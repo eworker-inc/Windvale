@@ -3,7 +3,7 @@
 - Status: Implemented locally through experimental profile 16, a compiler-capacity verifier bundle, and bounded reclamation for generated values and guest records; cross-host qualified through profile 10, but not an accepted permanent target
 - Target identifier: `wasm32-browser-v1-experimental`
 - WebAssembly binary version: 1
-- Portable input identity: canonical WVB 1.6 through 1.11, with the writer selecting the lowest vocabulary required by the module
+- Portable input identity: canonical WVB 1.11; each selector below states its explicit accepted subset
 
 ## Purpose
 
@@ -21,7 +21,7 @@ This selector is not itself a general Windvale-native WVB semantic verifier. Pro
 
 Profiles 1 through 5 require the shared envelope and module shape below:
 
-- WVB 1.6 with all seven mandatory sections in canonical order and no trailing bytes;
+- WVB 1.11 with all seven mandatory sections in canonical order, an explicit absent-metadata byte, and no trailing bytes;
 - a `portable` module with a nonempty module name;
 - zero capabilities, data declarations, and nominal types;
 - one function and one export, both named `Main`; and
@@ -117,7 +117,7 @@ Profile 8 accepts either of two exact compiler-produced identity functions:
 - `Main(Input: bytes) -> bytes`; or
 - `Main(Input: text) -> text`.
 
-The module remains canonical WVB 1.6, portable, capability-free, and single-function/single-export. The accepted function has exactly one parameter, one synthesized return local of the same type, declared maximum operand-stack depth one, and the four-instruction sequence `local.load 0; local.store 1; local.load 1; return`. The selector rejects a mixed parameter/return family, any other local or instruction shape, and every malformed envelope without publication.
+The module remains canonical metadata-free WVB 1.11, portable, capability-free, and single-function/single-export. The accepted function has exactly one parameter, one synthesized return local of the same type, declared maximum operand-stack depth one, and the four-instruction sequence `local.load 0; local.store 1; local.load 1; return`. The selector rejects a mixed parameter/return family, any other local or instruction shape, and every malformed envelope without publication.
 
 This deliberately narrow identity profile establishes transport and validation semantics before general dynamic values. It does not yet lower arbitrary text or byte operations, calls, branches, allocation, records, or enums. `bytes` are opaque and may contain any octets. `text` input is validated inside the generated guest by a strict UTF-8 state machine that rejects truncation, invalid continuation ranges, overlong encodings, surrogate code points, and values above U+10FFFF.
 
@@ -146,7 +146,7 @@ Profile 10 composes profile 9's primitive and byte values with:
 
 Every absolute control target must be function entry or immediately follow a decoded `jump`, `branch.false`, or `return`. Operand stacks are empty at control boundaries. The selector lowers the verified basic-block graph through one private `i32` program-counter local and one Wasm dispatch loop. Dispatch comparisons and branches are target implementation details and do not consume the WVB instruction budget. Every dynamically selected WVB instruction is still charged exactly once before its operation. Checked unsigned overflow or underflow returns `WVR3007` without publishing output.
 
-The retained profile-10 consumer is `Wvb-Envelope-Verify-Main.wv`. Given arbitrary input bytes, it returns `[1]` only when the input is a completely consumed WVB 1.6 envelope with magic `WVB1`, version `1.6`, section count seven, section kinds one through seven in order, zero section flags and reserved fields, and every payload extent in range. It returns `[0]` for an invalid envelope. This is outer-envelope verification, not complete validation of section payloads or executable semantics.
+The retained profile-10 consumer is `Wvb-Envelope-Verify-Main.wv`. Given arbitrary input bytes, it returns `[1]` only when the input is a completely consumed WVB 1.11 envelope with magic `WVB1`, version `1.11`, section count seven, section kinds one through seven in order, zero section flags and reserved fields, an explicit absent-metadata byte, and every payload extent in range. It returns `[0]` for an invalid envelope. This is outer-envelope verification, not complete validation of section payloads or executable semantics.
 
 ### Profile 11: bounded WVB section-payload verification
 
@@ -207,7 +207,7 @@ The generated code detects every Windvale overflow explicitly. Signed operations
 
 The retained consumer is `Wvb-Scalar-Interpreter-Main.wv`. It accepts a versioned `WVXI 1` request containing a guest instruction budget, guest call-depth limit, and exact WVB bytes that have already passed the complete Decision 0149 verifier. It returns a fixed `WVXO 1` response containing guest status, charged guest instructions, and one `i32` result. The interpreter preflight is a bounded profile selector and must not be used as the untrusted-input verifier.
 
-The candidate execution subset is portable, capability-free WVB 1.6 with no nominal types; one through sixteen scalar functions; at most eight parameters and thirty-two parameters plus locals per function; declared stack depth at most sixteen; at most 4,096 aggregate instructions; and `Main() -> i32`. It interprets deterministic default-valued `i32`, `u32`, `u8`, and `bool` locals; checked arithmetic and scalar comparisons; boolean operations; `u32.from_u8`; terminator-aligned jumps and branches; direct calls; `pop`; and returns. Guest budget is one through 4,096 and call depth is one through eight.
+The candidate execution subset is portable, capability-free, metadata-free WVB 1.11 with no nominal types; one through sixteen scalar functions; at most eight parameters and thirty-two parameters plus locals per function; declared stack depth at most sixteen; at most 4,096 aggregate instructions; and `Main() -> i32`. It interprets deterministic default-valued `i32`, `u32`, `u8`, and `bool` locals; checked arithmetic and scalar comparisons; boolean operations; `u32.from_u8`; terminator-aligned jumps and branches; direct calls; `pop`; and returns. Guest budget is one through 4,096 and call depth is one through eight.
 
 The complete verifier and interpreter are deliberately separate import-free artifacts. A worker runs the verifier first, applies capability policy, and only then builds `WVXI`. Empty interpreter output after successful verification means the candidate is outside profile 14. `WVXO` status `3011` reports guest instruction exhaustion and `3004` reports guest call-depth exhaustion; an arithmetic trap propagates through the enclosing execution ABI as status `3007` with no output.
 
@@ -574,6 +574,10 @@ The exact implementation commit also passed GitHub [Deploy homepage run 30770158
 [Decision 0197](../Documents/Decisions/0197-Bounded-Reclaiming-Wasm-Guest-Records.md) retains the 4 KiB guest-record arena but changes handles to stable field-cell slots, adds nominal extent metadata plus a fixed mark vector, and traces conservative roots through active locals, the operand stack, saved call frames, in-progress construction, and nested record fields before first-fit retry. A 33-replacement churn phase proves reuse; a separate 512-live-field phase proves exact `WVR3017` and deterministic reset. The 70,846-byte interpreter lowers in 332,023,684 instructions to 468,320 import-free Wasm bytes with SHA-256 `dbcb971cb1dedac2169035d0cf436aaed9cc5abcce0a9347932c8e0b7d1bff1e`; the exact compiler now reaches an ordinary 100,000-instruction `WVXO 2` guest-budget result after 96,797,247 outer instructions.
 
 [Decision 0202](../Documents/Decisions/0202-Four-Phase-Compiler-Capacity-WebAssembly-Verification.md) advances the current compiler-capacity bundle without changing profile 16, execution ABI 3, or the canonical complete verifier. The 859,555-byte hosted compiler and 857,232-byte portable compiler exceed the old single typed phase's 4,000,000,000-instruction run. Two deterministic typed phases split function indices at 200 and preserve complete coverage. The 440,583-byte semantic Wasm has SHA-256 `d61fe8f1091429d64ba425670ad4d85608f1efcc8bc71ad8904f3a7691ded677`; the 283,430-byte typed artifacts have SHA-256 `a64084987d6890f4c2384ce2aaaa9e724f931cd61d39f3b460fbf9e35714e0ba` and `225c489f3db95414480889f8fc725c87b71fed45d504c539c65a418466dd56f0`. Hosted exact phase meters are 2,538,949,903 metadata/reference, 1,498,394,475 typed-first, 3,666,795,913 typed-second, and 3,884,234,392 control/reachability; portable meters are 2,537,643,002, 1,493,928,972, 3,651,136,554, and 3,883,165,187.
+
+[Decision 0209](../Documents/Decisions/0209-Single-Current-Wvb-1-11-Format.md) supersedes those artifact identities while retaining the same explicit profile-16 and ABI-3 boundaries. Every verifier and interpreter now requires the canonical WVB 1.11 envelope and consumes the mandatory Module metadata-presence byte. The backend additionally lowers checked `u32` divide/remainder, bitwise AND/OR/XOR/complement, and shifts; divide-by-zero and invalid shift counts return exact `WVR3032` and `WVR3033` status before the WebAssembly operation executes. The current scalar interpreter is 76,008 WVB bytes with SHA-256 `7bd13f2c19d8f45343a16d165530ff4779fb1d770e4fc0687e89a65c409f73d3`; its 4,613 locals, 71,221 code bytes, and 15,577 instructions lower in 375,304,013 instructions to 499,920 import-free Wasm bytes with SHA-256 `a14a4b67a0b6d9e495ec46c121b44cfaa0b9905a1f37f2a0218590a9844eb6e5`. The current complete verifier is 757,110 Wasm bytes with SHA-256 `ae0224e0200d7e32c6ca96e1771715a7dcec9578e82ab9b93947f7714f290dd5`.
+
+The compiler-capacity bundle now uses six phases so no exact run approaches or crosses ABI 3's `u32` instruction meter: metadata/reference; typed functions 0–199, 200–299, and 300+; and control/reachability functions 0–199 and 200+. Their Wasm byte lengths are 455,762, 302,034, 302,608, 302,034, 302,044, and 302,044. Their SHA-256 identities are `2c3163128e71bc6fd1fb62740655f46f95fa1598d59c3d7bcdf8881331a4a112`, `c5e1415a3a6d83198263fe254c89162422b23adcb63ef47d530a7dc949ae358f`, `83d924bcca1767311502cbca6d9b0a3144f1833a0c14ac9e14fbc4c96c288296`, `530deb37652d3ddd4c7b189e4901e49ad7e35a401a00499092f2bbdae978f0e8`, `ba40b57a6a8633e2ebb0da6e2d45c7286d675156be94c196e7a48b9e02e91c62`, and `5cc8299462f0a267a25dcf44f8aa5de1f1351c36f7c5f68bc579d57c5dda9cee`. The largest measured phase is typed functions 300+ at 3,554,711,351 hosted and 3,537,345,351 portable instructions. Final standalone-engine and dual-host qualification remain pending.
 
 ## Non-claims
 

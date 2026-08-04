@@ -335,7 +335,7 @@ public sealed record Bytecodeˉmodule(
 
     public Moduleˉmetadata? Metadata { get; init; }
 
-    public ushort Formatˉminorˉversion { get; init; } = Moduleˉcodec.BASE_MINOR_VERSION;
+    public ushort Formatˉminorˉversion { get; init; } = Moduleˉcodec.MINOR_VERSION;
 }
 
 public sealed record Decodedˉinstruction(

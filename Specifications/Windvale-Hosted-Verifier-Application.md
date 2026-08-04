@@ -108,13 +108,13 @@ The package constructors retain only the zero-relocation templates plus typed pa
 
 `windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the one bounded input snapshot.
 
-The current canonical application is 961,536 bytes with SHA-256 `cac82b26c7af4edea01a808db718e66e65fd859f421d5e73f144b017f390bc59`.
+The current canonical application is 996,352 bytes with SHA-256 `c223b71e7580c9d9b9ba3d2f6f82e1689d0638967f7112c0c1a952432128b154`.
 
 ## Linux container
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
 
-The current canonical application is 962,560 bytes with SHA-256 `d99f5d9c95f1ab7e731eaf4ea7f15e48a19cc72e689f99d1b00d5a58f2984ede`.
+The current canonical application is 995,328 bytes with SHA-256 `04a800ee9a81471dd6b2be0727c94b833229ef7b6020390df0ce23b909c6d1f1`.
 
 ## Construction and verification
 
@@ -126,7 +126,7 @@ windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target windows-x64-verifier-v1
 windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target linux-x64-verifier-v1
 ```
 
-The canonical WVB is 118,496 bytes with SHA-256 `19760a4438a48c945de3e39fd612ed72f3ea3a33373b5d9da09cd1e2411938d7`.
+The canonical WVB is 123,969 bytes with SHA-256 `0e5a11c8ce5e9ab9c9b4d87d7b57ef1ace89e13b449a9f32815ef90bc7c41696`.
 
 Both public writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical fragment services. They add only the startup-internal UTF-8 service, construct the outer application, parse it independently, and atomically publish it only after every manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
 

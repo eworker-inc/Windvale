@@ -173,7 +173,7 @@ export fn Compilerˉsourceˉwvbˉshapeˉisˉsupported(
     Variants: u32
 ) -> bool {
     if Shape == 0u32 { return Allowˉvoid; }
-    if Shape <= 6u32 { return true; }
+    if Shape <= 8u32 { return true; }
     if Shape >= 65536u32 {
         if Shape < 65536u32 + Records { return true; }
     }
@@ -203,6 +203,8 @@ export fn Compilerˉsourceˉwvbˉshape(Shape: u32) -> bytes {
     if Shape == 4u32 { Kind = 2u8; }
     if Shape == 5u32 { Kind = 3u8; }
     if Shape == 6u32 { Kind = 6u8; }
+    if Shape == 7u32 { Kind = 9u8; }
+    if Shape == 8u32 { Kind = 10u8; }
     if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
         Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
         var Collectionˉkind: u8 = 12u8;
@@ -470,12 +472,47 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> u8 {
     if Operation == 90u32 { return 186u8; }
     if Operation == 91u32 { return 187u8; }
     if Operation == 92u32 { return 188u8; }
+    if Operation == 93u32 { return 128u8; }
+    if Operation == 94u32 { return 129u8; }
+    if Operation == 95u32 { return 149u8; }
+    if Operation == 96u32 { return 150u8; }
+    if Operation == 97u32 { return 130u8; }
+    if Operation == 98u32 { return 131u8; }
+    if Operation == 99u32 { return 132u8; }
+    if Operation == 100u32 { return 133u8; }
+    if Operation == 101u32 { return 134u8; }
+    if Operation == 102u32 { return 135u8; }
+    if Operation == 103u32 { return 136u8; }
+    if Operation == 104u32 { return 137u8; }
+    if Operation == 105u32 { return 138u8; }
+    if Operation == 106u32 { return 139u8; }
+    if Operation == 107u32 { return 140u8; }
+    if Operation == 108u32 { return 141u8; }
+    if Operation == 109u32 { return 142u8; }
+    if Operation == 110u32 { return 143u8; }
+    if Operation == 111u32 { return 144u8; }
+    if Operation == 112u32 { return 145u8; }
+    if Operation == 113u32 { return 146u8; }
+    if Operation == 114u32 { return 147u8; }
+    if Operation == 115u32 { return 148u8; }
+    if Operation == 116u32 { return 163u8; }
+    if Operation == 117u32 { return 164u8; }
+    if Operation == 118u32 { return 165u8; }
+    if Operation == 119u32 { return 166u8; }
+    if Operation == 120u32 { return 179u8; }
+    if Operation == 121u32 { return 180u8; }
+    if Operation == 122u32 { return 181u8; }
+    if Operation == 123u32 { return 182u8; }
+    if Operation == 124u32 { return 183u8; }
+    if Operation == 125u32 { return 184u8; }
+    if Operation == 126u32 { return 189u8; }
+    if Operation == 127u32 { return 190u8; }
     return 0u8;
 }
 
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 92u32 { return true; }
+        if Operation <= 127u32 { return true; }
     }
     return false;
 }
@@ -520,6 +557,10 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     }
     if Operation >= 73u32 {
         if Operation <= 92u32 { Opcodeˉbytes = 1u32; }
+    }
+    if Operation == 93u32 || Operation == 94u32 { Opcodeˉbytes = 9u32; }
+    if Operation >= 95u32 {
+        if Operation <= 127u32 { Opcodeˉbytes = 1u32; }
     }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
@@ -2309,6 +2350,13 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             Result, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Target), 0u32, 1u32)
         );
     }
+    if Operation == 93u32 || Operation == 94u32 {
+        Result = Bytesˉconcat(
+            Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+        );
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Auxiliary));
+    }
     if Operation == 5u32 {
         Result = Bytesˉconcat(
             Result,
@@ -2435,6 +2483,13 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     }
     if Operation >= 73u32 {
         if Operation <= 92u32 {
+            Result = Bytesˉconcat(
+                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+            );
+        }
+    }
+    if Operation >= 95u32 {
+        if Operation <= 127u32 {
             Result = Bytesˉconcat(
                 Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
             );
@@ -3036,15 +3091,13 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
             Root.Source, Rootˉheader.Nameˉoffset, Rootˉheader.Nameˉlength
         )
     );
-    if Symbols.Variants > 0u32 || Hasˉcollections || Hasˉoperators {
-        var Metadataˉpresent: u8 = 0u8;
-        if Bytesˉlength(Moduleˉmetadata.Payload) != 0u32 {
-            Metadataˉpresent = 1u8;
-        }
-        Moduleˉpayload = Bytesˉconcat(
-            Moduleˉpayload, Bytesˉfromˉu8(Metadataˉpresent)
-        );
+    var Metadataˉpresent: u8 = 0u8;
+    if Bytesˉlength(Moduleˉmetadata.Payload) != 0u32 {
+        Metadataˉpresent = 1u8;
     }
+    Moduleˉpayload = Bytesˉconcat(
+        Moduleˉpayload, Bytesˉfromˉu8(Metadataˉpresent)
+    );
     Moduleˉpayload = Bytesˉconcat(Moduleˉpayload, Moduleˉmetadata.Payload);
     let Exportˉpayload: bytes = Bytesˉconcat(
         Bytesˉfromˉu32ˉlittle(Declarations.Exports),
@@ -3052,12 +3105,7 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     );
     var Bytecode: bytes = Textˉtoˉutf8("WVB1");
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(1u32));
-    var Minorˉversion: u32 = 6u32;
-    if Bytesˉlength(Moduleˉmetadata.Payload) != 0u32 { Minorˉversion = 8u32; }
-    if Symbols.Variants > 0u32 { Minorˉversion = 9u32; }
-    if Hasˉcollections { Minorˉversion = 10u32; }
-    if Hasˉoperators { Minorˉversion = 11u32; }
-    Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Minorˉversion));
+    Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(11u32));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(
         Bytecode, Compilerˉsourceˉwvbˉsection(1u8, Moduleˉpayload)

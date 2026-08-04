@@ -64,7 +64,7 @@ This implementation is the qualified Windvale bytecode compiler: Stage 0 builds 
 - Deterministic lowering from WIR into stack bytecode
 - A bounded x86-64 kernel-entry target that lowers the specified linear system-profile WIR subset into independently verified WVO
 
-WIR uses virtual temporaries and local slots. The C# reference compiler lowers its typed WIR to bytecode and, for the narrow target specified by [Windvale-X64-Kernel-Target.md](../../Specifications/Windvale-X64-Kernel-Target.md), to a code-only WVO kernel entry. That target accepts only one linear `Main`, constant text output through an explicit capability adapter, and a constant result; it is not the general native backend. The portable Windvale compiler publishes the separate WVIR 1 contract. Its backend assigns every WIR temporary a bytecode local and emits one complete WVB 1.6 module from a validated WVSS graph whose root is portable, hosted, or system. It currently internalizes portable dependency functions and nominal types while preserving root static data, explicit catalog capabilities, profile, and exports. The Stage 0 candidate additionally admits profile-compatible capability-bearing libraries only when every importer explicitly redeclares the complete transitive requirement set; the Windvale-written compiler has not yet adopted that extension. WVIR retains stable WVSD declaration identities; the backend resolves each identity through its owner source, translates it to ordinal WVB function, data, and capability indices, uses canonical nominal identities as Types indices, and emits canonical functions, root exports, types, capabilities, explicit data, and cross-module interned text literals. The operand stack stays empty between WIR operations and at block boundaries. This intentionally verbose form remains easy to inspect, verify, and compare byte for byte with the reference compiler. Runtime linkage remains separate and is not required by static source composition.
+WIR uses virtual temporaries and local slots. The C# reference compiler lowers its typed WIR to bytecode and, for the narrow target specified by [Windvale-X64-Kernel-Target.md](../../Specifications/Windvale-X64-Kernel-Target.md), to a code-only WVO kernel entry. That target accepts only one linear `Main`, constant text output through an explicit capability adapter, and a constant result; it is not the general native backend. The portable Windvale compiler publishes the separate WVIR 1 contract. Its backend assigns every WIR temporary a bytecode local and emits one complete WVB 1.11 module from a validated WVSS graph whose root is portable, hosted, or system. It currently internalizes portable dependency functions and nominal types while preserving root static data, explicit catalog capabilities, profile, and exports. The Stage 0 candidate additionally admits profile-compatible capability-bearing libraries only when every importer explicitly redeclares the complete transitive requirement set; the Windvale-written compiler has not yet adopted that extension. WVIR retains stable WVSD declaration identities; the backend resolves each identity through its owner source, translates it to ordinal WVB function, data, and capability indices, uses canonical nominal identities as Types indices, and emits canonical functions, root exports, types, capabilities, explicit data, and cross-module interned text literals. The operand stack stays empty between WIR operations and at block boundaries. This intentionally verbose form remains easy to inspect, verify, and compare byte for byte with the reference compiler. Runtime linkage remains separate and is not required by static source composition.
 
 ### Bytecode
 
@@ -181,50 +181,50 @@ The interpreter uses ordinary portable .NET APIs and has no Windows-specific or 
 - Text is encoded as strict UTF-8.
 - The conformance suite compares complete output bytes and fixed SHA-256 identities.
 
-The current bytecode 1.6 golden modules are:
+The current bytecode 1.11 golden modules are:
 
-- `Sumˉdata`: `6f3a272d37dd8893995c7f85c236414ed2864bf59de2f3775c08afd426013f8c`
-- `Helloˉwindvale`: `bcf6597a27384661d2796f1dd8ee6e24cce8e6c7cb84def3b7826a564acb7d54`
-- `Readˉwvbˉheader`: `72ae31559bb3335b320328c26e70518b6a0f3e617d099d41b328b066bb3784c7`
-- `Compositionˉdemo`: `0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60`
-- `Foundationˉmachineˉcontracts`: `9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a`
-- `Machineˉcontractsˉdemo`: `b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a`
-- `Foundationˉbyteˉordering`: `194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1`
-- `Foundationˉbyteˉorderingˉdemo`: `0b41e8f615630e0734812ba8cd8e7c06e975592b86327c2fe8220f5e29c10cab`
-- `Foundationˉdecimalˉparsing`: `39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f`
-- `Foundationˉdecimalˉparsingˉdemo`: `16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695`
-- `Foundationˉbyteˉconstruction`: `6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207`
-- `Foundationˉbyteˉconstructionˉdemo`: `a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29`
-- `Compilerˉsourceˉlexer`: `ca91d5aa9889540250be552b5563dacba8deba2abb70ea557d0e4f8089ee749f`
-- `Compilerˉsourceˉlexerˉdemo`: `2a7a2f8c1276c252fa8ddb53a362c6560dfa06ba8c2a8be0fb56f507e820df87`
-- `Compilerˉsourceˉdeclarationˉparser`: `4bbaaaa6293ab1fb5a4eb92c3e8a52c078943ba88652b27f69fdc3c5ab76fda7`
-- `Compilerˉsourceˉdeclarationˉparserˉdemo`: `ab28936fe0961261a0f243009d5c9b93af52069326618e03e428d1cc024fea11`
-- `Compilerˉsourceˉdeclarationˉparserˉtool`: `94134e28bef9544b0fbb4b4ae6dfd3deb3aa52598475023d37b01a5de8686d45`
-- `Compilerˉsourceˉbodyˉparser`: `3df42c7b6e81343194340b8f6f44e44fb83f3d6f18c249c9d9ed4e58df69ec73`
-- `Compilerˉsourceˉbodyˉparserˉdemo`: `afa07f843679e89f84a5a55887af834575d43d4a3ac3f1a76cd4395a103e62b6`
-- `Compilerˉsourceˉbodyˉparserˉtool`: `342fadc0886e5b8b2910cb65c8495730a902364a526fd34df58c574a32a91890`
-- `Compilerˉsourceˉset`: `ab6a6afc5cc90e8db508a9ce4d22acc42cf2cbc5293afad977881a71c3b2658a`
-- `Compilerˉsourceˉsetˉdemo`: `dda97ec276bc2c56552e765854322b1177f5b6c27d36fec25d9360f39451b7e1`
-- `Compilerˉsourceˉsetˉtool`: `58d29de0ea3b92a83f0cd84bba22910c2c826e7f01d93d0aa5a04f8d0a029322`
-- `Compilerˉsourceˉgraph`: `a6ef5896e45593f45b136cc73f3e8c57dd33274ff4736eff18795276fb0c8885`
-- `Compilerˉsourceˉgraphˉdemo`: `7c0e191c6a931617aee23fbc91dac61648ebc2f8f2a40a1690ff648a6b9d60de`
-- `Compilerˉsourceˉgraphˉtool`: `ffbbea564754c667961680497d3b077f38626a4993ed9c1e1a0d5966e5378aba`
-- `Compilerˉsourceˉsymbols`: `230701dc73c8b18e4beedbaad1ce09fa02e83ab5d65e1152ed9ad945e0846105`
-- `Compilerˉsourceˉsymbolsˉdemo`: `02ca6d2b9d3dd18efe5aafaf329f787226fc68051a10e63cfb053dd51e4654d0`
-- `Compilerˉsourceˉsymbolsˉtool`: `6c83cd9813efb88e86252ce428248245a3f1c0c5d9f8cdb7eeefef4172b126c3`
-- `Compilerˉsourceˉbindings`: `3922ca780b11162a9a331b7ca2fc6d3bb070e89134190eabbb978640a05ca128`
-- `Compilerˉsourceˉbindingsˉdemo`: `26c778d4676d9dfa969cfebe41593d7733a6c5ad8fc54c0ee7b1b9a2dc6a5880`
-- `Compilerˉsourceˉbindingsˉtool`: `d989caa9573ca0b69df46b6a5cf0bd385011d65311463043bcc0b74e25b5a28c`
-- `Compilerˉsourceˉwir`: `f94c96ce84ea05e7802bf4780bb8c0ef5d818303ac83730b50273006aaf6a35e`
-- `Compilerˉsourceˉwirˉdemo`: `0fcf0bf2a6eda1ae271bbe83169af9acfb339e24436c5e76e77b5e273b54301b`
-- `Compilerˉsourceˉwirˉtool`: `cf1421565f9888b23864253b722feac9fa3aa053a0dccfd06d695ca10162ff87`
-- `Compilerˉsourceˉwvb`: `eee0cbffcd6f615d1d7805ece8dfc1a8747d265de4c8fe6cae0b426e0770178f`
-- `Compilerˉsourceˉwvbˉdemo`: `c6e6fcbfd674df8d5e147b7c3bb52dfbdd4e26fcae4089ccb6c6fb00ffbb26db`
-- `Compilerˉsourceˉwvbˉtool`: `db0b76432f531da40cfb91617673ea0df2981102f294765e7e60c544a8129d0e`
-- `Wvˉdumpˉcore`: `38af93371f5ed737946092092c67f6c363b340c7b2a2e8d0588c05a3e94b730b`
-- `Wvoˉobjectˉcore`: `e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74`
-- `Wvaˉassemblerˉcore`: `a5f4e913078295a323eac315f9df818877ac519de97028e581cab8577f1dd150`
-- `Wvˉlinkerˉcore`: `091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa`
+- `Sumˉdata`: `76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df`
+- `Helloˉwindvale`: `0a9230e700a10d14e718340e49562e5b0184a3c3a71b5cd29915126a6b28c28f`
+- `Readˉwvbˉheader`: `c13efd14485afa1bf7fa418b54cea2fdd234fe34fdc824ae52346ce062be7793`
+- `Compositionˉdemo`: `2a3acaf08c23075ee2a9701ba1b35dfe2cb83fca27eb669102a9d0dbfff53419`
+- `Foundationˉmachineˉcontracts`: `f624739461dea01862121daf234b3a838dfcafd73753e3124a038b7efa8b4fa3`
+- `Machineˉcontractsˉdemo`: `69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3`
+- `Foundationˉbyteˉordering`: `27a3c24b5cc358a4f67e2e1959b5e80559918f0176c52e08648e638212e6dece`
+- `Foundationˉbyteˉorderingˉdemo`: `fbaf423b6e4eac5c18b644dc27f1fa20fca8798519596485cd7497b44979533f`
+- `Foundationˉdecimalˉparsing`: `bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37`
+- `Foundationˉdecimalˉparsingˉdemo`: `d323f8fa9178583990394a37872a8ee522320084ef4741eac26cb0f86c21b453`
+- `Foundationˉbyteˉconstruction`: `3be0d06b8f4e7745dd9ffd9f325804d69ce524ac7ff6341b1e7b38037f6dd6f8`
+- `Foundationˉbyteˉconstructionˉdemo`: `ab594976ced7a84573ade0aa50fb4370d96b8004c8b9a5ec1e888968c7b3bf8f`
+- `Compilerˉsourceˉlexer`: `411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08efb89da6b3e`
+- `Compilerˉsourceˉlexerˉdemo`: `f83ff53dd2ffa1808bbf5c9ca2056f8dbb386308d52142f720ddf26420a6c2db`
+- `Compilerˉsourceˉdeclarationˉparser`: `8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb`
+- `Compilerˉsourceˉdeclarationˉparserˉdemo`: `9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf`
+- `Compilerˉsourceˉdeclarationˉparserˉtool`: `ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0`
+- `Compilerˉsourceˉbodyˉparser`: `68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589`
+- `Compilerˉsourceˉbodyˉparserˉdemo`: `2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f`
+- `Compilerˉsourceˉbodyˉparserˉtool`: `0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f`
+- `Compilerˉsourceˉset`: `1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb`
+- `Compilerˉsourceˉsetˉdemo`: `ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742`
+- `Compilerˉsourceˉsetˉtool`: `6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f`
+- `Compilerˉsourceˉgraph`: `7fe9276273e48432f6206bde0d8a533dbc35ddf055b2f68b8a03810f07b4fb14`
+- `Compilerˉsourceˉgraphˉdemo`: `fc046e27037f0b2f18129b270b21d8d2c5c3c532601c5a4bfdf211881b0c2acb`
+- `Compilerˉsourceˉgraphˉtool`: `9d49a4e321429ea203bd9a00ab2f6a9196c844c7cdf77a6b707ad6e0dc48b0fd`
+- `Compilerˉsourceˉsymbols`: `c0ea4ba24ba6f9395a509aa8d1673409747da4aa5bd839dda1d511341676c56a`
+- `Compilerˉsourceˉsymbolsˉdemo`: `4572ff2175a2f7ecd56c9c6caab3865080f17834548be066f15e909984e063bc`
+- `Compilerˉsourceˉsymbolsˉtool`: `c0cb2d71ceb2fe979c819ec6668f8eb762e33576fe0ee3e74d1920f8d84015d0`
+- `Compilerˉsourceˉbindings`: `55a2d97d55dc7e52f6732dc6312b04ed066a997e2b92be625354645a28370c22`
+- `Compilerˉsourceˉbindingsˉdemo`: `caecddffa3ee83c35424f46b7581e185e434d85533b56ca05c497d90da9d08e3`
+- `Compilerˉsourceˉbindingsˉtool`: `f30016abc392c6e0141426f488397ac74a404d8f1aa636c9ed5ed69d16c458b4`
+- `Compilerˉsourceˉwir`: `4849dfcd26d3ff70f54aec80072888f4f96612575c1999306dbbe7a4b99a6847`
+- `Compilerˉsourceˉwirˉdemo`: `4b9236a103bd77f8fecbc8b514fd37b0ca647da7317d7d319606332f4b3e2361`
+- `Compilerˉsourceˉwirˉtool`: `324a6292aac0f51b63bad887b880c29c7f1959fb6281a0a40f4252c2a2182de7`
+- `Compilerˉsourceˉwvb`: `389024fb26cb9335413fbfbdd739518b53962d7221480b42db7c6c6a9c9a4dd3`
+- `Compilerˉsourceˉwvbˉdemo`: `b910bd18abbca23882cdadbea289b8e1e41dbc2f5871c2f8772c10a170b42c2a`
+- `Compilerˉsourceˉwvbˉtool`: `abc2ef9839944bddee172cbeb3e11f716d7be9c0d94c1a0d4378341030ee4207`
+- `Wvˉdumpˉcore`: `333fffcb26912aed969581d394bf0d3b8a093edfaafc565a43f8f700a8afb43d`
+- `Wvoˉobjectˉcore`: `15b6de9e90cd3eb3288f106bd272fac5b4b25280f972c393e8d0f0b34ecf5d07`
+- `Wvaˉassemblerˉcore`: `1589f2750fa8fcf98ed1058814907f7e03eed0ac368467999118e25fb8195a7f`
+- `Wvˉlinkerˉcore`: `9e10e17d2827031a4cad216690c26fd5d96bc95a3d9d9d27c0f0e8050356c140`
 
 The canonical WVO 1.0 representative object is 189 bytes with SHA-256 `006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a`.
 

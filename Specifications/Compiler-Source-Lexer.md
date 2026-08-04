@@ -30,6 +30,7 @@ record Compilerˉsourceˉtoken {
     Nextˉcolumn: u32;
     Numericˉkind: Compilerˉnumericˉkind;
     Numericˉvalue: u32;
+    Numericˉhigh: u32;
     Failureˉoffset: u32;
     Failureˉline: u32;
     Failureˉcolumn: u32;
@@ -52,6 +53,7 @@ Token-kind values are frozen to the Stage 0 ordering:
 - `As`, `Platform`, `Authority`, `Requires`, `Optional`, and `Version` are values 63 through 68.
 - `Match`, `Case`, `Variant`, `Sequence`, `Builder`, `Freeze`, `Push`, `For`, and `In` are values 69 through 77.
 - `Slash`, `Percent`, `Ampersand`, `Pipe`, `Caret`, `Tilde`, `Shiftˉleft`, and `Shiftˉright` are values 78 through 85 and cover `/`, `%`, `&`, `|`, `^`, `~`, `<<`, and `>>`.
+- `I64` and `U64` are values 86 and 87 and cover the exact type keywords `i64` and `u64`.
 
 An identifier begins with an ASCII letter or underscore. Later characters may also be ASCII digits or U+02C9. No other non-ASCII identifier character is accepted.
 
@@ -61,7 +63,7 @@ Keyword classification uses exact byte length and first ASCII byte to select onl
 
 ## Numeric and string rules
 
-`Compilerˉnumericˉkind` distinguishes `None`, `I32`, `U8`, and `U32`. Unsuffixed decimal digits are `I32` and cannot exceed 2,147,483,647. The exact suffixes `u8` and `u32` require a non-identifier boundary and enforce 255 and 4,294,967,295 respectively. Digits are parsed by `Foundationˉu32ˉdecimalˉparse`.
+`Compilerˉnumericˉkind` distinguishes `None`, `I32`, `U8`, `U32`, `I64`, and `U64`. Unsuffixed decimal digits are `I32` and cannot exceed 2,147,483,647. The exact suffixes `u8`, `u32`, `i64`, and `u64` require a non-identifier boundary and enforce 255, 4,294,967,295, 9,223,372,036,854,775,807, and 18,446,744,073,709,551,615 respectively. Narrow values use `Numericˉvalue` with `Numericˉhigh` zero; wide values use the two fields as a little-endian low/high `u32` pair. Narrow digits are parsed by `Foundationˉu32ˉdecimalˉparse`; the lexer owns a bounded two-limb decimal accumulator for wide literals.
 
 Strings accept the simple escapes `\"`, `\\`, `\n`, `\r`, and `\t`, plus `\u` followed by exactly four hexadecimal digits. Escaped UTF-16 high and low surrogates must be paired. Raw LF or CR terminates scanning with `Unterminatedˉstring`.
 
@@ -84,4 +86,4 @@ Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 
 ## Current candidate implementation
 
-`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 44,771-byte WVB with SHA-256 `e108cc3721092a114c8bab3b58224aef7e4fb63b8ed46c368cf341860c0a44f9`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 52,051-byte WVB with SHA-256 `b0ee43b2441448e0e719fc8e80902a5cffea162450ce10a704685e8fec6c6918` and returns `0` under the 10,000,000-instruction ceiling. These appended-token identities are local deterministic evidence. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, the role-based path passed at `4fdc6bf`, and Decision 0055 was cross-host qualified at `1a4fca7`; those retained runs predate the new tokens.
+`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 49,470-byte WVB 1.11 module with SHA-256 `411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08efb89da6b3e`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 56,674-byte module with SHA-256 `f83ff53dd2ffa1808bbf5c9ca2056f8dbb386308d52142f720ddf26420a6c2db` and returns `0` under the 10,000,000-instruction ceiling. These wide-scalar identities are local deterministic evidence. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, the role-based path passed at `4fdc6bf`, and Decision 0055 was cross-host qualified at `1a4fca7`; those retained runs predate the new tokens.

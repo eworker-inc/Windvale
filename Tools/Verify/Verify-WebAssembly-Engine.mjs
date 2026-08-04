@@ -232,7 +232,7 @@ const EXPECTED = [
         name: "Windvale-native WVB envelope verifier",
         path: process.argv[24],
         inputPath: process.argv[25],
-        sha256: "01aab009fa7cf2a6e1b57d6fbf1e78b3caf6d3fb1c19e99db0f9c9d909d0cd58",
+        sha256: "91b6d98ce13cb7701d38b550821e75b053a2c707f0b78c5e1c3409470c159659",
         bytes: 16112,
         abi: 3,
         kind: 1,
@@ -243,8 +243,8 @@ const EXPECTED = [
         path: process.argv[26],
         inputPath: process.argv[27],
         acceptedInputPaths: [process.argv[28], process.argv[29], process.argv[30]],
-        sha256: "e6fe4991a44350121ddcefae6235fa52c9a39a0f25a11fefcdf02c4f9fc9326e",
-        bytes: 120043,
+        sha256: "efd12a96ba21f9cdac3fc42c570292623681fd2beef5be451343076589224b9e",
+        bytes: 126501,
         abi: 3,
         kind: 1,
         runtime: "wvb-structural",
@@ -262,8 +262,8 @@ const EXPECTED = [
         name: "Windvale-native WVB canonical metadata and reference verifier",
         path: process.argv[32],
         acceptedInputPaths: [process.argv[33], process.argv[34], process.argv[35]],
-        sha256: "78c8c7bd43b2036d336df956f693a1421a93a6bd55d6e2fda5afcc9c8df412e0",
-        bytes: 440583,
+        sha256: "a0e4133feeb18c20102b34121fa7efca0d58d60f4898af0cdc62a66d6c0a1fa2",
+        bytes: 455762,
         abi: 3,
         kind: 1,
         runtime: "wvb-semantic",
@@ -272,8 +272,8 @@ const EXPECTED = [
         name: "expanded Windvale-native WVB semantic-verifier call graph",
         path: process.argv[36],
         acceptedInputPaths: [process.argv[37], process.argv[38], process.argv[39]],
-        sha256: "c616ba9bd4b3bd96a546546cdad71d4a1fd4cb38e5de6f4e6acbcc46a4ed9331",
-        bytes: 440823,
+        sha256: "4b06ca57cb33516fbcd53dcfd3e7fbfb96e9710dabf77d969a3973d5d25190f1",
+        bytes: 456002,
         abi: 3,
         kind: 1,
         runtime: "wvb-semantic-expanded",
@@ -282,8 +282,8 @@ const EXPECTED = [
         name: "Windvale-native WVB executable verifier",
         path: process.argv[40],
         acceptedInputPaths: [process.argv[41], process.argv[42], process.argv[43]],
-        sha256: "c9249bd45a6ea7dcb14a11d1fbcf6dd004f6ce2bcf9eb4794ad65e2ba79a00fd",
-        bytes: 723327,
+        sha256: "ae0224e0200d7e32c6ca96e1771715a7dcec9578e82ab9b93947f7714f290dd5",
+        bytes: 757110,
         abi: 3,
         kind: 1,
         runtime: "wvb-executable",
@@ -302,8 +302,8 @@ const EXPECTED = [
         bytesEntryPath: process.argv[64],
         portableCompilerPath: process.argv[65],
         portableSourcePath: process.argv[66],
-        sha256: "dbcb971cb1dedac2169035d0cf436aaed9cc5abcce0a9347932c8e0b7d1bff1e",
-        bytes: 468320,
+        sha256: "a14a4b67a0b6d9e495ec46c121b44cfaa0b9905a1f37f2a0218590a9844eb6e5",
+        bytes: 499920,
         abi: 3,
         kind: 1,
         runtime: "wvb-scalar-interpreter",
@@ -313,17 +313,23 @@ const EXPECTED = [
         path: process.argv[60],
         typedPath: process.argv[61],
         typedSecondPath: process.argv[67],
+        typedThirdPath: process.argv[69],
         controlPath: process.argv[62],
+        controlSecondPath: process.argv[70],
         inputPath: process.argv[63],
         portableInputPath: process.argv[65],
-        sha256: "d61fe8f1091429d64ba425670ad4d85608f1efcc8bc71ad8904f3a7691ded677",
-        typedSha256: "a64084987d6890f4c2384ce2aaaa9e724f931cd61d39f3b460fbf9e35714e0ba",
-        typedSecondSha256: "225c489f3db95414480889f8fc725c87b71fed45d504c539c65a418466dd56f0",
-        controlSha256: "597c0f8313aac9fbcb1ba50fbcd4e25937f0cc464d090d491570f8eeb559253d",
-        bytes: 440583,
-        typedBytes: 283430,
-        typedSecondBytes: 283430,
-        controlBytes: 282718,
+        sha256: "2c3163128e71bc6fd1fb62740655f46f95fa1598d59c3d7bcdf8881331a4a112",
+        typedSha256: "c5e1415a3a6d83198263fe254c89162422b23adcb63ef47d530a7dc949ae358f",
+        typedSecondSha256: "83d924bcca1767311502cbca6d9b0a3144f1833a0c14ac9e14fbc4c96c288296",
+        typedThirdSha256: "530deb37652d3ddd4c7b189e4901e49ad7e35a401a00499092f2bbdae978f0e8",
+        controlSha256: "ba40b57a6a8633e2ebb0da6e2d45c7286d675156be94c196e7a48b9e02e91c62",
+        controlSecondSha256: "5cc8299462f0a267a25dcf44f8aa5de1f1351c36f7c5f68bc579d57c5dda9cee",
+        bytes: 455762,
+        typedBytes: 302034,
+        typedSecondBytes: 302608,
+        typedThirdBytes: 302034,
+        controlBytes: 302044,
+        controlSecondBytes: 302044,
         abi: 3,
         kind: 1,
         runtime: "wvb-compiler-verifier",
@@ -339,7 +345,7 @@ const EXPECTED = [
     },
 ];
 
-if (process.argv.length !== 69) {
+if (process.argv.length !== 71) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -369,7 +375,8 @@ if (process.argv.length !== 69) {
             "<compiler-control-verifier.wasm> <windvale-compiler.wvb> " +
             "<bytes-entry-guest.wvb> <windvale-compiler-memory.wvb> " +
             "<function-only.wv> <compiler-typed-second-verifier.wasm> " +
-            "<runtime-reclaim.wasm>",
+            "<runtime-reclaim.wasm> <compiler-typed-third-verifier.wasm> " +
+            "<compiler-control-second-verifier.wasm>",
     );
 }
 
@@ -1137,52 +1144,76 @@ function verifyRuntime(expected, module, exports, digest) {
             expected.typedSecondSha256,
             expected.typedSecondBytes,
         );
+        const typedThirdExports = compilerPhase(
+            expected.typedThirdPath,
+            expected.typedThirdSha256,
+            expected.typedThirdBytes,
+        );
         const controlExports = compilerPhase(
             expected.controlPath,
             expected.controlSha256,
             expected.controlBytes,
         );
+        const controlSecondExports = compilerPhase(
+            expected.controlSecondPath,
+            expected.controlSecondSha256,
+            expected.controlSecondBytes,
+        );
         const compiler = readFileSync(expected.inputPath);
         if (
-            compiler.length !== 859_555 ||
+            compiler.length !== 913_513 ||
             createHash("sha256").update(compiler).digest("hex") !==
-                "c08f76e998e0280b7c2e3e801a9752f000825c874abeb86e88420c31444d63f9"
+                "abc2ef9839944bddee172cbeb3e11f716d7be9c0d94c1a0d4378341030ee4207"
         ) {
             throw new Error(`${expected.inputPath}: the exact compiler WVB identity changed.`);
         }
         requireMemoryResult(
             expected.path,
-            runMemory(exports, compiler, 2_538_949_903),
+            runMemory(exports, compiler, 3_362_215_594),
             0,
-            2_538_949_903,
+            3_362_215_594,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.typedPath,
-            runMemory(typedExports, compiler, 1_498_394_475),
+            runMemory(typedExports, compiler, 1_803_543_994),
             0,
-            1_498_394_475,
+            1_803_543_994,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.typedSecondPath,
-            runMemory(typedSecondExports, compiler, 3_666_795_913),
+            runMemory(typedSecondExports, compiler, 1_288_175_205),
             0,
-            3_666_795_913,
+            1_288_175_205,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.typedThirdPath,
+            runMemory(typedThirdExports, compiler, 3_554_711_351),
+            0,
+            3_554_711_351,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.controlPath,
-            runMemory(controlExports, compiler, 3_884_234_392),
+            runMemory(controlExports, compiler, 1_665_423_271),
             0,
-            3_884_234_392,
+            1_665_423_271,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.controlSecondPath,
+            runMemory(controlSecondExports, compiler, 3_227_502_887),
+            0,
+            3_227_502_887,
             Uint8Array.from([1]),
         );
         const portableCompiler = readFileSync(expected.portableInputPath);
         if (
-            portableCompiler.length !== 857_232 ||
+            portableCompiler.length !== 911_190 ||
             createHash("sha256").update(portableCompiler).digest("hex") !==
-                "b5c442b6fc91f8aa0cabd52622c4e5cad492830424595b93bc4f2ca0c04b1ccc"
+                "5113f846684aacfe533660bc7db45badf5422bf720a92c47044f4c3f0e84ebf4"
         ) {
             throw new Error(
                 `${expected.portableInputPath}: the exact portable compiler WVB identity changed.`,
@@ -1190,30 +1221,44 @@ function verifyRuntime(expected, module, exports, digest) {
         }
         requireMemoryResult(
             expected.path,
-            runMemory(exports, portableCompiler, 2_537_643_002),
+            runMemory(exports, portableCompiler, 3_360_781_485),
             0,
-            2_537_643_002,
+            3_360_781_485,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.typedPath,
-            runMemory(typedExports, portableCompiler, 1_493_928_972),
+            runMemory(typedExports, portableCompiler, 1_803_205_128),
             0,
-            1_493_928_972,
+            1_803_205_128,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.typedSecondPath,
-            runMemory(typedSecondExports, portableCompiler, 3_651_136_554),
+            runMemory(typedSecondExports, portableCompiler, 1_280_783_153),
             0,
-            3_651_136_554,
+            1_280_783_153,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.typedThirdPath,
+            runMemory(typedThirdExports, portableCompiler, 3_537_345_351),
+            0,
+            3_537_345_351,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.controlPath,
-            runMemory(controlExports, portableCompiler, 3_883_165_187),
+            runMemory(controlExports, portableCompiler, 1_666_257_530),
             0,
-            3_883_165_187,
+            1_666_257_530,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.controlSecondPath,
+            runMemory(controlSecondExports, portableCompiler, 3_225_589_906),
+            0,
+            3_225_589_906,
             Uint8Array.from([1]),
         );
     } else if (expected.runtime === "wvb-scalar-interpreter") {

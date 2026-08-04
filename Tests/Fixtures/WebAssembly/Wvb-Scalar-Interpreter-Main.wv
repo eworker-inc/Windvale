@@ -40,6 +40,13 @@ export fn Main(Request: bytes) -> bytes {
     }
     let Total: u32 = Bytesˉlength(Module);
     if Total < 12u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 0u32)) != 87u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 1u32)) != 86u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 2u32)) != 66u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return Invalid; }
+    if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
+    if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 11u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
 
     var Envelope: u32 = 12u32;
     var Sectionˉkind: u32 = 1u32;
@@ -115,9 +122,15 @@ export fn Main(Request: bytes) -> bytes {
                     Bytesˉreadˉu8(Module, Typeˉcursor)
                 );
                 if Fieldˉshapeˉkind < 1u32 { return Invalid; }
-                if Fieldˉshapeˉkind > 8u32 { return Invalid; }
+                if Fieldˉshapeˉkind > 10u32 { return Invalid; }
                 Typeˉcursor = Typeˉcursor + 1u32;
-                if Fieldˉshapeˉkind >= 7u32 {
+                if Fieldˉshapeˉkind == 7u32 {
+                    if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor) >= Typeˉcount {
+                        return Invalid;
+                    }
+                    Typeˉcursor = Typeˉcursor + 4u32;
+                }
+                if Fieldˉshapeˉkind == 8u32 {
                     if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor) >= Typeˉcount {
                         return Invalid;
                     }
@@ -232,10 +245,21 @@ export fn Main(Request: bytes) -> bytes {
                 }
             }
             if Shapeˉkind < 1u32 { return Invalid; }
-            if Shapeˉkind > 8u32 { return Invalid; }
+            if Shapeˉkind > 10u32 { return Invalid; }
             Parameterˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
-            if Shapeˉkind >= 7u32 {
+            if Shapeˉkind == 7u32 {
+                Parameterˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
+                    Module,
+                    Functionˉcursor
+                );
+                if Parameterˉnominalˉtoken >= Typeˉcount {
+                    return Invalid;
+                }
+                Parameterˉnominalˉtoken = Parameterˉnominalˉtoken + 1u32;
+                Functionˉcursor = Functionˉcursor + 4u32;
+            }
+            if Shapeˉkind == 8u32 {
                 Parameterˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module,
                     Functionˉcursor
@@ -259,9 +283,15 @@ export fn Main(Request: bytes) -> bytes {
             Bytesˉreadˉu8(Module, Functionˉcursor)
         );
         if Returnˉkind < 1u32 { return Invalid; }
-        if Returnˉkind > 8u32 { return Invalid; }
+        if Returnˉkind > 10u32 { return Invalid; }
         Functionˉcursor = Functionˉcursor + 1u32;
-        if Returnˉkind >= 7u32 {
+        if Returnˉkind == 7u32 {
+            if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
+                return Invalid;
+            }
+            Functionˉcursor = Functionˉcursor + 4u32;
+        }
+        if Returnˉkind == 8u32 {
             if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
                 return Invalid;
             }
@@ -281,10 +311,21 @@ export fn Main(Request: bytes) -> bytes {
         while Shapeˉindex < Localˉcount {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
             if Shapeˉkind < 1u32 { return Invalid; }
-            if Shapeˉkind > 8u32 { return Invalid; }
+            if Shapeˉkind > 10u32 { return Invalid; }
             Localˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
-            if Shapeˉkind >= 7u32 {
+            if Shapeˉkind == 7u32 {
+                Localˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
+                    Module,
+                    Functionˉcursor
+                );
+                if Localˉnominalˉtoken >= Typeˉcount {
+                    return Invalid;
+                }
+                Localˉnominalˉtoken = Localˉnominalˉtoken + 1u32;
+                Functionˉcursor = Functionˉcursor + 4u32;
+            }
+            if Shapeˉkind == 8u32 {
                 Localˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module,
                     Functionˉcursor
@@ -393,6 +434,11 @@ export fn Main(Request: bytes) -> bytes {
             if Scanˉopcode == 118u32 { Supported = true; }
             if Scanˉopcode >= 119u32 {
                 if Scanˉopcode <= 125u32 { Supported = true; }
+            }
+            if Scanˉopcode == 161u32 { Supported = true; }
+            if Scanˉopcode == 162u32 { Supported = true; }
+            if Scanˉopcode >= 173u32 {
+                if Scanˉopcode <= 178u32 { Supported = true; }
             }
             if Supported {
                 Supported = true;
@@ -985,6 +1031,123 @@ export fn Main(Request: bytes) -> bytes {
                 Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
                 Mainˉfound = true;
             }
+        }
+
+        var Isˉu32ˉextendedˉbinary: bool = false;
+        if Payloadˉlength == 161u32 { Isˉu32ˉextendedˉbinary = true; }
+        if Payloadˉlength == 162u32 { Isˉu32ˉextendedˉbinary = true; }
+        if Payloadˉlength >= 173u32 {
+            if Payloadˉlength <= 175u32 { Isˉu32ˉextendedˉbinary = true; }
+        }
+        if Payloadˉlength == 177u32 { Isˉu32ˉextendedˉbinary = true; }
+        if Payloadˉlength == 178u32 { Isˉu32ˉextendedˉbinary = true; }
+        if Isˉu32ˉextendedˉbinary {
+            var U32ˉextendedˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let U32ˉextendedˉright: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                U32ˉextendedˉstackˉlength - 8u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                U32ˉextendedˉstackˉlength - 8u32
+            );
+            U32ˉextendedˉstackˉlength = Bytesˉlength(Stack);
+            let U32ˉextendedˉleft: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                U32ˉextendedˉstackˉlength - 8u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                U32ˉextendedˉstackˉlength - 8u32
+            );
+            var U32ˉextendedˉvalid: bool = true;
+            if Payloadˉlength == 161u32 {
+                if U32ˉextendedˉright == 0u32 {
+                    Sectionˉkind = 3032u32;
+                    U32ˉextendedˉvalid = false;
+                }
+            }
+            if Payloadˉlength == 162u32 {
+                if U32ˉextendedˉright == 0u32 {
+                    Sectionˉkind = 3032u32;
+                    U32ˉextendedˉvalid = false;
+                }
+            }
+            if Payloadˉlength == 177u32 {
+                if U32ˉextendedˉright >= 32u32 {
+                    Sectionˉkind = 3033u32;
+                    U32ˉextendedˉvalid = false;
+                }
+            }
+            if Payloadˉlength == 178u32 {
+                if U32ˉextendedˉright >= 32u32 {
+                    Sectionˉkind = 3033u32;
+                    U32ˉextendedˉvalid = false;
+                }
+            }
+            if U32ˉextendedˉvalid {
+                var U32ˉextendedˉresult: u32 = 0u32;
+                if Payloadˉlength == 161u32 {
+                    U32ˉextendedˉresult = U32ˉextendedˉleft
+                        / U32ˉextendedˉright;
+                }
+                if Payloadˉlength == 162u32 {
+                    U32ˉextendedˉresult = U32ˉextendedˉleft
+                        % U32ˉextendedˉright;
+                }
+                if Payloadˉlength == 173u32 {
+                    U32ˉextendedˉresult = U32ˉextendedˉleft
+                        & U32ˉextendedˉright;
+                }
+                if Payloadˉlength == 174u32 {
+                    U32ˉextendedˉresult = U32ˉextendedˉleft
+                        | U32ˉextendedˉright;
+                }
+                if Payloadˉlength == 175u32 {
+                    U32ˉextendedˉresult = U32ˉextendedˉleft
+                        ^ U32ˉextendedˉright;
+                }
+                if Payloadˉlength == 177u32 {
+                    U32ˉextendedˉresult = U32ˉextendedˉleft
+                        << U32ˉextendedˉright;
+                }
+                if Payloadˉlength == 178u32 {
+                    U32ˉextendedˉresult = U32ˉextendedˉleft
+                        >> U32ˉextendedˉright;
+                }
+                Stack = Bytesˉconcat(
+                    Stack,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(U32ˉextendedˉresult),
+                        Zeroˉvalue
+                    )
+                );
+            }
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
+            Mainˉfound = true;
+        }
+        if Payloadˉlength == 176u32 {
+            let U32ˉnotˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let U32ˉnotˉvalue: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack,
+                U32ˉnotˉstackˉlength - 8u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                U32ˉnotˉstackˉlength - 8u32
+            );
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(~U32ˉnotˉvalue),
+                    Zeroˉvalue
+                )
+            );
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
+            Mainˉfound = true;
         }
         }
 

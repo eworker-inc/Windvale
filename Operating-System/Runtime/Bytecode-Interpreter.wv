@@ -17,7 +17,7 @@ fn Validateˉenvelope(Input: bytes) -> i32 {
     if Total > 4096u32 { return -1; }
     if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 826431063u32 { return -2; }
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return -3; }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 { return -3; }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 { return -3; }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return -4; }
 
     var Cursor: u32 = 12u32;
@@ -52,7 +52,7 @@ fn Findˉsectionˉoffset(Input: bytes, Wantedˉindex: u32) -> u32 {
 
 fn Validateˉmodule(Input: bytes) -> i32 {
     let Moduleˉoffset: u32 = Findˉsectionˉoffset(Input, 0u32);
-    if Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset - 4u32) != 25u32 { return -10; }
+    if Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset - 4u32) != 26u32 { return -10; }
     if Bytesˉreadˉu8(Input, Moduleˉoffset) != 1u8 { return -10; }
     if Bytesˉreadˉu32ˉlittle(Input, Moduleˉoffset + 1u32) != 20u32 { return -10; }
     if Bytesˉreadˉu8(Input, Moduleˉoffset + 5u32) != 83u8 { return -10; }
@@ -75,6 +75,7 @@ fn Validateˉmodule(Input: bytes) -> i32 {
     if Bytesˉreadˉu8(Input, Moduleˉoffset + 22u32) != 117u8 { return -10; }
     if Bytesˉreadˉu8(Input, Moduleˉoffset + 23u32) != 114u8 { return -10; }
     if Bytesˉreadˉu8(Input, Moduleˉoffset + 24u32) != 101u8 { return -10; }
+    if Bytesˉreadˉu8(Input, Moduleˉoffset + 25u32) != 0u8 { return -10; }
     return 0;
 }
 

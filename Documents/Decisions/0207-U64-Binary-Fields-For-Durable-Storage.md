@@ -1,7 +1,7 @@
 # Decision 0207: `u64` binary fields for durable storage
 
 - Date: 2026-08-04
-- Status: Implemented candidate; dual-host qualification pending
+- Status: Implemented candidate; WVB 1.12 allocation superseded by [Decision 0209](0209-Single-Current-Wvb-1-11-Format.md); dual-host qualification pending
 - Adds: WVB 1.12 opcodes `0xBD` and `0xBE`
 - Retains: Exact lower-minor WVB output when neither operation is used, `u32`
   module counts and byte-value indices, and the bounded experimental `WVDB 1`
@@ -9,6 +9,8 @@
 - Advances: [Windvale database proposal](../Project/Windvale-Database-Proposal.md),
   [Seed bytecode](../../Specifications/Seed-Bytecode.md), and
   [Foundation binary primitives](../../Specifications/Foundation-Bytes.md)
+
+Decision 0209 subsequently retained opcodes `0xBD` and `0xBE` and their exact semantics while folding them into the sole canonical WVB 1.11 vocabulary. The WVB 1.12 and lowest-sufficient-minor statements below record this decision's original candidate allocation and are no longer the current format contract.
 
 ## Context
 

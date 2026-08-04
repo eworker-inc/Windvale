@@ -18,7 +18,7 @@ public static class Kernelˉwvbˉadmissionˉcontract
     public const string NATIVE_MAIN_SYMBOL = "Main";
     public const int ADMISSION_TOKEN = 73;
     public const int EXPECTED_RESULT = 6;
-    public const uint EXACT_INSTRUCTION_BUDGET = 39_712;
+    public const uint EXACT_INSTRUCTION_BUDGET = 39_760;
     public const uint EXACT_CALL_DEPTH_BUDGET = 2;
 }
 
@@ -54,7 +54,7 @@ public static class Kernelˉwvbˉadmission
         var Embeddedˉidentity = Convert.ToHexString(
             SHA256.HashData(Embeddedˉcompilation.Moduleˉbytes.AsSpan()));
         if (!Embeddedˉidentity.Equals(
-                "9CCFED0509E84BFC63979C6DC13170C14762EFBDAA448B4C5894325F31AA7761",
+                "28D215B982A7B7185CFA80C4CC5346666BD0181582FE80BEC8B7035D514DA936",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(

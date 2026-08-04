@@ -38,7 +38,7 @@ The loader validates UEFI tables, obtains a bounded memory map, and retries `Exi
 
 Memory 17 selects and clears a 2 MiB-aligned 157-page arena below 4 GiB, publishes `WVKMEM17`, copies the handoff, initializes bitmap/owner/object evidence, and switches to the four-page kernel stack. Page 5 becomes the IDT; paging 5 consumes pages 6 through 12 and activates the low-1-GiB W^X root, a 768 KiB supervisor RX window, and exact supervisor-only HPET/local-APIC MMIO windows.
 
-Admission 4 requires token 73 for the exact 815-byte canonical WVB. Protected-process execution then:
+Admission 4 requires token 73 for the exact 816-byte canonical WVB 1.11 module. Protected-process execution then:
 
 1. runs Windvale process policy and requires token 97;
 2. allocates `WVMEMO01` objects at pages 13 through 24 for init, 25 through 146 for client generation 1, and 147 through 156 for the directory provider;

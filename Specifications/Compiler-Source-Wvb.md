@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated WVSS 1 source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to a complete canonical WVB 1.6 through 1.11 module, and returns the bytes without using hosted capabilities.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated WVSS 1 source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 module, and returns the bytes without using hosted capabilities.
 
 The current slice proves the complete source set → symbols/bindings → typed WVIR → canonical cross-module identity flattening → static data, nominal and capability metadata, and code → WVB → verifier → runtime path. It emits one self-contained module and does not introduce runtime linkage.
 
@@ -13,7 +13,7 @@ Compilerˉcompileˉsourceˉwvb(Input: bytes)
     -> Compilerˉsourceˉwvbˉsummary
 ```
 
-On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB module at the lowest required current minor, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved.
+On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB 1.11 module, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved.
 
 The status contract distinguishes upstream WVIR rejection, declarations, shapes and operations, invalid data, and WVB limits. Its existing module-count and profile statuses remain reserved for stable diagnostic numbering; every currently validated WVSS module count and root profile is accepted.
 
@@ -49,12 +49,12 @@ The backend accepts:
 - private or exported functions, static data, storage-free constants, records, enums, and variants in any valid source declaration order;
 - `[i32]`, `text`, and `bytes` static data;
 - immutable nominal record, enum, and variant declarations plus bounded sequence and local affine-builder shapes;
-- `void`, primitive, record, enum, variant, and sequence function returns, parameters, explicitly typed or initializer-inferred locals, and temporaries, with builders restricted to verified locals;
+- `void`, `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, `text`, `bytes`, record, enum, variant, and sequence function returns, parameters, explicitly typed or initializer-inferred locals, and temporaries, with builders restricted to verified locals;
 - literal operations produced directly or by typed-constant substitution, parameter/local load and store, static-data length and integer-array indexing, and function calls;
 - positional and named record construction through the same canonical operation, record field reads, enum constants, exact equality/inequality, and declared names;
 - capability calls with their validated catalog parameter and result shapes;
-- the implemented Foundation byte, text, formatting, conversion, and SHA-256 intrinsics;
-- checked `i32`/`u32` division and remainder; `u8`/`u32` bitwise and shift operations; exact text/bytes equality; comparisons, signed negation, Boolean negation, short-circuit Boolean conjunction/disjunction, and mutable-local compound assignment; and
+- the implemented Foundation byte, text, formatting, conversion, and SHA-256 intrinsics, including exact little-endian `u64` read and construction;
+- checked `i32`/`i64`/`u32`/`u64` arithmetic including division and remainder; `u8`/`u32`/`u64` bitwise and shift operations; exact text/bytes equality; full fixed-width scalar comparison, signed negation, invariant formatting, Boolean negation, short-circuit Boolean conjunction/disjunction, and mutable-local compound assignment; and
 - variant and collection operations plus explicit jump, branch, and return terminators produced by `if`, `else if`, `else`, `match`, `while`, `for`, `break`, and `continue`.
 
 The root owns the emitted module name, profile, capabilities, static data, and exports. Dependencies follow the WVSS contract: imports, records, enums, and exported functions only. Their functions become internal WVB functions. Invalid graph topology, dependency order/profile/shape, unknown or repeated capabilities, and portable-profile capabilities remain upstream semantic failures rather than being silently omitted.
@@ -75,9 +75,11 @@ WVSD assigns canonical nominal indices independently of source order or module o
 
 Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern.
 
-Primitive value shapes occupy one byte. Record shapes encode byte `7` plus `u32(Shape - 65536)`; enum shapes encode byte `8` plus `u32(Shape - 131072)`. These encodings apply uniformly to parameters, results, user locals, and compiler temporaries.
+Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`. Record shapes encode byte `7` plus `u32(Shape - 65536)`; enum shapes encode byte `8` plus `u32(Shape - 131072)`. These encodings apply uniformly to parameters, results, user locals, and compiler temporaries.
 
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
+
+WVIR operations `126` and `127` lower to WVB opcodes `BD` and `BE` for `Bytesˉreadˉu64ˉlittle` and `Bytesˉfromˉu64ˉlittle`. They are ordinary members of the canonical WVB 1.11 vocabulary; the backend does not select another minor version when they occur.
 
 Named-record syntax has disappeared by this boundary: typed WVIR has already evaluated source fields left to right and reordered their temporary operands to canonical declaration order. It therefore lowers through the same record-construction opcode and value layout as the retained positional spelling.
 
@@ -120,33 +122,37 @@ Primitive WVIR shapes map to WVB shapes as follows:
 | 4 | `bool` | 2 |
 | 5 | `text` | 3 |
 | 6 | `bytes` | 6 |
+| 7 | `i64` | 9 |
+| 8 | `u64` | 10 |
 
-The encoder writes canonical Module, Capabilities, Data, Functions, Code, Exports, and Types section envelopes. It selects WVB 1.9 for variants, 1.10 for collection shapes or operations, and 1.11 for the appended operator operations; feature-bearing 1.9-or-later modules carry the metadata-presence byte. Capabilities and Types contain canonical zero counts when absent and canonical entries when their accepted declarations are present. Function metadata includes user locals followed by temporary locals, contiguous code offsets, exact code lengths, and the computed maximum stack depth.
+The encoder writes canonical Module, Capabilities, Data, Functions, Code, Exports, and Types section envelopes in WVB 1.11. Every module carries the metadata-presence byte, including modules without metadata. Capabilities and Types contain canonical zero counts when absent and canonical entries when their accepted declarations are present. Function metadata includes user locals followed by temporary locals, contiguous code offsets, exact code lengths, and the computed maximum stack depth.
 
 ## Verification
 
-The focused conformance test compiles the backend core, runs its profile/acceptance demo, and runs the hosted tool over five differential fixtures. Each returned WVB passes the mandatory Stage 0 verifier, executes in the reference runtime, and compares byte for byte with Stage 0 compiler output.
+The focused conformance test compiles the backend core, runs its profile/acceptance demo, and runs the hosted tool over the complete differential fixture family. Each returned WVB passes the mandatory Stage 0 verifier, executes in the reference runtime when it exposes an executable entry, and compares byte for byte with Stage 0 compiler output.
 
 A separate control-flow oracle compiles nested `&&`/`||` precedence, a skipped out-of-bounds operand, `break`, `continue`, and all three compound assignments through both compilers. Their WVB bytes compare exactly and execute with result `7`.
 
-`Tests/Fixtures/Source-Wvb/Function-Only.wv` retains the original four-function primitive/control-flow baseline while using storage-free typed constants, inferred mutable numeric locals, and multiline trailing commas. Both backends produce the exact 815-byte WVB module with SHA-256 `9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761`; it executes with result `6`. The unchanged bytes prove that the constant declarations add no WVB section, export, or runtime identity.
+`Tests/Fixtures/Source-Wvb/Function-Only.wv` retains the original four-function primitive/control-flow baseline while using storage-free typed constants, inferred mutable numeric locals, and multiline trailing commas. Both backends produce the exact 816-byte WVB 1.11 module with SHA-256 `28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936`; it executes with result `6`.
 
-`Tests/Fixtures/Source-Wvb/Data-And-Text.wv` deliberately interleaves unsorted functions and static data. It covers inferred integer, text, and bytes locals; signed integer arrays; multiline trailing commas; explicit and synthetic text; literal reuse; a synthetic-name collision; escaped Unicode and a surrogate pair; Foundation intrinsics; remapped data references; and remapped calls. Both backends produce the exact 1,651-byte WVB module with SHA-256 `5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704`; it executes with result `13`.
+`Tests/Fixtures/Source-Wvb/Data-And-Text.wv` deliberately interleaves unsorted functions and static data. It covers inferred integer, text, and bytes locals; signed integer arrays; multiline trailing commas; explicit and synthetic text; literal reuse; a synthetic-name collision; escaped Unicode and a surrogate pair; Foundation intrinsics; remapped data references; and remapped calls. Both backends produce the exact 1,652-byte WVB module with SHA-256 `8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc`; it executes with result `13`.
 
-`Tests/Fixtures/Source-Wvb/Nominal-Types.wv` deliberately interleaves records, enums, data, and unsorted functions. It covers inferred record, enum, and text locals; named literals; canonical record/enum grouping and ordering; every primitive record field plus enum fields; nominal parameters/results/locals/temporaries; multiline trailing commas; and all six nominal WVIR operations. Both backends produce the exact 1,781-byte WVB module with SHA-256 `1366b543a28a1921aca6198bca9eaaf5eeeb97766405d5efcdeff9d27cfca57a`; it executes with result `11`. The unchanged bytes prove that named construction retains the existing canonical value layout.
+`Tests/Fixtures/Source-Wvb/Nominal-Types.wv` deliberately interleaves records, enums, data, and unsorted functions. It covers inferred record, enum, and text locals; named literals; canonical record/enum grouping and ordering; every primitive record field plus enum fields; nominal parameters/results/locals/temporaries; multiline trailing commas; and all six nominal WVIR operations. Both backends produce the exact 1,782-byte WVB module with SHA-256 `b1c3543f8064732a0039d071f4e3a7da2bb901f8cfb890fb1de42193a228ff4b`; it executes with result `11`.
 
-`Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv` deliberately declares all seven catalog capabilities out of order. Its seven functions cover every capability call, parameter shape, and result shape. Both backends produce the exact 849-byte hosted WVB module with SHA-256 `1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528`; the authorized no-argument path executes with result `0` and performs no file read or write.
+`Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv` deliberately declares all seven catalog capabilities out of order. Its seven functions cover every capability call, parameter shape, and result shape. Both backends produce the exact 850-byte hosted WVB module with SHA-256 `bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f`; the authorized no-argument path executes with result `0` and performs no file read or write.
 
-The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical flattening across a root and two transitive dependencies. Dependency-owned functions, records, enums, a variant, and text literals combine with root static data and a synthetic-name collision. Only `Main` remains exported. Both backends produce the exact 1,387-byte WVB module with SHA-256 `61fc1644b2952aa3dc0b4c30d3d1c1f43532bed89032ede32eee946027c85d85`; it executes with result `42`. Reversed dependency order is rejected before output publication.
+The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical flattening across a root and two transitive dependencies. Dependency-owned functions, records, enums, a variant, and text literals combine with root static data and a synthetic-name collision. Only `Main` remains exported. Both backends produce the exact 1,388-byte WVB module with SHA-256 `42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5`; it executes with result `42`. Reversed dependency order is rejected before output publication.
+
+`Tests/Fixtures/Source-Wvb/Wide-Scalars.wv` covers checked `i64`/`u64` constants, arithmetic, comparisons, bitwise operations, formatting, and exact little-endian `u64` byte construction and reading. Both backends produce the exact 2,750-byte WVB module with SHA-256 `b898bc07461f7d93b2c8bd5806e06fa5c98cdaa5c11a7f4ce1fef89b77a7bf69`; it executes with result `64`.
 
 The current deterministic Stage 0 compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 861,651 bytes, SHA-256 `ba0480fcedebd09f6ae7cc2ec1469b366ae86ab21081b17455d0da2c559a93ce`.
-- `Source-Wvb-Demo.wvb`: 861,125 bytes, SHA-256 `c0408401d6a3290173acd7d50e114c6857c8714350c7a8a4296b3a7576fa61d4`.
-- `Source-Wvb-Tool.wvb`: 859,555 bytes, SHA-256 `c08f76e998e0280b7c2e3e801a9752f000825c874abeb86e88420c31444d63f9`.
-- `Source-Wvb-Memory-Adapter.wvb`: 857,232 bytes, SHA-256 `b5c442b6fc91f8aa0cabd52622c4e5cad492830424595b93bc4f2ca0c04b1ccc`.
+- `Source-Wvb-Core.wvb`: 915,609 bytes, SHA-256 `389024fb26cb9335413fbfbdd739518b53962d7221480b42db7c6c6a9c9a4dd3`.
+- `Source-Wvb-Demo.wvb`: 915,083 bytes, SHA-256 `b910bd18abbca23882cdadbea289b8e1e41dbc2f5871c2f8772c10a170b42c2a`.
+- `Source-Wvb-Tool.wvb`: 913,513 bytes, SHA-256 `abc2ef9839944bddee172cbeb3e11f716d7be9c0d94c1a0d4378341030ee4207`.
+- `Source-Wvb-Memory-Adapter.wvb`: 911,190 bytes, SHA-256 `5113f846684aacfe533660bc7db45badf5422bf720a92c47044f4c3f0e84ebf4`.
 
-The memory adapter contains 395 functions, 705,421 aggregate code bytes, 146,382 instructions, at most 1,396 locals and stack depth 34. These are local candidate identities and measurements. Complete Stage 1/Stage 2 bootstrap and dual-host qualification must still be rerun before the candidate becomes a new cross-host bootstrap claim.
+The memory adapter contains 411 functions, 752,046 aggregate code bytes, 156,313 instructions, at most 1,408 locals and stack depth 34. These are local candidate identities and measurements. Complete Stage 1/Stage 2 bootstrap and dual-host qualification must still be rerun before the candidate becomes a new cross-host bootstrap claim.
 
 The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055 changes embedded compiler implementation bytes but preserves all five differential fixture outputs byte-identical to Stage 0 and is cross-host qualified at `1a4fca7`.
 

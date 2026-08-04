@@ -2,7 +2,7 @@
 
 ## Status
 
-This document specifies the current Windvale bytecode 1.6 through 1.12 vocabulary. Windvale is in early development; these versions identify currently implemented binary contracts and are not a backward-compatibility promise. Version 1.7 adds 64-bit scalars, 1.8 adds independent module metadata, 1.9 adds nominal payload variants and a metadata-presence byte, 1.10 adds bounded sequences and affine builders, 1.11 adds division, remainder, fixed-width unsigned bitwise/shift operations, and exact text/bytes equality, and 1.12 adds exact little-endian `u64` byte codecs. The canonical writer emits the lowest current minor that contains every used feature, except that a metadata-bearing pre-variant module uses 1.8.
+This document specifies the sole current Windvale bytecode format, WVB 1.11. Windvale is in early development and does not preserve obsolete experimental WVB encodings unless a named compatibility case is approved. WVB 1.11 includes 64-bit scalars, independent module metadata, nominal payload variants, bounded sequences and affine builders, division and remainder, fixed-width unsigned bitwise/shift operations, exact text/bytes equality, and exact little-endian `u64` byte codecs. Every canonical writer emits 1.11 and every general WVB reader or verifier rejects any other version.
 
 ## Encoding
 
@@ -19,11 +19,11 @@ This document specifies the current Windvale bytecode 1.6 through 1.12 vocabular
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 6 through 12, selected by the module vocabulary
+u16      minor version: 11
 u32      section count: 7
 ```
 
-The verifier rejects every type or opcode introduced after the declared minor version. In particular, 1.7 owns types `9` and `10` plus opcodes `80` through `96`; 1.9 owns nominal kind `3`, shape `11`, and opcodes `97` through `99`; 1.10 owns shapes `12` and `13` plus opcodes `9A` through `9E`; 1.11 owns opcodes `9F` through `BC`; and 1.12 owns opcodes `BD` and `BE`.
+The version identifies one complete vocabulary. Feature-dependent version selection and lowest-required-version calculation are not part of the current contract.
 
 Every section has this envelope:
 
@@ -50,12 +50,9 @@ The seven mandatory sections occur exactly once in this order:
 ```text
 u8       profile: 1 portable, 2 hosted, 3 system
 string   module name
-if WVB 1.8:
-  <metadata fields below, always present>
-if WVB 1.9 or later:
-  u8       metadata present: 0 or 1
-  if present:
-    <metadata fields below>
+u8       metadata present: 0 or 1
+if present:
+  <metadata fields below>
 metadata fields:
   u8       metadata encoding version: 1
   u8       authority: 1 library, 2 application, 3 service, 4 system
@@ -71,7 +68,7 @@ metadata fields:
     u32    major version
 ```
 
-WVB 1.8 requires the metadata fields directly. WVB 1.9 and later always carry the presence byte so feature-bearing legacy-profile modules and metadata-bearing modules share one unambiguous Module shape. Earlier vocabularies do not carry metadata. Platform scopes are unique, strictly sorted lowercase ASCII identities with optional dot-separated segments. At least one scope is required when metadata is present. Required and optional entries are independently unique and sorted. An identity cannot be both required and optional. Seed currently admits catalog identities at major version 1. Required metadata identities exactly equal the executable Capabilities section; optional identities are admission and provider-selection metadata only. System authority and the retained system profile must agree.
+The presence byte is mandatory even when metadata is absent. Platform scopes are unique, strictly sorted lowercase ASCII identities with optional dot-separated segments. At least one scope is required when metadata is present. Required and optional entries are independently unique and sorted. An identity cannot be both required and optional. Seed currently admits catalog identities at major version 1. Required metadata identities exactly equal the executable Capabilities section; optional identities are admission and provider-selection metadata only. System authority and the retained system profile must agree.
 
 ## Capabilities section
 
@@ -144,7 +141,7 @@ The reference launcher selects exported `Main() -> i32` as the executable source
 ```text
 u32      nominal type count
 repeat:
-  u8     nominal kind: 1 record, 2 enum, 3 variant (WVB 1.9)
+  u8     nominal kind: 1 record, 2 enum, 3 variant
   string nominal type name
   if record:
     u32    field count
@@ -180,18 +177,18 @@ Nominal types are grouped by kind, then strictly sorted by ordinal name, and nam
 6 bytes
 7 record
 8 enum
-9 i64 (WVB 1.7)
-10 u64 (WVB 1.7)
-11 variant followed by u32 nominal-type index (WVB 1.9)
-12 sequence followed by element shape and u32 maximum (WVB 1.10)
-13 builder followed by element shape and u32 maximum (WVB 1.10)
+9 i64
+10 u64
+11 variant followed by u32 nominal-type index
+12 sequence followed by element shape and u32 maximum
+13 builder followed by element shape and u32 maximum
 ```
 
 `void` is valid only as a return type. Immutable integer arrays are module data and are not operand-stack values. A `bytes` value is an immutable sequence or slice view and can be stored in locals, passed to functions, and returned.
 
 Function parameter, result, local, record-field, and variant-payload types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7`, `8`, or `11` followed by a `u32` Types-section index. A collection shape is byte `12` or `13`, its recursively encoded non-collection element shape, then its `u32` maximum. Nominal identity and collection kind/element/maximum are exact.
 
-`i64` and `u64` are ordinary scalar shapes only in WVB 1.7. They do not widen counts, indices, lengths, code offsets, enum backing values, or existing binary Foundation operations, which remain explicitly `u32` or `i32`.
+`i64` and `u64` are ordinary scalar shapes. They do not widen counts, indices, lengths, code offsets, enum backing values, or existing binary Foundation operations, which remain explicitly `u32` or `i32`.
 
 ## Instruction encoding
 
@@ -261,8 +258,8 @@ Function parameter, result, local, record-field, and variant-payload types use a
 7C text.to_utf8       consumes text, produces its strict UTF-8 bytes
 7D bytes.sha256_hex   consumes bytes, produces 64 lowercase ASCII hex characters
 
-80 i64.const          i64 little-endian value (WVB 1.7)
-81 u64.const          u64 little-endian value (WVB 1.7)
+80 i64.const          i64 little-endian value
+81 u64.const          u64 little-endian value
 82 i64.add
 83 i64.subtract
 84 i64.multiply
@@ -323,8 +320,8 @@ B9 text.equal
 BA text.not_equal
 BB bytes.equal
 BC bytes.not_equal
-BD bytes.read_u64_little consumes bytes and u32 offset, produces u64 (WVB 1.12)
-BE bytes.from_u64_little consumes u64, produces eight bytes (WVB 1.12)
+BD bytes.read_u64_little consumes bytes and u32 offset, produces u64
+BE bytes.from_u64_little consumes u64, produces eight bytes
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -341,8 +338,8 @@ BE bytes.from_u64_little consumes u64, produces eight bytes (WVB 1.12)
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The minor version matches the vocabulary through WVB 1.12, and 1.8 versus 1.9-or-later Module metadata is encoded exactly as specified above.
-- Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent WVB 1.8 metadata rules.
+- The version is exactly WVB 1.11 and the Module metadata presence byte is encoded exactly as specified above.
+- Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
 - Every local, data, function, and capability index is valid and has the required type.

@@ -137,6 +137,41 @@ enum Compilerˉsourceˉwirˉoperation {
     Textˉnotˉequal = 90;
     Bytesˉequal = 91;
     Bytesˉnotˉequal = 92;
+    I64ˉconstant = 93;
+    U64ˉconstant = 94;
+    I64ˉformat = 95;
+    U64ˉformat = 96;
+    I64ˉadd = 97;
+    I64ˉsubtract = 98;
+    I64ˉmultiply = 99;
+    I64ˉnegate = 100;
+    U64ˉadd = 101;
+    U64ˉsubtract = 102;
+    U64ˉmultiply = 103;
+    I64ˉequal = 104;
+    I64ˉnotˉequal = 105;
+    I64ˉless = 106;
+    I64ˉlessˉequal = 107;
+    I64ˉgreater = 108;
+    I64ˉgreaterˉequal = 109;
+    U64ˉequal = 110;
+    U64ˉnotˉequal = 111;
+    U64ˉless = 112;
+    U64ˉlessˉequal = 113;
+    U64ˉgreater = 114;
+    U64ˉgreaterˉequal = 115;
+    I64ˉdivide = 116;
+    I64ˉremainder = 117;
+    U64ˉdivide = 118;
+    U64ˉremainder = 119;
+    U64ˉbitwiseˉand = 120;
+    U64ˉbitwiseˉor = 121;
+    U64ˉbitwiseˉxor = 122;
+    U64ˉbitwiseˉnot = 123;
+    U64ˉshiftˉleft = 124;
+    U64ˉshiftˉright = 125;
+    Bytesˉreadˉu64ˉlittle = 126;
+    Bytesˉfromˉu64ˉlittle = 127;
 }
 
 enum Compilerˉsourceˉwirˉterminator {
@@ -333,7 +368,7 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉvalid(
     Allowˉvoid: bool
 ) -> bool {
     if Shape == 0u32 { return Allowˉvoid; }
-    if Shape <= 6u32 { return true; }
+    if Shape <= 8u32 { return true; }
     if Shape >= 65536u32 {
         if Shape < 65536u32 + Symbols.Records { return true; }
     }
@@ -480,6 +515,41 @@ export fn Compilerˉsourceˉwirˉoperationˉvalue(
     if Operation == Compilerˉsourceˉwirˉoperation.Textˉnotˉequal { return 90u32; }
     if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉequal { return 91u32; }
     if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉnotˉequal { return 92u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉconstant { return 93u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉconstant { return 94u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉformat { return 95u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉformat { return 96u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉadd { return 97u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉsubtract { return 98u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉmultiply { return 99u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉnegate { return 100u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉadd { return 101u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉsubtract { return 102u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉmultiply { return 103u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉequal { return 104u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉnotˉequal { return 105u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉless { return 106u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉlessˉequal { return 107u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉgreater { return 108u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉgreaterˉequal { return 109u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉequal { return 110u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉnotˉequal { return 111u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉless { return 112u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉlessˉequal { return 113u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉgreater { return 114u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉgreaterˉequal { return 115u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉdivide { return 116u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.I64ˉremainder { return 117u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉdivide { return 118u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉremainder { return 119u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉand { return 120u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉor { return 121u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉxor { return 122u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉnot { return 123u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉshiftˉleft { return 124u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.U64ˉshiftˉright { return 125u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu64ˉlittle { return 126u32; }
+    if Operation == Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu64ˉlittle { return 127u32; }
     return 0u32;
 }
 
@@ -1038,16 +1108,20 @@ export fn Compilerˉsourceˉwirˉintrinsicˉoperation(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu16ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu16ˉlittle; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu32ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu32ˉlittle; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉi32ˉlittle; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉreadˉu64ˉlittle; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉconcat") { return Compilerˉsourceˉwirˉoperation.Bytesˉconcat; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu8") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu8; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu16ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu16ˉlittle; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu32ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu32ˉlittle; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉi32ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉi32ˉlittle; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return Compilerˉsourceˉwirˉoperation.Bytesˉfromˉu64ˉlittle; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉsha256ˉhex") { return Compilerˉsourceˉwirˉoperation.Bytesˉsha256ˉhex; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return Compilerˉsourceˉwirˉoperation.U32ˉfromˉu8; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return Compilerˉsourceˉwirˉoperation.I32ˉformat; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return Compilerˉsourceˉwirˉoperation.U8ˉformat; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return Compilerˉsourceˉwirˉoperation.U32ˉformat; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return Compilerˉsourceˉwirˉoperation.I64ˉformat; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return Compilerˉsourceˉwirˉoperation.U64ˉformat; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉconcat") { return Compilerˉsourceˉwirˉoperation.Textˉconcat; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉutf8ˉisˉvalid") { return Compilerˉsourceˉwirˉoperation.Textˉutf8ˉisˉvalid; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉfromˉutf8") { return Compilerˉsourceˉwirˉoperation.Textˉfromˉutf8; }
@@ -1083,16 +1157,23 @@ export fn Compilerˉsourceˉwirˉintrinsicˉparameterˉshape(
         if Index == 0u32 { return 6u32; }
         return 3u32;
     }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") {
+        if Index == 0u32 { return 6u32; }
+        return 3u32;
+    }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉconcat") { return 6u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉconcat") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu8") { return 2u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu16ˉlittle") { return 3u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu32ˉlittle") { return 3u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉi32ˉlittle") { return 1u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return 8u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return 2u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return 1u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return 2u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return 3u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return 7u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return 8u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉquote") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉtoˉutf8") { return 5u32; }
     return 6u32;
@@ -1108,11 +1189,14 @@ export fn Compilerˉsourceˉwirˉintrinsicˉreturnˉshape(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu16ˉlittle") { return 3u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu32ˉlittle") { return 3u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") { return 1u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") { return 8u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return 3u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉutf8ˉisˉvalid") { return 4u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return 5u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return 5u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉconcat") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉsha256ˉhex") { return 5u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉfromˉutf8") { return 5u32; }
@@ -1688,7 +1772,7 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
         var Operation: Compilerˉsourceˉwirˉoperation =
             Compilerˉsourceˉwirˉoperation.I32ˉconstant;
         var Target: u32 = Value.Magnitude;
-        var Auxiliary: u32 = 0u32;
+        var Auxiliary: u32 = Value.High;
         if Value.Shape == 1u32 {
             if Value.Negative {
                 Target = 4294967295u32 - Value.Magnitude + 1u32;
@@ -1699,6 +1783,20 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
         }
         if Value.Shape == 3u32 {
             Operation = Compilerˉsourceˉwirˉoperation.U32ˉconstant;
+        }
+        if Value.Shape == 7u32 {
+            Operation = Compilerˉsourceˉwirˉoperation.I64ˉconstant;
+            if Value.Negative {
+                if Target == 0u32 {
+                    Auxiliary = 4294967295u32 - Auxiliary + 1u32;
+                } else {
+                    Target = 4294967295u32 - Target + 1u32;
+                    Auxiliary = 4294967295u32 - Auxiliary;
+                }
+            }
+        }
+        if Value.Shape == 8u32 {
+            Operation = Compilerˉsourceˉwirˉoperation.U64ˉconstant;
         }
         if Value.Shape == 4u32 {
             Operation = Compilerˉsourceˉwirˉoperation.Boolˉconstant;
@@ -1915,58 +2013,81 @@ export fn Compilerˉsourceˉwirˉbinaryˉoperation(
 ) -> Compilerˉsourceˉwirˉoperation {
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Plus {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉadd; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉadd; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉadd; }
         return Compilerˉsourceˉwirˉoperation.U32ˉadd;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉsubtract; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉsubtract; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉsubtract; }
         return Compilerˉsourceˉwirˉoperation.U32ˉsubtract;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Star {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉmultiply; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉmultiply; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉmultiply; }
         return Compilerˉsourceˉwirˉoperation.U32ˉmultiply;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Slash {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉdivide; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉdivide; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉdivide; }
         return Compilerˉsourceˉwirˉoperation.U32ˉdivide;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Percent {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉremainder; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉremainder; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉremainder; }
         return Compilerˉsourceˉwirˉoperation.U32ˉremainder;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Ampersand {
         if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉand; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉand; }
         return Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉand;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Pipe {
         if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉor; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉor; }
         return Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉor;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Caret {
         if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉxor; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉxor; }
         return Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉxor;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉleft {
         if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉshiftˉleft; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉshiftˉleft; }
         return Compilerˉsourceˉwirˉoperation.U32ˉshiftˉleft;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉright {
         if Shape == 2u32 { return Compilerˉsourceˉwirˉoperation.U8ˉshiftˉright; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉshiftˉright; }
         return Compilerˉsourceˉwirˉoperation.U32ˉshiftˉright;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Less {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉless; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉless; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉless; }
         return Compilerˉsourceˉwirˉoperation.U32ˉless;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Lessˉequals {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉlessˉequal; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉlessˉequal; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉlessˉequal; }
         return Compilerˉsourceˉwirˉoperation.U32ˉlessˉequal;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greater {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉgreater; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉgreater; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉgreater; }
         return Compilerˉsourceˉwirˉoperation.U32ˉgreater;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greaterˉequals {
         if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉgreaterˉequal; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉgreaterˉequal; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉgreaterˉequal; }
         return Compilerˉsourceˉwirˉoperation.U32ˉgreaterˉequal;
     }
     if Operator == Sourceˉlexer.Compilerˉtokenˉkind.Equalsˉequals {
@@ -1976,6 +2097,8 @@ export fn Compilerˉsourceˉwirˉbinaryˉoperation(
         if Shape == 4u32 { return Compilerˉsourceˉwirˉoperation.Boolˉequal; }
         if Shape == 5u32 { return Compilerˉsourceˉwirˉoperation.Textˉequal; }
         if Shape == 6u32 { return Compilerˉsourceˉwirˉoperation.Bytesˉequal; }
+        if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉequal; }
+        if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉequal; }
         return Compilerˉsourceˉwirˉoperation.Enumˉequal;
     }
     if Shape == 1u32 { return Compilerˉsourceˉwirˉoperation.I32ˉnotˉequal; }
@@ -1984,6 +2107,8 @@ export fn Compilerˉsourceˉwirˉbinaryˉoperation(
     if Shape == 4u32 { return Compilerˉsourceˉwirˉoperation.Boolˉnotˉequal; }
     if Shape == 5u32 { return Compilerˉsourceˉwirˉoperation.Textˉnotˉequal; }
     if Shape == 6u32 { return Compilerˉsourceˉwirˉoperation.Bytesˉnotˉequal; }
+    if Shape == 7u32 { return Compilerˉsourceˉwirˉoperation.I64ˉnotˉequal; }
+    if Shape == 8u32 { return Compilerˉsourceˉwirˉoperation.U64ˉnotˉequal; }
     return Compilerˉsourceˉwirˉoperation.Enumˉnotˉequal;
 }
 
@@ -2185,9 +2310,17 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
             Shape = 3u32;
             Literalˉoperation = Compilerˉsourceˉwirˉoperation.U32ˉconstant;
         }
+        if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I64 {
+            Shape = 7u32;
+            Literalˉoperation = Compilerˉsourceˉwirˉoperation.I64ˉconstant;
+        }
+        if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U64 {
+            Shape = 8u32;
+            Literalˉoperation = Compilerˉsourceˉwirˉoperation.U64ˉconstant;
+        }
         return Compilerˉsourceˉwirˉemit(
             Build, Literalˉoperation, Shape, Compilerˉsourceˉwirˉempty(Source),
-            Expression.Numericˉvalue, 0u32,
+            Expression.Numericˉvalue, Expression.Numericˉhigh,
             Expression.Offset, Expression.Length
         );
     }
@@ -2276,8 +2409,19 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
         var Required: u32 = 4u32;
         var Unaryˉoperation: Compilerˉsourceˉwirˉoperation = Compilerˉsourceˉwirˉoperation.Boolˉnot;
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
-            Required = 1u32;
-            Unaryˉoperation = Compilerˉsourceˉwirˉoperation.I32ˉnegate;
+            Required = Operand.Shape;
+            if Operand.Shape == 1u32 {
+                Unaryˉoperation = Compilerˉsourceˉwirˉoperation.I32ˉnegate;
+            } else if Operand.Shape == 7u32 {
+                Unaryˉoperation = Compilerˉsourceˉwirˉoperation.I64ˉnegate;
+            } else {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Operand),
+                    Compilerˉsourceˉwirˉstatus.Invalidˉoperator,
+                    Build.Currentˉmodule,
+                    Expression.Offset, Expression.Line, Expression.Column
+                );
+            }
         }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Tilde {
             Required = Operand.Shape;
@@ -2285,6 +2429,8 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
                 Unaryˉoperation = Compilerˉsourceˉwirˉoperation.U8ˉbitwiseˉnot;
             } else if Operand.Shape == 3u32 {
                 Unaryˉoperation = Compilerˉsourceˉwirˉoperation.U32ˉbitwiseˉnot;
+            } else if Operand.Shape == 8u32 {
+                Unaryˉoperation = Compilerˉsourceˉwirˉoperation.U64ˉbitwiseˉnot;
             } else {
                 return Compilerˉsourceˉwirˉfailureˉvalue(
                     Compilerˉsourceˉwirˉvalueˉbuild(Operand),
@@ -2434,23 +2580,23 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
         }
         var Resultˉshape: u32 = Left.Shape;
         var Allowed: bool = false;
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Plus { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Star { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Slash { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Percent { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Ampersand { Allowed = Left.Shape == 2u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Pipe { Allowed = Left.Shape == 2u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Caret { Allowed = Left.Shape == 2u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉleft { Allowed = Left.Shape == 2u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉright { Allowed = Left.Shape == 2u32; if Left.Shape == 3u32 { Allowed = true; } }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Less { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } Resultˉshape = 4u32; }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Lessˉequals { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } Resultˉshape = 4u32; }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greater { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } Resultˉshape = 4u32; }
-        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greaterˉequals { Allowed = Left.Shape == 1u32; if Left.Shape == 3u32 { Allowed = true; } Resultˉshape = 4u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Plus { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Star { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Slash { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Percent { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Ampersand { Allowed = Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Pipe { Allowed = Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Caret { Allowed = Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉleft { Allowed = Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉright { Allowed = Left.Shape == 2u32 || Left.Shape == 3u32 || Left.Shape == 8u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Less { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; Resultˉshape = 4u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Lessˉequals { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; Resultˉshape = 4u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greater { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; Resultˉshape = 4u32; }
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Greaterˉequals { Allowed = Left.Shape == 1u32 || Left.Shape == 3u32 || Left.Shape == 7u32 || Left.Shape == 8u32; Resultˉshape = 4u32; }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Equalsˉequals {
             Allowed = Left.Shape >= 1u32;
-            if Left.Shape > 6u32 {
+            if Left.Shape > 8u32 {
                 Allowed = Left.Shape >= 131072u32 + Symbols.Records;
                 if Left.Shape >= 131072u32 + Symbols.Records + Symbols.Enums { Allowed = false; }
             }
@@ -2458,7 +2604,7 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
         }
         if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Bangˉequals {
             Allowed = Left.Shape >= 1u32;
-            if Left.Shape > 6u32 {
+            if Left.Shape > 8u32 {
                 Allowed = Left.Shape >= 131072u32 + Symbols.Records;
                 if Left.Shape >= 131072u32 + Symbols.Records + Symbols.Enums { Allowed = false; }
             }
@@ -3950,7 +4096,10 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     );
                 }
                 if Isˉcompound {
-                    if Assignmentˉbinding.Shape != 1u32 && Assignmentˉbinding.Shape != 3u32 {
+                    if Assignmentˉbinding.Shape != 1u32 &&
+                        Assignmentˉbinding.Shape != 3u32 &&
+                        Assignmentˉbinding.Shape != 7u32 &&
+                        Assignmentˉbinding.Shape != 8u32 {
                         return Compilerˉsourceˉwirˉfusedˉfrom(
                             Compilerˉsourceˉwirˉbuildˉfailure(
                                 Compilerˉsourceˉwirˉvalueˉbuild(Assignmentˉvalue),
@@ -4709,6 +4858,24 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation >= 89u32 {
         if Operation <= 92u32 { return Shape == 4u32; }
     }
+    if Operation == 93u32 { return Shape == 7u32; }
+    if Operation == 94u32 { return Shape == 8u32; }
+    if Operation == 95u32 || Operation == 96u32 { return Shape == 5u32; }
+    if Operation >= 97u32 {
+        if Operation <= 100u32 { return Shape == 7u32; }
+    }
+    if Operation >= 101u32 {
+        if Operation <= 103u32 { return Shape == 8u32; }
+    }
+    if Operation >= 104u32 {
+        if Operation <= 115u32 { return Shape == 4u32; }
+    }
+    if Operation == 116u32 || Operation == 117u32 { return Shape == 7u32; }
+    if Operation >= 118u32 {
+        if Operation <= 125u32 { return Shape == 8u32; }
+    }
+    if Operation == 126u32 { return Shape == 8u32; }
+    if Operation == 127u32 { return Shape == 6u32; }
     return false;
 }
 
@@ -4774,6 +4941,19 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation >= 87u32 {
         if Operation <= 92u32 { return Count == 2u32; }
     }
+    if Operation == 93u32 || Operation == 94u32 { return Count == 0u32; }
+    if Operation == 95u32 || Operation == 96u32 { return Count == 1u32; }
+    if Operation >= 97u32 {
+        if Operation <= 99u32 { return Count == 2u32; }
+    }
+    if Operation == 100u32 { return Count == 1u32; }
+    if Operation >= 101u32 {
+        if Operation <= 122u32 { return Count == 2u32; }
+    }
+    if Operation == 123u32 { return Count == 1u32; }
+    if Operation == 124u32 || Operation == 125u32 { return Count == 2u32; }
+    if Operation == 126u32 { return Count == 2u32; }
+    if Operation == 127u32 { return Count == 1u32; }
     return false;
 }
 
@@ -4871,6 +5051,33 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
     }
     if Operation == 89u32 || Operation == 90u32 { return Shape == 5u32; }
     if Operation == 91u32 || Operation == 92u32 { return Shape == 6u32; }
+    if Operation == 95u32 { return Shape == 7u32; }
+    if Operation == 96u32 { return Shape == 8u32; }
+    if Operation >= 97u32 {
+        if Operation <= 100u32 { return Shape == 7u32; }
+    }
+    if Operation >= 101u32 {
+        if Operation <= 103u32 { return Shape == 8u32; }
+    }
+    if Operation >= 104u32 {
+        if Operation <= 109u32 { return Shape == 7u32; }
+    }
+    if Operation >= 110u32 {
+        if Operation <= 115u32 { return Shape == 8u32; }
+    }
+    if Operation == 116u32 || Operation == 117u32 { return Shape == 7u32; }
+    if Operation >= 118u32 {
+        if Operation <= 123u32 { return Shape == 8u32; }
+    }
+    if Operation == 124u32 || Operation == 125u32 {
+        if Index == 0u32 { return Shape == 8u32; }
+        return Shape == 3u32;
+    }
+    if Operation == 126u32 {
+        if Index == 0u32 { return Shape == 6u32; }
+        return Shape == 3u32;
+    }
+    if Operation == 127u32 { return Shape == 8u32; }
     return true;
 }
 
@@ -5492,7 +5699,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > 92u32 { return false; }
+        if Operationˉkind > 127u32 { return false; }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalid(Operationˉshape, Symbols, true) {
             return false;
         }
@@ -5740,6 +5947,20 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         }
         if Operationˉkind >= 38u32 {
             if Operationˉkind <= 61u32 {
+                if Operationˉtarget != 0u32 { return false; }
+                if Operationˉauxiliary != 0u32 { return false; }
+            }
+        }
+        if Operationˉkind == 95u32 || Operationˉkind == 96u32 {
+            if Operationˉtarget != Compilerˉsourceˉwirˉsentinel() { return false; }
+            if Operationˉauxiliary != 0u32 { return false; }
+        }
+        if Operationˉkind == 126u32 || Operationˉkind == 127u32 {
+            if Operationˉtarget != Compilerˉsourceˉwirˉsentinel() { return false; }
+            if Operationˉauxiliary != 0u32 { return false; }
+        }
+        if Operationˉkind >= 97u32 {
+            if Operationˉkind <= 125u32 {
                 if Operationˉtarget != 0u32 { return false; }
                 if Operationˉauxiliary != 0u32 { return false; }
             }

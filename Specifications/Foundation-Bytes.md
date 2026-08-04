@@ -45,7 +45,7 @@ UTF-8 validation is strict and returns `false` rather than trapping for malforme
 
 ## Portability boundary
 
-These operations are pure and available to portable modules. They do not read files, inspect process memory, or depend on the host operating system. The `u64` codecs currently require the WVB 1.12 Stage 0 compiler and reference runtime; native, WebAssembly, Windvale OS, and Windvale-written compiler adoption remain separate profiles. The first example embeds a canonical `.wvb` header as module data. `Wv-Dump-Core.wv` uses the read operations to inspect complete modules. `Wvo-Object-Core.wv` uses the construction operations to encode the canonical WVO 1.0 sample; its hosted shell persists the already-validated bytes through the separate `file.write_bytes` capability.
+These operations are pure and available to portable modules. They do not read files, inspect process memory, or depend on the host operating system. The `u64` codecs are part of canonical WVB 1.11 in the Stage 0 and Windvale-written compiler/reference-runtime path; native, WebAssembly, and Windvale OS consumers retain explicit narrower 1.11 subsets. The first example embeds a canonical `.wvb` header as module data. `Wv-Dump-Core.wv` uses the read operations to inspect complete modules. `Wvo-Object-Core.wv` uses the construction operations to encode the canonical WVO 1.0 sample; its hosted shell persists the already-validated bytes through the separate `file.write_bytes` capability.
 
 ## Deliberate limits
 

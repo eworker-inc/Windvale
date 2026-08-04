@@ -40,9 +40,9 @@ internal static class Consoleˉapplicationˉverification
     internal const int EVIDENCE_BYTES = 36;
     internal const int FIRST_CHUNK_BYTES = Bytecodeˉlimits.MAX_BYTE_DATA_BYTES;
     internal const int SECOND_CHUNK_MAXIMUM_BYTES = 8_304;
-    internal const int VERIFIER_CANONICAL_SIZE = 44_678;
+    internal const int VERIFIER_CANONICAL_SIZE = 44_679;
     internal const string VERIFIER_CANONICAL_SHA256 =
-        "93cb6b787f42b3475f403fe9272458177995d763bf62bbfbd0d5f03465761efc";
+        "3e286ec7da351c66ce8f78a91059c0b358b8797e078cd3de8dcd4f93948788a0";
 
     private const string FIRST_RESOURCE_NAME = "console-application-first.bin";
     private const string SECOND_RESOURCE_NAME = "console-application-second.bin";

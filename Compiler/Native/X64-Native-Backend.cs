@@ -16,6 +16,8 @@ public static class X64ˉnativeˉbackend
     private const ulong RUNTIME_SERVICE_STATUS = 0x0000_0005_0000_0000UL;
     private const ulong BYTE_BOUNDS_STATUS = 0x0000_0006_0000_0000UL;
     private const ulong RECORD_ARENA_STATUS = 0x0000_0007_0000_0000UL;
+    private const ulong DIVISION_BY_ZERO_STATUS = 0x0000_0009_0000_0000UL;
+    private const ulong INVALID_SHIFT_STATUS = 0x0000_000A_0000_0000UL;
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public static Nativeˉcompilation Compile(Verifiedˉmodule verifiedˉmodule)
@@ -35,7 +37,7 @@ public static class X64ˉnativeˉbackend
         {
             Fail(
                 "WVN2003",
-                "The baseline x86-64 backend does not yet lower WVB 1.7 i64 or u64 values; use the reference runtime for this scalar profile.");
+                "The baseline x86-64 backend does not yet lower WVB 1.11 i64 or u64 values; use the reference runtime for this scalar profile.");
         }
 
         var Isˉportable = Module.Profile == Moduleˉprofile.Portable && Module.Capabilities.IsEmpty;
@@ -431,6 +433,13 @@ public static class X64ˉnativeˉbackend
                     case Opcode.U32ˉadd:
                     case Opcode.U32ˉsubtract:
                     case Opcode.U32ˉmultiply:
+                    case Opcode.U32ˉdivide:
+                    case Opcode.U32ˉremainder:
+                    case Opcode.U32ˉbitwiseˉand:
+                    case Opcode.U32ˉbitwiseˉor:
+                    case Opcode.U32ˉbitwiseˉxor:
+                    case Opcode.U32ˉshiftˉleft:
+                    case Opcode.U32ˉshiftˉright:
                         var U32ˉbinaryˉright = Popˉvalue(Nativeˉvalueˉtype.U32);
                         var U32ˉbinaryˉleft = Popˉvalue(Nativeˉvalueˉtype.U32);
                         var U32ˉbinaryˉresult = Newˉvalue(Nativeˉvalueˉtype.U32);
@@ -440,11 +449,26 @@ public static class X64ˉnativeˉbackend
                             {
                                 Opcode.U32ˉadd => Nativeˉu32ˉbinaryˉkind.Add,
                                 Opcode.U32ˉsubtract => Nativeˉu32ˉbinaryˉkind.Subtract,
-                                _ => Nativeˉu32ˉbinaryˉkind.Multiply,
+                                Opcode.U32ˉmultiply => Nativeˉu32ˉbinaryˉkind.Multiply,
+                                Opcode.U32ˉdivide => Nativeˉu32ˉbinaryˉkind.Divide,
+                                Opcode.U32ˉremainder => Nativeˉu32ˉbinaryˉkind.Remainder,
+                                Opcode.U32ˉbitwiseˉand => Nativeˉu32ˉbinaryˉkind.Bitwiseˉand,
+                                Opcode.U32ˉbitwiseˉor => Nativeˉu32ˉbinaryˉkind.Bitwiseˉor,
+                                Opcode.U32ˉbitwiseˉxor => Nativeˉu32ˉbinaryˉkind.Bitwiseˉxor,
+                                Opcode.U32ˉshiftˉleft => Nativeˉu32ˉbinaryˉkind.Shiftˉleft,
+                                _ => Nativeˉu32ˉbinaryˉkind.Shiftˉright,
                             },
                             U32ˉbinaryˉleft.Value,
                             U32ˉbinaryˉright.Value));
                         Stack.Push(new(U32ˉbinaryˉresult, Nativeˉvalueˉtype.U32));
+                        break;
+                    case Opcode.U32ˉbitwiseˉnot:
+                        var U32ˉnotˉvalue = Popˉvalue(Nativeˉvalueˉtype.U32);
+                        var U32ˉnotˉresult = Newˉvalue(Nativeˉvalueˉtype.U32);
+                        Operations.Add(new Nativeˉu32ˉbitwiseˉnot(
+                            U32ˉnotˉresult,
+                            U32ˉnotˉvalue.Value));
+                        Stack.Push(new(U32ˉnotˉresult, Nativeˉvalueˉtype.U32));
                         break;
                     case Opcode.U32ˉequal:
                     case Opcode.U32ˉnotˉequal:
@@ -991,6 +1015,8 @@ public static class X64ˉnativeˉbackend
             var Frameˉslots = Storage.Projectedˉframeˉcells;
             var Frameˉbytes = checked(Frameˉslots * Nativeˉcontract.VALUE_SLOT_BYTES);
             var Overflowˉpatches = new List<int>();
+            var Divisionˉbyˉzeroˉpatches = new List<int>();
+            var Invalidˉshiftˉpatches = new List<int>();
             var Instructionˉlimitˉpatches = new List<int>();
             var Boundsˉpatches = new List<int>();
             var Byteˉboundsˉpatches = new List<int>();
@@ -1228,8 +1254,42 @@ public static class X64ˉnativeˉbackend
                                     Overflowˉpatches.Add(Code.Count);
                                     Addˉi32(Code, 0);
                                     break;
+                                case Nativeˉu32ˉbinaryˉkind.Divide:
+                                case Nativeˉu32ˉbinaryˉkind.Remainder:
+                                    Code.AddRange([0x85, 0xC9, 0x0F, 0x84]);
+                                    Divisionˉbyˉzeroˉpatches.Add(Code.Count);
+                                    Addˉi32(Code, 0);
+                                    Code.AddRange([0x31, 0xD2, 0xF7, 0xF1]);
+                                    if (Binary.Kind == Nativeˉu32ˉbinaryˉkind.Remainder)
+                                    {
+                                        Code.AddRange([0x89, 0xD0]);
+                                    }
+                                    break;
+                                case Nativeˉu32ˉbinaryˉkind.Bitwiseˉand:
+                                    Code.AddRange([0x21, 0xC8]);
+                                    break;
+                                case Nativeˉu32ˉbinaryˉkind.Bitwiseˉor:
+                                    Code.AddRange([0x09, 0xC8]);
+                                    break;
+                                case Nativeˉu32ˉbinaryˉkind.Bitwiseˉxor:
+                                    Code.AddRange([0x31, 0xC8]);
+                                    break;
+                                case Nativeˉu32ˉbinaryˉkind.Shiftˉleft:
+                                case Nativeˉu32ˉbinaryˉkind.Shiftˉright:
+                                    Code.AddRange([0x83, 0xF9, 0x20, 0x0F, 0x83]);
+                                    Invalidˉshiftˉpatches.Add(Code.Count);
+                                    Addˉi32(Code, 0);
+                                    Code.AddRange(Binary.Kind == Nativeˉu32ˉbinaryˉkind.Shiftˉleft
+                                        ? [0xD3, 0xE0]
+                                        : [0xD3, 0xE8]);
+                                    break;
                             }
                             Emitˉstoreˉeax(Code, Valueˉslot(Function, Binary.Result));
+                            break;
+                        case Nativeˉu32ˉbitwiseˉnot Not:
+                            Emitˉloadˉeax(Code, Valueˉslot(Function, Not.Value));
+                            Code.AddRange([0xF7, 0xD0]);
+                            Emitˉstoreˉeax(Code, Valueˉslot(Function, Not.Result));
                             break;
                         case Nativeˉu32ˉcomparison Comparison:
                             Emitˉcomparison(
@@ -1672,6 +1732,16 @@ public static class X64ˉnativeˉbackend
             var Invalidˉutf8ˉoffset = Code.Count;
             Emitˉstatusˉtrap(Code, Frameˉbytes, 0x0000_0008_0000_0000UL, Isˉmain);
             Emitˉstatusˉtrap(Code, Frameˉbytes, RECORD_ARENA_STATUS, Isˉmain);
+            var Divisionˉbyˉzeroˉoffset = Code.Count;
+            if (Divisionˉbyˉzeroˉpatches.Count != 0)
+            {
+                Emitˉstatusˉtrap(Code, Frameˉbytes, DIVISION_BY_ZERO_STATUS, Isˉmain);
+            }
+            var Invalidˉshiftˉoffset = Code.Count;
+            if (Invalidˉshiftˉpatches.Count != 0)
+            {
+                Emitˉstatusˉtrap(Code, Frameˉbytes, INVALID_SHIFT_STATUS, Isˉmain);
+            }
             var Depthˉoffset = Code.Count;
             Code.AddRange([0x49, 0xFF, 0xC2, 0x48, 0xB8]);
             Addˉu64(Code, CALL_DEPTH_STATUS);
@@ -1684,6 +1754,14 @@ public static class X64ˉnativeˉbackend
             foreach (var Patchˉoffset in Overflowˉpatches)
             {
                 Writeˉrelativeˉi32(Code, Patchˉoffset, Overflowˉoffset);
+            }
+            foreach (var Patchˉoffset in Divisionˉbyˉzeroˉpatches)
+            {
+                Writeˉrelativeˉi32(Code, Patchˉoffset, Divisionˉbyˉzeroˉoffset);
+            }
+            foreach (var Patchˉoffset in Invalidˉshiftˉpatches)
+            {
+                Writeˉrelativeˉi32(Code, Patchˉoffset, Invalidˉshiftˉoffset);
             }
             foreach (var Patchˉoffset in Instructionˉlimitˉpatches)
             {
@@ -2038,6 +2116,10 @@ public static class X64ˉnativeˉbackend
                         Requireˉvalue(function, Binary.Left, Nativeˉvalueˉtype.U32, Firstˉblockˉvalue, Nextˉvalue);
                         Requireˉvalue(function, Binary.Right, Nativeˉvalueˉtype.U32, Firstˉblockˉvalue, Nextˉvalue);
                         Requireˉresult(function, Binary.Result, Nativeˉvalueˉtype.U32, ref Nextˉvalue);
+                        break;
+                    case Nativeˉu32ˉbitwiseˉnot Not:
+                        Requireˉvalue(function, Not.Value, Nativeˉvalueˉtype.U32, Firstˉblockˉvalue, Nextˉvalue);
+                        Requireˉresult(function, Not.Result, Nativeˉvalueˉtype.U32, ref Nextˉvalue);
                         break;
                     case Nativeˉu32ˉcomparison Comparison when Enum.IsDefined(Comparison.Kind):
                         Requireˉvalue(function, Comparison.Left, Nativeˉvalueˉtype.U32, Firstˉblockˉvalue, Nextˉvalue);

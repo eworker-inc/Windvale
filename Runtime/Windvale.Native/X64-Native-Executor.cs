@@ -504,6 +504,18 @@ public static class X64ˉnativeˉexecutor
                 "WVR3014",
                 $"Textˉfromˉutf8 received an invalid UTF-8 byte sequence in native entry '{entry}'.");
         }
+        if (Status == 9)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3032",
+                $"Integer division by zero in native entry '{entry}'.");
+        }
+        if (Status == 10)
+        {
+            throw new Nativeˉtrapˉexception(
+                "WVR3033",
+                $"Invalid integer shift count in native entry '{entry}'.");
+        }
         throw new Nativeˉbackendˉexception(
             "WVN4005",
             $"Native entry '{entry}' returned unknown status {Status}.");

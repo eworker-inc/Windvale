@@ -72,7 +72,7 @@ public static class Kernelˉprocessˉcontract
     public const uint CLIENT_MEMORY_PAGE_BUDGET = 120;
     public const uint DIRECTORY_MEMORY_PAGE_BUDGET = 6;
     public const uint INIT_INSTRUCTION_BUDGET = 64;
-    public const uint CLIENT_INSTRUCTION_BUDGET = 189_114;
+    public const uint CLIENT_INSTRUCTION_BUDGET = 189_137;
     public const uint DIRECTORY_INSTRUCTION_BUDGET = 64;
     public const uint INIT_CALL_DEPTH_BUDGET = 1;
     public const uint CLIENT_CALL_DEPTH_BUDGET = 5;

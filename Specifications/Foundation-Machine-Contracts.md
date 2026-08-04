@@ -4,7 +4,7 @@
 
 `Foundationˉmachineˉcontracts` is the first reusable Windvale Foundation source module. It owns two small WVO-adjacent semantic rules used by both the Windvale assembler and linker. It is portable, capability-free, deterministic, bounded, and cross-host qualified at `d46af86`.
 
-This is an early-development source API without a backward-compatibility promise. It does not change WVB 1.6, WVA 1, WVO 1.0, or Windvale Linking 1.
+This is an early-development source API without a backward-compatibility promise. It does not change WVB 1.11, WVA 1, WVO 1.0, or Windvale Linking 1.
 
 ## Public functions
 

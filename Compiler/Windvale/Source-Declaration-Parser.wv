@@ -37,6 +37,8 @@ export enum Compilerˉsourceˉtypeˉkind {
     I32ˉarray = 9;
     Sequence = 10;
     Builder = 11;
+    I64 = 12;
+    U64 = 13;
 }
 
 export enum Compilerˉsourceˉdeclarationˉkind {
@@ -417,6 +419,8 @@ export fn Compilerˉparseˉtype(
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I32 { Kind = Compilerˉsourceˉtypeˉkind.I32; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U8 { Kind = Compilerˉsourceˉtypeˉkind.U8; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U32 { Kind = Compilerˉsourceˉtypeˉkind.U32; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.I64 { Kind = Compilerˉsourceˉtypeˉkind.I64; }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.U64 { Kind = Compilerˉsourceˉtypeˉkind.U64; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bool { Kind = Compilerˉsourceˉtypeˉkind.Bool; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Text { Kind = Compilerˉsourceˉtypeˉkind.Text; }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bytes { Kind = Compilerˉsourceˉtypeˉkind.Bytes; }

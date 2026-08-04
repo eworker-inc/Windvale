@@ -9,25 +9,25 @@ capability process.argument_count;
 data Shortˉmodule: bytes = [87];
 
 data Badˉmagicˉmodule: bytes = [
-    0, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0
+    0, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0
 ];
 
 data Badˉversionˉmodule: bytes = [
-    87, 86, 66, 49, 2, 0, 6, 0, 7, 0, 0, 0
+    87, 86, 66, 49, 2, 0, 11, 0, 7, 0, 0, 0
 ];
 
 data Badˉcountˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 6, 0, 6, 0, 0, 0
+    87, 86, 66, 49, 1, 0, 11, 0, 6, 0, 0, 0
 ];
 
 data Hostileˉlengthˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0,
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0,
     1, 0, 0, 0, 255, 255, 255, 255
 ];
 
 data Validˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0,
-    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0,
+    1, 0, 0, 0, 7, 0, 0, 0, 1, 1, 0, 0, 0, 65, 0,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -37,8 +37,8 @@ data Validˉmodule: bytes = [
 ];
 
 data Badˉkindˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0,
-    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0,
+    1, 0, 0, 0, 7, 0, 0, 0, 1, 1, 0, 0, 0, 65, 0,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     6, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -48,8 +48,8 @@ data Badˉkindˉmodule: bytes = [
 ];
 
 data Badˉflagsˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0,
-    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0,
+    1, 0, 0, 0, 7, 0, 0, 0, 1, 1, 0, 0, 0, 65, 0,
     2, 1, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -59,8 +59,8 @@ data Badˉflagsˉmodule: bytes = [
 ];
 
 data Truncatedˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0,
-    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0,
+    1, 0, 0, 0, 7, 0, 0, 0, 1, 1, 0, 0, 0, 65, 0,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -70,8 +70,8 @@ data Truncatedˉmodule: bytes = [
 ];
 
 data Trailingˉmodule: bytes = [
-    87, 86, 66, 49, 1, 0, 6, 0, 7, 0, 0, 0,
-    1, 0, 0, 0, 6, 0, 0, 0, 1, 1, 0, 0, 0, 65,
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0,
+    1, 0, 0, 0, 7, 0, 0, 0, 1, 1, 0, 0, 0, 65, 0,
     2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
     4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
@@ -370,7 +370,7 @@ fn Inspectˉwvbˉenvelope(Input: bytes) -> Wvbˉinspection {
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
         return Wvbˉinspection(Wvbˉstatus.Badˉversion, 0u32, 4u32);
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 {
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 {
         return Wvbˉinspection(Wvbˉstatus.Badˉversion, 0u32, 6u32);
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
@@ -428,8 +428,15 @@ fn Scanˉmoduleˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
     if Name.Status != Wvbˉstatus.Valid {
         return Name;
     }
-    if Name.Cursor != End {
+    if !Rangeˉisˉinside(End, Name.Cursor, 1u32) {
+        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Name.Cursor);
+    }
+    let Metadataˉpresent: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Name.Cursor));
+    if Metadataˉpresent != 0u32 {
         return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Name.Cursor);
+    }
+    if Name.Cursor + 1u32 != End {
+        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Name.Cursor + 1u32);
     }
 
     return Wvbˉscan(Wvbˉstatus.Valid, End, 1u32, Profile);
@@ -1005,7 +1012,7 @@ fn Writeˉsectionˉline(Name: text, Section: Wvbˉsection, Count: u32) -> void {
 fn Writeˉmoduleˉline(Input: bytes, Section: Wvbˉsection) -> void {
     let Profile: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Section.Payloadˉoffset));
     let Nameˉcursor: u32 = Section.Payloadˉoffset + 1u32;
-    var Line: text = "module version=1.6";
+    var Line: text = "module version=1.11";
     Line = Textˉconcat(Line, Textˉconcat(" profile=", Profileˉname(Profile)));
     Line = Textˉconcat(Line, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Nameˉcursor)));
     console.write_line(Line);
@@ -1359,7 +1366,7 @@ fn Runˉselfˉtests() -> i32 {
     if Validˉresult.Sectionsˉseen != 7u32 {
         return 26;
     }
-    if Validˉresult.Failureˉoffset != 94u32 {
+    if Validˉresult.Failureˉoffset != 95u32 {
         return 36;
     }
     Describeˉinspection(Validˉresult);
@@ -1400,7 +1407,7 @@ fn Runˉselfˉtests() -> i32 {
     if Trailingˉresult.Status != Wvbˉstatus.Trailingˉbytes {
         return 20;
     }
-    if Trailingˉresult.Failureˉoffset != 94u32 {
+    if Trailingˉresult.Failureˉoffset != 95u32 {
         return 30;
     }
 

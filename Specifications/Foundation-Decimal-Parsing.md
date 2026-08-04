@@ -36,7 +36,7 @@ The function is total over arbitrary `bytes`, `Offset`, and `Length` values. It 
 
 `Assembler/Windvale/Wva-Assembler-Core.wv` parses each unsigned token through this contract. `Linker/Windvale/Wv-Linker-Core.wv` parses the base-address argument through the same contract. Each consumer retains grammar-specific signed parsing, token/range ownership, field-width validation, status codes, and diagnostics.
 
-The record and function reach consumers through bounded static source composition. They are internalized into one ordinary WVB 1.6 module; this is not runtime library linkage.
+The record and function reach consumers through bounded static source composition. They are internalized into one ordinary WVB 1.11 module; this is not runtime library linkage.
 
 ## Qualification
 

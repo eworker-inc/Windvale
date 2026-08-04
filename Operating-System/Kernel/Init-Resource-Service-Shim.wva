@@ -217,7 +217,7 @@ load_memory_u32 eax r8 none 1 244
 compare_i32 eax 380
 branch not_equal resource_reply_invalid
 load_memory_u32 eax r8 none 1 248
-compare_i32 eax 815
+compare_i32 eax 816
 branch not_equal resource_reply_invalid
 load_memory_u32 eax r8 none 1 252
 test eax eax

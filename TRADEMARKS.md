@@ -19,6 +19,6 @@ Separate permission is required to:
 - Imply sponsorship, certification, partnership, or endorsement by E-Worker Inc.
 - Register confusingly similar names or visual identities for a competing distribution or service.
 
-When naming compatibility, prefer factual wording such as “compatible with Windvale WVB 1.6” and identify the exact supported contract. Compatibility language must not imply that E-Worker Inc tested or approved the implementation.
+When naming compatibility, prefer factual wording such as “compatible with Windvale WVB 1.11” and identify the exact supported contract. Compatibility language must not imply that E-Worker Inc tested or approved the implementation.
 
 Questions about uses outside this policy should be directed to [info@eworker.ca](mailto:info@eworker.ca).

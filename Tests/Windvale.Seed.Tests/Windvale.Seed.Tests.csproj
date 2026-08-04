@@ -280,6 +280,9 @@
       Include="../Fixtures/Source-Wvb/Operators.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Operators.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Wide-Scalars.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Wide-Scalars.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Scalar-Interpreter-Guest.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-Guest.wv" />
     <EmbeddedResource

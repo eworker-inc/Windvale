@@ -11,10 +11,10 @@ data Budgetˉdigest: bytes = [173, 215, 242, 164, 132, 63, 140, 81, 44, 14, 40, 
 data Expectedˉbudgetˉdigest: bytes = [173, 215, 242, 164, 132, 63, 140, 81, 44, 14, 40, 117, 84, 101, 129, 219, 17, 185, 186, 34, 126, 224, 8, 181, 247, 25, 223, 172, 177, 37, 222, 118];
 data Serviceˉdigest: bytes = [5, 84, 216, 3, 64, 68, 11, 248, 137, 95, 11, 240, 102, 211, 85, 218, 131, 51, 119, 145, 245, 64, 79, 43, 114, 202, 109, 162, 20, 102, 68, 103];
 data Expectedˉserviceˉdigest: bytes = [5, 84, 216, 3, 64, 68, 11, 248, 137, 95, 11, 240, 102, 211, 85, 218, 131, 51, 119, 145, 245, 64, 79, 43, 114, 202, 109, 162, 20, 102, 68, 103];
-data Directoryˉserviceˉdigest: bytes = [51, 176, 228, 37, 189, 110, 42, 28, 214, 174, 143, 149, 212, 100, 87, 72, 166, 3, 27, 147, 104, 74, 155, 26, 196, 208, 229, 110, 132, 8, 190, 247];
-data Expectedˉdirectoryˉserviceˉdigest: bytes = [51, 176, 228, 37, 189, 110, 42, 28, 214, 174, 143, 149, 212, 100, 87, 72, 166, 3, 27, 147, 104, 74, 155, 26, 196, 208, 229, 110, 132, 8, 190, 247];
-data Storeˉdigest: bytes = [224, 108, 184, 139, 201, 124, 138, 140, 132, 19, 196, 118, 196, 30, 200, 110, 175, 184, 209, 238, 63, 171, 13, 174, 232, 227, 181, 14, 120, 128, 35, 184];
-data Expectedˉstoreˉdigest: bytes = [224, 108, 184, 139, 201, 124, 138, 140, 132, 19, 196, 118, 196, 30, 200, 110, 175, 184, 209, 238, 63, 171, 13, 174, 232, 227, 181, 14, 120, 128, 35, 184];
+data Directoryˉserviceˉdigest: bytes = [247, 65, 5, 149, 249, 130, 78, 81, 13, 169, 57, 159, 82, 164, 99, 1, 63, 244, 18, 64, 182, 115, 8, 205, 242, 139, 79, 91, 116, 132, 171, 43];
+data Expectedˉdirectoryˉserviceˉdigest: bytes = [247, 65, 5, 149, 249, 130, 78, 81, 13, 169, 57, 159, 82, 164, 99, 1, 63, 244, 18, 64, 182, 115, 8, 205, 242, 139, 79, 91, 116, 132, 171, 43];
+data Storeˉdigest: bytes = [98, 78, 206, 45, 46, 3, 47, 111, 9, 41, 103, 90, 143, 121, 206, 178, 35, 83, 141, 132, 188, 202, 206, 38, 78, 203, 191, 220, 229, 236, 164, 173];
+data Expectedˉstoreˉdigest: bytes = [98, 78, 206, 45, 46, 3, 47, 111, 9, 41, 103, 90, 143, 121, 206, 178, 35, 83, 141, 132, 188, 202, 206, 38, 78, 203, 191, 220, 229, 236, 164, 173];
 data Directoryˉsnapshotˉdigest: bytes = [15, 121, 58, 65, 167, 1, 36, 11, 156, 244, 17, 121, 218, 250, 37, 35, 132, 180, 60, 210, 50, 20, 100, 111, 240, 33, 210, 69, 101, 124, 35, 90];
 data Expectedˉdirectoryˉsnapshotˉdigest: bytes = [15, 121, 58, 65, 167, 1, 36, 11, 156, 244, 17, 121, 218, 250, 37, 35, 132, 180, 60, 210, 50, 20, 100, 111, 240, 33, 210, 69, 101, 124, 35, 90];
 
@@ -373,7 +373,7 @@ export fn Main() -> i32 {
     let Directoryˉmemoryˉpages: u32 = 6u32;
     let Interpreterˉmemoryˉpages: u32 = 120u32;
     let Initˉinstructionˉbudget: u32 = 64u32;
-    let Interpreterˉinstructionˉbudget: u32 = 189114u32;
+    let Interpreterˉinstructionˉbudget: u32 = 189137u32;
     let Interpreterˉcallˉdepth: u32 = 5u32;
     let Initˉprofile: u32 = 2u32;
     let Interpreterˉprofile: u32 = 7u32;
@@ -389,7 +389,7 @@ export fn Main() -> i32 {
     if Directoryˉmemoryˉpages != 6u32 { return 0; }
     if Interpreterˉmemoryˉpages != 120u32 { return 0; }
     if Initˉinstructionˉbudget != 64u32 { return 0; }
-    if Interpreterˉinstructionˉbudget != 189114u32 { return 0; }
+    if Interpreterˉinstructionˉbudget != 189137u32 { return 0; }
     if Interpreterˉcallˉdepth != 5u32 { return 0; }
     if Initˉprofile != 2u32 { return 0; }
     if Interpreterˉprofile != 7u32 { return 0; }

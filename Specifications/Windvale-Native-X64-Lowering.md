@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉnativeˉx64ˉlowering` is the first portable Windvale-written slice of the shared x86-64 backend. It consumes one bounded WVB 1.6 module, independently verifies the metered scalar-control and direct-call subset described below, and emits the canonical WVO 1.0 object used by the existing ABI-22 Stage 0 backend.
+`Compilerˉnativeˉx64ˉlowering` is the first portable Windvale-written slice of the shared x86-64 backend. It consumes one bounded WVB 1.11 module, independently verifies the metered scalar-control and direct-call subset described below, and emits the canonical WVO 1.0 object used by the existing ABI-22 Stage 0 backend.
 
 This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. C# remains the normal complete WVB-to-native backend, native fragment verifier, linker/package constructor, and recovery oracle.
 
@@ -31,7 +31,7 @@ The status vocabulary is:
 
 The core accepts exactly:
 
-- WVB 1.6 with seven canonical sections, no trailing bytes, and a valid Seed module identifier;
+- WVB 1.11 with seven canonical sections, an explicit absent-metadata byte, no trailing bytes, and a valid Seed module identifier;
 - portable profile, no capabilities, no data, and no nominal types;
 - either one exported `Main() -> i32`, or exactly one non-`Main` helper at canonical index zero followed by exported `Main` at index one;
 - parameterless `Main`, an `i32` return from every function, zero through four `i32` or `bool` helper parameters, no more than 1,024 combined parameters and declared `i32`/`bool` locals per function, a declared maximum stack depth from one through 1,024, at most 8,192 code bytes per function, adjacent exact code ranges, and no unclaimed function-section bytes;

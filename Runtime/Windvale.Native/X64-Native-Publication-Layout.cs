@@ -45,9 +45,9 @@ public static class X64ˉnativeˉpublicationˉlayout
     public const int SERVICE_RECORD_BYTES = 12;
     public const int MAXIMUM_SERVICES = 12;
     public const int MAXIMUM_IMAGE_BYTES = 34 * 1024 * 1024;
-    public const int PLANNER_CANONICAL_SIZE = 6_871;
+    public const int PLANNER_CANONICAL_SIZE = 6_872;
     public const string PLANNER_CANONICAL_SHA256 =
-        "7b18c009c2d2c8ade970d784168376498eadc833f7ab149b713a2d6ae8e0dc81";
+        "99a2732e499682ba6dff7c361b2ad207fb877f34f02b2da3f4766247f242e20e";
 
     private const string REQUEST_NAME = "native-publication-request.bin";
     private const string PLANNER_RESOURCE = "Windvale.Native.Native-Publication-Bridge.wvb";

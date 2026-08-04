@@ -22,7 +22,7 @@ All integers are unsigned little-endian. Offsets are from the beginning of the W
 
 The first source offset must equal `16 + directory length`. Every later offset must equal the preceding offset plus length. Lengths are nonzero. The last source must end exactly at the WVSS length. Gaps, overlap, padding, reordered payloads, and trailing bytes are noncanonical and rejected.
 
-The complete WVSS value is currently limited to 4,194,304 bytes by the Seed immutable-`bytes` contract. This means directory bytes reduce the maximum aggregate source payload. This first version does not claim parity with Stage 0's 16 MiB aggregate character limit. The complete 12-module compiler closure occupies 677,073 source bytes and proves that the present envelope is sufficient for bytecode self-hosting; envelope parity remains a separate future contract decision rather than a blocker to that achieved closure.
+The complete WVSS value is currently limited to 4,194,304 bytes by the Seed immutable-`bytes` contract. This means directory bytes reduce the maximum aggregate source payload. This first version does not claim parity with Stage 0's 16 MiB aggregate character limit. The current complete 12-module compiler closure occupies 1,090,127 source bytes and proves that the present envelope is sufficient for bytecode self-hosting; envelope parity remains a separate future contract decision rather than a blocker to that achieved closure.
 
 ## Portable contracts
 
@@ -56,14 +56,14 @@ The hosted source-set tool accepts explicit root/dependency resource names, cons
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Set-Core.wvb`: 252,333 bytes, SHA-256 `4b497ed318d685259dcff69f91da17bf10f5de5340aa42144c55eb87ea12ac74`.
-- `Source-Set-Demo.wvb`: 261,663 bytes, SHA-256 `1977c8e4ade8519b9a9e75a526f402b07b579323220cf8d29120ae246497729b`.
-- `Source-Set-Tool.wvb`: 256,186 bytes, SHA-256 `f7ddb4be4ab2a3b1cc2a33ed6ff995be0707de12a492f60c478208351dd74b09`.
+- `Source-Set-Core.wvb`: 257,873 bytes, SHA-256 `1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb`.
+- `Source-Set-Demo.wvb`: 267,203 bytes, SHA-256 `ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742`.
+- `Source-Set-Tool.wvb`: 261,726 bytes, SHA-256 `6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f`.
 
 These local candidate identities include the new lexical, declaration, and body-expression surface and require cross-host requalification. The current local hosted report is:
 
 ```text
-source set status=Valid modules=5 source-bytes=290433 imports=6 records=17 enums=11 functions=107
+source set status=Valid modules=5 source-bytes=297051 imports=6 records=18 enums=11 functions=110
 ```
 
 The source-set contract was originally cross-host qualified at `00ef0b1`. Decision 0042's artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's declaration-summary reuse implementation is cross-host qualified at `1a4fca7`. Decision 0058 adds the equality-only span helper and uses the unchanged WVSS 1 format for exact Stage 1 to Stage 2 compiler convergence, cross-host qualified at `5c16547`.

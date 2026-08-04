@@ -26,16 +26,16 @@ The kernel treats `WVRS 1` and `WVDS 1` as immutable byte extents with mapping a
 | Init/resource WVB | `0554d80340440bf8895f0bf066d355da83337791f5404f2b72ca6da214664467` | scalar receive, fixed-set grant, resource-request receive, and reply through endpoint `65536` |
 | Directory-service WVB | `33b0e425bd6e2a1cd6ae8f95d4645748a6031b93684a9b1ac4d0e56e8408bef7` | directory-request receive and reply through endpoint `65537` |
 | Bytecode-interpreter WVB | `3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f` | scalar send plus resource and directory service calls |
-| `boot:main.wvb` | `9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761` | resource 1, WVB, immutable RO/NX |
+| `boot:main.wvb` | `28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936` | resource 1, WVB 1.11, immutable RO/NX |
 | `boot:main.budget` | `add7f2a4843f8c512c0e2875546581db11b9ba227ee008b5f719dfacb125de76` | resource 2, four-byte LE value 199, immutable RO/NX |
-| Boot `WVRS 1` store | `e06cb88bc97c8a8c8413c476c41ec86eafb8d1ee3fab0daee8e3b50e788023b8` | resource 4, 1,195 immutable RO/NX bytes attached only to init |
+| Boot `WVRS 1` store | `624ece2d2e032f6f0929675a8f79ceb223538d84bccace264ecbbfdce5eca4ad` | resource 4, 1,196 immutable RO/NX bytes attached only to init |
 | Directory `WVDS 1` snapshot | `0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a` | resource 5, 3,184 immutable RO/NX bytes attached only to process 3 |
 
 The store contains the WVB and budget above plus resource 3, kind `opaque-bytes`, name `boot:main.configuration`, attributes `7`, and bytes `[3,5,8,13]`. The snapshot contains `folder` as `other` and `kernel.wv` as a 3,072-byte file where byte `i` is `i mod 251`.
 
 Init is process/thread `1/1`, generation 1, reference `65537`, runtime profile 2, instruction/call budgets `64/1`, eight user pages, one handle, and nine syscalls on the normal two-generation path. The directory provider is process/thread `3/3`, generation 1, reference `65539`, runtime profile 4, instruction/call budgets `64/1`, six user pages, one handle, and five syscalls on the normal path. The service-fault provider faults during its first request after one receive syscall.
 
-The client is process/thread `2/2`, generation 1 then 2, references `65538` then `131074`, runtime profile 7, native instruction/call budgets `189,114/5`, 755 physical frame cells, exact call-graph stack use 24,240 bytes, 118 pre-grant and 120 post-grant user pages, two handles, and four syscalls per normal generation. The contained client-fault and service-fault clients each use three syscalls. The separate guest execution budget remains `199` with maximum `256`.
+The client is process/thread `2/2`, generation 1 then 2, references `65538` then `131074`, runtime profile 7, native instruction/call budgets `189,137/5`, 755 physical frame cells, exact call-graph stack use 24,240 bytes, 118 pre-grant and 120 post-grant user pages, two handles, and four syscalls per normal generation. The contained client-fault and service-fault clients each use three syscalls. The separate guest execution budget remains `199` with maximum `256`.
 
 All paths retain result `6`, channel capacity 1, and ABI 22/context 7/service-table 5. Process policy must return token `97` before machine state is published.
 
@@ -123,7 +123,7 @@ The interrupt boundary saves all fifteen GPRs, preserves uncontrolled live RFLAG
 3. The kernel installs both RO/NX client aliases and publishes service table 5 plus `WVBR002` atomically.
 4. Client generation 1 calls the resource endpoint with the exact 55-byte `boot:main.configuration` request. Init dynamically selects the entry and returns the canonical 116-byte `WVRY 1` response.
 5. The client calls the independent directory endpoint with the exact 37-byte request for `kernel.wv`, offset 0, maximum 3,072. Process 3 validates its snapshot and returns the exact 3,096-byte `WVDR 1` response.
-6. The client validates the complete reply and all 3,072 bytes, interprets the exact 815-byte program for 199 guest instructions, sends `6`, then exits or takes the contained fault.
+6. The client validates the complete reply and all 3,072 bytes, interprets the exact 816-byte program for 199 guest instructions, sends `6`, then exits or takes the contained fault.
 7. Cleanup clears both channels' transient client state, records terminal status, removes client aliases/publication, reloads init's CR3, and zeroes/releases the exact 122-page client object while the later directory object remains live.
 8. The same root is immediately reallocated and rebuilt as generation 2; both endpoints rebind their client reference from `65538` to `131074` while retaining provider and endpoint identity.
 9. Generation 2 independently repeats grant, both service calls, interpretation, result, peer cleanup, and resource cleanup.
@@ -145,7 +145,7 @@ The contained service-fault scenario branches after generation 1's successful re
 | Directory-service WVB | 473 | `33b0e425bd6e2a1cd6ae8f95d4645748a6031b93684a9b1ac4d0e56e8408bef7` |
 | Directory WVA object | 1,549 | `c0a7524130b8733ed17a3ce52fc04986cb449394c9ee509280120b86a3ed8c88` |
 | Linked directory image | 3,911 | `f4d047c6f311b1561a5621b98f3db2868a969c54bb81dac2f75d599b7207f3fb` |
-| Boot `WVRS 1` store | 1,195 | `e06cb88bc97c8a8c8413c476c41ec86eafb8d1ee3fab0daee8e3b50e788023b8` |
+| Boot `WVRS 1` store | 1,196 | `624ece2d2e032f6f0929675a8f79ceb223538d84bccace264ecbbfdce5eca4ad` |
 | Directory `WVDS 1` snapshot | 3,184 | `0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a` |
 | Interpreter WVB | 56,165 | `3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f` |
 | Interpreter WVO | 447,652 | `0748200721cab7d5c3c6a43916fc623dfa0ee35e304fea6ad899877c9601c8e2` |

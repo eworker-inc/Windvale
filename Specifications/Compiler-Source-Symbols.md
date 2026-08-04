@@ -85,7 +85,7 @@ A named signature type resolves by exact ordinal UTF-8 name against the global n
 
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 
-Constants are currently permitted only in WVSS module zero. Their names use ASCII `ALL_CAPS_WITH_UNDERSCORES`; their explicit type is `i32`, `u8`, `u32`, `bool`, or a visible enum; and their initializer may use matching literals, enum members, earlier constants, parentheses, and the currently admitted exact-type operators. Boolean `&&` and `||` evaluate left to right and skip their right operand when the left value determines the result; invalid, unresolved, or would-overflow syntax on a skipped path therefore does not reject the constant. Calls, data reads, allocation-bearing expressions, evaluated forward/cyclic references, unsupported operators, mismatched types, and checked overflow/underflow fail before symbol evidence is published. This Windvale-written WVB 1.6 subset is narrower than Stage 0's additional `i64` and `u64` constant types.
+Constants are currently permitted only in WVSS module zero. Their names use ASCII `ALL_CAPS_WITH_UNDERSCORES`; their explicit type is `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, or a visible enum; and their initializer may use matching literals, enum members, earlier constants, parentheses, and the currently admitted exact-type operators. Boolean `&&` and `||` evaluate left to right and skip their right operand when the left value determines the result; invalid, unresolved, or would-overflow syntax on a skipped path therefore does not reject the constant. Calls, data reads, allocation-bearing expressions, evaluated forward/cyclic references, unsupported operators, mismatched types, and checked overflow/underflow fail before symbol evidence is published. Wide integers are evaluated with explicit low/high `u32` limbs so their range and overflow behavior do not inherit the host runtime.
 
 ## WVSD 1.1 declaration directory
 
@@ -125,14 +125,14 @@ Failure evidence names the current module, a related prior/target module when ap
 
 ## Candidate artifacts and retained qualified evidence
 
-- `Source-Symbols-Core.wvb`: 404,480 bytes, SHA-256 `6619d6b2de2512efca21e08888042382a6e676d089b85ce7f13133399c11343d`.
-- `Source-Symbols-Demo.wvb`: 416,060 bytes, SHA-256 `5b70c55c0462bf76b0e0ded51fc5c712de1fb16108ff4ca01fd6aea512b80f8c`.
-- `Source-Symbols-Tool.wvb`: 404,007 bytes, SHA-256 `f4414d04c23e35d461b00916330b53dd0bea2f3a072a6ddc0ca2f15b18d516b4`.
+- `Source-Symbols-Core.wvb`: 437,417 bytes, SHA-256 `c0ea4ba24ba6f9395a509aa8d1673409747da4aa5bd839dda1d511341676c56a`.
+- `Source-Symbols-Demo.wvb`: 448,303 bytes, SHA-256 `4572ff2175a2f7ecd56c9c6caab3865080f17834548be066f15e909984e063bc`.
+- `Source-Symbols-Tool.wvb`: 436,250 bytes, SHA-256 `c0cb2d71ceb2fe979c819ec6668f8eb762e33576fe0ee3e74d1920f8d84015d0`.
 
 The candidate demo additionally exercises valid constants, enum and earlier-constant references, Boolean short-circuiting over invalid or would-overflow skipped operands, invalid names/types/initializers, exact type mismatch, forward reference, checked overflow, and imported-module rejection. The hosted tool retains namespace/signature reporting; constants contribute WVSD entries but deliberately do not change the existing public aggregate `Data` count. The current local whole-compiler closure report is:
 
 ```text
-source symbols status=Valid modules=8 capabilities=0 data=0 records=28 enums=14 functions=186 fields=330 members=239 parameters=795 directory-bytes=5488 visibility-bytes=64
+source symbols status=Valid modules=8 capabilities=0 data=0 records=31 enums=14 functions=202 fields=344 members=245 parameters=891 directory-bytes=5944 visibility-bytes=64
 ```
 
 The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it advanced the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 added bounded reverse-table lookup and is cross-host qualified at `1a4fca7`. Decision 0058 changed equality-only implementation paths and embedded artifact bytes while preserving the then-current WVSD 1.0 and WVSI 1.1 formats and is cross-host qualified at `5c16547`. WVSD 1.1 and typed constants are new local candidate behavior and do not inherit those cross-host claims.

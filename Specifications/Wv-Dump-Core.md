@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Examples/Foundation/Wv-Dump-Core.wv` is a useful Windvale-written inspector for canonical WVB 1.6 modules. Its pure functions validate immutable bytes, decode all seven payload kinds, walk every function instruction, and return structured failures without relying on C# parsing. Its small hosted shell obtains one filename through explicit capabilities and emits the deterministic line report defined by [Wv-Dump-Report.md](Wv-Dump-Report.md).
+`Examples/Foundation/Wv-Dump-Core.wv` is a useful Windvale-written inspector for an explicit metadata-free subset of canonical WVB 1.11 modules. Its pure functions validate immutable bytes, decode all seven payload kinds, walk every supported function instruction, and return structured failures without relying on C# parsing. Its small hosted shell obtains one filename through explicit capabilities and emits the deterministic line report defined by [Wv-Dump-Report.md](Wv-Dump-Report.md).
 
 The module declares `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `process.argument`, and `process.argument_count`. With no arguments, `Main` runs embedded deterministic fixtures without reading a file. With one argument, it validates before writing any normal output, reports a valid module to standard output, and reports malformed input to the diagnostic sink with result `2`. Other argument counts print usage and return `64`. Native file failures remain stable host-boundary runtime errors.
 
@@ -29,7 +29,7 @@ Inspectˉwvbˉpayloads(Input: bytes) -> Wvbˉpayloadˉinspection
 | `Valid` | 0 | The inspected boundary is structurally valid. |
 | `Shortˉheader` | 1 | The input is shorter than the 12-byte header. |
 | `Badˉmagic` | 2 | The `WVB1` magic is invalid. |
-| `Badˉversion` | 3 | The version is not WVB 1.6. |
+| `Badˉversion` | 3 | The version is not WVB 1.11. |
 | `Badˉsectionˉcount` | 4 | The section count is not seven. |
 | `Outˉofˉbounds` | 5 | A required range is outside its enclosing input or payload. |
 | `Wrongˉsectionˉkind` | 6 | A canonical section position contains another kind. |
@@ -42,7 +42,7 @@ Inspectˉwvbˉpayloads(Input: bytes) -> Wvbˉpayloadˉinspection
 | `Unknownˉdataˉtype` | 13 | A data declaration uses an unknown representation tag. |
 | `Unknownˉnominalˉtype` | 14 | A Types entry uses an unknown kind tag. |
 | `Unknownˉexportˉkind` | 15 | An export is not a function export. |
-| `Unknownˉopcode` | 16 | Function code contains an opcode outside WVB 1.6. |
+| `Unknownˉopcode` | 16 | Function code contains an opcode outside the inspector's explicit subset. |
 | `Truncatedˉinstruction` | 17 | A known instruction lacks its complete encoded operand. |
 | `Invalidˉinstruction` | 18 | A structurally invalid instruction, such as a non-Boolean Boolean constant, was found. |
 
@@ -63,7 +63,7 @@ This decoder is deliberately a structural inspector, not an alternate semantic v
 
 ## Qualification fixtures
 
-The no-argument self-test covers a valid minimal WVB 1.6 module plus short header, bad magic, bad version, bad section count, wrong kind, nonzero flags, hostile `0xFFFFFFFF` length, truncation, and trailing bytes. The conformance suite additionally passes malformed payload counts and an unknown opcode through the hosted shell and requires a diagnostic result rather than a runtime escape.
+The no-argument self-test covers a valid minimal metadata-free WVB 1.11 module plus short header, bad magic, bad version, bad section count, wrong kind, nonzero flags, hostile `0xFFFFFFFF` length, truncation, and trailing bytes. The conformance suite additionally passes malformed payload counts and an unknown opcode through the hosted shell and requires a diagnostic result rather than a runtime escape.
 
 The cross-host contract compiles a real `Sumˉdata` module, passes its exact bytes through the native Windows or Debian file adapter, and compares the complete normalized Windvale-generated report. This proves that declaration decoding, signed and unsigned operands, safe name quoting, and instruction walking agree across hosts.
 

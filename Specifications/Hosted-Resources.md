@@ -20,7 +20,7 @@ diagnostic.write_line(Value: text) -> void
 
 A module must use the `hosted` or `system` profile, declare every capability it calls, and receive an exact grant for every declared capability before execution. Declaration is not authorization. The runtime also asks the selected host adapter whether every declared capability is implemented before executing the first instruction. Unsupported capability `WVR3001` and unauthorized capability `WVR3010` are distinct failures.
 
-Capability declarations remain ordinary canonical WVB 1.6 imports. Adding catalog entries does not itself change the module envelope or instruction set.
+Capability declarations remain ordinary canonical WVB 1.11 imports. Adding catalog entries does not itself change the module envelope or instruction set.
 
 [Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) permits a hosted static library to declare these existing catalog requirements. Every importing module must explicitly redeclare its complete transitive capability set, and the final runtime grant remains separate. This changes source composition, not the capability signatures or hosted adapter behavior below.
 

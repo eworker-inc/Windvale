@@ -230,6 +230,8 @@ export fn Compilerˉsourceˉbindingsˉshape(
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 { return 1u32; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 { return 2u32; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U32 { return 3u32; }
+    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I64 { return 7u32; }
+    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U64 { return 8u32; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bool { return 4u32; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text { return 5u32; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes { return 6u32; }
@@ -253,6 +255,8 @@ export fn Compilerˉsourceˉbindingsˉsourceˉshape(
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 { return 1u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 { return 2u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U32 { return 3u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I64 { return 7u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U64 { return 8u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bool { return 4u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text { return 5u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes { return 6u32; }
@@ -696,9 +700,9 @@ export fn Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
         if Kind == 0u32 { return false; }
         if Kind > 3u32 { return false; }
         if Slot >= 4096u32 { return false; }
-        var Shapeˉvalid: bool = Shape <= 6u32;
+        var Shapeˉvalid: bool = Shape <= 8u32;
         if Shape == 0u32 { Shapeˉvalid = Kind != 1u32; }
-        if Shape > 6u32 {
+        if Shape > 8u32 {
             if Shape >= 65536u32 {
                 if Shape < 65536u32 + Symbols.Records { Shapeˉvalid = true; }
             }
@@ -942,6 +946,8 @@ export fn Compilerˉsourceˉbindingsˉintrinsicˉarity(
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu16ˉlittle") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 2u32, 0u32); }
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉi32ˉlittle") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 2u32, 0u32); }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
     }
     if Length == 13u32 {
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉconcat") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 2u32, 0u32); }
@@ -963,6 +969,8 @@ export fn Compilerˉsourceˉbindingsˉintrinsicˉarity(
     if Length == 11u32 {
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉquote") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); }
     }
     if Length == 14u32 { if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉtoˉutf8") { return Compilerˉsourceˉbindingˉmatch(true, true, Compilerˉsourceˉcallableˉkind.Intrinsic, 0u32, 1u32, 0u32); } }

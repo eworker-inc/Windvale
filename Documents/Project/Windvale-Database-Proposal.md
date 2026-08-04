@@ -173,7 +173,7 @@ algorithm layers.
 | Candidate work | Current readiness | Boundary |
 | --- | --- | --- |
 | Database architecture and format proposal | Ready | Documentation makes no execution claim. |
-| Checksums, endian codecs, key comparison, and page validation | Ready in bounded slices | Current scalars and immutable `bytes` can express the algorithms; WVB 1.12 adds exact little-endian `u64` field codecs in the Stage 0 reference profile. |
+| Checksums, endian codecs, key comparison, and page validation | Ready in bounded slices | Current scalars and immutable `bytes` can express the algorithms; canonical WVB 1.11 includes exact little-endian `u64` field codecs in the Stage 0 and Windvale-written compiler/reference-runtime path. |
 | One read-only B+tree lookup over a small in-memory fixture | Implemented experiment | [`WVDB 1`](../../Specifications/Windvale-Database-Reader.md) validates at most 64 256-byte pages and returns a typed exact `u32` to `i32` result. It is not an accepted durable format. |
 | Bounded sequences and builders | Ready for narrow algorithms | WVB 1.11 implements bounded immutable sequences, affine builders, and deterministic `for`; nested collections, general maps, and database page ownership remain unavailable. |
 | General page and row collections | Not ready | Deterministic maps/page tables, nested or variable-size aggregates, exact allocation charging, and consuming database publication remain unimplemented. |
@@ -182,11 +182,12 @@ algorithm layers.
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
 | Windvale OS database service | Not ready | Persistent storage, general launch/supervision, resource domains, service bindings, and filesystem providers remain future work. |
 
-Checked `i64` and `u64` are an implemented Stage 0 candidate under
+Checked `i64` and `u64` are implemented in Stage 0 and the Windvale-written compiler under
 [Decision 0138](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md),
 and [Decision 0207](../Decisions/0207-U64-Binary-Fields-For-Durable-Storage.md)
-adds exact WVB 1.12 little-endian `u64` field codecs. Native, Windvale-written
-compiler, WebAssembly, and Windvale OS profiles do not yet share that support.
+adds exact little-endian `u64` field codecs. [Decision 0209](../Decisions/0209-Single-Current-Wvb-1-11-Format.md)
+folds the complete surface into canonical WVB 1.11. Native, WebAssembly, and
+Windvale OS profiles retain explicit narrower WVB 1.11 subsets.
 [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md)
 now supplies the first bounded ownership and builder slice required by
 [Decision 0137](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md).
@@ -232,7 +233,7 @@ The first writable database milestone requires at least:
    database publication remain required;
 3. scoped capability-resource ownership with explicit close, stale-generation,
    and provider-loss behavior;
-4. `i64` and `u64` support, including the WVB 1.12 binary codecs, through the
+4. `i64` and `u64` support, including the canonical WVB 1.11 binary codecs, through the
    selected compiler, verifier, interpreter, native ABI, and backend profile;
 5. a rights-limited storage capability with exact random-access reads, append or
    positioned writes, partial-progress reporting, flush and durability classes,

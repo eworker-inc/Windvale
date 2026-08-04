@@ -235,7 +235,7 @@ internal static class Semanticˉcompiler
                             Case.Payloadˉtype.Name is not null &&
                             Variantˉnames.Contains(Case.Payloadˉtype.Name))
                         {
-                            Report("WVC2135", Case.Payloadˉtype.Span, "WVB 1.9 variant payloads cannot contain variants.");
+                            Report("WVC2135", Case.Payloadˉtype.Span, "WVB 1.11 variant payloads cannot contain nested variants.");
                             Payloadˉtype = Valueˉtype.I32;
                         }
                         else

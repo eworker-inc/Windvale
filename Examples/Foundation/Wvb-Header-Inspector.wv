@@ -35,7 +35,7 @@ export fn Main() -> i32 {
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
         return 17;
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 {
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 {
         return 18;
     }
     console.write_line("wvb-header=pass");

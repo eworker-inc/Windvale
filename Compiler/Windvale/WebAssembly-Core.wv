@@ -942,6 +942,47 @@ export fn Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
         Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
         return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
     }
+    if Opcode == 161u8 {
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 162u8 {
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 173u8 {
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 174u8 {
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 175u8 {
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 176u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(
+            Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8),
+            5u8
+        );
+    }
+    if Opcode == 177u8 {
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
+    if Opcode == 178u8 {
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+        Result = Compilerˉwebassemblyˉruntimeˉstackˉpop(Result, 5u8);
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Result, 5u8);
+    }
     let Opcodeˉvalue: u32 = U32ˉfromˉu8(Opcode);
     if Opcodeˉvalue >= 32u32 {
         if Opcodeˉvalue <= 37u32 {
@@ -1076,6 +1117,11 @@ export fn Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
     if Opcode == 114u8 { Width = 1u32; }
     if Opcodeˉvalue >= 118u32 {
         if Opcodeˉvalue <= 125u32 { Width = 1u32; }
+    }
+    if Opcode == 161u8 { Width = 1u32; }
+    if Opcode == 162u8 { Width = 1u32; }
+    if Opcodeˉvalue >= 173u32 {
+        if Opcodeˉvalue <= 178u32 { Width = 1u32; }
     }
     if Width == 0u32 { return 0u32; }
     if !Compilerˉwebassemblyˉrangeˉisˉvalid(Length, Cursor, Width) {
@@ -1373,6 +1419,25 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
         if Opcode == 22u8 { U32ˉarithmetic = true; }
         if U32ˉarithmetic {
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+            Handled = true;
+        }
+        var U32ˉextendedˉbinary: bool = false;
+        if Opcode == 161u8 { U32ˉextendedˉbinary = true; }
+        if Opcode == 162u8 { U32ˉextendedˉbinary = true; }
+        if U32ˉfromˉu8(Opcode) >= 173u32 {
+            if U32ˉfromˉu8(Opcode) <= 175u32 { U32ˉextendedˉbinary = true; }
+        }
+        if Opcode == 177u8 { U32ˉextendedˉbinary = true; }
+        if Opcode == 178u8 { U32ˉextendedˉbinary = true; }
+        if U32ˉextendedˉbinary {
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+            Handled = true;
+        }
+        if Opcode == 176u8 {
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
             Handled = true;
@@ -1724,6 +1789,25 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
             Handled = true;
         }
         let Opcodeˉvalue: u32 = U32ˉfromˉu8(Opcode);
+        var U32ˉextendedˉbinary: bool = false;
+        if Opcode == 161u8 { U32ˉextendedˉbinary = true; }
+        if Opcode == 162u8 { U32ˉextendedˉbinary = true; }
+        if U32ˉfromˉu8(Opcode) >= 173u32 {
+            if U32ˉfromˉu8(Opcode) <= 175u32 { U32ˉextendedˉbinary = true; }
+        }
+        if Opcode == 177u8 { U32ˉextendedˉbinary = true; }
+        if Opcode == 178u8 { U32ˉextendedˉbinary = true; }
+        if U32ˉextendedˉbinary {
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+            Handled = true;
+        }
+        if Opcode == 176u8 {
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+            Handled = true;
+        }
         if Opcodeˉvalue >= 96u32 {
             if Opcodeˉvalue <= 101u32 {
                 Stack = Compilerˉwebassemblyˉruntimeˉstackˉpop(Stack, 5u8);
@@ -6540,6 +6624,162 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
             Compilerˉwebassemblyˉbyte(167u32)
         );
     }
+    if Opcode == 161u8 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, Second)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, First)
+        );
+        var Divideˉbyˉzero: bytes =
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second);
+        Divideˉbyˉzero = Bytesˉconcat(
+            Divideˉbyˉzero,
+            Compilerˉwebassemblyˉbyte(69u32)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(
+                Divideˉbyˉzero,
+                3032,
+                Privateˉfunction
+            )
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second)
+        );
+        return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(110u32));
+    }
+    if Opcode == 162u8 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, Second)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, First)
+        );
+        var Remainderˉbyˉzero: bytes =
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second);
+        Remainderˉbyˉzero = Bytesˉconcat(
+            Remainderˉbyˉzero,
+            Compilerˉwebassemblyˉbyte(69u32)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(
+                Remainderˉbyˉzero,
+                3032,
+                Privateˉfunction
+            )
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second)
+        );
+        return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(112u32));
+    }
+    if Opcode == 173u8 {
+        return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(113u32));
+    }
+    if Opcode == 174u8 {
+        return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(114u32));
+    }
+    if Opcode == 175u8 {
+        return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(115u32));
+    }
+    if Opcode == 176u8 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉi32ˉconstant(-1)
+        );
+        return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(115u32));
+    }
+    if Opcode == 177u8 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, Second)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, First)
+        );
+        var Shiftˉleftˉinvalid: bytes =
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second);
+        Shiftˉleftˉinvalid = Bytesˉconcat(
+            Shiftˉleftˉinvalid,
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(32u32)
+        );
+        Shiftˉleftˉinvalid = Bytesˉconcat(
+            Shiftˉleftˉinvalid,
+            Compilerˉwebassemblyˉbyte(79u32)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(
+                Shiftˉleftˉinvalid,
+                3033,
+                Privateˉfunction
+            )
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second)
+        );
+        return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(116u32));
+    }
+    if Opcode == 178u8 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, Second)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(33u32, First)
+        );
+        var Shiftˉrightˉinvalid: bytes =
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second);
+        Shiftˉrightˉinvalid = Bytesˉconcat(
+            Shiftˉrightˉinvalid,
+            Compilerˉwebassemblyˉpositiveˉi32ˉconstant(32u32)
+        );
+        Shiftˉrightˉinvalid = Bytesˉconcat(
+            Shiftˉrightˉinvalid,
+            Compilerˉwebassemblyˉbyte(79u32)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(
+                Shiftˉrightˉinvalid,
+                3033,
+                Privateˉfunction
+            )
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, First)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉindexedˉinstruction(32u32, Second)
+        );
+        return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(118u32));
+    }
     var Comparisonˉopcode: u32 = 0u32;
     if Opcode == 32u8 { Comparisonˉopcode = 70u32; }
     if Opcode == 33u8 { Comparisonˉopcode = 71u32; }
@@ -9390,7 +9630,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
     if Bytesˉreadˉu8(Input, 2u32) != 66u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
     if Bytesˉreadˉu8(Input, 3u32) != 49u8 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb); }
 
     let Module: Compilerˉwebassemblyˉsection =
@@ -9437,8 +9677,17 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
     if Moduleˉnameˉlength > 255u32 {
         return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb);
     }
-    if Moduleˉnameˉlength != Module.Payloadˉlength - 5u32 {
+    if Module.Payloadˉlength < 6u32 {
         return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb);
+    }
+    if Moduleˉnameˉlength != Module.Payloadˉlength - 6u32 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Invalidˉwvb);
+    }
+    if Bytesˉreadˉu8(
+        Input,
+        Module.Payloadˉoffset + 5u32 + Moduleˉnameˉlength
+    ) != 0u8 {
+        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
     }
 
     if Capabilities.Payloadˉlength != 4u32 {

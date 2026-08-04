@@ -13,7 +13,7 @@ The parser recognizes:
 - `let` and `var` locals with an optional explicit non-void, non-array type and one required initializer;
 - simple identifier `=`, `+=`, `-=`, and `*=` assignment;
 - `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, exhaustive `match`/`case`, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
-- integer, string-shape, and boolean literals;
+- `i32`, `i64`, `u8`, `u32`, and `u64` integer literals plus string-shape and Boolean literals;
 - qualified names, field access, one call or index postfix, named record literals, variant constructors, and bounded builder construction;
 - unary `-`, `!`, `~`, and consuming `freeze`;
 - `||`, `&&`, bitwise `|`/`^`/`&`, equality, comparisons, shifts, addition/subtraction, and multiplication/division/remainder with the Stage 0 precedence and left-associativity rules;
@@ -27,7 +27,7 @@ An inferred local publishes `Unknown` as its syntax type kind and zero type-span
 
 `Compilerˉsourceˉstatement` records the statement kind, whole span, optional name/type/expression spans, first and second block spans, mutability, next streaming cursor, aggregate descendant counts/depths, and first failure evidence.
 
-`Compilerˉsourceˉexpression` records the root kind/operator, whole span, literal/name/operator payload span, first and second child spans, call-argument interior/count, numeric classification/value, boolean value, next cursor, node count/tree depth, and first failure evidence.
+`Compilerˉsourceˉexpression` records the root kind/operator, whole span, literal/name/operator payload span, first and second child spans, call-argument interior/count, numeric classification plus low/high `u32` value limbs, Boolean value, next cursor, node count/tree depth, and first failure evidence.
 
 These records are flat scalar/enum data. They do not own child records or runtime handles. To traverse a child, derive its position from a known parent position with `Compilerˉbodyˉpositionˉbetween`, then parse the bounded child span. Call arguments and named-record field/value pairs are streamed from the recorded interior rather than retained as a collection. An `else if` stores the nested `if` statement as its second span; consumers accept that one-statement span recursively as well as ordinary brace-delimited block spans.
 
@@ -77,9 +77,9 @@ The first failure is deterministic and includes lexical status, expected/found t
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Body-Parser.wvb`: 243,094 bytes, SHA-256 `a9fb34ab9d6fe7a8fd44c81f1ea03f890664c131a4f0a085959910379c3655a6`.
-- `Source-Body-Parser-Demo.wvb`: 249,265 bytes, SHA-256 `18eac99ee5f93a8d179dc23746a3d63b46797d3ab8c4cd55fd6792f5a9a5ae77`, result `0` under 30,000,000 instructions.
-- `Source-Body-Parser-Tool.wvb`: 242,304 bytes, SHA-256 `841e14f4a4dd209658d8d0e123dbfa8730d58718dc139c6702964420259e7cd5`.
+- `Source-Body-Parser.wvb`: 248,663 bytes, SHA-256 `68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589`.
+- `Source-Body-Parser-Demo.wvb`: 254,805 bytes, SHA-256 `2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f`, result `0` under 30,000,000 instructions.
+- `Source-Body-Parser-Tool.wvb`: 247,844 bytes, SHA-256 `0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f`.
 
 These are the current local deterministic identities after initializer inference, named-record parsing, recursive `else if`, loop-control statements, short-circuit operators, and compound assignment. Cross-host qualification remains required before they replace the retained qualified baseline claim.
 

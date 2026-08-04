@@ -118,7 +118,7 @@ public static class Kernelˉprocessˉimage
         var Serviceˉdigest = SHA256.HashData(Serviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Serviceˉidentity = Convert.ToHexString(Serviceˉdigest.AsSpan());
         if (!Serviceˉidentity.Equals(
-                "0554D80340440BF8895F0BF066D355DA83337791F5404F2B72CA6DA214664467",
+                "7CEFA7DCF82ED05D6B6E133AA79B7DA90372E2D8F8F993ABE7449513398EDE83",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
@@ -170,7 +170,7 @@ public static class Kernelˉprocessˉimage
         var Directoryˉserviceˉidentity = Convert.ToHexString(
             Directoryˉserviceˉdigest.AsSpan());
         if (!Directoryˉserviceˉidentity.Equals(
-                "33B0E425BD6E2A1CD6AE8F95D4645748A6031B93684A9B1AC4D0E56E8408BEF7",
+                "F7410595F9824E510DA9399F52A463013FF41240B67308CDF28B4F5B7484AB2B",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
@@ -218,7 +218,7 @@ public static class Kernelˉprocessˉimage
         var Interpreterˉdigest = SHA256.HashData(Interpreterˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Interpreterˉidentity = Convert.ToHexString(Interpreterˉdigest.AsSpan());
         if (!Interpreterˉidentity.Equals(
-                "3669E94D712BD5A78F0061E29D8054ED3B54B687EFC9508114F79BB78AA8832F",
+                "E2024702919E9ACD37C119A7AFB9991A73904D97EF3BDB1DEFE8C5EA13E91A3D",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
@@ -286,7 +286,7 @@ public static class Kernelˉprocessˉimage
 
         var Admittedˉprogramˉdigest = SHA256.HashData(admission.Embeddedˉmoduleˉbytes.AsSpan()).ToImmutableArray();
         if (!Convert.ToHexString(Admittedˉprogramˉdigest.AsSpan()).Equals(
-                "9CCFED0509E84BFC63979C6DC13170C14762EFBDAA448B4C5894325F31AA7761",
+                "28D215B982A7B7185CFA80C4CC5346666BD0181582FE80BEC8B7035D514DA936",
                 StringComparison.Ordinal))
         {
             throw new InvalidOperationException("The process image is not bound to the admitted WVB identity.");

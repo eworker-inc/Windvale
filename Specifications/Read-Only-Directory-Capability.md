@@ -2,7 +2,7 @@
 
 ## Status
 
-This specification defines the first bounded application-facing filesystem operation. The implemented candidate uses the canonical WVB capability name `filesystem.directory_read_v1` as a temporary name-plus-major-version identity. It retains WVB 1.6/1.7 and the coarse `hosted` profile while independent platform-scope and capability-version metadata remain unimplemented.
+This specification defines the first bounded application-facing filesystem operation. The implemented candidate uses the canonical WVB capability name `filesystem.directory_read_v1` as a temporary name-plus-major-version identity. It uses canonical WVB 1.11 and the coarse `hosted` profile while independent platform-scope and capability-version metadata remain unimplemented.
 
 The capability binds exactly one rights-limited, immutable directory snapshot before process entry. It is not an ambient filesystem, native path API, package-resource lookup, general handle table, or promise that a provider remains available forever.
 

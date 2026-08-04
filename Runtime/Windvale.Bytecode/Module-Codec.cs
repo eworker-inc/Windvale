@@ -10,58 +10,23 @@ public static class Moduleˉcodec
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
 
     public const ushort MAJOR_VERSION = 1;
-    public const ushort BASE_MINOR_VERSION = 6;
-    public const ushort WIDE_MINOR_VERSION = 7;
-    public const ushort MINOR_VERSION = 8;
-    public const ushort VARIANT_MINOR_VERSION = 9;
-    public const ushort COLLECTION_MINOR_VERSION = 10;
-    public const ushort OPERATOR_MINOR_VERSION = 11;
-    public const ushort STORAGE_MINOR_VERSION = 12;
+    public const ushort MINOR_VERSION = 11;
     private const byte MODULE_METADATA_VERSION = 1;
 
     public static byte[] Write(Bytecodeˉmodule module)
     {
         ArgumentNullException.ThrowIfNull(module);
-        var Candidateˉminorˉversion = Requiresˉversionˉ1ˉ12(module)
-            ? STORAGE_MINOR_VERSION
-            : Requiresˉversionˉ1ˉ11(module)
-            ? OPERATOR_MINOR_VERSION
-            : Requiresˉcollectionˉshape(module)
-            ? COLLECTION_MINOR_VERSION
-            : module.Types.Any(Type => Type is Variantˉtypeˉdeclaration)
-                ? VARIANT_MINOR_VERSION
-                : module.Metadata is null
-                    ? WIDE_MINOR_VERSION
-                    : MINOR_VERSION;
-        var Verified = Moduleˉverifier.Verify(module with
-        {
-            Formatˉminorˉversion = Candidateˉminorˉversion,
-        });
         module = module with
         {
-            Formatˉminorˉversion = Requiresˉversionˉ1ˉ12(Verified)
-                ? STORAGE_MINOR_VERSION
-                : Requiresˉversionˉ1ˉ11(Verified)
-                ? OPERATOR_MINOR_VERSION
-                : Requiresˉversionˉ1ˉ10(Verified)
-                ? COLLECTION_MINOR_VERSION
-                : Requiresˉversionˉ1ˉ9(Verified)
-                    ? VARIANT_MINOR_VERSION
-                : module.Metadata is not null
-                    ? MINOR_VERSION
-                    : Requiresˉversionˉ1ˉ7(Verified)
-                        ? WIDE_MINOR_VERSION
-                        : BASE_MINOR_VERSION,
+            Formatˉminorˉversion = MINOR_VERSION,
         };
+        _ = Moduleˉverifier.Verify(module);
 
         var Moduleˉpayload = Buildˉpayload(Writer =>
         {
             Writer.Writeˉbyte((byte)module.Profile);
             Writer.Writeˉstring(module.Name, isˉname: true);
-            if (module.Formatˉminorˉversion >= VARIANT_MINOR_VERSION)
-            {
-                Writer.Writeˉbyte(module.Metadata is null ? (byte)0 : (byte)1);
-            }
+            Writer.Writeˉbyte(module.Metadata is null ? (byte)0 : (byte)1);
             if (module.Metadata is not null)
             {
                 Writeˉmetadata(Writer, module.Metadata);
@@ -240,8 +205,7 @@ public static class Moduleˉcodec
 
         var Majorˉversion = Reader.Readˉu16();
         var Minorˉversion = Reader.Readˉu16();
-        if (Majorˉversion != MAJOR_VERSION ||
-            Minorˉversion is not (BASE_MINOR_VERSION or WIDE_MINOR_VERSION or MINOR_VERSION or VARIANT_MINOR_VERSION or COLLECTION_MINOR_VERSION or OPERATOR_MINOR_VERSION or STORAGE_MINOR_VERSION))
+        if (Majorˉversion != MAJOR_VERSION || Minorˉversion != MINOR_VERSION)
         {
             throw new Moduleˉformatˉexception(
                 "WVB1003",
@@ -262,24 +226,17 @@ public static class Moduleˉcodec
         var Profile = Readˉprofile(ref Moduleˉreader);
         var Moduleˉname = Moduleˉreader.Readˉstring(isˉname: true);
         Moduleˉmetadata? Metadata = null;
-        if (Minorˉversion == MINOR_VERSION)
+        var Metadataˉpresent = Moduleˉreader.Readˉbyte();
+        if (Metadataˉpresent > 1)
+        {
+            throw new Moduleˉformatˉexception(
+                "WVB1026",
+                $"Invalid module metadata presence value {Metadataˉpresent}.",
+                Moduleˉreader.Absoluteˉoffset - 1);
+        }
+        if (Metadataˉpresent == 1)
         {
             Metadata = Readˉmetadata(ref Moduleˉreader);
-        }
-        if (Minorˉversion >= VARIANT_MINOR_VERSION)
-        {
-            var Metadataˉpresent = Moduleˉreader.Readˉbyte();
-            if (Metadataˉpresent > 1)
-            {
-                throw new Moduleˉformatˉexception(
-                    "WVB1026",
-                    $"Invalid module metadata presence value {Metadataˉpresent}.",
-                    Moduleˉreader.Absoluteˉoffset - 1);
-            }
-            if (Metadataˉpresent == 1)
-            {
-                Metadata = Readˉmetadata(ref Moduleˉreader);
-            }
         }
         Moduleˉreader.Requireˉend("Module");
 
@@ -327,87 +284,6 @@ public static class Moduleˉcodec
     {
         return Moduleˉverifier.Verify(Read(bytes));
     }
-
-    private static bool Requiresˉversionˉ1ˉ7(Verifiedˉmodule module)
-    {
-        static bool Isˉwide(Valueˉshape Shape) =>
-            Shape.Kind is Valueˉtype.I64 or Valueˉtype.U64;
-
-        if (module.Module.Capabilities.Any(Capability =>
-                Capability.Parameterˉtypes.Any(Type => Isˉwide(Type)) ||
-                Isˉwide(Capability.Returnˉtype)) ||
-            module.Module.Functions.Any(Function =>
-                Function.Parameterˉtypes.Any(Isˉwide) ||
-                Isˉwide(Function.Returnˉtype) ||
-                Function.Localˉtypes.Any(Isˉwide)) ||
-            module.Module.Types.OfType<Recordˉtypeˉdeclaration>().Any(Record =>
-                Record.Fields.Any(Field => Isˉwide(Field.Type))))
-        {
-            return true;
-        }
-
-        return module.Functions
-            .SelectMany(Function => Function.Instructions)
-            .Any(Instruction => Isˉversionˉ1ˉ7ˉopcode(Instruction.Opcode));
-    }
-
-    internal static bool Isˉversionˉ1ˉ7ˉopcode(Opcode opcode) =>
-        opcode is >= Opcode.I64ˉconst and <= Opcode.U64ˉformat;
-
-    private static bool Requiresˉversionˉ1ˉ9(Verifiedˉmodule module) =>
-        module.Module.Types.Any(Type => Type is Variantˉtypeˉdeclaration) ||
-        module.Functions.SelectMany(Function => Function.Instructions).Any(
-            Instruction => Isˉversionˉ1ˉ9ˉopcode(Instruction.Opcode));
-
-    internal static bool Isˉversionˉ1ˉ9ˉopcode(Opcode opcode) =>
-        opcode is >= Opcode.Variantˉcreate and <= Opcode.Variantˉpayload;
-
-    private static bool Requiresˉversionˉ1ˉ10(Verifiedˉmodule module) =>
-        Requiresˉcollectionˉshape(module.Module) ||
-        module.Functions.SelectMany(Function => Function.Instructions).Any(
-            Instruction => Isˉversionˉ1ˉ10ˉopcode(Instruction.Opcode));
-
-    private static bool Requiresˉcollectionˉshape(Bytecodeˉmodule module) =>
-        module.Functions.Any(Function =>
-            Function.Parameterˉtypes.Any(Isˉcollection) ||
-            Isˉcollection(Function.Returnˉtype) ||
-            Function.Localˉtypes.Any(Isˉcollection)) ||
-        module.Types.OfType<Recordˉtypeˉdeclaration>().Any(Record =>
-            Record.Fields.Any(Field => Isˉcollection(Field.Type))) ||
-        module.Types.OfType<Variantˉtypeˉdeclaration>().Any(Variant =>
-            Variant.Cases.Any(Case => Case.Payloadˉtype is { } Shape && Isˉcollection(Shape)));
-
-    private static bool Isˉcollection(Valueˉshape shape) =>
-        shape.Kind is Valueˉtype.Sequence or Valueˉtype.Builder;
-
-    internal static bool Isˉversionˉ1ˉ10ˉopcode(Opcode opcode) =>
-        opcode is >= Opcode.Builderˉcreate and <= Opcode.Sequenceˉelement;
-
-    private static bool Requiresˉversionˉ1ˉ11(Bytecodeˉmodule module) =>
-        module.Functions.Any(Function =>
-            Instructionˉcodec.Decode(
-                module.Code.AsSpan(Function.Codeˉoffset, Function.Codeˉlength),
-                Function.Name).Any(Instruction => Isˉversionˉ1ˉ11ˉopcode(Instruction.Opcode)));
-
-    private static bool Requiresˉversionˉ1ˉ11(Verifiedˉmodule module) =>
-        module.Functions.SelectMany(Function => Function.Instructions).Any(
-            Instruction => Isˉversionˉ1ˉ11ˉopcode(Instruction.Opcode));
-
-    internal static bool Isˉversionˉ1ˉ11ˉopcode(Opcode opcode) =>
-        opcode is >= Opcode.I32ˉdivide and <= Opcode.Bytesˉnotˉequal;
-
-    private static bool Requiresˉversionˉ1ˉ12(Bytecodeˉmodule module) =>
-        module.Functions.Any(Function =>
-            Instructionˉcodec.Decode(
-                module.Code.AsSpan(Function.Codeˉoffset, Function.Codeˉlength),
-                Function.Name).Any(Instruction => Isˉversionˉ1ˉ12ˉopcode(Instruction.Opcode)));
-
-    private static bool Requiresˉversionˉ1ˉ12(Verifiedˉmodule module) =>
-        module.Functions.SelectMany(Function => Function.Instructions).Any(
-            Instruction => Isˉversionˉ1ˉ12ˉopcode(Instruction.Opcode));
-
-    internal static bool Isˉversionˉ1ˉ12ˉopcode(Opcode opcode) =>
-        opcode is Opcode.Bytesˉreadˉu64ˉlittle or Opcode.Bytesˉfromˉu64ˉlittle;
 
     private static void Writeˉmetadata(Byteˉwriter writer, Moduleˉmetadata metadata)
     {
@@ -963,7 +839,7 @@ public static class Moduleˉcodec
                 {
                     throw new Moduleˉformatˉexception(
                         "WVB1027",
-                        "Nested collection value shapes are not valid in WVB 1.10.",
+                        "Nested collection value shapes are not valid in WVB 1.11.",
                         Absoluteˉoffset - 1);
                 }
                 var Elementˉnominalˉindex = Elementˉtype is Valueˉtype.Record or Valueˉtype.Enum or Valueˉtype.Variant

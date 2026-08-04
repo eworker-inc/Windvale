@@ -17,6 +17,8 @@ public static class Nativeˉfragmentˉverifier
     private const ulong BYTE_BOUNDS_STATUS = 0x0000_0006_0000_0000UL;
     private const ulong RECORD_ARENA_STATUS = 0x0000_0007_0000_0000UL;
     private const ulong INVALID_UTF8_STATUS = 0x0000_0008_0000_0000UL;
+    private const ulong DIVISION_BY_ZERO_STATUS = 0x0000_0009_0000_0000UL;
+    private const ulong INVALID_SHIFT_STATUS = 0x0000_000A_0000_0000UL;
     private const int INTERNAL_FUNCTION_SUFFIX_BYTES = 172;
     private const int MAIN_FUNCTION_SUFFIX_BYTES = 190;
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
@@ -502,7 +504,25 @@ public static class Nativeˉfragmentˉverifier
         var Staticˉdescriptorˉdata = new Dictionary<int, Nativeˉsymbol>();
         var Restoreˉbytes = Isˉmain ? 13 : 11;
         var Statusˉbytes = Isˉmain ? 23 : 21;
-        var Propagate = End - Suffixˉbytes;
+        var Hasˉinvalidˉshift = Depthˉtarget >= Statusˉbytes &&
+            Matchesˉstatusˉtrap(
+                Code,
+                Depthˉtarget - Statusˉbytes,
+                Frameˉbytes,
+                INVALID_SHIFT_STATUS,
+                Isˉmain);
+        var Divisionˉcandidate = Depthˉtarget -
+            (Hasˉinvalidˉshift ? 2 * Statusˉbytes : Statusˉbytes);
+        var Hasˉdivisionˉbyˉzero = Divisionˉcandidate >= 0 &&
+            Matchesˉstatusˉtrap(
+                Code,
+                Divisionˉcandidate,
+                Frameˉbytes,
+                DIVISION_BY_ZERO_STATUS,
+                Isˉmain);
+        var Propagate = End - Suffixˉbytes -
+            (Hasˉdivisionˉbyˉzero ? Statusˉbytes : 0) -
+            (Hasˉinvalidˉshift ? Statusˉbytes : 0);
         var Overflow = Propagate + Restoreˉbytes;
         var Instructionˉlimit = Overflow + Statusˉbytes;
         var Bounds = Instructionˉlimit + Statusˉbytes;
@@ -510,7 +530,16 @@ public static class Nativeˉfragmentˉverifier
         var Runtimeˉservice = Byteˉbounds + Statusˉbytes;
         var Invalidˉutf8 = Runtimeˉservice + Statusˉbytes;
         var Recordˉarena = Invalidˉutf8 + Statusˉbytes;
-        var Depth = Recordˉarena + Statusˉbytes;
+        var Divisionˉbyˉzero = Hasˉdivisionˉbyˉzero
+            ? Recordˉarena + Statusˉbytes
+            : -1;
+        var Invalidˉshift = Hasˉinvalidˉshift
+            ? Recordˉarena + Statusˉbytes +
+                (Hasˉdivisionˉbyˉzero ? Statusˉbytes : 0)
+            : -1;
+        var Depth = Recordˉarena + Statusˉbytes +
+            (Hasˉdivisionˉbyˉzero ? Statusˉbytes : 0) +
+            (Hasˉinvalidˉshift ? Statusˉbytes : 0);
         if (Depthˉtarget != Depth ||
             !Matchesˉpropagate(Code, Propagate, Frameˉbytes, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Overflow, Frameˉbytes, INTEGER_OVERFLOW_STATUS, Isˉmain) ||
@@ -520,6 +549,10 @@ public static class Nativeˉfragmentˉverifier
             !Matchesˉstatusˉtrap(Code, Runtimeˉservice, Frameˉbytes, RUNTIME_SERVICE_STATUS, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Invalidˉutf8, Frameˉbytes, INVALID_UTF8_STATUS, Isˉmain) ||
             !Matchesˉstatusˉtrap(Code, Recordˉarena, Frameˉbytes, RECORD_ARENA_STATUS, Isˉmain) ||
+            (Hasˉdivisionˉbyˉzero &&
+                !Matchesˉstatusˉtrap(Code, Divisionˉbyˉzero, Frameˉbytes, DIVISION_BY_ZERO_STATUS, Isˉmain)) ||
+            (Hasˉinvalidˉshift &&
+                !Matchesˉstatusˉtrap(Code, Invalidˉshift, Frameˉbytes, INVALID_SHIFT_STATUS, Isˉmain)) ||
             !Matches(Code, Depth, 0x49, 0xFF, 0xC2, 0x48, 0xB8) ||
             BinaryPrimitives.ReadUInt64LittleEndian(Code.Slice(Depth + 5, sizeof(ulong))) != CALL_DEPTH_STATUS ||
             (Isˉmain && !Matches(Code, Depth + 13, 0x41, 0x5F, 0xC3)) ||
@@ -1193,6 +1226,8 @@ public static class Nativeˉfragmentˉverifier
                 Propagate,
                 Frameˉbytes,
                 Overflow,
+                Divisionˉbyˉzero,
+                Invalidˉshift,
                 out var Scalarˉresult))
             {
                 Fail(
@@ -3661,6 +3696,8 @@ public static class Nativeˉfragmentˉverifier
         int end,
         int frameˉbytes,
         int overflow,
+        int divisionˉbyˉzero,
+        int invalidˉshift,
         out int resultˉslot)
     {
         resultˉslot = 0;
@@ -3699,6 +3736,45 @@ public static class Nativeˉfragmentˉverifier
                 index = Cursor;
                 return Cursor <= end;
             }
+            if (Matches(code, Cursor, 0x85, 0xC9, 0x0F, 0x84) &&
+                Tryˉreadˉtarget(code, Cursor + 4, out var Divisionˉbyˉzeroˉtarget) &&
+                Divisionˉbyˉzeroˉtarget == divisionˉbyˉzero &&
+                Matches(code, Cursor + 8, 0x31, 0xD2, 0xF7, 0xF1))
+            {
+                Cursor += 12;
+                if (Matches(code, Cursor, 0x89, 0xD0))
+                {
+                    Cursor += 2;
+                }
+                if (!Tryˉstoreˉeax(code, Cursor, frameˉbytes, out resultˉslot))
+                {
+                    return false;
+                }
+                Cursor += 7;
+                index = Cursor;
+                return Cursor <= end;
+            }
+            var Bitwise = Matches(code, Cursor, 0x21, 0xC8) ||
+                Matches(code, Cursor, 0x09, 0xC8) ||
+                Matches(code, Cursor, 0x31, 0xC8);
+            if (Bitwise &&
+                Tryˉstoreˉeax(code, Cursor + 2, frameˉbytes, out resultˉslot))
+            {
+                Cursor += 9;
+                index = Cursor;
+                return Cursor <= end;
+            }
+            if (Matches(code, Cursor, 0x83, 0xF9, 0x20, 0x0F, 0x83) &&
+                Tryˉreadˉtarget(code, Cursor + 5, out var Invalidˉshiftˉtarget) &&
+                Invalidˉshiftˉtarget == invalidˉshift &&
+                (Matches(code, Cursor + 9, 0xD3, 0xE0) ||
+                    Matches(code, Cursor + 9, 0xD3, 0xE8)) &&
+                Tryˉstoreˉeax(code, Cursor + 11, frameˉbytes, out resultˉslot))
+            {
+                Cursor += 18;
+                index = Cursor;
+                return Cursor <= end;
+            }
             if (Matches(code, Cursor, 0x39, 0xC8, 0x0F) &&
                 Isˉcondition(code[Cursor + 3]) &&
                 Matches(code, Cursor + 4, 0xC0, 0x0F, 0xB6, 0xC0) &&
@@ -3717,6 +3793,13 @@ public static class Nativeˉfragmentˉverifier
             Tryˉstoreˉeax(code, Cursor + 8, frameˉbytes, out resultˉslot))
         {
             Cursor += 15;
+            index = Cursor;
+            return Cursor <= end;
+        }
+        if (Matches(code, Cursor, 0xF7, 0xD0) &&
+            Tryˉstoreˉeax(code, Cursor + 2, frameˉbytes, out resultˉslot))
+        {
+            Cursor += 9;
             index = Cursor;
             return Cursor <= end;
         }

@@ -15,9 +15,9 @@ The pass recognizes:
 - qualified capability names;
 - `text`, `[i32]`, and `bytes` data declarations and literal shape;
 - optional export, name, explicit type, and bounded initializer span for `const` declarations;
-- record names, fields, and non-void/non-array field types;
+- record names, fields, and non-void/non-array field types, including `i64` and `u64`;
 - enum names, members, and unsuffixed nonnegative integer token shape;
-- optional function export, name, parameters, return type, and balanced body span.
+- optional function export, name, parameters, return type, and balanced body span over the complete implemented primitive and nominal type surface.
 
 Function-body tokens are balanced through the matching outer brace, including nested blocks. A constant initializer is retained as the declaration's body span from its first expression token through the token before the required semicolon; the later symbol phase owns expression grammar, typing, evaluation, and diagnostics. Function statement and expression grammar is deliberately outside this declaration pass.
 
@@ -85,9 +85,9 @@ source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums
 
 ## Current candidate artifacts
 
-- `Source-Declaration-Parser.wvb`: 146,302 bytes, SHA-256 `85d9d909c378a69223c3321b882ddf483eef19afc5042568da70a183bd8ed193`.
-- `Source-Declaration-Parser-Demo.wvb`: 149,470 bytes, SHA-256 `e3e5606b8a7fe63bd03bfb53da31980e1f6457980621b1d7db038c3a43b6e16d`, result `0` under 20,000,000 instructions.
-- `Source-Declaration-Parser-Tool.wvb`: 146,836 bytes, SHA-256 `4f24f9f6b5b7bdbffec6d60952b33e8b9e9df8fe17ad5b255a3c8aa28b017729`.
+- `Source-Declaration-Parser.wvb`: 151,197 bytes, SHA-256 `8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb`.
+- `Source-Declaration-Parser-Demo.wvb`: 154,365 bytes, SHA-256 `9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf`, result `0` under 20,000,000 instructions.
+- `Source-Declaration-Parser-Tool.wvb`: 151,731 bytes, SHA-256 `ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0`.
 
 The real lexer completes under 30,000,000 instructions. The larger self-declaration pass completes under 45,000,000. These are local deterministic constant-declaration candidates, not a successor cross-host qualification claim, and do not change assembler or linker ceilings.
 

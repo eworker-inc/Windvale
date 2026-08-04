@@ -1,0 +1,65 @@
+module Sourceˉwvbˉwideˉscalars profile portable;
+
+const SIGNED: i64 = -9i64;
+const UNSIGNED: u64 = 18446744073709551615u64;
+const MINIMUM: i64 = -9223372036854775807i64 - 1i64;
+const SIGNED_SUM: i64 = SIGNED + 10i64;
+const UNSIGNED_DIFFERENCE: u64 = UNSIGNED - 1u64;
+const WIDE_PRODUCT: u64 = 3u64 * 7u64;
+const WIDE_QUOTIENT: u64 = 41u64 / 6u64;
+const WIDE_REMAINDER: u64 = 41u64 % 6u64;
+const SIGNED_QUOTIENT: i64 = -41i64 / 6i64;
+const SIGNED_REMAINDER: i64 = -41i64 % 6i64;
+const WIDE_MASK: u64 =
+    (17361641481138401520u64 & 1085102592571150095u64) |
+    255u64;
+const WIDE_SHIFT: u64 = 1u64 << 63u32;
+const WIDE_NOT: u64 = ~0u64;
+
+record Wideˉpair {
+    Signed: i64;
+    Unsigned: u64;
+}
+
+fn Keepˉsigned(Value: i64) -> i64 {
+    return Value;
+}
+
+fn Keepˉunsigned(Value: u64) -> u64 {
+    return Value;
+}
+
+export fn Main() -> i32 {
+    let Pair = Wideˉpair {
+        Signed: MINIMUM,
+        Unsigned: UNSIGNED,
+    };
+    if Pair.Signed != -9223372036854775807i64 - 1i64 { return -1; }
+    if Pair.Unsigned != 18446744073709551615u64 { return -2; }
+    if SIGNED_SUM != 1i64 { return -3; }
+    if UNSIGNED_DIFFERENCE != 18446744073709551614u64 { return -4; }
+    if WIDE_PRODUCT != 21u64 { return -5; }
+    if WIDE_QUOTIENT != 6u64 { return -6; }
+    if WIDE_REMAINDER != 5u64 { return -7; }
+    if SIGNED_QUOTIENT != -6i64 { return -8; }
+    if SIGNED_REMAINDER != -5i64 { return -9; }
+    if WIDE_MASK != 255u64 { return -10; }
+    if WIDE_SHIFT != 9223372036854775808u64 { return -11; }
+    if WIDE_NOT != 18446744073709551615u64 { return -12; }
+    let Encoded: bytes = Bytesˉfromˉu64ˉlittle(Pair.Unsigned);
+    if Bytesˉlength(Encoded) != 8u32 { return -13; }
+    if Bytesˉreadˉu64ˉlittle(Encoded, 0u32) != Pair.Unsigned { return -14; }
+    if I64ˉformat(Pair.Signed) != "-9223372036854775808" { return -15; }
+    if U64ˉformat(Pair.Unsigned) != "18446744073709551615" { return -16; }
+    var Signedˉvalue = Keepˉsigned(SIGNED);
+    Signedˉvalue += 10i64;
+    Signedˉvalue *= 7i64;
+    if Signedˉvalue != 7i64 { return -17; }
+
+    var Unsignedˉvalue = Keepˉunsigned(WIDE_PRODUCT);
+    Unsignedˉvalue += 4u64;
+    Unsignedˉvalue -= 1u64;
+    if Unsignedˉvalue != 24u64 { return -18; }
+
+    return 64;
+}

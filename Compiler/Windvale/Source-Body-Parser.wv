@@ -110,6 +110,7 @@ export record Compilerˉsourceˉexpression {
     Items: u32;
     Numericˉkind: Sourceˉlexer.Compilerˉnumericˉkind;
     Numericˉvalue: u32;
+    Numericˉhigh: u32;
     Booleanˉvalue: bool;
     Nextˉoffset: u32;
     Nextˉline: u32;
@@ -502,6 +503,41 @@ export fn Compilerˉbodyˉexpressionˉmake(
     Nodes: u32,
     Depth: u32
 ) -> Compilerˉsourceˉexpression {
+    return Compilerˉbodyˉexpressionˉmakeˉwide(
+        Kind, Operator, Offset, End, Line, Column,
+        Valueˉoffset, Valueˉlength, Firstˉoffset, Firstˉlength,
+        Secondˉoffset, Secondˉlength, Itemsˉoffset, Itemsˉend, Items,
+        Numericˉkind, Numericˉvalue, 0u32, Booleanˉvalue,
+        Nextˉoffset, Nextˉline, Nextˉcolumn, Nodes, Depth
+    );
+}
+
+fn Compilerˉbodyˉexpressionˉmakeˉwide(
+    Kind: Compilerˉsourceˉexpressionˉkind,
+    Operator: Sourceˉlexer.Compilerˉtokenˉkind,
+    Offset: u32,
+    End: u32,
+    Line: u32,
+    Column: u32,
+    Valueˉoffset: u32,
+    Valueˉlength: u32,
+    Firstˉoffset: u32,
+    Firstˉlength: u32,
+    Secondˉoffset: u32,
+    Secondˉlength: u32,
+    Itemsˉoffset: u32,
+    Itemsˉend: u32,
+    Items: u32,
+    Numericˉkind: Sourceˉlexer.Compilerˉnumericˉkind,
+    Numericˉvalue: u32,
+    Numericˉhigh: u32,
+    Booleanˉvalue: bool,
+    Nextˉoffset: u32,
+    Nextˉline: u32,
+    Nextˉcolumn: u32,
+    Nodes: u32,
+    Depth: u32
+) -> Compilerˉsourceˉexpression {
     return Compilerˉsourceˉexpression(
         Compilerˉbodyˉparseˉstatus.Valid,
         Sourceˉlexer.Compilerˉlexˉstatus.Valid,
@@ -522,6 +558,7 @@ export fn Compilerˉbodyˉexpressionˉmake(
         Items,
         Numericˉkind,
         Numericˉvalue,
+        Numericˉhigh,
         Booleanˉvalue,
         Nextˉoffset,
         Nextˉline,
@@ -571,6 +608,7 @@ export fn Compilerˉbodyˉexpressionˉfailure(
         0u32,
         Sourceˉlexer.Compilerˉnumericˉkind.None,
         0u32,
+        0u32,
         false,
         Token.Offset,
         Token.Line,
@@ -607,6 +645,7 @@ export fn Compilerˉbodyˉexpressionˉfailureˉfromˉstep(
         0u32,
         0u32,
         Sourceˉlexer.Compilerˉnumericˉkind.None,
+        0u32,
         0u32,
         false,
         Step.Nextˉoffset,
@@ -673,7 +712,7 @@ export fn Compilerˉbodyˉparseˉprimary(
         return Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Lexicalˉerror, Token, Sourceˉlexer.Compilerˉtokenˉkind.Identifier);
     }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Integer {
-        return Compilerˉbodyˉexpressionˉmake(
+        return Compilerˉbodyˉexpressionˉmakeˉwide(
             Compilerˉsourceˉexpressionˉkind.Integer,
             Sourceˉlexer.Compilerˉtokenˉkind.End,
             Token.Offset,
@@ -691,6 +730,7 @@ export fn Compilerˉbodyˉparseˉprimary(
             0u32,
             Token.Numericˉkind,
             Token.Numericˉvalue,
+            Token.Numericˉhigh,
             false,
             Token.Nextˉoffset,
             Token.Nextˉline,
@@ -716,7 +756,7 @@ export fn Compilerˉbodyˉparseˉprimary(
         if Inner.Status != Compilerˉbodyˉparseˉstatus.Valid { return Inner; }
         let Right: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(Input, Inner.Nextˉoffset, Inner.Nextˉline, Inner.Nextˉcolumn, Endˉoffset, Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis);
         if Right.Status != Compilerˉbodyˉparseˉstatus.Valid { return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Right); }
-        return Compilerˉbodyˉexpressionˉmake(Inner.Kind, Inner.Operator, Token.Offset, Right.Nextˉoffset, Token.Line, Token.Column, Inner.Valueˉoffset, Inner.Valueˉlength, Inner.Firstˉoffset, Inner.Firstˉlength, Inner.Secondˉoffset, Inner.Secondˉlength, Inner.Itemsˉoffset, Inner.Itemsˉoffset + Inner.Itemsˉlength, Inner.Items, Inner.Numericˉkind, Inner.Numericˉvalue, Inner.Booleanˉvalue, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn, Inner.Nodes, Inner.Depth);
+        return Compilerˉbodyˉexpressionˉmakeˉwide(Inner.Kind, Inner.Operator, Token.Offset, Right.Nextˉoffset, Token.Line, Token.Column, Inner.Valueˉoffset, Inner.Valueˉlength, Inner.Firstˉoffset, Inner.Firstˉlength, Inner.Secondˉoffset, Inner.Secondˉlength, Inner.Itemsˉoffset, Inner.Itemsˉoffset + Inner.Itemsˉlength, Inner.Items, Inner.Numericˉkind, Inner.Numericˉvalue, Inner.Numericˉhigh, Inner.Booleanˉvalue, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn, Inner.Nodes, Inner.Depth);
     }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Builder {
         let Type: Sourceˉdeclarations.Compilerˉparseˉstep = Sourceˉdeclarations.Compilerˉparseˉtype(
@@ -760,7 +800,7 @@ export fn Compilerˉbodyˉparseˉprimary(
         return Compilerˉsourceˉexpression(
             Name.Status, Name.Lexicalˉstatus, Compilerˉsourceˉexpressionˉkind.Invalid, Sourceˉlexer.Compilerˉtokenˉkind.End,
             Name.Offset, 0u32, Line, Column, Name.Offset, 0u32, Name.Offset, 0u32, Name.Offset, 0u32, Name.Offset, 0u32, 0u32,
-            Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, false, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn, 0u32, 0u32,
+            Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, 0u32, false, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn, 0u32, 0u32,
             Name.Failureˉoffset, Name.Failureˉline, Name.Failureˉcolumn, Name.Expected, Name.Found
         );
     }

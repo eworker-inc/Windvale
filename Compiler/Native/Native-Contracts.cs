@@ -209,6 +209,13 @@ public enum Nativeˉu32ˉbinaryˉkind : byte
     Add = 1,
     Subtract = 2,
     Multiply = 3,
+    Divide = 4,
+    Remainder = 5,
+    Bitwiseˉand = 6,
+    Bitwiseˉor = 7,
+    Bitwiseˉxor = 8,
+    Shiftˉleft = 9,
+    Shiftˉright = 10,
 }
 
 public sealed record Nativeˉu32ˉbinary(
@@ -216,6 +223,8 @@ public sealed record Nativeˉu32ˉbinary(
     Nativeˉu32ˉbinaryˉkind Kind,
     int Left,
     int Right) : Nativeˉoperation;
+
+public sealed record Nativeˉu32ˉbitwiseˉnot(int Result, int Value) : Nativeˉoperation;
 
 public enum Nativeˉu32ˉcomparisonˉkind : byte
 {

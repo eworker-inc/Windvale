@@ -12,7 +12,7 @@ The interpreter is hosted Windvale compiled AOT and run at CPL3. The separately 
 
 The interpreter declares only `file.read_bytes` and performs exactly these lookups:
 
-1. `boot:main.wvb` — resource `1`, kind `wvb-module`, exact 815-byte admitted WVB;
+1. `boot:main.wvb` — resource `1`, kind `wvb-module`, exact 816-byte admitted WVB;
 2. `boot:main.budget` — resource `2`, kind `u32-execution-budget`, exactly four little-endian bytes containing `199`.
 
 Process `2` starts with both resource PTEs and context pointers absent. Windvale init selects ordered set token `131073`; one checked syscall publishes two distinct user-readable RO/NX aliases, service-table version 5 with only `file.read_bytes`, the exact two-entry `WVBR002` directory, and both context pointers as one atomic transition.
@@ -26,7 +26,7 @@ The sole accepted program has this exact semantic shape:
 | Property | Required value |
 | --- | --- |
 | Module | `Sourceˉwvbˉfixture`, portable profile |
-| WVB | version 1.6, seven ordered canonical sections, 815 exact bytes |
+| WVB | version 1.11, absent module metadata, seven ordered canonical sections, 816 exact bytes |
 | Capabilities/types/data | none |
 | Functions | `Add`, `Main`, `Probe`, and `Select` |
 | Scalar values | `bool`, `u8`, `u32`, and `i32` |
@@ -56,9 +56,9 @@ The guest budget must be exactly four bytes, decode to a nonzero unsigned value 
 - a three-byte resource returns status `-16`; and
 - a missing budget name remains a contained runtime capability failure.
 
-Malformed exact-profile coverage rejects an invalid function record, an invalid opcode, and a branch target that does not begin an instruction. A structurally valid byte mutation at program offset `395` executes to `9` on the ordinary runtime but fails exact admission.
+Malformed exact-profile coverage rejects an invalid function record, an invalid opcode, and a branch target that does not begin an instruction. A structurally valid byte mutation at program offset `396` executes to `9` on the ordinary runtime but fails exact admission.
 
-The complete AOT interpreter path consumes exactly 189,114 native instructions with maximum dynamic call depth 5. The largest generated function uses 1,900 frame slots, below ABI 17's unchanged 2,048-slot ceiling. Guest budget, native instruction budget, native call depth, per-function frame size, and whole-call-graph stack are separate contracts.
+The complete AOT interpreter path consumes exactly 189,137 native instructions with maximum dynamic call depth 5. The largest generated function uses 1,900 frame slots, below ABI 17's unchanged 2,048-slot ceiling. Guest budget, native instruction budget, native call depth, per-function frame size, and whole-call-graph stack are separate contracts.
 
 Before image construction, the process builder derives the exact maximum native stack from verified WVO calls and generated frames. It includes each active frame, return address, and the client entry shim's saved `r15`; recursion is rejected. The exact path needs 58,800 bytes, making 15 pages (61,440 bytes) the minimal whole-page envelope.
 
@@ -70,7 +70,7 @@ The context's record-arena pointer names 1,024 bytes at data-page offset `0x200`
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Canonical program WVB | 815 | `9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761` |
+| Canonical program WVB | 816 | `28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936` |
 | Interpreter WVB | 56,165 | `3669e94d712bd5a78f0061e29d8054ed3b54b687efc9508114f79bb78aa8832f` |
 | Interpreter WVO | 577,140 | `b55f9525cccab5fc2efbf5b4c488b2498a7689d4905d7e5e3d0950a791b00a85` |
 | Linked normal client | 576,541 | `afec9522862a6a69656c1a4a93f62d3e7b1b5b0f0d7c8759180410beb3429260` |

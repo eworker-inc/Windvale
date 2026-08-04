@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the deterministic report emitted by `Wv-Dump-Core.wv` for a structurally valid WVB 1.6 module. The format is intentionally line-oriented, ASCII-only, stable across Windows and Linux, and simple enough for both humans and early Windvale tools. It is a Seed development contract, not yet a long-term public interchange format.
+This document defines the deterministic report emitted by `Wv-Dump-Core.wv` for a structurally valid module in its metadata-free WVB 1.11 subset. The format is intentionally line-oriented, ASCII-only, stable across Windows and Linux, and simple enough for both humans and early Windvale tools. It is a Seed development contract, not yet a long-term public interchange format.
 
 ## Encoding and safety
 
@@ -19,7 +19,7 @@ The report begins with:
 
 ```text
 wvdump 1
-module version=1.6 profile=<portable|hosted|system> name=<quoted-name>
+module version=1.11 profile=<portable|hosted|system> name=<quoted-name>
 ```
 
 It then emits seven section records in physical WVB order:

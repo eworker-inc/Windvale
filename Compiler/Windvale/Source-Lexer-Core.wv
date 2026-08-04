@@ -89,6 +89,8 @@ export enum Compilerˉtokenˉkind {
     Tilde = 83;
     Shiftˉleft = 84;
     Shiftˉright = 85;
+    I64 = 86;
+    U64 = 87;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -96,6 +98,8 @@ export enum Compilerˉnumericˉkind {
     I32 = 1;
     U8 = 2;
     U32 = 3;
+    I64 = 4;
+    U64 = 5;
 }
 
 export enum Compilerˉlexˉstatus {
@@ -126,6 +130,7 @@ export record Compilerˉsourceˉtoken {
     Nextˉcolumn: u32;
     Numericˉkind: Compilerˉnumericˉkind;
     Numericˉvalue: u32;
+    Numericˉhigh: u32;
     Failureˉoffset: u32;
     Failureˉline: u32;
     Failureˉcolumn: u32;
@@ -305,12 +310,14 @@ export fn Compilerˉsourceˉkeywordˉkind(
         }
         if First == 105u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "i32") { return Compilerˉtokenˉkind.I32; }
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "i64") { return Compilerˉtokenˉkind.I64; }
         }
         if First == 108u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "let") { return Compilerˉtokenˉkind.Let; }
         }
         if First == 117u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "u32") { return Compilerˉtokenˉkind.U32; }
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "u64") { return Compilerˉtokenˉkind.U64; }
         }
         if First == 118u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "var") { return Compilerˉtokenˉkind.Var; }
@@ -457,9 +464,83 @@ export fn Compilerˉsourceˉtokenˉmake(
         Nextˉcolumn,
         Numericˉkind,
         Numericˉvalue,
+        0u32,
         Failureˉoffset,
         Failureˉline,
         Failureˉcolumn
+    );
+}
+
+record Compilerˉsourceˉwideˉparse {
+    Valid: bool;
+    Low: u32;
+    High: u32;
+}
+
+fn Compilerˉsourceˉwideˉdecimalˉparse(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> Compilerˉsourceˉwideˉparse {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total { return Compilerˉsourceˉwideˉparse(false, 0u32, 0u32); }
+    if Length > Total - Offset { return Compilerˉsourceˉwideˉparse(false, 0u32, 0u32); }
+    if Length == 0u32 { return Compilerˉsourceˉwideˉparse(false, 0u32, 0u32); }
+    if Length > 20u32 { return Compilerˉsourceˉwideˉparse(false, 0u32, 0u32); }
+
+    var Limbˉzero: u32 = 0u32;
+    var Limbˉone: u32 = 0u32;
+    var Limbˉtwo: u32 = 0u32;
+    var Limbˉthree: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + Index));
+        if Character < 48u32 { return Compilerˉsourceˉwideˉparse(false, 0u32, 0u32); }
+        if Character > 57u32 { return Compilerˉsourceˉwideˉparse(false, 0u32, 0u32); }
+        var Carry: u32 = Character - 48u32;
+        var Expanded: u32 = Limbˉzero * 10u32 + Carry;
+        Limbˉzero = Expanded % 65536u32;
+        Carry = Expanded / 65536u32;
+        Expanded = Limbˉone * 10u32 + Carry;
+        Limbˉone = Expanded % 65536u32;
+        Carry = Expanded / 65536u32;
+        Expanded = Limbˉtwo * 10u32 + Carry;
+        Limbˉtwo = Expanded % 65536u32;
+        Carry = Expanded / 65536u32;
+        Expanded = Limbˉthree * 10u32 + Carry;
+        Limbˉthree = Expanded % 65536u32;
+        Carry = Expanded / 65536u32;
+        if Carry != 0u32 { return Compilerˉsourceˉwideˉparse(false, 0u32, 0u32); }
+        Index = Index + 1u32;
+    }
+    return Compilerˉsourceˉwideˉparse(
+        true,
+        Limbˉzero + Limbˉone * 65536u32,
+        Limbˉtwo + Limbˉthree * 65536u32
+    );
+}
+
+fn Compilerˉsourceˉtokenˉmakeˉwide(
+    Status: Compilerˉlexˉstatus,
+    Kind: Compilerˉtokenˉkind,
+    Offset: u32,
+    Nextˉoffset: u32,
+    Line: u32,
+    Column: u32,
+    Nextˉline: u32,
+    Nextˉcolumn: u32,
+    Numericˉkind: Compilerˉnumericˉkind,
+    Numericˉvalue: u32,
+    Numericˉhigh: u32,
+    Failureˉoffset: u32,
+    Failureˉline: u32,
+    Failureˉcolumn: u32
+) -> Compilerˉsourceˉtoken {
+    return Compilerˉsourceˉtoken(
+        Status, Kind, Offset, Nextˉoffset - Offset, Nextˉoffset,
+        Line, Column, Nextˉline, Nextˉcolumn,
+        Numericˉkind, Numericˉvalue, Numericˉhigh,
+        Failureˉoffset, Failureˉline, Failureˉcolumn
     );
 }
 
@@ -748,15 +829,58 @@ export fn Compilerˉlexˉnextˉafterˉscan(
             }
             if Numericˉkind == Compilerˉnumericˉkind.I32 {
                 if Total - Cursor >= 3u32 {
-                    if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u32") {
+                    if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "i64") {
+                        let I64ˉfollowing: u32 = Cursor + 3u32;
+                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, I64ˉfollowing, Total) == 0u32 {
+                            Numericˉkind = Compilerˉnumericˉkind.I64;
+                            Cursor = I64ˉfollowing;
+                            Column = Column + 3u32;
+                        }
+                    } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u32") {
                         let U32ˉfollowing: u32 = Cursor + 3u32;
                         if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U32ˉfollowing, Total) == 0u32 {
                             Numericˉkind = Compilerˉnumericˉkind.U32;
                             Cursor = U32ˉfollowing;
                             Column = Column + 3u32;
                         }
+                    } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u64") {
+                        let U64ˉfollowing: u32 = Cursor + 3u32;
+                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U64ˉfollowing, Total) == 0u32 {
+                            Numericˉkind = Compilerˉnumericˉkind.U64;
+                            Cursor = U64ˉfollowing;
+                            Column = Column + 3u32;
+                        }
                     }
                 }
+            }
+            if Numericˉkind == Compilerˉnumericˉkind.I64 ||
+                Numericˉkind == Compilerˉnumericˉkind.U64 {
+                let Wide: Compilerˉsourceˉwideˉparse = Compilerˉsourceˉwideˉdecimalˉparse(
+                    Input, Tokenˉstart, Digitˉend - Tokenˉstart
+                );
+                var Wideˉstatus: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
+                if !Wide.Valid { Wideˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange; }
+                if Numericˉkind == Compilerˉnumericˉkind.I64 {
+                    if Wide.High > 2147483647u32 {
+                        Wideˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
+                    }
+                }
+                return Compilerˉsourceˉtokenˉmakeˉwide(
+                    Wideˉstatus,
+                    Compilerˉtokenˉkind.Integer,
+                    Tokenˉstart,
+                    Cursor,
+                    Tokenˉline,
+                    Tokenˉcolumn,
+                    Line,
+                    Column,
+                    Numericˉkind,
+                    Wide.Low,
+                    Wide.High,
+                    Tokenˉstart,
+                    Tokenˉline,
+                    Tokenˉcolumn
+                );
             }
             let Parsed: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(
                 Input,

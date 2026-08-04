@@ -17,47 +17,6 @@ public static class Moduleˉverifier
         {
             var Functionˉcode = module.Code.AsSpan(Function.Codeˉoffset, Function.Codeˉlength);
             var Instructions = Instructionˉcodec.Decode(Functionˉcode, Function.Name);
-            if (module.Formatˉminorˉversion == Moduleˉcodec.BASE_MINOR_VERSION &&
-                Instructions.Any(Instruction =>
-                    Moduleˉcodec.Isˉversionˉ1ˉ7ˉopcode(Instruction.Opcode)))
-            {
-                Fail(
-                    "WVB2107",
-                    $"Function '{Function.Name}' uses a WVB 1.7 opcode in a WVB 1.6 module.");
-            }
-            if (module.Formatˉminorˉversion < Moduleˉcodec.VARIANT_MINOR_VERSION &&
-                Instructions.Any(Instruction =>
-                    Moduleˉcodec.Isˉversionˉ1ˉ9ˉopcode(Instruction.Opcode)))
-            {
-                Fail(
-                    "WVB2107",
-                    $"Function '{Function.Name}' uses a WVB 1.9 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
-            }
-            if (module.Formatˉminorˉversion < Moduleˉcodec.COLLECTION_MINOR_VERSION &&
-                Instructions.Any(Instruction =>
-                    Moduleˉcodec.Isˉversionˉ1ˉ10ˉopcode(Instruction.Opcode)))
-            {
-                Fail(
-                    "WVB2107",
-                    $"Function '{Function.Name}' uses a WVB 1.10 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
-            }
-            if (module.Formatˉminorˉversion < Moduleˉcodec.OPERATOR_MINOR_VERSION &&
-                Instructions.Any(Instruction =>
-                    Moduleˉcodec.Isˉversionˉ1ˉ11ˉopcode(Instruction.Opcode)))
-            {
-                Fail(
-                    "WVB2107",
-                    $"Function '{Function.Name}' uses a WVB 1.11 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
-            }
-            if (module.Formatˉminorˉversion < Moduleˉcodec.STORAGE_MINOR_VERSION &&
-                Instructions.Any(Instruction =>
-                    Moduleˉcodec.Isˉversionˉ1ˉ12ˉopcode(Instruction.Opcode)))
-            {
-                Fail(
-                    "WVB2107",
-                    $"Function '{Function.Name}' uses a WVB 1.12 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
-            }
-
             Verifyˉfunction(module, Function, Instructions);
             Verifiedˉfunctions.Add(new(Function, Instructions));
         }
@@ -67,50 +26,11 @@ public static class Moduleˉverifier
 
     private static void Verifyˉmoduleˉmetadata(Bytecodeˉmodule module)
     {
-        if (module.Formatˉminorˉversion is not (
-            Moduleˉcodec.BASE_MINOR_VERSION or
-            Moduleˉcodec.WIDE_MINOR_VERSION or
-            Moduleˉcodec.MINOR_VERSION or
-            Moduleˉcodec.VARIANT_MINOR_VERSION or
-            Moduleˉcodec.COLLECTION_MINOR_VERSION or
-            Moduleˉcodec.OPERATOR_MINOR_VERSION or
-            Moduleˉcodec.STORAGE_MINOR_VERSION))
+        if (module.Formatˉminorˉversion != Moduleˉcodec.MINOR_VERSION)
         {
             Fail(
                 "WVB2107",
                 $"Module model version 1.{module.Formatˉminorˉversion} is not supported.");
-        }
-
-        static bool Isˉwide(Valueˉshape Shape) =>
-            Shape.Kind is Valueˉtype.I64 or Valueˉtype.U64;
-        if (module.Formatˉminorˉversion == Moduleˉcodec.BASE_MINOR_VERSION &&
-            (module.Capabilities.Any(Capability =>
-                Capability.Parameterˉtypes.Any(Type => Isˉwide(Type)) ||
-                Isˉwide(Capability.Returnˉtype)) ||
-            module.Functions.Any(Function =>
-                Function.Parameterˉtypes.Any(Isˉwide) ||
-                Isˉwide(Function.Returnˉtype) ||
-                Function.Localˉtypes.Any(Isˉwide)) ||
-            module.Types.OfType<Recordˉtypeˉdeclaration>().Any(Record =>
-                Record.Fields.Any(Field => Isˉwide(Field.Type)))))
-        {
-            Fail("WVB2107", "A WVB 1.6 module contains a WVB 1.7 value type.");
-        }
-
-        if (module.Formatˉminorˉversion < Moduleˉcodec.MINOR_VERSION &&
-            module.Metadata is not null)
-        {
-            Fail("WVB2160", "Module metadata requires WVB 1.8.");
-        }
-        if (module.Formatˉminorˉversion == Moduleˉcodec.MINOR_VERSION &&
-            module.Metadata is null)
-        {
-            Fail("WVB2160", "A WVB 1.8 module must contain module metadata.");
-        }
-        if (module.Formatˉminorˉversion < Moduleˉcodec.VARIANT_MINOR_VERSION &&
-            module.Types.Any(Type => Type is Variantˉtypeˉdeclaration))
-        {
-            Fail("WVB2161", "Nominal variants require WVB 1.9.");
         }
 
         if (!Seedˉnames.Isˉidentifier(module.Name))
@@ -556,7 +476,7 @@ public static class Moduleˉverifier
             }
             if (Payloadˉtype.Kind == Valueˉtype.Variant)
             {
-                Fail("WVB2166", $"Variant case '{type.Name}.{Case.Name}' cannot contain a variant in WVB 1.9.");
+                Fail("WVB2166", $"Variant case '{type.Name}.{Case.Name}' cannot contain a nested variant in WVB 1.11.");
             }
         }
     }
@@ -1496,26 +1416,8 @@ public static class Moduleˉverifier
         string position)
     {
         Verifyˉvalueˉtype(shape.Kind, allowˉvoid, position);
-        if (module.Formatˉminorˉversion == Moduleˉcodec.BASE_MINOR_VERSION &&
-            shape.Kind is Valueˉtype.I64 or Valueˉtype.U64)
-        {
-            Fail(
-                "WVB2107",
-                $"Value type '{shape.Kind}' requires WVB 1.{Moduleˉcodec.WIDE_MINOR_VERSION} for a {position}.");
-        }
-
-        if (shape.Kind == Valueˉtype.Variant &&
-            module.Formatˉminorˉversion < Moduleˉcodec.VARIANT_MINOR_VERSION)
-        {
-            Fail("WVB2107", $"Value type 'Variant' requires WVB 1.9 for a {position}.");
-        }
-
         if (shape.Kind is Valueˉtype.Sequence or Valueˉtype.Builder)
         {
-            if (module.Formatˉminorˉversion < Moduleˉcodec.COLLECTION_MINOR_VERSION)
-            {
-                Fail("WVB2107", $"Value type '{shape.Kind}' requires WVB 1.10 for a {position}.");
-            }
             if (shape.Maximum is 0 or > Bytecodeˉlimits.MAX_SEQUENCE_ELEMENTS)
             {
                 Fail("WVB2245", $"Collection maximum {shape.Maximum} is invalid for a {position}.");

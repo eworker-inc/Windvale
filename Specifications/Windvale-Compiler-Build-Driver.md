@@ -79,11 +79,11 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The canonical driver WVB is 1,008,678 bytes with SHA-256 `090f7ce9e00708dc029cbe98448c30ee1e6e0544bd2dcac1de045c44dcc226b2`.
+The canonical driver WVB is 1,068,108 bytes with SHA-256 `04fdb0c8de6ada23bf3c28b840782764551a27daa1244ff8315d41b0fb879210`.
 
-`windows-x64-build-driver-v1` emits a 27,656,704-byte PE32+ application with SHA-256 `3f72b96ef0697c1b531f566180fea9f406b7213b88a6dd7000235d82d1878819`.
+`windows-x64-build-driver-v1` emits a 28,820,992-byte PE32+ application with SHA-256 `dae678ebe263ae6aeb62eace0943f8666878cc904cb5614f29e0de52f6548621`.
 
-`linux-x64-build-driver-v1` emits a 27,656,192-byte sectionless static-PIE ELF application with SHA-256 `8302f75a2ff9effaa72fa7ee58a6ee93a7e780bf39a4471aa41e397e94bcb568`.
+`linux-x64-build-driver-v1` emits a 28,823,552-byte sectionless static-PIE ELF application with SHA-256 `ffbd7f2849cc9507c1d6231e5e77c60d2e70d232ffddf18f83af2deeb09b918b`.
 
 The Stage 0 construction route is:
 

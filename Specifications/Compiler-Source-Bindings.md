@@ -100,7 +100,7 @@ The header is followed by one range entry for every WVSD declaration entry. Each
 
 Each 36-byte binding entry contains nine `u32` fields in this order: module index, WVSD function-entry index, binding-kind value, slot, name byte offset, name byte length, shape, scope-start byte offset, and exclusive scope-end byte offset.
 
-Shape `0` is permitted only on a `let` or `var` entry whose source type is inferred and means “resolve from typed initializer evidence.” Parameter shapes are always concrete. Shape values `1` through `6` represent `i32`, `u8`, `u32`, `bool`, `text`, and `bytes`. A record shape is `65536 + NominalIndex`; an enum shape is `131072 + NominalIndex`. Nominal indices are the canonical WVSD identities.
+Shape `0` is permitted only on a `let` or `var` entry whose source type is inferred and means “resolve from typed initializer evidence.” Parameter shapes are always concrete. Shape values `1` through `8` represent `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, `i64`, and `u64`. A record shape is `65536 + NominalIndex`; an enum shape is `131072 + NominalIndex`. Nominal indices are the canonical WVSD identities.
 
 Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks the complete header, exact length, canonical ranges, declaration ownership, slot/kind consistency, concrete shape bounds or the local-only inference marker, identifier spans, scope bounds, order, and trailing data. Identifier validation operates directly over absolute WVSS spans; it does not materialize a source copy or rescan from the start of the module for each binding.
 
@@ -116,9 +116,9 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Bindings-Core.wvb`: 506,412 bytes, SHA-256 `205112ba67f9c3dca1f602d09b573f684035cbeec956d36755085f02723c12ca`.
-- `Source-Bindings-Demo.wvb`: 512,139 bytes, SHA-256 `4a0e3ddca159f40ebaa4e7dea97f88b4c91f97e0a62c590bca44724c7ffa7a51`.
-- `Source-Bindings-Tool.wvb`: 506,437 bytes, SHA-256 `f25c6c4ac04da77a3498587b62220376475680b46797017eb7855009bcd2995b`.
+- `Source-Bindings-Core.wvb`: 539,903 bytes, SHA-256 `55a2d97d55dc7e52f6732dc6312b04ed066a997e2b92be625354645a28370c22`.
+- `Source-Bindings-Demo.wvb`: 545,630 bytes, SHA-256 `caecddffa3ee83c35424f46b7581e185e434d85533b56ca05c497d90da9d08e3`.
+- `Source-Bindings-Tool.wvb`: 539,928 bytes, SHA-256 `f30016abc392c6e0141426f488397ac74a404d8f1aa636c9ed5ed69d16c458b4`.
 
 These are local deterministic WVLB 1.1 candidate identities; they do not claim cross-host requalification.
 
@@ -127,7 +127,7 @@ The focused demo covers valid parameters/locals/data/calls; ordinary and compoun
 The current local hosted closure report is:
 
 ```text
-source bindings status=Valid modules=9 functions=245 parameters=1058 locals=1501 reads=12665 assignments=989 calls=2212 directory-bytes=94524
+source bindings status=Valid modules=9 functions=261 parameters=1154 locals=1584 reads=13346 assignments=1098 calls=2314 directory-bytes=101120
 ```
 
 The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0050's bidirectional nominal map and length-filtered equality paths are qualified at `e37204f`. Decision 0055's artifacts consume validated lexer cursors and the bounded nominal range and are cross-host qualified at `1a4fca7`. Decision 0058 uses the reverse equality helper on exact-name paths without changing WVLB format or binding semantics and is cross-host qualified at `5c16547`.

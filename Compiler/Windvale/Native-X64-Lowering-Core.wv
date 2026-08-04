@@ -230,7 +230,7 @@ export fn Compilerˉnativeˉx64ˉreadˉstructure(Input: bytes)
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
         return Compilerˉnativeˉx64ˉinvalidˉstructure();
     }
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 6u32 {
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 {
         return Compilerˉnativeˉx64ˉinvalidˉstructure();
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
@@ -291,15 +291,19 @@ export fn Compilerˉnativeˉx64ˉmoduleˉisˉvalid(
     Input: bytes,
     Section: Compilerˉnativeˉx64ˉsection
 ) -> bool {
-    if Section.Payloadˉlength < 5u32 { return false; }
+    if Section.Payloadˉlength < 6u32 { return false; }
     let Nameˉlength: u32 =
         Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset + 1u32);
-    if Nameˉlength != Section.Payloadˉlength - 5u32 { return false; }
-    return Compilerˉnativeˉx64ˉidentifierˉisˉvalid(
+    if Nameˉlength != Section.Payloadˉlength - 6u32 { return false; }
+    if !Compilerˉnativeˉx64ˉidentifierˉisˉvalid(
         Input,
         Section.Payloadˉoffset + 5u32,
         Nameˉlength
-    );
+    ) { return false; }
+    return Bytesˉreadˉu8(
+        Input,
+        Section.Payloadˉoffset + 5u32 + Nameˉlength
+    ) == 0u8;
 }
 
 export fn Compilerˉnativeˉx64ˉinvalidˉfunction()

@@ -21,14 +21,14 @@ The status contract distinguishes upstream source-binding rejection, evidence li
 
 The phase currently lowers:
 
-- `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, record, enum, variant, sequence, and local builder values;
+- `i32`, `i64`, `u8`, `u32`, `u64`, `bool`, `text`, `bytes`, record, enum, variant, sequence, and local builder values;
 - literals, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction and fields, enum members, Foundation intrinsics, functions, and declared capabilities;
 - checked arithmetic including division/remainder, fixed-width bitwise/shift operations, comparison, exact scalar/enum/text/bytes equality, short-circuit Boolean conjunction/disjunction, boolean negation, and signed negation;
 - exhaustive enum/variant match, variant construction/case tests/payload extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
 - expression statements, `return`, lexical blocks, `if`/`else if`/`else`, `while`, `for`, `break`, and `continue`;
 - explicit jump, branch, and return terminators.
 
-Shape `0` is `void`; `1` through `6` are `i32`, `u8`, `u32`, `bool`, `text`, and `bytes`. Record shapes start at `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at `196608`. Packed high families retain sequence/builder element identity and maximum. Nominal suffixes are canonical WVSD nominal indices.
+Shape `0` is `void`; `1` through `6` are `i32`, `u8`, `u32`, `bool`, `text`, and `bytes`; `7` and `8` are `i64` and `u64`. Record shapes start at `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at `196608`. Packed high families retain sequence/builder element identity and maximum. Nominal suffixes are canonical WVSD nominal indices.
 
 Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. Function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries.
 
@@ -64,7 +64,7 @@ The temporary section is a sequence of result shapes. The operand section is a s
 
 ## Operation families
 
-Operation values `1` through `64` retain the prior constants, storage, Foundation, nominal, scalar, call, and Boolean-phi contract. Values `65` through `67` are variant create/test/payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` are the Windvale-written compiler's `i32`/`u8`/`u32`, text, and bytes subset of the WVB 1.11 operator family. Value `0` is invalid in published evidence.
+Operation values `1` through `64` retain the prior constants, storage, Foundation, nominal, scalar, call, and Boolean-phi contract. Values `65` through `67` are variant create/test/payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` cover `i32`/`u8`/`u32`, text, and bytes operations. Values `93` and `94` are `i64` and `u64` constants; `95` and `96` are their formatting intrinsics; values `97` through `119` are wide arithmetic, comparison, division, and remainder; values `120` through `125` are `u64` bitwise, complement, and shift operations; and values `126` and `127` are exact little-endian `u64` byte read and construction. Value `0` is invalid in published evidence.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
@@ -82,7 +82,7 @@ The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified
 
 Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Canonical record/enum shapes and directory identities use the private WVSI bidirectional nominal tables rather than repeated ordinal rescans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible; an omitted annotation takes that initializer's exact non-void shape, and the resolved growing binding state is carried through nested blocks. The independent validator can consume standalone WVLB 1.1 evidence by establishing each shape-`0` inferred local from its first verified store and requiring all subsequent accesses to agree. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
 
-A constant read resolves its WVSD 1.1 entry, reevaluates the validated root declaration under the source-symbol contract, and emits the existing `I32ˉconstant`, `U8ˉconstant`, `U32ˉconstant`, `Boolˉconstant`, or `Enumˉconstant` operation. No new WVIR operation, data identity, local slot, or runtime lookup is introduced.
+A constant read resolves its WVSD 1.1 entry, reevaluates the validated root declaration under the source-symbol contract, and emits the matching scalar, Boolean, or enum constant operation, including `I64ˉconstant` and `U64ˉconstant`. Wide values carry exact low/high `u32` limbs in the operation target and auxiliary fields. No data identity, local slot, or runtime lookup is introduced.
 
 A named record literal resolves one accessible record, lowers each field expression left to right in source order, rejects unknown, duplicate, missing, or mismatched fields, and places the resulting temporary IDs into declaration-order operands before emitting the existing `Recordˉcreate = 17` operation. No new WVIR operation or WVB opcode is introduced. Recursive `else if` lowers through the existing conditional blocks and terminators.
 
@@ -100,9 +100,9 @@ source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporarie
 
 Current deterministic candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 759,241 bytes, SHA-256 `8414d674d7373f977199f96319c33af6df86f1cff7664aa2ad15374e8b75cd09`.
-- `Source-Wir-Demo.wvb`: 764,584 bytes, SHA-256 `2f856568394b108404f4c6fb4135af93bbf35be6a33102c81cce9e9b1d73cd05`.
-- `Source-Wir-Tool.wvb`: 758,052 bytes, SHA-256 `729c477cb8d178984806ef1ad5e816debc7bcd919df2d78cf87e955dea754f62`.
+- `Source-Wir-Core.wvb`: 810,164 bytes, SHA-256 `4849dfcd26d3ff70f54aec80072888f4f96612575c1999306dbbe7a4b99a6847`.
+- `Source-Wir-Demo.wvb`: 815,507 bytes, SHA-256 `4b9236a103bd77f8fecbc8b514fd37b0ca647da7317d7d319606332f4b3e2361`.
+- `Source-Wir-Tool.wvb`: 808,975 bytes, SHA-256 `324a6292aac0f51b63bad887b880c29c7f1959fb6281a0a40f4252c2a2182de7`.
 
 These local identities include inferred-local verification, storage-free typed-constant lowering, named-record remapping, recursive `else if`, loop-control targets, compound assignment, and structurally verified short-circuit Boolean phi nodes; they require cross-host requalification before a new qualification claim.
 
