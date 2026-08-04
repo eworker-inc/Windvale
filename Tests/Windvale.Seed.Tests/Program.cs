@@ -33,9 +33,9 @@ internal static class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "d4df72b19fa1222cfffa32e87de798b5073c24b7b2037c3ed2711799e006303d";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "6b06e9c9ceb10ebecee11d1d6533d9586e99cac04d407c602bbc29821770f8ab";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "05c379c6d09b4eadb3b7db68212db42c51e2762b36d5fc453b81998398c92e0d";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "26cde3077eca627ca50763113178f68206c52b3df833ec3fd0b70ca261c6af89";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "d9556132e930dd226e77b50ab963b3783e3368bb1375fc61326a9aa6e6ef6ffc";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "654d893551b923d707a46ba1d41a99672cdeceafbd14cce65a75461022d2c0b4";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "7fe718d644e426b9a90e3bd1dcc51c4e1bb1ac4af439cd4bbcda2cf7d01f276a";
@@ -51,6 +51,8 @@ internal static class Program
     private const string NATIVE_CONTROL_WVO_SHA256 = "4cf925098870f7e1aa9ae3d50f30211d69287ac486a5169dc685ae3fcf18417e";
     private const string NATIVE_LOOP_CODE_SHA256 = "470542f262ebb288c72b306cf73807f1922c9c1cf089ecfc8dbba6c810435fe8";
     private const string NATIVE_LOOP_WVO_SHA256 = "1771bcb36ce897dab2184b28a93a93d3d1116e948997ee551920c94c2a52e9e6";
+    private const string NATIVE_CALL_CODE_SHA256 = "5687bce4c0a13535256d4d8c238153ecb8a48c27e77248a307b203ca33303424";
+    private const string NATIVE_CALL_WVO_SHA256 = "790d2436ef6f45a6379494038dbbc4ba8987d597ee32e711eb3ef2ab3aeda133";
     private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
     private const string NATIVE_STENCIL_BRIDGE_SHA256 = "fca2a0ba6c3ec864a2f77295f39326b1196a675dc6defd7a749c0d5541499770";
     private const string NATIVE_STENCIL_DEMO_SHA256 = "0bd2c8989e763c4d84463a197244607c56fa884896cecf9ca64bc995c8f86f6f";
@@ -2419,6 +2421,23 @@ internal static class Program
         Equal(
             NATIVE_LOOP_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Loopˉobject.AsSpan()));
+        var Callˉwvb = Compileˉsuccess(
+            "module Nativeˉcalls profile portable; export fn Main() -> i32 { return Answer(); } fn Answer() -> i32 { return 42; }");
+        var Callˉverified = Moduleˉcodec.Readˉandˉverify(Callˉwvb);
+        var Callˉinterpreted = new Referenceˉruntime(
+            Callˉverified,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        var Callˉnative = X64ˉnativeˉbackend.Compile(Callˉverified);
+        var Callˉobject = Nativeˉobjectˉsink.Writeˉwvo(Callˉnative.Fragment);
+        Equal(795, Callˉnative.Fragment.Code.Length);
+        Equal(
+            NATIVE_CALL_CODE_SHA256,
+            Objectˉdigest.Calculateˉsha256(Callˉnative.Fragment.Code.AsSpan()));
+        Equal(902, Callˉobject.Length);
+        Equal(
+            NATIVE_CALL_WVO_SHA256,
+            Objectˉdigest.Calculateˉsha256(Callˉobject.AsSpan()));
         Windvaleˉnativeˉx64ˉloweringˉagrees(
             Wvbˉbytes,
             Firstˉobject,
@@ -2427,7 +2446,9 @@ internal static class Program
             Controlˉwvb,
             Controlˉfirstˉobject,
             Loopˉwvb,
-            Loopˉobject);
+            Loopˉobject,
+            Callˉwvb,
+            Callˉobject);
 
         var Nonterminatingˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
             "module Nativeˉnonterminating profile portable; export fn Main() -> i32 { var Value: i32 = 0; while Value == 0 { Value = Value; } return 1; }"));
@@ -2444,13 +2465,6 @@ internal static class Program
                 Nonterminatingˉnative.Fragment,
                 maximumˉinstructions: 50));
 
-        var Callˉverified = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
-            "module Nativeˉcalls profile portable; export fn Main() -> i32 { return Answer(); } fn Answer() -> i32 { return 42; }"));
-        var Callˉinterpreted = new Referenceˉruntime(
-            Callˉverified,
-            new Referenceˉcapabilityˉhost(TextWriter.Null),
-            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
-        var Callˉnative = X64ˉnativeˉbackend.Compile(Callˉverified);
         Equal(2, Callˉnative.Module.Functions.Length);
         True(
             Callˉnative.Module.Functions
@@ -2680,7 +2694,9 @@ internal static class Program
         byte[] controlˉwvb,
         ImmutableArray<byte> controlˉobject,
         byte[] loopˉwvb,
-        ImmutableArray<byte> loopˉobject)
+        ImmutableArray<byte> loopˉobject,
+        byte[] callˉwvb,
+        ImmutableArray<byte> callˉobject)
     {
         static int Codeˉpayloadˉoffset(byte[] Input)
         {
@@ -2740,6 +2756,13 @@ internal static class Program
                 new Referenceˉcapabilityˉhost(TextWriter.Null),
                 Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
                 .Runˉmainˉbytes(loopˉwvb.ToImmutableArray()).Bytes);
+        Sequenceˉequal(
+            callˉobject,
+            new Referenceˉruntime(
+                Memory,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+                .Runˉmainˉbytes(callˉwvb.ToImmutableArray()).Bytes);
         Equal(
             0,
             new Referenceˉruntime(
@@ -2791,6 +2814,13 @@ internal static class Program
             "native x64 status=Valid abi=22 code-bytes=1665 object-bytes=1738\n",
             Loopˉreference.Output);
         Sequenceˉequal(loopˉobject, Loopˉreference.Writtenˉbytes);
+
+        var Callˉreference = Runˉnativeˉx64ˉloweringˉtool(Tool, callˉwvb);
+        Equal(0, Callˉreference.Exitˉcode);
+        Equal(
+            "native x64 status=Valid abi=22 code-bytes=795 object-bytes=902\n",
+            Callˉreference.Output);
+        Sequenceˉequal(callˉobject, Callˉreference.Writtenˉbytes);
 
         const string Nextˉconstantˉsource = """
             module Nativeˉconstant profile portable;
@@ -2880,12 +2910,24 @@ internal static class Program
                 Codeˉpayloadˉoffset(Unreachableˉloopˉwvb) + Initialˉloopˉjump.Offset + 1,
                 4),
             Loopˉexit);
+        var Invalidˉcallˉtargetˉwvb = callˉwvb.ToArray();
+        var Callˉmainˉfunction = Moduleˉcodec.Readˉandˉverify(callˉwvb).Functions[1];
+        var Directˉcall = Callˉmainˉfunction.Instructions.Single(
+            Instruction => Instruction.Opcode == Opcode.Call);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉcallˉtargetˉwvb.AsSpan(
+                Codeˉpayloadˉoffset(Invalidˉcallˉtargetˉwvb) +
+                Callˉmainˉfunction.Declaration.Codeˉoffset +
+                Directˉcall.Offset + 1,
+                4),
+            1u);
         foreach (var Malformed in new[]
         {
             Underflowˉwvb,
             Invalidˉlocalˉwvb,
             Invalidˉbranchˉtargetˉwvb,
             Unreachableˉloopˉwvb,
+            Invalidˉcallˉtargetˉwvb,
         })
         {
             Equal(
@@ -3000,6 +3042,26 @@ internal static class Program
             Equal(Loopˉreference.Output, Loopˉoutput.Readˉtext());
             Equal(Loopˉreference.Diagnostics, Loopˉdiagnostic.Readˉtext());
             Sequenceˉequal(loopˉobject, File.ReadAllBytes(Outputˉpath));
+
+            File.WriteAllBytes(Inputˉpath, callˉwvb);
+            using var Callˉoutput = new Nativeˉoutputˉcapture();
+            using var Callˉdiagnostic = new Nativeˉoutputˉcapture();
+            var Callˉhost = new Nativeˉhostˉservices(
+                Callˉoutput.Channel,
+                Authorized,
+                Resources,
+                Callˉdiagnostic.Channel,
+                Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                Nativeˉfileˉoutput.Hostˉfileˉsystem());
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    Toolˉnative.Fragment,
+                    maximumˉinstructions: Callˉreference.Executedˉinstructions,
+                    hostˉservices: Callˉhost));
+            Equal(Callˉreference.Output, Callˉoutput.Readˉtext());
+            Equal(Callˉreference.Diagnostics, Callˉdiagnostic.Readˉtext());
+            Sequenceˉequal(callˉobject, File.ReadAllBytes(Outputˉpath));
 
             File.WriteAllBytes(Inputˉpath, wvbˉbytes[..^1]);
             var Sentinel = new byte[] { 0x57, 0x56, 0x4F, 0x21 };
