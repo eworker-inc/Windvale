@@ -9,6 +9,7 @@ param(
     [ValidateSet('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')]
     [string[]]$TestArea,
     [switch]$FailFast,
+    [switch]$IncludeExtended,
     [string]$TimingReportPath
 )
 
@@ -55,6 +56,9 @@ if (
 if ($Level -ne 'Fast' -and $FailFast) {
     throw '-FailFast is available only with -Level Fast; other levels have fixed suites.'
 }
+if ($Level -ne 'Fast' -and $IncludeExtended) {
+    throw '-IncludeExtended is available only with -Level Fast; Standard and Qualification already include extended tests.'
+}
 if ($Level -eq 'Development' -and ![string]::IsNullOrWhiteSpace($ReportPath)) {
     throw '-ReportPath is available only with Standard or Qualification; Development is not conformance evidence.'
 }
@@ -79,10 +83,14 @@ if ($Level -eq 'Fast') {
     if ($FailFast) {
         $TestArguments += '--fail-fast'
     }
+    if (!$IncludeExtended) {
+        $TestArguments += '--exclude-extended'
+    }
 } elseif ($Level -eq 'Development') {
     foreach ($Area in $DevelopmentAreas) {
         $TestArguments += @('--area', $Area)
     }
+    $TestArguments += '--exclude-extended'
 } else {
     $TestArguments += @('--report', $ReportPath)
 }
@@ -103,7 +111,8 @@ if ($Level -eq 'Fast') {
     if ($SelectedAreas.Count -ne 0) {
         $Selection += "areas [$($SelectedAreas -join ', ')]"
     }
-    Write-Host "Windvale Seed fast verification passed for $($Selection -join ' and ')."
+    $Cost = $IncludeExtended ? 'including extended tests' : 'for regular tests'
+    Write-Host "Windvale Seed fast verification passed $Cost matching $($Selection -join ' and ')."
     return
 }
 
@@ -114,7 +123,7 @@ if ($LASTEXITCODE -ne 0) {
 
 if ($Level -eq 'Development') {
     Write-Host 'Windvale Seed development verification passed for every regular in-process test.'
-    Write-Host 'The qualification-only golden cross-host contract was not executed.'
+    Write-Host 'Extended integration contracts and the golden cross-host contract were not executed.'
     return
 }
 if ($Level -eq 'Standard') {

@@ -1114,10 +1114,10 @@ internal static class Program
         new("Windvale owns bounded executable-image layout before W^X publication", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlayoutˉruns),
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
-        new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes),
-        new("exact compiler AOT transport pressure is deterministic and measured", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉcompilerˉaotˉtransportˉisˉmeasured),
-        new("native exact compiler reproduces full Stage 2 under the bounded text arena", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreproducesˉstage2),
-        new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns),
+        new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes, Testˉcost.Extended),
+        new("exact compiler AOT transport pressure is deterministic and measured", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉcompilerˉaotˉtransportˉisˉmeasured, Testˉcost.Extended),
+        new("native exact compiler reproduces full Stage 2 under the bounded text arena", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreproducesˉstage2, Testˉcost.Extended),
+        new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns, Testˉcost.Extended),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
         new("rights-limited directory reads return typed bounded results", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Readˉonlyˉdirectoryˉreadsˉareˉtyped),
@@ -1131,14 +1131,14 @@ internal static class Program
         new("Windvale Database validates bounded pages and performs exact B+tree lookup", [TEST_AREA_DATABASE, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvdbˉreaderˉruns),
         new("Windvale-written source lexer streams the complete Seed token contract", [TEST_AREA_COMPILER], Compilerˉsourceˉlexerˉruns),
         new("Windvale-written declaration parser exposes bounded streaming source views", [TEST_AREA_COMPILER], Compilerˉsourceˉdeclarationˉparserˉruns),
-        new("Windvale-written body parser exposes bounded statement and expression views", [TEST_AREA_COMPILER], Compilerˉsourceˉbodyˉparserˉruns),
+        new("Windvale-written body parser exposes bounded statement and expression views", [TEST_AREA_COMPILER], Compilerˉsourceˉbodyˉparserˉruns, Testˉcost.Extended),
         new("Windvale compiler source sets are canonical, bounded, and portable", [TEST_AREA_COMPILER], Compilerˉsourceˉsetˉruns),
-        new("Windvale compiler import graphs are complete, acyclic, and portable", [TEST_AREA_COMPILER], Compilerˉsourceˉgraphˉruns),
+        new("Windvale compiler import graphs are complete, acyclic, and portable", [TEST_AREA_COMPILER], Compilerˉsourceˉgraphˉruns, Testˉcost.Extended),
         new("Windvale compiler declaration namespaces and signatures bind portably", [TEST_AREA_COMPILER], Compilerˉsourceˉsymbolsˉrun),
         new("Windvale compiler bodies, locals, and calls bind portably", [TEST_AREA_COMPILER], Compilerˉsourceˉbindingsˉrun),
-        new("Windvale compiler lowers typed source into canonical validated WVIR", [TEST_AREA_COMPILER], Compilerˉsourceˉwirˉruns),
-        new("Windvale compiler emits canonical executable WVB from validated WVIR", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉsourceˉwvbˉruns),
-        new("Windvale compiler enforces qualified module boundaries end to end", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉqualifiedˉmodulesˉrun),
+        new("Windvale compiler lowers typed source into canonical validated WVIR", [TEST_AREA_COMPILER], Compilerˉsourceˉwirˉruns, Testˉcost.Extended),
+        new("Windvale compiler emits canonical executable WVB from validated WVIR", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉsourceˉwvbˉruns, Testˉcost.Extended),
+        new("Windvale compiler enforces qualified module boundaries end to end", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉqualifiedˉmodulesˉrun, Testˉcost.Extended),
         new("module codec round-trips exact canonical bytes", [TEST_AREA_BYTECODE], Moduleˉroundˉtrip),
         new("inspector exposes module metadata and disassembly", [TEST_AREA_BYTECODE], Inspectorˉisˉuseful),
         new("bool, if, text literals, and calls execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Additionalˉsemanticsˉrun),
@@ -1157,9 +1157,9 @@ internal static class Program
         new("WVA assembler encodes typed byte and word scalar operations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER], Assemblerˉencodesˉtypedˉscalarˉx64),
         new("WVA assembler rejects malformed and inconsistent source", [TEST_AREA_ASSEMBLER], Assemblerˉrejectsˉinvalidˉsource),
         new("Windvale-written WVA assembler enforces source and token boundaries", [TEST_AREA_ASSEMBLER, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvaˉassemblerˉcoreˉrecognizesˉsource),
-        new("Windvale-written WVA assembler matches Stage 0 semantics and bytes", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvaˉassemblerˉmatchesˉoracle),
+        new("Windvale-written WVA assembler matches Stage 0 semantics and bytes", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvaˉassemblerˉmatchesˉoracle, Testˉcost.Extended),
         new("Windvale linker core scans WVO exactly at the hosted boundary", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉcoreˉscansˉobjects),
-        new("Windvale linker emits verified deterministic images and maps", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉresolvesˉandˉlaysˉout),
+        new("Windvale linker emits verified deterministic images and maps", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉresolvesˉandˉlaysˉout, Testˉcost.Extended),
         new("Stage 0 linker resolves and verifies a canonical flat image", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉproducesˉcanonicalˉflatˉimage),
         new("Stage 0 linker rejects resolution, layout, and relocation failures", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉrejectsˉinvalidˉlinks),
         new("Stage 0 linker contains hostile objects and remains deterministic", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉcontainsˉhostileˉinput),
@@ -1181,9 +1181,13 @@ internal static class Program
         new("reference runtime reports dynamic-value lifetime through aliases and records", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉdynamicˉvalueˉlifetimeˉisˉreported),
         new("reference runtime replays bounded dynamic allocation and coalescing", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Runtimeˉdynamicˉallocatorˉtraceˉisˉreported),
         new("bounded random input never escapes diagnostic boundaries", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_ASSEMBLER], Randomˉinputˉisˉcontained),
-        new(GOLDEN_TEST_NAME, [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch),
+        new(GOLDEN_TEST_NAME, [TEST_AREA_GOLDEN], Goldenˉhashesˉmatch, Testˉcost.Extended),
     ];
 
+    private static readonly Lazy<Exactˉcompilerˉwvbˉfixture> EXACT_COMPILER_WVB =
+        new(Buildˉexactˉcompilerˉwvbˉfixture);
+    private static readonly Lazy<Nativeˉcompilation> EXACT_COMPILER_NATIVE =
+        new(() => X64ˉnativeˉbackend.Compile(EXACT_COMPILER_WVB.Value.Module));
     private static Conformanceˉcontract? Contract;
     private static readonly List<Goldenˉphaseˉtimingˉentry> GOLDEN_PHASE_TIMINGS = [];
     private static bool Collectˉgoldenˉphaseˉtimings;
@@ -1233,6 +1237,13 @@ internal static class Program
             Selection = Selection.Where(Test => Test.Areas.Any(Options.Areas.Contains));
         }
 
+        var Extendedˉexcluded = 0;
+        if (Options.Excludeˉextended)
+        {
+            Extendedˉexcluded = Selection.Count(Test => Test.Cost == Testˉcost.Extended);
+            Selection = Selection.Where(Test => Test.Cost == Testˉcost.Regular);
+        }
+
         var Selectedˉtests = Selection.ToList();
         if (Selectedˉtests.Count == 0)
         {
@@ -1242,7 +1253,8 @@ internal static class Program
                     ? $"filter '{Options.Filter}'"
                     : $"filter '{Options.Filter}' and areas " +
                       $"[{string.Join(", ", Options.Areas.Order(StringComparer.Ordinal))}]";
-            Console.Error.WriteLine($"No tests match {Selectionˉdescription}.");
+            var Costˉdescription = Options.Excludeˉextended ? "regular tests" : "tests";
+            Console.Error.WriteLine($"No {Costˉdescription} match {Selectionˉdescription}.");
             return 64;
         }
 
@@ -1288,6 +1300,10 @@ internal static class Program
             $"Tests: {Selectedˉtests.Count}, Executed: {Timings.Count}, " +
             $"Passed: {Timings.Count - Failures}, Failed: {Failures}, " +
             $"Elapsed: {Suiteˉtimer.Elapsed.TotalSeconds:F3} s");
+        if (Options.Excludeˉextended)
+        {
+            Console.WriteLine($"Extended tests excluded: {Extendedˉexcluded}");
+        }
         if (Options.Timingˉreportˉpath is not null)
         {
             Writeˉtimingˉreport(
@@ -1295,6 +1311,8 @@ internal static class Program
                 Options.Filter,
                 Options.Areas,
                 Options.Failˉfast,
+                Options.Excludeˉextended,
+                Extendedˉexcluded,
                 Selectedˉtests.Count,
                 Suiteˉtimer.ElapsedMilliseconds,
                 Timings);
@@ -1323,6 +1341,7 @@ internal static class Program
         string? Timingˉreportˉpath = null;
         var Areas = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
         var Failˉfast = false;
+        var Excludeˉextended = false;
         var Listˉtests = false;
         var Listˉareas = false;
 
@@ -1396,6 +1415,12 @@ internal static class Program
                 continue;
             }
 
+            if (Argument == "--exclude-extended")
+            {
+                Excludeˉextended = true;
+                continue;
+            }
+
             if (Argument == "--list-tests")
             {
                 Listˉtests = true;
@@ -1413,10 +1438,11 @@ internal static class Program
             return false;
         }
 
-        if (Reportˉpath is not null && (Filter is not null || Areas.Count != 0))
+        if (Reportˉpath is not null &&
+            (Filter is not null || Areas.Count != 0 || Excludeˉextended))
         {
             options = Testˉrunnerˉoptions.Empty;
-            error = "--report requires the complete test suite and cannot be combined with selection options.";
+            error = "--report requires the complete test suite and cannot be combined with selection options or --exclude-extended.";
             return false;
         }
 
@@ -1433,6 +1459,7 @@ internal static class Program
             Filter is not null ||
             Areas.Count != 0 ||
             Failˉfast ||
+            Excludeˉextended ||
             Timingˉreportˉpath is not null))
         {
             options = Testˉrunnerˉoptions.Empty;
@@ -1445,6 +1472,7 @@ internal static class Program
             Filter,
             Areas.ToImmutable(),
             Failˉfast,
+            Excludeˉextended,
             Timingˉreportˉpath,
             Listˉtests,
             Listˉareas);
@@ -1457,7 +1485,7 @@ internal static class Program
         Console.Error.WriteLine(
             "Usage: Windvale.Seed.Tests [--report <path>] [--timing-report <path>]\n" +
             "       Windvale.Seed.Tests [--filter <substring>] [--area <name>]... " +
-            "[--fail-fast] [--timing-report <path>]\n" +
+            "[--fail-fast] [--exclude-extended] [--timing-report <path>]\n" +
             "       Windvale.Seed.Tests --list-tests\n" +
             "       Windvale.Seed.Tests --list-areas\n" +
             "       Windvale.Seed.Tests --compare-reports <first> <second>");
@@ -8395,12 +8423,13 @@ internal static class Program
             Directory.Delete(Directoryˉpath, recursive: true);
         }
 
-        var Compilerˉtoolˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
-            SOURCE_WVB_TOOL_SOURCE,
-            "Source-Wvb-Tool.wv");
-        Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉbytes));
-        var Compilerˉtool = Moduleˉcodec.Readˉandˉverify(Compilerˉtoolˉbytes);
-        var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
+        var Compilerˉfixture = EXACT_COMPILER_WVB.Value;
+        var Compilerˉtoolˉbytes = Compilerˉfixture.Bytes;
+        Equal(
+            SOURCE_WVB_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉbytes.AsSpan()));
+        var Compilerˉtool = Compilerˉfixture.Module;
+        var Compilerˉnative = EXACT_COMPILER_NATIVE.Value;
         Nativeˉshapesˉmatchˉverifiedˉwvb(Compilerˉtool, Compilerˉnative);
         var Compilerˉrecordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(
             Compilerˉnative.Module);
@@ -8527,11 +8556,10 @@ internal static class Program
 
     private static void Nativeˉcompilerˉaotˉtransportˉisˉmeasured()
     {
-        var Compilerˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
-            SOURCE_WVB_TOOL_SOURCE,
-            "Source-Wvb-Tool.wv");
-        var Compilerˉtool = Moduleˉcodec.Readˉandˉverify(Compilerˉbytes);
-        var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
+        var Compilerˉfixture = EXACT_COMPILER_WVB.Value;
+        var Compilerˉbytes = Compilerˉfixture.Bytes;
+        var Compilerˉtool = Compilerˉfixture.Module;
+        var Compilerˉnative = EXACT_COMPILER_NATIVE.Value;
         var Measurement = Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment);
         Equal(Measurement, Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment));
         Equal(27_428_212, Compilerˉnative.Fragment.Code.Length);
@@ -9198,7 +9226,7 @@ internal static class Program
             }
         }
 
-        Compilerˉwvbˉverifierˉpackages(Compilerˉbytes, Compilerˉnative.Fragment);
+        Compilerˉwvbˉverifierˉpackages(Compilerˉbytes.ToArray(), Compilerˉnative.Fragment);
 
         var Aggregateˉoverflowˉdata = new byte[
             Linkˉlimits.LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES - Firstˉobject.Length + 1];
@@ -10147,10 +10175,9 @@ internal static class Program
 
     private static void Nativeˉcompilerˉbootstrapˉreproducesˉstage2()
     {
-        var Compilerˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
-            SOURCE_WVB_TOOL_SOURCE,
-            "Source-Wvb-Tool.wv");
-        var Compilerˉtool = Moduleˉcodec.Readˉandˉverify(Compilerˉbytes);
+        var Compilerˉfixture = EXACT_COMPILER_WVB.Value;
+        var Compilerˉbytes = Compilerˉfixture.Bytes;
+        var Compilerˉtool = Compilerˉfixture.Module;
         var Compilerˉrecords = Compilerˉtool.Module.Types
             .OfType<Recordˉtypeˉdeclaration>()
             .ToImmutableArray();
@@ -10161,7 +10188,7 @@ internal static class Program
             0,
             Compilerˉrecords.Sum(Record =>
                 Record.Fields.Count(Field => Field.Type.Kind == Valueˉtype.Record)));
-        var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
+        var Compilerˉnative = EXACT_COMPILER_NATIVE.Value;
         var Ownership = Compilerˉnative.Module.Descriptorˉownership ??
             throw new InvalidOperationException("The exact native compiler omitted descriptor ownership.");
         Nativeˉdescriptorˉownershipˉverifier.Verify(Compilerˉnative.Module, Ownership);
@@ -12627,11 +12654,12 @@ internal static class Program
             "source-wvb status=Sourceˉwir wir-status=Sourceˉbindings function=0 operation=0",
             Memoryˉdiagnostic);
 
-        var Toolˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
-            SOURCE_WVB_TOOL_SOURCE,
-            "Source-Wvb-Tool.wv");
-        Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
-        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Toolˉfixture = EXACT_COMPILER_WVB.Value;
+        var Toolˉbytes = Toolˉfixture.Bytes;
+        Equal(
+            SOURCE_WVB_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Toolˉbytes.AsSpan()));
+        var Tool = Toolˉfixture.Module;
         var Sourceˉbytes = System.Text.Encoding.UTF8.GetBytes(
             SOURCE_WVB_FUNCTION_ONLY_SOURCE).ToImmutableArray();
         var Output = new StringWriter();
@@ -13155,10 +13183,8 @@ internal static class Program
         Equal(1, Transitiveˉresult.Exitˉcode);
         Contains(Transitiveˉresult.Diagnostics, "status=Unknownˉcall");
 
-        var Toolˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
-            SOURCE_WVB_TOOL_SOURCE,
-            "Source-Wvb-Tool.wv");
-        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Toolˉfixture = EXACT_COMPILER_WVB.Value;
+        var Tool = Toolˉfixture.Module;
         var Sources = new Dictionary<string, ImmutableArray<byte>>(StringComparer.Ordinal)
         {
             ["composition-root.wv"] = System.Text.Encoding.UTF8.GetBytes(
@@ -15188,11 +15214,12 @@ internal static class Program
             "WebAssemblyˉwvbˉcompilerˉcontrolˉsecondˉverify",
             "Iˉcontrol",
             Compilerˉcapacityˉcontrolˉsecondˉsource);
-        var Compilerˉtoolˉwvb = Compileˉwithˉsourceˉwvbˉsuccess(
-            SOURCE_WVB_TOOL_SOURCE,
-            "Source-Wvb-Tool.wv");
-        Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉwvb));
-        var Compilerˉtoolˉverified = Moduleˉcodec.Readˉandˉverify(Compilerˉtoolˉwvb);
+        var Compilerˉtoolˉfixture = EXACT_COMPILER_WVB.Value;
+        var Compilerˉtoolˉwvb = Compilerˉtoolˉfixture.Bytes;
+        Equal(
+            SOURCE_WVB_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉwvb.AsSpan()));
+        var Compilerˉtoolˉverified = Compilerˉtoolˉfixture.Module;
         Equal(413, Compilerˉtoolˉverified.Functions.Length);
         Equal(
             753_669,
@@ -24404,6 +24431,14 @@ internal static class Program
         return Result.Moduleˉbytes.ToArray();
     }
 
+    private static Exactˉcompilerˉwvbˉfixture Buildˉexactˉcompilerˉwvbˉfixture()
+    {
+        var Bytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_TOOL_SOURCE,
+            "Source-Wvb-Tool.wv").ToImmutableArray();
+        return new(Bytes, Moduleˉcodec.Readˉandˉverify(Bytes.AsSpan()));
+    }
+
     private static byte[] Compileˉcompositionˉsuccess(params Sourceˉmoduleˉinput[] dependencies)
     {
         var Result = Seedˉcompiler.Compileˉmodules(
@@ -25803,6 +25838,8 @@ internal static class Program
         string? filter,
         ImmutableHashSet<string> areas,
         bool failˉfast,
+        bool excludeˉextended,
+        int extendedˉexcluded,
         int selected,
         long elapsedˉmilliseconds,
         List<Testˉtimingˉentry> tests)
@@ -25812,6 +25849,8 @@ internal static class Program
             filter,
             [.. areas.Order(StringComparer.Ordinal)],
             failˉfast,
+            excludeˉextended,
+            extendedˉexcluded,
             selected,
             tests.Count,
             elapsedˉmilliseconds,
@@ -26395,10 +26434,17 @@ internal static class Program
         }
     }
 
+    private enum Testˉcost : byte
+    {
+        Regular = 0,
+        Extended = 1,
+    }
+
     private sealed record Testˉcase(
         string Name,
         ImmutableArray<string> Areas,
-        Action Body);
+        Action Body,
+        Testˉcost Cost = Testˉcost.Regular);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate uint Nativeˉdescriptorˉallocatorˉleaf(
@@ -26414,6 +26460,7 @@ internal static class Program
         string? Filter,
         ImmutableHashSet<string> Areas,
         bool Failˉfast,
+        bool Excludeˉextended,
         string? Timingˉreportˉpath,
         bool Listˉtests,
         bool Listˉareas)
@@ -26422,6 +26469,7 @@ internal static class Program
             null,
             null,
             ImmutableHashSet<string>.Empty,
+            false,
             false,
             null,
             false,
@@ -26432,6 +26480,10 @@ internal static class Program
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("outcome")] string Outcome,
         [property: JsonPropertyName("elapsedMilliseconds")] long Elapsedˉmilliseconds);
+
+    private sealed record Exactˉcompilerˉwvbˉfixture(
+        ImmutableArray<byte> Bytes,
+        Verifiedˉmodule Module);
 
     private sealed record Goldenˉphaseˉtimingˉentry(
         [property: JsonPropertyName("name")] string Name,
@@ -26446,6 +26498,8 @@ internal static class Program
         [property: JsonPropertyName("filter")] string? Filter,
         [property: JsonPropertyName("areas")] ImmutableArray<string> Areas,
         [property: JsonPropertyName("failFast")] bool Failˉfast,
+        [property: JsonPropertyName("excludeExtended")] bool Excludeˉextended,
+        [property: JsonPropertyName("extendedExcluded")] int Extendedˉexcluded,
         [property: JsonPropertyName("selected")] int Selected,
         [property: JsonPropertyName("executed")] int Executed,
         [property: JsonPropertyName("elapsedMilliseconds")] long Elapsedˉmilliseconds,

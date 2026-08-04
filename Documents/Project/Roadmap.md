@@ -10,7 +10,9 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 ## Status
 
-This roadmap expresses the active long-term goal and its current best route. The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
+This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
+
+The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle
 

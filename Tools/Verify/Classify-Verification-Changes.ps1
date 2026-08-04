@@ -68,7 +68,16 @@ function Test-LightweightPath {
         return $true
     }
 
-    return $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or $Path -eq 'LICENSE'
+    $IsDocumentationImage = (
+        $Path.StartsWith('Documents/Project/Images/', [StringComparison]::Ordinal) -and
+        [System.IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
+    )
+
+    return (
+        $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
+        $Path -eq 'LICENSE' -or
+        $IsDocumentationImage
+    )
 }
 
 function Test-WebsitePath {

@@ -97,12 +97,13 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
   -Level Fast `
   -TestArea compiler `
   -TestFilter 'exact compiler AOT transport pressure' `
+  -IncludeExtended `
   -FailFast
 ```
 
 ```sh
 VERIFY_LEVEL=fast TEST_AREAS=compiler \
-TEST_FILTER='exact compiler AOT transport pressure' FAIL_FAST=1 \
+TEST_FILTER='exact compiler AOT transport pressure' INCLUDE_EXTENDED=1 FAIL_FAST=1 \
   ./Tools/Verify/Verify-Seed.sh
 ```
 

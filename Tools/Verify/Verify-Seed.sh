@@ -10,12 +10,21 @@ VERIFY_LEVEL=${VERIFY_LEVEL:-development}
 TEST_FILTER=${TEST_FILTER:-}
 TEST_AREAS=${TEST_AREAS:-}
 FAIL_FAST=${FAIL_FAST:-0}
+INCLUDE_EXTENDED=${INCLUDE_EXTENDED:-0}
 TIMING_REPORT_PATH=${TIMING_REPORT_PATH:-}
 TOOL_DLL="$REPOSITORY_ROOT/Tools/Windvale.Tool/bin/$CONFIGURATION/net10.0/windvale.dll"
 TEST_PROJECT="$REPOSITORY_ROOT/Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj"
 OS_TEST_PROJECT="$REPOSITORY_ROOT/Tests/Windvale.Os.Tests/Windvale.Os.Tests.csproj"
 ARTIFACTS="$REPOSITORY_ROOT/artifacts"
 mkdir -p "$ARTIFACTS"
+
+case "$INCLUDE_EXTENDED" in
+    0|1) ;;
+    *)
+        echo 'INCLUDE_EXTENDED must be 0 or 1.' >&2
+        exit 64
+        ;;
+esac
 
 case "$VERIFY_LEVEL" in
     fast)
@@ -31,6 +40,10 @@ case "$VERIFY_LEVEL" in
         fi
         if [ "$FAIL_FAST" != '0' ]; then
             echo 'FAIL_FAST is available only with VERIFY_LEVEL=fast.' >&2
+            exit 64
+        fi
+        if [ "$INCLUDE_EXTENDED" != '0' ]; then
+            echo 'INCLUDE_EXTENDED is available only with VERIFY_LEVEL=fast; standard and qualification already include extended tests.' >&2
             exit 64
         fi
         ;;
@@ -62,6 +75,9 @@ if [ "$VERIFY_LEVEL" = 'fast' ]; then
     if [ "$FAIL_FAST" = '1' ]; then
         set -- "$@" --fail-fast
     fi
+    if [ "$INCLUDE_EXTENDED" != '1' ]; then
+        set -- "$@" --exclude-extended
+    fi
 elif [ "$VERIFY_LEVEL" = 'development' ]; then
     set -- \
         --area assembler \
@@ -71,7 +87,8 @@ elif [ "$VERIFY_LEVEL" = 'development' ]; then
         --area foundation \
         --area linker \
         --area object-model \
-        --area runtime
+        --area runtime \
+        --exclude-extended
 else
     set -- --report "$REPORT_PATH"
 fi
@@ -98,7 +115,11 @@ if [ "$VERIFY_LEVEL" = 'fast' ]; then
             SELECTION_DESCRIPTION="areas [$TEST_AREAS]"
         fi
     fi
-    echo "Windvale Seed fast verification passed for $SELECTION_DESCRIPTION."
+    if [ "$INCLUDE_EXTENDED" = '1' ]; then
+        echo "Windvale Seed fast verification passed including extended tests matching $SELECTION_DESCRIPTION."
+    else
+        echo "Windvale Seed fast verification passed for regular tests matching $SELECTION_DESCRIPTION."
+    fi
     exit 0
 fi
 
@@ -109,7 +130,7 @@ dotnet run \
 
 if [ "$VERIFY_LEVEL" = 'development' ]; then
     echo 'Windvale Seed development verification passed for every regular in-process test.'
-    echo 'The qualification-only golden cross-host contract was not executed.'
+    echo 'Extended integration contracts and the golden cross-host contract were not executed.'
     exit 0
 fi
 if [ "$VERIFY_LEVEL" = 'standard' ]; then

@@ -6,11 +6,13 @@ $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
 $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
+    @{ Name = 'documentation image'; Paths = @('README.md', 'Documents/Project/Images/Progress.png'); Scope = 'lightweight'; Editor = $false; Areas = @() },
     @{ Name = 'editor'; Paths = @('Tools/Editors/Windvale/package.json'); Scope = 'lightweight'; Editor = $true; Areas = @() },
     @{ Name = 'website'; Paths = @('Website/index.html'); Scope = 'website'; Editor = $false; Areas = @() },
     @{ Name = 'website editor'; Paths = @('Tools/Windvale.Playground/Editor/Vite-Config.mjs', 'Tools/Editors/Windvale/package.json'); Scope = 'website'; Editor = $true; Areas = @() },
     @{ Name = 'website and compiler'; Paths = @('Website/site.js', 'Compiler/Reference/Seed-Compiler.cs'); Scope = 'qualification'; Editor = $true; Areas = $AllAreas },
     @{ Name = 'compiler'; Paths = @('Compiler/Reference/Seed-Compiler.cs'); Scope = 'qualification'; Editor = $true; Areas = @('compiler') },
+    @{ Name = 'compiler and documentation image'; Paths = @('Compiler/Reference/Seed-Compiler.cs', 'Documents/Project/Images/Progress.png'); Scope = 'qualification'; Editor = $true; Areas = @('compiler') },
     @{ Name = 'native compiler'; Paths = @('Compiler/Native/X64-Native-Backend.cs'); Scope = 'qualification'; Editor = $false; Areas = @('compiler') },
     @{ Name = 'bytecode'; Paths = @('Runtime/Windvale.Bytecode/Module-Codec.cs'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode') },
     @{ Name = 'native runtime'; Paths = @('Runtime/Windvale.Native/X64-Native-Executor.cs'); Scope = 'qualification'; Editor = $false; Areas = @('runtime') },

@@ -2,10 +2,27 @@
 
 Windvale separates current status, enduring architecture, accepted decisions, executable specifications, historical evidence, and operational records. Start with the smallest source that answers the question; dated decisions and evidence should not be read as the current status page by themselves.
 
+## Where updates belong
+
+Each kind of information has one primary home. Link to that source instead of copying a changing status paragraph into several documents.
+
+| Information | Primary home | Update when |
+| --- | --- | --- |
+| Stable public introduction and working entry points | [Root README](../README.md) | The project's purpose, supported entry points, or top-level navigation changes |
+| Current implemented and qualified state, immediate transfer, and working paths | [Progress](Project/Progress.md) | The measured project state changes |
+| Forward phase gates, sequencing, and next deliverables | [Roadmap](Project/Roadmap.md) | The route, phase gate, or intended order changes |
+| Current normative behavior and formats | [Specifications](../Specifications/README.md) | A contract changes |
+| Durable component ownership and design boundaries | [Architecture](Architecture/) | An enduring boundary changes |
+| Accepted rationale and consequential choices | [Decisions](Decisions/) | A decision is accepted, superseded, or materially amended |
+| Exact completed qualification runs and artifact identities | [Seed verification evidence](Project/Seed-Verification-Evidence.md) | New reproducible evidence completes |
+| Release-facing summary of accepted changes | [Changelog](../CHANGELOG.md) | Accepted work should be visible to release readers |
+
+The Progress page is the single current-state dashboard. The Roadmap can report whether a gate is open or complete, but it should not become a second activity diary. Evidence is historical and append-oriented; specifications and architecture describe the current contract rather than daily progress.
+
 ## Current project state
 
-- [Progress](Project/Progress.md) — concise phase indicators and working paths
-- [Roadmap](Project/Roadmap.md) — phase gates, detailed sequence, and current transfer
+- [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
+- [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
 - [Project vision](Project/Project-Vision.md) — purpose, intended stack, success principles, and non-goals
 - [Open questions](Project/Open-Questions.md) — unresolved choices only
 - [Windvale Database proposal](Project/Windvale-Database-Proposal.md) — EWDB-informed engine/application/service split, language-readiness boundaries, performance-transfer rules, and the implemented Stage 1 read-only experiment; no durable format or product direction is accepted
@@ -56,4 +73,4 @@ Windvale separates current status, enduring architecture, accepted decisions, ex
 - [Bootstrap attribution migration](Project/Bootstrap-Attribution-Migration.md) — completed one-time identity-normalization evidence
 - [Earliest-known claim evidence](Project/Earliest-Known-Claim-Evidence.md) — dated scope and comparison record for the project claim
 
-Accepted decisions and qualification evidence are intentionally historical and cumulative. Update the progress page, roadmap, architecture, and specifications when the current contract changes; do not rewrite an accepted decision to make it look current.
+Accepted decisions and qualification evidence are intentionally historical and cumulative. Put current-state changes in Progress, route changes in the Roadmap, durable boundaries in Architecture, and normative behavior in Specifications. Do not duplicate the same progress narrative across those documents or rewrite an accepted decision to make it look current.

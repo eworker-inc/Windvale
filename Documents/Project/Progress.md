@@ -4,7 +4,9 @@
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Windvale roadmap phase map showing qualified, ongoing, current, in-progress, and planned phases" width="100%"></a>
 
-This is an editorial snapshot of the implemented and qualified project state, not a generated completion meter. Windvale phases overlap: later experiments can produce evidence while an earlier, deliberately open-ended foundation phase continues. The [development roadmap](Roadmap.md), accepted decisions, and [qualification evidence](Seed-Verification-Evidence.md) remain authoritative.
+This is the authoritative current-state dashboard for implemented and qualified project progress, not a generated completion meter. Update it when the measured state, immediate transfer, or working paths change. Windvale phases overlap: later experiments can produce evidence while an earlier, deliberately open-ended foundation phase continues.
+
+The [development roadmap](Roadmap.md) owns the forward sequence and phase gates; [qualification evidence](Seed-Verification-Evidence.md) owns exact completed runs and artifact identities; accepted decisions own rationale. The root README remains a stable public overview and should link here instead of repeating this changing narrative.
 
 ## Indicators
 

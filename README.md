@@ -1,8 +1,8 @@
 # Windvale
 
-![Playful illustrated overview of Windvale's language, runtime, tooling, and operating-system ambitions](Documents/Project/Images/Windvale-Project-Portrait-August-2026.png)
+![Four-panel illustrated Windvale progress snapshot showing the language leading to a compiler, runtime, operating system, and database reader](Documents/Project/Images/Windvale-Project-Progress-2026-08-04.png)
 
-*A playful August 2026 portrait of Windvale's scope: one ambitious computing stack, plenty of open questions, and steady progress from language to operating system.*
+*An illustrated 4 August 2026 progress snapshot: the language grew a compiler, the compiler grew a runtime, the runtime pulled in an operating system, and a database reader joined the family.*
 
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
@@ -12,9 +12,19 @@ At its center is a **new programming language**, together with its compiler, por
 
 **[Visit windvale.ca](https://windvale.ca/)** · **[Try the browser playground](https://windvale.ca/playground/)** · **[Support Windvale](https://windvale.ca/support/)**
 
-## What works today
+## Project status
 
-Windvale Seed is experimental, but several paths already work end to end:
+Windvale Seed is experimental and not production-stable. This README is the stable public overview; changing implementation detail belongs in the documents that own it:
+
+- [Progress dashboard](Documents/Project/Progress.md) — authoritative current implementation and qualification snapshot
+- [Development roadmap](Documents/Project/Roadmap.md) — forward phase gates, sequencing, and next deliverables
+- [Seed implementation](Documents/Architecture/Seed-Implementation.md) — component ownership and implemented boundaries
+- [Specification index](Specifications/README.md) — current language, format, runtime, native, and OS contracts
+- [Qualification evidence](Documents/Project/Seed-Verification-Evidence.md) — exact completed cross-host runs and artifact identities
+
+## Working paths
+
+Several paths already work end to end:
 
 ```text
 Windvale source -> deterministic WVB -> verification -> execution on Windows or Linux
@@ -23,25 +33,15 @@ Portable Sum-Data.wv -> the same canonical WVB -> Windows, Linux, and Windvale O
 Portable Function-Only.wv -> the same canonical WVB -> Windows, Linux, and Windvale OS
 ```
 
-The current Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. A Windvale-written compiler reproduces its canonical bytecode compiler exactly; independently verified native PE/ELF compiler packages and public format-3 project/CLI routes now reproduce it directly on Windows and Debian without loading .NET. Paired fixed-authority applications package the Windvale-written compiler-aligned verifier, and a format-5 Windvale-native build driver now composes that verifier, compiler, and Project 1 parser to publish accepted WVB from explicit sources or a bounded `.wvproj` without loading .NET; dual-host qualification is pending. The Windvale-owned ABI-22 x86-64 selector now algorithmically lowers bounded metered `i32`/`bool` control flow—including locals, checked arithmetic, comparisons, forward and backward jumps, conditionals, loops, early returns, and one direct helper-call boundary with up to four scalar parameters—into the exact canonical WVO; broader call graphs, backend transfer, and dual-host qualification remain. Cross-host-qualified Probe 39 adds a private four-interrupt HPET-calibrated local-APIC preemption proof across three protected roots. Cross-host-qualified Probe 40 adds Windvale-owned policy plus WVA-owned generation-safe non-tail client memory-object release, zeroing, and same-root reuse while a later directory object remains live. C# remains the bootstrap, complete x64 backend, host adapter, package constructor, and recovery implementation while the remaining retirement gates are completed.
-
-Windvale is not production-stable. Native compiler execution, the general native toolchain, broader runtime services, and the operating system remain active milestones. For current detail, use the authoritative documents instead of treating this overview as a cumulative status log:
-
-- [Progress dashboard](Documents/Project/Progress.md) — concise indicators and working paths
-- [Development roadmap](Documents/Project/Roadmap.md) — phase gates, sequencing, and current focus
-- [Seed implementation](Documents/Architecture/Seed-Implementation.md) — component ownership and implemented boundaries
-- [Specification index](Specifications/README.md) — current language, format, runtime, native, and OS contracts
-- [Qualification evidence](Documents/Project/Seed-Verification-Evidence.md) — exact cross-host history and artifact identities
+The Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. Windvale-written compiler and native-tool paths are already real, while broader backend transfer, runtime services, and Windvale OS remain active milestones. C# and .NET stay as the explicit bootstrap and recovery path until the documented native-retirement gate is qualified on Windows and Linux.
 
 ## Browser playground
 
-The experimental Stage 0 playground compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the C# reference compiler and interpreter as the current semantic oracle, produces canonical WVB, and exposes only explicitly checked console and diagnostic capabilities. Its bounded portable subset is also lowered by the Windvale-authored backend and executed in a disposable Web Worker for differential evidence.
-
-Cross-host-qualified `windows-x64-console-v1` and `linux-x64-console-v1` targets package capability-free scalar programs as deterministic import-free PE32+ and sectionless static-PIE ELF applications. Cross-host-qualified version-2 targets add one explicit `console.write_line` capability, serialized and independently verified runtime metadata, exact native output leaves, and real standalone console output. The generated `.exe` and `.elf` run without loading .NET; their compiler and outer-container packagers remain Stage 0 hosted.
+The experimental Stage 0 playground compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the reference compiler and interpreter as the current semantic oracle, produces canonical WVB, and exposes only explicitly checked console and diagnostic capabilities. A separate direct demo runs one pinned Windvale-generated WebAssembly artifact in a disposable worker without loading .NET.
 
 **[Open the Windvale Playground](https://windvale.ca/playground/)**
 
-The separate **[direct WebAssembly demo](https://windvale.ca/playground/wasm-demo/)** starts no Blazor or .NET runtime. It checks and executes one pinned, independently verified Windvale-generated artifact in the same disposable worker and accepts editable text input. Artifact production and the general source compiler path still use Stage 0.
+The **[direct WebAssembly demo](https://windvale.ca/playground/wasm-demo/)** checks and executes its independently verified artifact and accepts editable text input. Artifact production and the general source compiler path still use Stage 0.
 
 Run it locally:
 
@@ -51,7 +51,7 @@ dotnet run --project Tools/Windvale.Playground
 
 The [playground host specification](Specifications/Browser-Playground.md) defines its limits and non-claims. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
 
-The separate [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) proves the first lower layer in Windvale source: portable `.wv` code revalidates canonical WVB and emits deterministic import-free Wasm with checked scalar/control, fixed-memory value, and bounded call support. A complete compiler-aligned Windvale verifier proves structure, identities, typed executable flow, reachability, and exact stack contracts. The same portable algorithm now serves both a [standalone hosted verifier profile](Specifications/Windvale-Hosted-Verifier-Application.md) with exact read-only authority and the [Windvale compiler build driver](Specifications/Windvale-Compiler-Build-Driver.md), which verifies its in-memory compiler result before the sole output call. A separate 468,320-byte Wasm-hosted interpreter executes verified scalar WVB plus bounded static data and descriptors, immutable text/bytes operations, strict UTF-8, invariant formatting, deterministic quoting, SHA-256, records, enums, typed defaults, and versioned byte-array entry/return. A three-artifact import-free verifier bundle admits both the exact hosted compiler and a 597,545-byte capability-free WVSS-to-WVB adapter under Node.js without .NET. Reclaiming fixed-arena value storage, compact local-shape metadata, and conservative bounded guest-record tracing now carry the portable compiler to an ordinary 100,000-instruction guest-budget result instead of the former 1,512-value and 37,085-record boundaries. Guest text/bytes heap ownership, complete compilation, browser-worker packaging, and cross-browser qualification remain before the editable playground can switch. The existing direct demo already runs without a .NET runtime.
+The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) and [playground exploration](Documents/Project/WebAssembly-Playground-Exploration.md) describe the implemented profiles, evidence, limits, and remaining route toward a complete editable .NET-free playground. Those documents own the fast-changing backend detail.
 
 ## Quick start
 

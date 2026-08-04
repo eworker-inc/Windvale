@@ -11,6 +11,12 @@ $Cases = @(
         Editor = $false
     },
     @{
+        Name = 'documentation with editorial image'
+        Paths = @('README.md', 'Documents/Project/Images/Windvale-Project-Progress-2026-08-04.png')
+        Scope = 'lightweight'
+        Editor = $false
+    },
+    @{
         Name = 'editor only'
         Paths = @('Tools/Editors/Windvale/package.json')
         Scope = 'lightweight'
@@ -66,7 +72,11 @@ $Cases = @(
     },
     @{
         Name = 'mixed documentation and compiler implementation'
-        Paths = @('README.md', 'Compiler/Reference/Source-Lexer.cs')
+        Paths = @(
+            'README.md',
+            'Documents/Project/Images/Windvale-Project-Progress-2026-08-04.png',
+            'Compiler/Reference/Source-Lexer.cs'
+        )
         Scope = 'qualification'
         Editor = $true
         Homepage = $true

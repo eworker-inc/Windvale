@@ -33,7 +33,9 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
 
 Available Seed areas are `assembler`, `bytecode`, `compiler`, `database`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. `Verify-Changed.ps1` fails closed to all areas for broad or unrecognized implementation changes.
 
-`Development`, `Standard`, and `Qualification` have fixed suites, so omit `-TestArea`, `-TestFilter`, and `-FailFast` at those levels. For the broad regular suite without the very long golden contract, use:
+Fast runs regular tests by default. Tests that execute broad compiler closures, exact-compiler AOT transport, full-stage reproduction, or the golden contract are explicitly extended because a small group dominates suite time. To run one as a focused check, retain the area/filter selection and add `-IncludeExtended`; on Linux set `INCLUDE_EXTENDED=1`. Standard and Qualification always include every extended test.
+
+`Development`, `Standard`, and `Qualification` have fixed suites, so omit `-TestArea`, `-TestFilter`, `-FailFast`, and `-IncludeExtended` at those levels. For the broad regular suite without the extended integration contracts, use:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Development
@@ -45,7 +47,7 @@ Choose the gate that protects the changed boundary:
 | --- | --- |
 | One implementation area or focused fix | `Verify-Changed.ps1` or a filtered `Fast` run |
 | Coherent cross-area development batch | `Development` |
-| Complete in-process conformance candidate | `Standard` |
+| Complete regular and extended in-process candidate | `Standard` |
 | Release, qualification, or changed portable artifact identity | Cross-host `Qualification` |
 | Compiler inventory, project, or convergence change | `Verify-Bootstrap.ps1` or `.sh` once for the final candidate |
 | OS boot, image, firmware, or kernel-seam change | Focused OS tests and the relevant live boot gate |
@@ -62,7 +64,23 @@ On Linux:
 VERIFY_LEVEL=qualification ./Tools/Verify/Verify-Seed.sh
 ```
 
-Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, and `TIMING_REPORT_PATH`; its default is also `development`.
+Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, `INCLUDE_EXTENDED`, and `TIMING_REPORT_PATH`; its default is also `development`.
+
+### Standard and Qualification
+
+`Standard` is the complete in-process candidate gate. It runs every regular and extended Seed test, including the golden contract, then runs the bounded Windvale OS in-process suite and writes the conformance report. It stops before the published command-line, process, filesystem, and native-artifact checks.
+
+`Qualification` begins with that same complete in-process suite, then exercises the published CLI as an external tool. It verifies real file publication and preservation behavior, native Windows and Linux application artifacts, assembler/object/linker routes, malformed and rejected inputs, exact artifact identities, and Windvale-written versus Stage 0 agreement.
+
+The recommended candidate workflow is:
+
+1. Use `Verify-Changed.ps1`, a focused `Fast` selection, or `Development` while editing.
+2. Run `Standard` once after a coherent higher-risk candidate has settled and before presenting it as complete in-process work.
+3. Commit and push the unchanged candidate.
+4. Let GitHub run the independent Windows and pinned-Debian `Qualification` jobs.
+5. Run a local `Qualification` only when diagnosing that gate, preparing a critical release, or changing a boundary whose external process behavior cannot be established by `Standard`.
+
+Do not run each tier sequentially against the same source state. A successful `Standard` already subsumes the local Fast and Development suites. A successful single-host `Qualification` is useful diagnostic evidence, but it is not a cross-host qualification claim; that claim requires the paired Windows and Debian results.
 
 Fast and changed-file runs are development feedback, not qualification evidence. GitHub runs the independent dual-host Qualification gate for implementation and specification changes. Do not duplicate that gate locally merely because a commit or push follows. Record which broader checks were not run and why.
 
