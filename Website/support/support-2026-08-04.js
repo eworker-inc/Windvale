@@ -1,4 +1,4 @@
-import { SUPPORT_CURRENCY, SUPPORT_TIERS } from "../support-data.js";
+import { SUPPORT_CURRENCY, SUPPORT_TIERS } from "../support-data-2026-08-04.js";
 
 const TIER_BY_KEY = new Map(SUPPORT_TIERS.map((Tier) => [Tier.key, Tier]));
 const RECOGNITION_ORDER = Object.freeze([

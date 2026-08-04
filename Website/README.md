@@ -48,7 +48,7 @@ All public pages load the shared `analytics.js` bootstrap for the Google Analyti
 
 ## Configuring support
 
-The support page lives at `/support/`. Its six one-time tiers, USD currency declaration, and public Stripe Payment Link URLs are the only values maintained in `support-data.js`. Empty or invalid checkout URLs fail closed and render as unavailable; the page accepts only public `https://buy.stripe.com/` links. Create all six Stripe prices in USD. Stripe can localize fixed tiers through Adaptive Pricing, while the choose-your-own-amount link remains explicitly USD with a $50 starting amount and a $1–$10,000 range.
+The support page lives at `/support/`. Its six one-time tiers, USD currency declaration, and public Stripe Payment Link URLs are the only values maintained in the versioned `support-data-*.js` module. Version that module and its importing support-page module together when changing public tier data or artwork URLs so deployed browsers cannot retain a stale dependency chain. Empty or invalid checkout URLs fail closed and render as unavailable; the page accepts only public `https://buy.stripe.com/` links. Create all six Stripe prices in USD. Stripe can localize fixed tiers through Adaptive Pricing, while the choose-your-own-amount link remains explicitly USD with a $50 starting amount and a $1–$10,000 range.
 
 Configure every Stripe Payment Link consistently:
 
