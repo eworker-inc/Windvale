@@ -1,14 +1,14 @@
 module Linkerˉconsoleˉapplicationˉconstruction profile portable;
 
-import Foundationˉbyteˉconstruction;
-import Linkerˉconsoleˉapplicationˉplan;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Linkerˉconsoleˉapplicationˉplan as Applicationˉplan;
 
 export fn Consoleˉapplicationˉconstructionˉempty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
 
 export fn Consoleˉapplicationˉconstructionˉzeros(Count: u32) -> bytes {
-    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(0u8, Count);
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
     return Result.Value;
 }
 
@@ -18,7 +18,7 @@ export fn Consoleˉapplicationˉconstructionˉreplace(
     Removedˉbytes: u32,
     Value: bytes
 ) -> bytes {
-    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
         Input, Offset, Removedˉbytes, Value
     );
     return Result.Value;
@@ -544,12 +544,12 @@ export fn Consoleˉapplicationˉconstructionˉlinux(
 }
 
 export fn Consoleˉapplicationˉconstruction(Input: bytes) -> bytes {
-    let Planned: Consoleˉapplicationˉplanˉresult = Consoleˉapplicationˉplan(Input);
-    if Planned.Status != Consoleˉapplicationˉplanˉstatus.Valid {
+    let Planned: Applicationˉplan.Consoleˉapplicationˉplanˉresult = Applicationˉplan.Consoleˉapplicationˉplan(Input);
+    if Planned.Status != Applicationˉplan.Consoleˉapplicationˉplanˉstatus.Valid {
         return Consoleˉapplicationˉconstructionˉheader(
             Input,
             40u32,
-            Consoleˉapplicationˉplanˉstatusˉvalue(Planned.Status),
+            Applicationˉplan.Consoleˉapplicationˉplanˉstatusˉvalue(Planned.Status),
             Planned.Failureˉoffset,
             0u32,
             0u32,

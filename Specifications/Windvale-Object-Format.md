@@ -12,7 +12,7 @@ This is an early-development format without a backward-compatibility promise. Re
 - Counts, indices, sizes, alignments, and offsets use `u32`; relocation addends use `i32`.
 - Names are length-prefixed strict UTF-8 but must also satisfy the ASCII machine-name grammar below.
 - Every reserved or flags field must be zero.
-- A complete object is limited by the caller-selected admission profile. Standard admission is 4 MiB; explicit large-native admission is 20 MiB.
+- A complete object is limited by the caller-selected admission profile. Standard admission is 4 MiB; explicit large-native admission is 32 MiB.
 - Readers use checked range arithmetic and reject trailing bytes.
 
 The admission profile is not encoded in WVO. A file therefore cannot elevate its own limits: every reader, writer, verifier, and downstream linker must receive large-native authority explicitly. Both profiles use the same canonical WVO 1.0 encoding, so choosing large-native admission does not create a second object format or change bytes that already fit standard admission.
@@ -47,7 +47,7 @@ repeat section count:
   bytes  data
 ```
 
-Sections are strictly ordered by kind, then ordinal name, and names are unique. Alignment is a power of two from 1 through 4,096. Code, read-only-data, and writable-data sections require `memory size == data length`. A zero-fill section has no encoded data and a nonzero memory size. Under standard admission, total encoded section data is limited to 4 MiB and materialized plus zero-fill memory is limited to 16 MiB. Under large-native admission, both limits are 20 MiB. Version 1.0 derives access policy from the kind and has no arbitrary section flags.
+Sections are strictly ordered by kind, then ordinal name, and names are unique. Alignment is a power of two from 1 through 4,096. Code, read-only-data, and writable-data sections require `memory size == data length`. A zero-fill section has no encoded data and a nonzero memory size. Under standard admission, total encoded section data is limited to 4 MiB and materialized plus zero-fill memory is limited to 16 MiB. Under large-native admission, both limits are 32 MiB. Version 1.0 derives access policy from the kind and has no arbitrary section flags.
 
 ## Symbols
 
@@ -96,8 +96,8 @@ Section and symbol names are 1 through 255 ASCII bytes. The first byte is an ASC
 
 - Standard object bytes: 4 MiB
 - Standard total object memory: 16 MiB
-- Large-native object bytes: 20 MiB
-- Large-native total object memory: 20 MiB
+- Large-native object bytes: 32 MiB
+- Large-native total object memory: 32 MiB
 - Sections: 64
 - Symbols: 4,096
 - Relocations: 65,536

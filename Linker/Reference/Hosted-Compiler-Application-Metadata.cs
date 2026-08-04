@@ -62,7 +62,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
     internal const int NATIVE_SHA256_OFFSET = 96;
     internal const uint COMPILER_PROFILE_FLAGS = 1;
     internal const uint BUILD_DRIVER_PROFILE_FLAGS = 3;
-    internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 8_000_000_000;
+    internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 48_000_000_000;
 
     private static readonly ImmutableArray<Hostedˉcompilerˉcapabilityˉcontract>
         CAPABILITY_CONTRACTS =

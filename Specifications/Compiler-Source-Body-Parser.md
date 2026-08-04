@@ -10,16 +10,18 @@ The implementation is cross-host qualified under Decision 0027. It imports `Comp
 
 The parser recognizes:
 
-- `let` and `var` locals with one explicit non-void, non-array type and initializer;
-- simple identifier assignment;
-- `if` plus optional block `else`, `while`, nested blocks, return, and expression statements;
+- `let` and `var` locals with an optional explicit non-void, non-array type and one required initializer;
+- simple identifier `=`, `+=`, `-=`, and `*=` assignment;
+- `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, exhaustive `match`/`case`, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
 - integer, string-shape, and boolean literals;
-- qualified names, two-part field access, one call or index postfix;
-- unary `-` and `!`;
-- `==`/`!=`, comparisons, `+`/`-`, and `*` with the Stage 0 precedence/associativity rules;
+- qualified names, field access, one call or index postfix, named record literals, variant constructors, and bounded builder construction;
+- unary `-`, `!`, `~`, and consuming `freeze`;
+- `||`, `&&`, bitwise `|`/`^`/`&`, equality, comparisons, shifts, addition/subtraction, and multiplication/division/remainder with the Stage 0 precedence and left-associativity rules;
 - parenthesized expressions without a synthetic group node.
 
-This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment remains limited to the simple-name form accepted by Stage 0.
+This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, and `For = 12`; expression kinds append `Builder = 11`. Semantic lowering proves exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
+
+An inferred local publishes `Unknown` as its syntax type kind and zero type-span length. This is an explicit parser representation of an omitted annotation, not a semantic value shape; typed WVIR construction resolves it from the initializer. Comma-separated parameter, call-argument, positional-constructor, named-record-field, and static-data lists accept one final trailing comma under the Seed grammar. `Namedˉrecord = 10` is appended to the expression-kind contract. The named form is recognized only when a qualified name is followed by `{ Identifier :`, so an ordinary condition followed by its block remains unambiguous.
 
 ## Immutable views
 
@@ -27,7 +29,7 @@ This is syntax only. A string view retains its source bytes rather than decoding
 
 `Compilerˉsourceˉexpression` records the root kind/operator, whole span, literal/name/operator payload span, first and second child spans, call-argument interior/count, numeric classification/value, boolean value, next cursor, node count/tree depth, and first failure evidence.
 
-These records are flat scalar/enum data. They do not own child records or runtime handles. To traverse a child, derive its position from a known parent position with `Compilerˉbodyˉpositionˉbetween`, then parse the bounded child span. Call arguments are streamed from the recorded interior rather than retained as a collection.
+These records are flat scalar/enum data. They do not own child records or runtime handles. To traverse a child, derive its position from a known parent position with `Compilerˉbodyˉpositionˉbetween`, then parse the bounded child span. Call arguments and named-record field/value pairs are streamed from the recorded interior rather than retained as a collection. An `else if` stores the nested `if` statement as its second span; consumers accept that one-statement span recursively as well as ordinary brace-delimited block spans.
 
 `Compilerˉsourceˉbodyˉsummary` reports functions, top-level statements, total statements, expression nodes, maximum statement/expression depths, final cursor, and failure evidence.
 
@@ -67,24 +69,26 @@ The pass enforces:
 - the lower-layer 4,194,304-byte source and 262,144-token ceilings;
 - at most 64 statement nestings;
 - at most 64 expression nestings/tree depth;
-- at most 64 call arguments and 16 qualified-name parts;
+- at most 64 call arguments or named-record fields and 16 qualified-name parts;
 - at most 4,096 statements per function body;
 - at most 4,096 nodes in one expression and 262,144 expression nodes in one body.
 
 The first failure is deterministic and includes lexical status, expected/found token kinds, and byte/line/column position. Recoverable multi-error diagnostics remain deferred to semantic compiler pressure.
 
-## Qualified milestone artifacts and evidence
+## Current deterministic artifacts and retained evidence
 
-- `Source-Body-Parser.wvb`: 175,055 bytes, SHA-256 `3df42c7b6e81343194340b8f6f44e44fb83f3d6f18c249c9d9ed4e58df69ec73`.
-- `Source-Body-Parser-Demo.wvb`: 179,955 bytes, SHA-256 `afa07f843679e89f84a5a55887af834575d43d4a3ac3f1a76cd4395a103e62b6`, result `0` under 30,000,000 instructions.
-- `Source-Body-Parser-Tool.wvb`: 176,131 bytes, SHA-256 `342fadc0886e5b8b2910cb65c8495730a902364a526fd34df58c574a32a91890`.
+- `Source-Body-Parser.wvb`: 243,094 bytes, SHA-256 `a9fb34ab9d6fe7a8fd44c81f1ea03f890664c131a4f0a085959910379c3655a6`.
+- `Source-Body-Parser-Demo.wvb`: 249,265 bytes, SHA-256 `18eac99ee5f93a8d179dc23746a3d63b46797d3ab8c4cd55fd6792f5a9a5ae77`, result `0` under 30,000,000 instructions.
+- `Source-Body-Parser-Tool.wvb`: 242,304 bytes, SHA-256 `841e14f4a4dd209658d8d0e123dbfa8730d58718dc139c6702964420259e7cd5`.
+
+These are the current local deterministic identities after initializer inference, named-record parsing, recursive `else if`, loop-control statements, short-circuit operators, and compound assignment. Cross-host qualification remains required before they replace the retained qualified baseline claim.
 
 The real-source reports are:
 
 ```text
-source bodies status=Valid functions=17 top-level=111 statements=602 expression-nodes=1670 statement-depth=17 expression-depth=5 offset=45589
-source bodies status=Valid functions=25 top-level=245 statements=615 expression-nodes=2366 statement-depth=12 expression-depth=4 offset=70592
-source bodies status=Valid functions=39 top-level=237 statements=523 expression-nodes=2520 statement-depth=5 expression-depth=3 offset=69903
+source bodies status=Valid functions=17 top-level=118 statements=686 expression-nodes=1916 statement-depth=17 expression-depth=5 offset=51135
+source bodies status=Valid functions=32 top-level=363 statements=917 expression-nodes=3593 statement-depth=12 expression-depth=5 offset=112328
+source bodies status=Valid functions=47 top-level=338 statements=811 expression-nodes=3576 statement-depth=7 expression-depth=3 offset=109506
 ```
 
 These correspond to the lexer, declaration parser, and body parser. Their ceilings remain respectively 100,000,000, 160,000,000, and 160,000,000 instructions. The body parser was originally cross-host qualified at `ddfa9e3`; Decision 0042's artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's reuse and containment implementation is cross-host qualified at `1a4fca7`.

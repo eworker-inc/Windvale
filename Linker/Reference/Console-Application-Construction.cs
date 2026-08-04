@@ -28,9 +28,9 @@ internal static class Consoleˉapplicationˉconstruction
     internal const int SEGMENT_BYTES = 12;
     internal const int WINDOWS_RESPONSE_BYTES = 834;
     internal const int LINUX_RESPONSE_BYTES = 4_454;
-    internal const int CONSTRUCTOR_CANONICAL_SIZE = 30_202;
+    internal const int CONSTRUCTOR_CANONICAL_SIZE = 29_146;
     internal const string CONSTRUCTOR_CANONICAL_SHA256 =
-        "43f1537c4c4038824512972173e0a5c8acc4e74710d315a5b7498a6dae668bb2";
+        "437e1c2ec72e96cf19c6a29143665599d6f8044b942f1a841651513405c6b727";
 
     private const string REQUEST_NAME = "console-application-construction-request.bin";
     private const string CONSTRUCTOR_RESOURCE =

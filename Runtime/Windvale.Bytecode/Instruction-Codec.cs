@@ -102,6 +102,10 @@ public static class Instructionˉcodec
                     Offset += sizeof(uint);
                     break;
                 case Opcode.Enumˉconst:
+                case Opcode.Variantˉcreate:
+                case Opcode.Variantˉisˉcase:
+                case Opcode.Variantˉpayload:
+                case Opcode.Builderˉcreate:
                     Requireˉoperand(code, Offset, sizeof(uint) * 2, functionˉname, Start);
                     Unsignedˉoperand = BinaryPrimitives.ReadUInt32LittleEndian(code[Offset..]);
                     Offset += sizeof(uint);
@@ -138,7 +142,11 @@ public static class Instructionˉcodec
             Opcode.I32ˉconst => 5,
             Opcode.I64ˉconst or Opcode.U64ˉconst => 9,
             Opcode.Boolˉconst or Opcode.U8ˉconst => 2,
-            Opcode.Enumˉconst => 9,
+            Opcode.Enumˉconst or
+            Opcode.Variantˉcreate or
+            Opcode.Variantˉisˉcase or
+            Opcode.Variantˉpayload or
+            Opcode.Builderˉcreate => 9,
             Opcode.Textˉconst or
             Opcode.U32ˉconst or
             Opcode.Bytesˉconst or

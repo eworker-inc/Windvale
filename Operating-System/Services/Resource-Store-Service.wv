@@ -1,6 +1,6 @@
 module Resourceˉstoreˉservice profile hosted;
 
-import Resourceˉstore;
+import Resourceˉstore as Resourceˉstore;
 
 capability file.read_bytes;
 
@@ -9,9 +9,9 @@ data Configurationˉname: text = "boot:main.configuration";
 
 export fn Main() -> i32 {
     let Store: bytes = file.read_bytes(Storeˉname);
-    let Result: Resourceˉstoreˉresult = Resourceˉstoreˉlookup(Store, Configurationˉname);
-    if Result.Status != Resourceˉstoreˉstatus.Valid {
-        return Resourceˉstoreˉstatusˉi32(Result.Status);
+    let Result: Resourceˉstore.Resourceˉstoreˉresult = Resourceˉstore.Resourceˉstoreˉlookup(Store, Configurationˉname);
+    if Result.Status != Resourceˉstore.Resourceˉstoreˉstatus.Valid {
+        return Resourceˉstore.Resourceˉstoreˉstatusˉi32(Result.Status);
     }
     if Result.Identifier != 3u32 { return 20; }
     if Result.Kind != 3u32 { return 21; }

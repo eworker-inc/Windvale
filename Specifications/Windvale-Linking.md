@@ -21,7 +21,7 @@ Every object is decoded and independently verified before resolution or layout. 
 
 The aggregate link is limited to 256 sections, 16,384 symbols, and 65,536 relocations. Counts are checked while inputs are loaded so a hostile collection cannot bypass the link-wide limits even when each object is independently valid.
 
-Standard admission retains the qualified contract: each WVO is at most 4 MiB, aggregate input bytes are bounded by 64 such objects, the image is at most 4 MiB, and the map target is `flat-x86-64-v1`. Large-native admission must be requested explicitly: each WVO is at most 20 MiB, aggregate encoded input is at most 20 MiB, the image is at most 20 MiB, and the map target is `flat-x86-64-large-v1`. The same loader, resolver, layout engine, relocation rules, independent verifier, and map writer serve both profiles. A large WVO never selects the larger profile by itself.
+Standard admission retains the qualified contract: each WVO is at most 4 MiB, aggregate input bytes are bounded by 64 such objects, the image is at most 4 MiB, and the map target is `flat-x86-64-v1`. Large-native admission must be requested explicitly: each WVO is at most 32 MiB, aggregate encoded input is at most 32 MiB, the image is at most 32 MiB, and the map target is `flat-x86-64-large-v1`. The same loader, resolver, layout engine, relocation rules, independent verifier, and map writer serve both profiles. A large WVO never selects the larger profile by itself.
 
 ## Symbol resolution
 
@@ -41,7 +41,7 @@ The image represents bytes beginning at the requested base address. Section cont
 
 Before each contribution, the linker aligns the actual address `base address + current image offset` to the section alignment. Alignment gaps contain zero bytes. Materialized sections copy their exact WVO data. Zero-fill sections contribute their declared memory size as zero bytes. Empty sections retain a canonical aligned placement even when they add no bytes.
 
-The complete image is limited to 4 MiB under standard admission and 20 MiB under large-native admission. Every section start, symbol address, and relocation-field address must fit `u32`; the one-past final byte may equal `2^32`. Layout arithmetic is checked and never wraps.
+The complete image is limited to 4 MiB under standard admission and 32 MiB under large-native admission. Every section start, symbol address, and relocation-field address must fit `u32`; the one-past final byte may equal `2^32`. Layout arithmetic is checked and never wraps.
 
 Grouping by kind makes the flat memory policy visible while preserving semantic input order within a kind. Version 1 does not merge same-named sections, discard unused contributions, coalesce constants, reorder by symbol, or insert target-specific headers.
 

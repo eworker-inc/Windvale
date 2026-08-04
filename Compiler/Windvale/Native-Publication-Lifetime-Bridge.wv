@@ -1,6 +1,6 @@
 module Compilerˉnativeˉpublicationˉlifetimeˉbridge profile hosted;
 
-import Compilerˉnativeˉpublicationˉlifetime;
+import Compilerˉnativeˉpublicationˉlifetime as Publicationˉlifetime;
 
 capability file.read_bytes;
 
@@ -8,7 +8,7 @@ data Requestˉname: text = "native-publication-lifetime-request.bin";
 
 export fn Main() -> bytes {
     let Input: bytes = file.read_bytes(Requestˉname);
-    let Plan: Nativeˉpublicationˉlifetimeˉresult =
-        Nativeˉpublicationˉlifetimeˉplan(Input);
+    let Plan: Publicationˉlifetime.Nativeˉpublicationˉlifetimeˉresult =
+        Publicationˉlifetime.Nativeˉpublicationˉlifetimeˉplan(Input);
     return Plan.Value;
 }

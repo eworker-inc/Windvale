@@ -312,14 +312,17 @@ const EXPECTED = [
         name: "compiler-capacity Windvale WVB verifier bundle",
         path: process.argv[60],
         typedPath: process.argv[61],
+        typedSecondPath: process.argv[67],
         controlPath: process.argv[62],
         inputPath: process.argv[63],
         portableInputPath: process.argv[65],
         sha256: "d61fe8f1091429d64ba425670ad4d85608f1efcc8bc71ad8904f3a7691ded677",
-        typedSha256: "6fc1e02498de6345b441d0f34e52fe9d0c014642fc637f9066623b07b4329240",
+        typedSha256: "a64084987d6890f4c2384ce2aaaa9e724f931cd61d39f3b460fbf9e35714e0ba",
+        typedSecondSha256: "225c489f3db95414480889f8fc725c87b71fed45d504c539c65a418466dd56f0",
         controlSha256: "597c0f8313aac9fbcb1ba50fbcd4e25937f0cc464d090d491570f8eeb559253d",
         bytes: 440583,
-        typedBytes: 282718,
+        typedBytes: 283430,
+        typedSecondBytes: 283430,
         controlBytes: 282718,
         abi: 3,
         kind: 1,
@@ -327,7 +330,7 @@ const EXPECTED = [
     },
     {
         name: "linear-memory reclaiming allocator stress",
-        path: process.argv[67],
+        path: process.argv[68],
         sha256: "5a89412a9f48e883a027da497406747f1c31c8eb0e6533f7103e52a078a8827a",
         bytes: 2399,
         abi: 3,
@@ -336,7 +339,7 @@ const EXPECTED = [
     },
 ];
 
-if (process.argv.length !== 68) {
+if (process.argv.length !== 69) {
     throw new Error(
         "Usage: node Verify-WebAssembly-Engine.mjs " +
             "<add-success.wasm> <add-overflow.wasm> <straight-i32.wasm> " +
@@ -365,7 +368,8 @@ if (process.argv.length !== 68) {
             "<compiler-semantic-verifier.wasm> <compiler-typed-verifier.wasm> " +
             "<compiler-control-verifier.wasm> <windvale-compiler.wvb> " +
             "<bytes-entry-guest.wvb> <windvale-compiler-memory.wvb> " +
-            "<function-only.wv> <runtime-reclaim.wasm>",
+            "<function-only.wv> <compiler-typed-second-verifier.wasm> " +
+            "<runtime-reclaim.wasm>",
     );
 }
 
@@ -1128,6 +1132,11 @@ function verifyRuntime(expected, module, exports, digest) {
             expected.typedSha256,
             expected.typedBytes,
         );
+        const typedSecondExports = compilerPhase(
+            expected.typedSecondPath,
+            expected.typedSecondSha256,
+            expected.typedSecondBytes,
+        );
         const controlExports = compilerPhase(
             expected.controlPath,
             expected.controlSha256,
@@ -1135,38 +1144,45 @@ function verifyRuntime(expected, module, exports, digest) {
         );
         const compiler = readFileSync(expected.inputPath);
         if (
-            compiler.length !== 599_868 ||
+            compiler.length !== 859_555 ||
             createHash("sha256").update(compiler).digest("hex") !==
-                "9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066"
+                "c08f76e998e0280b7c2e3e801a9752f000825c874abeb86e88420c31444d63f9"
         ) {
             throw new Error(`${expected.inputPath}: the exact compiler WVB identity changed.`);
         }
         requireMemoryResult(
             expected.path,
-            runMemory(exports, compiler, 1_381_756_663),
+            runMemory(exports, compiler, 2_538_949_903),
             0,
-            1_381_756_663,
+            2_538_949_903,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.typedPath,
-            runMemory(typedExports, compiler, 2_434_833_692),
+            runMemory(typedExports, compiler, 1_498_394_475),
             0,
-            2_434_833_692,
+            1_498_394_475,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.typedSecondPath,
+            runMemory(typedSecondExports, compiler, 3_666_795_913),
+            0,
+            3_666_795_913,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.controlPath,
-            runMemory(controlExports, compiler, 1_952_101_000),
+            runMemory(controlExports, compiler, 3_884_234_392),
             0,
-            1_952_101_000,
+            3_884_234_392,
             Uint8Array.from([1]),
         );
         const portableCompiler = readFileSync(expected.portableInputPath);
         if (
-            portableCompiler.length !== 597_545 ||
+            portableCompiler.length !== 857_232 ||
             createHash("sha256").update(portableCompiler).digest("hex") !==
-                "5b819f86ffa05feaae1e27feb0b6fe6eda5034f1b229d4d9917ac7fa8041a0d4"
+                "b5c442b6fc91f8aa0cabd52622c4e5cad492830424595b93bc4f2ca0c04b1ccc"
         ) {
             throw new Error(
                 `${expected.portableInputPath}: the exact portable compiler WVB identity changed.`,
@@ -1174,23 +1190,30 @@ function verifyRuntime(expected, module, exports, digest) {
         }
         requireMemoryResult(
             expected.path,
-            runMemory(exports, portableCompiler, 1_380_577_333),
+            runMemory(exports, portableCompiler, 2_537_643_002),
             0,
-            1_380_577_333,
+            2_537_643_002,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.typedPath,
-            runMemory(typedExports, portableCompiler, 2_430_056_746),
+            runMemory(typedExports, portableCompiler, 1_493_928_972),
             0,
-            2_430_056_746,
+            1_493_928_972,
+            Uint8Array.from([1]),
+        );
+        requireMemoryResult(
+            expected.typedSecondPath,
+            runMemory(typedSecondExports, portableCompiler, 3_651_136_554),
+            0,
+            3_651_136_554,
             Uint8Array.from([1]),
         );
         requireMemoryResult(
             expected.controlPath,
-            runMemory(controlExports, portableCompiler, 1_951_031_795),
+            runMemory(controlExports, portableCompiler, 3_883_165_187),
             0,
-            1_951_031_795,
+            3_883_165_187,
             Uint8Array.from([1]),
         );
     } else if (expected.runtime === "wvb-scalar-interpreter") {
@@ -1425,9 +1448,9 @@ function verifyRuntime(expected, module, exports, digest) {
             runMemory(
                 exports,
                 bytesRequest(portableCompiler, portableCompilerInput, 1, 64),
-                50_000_000,
+                80_000_000,
             ),
-            45_177_347,
+            66_187_926,
             3011,
             1,
         );
@@ -1435,23 +1458,23 @@ function verifyRuntime(expected, module, exports, digest) {
             "portable compiler former allocation boundary",
             runMemory(
                 exports,
-                bytesRequest(portableCompiler, portableCompilerInput, 1_511, 64),
-                50_000_000,
+                bytesRequest(portableCompiler, portableCompilerInput, 1_229, 64),
+                80_000_000,
             ),
-            46_155_795,
+            67_126_106,
             3011,
-            1_511,
+            1_229,
         );
         requireBytesFailure(
             "portable compiler crosses former allocation boundary",
             runMemory(
                 exports,
-                bytesRequest(portableCompiler, portableCompilerInput, 1_512, 64),
-                50_000_000,
+                bytesRequest(portableCompiler, portableCompilerInput, 1_230, 64),
+                80_000_000,
             ),
-            46_156_318,
+            67_126_629,
             3011,
-            1_512,
+            1_230,
         );
         requireBytesFailure(
             "portable compiler crosses guest record reclamation boundary",
@@ -1460,7 +1483,7 @@ function verifyRuntime(expected, module, exports, digest) {
                 bytesRequest(portableCompiler, portableCompilerInput, 100_000, 64),
                 200_000_000,
             ),
-            96_797_247,
+            118_006_709,
             3011,
             100_000,
         );
@@ -1469,10 +1492,10 @@ function verifyRuntime(expected, module, exports, digest) {
             runMemory(
                 exports,
                 bytesRequest(portableCompiler, portableCompilerInput, 20_000_000, 64),
-                50_000_000,
+                80_000_000,
             ),
             3011,
-            50_000_000,
+            80_000_000,
         );
         requireScalarResult(
             "complete scalar guest",

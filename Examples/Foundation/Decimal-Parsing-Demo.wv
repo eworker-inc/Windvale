@@ -1,6 +1,6 @@
 module Foundationˉdecimalˉparsingˉdemo profile portable;
 
-import Foundationˉdecimalˉparsing;
+import Foundationˉdecimalˉparsing as Decimalˉparsing;
 
 data Zero: bytes = [48];
 data Maximum: bytes = [52, 50, 57, 52, 57, 54, 55, 50, 57, 53];
@@ -11,34 +11,34 @@ data Leadingˉzeroes: bytes = [48, 48, 48, 55];
 data Tooˉlong: bytes = [48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48];
 
 export fn Main() -> i32 {
-    let Zeroˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Zero, 0u32, 1u32);
+    let Zeroˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Zero, 0u32, 1u32);
     if !Zeroˉresult.Valid { return 1; }
     if Zeroˉresult.Value != 0u32 { return 2; }
 
-    let Maximumˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Maximum, 0u32, 10u32);
+    let Maximumˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Maximum, 0u32, 10u32);
     if !Maximumˉresult.Valid { return 3; }
     if Maximumˉresult.Value != 4294967295u32 { return 4; }
 
-    let Overflowˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Overflow, 0u32, 10u32);
+    let Overflowˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Overflow, 0u32, 10u32);
     if Overflowˉresult.Valid { return 5; }
-    let Emptyˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Zero, 0u32, 0u32);
+    let Emptyˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Zero, 0u32, 0u32);
     if Emptyˉresult.Valid { return 6; }
-    let Longˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Tooˉlong, 0u32, 11u32);
+    let Longˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Tooˉlong, 0u32, 11u32);
     if Longˉresult.Valid { return 7; }
-    let Nondigitˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Nondigit, 0u32, 3u32);
+    let Nondigitˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Nondigit, 0u32, 3u32);
     if Nondigitˉresult.Valid { return 8; }
 
-    let Framedˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Framed, 1u32, 3u32);
+    let Framedˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Framed, 1u32, 3u32);
     if !Framedˉresult.Valid { return 9; }
     if Framedˉresult.Value != 123u32 { return 10; }
 
-    let Leadingˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Leadingˉzeroes, 0u32, 4u32);
+    let Leadingˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Leadingˉzeroes, 0u32, 4u32);
     if !Leadingˉresult.Valid { return 11; }
     if Leadingˉresult.Value != 7u32 { return 12; }
 
-    let Offsetˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Zero, 2u32, 0u32);
+    let Offsetˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Zero, 2u32, 0u32);
     if Offsetˉresult.Valid { return 13; }
-    let Rangeˉresult: Foundationˉu32ˉparse = Foundationˉu32ˉdecimalˉparse(Zero, 0u32, 2u32);
+    let Rangeˉresult: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Zero, 0u32, 2u32);
     if Rangeˉresult.Valid { return 14; }
     return 0;
 }

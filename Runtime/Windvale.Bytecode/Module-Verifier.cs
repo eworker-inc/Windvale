@@ -25,6 +25,30 @@ public static class Moduleˉverifier
                     "WVB2107",
                     $"Function '{Function.Name}' uses a WVB 1.7 opcode in a WVB 1.6 module.");
             }
+            if (module.Formatˉminorˉversion < Moduleˉcodec.VARIANT_MINOR_VERSION &&
+                Instructions.Any(Instruction =>
+                    Moduleˉcodec.Isˉversionˉ1ˉ9ˉopcode(Instruction.Opcode)))
+            {
+                Fail(
+                    "WVB2107",
+                    $"Function '{Function.Name}' uses a WVB 1.9 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
+            }
+            if (module.Formatˉminorˉversion < Moduleˉcodec.COLLECTION_MINOR_VERSION &&
+                Instructions.Any(Instruction =>
+                    Moduleˉcodec.Isˉversionˉ1ˉ10ˉopcode(Instruction.Opcode)))
+            {
+                Fail(
+                    "WVB2107",
+                    $"Function '{Function.Name}' uses a WVB 1.10 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
+            }
+            if (module.Formatˉminorˉversion < Moduleˉcodec.OPERATOR_MINOR_VERSION &&
+                Instructions.Any(Instruction =>
+                    Moduleˉcodec.Isˉversionˉ1ˉ11ˉopcode(Instruction.Opcode)))
+            {
+                Fail(
+                    "WVB2107",
+                    $"Function '{Function.Name}' uses a WVB 1.11 opcode in a WVB 1.{module.Formatˉminorˉversion} module.");
+            }
 
             Verifyˉfunction(module, Function, Instructions);
             Verifiedˉfunctions.Add(new(Function, Instructions));
@@ -36,7 +60,12 @@ public static class Moduleˉverifier
     private static void Verifyˉmoduleˉmetadata(Bytecodeˉmodule module)
     {
         if (module.Formatˉminorˉversion is not (
-            Moduleˉcodec.BASE_MINOR_VERSION or Moduleˉcodec.MINOR_VERSION))
+            Moduleˉcodec.BASE_MINOR_VERSION or
+            Moduleˉcodec.WIDE_MINOR_VERSION or
+            Moduleˉcodec.MINOR_VERSION or
+            Moduleˉcodec.VARIANT_MINOR_VERSION or
+            Moduleˉcodec.COLLECTION_MINOR_VERSION or
+            Moduleˉcodec.OPERATOR_MINOR_VERSION))
         {
             Fail(
                 "WVB2107",
@@ -57,6 +86,22 @@ public static class Moduleˉverifier
                 Record.Fields.Any(Field => Isˉwide(Field.Type)))))
         {
             Fail("WVB2107", "A WVB 1.6 module contains a WVB 1.7 value type.");
+        }
+
+        if (module.Formatˉminorˉversion < Moduleˉcodec.MINOR_VERSION &&
+            module.Metadata is not null)
+        {
+            Fail("WVB2160", "Module metadata requires WVB 1.8.");
+        }
+        if (module.Formatˉminorˉversion == Moduleˉcodec.MINOR_VERSION &&
+            module.Metadata is null)
+        {
+            Fail("WVB2160", "A WVB 1.8 module must contain module metadata.");
+        }
+        if (module.Formatˉminorˉversion < Moduleˉcodec.VARIANT_MINOR_VERSION &&
+            module.Types.Any(Type => Type is Variantˉtypeˉdeclaration))
+        {
+            Fail("WVB2161", "Nominal variants require WVB 1.9.");
         }
 
         if (!Seedˉnames.Isˉidentifier(module.Name))
@@ -95,10 +140,113 @@ public static class Moduleˉverifier
         }
 
         Verifyˉcapabilities(module);
+        Verifyˉindependentˉmetadata(module);
         Verifyˉdata(module);
         Verifyˉtypes(module);
         Verifyˉfunctionˉmetadata(module);
         Verifyˉexports(module);
+    }
+
+    private static void Verifyˉindependentˉmetadata(Bytecodeˉmodule module)
+    {
+        if (module.Metadata is not { } Metadata)
+        {
+            return;
+        }
+
+        if (!Enum.IsDefined(Metadata.Authority))
+        {
+            Fail("WVB2161", $"Module authority '{Metadata.Authority}' is invalid.");
+        }
+        if (Metadata.Platformˉscopes.IsDefault ||
+            Metadata.Requiredˉcapabilities.IsDefault ||
+            Metadata.Optionalˉcapabilities.IsDefault)
+        {
+            Fail("WVB2162", "Module metadata arrays must be initialized.");
+        }
+        if (Metadata.Platformˉscopes.Length is 0 or > Bytecodeˉlimits.MAX_PLATFORM_SCOPES)
+        {
+            Fail("WVB2162", "Module metadata has an invalid platform-scope count.");
+        }
+        if (Metadata.Requiredˉcapabilities.Length > Bytecodeˉlimits.MAX_CAPABILITY_REQUIREMENTS ||
+            Metadata.Optionalˉcapabilities.Length > Bytecodeˉlimits.MAX_CAPABILITY_REQUIREMENTS)
+        {
+            Fail("WVB2163", "Module metadata has too many capability requirements.");
+        }
+
+        Verifyˉstrictˉordering(Metadata.Platformˉscopes, "platform scope");
+        foreach (var Scope in Metadata.Platformˉscopes)
+        {
+            if (!Seedˉnames.Isˉplatformˉscope(Scope))
+            {
+                Fail("WVB2164", $"Platform scope '{Scope}' is invalid.");
+            }
+        }
+
+        Verifyˉrequirements(Metadata.Requiredˉcapabilities, "required");
+        Verifyˉrequirements(Metadata.Optionalˉcapabilities, "optional");
+        var Requiredˉnames = Metadata.Requiredˉcapabilities
+            .Select(Requirement => Requirement.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var Requirement in Metadata.Optionalˉcapabilities)
+        {
+            if (Requiredˉnames.Contains(Requirement.Name))
+            {
+                Fail(
+                    "WVB2165",
+                    $"Capability '{Requirement.Name}' cannot be both required and optional.");
+            }
+        }
+
+        var Declaredˉnames = module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToArray();
+        var Metadataˉnames = Metadata.Requiredˉcapabilities
+            .Select(Requirement => Requirement.Name)
+            .ToArray();
+        if (!Declaredˉnames.SequenceEqual(Metadataˉnames, StringComparer.Ordinal))
+        {
+            Fail(
+                "WVB2166",
+                "Required capability metadata must exactly match the executable capability declarations.");
+        }
+
+        if ((Metadata.Authority == Moduleˉauthority.System) !=
+            (module.Profile == Moduleˉprofile.System))
+        {
+            Fail("WVB2167", "System authority and the retained system profile must agree.");
+        }
+        if (module.Profile == Moduleˉprofile.Portable &&
+            Metadata.Optionalˉcapabilities.Length != 0)
+        {
+            Fail("WVB2168", "A portable module cannot declare optional hosted capabilities.");
+        }
+    }
+
+    private static void Verifyˉrequirements(
+        ImmutableArray<Capabilityˉrequirement> requirements,
+        string kind)
+    {
+        Verifyˉstrictˉordering(
+            requirements.Select(Requirement => Requirement.Name),
+            $"{kind} capability");
+        foreach (var Requirement in requirements)
+        {
+            if (!Seedˉnames.Isˉcapability(Requirement.Name))
+            {
+                Fail("WVB2169", $"{kind} capability name '{Requirement.Name}' is invalid.");
+            }
+            if (!Capabilityˉcatalog.Tryˉget(Requirement.Name, out _))
+            {
+                Fail("WVB2170", $"{kind} capability '{Requirement.Name}' is not defined by Windvale Seed.");
+            }
+            if (Requirement.Majorˉversion != 1)
+            {
+                Fail(
+                    "WVB2171",
+                    $"{kind} capability '{Requirement.Name}' requires unsupported major version {Requirement.Majorˉversion}.");
+            }
+        }
     }
 
     private static void Verifyˉcapabilities(Bytecodeˉmodule module)
@@ -213,6 +361,10 @@ public static class Moduleˉverifier
             foreach (var Parameterˉtype in Function.Parameterˉtypes)
             {
                 Verifyˉvalueˉshape(module, Parameterˉtype, allowˉvoid: false, "function parameter");
+                if (Parameterˉtype.Kind == Valueˉtype.Builder)
+                {
+                    Fail("WVB2167", $"Function '{Function.Name}' has a builder parameter.");
+                }
             }
 
             foreach (var Localˉtype in Function.Localˉtypes)
@@ -221,6 +373,10 @@ public static class Moduleˉverifier
             }
 
             Verifyˉvalueˉshape(module, Function.Returnˉtype, allowˉvoid: true, "function return");
+            if (Function.Returnˉtype.Kind == Valueˉtype.Builder)
+            {
+                Fail("WVB2167", $"Function '{Function.Name}' returns a builder.");
+            }
 
             if (Function.Codeˉoffset != Expectedˉcodeˉoffset)
             {
@@ -291,6 +447,9 @@ public static class Moduleˉverifier
                 case Enumˉtypeˉdeclaration Enum:
                     Verifyˉenumˉtype(Enum);
                     break;
+                case Variantˉtypeˉdeclaration Variant:
+                    Verifyˉvariantˉtype(module, Variant);
+                    break;
                 default:
                     Fail("WVB2158", $"Nominal type '{Type.Name}' has an inconsistent representation.");
                     break;
@@ -316,6 +475,10 @@ public static class Moduleˉverifier
             }
 
             Verifyˉvalueˉshape(module, Field.Type, allowˉvoid: false, "record field");
+            if (Field.Type.Kind == Valueˉtype.Builder)
+            {
+                Fail("WVB2167", $"Record field '{type.Name}.{Field.Name}' cannot contain a builder.");
+            }
             if (Field.Type.Kind == Valueˉtype.Record)
             {
                 Fail("WVB2153", $"Record field '{type.Name}.{Field.Name}' cannot contain a record in Seed.");
@@ -342,6 +505,49 @@ public static class Moduleˉverifier
             if (!Memberˉvalues.Add(Member.Value))
             {
                 Fail("WVB2156", $"Enum type '{type.Name}' repeats value {Member.Value}.");
+            }
+        }
+    }
+
+    private static void Verifyˉvariantˉtype(
+        Bytecodeˉmodule module,
+        Variantˉtypeˉdeclaration type)
+    {
+        if (type.Cases.IsDefault ||
+            type.Cases.Length == 0 ||
+            type.Cases.Length > Bytecodeˉlimits.MAX_VARIANT_CASES)
+        {
+            Fail("WVB2162", $"Variant type '{type.Name}' has an invalid case count.");
+        }
+
+        var Caseˉnames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var Case in type.Cases)
+        {
+            if (!Seedˉnames.Isˉidentifier(Case.Name) || !Caseˉnames.Add(Case.Name))
+            {
+                Fail("WVB2163", $"Variant type '{type.Name}' has an invalid or duplicate case '{Case.Name}'.");
+            }
+
+            if ((Case.Payloadˉname is null) != (Case.Payloadˉtype is null))
+            {
+                Fail("WVB2164", $"Variant case '{type.Name}.{Case.Name}' has inconsistent payload metadata.");
+            }
+            if (Case.Payloadˉtype is not { } Payloadˉtype)
+            {
+                continue;
+            }
+            if (!Seedˉnames.Isˉidentifier(Case.Payloadˉname!))
+            {
+                Fail("WVB2165", $"Variant case '{type.Name}.{Case.Name}' has an invalid payload name.");
+            }
+            Verifyˉvalueˉshape(module, Payloadˉtype, allowˉvoid: false, "variant payload");
+            if (Payloadˉtype.Kind == Valueˉtype.Builder)
+            {
+                Fail("WVB2167", $"Variant case '{type.Name}.{Case.Name}' cannot contain a builder.");
+            }
+            if (Payloadˉtype.Kind == Valueˉtype.Variant)
+            {
+                Fail("WVB2166", $"Variant case '{type.Name}.{Case.Name}' cannot contain a variant in WVB 1.9.");
             }
         }
     }
@@ -541,6 +747,8 @@ public static class Moduleˉverifier
             case Opcode.I32ˉadd:
             case Opcode.I32ˉsubtract:
             case Opcode.I32ˉmultiply:
+            case Opcode.I32ˉdivide:
+            case Opcode.I32ˉremainder:
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.I32);
@@ -552,6 +760,8 @@ public static class Moduleˉverifier
             case Opcode.I64ˉadd:
             case Opcode.I64ˉsubtract:
             case Opcode.I64ˉmultiply:
+            case Opcode.I64ˉdivide:
+            case Opcode.I64ˉremainder:
                 Pop(stack, Valueˉtype.I64, function.Name, instruction.Offset);
                 Pop(stack, Valueˉtype.I64, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.I64);
@@ -563,6 +773,13 @@ public static class Moduleˉverifier
             case Opcode.U32ˉadd:
             case Opcode.U32ˉsubtract:
             case Opcode.U32ˉmultiply:
+            case Opcode.U32ˉdivide:
+            case Opcode.U32ˉremainder:
+            case Opcode.U32ˉbitwiseˉand:
+            case Opcode.U32ˉbitwiseˉor:
+            case Opcode.U32ˉbitwiseˉxor:
+            case Opcode.U32ˉshiftˉleft:
+            case Opcode.U32ˉshiftˉright:
                 Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
                 Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.U32);
@@ -570,7 +787,43 @@ public static class Moduleˉverifier
             case Opcode.U64ˉadd:
             case Opcode.U64ˉsubtract:
             case Opcode.U64ˉmultiply:
+            case Opcode.U64ˉdivide:
+            case Opcode.U64ˉremainder:
+            case Opcode.U64ˉbitwiseˉand:
+            case Opcode.U64ˉbitwiseˉor:
+            case Opcode.U64ˉbitwiseˉxor:
                 Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U64);
+                break;
+            case Opcode.U8ˉbitwiseˉand:
+            case Opcode.U8ˉbitwiseˉor:
+            case Opcode.U8ˉbitwiseˉxor:
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U8);
+                break;
+            case Opcode.U8ˉbitwiseˉnot:
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U8);
+                break;
+            case Opcode.U8ˉshiftˉleft:
+            case Opcode.U8ˉshiftˉright:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U8);
+                break;
+            case Opcode.U32ˉbitwiseˉnot:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U32);
+                break;
+            case Opcode.U64ˉbitwiseˉnot:
+                Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.U64);
+                break;
+            case Opcode.U64ˉshiftˉleft:
+            case Opcode.U64ˉshiftˉright:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
                 Pop(stack, Valueˉtype.U64, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.U64);
                 break;
@@ -630,6 +883,18 @@ public static class Moduleˉverifier
                 Pop(stack, Valueˉtype.U8, function.Name, instruction.Offset);
                 Push(stack, Valueˉtype.Bool);
                 break;
+            case Opcode.Textˉequal:
+            case Opcode.Textˉnotˉequal:
+                Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Text, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bool);
+                break;
+            case Opcode.Bytesˉequal:
+            case Opcode.Bytesˉnotˉequal:
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Pop(stack, Valueˉtype.Bytes, function.Name, instruction.Offset);
+                Push(stack, Valueˉtype.Bool);
+                break;
             case Opcode.Enumˉconst:
                 var Enumˉtype = Getˉenumˉtype(module, instruction, function.Name);
                 if (instruction.Secondˉunsignedˉoperand >= (uint)Enumˉtype.Members.Length)
@@ -661,6 +926,108 @@ public static class Moduleˉverifier
                 }
 
                 Push(stack, Valueˉtype.Text);
+                break;
+            case Opcode.Variantˉcreate:
+                var Createdˉvariant = Getˉvariantˉtype(module, instruction, function.Name);
+                var Createdˉcase = Getˉvariantˉcase(Createdˉvariant, instruction, function.Name);
+                if (Createdˉcase.Payloadˉtype is { } Createdˉpayload)
+                {
+                    Pop(stack, Createdˉpayload, function.Name, instruction.Offset);
+                }
+                Push(stack, Valueˉshape.Forˉvariant((int)instruction.Unsignedˉoperand));
+                break;
+            case Opcode.Variantˉisˉcase:
+                var Testedˉvariant = Getˉvariantˉtype(module, instruction, function.Name);
+                _ = Getˉvariantˉcase(Testedˉvariant, instruction, function.Name);
+                Pop(
+                    stack,
+                    Valueˉshape.Forˉvariant((int)instruction.Unsignedˉoperand),
+                    function.Name,
+                    instruction.Offset);
+                Push(stack, Valueˉtype.Bool);
+                break;
+            case Opcode.Variantˉpayload:
+                var Payloadˉvariant = Getˉvariantˉtype(module, instruction, function.Name);
+                var Payloadˉcase = Getˉvariantˉcase(Payloadˉvariant, instruction, function.Name);
+                var Payloadˉshape = Payloadˉcase.Payloadˉtype.GetValueOrDefault();
+                if (Payloadˉcase.Payloadˉtype is null)
+                {
+                    Fail(
+                        "WVB2227",
+                        $"Function '{function.Name}' reads absent payload from variant case '{Payloadˉvariant.Name}.{Payloadˉcase.Name}'.",
+                        instruction.Offset);
+                }
+                Pop(
+                    stack,
+                    Valueˉshape.Forˉvariant((int)instruction.Unsignedˉoperand),
+                    function.Name,
+                    instruction.Offset);
+                Push(stack, Payloadˉshape);
+                break;
+            case Opcode.Builderˉcreate:
+                var Builderˉelement = Decodeˉcollectionˉelement(
+                    module, instruction.Unsignedˉoperand, function.Name, instruction.Offset);
+                if (instruction.Secondˉunsignedˉoperand is 0 or > Bytecodeˉlimits.MAX_SEQUENCE_ELEMENTS)
+                {
+                    Fail(
+                        "WVB2228",
+                        $"Function '{function.Name}' constructs a builder with invalid maximum {instruction.Secondˉunsignedˉoperand}.",
+                        instruction.Offset);
+                }
+                Push(
+                    stack,
+                    Valueˉshape.Forˉbuilder(
+                        Builderˉelement, instruction.Secondˉunsignedˉoperand));
+                break;
+            case Opcode.Builderˉpush:
+                var Pushedˉelement = Popˉany(stack, function.Name, instruction.Offset);
+                var Pushedˉbuilder = Popˉany(stack, function.Name, instruction.Offset);
+                if (Pushedˉbuilder.Kind != Valueˉtype.Builder ||
+                    Pushedˉbuilder.Elementˉshape != Pushedˉelement)
+                {
+                    Fail(
+                        "WVB2229",
+                        $"Function '{function.Name}' pushes an incompatible builder element.",
+                        instruction.Offset);
+                }
+                Push(stack, Pushedˉbuilder);
+                break;
+            case Opcode.Builderˉfreeze:
+                var Frozenˉbuilder = Popˉany(stack, function.Name, instruction.Offset);
+                if (Frozenˉbuilder.Kind != Valueˉtype.Builder)
+                {
+                    Fail(
+                        "WVB2230",
+                        $"Function '{function.Name}' freezes a non-builder value.",
+                        instruction.Offset);
+                }
+                Push(
+                    stack,
+                    Valueˉshape.Forˉsequence(
+                        Frozenˉbuilder.Elementˉshape, Frozenˉbuilder.Maximum));
+                break;
+            case Opcode.Sequenceˉlength:
+                var Lengthˉsequence = Popˉany(stack, function.Name, instruction.Offset);
+                if (Lengthˉsequence.Kind != Valueˉtype.Sequence)
+                {
+                    Fail(
+                        "WVB2231",
+                        $"Function '{function.Name}' reads the length of a non-sequence value.",
+                        instruction.Offset);
+                }
+                Push(stack, Valueˉtype.U32);
+                break;
+            case Opcode.Sequenceˉelement:
+                Pop(stack, Valueˉtype.U32, function.Name, instruction.Offset);
+                var Indexedˉsequence = Popˉany(stack, function.Name, instruction.Offset);
+                if (Indexedˉsequence.Kind != Valueˉtype.Sequence)
+                {
+                    Fail(
+                        "WVB2232",
+                        $"Function '{function.Name}' indexes a non-sequence value.",
+                        instruction.Offset);
+                }
+                Push(stack, Indexedˉsequence.Elementˉshape);
                 break;
             case Opcode.I32ˉformat:
                 Pop(stack, Valueˉtype.I32, function.Name, instruction.Offset);
@@ -923,6 +1290,40 @@ public static class Moduleˉverifier
         return null!;
     }
 
+    private static Variantˉtypeˉdeclaration Getˉvariantˉtype(
+        Bytecodeˉmodule module,
+        Decodedˉinstruction instruction,
+        string functionˉname)
+    {
+        if (instruction.Unsignedˉoperand >= (uint)module.Types.Length ||
+            module.Types[(int)instruction.Unsignedˉoperand] is not Variantˉtypeˉdeclaration Variant)
+        {
+            Fail(
+                "WVB2228",
+                $"Function '{functionˉname}' references invalid variant type {instruction.Unsignedˉoperand}.",
+                instruction.Offset);
+            return null!;
+        }
+
+        return Variant;
+    }
+
+    private static Variantˉcaseˉdeclaration Getˉvariantˉcase(
+        Variantˉtypeˉdeclaration variant,
+        Decodedˉinstruction instruction,
+        string functionˉname)
+    {
+        if (instruction.Secondˉunsignedˉoperand >= (uint)variant.Cases.Length)
+        {
+            Fail(
+                "WVB2229",
+                $"Function '{functionˉname}' references invalid case {instruction.Secondˉunsignedˉoperand} on variant '{variant.Name}'.",
+                instruction.Offset);
+        }
+
+        return variant.Cases[(int)instruction.Secondˉunsignedˉoperand];
+    }
+
     private static void Popˉparameters(
         List<Valueˉshape> stack,
         ImmutableArray<Valueˉshape> parameters,
@@ -1082,19 +1483,50 @@ public static class Moduleˉverifier
         {
             Fail(
                 "WVB2107",
-                $"Value type '{shape.Kind}' requires WVB 1.{Moduleˉcodec.MINOR_VERSION} for a {position}.");
+                $"Value type '{shape.Kind}' requires WVB 1.{Moduleˉcodec.WIDE_MINOR_VERSION} for a {position}.");
         }
 
-        if (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum)
+        if (shape.Kind == Valueˉtype.Variant &&
+            module.Formatˉminorˉversion < Moduleˉcodec.VARIANT_MINOR_VERSION)
+        {
+            Fail("WVB2107", $"Value type 'Variant' requires WVB 1.9 for a {position}.");
+        }
+
+        if (shape.Kind is Valueˉtype.Sequence or Valueˉtype.Builder)
+        {
+            if (module.Formatˉminorˉversion < Moduleˉcodec.COLLECTION_MINOR_VERSION)
+            {
+                Fail("WVB2107", $"Value type '{shape.Kind}' requires WVB 1.10 for a {position}.");
+            }
+            if (shape.Maximum is 0 or > Bytecodeˉlimits.MAX_SEQUENCE_ELEMENTS)
+            {
+                Fail("WVB2245", $"Collection maximum {shape.Maximum} is invalid for a {position}.");
+            }
+            if (shape.Elementˉshape.Kind is Valueˉtype.Void or Valueˉtype.Sequence or Valueˉtype.Builder)
+            {
+                Fail("WVB2246", $"Collection element type '{shape.Elementˉshape}' is invalid for a {position}.");
+            }
+            Verifyˉvalueˉshape(module, shape.Elementˉshape, allowˉvoid: false, $"{position} element");
+            if (shape.Nominalˉtypeˉindex != -1)
+            {
+                Fail("WVB2243", $"Collection type '{shape.Kind}' carries a nominal type index in a {position}.");
+            }
+            return;
+        }
+
+        if (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum or Valueˉtype.Variant)
         {
             if ((uint)shape.Nominalˉtypeˉindex >= (uint)module.Types.Length)
             {
                 Fail("WVB2242", $"Nominal type index {shape.Nominalˉtypeˉindex} is invalid for a {position}.");
             }
 
-            var Expectedˉkind = shape.Kind == Valueˉtype.Record
-                ? Nominalˉtypeˉkind.Record
-                : Nominalˉtypeˉkind.Enum;
+            var Expectedˉkind = shape.Kind switch
+            {
+                Valueˉtype.Record => Nominalˉtypeˉkind.Record,
+                Valueˉtype.Enum => Nominalˉtypeˉkind.Enum,
+                _ => Nominalˉtypeˉkind.Variant,
+            };
             if (module.Types[shape.Nominalˉtypeˉindex].Kind != Expectedˉkind)
             {
                 Fail("WVB2244", $"Nominal type index {shape.Nominalˉtypeˉindex} has the wrong kind for a {position}.");
@@ -1104,6 +1536,51 @@ public static class Moduleˉverifier
         {
             Fail("WVB2243", $"Primitive type '{shape.Kind}' carries a nominal type index in a {position}.");
         }
+        if (shape.Elementˉkind != Valueˉtype.Void ||
+            shape.Elementˉnominalˉtypeˉindex != -1 ||
+            shape.Maximum != 0)
+        {
+            Fail("WVB2247", $"Non-collection type '{shape.Kind}' carries collection metadata in a {position}.");
+        }
+    }
+
+    private static Valueˉshape Decodeˉcollectionˉelement(
+        Bytecodeˉmodule module,
+        uint descriptor,
+        string functionˉname,
+        int instructionˉoffset)
+    {
+        var Tag = descriptor >> 30;
+        var Payload = descriptor & 0x3FFF_FFFFu;
+        Valueˉshape Shape;
+        if (Tag == 0)
+        {
+            if (Payload > byte.MaxValue ||
+                !Enum.IsDefined(typeof(Valueˉtype), (byte)Payload))
+            {
+                Fail("WVB2233", $"Function '{functionˉname}' has invalid collection element descriptor {descriptor}.", instructionˉoffset);
+            }
+            Shape = (Valueˉtype)Payload;
+        }
+        else
+        {
+            if (Payload > int.MaxValue)
+            {
+                Fail("WVB2233", $"Function '{functionˉname}' has invalid collection element descriptor {descriptor}.", instructionˉoffset);
+            }
+            Shape = Tag switch
+            {
+                1 => Valueˉshape.Forˉrecord((int)Payload),
+                2 => Valueˉshape.Forˉenum((int)Payload),
+                _ => Valueˉshape.Forˉvariant((int)Payload),
+            };
+        }
+        Verifyˉvalueˉshape(module, Shape, allowˉvoid: false, "builder constructor element");
+        if (Shape.Kind is Valueˉtype.Void or Valueˉtype.Sequence or Valueˉtype.Builder)
+        {
+            Fail("WVB2233", $"Function '{functionˉname}' has invalid collection element descriptor {descriptor}.", instructionˉoffset);
+        }
+        return Shape;
     }
 
     private static void Fail(string code, string message, int? byteˉoffset = null)

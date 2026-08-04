@@ -119,9 +119,9 @@ public static class Linkˉlimits
     public const int MAX_TOTAL_SYMBOLS = 16_384;
     public const int MAX_TOTAL_RELOCATIONS = 65_536;
     public const int MAX_IMAGE_BYTES = 4 * 1024 * 1024;
-    public const int LARGE_NATIVE_MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+    public const int LARGE_NATIVE_MAX_IMAGE_BYTES = 32 * 1024 * 1024;
     public const int MAX_TOTAL_INPUT_BYTES = MAX_INPUT_OBJECTS * Objectˉlimits.MAX_OBJECT_BYTES;
-    public const int LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES = 20 * 1024 * 1024;
+    public const int LARGE_NATIVE_MAX_TOTAL_INPUT_BYTES = 32 * 1024 * 1024;
     public const int MAX_MAP_BYTES = 1024 * 1024;
 
     public static int Maximumˉimageˉbytes(Linkˉadmissionˉprofile profile) => profile switch

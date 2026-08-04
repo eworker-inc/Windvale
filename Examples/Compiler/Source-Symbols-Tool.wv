@@ -1,6 +1,6 @@
 module Compilerˉsourceˉsymbolsˉtool profile hosted;
 
-import Compilerˉsourceˉsymbols;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -43,7 +43,7 @@ fn Compilerˉsourceˉsymbolsˉtoolˉbuild(Modules: u32) -> bytes {
 }
 
 fn Compilerˉsourceˉsymbolsˉtoolˉsuccess(
-    Summary: Compilerˉsourceˉsymbolˉsummary
+    Summary: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
 ) -> text {
     var Report: text = "source symbols status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -72,7 +72,7 @@ fn Compilerˉsourceˉsymbolsˉtoolˉsuccess(
 }
 
 fn Compilerˉsourceˉsymbolsˉtoolˉfailure(
-    Summary: Compilerˉsourceˉsymbolˉsummary
+    Summary: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
 ) -> text {
     var Report: text = "source symbols status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -103,8 +103,8 @@ export fn Main() -> i32 {
         return 64;
     }
     let Input: bytes = Compilerˉsourceˉsymbolsˉtoolˉbuild(Modules);
-    let Summary: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Input);
-    if Summary.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
+    let Summary: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Summary.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉsymbolsˉtoolˉfailure(Summary));
         return 1;
     }

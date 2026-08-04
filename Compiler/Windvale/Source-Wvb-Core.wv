@@ -1,8 +1,14 @@
 module Compilerˉsourceˉwvb profile portable;
 
-import Compilerˉsourceˉwir;
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉwir as Sourceˉwir;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
-enum Compilerˉsourceˉwvbˉstatus {
+export enum Compilerˉsourceˉwvbˉstatus {
     Valid = 0;
     Sourceˉwir = 1;
     Unsupportedˉmoduleˉcount = 2;
@@ -20,6 +26,7 @@ record Compilerˉsourceˉwvbˉdeclarations {
     Data: u32;
     Records: u32;
     Enums: u32;
+    Variants: u32;
     Functions: u32;
     Exports: u32;
 }
@@ -60,6 +67,7 @@ record Compilerˉsourceˉwvbˉcapabilityˉencoding {
 record Compilerˉsourceˉwvbˉtypeˉencoding {
     Status: Compilerˉsourceˉwvbˉstatus;
     Payload: bytes;
+    Hasˉcollections: bool;
 }
 
 record Compilerˉsourceˉwvbˉanalysis {
@@ -75,6 +83,8 @@ record Compilerˉsourceˉwvbˉfunctionˉencoding {
     Metadata: bytes;
     Code: bytes;
     Failureˉoperation: u32;
+    Hasˉcollections: bool;
+    Hasˉoperators: bool;
 }
 
 record Compilerˉsourceˉwvbˉsymbolˉorder {
@@ -91,13 +101,15 @@ record Compilerˉsourceˉwvbˉsymbolˉorders {
     Recordˉranks: bytes;
     Enumˉentries: bytes;
     Enumˉranks: bytes;
+    Variantˉentries: bytes;
+    Variantˉranks: bytes;
     Functionˉentries: bytes;
     Functionˉranks: bytes;
 }
 
-record Compilerˉsourceˉwvbˉsummary {
+export record Compilerˉsourceˉwvbˉsummary {
     Status: Compilerˉsourceˉwvbˉstatus;
-    Wirˉstatus: Compilerˉsourceˉwirˉstatus;
+    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus;
     Functions: u32;
     Codeˉbytes: u32;
     Bytecode: bytes;
@@ -112,7 +124,7 @@ export fn Compilerˉsourceˉwvbˉempty(Input: bytes) -> bytes {
 export fn Compilerˉsourceˉwvbˉsummaryˉfailure(
     Input: bytes,
     Status: Compilerˉsourceˉwvbˉstatus,
-    Wirˉstatus: Compilerˉsourceˉwirˉstatus,
+    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
     Function: u32,
     Operation: u32
 ) -> Compilerˉsourceˉwvbˉsummary {
@@ -138,6 +150,13 @@ export fn Compilerˉsourceˉwvbˉstring(
     );
 }
 
+export fn Compilerˉsourceˉwvbˉencodedˉstring(Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Value)),
+        Value
+    );
+}
+
 export fn Compilerˉsourceˉwvbˉsection(Kind: u8, Payload: bytes) -> bytes {
     var Result: bytes = Bytesˉfromˉu8(Kind);
     Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
@@ -150,7 +169,8 @@ export fn Compilerˉsourceˉwvbˉshapeˉisˉsupported(
     Shape: u32,
     Allowˉvoid: bool,
     Records: u32,
-    Enums: u32
+    Enums: u32,
+    Variants: u32
 ) -> bool {
     if Shape == 0u32 { return Allowˉvoid; }
     if Shape <= 6u32 { return true; }
@@ -159,6 +179,18 @@ export fn Compilerˉsourceˉwvbˉshapeˉisˉsupported(
     }
     if Shape >= 131072u32 + Records {
         if Shape < 131072u32 + Records + Enums { return true; }
+    }
+    if Shape >= 196608u32 + Records + Enums {
+        if Shape < 196608u32 + Records + Enums + Variants { return true; }
+    }
+    if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
+        Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
+        let Maximum: u32 = Sourceˉwir.Compilerˉsourceˉwirˉcollectionˉmaximum(Shape);
+        if Maximum == 0u32 || Maximum > 4095u32 { return false; }
+        return Compilerˉsourceˉwvbˉshapeˉisˉsupported(
+            Sourceˉwir.Compilerˉsourceˉwirˉcollectionˉelementˉshape(Shape),
+            false, Records, Enums, Variants
+        );
     }
     return false;
 }
@@ -171,6 +203,26 @@ export fn Compilerˉsourceˉwvbˉshape(Shape: u32) -> bytes {
     if Shape == 4u32 { Kind = 2u8; }
     if Shape == 5u32 { Kind = 3u8; }
     if Shape == 6u32 { Kind = 6u8; }
+    if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
+        Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
+        var Collectionˉkind: u8 = 12u8;
+        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
+            Collectionˉkind = 13u8;
+        }
+        var Collectionˉshape: bytes = Bytesˉfromˉu8(Collectionˉkind);
+        Collectionˉshape = Bytesˉconcat(
+            Collectionˉshape,
+            Compilerˉsourceˉwvbˉshape(
+                Sourceˉwir.Compilerˉsourceˉwirˉcollectionˉelementˉshape(Shape)
+            )
+        );
+        return Bytesˉconcat(
+            Collectionˉshape,
+            Bytesˉfromˉu32ˉlittle(
+                Sourceˉwir.Compilerˉsourceˉwirˉcollectionˉmaximum(Shape)
+            )
+        );
+    }
     if Shape < 65536u32 { return Bytesˉfromˉu8(Kind); }
     if Shape < 131072u32 {
         return Bytesˉconcat(
@@ -178,18 +230,164 @@ export fn Compilerˉsourceˉwvbˉshape(Shape: u32) -> bytes {
             Bytesˉfromˉu32ˉlittle(Shape - 65536u32)
         );
     }
+    if Shape < 196608u32 {
+        return Bytesˉconcat(
+            Bytesˉfromˉu8(8u8),
+            Bytesˉfromˉu32ˉlittle(Shape - 131072u32)
+        );
+    }
     return Bytesˉconcat(
-        Bytesˉfromˉu8(8u8),
-        Bytesˉfromˉu32ˉlittle(Shape - 131072u32)
+        Bytesˉfromˉu8(11u8),
+        Bytesˉfromˉu32ˉlittle(Shape - 196608u32)
     );
 }
 
 export fn Compilerˉsourceˉwvbˉprofile(
-    Profile: Compilerˉsourceˉprofile
+    Profile: Sourceˉdeclarations.Compilerˉsourceˉprofile
 ) -> u8 {
-    if Profile == Compilerˉsourceˉprofile.Portable { return 1u8; }
-    if Profile == Compilerˉsourceˉprofile.Hosted { return 2u8; }
+    if Profile == Sourceˉdeclarations.Compilerˉsourceˉprofile.Portable { return 1u8; }
+    if Profile == Sourceˉdeclarations.Compilerˉsourceˉprofile.Hosted { return 2u8; }
     return 3u8;
+}
+
+export fn Compilerˉsourceˉwvbˉmoduleˉmetadata(
+    Source: bytes
+) -> Compilerˉsourceˉwvbˉdataˉencoding {
+    let Moduleˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Source, 0u32, 1u32, 1u32);
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Moduleˉtoken.Nextˉoffset, Moduleˉtoken.Nextˉline, Moduleˉtoken.Nextˉcolumn
+        );
+    let Form: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+        );
+    if Form.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Profile {
+        return Compilerˉsourceˉwvbˉdataˉencoding(
+            Compilerˉsourceˉwvbˉstatus.Valid,
+            Compilerˉsourceˉwvbˉempty(Source)
+        );
+    }
+    if Form.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon {
+        return Compilerˉsourceˉwvbˉdataˉencoding(
+            Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
+            Compilerˉsourceˉwvbˉempty(Source)
+        );
+    }
+
+    let Platform: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Form.Nextˉoffset, Form.Nextˉline, Form.Nextˉcolumn
+        );
+    if Platform.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Platform {
+        return Compilerˉsourceˉwvbˉdataˉencoding(
+            Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
+            Compilerˉsourceˉwvbˉempty(Source)
+        );
+    }
+    var Cursor: u32 = Platform.Nextˉoffset;
+    var Line: u32 = Platform.Nextˉline;
+    var Column: u32 = Platform.Nextˉcolumn;
+    var Platformˉcount: u32 = 0u32;
+    var Platformˉentries: bytes = Compilerˉsourceˉwvbˉempty(Source);
+    var Readingˉplatforms: bool = true;
+    while Readingˉplatforms {
+        let Scope: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Source, Cursor, Line, Column);
+        let Qualified: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
+                Source, Cursor, Line, Column, false
+            );
+        Platformˉentries = Bytesˉconcat(
+            Platformˉentries,
+            Compilerˉsourceˉwvbˉstring(
+                Source, Scope.Offset, Qualified.Nextˉoffset - Scope.Offset
+            )
+        );
+        Platformˉcount = Platformˉcount + 1u32;
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Qualified.Nextˉoffset, Qualified.Nextˉline, Qualified.Nextˉcolumn
+            );
+        Cursor = Separator.Nextˉoffset;
+        Line = Separator.Nextˉline;
+        Column = Separator.Nextˉcolumn;
+        if Separator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            Readingˉplatforms = false;
+        }
+    }
+
+    let Authorityˉkeyword: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Source, Cursor, Line, Column);
+    let Authority: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Authorityˉkeyword.Nextˉoffset, Authorityˉkeyword.Nextˉline, Authorityˉkeyword.Nextˉcolumn
+        );
+    var Authorityˉvalue: u8 = 0u8;
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(Source, Authority.Offset, Authority.Length, "library") {
+        Authorityˉvalue = 1u8;
+    }
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(Source, Authority.Offset, Authority.Length, "application") {
+        Authorityˉvalue = 2u8;
+    }
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(Source, Authority.Offset, Authority.Length, "service") {
+        Authorityˉvalue = 3u8;
+    }
+    if Authority.Kind == Sourceˉlexer.Compilerˉtokenˉkind.System { Authorityˉvalue = 4u8; }
+    let Authorityˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Authority.Nextˉoffset, Authority.Nextˉline, Authority.Nextˉcolumn
+        );
+    Cursor = Authorityˉend.Nextˉoffset;
+    Line = Authorityˉend.Nextˉline;
+    Column = Authorityˉend.Nextˉcolumn;
+
+    var Requiredˉcount: u32 = 0u32;
+    var Requiredˉentries: bytes = Compilerˉsourceˉwvbˉempty(Source);
+    var Optionalˉcount: u32 = 0u32;
+    var Optionalˉentries: bytes = Compilerˉsourceˉwvbˉempty(Source);
+    var Readingˉrequirements: bool = true;
+    while Readingˉrequirements {
+        let Requirementˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Source, Cursor, Line, Column);
+        var Isˉoptional: bool = Requirementˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Optional;
+        if Requirementˉtoken.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Requires {
+            if !Isˉoptional { Readingˉrequirements = false; }
+        }
+        if Readingˉrequirements {
+            let Requirement: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+                Sourceˉdeclarations.Compilerˉparseˉmetadataˉcapabilityˉdeclaration(
+                    Source, Requirementˉtoken, Isˉoptional
+                );
+            var Entry: bytes = Compilerˉsourceˉwvbˉstring(
+                Source, Requirement.Nameˉoffset, Requirement.Nameˉlength
+            );
+            Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+            if Isˉoptional {
+                Optionalˉentries = Bytesˉconcat(Optionalˉentries, Entry);
+                Optionalˉcount = Optionalˉcount + 1u32;
+            } else {
+                Requiredˉentries = Bytesˉconcat(Requiredˉentries, Entry);
+                Requiredˉcount = Requiredˉcount + 1u32;
+            }
+            Cursor = Requirement.Nextˉoffset;
+            Line = Requirement.Nextˉline;
+            Column = Requirement.Nextˉcolumn;
+        }
+    }
+
+    var Payload: bytes = Bytesˉfromˉu8(1u8);
+    Payload = Bytesˉconcat(Payload, Bytesˉfromˉu8(Authorityˉvalue));
+    Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Platformˉcount));
+    Payload = Bytesˉconcat(Payload, Platformˉentries);
+    Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Requiredˉcount));
+    Payload = Bytesˉconcat(Payload, Requiredˉentries);
+    Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Optionalˉcount));
+    Payload = Bytesˉconcat(Payload, Optionalˉentries);
+    return Compilerˉsourceˉwvbˉdataˉencoding(
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload
+    );
 }
 
 export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> u8 {
@@ -244,12 +442,40 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> u8 {
     if Operation == 59u32 { return 101u8; }
     if Operation == 60u32 { return 102u8; }
     if Operation == 61u32 { return 103u8; }
+    if Operation == 65u32 { return 151u8; }
+    if Operation == 66u32 { return 152u8; }
+    if Operation == 67u32 { return 153u8; }
+    if Operation == 68u32 { return 154u8; }
+    if Operation == 69u32 { return 155u8; }
+    if Operation == 70u32 { return 156u8; }
+    if Operation == 71u32 { return 157u8; }
+    if Operation == 72u32 { return 158u8; }
+    if Operation == 73u32 { return 159u8; }
+    if Operation == 74u32 { return 160u8; }
+    if Operation == 75u32 { return 161u8; }
+    if Operation == 76u32 { return 162u8; }
+    if Operation == 77u32 { return 167u8; }
+    if Operation == 78u32 { return 168u8; }
+    if Operation == 79u32 { return 169u8; }
+    if Operation == 80u32 { return 170u8; }
+    if Operation == 81u32 { return 171u8; }
+    if Operation == 82u32 { return 172u8; }
+    if Operation == 83u32 { return 173u8; }
+    if Operation == 84u32 { return 174u8; }
+    if Operation == 85u32 { return 175u8; }
+    if Operation == 86u32 { return 176u8; }
+    if Operation == 87u32 { return 177u8; }
+    if Operation == 88u32 { return 178u8; }
+    if Operation == 89u32 { return 185u8; }
+    if Operation == 90u32 { return 186u8; }
+    if Operation == 91u32 { return 187u8; }
+    if Operation == 92u32 { return 188u8; }
     return 0u8;
 }
 
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 63u32 { return true; }
+        if Operation <= 92u32 { return true; }
     }
     return false;
 }
@@ -259,6 +485,7 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     Shape: u32,
     Operands: u32
 ) -> u32 {
+    if Operation == 64u32 { return 0u32; }
     var Opcodeˉbytes: u32 = 0u32;
     if Operation == 1u32 { Opcodeˉbytes = 5u32; }
     if Operation == 2u32 { Opcodeˉbytes = 2u32; }
@@ -284,6 +511,16 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     }
     if Operation == 62u32 { Opcodeˉbytes = 5u32; }
     if Operation == 63u32 { Opcodeˉbytes = 5u32; }
+    if Operation >= 65u32 {
+        if Operation <= 67u32 { Opcodeˉbytes = 9u32; }
+    }
+    if Operation == 68u32 { Opcodeˉbytes = 9u32; }
+    if Operation >= 69u32 {
+        if Operation <= 72u32 { Opcodeˉbytes = 1u32; }
+    }
+    if Operation >= 73u32 {
+        if Operation <= 92u32 { Opcodeˉbytes = 1u32; }
+    }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -291,13 +528,14 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
 
 export fn Compilerˉsourceˉwvbˉscanˉdeclarations(
     Source: bytes,
-    Header: Compilerˉsourceˉheader
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader
 ) -> Compilerˉsourceˉwvbˉdeclarations {
     var Exports: u32 = 0u32;
     var Capabilities: u32 = 0u32;
     var Data: u32 = 0u32;
     var Records: u32 = 0u32;
     var Enums: u32 = 0u32;
+    var Variants: u32 = 0u32;
     var Functions: u32 = 0u32;
     var Cursor: u32 = Header.Nextˉoffset;
     var Line: u32 = Header.Nextˉline;
@@ -305,51 +543,63 @@ export fn Compilerˉsourceˉwvbˉscanˉdeclarations(
     var Sawˉnonˉimport: bool = false;
     var Reading: bool = true;
     while Reading {
-        let Declaration: Compilerˉsourceˉdeclaration = Compilerˉparseˉnextˉdeclarationˉvalidated(
+        let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
             Source, Cursor, Line, Column, Sawˉnonˉimport
         );
-        if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.End {
+        if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End {
             Reading = false;
         } else {
-            var Supported: bool = Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Import;
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Data {
+            var Supported: bool = Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import;
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Data {
                 Supported = true;
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Function {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function {
                 Supported = true;
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Record {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
                 Supported = true;
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Enum {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
                 Supported = true;
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Capability {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+                Supported = true;
+            }
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
+                Supported = true;
+            }
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Constant {
+                Supported = true;
+            }
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Optionalˉcapability {
                 Supported = true;
             }
             if !Supported {
                 return Compilerˉsourceˉwvbˉdeclarations(
                     Compilerˉsourceˉwvbˉstatus.Unsupportedˉdeclaration,
-                    Capabilities, Data, Records, Enums, Functions, Exports
+                    Capabilities, Data, Records, Enums, Variants, Functions, Exports
                 );
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Capability {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
                 Capabilities = Capabilities + 1u32;
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Data {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Data {
                 Data = Data + 1u32;
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Function {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function {
                 if Declaration.Isˉexported { Exports = Exports + 1u32; }
                 Functions = Functions + 1u32;
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Record {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
                 Records = Records + 1u32;
             }
-            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Enum {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
                 Enums = Enums + 1u32;
             }
-            if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
+            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+                Variants = Variants + 1u32;
+            }
+            if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉclosesˉimports(Declaration) {
                 Sawˉnonˉimport = true;
             }
             Cursor = Declaration.Nextˉoffset;
@@ -362,6 +612,7 @@ export fn Compilerˉsourceˉwvbˉscanˉdeclarations(
         Capabilities, Data,
         Records,
         Enums,
+        Variants,
         Functions,
         Exports
     );
@@ -369,20 +620,21 @@ export fn Compilerˉsourceˉwvbˉscanˉdeclarations(
 
 export fn Compilerˉsourceˉwvbˉscanˉsourceˉsetˉdeclarations(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan
 ) -> Compilerˉsourceˉwvbˉdeclarations {
     var Capabilities: u32 = 0u32;
     var Data: u32 = 0u32;
     var Records: u32 = 0u32;
     var Enums: u32 = 0u32;
+    var Variants: u32 = 0u32;
     var Functions: u32 = 0u32;
     var Exports: u32 = 0u32;
     var Module: u32 = 0u32;
     while Module < Scan.Modules {
-        let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
             Input, Scan, Module
         );
-        let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
             View.Source
         );
         let Current: Compilerˉsourceˉwvbˉdeclarations =
@@ -394,18 +646,19 @@ export fn Compilerˉsourceˉwvbˉscanˉsourceˉsetˉdeclarations(
         Data = Data + Current.Data;
         Records = Records + Current.Records;
         Enums = Enums + Current.Enums;
+        Variants = Variants + Current.Variants;
         Functions = Functions + Current.Functions;
         if Module == 0u32 { Exports = Current.Exports; }
         Module = Module + 1u32;
     }
     return Compilerˉsourceˉwvbˉdeclarations(
         Compilerˉsourceˉwvbˉstatus.Valid,
-        Capabilities, Data, Records, Enums, Functions, Exports
+        Capabilities, Data, Records, Enums, Variants, Functions, Exports
     );
 }
 
 export fn Compilerˉsourceˉwvbˉsymbolˉmodule(
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Entry: u32
 ) -> u32 {
     return Bytesˉreadˉu32ˉlittle(Symbols.Directory, 16u32 + Entry * 24u32);
@@ -413,12 +666,23 @@ export fn Compilerˉsourceˉwvbˉsymbolˉmodule(
 
 export fn Compilerˉsourceˉwvbˉsymbolˉsource(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Entry: u32
-) -> Compilerˉsourceˉsetˉview {
-    return Compilerˉsourceˉsetˉmodule(
+) -> Sourceˉset.Compilerˉsourceˉsetˉview {
+    return Sourceˉset.Compilerˉsourceˉsetˉmodule(
         Input, Scan, Compilerˉsourceˉwvbˉsymbolˉmodule(Symbols, Entry)
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉsymbolˉname(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Entry: u32
+) -> bytes {
+    return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉlookupˉemittedˉname(
+        Symbols.Lookup, Scan.Modules, Entry
     );
 }
 
@@ -427,7 +691,7 @@ export fn Compilerˉsourceˉwvbˉcapabilityˉsignature(
     Offset: u32,
     Length: u32
 ) -> bytes {
-    let Parameters: u32 = Compilerˉsourceˉbindingsˉcapabilityˉarity(
+    let Parameters: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉcapabilityˉarity(
         Source, Offset, Length
     );
     var Result: bytes = Bytesˉfromˉu32ˉlittle(Parameters);
@@ -436,7 +700,7 @@ export fn Compilerˉsourceˉwvbˉcapabilityˉsignature(
         Result = Bytesˉconcat(
             Result,
             Compilerˉsourceˉwvbˉshape(
-                Compilerˉsourceˉwirˉcapabilityˉparameterˉshape(
+                Sourceˉwir.Compilerˉsourceˉwirˉcapabilityˉparameterˉshape(
                     Source, Offset, Length, Parameter
                 )
             )
@@ -446,7 +710,7 @@ export fn Compilerˉsourceˉwvbˉcapabilityˉsignature(
     return Bytesˉconcat(
         Result,
         Compilerˉsourceˉwvbˉshape(
-            Compilerˉsourceˉwirˉcapabilityˉreturnˉshape(
+            Sourceˉwir.Compilerˉsourceˉwirˉcapabilityˉreturnˉshape(
                 Source, Offset, Length
             )
         )
@@ -455,21 +719,21 @@ export fn Compilerˉsourceˉwvbˉcapabilityˉsignature(
 
 export fn Compilerˉsourceˉwvbˉencodeˉcapabilities(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Order: Compilerˉsourceˉwvbˉsymbolˉorder
 ) -> Compilerˉsourceˉwvbˉcapabilityˉencoding {
     var Payload: bytes = Bytesˉfromˉu32ˉlittle(Symbols.Capabilities);
     var Rank: u32 = 0u32;
     while Rank < Symbols.Capabilities {
         let Entry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Order, Rank);
-        let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Entry
         );
-        let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
             View.Source
         );
-        let Declaration: Compilerˉsourceˉdeclaration =
+        let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
             Compilerˉsourceˉwvbˉdeclaration(View.Source, Header, Symbols, Entry);
         let Signature: bytes = Compilerˉsourceˉwvbˉcapabilityˉsignature(
             View.Source, Declaration.Nameˉoffset, Declaration.Nameˉlength
@@ -491,20 +755,14 @@ export fn Compilerˉsourceˉwvbˉencodeˉcapabilities(
 
 export fn Compilerˉsourceˉwvbˉsymbolˉrank(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Entry: u32,
     Kind: u32
 ) -> u32 {
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
     let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
-    let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-        Symbols.Directory, Entryˉoffset + 12u32
-    );
-    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-        Symbols.Directory, Entryˉoffset + 16u32
-    );
-    let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
+    let Name: bytes = Compilerˉsourceˉwvbˉsymbolˉname(
         Input, Scan, Symbols, Entry
     );
     var Rank: u32 = 0u32;
@@ -514,20 +772,12 @@ export fn Compilerˉsourceˉwvbˉsymbolˉrank(
         if Bytesˉreadˉu32ˉlittle(
             Symbols.Directory, Candidateˉoffset + 4u32
         ) == Kind {
-            let Candidateˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Candidateˉoffset + 12u32
+            let Candidateˉname: bytes = Compilerˉsourceˉwvbˉsymbolˉname(
+                Input, Scan, Symbols, Candidate
             );
-            let Candidateˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Candidateˉoffset + 16u32
-            );
-            let Candidateˉview: Compilerˉsourceˉsetˉview =
-                Compilerˉsourceˉwvbˉsymbolˉsource(
-                    Input, Scan, Symbols, Candidate
-                );
-            if Compilerˉsourceˉspansˉcompare(
-                Candidateˉview.Source,
-                Candidateˉnameˉoffset, Candidateˉnameˉlength,
-                View.Source, Nameˉoffset, Nameˉlength
+            if Sourceˉset.Compilerˉsourceˉspansˉcompare(
+                Candidateˉname, 0u32, Bytesˉlength(Candidateˉname),
+                Name, 0u32, Bytesˉlength(Name)
             ) < 0 { Rank = Rank + 1u32; }
         }
         Candidate = Candidate + 1u32;
@@ -537,8 +787,8 @@ export fn Compilerˉsourceˉwvbˉsymbolˉrank(
 
 export fn Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Kind: u32,
     Rank: u32
 ) -> u32 {
@@ -555,13 +805,13 @@ export fn Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
         }
         Entry = Entry + 1u32;
     }
-    return Compilerˉsourceˉwirˉsentinel();
+    return Sourceˉwir.Compilerˉsourceˉwirˉsentinel();
 }
 
 export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Kind: u32
 ) -> Compilerˉsourceˉwvbˉsymbolˉorder {
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
@@ -573,16 +823,9 @@ export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(
         if Bytesˉreadˉu32ˉlittle(
             Symbols.Directory, Candidateˉentry + 4u32
         ) == Kind {
-            let Candidateˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Candidateˉentry + 12u32
+            let Candidateˉname: bytes = Compilerˉsourceˉwvbˉsymbolˉname(
+                Input, Scan, Symbols, Candidate
             );
-            let Candidateˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Candidateˉentry + 16u32
-            );
-            let Candidateˉview: Compilerˉsourceˉsetˉview =
-                Compilerˉsourceˉwvbˉsymbolˉsource(
-                    Input, Scan, Symbols, Candidate
-                );
             var Position: u32 = 0u32;
             var Insertˉat: u32 = Count;
             while Position < Count {
@@ -590,27 +833,17 @@ export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(
                     let Existing: u32 = Bytesˉreadˉu32ˉlittle(
                         Ordered, Position * 4u32
                     );
-                    let Existingˉentry: u32 = 16u32 + Existing * 24u32;
-                    let Existingˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                        Symbols.Directory, Existingˉentry + 12u32
+                    let Existingˉname: bytes = Compilerˉsourceˉwvbˉsymbolˉname(
+                        Input, Scan, Symbols, Existing
                     );
-                    let Existingˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                        Symbols.Directory, Existingˉentry + 16u32
-                    );
-                    let Existingˉview: Compilerˉsourceˉsetˉview =
-                        Compilerˉsourceˉwvbˉsymbolˉsource(
-                            Input, Scan, Symbols, Existing
-                        );
-                    if Compilerˉsourceˉspansˉcompare(
-                        Candidateˉview.Source,
-                        Candidateˉnameˉoffset, Candidateˉnameˉlength,
-                        Existingˉview.Source,
-                        Existingˉnameˉoffset, Existingˉnameˉlength
+                    if Sourceˉset.Compilerˉsourceˉspansˉcompare(
+                        Candidateˉname, 0u32, Bytesˉlength(Candidateˉname),
+                        Existingˉname, 0u32, Bytesˉlength(Existingˉname)
                     ) < 0 { Insertˉat = Position; }
                 }
                 Position = Position + 1u32;
             }
-            let Inserted: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+            let Inserted: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
                 Ordered,
                 Insertˉat * 4u32,
                 0u32,
@@ -621,14 +854,14 @@ export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(
         }
         Candidate = Candidate + 1u32;
     }
-    let Repeated: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(
+    let Repeated: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉrepeat(
         0u8, Entries * 4u32
     );
     var Ranks: bytes = Repeated.Value;
     var Rank: u32 = 0u32;
     while Rank < Count {
         let Entry: u32 = Bytesˉreadˉu32ˉlittle(Ordered, Rank * 4u32);
-        let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+        let Replaced: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
             Ranks,
             Entry * 4u32,
             4u32,
@@ -642,8 +875,8 @@ export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(
 
 export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
 ) -> Compilerˉsourceˉwvbˉsymbolˉorders {
     let Capabilities: Compilerˉsourceˉwvbˉsymbolˉorder =
         Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 2u32);
@@ -653,6 +886,8 @@ export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(
         Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 4u32);
     let Enums: Compilerˉsourceˉwvbˉsymbolˉorder =
         Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 5u32);
+    let Variants: Compilerˉsourceˉwvbˉsymbolˉorder =
+        Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 8u32);
     let Functions: Compilerˉsourceˉwvbˉsymbolˉorder =
         Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(Input, Scan, Symbols, 6u32);
     return Compilerˉsourceˉwvbˉsymbolˉorders(
@@ -660,6 +895,7 @@ export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(
         Data.Entries, Data.Ranks,
         Records.Entries, Records.Ranks,
         Enums.Entries, Enums.Ranks,
+        Variants.Entries, Variants.Ranks,
         Functions.Entries, Functions.Ranks
     );
 }
@@ -696,6 +932,14 @@ export fn Compilerˉsourceˉwvbˉenumˉorder(
     );
 }
 
+export fn Compilerˉsourceˉwvbˉvariantˉorder(
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> Compilerˉsourceˉwvbˉsymbolˉorder {
+    return Compilerˉsourceˉwvbˉsymbolˉorder(
+        Orders.Variantˉentries, Orders.Variantˉranks
+    );
+}
+
 export fn Compilerˉsourceˉwvbˉfunctionˉorder(
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders
 ) -> Compilerˉsourceˉwvbˉsymbolˉorder {
@@ -720,42 +964,39 @@ export fn Compilerˉsourceˉwvbˉorderedˉrank(
 
 export fn Compilerˉsourceˉwvbˉdeclaration(
     Source: bytes,
-    Header: Compilerˉsourceˉheader,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Entry: u32
-) -> Compilerˉsourceˉdeclaration {
+) -> Sourceˉdeclarations.Compilerˉsourceˉdeclaration {
     let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
     let Declarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
         Symbols.Directory, Entryˉoffset + 8u32
     );
-    return Compilerˉparseˉnextˉdeclarationˉvalidated(
+    return Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
         Source, Declarationˉoffset, 1u32, 1u32, true
     );
 }
 
 export fn Compilerˉsourceˉwvbˉdataˉtype(
     Source: bytes,
-    Declaration: Compilerˉsourceˉdeclaration
-) -> Compilerˉsourceˉtypeˉkind {
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
-        Source, Declaration.Declarationˉoffset, 1u32, 1u32
+    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration
+) -> Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind {
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+        Source, Declaration.Nameˉoffset, 1u32, 1u32
     );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
-        Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
-    );
-    let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+    let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
         Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
     );
-    let Type: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+    let Type: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
         Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn
     );
-    if Type.Kind == Compilerˉtokenˉkind.Text {
-        return Compilerˉsourceˉtypeˉkind.Text;
+    if Type.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Text {
+        return Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text;
     }
-    if Type.Kind == Compilerˉtokenˉkind.Bytes {
-        return Compilerˉsourceˉtypeˉkind.Bytes;
+    if Type.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Bytes {
+        return Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Bytes;
     }
-    return Compilerˉsourceˉtypeˉkind.I32ˉarray;
+    return Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32ˉarray;
 }
 
 export fn Compilerˉsourceˉwvbˉlowˉbyte(Value: u32) -> bytes {
@@ -888,10 +1129,10 @@ export fn Compilerˉsourceˉwvbˉdecodeˉtext(
                         Compilerˉsourceˉwvbˉstatus.Invalidˉdata, Empty
                     );
                 }
-                let H0: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 2u32));
-                let H1: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 3u32));
-                let H2: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 4u32));
-                let H3: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 5u32));
+                let H0: u32 = Sourceˉlexer.Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 2u32));
+                let H1: u32 = Sourceˉlexer.Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 3u32));
+                let H2: u32 = Sourceˉlexer.Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 4u32));
+                let H3: u32 = Sourceˉlexer.Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 5u32));
                 var Highˉdigitsˉvalid: bool = H0 <= 15u32;
                 if H1 > 15u32 { Highˉdigitsˉvalid = false; }
                 if H2 > 15u32 { Highˉdigitsˉvalid = false; }
@@ -910,10 +1151,10 @@ export fn Compilerˉsourceˉwvbˉdecodeˉtext(
                                 Compilerˉsourceˉwvbˉstatus.Invalidˉdata, Empty
                             );
                         }
-                        let L0: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 2u32));
-                        let L1: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 3u32));
-                        let L2: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 4u32));
-                        let L3: u32 = Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 5u32));
+                        let L0: u32 = Sourceˉlexer.Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 2u32));
+                        let L1: u32 = Sourceˉlexer.Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 3u32));
+                        let L2: u32 = Sourceˉlexer.Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 4u32));
+                        let L3: u32 = Sourceˉlexer.Compilerˉsourceˉhexˉdigit(Bytesˉreadˉu8(Source, Cursor + 5u32));
                         var Lowˉdigitsˉvalid: bool = L0 <= 15u32;
                         if L1 > 15u32 { Lowˉdigitsˉvalid = false; }
                         if L2 > 15u32 { Lowˉdigitsˉvalid = false; }
@@ -1012,8 +1253,8 @@ export fn Compilerˉsourceˉwvbˉsyntheticˉname(Counter: u32) -> bytes {
 
 export fn Compilerˉsourceˉwvbˉdataˉnameˉexists(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Name: bytes
 ) -> bool {
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
@@ -1021,18 +1262,11 @@ export fn Compilerˉsourceˉwvbˉdataˉnameˉexists(
     while Entry < Entries {
         let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
         if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entryˉoffset + 4u32) == 3u32 {
-            let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Entryˉoffset + 12u32
+            let Symbolˉname: bytes = Compilerˉsourceˉwvbˉsymbolˉname(
+                Input, Scan, Symbols, Entry
             );
-            let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                Symbols.Directory, Entryˉoffset + 16u32
-            );
-            let View: Compilerˉsourceˉsetˉview =
-                Compilerˉsourceˉwvbˉsymbolˉsource(
-                    Input, Scan, Symbols, Entry
-                );
-            if Compilerˉsourceˉspansˉequal(
-                View.Source, Nameˉoffset, Nameˉlength,
+            if Sourceˉset.Compilerˉsourceˉspansˉequal(
+                Symbolˉname, 0u32, Bytesˉlength(Symbolˉname),
                 Name, 0u32, Bytesˉlength(Name)
             ) { return true; }
         }
@@ -1043,8 +1277,8 @@ export fn Compilerˉsourceˉwvbˉdataˉnameˉexists(
 
 export fn Compilerˉsourceˉwvbˉexplicitˉtextˉentry(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Value: bytes
 ) -> u32 {
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
@@ -1052,27 +1286,27 @@ export fn Compilerˉsourceˉwvbˉexplicitˉtextˉentry(
     while Entry < Entries {
         let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
         if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entryˉoffset + 4u32) == 3u32 {
-            let View: Compilerˉsourceˉsetˉview =
+            let View: Sourceˉset.Compilerˉsourceˉsetˉview =
                 Compilerˉsourceˉwvbˉsymbolˉsource(
                     Input, Scan, Symbols, Entry
                 );
-            let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(
+            let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
                 View.Source
             );
-            let Declaration: Compilerˉsourceˉdeclaration =
+            let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
                 Compilerˉsourceˉwvbˉdeclaration(
                     View.Source, Header, Symbols, Entry
                 );
             if Compilerˉsourceˉwvbˉdataˉtype(
                 View.Source, Declaration
-            ) == Compilerˉsourceˉtypeˉkind.Text {
+            ) == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text {
                 let Decoded: Compilerˉsourceˉwvbˉtextˉvalue =
                     Compilerˉsourceˉwvbˉdecodeˉtext(
                         View.Source,
                         Declaration.Bodyˉoffset, Declaration.Bodyˉlength
                     );
                 if Decoded.Status == Compilerˉsourceˉwvbˉstatus.Valid {
-                    if Compilerˉsourceˉspansˉequal(
+                    if Sourceˉset.Compilerˉsourceˉspansˉequal(
                         Decoded.Value, 0u32, Bytesˉlength(Decoded.Value),
                         Value, 0u32, Bytesˉlength(Value)
                     ) { return Entry; }
@@ -1081,7 +1315,7 @@ export fn Compilerˉsourceˉwvbˉexplicitˉtextˉentry(
         }
         Entry = Entry + 1u32;
     }
-    return Compilerˉsourceˉwirˉsentinel();
+    return Sourceˉwir.Compilerˉsourceˉwirˉsentinel();
 }
 
 export fn Compilerˉsourceˉwvbˉtextˉplanˉempty(
@@ -1102,19 +1336,19 @@ export fn Compilerˉsourceˉwvbˉtextˉplanˉfind(
         let Entry: u32 = Index * 12u32;
         let Offset: u32 = Bytesˉreadˉu32ˉlittle(Plan.Directory, Entry + 4u32);
         let Length: u32 = Bytesˉreadˉu32ˉlittle(Plan.Directory, Entry + 8u32);
-        if Compilerˉsourceˉspansˉequal(
+        if Sourceˉset.Compilerˉsourceˉspansˉequal(
             Plan.Values, Offset, Length,
             Value, 0u32, Bytesˉlength(Value)
         ) { return Index; }
         Index = Index + 1u32;
     }
-    return Compilerˉsourceˉwirˉsentinel();
+    return Sourceˉwir.Compilerˉsourceˉwirˉsentinel();
 }
 
 export fn Compilerˉsourceˉwvbˉtextˉplanˉadd(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Value: bytes
 ) -> Compilerˉsourceˉwvbˉtextˉplan {
@@ -1156,8 +1390,8 @@ export fn Compilerˉsourceˉwvbˉtextˉplanˉadd(
 
 export fn Compilerˉsourceˉwvbˉcollectˉtextˉplan(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Wir: bytes
 ) -> Compilerˉsourceˉwvbˉtextˉplan {
@@ -1167,7 +1401,7 @@ export fn Compilerˉsourceˉwvbˉcollectˉtextˉplan(
     var Rank: u32 = 0u32;
     while Rank < Symbols.Functions {
         let Function: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(Order, Rank);
-        let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Function
         );
         let Functionˉentry: u32 = 48u32 + Function * 48u32;
@@ -1202,10 +1436,10 @@ export fn Compilerˉsourceˉwvbˉcollectˉtextˉplan(
                     let Explicit: u32 = Compilerˉsourceˉwvbˉexplicitˉtextˉentry(
                         Input, Scan, Symbols, Decoded.Value
                     );
-                    if Explicit == Compilerˉsourceˉwirˉsentinel() {
+                    if Explicit == Sourceˉwir.Compilerˉsourceˉwirˉsentinel() {
                         if Compilerˉsourceˉwvbˉtextˉplanˉfind(
                             Plan, Decoded.Value
-                        ) == Compilerˉsourceˉwirˉsentinel() {
+                        ) == Sourceˉwir.Compilerˉsourceˉwirˉsentinel() {
                             Plan = Compilerˉsourceˉwvbˉtextˉplanˉadd(
                                 Input, Scan, Symbols, Plan, Decoded.Value
                             );
@@ -1225,8 +1459,8 @@ export fn Compilerˉsourceˉwvbˉcollectˉtextˉplan(
 
 export fn Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Entry: u32
@@ -1239,7 +1473,10 @@ export fn Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
     let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
         Symbols.Directory, Entryˉoffset + 16u32
     );
-    let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
+        Input, Scan, Symbols, Entry
+    );
+    let Symbolˉname: bytes = Compilerˉsourceˉwvbˉsymbolˉname(
         Input, Scan, Symbols, Entry
     );
     var Synthetic: u32 = 0u32;
@@ -1247,9 +1484,9 @@ export fn Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
         let Name: bytes = Compilerˉsourceˉwvbˉsyntheticˉname(
             Bytesˉreadˉu32ˉlittle(Plan.Directory, Synthetic * 12u32)
         );
-        if Compilerˉsourceˉspansˉcompare(
+        if Sourceˉset.Compilerˉsourceˉspansˉcompare(
             Name, 0u32, Bytesˉlength(Name),
-            View.Source, Nameˉoffset, Nameˉlength
+            Symbolˉname, 0u32, Bytesˉlength(Symbolˉname)
         ) < 0 { Result = Result + 1u32; }
         Synthetic = Synthetic + 1u32;
     }
@@ -1258,8 +1495,8 @@ export fn Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
 
 export fn Compilerˉsourceˉwvbˉsyntheticˉdataˉindex(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Synthetic: u32
@@ -1278,12 +1515,15 @@ export fn Compilerˉsourceˉwvbˉsyntheticˉdataˉindex(
         let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
             Symbols.Directory, Entryˉoffset + 16u32
         );
-        let View: Compilerˉsourceˉsetˉview =
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
             Compilerˉsourceˉwvbˉsymbolˉsource(
                 Input, Scan, Symbols, Entry
             );
-        if Compilerˉsourceˉspansˉcompare(
-            View.Source, Nameˉoffset, Nameˉlength,
+        let Symbolˉname: bytes = Compilerˉsourceˉwvbˉsymbolˉname(
+            Input, Scan, Symbols, Entry
+        );
+        if Sourceˉset.Compilerˉsourceˉspansˉcompare(
+            Symbolˉname, 0u32, Bytesˉlength(Symbolˉname),
             Name, 0u32, Bytesˉlength(Name)
         ) < 0 { Result = Result + 1u32; }
         Rank = Rank + 1u32;
@@ -1292,21 +1532,23 @@ export fn Compilerˉsourceˉwvbˉsyntheticˉdataˉindex(
 }
 
 export fn Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Source: bytes,
-    Header: Compilerˉsourceˉheader,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Entry: u32
 ) -> Compilerˉsourceˉwvbˉdataˉencoding {
     let Empty: bytes = Compilerˉsourceˉwvbˉempty(Source);
-    let Declaration: Compilerˉsourceˉdeclaration =
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
         Compilerˉsourceˉwvbˉdeclaration(Source, Header, Symbols, Entry);
-    let Type: Compilerˉsourceˉtypeˉkind = Compilerˉsourceˉwvbˉdataˉtype(
+    let Type: Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind = Compilerˉsourceˉwvbˉdataˉtype(
         Source, Declaration
     );
-    var Payload: bytes = Compilerˉsourceˉwvbˉstring(
-        Source, Declaration.Nameˉoffset, Declaration.Nameˉlength
+    var Payload: bytes = Compilerˉsourceˉwvbˉencodedˉstring(
+        Compilerˉsourceˉwvbˉsymbolˉname(Input, Scan, Symbols, Entry)
     );
-    if Type == Compilerˉsourceˉtypeˉkind.Text {
+    if Type == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Text {
         let Decoded: Compilerˉsourceˉwvbˉtextˉvalue =
             Compilerˉsourceˉwvbˉdecodeˉtext(
                 Source, Declaration.Bodyˉoffset, Declaration.Bodyˉlength
@@ -1323,26 +1565,26 @@ export fn Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
             Bytesˉconcat(Payload, Decoded.Value)
         );
     }
-    let Start: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+    let Start: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Bodyˉoffset, 1u32, 1u32
     );
     var Cursor: u32 = Start.Nextˉoffset;
     var Line: u32 = Start.Nextˉline;
     var Column: u32 = Start.Nextˉcolumn;
-    if Type == Compilerˉsourceˉtypeˉkind.I32ˉarray {
+    if Type == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32ˉarray {
         Payload = Bytesˉconcat(Payload, Bytesˉfromˉu8(4u8));
         Payload = Bytesˉconcat(
             Payload, Bytesˉfromˉu32ˉlittle(Declaration.Items)
         );
         var Arrayˉindex: u32 = 0u32;
         while Arrayˉindex < Declaration.Items {
-            var Arrayˉitem: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+            var Arrayˉitem: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                 Source, Cursor, Line, Column
             );
             var Negative: bool = false;
-            if Arrayˉitem.Kind == Compilerˉtokenˉkind.Minus {
+            if Arrayˉitem.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
                 Negative = true;
-                Arrayˉitem = Compilerˉlexˉnextˉafterˉscan(
+                Arrayˉitem = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                     Source, Arrayˉitem.Nextˉoffset, Arrayˉitem.Nextˉline, Arrayˉitem.Nextˉcolumn
                 );
             }
@@ -1353,7 +1595,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
                 }
             }
             Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Arrayˉvalue));
-            let Arrayˉseparator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+            let Arrayˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                 Source, Arrayˉitem.Nextˉoffset, Arrayˉitem.Nextˉline, Arrayˉitem.Nextˉcolumn
             );
             Cursor = Arrayˉseparator.Nextˉoffset;
@@ -1371,13 +1613,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
     );
     var Byteˉindex: u32 = 0u32;
     while Byteˉindex < Declaration.Items {
-        let Byteˉitem: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let Byteˉitem: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Line, Column
         );
         Payload = Bytesˉconcat(
             Payload, Compilerˉsourceˉwvbˉlowˉbyte(Byteˉitem.Numericˉvalue)
         );
-        let Byteˉseparator: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let Byteˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Byteˉitem.Nextˉoffset, Byteˉitem.Nextˉline, Byteˉitem.Nextˉcolumn
         );
         Cursor = Byteˉseparator.Nextˉoffset;
@@ -1410,8 +1652,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉsyntheticˉdata(
 
 export fn Compilerˉsourceˉwvbˉencodeˉdata(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Order: Compilerˉsourceˉwvbˉsymbolˉorder
 ) -> Compilerˉsourceˉwvbˉdataˉencoding {
@@ -1423,7 +1665,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉdata(
         let Explicitˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Order, Explicit
         );
-        let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Explicitˉentry
         );
         if Synthetic < Plan.Count {
@@ -1437,18 +1679,21 @@ export fn Compilerˉsourceˉwvbˉencodeˉdata(
             let Syntheticˉname: bytes = Compilerˉsourceˉwvbˉsyntheticˉname(
                 Bytesˉreadˉu32ˉlittle(Plan.Directory, Synthetic * 12u32)
             );
-            if Compilerˉsourceˉspansˉcompare(
-                View.Source, Explicitˉnameˉoffset, Explicitˉnameˉlength,
+            let Explicitˉname: bytes = Compilerˉsourceˉwvbˉsymbolˉname(
+                Input, Scan, Symbols, Explicitˉentry
+            );
+            if Sourceˉset.Compilerˉsourceˉspansˉcompare(
+                Explicitˉname, 0u32, Bytesˉlength(Explicitˉname),
                 Syntheticˉname, 0u32, Bytesˉlength(Syntheticˉname)
             ) < 0 { Useˉexplicit = true; }
         }
         if Useˉexplicit {
-            let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(
+            let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
                 View.Source
             );
             let Encoded: Compilerˉsourceˉwvbˉdataˉencoding =
                 Compilerˉsourceˉwvbˉencodeˉexplicitˉdata(
-                    View.Source, Header, Symbols, Explicitˉentry
+                    Input, Scan, View.Source, Header, Symbols, Explicitˉentry
                 );
             if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid {
                 return Encoded;
@@ -1477,70 +1722,69 @@ export fn Compilerˉsourceˉwvbˉencodeˉdata(
 
 export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Source: bytes,
-    Header: Compilerˉsourceˉheader,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Entry: u32
 ) -> Compilerˉsourceˉwvbˉtypeˉencoding {
     let Empty: bytes = Compilerˉsourceˉwvbˉempty(Source);
     let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
     let Owner: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entryˉoffset);
-    let Declaration: Compilerˉsourceˉdeclaration = Compilerˉsourceˉwvbˉdeclaration(
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Compilerˉsourceˉwvbˉdeclaration(
         Source, Header, Symbols, Entry
     );
     var Payload: bytes = Bytesˉfromˉu8(1u8);
+    var Hasˉcollections: bool = false;
     Payload = Bytesˉconcat(
         Payload,
-        Compilerˉsourceˉwvbˉstring(
-            Source, Declaration.Nameˉoffset, Declaration.Nameˉlength
+        Compilerˉsourceˉwvbˉencodedˉstring(
+            Compilerˉsourceˉwvbˉsymbolˉname(Input, Scan, Symbols, Entry)
         )
     );
     Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Declaration.Items));
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
-        Source, Declaration.Declarationˉoffset, 1u32, 1u32
-    );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
-        Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
-    );
-    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
-        Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+    let Brace: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+        Source, Declaration.Bodyˉoffset, 1u32, 1u32
     );
     var Cursor: u32 = Brace.Nextˉoffset;
     var Line: u32 = Brace.Nextˉline;
     var Column: u32 = Brace.Nextˉcolumn;
     var Fieldˉindex: u32 = 0u32;
     while Fieldˉindex < Declaration.Items {
-        let Field: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let Field: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Line, Column
         );
-        let Colon: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Field.Nextˉoffset, Field.Nextˉline, Field.Nextˉcolumn
         );
-        let Binding: Compilerˉsourceˉtypeˉbinding = Compilerˉsourceˉsymbolsˉbindˉtype(
+        let Binding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
             Input, Scan, Symbols.Directory, Symbols.Lookup, Symbols.Visibility,
             Owner, Source,
             Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
             Symbols.Records, Symbols.Enums, true
         );
-        if Binding.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
+        if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
             return Compilerˉsourceˉwvbˉtypeˉencoding(
-                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty
+                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty, Hasˉcollections
             );
         }
-        let Shape: u32 = Compilerˉsourceˉbindingsˉshape(Binding);
+        let Shape: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Binding);
         if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
-            Shape, false, Symbols.Records, Symbols.Enums
+            Shape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
         ) {
             return Compilerˉsourceˉwvbˉtypeˉencoding(
-                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty
+                Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty, Hasˉcollections
             );
+        }
+        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
+            Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
+            Hasˉcollections = true;
         }
         Payload = Bytesˉconcat(
             Payload, Compilerˉsourceˉwvbˉstring(Source, Field.Offset, Field.Length)
         );
         Payload = Bytesˉconcat(Payload, Compilerˉsourceˉwvbˉshape(Shape));
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let End: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;
@@ -1549,55 +1793,51 @@ export fn Compilerˉsourceˉwvbˉencodeˉrecordˉtype(
         Fieldˉindex = Fieldˉindex + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections
     );
 }
 
 export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Source: bytes,
-    Header: Compilerˉsourceˉheader,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Entry: u32
 ) -> Compilerˉsourceˉwvbˉtypeˉencoding {
-    let Declaration: Compilerˉsourceˉdeclaration = Compilerˉsourceˉwvbˉdeclaration(
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Compilerˉsourceˉwvbˉdeclaration(
         Source, Header, Symbols, Entry
     );
     var Payload: bytes = Bytesˉfromˉu8(2u8);
     Payload = Bytesˉconcat(
         Payload,
-        Compilerˉsourceˉwvbˉstring(
-            Source, Declaration.Nameˉoffset, Declaration.Nameˉlength
+        Compilerˉsourceˉwvbˉencodedˉstring(
+            Compilerˉsourceˉwvbˉsymbolˉname(Input, Scan, Symbols, Entry)
         )
     );
     Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Declaration.Items));
-    let Keyword: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
-        Source, Declaration.Declarationˉoffset, 1u32, 1u32
-    );
-    let Name: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
-        Source, Keyword.Nextˉoffset, Keyword.Nextˉline, Keyword.Nextˉcolumn
-    );
-    let Brace: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
-        Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+    let Brace: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+        Source, Declaration.Bodyˉoffset, 1u32, 1u32
     );
     var Cursor: u32 = Brace.Nextˉoffset;
     var Line: u32 = Brace.Nextˉline;
     var Column: u32 = Brace.Nextˉcolumn;
     var Memberˉindex: u32 = 0u32;
     while Memberˉindex < Declaration.Items {
-        let Member: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let Member: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Cursor, Line, Column
         );
-        let Equals: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let Equals: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
         );
-        let Value: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let Value: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Equals.Nextˉoffset, Equals.Nextˉline, Equals.Nextˉcolumn
         );
         Payload = Bytesˉconcat(
             Payload, Compilerˉsourceˉwvbˉstring(Source, Member.Offset, Member.Length)
         );
         Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Value.Numericˉvalue));
-        let End: Compilerˉsourceˉtoken = Compilerˉlexˉnextˉafterˉscan(
+        let End: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
         );
         Cursor = End.Nextˉoffset;
@@ -1606,27 +1846,130 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
         Memberˉindex = Memberˉindex + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, false
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Source: bytes,
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Entry: u32
+) -> Compilerˉsourceˉwvbˉtypeˉencoding {
+    let Empty: bytes = Compilerˉsourceˉwvbˉempty(Source);
+    let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
+    let Owner: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entryˉoffset);
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+        Compilerˉsourceˉwvbˉdeclaration(Source, Header, Symbols, Entry);
+    var Payload: bytes = Bytesˉfromˉu8(3u8);
+    var Hasˉcollections: bool = false;
+    Payload = Bytesˉconcat(
+        Payload,
+        Compilerˉsourceˉwvbˉencodedˉstring(
+            Compilerˉsourceˉwvbˉsymbolˉname(Input, Scan, Symbols, Entry)
+        )
+    );
+    Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Declaration.Items));
+    let Brace: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+        Source, Declaration.Bodyˉoffset, 1u32, 1u32
+    );
+    var Cursor: u32 = Brace.Nextˉoffset;
+    var Line: u32 = Brace.Nextˉline;
+    var Column: u32 = Brace.Nextˉcolumn;
+    var Caseˉindex: u32 = 0u32;
+    while Caseˉindex < Declaration.Items {
+        let Caseˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Cursor, Line, Column
+        );
+        let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Caseˉname.Nextˉoffset, Caseˉname.Nextˉline, Caseˉname.Nextˉcolumn
+        );
+        Payload = Bytesˉconcat(
+            Payload,
+            Compilerˉsourceˉwvbˉstring(Source, Caseˉname.Offset, Caseˉname.Length)
+        );
+        var End: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉname;
+        if Afterˉname.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
+            Payload = Bytesˉconcat(Payload, Bytesˉfromˉu8(1u8));
+            let Payloadˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn
+            );
+            Payload = Bytesˉconcat(
+                Payload,
+                Compilerˉsourceˉwvbˉstring(
+                    Source, Payloadˉname.Offset, Payloadˉname.Length
+                )
+            );
+            let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Payloadˉname.Nextˉoffset, Payloadˉname.Nextˉline, Payloadˉname.Nextˉcolumn
+            );
+            let Binding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
+                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
+                    Input, Scan, Symbols.Directory, Symbols.Lookup, Symbols.Visibility,
+                    Owner, Source,
+                    Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                    Symbols.Records, Symbols.Enums, false
+                );
+            if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+                return Compilerˉsourceˉwvbˉtypeˉencoding(
+                    Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty, Hasˉcollections
+                );
+            }
+            let Shape: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Binding);
+            if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
+                Shape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
+            ) {
+                return Compilerˉsourceˉwvbˉtypeˉencoding(
+                    Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape, Empty, Hasˉcollections
+                );
+            }
+            if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) ||
+                Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) {
+                Hasˉcollections = true;
+            }
+            Payload = Bytesˉconcat(Payload, Compilerˉsourceˉwvbˉshape(Shape));
+            let Right: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn
+            );
+            End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
+            );
+        } else {
+            Payload = Bytesˉconcat(Payload, Bytesˉfromˉu8(0u8));
+        }
+        Cursor = End.Nextˉoffset;
+        Line = End.Nextˉline;
+        Column = End.Nextˉcolumn;
+        Caseˉindex = Caseˉindex + 1u32;
+    }
+    return Compilerˉsourceˉwvbˉtypeˉencoding(
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections
     );
 }
 
 export fn Compilerˉsourceˉwvbˉencodeˉtypes(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Recordˉorder: Compilerˉsourceˉwvbˉsymbolˉorder,
-    Enumˉorder: Compilerˉsourceˉwvbˉsymbolˉorder
+    Enumˉorder: Compilerˉsourceˉwvbˉsymbolˉorder,
+    Variantˉorder: Compilerˉsourceˉwvbˉsymbolˉorder
 ) -> Compilerˉsourceˉwvbˉtypeˉencoding {
-    var Payload: bytes = Bytesˉfromˉu32ˉlittle(Symbols.Records + Symbols.Enums);
+    var Payload: bytes = Bytesˉfromˉu32ˉlittle(
+        Symbols.Records + Symbols.Enums + Symbols.Variants
+    );
     var Rank: u32 = 0u32;
+    var Hasˉcollections: bool = false;
     while Rank < Symbols.Records {
         let Entry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Recordˉorder, Rank
         );
-        let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview = Compilerˉsourceˉwvbˉsymbolˉsource(
             Input, Scan, Symbols, Entry
         );
-        let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
             View.Source
         );
         let Encoded: Compilerˉsourceˉwvbˉtypeˉencoding =
@@ -1634,6 +1977,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
                 Input, Scan, View.Source, Header, Symbols, Entry
             );
         if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid { return Encoded; }
+        if Encoded.Hasˉcollections { Hasˉcollections = true; }
         Payload = Bytesˉconcat(Payload, Encoded.Payload);
         Rank = Rank + 1u32;
     }
@@ -1642,32 +1986,56 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
         let Enumˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Enumˉorder, Rank
         );
-        let Enumˉview: Compilerˉsourceˉsetˉview =
+        let Enumˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
             Compilerˉsourceˉwvbˉsymbolˉsource(
                 Input, Scan, Symbols, Enumˉentry
             );
-        let Enumˉheader: Compilerˉsourceˉheader =
-            Compilerˉparseˉheaderˉvalidated(Enumˉview.Source);
+        let Enumˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Enumˉview.Source);
         let Encodedˉenum: Compilerˉsourceˉwvbˉtypeˉencoding =
             Compilerˉsourceˉwvbˉencodeˉenumˉtype(
-                Enumˉview.Source, Enumˉheader, Symbols, Enumˉentry
+                Input, Scan, Enumˉview.Source, Enumˉheader, Symbols, Enumˉentry
             );
         if Encodedˉenum.Status != Compilerˉsourceˉwvbˉstatus.Valid {
             return Encodedˉenum;
         }
+        if Encodedˉenum.Hasˉcollections { Hasˉcollections = true; }
         Payload = Bytesˉconcat(Payload, Encodedˉenum.Payload);
         Rank = Rank + 1u32;
     }
+    Rank = 0u32;
+    while Rank < Symbols.Variants {
+        let Variantˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Variantˉorder, Rank
+        );
+        let Variantˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Compilerˉsourceˉwvbˉsymbolˉsource(
+                Input, Scan, Symbols, Variantˉentry
+            );
+        let Variantˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Variantˉview.Source);
+        let Encodedˉvariant: Compilerˉsourceˉwvbˉtypeˉencoding =
+            Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
+                Input, Scan, Variantˉview.Source, Variantˉheader,
+                Symbols, Variantˉentry
+            );
+        if Encodedˉvariant.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+            return Encodedˉvariant;
+        }
+        if Encodedˉvariant.Hasˉcollections { Hasˉcollections = true; }
+        Payload = Bytesˉconcat(Payload, Encodedˉvariant.Payload);
+        Rank = Rank + 1u32;
+    }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Hasˉcollections
     );
 }
 
 export fn Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Source: bytes,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Order: Compilerˉsourceˉwvbˉsymbolˉorder,
     Wir: bytes,
@@ -1685,7 +2053,7 @@ export fn Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
     let Explicit: u32 = Compilerˉsourceˉwvbˉexplicitˉtextˉentry(
         Input, Scan, Symbols, Decoded.Value
     );
-    if Explicit != Compilerˉsourceˉwirˉsentinel() {
+    if Explicit != Sourceˉwir.Compilerˉsourceˉwirˉsentinel() {
         return Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
             Input, Scan, Symbols, Plan, Order, Explicit
         );
@@ -1729,11 +2097,34 @@ export fn Compilerˉsourceˉwvbˉanalysisˉfailure(
     );
 }
 
+export fn Compilerˉsourceˉwvbˉphiˉpreludeˉlength(
+    Wir: bytes,
+    Firstˉblock: u32,
+    Predecessor: u32,
+    Targetˉblock: u32
+) -> u32 {
+    let Blocksˉoffset: u32 = Compilerˉsourceˉwvbˉblocksˉoffset(Wir);
+    let Targetˉentry: u32 = Blocksˉoffset + (Firstˉblock + Targetˉblock) * 36u32;
+    if Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 16u32) == 0u32 { return 0u32; }
+    let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 12u32);
+    let Operationˉentry: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
+        Firstˉoperation * 48u32;
+    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 12u32) != 64u32 { return 0u32; }
+    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 32u32) == Predecessor {
+        return 10u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 36u32) == Predecessor {
+        return 10u32;
+    }
+    return 0u32;
+}
+
 export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
     Wir: bytes,
     Function: u32,
     Records: u32,
-    Enums: u32
+    Enums: u32,
+    Variants: u32
 ) -> Compilerˉsourceˉwvbˉanalysis {
     let Functionˉentry: u32 = 48u32 + Function * 48u32;
     let Firstˉblock: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 4u32);
@@ -1765,7 +2156,7 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                 );
             }
             if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
-                Shape, true, Records, Enums
+                Shape, true, Records, Enums, Variants
             ) {
                 return Compilerˉsourceˉwvbˉanalysisˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
@@ -1773,6 +2164,7 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                 );
             }
             var Operationˉstack: u32 = Operands;
+            if Operation == 64u32 { Operationˉstack = 0u32; }
             if Shape != 0u32 {
                 if Operationˉstack == 0u32 { Operationˉstack = 1u32; }
             }
@@ -1780,7 +2172,7 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
             let Added: u32 = Compilerˉsourceˉwvbˉoperationˉlength(
                 Operation, Shape, Operands
             );
-            if Added == 0u32 {
+            if Added == 0u32 && Operation != 64u32 {
                 return Compilerˉsourceˉwvbˉanalysisˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉoperation,
                     Globalˉoperation
@@ -1797,7 +2189,16 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
         }
         let Terminator: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 20u32);
         var Terminatorˉlength: u32 = 0u32;
-        if Terminator == 1u32 { Terminatorˉlength = 5u32; }
+        if Terminator == 1u32 {
+            let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 28u32);
+            let Phiˉprelude: u32 = Compilerˉsourceˉwvbˉphiˉpreludeˉlength(
+                Wir, Firstˉblock, Block, Jumpˉtarget
+            );
+            Terminatorˉlength = 5u32 + Phiˉprelude;
+            if Phiˉprelude > 0u32 {
+                if Maximumˉstack == 0u32 { Maximumˉstack = 1u32; }
+            }
+        }
         if Terminator == 2u32 {
             Terminatorˉlength = 15u32;
             if Maximumˉstack == 0u32 { Maximumˉstack = 1u32; }
@@ -1805,7 +2206,7 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
         if Terminator == 3u32 {
             Terminatorˉlength = 1u32;
             if Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 24u32) !=
-                Compilerˉsourceˉwirˉsentinel() {
+                Sourceˉwir.Compilerˉsourceˉwirˉsentinel() {
                 Terminatorˉlength = 6u32;
                 if Maximumˉstack == 0u32 { Maximumˉstack = 1u32; }
             }
@@ -1853,9 +2254,9 @@ export fn Compilerˉsourceˉwvbˉloadˉtemporary(
 
 export fn Compilerˉsourceˉwvbˉemitˉoperation(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Source: bytes,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Wir: bytes,
@@ -1872,6 +2273,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 36u32);
     let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
     var Result: bytes = Compilerˉsourceˉwvbˉempty(Wir);
+    if Operation == 64u32 { return Result; }
     var Operand: u32 = 0u32;
     while Operand < Operandˉcount {
         let Operandˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
@@ -2004,6 +2406,40 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             )
         );
     }
+    if Operation >= 65u32 {
+        if Operation <= 67u32 {
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉsourceˉwvbˉinstructionˉu32(
+                    Compilerˉsourceˉwvbˉopcode(Operation), Target
+                )
+            );
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Auxiliary));
+        }
+    }
+    if Operation == 68u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉsourceˉwvbˉinstructionˉu32(
+                Compilerˉsourceˉwvbˉopcode(Operation), Target
+            )
+        );
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Auxiliary));
+    }
+    if Operation >= 69u32 {
+        if Operation <= 72u32 {
+            Result = Bytesˉconcat(
+                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+            );
+        }
+    }
+    if Operation >= 73u32 {
+        if Operation <= 92u32 {
+            Result = Bytesˉconcat(
+                Result, Bytesˉfromˉu8(Compilerˉsourceˉwvbˉopcode(Operation))
+            );
+        }
+    }
     if Operation >= 11u32 {
         if Operation <= 16u32 {
             Result = Bytesˉconcat(
@@ -2039,8 +2475,50 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     return Result;
 }
 
+export fn Compilerˉsourceˉwvbˉemitˉphiˉprelude(
+    Wir: bytes,
+    Firstˉblock: u32,
+    Predecessor: u32,
+    Targetˉblock: u32,
+    Parameters: u32,
+    Locals: u32
+) -> bytes {
+    if Compilerˉsourceˉwvbˉphiˉpreludeˉlength(
+        Wir, Firstˉblock, Predecessor, Targetˉblock
+    ) == 0u32 { return Compilerˉsourceˉwvbˉempty(Wir); }
+    let Targetˉentry: u32 = Compilerˉsourceˉwvbˉblocksˉoffset(Wir) +
+        (Firstˉblock + Targetˉblock) * 36u32;
+    let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 12u32);
+    let Phiˉentry: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
+        Firstˉoperation * 48u32;
+    let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 24u32);
+    var Operandˉindex: u32 = 0u32;
+    if Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 36u32) == Predecessor {
+        Operandˉindex = 1u32;
+    }
+    let Operandˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir,
+        Compilerˉsourceˉwvbˉoperandsˉoffset(Wir) +
+            (Firstˉoperand + Operandˉindex) * 4u32
+    );
+    let Phiˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 20u32);
+    let Loaded: bytes = Compilerˉsourceˉwvbˉloadˉtemporary(
+        Operandˉtemporary, Parameters, Locals
+    );
+    return Bytesˉconcat(
+        Loaded,
+        Compilerˉsourceˉwvbˉinstructionˉu32(
+            5u8,
+            Compilerˉsourceˉwvbˉtemporaryˉslot(
+                Phiˉtemporary, Parameters, Locals
+            )
+        )
+    );
+}
+
 export fn Compilerˉsourceˉwvbˉemitˉterminator(
     Wir: bytes,
+    Firstˉblock: u32,
     Blockˉentry: u32,
     Blockˉoffsets: bytes,
     Parameters: u32,
@@ -2052,8 +2530,15 @@ export fn Compilerˉsourceˉwvbˉemitˉterminator(
     let Secondˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 32u32);
     var Result: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     if Terminator == 1u32 {
-        return Compilerˉsourceˉwvbˉinstructionˉu32(
-            48u8, Bytesˉreadˉu32ˉlittle(Blockˉoffsets, Firstˉtarget * 4u32)
+        let Predecessor: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 8u32);
+        Result = Compilerˉsourceˉwvbˉemitˉphiˉprelude(
+            Wir, Firstˉblock, Predecessor, Firstˉtarget, Parameters, Locals
+        );
+        return Bytesˉconcat(
+            Result,
+            Compilerˉsourceˉwvbˉinstructionˉu32(
+                48u8, Bytesˉreadˉu32ˉlittle(Blockˉoffsets, Firstˉtarget * 4u32)
+            )
         );
     }
     if Terminator == 2u32 {
@@ -2075,7 +2560,7 @@ export fn Compilerˉsourceˉwvbˉemitˉterminator(
             )
         );
     }
-    if Value != Compilerˉsourceˉwirˉsentinel() {
+    if Value != Sourceˉwir.Compilerˉsourceˉwirˉsentinel() {
         Result = Compilerˉsourceˉwvbˉloadˉtemporary(
             Value, Parameters, Locals
         );
@@ -2090,17 +2575,59 @@ export fn Compilerˉsourceˉwvbˉfunctionˉfailure(
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
     let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     return Compilerˉsourceˉwvbˉfunctionˉencoding(
-        Status, Empty, Empty, Operation
+        Status, Empty, Empty, Operation, false, false
     );
+}
+
+export fn Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
+    Wir: bytes,
+    Function: u32,
+    Slot: u32
+) -> u32 {
+    let Functionˉentry: u32 = 48u32 + Function * 48u32;
+    let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 12u32
+    );
+    let Operationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 16u32
+    );
+    let Firstˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 20u32
+    );
+    let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+    let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
+    let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+    var Index: u32 = 0u32;
+    while Index < Operationˉcount {
+        let Operationˉentry: u32 = Operationsˉoffset + (
+            Firstˉoperation + Index
+        ) * 48u32;
+        if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 12u32) == 8u32 {
+            if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 32u32) == Slot {
+                let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir, Operationˉentry + 24u32
+                );
+                let Temporary: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir, Operandsˉoffset + Firstˉoperand * 4u32
+                );
+                return Bytesˉreadˉu32ˉlittle(
+                    Wir,
+                    Temporariesˉoffset + (Firstˉtemporary + Temporary) * 4u32
+                );
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return 0u32;
 }
 
 export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Source: bytes,
-    Header: Compilerˉsourceˉheader,
-    Symbols: Compilerˉsourceˉsymbolˉsummary,
-    Bindings: Compilerˉsourceˉbindingˉsummary,
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Wir: bytes,
@@ -2109,7 +2636,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
     let Analysis: Compilerˉsourceˉwvbˉanalysis =
         Compilerˉsourceˉwvbˉanalyzeˉfunction(
-            Wir, Function, Symbols.Records, Symbols.Enums
+            Wir, Function, Symbols.Records, Symbols.Enums, Symbols.Variants
         );
     if Analysis.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉfunctionˉfailure(
@@ -2124,8 +2651,12 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 36u32);
     let Locals: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 40u32);
     let Returnˉshape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 44u32);
+    var Hasˉcollections: bool =
+        Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Returnˉshape) ||
+        Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Returnˉshape);
+    var Hasˉoperators: bool = false;
     if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
-        Returnˉshape, true, Symbols.Records, Symbols.Enums
+        Returnˉshape, true, Symbols.Records, Symbols.Enums, Symbols.Variants
     ) {
         return Compilerˉsourceˉwvbˉfunctionˉfailure(
             Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
@@ -2150,9 +2681,12 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     let Firstˉbinding: u32 = Bytesˉreadˉu32ˉlittle(
         Bindings.Directory, Bindingˉrange
     );
+    let Bindingˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Bindings.Directory, Bindingˉrange + 4u32
+    );
     let Bindingˉpayload: u32 = 24u32 + Symbolˉentries * 8u32;
-    var Metadata: bytes = Compilerˉsourceˉwvbˉstring(
-        Source, Nameˉoffset, Nameˉlength
+    var Metadata: bytes = Compilerˉsourceˉwvbˉencodedˉstring(
+        Compilerˉsourceˉwvbˉsymbolˉname(Input, Scan, Symbols, Function)
     );
     Metadata = Bytesˉconcat(Metadata, Bytesˉfromˉu32ˉlittle(Parameters));
     var Index: u32 = 0u32;
@@ -2162,12 +2696,16 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Bindingˉpayload + (Firstˉbinding + Index) * 36u32 + 24u32
         );
         if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
-            Parameterˉshape, false, Symbols.Records, Symbols.Enums
+            Parameterˉshape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
         ) {
             return Compilerˉsourceˉwvbˉfunctionˉfailure(
                 Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                 Analysis.Failureˉoperation
             );
+        }
+        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Parameterˉshape) ||
+            Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Parameterˉshape) {
+            Hasˉcollections = true;
         }
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Parameterˉshape)
@@ -2182,17 +2720,29 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     );
     Index = 0u32;
     while Index < Locals {
-        let Localˉshape: u32 = Bytesˉreadˉu32ˉlittle(
-            Bindings.Directory,
-            Bindingˉpayload + (Firstˉbinding + Parameters + Index) * 36u32 + 24u32
-        );
+        var Localˉshape: u32 = 0u32;
+        if Parameters + Index < Bindingˉcount {
+            Localˉshape = Bytesˉreadˉu32ˉlittle(
+                Bindings.Directory,
+                Bindingˉpayload + (Firstˉbinding + Parameters + Index) * 36u32 + 24u32
+            );
+        }
+        if Localˉshape == 0u32 {
+            Localˉshape = Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
+                Wir, Function, Parameters + Index
+            );
+        }
         if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
-            Localˉshape, false, Symbols.Records, Symbols.Enums
+            Localˉshape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
         ) {
             return Compilerˉsourceˉwvbˉfunctionˉfailure(
                 Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                 Analysis.Failureˉoperation
             );
+        }
+        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Localˉshape) ||
+            Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Localˉshape) {
+            Hasˉcollections = true;
         }
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Localˉshape)
@@ -2206,12 +2756,16 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Wir, Temporariesˉoffset + (Firstˉtemporary + Index) * 4u32
         );
         if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
-            Temporaryˉshape, false, Symbols.Records, Symbols.Enums
+            Temporaryˉshape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
         ) {
             return Compilerˉsourceˉwvbˉfunctionˉfailure(
                 Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                 Analysis.Failureˉoperation
             );
+        }
+        if Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉsequence(Temporaryˉshape) ||
+            Sourceˉwir.Compilerˉsourceˉwirˉshapeˉisˉbuilder(Temporaryˉshape) {
+            Hasˉcollections = true;
         }
         Metadata = Bytesˉconcat(
             Metadata, Compilerˉsourceˉwvbˉshape(Temporaryˉshape)
@@ -2238,6 +2792,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         while Inˉblock < Operationˉcount {
             let Operationˉentry: u32 = Operationsˉoffset +
                 (Firstˉoperation + Inˉblock) * 48u32;
+            let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 12u32);
+            if Operationˉkind >= 73u32 { Hasˉoperators = true; }
             Code = Bytesˉconcat(
                 Code,
                 Compilerˉsourceˉwvbˉemitˉoperation(
@@ -2250,7 +2806,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Code = Bytesˉconcat(
             Code,
             Compilerˉsourceˉwvbˉemitˉterminator(
-                Wir, Blockˉentry, Analysis.Blockˉoffsets, Parameters, Locals
+                Wir, Firstˉblock, Blockˉentry,
+                Analysis.Blockˉoffsets, Parameters, Locals
             )
         );
         Block = Block + 1u32;
@@ -2265,13 +2822,15 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Compilerˉsourceˉwvbˉstatus.Valid,
         Metadata,
         Code,
-        Analysis.Failureˉoperation
+        Analysis.Failureˉoperation,
+        Hasˉcollections,
+        Hasˉoperators
     );
 }
 
 export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvbˉsummary {
-    let Wirˉsummary: Compilerˉsourceˉwirˉsummary = Compilerˉvalidateˉsourceˉwir(Input);
-    if Wirˉsummary.Status != Compilerˉsourceˉwirˉstatus.Valid {
+    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary = Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Input);
+    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
             Input,
             Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
@@ -2280,14 +2839,14 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
             0u32
         );
     }
-    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Input);
-    let Symbols: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Input);
-    let Bindings: Compilerˉsourceˉbindingˉsummary =
-        Compilerˉsourceˉbindingsˉlocalsˉfromˉsymbols(Input, Scan, Symbols);
-    let Root: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉlocalsˉfromˉsymbols(Input, Scan, Symbols);
+    let Root: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
         Input, Scan, 0u32
     );
-    let Rootˉheader: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(
+    let Rootˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
         Root.Source
     );
     let Declarations: Compilerˉsourceˉwvbˉdeclarations =
@@ -2313,6 +2872,9 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         Declarationˉcountsˉmatch = false;
     }
     if Declarations.Enums != Symbols.Enums {
+        Declarationˉcountsˉmatch = false;
+    }
+    if Declarations.Variants != Symbols.Variants {
         Declarationˉcountsˉmatch = false;
     }
     if !Declarationˉcountsˉmatch {
@@ -2376,7 +2938,8 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         Compilerˉsourceˉwvbˉencodeˉtypes(
             Input, Scan, Symbols,
             Compilerˉsourceˉwvbˉrecordˉorder(Orders),
-            Compilerˉsourceˉwvbˉenumˉorder(Orders)
+            Compilerˉsourceˉwvbˉenumˉorder(Orders),
+            Compilerˉsourceˉwvbˉvariantˉorder(Orders)
         );
     if Typeˉencoding.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
@@ -2393,16 +2956,18 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     var Exportˉentries: bytes = Compilerˉsourceˉwvbˉempty(Input);
     var Codeˉoffset: u32 = 0u32;
     var Functionˉrank: u32 = 0u32;
+    var Hasˉcollections: bool = Typeˉencoding.Hasˉcollections;
+    var Hasˉoperators: bool = false;
     while Functionˉrank < Symbols.Functions {
         let Functionˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Compilerˉsourceˉwvbˉfunctionˉorder(Orders), Functionˉrank
         );
-        let Functionˉview: Compilerˉsourceˉsetˉview =
+        let Functionˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
             Compilerˉsourceˉwvbˉsymbolˉsource(
                 Input, Scan, Symbols, Functionˉentry
             );
-        let Functionˉheader: Compilerˉsourceˉheader =
-            Compilerˉparseˉheaderˉvalidated(Functionˉview.Source);
+        let Functionˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Functionˉview.Source);
         let Functionˉowner: u32 = Compilerˉsourceˉwvbˉsymbolˉmodule(
             Symbols, Functionˉentry
         );
@@ -2421,9 +2986,11 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
                 Encoded.Failureˉoperation
             );
         }
+        if Encoded.Hasˉcollections { Hasˉcollections = true; }
+        if Encoded.Hasˉoperators { Hasˉoperators = true; }
         Functionˉpayload = Bytesˉconcat(Functionˉpayload, Encoded.Metadata);
         Codeˉpayload = Bytesˉconcat(Codeˉpayload, Encoded.Code);
-        let Functionˉdeclaration: Compilerˉsourceˉdeclaration =
+        let Functionˉdeclaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
             Compilerˉsourceˉwvbˉdeclaration(
                 Functionˉview.Source, Functionˉheader, Symbols, Functionˉentry
             );
@@ -2449,6 +3016,17 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         Functionˉrank = Functionˉrank + 1u32;
     }
 
+    let Moduleˉmetadata: Compilerˉsourceˉwvbˉdataˉencoding =
+        Compilerˉsourceˉwvbˉmoduleˉmetadata(Root.Source);
+    if Moduleˉmetadata.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉsummaryˉfailure(
+            Input,
+            Moduleˉmetadata.Status,
+            Wirˉsummary.Status,
+            Symbols.Functions,
+            Wirˉsummary.Operations
+        );
+    }
     var Moduleˉpayload: bytes = Bytesˉfromˉu8(
         Compilerˉsourceˉwvbˉprofile(Rootˉheader.Profile)
     );
@@ -2458,13 +3036,28 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
             Root.Source, Rootˉheader.Nameˉoffset, Rootˉheader.Nameˉlength
         )
     );
+    if Symbols.Variants > 0u32 || Hasˉcollections || Hasˉoperators {
+        var Metadataˉpresent: u8 = 0u8;
+        if Bytesˉlength(Moduleˉmetadata.Payload) != 0u32 {
+            Metadataˉpresent = 1u8;
+        }
+        Moduleˉpayload = Bytesˉconcat(
+            Moduleˉpayload, Bytesˉfromˉu8(Metadataˉpresent)
+        );
+    }
+    Moduleˉpayload = Bytesˉconcat(Moduleˉpayload, Moduleˉmetadata.Payload);
     let Exportˉpayload: bytes = Bytesˉconcat(
         Bytesˉfromˉu32ˉlittle(Declarations.Exports),
         Exportˉentries
     );
     var Bytecode: bytes = Textˉtoˉutf8("WVB1");
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(1u32));
-    Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(6u32));
+    var Minorˉversion: u32 = 6u32;
+    if Bytesˉlength(Moduleˉmetadata.Payload) != 0u32 { Minorˉversion = 8u32; }
+    if Symbols.Variants > 0u32 { Minorˉversion = 9u32; }
+    if Hasˉcollections { Minorˉversion = 10u32; }
+    if Hasˉoperators { Minorˉversion = 11u32; }
+    Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Minorˉversion));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(
         Bytecode, Compilerˉsourceˉwvbˉsection(1u8, Moduleˉpayload)

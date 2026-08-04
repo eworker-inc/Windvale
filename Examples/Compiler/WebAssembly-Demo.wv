@@ -1,6 +1,6 @@
 module Compilerˉwebassemblyˉdemo profile portable;
 
-import Compilerˉwebassembly;
+import Compilerˉwebassembly as Webassembly;
 
 fn Compilerˉwebassemblyˉdemoˉhasˉbyte(
     Input: bytes,
@@ -12,26 +12,26 @@ fn Compilerˉwebassemblyˉdemoˉhasˉbyte(
 }
 
 export fn Main() -> i32 {
-    let Zero: bytes = Compilerˉwebassemblyˉuleb32(0u32);
+    let Zero: bytes = Webassembly.Compilerˉwebassemblyˉuleb32(0u32);
     if Bytesˉlength(Zero) != 1u32 { return 1; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Zero, 0u32, 0u8) { return 2; }
 
-    let Oneˉbyte: bytes = Compilerˉwebassemblyˉuleb32(127u32);
+    let Oneˉbyte: bytes = Webassembly.Compilerˉwebassemblyˉuleb32(127u32);
     if Bytesˉlength(Oneˉbyte) != 1u32 { return 3; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Oneˉbyte, 0u32, 127u8) { return 4; }
 
-    let Twoˉbytes: bytes = Compilerˉwebassemblyˉuleb32(128u32);
+    let Twoˉbytes: bytes = Webassembly.Compilerˉwebassemblyˉuleb32(128u32);
     if Bytesˉlength(Twoˉbytes) != 2u32 { return 5; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Twoˉbytes, 0u32, 128u8) { return 6; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Twoˉbytes, 1u32, 1u8) { return 7; }
 
-    let Boundary: bytes = Compilerˉwebassemblyˉuleb32(16384u32);
+    let Boundary: bytes = Webassembly.Compilerˉwebassemblyˉuleb32(16384u32);
     if Bytesˉlength(Boundary) != 3u32 { return 8; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Boundary, 0u32, 128u8) { return 9; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Boundary, 1u32, 128u8) { return 10; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Boundary, 2u32, 1u8) { return 11; }
 
-    let Maximum: bytes = Compilerˉwebassemblyˉuleb32(4294967295u32);
+    let Maximum: bytes = Webassembly.Compilerˉwebassemblyˉuleb32(4294967295u32);
     if Bytesˉlength(Maximum) != 5u32 { return 12; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Maximum, 0u32, 255u8) { return 13; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Maximum, 1u32, 255u8) { return 14; }
@@ -39,8 +39,8 @@ export fn Main() -> i32 {
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Maximum, 3u32, 255u8) { return 16; }
     if !Compilerˉwebassemblyˉdemoˉhasˉbyte(Maximum, 4u32, 15u8) { return 17; }
 
-    let Zeroˉdivisor: Compilerˉwebassemblyˉdivision =
-        Compilerˉwebassemblyˉdivideˉbyte(255u32, 0u32);
+    let Zeroˉdivisor: Webassembly.Compilerˉwebassemblyˉdivision =
+        Webassembly.Compilerˉwebassemblyˉdivideˉbyte(255u32, 0u32);
     if Zeroˉdivisor.Quotient != 0u32 { return 18; }
     if Zeroˉdivisor.Remainder != 255u32 { return 19; }
     return 0;

@@ -1,6 +1,6 @@
 module Compilerˉsourceˉbindingsˉtool profile hosted;
 
-import Compilerˉsourceˉbindings;
+import Compilerˉsourceˉbindings as Sourceˉbindings;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -43,7 +43,7 @@ fn Compilerˉsourceˉbindingsˉtoolˉbuild(Modules: u32) -> bytes {
 }
 
 fn Compilerˉsourceˉbindingsˉtoolˉsuccess(
-    Summary: Compilerˉsourceˉbindingˉsummary
+    Summary: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary
 ) -> text {
     var Report: text = "source bindings status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -66,7 +66,7 @@ fn Compilerˉsourceˉbindingsˉtoolˉsuccess(
 }
 
 fn Compilerˉsourceˉbindingsˉtoolˉfailure(
-    Summary: Compilerˉsourceˉbindingˉsummary
+    Summary: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary
 ) -> text {
     var Report: text = "source bindings status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -97,8 +97,8 @@ export fn Main() -> i32 {
         return 64;
     }
     let Input: bytes = Compilerˉsourceˉbindingsˉtoolˉbuild(Modules);
-    let Summary: Compilerˉsourceˉbindingˉsummary = Compilerˉvalidateˉsourceˉbindings(Input);
-    if Summary.Status != Compilerˉsourceˉbindingˉstatus.Valid {
+    let Summary: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉvalidateˉsourceˉbindings(Input);
+    if Summary.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉbindingsˉtoolˉfailure(Summary));
         return 1;
     }

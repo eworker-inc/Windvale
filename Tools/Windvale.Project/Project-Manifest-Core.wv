@@ -1,6 +1,6 @@
 module Windvaleˉproject profile portable;
 
-enum Windvaleˉprojectˉstatus {
+export enum Windvaleˉprojectˉstatus {
     Valid = 0;
     Invalidˉheader = 1001;
     Invalidˉtext = 1002;
@@ -31,7 +31,7 @@ record Windvaleˉprojectˉpathˉscan {
     Failureˉcolumn: u32;
 }
 
-record Windvaleˉprojectˉscan {
+export record Windvaleˉprojectˉscan {
     Status: Windvaleˉprojectˉstatus;
     Modules: u32;
     Rootˉoffset: u32;
@@ -44,7 +44,7 @@ record Windvaleˉprojectˉscan {
     Failureˉcolumn: u32;
 }
 
-record Windvaleˉprojectˉpath {
+export record Windvaleˉprojectˉpath {
     Found: bool;
     Index: u32;
     Offset: u32;

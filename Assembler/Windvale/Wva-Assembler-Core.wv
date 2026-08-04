@@ -1,9 +1,9 @@
 module Wvaˉassemblerˉcore profile hosted;
 
-import Foundationˉmachineˉcontracts;
-import Foundationˉbyteˉordering;
-import Foundationˉdecimalˉparsing;
-import Foundationˉbyteˉconstruction;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Foundationˉbyteˉordering as Byteˉordering;
+import Foundationˉdecimalˉparsing as Decimalˉparsing;
+import Foundationˉmachineˉcontracts as Machineˉcontracts;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -564,7 +564,7 @@ fn Spansˉequal(
     Rightˉoffset: u32,
     Rightˉlength: u32
 ) -> bool {
-    return Foundationˉbyteˉspansˉcompare(
+    return Byteˉordering.Foundationˉbyteˉspansˉcompare(
         Input,
         Leftˉoffset,
         Leftˉlength,
@@ -589,7 +589,7 @@ fn Compareˉspans(
     Rightˉoffset: u32,
     Rightˉlength: u32
 ) -> i32 {
-    return Foundationˉbyteˉspansˉcompare(
+    return Byteˉordering.Foundationˉbyteˉspansˉcompare(
         Input,
         Leftˉoffset,
         Leftˉlength,
@@ -599,7 +599,7 @@ fn Compareˉspans(
 }
 
 fn Machineˉnameˉisˉvalid(Input: bytes, Value: Wvaˉtoken) -> bool {
-    return Foundationˉmachineˉnameˉisˉvalid(Bytesˉslice(Input, Value.Offset, Value.Length));
+    return Machineˉcontracts.Foundationˉmachineˉnameˉisˉvalid(Bytesˉslice(Input, Value.Offset, Value.Length));
 }
 
 fn Bindingˉtag(Input: bytes, Value: Wvaˉtoken) -> u32 {
@@ -840,8 +840,8 @@ fn Conditionˉtag(Input: bytes, Value: Wvaˉtoken) -> u32 {
     return 16u32;
 }
 
-fn Parseˉu32(Input: bytes, Value: Wvaˉtoken) -> Foundationˉu32ˉparse {
-    return Foundationˉu32ˉdecimalˉparse(Input, Value.Offset, Value.Length);
+fn Parseˉu32(Input: bytes, Value: Wvaˉtoken) -> Decimalˉparsing.Foundationˉu32ˉparse {
+    return Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(Input, Value.Offset, Value.Length);
 }
 
 fn Digitˉi32(Value: u8) -> i32 {
@@ -1005,7 +1005,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
         }
         let Moveˉu8ˉvalue: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
-        let Moveˉu8ˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu8ˉvalue);
+        let Moveˉu8ˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu8ˉvalue);
         if !Moveˉu8ˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu8ˉvalue); }
         if Moveˉu8ˉparsed.Value > 255u32 {
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu8ˉvalue);
@@ -1021,7 +1021,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First);
         }
         let Moveˉu16ˉvalue: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
-        let Moveˉu16ˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu16ˉvalue);
+        let Moveˉu16ˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu16ˉvalue);
         if !Moveˉu16ˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu16ˉvalue); }
         if Moveˉu16ˉparsed.Value > 65535u32 {
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu16ˉvalue);
@@ -1170,7 +1170,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
         let Shiftˉwidth: u32 = Typedˉregisterˉwidth(Input, Shiftˉregister);
         if Shiftˉwidth == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, First); }
         let Shiftˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
-        let Shiftˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Shiftˉtoken);
+        let Shiftˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Shiftˉtoken);
         if !Shiftˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Shiftˉtoken); }
         if Shiftˉparsed.Value >= Shiftˉwidth {
             return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Shiftˉtoken);
@@ -1218,7 +1218,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                 return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1003, Indexˉtoken);
             }
         }
-        let Scaleˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Scaleˉtoken);
+        let Scaleˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Scaleˉtoken);
         if !Scaleˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Scaleˉtoken); }
         if Scaleˉparsed.Value != 1u32 {
             if Scaleˉparsed.Value != 2u32 {
@@ -1395,7 +1395,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                             }
                             if Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32)) >= 8u32 { Size = 6u32; }
                             let Moveˉu32ˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 2u32);
-                            let Moveˉu32ˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu32ˉnumber);
+                            let Moveˉu32ˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Moveˉu32ˉnumber);
                             if !Moveˉu32ˉparsed.Valid {
                                 return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Moveˉu32ˉnumber);
                             }
@@ -1408,7 +1408,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                                 var Index: u32 = 1u32;
                                 while Index < Line.Tokens {
                                     let Byteˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, Index);
-                                    let Byteˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Byteˉnumber);
+                                    let Byteˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Byteˉnumber);
                                     if !Byteˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Byteˉnumber); }
                                     if Byteˉparsed.Value > 255u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, Byteˉnumber); }
                                     Index = Index + 1u32;
@@ -1419,7 +1419,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                                     Size = 4u32;
                                     if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
                                     let U32ˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
-                                    let U32ˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, U32ˉnumber);
+                                    let U32ˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, U32ˉnumber);
                                     if !U32ˉparsed.Valid {
                                         return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First);
                                     }
@@ -1503,7 +1503,7 @@ fn Checkˉstatement(Input: bytes, Line: Wvaˉline, Sectionˉkind: u32) -> Wvaˉs
                                                                                             Kind = 12u32;
                                                                                             if Line.Tokens != 2u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
                                                                                             let Zeroˉnumber: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
-                                                                                            let Zeroˉparsed: Foundationˉu32ˉparse = Parseˉu32(Input, Zeroˉnumber);
+                                                                                            let Zeroˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Zeroˉnumber);
                                                                                             if !Zeroˉparsed.Valid { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
                                                                                             if Zeroˉparsed.Value == 0u32 { return Statementˉfailure(Wvaˉsemanticˉstatus.Wva1005, First); }
                                                                                             Size = Zeroˉparsed.Value;
@@ -2176,7 +2176,7 @@ fn Inspectˉwvaˉsemantics(Input: bytes) -> Wvaˉsemanticˉinspection {
                             Totalˉmemory
                         );
                     }
-                    let Alignment: Foundationˉu32ˉparse = Parseˉu32(Input, Alignmentˉtoken);
+                    let Alignment: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Alignmentˉtoken);
                     if !Alignment.Valid {
                         return Structuralˉfailure(
                             Wvaˉsemanticˉstatus.Wva1005,
@@ -2189,7 +2189,7 @@ fn Inspectˉwvaˉsemantics(Input: bytes) -> Wvaˉsemanticˉinspection {
                             Totalˉmemory
                         );
                     }
-                    if !Foundationˉalignmentˉisˉvalid(Alignment.Value) {
+                    if !Machineˉcontracts.Foundationˉalignmentˉisˉvalid(Alignment.Value) {
                         return Structuralˉfailure(
                             Wvaˉsemanticˉstatus.Wva1005,
                             Alignmentˉtoken,
@@ -3061,7 +3061,7 @@ fn Encodeˉstatement(
     }
     if Statement.Kind == 7u32 {
         let U32ˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
-        let Moveˉu32ˉnumber: Foundationˉu32ˉparse = Parseˉu32(
+        let Moveˉu32ˉnumber: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(
             Input,
             Lineˉtoken(Input, Line, 2u32)
         );
@@ -3077,14 +3077,14 @@ fn Encodeˉstatement(
         var Result: bytes = Emptyˉbytes;
         var Index: u32 = 1u32;
         while Index < Line.Tokens {
-            let Byteˉnumber: Foundationˉu32ˉparse = Parseˉu32(Input, Lineˉtoken(Input, Line, Index));
+            let Byteˉnumber: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Lineˉtoken(Input, Line, Index));
             Result = Appendˉbytes(Result, Singleˉbyte(Byteˉnumber.Value));
             Index = Index + 1u32;
         }
         return Result;
     }
     if Statement.Kind == 9u32 {
-        let Dataˉu32ˉnumber: Foundationˉu32ˉparse = Parseˉu32(Input, Lineˉtoken(Input, Line, 1u32));
+        let Dataˉu32ˉnumber: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Lineˉtoken(Input, Line, 1u32));
         return Bytesˉfromˉu32ˉlittle(Dataˉu32ˉnumber.Value);
     }
     if Statement.Kind == 10u32 {
@@ -3280,7 +3280,7 @@ fn Encodeˉstatement(
             let Shiftˉregisterˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
             let Shiftˉregister: u32 = Registerˉindex(Input, Shiftˉregisterˉtoken);
             let Shiftˉwidth: u32 = Typedˉregisterˉwidth(Input, Shiftˉregisterˉtoken);
-            let Shiftˉparsed: Foundationˉu32ˉparse = Parseˉu32(
+            let Shiftˉparsed: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(
                 Input,
                 Lineˉtoken(Input, Line, 2u32)
             );
@@ -3308,7 +3308,7 @@ fn Encodeˉstatement(
     if Statement.Kind == 57u32 {
         let Moveˉu8ˉregisterˉtoken: Wvaˉtoken = Lineˉtoken(Input, Line, 1u32);
         let Moveˉu8ˉregister: u32 = Registerˉindex(Input, Moveˉu8ˉregisterˉtoken);
-        let Moveˉu8ˉvalue: Foundationˉu32ˉparse = Parseˉu32(
+        let Moveˉu8ˉvalue: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(
             Input,
             Lineˉtoken(Input, Line, 2u32)
         );
@@ -3327,7 +3327,7 @@ fn Encodeˉstatement(
     }
     if Statement.Kind == 58u32 {
         let Moveˉu16ˉregister: u32 = Registerˉindex(Input, Lineˉtoken(Input, Line, 1u32));
-        let Moveˉu16ˉvalue: Foundationˉu32ˉparse = Parseˉu32(
+        let Moveˉu16ˉvalue: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(
             Input,
             Lineˉtoken(Input, Line, 2u32)
         );
@@ -3490,7 +3490,7 @@ fn Encodeˉstatement(
                 Memoryˉrexˉindex = Memoryˉindex;
             }
             let Memoryˉwidth: u32 = Memoryˉstatementˉwidth(Statement.Kind);
-            let Memoryˉscale: Foundationˉu32ˉparse = Parseˉu32(Input, Memoryˉscaleˉtoken);
+            let Memoryˉscale: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(Input, Memoryˉscaleˉtoken);
             let Memoryˉdisplacement: Wvaˉi32ˉparse = Parseˉi32(
                 Input,
                 Memoryˉdisplacementˉtoken
@@ -3570,7 +3570,7 @@ fn Encodeˉsections(Input: bytes) -> bytes {
         if Tokenˉequalsˉtext(Input, First, "section") {
             Sectionˉkind = Sectionˉkindˉtag(Input, Lineˉtoken(Input, Current, 1u32));
             Sectionˉname = Lineˉtoken(Input, Current, 2u32);
-            let Parsedˉalignment: Foundationˉu32ˉparse = Parseˉu32(
+            let Parsedˉalignment: Decimalˉparsing.Foundationˉu32ˉparse = Parseˉu32(
                 Input,
                 Lineˉtoken(Input, Current, 4u32)
             );
@@ -4018,7 +4018,7 @@ fn Describeˉencoding(Result: Wvaˉobjectˉencoding) -> text {
 }
 
 fn Repeatˉbytes(Count: u32) -> bytes {
-    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(97u8, Count);
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉrepeat(97u8, Count);
     return Result.Value;
 }
 

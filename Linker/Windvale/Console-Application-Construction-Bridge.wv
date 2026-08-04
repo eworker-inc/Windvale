@@ -1,6 +1,6 @@
 module Linkerˉconsoleˉapplicationˉconstructionˉbridge profile hosted;
 
-import Linkerˉconsoleˉapplicationˉconstruction;
+import Linkerˉconsoleˉapplicationˉconstruction as Applicationˉconstruction;
 
 capability file.read_bytes;
 
@@ -8,5 +8,5 @@ data Requestˉname: text = "console-application-construction-request.bin";
 
 export fn Main() -> bytes {
     let Input: bytes = file.read_bytes(Requestˉname);
-    return Consoleˉapplicationˉconstruction(Input);
+    return Applicationˉconstruction.Consoleˉapplicationˉconstruction(Input);
 }

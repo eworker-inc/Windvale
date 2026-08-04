@@ -53,16 +53,16 @@ The graph contains one through 64 modules because WVSS owns that bound. Traversa
 
 Headers and leading import declarations are rescanned from accepted immutable sources. No edge table is retained. The graph phase does not increase the 4 MiB WVSS ceiling or the parser's declaration limits.
 
-## Qualified milestone artifacts and evidence
+## Current deterministic artifacts and retained evidence
 
-- `Source-Graph-Core.wvb`: 204,109 bytes, SHA-256 `5d266d834c5cde77efa4046dfc9c8a8c0eed7c2df1dd254f98c4e338d76cccda`.
-- `Source-Graph-Demo.wvb`: 210,509 bytes, SHA-256 `2d2fa7ae2cca012834fb340253a551f9332a764200bb8f6449158b8dad4b30b2`.
-- `Source-Graph-Tool.wvb`: 207,790 bytes, SHA-256 `4558a7c6ba1c1632bb2d46747d31dfd1be0480e93fc4eec8340d0ea39db702f1`.
+- `Source-Graph-Core.wvb`: 271,314 bytes, SHA-256 `574528635f818694fb72ba1fe1d4634cf0fddf4976b6733a1f96a9cf2dbd8cd0`.
+- `Source-Graph-Demo.wvb`: 277,325 bytes, SHA-256 `63e72328ec5897695ac4c7b9c044a409068d726e294011f00ff4f72221a6087a`.
+- `Source-Graph-Tool.wvb`: 274,512 bytes, SHA-256 `697a803b57229ca4e5a7e66053f696f45f0b6f35c0c3bc6cfe87f47a6f3aa56b`.
 
-The Windows and Debian conformance runners each pass all 44 tests with zero build warnings/errors. The demo covers valid and rejected topology, and the hosted tool validates the real compiler closure as:
+These local candidate identities contain the updated frontend while preserving WVSS graph semantics. The current local hosted report is:
 
 ```text
-source graph status=Valid modules=7 imports=6 reachable=7
+source graph status=Valid modules=7 imports=10 reachable=7
 ```
 
 The graph contract was originally cross-host qualified at `09c6f54`. Decision 0042's artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`; the graph summary itself remains unchanged. Decision 0055 changes only embedded frontend implementation bytes in these artifacts and is cross-host qualified at `1a4fca7`. Decision 0058 uses exact span equality on graph identity paths without changing graph semantics or its report and is cross-host qualified at `5c16547`.

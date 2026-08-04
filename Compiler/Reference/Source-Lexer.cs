@@ -13,6 +13,13 @@ internal sealed class Sourceˉlexer(
         {
             ["module"] = Tokenˉkind.Module,
             ["profile"] = Tokenˉkind.Profile,
+            ["platform"] = Tokenˉkind.Platform,
+            ["authority"] = Tokenˉkind.Authority,
+            ["requires"] = Tokenˉkind.Requires,
+            ["optional"] = Tokenˉkind.Optional,
+            ["version"] = Tokenˉkind.Version,
+            ["match"] = Tokenˉkind.Match,
+            ["case"] = Tokenˉkind.Case,
             ["portable"] = Tokenˉkind.Portable,
             ["hosted"] = Tokenˉkind.Hosted,
             ["system"] = Tokenˉkind.System,
@@ -21,6 +28,7 @@ internal sealed class Sourceˉlexer(
             ["data"] = Tokenˉkind.Data,
             ["record"] = Tokenˉkind.Record,
             ["enum"] = Tokenˉkind.Enum,
+            ["variant"] = Tokenˉkind.Variant,
             ["export"] = Tokenˉkind.Export,
             ["fn"] = Tokenˉkind.Fn,
             ["let"] = Tokenˉkind.Let,
@@ -29,6 +37,9 @@ internal sealed class Sourceˉlexer(
             ["else"] = Tokenˉkind.Else,
             ["while"] = Tokenˉkind.While,
             ["return"] = Tokenˉkind.Return,
+            ["break"] = Tokenˉkind.Break,
+            ["continue"] = Tokenˉkind.Continue,
+            ["as"] = Tokenˉkind.As,
             ["true"] = Tokenˉkind.True,
             ["false"] = Tokenˉkind.False,
             ["i32"] = Tokenˉkind.I32,
@@ -41,6 +52,13 @@ internal sealed class Sourceˉlexer(
             ["bytes"] = Tokenˉkind.Bytes,
             ["void"] = Tokenˉkind.Void,
             ["length"] = Tokenˉkind.Length,
+            ["const"] = Tokenˉkind.Const,
+            ["sequence"] = Tokenˉkind.Sequence,
+            ["builder"] = Tokenˉkind.Builder,
+            ["freeze"] = Tokenˉkind.Freeze,
+            ["push"] = Tokenˉkind.Push,
+            ["for"] = Tokenˉkind.For,
+            ["in"] = Tokenˉkind.In,
         };
 
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
@@ -213,10 +231,32 @@ internal sealed class Sourceˉlexer(
                 return Token(Tokenˉkind.Dot, Start, Startˉline, Startˉcolumn);
             case '+':
                 Advance();
+                if (Current == '=')
+                {
+                    Advance();
+                    return Token(Tokenˉkind.Plusˉequals, Start, Startˉline, Startˉcolumn);
+                }
                 return Token(Tokenˉkind.Plus, Start, Startˉline, Startˉcolumn);
             case '*':
                 Advance();
+                if (Current == '=')
+                {
+                    Advance();
+                    return Token(Tokenˉkind.Starˉequals, Start, Startˉline, Startˉcolumn);
+                }
                 return Token(Tokenˉkind.Star, Start, Startˉline, Startˉcolumn);
+            case '/':
+                Advance();
+                return Token(Tokenˉkind.Slash, Start, Startˉline, Startˉcolumn);
+            case '%':
+                Advance();
+                return Token(Tokenˉkind.Percent, Start, Startˉline, Startˉcolumn);
+            case '^':
+                Advance();
+                return Token(Tokenˉkind.Caret, Start, Startˉline, Startˉcolumn);
+            case '~':
+                Advance();
+                return Token(Tokenˉkind.Tilde, Start, Startˉline, Startˉcolumn);
             case '-':
                 Advance();
                 if (Current == '>')
@@ -225,7 +265,29 @@ internal sealed class Sourceˉlexer(
                     return Token(Tokenˉkind.Arrow, Start, Startˉline, Startˉcolumn);
                 }
 
+                if (Current == '=')
+                {
+                    Advance();
+                    return Token(Tokenˉkind.Minusˉequals, Start, Startˉline, Startˉcolumn);
+                }
+
                 return Token(Tokenˉkind.Minus, Start, Startˉline, Startˉcolumn);
+            case '&':
+                Advance();
+                if (Current == '&')
+                {
+                    Advance();
+                    return Token(Tokenˉkind.Andˉand, Start, Startˉline, Startˉcolumn);
+                }
+                return Token(Tokenˉkind.Ampersand, Start, Startˉline, Startˉcolumn);
+            case '|':
+                Advance();
+                if (Current == '|')
+                {
+                    Advance();
+                    return Token(Tokenˉkind.Orˉor, Start, Startˉline, Startˉcolumn);
+                }
+                return Token(Tokenˉkind.Pipe, Start, Startˉline, Startˉcolumn);
             case '!':
                 Advance();
                 if (Current == '=')
@@ -246,6 +308,11 @@ internal sealed class Sourceˉlexer(
                 return Token(Tokenˉkind.Equals, Start, Startˉline, Startˉcolumn);
             case '<':
                 Advance();
+                if (Current == '<')
+                {
+                    Advance();
+                    return Token(Tokenˉkind.Shiftˉleft, Start, Startˉline, Startˉcolumn);
+                }
                 if (Current == '=')
                 {
                     Advance();
@@ -255,6 +322,11 @@ internal sealed class Sourceˉlexer(
                 return Token(Tokenˉkind.Less, Start, Startˉline, Startˉcolumn);
             case '>':
                 Advance();
+                if (Current == '>')
+                {
+                    Advance();
+                    return Token(Tokenˉkind.Shiftˉright, Start, Startˉline, Startˉcolumn);
+                }
                 if (Current == '=')
                 {
                     Advance();

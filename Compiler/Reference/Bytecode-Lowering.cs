@@ -60,6 +60,7 @@ internal static class Bytecodeˉlowering
             Exports)
         {
             Types = module.Types,
+            Metadata = module.Metadata,
         };
     }
 
@@ -92,7 +93,7 @@ internal static class Bytecodeˉlowering
                     Emitˉinstruction(Instruction);
                 }
 
-                Emitˉterminator(Block.Terminator);
+                Emitˉterminator(Block);
                 if (Stackˉdepth != 0)
                 {
                     throw new InvalidOperationException(
@@ -235,6 +236,59 @@ internal static class Bytecodeˉlowering
                         push: 1);
                     Storeˉresult(instruction);
                     break;
+                case Wirˉoperation.Variantˉcreate:
+                    Loadˉarguments(instruction.Operands);
+                    Emitˉtwoˉu32(
+                        Opcode.Variantˉcreate,
+                        instruction.Unsignedˉintegerˉoperand,
+                        instruction.Secondˉunsignedˉintegerˉoperand,
+                        pop: instruction.Operands.Length,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Variantˉisˉcase:
+                case Wirˉoperation.Variantˉpayload:
+                    Loadˉtemporary(instruction.Operands[0]);
+                    Emitˉtwoˉu32(
+                        instruction.Operation == Wirˉoperation.Variantˉisˉcase
+                            ? Opcode.Variantˉisˉcase
+                            : Opcode.Variantˉpayload,
+                        instruction.Unsignedˉintegerˉoperand,
+                        instruction.Secondˉunsignedˉintegerˉoperand,
+                        pop: 1,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Builderˉcreate:
+                    Emitˉtwoˉu32(
+                        Opcode.Builderˉcreate,
+                        instruction.Unsignedˉintegerˉoperand,
+                        instruction.Secondˉunsignedˉintegerˉoperand,
+                        pop: 0,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Builderˉpush:
+                    Loadˉarguments(instruction.Operands);
+                    Emitˉnone(Opcode.Builderˉpush, pop: 2, push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Builderˉfreeze:
+                case Wirˉoperation.Sequenceˉlength:
+                    Loadˉtemporary(instruction.Operands[0]);
+                    Emitˉnone(
+                        instruction.Operation == Wirˉoperation.Builderˉfreeze
+                            ? Opcode.Builderˉfreeze
+                            : Opcode.Sequenceˉlength,
+                        pop: 1,
+                        push: 1);
+                    Storeˉresult(instruction);
+                    break;
+                case Wirˉoperation.Sequenceˉelement:
+                    Loadˉarguments(instruction.Operands);
+                    Emitˉnone(Opcode.Sequenceˉelement, pop: 2, push: 1);
+                    Storeˉresult(instruction);
+                    break;
                 case Wirˉoperation.I32ˉadd:
                 case Wirˉoperation.I32ˉsubtract:
                 case Wirˉoperation.I32ˉmultiply:
@@ -275,6 +329,33 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.U64ˉgreaterˉequal:
                 case Wirˉoperation.U8ˉequal:
                 case Wirˉoperation.U8ˉnotˉequal:
+                case Wirˉoperation.I32ˉdivide:
+                case Wirˉoperation.I32ˉremainder:
+                case Wirˉoperation.U32ˉdivide:
+                case Wirˉoperation.U32ˉremainder:
+                case Wirˉoperation.I64ˉdivide:
+                case Wirˉoperation.I64ˉremainder:
+                case Wirˉoperation.U64ˉdivide:
+                case Wirˉoperation.U64ˉremainder:
+                case Wirˉoperation.U8ˉbitwiseˉand:
+                case Wirˉoperation.U8ˉbitwiseˉor:
+                case Wirˉoperation.U8ˉbitwiseˉxor:
+                case Wirˉoperation.U8ˉshiftˉleft:
+                case Wirˉoperation.U8ˉshiftˉright:
+                case Wirˉoperation.U32ˉbitwiseˉand:
+                case Wirˉoperation.U32ˉbitwiseˉor:
+                case Wirˉoperation.U32ˉbitwiseˉxor:
+                case Wirˉoperation.U32ˉshiftˉleft:
+                case Wirˉoperation.U32ˉshiftˉright:
+                case Wirˉoperation.U64ˉbitwiseˉand:
+                case Wirˉoperation.U64ˉbitwiseˉor:
+                case Wirˉoperation.U64ˉbitwiseˉxor:
+                case Wirˉoperation.U64ˉshiftˉleft:
+                case Wirˉoperation.U64ˉshiftˉright:
+                case Wirˉoperation.Textˉequal:
+                case Wirˉoperation.Textˉnotˉequal:
+                case Wirˉoperation.Bytesˉequal:
+                case Wirˉoperation.Bytesˉnotˉequal:
                 case Wirˉoperation.Enumˉequal:
                 case Wirˉoperation.Enumˉnotˉequal:
                 case Wirˉoperation.Textˉconcat:
@@ -286,6 +367,9 @@ internal static class Bytecodeˉlowering
                 case Wirˉoperation.I32ˉnegate:
                 case Wirˉoperation.I64ˉnegate:
                 case Wirˉoperation.Boolˉnot:
+                case Wirˉoperation.U8ˉbitwiseˉnot:
+                case Wirˉoperation.U32ˉbitwiseˉnot:
+                case Wirˉoperation.U64ˉbitwiseˉnot:
                 case Wirˉoperation.Enumˉname:
                 case Wirˉoperation.I32ˉformat:
                 case Wirˉoperation.I64ˉformat:
@@ -334,20 +418,27 @@ internal static class Bytecodeˉlowering
                         push: instruction.Result is null ? 0 : 1);
                     Storeˉoptionalˉresult(instruction);
                     break;
+                case Wirˉoperation.Boolˉphi:
+                    // Each predecessor writes the selected operand directly into this result's
+                    // temporary slot immediately before its jump to the phi block.
+                    break;
                 default:
                     throw new InvalidOperationException(
                         $"WIR operation '{instruction.Operation}' has no bytecode lowering.");
             }
         }
 
-        private void Emitˉterminator(Wirˉterminator terminator)
+        private void Emitˉterminator(Wirˉblock block)
         {
-            switch (terminator)
+            switch (block.Terminator)
             {
                 case Wirˉjump Jump:
+                    Emitˉphiˉassignments(block.Id, Jump.Targetˉblock);
                     Emitˉbranch(Opcode.Jump, Jump.Targetˉblock, pop: 0);
                     break;
                 case Wirˉbranch Branch:
+                    Requireˉnoˉphiˉtarget(Branch.Trueˉblock);
+                    Requireˉnoˉphiˉtarget(Branch.Falseˉblock);
                     Loadˉtemporary(Branch.Condition);
                     Emitˉbranch(Opcode.Branchˉfalse, Branch.Falseˉblock, pop: 1);
                     Emitˉbranch(Opcode.Jump, Branch.Trueˉblock, pop: 0);
@@ -366,7 +457,53 @@ internal static class Bytecodeˉlowering
                     break;
                 default:
                     throw new InvalidOperationException(
-                        $"WIR terminator '{terminator.GetType().Name}' has no bytecode lowering.");
+                        $"WIR terminator '{block.Terminator.GetType().Name}' has no bytecode lowering.");
+            }
+        }
+
+        private void Emitˉphiˉassignments(int predecessorˉblock, int targetˉblock)
+        {
+            var Target = function.Blocks.SingleOrDefault(Block => Block.Id == targetˉblock)
+                ?? throw new InvalidOperationException(
+                    $"WIR jump in function '{function.Name}' references block {targetˉblock}.");
+            foreach (var Phi in Target.Instructions.TakeWhile(
+                         Instruction => Instruction.Operation == Wirˉoperation.Boolˉphi))
+            {
+                if (Phi.Result is null || Phi.Operands.Length != 2)
+                {
+                    throw new InvalidOperationException(
+                        $"WIR bool phi in function '{function.Name}' has an invalid result or operand contract.");
+                }
+
+                int Operand;
+                if (Phi.Integerˉoperand == predecessorˉblock)
+                {
+                    Operand = Phi.Operands[0];
+                }
+                else if (Phi.Unsignedˉintegerˉoperand == checked((uint)predecessorˉblock))
+                {
+                    Operand = Phi.Operands[1];
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"WIR bool phi in block {targetˉblock} does not admit predecessor {predecessorˉblock}.");
+                }
+
+                Loadˉtemporary(Operand);
+                Storeˉresult(Phi);
+            }
+        }
+
+        private void Requireˉnoˉphiˉtarget(int targetˉblock)
+        {
+            var Target = function.Blocks.SingleOrDefault(Block => Block.Id == targetˉblock)
+                ?? throw new InvalidOperationException(
+                    $"WIR branch in function '{function.Name}' references block {targetˉblock}.");
+            if (Target.Instructions.FirstOrDefault()?.Operation == Wirˉoperation.Boolˉphi)
+            {
+                throw new InvalidOperationException(
+                    $"WIR conditional branch in function '{function.Name}' targets phi block {targetˉblock} directly.");
             }
         }
 
@@ -595,6 +732,36 @@ internal static class Bytecodeˉlowering
                 Wirˉoperation.U64ˉgreaterˉequal => Opcode.U64ˉgreaterˉequal,
                 Wirˉoperation.U8ˉequal => Opcode.U8ˉequal,
                 Wirˉoperation.U8ˉnotˉequal => Opcode.U8ˉnotˉequal,
+                Wirˉoperation.I32ˉdivide => Opcode.I32ˉdivide,
+                Wirˉoperation.I32ˉremainder => Opcode.I32ˉremainder,
+                Wirˉoperation.U32ˉdivide => Opcode.U32ˉdivide,
+                Wirˉoperation.U32ˉremainder => Opcode.U32ˉremainder,
+                Wirˉoperation.I64ˉdivide => Opcode.I64ˉdivide,
+                Wirˉoperation.I64ˉremainder => Opcode.I64ˉremainder,
+                Wirˉoperation.U64ˉdivide => Opcode.U64ˉdivide,
+                Wirˉoperation.U64ˉremainder => Opcode.U64ˉremainder,
+                Wirˉoperation.U8ˉbitwiseˉand => Opcode.U8ˉbitwiseˉand,
+                Wirˉoperation.U8ˉbitwiseˉor => Opcode.U8ˉbitwiseˉor,
+                Wirˉoperation.U8ˉbitwiseˉxor => Opcode.U8ˉbitwiseˉxor,
+                Wirˉoperation.U8ˉbitwiseˉnot => Opcode.U8ˉbitwiseˉnot,
+                Wirˉoperation.U8ˉshiftˉleft => Opcode.U8ˉshiftˉleft,
+                Wirˉoperation.U8ˉshiftˉright => Opcode.U8ˉshiftˉright,
+                Wirˉoperation.U32ˉbitwiseˉand => Opcode.U32ˉbitwiseˉand,
+                Wirˉoperation.U32ˉbitwiseˉor => Opcode.U32ˉbitwiseˉor,
+                Wirˉoperation.U32ˉbitwiseˉxor => Opcode.U32ˉbitwiseˉxor,
+                Wirˉoperation.U32ˉbitwiseˉnot => Opcode.U32ˉbitwiseˉnot,
+                Wirˉoperation.U32ˉshiftˉleft => Opcode.U32ˉshiftˉleft,
+                Wirˉoperation.U32ˉshiftˉright => Opcode.U32ˉshiftˉright,
+                Wirˉoperation.U64ˉbitwiseˉand => Opcode.U64ˉbitwiseˉand,
+                Wirˉoperation.U64ˉbitwiseˉor => Opcode.U64ˉbitwiseˉor,
+                Wirˉoperation.U64ˉbitwiseˉxor => Opcode.U64ˉbitwiseˉxor,
+                Wirˉoperation.U64ˉbitwiseˉnot => Opcode.U64ˉbitwiseˉnot,
+                Wirˉoperation.U64ˉshiftˉleft => Opcode.U64ˉshiftˉleft,
+                Wirˉoperation.U64ˉshiftˉright => Opcode.U64ˉshiftˉright,
+                Wirˉoperation.Textˉequal => Opcode.Textˉequal,
+                Wirˉoperation.Textˉnotˉequal => Opcode.Textˉnotˉequal,
+                Wirˉoperation.Bytesˉequal => Opcode.Bytesˉequal,
+                Wirˉoperation.Bytesˉnotˉequal => Opcode.Bytesˉnotˉequal,
                 Wirˉoperation.Enumˉequal => Opcode.Enumˉequal,
                 Wirˉoperation.Enumˉnotˉequal => Opcode.Enumˉnotˉequal,
                 Wirˉoperation.Enumˉname => Opcode.Enumˉname,

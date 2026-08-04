@@ -1,10 +1,16 @@
 module Compositionˉdemo profile portable;
 
-import Compositionˉmiddle;
+import Compositionˉmiddle as Middle;
+
+record Shared { Value: i32; }
 
 data __Text_000000: text = "root";
 data Compositionˉoffset: [i32] = [0];
 
+fn Helper(Value: i32) -> i32 { return Value; }
+
+fn __WvM1F0() -> i32 { return 0; }
+
 export fn Main() -> i32 {
-    return Compositionˉanswer() + Compositionˉoffset[0];
+    return Helper(Middle.Compositionˉanswer()) + Compositionˉoffset[0];
 }

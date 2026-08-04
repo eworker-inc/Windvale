@@ -1,18 +1,22 @@
 module Compilerˉsourceˉgraph profile portable;
 
-import Compilerˉsourceˉset;
-import Foundationˉbyteˉconstruction;
+import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉset as Sourceˉset;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
-enum Compilerˉsourceˉgraphˉstatus {
+export enum Compilerˉsourceˉgraphˉstatus {
     Valid = 0;
     Sourceˉset = 1;
     Duplicateˉimport = 2;
     Missingˉimport = 3;
     Cycle = 4;
     Unreachable = 5;
+    Invalidˉalias = 6;
+    Duplicateˉalias = 7;
 }
 
-record Compilerˉsourceˉgraphˉmatch {
+export record Compilerˉsourceˉgraphˉmatch {
     Found: bool;
     Index: u32;
 }
@@ -29,9 +33,9 @@ record Compilerˉsourceˉgraphˉwalk {
     Failureˉcolumn: u32;
 }
 
-record Compilerˉsourceˉgraphˉsummary {
+export record Compilerˉsourceˉgraphˉsummary {
     Status: Compilerˉsourceˉgraphˉstatus;
-    Sourceˉsetˉstatus: Compilerˉsourceˉsetˉstatus;
+    Sourceˉsetˉstatus: Sourceˉset.Compilerˉsourceˉsetˉstatus;
     Modules: u32;
     Imports: u32;
     Reachable: u32;
@@ -43,12 +47,12 @@ record Compilerˉsourceˉgraphˉsummary {
 }
 
 export fn Compilerˉsourceˉgraphˉstate(Count: u32) -> bytes {
-    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉrepeat(0u8, Count);
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
     return Result.Value;
 }
 
 export fn Compilerˉsourceˉgraphˉmark(State: bytes, Index: u32) -> bytes {
-    let Result: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
         State,
         Index,
         1u32,
@@ -59,7 +63,7 @@ export fn Compilerˉsourceˉgraphˉmark(State: bytes, Index: u32) -> bytes {
 
 export fn Compilerˉsourceˉgraphˉsummaryˉfailure(
     Status: Compilerˉsourceˉgraphˉstatus,
-    Sourceˉsetˉstatus: Compilerˉsourceˉsetˉstatus,
+    Sourceˉsetˉstatus: Sourceˉset.Compilerˉsourceˉsetˉstatus,
     Modules: u32,
     Imports: u32,
     Reachable: u32,
@@ -108,16 +112,16 @@ export fn Compilerˉsourceˉgraphˉwalkˉfailure(
 
 export fn Compilerˉsourceˉgraphˉfind(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Nameˉsource: bytes,
     Nameˉoffset: u32,
     Nameˉlength: u32
 ) -> Compilerˉsourceˉgraphˉmatch {
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
-        let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
-        let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(View.Source);
-        if Compilerˉsourceˉspansˉequal(
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+        if Sourceˉset.Compilerˉsourceˉspansˉequal(
             Nameˉsource,
             Nameˉoffset,
             Nameˉlength,
@@ -134,31 +138,33 @@ export fn Compilerˉsourceˉgraphˉfind(
 
 export fn Compilerˉsourceˉgraphˉimportˉisˉduplicate(
     Source: bytes,
-    Header: Compilerˉsourceˉheader,
-    Current: Compilerˉsourceˉdeclaration
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Current: Sourceˉdeclarations.Compilerˉsourceˉdeclaration
 ) -> bool {
     var Cursor: u32 = Header.Nextˉoffset;
     var Currentˉline: u32 = Header.Nextˉline;
     var Currentˉcolumn: u32 = Header.Nextˉcolumn;
     while Cursor < Current.Declarationˉoffset {
-        let Prior: Compilerˉsourceˉdeclaration = Compilerˉparseˉnextˉdeclarationˉvalidated(
+        let Prior: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
             Source,
             Cursor,
             Currentˉline,
             Currentˉcolumn,
             false
         );
-        if Prior.Kind != Compilerˉsourceˉdeclarationˉkind.Import { return false; }
-        if Prior.Declarationˉoffset >= Current.Declarationˉoffset { return false; }
-        if Compilerˉsourceˉspansˉequal(
-            Source,
-            Prior.Nameˉoffset,
-            Prior.Nameˉlength,
-            Source,
-            Current.Nameˉoffset,
-            Current.Nameˉlength
-        ) {
-            return true;
+        if !Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata(Prior) {
+            if Prior.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import { return false; }
+            if Prior.Declarationˉoffset >= Current.Declarationˉoffset { return false; }
+            if Sourceˉset.Compilerˉsourceˉspansˉequal(
+                Source,
+                Prior.Nameˉoffset,
+                Prior.Nameˉlength,
+                Source,
+                Current.Nameˉoffset,
+                Current.Nameˉlength
+            ) {
+                return true;
+            }
         }
         Cursor = Prior.Nextˉoffset;
         Currentˉline = Prior.Nextˉline;
@@ -167,9 +173,38 @@ export fn Compilerˉsourceˉgraphˉimportˉisˉduplicate(
     return false;
 }
 
+export fn Compilerˉsourceˉgraphˉaliasˉisˉduplicate(
+    Source: bytes,
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Current: Sourceˉdeclarations.Compilerˉsourceˉdeclaration
+) -> bool {
+    var Cursor: u32 = Header.Nextˉoffset;
+    var Line: u32 = Header.Nextˉline;
+    var Column: u32 = Header.Nextˉcolumn;
+    while Cursor < Current.Declarationˉoffset {
+        let Prior: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            Source, Cursor, Line, Column, false
+        );
+        if !Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata(Prior) {
+            if Prior.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import { return false; }
+            if Prior.Declarationˉoffset >= Current.Declarationˉoffset { return false; }
+            if Prior.Bodyˉlength == Current.Bodyˉlength {
+                if Sourceˉset.Compilerˉsourceˉspansˉequal(
+                    Source, Prior.Bodyˉoffset, Prior.Bodyˉlength,
+                    Source, Current.Bodyˉoffset, Current.Bodyˉlength
+                ) { return true; }
+            }
+        }
+        Cursor = Prior.Nextˉoffset;
+        Line = Prior.Nextˉline;
+        Column = Prior.Nextˉcolumn;
+    }
+    return false;
+}
+
 export fn Compilerˉsourceˉgraphˉexpand(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     State: bytes,
     Reachable: u32
 ) -> Compilerˉsourceˉgraphˉwalk {
@@ -179,31 +214,64 @@ export fn Compilerˉsourceˉgraphˉexpand(
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
         if Bytesˉreadˉu8(Nextˉstate, Index) != 0u8 {
-            let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
+            let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
             let Source: bytes = View.Source;
-            let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Source);
+            let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Source);
             var Cursor: u32 = Header.Nextˉoffset;
             var Currentˉline: u32 = Header.Nextˉline;
             var Currentˉcolumn: u32 = Header.Nextˉcolumn;
             var Reading: bool = true;
             while Reading {
-                let Declaration: Compilerˉsourceˉdeclaration = Compilerˉparseˉnextˉdeclarationˉvalidated(
+                let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
                     Source,
                     Cursor,
                     Currentˉline,
                     Currentˉcolumn,
                     false
                 );
-                if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
+                if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata(Declaration) {
+                    Cursor = Declaration.Nextˉoffset;
+                    Currentˉline = Declaration.Nextˉline;
+                    Currentˉcolumn = Declaration.Nextˉcolumn;
+                } else if Declaration.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import {
                     Reading = false;
                 } else {
-                    let Position: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+                    let Position: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
                         Source,
                         Cursor,
                         Currentˉline,
                         Currentˉcolumn,
                         Declaration.Nameˉoffset
                     );
+                    let Aliasˉfirst: u32 = U32ˉfromˉu8(
+                        Bytesˉreadˉu8(Source, Declaration.Bodyˉoffset)
+                    );
+                    if Aliasˉfirst < 65u32 {
+                        return Compilerˉsourceˉgraphˉwalkˉfailure(
+                            Compilerˉsourceˉgraphˉstatus.Invalidˉalias,
+                            Nextˉstate, Nextˉreachable, Index, Scan.Modules,
+                            Declaration.Bodyˉoffset,
+                            Position.Line, Position.Column
+                        );
+                    }
+                    if Aliasˉfirst > 90u32 {
+                        return Compilerˉsourceˉgraphˉwalkˉfailure(
+                            Compilerˉsourceˉgraphˉstatus.Invalidˉalias,
+                            Nextˉstate, Nextˉreachable, Index, Scan.Modules,
+                            Declaration.Bodyˉoffset,
+                            Position.Line, Position.Column
+                        );
+                    }
+                    if Compilerˉsourceˉgraphˉaliasˉisˉduplicate(
+                        Source, Header, Declaration
+                    ) {
+                        return Compilerˉsourceˉgraphˉwalkˉfailure(
+                            Compilerˉsourceˉgraphˉstatus.Duplicateˉalias,
+                            Nextˉstate, Nextˉreachable, Index, Scan.Modules,
+                            Declaration.Bodyˉoffset,
+                            Position.Line, Position.Column
+                        );
+                    }
                     if Compilerˉsourceˉgraphˉimportˉisˉduplicate(Source, Header, Declaration) {
                         return Compilerˉsourceˉgraphˉwalkˉfailure(
                             Compilerˉsourceˉgraphˉstatus.Duplicateˉimport,
@@ -263,27 +331,31 @@ export fn Compilerˉsourceˉgraphˉexpand(
 
 export fn Compilerˉsourceˉgraphˉimportˉcount(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan
 ) -> u32 {
     var Imports: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
-        let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
         let Source: bytes = View.Source;
-        let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Source);
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Source);
         var Cursor: u32 = Header.Nextˉoffset;
         var Currentˉline: u32 = Header.Nextˉline;
         var Currentˉcolumn: u32 = Header.Nextˉcolumn;
         var Reading: bool = true;
         while Reading {
-            let Declaration: Compilerˉsourceˉdeclaration = Compilerˉparseˉnextˉdeclarationˉvalidated(
+            let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
                 Source,
                 Cursor,
                 Currentˉline,
                 Currentˉcolumn,
                 false
             );
-            if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
+            if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata(Declaration) {
+                Cursor = Declaration.Nextˉoffset;
+                Currentˉline = Declaration.Nextˉline;
+                Currentˉcolumn = Declaration.Nextˉcolumn;
+            } else if Declaration.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import {
                 Reading = false;
             } else {
                 Imports = Imports + 1u32;
@@ -299,34 +371,38 @@ export fn Compilerˉsourceˉgraphˉimportˉcount(
 
 export fn Compilerˉsourceˉgraphˉhasˉincoming(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Removed: bytes,
     Candidate: u32
 ) -> bool {
-    let Candidateˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Candidate);
-    let Candidateˉheader: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Candidateˉview.Source);
+    let Candidateˉview: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Candidate);
+    let Candidateˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Candidateˉview.Source);
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
         if Bytesˉreadˉu8(Removed, Index) == 0u8 {
-            let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
+            let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
             let Source: bytes = View.Source;
-            let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Source);
+            let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Source);
             var Cursor: u32 = Header.Nextˉoffset;
             var Currentˉline: u32 = Header.Nextˉline;
             var Currentˉcolumn: u32 = Header.Nextˉcolumn;
             var Reading: bool = true;
             while Reading {
-                let Declaration: Compilerˉsourceˉdeclaration = Compilerˉparseˉnextˉdeclarationˉvalidated(
+                let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
                     Source,
                     Cursor,
                     Currentˉline,
                     Currentˉcolumn,
                     false
                 );
-                if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
+                if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata(Declaration) {
+                    Cursor = Declaration.Nextˉoffset;
+                    Currentˉline = Declaration.Nextˉline;
+                    Currentˉcolumn = Declaration.Nextˉcolumn;
+                } else if Declaration.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import {
                     Reading = false;
                 } else {
-                    if Compilerˉsourceˉspansˉequal(
+                    if Sourceˉset.Compilerˉsourceˉspansˉequal(
                         Source,
                         Declaration.Nameˉoffset,
                         Declaration.Nameˉlength,
@@ -349,7 +425,7 @@ export fn Compilerˉsourceˉgraphˉhasˉincoming(
 
 export fn Compilerˉsourceˉgraphˉcycleˉfailure(
     Input: bytes,
-    Scan: Compilerˉsourceˉsetˉscan,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Imports: u32
 ) -> Compilerˉsourceˉgraphˉsummary {
     var Start: u32 = 0u32;
@@ -365,22 +441,26 @@ export fn Compilerˉsourceˉgraphˉcycleˉfailure(
             var Index: u32 = 0u32;
             while Index < Scan.Modules {
                 if Bytesˉreadˉu8(Frontier, Index) != 0u8 {
-                    let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
+                    let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
                     let Source: bytes = View.Source;
-                    let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Source);
+                    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Source);
                     var Cursor: u32 = Header.Nextˉoffset;
                     var Currentˉline: u32 = Header.Nextˉline;
                     var Currentˉcolumn: u32 = Header.Nextˉcolumn;
                     var Reading: bool = true;
                     while Reading {
-                        let Declaration: Compilerˉsourceˉdeclaration = Compilerˉparseˉnextˉdeclarationˉvalidated(
+                        let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
                             Source,
                             Cursor,
                             Currentˉline,
                             Currentˉcolumn,
                             false
                         );
-                        if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
+                        if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata(Declaration) {
+                            Cursor = Declaration.Nextˉoffset;
+                            Currentˉline = Declaration.Nextˉline;
+                            Currentˉcolumn = Declaration.Nextˉcolumn;
+                        } else if Declaration.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import {
                             Reading = false;
                         } else {
                             let Target: Compilerˉsourceˉgraphˉmatch = Compilerˉsourceˉgraphˉfind(
@@ -391,7 +471,7 @@ export fn Compilerˉsourceˉgraphˉcycleˉfailure(
                                 Declaration.Nameˉlength
                             );
                             if Target.Index == Start {
-                                let Position: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+                                let Position: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
                                     Source,
                                     Cursor,
                                     Currentˉline,
@@ -400,7 +480,7 @@ export fn Compilerˉsourceˉgraphˉcycleˉfailure(
                                 );
                                 return Compilerˉsourceˉgraphˉsummaryˉfailure(
                                     Compilerˉsourceˉgraphˉstatus.Cycle,
-                                    Compilerˉsourceˉsetˉstatus.Valid,
+                                    Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
                                     Scan.Modules,
                                     Imports,
                                     Scan.Modules,
@@ -432,7 +512,7 @@ export fn Compilerˉsourceˉgraphˉcycleˉfailure(
     }
     return Compilerˉsourceˉgraphˉsummaryˉfailure(
         Compilerˉsourceˉgraphˉstatus.Cycle,
-        Compilerˉsourceˉsetˉstatus.Valid,
+        Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
         Scan.Modules,
         Imports,
         Scan.Modules,
@@ -445,8 +525,8 @@ export fn Compilerˉsourceˉgraphˉcycleˉfailure(
 }
 
 export fn Compilerˉvalidateˉsourceˉgraph(Input: bytes) -> Compilerˉsourceˉgraphˉsummary {
-    let Setˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Input);
-    if Setˉsummary.Status != Compilerˉsourceˉsetˉstatus.Valid {
+    let Setˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Input);
+    if Setˉsummary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid {
         return Compilerˉsourceˉgraphˉsummaryˉfailure(
             Compilerˉsourceˉgraphˉstatus.Sourceˉset,
             Setˉsummary.Status,
@@ -461,7 +541,7 @@ export fn Compilerˉvalidateˉsourceˉgraph(Input: bytes) -> Compilerˉsourceˉg
         );
     }
 
-    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
     var State: bytes = Compilerˉsourceˉgraphˉmark(
         Compilerˉsourceˉgraphˉstate(Scan.Modules),
         0u32
@@ -479,7 +559,7 @@ export fn Compilerˉvalidateˉsourceˉgraph(Input: bytes) -> Compilerˉsourceˉg
         if Walk.Status != Compilerˉsourceˉgraphˉstatus.Valid {
             return Compilerˉsourceˉgraphˉsummaryˉfailure(
                 Walk.Status,
-                Compilerˉsourceˉsetˉstatus.Valid,
+                Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
                 Scan.Modules,
                 Setˉsummary.Imports,
                 Walk.Count,
@@ -500,9 +580,9 @@ export fn Compilerˉvalidateˉsourceˉgraph(Input: bytes) -> Compilerˉsourceˉg
     var Index: u32 = 1u32;
     while Index < Scan.Modules {
         if Bytesˉreadˉu8(State, Index) == 0u8 {
-            let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
-            let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(View.Source);
-            let Position: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+            let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
+            let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+            let Position: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
                 View.Source,
                 0u32,
                 1u32,
@@ -511,7 +591,7 @@ export fn Compilerˉvalidateˉsourceˉgraph(Input: bytes) -> Compilerˉsourceˉg
             );
             return Compilerˉsourceˉgraphˉsummaryˉfailure(
                 Compilerˉsourceˉgraphˉstatus.Unreachable,
-                Compilerˉsourceˉsetˉstatus.Valid,
+                Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
                 Scan.Modules,
                 Setˉsummary.Imports,
                 Reachable,
@@ -552,7 +632,7 @@ export fn Compilerˉvalidateˉsourceˉgraph(Input: bytes) -> Compilerˉsourceˉg
 
     return Compilerˉsourceˉgraphˉsummary(
         Compilerˉsourceˉgraphˉstatus.Valid,
-        Compilerˉsourceˉsetˉstatus.Valid,
+        Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
         Scan.Modules,
         Imports,
         Reachable,

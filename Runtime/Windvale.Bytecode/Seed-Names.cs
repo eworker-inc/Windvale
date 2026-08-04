@@ -10,6 +10,9 @@ public static partial class Seedˉnames
     [GeneratedRegex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$", RegexOptions.CultureInvariant)]
     private static partial Regex Capabilityˉpattern();
 
+    [GeneratedRegex("^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$", RegexOptions.CultureInvariant)]
+    private static partial Regex Platformˉscopeˉpattern();
+
     public static bool Isˉidentifier(string value)
     {
         return Identifierˉpattern().IsMatch(value);
@@ -18,5 +21,10 @@ public static partial class Seedˉnames
     public static bool Isˉcapability(string value)
     {
         return Capabilityˉpattern().IsMatch(value);
+    }
+
+    public static bool Isˉplatformˉscope(string value)
+    {
+        return Platformˉscopeˉpattern().IsMatch(value);
     }
 }

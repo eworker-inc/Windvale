@@ -11,26 +11,56 @@ public static class Moduleˉcodec
 
     public const ushort MAJOR_VERSION = 1;
     public const ushort BASE_MINOR_VERSION = 6;
-    public const ushort MINOR_VERSION = 7;
+    public const ushort WIDE_MINOR_VERSION = 7;
+    public const ushort MINOR_VERSION = 8;
+    public const ushort VARIANT_MINOR_VERSION = 9;
+    public const ushort COLLECTION_MINOR_VERSION = 10;
+    public const ushort OPERATOR_MINOR_VERSION = 11;
+    private const byte MODULE_METADATA_VERSION = 1;
 
     public static byte[] Write(Bytecodeˉmodule module)
     {
         ArgumentNullException.ThrowIfNull(module);
+        var Candidateˉminorˉversion = Requiresˉversionˉ1ˉ11(module)
+            ? OPERATOR_MINOR_VERSION
+            : Requiresˉcollectionˉshape(module)
+            ? COLLECTION_MINOR_VERSION
+            : module.Types.Any(Type => Type is Variantˉtypeˉdeclaration)
+                ? VARIANT_MINOR_VERSION
+                : module.Metadata is null
+                    ? WIDE_MINOR_VERSION
+                    : MINOR_VERSION;
         var Verified = Moduleˉverifier.Verify(module with
         {
-            Formatˉminorˉversion = MINOR_VERSION,
+            Formatˉminorˉversion = Candidateˉminorˉversion,
         });
         module = module with
         {
-            Formatˉminorˉversion = Requiresˉversionˉ1ˉ7(Verified)
-                ? MINOR_VERSION
-                : BASE_MINOR_VERSION,
+            Formatˉminorˉversion = Requiresˉversionˉ1ˉ11(Verified)
+                ? OPERATOR_MINOR_VERSION
+                : Requiresˉversionˉ1ˉ10(Verified)
+                ? COLLECTION_MINOR_VERSION
+                : Requiresˉversionˉ1ˉ9(Verified)
+                    ? VARIANT_MINOR_VERSION
+                : module.Metadata is not null
+                    ? MINOR_VERSION
+                    : Requiresˉversionˉ1ˉ7(Verified)
+                        ? WIDE_MINOR_VERSION
+                        : BASE_MINOR_VERSION,
         };
 
         var Moduleˉpayload = Buildˉpayload(Writer =>
         {
             Writer.Writeˉbyte((byte)module.Profile);
             Writer.Writeˉstring(module.Name, isˉname: true);
+            if (module.Formatˉminorˉversion >= VARIANT_MINOR_VERSION)
+            {
+                Writer.Writeˉbyte(module.Metadata is null ? (byte)0 : (byte)1);
+            }
+            if (module.Metadata is not null)
+            {
+                Writeˉmetadata(Writer, module.Metadata);
+            }
         });
 
         var Capabilityˉpayload = Buildˉpayload(Writer =>
@@ -144,6 +174,20 @@ public static class Moduleˉcodec
                         }
 
                         break;
+                    case Variantˉtypeˉdeclaration Variant:
+                        Writer.Writeˉu32(Variant.Cases.Length);
+                        foreach (var Case in Variant.Cases)
+                        {
+                            Writer.Writeˉstring(Case.Name, isˉname: true);
+                            Writer.Writeˉbyte(Case.Payloadˉtype is null ? (byte)0 : (byte)1);
+                            if (Case.Payloadˉtype is not null)
+                            {
+                                Writer.Writeˉstring(Case.Payloadˉname!, isˉname: true);
+                                Writer.Writeˉvalueˉshape(Case.Payloadˉtype.Value);
+                            }
+                        }
+
+                        break;
                     default:
                         throw new InvalidOperationException($"Unknown nominal type '{Type.GetType().Name}'.");
                 }
@@ -192,7 +236,7 @@ public static class Moduleˉcodec
         var Majorˉversion = Reader.Readˉu16();
         var Minorˉversion = Reader.Readˉu16();
         if (Majorˉversion != MAJOR_VERSION ||
-            Minorˉversion is not (BASE_MINOR_VERSION or MINOR_VERSION))
+            Minorˉversion is not (BASE_MINOR_VERSION or WIDE_MINOR_VERSION or MINOR_VERSION or VARIANT_MINOR_VERSION or COLLECTION_MINOR_VERSION or OPERATOR_MINOR_VERSION))
         {
             throw new Moduleˉformatˉexception(
                 "WVB1003",
@@ -212,6 +256,26 @@ public static class Moduleˉcodec
         var Moduleˉreader = Readˉsection(ref Reader, Sectionˉkind.Module);
         var Profile = Readˉprofile(ref Moduleˉreader);
         var Moduleˉname = Moduleˉreader.Readˉstring(isˉname: true);
+        Moduleˉmetadata? Metadata = null;
+        if (Minorˉversion == MINOR_VERSION)
+        {
+            Metadata = Readˉmetadata(ref Moduleˉreader);
+        }
+        if (Minorˉversion >= VARIANT_MINOR_VERSION)
+        {
+            var Metadataˉpresent = Moduleˉreader.Readˉbyte();
+            if (Metadataˉpresent > 1)
+            {
+                throw new Moduleˉformatˉexception(
+                    "WVB1026",
+                    $"Invalid module metadata presence value {Metadataˉpresent}.",
+                    Moduleˉreader.Absoluteˉoffset - 1);
+            }
+            if (Metadataˉpresent == 1)
+            {
+                Metadata = Readˉmetadata(ref Moduleˉreader);
+            }
+        }
         Moduleˉreader.Requireˉend("Module");
 
         var Capabilityˉreader = Readˉsection(ref Reader, Sectionˉkind.Capabilities);
@@ -249,6 +313,7 @@ public static class Moduleˉcodec
             Exports)
         {
             Types = Types,
+            Metadata = Metadata,
             Formatˉminorˉversion = Minorˉversion,
         };
     }
@@ -283,6 +348,128 @@ public static class Moduleˉcodec
 
     internal static bool Isˉversionˉ1ˉ7ˉopcode(Opcode opcode) =>
         opcode is >= Opcode.I64ˉconst and <= Opcode.U64ˉformat;
+
+    private static bool Requiresˉversionˉ1ˉ9(Verifiedˉmodule module) =>
+        module.Module.Types.Any(Type => Type is Variantˉtypeˉdeclaration) ||
+        module.Functions.SelectMany(Function => Function.Instructions).Any(
+            Instruction => Isˉversionˉ1ˉ9ˉopcode(Instruction.Opcode));
+
+    internal static bool Isˉversionˉ1ˉ9ˉopcode(Opcode opcode) =>
+        opcode is >= Opcode.Variantˉcreate and <= Opcode.Variantˉpayload;
+
+    private static bool Requiresˉversionˉ1ˉ10(Verifiedˉmodule module) =>
+        Requiresˉcollectionˉshape(module.Module) ||
+        module.Functions.SelectMany(Function => Function.Instructions).Any(
+            Instruction => Isˉversionˉ1ˉ10ˉopcode(Instruction.Opcode));
+
+    private static bool Requiresˉcollectionˉshape(Bytecodeˉmodule module) =>
+        module.Functions.Any(Function =>
+            Function.Parameterˉtypes.Any(Isˉcollection) ||
+            Isˉcollection(Function.Returnˉtype) ||
+            Function.Localˉtypes.Any(Isˉcollection)) ||
+        module.Types.OfType<Recordˉtypeˉdeclaration>().Any(Record =>
+            Record.Fields.Any(Field => Isˉcollection(Field.Type))) ||
+        module.Types.OfType<Variantˉtypeˉdeclaration>().Any(Variant =>
+            Variant.Cases.Any(Case => Case.Payloadˉtype is { } Shape && Isˉcollection(Shape)));
+
+    private static bool Isˉcollection(Valueˉshape shape) =>
+        shape.Kind is Valueˉtype.Sequence or Valueˉtype.Builder;
+
+    internal static bool Isˉversionˉ1ˉ10ˉopcode(Opcode opcode) =>
+        opcode is >= Opcode.Builderˉcreate and <= Opcode.Sequenceˉelement;
+
+    private static bool Requiresˉversionˉ1ˉ11(Bytecodeˉmodule module) =>
+        module.Functions.Any(Function =>
+            Instructionˉcodec.Decode(
+                module.Code.AsSpan(Function.Codeˉoffset, Function.Codeˉlength),
+                Function.Name).Any(Instruction => Isˉversionˉ1ˉ11ˉopcode(Instruction.Opcode)));
+
+    private static bool Requiresˉversionˉ1ˉ11(Verifiedˉmodule module) =>
+        module.Functions.SelectMany(Function => Function.Instructions).Any(
+            Instruction => Isˉversionˉ1ˉ11ˉopcode(Instruction.Opcode));
+
+    internal static bool Isˉversionˉ1ˉ11ˉopcode(Opcode opcode) =>
+        opcode is >= Opcode.I32ˉdivide and <= Opcode.Bytesˉnotˉequal;
+
+    private static void Writeˉmetadata(Byteˉwriter writer, Moduleˉmetadata metadata)
+    {
+        writer.Writeˉbyte(MODULE_METADATA_VERSION);
+        writer.Writeˉbyte((byte)metadata.Authority);
+        writer.Writeˉu32(metadata.Platformˉscopes.Length);
+        foreach (var Scope in metadata.Platformˉscopes)
+        {
+            writer.Writeˉstring(Scope, isˉname: true);
+        }
+
+        Writeˉrequirements(writer, metadata.Requiredˉcapabilities);
+        Writeˉrequirements(writer, metadata.Optionalˉcapabilities);
+    }
+
+    private static void Writeˉrequirements(
+        Byteˉwriter writer,
+        ImmutableArray<Capabilityˉrequirement> requirements)
+    {
+        writer.Writeˉu32(requirements.Length);
+        foreach (var Requirement in requirements)
+        {
+            writer.Writeˉstring(Requirement.Name, isˉname: true);
+            writer.Writeˉu32(Requirement.Majorˉversion);
+        }
+    }
+
+    private static Moduleˉmetadata Readˉmetadata(ref Byteˉreader reader)
+    {
+        var Versionˉoffset = reader.Absoluteˉoffset;
+        var Version = reader.Readˉbyte();
+        if (Version != MODULE_METADATA_VERSION)
+        {
+            throw new Moduleˉformatˉexception(
+                "WVB1021",
+                $"Unknown module metadata version {Version}.",
+                Versionˉoffset);
+        }
+
+        var Authorityˉoffset = reader.Absoluteˉoffset;
+        var Rawˉauthority = reader.Readˉbyte();
+        if (!Enum.IsDefined(typeof(Moduleˉauthority), Rawˉauthority))
+        {
+            throw new Moduleˉformatˉexception(
+                "WVB1022",
+                $"Unknown module authority {Rawˉauthority}.",
+                Authorityˉoffset);
+        }
+
+        var Platformˉcount = reader.Readˉboundedˉcount(
+            Bytecodeˉlimits.MAX_PLATFORM_SCOPES,
+            "platform scope");
+        var Platforms = ImmutableArray.CreateBuilder<string>(Platformˉcount);
+        for (var Index = 0; Index < Platformˉcount; Index++)
+        {
+            Platforms.Add(reader.Readˉstring(isˉname: true));
+        }
+
+        return new(
+            (Moduleˉauthority)Rawˉauthority,
+            Platforms.ToImmutable(),
+            Readˉrequirements(ref reader),
+            Readˉrequirements(ref reader));
+    }
+
+    private static ImmutableArray<Capabilityˉrequirement> Readˉrequirements(
+        ref Byteˉreader reader)
+    {
+        var Count = reader.Readˉboundedˉcount(
+            Bytecodeˉlimits.MAX_CAPABILITY_REQUIREMENTS,
+            "capability requirement");
+        var Requirements = ImmutableArray.CreateBuilder<Capabilityˉrequirement>(Count);
+        for (var Index = 0; Index < Count; Index++)
+        {
+            Requirements.Add(new(
+                reader.Readˉstring(isˉname: true),
+                reader.Readˉu32()));
+        }
+        return Requirements.ToImmutable();
+    }
 
     private static ImmutableArray<Capabilityˉdeclaration> Readˉcapabilities(ref Byteˉreader reader)
     {
@@ -457,6 +644,40 @@ public static class Moduleˉcodec
                 continue;
             }
 
+            if (Kind == Nominalˉtypeˉkind.Variant)
+            {
+                var Caseˉcount = reader.Readˉboundedˉcount(
+                    Bytecodeˉlimits.MAX_VARIANT_CASES,
+                    "variant case");
+                var Cases = ImmutableArray.CreateBuilder<Variantˉcaseˉdeclaration>(Caseˉcount);
+                for (var Caseˉindex = 0; Caseˉindex < Caseˉcount; Caseˉindex++)
+                {
+                    var Caseˉname = reader.Readˉstring(isˉname: true);
+                    var Payloadˉpresent = reader.Readˉbyte();
+                    if (Payloadˉpresent > 1)
+                    {
+                        throw new Moduleˉformatˉexception(
+                            "WVB1027",
+                            $"Invalid variant payload presence value {Payloadˉpresent}.",
+                            reader.Absoluteˉoffset - 1);
+                    }
+                    if (Payloadˉpresent == 0)
+                    {
+                        Cases.Add(new(Caseˉname, null, null));
+                    }
+                    else
+                    {
+                        Cases.Add(new(
+                            Caseˉname,
+                            reader.Readˉstring(isˉname: true),
+                            reader.Readˉvalueˉshape(allowˉvoid: false)));
+                    }
+                }
+
+                Result.Add(new Variantˉtypeˉdeclaration(Name, Cases.ToImmutable()));
+                continue;
+            }
+
             var Memberˉcount = reader.Readˉboundedˉcount(
                 Bytecodeˉlimits.MAX_ENUM_MEMBERS,
                 "enum member");
@@ -574,9 +795,14 @@ public static class Moduleˉcodec
         public void Writeˉvalueˉshape(Valueˉshape shape)
         {
             Writeˉbyte((byte)shape.Kind);
-            if (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum)
+            if (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum or Valueˉtype.Variant)
             {
                 Writeˉu32(shape.Nominalˉtypeˉindex);
+            }
+            if (shape.Kind is Valueˉtype.Sequence or Valueˉtype.Builder)
+            {
+                Writeˉvalueˉshape(shape.Elementˉshape);
+                Writeˉu32(shape.Maximum);
             }
         }
 
@@ -695,7 +921,7 @@ public static class Moduleˉcodec
                     Typeˉoffset);
             }
 
-            if (!allowˉnominal && Type is Valueˉtype.Record or Valueˉtype.Enum)
+            if (!allowˉnominal && Type is Valueˉtype.Record or Valueˉtype.Enum or Valueˉtype.Variant or Valueˉtype.Sequence or Valueˉtype.Builder)
             {
                 throw new Moduleˉformatˉexception(
                     "WVB1019",
@@ -709,9 +935,28 @@ public static class Moduleˉcodec
         public Valueˉshape Readˉvalueˉshape(bool allowˉvoid)
         {
             var Type = Readˉvalueˉtype(allowˉvoid, allowˉnominal: true);
-            var Nominalˉindex = Type is Valueˉtype.Record or Valueˉtype.Enum
+            var Nominalˉindex = Type is Valueˉtype.Record or Valueˉtype.Enum or Valueˉtype.Variant
                 ? Readˉnonnegativeˉi32("nominal type index")
                 : -1;
+            if (Type is Valueˉtype.Sequence or Valueˉtype.Builder)
+            {
+                var Elementˉtype = Readˉvalueˉtype(allowˉvoid: false, allowˉnominal: true);
+                if (Elementˉtype is Valueˉtype.Sequence or Valueˉtype.Builder)
+                {
+                    throw new Moduleˉformatˉexception(
+                        "WVB1027",
+                        "Nested collection value shapes are not valid in WVB 1.10.",
+                        Absoluteˉoffset - 1);
+                }
+                var Elementˉnominalˉindex = Elementˉtype is Valueˉtype.Record or Valueˉtype.Enum or Valueˉtype.Variant
+                    ? Readˉnonnegativeˉi32("collection element nominal type index")
+                    : -1;
+                var Maximum = Readˉu32();
+                var Elementˉshape = new Valueˉshape(Elementˉtype, Elementˉnominalˉindex);
+                return Type == Valueˉtype.Sequence
+                    ? Valueˉshape.Forˉsequence(Elementˉshape, Maximum)
+                    : Valueˉshape.Forˉbuilder(Elementˉshape, Maximum);
+            }
             return new(Type, Nominalˉindex);
         }
 

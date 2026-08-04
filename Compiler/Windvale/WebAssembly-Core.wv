@@ -1,6 +1,6 @@
 module Compilerˉwebassembly profile portable;
 
-enum Compilerˉwebassemblyˉstatus {
+export enum Compilerˉwebassemblyˉstatus {
     Valid = 0;
     Invalidˉwvb = 1;
     Unsupportedˉprofile = 2;
@@ -10,7 +10,7 @@ enum Compilerˉwebassemblyˉstatus {
     Outputˉlimit = 6;
 }
 
-record Compilerˉwebassemblyˉdivision {
+export record Compilerˉwebassemblyˉdivision {
     Quotient: u32;
     Remainder: u32;
 }
@@ -130,7 +130,7 @@ record Compilerˉwebassemblyˉruntimeˉcallˉsummary {
     Callˉcount: u32;
 }
 
-record Compilerˉwebassemblyˉsummary {
+export record Compilerˉwebassemblyˉsummary {
     Status: Compilerˉwebassemblyˉstatus;
     Webassembly: bytes;
     Result: i32;

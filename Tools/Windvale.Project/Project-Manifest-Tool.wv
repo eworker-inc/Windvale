@@ -1,6 +1,6 @@
 module Windvaleˉprojectˉtool profile hosted;
 
-import Windvaleˉproject;
+import Windvaleˉproject as Project;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -8,16 +8,16 @@ capability file.read_bytes;
 capability process.argument;
 capability process.argument_count;
 
-fn Windvaleˉprojectˉtoolˉfailure(Scan: Windvaleˉprojectˉscan) -> text {
+fn Windvaleˉprojectˉtoolˉfailure(Scan: Project.Windvaleˉprojectˉscan) -> text {
     var Report: text = "project status=";
-    Report = Textˉconcat(Report, Windvaleˉprojectˉdiagnosticˉcode(Scan.Status));
+    Report = Textˉconcat(Report, Project.Windvaleˉprojectˉdiagnosticˉcode(Scan.Status));
     Report = Textˉconcat(Report, " line=");
     Report = Textˉconcat(Report, U32ˉformat(Scan.Failureˉline));
     Report = Textˉconcat(Report, " column=");
     return Textˉconcat(Report, U32ˉformat(Scan.Failureˉcolumn));
 }
 
-fn Windvaleˉprojectˉtoolˉpath(Path: Windvaleˉprojectˉpath) -> text {
+fn Windvaleˉprojectˉtoolˉpath(Path: Project.Windvaleˉprojectˉpath) -> text {
     var Report: text = "project path=";
     Report = Textˉconcat(Report, U32ˉformat(Path.Index));
     Report = Textˉconcat(Report, " line=");
@@ -35,8 +35,8 @@ export fn Main() -> i32 {
     }
 
     let Input: bytes = file.read_bytes(process.argument(0u32));
-    let Scan: Windvaleˉprojectˉscan = Windvaleˉprojectˉscanˉmanifest(Input);
-    if Scan.Status != Windvaleˉprojectˉstatus.Valid {
+    let Scan: Project.Windvaleˉprojectˉscan = Project.Windvaleˉprojectˉscanˉmanifest(Input);
+    if Scan.Status != Project.Windvaleˉprojectˉstatus.Valid {
         diagnostic.write_line(Windvaleˉprojectˉtoolˉfailure(Scan));
         return 1;
     }
@@ -46,7 +46,7 @@ export fn Main() -> i32 {
     );
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
-        let Path: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(Input, Scan, Index);
+        let Path: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉpathˉat(Input, Scan, Index);
         if !Path.Found {
             diagnostic.write_line("project status=Internal");
             return 70;

@@ -19,9 +19,9 @@ The writable segment begins with a 1,024-byte file-backed header. Remaining byte
 | 272 | 192 | `WVHC 1` hosted metadata |
 | 464 | platform-defined | Windows import records or zero Linux padding |
 | 1,024 | 2,097,152 | Record arena |
-| 2,098,176 | 67,108,864 | Dynamic text/byte arena |
+| 2,098,176 | 134,217,728 | Dynamic text/byte arena |
 
-The complete virtual data extent is 69,207,040 bytes. The context carries default instruction and call-depth budgets, the 2 MiB record length, and the 64 MiB text length. Startup installs context, service-table, arena, and output-table pointers. The service table contains only the `console.write_line` pointer at byte 8. All other service slots remain zero.
+The complete virtual data extent is 136,315,904 bytes. The context carries default instruction and call-depth budgets, the 2 MiB record length, and the 128 MiB text length. Startup installs context, service-table, arena, and output-table pointers. The service table contains only the `console.write_line` pointer at byte 8. All other service slots remain zero.
 
 The output table has magic `WVIO`, version 1, size 48, the target platform identity, and `CONSOLE_PRESENT`. Linux initializes the console target to file descriptor 1 and uses a zero write-function pointer. Windows startup obtains standard output through `GetStdHandle(-11)` and installs both that handle and the imported `WriteFile` address before entering the application.
 

@@ -54,16 +54,16 @@ WVSS is a compiler input container, not a source package, archive, module-distri
 
 The hosted source-set tool accepts explicit root/dependency resource names, constructs WVSS in argument order, and passes it to the portable validator. Dependency order is therefore checked rather than inherited from host enumeration. Repeated reads of the same exact resource use the hosted first-successful-read snapshot.
 
-## Qualified milestone artifacts and evidence
+## Current deterministic artifacts and retained evidence
 
-- `Source-Set-Core.wvb`: 187,767 bytes, SHA-256 `bb671df781acb049c513f9504abf00069a3fff1cdb9affb8706340b9e02fefda`.
-- `Source-Set-Demo.wvb`: 197,409 bytes, SHA-256 `5b334b0ead653bc043e244a60e2e36bc32d66aa0211f715329434c0447a539c9`.
-- `Source-Set-Tool.wvb`: 191,957 bytes, SHA-256 `3ecb611599ee51799799ead54288259569a1b0a092d24c216caa703b578d55e4`.
+- `Source-Set-Core.wvb`: 252,333 bytes, SHA-256 `4b497ed318d685259dcff69f91da17bf10f5de5340aa42144c55eb87ea12ac74`.
+- `Source-Set-Demo.wvb`: 261,663 bytes, SHA-256 `1977c8e4ade8519b9a9e75a526f402b07b579323220cf8d29120ae246497729b`.
+- `Source-Set-Tool.wvb`: 256,186 bytes, SHA-256 `f7ddb4be4ab2a3b1cc2a33ed6ff995be0707de12a492f60c478208351dd74b09`.
 
-The Windows x64 and Debian Linux x64 conformance runners each pass all 43 tests with zero build warnings/errors. The hosted tool validates the real source-set core plus body parser, declaration parser, lexer, and decimal parser as:
+These local candidate identities include the new lexical, declaration, and body-expression surface and require cross-host requalification. The current local hosted report is:
 
 ```text
-source set status=Valid modules=5 source-bytes=205658 imports=4 records=16 enums=11 functions=92
+source set status=Valid modules=5 source-bytes=290433 imports=6 records=17 enums=11 functions=107
 ```
 
 The source-set contract was originally cross-host qualified at `00ef0b1`. Decision 0042's artifacts and aggregate source-byte report were requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's declaration-summary reuse implementation is cross-host qualified at `1a4fca7`. Decision 0058 adds the equality-only span helper and uses the unchanged WVSS 1 format for exact Stage 1 to Stage 2 compiler convergence, cross-host qualified at `5c16547`.

@@ -1,25 +1,25 @@
 module Directoryˉsnapshotˉservice profile portable;
 
-import Directoryˉservice;
-import Directoryˉsnapshot;
+import Directoryˉservice as Directoryˉservice;
+import Directoryˉsnapshot as Directoryˉsnapshot;
 
 export fn Directoryˉsnapshotˉserviceˉhandle(
     Snapshot: bytes,
     Requestˉbytes: bytes
 ) -> bytes {
-    let Request: Directoryˉserviceˉrequest =
-        Directoryˉserviceˉparseˉrequest(Requestˉbytes);
-    if Request.Status != Directoryˉserviceˉrequestˉstatus.Valid {
-        return Directoryˉserviceˉhandleˉresponse(
+    let Request: Directoryˉservice.Directoryˉserviceˉrequest =
+        Directoryˉservice.Directoryˉserviceˉparseˉrequest(Requestˉbytes);
+    if Request.Status != Directoryˉservice.Directoryˉserviceˉrequestˉstatus.Valid {
+        return Directoryˉservice.Directoryˉserviceˉhandleˉresponse(
             Requestˉbytes,
-            Directoryˉserviceˉempty(Requestˉbytes)
+            Directoryˉservice.Directoryˉserviceˉempty(Requestˉbytes)
         );
     }
-    let Providerˉresponse: bytes = Directoryˉsnapshotˉread(
+    let Providerˉresponse: bytes = Directoryˉsnapshot.Directoryˉsnapshotˉread(
         Snapshot,
         Request.Name,
         Request.Offset,
         Request.Maximumˉbytes
     );
-    return Directoryˉserviceˉhandleˉresponse(Requestˉbytes, Providerˉresponse);
+    return Directoryˉservice.Directoryˉserviceˉhandleˉresponse(Requestˉbytes, Providerˉresponse);
 }

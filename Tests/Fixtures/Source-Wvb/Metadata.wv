@@ -1,0 +1,12 @@
+module Metadataˉapplication;
+
+platform linux, windows, windvale;
+authority application;
+requires capability console.write_line version 1;
+optional capability file.read_bytes version 1;
+
+export fn Main() -> i32
+{
+    console.write_line("metadata");
+    return 0;
+}

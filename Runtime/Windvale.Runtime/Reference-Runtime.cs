@@ -365,10 +365,102 @@ public sealed class Referenceˉruntime
         var Instructionˉindex = 0;
         while (true)
         {
-            Countˉinstruction(functionˉindex);
             var Instruction = Verifiedˉfunction.Instructions[Instructionˉindex];
+            if (Instruction.Opcode is not (
+                    Opcode.Jump or
+                    Opcode.Branchˉfalse or
+                    Opcode.Call or
+                    Opcode.Return))
+            {
+                Executeˉnoncontrolˉinstructions(
+                    functionˉindex,
+                    Function,
+                    Stack,
+                    Locals,
+                    ref Instructionˉindex);
+                continue;
+            }
+
+            Countˉinstruction(functionˉindex);
             var Advance = true;
 
+            try
+            {
+                switch (Instruction.Opcode)
+                {
+                    case Opcode.Jump:
+                        Instructionˉindex = Instructionˉindices[functionˉindex][(int)Instruction.Unsignedˉoperand];
+                        Advance = false;
+                        break;
+                    case Opcode.Branchˉfalse:
+                        if (!Stack.Pop().Boolˉvalue)
+                        {
+                            Instructionˉindex = Instructionˉindices[functionˉindex][(int)Instruction.Unsignedˉoperand];
+                            Advance = false;
+                        }
+
+                        break;
+                    case Opcode.Call:
+                        var Calledˉfunction = Verifiedˉmodule.Module.Functions[(int)Instruction.Unsignedˉoperand];
+                        var Callˉresult = Executeˉfunction(
+                            (int)Instruction.Unsignedˉoperand,
+                            Stack,
+                            Calledˉfunction.Parameterˉtypes.Length,
+                            callˉdepth + 1);
+                        if (Callˉresult is not null)
+                        {
+                            Stack.Push(Callˉresult.Value);
+                        }
+
+                        break;
+                    case Opcode.Return:
+                        return Function.Returnˉtype == Valueˉtype.Void ? null : Stack.Pop();
+                    default:
+                        throw new InvalidOperationException(
+                            $"Opcode '{Instruction.Opcode}' escaped non-control dispatch.");
+                }
+            }
+            catch (OverflowException)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3007",
+                    $"Integer overflow in function '{Function.Name}' at bytecode offset {Instruction.Offset}.");
+            }
+            catch (DivideByZeroException)
+            {
+                throw new Runtimeˉexception(
+                    "WVR3032",
+                    $"Division by zero in function '{Function.Name}' at bytecode offset {Instruction.Offset}.");
+            }
+
+            if (Advance)
+            {
+                Instructionˉindex++;
+            }
+        }
+    }
+
+    private void Executeˉnoncontrolˉinstructions(
+        int functionˉindex,
+        Functionˉdeclaration Function,
+        Runtimeˉstack Stack,
+        Runtimeˉvalue[] Locals,
+        ref int instructionˉindex)
+    {
+        var Instructions = Verifiedˉmodule.Functions[functionˉindex].Instructions;
+        while (true)
+        {
+            var Instruction = Instructions[instructionˉindex];
+            if (Instruction.Opcode is
+                Opcode.Jump or
+                Opcode.Branchˉfalse or
+                Opcode.Call or
+                Opcode.Return)
+            {
+                return;
+            }
+
+            Countˉinstruction(functionˉindex);
             try
             {
                 switch (Instruction.Opcode)
@@ -478,6 +570,10 @@ public sealed class Referenceˉruntime
                     case Opcode.I32ˉmultiply:
                         Applyˉi32ˉbinary(Stack, (Left, Right) => checked(Left * Right));
                         break;
+                    case Opcode.I32ˉdivide:
+                    case Opcode.I32ˉremainder:
+                        Executeˉextendedˉinstruction(Instruction, Stack);
+                        break;
                     case Opcode.I32ˉnegate:
                         Stack.Push(Runtimeˉvalue.Fromˉi32(checked(-Stack.Pop().I32ˉvalue)));
                         break;
@@ -489,6 +585,10 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.I64ˉmultiply:
                         Applyˉi64ˉbinary(Stack, (Left, Right) => checked(Left * Right));
+                        break;
+                    case Opcode.I64ˉdivide:
+                    case Opcode.I64ˉremainder:
+                        Executeˉextendedˉinstruction(Instruction, Stack);
                         break;
                     case Opcode.I64ˉnegate:
                         Stack.Push(Runtimeˉvalue.Fromˉi64(checked(-Stack.Pop().I64ˉvalue)));
@@ -502,6 +602,16 @@ public sealed class Referenceˉruntime
                     case Opcode.U32ˉmultiply:
                         Applyˉu32ˉbinary(Stack, (Left, Right) => checked(Left * Right));
                         break;
+                    case Opcode.U32ˉdivide:
+                    case Opcode.U32ˉremainder:
+                    case Opcode.U32ˉbitwiseˉand:
+                    case Opcode.U32ˉbitwiseˉor:
+                    case Opcode.U32ˉbitwiseˉxor:
+                    case Opcode.U32ˉbitwiseˉnot:
+                    case Opcode.U32ˉshiftˉleft:
+                    case Opcode.U32ˉshiftˉright:
+                        Executeˉextendedˉinstruction(Instruction, Stack);
+                        break;
                     case Opcode.U64ˉadd:
                         Applyˉu64ˉbinary(Stack, (Left, Right) => checked(Left + Right));
                         break;
@@ -510,6 +620,24 @@ public sealed class Referenceˉruntime
                         break;
                     case Opcode.U64ˉmultiply:
                         Applyˉu64ˉbinary(Stack, (Left, Right) => checked(Left * Right));
+                        break;
+                    case Opcode.U64ˉdivide:
+                    case Opcode.U64ˉremainder:
+                    case Opcode.U64ˉbitwiseˉand:
+                    case Opcode.U64ˉbitwiseˉor:
+                    case Opcode.U64ˉbitwiseˉxor:
+                    case Opcode.U64ˉbitwiseˉnot:
+                    case Opcode.U64ˉshiftˉleft:
+                    case Opcode.U64ˉshiftˉright:
+                        Executeˉextendedˉinstruction(Instruction, Stack);
+                        break;
+                    case Opcode.U8ˉbitwiseˉand:
+                    case Opcode.U8ˉbitwiseˉor:
+                    case Opcode.U8ˉbitwiseˉxor:
+                    case Opcode.U8ˉbitwiseˉnot:
+                    case Opcode.U8ˉshiftˉleft:
+                    case Opcode.U8ˉshiftˉright:
+                        Executeˉextendedˉinstruction(Instruction, Stack);
                         break;
                     case Opcode.I32ˉequal:
                         Applyˉi32ˉcomparison(Stack, (Left, Right) => Left == Right);
@@ -598,6 +726,12 @@ public sealed class Referenceˉruntime
                     case Opcode.U8ˉnotˉequal:
                         Applyˉu8ˉcomparison(Stack, (Left, Right) => Left != Right);
                         break;
+                    case Opcode.Textˉequal:
+                    case Opcode.Textˉnotˉequal:
+                    case Opcode.Bytesˉequal:
+                    case Opcode.Bytesˉnotˉequal:
+                        Executeˉextendedˉinstruction(Instruction, Stack);
+                        break;
                     case Opcode.Enumˉconst:
                         var Enumˉtype = (Enumˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
                             (int)Instruction.Unsignedˉoperand];
@@ -622,6 +756,16 @@ public sealed class Referenceˉruntime
                             Runtimeˉdynamicˉvalueˉkind.Enumˉname,
                             STRICT_UTF8.GetByteCount(Enumˉname));
                         Stack.Push(Runtimeˉvalue.Fromˉtext(Enumˉname, Enumˉnameˉroots));
+                        break;
+                    case Opcode.Variantˉcreate:
+                    case Opcode.Variantˉisˉcase:
+                    case Opcode.Variantˉpayload:
+                    case Opcode.Builderˉcreate:
+                    case Opcode.Builderˉpush:
+                    case Opcode.Builderˉfreeze:
+                    case Opcode.Sequenceˉlength:
+                    case Opcode.Sequenceˉelement:
+                        Executeˉextendedˉinstruction(Instruction, Stack);
                         break;
                     case Opcode.I32ˉformat:
                         var I32ˉformatted = Stack.Pop().I32ˉvalue.ToString(CultureInfo.InvariantCulture);
@@ -836,31 +980,6 @@ public sealed class Referenceˉruntime
                         var Record = Stack.Pop().Recordˉvalue!;
                         Stack.Push(Record.Fields[(int)Instruction.Unsignedˉoperand]);
                         break;
-                    case Opcode.Jump:
-                        Instructionˉindex = Instructionˉindices[functionˉindex][(int)Instruction.Unsignedˉoperand];
-                        Advance = false;
-                        break;
-                    case Opcode.Branchˉfalse:
-                        if (!Stack.Pop().Boolˉvalue)
-                        {
-                            Instructionˉindex = Instructionˉindices[functionˉindex][(int)Instruction.Unsignedˉoperand];
-                            Advance = false;
-                        }
-
-                        break;
-                    case Opcode.Call:
-                        var Calledˉfunction = Verifiedˉmodule.Module.Functions[(int)Instruction.Unsignedˉoperand];
-                        var Callˉresult = Executeˉfunction(
-                            (int)Instruction.Unsignedˉoperand,
-                            Stack,
-                            Calledˉfunction.Parameterˉtypes.Length,
-                            callˉdepth + 1);
-                        if (Callˉresult is not null)
-                        {
-                            Stack.Push(Callˉresult.Value);
-                        }
-
-                        break;
                     case Opcode.Callˉcapability:
                         var Capability = Verifiedˉmodule.Module.Capabilities[(int)Instruction.Unsignedˉoperand];
                         var Capabilityˉarguments = Popˉarguments(Stack, Capability.Parameterˉtypes.Length);
@@ -917,8 +1036,6 @@ public sealed class Referenceˉruntime
                     case Opcode.Pop:
                         Stack.Pop();
                         break;
-                    case Opcode.Return:
-                        return Function.Returnˉtype == Valueˉtype.Void ? null : Stack.Pop();
                     default:
                         throw new Runtimeˉexception(
                             "WVR3006",
@@ -931,12 +1048,45 @@ public sealed class Referenceˉruntime
                     "WVR3007",
                     $"Integer overflow in function '{Function.Name}' at bytecode offset {Instruction.Offset}.");
             }
-
-            if (Advance)
+            catch (DivideByZeroException)
             {
-                Instructionˉindex++;
+                throw new Runtimeˉexception(
+                    "WVR3032",
+                    $"Division by zero in function '{Function.Name}' at bytecode offset {Instruction.Offset}.");
             }
+
+            instructionˉindex++;
         }
+    }
+
+    private Valueˉshape Decodeˉcollectionˉelement(uint descriptor)
+    {
+        var Tag = descriptor >> 30;
+        var Payload = descriptor & 0x3FFF_FFFFu;
+        return Tag switch
+        {
+            0 => (Valueˉtype)Payload,
+            1 => Valueˉshape.Forˉrecord((int)Payload),
+            2 => Valueˉshape.Forˉenum((int)Payload),
+            _ => Valueˉshape.Forˉvariant((int)Payload),
+        };
+    }
+
+    private static Runtimeˉrecordˉvalue Requireˉliveˉbuilder(Runtimeˉvalue value)
+    {
+        var Builder = value.Recordˉvalue
+            ?? throw new InvalidOperationException("Verified builder value is absent.");
+        if (!Builder.Isˉbuilder)
+        {
+            throw new InvalidOperationException("Verified builder value has invalid aggregate storage.");
+        }
+        if (Builder.Isˉconsumed)
+        {
+            throw new Runtimeˉexception(
+                "WVR3031",
+                "A consumed or uninitialized builder was used.");
+        }
+        return Builder;
     }
 
     private void Requireˉauthorizedˉcapabilities()
@@ -1112,6 +1262,204 @@ public sealed class Referenceˉruntime
         return [.. Arguments];
     }
 
+    private void Executeˉextendedˉinstruction(
+        Decodedˉinstruction instruction,
+        Runtimeˉstack stack)
+    {
+        switch (instruction.Opcode)
+        {
+            case Opcode.I32ˉdivide:
+                Applyˉi32ˉbinary(stack, (Left, Right) => checked(Left / Right));
+                break;
+            case Opcode.I32ˉremainder:
+                Applyˉi32ˉbinary(stack, (Left, Right) => checked(Left % Right));
+                break;
+            case Opcode.I64ˉdivide:
+                Applyˉi64ˉbinary(stack, (Left, Right) => checked(Left / Right));
+                break;
+            case Opcode.I64ˉremainder:
+                Applyˉi64ˉbinary(stack, (Left, Right) => checked(Left % Right));
+                break;
+            case Opcode.U32ˉdivide:
+                Applyˉu32ˉbinary(stack, (Left, Right) => Left / Right);
+                break;
+            case Opcode.U32ˉremainder:
+                Applyˉu32ˉbinary(stack, (Left, Right) => Left % Right);
+                break;
+            case Opcode.U32ˉbitwiseˉand:
+                Applyˉu32ˉbinary(stack, (Left, Right) => Left & Right);
+                break;
+            case Opcode.U32ˉbitwiseˉor:
+                Applyˉu32ˉbinary(stack, (Left, Right) => Left | Right);
+                break;
+            case Opcode.U32ˉbitwiseˉxor:
+                Applyˉu32ˉbinary(stack, (Left, Right) => Left ^ Right);
+                break;
+            case Opcode.U32ˉbitwiseˉnot:
+                stack.Push(Runtimeˉvalue.Fromˉu32(~stack.Pop().U32ˉvalue));
+                break;
+            case Opcode.U32ˉshiftˉleft:
+            case Opcode.U32ˉshiftˉright:
+                var U32ˉshiftˉcount = stack.Pop().U32ˉvalue;
+                var U32ˉshiftˉvalue = stack.Pop().U32ˉvalue;
+                Requireˉshiftˉcount(U32ˉshiftˉcount, 32u);
+                stack.Push(Runtimeˉvalue.Fromˉu32(
+                    instruction.Opcode == Opcode.U32ˉshiftˉleft
+                        ? U32ˉshiftˉvalue << (int)U32ˉshiftˉcount
+                        : U32ˉshiftˉvalue >> (int)U32ˉshiftˉcount));
+                break;
+            case Opcode.U64ˉdivide:
+                Applyˉu64ˉbinary(stack, (Left, Right) => Left / Right);
+                break;
+            case Opcode.U64ˉremainder:
+                Applyˉu64ˉbinary(stack, (Left, Right) => Left % Right);
+                break;
+            case Opcode.U64ˉbitwiseˉand:
+                Applyˉu64ˉbinary(stack, (Left, Right) => Left & Right);
+                break;
+            case Opcode.U64ˉbitwiseˉor:
+                Applyˉu64ˉbinary(stack, (Left, Right) => Left | Right);
+                break;
+            case Opcode.U64ˉbitwiseˉxor:
+                Applyˉu64ˉbinary(stack, (Left, Right) => Left ^ Right);
+                break;
+            case Opcode.U64ˉbitwiseˉnot:
+                stack.Push(Runtimeˉvalue.Fromˉu64(~stack.Pop().U64ˉvalue));
+                break;
+            case Opcode.U64ˉshiftˉleft:
+            case Opcode.U64ˉshiftˉright:
+                var U64ˉshiftˉcount = stack.Pop().U32ˉvalue;
+                var U64ˉshiftˉvalue = stack.Pop().U64ˉvalue;
+                Requireˉshiftˉcount(U64ˉshiftˉcount, 64u);
+                stack.Push(Runtimeˉvalue.Fromˉu64(
+                    instruction.Opcode == Opcode.U64ˉshiftˉleft
+                        ? U64ˉshiftˉvalue << (int)U64ˉshiftˉcount
+                        : U64ˉshiftˉvalue >> (int)U64ˉshiftˉcount));
+                break;
+            case Opcode.U8ˉbitwiseˉand:
+                Applyˉu8ˉbinary(stack, (Left, Right) => (byte)(Left & Right));
+                break;
+            case Opcode.U8ˉbitwiseˉor:
+                Applyˉu8ˉbinary(stack, (Left, Right) => (byte)(Left | Right));
+                break;
+            case Opcode.U8ˉbitwiseˉxor:
+                Applyˉu8ˉbinary(stack, (Left, Right) => (byte)(Left ^ Right));
+                break;
+            case Opcode.U8ˉbitwiseˉnot:
+                stack.Push(Runtimeˉvalue.Fromˉu8((byte)~stack.Pop().U8ˉvalue));
+                break;
+            case Opcode.U8ˉshiftˉleft:
+            case Opcode.U8ˉshiftˉright:
+                var U8ˉshiftˉcount = stack.Pop().U32ˉvalue;
+                var U8ˉshiftˉvalue = stack.Pop().U8ˉvalue;
+                Requireˉshiftˉcount(U8ˉshiftˉcount, 8u);
+                stack.Push(Runtimeˉvalue.Fromˉu8((byte)(
+                    instruction.Opcode == Opcode.U8ˉshiftˉleft
+                        ? U8ˉshiftˉvalue << (int)U8ˉshiftˉcount
+                        : U8ˉshiftˉvalue >> (int)U8ˉshiftˉcount)));
+                break;
+            case Opcode.Textˉequal:
+            case Opcode.Textˉnotˉequal:
+                var Rightˉtext = stack.Pop().Textˉvalue!;
+                var Leftˉtext = stack.Pop().Textˉvalue!;
+                var Textˉequal = string.Equals(Leftˉtext, Rightˉtext, StringComparison.Ordinal);
+                stack.Push(Runtimeˉvalue.Fromˉbool(
+                    instruction.Opcode == Opcode.Textˉequal ? Textˉequal : !Textˉequal));
+                break;
+            case Opcode.Bytesˉequal:
+            case Opcode.Bytesˉnotˉequal:
+                var Rightˉbytes = stack.Pop().Bytesˉvalue;
+                var Leftˉbytes = stack.Pop().Bytesˉvalue;
+                var Bytesˉequal = Leftˉbytes.Toˉarray().AsSpan().SequenceEqual(
+                    Rightˉbytes.Toˉarray());
+                stack.Push(Runtimeˉvalue.Fromˉbool(
+                    instruction.Opcode == Opcode.Bytesˉequal ? Bytesˉequal : !Bytesˉequal));
+                break;
+            case Opcode.Variantˉcreate:
+                var Createdˉvariant = (Variantˉtypeˉdeclaration)Verifiedˉmodule.Module.Types[
+                    (int)instruction.Unsignedˉoperand];
+                var Createdˉcase = Createdˉvariant.Cases[(int)instruction.Secondˉunsignedˉoperand];
+                Runtimeˉvalue? Createdˉpayload = Createdˉcase.Payloadˉtype is null
+                    ? null
+                    : stack.Pop();
+                stack.Push(Runtimeˉvalue.Fromˉvariant(
+                    (int)instruction.Unsignedˉoperand,
+                    (int)instruction.Secondˉunsignedˉoperand,
+                    Createdˉpayload));
+                break;
+            case Opcode.Variantˉisˉcase:
+                var Testedˉvariant = stack.Pop();
+                stack.Push(Runtimeˉvalue.Fromˉbool(
+                    Testedˉvariant.Enumˉvalue == (int)instruction.Secondˉunsignedˉoperand));
+                break;
+            case Opcode.Variantˉpayload:
+                var Payloadˉvariant = stack.Pop();
+                if (Payloadˉvariant.Enumˉvalue != (int)instruction.Secondˉunsignedˉoperand ||
+                    Payloadˉvariant.Recordˉvalue is not { Fields.Length: 1 } Payloadˉstorage)
+                {
+                    throw new Runtimeˉexception(
+                        "WVR3017",
+                        "variant.payload selected a different case or an absent payload.");
+                }
+                stack.Push(Payloadˉstorage.Fields[0]);
+                break;
+            case Opcode.Builderˉcreate:
+                var Builderˉelement = Decodeˉcollectionˉelement(instruction.Unsignedˉoperand);
+                var Builderˉtype = Valueˉshape.Forˉbuilder(
+                    Builderˉelement,
+                    instruction.Secondˉunsignedˉoperand);
+                stack.Push(Runtimeˉvalue.Fromˉbuilder(
+                    Builderˉtype,
+                    new(ImmutableArray<Runtimeˉvalue>.Empty)));
+                break;
+            case Opcode.Builderˉpush:
+                var Pushedˉvalue = stack.Pop();
+                var Pushedˉbuilder = stack.Pop();
+                var Pushedˉstate = Requireˉliveˉbuilder(Pushedˉbuilder);
+                if ((uint)Pushedˉstate.Fields.Length >= Pushedˉbuilder.Type.Maximum)
+                {
+                    throw new Runtimeˉexception(
+                        "WVR3030",
+                        $"The builder capacity {Pushedˉbuilder.Type.Maximum} was exceeded.");
+                }
+                Pushedˉstate.Isˉconsumed = true;
+                stack.Push(Runtimeˉvalue.Fromˉbuilder(
+                    Pushedˉbuilder.Type,
+                    new(Pushedˉstate.Fields.Add(Pushedˉvalue))));
+                break;
+            case Opcode.Builderˉfreeze:
+                var Frozenˉbuilder = stack.Pop();
+                var Frozenˉstate = Requireˉliveˉbuilder(Frozenˉbuilder);
+                Frozenˉstate.Isˉconsumed = true;
+                stack.Push(Runtimeˉvalue.Fromˉsequence(
+                    Valueˉshape.Forˉsequence(
+                        Frozenˉbuilder.Type.Elementˉshape,
+                        Frozenˉbuilder.Type.Maximum),
+                    Frozenˉstate.Fields));
+                break;
+            case Opcode.Sequenceˉlength:
+                var Lengthˉsequence = stack.Pop().Recordˉvalue
+                    ?? throw new InvalidOperationException("Verified sequence value is absent.");
+                stack.Push(Runtimeˉvalue.Fromˉu32(checked((uint)Lengthˉsequence.Fields.Length)));
+                break;
+            case Opcode.Sequenceˉelement:
+                var Sequenceˉindex = stack.Pop().U32ˉvalue;
+                var Indexedˉsequence = stack.Pop().Recordˉvalue
+                    ?? throw new InvalidOperationException("Verified sequence value is absent.");
+                if (Sequenceˉindex >= (uint)Indexedˉsequence.Fields.Length)
+                {
+                    throw new Runtimeˉexception(
+                        "WVR3008",
+                        $"Sequence index {Sequenceˉindex} is outside length {Indexedˉsequence.Fields.Length}.");
+                }
+                stack.Push(Indexedˉsequence.Fields[(int)Sequenceˉindex]);
+                break;
+            default:
+                throw new InvalidOperationException(
+                    $"Opcode '{instruction.Opcode}' is not an extended runtime instruction.");
+        }
+    }
+
     private static void Applyˉi32ˉbinary(
         Runtimeˉstack stack,
         Func<int, int, int> operation)
@@ -1191,6 +1539,25 @@ public sealed class Referenceˉruntime
         var Right = stack.Pop().U8ˉvalue;
         var Left = stack.Pop().U8ˉvalue;
         stack.Push(Runtimeˉvalue.Fromˉbool(operation(Left, Right)));
+    }
+
+    private static void Applyˉu8ˉbinary(
+        Runtimeˉstack stack,
+        Func<byte, byte, byte> operation)
+    {
+        var Right = stack.Pop().U8ˉvalue;
+        var Left = stack.Pop().U8ˉvalue;
+        stack.Push(Runtimeˉvalue.Fromˉu8(operation(Left, Right)));
+    }
+
+    private static void Requireˉshiftˉcount(uint count, uint width)
+    {
+        if (count >= width)
+        {
+            throw new Runtimeˉexception(
+                "WVR3033",
+                $"Shift count {count} is outside the {width}-bit operand width.");
+        }
     }
 
     private static void Applyˉboolˉcomparison(

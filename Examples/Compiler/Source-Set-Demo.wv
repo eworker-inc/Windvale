@@ -1,6 +1,6 @@
 module Compilerˉsourceˉsetˉdemo profile portable;
 
-import Compilerˉsourceˉset;
+import Compilerˉsourceˉset as Sourceˉset;
 
 data Sourceˉsetˉmagic: bytes = [87, 86, 83, 83];
 
@@ -60,21 +60,21 @@ fn Sourceˉsetˉreplaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
 }
 
 export fn Main() -> i32 {
-    let Root: text = "module Setˉroot profile portable; import Setˉdependency; export fn Main() -> i32 { return Setˉvalue(); }";
+    let Root: text = "module Setˉroot profile portable; import Setˉdependency as Dependency; export fn Main() -> i32 { return Dependency.Setˉvalue(); }";
     let Dependency: text = "module Setˉdependency profile portable; export fn Setˉvalue() -> i32 { return 1; }";
     let Valid: bytes = Sourceˉsetˉtwo(Root, Dependency);
-    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Valid);
-    if Scan.Status != Compilerˉsourceˉsetˉstatus.Valid { return 1; }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Valid);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid { return 1; }
     if Scan.Modules != 2u32 { return 2; }
     if Scan.Directoryˉoffset != 16u32 { return 3; }
     if Scan.Directoryˉlength != 16u32 { return 4; }
     if Scan.Sourcesˉoffset != 32u32 { return 5; }
     if Scan.Sourceˉbytes != Bytesˉlength(Textˉtoˉutf8(Root)) + Bytesˉlength(Textˉtoˉutf8(Dependency)) { return 6; }
 
-    let Rootˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Valid, Scan, 0u32);
-    if Rootˉview.Status != Compilerˉsourceˉsetˉstatus.Valid { return 7; }
+    let Rootˉview: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Valid, Scan, 0u32);
+    if Rootˉview.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid { return 7; }
     let Expectedˉroot: bytes = Textˉtoˉutf8(Root);
-    if Compilerˉsourceˉspansˉcompare(
+    if Sourceˉset.Compilerˉsourceˉspansˉcompare(
         Rootˉview.Source,
         0u32,
         Bytesˉlength(Rootˉview.Source),
@@ -82,86 +82,86 @@ export fn Main() -> i32 {
         0u32,
         Bytesˉlength(Expectedˉroot)
     ) != 0 { return 8; }
-    let Missingˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Valid, Scan, 2u32);
-    if Missingˉview.Status != Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 9; }
+    let Missingˉview: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Valid, Scan, 2u32);
+    if Missingˉview.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 9; }
 
-    let Summary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Valid);
-    if Summary.Status != Compilerˉsourceˉsetˉstatus.Valid { return 10; }
+    let Summary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Valid);
+    if Summary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid { return 10; }
     if Summary.Modules != 2u32 { return 11; }
     if Summary.Imports != 1u32 { return 12; }
     if Summary.Records != 0u32 { return 13; }
     if Summary.Enums != 0u32 { return 14; }
     if Summary.Functions != 2u32 { return 15; }
 
-    let Tooˉshort: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Bytesˉslice(Valid, 0u32, 15u32));
-    if Tooˉshort.Status != Compilerˉsourceˉsetˉstatus.Tooˉshort { return 16; }
-    let Badˉmagic: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu8(Valid, 0u32, 0u8));
-    if Badˉmagic.Status != Compilerˉsourceˉsetˉstatus.Invalidˉmagic { return 17; }
-    let Badˉversion: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu8(Valid, 4u32, 2u8));
-    if Badˉversion.Status != Compilerˉsourceˉsetˉstatus.Unsupportedˉversion { return 18; }
-    let Zeroˉcount: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 8u32, 0u32));
-    if Zeroˉcount.Status != Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 19; }
-    let Largeˉcount: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 8u32, 65u32));
-    if Largeˉcount.Status != Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 20; }
-    let Badˉdirectory: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 12u32, 8u32));
-    if Badˉdirectory.Status != Compilerˉsourceˉsetˉstatus.Invalidˉdirectory { return 21; }
-    let Badˉoffset: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 16u32, 33u32));
-    if Badˉoffset.Status != Compilerˉsourceˉsetˉstatus.Noncanonicalˉlayout { return 22; }
-    let Zeroˉlength: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 20u32, 0u32));
-    if Zeroˉlength.Status != Compilerˉsourceˉsetˉstatus.Invalidˉentry { return 23; }
-    let Largeˉlength: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 20u32, Bytesˉlength(Valid)));
-    if Largeˉlength.Status != Compilerˉsourceˉsetˉstatus.Invalidˉentry { return 24; }
-    let Trailing: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Bytesˉconcat(Valid, Bytesˉfromˉu8(0u8)));
-    if Trailing.Status != Compilerˉsourceˉsetˉstatus.Noncanonicalˉlayout { return 25; }
+    let Tooˉshort: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Bytesˉslice(Valid, 0u32, 15u32));
+    if Tooˉshort.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Tooˉshort { return 16; }
+    let Badˉmagic: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu8(Valid, 0u32, 0u8));
+    if Badˉmagic.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉmagic { return 17; }
+    let Badˉversion: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu8(Valid, 4u32, 2u8));
+    if Badˉversion.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Unsupportedˉversion { return 18; }
+    let Zeroˉcount: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 8u32, 0u32));
+    if Zeroˉcount.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 19; }
+    let Largeˉcount: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 8u32, 65u32));
+    if Largeˉcount.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉcount { return 20; }
+    let Badˉdirectory: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 12u32, 8u32));
+    if Badˉdirectory.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉdirectory { return 21; }
+    let Badˉoffset: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 16u32, 33u32));
+    if Badˉoffset.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Noncanonicalˉlayout { return 22; }
+    let Zeroˉlength: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 20u32, 0u32));
+    if Zeroˉlength.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉentry { return 23; }
+    let Largeˉlength: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Sourceˉsetˉreplaceˉu32(Valid, 20u32, Bytesˉlength(Valid)));
+    if Largeˉlength.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉentry { return 24; }
+    let Trailing: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Bytesˉconcat(Valid, Bytesˉfromˉu8(0u8)));
+    if Trailing.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Noncanonicalˉlayout { return 25; }
 
     let Invalidˉsource: bytes = Sourceˉsetˉtwo("not a module", Dependency);
-    let Invalidˉsourceˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Invalidˉsource);
-    if Invalidˉsourceˉsummary.Status != Compilerˉsourceˉsetˉstatus.Sourceˉsyntax { return 26; }
+    let Invalidˉsourceˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Invalidˉsource);
+    if Invalidˉsourceˉsummary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Sourceˉsyntax { return 26; }
     let Invalidˉbody: bytes = Sourceˉsetˉtwo("module Setˉroot profile portable; export fn Main() -> i32 { return +; }", Dependency);
-    let Invalidˉbodyˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Invalidˉbody);
-    if Invalidˉbodyˉsummary.Status != Compilerˉsourceˉsetˉstatus.Bodyˉsyntax { return 27; }
+    let Invalidˉbodyˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Invalidˉbody);
+    if Invalidˉbodyˉsummary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Bodyˉsyntax { return 27; }
     let Duplicate: bytes = Sourceˉsetˉtwo(
         "module Same profile portable; export fn Main() -> i32 { return 0; }",
         "module Same profile portable; export fn Other() -> i32 { return 0; }"
     );
-    let Duplicateˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Duplicate);
-    if Duplicateˉsummary.Status != Compilerˉsourceˉsetˉstatus.Duplicateˉmodule { return 28; }
+    let Duplicateˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Duplicate);
+    if Duplicateˉsummary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Duplicateˉmodule { return 28; }
     let Wrongˉorder: bytes = Sourceˉsetˉthree(
         "module Setˉroot profile portable; export fn Main() -> i32 { return 0; }",
         "module Zed profile portable; export fn Zedˉvalue() -> i32 { return 0; }",
         "module Alpha profile portable; export fn Alphaˉvalue() -> i32 { return 0; }"
     );
-    let Wrongˉorderˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Wrongˉorder);
-    if Wrongˉorderˉsummary.Status != Compilerˉsourceˉsetˉstatus.Dependencyˉorder { return 29; }
+    let Wrongˉorderˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Wrongˉorder);
+    if Wrongˉorderˉsummary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Dependencyˉorder { return 29; }
     let Hostedˉdependency: bytes = Sourceˉsetˉtwo(
         Root,
         "module Setˉdependency profile hosted; export fn Setˉvalue() -> i32 { return 1; }"
     );
-    let Hostedˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Hostedˉdependency);
-    if Hostedˉsummary.Status != Compilerˉsourceˉsetˉstatus.Dependencyˉprofile { return 30; }
+    let Hostedˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Hostedˉdependency);
+    if Hostedˉsummary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Dependencyˉprofile { return 30; }
     let Dataˉdependency: bytes = Sourceˉsetˉtwo(
         Root,
         "module Setˉdependency profile portable; data Value: text = \"x\"; export fn Setˉvalue() -> i32 { return 1; }"
     );
-    let Dataˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Dataˉdependency);
-    if Dataˉsummary.Status != Compilerˉsourceˉsetˉstatus.Dependencyˉshape { return 31; }
+    let Dataˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Dataˉdependency);
+    if Dataˉsummary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid { return 31; }
     let Privateˉdependency: bytes = Sourceˉsetˉtwo(
         Root,
         "module Setˉdependency profile portable; fn Setˉvalue() -> i32 { return 1; }"
     );
-    let Privateˉsummary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Privateˉdependency);
-    if Privateˉsummary.Status != Compilerˉsourceˉsetˉstatus.Privateˉdependencyˉfunction { return 32; }
+    let Privateˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Privateˉdependency);
+    if Privateˉsummary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid { return 32; }
     let Sharedˉprefix: bytes = Textˉtoˉutf8("Compilerˉsourceˉbindings");
     let Differentˉsuffix: bytes = Textˉtoˉutf8("Compilerˉsourceˉbindingx");
-    if !Compilerˉsourceˉspansˉequal(
+    if !Sourceˉset.Compilerˉsourceˉspansˉequal(
         Sharedˉprefix, 0u32, Bytesˉlength(Sharedˉprefix),
         Sharedˉprefix, 0u32, Bytesˉlength(Sharedˉprefix)
     ) { return 33; }
-    if Compilerˉsourceˉspansˉequal(
+    if Sourceˉset.Compilerˉsourceˉspansˉequal(
         Sharedˉprefix, 0u32, Bytesˉlength(Sharedˉprefix),
         Differentˉsuffix, 0u32, Bytesˉlength(Differentˉsuffix)
     ) { return 34; }
-    if Compilerˉsourceˉspansˉequal(
+    if Sourceˉset.Compilerˉsourceˉspansˉequal(
         Sharedˉprefix, 0u32, Bytesˉlength(Sharedˉprefix),
         Differentˉsuffix, 0u32, Bytesˉlength(Differentˉsuffix) - 1u32
     ) { return 35; }

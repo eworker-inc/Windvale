@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current implementation adds bidirectional nominal identity evidence under Decision 0050 and bounded nominal-range lookup under Decision 0055 while preserving the qualified namespace, signature, and WVSD contracts. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces and signature types, and publishes evidence for later semantic phases.
+`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current candidate retains Decision 0050's bidirectional nominal identity evidence and Decision 0055's bounded nominal-range lookup while adding typed-constant validation under Decision 0184. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces, signature types, and deterministic root constants, and publishes evidence for later semantic phases.
 
 It does not bind function bodies, locals, calls, expressions, control flow, construct WIR, or emit WVB.
 
@@ -34,6 +34,14 @@ enum Compilerˉsourceˉsymbolˉstatus {
     Invalidˉfieldˉtype = 21;
     Invalidˉdirectory = 22;
     Duplicateˉparameter = 23;
+    Constantˉlimit = 24;
+    Invalidˉconstantˉname = 25;
+    Invalidˉconstantˉtype = 26;
+    Invalidˉconstantˉinitializer = 27;
+    Constantˉtypeˉmismatch = 28;
+    Constantˉforwardˉreference = 29;
+    Constantˉoverflow = 30;
+    Importedˉconstant = 31;
 }
 
 record Compilerˉsourceˉsymbolˉsummary {
@@ -67,9 +75,9 @@ Success returns aggregate declaration/member counts, a valid WVSD directory, a v
 
 ## Namespace and signature rules
 
-Capability names, data names, nominal type names, and function names each form one global namespace across the complete supplied graph. Records and enums share the nominal namespace. Record constructors and functions share the callable constructor namespace. Function and record names matching a Foundation intrinsic are reserved.
+Capability names, value names, nominal type names, and function names each form one global namespace across the complete supplied graph. Data and constants share the value namespace. Records and enums share the nominal namespace. Record constructors and functions share the callable constructor namespace. Function and record names matching a Foundation intrinsic are reserved.
 
-Capabilities must belong to the implemented catalog. A portable-profile module may not declare capabilities. The aggregate bounds are 32 capabilities, 4,096 data declarations, 1,024 nominal types, and 4,096 functions.
+Capabilities must belong to the implemented catalog. A portable-profile module may not declare capabilities. The aggregate bounds are 32 capabilities, 4,096 data declarations, 4,096 constants, 1,024 nominal types, and 4,096 functions.
 
 Records and enums are nonempty. Field names are unique within a record. Enum member names and explicit values are each unique within an enum. Parameter names are unique within a function. These rules apply after complete syntax validation, so the symbol phase operates only on qualified declaration and body spans.
 
@@ -77,7 +85,9 @@ A named signature type resolves by exact ordinal UTF-8 name against the global n
 
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 
-## WVSD 1 declaration directory
+Constants are currently permitted only in WVSS module zero. Their names use ASCII `ALL_CAPS_WITH_UNDERSCORES`; their explicit type is `i32`, `u8`, `u32`, `bool`, or a visible enum; and their initializer may use matching literals, enum members, earlier constants, parentheses, and the currently admitted exact-type operators. Boolean `&&` and `||` evaluate left to right and skip their right operand when the left value determines the result; invalid, unresolved, or would-overflow syntax on a skipped path therefore does not reject the constant. Calls, data reads, allocation-bearing expressions, evaluated forward/cyclic references, unsupported operators, mismatched types, and checked overflow/underflow fail before symbol evidence is published. This Windvale-written WVB 1.6 subset is narrower than Stage 0's additional `i64` and `u64` constant types.
+
+## WVSD 1.1 declaration directory
 
 All integers are unsigned little-endian. The directory contains no padding.
 
@@ -85,11 +95,11 @@ All integers are unsigned little-endian. The directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVSD` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `0` |
+| 6 | 2 | Minor version `1` |
 | 8 | 4 | Entry count |
 | 12 | 4 | Fixed entry size `24` |
 
-Each entry contains six `u32` fields in this order: WVSS module index, declaration-kind value, declaration byte offset, name byte offset, name byte length, and declaration item count. Imports are excluded. Entries use canonical WVSS module order and source declaration order.
+Each entry contains six `u32` fields in this order: WVSS module index, declaration-kind value, declaration byte offset, name byte offset, name byte length, and declaration item count. Imports are excluded. Values `1` through `6` retain import, capability, data, record, enum, and function identity; `Constant = 7` is appended. Entries use canonical WVSS module order and source declaration order.
 
 The directory length must be exactly `16 + EntryCount * 24`. `Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid` remains an exported strict validator that reparses every accepted source as a stream. The normal phase constructs counts and entries together, checks the complete binary shape, and compares every entry with its source declaration during the namespace pass. This preserves an independent canonical comparison without a redundant whole-source traversal.
 
@@ -109,20 +119,20 @@ Name equality remains exact ordinal UTF-8 comparison over validated absolute WVS
 
 ## Deterministic processing order
 
-The phase validates in this order: source graph; aggregate counts plus WVSD construction; directory shape; namespaces, canonical entry correspondence, and capability policy; visibility construction; then record, enum, and function signatures in canonical WVSS module/source order. Within a declaration, members are checked in source order. Inputs containing multiple faults receive the first failure under this order.
+The phase validates in this order: source graph; aggregate counts plus WVSD construction; directory shape; namespaces, canonical entry correspondence, constant names, root-only placement, and capability policy; visibility construction; then constants, records, enums, and function signatures in canonical WVSS module/source order. A constant recursively evaluates only earlier constant declarations, with a depth bound of 64. Within a declaration, members and expression operands are checked in source order. Inputs containing multiple faults receive the first failure under this order.
 
 Failure evidence names the current module, a related prior/target module when applicable, declaration kind, name/token byte offset, and one-based line/column. `Modules` is the sentinel when no related module exists.
 
-## Qualified milestone artifacts and evidence
+## Candidate artifacts and retained qualified evidence
 
-- `Source-Symbols-Core.wvb`: 278,044 bytes, SHA-256 `7769def20aef89bac982d896a5fa791f7ae3cea744b70fc199583ed97aef40e4`.
-- `Source-Symbols-Demo.wvb`: 291,283 bytes, SHA-256 `6ce17cdcd140cd686c0975e30a9be173d09deff4eb8d4dbb8d972ed1b8440158`.
-- `Source-Symbols-Tool.wvb`: 281,825 bytes, SHA-256 `0d09379e35df8af7d3239badc4a50a71ecb4638255f28f3a40421491d35a6529`.
+- `Source-Symbols-Core.wvb`: 404,480 bytes, SHA-256 `6619d6b2de2512efca21e08888042382a6e676d089b85ce7f13133399c11343d`.
+- `Source-Symbols-Demo.wvb`: 416,060 bytes, SHA-256 `5b70c55c0462bf76b0e0ded51fc5c712de1fb16108ff4ca01fd6aea512b80f8c`.
+- `Source-Symbols-Tool.wvb`: 404,007 bytes, SHA-256 `f4414d04c23e35d461b00916330b53dd0bea2f3a072a6ddc0ca2f15b18d516b4`.
 
-The demo exercises valid and rejected namespaces/signatures plus corrupted directories and both directions of the nominal map. The hosted tool validates the current real eight-module, 315,465-byte compiler closure as:
+The candidate demo additionally exercises valid constants, enum and earlier-constant references, Boolean short-circuiting over invalid or would-overflow skipped operands, invalid names/types/initializers, exact type mismatch, forward reference, checked overflow, and imported-module rejection. The hosted tool retains namespace/signature reporting; constants contribute WVSD entries but deliberately do not change the existing public aggregate `Data` count. The current local whole-compiler closure report is:
 
 ```text
-source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=141 fields=291 members=181 parameters=619 directory-bytes=4312 visibility-bytes=64
+source symbols status=Valid modules=8 capabilities=0 data=0 records=28 enums=14 functions=186 fields=330 members=239 parameters=795 directory-bytes=5488 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it preserves public WVSD bytes while advancing the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 preserves both byte formats, adds the bounded reverse-table lookup, and is cross-host qualified at `1a4fca7`. Decision 0058 changes equality-only implementation paths and embedded artifact bytes while preserving WVSD and WVSI formats and is cross-host qualified at `5c16547`.
+The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it advanced the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 added bounded reverse-table lookup and is cross-host qualified at `1a4fca7`. Decision 0058 changed equality-only implementation paths and embedded artifact bytes while preserving the then-current WVSD 1.0 and WVSI 1.1 formats and is cross-host qualified at `5c16547`. WVSD 1.1 and typed constants are new local candidate behavior and do not inherit those cross-host claims.

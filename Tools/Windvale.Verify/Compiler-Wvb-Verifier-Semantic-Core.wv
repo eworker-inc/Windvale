@@ -1,6 +1,6 @@
 module Windvaleˉcompilerˉwvbˉverifierˉsemantic profile portable;
 
-import Windvaleˉcompilerˉwvbˉverifierˉexecutable;
+import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executableˉverifier;
 
 export fn Aˉidentifier(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
@@ -1647,9 +1647,9 @@ export fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
 export fn Compilerˉwvbˉverify(Input: bytes) -> u32 {
     var State: bytes = Compilerˉwvbˉverifyˉsemantic(Input);
     if Bytesˉlength(State) == 0u32 { return 1u32; }
-    State = Hˉexecutable(Input);
+    State = Executableˉverifier.Hˉexecutable(Input);
     if Bytesˉlength(State) == 0u32 { return 2u32; }
-    State = Iˉcontrol(Input);
+    State = Executableˉverifier.Iˉcontrol(Input);
     if Bytesˉlength(State) == 0u32 { return 3u32; }
     return 0u32;
 }

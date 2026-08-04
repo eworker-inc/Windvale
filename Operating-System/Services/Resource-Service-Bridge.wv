@@ -1,6 +1,6 @@
 module Resourceˉserviceˉbridge profile hosted;
 
-import Resourceˉservice;
+import Resourceˉservice as Resourceˉservice;
 
 capability file.read_bytes;
 
@@ -10,5 +10,5 @@ data Requestˉname: text = "ipc:resource-request.wvrq";
 export fn Main() -> bytes {
     let Store: bytes = file.read_bytes(Storeˉname);
     let Request: bytes = file.read_bytes(Requestˉname);
-    return Resourceˉserviceˉhandle(Store, Request);
+    return Resourceˉservice.Resourceˉserviceˉhandle(Store, Request);
 }

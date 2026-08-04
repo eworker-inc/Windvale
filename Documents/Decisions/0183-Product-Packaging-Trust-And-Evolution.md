@@ -31,6 +31,8 @@ Version source-language editions, WVB, WVO, object/link recipes, package manifes
 
 Before 1.0, Windvale may replace experimental formats and APIs without compatibility, but release notes identify the affected contract and migration expectations. A later 1.0 decision selects the actual source, package, runtime, and support commitments.
 
+Decision 0184 makes the immediate policy more explicit: through at least September 3, 2026, and afterward until a named successor decision, repository syntax, compiler models, WVB, and related experimental tool formats may be replaced directly. Internal snapshots and historical qualification artifacts do not require backward readers, translation shims, or compatibility aliases during this window.
+
 ### Make time, entropy, and network authority explicit
 
 - Monotonic time, civil wall time, timers, and scheduler accounting are separate contracts.

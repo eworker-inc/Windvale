@@ -1,6 +1,7 @@
 module Compilerˉsourceˉwvbˉdemo profile portable;
 
-import Compilerˉsourceˉwvb;
+import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwvb as Sourceˉwvb;
 
 fn Compilerˉsourceˉwvbˉdemoˉinput(Source: text) -> bytes {
     let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
@@ -16,8 +17,8 @@ fn Compilerˉsourceˉwvbˉdemoˉinput(Source: text) -> bytes {
 
 fn Compilerˉsourceˉwvbˉdemoˉstatus(
     Source: text
-) -> Compilerˉsourceˉwvbˉstatus {
-    let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
+) -> Sourceˉwvb.Compilerˉsourceˉwvbˉstatus {
+    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉinput(Source)
     );
     return Summary.Status;
@@ -46,13 +47,13 @@ fn Compilerˉsourceˉwvbˉdemoˉpair(Root: text, Dependency: text) -> bytes {
 }
 
 export fn Main() -> i32 {
-    let Valid: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
+    let Valid: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉinput(
             "module Wvbˉdemo profile portable; fn Add(Value: i32) -> i32 { return Value + 1; } export fn Main() -> i32 { return Add(41); }"
         )
     );
-    if Valid.Status != Compilerˉsourceˉwvbˉstatus.Valid { return 1; }
-    if Valid.Wirˉstatus != Compilerˉsourceˉwirˉstatus.Valid { return 2; }
+    if Valid.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 1; }
+    if Valid.Wirˉstatus != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid { return 2; }
     if Valid.Functions != 2u32 { return 3; }
     if Bytesˉlength(Valid.Bytecode) == 0u32 { return 4; }
     if Bytesˉreadˉu8(Valid.Bytecode, 0u32) != 87u8 { return 5; }
@@ -61,26 +62,32 @@ export fn Main() -> i32 {
     if Bytesˉreadˉu8(Valid.Bytecode, 3u32) != 49u8 { return 8; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉdata profile portable; data Value: text = \"x\"; export fn Main() -> i32 { return 0; }"
-    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 9; }
+    ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 9; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉhosted profile hosted; export fn Main() -> i32 { return 0; }"
-    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 10; }
+    ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 10; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉorder profile portable; export fn Zed() -> i32 { return 0; } fn Alpha() -> i32 { return 1; }"
-    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 11; }
+    ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 11; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉrecord profile portable; record Pair { Value: i32; } export fn Main() -> i32 { return 0; }"
-    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 12; }
+    ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 12; }
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉsystem profile system; capability process.argument_count; export fn Main() -> i32 { return 0; }"
-    ) != Compilerˉsourceˉwvbˉstatus.Valid { return 13; }
-    let Composed: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
+    ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 13; }
+    let Composed: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉpair(
-            "module Wvbˉroot profile portable; import Wvbˉdependency; export fn Main() -> i32 { return Wvbˉvalue(); }",
+            "module Wvbˉroot profile portable; import Wvbˉdependency as Dependency; export fn Main() -> i32 { return Dependency.Wvbˉvalue(); }",
             "module Wvbˉdependency profile portable; export fn Wvbˉvalue() -> i32 { return 42; }"
         )
     );
-    if Composed.Status != Compilerˉsourceˉwvbˉstatus.Valid { return 14; }
+    if Composed.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 14; }
     if Composed.Functions != 2u32 { return 15; }
+    if Compilerˉsourceˉwvbˉdemoˉstatus(
+        "module Wvbˉinference profile portable; data Values: bytes = [3u8, 5u8]; record Pair { Left: u32; Right: u32; } enum State { Ready = 0; } fn Add(Left: u32, Right: u32) -> u32 { return Left + Right; } export fn Main() -> u32 { let Count = Bytesˉlength(Values); let Pairˉvalue = Pair { Left: Count, Right: 2u32 }; let Stateˉvalue = State.Ready; var Result = Add(Pairˉvalue.Left, Pairˉvalue.Right); if Stateˉvalue != State.Ready { return 0u32; } else if Stateˉvalue == State.Ready { Result = Result + 1u32; } return Result; }"
+    ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 16; }
+    if Compilerˉsourceˉwvbˉdemoˉstatus(
+        "module Wvbˉcontrol profile portable; export fn Main() -> i32 { var Result = 0; var Index = 0; if false || true && true { while Index < 5 { Index += 1; if Index == 2 { continue; } if Index == 4 { break; } Result += Index; } Result *= 2; Result -= 1; } return Result; }"
+    ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 17; }
     return 0;
 }

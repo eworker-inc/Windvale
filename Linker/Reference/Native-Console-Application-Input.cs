@@ -131,7 +131,7 @@ public static class Nativeˉconsoleˉapplicationˉcontract
         112 + RECORD_ARENA_BYTES + TEXT_ARENA_BYTES;
     public const ulong STACK_BYTES = 64UL * 1024 * 1024;
     public const uint HOSTED_DATA_HEADER_BYTES = 1024;
-    public const uint HOSTED_TEXT_ARENA_BYTES = 64 * 1024 * 1024;
+    public const uint HOSTED_TEXT_ARENA_BYTES = 128 * 1024 * 1024;
     public const uint HOSTED_DATA_VIRTUAL_BYTES =
         HOSTED_DATA_HEADER_BYTES + RECORD_ARENA_BYTES + HOSTED_TEXT_ARENA_BYTES;
     public const uint HOSTED_SERVICE_TABLE_OFFSET = 112;

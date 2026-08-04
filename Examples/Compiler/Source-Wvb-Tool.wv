@@ -1,6 +1,6 @@
 module Compilerˉsourceˉwvbˉtool profile hosted;
 
-import Compilerˉsourceˉwvb;
+import Compilerˉsourceˉwvb as Sourceˉwvb;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -44,7 +44,7 @@ fn Compilerˉsourceˉwvbˉtoolˉinput(Modules: u32) -> bytes {
 }
 
 fn Compilerˉsourceˉwvbˉtoolˉreport(
-    Summary: Compilerˉsourceˉwvbˉsummary
+    Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary
 ) -> text {
     var Report: text = "source wvb status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -57,7 +57,7 @@ fn Compilerˉsourceˉwvbˉtoolˉreport(
 }
 
 fn Compilerˉsourceˉwvbˉtoolˉfailure(
-    Summary: Compilerˉsourceˉwvbˉsummary
+    Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary
 ) -> text {
     var Report: text = "source wvb status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -82,10 +82,10 @@ export fn Main() -> i32 {
         diagnostic.write_line("source wvb status=Sourceˉwir wir-status=Sourceˉbindings");
         return 64;
     }
-    let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(
+    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉtoolˉinput(Modules)
     );
-    if Summary.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+    if Summary.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉwvbˉtoolˉfailure(Summary));
         return 1;
     }

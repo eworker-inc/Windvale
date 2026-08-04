@@ -1,6 +1,6 @@
 module Compilerˉsourceˉwirˉtool profile hosted;
 
-import Compilerˉsourceˉwir;
+import Compilerˉsourceˉwir as Sourceˉwir;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -43,7 +43,7 @@ fn Compilerˉsourceˉwirˉtoolˉbuild(Modules: u32) -> bytes {
 }
 
 fn Compilerˉsourceˉwirˉtoolˉsuccess(
-    Summary: Compilerˉsourceˉwirˉsummary
+    Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary
 ) -> text {
     var Report: text = "source wir status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -64,7 +64,7 @@ fn Compilerˉsourceˉwirˉtoolˉsuccess(
 }
 
 fn Compilerˉsourceˉwirˉtoolˉfailure(
-    Summary: Compilerˉsourceˉwirˉsummary
+    Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary
 ) -> text {
     var Report: text = "source wir status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -95,8 +95,8 @@ export fn Main() -> i32 {
         return 64;
     }
     let Input: bytes = Compilerˉsourceˉwirˉtoolˉbuild(Modules);
-    let Summary: Compilerˉsourceˉwirˉsummary = Compilerˉvalidateˉsourceˉwir(Input);
-    if Summary.Status != Compilerˉsourceˉwirˉstatus.Valid {
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary = Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Input);
+    if Summary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉwirˉtoolˉfailure(Summary));
         return 1;
     }

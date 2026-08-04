@@ -1,0 +1,27 @@
+module Matchˉoracle profile portable;
+
+enum State {
+    Ready = 0;
+    Running = 1;
+    Done = 2;
+}
+
+fn Score(Value: State) -> i32
+{
+    match Value {
+        case State.Running {
+            return 2;
+        }
+        case State.Ready {
+            return 1;
+        }
+        case State.Done {
+            return 3;
+        }
+    }
+}
+
+export fn Main() -> i32
+{
+    return Score(State.Running);
+}

@@ -1,6 +1,6 @@
 module Linkerˉconsoleˉapplicationˉverificationˉbridge profile hosted;
 
-import Linkerˉconsoleˉapplicationˉverification;
+import Linkerˉconsoleˉapplicationˉverification as Applicationˉverification;
 
 capability file.read_bytes;
 capability file.write_bytes;
@@ -12,9 +12,9 @@ data Nativeˉimageˉname: text = "console-application-native-image.bin";
 export fn Main() -> bytes {
     let First: bytes = file.read_bytes(Firstˉname);
     let Second: bytes = file.read_bytes(Secondˉname);
-    let Verified: Consoleˉapplicationˉverificationˉresult =
-        Consoleˉapplicationˉverification(First, Second);
-    if Verified.Status == Consoleˉapplicationˉverificationˉstatus.Valid {
+    let Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult =
+        Applicationˉverification.Consoleˉapplicationˉverification(First, Second);
+    if Verified.Status == Applicationˉverification.Consoleˉapplicationˉverificationˉstatus.Valid {
         file.write_bytes(Nativeˉimageˉname, Verified.Nativeˉimage);
     }
     return Verified.Evidence;

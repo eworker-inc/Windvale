@@ -1,6 +1,6 @@
 module Compilerˉsourceˉdeclarationˉparserˉtool profile hosted;
 
-import Compilerˉsourceˉdeclarationˉparser;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -9,7 +9,7 @@ capability process.argument;
 capability process.argument_count;
 
 fn Compilerˉsourceˉsummaryˉreport(
-    Summary: Compilerˉsourceˉmoduleˉsummary
+    Summary: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary
 ) -> text {
     var Report: text = "source declarations status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -32,7 +32,7 @@ fn Compilerˉsourceˉsummaryˉreport(
 }
 
 fn Compilerˉsourceˉfailureˉreport(
-    Summary: Compilerˉsourceˉmoduleˉsummary
+    Summary: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary
 ) -> text {
     var Report: text = "source declarations status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -52,8 +52,8 @@ export fn Main() -> i32 {
         return 64;
     }
     let Input: bytes = file.read_bytes(process.argument(0u32));
-    let Summary: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Input);
-    if Summary.Status != Compilerˉparseˉstatus.Valid {
+    let Summary: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Input);
+    if Summary.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉfailureˉreport(Summary));
         return 1;
     }

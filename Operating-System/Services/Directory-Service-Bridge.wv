@@ -1,6 +1,6 @@
 module Directoryˉserviceˉbridge profile hosted;
 
-import Directoryˉservice;
+import Directoryˉservice as Directoryˉservice;
 
 capability file.read_bytes;
 capability filesystem.directory_read_v1;
@@ -9,12 +9,12 @@ data Requestˉname: text = "ipc:directory-read.wvdq";
 
 export fn Main() -> bytes {
     let Requestˉbytes: bytes = file.read_bytes(Requestˉname);
-    let Request: Directoryˉserviceˉrequest =
-        Directoryˉserviceˉparseˉrequest(Requestˉbytes);
-    if !Directoryˉserviceˉshouldˉinvokeˉprovider(Request) {
-        return Directoryˉserviceˉhandleˉresponse(
+    let Request: Directoryˉservice.Directoryˉserviceˉrequest =
+        Directoryˉservice.Directoryˉserviceˉparseˉrequest(Requestˉbytes);
+    if !Directoryˉservice.Directoryˉserviceˉshouldˉinvokeˉprovider(Request) {
+        return Directoryˉservice.Directoryˉserviceˉhandleˉresponse(
             Requestˉbytes,
-            Directoryˉserviceˉempty(Requestˉbytes)
+            Directoryˉservice.Directoryˉserviceˉempty(Requestˉbytes)
         );
     }
     let Providerˉresponse: bytes = filesystem.directory_read_v1(
@@ -22,5 +22,5 @@ export fn Main() -> bytes {
         Request.Offset,
         Request.Maximumˉbytes
     );
-    return Directoryˉserviceˉhandleˉresponse(Requestˉbytes, Providerˉresponse);
+    return Directoryˉservice.Directoryˉserviceˉhandleˉresponse(Requestˉbytes, Providerˉresponse);
 }

@@ -47,10 +47,17 @@ Token-kind values are frozen to the Stage 0 ordering:
 - `End`, `Bad`, `Identifier`, `Integer`, and `String` are values 0 through 4.
 - `Module` through `Length` are values 5 through 32 and cover `module profile portable hosted system import capability data record enum export fn let var if else while return true false i32 u8 u32 bool text bytes void length`.
 - `Leftˉparenthesis` through `Greaterˉequals` are values 33 through 54 and cover `(`, `)`, `{`, `}`, `[`, `]`, `;`, `:`, `,`, `.`, `->`, `+`, `-`, `*`, `!`, `=`, `==`, `!=`, `<`, `<=`, `>`, and `>=`.
+- `Const` is appended as value 55 and covers the exact keyword `const` without renumbering any retained token kind.
+- `Break`, `Continue`, `Andˉand`, `Orˉor`, `Plusˉequals`, `Minusˉequals`, and `Starˉequals` are appended as values 56 through 62 and cover `break`, `continue`, `&&`, `||`, `+=`, `-=`, and `*=`.
+- `As`, `Platform`, `Authority`, `Requires`, `Optional`, and `Version` are values 63 through 68.
+- `Match`, `Case`, `Variant`, `Sequence`, `Builder`, `Freeze`, `Push`, `For`, and `In` are values 69 through 77.
+- `Slash`, `Percent`, `Ampersand`, `Pipe`, `Caret`, `Tilde`, `Shiftˉleft`, and `Shiftˉright` are values 78 through 85 and cover `/`, `%`, `&`, `|`, `^`, `~`, `<<`, and `>>`.
 
 An identifier begins with an ASCII letter or underscore. Later characters may also be ASCII digits or U+02C9. No other non-ASCII identifier character is accepted.
 
 Keyword classification uses exact byte length and first ASCII byte to select only plausible candidates before full ordinal comparison. Ordinary identifier bytes classify ASCII start characters directly. The complete whitespace routine runs only for byte values that can begin an accepted ASCII or Unicode whitespace scalar. These are bounded dispatch choices, not lexical-contract changes.
+
+`&&` and `||` are recognized before their valid single-character `&` and `|` prefixes. `<<`, `>>`, `<=`, and `>=` are likewise recognized before `<` and `>`. A `/` that begins `//` trivia remains a comment; otherwise it is the division token.
 
 ## Numeric and string rules
 
@@ -75,6 +82,6 @@ Compilerˉlexˉtokenˉat(Input, Wanted) -> Compilerˉsourceˉtoken
 
 `Compilerˉsourceˉscan` reports final status, accepted token count, failure coordinates, and end cursor. It never stores a token sequence. `Compilerˉlexˉtokenˉat` exists for tests and inspection and is not the parser iteration contract.
 
-## Qualified implementation
+## Current candidate implementation
 
-`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 38,973-byte WVB with SHA-256 `ca91d5aa9889540250be552b5563dacba8deba2abb70ea557d0e4f8089ee749f`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 45,319-byte WVB with SHA-256 `2a7a2f8c1276c252fa8ddb53a362c6560dfa06ba8c2a8be0fb56f507e820df87` and returns `0` under the 10,000,000-instruction ceiling. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, and the role-based path passed at `4fdc6bf`. Decision 0055 retains the lexical contract while changing implementation bytes and is cross-host qualified at `1a4fca7`.
+`Compiler/Windvale/Source-Lexer-Core.wv` composes to a 44,771-byte WVB with SHA-256 `e108cc3721092a114c8bab3b58224aef7e4fb63b8ed46c368cf341860c0a44f9`. `Examples/Compiler/Source-Lexer-Demo.wv` composes to a 52,051-byte WVB with SHA-256 `b0ee43b2441448e0e719fc8e80902a5cffea162450ce10a704685e8fec6c6918` and returns `0` under the 10,000,000-instruction ceiling. These appended-token identities are local deterministic evidence. The Decision 0042 implementation passed exact Windows/Debian qualification at `5d67463`, the role-based path passed at `4fdc6bf`, and Decision 0055 was cross-host qualified at `1a4fca7`; those retained runs predate the new tokens.

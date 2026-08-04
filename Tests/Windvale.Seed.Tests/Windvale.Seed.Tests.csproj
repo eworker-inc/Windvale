@@ -253,6 +253,27 @@
       Include="../Fixtures/Source-Wvb/Function-Only.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Match.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Match.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Match-Fallthrough.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Match-Fallthrough.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Metadata.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Metadata.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Variants.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Variants.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Collections.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Collections.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Operators-Windvale.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Operators-Windvale.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Source-Wvb/Operators.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Operators.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Scalar-Interpreter-Guest.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-Guest.wv" />
     <EmbeddedResource

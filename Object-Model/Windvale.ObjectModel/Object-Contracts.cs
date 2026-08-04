@@ -81,14 +81,14 @@ public sealed class Verifiedˉobject
 public static class Objectˉlimits
 {
     public const int MAX_OBJECT_BYTES = 4 * 1024 * 1024;
-    public const int LARGE_NATIVE_MAX_OBJECT_BYTES = 20 * 1024 * 1024;
+    public const int LARGE_NATIVE_MAX_OBJECT_BYTES = 32 * 1024 * 1024;
     public const int MAX_SECTIONS = 64;
     public const int MAX_SYMBOLS = 4_096;
     public const int MAX_RELOCATIONS = 65_536;
     public const int MAX_NAME_BYTES = 255;
     public const uint MAX_ALIGNMENT = 4_096;
     public const uint MAX_MEMORY_BYTES = 16 * 1024 * 1024;
-    public const uint LARGE_NATIVE_MAX_MEMORY_BYTES = 20 * 1024 * 1024;
+    public const uint LARGE_NATIVE_MAX_MEMORY_BYTES = 32 * 1024 * 1024;
     public const uint UNDEFINED_SECTION = uint.MaxValue;
 
     public static int Maximumˉobjectˉbytes(Objectˉadmissionˉprofile profile) => profile switch

@@ -26,24 +26,24 @@ internal static class Program
     private const string FOUNDATION_SHA256 = "72ae31559bb3335b320328c26e70518b6a0f3e617d099d41b328b066bb3784c7";
     private const string WVDUMP_CORE_SHA256 = "f11dcff36bb5e686d5841be69cf03838da240da64de672123ca0a6f9db9c102a";
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
-    private const string WVO_CORE_SHA256 = "e35939e46ca63f6c284ae457be12de23bb6bc8cb28fac52ce76c833d5fe6bb74";
+    private const string WVO_CORE_SHA256 = "de2a75116fe734feb3b6bd9758e22211f60e42dbb641d19775144ea7b140e511";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
-    private const string WVA_ASSEMBLER_CORE_SHA256 = "e69b4ddf632ab21aba06aa79ad7c2e6c0d1f80f684ad904d9f80e12a7f1f783f";
-    private const string WVLINK_CORE_SHA256 = "091383174f0ca6e535881f31949c65d46542f8b452905f0a82c713707cada1aa";
+    private const string WVA_ASSEMBLER_CORE_SHA256 = "3bd0a74dfb607238b69ce62c4ab1f4c7f279eed3dfaff38c9a9d31cbbdfb034e";
+    private const string WVLINK_CORE_SHA256 = "bc0b7c6cd4edd826c8b4e2da10ce3277723d2520ebb9de1cb4b860a2b03bf273";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
     private const string NATIVE_X64_LOWERING_CORE_SHA256 = "3ba83ebe5d848273b42f9a4fed3aa110b7396ba54796b03bf43324c5077c584b";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "8c01614988c24d17070b9bbb55276fd9d35a34a917d4fcfb70bc77dc16532a4f";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "f6d44af0a3ea8d4dd5c8c3367358d970fb9bd0b2252305d8058bec791a041a57";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "fdd7cc1939b4354a7071ab09b2e6c9b439724ea4f7a5e018c73d2daae926b4e3";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "5f3b725adb9b1e7a5601b33332b240b70efa2061dae03318f83d3e902632bb32";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "7fe718d644e426b9a90e3bd1dcc51c4e1bb1ac4af439cd4bbcda2cf7d01f276a";
-    private const string CONSOLE_APPLICATION_PLAN_BRIDGE_SHA256 = "a4421adf6e46f31a5096099b1b164ea93901e97a66ff86b9b5b80ba5e753e790";
-    private const string CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256 = "80684e78839f0001950a7b65fbfce4ec79db81f3c089dc74df00fcde1707aa88";
-    private const string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256 = "43f1537c4c4038824512972173e0a5c8acc4e74710d315a5b7498a6dae668bb2";
-    private const string CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256 = "326e2ecfc1f4dd8bd24f71fff4a9db960de2519d9aae17afbcd6a005c2e7c94d";
-    private const string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256 = "74542907a1b7a90d6d13ee157e7a9e7a4e60e83c042a5486e2f0ab3113ad6013";
+    private const string CONSOLE_APPLICATION_PLAN_BRIDGE_SHA256 = "30475516a4f37ff6739c4ef45fdc9d517d12ea781fff50aab3051fd672792cfc";
+    private const string CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256 = "94819a48d50df0affde426472af8abeb778f46e31faaadcb477584d906ab1909";
+    private const string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256 = "437e1c2ec72e96cf19c6a29143665599d6f8044b942f1a841651513405c6b727";
+    private const string CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256 = "67b292adbfe4cb6af04cb0422083eb04987b86a21269fba17f50d93c89389634";
+    private const string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256 = "93cb6b787f42b3475f403fe9272458177995d763bf62bbfbd0d5f03465761efc";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -52,75 +52,75 @@ internal static class Program
     private const string NATIVE_LOOP_CODE_SHA256 = "470542f262ebb288c72b306cf73807f1922c9c1cf089ecfc8dbba6c810435fe8";
     private const string NATIVE_LOOP_WVO_SHA256 = "1771bcb36ce897dab2184b28a93a93d3d1116e948997ee551920c94c2a52e9e6";
     private const string NATIVE_STENCIL_CORE_SHA256 = "d40fc83c3288043c7af80a261e351066bf3507913b34371a9839014b51ed4b2f";
-    private const string NATIVE_STENCIL_BRIDGE_SHA256 = "5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9";
-    private const string NATIVE_STENCIL_DEMO_SHA256 = "651d9435c2b11b4f102a086615bdd159eb981096e2a2324027d5f86a29e36a15";
+    private const string NATIVE_STENCIL_BRIDGE_SHA256 = "fca2a0ba6c3ec864a2f77295f39326b1196a675dc6defd7a749c0d5541499770";
+    private const string NATIVE_STENCIL_DEMO_SHA256 = "0bd2c8989e763c4d84463a197244607c56fa884896cecf9ca64bc995c8f86f6f";
     private const string NATIVE_PUBLICATION_CORE_SHA256 = "f2c315c4c52099b8682396358563eef2eb9dceecf1feb84ce5bef5f8465bdeba";
-    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "b21e1136fc9087f530391127a1e1400e7248fa1831a51f00d86d467cf5133cb0";
+    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "7b18c009c2d2c8ade970d784168376498eadc833f7ab149b713a2d6ae8e0dc81";
     private const string NATIVE_PUBLICATION_LIFETIME_CORE_SHA256 = "52b1cb6dd0d7fa9d17c1cba50b527912876e4acf1cd9663846ce915b4c56aed5";
-    private const string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256 = "74dfaf40bb6ea83f0fd72757c9c4cb85f5c8dd28a41f3993325871d348e88d32";
-    private const string SOURCE_COMPOSITION_SHA256 = "0980b7178943be516cd9b6924f179d5977ca147e11bf105c5063ea078c645b60";
+    private const string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256 = "9f7b3c331f4afb56d2e55d51cdea32c5b1536e6856f8da20ade1479e75682bcf";
+    private const string SOURCE_COMPOSITION_SHA256 = "a9250b544544cae8f4183d8db66a4391b619caa41001c86dd7142fb204b9d979";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "b609fb7d442bbe1685c1058c71eb011d43b291df505697a97c233ca7063a2044";
-    private const string PROJECT_MANIFEST_TOOL_SHA256 = "50ab9aa5048ab844a816d0f7f12fb691cb69f57c4a71f7eb18ebc7fb4aaf0b0c";
-    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "a90577205efd19149f1d89f7979e74c8a177b5d2c59558d76e58bccde96a7a2a";
-    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "b5f67c3254bdabbc53bd2430d5f350261a8fc5214bc7d3d1d9be6702a37ad4f2";
+    private const string PROJECT_MANIFEST_TOOL_SHA256 = "30f8ae1d3a4d8db0343b508b313736a314fd61fefb9054c90b4d9993f6df01db";
+    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "1436fb0e3d4f3f2c4cbdac048077e4761da6020b3f964b293fd090637d1ce135";
+    private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "fdd83bf385dfed851462c4a02e0e1e2c72f5f4be5eb02ae68731417c46fbdd34";
     private const string MACHINE_CONTRACTS_SHA256 = "9f909a4c47d6f7fb41570b58615a533e79e0219a780c686a64995826b322219a";
-    private const string MACHINE_CONTRACTS_DEMO_SHA256 = "b505d3335fa5a4b1dabe2d5e64e4c7a557e0028666cbebe1e2557a0255772f1a";
+    private const string MACHINE_CONTRACTS_DEMO_SHA256 = "68ea0056db52ca3a4f5bb2dc6071bab49da8db1bf33272c495c115cb40db3e66";
     private const string BYTE_ORDERING_SHA256 = "194e4b5c4eb7f4641a39098abce3dabb93187af7149e184b56b76f978ed2f4f1";
-    private const string BYTE_ORDERING_DEMO_SHA256 = "0b41e8f615630e0734812ba8cd8e7c06e975592b86327c2fe8220f5e29c10cab";
+    private const string BYTE_ORDERING_DEMO_SHA256 = "10ca64b40a74cd23f801bc59d64ab271c03fbe8b5a59d2426781cd0bf9b817c2";
     private const string DECIMAL_PARSING_SHA256 = "39f6c1c3d5a2233d5296e777e798450571c5f4ba837120a25a6487bf8014ee1f";
-    private const string DECIMAL_PARSING_DEMO_SHA256 = "16a20ee595eb708095f6e8c38c809a24774989110780dbefbacbc36ee468e695";
+    private const string DECIMAL_PARSING_DEMO_SHA256 = "2a9789972a77e3fcf0fbacf686050e22d30f0bc0aab5a7e09f1d5620d8168ac8";
     private const string BYTE_CONSTRUCTION_SHA256 = "6f26865069333c02b15ab83d48f2a0cb0e3a05db98bcd841f31e232485b76207";
-    private const string BYTE_CONSTRUCTION_DEMO_SHA256 = "a9b577dc08ac6e4a0d786f04d6667eb0347c57a0c1abbd81f3481fb0e0bc6c29";
-    private const string SOURCE_LEXER_SHA256 = "ca91d5aa9889540250be552b5563dacba8deba2abb70ea557d0e4f8089ee749f";
-    private const string SOURCE_LEXER_DEMO_SHA256 = "2a7a2f8c1276c252fa8ddb53a362c6560dfa06ba8c2a8be0fb56f507e820df87";
-    private const string SOURCE_DECLARATION_PARSER_SHA256 = "4bbaaaa6293ab1fb5a4eb92c3e8a52c078943ba88652b27f69fdc3c5ab76fda7";
-    private const string SOURCE_DECLARATION_PARSER_DEMO_SHA256 = "ab28936fe0961261a0f243009d5c9b93af52069326618e03e428d1cc024fea11";
-    private const string SOURCE_DECLARATION_PARSER_TOOL_SHA256 = "94134e28bef9544b0fbb4b4ae6dfd3deb3aa52598475023d37b01a5de8686d45";
-    private const string SOURCE_BODY_PARSER_SHA256 = "3df42c7b6e81343194340b8f6f44e44fb83f3d6f18c249c9d9ed4e58df69ec73";
-    private const string SOURCE_BODY_PARSER_DEMO_SHA256 = "afa07f843679e89f84a5a55887af834575d43d4a3ac3f1a76cd4395a103e62b6";
-    private const string SOURCE_BODY_PARSER_TOOL_SHA256 = "342fadc0886e5b8b2910cb65c8495730a902364a526fd34df58c574a32a91890";
-    private const string SOURCE_SET_SHA256 = "bb671df781acb049c513f9504abf00069a3fff1cdb9affb8706340b9e02fefda";
-    private const string SOURCE_SET_DEMO_SHA256 = "5b334b0ead653bc043e244a60e2e36bc32d66aa0211f715329434c0447a539c9";
-    private const string SOURCE_SET_TOOL_SHA256 = "3ecb611599ee51799799ead54288259569a1b0a092d24c216caa703b578d55e4";
-    private const string SOURCE_GRAPH_SHA256 = "5d266d834c5cde77efa4046dfc9c8a8c0eed7c2df1dd254f98c4e338d76cccda";
-    private const string SOURCE_GRAPH_DEMO_SHA256 = "2d2fa7ae2cca012834fb340253a551f9332a764200bb8f6449158b8dad4b30b2";
-    private const string SOURCE_GRAPH_TOOL_SHA256 = "4558a7c6ba1c1632bb2d46747d31dfd1be0480e93fc4eec8340d0ea39db702f1";
-    private const string SOURCE_SYMBOLS_SHA256 = "7769def20aef89bac982d896a5fa791f7ae3cea744b70fc199583ed97aef40e4";
-    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "6ce17cdcd140cd686c0975e30a9be173d09deff4eb8d4dbb8d972ed1b8440158";
-    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "0d09379e35df8af7d3239badc4a50a71ecb4638255f28f3a40421491d35a6529";
-    private const string SOURCE_BINDINGS_SHA256 = "4e1e5d7f0029d15abaaadc3c2d84d966db6b33bb7b11c8b222bc5336b32cdae6";
-    private const string SOURCE_BINDINGS_DEMO_SHA256 = "261d3497883a1920ebc523b252b91b1ee5efbbd4a5ad7a0d81255e3908959014";
-    private const string SOURCE_BINDINGS_TOOL_SHA256 = "b5c0663ba414a913f0e64e611a8619ecb0dc95c763dfb2c2d12e02f65919e0b3";
-    private const string SOURCE_WIR_SHA256 = "959a9341668215bd748d5a04946ff5a598c443dd788b551b9062fe47a5d7bca8";
-    private const string SOURCE_WIR_DEMO_SHA256 = "a32ae736936f459a33e0e9733593926b8d4f345d7f399310adb61b7e136f142d";
-    private const string SOURCE_WIR_TOOL_SHA256 = "8da075794db7227c8e89b48885a227d501a3ca03b2de7a186c27c97100060b4f";
-    private const string SOURCE_WVB_SHA256 = "9c3f4f6839274766a3633784716147e03e3bce47ec1103dac0eb0d998a1b4b9a";
-    private const string SOURCE_WVB_DEMO_SHA256 = "acf1f5cbde6e2ba3d831ed8390dac85f812d13525847619b3c85903bb7a44c8f";
-    private const string SOURCE_WVB_TOOL_SHA256 = "9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066";
-    private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "5b819f86ffa05feaae1e27feb0b6fe6eda5034f1b229d4d9917ac7fa8041a0d4";
-    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "af8db63675a2441e57a763ca4caa411419a84879cf01a1eb62b4be7556487cab";
-    private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "ee1c77763ad7440ad87ec10c4b7def67f9ec296eb366277cfe219617c76dda4b";
-    private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "86e32c67a41ccb31053d4905191e32dd2aaafd59e4b73416ea2b401e83adc973";
-    private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "6d524aa9b96d0f624b0b449937ec6c0987a57e2c002af8276784c63a185efef6";
-    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "b209eabbced72ccca37a325ac55f1a5198f9c257c6dc9faa5b57954c393c2493";
-    private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "5d61f926461fc19e46e04a7e5dd3636fcbaa554e30370fc10a5eeb7992f5e634";
-    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "356bd9c6be1a927017e987728b479d105f9852c0c7aad1b8b9e93202ba64010f";
-    private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "99da55911c81218ac74442a695d340ed440c74515b830bcc659bd4b7df7b2d4b";
-    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507";
-    private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a";
-    private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "42f3f947cccca8e44c279afce1b6e944682dc440e0e9cda6546883898d951f31";
-    private const string COMPILER_WVB_VERIFIER_SHA256 = "a70d02d85b7a67980220b2b7f6a3b6338cc5f1f51639f17816f3b97eab62e2a1";
-    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "3045f343ed5fd428ab5e8089ee254e3455f34f0e27f084af82d7784d231a7379";
-    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "44b16d42ec1aa6f775285ad2f53ac52be8a32479e1a446dfebe59c7db10b1c75";
-    private const string COMPILER_BUILD_DRIVER_SHA256 = "a7cb475dbed8dd8dbf55c45e4d168f462af0a39ec707deff3108bba70e9dfd77";
-    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "885baedad6e5065f09409a793c51b610753d8ef75ce746498be050413405641d";
-    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "01629d1ab879c8dd73956179f9dad1986a8e545e9377268578171d8d3e17b978";
+    private const string BYTE_CONSTRUCTION_DEMO_SHA256 = "e12b9f36be719c4f448b074f8d40e19e2dc044908e85945759f024ae69335a1b";
+    private const string SOURCE_LEXER_SHA256 = "e108cc3721092a114c8bab3b58224aef7e4fb63b8ed46c368cf341860c0a44f9";
+    private const string SOURCE_LEXER_DEMO_SHA256 = "b0ee43b2441448e0e719fc8e80902a5cffea162450ce10a704685e8fec6c6918";
+    private const string SOURCE_DECLARATION_PARSER_SHA256 = "85d9d909c378a69223c3321b882ddf483eef19afc5042568da70a183bd8ed193";
+    private const string SOURCE_DECLARATION_PARSER_DEMO_SHA256 = "e3e5606b8a7fe63bd03bfb53da31980e1f6457980621b1d7db038c3a43b6e16d";
+    private const string SOURCE_DECLARATION_PARSER_TOOL_SHA256 = "4f24f9f6b5b7bdbffec6d60952b33e8b9e9df8fe17ad5b255a3c8aa28b017729";
+    private const string SOURCE_BODY_PARSER_SHA256 = "a9fb34ab9d6fe7a8fd44c81f1ea03f890664c131a4f0a085959910379c3655a6";
+    private const string SOURCE_BODY_PARSER_DEMO_SHA256 = "18eac99ee5f93a8d179dc23746a3d63b46797d3ab8c4cd55fd6792f5a9a5ae77";
+    private const string SOURCE_BODY_PARSER_TOOL_SHA256 = "841e14f4a4dd209658d8d0e123dbfa8730d58718dc139c6702964420259e7cd5";
+    private const string SOURCE_SET_SHA256 = "4b497ed318d685259dcff69f91da17bf10f5de5340aa42144c55eb87ea12ac74";
+    private const string SOURCE_SET_DEMO_SHA256 = "1977c8e4ade8519b9a9e75a526f402b07b579323220cf8d29120ae246497729b";
+    private const string SOURCE_SET_TOOL_SHA256 = "f7ddb4be4ab2a3b1cc2a33ed6ff995be0707de12a492f60c478208351dd74b09";
+    private const string SOURCE_GRAPH_SHA256 = "574528635f818694fb72ba1fe1d4634cf0fddf4976b6733a1f96a9cf2dbd8cd0";
+    private const string SOURCE_GRAPH_DEMO_SHA256 = "63e72328ec5897695ac4c7b9c044a409068d726e294011f00ff4f72221a6087a";
+    private const string SOURCE_GRAPH_TOOL_SHA256 = "697a803b57229ca4e5a7e66053f696f45f0b6f35c0c3bc6cfe87f47a6f3aa56b";
+    private const string SOURCE_SYMBOLS_SHA256 = "6619d6b2de2512efca21e08888042382a6e676d089b85ce7f13133399c11343d";
+    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "5b70c55c0462bf76b0e0ded51fc5c712de1fb16108ff4ca01fd6aea512b80f8c";
+    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "f4414d04c23e35d461b00916330b53dd0bea2f3a072a6ddc0ca2f15b18d516b4";
+    private const string SOURCE_BINDINGS_SHA256 = "205112ba67f9c3dca1f602d09b573f684035cbeec956d36755085f02723c12ca";
+    private const string SOURCE_BINDINGS_DEMO_SHA256 = "4a0e3ddca159f40ebaa4e7dea97f88b4c91f97e0a62c590bca44724c7ffa7a51";
+    private const string SOURCE_BINDINGS_TOOL_SHA256 = "f25c6c4ac04da77a3498587b62220376475680b46797017eb7855009bcd2995b";
+    private const string SOURCE_WIR_SHA256 = "8414d674d7373f977199f96319c33af6df86f1cff7664aa2ad15374e8b75cd09";
+    private const string SOURCE_WIR_DEMO_SHA256 = "2f856568394b108404f4c6fb4135af93bbf35be6a33102c81cce9e9b1d73cd05";
+    private const string SOURCE_WIR_TOOL_SHA256 = "729c477cb8d178984806ef1ad5e816debc7bcd919df2d78cf87e955dea754f62";
+    private const string SOURCE_WVB_SHA256 = "ba0480fcedebd09f6ae7cc2ec1469b366ae86ab21081b17455d0da2c559a93ce";
+    private const string SOURCE_WVB_DEMO_SHA256 = "c0408401d6a3290173acd7d50e114c6857c8714350c7a8a4296b3a7576fa61d4";
+    private const string SOURCE_WVB_TOOL_SHA256 = "c08f76e998e0280b7c2e3e801a9752f000825c874abeb86e88420c31444d63f9";
+    private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "b5c442b6fc91f8aa0cabd52622c4e5cad492830424595b93bc4f2ca0c04b1ccc";
+    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "8da929b94279189fcd7c58dc83bdaac24ce32af91c2450952d1c26a63d60e72c";
+    private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "76e24a25b4d18c8526dcf05916867512bec9f0b2f60ca0c9de3d30504ab30eb1";
+    private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "008025a2bb4a40c034cd64dfdba24b1a55dc72fb4d89df5a291fa9cf577578de";
+    private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "e25f22f7de9fd973299fbe220b61899d0b6a215e7f4fa616abedc5729a51cd54";
+    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "fa3fd8155d9c71585a7ab389479e9b4e34432c909d45d948cb1925a20ceaae2e";
+    private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "127cee36736a40b3825757cc5a831b83e36373cb52f7fc57a6d487da4aa1784b";
+    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "d82f6276bf18f5f9c5b2960598a731a966afca38a4d8340f0b26e3140e3c6353";
+    private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "71dc1cd9c11d0a1d6e3b7795a68134391b2635912b70cc25a82ab3e75491fc51";
+    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "e15fe61d1cce66a2a8e30aa8e27cc124f534f6d430eaeffcba9fe28c6503e6c6";
+    private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "69612958cb82aba4334f6243847441bdaf280b0762bbccb64419fc8688e1c442";
+    private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "ec63f1c41b74ebd529eeb7020e072875021cc9aaa6f2ceff23703fa8f907becf";
+    private const string COMPILER_WVB_VERIFIER_SHA256 = "19760a4438a48c945de3e39fd612ed72f3ea3a33373b5d9da09cd1e2411938d7";
+    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "cac82b26c7af4edea01a808db718e66e65fd859f421d5e73f144b017f390bc59";
+    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "d99f5d9c95f1ab7e731eaf4ea7f15e48a19cc72e689f99d1b00d5a58f2984ede";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "090f7ce9e00708dc029cbe98448c30ee1e6e0544bd2dcac1de045c44dcc226b2";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "3f72b96ef0697c1b531f566180fea9f406b7213b88a6dd7000235d82d1878819";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "8302f75a2ff9effaa72fa7ee58a6ee93a7e780bf39a4471aa41e397e94bcb568";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "5d0779925bee06b8e27afb5ccedd995fc83cbd6aa71954911a644cf078c71704";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "1df4503a21abf5f2c0b0307ac2dc79402bc8550ec5e4a016df43fdeb8197d528";
-    private const string SOURCE_WVB_COMPOSITION_SHA256 = "7279011a12f3d2becc1e9775fb92bd7c74b8760b2c94f13a282d71c0849f8e6f";
+    private const string SOURCE_WVB_COMPOSITION_SHA256 = "61fc1644b2952aa3dc0b4c30d3d1c1f43532bed89032ede32eee946027c85d85";
     private const string WEBASSEMBLY_CORE_SHA256 = "4a81c05f01c09a45ca94c072d5a5e1c99c466b22ef10217df8a1fb4c73089add";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "70a9deff796fcf8dd554ac90e4dd904f98cb2abea7c96006d70c9ef8b0ef35a9";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "6c5416f2239d482d5f627267198a7d4305d1120247868d971eee9067256eb083";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "255cf55330e62dc915efc9a4cb20fbb4a7c9694582b2643b8a6510799e6fbfca";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "52ab41f54b6e906bf1f6d04496cb66069ab5bb6aeb66050497fcd4f6bb48802d";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "da24fd4b2d7a0859d0262f4e79e31d9733bf58092730ee7f69d1992a21e3110f";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "54fccbb837dc47dad0f40dca1356d046dd9beb6dab13a3a2574b867791e10466";
@@ -184,14 +184,23 @@ internal static class Program
     private const string WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_SHA256 = "c9249bd45a6ea7dcb14a11d1fbcf6dd004f6ce2bcf9eb4794ad65e2ba79a00fd";
     private const string WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_WVB_SHA256 = "523e596426040a8870dfffc1fe8c1ba46779b2238a89bcdc58148d5da5c7d72b";
     private const string WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_SHA256 = "d61fe8f1091429d64ba425670ad4d85608f1efcc8bc71ad8904f3a7691ded677";
-    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_WVB_SHA256 = "bc282d6163b97e70766fb0882395ce594a00ecafb60bea12e4b401e731f3f0be";
-    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256 = "6fc1e02498de6345b441d0f34e52fe9d0c014642fc637f9066623b07b4329240";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_WVB_SHA256 = "1abd13fcc2ca3695c5c6ba16949158e7ae7b79c586047f04aeaf6fa6d39ea79a";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256 = "a64084987d6890f4c2384ce2aaaa9e724f931cd61d39f3b460fbf9e35714e0ba";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_WVB_SHA256 = "3eb8fb93a44d8c2c1c60fb04e84948a1daea356de40b2915e920e49111b57c19";
+    private const string WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_SHA256 = "225c489f3db95414480889f8fc725c87b71fed45d504c539c65a418466dd56f0";
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_WVB_SHA256 = "7848041e406b0f92ab3219e9a7052e9cca337014fa9698978bf2c894c689532b";
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256 = "597c0f8313aac9fbcb1ba50fbcd4e25937f0cc464d090d491570f8eeb559253d";
     private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "3ae7718480a19b2a1de5858429e59cd833dd1beec7bc70f5de7c42c91aff0c40";
     private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SHA256 = "dbcb971cb1dedac2169035d0cf436aaed9cc5abcce0a9347932c8e0b7d1bff1e";
     private const string SOURCE_WVB_BYTES_ENTRY_GUEST_SHA256 = "b27ca1d0afcd379273f35e755eff12ccc5674762fe01381232eea36714d09bf1";
     private const string SOURCE_WVB_FUNCTION_ONLY_SHA256 = "9ccfed0509e84bfc63979c6dc13170c14762efbdaa448b4c5894325f31aa7761";
+    private const string SOURCE_WVB_MATCH_SHA256 = "4b18063f40f74f7c4255904a244d8c9edf30192402b125ead6fa909fa5446d40";
+    private const string SOURCE_WVB_MATCH_FALLTHROUGH_SHA256 = "eb684fb5d019081a6f83863d2066e6a819913b1353b87001e4080f6d9de392fd";
+    private const string SOURCE_WVB_METADATA_SHA256 = "948a253293fcefd0f48be8dd3b81d7379db04ed889feea31137657274d7e1382";
+    private const string SOURCE_WVB_VARIANTS_SHA256 = "0c1ad5583f023db53a0878d1f599ca8748a222d393ee0edcc14f6d590e1a621a";
+    private const string SOURCE_WVB_COLLECTIONS_SHA256 = "5cd5e686cd8bbbe6d8bc793dcf7c270acd643301e16cdcf53a65a317ef08a8ee";
+    private const string SOURCE_WVB_OPERATORS_WINDVALE_SHA256 = "26fcb52bc7e893d306d6f12343fa596bdbf919c95c74f033ef67c2afaf46a210";
+    private const string SOURCE_WVB_OPERATORS_SHA256 = "82ae423000f0cf44f1170def85806488bf823be3d762731145f6fd461f35c685";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_GUEST_SHA256 = "6e8c2c29dc5f42d5dc2a7283604acca8d183325d9ae972c1dce3430aa7976414";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_I32_OVERFLOW_SHA256 = "f10665d894c6b7cd3d198dc50469f3320e0fad71442aded4bf4eae06a1a1c85c";
     private const string SOURCE_WVB_SCALAR_INTERPRETER_U32_OVERFLOW_SHA256 = "fd0c02a650d54d6618f760a36613eb811c49b8304bd4a9ab20e94f03bd733d2d";
@@ -533,43 +542,52 @@ internal static class Program
     private const string COMPOSITION_LEAF_SOURCE = """
         module Compositionˉleaf profile portable;
 
-        enum Compositionˉstatus {
+        export enum Compositionˉstatus {
             Ready = 1;
         }
 
-        record Compositionˉvalue {
+        export record Compositionˉvalue {
             Value: i32;
             Status: Compositionˉstatus;
         }
 
-        export fn Compositionˉmake(Value: i32) -> Compositionˉvalue {
-            return Compositionˉvalue(Value, Compositionˉstatus.Ready);
+        export const OFFSET: i32 = 1;
+        export data Compositionˉvalues: [i32] = [40];
+
+        fn Helper(Value: i32) -> i32 {
+            return Value + OFFSET;
         }
 
-        export fn Compositionˉincrement(Value: i32) -> i32 {
-            return Value + 1;
+        export fn Compositionˉmake(Value: i32) -> Compositionˉvalue {
+            return Compositionˉvalue(Helper(Value), Compositionˉstatus.Ready);
         }
         """;
 
     private const string COMPOSITION_MIDDLE_SOURCE = """
         module Compositionˉmiddle profile portable;
 
-        import Compositionˉleaf;
+        import Compositionˉleaf as Leaf;
+
+        fn Helper(Value: i32) -> i32 { return Value; }
 
         export fn Compositionˉanswer() -> i32 {
-            let Candidate: Compositionˉvalue = Compositionˉmake(41);
-            if Candidate.Status != Compositionˉstatus.Ready { return 0; }
-            return Compositionˉincrement(Candidate.Value);
+            let Candidate: Leaf.Compositionˉvalue = Leaf.Compositionˉmake(
+                Leaf.Compositionˉvalues[0] + Leaf.OFFSET
+            );
+            if Candidate.Status != Leaf.Compositionˉstatus.Ready { return 0; }
+            return Helper(Candidate.Value);
         }
         """;
 
     private const string COMPOSITION_ROOT_SOURCE = """
         module Compositionˉdemo profile portable;
 
-        import Compositionˉmiddle;
+        import Compositionˉmiddle as Middle;
+
+        fn Helper(Value: i32) -> i32 { return Value; }
 
         export fn Main() -> i32 {
-            return Compositionˉanswer();
+            return Helper(Middle.Compositionˉanswer());
         }
         """;
 
@@ -706,6 +724,20 @@ internal static class Program
 
     private static readonly string SOURCE_WVB_FUNCTION_ONLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Function-Only.wv");
+    private static readonly string SOURCE_WVB_MATCH_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Match.wv");
+    private static readonly string SOURCE_WVB_MATCH_FALLTHROUGH_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Match-Fallthrough.wv");
+    private static readonly string SOURCE_WVB_METADATA_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Metadata.wv");
+    private static readonly string SOURCE_WVB_VARIANTS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Variants.wv");
+    private static readonly string SOURCE_WVB_COLLECTIONS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Collections.wv");
+    private static readonly string SOURCE_WVB_OPERATORS_WINDVALE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Operators-Windvale.wv");
+    private static readonly string SOURCE_WVB_OPERATORS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Operators.wv");
 
     private static readonly string SOURCE_WVB_SCALAR_INTERPRETER_GUEST_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Scalar-Interpreter-Guest.wv");
@@ -1079,9 +1111,11 @@ internal static class Program
         new("Windvale compiler bodies, locals, and calls bind portably", [TEST_AREA_COMPILER], Compilerˉsourceˉbindingsˉrun),
         new("Windvale compiler lowers typed source into canonical validated WVIR", [TEST_AREA_COMPILER], Compilerˉsourceˉwirˉruns),
         new("Windvale compiler emits canonical executable WVB from validated WVIR", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉsourceˉwvbˉruns),
+        new("Windvale compiler enforces qualified module boundaries end to end", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉqualifiedˉmodulesˉrun),
         new("module codec round-trips exact canonical bytes", [TEST_AREA_BYTECODE], Moduleˉroundˉtrip),
         new("inspector exposes module metadata and disassembly", [TEST_AREA_BYTECODE], Inspectorˉisˉuseful),
         new("bool, if, text literals, and calls execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Additionalˉsemanticsˉrun),
+        new("loop control, short-circuit Boolean operators, and compound assignment execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Controlˉoperatorsˉrun),
         new("macron names and explicit local mutability execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Namingˉandˉmutabilityˉrun),
         new("Foundation byte values, slices, and little-endian reads execute", [TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Foundationˉbytesˉrun),
         new("Foundation signed reads and strict UTF-8 text operations execute", [TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Foundationˉtextˉrun),
@@ -1104,6 +1138,9 @@ internal static class Program
         new("Stage 0 linker contains hostile objects and remains deterministic", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉcontainsˉhostileˉinput),
         new("immutable nominal records cross function boundaries", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Immutableˉrecordsˉrun),
         new("nominal enums and bounded formatting execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Enumsˉandˉformattingˉrun),
+        new("local declarations infer exact initializer types", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Localˉinferenceˉruns),
+        new("typed constants evaluate exactly without runtime storage", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Typedˉconstantsˉrun),
+        new("match, metadata, variants, collections, and extended operators execute", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Advancedˉlanguageˉfeaturesˉrun),
         new("Seed arithmetic and comparison operators execute", [TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Operatorsˉrun),
         new("WVB 1.7 checked 64-bit scalars execute in the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wideˉscalarsˉrun),
         new("source diagnostics contain stable codes and locations", [TEST_AREA_COMPILER], Sourceˉdiagnosticsˉareˉuseful),
@@ -1202,6 +1239,7 @@ internal static class Program
                 Testˉtimer.Stop();
                 Console.Error.WriteLine($"FAIL  {Test.Name} ({Testˉtimer.ElapsedMilliseconds} ms)");
                 Console.Error.WriteLine($"      {Exception.Message}");
+                Console.Error.WriteLine(Exception.StackTrace);
                 Timings.Add(new(Test.Name, Outcome, Testˉtimer.ElapsedMilliseconds));
                 if (Options.Failˉfast)
                 {
@@ -1939,7 +1977,7 @@ internal static class Program
         Equal(22, Nativeˉcontract.ABI_VERSION);
         Equal(33_554_432, Nativeˉcontract.MAXIMUM_CODE_BYTES);
         Equal(2_097_152, Nativeˉcontract.MAXIMUM_RECORD_ARENA_BYTES);
-        Equal(67_108_864, Nativeˉcontract.MAXIMUM_TEXT_ARENA_BYTES);
+        Equal(134_217_728, Nativeˉcontract.MAXIMUM_TEXT_ARENA_BYTES);
         Equal(2_048, Nativeˉcontract.MAXIMUM_FRAME_SLOTS);
         Equal(100_000, Nativeˉcontract.MAXIMUM_VALUE_IDENTIFIERS);
         Equal(32_768, Nativeˉcontract.MAXIMUM_FRAME_BYTES);
@@ -3663,7 +3701,7 @@ internal static class Program
             Constructionˉcore.Success,
             "The Windvale console-application construction core did not compile: " +
                 string.Join(" | ", Constructionˉcore.Diagnostics));
-        Equal(31_022, Constructionˉcore.Moduleˉbytes.Length);
+        Equal(30_666, Constructionˉcore.Moduleˉbytes.Length);
         Equal(
             CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256,
             Moduleˉdigest.Calculateˉsha256(Constructionˉcore.Moduleˉbytes.AsSpan()));
@@ -3735,7 +3773,7 @@ internal static class Program
             Verificationˉcore.Success,
             "The Windvale console-application verification core did not compile: " +
                 string.Join(" | ", Verificationˉcore.Diagnostics));
-        Equal(46_074, Verificationˉcore.Moduleˉbytes.Length);
+        Equal(45_018, Verificationˉcore.Moduleˉbytes.Length);
         Equal(
             CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256,
             Moduleˉdigest.Calculateˉsha256(Verificationˉcore.Moduleˉbytes.AsSpan()));
@@ -5595,7 +5633,7 @@ internal static class Program
                 }
                 var Copy: text = Value;
                 var Count: i32 = 0;
-                while Count < 140 {
+                while Count < 276 {
                     Copy = Textˉconcat(Value, "b");
                     Count = Count + 1;
                 }
@@ -5645,7 +5683,7 @@ internal static class Program
                 }
                 var Quoted: text = "";
                 var Count: i32 = 0;
-                while Count < 255 {
+                while Count < 511 {
                     Quoted = Textˉquote(Value);
                     Count = Count + 1;
                 }
@@ -5656,7 +5694,7 @@ internal static class Program
             "WVR3018",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Quoteˉarenaˉexhaustion).Fragment,
-                maximumˉinstructions: 10_000));
+                maximumˉinstructions: 20_000));
 
         var Longˉmember = $"N{new string('a', 127)}";
         var Enumˉarenaˉexhaustion = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess($$"""
@@ -5665,7 +5703,7 @@ internal static class Program
             export fn Main() -> i32 {
                 var Name: text = "";
                 var Count: i32 = 0;
-                while Count < 524289 {
+                while Count < 1048578 {
                     Name = Enumˉname(Nativeˉlong.{{Longˉmember}});
                     Count = Count + 1;
                 }
@@ -5676,7 +5714,7 @@ internal static class Program
             "WVR3018",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(
                 X64ˉnativeˉbackend.Compile(Enumˉarenaˉexhaustion).Fragment,
-                maximumˉinstructions: 50_000_000));
+                maximumˉinstructions: 100_000_000));
 
         var Descriptorˉfunction = First.Module.Functions
             .Select((Function, Index) => (Function, Index))
@@ -8149,14 +8187,14 @@ internal static class Program
                     (Function.Returnsˉrecord ? 1 : 0))),
             "Native record-storage accounting violated its bounded frame model.");
         Equal(
-            "NATIVE_RECORD_STORAGE functions=328 record-functions=253 " +
-            "parameters=308 assigned-parameters=0 locals=8097 declared=137512 persistent=9291 " +
-            "block=88669 peak-live=7463 scratch=7463 values=14948 slots=4484 " +
-            "return-functions=206 return-fields=3222 max-frame=1489 " +
-            "largest-declared=13512 largest-persistent=196 largest-peak=114 " +
-            "largest-scratch=114 max-existing=1178 max-width=34 largest-index=204 " +
-            "largest-name=Compilerˉsourceˉwirˉcompileˉblock nested=0 " +
-            "offset-map=aff287fba46a840e454e4cc7bf4751d3152474caf09331a526f3730ba280816e",
+            "NATIVE_RECORD_STORAGE functions=397 record-functions=304 " +
+            "parameters=401 assigned-parameters=0 locals=12792 declared=219732 persistent=12275 " +
+            "block=119309 peak-live=9559 scratch=9559 values=23556 slots=5938 " +
+            "return-functions=244 return-fields=3814 max-frame=1904 " +
+            "largest-declared=17508 largest-persistent=229 largest-peak=147 " +
+            "largest-scratch=147 max-existing=1527 max-width=34 largest-index=296 " +
+            "largest-name=__WvM8F50 nested=0 " +
+            "offset-map=cae2b98aa7cfca8eba8cc8b49a1a21d6e2b7b9c063f52be877c8b10697fa138e",
             $"NATIVE_RECORD_STORAGE functions={Compilerˉrecordˉstorage.Length} " +
             $"record-functions={Compilerˉrecordˉstorage.Count(Function => Function.Recordˉvalueˉidentifiers > 0 || Function.Recordˉparameterˉbindings > 0 || Function.Recordˉlocalˉbindings > 0 || Function.Returnsˉrecord)} " +
             $"parameters={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉparameterˉbindings)} " +
@@ -8182,7 +8220,7 @@ internal static class Program
             $"largest-name={Largestˉrecordˉframe.Functionˉname} " +
             $"nested={Compilerˉrecordˉstorage.Count(Function => Function.Containsˉnestedˉrecordˉfields)} " +
             $"offset-map={Nativeˉrecordˉstorageˉdigest(Compilerˉrecordˉstorage)}");
-        Equal(17_130_441, Compilerˉnative.Fragment.Code.Length);
+        Equal(26_299_864, Compilerˉnative.Fragment.Code.Length);
         Equal(
             SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Compilerˉnative.Fragment.Code.AsSpan()));
@@ -8234,7 +8272,7 @@ internal static class Program
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Compilerˉmeasurement.Scalar);
             Equal(0u, Compilerˉmeasurement.Recordˉarenaˉused);
-            Equal(60_632u, Compilerˉmeasurement.Textˉarenaˉused);
+            Equal(66_024u, Compilerˉmeasurement.Textˉarenaˉused);
             Equal(
                 "source wvb status=Valid functions=4 code-bytes=532 module-bytes=815\n",
                 Compilerˉoutput.Readˉtext());
@@ -8258,15 +8296,15 @@ internal static class Program
         var Compilerˉnative = X64ˉnativeˉbackend.Compile(Compilerˉtool);
         var Measurement = Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment);
         Equal(Measurement, Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment));
-        Equal(17_130_441, Compilerˉnative.Fragment.Code.Length);
-        Equal(17_147_219, Measurement.Encodedˉobjectˉbytes);
+        Equal(26_299_864, Compilerˉnative.Fragment.Code.Length);
+        Equal(26_320_498, Measurement.Encodedˉobjectˉbytes);
         Equal(Compilerˉnative.Fragment.Code.Length, Measurement.Materializedˉsectionˉbytes);
         Equal(Compilerˉnative.Fragment.Code.Length, Measurement.Linkedˉimageˉbytes);
-        Equal(17_129_584, Measurement.Textˉbytes);
-        Equal(857, Measurement.Readˉonlyˉdataˉbytes);
+        Equal(26_298_864, Measurement.Textˉbytes);
+        Equal(1_000, Measurement.Readˉonlyˉdataˉbytes);
         Equal(2, Measurement.Sections);
-        Equal(402, Measurement.Symbols);
-        Equal(167, Measurement.Relocations);
+        Equal(500, Measurement.Symbols);
+        Equal(199, Measurement.Relocations);
         True(
             Measurement.Encodedˉobjectˉbytes > Objectˉlimits.MAX_OBJECT_BYTES,
             "The exact compiler unexpectedly fits the retained encoded-WVO limit.");
@@ -8354,11 +8392,11 @@ internal static class Program
         var Linuxˉbundle = X64ˉnativeˉserviceˉbundle.Build(
             Compilerˉnative.Fragment,
             Nativeˉserviceˉplatform.Linux);
-        Equal(17_143_635, Windowsˉbundle.Imageˉbytes.Length);
+        Equal(26_316_131, Windowsˉbundle.Imageˉbytes.Length);
         Equal(
             SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256,
             Objectˉdigest.Calculateˉsha256(Windowsˉbundle.Imageˉbytes.AsSpan()));
-        Equal(17_143_351, Linuxˉbundle.Imageˉbytes.Length);
+        Equal(26_315_847, Linuxˉbundle.Imageˉbytes.Length);
         Equal(
             SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256,
             Objectˉdigest.Calculateˉsha256(Linuxˉbundle.Imageˉbytes.AsSpan()));
@@ -8422,7 +8460,7 @@ internal static class Program
                 Case.Bundle.Imageˉbytes.AsSpan());
             Equal(Hostedˉcompilerˉapplicationˉmetadata.SIZE, Case.Metadata.Length);
             Equal(Nativeˉentry, Verified.Nativeˉentryˉoffset);
-            Equal(8_000_000_000UL, Verified.Maximumˉinstructions);
+            Equal(48_000_000_000UL, Verified.Maximumˉinstructions);
             Sequenceˉequal(
                 Compilerˉtool.Module.Capabilities.Select(Capability => (
                     Capability.Name,
@@ -8486,12 +8524,12 @@ internal static class Program
         {
             (Target: Consoleˉapplicationˉtarget.Windowsˉx64,
                 Bundle: Windowsˉbundle, Runtime: Windowsˉruntime,
-                Virtualˉbytes: 409_026_560u, Inputˉscratch: 2_097_154u,
-                Outputˉscratchˉoffset: 406_925_312u),
+                Virtualˉbytes: 476_135_424u, Inputˉscratch: 2_097_154u,
+                Outputˉscratchˉoffset: 474_034_176u),
             (Target: Consoleˉapplicationˉtarget.Linuxˉx64,
                 Bundle: Linuxˉbundle, Runtime: Linuxˉruntime,
-                Virtualˉbytes: 406_929_408u, Inputˉscratch: 1_048_577u,
-                Outputˉscratchˉoffset: 405_876_736u),
+                Virtualˉbytes: 474_038_272u, Inputˉscratch: 1_048_577u,
+                Outputˉscratchˉoffset: 472_985_600u),
         })
         {
             var Verified = Hostedˉcompilerˉruntimeˉdata.Verify(
@@ -8510,14 +8548,14 @@ internal static class Program
             Equal(2_048u, Verified.Layout.Snapshotˉtableˉbytes);
             Equal(73_728u, Verified.Layout.Recordˉarenaˉoffset);
             Equal(2_170_880u, Verified.Layout.Textˉarenaˉoffset);
-            Equal(69_279_744u, Verified.Layout.Nameˉarenaˉoffset);
-            Equal(136_388_608u, Verified.Layout.Dataˉarenaˉoffset);
-            Equal(404_824_064u, Verified.Layout.Fileˉinputˉscratchˉoffset);
+            Equal(136_388_608u, Verified.Layout.Nameˉarenaˉoffset);
+            Equal(203_497_472u, Verified.Layout.Dataˉarenaˉoffset);
+            Equal(471_932_928u, Verified.Layout.Fileˉinputˉscratchˉoffset);
             Equal(Case.Inputˉscratch, Verified.Layout.Fileˉinputˉscratchˉbytes);
             Equal(Case.Outputˉscratchˉoffset, Verified.Layout.Fileˉoutputˉscratchˉoffset);
             Equal(Case.Inputˉscratch, Verified.Layout.Fileˉoutputˉscratchˉbytes);
             Equal(Case.Virtualˉbytes, Verified.Layout.Virtualˉbytes);
-            Equal(8_000_000_000UL, Verified.Metadata.Maximumˉinstructions);
+            Equal(48_000_000_000UL, Verified.Metadata.Maximumˉinstructions);
             foreach (var Offset in new[]
             {
                 Nativeˉexecutionˉcontextˉcontract.INSTRUCTION_BUDGET_OFFSET,
@@ -8569,14 +8607,14 @@ internal static class Program
                 Firstˉwindowsˉapplication.AsSpan(),
                 Windowsˉbundle);
         Equal(Nativeˉentry, Verifiedˉwindowsˉapplication.Nativeˉentryˉoffset);
-        Equal(17_157_120, Verifiedˉwindowsˉapplication.Layout.Applicationˉbytes);
-        Equal(17_147_731u, Verifiedˉwindowsˉapplication.Layout.Textˉvirtualˉbytes);
-        Equal(17_147_904u, Verifiedˉwindowsˉapplication.Layout.Textˉfileˉbytes);
-        Equal(17_148_416u, Verifiedˉwindowsˉapplication.Layout.Dataˉfileˉoffset);
-        Equal(17_154_048u, Verifiedˉwindowsˉapplication.Layout.Dataˉsectionˉaddress);
-        Equal(17_158_144u, Verifiedˉwindowsˉapplication.Layout.Runtimeˉaddress);
-        Equal(409_030_656u, Verifiedˉwindowsˉapplication.Layout.Dataˉvirtualˉbytes);
-        Equal(426_188_800u, Verifiedˉwindowsˉapplication.Layout.Imageˉvirtualˉbytes);
+        Equal(26_329_600, Verifiedˉwindowsˉapplication.Layout.Applicationˉbytes);
+        Equal(26_320_227u, Verifiedˉwindowsˉapplication.Layout.Textˉvirtualˉbytes);
+        Equal(26_320_384u, Verifiedˉwindowsˉapplication.Layout.Textˉfileˉbytes);
+        Equal(26_320_896u, Verifiedˉwindowsˉapplication.Layout.Dataˉfileˉoffset);
+        Equal(26_324_992u, Verifiedˉwindowsˉapplication.Layout.Dataˉsectionˉaddress);
+        Equal(26_329_088u, Verifiedˉwindowsˉapplication.Layout.Runtimeˉaddress);
+        Equal(476_139_520u, Verifiedˉwindowsˉapplication.Layout.Dataˉvirtualˉbytes);
+        Equal(502_468_608u, Verifiedˉwindowsˉapplication.Layout.Imageˉvirtualˉbytes);
         Sequenceˉequal(Windowsˉbundle.Imageˉbytes,
             Verifiedˉwindowsˉapplication.Bundleˉimage);
 
@@ -8730,8 +8768,8 @@ internal static class Program
                     0,
                     Executeˉwindowsˉapplication(
                         Firstˉwindowsˉapplication,
-                        "source wvb status=Valid functions=328 code-bytes=481356 " +
-                            "module-bytes=599868\n",
+                        "source wvb status=Valid functions=397 code-bytes=707044 " +
+                            "module-bytes=859555\n",
                         Arguments,
                         timeoutˉmilliseconds: 600_000,
                         loadedˉmodules: Loadedˉmodules));
@@ -8781,11 +8819,11 @@ internal static class Program
                 Firstˉlinuxˉapplication.AsSpan(),
                 Linuxˉbundle);
         Equal(Nativeˉentry, Verifiedˉlinuxˉapplication.Nativeˉentryˉoffset);
-        Equal(17_158_144, Verifiedˉlinuxˉapplication.Layout.Applicationˉbytes);
-        Equal(17_147_447u, Verifiedˉlinuxˉapplication.Layout.Textˉbytes);
-        Equal(17_154_048u, Verifiedˉlinuxˉapplication.Layout.Dataˉfileˉoffset);
-        Equal(406_929_408u, Verifiedˉlinuxˉapplication.Layout.Dataˉvirtualˉbytes);
-        Equal(424_083_456u, Verifiedˉlinuxˉapplication.Layout.Imageˉvirtualˉbytes);
+        Equal(26_329_088, Verifiedˉlinuxˉapplication.Layout.Applicationˉbytes);
+        Equal(26_319_943u, Verifiedˉlinuxˉapplication.Layout.Textˉbytes);
+        Equal(26_324_992u, Verifiedˉlinuxˉapplication.Layout.Dataˉfileˉoffset);
+        Equal(474_038_272u, Verifiedˉlinuxˉapplication.Layout.Dataˉvirtualˉbytes);
+        Equal(500_363_264u, Verifiedˉlinuxˉapplication.Layout.Imageˉvirtualˉbytes);
         Sequenceˉequal(Linuxˉbundle.Imageˉbytes, Verifiedˉlinuxˉapplication.Bundleˉimage);
 
         var Linuxˉapplicationˉlayout = Verifiedˉlinuxˉapplication.Layout;
@@ -8896,8 +8934,8 @@ internal static class Program
                     0,
                     Executeˉlinuxˉapplication(
                         Firstˉlinuxˉapplication,
-                        "source wvb status=Valid functions=328 code-bytes=481356 " +
-                            "module-bytes=599868\n",
+                        "source wvb status=Valid functions=397 code-bytes=707044 " +
+                            "module-bytes=859555\n",
                         Arguments,
                         timeoutˉmilliseconds: 600_000,
                         loadedˉmappings: Loadedˉmappings));
@@ -8931,7 +8969,7 @@ internal static class Program
             [new(".padding", Objectˉsectionˉkind.Code, 1, (uint)Aggregateˉoverflowˉdata.Length,
                 Aggregateˉoverflowˉdata.ToImmutableArray())],
             [],
-            []));
+            []), Objectˉadmissionˉprofile.Largeˉnative);
         Hasˉlinkˉdiagnostic(
             [Firstˉobject.ToArray(), Aggregateˉoverflowˉobject],
             new(0, "Main", Linkˉadmissionˉprofile.Largeˉnative),
@@ -8971,30 +9009,6 @@ internal static class Program
             [Firstˉobject.ToArray()],
             new(0, "Main", (Linkˉadmissionˉprofile)0),
             "WVL1001");
-        Console.WriteLine(
-            $"NATIVE_COMPILER_AOT_MEASUREMENT code={Compilerˉnative.Fragment.Code.Length} " +
-            $"code-sha256={Objectˉdigest.Calculateˉsha256(Compilerˉnative.Fragment.Code.AsSpan())} " +
-            $"wvo-sha256={Objectˉdigest.Calculateˉsha256(Firstˉobject.AsSpan())} " +
-            $"image-sha256={Objectˉdigest.Calculateˉsha256(Firstˉlink.Imageˉbytes.AsSpan())} " +
-            $"map-sha256={Objectˉdigest.Calculateˉsha256(Firstˉlink.Mapˉbytes.AsSpan())} " +
-            $"windows-bundle={Windowsˉbundle.Imageˉbytes.Length} " +
-            $"windows-bundle-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉbundle.Imageˉbytes.AsSpan())} " +
-            $"windows-metadata-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉmetadata.AsSpan())} " +
-            $"windows-runtime={Hostedˉcompilerˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Windowsˉx64).Virtualˉbytes} " +
-            $"windows-runtime-header-sha256={Objectˉdigest.Calculateˉsha256(Windowsˉruntime.AsSpan())} " +
-            $"windows-application={Firstˉwindowsˉapplication.Length} " +
-            $"windows-application-sha256={Objectˉdigest.Calculateˉsha256(Firstˉwindowsˉapplication.AsSpan())} " +
-            $"linux-bundle={Linuxˉbundle.Imageˉbytes.Length} " +
-            $"linux-bundle-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉbundle.Imageˉbytes.AsSpan())} " +
-            $"linux-metadata-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉmetadata.AsSpan())} " +
-            $"linux-runtime={Hostedˉcompilerˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Linuxˉx64).Virtualˉbytes} " +
-            $"linux-runtime-header-sha256={Objectˉdigest.Calculateˉsha256(Linuxˉruntime.AsSpan())} " +
-            $"linux-application={Firstˉlinuxˉapplication.Length} " +
-            $"linux-application-sha256={Objectˉdigest.Calculateˉsha256(Firstˉlinuxˉapplication.AsSpan())} " +
-            $"wvo={Measurement.Encodedˉobjectˉbytes} memory={Measurement.Materializedˉsectionˉbytes} " +
-            $"linked={Measurement.Linkedˉimageˉbytes} text={Measurement.Textˉbytes} " +
-            $"rodata={Measurement.Readˉonlyˉdataˉbytes} sections={Measurement.Sections} " +
-            $"symbols={Measurement.Symbols} relocations={Measurement.Relocations}");
     }
 
     private static void Compilerˉwvbˉverifierˉpackages(
@@ -9044,7 +9058,7 @@ internal static class Program
         }
 
         var Verifierˉbytes = Compilation.Moduleˉbytes.ToArray();
-        Equal(118_612, Verifierˉbytes.Length);
+        Equal(118_496, Verifierˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_SHA256,
             Objectˉdigest.Calculateˉsha256(Verifierˉbytes));
@@ -9151,9 +9165,9 @@ internal static class Program
             Equal(32u, Runtime.Layout.Snapshotˉtableˉbytes);
             Equal(0u, Runtime.Layout.Fileˉoutputˉscratchˉbytes);
             True(
-                Runtime.Layout.Virtualˉbytes < 80u * 1024u * 1024u,
-                "The verifier runtime unexpectedly retained compiler-scale file snapshots.");
-            Equal(8_000_000_000UL, Runtime.Metadata.Maximumˉinstructions);
+                Runtime.Layout.Virtualˉbytes < 144u * 1024u * 1024u,
+                "The verifier runtime exceeded its one-snapshot layout with the 128 MiB dynamic arena.");
+            Equal(16_000_000_000UL, Runtime.Metadata.Maximumˉinstructions);
             Equal(5, Runtime.Metadata.Capabilities.Length);
             Equal(6, Runtime.Metadata.Services.Length);
         }
@@ -9461,7 +9475,7 @@ internal static class Program
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
             ]);
-        Equal(749_536, Driverˉbytes.Length);
+        Equal(1_008_678, Driverˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_SHA256,
             Objectˉdigest.Calculateˉsha256(Driverˉbytes));
@@ -9525,7 +9539,7 @@ internal static class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(18_484_224, Firstˉwindows.Imageˉbytes.Length);
+        Equal(27_656_704, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -9557,7 +9571,7 @@ internal static class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(18_485_248, Firstˉlinux.Imageˉbytes.Length);
+        Equal(27_656_192, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -9721,8 +9735,8 @@ internal static class Program
             var Sameˉresourceˉerror =
                 "build status=Invalidˉinvocation reason=output-is-input\n";
             var Expectedˉprojectˉoutput =
-                "build status=Published verification=compiler-aligned functions=4 " +
-                "code-bytes=280 module-bytes=714\n";
+                "build status=Published verification=compiler-aligned functions=6 " +
+                "code-bytes=383 module-bytes=856\n";
             var Invalidˉprojectˉerror =
                 "build status=Projectˉrejected code=WVP1001 line=1 column=1\n";
             var Duplicateˉprojectˉerror =
@@ -9902,7 +9916,7 @@ internal static class Program
         var Compilerˉrecords = Compilerˉtool.Module.Types
             .OfType<Recordˉtypeˉdeclaration>()
             .ToImmutableArray();
-        Equal(49, Compilerˉrecords.Length);
+        Equal(54, Compilerˉrecords.Length);
         Equal(22, Compilerˉtool.Module.Types.OfType<Enumˉtypeˉdeclaration>().Count());
         Equal(34, Compilerˉrecords.Max(Record => Record.Fields.Length));
         Equal(
@@ -9932,15 +9946,15 @@ internal static class Program
         var Largestˉownershipˉfunction = Ownership.Functions.MaxBy(
             Function => Function.Actions.Length)!;
         Equal(
-            "NATIVE_DESCRIPTOR_OWNERSHIP format=1 functions=328 actions=186557 " +
-            "allocator-leaf-calls=180190 ownership-movement-actions=6367 " +
-            "parameters=293 assigned-parameters=0 locals=3190 " +
-            "record-parameter-fields=524 assigned-record-parameter-fields=0 " +
-            "record-local-fields=9287 values=6182 record-value-fields=17898 " +
-            "acquire=435 borrow=172 retain=34772 release=144983 call-borrow=3546 " +
-            "accept-return=1660 transfer-return=989 largest-actions=48242 " +
-            "largest-index=204 largest-name=Compilerˉsourceˉwirˉcompileˉblock " +
-            "action-map=8681cfd9d8c96e3d5dc70c2b97f62795c2e29b632fb66065f2dea8ca102b0511",
+            "NATIVE_DESCRIPTOR_OWNERSHIP format=1 functions=397 actions=336848 " +
+            "allocator-leaf-calls=326154 ownership-movement-actions=10694 " +
+            "parameters=374 assigned-parameters=0 locals=4313 " +
+            "record-parameter-fields=629 assigned-record-parameter-fields=0 " +
+            "record-local-fields=13897 values=8346 record-value-fields=26526 " +
+            "acquire=523 borrow=204 retain=50035 release=275596 call-borrow=5923 " +
+            "accept-return=3112 transfer-return=1455 largest-actions=80449 " +
+            "largest-index=296 largest-name=__WvM8F50 " +
+            "action-map=867e927efe50cd532a688d568eedb9e5a9151b40f986ce6d2da33a1bdcbad7e5",
             $"NATIVE_DESCRIPTOR_OWNERSHIP format={Ownership.Formatˉversion} " +
             $"functions={Ownership.Functions.Length} actions={Ownership.Totalˉactions} " +
             $"allocator-leaf-calls={Allocatorˉprojection.Allocatorˉleafˉcalls} " +
@@ -9971,13 +9985,13 @@ internal static class Program
             Function => Function.Allocatorˉleafˉinvocations)!;
         Equal(
             "NATIVE_DESCRIPTOR_ALLOCATOR_EMISSION format=1 context=8/128 " +
-            "state-offset=112 leaf-offset=120 request-cells=3 functions=328 " +
-            "ownership-actions=186557 leaf-invocations=180190 movement-actions=6367 " +
-            "generated=180168 service=22 request-functions=265 entry=0 before=25918 " +
-            "allocation=435 after=44904 cleanup=108933 direct-locations=209836 " +
-            "indirect-locations=5126 max-frame=1492 largest-invocations=46834 " +
-            "largest-index=204 largest-name=Compilerˉsourceˉwirˉcompileˉblock " +
-            "emission-map=b1e985c17c64f98993964bb399b3a9e47cc5666f1fc03d6727a05d5b5da46ff6",
+            "state-offset=112 leaf-offset=120 request-cells=3 functions=397 " +
+            "ownership-actions=336848 leaf-invocations=326154 movement-actions=10694 " +
+            "generated=326127 service=27 request-functions=316 entry=0 before=38004 " +
+            "allocation=523 after=64450 cleanup=223177 direct-locations=370189 " +
+            "indirect-locations=6000 max-frame=1907 largest-invocations=78676 " +
+            "largest-index=296 largest-name=__WvM8F50 " +
+            "emission-map=3d7c14889969c02d5dce5aa72ddda4d7b3c52982e3670e19eba8ff53280f0cc4",
             $"NATIVE_DESCRIPTOR_ALLOCATOR_EMISSION format={Allocatorˉemission.Formatˉversion} " +
             $"context={Allocatorˉemission.Candidateˉcontextˉformatˉversion}/" +
             $"{Allocatorˉemission.Candidateˉcontextˉsize} " +
@@ -10024,7 +10038,7 @@ internal static class Program
                 .ToImmutableHashSet(StringComparer.Ordinal);
             var Measurement = X64ˉnativeˉexecutor.Measureˉi32(
                 Compilerˉnative.Fragment,
-                maximumˉinstructions: 8_000_000_000,
+                maximumˉinstructions: 48_000_000_000,
                 hostˉservices: new(
                     Compilerˉoutput.Channel,
                     Compilerˉauthorized,
@@ -10034,9 +10048,9 @@ internal static class Program
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Measurement.Scalar);
             Equal(0u, Measurement.Recordˉarenaˉused);
-            Equal(64_476_249u, Measurement.Textˉarenaˉused);
+            Equal(104_885_093u, Measurement.Textˉarenaˉused);
             Equal(
-                "source wvb status=Valid functions=328 code-bytes=481356 module-bytes=599868\n",
+                "source wvb status=Valid functions=397 code-bytes=707044 module-bytes=859555\n",
                 Compilerˉoutput.Readˉtext());
             Equal(string.Empty, Compilerˉdiagnostic.Readˉtext());
             Sequenceˉequal(Compilerˉbytes, File.ReadAllBytes(Outputˉpath));
@@ -10091,11 +10105,12 @@ internal static class Program
         Equal("Compositionˉdemo", Module.Module.Name);
         Equal(Moduleˉprofile.Portable, Module.Module.Profile);
         Sequenceˉequal(
-            ["Compositionˉanswer", "Compositionˉincrement", "Compositionˉmake", "Main"],
+            ["Helper", "Main", "__WvM1F0", "__WvM1F1", "__WvM2F0", "__WvM2F1"],
             Module.Module.Functions.Select(Function => Function.Name));
         Sequenceˉequal(
-            ["Compositionˉvalue", "Compositionˉstatus"],
+            ["__WvM1R0", "__WvM1E0"],
             Module.Module.Types.Select(Type => Type.Name));
+        Sequenceˉequal(["__WvM1D0"], Module.Module.Data.Select(Item => Item.Name));
         Sequenceˉequal(["Main"], Module.Module.Exports.Select(Export => Export.Name));
         Equal(
             42,
@@ -10103,6 +10118,91 @@ internal static class Program
                 Module,
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var Renamedˉaliases = Seedˉcompiler.Compileˉmodules(
+            new(
+                "root.wv",
+                COMPOSITION_ROOT_SOURCE
+                    .Replace(" as Middle", " as M", StringComparison.Ordinal)
+                    .Replace("Middle.", "M.", StringComparison.Ordinal)),
+            [
+                new(
+                    "middle.wv",
+                    COMPOSITION_MIDDLE_SOURCE
+                        .Replace(" as Leaf", " as L", StringComparison.Ordinal)
+                        .Replace("Leaf.", "L.", StringComparison.Ordinal)),
+                new("leaf.wv", COMPOSITION_LEAF_SOURCE),
+            ]);
+        True(
+            Renamedˉaliases.Success,
+            "Renamed aliases failed: " + string.Join(" | ", Renamedˉaliases.Diagnostics));
+        Sequenceˉequal(First, Renamedˉaliases.Moduleˉbytes);
+
+        const string Qualifiedˉprivateˉroot = """
+            module Qualifiedˉprivateˉroot profile portable;
+            import Compositionˉleaf as Leaf;
+            export fn Main() -> i32 { return Leaf.Helper(1); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("qualified-private-root.wv", Qualifiedˉprivateˉroot),
+                [new("leaf.wv", COMPOSITION_LEAF_SOURCE)]),
+            "WVC0017");
+
+        const string Qualifiedˉunknownˉroot = """
+            module Qualifiedˉunknownˉroot profile portable;
+            import Compositionˉleaf as Leaf;
+            export fn Main() -> i32 { return Leaf.Missing(); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("qualified-unknown-root.wv", Qualifiedˉunknownˉroot),
+                [new("leaf.wv", COMPOSITION_LEAF_SOURCE)]),
+            "WVC0018");
+
+        const string Transitiveˉleakˉroot = """
+            module Transitiveˉleakˉroot profile portable;
+            import Compositionˉmiddle as Middle;
+            export fn Main() -> i32 { return Leaf.Compositionˉmake(1); }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("transitive-leak-root.wv", Transitiveˉleakˉroot),
+                [
+                    new("middle.wv", COMPOSITION_MIDDLE_SOURCE),
+                    new("leaf.wv", COMPOSITION_LEAF_SOURCE),
+                ]),
+            "WVC0019");
+
+        const string Duplicateˉaliasˉroot = """
+            module Duplicateˉaliasˉroot profile portable;
+            import Compositionˉleaf as Dependency;
+            import Compositionˉmiddle as Dependency;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("duplicate-alias-root.wv", Duplicateˉaliasˉroot),
+                [
+                    new("middle.wv", COMPOSITION_MIDDLE_SOURCE),
+                    new("leaf.wv", COMPOSITION_LEAF_SOURCE),
+                ]),
+            "WVC0015");
+
+        const string Missingˉaliasˉroot = """
+            module Missingˉaliasˉroot profile portable;
+            import Compositionˉleaf as Leaf;
+            import Compositionˉmiddle;
+            export fn Main() -> i32 { return 0; }
+            """;
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new("missing-alias-root.wv", Missingˉaliasˉroot),
+                [
+                    new("middle.wv", COMPOSITION_MIDDLE_SOURCE),
+                    new("leaf.wv", COMPOSITION_LEAF_SOURCE),
+                ]),
+            "WVC1104");
 
         var Missing = Seedˉcompiler.Compileˉmodules(
             new("root.wv", COMPOSITION_ROOT_SOURCE),
@@ -10112,12 +10212,12 @@ internal static class Program
 
         const string Cycleˉroot = """
             module Cycleˉroot profile portable;
-            import Cycleˉdependency;
-            export fn Main() -> i32 { return Cycleˉvalue(); }
+            import Cycleˉdependency as Dependency;
+            export fn Main() -> i32 { return Dependency.Cycleˉvalue(); }
             """;
         const string Cycleˉdependency = """
             module Cycleˉdependency profile portable;
-            import Cycleˉroot;
+            import Cycleˉroot as Root;
             export fn Cycleˉvalue() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(
@@ -10132,8 +10232,8 @@ internal static class Program
             """;
         const string Portableˉroot = """
             module Portableˉroot profile portable;
-            import Hostedˉdependency;
-            export fn Main() -> i32 { return Hostedˉvalue(); }
+            import Hostedˉdependency as Dependency;
+            export fn Main() -> i32 { return Dependency.Hostedˉvalue(); }
             """;
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(
@@ -10147,14 +10247,14 @@ internal static class Program
             """;
         const string Privateˉroot = """
             module Privateˉroot profile portable;
-            import Privateˉdependency;
-            export fn Main() -> i32 { return Privateˉvalue(); }
+            import Privateˉdependency as Dependency;
+            export fn Main() -> i32 { return Dependency.Privateˉvalue(); }
             """;
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(
                 new("private-root.wv", Privateˉroot),
                 [new("private-dependency.wv", Privateˉdependency)]),
-            "WVC0012");
+            "WVC0017");
 
         const string Dataˉdependency = """
             module Dataˉdependency profile portable;
@@ -10163,14 +10263,16 @@ internal static class Program
             """;
         const string Dataˉroot = """
             module Dataˉroot profile portable;
-            import Dataˉdependency;
-            export fn Main() -> i32 { return Dataˉvalue(); }
+            import Dataˉdependency as Data;
+            export fn Main() -> i32 { return Data.Dataˉvalue(); }
             """;
-        Hasˉdiagnostic(
-            Seedˉcompiler.Compileˉmodules(
-                new("data-root.wv", Dataˉroot),
-                [new("data-dependency.wv", Dataˉdependency)]),
-            "WVC0011");
+        var Dataˉcomposition = Seedˉcompiler.Compileˉmodules(
+            new("data-root.wv", Dataˉroot),
+            [new("data-dependency.wv", Dataˉdependency)]);
+        True(
+            Dataˉcomposition.Success,
+            "Private dependency data failed to internalize: " +
+                string.Join(" | ", Dataˉcomposition.Diagnostics));
 
         const string Nominalˉsibling = """
             module Nominalˉsibling profile portable;
@@ -10183,8 +10285,8 @@ internal static class Program
             """;
         const string Nominalˉleakˉroot = """
             module Nominalˉleakˉroot profile portable;
-            import Nominalˉsibling;
-            import Nominalˉleak;
+            import Nominalˉsibling as Sibling;
+            import Nominalˉleak as Leak;
             export fn Main() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(
@@ -10202,9 +10304,9 @@ internal static class Program
             """;
         const string Leakingˉroot = """
             module Leakingˉroot profile portable;
-            import Leakingˉdependency;
+            import Leakingˉdependency as Dependency;
             fn Rootˉhelper() -> i32 { return 0; }
-            export fn Main() -> i32 { return Leakingˉvalue(); }
+            export fn Main() -> i32 { return Dependency.Leakingˉvalue(); }
             """;
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(
@@ -10214,9 +10316,9 @@ internal static class Program
 
         const string Duplicateˉimport = """
             module Duplicateˉimport profile portable;
-            import Compositionˉleaf;
-            import Compositionˉleaf;
-            export fn Main() -> i32 { return Compositionˉincrement(0); }
+            import Compositionˉleaf as First;
+            import Compositionˉleaf as Second;
+            export fn Main() -> i32 { return First.Compositionˉincrement(0); }
             """;
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(
@@ -10226,8 +10328,8 @@ internal static class Program
 
         const string Duplicateˉmoduleˉroot = """
             module Duplicateˉmoduleˉroot profile portable;
-            import Compositionˉleaf;
-            export fn Main() -> i32 { return Compositionˉincrement(0); }
+            import Compositionˉleaf as Leaf;
+            export fn Main() -> i32 { return Leaf.Compositionˉincrement(0); }
             """;
         Hasˉdiagnostic(
             Seedˉcompiler.Compileˉmodules(
@@ -10251,7 +10353,7 @@ internal static class Program
         const string Lateˉimport = """
             module Lateˉimport profile portable;
             export fn Main() -> i32 { return 0; }
-            import Compositionˉleaf;
+            import Compositionˉleaf as Leaf;
             """;
         Hasˉdiagnostic(Seedˉcompiler.Compile(Lateˉimport, "late.wv"), "WVC1107");
 
@@ -10270,16 +10372,17 @@ internal static class Program
         const string Rootˉsource = """
             module Resourceˉstoreˉapplication profile hosted;
 
-            import Hostedˉresourceˉstore;
+            import Hostedˉresourceˉstore as Hostedˉresources;
+            import Resourceˉstore as Resources;
 
             capability file.read_bytes;
 
             export fn Main() -> i32 {
-                let Result: Resourceˉstoreˉresult = Hostedˉresourceˉstoreˉlookup(
+                let Result: Resources.Resourceˉstoreˉresult = Hostedˉresources.Hostedˉresourceˉstoreˉlookup(
                     "fixture.wvrs",
                     "entry"
                 );
-                if Result.Status != Resourceˉstoreˉstatus.Valid { return 1; }
+                if Result.Status != Resources.Resourceˉstoreˉstatus.Valid { return 1; }
                 if Result.Identifier != 1u32 { return 2; }
                 if Result.Kind != 3u32 { return 3; }
                 if Result.Attributes != 7u32 { return 4; }
@@ -10332,7 +10435,7 @@ internal static class Program
 
         const string Unapprovedˉroot = """
             module Unapprovedˉapplication profile hosted;
-            import Hostedˉresourceˉstore;
+            import Hostedˉresourceˉstore as Resources;
             export fn Main() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(
@@ -10343,14 +10446,15 @@ internal static class Program
 
         const string Unapprovedˉforwarder = """
             module Unapprovedˉforwarder profile hosted;
-            import Hostedˉresourceˉstore;
-            export fn Forwardˉlookup(Store: text, Name: text) -> Resourceˉstoreˉresult {
-                return Hostedˉresourceˉstoreˉlookup(Store, Name);
+            import Hostedˉresourceˉstore as Hostedˉresources;
+            import Resourceˉstore as Resources;
+            export fn Forwardˉlookup(Store: text, Name: text) -> Resources.Resourceˉstoreˉresult {
+                return Hostedˉresources.Hostedˉresourceˉstoreˉlookup(Store, Name);
             }
             """;
         const string Forwardingˉroot = """
             module Forwardingˉapplication profile hosted;
-            import Unapprovedˉforwarder;
+            import Unapprovedˉforwarder as Forwarder;
             capability file.read_bytes;
             export fn Main() -> i32 { return 0; }
             """;
@@ -10370,15 +10474,15 @@ internal static class Program
         const string Rootˉsource = """
             module Directoryˉapplication profile hosted;
 
-            import Readˉonlyˉdirectory;
+            import Readˉonlyˉdirectory as Directory;
 
             capability filesystem.directory_read_v1;
 
             export fn Main() -> i32 {
-                let First: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                let First: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
                     "Kernel.wvb", 1u32, 3u32
                 );
-                if First.Status != Directoryˉreadˉstatus.Valid { return 1; }
+                if First.Status != Directory.Directoryˉreadˉstatus.Valid { return 1; }
                 if First.Fileˉlength != 5u32 { return 2; }
                 if First.Nextˉoffset != 4u32 { return 3; }
                 if Bytesˉlength(First.Value) != 3u32 { return 4; }
@@ -10386,51 +10490,51 @@ internal static class Program
                 if Bytesˉreadˉu8(First.Value, 1u32) != 8u8 { return 6; }
                 if Bytesˉreadˉu8(First.Value, 2u32) != 13u8 { return 7; }
 
-                let Tail: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                let Tail: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
                     "Kernel.wvb", 4u32, 3u32
                 );
-                if Tail.Status != Directoryˉreadˉstatus.Valid { return 8; }
+                if Tail.Status != Directory.Directoryˉreadˉstatus.Valid { return 8; }
                 if Tail.Nextˉoffset != 5u32 { return 9; }
                 if Bytesˉlength(Tail.Value) != 1u32 { return 10; }
                 if Bytesˉreadˉu8(Tail.Value, 0u32) != 21u8 { return 11; }
 
-                let End: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                let End: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
                     "Kernel.wvb", 5u32, 3u32
                 );
-                if End.Status != Directoryˉreadˉstatus.Valid { return 12; }
+                if End.Status != Directory.Directoryˉreadˉstatus.Valid { return 12; }
                 if End.Nextˉoffset != 5u32 { return 13; }
                 if Bytesˉlength(End.Value) != 0u32 { return 14; }
 
-                let Missing: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                let Missing: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
                     "Missing.wvb", 0u32, 3u32
                 );
-                if Missing.Status != Directoryˉreadˉstatus.Notˉfound { return 15; }
+                if Missing.Status != Directory.Directoryˉreadˉstatus.Notˉfound { return 15; }
 
-                let Pastˉend: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                let Pastˉend: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
                     "Kernel.wvb", 6u32, 3u32
                 );
-                if Pastˉend.Status != Directoryˉreadˉstatus.Invalidˉoffset { return 16; }
+                if Pastˉend.Status != Directory.Directoryˉreadˉstatus.Invalidˉoffset { return 16; }
                 if Pastˉend.Fileˉlength != 5u32 { return 17; }
 
-                let Invalidˉname: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                let Invalidˉname: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
                     "../Kernel.wvb", 0u32, 3u32
                 );
-                if Invalidˉname.Status != Directoryˉreadˉstatus.Invalidˉname { return 18; }
+                if Invalidˉname.Status != Directory.Directoryˉreadˉstatus.Invalidˉname { return 18; }
 
-                let Invalidˉlimit: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                let Invalidˉlimit: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
                     "Kernel.wvb", 0u32, 3073u32
                 );
-                if Invalidˉlimit.Status != Directoryˉreadˉstatus.Invalidˉlimit { return 19; }
+                if Invalidˉlimit.Status != Directory.Directoryˉreadˉstatus.Invalidˉlimit { return 19; }
 
-                let Invalidˉresponse: Directoryˉreadˉresult = Directoryˉreadˉdecode(
+                let Invalidˉresponse: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉdecode(
                     Textˉtoˉutf8("short"), 0u32, 3u32
                 );
-                if Invalidˉresponse.Status != Directoryˉreadˉstatus.Invalidˉresponse { return 20; }
+                if Invalidˉresponse.Status != Directory.Directoryˉreadˉstatus.Invalidˉresponse { return 20; }
 
-                let Overflowingˉlimit: Directoryˉreadˉresult = Directoryˉreadˉbytes(
+                let Overflowingˉlimit: Directory.Directoryˉreadˉresult = Directory.Directoryˉreadˉbytes(
                     "Kernel.wvb", 4294967295u32, 1u32
                 );
-                if Overflowingˉlimit.Status != Directoryˉreadˉstatus.Invalidˉlimit { return 21; }
+                if Overflowingˉlimit.Status != Directory.Directoryˉreadˉstatus.Invalidˉlimit { return 21; }
                 return 29;
             }
             """;
@@ -10594,7 +10698,7 @@ internal static class Program
 
         const string Unapprovedˉroot = """
             module Unapprovedˉdirectoryˉapplication profile hosted;
-            import Readˉonlyˉdirectory;
+            import Readˉonlyˉdirectory as Directory;
             export fn Main() -> i32 { return 0; }
             """;
         Hasˉdiagnostic(
@@ -11168,7 +11272,7 @@ internal static class Program
             DECIMAL_PARSING_DEMO_SOURCE,
             "Decimal-Parsing-Demo.wv");
         var Demo = Moduleˉcodec.Readˉandˉverify(Demoˉbytes);
-        Sequenceˉequal(["Foundationˉu32ˉparse"], Demo.Module.Types.Select(Type => Type.Name));
+        Sequenceˉequal(["__WvM1R0"], Demo.Module.Types.Select(Type => Type.Name));
         Sequenceˉequal(["Main"], Demo.Module.Exports.Select(Export => Export.Name));
         Equal(
             0,
@@ -11195,7 +11299,7 @@ internal static class Program
             BYTE_CONSTRUCTION_DEMO_SOURCE,
             "Byte-Construction-Demo.wv");
         var Demo = Moduleˉcodec.Readˉandˉverify(Demoˉbytes);
-        Sequenceˉequal(["Foundationˉbytesˉresult"], Demo.Module.Types.Select(Type => Type.Name));
+        Sequenceˉequal(["__WvM1R0"], Demo.Module.Types.Select(Type => Type.Name));
         Sequenceˉequal(["Main"], Demo.Module.Exports.Select(Export => Export.Name));
         Equal(
             0,
@@ -11217,7 +11321,7 @@ internal static class Program
             [
                 "Compilerˉsourceˉscan",
                 "Compilerˉsourceˉtoken",
-                "Foundationˉu32ˉparse",
+                "__WvM1R0",
                 "Compilerˉlexˉstatus",
                 "Compilerˉnumericˉkind",
                 "Compilerˉtokenˉkind",
@@ -11273,22 +11377,23 @@ internal static class Program
                 "Compilerˉsourceˉdeclaration",
                 "Compilerˉsourceˉheader",
                 "Compilerˉsourceˉmoduleˉsummary",
-                "Compilerˉsourceˉscan",
-                "Compilerˉsourceˉtoken",
-                "Foundationˉu32ˉparse",
-                "Compilerˉlexˉstatus",
-                "Compilerˉnumericˉkind",
+                "__WvM1R0",
+                "__WvM1R1",
+                "__WvM2R0",
                 "Compilerˉparseˉstatus",
                 "Compilerˉsourceˉdeclarationˉkind",
                 "Compilerˉsourceˉprofile",
                 "Compilerˉsourceˉtypeˉkind",
-                "Compilerˉtokenˉkind",
+                "__WvM1E0",
+                "__WvM1E1",
+                "__WvM1E2",
             ],
             Library.Module.Types.Select(Type => Type.Name));
         Sequenceˉequal(
             [
                 "Compilerˉparseˉbytesˉarray",
                 "Compilerˉparseˉcapabilityˉdeclaration",
+                "Compilerˉparseˉconstantˉdeclaration",
                 "Compilerˉparseˉconsume",
                 "Compilerˉparseˉdataˉdeclaration",
                 "Compilerˉparseˉdeclarationˉat",
@@ -11298,6 +11403,8 @@ internal static class Program
                 "Compilerˉparseˉheaderˉvalidated",
                 "Compilerˉparseˉi32ˉarray",
                 "Compilerˉparseˉimportˉdeclaration",
+                "Compilerˉparseˉmetadataˉcapabilityˉdeclaration",
+                "Compilerˉparseˉmetadataˉheaderˉafterˉname",
                 "Compilerˉparseˉnextˉdeclaration",
                 "Compilerˉparseˉnextˉdeclarationˉvalidated",
                 "Compilerˉparseˉqualifiedˉname",
@@ -11309,7 +11416,11 @@ internal static class Program
                 "Compilerˉparseˉstepˉfromˉtoken",
                 "Compilerˉparseˉstepˉvalid",
                 "Compilerˉparseˉtype",
+                "Compilerˉparseˉvariantˉdeclaration",
+                "Compilerˉsourceˉdeclarationˉclosesˉimports",
                 "Compilerˉsourceˉdeclarationˉfailure",
+                "Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata",
+                "Compilerˉsourceˉdeclarationˉisˉsymbol",
                 "Compilerˉsourceˉdeclarationˉmake",
                 "Compilerˉsourceˉsummaryˉfromˉfailure",
             ],
@@ -11339,7 +11450,7 @@ internal static class Program
         Equal(0, Lexerˉresult.Exitˉcode);
         Equal(string.Empty, Lexerˉresult.Diagnostics);
         Equal(
-            "source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=17 tokens=5384 offset=45588\n",
+            "source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=17 tokens=6175 offset=51134\n",
             Lexerˉresult.Output);
 
         var Selfˉresult = Runˉsourceˉdeclarationˉparser(
@@ -11350,7 +11461,7 @@ internal static class Program
         Equal(0, Selfˉresult.Exitˉcode);
         Equal(string.Empty, Selfˉresult.Diagnostics);
         Equal(
-            "source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=25 tokens=9561 offset=70591\n",
+            "source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=32 tokens=15098 offset=112327\n",
             Selfˉresult.Output);
     }
 
@@ -11363,8 +11474,8 @@ internal static class Program
         var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
         Equal("Compilerˉsourceˉbodyˉparser", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
-        Equal(23, Library.Module.Types.Length);
-        Equal(39, Library.Module.Exports.Length);
+        Equal(24, Library.Module.Types.Length);
+        Equal(47, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉbodyˉparseˉstatus",
@@ -11415,24 +11526,24 @@ internal static class Program
         var Excessˉstatements = "{" + string.Concat(Enumerable.Repeat("return;", 4_097)) + "}";
         var Boundaryˉsource = $$"""
             module Compilerˉbodyˉparserˉboundaries profile portable;
-            import Compilerˉsourceˉbodyˉparser;
+            import Compilerˉsourceˉbodyˉparser as Parser;
             data Excessˉarguments: text = "{{Excessˉarguments}}";
             data Deepˉexpression: text = "{{Deepˉexpression}}";
             data Deepˉblocks: text = "{{Deepˉblocks}}";
             data Excessˉstatements: text = "{{Excessˉstatements}}";
             export fn Main() -> i32 {
                 let Arguments: bytes = Textˉtoˉutf8(Excessˉarguments);
-                let Argumentˉresult: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉspan(Arguments, 0u32, 1u32, 1u32, Bytesˉlength(Arguments));
-                if Argumentˉresult.Status != Compilerˉbodyˉparseˉstatus.Itemˉlimit { return 1; }
+                let Argumentˉresult: Parser.Compilerˉsourceˉexpression = Parser.Compilerˉparseˉexpressionˉspan(Arguments, 0u32, 1u32, 1u32, Bytesˉlength(Arguments));
+                if Argumentˉresult.Status != Parser.Compilerˉbodyˉparseˉstatus.Itemˉlimit { return 1; }
                 let Expression: bytes = Textˉtoˉutf8(Deepˉexpression);
-                let Expressionˉresult: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉspan(Expression, 0u32, 1u32, 1u32, Bytesˉlength(Expression));
-                if Expressionˉresult.Status != Compilerˉbodyˉparseˉstatus.Nestingˉlimit { return 2; }
+                let Expressionˉresult: Parser.Compilerˉsourceˉexpression = Parser.Compilerˉparseˉexpressionˉspan(Expression, 0u32, 1u32, 1u32, Bytesˉlength(Expression));
+                if Expressionˉresult.Status != Parser.Compilerˉbodyˉparseˉstatus.Nestingˉlimit { return 2; }
                 let Blocks: bytes = Textˉtoˉutf8(Deepˉblocks);
-                let Blockˉresult: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉbodyˉspan(Blocks, 0u32, 1u32, 1u32, Bytesˉlength(Blocks));
-                if Blockˉresult.Status != Compilerˉbodyˉparseˉstatus.Nestingˉlimit { return 3; }
+                let Blockˉresult: Parser.Compilerˉsourceˉbodyˉsummary = Parser.Compilerˉparseˉbodyˉspan(Blocks, 0u32, 1u32, 1u32, Bytesˉlength(Blocks));
+                if Blockˉresult.Status != Parser.Compilerˉbodyˉparseˉstatus.Nestingˉlimit { return 3; }
                 let Statements: bytes = Textˉtoˉutf8(Excessˉstatements);
-                let Statementˉresult: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉbodyˉspan(Statements, 0u32, 1u32, 1u32, Bytesˉlength(Statements));
-                if Statementˉresult.Status != Compilerˉbodyˉparseˉstatus.Itemˉlimit { return 4; }
+                let Statementˉresult: Parser.Compilerˉsourceˉbodyˉsummary = Parser.Compilerˉparseˉbodyˉspan(Statements, 0u32, 1u32, 1u32, Bytesˉlength(Statements));
+                if Statementˉresult.Status != Parser.Compilerˉbodyˉparseˉstatus.Itemˉlimit { return 4; }
                 return 0;
             }
             """;
@@ -11458,7 +11569,7 @@ internal static class Program
         Equal(string.Empty, Lexerˉresult.Diagnostics);
         Equal(1, Lexerˉresult.Readˉcount);
         Equal(
-            "source bodies status=Valid functions=17 top-level=111 statements=602 expression-nodes=1670 statement-depth=17 expression-depth=5 offset=45589\n",
+            "source bodies status=Valid functions=17 top-level=118 statements=686 expression-nodes=1916 statement-depth=17 expression-depth=5 offset=51135\n",
             Lexerˉresult.Output);
         var Declarationˉresult = Runˉsourceˉdeclarationˉparser(
             Tool, "Source-Declaration-Parser.wv", SOURCE_DECLARATION_PARSER_SOURCE, 160_000_000);
@@ -11466,7 +11577,7 @@ internal static class Program
         Equal(string.Empty, Declarationˉresult.Diagnostics);
         Equal(1, Declarationˉresult.Readˉcount);
         Equal(
-            "source bodies status=Valid functions=25 top-level=245 statements=615 expression-nodes=2366 statement-depth=12 expression-depth=4 offset=70592\n",
+            "source bodies status=Valid functions=32 top-level=363 statements=917 expression-nodes=3593 statement-depth=12 expression-depth=5 offset=112328\n",
             Declarationˉresult.Output);
         var Selfˉresult = Runˉsourceˉdeclarationˉparser(
             Tool, "Source-Body-Parser.wv", SOURCE_BODY_PARSER_SOURCE, 160_000_000);
@@ -11474,7 +11585,7 @@ internal static class Program
         Equal(string.Empty, Selfˉresult.Diagnostics);
         Equal(1, Selfˉresult.Readˉcount);
         Equal(
-            "source bodies status=Valid functions=39 top-level=237 statements=523 expression-nodes=2520 statement-depth=5 expression-depth=3 offset=69903\n",
+            "source bodies status=Valid functions=47 top-level=338 statements=811 expression-nodes=3576 statement-depth=7 expression-depth=3 offset=109506\n",
             Selfˉresult.Output);
     }
 
@@ -11488,7 +11599,7 @@ internal static class Program
         var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
         Equal("Compilerˉsourceˉset", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
-        Equal(27, Library.Module.Types.Length);
+        Equal(28, Library.Module.Types.Length);
         Equal(10, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
@@ -11532,7 +11643,7 @@ internal static class Program
         Equal(SOURCE_SET_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
         var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         const string Root =
-            "module Setˉroot profile portable; import Setˉdependency; export fn Main() -> i32 { return Setˉvalue(); }";
+            "module Setˉroot profile portable; import Setˉdependency as Dependency; export fn Main() -> i32 { return Dependency.Setˉvalue(); }";
         const string Dependency =
             "module Setˉdependency profile portable; export fn Setˉvalue() -> i32 { return 1; }";
         var Smallˉset = Runˉsourceˉsetˉtool(
@@ -11576,8 +11687,8 @@ internal static class Program
         var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
         Equal("Compilerˉsourceˉgraph", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
-        Equal(32, Library.Module.Types.Length);
-        Equal(11, Library.Module.Exports.Length);
+        Equal(33, Library.Module.Types.Length);
+        Equal(12, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉgraphˉmatch",
@@ -11614,11 +11725,13 @@ internal static class Program
         {
             new(
                 "root.wv",
-                "module Graphˉboundaryˉroot profile portable; import Graph_00;"),
+                "module Graphˉboundaryˉroot profile portable; import Graph_00 as Dependency_00;"),
         };
         for (var Index = 0; Index < 63; Index++)
         {
-            var Import = Index == 62 ? string.Empty : $" import Graph_{Index + 1:D2};";
+            var Import = Index == 62
+                ? string.Empty
+                : $" import Graph_{Index + 1:D2} as Dependency_{Index + 1:D2};";
             Boundaryˉmodules.Add(new(
                 $"dependency-{Index:D2}.wv",
                 $"module Graph_{Index:D2} profile portable;{Import}"));
@@ -11642,8 +11755,8 @@ internal static class Program
         var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
         Equal("Compilerˉsourceˉsymbols", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
-        Equal(38, Library.Module.Types.Length);
-        Equal(36, Library.Module.Exports.Length);
+        Equal(42, Library.Module.Types.Length);
+        Equal(65, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉsymbolˉmatch",
@@ -11678,16 +11791,16 @@ internal static class Program
         var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         const string Root = """
             module Symbolsˉtoolˉroot profile portable;
-            import Symbolsˉtoolˉdependency;
-            record Rootˉbox { State: Dependencyˉstate; }
-            export fn Main(Value: Dependencyˉrecord) -> Dependencyˉstate {
-                return Dependencyˉstate.Ready;
+            import Symbolsˉtoolˉdependency as Dependency;
+            record Rootˉbox { State: Dependency.Dependencyˉstate; }
+            export fn Main(Value: Dependency.Dependencyˉrecord) -> Dependency.Dependencyˉstate {
+                return Dependency.Dependencyˉstate.Ready;
             }
             """;
         const string Dependency = """
             module Symbolsˉtoolˉdependency profile portable;
-            record Dependencyˉrecord { Value: u32; }
-            enum Dependencyˉstate { Ready = 0; }
+            export record Dependencyˉrecord { Value: u32; }
+            export enum Dependencyˉstate { Ready = 0; }
             export fn Dependencyˉuse(Value: Dependencyˉrecord) -> Dependencyˉstate {
                 return Dependencyˉstate.Ready;
             }
@@ -11728,8 +11841,8 @@ internal static class Program
         var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
         Equal("Compilerˉsourceˉbindings", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
-        Equal(47, Library.Module.Types.Length);
-        Equal(54, Library.Module.Exports.Length);
+        Equal(52, Library.Module.Types.Length);
+        Equal(59, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉbindingˉkind",
@@ -11764,9 +11877,9 @@ internal static class Program
         var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         const string Root = """
             module Bindingsˉtoolˉroot profile portable;
-            import Bindingsˉtoolˉdependency;
+            import Bindingsˉtoolˉdependency as Dependency;
             export fn Main(Input: u32) -> u32 {
-                let Start: u32 = Dependencyˉvalue(Input);
+                let Start: u32 = Dependency.Dependencyˉvalue(Input);
                 var Result: u32 = Start;
                 Result = Result + 1u32;
                 return Result;
@@ -11794,7 +11907,7 @@ internal static class Program
         var Rejected = Runˉsourceˉsetˉtool(
             Tool,
             [new("unknown.wv", Unknownˉname)],
-            300_000_000);
+            240_000_000);
         Equal(1, Rejected.Exitˉcode);
         Equal(string.Empty, Rejected.Output);
         Contains(Rejected.Diagnostics, "source bindings status=Unknownˉname");
@@ -11812,7 +11925,7 @@ internal static class Program
         var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
         Equal("Compilerˉsourceˉwir", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
-        Equal(64, Library.Module.Exports.Length);
+        Equal(72, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉwirˉoperation",
@@ -11891,27 +12004,27 @@ internal static class Program
         var Memoryˉadapterˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_MEMORY_ADAPTER_SOURCE,
             "Source-Wvb-Memory-Adapter.wv");
-        Equal(597_545, Memoryˉadapterˉbytes.Length);
+        Equal(857_232, Memoryˉadapterˉbytes.Length);
         Equal(
             SOURCE_WVB_MEMORY_ADAPTER_SHA256,
             Moduleˉdigest.Calculateˉsha256(Memoryˉadapterˉbytes));
         var Memoryˉadapter = Moduleˉcodec.Readˉandˉverify(Memoryˉadapterˉbytes);
         Equal(Moduleˉprofile.Portable, Memoryˉadapter.Module.Profile);
         Equal(0, Memoryˉadapter.Module.Capabilities.Length);
-        Equal(326, Memoryˉadapter.Functions.Length);
+        Equal(395, Memoryˉadapter.Functions.Length);
         var Memoryˉmain = Memoryˉadapter.Functions.Single(
             Function => Function.Declaration.Name == "Main");
         Equal(1, Memoryˉmain.Declaration.Parameterˉtypes.Length);
         Equal(Valueˉtype.Bytes, Memoryˉmain.Declaration.Parameterˉtypes[0]);
         Equal(Valueˉtype.Bytes, Memoryˉmain.Declaration.Returnˉtype);
         Equal(
-            479_733,
+            705_421,
             Memoryˉadapter.Functions.Sum(Function => Function.Declaration.Codeˉlength));
         Equal(
-            99_839,
+            146_382,
             Memoryˉadapter.Functions.Sum(Function => Function.Instructions.Length));
         Equal(
-            1_049,
+            1_396,
             Memoryˉadapter.Functions.Max(Function => Function.Declaration.Localˉtypes.Length));
         Equal(
             34,
@@ -11926,7 +12039,7 @@ internal static class Program
             });
         var Memoryˉresult = Memoryˉruntime.Runˉmainˉbytes(
             Buildˉsingleˉsourceˉset(SOURCE_WVB_FUNCTION_ONLY_SOURCE));
-        Equal(5_030_333L, Memoryˉresult.Executedˉinstructions);
+        Equal(8_389_837L, Memoryˉresult.Executedˉinstructions);
         Equal(831, Memoryˉresult.Bytes.Length);
         Equal(
             0x4F43_5657u,
@@ -11945,7 +12058,7 @@ internal static class Program
             {
                 Maximumˉinstructions = 20_000_000,
             }).Runˉmainˉbytes(ImmutableArray<byte>.Empty);
-        Equal(1_046L, Memoryˉfailure.Executedˉinstructions);
+        Equal(1_058L, Memoryˉfailure.Executedˉinstructions);
         Equal(
             0x4F43_5657u,
             BinaryPrimitives.ReadUInt32LittleEndian(Memoryˉfailure.Bytes.AsSpan(0, 4)));
@@ -12007,6 +12120,64 @@ internal static class Program
             6,
             new Referenceˉruntime(
                 Generated,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        const string Controlˉsource = """
+            module Sourceˉwvbˉcontrol profile portable;
+            data Values: [i32] = [7];
+            fn Wouldˉtrap() -> bool { return Values[2] == 0; }
+            export fn Main() -> i32 {
+                if false && Wouldˉtrap() { return 90; }
+                if !(true || Wouldˉtrap()) { return 91; }
+                var Result = 0;
+                var Index = 0;
+                if false || true && true {
+                    while Index < 5 {
+                        Index += 1;
+                        if Index == 2 { continue; }
+                        if Index == 4 { break; }
+                        Result += Index;
+                    }
+                    Result *= 2;
+                    Result -= 1;
+                }
+                return Result;
+            }
+            """;
+        var Controlˉsourceˉbytes = System.Text.Encoding.UTF8.GetBytes(
+            Controlˉsource).ToImmutableArray();
+        var Controlˉoutput = new StringWriter();
+        var Controlˉdiagnostics = new StringWriter();
+        var Controlˉwriter = new Capturingˉfileˉwriter();
+        var Controlˉreader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            Equal("control.wv", Name);
+            True(Controlˉsourceˉbytes.Length <= Maximumˉbytes,
+                "The source-to-WVB hosted byte limit was too small for control operators.");
+            return Controlˉsourceˉbytes;
+        });
+        var Controlˉtoolˉresult = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["control.wv", "control.wvb"],
+                Controlˉoutput,
+                Controlˉdiagnostics,
+                Controlˉreader,
+                Controlˉwriter)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        Equal(0, Controlˉtoolˉresult.Exitˉcode);
+        Equal(string.Empty, Controlˉdiagnostics.ToString());
+        Contains(Controlˉoutput.ToString(), "source wvb status=Valid");
+        Equal(1, Controlˉreader.Readˉcount);
+        Equal(1, Controlˉwriter.Writeˉcount);
+        Equal("control.wvb", Controlˉwriter.Resourceˉname);
+        var Controlˉstageˉzeroˉbytes = Compileˉsuccess(Controlˉsource);
+        Sequenceˉequal(Controlˉstageˉzeroˉbytes, Controlˉwriter.Bytes);
+        Equal(
+            7,
+            new Referenceˉruntime(
+                Moduleˉcodec.Readˉandˉverify(Controlˉwriter.Bytes.AsSpan()),
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
 
@@ -12222,7 +12393,7 @@ internal static class Program
         Equal(0, Compositionˉtoolˉresult.Exitˉcode);
         Equal(string.Empty, Compositionˉdiagnostics.ToString());
         Equal(
-            "source wvb status=Valid functions=5 code-bytes=451 module-bytes=1030\n",
+            "source wvb status=Valid functions=9 code-bytes=627 module-bytes=1387\n",
             Compositionˉoutput.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
         Equal(3, Compositionˉreader.Readˉcount);
         Equal(1, Compositionˉwriter.Writeˉcount);
@@ -12246,18 +12417,15 @@ internal static class Program
             Compositionˉwriter.Bytes.AsSpan());
         Sequenceˉequal(
             [
-                "Compositionˉanswer",
-                "Compositionˉincrement",
-                "Compositionˉlabel",
-                "Compositionˉmake",
-                "Main",
+                "Helper", "Main", "__WvM1F0", "__WvM1F0_", "__WvM1F1",
+                "__WvM1F2", "__WvM1F3", "__WvM2F0", "__WvM2F1",
             ],
             Compositionˉgenerated.Module.Functions.Select(Function => Function.Name));
         Sequenceˉequal(
-            ["Compositionˉoffset", "__Text_000000", "__Text_000001"],
+            ["Compositionˉoffset", "__Text_000000", "__Text_000001", "__WvM1D0"],
             Compositionˉgenerated.Module.Data.Select(Data => Data.Name));
         Sequenceˉequal(
-            ["Compositionˉvalue", "Compositionˉstatus"],
+            ["Shared", "__WvM1R0", "__WvM1R1", "__WvM2R0", "__WvM1E0"],
             Compositionˉgenerated.Module.Types.Select(Type => Type.Name));
         Sequenceˉequal(
             ["Main"],
@@ -12268,6 +12436,60 @@ internal static class Program
                 Compositionˉgenerated,
                 new Referenceˉcapabilityˉhost(new StringWriter()),
                 Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        var Featureˉcases = new (string Name, string Source, string Hash, int? Exitˉcode)[]
+        {
+            ("match", SOURCE_WVB_MATCH_SOURCE, SOURCE_WVB_MATCH_SHA256, 2),
+            ("match-fallthrough", SOURCE_WVB_MATCH_FALLTHROUGH_SOURCE, SOURCE_WVB_MATCH_FALLTHROUGH_SHA256, 3),
+            ("metadata", SOURCE_WVB_METADATA_SOURCE, SOURCE_WVB_METADATA_SHA256, null),
+            ("variants", SOURCE_WVB_VARIANTS_SOURCE, SOURCE_WVB_VARIANTS_SHA256, 45),
+            ("collections", SOURCE_WVB_COLLECTIONS_SOURCE, SOURCE_WVB_COLLECTIONS_SHA256, 16),
+            ("operators", SOURCE_WVB_OPERATORS_WINDVALE_SOURCE, SOURCE_WVB_OPERATORS_WINDVALE_SHA256, 28),
+        };
+        foreach (var Feature in Featureˉcases)
+        {
+            var Featureˉsourceˉbytes = System.Text.Encoding.UTF8.GetBytes(
+                Feature.Source).ToImmutableArray();
+            var Featureˉoutput = new StringWriter();
+            var Featureˉdiagnostics = new StringWriter();
+            var Featureˉwriter = new Capturingˉfileˉwriter();
+            var Featureˉreader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+            {
+                Equal($"{Feature.Name}.wv", Name);
+                True(
+                    Featureˉsourceˉbytes.Length <= Maximumˉbytes,
+                    $"The source-to-WVB hosted byte limit was too small for {Feature.Name}.");
+                return Featureˉsourceˉbytes;
+            });
+            var Featureˉtoolˉresult = new Referenceˉruntime(
+                Tool,
+                new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                    [$"{Feature.Name}.wv", $"{Feature.Name}.wvb"],
+                    Featureˉoutput,
+                    Featureˉdiagnostics,
+                    Featureˉreader,
+                    Featureˉwriter)),
+                new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+            Equal(0, Featureˉtoolˉresult.Exitˉcode);
+            Equal(string.Empty, Featureˉdiagnostics.ToString());
+            Contains(Featureˉoutput.ToString(), "source wvb status=Valid");
+            Equal(1, Featureˉreader.Readˉcount);
+            Equal(1, Featureˉwriter.Writeˉcount);
+            Equal($"{Feature.Name}.wvb", Featureˉwriter.Resourceˉname);
+
+            var Featureˉstageˉzeroˉbytes = Compileˉsuccess(Feature.Source);
+            Equal(Feature.Hash, Moduleˉdigest.Calculateˉsha256(Featureˉstageˉzeroˉbytes));
+            Sequenceˉequal(Featureˉstageˉzeroˉbytes, Featureˉwriter.Bytes);
+            if (Feature.Exitˉcode is { } Expectedˉexitˉcode)
+            {
+                Equal(
+                    Expectedˉexitˉcode,
+                    new Referenceˉruntime(
+                        Moduleˉcodec.Readˉandˉverify(Featureˉwriter.Bytes.AsSpan()),
+                        new Referenceˉcapabilityˉhost(new StringWriter()),
+                        Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+            }
+        }
 
         var Rejectedˉdiagnostics = new StringWriter();
         var Rejectedˉwriter = new Capturingˉfileˉwriter();
@@ -12291,6 +12513,206 @@ internal static class Program
         Contains(Rejectedˉdiagnostics.ToString(), "source wvb status=Sourceˉwir");
         Equal(3, Rejectedˉreader.Readˉcount);
         Equal(0, Rejectedˉwriter.Writeˉcount);
+    }
+
+    private static void Compilerˉqualifiedˉmodulesˉrun()
+    {
+        var Graphˉtoolˉbytes = Compileˉwithˉsourceˉgraphˉsuccess(
+            SOURCE_GRAPH_TOOL_SOURCE,
+            "Source-Graph-Tool.wv");
+        var Graphˉtool = Moduleˉcodec.Readˉandˉverify(Graphˉtoolˉbytes);
+        const string Duplicateˉaliasˉroot = """
+            module Duplicateˉaliasˉroot profile portable;
+            import Compositionˉleaf as Dependency;
+            import Compositionˉmiddle as Dependency;
+            export fn Main() -> i32 { return 0; }
+            """;
+        var Duplicateˉalias = Runˉsourceˉsetˉtool(
+            Graphˉtool,
+            [
+                new("duplicate-alias-root.wv", Duplicateˉaliasˉroot),
+                new("composition-leaf.wv", SOURCE_WVB_COMPOSITION_LEAF_SOURCE),
+                new("composition-middle.wv", SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE),
+            ],
+            1_000_000_000);
+        Equal(1, Duplicateˉalias.Exitˉcode);
+        Contains(Duplicateˉalias.Diagnostics, "status=Duplicateˉalias");
+
+        const string Invalidˉaliasˉroot = """
+            module Invalidˉaliasˉroot profile portable;
+            import Compositionˉleaf as leaf;
+            export fn Main() -> i32 { return 0; }
+            """;
+        var Invalidˉalias = Runˉsourceˉsetˉtool(
+            Graphˉtool,
+            [
+                new("invalid-alias-root.wv", Invalidˉaliasˉroot),
+                new("composition-leaf.wv", SOURCE_WVB_COMPOSITION_LEAF_SOURCE),
+            ],
+            1_000_000_000);
+        Equal(1, Invalidˉalias.Exitˉcode);
+        Contains(Invalidˉalias.Diagnostics, "status=Invalidˉalias");
+
+        var Bindingˉtoolˉbytes = Compileˉwithˉsourceˉbindingsˉsuccess(
+            SOURCE_BINDINGS_TOOL_SOURCE,
+            "Source-Bindings-Tool.wv");
+        var Bindingˉtool = Moduleˉcodec.Readˉandˉverify(Bindingˉtoolˉbytes);
+        var Bindingˉresult = Runˉsourceˉsetˉtool(
+            Bindingˉtool,
+            [
+                new("composition-root.wv", SOURCE_WVB_COMPOSITION_ROOT_SOURCE),
+                new("composition-leaf.wv", SOURCE_WVB_COMPOSITION_LEAF_SOURCE),
+                new("composition-middle.wv", SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE),
+            ],
+            2_000_000_000);
+        True(
+            Bindingˉresult.Exitˉcode == 0,
+            $"Qualified-module binding failed: {Bindingˉresult.Diagnostics} | {Bindingˉresult.Output}");
+
+        const string Privateˉroot = """
+            module Privateˉroot profile portable;
+            import Compositionˉleaf as Leaf;
+            export fn Main() -> i32 { return Leaf.Helper(1); }
+            """;
+        var Privateˉresult = Runˉsourceˉsetˉtool(
+            Bindingˉtool,
+            [
+                new("private-root.wv", Privateˉroot),
+                new("composition-leaf.wv", SOURCE_WVB_COMPOSITION_LEAF_SOURCE),
+            ],
+            2_000_000_000);
+        Equal(1, Privateˉresult.Exitˉcode);
+        Contains(Privateˉresult.Diagnostics, "status=Inaccessibleˉcall");
+
+        const string Transitiveˉroot = """
+            module Transitiveˉroot profile portable;
+            import Compositionˉmiddle as Middle;
+            export fn Main() -> i32 { return Leaf.Compositionˉincrement(1); }
+            """;
+        var Transitiveˉresult = Runˉsourceˉsetˉtool(
+            Bindingˉtool,
+            [
+                new("transitive-root.wv", Transitiveˉroot),
+                new("composition-leaf.wv", SOURCE_WVB_COMPOSITION_LEAF_SOURCE),
+                new("composition-middle.wv", SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE),
+            ],
+            2_000_000_000);
+        Equal(1, Transitiveˉresult.Exitˉcode);
+        Contains(Transitiveˉresult.Diagnostics, "status=Unknownˉcall");
+
+        var Toolˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
+            SOURCE_WVB_TOOL_SOURCE,
+            "Source-Wvb-Tool.wv");
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Sources = new Dictionary<string, ImmutableArray<byte>>(StringComparer.Ordinal)
+        {
+            ["composition-root.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_ROOT_SOURCE).ToImmutableArray(),
+            ["composition-leaf.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_LEAF_SOURCE).ToImmutableArray(),
+            ["composition-middle.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE).ToImmutableArray(),
+        };
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Writer = new Capturingˉfileˉwriter();
+        var Reader = new Testˉfileˉreader((Name, Maximumˉbytes) =>
+        {
+            True(Sources.TryGetValue(Name, out var Source),
+                $"Unexpected qualified-module source resource '{Name}'.");
+            True(Source.Length <= Maximumˉbytes,
+                "The source-to-WVB hosted byte limit was too small for qualified modules.");
+            return Source;
+        });
+        var Authorized = Tool.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Result = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [
+                    "composition-root.wv",
+                    "composition-leaf.wv",
+                    "composition-middle.wv",
+                    "composition.wvb",
+                ],
+                Output,
+                Diagnostics,
+                Reader,
+                Writer)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        True(
+            Result.Exitˉcode == 0,
+            $"Qualified-module compiler failed: {Diagnostics} | {Output}");
+        Equal(string.Empty, Diagnostics.ToString());
+        Equal(3, Reader.Readˉcount);
+        Equal(1, Writer.Writeˉcount);
+
+        var Renamedˉsources = new Dictionary<string, ImmutableArray<byte>>(
+            StringComparer.Ordinal)
+        {
+            ["composition-root.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_ROOT_SOURCE
+                    .Replace(" as Middle", " as M", StringComparison.Ordinal)
+                    .Replace("Middle.", "M.", StringComparison.Ordinal)).ToImmutableArray(),
+            ["composition-leaf.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_LEAF_SOURCE).ToImmutableArray(),
+            ["composition-middle.wv"] = System.Text.Encoding.UTF8.GetBytes(
+                SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE
+                    .Replace(" as Leaf", " as L", StringComparison.Ordinal)
+                    .Replace("Leaf.", "L.", StringComparison.Ordinal)).ToImmutableArray(),
+        };
+        var Renamedˉwriter = new Capturingˉfileˉwriter();
+        var Renamedˉdiagnostics = new StringWriter();
+        var Renamedˉreader = new Testˉfileˉreader((Name, _) => Renamedˉsources[Name]);
+        var Renamedˉresult = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [
+                    "composition-root.wv",
+                    "composition-leaf.wv",
+                    "composition-middle.wv",
+                    "composition.wvb",
+                ],
+                new StringWriter(),
+                Renamedˉdiagnostics,
+                Renamedˉreader,
+                Renamedˉwriter)),
+            new(Authorized, Maximumˉinstructions: 4_000_000_000)).Runˉmain();
+        True(
+            Renamedˉresult.Exitˉcode == 0,
+            $"Renamed qualified-module compiler failed: {Renamedˉdiagnostics}");
+        Sequenceˉequal(Writer.Bytes, Renamedˉwriter.Bytes);
+
+        var Stageˉzero = Seedˉcompiler.Compileˉmodules(
+            new("composition-root.wv", SOURCE_WVB_COMPOSITION_ROOT_SOURCE),
+            [
+                new("composition-leaf.wv", SOURCE_WVB_COMPOSITION_LEAF_SOURCE),
+                new("composition-middle.wv", SOURCE_WVB_COMPOSITION_MIDDLE_SOURCE),
+            ]);
+        True(Stageˉzero.Success,
+            "Stage 0 qualified composition failed: " +
+            string.Join(" | ", Stageˉzero.Diagnostics));
+        Sequenceˉequal(Stageˉzero.Moduleˉbytes, Writer.Bytes);
+
+        var Generated = Moduleˉcodec.Readˉandˉverify(Writer.Bytes.AsSpan());
+        Sequenceˉequal(
+            [
+                "Helper", "Main", "__WvM1F0",
+                "__WvM1F0_", "__WvM1F1", "__WvM1F2", "__WvM1F3",
+                "__WvM2F0", "__WvM2F1",
+            ],
+            Generated.Module.Functions.Select(Function => Function.Name));
+        Sequenceˉequal(
+            ["Shared", "__WvM1R0", "__WvM1R1", "__WvM2R0", "__WvM1E0"],
+            Generated.Module.Types.Select(Type => Type.Name));
+        Sequenceˉequal(["Main"], Generated.Module.Exports.Select(Export => Export.Name));
+        Equal(
+            42,
+            new Referenceˉruntime(
+                Generated,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
     }
 
     private static void Compilerˉwebassemblyˉruns()
@@ -13739,11 +14161,18 @@ internal static class Program
             Expandedˉsemanticˉlowered.Writtenˉbytes.AsSpan(),
             Expandedˉsemanticˉverified);
 
+        var Executableˉphaseˉsource = WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_PHASE_SOURCE
+            .Replace(
+                "module WebAssemblyˉwvbˉexecutableˉverify profile portable;\n\n",
+                string.Empty,
+                StringComparison.Ordinal)
+            .Replace("export fn Hˉexecutable", "fn Hˉexecutable", StringComparison.Ordinal)
+            .Replace("export fn Iˉcontrol", "fn Iˉcontrol", StringComparison.Ordinal);
         var Executableˉsemanticˉsource = WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE
             .Replace(
                 "module WebAssemblyˉwvbˉsemanticˉverify profile portable;",
                 "module WebAssemblyˉwvbˉsemanticˉverify profile portable;\n\n" +
-                "import WebAssemblyˉwvbˉexecutableˉverify;",
+                Executableˉphaseˉsource,
                 StringComparison.Ordinal)
             .Replace(
                 "State = Gˉtypes(State);\n" +
@@ -13760,11 +14189,7 @@ internal static class Program
             "The executable semantic source composition did not apply.");
         var Executableˉsemanticˉresult = Seedˉcompiler.Compileˉmodules(
             new("Wvb-Semantic-Executable-Verify-Main.wv", Executableˉsemanticˉsource),
-            [
-                new(
-                    "Wvb-Executable-Verify-Phase.wv",
-                    WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_PHASE_SOURCE),
-            ]);
+            []);
         True(
             Executableˉsemanticˉresult.Success,
             "The executable semantic verifier did not compile: " +
@@ -13778,11 +14203,15 @@ internal static class Program
             Executableˉsemanticˉwvb);
         Equal(10, Executableˉsemanticˉverified.Functions.Length);
         var Executableˉtypedˉphase = Executableˉsemanticˉverified.Functions.Single(
-            Function => Function.Declaration.Name == "Hˉexecutable");
+            Function =>
+                Function.Declaration.Localˉtypes.Length == 2_019 &&
+                Function.Declaration.Codeˉlength == 32_766);
         Equal(2_019, Executableˉtypedˉphase.Declaration.Localˉtypes.Length);
         Equal(32_766, Executableˉtypedˉphase.Declaration.Codeˉlength);
         var Executableˉcontrolˉphase = Executableˉsemanticˉverified.Functions.Single(
-            Function => Function.Declaration.Name == "Iˉcontrol");
+            Function =>
+                Function.Declaration.Localˉtypes.Length == 564 &&
+                Function.Declaration.Codeˉlength == 9_793);
         Equal(564, Executableˉcontrolˉphase.Declaration.Localˉtypes.Length);
         Equal(9_793, Executableˉcontrolˉphase.Declaration.Codeˉlength);
         Equal(
@@ -14002,6 +14431,18 @@ internal static class Program
                     ImmutableArray.Create(Malformed.Bytes));
             Sequenceˉequal(ImmutableArray<byte>.Empty, Rejected.Bytes);
         }
+        var Executableˉsemanticˉforwardˉcalls = Executableˉsemanticˉverified.Functions
+            .SelectMany((Function, Functionˉindex) => Function.Instructions
+                .Where(Instruction =>
+                    Instruction.Opcode == Opcode.Call &&
+                    Instruction.Unsignedˉoperand >= (uint)Functionˉindex)
+                .Select(Instruction =>
+                    $"{Functionˉindex}:{Function.Declaration.Name}->" +
+                    Instruction.Unsignedˉoperand))
+            .ToArray();
+        Equal(
+            string.Empty,
+            string.Join(",", Executableˉsemanticˉforwardˉcalls));
         var Executableˉsemanticˉlowered = Runˉwebassemblyˉtool(
             Tool,
             Executableˉsemanticˉwvb,
@@ -14059,6 +14500,31 @@ internal static class Program
             Compilerˉcapacityˉphaseˉsource !=
                 WEBASSEMBLY_WVB_EXECUTABLE_VERIFY_PHASE_SOURCE,
             "The compiler-capacity executable verifier limits did not expand.");
+        const string Compilerˉtypedˉsplitˉanchor =
+            "        Functionˉcursor = Functionˉcursor + 12u32;\n" +
+            "        if Declaredˉmaximum > 4096u32 { return Invalid; }";
+        var Compilerˉcapacityˉtypedˉfirstˉsource =
+            Compilerˉcapacityˉphaseˉsource.Replace(
+                Compilerˉtypedˉsplitˉanchor,
+                Compilerˉtypedˉsplitˉanchor + "\n" +
+                    "        if Functionˉindex >= 200u32 {\n" +
+                    "            Functionˉindex = Functionˉindex + 1u32;\n" +
+                    "            continue;\n" +
+                    "        }",
+                StringComparison.Ordinal);
+        var Compilerˉcapacityˉtypedˉsecondˉsource =
+            Compilerˉcapacityˉphaseˉsource.Replace(
+                Compilerˉtypedˉsplitˉanchor,
+                Compilerˉtypedˉsplitˉanchor + "\n" +
+                    "        if Functionˉindex < 200u32 {\n" +
+                    "            Functionˉindex = Functionˉindex + 1u32;\n" +
+                    "            continue;\n" +
+                    "        }",
+                StringComparison.Ordinal);
+        True(
+            Compilerˉcapacityˉtypedˉfirstˉsource != Compilerˉcapacityˉphaseˉsource &&
+                Compilerˉcapacityˉtypedˉsecondˉsource != Compilerˉcapacityˉphaseˉsource,
+            "The compiler-capacity typed verifier split anchor was not found.");
         var Compilerˉcapacityˉsemanticˉsource =
             WEBASSEMBLY_WVB_SEMANTIC_VERIFY_SOURCE.Replace(
                 "if Index >= 100000u32 { return Invalid; }",
@@ -14073,11 +14539,18 @@ internal static class Program
 
         byte[] Compileˉcompilerˉcapacityˉphase(
             string Moduleˉname,
-            string Phaseˉfunction)
+            string Phaseˉfunction,
+            string Phaseˉsourceˉtext)
         {
+            var Phaseˉsource = Phaseˉsourceˉtext.Replace(
+                "module WebAssemblyˉwvbˉexecutableˉverify profile portable;\n\n",
+                string.Empty,
+                StringComparison.Ordinal)
+                .Replace("export fn Hˉexecutable", "fn Hˉexecutable", StringComparison.Ordinal)
+                .Replace("export fn Iˉcontrol", "fn Iˉcontrol", StringComparison.Ordinal);
             var Probeˉsource =
                 $"module {Moduleˉname} profile portable;\n\n" +
-                "import WebAssemblyˉwvbˉexecutableˉverify;\n\n" +
+                Phaseˉsource + "\n" +
                 "export fn Main(Input: bytes) -> bytes {\n" +
                 $"    let State: bytes = {Phaseˉfunction}(Input);\n" +
                 "    if Bytesˉlength(State) == 0u32 { return State; }\n" +
@@ -14085,11 +14558,7 @@ internal static class Program
                 "}\n";
             var Probeˉresult = Seedˉcompiler.Compileˉmodules(
                 new($"{Moduleˉname}.wv", Probeˉsource),
-                [
-                    new(
-                        "Wvb-Compiler-Executable-Verify-Phase.wv",
-                        Compilerˉcapacityˉphaseˉsource),
-                ]);
+                []);
             True(
                 Probeˉresult.Success,
                 $"The compiler-capacity phase '{Phaseˉfunction}' did not compile: " +
@@ -14099,25 +14568,31 @@ internal static class Program
 
         var Compilerˉcapacityˉtypedˉwvb = Compileˉcompilerˉcapacityˉphase(
             "WebAssemblyˉwvbˉcompilerˉtypedˉverify",
-            "Hˉexecutable");
+            "Hˉexecutable",
+            Compilerˉcapacityˉtypedˉfirstˉsource);
+        var Compilerˉcapacityˉtypedˉsecondˉwvb = Compileˉcompilerˉcapacityˉphase(
+            "WebAssemblyˉwvbˉcompilerˉtypedˉsecondˉverify",
+            "Hˉexecutable",
+            Compilerˉcapacityˉtypedˉsecondˉsource);
         var Compilerˉcapacityˉcontrolˉwvb = Compileˉcompilerˉcapacityˉphase(
             "WebAssemblyˉwvbˉcompilerˉcontrolˉverify",
-            "Iˉcontrol");
+            "Iˉcontrol",
+            Compilerˉcapacityˉphaseˉsource);
         var Compilerˉtoolˉwvb = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_TOOL_SOURCE,
             "Source-Wvb-Tool.wv");
         Equal(SOURCE_WVB_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉwvb));
         var Compilerˉtoolˉverified = Moduleˉcodec.Readˉandˉverify(Compilerˉtoolˉwvb);
-        Equal(328, Compilerˉtoolˉverified.Functions.Length);
+        Equal(397, Compilerˉtoolˉverified.Functions.Length);
         Equal(
-            481_356,
+            707_044,
             Compilerˉtoolˉverified.Functions.Sum(
                 Function => Function.Declaration.Codeˉlength));
         Equal(
-            100_194,
+            146_737,
             Compilerˉtoolˉverified.Functions.Sum(Function => Function.Instructions.Length));
         Equal(
-            1_049,
+            1_396,
             Compilerˉtoolˉverified.Functions.Max(
                 Function => Function.Declaration.Localˉtypes.Length));
         Equal(
@@ -14128,6 +14603,8 @@ internal static class Program
             Compilerˉcapacityˉsemanticˉwvb);
         var Compilerˉcapacityˉtypedˉverified = Moduleˉcodec.Readˉandˉverify(
             Compilerˉcapacityˉtypedˉwvb);
+        var Compilerˉcapacityˉtypedˉsecondˉverified = Moduleˉcodec.Readˉandˉverify(
+            Compilerˉcapacityˉtypedˉsecondˉwvb);
         var Compilerˉcapacityˉcontrolˉverified = Moduleˉcodec.Readˉandˉverify(
             Compilerˉcapacityˉcontrolˉwvb);
         var Compilerˉcapacityˉsemanticˉlowered = Runˉwebassemblyˉtool(
@@ -14138,12 +14615,17 @@ internal static class Program
             Tool,
             Compilerˉcapacityˉtypedˉwvb,
             225_000_000);
+        var Compilerˉcapacityˉtypedˉsecondˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Compilerˉcapacityˉtypedˉsecondˉwvb,
+            225_000_000);
         var Compilerˉcapacityˉcontrolˉlowered = Runˉwebassemblyˉtool(
             Tool,
             Compilerˉcapacityˉcontrolˉwvb,
             225_000_000);
         Equal(0, Compilerˉcapacityˉsemanticˉlowered.Exitˉcode);
         Equal(0, Compilerˉcapacityˉtypedˉlowered.Exitˉcode);
+        Equal(0, Compilerˉcapacityˉtypedˉsecondˉlowered.Exitˉcode);
         Equal(0, Compilerˉcapacityˉcontrolˉlowered.Exitˉcode);
         Validateˉruntimeˉcallˉwebassembly(
             Compilerˉcapacityˉsemanticˉlowered.Writtenˉbytes.AsSpan(),
@@ -14151,6 +14633,9 @@ internal static class Program
         Validateˉruntimeˉcallˉwebassembly(
             Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.AsSpan(),
             Compilerˉcapacityˉtypedˉverified);
+        Validateˉruntimeˉcallˉwebassembly(
+            Compilerˉcapacityˉtypedˉsecondˉlowered.Writtenˉbytes.AsSpan(),
+            Compilerˉcapacityˉtypedˉsecondˉverified);
         Validateˉruntimeˉcallˉwebassembly(
             Compilerˉcapacityˉcontrolˉlowered.Writtenˉbytes.AsSpan(),
             Compilerˉcapacityˉcontrolˉverified);
@@ -14164,16 +14649,26 @@ internal static class Program
             WEBASSEMBLY_WVB_COMPILER_SEMANTIC_VERIFY_SHA256,
             Objectˉdigest.Calculateˉsha256(
                 Compilerˉcapacityˉsemanticˉlowered.Writtenˉbytes.AsSpan()));
-        Equal(45_546, Compilerˉcapacityˉtypedˉwvb.Length);
+        Equal(45_659, Compilerˉcapacityˉtypedˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉtypedˉwvb));
-        Equal(282_718, Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.Length);
-        Equal(86_034_911L, Compilerˉcapacityˉtypedˉlowered.Executedˉinstructions);
+        Equal(283_430, Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.Length);
+        Equal(86_249_017L, Compilerˉcapacityˉtypedˉlowered.Executedˉinstructions);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_TYPED_VERIFY_SHA256,
             Objectˉdigest.Calculateˉsha256(
                 Compilerˉcapacityˉtypedˉlowered.Writtenˉbytes.AsSpan()));
+        Equal(45_667, Compilerˉcapacityˉtypedˉsecondˉwvb.Length);
+        Equal(
+            WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Compilerˉcapacityˉtypedˉsecondˉwvb));
+        Equal(283_430, Compilerˉcapacityˉtypedˉsecondˉlowered.Writtenˉbytes.Length);
+        Equal(86_249_017L, Compilerˉcapacityˉtypedˉsecondˉlowered.Executedˉinstructions);
+        Equal(
+            WEBASSEMBLY_WVB_COMPILER_TYPED_SECOND_VERIFY_SHA256,
+            Objectˉdigest.Calculateˉsha256(
+                Compilerˉcapacityˉtypedˉsecondˉlowered.Writtenˉbytes.AsSpan()));
         Equal(45_548, Compilerˉcapacityˉcontrolˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_WVB_SHA256,
@@ -14369,7 +14864,7 @@ internal static class Program
         var Compilerˉmemoryˉwvb = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_MEMORY_ADAPTER_SOURCE,
             "Source-Wvb-Memory-Adapter.wv");
-        Equal(597_545, Compilerˉmemoryˉwvb.Length);
+        Equal(857_232, Compilerˉmemoryˉwvb.Length);
         Equal(
             SOURCE_WVB_MEMORY_ADAPTER_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉmemoryˉwvb));
@@ -14379,8 +14874,7 @@ internal static class Program
                 Buildˉsingleˉsourceˉset(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
                 1,
                 64),
-            50_000_000);
-        Equal(45_177_347L, Compilerˉmemoryˉpreflight.Executedˉinstructions);
+            80_000_000);
         Equal(20, Compilerˉmemoryˉpreflight.Bytes.Length);
         Equal(
             0x4F58_5657u,
@@ -14408,8 +14902,9 @@ internal static class Program
                 Buildˉsingleˉsourceˉset(SOURCE_WVB_FUNCTION_ONLY_SOURCE),
                 1_511,
                 64),
-            50_000_000);
-        Equal(46_155_795L, Compilerˉmemoryˉmaximumˉsuccess.Executedˉinstructions);
+            80_000_000);
+        Equal(66_187_926L, Compilerˉmemoryˉpreflight.Executedˉinstructions);
+        Equal(67_256_958L, Compilerˉmemoryˉmaximumˉsuccess.Executedˉinstructions);
         Equal(20, Compilerˉmemoryˉmaximumˉsuccess.Bytes.Length);
         Equal(
             3011u,
@@ -14430,7 +14925,7 @@ internal static class Program
                 100_000,
                 64),
             200_000_000);
-        Equal(96_797_247L, Compilerˉmemoryˉbudgetˉboundary.Executedˉinstructions);
+        Equal(118_006_709L, Compilerˉmemoryˉbudgetˉboundary.Executedˉinstructions);
         Equal(20, Compilerˉmemoryˉbudgetˉboundary.Bytes.Length);
         Equal(
             3011u,
@@ -15306,7 +15801,9 @@ internal static class Program
             capability console.write_line;
             fn Isˉanswer(Value: i32) -> bool { return !(Value != 42); }
             export fn Main() -> i32 {
-                if Isˉanswer(6 * 7) {
+                if false {
+                    return 0;
+                } else if Isˉanswer(6 * 7) {
                     console.write_line("answer");
                     return 42;
                 } else {
@@ -15322,6 +15819,77 @@ internal static class Program
             new(ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.CONSOLE_WRITE_LINE)));
         Equal(42, Runtime.Runˉmain().Exitˉcode);
         Equal("answer\n", Output.ToString());
+    }
+
+    private static void Controlˉoperatorsˉrun()
+    {
+        const string Source = """
+            module Controlˉoperators profile portable;
+            data Values: [i32] = [7];
+
+            fn Wouldˉtrap() -> bool {
+                return Values[2] == 0;
+            }
+
+            export fn Main() -> i32 {
+                if false && Wouldˉtrap() {
+                    return 90;
+                }
+                if !(true || Wouldˉtrap()) {
+                    return 91;
+                }
+                if false || true && true {
+                    var Result = 0;
+                    var Index = 0;
+                    while Index < 5 {
+                        Index += 1;
+                        if Index == 2 {
+                            continue;
+                        }
+                        if Index == 4 {
+                            break;
+                        }
+                        Result += Index;
+                    }
+                    Result *= 2;
+                    Result -= 1;
+                    return Result;
+                }
+                return 92;
+            }
+            """;
+        Equal(7, Runˉportable(Source));
+
+        const string Breakˉoutsideˉloop = """
+            module Broken profile portable;
+            export fn Main() -> i32 { break; return 0; }
+            """;
+        Hasˉdiagnostic(Breakˉoutsideˉloop, "WVC2111");
+
+        const string Continueˉoutsideˉloop = """
+            module Broken profile portable;
+            export fn Main() -> i32 { continue; return 0; }
+            """;
+        Hasˉdiagnostic(Continueˉoutsideˉloop, "WVC2112");
+
+        const string Immutableˉcompound = """
+            module Broken profile portable;
+            export fn Main() -> i32 {
+                let Value = 1;
+                Value += 1;
+                return Value;
+            }
+            """;
+        Hasˉdiagnostic(Immutableˉcompound, "WVC2042");
+
+        const string Invalidˉshortˉcircuit = """
+            module Broken profile portable;
+            export fn Main() -> i32 {
+                if 1 && true { return 1; }
+                return 0;
+            }
+            """;
+        Hasˉdiagnostic(Invalidˉshortˉcircuit, "WVC2070");
     }
 
     private static void Namingˉandˉmutabilityˉrun()
@@ -15421,7 +15989,7 @@ internal static class Program
             fn Pair(Value: i32) -> i32 { return Value; }
             export fn Main() -> i32 { return 0; }
             """;
-        Hasˉdiagnostic(Constructorˉnameˉconflict, "WVC2025");
+        Hasˉdiagnostic(Constructorˉnameˉconflict, "WVC0016");
 
         const string Nominalˉmismatch = """
             module Broken profile portable;
@@ -18484,7 +19052,10 @@ internal static class Program
             }
 
             fn Make(Left: i32, Right: u32) -> Pair {
-                return Pair(Left, Right);
+                return Pair {
+                    Right: Right,
+                    Left: Left,
+                };
             }
 
             fn Readˉleft(Value: Pair) -> i32 {
@@ -18525,6 +19096,45 @@ internal static class Program
             Module,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+
+        const string Unknownˉnamedˉfield = """
+            module Broken profile portable;
+            record Pair { Value: i32; }
+            export fn Main() -> i32 {
+                let Value = Pair { Missing: 1 };
+                return 0;
+            }
+            """;
+        Hasˉdiagnostic(Unknownˉnamedˉfield, "WVC2108");
+
+        const string Duplicateˉnamedˉfield = """
+            module Broken profile portable;
+            record Pair { Value: i32; }
+            export fn Main() -> i32 {
+                let Value = Pair { Value: 1, Value: 2 };
+                return 0;
+            }
+            """;
+        Hasˉdiagnostic(Duplicateˉnamedˉfield, "WVC2109");
+
+        const string Missingˉnamedˉfield = """
+            module Broken profile portable;
+            record Pair { Left: i32; Right: i32; }
+            export fn Main() -> i32 {
+                let Value = Pair { Left: 1 };
+                return 0;
+            }
+            """;
+        Hasˉdiagnostic(Missingˉnamedˉfield, "WVC2110");
+
+        const string Unknownˉnamedˉrecord = """
+            module Broken profile portable;
+            export fn Main() -> i32 {
+                let Value = Missing { Field: 1 };
+                return 0;
+            }
+            """;
+        Hasˉdiagnostic(Unknownˉnamedˉrecord, "WVC2107");
     }
 
     private static void Enumsˉandˉformattingˉrun()
@@ -18719,6 +19329,210 @@ internal static class Program
         Hasˉdiagnostic(Reservedˉrecordˉconstructor, "WVC2090");
     }
 
+    private static void Localˉinferenceˉruns()
+    {
+        const string Source = """
+            module Localˉinference profile portable;
+
+            data Values: bytes = [
+                3u8,
+                5u8,
+            ];
+
+            enum Localˉmode {
+                Ready = 1;
+                Closed = 2;
+            }
+
+            record Localˉsnapshot {
+                Count: u32;
+                Mode: Localˉmode;
+            }
+
+            fn Add(
+                Left: i32,
+                Right: i32,
+            ) -> i32 {
+                return Left + Right;
+            }
+
+            export fn Main() -> i32 {
+                let Signed = -7;
+                let Byte = 3u8;
+                let Count = Bytesˉlength(Values);
+                let Enabled = true;
+                let Message = "windvale";
+                let Copy = Values;
+                let Mode = Localˉmode.Ready;
+                let Snapshot = Localˉsnapshot(
+                    Count,
+                    Mode,
+                );
+                var Result = Add(
+                    Signed,
+                    10,
+                );
+                if Byte == Bytesˉreadˉu8(Copy, 0u32) { Result = Result + 1; }
+                if Enabled { Result = Result + 1; }
+                if Bytesˉlength(Textˉtoˉutf8(Message)) == 8u32 { Result = Result + 1; }
+                if Snapshot.Count == 2u32 { Result = Result + 1; }
+                if Snapshot.Mode == Localˉmode.Ready { Result = Result + 1; }
+                return Result;
+            }
+            """;
+
+        Equal(8, Runˉportable(Source));
+
+        const string Voidˉinitializer = """
+            module Invalidˉinference profile portable;
+            fn Touch() -> void {}
+            export fn Main() -> i32 {
+                let Value = Touch();
+                return 0;
+            }
+            """;
+        Hasˉdiagnostic(Voidˉinitializer, "WVC2044");
+    }
+
+    private static void Typedˉconstantsˉrun()
+    {
+        const string Source = """
+            module Typedˉconstants profile portable;
+
+            enum Constantˉmode {
+                Ready = 1;
+                Closed = 2;
+            }
+
+            const BASE: i32 = 40;
+            const ANSWER: i32 = BASE + 2;
+            const LIMIT: u32 = 3u32 * 4u32;
+            const ENABLED: bool = ANSWER > BASE;
+            const MODE: Constantˉmode = Constantˉmode.Ready;
+            const SIGNED: i64 = -9i64;
+            const UNSIGNED: u64 = 18446744073709551615u64;
+            export const PUBLIC_LIMIT: u8 = 9u8;
+
+            export fn Main() -> i32 {
+                var Score = ANSWER;
+                if ENABLED { Score = Score + 1; }
+                if MODE == Constantˉmode.Ready { Score = Score + 1; }
+                if LIMIT == 12u32 { Score = Score + 1; }
+                if SIGNED < 0i64 { Score = Score + 1; }
+                if UNSIGNED > 4294967295u64 { Score = Score + 1; }
+                if PUBLIC_LIMIT == 9u8 { Score = Score + 1; }
+                return Score;
+            }
+            """;
+        var Bytes = Compileˉsuccess(Source);
+        Sequenceˉequal(Compileˉsuccess(Source), Bytes);
+        var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+        Equal(0, Module.Module.Data.Length);
+        Sequenceˉequal(["Main"], Module.Module.Exports.Select(Export => Export.Name));
+        Equal(48, Runˉportable(Source));
+
+        Hasˉdiagnostic("""
+            module Invalidˉconstant profile portable;
+            const FIRST: i32 = SECOND;
+            const SECOND: i32 = 2;
+            export fn Main() -> i32 { return 0; }
+            """, "WVC2103");
+        Hasˉdiagnostic("""
+            module Invalidˉconstant profile portable;
+            const BAD: i32 = true;
+            export fn Main() -> i32 { return 0; }
+            """, "WVC2102");
+        Hasˉdiagnostic("""
+            module Invalidˉconstant profile portable;
+            fn Value() -> i32 { return 1; }
+            const BAD: i32 = Value();
+            export fn Main() -> i32 { return 0; }
+            """, "WVC2104");
+        Hasˉdiagnostic("""
+            module Invalidˉconstant profile portable;
+            const BAD: i32 = 2147483647 + 1;
+            export fn Main() -> i32 { return 0; }
+            """, "WVC2106");
+        Hasˉdiagnostic("""
+            module Invalidˉconstant profile portable;
+            const BAD: text = "value";
+            export fn Main() -> i32 { return 0; }
+            """, "WVC2101");
+        Hasˉdiagnostic("""
+            module Invalidˉconstant profile portable;
+            const Bad: i32 = 1;
+            export fn Main() -> i32 { return 0; }
+            """, "WVC2100");
+
+        Hasˉdiagnostic(
+            Seedˉcompiler.Compileˉmodules(
+                new(
+                    "constant-root.wv",
+                    "module Constantˉroot profile portable; import Constantˉdependency as Dependency; export fn Main() -> i32 { return Dependency.VALUE; }"),
+                [
+                    new(
+                        "constant-dependency.wv",
+                        "module Constantˉdependency profile portable; const VALUE: i32 = 7; export fn Value() -> i32 { return VALUE; }")
+                ]),
+            "WVC0017");
+    }
+
+    private static void Advancedˉlanguageˉfeaturesˉrun()
+    {
+        var Portableˉcases = new (string Source, string Hash, ushort Minorˉversion, int Exitˉcode)[]
+        {
+            (SOURCE_WVB_MATCH_SOURCE, SOURCE_WVB_MATCH_SHA256, Moduleˉcodec.BASE_MINOR_VERSION, 2),
+            (SOURCE_WVB_MATCH_FALLTHROUGH_SOURCE, SOURCE_WVB_MATCH_FALLTHROUGH_SHA256, Moduleˉcodec.BASE_MINOR_VERSION, 3),
+            (SOURCE_WVB_VARIANTS_SOURCE, SOURCE_WVB_VARIANTS_SHA256, Moduleˉcodec.VARIANT_MINOR_VERSION, 45),
+            (SOURCE_WVB_COLLECTIONS_SOURCE, SOURCE_WVB_COLLECTIONS_SHA256, Moduleˉcodec.COLLECTION_MINOR_VERSION, 16),
+            (SOURCE_WVB_OPERATORS_WINDVALE_SOURCE, SOURCE_WVB_OPERATORS_WINDVALE_SHA256, Moduleˉcodec.OPERATOR_MINOR_VERSION, 28),
+            (SOURCE_WVB_OPERATORS_SOURCE, SOURCE_WVB_OPERATORS_SHA256, Moduleˉcodec.OPERATOR_MINOR_VERSION, 28),
+        };
+        foreach (var Case in Portableˉcases)
+        {
+            var Bytes = Compileˉsuccess(Case.Source);
+            Equal(Case.Hash, Moduleˉdigest.Calculateˉsha256(Bytes));
+            var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
+            Equal(Case.Minorˉversion, Module.Module.Formatˉminorˉversion);
+            Sequenceˉequal(Bytes, Moduleˉcodec.Write(Module.Module));
+            Equal(
+                Case.Exitˉcode,
+                new Referenceˉruntime(
+                    Module,
+                    new Referenceˉcapabilityˉhost(new StringWriter()),
+                    Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+        }
+
+        var Metadataˉbytes = Compileˉsuccess(SOURCE_WVB_METADATA_SOURCE);
+        Equal(SOURCE_WVB_METADATA_SHA256, Moduleˉdigest.Calculateˉsha256(Metadataˉbytes));
+        var Metadataˉmodule = Moduleˉcodec.Readˉandˉverify(Metadataˉbytes);
+        Equal(Moduleˉcodec.MINOR_VERSION, Metadataˉmodule.Module.Formatˉminorˉversion);
+        Equal(Moduleˉprofile.Hosted, Metadataˉmodule.Module.Profile);
+        var Metadata = Metadataˉmodule.Module.Metadata
+            ?? throw new InvalidOperationException("The metadata fixture omitted module metadata.");
+        Equal(Moduleˉauthority.Application, Metadata.Authority);
+        Sequenceˉequal(["linux", "windows", "windvale"], Metadata.Platformˉscopes);
+        Sequenceˉequal(
+            [new Capabilityˉrequirement(Capabilityˉcatalog.CONSOLE_WRITE_LINE, 1)],
+            Metadata.Requiredˉcapabilities);
+        Sequenceˉequal(
+            [new Capabilityˉrequirement(Capabilityˉcatalog.FILE_READ_BYTES, 1)],
+            Metadata.Optionalˉcapabilities);
+        Sequenceˉequal(Metadataˉbytes, Moduleˉcodec.Write(Metadataˉmodule.Module));
+
+        var Output = new StringWriter();
+        var Authorized = Metadataˉmodule.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Metadataˉmodule,
+                new Referenceˉcapabilityˉhost(Output),
+                new(Authorized)).Runˉmain().Exitˉcode);
+        Equal("metadata\n", Output.ToString().Replace("\r\n", "\n", StringComparison.Ordinal));
+    }
+
     private static void Operatorsˉrun()
     {
         const string Source = """
@@ -18775,14 +19589,14 @@ internal static class Program
             """;
 
         var Bytes = Compileˉsuccess(Source);
-        Equal(Moduleˉcodec.MINOR_VERSION, BinaryPrimitives.ReadUInt16LittleEndian(Bytes.AsSpan(6)));
+        Equal(Moduleˉcodec.WIDE_MINOR_VERSION, BinaryPrimitives.ReadUInt16LittleEndian(Bytes.AsSpan(6)));
         var Legacyˉbytes = Compileˉsuccess(SUM_SOURCE);
         Equal(
             Moduleˉcodec.BASE_MINOR_VERSION,
             BinaryPrimitives.ReadUInt16LittleEndian(Legacyˉbytes.AsSpan(6)));
 
         var Module = Moduleˉcodec.Readˉandˉverify(Bytes);
-        Equal(Moduleˉcodec.MINOR_VERSION, Module.Module.Formatˉminorˉversion);
+        Equal(Moduleˉcodec.WIDE_MINOR_VERSION, Module.Module.Formatˉminorˉversion);
         var Pair = (Recordˉtypeˉdeclaration)Module.Module.Types.Single();
         Equal(Valueˉtype.I64, Pair.Fields[0].Type);
         Equal(Valueˉtype.U64, Pair.Fields[1].Type);
@@ -18898,7 +19712,7 @@ internal static class Program
                 Valueˉtype.I64,
                 maximumˉstack: 1) with
             {
-                Formatˉminorˉversion = Moduleˉcodec.MINOR_VERSION,
+                Formatˉminorˉversion = Moduleˉcodec.WIDE_MINOR_VERSION,
             }));
 
         Throwsˉbytecode(
@@ -19235,6 +20049,45 @@ internal static class Program
             }
             """;
         Throwsˉruntime("WVR3007", () => Runˉportable(U64ˉunderflow));
+
+        const string Divideˉbyˉzero = """
+            module Divideˉbyˉzero profile portable;
+            export fn Main() -> i32 {
+                1 / 0;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3032", () => Runˉportable(Divideˉbyˉzero));
+
+        const string Signedˉdivideˉoverflow = """
+            module Signedˉdivideˉoverflow profile portable;
+            export fn Main() -> i32 {
+                let Minimum: i32 = -2147483647 - 1;
+                Minimum / -1;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3007", () => Runˉportable(Signedˉdivideˉoverflow));
+
+        const string Invalidˉshift = """
+            module Invalidˉshift profile portable;
+            export fn Main() -> i32 {
+                1u8 << 8u32;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3033", () => Runˉportable(Invalidˉshift));
+
+        const string Builderˉcapacity = """
+            module Builderˉcapacity profile portable;
+            export fn Main() -> i32 {
+                var Values = builder<i32, 1>();
+                push Values, 1;
+                push Values, 2;
+                return 0;
+            }
+            """;
+        Throwsˉruntime("WVR3030", () => Runˉportable(Builderˉcapacity));
 
         var Oversizedˉtextˉresult = Buildˉmodule(
             [
@@ -20256,28 +21109,28 @@ internal static class Program
         Equal(string.Empty, Sourceˉsetˉselfˉresult.Diagnostics);
         Equal(5, Sourceˉsetˉselfˉresult.Readˉcount);
         Equal(
-            "source set status=Valid modules=5 source-bytes=205658 imports=4 records=16 enums=11 functions=92\n",
+            "source set status=Valid modules=5 source-bytes=290433 imports=6 records=17 enums=11 functions=107\n",
             Sourceˉsetˉselfˉresult.Output);
         Equal(0, Sourceˉgraphˉdemoˉresult.Exitˉcode);
         Equal(0, Sourceˉgraphˉselfˉresult.Exitˉcode);
         Equal(string.Empty, Sourceˉgraphˉselfˉresult.Diagnostics);
         Equal(7, Sourceˉgraphˉselfˉresult.Readˉcount);
         Equal(
-            "source graph status=Valid modules=7 imports=6 reachable=7\n",
+            "source graph status=Valid modules=7 imports=10 reachable=7\n",
             Sourceˉgraphˉselfˉresult.Output);
         Equal(0, Sourceˉsymbolsˉdemoˉresult.Exitˉcode);
         Equal(0, Sourceˉsymbolsˉselfˉresult.Exitˉcode);
         Equal(string.Empty, Sourceˉsymbolsˉselfˉresult.Diagnostics);
         Equal(8, Sourceˉsymbolsˉselfˉresult.Readˉcount);
         Equal(
-            "source symbols status=Valid modules=8 capabilities=0 data=0 records=24 enums=14 functions=141 fields=291 members=181 parameters=619 directory-bytes=4312 visibility-bytes=64\n",
+            "source symbols status=Valid modules=8 capabilities=0 data=0 records=28 enums=14 functions=186 fields=330 members=239 parameters=795 directory-bytes=5488 visibility-bytes=64\n",
             Sourceˉsymbolsˉselfˉresult.Output);
         Equal(0, Sourceˉbindingsˉdemoˉresult.Exitˉcode);
         Equal(0, Sourceˉbindingsˉselfˉresult.Exitˉcode);
         Equal(string.Empty, Sourceˉbindingsˉselfˉresult.Diagnostics);
         Equal(9, Sourceˉbindingsˉselfˉresult.Readˉcount);
         Equal(
-            "source bindings status=Valid modules=9 functions=195 parameters=849 locals=1018 reads=8642 assignments=684 calls=1540 directory-bytes=69172\n",
+            "source bindings status=Valid modules=9 functions=245 parameters=1058 locals=1501 reads=12665 assignments=989 calls=2212 directory-bytes=94524\n",
             Sourceˉbindingsˉselfˉresult.Output);
         Contract = new(
             $"{Moduleˉcodec.MAJOR_VERSION}.{Moduleˉcodec.MINOR_VERSION}",

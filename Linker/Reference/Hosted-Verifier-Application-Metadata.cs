@@ -50,7 +50,7 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         CAPABILITY_OFFSET + CAPABILITY_COUNT * CAPABILITY_RECORD_BYTES;
     internal const int NATIVE_SHA256_OFFSET = 96;
     internal const uint VERIFIER_PROFILE_FLAGS = 2;
-    internal const ulong VERIFIER_MAXIMUM_INSTRUCTIONS = 8_000_000_000;
+    internal const ulong VERIFIER_MAXIMUM_INSTRUCTIONS = 16_000_000_000;
 
     private static readonly ImmutableArray<Hostedˉverifierˉcapabilityˉcontract>
         CAPABILITY_CONTRACTS =

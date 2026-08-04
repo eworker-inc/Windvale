@@ -1,6 +1,6 @@
 module Linkerˉconsoleˉapplicationˉplan profile portable;
 
-enum Consoleˉapplicationˉplanˉstatus {
+export enum Consoleˉapplicationˉplanˉstatus {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉmagic = 2;
@@ -12,7 +12,7 @@ enum Consoleˉapplicationˉplanˉstatus {
     Layoutˉlimit = 8;
 }
 
-record Consoleˉapplicationˉplanˉresult {
+export record Consoleˉapplicationˉplanˉresult {
     Status: Consoleˉapplicationˉplanˉstatus;
     Value: bytes;
     Failureˉoffset: u32;

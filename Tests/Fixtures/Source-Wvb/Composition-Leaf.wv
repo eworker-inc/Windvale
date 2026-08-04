@@ -1,16 +1,25 @@
 module Compositionˉleaf profile portable;
 
-enum Compositionˉstatus {
+export const OFFSET: i32 = 1;
+export data Compositionˉvalues: [i32] = [1];
+
+export enum Compositionˉstatus {
     Ready = 1;
 }
 
-record Compositionˉvalue {
+record Shared { Value: i32; }
+
+export record Compositionˉvalue {
     Value: i32;
     Status: Compositionˉstatus;
 }
 
+fn Helper(Value: i32) -> i32 {
+    return Value + OFFSET - Compositionˉvalues[0];
+}
+
 export fn Compositionˉmake(Value: i32) -> Compositionˉvalue {
-    return Compositionˉvalue(Value, Compositionˉstatus.Ready);
+    return Compositionˉvalue(Helper(Value), Compositionˉstatus.Ready);
 }
 
 export fn Compositionˉincrement(Value: i32) -> i32 {

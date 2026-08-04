@@ -23,6 +23,13 @@ public static class Moduleˉinspector
         Output.AppendLine($"SHA-256: {Moduleˉdigest.Calculateˉsha256(originalˉbytes)}");
         Output.AppendLine($"Module: {Module.Name}");
         Output.AppendLine($"Profile: {Formatˉprofile(Module.Profile)}");
+        if (Module.Metadata is { } Metadata)
+        {
+            Output.AppendLine($"Authority: {Metadata.Authority.ToString().ToLowerInvariant()}");
+            Output.AppendLine($"Platforms: {string.Join(", ", Metadata.Platformˉscopes)}");
+            Output.AppendLine($"Required capabilities: {Formatˉrequirements(Metadata.Requiredˉcapabilities)}");
+            Output.AppendLine($"Optional capabilities: {Formatˉrequirements(Metadata.Optionalˉcapabilities)}");
+        }
         Output.AppendLine();
 
         Output.AppendLine($"Capabilities ({Module.Capabilities.Length})");
@@ -85,6 +92,18 @@ public static class Moduleˉinspector
                     }
 
                     break;
+                case Variantˉtypeˉdeclaration Variant:
+                    Output.AppendLine($"  [{Typeˉindex}] variant {Variant.Name}");
+                    for (var Caseˉindex = 0; Caseˉindex < Variant.Cases.Length; Caseˉindex++)
+                    {
+                        var Case = Variant.Cases[Caseˉindex];
+                        var Payload = Case.Payloadˉtype is { } Payloadˉtype
+                            ? $"({Case.Payloadˉname}: {Formatˉshape(Module, Payloadˉtype)})"
+                            : string.Empty;
+                        Output.AppendLine($"    [{Caseˉindex}] {Case.Name}{Payload}");
+                    }
+
+                    break;
             }
         }
 
@@ -120,6 +139,15 @@ public static class Moduleˉinspector
         return Output.ToString();
     }
 
+    private static string Formatˉrequirements(
+        System.Collections.Immutable.ImmutableArray<Capabilityˉrequirement> requirements)
+    {
+        return requirements.Length == 0
+            ? "none"
+            : string.Join(", ", requirements.Select(Requirement =>
+                $"{Requirement.Name}@{Requirement.Majorˉversion}"));
+    }
+
     public static string Formatˉtype(Valueˉtype type)
     {
         return type switch
@@ -135,13 +163,14 @@ public static class Moduleˉinspector
             Valueˉtype.Bytes => "bytes",
             Valueˉtype.Record => "record",
             Valueˉtype.Enum => "enum",
+            Valueˉtype.Variant => "variant",
             _ => $"unknown({(byte)type})",
         };
     }
 
     private static string Formatˉshape(Bytecodeˉmodule module, Valueˉshape shape)
     {
-        return (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum) &&
+        return (shape.Kind is Valueˉtype.Record or Valueˉtype.Enum or Valueˉtype.Variant) &&
             (uint)shape.Nominalˉtypeˉindex < (uint)module.Types.Length
                 ? module.Types[shape.Nominalˉtypeˉindex].Name
                 : Formatˉtype(shape.Kind);
@@ -189,6 +218,9 @@ public static class Moduleˉinspector
             Opcode.Enumˉequal => "enum.equal",
             Opcode.Enumˉnotˉequal => "enum.not_equal",
             Opcode.Enumˉname => "enum.name",
+            Opcode.Variantˉcreate => Formatˉvariantˉinstruction(module, instruction, "variant.create"),
+            Opcode.Variantˉisˉcase => Formatˉvariantˉinstruction(module, instruction, "variant.is_case"),
+            Opcode.Variantˉpayload => Formatˉvariantˉinstruction(module, instruction, "variant.payload"),
             Opcode.I32ˉformat => "i32.format",
             Opcode.I64ˉformat => "i64.format",
             Opcode.U8ˉformat => "u8.format",
@@ -249,6 +281,36 @@ public static class Moduleˉinspector
             Opcode.U64ˉgreaterˉequal => "u64.greater_equal",
             Opcode.U8ˉequal => "u8.equal",
             Opcode.U8ˉnotˉequal => "u8.not_equal",
+            Opcode.I32ˉdivide => "i32.divide",
+            Opcode.I32ˉremainder => "i32.remainder",
+            Opcode.U32ˉdivide => "u32.divide",
+            Opcode.U32ˉremainder => "u32.remainder",
+            Opcode.I64ˉdivide => "i64.divide",
+            Opcode.I64ˉremainder => "i64.remainder",
+            Opcode.U64ˉdivide => "u64.divide",
+            Opcode.U64ˉremainder => "u64.remainder",
+            Opcode.U8ˉbitwiseˉand => "u8.bitwise_and",
+            Opcode.U8ˉbitwiseˉor => "u8.bitwise_or",
+            Opcode.U8ˉbitwiseˉxor => "u8.bitwise_xor",
+            Opcode.U8ˉbitwiseˉnot => "u8.bitwise_not",
+            Opcode.U8ˉshiftˉleft => "u8.shift_left",
+            Opcode.U8ˉshiftˉright => "u8.shift_right",
+            Opcode.U32ˉbitwiseˉand => "u32.bitwise_and",
+            Opcode.U32ˉbitwiseˉor => "u32.bitwise_or",
+            Opcode.U32ˉbitwiseˉxor => "u32.bitwise_xor",
+            Opcode.U32ˉbitwiseˉnot => "u32.bitwise_not",
+            Opcode.U32ˉshiftˉleft => "u32.shift_left",
+            Opcode.U32ˉshiftˉright => "u32.shift_right",
+            Opcode.U64ˉbitwiseˉand => "u64.bitwise_and",
+            Opcode.U64ˉbitwiseˉor => "u64.bitwise_or",
+            Opcode.U64ˉbitwiseˉxor => "u64.bitwise_xor",
+            Opcode.U64ˉbitwiseˉnot => "u64.bitwise_not",
+            Opcode.U64ˉshiftˉleft => "u64.shift_left",
+            Opcode.U64ˉshiftˉright => "u64.shift_right",
+            Opcode.Textˉequal => "text.equal",
+            Opcode.Textˉnotˉequal => "text.not_equal",
+            Opcode.Bytesˉequal => "bytes.equal",
+            Opcode.Bytesˉnotˉequal => "bytes.not_equal",
             Opcode.Jump => $"jump {instruction.Unsignedˉoperand:X4}",
             Opcode.Branchˉfalse => $"branch.false {instruction.Unsignedˉoperand:X4}",
             Opcode.Call => $"call function[{instruction.Unsignedˉoperand}] ({module.Functions[(int)instruction.Unsignedˉoperand].Name})",
@@ -267,6 +329,17 @@ public static class Moduleˉinspector
         var Member = Enum.Members[(int)instruction.Secondˉunsignedˉoperand];
         return $"enum.const type[{instruction.Unsignedˉoperand}] ({Enum.Name}) " +
             $"member[{instruction.Secondˉunsignedˉoperand}] ({Member.Name}={Member.Value})";
+    }
+
+    private static string Formatˉvariantˉinstruction(
+        Bytecodeˉmodule module,
+        Decodedˉinstruction instruction,
+        string operation)
+    {
+        var Variant = (Variantˉtypeˉdeclaration)module.Types[(int)instruction.Unsignedˉoperand];
+        var Case = Variant.Cases[(int)instruction.Secondˉunsignedˉoperand];
+        return $"{operation} type[{instruction.Unsignedˉoperand}] ({Variant.Name}) " +
+            $"case[{instruction.Secondˉunsignedˉoperand}] ({Case.Name})";
     }
 
     private static string Formatˉtextˉpreview(string value)

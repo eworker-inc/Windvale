@@ -1,14 +1,15 @@
 module Compilerˉsourceˉdeclarationˉparserˉdemo profile portable;
 
-import Compilerˉsourceˉdeclarationˉparser;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
 
 data Invalidˉutf8: bytes = [195, 40];
 
 export fn Main() -> i32 {
-    let Complete: bytes = Textˉtoˉutf8("module Exampleˉcompiler profile hosted; import Foundationˉdecimalˉparsing; capability console.write_line; data Message: text = \"hello\"; data Values: [i32] = [-1, 2]; data Blob: bytes = [0, 255u8]; record Pair { Left: u32; Ready: bool; } enum State { Ready = 1; Done = 2; } fn Helper(Value: Pair, Stateˉvalue: State) -> void { console.write_line(\"{\\\"}\"); if true { return; } } export fn Main() -> i32 { return 0; }");
-    let Summary: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Complete);
-    if Summary.Status != Compilerˉparseˉstatus.Valid { return 1; }
-    if Summary.Profile != Compilerˉsourceˉprofile.Hosted { return 2; }
+    let Complete: bytes = Textˉtoˉutf8("module Exampleˉcompiler profile hosted; import Foundationˉdecimalˉparsing as Decimalˉparsing; capability console.write_line; export const LIMIT: u32 = 1u32 + 2u32; data Message: text = \"hello\"; data Values: [i32] = [-1, 2]; data Blob: bytes = [0, 255u8]; record Pair { Left: u32; Ready: bool; } enum State { Ready = 1; Done = 2; } fn Helper(Value: Pair, Stateˉvalue: State) -> void { console.write_line(\"{\\\"}\"); if true { return; } } export fn Main() -> i32 { return 0; }");
+    let Summary: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Complete);
+    if Summary.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid { return 1; }
+    if Summary.Profile != Sourceˉdeclarations.Compilerˉsourceˉprofile.Hosted { return 2; }
     if Summary.Imports != 1u32 { return 3; }
     if Summary.Capabilities != 1u32 { return 4; }
     if Summary.Data != 3u32 { return 5; }
@@ -16,43 +17,47 @@ export fn Main() -> i32 {
     if Summary.Enums != 1u32 { return 7; }
     if Summary.Functions != 2u32 { return 8; }
 
-    let Importˉview: Compilerˉsourceˉdeclaration = Compilerˉparseˉdeclarationˉat(Complete, 0u32);
-    if Importˉview.Kind != Compilerˉsourceˉdeclarationˉkind.Import { return 9; }
-    let Capabilityˉview: Compilerˉsourceˉdeclaration = Compilerˉparseˉdeclarationˉat(Complete, 1u32);
-    if Capabilityˉview.Kind != Compilerˉsourceˉdeclarationˉkind.Capability { return 10; }
+    let Importˉview: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉdeclarationˉat(Complete, 0u32);
+    if Importˉview.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import { return 9; }
+    let Capabilityˉview: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉdeclarationˉat(Complete, 1u32);
+    if Capabilityˉview.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability { return 10; }
     if Capabilityˉview.Items != 2u32 { return 11; }
-    let Recordˉview: Compilerˉsourceˉdeclaration = Compilerˉparseˉdeclarationˉat(Complete, 5u32);
-    if Recordˉview.Kind != Compilerˉsourceˉdeclarationˉkind.Record { return 12; }
+    let Constantˉview: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉdeclarationˉat(Complete, 2u32);
+    if Constantˉview.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Constant { return 31; }
+    if !Constantˉview.Isˉexported { return 32; }
+    if Constantˉview.Bodyˉlength == 0u32 { return 33; }
+    let Recordˉview: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉdeclarationˉat(Complete, 6u32);
+    if Recordˉview.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record { return 12; }
     if Recordˉview.Items != 2u32 { return 13; }
-    let Enumˉview: Compilerˉsourceˉdeclaration = Compilerˉparseˉdeclarationˉat(Complete, 6u32);
-    if Enumˉview.Kind != Compilerˉsourceˉdeclarationˉkind.Enum { return 14; }
+    let Enumˉview: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉdeclarationˉat(Complete, 7u32);
+    if Enumˉview.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum { return 14; }
     if Enumˉview.Items != 2u32 { return 15; }
-    let Functionˉview: Compilerˉsourceˉdeclaration = Compilerˉparseˉdeclarationˉat(Complete, 7u32);
-    if Functionˉview.Kind != Compilerˉsourceˉdeclarationˉkind.Function { return 16; }
+    let Functionˉview: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉdeclarationˉat(Complete, 8u32);
+    if Functionˉview.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function { return 16; }
     if Functionˉview.Items != 2u32 { return 17; }
     if Functionˉview.Bodyˉlength == 0u32 { return 18; }
-    let Mainˉview: Compilerˉsourceˉdeclaration = Compilerˉparseˉdeclarationˉat(Complete, 8u32);
+    let Mainˉview: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉdeclarationˉat(Complete, 9u32);
     if !Mainˉview.Isˉexported { return 19; }
 
-    let Lateˉimport: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; data Value: text = \"x\"; import Other;"));
-    if Lateˉimport.Status != Compilerˉparseˉstatus.Importˉafterˉdeclaration { return 20; }
-    let Missingˉsemicolon: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable record Value { Field: i32; }"));
-    if Missingˉsemicolon.Status != Compilerˉparseˉstatus.Expectedˉtoken { return 21; }
-    if Missingˉsemicolon.Expected != Compilerˉtokenˉkind.Semicolon { return 22; }
-    let Badˉprofile: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile maybe;"));
-    if Badˉprofile.Status != Compilerˉparseˉstatus.Invalidˉprofile { return 23; }
-    let Badˉdataˉtype: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; data Value: u32 = 1u32;"));
-    if Badˉdataˉtype.Status != Compilerˉparseˉstatus.Invalidˉdataˉtype { return 24; }
-    let Badˉbytes: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; data Value: bytes = [256];"));
-    if Badˉbytes.Status != Compilerˉparseˉstatus.Invalidˉliteral { return 25; }
-    let Badˉrecordˉtype: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; record Value { Field: void; }"));
-    if Badˉrecordˉtype.Status != Compilerˉparseˉstatus.Invalidˉtype { return 26; }
-    let Badˉdeclaration: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; let Value: i32 = 0;"));
-    if Badˉdeclaration.Status != Compilerˉparseˉstatus.Unexpectedˉdeclaration { return 27; }
-    let Missingˉbrace: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; fn Main() -> i32 { return 0;"));
-    if Missingˉbrace.Status != Compilerˉparseˉstatus.Expectedˉtoken { return 28; }
-    let Invalidˉencoding: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Invalidˉutf8);
-    if Invalidˉencoding.Status != Compilerˉparseˉstatus.Lexicalˉerror { return 29; }
-    if Invalidˉencoding.Lexicalˉstatus != Compilerˉlexˉstatus.Invalidˉutf8 { return 30; }
+    let Lateˉimport: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; data Value: text = \"x\"; import Other as Dependency;"));
+    if Lateˉimport.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Importˉafterˉdeclaration { return 20; }
+    let Missingˉsemicolon: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable record Value { Field: i32; }"));
+    if Missingˉsemicolon.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Expectedˉtoken { return 21; }
+    if Missingˉsemicolon.Expected != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon { return 22; }
+    let Badˉprofile: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile maybe;"));
+    if Badˉprofile.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Invalidˉprofile { return 23; }
+    let Badˉdataˉtype: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; data Value: u32 = 1u32;"));
+    if Badˉdataˉtype.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Invalidˉdataˉtype { return 24; }
+    let Badˉbytes: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; data Value: bytes = [256];"));
+    if Badˉbytes.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Invalidˉliteral { return 25; }
+    let Badˉrecordˉtype: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; record Value { Field: void; }"));
+    if Badˉrecordˉtype.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Invalidˉtype { return 26; }
+    let Badˉdeclaration: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; let Value: i32 = 0;"));
+    if Badˉdeclaration.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Unexpectedˉdeclaration { return 27; }
+    let Missingˉbrace: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Textˉtoˉutf8("module Bad profile portable; fn Main() -> i32 { return 0;"));
+    if Missingˉbrace.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Expectedˉtoken { return 28; }
+    let Invalidˉencoding: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Invalidˉutf8);
+    if Invalidˉencoding.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Lexicalˉerror { return 29; }
+    if Invalidˉencoding.Lexicalˉstatus != Sourceˉlexer.Compilerˉlexˉstatus.Invalidˉutf8 { return 30; }
     return 0;
 }

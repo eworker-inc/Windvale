@@ -1,6 +1,6 @@
 module Foundationˉdecimalˉparsing profile portable;
 
-record Foundationˉu32ˉparse {
+export record Foundationˉu32ˉparse {
     Valid: bool;
     Value: u32;
 }

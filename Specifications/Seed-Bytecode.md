@@ -2,7 +2,7 @@
 
 ## Status
 
-This document specifies the Windvale bytecode 1.6 base and its 1.7 64-bit scalar extension. Windvale is in early development; these versions identify binary vocabularies and are not yet a long-term compatibility promise. Version 1.6 adds the exact SHA-256 identity operation required by the accepted deterministic linker-map contract. Version 1.7 adds checked `i64` and `u64` stack values, operations, and formatting without changing the section grammar. The canonical writer emits 1.6 unless a module uses the 1.7 vocabulary. Readers do not accept versions 1.0 through 1.5.
+This document specifies the current Windvale bytecode 1.6 through 1.11 vocabulary. Windvale is in early development; these versions identify currently implemented binary contracts and are not a backward-compatibility promise. Version 1.7 adds 64-bit scalars, 1.8 adds independent module metadata, 1.9 adds nominal payload variants and a metadata-presence byte, 1.10 adds bounded sequences and affine builders, and 1.11 adds division, remainder, fixed-width unsigned bitwise/shift operations, and exact text/bytes equality. The canonical writer emits the lowest current minor that contains every used feature, except that a metadata-bearing pre-variant module uses 1.8.
 
 ## Encoding
 
@@ -19,11 +19,11 @@ This document specifies the Windvale bytecode 1.6 base and its 1.7 64-bit scalar
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 6 or 7, selected by the module vocabulary
+u16      minor version: 6 through 11, selected by the module vocabulary
 u32      section count: 7
 ```
 
-A 1.6 module must not contain value types `9` or `10` or opcodes `80` through `96`. The verifier rejects such a mismatched header rather than interpreting the extension under the older contract.
+The verifier rejects every type or opcode introduced after the declared minor version. In particular, 1.7 owns types `9` and `10` plus opcodes `80` through `96`; 1.9 owns nominal kind `3`, shape `11`, and opcodes `97` through `99`; 1.10 owns shapes `12` and `13` plus opcodes `9A` through `9E`; and 1.11 owns opcodes `9F` through `BC`.
 
 Every section has this envelope:
 
@@ -50,7 +50,28 @@ The seven mandatory sections occur exactly once in this order:
 ```text
 u8       profile: 1 portable, 2 hosted, 3 system
 string   module name
+if WVB 1.8:
+  <metadata fields below, always present>
+if WVB 1.9 or later:
+  u8       metadata present: 0 or 1
+  if present:
+    <metadata fields below>
+metadata fields:
+  u8       metadata encoding version: 1
+  u8       authority: 1 library, 2 application, 3 service, 4 system
+  u32      platform-scope count
+  string[] strictly sorted platform scopes
+  u32      required-capability count
+  repeat:
+    string capability identity
+    u32    major version
+  u32      optional-capability count
+  repeat:
+    string capability identity
+    u32    major version
 ```
+
+WVB 1.8 requires the metadata fields directly. WVB 1.9 and later always carry the presence byte so feature-bearing legacy-profile modules and metadata-bearing modules share one unambiguous Module shape. Earlier vocabularies do not carry metadata. Platform scopes are unique, strictly sorted lowercase ASCII identities with optional dot-separated segments. At least one scope is required when metadata is present. Required and optional entries are independently unique and sorted. An identity cannot be both required and optional. Seed currently admits catalog identities at major version 1. Required metadata identities exactly equal the executable Capabilities section; optional identities are admission and provider-selection metadata only. System authority and the retained system profile must agree.
 
 ## Capabilities section
 
@@ -123,7 +144,7 @@ The reference launcher selects exported `Main() -> i32` as the executable source
 ```text
 u32      nominal type count
 repeat:
-  u8     nominal kind: 1 record, 2 enum
+  u8     nominal kind: 1 record, 2 enum, 3 variant (WVB 1.9)
   string nominal type name
   if record:
     u32    field count
@@ -135,9 +156,17 @@ repeat:
     repeat:
       string member name
       i32  member value
+  if variant:
+    u32    case count
+    repeat:
+      string case name
+      u8     payload present: 0 or 1
+      if present:
+        string payload name
+        shape  payload type
 ```
 
-Nominal types are grouped by kind, then strictly sorted by ordinal name, and names are unique across all kinds. Record field order is declaration order and therefore constructor order; field names are unique within the record. Seed requires between 1 and 64 fields. Fields may use `i32`, `i64`, `bool`, `text`, `u8`, `u32`, `u64`, `bytes`, or a nominal enum, but not `void` or another record. Enums contain 1 through 256 uniquely named members with unique `i32` values; member order is declaration order.
+Nominal types are grouped by kind, then strictly sorted by ordinal name, and names are unique across all kinds. Record field order is declaration order and therefore constructor order; field names are unique within the record. Seed requires between 1 and 64 fields. Enums contain 1 through 256 uniquely named members with unique `i32` values. Variants contain 1 through 256 unique ordered cases and at most one payload per case. Field and payload shapes obey the bounded, acyclic source restrictions.
 
 ## Value types
 
@@ -153,11 +182,14 @@ Nominal types are grouped by kind, then strictly sorted by ordinal name, and nam
 8 enum
 9 i64 (WVB 1.7)
 10 u64 (WVB 1.7)
+11 variant followed by u32 nominal-type index (WVB 1.9)
+12 sequence followed by element shape and u32 maximum (WVB 1.10)
+13 builder followed by element shape and u32 maximum (WVB 1.10)
 ```
 
 `void` is valid only as a return type. Immutable integer arrays are module data and are not operand-stack values. A `bytes` value is an immutable sequence or slice view and can be stored in locals, passed to functions, and returned.
 
-Function parameter, result, local, and record-field types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7` for a record or byte `8` for an enum followed by a `u32` index into the Types section. Nominal identity is exact: separately declared records or enums remain different operand-stack types even when their contents match.
+Function parameter, result, local, record-field, and variant-payload types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7`, `8`, or `11` followed by a `u32` Types-section index. A collection shape is byte `12` or `13`, its recursively encoded non-collection element shape, then its `u32` maximum. Nominal identity and collection kind/element/maximum are exact.
 
 `i64` and `u64` are ordinary scalar shapes only in WVB 1.7. They do not widen counts, indices, lengths, code offsets, enum backing values, or existing binary Foundation operations, which remain explicitly `u32` or `i32`.
 
@@ -253,6 +285,45 @@ Function parameter, result, local, and record-field types use a value shape. A p
 95 i64.format          consumes i64, produces invariant decimal text
 96 u64.format          consumes u64, produces invariant decimal text
 
+97 variant.create      u32 variant-type index, u32 case index
+98 variant.is_case     u32 variant-type index, u32 case index; consumes variant, produces bool
+99 variant.payload     u32 variant-type index, u32 case index; consumes variant, produces payload
+9A builder.create      u32 element-shape descriptor, u32 maximum
+9B builder.push        consumes builder and exact element, produces replacement builder
+9C builder.freeze      consumes builder, produces immutable sequence
+9D sequence.length     consumes sequence, produces u32
+9E sequence.element    consumes sequence and u32 index, produces exact element
+9F i32.divide
+A0 i32.remainder
+A1 u32.divide
+A2 u32.remainder
+A3 i64.divide
+A4 i64.remainder
+A5 u64.divide
+A6 u64.remainder
+A7 u8.bitwise_and
+A8 u8.bitwise_or
+A9 u8.bitwise_xor
+AA u8.bitwise_not
+AB u8.shift_left       consumes u8 and u32
+AC u8.shift_right      consumes u8 and u32
+AD u32.bitwise_and
+AE u32.bitwise_or
+AF u32.bitwise_xor
+B0 u32.bitwise_not
+B1 u32.shift_left      consumes u32 value and u32 count
+B2 u32.shift_right     consumes u32 value and u32 count
+B3 u64.bitwise_and
+B4 u64.bitwise_or
+B5 u64.bitwise_xor
+B6 u64.bitwise_not
+B7 u64.shift_left      consumes u64 and u32
+B8 u64.shift_right     consumes u64 and u32
+B9 text.equal
+BA text.not_equal
+BB bytes.equal
+BC bytes.not_equal
+
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
 
@@ -268,11 +339,14 @@ Function parameter, result, local, and record-field types use a value shape. A p
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The minor version matches the vocabulary: WVB 1.6 contains no 64-bit scalar types or extension opcodes, while WVB 1.7 may contain both the base and extension vocabularies.
+- The minor version matches the vocabulary through WVB 1.11, and 1.8 versus 1.9-or-later Module metadata is encoded exactly as specified above.
+- Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent WVB 1.8 metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
 - Every local, data, function, and capability index is valid and has the required type.
-- Every record or enum declaration, nominal shape, constructor operand, field access, enum constant, and enum comparison has valid nominal identity and exact types.
+- Every record, enum, or variant declaration, nominal shape, constructor operand, field/payload access, case test, constant, and enum comparison has valid nominal identity and exact types.
+- Every collection shape has an admitted non-collection element and maximum; builder transitions and sequence operations have exact types and cannot cross forbidden boundaries.
+- Division/remainder, bitwise/shift, and content equality operations have exact operand types; shifts use a `u32` count and content equality is limited to text and bytes.
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
 - Strict UTF-8 decoding and encoding, safe quoting, signed little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
@@ -291,6 +365,9 @@ Verification is required before execution and rejects a module unless:
 - Byte-data value: 4 MiB
 - Declaration name: 255 UTF-8 bytes
 - Capabilities: 32
+- Platform scopes: 32
+- Required capability requirements: 32
+- Optional capability requirements: 32
 - Data declarations: 4,096
 - Functions: 4,096
 - Nominal types: 1,024

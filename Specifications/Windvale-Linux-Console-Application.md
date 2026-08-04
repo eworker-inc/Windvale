@@ -76,7 +76,7 @@ The writer requires both verifiers to reproduce the verified flat link before pu
 
 ## Diagnostics
 
-Version 2 writer failures use `WVL1101` through `WVL1104` for the same preparation, entry/service, WVO/link, and completed-verification stages. Its untrusted-container verifier reports `WVL2100` for a malformed ELF, startup, runtime table, `WVHC 1` record, digest, extent, or padding field. Version 2 accepts only `console.write_line`, writes through direct Linux syscalls, reserves the ABI-22 64 MiB text arena, and is otherwise specified by the shared hosted-console contract.
+Version 2 writer failures use `WVL1101` through `WVL1104` for the same preparation, entry/service, WVO/link, and completed-verification stages. Its untrusted-container verifier reports `WVL2100` for a malformed ELF, startup, runtime table, `WVHC 1` record, digest, extent, or padding field. Version 2 accepts only `console.write_line`, writes through direct Linux syscalls, reserves the ABI-22 128 MiB text arena, and is otherwise specified by the shared hosted-console contract.
 
 Writer failures return no application bytes:
 

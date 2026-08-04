@@ -168,6 +168,82 @@ public readonly record struct Runtimeˉvalue
             new(typeˉindex, fields),
             dynamicˉroots);
 
+    public static Runtimeˉvalue Fromˉvariant(
+        int typeˉindex,
+        int caseˉindex,
+        Runtimeˉvalue? payload)
+    {
+        var Fields = payload is null
+            ? ImmutableArray<Runtimeˉvalue>.Empty
+            : ImmutableArray.Create(payload.Value);
+        return new(
+            Valueˉshape.Forˉvariant(typeˉindex),
+            0,
+            0,
+            false,
+            null,
+            0,
+            0,
+            0,
+            caseˉindex,
+            default,
+            new(typeˉindex, Fields),
+            Runtimeˉdynamicˉrootˉset.Combine(Fields));
+    }
+
+    public static Runtimeˉvalue Fromˉsequence(
+        Valueˉshape type,
+        ImmutableArray<Runtimeˉvalue> values)
+    {
+        if (type.Kind != Valueˉtype.Sequence)
+        {
+            throw new ArgumentOutOfRangeException(nameof(type), type, "A sequence value requires a sequence shape.");
+        }
+
+        return new(
+            type,
+            0,
+            0,
+            false,
+            null,
+            0,
+            0,
+            0,
+            0,
+            default,
+            new(-1, values),
+            Runtimeˉdynamicˉrootˉset.Combine(values));
+    }
+
+    public static Runtimeˉvalue Fromˉbuilder(
+        Valueˉshape type,
+        Runtimeˉbuilderˉvalue builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        if (type.Kind != Valueˉtype.Builder)
+        {
+            throw new ArgumentOutOfRangeException(nameof(type), type, "A builder value requires a builder shape.");
+        }
+
+        return new(
+            type,
+            0,
+            0,
+            false,
+            null,
+            0,
+            0,
+            0,
+            0,
+            default,
+            new(-1, builder.Values)
+            {
+                Isˉbuilder = true,
+                Isˉconsumed = builder.Isˉconsumed,
+            },
+            Runtimeˉdynamicˉrootˉset.Combine(builder.Values));
+    }
+
     public static Runtimeˉvalue Default(
         Valueˉshape type,
         ImmutableArray<Nominalˉtypeˉdeclaration> nominalˉtypes)
@@ -184,6 +260,9 @@ public readonly record struct Runtimeˉvalue
             Valueˉtype.Bytes => Fromˉbytes(ImmutableArray<byte>.Empty),
             Valueˉtype.Record => Defaultˉrecord(type.Nominalˉtypeˉindex, nominalˉtypes),
             Valueˉtype.Enum => Defaultˉenum(type.Nominalˉtypeˉindex, nominalˉtypes),
+            Valueˉtype.Variant => Defaultˉvariant(type.Nominalˉtypeˉindex, nominalˉtypes),
+            Valueˉtype.Sequence => Fromˉsequence(type, ImmutableArray<Runtimeˉvalue>.Empty),
+            Valueˉtype.Builder => Fromˉbuilder(type, Runtimeˉbuilderˉvalue.Uninitialized()),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Void has no runtime value."),
         };
     }
@@ -205,11 +284,51 @@ public readonly record struct Runtimeˉvalue
         var Type = (Enumˉtypeˉdeclaration)nominalˉtypes[typeˉindex];
         return Fromˉenum(typeˉindex, Type.Members[0].Value);
     }
+
+    private static Runtimeˉvalue Defaultˉvariant(
+        int typeˉindex,
+        ImmutableArray<Nominalˉtypeˉdeclaration> nominalˉtypes)
+    {
+        var Type = (Variantˉtypeˉdeclaration)nominalˉtypes[typeˉindex];
+        var Case = Type.Cases[0];
+        var Payload = Case.Payloadˉtype is { } Payloadˉtype
+            ? Default(Payloadˉtype, nominalˉtypes)
+            : (Runtimeˉvalue?)null;
+        return Fromˉvariant(typeˉindex, 0, Payload);
+    }
 }
 
 public sealed record Runtimeˉrecordˉvalue(
     int Typeˉindex,
-    ImmutableArray<Runtimeˉvalue> Fields);
+    ImmutableArray<Runtimeˉvalue> Fields)
+{
+    internal bool Isˉbuilder { get; init; }
+
+    internal bool Isˉconsumed { get; set; }
+}
+
+public sealed class Runtimeˉbuilderˉvalue
+{
+    public Runtimeˉbuilderˉvalue(ImmutableArray<Runtimeˉvalue> values)
+    {
+        Values = values;
+    }
+
+    private Runtimeˉbuilderˉvalue(
+        ImmutableArray<Runtimeˉvalue> values,
+        bool isˉconsumed)
+    {
+        Values = values;
+        Isˉconsumed = isˉconsumed;
+    }
+
+    public ImmutableArray<Runtimeˉvalue> Values { get; }
+
+    public bool Isˉconsumed { get; internal set; }
+
+    internal static Runtimeˉbuilderˉvalue Uninitialized() =>
+        new(ImmutableArray<Runtimeˉvalue>.Empty, isˉconsumed: true);
+}
 
 internal sealed class Runtimeˉdynamicˉrootˉset
 {

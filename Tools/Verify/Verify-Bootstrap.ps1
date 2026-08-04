@@ -2,8 +2,8 @@
 param(
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Release',
-    [ValidateRange(1, 12000000000)]
-    [long]$MaximumInstructions = 8000000000
+    [ValidateRange(1, 60000000000)]
+    [long]$MaximumInstructions = 48000000000
 )
 
 $ErrorActionPreference = 'Stop'

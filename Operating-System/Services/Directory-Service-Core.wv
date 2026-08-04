@@ -1,6 +1,6 @@
 module Directoryˉservice profile portable;
 
-enum Directoryˉserviceˉrequestˉstatus {
+export enum Directoryˉserviceˉrequestˉstatus {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉmagic = 2;
@@ -10,7 +10,7 @@ enum Directoryˉserviceˉrequestˉstatus {
     Invalidˉlimit = 6;
 }
 
-record Directoryˉserviceˉrequest {
+export record Directoryˉserviceˉrequest {
     Status: Directoryˉserviceˉrequestˉstatus;
     Offset: u32;
     Maximumˉbytes: u32;

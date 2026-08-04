@@ -1,6 +1,6 @@
 module Directoryˉsnapshotˉbridge profile hosted;
 
-import Directoryˉsnapshotˉservice;
+import Directoryˉsnapshotˉservice as Snapshotˉservice;
 
 capability file.read_bytes;
 
@@ -10,5 +10,5 @@ data Requestˉname: text = "ipc:directory-read.wvdq";
 export fn Main() -> bytes {
     let Snapshot: bytes = file.read_bytes(Snapshotˉname);
     let Request: bytes = file.read_bytes(Requestˉname);
-    return Directoryˉsnapshotˉserviceˉhandle(Snapshot, Request);
+    return Snapshotˉservice.Directoryˉsnapshotˉserviceˉhandle(Snapshot, Request);
 }

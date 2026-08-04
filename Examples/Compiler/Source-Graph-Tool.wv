@@ -1,6 +1,6 @@
 module Compilerˉsourceˉgraphˉtool profile hosted;
 
-import Compilerˉsourceˉgraph;
+import Compilerˉsourceˉgraph as Sourceˉgraph;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -43,7 +43,7 @@ fn Compilerˉsourceˉgraphˉtoolˉbuild(Modules: u32) -> bytes {
 }
 
 fn Compilerˉsourceˉgraphˉtoolˉsuccess(
-    Summary: Compilerˉsourceˉgraphˉsummary
+    Summary: Sourceˉgraph.Compilerˉsourceˉgraphˉsummary
 ) -> text {
     var Report: text = "source graph status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -56,7 +56,7 @@ fn Compilerˉsourceˉgraphˉtoolˉsuccess(
 }
 
 fn Compilerˉsourceˉgraphˉtoolˉfailure(
-    Summary: Compilerˉsourceˉgraphˉsummary
+    Summary: Sourceˉgraph.Compilerˉsourceˉgraphˉsummary
 ) -> text {
     var Report: text = "source graph status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -85,8 +85,8 @@ export fn Main() -> i32 {
         return 64;
     }
     let Input: bytes = Compilerˉsourceˉgraphˉtoolˉbuild(Modules);
-    let Summary: Compilerˉsourceˉgraphˉsummary = Compilerˉvalidateˉsourceˉgraph(Input);
-    if Summary.Status != Compilerˉsourceˉgraphˉstatus.Valid {
+    let Summary: Sourceˉgraph.Compilerˉsourceˉgraphˉsummary = Sourceˉgraph.Compilerˉvalidateˉsourceˉgraph(Input);
+    if Summary.Status != Sourceˉgraph.Compilerˉsourceˉgraphˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉgraphˉtoolˉfailure(Summary));
         return 1;
     }

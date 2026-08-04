@@ -1,6 +1,6 @@
 module Compilerˉnativeˉstencil profile portable;
 
-enum Nativeˉstencilˉstatus {
+export enum Nativeˉstencilˉstatus {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉobject = 2;
@@ -21,7 +21,7 @@ enum Nativeˉstencilˉpatchˉkind {
     Argumentˉindexˉoutˉofˉrangeˉu8ˉdetail = 7;
 }
 
-record Nativeˉstencilˉresult {
+export record Nativeˉstencilˉresult {
     Status: Nativeˉstencilˉstatus;
     Value: bytes;
     Failureˉoffset: u32;

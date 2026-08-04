@@ -1,11 +1,11 @@
 module Compilerˉnativeˉx64ˉloweringˉmemory profile portable;
 
-import Compilerˉnativeˉx64ˉlowering;
+import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 
 export fn Main(Input: bytes) -> bytes {
-    let Summary: Compilerˉnativeˉx64ˉsummary =
-        Compilerˉlowerˉwvbˉnativeˉx64(Input);
-    if Summary.Status != Compilerˉnativeˉx64ˉstatus.Valid {
+    let Summary: Nativeˉx64.Compilerˉnativeˉx64ˉsummary =
+        Nativeˉx64.Compilerˉlowerˉwvbˉnativeˉx64(Input);
+    if Summary.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
         return Bytesˉslice(Input, 0u32, 0u32);
     }
     return Summary.Object;

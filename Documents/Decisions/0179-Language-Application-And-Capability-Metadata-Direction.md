@@ -56,7 +56,7 @@ Source, package, and module evidence will separately encode:
 
 Capability requirements carry canonical ASCII-safe interface identities, major contract versions, exact signatures, limits, and failure behavior. Metadata is canonical, deterministically ordered, and preserved in derived native or AOT containers. The root application or package approval remains separate from provider grants and runtime bindings.
 
-The current `portable`, `hosted`, and `system` profile bytes remain implemented compatibility boundaries until one real platform-scoped library and one optional-capability consumer justify a versioned source and WVB encoding. A profile value must not become an overloaded replacement for the four dimensions.
+The current `portable`, `hosted`, and `system` profile bytes remain implemented encoding boundaries until one real platform-scoped library and one optional-capability consumer justify a versioned source and WVB encoding. Under Decision 0184's active-development policy they are not backward-compatibility promises: a replacement may migrate the repository directly without a dual reader. A profile value must not become an overloaded replacement for the four dimensions.
 
 ### Retain the current identifier boundary
 

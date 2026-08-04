@@ -1,8 +1,9 @@
 module Compilerˉsourceˉset profile portable;
 
-import Compilerˉsourceˉbodyˉparser;
+import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 
-enum Compilerˉsourceˉsetˉstatus {
+export enum Compilerˉsourceˉsetˉstatus {
     Valid = 0;
     Tooˉshort = 1;
     Invalidˉmagic = 2;
@@ -20,7 +21,7 @@ enum Compilerˉsourceˉsetˉstatus {
     Privateˉdependencyˉfunction = 14;
 }
 
-record Compilerˉsourceˉsetˉscan {
+export record Compilerˉsourceˉsetˉscan {
     Status: Compilerˉsourceˉsetˉstatus;
     Modules: u32;
     Directoryˉoffset: u32;
@@ -31,7 +32,7 @@ record Compilerˉsourceˉsetˉscan {
     Failureˉmodule: u32;
 }
 
-record Compilerˉsourceˉsetˉview {
+export record Compilerˉsourceˉsetˉview {
     Status: Compilerˉsourceˉsetˉstatus;
     Index: u32;
     Offset: u32;
@@ -39,7 +40,7 @@ record Compilerˉsourceˉsetˉview {
     Source: bytes;
 }
 
-record Compilerˉsourceˉsetˉsummary {
+export record Compilerˉsourceˉsetˉsummary {
     Status: Compilerˉsourceˉsetˉstatus;
     Modules: u32;
     Sourceˉbytes: u32;
@@ -51,8 +52,8 @@ record Compilerˉsourceˉsetˉsummary {
     Failureˉoffset: u32;
     Failureˉline: u32;
     Failureˉcolumn: u32;
-    Parseˉstatus: Compilerˉparseˉstatus;
-    Bodyˉstatus: Compilerˉbodyˉparseˉstatus;
+    Parseˉstatus: Sourceˉdeclarations.Compilerˉparseˉstatus;
+    Bodyˉstatus: Sourceˉbodies.Compilerˉbodyˉparseˉstatus;
 }
 
 export fn Compilerˉsourceˉsetˉscanˉfailure(
@@ -258,8 +259,8 @@ export fn Compilerˉsourceˉsetˉsummaryˉfailure(
     Offset: u32,
     Line: u32,
     Column: u32,
-    Parseˉstatus: Compilerˉparseˉstatus,
-    Bodyˉstatus: Compilerˉbodyˉparseˉstatus
+    Parseˉstatus: Sourceˉdeclarations.Compilerˉparseˉstatus,
+    Bodyˉstatus: Sourceˉbodies.Compilerˉbodyˉparseˉstatus
 ) -> Compilerˉsourceˉsetˉsummary {
     return Compilerˉsourceˉsetˉsummary(
         Status,
@@ -289,8 +290,8 @@ export fn Compilerˉsourceˉsetˉsummaryˉfromˉscan(
         Scan.Failureˉoffset,
         0u32,
         0u32,
-        Compilerˉparseˉstatus.Valid,
-        Compilerˉbodyˉparseˉstatus.Valid
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+        Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
     );
 }
 
@@ -308,8 +309,8 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
     while Index < Scan.Modules {
         let View: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
         let Source: bytes = View.Source;
-        let Parsed: Compilerˉsourceˉmoduleˉsummary = Compilerˉparseˉsource(Source);
-        if Parsed.Status != Compilerˉparseˉstatus.Valid {
+        let Parsed: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary = Sourceˉdeclarations.Compilerˉparseˉsource(Source);
+        if Parsed.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
             return Compilerˉsourceˉsetˉsummaryˉfailure(
                 Compilerˉsourceˉsetˉstatus.Sourceˉsyntax,
                 Scan.Modules,
@@ -319,12 +320,12 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                 Parsed.Failureˉline,
                 Parsed.Failureˉcolumn,
                 Parsed.Status,
-                Compilerˉbodyˉparseˉstatus.Valid
+                Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
             );
         }
-        let Bodies: Compilerˉsourceˉbodyˉsummary =
-            Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(Source, Parsed);
-        if Bodies.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        let Bodies: Sourceˉbodies.Compilerˉsourceˉbodyˉsummary =
+            Sourceˉbodies.Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(Source, Parsed);
+        if Bodies.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid {
             return Compilerˉsourceˉsetˉsummaryˉfailure(
                 Compilerˉsourceˉsetˉstatus.Bodyˉsyntax,
                 Scan.Modules,
@@ -333,12 +334,12 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                 Bodies.Failureˉoffset,
                 Bodies.Failureˉline,
                 Bodies.Failureˉcolumn,
-                Compilerˉparseˉstatus.Valid,
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
                 Bodies.Status
             );
         }
-        let Header: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Source);
-        let Nameˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Source);
+        let Nameˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
             Source,
             0u32,
             1u32,
@@ -349,7 +350,7 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
         var Previous: u32 = 0u32;
         while Previous < Index {
             let Previousˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Previous);
-            let Previousˉheader: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Previousˉview.Source);
+            let Previousˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Previousˉview.Source);
             if Compilerˉsourceˉspansˉequal(
                 Previousˉview.Source,
                 Previousˉheader.Nameˉoffset,
@@ -366,8 +367,8 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                     Header.Nameˉoffset,
                     Nameˉposition.Line,
                     Nameˉposition.Column,
-                    Compilerˉparseˉstatus.Valid,
-                    Compilerˉbodyˉparseˉstatus.Valid
+                    Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                    Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
                 );
             }
             Previous = Previous + 1u32;
@@ -375,7 +376,7 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
 
         if Index > 1u32 {
             let Priorˉview: Compilerˉsourceˉsetˉview = Compilerˉsourceˉsetˉmodule(Input, Scan, Index - 1u32);
-            let Priorˉheader: Compilerˉsourceˉheader = Compilerˉparseˉheaderˉvalidated(Priorˉview.Source);
+            let Priorˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Priorˉview.Source);
             if Compilerˉsourceˉspansˉcompare(
                 Priorˉview.Source,
                 Priorˉheader.Nameˉoffset,
@@ -392,14 +393,14 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                     Header.Nameˉoffset,
                     Nameˉposition.Line,
                     Nameˉposition.Column,
-                    Compilerˉparseˉstatus.Valid,
-                    Compilerˉbodyˉparseˉstatus.Valid
+                    Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                    Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
                 );
             }
         }
 
         if Index > 0u32 {
-            if Header.Profile != Compilerˉsourceˉprofile.Portable {
+            if Header.Profile != Sourceˉdeclarations.Compilerˉsourceˉprofile.Portable {
                 return Compilerˉsourceˉsetˉsummaryˉfailure(
                     Compilerˉsourceˉsetˉstatus.Dependencyˉprofile,
                     Scan.Modules,
@@ -408,8 +409,8 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                     Header.Nameˉoffset,
                     Nameˉposition.Line,
                     Nameˉposition.Column,
-                    Compilerˉparseˉstatus.Valid,
-                    Compilerˉbodyˉparseˉstatus.Valid
+                    Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                    Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
                 );
             }
             if Parsed.Capabilities != 0u32 {
@@ -421,69 +422,9 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
                     Header.Nameˉoffset,
                     Nameˉposition.Line,
                     Nameˉposition.Column,
-                    Compilerˉparseˉstatus.Valid,
-                    Compilerˉbodyˉparseˉstatus.Valid
+                    Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                    Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
                 );
-            }
-            if Parsed.Data != 0u32 {
-                return Compilerˉsourceˉsetˉsummaryˉfailure(
-                    Compilerˉsourceˉsetˉstatus.Dependencyˉshape,
-                    Scan.Modules,
-                    Scan.Sourceˉbytes,
-                    Index,
-                    Header.Nameˉoffset,
-                    Nameˉposition.Line,
-                    Nameˉposition.Column,
-                    Compilerˉparseˉstatus.Valid,
-                    Compilerˉbodyˉparseˉstatus.Valid
-                );
-            }
-
-            var Cursor: u32 = Header.Nextˉoffset;
-            var Currentˉline: u32 = Header.Nextˉline;
-            var Currentˉcolumn: u32 = Header.Nextˉcolumn;
-            var Sawˉnonˉimport: bool = false;
-            var Reading: bool = true;
-            while Reading {
-                let Declaration: Compilerˉsourceˉdeclaration = Compilerˉparseˉnextˉdeclarationˉvalidated(
-                    Source,
-                    Cursor,
-                    Currentˉline,
-                    Currentˉcolumn,
-                    Sawˉnonˉimport
-                );
-                if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.End {
-                    Reading = false;
-                } else {
-                    if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Function {
-                        if !Declaration.Isˉexported {
-                            let Functionˉposition: Compilerˉsourceˉposition = Compilerˉbodyˉpositionˉbetween(
-                                Source,
-                                Cursor,
-                                Currentˉline,
-                                Currentˉcolumn,
-                                Declaration.Nameˉoffset
-                            );
-                            return Compilerˉsourceˉsetˉsummaryˉfailure(
-                                Compilerˉsourceˉsetˉstatus.Privateˉdependencyˉfunction,
-                                Scan.Modules,
-                                Scan.Sourceˉbytes,
-                                Index,
-                                Declaration.Nameˉoffset,
-                                Functionˉposition.Line,
-                                Functionˉposition.Column,
-                                Compilerˉparseˉstatus.Valid,
-                                Compilerˉbodyˉparseˉstatus.Valid
-                            );
-                        }
-                    }
-                    Cursor = Declaration.Nextˉoffset;
-                    Currentˉline = Declaration.Nextˉline;
-                    Currentˉcolumn = Declaration.Nextˉcolumn;
-                    if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Import {
-                        Sawˉnonˉimport = true;
-                    }
-                }
             }
         }
 
@@ -506,7 +447,7 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
         Bytesˉlength(Input),
         0u32,
         0u32,
-        Compilerˉparseˉstatus.Valid,
-        Compilerˉbodyˉparseˉstatus.Valid
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+        Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
     );
 }

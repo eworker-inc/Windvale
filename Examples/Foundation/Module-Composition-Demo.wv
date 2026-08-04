@@ -1,7 +1,7 @@
 module Compositionˉdemo profile portable;
 
-import Compositionˉmiddle;
+import Compositionˉmiddle as Middle;
 
 export fn Main() -> i32 {
-    return Compositionˉanswer();
+    return Middle.Compositionˉanswer();
 }

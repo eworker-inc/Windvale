@@ -41,7 +41,7 @@ The runtime cannot execute raw module bytes or an unverified `Bytecodeˉmodule`.
 `Compiler/Windvale/` owns the compiler implementation written in Windvale:
 
 - The first Windvale-written streaming lexer over strict UTF-8 bytes, with Stage 0 token identities and bounded source/failure coordinates
-- A Windvale-written declaration pass exposing module/declaration/body byte spans and counts through streaming cursors without token or declaration collections
+- A Windvale-written declaration and body pass exposing module/declaration/body byte spans and counts through streaming cursors without token or declaration collections, including inferred locals, named record literals, and recursive `else if`
 - A compiler-owned canonical packed source-set reader that gives portable semantic phases indexed immutable views over the root and ordered dependencies
 - A Windvale-written import-graph phase that owns bounded module resolution, root reachability, and cycle rejection without host paths or collections
 - A Windvale-written declaration/signature symbol phase with independently validated packed declaration evidence, transitive visibility, deterministic nominal indices, and stable namespace/type failures
@@ -57,7 +57,7 @@ This implementation is the qualified Windvale bytecode compiler: Stage 0 builds 
 
 - Source locations and stable compiler diagnostics
 - Tokenization and strict string-literal handling
-- Recursive-descent and precedence parsing
+- Recursive-descent and precedence parsing, including named record fields and block-form `else if`
 - Explicit bounded source-module graph validation and deterministic static composition of dependency records, enums, functions, and explicitly re-approved catalog capabilities
 - Module, capability, data, record, enum, function, local, and nominal type binding
 - Typed, stack-independent WIR with explicit blocks and terminators
@@ -154,6 +154,7 @@ Both linker implementations own the same `flat-x86-64-v1` contract and remain by
 - Deterministic local defaults
 - Checked `i32` arithmetic
 - Checked `u32` arithmetic and `u8` values
+- Compile-time checked, storage-free typed scalar and enum constants
 - Immutable byte sequences and zero-copy slice views
 - Immutable nominal record values and field access
 - Nominal enum values, names, equality, and invariant bounded formatting

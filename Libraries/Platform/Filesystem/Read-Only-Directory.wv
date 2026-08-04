@@ -5,7 +5,7 @@ capability filesystem.directory_read_v1;
 // The capability is one pre-bound directory instance. Names are single ASCII
 // segments; providers never receive native paths or ambient process state.
 
-enum Directoryˉreadˉstatus {
+export enum Directoryˉreadˉstatus {
     Valid = 0;
     Notˉfound = 1;
     Notˉfile = 2;
@@ -20,7 +20,7 @@ enum Directoryˉreadˉstatus {
     Invalidˉresponse = 11;
 }
 
-record Directoryˉreadˉresult {
+export record Directoryˉreadˉresult {
     Status: Directoryˉreadˉstatus;
     Value: bytes;
     Fileˉlength: u32;

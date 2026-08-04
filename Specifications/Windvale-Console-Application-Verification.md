@@ -70,7 +70,7 @@ On success, the hosted bridge performs exactly one `file.write_bytes` to `consol
 
 ## Stage 0 integration and limits
 
-`Linker/Windvale/Console-Application-Verification-Core.wv` is portable and capability-free. Its hosted bridge declares only `file.read_bytes` and `file.write_bytes`, uses the fixed resource names above, and is bounded to ten million instructions. The retained bridge WVB is exactly 46,150 bytes with SHA-256 `74542907a1b7a90d6d13ee157e7a9e7a4e60e83c042a5486e2f0ab3113ad6013`.
+`Linker/Windvale/Console-Application-Verification-Core.wv` is portable and capability-free. Its hosted bridge declares only `file.read_bytes` and `file.write_bytes`, uses the fixed resource names above, and is bounded to ten million instructions. The current retained bridge WVB is exactly 44,678 bytes with SHA-256 `93cb6b787f42b3475f403fe9272458177995d763bf62bbfbd0d5f03465761efc`; its portable core is 45,018 bytes with SHA-256 `67b292adbfe4cb6af04cb0422083eb04987b86a21269fba17f50d93c89389634`.
 
 Both live console writers require the Windvale verifier to reproduce the original target, native bytes, and entry. The independent detailed C# PE or ELF verifier then performs the same recovery through separately maintained structural logic. Any rejection or disagreement prevents successful application output. Atomic filesystem publication remains a later host operation over these already verified bytes.
 

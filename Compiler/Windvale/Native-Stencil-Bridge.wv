@@ -1,6 +1,6 @@
 module Compilerˉnativeˉstencilˉbridge profile portable;
 
-import Compilerˉnativeˉstencil;
+import Compilerˉnativeˉstencil as Nativeˉstencil;
 
 data Argumentˉcountˉobject: bytes = [
     87, 86, 79, 49, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,
@@ -41,15 +41,15 @@ data Argumentˉobject: bytes = [
 ];
 
 export fn Main() -> bytes {
-    let Count: Nativeˉstencilˉresult =
-        Nativeˉstencilˉprocessˉargumentˉcount(Argumentˉcountˉobject);
-    if Count.Status != Nativeˉstencilˉstatus.Valid {
+    let Count: Nativeˉstencil.Nativeˉstencilˉresult =
+        Nativeˉstencil.Nativeˉstencilˉprocessˉargumentˉcount(Argumentˉcountˉobject);
+    if Count.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Valid {
         return Bytesˉslice(Argumentˉcountˉobject, 0u32, 0u32);
     }
 
-    let Argument: Nativeˉstencilˉresult =
-        Nativeˉstencilˉprocessˉargument(Argumentˉobject);
-    if Argument.Status != Nativeˉstencilˉstatus.Valid {
+    let Argument: Nativeˉstencil.Nativeˉstencilˉresult =
+        Nativeˉstencil.Nativeˉstencilˉprocessˉargument(Argumentˉobject);
+    if Argument.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Valid {
         return Bytesˉslice(Argumentˉobject, 0u32, 0u32);
     }
 

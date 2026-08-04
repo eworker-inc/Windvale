@@ -40,6 +40,9 @@
       "include": "#numbers"
     },
     {
+      "include": "#named-record-literals"
+    },
+    {
       "include": "#calls"
     },
     {
@@ -115,7 +118,7 @@
           }
         },
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(record|enum)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "match": "(?<![A-Za-z0-9_ˉ])(record|enum|variant)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
           "captures": {
             "1": {
               "name": "keyword.declaration.type.windvale"
@@ -130,6 +133,17 @@
           "captures": {
             "1": {
               "name": "keyword.declaration.data.windvale"
+            },
+            "2": {
+              "name": "variable.other.constant.windvale"
+            }
+          }
+        },
+        {
+          "match": "(?<![A-Za-z0-9_ˉ])(const)\\s+([A-Z_][A-Z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.constant.windvale"
             },
             "2": {
               "name": "variable.other.constant.windvale"
@@ -168,7 +182,7 @@
       "patterns": [
         {
           "name": "keyword.declaration.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:module|profile|import|capability|data|record|enum|export|fn)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![A-Za-z0-9_ˉ])(?:module|profile|import|as|capability|data|const|record|enum|variant|export|fn)(?![A-Za-z0-9_ˉ])"
         }
       ]
     },
@@ -176,7 +190,7 @@
       "patterns": [
         {
           "name": "keyword.control.flow.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:if|else|while|return)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![A-Za-z0-9_ˉ])(?:if|else|while|for|in|match|case|push|break|continue|return)(?![A-Za-z0-9_ˉ])"
         }
       ]
     },
@@ -184,7 +198,7 @@
       "patterns": [
         {
           "name": "storage.modifier.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:let|var)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![A-Za-z0-9_ˉ])(?:let|var|freeze)(?![A-Za-z0-9_ˉ])"
         }
       ]
     },
@@ -200,7 +214,7 @@
       "patterns": [
         {
           "name": "storage.type.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:i32|i64|u8|u32|u64|bool|text|bytes|void)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![A-Za-z0-9_ˉ])(?:i32|i64|u8|u32|u64|bool|text|bytes|sequence|builder|void)(?![A-Za-z0-9_ˉ])"
         }
       ]
     },
@@ -235,6 +249,14 @@
         }
       ]
     },
+    "named-record-literals": {
+      "patterns": [
+        {
+          "name": "entity.name.type.windvale",
+          "match": "(?<![A-Za-z0-9_ˉ])([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)(?=\\s*\\{\\s*[A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*\\s*:)"
+        }
+      ]
+    },
     "calls": {
       "patterns": [
         {
@@ -266,7 +288,7 @@
       "patterns": [
         {
           "name": "keyword.operator.windvale",
-          "match": "->|==|!=|<=|>=|[+\\-*!<>=]"
+          "match": "->|&&|\\|\\||<<|>>|==|!=|<=|>=|\\+=|-=|\\*=|[+\\-*/%&|^~!<>=]"
         }
       ]
     },

@@ -9,7 +9,7 @@ enum Nativeˉpublicationˉlifetimeˉstatus {
     Invalidˉimage = 5;
 }
 
-record Nativeˉpublicationˉlifetimeˉresult {
+export record Nativeˉpublicationˉlifetimeˉresult {
     Status: Nativeˉpublicationˉlifetimeˉstatus;
     Value: bytes;
     Failureˉoffset: u32;

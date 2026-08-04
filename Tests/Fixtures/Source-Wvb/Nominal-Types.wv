@@ -20,7 +20,11 @@ record Reading {
     Payload: bytes;
 }
 
-data Blob: bytes = [9, 8, 7];
+data Blob: bytes = [
+    9,
+    8,
+    7,
+];
 
 enum Signal {
     Stop = 2;
@@ -28,9 +32,20 @@ enum Signal {
 }
 
 export fn Main() -> i32 {
-    let Sample: Reading = Reading(7, Weather.Windy, true, "ridge", 5u8, 8u32, Blob);
-    let Copy: Reading = Keep(Sample);
-    let Box: Envelope = Envelope(4, Signal.Go);
+    let Sample = Reading {
+        Count: 7,
+        State: Weather.Windy,
+        Ready: true,
+        Label: "ridge",
+        Code: 5u8,
+        Size: 8u32,
+        Payload: Blob,
+    };
+    let Copy = Keep(Sample);
+    let Box = Envelope {
+        Value: 4,
+        State: Signal.Go,
+    };
     if Copy.State != Weather.Windy { return 1; }
     if Copy.State == Weather.Calm { return 2; }
     if Box.State != Signal.Go { return 3; }
@@ -38,7 +53,7 @@ export fn Main() -> i32 {
     if Copy.Code != 5u8 { return 5; }
     if Copy.Size != 8u32 { return 6; }
     if Bytesˉlength(Copy.Payload) != 3u32 { return 7; }
-    let Weatherˉname: text = Enumˉname(Copy.State);
+    let Weatherˉname = Enumˉname(Copy.State);
     if Bytesˉreadˉu8(Textˉtoˉutf8(Weatherˉname), 0u32) != 87u8 { return 8; }
     return Measure(Copy) + Box.Value;
 }

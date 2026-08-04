@@ -1,6 +1,6 @@
 module Compilerˉsourceˉsetˉtool profile hosted;
 
-import Compilerˉsourceˉset;
+import Compilerˉsourceˉset as Sourceˉset;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -43,7 +43,7 @@ fn Compilerˉsourceˉsetˉtoolˉbuild(Modules: u32) -> bytes {
 }
 
 fn Compilerˉsourceˉsetˉtoolˉsuccess(
-    Summary: Compilerˉsourceˉsetˉsummary
+    Summary: Sourceˉset.Compilerˉsourceˉsetˉsummary
 ) -> text {
     var Report: text = "source set status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -62,7 +62,7 @@ fn Compilerˉsourceˉsetˉtoolˉsuccess(
 }
 
 fn Compilerˉsourceˉsetˉtoolˉfailure(
-    Summary: Compilerˉsourceˉsetˉsummary
+    Summary: Sourceˉset.Compilerˉsourceˉsetˉsummary
 ) -> text {
     var Report: text = "source set status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -91,8 +91,8 @@ export fn Main() -> i32 {
         return 64;
     }
     let Input: bytes = Compilerˉsourceˉsetˉtoolˉbuild(Modules);
-    let Summary: Compilerˉsourceˉsetˉsummary = Compilerˉvalidateˉsourceˉset(Input);
-    if Summary.Status != Compilerˉsourceˉsetˉstatus.Valid {
+    let Summary: Sourceˉset.Compilerˉsourceˉsetˉsummary = Sourceˉset.Compilerˉvalidateˉsourceˉset(Input);
+    if Summary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid {
         diagnostic.write_line(Compilerˉsourceˉsetˉtoolˉfailure(Summary));
         return 1;
     }

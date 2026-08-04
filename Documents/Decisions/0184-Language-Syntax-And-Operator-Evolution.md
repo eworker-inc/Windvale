@@ -1,7 +1,7 @@
 # Decision 0184: Language syntax and operator evolution
 
 - Date: 2026-08-03
-- Status: Accepted architecture direction; none of the new syntax is implemented
+- Status: Accepted architecture direction; implementation-sequence slices 1 through 8 and the coherent local change-aware gate pass, with independent cross-host qualification pending
 - Refines: [Decision 0179](0179-Language-Application-And-Capability-Metadata-Direction.md) and [Decision 0180](0180-Compiler-Runtime-And-Native-Toolchain-Boundaries.md)
 - Architecture: [Language design](../Architecture/Language-Design.md)
 - Retains: explicit types at public boundaries, immutable `let`, mutable `var`, checked arithmetic, no implicit conversions, deterministic left-to-right evaluation, braces, semicolons, and canonical WVB semantics
@@ -12,7 +12,29 @@ Windvale Seed already supports modules, imports, capabilities, immutable data, n
 
 Syntax growth affects the Stage 0 compiler, Windvale-written lexer/parser/bindings/WIR/backend, WVB verifier and runtime where semantics expand, editor grammar, examples, malformed-input coverage, and bootstrap convergence. The first additions should therefore improve useful programs while lowering to existing WIR and WVB contracts whenever possible.
 
+## Implementation progress
+
+The first candidate slice implements exact initializer inference for `let` and `var` plus trailing commas in multiline parameter, call, positional-record, and static-data lists. The second implements typed constants in Stage 0 and the Windvale-written compiler. Constants lower to retained literal and enum operations and create no runtime storage or WVB export. The third implements named record literals and block-form `else if` in both compilers and editor tooling. Named fields lower through the existing record-create operation after source-order evaluation and declaration-order operand placement; `else if` lowers through existing conditional blocks and branches.
+
+The fourth candidate implements nearest-loop `break` and `continue`, Boolean-only left-to-right short-circuit `&&` and `||`, and `+=`, `-=`, and `*=` for mutable locals. Stage 0 and the Windvale-written compiler agree on exact WVB bytes for a control oracle whose skipped operand would trap. WVIR appends a structurally verified `Boolˉphi = 64`; WVB adds no opcode and materializes that value on the two predecessor jumps. Compound assignment uses one target load and one store. The current Windvale WVB 1.6 lowering admits `i32` and `u32` compound arithmetic while Stage 0 also follows its existing `i64` and `u64` arithmetic contract.
+
+The next two candidates implement private-by-default source modules with explicit export, alias qualification, deterministic internal identities, and the independently encoded platform/authority/required/optional metadata contract. Dependency data, constants, nominal types, variants, and functions are visible only through an explicit alias and export. WVB 1.8 carries the metadata contract; later feature-bearing minors retain an explicit metadata-presence byte.
+
+Exhaustive enum match, nominal single-payload variants, and explicit recoverable-result flow are implemented through Decisions 0184 and 0199. WVB 1.9 adds variant types and create/test/payload operations. Decision 0200 then implements bounded sequences, affine builders, consuming `freeze`, `push`, and deterministic `for` through WVB 1.10.
+
+The operator candidate implements checked `/` and `%`, unsigned `&`, `|`, `^`, `~`, `<<`, and `>>`, plus exact text and bytes equality. WVB 1.11 appends the complete Stage 0 opcode family; the Windvale-written compiler emits its current `i32`, `u8`, `u32`, text, and bytes subset. The shared operator oracle is 2,623 bytes with SHA-256 `26fcb52bc7e893d306d6f12343fa596bdbf919c95c74f033ef67c2afaf46a210`, compares byte-for-byte across both compilers, verifies, and executes with result `28`.
+
+Typed capability values, `using`, and package-backed resources are not silently inferred from this sequence. The accepted architecture still requires a focused decision selecting their value representation, provider protocol, cleanup-failure semantics, and immutable resource manifest before implementation.
+
+Stage 0 covers the complete current scalar widths. The Windvale-written compiler covers `i32`, `u8`, `u32`, `bool`, text, bytes, nominal values, variants, and collections pending its separately verified `i64`/`u64` adoption. These are local deterministic implementation results, not a new cross-host qualification claim.
+
 ## Decision
+
+### Keep active development free of compatibility debt
+
+Through at least September 3, 2026, and afterward until a named decision replaces this policy, Windvale source syntax, compiler IR, WVB, and related experimental tool formats carry no backward-compatibility promise. An accepted replacement may remove the obsolete spelling or encoding directly and migrate repository source, fixtures, generated artifacts, tools, and tests together. Readers need not accept superseded experimental versions, and implementations must not add dual parsers, translation shims, or compatibility aliases merely to preserve them.
+
+This policy does not permit silent semantic drift: the current contract remains explicit, versioned, bounded, and verified. Historical qualification evidence remains historical evidence, not a supported-input promise. A compatibility case becomes binding only when a later named decision identifies the exact source or binary contract, supported versions, duration, consumers, and retirement rule.
 
 ### Keep the grammar explicit and bounded
 
@@ -200,7 +222,7 @@ Do not add classes, inheritance, implicit null, operator overloading, overload r
 ## Implementation sequence
 
 1. Specify and implement local inference, typed constants, uniform trailing commas, named record literals, and `else if` in both compiler paths and editor tooling without changing WVB semantics.
-2. Add `break`, `continue`, `&&`, and `||` through typed WIR control and existing WVB branches.
+2. Add `break`, `continue`, `&&`, `||`, and mutable-local compound assignment through typed WIR control and existing WVB branches.
 3. Add private dependency helpers, `export` on nominal declarations, import aliases, and qualified name resolution while preserving canonical declaration identities.
 4. Select and version the independent platform/authority/required/optional metadata grammar and encoding under Decision 0179.
 5. Add exhaustive statement-form enum `match` through existing enum and branch operations.
@@ -215,11 +237,13 @@ Each slice updates Stage 0, the Windvale compiler front end and WIR, WVB only wh
 
 Near-term Windvale source becomes substantially easier to read without weakening explicit types, mutability, authority, allocation, or checked execution. Module qualification and privacy allow libraries to grow without globally prefixed declaration names or accidental visibility.
 
-Exhaustive enum matching provides immediate value before payload variants change the value model. Variants then support typed operational results and optional values without exceptions or null. Collections and resource scopes arrive only after their ownership contracts can be verified.
+Exhaustive enum matching provides immediate value before payload variants change the value model. Variants then support typed operational results and optional values without exceptions or null. Bounded sequences and affine builders now carry their verified ownership contract; resource scopes still wait for a separate provider/value/cleanup/manifest decision.
 
 Operators remain predictable and non-extensible. Numeric notation cannot silently allocate text, invoke user code, acquire authority, compare native handles, or inherit host overflow and shift behavior.
 
-This decision changes no current Seed token, grammar, WIR, WVB, runtime, editor, example, or artifact identity.
+The implemented candidate slices append the `const`, loop-control, Boolean, and compound-assignment tokens; append named-record expression, loop-control statement, loop-placement failure, and Boolean-phi identities; advance WVLB and WVSD minor versions to 1.1; update editor/examples; and change compiler artifact identities. They preserve retained fixture bytes where the source semantics are unchanged: inferred annotations and constant declarations disappear during typed lowering, named fields remap to the existing declaration-order record operation, `else if`, `break`, and `continue` use ordinary branches, and `Boolˉphi` is materialized without a new WVB opcode.
+
+The completed coherent batch expands beyond this decision's intermediate capacity measurements. [Decision 0201](0201-Expanded-Exact-Compiler-Native-Capacity.md) owns the current 26,299,864-byte native image, 32 MiB explicit large-native admission, measured 104,885,093-byte dynamic peak, 128 MiB ordinary/version-2/3 arena, and 48,000,000,000-instruction compiler ceiling. ABI 22, context 7, the 32-bit capacity field, individual value limits, and narrow version-1 container capacities remain unchanged. The successor capacity is locally verified and still requires dual-host qualification before it becomes a new cross-host claim.
 
 ## Rejected alternatives
 

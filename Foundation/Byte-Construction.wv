@@ -1,6 +1,6 @@
 module Foundationˉbyteˉconstruction profile portable;
 
-record Foundationˉbytesˉresult {
+export record Foundationˉbytesˉresult {
     Valid: bool;
     Value: bytes;
 }

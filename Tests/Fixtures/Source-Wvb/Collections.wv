@@ -1,0 +1,15 @@
+module Collectionˉoracle profile portable;
+
+export fn Main() -> i32
+{
+    var Items = builder<i32, 8>();
+    push Items, 2;
+    push Items, 4;
+    push Items, 6;
+    let Values = freeze Items;
+    var Total = 0;
+    for Value in Values {
+        Total += Value;
+    }
+    return Total + Values[1u32];
+}

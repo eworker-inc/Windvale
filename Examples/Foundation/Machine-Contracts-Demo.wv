@@ -1,19 +1,19 @@
 module Machineˉcontractsˉdemo profile portable;
 
-import Foundationˉmachineˉcontracts;
+import Foundationˉmachineˉcontracts as Machineˉcontracts;
 
 export fn Main() -> i32 {
-    if !Foundationˉalignmentˉisˉvalid(1u32) { return 1; }
-    if !Foundationˉalignmentˉisˉvalid(4096u32) { return 2; }
-    if Foundationˉalignmentˉisˉvalid(0u32) { return 3; }
-    if Foundationˉalignmentˉisˉvalid(3u32) { return 4; }
-    if Foundationˉalignmentˉisˉvalid(8192u32) { return 5; }
-    if !Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("Main")) { return 6; }
-    if !Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8(".text")) { return 7; }
-    if !Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("$Value9")) { return 8; }
-    if Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("")) { return 9; }
-    if Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("9Value")) { return 10; }
-    if Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("Bad-Name")) { return 11; }
-    if Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("Windˉvale")) { return 12; }
+    if !Machineˉcontracts.Foundationˉalignmentˉisˉvalid(1u32) { return 1; }
+    if !Machineˉcontracts.Foundationˉalignmentˉisˉvalid(4096u32) { return 2; }
+    if Machineˉcontracts.Foundationˉalignmentˉisˉvalid(0u32) { return 3; }
+    if Machineˉcontracts.Foundationˉalignmentˉisˉvalid(3u32) { return 4; }
+    if Machineˉcontracts.Foundationˉalignmentˉisˉvalid(8192u32) { return 5; }
+    if !Machineˉcontracts.Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("Main")) { return 6; }
+    if !Machineˉcontracts.Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8(".text")) { return 7; }
+    if !Machineˉcontracts.Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("$Value9")) { return 8; }
+    if Machineˉcontracts.Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("")) { return 9; }
+    if Machineˉcontracts.Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("9Value")) { return 10; }
+    if Machineˉcontracts.Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("Bad-Name")) { return 11; }
+    if Machineˉcontracts.Foundationˉmachineˉnameˉisˉvalid(Textˉtoˉutf8("Windˉvale")) { return 12; }
     return 0;
 }

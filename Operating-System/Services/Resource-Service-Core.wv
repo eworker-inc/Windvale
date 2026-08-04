@@ -1,6 +1,6 @@
 module Resourceˉservice profile portable;
 
-import Resourceˉstore;
+import Resourceˉstore as Resourceˉstore;
 
 enum Resourceˉserviceˉrequestˉstatus {
     Valid = 0;
@@ -184,7 +184,7 @@ export fn Resourceˉserviceˉparseˉrequest(Input: bytes) -> Resourceˉserviceˉ
             Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉheader, 8u32
         );
     }
-    if !Resourceˉstoreˉutf8ˉisˉvalid(Input, 32u32, Nameˉbytes) {
+    if !Resourceˉstore.Resourceˉstoreˉutf8ˉisˉvalid(Input, 32u32, Nameˉbytes) {
         return Resourceˉserviceˉinvalidˉrequest(
             Requestˉid, Resourceˉserviceˉrequestˉstatus.Invalidˉname, 32u32
         );
@@ -211,8 +211,8 @@ export fn Resourceˉserviceˉhandle(Store: bytes, Request: bytes) -> bytes {
         );
     }
 
-    let Lookup: Resourceˉstoreˉresult = Resourceˉstoreˉlookup(Store, Parsed.Name);
-    if Lookup.Status == Resourceˉstoreˉstatus.Notˉfound {
+    let Lookup: Resourceˉstore.Resourceˉstoreˉresult = Resourceˉstore.Resourceˉstoreˉlookup(Store, Parsed.Name);
+    if Lookup.Status == Resourceˉstore.Resourceˉstoreˉstatus.Notˉfound {
         return Resourceˉserviceˉfailure(
             Request,
             Parsed.Requestˉid,
@@ -221,7 +221,7 @@ export fn Resourceˉserviceˉhandle(Store: bytes, Request: bytes) -> bytes {
             0u32
         );
     }
-    if Lookup.Status != Resourceˉstoreˉstatus.Valid {
+    if Lookup.Status != Resourceˉstore.Resourceˉstoreˉstatus.Valid {
         var Failureˉoffset: u32 = Lookup.Failureˉoffset;
         if Failureˉoffset > 4194304u32 { Failureˉoffset = 4194304u32; }
         return Resourceˉserviceˉfailure(

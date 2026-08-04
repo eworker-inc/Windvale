@@ -1,9 +1,9 @@
 module Windvaleˉcompilerˉbuildˉdriver profile hosted;
 
-import Compilerˉsourceˉwvb;
-import Compilerˉsourceˉsymbols;
-import Windvaleˉcompilerˉwvbˉverifierˉsemantic;
-import Windvaleˉproject;
+import Compilerˉsourceˉwvb as Sourceˉwvb;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
+import Windvaleˉproject as Project;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -92,7 +92,7 @@ fn Compilerˉbuildˉdriverˉhasˉsuffix(Value: bytes, Suffix: text) -> bool {
     let Valueˉlength: u32 = Bytesˉlength(Value);
     let Suffixˉlength: u32 = Bytesˉlength(Suffixˉbytes);
     if Valueˉlength < Suffixˉlength { return false; }
-    return Compilerˉsourceˉsymbolsˉnameˉequals(
+    return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
         Value, Valueˉlength - Suffixˉlength, Suffixˉlength, Suffix
     );
 }
@@ -120,14 +120,14 @@ fn Compilerˉbuildˉdriverˉderiveˉprojectˉprefix(
 
 fn Compilerˉbuildˉdriverˉprojectˉresource(
     Prefix: bytes,
-    Path: Windvaleˉprojectˉpath
+    Path: Project.Windvaleˉprojectˉpath
 ) -> bytes {
     return Bytesˉconcat(Prefix, Path.Value);
 }
 
 fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
     Manifest: bytes,
-    Scan: Windvaleˉprojectˉscan,
+    Scan: Project.Windvaleˉprojectˉscan,
     Prefix: bytes,
     Manifestˉname: bytes,
     Outputˉname: bytes
@@ -137,7 +137,7 @@ fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
     }
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
-        let Path: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(
+        let Path: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉpathˉat(
             Manifest, Scan, Index
         );
         if !Path.Found {
@@ -153,7 +153,7 @@ fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
         }
         var Previousˉindex: u32 = 0u32;
         while Previousˉindex < Index {
-            let Previousˉpath: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(
+            let Previousˉpath: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉpathˉat(
                 Manifest, Scan, Previousˉindex
             );
             let Previousˉresource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(
@@ -175,7 +175,7 @@ fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
 
 fn Compilerˉbuildˉdriverˉprojectˉinput(
     Manifest: bytes,
-    Scan: Windvaleˉprojectˉscan,
+    Scan: Project.Windvaleˉprojectˉscan,
     Prefix: bytes
 ) -> bytes {
     let Headerˉbytes: u32 = 16u32 + Scan.Modules * 8u32;
@@ -184,7 +184,7 @@ fn Compilerˉbuildˉdriverˉprojectˉinput(
     var Payloadˉbytes: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
-        let Path: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(
+        let Path: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉpathˉat(
             Manifest, Scan, Index
         );
         let Resource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(Prefix, Path);
@@ -211,12 +211,12 @@ fn Compilerˉbuildˉdriverˉprojectˉinput(
 }
 
 fn Compilerˉbuildˉdriverˉprojectˉfailure(
-    Status: Windvaleˉprojectˉstatus,
+    Status: Project.Windvaleˉprojectˉstatus,
     Line: u32,
     Column: u32
 ) -> text {
     var Report: text = "build status=Projectˉrejected code=";
-    Report = Textˉconcat(Report, Windvaleˉprojectˉdiagnosticˉcode(Status));
+    Report = Textˉconcat(Report, Project.Windvaleˉprojectˉdiagnosticˉcode(Status));
     Report = Textˉconcat(Report, " line=");
     Report = Textˉconcat(Report, U32ˉformat(Line));
     Report = Textˉconcat(Report, " column=");
@@ -224,7 +224,7 @@ fn Compilerˉbuildˉdriverˉprojectˉfailure(
 }
 
 fn Compilerˉbuildˉdriverˉcompileˉfailure(
-    Summary: Compilerˉsourceˉwvbˉsummary
+    Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary
 ) -> text {
     var Report: text = "build status=Compileˉrejected source-status=";
     Report = Textˉconcat(Report, Enumˉname(Summary.Status));
@@ -237,7 +237,7 @@ fn Compilerˉbuildˉdriverˉcompileˉfailure(
 }
 
 fn Compilerˉbuildˉdriverˉsuccess(
-    Summary: Compilerˉsourceˉwvbˉsummary
+    Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary
 ) -> text {
     var Report: text = "build status=Published verification=compiler-aligned functions=";
     Report = Textˉconcat(Report, U32ˉformat(Summary.Functions));
@@ -248,13 +248,14 @@ fn Compilerˉbuildˉdriverˉsuccess(
 }
 
 fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
-    let Summary: Compilerˉsourceˉwvbˉsummary = Compilerˉcompileˉsourceˉwvb(Input);
-    if Summary.Status != Compilerˉsourceˉwvbˉstatus.Valid {
+    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Input);
+    if Summary.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
         diagnostic.write_line(Compilerˉbuildˉdriverˉcompileˉfailure(Summary));
         return 1;
     }
 
-    let Verification: u32 = Compilerˉwvbˉverify(Summary.Bytecode);
+    let Verification: u32 = Semanticˉverifier.Compilerˉwvbˉverify(Summary.Bytecode);
     if Verification != 0u32 {
         if Verification == 1u32 {
             diagnostic.write_line("build status=Verifierˉrejected phase=semantic");
@@ -275,7 +276,7 @@ fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
 
 fn Compilerˉbuildˉdriverˉisˉprojectˉmode(Value: text) -> bool {
     let Bytes: bytes = Textˉtoˉutf8(Value);
-    return Compilerˉsourceˉsymbolsˉnameˉequals(
+    return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
         Bytes, 0u32, Bytesˉlength(Bytes), "--project"
     );
 }
@@ -311,19 +312,20 @@ fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
     }
 
     let Manifest: bytes = file.read_bytes(Manifestˉpath);
-    let Scan: Windvaleˉprojectˉscan = Windvaleˉprojectˉscanˉmanifest(Manifest);
-    if Scan.Status != Windvaleˉprojectˉstatus.Valid {
+    let Scan: Project.Windvaleˉprojectˉscan =
+        Project.Windvaleˉprojectˉscanˉmanifest(Manifest);
+    if Scan.Status != Project.Windvaleˉprojectˉstatus.Valid {
         diagnostic.write_line(Compilerˉbuildˉdriverˉprojectˉfailure(
             Scan.Status, Scan.Failureˉline, Scan.Failureˉcolumn
         ));
         return 1;
     }
     if Scan.Modules > 63u32 {
-        let Excess: Windvaleˉprojectˉpath = Windvaleˉprojectˉpathˉat(
+        let Excess: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉpathˉat(
             Manifest, Scan, 63u32
         );
         diagnostic.write_line(Compilerˉbuildˉdriverˉprojectˉfailure(
-            Windvaleˉprojectˉstatus.Sourceˉlimit, Excess.Line, Excess.Column
+            Project.Windvaleˉprojectˉstatus.Sourceˉlimit, Excess.Line, Excess.Column
         ));
         return 1;
     }
@@ -340,7 +342,7 @@ fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
             return 64;
         }
         diagnostic.write_line(Compilerˉbuildˉdriverˉprojectˉfailure(
-            Windvaleˉprojectˉstatus.Duplicateˉpath,
+            Project.Windvaleˉprojectˉstatus.Duplicateˉpath,
             Paths.Failureˉline,
             Paths.Failureˉcolumn
         ));

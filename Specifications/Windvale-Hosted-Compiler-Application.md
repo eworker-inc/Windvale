@@ -2,7 +2,9 @@
 
 ## Status and scope
 
-`WVHA 1` is the implemented manifest for packaging the exact ABI-22 Windvale compiler as paired Windows and Linux hosted applications. It binds the compiler's canonical six capabilities, exact ten required native services, platform adapter identities, service-table slots, service code, native image, native entry, and eight-billion-instruction execution bound. The manifest, service bundles, runtime data, canonical WVA startups, independently verified PE/ELF containers, public `windows-x64-console-v3` and `linux-x64-console-v3` targets, `aot` recovery path, and atomic publication are cross-host qualified at exact commit `57d154c` in GitHub Verify run 30819768981. Both raw applications directly reproduce the canonical Stage 2 WVB without loading .NET in their child processes.
+`WVHA 1` is the implemented manifest for packaging the exact ABI-22 Windvale compiler as paired Windows and Linux hosted applications. It binds the compiler's canonical six capabilities, exact ten required native services, platform adapter identities, service-table slots, service code, native image, native entry, and explicit instruction bound. The manifest, service bundles, runtime data, canonical WVA startups, independently verified PE/ELF containers, public `windows-x64-console-v3` and `linux-x64-console-v3` targets, `aot` recovery path, and atomic publication were cross-host qualified at exact commit `57d154c` in GitHub Verify run 30819768981. Both qualified raw applications directly reproduced their canonical Stage 2 WVB without loading .NET in their child processes.
+
+The Decision 0201 compiler candidate preserves those formats and boundaries while advancing the exact compiler bytes, the checked hosted dynamic-value arena from 80 MiB to 128 MiB, the instruction ceiling to 48,000,000,000, and explicit large-native WVO/link admission from 20 MiB to 32 MiB. The current identities and layouts below are locally verified candidate evidence; they do not replace the retained cross-host qualification until independent Windows and Debian jobs reproduce them.
 
 The candidate allocates hosted container format 3 without changing the qualified version-1 or version-2 formats or bytes. It does not change WVB 1.6, WVO 1.0, native ABI 22, execution-context format 7, service-table format 5, the ordinary 4 MiB Windvale `bytes` limit, or the standard WVO/link admission profile.
 
@@ -56,7 +58,7 @@ Adapter identities are serialized separately from semantic service identities:
 | 13 | Platform-neutral u32 formatting |
 | 14 / 15 | Windows file output / Linux file output |
 
-The exact Windows bundle is 17,143,635 bytes with SHA-256 `6d524aa9b96d0f624b0b449937ec6c0987a57e2c002af8276784c63a185efef6`. The exact Linux bundle is 17,143,351 bytes with SHA-256 `99da55911c81218ac74442a695d340ed440c74515b830bcc659bd4b7df7b2d4b`. Both begin with the same 17,130,441 native bytes and differ only in the four platform service leaves and resulting placement.
+The exact Windows bundle is 26,316,131 bytes with SHA-256 `e25f22f7de9fd973299fbe220b61899d0b6a215e7f4fa616abedc5729a51cd54`. The exact Linux bundle is 26,315,847 bytes with SHA-256 `71dc1cd9c11d0a1d6e3b7795a68134391b2635912b70cc25a82ab3e75491fc51`. Both begin with the same 26,299,864 native bytes and differ only in the four platform service leaves and resulting placement.
 
 ## `WVHA 1` binary layout
 
@@ -81,12 +83,12 @@ The manifest is exactly 1,024 bytes. All integer fields are unsigned 32-bit litt
 | 56 | 4 | Bundle offset within executable text, aligned to 16 |
 | 60 | 4 | Complete bundle bytes |
 | 64 | 4 | Native-image offset within bundle, zero |
-| 68 | 4 | Native-image bytes, 17,130,441 |
+| 68 | 4 | Native-image bytes, 26,299,864 |
 | 72 | 4 | Native entry offset inside the native image |
 | 76 | 4 | Record arena bytes, 2,097,152 |
-| 80 | 4 | Dynamic text/byte arena bytes, 67,108,864 |
+| 80 | 4 | Dynamic text/byte arena bytes, 134,217,728 |
 | 84 | 4 | Profile flags, 1: exact hosted compiler |
-| 88 | 8 | Maximum instructions, 8,000,000,000 |
+| 88 | 8 | Maximum instructions, 48,000,000,000 |
 | 96 | 32 | SHA-256 of the native-image prefix |
 | 128 | 96 | Six capability records |
 | 224 | 640 | Ten service records |
@@ -96,7 +98,7 @@ Each capability record contains numeric capability identity, its authority-beari
 
 Each service record contains service identity at byte 0, capability identity or zero at byte 4, service-table byte offset at byte 8, adapter identity at byte 12, bundle-relative leaf offset at byte 16, leaf byte count at byte 20, flags at byte 24, reserved zero at byte 28, and the 32-byte leaf SHA-256 at byte 32. Flags are exactly 1 for an authority-bearing capability service and exactly 2 for an intrinsic service.
 
-The current exact metadata SHA-256 values, using text-relative bundle offset 4,096 and the canonical native entry, are `b209eabbced72ccca37a325ac55f1a5198f9c257c6dc9faa5b57954c393c2493` for Windows and `46435a40a18f7a5462f256b829aea90032c0de2c18d415222e3d5133e81da507` for Linux. An outer container may select a different aligned text-relative bundle offset only by producing and verifying the corresponding manifest bytes.
+The current exact metadata SHA-256 values, using text-relative bundle offset 4,096 and the canonical native entry, are `fa3fd8155d9c71585a7ab389479e9b4e34432c909d45d948cb1925a20ceaae2e` for Windows and `e15fe61d1cce66a2a8e30aa8e27cc124f534f6d430eaeffcba9fe28c6503e6c6` for Linux. An outer container may select a different aligned text-relative bundle offset only by producing and verifying the corresponding manifest bytes.
 
 ## Initial runtime data layout
 
@@ -104,7 +106,7 @@ Format 3 uses one 4,096-byte file-backed RW/NX header followed by loader-zeroed 
 
 | Offset | Bytes | Contract |
 | ---: | ---: | --- |
-| 0 | 112 | ABI-22 execution context with 8,000,000,000 instructions and call depth 1,024 |
+| 0 | 112 | ABI-22 execution context with 48,000,000,000 instructions and call depth 1,024 |
 | 112 | 104 | Service table 5 with all pointers initially zero |
 | 216 | 48 | Console plus diagnostic output table |
 | 264 | 136 | File-input table 1 |
@@ -121,21 +123,21 @@ The runtime planner retains the hosted limits of at most 67 arguments, 4,096 UTF
 | Argument UTF-8 bytes | 5,168 | 65,536 |
 | File snapshot records | 70,704 | 2,048 |
 | Record arena | 73,728 | 2,097,152 |
-| Dynamic text/byte arena | 2,170,880 | 67,108,864 |
-| File-name arena | 69,279,744 | 67,108,864 |
-| File-data arena | 136,388,608 | 268,435,456 |
-| File-input scratch | 404,824,064 | 2,097,154 Windows / 1,048,577 Linux |
-| File-output scratch | 406,925,312 Windows / 405,876,736 Linux | 2,097,154 Windows / 1,048,577 Linux |
+| Dynamic text/byte arena | 2,170,880 | 134,217,728 |
+| File-name arena | 136,388,608 | 67,108,864 |
+| File-data arena | 203,497,472 | 268,435,456 |
+| File-input scratch | 471,932,928 | 2,097,154 Windows / 1,048,577 Linux |
+| File-output scratch | 474,034,176 Windows / 472,985,600 Linux | 2,097,154 Windows / 1,048,577 Linux |
 
-The final page-aligned virtual extent is 409,026,560 bytes on Windows and 406,929,408 bytes on Linux. Windows uses UTF-16-sized path scratch; Linux uses UTF-8-sized path scratch. The 4,096-byte initial headers have SHA-256 `5d61f926461fc19e46e04a7e5dd3636fcbaa554e30370fc10a5eeb7992f5e634` and `ee0e58ef5c82f65a48150f886ce7349753bb0af05145c46dafae000eff576c4a`, respectively.
+The final page-aligned virtual extent is 476,135,424 bytes on Windows and 474,038,272 bytes on Linux. Windows uses UTF-16-sized path scratch; Linux uses UTF-8-sized path scratch. The 4,096-byte initial headers have SHA-256 `127cee36736a40b3825757cc5a831b83e36373cb52f7fc57a6d487da4aa1784b` and `69612958cb82aba4334f6243847441bdaf280b0762bbccb64419fc8688e1c442`, respectively.
 
 ## Format-3 executables and publication
 
 The public compiler targets admit only a verified x86-64 fragment with exactly one exported `Main`, the canonical six capability declarations above, and the exact ordered ten-service set. Each public writer builds the target-specific service bundle, constructs the complete format-3 image, and runs the independent outer verifier against the entry and complete bundle before returning any bytes.
 
-`windows-x64-console-v3` emits a deterministic PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. Its startup imports exactly twelve functions from `KERNEL32.dll` plus `CommandLineToArgvW` from `SHELL32.dll`; it imports no CLR or C runtime. The bounded stack reserve and commit are both 64 MiB because current native prologues do not yet probe skipped Windows guard pages. The canonical application is 17,157,120 bytes with SHA-256 `356bd9c6be1a927017e987728b479d105f9852c0c7aad1b8b9e93202ba64010f`.
+`windows-x64-console-v3` emits a deterministic PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. Its startup imports exactly twelve functions from `KERNEL32.dll` plus `CommandLineToArgvW` from `SHELL32.dll`; it imports no CLR or C runtime. The bounded stack reserve and commit are both 64 MiB because current native prologues do not yet probe skipped Windows guard pages. The canonical candidate application is 26,329,600 bytes with SHA-256 `d82f6276bf18f5f9c5b2960598a731a966afca38a4d8340f0b26e3140e3c6353`.
 
-`linux-x64-console-v3` emits a deterministic sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-3 note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only the startup's checked direct syscalls. The canonical application is 17,158,144 bytes with SHA-256 `42f3f947cccca8e44c279afce1b6e944682dc440e0e9cda6546883898d951f31`.
+`linux-x64-console-v3` emits a deterministic sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-3 note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only the startup's checked direct syscalls. The canonical candidate application is 26,329,088 bytes with SHA-256 `ec63f1c41b74ebd529eeb7020e072875021cc9aaa6f2ceff23703fa8f907becf`.
 
 `windvale compile --target <target>` may lower from source directly, while `windvale aot <module.wvb> --target <target>` packages an already verified module without repeating source compilation. Both publish the verified executable through the shared outer artifact workflow: a unique sibling is created without replacement, written through and flushed to durable storage, prepared with executable permissions for Linux when running on Linux, and then moved over the destination. Failure before the move deletes the sibling and preserves an existing destination. This is a package-publication guarantee; the source-visible `file.write_bytes` capability used by the compiler itself retains its separately specified durable, non-atomic replacement behavior.
 
@@ -143,4 +145,6 @@ The public compiler targets admit only a verified x86-64 fragment with exactly o
 
 The native fragment is verified before bundle construction. Every selected leaf is then verified independently, the complete ordered placement is reconstructed, and `WVHA 1` is parsed back against the actual bundle bytes. The runtime-data verifier separately checks every fixed table field, budget, platform identity, resource limit, zero pointer, reserved byte, manifest, target, and complete bundle input. The PE and ELF verifiers additionally reconstruct their startup, layout, protection, import/syscall, relocation, padding, runtime, bundle, entry, truncation, and trailing-byte contracts. Shared focused malformed evidence covers count, capability, adapter, leaf digest, actual-bundle corruption, budget, output flags, snapshot capacity, target mismatch, and mutations across every container-owned region. Exact bundle, manifest, runtime-header, startup, and executable identities are pinned for cross-host reproduction.
 
-Windows and digest-pinned Debian 12 directly prove canonical Stage 2 reproduction at exact commit `db20fef` in GitHub Verify run 30816153900. Each raw application consumes the twelve-source inventory, returns zero, emits the exact status line, and produces the canonical 599,868-byte WVB with SHA-256 `9673bf3331763181f443ec67b7a513bc66daa718969f7f6b0d197a4186071066`. Live module/mapping sampling observes the declared host boundary and no CLR/.NET host or runtime module. Both hosts independently report every pinned WVO, link, bundle, metadata, runtime, PE, and ELF identity unchanged. Public-target replay and final clean-checkout Stage 0 archive provenance remain successor gates; Stage 0 remains the builder, independent oracle, and recovery implementation until the broader retirement gate passes.
+Windows and digest-pinned Debian 12 directly proved the retained 599,868-byte Stage 2 at exact commit `db20fef` in GitHub Verify run 30816153900. Live module/mapping sampling observed the declared host boundary and no CLR/.NET host or runtime module. Both hosts independently reported every then-pinned WVO, link, bundle, metadata, runtime, PE, and ELF identity unchanged.
+
+The Decision 0201 local candidate compiles the current twelve-source inventory into an 859,555-byte WVB with SHA-256 `c08f76e998e0280b7c2e3e801a9752f000825c874abeb86e88420c31444d63f9`. Its 397 functions contain 707,044 code bytes. Native execution peaks at 104,885,093 of 134,217,728 dynamic-arena bytes, returns zero, emits `source wvb status=Valid functions=397 code-bytes=707044 module-bytes=859555`, and reproduces the exact Stage 0 bytes. The raw Windows PE also reproduces that result directly. Linux execution and independent dual-host identity remain pending. Stage 0 remains the builder, independent oracle, and recovery implementation until the broader retirement gate passes.

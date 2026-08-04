@@ -56,9 +56,9 @@ public static class X64ˉnativeˉpublicationˉlifetime
     public const int TRANSITION_RECORD_BYTES = 12;
     public const int TRANSITION_COUNT = 9;
     public const int RESPONSE_BYTES = RESPONSE_HEADER_BYTES + TRANSITION_COUNT * TRANSITION_RECORD_BYTES;
-    public const int PLANNER_CANONICAL_SIZE = 4_857;
+    public const int PLANNER_CANONICAL_SIZE = 4_564;
     public const string PLANNER_CANONICAL_SHA256 =
-        "74dfaf40bb6ea83f0fd72757c9c4cb85f5c8dd28a41f3993325871d348e88d32";
+        "9f7b3c331f4afb56d2e55d51cdea32c5b1536e6856f8da20ade1479e75682bcf";
 
     private const string REQUEST_NAME = "native-publication-lifetime-request.bin";
     private const string PLANNER_RESOURCE = "Windvale.Native.Native-Publication-Lifetime-Bridge.wvb";

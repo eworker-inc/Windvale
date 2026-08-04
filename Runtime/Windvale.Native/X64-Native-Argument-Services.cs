@@ -7,9 +7,9 @@ namespace Windvale.Runtime.Native;
 
 public static class X64ˉnativeˉargumentˉservices
 {
-    public const int CONSUMER_CANONICAL_SIZE = 21_447;
+    public const int CONSUMER_CANONICAL_SIZE = 20_799;
     public const string CONSUMER_CANONICAL_SHA256 =
-        "5e1c6c360d93ac54c9281adb0f27b53c77937cf78027e80a9d3fc177877ae7e9";
+        "fca2a0ba6c3ec864a2f77295f39326b1196a675dc6defd7a749c0d5541499770";
     public const int ARGUMENT_COUNT_CANONICAL_SIZE = 5;
     public const string ARGUMENT_COUNT_CANONICAL_SHA256 =
         "2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829";

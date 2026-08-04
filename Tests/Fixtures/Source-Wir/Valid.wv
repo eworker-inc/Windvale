@@ -2,7 +2,11 @@ module Wirˉvalid profile hosted;
 
 capability console.write_line;
 
-data Numbers: [i32] = [1, 2, 3];
+data Numbers: [i32] = [
+    1,
+    2,
+    3,
+];
 data Message: text = "value=";
 
 record Pair {
@@ -15,7 +19,9 @@ enum State {
     Waiting = 1;
 }
 
-fn Add(Value: i32) -> i32 {
+fn Add(
+    Value: i32,
+) -> i32 {
     return Value + 1;
 }
 
@@ -28,17 +34,22 @@ fn Choose(Value: i32) -> i32 {
 }
 
 export fn Main() -> i32 {
-    let Pairˉvalue: Pair = Pair(1, 2);
-    let Stateˉvalue: State = State.Ready;
-    var Result: i32 = Add(Pairˉvalue.Left);
+    let Pairˉvalue = Pair(
+        1,
+        2,
+    );
+    let Stateˉvalue = State.Ready;
+    var Result = Add(
+        Pairˉvalue.Left,
+    );
     if Stateˉvalue == State.Ready {
         Result = Result + Numbers[0];
     }
     while Result < 4 {
         Result = Result + 1;
     }
-    let Count: i32 = length(Numbers);
-    let Report: text = Textˉconcat(Message, I32ˉformat(Count));
+    let Count = length(Numbers);
+    let Report = Textˉconcat(Message, I32ˉformat(Count));
     console.write_line(Report);
     return Choose(Result);
 }

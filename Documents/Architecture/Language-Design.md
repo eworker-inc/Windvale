@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted evolution direction under [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md) and [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) adds recommended value and metadata defaults for review. The implemented language remains exactly [Windvale Seed](../../Specifications/Seed-Language.md); examples in this document marked as future syntax are not accepted source today.
+Accepted evolution direction under [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md), [Decision 0199](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), and [Decision 0200](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md). Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md) adds recommended successor defaults for review. The implemented language remains exactly [Windvale Seed](../../Specifications/Seed-Language.md); examples explicitly marked as future syntax are not accepted source today.
+
+Windvale is in active early development. Through at least September 3, 2026, and until a later named decision says otherwise, obsolete source spellings, compiler models, and experimental binary encodings may be replaced without backward readers or migration layers. The repository moves as one contract; old qualification artifacts remain evidence rather than supported inputs.
 
 ## Product character
 
@@ -13,7 +15,7 @@ The language therefore prefers:
 - immutable `let` and visible mutable `var`;
 - explicit typed constants without mutable module globals;
 - explicit public types and local inference only from one initializer;
-- nominal records, enums, and future payload variants;
+- nominal records, enums, and payload variants;
 - checked fixed-width arithmetic and no implicit conversions;
 - recoverable typed results rather than general exceptions;
 - bounded builders and immutable published collections;
@@ -30,17 +32,23 @@ Seed currently has:
 - one module per source file with `portable`, `hosted`, or `system` profile;
 - source imports and required capability declarations;
 - immutable `text`, `bytes`, and `[i32]` module data;
+- explicitly typed, storage-free scalar and enum constants;
 - explicit-value enums and immutable nominal records;
-- typed functions, parameters, `let`, and `var` locals;
-- expression statements, assignment to mutable locals, `if`/`else`, `while`, and `return`;
-- checked `i32`, `i64`, `u32`, and `u64` arithmetic, byte values, Boolean logic, numeric comparison, enum equality, calls, indexing, and field access; and
-- bounded Foundation operations for text, bytes, encoding, formatting, and SHA-256.
+- typed functions and parameters plus explicitly typed or initializer-inferred `let` and `var` locals;
+- expression statements, simple and compound assignment to mutable locals, `if`/`else if`/`else`, `while`, nearest-loop `break` and `continue`, and `return`;
+- checked `i32`, `i64`, `u32`, and `u64` arithmetic, byte values, short-circuit Boolean logic, numeric comparison, enum equality, calls, indexing, and field access; and
+- named and retained positional record construction plus bounded Foundation operations for text, bytes, encoding, formatting, and SHA-256; and
+- trailing commas in multiline parameter, argument, named-record, positional-record, and static-data lists;
+- explicit import aliases, private-by-default declarations, qualified exported data/constants/types/functions, and independent module metadata;
+- exhaustive enum and payload-variant matching with explicit recoverable-result values;
+- bounded immutable sequences, affine builders, consuming `freeze`, explicit `push`, and deterministic `for`; and
+- checked division/remainder, unsigned bitwise/shifts, and exact text/bytes equality.
 
-Seed intentionally lacks module aliases and private dependency helpers, scalar constants, local inference, named record literals, short-circuit Boolean operators, `break`, `continue`, match, payload variants, general collections, structured resource scope, generics, closures, async, floating point, and unsafe source operations.
+Seed intentionally lacks dynamic linking, typed capability values, structured resource scope, package-backed resources, maps/sets and other general collections, generics, closures, async, floating point, and unsafe source operations.
 
 ## Near-term source direction
 
-The first syntax growth is mostly sugar over existing semantics:
+The first syntax-growth batch is mostly sugar over existing semantics. Local inference, multiline trailing commas, typed constants, named records, and block-form `else if` are implemented:
 
 ```text
 let Length = Bytesˉlength(Value);
@@ -54,18 +62,32 @@ let Request = Readˉrequest {
     Maximum: 4096u32,
 };
 
+if Ready {
+    Process(Request);
+} else if Retry {
+    Retryˉlater(Request);
+}
+```
+
+Local inference never changes public signatures or invokes overload resolution. A typed constant uses only deterministic literal, enum, earlier-constant, and checked-operator expressions, rejects cycles and would-trap evaluation at compile time, and has no observable storage identity. Named records require every field once, evaluate field expressions in source order, and retain declaration-order value layout. Braces and semicolons remain mandatory; multiline comma-separated lists may retain a trailing comma.
+
+The second syntax-growth slice implements Boolean-only, left-to-right short-circuit `&&` and `||`, nearest-loop `break` and `continue`, and `+=`, `-=`, and `*=` assignment to mutable locals:
+
+```text
 if Ready && !Closed {
     Process(Request);
 } else if Retry {
     continue;
 }
+
+Attempts += 1u32;
 ```
 
-Local inference never changes public signatures or invokes overload resolution. A typed constant uses only deterministic literal, enum, earlier-constant, and checked-operator expressions, rejects cycles and would-trap evaluation at compile time, and has no observable storage identity. Named records require every field once, evaluate field expressions in source order, and retain declaration-order value layout. `&&` and `||` are Boolean-only and short-circuit from left to right. `break` and `continue` target the nearest loop. Braces and semicolons remain mandatory; multiline comma-separated lists may retain a trailing comma.
+The skipped operand of a short-circuit expression is not evaluated and therefore cannot call, mutate, allocate, or trap. `break` exits and `continue` restarts the nearest enclosing `while`; both are rejected outside a loop. Compound assignment reads its target exactly once before evaluating the right operand, applies the same checked arithmetic and exact-type rules as the underlying operator, and stores the result only if evaluation succeeds.
 
 ## Module and authority direction
 
-Modules need private helpers, explicit exports, aliases, and qualified references before the library graph becomes much larger:
+Modules now have private helpers, explicit exports, aliases, qualified references, and independent metadata:
 
 ```text
 module Imageˉtool;
@@ -90,7 +112,7 @@ fn Decodeˉheader(Value: bytes) -> Imageˉsummary {
 }
 ```
 
-The metadata spelling remains a candidate until the versioned source/WVB encoding is selected. The durable rule is that platform scope, authority, required capabilities, optional capabilities, root approval, concrete grants, and provider binding remain separate.
+The source spelling and WVB 1.8+ encoding are implemented. Platform scope, authority, required capabilities, optional capabilities, root approval, concrete grants, and provider binding remain separate. Typed capability values and provider instances still require the later focused decision described below.
 
 The recommended encoding gives the platform dimension structured, independently ordered fields for environment, architecture, ABI, and named extension requirements. Authority is a separate closed role value. Required and optional capability tables contain canonical ASCII-safe interface identity, major contract version, exact signature-set identity, and declared limit profile. Provider identity, user approval, and granted capability references never enter those requirement tables.
 
@@ -110,7 +132,7 @@ Omitting a dimension is an error rather than an implicit host default. A later `
 
 ## Recoverable values and matching
 
-Windvale first adds exhaustive statement-form matching over existing enums. A later nominal `variant` carries payloads:
+Windvale implements exhaustive statement-form matching over enums and nominal payload variants:
 
 ```text
 variant Readˉresult {
@@ -128,7 +150,7 @@ match Result {
 }
 ```
 
-Match has no fallthrough and is exhaustive. The first result flow remains explicit. A later `try` expression may provide visible propagation after success/failure shape, ownership, cleanup, and return compatibility are exact. Traps remain for contract violations, corrupted state, invalid bounds, and other runtime invariants; expected provider outcomes use typed results.
+Match has no fallthrough and is exhaustive. Result flow remains explicit. A later `try` expression may provide visible propagation after success/failure shape, ownership, cleanup, and return compatibility are exact. Traps remain for contract violations, corrupted state, invalid bounds, and other runtime invariants; expected provider outcomes use typed results.
 
 The recommended variant contract is nominal, immutable, closed, and verifier-bounded. Every case has a stable declaration ordinal and zero or more named fields. Construction names the variant and case and supplies every payload field exactly once. There is no implicit null case, default value, open extension, integer conversion, or layout inspection.
 
@@ -138,12 +160,12 @@ The first typed results are ordinary two-case nominal variants, conventionally `
 
 ## Bounded collections and resources
 
-The first dynamic collection family is an immutable bounded sequence plus uniquely owned builder:
+The first dynamic collection family is the implemented immutable bounded sequence plus uniquely owned builder:
 
 ```text
 var Pending: builder<Request, 256> = builder<Request, 256>();
-Pending.Push(First);
-Pending.Push(Second);
+push Pending, First;
+push Pending, Second;
 
 let Published: sequence<Request, 256> = freeze Pending;
 
@@ -152,7 +174,7 @@ for Request in Published {
 }
 ```
 
-The exact constructor and member spelling remains part of the focused collection decision. The semantic requirements are explicit maximum, checked allocation, visible mutation, consuming freeze, immutable publication, deterministic iteration, and compile-time rejection of builder use after freeze.
+The spelling and WVB 1.10 contract are selected by Decision 0200. The semantics retain an explicit maximum, checked allocation, visible mutation, consuming freeze, immutable publication, deterministic iteration, and compile-time rejection of builder use after freeze.
 
 The recommended first family treats the maximum as part of the exact type. `sequence<Item, 256>` and `sequence<Item, 512>` are different types unless an explicit checked conversion copies or republishes the value. Length varies from zero through the maximum; iteration order is insertion order. Indexing outside current length traps as a contract violation.
 
@@ -168,21 +190,21 @@ A later `using` declaration scopes one owned capability and closes it on ordinar
 
 `=` is declaration initialization or assignment to a `var` local. It is not an expression, cannot be chained, and cannot appear as a condition. `==` and `!=` are equality operators over two values of the same exact admitted type. Windvale does not add `===` or expose backing identity for ordinary immutable values.
 
-Scalar, Boolean, and same-nominal-enum equality is implemented. Future text equality compares the exact Unicode scalar sequence represented by strict UTF-8 without normalization or locale behavior; bytes equality compares exact octets. Both are bounded and charged content operations. Records, variants, sequences, and maps require explicit bounded derived-equality rules before receiving operators. Builders, capabilities, functions, and resources do not have general equality.
+Scalar, Boolean, same-nominal-enum, text, and bytes equality is implemented. Text compares the exact Unicode scalar sequence represented by strict UTF-8 without normalization or locale behavior; bytes compares exact octets. Records, variants, sequences, and maps require explicit bounded derived-equality rules before receiving operators. Builders, capabilities, functions, and resources do not have general equality.
 
 ### Arithmetic
 
 `+`, binary `-`, and `*` remain checked same-type numeric operations. Unary `-` is signed-only. `u8` must be widened explicitly before arithmetic. Text, bytes, sequences, and user types do not overload arithmetic punctuation.
 
-Future `/` and `%` trap on zero. Signed minimum with divisor `-1` traps for both operators, quotient otherwise truncates toward zero, and remainder follows the dividend sign while satisfying the quotient/remainder identity for every accepted pair.
+`/` and `%` trap on zero. Signed minimum with divisor `-1` traps for both operators, quotient otherwise truncates toward zero, and remainder follows the dividend sign while satisfying the quotient/remainder identity for every accepted pair.
 
 ### Ordering and Boolean logic
 
-`<`, `<=`, `>`, and `>=` are numeric-only. Text collation, byte order, enum order, version order, and locale behavior use named contracts. `!`, future `&&`, and future `||` are Boolean-only; there is no truthiness conversion.
+`<`, `<=`, `>`, and `>=` are numeric-only. Text collation, byte order, enum order, version order, and locale behavior use named contracts. `!`, `&&`, and `||` are Boolean-only; there is no truthiness conversion.
 
 ### Bitwise operations
 
-Future `&`, `|`, `^`, `~`, `<<`, and `>>` begin with unsigned fixed-width integers. Shift counts are `u32`, must be below the operand width, and otherwise trap. Right shift fills with zero; left shift discards bits beyond the fixed width. Rotates remain named operations. Signed shifts wait for explicit reinterpretation and measured consumers.
+`&`, `|`, `^`, `~`, `<<`, and `>>` operate on unsigned fixed-width integers. Shift counts are `u32`, must be below the operand width, and otherwise trap. Right shift fills with zero; left shift discards bits beyond the fixed width. Rotates remain named operations. Signed shifts wait for explicit reinterpretation and measured consumers.
 
 ### Precedence
 
@@ -211,14 +233,17 @@ Classes, inheritance, implicit null, implicit conversions, general exceptions, o
 
 ## Evolution order
 
+The first eight slices are implemented locally and await the final coherent-batch verification and cross-host qualification where required:
+
 1. Local inference, typed constants, trailing commas, named records, and `else if`.
-2. `break`, `continue`, `&&`, and `||`.
+2. `break`, `continue`, `&&`, `||`, and mutable-local `+=`, `-=`, and `*=`.
 3. Module privacy, broader exports, aliases, and qualification.
 4. Independent platform, authority, required-capability, and optional-capability syntax and encoding.
 5. Exhaustive enum match.
 6. Payload variants and typed recoverable results.
 7. Bounded sequences/builders, consuming freeze, and bounded `for`.
-8. Typed capabilities, `using`, and package-backed resources.
-9. Later operators and advanced syntax only from measured consumers.
+8. Division/remainder, unsigned bitwise/shifts, and text/bytes equality.
+9. Typed capabilities, `using`, and package-backed resources.
+10. Later operators and advanced syntax only from measured consumers.
 
 Every implemented slice advances the reference and Windvale compilers, editor package, specifications, WIR/WVB contracts where affected, interpreter/native/Wasm consumers where supported, malformed cases, deterministic bytes, and cross-host evidence together.

@@ -4,7 +4,7 @@
 
 `WVHV 1` is the implemented manifest for packaging the Windvale-written, compiler-aligned WVB verifier as deterministic Windows and Linux x86-64 applications. The verifier applications run without loading .NET. Stage 0 still builds, lowers, packages, and independently verifies these artifacts until the broader native-retirement gate is qualified.
 
-This is a deliberately fixed tool profile, not a general hosted-application format. It accepts the same compiler-aligned WVB subset as the three-phase verifier from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. General WVB programs that require non-empty control-flow joins remain outside this profile.
+This is a deliberately fixed tool profile, not a general hosted-application format. It enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one monolithic typed walk under a `u64` host meter; the WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside this profile.
 
 The canonical source project is [`Windvale-Compiler-Wvb-Verifier.wvproj`](../Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
 
@@ -63,7 +63,7 @@ u32   native Main offset
 u32   record-arena bytes
 u32   text-arena bytes
 u32   profile flags = 2
-u64   instruction budget = 8,000,000,000
+u64   instruction budget = 16,000,000,000
 bytes native-image SHA-256[32]
 ```
 
@@ -88,7 +88,7 @@ The runtime header retains the ABI-22 execution context, service table, output t
 - one 32-byte file snapshot record;
 - one 1 MiB name stride;
 - one 4 MiB data stride;
-- the existing fixed record and hosted text arenas;
+- the existing fixed record arena and Decision 0201's 128 MiB hosted text arena;
 - one platform path-conversion scratch region;
 - no file-output scratch region.
 
@@ -108,13 +108,13 @@ The package constructors retain only the zero-relocation templates plus typed pa
 
 `windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the one bounded input snapshot.
 
-The current canonical application is 960,512 bytes with SHA-256 `109a093fc9ff0a9f18c4125d635d2713111bf0c61ca71f4eb38e85850430900c`.
+The current canonical application is 961,536 bytes with SHA-256 `cac82b26c7af4edea01a808db718e66e65fd859f421d5e73f144b017f390bc59`.
 
 ## Linux container
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
 
-The current canonical application is 962,560 bytes with SHA-256 `35dc54aa0d5055cdce6df3ad1af4e921bbd1f53151835d22c63979b57cbb8716`.
+The current canonical application is 962,560 bytes with SHA-256 `d99f5d9c95f1ab7e731eaf4ea7f15e48a19cc72e689f99d1b00d5a58f2984ede`.
 
 ## Construction and verification
 
@@ -126,7 +126,7 @@ windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target windows-x64-verifier-v1
 windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target linux-x64-verifier-v1
 ```
 
-The canonical WVB is 118,536 bytes with SHA-256 `028af7f7a69d3ea434cfaf5e4122cf09878dfb10593c03af34351844715d49f5`.
+The canonical WVB is 118,496 bytes with SHA-256 `19760a4438a48c945de3e39fd612ed72f3ea3a33373b5d9da09cd1e2411938d7`.
 
 Both public writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical fragment services. They add only the startup-internal UTF-8 service, construct the outer application, parse it independently, and atomically publish it only after every manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
 

@@ -1,6 +1,6 @@
 module Compilerˉnativeˉx64ˉlowering profile portable;
 
-enum Compilerˉnativeˉx64ˉstatus {
+export enum Compilerˉnativeˉx64ˉstatus {
     Valid = 0;
     Invalidˉwvb = 1;
     Unsupportedˉprofile = 2;
@@ -35,7 +35,7 @@ record Compilerˉnativeˉx64ˉstructure {
     Typesˉlength: u32;
 }
 
-record Compilerˉnativeˉx64ˉsummary {
+export record Compilerˉnativeˉx64ˉsummary {
     Status: Compilerˉnativeˉx64ˉstatus;
     Object: bytes;
     Value: i32;

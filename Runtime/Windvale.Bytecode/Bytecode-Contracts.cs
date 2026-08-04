@@ -9,6 +9,24 @@ public enum Moduleˉprofile : byte
     System = 3,
 }
 
+public enum Moduleˉauthority : byte
+{
+    Library = 1,
+    Application = 2,
+    Service = 3,
+    System = 4,
+}
+
+public sealed record Capabilityˉrequirement(
+    string Name,
+    uint Majorˉversion);
+
+public sealed record Moduleˉmetadata(
+    Moduleˉauthority Authority,
+    ImmutableArray<string> Platformˉscopes,
+    ImmutableArray<Capabilityˉrequirement> Requiredˉcapabilities,
+    ImmutableArray<Capabilityˉrequirement> Optionalˉcapabilities);
+
 public enum Valueˉtype : byte
 {
     Void = 0,
@@ -22,9 +40,17 @@ public enum Valueˉtype : byte
     Enum = 8,
     I64 = 9,
     U64 = 10,
+    Variant = 11,
+    Sequence = 12,
+    Builder = 13,
 }
 
-public readonly record struct Valueˉshape(Valueˉtype Kind, int Nominalˉtypeˉindex = -1)
+public readonly record struct Valueˉshape(
+    Valueˉtype Kind,
+    int Nominalˉtypeˉindex = -1,
+    Valueˉtype Elementˉkind = Valueˉtype.Void,
+    int Elementˉnominalˉtypeˉindex = -1,
+    uint Maximum = 0)
 {
     public static implicit operator Valueˉshape(Valueˉtype kind) => new(kind);
 
@@ -34,10 +60,34 @@ public readonly record struct Valueˉshape(Valueˉtype Kind, int Nominalˉtypeˉ
     public static Valueˉshape Forˉenum(int enumˉtypeˉindex) =>
         new(Valueˉtype.Enum, enumˉtypeˉindex);
 
+    public static Valueˉshape Forˉvariant(int variantˉtypeˉindex) =>
+        new(Valueˉtype.Variant, variantˉtypeˉindex);
+
+    public static Valueˉshape Forˉsequence(Valueˉshape elementˉshape, uint maximum) =>
+        new(
+            Valueˉtype.Sequence,
+            Elementˉkind: elementˉshape.Kind,
+            Elementˉnominalˉtypeˉindex: elementˉshape.Nominalˉtypeˉindex,
+            Maximum: maximum);
+
+    public static Valueˉshape Forˉbuilder(Valueˉshape elementˉshape, uint maximum) =>
+        new(
+            Valueˉtype.Builder,
+            Elementˉkind: elementˉshape.Kind,
+            Elementˉnominalˉtypeˉindex: elementˉshape.Nominalˉtypeˉindex,
+            Maximum: maximum);
+
+    public Valueˉshape Elementˉshape => new(Elementˉkind, Elementˉnominalˉtypeˉindex);
+
     public override string ToString()
     {
-        return Kind is Valueˉtype.Record or Valueˉtype.Enum
-            ? $"{Kind.ToString().ToLowerInvariant()}[{Nominalˉtypeˉindex}]"
+        if (Kind is Valueˉtype.Record or Valueˉtype.Enum or Valueˉtype.Variant)
+        {
+            return $"{Kind.ToString().ToLowerInvariant()}[{Nominalˉtypeˉindex}]";
+        }
+
+        return Kind is Valueˉtype.Sequence or Valueˉtype.Builder
+            ? $"{Kind.ToString().ToLowerInvariant()}<{Elementˉshape},{Maximum}>"
             : Kind.ToString();
     }
 }
@@ -46,6 +96,7 @@ public enum Nominalˉtypeˉkind : byte
 {
     Record = 1,
     Enum = 2,
+    Variant = 3,
 }
 
 public enum Dataˉtype : byte
@@ -161,6 +212,44 @@ public enum Opcode : byte
     U64ˉgreaterˉequal = 0x94,
     I64ˉformat = 0x95,
     U64ˉformat = 0x96,
+    Variantˉcreate = 0x97,
+    Variantˉisˉcase = 0x98,
+    Variantˉpayload = 0x99,
+    Builderˉcreate = 0x9A,
+    Builderˉpush = 0x9B,
+    Builderˉfreeze = 0x9C,
+    Sequenceˉlength = 0x9D,
+    Sequenceˉelement = 0x9E,
+    I32ˉdivide = 0x9F,
+    I32ˉremainder = 0xA0,
+    U32ˉdivide = 0xA1,
+    U32ˉremainder = 0xA2,
+    I64ˉdivide = 0xA3,
+    I64ˉremainder = 0xA4,
+    U64ˉdivide = 0xA5,
+    U64ˉremainder = 0xA6,
+    U8ˉbitwiseˉand = 0xA7,
+    U8ˉbitwiseˉor = 0xA8,
+    U8ˉbitwiseˉxor = 0xA9,
+    U8ˉbitwiseˉnot = 0xAA,
+    U8ˉshiftˉleft = 0xAB,
+    U8ˉshiftˉright = 0xAC,
+    U32ˉbitwiseˉand = 0xAD,
+    U32ˉbitwiseˉor = 0xAE,
+    U32ˉbitwiseˉxor = 0xAF,
+    U32ˉbitwiseˉnot = 0xB0,
+    U32ˉshiftˉleft = 0xB1,
+    U32ˉshiftˉright = 0xB2,
+    U64ˉbitwiseˉand = 0xB3,
+    U64ˉbitwiseˉor = 0xB4,
+    U64ˉbitwiseˉxor = 0xB5,
+    U64ˉbitwiseˉnot = 0xB6,
+    U64ˉshiftˉleft = 0xB7,
+    U64ˉshiftˉright = 0xB8,
+    Textˉequal = 0xB9,
+    Textˉnotˉequal = 0xBA,
+    Bytesˉequal = 0xBB,
+    Bytesˉnotˉequal = 0xBC,
 
     Jump = 0x30,
     Branchˉfalse = 0x31,
@@ -199,6 +288,16 @@ public sealed record Enumˉtypeˉdeclaration(
     ImmutableArray<Enumˉmemberˉdeclaration> Members)
     : Nominalˉtypeˉdeclaration(Name, Nominalˉtypeˉkind.Enum);
 
+public sealed record Variantˉcaseˉdeclaration(
+    string Name,
+    string? Payloadˉname,
+    Valueˉshape? Payloadˉtype);
+
+public sealed record Variantˉtypeˉdeclaration(
+    string Name,
+    ImmutableArray<Variantˉcaseˉdeclaration> Cases)
+    : Nominalˉtypeˉdeclaration(Name, Nominalˉtypeˉkind.Variant);
+
 public sealed record Capabilityˉdeclaration(
     string Name,
     ImmutableArray<Valueˉtype> Parameterˉtypes,
@@ -231,6 +330,8 @@ public sealed record Bytecodeˉmodule(
     ImmutableArray<Exportˉdeclaration> Exports)
 {
     public ImmutableArray<Nominalˉtypeˉdeclaration> Types { get; init; } = [];
+
+    public Moduleˉmetadata? Metadata { get; init; }
 
     public ushort Formatˉminorˉversion { get; init; } = Moduleˉcodec.BASE_MINOR_VERSION;
 }

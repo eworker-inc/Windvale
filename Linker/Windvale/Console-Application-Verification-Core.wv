@@ -1,8 +1,8 @@
 module Linkerˉconsoleˉapplicationˉverification profile portable;
 
-import Linkerˉconsoleˉapplicationˉconstruction;
+import Linkerˉconsoleˉapplicationˉconstruction as Applicationˉconstruction;
 
-enum Consoleˉapplicationˉverificationˉstatus {
+export enum Consoleˉapplicationˉverificationˉstatus {
     Valid = 0;
     Invalidˉchunk = 1;
     Invalidˉsize = 2;
@@ -13,7 +13,7 @@ enum Consoleˉapplicationˉverificationˉstatus {
     Invalidˉcontainer = 7;
 }
 
-record Consoleˉapplicationˉverificationˉresult {
+export record Consoleˉapplicationˉverificationˉresult {
     Status: Consoleˉapplicationˉverificationˉstatus;
     Failureˉoffset: u32;
     Target: u32;
@@ -46,17 +46,17 @@ export fn Consoleˉapplicationˉverificationˉevidence(
     Nativeˉentryˉoffset: u32
 ) -> bytes {
     var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1447253591u32);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1u32);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 36u32);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1447253591u32);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1u32);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, 36u32);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
         Result, Consoleˉapplicationˉverificationˉstatusˉvalue(Status)
     );
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Failureˉoffset);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Target);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Applicationˉbytes);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉimageˉbytes);
-    return Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉentryˉoffset);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, Failureˉoffset);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, Target);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, Applicationˉbytes);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉimageˉbytes);
+    return Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉentryˉoffset);
 }
 
 export fn Consoleˉapplicationˉverificationˉfailure(
@@ -135,14 +135,14 @@ export fn Consoleˉapplicationˉverificationˉrequest(
     Nativeˉentryˉoffset: u32
 ) -> bytes {
     var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1363367511u32);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1u32);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 32u32);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Target);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉimageˉbytes);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉentryˉoffset);
-    Result = Consoleˉapplicationˉconstructionˉappendˉu32(Result, 0u32);
-    return Consoleˉapplicationˉconstructionˉappendˉu32(Result, 0u32);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1363367511u32);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, 1u32);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, 32u32);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, Target);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉimageˉbytes);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, Nativeˉentryˉoffset);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, 0u32);
+    return Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(Result, 0u32);
 }
 
 export fn Consoleˉapplicationˉverificationˉnativeˉimage(
@@ -530,7 +530,7 @@ export fn Consoleˉapplicationˉverification(
     let Request: bytes = Consoleˉapplicationˉverificationˉrequest(
         First, Target, Nativeˉimageˉbytes, Nativeˉentryˉoffset
     );
-    let Recipe: bytes = Consoleˉapplicationˉconstruction(Request);
+    let Recipe: bytes = Applicationˉconstruction.Consoleˉapplicationˉconstruction(Request);
     return Consoleˉapplicationˉverificationˉrecipe(
         First,
         Second,

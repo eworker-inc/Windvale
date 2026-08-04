@@ -77,6 +77,8 @@ The accepted first boot environment is x86-64 with UEFI 2.11, QEMU as the primar
 
 ## Non-goals for the first stages
 
+The active-development policy is intentionally direct: through at least September 3, 2026, and afterward until a named decision changes it, Windvale does not preserve compatibility with superseded experimental syntax or formats. Accepted changes update the implementation, repository sources, fixtures, and tools together. This date is a minimum no-compatibility window, not an automatic stability date.
+
 - A complete desktop environment
 - Broad hardware compatibility
 - Native Windows and Linux executable backends for every Windvale application

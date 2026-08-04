@@ -1,6 +1,6 @@
 module Compilerˉnativeˉstencilˉdemo profile portable;
 
-import Compilerˉnativeˉstencil;
+import Compilerˉnativeˉstencil as Nativeˉstencil;
 
 data Argumentˉcountˉobject: bytes = [
     87, 86, 79, 49, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,
@@ -72,15 +72,15 @@ fn Differentˉu8(Value: u8) -> u8 {
 }
 
 export fn Main() -> i32 {
-    let Count: Nativeˉstencilˉresult =
-        Nativeˉstencilˉprocessˉargumentˉcount(Argumentˉcountˉobject);
-    if Count.Status != Nativeˉstencilˉstatus.Valid { return 1; }
+    let Count: Nativeˉstencil.Nativeˉstencilˉresult =
+        Nativeˉstencil.Nativeˉstencilˉprocessˉargumentˉcount(Argumentˉcountˉobject);
+    if Count.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Valid { return 1; }
     if Bytesˉlength(Count.Value) != 5u32 { return 2; }
     if Bytesˉreadˉu8(Count.Value, 3u32) != 80u8 { return 3; }
 
-    let Argument: Nativeˉstencilˉresult =
-        Nativeˉstencilˉprocessˉargument(Argumentˉobject);
-    if Argument.Status != Nativeˉstencilˉstatus.Valid { return 4; }
+    let Argument: Nativeˉstencil.Nativeˉstencilˉresult =
+        Nativeˉstencil.Nativeˉstencilˉprocessˉargument(Argumentˉobject);
+    if Argument.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Valid { return 4; }
     if Bytesˉlength(Argument.Value) != 70u32 { return 5; }
     if Bytesˉreadˉu8(Argument.Value, 3u32) != 64u8 { return 6; }
     if Bytesˉreadˉu8(Argument.Value, 11u32) != 80u8 { return 7; }
@@ -91,76 +91,76 @@ export fn Main() -> i32 {
     if Bytesˉreadˉu8(Argument.Value, 59u32) != 64u8 { return 12; }
     if Bytesˉreadˉu8(Argument.Value, 60u32) != 3u8 { return 13; }
 
-    let Repeated: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargument(Argumentˉobject);
-    if Repeated.Status != Nativeˉstencilˉstatus.Valid { return 14; }
+    let Repeated: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargument(Argumentˉobject);
+    if Repeated.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Valid { return 14; }
     if !Same(Argument.Value, Repeated.Value) { return 15; }
 
-    let Short: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+    let Short: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargumentˉcount(
         Bytesˉslice(Argumentˉcountˉobject, 0u32, 165u32)
     );
-    if Short.Status != Nativeˉstencilˉstatus.Invalidˉsize { return 16; }
+    if Short.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Invalidˉsize { return 16; }
     if Bytesˉlength(Short.Value) != 0u32 { return 17; }
 
-    let Badˉheader: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+    let Badˉheader: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargumentˉcount(
         Replaceˉu8(Argumentˉcountˉobject, 0u32, 0u8)
     );
-    if Badˉheader.Status != Nativeˉstencilˉstatus.Invalidˉobject { return 18; }
+    if Badˉheader.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Invalidˉobject { return 18; }
 
-    let Badˉsection: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargument(
+    let Badˉsection: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargument(
         Replaceˉu8(Argumentˉobject, 28u32, 2u8)
     );
-    if Badˉsection.Status != Nativeˉstencilˉstatus.Invalidˉobject { return 19; }
+    if Badˉsection.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Invalidˉobject { return 19; }
 
-    let Badˉsymbol: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+    let Badˉsymbol: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargumentˉcount(
         Replaceˉu8(Argumentˉcountˉobject, 96u32, 66u8)
     );
-    if Badˉsymbol.Status != Nativeˉstencilˉstatus.Invalidˉobject { return 20; }
+    if Badˉsymbol.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Invalidˉobject { return 20; }
 
-    let Badˉmetadata: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargument(
+    let Badˉmetadata: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargument(
         Replaceˉu8(Argumentˉobject, 59u32, 7u8)
     );
-    if Badˉmetadata.Status != Nativeˉstencilˉstatus.Invalidˉmetadata { return 21; }
+    if Badˉmetadata.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Invalidˉmetadata { return 21; }
 
-    let Badˉpatch: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+    let Badˉpatch: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargumentˉcount(
         Replaceˉu8(Argumentˉcountˉobject, 59u32, 4u8)
     );
-    if Badˉpatch.Status != Nativeˉstencilˉstatus.Invalidˉmetadata { return 22; }
+    if Badˉpatch.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Invalidˉmetadata { return 22; }
 
-    let Badˉtemplate: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargument(
+    let Badˉtemplate: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargument(
         Replaceˉu8(Argumentˉobject, 163u32, 0u8)
     );
-    if Badˉtemplate.Status != Nativeˉstencilˉstatus.Invalidˉtemplate { return 23; }
+    if Badˉtemplate.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Invalidˉtemplate { return 23; }
 
-    let Filledˉhole: Nativeˉstencilˉresult = Nativeˉstencilˉprocessˉargumentˉcount(
+    let Filledˉhole: Nativeˉstencil.Nativeˉstencilˉresult = Nativeˉstencil.Nativeˉstencilˉprocessˉargumentˉcount(
         Replaceˉu8(Argumentˉcountˉobject, 74u32, 80u8)
     );
-    if Filledˉhole.Status != Nativeˉstencilˉstatus.Invalidˉtemplate { return 24; }
+    if Filledˉhole.Status != Nativeˉstencil.Nativeˉstencilˉstatus.Invalidˉtemplate { return 24; }
 
     var Countˉindex: u32 = 0u32;
     while Countˉindex < Bytesˉlength(Argumentˉcountˉobject) {
-        let Mutatedˉcount: Nativeˉstencilˉresult =
-            Nativeˉstencilˉprocessˉargumentˉcount(
+        let Mutatedˉcount: Nativeˉstencil.Nativeˉstencilˉresult =
+            Nativeˉstencil.Nativeˉstencilˉprocessˉargumentˉcount(
                 Replaceˉu8(
                     Argumentˉcountˉobject,
                     Countˉindex,
                     Differentˉu8(Bytesˉreadˉu8(Argumentˉcountˉobject, Countˉindex))
                 )
             );
-        if Mutatedˉcount.Status == Nativeˉstencilˉstatus.Valid { return 25; }
+        if Mutatedˉcount.Status == Nativeˉstencil.Nativeˉstencilˉstatus.Valid { return 25; }
         Countˉindex = Countˉindex + 1u32;
     }
 
     var Argumentˉindex: u32 = 0u32;
     while Argumentˉindex < Bytesˉlength(Argumentˉobject) {
-        let Mutatedˉargument: Nativeˉstencilˉresult =
-            Nativeˉstencilˉprocessˉargument(
+        let Mutatedˉargument: Nativeˉstencil.Nativeˉstencilˉresult =
+            Nativeˉstencil.Nativeˉstencilˉprocessˉargument(
                 Replaceˉu8(
                     Argumentˉobject,
                     Argumentˉindex,
                     Differentˉu8(Bytesˉreadˉu8(Argumentˉobject, Argumentˉindex))
                 )
             );
-        if Mutatedˉargument.Status == Nativeˉstencilˉstatus.Valid { return 26; }
+        if Mutatedˉargument.Status == Nativeˉstencil.Nativeˉstencilˉstatus.Valid { return 26; }
         Argumentˉindex = Argumentˉindex + 1u32;
     }
     return 0;

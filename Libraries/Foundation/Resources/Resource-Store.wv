@@ -2,7 +2,7 @@ module Resourceˉstore profile portable;
 
 // Format validation remains capability-free; platform libraries supply the bytes.
 
-enum Resourceˉstoreˉstatus {
+export enum Resourceˉstoreˉstatus {
     Valid = 0;
     Invalidˉsize = 1;
     Invalidˉmagic = 2;
@@ -19,7 +19,7 @@ enum Resourceˉstoreˉstatus {
     Invalidˉquery = 13;
 }
 
-record Resourceˉstoreˉresult {
+export record Resourceˉstoreˉresult {
     Status: Resourceˉstoreˉstatus;
     Identifier: u32;
     Kind: u32;

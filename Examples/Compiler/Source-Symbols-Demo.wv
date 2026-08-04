@@ -1,6 +1,9 @@
 module Compilerˉsourceˉsymbolsˉdemo profile portable;
 
-import Compilerˉsourceˉsymbols;
+import Compilerˉsourceˉgraph as Sourceˉgraph;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
 
@@ -77,35 +80,35 @@ fn Sourceˉsymbolsˉfour(First: text, Second: text, Third: text, Fourth: text) -
     return Bytesˉconcat(Result, Fourthˉbytes);
 }
 
-fn Sourceˉsymbolsˉstatus(Source: text) -> Compilerˉsourceˉsymbolˉstatus {
-    let Summary: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(
+fn Sourceˉsymbolsˉstatus(Source: text) -> Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus {
+    let Summary: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(
         Sourceˉsymbolsˉone(Source)
     );
     return Summary.Status;
 }
 
 fn Sourceˉsymbolsˉreplaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
-    let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
         Input, Offset, 1u32, Bytesˉfromˉu8(Value)
     );
     return Replaced.Value;
 }
 
 fn Sourceˉsymbolsˉreplaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
-    let Replaced: Foundationˉbytesˉresult = Foundationˉbytesˉreplace(
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
         Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
     );
     return Replaced.Value;
 }
 
 export fn Main() -> i32 {
-    let Root: text = "module Symbolsˉroot profile hosted; import Symbolsˉalpha; import Symbolsˉbeta; capability console.write_line; data Message: text = \"ready\"; record Rootˉpair { Choice: Symbolsˉchoice; Count: u32; } enum Rootˉstate { Ready = 0; Stopped = 1; } export fn Main(Value: Symbolsˉleaf) -> Rootˉstate { return Rootˉstate.Ready; }";
-    let Alpha: text = "module Symbolsˉalpha profile portable; import Symbolsˉleaf; record Alphaˉrecord { Code: Symbolsˉleafˉstate; } enum Symbolsˉchoice { First = 0; Second = 1; } export fn Alphaˉuse(Value: Symbolsˉleaf) -> Symbolsˉchoice { return Symbolsˉchoice.First; }";
-    let Beta: text = "module Symbolsˉbeta profile portable; record Betaˉrecord { Count: u32; } export fn Betaˉuse(Value: Betaˉrecord) -> u32 { return Value.Count; }";
-    let Leaf: text = "module Symbolsˉleaf profile portable; record Symbolsˉleaf { Value: u32; } enum Symbolsˉleafˉstate { Cold = 0; Warm = 1; } export fn Leafˉuse(Value: Symbolsˉleaf) -> Symbolsˉleafˉstate { return Symbolsˉleafˉstate.Warm; }";
+    let Root: text = "module Symbolsˉroot profile hosted; import Symbolsˉalpha as Alpha; import Symbolsˉbeta as Beta; capability console.write_line; data Message: text = \"ready\"; record Rootˉpair { Choice: Alpha.Symbolsˉchoice; Count: u32; } enum Rootˉstate { Ready = 0; Stopped = 1; } export fn Main(Value: Alpha.Alphaˉrecord) -> Rootˉstate { return Rootˉstate.Ready; }";
+    let Alpha: text = "module Symbolsˉalpha profile portable; import Symbolsˉleaf as Leaf; export record Alphaˉrecord { Code: Leaf.Symbolsˉleafˉstate; } export enum Symbolsˉchoice { First = 0; Second = 1; } export fn Alphaˉuse(Value: Leaf.Symbolsˉleaf) -> Symbolsˉchoice { return Symbolsˉchoice.First; }";
+    let Beta: text = "module Symbolsˉbeta profile portable; export record Betaˉrecord { Count: u32; } export fn Betaˉuse(Value: Betaˉrecord) -> u32 { return Value.Count; }";
+    let Leaf: text = "module Symbolsˉleaf profile portable; export record Symbolsˉleaf { Value: u32; } export enum Symbolsˉleafˉstate { Cold = 0; Warm = 1; } export fn Leafˉuse(Value: Symbolsˉleaf) -> Symbolsˉleafˉstate { return Symbolsˉleafˉstate.Warm; }";
     let Validˉinput: bytes = Sourceˉsymbolsˉfour(Root, Alpha, Beta, Leaf);
-    let Valid: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(Validˉinput);
-    if Valid.Status != Compilerˉsourceˉsymbolˉstatus.Valid { return 1; }
+    let Valid: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Validˉinput);
+    if Valid.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 1; }
     if Valid.Modules != 4u32 { return 2; }
     if Valid.Capabilities != 1u32 { return 3; }
     if Valid.Data != 1u32 { return 4; }
@@ -122,81 +125,95 @@ export fn Main() -> i32 {
     if Bytesˉreadˉu8(Valid.Visibility, 6u32) != 0u8 { return 15; }
     if Bytesˉreadˉu8(Valid.Visibility, 7u32) != 1u8 { return 16; }
     if Bytesˉreadˉu8(Valid.Visibility, 11u32) != 0u8 { return 17; }
-    let Scan: Compilerˉsourceˉsetˉscan = Compilerˉscanˉsourceˉset(Validˉinput);
-    if !Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Validˉinput);
+    if !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Valid.Directory, 13u32
     ) { return 18; }
-    if Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Sourceˉsymbolsˉreplaceˉu8(Valid.Directory, 0u32, 0u8), 13u32
     ) { return 19; }
-    if Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Sourceˉsymbolsˉreplaceˉu32(Valid.Directory, 8u32, 12u32), 13u32
     ) { return 20; }
-    if Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Sourceˉsymbolsˉreplaceˉu32(Valid.Directory, 16u32, 4u32), 13u32
     ) { return 21; }
-    if Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
         Validˉinput, Scan, Bytesˉconcat(Valid.Directory, Bytesˉfromˉu8(0u8)), 13u32
     ) { return 22; }
     let Leafˉname: bytes = Textˉtoˉutf8("Symbolsˉleaf");
-    let Leafˉmatch: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
+    let Leafˉmatch: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfindˉnominalˉinˉdirectory(
         Validˉinput, Scan, Valid.Directory, Valid.Lookup,
         Leafˉname, 0u32, Bytesˉlength(Leafˉname)
     );
     if !Leafˉmatch.Found { return 23; }
     if Leafˉmatch.Module != 3u32 { return 24; }
-    if Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnominalˉindexˉinˉdirectory(
         Validˉinput, Scan, Valid.Directory, Valid.Lookup, Leafˉmatch.Kind,
         Leafˉname, 0u32, Bytesˉlength(Leafˉname), Valid.Records
     ) != 3u32 { return 25; }
-    if Bytesˉlength(Valid.Lookup) != 4244u32 { return 26; }
+    if Bytesˉlength(Valid.Lookup) != 4603u32 { return 26; }
     if Bytesˉreadˉu16ˉlittle(Valid.Lookup, 6u32) != 1u32 { return 27; }
     if Leafˉmatch.Directoryˉindex != 10u32 { return 28; }
     if Bytesˉreadˉu32ˉlittle(Valid.Lookup, 4164u32 + 3u32 * 4u32) != 10u32 { return 29; }
     if Bytesˉreadˉu32ˉlittle(Valid.Lookup, 4192u32 + 10u32 * 4u32) != 3u32 { return 53; }
 
-    if Sourceˉsymbolsˉstatus("module Duplicateˉcapability profile hosted; capability console.write; capability console.write; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉcapability { return 30; }
-    if Sourceˉsymbolsˉstatus("module Unknownˉcapability profile hosted; capability console.unknown; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Unknownˉcapability { return 31; }
-    if Sourceˉsymbolsˉstatus("module Portableˉcapability profile portable; capability console.write; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Capabilityˉprofile { return 32; }
-    if Sourceˉsymbolsˉstatus("module Duplicateˉdata profile portable; data Value: text = \"a\"; data Value: text = \"b\"; export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉdata { return 33; }
-    if Sourceˉsymbolsˉstatus("module Duplicateˉtype profile portable; record Value { Field: i32; } enum Value { One = 1; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉtype { return 34; }
-    if Sourceˉsymbolsˉstatus("module Duplicateˉfunction profile portable; fn Value() -> i32 { return 1; } export fn Value() -> i32 { return 2; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉfunction { return 35; }
-    if Sourceˉsymbolsˉstatus("module Constructorˉconflict profile portable; record Value { Field: i32; } export fn Value() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Constructorˉconflict { return 36; }
-    if Sourceˉsymbolsˉstatus("module Reservedˉname profile portable; export fn Bytesˉlength() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Reservedˉname { return 37; }
-    if Sourceˉsymbolsˉstatus("module Emptyˉrecord profile portable; record Empty { } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Emptyˉrecord { return 38; }
-    if Sourceˉsymbolsˉstatus("module Duplicateˉfield profile portable; record Pair { Value: i32; Value: u32; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉfield { return 39; }
-    if Sourceˉsymbolsˉstatus("module Emptyˉenum profile portable; enum Empty { } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Emptyˉenum { return 40; }
-    if Sourceˉsymbolsˉstatus("module Duplicateˉmember profile portable; enum State { Ready = 0; Ready = 1; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉmember { return 41; }
-    if Sourceˉsymbolsˉstatus("module Duplicateˉvalue profile portable; enum State { Ready = 0; Stopped = 0; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉvalue { return 42; }
-    if Sourceˉsymbolsˉstatus("module Unknownˉtype profile portable; export fn Main(Value: Missing) -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 44; }
-    if Sourceˉsymbolsˉstatus("module Invalidˉfield profile portable; record Inner { Value: i32; } record Outer { Value: Inner; } export fn Main() -> i32 { return 0; }") != Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype { return 45; }
-    if Sourceˉsymbolsˉstatus("module Duplicateˉparameter profile portable; export fn Main(Value: i32, Value: i32) -> i32 { return Value; }") != Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter { return 46; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉcapability profile hosted; capability console.write; capability console.write; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉcapability { return 30; }
+    if Sourceˉsymbolsˉstatus("module Unknownˉcapability profile hosted; capability console.unknown; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉcapability { return 31; }
+    if Sourceˉsymbolsˉstatus("module Portableˉcapability profile portable; capability console.write; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Capabilityˉprofile { return 32; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉdata profile portable; data Value: text = \"a\"; data Value: text = \"b\"; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉdata { return 33; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉtype profile portable; record Value { Field: i32; } enum Value { One = 1; } export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉtype { return 34; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉfunction profile portable; fn Value() -> i32 { return 1; } export fn Value() -> i32 { return 2; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉfunction { return 35; }
+    if Sourceˉsymbolsˉstatus("module Constructorˉconflict profile portable; record Value { Field: i32; } export fn Value() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Constructorˉconflict { return 36; }
+    if Sourceˉsymbolsˉstatus("module Reservedˉname profile portable; export fn Bytesˉlength() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Reservedˉname { return 37; }
+    if Sourceˉsymbolsˉstatus("module Emptyˉrecord profile portable; record Empty { } export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Emptyˉrecord { return 38; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉfield profile portable; record Pair { Value: i32; Value: u32; } export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉfield { return 39; }
+    if Sourceˉsymbolsˉstatus("module Emptyˉenum profile portable; enum Empty { } export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Emptyˉenum { return 40; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉmember profile portable; enum State { Ready = 0; Ready = 1; } export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉmember { return 41; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉvalue profile portable; enum State { Ready = 0; Stopped = 0; } export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉvalue { return 42; }
+    if Sourceˉsymbolsˉstatus("module Unknownˉtype profile portable; export fn Main(Value: Missing) -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype { return 44; }
+    if Sourceˉsymbolsˉstatus("module Invalidˉfield profile portable; record Inner { Value: i32; } record Outer { Value: Inner; } export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype { return 45; }
+    if Sourceˉsymbolsˉstatus("module Duplicateˉparameter profile portable; export fn Main(Value: i32, Value: i32) -> i32 { return Value; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Duplicateˉparameter { return 46; }
+    if Sourceˉsymbolsˉstatus("module Validˉconstant profile portable; enum Mode { Ready = 1; } const START: i32 = 1; const STEP: i32 = START + 2; const ENABLED: bool = STEP == 3; const MODE: Mode = Mode.Ready; export fn Main() -> i32 { return STEP; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 62; }
+    if Sourceˉsymbolsˉstatus("module Shortˉconstant profile portable; const ENABLED: bool = true || MISSING; const DISABLED: bool = false && (4294967295u32 + 1u32 == 0u32); export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 71; }
+    if Sourceˉsymbolsˉstatus("module Invalidˉconstantˉname profile portable; const Mixed: i32 = 1; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉconstantˉname { return 63; }
+    if Sourceˉsymbolsˉstatus("module Invalidˉconstantˉtype profile portable; const VALUE: text = \"x\"; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉconstantˉtype { return 64; }
+    if Sourceˉsymbolsˉstatus("module Invalidˉconstantˉinitializer profile portable; const VALUE: i32 = Length(); export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉconstantˉinitializer { return 65; }
+    if Sourceˉsymbolsˉstatus("module Constantˉtypeˉmismatch profile portable; const VALUE: u32 = 1; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Constantˉtypeˉmismatch { return 66; }
+    if Sourceˉsymbolsˉstatus("module Constantˉforwardˉreference profile portable; const VALUE: i32 = LATER; const LATER: i32 = 1; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Constantˉforwardˉreference { return 67; }
+    if Sourceˉsymbolsˉstatus("module Constantˉoverflow profile portable; const MAXIMUM: u32 = 4294967295u32; const OVERFLOW: u32 = MAXIMUM + 1u32; export fn Main() -> i32 { return 0; }") != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Constantˉoverflow { return 68; }
 
-    let Crossˉmoduleˉduplicate: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(
+    let Crossˉmoduleˉduplicate: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(
         Sourceˉsymbolsˉtwo(
-            "module Crossˉduplicateˉroot profile portable; import Crossˉduplicateˉdependency; record Sharedˉtype { Value: i32; } export fn Main() -> i32 { return 0; }",
+            "module Crossˉduplicateˉroot profile portable; import Crossˉduplicateˉdependency as Dependency; record Sharedˉtype { Value: i32; } export fn Main() -> i32 { return 0; }",
             "module Crossˉduplicateˉdependency profile portable; record Sharedˉtype { Value: u32; } export fn Dependencyˉmain() -> i32 { return 0; }"
         )
     );
-    if Crossˉmoduleˉduplicate.Status != Compilerˉsourceˉsymbolˉstatus.Duplicateˉtype { return 47; }
-    if Crossˉmoduleˉduplicate.Failureˉmodule != 1u32 { return 48; }
-    if Crossˉmoduleˉduplicate.Failureˉrelatedˉmodule != 0u32 { return 49; }
+    if Crossˉmoduleˉduplicate.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 47; }
 
-    let Inaccessible: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(
+    let Inaccessible: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(
         Sourceˉsymbolsˉthree(
-            "module Visibilityˉroot profile portable; import Visibilityˉalpha; import Visibilityˉbeta; export fn Main() -> i32 { return 0; }",
-            "module Visibilityˉalpha profile portable; export fn Alphaˉuse(Value: Visibilityˉbetaˉtype) -> i32 { return 0; }",
+            "module Visibilityˉroot profile portable; import Visibilityˉalpha as Alpha; export fn Main() -> i32 { return 0; }",
+            "module Visibilityˉalpha profile portable; import Visibilityˉbeta as Beta; export fn Alphaˉuse(Value: Beta.Visibilityˉbetaˉtype) -> i32 { return 0; }",
             "module Visibilityˉbeta profile portable; record Visibilityˉbetaˉtype { Value: i32; } export fn Betaˉuse(Value: Visibilityˉbetaˉtype) -> i32 { return Value.Value; }"
         )
     );
-    if Inaccessible.Status != Compilerˉsourceˉsymbolˉstatus.Inaccessibleˉtype { return 50; }
+    if Inaccessible.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Inaccessibleˉtype { return 50; }
     if Inaccessible.Failureˉmodule != 1u32 { return 51; }
     if Inaccessible.Failureˉrelatedˉmodule != 2u32 { return 52; }
 
-    let Graphˉfailure: Compilerˉsourceˉsymbolˉsummary = Compilerˉvalidateˉsourceˉsymbols(
-        Sourceˉsymbolsˉone("module Missingˉimport profile portable; import Missingˉdependency;")
+    let Importedˉconstant: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(
+        Sourceˉsymbolsˉtwo(
+            "module Importedˉconstantˉroot profile portable; import Importedˉconstantˉdependency as Dependency; export fn Main() -> i32 { return 0; }",
+            "module Importedˉconstantˉdependency profile portable; const VALUE: i32 = 1; export fn Dependencyˉmain() -> i32 { return VALUE; }"
+        )
     );
-    if Graphˉfailure.Status != Compilerˉsourceˉsymbolˉstatus.Sourceˉgraph { return 60; }
-    if Graphˉfailure.Graphˉstatus != Compilerˉsourceˉgraphˉstatus.Missingˉimport { return 61; }
+    if Importedˉconstant.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid { return 69; }
+
+    let Graphˉfailure: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(
+        Sourceˉsymbolsˉone("module Missingˉimport profile portable; import Missingˉdependency as Dependency;")
+    );
+    if Graphˉfailure.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Sourceˉgraph { return 60; }
+    if Graphˉfailure.Graphˉstatus != Sourceˉgraph.Compilerˉsourceˉgraphˉstatus.Missingˉimport { return 61; }
     return 0;
 }

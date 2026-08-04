@@ -1,9 +1,9 @@
 module Compositionˉmiddle profile portable;
 
-import Compositionˉleaf;
+import Compositionˉleaf as Leaf;
 
 export fn Compositionˉanswer() -> i32 {
-    let Candidate: Compositionˉvalue = Compositionˉmake(41);
-    if Candidate.Status != Compositionˉstatus.Ready { return 0; }
-    return Compositionˉincrement(Candidate.Value);
+    let Candidate: Leaf.Compositionˉvalue = Leaf.Compositionˉmake(41);
+    if Candidate.Status != Leaf.Compositionˉstatus.Ready { return 0; }
+    return Leaf.Compositionˉincrement(Candidate.Value);
 }

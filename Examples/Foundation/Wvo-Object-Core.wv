@@ -1,6 +1,6 @@
 module Wvoˉobjectˉcore profile hosted;
 
-import Foundationˉbyteˉordering;
+import Foundationˉbyteˉordering as Byteˉordering;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -366,7 +366,7 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         if Sectionˉindex > 0u32 {
             if Sectionˉkind < Previousˉsectionˉkind { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉindex, 0u32, 0u32, Cursor); }
             if Sectionˉkind == Previousˉsectionˉkind {
-                if Foundationˉbyteˉspansˉcompare(
+                if Byteˉordering.Foundationˉbyteˉspansˉcompare(
                     Input,
                     Previousˉsectionˉname,
                     Previousˉsectionˉnameˉlength,
@@ -417,7 +417,7 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         if Symbolˉindex > 0u32 {
             if Symbolˉbinding < Previousˉbinding { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉindex, 0u32, Cursor); }
             if Symbolˉbinding == Previousˉbinding {
-                if Foundationˉbyteˉspansˉcompare(
+                if Byteˉordering.Foundationˉbyteˉspansˉcompare(
                     Input,
                     Previousˉsymbolˉname,
                     Previousˉsymbolˉnameˉlength,

@@ -1,10 +1,10 @@
 module Compositionˉleaf profile portable;
 
-enum Compositionˉstatus {
+export enum Compositionˉstatus {
     Ready = 1;
 }
 
-record Compositionˉvalue {
+export record Compositionˉvalue {
     Value: i32;
     Status: Compositionˉstatus;
 }

@@ -107,6 +107,7 @@ $RequiredIncludes = @(
     '#boolean-literals',
     '#built-in-functions',
     '#numbers',
+    '#named-record-literals',
     '#calls',
     '#members',
     '#operators',
@@ -118,11 +119,11 @@ foreach ($Include in $RequiredIncludes) {
 }
 
 $KeywordCases = [ordered]@{
-    'declaration-keywords' = @('module', 'profile', 'import', 'capability', 'data', 'record', 'enum', 'export', 'fn')
-    'control-keywords' = @('if', 'else', 'while', 'return')
-    'storage-keywords' = @('let', 'var')
+    'declaration-keywords' = @('module', 'profile', 'import', 'as', 'capability', 'data', 'const', 'record', 'enum', 'variant', 'export', 'fn')
+    'control-keywords' = @('if', 'else', 'while', 'for', 'in', 'match', 'case', 'push', 'break', 'continue', 'return')
+    'storage-keywords' = @('let', 'var', 'freeze')
     'profile-keywords' = @('portable', 'hosted', 'system')
-    'type-keywords' = @('i32', 'i64', 'u8', 'u32', 'u64', 'bool', 'text', 'bytes', 'void')
+    'type-keywords' = @('i32', 'i64', 'u8', 'u32', 'u64', 'bool', 'text', 'bytes', 'sequence', 'builder', 'void')
     'boolean-literals' = @('true', 'false')
     'built-in-functions' = @('length')
 }
@@ -139,6 +140,14 @@ foreach ($Identifier in @('moduleˉname', 'trueˉvalue', 'i32ˉvalue', 'lengthen
         Assert-Condition (!$Pattern.IsMatch($Identifier)) "Identifier '$Identifier' is incorrectly matched as a reserved word."
     }
 }
+
+$ConstantDeclarationPattern = Get-RulePattern $Grammar 'declarations' 4
+$ConstantDeclarationSource = 'const MAXIMUM_RECORDS'
+$ConstantDeclaration = $ConstantDeclarationPattern.Match($ConstantDeclarationSource)
+Assert-Condition ($ConstantDeclaration.Success -and $ConstantDeclaration.Length -eq $ConstantDeclarationSource.Length) `
+    'The editor grammar must recognize a complete typed-constant declaration prefix.'
+Assert-Condition ($ConstantDeclaration.Groups[2].Value -eq 'MAXIMUM_RECORDS') `
+    'The editor grammar must scope the ALL_CAPS constant name separately.'
 
 $NumberPattern = Get-RulePattern $Grammar 'numbers'
 foreach ($Number in @(
@@ -158,10 +167,22 @@ foreach ($Identifier in @('Value0', '0u32suffix', '0u64suffix', 'Fieldˉ0u8')) {
     Assert-Condition (!$NumberPattern.IsMatch($Identifier)) "Identifier '$Identifier' is incorrectly matched as a numeric token."
 }
 
+$NamedRecordPattern = Get-RulePattern $Grammar 'named-record-literals'
+$NamedRecordSource = 'Readˉrequest { Name:'
+$NamedRecord = $NamedRecordPattern.Match($NamedRecordSource)
+Assert-Condition ($NamedRecord.Success -and $NamedRecord.Value -eq 'Readˉrequest') `
+    'The editor grammar must recognize a named-record literal type before its field block.'
+Assert-Condition (!$NamedRecordPattern.IsMatch('Ready { Process(Value); }')) `
+    'The named-record grammar must not classify an ordinary condition before a block as a type.'
+
+$ControlPattern = Get-RulePattern $Grammar 'control-keywords'
+Assert-Condition ($ControlPattern.Matches('else if').Count -eq 2) `
+    'The editor grammar must recognize both control words in block-form else if.'
+
 $CommentPattern = Get-RulePattern $Grammar 'comments'
 Assert-FullMatch $CommentPattern '// Windvale comment' 'Line comment'
 $OperatorPattern = Get-RulePattern $Grammar 'operators'
-foreach ($Operator in @('->', '==', '!=', '<=', '>=', '+', '-', '*', '!', '<', '>', '=')) {
+foreach ($Operator in @('->', '&&', '||', '<<', '>>', '==', '!=', '<=', '>=', '+=', '-=', '*=', '+', '-', '*', '/', '%', '&', '|', '^', '~', '!', '<', '>', '=')) {
     Assert-FullMatch $OperatorPattern $Operator 'Operator'
 }
 

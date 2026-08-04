@@ -13,7 +13,7 @@ enum Nativeˉpublicationˉstatus {
     Imageˉlimit = 9;
 }
 
-record Nativeˉpublicationˉresult {
+export record Nativeˉpublicationˉresult {
     Status: Nativeˉpublicationˉstatus;
     Value: bytes;
     Failureˉoffset: u32;

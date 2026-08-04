@@ -59,9 +59,9 @@ internal static class Consoleˉapplicationˉlayout
     internal const int REQUEST_BYTES = 32;
     internal const int RESPONSE_BYTES = 108;
     internal const int MAXIMUM_NATIVE_IMAGE_BYTES = 4 * 1024 * 1024;
-    internal const int PLANNER_CANONICAL_SIZE = 8_806;
+    internal const int PLANNER_CANONICAL_SIZE = 8_502;
     internal const string PLANNER_CANONICAL_SHA256 =
-        "a4421adf6e46f31a5096099b1b164ea93901e97a66ff86b9b5b80ba5e753e790";
+        "30475516a4f37ff6739c4ef45fdc9d517d12ea781fff50aab3051fd672792cfc";
 
     private const uint DATA_VIRTUAL_BYTES = 18_874_480;
     private const string REQUEST_NAME = "console-application-plan-request.bin";

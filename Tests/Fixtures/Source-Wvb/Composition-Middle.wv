@@ -1,11 +1,15 @@
 module Compositionˉmiddle profile portable;
 
-import Compositionˉleaf;
+import Compositionˉleaf as Leaf;
+
+record Shared { Value: i32; }
+
+fn Helper(Value: i32) -> i32 { return Value; }
 
 export fn Compositionˉanswer() -> i32 {
-    let Label: text = Compositionˉlabel();
+    let Label: text = Leaf.Compositionˉlabel();
     if Bytesˉlength(Textˉtoˉutf8(Label)) != 10u32 { return 0; }
-    let Candidate: Compositionˉvalue = Compositionˉmake(41);
-    if Candidate.Status != Compositionˉstatus.Ready { return 0; }
-    return Compositionˉincrement(Candidate.Value);
+    let Candidate: Leaf.Compositionˉvalue = Leaf.Compositionˉmake(41);
+    if Candidate.Status != Leaf.Compositionˉstatus.Ready { return 0; }
+    return Leaf.Compositionˉincrement(Helper(Candidate.Value));
 }

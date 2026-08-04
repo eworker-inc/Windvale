@@ -70,7 +70,7 @@ The fixed 1,024-byte metadata record reuses the qualified compiler-authority cap
 - native ABI `22`, execution-context format `7`, service-table format `5`;
 - six capability records and ten service records;
 - profile flags `3`, meaning compiler plus in-process verifier build driver;
-- instruction budget `8,000,000,000`;
+- instruction budget `48,000,000,000` under the shared Decision 0201 hosted compiler/build-driver ceiling;
 - exact native-image and per-service SHA-256 identities.
 
 The PE/ELF constructors and independent parsers take the expected compiler or build-driver profile explicitly. A format-3 compiler container is rejected as format 5 and a format-5 driver is rejected as format 3. Every changed header format, metadata magic, native bundle, digest, extent, reserved byte, truncation, or extension is rejected before execution or package publication.
@@ -79,11 +79,11 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The canonical driver WVB is 749,460 bytes with SHA-256 `ed3a1d7ab0079af604ae692da98db048747ddf74f491ee4f3f25f42d353063d1`.
+The canonical driver WVB is 1,008,678 bytes with SHA-256 `090f7ce9e00708dc029cbe98448c30ee1e6e0544bd2dcac1de045c44dcc226b2`.
 
-`windows-x64-build-driver-v1` emits an 18,483,200-byte PE32+ application with SHA-256 `92ce5643e5e1685a2c292e6e97c17013d7f2153d8976c749415d2d0a1a7310ab`.
+`windows-x64-build-driver-v1` emits a 27,656,704-byte PE32+ application with SHA-256 `3f72b96ef0697c1b531f566180fea9f406b7213b88a6dd7000235d82d1878819`.
 
-`linux-x64-build-driver-v1` emits an 18,485,248-byte sectionless static-PIE ELF application with SHA-256 `4b90674255d11ee4b6ffc375eaa80575dd1fe39b6d7f2b5d6ba4d246f3a7d99e`.
+`linux-x64-build-driver-v1` emits a 27,656,192-byte sectionless static-PIE ELF application with SHA-256 `8302f75a2ff9effaa72fa7ee58a6ee93a7e780bf39a4471aa41e397e94bcb568`.
 
 The Stage 0 construction route is:
 
