@@ -103,17 +103,17 @@ internal static partial class Program
     private const string SOURCE_WVB_DEMO_SHA256 = "c8f96a8d973c1d03d5bb115612ddc765a2a7e3b617ec61af641f540fb7b2ce04";
     private const string SOURCE_WVB_TOOL_SHA256 = "fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556";
     private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e";
-    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "96547e74e54ccd452e85d859539d6c282eafc3562d161af029cbd3168546f0ec";
-    private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "55e51e665a59575ac134d171e24bcf1e73863489815e50aba5167a5b920a9e44";
-    private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "8e7cd4105994b9228460e5b96468c613c906f97c7784d298e7b790b91e3a1358";
-    private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "06f9f19784133d313950d571fe834a2c6d062fc6007f6d8ff8114f7bdff9be30";
-    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "ed6e1f2c7d657bda10ca751474401947abcef1b6040fb4aeefe1d0ccc4ef5637";
-    private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "db188356139f3a99e6dcf2693a23933c315817b85f4a00356b6b38ba00881a9c";
-    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "1be3bd8c653d17721c6e4324a12e1338a06acdc7e7a3dee24222d03a2ade278b";
-    private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "f7becf508479ac813541dca94aeef85417c93e78039eaea664278793a0424e1c";
-    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "31bab9637aae9e37ed204baaf55fe7261ab4398d21f4fb6531c01d69375a1944";
-    private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "6bed8725e7f20d6bcae8cc7ef027a068b30a1f189df3e483712fc7ab61eb33b9";
-    private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "72d701eaf6b5e31579cd7473c49805ee6ca360ddf0db03d15de588042bb07aba";
+    private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "d37f594017d83e51e86526d507745e5f0970277fbeeca70337c18b5662df16f6";
+    private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "f0cf5e623f1b193cb2dc64fa86263ea53180f2bf3190e2727711a2888eda5c7b";
+    private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "80e80b3f70379f291025d2724a0c6ba9f32dab5c85ed57418746d4504310317b";
+    private const string SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256 = "a2d97c6f6569c4f2296fa44d0064ee52306541bfee8dbef54d5e66dd238e3ae2";
+    private const string SOURCE_WVB_TOOL_WINDOWS_METADATA_SHA256 = "274b4f6756170a2d550fa5ceb9e6ea4718dee4b126c48fb1aeb80f677e8e617f";
+    private const string SOURCE_WVB_TOOL_WINDOWS_RUNTIME_HEADER_SHA256 = "77b05c21d603502ad5f90977ba911e33f3a6f84ba7bb06e85a475d952540da9c";
+    private const string SOURCE_WVB_TOOL_WINDOWS_APPLICATION_SHA256 = "64ce8f05596aa8f9f54cde51e5876a41312141a3698d0a7090bb2d5f85483290";
+    private const string SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256 = "7675ecb3a6dce251b3e40b9cceb9e2d9f1537a7d80ac7d50c2e118d26cba9cf3";
+    private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "3df958a0ee8023a77d7ca2c570b97e4cebfa9eb1f59a04c194dfad1990533097";
+    private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "aaae83eccfb7522f351fdbcdc0592a278b2f0a641693734447396c4bab56c9c7";
+    private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "5008e8ac7746afd247826fc167d07816219cd898d1defa04fb96b7720ae0ec2a";
     private const string COMPILER_WVB_VERIFIER_SHA256 = "259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f";
     private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0";
     private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a";
@@ -8478,14 +8478,14 @@ internal static partial class Program
                     (Function.Returnsˉrecord ? 1 : 0))),
             "Native record-storage accounting violated its bounded frame model.");
         Equal(
-            "NATIVE_RECORD_STORAGE functions=413 record-functions=319 " +
-            "parameters=416 assigned-parameters=0 locals=13189 declared=228005 persistent=12721 " +
-            "block=121588 peak-live=9921 scratch=9921 values=24322 slots=6018 " +
-            "return-functions=259 return-fields=3957 max-frame=1916 " +
+            "NATIVE_RECORD_STORAGE functions=419 record-functions=324 " +
+            "parameters=416 assigned-parameters=0 locals=13221 declared=228141 persistent=12754 " +
+            "block=121642 peak-live=9941 scratch=9941 values=24380 slots=6032 " +
+            "return-functions=263 return-fields=3974 max-frame=1916 " +
             "largest-declared=17538 largest-persistent=229 largest-peak=147 " +
-            "largest-scratch=147 max-existing=1539 max-width=34 largest-index=312 " +
+            "largest-scratch=147 max-existing=1539 max-width=34 largest-index=318 " +
             "largest-name=__WvM8F50 nested=0 " +
-            "offset-map=83bea137cb0b9605baba15e176bfc1fc4e97b9ae48e90e18e59ae296f2017068",
+            "offset-map=809e169723c0360053ce51d3c776aa3e34ed53fbaad849b329337912dbc27a53",
             $"NATIVE_RECORD_STORAGE functions={Compilerˉrecordˉstorage.Length} " +
             $"record-functions={Compilerˉrecordˉstorage.Count(Function => Function.Recordˉvalueˉidentifiers > 0 || Function.Recordˉparameterˉbindings > 0 || Function.Recordˉlocalˉbindings > 0 || Function.Returnsˉrecord)} " +
             $"parameters={Compilerˉrecordˉstorage.Sum(Function => Function.Recordˉparameterˉbindings)} " +
@@ -8511,7 +8511,7 @@ internal static partial class Program
             $"largest-name={Largestˉrecordˉframe.Functionˉname} " +
             $"nested={Compilerˉrecordˉstorage.Count(Function => Function.Containsˉnestedˉrecordˉfields)} " +
             $"offset-map={Nativeˉrecordˉstorageˉdigest(Compilerˉrecordˉstorage)}");
-        Equal(27_437_138, Compilerˉnative.Fragment.Code.Length);
+        Equal(27_516_706, Compilerˉnative.Fragment.Code.Length);
         Equal(
             SOURCE_WVB_TOOL_NATIVE_CODE_SHA256,
             Objectˉdigest.Calculateˉsha256(Compilerˉnative.Fragment.Code.AsSpan()));
@@ -8586,14 +8586,14 @@ internal static partial class Program
         var Compilerˉnative = EXACT_COMPILER_NATIVE.Value;
         var Measurement = Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment);
         Equal(Measurement, Nativeˉobjectˉsink.Measureˉwvo(Compilerˉnative.Fragment));
-        Equal(27_437_138, Compilerˉnative.Fragment.Code.Length);
-        Equal(27_459_086, Measurement.Encodedˉobjectˉbytes);
+        Equal(27_516_706, Compilerˉnative.Fragment.Code.Length);
+        Equal(27_538_858, Measurement.Encodedˉobjectˉbytes);
         Equal(Compilerˉnative.Fragment.Code.Length, Measurement.Materializedˉsectionˉbytes);
         Equal(Compilerˉnative.Fragment.Code.Length, Measurement.Linkedˉimageˉbytes);
-        Equal(27_436_048, Measurement.Textˉbytes);
+        Equal(27_515_616, Measurement.Textˉbytes);
         Equal(1_090, Measurement.Readˉonlyˉdataˉbytes);
         Equal(2, Measurement.Sections);
-        Equal(523, Measurement.Symbols);
+        Equal(529, Measurement.Symbols);
         Equal(227, Measurement.Relocations);
         True(
             Measurement.Encodedˉobjectˉbytes > Objectˉlimits.MAX_OBJECT_BYTES,
@@ -8682,11 +8682,11 @@ internal static partial class Program
         var Linuxˉbundle = X64ˉnativeˉserviceˉbundle.Build(
             Compilerˉnative.Fragment,
             Nativeˉserviceˉplatform.Linux);
-        Equal(27_454_627, Windowsˉbundle.Imageˉbytes.Length);
+        Equal(27_534_291, Windowsˉbundle.Imageˉbytes.Length);
         Equal(
             SOURCE_WVB_TOOL_WINDOWS_SERVICE_BUNDLE_SHA256,
             Objectˉdigest.Calculateˉsha256(Windowsˉbundle.Imageˉbytes.AsSpan()));
-        Equal(27_454_343, Linuxˉbundle.Imageˉbytes.Length);
+        Equal(27_534_007, Linuxˉbundle.Imageˉbytes.Length);
         Equal(
             SOURCE_WVB_TOOL_LINUX_SERVICE_BUNDLE_SHA256,
             Objectˉdigest.Calculateˉsha256(Linuxˉbundle.Imageˉbytes.AsSpan()));
@@ -8897,14 +8897,14 @@ internal static partial class Program
                 Firstˉwindowsˉapplication.AsSpan(),
                 Windowsˉbundle);
         Equal(Nativeˉentry, Verifiedˉwindowsˉapplication.Nativeˉentryˉoffset);
-        Equal(27_468_288, Verifiedˉwindowsˉapplication.Layout.Applicationˉbytes);
-        Equal(27_458_723u, Verifiedˉwindowsˉapplication.Layout.Textˉvirtualˉbytes);
-        Equal(27_459_072u, Verifiedˉwindowsˉapplication.Layout.Textˉfileˉbytes);
-        Equal(27_459_584u, Verifiedˉwindowsˉapplication.Layout.Dataˉfileˉoffset);
-        Equal(27_463_680u, Verifiedˉwindowsˉapplication.Layout.Dataˉsectionˉaddress);
-        Equal(27_467_776u, Verifiedˉwindowsˉapplication.Layout.Runtimeˉaddress);
+        Equal(27_547_648, Verifiedˉwindowsˉapplication.Layout.Applicationˉbytes);
+        Equal(27_538_387u, Verifiedˉwindowsˉapplication.Layout.Textˉvirtualˉbytes);
+        Equal(27_538_432u, Verifiedˉwindowsˉapplication.Layout.Textˉfileˉbytes);
+        Equal(27_538_944u, Verifiedˉwindowsˉapplication.Layout.Dataˉfileˉoffset);
+        Equal(27_545_600u, Verifiedˉwindowsˉapplication.Layout.Dataˉsectionˉaddress);
+        Equal(27_549_696u, Verifiedˉwindowsˉapplication.Layout.Runtimeˉaddress);
         Equal(476_139_520u, Verifiedˉwindowsˉapplication.Layout.Dataˉvirtualˉbytes);
-        Equal(503_607_296u, Verifiedˉwindowsˉapplication.Layout.Imageˉvirtualˉbytes);
+        Equal(503_689_216u, Verifiedˉwindowsˉapplication.Layout.Imageˉvirtualˉbytes);
         Sequenceˉequal(Windowsˉbundle.Imageˉbytes,
             Verifiedˉwindowsˉapplication.Bundleˉimage);
 
@@ -9058,8 +9058,8 @@ internal static partial class Program
                     0,
                     Executeˉwindowsˉapplication(
                         Firstˉwindowsˉapplication,
-                        "source wvb status=Valid functions=413 code-bytes=754761 " +
-                            "module-bytes=914746\n",
+                        "source wvb status=Valid functions=419 code-bytes=760855 " +
+                            "module-bytes=921900\n",
                         Arguments,
                         timeoutˉmilliseconds: 600_000,
                         loadedˉmodules: Loadedˉmodules));
@@ -9109,11 +9109,11 @@ internal static partial class Program
                 Firstˉlinuxˉapplication.AsSpan(),
                 Linuxˉbundle);
         Equal(Nativeˉentry, Verifiedˉlinuxˉapplication.Nativeˉentryˉoffset);
-        Equal(27_467_776, Verifiedˉlinuxˉapplication.Layout.Applicationˉbytes);
-        Equal(27_458_439u, Verifiedˉlinuxˉapplication.Layout.Textˉbytes);
-        Equal(27_463_680u, Verifiedˉlinuxˉapplication.Layout.Dataˉfileˉoffset);
+        Equal(27_549_696, Verifiedˉlinuxˉapplication.Layout.Applicationˉbytes);
+        Equal(27_538_103u, Verifiedˉlinuxˉapplication.Layout.Textˉbytes);
+        Equal(27_545_600u, Verifiedˉlinuxˉapplication.Layout.Dataˉfileˉoffset);
         Equal(474_038_272u, Verifiedˉlinuxˉapplication.Layout.Dataˉvirtualˉbytes);
-        Equal(501_501_952u, Verifiedˉlinuxˉapplication.Layout.Imageˉvirtualˉbytes);
+        Equal(501_583_872u, Verifiedˉlinuxˉapplication.Layout.Imageˉvirtualˉbytes);
         Sequenceˉequal(Linuxˉbundle.Imageˉbytes, Verifiedˉlinuxˉapplication.Bundleˉimage);
 
         var Linuxˉapplicationˉlayout = Verifiedˉlinuxˉapplication.Layout;
@@ -9224,8 +9224,8 @@ internal static partial class Program
                     0,
                     Executeˉlinuxˉapplication(
                         Firstˉlinuxˉapplication,
-                        "source wvb status=Valid functions=413 code-bytes=754761 " +
-                            "module-bytes=914746\n",
+                        "source wvb status=Valid functions=419 code-bytes=760855 " +
+                            "module-bytes=921900\n",
                         Arguments,
                         timeoutˉmilliseconds: 600_000,
                         loadedˉmappings: Loadedˉmappings));
@@ -10205,8 +10205,8 @@ internal static partial class Program
         var Compilerˉrecords = Compilerˉtool.Module.Types
             .OfType<Recordˉtypeˉdeclaration>()
             .ToImmutableArray();
-        Equal(57, Compilerˉrecords.Length);
-        Equal(22, Compilerˉtool.Module.Types.OfType<Enumˉtypeˉdeclaration>().Count());
+        Equal(59, Compilerˉrecords.Length);
+        Equal(23, Compilerˉtool.Module.Types.OfType<Enumˉtypeˉdeclaration>().Count());
         Equal(34, Compilerˉrecords.Max(Record => Record.Fields.Length));
         Equal(
             0,
@@ -10235,15 +10235,15 @@ internal static partial class Program
         var Largestˉownershipˉfunction = Ownership.Functions.MaxBy(
             Function => Function.Actions.Length)!;
         Equal(
-            "NATIVE_DESCRIPTOR_OWNERSHIP format=1 functions=413 actions=350113 " +
-            "allocator-leaf-calls=339302 ownership-movement-actions=10811 " +
-            "parameters=375 assigned-parameters=0 locals=4385 " +
+            "NATIVE_DESCRIPTOR_OWNERSHIP format=1 functions=419 actions=351544 " +
+            "allocator-leaf-calls=340671 ownership-movement-actions=10873 " +
+            "parameters=386 assigned-parameters=0 locals=4468 " +
             "record-parameter-fields=629 assigned-record-parameter-fields=0 " +
-            "record-local-fields=14076 values=8490 record-value-fields=26884 " +
-            "acquire=531 borrow=232 retain=50744 release=288027 call-borrow=5994 " +
-            "accept-return=3124 transfer-return=1461 largest-actions=80449 " +
-            "largest-index=312 largest-name=__WvM8F50 " +
-            "action-map=a9c6ac6e4fae386537b4f30ebfc7b8d49a71a2d347c00c0a8a0edd85dbd2afad",
+            "record-local-fields=14114 values=8642 record-value-fields=26954 " +
+            "acquire=544 borrow=232 retain=51063 release=289064 call-borrow=6021 " +
+            "accept-return=3143 transfer-return=1477 largest-actions=80449 " +
+            "largest-index=318 largest-name=__WvM8F50 " +
+            "action-map=7d89ebff01349c6e4d7ea82591d03cd226ab5f060128295e7ae34f8b96a3bf21",
             $"NATIVE_DESCRIPTOR_OWNERSHIP format={Ownership.Formatˉversion} " +
             $"functions={Ownership.Functions.Length} actions={Ownership.Totalˉactions} " +
             $"allocator-leaf-calls={Allocatorˉprojection.Allocatorˉleafˉcalls} " +
@@ -10274,13 +10274,13 @@ internal static partial class Program
             Function => Function.Allocatorˉleafˉinvocations)!;
         Equal(
             "NATIVE_DESCRIPTOR_ALLOCATOR_EMISSION format=1 context=8/128 " +
-            "state-offset=112 leaf-offset=120 request-cells=3 functions=413 " +
-            "ownership-actions=350113 leaf-invocations=339302 movement-actions=10811 " +
-            "generated=339275 service=27 request-functions=317 entry=0 before=38514 " +
-            "allocation=531 after=65400 cleanup=234857 direct-locations=384040 " +
+            "state-offset=112 leaf-offset=120 request-cells=3 functions=419 " +
+            "ownership-actions=351544 leaf-invocations=340671 movement-actions=10873 " +
+            "generated=340644 service=27 request-functions=324 entry=0 before=38772 " +
+            "allocation=544 after=65796 cleanup=235559 direct-locations=385728 " +
             "indirect-locations=6006 max-frame=1919 largest-invocations=78676 " +
-            "largest-index=312 largest-name=__WvM8F50 " +
-            "emission-map=18acb7155aa4d170bb25bdacdd17670edb8f7bd5ad72aa951969a1cbbb75f6ee",
+            "largest-index=318 largest-name=__WvM8F50 " +
+            "emission-map=93144d1d47ffb0ddfe2937f00a6a427d478b8e548dca4ff08713bbe24b15d368",
             $"NATIVE_DESCRIPTOR_ALLOCATOR_EMISSION format={Allocatorˉemission.Formatˉversion} " +
             $"context={Allocatorˉemission.Candidateˉcontextˉformatˉversion}/" +
             $"{Allocatorˉemission.Candidateˉcontextˉsize} " +
@@ -10337,9 +10337,9 @@ internal static partial class Program
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Measurement.Scalar);
             Equal(0u, Measurement.Recordˉarenaˉused);
-            Equal(126_065_489u, Measurement.Textˉarenaˉused);
+            Equal(128_758_647u, Measurement.Textˉarenaˉused);
             Equal(
-                "source wvb status=Valid functions=413 code-bytes=754761 module-bytes=914746\n",
+                "source wvb status=Valid functions=419 code-bytes=760855 module-bytes=921900\n",
                 Compilerˉoutput.Readˉtext());
             Equal(string.Empty, Compilerˉdiagnostic.Readˉtext());
             Sequenceˉequal(Compilerˉbytes, File.ReadAllBytes(Outputˉpath));
@@ -10365,6 +10365,7 @@ internal static partial class Program
             ("Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE),
             ("Source-Wir-Core.wv", SOURCE_WIR_SOURCE),
             ("Source-Wvb-Core.wv", SOURCE_WVB_SOURCE),
+            ("Source-Wvb-Temporary-Slots.wv", SOURCE_WVB_TEMPORARY_SLOTS_SOURCE),
             ("Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
             ("Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
         };
@@ -15757,13 +15758,13 @@ internal static partial class Program
             SOURCE_WVB_TOOL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉtoolˉwvb.AsSpan()));
         var Compilerˉtoolˉverified = Compilerˉtoolˉfixture.Module;
-        Equal(413, Compilerˉtoolˉverified.Functions.Length);
+        Equal(419, Compilerˉtoolˉverified.Functions.Length);
         Equal(
-            754_761,
+            760_855,
             Compilerˉtoolˉverified.Functions.Sum(
                 Function => Function.Declaration.Codeˉlength));
         Equal(
-            156_901,
+            158_199,
             Compilerˉtoolˉverified.Functions.Sum(Function => Function.Instructions.Length));
         Equal(
             1_408,

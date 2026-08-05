@@ -23,6 +23,7 @@ set -- \
     "$REPOSITORY_ROOT/Compiler/Windvale/Source-Symbols-Core.wv" \
     "$REPOSITORY_ROOT/Compiler/Windvale/Source-Wir-Core.wv" \
     "$REPOSITORY_ROOT/Compiler/Windvale/Source-Wvb-Core.wv" \
+    "$REPOSITORY_ROOT/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv" \
     "$REPOSITORY_ROOT/Foundation/Byte-Construction.wv" \
     "$REPOSITORY_ROOT/Foundation/Decimal-Parsing.wv"
 

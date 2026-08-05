@@ -92,18 +92,19 @@ internal static partial class Program
             Equal(string.Empty, Nativeˉinspect.Error);
 
             Published[0] = 0;
-            File.WriteAllBytes(Outputˉpath, Published);
+            var Invalidˉwvbˉpath = Path.Combine(Directoryˉpath, "Invalid.wvb");
+            File.WriteAllBytes(Invalidˉwvbˉpath, Published);
             var Invalidˉverify = Runˉnativeˉwvbˉtool(
                 Repository,
                 "Verify-Wvb",
-                Outputˉpath);
+                Invalidˉwvbˉpath);
             Equal(1, Invalidˉverify.Exitˉcode);
             Equal(string.Empty, Invalidˉverify.Output);
             Equal("wvb status=Invalid phase=semantic\n", Invalidˉverify.Error);
             var Invalidˉinspect = Runˉnativeˉwvbˉtool(
                 Repository,
                 "Inspect-Wvb",
-                Outputˉpath);
+                Invalidˉwvbˉpath);
             Equal(1, Invalidˉinspect.Exitˉcode);
             Equal(string.Empty, Invalidˉinspect.Output);
             Equal("wvb status=Invalid phase=semantic\n", Invalidˉinspect.Error);

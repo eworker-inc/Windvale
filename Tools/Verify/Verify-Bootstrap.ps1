@@ -23,6 +23,7 @@ $Dependencies = @(
     'Compiler/Windvale/Source-Symbols-Core.wv',
     'Compiler/Windvale/Source-Wir-Core.wv',
     'Compiler/Windvale/Source-Wvb-Core.wv',
+    'Compiler/Windvale/Source-Wvb-Temporary-Slots.wv',
     'Foundation/Byte-Construction.wv',
     'Foundation/Decimal-Parsing.wv'
 ) | ForEach-Object { Join-Path $RepositoryRoot $_ }

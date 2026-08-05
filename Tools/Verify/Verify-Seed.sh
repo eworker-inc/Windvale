@@ -1150,10 +1150,12 @@ printf '%s\n' "$SOURCE_WIR_FIXTURE_OUTPUT" | grep -F 'source wir status=Valid mo
 printf '%s\n' "$SOURCE_WIR_FIXTURE_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_WVB_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Wvb-Core.wv"
+SOURCE_WVB_TEMPORARY_SLOTS_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv"
 compile_source_wvb() {
     dotnet "$TOOL_DLL" \
         compile "$1" \
         --module "$SOURCE_WVB_SOURCE" \
+        --module "$SOURCE_WVB_TEMPORARY_SLOTS_SOURCE" \
         --module "$SOURCE_WIR_SOURCE" \
         --module "$SOURCE_BINDINGS_SOURCE" \
         --module "$SOURCE_SYMBOLS_SOURCE" \
@@ -1168,6 +1170,7 @@ compile_source_wvb() {
 }
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_WVB_SOURCE" \
+    --module "$SOURCE_WVB_TEMPORARY_SLOTS_SOURCE" \
     --module "$SOURCE_WIR_SOURCE" \
     --module "$SOURCE_BINDINGS_SOURCE" \
     --module "$SOURCE_SYMBOLS_SOURCE" \
@@ -1180,7 +1183,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WVB_MODULE"
 SOURCE_WVB_HASH=$(sha256sum "$SOURCE_WVB_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_HASH" != '08d0630b0b6411c218778faf4f6e9b0ea7332a4e634a072c14de6d7f6bd83307' ]; then
+if [ "$SOURCE_WVB_HASH" != '20ab85982a821dee87c8674c16c520a10646b604a5d3f0e38442589e521bf1c0' ]; then
     echo "The Windvale WVB backend core has an unexpected digest: $SOURCE_WVB_HASH" >&2
     exit 1
 fi
@@ -1190,7 +1193,7 @@ printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉcompileˉsourceˉwvb
 printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (72)' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Demo.wv" "$SOURCE_WVB_DEMO_MODULE"
 SOURCE_WVB_DEMO_HASH=$(sha256sum "$SOURCE_WVB_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_DEMO_HASH" != 'e5bf9aaf00598092243578f39aae693de5f728204ffce86ffb7b03340c985715' ]; then
+if [ "$SOURCE_WVB_DEMO_HASH" != 'c8f96a8d973c1d03d5bb115612ddc765a2a7e3b617ec61af641f540fb7b2ce04' ]; then
     echo "The Windvale WVB backend demo has an unexpected digest: $SOURCE_WVB_DEMO_HASH" >&2
     exit 1
 fi
@@ -1198,7 +1201,7 @@ SOURCE_WVB_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_DEMO_MODULE" --max-
 printf '%s\n' "$SOURCE_WVB_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Tool.wv" "$SOURCE_WVB_TOOL_MODULE"
 SOURCE_WVB_TOOL_HASH=$(sha256sum "$SOURCE_WVB_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_TOOL_HASH" != '48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6' ]; then
+if [ "$SOURCE_WVB_TOOL_HASH" != 'fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556' ]; then
     echo "The Windvale WVB backend tool has an unexpected digest: $SOURCE_WVB_TOOL_HASH" >&2
     exit 1
 fi

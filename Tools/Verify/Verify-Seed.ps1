@@ -1376,7 +1376,9 @@ if (
 }
 
 $SourceWvbSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Wvb-Core.wv'
+$SourceWvbTemporarySlotsSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Wvb-Temporary-Slots.wv'
 $SourceWvbDependencies = @(
+    '--module', $SourceWvbTemporarySlotsSource,
     '--module', $SourceWirSource,
     '--module', $SourceBindingsSource,
     '--module', $SourceSymbolsSource,
@@ -1391,7 +1393,7 @@ $SourceWvbDependencies = @(
 dotnet $ToolDll compile $SourceWvbSource @SourceWvbDependencies -o $SourceWvbModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend core.' }
 $SourceWvbHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbModule).Hash.ToLowerInvariant()
-if ($SourceWvbHash -ne '08d0630b0b6411c218778faf4f6e9b0ea7332a4e634a072c14de6d7f6bd83307') {
+if ($SourceWvbHash -ne '20ab85982a821dee87c8674c16c520a10646b604a5d3f0e38442589e521bf1c0') {
     throw "The Windvale WVB backend core has an unexpected digest: $SourceWvbHash"
 }
 $SourceWvbInspection = (dotnet $ToolDll inspect $SourceWvbModule) -join "`n"
@@ -1409,7 +1411,7 @@ dotnet $ToolDll `
     -o $SourceWvbDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend demo.' }
 $SourceWvbDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbDemoModule).Hash.ToLowerInvariant()
-if ($SourceWvbDemoHash -ne 'e5bf9aaf00598092243578f39aae693de5f728204ffce86ffb7b03340c985715') {
+if ($SourceWvbDemoHash -ne 'c8f96a8d973c1d03d5bb115612ddc765a2a7e3b617ec61af641f540fb7b2ce04') {
     throw "The Windvale WVB backend demo has an unexpected digest: $SourceWvbDemoHash"
 }
 $SourceWvbDemoOutput = dotnet $ToolDll run $SourceWvbDemoModule --max-steps 4000000000
@@ -1422,7 +1424,7 @@ dotnet $ToolDll `
     -o $SourceWvbToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend tool.' }
 $SourceWvbToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbToolModule).Hash.ToLowerInvariant()
-if ($SourceWvbToolHash -ne '48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6') {
+if ($SourceWvbToolHash -ne 'fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556') {
     throw "The Windvale WVB backend tool has an unexpected digest: $SourceWvbToolHash"
 }
 $SourceWvbFixture = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Function-Only.wv'
