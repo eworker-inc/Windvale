@@ -1987,3 +1987,27 @@ the direct plan is the narrowest behavioral check. Linux execution, malformed an
 failure-plan transfer, broader fixture orchestration, Standard, Qualification,
 GitHub verification, and runner/test promotion remain deferred to the grouped
 end-of-goal gate.
+
+## Local native result-and-failure test evidence
+
+[Decision 0227](../Decisions/0227-Native-Result-And-Failure-Test-Plan.md)
+supersedes the unqualified five-result plan with the fixed eight-case `WVNT 2`
+result/failure contract. Its 1,074 UTF-8/LF bytes have SHA-256
+`619b22496a6999b80ed25f601066c1fa07162dad52c6b6c79b9d836a1d46df62`.
+The three added WVB identities, failure statuses, and executed guest-instruction
+counts exactly match the pre-existing independent scalar-interpreter assertions:
+invalid UTF-8 is `3014:11`, byte-range rejection is `3008:14`, and truncated
+little-endian `u16` input is `3016:4`.
+
+Review found and corrected one stale version-1 header skip in the Linux adapter
+before execution. The final review checks both launcher digests, the version-2
+header, the closed result/failure policy, all three conformance identities and
+oracles, and the managed wrapper's complete eight-case report. The direct
+.NET-free Windows plan then passes all eight cases in 3.336 seconds. Each negative
+case passes only with exit `1`, empty standard output, and its exact one-line native
+diagnostic; a generic nonzero result is insufficient.
+
+This focused run subsumes the preceding five-case local result. The managed suite,
+Linux execution, malformed-module envelopes, additional runtime/resource failures,
+Standard, Qualification, GitHub verification, and runner/test promotion remain
+deferred to the grouped end-of-goal gate.

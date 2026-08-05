@@ -14,7 +14,10 @@ internal static partial class Program
             "PASS  function-only\n" +
             "PASS  data-text\n" +
             "PASS  nominal-types\n" +
-            "Tests: 5, Passed: 5, Failed: 0\n",
+            "PASS  invalid-utf8\n" +
+            "PASS  range-failure\n" +
+            "PASS  u16-failure\n" +
+            "Tests: 8, Passed: 8, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

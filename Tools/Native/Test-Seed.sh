@@ -4,7 +4,7 @@ set -uo pipefail
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Plan.txt"
-plan_digest=79294d8e1a08325cd41042e6068b4a6bc9f3c15bd05372ad4bb7eda268a47b73
+plan_digest=619b22496a6999b80ed25f601066c1fa07162dad52c6b6c79b9d836a1d46df62
 
 if ! printf '%s  %s\n' "$plan_digest" "$plan" | sha256sum --check --strict --quiet; then
     echo 'The native test plan artifact digest is invalid.' >&2
@@ -29,14 +29,14 @@ trap cleanup EXIT
 total=0
 passed=0
 IFS= read -r header < "$plan"
-if [[ $header != 'windvale-native-tests 1' ]]; then
+if [[ $header != 'windvale-native-tests 2' ]]; then
     echo 'The native test plan header is invalid.' >&2
     exit 1
 fi
 
-while IFS='|' read -r name project expected_hash expected_result; do
+while IFS='|' read -r name project expected_hash expected_kind expected_value; do
     [[ -n $name ]] || continue
-    [[ $name != 'windvale-native-tests 1' ]] || continue
+    [[ $name != 'windvale-native-tests 2' ]] || continue
     total=$((total + 1))
     output="$temporary_directory/Current.wvb"
     build_output="$temporary_directory/Build.out"
@@ -44,6 +44,7 @@ while IFS='|' read -r name project expected_hash expected_result; do
     run_output="$temporary_directory/Run.out"
     run_error="$temporary_directory/Run.err"
     expected_output="$temporary_directory/Expected.out"
+    expected_error="$temporary_directory/Expected.err"
 
     if ! "$repository_root/Tools/Native/Build-Wvb.sh" \
         "$repository_root/$project" "$output" > "$build_output" 2> "$build_error"; then
@@ -65,22 +66,57 @@ while IFS='|' read -r name project expected_hash expected_result; do
         exit 1
     fi
 
-    if ! "$repository_root/Tools/Native/Run-Wvb.sh" "$output" \
-        > "$run_output" 2> "$run_error"; then
-        echo "FAIL  $name: native execution failed" >&2
-        cat -- "$run_error" >&2
-        echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
-        exit 1
-    fi
-    if [[ -s $run_error ]]; then
-        echo "FAIL  $name: native execution wrote a diagnostic" >&2
-        cat -- "$run_error" >&2
-        echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
-        exit 1
-    fi
-    printf 'Result: %s\n' "$expected_result" > "$expected_output"
-    if ! cmp --silent "$expected_output" "$run_output"; then
-        echo "FAIL  $name: result report differs" >&2
+    "$repository_root/Tools/Native/Run-Wvb.sh" "$output" \
+        > "$run_output" 2> "$run_error"
+    run_status=$?
+    if [[ $expected_kind == result ]]; then
+        if ((run_status != 0)); then
+            echo "FAIL  $name: native execution failed" >&2
+            cat -- "$run_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if [[ -s $run_error ]]; then
+            echo "FAIL  $name: successful execution wrote a diagnostic" >&2
+            cat -- "$run_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        printf 'Result: %s\n' "$expected_value" > "$expected_output"
+        if ! cmp --silent "$expected_output" "$run_output"; then
+            echo "FAIL  $name: result report differs" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+    elif [[ $expected_kind == failure ]]; then
+        if ((run_status != 1)); then
+            echo "FAIL  $name: native failure exit differs" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if [[ -s $run_output ]]; then
+            echo "FAIL  $name: failed execution wrote standard output" >&2
+            cat -- "$run_output" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        expected_code=${expected_value%%:*}
+        expected_instructions=${expected_value#*:}
+        if [[ $expected_code == "$expected_value" || -z $expected_instructions ]]; then
+            echo "FAIL  $name: failure expectation is invalid" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        printf 'wvb run status=Failed code=%s instructions=%s\n' \
+            "$expected_code" "$expected_instructions" > "$expected_error"
+        if ! cmp --silent "$expected_error" "$run_error"; then
+            echo "FAIL  $name: failure report differs" >&2
+            cat -- "$run_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+    else
+        echo "FAIL  $name: test expectation kind is invalid" >&2
         echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
         exit 1
     fi
