@@ -18,13 +18,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Text-Services.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 158_172;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 2_156_544;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 167_172;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 2_275_328;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "2c2fde72296acea8659d36b91626285cd61b1eb6b42fbab58d67ecb2eb27e81b";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 2_158_592;
+        "8f0e817d3c1cf06c44943448fcb58441cd2884d27a8e6f8fcb7185d4539c1779";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 2_277_376;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "5e7d980ff8048136185d580f180a081316eeae38f59f31d047af7cf6e998ff68";
+        "d793743e8c89a46f2cabe0da29e0c82318f198aa59226715c92e017bc4757998";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -274,6 +274,9 @@ internal static partial class Program
                     "Compiler/Windvale/Native-X64-Lowering-Runtime-Descriptors.wv",
                     NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE),
                 new(
+                    "Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv",
+                    NATIVE_X64_LOWERING_BYTES_CONCATENATION_SOURCE),
+                new(
                     "Compiler/Windvale/Native-X64-Lowering-Layout.wv",
                     NATIVE_X64_LOWERING_LAYOUT_SOURCE),
                 new(
@@ -392,6 +395,65 @@ internal static partial class Program
         }
 
         var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(tool, Wvb);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+    }
+
+    private static void Assertˉdataˉandˉtextˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(SOURCE_WVB_DATA_AND_TEXT_SOURCE);
+        Equal(SOURCE_WVB_DATA_AND_TEXT_SHA256, Moduleˉdigest.Calculateˉsha256(Wvb));
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(13, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(
+            13,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(Expectedˉobject.AsSpan()).Value;
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        if (!Expectedˉobject.SequenceEqual(Memoryˉresult.Bytes))
+        {
+            var Sharedˉlength = Math.Min(
+                Expectedˉobject.Length,
+                Memoryˉresult.Bytes.Length);
+            var Firstˉdifference = Enumerable.Range(0, Sharedˉlength)
+                .FirstOrDefault(
+                    Index => Expectedˉobject[Index] != Memoryˉresult.Bytes[Index],
+                    -1);
+            throw new InvalidOperationException(
+                $"Data-and-text WVO differs at {Firstˉdifference}; " +
+                $"Stage0 length={Expectedˉobject.Length}, " +
+                $"Windvale length={Memoryˉresult.Bytes.Length}, " +
+                $"Stage0 byte={(Firstˉdifference < 0 ? -1 : Expectedˉobject[Firstˉdifference])}, " +
+                $"Windvale byte={(Firstˉdifference < 0 ? -1 : Memoryˉresult.Bytes[Firstˉdifference])}.");
+        }
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 100_000_000);
         Equal(0, Toolˉresult.Exitˉcode);
         Equal(string.Empty, Toolˉresult.Diagnostics);
         Equal(
