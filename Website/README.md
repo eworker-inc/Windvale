@@ -17,6 +17,8 @@ Open <http://127.0.0.1:5173/> for the website, <http://127.0.0.1:5173/progress/>
 
 Use `npm --prefix Website run dev:site` or `npm --prefix Website run dev:playground` only when debugging one half independently.
 
+The playground can keep several example and scratch tabs open during one visit. Choosing an example opens or focuses its tab, the `+` button creates a valid independent scratch program, and Compile + Run uses only the active tab. Source, capability grants, and instruction budget remain with each open tab until the page is reloaded; the playground does not persist draft source in browser storage.
+
 Stop the combined development command before running a separate `dotnet build` or `dotnet publish` for the playground. Those commands regenerate fingerprinted WebAssembly assets, while an already-running development server can still describe the previous asset set. Restarting the development command gives the proxy and Blazor server one consistent publication; clearing the browser cache is not required.
 
 Run the complete targeted website gate with:

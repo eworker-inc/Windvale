@@ -997,6 +997,18 @@ h1 {
     box-shadow: 0 20px 42px rgba(23, 85, 177, 0.12);
 }
 
+.comic-archive-note {
+    margin: 18px 2px 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.comic-archive-note a {
+    color: var(--blue);
+    font-weight: 750;
+}
+
 .site-footer {
     display: flex;
     width: min(1320px, calc(100% - 48px));
