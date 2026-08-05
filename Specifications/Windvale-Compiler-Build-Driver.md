@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHB 1` is the implemented manifest for the first Windvale-native source-to-verified-WVB build driver. The same canonical Windvale application packages as deterministic Windows and Linux x86-64 processes and runs without loading .NET. It is cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` in GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192). Stage 0 still constructs, native-lowers, packages, and independently verifies the driver itself.
+`WVHB 1` is the implemented manifest for the first Windvale-native source-to-verified-WVB build driver. The same canonical Windvale application packages as deterministic Windows and Linux x86-64 processes and runs without loading .NET. It is cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` in GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192). The pinned packages are now consumed by the candidate ordinary [native source-to-WVB front door](Windvale-Native-Source-To-Wvb-Front-Door.md); Stage 0 remains the explicit construction, independent-verification, and recovery route.
 
 The driver is intentionally narrow. Its explicit-source form accepts one root source, zero or more dependencies, and one output path:
 
@@ -43,7 +43,17 @@ Project failures use the existing `WVP1001` through `WVP1007` identities with on
 
 The driver never calls `file.write_bytes` after an invocation, manifest, resource-set, source, compilation, or verifier failure. Those deterministic failures therefore leave an existing output unchanged. The successful output is the exact verifier-accepted byte value; no separate candidate file or host process can replace it between verification and the write call.
 
-This is not yet an atomic replacement contract. `file.write_bytes` retains its existing durable, whole-value but non-atomic host semantics. A host I/O failure may leave its separately specified result and is not reported as deterministic output preservation. Conservative resource-name comparison is not canonical resource identity. Atomic replacement, directory durability, alias identity, and indeterminate-mutation evidence require distinct future provider contracts rather than silently strengthening this operation.
+The raw driver operation is not an atomic replacement contract. `file.write_bytes`
+retains its durable, whole-value but non-atomic host semantics. A host I/O failure
+may leave its separately specified result and is not reported as deterministic
+output preservation. Conservative resource-name comparison is not canonical
+resource identity.
+
+The ordinary front door therefore directs the raw driver to a private caller-owned
+candidate and passes that candidate to the separately qualified publisher. That
+publisher owns native identity, same-directory atomic replacement, durability, and
+indeterminate-completion evidence without silently strengthening `file.write_bytes`.
+Direct use of `wvbuild` retains the raw contract defined here.
 
 ## Authority and native services
 
@@ -97,4 +107,4 @@ The existing exact-compiler AOT test constructs this project once, verifies dete
 
 ## Retirement boundary
 
-This milestone removes .NET from another useful execution path: a previously packaged Windvale-native driver can parse a bounded `.wvproj`, read its explicit source set, compile it, verifier-admit the result, and publish canonical WVB on Windows or Linux. It does not discover files, consume packages or project references, native-lower WVB, package applications as PE/ELF, run tests, assemble, link, inspect, or atomically replace output. The shared x64 lowering backend remains C#-owned; moving only outer PE/ELF headers would not create a .NET-free source-to-executable path. Stage 0 still builds and packages the driver and remains the recovery oracle. Decision 0057's complete dual-host native-retirement gate remains mandatory.
+This milestone removes .NET from another useful execution path: a previously packaged Windvale-native driver can parse a bounded `.wvproj`, read its explicit source set, compile it, and verifier-admit canonical WVB on Windows or Linux. The ordinary launcher composes that driver with the exact native publisher, so the useful source-to-atomically-published-WVB path also avoids .NET. It does not discover files, consume packages or project references, native-lower WVB, package applications as PE/ELF, run tests, assemble, link, inspect, or execute output. The complete shared x64 lowering and remaining tool surfaces are not yet Windvale-owned. Stage 0 still reconstructs and independently checks the distributed driver and remains the recovery oracle. Decision 0057's complete dual-host native-retirement gate remains mandatory.

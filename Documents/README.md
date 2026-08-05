@@ -33,8 +33,8 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Accepted remote-terminal protocol direction](Decisions/0193-Simple-Windvale-Remote-Terminal-Protocol.md) — one authenticated secure connection, one bounded terminal session, typed control messages, explicit authority, and connection-owned teardown
 - [First generation-safe non-tail memory objects](Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md) — cross-host-qualified Probe-40 bitmap/owner/object policy and WVA reclamation proof
 - [Proposed next integrated defaults](Decisions/0198-Next-Integrated-Architecture-Defaults.md) — successor review set for resource domains, launch, streams, network devices, identity/trust, packages/releases, and language value contracts; not accepted or implemented
-- [Stage 0 semantic freeze and native front door](Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md) — qualified WVB 1.11 semantic-freeze baseline that ends forward C# source expansion and moves ordinary source-to-verified-WVB work to native tools first
-- [Exact native WVB publication step](Decisions/0214-Exact-Native-Wvb-Publication-Step.md) — separate verify-snapshot-and-replace boundary that preserves `file.write_bytes`, shares Windvale admission logic, and confines Windows/Linux differences to native publication mechanics
+- [Stage 0 semantic freeze and native front door](Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md) — qualified WVB 1.11 semantic-freeze baseline, implemented normal-path candidate, and recovery-lane boundary that stops forward C# source expansion
+- [Exact native WVB publication step](Decisions/0214-Exact-Native-Wvb-Publication-Step.md) — first cross-host-qualified native publisher profile, shared verify-snapshot-and-replace logic, and remaining extended fault/concurrency hardening
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 
@@ -65,6 +65,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 ## Development and operations
 
 - [Seed development runbook](Runbooks/Seed-Development.md) — prerequisites, verification tiers, bootstrap convergence, CLI examples, assembly, and linking
+- [Native source-to-WVB runbook](Runbooks/Native-Source-To-Wvb.md) — ordinary no-.NET project build, pinned artifact verification, atomic publication, limits, and Stage 0 reconstruction
 - [Contributing guide](../CONTRIBUTING.md) — CLA acceptance, DCO sign-off, provenance, and pull-request requirements
 - [Website guide](../Website/README.md) — local preview, featured progress stories, social and favicon assets, support configuration, analytics, and publication
 

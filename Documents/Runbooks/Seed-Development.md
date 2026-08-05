@@ -4,11 +4,23 @@ This runbook is the practical entry point for building, testing, and exploring t
 
 ## Prerequisites
 
-- .NET SDK 10.0.302 or a compatible later patch in the same feature band
-- PowerShell 7 on Windows, or a POSIX shell on Linux
+- Windows x64 with the inbox command processor, or Linux x64 with Bash and
+  `sha256sum`, for the ordinary native project source-to-WVB path
+- .NET SDK 10.0.302 or a compatible later patch in the same feature band for
+  Stage 0 development, verification, execution, packaging, and recovery
+- PowerShell 7 on Windows, or a POSIX shell on Linux, for repository automation
 - Node.js 24 when running the optional direct-WebAssembly engine verifier
 
 The repository pins the SDK in `global.json` and uses no external NuGet packages.
+The ordinary project source-to-WVB command itself does not invoke .NET.
+
+## Source organization
+
+Prefer focused source files with one clear owner or capability. When a source file
+becomes difficult to navigate or review, split it along an existing responsibility
+boundary when that produces clearer names and dependencies. This is maintainability
+guidance, not a mandatory size limit: do not create arbitrary numbered fragments,
+duplicate shared state, or force a split where the code is more coherent together.
 
 ## Development verification
 
@@ -116,11 +128,32 @@ The verifier builds Stage 1 with the C# recovery compiler, asks that Windvale by
 
 ## Compile and run a portable program
 
+Build the project through the ordinary native front door on Windows:
+
+```bat
+Tools\Native\Build-Wvb.cmd Examples\Seed\Sum-Data.wvproj Artifacts\Sum-Data.wvb
+```
+
+Or on Linux:
+
+```sh
+./Tools/Native/Build-Wvb.sh Examples/Seed/Sum-Data.wvproj Artifacts/Sum-Data.wvb
+```
+
+The launcher verifies its pinned native tools, builds a caller-owned candidate,
+and invokes the exact native publisher for verifier-admitted atomic replacement.
+The retained Stage 0 runtime can then verify, inspect, and execute that WVB:
+
 ```powershell
-dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv -o artifacts/Sum-Data.wvb
-dotnet run --project Tools/Windvale.Tool -- verify artifacts/Sum-Data.wvb
-dotnet run --project Tools/Windvale.Tool -- inspect artifacts/Sum-Data.wvb
-dotnet run --project Tools/Windvale.Tool -- run artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- verify Artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- inspect Artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- run Artifacts/Sum-Data.wvb
+```
+
+Direct single-source compilation remains a Stage 0 development/recovery command:
+
+```powershell
+dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv -o Artifacts/Sum-Data.wvb
 ```
 
 On Windows, build and run the first narrow import-free native application target with:
@@ -167,6 +200,19 @@ dotnet run --project Tools/Windvale.Tool -- run artifacts/Hello-Windvale.wvb --a
 The runtime refuses this module without `--allow console.write_line`.
 
 ## Build a project manifest
+
+Use the native front door for an ordinary project build:
+
+```bat
+Tools\Native\Build-Wvb.cmd Examples\Foundation\Module-Composition-Demo.wvproj Artifacts\Module-Composition-Demo.wvb
+```
+
+```sh
+./Tools/Native/Build-Wvb.sh Examples/Foundation/Module-Composition-Demo.wvproj Artifacts/Module-Composition-Demo.wvb
+```
+
+The equivalent Stage 0 command remains available for recovery, differential
+evidence, and development of tool boundaries that are not native yet:
 
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- build `

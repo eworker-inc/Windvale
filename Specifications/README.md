@@ -27,6 +27,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Typed source IR](Compiler-Source-Wir.md)
 - [Source-to-WVB backend](Compiler-Source-Wvb.md)
 - [Project manifest](Windvale-Project.md)
+- [Native source-to-WVB front door](Windvale-Native-Source-To-Wvb-Front-Door.md)
 
 ## Bytecode, runtime, CLI, and tools
 
@@ -64,6 +65,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native publication plan](Windvale-Native-Publication-Plan.md)
 - [Native publication lifetime](Windvale-Native-Publication-Lifetime.md)
 - [WVB publication transaction](Windvale-Wvb-Publication-Transaction.md)
+- [Compiler build-driver application](Windvale-Compiler-Build-Driver.md)
 - [Bounded x86-64 kernel target](Windvale-X64-Kernel-Target.md)
 
 ## Boot and operating system

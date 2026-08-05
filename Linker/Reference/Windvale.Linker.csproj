@@ -21,5 +21,20 @@
     <EmbeddedResource
       Include="Consumers/Console-Application-Verification-Bridge.wvb"
       LogicalName="Windvale.Linker.Console-Application-Verification-Bridge.wvb" />
+    <EmbeddedResource
+      Include="Consumers/Linux-X64-Wvb-Publisher.wvo"
+      LogicalName="Windvale.Linker.Linux-X64-Wvb-Publisher.wvo" />
+    <EmbeddedResource
+      Include="Consumers/Linux-X64-Wvb-Publication-Adapter.wvo"
+      LogicalName="Windvale.Linker.Linux-X64-Wvb-Publication-Adapter.wvo" />
+    <EmbeddedResource
+      Include="Consumers/Windows-X64-Wvb-Publisher.wvo"
+      LogicalName="Windvale.Linker.Windows-X64-Wvb-Publisher.wvo" />
+    <EmbeddedResource
+      Include="Consumers/Windows-X64-Wvb-Publication-Adapter.wvo"
+      LogicalName="Windvale.Linker.Windows-X64-Wvb-Publication-Adapter.wvo" />
+    <EmbeddedResource
+      Include="Consumers/X64-Wvb-Publication-Sha256.wvo"
+      LogicalName="Windvale.Linker.X64-Wvb-Publication-Sha256.wvo" />
   </ItemGroup>
 </Project>

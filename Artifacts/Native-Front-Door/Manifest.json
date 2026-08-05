@@ -1,0 +1,57 @@
+{
+  "format": "windvale-native-front-door-1",
+  "semanticFreezeCommit": "524e84afb6e5bab6bbd95ebc0b9eeaf886af834b",
+  "semanticFreezeQualification": "https://github.com/eworker-inc/Windvale/actions/runs/30964566192",
+  "publisherCommit": "9d36387867ebff80ee94c6f9f7996da4ef32a4a3",
+  "publisherQualification": "https://github.com/eworker-inc/Windvale/actions/runs/30971408639",
+  "artifacts": [
+    {
+      "name": "compiler-build-driver-wvb",
+      "path": "Wvb/Compiler-Build-Driver.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 1071093,
+      "sha256": "51f680d7fb96819e21ad8ab68988437c3ae5cfc3aa7a7ca5627641cae4fccbfe",
+      "sourceProject": "Windvale-Compiler-Build-Driver.wvproj"
+    },
+    {
+      "name": "wvb-publisher-wvb",
+      "path": "Wvb/Wvb-Publisher.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 136698,
+      "sha256": "d8fcbebe7915542b0206900bcce5459957cee768470bf64a2999e6ee688af05d",
+      "sourceProject": "Windvale-Wvb-Publisher.wvproj"
+    },
+    {
+      "name": "windows-x64-build-driver",
+      "path": "windows-x64/wvbuild.exe",
+      "target": "windows-x64-build-driver-v1",
+      "bytes": 28840960,
+      "sha256": "1792ec58a433812d3a6cf32786ca968b5fd26155585805bd250d93ead60128e6",
+      "sourceWvb": "Wvb/Compiler-Build-Driver.wvb"
+    },
+    {
+      "name": "windows-x64-wvb-publisher",
+      "path": "windows-x64/wvpublish.exe",
+      "target": "windows-x64-wvb-publisher-v1",
+      "bytes": 1121792,
+      "sha256": "f2502ecf9143cfa1343c5f5cb1de066bdf1f82f0e4782afae178f11c41afd735",
+      "sourceWvb": "Wvb/Wvb-Publisher.wvb"
+    },
+    {
+      "name": "linux-x64-build-driver",
+      "path": "linux-x64/wvbuild.elf",
+      "target": "linux-x64-build-driver-v1",
+      "bytes": 28839936,
+      "sha256": "2728c871c9d6083f02cade80c41aa58328185e0a3b8a2997d935fdf91186b2a2",
+      "sourceWvb": "Wvb/Compiler-Build-Driver.wvb"
+    },
+    {
+      "name": "linux-x64-wvb-publisher",
+      "path": "linux-x64/wvpublish.elf",
+      "target": "linux-x64-wvb-publisher-v1",
+      "bytes": 1119173,
+      "sha256": "71dccc29333b05cff71e4b36e5e41617e0df4f8d747747479e8a27f4a90ed3b0",
+      "sourceWvb": "Wvb/Wvb-Publisher.wvb"
+    }
+  ]
+}

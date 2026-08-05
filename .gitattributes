@@ -32,6 +32,8 @@
 *.wvb binary
 *.wvo binary
 *.bin binary
+*.exe binary
+*.elf binary
 *.wvmap text eol=lf
 *.efi binary
 *.img binary

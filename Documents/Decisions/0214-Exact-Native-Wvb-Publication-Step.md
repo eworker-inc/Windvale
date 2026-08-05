@@ -1,7 +1,7 @@
 # Decision 0214: Exact native WVB publication step
 
 - Date: 2026-08-04
-- Status: Accepted; native publisher candidate implemented; cross-host qualification pending
+- Status: Accepted; first native publisher profile cross-host qualified; extended fault/concurrency matrix remains
 - Advances: [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md) and Phase 10
 - Builds on: [Decision 0185](0185-Standalone-Compiler-Wvb-Verifier-Applications.md), [Decision 0186](0186-First-Windvale-Native-Compiler-Build-Driver.md), and [Decision 0187](0187-Project-Aware-Windvale-Native-Build-Driver.md)
 
@@ -167,15 +167,23 @@ The deterministic candidate object and package identities are:
 | Linux raw publisher package | 1,119,173 | `71dccc29333b05cff71e4b36e5e41617e0df4f8d747747479e8a27f4a90ed3b0` |
 | Windows raw publisher package | 1,121,792 | `f2502ecf9143cfa1343c5f5cb1de066bdf1f82f0e4782afae178f11c41afd735` |
 
-Current-host Windows evidence directly executes the raw PE without loading the
-CLR, replaces an existing destination, reports the exact admitted byte count and
-SHA-256 only after durability, preserves the destination for malformed input,
-rejects a hard-link alias by native identity, and leaves no publisher scratch.
-The same focused test deterministically constructs and inspects the Linux ELF;
-direct Linux execution and the complete fault, concurrency, and post-replacement
-indeterminate matrix remain for the independent dual-host qualification run.
-These artifacts are therefore implemented candidates, not yet distributed or
-cross-host-qualified releases.
+The publisher slice is cross-host qualified at exact commit
+`9d36387867ebff80ee94c6f9f7996da4ef32a4a3` in GitHub
+[Verify run 30971408639](https://github.com/eworker-inc/Windvale/actions/runs/30971408639).
+Both permanent hosts directly execute their raw publisher without loading the CLR,
+replace an existing destination, report the exact admitted byte count and SHA-256
+only after durability, preserve the destination after semantic rejection, reject a
+hard-link alias by native identity, and leave no publisher scratch. The shared
+portable transaction fixture covers every state transition, including cleanup and
+post-replacement uncertainty. The paired jobs agree on the deterministic WVB, WVO,
+PE, and ELF identities above.
+
+This qualifies the first real Windows/Linux publisher profile and its exact artifact
+identities. It does not claim native fault injection at every host boundary or a
+concurrent-reader stress schedule; those remain extended hardening evidence.
+Distribution of the pinned packages and promotion of the composed ordinary workflow
+are owned by the following Decision 0213 cutover slice and require their own
+committed dual-host evidence.
 
 ## Consequences
 

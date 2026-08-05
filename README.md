@@ -33,7 +33,7 @@ Portable Sum-Data.wv -> the same canonical WVB -> Windows, Linux, and Windvale O
 Portable Function-Only.wv -> the same canonical WVB -> Windows, Linux, and Windvale OS
 ```
 
-The Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. Windvale-written compiler and native-tool paths are already real, while broader backend transfer, runtime services, and Windvale OS remain active milestones. C# and .NET stay as the explicit bootstrap and recovery path until the documented native-retirement gate is qualified on Windows and Linux, but forward C# source-language expansion is frozen at exact qualified WVB 1.11 baseline `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` while the native build and verification front door advances.
+The Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. Windvale-written compiler and native-tool paths are already real, while broader backend transfer, runtime services, and Windvale OS remain active milestones. C# and .NET stay as the explicit bootstrap and recovery path until the documented native-retirement gate is qualified on Windows and Linux, but forward C# source-language expansion is frozen at exact qualified WVB 1.11 baseline `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`. The ordinary project source-to-WVB build now uses the pinned native build driver and publisher without loading .NET; the remaining commands still identify their Stage 0 role explicitly.
 
 ## Browser playground
 
@@ -57,23 +57,38 @@ The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) an
 
 Requirements:
 
-- .NET SDK 10.0.302 or a compatible later patch in the same feature band
-- Windows or Linux
+- Windows x64 with the inbox command processor, or Linux x64 with Bash and
+  `sha256sum`, for the ordinary native source-to-WVB build
+- .NET SDK 10.0.302 or a compatible later patch in the same feature band for
+  the retained Stage 0 runtime, inspection, tests, packaging, and recovery tools
 
 The repository pins the SDK in `global.json` and uses no external NuGet packages.
 
-Compile, verify, inspect, and run the portable example:
+Compile the portable example through the ordinary no-.NET front door on Windows:
+
+```bat
+Tools\Native\Build-Wvb.cmd Examples\Seed\Sum-Data.wvproj Artifacts\Sum-Data.wvb
+```
+
+Or on Linux:
+
+```sh
+./Tools/Native/Build-Wvb.sh Examples/Seed/Sum-Data.wvproj Artifacts/Sum-Data.wvb
+```
+
+The checked-in native artifacts are digest-verified before use, and the publisher
+atomically replaces only a verifier-admitted output. Inspect and run the result
+through the retained Stage 0 tools:
 
 ```powershell
-dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv -o artifacts/Sum-Data.wvb
-dotnet run --project Tools/Windvale.Tool -- verify artifacts/Sum-Data.wvb
-dotnet run --project Tools/Windvale.Tool -- inspect artifacts/Sum-Data.wvb
-dotnet run --project Tools/Windvale.Tool -- run artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- verify Artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- inspect Artifacts/Sum-Data.wvb
+dotnet run --project Tools/Windvale.Tool -- run Artifacts/Sum-Data.wvb
 ```
 
 The result is `Result: 29`.
 
-For verification tiers, hosted capabilities, project builds, bootstrap convergence, assembly, linking, and component examples, continue with the [Seed development runbook](Documents/Runbooks/Seed-Development.md).
+For native build details and reconstruction, see the [native source-to-WVB runbook](Documents/Runbooks/Native-Source-To-Wvb.md). For verification tiers, hosted capabilities, Stage 0 commands, bootstrap convergence, assembly, linking, and component examples, continue with the [Seed development runbook](Documents/Runbooks/Seed-Development.md).
 
 ## Seed language example
 
