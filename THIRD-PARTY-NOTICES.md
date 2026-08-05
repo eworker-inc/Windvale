@@ -22,6 +22,12 @@ precedence for the third-party material.
 The exact installed versions and integrity hashes are recorded in
 `Tools/Windvale.Playground/package-lock.json`.
 
+The website snapshot generator uses **Marked 18.0.9** (MIT),
+**sanitize-html 2.17.6** (MIT), and **Shiki 4.4.2** (MIT) at build time to
+render, sanitize, and highlight repository content. Their exact versions and
+integrity hashes are recorded in `Website/package-lock.json`; the generated
+publication does not ship their JavaScript runtimes.
+
 ## Build, test, and platform dependencies
 
 Windvale also uses third-party SDKs, packages, firmware, emulators, and build

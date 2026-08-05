@@ -1,9 +1,18 @@
-name: Deploy homepage manually
+name: Deploy verified website snapshot
 
 on:
+  schedule:
+    - cron: "17 0,6,12,18 * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: Redeploy the verified main commit even when it is already live
+        required: false
+        default: false
+        type: boolean
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -18,35 +27,109 @@ jobs:
   deploy:
     name: Publish windvale.ca
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
+      - name: Select a new verified main commit
+        id: gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_DEPLOY: ${{ inputs.force || false }}
+        run: |
+          set -euo pipefail
+          api_headers=(
+            --header "Accept: application/vnd.github+json"
+            --header "Authorization: Bearer $GH_TOKEN"
+            --header "X-GitHub-Api-Version: 2026-03-10"
+          )
+          target_sha="$({
+            curl --fail --silent --show-error "${api_headers[@]}" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/git/ref/heads/main"
+          } | jq --raw-output '.object.sha')"
+          if [[ ! "$target_sha" =~ ^[0-9a-f]{40,64}$ ]]; then
+            echo "GitHub did not return a valid main commit." >&2
+            exit 1
+          fi
+
+          encoded_sha="$(printf '%s' "$target_sha" | jq --raw-input --slurp --uri-encode)"
+          verification="$({
+            curl --fail --silent --show-error "${api_headers[@]}" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/verify.yml/runs?branch=main&head_sha=$encoded_sha&status=completed&per_page=10"
+          })"
+          verified_count="$(
+            jq --arg sha "$target_sha" \
+              '[.workflow_runs[] | select(.event == "push" and .head_sha == $sha and .conclusion == "success")] | length' \
+              <<<"$verification"
+          )"
+          if [[ "$verified_count" -eq 0 ]]; then
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+            echo "The current main commit has not completed verification successfully; keeping the existing deployment."
+            exit 0
+          fi
+
+          deployed_sha="$({
+            curl --fail --silent --show-error \
+              --header "Cache-Control: no-cache" \
+              "https://windvale.ca/deployment.json?target=$target_sha" 2>/dev/null || true
+          } | jq --raw-output '.commit // empty' 2>/dev/null || true)"
+          if [[ "$FORCE_DEPLOY" != "true" && "$deployed_sha" == "$target_sha" ]]; then
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+            echo "The current verified main commit is already deployed."
+            exit 0
+          fi
+
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+          echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+
       - name: Check out source
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ steps.gate.outputs.target_sha }}
           persist-credentials: false
 
       - name: Install pinned .NET SDK
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
 
       - name: Install pinned Node.js runtime
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: Tools/Windvale.Playground/package-lock.json
+          cache-dependency-path: |
+            Website/package-lock.json
+            Tools/Windvale.Playground/package-lock.json
+
+      - name: Build static website and repository snapshot
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
+        working-directory: Website
+        env:
+          GITHUB_SHA: ${{ steps.gate.outputs.target_sha }}
+        run: |
+          npm ci
+          npm run build
+          node ../Tools/Website/Verify-Repository-Browser.mjs
 
       - name: Build local playground editor
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
         working-directory: Tools/Windvale.Playground
         run: |
           npm ci
           npm run build
 
       - name: Verify direct WebAssembly demo
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
+        working-directory: Website
         run: npm run verify:wasm-demo
 
       - name: Publish standalone WebAssembly application
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
         run: >-
           dotnet publish Tools/Windvale.Playground/Windvale.Playground.csproj
           --configuration Release
@@ -54,7 +137,10 @@ jobs:
           -p:ContinuousIntegrationBuild=true
 
       - name: Version playground startup
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
         shell: bash
+        env:
+          TARGET_SHA: ${{ steps.gate.outputs.target_sha }}
         run: |
           marker="__WINDVALE_BUILD_VERSION__"
           versioned_paths=(
@@ -63,7 +149,7 @@ jobs:
           )
           for versioned_path in "${versioned_paths[@]}"; do
             grep -Fq "$marker" "$versioned_path"
-            sed -i "s/$marker/$GITHUB_SHA/g" "$versioned_path"
+            sed -i "s/$marker/$TARGET_SHA/g" "$versioned_path"
             if grep -Fq "$marker" "$versioned_path"; then
               echo "Playground bootstrap version marker remained in $versioned_path." >&2
               exit 1
@@ -71,19 +157,23 @@ jobs:
           done
 
       - name: Assemble same-origin static site
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
         shell: bash
         run: |
           mkdir -p artifacts/site/playground
-          cp -a Website/. artifacts/site/
+          cp -a Website/dist/. artifacts/site/
           cp -a artifacts/playground/wwwroot/. artifacts/site/playground/
 
       - name: Publish static site
+        if: ${{ steps.gate.outputs.deploy == 'true' }}
         shell: bash
+        working-directory: Website
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TARGET_SHA: ${{ steps.gate.outputs.target_sha }}
         run: >-
-          npx --yes wrangler@4.118.0 pages deploy artifacts/site
+          npx --yes wrangler@4.118.0 pages deploy ../artifacts/site
           --project-name windvale-ca
           --branch main
-          --commit-hash "${GITHUB_SHA}"
+          --commit-hash "${TARGET_SHA}"

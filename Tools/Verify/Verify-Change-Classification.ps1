@@ -27,28 +27,24 @@ $Cases = @(
         Paths = @('Website/index.html', 'Website/styles.css')
         Scope = 'website'
         Editor = $false
-        Homepage = $true
     },
     @{
         Name = 'website tooling and editor metadata'
         Paths = @('Tools/Windvale.Playground/Editor/Vite-Config.mjs', 'Tools/Editors/Windvale/package.json')
         Scope = 'website'
         Editor = $true
-        Homepage = $true
     },
     @{
         Name = 'website and documentation'
         Paths = @('Website/site.js', 'README.md')
         Scope = 'website'
         Editor = $false
-        Homepage = $true
     },
     @{
         Name = 'website deployment and function'
-        Paths = @('.github/workflows/deploy-homepage.yml', 'functions/api/supporters.js')
+        Paths = @('.github/workflows/deploy-homepage.yml', 'Website/functions/api/supporters.js')
         Scope = 'website'
         Editor = $false
-        Homepage = $true
     },
     @{
         Name = 'source specification'
@@ -61,14 +57,12 @@ $Cases = @(
         Paths = @('Runtime/Windvale.Runtime/Reference-Runtime.cs')
         Scope = 'qualification'
         Editor = $false
-        Homepage = $true
     },
     @{
         Name = 'playground host implementation'
         Paths = @('Tools/Windvale.Playground/Program.cs')
         Scope = 'qualification'
         Editor = $false
-        Homepage = $true
     },
     @{
         Name = 'mixed documentation and compiler implementation'
@@ -79,14 +73,12 @@ $Cases = @(
         )
         Scope = 'qualification'
         Editor = $true
-        Homepage = $true
     },
     @{
         Name = 'mixed website and compiler implementation'
         Paths = @('Website/site.js', 'Compiler/Reference/Source-Lexer.cs')
         Scope = 'qualification'
         Editor = $true
-        Homepage = $true
     },
     @{
         Name = 'unrecognized configuration'
@@ -99,29 +91,25 @@ $Cases = @(
         Paths = @('Directory.Build.props')
         Scope = 'qualification'
         Editor = $false
-        Homepage = $true
     }
 )
 
 foreach ($Case in $Cases) {
     $Result = & $Classifier -ChangedPath $Case.Paths -PassThru -Quiet
-    $ExpectedHomepage = $Case.Homepage -eq $true
     if (
         $Result.Scope -ne $Case.Scope -or
-        $Result.Editor -ne $Case.Editor -or
-        $Result.Homepage -ne $ExpectedHomepage
+        $Result.Editor -ne $Case.Editor
     ) {
         throw (
             "Classification '$($Case.Name)' expected scope=$($Case.Scope), " +
-            "editor=$($Case.Editor), homepage=$ExpectedHomepage; found scope=$($Result.Scope), " +
-            "editor=$($Result.Editor), homepage=$($Result.Homepage)."
+            "editor=$($Case.Editor); found scope=$($Result.Scope), editor=$($Result.Editor)."
         )
     }
 }
 
 $Empty = & $Classifier -ChangedPath @() -PassThru -Quiet
-if ($Empty.Scope -ne 'qualification' -or !$Empty.Editor -or $Empty.Homepage) {
-    throw 'An empty changed-path set did not select qualification and editor verification without deployment.'
+if ($Empty.Scope -ne 'qualification' -or !$Empty.Editor) {
+    throw 'An empty changed-path set did not select qualification and editor verification.'
 }
 
 $Unresolved = & $Classifier `
@@ -129,13 +117,13 @@ $Unresolved = & $Classifier `
     -HeadReference 'HEAD' `
     -PassThru `
     -Quiet
-if ($Unresolved.Scope -ne 'qualification' -or !$Unresolved.Editor -or !$Unresolved.Homepage) {
-    throw 'An unresolved comparison did not fail closed to qualification, editor verification, and deployment.'
+if ($Unresolved.Scope -ne 'qualification' -or !$Unresolved.Editor) {
+    throw 'An unresolved comparison did not fail closed to qualification and editor verification.'
 }
 
 $Forced = & $Classifier -ForceQualification -PassThru -Quiet
-if ($Forced.Scope -ne 'qualification' -or !$Forced.Editor -or !$Forced.Homepage) {
-    throw 'A forced run did not select qualification, editor verification, and deployment.'
+if ($Forced.Scope -ne 'qualification' -or !$Forced.Editor) {
+    throw 'A forced run did not select qualification and editor verification.'
 }
 
 Write-Host "Verification change classification passed ($($Cases.Count + 3) cases)."

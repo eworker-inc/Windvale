@@ -11,6 +11,33 @@
 /assets/*
   Cache-Control: public, max-age=86400
 
+/deployment.json
+  Cache-Control: public, max-age=0, must-revalidate
+
+/repository/manifest.json
+  Cache-Control: public, max-age=0, must-revalidate
+
+/repository/code/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/repository/docs/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/repository/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/docs/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/docs/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/code/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/code/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
 /playground/editor/*
   Cache-Control: public, max-age=0, must-revalidate
 

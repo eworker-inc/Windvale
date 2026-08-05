@@ -28,7 +28,7 @@ npm run build --prefix Tools/Windvale.Playground
 dotnet run --project Tools/Windvale.Playground
 ```
 
-Open <http://127.0.0.1:5174/> to test the playground alone or <http://127.0.0.1:5174/wasm-demo/index.html> for the direct artifact route. To test the website and shared theme together, also run `npm run dev` at the repository root and open <http://127.0.0.1:5173/playground/>. Vite proxies that path to the Blazor server while preserving the website origin. The explicit `index.html` suffix bypasses the Blazor development server's fallback route; production static hosting exposes the clean `/playground/wasm-demo/` URL. The first two commands build the locally hosted Monaco editor bundle; they are required only after the editor dependencies or integration change. The first editable-playground browser download includes the editor, Stage 0 managed runtime, and compiler; the direct artifact route does not.
+Open <http://127.0.0.1:5174/> to test the playground alone or <http://127.0.0.1:5174/wasm-demo/index.html> for the direct artifact route. To test the website and shared theme together, also run `npm --prefix Website run dev` at the repository root and open <http://127.0.0.1:5173/playground/>. Vite proxies that path to the Blazor server while preserving the website origin. The explicit `index.html` suffix bypasses the Blazor development server's fallback route; production static hosting exposes the clean `/playground/wasm-demo/` URL. The first two commands build the locally hosted Monaco editor bundle; they are required only after the editor dependencies or integration change. The first editable-playground browser download includes the editor, Stage 0 managed runtime, and compiler; the direct artifact route does not.
 
 The current dated .NET 10 Release publication totals approximately 3.60 MiB across its Brotli-compressed representations, or 13.84 MiB for the corresponding uncompressed static files. The enhanced Monaco editor itself is approximately 1.03 MiB over Brotli. These local measurements are guidance, not a size contract.
 
@@ -44,7 +44,7 @@ dotnet publish Tools/Windvale.Playground/Windvale.Playground.csproj `
 
 Deploy the contents of `artifacts/playground/wwwroot`, not its parent directory. The output has a relative base path and a `.nojekyll` marker, so it can live below the website's `/playground/` path. The static host must serve WebAssembly with the `application/wasm` media type.
 
-The `Deploy homepage` GitHub Actions workflow builds this project, copies its published `wwwroot` into the website artifact at `playground/`, and publishes the combined static site to Cloudflare Pages. It does not add an application server.
+The scheduled `Deploy verified website snapshot` GitHub Actions workflow builds this project only for a new verified `main` commit, copies its published `wwwroot` into the website artifact at `playground/`, and publishes the combined static site to Cloudflare Pages. It does not add an application server.
 
 ## Current boundary
 

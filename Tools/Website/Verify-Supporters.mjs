@@ -3,7 +3,7 @@ import {
     Normalizeˉsupporterˉroll,
     onRequestGet as Getˉsupporters,
     Supportersˉcontract,
-} from "../../functions/api/supporters.js";
+} from "../../Website/functions/api/supporters.js";
 
 const Missingˉbinding = await Getˉsupporters({ env: {} });
 assert.equal(Missingˉbinding.status, 503);

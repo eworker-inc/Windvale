@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Read the Windvale project overview, specifications, architecture, decisions, and development evidence." />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f9fc" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#071018" />
+    <link rel="canonical" href="https://windvale.ca/docs/" />
+    <link rel="icon" type="image/png" sizes="512x512" href="../assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="../repository-browser.css" />
+    <script type="module" src="/analytics.js"></script>
+    <script type="module" src="../site.js"></script>
+    <script type="module" src="docs.js"></script>
+    <title>Windvale documents</title>
+</head>
+<body class="repository-page">
+    <a class="skip-link" href="#document-content">Skip to document</a>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="/" aria-label="Windvale home">
+                <img src="../assets/windvale-mark-transparent.png" width="670" height="498" alt="" />
+                <span>Windvale</span>
+            </a>
+            <nav aria-label="Primary navigation">
+                <a href="/">Overview</a>
+                <a class="active" href="/docs/" aria-current="page">Docs</a>
+                <a href="/code/">Code</a>
+                <a href="https://github.com/eworker-inc/Windvale">GitHub</a>
+                <a href="/support/">Support</a>
+                <a class="nav-button" href="/playground/">Playground <span aria-hidden="true">↗</span></a>
+            </nav>
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch color theme">
+                <span class="material-symbol" aria-hidden="true">dark_mode</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="repository-main">
+        <aside class="repository-panel" id="repository-panel" aria-label="Document navigation">
+            <div class="repository-panel-heading">
+                <div>
+                    <p class="kicker">Project library</p>
+                    <h1>Documents</h1>
+                </div>
+                <button id="repository-panel-close" class="repository-panel-close" type="button" aria-label="Close document navigation">
+                    <span class="material-symbol" aria-hidden="true">close</span>
+                </button>
+            </div>
+            <label class="repository-search">
+                <span class="material-symbol" aria-hidden="true">search</span>
+                <span class="visually-hidden">Filter documents</span>
+                <input id="repository-search" type="search" placeholder="Filter documents" autocomplete="off" />
+            </label>
+            <nav id="repository-tree" class="repository-tree" aria-label="Repository documents">
+                <p class="repository-empty-tree">Loading documents…</p>
+            </nav>
+            <p class="repository-snapshot-note">
+                Snapshot <a data-repository-commit href="https://github.com/eworker-inc/Windvale">loading</a>
+            </p>
+        </aside>
+
+        <section class="repository-viewer document-viewer" id="document-viewer" aria-labelledby="document-path">
+            <header class="repository-toolbar">
+                <button id="repository-panel-toggle" class="repository-panel-toggle" type="button" aria-expanded="false" aria-controls="repository-panel">
+                    <span class="material-symbol" aria-hidden="true">account_tree</span>
+                    Documents
+                </button>
+                <div class="repository-location">
+                    <strong id="document-path">README.md</strong>
+                    <small id="document-meta">Loading repository snapshot…</small>
+                </div>
+                <nav class="repository-actions" aria-label="Document actions">
+                    <a id="document-source-link" href="/code/">Source</a>
+                    <a id="document-github-link" href="https://github.com/eworker-inc/Windvale">GitHub <span aria-hidden="true">↗</span></a>
+                </nav>
+            </header>
+            <article class="markdown-body" id="document-content" aria-live="polite">
+                <p class="repository-load-state" role="status">Loading repository snapshot…</p>
+            </article>
+        </section>
+    </main>
+</body>
+</html>

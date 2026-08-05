@@ -1,0 +1,20 @@
+{
+  "name": "windvale-website-local",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently --kill-others --names website,playground --prefix-colors blue,magenta \"npm:dev:site\" \"npm:dev:playground\"",
+    "dev:site": "npm run generate && vite --config Vite-Config.mjs",
+    "dev:playground": "npm run build --prefix ../Tools/Windvale.Playground && dotnet run --project ../Tools/Windvale.Playground/Windvale.Playground.csproj",
+    "build": "npm run generate && vite build --config Vite-Config.mjs",
+    "generate": "node Scripts/Generate-Repository-Browser.mjs --output Generated",
+    "verify:wasm-demo": "node ../Tools/Website/Verify-Wasm-Demo.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.4",
+    "marked": "18.0.9",
+    "sanitize-html": "2.17.6",
+    "shiki": "4.4.2",
+    "vite": "8.2.0"
+  }
+}

@@ -1,6 +1,19 @@
+import { copyFile, mkdir } from "node:fs/promises";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import { onRequestGet as Getˉsupporters } from "./functions/api/supporters.js";
+
+const PROJECT_ROOT = fileURLToPath(new URL("./", import.meta.url));
+const STATIC_FILES = Object.freeze([
+    "_headers",
+    "robots.txt",
+    "sitemap.xml",
+    "og.png",
+    "support-og.png",
+    "windvale-logo.png",
+    "assets/material-symbols-LICENSE.txt",
+]);
 
 function Windvaleˉsupportersˉdevelopmentˉapi() {
     return {
@@ -29,14 +42,38 @@ function Windvaleˉsupportersˉdevelopmentˉapi() {
     };
 }
 
+function Windvaleˉstaticˉpublicationˉfiles() {
+    let Outputˉdirectory;
+    return {
+        name: "windvale-static-publication-files",
+        configResolved(Config) {
+            Outputˉdirectory = Config.build.outDir;
+        },
+        async closeBundle() {
+            await Promise.all(STATIC_FILES.map(async (Relativeˉpath) => {
+                const Targetˉpath = path.join(Outputˉdirectory, ...Relativeˉpath.split("/"));
+                await mkdir(path.dirname(Targetˉpath), { recursive: true });
+                await copyFile(path.join(PROJECT_ROOT, ...Relativeˉpath.split("/")), Targetˉpath);
+            }));
+        },
+    };
+}
+
 export default defineConfig({
-    root: "Website",
-    plugins: [Windvaleˉsupportersˉdevelopmentˉapi()],
+    root: PROJECT_ROOT,
+    publicDir: "Generated",
+    plugins: [
+        Windvaleˉsupportersˉdevelopmentˉapi(),
+        Windvaleˉstaticˉpublicationˉfiles(),
+    ],
     build: {
         rollupOptions: {
             input: {
-                home: fileURLToPath(new URL("./Website/index.html", import.meta.url)),
-                support: fileURLToPath(new URL("./Website/support/index.html", import.meta.url)),
+                home: fileURLToPath(new URL("./index.html", import.meta.url)),
+                notFound: fileURLToPath(new URL("./404.html", import.meta.url)),
+                support: fileURLToPath(new URL("./support/index.html", import.meta.url)),
+                documents: fileURLToPath(new URL("./docs/index.html", import.meta.url)),
+                code: fileURLToPath(new URL("./code/index.html", import.meta.url)),
             },
         },
     },

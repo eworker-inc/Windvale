@@ -3,6 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$WebsiteRoot = Join-Path $RepositoryRoot 'Website'
 $PlaygroundRoot = Join-Path $RepositoryRoot 'Tools/Windvale.Playground'
 
 function Invoke-External {
@@ -26,10 +27,10 @@ function Invoke-External {
     }
 }
 
-Invoke-External $RepositoryRoot 'npm' @('ci')
+Invoke-External $WebsiteRoot 'npm' @('ci')
 Invoke-External $PlaygroundRoot 'npm' @('ci')
 Invoke-External $PlaygroundRoot 'npm' @('run', 'build')
-Invoke-External $RepositoryRoot 'npm' @('run', 'verify:wasm-demo')
+Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-demo')
 
 $WebsiteScripts = Get-ChildItem -LiteralPath (Join-Path $RepositoryRoot 'Tools/Website') -Filter '*.mjs' -File
 foreach ($WebsiteScript in $WebsiteScripts) {
@@ -37,7 +38,12 @@ foreach ($WebsiteScript in $WebsiteScripts) {
 }
 
 $BrowserScripts = @(
-    Get-ChildItem -LiteralPath (Join-Path $RepositoryRoot 'Website') -Filter '*.js' -File -Recurse
+    Get-ChildItem -LiteralPath $WebsiteRoot -Filter '*.js' -File -Recurse |
+        Where-Object {
+            !$_.FullName.StartsWith((Join-Path $WebsiteRoot 'node_modules'), [StringComparison]::OrdinalIgnoreCase) -and
+            !$_.FullName.StartsWith((Join-Path $WebsiteRoot 'dist'), [StringComparison]::OrdinalIgnoreCase) -and
+            !$_.FullName.StartsWith((Join-Path $WebsiteRoot 'Generated'), [StringComparison]::OrdinalIgnoreCase)
+        }
     Get-ChildItem -LiteralPath (Join-Path $PlaygroundRoot 'wwwroot') -Filter '*.js' -File -Recurse |
         Where-Object { !$_.FullName.StartsWith((Join-Path $PlaygroundRoot 'wwwroot/editor'), [StringComparison]::OrdinalIgnoreCase) }
 )
@@ -46,7 +52,8 @@ foreach ($BrowserScript in $BrowserScripts) {
 }
 
 Invoke-External $RepositoryRoot 'node' @('Tools/Website/Verify-Supporters.mjs')
-Invoke-External $RepositoryRoot 'npm' @('exec', '--', 'vite', 'build', '--config', 'Vite-Config.mjs')
+Invoke-External $WebsiteRoot 'npm' @('run', 'build')
+Invoke-External $RepositoryRoot 'node' @('Tools/Website/Verify-Repository-Browser.mjs')
 
 $NoticePairs = @(
     @('node_modules/monaco-editor/LICENSE', 'wwwroot/editor/notices/monaco-editor-LICENSE.txt'),

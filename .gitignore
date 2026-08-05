@@ -17,6 +17,7 @@ tmp/
 temp/
 .cache/
 artifacts/
+Website/Generated/
 build/
 Build/
 dist/

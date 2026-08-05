@@ -11,6 +11,16 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://windvale.ca/docs/</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://windvale.ca/code/</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://windvale.ca/playground/wasm-demo/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

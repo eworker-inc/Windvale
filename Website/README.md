@@ -1,23 +1,23 @@
 # Windvale website
 
-This directory contains the public project home for <https://windvale.ca/>. The home, support page, and playground are static browser applications with no dedicated application server. A narrow Cloudflare Pages Function exposes the approved public supporter roll from Workers KV without handling payments. Vite is used only as a convenient local development server.
+This directory is the complete website project for <https://windvale.ca/>: its pinned npm package, Vite configuration, static pages, generated documentation and source browsers, and Cloudflare Pages Functions. The home, documentation, source, support, and playground surfaces are static browser applications with no dedicated application server. A narrow Function under `functions/` exposes the approved public supporter roll from Workers KV without handling payments.
 
 The site follows the visitor's operating-system light or dark preference through `prefers-color-scheme`. The browser playground lives below the same origin at <https://windvale.ca/playground/>, so navigation and the saved theme remain continuous. Its nested <https://windvale.ca/playground/wasm-demo/> route executes a pinned Windvale-generated artifact without starting Blazor or .NET. During local development, Vite proxies `/playground/` to the independent Blazor development server at `http://127.0.0.1:5174/` while the browser stays on the website's `http://127.0.0.1:5173/` origin.
 
 ## Local preview
 
-From the repository root, install the local development dependencies once and start the website plus playground:
+From the repository root, install the website dependencies once and start the website plus playground:
 
 ```powershell
-npm install
-npm run dev
+npm install --prefix Website
+npm --prefix Website run dev
 ```
 
-Open <http://127.0.0.1:5173/> for the website or <http://127.0.0.1:5173/playground/> for the same-origin playground. `npm run dev` builds the Monaco bundle, starts Blazor on the internal port 5174, and starts Vite on port 5173. Vite refreshes the website as files change. Do not open `index.html` directly when checking absolute routes.
+Open <http://127.0.0.1:5173/> for the website, <http://127.0.0.1:5173/docs/> for rendered repository documents, <http://127.0.0.1:5173/code/> for the highlighted source tree, or <http://127.0.0.1:5173/playground/> for the same-origin playground. The combined command generates one bounded repository snapshot, builds the Monaco bundle, starts Blazor on the internal port 5174, and starts Vite on port 5173. Restart the site command after repository files change so the generated snapshot is refreshed. Do not open `index.html` directly when checking absolute routes.
 
-Use `npm run dev:site` or `npm run dev:playground` only when debugging one half independently.
+Use `npm --prefix Website run dev:site` or `npm --prefix Website run dev:playground` only when debugging one half independently.
 
-Stop `npm run dev` before running a separate `dotnet build` or `dotnet publish` for the playground. Those commands regenerate fingerprinted WebAssembly assets, while an already-running development server can still describe the previous asset set. Restarting `npm run dev` gives the proxy and Blazor server one consistent publication; clearing the browser cache is not required.
+Stop the combined development command before running a separate `dotnet build` or `dotnet publish` for the playground. Those commands regenerate fingerprinted WebAssembly assets, while an already-running development server can still describe the previous asset set. Restarting the development command gives the proxy and Blazor server one consistent publication; clearing the browser cache is not required.
 
 Run the complete targeted website gate with:
 
@@ -25,7 +25,19 @@ Run the complete targeted website gate with:
 pwsh -NoProfile -File Tools/Verify/Verify-Website.ps1
 ```
 
-It installs the pinned root and playground Node dependencies, rebuilds the browser editor and its exact third-party notices, verifies the direct WebAssembly demo and supporter contract, checks the website tooling syntax, and builds the Vite site. Change-aware local and GitHub verification select this gate for website and browser-packaging paths without running unrelated Seed qualification.
+It installs the pinned website and playground Node dependencies, rebuilds the browser editor and its exact third-party notices, verifies the direct WebAssembly demo and supporter contract, generates and validates the repository snapshot, checks the website tooling syntax, and builds the complete Vite publication. Change-aware local and GitHub verification select this gate for website and browser-packaging paths without running unrelated Seed qualification.
+
+## Repository documents and source
+
+`npm run generate` reads tracked and non-ignored working-tree files and creates the ignored `Generated/` publication input. Deployment runs against a clean checkout of one verified commit. The generator:
+
+- renders every tracked Markdown document through a sanitized HTML boundary;
+- resolves tracked relative document links and copies local referenced images to content-addressed asset names;
+- publishes the complete repository tree without copying unavailable or unsupported binary payloads;
+- applies the repository-owned Windvale TextMate grammar and pinned Shiki grammars to bounded text files; and
+- records the exact commit and tree in `deployment.json` and the repository manifest.
+
+The `/docs/` page renders the root `README.md` by default and offers the remaining Markdown tree at the left. `/code/` is a separate read-only source browser. Both surfaces link to exact-commit GitHub pages. Content-addressed document, code, and image assets are immutable; the small manifest and route entry points always revalidate.
 
 ## Updating the featured progress story
 
@@ -89,9 +101,11 @@ Keep the editable JSON source outside this public repository. Validate it with `
 
 ## Publication
 
-The `Deploy homepage` GitHub Actions workflow assembles this directory with the published browser playground under `playground/`, bundles the repository-root Pages Functions, then publishes the combined artifact to the `windvale-ca` Cloudflare Pages project after relevant changes reach `main`. Cloudflare owns the `windvale.ca` zone and supplies HTTPS for the apex site. Payments remain on Stripe; the only server-side website behavior is the read-only supporter-roll Function.
+The `Deploy verified website snapshot` workflow checks four times per day at 00:17, 06:17, 12:17, and 18:17 UTC. It publishes only when the exact current `main` commit has a successful push-triggered `Verify` run and differs from `deployment.json` on the live site. An unchanged or unverified commit stops before checkout, dependency installation, compilation, or Cloudflare publication. A manual dispatch retains the same verification requirement and can explicitly force a rebuild of an already-live commit.
 
-Before publication, `npm run verify:wasm-demo` checks the direct route's static dependency boundary, reconstructs and hashes its exact 432-byte artifact, validates its import-free export contract, and executes it twice under Node.js.
+For a real deployment, the workflow builds `Website/dist`, assembles it with the published browser playground under `playground/`, and runs Wrangler from this directory so the project-root `functions/` folder is bundled. The combined artifact is published to the `windvale-ca` Cloudflare Pages project. Cloudflare owns the `windvale.ca` zone and supplies HTTPS for the apex site. Payments remain on Stripe; the only server-side website behavior is the read-only supporter-roll Function.
+
+Before publication, `npm --prefix Website run verify:wasm-demo` checks the direct route's static dependency boundary, reconstructs and hashes its exact artifact, validates its import-free export contract, and executes it twice under Node.js.
 
 The deployment stamps both Blazor startup requests with the Git commit so a new release cannot reuse a browser's old startup script or embedded framework manifest. Mutable entry points, startup scripts, and editor bundles request revalidation, and the Cloudflare zone's Browser Cache TTL remains set to `Respect Existing Headers`. The per-deployment stamp is a second correctness boundary if that zone policy changes. Only content-fingerprinted `.wasm`, `.pdb`, and `.dat` framework assets receive long-lived immutable caching. Keep WebAssembly integrity checks enabled: a missing or mixed-release asset is a publication or caching fault, not a reason to weaken verification.
 

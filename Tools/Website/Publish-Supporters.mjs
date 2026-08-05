@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
     Normalizeˉsupporterˉroll,
     Supportersˉcontract,
-} from "../../functions/api/supporters.js";
+} from "../../Website/functions/api/supporters.js";
 
 const Toolˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = path.resolve(Toolˉdirectory, "../..");

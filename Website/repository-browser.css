@@ -1,0 +1,576 @@
+.repository-page {
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.repository-page .site-header {
+    position: relative;
+    z-index: 40;
+}
+
+.repository-main {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    width: 100%;
+    max-width: none;
+    height: calc(100vh - 69px);
+    margin: 0;
+}
+
+.repository-panel {
+    display: flex;
+    min-width: 0;
+    padding: 20px 14px 14px;
+    border-right: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface-soft) 82%, var(--page));
+    flex-direction: column;
+}
+
+.repository-panel-heading {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    padding: 0 8px 14px;
+}
+
+.repository-panel-heading .kicker {
+    margin-bottom: 3px;
+    font-size: 10px;
+}
+
+.repository-panel-heading h1 {
+    margin: 0;
+    font-size: 23px;
+    letter-spacing: -0.025em;
+}
+
+.repository-panel-close,
+.repository-panel-toggle {
+    display: none;
+}
+
+.repository-search {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    align-items: center;
+    gap: 4px;
+    margin: 0 4px 12px;
+    padding: 0 9px;
+    border: 1px solid var(--line-strong);
+    border-radius: 9px;
+    background: var(--surface);
+}
+
+.repository-search > .material-symbol {
+    color: var(--muted);
+    font-size: 18px;
+}
+
+.repository-search input {
+    min-width: 0;
+    height: 38px;
+    padding: 0;
+    color: var(--ink);
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+}
+
+.repository-search:focus-within {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 14%, transparent);
+}
+
+.repository-tree {
+    min-height: 0;
+    padding: 2px 4px 18px;
+    overflow: auto;
+    scrollbar-color: var(--line-strong) transparent;
+}
+
+.repository-tree-list {
+    margin: 0;
+    padding: 0 0 0 15px;
+    list-style: none;
+}
+
+.repository-tree > .repository-tree-list {
+    padding-left: 0;
+}
+
+.repository-directory-name {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 30px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 720;
+    list-style: none;
+    user-select: none;
+}
+
+.repository-directory-name::-webkit-details-marker {
+    display: none;
+}
+
+.repository-directory-name::before {
+    content: "chevron_right";
+    font-family: "Material Symbols Rounded";
+    font-size: 15px;
+    transition: transform 120ms ease;
+}
+
+details[open] > .repository-directory-name::before {
+    transform: rotate(90deg);
+}
+
+.repository-directory-name .material-symbol {
+    color: var(--amber);
+    font-size: 17px;
+}
+
+.repository-file button {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    min-height: 29px;
+    padding: 3px 7px;
+    color: var(--muted);
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+}
+
+.repository-file button:hover,
+.repository-file button:focus-visible {
+    color: var(--ink);
+    background: var(--surface);
+    outline: none;
+}
+
+.repository-file button.selected {
+    color: var(--blue);
+    background: var(--blue-soft);
+}
+
+.repository-file .material-symbol {
+    font-size: 16px;
+}
+
+.repository-file-name {
+    overflow: hidden;
+    font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.repository-empty-tree,
+.repository-snapshot-note {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.repository-empty-tree {
+    padding: 10px;
+}
+
+.repository-snapshot-note {
+    margin: auto 7px 0;
+    padding-top: 11px;
+    border-top: 1px solid var(--line);
+}
+
+.repository-snapshot-note a {
+    color: var(--blue);
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    text-decoration: none;
+}
+
+.repository-viewer {
+    min-width: 0;
+    overflow: auto;
+    background: var(--surface);
+}
+
+.repository-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    min-height: 62px;
+    padding: 10px 22px;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(12px);
+}
+
+.repository-location {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.repository-location strong {
+    overflow: hidden;
+    font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.repository-location small {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: capitalize;
+}
+
+.repository-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.repository-actions a,
+.repository-actions button,
+.repository-panel-toggle {
+    min-height: 34px;
+    padding: 7px 10px;
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.repository-actions a:hover,
+.repository-actions a:focus-visible,
+.repository-actions button:hover,
+.repository-actions button:focus-visible {
+    color: var(--blue);
+    border-color: var(--blue);
+}
+
+.repository-actions button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.repository-load-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 240px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.repository-load-state.failure {
+    color: #b33a3a;
+}
+
+.code-content {
+    min-width: max-content;
+    min-height: calc(100% - 62px);
+    background: #ffffff;
+}
+
+:root[data-theme="dark"] .code-content {
+    background: #24292e;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .code-content {
+        background: #24292e;
+    }
+}
+
+.code-content .shiki {
+    min-width: 100%;
+    min-height: calc(100vh - 131px);
+    margin: 0;
+    padding: 18px 0 42px;
+    background-color: var(--shiki-light-bg, #ffffff);
+    color: var(--shiki-light, #24292e);
+    font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.68;
+    tab-size: 4;
+}
+
+.code-content .shiki code {
+    counter-reset: source-line;
+}
+
+.code-content .shiki .line {
+    display: inline-block;
+    min-width: 100%;
+    padding-right: 28px;
+}
+
+.code-content .shiki .line::before {
+    position: sticky;
+    left: 0;
+    display: inline-block;
+    width: 58px;
+    margin-right: 18px;
+    padding-right: 14px;
+    color: #8c959f;
+    background: inherit;
+    content: counter(source-line);
+    counter-increment: source-line;
+    text-align: right;
+    user-select: none;
+}
+
+.code-content .shiki .line:target {
+    background: rgba(255, 213, 79, 0.17);
+}
+
+:root[data-theme="dark"] .code-content .shiki,
+:root[data-theme="dark"] .code-content .shiki span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .code-content .shiki,
+    :root:not([data-theme="light"]) .code-content .shiki span {
+        color: var(--shiki-dark) !important;
+        background-color: var(--shiki-dark-bg) !important;
+        font-style: var(--shiki-dark-font-style) !important;
+        font-weight: var(--shiki-dark-font-weight) !important;
+        text-decoration: var(--shiki-dark-text-decoration) !important;
+    }
+}
+
+.markdown-body {
+    width: min(920px, calc(100% - 54px));
+    margin: 0 auto;
+    padding: 46px 0 90px;
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.72;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+    scroll-margin-top: 80px;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+}
+
+.markdown-body h1 {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: clamp(34px, 5vw, 48px);
+}
+
+.markdown-body h2 {
+    margin-top: 48px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--line);
+    font-size: 26px;
+}
+
+.markdown-body h3 {
+    margin-top: 34px;
+    font-size: 20px;
+}
+
+.markdown-body a {
+    color: var(--blue);
+    text-underline-offset: 3px;
+}
+
+.markdown-body img {
+    height: auto;
+    margin: 26px auto;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.markdown-body pre {
+    max-width: 100%;
+    padding: 16px 18px;
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface-soft);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.markdown-body :not(pre) > code,
+.markdown-body kbd {
+    padding: 2px 5px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--surface-soft);
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 0.9em;
+}
+
+.markdown-body blockquote {
+    margin: 24px 0;
+    padding: 2px 20px;
+    color: var(--muted);
+    border-left: 4px solid var(--blue);
+}
+
+.markdown-body table {
+    display: block;
+    max-width: 100%;
+    margin: 24px 0;
+    overflow: auto;
+    border-collapse: collapse;
+}
+
+.markdown-body th,
+.markdown-body td {
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+}
+
+.markdown-body th {
+    background: var(--surface-soft);
+}
+
+.markdown-body details {
+    margin: 20px 0;
+    padding: 12px 15px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--surface-soft);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 850px) {
+    .repository-main {
+        grid-template-columns: 1fr;
+        height: calc(100vh - 69px);
+    }
+
+    .repository-panel {
+        position: fixed;
+        z-index: 60;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: min(360px, calc(100% - 42px));
+        border-right-color: var(--line-strong);
+        box-shadow: 14px 0 42px rgba(0, 0, 0, 0.22);
+        transform: translateX(-110%);
+        transition: transform 160ms ease;
+    }
+
+    .repository-panel.open {
+        transform: translateX(0);
+    }
+
+    .repository-panel-close,
+    .repository-panel-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .repository-panel-close {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+    }
+
+    .repository-toolbar {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        padding-inline: 14px;
+    }
+
+    .repository-panel-toggle {
+        gap: 5px;
+    }
+
+    .repository-panel-toggle .material-symbol {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .repository-main {
+        height: calc(100vh - 63px);
+    }
+
+    .repository-toolbar {
+        grid-template-columns: auto minmax(0, 1fr);
+        min-height: 62px;
+    }
+
+    .repository-actions {
+        grid-column: 1 / -1;
+        padding-bottom: 3px;
+    }
+
+    .markdown-body {
+        width: min(100% - 30px, 920px);
+        padding-top: 30px;
+    }
+
+    .code-content .shiki {
+        min-height: calc(100vh - 172px);
+        font-size: 11px;
+    }
+
+    .code-content .shiki .line::before {
+        width: 42px;
+        margin-right: 12px;
+        padding-right: 9px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .repository-panel,
+    .repository-directory-name::before {
+        transition: none;
+    }
+}
