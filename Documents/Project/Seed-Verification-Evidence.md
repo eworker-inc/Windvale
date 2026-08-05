@@ -1827,3 +1827,35 @@ evidence for this workflow. Native WVB execution and inspection, repository test
 orchestration, complete backend ownership, remaining tools, the extended publisher
 fault/concurrency matrix, and the final recovery archive remain; Decision 0057's
 complete .NET-retirement gate is not claimed.
+
+## Qualified native WVB verification and inspection front door
+
+Exact implementation commit `e2d9c52548fd782a57765b1a9635d8cbe009df20`
+passes GitHub [Verify run 30977962784](https://github.com/eworker-inc/Windvale/actions/runs/30977962784).
+Windows and digest-pinned Debian 12 each complete zero-warning Release builds,
+all 101 Seed tests, all 39 OS tests, and the complete native CLI gate. The Seed
+suite records 881.692 seconds on Windows and 576.435 seconds on Linux. The
+complete jobs finish in 24m47s and 15m55s respectively; the final verification
+gate passes in 4 seconds.
+
+Both hosts preserve the exact previously qualified verifier identities and verify
+the expanded twelve-entry `windvale-native-front-door-1` inventory. The new
+61,890-byte inspector WVB has SHA-256
+`333fffcb26912aed969581d394bf0d3b8a093edfaafc565a43f8f700a8afb43d`.
+Its 678,400-byte Windows PE and 679,936-byte Linux ELF have SHA-256 identities
+`30f8c6cbb1555665063dfb70fa35f08d90818107298c6ab5b91f845814d22daa`
+and `4f99dc43e1af4ad074cc15a38bfe44a433af9979985a600739780ac156a52791`.
+The package test independently reconstructs the WVA startups and containers,
+proves the exact eleven-service read-only profile, runs fixed valid/malformed
+modules, and observes no CLR/.NET mapping. It passes in 535 milliseconds on
+Windows and 484 milliseconds on Linux.
+
+The ordinary front-door test passes in 987 milliseconds on Windows and 587
+milliseconds on Linux. It digest-checks all twelve artifacts, composes the semantic
+verifier before deterministic structural inspection, and proves that rejected
+input never reaches the inspector. This qualifies `Verify-Wvb` and `Inspect-Wvb`
+as the ordinary no-.NET Windows/Linux routes. The retained Stage 0 `verify` and
+`inspect` commands are recovery/differential evidence until the final archive gate.
+Native WVB execution is the next coherent normal-path item; test orchestration,
+complete backend ownership, assembly, linking, packaging, release production,
+and the final recovery archive remain open.

@@ -1,7 +1,7 @@
 # Decision 0215: Native WVB verify and inspect front door
 
 - Date: 2026-08-05
-- Status: Implemented candidate; dual-host qualification pending
+- Status: Qualified on Windows and Debian at `e2d9c52548fd782a57765b1a9635d8cbe009df20`; GitHub Verify run 30977962784
 - Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md)
 - Builds on: [Decision 0185](0185-Standalone-Compiler-Wvb-Verifier-Applications.md) and [Decision 0069](0069-Dynamic-Native-Text-And-Complete-Wvdump.md)
 - Contract: [Native WVB read-only front door](../../Specifications/Windvale-Native-Wvb-Read-Only-Front-Door.md)
@@ -43,9 +43,9 @@ Use separate Windows and Linux WVA startup modules only for the unavoidable pre-
 
 Normal front-door tests compare exact artifact identities, fixed report text, structural assertions, malformed-input outcomes, and absence of CLR modules/mappings. They do not require a live C# inspector to calculate expected output. The frozen Stage 0 implementation remains only for explicitly named differential, package-reconstruction, and recovery evidence.
 
-## Implemented candidate
+## Qualified implementation
 
-The verifier artifacts retain their exact qualified identities. The inspector candidate is:
+The verifier artifacts retain their exact qualified identities. The inspector artifacts are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -55,9 +55,18 @@ The verifier artifacts retain their exact qualified identities. The inspector ca
 
 The focused package test compiles the real inspector, verifies the exact eleven-service/no-file-output profile, reconstructs both WVA templates, independently parses both containers, checks the public AOT target, runs the current-host raw application on a fixed golden module, rejects malformed magic, and checks that no CLR/.NET runtime is loaded. The native-front-door test verifies all twelve manifest artifacts and exercises both ordinary launchers with valid and rejected input.
 
+Exact implementation commit `e2d9c52548fd782a57765b1a9635d8cbe009df20`
+passes GitHub [Verify run 30977962784](https://github.com/eworker-inc/Windvale/actions/runs/30977962784).
+Windows and digest-pinned Debian 12 each pass all 101 Seed tests, all 39 OS
+tests, and the complete native CLI gate. The focused package/front-door cases
+pass in 535/987 milliseconds on Windows and 484/587 milliseconds on Linux.
+Windows completes in 24m47s and Linux in 15m55s.
+
 ## Retirement boundary and next item
 
-After one Windows/Linux Qualification run passes and its exact commit is recorded, ordinary WVB verification and inspection are native. The C# CLI commands remain available only as recovery/differential tools until the final archive gate.
+The qualified Windows/Linux run makes ordinary WVB verification and inspection
+native. The C# CLI commands remain available only as recovery/differential tools
+until the final archive gate.
 
 This decision does not retire the Stage 0 test runner or packaging implementation. The next coherent item is native execution: select and execute a verified WVB through one bounded native Windows/Linux front door. Test orchestration follows after that execution boundary is stable so the project does not port the monolithic C# harness line for line.
 
