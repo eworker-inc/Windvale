@@ -1,0 +1,154 @@
+module Compilerˉnativeˉx64ˉloweringˉobject profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉsection(
+    Result: bytes,
+    Kind: u8,
+    Name: text,
+    Data: bytes
+) -> bytes {
+    var Output: bytes = Bytesˉconcat(Result, Bytesˉfromˉu8(Kind));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu8(0u8));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(0u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(16u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Data)));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Data)));
+    let Nameˉbytes: bytes = Textˉtoˉutf8(Name);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Nameˉbytes)));
+    Output = Bytesˉconcat(Output, Nameˉbytes);
+    return Bytesˉconcat(Output, Data);
+}
+
+fn Appendˉsymbol(
+    Result: bytes,
+    Binding: u8,
+    Kind: u8,
+    Section: u32,
+    Offset: u32,
+    Size: u32,
+    Name: bytes
+) -> bytes {
+    var Output: bytes = Bytesˉconcat(Result, Bytesˉfromˉu8(Binding));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu8(Kind));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(0u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Section));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Offset));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Size));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Name)));
+    return Bytesˉconcat(Output, Name);
+}
+
+export fn Compilerˉnativeˉx64ˉobjectˉemit(
+    Code: bytes,
+    Directory: bytes,
+    Functionˉcount: u32,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    Relocations: bytes
+) -> bytes {
+    if Functionˉcount == 0u32 { return Empty(Code); }
+    if Functionˉcount > 8u32 { return Empty(Code); }
+    if !Data.Valid { return Empty(Code); }
+    if Data.Count > 1u32 { return Empty(Code); }
+    if Bytesˉlength(Directory) !=
+        Functionˉcount * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() {
+        return Empty(Code);
+    }
+    if Bytesˉlength(Relocations) % 4u32 != 0u32 { return Empty(Code); }
+    let Relocationˉcount: u32 = Bytesˉlength(Relocations) / 4u32;
+    if Relocationˉcount > 65536u32 { return Empty(Code); }
+    if Data.Count == 0u32 {
+        if Bytesˉlength(Data.Bytes) != 0u32 { return Empty(Code); }
+        if Relocationˉcount != 0u32 { return Empty(Code); }
+    } else {
+        if Bytesˉlength(Data.Bytes) != Data.Elements * 4u32 { return Empty(Code); }
+    }
+
+    var Relocation: u32 = 0u32;
+    var Previousˉoffset: u32 = 0u32;
+    while Relocation < Relocationˉcount {
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 4u32);
+        if Patchˉoffset > Bytesˉlength(Code) { return Empty(Code); }
+        if 4u32 > Bytesˉlength(Code) - Patchˉoffset { return Empty(Code); }
+        if Bytesˉreadˉu32ˉlittle(Code, Patchˉoffset) != 0u32 { return Empty(Code); }
+        if Relocation > 0u32 {
+            if Patchˉoffset < Previousˉoffset + 4u32 { return Empty(Code); }
+        }
+        Previousˉoffset = Patchˉoffset;
+        Relocation = Relocation + 1u32;
+    }
+
+    var Sectionˉcount: u32 = 1u32;
+    var Symbolˉcount: u32 = Functionˉcount;
+    if Data.Count == 1u32 {
+        Sectionˉcount = 2u32;
+        Symbolˉcount = Symbolˉcount + 1u32;
+    }
+    var Result: bytes = Textˉtoˉutf8("WVO1");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Sectionˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbolˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Relocationˉcount));
+
+    Result = Appendˉsection(Result, 1u8, ".text", Code);
+    if Data.Count == 1u32 {
+        Result = Appendˉsection(Result, 2u8, ".rodata", Data.Bytes);
+        Result = Appendˉsymbol(
+            Result,
+            1u8,
+            2u8,
+            1u32,
+            0u32,
+            Bytesˉlength(Data.Bytes),
+            Textˉtoˉutf8("$data_0000")
+        );
+    }
+
+    var Function: u32 = 0u32;
+    while Function < Functionˉcount {
+        let Isˉmain: bool = Function + 1u32 == Functionˉcount;
+        var Name: bytes = Layout.Compilerˉnativeˉx64ˉlayoutˉhelperˉname(Function);
+        var Binding: u8 = 1u8;
+        if Isˉmain {
+            Name = Textˉtoˉutf8("Main");
+            Binding = 2u8;
+        }
+        Result = Appendˉsymbol(
+            Result,
+            Binding,
+            1u8,
+            0u32,
+            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(Directory, Function),
+            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(Directory, Function),
+            Name
+        );
+        Function = Function + 1u32;
+    }
+
+    Relocation = 0u32;
+    while Relocation < Relocationˉcount {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(2u8));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(
+                Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 4u32)
+            )
+        );
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉi32ˉlittle(-4));
+        Relocation = Relocation + 1u32;
+    }
+    return Result;
+}

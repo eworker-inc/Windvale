@@ -1,0 +1,99 @@
+module Compilerˉnativeˉx64ˉloweringˉdata profile portable;
+
+export record Compilerˉnativeˉx64ˉdata {
+    Valid: bool;
+    Count: u32;
+    Elements: u32;
+    Bytes: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉdata {
+    return Compilerˉnativeˉx64ˉdata(false, 0u32, 0u32, Empty(Input));
+}
+
+fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Identifierˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
+    if Length == 0u32 { return false; }
+    if Length > 255u32 { return false; }
+    if !Rangeˉisˉvalid(Bytesˉlength(Input), Offset, Length) { return false; }
+    let End: u32 = Offset + Length;
+    var Cursor: u32 = Offset;
+    var Wordˉstart: bool = true;
+    while Cursor < End {
+        let Current: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        var Valid: bool = false;
+        if Current >= 65u32 {
+            if Current <= 90u32 { Valid = true; }
+        }
+        if Current >= 97u32 {
+            if Current <= 122u32 { Valid = true; }
+        }
+        if Current == 95u32 { Valid = true; }
+        if !Wordˉstart {
+            if Current >= 48u32 {
+                if Current <= 57u32 { Valid = true; }
+            }
+        }
+        if Valid {
+            Wordˉstart = false;
+            Cursor = Cursor + 1u32;
+        } else {
+            if Wordˉstart { return false; }
+            if Current != 203u32 { return false; }
+            if Cursor + 1u32 >= End { return false; }
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) != 137u8 { return false; }
+            Wordˉstart = true;
+            Cursor = Cursor + 2u32;
+        }
+    }
+    return !Wordˉstart;
+}
+
+export fn Compilerˉnativeˉx64ˉdataˉread(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> Compilerˉnativeˉx64ˉdata {
+    if !Rangeˉisˉvalid(Bytesˉlength(Input), Offset, Length) {
+        return Invalid(Input);
+    }
+    if Length < 4u32 { return Invalid(Input); }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Count == 0u32 {
+        if Length != 4u32 { return Invalid(Input); }
+        return Compilerˉnativeˉx64ˉdata(true, 0u32, 0u32, Empty(Input));
+    }
+    if Count != 1u32 { return Invalid(Input); }
+
+    let Limit: u32 = Offset + Length;
+    var Cursor: u32 = Offset + 4u32;
+    if !Rangeˉisˉvalid(Limit, Cursor, 4u32) { return Invalid(Input); }
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    Cursor = Cursor + 4u32;
+    if !Identifierˉisˉvalid(Input, Cursor, Nameˉlength) { return Invalid(Input); }
+    if !Rangeˉisˉvalid(Limit, Cursor, Nameˉlength) { return Invalid(Input); }
+    Cursor = Cursor + Nameˉlength;
+    if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return Invalid(Input); }
+    if Bytesˉreadˉu8(Input, Cursor) != 4u8 { return Invalid(Input); }
+    Cursor = Cursor + 1u32;
+    let Elements: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    Cursor = Cursor + 4u32;
+    if Elements > 262144u32 { return Invalid(Input); }
+    let Dataˉbytes: u32 = Elements * 4u32;
+    if !Rangeˉisˉvalid(Limit, Cursor, Dataˉbytes) { return Invalid(Input); }
+    if Cursor + Dataˉbytes != Limit { return Invalid(Input); }
+    return Compilerˉnativeˉx64ˉdata(
+        true,
+        1u32,
+        Elements,
+        Bytesˉslice(Input, Cursor, Dataˉbytes)
+    );
+}

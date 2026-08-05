@@ -277,8 +277,14 @@
       Include="../../Compiler/Windvale/Native-X64-Lowering-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Core.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Data.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Data.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Layout.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Layout.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Object.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Object.wv" />
     <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Memory-Adapter.wv" />

@@ -33,10 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "b2f966e8c15ab2e2b60d04d6fabfa74727b42b542ab93db90c1d62a9cbc4c32b";
-    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "240e8bc7944718c89de1db36c8bc4cfa7d0b78ecd52f24277db15714df4d8dc2";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "a216e6f88de0599e2060047ce3ba157b537d9caf54d78a7d8631eb253d6971e5";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "a892837f439c484b8627b16770aaaa757c4c31819161e47b8fc6b7de7a0a4085";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "ebef78182bd6385589277721b69faa08f05849307da01353fdb94c73ac08cea4";
+    private const string NATIVE_X64_LOWERING_DATA_SHA256 = "9a32b3854270bcace52f615633f4b110d9f0777ba5fb5338157af0965dcc8ed4";
+    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "6e13d55df4e99ee60bc087ffc5bcfb290c3c922930837009405492e910e49467";
+    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "6deeddffa056de376e77b19f9c1825899579777eaede34141b2240f2da1076a6";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "9a8b45325df56722bdf9a1c552c6743056f9fc8c472a9d29b80684ccb823dc78";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "adca98f19b4b3c6d864d07285d5fb1214131976e4a11b3c0aafd0a5e71f9e230";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -728,8 +730,12 @@ internal static partial class Program
 
     private static readonly string NATIVE_X64_LOWERING_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Core.wv");
+    private static readonly string NATIVE_X64_LOWERING_DATA_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-X64-Lowering-Data.wv");
     private static readonly string NATIVE_X64_LOWERING_LAYOUT_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Layout.wv");
+    private static readonly string NATIVE_X64_LOWERING_OBJECT_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-X64-Lowering-Object.wv");
 
     private static readonly string NATIVE_X64_LOWERING_MEMORY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Memory-Adapter.wv");
@@ -2843,13 +2849,28 @@ internal static partial class Program
             return checked(Cursor + 8);
         }
 
+        var Dataˉbytes = Compileˉsuccess(NATIVE_X64_LOWERING_DATA_SOURCE);
         var Layoutˉbytes = Compileˉsuccess(NATIVE_X64_LOWERING_LAYOUT_SOURCE);
-        Equal(
-            NATIVE_X64_LOWERING_LAYOUT_SHA256,
-            Moduleˉdigest.Calculateˉsha256(Layoutˉbytes));
+        var Objectˉcompilation = Seedˉcompiler.Compileˉmodules(
+            new("Native-X64-Lowering-Object.wv", NATIVE_X64_LOWERING_OBJECT_SOURCE),
+            [
+                new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
+                new("Native-X64-Lowering-Layout.wv", NATIVE_X64_LOWERING_LAYOUT_SOURCE),
+            ]);
+        if (!Objectˉcompilation.Success)
+        {
+            throw new InvalidOperationException(
+                "Windvale native x64 object writer compilation failed: " +
+                string.Join(" | ", Objectˉcompilation.Diagnostics));
+        }
+        var Objectˉbytes = Objectˉcompilation.Moduleˉbytes.ToArray();
         var Coreˉcompilation = Seedˉcompiler.Compileˉmodules(
             new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE),
-            [new("Native-X64-Lowering-Layout.wv", NATIVE_X64_LOWERING_LAYOUT_SOURCE)]);
+            [
+                new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
+                new("Native-X64-Lowering-Layout.wv", NATIVE_X64_LOWERING_LAYOUT_SOURCE),
+                new("Native-X64-Lowering-Object.wv", NATIVE_X64_LOWERING_OBJECT_SOURCE),
+            ]);
         if (!Coreˉcompilation.Success)
         {
             throw new InvalidOperationException(
@@ -2857,14 +2878,13 @@ internal static partial class Program
                 string.Join(" | ", Coreˉcompilation.Diagnostics));
         }
         var Coreˉbytes = Coreˉcompilation.Moduleˉbytes.ToArray();
-        Equal(
-            NATIVE_X64_LOWERING_CORE_SHA256,
-            Moduleˉdigest.Calculateˉsha256(Coreˉbytes));
         var Memoryˉcompilation = Seedˉcompiler.Compileˉmodules(
             new("Native-X64-Lowering-Memory-Adapter.wv", NATIVE_X64_LOWERING_MEMORY_SOURCE),
             [
                 new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE),
+                new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
                 new("Native-X64-Lowering-Layout.wv", NATIVE_X64_LOWERING_LAYOUT_SOURCE),
+                new("Native-X64-Lowering-Object.wv", NATIVE_X64_LOWERING_OBJECT_SOURCE),
             ]);
         if (!Memoryˉcompilation.Success)
         {
@@ -2873,9 +2893,7 @@ internal static partial class Program
                 string.Join(" | ", Memoryˉcompilation.Diagnostics));
         }
         var Memoryˉbytes = Memoryˉcompilation.Moduleˉbytes.ToArray();
-        Equal(
-            NATIVE_X64_LOWERING_MEMORY_SHA256,
-            Moduleˉdigest.Calculateˉsha256(Memoryˉbytes));
+        var Toolˉbytes = Compileˉwvbˉtoˉwvoˉtoolˉsuccess();
         var Memory = Moduleˉcodec.Readˉandˉverify(Memoryˉbytes);
         var Memoryˉruntime = new Referenceˉruntime(
             Memory,
@@ -2886,6 +2904,14 @@ internal static partial class Program
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);
         var Multiˉcallˉobject = Nativeˉobjectˉsink.Writeˉwvo(
             Multiˉcallˉnative.Fragment);
+        var Sumˉwvb = Compileˉsuccess(SUM_SOURCE);
+        var Sumˉmodule = Moduleˉcodec.Readˉandˉverify(Sumˉwvb);
+        var Sumˉnative = X64ˉnativeˉbackend.Compile(Sumˉmodule);
+        var Sumˉobject = Nativeˉobjectˉsink.Writeˉwvo(Sumˉnative.Fragment);
+        var Sumˉobjectˉview = Objectˉcodec.Readˉandˉverify(Sumˉobject.AsSpan()).Value;
+        Equal(2, Sumˉobjectˉview.Sections.Length);
+        Equal(Objectˉsectionˉkind.Readˉonlyˉdata, Sumˉobjectˉview.Sections[1].Kind);
+        Equal(1, Sumˉobjectˉview.Relocations.Length);
         Equal(
             42,
             new Referenceˉruntime(
@@ -2937,6 +2963,22 @@ internal static partial class Program
                 new Referenceˉcapabilityˉhost(TextWriter.Null),
                 Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
                 .Runˉmainˉbytes(Multiˉcallˉwvb.ToImmutableArray()).Bytes);
+        var Windvaleˉsumˉobject = new Referenceˉruntime(
+            Memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Sumˉwvb.ToImmutableArray()).Bytes;
+        if (!Sumˉobject.SequenceEqual(Windvaleˉsumˉobject))
+        {
+            var Sharedˉlength = Math.Min(Sumˉobject.Length, Windvaleˉsumˉobject.Length);
+            var Firstˉdifference = Enumerable.Range(0, Sharedˉlength)
+                .FirstOrDefault(Index => Sumˉobject[Index] != Windvaleˉsumˉobject[Index], -1);
+            throw new InvalidOperationException(
+                $"Windvale Sum-Data WVO differs at {Firstˉdifference}; " +
+                $"Stage0 length={Sumˉobject.Length}, Windvale length={Windvaleˉsumˉobject.Length}, " +
+                $"Stage0 byte={(Firstˉdifference < 0 ? -1 : Sumˉobject[Firstˉdifference])}, " +
+                $"Windvale byte={(Firstˉdifference < 0 ? -1 : Windvaleˉsumˉobject[Firstˉdifference])}.");
+        }
         Equal(
             0,
             new Referenceˉruntime(
@@ -2945,10 +2987,6 @@ internal static partial class Program
                 Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
                 .Runˉmainˉbytes(wvbˉbytes[..^1].ToImmutableArray()).Bytes.Length);
 
-        var Toolˉbytes = Compileˉwvbˉtoˉwvoˉtoolˉsuccess();
-        Equal(
-            NATIVE_X64_LOWERING_TOOL_SHA256,
-            Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
         var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         var Reference = Runˉnativeˉx64ˉloweringˉtool(Tool, wvbˉbytes);
         Equal(0, Reference.Exitˉcode);
@@ -3008,6 +3046,15 @@ internal static partial class Program
             $"object-bytes={Multiˉcallˉobject.Length}\n",
             Multiˉcallˉreference.Output);
         Sequenceˉequal(Multiˉcallˉobject, Multiˉcallˉreference.Writtenˉbytes);
+
+        var Sumˉreference = Runˉnativeˉx64ˉloweringˉtool(Tool, Sumˉwvb);
+        Equal(0, Sumˉreference.Exitˉcode);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Sumˉobjectˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Sumˉobject.Length}\n",
+            Sumˉreference.Output);
+        Sequenceˉequal(Sumˉobject, Sumˉreference.Writtenˉbytes);
 
         const string Nextˉconstantˉsource = """
             module Nativeˉconstant profile portable;
@@ -3125,6 +3172,17 @@ internal static partial class Program
             Mismatchedˉscalarˉparameterˉwvb.AsSpan(Scalarˉfunction, 4)));
         var Scalarˉparameterˉtypes = Scalarˉfunction + 4 + Scalarˉnameˉlength + 4;
         Mismatchedˉscalarˉparameterˉwvb[Scalarˉparameterˉtypes + 1] = (byte)Valueˉtype.I32;
+        var Invalidˉdataˉindexˉwvb = Sumˉwvb.ToArray();
+        var Sumˉmain = Sumˉmodule.Functions[1];
+        var Sumˉdataˉload = Sumˉmain.Instructions.First(
+            Instruction => Instruction.Opcode == Opcode.Dataˉloadˉi32);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉdataˉindexˉwvb.AsSpan(
+                Codeˉpayloadˉoffset(Invalidˉdataˉindexˉwvb) +
+                Sumˉmain.Declaration.Codeˉoffset +
+                Sumˉdataˉload.Offset + 1,
+                4),
+            1u);
         foreach (var Malformed in new[]
         {
             Underflowˉwvb,
@@ -3134,6 +3192,7 @@ internal static partial class Program
             Invalidˉcallˉtargetˉwvb,
             Forwardˉcallˉwvb,
             Mismatchedˉscalarˉparameterˉwvb,
+            Invalidˉdataˉindexˉwvb,
         })
         {
             Equal(
@@ -3344,12 +3403,33 @@ internal static partial class Program
 
         Console.WriteLine(
             $"NATIVE_X64_LOWERING_MEASUREMENT " +
+            $"data={Moduleˉdigest.Calculateˉsha256(Dataˉbytes)} " +
             $"layout={Moduleˉdigest.Calculateˉsha256(Layoutˉbytes)} " +
+            $"object={Moduleˉdigest.Calculateˉsha256(Objectˉbytes)} " +
             $"core={Moduleˉdigest.Calculateˉsha256(Coreˉbytes)} " +
             $"memory={Moduleˉdigest.Calculateˉsha256(Memoryˉbytes)} " +
             $"tool={Moduleˉdigest.Calculateˉsha256(Toolˉbytes)} " +
+            $"tool-wvb={Toolˉbytes.Length} " +
             $"tool-native-code={Toolˉnative.Fragment.Code.Length} " +
             $"tool-native-wvo={Toolˉnativeˉobject.Length}");
+        Equal(
+            NATIVE_X64_LOWERING_DATA_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Dataˉbytes));
+        Equal(
+            NATIVE_X64_LOWERING_LAYOUT_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Layoutˉbytes));
+        Equal(
+            NATIVE_X64_LOWERING_OBJECT_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Objectˉbytes));
+        Equal(
+            NATIVE_X64_LOWERING_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Coreˉbytes));
+        Equal(
+            NATIVE_X64_LOWERING_MEMORY_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Memoryˉbytes));
+        Equal(
+            NATIVE_X64_LOWERING_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
     }
 
     private static void Windowsˉconsoleˉapplicationˉruns()

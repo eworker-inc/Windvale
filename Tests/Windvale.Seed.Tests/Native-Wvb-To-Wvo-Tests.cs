@@ -9,13 +9,13 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 87_998;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_115_136;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 101_687;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_274_880;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "d6fe7e3cbeb109ae048b1b853de0abfa93c35f3f534bba9d072a34f5d3810469";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_114_112;
+        "c37d6493f453bde736eef52d01b733382eb6ac74505b915706e00b273f14f726";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_273_856;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "25612acf58b7bb2113865bcccbda09800ecaeaa8f30ee1d7a50a68b90bbcf491";
+        "80d62a7195abcfe071ddb4c3eb8c64325eb2bdad18d217b7664c311f21f14844";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -92,10 +92,6 @@ internal static partial class Program
             Windows.Diagnostics.IsEmpty
                 ? "The Windows WVB-to-WVO writer failed without a diagnostic."
                 : Windows.Diagnostics[0].Message);
-        Equal(WINDOWS_WVB_TO_WVO_APPLICATION_BYTES, Windows.Imageˉbytes.Length);
-        Equal(
-            WINDOWS_WVB_TO_WVO_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan()));
         var Verifiedˉwindows = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
             Windows.Imageˉbytes.AsSpan(),
             Windowsˉbundle,
@@ -113,6 +109,16 @@ internal static partial class Program
             Linux.Diagnostics.IsEmpty
                 ? "The Linux WVB-to-WVO writer failed without a diagnostic."
                 : Linux.Diagnostics[0].Message);
+        Console.WriteLine(
+            $"NATIVE_WVB_TO_WVO_APPLICATION_MEASUREMENT " +
+            $"windows-bytes={Windows.Imageˉbytes.Length} " +
+            $"windows-sha256={Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan())} " +
+            $"linux-bytes={Linux.Imageˉbytes.Length} " +
+            $"linux-sha256={Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan())}");
+        Equal(WINDOWS_WVB_TO_WVO_APPLICATION_BYTES, Windows.Imageˉbytes.Length);
+        Equal(
+            WINDOWS_WVB_TO_WVO_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan()));
         Equal(LINUX_WVB_TO_WVO_APPLICATION_BYTES, Linux.Imageˉbytes.Length);
         Equal(
             LINUX_WVB_TO_WVO_APPLICATION_SHA256,
@@ -245,8 +251,14 @@ internal static partial class Program
                     "Compiler/Windvale/Native-X64-Lowering-Core.wv",
                     NATIVE_X64_LOWERING_CORE_SOURCE),
                 new(
+                    "Compiler/Windvale/Native-X64-Lowering-Data.wv",
+                    NATIVE_X64_LOWERING_DATA_SOURCE),
+                new(
                     "Compiler/Windvale/Native-X64-Lowering-Layout.wv",
                     NATIVE_X64_LOWERING_LAYOUT_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Object.wv",
+                    NATIVE_X64_LOWERING_OBJECT_SOURCE),
             ]);
         if (!Result.Success)
         {

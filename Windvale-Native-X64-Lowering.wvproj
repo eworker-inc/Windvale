@@ -1,5 +1,7 @@
 windvale-project 1
 root "Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Core.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Data.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Layout.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Object.wv"
 emit wvb

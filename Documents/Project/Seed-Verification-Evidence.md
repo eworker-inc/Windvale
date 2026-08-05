@@ -1912,19 +1912,29 @@ the separate layout module also owns WVO function-symbol encoding. The lowering
 core falls from 2,979 to 2,887 source lines rather than growing another special
 case.
 
-The current module identities are a 5,369-byte layout module /
-`240e8bc7944718c89de1db36c8bc4cfa7d0b78ecd52f24277db15714df4d8dc2`,
-a 90,971-byte core closure /
-`b2f966e8c15ab2e2b60d04d6fabfa74727b42b542ab93db90c1d62a9cbc4c32b`,
-an 86,970-byte memory adapter /
-`a216e6f88de0599e2060047ce3ba157b537d9caf54d78a7d8631eb253d6971e5`,
-and an 87,998-byte hosted tool /
-`a892837f439c484b8627b16770aaaa757c4c31819161e47b8fc6b7de7a0a4085`.
-The tool's complete Stage 0 lowering records 1,096,799 native code bytes and a
-1,099,853-byte WVO. Its Windows candidate is 1,115,136 bytes /
-`d6fe7e3cbeb109ae048b1b853de0abfa93c35f3f534bba9d072a34f5d3810469`;
-its Linux candidate is 1,114,112 bytes /
-`25612acf58b7bb2113865bcccbda09800ecaeaa8f30ee1d7a50a68b90bbcf491`.
+[Decision 0231](../Decisions/0231-Native-I32-Static-Data-Lowering.md)
+adds one canonical immutable `[i32]` data declaration, `data.length`, and
+bounds-checked `data.load.i32`. The focused 99-line data module owns exact WVB
+payload admission, the 154-line object module owns optional `.rodata`, data
+symbols, and relative relocations, and the layout module contracts to 82 lines
+of function-directory ownership. The instruction core remains the owner of typed
+stack analysis, exact machine sizes, the `WVR3005` branch, and RIP-relative load
+selection.
+
+The current module identities are:
+
+- data: `9a32b3854270bcace52f615633f4b110d9f0777ba5fb5338157af0965dcc8ed4`;
+- layout: `6e13d55df4e99ee60bc087ffc5bcfb290c3c922930837009405492e910e49467`;
+- object: `6deeddffa056de376e77b19f9c1825899579777eaede34141b2240f2da1076a6`;
+- core closure: `ebef78182bd6385589277721b69faa08f05849307da01353fdb94c73ac08cea4`;
+- memory adapter: `9a8b45325df56722bdf9a1c552c6743056f9fc8c472a9d29b80684ccb823dc78`;
+- 101,687-byte hosted tool: `adca98f19b4b3c6d864d07285d5fb1214131976e4a11b3c0aafd0a5e71f9e230`.
+
+The tool's complete Stage 0 lowering records 1,256,704 native code bytes and a
+1,260,104-byte WVO. Its Windows candidate is 1,274,880 bytes /
+`c37d6493f453bde736eef52d01b733382eb6ac74505b915706e00b273f14f726`;
+its Linux candidate is 1,273,856 bytes /
+`80d62a7195abcfe071ddb4c3eb8c64325eb2bdad18d217b7664c311f21f14844`.
 
 One stable accepted-subset fixture is 174 WVB bytes /
 `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31`.
@@ -1932,18 +1942,20 @@ The native Windows candidate emits its exact 479-byte WVO /
 `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`
 and reports 406 code bytes. The independent C# WVO parser admits that result.
 
-Before execution, the shared-backend assertions were extended with the existing
-three-function `Add -> Build -> Main` fixture and a mutated middle-function
-self/forward call. The fixture calls both lower ordinals, returns 42 under the
-reference runtime, and produces exact Stage 0 WVO bytes through both interpreted
-and native execution of the Windvale-written lowerer. Every retained one- and
-two-function object remains byte-identical. The malformed mutation fails closed.
+Before execution, the shared-backend assertions retain the existing three-function
+`Add -> Build -> Main` fixture and add canonical `Sum-Data.wv`. Its exact 493-byte
+WVB returns 29 and now produces Stage 0's byte-identical 3,288-byte WVO through
+both the Windvale memory adapter and hosted tool: 3,088 `.text` bytes, 16 `.rodata`
+bytes, `$data_0000`, and one `Relative_i32` relocation with addend `-4`. Every
+retained code-only object remains byte-identical. An encoded data index one fails
+closed as `Unsupportedˉcode`.
 
-On local Windows, the one reviewed Fast selection rebuilds the test project in
-16.09 seconds and passes its single case in 5.944 test seconds. Native and managed
-source compilers independently produce the same layout, core, and memory closure
-bytes. Standard, Qualification, the full Seed/OS suites, the separate native
-package case, Linux execution, GitHub verification, artifact promotion, and
+On local Windows, the reviewed Fast shared-backend selection rebuilds in 8.68
+seconds and passes its single case in 5.429 test seconds. The distinct affected
+native WVB-to-WVO application selection rebuilds in 8.94 seconds and passes its
+single case in 5.797 test seconds, including both deterministic package identities
+and direct current-host execution. Standard, Qualification, the full Seed/OS
+suites, Linux execution, GitHub verification, artifact promotion, and
 ordinary-path cutover were deliberately not run.
 
 This is focused local candidate evidence only. Standard, Qualification, the full
