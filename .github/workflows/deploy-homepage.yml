@@ -1,4 +1,5 @@
 name: Deploy verified website snapshot
+run-name: Deploy website snapshot · ${{ github.event_name }}
 
 on:
   schedule:
