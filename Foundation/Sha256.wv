@@ -1,151 +1,6 @@
 module Foundationˉsha256 profile portable;
 
-fn Addˉwrapping(Left: u32, Right: u32) -> u32 {
-    var Value: u32 = Left;
-    var Carry: u32 = Right;
-    while Carry != 0u32 {
-        let Nextˉcarry: u32 = (Value & Carry) << 1u32;
-        Value = Value ^ Carry;
-        Carry = Nextˉcarry;
-    }
-    return Value;
-}
-
-fn Rotateˉright(Value: u32, Count: u32) -> u32 {
-    return (Value >> Count) | (Value << (32u32 - Count));
-}
-
-fn Roundˉconstant(Index: u32) -> u32 {
-    if Index == 0u32 { return 1116352408u32; }
-    if Index == 1u32 { return 1899447441u32; }
-    if Index == 2u32 { return 3049323471u32; }
-    if Index == 3u32 { return 3921009573u32; }
-    if Index == 4u32 { return 961987163u32; }
-    if Index == 5u32 { return 1508970993u32; }
-    if Index == 6u32 { return 2453635748u32; }
-    if Index == 7u32 { return 2870763221u32; }
-    if Index == 8u32 { return 3624381080u32; }
-    if Index == 9u32 { return 310598401u32; }
-    if Index == 10u32 { return 607225278u32; }
-    if Index == 11u32 { return 1426881987u32; }
-    if Index == 12u32 { return 1925078388u32; }
-    if Index == 13u32 { return 2162078206u32; }
-    if Index == 14u32 { return 2614888103u32; }
-    if Index == 15u32 { return 3248222580u32; }
-    if Index == 16u32 { return 3835390401u32; }
-    if Index == 17u32 { return 4022224774u32; }
-    if Index == 18u32 { return 264347078u32; }
-    if Index == 19u32 { return 604807628u32; }
-    if Index == 20u32 { return 770255983u32; }
-    if Index == 21u32 { return 1249150122u32; }
-    if Index == 22u32 { return 1555081692u32; }
-    if Index == 23u32 { return 1996064986u32; }
-    if Index == 24u32 { return 2554220882u32; }
-    if Index == 25u32 { return 2821834349u32; }
-    if Index == 26u32 { return 2952996808u32; }
-    if Index == 27u32 { return 3210313671u32; }
-    if Index == 28u32 { return 3336571891u32; }
-    if Index == 29u32 { return 3584528711u32; }
-    if Index == 30u32 { return 113926993u32; }
-    if Index == 31u32 { return 338241895u32; }
-    if Index == 32u32 { return 666307205u32; }
-    if Index == 33u32 { return 773529912u32; }
-    if Index == 34u32 { return 1294757372u32; }
-    if Index == 35u32 { return 1396182291u32; }
-    if Index == 36u32 { return 1695183700u32; }
-    if Index == 37u32 { return 1986661051u32; }
-    if Index == 38u32 { return 2177026350u32; }
-    if Index == 39u32 { return 2456956037u32; }
-    if Index == 40u32 { return 2730485921u32; }
-    if Index == 41u32 { return 2820302411u32; }
-    if Index == 42u32 { return 3259730800u32; }
-    if Index == 43u32 { return 3345764771u32; }
-    if Index == 44u32 { return 3516065817u32; }
-    if Index == 45u32 { return 3600352804u32; }
-    if Index == 46u32 { return 4094571909u32; }
-    if Index == 47u32 { return 275423344u32; }
-    if Index == 48u32 { return 430227734u32; }
-    if Index == 49u32 { return 506948616u32; }
-    if Index == 50u32 { return 659060556u32; }
-    if Index == 51u32 { return 883997877u32; }
-    if Index == 52u32 { return 958139571u32; }
-    if Index == 53u32 { return 1322822218u32; }
-    if Index == 54u32 { return 1537002063u32; }
-    if Index == 55u32 { return 1747873779u32; }
-    if Index == 56u32 { return 1955562222u32; }
-    if Index == 57u32 { return 2024104815u32; }
-    if Index == 58u32 { return 2227730452u32; }
-    if Index == 59u32 { return 2361852424u32; }
-    if Index == 60u32 { return 2428436474u32; }
-    if Index == 61u32 { return 2756734187u32; }
-    if Index == 62u32 { return 3204031479u32; }
-    return 3329325298u32;
-}
-
-fn Messageˉbyte(Value: bytes, Length: u32, Position: u32, Paddedˉlength: u32) -> u32 {
-    if Position < Length {
-        return U32ˉfromˉu8(Bytesˉreadˉu8(Value, Position));
-    }
-    if Position == Length { return 128u32; }
-    if Position < Paddedˉlength - 4u32 { return 0u32; }
-    let Shift: u32 = (Paddedˉlength - 1u32 - Position) * 8u32;
-    return ((Length << 3u32) >> Shift) & 255u32;
-}
-
-fn Messageˉword(Value: bytes, Length: u32, Position: u32, Paddedˉlength: u32) -> u32 {
-    let First: u32 = Messageˉbyte(Value, Length, Position, Paddedˉlength) << 24u32;
-    let Second: u32 = Messageˉbyte(Value, Length, Position + 1u32, Paddedˉlength) << 16u32;
-    let Third: u32 = Messageˉbyte(Value, Length, Position + 2u32, Paddedˉlength) << 8u32;
-    return First | Second | Third |
-        Messageˉbyte(Value, Length, Position + 3u32, Paddedˉlength);
-}
-
-fn Smallˉsigmaˉzero(Value: u32) -> u32 {
-    return Rotateˉright(Value, 7u32) ^ Rotateˉright(Value, 18u32) ^ (Value >> 3u32);
-}
-
-fn Smallˉsigmaˉone(Value: u32) -> u32 {
-    return Rotateˉright(Value, 17u32) ^ Rotateˉright(Value, 19u32) ^ (Value >> 10u32);
-}
-
-fn Bigˉsigmaˉzero(Value: u32) -> u32 {
-    return Rotateˉright(Value, 2u32) ^ Rotateˉright(Value, 13u32) ^
-        Rotateˉright(Value, 22u32);
-}
-
-fn Bigˉsigmaˉone(Value: u32) -> u32 {
-    return Rotateˉright(Value, 6u32) ^ Rotateˉright(Value, 11u32) ^
-        Rotateˉright(Value, 25u32);
-}
-
-fn Choice(First: u32, Second: u32, Third: u32) -> u32 {
-    return (First & Second) ^ (~First & Third);
-}
-
-fn Majority(First: u32, Second: u32, Third: u32) -> u32 {
-    return (First & Second) ^ (First & Third) ^ (Second & Third);
-}
-
-fn Hexˉdigit(Value: u32) -> bytes {
-    var Ascii: u32 = Value + 48u32;
-    if Value > 9u32 { Ascii = Value + 87u32; }
-    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Ascii), 0u32, 1u32);
-}
-
-fn Appendˉhexˉword(Output: bytes, Value: u32) -> bytes {
-    var Result: bytes = Output;
-    var Index: u32 = 0u32;
-    while Index < 4u32 {
-        let Shift: u32 = (3u32 - Index) * 8u32;
-        let Byteˉvalue: u32 = (Value >> Shift) & 255u32;
-        Result = Bytesˉconcat(Result, Hexˉdigit(Byteˉvalue >> 4u32));
-        Result = Bytesˉconcat(Result, Hexˉdigit(Byteˉvalue & 15u32));
-        Index = Index + 1u32;
-    }
-    return Result;
-}
-
-export fn Foundationˉsha256ˉhex(Value: bytes) -> text {
+export fn Foundationˉsha256ˉhex(Value: bytes) -> bytes {
     let Length: u32 = Bytesˉlength(Value);
     let Paddedˉlength: u32 = (Length + 72u32) & 4294967232u32;
     var Hashˉzero: u32 = 1779033703u32;
@@ -164,31 +19,72 @@ export fn Foundationˉsha256ˉhex(Value: bytes) -> text {
         while Scheduleˉindex < 64u32 {
             var Word: u32 = 0u32;
             if Scheduleˉindex < 16u32 {
-                Word = Messageˉword(
-                    Value,
-                    Length,
-                    Blockˉoffset + Scheduleˉindex * 4u32,
-                    Paddedˉlength
-                );
+                var Messageˉindex: u32 = 0u32;
+                while Messageˉindex < 4u32 {
+                    let Position: u32 =
+                        Blockˉoffset + Scheduleˉindex * 4u32 + Messageˉindex;
+                    var Messageˉbyte: u32 = 0u32;
+                    if Position < Length {
+                        Messageˉbyte = U32ˉfromˉu8(Bytesˉreadˉu8(Value, Position));
+                    }
+                    if Position == Length { Messageˉbyte = 128u32; }
+                    if Position >= Paddedˉlength - 4u32 {
+                        let Lengthˉshift: u32 =
+                            (Paddedˉlength - 1u32 - Position) * 8u32;
+                        Messageˉbyte = ((Length << 3u32) >> Lengthˉshift) & 255u32;
+                    }
+                    let Messageˉshift: u32 = (3u32 - Messageˉindex) * 8u32;
+                    Word = Word | (Messageˉbyte << Messageˉshift);
+                    Messageˉindex = Messageˉindex + 1u32;
+                }
             } else {
-                Word = Addˉwrapping(
-                    Addˉwrapping(
-                        Bytesˉreadˉu32ˉlittle(
-                            Schedule, (Scheduleˉindex - 16u32) * 4u32
-                        ),
-                        Smallˉsigmaˉzero(Bytesˉreadˉu32ˉlittle(
-                            Schedule, (Scheduleˉindex - 15u32) * 4u32
-                        ))
-                    ),
-                    Addˉwrapping(
-                        Bytesˉreadˉu32ˉlittle(
-                            Schedule, (Scheduleˉindex - 7u32) * 4u32
-                        ),
-                        Smallˉsigmaˉone(Bytesˉreadˉu32ˉlittle(
-                            Schedule, (Scheduleˉindex - 2u32) * 4u32
-                        ))
-                    )
+                let Scheduleˉminusˉsixteen: u32 = Bytesˉreadˉu32ˉlittle(
+                    Schedule, (Scheduleˉindex - 16u32) * 4u32
                 );
+                let Scheduleˉminusˉfifteen: u32 = Bytesˉreadˉu32ˉlittle(
+                    Schedule, (Scheduleˉindex - 15u32) * 4u32
+                );
+                let Scheduleˉminusˉseven: u32 = Bytesˉreadˉu32ˉlittle(
+                    Schedule, (Scheduleˉindex - 7u32) * 4u32
+                );
+                let Scheduleˉminusˉtwo: u32 = Bytesˉreadˉu32ˉlittle(
+                    Schedule, (Scheduleˉindex - 2u32) * 4u32
+                );
+                let Smallˉzeroˉseven: u32 =
+                    (Scheduleˉminusˉfifteen >> 7u32) |
+                    (Scheduleˉminusˉfifteen << 25u32);
+                let Smallˉzeroˉeighteen: u32 =
+                    (Scheduleˉminusˉfifteen >> 18u32) |
+                    (Scheduleˉminusˉfifteen << 14u32);
+                let Smallˉzero: u32 = Smallˉzeroˉseven ^
+                    Smallˉzeroˉeighteen ^ (Scheduleˉminusˉfifteen >> 3u32);
+                let Smallˉoneˉseventeen: u32 =
+                    (Scheduleˉminusˉtwo >> 17u32) |
+                    (Scheduleˉminusˉtwo << 15u32);
+                let Smallˉoneˉnineteen: u32 =
+                    (Scheduleˉminusˉtwo >> 19u32) |
+                    (Scheduleˉminusˉtwo << 13u32);
+                let Smallˉone: u32 = Smallˉoneˉseventeen ^
+                    Smallˉoneˉnineteen ^ (Scheduleˉminusˉtwo >> 10u32);
+                Word = Scheduleˉminusˉsixteen;
+                var Scheduleˉaddendˉindex: u32 = 0u32;
+                while Scheduleˉaddendˉindex < 3u32 {
+                    var Scheduleˉaddend: u32 = Smallˉzero;
+                    if Scheduleˉaddendˉindex == 1u32 {
+                        Scheduleˉaddend = Scheduleˉminusˉseven;
+                    }
+                    if Scheduleˉaddendˉindex == 2u32 {
+                        Scheduleˉaddend = Smallˉone;
+                    }
+                    var Scheduleˉcarry: u32 = Scheduleˉaddend;
+                    while Scheduleˉcarry != 0u32 {
+                        let Nextˉscheduleˉcarry: u32 =
+                            (Word & Scheduleˉcarry) << 1u32;
+                        Word = Word ^ Scheduleˉcarry;
+                        Scheduleˉcarry = Nextˉscheduleˉcarry;
+                    }
+                    Scheduleˉaddendˉindex = Scheduleˉaddendˉindex + 1u32;
+                }
             }
             Schedule = Bytesˉconcat(Schedule, Bytesˉfromˉu32ˉlittle(Word));
             Scheduleˉindex = Scheduleˉindex + 1u32;
@@ -204,50 +100,222 @@ export fn Foundationˉsha256ˉhex(Value: bytes) -> text {
         var H: u32 = Hashˉseven;
         var Round: u32 = 0u32;
         while Round < 64u32 {
-            let Temporaryˉone: u32 = Addˉwrapping(
-                Addˉwrapping(
-                    Addˉwrapping(H, Bigˉsigmaˉone(E)),
-                    Choice(E, F, G)
-                ),
-                Addˉwrapping(
-                    Roundˉconstant(Round),
-                    Bytesˉreadˉu32ˉlittle(Schedule, Round * 4u32)
-                )
-            );
-            let Temporaryˉtwo: u32 = Addˉwrapping(
-                Bigˉsigmaˉzero(A),
-                Majority(A, B, C)
-            );
+            var Roundˉconstant: u32 = 3329325298u32;
+            if Round < 16u32 {
+                if Round == 0u32 { Roundˉconstant = 1116352408u32; }
+                if Round == 1u32 { Roundˉconstant = 1899447441u32; }
+                if Round == 2u32 { Roundˉconstant = 3049323471u32; }
+                if Round == 3u32 { Roundˉconstant = 3921009573u32; }
+                if Round == 4u32 { Roundˉconstant = 961987163u32; }
+                if Round == 5u32 { Roundˉconstant = 1508970993u32; }
+                if Round == 6u32 { Roundˉconstant = 2453635748u32; }
+                if Round == 7u32 { Roundˉconstant = 2870763221u32; }
+                if Round == 8u32 { Roundˉconstant = 3624381080u32; }
+                if Round == 9u32 { Roundˉconstant = 310598401u32; }
+                if Round == 10u32 { Roundˉconstant = 607225278u32; }
+                if Round == 11u32 { Roundˉconstant = 1426881987u32; }
+                if Round == 12u32 { Roundˉconstant = 1925078388u32; }
+                if Round == 13u32 { Roundˉconstant = 2162078206u32; }
+                if Round == 14u32 { Roundˉconstant = 2614888103u32; }
+                if Round == 15u32 { Roundˉconstant = 3248222580u32; }
+            }
+            if Round < 32u32 {
+                if Round >= 16u32 {
+                    if Round == 16u32 { Roundˉconstant = 3835390401u32; }
+                    if Round == 17u32 { Roundˉconstant = 4022224774u32; }
+                    if Round == 18u32 { Roundˉconstant = 264347078u32; }
+                    if Round == 19u32 { Roundˉconstant = 604807628u32; }
+                    if Round == 20u32 { Roundˉconstant = 770255983u32; }
+                    if Round == 21u32 { Roundˉconstant = 1249150122u32; }
+                    if Round == 22u32 { Roundˉconstant = 1555081692u32; }
+                    if Round == 23u32 { Roundˉconstant = 1996064986u32; }
+                    if Round == 24u32 { Roundˉconstant = 2554220882u32; }
+                    if Round == 25u32 { Roundˉconstant = 2821834349u32; }
+                    if Round == 26u32 { Roundˉconstant = 2952996808u32; }
+                    if Round == 27u32 { Roundˉconstant = 3210313671u32; }
+                    if Round == 28u32 { Roundˉconstant = 3336571891u32; }
+                    if Round == 29u32 { Roundˉconstant = 3584528711u32; }
+                    if Round == 30u32 { Roundˉconstant = 113926993u32; }
+                    if Round == 31u32 { Roundˉconstant = 338241895u32; }
+                }
+            }
+            if Round < 48u32 {
+                if Round >= 32u32 {
+                    if Round == 32u32 { Roundˉconstant = 666307205u32; }
+                    if Round == 33u32 { Roundˉconstant = 773529912u32; }
+                    if Round == 34u32 { Roundˉconstant = 1294757372u32; }
+                    if Round == 35u32 { Roundˉconstant = 1396182291u32; }
+                    if Round == 36u32 { Roundˉconstant = 1695183700u32; }
+                    if Round == 37u32 { Roundˉconstant = 1986661051u32; }
+                    if Round == 38u32 { Roundˉconstant = 2177026350u32; }
+                    if Round == 39u32 { Roundˉconstant = 2456956037u32; }
+                    if Round == 40u32 { Roundˉconstant = 2730485921u32; }
+                    if Round == 41u32 { Roundˉconstant = 2820302411u32; }
+                    if Round == 42u32 { Roundˉconstant = 3259730800u32; }
+                    if Round == 43u32 { Roundˉconstant = 3345764771u32; }
+                    if Round == 44u32 { Roundˉconstant = 3516065817u32; }
+                    if Round == 45u32 { Roundˉconstant = 3600352804u32; }
+                    if Round == 46u32 { Roundˉconstant = 4094571909u32; }
+                    if Round == 47u32 { Roundˉconstant = 275423344u32; }
+                }
+            }
+            if Round >= 48u32 {
+                if Round == 48u32 { Roundˉconstant = 430227734u32; }
+                if Round == 49u32 { Roundˉconstant = 506948616u32; }
+                if Round == 50u32 { Roundˉconstant = 659060556u32; }
+                if Round == 51u32 { Roundˉconstant = 883997877u32; }
+                if Round == 52u32 { Roundˉconstant = 958139571u32; }
+                if Round == 53u32 { Roundˉconstant = 1322822218u32; }
+                if Round == 54u32 { Roundˉconstant = 1537002063u32; }
+                if Round == 55u32 { Roundˉconstant = 1747873779u32; }
+                if Round == 56u32 { Roundˉconstant = 1955562222u32; }
+                if Round == 57u32 { Roundˉconstant = 2024104815u32; }
+                if Round == 58u32 { Roundˉconstant = 2227730452u32; }
+                if Round == 59u32 { Roundˉconstant = 2361852424u32; }
+                if Round == 60u32 { Roundˉconstant = 2428436474u32; }
+                if Round == 61u32 { Roundˉconstant = 2756734187u32; }
+                if Round == 62u32 { Roundˉconstant = 3204031479u32; }
+            }
+
+            let Eˉrotateˉsix: u32 = (E >> 6u32) | (E << 26u32);
+            let Eˉrotateˉeleven: u32 = (E >> 11u32) | (E << 21u32);
+            let Eˉrotateˉtwentyˉfive: u32 = (E >> 25u32) | (E << 7u32);
+            let Bigˉone: u32 =
+                Eˉrotateˉsix ^ Eˉrotateˉeleven ^ Eˉrotateˉtwentyˉfive;
+            let Choice: u32 = (E & F) ^ (~E & G);
+            let Scheduleˉword: u32 =
+                Bytesˉreadˉu32ˉlittle(Schedule, Round * 4u32);
+            var Temporaryˉone: u32 = H;
+            var Temporaryˉoneˉindex: u32 = 0u32;
+            while Temporaryˉoneˉindex < 4u32 {
+                var Temporaryˉoneˉaddend: u32 = Bigˉone;
+                if Temporaryˉoneˉindex == 1u32 {
+                    Temporaryˉoneˉaddend = Choice;
+                }
+                if Temporaryˉoneˉindex == 2u32 {
+                    Temporaryˉoneˉaddend = Roundˉconstant;
+                }
+                if Temporaryˉoneˉindex == 3u32 {
+                    Temporaryˉoneˉaddend = Scheduleˉword;
+                }
+                var Temporaryˉoneˉcarry: u32 = Temporaryˉoneˉaddend;
+                while Temporaryˉoneˉcarry != 0u32 {
+                    let Nextˉtemporaryˉoneˉcarry: u32 =
+                        (Temporaryˉone & Temporaryˉoneˉcarry) << 1u32;
+                    Temporaryˉone = Temporaryˉone ^ Temporaryˉoneˉcarry;
+                    Temporaryˉoneˉcarry = Nextˉtemporaryˉoneˉcarry;
+                }
+                Temporaryˉoneˉindex = Temporaryˉoneˉindex + 1u32;
+            }
+
+            let Aˉrotateˉtwo: u32 = (A >> 2u32) | (A << 30u32);
+            let Aˉrotateˉthirteen: u32 = (A >> 13u32) | (A << 19u32);
+            let Aˉrotateˉtwentyˉtwo: u32 = (A >> 22u32) | (A << 10u32);
+            let Bigˉzero: u32 =
+                Aˉrotateˉtwo ^ Aˉrotateˉthirteen ^ Aˉrotateˉtwentyˉtwo;
+            let Majority: u32 = (A & B) ^ (A & C) ^ (B & C);
+            var Temporaryˉtwo: u32 = Bigˉzero;
+            var Temporaryˉtwoˉcarry: u32 = Majority;
+            while Temporaryˉtwoˉcarry != 0u32 {
+                let Nextˉtemporaryˉtwoˉcarry: u32 =
+                    (Temporaryˉtwo & Temporaryˉtwoˉcarry) << 1u32;
+                Temporaryˉtwo = Temporaryˉtwo ^ Temporaryˉtwoˉcarry;
+                Temporaryˉtwoˉcarry = Nextˉtemporaryˉtwoˉcarry;
+            }
+
             H = G;
             G = F;
             F = E;
-            E = Addˉwrapping(D, Temporaryˉone);
+            var Nextˉe: u32 = D;
+            var Nextˉeˉcarry: u32 = Temporaryˉone;
+            while Nextˉeˉcarry != 0u32 {
+                let Nextˉnextˉeˉcarry: u32 =
+                    (Nextˉe & Nextˉeˉcarry) << 1u32;
+                Nextˉe = Nextˉe ^ Nextˉeˉcarry;
+                Nextˉeˉcarry = Nextˉnextˉeˉcarry;
+            }
+            E = Nextˉe;
             D = C;
             C = B;
             B = A;
-            A = Addˉwrapping(Temporaryˉone, Temporaryˉtwo);
+            var Nextˉa: u32 = Temporaryˉone;
+            var Nextˉaˉcarry: u32 = Temporaryˉtwo;
+            while Nextˉaˉcarry != 0u32 {
+                let Nextˉnextˉaˉcarry: u32 =
+                    (Nextˉa & Nextˉaˉcarry) << 1u32;
+                Nextˉa = Nextˉa ^ Nextˉaˉcarry;
+                Nextˉaˉcarry = Nextˉnextˉaˉcarry;
+            }
+            A = Nextˉa;
             Round = Round + 1u32;
         }
 
-        Hashˉzero = Addˉwrapping(Hashˉzero, A);
-        Hashˉone = Addˉwrapping(Hashˉone, B);
-        Hashˉtwo = Addˉwrapping(Hashˉtwo, C);
-        Hashˉthree = Addˉwrapping(Hashˉthree, D);
-        Hashˉfour = Addˉwrapping(Hashˉfour, E);
-        Hashˉfive = Addˉwrapping(Hashˉfive, F);
-        Hashˉsix = Addˉwrapping(Hashˉsix, G);
-        Hashˉseven = Addˉwrapping(Hashˉseven, H);
+        var Hashˉindex: u32 = 0u32;
+        while Hashˉindex < 8u32 {
+            var Hashˉvalue: u32 = Hashˉzero;
+            var Workingˉvalue: u32 = A;
+            if Hashˉindex == 1u32 { Hashˉvalue = Hashˉone; Workingˉvalue = B; }
+            if Hashˉindex == 2u32 { Hashˉvalue = Hashˉtwo; Workingˉvalue = C; }
+            if Hashˉindex == 3u32 { Hashˉvalue = Hashˉthree; Workingˉvalue = D; }
+            if Hashˉindex == 4u32 { Hashˉvalue = Hashˉfour; Workingˉvalue = E; }
+            if Hashˉindex == 5u32 { Hashˉvalue = Hashˉfive; Workingˉvalue = F; }
+            if Hashˉindex == 6u32 { Hashˉvalue = Hashˉsix; Workingˉvalue = G; }
+            if Hashˉindex == 7u32 { Hashˉvalue = Hashˉseven; Workingˉvalue = H; }
+            var Hashˉcarry: u32 = Workingˉvalue;
+            while Hashˉcarry != 0u32 {
+                let Nextˉhashˉcarry: u32 = (Hashˉvalue & Hashˉcarry) << 1u32;
+                Hashˉvalue = Hashˉvalue ^ Hashˉcarry;
+                Hashˉcarry = Nextˉhashˉcarry;
+            }
+            if Hashˉindex == 0u32 { Hashˉzero = Hashˉvalue; }
+            if Hashˉindex == 1u32 { Hashˉone = Hashˉvalue; }
+            if Hashˉindex == 2u32 { Hashˉtwo = Hashˉvalue; }
+            if Hashˉindex == 3u32 { Hashˉthree = Hashˉvalue; }
+            if Hashˉindex == 4u32 { Hashˉfour = Hashˉvalue; }
+            if Hashˉindex == 5u32 { Hashˉfive = Hashˉvalue; }
+            if Hashˉindex == 6u32 { Hashˉsix = Hashˉvalue; }
+            if Hashˉindex == 7u32 { Hashˉseven = Hashˉvalue; }
+            Hashˉindex = Hashˉindex + 1u32;
+        }
         Blockˉoffset = Blockˉoffset + 64u32;
     }
 
     var Output: bytes = Bytesˉslice(Value, 0u32, 0u32);
-    Output = Appendˉhexˉword(Output, Hashˉzero);
-    Output = Appendˉhexˉword(Output, Hashˉone);
-    Output = Appendˉhexˉword(Output, Hashˉtwo);
-    Output = Appendˉhexˉword(Output, Hashˉthree);
-    Output = Appendˉhexˉword(Output, Hashˉfour);
-    Output = Appendˉhexˉword(Output, Hashˉfive);
-    Output = Appendˉhexˉword(Output, Hashˉsix);
-    Output = Appendˉhexˉword(Output, Hashˉseven);
-    return Textˉfromˉutf8(Output);
+    var Outputˉwordˉindex: u32 = 0u32;
+    while Outputˉwordˉindex < 8u32 {
+        var Outputˉword: u32 = Hashˉzero;
+        if Outputˉwordˉindex == 1u32 { Outputˉword = Hashˉone; }
+        if Outputˉwordˉindex == 2u32 { Outputˉword = Hashˉtwo; }
+        if Outputˉwordˉindex == 3u32 { Outputˉword = Hashˉthree; }
+        if Outputˉwordˉindex == 4u32 { Outputˉword = Hashˉfour; }
+        if Outputˉwordˉindex == 5u32 { Outputˉword = Hashˉfive; }
+        if Outputˉwordˉindex == 6u32 { Outputˉword = Hashˉsix; }
+        if Outputˉwordˉindex == 7u32 { Outputˉword = Hashˉseven; }
+        var Outputˉbyteˉindex: u32 = 0u32;
+        while Outputˉbyteˉindex < 4u32 {
+            let Outputˉshift: u32 = (3u32 - Outputˉbyteˉindex) * 8u32;
+            let Outputˉbyte: u32 = (Outputˉword >> Outputˉshift) & 255u32;
+            var Outputˉnibbleˉindex: u32 = 0u32;
+            while Outputˉnibbleˉindex < 2u32 {
+                var Outputˉnibble: u32 = Outputˉbyte >> 4u32;
+                if Outputˉnibbleˉindex == 1u32 {
+                    Outputˉnibble = Outputˉbyte & 15u32;
+                }
+                var Outputˉascii: u32 = Outputˉnibble + 48u32;
+                if Outputˉnibble > 9u32 {
+                    Outputˉascii = Outputˉnibble + 87u32;
+                }
+                Output = Bytesˉconcat(
+                    Output,
+                    Bytesˉslice(
+                        Bytesˉfromˉu32ˉlittle(Outputˉascii), 0u32, 1u32
+                    )
+                );
+                Outputˉnibbleˉindex = Outputˉnibbleˉindex + 1u32;
+            }
+            Outputˉbyteˉindex = Outputˉbyteˉindex + 1u32;
+        }
+        Outputˉwordˉindex = Outputˉwordˉindex + 1u32;
+    }
+    return Output;
 }

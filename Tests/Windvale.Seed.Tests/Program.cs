@@ -123,9 +123,9 @@ internal static partial class Program
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
-    private const string WEBASSEMBLY_CORE_SHA256 = "9ac7514e5a3de829e1a1970e48dfcb25db0c25eed6aa556db548c63873696faf";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "8bb51d298dec22376afe3daab62f6257bdcbfaa5e3510e81ee29b710dfca0e14";
-    private const string WEBASSEMBLY_DEMO_SHA256 = "8f3ab44f74dbb6bb95a450c33d79987fb90d95b7f28c12129b5d0daac7b585e1";
+    private const string WEBASSEMBLY_CORE_SHA256 = "3997e298c23b82bf327a406c23035a3c4ac2c725781cbdd91bb1c6ea7781eafa";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "e1b186989d158bf0f39830493ebf5e3ee54100d8340b31f0d2245623e38391a9";
+    private const string WEBASSEMBLY_DEMO_SHA256 = "caef2f27fabd2d4902c7057d8d89c5bc267fc23f65ac53def17f88326f104aca";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
     private const string WEBASSEMBLY_CHECKED_ADD_WVB_SHA256 = "dbcef5ac71e0374b8438b4288dd751086e6e5128e4f5e9dbf16d87621491280b";
@@ -199,7 +199,7 @@ internal static partial class Program
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256 = "6a71829c14b4beb5c20a0368574bedb65aa89b3f1d8989889bc0433118a39ca5";
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_WVB_SHA256 = "2e277f962a47f6ebf06a17de329d221913f792ee940cd68873a1cdfce63a8ac0";
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_SHA256 = "e2a906bc7e0c91b5fc8b51a220f6be192af1775b630f0627018ad70bf2e9e308";
-    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "284c6be845c3079f5bdaa7675d8b165d7cfe05a61567f56c9ab63fd94238e947";
+    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "a1af180e5fb55b92a163c4ff9f88d67fe65a06207527948e2fb58426692d9005";
     private const string SOURCE_WVB_BYTES_ENTRY_GUEST_SHA256 = "2e76ffb1e78ccc3b4e153a5d2ada5d247f7c96c5e0f82761d06e3a496eac5b81";
     private const string SOURCE_WVB_FUNCTION_ONLY_SHA256 = "28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936";
     private const string SOURCE_WVB_MATCH_SHA256 = "a64840ef59dbf72ee48acda5e430af3d3c52eb933a3647b72b23566c12bbaf6d";
@@ -3484,7 +3484,7 @@ internal static partial class Program
         }
         finally
         {
-            File.Delete(Path);
+            Deleteˉwindowsˉtestˉapplication(Path);
         }
     }
 
@@ -15919,20 +15919,20 @@ internal static partial class Program
                 "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
                 WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE),
             [new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE)]);
-        Equal(87_783, Scalarˉinterpreterˉwvb.Length);
+        Equal(91_731, Scalarˉinterpreterˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Scalarˉinterpreterˉwvb));
         var Scalarˉinterpreterˉverified = Moduleˉcodec.Readˉandˉverify(
             Scalarˉinterpreterˉwvb);
-        Equal(15, Scalarˉinterpreterˉverified.Functions.Length);
+        Equal(2, Scalarˉinterpreterˉverified.Functions.Length);
         var Scalarˉinterpreterˉmain = Scalarˉinterpreterˉverified.Functions[0];
         Equal("Main", Scalarˉinterpreterˉmain.Declaration.Name);
         Equal(1, Scalarˉinterpreterˉmain.Declaration.Parameterˉtypes.Length);
-        Equal(4_613, Scalarˉinterpreterˉmain.Declaration.Localˉtypes.Length);
-        Equal(71_225, Scalarˉinterpreterˉmain.Declaration.Codeˉlength);
+        Equal(4_612, Scalarˉinterpreterˉmain.Declaration.Localˉtypes.Length);
+        Equal(71_214, Scalarˉinterpreterˉmain.Declaration.Codeˉlength);
         Equal(3, Scalarˉinterpreterˉmain.Declaration.Maximumˉstackˉdepth);
-        Equal(15_577, Scalarˉinterpreterˉmain.Instructions.Length);
+        Equal(15_574, Scalarˉinterpreterˉmain.Instructions.Length);
 
         ImmutableArray<byte> Buildˉscalarˉrequest(
             IEnumerable<byte> Candidate,
@@ -16531,6 +16531,19 @@ internal static partial class Program
         Validateˉruntimeˉwebassembly(
             Scalarˉinterpreterˉlowered.Writtenˉbytes.AsSpan(),
             Scalarˉinterpreterˉverified);
+
+        const string Rootˉfirstˉcycleˉsource =
+            "module Webassemblyˉrootˉfirstˉcycle profile portable; " +
+            "fn Zˉleaf(Input: bytes) -> bytes { return Main(Input); } " +
+            "export fn Main(Input: bytes) -> bytes { return Zˉleaf(Input); }";
+        var Rootˉfirstˉcycle = Runˉwebassemblyˉtool(
+            Tool,
+            Compileˉsuccess(Rootˉfirstˉcycleˉsource));
+        Equal(1, Rootˉfirstˉcycle.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Rootˉfirstˉcycle.Diagnostics);
+        Equal(0, Rootˉfirstˉcycle.Writeˉcount);
 
         var Overwideˉruntimeˉsource = new StringBuilder(
             "module Webassemblyˉoverwideˉruntime profile portable; " +
@@ -23427,7 +23440,12 @@ internal static partial class Program
             source.Functions.Sum(Function => Function.Instructions.Length) <=
                 400_000,
             "The runtime-call aggregate instruction count is outside the profile.");
-        Equal("Main", source.Functions[^1].Declaration.Name);
+        var Rootˉfirstˉleaf = source.Functions.Length == 2 &&
+            source.Functions[0].Declaration.Name == "Main";
+        if (!Rootˉfirstˉleaf)
+        {
+            Equal("Main", source.Functions[^1].Declaration.Name);
+        }
         for (var Functionˉindex = 0; Functionˉindex < source.Functions.Length;
             Functionˉindex++)
         {
@@ -23435,12 +23453,30 @@ internal static partial class Program
             Equal(1, Function.Declaration.Parameterˉtypes.Length);
             Equal(Valueˉtype.Bytes, Function.Declaration.Parameterˉtypes[0].Kind);
             Equal(Valueˉtype.Bytes, Function.Declaration.Returnˉtype.Kind);
+            True(
+                Function.Declaration.Codeˉlength <=
+                    (Rootˉfirstˉleaf ? 131_072 : 65_536),
+                "A runtime-call function exceeds its profile code bound.");
             foreach (var Call in Function.Instructions.Where(Instruction =>
                 Instruction.Opcode == Opcode.Call))
             {
+                if (Rootˉfirstˉleaf && Functionˉindex == 0)
+                {
+                    Equal(1u, Call.Unsignedˉoperand);
+                }
+                else
+                {
+                    True(
+                        Call.Unsignedˉoperand < (uint)Functionˉindex,
+                        "A runtime call does not target a lower function ordinal.");
+                }
+            }
+            if (Rootˉfirstˉleaf && Functionˉindex == 1)
+            {
                 True(
-                    Call.Unsignedˉoperand < (uint)Functionˉindex,
-                    "A runtime call does not target a lower function ordinal.");
+                    Function.Instructions.All(Instruction =>
+                        Instruction.Opcode != Opcode.Call),
+                    "The root-first runtime leaf contains a call.");
             }
         }
 

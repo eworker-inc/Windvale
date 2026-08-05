@@ -2,8 +2,7 @@ module Foundationˉsha256ˉknownˉanswers profile portable;
 
 import Foundationˉsha256 as Sha256;
 
-fn Matches(Actual: text, Expected: text) -> bool {
-    let Actualˉbytes: bytes = Textˉtoˉutf8(Actual);
+fn Matches(Actualˉbytes: bytes, Expected: text) -> bool {
     let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
     if Bytesˉlength(Actualˉbytes) != Bytesˉlength(Expectedˉbytes) { return false; }
     var Index: u32 = 0u32;

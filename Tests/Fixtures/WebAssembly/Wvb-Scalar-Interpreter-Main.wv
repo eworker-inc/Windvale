@@ -2586,13 +2586,12 @@ export fn Main(Request: bytes) -> bytes {
             if Sha256ˉoffset > 65536u32 - 64u32 {
                 Sectionˉkind = 3018u32;
             } else {
-                let Sha256ˉvalue: bytes = Textˉtoˉutf8(
+                let Sha256ˉvalue: bytes =
                     Sha256.Foundationˉsha256ˉhex(Bytesˉslice(
                         Heap,
                         Sha256ˉsourceˉoffset,
                         Sha256ˉsourceˉlength
-                    ))
-                );
+                    ));
                 Heap = Bytesˉconcat(Heap, Sha256ˉvalue);
                 Stack = Bytesˉconcat(
                     Stack,

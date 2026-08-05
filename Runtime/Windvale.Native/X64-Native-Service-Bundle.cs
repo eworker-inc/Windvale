@@ -118,7 +118,25 @@ public static class X64ˉnativeˉserviceˉbundle
         Nativeˉserviceˉplatform platform)
     {
         Nativeˉfragmentˉverifier.Verify(fragment);
-        ReadOnlySpan<Nativeˉservice> Expected =
+        ReadOnlySpan<Nativeˉservice> Fragmentˉservices =
+        [
+            Nativeˉservice.Consoleˉwriteˉline,
+            Nativeˉservice.Processˉargumentˉcount,
+            Nativeˉservice.Processˉargument,
+            Nativeˉservice.Fileˉreadˉbytes,
+            Nativeˉservice.Diagnosticˉwriteˉline,
+            Nativeˉservice.Textˉconcat,
+            Nativeˉservice.I32ˉformat,
+            Nativeˉservice.U32ˉformat,
+        ];
+        if (!fragment.Requiredˉservices.AsSpan().SequenceEqual(Fragmentˉservices))
+        {
+            throw new Nativeˉbackendˉexception(
+                "WVN4020",
+                "The hosted WVB runner requires its exact read-only execution service profile.");
+        }
+
+        ReadOnlySpan<Nativeˉservice> Bundleˉservices =
         [
             Nativeˉservice.Consoleˉwriteˉline,
             Nativeˉservice.Processˉargumentˉcount,
@@ -130,14 +148,7 @@ public static class X64ˉnativeˉserviceˉbundle
             Nativeˉservice.I32ˉformat,
             Nativeˉservice.U32ˉformat,
         ];
-        if (!fragment.Requiredˉservices.AsSpan().SequenceEqual(Expected))
-        {
-            throw new Nativeˉbackendˉexception(
-                "WVN4020",
-                "The hosted WVB runner requires its exact read-only execution service profile.");
-        }
-
-        return Build(fragment, platform, [.. Expected]);
+        return Build(fragment, platform, [.. Bundleˉservices]);
     }
 
     private static Nativeˉserviceˉbundle Build(

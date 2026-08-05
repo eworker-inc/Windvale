@@ -40,7 +40,7 @@ internal static partial class Program
                     WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE),
             ]);
         var Runnerˉmodule = Moduleˉcodec.Readˉandˉverify(Runnerˉbytes);
-        Equal(18, Runnerˉmodule.Module.Functions.Length);
+        Equal(5, Runnerˉmodule.Module.Functions.Length);
 
         var Interpreterˉbytes = Compileˉrunnerˉmodules(
             new(
@@ -92,8 +92,7 @@ internal static partial class Program
             "capability process.argument_count; " +
             "fn Exercise(Path: text) -> i32 { " +
             "let Data: bytes = file.read_bytes(Path); " +
-            "let Value: text = Textˉfromˉutf8(Data); " +
-            "console.write_line(Textˉconcat(Value, U32ˉformat(Bytesˉlength(Data)))); " +
+            "console.write_line(Textˉconcat(\"bytes=\", U32ˉformat(Bytesˉlength(Data)))); " +
             "diagnostic.write_line(I32ˉformat(0)); return 0; } " +
             "export fn Main() -> i32 { " +
             "if process.argument_count() == 0u32 { return 64; } " +
@@ -107,7 +106,6 @@ internal static partial class Program
                 Nativeˉservice.Processˉargumentˉcount,
                 Nativeˉservice.Processˉargument,
                 Nativeˉservice.Fileˉreadˉbytes,
-                Nativeˉservice.Textˉutf8ˉisˉvalid,
                 Nativeˉservice.Diagnosticˉwriteˉline,
                 Nativeˉservice.Textˉconcat,
                 Nativeˉservice.I32ˉformat,
