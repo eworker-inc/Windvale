@@ -1,6 +1,6 @@
 # Windvale website
 
-This directory is the complete website project for <https://windvale.ca/>: its pinned npm package, Vite configuration, static pages, generated documentation and source browsers, and Cloudflare Pages Functions. The home, documentation, source, support, and playground surfaces are static browser applications with no dedicated application server. A narrow Function under `functions/` exposes the approved public supporter roll from Workers KV without handling payments.
+This directory is the complete website project for <https://windvale.ca/>: its pinned npm package, Vite configuration, static pages, generated documentation and source browsers, and Cloudflare Pages Functions. The home, progress-comic, documentation, source, support, and playground surfaces are static browser applications with no dedicated application server. A narrow Function under `functions/` exposes the approved public supporter roll from Workers KV without handling payments.
 
 The site follows the visitor's operating-system light or dark preference through `prefers-color-scheme`. The browser playground lives below the same origin at <https://windvale.ca/playground/>, so navigation and the saved theme remain continuous. Its nested <https://windvale.ca/playground/wasm-demo/> route executes a pinned Windvale-generated artifact without starting Blazor or .NET. During local development, Vite proxies `/playground/` to the independent Blazor development server at `http://127.0.0.1:5174/` while the browser stays on the website's `http://127.0.0.1:5173/` origin.
 
@@ -13,7 +13,7 @@ npm install --prefix Website
 npm --prefix Website run dev
 ```
 
-Open <http://127.0.0.1:5173/> for the website, <http://127.0.0.1:5173/docs/> for rendered repository documents, <http://127.0.0.1:5173/code/> for the highlighted source tree, or <http://127.0.0.1:5173/playground/> for the same-origin playground. The combined command generates one bounded repository snapshot, builds the Monaco bundle, starts Blazor on the internal port 5174, and starts Vite on port 5173. Restart the site command after repository files change so the generated snapshot is refreshed. Do not open `index.html` directly when checking absolute routes.
+Open <http://127.0.0.1:5173/> for the website, <http://127.0.0.1:5173/progress/> for progress comics, <http://127.0.0.1:5173/docs/> for rendered repository documents, <http://127.0.0.1:5173/code/> for the highlighted source tree, or <http://127.0.0.1:5173/playground/> for the same-origin playground. The combined command generates one bounded repository snapshot, builds the Monaco bundle, starts Blazor on the internal port 5174, and starts Vite on port 5173. Restart the site command after repository files change so the generated snapshot is refreshed. Do not open `index.html` directly when checking absolute routes.
 
 Use `npm --prefix Website run dev:site` or `npm --prefix Website run dev:playground` only when debugging one half independently.
 
@@ -43,12 +43,7 @@ The `/docs/` page renders the root `README.md` by default and offers the remaini
 
 The homepage is an editorial introduction, not a second progress dashboard. [`Documents/Project/Progress.md`](../Documents/Project/Progress.md) remains the authoritative current-state source; the website shows one dated comic and links to that dashboard, the roadmap, and qualification evidence.
 
-To rotate the featured story:
-
-1. Put the full-resolution dated original in [`Documents/Project/Images/`](../Documents/Project/Images/), and update the root README if it uses the same story.
-2. Add 640-pixel and 1120-pixel WebP derivatives under `assets/progress/`.
-3. Update the hero image paths, intrinsic dimensions, date, alt text, caption, and collapsed transcript in `index.html`.
-4. Run the website verifier and inspect the desktop and mobile hero before publication.
+Progress stories are saved as ordinary versioned files: the dated full-resolution original lives in [`Documents/Project/Images/`](../Documents/Project/Images/), responsive WebP derivatives live under `assets/progress/`, and the homepage owns the featured date, caption, alternative text, and transcript. Nothing is saved in browser storage, a database, or Cloudflare state. The `/progress/` page presents the dated illustrated archive newest-first without replacing the technical dashboard. The [progress comic publishing runbook](../Documents/Runbooks/Progress-Comic-Publishing.md) gives the complete preparation, image-export, accessibility, archive, review, and publication procedure.
 
 The 1200×630 `og.png` is the homepage social preview for X and other link unfurls, while `support-og.png` is the support-page preview. Refresh either deliberately when its public visual direction changes, not automatically with every comic, and keep its Open Graph and X alt text synchronized with the page that uses it. The six 768×512 illustrations under `assets/support/` form a character-led mini-story across the support tiers; keep their shared style, safe crop, and tier meanings coherent when replacing them. `assets/favicon.png` and `assets/apple-touch-icon.png` use the Windvale wind-and-butterfly mark on a dark background so the mark remains visible in browser and device chrome.
 
@@ -56,7 +51,7 @@ The page uses a small self-hosted subset of Google Material Symbols Rounded. Its
 
 ## Analytics
 
-All public pages load Google's standard asynchronous tag for the Google Analytics 4 stream `G-3PB4LZFMRE`, followed by the shared `analytics.js` configuration bootstrap. The bootstrap records ordinary page views across the home, documents, source, support, playground, and not-found pages while disabling Google signals and ad-personalization signals. Google Analytics can use first-party analytics cookies and receives usage data directly from the visitor's browser; Windvale does not run a separate analytics backend. Cloudflare may also inject its versioned Web Analytics beacon and report its measurements through the same-origin `/cdn-cgi/rum` endpoint. The Content Security Policy permits only the Google Tag and GA4 collection origins needed by this configuration plus Cloudflare's dedicated beacon origin, without advertising endpoints.
+All public pages load Google's standard asynchronous tag for the Google Analytics 4 stream `G-3PB4LZFMRE`, followed by the shared `analytics.js` configuration bootstrap. The bootstrap records ordinary page views across the home, progress, documents, source, support, playground, and not-found pages while disabling Google signals and ad-personalization signals. Google Analytics can use first-party analytics cookies and receives usage data directly from the visitor's browser; Windvale does not run a separate analytics backend. Cloudflare may also inject its versioned Web Analytics beacon and report its measurements through the same-origin `/cdn-cgi/rum` endpoint. The Content Security Policy permits only the Google Tag and GA4 collection origins needed by this configuration plus Cloudflare's dedicated beacon origin, without advertising endpoints.
 
 ## Configuring support
 

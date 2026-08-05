@@ -72,6 +72,7 @@ export default defineConfig({
                 home: fileURLToPath(new URL("./index.html", import.meta.url)),
                 notFound: fileURLToPath(new URL("./404.html", import.meta.url)),
                 support: fileURLToPath(new URL("./support/index.html", import.meta.url)),
+                progress: fileURLToPath(new URL("./progress/index.html", import.meta.url)),
                 documents: fileURLToPath(new URL("./docs/index.html", import.meta.url)),
                 code: fileURLToPath(new URL("./code/index.html", import.meta.url)),
             },

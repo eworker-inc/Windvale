@@ -36,8 +36,15 @@
     <div class="ide-toolbar">
         <div class="toolbar-actions">
             <label class="example-picker">
-                <span>Example</span>
-                <select value="@Selectedˉexample.Id" @onchange="Selectˉexample">
+                <span>Open example</span>
+                <select value="@Selectedˉexample.Id"
+                        @onchange="Selectˉexample"
+                        disabled="@Isˉrunning"
+                        aria-label="Open example">
+                    @if (!Playgroundˉexamples.All.Any(Example => Example.Id == Selectedˉexample.Id))
+                    {
+                        <option value="@Selectedˉexample.Id">@Selectedˉexample.Title</option>
+                    }
                     @foreach (var Example in Playgroundˉexamples.All)
                     {
                         <option value="@Example.Id">@Example.Title</option>
@@ -55,10 +62,48 @@
     <main class="ide-workspace">
         <div class="ide-top">
             <section class="editor-pane" aria-label="Source editor">
-                <div class="editor-tab-strip" aria-hidden="true">
-                    <span class="editor-tab active"><b>WV</b> playground.wv</span>
+                <div class="editor-tab-strip" role="tablist" aria-label="Open Windvale examples">
+                    @foreach (var Tab in Sourceˉtabs)
+                    {
+                        var Isˉactive = Tab.Id == Activeˉsourceˉtabˉid;
+                        <div class="editor-tab @(Isˉactive ? "active" : null)" @key="Tab.Id">
+                            <button class="editor-tab-select"
+                                    type="button"
+                                    role="tab"
+                                    aria-selected="@Isˉactive"
+                                    aria-controls="source-editor-panel"
+                                    disabled="@Isˉrunning"
+                                    title="Open @Tab.Fileˉname"
+                                    @onclick="() => Selectˉsourceˉtab(Tab.Id)">
+                                <b aria-hidden="true">WV</b>
+                                <span>@Tab.Fileˉname</span>
+                            </button>
+                            @if (Sourceˉtabs.Count > 1)
+                            {
+                                <button class="editor-tab-close"
+                                        type="button"
+                                        disabled="@Isˉrunning"
+                                        aria-label="Close @Tab.Fileˉname"
+                                        title="Close @Tab.Fileˉname"
+                                        @onclick="() => Closeˉsourceˉtab(Tab.Id)">
+                                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7" /></svg>
+                                </button>
+                            }
+                        </div>
+                    }
+                    <button class="editor-tab-add"
+                            type="button"
+                            disabled="@(Isˉrunning || Sourceˉtabs.Count >= MAXIMUM_SOURCE_TABS)"
+                            aria-label="@Newˉsourceˉtabˉtitle"
+                            title="@Newˉsourceˉtabˉtitle"
+                            @onclick="Addˉsourceˉtab">
+                        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
+                    </button>
                 </div>
-                <div class="editor-stage">
+                <div id="source-editor-panel"
+                     class="editor-stage"
+                     role="tabpanel"
+                     aria-label="Source for @Activeˉsourceˉtab.Fileˉname">
                     <label class="sr-only" for="fallback-source-editor">Windvale source</label>
                     <textarea id="fallback-source-editor"
                               class="fallback-editor"
@@ -189,7 +234,7 @@
                                         <strong>@Diagnostic.Message</strong>
                                         @if (Diagnostic.Line is not null)
                                         {
-                                            <em>playground.wv:@Diagnostic.Line:@Diagnostic.Column</em>
+                                            <em>@Activeˉsourceˉtab.Fileˉname:@Diagnostic.Line:@Diagnostic.Column</em>
                                         }
                                         else if (Diagnostic.Byteˉoffset is not null)
                                         {
@@ -283,8 +328,12 @@
     private IJSObjectReference? Editorˉmodule;
     private IJSObjectReference? Webassemblyˉmodule;
     private DotNetObjectReference<Home>? Selfˉreference;
+    private readonly List<Playgroundˉsourceˉtab> Sourceˉtabs = [];
+    private int Activeˉsourceˉtabˉid;
+    private int Nextˉsourceˉtabˉid = 1;
+    private int Nextˉscratchˉtabˉnumber = 1;
     private Playgroundˉexample Selectedˉexample = Playgroundˉexamples.All[0];
-    private string Source = Playgroundˉexamples.All[0].Source;
+    private string Source = string.Empty;
     private string Theme = "light";
     private bool Allowˉconsoleˉwrite;
     private bool Allowˉconsoleˉwriteˉline = true;
@@ -298,6 +347,14 @@
     private Resultˉtab Activeˉtab = Resultˉtab.Output;
 
     private const int WEBASSEMBLY_WORKER_TIMEOUT_MILLISECONDS = 2_000;
+    private const int MAXIMUM_SOURCE_TABS = 12;
+
+    private Playgroundˉsourceˉtab Activeˉsourceˉtab =>
+        Sourceˉtabs.First(Tab => Tab.Id == Activeˉsourceˉtabˉid);
+
+    private string Newˉsourceˉtabˉtitle => Sourceˉtabs.Count >= MAXIMUM_SOURCE_TABS
+        ? $"Maximum of {MAXIMUM_SOURCE_TABS} source tabs open"
+        : "New scratch tab";
 
     private enum Resultˉtab
     {
@@ -305,6 +362,14 @@
         Diagnostics,
         Bytecode,
         Execution,
+    }
+
+    protected override void OnInitialized()
+    {
+        var Initialˉtab = Playgroundˉsourceˉtab.Fromˉexample(Nextˉsourceˉtabˉid++, Playgroundˉexamples.All[0]);
+        Sourceˉtabs.Add(Initialˉtab);
+        Activeˉsourceˉtabˉid = Initialˉtab.Id;
+        Restoreˉsourceˉtab(Initialˉtab);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -336,20 +401,143 @@
     private async Task Selectˉexample(ChangeEventArgs arguments)
     {
         var Id = arguments.Value?.ToString();
-        Selectedˉexample = Playgroundˉexamples.All.First(Example => Example.Id == Id);
-        Source = Selectedˉexample.Source;
-        Allowˉconsoleˉwrite = Selectedˉexample.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.CONSOLE_WRITE);
-        Allowˉconsoleˉwriteˉline = Selectedˉexample.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.CONSOLE_WRITE_LINE);
-        Allowˉdiagnosticˉwriteˉline = Selectedˉexample.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE);
-        Result = null;
-        Webassemblyˉlowering = null;
-        Webassemblyˉexecution = null;
-        Activeˉtab = Resultˉtab.Output;
+        var Example = Playgroundˉexamples.All.FirstOrDefault(Candidate => Candidate.Id == Id);
+        if (Example is null || Isˉrunning)
+        {
+            return;
+        }
+
+        await Captureˉsourceˉtab();
+        var Tab = Sourceˉtabs.FirstOrDefault(Candidate => Candidate.Example.Id == Example.Id);
+        if (Tab is null)
+        {
+            Tab = Playgroundˉsourceˉtab.Fromˉexample(Nextˉsourceˉtabˉid++, Example);
+            Sourceˉtabs.Add(Tab);
+        }
+
+        Activeˉsourceˉtabˉid = Tab.Id;
+        Restoreˉsourceˉtab(Tab);
+        Clearˉrunˉstate();
 
         if (Editorˉready && Editorˉmodule is not null)
         {
             await Editorˉmodule.InvokeVoidAsync("SetValue", Source);
         }
+    }
+
+    private async Task Addˉsourceˉtab()
+    {
+        if (Isˉrunning || Sourceˉtabs.Count >= MAXIMUM_SOURCE_TABS)
+        {
+            return;
+        }
+
+        await Captureˉsourceˉtab();
+        var Tab = Playgroundˉsourceˉtab.Createˉscratch(
+            Nextˉsourceˉtabˉid++,
+            Nextˉscratchˉtabˉnumber++);
+        Sourceˉtabs.Add(Tab);
+        Activeˉsourceˉtabˉid = Tab.Id;
+        Restoreˉsourceˉtab(Tab);
+        Clearˉrunˉstate();
+
+        if (Editorˉready && Editorˉmodule is not null)
+        {
+            await Editorˉmodule.InvokeVoidAsync("SetValue", Source);
+        }
+    }
+
+    private async Task Selectˉsourceˉtab(int id)
+    {
+        if (id == Activeˉsourceˉtabˉid || Isˉrunning)
+        {
+            return;
+        }
+
+        var Tab = Sourceˉtabs.FirstOrDefault(Candidate => Candidate.Id == id);
+        if (Tab is null)
+        {
+            return;
+        }
+
+        await Captureˉsourceˉtab();
+        Activeˉsourceˉtabˉid = Tab.Id;
+        Restoreˉsourceˉtab(Tab);
+        Clearˉrunˉstate();
+
+        if (Editorˉready && Editorˉmodule is not null)
+        {
+            await Editorˉmodule.InvokeVoidAsync("SetValue", Source);
+        }
+    }
+
+    private async Task Closeˉsourceˉtab(int id)
+    {
+        if (Sourceˉtabs.Count <= 1 || Isˉrunning)
+        {
+            return;
+        }
+
+        var Index = Sourceˉtabs.FindIndex(Tab => Tab.Id == id);
+        if (Index < 0)
+        {
+            return;
+        }
+
+        var Closingˉactiveˉtab = id == Activeˉsourceˉtabˉid;
+        if (Closingˉactiveˉtab)
+        {
+            await Captureˉsourceˉtab();
+        }
+
+        Sourceˉtabs.RemoveAt(Index);
+        if (!Closingˉactiveˉtab)
+        {
+            return;
+        }
+
+        var Tab = Sourceˉtabs[Math.Min(Index, Sourceˉtabs.Count - 1)];
+        Activeˉsourceˉtabˉid = Tab.Id;
+        Restoreˉsourceˉtab(Tab);
+        Clearˉrunˉstate();
+
+        if (Editorˉready && Editorˉmodule is not null)
+        {
+            await Editorˉmodule.InvokeVoidAsync("SetValue", Source);
+        }
+    }
+
+    private async Task Captureˉsourceˉtab()
+    {
+        if (Editorˉready && Editorˉmodule is not null)
+        {
+            Source = await Editorˉmodule.InvokeAsync<string>("GetValue");
+        }
+
+        var Tab = Activeˉsourceˉtab;
+        Tab.Source = Source;
+        Tab.Allowˉconsoleˉwrite = Allowˉconsoleˉwrite;
+        Tab.Allowˉconsoleˉwriteˉline = Allowˉconsoleˉwriteˉline;
+        Tab.Allowˉdiagnosticˉwriteˉline = Allowˉdiagnosticˉwriteˉline;
+        Tab.Instructionˉbudget = Instructionˉbudget;
+    }
+
+    private void Restoreˉsourceˉtab(Playgroundˉsourceˉtab tab)
+    {
+        Selectedˉexample = tab.Example;
+        Source = tab.Source;
+        Allowˉconsoleˉwrite = tab.Allowˉconsoleˉwrite;
+        Allowˉconsoleˉwriteˉline = tab.Allowˉconsoleˉwriteˉline;
+        Allowˉdiagnosticˉwriteˉline = tab.Allowˉdiagnosticˉwriteˉline;
+        Instructionˉbudget = tab.Instructionˉbudget;
+    }
+
+    private void Clearˉrunˉstate()
+    {
+        Result = null;
+        Webassemblyˉlowering = null;
+        Webassemblyˉexecution = null;
+        Activeˉtab = Resultˉtab.Output;
     }
 
     [JSInvokable("RunWindvaleProgram")]
@@ -362,10 +550,7 @@
             return;
         }
 
-        if (Editorˉready && Editorˉmodule is not null)
-        {
-            Source = await Editorˉmodule.InvokeAsync<string>("GetValue");
-        }
+        await Captureˉsourceˉtab();
 
         Isˉrunning = true;
         Result = null;
@@ -612,6 +797,69 @@
         Resultˉtab.Bytecode => "Bytecode",
         _ => tab.ToString(),
     };
+
+    private sealed class Playgroundˉsourceˉtab
+    {
+        private Playgroundˉsourceˉtab(
+            int id,
+            Playgroundˉexample example,
+            string source,
+            bool allowˉconsoleˉwrite,
+            bool allowˉconsoleˉwriteˉline,
+            bool allowˉdiagnosticˉwriteˉline,
+            long instructionˉbudget)
+        {
+            Id = id;
+            Example = example;
+            Source = source;
+            Allowˉconsoleˉwrite = allowˉconsoleˉwrite;
+            Allowˉconsoleˉwriteˉline = allowˉconsoleˉwriteˉline;
+            Allowˉdiagnosticˉwriteˉline = allowˉdiagnosticˉwriteˉline;
+            Instructionˉbudget = instructionˉbudget;
+        }
+
+        public int Id { get; }
+
+        public Playgroundˉexample Example { get; }
+
+        public string Fileˉname => $"{Example.Id}.wv";
+
+        public string Source { get; set; }
+
+        public bool Allowˉconsoleˉwrite { get; set; }
+
+        public bool Allowˉconsoleˉwriteˉline { get; set; }
+
+        public bool Allowˉdiagnosticˉwriteˉline { get; set; }
+
+        public long Instructionˉbudget { get; set; }
+
+        public static Playgroundˉsourceˉtab Fromˉexample(int id, Playgroundˉexample example) => new(
+            id,
+            example,
+            example.Source,
+            example.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.CONSOLE_WRITE),
+            example.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.CONSOLE_WRITE_LINE),
+            example.Recommendedˉcapabilities.Contains(Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE),
+            Playgroundˉlimits.DEFAULT_MAXIMUM_INSTRUCTIONS);
+
+        public static Playgroundˉsourceˉtab Createˉscratch(int id, int number)
+        {
+            var Example = new Playgroundˉexample(
+                $"scratch-{number}",
+                $"Scratch {number}",
+                "An independent scratch program. Compile + Run uses this active tab only.",
+                """
+                module Scratch profile portable;
+
+                export fn Main() -> i32 {
+                    return 0;
+                }
+                """,
+                ImmutableHashSet.Create<string>(StringComparer.Ordinal));
+            return Fromˉexample(id, Example);
+        }
+    }
 
     private sealed class Browserˉwebassemblyˉresult
     {

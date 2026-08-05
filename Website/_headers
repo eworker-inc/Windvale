@@ -38,6 +38,12 @@
 /code/index.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/progress/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/progress/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
 /playground/editor/*
   Cache-Control: public, max-age=0, must-revalidate
 
