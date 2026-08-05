@@ -4839,6 +4839,10 @@ internal static partial class Program
                     {
                         break;
                     }
+                    catch (IOException) when (Process.HasExited)
+                    {
+                        break;
+                    }
                     var Remaining = timeoutˉmilliseconds - checked((int)Timer.ElapsedMilliseconds);
                     if (Remaining <= 0)
                     {
