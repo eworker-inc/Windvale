@@ -838,7 +838,6 @@ export fn Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(Type: u8) -> bool
 
 export fn Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
     Input: bytes,
-    Function: Compilerˉwebassemblyˉruntimeˉfunction,
     Offset: u32,
     Opcode: u8,
     Operationˉtype: u8,
@@ -5394,7 +5393,8 @@ export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉreferenceˉbody() -> bytes
 
 export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(
     Length: u32,
-    Pointer: u32
+    Pointer: u32,
+    Privateˉfunction: bool
 ) -> bytes {
     var Allocation: bytes = Compilerˉwebassemblyˉindexedˉinstruction(
         32u32, Length
@@ -5410,9 +5410,10 @@ export fn Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(
     Allocation = Bytesˉconcat(Allocation, Compilerˉwebassemblyˉbyte(69u32));
     return Bytesˉconcat(
         Allocation,
-        Compilerˉwebassemblyˉruntimeˉfailureˉif(
+        Compilerˉwebassemblyˉruntimeˉfailureˉifˉfor(
             Compilerˉwebassemblyˉempty(Allocation),
-            3018
+            3018,
+            Privateˉfunction
         )
     );
 }
@@ -6305,7 +6306,9 @@ export fn Compilerˉwebassemblyˉruntimeˉsha256(
         );
         Result = Bytesˉconcat(
             Result,
-            Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(Value, Arena)
+            Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(
+                Value, Arena, Privateˉfunction
+            )
         );
     } else {
         var Exhausted: bytes =
@@ -7218,7 +7221,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
             );
             var Reclaimedˉconcat: bytes =
                 Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(
-                    Third, Fourth
+                    Third, Fourth, Privateˉfunction
                 );
             Reclaimedˉconcat = Bytesˉconcat(
                 Reclaimedˉconcat,
@@ -7353,7 +7356,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
             Result = Bytesˉconcat(
                 Result,
                 Compilerˉwebassemblyˉruntimeˉreclaimingˉallocate(
-                    Second, Third
+                    Second, Third, Privateˉfunction
                 )
             );
             Result = Bytesˉconcat(
@@ -7629,7 +7632,6 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉwrapper(
         Encodingˉstack =
             Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
                 Input,
-                Function,
                 Codeˉoffset + Cursor,
                 Opcode,
                 Operationˉtype,
@@ -7953,7 +7955,6 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
         Encodingˉstack =
             Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
                 Input,
-                Function,
                 Codeˉoffset + Cursor,
                 Opcode,
                 Operationˉtype,
@@ -8023,6 +8024,10 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcallˉwrapper(
     );
     Body = Bytesˉconcat(
         Body,
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉinitialize()
+    );
+    Body = Bytesˉconcat(
+        Body,
         Compilerˉwebassemblyˉruntimeˉi64ˉconstant(65536u32)
     );
     Body = Bytesˉconcat(
@@ -8038,7 +8043,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcallˉwrapper(
     Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(132u32));
     Body = Bytesˉconcat(
         Body,
-        Compilerˉwebassemblyˉindexedˉinstruction(16u32, Mainˉindex + 1u32)
+        Compilerˉwebassemblyˉindexedˉinstruction(16u32, Mainˉindex + 3u32)
     );
     Body = Bytesˉconcat(
         Body,
@@ -8063,6 +8068,40 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcallˉwrapper(
         Compilerˉwebassemblyˉencodeˉruntimeˉreturn(4u32, 2u32, 3u32)
     );
     return Bytesˉconcat(Body, Compilerˉwebassemblyˉbyte(11u32));
+}
+
+export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉreturn(
+    Input: bytes,
+    Function: Compilerˉwebassemblyˉruntimeˉcallˉfunction,
+    Descriptorˉresult: u32
+) -> bytes {
+    if Function.Isˉmain {
+        return Compilerˉwebassemblyˉbyte(15u32);
+    }
+    var Result: bytes = Compilerˉwebassemblyˉindexedˉinstruction(
+        33u32, Descriptorˉresult
+    );
+    var Local: u32 = 0u32;
+    while Local < Function.Localˉcount {
+        if Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+            Compilerˉwebassemblyˉruntimeˉcallˉlocalˉtype(
+                Input, Function, Local
+            )
+        ) {
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉwebassemblyˉruntimeˉreclaimingˉreference(
+                    Local, false
+                )
+            );
+        }
+        Local = Local + 1u32;
+    }
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉindexedˉinstruction(32u32, Descriptorˉresult)
+    );
+    return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(15u32));
 }
 
 export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
@@ -8122,6 +8161,8 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
     var Cursor: u32 = 0u32;
     var Openˉblock: bool = false;
     var Block: bytes = Compilerˉwebassemblyˉempty(Input);
+    var Encodingˉstack: Compilerˉwebassemblyˉruntimeˉstack =
+        Compilerˉwebassemblyˉruntimeˉstackˉempty();
     while Cursor < Function.Codeˉlength {
         if !Openˉblock {
             Block = Bytesˉconcat(
@@ -8141,6 +8182,38 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
         }
 
         let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        var Descriptorˉoperation: bool = false;
+        var Operationˉtype: u8 = 0u8;
+        if Opcode == 4u8 {
+            Operationˉtype = Compilerˉwebassemblyˉruntimeˉcallˉlocalˉtype(
+                Input,
+                Function,
+                Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32)
+            );
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
+        if Opcode == 5u8 {
+            Operationˉtype = Compilerˉwebassemblyˉruntimeˉcallˉlocalˉtype(
+                Input,
+                Function,
+                Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32)
+            );
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
+        if Opcode == 80u8 {
+            Operationˉtype =
+                Compilerˉwebassemblyˉruntimeˉstackˉtop(Encodingˉstack);
+            Descriptorˉoperation =
+                Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(
+                    Operationˉtype
+                );
+        }
         let Width: u32 = Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
             Input, Codeˉoffset, Function.Codeˉlength, Cursor
         );
@@ -8235,7 +8308,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
                             16u32,
                             Bytesˉreadˉu32ˉlittle(
                                 Input, Codeˉoffset + Cursor + 1u32
-                            ) + 1u32
+                            ) + 3u32
                         )
                     );
                     Block = Bytesˉconcat(
@@ -8282,19 +8355,11 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
                         );
                         Block = Bytesˉconcat(
                             Block,
-                            Compilerˉwebassemblyˉindexedˉinstruction(
-                                32u32, Arena
+                            Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉreturn(
+                                Input,
+                                Function,
+                                Descriptorˉresult
                             )
-                        );
-                        Block = Bytesˉconcat(
-                            Block,
-                            Compilerˉwebassemblyˉindexedˉinstruction(
-                                36u32, 9u32
-                            )
-                        );
-                        Block = Bytesˉconcat(
-                            Block,
-                            Compilerˉwebassemblyˉbyte(15u32)
                         );
                         Block = Bytesˉconcat(
                             Block,
@@ -8320,14 +8385,22 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
                                 Descriptorˉresult,
                                 0u32,
                                 true,
-                                false,
-                                false
+                                true,
+                                Descriptorˉoperation
                             )
                         );
                     }
                 }
             }
         }
+        Encodingˉstack =
+            Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
+                Input,
+                Codeˉoffset + Cursor,
+                Opcode,
+                Operationˉtype,
+                Encodingˉstack
+            );
         Cursor = Cursor + Width;
     }
     Body = Bytesˉconcat(
@@ -8348,7 +8421,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
     Code: Compilerˉwebassemblyˉsection,
     Summary: Compilerˉwebassemblyˉruntimeˉcallˉsummary
 ) -> bytes {
-    var Typeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(2u32);
+    var Typeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(4u32);
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(96u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(2u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
@@ -8360,13 +8433,31 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(126u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(1u32));
     Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(126u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(96u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(1u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(1u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(96u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(2u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(126u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉbyte(127u32));
+    Typeˉpayload = Bytesˉconcat(Typeˉpayload, Compilerˉwebassemblyˉuleb32(0u32));
 
     var Functionˉpayload: bytes = Compilerˉwebassemblyˉuleb32(
-        Summary.Functionˉcount + 1u32
+        Summary.Functionˉcount + 3u32
     );
     Functionˉpayload = Bytesˉconcat(
         Functionˉpayload,
         Compilerˉwebassemblyˉuleb32(0u32)
+    );
+    Functionˉpayload = Bytesˉconcat(
+        Functionˉpayload,
+        Compilerˉwebassemblyˉuleb32(2u32)
+    );
+    Functionˉpayload = Bytesˉconcat(
+        Functionˉpayload,
+        Compilerˉwebassemblyˉuleb32(3u32)
     );
     var Functionˉindex: u32 = 0u32;
     while Functionˉindex < Summary.Functionˉcount {
@@ -8410,14 +8501,28 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
     let Wrapper: bytes = Compilerˉwebassemblyˉencodeˉruntimeˉcallˉwrapper(
         Summary.Mainˉindex
     );
+    let Allocator: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉallocateˉbody();
+    let Reference: bytes =
+        Compilerˉwebassemblyˉruntimeˉreclaimingˉreferenceˉbody();
     var Codeˉpayload: bytes = Compilerˉwebassemblyˉuleb32(
-        Summary.Functionˉcount + 1u32
+        Summary.Functionˉcount + 3u32
     );
     Codeˉpayload = Bytesˉconcat(
         Codeˉpayload,
         Compilerˉwebassemblyˉuleb32(Bytesˉlength(Wrapper))
     );
     Codeˉpayload = Bytesˉconcat(Codeˉpayload, Wrapper);
+    Codeˉpayload = Bytesˉconcat(
+        Codeˉpayload,
+        Compilerˉwebassemblyˉuleb32(Bytesˉlength(Allocator))
+    );
+    Codeˉpayload = Bytesˉconcat(Codeˉpayload, Allocator);
+    Codeˉpayload = Bytesˉconcat(
+        Codeˉpayload,
+        Compilerˉwebassemblyˉuleb32(Bytesˉlength(Reference))
+    );
+    Codeˉpayload = Bytesˉconcat(Codeˉpayload, Reference);
     Functionˉindex = 0u32;
     while Functionˉindex < Summary.Functionˉcount {
         let Function: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
