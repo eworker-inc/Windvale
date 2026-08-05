@@ -1135,6 +1135,7 @@ internal static partial class Program
         new("native console packager materializes verified PE and ELF applications", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉruns),
         new("native WVB-to-WVO AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL], Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable),
         new("native WVB-to-WVO lowerer emits the pinned object without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉruns),
+        new("native source-to-AOT front door composes without .NET child processes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉsourceˉtoˉaotˉfrontˉdoorˉcomposes),
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native byte descriptors survive helper returns and later allocations", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉbyteˉdescriptorˉreturnsˉsurvive),
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),

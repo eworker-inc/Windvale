@@ -1936,3 +1936,30 @@ Seed/OS suites, native CLI qualification, Linux execution, GitHub verification,
 artifact promotion, complete-backend coverage, native multi-tool composition, and
 ordinary-path cutover remain deferred to the grouped end-of-goal gate. That gate
 will start by updating from upstream and reconciling the complete retirement batch.
+
+## Local native source-to-AOT composition evidence
+
+[Decision 0225](../Decisions/0225-Native-Source-To-Aot-Composition-Proof.md)
+adds one reviewed current-host composition case without promoting a tool artifact
+or adding an ordinary launcher. The qualified native source front door produces
+the exact 174-byte return-42 WVB. Separate native lowerer, linker, and packager
+candidate processes then produce the exact 479-byte WVO, 630-byte canonical link
+map, 406-byte flat image, and current-host version-1 console application.
+
+The fixed link-map and flat-image SHA-256 identities are
+`857710249807d2fed4da847729d0244f08ccdc70156c043fdaa0516de394e2dc`
+and `7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408`.
+The 2,560-byte Windows PE identity is
+`8f2c3389dafa40c0231a0f5aeead3db5570697d54874f324a81f84a2d5b16eb6`;
+the future grouped Linux run must reproduce the recorded 8,304-byte ELF identity
+`fe525b84b9bf902677a5c7beb36872dfd72e7d6d0f12bfb5c95d491c4e1cd3f7`.
+
+On local Windows, the zero-warning compile-only Seed build completes in 20.46
+seconds. The single focused composition case passes in 7.443 test seconds. It
+parses each portable/container boundary, requires exported `Main` at offset zero,
+recovers the exact linked bytes from the PE, executes it to process result 42,
+and observes no named CLR/.NET mapping in the lowerer, linker, packager, or result
+process. Standard, Qualification, the full Seed/OS suites, native CLI qualification,
+Linux execution, GitHub verification, artifact promotion, and ordinary-path cutover
+remain deferred. The final broad gate begins with an upstream refresh and one
+reconciliation of the accumulated retirement state.
