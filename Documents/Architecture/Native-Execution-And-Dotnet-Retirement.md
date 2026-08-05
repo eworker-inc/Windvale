@@ -14,6 +14,8 @@ Accepted architectural direction under [Decision 0057](../Decisions/0057-Windval
 
 [Decision 0244](../Decisions/0244-Native-File-Read-Bytes-Capability.md) adds `file.read_bytes(text) -> bytes` with exact immutable-snapshot borrowing and runtime-service failure propagation. Capability-specific analysis and emitted-result state now live in the focused capability module after the general instruction core reached its native frame limit. File mutation and console/diagnostic output remain separate pending slices.
 
+[Decision 0245](../Decisions/0245-Native-File-Write-Bytes-Capability.md) adds `file.write_bytes(text, bytes) -> void` while preserving the existing whole-value bound, externally visible replacement, durable-success condition, and failure propagation. Both file-byte leaves now lower through Windvale source; console and diagnostic output remain separate pending slices.
+
 [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) additionally makes portability a per-part and derived artifact property. Native publication must preserve the canonical module's platform scope and capability requirements even when a particular application intentionally targets only one environment.
 
 ## Destination
@@ -299,6 +301,8 @@ Decision 0242 then admits exact portable-or-hosted profile rules, validates the 
 Decision 0243 extends that focused boundary with `process.argument`, passing its scalar index and borrowed-text output through ABI 22's service table and existing runtime-service failure tail. The accepted WVO remains package-bound because WVO 1.0 does not serialize its required service.
 
 Decision 0244 adds the read side of the real hosted lowering shell. It passes a borrowed resource-name descriptor to service-table slot 32, receives a service-owned immutable bytes snapshot, and keeps capability analysis and emission state outside the general instruction core. The direct current-host package reproduces Stage 0's exact file-read fixture WVO; grouped dual-host qualification remains pending.
+
+Decision 0245 adds the mutation side through service-table slot 96. It consumes borrowed text and bytes descriptors, produces no value, and retains the exact create-or-replace, 4 MiB, durable-flush, and non-atomic contract. The direct current-host package reproduces Stage 0's exact file-write fixture WVO; grouped dual-host qualification remains pending.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 

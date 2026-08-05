@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "baac80e43995fa80de544470d712925a6c908be5620b56599b53d1788f228c70";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "60e68f8f2b58134a79d11692c5f4d3232f723583363a5140334c24021daee11b";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "79e4ddac4eac5e85aa4a10b14b91de9ca41a8263a3bf811bb38ec3eed5ed6f1c";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "ffeec555fa6ff3c00b49c9510dd267050a3c5b03e9fa01d89573d31e7db94753";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "4b1065fb72e9fc40494cb11681c27b42e80e4f8bacf78338db3a51bd4255fe87";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "6c483fa9445dc0f3e1c51327e63500764464718f4b40e5fb9ea3fe0e97707dac";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "4edd7a9fcc63b3cd7936190f0b401effd02d1be14d51ab243b343408b0de4f1f";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "8c3cc880094d2aac95254211089d01218d3b13754269632b4004848e7aa5caba";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "ab3fe35a0a402737350085578731b066aa4926a207d962b12d5d7fac955795ce";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -2991,6 +2991,7 @@ internal static partial class Program
         Assertˉprocessˉargumentˉcountˉlowering(Tool, Memory);
         Assertˉprocessˉargumentˉlowering(Tool, Memory);
         Assertˉfileˉreadˉbytesˉlowering(Tool, Memory);
+        Assertˉfileˉwriteˉbytesˉlowering(Tool, Memory);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);

@@ -181,6 +181,10 @@ export fn Compilerˉnativeˉx64ˉfileˉreadˉbytesˉkind() -> u8 {
     return 3u8;
 }
 
+export fn Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉkind() -> u8 {
+    return 4u8;
+}
+
 export fn Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes() -> u32 {
     return 27u32;
 }
@@ -191,6 +195,10 @@ export fn Compilerˉnativeˉx64ˉprocessˉargumentˉbytes() -> u32 {
 
 export fn Compilerˉnativeˉx64ˉfileˉreadˉbytesˉbytes() -> u32 {
     return 52u32;
+}
+
+export fn Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉbytes() -> u32 {
+    return 59u32;
 }
 
 export fn Compilerˉnativeˉx64ˉanalyzeˉcapability(
@@ -214,6 +222,34 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcapability(
         Outputˉu32 = Outputˉu32 + 1u32;
         Outputˉbody = Outputˉbody +
             Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes();
+        return Compilerˉnativeˉx64ˉcapabilityˉanalysis(
+            true,
+            Outputˉstack,
+            Outputˉdepth,
+            Outputˉtext,
+            Outputˉu32,
+            Outputˉbytes,
+            Outputˉbody
+        );
+    }
+    if Kind == Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉkind() {
+        if Outputˉdepth < 2u32 ||
+            Bytesˉreadˉu8(Outputˉstack, Outputˉdepth - 2u32) != 3u8 ||
+            Bytesˉreadˉu8(Outputˉstack, Outputˉdepth - 1u32) != 6u8 {
+            return Compilerˉnativeˉx64ˉcapabilityˉanalysis(
+                false,
+                Outputˉstack,
+                Outputˉdepth,
+                Outputˉtext,
+                Outputˉu32,
+                Outputˉbytes,
+                Outputˉbody
+            );
+        }
+        Outputˉdepth = Outputˉdepth - 2u32;
+        Outputˉstack = Bytesˉslice(Outputˉstack, 0u32, Outputˉdepth);
+        Outputˉbody = Outputˉbody +
+            Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉbytes();
         return Compilerˉnativeˉx64ˉcapabilityˉanalysis(
             true,
             Outputˉstack,
@@ -407,6 +443,51 @@ export fn Compilerˉnativeˉx64ˉemitˉfileˉreadˉbytes(
     );
 }
 
+export fn Compilerˉnativeˉx64ˉemitˉfileˉwriteˉbytes(
+    Result: bytes,
+    Nameˉsource: u32,
+    Bytesˉsource: u32,
+    Failureˉtarget: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 76u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Nameˉsource * 16u32);
+    Output = Appendˉbyte(Output, 68u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Nameˉsource * 16u32 + 8u32);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Bytesˉsource * 16u32);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 148u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Bytesˉsource * 16u32 + 8u32);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 71u8);
+    Output = Appendˉbyte(Output, 24u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 64u8);
+    Output = Appendˉbyte(Output, 96u8);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Appendˉbyte(Output, 208u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 133u8);
+    return Appendˉu32(
+        Output,
+        Relativeˉu32(Failureˉtarget, Bytesˉlength(Output) + 4u32)
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉcapability(
     Kind: u8,
     Result: bytes,
@@ -446,6 +527,34 @@ export fn Compilerˉnativeˉx64ˉemitˉcapability(
         );
         Outputˉdepth = Outputˉdepth + 1u32;
         Outputˉu32 = Outputˉu32 + 1u32;
+        return Compilerˉnativeˉx64ˉcapabilityˉstate(
+            Outputˉresult,
+            Outputˉtypes,
+            Outputˉslots,
+            Outputˉdepth,
+            Outputˉtext,
+            Outputˉu32,
+            Outputˉbytes
+        );
+    }
+    if Kind == Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉkind() {
+        let Bytesˉsource: u32 = Bytesˉreadˉu32ˉlittle(
+            Outputˉslots,
+            (Outputˉdepth - 1u32) * 4u32
+        );
+        let Nameˉsource: u32 = Bytesˉreadˉu32ˉlittle(
+            Outputˉslots,
+            (Outputˉdepth - 2u32) * 4u32
+        );
+        Outputˉdepth = Outputˉdepth - 2u32;
+        Outputˉtypes = Bytesˉslice(Outputˉtypes, 0u32, Outputˉdepth);
+        Outputˉslots = Bytesˉslice(Outputˉslots, 0u32, Outputˉdepth * 4u32);
+        Outputˉresult = Compilerˉnativeˉx64ˉemitˉfileˉwriteˉbytes(
+            Outputˉresult,
+            Nameˉsource,
+            Bytesˉsource,
+            Failureˉtarget
+        );
         return Compilerˉnativeˉx64ˉcapabilityˉstate(
             Outputˉresult,
             Outputˉtypes,

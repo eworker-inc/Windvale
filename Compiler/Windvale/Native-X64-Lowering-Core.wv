@@ -2722,6 +2722,10 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
             Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉreadˉbytesˉkind() {
             return Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉreadˉbytesˉbytes();
         }
+        if Capabilityˉkind ==
+            Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉkind() {
+            return Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉbytes();
+        }
         return Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes();
     }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
