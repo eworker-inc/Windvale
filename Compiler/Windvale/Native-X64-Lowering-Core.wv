@@ -1,6 +1,7 @@
 module Compilerˉnativeˉx64ˉlowering profile portable;
 
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉcapabilities as Nativeˉcapabilities;
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉstaticˉdataˉinstructions as Staticˉdataˉinstructions;
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
@@ -883,6 +884,7 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 48u8 { return 5u32; }
     if Opcode == 49u8 { return 5u32; }
     if Opcode == 64u8 { return 5u32; }
+    if Opcode == 65u8 { return 5u32; }
     if Opcode == 81u8 { return 1u32; }
     if Opcode == 113u8 { return 1u32; }
     if Opcode == 114u8 { return 1u32; }
@@ -925,7 +927,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
     Callableˉfunctions: u32,
     Callˉdirectory: bytes,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
-    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
 ) -> Compilerˉnativeˉx64ˉblockˉanalysis {
     let Length: u32 = Section.Payloadˉlength;
     let End: u32 = Compilerˉnativeˉx64ˉnextˉleader(Leaders, Start, Length);
@@ -950,9 +953,27 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
         let Size: u32 = Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
         let Next: u32 = Cursor + Size;
         if Next > End { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
-        if Compilerˉnativeˉx64ˉdescriptorˉoperation(Opcode) ||
+        if Opcode == 65u8 ||
+            Compilerˉnativeˉx64ˉdescriptorˉoperation(Opcode) ||
             Compilerˉnativeˉx64ˉnominalˉoperation(Opcode) ||
             Compilerˉnativeˉx64ˉrecordˉoperation(Opcode) {
+            if Opcode == 65u8 {
+                let Capabilityˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Section.Payloadˉoffset + Cursor + 1u32
+                );
+                if Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilityˉkind(
+                    Capabilityˉtable,
+                    Capabilityˉindex
+                ) != Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() {
+                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                }
+                Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(5u8));
+                Depth = Depth + 1u32;
+                U32ˉvalues = U32ˉvalues + 1u32;
+                Bodyˉbytes = Bodyˉbytes +
+                    Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes();
+            }
             if Opcode == 104u8 {
                 let Recordˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
                     Input,
@@ -1763,7 +1784,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
     Callableˉfunctions: u32,
     Callˉdirectory: bytes,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
-    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
 ) -> Compilerˉnativeˉx64ˉcontrolˉanalysis {
     if Section.Payloadˉlength != Function.Codeˉlength {
         return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
@@ -1874,7 +1896,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                 Callableˉfunctions,
                 Callˉdirectory,
                 Data,
-                Types
+                Types,
+                Capabilityˉtable
             );
         if !Block.Valid {
             return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
@@ -1914,7 +1937,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                     Callableˉfunctions,
                     Callˉdirectory,
                     Data,
-                    Types
+                    Types,
+                    Capabilityˉtable
                 );
             if Bytesˉreadˉu8(Reachable, Cursor) == 1u8 {
                 if Reachˉblock.Terminator == 0u8 {
@@ -2669,6 +2693,9 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
         return 38u32 +
             Compilerˉnativeˉx64ˉscalarˉargumentˉbytes(Callˉparameters);
     }
+    if Opcode == 65u8 {
+        return Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes();
+    }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
         Functionˉreturnˉtype
     ) {
@@ -3058,7 +3085,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
     Codeˉbase: u32,
     Callˉdirectory: bytes,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
-    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
 ) -> bytes {
     let Slots: u32 = Function.Locals + Analysis.I32ˉslots +
         Analysis.Boolˉslots + Analysis.Textˉslots + Analysis.U8ˉslots +
@@ -3367,6 +3395,31 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
             Stackˉdepth = Staticˉdataˉstate.Stackˉdepth;
             Nextˉi32 = Staticˉdataˉstate.Nextˉi32;
         }
+        if Opcode == 65u8 {
+            let Capabilityˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Section.Payloadˉoffset + Cursor + 1u32
+            );
+            let Capabilityˉresult: u32 = Function.Locals +
+                Analysis.I32ˉslots + Analysis.Boolˉslots +
+                Analysis.Textˉslots + Analysis.U8ˉslots + Nextˉu32;
+            if Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilityˉkind(
+                Capabilityˉtable,
+                Capabilityˉindex
+            ) == Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() {
+                Result = Nativeˉcapabilities.Compilerˉnativeˉx64ˉemitˉprocessˉargumentˉcount(
+                    Result,
+                    Capabilityˉresult
+                );
+            }
+            Stackˉtypes = Bytesˉconcat(Stackˉtypes, Bytesˉfromˉu8(5u8));
+            Stackˉslots = Bytesˉconcat(
+                Stackˉslots,
+                Bytesˉfromˉu32ˉlittle(Capabilityˉresult)
+            );
+            Stackˉdepth = Stackˉdepth + 1u32;
+            Nextˉu32 = Nextˉu32 + 1u32;
+        } else {
         if Opcode == 1u8 || Opcode == 8u8 || Opcode == 9u8 {
             var Constantˉtype: u8 = 1u8;
             var Constantˉindex: u32 = Nextˉi32;
@@ -3993,6 +4046,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                 }
             }
         }
+        }
         Cursor = Cursor + Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
     }
 
@@ -4068,19 +4122,32 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
             Compilerˉnativeˉx64ˉstatus.Invalidˉwvb
         );
     }
-    if Bytesˉreadˉu8(Input, Structure.Moduleˉoffset) != 1u8 {
+    let Profile: u8 = Bytesˉreadˉu8(Input, Structure.Moduleˉoffset);
+    if Profile != 1u8 && Profile != 2u8 {
         return Compilerˉnativeˉx64ˉfailure(
             Input,
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉprofile
         );
     }
-    if Structure.Capabilitiesˉlength != 4u32 {
+    let Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities =
+        Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilitiesˉread(
+            Input,
+            Structure.Capabilitiesˉoffset,
+            Structure.Capabilitiesˉlength
+        );
+    if !Capabilityˉtable.Valid {
         return Compilerˉnativeˉx64ˉfailure(
             Input,
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉmodule
         );
     }
-    if Bytesˉreadˉu32ˉlittle(Input, Structure.Capabilitiesˉoffset) != 0u32 {
+    if Profile == 1u8 && Capabilityˉtable.Count != 0u32 {
+        return Compilerˉnativeˉx64ˉfailure(
+            Input,
+            Compilerˉnativeˉx64ˉstatus.Unsupportedˉmodule
+        );
+    }
+    if Profile == 2u8 && Capabilityˉtable.Count == 0u32 {
         return Compilerˉnativeˉx64ˉfailure(
             Input,
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉmodule
@@ -4276,7 +4343,8 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
                 Functionˉcount,
                 Signatures,
                 Data,
-                Types
+                Types,
+                Capabilityˉtable
             );
         if !Measureˉanalysis.Valid {
             return Compilerˉnativeˉx64ˉfailure(
@@ -4357,7 +4425,8 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
                 Functionˉcount,
                 Directory,
                 Data,
-                Types
+                Types,
+                Capabilityˉtable
             );
         Relocations = Bytesˉconcat(
             Relocations,
@@ -4388,7 +4457,8 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
                 ),
                 Directory,
                 Data,
-                Types
+                Types,
+                Capabilityˉtable
             );
         if Bytesˉlength(Functionˉcode) !=
             Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(

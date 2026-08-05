@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "20b0f6158e2ce968b3e5bcaf472e291bf62cfc3ec0dc9e3569b68acf4ca528f8";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "f64bb5e60f69cc2e1ae6662b307d6407bfe70bc8fcf6c277d91143426a4e9143";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "79e4ddac4eac5e85aa4a10b14b91de9ca41a8263a3bf811bb38ec3eed5ed6f1c";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "ffeec555fa6ff3c00b49c9510dd267050a3c5b03e9fa01d89573d31e7db94753";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "4b1065fb72e9fc40494cb11681c27b42e80e4f8bacf78338db3a51bd4255fe87";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "b06944f1d7a3977275fe147ab8fd8f283dbcfe00332f00af13485e296f20f86f";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "1689fdb55f3e6cd1b9bf75d7f94f7f7e8550c264a6c8c2af7008c5b176364eb2";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "7ea14319b4b27546a4933783ad794fc9b736665f79fd5790f30265a5cb74d8cf";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "c96e2aa6b0cc77f03f482cd52d5b2488046da4efb453248877c851cdfefbcf16";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -730,6 +730,9 @@ internal static partial class Program
 
     private static readonly string NATIVE_X64_LOWERING_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Core.wv");
+    private static readonly string NATIVE_X64_LOWERING_CAPABILITIES_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Capabilities.wv");
     private static readonly string NATIVE_X64_LOWERING_DATA_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Data.wv");
     private static readonly string NATIVE_X64_LOWERING_STATIC_DATA_INSTRUCTIONS_SOURCE =
@@ -784,7 +787,6 @@ internal static partial class Program
 
     private static readonly string WVB_TO_WVO_RETURN_42_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wvb-To-Wvo-Return-42.wv");
-
     private static readonly string SOURCE_WVB_FUNCTION_ONLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Function-Only.wv");
     private static readonly string SOURCE_WVB_MATCH_SOURCE = Readˉembeddedˉsource(
@@ -2888,6 +2890,16 @@ internal static partial class Program
             return checked(Cursor + 8);
         }
 
+        static int Capabilityˉpayloadˉoffset(byte[] Input)
+        {
+            var Cursor = 12;
+            Cursor = checked(
+                Cursor + 8 +
+                (int)BinaryPrimitives.ReadUInt32LittleEndian(Input.AsSpan(Cursor + 4, 4)));
+            Equal((byte)Sectionˉkind.Capabilities, Input[Cursor]);
+            return checked(Cursor + 8);
+        }
+
         var Dataˉbytes = Compileˉsuccess(NATIVE_X64_LOWERING_DATA_SOURCE);
         var Layoutˉbytes = Compileˉsuccess(NATIVE_X64_LOWERING_LAYOUT_SOURCE);
         var Objectˉcompilation = Seedˉcompiler.Compileˉmodules(
@@ -2907,6 +2919,7 @@ internal static partial class Program
             new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE),
             [
                 new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
+                new("Native-X64-Lowering-Capabilities.wv", NATIVE_X64_LOWERING_CAPABILITIES_SOURCE),
                 new("Native-X64-Lowering-Static-Data-Instructions.wv", NATIVE_X64_LOWERING_STATIC_DATA_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Types.wv", NATIVE_X64_LOWERING_TYPES_SOURCE),
                 new("Native-X64-Lowering-Enums.wv", NATIVE_X64_LOWERING_ENUMS_SOURCE),
@@ -2935,6 +2948,7 @@ internal static partial class Program
             new("Native-X64-Lowering-Memory-Adapter.wv", NATIVE_X64_LOWERING_MEMORY_SOURCE),
             [
                 new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE),
+                new("Native-X64-Lowering-Capabilities.wv", NATIVE_X64_LOWERING_CAPABILITIES_SOURCE),
                 new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
                 new("Native-X64-Lowering-Static-Data-Instructions.wv", NATIVE_X64_LOWERING_STATIC_DATA_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Types.wv", NATIVE_X64_LOWERING_TYPES_SOURCE),
@@ -2974,6 +2988,7 @@ internal static partial class Program
         Assertˉrecordˉlowering(Tool, Memory);
         Assertˉrecordˉcallˉlowering(Tool, Memory);
         Assertˉnominalˉtypeˉlowering(Tool, Memory);
+        Assertˉprocessˉargumentˉcountˉlowering(Tool, Memory);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);
@@ -3411,6 +3426,26 @@ internal static partial class Program
                 Directˉcall.Offset + 1,
                 4),
             2u);
+        var Capabilityˉwvb = Compileˉsuccess(WVB_TO_WVO_PROCESS_ARGUMENT_COUNT_SOURCE);
+        var Capabilityˉmodule = Moduleˉcodec.Readˉandˉverify(Capabilityˉwvb);
+        var Capabilityˉmain = Capabilityˉmodule.Functions.Single();
+        var Capabilityˉcall = Capabilityˉmain.Instructions.Single(
+            Instruction => Instruction.Opcode == Opcode.Callˉcapability);
+        var Invalidˉcapabilityˉtargetˉwvb = Capabilityˉwvb.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉcapabilityˉtargetˉwvb.AsSpan(
+                Codeˉpayloadˉoffset(Invalidˉcapabilityˉtargetˉwvb) +
+                Capabilityˉmain.Declaration.Codeˉoffset +
+                Capabilityˉcall.Offset + 1,
+                4),
+            1u);
+        var Invalidˉcapabilityˉsignatureˉwvb = Capabilityˉwvb.ToArray();
+        var Capabilityˉpayload = Capabilityˉpayloadˉoffset(
+            Invalidˉcapabilityˉsignatureˉwvb);
+        var Capabilityˉnameˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+            Invalidˉcapabilityˉsignatureˉwvb.AsSpan(Capabilityˉpayload + 4, 4)));
+        var Capabilityˉreturnˉtype = Capabilityˉpayload + 8 + Capabilityˉnameˉlength + 4;
+        Invalidˉcapabilityˉsignatureˉwvb[Capabilityˉreturnˉtype] = (byte)Valueˉtype.I32;
         var Mismatchedˉscalarˉparameterˉwvb = scalarˉargumentˉwvb.ToArray();
         var Scalarˉfunction = Functionˉpayloadˉoffset(Mismatchedˉscalarˉparameterˉwvb) + 4;
         var Scalarˉnameˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
@@ -3503,6 +3538,7 @@ internal static partial class Program
             Invalidˉbranchˉtargetˉwvb,
             Unreachableˉloopˉwvb,
             Invalidˉcallˉtargetˉwvb,
+            Invalidˉcapabilityˉtargetˉwvb,
             Mismatchedˉscalarˉparameterˉwvb,
             Invalidˉdataˉindexˉwvb,
             Invalidˉdescriptorˉdataˉindexˉwvb,
@@ -3526,6 +3562,24 @@ internal static partial class Program
             Equal("native x64 status=Unsupportedˉcode\n", Rejected.Diagnostics);
             Equal(0, Rejected.Writeˉcount);
         }
+
+
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Memory,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
+                .Runˉmainˉbytes(Invalidˉcapabilityˉsignatureˉwvb.ToImmutableArray()).Bytes.Length);
+        var Rejectedˉcapabilityˉsignature = Runˉnativeˉx64ˉloweringˉtool(
+            Tool,
+            Invalidˉcapabilityˉsignatureˉwvb);
+        Equal(1, Rejectedˉcapabilityˉsignature.Exitˉcode);
+        Equal(string.Empty, Rejectedˉcapabilityˉsignature.Output);
+        Equal(
+            "native x64 status=Unsupportedˉmodule\n",
+            Rejectedˉcapabilityˉsignature.Diagnostics);
+        Equal(0, Rejectedˉcapabilityˉsignature.Writeˉcount);
 
         var Toolˉnative = X64ˉnativeˉbackend.Compile(Tool);
         _ = Nativeˉfragmentˉverifier.Verify(Toolˉnative.Fragment);

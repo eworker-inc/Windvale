@@ -1,0 +1,8 @@
+module Wvbˉtoˉwvoˉprocessˉargumentˉcount profile hosted;
+
+capability process.argument_count;
+
+export fn Main() -> i32 {
+    if process.argument_count() == 0u32 { return 42; }
+    return 1;
+}

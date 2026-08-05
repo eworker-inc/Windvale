@@ -8,6 +8,8 @@ Accepted architectural direction under [Decision 0057](../Decisions/0057-Windval
 
 [Decision 0241](../Decisions/0241-Multi-Block-Native-Record-Liveness.md) closes that boundary with fixed-point record-local liveness, block-scoped record-temporary allocation, and scalar-returning record consumers. The exact compiler-produced `Nominal-Types.wv` WVO now agrees across Stage 0, the Windvale adapters, and the direct current-host native package; grouped Windows/Linux qualification and artifact promotion remain pending.
 
+[Decision 0242](../Decisions/0242-First-Hosted-Capability-In-Native-Lowering.md) crosses the next backend boundary with exact hosted capability-table admission and the first `process.argument_count() -> u32` service-table call. Portable modules still require no capabilities, other capability calls remain rejected, and WVO 1.0 does not yet carry independently loadable required-service metadata.
+
 [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) additionally makes portability a per-part and derived artifact property. Native publication must preserve the canonical module's platform scope and capability requirements even when a particular application intentionally targets only one environment.
 
 ## Destination
@@ -287,6 +289,8 @@ Decision 0213 deliberately separates the semantic-freeze checkpoint from final r
 Decision 0240 extends that accepted subset with nonzero-first enum tables plus one-block record parameter, caller-owned return, and call transport. The bounded C# enum-admission correction preserves Stage 0 as the independent WVB 1.11 oracle rather than adding forward language semantics there.
 
 Decision 0241 extends record storage through validated control-flow successors and admits scalar-returning record consumers. Its planner keeps persistent locals live across edges while requiring scratch record values to die inside their defining block, and its row-wise immutable fixed point remains within the native tool's bounded arena on the real nominal fixture.
+
+Decision 0242 then admits exact portable-or-hosted profile rules, validates the six current Stage 0 native capability signatures, and lowers only the parameterless scalar `process.argument_count` call. The focused capability module and canonically ordered project dependencies keep the ordinary native source front door usable without folding more policy into the large instruction core.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 

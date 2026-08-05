@@ -1,0 +1,184 @@
+module Compilerˉnativeˉx64ˉloweringˉcapabilities profile portable;
+
+export record Compilerˉnativeˉx64ˉcapabilities {
+    Valid: bool;
+    Count: u32;
+    Kinds: bytes;
+}
+
+export fn Compilerˉnativeˉx64ˉemptyˉcapabilities(Input: bytes)
+    -> Compilerˉnativeˉx64ˉcapabilities {
+    return Compilerˉnativeˉx64ˉcapabilities(
+        false,
+        0u32,
+        Bytesˉslice(Input, 0u32, 0u32)
+    );
+}
+
+fn Spanˉequalsˉtext(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: text
+) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Length != Bytesˉlength(Expectedˉbytes) { return false; }
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total { return false; }
+    if Length > Total - Offset { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) !=
+            Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Capabilityˉkind(
+    Input: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> u8 {
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "console.write_line") {
+        return 1u8;
+    }
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "diagnostic.write_line") {
+        return 2u8;
+    }
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "file.read_bytes") {
+        return 3u8;
+    }
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "file.write_bytes") {
+        return 4u8;
+    }
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "process.argument") {
+        return 5u8;
+    }
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "process.argument_count") {
+        return 6u8;
+    }
+    return 0u8;
+}
+
+fn Signatureˉisˉvalid(
+    Input: bytes,
+    Offset: u32,
+    Limit: u32,
+    Kind: u8
+) -> u32 {
+    if Limit - Offset < 5u32 { return 0u32; }
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Parameters > 2u32 { return 0u32; }
+    if Limit - Offset < 5u32 + Parameters { return 0u32; }
+    let First: u8 = Bytesˉreadˉu8(Input, Offset + 4u32);
+    var Second: u8 = 0u8;
+    if Parameters == 2u32 {
+        Second = Bytesˉreadˉu8(Input, Offset + 5u32);
+    }
+    let Return: u8 = Bytesˉreadˉu8(Input, Offset + 4u32 + Parameters);
+    if Kind == 1u8 || Kind == 2u8 {
+        if Parameters != 1u32 || First != 3u8 || Return != 0u8 { return 0u32; }
+    }
+    if Kind == 3u8 {
+        if Parameters != 1u32 || First != 3u8 || Return != 6u8 { return 0u32; }
+    }
+    if Kind == 4u8 {
+        if Parameters != 2u32 || First != 3u8 || Second != 6u8 || Return != 0u8 {
+            return 0u32;
+        }
+    }
+    if Kind == 5u8 {
+        if Parameters != 1u32 || First != 5u8 || Return != 3u8 { return 0u32; }
+    }
+    if Kind == 6u8 {
+        if Parameters != 0u32 || Return != 5u8 { return 0u32; }
+    }
+    return 5u32 + Parameters;
+}
+
+export fn Compilerˉnativeˉx64ˉcapabilitiesˉread(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> Compilerˉnativeˉx64ˉcapabilities {
+    let Invalid: Compilerˉnativeˉx64ˉcapabilities =
+        Compilerˉnativeˉx64ˉemptyˉcapabilities(Input);
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total { return Invalid; }
+    if Length > Total - Offset { return Invalid; }
+    if Length < 4u32 { return Invalid; }
+    let Limit: u32 = Offset + Length;
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Count > 6u32 { return Invalid; }
+    var Kinds: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Previous: u32 = 0u32;
+    var Cursor: u32 = Offset + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Limit - Cursor < 4u32 { return Invalid; }
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Nameˉlength == 0u32 { return Invalid; }
+        if Nameˉlength > Limit - Cursor { return Invalid; }
+        let Kind: u8 = Capabilityˉkind(Input, Cursor, Nameˉlength);
+        if Kind == 0u8 { return Invalid; }
+        let Numericˉkind: u32 = U32ˉfromˉu8(Kind);
+        if Numericˉkind <= Previous { return Invalid; }
+        Previous = Numericˉkind;
+        Cursor = Cursor + Nameˉlength;
+        let Signatureˉbytes: u32 = Signatureˉisˉvalid(Input, Cursor, Limit, Kind);
+        if Signatureˉbytes == 0u32 { return Invalid; }
+        Cursor = Cursor + Signatureˉbytes;
+        Kinds = Bytesˉconcat(Kinds, Bytesˉfromˉu8(Kind));
+        Index = Index + 1u32;
+    }
+    if Cursor != Limit { return Invalid; }
+    return Compilerˉnativeˉx64ˉcapabilities(true, Count, Kinds);
+}
+
+export fn Compilerˉnativeˉx64ˉcapabilityˉkind(
+    Capabilities: Compilerˉnativeˉx64ˉcapabilities,
+    Index: u32
+) -> u8 {
+    if Index >= Capabilities.Count { return 0u8; }
+    return Bytesˉreadˉu8(Capabilities.Kinds, Index);
+}
+
+export fn Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() -> u8 {
+    return 6u8;
+}
+
+export fn Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes() -> u32 {
+    return 27u32;
+}
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉprocessˉargumentˉcount(
+    Result: bytes,
+    Target: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 73u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 71u8);
+    Output = Appendˉbyte(Output, 24u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 64u8);
+    Output = Appendˉbyte(Output, 16u8);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Appendˉbyte(Output, 208u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Target * 16u32);
+}
