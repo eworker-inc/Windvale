@@ -1,0 +1,179 @@
+module Windvaleˉwvbˉpublicationˉnativeˉbridge profile portable;
+
+import Windvaleˉwvbˉpublicationˉtransaction as Publication;
+
+fn Wvbˉpublicationˉtoken(
+    State: u32,
+    Outcome: u32,
+    Scratchˉowned: bool,
+    Destinationˉmayˉdiffer: bool
+) -> u32 {
+    var Token: u32 = State + Outcome * 16u32;
+    if Scratchˉowned { Token = Token + 128u32; }
+    if Destinationˉmayˉdiffer { Token = Token + 256u32; }
+    return Token;
+}
+
+fn Wvbˉpublicationˉstateˉcode(
+    State: Publication.Wvbˉpublicationˉstate
+) -> u32 {
+    if State == Publication.Wvbˉpublicationˉstate.Candidateˉadmitted { return 0u32; }
+    if State == Publication.Wvbˉpublicationˉstate.Siblingˉowned { return 1u32; }
+    if State == Publication.Wvbˉpublicationˉstate.Siblingˉdurable { return 2u32; }
+    if State == Publication.Wvbˉpublicationˉstate.Siblingˉverified { return 3u32; }
+    if State == Publication.Wvbˉpublicationˉstate.Destinationˉreplaced { return 4u32; }
+    if State == Publication.Wvbˉpublicationˉstate.Cleanupˉrequired { return 5u32; }
+    if State == Publication.Wvbˉpublicationˉstate.Rejectedˉunchanged { return 6u32; }
+    if State == Publication.Wvbˉpublicationˉstate.Complete { return 7u32; }
+    return 8u32;
+}
+
+fn Wvbˉpublicationˉoutcomeˉcode(
+    Outcome: Publication.Wvbˉpublicationˉoutcome
+) -> u32 {
+    if Outcome == Publication.Wvbˉpublicationˉoutcome.Active { return 0u32; }
+    if Outcome == Publication.Wvbˉpublicationˉoutcome.Cleanupˉrequired { return 1u32; }
+    if Outcome == Publication.Wvbˉpublicationˉoutcome.Rejectedˉunchanged { return 2u32; }
+    if Outcome == Publication.Wvbˉpublicationˉoutcome.Complete { return 3u32; }
+    if Outcome == Publication.Wvbˉpublicationˉoutcome.Indeterminate { return 4u32; }
+    return 5u32;
+}
+
+fn Wvbˉpublicationˉencode(
+    Result: Publication.Wvbˉpublicationˉresult
+) -> u32 {
+    return Wvbˉpublicationˉtoken(
+        Wvbˉpublicationˉstateˉcode(Result.State),
+        Wvbˉpublicationˉoutcomeˉcode(Result.Outcome),
+        Result.Scratchˉowned,
+        Result.Destinationˉmayˉdiffer
+    );
+}
+
+fn Wvbˉpublicationˉactiveˉresult(
+    State: u32
+) -> Publication.Wvbˉpublicationˉresult {
+    if State == 0u32 {
+        return Publication.Wvbˉpublicationˉresult(
+            Publication.Wvbˉpublicationˉstate.Candidateˉadmitted,
+            Publication.Wvbˉpublicationˉoutcome.Active,
+            false,
+            false
+        );
+    }
+    if State == 1u32 {
+        return Publication.Wvbˉpublicationˉresult(
+            Publication.Wvbˉpublicationˉstate.Siblingˉowned,
+            Publication.Wvbˉpublicationˉoutcome.Active,
+            true,
+            false
+        );
+    }
+    if State == 2u32 {
+        return Publication.Wvbˉpublicationˉresult(
+            Publication.Wvbˉpublicationˉstate.Siblingˉdurable,
+            Publication.Wvbˉpublicationˉoutcome.Active,
+            true,
+            false
+        );
+    }
+    if State == 3u32 {
+        return Publication.Wvbˉpublicationˉresult(
+            Publication.Wvbˉpublicationˉstate.Siblingˉverified,
+            Publication.Wvbˉpublicationˉoutcome.Active,
+            true,
+            false
+        );
+    }
+    return Publication.Wvbˉpublicationˉresult(
+        Publication.Wvbˉpublicationˉstate.Destinationˉreplaced,
+        Publication.Wvbˉpublicationˉoutcome.Active,
+        false,
+        true
+    );
+}
+
+fn Wvbˉpublicationˉdecode(
+    Token: u32
+) -> Publication.Wvbˉpublicationˉresult {
+    if Token == 0u32 { return Wvbˉpublicationˉactiveˉresult(0u32); }
+    if Token == 129u32 { return Wvbˉpublicationˉactiveˉresult(1u32); }
+    if Token == 130u32 { return Wvbˉpublicationˉactiveˉresult(2u32); }
+    if Token == 131u32 { return Wvbˉpublicationˉactiveˉresult(3u32); }
+    if Token == 260u32 { return Wvbˉpublicationˉactiveˉresult(4u32); }
+    if Token == 149u32 {
+        return Publication.Wvbˉpublicationˉresult(
+            Publication.Wvbˉpublicationˉstate.Cleanupˉrequired,
+            Publication.Wvbˉpublicationˉoutcome.Cleanupˉrequired,
+            true,
+            false
+        );
+    }
+    return Publication.Wvbˉpublicationˉresult(
+        Publication.Wvbˉpublicationˉstate.Rejectedˉunchanged,
+        Publication.Wvbˉpublicationˉoutcome.Rejectedˉunchanged,
+        false,
+        false
+    );
+}
+
+fn Wvbˉpublicationˉapplyˉaction(
+    Current: Publication.Wvbˉpublicationˉresult,
+    Action: u32
+) -> Publication.Wvbˉpublicationˉresult {
+    if Action == 0u32 {
+        return Publication.Wvbˉpublicationˉapply(
+            Current,
+            Publication.Wvbˉpublicationˉaction.Createˉsibling
+        );
+    }
+    if Action == 1u32 {
+        return Publication.Wvbˉpublicationˉapply(
+            Current,
+            Publication.Wvbˉpublicationˉaction.Flushˉsibling
+        );
+    }
+    if Action == 2u32 {
+        return Publication.Wvbˉpublicationˉapply(
+            Current,
+            Publication.Wvbˉpublicationˉaction.Verifyˉsibling
+        );
+    }
+    if Action == 3u32 {
+        return Publication.Wvbˉpublicationˉapply(
+            Current,
+            Publication.Wvbˉpublicationˉaction.Replaceˉdestination
+        );
+    }
+    if Action == 4u32 {
+        return Publication.Wvbˉpublicationˉapply(
+            Current,
+            Publication.Wvbˉpublicationˉaction.Flushˉdirectory
+        );
+    }
+    if Action == 5u32 {
+        return Publication.Wvbˉpublicationˉapply(
+            Current,
+            Publication.Wvbˉpublicationˉaction.Fail
+        );
+    }
+    return Publication.Wvbˉpublicationˉapply(
+        Current,
+        Publication.Wvbˉpublicationˉaction.Cleanˉsibling
+    );
+}
+
+export fn Wvbˉpublicationˉnativeˉbegin() -> u32 {
+    return Wvbˉpublicationˉencode(Publication.Wvbˉpublicationˉbegin());
+}
+
+export fn Wvbˉpublicationˉnativeˉapply(Current: u32, Action: u32) -> u32 {
+    if Action > 6u32 { return 4294967295u32; }
+    if Current != 0u32 && Current != 129u32 && Current != 130u32 &&
+        Current != 131u32 && Current != 260u32 && Current != 149u32 {
+        return 4294967295u32;
+    }
+    return Wvbˉpublicationˉencode(
+        Wvbˉpublicationˉapplyˉaction(Wvbˉpublicationˉdecode(Current), Action)
+    );
+}

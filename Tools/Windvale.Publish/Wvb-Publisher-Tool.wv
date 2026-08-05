@@ -1,0 +1,82 @@
+module Windvaleˉwvbˉpublisherˉtool profile hosted;
+
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
+import Windvaleˉwvbˉpublicationˉnativeˉbridge as Nativeˉbridge;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Wvbˉpublisherˉpathˉisˉwvb(Path: text) -> bool {
+    let Value: bytes = Textˉtoˉutf8(Path);
+    let Length: u32 = Bytesˉlength(Value);
+    if Length < 4u32 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 4u32) != 46u8 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 3u32) != 119u8 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 2u32) != 118u8 { return false; }
+    return Bytesˉreadˉu8(Value, Length - 1u32) == 98u8;
+}
+
+fn Wvbˉpublisherˉpathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) != Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Wvbˉpublisherˉcandidateˉstatus(Candidate: bytes) -> i32 {
+    let Status: u32 = Semanticˉverifier.Compilerˉwvbˉverify(Candidate);
+    if Status == 1u32 {
+        diagnostic.write_line("publication status=Rejected phase=semantic");
+        return 1;
+    }
+    if Status == 2u32 {
+        diagnostic.write_line("publication status=Rejected phase=typed-execution");
+        return 1;
+    }
+    if Status == 3u32 {
+        diagnostic.write_line("publication status=Rejected phase=control-reachability");
+        return 1;
+    }
+    if Status != 0u32 {
+        diagnostic.write_line("publication status=Rejected phase=internal");
+        return 1;
+    }
+    return 0;
+}
+
+fn Wvbˉpublicationˉpublisherˉbegin() -> u32 {
+    return Nativeˉbridge.Wvbˉpublicationˉnativeˉbegin();
+}
+
+fn Wvbˉpublicationˉpublisherˉapply(Current: u32, Action: u32) -> u32 {
+    return Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(Current, Action);
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line("Usage: wvpublish <candidate.wvb> <destination.wvb>");
+        return 64;
+    }
+
+    let Candidateˉpath: text = process.argument(0u32);
+    let Destinationˉpath: text = process.argument(1u32);
+    if !Wvbˉpublisherˉpathˉisˉwvb(Candidateˉpath) ||
+        !Wvbˉpublisherˉpathˉisˉwvb(Destinationˉpath) ||
+        Wvbˉpublisherˉpathsˉareˉequal(Candidateˉpath, Destinationˉpath) {
+        diagnostic.write_line("Usage: wvpublish <candidate.wvb> <destination.wvb>");
+        return 64;
+    }
+
+    return Wvbˉpublisherˉcandidateˉstatus(file.read_bytes(Candidateˉpath));
+}

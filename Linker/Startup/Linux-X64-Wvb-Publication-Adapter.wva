@@ -1,0 +1,849 @@
+windvale-assembly 1
+
+# Linux x64 native WVB publication adapter. Portable admission and transaction
+# policy remain in the linked Windvale fragment; this adapter owns only the
+# anchored Linux resource operations required to publish admitted bytes.
+symbol local function Linux_wvb_publisher_hex8 in .text
+symbol export function Linux_wvb_publisher_run in .text
+symbol import data Argument_bytes
+symbol import data Argument_table
+symbol import data Data_arena
+symbol import data Execution_context
+symbol import data File_input_scratch
+symbol import data File_input_table
+symbol import data Name_arena
+symbol import function Native_main
+symbol import function Native_publication_apply
+symbol import function Native_publication_begin
+symbol import data Output_table
+symbol import data Record_arena
+symbol import function Service_console_write
+symbol import function Service_diagnostic_write
+symbol import function Service_file_read
+symbol import function Service_process_argument
+symbol import function Service_process_argument_count
+symbol import data Service_table
+symbol import function Service_utf8
+symbol import data Snapshot_table
+symbol import data Text_arena
+symbol import data X64_wvb_publication_report_newline
+symbol import data X64_wvb_publication_report_prefix
+symbol import data X64_wvb_publication_report_separator
+symbol import function X64_wvb_publication_sha256_hex
+symbol import function X64_wvb_publication_u32_hex8
+
+section code .text align 16
+define Linux_wvb_publisher_hex8
+# Input: EAX value, RDI eight-byte destination. Output uses lowercase hex.
+move_u32 r8d 8
+label Hex_loop
+rotate_left eax 4
+move edx eax
+and_i32 edx 15
+add_i8 dl 48
+compare_i8 dl 57
+branch below_equal Hex_digit
+add_i8 dl 39
+label Hex_digit
+store_memory_u8 rdi none 1 0 dl
+add_i32 rdi 1
+subtract_i32 r8d 1
+branch not_equal Hex_loop
+return
+end define
+
+define Linux_wvb_publisher_run
+# Keep the kernel argc/argv stack, allocate the established bounded execution
+# stack, and reserve 16 KiB at its top for publication paths and evidence.
+move r12 rsp
+xor edi edi
+move_u32 esi 67108864
+move_u32 edx 3
+move_u32 r10d 131106
+xor r8 r8
+subtract_i32 r8 1
+xor r9d r9d
+move_u32 eax 9
+syscall
+compare_i32 rax -4095
+branch above_equal Failure
+move rsp rax
+add_i32 rsp 67108864
+subtract_i32 rsp 16384
+
+# Bind the shared hosted-verifier runtime regions and exact service sequence.
+load_address r15 Execution_context
+load_address rax Service_table
+store_memory_u64 r15 none 1 24 rax
+load_address rax Record_arena
+store_memory_u64 r15 none 1 32 rax
+load_address rax Text_arena
+store_memory_u64 r15 none 1 48 rax
+load_address rax Argument_table
+store_memory_u64 r15 none 1 72 rax
+load_address rax Output_table
+store_memory_u64 r15 none 1 88 rax
+load_address rax File_input_table
+store_memory_u64 r15 none 1 96 rax
+
+load_address rbx File_input_table
+load_address rax Snapshot_table
+store_memory_u64 rbx none 1 16 rax
+load_address rax Name_arena
+store_memory_u64 rbx none 1 32 rax
+load_address rax Data_arena
+store_memory_u64 rbx none 1 48 rax
+load_address rax File_input_scratch
+store_memory_u64 rbx none 1 64 rax
+
+load_address rbx Service_table
+load_address rax Service_console_write
+store_memory_u64 rbx none 1 8 rax
+load_address rax Service_process_argument_count
+store_memory_u64 rbx none 1 16 rax
+load_address rax Service_process_argument
+store_memory_u64 rbx none 1 24 rax
+load_address rax Service_file_read
+store_memory_u64 rbx none 1 32 rax
+load_address rax Service_utf8
+store_memory_u64 rbx none 1 40 rax
+load_address rax Service_diagnostic_write
+store_memory_u64 rbx none 1 48 rax
+
+# Exclude argv[0], require exactly the two publisher arguments, and retain the
+# same strict UTF-8 and aggregate argument bounds as other hosted native tools.
+load_memory_u64 rax r12 none 1 0
+compare_i32 rax 3
+branch not_equal Failure
+move_u32 eax 2
+store_memory_u32 r15 none 1 80 eax
+xor ebx ebx
+xor ebp ebp
+load_address r13 Argument_table
+load_address r14 Argument_bytes
+
+label Argument_loop
+compare_i32 ebx 2
+branch above_equal Arguments_ready
+load_memory_u64 rsi r12 rbx 8 16
+xor ecx ecx
+label Scan_argument
+load_memory_u8 dl rsi rcx 1 0
+test dl dl
+branch equal Argument_length
+compare_i32 ecx 4096
+branch above_equal Failure
+add_i32 ecx 1
+jump_label Scan_argument
+
+label Argument_length
+move r10d ecx
+move edx ebp
+add edx ecx
+compare_i32 edx 65536
+branch above Failure
+subtract_i32 rsp 16
+move rcx rsp
+move r8 rsi
+move r9d r10d
+call Service_utf8
+load_memory_u32 eax rsp none 1 0
+add_i32 rsp 16
+compare_i32 eax 1
+branch not_equal Failure
+
+move rdx rbx
+shift_left rdx 4
+add rdx r13
+move rdi r14
+add rdi rbp
+store_memory_u64 rdx none 1 0 rdi
+store_memory_u32 rdx none 1 8 r10d
+xor ecx ecx
+label Copy_argument
+compare ecx r10d
+branch above_equal Argument_copied
+load_memory_u8 al rsi rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Copy_argument
+label Argument_copied
+add ebp r10d
+add_i32 ebx 1
+jump_label Argument_loop
+
+label Arguments_ready
+# Preserve one candidate handle before portable admission. After Main returns,
+# exact reread comparison proves that this identity supplied the admitted bytes.
+load_address rbx Argument_table
+load_memory_u64 rsi rbx none 1 0
+load_memory_u32 ecx rbx none 1 8
+move rdi rsp
+xor edx edx
+label Copy_candidate_path
+compare edx ecx
+branch above_equal Candidate_path_ready
+load_memory_u8 al rsi rdx 1 0
+store_memory_u8 rdi rdx 1 0 al
+add_i32 edx 1
+jump_label Copy_candidate_path
+label Candidate_path_ready
+xor eax eax
+store_memory_u8 rdi rdx 1 0 al
+move_i32 edi -100
+move rsi rsp
+move_u32 edx 524288
+xor r10d r10d
+move_u32 eax 257
+syscall
+compare_i32 rax -4095
+branch above_equal Failure
+move r12 rax
+
+load_address rdx Execution_context
+xor edi edi
+xor ecx ecx
+xor r8d r8d
+xor r9d r9d
+call Native_main
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Candidate_failure
+test eax eax
+branch not_equal Candidate_exit
+
+# The publisher reads exactly one immutable snapshot. Retain its pointer/length
+# in private cells at offsets 12720 and 12728 of the publication workspace.
+load_address rbx File_input_table
+load_memory_u32 eax rbx none 1 28
+compare_i32 eax 1
+branch not_equal Candidate_failure
+load_address rbx Snapshot_table
+load_memory_u64 rax rbx none 1 16
+store_memory_u64 rsp none 1 12720 rax
+load_memory_u32 eax rbx none 1 24
+store_memory_u32 rsp none 1 12728 eax
+
+# Capture the candidate identity and reconstruct the admitted snapshot from the
+# preserved handle before any destination mutation.
+move rdi r12
+move rsi rsp
+add_i32 rsi 12416
+move_u32 eax 5
+syscall
+test rax rax
+branch not_equal Candidate_failure
+move rdi r12
+xor esi esi
+xor edx edx
+move_u32 eax 8
+syscall
+test rax rax
+branch not_equal Candidate_failure
+xor ebx ebx
+label Candidate_read_loop
+load_memory_u32 ebp rsp none 1 12728
+compare ebx ebp
+branch above_equal Candidate_read_complete
+subtract ebp ebx
+compare_i32 ebp 4096
+branch below_equal Candidate_read_size
+move_u32 ebp 4096
+label Candidate_read_size
+move rdi r12
+load_address rsi File_input_scratch
+move edx ebp
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Candidate_read_loop
+compare_i32 rax 1
+branch below Candidate_failure
+compare rax rbp
+branch above Candidate_failure
+move r10d eax
+xor ecx ecx
+load_address rdi File_input_scratch
+load_memory_u64 rsi rsp none 1 12720
+add rsi rbx
+label Candidate_compare_loop
+compare ecx r10d
+branch above_equal Candidate_chunk_matches
+load_memory_u8 al rdi rcx 1 0
+load_memory_u8 dl rsi rcx 1 0
+compare al dl
+branch not_equal Candidate_failure
+add_i32 ecx 1
+jump_label Candidate_compare_loop
+label Candidate_chunk_matches
+add ebx r10d
+jump_label Candidate_read_loop
+
+label Candidate_read_complete
+move rdi r12
+load_address rsi File_input_scratch
+move_u32 edx 1
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Candidate_read_complete
+test rax rax
+branch not_equal Candidate_failure
+
+# Decode destination into an anchored directory path and a relative basename.
+load_address rbx Argument_table
+load_memory_u64 rsi rbx none 1 16
+load_memory_u32 ebp rbx none 1 24
+test ebp ebp
+branch equal Candidate_failure
+xor ecx ecx
+move_u32 r10d 4294967295
+label Destination_scan
+compare ecx ebp
+branch above_equal Destination_scanned
+load_memory_u8 al rsi rcx 1 0
+compare_i8 al 47
+branch not_equal Destination_scan_next
+move r10d ecx
+label Destination_scan_next
+add_i32 ecx 1
+jump_label Destination_scan
+
+label Destination_scanned
+move eax r10d
+add_i32 eax 1
+compare eax ebp
+branch above_equal Candidate_failure
+move rdi rsp
+add_i32 rdi 4112
+compare_i32 r10d -1
+branch not_equal Destination_has_slash
+move_u8 al 46
+store_memory_u8 rdi none 1 0 al
+xor eax eax
+store_memory_u8 rdi none 1 1 al
+xor r11d r11d
+jump_label Copy_destination_base
+
+label Destination_has_slash
+test r10d r10d
+branch not_equal Copy_destination_directory
+move_u8 al 47
+store_memory_u8 rdi none 1 0 al
+xor eax eax
+store_memory_u8 rdi none 1 1 al
+move_u32 r11d 1
+jump_label Copy_destination_base
+
+label Copy_destination_directory
+xor ecx ecx
+label Destination_directory_loop
+compare ecx r10d
+branch above_equal Destination_directory_ready
+load_memory_u8 al rsi rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Destination_directory_loop
+label Destination_directory_ready
+xor eax eax
+store_memory_u8 rdi rcx 1 0 al
+move r11d r10d
+add_i32 r11d 1
+
+label Copy_destination_base
+move rdi rsp
+add_i32 rdi 8224
+xor ecx ecx
+label Destination_base_loop
+move eax r11d
+add eax ecx
+compare eax ebp
+branch above_equal Destination_base_ready
+load_memory_u8 dl rsi rax 1 0
+store_memory_u8 rdi rcx 1 0 dl
+add_i32 ecx 1
+jump_label Destination_base_loop
+label Destination_base_ready
+test ecx ecx
+branch equal Candidate_failure
+xor eax eax
+store_memory_u8 rdi rcx 1 0 al
+
+# Anchor all following names to one opened directory descriptor.
+move_i32 edi -100
+move rsi rsp
+add_i32 rsi 4112
+move_u32 edx 720896
+xor r10d r10d
+move_u32 eax 257
+syscall
+compare_i32 rax -4095
+branch above_equal Candidate_failure
+move r13 rax
+
+# Reject a destination that aliases the preserved candidate identity. Any other
+# destination open error except ENOENT is a provider rejection before mutation.
+move rdi r13
+move rsi rsp
+add_i32 rsi 8224
+move_u32 edx 655360
+xor r10d r10d
+move_u32 eax 257
+syscall
+compare_i32 rax -2
+branch equal Destination_absent
+compare_i32 rax -4095
+branch above_equal Directory_failure
+move rbx rax
+move rdi rbx
+move rsi rsp
+add_i32 rsi 12560
+move_u32 eax 5
+syscall
+test rax rax
+branch not_equal Destination_close_failure
+load_memory_u64 rax rsp none 1 12416
+load_memory_u64 rdx rsp none 1 12560
+compare rax rdx
+branch not_equal Destination_identity_distinct
+load_memory_u64 rax rsp none 1 12424
+load_memory_u64 rdx rsp none 1 12568
+compare rax rdx
+branch equal Destination_alias
+label Destination_identity_distinct
+move rdi rbx
+move_u32 eax 3
+syscall
+test rax rax
+branch not_equal Directory_failure
+jump_label Destination_absent
+label Destination_alias
+move rdi rbx
+move_u32 eax 3
+syscall
+jump_label Directory_failure
+label Destination_close_failure
+move rdi rbx
+move_u32 eax 3
+syscall
+jump_label Directory_failure
+
+label Destination_absent
+# Start the Windvale-owned transaction only after candidate, identity, and
+# anchored-provider preflight have completed.
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_begin
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Directory_failure
+test eax eax
+branch not_equal Directory_failure
+store_memory_u32 rsp none 1 12704 eax
+
+# Create a bounded process-unique sibling name exclusively under the directory
+# handle. Collisions retry with a different hexadecimal suffix.
+move rdi rsp
+add_i32 rdi 12336
+move_u8 al 46
+store_memory_u8 rdi none 1 0 al
+move_u8 al 119
+store_memory_u8 rdi none 1 1 al
+move_u8 al 118
+store_memory_u8 rdi none 1 2 al
+move_u8 al 112
+store_memory_u8 rdi none 1 3 al
+move_u8 al 117
+store_memory_u8 rdi none 1 4 al
+move_u8 al 98
+store_memory_u8 rdi none 1 5 al
+move_u8 al 108
+store_memory_u8 rdi none 1 6 al
+move_u8 al 105
+store_memory_u8 rdi none 1 7 al
+move_u8 al 115
+store_memory_u8 rdi none 1 8 al
+move_u8 al 104
+store_memory_u8 rdi none 1 9 al
+move_u8 al 45
+store_memory_u8 rdi none 1 10 al
+move_u32 eax 39
+syscall
+store_memory_u32 rsp none 1 12708 eax
+xor ebx ebx
+label Create_sibling
+load_memory_u32 eax rsp none 1 12708
+add eax ebx
+move rdi rsp
+add_i32 rdi 12347
+call Linux_wvb_publisher_hex8
+move rdi rsp
+add_i32 rdi 12336
+xor eax eax
+store_memory_u8 rdi none 1 19 al
+move rdi r13
+move rsi rsp
+add_i32 rsi 12336
+move_u32 edx 655554
+move_u32 r10d 384
+move_u32 eax 257
+syscall
+compare_i32 rax -17
+branch not_equal Sibling_create_result
+add_i32 ebx 1
+compare_i32 ebx 16
+branch below Create_sibling
+jump_label Directory_failure
+label Sibling_create_result
+compare_i32 rax -4095
+branch above_equal Directory_failure
+move r14 rax
+
+load_memory_u32 r8d rsp none 1 12704
+xor r9d r9d
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Scratch_failure
+compare_i32 eax 129
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 12704 eax
+
+# Write the exact admitted snapshot with explicit partial-progress handling.
+xor ebx ebx
+label Sibling_write_loop
+load_memory_u32 ebp rsp none 1 12728
+compare ebx ebp
+branch above_equal Sibling_written
+subtract ebp ebx
+move rdi r14
+load_memory_u64 rsi rsp none 1 12720
+add rsi rbx
+move edx ebp
+move_u32 eax 1
+syscall
+compare_i32 rax -4
+branch equal Sibling_write_loop
+compare_i32 rax 1
+branch below Scratch_failure
+compare rax rbp
+branch above Scratch_failure
+add ebx eax
+jump_label Sibling_write_loop
+
+label Sibling_written
+move rdi r14
+move_u32 eax 74
+syscall
+test rax rax
+branch not_equal Scratch_failure
+load_memory_u32 r8d rsp none 1 12704
+move_u32 r9d 1
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Scratch_failure
+compare_i32 eax 130
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 12704 eax
+
+# Reread the complete owned sibling and compare every byte with the admitted
+# snapshot. An additional one-byte read proves exact EOF.
+move rdi r14
+xor esi esi
+xor edx edx
+move_u32 eax 8
+syscall
+test rax rax
+branch not_equal Scratch_failure
+xor ebx ebx
+label Sibling_read_loop
+load_memory_u32 ebp rsp none 1 12728
+compare ebx ebp
+branch above_equal Sibling_read_complete
+subtract ebp ebx
+compare_i32 ebp 4096
+branch below_equal Sibling_read_size
+move_u32 ebp 4096
+label Sibling_read_size
+move rdi r14
+load_address rsi File_input_scratch
+move edx ebp
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Sibling_read_loop
+compare_i32 rax 1
+branch below Scratch_failure
+compare rax rbp
+branch above Scratch_failure
+move r10d eax
+xor ecx ecx
+load_address rdi File_input_scratch
+load_memory_u64 rsi rsp none 1 12720
+add rsi rbx
+label Sibling_compare_loop
+compare ecx r10d
+branch above_equal Sibling_chunk_matches
+load_memory_u8 al rdi rcx 1 0
+load_memory_u8 dl rsi rcx 1 0
+compare al dl
+branch not_equal Scratch_failure
+add_i32 ecx 1
+jump_label Sibling_compare_loop
+label Sibling_chunk_matches
+add ebx r10d
+jump_label Sibling_read_loop
+label Sibling_read_complete
+move rdi r14
+load_address rsi File_input_scratch
+move_u32 edx 1
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Sibling_read_complete
+test rax rax
+branch not_equal Scratch_failure
+
+load_memory_u32 r8d rsp none 1 12704
+move_u32 r9d 2
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Scratch_failure
+compare_i32 eax 131
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 12704 eax
+
+# renameat performs the single same-directory replacement under the anchored
+# descriptor. From this point onward failure is indeterminate, never unchanged.
+move rdi r13
+move rsi rsp
+add_i32 rsi 12336
+move rdx r13
+move r10 rsp
+add_i32 r10 8224
+move_u32 eax 264
+syscall
+test rax rax
+branch not_equal Scratch_failure
+load_memory_u32 r8d rsp none 1 12704
+move_u32 r9d 3
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Replaced_failure
+compare_i32 eax 260
+branch not_equal Replaced_failure
+store_memory_u32 rsp none 1 12704 eax
+
+move rdi r13
+move_u32 eax 74
+syscall
+test rax rax
+branch not_equal Replaced_failure
+load_memory_u32 r8d rsp none 1 12704
+move_u32 r9d 4
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Replaced_failure
+compare_i32 eax 311
+branch not_equal Replaced_failure
+
+# Report byte count and SHA-256 only after the transaction is durably complete.
+load_memory_u64 rsi rsp none 1 12720
+load_memory_u32 ecx rsp none 1 12728
+move rdi rsp
+add_i32 rdi 12800
+call X64_wvb_publication_sha256_hex
+load_memory_u32 eax rsp none 1 12728
+move rdi rsp
+add_i32 rdi 12864
+call X64_wvb_publication_u32_hex8
+move rdi rsp
+add_i32 rdi 12900
+load_address rsi X64_wvb_publication_report_prefix
+xor ecx ecx
+label Copy_report_prefix
+compare_i32 ecx 36
+branch above_equal Copy_report_count_begin
+load_memory_u8 al rsi rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Copy_report_prefix
+label Copy_report_count_begin
+move rsi rsp
+add_i32 rsi 12864
+xor edx edx
+label Copy_report_count
+compare_i32 edx 8
+branch above_equal Copy_report_separator_begin
+load_memory_u8 al rsi rdx 1 0
+store_memory_u8 rdi rdx 1 36 al
+add_i32 edx 1
+jump_label Copy_report_count
+label Copy_report_separator_begin
+load_address rsi X64_wvb_publication_report_separator
+xor edx edx
+label Copy_report_separator
+compare_i32 edx 8
+branch above_equal Copy_report_digest_begin
+load_memory_u8 al rsi rdx 1 0
+store_memory_u8 rdi rdx 1 44 al
+add_i32 edx 1
+jump_label Copy_report_separator
+label Copy_report_digest_begin
+move rsi rsp
+add_i32 rsi 12800
+xor edx edx
+label Copy_report_digest
+compare_i32 edx 64
+branch above_equal Copy_report_newline
+load_memory_u8 al rsi rdx 1 0
+store_memory_u8 rdi rdx 1 52 al
+add_i32 edx 1
+jump_label Copy_report_digest
+label Copy_report_newline
+load_address rsi X64_wvb_publication_report_newline
+load_memory_u8 al rsi none 1 0
+store_memory_u8 rdi none 1 116 al
+xor ebx ebx
+label Report_write_loop
+compare_i32 ebx 117
+branch above_equal Report_complete
+move_u32 edx 117
+subtract edx ebx
+move_u32 edi 1
+move rsi rsp
+add_i32 rsi 12900
+add rsi rbx
+move_u32 eax 1
+syscall
+compare_i32 rax -4
+branch equal Report_write_loop
+compare_i32 rax 1
+branch below Report_failure
+compare rax rdx
+branch above Report_failure
+add ebx eax
+jump_label Report_write_loop
+
+label Report_complete
+# Success owns no sibling name after rename.
+move rdi r14
+move_u32 eax 3
+syscall
+move rdi r13
+move_u32 eax 3
+syscall
+move rdi r12
+move_u32 eax 3
+syscall
+xor edi edi
+jump_label Exit
+
+label Report_failure
+move rdi r14
+move_u32 eax 3
+syscall
+move rdi r13
+move_u32 eax 3
+syscall
+move rdi r12
+move_u32 eax 3
+syscall
+move_u32 edi 2
+jump_label Exit
+
+label Scratch_failure
+# Ask the portable state machine whether the failed point is still before the
+# replacement boundary. Token 260 is the only active post-replacement state.
+load_memory_u32 eax rsp none 1 12704
+compare_i32 eax 260
+branch equal Replaced_failure
+move r8d eax
+move_u32 r9d 5
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 149
+branch not_equal Replaced_failure
+move rdi r13
+move rsi rsp
+add_i32 rsi 12336
+xor edx edx
+move_u32 eax 263
+syscall
+test rax rax
+branch not_equal Replaced_failure
+move_u32 r8d 149
+move_u32 r9d 6
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 38
+branch not_equal Replaced_failure
+move rdi r14
+move_u32 eax 3
+syscall
+label Directory_failure
+move rdi r13
+move_u32 eax 3
+syscall
+label Candidate_failure
+move rdi r12
+move_u32 eax 3
+syscall
+label Failure
+move_u32 edi 1
+jump_label Exit
+
+label Replaced_failure
+load_memory_u32 r8d rsp none 1 12704
+move_u32 r9d 5
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdi r14
+move_u32 eax 3
+syscall
+move rdi r13
+move_u32 eax 3
+syscall
+move rdi r12
+move_u32 eax 3
+syscall
+move_u32 edi 2
+jump_label Exit
+
+label Candidate_exit
+move edi eax
+move rbx rdi
+move rdi r12
+move_u32 eax 3
+syscall
+move edi ebx
+label Exit
+move_u32 eax 60
+syscall
+trap
+end define
+end section

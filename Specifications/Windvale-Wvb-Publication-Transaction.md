@@ -2,12 +2,15 @@
 
 ## Status and scope
 
-The portable transaction core is implemented under
+The portable transaction core and narrow native publisher candidates are
+implemented under
 [Decision 0214](../Documents/Decisions/0214-Exact-Native-Wvb-Publication-Step.md).
-It owns the platform-independent state and outcome rules for the future exact native
-WVB publisher. Windows/Linux resource identity, exclusive sibling creation, durable
-write, byte reconstruction, atomic replacement, directory durability, and raw tool
-packages remain pending.
+The core owns the platform-independent state and outcome rules for the exact native
+WVB publisher. Windows and Linux adapters now implement resource identity,
+exclusive sibling creation, durable write, byte reconstruction, atomic replacement,
+directory durability, and deterministic raw tool packages. Current-host Windows
+direct execution passes; independent Linux execution and the complete cross-host
+fault/concurrency qualification matrix remain pending.
 
 This module does not read or write files, verify WVB, interpret paths, or perform a
 replacement. It receives only confirmed adapter milestones and makes it impossible
@@ -67,11 +70,12 @@ Wvbˉpublicationˉapply(
 
 The executable fixture is deliberately separate from the core and returns zero
 only after checking the complete success path, each cleanup-producing failure,
-known unchanged rejection, post-replacement indeterminate completion, and invalid
-transition evidence. Its exact composed WVB is 7,684 bytes with SHA-256
-`4be7e3948576498963f2858fd95d7273d6b63d467fbbb2b344c86c223a8864ce`.
+known unchanged rejection, post-replacement indeterminate completion, invalid
+transition evidence, and native-bridge result encoding. Its exact composed WVB is
+13,617 bytes with SHA-256
+`a9c356ba0bcbd61fd6bac7afd40c10e752f3eedad729077d5abdc5518ae188a4`.
 
-## Remaining native boundary
+## Native boundary and remaining qualification
 
 The native adapters must prove each action before submitting it to the state
 machine. They may not submit `Flushˉsibling`, `Verifyˉsibling`,
@@ -80,6 +84,8 @@ call was attempted. Provider rejection before replacement must retain evidence t
 the destination is unchanged. Any failure after replacement that lacks confirmed
 directory durability remains indeterminate.
 
-The adapters and final publisher packages require the full Decision 0214 fault,
-concurrency, identity, direct no-.NET execution, deterministic package, and
-cross-host evidence before normal-path cutover.
+The implemented adapters retain this proof ordering and share the portable state
+machine, verifier, SHA-256, and success transcript. The candidate packages remain
+Stage 0-constructed evidence until the full Decision 0214 fault, concurrency,
+identity, direct no-.NET execution, deterministic package, and cross-host matrix
+passes. Normal-path cutover must not precede that qualification.

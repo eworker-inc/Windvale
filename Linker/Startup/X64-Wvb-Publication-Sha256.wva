@@ -1,0 +1,437 @@
+windvale-assembly 1
+
+# Capability-free SHA-256 used by both fixed publisher adapters. This is host
+# assembly, not a second WVB verifier or a source-language semantic definition.
+symbol local data X64_wvb_publication_sha256_initial in .rodata
+symbol local data X64_wvb_publication_sha256_round_constants in .rodata
+symbol export data X64_wvb_publication_report_newline in .rodata
+symbol export data X64_wvb_publication_report_prefix in .rodata
+symbol export data X64_wvb_publication_report_separator in .rodata
+symbol export function X64_wvb_publication_sha256_hex in .text
+symbol export function X64_wvb_publication_u32_hex8 in .text
+
+section code .text align 16
+define X64_wvb_publication_sha256_hex
+# Input: RSI bytes, ECX length, RDI 64-byte output. The caller has already
+# admitted the exact bytes and guarantees length <= 4 MiB.
+push rbx
+push rbp
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 416
+store_memory_u64 rsp none 1 384 rsi
+store_memory_u32 rsp none 1 392 ecx
+store_memory_u64 rsp none 1 400 rdi
+move eax ecx
+add_i32 eax 72
+and_i32 eax -64
+store_memory_u32 rsp none 1 396 eax
+
+# Copy the eight initial hash words into mutable state cells 0..31.
+load_address rsi X64_wvb_publication_sha256_initial
+xor ecx ecx
+label Initial_loop
+compare_i32 ecx 8
+branch above_equal Blocks_begin
+load_memory_u32 eax rsi rcx 4 0
+store_memory_u32 rsp rcx 4 0 eax
+add_i32 ecx 1
+jump_label Initial_loop
+
+label Blocks_begin
+xor r12d r12d
+label Block_loop
+load_memory_u32 eax rsp none 1 396
+compare r12d eax
+branch above_equal Digest_output
+
+# Zero and fill one 64-byte padded message block.
+xor ecx ecx
+xor eax eax
+label Block_zero_loop
+compare_i32 ecx 64
+branch above_equal Block_fill_begin
+store_memory_u8 rsp rcx 1 64 al
+add_i32 ecx 1
+jump_label Block_zero_loop
+label Block_fill_begin
+xor r13d r13d
+label Block_fill_loop
+compare_i32 r13d 64
+branch above_equal Block_length
+move eax r12d
+add eax r13d
+load_memory_u32 edx rsp none 1 392
+compare eax edx
+branch below Block_source_byte
+branch not_equal Block_fill_next
+move_u8 dl 128
+store_memory_u8 rsp r13 1 64 dl
+jump_label Block_fill_next
+label Block_source_byte
+load_memory_u64 rsi rsp none 1 384
+load_memory_u8 dl rsi rax 1 0
+store_memory_u8 rsp r13 1 64 dl
+label Block_fill_next
+add_i32 r13d 1
+jump_label Block_fill_loop
+
+label Block_length
+move eax r12d
+add_i32 eax 64
+load_memory_u32 edx rsp none 1 396
+compare eax edx
+branch not_equal Schedule_words
+load_memory_u32 eax rsp none 1 392
+shift_left rax 3
+move r8 rax
+shift_right r8 56
+store_memory_u8 rsp none 1 120 r8b
+move r8 rax
+shift_right r8 48
+store_memory_u8 rsp none 1 121 r8b
+move r8 rax
+shift_right r8 40
+store_memory_u8 rsp none 1 122 r8b
+move r8 rax
+shift_right r8 32
+store_memory_u8 rsp none 1 123 r8b
+move r8 rax
+shift_right r8 24
+store_memory_u8 rsp none 1 124 r8b
+move r8 rax
+shift_right r8 16
+store_memory_u8 rsp none 1 125 r8b
+move r8 rax
+shift_right r8 8
+store_memory_u8 rsp none 1 126 r8b
+store_memory_u8 rsp none 1 127 al
+
+# Decode the first sixteen big-endian words into the 256-byte schedule.
+label Schedule_words
+xor ecx ecx
+label Schedule_decode_loop
+compare_i32 ecx 16
+branch above_equal Schedule_extend_begin
+move edx ecx
+shift_left edx 2
+load_memory_u8 al rsp rdx 1 64
+zero_extend_u8 eax al
+shift_left eax 24
+load_memory_u8 dl rsp rdx 1 65
+zero_extend_u8 r8d dl
+shift_left r8d 16
+or eax r8d
+move edx ecx
+shift_left edx 2
+load_memory_u8 dl rsp rdx 1 66
+zero_extend_u8 r8d dl
+shift_left r8d 8
+or eax r8d
+move edx ecx
+shift_left edx 2
+load_memory_u8 dl rsp rdx 1 67
+zero_extend_u8 r8d dl
+or eax r8d
+store_memory_u32 rsp rcx 4 128 eax
+add_i32 ecx 1
+jump_label Schedule_decode_loop
+
+label Schedule_extend_begin
+move_u32 ecx 16
+label Schedule_extend_loop
+compare_i32 ecx 64
+branch above_equal Round_begin
+move edx ecx
+subtract_i32 edx 15
+load_memory_u32 eax rsp rdx 4 128
+move r8d eax
+rotate_right r8d 7
+move r9d eax
+rotate_right r9d 18
+xor r8d r9d
+shift_right eax 3
+xor r8d eax
+move edx ecx
+subtract_i32 edx 2
+load_memory_u32 eax rsp rdx 4 128
+move r9d eax
+rotate_right r9d 17
+move r10d eax
+rotate_right r10d 19
+xor r9d r10d
+shift_right eax 10
+xor r9d eax
+move edx ecx
+subtract_i32 edx 16
+load_memory_u32 eax rsp rdx 4 128
+add eax r8d
+move edx ecx
+subtract_i32 edx 7
+load_memory_u32 r10d rsp rdx 4 128
+add eax r10d
+add eax r9d
+store_memory_u32 rsp rcx 4 128 eax
+add_i32 ecx 1
+jump_label Schedule_extend_loop
+
+# Preserve the pre-block state in cells 32..63, then execute 64 wrapping rounds.
+label Round_begin
+xor ecx ecx
+label Preserve_state_loop
+compare_i32 ecx 8
+branch above_equal Round_loop_begin
+load_memory_u32 eax rsp rcx 4 0
+store_memory_u32 rsp rcx 4 32 eax
+add_i32 ecx 1
+jump_label Preserve_state_loop
+label Round_loop_begin
+load_address r15 X64_wvb_publication_sha256_round_constants
+xor r14d r14d
+label Round_loop
+compare_i32 r14d 64
+branch above_equal Round_complete
+
+# T1 = h + Sigma1(e) + Ch(e,f,g) + K[i] + W[i].
+load_memory_u32 eax rsp none 1 16
+move r8d eax
+rotate_right r8d 6
+move r9d eax
+rotate_right r9d 11
+xor r8d r9d
+move r9d eax
+rotate_right r9d 25
+xor r8d r9d
+move r9d eax
+load_memory_u32 r10d rsp none 1 20
+and r9d r10d
+xor_i32 eax -1
+load_memory_u32 r10d rsp none 1 24
+and eax r10d
+xor r9d eax
+load_memory_u32 ebp rsp none 1 28
+add ebp r8d
+add ebp r9d
+load_memory_u32 eax r15 r14 4 0
+add ebp eax
+load_memory_u32 eax rsp r14 4 128
+add ebp eax
+
+# T2 = Sigma0(a) + Maj(a,b,c).
+load_memory_u32 eax rsp none 1 0
+move r8d eax
+rotate_right r8d 2
+move r9d eax
+rotate_right r9d 13
+xor r8d r9d
+move r9d eax
+rotate_right r9d 22
+xor r8d r9d
+move r9d eax
+load_memory_u32 r10d rsp none 1 4
+and r9d r10d
+move r11d eax
+load_memory_u32 r10d rsp none 1 8
+and r11d r10d
+xor r9d r11d
+load_memory_u32 r11d rsp none 1 4
+and r11d r10d
+xor r9d r11d
+add r8d r9d
+
+# Shift working state and install the two new words.
+load_memory_u32 eax rsp none 1 24
+store_memory_u32 rsp none 1 28 eax
+load_memory_u32 eax rsp none 1 20
+store_memory_u32 rsp none 1 24 eax
+load_memory_u32 eax rsp none 1 16
+store_memory_u32 rsp none 1 20 eax
+load_memory_u32 eax rsp none 1 12
+add eax ebp
+store_memory_u32 rsp none 1 16 eax
+load_memory_u32 eax rsp none 1 8
+store_memory_u32 rsp none 1 12 eax
+load_memory_u32 eax rsp none 1 4
+store_memory_u32 rsp none 1 8 eax
+load_memory_u32 eax rsp none 1 0
+store_memory_u32 rsp none 1 4 eax
+add ebp r8d
+store_memory_u32 rsp none 1 0 ebp
+add_i32 r14d 1
+jump_label Round_loop
+
+label Round_complete
+xor ecx ecx
+label State_add_loop
+compare_i32 ecx 8
+branch above_equal Block_next
+load_memory_u32 eax rsp rcx 4 0
+load_memory_u32 edx rsp rcx 4 32
+add eax edx
+store_memory_u32 rsp rcx 4 0 eax
+add_i32 ecx 1
+jump_label State_add_loop
+label Block_next
+add_i32 r12d 64
+jump_label Block_loop
+
+# Encode eight final words as 64 lowercase hexadecimal ASCII bytes.
+label Digest_output
+load_memory_u64 rdi rsp none 1 400
+xor r12d r12d
+xor r13d r13d
+label Digest_word_loop
+compare_i32 r12d 8
+branch above_equal Digest_complete
+load_memory_u32 r11d rsp r12 4 0
+xor ecx ecx
+label Digest_byte_loop
+compare_i32 ecx 4
+branch above_equal Digest_word_next
+rotate_left r11d 8
+move r8d r11d
+and_i32 r8d 255
+move r9d r8d
+shift_right r9d 4
+add_i32 r9d 48
+compare_i32 r9d 57
+branch below_equal Digest_high_ready
+add_i32 r9d 39
+label Digest_high_ready
+store_memory_u8 rdi r13 1 0 r9b
+add_i32 r13d 1
+and_i32 r8d 15
+add_i32 r8d 48
+compare_i32 r8d 57
+branch below_equal Digest_low_ready
+add_i32 r8d 39
+label Digest_low_ready
+store_memory_u8 rdi r13 1 0 r8b
+add_i32 r13d 1
+add_i32 ecx 1
+jump_label Digest_byte_loop
+label Digest_word_next
+add_i32 r12d 1
+jump_label Digest_word_loop
+
+label Digest_complete
+add_i32 rsp 416
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbp
+pop rbx
+return
+end define
+
+define X64_wvb_publication_u32_hex8
+# Input: EAX value, RDI eight-byte output.
+move_u32 r8d 8
+label Hex_loop
+rotate_left eax 4
+move edx eax
+and_i32 edx 15
+add_i8 dl 48
+compare_i8 dl 57
+branch below_equal Hex_digit
+add_i8 dl 39
+label Hex_digit
+store_memory_u8 rdi none 1 0 dl
+add_i32 rdi 1
+subtract_i32 r8d 1
+branch not_equal Hex_loop
+return
+end define
+end section
+
+section rodata .rodata align 4
+define X64_wvb_publication_sha256_initial
+u32 1779033703
+u32 3144134277
+u32 1013904242
+u32 2773480762
+u32 1359893119
+u32 2600822924
+u32 528734635
+u32 1541459225
+end define
+define X64_wvb_publication_sha256_round_constants
+u32 1116352408
+u32 1899447441
+u32 3049323471
+u32 3921009573
+u32 961987163
+u32 1508970993
+u32 2453635748
+u32 2870763221
+u32 3624381080
+u32 310598401
+u32 607225278
+u32 1426881987
+u32 1925078388
+u32 2162078206
+u32 2614888103
+u32 3248222580
+u32 3835390401
+u32 4022224774
+u32 264347078
+u32 604807628
+u32 770255983
+u32 1249150122
+u32 1555081692
+u32 1996064986
+u32 2554220882
+u32 2821834349
+u32 2952996808
+u32 3210313671
+u32 3336571891
+u32 3584528711
+u32 113926993
+u32 338241895
+u32 666307205
+u32 773529912
+u32 1294757372
+u32 1396182291
+u32 1695183700
+u32 1986661051
+u32 2177026350
+u32 2456956037
+u32 2730485921
+u32 2820302411
+u32 3259730800
+u32 3345764771
+u32 3516065817
+u32 3600352804
+u32 4094571909
+u32 275423344
+u32 430227734
+u32 506948616
+u32 659060556
+u32 883997877
+u32 958139571
+u32 1322822218
+u32 1537002063
+u32 1747873779
+u32 1955562222
+u32 2024104815
+u32 2227730452
+u32 2361852424
+u32 2428436474
+u32 2756734187
+u32 3204031479
+u32 3329325298
+end define
+define X64_wvb_publication_report_newline
+bytes 10
+end define
+define X64_wvb_publication_report_prefix
+bytes 112 117 98 108 105 99 97 116 105 111 110 32 115 116 97 116 117 115
+bytes 61 67 111 109 112 108 101 116 101 32 98 121 116 101 115 61 48 120
+end define
+define X64_wvb_publication_report_separator
+bytes 32 115 104 97 50 53 54 61
+end define
+end section

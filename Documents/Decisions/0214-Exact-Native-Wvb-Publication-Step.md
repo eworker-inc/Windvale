@@ -1,7 +1,7 @@
 # Decision 0214: Exact native WVB publication step
 
 - Date: 2026-08-04
-- Status: Accepted; portable transaction core implemented; native adapters pending
+- Status: Accepted; native publisher candidate implemented; cross-host qualification pending
 - Advances: [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md) and Phase 10
 - Builds on: [Decision 0185](0185-Standalone-Compiler-Wvb-Verifier-Applications.md), [Decision 0186](0186-First-Windvale-Native-Compiler-Build-Driver.md), and [Decision 0187](0187-Project-Aware-Windvale-Native-Build-Driver.md)
 
@@ -135,13 +135,47 @@ replacement is indeterminate and cannot return to an unchanged state.
 
 The 4,560-byte portable WVB has SHA-256
 `6c579d06e481ff5a2cde04463ccc84e78c458eea2c7865bf8797f22136c11a52`.
-The separate fixture composes that core into a 7,684-byte executable module with
-SHA-256 `4be7e3948576498963f2858fd95d7273d6b63d467fbbb2b344c86c223a8864ce`
-and exercises the complete success path, each pre-replacement failure and cleanup,
-post-replacement uncertainty, and invalid transition preservation. The focused
-zero-warning Windows test passes in 0.636 seconds. This evidence implements shared
-policy only; it does not claim native file identity, replacement, durability, raw
-publisher packages, or cross-host qualification.
+The separate fixture now composes that core and the native-call bridge into a
+13,617-byte executable module with SHA-256
+`a9c356ba0bcbd61fd6bac7afd40c10e752f3eedad729077d5abdc5518ae188a4` and
+exercises the complete success path, each pre-replacement failure and cleanup,
+post-replacement uncertainty, invalid transition preservation, and bridge result
+encoding. This evidence implements shared policy only; it does not by itself claim
+native file identity, replacement, durability, raw publisher packages, or
+cross-host qualification.
+
+## Implemented native-adapter slice
+
+The publisher front door now composes the compiler-aligned verifier and portable
+transaction core into one 136,698-byte hosted WVB with SHA-256
+`d8fcbebe7915542b0206900bcce5459957cee768470bf64a2999e6ee688af05d`.
+Small fixed entry objects transfer control to separately owned Windows and Linux
+publication adapters. Both adapters use one capability-free shared x64 SHA-256
+object, preserve the admitted candidate through an already-open native identity,
+and submit transaction milestones only after the corresponding host operation is
+confirmed.
+
+The deterministic candidate object and package identities are:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Linux entry WVO | 164 | `eee997412ced0d7edacaf39dae9c4a3c51e859dce4537045f3972be990b115a4` |
+| Linux publication-adapter WVO | 5,507 | `9272c17b0d7234218a6cd7c31131e9d25e62b6c1ccd976d94975e9b436b2ca5a` |
+| Windows entry WVO | 168 | `bb136af0382b2f72efc8a07f58fb2368319fce7c119bc7bbfa1b94da6ded9367` |
+| Windows publication-adapter WVO | 9,544 | `ef795dabbced735e0808fca04d0205b87d3735b26dd53ca23ed57a7e74453e93` |
+| Shared x64 SHA-256/report WVO | 2,176 | `380af02cf29f85be1f63a4ea1f02ca3cc027e63091659e214a023b03730f6608` |
+| Linux raw publisher package | 1,119,173 | `71dccc29333b05cff71e4b36e5e41617e0df4f8d747747479e8a27f4a90ed3b0` |
+| Windows raw publisher package | 1,121,792 | `f2502ecf9143cfa1343c5f5cb1de066bdf1f82f0e4782afae178f11c41afd735` |
+
+Current-host Windows evidence directly executes the raw PE without loading the
+CLR, replaces an existing destination, reports the exact admitted byte count and
+SHA-256 only after durability, preserves the destination for malformed input,
+rejects a hard-link alias by native identity, and leaves no publisher scratch.
+The same focused test deterministically constructs and inspects the Linux ELF;
+direct Linux execution and the complete fault, concurrency, and post-replacement
+indeterminate matrix remain for the independent dual-host qualification run.
+These artifacts are therefore implemented candidates, not yet distributed or
+cross-host-qualified releases.
 
 ## Consequences
 

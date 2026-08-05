@@ -1,6 +1,7 @@
 module Wvbˉpublicationˉtransactionˉadapter profile portable;
 
 import Windvaleˉwvbˉpublicationˉtransaction as Publication;
+import Windvaleˉwvbˉpublicationˉnativeˉbridge as Nativeˉbridge;
 
 fn Apply(
     Current: Publication.Wvbˉpublicationˉresult,
@@ -45,6 +46,25 @@ fn Cleanupˉafter(
 }
 
 export fn Main() -> i32 {
+    var Token: u32 = Nativeˉbridge.Wvbˉpublicationˉnativeˉbegin();
+    if Token != 0u32 { return 15; }
+    Token = Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(Token, 0u32);
+    if Token != 129u32 { return 16; }
+    Token = Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(Token, 1u32);
+    if Token != 130u32 { return 17; }
+    Token = Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(Token, 2u32);
+    if Token != 131u32 { return 18; }
+    Token = Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(Token, 3u32);
+    if Token != 260u32 { return 19; }
+    Token = Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(Token, 4u32);
+    if Token != 311u32 { return 20; }
+    if Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(0u32, 7u32) != 4294967295u32 {
+        return 21;
+    }
+    if Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(311u32, 5u32) != 4294967295u32 {
+        return 22;
+    }
+
     let Begun: Publication.Wvbˉpublicationˉresult =
         Publication.Wvbˉpublicationˉbegin();
     if !Isˉrejected(Apply(Begun, Publication.Wvbˉpublicationˉaction.Fail)) {

@@ -472,6 +472,27 @@
       Include="../../Tools/Windvale.Publish/Wvb-Publication-Transaction.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-Publication-Transaction.wv" />
     <EmbeddedResource
+      Include="../../Tools/Windvale.Publish/Wvb-Publication-Native-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-Publication-Native-Bridge.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.Publish/Wvb-Publisher-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-Publisher-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/Linux-X64-Wvb-Publisher.wva"
+      LogicalName="Windvale.Seed.Tests.Linux-X64-Wvb-Publisher.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/Linux-X64-Wvb-Publication-Adapter.wva"
+      LogicalName="Windvale.Seed.Tests.Linux-X64-Wvb-Publication-Adapter.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/Windows-X64-Wvb-Publisher.wva"
+      LogicalName="Windvale.Seed.Tests.Windows-X64-Wvb-Publisher.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/Windows-X64-Wvb-Publication-Adapter.wva"
+      LogicalName="Windvale.Seed.Tests.Windows-X64-Wvb-Publication-Adapter.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/X64-Wvb-Publication-Sha256.wva"
+      LogicalName="Windvale.Seed.Tests.X64-Wvb-Publication-Sha256.wva" />
+    <EmbeddedResource
       Include="../Fixtures/Publication/Wvb-Publication-Transaction-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-Publication-Transaction-Adapter.wv" />
     <EmbeddedResource

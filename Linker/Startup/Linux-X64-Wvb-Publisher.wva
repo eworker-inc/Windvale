@@ -1,0 +1,12 @@
+windvale-assembly 1
+
+# Fixed Linux publisher entry. The host publication mechanics remain in a
+# separately owned adapter so the startup boundary stays small and reviewable.
+symbol export function Linux_wvb_publisher_startup in .text
+symbol import function Linux_wvb_publisher_run
+
+section code .text align 16
+define Linux_wvb_publisher_startup
+jump Linux_wvb_publisher_run
+end define
+end section

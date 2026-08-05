@@ -1,0 +1,13 @@
+windvale-assembly 1
+
+# Fixed entry shim. The substantial host adapter is a separate WVO fragment so
+# startup, platform mutation logic, and the linked Windvale program remain
+# independently bounded and reviewable.
+symbol export function Windows_wvb_publisher_startup in .text
+symbol import function Windows_wvb_publisher_run
+
+section code .text align 16
+define Windows_wvb_publisher_startup
+jump Windows_wvb_publisher_run
+end define
+end section
