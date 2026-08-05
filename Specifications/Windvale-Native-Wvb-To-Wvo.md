@@ -51,9 +51,9 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 86,741 | `e1a795dd07be21ccb150823bd8790a8766af28d4361b8151cdf224a48f1c4389` |
-| Windows WVB-to-WVO tool | 1,127,936 | `74fc450f042d4ef48e77c89ff7ad5f8fbf88dd19b3a9b4bae53106b536957061` |
-| Linux WVB-to-WVO tool | 1,126,400 | `7bd6c4e0cf5e7cfeb416f3a36386722b9317204c828cc40794da2e87071e4538` |
+| WVB-to-WVO tool WVB | 87,998 | `a892837f439c484b8627b16770aaaa757c4c31819161e47b8fc6b7de7a0a4085` |
+| Windows WVB-to-WVO tool | 1,115,136 | `d6fe7e3cbeb109ae048b1b853de0abfa93c35f3f534bba9d072a34f5d3810469` |
+| Linux WVB-to-WVO tool | 1,114,112 | `25612acf58b7bb2113865bcccbda09800ecaeaa8f30ee1d7a50a68b90bbcf491` |
 
 `Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 
@@ -62,7 +62,7 @@ The current candidate identities are:
 | Return-42 WVB | 174 | `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31` |
 | Return-42 WVO | 479 | `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5` |
 
-The WVO contains 406 code bytes, one exported `Main`, no data, imports, or relocations, and is admitted by the independent WVO parser. The current-host native application must reproduce it byte for byte, repeat deterministically, reject a truncated WVB without changing a sentinel output, and load no CLR/.NET runtime.
+The WVO contains 406 code bytes, one exported `Main`, no data, imports, or relocations, and is admitted by the independent WVO parser. The current-host native application must reproduce it byte for byte, repeat deterministically, reject a truncated WVB without changing a sentinel output, and load no CLR/.NET runtime. Decision 0228 also requires exact Stage 0 WVO agreement for the existing three-function `Add -> Build -> Main` fixture while rejecting self or forward calls; that expanded corpus changes no fixed return-42 vector.
 
 ## Qualification and retirement boundary
 

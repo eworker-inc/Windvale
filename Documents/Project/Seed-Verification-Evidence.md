@@ -1904,17 +1904,27 @@ as paired `WVHN 1` source candidates without new startup assembly. Direct
 emit signed machine fields. The complete retained differential corpus proves that
 this changes no generated WVO byte.
 
-The current module identities are an 89,708-byte core /
-`761822053ecee061422571758b1297e6451447a255b3b529cb6546c4ef2a78f7`,
-an 85,713-byte memory adapter /
-`7a806d8ed92fb4121c2017f3e0ebcfa5e174715e4655a87b0d8e7d0dcf3e3c9b`,
-and an 86,741-byte hosted tool /
-`e1a795dd07be21ccb150823bd8790a8766af28d4361b8151cdf224a48f1c4389`.
-The tool's complete Stage 0 lowering records 1,109,643 native code bytes and a
-1,112,045-byte WVO. Its Windows candidate is 1,127,936 bytes /
-`74fc450f042d4ef48e77c89ff7ad5f8fbf88dd19b3a9b4bae53106b536957061`;
-its Linux candidate is 1,126,400 bytes /
-`7bd6c4e0cf5e7cfeb416f3a36386722b9317204c828cc40794da2e87071e4538`.
+[Decision 0228](../Decisions/0228-Bounded-Acyclic-Native-Call-Directory.md)
+expands the core from one optional helper to one through eight functions under a
+strictly decreasing call-ordinal rule. A focused 16-byte-per-function directory
+owns machine offsets, lengths, parameter counts, and four padded scalar types;
+the separate layout module also owns WVO function-symbol encoding. The lowering
+core falls from 2,979 to 2,887 source lines rather than growing another special
+case.
+
+The current module identities are a 5,369-byte layout module /
+`240e8bc7944718c89de1db36c8bc4cfa7d0b78ecd52f24277db15714df4d8dc2`,
+a 90,971-byte core closure /
+`b2f966e8c15ab2e2b60d04d6fabfa74727b42b542ab93db90c1d62a9cbc4c32b`,
+an 86,970-byte memory adapter /
+`a216e6f88de0599e2060047ce3ba157b537d9caf54d78a7d8631eb253d6971e5`,
+and an 87,998-byte hosted tool /
+`a892837f439c484b8627b16770aaaa757c4c31819161e47b8fc6b7de7a0a4085`.
+The tool's complete Stage 0 lowering records 1,096,799 native code bytes and a
+1,099,853-byte WVO. Its Windows candidate is 1,115,136 bytes /
+`d6fe7e3cbeb109ae048b1b853de0abfa93c35f3f534bba9d072a34f5d3810469`;
+its Linux candidate is 1,114,112 bytes /
+`25612acf58b7bb2113865bcccbda09800ecaeaa8f30ee1d7a50a68b90bbcf491`.
 
 One stable accepted-subset fixture is 174 WVB bytes /
 `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31`.
@@ -1922,14 +1932,19 @@ The native Windows candidate emits its exact 479-byte WVO /
 `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`
 and reports 406 code bytes. The independent C# WVO parser admits that result.
 
-On local Windows, the final zero-warning compile-only Seed build takes 9.03
-seconds. Both reviewed package cases pass in 6.450 test seconds: they check target
-discovery, exact source/profile/service/container identities, public AOT
-reconstruction, direct native output, deterministic repetition, malformed and
-usage behavior, sentinel preservation, independent WVO parsing, and absence of a
-CLR/.NET module. The separately reviewed existing shared-backend case passes in
-5.216 seconds and preserves byte equality across its constant, arithmetic,
-comparison, control, loop, call, mixed-register, and malformed corpus.
+Before execution, the shared-backend assertions were extended with the existing
+three-function `Add -> Build -> Main` fixture and a mutated middle-function
+self/forward call. The fixture calls both lower ordinals, returns 42 under the
+reference runtime, and produces exact Stage 0 WVO bytes through both interpreted
+and native execution of the Windvale-written lowerer. Every retained one- and
+two-function object remains byte-identical. The malformed mutation fails closed.
+
+On local Windows, the one reviewed Fast selection rebuilds the test project in
+16.09 seconds and passes its single case in 5.944 test seconds. Native and managed
+source compilers independently produce the same layout, core, and memory closure
+bytes. Standard, Qualification, the full Seed/OS suites, the separate native
+package case, Linux execution, GitHub verification, artifact promotion, and
+ordinary-path cutover were deliberately not run.
 
 This is focused local candidate evidence only. Standard, Qualification, the full
 Seed/OS suites, native CLI qualification, Linux execution, GitHub verification,

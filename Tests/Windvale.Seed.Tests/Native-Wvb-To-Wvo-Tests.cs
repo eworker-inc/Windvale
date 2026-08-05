@@ -9,13 +9,13 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 86_741;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_127_936;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 87_998;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_115_136;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "74fc450f042d4ef48e77c89ff7ad5f8fbf88dd19b3a9b4bae53106b536957061";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_126_400;
+        "d6fe7e3cbeb109ae048b1b853de0abfa93c35f3f534bba9d072a34f5d3810469";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_114_112;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "7bd6c4e0cf5e7cfeb416f3a36386722b9317204c828cc40794da2e87071e4538";
+        "25612acf58b7bb2113865bcccbda09800ecaeaa8f30ee1d7a50a68b90bbcf491";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -240,7 +240,14 @@ internal static partial class Program
     {
         var Result = Seedˉcompiler.Compileˉmodules(
             new("Compiler/Windvale/Native-X64-Lowering-Tool.wv", NATIVE_X64_LOWERING_TOOL_SOURCE),
-            [new("Compiler/Windvale/Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE)]);
+            [
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+                    NATIVE_X64_LOWERING_CORE_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Layout.wv",
+                    NATIVE_X64_LOWERING_LAYOUT_SOURCE),
+            ]);
         if (!Result.Success)
         {
             throw new InvalidOperationException(

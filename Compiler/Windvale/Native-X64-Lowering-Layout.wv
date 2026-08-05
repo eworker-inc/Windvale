@@ -1,0 +1,146 @@
+module Compilerˉnativeˉx64ˉloweringˉlayout profile portable;
+
+export fn Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() -> u32 {
+    return 16u32;
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉappend(
+    Directory: bytes,
+    Machineˉoffset: u32,
+    Machineˉlength: u32,
+    Parameters: u32,
+    Parameterˉtypes: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉconcat(
+        Directory,
+        Bytesˉfromˉu32ˉlittle(Machineˉoffset)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Machineˉlength));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Parameters));
+    var Parameter: u32 = 0u32;
+    while Parameter < 4u32 {
+        var Type: u8 = 0u8;
+        if Parameter < Parameters {
+            Type = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
+        }
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Type));
+        Parameter = Parameter + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Directory,
+        Function * Compilerˉnativeˉx64ˉlayoutˉentryˉbytes()
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Directory,
+        Function * Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() + 4u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉparameters(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Directory,
+        Function * Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() + 8u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉparameterˉtype(
+    Directory: bytes,
+    Function: u32,
+    Parameter: u32
+) -> u8 {
+    return Bytesˉreadˉu8(
+        Directory,
+        Function * Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() + 12u32 + Parameter
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉhelperˉname(Function: u32) -> bytes {
+    if Function == 0u32 { return Textˉtoˉutf8("$function_0000"); }
+    if Function == 1u32 { return Textˉtoˉutf8("$function_0001"); }
+    if Function == 2u32 { return Textˉtoˉutf8("$function_0002"); }
+    if Function == 3u32 { return Textˉtoˉutf8("$function_0003"); }
+    if Function == 4u32 { return Textˉtoˉutf8("$function_0004"); }
+    if Function == 5u32 { return Textˉtoˉutf8("$function_0005"); }
+    if Function == 6u32 { return Textˉtoˉutf8("$function_0006"); }
+    return Textˉtoˉutf8("");
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉemitˉobject(
+    Code: bytes,
+    Directory: bytes,
+    Functionˉcount: u32
+) -> bytes {
+    if Functionˉcount == 0u32 { return Textˉtoˉutf8(""); }
+    if Functionˉcount > 8u32 { return Textˉtoˉutf8(""); }
+    if Bytesˉlength(Directory) !=
+        Functionˉcount * Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() {
+        return Textˉtoˉutf8("");
+    }
+    let Codeˉlength: u32 = Bytesˉlength(Code);
+    var Result: bytes = Textˉtoˉutf8("WVO1");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functionˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(16u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Codeˉlength));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Codeˉlength));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(5u32));
+    Result = Bytesˉconcat(Result, Textˉtoˉutf8(".text"));
+    Result = Bytesˉconcat(Result, Code);
+
+    var Function: u32 = 0u32;
+    while Function < Functionˉcount {
+        let Isˉmain: bool = Function + 1u32 == Functionˉcount;
+        var Name: bytes = Compilerˉnativeˉx64ˉlayoutˉhelperˉname(Function);
+        var Binding: u8 = 1u8;
+        if Isˉmain {
+            Name = Textˉtoˉutf8("Main");
+            Binding = 2u8;
+        }
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Binding));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(
+                Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(Directory, Function)
+            )
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(
+                Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(Directory, Function)
+            )
+        );
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Name)));
+        Result = Bytesˉconcat(Result, Name);
+        Function = Function + 1u32;
+    }
+    return Result;
+}
