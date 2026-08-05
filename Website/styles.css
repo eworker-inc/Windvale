@@ -217,6 +217,21 @@ main {
     background: #0f54bd;
 }
 
+.site-header nav a[href="/support/"] {
+    padding: 6px 9px;
+    color: var(--amber);
+    border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--line));
+    border-radius: 999px;
+    background: var(--amber-soft);
+}
+
+.site-header nav a[href="/support/"]:hover,
+.site-header nav a[href="/support/"]:focus-visible,
+.site-header nav a[href="/support/"].active {
+    color: var(--ink);
+    border-color: var(--amber);
+}
+
 .theme-toggle {
     display: grid;
     place-items: center;
@@ -1351,7 +1366,7 @@ button:focus-visible {
         grid-template-columns: 1fr auto 38px;
     }
 
-    .site-header nav a:not(.nav-button) {
+    .site-header nav a:not(.nav-button):not([href="/support/"]) {
         display: none;
     }
 
@@ -1413,6 +1428,10 @@ button:focus-visible {
     .header-inner {
         gap: 10px;
         min-height: 62px;
+    }
+
+    .site-header nav {
+        gap: 8px;
     }
 
     .brand > span {

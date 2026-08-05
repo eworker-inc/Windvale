@@ -1143,32 +1143,95 @@ select {
 }
 
 @media (max-width: 560px) {
+    .playground-shell {
+        grid-template-rows: 52px auto auto 28px;
+    }
+
+    .app-header {
+        padding: 0 9px;
+    }
+
+    .brand-mark {
+        width: 35px;
+        height: 35px;
+        border-radius: 9px;
+    }
+
     .playground-brand b,
     .header-actions a {
         display: none;
     }
 
     .toolbar-actions {
-        align-items: stretch;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 8px;
     }
 
     .example-picker,
-    .example-picker select,
-    .run-button {
+    .example-picker select {
         width: 100%;
+    }
+
+    .example-picker > span {
+        display: none;
     }
 
     .example-picker select {
         max-width: none;
+        min-height: 38px;
     }
 
     .run-button {
+        width: auto;
+        min-height: 38px;
+        padding-inline: 12px;
         justify-content: center;
     }
 
+    .editor-pane {
+        height: min(54svh, 500px);
+        min-height: 350px;
+    }
+
+    .authority-content {
+        padding: 10px;
+    }
+
+    .example-description {
+        margin-bottom: 10px;
+    }
+
     .capabilities {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+    .capabilities label {
+        padding: 7px;
+    }
+
+    .capabilities label:last-of-type {
+        grid-column: 1 / -1;
+    }
+
+    .capabilities small {
+        display: none;
+    }
+
+    .budget-control,
+    .sandbox-note {
+        margin-top: 10px;
+    }
+
+    .sandbox-note {
+        padding: 7px;
+    }
+
+    .results-pane {
+        height: 320px;
     }
 
     .execution-grid {
@@ -1176,7 +1239,12 @@ select {
     }
 
     .result-tabs {
+        padding-inline: 4px;
         overflow-x: auto;
+    }
+
+    .result-tabs button {
+        padding-inline: 8px;
     }
 
     .result-status,

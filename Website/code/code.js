@@ -24,8 +24,13 @@ function Setˉstatus(Message, Failure = false) {
     }
     const Status = Makeˉelement("div", Failure ? "repository-load-state failure" : "repository-load-state");
     Status.setAttribute("role", Failure ? "alert" : "status");
+    const Icon = Makeˉelement(
+        "span",
+        Failure ? "repository-status-icon failure" : "repository-status-icon loading",
+    );
+    Icon.setAttribute("aria-hidden", "true");
     Status.append(
-        Makeˉelement("span", "material-symbol", Failure ? "error" : "hourglass_top"),
+        Icon,
         Makeˉelement("p", "", Message),
     );
     Content.replaceChildren(Status);
