@@ -1,0 +1,197 @@
+module Windvaleˉwvbˉpublicationˉtransaction profile portable;
+
+export enum Wvbˉpublicationˉstate {
+    Candidateˉadmitted = 0;
+    Siblingˉowned = 1;
+    Siblingˉdurable = 2;
+    Siblingˉverified = 3;
+    Destinationˉreplaced = 4;
+    Cleanupˉrequired = 5;
+    Rejectedˉunchanged = 6;
+    Complete = 7;
+    Indeterminate = 8;
+}
+
+export enum Wvbˉpublicationˉaction {
+    Createˉsibling = 0;
+    Flushˉsibling = 1;
+    Verifyˉsibling = 2;
+    Replaceˉdestination = 3;
+    Flushˉdirectory = 4;
+    Fail = 5;
+    Cleanˉsibling = 6;
+}
+
+export enum Wvbˉpublicationˉoutcome {
+    Active = 0;
+    Cleanupˉrequired = 1;
+    Rejectedˉunchanged = 2;
+    Complete = 3;
+    Indeterminate = 4;
+    Invalidˉtransition = 5;
+}
+
+export record Wvbˉpublicationˉresult {
+    State: Wvbˉpublicationˉstate;
+    Outcome: Wvbˉpublicationˉoutcome;
+    Scratchˉowned: bool;
+    Destinationˉmayˉdiffer: bool;
+}
+
+fn Wvbˉpublicationˉresultˉmake(
+    State: Wvbˉpublicationˉstate,
+    Outcome: Wvbˉpublicationˉoutcome,
+    Scratchˉowned: bool,
+    Destinationˉmayˉdiffer: bool
+) -> Wvbˉpublicationˉresult {
+    return Wvbˉpublicationˉresult(
+        State,
+        Outcome,
+        Scratchˉowned,
+        Destinationˉmayˉdiffer
+    );
+}
+
+export fn Wvbˉpublicationˉbegin() -> Wvbˉpublicationˉresult {
+    return Wvbˉpublicationˉresultˉmake(
+        Wvbˉpublicationˉstate.Candidateˉadmitted,
+        Wvbˉpublicationˉoutcome.Active,
+        false,
+        false
+    );
+}
+
+fn Wvbˉpublicationˉinvalid(
+    Current: Wvbˉpublicationˉresult
+) -> Wvbˉpublicationˉresult {
+    return Wvbˉpublicationˉresultˉmake(
+        Current.State,
+        Wvbˉpublicationˉoutcome.Invalidˉtransition,
+        Current.Scratchˉowned,
+        Current.Destinationˉmayˉdiffer
+    );
+}
+
+fn Wvbˉpublicationˉfail(
+    Current: Wvbˉpublicationˉresult
+) -> Wvbˉpublicationˉresult {
+    if Current.State == Wvbˉpublicationˉstate.Candidateˉadmitted {
+        return Wvbˉpublicationˉresultˉmake(
+            Wvbˉpublicationˉstate.Rejectedˉunchanged,
+            Wvbˉpublicationˉoutcome.Rejectedˉunchanged,
+            false,
+            false
+        );
+    }
+    if Current.State == Wvbˉpublicationˉstate.Siblingˉowned {
+        return Wvbˉpublicationˉresultˉmake(
+            Wvbˉpublicationˉstate.Cleanupˉrequired,
+            Wvbˉpublicationˉoutcome.Cleanupˉrequired,
+            true,
+            false
+        );
+    }
+    if Current.State == Wvbˉpublicationˉstate.Siblingˉdurable {
+        return Wvbˉpublicationˉresultˉmake(
+            Wvbˉpublicationˉstate.Cleanupˉrequired,
+            Wvbˉpublicationˉoutcome.Cleanupˉrequired,
+            true,
+            false
+        );
+    }
+    if Current.State == Wvbˉpublicationˉstate.Siblingˉverified {
+        return Wvbˉpublicationˉresultˉmake(
+            Wvbˉpublicationˉstate.Cleanupˉrequired,
+            Wvbˉpublicationˉoutcome.Cleanupˉrequired,
+            true,
+            false
+        );
+    }
+    if Current.State == Wvbˉpublicationˉstate.Destinationˉreplaced {
+        return Wvbˉpublicationˉresultˉmake(
+            Wvbˉpublicationˉstate.Indeterminate,
+            Wvbˉpublicationˉoutcome.Indeterminate,
+            false,
+            true
+        );
+    }
+    return Wvbˉpublicationˉinvalid(Current);
+}
+
+export fn Wvbˉpublicationˉapply(
+    Current: Wvbˉpublicationˉresult,
+    Action: Wvbˉpublicationˉaction
+) -> Wvbˉpublicationˉresult {
+    if Current.Outcome != Wvbˉpublicationˉoutcome.Active {
+        if Current.State == Wvbˉpublicationˉstate.Cleanupˉrequired {
+            if Action == Wvbˉpublicationˉaction.Cleanˉsibling {
+                return Wvbˉpublicationˉresultˉmake(
+                    Wvbˉpublicationˉstate.Rejectedˉunchanged,
+                    Wvbˉpublicationˉoutcome.Rejectedˉunchanged,
+                    false,
+                    false
+                );
+            }
+        }
+        return Wvbˉpublicationˉinvalid(Current);
+    }
+    if Action == Wvbˉpublicationˉaction.Fail {
+        return Wvbˉpublicationˉfail(Current);
+    }
+    if Current.State == Wvbˉpublicationˉstate.Candidateˉadmitted {
+        if Action == Wvbˉpublicationˉaction.Createˉsibling {
+            return Wvbˉpublicationˉresultˉmake(
+                Wvbˉpublicationˉstate.Siblingˉowned,
+                Wvbˉpublicationˉoutcome.Active,
+                true,
+                false
+            );
+        }
+        return Wvbˉpublicationˉinvalid(Current);
+    }
+    if Current.State == Wvbˉpublicationˉstate.Siblingˉowned {
+        if Action == Wvbˉpublicationˉaction.Flushˉsibling {
+            return Wvbˉpublicationˉresultˉmake(
+                Wvbˉpublicationˉstate.Siblingˉdurable,
+                Wvbˉpublicationˉoutcome.Active,
+                true,
+                false
+            );
+        }
+        return Wvbˉpublicationˉinvalid(Current);
+    }
+    if Current.State == Wvbˉpublicationˉstate.Siblingˉdurable {
+        if Action == Wvbˉpublicationˉaction.Verifyˉsibling {
+            return Wvbˉpublicationˉresultˉmake(
+                Wvbˉpublicationˉstate.Siblingˉverified,
+                Wvbˉpublicationˉoutcome.Active,
+                true,
+                false
+            );
+        }
+        return Wvbˉpublicationˉinvalid(Current);
+    }
+    if Current.State == Wvbˉpublicationˉstate.Siblingˉverified {
+        if Action == Wvbˉpublicationˉaction.Replaceˉdestination {
+            return Wvbˉpublicationˉresultˉmake(
+                Wvbˉpublicationˉstate.Destinationˉreplaced,
+                Wvbˉpublicationˉoutcome.Active,
+                false,
+                true
+            );
+        }
+        return Wvbˉpublicationˉinvalid(Current);
+    }
+    if Current.State == Wvbˉpublicationˉstate.Destinationˉreplaced {
+        if Action == Wvbˉpublicationˉaction.Flushˉdirectory {
+            return Wvbˉpublicationˉresultˉmake(
+                Wvbˉpublicationˉstate.Complete,
+                Wvbˉpublicationˉoutcome.Complete,
+                false,
+                true
+            );
+        }
+        return Wvbˉpublicationˉinvalid(Current);
+    }
+    return Wvbˉpublicationˉinvalid(Current);
+}

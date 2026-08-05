@@ -1,7 +1,7 @@
 # Decision 0185: Standalone compiler-WVB verifier applications
 
 - Date: 2026-08-03
-- Status: Implemented; cross-host qualification pending
+- Status: Cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`
 - Advances: Phase 10 native host tools and the [Decision 0057 native-retirement gate](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Extends: [Decision 0170](0170-Compiler-Capacity-Wasm-Wvb-Verifier-Bundle.md) and [Decision 0169](0169-Public-Format3-Compiler-Targets.md)
 - Contract: [Hosted compiler-WVB verifier application](../../Specifications/Windvale-Hosted-Verifier-Application.md)
@@ -36,6 +36,14 @@ Integrate qualification into the existing exact-compiler AOT test. It already co
 - The verifier uses the compiler-aligned subset and must not be advertised as accepting every semantically valid future WVB.
 - Stage 0 still owns build, native lowering, package construction, independent outer verification, and test orchestration.
 - Decision 0186 now composes this portable verifier core into the first Windvale-native compiler build driver without duplicating the algorithm or adding process-launch authority.
+
+## Qualification
+
+Exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` passes GitHub
+[Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192).
+The raw verifier applications run the canonical and corrupted compiler candidates
+on their native hosts without loading .NET; both hosts pass all 97 Seed tests, all
+39 OS tests, and the native CLI gate.
 
 ## Reconsideration triggers
 

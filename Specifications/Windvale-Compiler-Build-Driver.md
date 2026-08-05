@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHB 1` is the implemented manifest for the first Windvale-native source-to-verified-WVB build driver. The same canonical Windvale application packages as deterministic Windows and Linux x86-64 processes and runs without loading .NET. Stage 0 still constructs, native-lowers, packages, and independently verifies the driver itself; cross-host qualification remains pending.
+`WVHB 1` is the implemented manifest for the first Windvale-native source-to-verified-WVB build driver. The same canonical Windvale application packages as deterministic Windows and Linux x86-64 processes and runs without loading .NET. It is cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` in GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192). Stage 0 still constructs, native-lowers, packages, and independently verifies the driver itself.
 
 The driver is intentionally narrow. Its explicit-source form accepts one root source, zero or more dependencies, and one output path:
 
@@ -79,11 +79,11 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The canonical driver WVB is 1,068,108 bytes with SHA-256 `04fdb0c8de6ada23bf3c28b840782764551a27daa1244ff8315d41b0fb879210`.
+The canonical driver WVB is 1,071,093 bytes with SHA-256 `51f680d7fb96819e21ad8ab68988437c3ae5cfc3aa7a7ca5627641cae4fccbfe`.
 
-`windows-x64-build-driver-v1` emits a 28,820,992-byte PE32+ application with SHA-256 `dae678ebe263ae6aeb62eace0943f8666878cc904cb5614f29e0de52f6548621`.
+`windows-x64-build-driver-v1` emits a 28,840,960-byte PE32+ application with SHA-256 `1792ec58a433812d3a6cf32786ca968b5fd26155585805bd250d93ead60128e6`.
 
-`linux-x64-build-driver-v1` emits a 28,823,552-byte sectionless static-PIE ELF application with SHA-256 `ffbd7f2849cc9507c1d6231e5e77c60d2e70d232ffddf18f83af2deeb09b918b`.
+`linux-x64-build-driver-v1` emits a 28,839,936-byte sectionless static-PIE ELF application with SHA-256 `2728c871c9d6083f02cade80c41aa58328185e0a3b8a2997d935fdf91186b2a2`.
 
 The Stage 0 construction route is:
 

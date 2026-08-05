@@ -33,7 +33,7 @@ Portable Sum-Data.wv -> the same canonical WVB -> Windows, Linux, and Windvale O
 Portable Function-Only.wv -> the same canonical WVB -> Windows, Linux, and Windvale OS
 ```
 
-The Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. Windvale-written compiler and native-tool paths are already real, while broader backend transfer, runtime services, and Windvale OS remain active milestones. C# and .NET stay as the explicit bootstrap and recovery path until the documented native-retirement gate is qualified on Windows and Linux, but forward C# source-language expansion stops at the next qualified WVB 1.11 freeze baseline while the native build and verification front door advances.
+The Stage 0 toolchain includes the typed language, compiler, bytecode verifier, portable reference runtime, assembler, object model, linker, CLI, editor support, and focused Foundation modules. Windvale-written compiler and native-tool paths are already real, while broader backend transfer, runtime services, and Windvale OS remain active milestones. C# and .NET stay as the explicit bootstrap and recovery path until the documented native-retirement gate is qualified on Windows and Linux, but forward C# source-language expansion is frozen at exact qualified WVB 1.11 baseline `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` while the native build and verification front door advances.
 
 ## Browser playground
 

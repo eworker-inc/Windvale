@@ -1,7 +1,7 @@
 # Decision 0213: Stage 0 semantic freeze and native front door
 
 - Date: 2026-08-04
-- Status: Accepted migration policy; freeze-candidate qualification and normal-path cutover pending
+- Status: Accepted migration policy; semantic-freeze baseline qualified; normal-path cutover pending
 - Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), [Decision 0178](0178-Project-Stewardship-Archives-And-Recovery.md), and Phase 10
 - Builds on: [Decision 0185](0185-Standalone-Compiler-Wvb-Verifier-Applications.md), [Decision 0186](0186-First-Windvale-Native-Compiler-Build-Driver.md), and [Decision 0187](0187-Project-Aware-Windvale-Native-Build-Driver.md)
 
@@ -19,13 +19,23 @@ project-aware build-driver applications exist. Continuing to evolve the C# sourc
 frontend in lockstep would make a temporary recovery implementation a permanent
 second compiler.
 
-The current evolved WVB 1.11 compiler and native front-door artifacts are still a
-candidate. They need one exact Windows/Linux qualification state before they can
-become the retained freeze baseline or replace the ordinary C# entry point. The
-existing C# implementation must remain correctable until that qualification is
-complete.
+The evolved WVB 1.11 compiler and native front-door artifacts were qualified on
+both permanent hosts at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`
+in GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192).
+That state is the retained semantic-freeze baseline. The existing C# implementation
+remains correctable recovery evidence while the normal-path cutover continues.
 
 ## Decision
+
+### Qualified freeze baseline
+
+Exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` is the first descendant
+containing this decision to pass the complete Windows and digest-pinned Debian 12
+Qualification gate. Each host passed all 97 Seed tests, all 39 OS tests, the golden
+compiler contract, and the native CLI gate. The Windows job completed in 19m47s;
+the Linux job completed in 23m50s. This activates the semantic freeze below: new
+source-language behavior advances only through `Compiler/Windvale`, while
+`Compiler/Reference` retains the bounded correction and recovery role defined here.
 
 ### Freeze Stage 0 source semantics at the next qualified baseline
 
@@ -103,7 +113,7 @@ suite can consume independently.
 
 | Decision 0057 condition | Status at this decision |
 | --- | --- |
-| 1. Complete compiler graph and Stage 1/Stage 2 comparison | Qualified for the retained compiler baseline; the evolved WVB 1.11 freeze candidate still needs exact dual-host qualification. |
+| 1. Complete compiler graph and Stage 1/Stage 2 comparison | Qualified for the evolved WVB 1.11 semantic-freeze baseline at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`. |
 | 2. Native tools build, verify, test, link, package, and run | Partial: native compiler/verifier/build-driver applications and Windvale assembler/linker cores exist; general runtime, packaging, tests, and workflow replacement remain. |
 | 3. Windvale-native decoder and verifier protect execution | Partial: compiler-aligned and bounded profile verifiers exist; one complete general native execution boundary remains open. |
 | 4. Native runtime owns values, memory, traps, capabilities, entry, and adapters | Partial: ABI 22 and exact service leaves are substantial; general loader/runtime ownership and some host orchestration remain Stage 0. |

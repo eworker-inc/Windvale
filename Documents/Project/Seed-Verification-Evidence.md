@@ -3,8 +3,8 @@
 - Evidence date: 2026-08-04
 - Milestone: Windvale Seed
 - Qualified hosts: Windows x64 and Debian Linux x64
-- Latest cross-host Seed qualified implementation commit: `a797e31dbe404267622f409b6c45da9b680ec8b5`
-- Latest pinned Windvale OS qualified implementation commit: `a797e31dbe404267622f409b6c45da9b680ec8b5`
+- Latest cross-host Seed qualified implementation commit: `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`
+- Latest pinned Windvale OS qualified implementation commit: `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`
 
 ## Requirement evidence
 
@@ -1772,3 +1772,31 @@ golden cross-host contract. These are local Windows candidate results, not a
 new dual-host qualification. The next database gate is a decision for the
 rights-limited random-access storage resource contract; no durable page writer,
 flush promise, single-writer lease, or recovery format is claimed yet.
+
+## Qualified WVB 1.11 semantic-freeze and native-front-door baseline
+
+Exact implementation commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`
+passes GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192).
+Windows and digest-pinned Debian 12 each complete zero-warning builds, all 97 Seed
+tests including the golden compiler contract, all 39 OS tests, and the complete
+native CLI gate. Windows records 704.327 Seed-suite seconds and completes its job
+in 19m47s; Linux records 860.549 Seed-suite seconds and completes in 23m50s.
+
+This is the Decision 0213 semantic-freeze baseline. The exact 914,746-byte compiler
+WVB has SHA-256 `48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6`;
+its Windows PE is 27,468,288 bytes / `1be3bd8c653d17721c6e4324a12e1338a06acdc7e7a3dee24222d03a2ade278b`,
+and its Linux ELF is 27,467,776 bytes / `72d701eaf6b5e31579cd7473c49805ee6ca360ddf0db03d15de588042bb07aba`.
+The exact verifier artifacts are 125,721 WVB bytes / `259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f`,
+1,007,104 Windows bytes / `f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0`,
+and 1,007,616 Linux bytes / `dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a`.
+The exact build-driver artifacts are 1,071,093 WVB bytes / `51f680d7fb96819e21ad8ab68988437c3ae5cfc3aa7a7ca5627641cae4fccbfe`,
+28,840,960 Windows bytes / `1792ec58a433812d3a6cf32786ca968b5fd26155585805bd250d93ead60128e6`,
+and 28,839,936 Linux bytes / `2728c871c9d6083f02cade80c41aa58328185e0a3b8a2997d935fdf91186b2a2`.
+
+The raw compiler, verifier, and project-aware driver execute on their native hosts,
+reproduce or admit the exact canonical artifacts, reject malformed candidates,
+preserve existing outputs on deterministic failure, and expose no CLR/.NET host or
+runtime mapping in the child processes. This qualifies the semantic freeze and the
+current native source-to-verified-WVB components; it does not qualify atomic
+source-visible WVB replacement, normal-path cutover, complete native-backend
+ownership, remaining tools, final recovery archive, or complete .NET retirement.

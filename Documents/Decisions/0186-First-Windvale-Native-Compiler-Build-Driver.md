@@ -1,7 +1,7 @@
 # Decision 0186: First Windvale-native compiler build driver
 
 - Date: 2026-08-03
-- Status: Implemented; cross-host qualification pending
+- Status: Cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`
 - Advances: Phase 10 native host tools and the [Decision 0057 native-retirement gate](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Extends: [Decision 0185](0185-Standalone-Compiler-Wvb-Verifier-Applications.md) and [Decision 0169](0169-Public-Format3-Compiler-Targets.md)
 - Contract: [Windvale compiler build-driver application](../../Specifications/Windvale-Compiler-Build-Driver.md)
@@ -33,7 +33,16 @@ Integrate the proof into the existing exact-compiler AOT case. Reuse its compile
 - Exact resource-name equality is rejected, but distinct path aliases cannot be proven distinct without a future canonical resource-identity contract.
 - The original driver consumes explicit source paths. Decision 0187 extends the same application with bounded Project 1 input while dependency discovery, native packaging, tests, assembler/linker/inspector orchestration, and normal repository automation remain Stage 0 work.
 - The format-3 compiler artifacts and their qualified identities remain unchanged.
-- Cross-host qualification is still required before this slice counts toward a dual-host retirement claim.
+- The exact driver profile counts as qualified dual-host retirement evidence; atomic source-visible publication and normal-path cutover remain separate gates.
+
+## Qualification
+
+Exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` passes GitHub
+[Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192).
+Windows and Debian each execute the raw compiler, verifier, and build-driver
+applications, reproduce the canonical compiler WVB, preserve outputs on deterministic
+rejection, observe no .NET mapping in the child processes, and pass the complete
+97-Seed/39-OS/native-CLI gate.
 
 ## Reconsideration triggers
 

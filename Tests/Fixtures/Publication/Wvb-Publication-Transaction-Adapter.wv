@@ -1,0 +1,126 @@
+module Wvbˉpublicationˉtransactionˉadapter profile portable;
+
+import Windvaleˉwvbˉpublicationˉtransaction as Publication;
+
+fn Apply(
+    Current: Publication.Wvbˉpublicationˉresult,
+    Action: Publication.Wvbˉpublicationˉaction
+) -> Publication.Wvbˉpublicationˉresult {
+    return Publication.Wvbˉpublicationˉapply(Current, Action);
+}
+
+fn Isˉrejected(
+    Result: Publication.Wvbˉpublicationˉresult
+) -> bool {
+    if Result.State != Publication.Wvbˉpublicationˉstate.Rejectedˉunchanged {
+        return false;
+    }
+    if Result.Outcome != Publication.Wvbˉpublicationˉoutcome.Rejectedˉunchanged {
+        return false;
+    }
+    if Result.Scratchˉowned { return false; }
+    if Result.Destinationˉmayˉdiffer { return false; }
+    return true;
+}
+
+fn Cleanupˉafter(
+    Current: Publication.Wvbˉpublicationˉresult
+) -> bool {
+    let Failed: Publication.Wvbˉpublicationˉresult = Apply(
+        Current,
+        Publication.Wvbˉpublicationˉaction.Fail
+    );
+    if Failed.State != Publication.Wvbˉpublicationˉstate.Cleanupˉrequired {
+        return false;
+    }
+    if Failed.Outcome != Publication.Wvbˉpublicationˉoutcome.Cleanupˉrequired {
+        return false;
+    }
+    if !Failed.Scratchˉowned { return false; }
+    if Failed.Destinationˉmayˉdiffer { return false; }
+    return Isˉrejected(Apply(
+        Failed,
+        Publication.Wvbˉpublicationˉaction.Cleanˉsibling
+    ));
+}
+
+export fn Main() -> i32 {
+    let Begun: Publication.Wvbˉpublicationˉresult =
+        Publication.Wvbˉpublicationˉbegin();
+    if !Isˉrejected(Apply(Begun, Publication.Wvbˉpublicationˉaction.Fail)) {
+        return 1;
+    }
+
+    let Owned: Publication.Wvbˉpublicationˉresult = Apply(
+        Begun,
+        Publication.Wvbˉpublicationˉaction.Createˉsibling
+    );
+    if !Cleanupˉafter(Owned) { return 2; }
+
+    let Durable: Publication.Wvbˉpublicationˉresult = Apply(
+        Owned,
+        Publication.Wvbˉpublicationˉaction.Flushˉsibling
+    );
+    if !Cleanupˉafter(Durable) { return 3; }
+
+    let Verified: Publication.Wvbˉpublicationˉresult = Apply(
+        Durable,
+        Publication.Wvbˉpublicationˉaction.Verifyˉsibling
+    );
+    if !Cleanupˉafter(Verified) { return 4; }
+
+    let Replaced: Publication.Wvbˉpublicationˉresult = Apply(
+        Verified,
+        Publication.Wvbˉpublicationˉaction.Replaceˉdestination
+    );
+    let Uncertain: Publication.Wvbˉpublicationˉresult = Apply(
+        Replaced,
+        Publication.Wvbˉpublicationˉaction.Fail
+    );
+    if Uncertain.State != Publication.Wvbˉpublicationˉstate.Indeterminate {
+        return 5;
+    }
+    if Uncertain.Outcome != Publication.Wvbˉpublicationˉoutcome.Indeterminate {
+        return 6;
+    }
+    if Uncertain.Scratchˉowned || !Uncertain.Destinationˉmayˉdiffer {
+        return 7;
+    }
+
+    let Complete: Publication.Wvbˉpublicationˉresult = Apply(
+        Replaced,
+        Publication.Wvbˉpublicationˉaction.Flushˉdirectory
+    );
+    if Complete.State != Publication.Wvbˉpublicationˉstate.Complete {
+        return 8;
+    }
+    if Complete.Outcome != Publication.Wvbˉpublicationˉoutcome.Complete {
+        return 9;
+    }
+    if Complete.Scratchˉowned || !Complete.Destinationˉmayˉdiffer {
+        return 10;
+    }
+
+    let Invalid: Publication.Wvbˉpublicationˉresult = Apply(
+        Begun,
+        Publication.Wvbˉpublicationˉaction.Flushˉdirectory
+    );
+    if Invalid.State != Publication.Wvbˉpublicationˉstate.Candidateˉadmitted {
+        return 11;
+    }
+    if Invalid.Outcome != Publication.Wvbˉpublicationˉoutcome.Invalidˉtransition {
+        return 12;
+    }
+    if Invalid.Scratchˉowned || Invalid.Destinationˉmayˉdiffer {
+        return 13;
+    }
+    let Stillˉinvalid: Publication.Wvbˉpublicationˉresult = Apply(
+        Invalid,
+        Publication.Wvbˉpublicationˉaction.Fail
+    );
+    if Stillˉinvalid.Outcome !=
+        Publication.Wvbˉpublicationˉoutcome.Invalidˉtransition {
+        return 14;
+    }
+    return 0;
+}

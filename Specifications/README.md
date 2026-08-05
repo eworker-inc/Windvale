@@ -63,6 +63,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [WVA native stencils](Wva-Native-Stencil.md)
 - [Native publication plan](Windvale-Native-Publication-Plan.md)
 - [Native publication lifetime](Windvale-Native-Publication-Lifetime.md)
+- [WVB publication transaction](Windvale-Wvb-Publication-Transaction.md)
 - [Bounded x86-64 kernel target](Windvale-X64-Kernel-Target.md)
 
 ## Boot and operating system

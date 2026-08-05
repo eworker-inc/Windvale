@@ -19,7 +19,7 @@ using Windvale.Runtime.Native;
 
 namespace Windvale.Seed.Tests;
 
-internal static class Program
+internal static partial class Program
 {
     private const string SUM_SHA256 = "76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df";
     private const string HELLO_SHA256 = "0a9230e700a10d14e718340e49562e5b0184a3c3a71b5cd29915126a6b28c28f";
@@ -1127,6 +1127,7 @@ internal static class Program
         new("Windvale returns and publishes native argument leaves through the descriptor bridge", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉbridgeˉruns),
         new("Windvale owns bounded executable-image layout before W^X publication", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlayoutˉruns),
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
+        new("Windvale owns atomic WVB publication transaction outcomes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvbˉpublicationˉtransactionˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes, Testˉcost.Extended),
         new("exact compiler AOT transport pressure is deterministic and measured", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉcompilerˉaotˉtransportˉisˉmeasured, Testˉcost.Extended),

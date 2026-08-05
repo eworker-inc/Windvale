@@ -469,6 +469,12 @@
       Include="../../Tools/Windvale.Build/Compiler-Build-Driver.wv"
       LogicalName="Windvale.Seed.Tests.Compiler-Build-Driver.wv" />
     <EmbeddedResource
+      Include="../../Tools/Windvale.Publish/Wvb-Publication-Transaction.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-Publication-Transaction.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Publication/Wvb-Publication-Transaction-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-Publication-Transaction-Adapter.wv" />
+    <EmbeddedResource
       Include="../Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Main.wv" />
   </ItemGroup>

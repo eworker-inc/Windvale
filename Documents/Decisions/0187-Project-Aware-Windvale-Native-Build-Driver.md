@@ -1,7 +1,7 @@
 # Decision 0187: Project-aware Windvale-native build driver
 
 - Date: 2026-08-03
-- Status: Implemented; cross-host qualification pending
+- Status: Cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`
 - Advances: Phase 10 native host tools and the [Decision 0057 native-retirement gate](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Extends: [Decision 0186](0186-First-Windvale-Native-Compiler-Build-Driver.md) and [Decision 0075](0075-Minimal-Deterministic-Windvale-Projects.md)
 - Contract: [Windvale compiler build-driver application](../../Specifications/Windvale-Compiler-Build-Driver.md)
@@ -41,6 +41,14 @@ Extend the existing exact-compiler AOT test rather than adding another compiler 
 - `file.write_bytes` remains durable but non-atomic; deterministic rejection still occurs before its only call.
 - Native PE/ELF source builds remain blocked on Windvale ownership of the shared x64 lowering backend. Outer-container transfer alone is insufficient.
 - Stage 0 still builds, lowers, packages, and independently verifies the driver and remains the recovery oracle.
+
+## Qualification
+
+Exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` passes GitHub
+[Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192).
+Both permanent hosts exercise explicit-source and Project 1 modes through the raw
+native driver, compare exact verifier-admitted output, preserve an existing output
+on deterministic rejection, and complete the full repository Qualification gate.
 
 ## Reconsideration triggers
 

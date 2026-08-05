@@ -1,9 +1,9 @@
 # Decision 0203: Evolved-compiler hosted-tool capacity
 
-- Status: Accepted; implemented locally
+- Status: Accepted and cross-host qualified
 - Date: 2026-08-04
 - Scope: compiler-aligned native verifier and build-driver integration
-- Extends: [Decision 0185](0185-Standalone-Compiler-Wvb-Verifier-Applications.md), [Decision 0196](0196-Windvale-Compiler-Build-Driver-Applications.md), [Decision 0201](0201-Expanded-Exact-Compiler-Native-Capacity.md), and [Decision 0202](0202-Four-Phase-Compiler-Capacity-WebAssembly-Verification.md)
+- Extends: [Decision 0185](0185-Standalone-Compiler-Wvb-Verifier-Applications.md), [Decision 0186](0186-First-Windvale-Native-Compiler-Build-Driver.md), [Decision 0201](0201-Expanded-Exact-Compiler-Native-Capacity.md), and [Decision 0202](0202-Four-Phase-Compiler-Capacity-WebAssembly-Verification.md)
 - Retains: `WVHV 1`, `WVHB 1`, native ABI 22, execution-context format 7, service-table format 5, the canonical verifier rules, fixed authority profiles, and active-development replacement without compatibility shims
 
 ## Context
@@ -23,13 +23,13 @@ Decision 0201 separately advances the shared hosted dynamic arena to 128 MiB. Th
 - Keep `WVHB 1` on the shared 48,000,000,000 hosted compiler/build-driver ceiling. Its compiler and in-process verifier work is broader than the standalone verifier profile and already uses the shared `u64` compiler metadata contract.
 - Replace exact WVB, PE, and ELF identities with the current artifacts. No legacy implicit-import sources, 8-billion verifier package, dual metadata acceptance, or migration path is retained.
 
-## Exact local evidence
+## Exact qualified evidence
 
-The compiler-aligned hosted verifier is 118,496 WVB bytes with SHA-256 `19760a4438a48c945de3e39fd612ed72f3ea3a33373b5d9da09cd1e2411938d7`. Its 961,536-byte Windows package has SHA-256 `cac82b26c7af4edea01a808db718e66e65fd859f421d5e73f144b017f390bc59`; its 962,560-byte Linux package has SHA-256 `d99f5d9c95f1ab7e731eaf4ea7f15e48a19cc72e689f99d1b00d5a58f2984ede`.
+The compiler-aligned hosted verifier is 125,721 WVB bytes with SHA-256 `259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f`. Its 1,007,104-byte Windows package has SHA-256 `f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0`; its 1,007,616-byte Linux package has SHA-256 `dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a`.
 
-The build driver is 1,008,678 WVB bytes with SHA-256 `090f7ce9e00708dc029cbe98448c30ee1e6e0544bd2dcac1de045c44dcc226b2`. Its 27,656,704-byte Windows package has SHA-256 `3f72b96ef0697c1b531f566180fea9f406b7213b88a6dd7000235d82d1878819`; its 27,656,192-byte Linux package has SHA-256 `8302f75a2ff9effaa72fa7ee58a6ee93a7e780bf39a4471aa41e397e94bcb568`. A three-source Project 1 composition now publishes the exact current 856-byte WVB with six functions and 383 code bytes.
+The build driver is 1,071,093 WVB bytes with SHA-256 `51f680d7fb96819e21ad8ab68988437c3ae5cfc3aa7a7ca5627641cae4fccbfe`. Its 28,840,960-byte Windows package has SHA-256 `1792ec58a433812d3a6cf32786ca968b5fd26155585805bd250d93ead60128e6`; its 28,839,936-byte Linux package has SHA-256 `2728c871c9d6083f02cade80c41aa58328185e0a3b8a2997d935fdf91186b2a2`. A three-source Project 1 composition publishes the exact current 1,388-byte WVB with nine functions and 627 code bytes.
 
-The focused exact-compiler AOT transport case passes a zero-warning Release build, deterministic package reconstruction, malformed-container rejection, direct Windows verifier execution over the evolved compiler, corrupted-candidate rejection, build-driver explicit/project execution, output preservation, and host-module inspection in 78.100 test seconds. This is local Windows development evidence; independent Debian execution and dual-host qualification remain pending.
+Exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` passes GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192). Windows and Debian each pass all 97 Seed tests, all 39 OS tests, and the native CLI gate, including direct verifier and build-driver execution without loading .NET.
 
 ## Consequences
 
