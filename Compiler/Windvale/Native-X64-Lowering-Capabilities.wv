@@ -151,8 +151,16 @@ export fn Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() -> u8 {
     return 6u8;
 }
 
+export fn Compilerˉnativeˉx64ˉprocessˉargumentˉkind() -> u8 {
+    return 5u8;
+}
+
 export fn Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes() -> u32 {
     return 27u32;
+}
+
+export fn Compilerˉnativeˉx64ˉprocessˉargumentˉbytes() -> u32 {
+    return 46u32;
 }
 
 fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
@@ -161,6 +169,12 @@ fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
 
 fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
     return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
 }
 
 export fn Compilerˉnativeˉx64ˉemitˉprocessˉargumentˉcount(
@@ -181,4 +195,42 @@ export fn Compilerˉnativeˉx64ˉemitˉprocessˉargumentˉcount(
     Output = Appendˉbyte(Output, 132u8);
     Output = Appendˉbyte(Output, 36u8);
     return Appendˉu32(Output, Target * 16u32);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉprocessˉargument(
+    Result: bytes,
+    Source: u32,
+    Target: u32,
+    Failureˉtarget: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Source * 16u32);
+    Output = Appendˉbyte(Output, 65u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 76u8);
+    Output = Appendˉbyte(Output, 141u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Target * 16u32);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 71u8);
+    Output = Appendˉbyte(Output, 24u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 64u8);
+    Output = Appendˉbyte(Output, 24u8);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Appendˉbyte(Output, 208u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 133u8);
+    return Appendˉu32(
+        Output,
+        Relativeˉu32(Failureˉtarget, Bytesˉlength(Output) + 4u32)
+    );
 }

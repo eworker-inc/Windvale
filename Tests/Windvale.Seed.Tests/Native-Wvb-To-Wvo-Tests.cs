@@ -29,14 +29,17 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_PROCESS_ARGUMENT_COUNT_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Process-Argument-Count.wv");
+    private static readonly string WVB_TO_WVO_PROCESS_ARGUMENT_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Process-Argument.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 280_791;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 3_950_080;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 284_359;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 3_997_184;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "0ea29b5a5e916a18f0d5b998617adc3f8f4da3e2de50c328cc3b993d16839156";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 3_948_544;
+        "3556b23a969f841286d2f43526d6c4e38f448a48ab244171afa9771ad56d9e8f";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 3_997_696;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "1dfe66328b38964063b61918e2316af24430603f09ffc8af1595e8c956303440";
+        "b0a5babd6f77834909c4daec4d1d9843cb1a28fef1c01c149952bdf76d2b611b";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -180,6 +183,16 @@ internal static partial class Program
             $"native x64 status=Valid abi=22 " +
             $"code-bytes={Expectedˉcapabilityˉview.Sections[0].Data.Length} " +
             $"object-bytes={Expectedˉcapabilityˉobject.Length}\n";
+        var Argumentˉwvb = Compileˉsuccess(WVB_TO_WVO_PROCESS_ARGUMENT_SOURCE);
+        var Argumentˉmodule = Moduleˉcodec.Readˉandˉverify(Argumentˉwvb);
+        var Expectedˉargumentˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            X64ˉnativeˉbackend.Compile(Argumentˉmodule).Fragment);
+        var Expectedˉargumentˉview = Objectˉcodec.Readˉandˉverify(
+            Expectedˉargumentˉobject.AsSpan()).Value;
+        var Expectedˉargumentˉreport =
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉargumentˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉargumentˉobject.Length}\n";
 
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
@@ -199,12 +212,19 @@ internal static partial class Program
             var Capabilityˉoutputˉpath = Path.Combine(
                 Directoryˉpath,
                 "Process-Argument-Count.wvo");
+            var Argumentˉinputˉpath = Path.Combine(
+                Directoryˉpath,
+                "Process-Argument.wvb");
+            var Argumentˉoutputˉpath = Path.Combine(
+                Directoryˉpath,
+                "Process-Argument.wvo");
             var Invalidˉpath = Path.Combine(Directoryˉpath, "Invalid.wvb");
             var Rejectedˉpath = Path.Combine(Directoryˉpath, "Rejected.wvo");
             File.WriteAllBytes(Toolˉpath, Toolˉbytes);
             File.WriteAllBytes(Inputˉpath, Fixtureˉwvb);
             File.WriteAllBytes(Nominalˉinputˉpath, Nominalˉwvb);
             File.WriteAllBytes(Capabilityˉinputˉpath, Capabilityˉwvb);
+            File.WriteAllBytes(Argumentˉinputˉpath, Argumentˉwvb);
             File.WriteAllBytes(Invalidˉpath, Fixtureˉwvb[..^1]);
             byte[] Sentinel = [0x57, 0x56, 0x4F];
             File.WriteAllBytes(Rejectedˉpath, Sentinel);
@@ -260,6 +280,10 @@ internal static partial class Program
                     Windows.Imageˉbytes,
                     Expectedˉcapabilityˉreport,
                     [Capabilityˉinputˉpath, Capabilityˉoutputˉpath]));
+                Equal(0, Executeˉwindowsˉapplication(
+                    Windows.Imageˉbytes,
+                    Expectedˉargumentˉreport,
+                    [Argumentˉinputˉpath, Argumentˉoutputˉpath]));
             }
             if (OperatingSystem.IsLinux())
             {
@@ -293,6 +317,10 @@ internal static partial class Program
                     Linux.Imageˉbytes,
                     Expectedˉcapabilityˉreport,
                     [Capabilityˉinputˉpath, Capabilityˉoutputˉpath]));
+                Equal(0, Executeˉlinuxˉapplication(
+                    Linux.Imageˉbytes,
+                    Expectedˉargumentˉreport,
+                    [Argumentˉinputˉpath, Argumentˉoutputˉpath]));
             }
 
             Sequenceˉequal(Expectedˉobject, File.ReadAllBytes(Outputˉpath));
@@ -303,6 +331,9 @@ internal static partial class Program
             Sequenceˉequal(
                 Expectedˉcapabilityˉobject,
                 File.ReadAllBytes(Capabilityˉoutputˉpath));
+            Sequenceˉequal(
+                Expectedˉargumentˉobject,
+                File.ReadAllBytes(Argumentˉoutputˉpath));
             Sequenceˉequal(Sentinel, File.ReadAllBytes(Rejectedˉpath));
             _ = Objectˉcodec.Readˉandˉverify(File.ReadAllBytes(Outputˉpath));
         }
@@ -797,6 +828,68 @@ internal static partial class Program
         {
             throw new InvalidOperationException(
                 "process.argument_count lowering failed: " + Toolˉresult.Diagnostics);
+        }
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+    }
+
+    private static void Assertˉprocessˉargumentˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_PROCESS_ARGUMENT_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
+        var Capability = Module.Module.Capabilities.Single();
+        Equal(Capabilityˉcatalog.PROCESS_ARGUMENT, Capability.Name);
+        Sequenceˉequal([Valueˉtype.U32], Capability.Parameterˉtypes);
+        Equal(Valueˉtype.Text, Capability.Returnˉtype);
+
+        var Authorized = ImmutableHashSet.Create(
+            StringComparer.Ordinal,
+            Capabilityˉcatalog.PROCESS_ARGUMENT);
+        var Resources = new Hostedˉresourceˉcontext(
+            ["A"],
+            TextWriter.Null,
+            TextWriter.Null);
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(Resources),
+            new(Authorized)).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Sequenceˉequal(
+            [Nativeˉservice.Processˉargument],
+            Native.Fragment.Requiredˉservices);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions,
+                hostˉservices: new(null, Authorized, Resources)));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(
+            Expectedˉobject.AsSpan()).Value;
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(tool, Wvb);
+        if (Toolˉresult.Exitˉcode != 0)
+        {
+            throw new InvalidOperationException(
+                "process.argument lowering failed: " + Toolˉresult.Diagnostics);
         }
         Equal(string.Empty, Toolˉresult.Diagnostics);
         Equal(
