@@ -12,6 +12,8 @@ Accepted architectural direction under [Decision 0057](../Decisions/0057-Windval
 
 [Decision 0243](../Decisions/0243-Native-Process-Argument-Capability.md) adds `process.argument(u32) -> text` with exact borrowed-descriptor ownership and runtime-service failure propagation. Both process-input leaves now lower through Windvale source and the direct current-host package; file and output capabilities remain separate pending slices.
 
+[Decision 0244](../Decisions/0244-Native-File-Read-Bytes-Capability.md) adds `file.read_bytes(text) -> bytes` with exact immutable-snapshot borrowing and runtime-service failure propagation. Capability-specific analysis and emitted-result state now live in the focused capability module after the general instruction core reached its native frame limit. File mutation and console/diagnostic output remain separate pending slices.
+
 [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) additionally makes portability a per-part and derived artifact property. Native publication must preserve the canonical module's platform scope and capability requirements even when a particular application intentionally targets only one environment.
 
 ## Destination
@@ -295,6 +297,8 @@ Decision 0241 extends record storage through validated control-flow successors a
 Decision 0242 then admits exact portable-or-hosted profile rules, validates the six current Stage 0 native capability signatures, and lowers only the parameterless scalar `process.argument_count` call. The focused capability module and canonically ordered project dependencies keep the ordinary native source front door usable without folding more policy into the large instruction core.
 
 Decision 0243 extends that focused boundary with `process.argument`, passing its scalar index and borrowed-text output through ABI 22's service table and existing runtime-service failure tail. The accepted WVO remains package-bound because WVO 1.0 does not serialize its required service.
+
+Decision 0244 adds the read side of the real hosted lowering shell. It passes a borrowed resource-name descriptor to service-table slot 32, receives a service-owned immutable bytes snapshot, and keeps capability analysis and emission state outside the general instruction core. The direct current-host package reproduces Stage 0's exact file-read fixture WVO; grouped dual-host qualification remains pending.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
