@@ -9,8 +9,8 @@ Progress stories are ordinary versioned repository files. They are not stored in
 | Item | Local source | Purpose |
 | --- | --- | --- |
 | Measured project state | [`Documents/Project/Progress.md`](../Project/Progress.md) | Authoritative facts and current transfer point |
-| Full-resolution comic | `Documents/Project/Images/Windvale-Project-Progress-YYYY-MM-DD.png` | Dated archival original used by documents and future re-exports |
-| Responsive website images | `Website/assets/progress/windvale-progress-YYYY-MM-DD-640.webp` and `-1120.webp` | Smaller browser downloads for narrow and wide screens |
+| Full-resolution comic | `Documents/Project/Images/Windvale-Project-Progress-YYYY-MM-DD.png` or `Windvale-Project-History-<chapter>.png` | Dated or chapter-named archival original used by documents and future re-exports |
+| Responsive website images | `Website/assets/progress/<story-name>-640.webp` and `-1120.webp` | Smaller browser downloads for narrow and wide screens |
 | Featured-story date, caption, alternative text, and transcript | `Website/index.html` | Accessible homepage presentation |
 | Optional overview placement | Root `README.md` | Repository introduction when the same story still represents the project well |
 
@@ -54,7 +54,7 @@ Update the root README only when the new comic is also the best repository overv
 
 ## Website presentation
 
-Keep the latest comic in the homepage hero. The static `/progress/` archive presents every accepted story newest-first with responsive images, a date, a short explanation, and an accessible transcript. It links back to the technical Progress dashboard instead of becoming a second state record. All images are local build inputs; the page does not fetch them from GitHub at request time.
+Keep the latest comic in the homepage hero. The static `/progress/` archive presents every accepted story in newest-first order with responsive images, a date or chapter label, a short explanation, and an accessible transcript. It links back to the technical Progress dashboard instead of becoming a second state record. All images are local build inputs; the page does not fetch them from GitHub at request time.
 
 If the archive grows enough to make the repeated HTML difficult to maintain, move the story metadata into one small repository-owned static manifest without changing the public layout or storage boundary.
 
