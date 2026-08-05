@@ -47,11 +47,14 @@ These documents define the current implemented or accepted contracts. Dated rati
 ## Assembly, objects, and linking
 
 - [WVO object core](Wvo-Object-Core.md)
+- [Native WVO inspector application](Windvale-Native-Wvo-Inspector.md)
 - [Windvale object format](Windvale-Object-Format.md)
 - [Windvale textual assembly](Windvale-Assembly.md)
 - [Windvale assembler core](Wva-Assembler-Core.md)
+- [Native WVA assembler application](Windvale-Native-Wva-Assembler.md)
 - [Windvale linking](Windvale-Linking.md)
 - [Windvale linker core](Wv-Linker-Core.md)
+- [Native Windvale linker application](Windvale-Native-Wv-Linker.md)
 
 ## Native execution
 

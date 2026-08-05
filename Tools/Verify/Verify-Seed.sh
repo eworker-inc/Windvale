@@ -397,6 +397,7 @@ MACHINE_CONTRACTS_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$MACHINE_CONTRACTS_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 BYTE_ORDERING_SOURCE="$REPOSITORY_ROOT/Foundation/Byte-Ordering.wv"
+SHA256_SOURCE="$REPOSITORY_ROOT/Foundation/Sha256.wv"
 dotnet "$TOOL_DLL" \
     compile "$BYTE_ORDERING_SOURCE" -o "$BYTE_ORDERING_MODULE"
 BYTE_ORDERING_HASH=$(sha256sum "$BYTE_ORDERING_MODULE" | awk '{print $1}')
@@ -1534,8 +1535,9 @@ fi
 printf '%s\n' "$WVDUMP_INVALID_NAME_OUTPUT" | grep -F 'WVR3021' >/dev/null
 
 dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Foundation/Wvo-Object-Core.wv" \
+    compile "$REPOSITORY_ROOT/Object-Model/Windvale/Wvo-Object-Core.wv" \
     --module "$BYTE_ORDERING_SOURCE" \
+    --module "$SHA256_SOURCE" \
     -o "$WVO_CORE_MODULE"
 
 WVO_CORE_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVO_CORE_MODULE")
@@ -1547,14 +1549,20 @@ printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.from_u16_little' >/dev
 printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.from_i32_little' >/dev/null
 printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'text.to_utf8' >/dev/null
 printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F '__WvM1F0' >/dev/null
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
+printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
+printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'Objectˉsha256' >/dev/null
+printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F '__WvM2F0(bytes) -> bytes' >/dev/null
+if printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null; then
+    echo 'The read-only Windvale object core unexpectedly retained file-write authority.' >&2
+    exit 1
+fi
 
 set +e
 WVO_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVO_CORE_MODULE" 2>&1)
 WVO_UNAUTHORIZED_EXIT=$?
 set -e
 if [ "$WVO_UNAUTHORIZED_EXIT" -ne 3 ]; then
-    echo "Expected unauthorized WVO writer run exit 3, found $WVO_UNAUTHORIZED_EXIT." >&2
+    echo "Expected unauthorized WVO read-only run exit 3, found $WVO_UNAUTHORIZED_EXIT." >&2
     exit 1
 fi
 printf '%s\n' "$WVO_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
@@ -1563,29 +1571,48 @@ WVO_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVO_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
-    --allow file.write_bytes \
+    --allow file.read_bytes \
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 10000000)
 printf '%s\n' "$WVO_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
+WVO_SAMPLE_OUTPUT=$(dotnet "$TOOL_DLL" \
+    assemble "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" \
+    -o "$WVO_SAMPLE")
+printf '%s\n' "$WVO_SAMPLE_OUTPUT" | grep -F "Assembled: $WVO_SAMPLE" >/dev/null
+
+WVO_HASH=$(sha256sum "$WVO_SAMPLE" | awk '{print $1}')
+if [ "$WVO_HASH" != '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85' ]; then
+    echo "The WVO inspector input has unexpected bytes: $WVO_HASH" >&2
+    exit 1
+fi
+
 WVO_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVO_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
-    --allow file.write_bytes \
+    --allow file.read_bytes \
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 10000000 \
-    -- "$WVO_SAMPLE")
-printf '%s\n' "$WVO_HOSTED_OUTPUT" | grep -F 'Wrote WVO 1.0 bytes=189' >/dev/null
+    -- verify "$WVO_SAMPLE")
+printf '%s\n' "$WVO_HOSTED_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
 printf '%s\n' "$WVO_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-WVO_HASH=$(sha256sum "$WVO_SAMPLE" | awk '{print $1}')
-if [ "$WVO_HASH" != '006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a' ]; then
-    echo "The Windvale object core wrote unexpected bytes: $WVO_HASH" >&2
-    exit 1
-fi
+WVO_HOSTED_INSPECTION=$(dotnet "$TOOL_DLL" \
+    run "$WVO_CORE_MODULE" \
+    --allow console.write_line \
+    --allow diagnostic.write_line \
+    --allow file.read_bytes \
+    --allow process.argument \
+    --allow process.argument_count \
+    --max-steps 10000000 \
+    -- inspect "$WVO_SAMPLE")
+printf '%s\n' "$WVO_HOSTED_INSPECTION" | grep -F 'Sections (2)' >/dev/null
+printf '%s\n' "$WVO_HOSTED_INSPECTION" | grep -F 'Console_write binding=Import' >/dev/null
+printf '%s\n' "$WVO_HOSTED_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' >/dev/null
+printf '%s\n' "$WVO_HOSTED_INSPECTION" | grep -F 'Result: 0' >/dev/null
 
 WVO_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" object-verify "$WVO_SAMPLE")
 printf '%s\n' "$WVO_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
@@ -1593,48 +1620,48 @@ printf '%s\n' "$WVO_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/nu
 WVO_INSPECTION=$(dotnet "$TOOL_DLL" object-inspect "$WVO_SAMPLE")
 printf '%s\n' "$WVO_INSPECTION" | grep -F 'Sections (2)' >/dev/null
 printf '%s\n' "$WVO_INSPECTION" | grep -F 'Console_write binding=Import' >/dev/null
-printf '%s\n' "$WVO_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=1 symbol=2 addend=-4' >/dev/null
+printf '%s\n' "$WVO_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' >/dev/null
 
 set +e
 WVO_INVALID_NAME_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVO_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
-    --allow file.write_bytes \
+    --allow file.read_bytes \
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 10000000 \
-    -- '' 2>&1)
+    -- verify '' 2>&1)
 WVO_INVALID_NAME_EXIT=$?
 set -e
 if [ "$WVO_INVALID_NAME_EXIT" -ne 3 ]; then
-    echo "Expected invalid hosted file writer name exit 3, found $WVO_INVALID_NAME_EXIT." >&2
+    echo "Expected invalid hosted file reader name exit 3, found $WVO_INVALID_NAME_EXIT." >&2
     exit 1
 fi
 printf '%s\n' "$WVO_INVALID_NAME_OUTPUT" | grep -F 'WVR3021' >/dev/null
 
-MISSING_WRITER_PARENT="$ARTIFACTS/__windvale_missing_writer_parent__"
-if [ -e "$MISSING_WRITER_PARENT" ]; then
-    echo "The missing writer parent unexpectedly exists: $MISSING_WRITER_PARENT" >&2
+MISSING_WVO_INPUT="$ARTIFACTS/__windvale_missing_wvo_input__.wvo"
+if [ -e "$MISSING_WVO_INPUT" ]; then
+    echo "The missing WVO input unexpectedly exists: $MISSING_WVO_INPUT" >&2
     exit 1
 fi
 set +e
-WVO_MISSING_PARENT_OUTPUT=$(dotnet "$TOOL_DLL" \
+WVO_MISSING_INPUT_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVO_CORE_MODULE" \
     --allow console.write_line \
     --allow diagnostic.write_line \
-    --allow file.write_bytes \
+    --allow file.read_bytes \
     --allow process.argument \
     --allow process.argument_count \
     --max-steps 10000000 \
-    -- "$MISSING_WRITER_PARENT/Sample.wvo" 2>&1)
-WVO_MISSING_PARENT_EXIT=$?
+    -- verify "$MISSING_WVO_INPUT" 2>&1)
+WVO_MISSING_INPUT_EXIT=$?
 set -e
-if [ "$WVO_MISSING_PARENT_EXIT" -ne 3 ]; then
-    echo "Expected missing hosted writer parent exit 3, found $WVO_MISSING_PARENT_EXIT." >&2
+if [ "$WVO_MISSING_INPUT_EXIT" -ne 3 ]; then
+    echo "Expected missing hosted WVO input exit 3, found $WVO_MISSING_INPUT_EXIT." >&2
     exit 1
 fi
-printf '%s\n' "$WVO_MISSING_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
+printf '%s\n' "$WVO_MISSING_INPUT_OUTPUT" | grep -F 'WVR3022' >/dev/null
 
 dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Assembler/Windvale/Wva-Assembler-Core.wv" \

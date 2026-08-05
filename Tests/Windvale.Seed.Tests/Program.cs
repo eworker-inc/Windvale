@@ -26,7 +26,7 @@ internal static partial class Program
     private const string FOUNDATION_SHA256 = "c13efd14485afa1bf7fa418b54cea2fdd234fe34fdc824ae52346ce062be7793";
     private const string WVDUMP_CORE_SHA256 = "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
-    private const string WVO_CORE_SHA256 = "15b6de9e90cd3eb3288f106bd272fac5b4b25280f972c393e8d0f0b34ecf5d07";
+    private const string WVO_CORE_SHA256 = "3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c";
     private const string WVLINK_CORE_SHA256 = "592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386";
@@ -1177,6 +1177,8 @@ internal static partial class Program
         new("Windvale wvdump decodes bounded payloads and instructions", [TEST_AREA_FOUNDATION, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvˉdumpˉcoreˉwalksˉsections),
         new("Windvale object codec validates canonical symbols and relocations", [TEST_AREA_OBJECT_MODEL], Objectˉmodelˉroundˉtrip),
         new("Windvale-written object core matches the Stage 0 oracle", [TEST_AREA_OBJECT_MODEL, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvoˉobjectˉcoreˉmatchesˉoracle),
+        new("native WVO inspector AOT targets are discoverable", [TEST_AREA_OBJECT_MODEL], Nativeˉwvoˉinspectorˉtargetsˉareˉdiscoverable),
+        new("native WVO verifier and inspector own the read-only front door", [TEST_AREA_OBJECT_MODEL, TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉinspectorˉruns),
         new("WVA assembler emits canonical sections, symbols, and relocations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉemitsˉcanonicalˉobject),
         new("WVA assembler encodes expanded x86-64 registers, control flow, and RIP-relative data", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉencodesˉexpandedˉx64),
         new("WVA assembler encodes immediate, multiply, shift, and indexed-memory operations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER], Assemblerˉencodesˉscalarˉx64),
@@ -17888,9 +17890,7 @@ internal static partial class Program
 
     private static void Wvoˉobjectˉcoreˉmatchesˉoracle()
     {
-        var Moduleˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
-            WVO_CORE_SOURCE,
-            "Wvo-Object-Core.wv");
+        var Moduleˉbytes = Compileˉwvoˉobjectˉsuccess();
         Equal(WVO_CORE_SHA256, Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
         var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
         Equal("Wvoˉobjectˉcore", Module.Module.Name);
@@ -17898,7 +17898,7 @@ internal static partial class Program
             [
                 Capabilityˉcatalog.CONSOLE_WRITE_LINE,
                 Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
-                Capabilityˉcatalog.FILE_WRITE_BYTES,
+                Capabilityˉcatalog.FILE_READ_BYTES,
                 Capabilityˉcatalog.PROCESS_ARGUMENT,
                 Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
             ],
@@ -17908,45 +17908,81 @@ internal static partial class Program
         Contains(Moduleˉinspection, "bytes.from_u16_little");
         Contains(Moduleˉinspection, "bytes.from_i32_little");
         Contains(Moduleˉinspection, "text.to_utf8");
-        Contains(Moduleˉinspection, "call.capability capability[2] (file.write_bytes)");
+        Contains(Moduleˉinspection, "call.capability capability[2] (file.read_bytes)");
+        Contains(Moduleˉinspection, "Objectˉsha256");
+        Contains(Moduleˉinspection, "__WvM2F0(bytes) -> bytes");
+        True(
+            !Moduleˉinspection.Contains("file.write_bytes", StringComparison.Ordinal),
+            "The read-only WVO shell must not retain file-write authority.");
 
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
             .ToImmutableHashSet(StringComparer.Ordinal);
-        var Selfˉtestˉwriter = new Capturingˉfileˉwriter();
         var Selfˉtestˉresult = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
                 [],
                 TextWriter.Null,
                 TextWriter.Null,
-                null,
-                Selfˉtestˉwriter)),
+                new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
+                    "The WVO object self-test must not read a hosted file.")))),
             new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
         Equal(0, Selfˉtestˉresult.Exitˉcode);
-        Equal(0, Selfˉtestˉwriter.Writeˉcount);
 
-        var Hostedˉwriter = new Capturingˉfileˉwriter();
-        var Hostedˉoutput = new StringWriter();
-        var Hostedˉdiagnostics = new StringWriter();
-        var Hostedˉresult = new Referenceˉruntime(
+        var Oracleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
+        var Verifiedˉoracle = Objectˉcodec.Readˉandˉverify(Oracleˉbytes.AsSpan());
+        var Verifyˉoutput = new StringWriter();
+        var Verifyˉdiagnostics = new StringWriter();
+        var Verifyˉresult = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
-                ["sample.wvo"],
-                Hostedˉoutput,
-                Hostedˉdiagnostics,
-                null,
-                Hostedˉwriter)),
+                ["verify", "sample.wvo"],
+                Verifyˉoutput,
+                Verifyˉdiagnostics,
+                new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                {
+                    Equal("sample.wvo", Name);
+                    True(Oracleˉbytes.Length <= Maximumˉbytes,
+                        "The WVO verifier fixture exceeded the hosted read bound.");
+                    return Oracleˉbytes.ToImmutableArray();
+                }))),
             new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
-        Equal(0, Hostedˉresult.Exitˉcode);
-        Equal("Wrote WVO 1.0 bytes=189\n", Hostedˉoutput.ToString());
-        Equal(string.Empty, Hostedˉdiagnostics.ToString());
-        Equal(1, Hostedˉwriter.Writeˉcount);
-        Equal("sample.wvo", Hostedˉwriter.Resourceˉname);
-        var Oracleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
-        Sequenceˉequal(Oracleˉbytes, Hostedˉwriter.Bytes);
-        Equal(WVO_SAMPLE_SHA256, Objectˉdigest.Calculateˉsha256(Hostedˉwriter.Bytes.AsSpan()));
-        _ = Objectˉcodec.Readˉandˉverify(Hostedˉwriter.Bytes.AsSpan());
+        Equal(0, Verifyˉresult.Exitˉcode);
+        var Normalizedˉverifyˉoutput = Verifyˉoutput.ToString()
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+        Equal(
+            $"Verified object: {Verifiedˉoracle.Value.Architecture}\n" +
+                $"SHA-256: {Objectˉdigest.Calculateˉsha256(Oracleˉbytes)}\n",
+            Normalizedˉverifyˉoutput);
+        Equal(string.Empty, Verifyˉdiagnostics.ToString());
+
+        var Inspectˉoutput = new StringWriter();
+        var Inspectˉdiagnostics = new StringWriter();
+        var Inspectˉresult = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["inspect", "sample.wvo"],
+                Inspectˉoutput,
+                Inspectˉdiagnostics,
+                new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                {
+                    Equal("sample.wvo", Name);
+                    True(Oracleˉbytes.Length <= Maximumˉbytes,
+                        "The WVO inspector fixture exceeded the hosted read bound.");
+                    return Oracleˉbytes.ToImmutableArray();
+                }))),
+            new(Authorized, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        Equal(0, Inspectˉresult.Exitˉcode);
+        var Expectedˉinspection = Objectˉinspector.Inspect(Verifiedˉoracle, Oracleˉbytes)
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+        var Normalizedˉinspection = Inspectˉoutput.ToString()
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+        Equal(Expectedˉinspection, Normalizedˉinspection);
+        Equal(string.Empty, Inspectˉdiagnostics.ToString());
+        Equal(WVO_SAMPLE_SHA256, Objectˉdigest.Calculateˉsha256(Oracleˉbytes));
     }
 
     private static void Assemblerˉemitsˉcanonicalˉobject()
@@ -21997,9 +22033,7 @@ internal static partial class Program
             SOURCE_BINDINGS_TOOL_SOURCE,
             "Source-Bindings-Tool.wv");
         var Wvˉdumpˉbytes = Compileˉsuccess(WVDUMP_CORE_SOURCE);
-        var Wvoˉcoreˉbytes = Compileˉwithˉbyteˉorderingˉsuccess(
-            WVO_CORE_SOURCE,
-            "Wvo-Object-Core.wv");
+        var Wvoˉcoreˉbytes = Compileˉwvoˉobjectˉsuccess();
         var Wvaˉassemblerˉbytes = Compileˉwithˉtoolˉfoundationˉsuccess(
             WVA_ASSEMBLER_CORE_SOURCE,
             "Wva-Assembler-Core.wv");
@@ -22342,27 +22376,30 @@ internal static partial class Program
         var Wvoˉcapabilities = Wvoˉmodule.Module.Capabilities
             .Select(Capability => Capability.Name)
             .ToImmutableHashSet(StringComparer.Ordinal);
-        var Wvoˉselfˉtestˉwriter = new Capturingˉfileˉwriter();
         var Wvoˉselfˉtestˉresult = new Referenceˉruntime(
             Wvoˉmodule,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
                 [],
                 TextWriter.Null,
                 TextWriter.Null,
-                null,
-                Wvoˉselfˉtestˉwriter)),
+                new Testˉfileˉreader((_, _) => throw new InvalidOperationException(
+                    "The golden WVO self-test must not read a hosted file.")))),
             new(Wvoˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
-        var Wvoˉhostedˉwriter = new Capturingˉfileˉwriter();
         var Wvoˉhostedˉoutput = new StringWriter();
         var Wvoˉhostedˉdiagnostics = new StringWriter();
         var Wvoˉhostedˉresult = new Referenceˉruntime(
             Wvoˉmodule,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
-                ["sample.wvo"],
+                ["verify", "sample.wvo"],
                 Wvoˉhostedˉoutput,
                 Wvoˉhostedˉdiagnostics,
-                null,
-                Wvoˉhostedˉwriter)),
+                new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                {
+                    Equal("sample.wvo", Name);
+                    True(Wvoˉsampleˉbytes.Length <= Maximumˉbytes,
+                        "The golden WVO sample exceeded the hosted read bound.");
+                    return Wvoˉsampleˉbytes.ToImmutableArray();
+                }))),
             new(Wvoˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
         var Normalizedˉwvoˉoutput = Wvoˉhostedˉoutput.ToString()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -22467,11 +22504,12 @@ internal static partial class Program
         Contains(Normalizedˉwvdumpˉoutput, "instruction function=1 offset=141 opcode=call operand=0");
         Contains(Normalizedˉwvdumpˉoutput, "export index=0 name=\"Main\" kind=function target=1");
         Equal(0, Wvoˉselfˉtestˉresult.Exitˉcode);
-        Equal(0, Wvoˉselfˉtestˉwriter.Writeˉcount);
         Equal(0, Wvoˉhostedˉresult.Exitˉcode);
-        Equal("Wrote WVO 1.0 bytes=189\n", Normalizedˉwvoˉoutput);
+        Equal(
+            "Verified object: X86ˉ64\n" +
+                $"SHA-256: {Wvoˉsampleˉhash}\n",
+            Normalizedˉwvoˉoutput);
         Equal(string.Empty, Wvoˉhostedˉdiagnostics.ToString());
-        Sequenceˉequal(Wvoˉsampleˉbytes, Wvoˉhostedˉwriter.Bytes);
         Equal(0, Wvaˉassemblerˉselfˉtestˉresult.Exitˉcode);
         Equal(0, Wvaˉassemblerˉselfˉtestˉwriter.Writeˉcount);
         Equal(0, Wvaˉassemblerˉhostedˉresult.Exitˉcode);
@@ -25085,6 +25123,24 @@ internal static partial class Program
         {
             throw new InvalidOperationException(
                 "Foundation composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwvoˉobjectˉsuccess()
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new("Object-Model/Windvale/Wvo-Object-Core.wv", WVO_CORE_SOURCE),
+            [
+                new("Foundation/Byte-Ordering.wv", BYTE_ORDERING_SOURCE),
+                new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Windvale WVO object composition failed: " +
+                string.Join(" | ", Result.Diagnostics));
         }
 
         return Result.Moduleˉbytes.ToArray();

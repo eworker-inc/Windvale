@@ -187,7 +187,7 @@ Existing examples that could seed this gallery include:
 - [`Examples/Foundation/Byte-Construction-Demo.wv`](../../Examples/Foundation/Byte-Construction-Demo.wv)
 - [`Examples/Foundation/Wvb-Header-Inspector.wv`](../../Examples/Foundation/Wvb-Header-Inspector.wv)
 - [`Examples/Foundation/Wv-Dump-Core.wv`](../../Examples/Foundation/Wv-Dump-Core.wv)
-- [`Examples/Foundation/Wvo-Object-Core.wv`](../../Examples/Foundation/Wvo-Object-Core.wv)
+- [`Object-Model/Windvale/Wvo-Object-Core.wv`](../../Object-Model/Windvale/Wvo-Object-Core.wv)
 
 ### Windvale-specific demonstrations
 

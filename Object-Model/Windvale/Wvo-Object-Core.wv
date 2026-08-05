@@ -1,10 +1,11 @@
 module Wvoˉobjectˉcore profile hosted;
 
 import Foundationˉbyteˉordering as Byteˉordering;
+import Foundationˉsha256 as Sha256;
 
 capability console.write_line;
 capability diagnostic.write_line;
-capability file.write_bytes;
+capability file.read_bytes;
 capability process.argument;
 capability process.argument_count;
 
@@ -13,6 +14,7 @@ data Textˉcontents: bytes = [232, 0, 0, 0, 0, 195];
 data Messageˉcontents: bytes = [72, 105, 10];
 
 enum Wvoˉsectionˉkind {
+    Invalid = 0;
     Code = 1;
     Readˉonlyˉdata = 2;
     Writableˉdata = 3;
@@ -20,17 +22,20 @@ enum Wvoˉsectionˉkind {
 }
 
 enum Wvoˉsymbolˉbinding {
+    Invalid = 0;
     Local = 1;
     Export = 2;
     Import = 3;
 }
 
 enum Wvoˉsymbolˉkind {
+    Invalid = 0;
     Function = 1;
     Data = 2;
 }
 
 enum Wvoˉrelocationˉkind {
+    Invalid = 0;
     Absoluteˉu32 = 1;
     Relativeˉi32 = 2;
 }
@@ -87,9 +92,32 @@ record Wvoˉstringˉscan {
 record Wvoˉsectionˉview {
     Status: Wvoˉstatus;
     Kind: u32;
+    Alignment: u32;
     Memoryˉsize: u32;
     Dataˉoffset: u32;
     Dataˉlength: u32;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Cursor: u32;
+}
+
+record Wvoˉsymbolˉview {
+    Binding: u32;
+    Kind: u32;
+    Sectionˉindex: u32;
+    Offset: u32;
+    Size: u32;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Cursor: u32;
+}
+
+record Wvoˉrelocationˉview {
+    Kind: u32;
+    Sectionˉindex: u32;
+    Offset: u32;
+    Symbolˉindex: u32;
+    Addend: i32;
 }
 
 record Wvoˉinspection {
@@ -289,6 +317,7 @@ fn Findˉsection(Input: bytes, Sectionˉstart: u32, Sectionˉcount: u32, Wanted:
     var Index: u32 = 0u32;
     while Index < Sectionˉcount {
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        let Alignment: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
         let Memoryˉsize: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
         let Dataˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
         let Name: Wvoˉstringˉscan = Scanˉstring(Input, Cursor + 16u32, Bytesˉlength(Input));
@@ -296,19 +325,155 @@ fn Findˉsection(Input: bytes, Sectionˉstart: u32, Sectionˉcount: u32, Wanted:
             return Wvoˉsectionˉview(
                 Wvoˉstatus.Valid,
                 Kind,
+                Alignment,
                 Memoryˉsize,
                 Name.Cursor,
-                Dataˉlength
+                Dataˉlength,
+                Name.Valueˉoffset,
+                Name.Length,
+                Name.Cursor + Dataˉlength
             );
         }
         Cursor = Name.Cursor + Dataˉlength;
         Index = Index + 1u32;
     }
-    return Wvoˉsectionˉview(Wvoˉstatus.Invalidˉsection, 0u32, 0u32, Cursor, 0u32);
+    return Wvoˉsectionˉview(
+        Wvoˉstatus.Invalidˉsection,
+        0u32,
+        0u32,
+        0u32,
+        Cursor,
+        0u32,
+        Cursor,
+        0u32,
+        Cursor
+    );
+}
+
+fn Sectionˉrecordsˉend(Input: bytes, Sectionˉcount: u32) -> u32 {
+    var Cursor: u32 = 24u32;
+    var Index: u32 = 0u32;
+    while Index < Sectionˉcount {
+        let View: Wvoˉsectionˉview = Findˉsection(Input, 24u32, Sectionˉcount, Index);
+        Cursor = View.Cursor;
+        Index = Index + 1u32;
+    }
+    return Cursor;
+}
+
+fn Findˉsymbol(Input: bytes, Symbolˉstart: u32, Symbolˉcount: u32, Wanted: u32) -> Wvoˉsymbolˉview {
+    var Cursor: u32 = Symbolˉstart;
+    var Index: u32 = 0u32;
+    while Index < Symbolˉcount {
+        let Binding: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
+        let Sectionˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Size: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        let Name: Wvoˉstringˉscan = Scanˉstring(Input, Cursor + 16u32, Bytesˉlength(Input));
+        if Index == Wanted {
+            return Wvoˉsymbolˉview(
+                Binding,
+                Kind,
+                Sectionˉindex,
+                Offset,
+                Size,
+                Name.Valueˉoffset,
+                Name.Length,
+                Name.Cursor
+            );
+        }
+        Cursor = Name.Cursor;
+        Index = Index + 1u32;
+    }
+    return Wvoˉsymbolˉview(0u32, 0u32, 0u32, 0u32, 0u32, Cursor, 0u32, Cursor);
+}
+
+fn Symbolˉrecordsˉend(Input: bytes, Symbolˉstart: u32, Symbolˉcount: u32) -> u32 {
+    var Cursor: u32 = Symbolˉstart;
+    var Index: u32 = 0u32;
+    while Index < Symbolˉcount {
+        let View: Wvoˉsymbolˉview = Findˉsymbol(Input, Symbolˉstart, Symbolˉcount, Index);
+        Cursor = View.Cursor;
+        Index = Index + 1u32;
+    }
+    return Cursor;
+}
+
+fn Findˉrelocation(Input: bytes, Relocationˉstart: u32, Wanted: u32) -> Wvoˉrelocationˉview {
+    let Cursor: u32 = Relocationˉstart + Wanted * 20u32;
+    return Wvoˉrelocationˉview(
+        U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)),
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32),
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32),
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32),
+        Bytesˉreadˉi32ˉlittle(Input, Cursor + 16u32)
+    );
+}
+
+fn Earlierˉsectionˉnameˉexists(
+    Input: bytes,
+    Sectionˉstart: u32,
+    Currentˉindex: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Currentˉindex {
+        let Earlier: Wvoˉsectionˉview = Findˉsection(
+            Input,
+            Sectionˉstart,
+            Currentˉindex,
+            Index
+        );
+        if Byteˉordering.Foundationˉbyteˉspansˉcompare(
+            Input,
+            Earlier.Nameˉoffset,
+            Earlier.Nameˉlength,
+            Nameˉoffset,
+            Nameˉlength
+        ) == 0 {
+            return true;
+        }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
+fn Earlierˉsymbolˉnameˉexists(
+    Input: bytes,
+    Symbolˉstart: u32,
+    Currentˉindex: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Currentˉindex {
+        let Earlier: Wvoˉsymbolˉview = Findˉsymbol(
+            Input,
+            Symbolˉstart,
+            Currentˉindex,
+            Index
+        );
+        if Byteˉordering.Foundationˉbyteˉspansˉcompare(
+            Input,
+            Earlier.Nameˉoffset,
+            Earlier.Nameˉlength,
+            Nameˉoffset,
+            Nameˉlength
+        ) == 0 {
+            return true;
+        }
+        Index = Index + 1u32;
+    }
+    return false;
 }
 
 fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
     let Total: u32 = Bytesˉlength(Input);
+    if Total > 4194304u32 {
+        return Wvoˉinspection(Wvoˉstatus.Limitˉexceeded, 0u32, 0u32, 0u32, 0u32);
+    }
     if Total < 24u32 {
         return Wvoˉinspection(Wvoˉstatus.Shortˉheader, 0u32, 0u32, 0u32, Total);
     }
@@ -363,6 +528,15 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         if Sectionˉname.Status != Wvoˉstatus.Valid {
             return Wvoˉinspection(Sectionˉname.Status, Sectionˉindex, 0u32, 0u32, Sectionˉname.Cursor);
         }
+        if Earlierˉsectionˉnameˉexists(
+            Input,
+            Sectionˉstart,
+            Sectionˉindex,
+            Sectionˉname.Valueˉoffset,
+            Sectionˉname.Length
+        ) {
+            return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, Sectionˉindex, 0u32, 0u32, Sectionˉname.Valueˉoffset);
+        }
         if Sectionˉindex > 0u32 {
             if Sectionˉkind < Previousˉsectionˉkind { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉindex, 0u32, 0u32, Cursor); }
             if Sectionˉkind == Previousˉsectionˉkind {
@@ -391,6 +565,7 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         Sectionˉindex = Sectionˉindex + 1u32;
     }
 
+    let Symbolˉstart: u32 = Cursor;
     var Symbolˉindex: u32 = 0u32;
     var Previousˉbinding: u32 = 0u32;
     var Previousˉsymbolˉname: u32 = 0u32;
@@ -413,6 +588,15 @@ fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
         let Symbolˉname: Wvoˉstringˉscan = Scanˉstring(Input, Cursor + 16u32, Total);
         if Symbolˉname.Status != Wvoˉstatus.Valid {
             return Wvoˉinspection(Symbolˉname.Status, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Cursor);
+        }
+        if Earlierˉsymbolˉnameˉexists(
+            Input,
+            Symbolˉstart,
+            Symbolˉindex,
+            Symbolˉname.Valueˉoffset,
+            Symbolˉname.Length
+        ) {
+            return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Valueˉoffset);
         }
         if Symbolˉindex > 0u32 {
             if Symbolˉbinding < Previousˉbinding { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉindex, 0u32, Cursor); }
@@ -514,30 +698,159 @@ fn Runˉselfˉtests() -> i32 {
     if Inspection.Symbolsˉseen != 3u32 { return 18; }
     if Inspection.Relocationsˉseen != 1u32 { return 19; }
     if Inspection.Failureˉoffset != 189u32 { return 20; }
+    let Quoted: bytes = Textˉtoˉutf8(Textˉquote("WVO"));
+    if Bytesˉlength(Quoted) != 5u32 { return 21; }
+    if Bytesˉreadˉu8(Quoted, 0u32) != 34u8 { return 22; }
+    if Bytesˉreadˉu8(Quoted, 4u32) != 34u8 { return 23; }
     Describeˉinspection(Inspection);
     return 0;
 }
 
-fn Writeˉsampleˉobject() -> i32 {
-    if process.argument_count() != 1u32 {
-        diagnostic.write_line("Usage: wvo-object-core <output.wvo>");
-        return 64;
+fn Byteˉvaluesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Textˉfromˉspan(Input: bytes, Offset: u32, Length: u32) -> text {
+    return Textˉfromˉutf8(Bytesˉslice(Input, Offset, Length));
+}
+
+fn Sectionˉkindˉname(Value: u32) -> text {
+    if Value == 1u32 { return "Code"; }
+    if Value == 2u32 { return "Readˉonlyˉdata"; }
+    if Value == 3u32 { return "Writableˉdata"; }
+    return "Zeroˉfill";
+}
+
+fn Symbolˉbindingˉname(Value: u32) -> text {
+    if Value == 1u32 { return "Local"; }
+    if Value == 2u32 { return "Export"; }
+    return "Import";
+}
+
+fn Symbolˉkindˉname(Value: u32) -> text {
+    if Value == 1u32 { return "Function"; }
+    return "Data";
+}
+
+fn Relocationˉkindˉname(Value: u32) -> text {
+    if Value == 1u32 { return "Absoluteˉu32"; }
+    return "Relativeˉi32";
+}
+
+fn Objectˉsha256(Input: bytes) -> text {
+    return Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Input));
+}
+
+fn Reportˉverifiedˉobject(Input: bytes) -> void {
+    console.write_line("Verified object: X86ˉ64");
+    console.write_line(Textˉconcat("SHA-256: ", Objectˉsha256(Input)));
+}
+
+fn Reportˉobjectˉinspection(Input: bytes) -> void {
+    let Sectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Symbolˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Relocationˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Sectionˉstart: u32 = 24u32;
+    let Symbolˉstart: u32 = Sectionˉrecordsˉend(Input, Sectionˉcount);
+    let Relocationˉstart: u32 = Symbolˉrecordsˉend(Input, Symbolˉstart, Symbolˉcount);
+
+    console.write_line("Windvale object 1.0");
+    console.write_line("Architecture: X86ˉ64");
+    console.write_line(Textˉconcat("SHA-256: ", Objectˉsha256(Input)));
+    console.write_line(Textˉconcat("Sections (", Textˉconcat(U32ˉformat(Sectionˉcount), ")")));
+    var Sectionˉindex: u32 = 0u32;
+    while Sectionˉindex < Sectionˉcount {
+        let Section: Wvoˉsectionˉview = Findˉsection(
+            Input,
+            Sectionˉstart,
+            Sectionˉcount,
+            Sectionˉindex
+        );
+        var Sectionˉline: text = Textˉconcat("  [", U32ˉformat(Sectionˉindex));
+        Sectionˉline = Textˉconcat(Sectionˉline, Textˉconcat("] ", Textˉfromˉspan(Input, Section.Nameˉoffset, Section.Nameˉlength)));
+        Sectionˉline = Textˉconcat(Sectionˉline, Textˉconcat(" kind=", Sectionˉkindˉname(Section.Kind)));
+        Sectionˉline = Textˉconcat(Sectionˉline, Textˉconcat(" align=", U32ˉformat(Section.Alignment)));
+        Sectionˉline = Textˉconcat(Sectionˉline, Textˉconcat(" memory=", U32ˉformat(Section.Memoryˉsize)));
+        Sectionˉline = Textˉconcat(Sectionˉline, Textˉconcat(" data=", U32ˉformat(Section.Dataˉlength)));
+        console.write_line(Sectionˉline);
+        Sectionˉindex = Sectionˉindex + 1u32;
     }
 
-    let Object: bytes = Buildˉsampleˉobject();
-    let Inspection: Wvoˉinspection = Inspectˉobject(Object);
-    if Inspection.Status != Wvoˉstatus.Valid {
-        diagnostic.write_line(Describeˉinspection(Inspection));
+    console.write_line(Textˉconcat("Symbols (", Textˉconcat(U32ˉformat(Symbolˉcount), ")")));
+    var Symbolˉindex: u32 = 0u32;
+    while Symbolˉindex < Symbolˉcount {
+        let Symbol: Wvoˉsymbolˉview = Findˉsymbol(Input, Symbolˉstart, Symbolˉcount, Symbolˉindex);
+        var Symbolˉline: text = Textˉconcat("  [", U32ˉformat(Symbolˉindex));
+        Symbolˉline = Textˉconcat(Symbolˉline, Textˉconcat("] ", Textˉfromˉspan(Input, Symbol.Nameˉoffset, Symbol.Nameˉlength)));
+        Symbolˉline = Textˉconcat(Symbolˉline, Textˉconcat(" binding=", Symbolˉbindingˉname(Symbol.Binding)));
+        Symbolˉline = Textˉconcat(Symbolˉline, Textˉconcat(" kind=", Symbolˉkindˉname(Symbol.Kind)));
+        if Symbol.Sectionˉindex == 4294967295u32 {
+            Symbolˉline = Textˉconcat(Symbolˉline, " section=undefined");
+        } else {
+            Symbolˉline = Textˉconcat(Symbolˉline, Textˉconcat(" section=", U32ˉformat(Symbol.Sectionˉindex)));
+        }
+        Symbolˉline = Textˉconcat(Symbolˉline, Textˉconcat(" offset=", U32ˉformat(Symbol.Offset)));
+        Symbolˉline = Textˉconcat(Symbolˉline, Textˉconcat(" size=", U32ˉformat(Symbol.Size)));
+        console.write_line(Symbolˉline);
+        Symbolˉindex = Symbolˉindex + 1u32;
+    }
+
+    console.write_line(Textˉconcat("Relocations (", Textˉconcat(U32ˉformat(Relocationˉcount), ")")));
+    var Relocationˉindex: u32 = 0u32;
+    while Relocationˉindex < Relocationˉcount {
+        let Relocation: Wvoˉrelocationˉview = Findˉrelocation(
+            Input,
+            Relocationˉstart,
+            Relocationˉindex
+        );
+        var Relocationˉline: text = Textˉconcat("  [", U32ˉformat(Relocationˉindex));
+        Relocationˉline = Textˉconcat(Relocationˉline, Textˉconcat("] kind=", Relocationˉkindˉname(Relocation.Kind)));
+        Relocationˉline = Textˉconcat(Relocationˉline, Textˉconcat(" section=", U32ˉformat(Relocation.Sectionˉindex)));
+        Relocationˉline = Textˉconcat(Relocationˉline, Textˉconcat(" offset=", U32ˉformat(Relocation.Offset)));
+        Relocationˉline = Textˉconcat(Relocationˉline, Textˉconcat(" symbol=", U32ˉformat(Relocation.Symbolˉindex)));
+        Relocationˉline = Textˉconcat(Relocationˉline, Textˉconcat(" addend=", I32ˉformat(Relocation.Addend)));
+        console.write_line(Relocationˉline);
+        Relocationˉindex = Relocationˉindex + 1u32;
+    }
+}
+
+fn Runˉobjectˉcommand() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line("Usage: wvo-object-core <verify|inspect> <object.wvo>");
+        return 64;
+    }
+    let Command: bytes = Textˉtoˉutf8(process.argument(0u32));
+    let Verify: bool = Byteˉvaluesˉareˉequal(Command, Textˉtoˉutf8("verify"));
+    let Inspect: bool = Byteˉvaluesˉareˉequal(Command, Textˉtoˉutf8("inspect"));
+    if !Verify {
+        if !Inspect {
+            diagnostic.write_line("Usage: wvo-object-core <verify|inspect> <object.wvo>");
+            return 64;
+        }
+    }
+
+    let Input: bytes = file.read_bytes(process.argument(1u32));
+    let Result: Wvoˉinspection = Inspectˉobject(Input);
+    if Result.Status != Wvoˉstatus.Valid {
+        diagnostic.write_line(Textˉconcat("object status=", Describeˉinspection(Result)));
         return 2;
     }
-    file.write_bytes(process.argument(0u32), Object);
-    console.write_line(Textˉconcat("Wrote WVO 1.0 bytes=", U32ˉformat(Bytesˉlength(Object))));
+    if Verify {
+        Reportˉverifiedˉobject(Input);
+    } else {
+        Reportˉobjectˉinspection(Input);
+    }
     return 0;
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() == 0u32 {
-        return Runˉselfˉtests();
-    }
-    return Writeˉsampleˉobject();
+    if process.argument_count() == 0u32 { return Runˉselfˉtests(); }
+    return Runˉobjectˉcommand();
 }

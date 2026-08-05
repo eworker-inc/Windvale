@@ -45,7 +45,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉbuilder
                     bundle,
                     nativeˉentryˉoffset),
             Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
-                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner =>
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner or
+                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector =>
                 Windowsˉhostedˉinspectorˉstartup.Build(
                     Layout.Textˉaddress,
                     Layout.Importˉaddress,

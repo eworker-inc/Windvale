@@ -107,7 +107,7 @@ public static partial class X64ˉnativeˉserviceˉbundle
         {
             throw new Nativeˉbackendˉexception(
                 "WVN4019",
-                "The hosted WVB inspector requires its exact read-only service profile.");
+                "The hosted read-only inspector requires its exact service profile.");
         }
 
         return Build(fragment, platform, [.. Expected]);

@@ -456,6 +456,7 @@ if ($LASTEXITCODE -ne 0 -or $MachineContractsDemoOutput -notcontains 'Result: 0'
 }
 
 $ByteOrderingSource = Join-Path $RepositoryRoot 'Foundation/Byte-Ordering.wv'
+$Sha256Source = Join-Path $RepositoryRoot 'Foundation/Sha256.wv'
 dotnet $ToolDll `
     compile $ByteOrderingSource -o $ByteOrderingModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation byte ordering.' }
@@ -1779,8 +1780,9 @@ if ($LASTEXITCODE -ne 3 -or ($WvDumpInvalidNameOutput -join "`n") -notmatch 'WVR
 }
 
 dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wvo-Object-Core.wv') `
+    compile (Join-Path $RepositoryRoot 'Object-Model/Windvale/Wvo-Object-Core.wv') `
     --module $ByteOrderingSource `
+    --module $Sha256Source `
     -o $WvoCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wvo-Object-Core.wv.' }
 
@@ -1797,15 +1799,18 @@ if (
     $WvoCoreInspection -notmatch 'bytes\.from_i32_little' -or
     $WvoCoreInspection -notmatch 'text\.to_utf8' -or
     $WvoCoreInspection -notmatch '__WvM1F0' -or
-    $WvoCoreInspection -notmatch 'file\.write_bytes'
+    $WvoCoreInspection -notmatch 'file\.read_bytes' -or
+    $WvoCoreInspection -notmatch 'Objectˉsha256' -or
+    $WvoCoreInspection -notmatch '__WvM2F0\(bytes\) -> bytes' -or
+    $WvoCoreInspection -match 'file\.write_bytes'
 ) {
-    throw 'The Seed CLI inspector did not expose the Windvale object writer operations.'
+    throw 'The Seed CLI inspector did not expose the read-only Windvale object operations.'
 }
 
 $WvoCapabilities = @(
     '--allow', 'console.write_line',
     '--allow', 'diagnostic.write_line',
-    '--allow', 'file.write_bytes',
+    '--allow', 'file.read_bytes',
     '--allow', 'process.argument',
     '--allow', 'process.argument_count',
     '--max-steps', '10000000'
@@ -1813,7 +1818,7 @@ $WvoCapabilities = @(
 
 $WvoUnauthorizedOutput = dotnet $ToolDll run $WvoCoreModule 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvoUnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
-    throw 'The Seed CLI did not refuse ungranted WVO writer capabilities.'
+    throw 'The Seed CLI did not refuse ungranted WVO read-only capabilities.'
 }
 
 $WvoSelfTestOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities
@@ -1821,23 +1826,41 @@ if ($LASTEXITCODE -ne 0 -or $WvoSelfTestOutput -notcontains 'Result: 0') {
     throw 'The Windvale object core self-test did not return Result: 0.'
 }
 
-$WvoHostedOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- $WvoSample
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvoHostedOutput -notcontains 'Wrote WVO 1.0 bytes=189' -or
-    $WvoHostedOutput -notcontains 'Result: 0'
-) {
-    throw 'The Windvale object core did not write the expected native-host object.'
+$WvoSampleOutput = dotnet $ToolDll assemble `
+    (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') `
+    -o $WvoSample
+if ($LASTEXITCODE -ne 0 -or $WvoSampleOutput -notcontains "Assembled: $WvoSample") {
+    throw 'The Stage 0 assembler did not create the WVO inspector input.'
 }
 
 $WvoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WvoSample).Hash.ToLowerInvariant()
-if ($WvoHash -ne '006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a') {
-    throw "The Windvale object core wrote unexpected bytes: $WvoHash"
+if ($WvoHash -ne '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85') {
+    throw "The WVO inspector input has unexpected bytes: $WvoHash"
+}
+
+$WvoHostedOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- verify $WvoSample
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvoHostedOutput -notcontains 'Verified object: X86ˉ64' -or
+    $WvoHostedOutput -notcontains 'Result: 0'
+) {
+    throw 'The Windvale object core did not verify the expected object.'
+}
+
+$WvoHostedInspection = (dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- inspect $WvoSample) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $WvoHostedInspection -notmatch 'Sections \(2\)' -or
+    $WvoHostedInspection -notmatch 'Console_write binding=Import' -or
+    $WvoHostedInspection -notmatch 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' -or
+    $WvoHostedInspection -notmatch 'Result: 0'
+) {
+    throw 'The Windvale object core did not inspect the expected records.'
 }
 
 $WvoVerifyOutput = dotnet $ToolDll object-verify $WvoSample
 if ($LASTEXITCODE -ne 0 -or $WvoVerifyOutput -notcontains 'Verified object: X86ˉ64') {
-    throw 'The object verifier rejected the Windvale-written sample.'
+    throw 'The Stage 0 object verifier rejected the WVO inspector input.'
 }
 
 $WvoInspection = (dotnet $ToolDll object-inspect $WvoSample) -join "`n"
@@ -1845,23 +1868,23 @@ if (
     $LASTEXITCODE -ne 0 -or
     $WvoInspection -notmatch 'Sections \(2\)' -or
     $WvoInspection -notmatch 'Console_write binding=Import' -or
-    $WvoInspection -notmatch 'kind=Relativeˉi32 section=0 offset=1 symbol=2 addend=-4'
+    $WvoInspection -notmatch 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4'
 ) {
-    throw 'The object inspector did not expose the expected symbol and relocation records.'
+    throw 'The Stage 0 object inspector did not expose the expected records.'
 }
 
-$WvoInvalidNameOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- '' 2>&1
+$WvoInvalidNameOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- verify '' 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvoInvalidNameOutput -join "`n") -notmatch 'WVR3021') {
-    throw 'The hosted file writer did not reject an empty resource name deterministically.'
+    throw 'The hosted file reader did not reject an empty resource name deterministically.'
 }
 
-$MissingWriterParent = Join-Path $Artifacts '__windvale_missing_writer_parent__'
-if (Test-Path -LiteralPath $MissingWriterParent) {
-    throw "The missing writer parent unexpectedly exists: $MissingWriterParent"
+$MissingWvoInput = Join-Path $Artifacts '__windvale_missing_wvo_input__.wvo'
+if (Test-Path -LiteralPath $MissingWvoInput) {
+    throw "The missing WVO input unexpectedly exists: $MissingWvoInput"
 }
-$WvoMissingParentOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- (Join-Path $MissingWriterParent 'Sample.wvo') 2>&1
-if ($LASTEXITCODE -ne 3 -or ($WvoMissingParentOutput -join "`n") -notmatch 'WVR3022') {
-    throw 'The hosted file writer did not report a missing parent deterministically.'
+$WvoMissingInputOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- verify $MissingWvoInput 2>&1
+if ($LASTEXITCODE -ne 3 -or ($WvoMissingInputOutput -join "`n") -notmatch 'WVR3022') {
+    throw 'The hosted file reader did not report a missing WVO input deterministically.'
 }
 
 dotnet $ToolDll `

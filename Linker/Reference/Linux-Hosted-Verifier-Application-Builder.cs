@@ -42,7 +42,8 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉbuilder
                     bundle,
                     nativeˉentryˉoffset),
             Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
-                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner =>
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner or
+                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector =>
                 Linuxˉhostedˉinspectorˉstartup.Build(
                     Layout.Textˉaddress,
                     Layout.Dataˉaddress,

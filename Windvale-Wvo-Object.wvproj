@@ -1,0 +1,5 @@
+windvale-project 1
+root "Object-Model/Windvale/Wvo-Object-Core.wv"
+source "Foundation/Byte-Ordering.wv"
+source "Foundation/Sha256.wv"
+emit wvb

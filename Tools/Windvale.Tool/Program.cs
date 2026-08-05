@@ -103,6 +103,7 @@ internal static class Program
             "windows-x64-console-v3|linux-x64-console-v3|" +
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
+            "windows-x64-wvo-inspector-v1|linux-x64-wvo-inspector-v1|" +
             "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
@@ -163,6 +164,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME => ".exe",
+        Windowsˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME => ".exe",
@@ -221,6 +223,7 @@ internal static class Program
             "windows-x64-console-v3|linux-x64-console-v3|" +
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
+            "windows-x64-wvo-inspector-v1|linux-x64-wvo-inspector-v1|" +
             "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
@@ -299,6 +302,8 @@ internal static class Program
         Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
+        Windowsˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
@@ -433,6 +438,7 @@ internal static class Program
                 Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
+                Windowsˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME or
@@ -453,6 +459,11 @@ internal static class Program
                         Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉinspector(
                             Fragment,
                             Capabilities),
+                    Windowsˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME =>
+                        Wvoˉinspectorˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME =>
                         Wvbˉrunnerˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
@@ -509,6 +520,11 @@ internal static class Program
                         Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉinspector(
                             Fragment,
                             Capabilities),
+                    Linuxˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME =>
+                        Wvoˉinspectorˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME =>
                         Wvbˉrunnerˉapplicationˉwriter.Writeˉlinux(
                             Fragment,
@@ -559,6 +575,7 @@ internal static class Program
                     Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
+                    Linuxˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME or
@@ -1040,6 +1057,7 @@ internal static class Program
             "windows-x64-console-v3|linux-x64-console-v3|" +
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
+            "windows-x64-wvo-inspector-v1|linux-x64-wvo-inspector-v1|" +
             "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
@@ -1053,6 +1071,7 @@ internal static class Program
             "windows-x64-console-v3|linux-x64-console-v3|" +
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
+            "windows-x64-wvo-inspector-v1|linux-x64-wvo-inspector-v1|" +
             "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +

@@ -95,7 +95,9 @@ Every function is checked for valid branch boundaries, index and type use, match
 - Size, alignment, range, canonical-order, symbol-reference, relocation-placeholder, and overlap verification
 - Object inspection and SHA-256 identity
 
-The object verifier returns a `Verifiedˉobject`; both CLI object commands decode and verify before reporting. This Stage 0 project is an independent oracle for Windvale-written producers and is not a linker or a host object-format adapter.
+`Object-Model/Windvale/Wvo-Object-Core.wv` owns the corresponding Windvale-written bounded verifier and complete read-only report path. `Windvale-Wvo-Object.wvproj` composes its byte-ordering and SHA-256 dependencies, while paired profile-6 Windows/Linux candidates reuse the existing eleven-service read-only inspector package without adding platform assembly or file-write authority.
+
+The C# object verifier returns a `Verifiedˉobject`; both Stage 0 CLI object commands decode and verify before reporting. During native-candidate qualification this project remains the independent recovery/differential oracle. After promotion, ordinary WVO verification and inspection move to digest-bound native launchers while the C# path remains explicitly named recovery evidence until the complete retirement gate passes.
 
 ### Windvale assembler
 
@@ -222,7 +224,7 @@ The current bytecode 1.11 golden modules are:
 - `Compilerˉsourceˉwvbˉdemo`: `b910bd18abbca23882cdadbea289b8e1e41dbc2f5871c2f8772c10a170b42c2a`
 - `Compilerˉsourceˉwvbˉtool`: `abc2ef9839944bddee172cbeb3e11f716d7be9c0d94c1a0d4378341030ee4207`
 - `Wvˉdumpˉcore`: `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`
-- `Wvoˉobjectˉcore`: `15b6de9e90cd3eb3288f106bd272fac5b4b25280f972c393e8d0f0b34ecf5d07`
+- `Wvoˉobjectˉcore`: `3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7`
 - `Wvaˉassemblerˉcore`: `1589f2750fa8fcf98ed1058814907f7e03eed0ac368467999118e25fb8195a7f`
 - `Wvˉlinkerˉcore`: `592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386`
 

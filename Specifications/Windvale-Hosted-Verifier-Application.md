@@ -1,8 +1,8 @@
-# Windvale hosted read-only WVB tool applications
+# Windvale hosted read-only binary tool applications
 
 ## Status and scope
 
-`WVHV 1` is the implemented manifest for packaging three Windvale-written read-only WVB tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned verifier, the complete structural `wvdump` inspector, and the bounded portable-WVB runner. All run without loading .NET. The verifier and inspector applications have qualified histories; the runner profile is an implemented candidate pending dual-host qualification. Stage 0 still lowers, packages, and independently verifies the applications until the broader native-retirement gate is qualified.
+`WVHV 1` is the implemented manifest for packaging four fixed Windvale-written read-only binary tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned WVB verifier, the complete structural `wvdump` inspector, the bounded portable-WVB runner, and the WVO verifier/inspector. All run without loading .NET. The WVB verifier and inspector applications have qualified histories; the runner and WVO profiles are implemented candidates pending the grouped dual-host retirement gate. Stage 0 still lowers, packages, and independently verifies the applications until the broader native-retirement gate is qualified.
 
 These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one monolithic typed walk under a `u64` host meter; the WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
 
@@ -22,7 +22,7 @@ wvverify <module.wvb>
 
 Success writes `wvb status=Valid profile=compiler-aligned` plus LF to standard output and returns `0`. Rejection writes one stable phase line to standard error and returns `1`. Invalid invocation writes the usage line to standard error and returns `64`.
 
-The canonical inspector project is [`Windvale-Wvb-Inspector.wvproj`](../Windvale-Wvb-Inspector.wvproj), which reuses the checked-in Windvale source `Examples/Foundation/Wv-Dump-Core.wv` without a second implementation. Its invocation is:
+The canonical WVB inspector project is [`Windvale-Wvb-Inspector.wvproj`](../Windvale-Wvb-Inspector.wvproj), which reuses the checked-in Windvale source `Examples/Foundation/Wv-Dump-Core.wv` without a second implementation. Its invocation is:
 
 ```text
 wvdump <module.wvb>
@@ -30,9 +30,11 @@ wvdump <module.wvb>
 
 Success writes the deterministic [`wvdump 1`](Wv-Dump-Report.md) line report and returns `0`. Structural rejection writes one stable diagnostic and returns `2`; invalid invocation returns `64`. Ordinary inspection first runs `wvverify` and invokes `wvdump` only after semantic acceptance.
 
+The WVO profile packages [`Windvale-Wvo-Object.wvproj`](../Windvale-Wvo-Object.wvproj) under the separately specified [native WVO inspector contract](Windvale-Native-Wvo-Inspector.md). It uses the same eleven-service read-only startup as `wvdump`, but profile 6 binds the canonical `Wvoˉobjectˉcore` identity and its `verify`/`inspect` command contract.
+
 ## Source and authority contract
 
-Both modules have hosted authority and declare exactly these five capabilities in canonical order:
+Every application module has hosted authority and declares exactly these five capabilities in canonical order:
 
 1. `console.write_line(text) -> void`;
 2. `diagnostic.write_line(text) -> void`;
@@ -60,7 +62,7 @@ u32   native ABI version = 22
 u32   execution-context version
 u32   service-table version
 u32   capability count = 5
-u32   service count = 6 verifier, 11 inspector, 9 runner
+u32   service count = 6 verifier, 11 WVB/WVO inspector, 9 runner
 u32   capability offset = 128
 u32   capability record bytes = 16
 u32   service offset = 208
@@ -72,7 +74,7 @@ u32   native-image bytes
 u32   native Main offset
 u32   record-arena bytes
 u32   text-arena bytes
-u32   profile flags: 2 compiler-WVB verifier, 4 WVB inspector, 5 WVB runner
+u32   profile: 2 compiler-WVB verifier, 4 WVB inspector, 5 WVB runner, 6 WVO inspector
 u64   instruction budget = 16,000,000,000
 bytes native-image SHA-256[32]
 ```
@@ -93,6 +95,8 @@ Each service record binds its service identity, capability identity or zero for 
 Profile `4` extends that exact sequence with `enum.name`, `text.concat`, `text.quote`, `i32.format`, and `u32.format`. Those services have zero capability identity and pure-service flags. The profile identity, service count, exact order, records, and zero tail are independently verified.
 
 Profile `5` uses the verifier's first six services and then `text.concat`, `i32.format`, and `u32.format`. It reuses the inspector startup template; the two service-table slots not present in the runner profile are bound to zero and are unreachable from the independently verified runner fragment.
+
+Profile `6` uses the same exact eleven services as profile `4` and reuses the same inspector startup template. Its distinct profile identity prevents a WVB inspector package from being accepted as the WVO front door or vice versa.
 
 ## Runtime and startup
 
@@ -138,6 +142,8 @@ The current corrected-backend reconstruction candidate is 1,004,032 bytes with S
 
 `windows-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,752 bytes with SHA-256 `91b046015660f5f9e2710ed9cb41d5da9a79a1c87f4cf9ed87790c013a6dcce4`; the current corrected-backend reconstruction is 778,240 bytes with SHA-256 `6231a60404fc49f85695eddcc2e0690e372c64c0cf2d2ca847fd0ffc3f76b028`.
 
+`windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 577,024 bytes with SHA-256 `9f85375a9223fdc8c8bfe81f82b6b428432a21594a11179d1ab1375aa6c6886f`.
+
 ## Linux container
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
@@ -147,6 +153,8 @@ The current corrected-backend reconstruction candidate is 1,003,520 bytes with S
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its current corrected-backend candidate is 794,624 bytes with SHA-256 `cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e`.
 
 `linux-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,240 bytes with SHA-256 `8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294`; the current corrected-backend reconstruction has the same size and SHA-256 `74180ac7cd80192647f46df166a8ea97af17c9676afbe0b2ecb2c8c824db6944`.
+
+`linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 577,536 bytes with SHA-256 `dc9fff2a13256cd0dfabed4c7e9369a9d446408a00aec3eee5fd95876ce88b37`.
 
 The digest-bound [native read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md) intentionally continues to use the previously qualified verifier and inspector applications until the corrected-backend candidates pass the same exact-commit dual-host gate. Candidate reconstruction does not silently replace a qualified ordinary artifact.
 
@@ -164,6 +172,9 @@ windvale aot Windvale-Wvb-Inspector.wvb --target linux-x64-wvb-inspector-v1
 windvale build Windvale-Wvb-Runner.wvproj
 windvale aot Windvale-Wvb-Runner.wvb --target windows-x64-wvb-runner-v1
 windvale aot Windvale-Wvb-Runner.wvb --target linux-x64-wvb-runner-v1
+windvale build Windvale-Wvo-Object.wvproj
+windvale aot Windvale-Wvo-Object.wvb --target windows-x64-wvo-inspector-v1
+windvale aot Windvale-Wvo-Object.wvb --target linux-x64-wvo-inspector-v1
 ```
 
 The canonical WVB is 125,721 bytes with SHA-256 `259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f`.
@@ -172,10 +183,12 @@ The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e966
 
 The current native-compiler runner candidate is 90,009 bytes with SHA-256 `3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626`.
 
-The verifier writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical verifier-fragment services; they add only the startup-internal UTF-8 service. The inspector writers require the same entry and capabilities plus the exact eleven-service read-only fragment. The runner writers require the same entry and capabilities plus its exact eight-service source fragment, and retain the same qualified startup-internal UTF-8 leaf in the fixed nine-service application bundle. All three construct the outer application, parse it independently, and atomically publish it only after every profile, manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
+The WVO inspector candidate is 57,297 bytes with SHA-256 `3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7`.
+
+The verifier writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical verifier-fragment services; they add only the startup-internal UTF-8 service. The WVB and WVO inspector writers require the same entry and capabilities plus the exact eleven-service read-only fragment, and the WVO writer additionally binds the canonical module identity. The runner writers require the same entry and capabilities plus its exact eight-service source fragment, and retain the same qualified startup-internal UTF-8 leaf in the fixed nine-service application bundle. All four profiles construct the outer application, parse it independently, and atomically publish it only after every profile, manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
 
 Qualification shares the existing exact-compiler AOT test so the suite compiles the large compiler once. That test compiles the verifier, verifies both deterministic packages, reconstructs both WVA startups, corrupts each outer boundary, runs the current-host application against the exact compiler WVB, rejects a corrupted candidate, and inspects the child for .NET modules or mappings. The same case then consumes the portable verifier core in the build-driver proof rather than compiling a second verifier implementation.
 
 ## Retirement boundary
 
-The verifier satisfies one qualified part of the native-retirement inventory: a Windvale-authored semantic verifier runs as a direct Windows or Linux process, and its portable core is shared by the native compiler build driver. The inspector candidate removes a second ordinary CLI role once dual-host qualification is recorded. Neither retires Stage 0 packaging or test orchestration. Native x64 lowering, package constructors, assembler, linker, reference recovery compiler, test runner, and repository automation still invoke .NET. All remaining [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) conditions remain mandatory before .NET leaves the normal path.
+The verifier satisfies one qualified part of the native-retirement inventory: a Windvale-authored semantic verifier runs as a direct Windows or Linux process, and its portable core is shared by the native compiler build driver. The WVB inspector is already qualified; the runner and WVO candidates remove additional ordinary CLI roles once the grouped dual-host and artifact-promotion gates are recorded. These profiles do not retire Stage 0 packaging or test orchestration. Native x64 lowering, package constructors, the reference recovery compiler, and remaining repository automation still invoke .NET. All remaining [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) conditions remain mandatory before .NET leaves the normal path.

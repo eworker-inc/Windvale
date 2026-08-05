@@ -32,7 +32,7 @@ The function reads at most the smaller declared length, allocates no byte value,
 
 The three current consumers are:
 
-- `Examples/Foundation/Wvo-Object-Core.wv`, for canonical section and symbol order;
+- `Object-Model/Windvale/Wvo-Object-Core.wv`, for canonical section and symbol order;
 - `Assembler/Windvale/Wva-Assembler-Core.wv`, for declaration equality, lookup, and canonical order; and
 - `Linker/Windvale/Wv-Linker-Core.wv`, for same-object name equality and canonical order.
 

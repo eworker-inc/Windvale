@@ -121,7 +121,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉcontract
             Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier =>
                 Windowsˉhostedˉverifierˉstartup.BYTES,
             Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
-                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner =>
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner or
+                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector =>
                 Windowsˉhostedˉinspectorˉstartup.BYTES,
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };
