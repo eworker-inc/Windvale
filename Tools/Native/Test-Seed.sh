@@ -4,7 +4,7 @@ set -uo pipefail
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Plan.txt"
-plan_digest=619b22496a6999b80ed25f601066c1fa07162dad52c6b6c79b9d836a1d46df62
+plan_digest=1b5dc525a2a5fc8883e21cbd0502bb2c3af1cb93c32fec11f5379e9f624fd870
 
 if ! printf '%s  %s\n' "$plan_digest" "$plan" | sha256sum --check --strict --quiet; then
     echo 'The native test plan artifact digest is invalid.' >&2
@@ -29,33 +29,55 @@ trap cleanup EXIT
 total=0
 passed=0
 IFS= read -r header < "$plan"
-if [[ $header != 'windvale-native-tests 2' ]]; then
+if [[ $header != 'windvale-native-tests 3' ]]; then
     echo 'The native test plan header is invalid.' >&2
     exit 1
 fi
 
-while IFS='|' read -r name project expected_hash expected_kind expected_value; do
+while IFS='|' read -r name input_kind input expected_hash expected_kind expected_value; do
     [[ -n $name ]] || continue
-    [[ $name != 'windvale-native-tests 2' ]] || continue
+    [[ $name != 'windvale-native-tests 3' ]] || continue
     total=$((total + 1))
     output="$temporary_directory/Current.wvb"
     build_output="$temporary_directory/Build.out"
     build_error="$temporary_directory/Build.err"
+    decode_output="$temporary_directory/Decode.out"
+    decode_error="$temporary_directory/Decode.err"
     run_output="$temporary_directory/Run.out"
     run_error="$temporary_directory/Run.err"
     expected_output="$temporary_directory/Expected.out"
     expected_error="$temporary_directory/Expected.err"
 
-    if ! "$repository_root/Tools/Native/Build-Wvb.sh" \
-        "$repository_root/$project" "$output" > "$build_output" 2> "$build_error"; then
-        echo "FAIL  $name: native build failed" >&2
-        cat -- "$build_error" >&2
-        echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
-        exit 1
-    fi
-    if [[ -s $build_error ]]; then
-        echo "FAIL  $name: native build wrote a diagnostic" >&2
-        cat -- "$build_error" >&2
+    if [[ $input_kind == project ]]; then
+        if ! "$repository_root/Tools/Native/Build-Wvb.sh" \
+            "$repository_root/$input" "$output" > "$build_output" 2> "$build_error"; then
+            echo "FAIL  $name: native build failed" >&2
+            cat -- "$build_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if [[ -s $build_error ]]; then
+            echo "FAIL  $name: native build wrote a diagnostic" >&2
+            cat -- "$build_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+    elif [[ $input_kind == fixture-base64 ]]; then
+        if ! base64 --decode "$repository_root/$input" \
+            > "$output" 2> "$decode_error"; then
+            echo "FAIL  $name: malformed fixture decoding failed" >&2
+            cat -- "$decode_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if [[ -s $decode_error ]]; then
+            echo "FAIL  $name: malformed fixture decoding wrote a diagnostic" >&2
+            cat -- "$decode_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+    else
+        echo "FAIL  $name: test input kind is invalid" >&2
         echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
         exit 1
     fi
@@ -66,8 +88,13 @@ while IFS='|' read -r name project expected_hash expected_kind expected_value; d
         exit 1
     fi
 
-    "$repository_root/Tools/Native/Run-Wvb.sh" "$output" \
-        > "$run_output" 2> "$run_error"
+    if [[ $expected_kind == verify-failure ]]; then
+        "$repository_root/Tools/Native/Verify-Wvb.sh" "$output" \
+            > "$run_output" 2> "$run_error"
+    else
+        "$repository_root/Tools/Native/Run-Wvb.sh" "$output" \
+            > "$run_output" 2> "$run_error"
+    fi
     run_status=$?
     if [[ $expected_kind == result ]]; then
         if ((run_status != 0)); then
@@ -111,6 +138,25 @@ while IFS='|' read -r name project expected_hash expected_kind expected_value; d
             "$expected_code" "$expected_instructions" > "$expected_error"
         if ! cmp --silent "$expected_error" "$run_error"; then
             echo "FAIL  $name: failure report differs" >&2
+            cat -- "$run_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+    elif [[ $expected_kind == verify-failure ]]; then
+        if ((run_status != 1)); then
+            echo "FAIL  $name: native verification exit differs" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if [[ -s $run_output ]]; then
+            echo "FAIL  $name: rejected verification wrote standard output" >&2
+            cat -- "$run_output" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        printf 'wvb status=Invalid phase=%s\n' "$expected_value" > "$expected_error"
+        if ! cmp --silent "$expected_error" "$run_error"; then
+            echo "FAIL  $name: verification report differs" >&2
             cat -- "$run_error" >&2
             echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
             exit 1

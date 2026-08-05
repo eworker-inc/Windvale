@@ -17,7 +17,12 @@ internal static partial class Program
             "PASS  invalid-utf8\n" +
             "PASS  range-failure\n" +
             "PASS  u16-failure\n" +
-            "Tests: 8, Passed: 8, Failed: 0\n",
+            "PASS  malformed-bad-magic\n" +
+            "PASS  malformed-bad-version\n" +
+            "PASS  malformed-bad-utf8\n" +
+            "PASS  malformed-truncated\n" +
+            "PASS  malformed-trailing\n" +
+            "Tests: 13, Passed: 13, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

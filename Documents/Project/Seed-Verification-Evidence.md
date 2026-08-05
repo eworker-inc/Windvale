@@ -2026,3 +2026,39 @@ This focused run subsumes the preceding five-case local result. The managed suit
 Linux execution, malformed-module envelopes, additional runtime/resource failures,
 Standard, Qualification, GitHub verification, and runner/test promotion remain
 deferred to the grouped end-of-goal gate.
+
+## Local native malformed-WVB test evidence
+
+[Decision 0229](../Decisions/0229-Native-Malformed-Wvb-Test-Fixtures.md)
+supersedes the unqualified result/failure plan with the fixed thirteen-case
+`WVNT 3` contract. Its 1,983 UTF-8/LF bytes have SHA-256
+`1b5dc525a2a5fc8883e21cbd0502bb2c3af1cb93c32fec11f5379e9f624fd870`.
+The first eight rows and every prior WVB/result/failure identity remain unchanged.
+
+Five checked-in base64 text fixtures decode to exact malformed WVB values derived
+once from the existing 174-byte return-42 vector: bad magic (174 bytes,
+`20618498d9df059d52fc0d660bf52f32df291c88b94d4b5ded224078f936108e`),
+bad format version (174 bytes,
+`4f0cc323d4eb6713405a3e92f7c885b358aa1efc5fa08e2ecca7be7e17287614`),
+invalid module-name UTF-8 (174 bytes,
+`d7e26806542fc5a924193f7d42a229b8e86aaab78c7ba9f845f0b51dcc655c55`),
+one-byte truncation (173 bytes,
+`c795b6a811dac439e60775dfc1c48b23b6a594e203639bc660f974d41dc4073f`),
+and one appended zero byte (175 bytes,
+`7121dfd48f36433738e81c9328e54b86ac3e26aa5a61c89f5bef6469df0481c1`).
+The host adapters verify each decoded identity before invoking the already
+qualified native verifier.
+
+Review covered the closed two-input/three-expectation policy, both launcher
+digests, all decoded hashes, exact exit/channel requirements, and the managed
+wrapper's complete report before execution. The direct .NET-free Windows plan
+passes all thirteen cases in 5.1 seconds. Every malformed case returns 1, writes
+no standard output, and writes exactly
+`wvb status=Invalid phase=semantic` plus LF to standard error.
+
+The managed wrapper was not rebuilt or rerun because the direct plan is the
+narrowest behavioral check and its fixed report was reviewed. Linux execution,
+typed-execution and control-reachability corruptions, randomized malformed data,
+unsafe bytecode, Standard, Qualification, GitHub verification, and runner/test
+promotion remain deferred to the grouped end-of-goal gate or later focused
+transfers.

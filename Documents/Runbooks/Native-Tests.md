@@ -19,27 +19,41 @@ On Linux x64:
 ./Tools/Native/Test-Seed.sh
 ```
 
-The command verifies the fixed test plan, builds both projects through the pinned
-native source-to-WVB tools, compares their complete WVB identities, and executes
-them through the pinned native runner. Success is:
+The command verifies the fixed test plan, builds project cases through the pinned
+native source-to-WVB tools, decodes fixed malformed fixtures, compares every
+complete WVB identity, and dispatches only to the pinned native runner or verifier.
+Success is:
 
 ```text
 PASS  calls-control
 PASS  scalar-core
-Tests: 2, Passed: 2, Failed: 0
+PASS  function-only
+PASS  data-text
+PASS  nominal-types
+PASS  invalid-utf8
+PASS  range-failure
+PASS  u16-failure
+PASS  malformed-bad-magic
+PASS  malformed-bad-version
+PASS  malformed-bad-utf8
+PASS  malformed-truncated
+PASS  malformed-trailing
+Tests: 13, Passed: 13, Failed: 0
 ```
 
 No .NET process is required by this command. The host dependencies are `cmd.exe`
-and `certutil` on Windows, or Bash, `sha256sum`, `cmp`, and core utilities on Linux.
+and `certutil` on Windows, or Bash, `sha256sum`, `base64`, `cmp`, and core utilities
+on Linux.
 
 ## Current boundary
 
-This is a candidate scalar smoke gate, not the complete normal repository verifier.
-Continue to select one appropriate Stage 0 verifier for changes outside these two
-transferred fixtures. Do not run this candidate and progressively broader local
-levels merely as a checklist; use the narrowest gate that owns the changed behavior.
+This is a candidate portable result/runtime-failure/malformed-envelope gate, not
+the complete normal repository verifier. Continue to select one appropriate Stage
+0 verifier for changes outside these transferred fixtures. Do not run this
+candidate and progressively broader local levels merely as a checklist; use the
+narrowest gate that owns the changed behavior.
 
-For changes to the native plan, launchers, or its two projects, run the focused Seed
-test named `native test orchestration builds and runs the pinned scalar plan` once.
-GitHub owns the independent Windows and pinned-Debian Qualification run for a final
-committed candidate.
+For changes to the native plan, launchers, projects, or fixed fixtures, review the
+managed wrapper's exact report and run `Tools\Native\Test-Seed.cmd` or
+`./Tools/Native/Test-Seed.sh` directly once. GitHub owns the independent Windows
+and pinned-Debian Qualification run for a final committed candidate.

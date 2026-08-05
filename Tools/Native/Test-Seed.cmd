@@ -5,7 +5,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Plan.txt"
 
-certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"619b22496a6999b80ed25f601066c1fa07162dad52c6b6c79b9d836a1d46df62" >nul
+certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"1b5dc525a2a5fc8883e21cbd0502bb2c3af1cb93c32fec11f5379e9f624fd870" >nul
 if errorlevel 1 (
     >&2 echo The native test plan artifact digest is invalid.
     exit /b 1
@@ -17,8 +17,8 @@ mkdir "%TemporaryDirectory%" || exit /b 1
 
 set /a Total=0
 set /a Passed=0
-for /f "usebackq skip=1 tokens=1-5 delims=|" %%A in ("%Plan%") do (
-    call :run_case "%%A" "%%B" "%%C" "%%D" "%%E"
+for /f "usebackq skip=1 tokens=1-6 delims=|" %%A in ("%Plan%") do (
+    call :run_case "%%A" "%%B" "%%C" "%%D" "%%E" "%%F"
     if errorlevel 1 goto :failed
 )
 
@@ -29,17 +29,26 @@ exit /b 0
 :run_case
 set /a Total+=1
 set "Name=%~1"
-set "Project=%~2"
-set "ExpectedHash=%~3"
-set "ExpectedKind=%~4"
-set "ExpectedValue=%~5"
+set "InputKind=%~2"
+set "Input=%~3"
+set "ExpectedHash=%~4"
+set "ExpectedKind=%~5"
+set "ExpectedValue=%~6"
 set "Output=%TemporaryDirectory%\Current.wvb"
 set "BuildOutput=%TemporaryDirectory%\Build.out"
 set "BuildError=%TemporaryDirectory%\Build.err"
+set "DecodeOutput=%TemporaryDirectory%\Decode.out"
+set "DecodeError=%TemporaryDirectory%\Decode.err"
 set "RunOutput=%TemporaryDirectory%\Run.out"
 set "RunError=%TemporaryDirectory%\Run.err"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\%Project%" "%Output%" > "%BuildOutput%" 2> "%BuildError%"
+if "%InputKind%"=="project" goto :build_project
+if "%InputKind%"=="fixture-base64" goto :decode_fixture
+>&2 echo FAIL  %Name%: test input kind is invalid
+exit /b 1
+
+:build_project
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\%Input%" "%Output%" > "%BuildOutput%" 2> "%BuildError%"
 if errorlevel 1 (
     >&2 echo FAIL  %Name%: native build failed
     type "%BuildError%" >&2
@@ -50,12 +59,29 @@ for %%S in ("%BuildError%") do if not "%%~zS"=="0" (
     type "%BuildError%" >&2
     exit /b 1
 )
+goto :input_ready
+
+:decode_fixture
+certutil -f -decode "%RepositoryRoot%\%Input%" "%Output%" > "%DecodeOutput%" 2> "%DecodeError%"
+if errorlevel 1 (
+    >&2 echo FAIL  %Name%: malformed fixture decoding failed
+    type "%DecodeError%" >&2
+    exit /b 1
+)
+for %%S in ("%DecodeError%") do if not "%%~zS"=="0" (
+    >&2 echo FAIL  %Name%: malformed fixture decoding wrote a diagnostic
+    type "%DecodeError%" >&2
+    exit /b 1
+)
+
+:input_ready
 certutil -hashfile "%Output%" SHA256 | findstr /I /C:"%ExpectedHash%" >nul
 if errorlevel 1 (
     >&2 echo FAIL  %Name%: WVB identity differs
     exit /b 1
 )
 
+if "%ExpectedKind%"=="verify-failure" goto :verify_case
 call "%RepositoryRoot%\Tools\Native\Run-Wvb.cmd" "%Output%" > "%RunOutput%" 2> "%RunError%"
 set "RunExit=%ERRORLEVEL%"
 if "%ExpectedKind%"=="result" (
@@ -70,6 +96,13 @@ if "%ExpectedKind%"=="failure" (
 )
 >&2 echo FAIL  %Name%: test expectation kind is invalid
 exit /b 1
+
+:verify_case
+call "%RepositoryRoot%\Tools\Native\Verify-Wvb.cmd" "%Output%" > "%RunOutput%" 2> "%RunError%"
+set "RunExit=%ERRORLEVEL%"
+call :check_verify_failure
+if errorlevel 1 exit /b 1
+goto :case_passed
 
 :check_result
 if not "%RunExit%"=="0" (
@@ -125,6 +158,28 @@ if not "%ActualReport%"=="wvb run status=Failed code=%ExpectedCode% instructions
 )
 exit /b 0
 
+:check_verify_failure
+if not "%RunExit%"=="1" (
+    >&2 echo FAIL  %Name%: native verification exit differs
+    exit /b 1
+)
+for %%S in ("%RunOutput%") do if not "%%~zS"=="0" (
+    >&2 echo FAIL  %Name%: rejected verification wrote standard output
+    type "%RunOutput%" >&2
+    exit /b 1
+)
+call :read_report "%RunError%"
+if not "%ReportLines%"=="1" (
+    >&2 echo FAIL  %Name%: verification report has extra lines
+    exit /b 1
+)
+if not "%ActualReport%"=="wvb status=Invalid phase=%ExpectedValue%" (
+    >&2 echo FAIL  %Name%: verification report differs
+    type "%RunError%" >&2
+    exit /b 1
+)
+exit /b 0
+
 :case_passed
 set /a Passed+=1
 echo PASS  %Name%
@@ -148,7 +203,7 @@ call :cleanup
 exit /b 1
 
 :cleanup
-for %%F in (Current.wvb Build.out Build.err Run.out Run.err) do (
+for %%F in (Current.wvb Build.out Build.err Decode.out Decode.err Run.out Run.err) do (
     if exist "%TemporaryDirectory%\%%F" del /f /q "%TemporaryDirectory%\%%F" >nul 2>nul
 )
 rmdir "%TemporaryDirectory%" >nul 2>nul
