@@ -259,6 +259,9 @@
       Include="../../Compiler/Windvale/Source-Wvb-Core.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Core.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Source-Wvb-Temporary-Slots.wv"
+      LogicalName="Windvale.Seed.Tests.Source-Wvb-Temporary-Slots.wv" />
+    <EmbeddedResource
       Include="../../Examples/Compiler/Source-Wvb-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Demo.wv" />
     <EmbeddedResource

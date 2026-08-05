@@ -1,0 +1,68 @@
+module Wvbˉrunnerˉtool profile hosted;
+
+import WebAssemblyˉwvbˉscalarˉinterpreter as Interpreter;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Buildˉrequest(Module: bytes) -> bytes {
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1230526039u32);
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(1u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(4096u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(8u32));
+    return Bytesˉconcat(Request, Module);
+}
+
+fn Reportˉfailure(Status: u32, Instructions: u32) -> void {
+    var Report: text = Textˉconcat(
+        "wvb run status=Failed code=",
+        U32ˉformat(Status)
+    );
+    Report = Textˉconcat(Report, " instructions=");
+    diagnostic.write_line(Textˉconcat(Report, U32ˉformat(Instructions)));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        diagnostic.write_line("Usage: wvrun <module.wvb>");
+        return 64;
+    }
+
+    let Module: bytes = file.read_bytes(process.argument(0u32));
+    let Response: bytes = Interpreter.Main(Buildˉrequest(Module));
+    if Bytesˉlength(Response) != 20u32 {
+        diagnostic.write_line(
+            "wvb run status=Unsupported profile=portable-main-i32"
+        );
+        return 1;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1331189335u32 {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+    if Bytesˉreadˉu16ˉlittle(Response, 4u32) != 1u32 {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+    if Bytesˉreadˉu16ˉlittle(Response, 6u32) != 0u32 {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+
+    let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
+    let Instructions: u32 = Bytesˉreadˉu32ˉlittle(Response, 12u32);
+    if Status != 0u32 {
+        Reportˉfailure(Status, Instructions);
+        return 1;
+    }
+
+    console.write_line(Textˉconcat(
+        "Result: ",
+        I32ˉformat(Bytesˉreadˉi32ˉlittle(Response, 16u32))
+    ));
+    return 0;
+}

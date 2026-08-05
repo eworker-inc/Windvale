@@ -132,7 +132,7 @@ The package constructors retain only the zero-relocation templates plus typed pa
 
 The current canonical application is 1,007,104 bytes with SHA-256 `f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0`.
 
-`windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its implemented candidate is 678,400 bytes with SHA-256 `30f8c6cbb1555665063dfb70fa35f08d90818107298c6ab5b91f845814d22daa`.
+`windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its implemented candidate is 795,136 bytes with SHA-256 `61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381`.
 
 ## Linux container
 
@@ -140,7 +140,7 @@ The current canonical application is 1,007,104 bytes with SHA-256 `f15422397ad89
 
 The current canonical application is 1,007,616 bytes with SHA-256 `dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a`.
 
-`linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its implemented candidate is 679,936 bytes with SHA-256 `4f99dc43e1af4ad074cc15a38bfe44a433af9979985a600739780ac156a52791`.
+`linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its implemented candidate is 794,624 bytes with SHA-256 `d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627`.
 
 ## Construction and verification
 
@@ -157,7 +157,7 @@ windvale aot Windvale-Wvb-Inspector.wvb --target linux-x64-wvb-inspector-v1
 
 The canonical WVB is 125,721 bytes with SHA-256 `259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f`.
 
-The canonical inspector WVB is 61,890 bytes with SHA-256 `333fffcb26912aed969581d394bf0d3b8a093edfaafc565a43f8f700a8afb43d`.
+The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`.
 
 The verifier writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical verifier-fragment services; they add only the startup-internal UTF-8 service. The inspector writers require the same entry and capabilities plus the exact eleven-service read-only fragment. Both construct the outer application, parse it independently, and atomically publish it only after every profile, manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
 

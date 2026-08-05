@@ -36,11 +36,11 @@ The report is checked against fixed contract text and artifact hashes. The norma
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | `Wvb/Compiler-Wvb-Verifier.wvb` | 125,721 | `259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f` |
-| `Wvb/Wvb-Inspector.wvb` | 61,890 | `333fffcb26912aed969581d394bf0d3b8a093edfaafc565a43f8f700a8afb43d` |
+| `Wvb/Wvb-Inspector.wvb` | 76,527 | `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753` |
 | `windows-x64/wvverify.exe` | 1,007,104 | `f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0` |
-| `windows-x64/wvdump.exe` | 678,400 | `30f8c6cbb1555665063dfb70fa35f08d90818107298c6ab5b91f845814d22daa` |
+| `windows-x64/wvdump.exe` | 795,136 | `61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381` |
 | `linux-x64/wvverify.elf` | 1,007,616 | `dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a` |
-| `linux-x64/wvdump.elf` | 679,936 | `4f99dc43e1af4ad074cc15a38bfe44a433af9979985a600739780ac156a52791` |
+| `linux-x64/wvdump.elf` | 794,624 | `d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627` |
 
 The verifier artifacts retain their previously qualified identities. The inspector WVB reuses the existing complete Windvale `Wv-Dump-Core.wv` implementation rather than introducing a second parser or report generator.
 

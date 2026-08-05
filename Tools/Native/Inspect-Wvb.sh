@@ -12,7 +12,7 @@ artifact_root="$repository_root/Artifacts/Native-Front-Door"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n%s  %s\n' \
     'dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a' \
     'linux-x64/wvverify.elf' \
-    '4f99dc43e1af4ad074cc15a38bfe44a433af9979985a600739780ac156a52791' \
+    'd3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627' \
     'linux-x64/wvdump.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native WVB verifier or inspector artifact digest is invalid.' >&2
     exit 1

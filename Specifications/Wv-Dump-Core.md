@@ -53,13 +53,14 @@ The Windvale decoder validates:
 - Module profile and strict UTF-8 name.
 - Capability count, names, parameter counts, primitive parameter shapes, and return shapes.
 - Text, immutable `i32` array, and immutable byte data representations and their independent bounds.
-- Function names, parameter/result/local shapes, combined local-slot bounds, maximum stack bounds, contiguous code ranges, and complete Code-section coverage.
-- Every instruction opcode, operand width, Boolean operand, per-function code size, and instruction count.
+- Function names, parameter/result/local shapes, the WVB 1.11 8,192-slot combined bound, maximum stack bounds, contiguous code ranges, and complete Code-section coverage.
+- Every WVB 1.11 instruction opcode through `0xBF`, operand width, Boolean operand, per-function code size, and instruction count.
 - Export names, function kind, and target range.
-- Record and enum tags, names, nonempty field/member counts, field shapes, member names, and signed values.
+- Record, enum, and variant tags; names; nonempty field/member/case counts; field and optional variant-payload shapes; member names; and signed enum values.
+- Primitive `i64`/`u64`, nominal variant, and bounded non-nested sequence/builder value shapes.
 - Exact consumption of every non-Code payload.
 
-This decoder is deliberately a structural inspector, not an alternate semantic verifier. The mandatory C# verifier still owns canonical declaration ordering, identifier grammar, recognized capability signatures, nominal-reference identity, stack typing, branch boundaries, reachable control flow, exact maximum-stack calculation, and all instruction reference checks. Keeping those responsibilities explicit avoids two subtly different execution gates.
+This decoder is deliberately a structural inspector, not an alternate semantic verifier. The mandatory compiler-aligned verifier owns canonical declaration ordering, identifier grammar, recognized capability signatures, nominal-reference identity, stack typing, branch boundaries, reachable control flow, exact maximum-stack calculation, and all instruction reference checks. Its native application is the ordinary gate; the C# implementation remains the frozen Stage 0 recovery and differential oracle while retirement is in progress.
 
 ## Qualification fixtures
 

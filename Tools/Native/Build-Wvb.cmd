@@ -14,7 +14,7 @@ set "ArtifactRoot=%RepositoryRoot%\Artifacts\Native-Front-Door"
 set "BuildDriver=%ArtifactRoot%\windows-x64\wvbuild.exe"
 set "Publisher=%ArtifactRoot%\windows-x64\wvpublish.exe"
 
-certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"1792ec58a433812d3a6cf32786ca968b5fd26155585805bd250d93ead60128e6" >nul
+certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"ee338c635aa817a26081c4327da4b36b78557f10518268162b8039d1f82316f4" >nul
 if errorlevel 1 (
     >&2 echo The Windows native build-driver artifact digest is invalid.
     exit /b 1

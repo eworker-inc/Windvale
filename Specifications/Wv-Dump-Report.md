@@ -43,7 +43,7 @@ data index=<n> name=<quoted-name> type=bytes bytes=<n>
 function index=<n> name=<quoted-name> parameters=<n> result=<shape> locals=<n> code_offset=<n> code_bytes=<n> max_stack=<n>
 function_parameter function=<n> index=<n> type=<shape>
 function_local function=<n> index=<n> type=<shape>
-instruction function=<n> offset=<n> opcode=<name> [operand=<value>] [operand2=<value>]
+instruction function=<n> offset=<n> opcode=<name> [operand=<value>] [operand2=<value>] [operand_low=<u32> operand_high=<u32>]
 
 export index=<n> name=<quoted-name> kind=function target=<function-index>
 
@@ -51,9 +51,11 @@ type index=<n> name=<quoted-name> kind=record fields=<n>
 record_field type=<n> index=<n> name=<quoted-name> value_type=<shape>
 type index=<n> name=<quoted-name> kind=enum members=<n>
 enum_member type=<n> index=<n> name=<quoted-name> value=<i32>
+type index=<n> name=<quoted-name> kind=variant cases=<n>
+variant_case type=<n> index=<n> name=<quoted-name> has_payload=<true|false> [payload_name=<quoted-name> value_type=<shape>]
 ```
 
-A primitive shape is `void`, `i32`, `bool`, `text`, `u8`, `u32`, or `bytes`. Nominal shapes are `record[<type-index>]` and `enum[<type-index>]`. Instruction offsets are relative to the beginning of their function, matching branch operands. `i32.const` uses signed decimal; Boolean constants use `true` or `false`; `enum.const` emits both operands; other encoded operands use unsigned decimal.
+A primitive shape is `void`, `i32`, `bool`, `text`, `u8`, `u32`, `bytes`, `i64`, or `u64`. Nominal shapes are `record[<type-index>]`, `enum[<type-index>]`, and `variant[<type-index>]`. Collection shapes use `sequence<element,maximum>` and `builder<element,maximum>`; WVB 1.11 forbids a collection element from itself being a collection. Instruction offsets are relative to the beginning of their function, matching branch operands. `i32.const` uses signed decimal; Boolean constants use `true` or `false`; enum/variant/builder constructors emit both unsigned operands. Because the inspector does not require a wide-integer formatting service, `i64.const` and `u64.const` report their exact little-endian low and high `u32` words.
 
 ## Diagnostics
 

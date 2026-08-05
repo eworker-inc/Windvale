@@ -219,7 +219,7 @@ fn Scanˉshape(Input: bytes, Cursor: u32, End: u32, Policy: u32) -> Wvbˉscan {
     }
 
     let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-    if Raw > 8u32 {
+    if Raw > 13u32 {
         return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
     }
     if Policy != 1u32 {
@@ -229,7 +229,7 @@ fn Scanˉshape(Input: bytes, Cursor: u32, End: u32, Policy: u32) -> Wvbˉscan {
             }
         }
     }
-    if Raw >= 7u32 {
+    if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 {
         if Policy < 2u32 {
             return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
         }
@@ -241,6 +241,39 @@ fn Scanˉshape(Input: bytes, Cursor: u32, End: u32, Policy: u32) -> Wvbˉscan {
             return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor + 1u32);
         }
         return Wvbˉscan(Wvbˉstatus.Valid, Cursor + 5u32, 1u32, Raw);
+    }
+    if Raw == 12u32 || Raw == 13u32 {
+        if Policy < 2u32 {
+            return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor);
+        }
+        if !Rangeˉisˉinside(End, Cursor + 1u32, 1u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor + 1u32);
+        }
+
+        let Elementˉraw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
+        if Elementˉraw == 0u32 || Elementˉraw > 11u32 {
+            return Scanˉfailure(Wvbˉstatus.Unknownˉvalueˉtype, Cursor + 1u32);
+        }
+
+        var Maximumˉcursor: u32 = Cursor + 2u32;
+        if Elementˉraw == 7u32 || Elementˉraw == 8u32 || Elementˉraw == 11u32 {
+            if !Rangeˉisˉinside(End, Maximumˉcursor, 4u32) {
+                return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Maximumˉcursor);
+            }
+            let Elementˉnominalˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Maximumˉcursor);
+            if Elementˉnominalˉindex > 2147483647u32 {
+                return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Maximumˉcursor);
+            }
+            Maximumˉcursor = Maximumˉcursor + 4u32;
+        }
+        if !Rangeˉisˉinside(End, Maximumˉcursor, 4u32) {
+            return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Maximumˉcursor);
+        }
+        let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Input, Maximumˉcursor);
+        if Maximum == 0u32 || Maximum > 4095u32 {
+            return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Maximumˉcursor);
+        }
+        return Wvbˉscan(Wvbˉstatus.Valid, Maximumˉcursor + 4u32, 1u32, Raw);
     }
 
     return Wvbˉscan(Wvbˉstatus.Valid, Cursor + 1u32, 1u32, Raw);
@@ -306,6 +339,26 @@ fn Opcodeˉsize(Raw: u32) -> u32 {
     }
     if Raw >= 107u32 {
         if Raw <= 125u32 {
+            return 1u32;
+        }
+    }
+    if Raw >= 128u32 {
+        if Raw <= 129u32 {
+            return 9u32;
+        }
+    }
+    if Raw >= 130u32 {
+        if Raw <= 150u32 {
+            return 1u32;
+        }
+    }
+    if Raw >= 151u32 {
+        if Raw <= 154u32 {
+            return 9u32;
+        }
+    }
+    if Raw >= 155u32 {
+        if Raw <= 191u32 {
             return 1u32;
         }
     }
@@ -466,7 +519,7 @@ fn Scanˉcapabilityˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
         }
 
         let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
-        if Parameterˉcount > 4096u32 {
+        if Parameterˉcount > 8192u32 {
             return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
         }
         Cursor = Cursor + 4u32;
@@ -621,10 +674,10 @@ fn Scanˉfunctionˉpayload(Input: bytes, Section: Wvbˉsection, Code: Wvbˉsecti
         }
 
         let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
-        if Localˉcount > 4096u32 {
+        if Localˉcount > 8192u32 {
             return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
         }
-        if Parameterˉcount > 4096u32 - Localˉcount {
+        if Parameterˉcount > 8192u32 - Localˉcount {
             return Scanˉfailure(Wvbˉstatus.Limitˉexceeded, Cursor);
         }
         Cursor = Cursor + 4u32;
@@ -744,7 +797,7 @@ fn Scanˉtypeˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
         if Kind < 1u32 {
             return Scanˉfailure(Wvbˉstatus.Unknownˉnominalˉtype, Cursor);
         }
-        if Kind > 2u32 {
+        if Kind > 3u32 {
             return Scanˉfailure(Wvbˉstatus.Unknownˉnominalˉtype, Cursor);
         }
         Cursor = Cursor + 1u32;
@@ -786,10 +839,33 @@ fn Scanˉtypeˉpayload(Input: bytes, Section: Wvbˉsection) -> Wvbˉscan {
                 }
                 Cursor = Fieldˉtype.Cursor;
             } else {
-                if !Rangeˉisˉinside(End, Cursor, 4u32) {
-                    return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+                if Kind == 2u32 {
+                    if !Rangeˉisˉinside(End, Cursor, 4u32) {
+                        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+                    }
+                    Cursor = Cursor + 4u32;
+                } else {
+                    if !Rangeˉisˉinside(End, Cursor, 1u32) {
+                        return Scanˉfailure(Wvbˉstatus.Outˉofˉbounds, Cursor);
+                    }
+                    let Payloadˉpresent: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+                    if Payloadˉpresent > 1u32 {
+                        return Scanˉfailure(Wvbˉstatus.Invalidˉpayload, Cursor);
+                    }
+                    Cursor = Cursor + 1u32;
+                    if Payloadˉpresent == 1u32 {
+                        let Payloadˉname: Wvbˉscan = Scanˉstring(Input, Cursor, End, 255u32);
+                        if Payloadˉname.Status != Wvbˉstatus.Valid {
+                            return Payloadˉname;
+                        }
+                        Cursor = Payloadˉname.Cursor;
+                        let Payloadˉtype: Wvbˉscan = Scanˉshape(Input, Cursor, End, 2u32);
+                        if Payloadˉtype.Status != Wvbˉstatus.Valid {
+                            return Payloadˉtype;
+                        }
+                        Cursor = Payloadˉtype.Cursor;
+                    }
                 }
-                Cursor = Cursor + 4u32;
             }
             Itemˉindex = Itemˉindex + 1u32;
         }
@@ -907,26 +983,49 @@ fn Primitiveˉtypeˉname(Raw: u32) -> text {
     if Raw == 5u32 {
         return "u32";
     }
+    if Raw == 9u32 {
+        return "i64";
+    }
+    if Raw == 10u32 {
+        return "u64";
+    }
     return "bytes";
 }
 
 fn Shapeˉname(Input: bytes, Cursor: u32) -> text {
     let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-    if Raw < 7u32 {
+    if Raw < 7u32 || Raw == 9u32 || Raw == 10u32 {
         return Primitiveˉtypeˉname(Raw);
     }
 
-    let Index: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-    if Raw == 7u32 {
-        return Textˉconcat("record[", Textˉconcat(U32ˉformat(Index), "]"));
+    if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 {
+        let Nominalˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        if Raw == 7u32 {
+            return Textˉconcat("record[", Textˉconcat(U32ˉformat(Nominalˉindex), "]"));
+        }
+        if Raw == 8u32 {
+            return Textˉconcat("enum[", Textˉconcat(U32ˉformat(Nominalˉindex), "]"));
+        }
+        return Textˉconcat("variant[", Textˉconcat(U32ˉformat(Nominalˉindex), "]"));
     }
-    return Textˉconcat("enum[", Textˉconcat(U32ˉformat(Index), "]"));
+
+    let Elementˉcursor: u32 = Cursor + 1u32;
+    let Maximumˉcursor: u32 = Nextˉshape(Input, Elementˉcursor);
+    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Input, Maximumˉcursor);
+    let Tail: text = Textˉconcat(",", Textˉconcat(U32ˉformat(Maximum), ">"));
+    if Raw == 12u32 {
+        return Textˉconcat("sequence<", Textˉconcat(Shapeˉname(Input, Elementˉcursor), Tail));
+    }
+    return Textˉconcat("builder<", Textˉconcat(Shapeˉname(Input, Elementˉcursor), Tail));
 }
 
 fn Nextˉshape(Input: bytes, Cursor: u32) -> u32 {
     let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-    if Raw >= 7u32 {
+    if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 {
         return Cursor + 5u32;
+    }
+    if Raw == 12u32 || Raw == 13u32 {
+        return Nextˉshape(Input, Cursor + 1u32) + 4u32;
     }
     return Cursor + 1u32;
 }
@@ -998,7 +1097,71 @@ fn Opcodeˉname(Raw: u32) -> text {
     if Raw == 122u32 { return "bytes.from_u32_little"; }
     if Raw == 123u32 { return "bytes.from_i32_little"; }
     if Raw == 124u32 { return "text.to_utf8"; }
-    return "bytes.sha256_hex";
+    if Raw == 125u32 { return "bytes.sha256_hex"; }
+    if Raw == 128u32 { return "i64.const"; }
+    if Raw == 129u32 { return "u64.const"; }
+    if Raw == 130u32 { return "i64.add"; }
+    if Raw == 131u32 { return "i64.subtract"; }
+    if Raw == 132u32 { return "i64.multiply"; }
+    if Raw == 133u32 { return "i64.negate"; }
+    if Raw == 134u32 { return "u64.add"; }
+    if Raw == 135u32 { return "u64.subtract"; }
+    if Raw == 136u32 { return "u64.multiply"; }
+    if Raw == 137u32 { return "i64.equal"; }
+    if Raw == 138u32 { return "i64.not_equal"; }
+    if Raw == 139u32 { return "i64.less"; }
+    if Raw == 140u32 { return "i64.less_equal"; }
+    if Raw == 141u32 { return "i64.greater"; }
+    if Raw == 142u32 { return "i64.greater_equal"; }
+    if Raw == 143u32 { return "u64.equal"; }
+    if Raw == 144u32 { return "u64.not_equal"; }
+    if Raw == 145u32 { return "u64.less"; }
+    if Raw == 146u32 { return "u64.less_equal"; }
+    if Raw == 147u32 { return "u64.greater"; }
+    if Raw == 148u32 { return "u64.greater_equal"; }
+    if Raw == 149u32 { return "i64.format"; }
+    if Raw == 150u32 { return "u64.format"; }
+    if Raw == 151u32 { return "variant.create"; }
+    if Raw == 152u32 { return "variant.is_case"; }
+    if Raw == 153u32 { return "variant.payload"; }
+    if Raw == 154u32 { return "builder.create"; }
+    if Raw == 155u32 { return "builder.push"; }
+    if Raw == 156u32 { return "builder.freeze"; }
+    if Raw == 157u32 { return "sequence.length"; }
+    if Raw == 158u32 { return "sequence.element"; }
+    if Raw == 159u32 { return "i32.divide"; }
+    if Raw == 160u32 { return "i32.remainder"; }
+    if Raw == 161u32 { return "u32.divide"; }
+    if Raw == 162u32 { return "u32.remainder"; }
+    if Raw == 163u32 { return "i64.divide"; }
+    if Raw == 164u32 { return "i64.remainder"; }
+    if Raw == 165u32 { return "u64.divide"; }
+    if Raw == 166u32 { return "u64.remainder"; }
+    if Raw == 167u32 { return "u8.bitwise_and"; }
+    if Raw == 168u32 { return "u8.bitwise_or"; }
+    if Raw == 169u32 { return "u8.bitwise_xor"; }
+    if Raw == 170u32 { return "u8.bitwise_not"; }
+    if Raw == 171u32 { return "u8.shift_left"; }
+    if Raw == 172u32 { return "u8.shift_right"; }
+    if Raw == 173u32 { return "u32.bitwise_and"; }
+    if Raw == 174u32 { return "u32.bitwise_or"; }
+    if Raw == 175u32 { return "u32.bitwise_xor"; }
+    if Raw == 176u32 { return "u32.bitwise_not"; }
+    if Raw == 177u32 { return "u32.shift_left"; }
+    if Raw == 178u32 { return "u32.shift_right"; }
+    if Raw == 179u32 { return "u64.bitwise_and"; }
+    if Raw == 180u32 { return "u64.bitwise_or"; }
+    if Raw == 181u32 { return "u64.bitwise_xor"; }
+    if Raw == 182u32 { return "u64.bitwise_not"; }
+    if Raw == 183u32 { return "u64.shift_left"; }
+    if Raw == 184u32 { return "u64.shift_right"; }
+    if Raw == 185u32 { return "text.equal"; }
+    if Raw == 186u32 { return "text.not_equal"; }
+    if Raw == 187u32 { return "bytes.equal"; }
+    if Raw == 188u32 { return "bytes.not_equal"; }
+    if Raw == 189u32 { return "bytes.read_u64_little"; }
+    if Raw == 190u32 { return "bytes.from_u64_little"; }
+    return "u64.from_u32";
 }
 
 fn Writeˉsectionˉline(Name: text, Section: Wvbˉsection, Count: u32) -> void {
@@ -1116,9 +1279,14 @@ fn Writeˉinstructions(Input: bytes, Start: u32, Length: u32, Functionˉindex: u
                         Textˉconcat(" operand=", U32ˉformat(U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32))))
                     );
                 } else {
-                    if Raw == 106u32 {
-                        Line = Textˉconcat(Line, Textˉconcat(" operand=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32))));
-                        Line = Textˉconcat(Line, Textˉconcat(" operand2=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 5u32))));
+                    if Size == 9u32 {
+                        if Raw == 128u32 || Raw == 129u32 {
+                            Line = Textˉconcat(Line, Textˉconcat(" operand_low=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32))));
+                            Line = Textˉconcat(Line, Textˉconcat(" operand_high=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 5u32))));
+                        } else {
+                            Line = Textˉconcat(Line, Textˉconcat(" operand=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32))));
+                            Line = Textˉconcat(Line, Textˉconcat(" operand2=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 5u32))));
+                        }
                     } else {
                         if Size == 5u32 {
                             Line = Textˉconcat(Line, Textˉconcat(" operand=", U32ˉformat(Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32))));
@@ -1236,8 +1404,13 @@ fn Writeˉtypes(Input: bytes, Section: Wvbˉsection) -> void {
             Line = Textˉconcat(Line, " kind=record");
             Line = Textˉconcat(Line, Textˉconcat(" fields=", U32ˉformat(Itemˉcount)));
         } else {
-            Line = Textˉconcat(Line, " kind=enum");
-            Line = Textˉconcat(Line, Textˉconcat(" members=", U32ˉformat(Itemˉcount)));
+            if Kind == 2u32 {
+                Line = Textˉconcat(Line, " kind=enum");
+                Line = Textˉconcat(Line, Textˉconcat(" members=", U32ˉformat(Itemˉcount)));
+            } else {
+                Line = Textˉconcat(Line, " kind=variant");
+                Line = Textˉconcat(Line, Textˉconcat(" cases=", U32ˉformat(Itemˉcount)));
+            }
         }
         console.write_line(Line);
 
@@ -1253,12 +1426,31 @@ fn Writeˉtypes(Input: bytes, Section: Wvbˉsection) -> void {
                 console.write_line(Fieldˉline);
                 Cursor = Nextˉshape(Input, Cursor);
             } else {
+                if Kind == 2u32 {
                 var Memberˉline: text = Textˉconcat("enum_member type=", U32ˉformat(Index));
                 Memberˉline = Textˉconcat(Memberˉline, Textˉconcat(" index=", U32ˉformat(Itemˉindex)));
                 Memberˉline = Textˉconcat(Memberˉline, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Itemˉname)));
                 Memberˉline = Textˉconcat(Memberˉline, Textˉconcat(" value=", I32ˉformat(Bytesˉreadˉi32ˉlittle(Input, Cursor))));
                 console.write_line(Memberˉline);
                 Cursor = Cursor + 4u32;
+                } else {
+                    let Payloadˉpresent: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+                    Cursor = Cursor + 1u32;
+                    var Caseˉline: text = Textˉconcat("variant_case type=", U32ˉformat(Index));
+                    Caseˉline = Textˉconcat(Caseˉline, Textˉconcat(" index=", U32ˉformat(Itemˉindex)));
+                    Caseˉline = Textˉconcat(Caseˉline, Textˉconcat(" name=", Quotedˉstringˉvalue(Input, Itemˉname)));
+                    if Payloadˉpresent == 0u32 {
+                        Caseˉline = Textˉconcat(Caseˉline, " has_payload=false");
+                    } else {
+                        let Payloadˉname: u32 = Cursor;
+                        Cursor = Nextˉstring(Input, Cursor);
+                        Caseˉline = Textˉconcat(Caseˉline, " has_payload=true");
+                        Caseˉline = Textˉconcat(Caseˉline, Textˉconcat(" payload_name=", Quotedˉstringˉvalue(Input, Payloadˉname)));
+                        Caseˉline = Textˉconcat(Caseˉline, Textˉconcat(" value_type=", Shapeˉname(Input, Cursor)));
+                        Cursor = Nextˉshape(Input, Cursor);
+                    }
+                    console.write_line(Caseˉline);
+                }
             }
             Itemˉindex = Itemˉindex + 1u32;
         }

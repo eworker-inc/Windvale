@@ -1,0 +1,4 @@
+windvale-project 1
+root "Tools/Windvale.Run/Wvb-Runner-Tool.wv"
+source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
+emit wvb

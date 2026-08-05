@@ -3,21 +3,27 @@ using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 using Windvale.Linker;
 using Windvale.ObjectModel;
+using Windvale.Runtime;
 using Windvale.Runtime.Native;
 
 namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVB_INSPECTOR_BYTES = 61_890;
+    private const string CURRENT_INSPECTOR_OPCODE_SOURCE =
+        "module Inspectorˉcurrentˉopcode profile portable; " +
+        "export fn Main() -> i32 { " +
+        "let Value: u32 = 29u32 / 4u32; " +
+        "if Value != 7u32 { return 1; } return 0; }";
+    private const int WVB_INSPECTOR_BYTES = 76_527;
     private const string WVB_INSPECTOR_SHA256 =
-        "333fffcb26912aed969581d394bf0d3b8a093edfaafc565a43f8f700a8afb43d";
-    private const int WINDOWS_WVB_INSPECTOR_APPLICATION_BYTES = 678_400;
+        "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
+    private const int WINDOWS_WVB_INSPECTOR_APPLICATION_BYTES = 795_136;
     private const string WINDOWS_WVB_INSPECTOR_APPLICATION_SHA256 =
-        "30f8c6cbb1555665063dfb70fa35f08d90818107298c6ab5b91f845814d22daa";
-    private const int LINUX_WVB_INSPECTOR_APPLICATION_BYTES = 679_936;
+        "61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381";
+    private const int LINUX_WVB_INSPECTOR_APPLICATION_BYTES = 794_624;
     private const string LINUX_WVB_INSPECTOR_APPLICATION_SHA256 =
-        "4f99dc43e1af4ad074cc15a38bfe44a433af9979985a600739780ac156a52791";
+        "d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627";
 
     private static readonly string LINUX_HOSTED_INSPECTOR_STARTUP_SOURCE =
         Readˉembeddedˉsource("Windvale.Seed.Tests.Linux-X64-Hosted-Inspector.wva");
@@ -158,6 +164,32 @@ internal static partial class Program
             section name=exports offset=79 bytes=4 count=0
             section name=types offset=91 bytes=4 count=0
             """.Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
+        var Currentˉbytes = Compileˉsuccess(CURRENT_INSPECTOR_OPCODE_SOURCE);
+        var Currentˉoutput = new StringWriter();
+        var Currentˉdiagnostics = new StringWriter();
+        var Inspectorˉcapabilities = Inspectorˉmodule.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Currentˉresult = new Referenceˉruntime(
+            Inspectorˉmodule,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                ["Current.wvb"],
+                Currentˉoutput,
+                Currentˉdiagnostics,
+                new Testˉfileˉreader((Name, Maximumˉbytes) =>
+                {
+                    Equal("Current.wvb", Name);
+                    True(Currentˉbytes.Length <= Maximumˉbytes,
+                        "The current-opcode inspector fixture exceeded the hosted read bound.");
+                    return Currentˉbytes.ToImmutableArray();
+                }))),
+            new(Inspectorˉcapabilities, Maximumˉinstructions: 10_000_000)).Runˉmain();
+        Equal(0, Currentˉresult.Exitˉcode);
+        Equal(string.Empty, Currentˉdiagnostics.ToString());
+        var Expectedˉcurrentˉreport = Currentˉoutput.ToString()
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+        Contains(Expectedˉcurrentˉreport, "opcode=u32.divide");
 
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
@@ -167,11 +199,13 @@ internal static partial class Program
         {
             var Validˉpath = Path.Combine(Directoryˉpath, "Valid.wvb");
             var Invalidˉpath = Path.Combine(Directoryˉpath, "Invalid.wvb");
+            var Currentˉpath = Path.Combine(Directoryˉpath, "Current.wvb");
             var Inspectorˉpath = Path.Combine(Directoryˉpath, "Wvb-Inspector.wvb");
             File.WriteAllBytes(Validˉpath, Embeddedˉmodule.Values.AsSpan());
             var Invalidˉbytes = Embeddedˉmodule.Values.ToArray();
             Invalidˉbytes[0] = 0;
             File.WriteAllBytes(Invalidˉpath, Invalidˉbytes);
+            File.WriteAllBytes(Currentˉpath, Currentˉbytes);
             File.WriteAllBytes(Inspectorˉpath, Inspectorˉbytes);
 
             var Cliˉtarget = OperatingSystem.IsWindows()
@@ -203,6 +237,10 @@ internal static partial class Program
                     Windows.Imageˉbytes,
                     arguments: [Invalidˉpath],
                     expectedˉerror: "Badˉmagic sections=0 offset=0\n"));
+                Equal(0, Executeˉwindowsˉapplication(
+                    Windows.Imageˉbytes,
+                    Expectedˉcurrentˉreport,
+                    [Currentˉpath]));
                 Equal(0, Loadedˉmodules.Count(Name =>
                     Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
                     Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
@@ -220,6 +258,10 @@ internal static partial class Program
                     Linux.Imageˉbytes,
                     arguments: [Invalidˉpath],
                     expectedˉerror: "Badˉmagic sections=0 offset=0\n"));
+                Equal(0, Executeˉlinuxˉapplication(
+                    Linux.Imageˉbytes,
+                    Expectedˉcurrentˉreport,
+                    [Currentˉpath]));
                 Equal(0, Loadedˉmappings.Count(Name =>
                     Name.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
                     Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||

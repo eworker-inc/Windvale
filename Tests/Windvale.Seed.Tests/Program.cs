@@ -24,7 +24,7 @@ internal static partial class Program
     private const string SUM_SHA256 = "76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df";
     private const string HELLO_SHA256 = "0a9230e700a10d14e718340e49562e5b0184a3c3a71b5cd29915126a6b28c28f";
     private const string FOUNDATION_SHA256 = "c13efd14485afa1bf7fa418b54cea2fdd234fe34fdc824ae52346ce062be7793";
-    private const string WVDUMP_CORE_SHA256 = "333fffcb26912aed969581d394bf0d3b8a093edfaafc565a43f8f700a8afb43d";
+    private const string WVDUMP_CORE_SHA256 = "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
     private const string WVO_CORE_SHA256 = "15b6de9e90cd3eb3288f106bd272fac5b4b25280f972c393e8d0f0b34ecf5d07";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
@@ -99,10 +99,10 @@ internal static partial class Program
     private const string SOURCE_WIR_SHA256 = "3345bdfb062cf467f8b658414a672157b518af8c5a4aa994b0eb0e32e15837a4";
     private const string SOURCE_WIR_DEMO_SHA256 = "d0b3f7b8fdbf1a7c56ebd8a2f024988933019f6e8b75202d5e97c5a96e567983";
     private const string SOURCE_WIR_TOOL_SHA256 = "302409f6f1e8c0a1c3061dda2400083e06cf6781a28922f0138a952f2edfb574";
-    private const string SOURCE_WVB_SHA256 = "08d0630b0b6411c218778faf4f6e9b0ea7332a4e634a072c14de6d7f6bd83307";
-    private const string SOURCE_WVB_DEMO_SHA256 = "e5bf9aaf00598092243578f39aae693de5f728204ffce86ffb7b03340c985715";
-    private const string SOURCE_WVB_TOOL_SHA256 = "48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6";
-    private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "7ad497d480eac6d232b7618bb1bdbc5eda256a103e35e4fcd2c6ca01d52685f7";
+    private const string SOURCE_WVB_SHA256 = "20ab85982a821dee87c8674c16c520a10646b604a5d3f0e38442589e521bf1c0";
+    private const string SOURCE_WVB_DEMO_SHA256 = "c8f96a8d973c1d03d5bb115612ddc765a2a7e3b617ec61af641f540fb7b2ce04";
+    private const string SOURCE_WVB_TOOL_SHA256 = "fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556";
+    private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e";
     private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "96547e74e54ccd452e85d859539d6c282eafc3562d161af029cbd3168546f0ec";
     private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "55e51e665a59575ac134d171e24bcf1e73863489815e50aba5167a5b920a9e44";
     private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "8e7cd4105994b9228460e5b96468c613c906f97c7784d298e7b790b91e3a1358";
@@ -117,9 +117,9 @@ internal static partial class Program
     private const string COMPILER_WVB_VERIFIER_SHA256 = "259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f";
     private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0";
     private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a";
-    private const string COMPILER_BUILD_DRIVER_SHA256 = "51f680d7fb96819e21ad8ab68988437c3ae5cfc3aa7a7ca5627641cae4fccbfe";
-    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "1792ec58a433812d3a6cf32786ca968b5fd26155585805bd250d93ead60128e6";
-    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "2728c871c9d6083f02cade80c41aa58328185e0a3b8a2997d935fdf91186b2a2";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "c609e6a4ed90da3e8e3a52cfe6266da7501ebb3142df4d1746bfcd9457051b00";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "ee338c635aa817a26081c4327da4b36b78557f10518268162b8039d1f82316f4";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "7a4451e10fbc0eaa92c08f9752112f3933b7d6d519c6e3dc08f78517d7ac6e52";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
@@ -714,6 +714,9 @@ internal static partial class Program
 
     private static readonly string SOURCE_WVB_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Core.wv");
+
+    private static readonly string SOURCE_WVB_TEMPORARY_SLOTS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Source-Wvb-Temporary-Slots.wv");
 
     private static readonly string SOURCE_WVB_DEMO_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Demo.wv");
@@ -9762,7 +9765,7 @@ internal static partial class Program
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
             ]);
-        Equal(1_071_093, Driverˉbytes.Length);
+        Equal(1_078_247, Driverˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_SHA256,
             Objectˉdigest.Calculateˉsha256(Driverˉbytes));
@@ -9826,7 +9829,7 @@ internal static partial class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(28_840_960, Firstˉwindows.Imageˉbytes.Length);
+        Equal(28_920_320, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -9858,7 +9861,7 @@ internal static partial class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(28_839_936, Firstˉlinux.Imageˉbytes.Length);
+        Equal(28_921_856, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -13118,24 +13121,24 @@ internal static partial class Program
         var Memoryˉadapterˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_MEMORY_ADAPTER_SOURCE,
             "Source-Wvb-Memory-Adapter.wv");
-        Equal(912_423, Memoryˉadapterˉbytes.Length);
+        Equal(919_577, Memoryˉadapterˉbytes.Length);
         Equal(
             SOURCE_WVB_MEMORY_ADAPTER_SHA256,
             Moduleˉdigest.Calculateˉsha256(Memoryˉadapterˉbytes));
         var Memoryˉadapter = Moduleˉcodec.Readˉandˉverify(Memoryˉadapterˉbytes);
         Equal(Moduleˉprofile.Portable, Memoryˉadapter.Module.Profile);
         Equal(0, Memoryˉadapter.Module.Capabilities.Length);
-        Equal(411, Memoryˉadapter.Functions.Length);
+        Equal(417, Memoryˉadapter.Functions.Length);
         var Memoryˉmain = Memoryˉadapter.Functions.Single(
             Function => Function.Declaration.Name == "Main");
         Equal(1, Memoryˉmain.Declaration.Parameterˉtypes.Length);
         Equal(Valueˉtype.Bytes, Memoryˉmain.Declaration.Parameterˉtypes[0]);
         Equal(Valueˉtype.Bytes, Memoryˉmain.Declaration.Returnˉtype);
         Equal(
-            753_138,
+            759_232,
             Memoryˉadapter.Functions.Sum(Function => Function.Declaration.Codeˉlength));
         Equal(
-            156_546,
+            157_844,
             Memoryˉadapter.Functions.Sum(Function => Function.Instructions.Length));
         Equal(
             1_408,
@@ -13153,7 +13156,7 @@ internal static partial class Program
             });
         var Memoryˉresult = Memoryˉruntime.Runˉmainˉbytes(
             Buildˉsingleˉsourceˉset(SOURCE_WVB_FUNCTION_ONLY_SOURCE));
-        Equal(8_500_148L, Memoryˉresult.Executedˉinstructions);
+        Equal(8_504_719L, Memoryˉresult.Executedˉinstructions);
         Equal(832, Memoryˉresult.Bytes.Length);
         Equal(
             0x4F43_5657u,
@@ -25297,6 +25300,9 @@ internal static partial class Program
         {
             Dependencies.Add(new("Compiler/Windvale/Source-Wvb-Core.wv", SOURCE_WVB_SOURCE));
         }
+        Dependencies.Add(new(
+            "Compiler/Windvale/Source-Wvb-Temporary-Slots.wv",
+            SOURCE_WVB_TEMPORARY_SLOTS_SOURCE));
         Dependencies.Add(new("Compiler/Windvale/Source-Wir-Core.wv", SOURCE_WIR_SOURCE));
         Dependencies.Add(new("Compiler/Windvale/Source-Bindings-Core.wv", SOURCE_BINDINGS_SOURCE));
         Dependencies.Add(new("Compiler/Windvale/Source-Symbols-Core.wv", SOURCE_SYMBOLS_SOURCE));

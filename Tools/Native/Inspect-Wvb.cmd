@@ -18,7 +18,7 @@ if errorlevel 1 (
     >&2 echo The Windows native WVB verifier artifact digest is invalid.
     exit /b 1
 )
-certutil -hashfile "%Inspector%" SHA256 | findstr /I /C:"30f8c6cbb1555665063dfb70fa35f08d90818107298c6ab5b91f845814d22daa" >nul
+certutil -hashfile "%Inspector%" SHA256 | findstr /I /C:"61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVB inspector artifact digest is invalid.
     exit /b 1

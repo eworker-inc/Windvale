@@ -6,6 +6,7 @@ import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwvbˉtemporaryˉslots as Temporaryˉslots;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 export enum Compilerˉsourceˉwvbˉstatus {
@@ -2278,19 +2279,25 @@ export fn Compilerˉsourceˉwvbˉinstructionˉu32(Opcode: u8, Value: u32) -> byt
 export fn Compilerˉsourceˉwvbˉtemporaryˉslot(
     Temporary: u32,
     Parameters: u32,
-    Locals: u32
+    Locals: u32,
+    Mapping: bytes
 ) -> u32 {
-    return Parameters + Locals + Temporary;
+    return Parameters + Locals + Bytesˉreadˉu32ˉlittle(
+        Mapping, Temporary * 4u32
+    );
 }
 
 export fn Compilerˉsourceˉwvbˉloadˉtemporary(
     Temporary: u32,
     Parameters: u32,
-    Locals: u32
+    Locals: u32,
+    Mapping: bytes
 ) -> bytes {
     return Compilerˉsourceˉwvbˉinstructionˉu32(
         4u8,
-        Compilerˉsourceˉwvbˉtemporaryˉslot(Temporary, Parameters, Locals)
+        Compilerˉsourceˉwvbˉtemporaryˉslot(
+            Temporary, Parameters, Locals, Mapping
+        )
     );
 }
 
@@ -2304,7 +2311,8 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     Wir: bytes,
     Operationˉentry: u32,
     Parameters: u32,
-    Locals: u32
+    Locals: u32,
+    Temporaryˉmapping: bytes
 ) -> bytes {
     let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 12u32);
     let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 16u32);
@@ -2324,7 +2332,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
         Result = Bytesˉconcat(
             Result,
             Compilerˉsourceˉwvbˉloadˉtemporary(
-                Operandˉtemporary, Parameters, Locals
+                Operandˉtemporary, Parameters, Locals, Temporaryˉmapping
             )
         );
         Operand = Operand + 1u32;
@@ -2523,7 +2531,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             Compilerˉsourceˉwvbˉinstructionˉu32(
                 5u8,
                 Compilerˉsourceˉwvbˉtemporaryˉslot(
-                    Temporary, Parameters, Locals
+                    Temporary, Parameters, Locals, Temporaryˉmapping
                 )
             )
         );
@@ -2537,7 +2545,8 @@ export fn Compilerˉsourceˉwvbˉemitˉphiˉprelude(
     Predecessor: u32,
     Targetˉblock: u32,
     Parameters: u32,
-    Locals: u32
+    Locals: u32,
+    Temporaryˉmapping: bytes
 ) -> bytes {
     if Compilerˉsourceˉwvbˉphiˉpreludeˉlength(
         Wir, Firstˉblock, Predecessor, Targetˉblock
@@ -2559,14 +2568,14 @@ export fn Compilerˉsourceˉwvbˉemitˉphiˉprelude(
     );
     let Phiˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 20u32);
     let Loaded: bytes = Compilerˉsourceˉwvbˉloadˉtemporary(
-        Operandˉtemporary, Parameters, Locals
+        Operandˉtemporary, Parameters, Locals, Temporaryˉmapping
     );
     return Bytesˉconcat(
         Loaded,
         Compilerˉsourceˉwvbˉinstructionˉu32(
             5u8,
             Compilerˉsourceˉwvbˉtemporaryˉslot(
-                Phiˉtemporary, Parameters, Locals
+                Phiˉtemporary, Parameters, Locals, Temporaryˉmapping
             )
         )
     );
@@ -2578,7 +2587,8 @@ export fn Compilerˉsourceˉwvbˉemitˉterminator(
     Blockˉentry: u32,
     Blockˉoffsets: bytes,
     Parameters: u32,
-    Locals: u32
+    Locals: u32,
+    Temporaryˉmapping: bytes
 ) -> bytes {
     let Terminator: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 20u32);
     let Value: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 24u32);
@@ -2588,7 +2598,8 @@ export fn Compilerˉsourceˉwvbˉemitˉterminator(
     if Terminator == 1u32 {
         let Predecessor: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 8u32);
         Result = Compilerˉsourceˉwvbˉemitˉphiˉprelude(
-            Wir, Firstˉblock, Predecessor, Firstˉtarget, Parameters, Locals
+            Wir, Firstˉblock, Predecessor, Firstˉtarget,
+            Parameters, Locals, Temporaryˉmapping
         );
         return Bytesˉconcat(
             Result,
@@ -2599,7 +2610,7 @@ export fn Compilerˉsourceˉwvbˉemitˉterminator(
     }
     if Terminator == 2u32 {
         Result = Compilerˉsourceˉwvbˉloadˉtemporary(
-            Value, Parameters, Locals
+            Value, Parameters, Locals, Temporaryˉmapping
         );
         Result = Bytesˉconcat(
             Result,
@@ -2618,7 +2629,7 @@ export fn Compilerˉsourceˉwvbˉemitˉterminator(
     }
     if Value != Sourceˉwir.Compilerˉsourceˉwirˉsentinel() {
         Result = Compilerˉsourceˉwvbˉloadˉtemporary(
-            Value, Parameters, Locals
+            Value, Parameters, Locals, Temporaryˉmapping
         );
     }
     return Bytesˉconcat(Result, Bytesˉfromˉu8(81u8));
@@ -2702,6 +2713,12 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     let Functionˉentry: u32 = 48u32 + Function * 48u32;
     let Firstˉblock: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 4u32);
     let Blockˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 8u32);
+    let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 12u32
+    );
+    let Operationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 16u32
+    );
     let Firstˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 20u32);
     let Temporaryˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 24u32);
     let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 36u32);
@@ -2719,7 +2736,38 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Analysis.Failureˉoperation
         );
     }
+    let Blocksˉoffset: u32 = Compilerˉsourceˉwvbˉblocksˉoffset(Wir);
+    let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+    let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
+    let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+    var Temporaryˉallocation: Temporaryˉslots.Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation =
+        Temporaryˉslots.Compilerˉsourceˉwvbˉidentityˉtemporaryˉslots(
+            Wir, Temporariesˉoffset, Firstˉtemporary, Temporaryˉcount
+        );
     if Parameters + Locals + Temporaryˉcount > 4096u32 {
+        Temporaryˉallocation =
+            Temporaryˉslots.Compilerˉsourceˉwvbˉallocateˉtemporaryˉslots(
+                Wir,
+                Blocksˉoffset,
+                Operationsˉoffset,
+                Temporariesˉoffset,
+                Operandsˉoffset,
+                Firstˉblock,
+                Blockˉcount,
+                Firstˉoperation,
+                Operationˉcount,
+                Firstˉtemporary,
+                Temporaryˉcount
+            );
+    }
+    if Temporaryˉallocation.Status !=
+        Temporaryˉslots.Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉfunctionˉfailure(
+            Wir, Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
+            Analysis.Failureˉoperation
+        );
+    }
+    if Parameters + Locals + Temporaryˉallocation.Slots > 4096u32 {
         return Compilerˉsourceˉwvbˉfunctionˉfailure(
             Wir, Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
             Analysis.Failureˉoperation
@@ -2772,7 +2820,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Metadata, Compilerˉsourceˉwvbˉshape(Returnˉshape)
     );
     Metadata = Bytesˉconcat(
-        Metadata, Bytesˉfromˉu32ˉlittle(Locals + Temporaryˉcount)
+        Metadata,
+        Bytesˉfromˉu32ˉlittle(Locals + Temporaryˉallocation.Slots)
     );
     Index = 0u32;
     while Index < Locals {
@@ -2805,11 +2854,10 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         );
         Index = Index + 1u32;
     }
-    let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
     Index = 0u32;
-    while Index < Temporaryˉcount {
+    while Index < Temporaryˉallocation.Slots {
         let Temporaryˉshape: u32 = Bytesˉreadˉu32ˉlittle(
-            Wir, Temporariesˉoffset + (Firstˉtemporary + Index) * 4u32
+            Temporaryˉallocation.Shapes, Index * 4u32
         );
         if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
             Temporaryˉshape, false, Symbols.Records, Symbols.Enums, Symbols.Variants
@@ -2836,25 +2884,28 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Metadata, Bytesˉfromˉu32ˉlittle(Analysis.Maximumˉstack)
     );
 
-    let Blocksˉoffset: u32 = Compilerˉsourceˉwvbˉblocksˉoffset(Wir);
-    let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
     var Code: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     var Block: u32 = 0u32;
     while Block < Blockˉcount {
         let Blockˉentry: u32 = Blocksˉoffset + (Firstˉblock + Block) * 36u32;
-        let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 12u32);
-        let Operationˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Blockˉentry + 16u32);
+        let Blockˉfirstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Blockˉentry + 12u32
+        );
+        let Blockˉoperationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Blockˉentry + 16u32
+        );
         var Inˉblock: u32 = 0u32;
-        while Inˉblock < Operationˉcount {
+        while Inˉblock < Blockˉoperationˉcount {
             let Operationˉentry: u32 = Operationsˉoffset +
-                (Firstˉoperation + Inˉblock) * 48u32;
+                (Blockˉfirstˉoperation + Inˉblock) * 48u32;
             let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 12u32);
             if Operationˉkind >= 73u32 { Hasˉoperators = true; }
             Code = Bytesˉconcat(
                 Code,
                 Compilerˉsourceˉwvbˉemitˉoperation(
                     Input, Scan, Source, Symbols, Orders, Plan, Wir,
-                    Operationˉentry, Parameters, Locals
+                    Operationˉentry, Parameters, Locals,
+                    Temporaryˉallocation.Mapping
                 )
             );
             Inˉblock = Inˉblock + 1u32;
@@ -2863,7 +2914,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Code,
             Compilerˉsourceˉwvbˉemitˉterminator(
                 Wir, Firstˉblock, Blockˉentry,
-                Analysis.Blockˉoffsets, Parameters, Locals
+                Analysis.Blockˉoffsets, Parameters, Locals,
+                Temporaryˉallocation.Mapping
             )
         );
         Block = Block + 1u32;

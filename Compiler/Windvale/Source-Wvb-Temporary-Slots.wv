@@ -1,0 +1,268 @@
+module Compilerˉsourceˉwvbˉtemporaryˉslots profile portable;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+export enum Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus {
+    Valid = 0;
+    Invalidˉwir = 1;
+    Slotˉlimit = 2;
+}
+
+export record Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation {
+    Status: Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus;
+    Slots: u32;
+    Mapping: bytes;
+    Shapes: bytes;
+}
+
+record Compilerˉsourceˉwvbˉtemporaryˉlifetime {
+    Valid: bool;
+    Definition: u32;
+    Lastˉuse: u32;
+    Kind: u32;
+    Nextˉoperation: u32;
+}
+
+fn Empty(Wir: bytes) -> bytes {
+    return Bytesˉslice(Wir, 0u32, 0u32);
+}
+
+fn Failure(
+    Wir: bytes,
+    Status: Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus
+) -> Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation {
+    let Value: bytes = Empty(Wir);
+    return Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation(
+        Status, 0u32, Value, Value
+    );
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value)
+        );
+    return Replaced.Value;
+}
+
+export fn Compilerˉsourceˉwvbˉidentityˉtemporaryˉslots(
+    Wir: bytes,
+    Temporariesˉoffset: u32,
+    Firstˉtemporary: u32,
+    Temporaryˉcount: u32
+) -> Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation {
+    var Mapping: bytes = Empty(Wir);
+    var Shapes: bytes = Empty(Wir);
+    var Temporary: u32 = 0u32;
+    while Temporary < Temporaryˉcount {
+        Mapping = Bytesˉconcat(
+            Mapping, Bytesˉfromˉu32ˉlittle(Temporary)
+        );
+        Shapes = Bytesˉconcat(
+            Shapes,
+            Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(
+                Wir,
+                Temporariesˉoffset +
+                    (Firstˉtemporary + Temporary) * 4u32
+            ))
+        );
+        Temporary = Temporary + 1u32;
+    }
+    return Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation(
+        Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus.Valid,
+        Temporaryˉcount,
+        Mapping,
+        Shapes
+    );
+}
+
+fn Findˉlifetime(
+    Wir: bytes,
+    Blocksˉoffset: u32,
+    Operationsˉoffset: u32,
+    Operandsˉoffset: u32,
+    Firstˉblock: u32,
+    Blockˉcount: u32,
+    Firstˉoperation: u32,
+    Operationˉcount: u32,
+    Definitionˉstart: u32,
+    Temporary: u32
+) -> Compilerˉsourceˉwvbˉtemporaryˉlifetime {
+    var Definition: u32 = 4294967295u32;
+    var Kind: u32 = 0u32;
+    var Operation: u32 = Definitionˉstart;
+    while Operation < Operationˉcount {
+        if Definition == 4294967295u32 {
+            let Definitionˉentry: u32 = Operationsˉoffset +
+                (Firstˉoperation + Operation) * 48u32;
+            if Bytesˉreadˉu32ˉlittle(
+                Wir, Definitionˉentry + 20u32
+            ) == Temporary {
+                Definition = Operation;
+                Kind = Bytesˉreadˉu32ˉlittle(
+                    Wir, Definitionˉentry + 12u32
+                );
+            }
+        }
+        Operation = Operation + 1u32;
+    }
+    if Definition == 4294967295u32 {
+        return Compilerˉsourceˉwvbˉtemporaryˉlifetime(
+            false, 0u32, 0u32, 0u32, Definitionˉstart
+        );
+    }
+
+    var Lastˉuse: u32 = Definition;
+    var Block: u32 = 0u32;
+    while Block < Blockˉcount {
+        let Blockˉentry: u32 = Blocksˉoffset +
+            (Firstˉblock + Block) * 36u32;
+        let Value: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Blockˉentry + 24u32
+        );
+        if Value == Temporary {
+            Lastˉuse = Operationˉcount + Block;
+        }
+        Block = Block + 1u32;
+    }
+
+    if Lastˉuse < Operationˉcount {
+        var Reverse: u32 = Operationˉcount;
+        while Reverse > Definition {
+            let Useˉoperation: u32 = Reverse - 1u32;
+            let Useˉentry: u32 = Operationsˉoffset +
+                (Firstˉoperation + Useˉoperation) * 48u32;
+            let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Useˉentry + 24u32
+            );
+            let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Useˉentry + 28u32
+            );
+            var Operand: u32 = 0u32;
+            var Found: bool = false;
+            while Operand < Operandˉcount {
+                let Used: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir,
+                    Operandsˉoffset + (Firstˉoperand + Operand) * 4u32
+                );
+                if Used == Temporary {
+                    Lastˉuse = Useˉoperation;
+                    Found = true;
+                    Operand = Operandˉcount;
+                } else {
+                    Operand = Operand + 1u32;
+                }
+            }
+            if Found {
+                Reverse = Definition;
+            } else {
+                Reverse = Reverse - 1u32;
+            }
+        }
+    }
+    return Compilerˉsourceˉwvbˉtemporaryˉlifetime(
+        true, Definition, Lastˉuse, Kind, Definition + 1u32
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉallocateˉtemporaryˉslots(
+    Wir: bytes,
+    Blocksˉoffset: u32,
+    Operationsˉoffset: u32,
+    Temporariesˉoffset: u32,
+    Operandsˉoffset: u32,
+    Firstˉblock: u32,
+    Blockˉcount: u32,
+    Firstˉoperation: u32,
+    Operationˉcount: u32,
+    Firstˉtemporary: u32,
+    Temporaryˉcount: u32
+) -> Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation {
+    if Temporaryˉcount == 0u32 {
+        let Value: bytes = Empty(Wir);
+        return Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation(
+            Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus.Valid,
+            0u32,
+            Value,
+            Value
+        );
+    }
+    var Mapping: bytes = Empty(Wir);
+    var Shapes: bytes = Empty(Wir);
+    var Slotˉstate: bytes = Empty(Wir);
+    var Slots: u32 = 0u32;
+    var Definitionˉstart: u32 = 0u32;
+    var Temporary: u32 = 0u32;
+    while Temporary < Temporaryˉcount {
+        let Lifetime: Compilerˉsourceˉwvbˉtemporaryˉlifetime = Findˉlifetime(
+            Wir,
+            Blocksˉoffset,
+            Operationsˉoffset,
+            Operandsˉoffset,
+            Firstˉblock,
+            Blockˉcount,
+            Firstˉoperation,
+            Operationˉcount,
+            Definitionˉstart,
+            Temporary
+        );
+        if !Lifetime.Valid {
+            return Failure(
+                Wir, Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus.Invalidˉwir
+            );
+        }
+        Definitionˉstart = Lifetime.Nextˉoperation;
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Temporariesˉoffset + (Firstˉtemporary + Temporary) * 4u32
+        );
+        var Selected: u32 = 4294967295u32;
+        if Lifetime.Kind != 64u32 {
+            var Slot: u32 = 0u32;
+            while Slot < Slots {
+                if Selected == 4294967295u32 {
+                    let State: u32 = Slot * 8u32;
+                    if Bytesˉreadˉu32ˉlittle(Slotˉstate, State) == Shape {
+                        if Bytesˉreadˉu32ˉlittle(
+                            Slotˉstate, State + 4u32
+                        ) <= Lifetime.Definition {
+                            Selected = Slot;
+                        }
+                    }
+                }
+                Slot = Slot + 1u32;
+            }
+        }
+        if Selected == 4294967295u32 {
+            if Slots >= 4096u32 {
+                return Failure(
+                    Wir,
+                    Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus.Slotˉlimit
+                );
+            }
+            Selected = Slots;
+            Slots = Slots + 1u32;
+            Shapes = Bytesˉconcat(Shapes, Bytesˉfromˉu32ˉlittle(Shape));
+            var End: u32 = Lifetime.Lastˉuse;
+            if Lifetime.Kind == 64u32 { End = 4294967295u32; }
+            Slotˉstate = Bytesˉconcat(
+                Slotˉstate,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Shape),
+                    Bytesˉfromˉu32ˉlittle(End)
+                )
+            );
+        } else {
+            Slotˉstate = Replaceˉu32(
+                Slotˉstate, Selected * 8u32 + 4u32, Lifetime.Lastˉuse
+            );
+        }
+        Mapping = Bytesˉconcat(Mapping, Bytesˉfromˉu32ˉlittle(Selected));
+        Temporary = Temporary + 1u32;
+    }
+    return Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation(
+        Compilerˉsourceˉwvbˉtemporaryˉslotˉstatus.Valid,
+        Slots,
+        Mapping,
+        Shapes
+    );
+}

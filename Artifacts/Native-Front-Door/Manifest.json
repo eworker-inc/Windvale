@@ -9,8 +9,8 @@
       "name": "compiler-build-driver-wvb",
       "path": "Wvb/Compiler-Build-Driver.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 1071093,
-      "sha256": "51f680d7fb96819e21ad8ab68988437c3ae5cfc3aa7a7ca5627641cae4fccbfe",
+      "bytes": 1078247,
+      "sha256": "c609e6a4ed90da3e8e3a52cfe6266da7501ebb3142df4d1746bfcd9457051b00",
       "sourceProject": "Windvale-Compiler-Build-Driver.wvproj"
     },
     {
@@ -33,16 +33,16 @@
       "name": "wvb-inspector-wvb",
       "path": "Wvb/Wvb-Inspector.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 61890,
-      "sha256": "333fffcb26912aed969581d394bf0d3b8a093edfaafc565a43f8f700a8afb43d",
+      "bytes": 76527,
+      "sha256": "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753",
       "sourceProject": "Windvale-Wvb-Inspector.wvproj"
     },
     {
       "name": "windows-x64-build-driver",
       "path": "windows-x64/wvbuild.exe",
       "target": "windows-x64-build-driver-v1",
-      "bytes": 28840960,
-      "sha256": "1792ec58a433812d3a6cf32786ca968b5fd26155585805bd250d93ead60128e6",
+      "bytes": 28920320,
+      "sha256": "ee338c635aa817a26081c4327da4b36b78557f10518268162b8039d1f82316f4",
       "sourceWvb": "Wvb/Compiler-Build-Driver.wvb"
     },
     {
@@ -65,16 +65,16 @@
       "name": "windows-x64-wvb-inspector",
       "path": "windows-x64/wvdump.exe",
       "target": "windows-x64-wvb-inspector-v1",
-      "bytes": 678400,
-      "sha256": "30f8c6cbb1555665063dfb70fa35f08d90818107298c6ab5b91f845814d22daa",
+      "bytes": 795136,
+      "sha256": "61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381",
       "sourceWvb": "Wvb/Wvb-Inspector.wvb"
     },
     {
       "name": "linux-x64-build-driver",
       "path": "linux-x64/wvbuild.elf",
       "target": "linux-x64-build-driver-v1",
-      "bytes": 28839936,
-      "sha256": "2728c871c9d6083f02cade80c41aa58328185e0a3b8a2997d935fdf91186b2a2",
+      "bytes": 28921856,
+      "sha256": "7a4451e10fbc0eaa92c08f9752112f3933b7d6d519c6e3dc08f78517d7ac6e52",
       "sourceWvb": "Wvb/Compiler-Build-Driver.wvb"
     },
     {
@@ -97,8 +97,8 @@
       "name": "linux-x64-wvb-inspector",
       "path": "linux-x64/wvdump.elf",
       "target": "linux-x64-wvb-inspector-v1",
-      "bytes": 679936,
-      "sha256": "4f99dc43e1af4ad074cc15a38bfe44a433af9979985a600739780ac156a52791",
+      "bytes": 794624,
+      "sha256": "d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627",
       "sourceWvb": "Wvb/Wvb-Inspector.wvb"
     }
   ]
