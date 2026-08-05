@@ -1,7 +1,7 @@
 # Decision 0233: Bounded native u8 and u32 scalars
 
 - Date: 2026-08-05
-- Status: Implemented candidate; grouped dual-host qualification pending
+- Status: Implemented; extended by [Decision 0234](0234-Bounded-Native-Scalar-Comparisons.md); grouped dual-host qualification pending
 - Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Decision 0232](0232-General-Native-Call-Directory.md)
 - Contract: [Windvale-native x86-64 lowering](../../Specifications/Windvale-Native-X64-Lowering.md)
 
@@ -29,7 +29,7 @@ Reuse value cells independently in canonical native type order: `i32`, `bool`, `
 
 Extend the existing shared backend differential case with the canonical 816-byte `Function-Only.wv` WVB. Stage 0 interpretation and native execution return 6. The Windvale memory adapter, hosted tool, and generated native tool must reproduce Stage 0's exact 6,041-byte `.text` and 6,216-byte WVO.
 
-Add one small source-defined scalar-return vector because `Function-Only.wv` exercises a Boolean helper result but not `u8` or `u32` results. Its `Byte() -> u8` and `Count() -> u32` calls must execute to 42 and reproduce Stage 0's exact 2,349-byte `.text` and 2,490-byte WVO through the hosted Windvale lowerer.
+Add one small source-defined scalar-return vector because `Function-Only.wv` exercises a Boolean helper result but not `u8` or `u32` results. Its `Byte() -> u8` and `Count() -> u32` calls must execute to 42 and reproduce Stage 0's exact WVO through the hosted Windvale lowerer. Decision 0234 later expands this vector and supersedes its initial size identity.
 
 Keep identity pins after behavioral package assertions so a derived digest change cannot abort direct execution, deterministic repetition, malformed-output preservation, or CLR-absence checks and force a redundant rerun. Run only the reviewed shared-backend and package selections. Do not run Standard, Qualification, the full Seed/OS suites, Linux execution, GitHub verification, or artifact promotion before the grouped end-of-goal gate.
 

@@ -716,11 +716,15 @@ export fn Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode: u8) -> bool {
 }
 
 export fn Compilerˉnativeˉx64ˉisˉu32ˉcomparison(Opcode: u8) -> bool {
-    return Opcode == 98u8;
+    let Numeric: u32 = U32ˉfromˉu8(Opcode);
+    if Numeric < 96u32 { return false; }
+    return Numeric <= 101u32;
 }
 
 export fn Compilerˉnativeˉx64ˉisˉu8ˉcomparison(Opcode: u8) -> bool {
-    return Opcode == 102u8;
+    let Numeric: u32 = U32ˉfromˉu8(Opcode);
+    if Numeric < 102u32 { return false; }
+    return Numeric <= 103u32;
 }
 
 export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
@@ -2048,8 +2052,14 @@ export fn Compilerˉnativeˉx64ˉcomparisonˉcondition(Opcode: u8) -> u8 {
     if Opcode == 36u8 { return 159u8; }
     if Opcode == 37u8 { return 157u8; }
     if Opcode == 38u8 { return 148u8; }
+    if Opcode == 96u8 { return 148u8; }
+    if Opcode == 97u8 { return 149u8; }
     if Opcode == 98u8 { return 146u8; }
+    if Opcode == 99u8 { return 150u8; }
+    if Opcode == 100u8 { return 151u8; }
+    if Opcode == 101u8 { return 147u8; }
     if Opcode == 102u8 { return 148u8; }
+    if Opcode == 103u8 { return 149u8; }
     return 149u8;
 }
 

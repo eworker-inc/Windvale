@@ -1938,20 +1938,27 @@ two reserved bytes, and four parameter types. The layout module also owns typed
 temporary-slot offsets in canonical `i32`, `bool`, `u8`, `u32` order. Unmeasured
 scalar opcodes remain fail-closed.
 
+[Decision 0234](../Decisions/0234-Bounded-Native-Scalar-Comparisons.md)
+then admits all six unsigned `u32` comparisons and `u8.equal`/`u8.not_equal`.
+Measurement shows `u32.not_equal` in every remaining compiler-produced fixture
+and `u8.not_equal` in both data/text and nominal fixtures. The slice reuses the
+existing typed comparison analysis and exact dword template; descriptors, nominal
+values, capabilities, and other scalar arithmetic remain fail-closed.
+
 The current module identities are:
 
 - data: `9a32b3854270bcace52f615633f4b110d9f0777ba5fb5338157af0965dcc8ed4`;
 - layout: `9213e44e9b3a4cfec1c35acc8ddb211e4d5ddc057f3033c0152d9dfa102f0ee6`;
 - object: `430eb454207189b369c99ee622ca0f7b90edcc3b1be15ebaee52d73da95ce6c8`;
-- core closure: `e3f418faa2669453972547e46b2b5a4d5d553d65445a9941e5de47fb8b59ce73`;
-- memory adapter: `d052845962f3f5dbab7eac6acbb0b0fd3d84afaa24e4f81e2fb12e6b1814624d`;
-- 112,091-byte hosted tool: `836151775e9f0cf3f92258f2271b13934c5cb4e2e89e3aad9cbbbdd1b9bf5e51`.
+- core closure: `cd82452d81615fe42e887c712572321867b87feced255b5ce8dc950d09136173`;
+- memory adapter: `227ef23b325815e6386a74e19acb62aab3f0aca15b99bc93915f0f5cd0a2ce46`;
+- 112,731-byte hosted tool: `f39f87b8aaa0dc3f4299ec232b9757aa85df29c320a0cb35715fd6588464d700`.
 
-The tool's complete Stage 0 lowering records 1,392,878 native code bytes and a
-1,396,532-byte WVO. Its Windows candidate is 1,411,072 bytes /
-`6d12b981a87a5ab8ccd15df7a7679c79967d6509a888ae47545b5b8b2262c5f7`;
-its Linux candidate is 1,413,120 bytes /
-`088803a03d175e05d9482e8d184d47ae7f5301298f4fe073563c186c657a8ece`.
+The tool's complete Stage 0 lowering records 1,397,598 native code bytes and a
+1,401,252-byte WVO. Its Windows candidate is 1,415,680 bytes /
+`23d7000bb0f1e32f71eb76467010c29f25504d99b17604a432d6e243c7a6696d`;
+its Linux candidate is 1,417,216 bytes /
+`e32c0459aa55608edca9ed625c9aec88f74c7ce46e98eec2103d36fcba622559`.
 
 One stable accepted-subset fixture is 174 WVB bytes /
 `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31`.
@@ -1983,26 +1990,26 @@ hosted tool, and generated native tool reproduce Stage 0's exact 6,041-byte
 
 Review then identified that this canonical fixture does not exercise the admitted
 `u8` and `u32` helper-result slots. A small source-defined vector adds
-`Byte() -> u8` and `Count() -> u32`, returns 42 under interpretation and native
-execution, and reproduces Stage 0's exact 2,349-byte `.text` and 2,490-byte WVO
-through the hosted lowerer.
+`Byte() -> u8` and `Count() -> u32`; Decision 0234 expands it across all eight
+bounded comparisons and both true and false routes. It returns 42 under
+interpretation and native execution and reproduces Stage 0's exact 5,263-byte
+`.text` and 5,404-byte WVO through the hosted lowerer.
 
 The affected tests and their identity-assertion order were reviewed before the
-final source check. The qualified native build compiles the final 77-function
-memory-adapter closure in 5.6 seconds as 97,748 code bytes and a 111,063-byte WVB
-with the memory identity above. One focused shared-backend pass completed the
-existing behavior before its deliberately last stale identity; those identities
-were transcribed without replaying unchanged behavior. The subsequent test review
-found the scalar-result gap above, so that newly affected shared selection ran once:
-it builds in 7.74 seconds and passes its single case in 5.773 test seconds,
-including the new vector and every retained differential assertion. The distinct
-package selection builds in 8.36 seconds and completes direct Windows execution,
-deterministic repetition, malformed-output preservation, and the no-CLR check in
-5.235 test seconds before its deliberately last stale Windows size assertion. Its
-reported final Windows/Linux identities were transcribed without replaying that
-unchanged package behavior. Standard, Qualification, the full Seed/OS suites,
-Linux execution, GitHub verification, artifact promotion, and ordinary-path
-cutover were deliberately not run.
+Decision 0234 source check. The qualified native build compiles the final
+77-function memory-adapter closure in 5.5 seconds as 98,350 code bytes and a
+111,703-byte WVB with the memory identity above. The focused shared-backend
+selection builds in 10.66 seconds and completes every retained behavior plus the
+expanded comparison vector in 7.030 test seconds before its deliberately last
+stale core identity. The final module identities were transcribed without
+replaying that behavior. The distinct package selection builds in 8.83 seconds
+and completes direct Windows execution, deterministic repetition,
+malformed-output preservation, and the no-CLR check in 5.679 test seconds before
+its deliberately last stale Windows size assertion. Its final Windows/Linux
+identities were likewise transcribed without replaying unchanged package behavior.
+Standard, Qualification, the full Seed/OS suites, Linux execution, GitHub
+verification, artifact promotion, and ordinary-path cutover were deliberately not
+run.
 
 This is focused local candidate evidence only. Standard, Qualification, the full
 Seed/OS suites, native CLI qualification, Linux execution, GitHub verification,

@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Completed the bounded Windvale-native `u32` and `u8` comparison families after measuring them as a shared blocker in all remaining compiler-produced fixtures. One reviewed typed-return vector now covers all eight comparisons across true and false routes and reproduces Stage 0's exact WVO; descriptors, nominal values, capabilities, and other scalar arithmetic remain fail-closed.
 - Extended the Windvale-written native x86-64 lowerer with bounded `u8`/`u32` locals and operations plus typed scalar helper returns. The compiler-produced `Function-Only.wv` fixture now reproduces Stage 0's exact 6,041-byte `.text` and 6,216-byte WVO through the memory adapter, hosted tool, and generated native tool; unmeasured scalar operations remain fail-closed.
 - Generalized the Windvale-written native x86-64 call directory to accept exported `Main` at any ordinal plus bounded forward, self-recursive, mutually recursive, and cyclic scalar calls under ABI 22's shared instruction/depth budgets. A complete signature pass and canonical symbol projection reproduce Stage 0's exact general-call WVO while preserving every retained object byte.
 - Added bounded immutable i32 static data to the Windvale-written native x86-64 lowerer. Focused data and WVO modules now own exact payload admission, `.rodata`, `$data_0000`, and relative relocations; canonical `Sum-Data.wv` reproduces Stage 0's exact 3,288-byte object while code-only objects remain unchanged.

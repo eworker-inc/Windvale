@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "e3f418faa2669453972547e46b2b5a4d5d553d65445a9941e5de47fb8b59ce73";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "cd82452d81615fe42e887c712572321867b87feced255b5ce8dc950d09136173";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "9a32b3854270bcace52f615633f4b110d9f0777ba5fb5338157af0965dcc8ed4";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "9213e44e9b3a4cfec1c35acc8ddb211e4d5ddc057f3033c0152d9dfa102f0ee6";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "430eb454207189b369c99ee622ca0f7b90edcc3b1be15ebaee52d73da95ce6c8";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "d052845962f3f5dbab7eac6acbb0b0fd3d84afaa24e4f81e2fb12e6b1814624d";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "836151775e9f0cf3f92258f2271b13934c5cb4e2e89e3aad9cbbbdd1b9bf5e51";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "227ef23b325815e6386a74e19acb62aab3f0aca15b99bc93915f0f5cd0a2ce46";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "f39f87b8aaa0dc3f4299ec232b9757aa85df29c320a0cb35715fd6588464d700";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -3033,8 +3033,20 @@ internal static partial class Program
             fn Byte() -> u8 { return 255u8; }
             fn Count() -> u32 { return 3u32; }
             export fn Main() -> i32 {
-                if Byte() == 255u8 {
-                    if Count() < 4u32 { return 42; }
+                let Byteˉvalue = Byte();
+                let Countˉvalue = Count();
+                if Countˉvalue != 3u32 { return 1; }
+                if Countˉvalue == 3u32 {
+                    if Countˉvalue < 4u32 {
+                        if Countˉvalue <= 3u32 {
+                            if Countˉvalue > 2u32 {
+                                if Countˉvalue >= 3u32 {
+                                    if Byteˉvalue != 255u8 { return 2; }
+                                    if Byteˉvalue == 255u8 { return 42; }
+                                }
+                            }
+                        }
+                    }
                 }
                 return 0;
             }

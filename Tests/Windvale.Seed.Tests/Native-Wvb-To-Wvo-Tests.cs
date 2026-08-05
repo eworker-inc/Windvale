@@ -9,13 +9,13 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 112_091;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_411_072;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 112_731;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_415_680;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "6d12b981a87a5ab8ccd15df7a7679c79967d6509a888ae47545b5b8b2262c5f7";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_413_120;
+        "23d7000bb0f1e32f71eb76467010c29f25504d99b17604a432d6e243c7a6696d";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_417_216;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "088803a03d175e05d9482e8d184d47ae7f5301298f4fe073563c186c657a8ece";
+        "e32c0459aa55608edca9ed625c9aec88f74c7ce46e98eec2103d36fcba622559";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
