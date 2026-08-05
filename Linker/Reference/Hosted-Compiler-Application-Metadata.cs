@@ -30,6 +30,7 @@ internal enum Hostedˉcompilerˉapplicationˉprofile : uint
 {
     Compiler = 1,
     Buildˉdriver = 2,
+    Wvaˉassembler = 3,
 }
 
 internal sealed record Verifiedˉhostedˉcompilerˉmetadata(
@@ -47,9 +48,11 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
 {
     internal const uint COMPILER_MAGIC = 0x4148_5657;
     internal const uint BUILD_DRIVER_MAGIC = 0x4248_5657;
+    internal const uint WVA_ASSEMBLER_MAGIC = 0x5348_5657;
     internal const uint FORMAT_VERSION = 1;
     internal const uint COMPILER_CONTAINER_FORMAT_VERSION = 3;
     internal const uint BUILD_DRIVER_CONTAINER_FORMAT_VERSION = 5;
+    internal const uint WVA_ASSEMBLER_CONTAINER_FORMAT_VERSION = 6;
     internal const int SIZE = 1024;
     internal const int HEADER_BYTES = 128;
     internal const int CAPABILITY_RECORD_BYTES = 16;
@@ -62,6 +65,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
     internal const int NATIVE_SHA256_OFFSET = 96;
     internal const uint COMPILER_PROFILE_FLAGS = 1;
     internal const uint BUILD_DRIVER_PROFILE_FLAGS = 3;
+    internal const uint WVA_ASSEMBLER_PROFILE_FLAGS = 4;
     internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 48_000_000_000;
 
     private static readonly ImmutableArray<Hostedˉcompilerˉcapabilityˉcontract>
@@ -310,6 +314,10 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
                 BUILD_DRIVER_MAGIC,
                 BUILD_DRIVER_CONTAINER_FORMAT_VERSION,
                 BUILD_DRIVER_PROFILE_FLAGS),
+            Hostedˉcompilerˉapplicationˉprofile.Wvaˉassembler => new(
+                WVA_ASSEMBLER_MAGIC,
+                WVA_ASSEMBLER_CONTAINER_FORMAT_VERSION,
+                WVA_ASSEMBLER_PROFILE_FLAGS),
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };
 

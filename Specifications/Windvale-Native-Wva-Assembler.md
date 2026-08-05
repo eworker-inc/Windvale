@@ -1,0 +1,71 @@
+# Windvale native WVA assembler application
+
+## Status and scope
+
+`WVHS 1` packages the canonical Windvale-written `Wvaˉassemblerˉcore` as paired Windows x64 and Linux x64 command-line applications. The candidate moves ordinary WVA-to-WVO behavior toward a .NET-free process while preserving the frozen C# assembler as a named Stage 0 recovery and differential oracle until the retirement gate is qualified.
+
+The product logic remains in `Assembler/Windvale/Wva-Assembler-Core.wv`. It owns strict UTF-8 admission, WVA scanning and semantics, exact diagnostics, object measurement, x86-64 instruction encoding, WVO construction, and the single final output call. The package adds no second assembler implementation.
+
+## Construction contract
+
+`Windvale-Wva-Assembler.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvaˉassemblerˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
+
+The native writer accepts only that identity and one exported `Main`. Its fragment must require these services in this exact order:
+
+1. `console.write_line`;
+2. `process.argument_count`;
+3. `process.argument`;
+4. `file.read_bytes`;
+5. `text.utf8_is_valid`;
+6. `diagnostic.write_line`;
+7. `text.concat`;
+8. `u32.format`;
+9. `file.write_bytes`.
+
+The application bundle retains `enum.name` between diagnostics and concatenation as an internal tenth slot. This preserves the already-bounded compiler-authority runtime and startup layout without giving the Windvale fragment another dependency or capability. The slot is not part of the fragment's accepted service set.
+
+The six declared capabilities are `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `file.write_bytes`, `process.argument`, and `process.argument_count`. A different module identity, capability set, fragment service set, entry shape, runtime profile, bundle, or outer target is rejected before publication.
+
+## Container and targets
+
+The metadata magic is `WVHS`, format version is 1, profile number is 3 in the shared hosted-compiler family, profile flags are 4, and the outer container format is 6. The public targets are:
+
+- `windows-x64-wva-assembler-v1`, producing `.exe`;
+- `linux-x64-wva-assembler-v1`, producing `.elf` and exact executable mode on Linux.
+
+Both targets reuse the existing compiler-authority process entry, argument capture, bounded file adapters, runtime state, and service leaves. No new platform startup assembly is added by this profile. Assembly remains limited to the unavoidable process/ABI/syscall boundary; all WVA and WVO meaning stays in Windvale source.
+
+The Stage 0 `compile` and `aot` commands independently verify the WVB, native fragment, bundle, metadata, runtime data, startup, and complete PE/ELF container before atomic executable publication. The raw application then accepts exactly:
+
+```text
+wvasm <source.wva> <output.wvo>
+```
+
+Successful input writes one canonical WVO, emits the stable two-line `wvasm 1` report, and returns 0. Rejected WVA returns 2 and does not create or modify the requested output. Wrong argument count returns 64. Host input/output failure remains a runtime-boundary failure rather than an assembler diagnostic.
+
+## Candidate identities and evidence
+
+The current candidate identities are:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Assembler WVB | 180,071 | `a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c` |
+| Windows assembler | 2,895,360 | `e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4` |
+| Linux assembler | 2,895,872 | `ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0` |
+
+The focused candidate test reconstructs both containers, checks the exact authority and service bundle, exercises the public AOT target, and runs the current-host raw application. Canonical input must produce the independently verified 218-byte WVO with SHA-256 `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`; malformed input must leave output absent. Current-host module or mapping inspection must find no CLR/.NET runtime.
+
+The C# Stage 0 oracle supplies differential evidence during this candidate stage. After the candidate is pinned and passes the same exact commit on Windows and Linux, normal tests use fixed WVA/WVO vectors, structural WVO assertions, malformed-input outcomes, and deterministic artifact identities. They do not need a live C# result generator. Stage 0 then remains only in named recovery, differential, and final archive qualification lanes.
+
+## Qualification gate
+
+Promotion to the ordinary assembler front door requires one exact commit to pass on Windows and Linux with:
+
+- byte-identical assembler WVB and canonical WVO;
+- independently reconstructed and verified format-6 packages;
+- current-host valid and malformed raw execution;
+- no CLR/.NET module or mapping in the assembler process;
+- digest-bound launchers and manifest entries for both platform applications; and
+- no regression in the accepted WVA, WVO, native ABI, or hosted service contracts.
+
+Until that gate passes, `windvale assemble` remains the explicit Stage 0 construction path and the native pair remains a candidate.

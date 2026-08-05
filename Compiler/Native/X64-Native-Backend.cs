@@ -4080,8 +4080,7 @@ public static class X64ˉnativeˉbackend
         code.AddRange([0x4C, 0x39, 0xC2, 0x0F, 0x87]);
         Resetˉpatches.Add(code.Count);
         Addˉi32(code, 0);
-        Emitˉloadˉeaxˉatˉfield(code, hiddenˉresultˉslot, sizeof(ulong));
-        code.AddRange([0x41, 0x89, 0xC1, 0x4C, 0x39, 0xC8, 0x0F, 0x83]);
+        code.AddRange([0x4C, 0x39, 0xC8, 0x0F, 0x83]);
         Internalˉpatches.Add(code.Count);
         Addˉi32(code, 0);
         code.AddRange([0x4C, 0x39, 0xCA, 0x0F, 0x87]);

@@ -98,6 +98,8 @@ public static class Linuxˉconsoleˉapplicationˉcontract
     public const string WVB_RUNNER_TARGET_NAME = "linux-x64-wvb-runner-v1";
     public const int BUILD_DRIVER_FORMAT_VERSION = 5;
     public const string BUILD_DRIVER_TARGET_NAME = "linux-x64-build-driver-v1";
+    public const int WVA_ASSEMBLER_FORMAT_VERSION = 6;
+    public const string WVA_ASSEMBLER_TARGET_NAME = "linux-x64-wva-assembler-v1";
     public const int HOSTED_STARTUP_BYTES = 217;
     public const int HOSTED_OUTPUT_SERVICE_OFFSET = 224;
     public const int HOSTED_NATIVE_IMAGE_OFFSET = 448;

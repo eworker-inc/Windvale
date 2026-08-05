@@ -18,12 +18,12 @@ internal static partial class Program
     private const int WVB_INSPECTOR_BYTES = 76_527;
     private const string WVB_INSPECTOR_SHA256 =
         "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
-    private const int WINDOWS_WVB_INSPECTOR_APPLICATION_BYTES = 795_136;
+    private const int WINDOWS_WVB_INSPECTOR_APPLICATION_BYTES = 793_600;
     private const string WINDOWS_WVB_INSPECTOR_APPLICATION_SHA256 =
-        "61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381";
+        "31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c";
     private const int LINUX_WVB_INSPECTOR_APPLICATION_BYTES = 794_624;
     private const string LINUX_WVB_INSPECTOR_APPLICATION_SHA256 =
-        "d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627";
+        "cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e";
 
     private static readonly string LINUX_HOSTED_INSPECTOR_STARTUP_SOURCE =
         Readˉembeddedˉsource("Windvale.Seed.Tests.Linux-X64-Hosted-Inspector.wva");

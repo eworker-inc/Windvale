@@ -91,9 +91,11 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 The canonical driver WVB is 1,078,247 bytes with SHA-256 `c609e6a4ed90da3e8e3a52cfe6266da7501ebb3142df4d1746bfcd9457051b00`.
 
-`windows-x64-build-driver-v1` emits a 28,920,320-byte PE32+ application with SHA-256 `ee338c635aa817a26081c4327da4b36b78557f10518268162b8039d1f82316f4`.
+The current corrected-backend `windows-x64-build-driver-v1` candidate emits a 28,917,248-byte PE32+ application with SHA-256 `9d6de1b4b9fd6c9359357c70e282add08ab895f18fcf8712a14010ab6a7c13b9`.
 
-`linux-x64-build-driver-v1` emits a 28,921,856-byte sectionless static-PIE ELF application with SHA-256 `7a4451e10fbc0eaa92c08f9752112f3933b7d6d519c6e3dc08f78517d7ac6e52`.
+The current corrected-backend `linux-x64-build-driver-v1` candidate emits a 28,917,760-byte sectionless static-PIE ELF application with SHA-256 `2e6480adbccdffbe75ac5442bd1e2e841770274766c7392061131fb831a91999`.
+
+These are reconstruction candidates produced after the Decision 0220 descriptor-return correction. The digest-bound ordinary native-front-door inventory deliberately retains its previously qualified build-driver applications until this exact descendant passes the Windows/Linux replacement gate; historical qualification identities remain recorded in that inventory and its evidence documents.
 
 The Stage 0 construction route is:
 

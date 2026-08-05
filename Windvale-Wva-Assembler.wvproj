@@ -1,0 +1,7 @@
+windvale-project 1
+root "Assembler/Windvale/Wva-Assembler-Core.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Byte-Ordering.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Foundation/Machine-Contracts.wv"
+emit wvb

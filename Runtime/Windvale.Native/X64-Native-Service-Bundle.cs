@@ -43,7 +43,7 @@ public sealed record Nativeˉserviceˉbundle(
     ImmutableArray<byte> Imageˉbytes,
     ImmutableArray<Nativeˉserviceˉbundleˉplacement> Placements);
 
-public static class X64ˉnativeˉserviceˉbundle
+public static partial class X64ˉnativeˉserviceˉbundle
 {
     public static Nativeˉserviceˉbundle Build(
         Nativeˉfragment fragment,

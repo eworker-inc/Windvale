@@ -2166,7 +2166,7 @@ public static class Nativeˉfragmentˉverifier
         resultˉslot = 0;
         var Cursor = index;
         if (Cursor < 0 ||
-            Cursor > end - 306 ||
+            Cursor > end - 296 ||
             !Tryˉloadˉeaxˉatˉfield(
                 code,
                 Cursor,
@@ -2204,143 +2204,136 @@ public static class Nativeˉfragmentˉverifier
             !Matches(code, Cursor + 69, 0x4C, 0x39, 0xC2, 0x0F, 0x87) ||
             !Tryˉreadˉtarget(code, Cursor + 74, out var Thirdˉresetˉtarget) ||
             Thirdˉresetˉtarget != Resetˉtarget ||
-            !Tryˉloadˉeaxˉatˉfield(
-                code,
-                Cursor + 78,
-                frameˉbytes,
-                sizeof(ulong),
-                out var Secondˉcheckpointˉslot) ||
-            Secondˉcheckpointˉslot != hiddenˉresultˉslot ||
-            !Matches(code, Cursor + 85, 0x41, 0x89, 0xC1, 0x4C, 0x39, 0xC8, 0x0F, 0x83) ||
-            !Tryˉreadˉtarget(code, Cursor + 93, out var Internalˉtarget) ||
-            !Matches(code, Cursor + 97, 0x4C, 0x39, 0xCA, 0x0F, 0x87) ||
-            !Tryˉreadˉtarget(code, Cursor + 102, out var Secondˉpreserveˉtarget) ||
+            !Matches(code, Cursor + 78, 0x4C, 0x39, 0xC8, 0x0F, 0x83) ||
+            !Tryˉreadˉtarget(code, Cursor + 83, out var Internalˉtarget) ||
+            !Matches(code, Cursor + 87, 0x4C, 0x39, 0xCA, 0x0F, 0x87) ||
+            !Tryˉreadˉtarget(code, Cursor + 92, out var Secondˉpreserveˉtarget) ||
             Secondˉpreserveˉtarget != Preserveˉtarget ||
-            Resetˉtarget != Cursor + 106 ||
+            Resetˉtarget != Cursor + 96 ||
             !Tryˉloadˉeaxˉatˉfield(
                 code,
-                Cursor + 106,
+                Cursor + 96,
                 frameˉbytes,
                 sizeof(ulong),
                 out var Resetˉcheckpointˉslot) ||
             Resetˉcheckpointˉslot != hiddenˉresultˉslot ||
             !Matches(
                 code,
-                Cursor + 113,
+                Cursor + 103,
                 0x41, 0x89, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
                 0xE9) ||
-            !Tryˉreadˉtarget(code, Cursor + 118, out var Externalˉtarget) ||
-            Preserveˉtarget != Cursor + 122 ||
-            Externalˉtarget != Cursor + 122 ||
-            !Tryˉloadˉrdx(code, Cursor + 122, frameˉbytes, out var Externalˉhiddenˉslot) ||
+            !Tryˉreadˉtarget(code, Cursor + 108, out var Externalˉtarget) ||
+            Preserveˉtarget != Cursor + 112 ||
+            Externalˉtarget != Cursor + 112 ||
+            !Tryˉloadˉrdx(code, Cursor + 112, frameˉbytes, out var Externalˉhiddenˉslot) ||
             Externalˉhiddenˉslot != hiddenˉresultˉslot ||
-            !Tryˉloadˉrax(code, Cursor + 130, frameˉbytes, out var Externalˉresultˉslot) ||
+            !Tryˉloadˉrax(code, Cursor + 120, frameˉbytes, out var Externalˉresultˉslot) ||
             Externalˉresultˉslot != resultˉslot ||
-            !Matches(code, Cursor + 138, 0x48, 0x89, 0x02) ||
+            !Matches(code, Cursor + 128, 0x48, 0x89, 0x02) ||
             !Tryˉloadˉeaxˉatˉfield(
                 code,
-                Cursor + 141,
+                Cursor + 131,
                 frameˉbytes,
                 Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
                 out var Externalˉlengthˉslot) ||
             Externalˉlengthˉslot != resultˉslot ||
             !Matches(
                 code,
-                Cursor + 148,
+                Cursor + 138,
                 0x89, 0x42, 0x08,
                 0x31, 0xC0,
                 0x89, 0x42, 0x0C,
                 0x48, 0x81, 0xC4) ||
-            Readˉi32(code, Cursor + 159) != frameˉbytes ||
-            !Matchesˉrestoreˉdepthˉandˉreturn(code, Cursor + 163, false) ||
-            Internalˉtarget != Cursor + 167 ||
+            Readˉi32(code, Cursor + 149) != frameˉbytes ||
+            !Matchesˉrestoreˉdepthˉandˉreturn(code, Cursor + 153, false) ||
+            Internalˉtarget != Cursor + 157 ||
             !Tryˉloadˉeaxˉatˉfield(
                 code,
-                Cursor + 167,
+                Cursor + 157,
                 frameˉbytes,
                 sizeof(ulong),
                 out var Internalˉcheckpointˉslot) ||
             Internalˉcheckpointˉslot != hiddenˉresultˉslot ||
             !Matches(
                 code,
-                Cursor + 174,
+                Cursor + 164,
                 0x41, 0x89, 0xC1,
                 0x4D, 0x8B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
                 0x49, 0x01, 0xC1) ||
             !Tryˉloadˉecxˉatˉfield(
                 code,
-                Cursor + 184,
+                Cursor + 174,
                 frameˉbytes,
                 Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
                 out var Internalˉlengthˉslot) ||
             Internalˉlengthˉslot != resultˉslot ||
-            !Matches(code, Cursor + 191, 0x89, 0xC2, 0x01, 0xCA, 0x0F, 0x82) ||
-            !Tryˉreadˉtarget(code, Cursor + 197, out var Thirdˉpreserveˉtarget) ||
+            !Matches(code, Cursor + 181, 0x89, 0xC2, 0x01, 0xCA, 0x0F, 0x82) ||
+            !Tryˉreadˉtarget(code, Cursor + 187, out var Thirdˉpreserveˉtarget) ||
             Thirdˉpreserveˉtarget != Preserveˉtarget ||
             !Matches(
                 code,
-                Cursor + 201,
+                Cursor + 191,
                 0x41, 0x3B, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
                 0x0F, 0x87) ||
-            !Tryˉreadˉtarget(code, Cursor + 207, out var Fourthˉpreserveˉtarget) ||
+            !Tryˉreadˉtarget(code, Cursor + 197, out var Fourthˉpreserveˉtarget) ||
             Fourthˉpreserveˉtarget != Preserveˉtarget ||
             !Matches(
                 code,
-                Cursor + 211,
+                Cursor + 201,
                 0x41, 0x89, 0x57, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET) ||
-            !Tryˉloadˉrax(code, Cursor + 215, frameˉbytes, out var Copyˉsourceˉslot) ||
+            !Tryˉloadˉrax(code, Cursor + 205, frameˉbytes, out var Copyˉsourceˉslot) ||
             Copyˉsourceˉslot != resultˉslot ||
-            !Matches(code, Cursor + 223, 0x85, 0xC9, 0x0F, 0x84) ||
-            !Tryˉreadˉtarget(code, Cursor + 227, out var Copyˉendˉtarget) ||
+            !Matches(code, Cursor + 213, 0x85, 0xC9, 0x0F, 0x84) ||
+            !Tryˉreadˉtarget(code, Cursor + 217, out var Copyˉendˉtarget) ||
             !Matches(
                 code,
-                Cursor + 231,
+                Cursor + 221,
                 0x44, 0x0F, 0xB6, 0x00,
                 0x45, 0x88, 0x01,
                 0x48, 0xFF, 0xC0,
                 0x49, 0xFF, 0xC1,
                 0xFF, 0xC9,
                 0x0F, 0x85) ||
-            !Tryˉreadˉtarget(code, Cursor + 248, out var Copyˉtarget) ||
-            Copyˉtarget != Cursor + 231 ||
-            Copyˉendˉtarget != Cursor + 252 ||
+            !Tryˉreadˉtarget(code, Cursor + 238, out var Copyˉtarget) ||
+            Copyˉtarget != Cursor + 221 ||
+            Copyˉendˉtarget != Cursor + 242 ||
             !Tryˉloadˉeaxˉatˉfield(
                 code,
-                Cursor + 252,
+                Cursor + 242,
                 frameˉbytes,
                 sizeof(ulong),
                 out var Finalˉcheckpointˉslot) ||
             Finalˉcheckpointˉslot != hiddenˉresultˉslot ||
             !Matches(
                 code,
-                Cursor + 259,
+                Cursor + 249,
                 0x41, 0x89, 0xC1,
                 0x49, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
                 0x4C, 0x01, 0xC8) ||
-            !Tryˉloadˉrdx(code, Cursor + 269, frameˉbytes, out var Finalˉhiddenˉslot) ||
+            !Tryˉloadˉrdx(code, Cursor + 259, frameˉbytes, out var Finalˉhiddenˉslot) ||
             Finalˉhiddenˉslot != hiddenˉresultˉslot ||
-            !Matches(code, Cursor + 277, 0x48, 0x89, 0x02) ||
+            !Matches(code, Cursor + 267, 0x48, 0x89, 0x02) ||
             !Tryˉloadˉeaxˉatˉfield(
                 code,
-                Cursor + 280,
+                Cursor + 270,
                 frameˉbytes,
                 Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET,
                 out var Finalˉlengthˉslot) ||
             Finalˉlengthˉslot != resultˉslot ||
             !Matches(
                 code,
-                Cursor + 287,
+                Cursor + 277,
                 0x89, 0x42, 0x08,
                 0x31, 0xC0,
                 0x89, 0x42, 0x0C,
                 0x48, 0x81, 0xC4) ||
-            Readˉi32(code, Cursor + 298) != frameˉbytes ||
-            !Matchesˉrestoreˉdepthˉandˉreturn(code, Cursor + 302, false))
+            Readˉi32(code, Cursor + 288) != frameˉbytes ||
+            !Matchesˉrestoreˉdepthˉandˉreturn(code, Cursor + 292, false))
         {
             return false;
         }
 
-        index = Cursor + 306;
+        index = Cursor + 296;
         return true;
     }
 

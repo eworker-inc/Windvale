@@ -132,21 +132,23 @@ The package constructors retain only the zero-relocation templates plus typed pa
 
 `windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the one bounded input snapshot.
 
-The current canonical application is 1,007,104 bytes with SHA-256 `f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0`.
+The current corrected-backend reconstruction candidate is 1,004,032 bytes with SHA-256 `aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a`.
 
-`windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its implemented candidate is 795,136 bytes with SHA-256 `61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381`.
+`windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its current corrected-backend candidate is 793,600 bytes with SHA-256 `31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c`.
 
-`windows-x64-wvb-runner-v1` uses metadata profile `5`. The pinned candidate is 778,752 bytes with SHA-256 `91b046015660f5f9e2710ed9cb41d5da9a79a1c87f4cf9ed87790c013a6dcce4`; it is committed qualification input, not yet an accepted ordinary artifact.
+`windows-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,752 bytes with SHA-256 `91b046015660f5f9e2710ed9cb41d5da9a79a1c87f4cf9ed87790c013a6dcce4`; the current corrected-backend reconstruction is 778,240 bytes with SHA-256 `6231a60404fc49f85695eddcc2e0690e372c64c0cf2d2ca847fd0ffc3f76b028`.
 
 ## Linux container
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
 
-The current canonical application is 1,007,616 bytes with SHA-256 `dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a`.
+The current corrected-backend reconstruction candidate is 1,003,520 bytes with SHA-256 `26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b`.
 
-`linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its implemented candidate is 794,624 bytes with SHA-256 `d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627`.
+`linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its current corrected-backend candidate is 794,624 bytes with SHA-256 `cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e`.
 
-`linux-x64-wvb-runner-v1` uses metadata profile `5`. The pinned candidate is 778,240 bytes with SHA-256 `8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294`; direct execution remains pending Linux qualification.
+`linux-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,240 bytes with SHA-256 `8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294`; the current corrected-backend reconstruction has the same size and SHA-256 `74180ac7cd80192647f46df166a8ea97af17c9676afbe0b2ecb2c8c824db6944`.
+
+The digest-bound [native read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md) intentionally continues to use the previously qualified verifier and inspector applications until the corrected-backend candidates pass the same exact-commit dual-host gate. Candidate reconstruction does not silently replace a qualified ordinary artifact.
 
 ## Construction and verification
 

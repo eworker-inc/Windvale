@@ -4,6 +4,7 @@ using Windvale.Bytecode;
 using Windvale.Compiler;
 using Windvale.Compiler.Native;
 using Windvale.Linker;
+using Windvale.ObjectModel;
 using Windvale.Runtime;
 using Windvale.Runtime.Native;
 
@@ -11,6 +12,13 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
+    private const int CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_BYTES = 778_240;
+    private const string CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_SHA256 =
+        "6231a60404fc49f85695eddcc2e0690e372c64c0cf2d2ca847fd0ffc3f76b028";
+    private const int CURRENT_LINUX_WVB_RUNNER_APPLICATION_BYTES = 778_240;
+    private const string CURRENT_LINUX_WVB_RUNNER_APPLICATION_SHA256 =
+        "74180ac7cd80192647f46df166a8ea97af17c9676afbe0b2ecb2c8c824db6944";
+
     private static readonly string FOUNDATION_SHA256_SOURCE =
         Readˉembeddedˉsource("Windvale.Seed.Tests.Foundation-Sha256.wv");
     private static readonly string FOUNDATION_SHA256_KNOWN_ANSWERS_SOURCE =
@@ -154,12 +162,14 @@ internal static partial class Program
             Pinnedˉlinux.Diagnostics.IsEmpty
                 ? "The pinned Linux WVB runner failed without a diagnostic."
                 : Pinnedˉlinux.Diagnostics[0].Message);
-        Sequenceˉequal(
-            Pinnedˉwindows.Imageˉbytes,
-            File.ReadAllBytes(Path.Combine(Pinnedˉroot, "windows-x64", "wvrun.exe")));
-        Sequenceˉequal(
-            Pinnedˉlinux.Imageˉbytes,
-            File.ReadAllBytes(Path.Combine(Pinnedˉroot, "linux-x64", "wvrun.elf")));
+        Equal(CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_BYTES, Pinnedˉwindows.Imageˉbytes.Length);
+        Equal(
+            CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Pinnedˉwindows.Imageˉbytes.AsSpan()));
+        Equal(CURRENT_LINUX_WVB_RUNNER_APPLICATION_BYTES, Pinnedˉlinux.Imageˉbytes.Length);
+        Equal(
+            CURRENT_LINUX_WVB_RUNNER_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Pinnedˉlinux.Imageˉbytes.AsSpan()));
 
         foreach (var Platform in new[]
         {

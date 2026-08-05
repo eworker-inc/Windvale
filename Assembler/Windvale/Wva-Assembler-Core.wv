@@ -44,6 +44,7 @@ data Byteˉvalues: bytes = [
 ];
 
 enum Wvaˉtokenˉkind {
+    Invalid = 0;
     Word = 1;
     Newline = 2;
     End = 3;
