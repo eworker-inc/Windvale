@@ -349,7 +349,7 @@ dotnet $ToolDll `
     compile $CompositionRoot --module $CompositionMiddle --module $CompositionLeaf -o $CompositionModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-module composition demo.' }
 $CompositionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $CompositionModule).Hash.ToLowerInvariant()
-if ($CompositionHash -ne '2a3acaf08c23075ee2a9701ba1b35dfe2cb83fca27eb669102a9d0dbfff53419') {
+if ($CompositionHash -ne '030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607') {
     throw "The composed source module has an unexpected digest: $CompositionHash"
 }
 $CompositionRunOutput = dotnet $ToolDll run $CompositionModule
@@ -360,7 +360,7 @@ $RecordFieldReportOutput = dotnet $ToolDll run $CompositionModule --report-funct
 if (
     $LASTEXITCODE -ne 0 -or
     $RecordFieldReportOutput -notcontains 'Result: 42' -or
-    ($RecordFieldReportOutput -join "`n") -notmatch '(?m)^Function record-fields=2 index=2 name=Compositionˉmake$' -or
+    ($RecordFieldReportOutput -join "`n") -notmatch '(?m)^Function record-fields=2 index=1 name=__WvM1F0$' -or
     [regex]::Matches(($RecordFieldReportOutput -join "`n"), '(?m)^Function record-fields=').Count -ne 1
 ) {
     throw 'The Seed CLI did not report deterministic per-function record construction pressure.'
@@ -551,9 +551,9 @@ $DynamicValueReportOutput = dotnet $ToolDll run $ByteConstructionDemoModule --re
 if (
     $LASTEXITCODE -ne 0 -or
     $DynamicValueReportOutput -notcontains 'Result: 0' -or
-    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=8388653 values=27 kind=bytes\.concat index=0 name=Foundationˉbytesˉrepeat$' -or
-    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=15 values=4 kind=bytes\.concat index=1 name=Foundationˉbytesˉreplace$' -or
-    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=4 values=4 kind=bytes\.from_u8 index=0 name=Foundationˉbytesˉrepeat$' -or
+    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=8388653 values=27 kind=bytes\.concat index=1 name=__WvM1F0$' -or
+    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=15 values=4 kind=bytes\.concat index=2 name=__WvM1F1$' -or
+    ($DynamicValueReportOutput -join "`n") -notmatch '(?m)^Function dynamic-bytes=4 values=4 kind=bytes\.from_u8 index=1 name=__WvM1F0$' -or
     [regex]::Matches(($DynamicValueReportOutput -join "`n"), '(?m)^Function dynamic-bytes=').Count -ne 3
 ) {
     throw 'The Seed CLI did not report deterministic per-function dynamic-value construction pressure.'
@@ -562,7 +562,7 @@ $DynamicLifetimeOutput = dotnet $ToolDll run $ByteConstructionDemoModule --repor
 if (
     $LASTEXITCODE -ne 0 -or
     $DynamicLifetimeOutput -notcontains 'Result: 0' -or
-    ($DynamicLifetimeOutput -join "`n") -notmatch '(?m)^Dynamic lifetime constructed-bytes=8388672 constructed-values=35 peak-live-bytes=6291475 peak-live-values=5 peak-operation-bytes=6291475 peak-operation-values=5 retained-bytes=0 retained-values=0 kind=bytes\.concat index=0 name=Foundationˉbytesˉrepeat$'
+    ($DynamicLifetimeOutput -join "`n") -notmatch '(?m)^Dynamic lifetime constructed-bytes=8388672 constructed-values=35 peak-live-bytes=6291475 peak-live-values=5 peak-operation-bytes=6291475 peak-operation-values=5 retained-bytes=0 retained-values=0 kind=bytes\.concat index=1 name=__WvM1F0$'
 ) {
     throw 'The Seed CLI did not report deterministic dynamic-value lifetime pressure.'
 }
@@ -749,7 +749,7 @@ if ($SourceLexerHash -ne '411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08e
 $SourceLexerInspection = (dotnet $ToolDll inspect $SourceLexerModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceLexerInspection -notmatch 'Nominal types \(6\)' -or
+    $SourceLexerInspection -notmatch 'Nominal types \(7\)' -or
     $SourceLexerInspection -notmatch 'Compilerˉsourceˉtoken' -or
     $SourceLexerInspection -notmatch 'Compilerˉtokenˉkind' -or
     $SourceLexerInspection -notmatch 'Compilerˉlexˉsourceˉbounded' -or
@@ -787,7 +787,7 @@ if ($SourceDeclarationParserHash -ne '8a0bafe3b0faebfd20e882be59a37af659158fb674
 $SourceDeclarationParserInspection = (dotnet $ToolDll inspect $SourceDeclarationParserModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceDeclarationParserInspection -notmatch 'Nominal types \(14\)' -or
+    $SourceDeclarationParserInspection -notmatch 'Nominal types \(15\)' -or
     $SourceDeclarationParserInspection -notmatch 'Compilerˉsourceˉdeclaration' -or
     $SourceDeclarationParserInspection -notmatch 'Compilerˉsourceˉmoduleˉsummary' -or
     $SourceDeclarationParserInspection -notmatch 'Compilerˉparseˉnextˉdeclarationˉvalidated' -or
@@ -834,7 +834,7 @@ $SourceLexerDeclarationOutput = dotnet $ToolDll `
     @SourceDeclarationParserArguments --max-steps 30000000 -- $SourceLexerSource
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceLexerDeclarationOutput -notcontains 'source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=17 tokens=6175 offset=51134' -or
+    $SourceLexerDeclarationOutput -notcontains 'source declarations status=Valid imports=1 capabilities=0 data=0 records=3 enums=3 functions=19 tokens=6881 offset=56312' -or
     $SourceLexerDeclarationOutput -notcontains 'Result: 0'
 ) {
     throw 'The declaration-parser tool did not parse the real Windvale lexer source.'
@@ -843,7 +843,7 @@ $SourceParserSelfDeclarationOutput = dotnet $ToolDll `
     @SourceDeclarationParserArguments --max-steps 45000000 -- $SourceDeclarationParserSource
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceParserSelfDeclarationOutput -notcontains 'source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=32 tokens=15098 offset=112327' -or
+    $SourceParserSelfDeclarationOutput -notcontains 'source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=32 tokens=15142 offset=112567' -or
     $SourceParserSelfDeclarationOutput -notcontains 'Result: 0'
 ) {
     throw 'The declaration-parser tool did not parse its own declaration source.'
@@ -864,7 +864,7 @@ if ($SourceBodyParserHash -ne '68a340644274f220224a0c2c08058c78c82bcb0d3edff7140
 $SourceBodyParserInspection = (dotnet $ToolDll inspect $SourceBodyParserModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceBodyParserInspection -notmatch 'Nominal types \(24\)' -or
+    $SourceBodyParserInspection -notmatch 'Nominal types \(25\)' -or
     $SourceBodyParserInspection -notmatch 'Compilerˉsourceˉexpression' -or
     $SourceBodyParserInspection -notmatch 'Compilerˉsourceˉstatement' -or
     $SourceBodyParserInspection -notmatch 'Compilerˉparseˉexpressionˉvalidated' -or
@@ -914,7 +914,7 @@ $SourceLexerBodyOutput = dotnet $ToolDll `
     @SourceBodyParserArguments --max-steps 100000000 -- $SourceLexerSource
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceLexerBodyOutput -notcontains 'source bodies status=Valid functions=17 top-level=118 statements=686 expression-nodes=1916 statement-depth=17 expression-depth=5 offset=51135' -or
+    $SourceLexerBodyOutput -notcontains 'source bodies status=Valid functions=19 top-level=131 statements=749 expression-nodes=2153 statement-depth=17 expression-depth=5 offset=56313' -or
     $SourceLexerBodyOutput -notcontains 'Result: 0'
 ) {
     throw 'The body-parser tool did not parse the real Windvale lexer bodies.'
@@ -923,7 +923,7 @@ $SourceDeclarationBodyOutput = dotnet $ToolDll `
     @SourceBodyParserArguments --max-steps 160000000 -- $SourceDeclarationParserSource
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceDeclarationBodyOutput -notcontains 'source bodies status=Valid functions=32 top-level=363 statements=917 expression-nodes=3593 statement-depth=12 expression-depth=5 offset=112328' -or
+    $SourceDeclarationBodyOutput -notcontains 'source bodies status=Valid functions=32 top-level=365 statements=921 expression-nodes=3601 statement-depth=12 expression-depth=5 offset=112568' -or
     $SourceDeclarationBodyOutput -notcontains 'Result: 0'
 ) {
     throw 'The body-parser tool did not parse the declaration-parser bodies.'
@@ -932,7 +932,7 @@ $SourceBodySelfOutput = dotnet $ToolDll `
     @SourceBodyParserArguments --max-steps 160000000 -- $SourceBodyParserSource
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceBodySelfOutput -notcontains 'source bodies status=Valid functions=47 top-level=338 statements=811 expression-nodes=3576 statement-depth=7 expression-depth=3 offset=109506' -or
+    $SourceBodySelfOutput -notcontains 'source bodies status=Valid functions=48 top-level=339 statements=812 expression-nodes=3607 statement-depth=7 expression-depth=3 offset=110706' -or
     $SourceBodySelfOutput -notcontains 'Result: 0'
 ) {
     throw 'The body-parser tool did not parse its own statement and expression source.'
@@ -954,7 +954,7 @@ if ($SourceSetHash -ne '1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fd
 $SourceSetInspection = (dotnet $ToolDll inspect $SourceSetModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceSetInspection -notmatch 'Nominal types \(28\)' -or
+    $SourceSetInspection -notmatch 'Nominal types \(29\)' -or
     $SourceSetInspection -notmatch 'Compilerˉsourceˉsetˉscan' -or
     $SourceSetInspection -notmatch 'Compilerˉsourceˉsetˉsummary' -or
     $SourceSetInspection -notmatch 'Compilerˉscanˉsourceˉset' -or
@@ -1035,7 +1035,7 @@ if ($SourceGraphHash -ne '7fe9276273e48432f6206bde0d8a533dbc35ddf055b2f68b8a0381
 $SourceGraphInspection = (dotnet $ToolDll inspect $SourceGraphModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceGraphInspection -notmatch 'Nominal types \(33\)' -or
+    $SourceGraphInspection -notmatch 'Nominal types \(34\)' -or
     $SourceGraphInspection -notmatch 'Compilerˉsourceˉgraphˉstatus' -or
     $SourceGraphInspection -notmatch 'Compilerˉsourceˉgraphˉsummary' -or
     $SourceGraphInspection -notmatch 'Compilerˉvalidateˉsourceˉgraph' -or
@@ -1116,18 +1116,18 @@ dotnet $ToolDll `
     -o $SourceSymbolsModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-symbol core.' }
 $SourceSymbolsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsHash -ne 'c0ea4ba24ba6f9395a509aa8d1673409747da4aa5bd839dda1d511341676c56a') {
+if ($SourceSymbolsHash -ne '9d82d52310cd542a6a2854d10f990080f7a56fd98567ef4ec4042ce6fd6e7a9b') {
     throw "The Windvale source-symbol core has an unexpected digest: $SourceSymbolsHash"
 }
 $SourceSymbolsInspection = (dotnet $ToolDll inspect $SourceSymbolsModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceSymbolsInspection -notmatch 'Nominal types \(42\)' -or
+    $SourceSymbolsInspection -notmatch 'Nominal types \(45\)' -or
     $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolˉstatus' -or
     $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolˉsummary' -or
     $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid' -or
     $SourceSymbolsInspection -notmatch 'Compilerˉvalidateˉsourceˉsymbols' -or
-    $SourceSymbolsInspection -notmatch 'Exports \(65\)'
+    $SourceSymbolsInspection -notmatch 'Exports \(66\)'
 ) {
     throw 'The Windvale source-symbol inspection is incomplete.'
 }
@@ -1144,7 +1144,7 @@ dotnet $ToolDll `
     -o $SourceSymbolsDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-symbol demo.' }
 $SourceSymbolsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsDemoModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsDemoHash -ne '4572ff2175a2f7ecd56c9c6caab3865080f17834548be066f15e909984e063bc') {
+if ($SourceSymbolsDemoHash -ne '43f6aef685cbc265105abf36e7b8cae4de9974824fadfb8e5b83270c96d1ad1e') {
     throw "The source-symbol demo has an unexpected digest: $SourceSymbolsDemoHash"
 }
 $SourceSymbolsDemoOutput = dotnet $ToolDll `
@@ -1165,7 +1165,7 @@ dotnet $ToolDll `
     -o $SourceSymbolsToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-symbol tool.' }
 $SourceSymbolsToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsToolModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsToolHash -ne 'c0cb2d71ceb2fe979c819ec6668f8eb762e33576fe0ee3e74d1920f8d84015d0') {
+if ($SourceSymbolsToolHash -ne '0555ca0b6d86a67cf94e8ee150d0baa92252f6a8ae7a06d7cbf2f7649f1ae43c') {
     throw "The source-symbol tool has an unexpected digest: $SourceSymbolsToolHash"
 }
 $SourceSymbolsArguments = @(
@@ -1208,13 +1208,13 @@ dotnet $ToolDll `
     -o $SourceBindingsModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-binding core.' }
 $SourceBindingsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsModule).Hash.ToLowerInvariant()
-if ($SourceBindingsHash -ne '55a2d97d55dc7e52f6732dc6312b04ed066a997e2b92be625354645a28370c22') {
+if ($SourceBindingsHash -ne '64b9fb7d92df4b40fc315d1f13f80118856a05ac2fb6b1d27e58dbb2d3bd9999') {
     throw "The Windvale source-binding core has an unexpected digest: $SourceBindingsHash"
 }
 $SourceBindingsInspection = (dotnet $ToolDll inspect $SourceBindingsModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceBindingsInspection -notmatch 'Nominal types \(52\)' -or
+    $SourceBindingsInspection -notmatch 'Nominal types \(55\)' -or
     $SourceBindingsInspection -notmatch 'Compilerˉsourceˉbindingˉstatus' -or
     $SourceBindingsInspection -notmatch 'Compilerˉsourceˉbindingˉsummary' -or
     $SourceBindingsInspection -notmatch 'Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid' -or
@@ -1237,7 +1237,7 @@ dotnet $ToolDll `
     -o $SourceBindingsDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-binding demo.' }
 $SourceBindingsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsDemoModule).Hash.ToLowerInvariant()
-if ($SourceBindingsDemoHash -ne 'caecddffa3ee83c35424f46b7581e185e434d85533b56ca05c497d90da9d08e3') {
+if ($SourceBindingsDemoHash -ne 'f6b9c184bfe8668a5c597dbe76d7709120a541789661df0156ce8f1785272e0a') {
     throw "The source-binding demo has an unexpected digest: $SourceBindingsDemoHash"
 }
 $SourceBindingsDemoOutput = dotnet $ToolDll `
@@ -1259,7 +1259,7 @@ dotnet $ToolDll `
     -o $SourceBindingsToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-binding tool.' }
 $SourceBindingsToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsToolModule).Hash.ToLowerInvariant()
-if ($SourceBindingsToolHash -ne 'f30016abc392c6e0141426f488397ac74a404d8f1aa636c9ed5ed69d16c458b4') {
+if ($SourceBindingsToolHash -ne '7b75e3cd72eb7a2521d3b382effbdf2435879ceca2ed24561683ac63b956dad8') {
     throw "The source-binding tool has an unexpected digest: $SourceBindingsToolHash"
 }
 $SourceBindingsArguments = @(
@@ -1283,7 +1283,7 @@ $SourceBindingsSelfOutput = dotnet $ToolDll `
     $DecimalParsingSource
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceBindingsSelfOutput -notcontains 'source bindings status=Valid modules=9 functions=261 parameters=1154 locals=1584 reads=13346 assignments=1098 calls=2314 directory-bytes=101120' -or
+    $SourceBindingsSelfOutput -notcontains 'source bindings status=Valid modules=9 functions=261 parameters=1154 locals=1584 reads=13354 assignments=1098 calls=2317 directory-bytes=101120' -or
     $SourceBindingsSelfOutput -notcontains 'Result: 0'
 ) {
     throw 'The source-binding tool did not bind the real compiler closure.'
@@ -1304,7 +1304,7 @@ dotnet $ToolDll `
     -o $SourceWirModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale typed-WVIR core.' }
 $SourceWirHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirModule).Hash.ToLowerInvariant()
-if ($SourceWirHash -ne '4849dfcd26d3ff70f54aec80072888f4f96612575c1999306dbbe7a4b99a6847') {
+if ($SourceWirHash -ne '3345bdfb062cf467f8b658414a672157b518af8c5a4aa994b0eb0e32e15837a4') {
     throw "The Windvale typed-WVIR core has an unexpected digest: $SourceWirHash"
 }
 $SourceWirInspection = (dotnet $ToolDll inspect $SourceWirModule) -join "`n"
@@ -1333,7 +1333,7 @@ dotnet $ToolDll `
     -o $SourceWirDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the typed-WVIR demo.' }
 $SourceWirDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirDemoModule).Hash.ToLowerInvariant()
-if ($SourceWirDemoHash -ne '4b9236a103bd77f8fecbc8b514fd37b0ca647da7317d7d319606332f4b3e2361') {
+if ($SourceWirDemoHash -ne 'd0b3f7b8fdbf1a7c56ebd8a2f024988933019f6e8b75202d5e97c5a96e567983') {
     throw "The typed-WVIR demo has an unexpected digest: $SourceWirDemoHash"
 }
 $SourceWirDemoOutput = dotnet $ToolDll run $SourceWirDemoModule --max-steps 4000000000
@@ -1355,7 +1355,7 @@ dotnet $ToolDll `
     -o $SourceWirToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the typed-WVIR tool.' }
 $SourceWirToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirToolModule).Hash.ToLowerInvariant()
-if ($SourceWirToolHash -ne '324a6292aac0f51b63bad887b880c29c7f1959fb6281a0a40f4252c2a2182de7') {
+if ($SourceWirToolHash -ne '302409f6f1e8c0a1c3061dda2400083e06cf6781a28922f0138a952f2edfb574') {
     throw "The typed-WVIR tool has an unexpected digest: $SourceWirToolHash"
 }
 $SourceWirFixtureOutput = dotnet $ToolDll `
@@ -1391,7 +1391,7 @@ $SourceWvbDependencies = @(
 dotnet $ToolDll compile $SourceWvbSource @SourceWvbDependencies -o $SourceWvbModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend core.' }
 $SourceWvbHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbModule).Hash.ToLowerInvariant()
-if ($SourceWvbHash -ne '389024fb26cb9335413fbfbdd739518b53962d7221480b42db7c6c6a9c9a4dd3') {
+if ($SourceWvbHash -ne '08d0630b0b6411c218778faf4f6e9b0ea7332a4e634a072c14de6d7f6bd83307') {
     throw "The Windvale WVB backend core has an unexpected digest: $SourceWvbHash"
 }
 $SourceWvbInspection = (dotnet $ToolDll inspect $SourceWvbModule) -join "`n"
@@ -1409,7 +1409,7 @@ dotnet $ToolDll `
     -o $SourceWvbDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend demo.' }
 $SourceWvbDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbDemoModule).Hash.ToLowerInvariant()
-if ($SourceWvbDemoHash -ne 'b910bd18abbca23882cdadbea289b8e1e41dbc2f5871c2f8772c10a170b42c2a') {
+if ($SourceWvbDemoHash -ne 'e5bf9aaf00598092243578f39aae693de5f728204ffce86ffb7b03340c985715') {
     throw "The Windvale WVB backend demo has an unexpected digest: $SourceWvbDemoHash"
 }
 $SourceWvbDemoOutput = dotnet $ToolDll run $SourceWvbDemoModule --max-steps 4000000000
@@ -1422,7 +1422,7 @@ dotnet $ToolDll `
     -o $SourceWvbToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend tool.' }
 $SourceWvbToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbToolModule).Hash.ToLowerInvariant()
-if ($SourceWvbToolHash -ne 'abc2ef9839944bddee172cbeb3e11f716d7be9c0d94c1a0d4378341030ee4207') {
+if ($SourceWvbToolHash -ne '48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6') {
     throw "The Windvale WVB backend tool has an unexpected digest: $SourceWvbToolHash"
 }
 $SourceWvbFixture = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Function-Only.wv'
@@ -1641,12 +1641,12 @@ if (
 $SourceWvbCompositionInspection = (dotnet $ToolDll inspect $SourceWvbCompositionModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $SourceWvbCompositionInspection -notmatch 'Data \(3\)' -or
+    $SourceWvbCompositionInspection -notmatch 'Data \(4\)' -or
     $SourceWvbCompositionInspection -notmatch '\[2\] __Text_000001: text' -or
-    $SourceWvbCompositionInspection -notmatch 'Nominal types \(2\)' -or
-    $SourceWvbCompositionInspection -notmatch 'Functions \(5\)' -or
+    $SourceWvbCompositionInspection -notmatch 'Nominal types \(5\)' -or
+    $SourceWvbCompositionInspection -notmatch 'Functions \(9\)' -or
     $SourceWvbCompositionInspection -notmatch 'Exports \(1\)' -or
-    $SourceWvbCompositionInspection -notmatch 'Main -> function\[4\]'
+    $SourceWvbCompositionInspection -notmatch 'Main -> function\[1\]'
 ) {
     throw 'The Windvale-written multi-module WVB inspection is incomplete.'
 }
@@ -1794,7 +1794,7 @@ if (
     $WvoCoreInspection -notmatch 'bytes\.from_u16_little' -or
     $WvoCoreInspection -notmatch 'bytes\.from_i32_little' -or
     $WvoCoreInspection -notmatch 'text\.to_utf8' -or
-    $WvoCoreInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
+    $WvoCoreInspection -notmatch '__WvM1F0' -or
     $WvoCoreInspection -notmatch 'file\.write_bytes'
 ) {
     throw 'The Seed CLI inspector did not expose the Windvale object writer operations.'
@@ -1885,10 +1885,10 @@ if (
     $WvaAssemblerInspection -notmatch 'Encodeˉsections' -or
     $WvaAssemblerInspection -notmatch 'Encodeˉsymbols' -or
     $WvaAssemblerInspection -notmatch 'Encodeˉrelocations' -or
-    $WvaAssemblerInspection -notmatch 'Foundationˉmachineˉnameˉisˉvalid' -or
-    $WvaAssemblerInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
-    $WvaAssemblerInspection -notmatch 'Foundationˉu32ˉdecimalˉparse' -or
-    $WvaAssemblerInspection -notmatch 'Foundationˉbytesˉrepeat' -or
+    $WvaAssemblerInspection -notmatch '__WvM4F1' -or
+    $WvaAssemblerInspection -notmatch '__WvM2F0' -or
+    $WvaAssemblerInspection -notmatch '__WvM3F0' -or
+    $WvaAssemblerInspection -notmatch '__WvM1F0' -or
     $WvaAssemblerInspection -notmatch 'bytes\.concat' -or
     $WvaAssemblerInspection -notmatch 'bytes\.from_u32_little' -or
     $WvaAssemblerInspection -notmatch 'file\.read_bytes' -or
@@ -1951,11 +1951,11 @@ if (
     $WvLinkerInspection -notmatch 'Acceptedˉobjectˉview' -or
     $WvLinkerInspection -notmatch 'Definitionˉmapˉminimumˉexceedsˉlimit' -or
     $WvLinkerInspection -notmatch 'Buildˉcanonicalˉmap' -or
-    $WvLinkerInspection -notmatch 'Foundationˉalignmentˉisˉvalid' -or
-    $WvLinkerInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
-    $WvLinkerInspection -notmatch 'Foundationˉu32ˉdecimalˉparse' -or
-    $WvLinkerInspection -notmatch 'Foundationˉbytesˉrepeat' -or
-    $WvLinkerInspection -notmatch 'Foundationˉbytesˉreplace' -or
+    $WvLinkerInspection -notmatch '__WvM4F0' -or
+    $WvLinkerInspection -notmatch '__WvM2F0' -or
+    $WvLinkerInspection -notmatch '__WvM3F0' -or
+    $WvLinkerInspection -notmatch '__WvM1F0' -or
+    $WvLinkerInspection -notmatch '__WvM1F1' -or
     $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
     $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
     $WvLinkerInspection -notmatch 'file\.read_bytes' -or
