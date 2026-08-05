@@ -1,15 +1,21 @@
+using System.Collections.Immutable;
 using Windvale.Bytecode;
 using Windvale.Compiler;
 using Windvale.Compiler.Native;
 using Windvale.Linker;
 using Windvale.ObjectModel;
+using Windvale.Runtime;
 using Windvale.Runtime.Native;
 
 namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 112_731;
+    private static readonly string WVB_TO_WVO_STATIC_DESCRIPTORS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Static-Descriptors.wv");
+
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 146_392;
     private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_415_680;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
         "23d7000bb0f1e32f71eb76467010c29f25504d99b17604a432d6e243c7a6696d";
@@ -255,6 +261,12 @@ internal static partial class Program
                     "Compiler/Windvale/Native-X64-Lowering-Data.wv",
                     NATIVE_X64_LOWERING_DATA_SOURCE),
                 new(
+                    "Compiler/Windvale/Native-X64-Lowering-Descriptors.wv",
+                    NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv",
+                    NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
+                new(
                     "Compiler/Windvale/Native-X64-Lowering-Layout.wv",
                     NATIVE_X64_LOWERING_LAYOUT_SOURCE),
                 new(
@@ -268,5 +280,64 @@ internal static partial class Program
                 string.Join(" | ", Result.Diagnostics));
         }
         return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static void Assertˉstaticˉdescriptorˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_STATIC_DESCRIPTORS_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(Expectedˉobject.AsSpan()).Value;
+        Equal(2, Expectedˉview.Sections.Length);
+        Equal(Objectˉsectionˉkind.Readˉonlyˉdata, Expectedˉview.Sections[1].Kind);
+        Equal(3, Expectedˉview.Symbols.Count(Symbol =>
+            Symbol.Kind == Objectˉsymbolˉkind.Data));
+        Equal(3, Expectedˉview.Relocations.Length);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        if (!Expectedˉobject.SequenceEqual(Memoryˉresult.Bytes))
+        {
+            var Sharedˉlength = Math.Min(
+                Expectedˉobject.Length,
+                Memoryˉresult.Bytes.Length);
+            var Firstˉdifference = Enumerable.Range(0, Sharedˉlength)
+                .FirstOrDefault(
+                    Index => Expectedˉobject[Index] != Memoryˉresult.Bytes[Index],
+                    -1);
+            throw new InvalidOperationException(
+                $"Static-descriptor WVO differs at {Firstˉdifference}; " +
+                $"Stage0 length={Expectedˉobject.Length}, " +
+                $"Windvale length={Memoryˉresult.Bytes.Length}, " +
+                $"Stage0 byte={(Firstˉdifference < 0 ? -1 : Expectedˉobject[Firstˉdifference])}, " +
+                $"Windvale byte={(Firstˉdifference < 0 ? -1 : Memoryˉresult.Bytes[Firstˉdifference])}.");
+        }
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(tool, Wvb);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
     }
 }

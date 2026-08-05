@@ -44,6 +44,18 @@ fn Appendˉsymbol(
     return Bytesˉconcat(Output, Name);
 }
 
+fn Dataˉsymbolˉname(Index: u32) -> bytes {
+    if Index == 0u32 { return Textˉtoˉutf8("$data_0000"); }
+    if Index == 1u32 { return Textˉtoˉutf8("$data_0001"); }
+    if Index == 2u32 { return Textˉtoˉutf8("$data_0002"); }
+    if Index == 3u32 { return Textˉtoˉutf8("$data_0003"); }
+    if Index == 4u32 { return Textˉtoˉutf8("$data_0004"); }
+    if Index == 5u32 { return Textˉtoˉutf8("$data_0005"); }
+    if Index == 6u32 { return Textˉtoˉutf8("$data_0006"); }
+    if Index == 7u32 { return Textˉtoˉutf8("$data_0007"); }
+    return Textˉtoˉutf8("");
+}
+
 export fn Compilerˉnativeˉx64ˉobjectˉemit(
     Code: bytes,
     Directory: bytes,
@@ -56,25 +68,51 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     if Functionˉcount > 8u32 { return Empty(Code); }
     if Mainˉfunction >= Functionˉcount { return Empty(Code); }
     if !Data.Valid { return Empty(Code); }
-    if Data.Count > 1u32 { return Empty(Code); }
+    if Data.Count > 8u32 { return Empty(Code); }
     if Bytesˉlength(Directory) !=
         Functionˉcount * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() {
         return Empty(Code);
     }
-    if Bytesˉlength(Relocations) % 4u32 != 0u32 { return Empty(Code); }
-    let Relocationˉcount: u32 = Bytesˉlength(Relocations) / 4u32;
+    if Bytesˉlength(Relocations) % 8u32 != 0u32 { return Empty(Code); }
+    let Relocationˉcount: u32 = Bytesˉlength(Relocations) / 8u32;
     if Relocationˉcount > 65536u32 { return Empty(Code); }
+    if Bytesˉlength(Data.Kinds) != Data.Count { return Empty(Code); }
+    if Bytesˉlength(Data.Lengths) != Data.Count * 4u32 {
+        return Empty(Code);
+    }
+    if Bytesˉlength(Data.Offsets) != Data.Count * 4u32 {
+        return Empty(Code);
+    }
+    if Bytesˉlength(Data.Sizes) != Data.Count * 4u32 { return Empty(Code); }
+    var Dataˉindex: u32 = 0u32;
+    var Expectedˉdataˉoffset: u32 = 0u32;
+    while Dataˉindex < Data.Count {
+        if Staticˉdata.Compilerˉnativeˉx64ˉdataˉoffset(Data, Dataˉindex) !=
+            Expectedˉdataˉoffset {
+            return Empty(Code);
+        }
+        let Dataˉsize: u32 =
+            Staticˉdata.Compilerˉnativeˉx64ˉdataˉsize(Data, Dataˉindex);
+        if Dataˉsize > Bytesˉlength(Data.Bytes) - Expectedˉdataˉoffset {
+            return Empty(Code);
+        }
+        Expectedˉdataˉoffset = Expectedˉdataˉoffset + Dataˉsize;
+        Dataˉindex = Dataˉindex + 1u32;
+    }
+    if Expectedˉdataˉoffset != Bytesˉlength(Data.Bytes) { return Empty(Code); }
     if Data.Count == 0u32 {
-        if Bytesˉlength(Data.Bytes) != 0u32 { return Empty(Code); }
         if Relocationˉcount != 0u32 { return Empty(Code); }
-    } else {
-        if Bytesˉlength(Data.Bytes) != Data.Elements * 4u32 { return Empty(Code); }
     }
 
     var Relocation: u32 = 0u32;
     var Previousˉoffset: u32 = 0u32;
     while Relocation < Relocationˉcount {
-        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 4u32);
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32);
+        let Targetˉdata: u32 = Bytesˉreadˉu32ˉlittle(
+            Relocations,
+            Relocation * 8u32 + 4u32
+        );
+        if Targetˉdata >= Data.Count { return Empty(Code); }
         if Patchˉoffset > Bytesˉlength(Code) { return Empty(Code); }
         if 4u32 > Bytesˉlength(Code) - Patchˉoffset { return Empty(Code); }
         if Bytesˉreadˉu32ˉlittle(Code, Patchˉoffset) != 0u32 { return Empty(Code); }
@@ -87,9 +125,9 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
 
     var Sectionˉcount: u32 = 1u32;
     var Symbolˉcount: u32 = Functionˉcount;
-    if Data.Count == 1u32 {
+    if Data.Count > 0u32 {
         Sectionˉcount = 2u32;
-        Symbolˉcount = Symbolˉcount + 1u32;
+        Symbolˉcount = Symbolˉcount + Data.Count;
     }
     var Result: bytes = Textˉtoˉutf8("WVO1");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
@@ -102,17 +140,21 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Relocationˉcount));
 
     Result = Appendˉsection(Result, 1u8, ".text", Code);
-    if Data.Count == 1u32 {
+    if Data.Count > 0u32 {
         Result = Appendˉsection(Result, 2u8, ".rodata", Data.Bytes);
+        Dataˉindex = 0u32;
+        while Dataˉindex < Data.Count {
         Result = Appendˉsymbol(
             Result,
             1u8,
             2u8,
             1u32,
-            0u32,
-            Bytesˉlength(Data.Bytes),
-            Textˉtoˉutf8("$data_0000")
+                Staticˉdata.Compilerˉnativeˉx64ˉdataˉoffset(Data, Dataˉindex),
+                Staticˉdata.Compilerˉnativeˉx64ˉdataˉsize(Data, Dataˉindex),
+                Dataˉsymbolˉname(Dataˉindex)
         );
+            Dataˉindex = Dataˉindex + 1u32;
+        }
     }
 
     var Function: u32 = 0u32;
@@ -161,10 +203,15 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
         Result = Bytesˉconcat(
             Result,
             Bytesˉfromˉu32ˉlittle(
-                Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 4u32)
+                Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32)
             )
         );
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(
+                Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32 + 4u32)
+            )
+        );
         Result = Bytesˉconcat(Result, Bytesˉfromˉi32ˉlittle(-4));
         Relocation = Relocation + 1u32;
     }

@@ -1,0 +1,247 @@
+module Compilerˉnativeˉx64ˉloweringˉdescriptors profile portable;
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
+fn Loadˉeax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉecx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉedx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 148u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉrdx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 148u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉeaxˉfield(Result: bytes, Slot: u32, Field: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + Field);
+}
+
+fn Loadˉecxˉfield(Result: bytes, Slot: u32, Field: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + Field);
+}
+
+fn Loadˉraxˉfield(Result: bytes, Slot: u32, Field: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + Field);
+}
+
+fn Storeˉeax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉeaxˉfield(Result: bytes, Slot: u32, Field: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + Field);
+}
+
+fn Storeˉraxˉfield(Result: bytes, Slot: u32, Field: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + Field);
+}
+
+fn Boundsˉbranch(Result: bytes, Condition: u8, Target: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 15u8);
+    Output = Appendˉbyte(Output, Condition);
+    return Appendˉu32(
+        Output,
+        Relativeˉu32(Target, Bytesˉlength(Output) + 4u32)
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉdescriptorˉconstantˉbytes() -> u32 {
+    return 46u32;
+}
+
+export fn Compilerˉnativeˉx64ˉdescriptorˉcopyˉbytes() -> u32 {
+    return 42u32;
+}
+
+export fn Compilerˉnativeˉx64ˉdescriptorˉlengthˉbytes() -> u32 {
+    return 24u32;
+}
+
+export fn Compilerˉnativeˉx64ˉdescriptorˉsliceˉbytes() -> u32 {
+    return 98u32;
+}
+
+export fn Compilerˉnativeˉx64ˉdescriptorˉreadˉbytes(Kind: u8) -> u32 {
+    if Kind == 13u8 || Kind == 14u8 { return 71u32; }
+    return 70u32;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉconstant(
+    Result: bytes,
+    Slot: u32,
+    Length: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 141u8);
+    Output = Appendˉbyte(Output, 5u8);
+    Output = Appendˉu32(Output, 0u32);
+    Output = Storeˉrax(Output, Slot);
+    Output = Appendˉbyte(Output, 184u8);
+    Output = Appendˉu32(Output, Length);
+    Output = Storeˉeaxˉfield(Output, Slot, 8u32);
+    Output = Appendˉbyte(Output, 49u8);
+    Output = Appendˉbyte(Output, 192u8);
+    return Storeˉeaxˉfield(Output, Slot, 12u32);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉcopy(
+    Result: bytes,
+    Source: u32,
+    Target: u32
+) -> bytes {
+    var Output: bytes = Loadˉrax(Result, Source);
+    Output = Storeˉrax(Output, Target);
+    Output = Loadˉraxˉfield(Output, Source, 8u32);
+    return Storeˉraxˉfield(Output, Target, 8u32);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉlength(
+    Result: bytes,
+    Source: u32,
+    Target: u32
+) -> bytes {
+    return Storeˉeax(Loadˉeaxˉfield(Result, Source, 8u32), Target);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉslice(
+    Result: bytes,
+    Source: u32,
+    Offset: u32,
+    Length: u32,
+    Target: u32,
+    Boundsˉtarget: u32
+) -> bytes {
+    var Output: bytes = Loadˉeax(Result, Offset);
+    Output = Loadˉecxˉfield(Output, Source, 8u32);
+    Output = Appendˉbyte(Output, 57u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Boundsˉbranch(Output, 135u8, Boundsˉtarget);
+    Output = Appendˉbyte(Output, 41u8);
+    Output = Appendˉbyte(Output, 193u8);
+    Output = Loadˉedx(Output, Length);
+    Output = Appendˉbyte(Output, 57u8);
+    Output = Appendˉbyte(Output, 202u8);
+    Output = Boundsˉbranch(Output, 135u8, Boundsˉtarget);
+    Output = Loadˉrax(Output, Source);
+    Output = Loadˉecx(Output, Offset);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 1u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Storeˉrax(Output, Target);
+    Output = Loadˉeax(Output, Length);
+    Output = Storeˉeaxˉfield(Output, Target, 8u32);
+    Output = Appendˉbyte(Output, 49u8);
+    Output = Appendˉbyte(Output, 192u8);
+    return Storeˉeaxˉfield(Output, Target, 12u32);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉread(
+    Result: bytes,
+    Source: u32,
+    Offset: u32,
+    Target: u32,
+    Kind: u8,
+    Boundsˉtarget: u32
+) -> bytes {
+    var Width: u8 = 4u8;
+    if Kind == 13u8 { Width = 1u8; }
+    if Kind == 14u8 { Width = 2u8; }
+    var Output: bytes = Loadˉeax(Result, Offset);
+    Output = Loadˉecxˉfield(Output, Source, 8u32);
+    Output = Appendˉbyte(Output, 57u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Boundsˉbranch(Output, 135u8, Boundsˉtarget);
+    Output = Appendˉbyte(Output, 41u8);
+    Output = Appendˉbyte(Output, 193u8);
+    Output = Appendˉbyte(Output, 131u8);
+    Output = Appendˉbyte(Output, 249u8);
+    Output = Appendˉbyte(Output, Width);
+    Output = Boundsˉbranch(Output, 130u8, Boundsˉtarget);
+    Output = Loadˉrdx(Output, Source);
+    Output = Loadˉeax(Output, Offset);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 1u8);
+    Output = Appendˉbyte(Output, 194u8);
+    if Kind == 13u8 {
+        Output = Appendˉbyte(Output, 15u8);
+        Output = Appendˉbyte(Output, 182u8);
+        Output = Appendˉbyte(Output, 2u8);
+    } else {
+        if Kind == 14u8 {
+            Output = Appendˉbyte(Output, 15u8);
+            Output = Appendˉbyte(Output, 183u8);
+            Output = Appendˉbyte(Output, 2u8);
+        } else {
+            Output = Appendˉbyte(Output, 139u8);
+            Output = Appendˉbyte(Output, 2u8);
+        }
+    }
+    return Storeˉeax(Output, Target);
+}

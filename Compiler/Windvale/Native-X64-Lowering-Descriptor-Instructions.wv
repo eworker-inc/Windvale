@@ -1,0 +1,280 @@
+module Compilerˉnativeˉx64ˉloweringˉdescriptorˉinstructions profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
+import Compilerˉnativeˉx64ˉloweringˉdescriptors as Descriptors;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+
+export record Compilerˉnativeˉx64ˉdescriptorˉinstruction {
+    Input: bytes;
+    Offset: u32;
+    Opcode: u8;
+    Boundsˉtarget: u32;
+}
+
+export record Compilerˉnativeˉx64ˉdescriptorˉlayout {
+    Locals: u32;
+    I32ˉslots: u32;
+    Boolˉslots: u32;
+    Textˉslots: u32;
+    U8ˉslots: u32;
+    U32ˉslots: u32;
+}
+
+export record Compilerˉnativeˉx64ˉdescriptorˉstate {
+    Result: bytes;
+    Stackˉtypes: bytes;
+    Stackˉslots: bytes;
+    Stackˉdepth: u32;
+    Nextˉi32: u32;
+    Nextˉtext: u32;
+    Nextˉu8: u32;
+    Nextˉu32: u32;
+    Nextˉbytes: u32;
+}
+
+fn Valueˉslot(
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    Type: u8,
+    Index: u32
+) -> u32 {
+    return Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+        Shape.Locals,
+        Shape.I32ˉslots,
+        Shape.Boolˉslots,
+        Shape.Textˉslots,
+        Shape.U8ˉslots,
+        Shape.U32ˉslots,
+        Type,
+        Index
+    );
+}
+
+fn Emitˉconstant(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Dataˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Instruction.Input,
+        Instruction.Offset + 1u32
+    );
+    var Type: u8 = 3u8;
+    var Index: u32 = State.Nextˉtext;
+    if Instruction.Opcode == 10u8 {
+        Type = 6u8;
+        Index = State.Nextˉbytes;
+    }
+    let Slot: u32 = Valueˉslot(Shape, Type, Index);
+    let Result: bytes = Descriptors.Compilerˉnativeˉx64ˉemitˉdescriptorˉconstant(
+        State.Result,
+        Slot,
+        Staticˉdata.Compilerˉnativeˉx64ˉdataˉlength(Data, Dataˉindex)
+    );
+    var Nextˉtext: u32 = State.Nextˉtext;
+    var Nextˉbytes: u32 = State.Nextˉbytes;
+    if Type == 3u8 {
+        Nextˉtext = Nextˉtext + 1u32;
+    } else {
+        Nextˉbytes = Nextˉbytes + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Result,
+        Bytesˉconcat(State.Stackˉtypes, Bytesˉfromˉu8(Type)),
+        Bytesˉconcat(State.Stackˉslots, Bytesˉfromˉu32ˉlittle(Slot)),
+        State.Stackˉdepth + 1u32,
+        State.Nextˉi32,
+        Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        Nextˉbytes
+    );
+}
+
+fn Emitˉlength(
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Target: u32 = Valueˉslot(Shape, 5u8, State.Nextˉu32);
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Descriptors.Compilerˉnativeˉx64ˉemitˉdescriptorˉlength(
+            State.Result,
+            Source,
+            Target
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(5u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32 + 1u32,
+        State.Nextˉbytes
+    );
+}
+
+fn Emitˉslice(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 3u32) * 4u32
+    );
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 2u32) * 4u32
+    );
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 3u32;
+    let Target: u32 = Valueˉslot(Shape, 6u8, State.Nextˉbytes);
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Descriptors.Compilerˉnativeˉx64ˉemitˉdescriptorˉslice(
+            State.Result,
+            Source,
+            Offset,
+            Length,
+            Target,
+            Instruction.Boundsˉtarget
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(6u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes + 1u32
+    );
+}
+
+fn Emitˉread(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 2u32) * 4u32
+    );
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    var Type: u8 = 5u8;
+    var Index: u32 = State.Nextˉu32;
+    if Instruction.Opcode == 13u8 {
+        Type = 4u8;
+        Index = State.Nextˉu8;
+    }
+    if Instruction.Opcode == 114u8 {
+        Type = 1u8;
+        Index = State.Nextˉi32;
+    }
+    let Depth: u32 = State.Stackˉdepth - 2u32;
+    let Target: u32 = Valueˉslot(Shape, Type, Index);
+    var Nextˉi32: u32 = State.Nextˉi32;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
+    if Type == 1u8 { Nextˉi32 = Nextˉi32 + 1u32; }
+    if Type == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
+    if Type == 5u8 { Nextˉu32 = Nextˉu32 + 1u32; }
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Descriptors.Compilerˉnativeˉx64ˉemitˉdescriptorˉread(
+            State.Result,
+            Source,
+            Offset,
+            Target,
+            Instruction.Opcode,
+            Instruction.Boundsˉtarget
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(Type)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        Nextˉi32,
+        State.Nextˉtext,
+        Nextˉu8,
+        Nextˉu32,
+        State.Nextˉbytes
+    );
+}
+
+fn Emitˉutf8(
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Target: u32 = Valueˉslot(Shape, 6u8, State.Nextˉbytes);
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Descriptors.Compilerˉnativeˉx64ˉemitˉdescriptorˉcopy(
+            State.Result,
+            Source,
+            Target
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(6u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes + 1u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    if Instruction.Opcode == 3u8 || Instruction.Opcode == 10u8 {
+        return Emitˉconstant(Instruction, Shape, Data, State);
+    }
+    if Instruction.Opcode == 11u8 { return Emitˉlength(Shape, State); }
+    if Instruction.Opcode == 12u8 {
+        return Emitˉslice(Instruction, Shape, State);
+    }
+    if Instruction.Opcode == 13u8 || Instruction.Opcode == 14u8 ||
+        Instruction.Opcode == 15u8 || Instruction.Opcode == 114u8 {
+        return Emitˉread(Instruction, Shape, State);
+    }
+    return Emitˉutf8(Shape, State);
+}

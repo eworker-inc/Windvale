@@ -1,0 +1,30 @@
+module Nativeˉstaticˉdescriptors profile portable;
+
+data Alpha: text = "ABCD";
+data Blob: bytes = [
+    1,
+    2,
+    3,
+    4,
+    255,
+    255,
+    255,
+    255,
+];
+data Values: [i32] = [
+    42,
+];
+
+export fn Main() -> i32 {
+    let Textˉvalue = Alpha;
+    let Encoded = Textˉtoˉutf8(Textˉvalue);
+    let Raw = Blob;
+    let Tail = Bytesˉslice(Raw, 1u32, 4u32);
+    if Bytesˉlength(Encoded) != 4u32 { return 1; }
+    if Bytesˉreadˉu8(Tail, 0u32) != 2u8 { return 2; }
+    if Bytesˉreadˉu16ˉlittle(Tail, 0u32) != 770u32 { return 3; }
+    if Bytesˉreadˉu32ˉlittle(Raw, 0u32) != 67305985u32 { return 4; }
+    if Bytesˉreadˉi32ˉlittle(Raw, 4u32) != -1 { return 5; }
+    if length(Values) != 1 { return 6; }
+    return Values[0];
+}

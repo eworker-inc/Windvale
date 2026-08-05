@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "cd82452d81615fe42e887c712572321867b87feced255b5ce8dc950d09136173";
-    private const string NATIVE_X64_LOWERING_DATA_SHA256 = "9a32b3854270bcace52f615633f4b110d9f0777ba5fb5338157af0965dcc8ed4";
-    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "9213e44e9b3a4cfec1c35acc8ddb211e4d5ddc057f3033c0152d9dfa102f0ee6";
-    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "430eb454207189b369c99ee622ca0f7b90edcc3b1be15ebaee52d73da95ce6c8";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "227ef23b325815e6386a74e19acb62aab3f0aca15b99bc93915f0f5cd0a2ce46";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "f39f87b8aaa0dc3f4299ec232b9757aa85df29c320a0cb35715fd6588464d700";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "9f9a24605ae56c9ba1e3029de11d76b80d1a3f89f95e6c93bfa3df13b7437076";
+    private const string NATIVE_X64_LOWERING_DATA_SHA256 = "79e4ddac4eac5e85aa4a10b14b91de9ca41a8263a3bf811bb38ec3eed5ed6f1c";
+    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "93eb0f25ddebd70b2c56edfdd7604ebd31297bdc5306d023cd8c84d63faafbb2";
+    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "3aaf9719cd776de2b7d5dd8fabb470cb0c3b0bceaf1932540845bdd1c0962e2c";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "e265e10a680cbe2303369343140cebe335bd2f27ea56b684e91da87952180406";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "76ef9e2d3b671df94d1499911addc1b008d0d2033e6d53128bc332d4e0dc121d";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -732,6 +732,11 @@ internal static partial class Program
         "Windvale.Seed.Tests.Native-X64-Lowering-Core.wv");
     private static readonly string NATIVE_X64_LOWERING_DATA_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Data.wv");
+    private static readonly string NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-X64-Lowering-Descriptors.wv");
+    private static readonly string NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Descriptor-Instructions.wv");
     private static readonly string NATIVE_X64_LOWERING_LAYOUT_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Layout.wv");
     private static readonly string NATIVE_X64_LOWERING_OBJECT_SOURCE = Readˉembeddedˉsource(
@@ -2868,6 +2873,8 @@ internal static partial class Program
             new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE),
             [
                 new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
+                new("Native-X64-Lowering-Descriptors.wv", NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
+                new("Native-X64-Lowering-Descriptor-Instructions.wv", NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Layout.wv", NATIVE_X64_LOWERING_LAYOUT_SOURCE),
                 new("Native-X64-Lowering-Object.wv", NATIVE_X64_LOWERING_OBJECT_SOURCE),
             ]);
@@ -2883,6 +2890,8 @@ internal static partial class Program
             [
                 new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE),
                 new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
+                new("Native-X64-Lowering-Descriptors.wv", NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
+                new("Native-X64-Lowering-Descriptor-Instructions.wv", NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Layout.wv", NATIVE_X64_LOWERING_LAYOUT_SOURCE),
                 new("Native-X64-Lowering-Object.wv", NATIVE_X64_LOWERING_OBJECT_SOURCE),
             ]);
@@ -2900,6 +2909,7 @@ internal static partial class Program
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 });
         var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        Assertˉstaticˉdescriptorˉlowering(Tool, Memory);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);
@@ -3354,6 +3364,27 @@ internal static partial class Program
                 Sumˉdataˉload.Offset + 1,
                 4),
             1u);
+        var Descriptorˉwvb = Compileˉsuccess(WVB_TO_WVO_STATIC_DESCRIPTORS_SOURCE);
+        var Descriptorˉmodule = Moduleˉcodec.Readˉandˉverify(Descriptorˉwvb);
+        var Descriptorˉmain = Descriptorˉmodule.Functions.Single();
+        var Textˉconstant = Descriptorˉmain.Instructions.First(
+            Instruction => Instruction.Opcode == Opcode.Textˉconst);
+        var Invalidˉdescriptorˉdataˉindexˉwvb = Descriptorˉwvb.ToArray();
+        var Descriptorˉoperandˉoffset =
+            Codeˉpayloadˉoffset(Invalidˉdescriptorˉdataˉindexˉwvb) +
+            Descriptorˉmain.Declaration.Codeˉoffset +
+            Textˉconstant.Offset + 1;
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉdescriptorˉdataˉindexˉwvb.AsSpan(
+                Descriptorˉoperandˉoffset,
+                4),
+            3u);
+        var Mismatchedˉdescriptorˉdataˉkindˉwvb = Descriptorˉwvb.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Mismatchedˉdescriptorˉdataˉkindˉwvb.AsSpan(
+                Descriptorˉoperandˉoffset,
+                4),
+            1u);
         foreach (var Malformed in new[]
         {
             Underflowˉwvb,
@@ -3363,6 +3394,8 @@ internal static partial class Program
             Invalidˉcallˉtargetˉwvb,
             Mismatchedˉscalarˉparameterˉwvb,
             Invalidˉdataˉindexˉwvb,
+            Invalidˉdescriptorˉdataˉindexˉwvb,
+            Mismatchedˉdescriptorˉdataˉkindˉwvb,
         })
         {
             Equal(
