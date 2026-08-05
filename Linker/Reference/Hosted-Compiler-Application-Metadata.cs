@@ -33,6 +33,7 @@ internal enum Hostedˉcompilerˉapplicationˉprofile : uint
     Wvaˉassembler = 3,
     Wvˉlinker = 4,
     Consoleˉpackager = 5,
+    Wvbˉtoˉwvo = 6,
 }
 
 internal sealed record Verifiedˉhostedˉcompilerˉmetadata(
@@ -53,12 +54,14 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
     internal const uint WVA_ASSEMBLER_MAGIC = 0x5348_5657;
     internal const uint WV_LINKER_MAGIC = 0x4C48_5657;
     internal const uint CONSOLE_PACKAGER_MAGIC = 0x5048_5657;
+    internal const uint WVB_TO_WVO_MAGIC = 0x4E48_5657;
     internal const uint FORMAT_VERSION = 1;
     internal const uint COMPILER_CONTAINER_FORMAT_VERSION = 3;
     internal const uint BUILD_DRIVER_CONTAINER_FORMAT_VERSION = 5;
     internal const uint WVA_ASSEMBLER_CONTAINER_FORMAT_VERSION = 6;
     internal const uint WV_LINKER_CONTAINER_FORMAT_VERSION = 7;
     internal const uint CONSOLE_PACKAGER_CONTAINER_FORMAT_VERSION = 8;
+    internal const uint WVB_TO_WVO_CONTAINER_FORMAT_VERSION = 9;
     internal const int SIZE = 1024;
     internal const int HEADER_BYTES = 128;
     internal const int CAPABILITY_RECORD_BYTES = 16;
@@ -74,6 +77,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
     internal const uint WVA_ASSEMBLER_PROFILE_FLAGS = 4;
     internal const uint WV_LINKER_PROFILE_FLAGS = 5;
     internal const uint CONSOLE_PACKAGER_PROFILE_FLAGS = 6;
+    internal const uint WVB_TO_WVO_PROFILE_FLAGS = 7;
     internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 48_000_000_000;
 
     private static readonly ImmutableArray<Hostedˉcompilerˉcapabilityˉcontract>
@@ -334,6 +338,10 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
                 CONSOLE_PACKAGER_MAGIC,
                 CONSOLE_PACKAGER_CONTAINER_FORMAT_VERSION,
                 CONSOLE_PACKAGER_PROFILE_FLAGS),
+            Hostedˉcompilerˉapplicationˉprofile.Wvbˉtoˉwvo => new(
+                WVB_TO_WVO_MAGIC,
+                WVB_TO_WVO_CONTAINER_FORMAT_VERSION,
+                WVB_TO_WVO_PROFILE_FLAGS),
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };
 

@@ -1222,33 +1222,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
     );
 }
 
-export fn Compilerˉnativeˉx64ˉi32ˉbits(Value: i32) -> u32 {
-    let Encoded: bytes = Textˉtoˉutf8(I32ˉformat(Value));
-    let Length: u32 = Bytesˉlength(Encoded);
-    var Cursor: u32 = 0u32;
-    var Negative: bool = false;
-    if Bytesˉreadˉu8(Encoded, 0u32) == 45u8 {
-        Negative = true;
-        Cursor = 1u32;
-    }
-    var Magnitude: u32 = 0u32;
-    while Cursor < Length {
-        let Digit: u32 =
-            U32ˉfromˉu8(Bytesˉreadˉu8(Encoded, Cursor)) - 48u32;
-        Magnitude = Magnitude * 10u32 + Digit;
-        Cursor = Cursor + 1u32;
-    }
-    if Negative {
-        return 4294967295u32 - Magnitude + 1u32;
-    }
-    return Magnitude;
-}
-
 export fn Compilerˉnativeˉx64ˉappendˉi32(Result: bytes, Value: i32) -> bytes {
-    return Bytesˉconcat(
-        Result,
-        Bytesˉfromˉu32ˉlittle(Compilerˉnativeˉx64ˉi32ˉbits(Value))
-    );
+    return Bytesˉconcat(Result, Bytesˉfromˉi32ˉlittle(Value));
 }
 
 export fn Compilerˉnativeˉx64ˉappendˉbyte(Result: bytes, Value: u8) -> bytes {

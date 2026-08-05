@@ -1894,3 +1894,45 @@ artifact promotion, and ordinary-path cutover were deliberately deferred to the
 one grouped end-of-goal gate. That final gate will begin by updating from upstream
 and reconciling the complete retirement batch, then regenerate current identities
 once before Windows/Linux qualification.
+
+## Local native WVB-to-WVO candidate evidence
+
+[Decision 0224](../Decisions/0224-First-Native-Wvb-To-Wvo-Front-Door.md)
+moves the existing hosted lowerer shell into `Compiler/Windvale` and packages it
+as paired `WVHN 1` source candidates without new startup assembly. Direct
+`Bytesˉfromˉi32ˉlittle` replaces the former text-formatting conversion used to
+emit signed machine fields. The complete retained differential corpus proves that
+this changes no generated WVO byte.
+
+The current module identities are an 89,708-byte core /
+`761822053ecee061422571758b1297e6451447a255b3b529cb6546c4ef2a78f7`,
+an 85,713-byte memory adapter /
+`7a806d8ed92fb4121c2017f3e0ebcfa5e174715e4655a87b0d8e7d0dcf3e3c9b`,
+and an 86,741-byte hosted tool /
+`e1a795dd07be21ccb150823bd8790a8766af28d4361b8151cdf224a48f1c4389`.
+The tool's complete Stage 0 lowering records 1,109,643 native code bytes and a
+1,112,045-byte WVO. Its Windows candidate is 1,127,936 bytes /
+`74fc450f042d4ef48e77c89ff7ad5f8fbf88dd19b3a9b4bae53106b536957061`;
+its Linux candidate is 1,126,400 bytes /
+`7bd6c4e0cf5e7cfeb416f3a36386722b9317204c828cc40794da2e87071e4538`.
+
+One stable accepted-subset fixture is 174 WVB bytes /
+`7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31`.
+The native Windows candidate emits its exact 479-byte WVO /
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`
+and reports 406 code bytes. The independent C# WVO parser admits that result.
+
+On local Windows, the final zero-warning compile-only Seed build takes 9.03
+seconds. Both reviewed package cases pass in 6.450 test seconds: they check target
+discovery, exact source/profile/service/container identities, public AOT
+reconstruction, direct native output, deterministic repetition, malformed and
+usage behavior, sentinel preservation, independent WVO parsing, and absence of a
+CLR/.NET module. The separately reviewed existing shared-backend case passes in
+5.216 seconds and preserves byte equality across its constant, arithmetic,
+comparison, control, loop, call, mixed-register, and malformed corpus.
+
+This is focused local candidate evidence only. Standard, Qualification, the full
+Seed/OS suites, native CLI qualification, Linux execution, GitHub verification,
+artifact promotion, complete-backend coverage, native multi-tool composition, and
+ordinary-path cutover remain deferred to the grouped end-of-goal gate. That gate
+will start by updating from upstream and reconciling the complete retirement batch.

@@ -4,7 +4,7 @@
 
 `Compilerˉnativeˉx64ˉlowering` is the first portable Windvale-written slice of the shared x86-64 backend. It consumes one bounded WVB 1.11 module, independently verifies the metered scalar-control and direct-call subset described below, and emits the canonical WVO 1.0 object used by the existing ABI-22 Stage 0 backend.
 
-This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. C# remains the normal complete WVB-to-native backend, native fragment verifier, linker/package constructor, and recovery oracle.
+This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. The bounded core now has a paired [native WVB-to-WVO application candidate](Windvale-Native-Wvb-To-Wvo.md). C# remains the normal complete WVB-to-native backend outside this subset, the independent fragment and differential oracle, and the candidate constructor until the grouped retirement gate.
 
 ## Public result
 
@@ -54,18 +54,18 @@ The emitted layout is versioned by this contract and must change whenever its AB
 
 ## Adapters
 
-`Native-X64-Lowering-Memory-Adapter.wv` exposes `Main(Input: bytes) -> bytes` and returns either the complete WVO or empty bytes. `Native-X64-Lowering-Tool.wv` is the hosted shell:
+`Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv` exposes `Main(Input: bytes) -> bytes` and returns either the complete WVO or empty bytes. `Compiler/Windvale/Native-X64-Lowering-Tool.wv` is the hosted shell:
 
 ```text
 wvnative <input.wvb> <output.wvo>
 ```
 
-It reads the input once, calls the portable core in memory, writes exactly once only after success, and reports the ABI and exact output sizes. Invalid or unsupported input produces a deterministic diagnostic and no output call. The checked-in Project 1 manifests build both adapters as WVB.
+It reads the input once, calls the portable core in memory, writes exactly once only after success, and reports the ABI and exact output sizes. Invalid or unsupported input produces a deterministic diagnostic and no output call. The checked-in Project 1 manifests build both adapters as WVB. The paired `WVHN 1` profile packages the hosted shell as a direct Windows/Linux candidate without adding platform assembly.
 
 ## Conformance and limits
 
 The existing shared-backend conformance case compiles the Windvale modules once and compares produced WVO bytes with Stage 0 across constants, each checked arithmetic operator, nested expressions, both scalar types, all comparison operations, boolean negation, both conditional routes, forward and backward jumps, loops, early returns, the bounded direct call, and mixed scalar arguments in all four register positions. The combined arithmetic oracle is exactly 1,871 code bytes and a 1,944-byte WVO. The retained nested-control oracle is exactly 4,835 code bytes and a 4,908-byte WVO. The metered loop oracle is exactly 1,665 code bytes and a 1,738-byte WVO; native execution succeeds at its exact 157-instruction requirement and reaches `WVR3011` at 156. The parameterless call oracle is exactly 795 code bytes and a 902-byte WVO, with exact shared instruction and two-entry depth boundaries retained by Stage 0 execution. The four-parameter mixed-scalar oracle is exactly 2,581 code bytes and a 2,688-byte WVO. The same test executes every retained input through the hosted lowering shell as native x86-64; exercises memory and hosted adapters over malformed stack, invalid-local, invalid-branch, unreachable-cycle, changed-call-target, and mismatched-parameter-type streams; and verifies that truncated input leaves a sentinel output unchanged. The same generated tool fragment is host-neutral; current-host evidence is not a Windows/Linux qualification claim.
 
-The mixed-scalar call code and WVO SHA-256 identities are `1a0a541d2bd59378b4fa6df53248c3c359e909a0b7446198ebb1a58ca5a79721` and `cb7d2c74edb7aa3443e1e23cf0d762d4c15b79c39ea4f363531b2ec80633c13f`. The pinned WVB identities are `75bc5ed88d2da94e602957ea9df6751470e277a135de76286c249d163983e26d` for the core, `34acd0b6b0b58eb08c737c1e86b940314223a23ee968aabdfb098ec645462930` for the memory adapter, and `bb76b15ba551f16101ecef600f47fabb8098e5c9b903a17aa14d893e9fe1854d` for the hosted tool. The current hosted-tool WVB lowers through the complete Stage 0 backend to 1,114,491 code bytes and a 1,116,927-byte WVO; those sizes are evidence, not a permanent optimization promise.
+The mixed-scalar call code and WVO SHA-256 identities remain `1a0a541d2bd59378b4fa6df53248c3c359e909a0b7446198ebb1a58ca5a79721` and `cb7d2c74edb7aa3443e1e23cf0d762d4c15b79c39ea4f363531b2ec80633c13f`. Direct `Bytesˉfromˉi32ˉlittle` emission replaces the former text-formatting conversion without changing any generated object byte. The current WVB identities are `761822053ecee061422571758b1297e6451447a255b3b529cb6546c4ef2a78f7` for the 89,708-byte core, `7a806d8ed92fb4121c2017f3e0ebcfa5e174715e4655a87b0d8e7d0dcf3e3c9b` for the 85,713-byte memory adapter, and `e1a795dd07be21ccb150823bd8790a8766af28d4361b8151cdf224a48f1c4389` for the 86,741-byte hosted tool. The hosted-tool WVB lowers through the complete Stage 0 backend to 1,109,643 code bytes and a 1,112,045-byte WVO; those sizes are evidence, not a permanent optimization promise.
 
 This slice does not yet transfer stack-passed or descriptor parameters, Boolean or descriptor returns, deeper call graphs, recursion, data, descriptors, capabilities, relocations, fragment verification, W^X publication, PE/ELF construction, or the complete compiler. It does not satisfy the native-retirement gate by itself.

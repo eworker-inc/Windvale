@@ -33,9 +33,9 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "5642968d2a8d4bc03d564ad5012b5191445ce13c762de265281c486dc196d069";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "19c6b230145d8e4f10c58bdf550ed48e80f0b75f7e6e242f24f63c88156e5f5a";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "115d71a6e0763419361e459ade69e3ed6df88b09989baaf70adcd927d7776f2b";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "761822053ecee061422571758b1297e6451447a255b3b529cb6546c4ef2a78f7";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "7a806d8ed92fb4121c2017f3e0ebcfa5e174715e4655a87b0d8e7d0dcf3e3c9b";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "e1a795dd07be21ccb150823bd8790a8766af28d4361b8151cdf224a48f1c4389";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -734,6 +734,9 @@ internal static partial class Program
     private static readonly string NATIVE_X64_LOWERING_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Tool.wv");
 
+    private static readonly string WVB_TO_WVO_RETURN_42_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wvb-To-Wvo-Return-42.wv");
+
     private static readonly string SOURCE_WVB_FUNCTION_ONLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Source-Wvb-Function-Only.wv");
     private static readonly string SOURCE_WVB_MATCH_SOURCE = Readˉembeddedˉsource(
@@ -1130,6 +1133,8 @@ internal static partial class Program
         new("native test orchestration builds and runs the pinned scalar plan", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉtestˉorchestrationˉruns),
         new("native console packager AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉpackagerˉtargetsˉareˉdiscoverable),
         new("native console packager materializes verified PE and ELF applications", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉruns),
+        new("native WVB-to-WVO AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL], Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable),
+        new("native WVB-to-WVO lowerer emits the pinned object without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉruns),
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native byte descriptors survive helper returns and later allocations", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉbyteˉdescriptorˉreturnsˉsurvive),
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),
@@ -2901,16 +2906,7 @@ internal static partial class Program
                 Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
                 .Runˉmainˉbytes(wvbˉbytes[..^1].ToImmutableArray()).Bytes.Length);
 
-        var Toolˉcompilation = Seedˉcompiler.Compileˉmodules(
-            new("Native-X64-Lowering-Tool.wv", NATIVE_X64_LOWERING_TOOL_SOURCE),
-            [new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE)]);
-        if (!Toolˉcompilation.Success)
-        {
-            throw new InvalidOperationException(
-                "Windvale native x64 tool compilation failed: " +
-                string.Join(" | ", Toolˉcompilation.Diagnostics));
-        }
-        var Toolˉbytes = Toolˉcompilation.Moduleˉbytes.ToArray();
+        var Toolˉbytes = Compileˉwvbˉtoˉwvoˉtoolˉsuccess();
         Equal(
             NATIVE_X64_LOWERING_TOOL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Toolˉbytes));

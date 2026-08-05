@@ -1,4 +1,4 @@
 windvale-project 1
-root "Examples/Compiler/Native-X64-Lowering-Tool.wv"
+root "Compiler/Windvale/Native-X64-Lowering-Tool.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Core.wv"
 emit wvb

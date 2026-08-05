@@ -1,0 +1,5 @@
+module Wvbˉtoˉwvoˉfixture profile portable;
+
+export fn Main() -> i32 {
+    return 42;
+}

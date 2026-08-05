@@ -28,6 +28,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Source-to-WVB backend](Compiler-Source-Wvb.md)
 - [Project manifest](Windvale-Project.md)
 - [Native source-to-WVB front door](Windvale-Native-Source-To-Wvb-Front-Door.md)
+- [Native WVB-to-WVO application](Windvale-Native-Wvb-To-Wvo.md)
 
 ## Bytecode, runtime, CLI, and tools
 

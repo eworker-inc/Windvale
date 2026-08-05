@@ -105,6 +105,7 @@ public static class Linuxˉconsoleˉapplicationˉcontract
     public const string WV_LINKER_TARGET_NAME = "linux-x64-wv-linker-v1";
     public const string CONSOLE_PACKAGER_TARGET_NAME =
         "linux-x64-console-packager-v1";
+    public const string WVB_TO_WVO_TARGET_NAME = "linux-x64-wvb-to-wvo-v1";
     public const int HOSTED_STARTUP_BYTES = 217;
     public const int HOSTED_OUTPUT_SERVICE_OFFSET = 224;
     public const int HOSTED_NATIVE_IMAGE_OFFSET = 448;
