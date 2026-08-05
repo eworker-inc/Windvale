@@ -2715,6 +2715,10 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
             Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32)
         );
         if Capabilityˉkind ==
+            Nativeˉcapabilities.Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉkind() {
+            return Nativeˉcapabilities.Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉbytes();
+        }
+        if Capabilityˉkind ==
             Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉkind() {
             return Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉbytes();
         }

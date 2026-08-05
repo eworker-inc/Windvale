@@ -346,6 +346,9 @@
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Process-Argument.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Process-Argument.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvb-To-Wvo-Console-Write-Line.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Console-Write-Line.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-File-Read-Bytes.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-File-Read-Bytes.wv" />
     <EmbeddedResource
