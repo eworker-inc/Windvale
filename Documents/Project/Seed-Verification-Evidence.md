@@ -1930,20 +1930,28 @@ under ABI 22's shared instruction and call-depth budgets. The focused object
 writer keeps local helper symbols ordered before exported `Main`; layout adds the
 previously unnecessary `$function_0007` name.
 
+[Decision 0233](../Decisions/0233-Bounded-Native-U8-U32-Scalars.md)
+adds the `u8`/`u32` locals, constants, checked `u32.add`, `u32.less`, `u8.equal`,
+and typed scalar helper returns required by compiler-produced `Function-Only.wv`.
+The packed 16-byte directory now records one-byte parameter count and return type,
+two reserved bytes, and four parameter types. The layout module also owns typed
+temporary-slot offsets in canonical `i32`, `bool`, `u8`, `u32` order. Unmeasured
+scalar opcodes remain fail-closed.
+
 The current module identities are:
 
 - data: `9a32b3854270bcace52f615633f4b110d9f0777ba5fb5338157af0965dcc8ed4`;
-- layout: `23298b46f524e31f4eca6e63d0815ff96a969182cce8872887c0650ab098a572`;
-- object: `e9237fe0bef27b4c4d4cb682872e25aae0532c9e3a7b1e2f4f43aab739b55046`;
-- core closure: `d4b7fcf12301de8d2be955e95a629467fcd45e719404449b3f8cc2938b82602b`;
-- memory adapter: `77ab37967363200d7bf75b6f86689e6cbebe50701d47bb601e8c9e26e32f5a21`;
-- 103,043-byte hosted tool: `dbc2b2f75baceb8659d4f2c0977b3e3290abbaf38b3d47b6e40aed6b399fd2bd`.
+- layout: `9213e44e9b3a4cfec1c35acc8ddb211e4d5ddc057f3033c0152d9dfa102f0ee6`;
+- object: `430eb454207189b369c99ee622ca0f7b90edcc3b1be15ebaee52d73da95ce6c8`;
+- core closure: `e3f418faa2669453972547e46b2b5a4d5d553d65445a9941e5de47fb8b59ce73`;
+- memory adapter: `d052845962f3f5dbab7eac6acbb0b0fd3d84afaa24e4f81e2fb12e6b1814624d`;
+- 112,091-byte hosted tool: `836151775e9f0cf3f92258f2271b13934c5cb4e2e89e3aad9cbbbdd1b9bf5e51`.
 
-The tool's complete Stage 0 lowering records 1,273,630 native code bytes and a
-1,277,080-byte WVO. Its Windows candidate is 1,291,776 bytes /
-`bca28bebfb3abed513d87bb1e7f3871c20cc32f8439315f568f92ae217392870`;
-its Linux candidate is 1,290,240 bytes /
-`7b15037de8cbaa47b039023410ff5a045546e6aef4c1c273247fbe46136248bc`.
+The tool's complete Stage 0 lowering records 1,392,878 native code bytes and a
+1,396,532-byte WVO. Its Windows candidate is 1,411,072 bytes /
+`6d12b981a87a5ab8ccd15df7a7679c79967d6509a888ae47545b5b8b2262c5f7`;
+its Linux candidate is 1,413,120 bytes /
+`088803a03d175e05d9482e8d184d47ae7f5301298f4fe073563c186c657a8ece`.
 
 One stable accepted-subset fixture is 174 WVB bytes /
 `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31`.
@@ -1967,20 +1975,34 @@ at four. The Windvale memory adapter, hosted tool, and generated native tool
 produce Stage 0's exact 4,350-byte `.text` and 4,491-byte WVO. The retained
 out-of-range call target continues to fail closed as `Unsupportedˉcode`.
 
-The affected tests were reviewed before execution. Early focused attempts stopped
-inside the newly added oracle and exposed its initially assumed helper order and
-the real `Alpha, Main, Zeta` export layout; those findings expanded the contract
-rather than weakening the test. On the resulting source state, the one shared
-backend case completes every behavioral and exact-byte assertion in 5.405 test
-seconds after an 8.07-second build, prints all current identities, and then stops
-only at the intentionally stale layout identity. The six printed identities above
-were transcribed without replaying the already-complete behavioral case. The
-distinct package selection then rebuilds in 7.15 seconds and passes its single
-case in 5.246 test seconds, including both deterministic package identities,
-direct Windows execution, malformed-output preservation, and absence of CLR
-modules in the generated application. Standard, Qualification, the full Seed/OS
-suites, Linux execution, GitHub verification, artifact promotion, and
-ordinary-path cutover were deliberately not run.
+Canonical `Function-Only.wv` returns 6 through `u32` loop state and checked
+addition, a `u8` argument/comparison, and a Boolean helper result. Stage 0
+interpretation and native execution agree on 6. The Windvale memory adapter,
+hosted tool, and generated native tool reproduce Stage 0's exact 6,041-byte
+`.text` and 6,216-byte WVO.
+
+Review then identified that this canonical fixture does not exercise the admitted
+`u8` and `u32` helper-result slots. A small source-defined vector adds
+`Byte() -> u8` and `Count() -> u32`, returns 42 under interpretation and native
+execution, and reproduces Stage 0's exact 2,349-byte `.text` and 2,490-byte WVO
+through the hosted lowerer.
+
+The affected tests and their identity-assertion order were reviewed before the
+final source check. The qualified native build compiles the final 77-function
+memory-adapter closure in 5.6 seconds as 97,748 code bytes and a 111,063-byte WVB
+with the memory identity above. One focused shared-backend pass completed the
+existing behavior before its deliberately last stale identity; those identities
+were transcribed without replaying unchanged behavior. The subsequent test review
+found the scalar-result gap above, so that newly affected shared selection ran once:
+it builds in 7.74 seconds and passes its single case in 5.773 test seconds,
+including the new vector and every retained differential assertion. The distinct
+package selection builds in 8.36 seconds and completes direct Windows execution,
+deterministic repetition, malformed-output preservation, and the no-CLR check in
+5.235 test seconds before its deliberately last stale Windows size assertion. Its
+reported final Windows/Linux identities were transcribed without replaying that
+unchanged package behavior. Standard, Qualification, the full Seed/OS suites,
+Linux execution, GitHub verification, artifact promotion, and ordinary-path
+cutover were deliberately not run.
 
 This is focused local candidate evidence only. Standard, Qualification, the full
 Seed/OS suites, native CLI qualification, Linux execution, GitHub verification,

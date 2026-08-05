@@ -51,9 +51,9 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 103,043 | `dbc2b2f75baceb8659d4f2c0977b3e3290abbaf38b3d47b6e40aed6b399fd2bd` |
-| Windows WVB-to-WVO tool | 1,291,776 | `bca28bebfb3abed513d87bb1e7f3871c20cc32f8439315f568f92ae217392870` |
-| Linux WVB-to-WVO tool | 1,290,240 | `7b15037de8cbaa47b039023410ff5a045546e6aef4c1c273247fbe46136248bc` |
+| WVB-to-WVO tool WVB | 112,091 | `836151775e9f0cf3f92258f2271b13934c5cb4e2e89e3aad9cbbbdd1b9bf5e51` |
+| Windows WVB-to-WVO tool | 1,411,072 | `6d12b981a87a5ab8ccd15df7a7679c79967d6509a888ae47545b5b8b2262c5f7` |
+| Linux WVB-to-WVO tool | 1,413,120 | `088803a03d175e05d9482e8d184d47ae7f5301298f4fe073563c186c657a8ece` |
 
 `Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 
@@ -62,7 +62,7 @@ The current candidate identities are:
 | Return-42 WVB | 174 | `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31` |
 | Return-42 WVO | 479 | `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5` |
 
-The WVO contains 406 code bytes, one exported `Main`, no data, imports, or relocations, and is admitted by the independent WVO parser. The current-host native application must reproduce it byte for byte, repeat deterministically, reject a truncated WVB without changing a sentinel output, and load no CLR/.NET runtime. Decision 0228 adds exact Stage 0 WVO agreement for the existing three-function `Add -> Build -> Main` fixture. Decision 0231 adds the canonical 493-byte `Sum-Data.wv` differential vector with exact `.text`, `.rodata`, data symbol, and relative relocation. Decision 0232 adds arbitrary exported-Main order plus bounded forward, recursive, and cyclic scalar calls under the existing instruction and call-depth budgets. None of those extensions changes the fixed return-42 vector.
+The WVO contains 406 code bytes, one exported `Main`, no data, imports, or relocations, and is admitted by the independent WVO parser. The current-host native application must reproduce it byte for byte, repeat deterministically, reject a truncated WVB without changing a sentinel output, and load no CLR/.NET runtime. Decision 0228 adds exact Stage 0 WVO agreement for the existing three-function `Add -> Build -> Main` fixture. Decision 0231 adds the canonical 493-byte `Sum-Data.wv` differential vector with exact `.text`, `.rodata`, data symbol, and relative relocation. Decision 0232 adds arbitrary exported-Main order plus bounded forward, recursive, and cyclic scalar calls under the existing instruction and call-depth budgets. Decision 0233 adds the compiler-produced `Function-Only.wv` vector with `u8`/`u32` locals and operations plus a Boolean helper return; the Windvale memory adapter, hosted tool, and generated native tool reproduce Stage 0's exact 6,041-byte `.text` and 6,216-byte WVO. A separate `u8`/`u32` helper-return vector reproduces its exact 2,349-byte `.text` and 2,490-byte WVO through the hosted lowerer. None of those extensions changes the fixed return-42 vector.
 
 ## Qualification and retirement boundary
 

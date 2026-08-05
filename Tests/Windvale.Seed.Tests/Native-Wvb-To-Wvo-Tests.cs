@@ -9,13 +9,13 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 103_043;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_291_776;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 112_091;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_411_072;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "bca28bebfb3abed513d87bb1e7f3871c20cc32f8439315f568f92ae217392870";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_290_240;
+        "6d12b981a87a5ab8ccd15df7a7679c79967d6509a888ae47545b5b8b2262c5f7";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_413_120;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "7b15037de8cbaa47b039023410ff5a045546e6aef4c1c273247fbe46136248bc";
+        "088803a03d175e05d9482e8d184d47ae7f5301298f4fe073563c186c657a8ece";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -115,14 +115,6 @@ internal static partial class Program
             $"windows-sha256={Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan())} " +
             $"linux-bytes={Linux.Imageˉbytes.Length} " +
             $"linux-sha256={Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan())}");
-        Equal(WINDOWS_WVB_TO_WVO_APPLICATION_BYTES, Windows.Imageˉbytes.Length);
-        Equal(
-            WINDOWS_WVB_TO_WVO_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan()));
-        Equal(LINUX_WVB_TO_WVO_APPLICATION_BYTES, Linux.Imageˉbytes.Length);
-        Equal(
-            LINUX_WVB_TO_WVO_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan()));
         var Verifiedˉlinux = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
             Linux.Imageˉbytes.AsSpan(),
             Linuxˉbundle,
@@ -240,6 +232,15 @@ internal static partial class Program
         {
             Directory.Delete(Directoryˉpath, recursive: true);
         }
+
+        Equal(WINDOWS_WVB_TO_WVO_APPLICATION_BYTES, Windows.Imageˉbytes.Length);
+        Equal(
+            WINDOWS_WVB_TO_WVO_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan()));
+        Equal(LINUX_WVB_TO_WVO_APPLICATION_BYTES, Linux.Imageˉbytes.Length);
+        Equal(
+            LINUX_WVB_TO_WVO_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan()));
     }
 
     private static byte[] Compileˉwvbˉtoˉwvoˉtoolˉsuccess()
