@@ -58,6 +58,28 @@ the semantic verifier to admit the exact input, then runs the read-only structur
 inspector. Neither route requires .NET or grants file-write authority. The retained
 Stage 0 CLI remains available for explicit differential and recovery work.
 
+## Candidate execution
+
+The bounded native WVB runner is pinned for exact dual-host qualification but
+is not yet an accepted ordinary front door. On Windows x64, invoke the candidate
+with:
+
+```bat
+Tools\Native\Run-Wvb.cmd <module.wvb>
+```
+
+On Linux x64:
+
+```sh
+./Tools/Native/Run-Wvb.sh <module.wvb>
+```
+
+Each launcher verifies the exact pinned runner digest before starting it. The
+runner admits and executes only the currently specified portable `Main() -> i32`
+scalar subset, uses read-only host authority, and does not load .NET. It becomes
+the ordinary execution route only after the manifest records a passing exact-commit
+Windows/Linux Qualification run.
+
 ## Stage 0 recovery and differential route
 
 The .NET CLI remains available for recovery, independent comparison, tests, and
@@ -68,7 +90,7 @@ entry point:
 dotnet run --project Tools/Windvale.Tool -- build project.wvproj -o output.wvb
 ```
 
-To reconstruct all twelve pinned WVB and native application artifacts into a separate
+To reconstruct all fifteen pinned WVB and native application artifacts into a separate
 directory on Windows:
 
 ```powershell
@@ -82,9 +104,11 @@ Or on Linux:
 ```
 
 Reconstruction requires the pinned .NET SDK. It builds the retained Stage 0 CLI,
-reconstructs all four canonical WVB modules and all eight native applications, then
-requires their lengths and SHA-256 identities to match the committed inventory.
-The recovery scripts refuse to target the canonical distribution directory.
+reconstructs the established native tools, uses the rebuilt native build driver for
+the runner WVB, and reconstructs all five canonical WVB modules and all ten native
+applications. It then requires every length and SHA-256 identity to match the
+committed inventory. The recovery scripts refuse to target the canonical distribution
+directory.
 
 ## Verification boundary
 
@@ -92,7 +116,9 @@ For a change limited to the source build launchers, inventory, or native-front-d
 integration, run the focused Seed test named `ordinary source-to-WVB builds use
 pinned native tools`. For native WVB verification or inspection, run the focused
 test named `native WVB verifier and inspector applications own the read-only front
-door`. Run the publisher-focused test when its application construction or adapter
-inputs change. Do not run progressively broader local levels against the same source
-state; GitHub owns the independent Windows and pinned-Debian Qualification gate for
-the final committed candidate.
+door`. For this candidate execution slice, run the focused tests named `ordinary
+source-to-WVB builds use pinned native tools` and `Windvale SHA-256 and the native
+WVB runner execute without a .NET host`. Run the publisher-focused test when its
+application construction or adapter inputs change. Do not run progressively broader
+local levels against the same source state; GitHub owns the independent Windows and
+pinned-Debian Qualification gate for the final committed candidate.

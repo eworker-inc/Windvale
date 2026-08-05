@@ -52,6 +52,15 @@ dotnet "$tool" aot "$destination/Wvb/Wvb-Inspector.wvb" \
 dotnet "$tool" aot "$destination/Wvb/Wvb-Inspector.wvb" \
     --target linux-x64-wvb-inspector-v1 \
     -o "$destination/linux-x64/wvdump.elf"
+"$destination/linux-x64/wvbuild.elf" \
+    --project "$repository_root/Windvale-Wvb-Runner.wvproj" \
+    "$destination/Wvb/Wvb-Runner.wvb"
+dotnet "$tool" aot "$destination/Wvb/Wvb-Runner.wvb" \
+    --target windows-x64-wvb-runner-v1 \
+    -o "$destination/windows-x64/wvrun.exe"
+dotnet "$tool" aot "$destination/Wvb/Wvb-Runner.wvb" \
+    --target linux-x64-wvb-runner-v1 \
+    -o "$destination/linux-x64/wvrun.elf"
 
 (cd -- "$destination" && sha256sum --check --strict "$canonical_root/SHA256SUMS")
 echo "Recovered native front door: $destination"

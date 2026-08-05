@@ -136,7 +136,7 @@ The current canonical application is 1,007,104 bytes with SHA-256 `f15422397ad89
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its implemented candidate is 795,136 bytes with SHA-256 `61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381`.
 
-`windows-x64-wvb-runner-v1` uses metadata profile `5`. The current-host candidate is 770,560 bytes with SHA-256 `bf4fa16b9072215fadab6f1097155d85d5b77924aac01b14330acb0496f0af4c`; this identity is implementation evidence, not yet a qualified distributed artifact.
+`windows-x64-wvb-runner-v1` uses metadata profile `5`. The pinned candidate is 770,560 bytes with SHA-256 `bf4fa16b9072215fadab6f1097155d85d5b77924aac01b14330acb0496f0af4c`; it is committed qualification input, not yet an accepted ordinary artifact.
 
 ## Linux container
 
@@ -146,7 +146,7 @@ The current canonical application is 1,007,616 bytes with SHA-256 `dd98cd8f42ee8
 
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its implemented candidate is 794,624 bytes with SHA-256 `d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627`.
 
-`linux-x64-wvb-runner-v1` uses metadata profile `5`. The locally constructed candidate is 770,048 bytes with SHA-256 `28a98e35286ab0f0515b147ef34a527335dce1f3a5bf96449ea4495b8079ed0f`; execution remains pending Linux qualification.
+`linux-x64-wvb-runner-v1` uses metadata profile `5`. The pinned candidate is 770,048 bytes with SHA-256 `28a98e35286ab0f0515b147ef34a527335dce1f3a5bf96449ea4495b8079ed0f`; direct execution remains pending Linux qualification.
 
 ## Construction and verification
 

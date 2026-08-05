@@ -71,6 +71,19 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     --target linux-x64-wvb-inspector-v1 `
     -o (Join-Path $Destination 'linux-x64/wvdump.elf')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$RunnerProject = (Join-Path $RepositoryRoot 'Windvale-Wvb-Runner.wvproj').Replace('\', '/')
+$RunnerWvb = (Join-Path $Destination 'Wvb/Wvb-Runner.wvb').Replace('\', '/')
+& (Join-Path $Destination 'windows-x64/wvbuild.exe') `
+    --project $RunnerProject $RunnerWvb
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Tool aot (Join-Path $Destination 'Wvb/Wvb-Runner.wvb') `
+    --target windows-x64-wvb-runner-v1 `
+    -o (Join-Path $Destination 'windows-x64/wvrun.exe')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Tool aot (Join-Path $Destination 'Wvb/Wvb-Runner.wvb') `
+    --target linux-x64-wvb-runner-v1 `
+    -o (Join-Path $Destination 'linux-x64/wvrun.elf')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $Manifest = Get-Content -LiteralPath (Join-Path $CanonicalRoot 'Manifest.json') `
     -Raw | ConvertFrom-Json

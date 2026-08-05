@@ -96,6 +96,37 @@ internal static partial class Program
             Linux.Diagnostics.IsEmpty
                 ? "The Linux WVB runner failed without a diagnostic."
                 : Linux.Diagnostics[0].Message);
+        var Repository = Findˉrepositoryˉroot();
+        var Pinnedˉroot = Path.Combine(
+            Repository,
+            "Artifacts",
+            "Native-Front-Door");
+        var Pinnedˉwvbˉpath = Path.Combine(Pinnedˉroot, "Wvb", "Wvb-Runner.wvb");
+        var Pinnedˉmodule = Moduleˉcodec.Readˉandˉverify(
+            File.ReadAllBytes(Pinnedˉwvbˉpath));
+        var Pinnedˉfragment = X64ˉnativeˉbackend.Compile(Pinnedˉmodule).Fragment;
+        var Pinnedˉwindows = Wvbˉrunnerˉapplicationˉwriter.Writeˉwindows(
+            Pinnedˉfragment,
+            Pinnedˉmodule.Module.Capabilities);
+        var Pinnedˉlinux = Wvbˉrunnerˉapplicationˉwriter.Writeˉlinux(
+            Pinnedˉfragment,
+            Pinnedˉmodule.Module.Capabilities);
+        True(
+            Pinnedˉwindows.Success,
+            Pinnedˉwindows.Diagnostics.IsEmpty
+                ? "The pinned Windows WVB runner failed without a diagnostic."
+                : Pinnedˉwindows.Diagnostics[0].Message);
+        True(
+            Pinnedˉlinux.Success,
+            Pinnedˉlinux.Diagnostics.IsEmpty
+                ? "The pinned Linux WVB runner failed without a diagnostic."
+                : Pinnedˉlinux.Diagnostics[0].Message);
+        Sequenceˉequal(
+            Pinnedˉwindows.Imageˉbytes,
+            File.ReadAllBytes(Path.Combine(Pinnedˉroot, "windows-x64", "wvrun.exe")));
+        Sequenceˉequal(
+            Pinnedˉlinux.Imageˉbytes,
+            File.ReadAllBytes(Path.Combine(Pinnedˉroot, "linux-x64", "wvrun.elf")));
 
         foreach (var Platform in new[]
         {
@@ -119,6 +150,18 @@ internal static partial class Program
         Directory.CreateDirectory(Directoryˉpath);
         try
         {
+            var Nativeˉrunnerˉpath = Path.Combine(Directoryˉpath, "Native-Runner.wvb");
+            var Nativeˉbuild = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Build-Wvb",
+                Path.Combine(Repository, "Windvale-Wvb-Runner.wvproj"),
+                Nativeˉrunnerˉpath);
+            Equal(0, Nativeˉbuild.Exitˉcode);
+            Equal(string.Empty, Nativeˉbuild.Error);
+            Sequenceˉequal(
+                File.ReadAllBytes(Pinnedˉwvbˉpath),
+                File.ReadAllBytes(Nativeˉrunnerˉpath));
+
             var Moduleˉpath = Path.Combine(Directoryˉpath, "Runner.wvb");
             File.WriteAllBytes(Moduleˉpath, Profileˉbytes);
             foreach (var Target in new[]

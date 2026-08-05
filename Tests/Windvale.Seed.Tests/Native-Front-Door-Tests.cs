@@ -20,7 +20,7 @@ internal static partial class Program
         Equal(
             "windvale-native-front-door-1",
             Root.GetProperty("format").GetString());
-        Equal(12, Root.GetProperty("artifacts").GetArrayLength());
+        Equal(15, Root.GetProperty("artifacts").GetArrayLength());
         foreach (var Artifact in Root.GetProperty("artifacts").EnumerateArray())
         {
             var Relative = Artifact.GetProperty("path").GetString() ??
@@ -90,6 +90,13 @@ internal static partial class Program
             Contains(Nativeˉinspect.Output,
                 "module version=1.11 profile=portable name=\"Composition\\u02C9demo\"");
             Equal(string.Empty, Nativeˉinspect.Error);
+            var Nativeˉrun = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Run-Wvb",
+                Outputˉpath);
+            Equal(0, Nativeˉrun.Exitˉcode);
+            Equal("Result: 42\n", Nativeˉrun.Output);
+            Equal(string.Empty, Nativeˉrun.Error);
 
             Published[0] = 0;
             var Invalidˉwvbˉpath = Path.Combine(Directoryˉpath, "Invalid.wvb");
@@ -135,7 +142,7 @@ internal static partial class Program
         string Error) Runˉnativeˉwvbˉtool(
         string repository,
         string tool,
-        string module)
+        params string[] arguments)
     {
         var Startˉinfo = new ProcessStartInfo
         {
@@ -161,7 +168,10 @@ internal static partial class Program
             Startˉinfo.ArgumentList.Add("bash");
             Startˉinfo.ArgumentList.Add(Launcher);
         }
-        Startˉinfo.ArgumentList.Add(module);
+        foreach (var Argument in arguments)
+        {
+            Startˉinfo.ArgumentList.Add(Argument);
+        }
         using var Process = System.Diagnostics.Process.Start(Startˉinfo) ??
             throw new InvalidOperationException($"The native {tool} launcher did not start.");
         var Outputˉtask = Process.StandardOutput.ReadToEndAsync();

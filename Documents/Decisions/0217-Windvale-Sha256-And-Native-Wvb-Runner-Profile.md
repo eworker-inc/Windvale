@@ -1,7 +1,7 @@
 # Decision 0217: Windvale SHA-256 and native WVB runner profile
 
 - Date: 2026-08-05
-- Status: Implemented on Windows; dual-host qualification pending
+- Status: Implemented and pinned as a candidate; dual-host qualification pending
 - Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Decision 0216](0216-Bounded-Compiler-Temporary-Slots-And-Current-Wvb-Inspection.md)
 - Contracts: [Foundation bytes](../../Specifications/Foundation-Bytes.md), [WebAssembly](../../Specifications/Windvale-WebAssembly.md), and [hosted WVB tools](../../Specifications/Windvale-Hosted-Verifier-Application.md)
 
@@ -47,14 +47,14 @@ The current native-compiler candidates are:
 | Windows runner | 770,560 | `bf4fa16b9072215fadab6f1097155d85d5b77924aac01b14330acb0496f0af4c` |
 | Linux runner | 770,048 | `28a98e35286ab0f0515b147ef34a527335dce1f3a5bf96449ea4495b8079ed0f` |
 
-The Windows candidate directly executes a compiler-produced portable guest and reports `Result: 42`. The focused Stage 0 conformance case verifies Foundation known answers through both the reference runtime and native executor, reconstructs both package profiles, and runs the current-host startup. These are current-host implementation results; they do not replace the pending Windows/Linux Qualification gate.
+The exact WVB, Windows application, and Linux application are pinned in the native-front-door inventory with qualification marked `pending`. The Windows candidate directly executes a compiler-produced portable guest and reports `Result: 42`. The focused Stage 0 conformance case verifies Foundation known answers through both the reference runtime and native executor, reconstructs both package profiles, and runs the current-host startup. These are current-host implementation results; they do not replace the pending Windows/Linux Qualification gate.
 
 ## Consequences
 
 - WVB decoding, execution, and SHA-256 remain Windvale source rather than new assembly or C# implementations.
 - The runner uses a narrower service set than the inspector while sharing its already-bounded host startup.
 - The scalar interpreter is now a composed fifteen-function WVB, and WebAssembly verification builds its explicit project instead of compiling one source file in isolation.
-- Stage 0 still performs AOT selection, package construction, test orchestration, and recovery. The normal `Run-Wvb` front door is not cut over until the candidate is dual-host qualified and pinned.
+- Stage 0 still performs AOT selection, package construction, test orchestration, and recovery. Digest-checking candidate `Run-Wvb` launchers are present for qualification, but they are not accepted as the ordinary front door until the exact pinned candidate passes on both hosts.
 
 ## Reconsideration triggers
 
