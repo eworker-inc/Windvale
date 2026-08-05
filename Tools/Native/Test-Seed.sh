@@ -4,7 +4,7 @@ set -uo pipefail
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Plan.txt"
-plan_digest=d04f77c41bbae2c98541b3a0e6dec0ee0c725106dae72e5bb128d52c4abf3fc5
+plan_digest=79294d8e1a08325cd41042e6068b4a6bc9f3c15bd05372ad4bb7eda268a47b73
 
 if ! printf '%s  %s\n' "$plan_digest" "$plan" | sha256sum --check --strict --quiet; then
     echo 'The native test plan artifact digest is invalid.' >&2

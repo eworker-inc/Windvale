@@ -1130,7 +1130,7 @@ internal static partial class Program
         new("complete Windvale-written wvdump agrees across interpreter, JIT, and WVO AOT", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvdumpˉcompleteˉruns),
         new("native WVB verifier and inspector applications own the read-only front door", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvbˉreadˉonlyˉtoolsˉrun),
         new("Windvale SHA-256 and the native WVB runner execute without a .NET host", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvbˉrunnerˉruns),
-        new("native test orchestration builds and runs the pinned scalar plan", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉtestˉorchestrationˉruns),
+        new("native test orchestration builds and runs the pinned portable plan", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉtestˉorchestrationˉruns),
         new("native console packager AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉpackagerˉtargetsˉareˉdiscoverable),
         new("native console packager materializes verified PE and ELF applications", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉruns),
         new("native WVB-to-WVO AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL], Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable),

@@ -11,7 +11,10 @@ internal static partial class Program
         Equal(
             "PASS  calls-control\n" +
             "PASS  scalar-core\n" +
-            "Tests: 2, Passed: 2, Failed: 0\n",
+            "PASS  function-only\n" +
+            "PASS  data-text\n" +
+            "PASS  nominal-types\n" +
+            "Tests: 5, Passed: 5, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

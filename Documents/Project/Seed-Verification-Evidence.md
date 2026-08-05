@@ -1963,3 +1963,27 @@ process. Standard, Qualification, the full Seed/OS suites, native CLI qualificat
 Linux execution, GitHub verification, artifact promotion, and ordinary-path cutover
 remain deferred. The final broad gate begins with an upstream refresh and one
 reconciliation of the accumulated retirement state.
+
+## Local expanded native portable-test evidence
+
+[Decision 0226](../Decisions/0226-Expanded-Native-Portable-Test-Plan.md)
+extends the fixed native inventory from two to five existing portable fixtures.
+The 635-byte UTF-8/LF `WVNT 1` plan has SHA-256
+`79294d8e1a08325cd41042e6068b4a6bc9f3c15bd05372ad4bb7eda268a47b73`.
+The three added WVB identities are the existing independent compiler-conformance
+values for `function-only`, `data-text`, and `nominal-types`; their source-defined
+results are the already asserted `6`, `13`, and `11`.
+
+After reviewing the plan digest in both host launchers, each pre-existing WVB
+identity, the reference/interpreter outcomes, and the managed wrapper's expected
+report, the direct .NET-free Windows plan passes all five cases in 2.236 seconds.
+Each case builds through the qualified native source front door, requires exact
+WVB bytes, and executes through the pinned native runner candidate. No managed
+compiler, runtime, or test process participates in that run.
+
+This is focused local candidate evidence only. The managed suite was not rebuilt
+or rerun, because the affected wrapper contains only the reviewed fixed report and
+the direct plan is the narrowest behavioral check. Linux execution, malformed and
+failure-plan transfer, broader fixture orchestration, Standard, Qualification,
+GitHub verification, and runner/test promotion remain deferred to the grouped
+end-of-goal gate.
