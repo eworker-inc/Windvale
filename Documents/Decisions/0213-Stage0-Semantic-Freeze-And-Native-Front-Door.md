@@ -1,7 +1,7 @@
 # Decision 0213: Stage 0 semantic freeze and native front door
 
 - Date: 2026-08-04
-- Status: Accepted migration policy; semantic freeze and publisher qualified; normal-path cutover implemented candidate
+- Status: Accepted migration policy; semantic freeze, publisher, and first normal-path cutover cross-host qualified
 - Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), [Decision 0178](0178-Project-Stewardship-Archives-And-Recovery.md), and Phase 10
 - Builds on: [Decision 0185](0185-Standalone-Compiler-Wvb-Verifier-Applications.md), [Decision 0186](0186-First-Windvale-Native-Compiler-Build-Driver.md), and [Decision 0187](0187-Project-Aware-Windvale-Native-Build-Driver.md)
 
@@ -97,21 +97,24 @@ Use this order:
 The normal-path switch happens only after the supplied native artifacts can be
 identified and reconstructed without introducing undocumented binary trust.
 
-Steps 1 through 3 are qualified and steps 4 and 5 are implemented in the current
-candidate. The exact publisher qualified at commit
+Steps 1 through 5 are qualified for the first project source-to-WVB profile. The
+exact publisher qualified at commit
 `9d36387867ebff80ee94c6f9f7996da4ef32a4a3` in
 GitHub [Verify run 30971408639](https://github.com/eworker-inc/Windvale/actions/runs/30971408639).
-The descendant cutover checks in both canonical WVB modules and four raw native
+The descendant cutover at exact commit
+`d2e71c1d6491153afb715674fc13ba2c6276326a` passes GitHub
+[Verify run 30974274271](https://github.com/eworker-inc/Windvale/actions/runs/30974274271).
+It checks in both canonical WVB modules and four raw native
 applications with byte lengths, SHA-256 identities, source projects, target names,
 and the two qualification references. Windows `Build-Wvb.cmd` and Linux
 `Build-Wvb.sh` verify those tools, build a private candidate, and invoke the exact
 publisher as the documented ordinary project source-to-WVB path. Separate recovery
 scripts reconstruct the inventory through Stage 0 without silently refreshing it.
 
-This cutover remains an implemented candidate until its own Windows and pinned-
-Debian Qualification jobs pass. After that evidence, the Stage 0 project build is
-the explicit recovery/differential lane for this workflow; the other Decision 0057
-retirement conditions remain open.
+Windows and digest-pinned Debian each pass all 100 Seed tests, including direct use
+of the distributed native front door, all 39 OS tests, and the complete native CLI
+gate. The Stage 0 project build is now the explicit recovery/differential lane for
+this workflow; the other Decision 0057 retirement conditions remain open.
 
 ### Preserve independent evidence without preserving duplicate product code
 
@@ -144,8 +147,8 @@ No open condition is reclassified as complete by this decision.
 
 - Source-language development stops paying the permanent cost of two forward
   compiler implementations after the freeze baseline qualifies.
-- The next native milestone is the source-to-verified-WVB front door, not another
-  unrelated fixed tool profile.
+- The first ordinary project source-to-verified-WVB path is native; the next
+  retirement slice should remove another coherent normal-path Stage 0 role.
 - C# remains present for recovery and independent evidence while its normal-path
   responsibilities shrink behind explicit gates.
 - New bytecode or ABI work may wait for a Windvale-owned consumer instead of using

@@ -1800,3 +1800,30 @@ runtime mapping in the child processes. This qualifies the semantic freeze and t
 current native source-to-verified-WVB components; it does not qualify atomic
 source-visible WVB replacement, normal-path cutover, complete native-backend
 ownership, remaining tools, final recovery archive, or complete .NET retirement.
+
+## Qualified native project source-to-WVB front door
+
+Exact cutover commit `d2e71c1d6491153afb715674fc13ba2c6276326a`
+passes GitHub [Verify run 30974274271](https://github.com/eworker-inc/Windvale/actions/runs/30974274271).
+Windows and digest-pinned Debian 12 each complete a zero-warning Release build,
+all 100 Seed tests, all 39 OS tests, and the complete native CLI gate. The Seed
+suite records 864.181 seconds on Windows and 879.500 seconds on Linux. The complete
+jobs finish in 24m50s and 24m27s respectively; the final verification gate passes
+in 4 seconds.
+
+Both hosts verify the six-entry `windvale-native-front-door-1` inventory, execute
+their checked-in native build driver and publisher, replace an existing output with
+the exact 660-byte project-composition WVB at SHA-256
+`030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607`,
+reject an invalid project without changing the destination, and clean the private
+candidate. The publisher test also proves that the public recovery CLI AOT target
+reconstructs the exact current-host package before directly exercising the raw
+publisher. Linux records 1.905 seconds for the publisher test and 0.539 seconds for
+the composed front door; Windows records 2.259 and 0.635 seconds.
+
+This qualifies the ordinary no-.NET project source-to-verified-WVB path on both
+permanent hosts. The retained Stage 0 `build` route is recovery and differential
+evidence for this workflow. Native WVB execution and inspection, repository test
+orchestration, complete backend ownership, remaining tools, the extended publisher
+fault/concurrency matrix, and the final recovery archive remain; Decision 0057's
+complete .NET-retirement gate is not claimed.
