@@ -6,6 +6,8 @@
   "publisherQualification": "https://github.com/eworker-inc/Windvale/actions/runs/30971408639",
   "runnerCommit": "36c4baff385f782700c3df8de1d7dec8db6e2e0b",
   "runnerQualification": "pending",
+  "assemblerCommit": "3aa5ba27f0ae4f96bc80d8bd521363015e884ab3",
+  "assemblerQualification": "https://github.com/eworker-inc/Windvale/actions/runs/31004212797",
   "artifacts": [
     {
       "name": "compiler-build-driver-wvb",
@@ -48,6 +50,14 @@
       "sourceProject": "Windvale-Wvb-Runner.wvproj"
     },
     {
+      "name": "wva-assembler-wvb",
+      "path": "Wvb/Wva-Assembler.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 180071,
+      "sha256": "a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c",
+      "sourceProject": "Windvale-Wva-Assembler.wvproj"
+    },
+    {
       "name": "windows-x64-build-driver",
       "path": "windows-x64/wvbuild.exe",
       "target": "windows-x64-build-driver-v1",
@@ -88,6 +98,14 @@
       "sourceWvb": "Wvb/Wvb-Runner.wvb"
     },
     {
+      "name": "windows-x64-wva-assembler",
+      "path": "windows-x64/wvasm.exe",
+      "target": "windows-x64-wva-assembler-v1",
+      "bytes": 2895360,
+      "sha256": "e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4",
+      "sourceWvb": "Wvb/Wva-Assembler.wvb"
+    },
+    {
       "name": "linux-x64-build-driver",
       "path": "linux-x64/wvbuild.elf",
       "target": "linux-x64-build-driver-v1",
@@ -126,6 +144,14 @@
       "bytes": 778240,
       "sha256": "8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294",
       "sourceWvb": "Wvb/Wvb-Runner.wvb"
+    },
+    {
+      "name": "linux-x64-wva-assembler",
+      "path": "linux-x64/wvasm.elf",
+      "target": "linux-x64-wva-assembler-v1",
+      "bytes": 2895872,
+      "sha256": "ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0",
+      "sourceWvb": "Wvb/Wva-Assembler.wvb"
     }
   ]
 }

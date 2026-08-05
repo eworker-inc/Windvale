@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHS 1` packages the canonical Windvale-written `Wvaˉassemblerˉcore` as paired Windows x64 and Linux x64 command-line applications. The candidate moves ordinary WVA-to-WVO behavior toward a .NET-free process while preserving the frozen C# assembler as a named Stage 0 recovery and differential oracle until the retirement gate is qualified.
+`WVHS 1` packages the canonical Windvale-written `Wvaˉassemblerˉcore` as paired Windows x64 and Linux x64 command-line applications. Exact source commit `3aa5ba27f0ae4f96bc80d8bd521363015e884ab3` passes the independent Windows/Linux gate in GitHub [Verify run 31004212797](https://github.com/eworker-inc/Windvale/actions/runs/31004212797). Its pinned native-front-door artifacts and digest-bound launchers move ordinary WVA-to-WVO behavior to a .NET-free process once their exact containing commit passes the artifact promotion gate, while preserving the frozen C# assembler as a named Stage 0 recovery and differential oracle until the complete retirement gate is qualified.
 
 The product logic remains in `Assembler/Windvale/Wva-Assembler-Core.wv`. It owns strict UTF-8 admission, WVA scanning and semantics, exact diagnostics, object measurement, x86-64 instruction encoding, WVO construction, and the single final output call. The package adds no second assembler implementation.
 
@@ -68,4 +68,4 @@ Promotion to the ordinary assembler front door requires one exact commit to pass
 - digest-bound launchers and manifest entries for both platform applications; and
 - no regression in the accepted WVA, WVO, native ABI, or hosted service contracts.
 
-Until that gate passes, `windvale assemble` remains the explicit Stage 0 construction path and the native pair remains a candidate.
+`Tools/Native/Assemble-Wva.cmd` and `Tools/Native/Assemble-Wva.sh` are the ordinary front-door commands after their exact artifact commit passes that gate. `windvale assemble` remains the explicit Stage 0 recovery/differential command; it is not deleted until Decision 0057's complete archive gate passes.

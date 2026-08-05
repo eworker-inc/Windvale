@@ -20,7 +20,13 @@ internal static partial class Program
         Equal(
             "windvale-native-front-door-1",
             Root.GetProperty("format").GetString());
-        Equal(15, Root.GetProperty("artifacts").GetArrayLength());
+        Equal(
+            "3aa5ba27f0ae4f96bc80d8bd521363015e884ab3",
+            Root.GetProperty("assemblerCommit").GetString());
+        Equal(
+            "https://github.com/eworker-inc/Windvale/actions/runs/31004212797",
+            Root.GetProperty("assemblerQualification").GetString());
+        Equal(18, Root.GetProperty("artifacts").GetArrayLength());
         foreach (var Artifact in Root.GetProperty("artifacts").EnumerateArray())
         {
             var Relative = Artifact.GetProperty("path").GetString() ??
@@ -97,6 +103,42 @@ internal static partial class Program
             Equal(0, Nativeˉrun.Exitˉcode);
             Equal("Result: 42\n", Nativeˉrun.Output);
             Equal(string.Empty, Nativeˉrun.Error);
+
+            var Assemblyˉpath = Path.Combine(Directoryˉpath, "Hello.wva");
+            var Objectˉpath = Path.Combine(Directoryˉpath, "Hello.wvo");
+            File.WriteAllText(
+                Assemblyˉpath,
+                HELLO_ASSEMBLY_SOURCE,
+                new System.Text.UTF8Encoding(false));
+            var Nativeˉassemble = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Assemble-Wva",
+                Assemblyˉpath,
+                Objectˉpath);
+            Equal(0, Nativeˉassemble.Exitˉcode);
+            Contains(Nativeˉassemble.Output, "wvasm 1\n");
+            Contains(Nativeˉassemble.Output, "assembly status=valid object-bytes=218");
+            Equal(string.Empty, Nativeˉassemble.Error);
+            Sequenceˉequal(
+                Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE),
+                File.ReadAllBytes(Objectˉpath));
+
+            var Invalidˉassemblyˉpath = Path.Combine(Directoryˉpath, "Invalid.wva");
+            File.WriteAllText(
+                Invalidˉassemblyˉpath,
+                "not assembly\n",
+                new System.Text.UTF8Encoding(false));
+            ReadOnlySpan<byte> Preservedˉobject = [4, 3, 2, 1];
+            File.WriteAllBytes(Objectˉpath, Preservedˉobject);
+            var Rejectedˉassembly = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Assemble-Wva",
+                Invalidˉassemblyˉpath,
+                Objectˉpath);
+            Equal(2, Rejectedˉassembly.Exitˉcode);
+            Equal(string.Empty, Rejectedˉassembly.Output);
+            Contains(Rejectedˉassembly.Error, "assembly status=WVA1001");
+            Sequenceˉequal(Preservedˉobject.ToArray(), File.ReadAllBytes(Objectˉpath));
 
             Published[0] = 0;
             var Invalidˉwvbˉpath = Path.Combine(Directoryˉpath, "Invalid.wvb");

@@ -1,7 +1,7 @@
 # Decision 0220: First native WVA assembler front door
 
 - Date: 2026-08-05
-- Status: Implemented as a candidate; dual-host qualification and front-door pinning pending
+- Status: Source-qualified at `3aa5ba2`; pinned artifact/front-door commit requires its own dual-host gate
 - Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md)
 - Contract: [Windvale native WVA assembler](../../Specifications/Windvale-Native-Wva-Assembler.md)
 
@@ -52,12 +52,14 @@ The Stage 0 CLI can construct both candidates and remains the normal `windvale a
 
 After one exact commit passes that evidence on Windows and Linux, pin both platform applications and add digest-bound native launchers in a provenance commit. Only after that second exact artifact commit passes both hosts does ordinary assembly move to the native launcher. The C# assembler then remains reachable solely through named recovery and differential paths until the complete Decision 0057 archive gate permits deletion.
 
+Exact source commit `3aa5ba27f0ae4f96bc80d8bd521363015e884ab3` passes GitHub [Verify run 31004212797](https://github.com/eworker-inc/Windvale/actions/runs/31004212797) on Windows and Linux. The provenance slice pins its exact WVB, PE, and ELF identities in `Artifacts/Native-Front-Door`, adds digest-bound `Tools/Native/Assemble-Wva.cmd` and `.sh` launchers, and exercises the current-host launcher with accepted and rejected WVA. Those launchers become the ordinary front door only when the exact commit containing the pinned artifacts passes the same dual-host gate; the commit's GitHub status is the promotion evidence and avoids embedding a self-referential commit identity in its own bytes.
+
 ## Consequences
 
 - WVA parsing, validation, encoding, and WVO construction remain one Windvale implementation.
 - The additional machine-specific code is zero for this profile; it reuses an existing startup and service boundary.
 - The native backend now preserves immutable byte descriptors returned across helper calls and later allocation.
-- Candidate construction still uses Stage 0; this decision does not claim .NET retirement or delete recovery source.
+- PE/ELF candidate construction still uses Stage 0; this decision does not claim complete .NET retirement or delete recovery source.
 - Normal post-cutover tests can use stable WVA/WVO vectors and independent WVO verification. A live C# comparison remains useful only in the bounded differential lane and is not a permanent requirement.
 
 ## Reconsideration triggers
