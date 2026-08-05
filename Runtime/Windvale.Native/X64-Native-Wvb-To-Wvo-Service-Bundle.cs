@@ -15,6 +15,7 @@ public static partial class X64ˉnativeˉserviceˉbundle
             Nativeˉservice.Processˉargumentˉcount,
             Nativeˉservice.Processˉargument,
             Nativeˉservice.Fileˉreadˉbytes,
+            Nativeˉservice.Textˉutf8ˉisˉvalid,
             Nativeˉservice.Diagnosticˉwriteˉline,
             Nativeˉservice.Enumˉname,
             Nativeˉservice.Textˉconcat,

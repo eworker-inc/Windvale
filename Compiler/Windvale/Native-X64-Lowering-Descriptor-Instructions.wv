@@ -3,12 +3,15 @@ module Compilerˉnativeˉx64ˉloweringˉdescriptorˉinstructions profile portabl
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉdescriptors as Descriptors;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉruntimeˉdescriptors as Runtimeˉdescriptors;
 
 export record Compilerˉnativeˉx64ˉdescriptorˉinstruction {
     Input: bytes;
     Offset: u32;
     Opcode: u8;
     Boundsˉtarget: u32;
+    Runtimeˉtarget: u32;
+    Invalidˉutf8ˉtarget: u32;
 }
 
 export record Compilerˉnativeˉx64ˉdescriptorˉlayout {
@@ -26,6 +29,7 @@ export record Compilerˉnativeˉx64ˉdescriptorˉstate {
     Stackˉslots: bytes;
     Stackˉdepth: u32;
     Nextˉi32: u32;
+    Nextˉbool: u32;
     Nextˉtext: u32;
     Nextˉu8: u32;
     Nextˉu32: u32;
@@ -84,6 +88,7 @@ fn Emitˉconstant(
         Bytesˉconcat(State.Stackˉslots, Bytesˉfromˉu32ˉlittle(Slot)),
         State.Stackˉdepth + 1u32,
         State.Nextˉi32,
+        State.Nextˉbool,
         Nextˉtext,
         State.Nextˉu8,
         State.Nextˉu32,
@@ -117,6 +122,7 @@ fn Emitˉlength(
         ),
         Depth + 1u32,
         State.Nextˉi32,
+        State.Nextˉbool,
         State.Nextˉtext,
         State.Nextˉu8,
         State.Nextˉu32 + 1u32,
@@ -162,6 +168,7 @@ fn Emitˉslice(
         ),
         Depth + 1u32,
         State.Nextˉi32,
+        State.Nextˉbool,
         State.Nextˉtext,
         State.Nextˉu8,
         State.Nextˉu32,
@@ -219,6 +226,7 @@ fn Emitˉread(
         ),
         Depth + 1u32,
         Nextˉi32,
+        State.Nextˉbool,
         State.Nextˉtext,
         Nextˉu8,
         Nextˉu32,
@@ -252,10 +260,122 @@ fn Emitˉutf8(
         ),
         Depth + 1u32,
         State.Nextˉi32,
+        State.Nextˉbool,
         State.Nextˉtext,
         State.Nextˉu8,
         State.Nextˉu32,
         State.Nextˉbytes + 1u32
+    );
+}
+
+fn Emitˉtextˉconcat(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Left: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 2u32) * 4u32
+    );
+    let Right: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 2u32;
+    let Target: u32 = Valueˉslot(Shape, 3u8, State.Nextˉtext);
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Runtimeˉdescriptors.Compilerˉnativeˉx64ˉemitˉtextˉconcat(
+            State.Result,
+            Left,
+            Right,
+            Target,
+            Instruction.Runtimeˉtarget
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(3u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext + 1u32,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes
+    );
+}
+
+fn Emitˉruntimeˉunary(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    var Type: u8 = 3u8;
+    var Index: u32 = State.Nextˉtext;
+    if Instruction.Opcode == 115u8 {
+        Type = 2u8;
+        Index = State.Nextˉbool;
+    }
+    let Target: u32 = Valueˉslot(Shape, Type, Index);
+    var Result: bytes = State.Result;
+    if Instruction.Opcode == 115u8 {
+        Result = Runtimeˉdescriptors.Compilerˉnativeˉx64ˉemitˉtextˉutf8ˉisˉvalid(
+            Result,
+            Source,
+            Target,
+            Instruction.Runtimeˉtarget
+        );
+    }
+    if Instruction.Opcode == 116u8 {
+        Result = Runtimeˉdescriptors.Compilerˉnativeˉx64ˉemitˉtextˉfromˉutf8(
+            Result,
+            Source,
+            Target,
+            Instruction.Runtimeˉtarget,
+            Instruction.Invalidˉutf8ˉtarget
+        );
+    }
+    if Instruction.Opcode == 117u8 {
+        Result = Runtimeˉdescriptors.Compilerˉnativeˉx64ˉemitˉtextˉquote(
+            Result,
+            Source,
+            Target,
+            Instruction.Runtimeˉtarget
+        );
+    }
+    var Nextˉbool: u32 = State.Nextˉbool;
+    var Nextˉtext: u32 = State.Nextˉtext;
+    if Type == 2u8 {
+        Nextˉbool = Nextˉbool + 1u32;
+    } else {
+        Nextˉtext = Nextˉtext + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Result,
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(Type)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        Nextˉbool,
+        Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes
     );
 }
 
@@ -275,6 +395,13 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
     if Instruction.Opcode == 13u8 || Instruction.Opcode == 14u8 ||
         Instruction.Opcode == 15u8 || Instruction.Opcode == 114u8 {
         return Emitˉread(Instruction, Shape, State);
+    }
+    if Instruction.Opcode == 113u8 {
+        return Emitˉtextˉconcat(Instruction, Shape, State);
+    }
+    if Instruction.Opcode == 115u8 || Instruction.Opcode == 116u8 ||
+        Instruction.Opcode == 117u8 {
+        return Emitˉruntimeˉunary(Instruction, Shape, State);
     }
     return Emitˉutf8(Shape, State);
 }

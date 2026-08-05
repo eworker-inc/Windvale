@@ -14,14 +14,17 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_STATIC_DESCRIPTORS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Static-Descriptors.wv");
+    private static readonly string WVB_TO_WVO_TEXT_SERVICES_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Text-Services.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 146_392;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 1_415_680;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 158_172;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 2_156_544;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "23d7000bb0f1e32f71eb76467010c29f25504d99b17604a432d6e243c7a6696d";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 1_417_216;
+        "2c2fde72296acea8659d36b91626285cd61b1eb6b42fbab58d67ecb2eb27e81b";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 2_158_592;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "e32c0459aa55608edca9ed625c9aec88f74c7ce46e98eec2103d36fcba622559";
+        "5e7d980ff8048136185d580f180a081316eeae38f59f31d047af7cf6e998ff68";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -57,6 +60,7 @@ internal static partial class Program
                 Nativeˉservice.Processˉargumentˉcount,
                 Nativeˉservice.Processˉargument,
                 Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
                 Nativeˉservice.Diagnosticˉwriteˉline,
                 Nativeˉservice.Enumˉname,
                 Nativeˉservice.Textˉconcat,
@@ -267,6 +271,9 @@ internal static partial class Program
                     "Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv",
                     NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
                 new(
+                    "Compiler/Windvale/Native-X64-Lowering-Runtime-Descriptors.wv",
+                    NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE),
+                new(
                     "Compiler/Windvale/Native-X64-Lowering-Layout.wv",
                     NATIVE_X64_LOWERING_LAYOUT_SOURCE),
                 new(
@@ -324,6 +331,60 @@ internal static partial class Program
                     -1);
             throw new InvalidOperationException(
                 $"Static-descriptor WVO differs at {Firstˉdifference}; " +
+                $"Stage0 length={Expectedˉobject.Length}, " +
+                $"Windvale length={Memoryˉresult.Bytes.Length}, " +
+                $"Stage0 byte={(Firstˉdifference < 0 ? -1 : Expectedˉobject[Firstˉdifference])}, " +
+                $"Windvale byte={(Firstˉdifference < 0 ? -1 : Memoryˉresult.Bytes[Firstˉdifference])}.");
+        }
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(tool, Wvb);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+    }
+
+    private static void Assertˉtextˉserviceˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_TEXT_SERVICES_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(Expectedˉobject.AsSpan()).Value;
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        if (!Expectedˉobject.SequenceEqual(Memoryˉresult.Bytes))
+        {
+            var Sharedˉlength = Math.Min(
+                Expectedˉobject.Length,
+                Memoryˉresult.Bytes.Length);
+            var Firstˉdifference = Enumerable.Range(0, Sharedˉlength)
+                .FirstOrDefault(
+                    Index => Expectedˉobject[Index] != Memoryˉresult.Bytes[Index],
+                    -1);
+            throw new InvalidOperationException(
+                $"Text-service WVO differs at {Firstˉdifference}; " +
                 $"Stage0 length={Expectedˉobject.Length}, " +
                 $"Windvale length={Memoryˉresult.Bytes.Length}, " +
                 $"Stage0 byte={(Firstˉdifference < 0 ? -1 : Expectedˉobject[Firstˉdifference])}, " +

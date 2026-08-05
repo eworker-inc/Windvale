@@ -1,0 +1,15 @@
+module Nativeˉtextˉservices profile portable;
+
+data Greeting: text = "same";
+data Suffix: text = "same";
+
+export fn Main() -> i32 {
+    let Joined = Textˉconcat(Greeting, Suffix);
+    let Encoded = Textˉtoˉutf8(Joined);
+    if !Textˉutf8ˉisˉvalid(Encoded) { return 1; }
+    let Roundˉtrip = Textˉfromˉutf8(Encoded);
+    let Quoted = Textˉquote(Suffix);
+    if Bytesˉlength(Textˉtoˉutf8(Roundˉtrip)) != 8u32 { return 2; }
+    if Bytesˉlength(Textˉtoˉutf8(Quoted)) != 6u32 { return 3; }
+    return 42;
+}

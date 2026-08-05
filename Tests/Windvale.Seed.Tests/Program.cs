@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "9f9a24605ae56c9ba1e3029de11d76b80d1a3f89f95e6c93bfa3df13b7437076";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "58a3082d48c90866b22234c2203f9b2d8f114559ff73f488e378562d4db1f338";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "79e4ddac4eac5e85aa4a10b14b91de9ca41a8263a3bf811bb38ec3eed5ed6f1c";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "93eb0f25ddebd70b2c56edfdd7604ebd31297bdc5306d023cd8c84d63faafbb2";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "3aaf9719cd776de2b7d5dd8fabb470cb0c3b0bceaf1932540845bdd1c0962e2c";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "e265e10a680cbe2303369343140cebe335bd2f27ea56b684e91da87952180406";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "76ef9e2d3b671df94d1499911addc1b008d0d2033e6d53128bc332d4e0dc121d";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "1e757d04cbdb1d84420240032d68e9bac99c8372cdacf1ae28f9c748c62209d0";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "60b1820a028943bcd4f4e5ee422d46f3bd82c7a5d5f3edf5962fbc5adcf421f4";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -737,6 +737,9 @@ internal static partial class Program
     private static readonly string NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Descriptor-Instructions.wv");
+    private static readonly string NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Runtime-Descriptors.wv");
     private static readonly string NATIVE_X64_LOWERING_LAYOUT_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Layout.wv");
     private static readonly string NATIVE_X64_LOWERING_OBJECT_SOURCE = Readˉembeddedˉsource(
@@ -2875,6 +2878,7 @@ internal static partial class Program
                 new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
                 new("Native-X64-Lowering-Descriptors.wv", NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
                 new("Native-X64-Lowering-Descriptor-Instructions.wv", NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
+                new("Native-X64-Lowering-Runtime-Descriptors.wv", NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE),
                 new("Native-X64-Lowering-Layout.wv", NATIVE_X64_LOWERING_LAYOUT_SOURCE),
                 new("Native-X64-Lowering-Object.wv", NATIVE_X64_LOWERING_OBJECT_SOURCE),
             ]);
@@ -2892,6 +2896,7 @@ internal static partial class Program
                 new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
                 new("Native-X64-Lowering-Descriptors.wv", NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
                 new("Native-X64-Lowering-Descriptor-Instructions.wv", NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
+                new("Native-X64-Lowering-Runtime-Descriptors.wv", NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE),
                 new("Native-X64-Lowering-Layout.wv", NATIVE_X64_LOWERING_LAYOUT_SOURCE),
                 new("Native-X64-Lowering-Object.wv", NATIVE_X64_LOWERING_OBJECT_SOURCE),
             ]);
@@ -2910,6 +2915,7 @@ internal static partial class Program
             Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 });
         var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         Assertˉstaticˉdescriptorˉlowering(Tool, Memory);
+        Assertˉtextˉserviceˉlowering(Tool, Memory);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);
@@ -3385,6 +3391,16 @@ internal static partial class Program
                 Descriptorˉoperandˉoffset,
                 4),
             1u);
+        var Textˉserviceˉwvb = Compileˉsuccess(WVB_TO_WVO_TEXT_SERVICES_SOURCE);
+        var Textˉserviceˉmodule = Moduleˉcodec.Readˉandˉverify(Textˉserviceˉwvb);
+        var Textˉserviceˉmain = Textˉserviceˉmodule.Functions.Single();
+        var Utf8ˉvalidation = Textˉserviceˉmain.Instructions.First(
+            Instruction => Instruction.Opcode == Opcode.Textˉutf8ˉisˉvalid);
+        var Mismatchedˉruntimeˉdescriptorˉwvb = Textˉserviceˉwvb.ToArray();
+        Mismatchedˉruntimeˉdescriptorˉwvb[
+            Codeˉpayloadˉoffset(Mismatchedˉruntimeˉdescriptorˉwvb) +
+            Textˉserviceˉmain.Declaration.Codeˉoffset +
+            Utf8ˉvalidation.Offset] = (byte)Opcode.Textˉquote;
         foreach (var Malformed in new[]
         {
             Underflowˉwvb,
@@ -3396,6 +3412,7 @@ internal static partial class Program
             Invalidˉdataˉindexˉwvb,
             Invalidˉdescriptorˉdataˉindexˉwvb,
             Mismatchedˉdescriptorˉdataˉkindˉwvb,
+            Mismatchedˉruntimeˉdescriptorˉwvb,
         })
         {
             Equal(

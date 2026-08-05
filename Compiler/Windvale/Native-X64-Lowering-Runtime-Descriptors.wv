@@ -1,0 +1,173 @@
+module Compilerˉnativeˉx64ˉloweringˉruntimeˉdescriptors profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉdescriptors as Descriptors;
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
+fn Serviceˉinput(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 76u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Slot * 16u32);
+    Output = Appendˉbyte(Output, 68u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + 8u32);
+}
+
+fn Outputˉr8(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 76u8);
+    Output = Appendˉbyte(Output, 141u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Outputˉr9(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 76u8);
+    Output = Appendˉbyte(Output, 141u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Outputˉrcx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 141u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉeax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Serviceˉcall(
+    Result: bytes,
+    Serviceˉoffset: u8,
+    Failureˉtarget: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 73u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 71u8);
+    Output = Appendˉbyte(Output, 24u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 64u8);
+    Output = Appendˉbyte(Output, Serviceˉoffset);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Appendˉbyte(Output, 208u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 133u8);
+    return Appendˉu32(
+        Output,
+        Relativeˉu32(Failureˉtarget, Bytesˉlength(Output) + 4u32)
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉtextˉutf8ˉisˉvalidˉbytes() -> u32 {
+    return 52u32;
+}
+
+export fn Compilerˉnativeˉx64ˉtextˉfromˉutf8ˉbytes() -> u32 {
+    return 99u32;
+}
+
+export fn Compilerˉnativeˉx64ˉtextˉconcatˉbytes() -> u32 {
+    return 52u32;
+}
+
+export fn Compilerˉnativeˉx64ˉtextˉquoteˉbytes() -> u32 {
+    return 44u32;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉtextˉutf8ˉisˉvalid(
+    Result: bytes,
+    Source: u32,
+    Target: u32,
+    Failureˉtarget: u32
+) -> bytes {
+    return Serviceˉcall(
+        Outputˉrcx(Serviceˉinput(Result, Source), Target),
+        40u8,
+        Failureˉtarget
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉtextˉfromˉutf8(
+    Result: bytes,
+    Source: u32,
+    Target: u32,
+    Failureˉtarget: u32,
+    Invalidˉutf8ˉtarget: u32
+) -> bytes {
+    var Output: bytes = Serviceˉcall(
+        Outputˉrcx(Serviceˉinput(Result, Source), Target),
+        40u8,
+        Failureˉtarget
+    );
+    Output = Loadˉeax(Output, Target);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉu32(
+        Output,
+        Relativeˉu32(
+            Invalidˉutf8ˉtarget,
+            Bytesˉlength(Output) + 4u32
+        )
+    );
+    return Descriptors.Compilerˉnativeˉx64ˉemitˉdescriptorˉcopy(
+        Output,
+        Source,
+        Target
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉtextˉconcat(
+    Result: bytes,
+    Left: u32,
+    Right: u32,
+    Target: u32,
+    Failureˉtarget: u32
+) -> bytes {
+    return Serviceˉcall(
+        Outputˉrcx(Outputˉr9(Outputˉr8(Result, Left), Right), Target),
+        64u8,
+        Failureˉtarget
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉtextˉquote(
+    Result: bytes,
+    Source: u32,
+    Target: u32,
+    Failureˉtarget: u32
+) -> bytes {
+    return Serviceˉcall(
+        Outputˉr9(Outputˉr8(Result, Source), Target),
+        72u8,
+        Failureˉtarget
+    );
+}
