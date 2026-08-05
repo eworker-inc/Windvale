@@ -1,0 +1,322 @@
+module Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉrecords as Records;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+
+export record Compilerˉnativeˉx64ˉrecordˉinstruction {
+    Input: bytes;
+    Offset: u32;
+    Opcode: u8;
+}
+
+export record Compilerˉnativeˉx64ˉrecordˉlayout {
+    Locals: u32;
+    I32ˉslots: u32;
+    Boolˉslots: u32;
+    Textˉslots: u32;
+    U8ˉslots: u32;
+    U32ˉslots: u32;
+    Bytesˉslots: u32;
+    Recordˉbase: u32;
+    Persistentˉbase: u32;
+    Scratchˉbase: u32;
+}
+
+export record Compilerˉnativeˉx64ˉrecordˉstate {
+    Result: bytes;
+    Stackˉtypes: bytes;
+    Stackˉslots: bytes;
+    Stackˉdepth: u32;
+    Nextˉi32: u32;
+    Nextˉbool: u32;
+    Nextˉtext: u32;
+    Nextˉu8: u32;
+    Nextˉu32: u32;
+    Nextˉbytes: u32;
+    Nextˉenum: u32;
+    Nextˉrecord: u32;
+}
+
+fn Valueˉslot(
+    Shape: Compilerˉnativeˉx64ˉrecordˉlayout,
+    Type: u8,
+    Index: u32
+) -> u32 {
+    return Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+        Shape.Locals,
+        Shape.I32ˉslots,
+        Shape.Boolˉslots,
+        Shape.Textˉslots,
+        Shape.U8ˉslots,
+        Shape.U32ˉslots,
+        Shape.Bytesˉslots,
+        Type,
+        Index
+    );
+}
+
+fn Emitˉcreate(
+    Instruction: Compilerˉnativeˉx64ˉrecordˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉrecordˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    State: Compilerˉnativeˉx64ˉrecordˉstate
+) -> Compilerˉnativeˉx64ˉrecordˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Instruction.Input,
+        Instruction.Offset + 1u32
+    );
+    let Fields: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+        Types,
+        Typeˉindex
+    );
+    let Depth: u32 = State.Stackˉdepth - Fields;
+    let Target: u32 = Shape.Recordˉbase + State.Nextˉrecord;
+    let Backing: u32 = Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(
+        Storage.Scratchˉoffsets,
+        State.Nextˉrecord * 4u32
+    );
+    return Compilerˉnativeˉx64ˉrecordˉstate(
+        Records.Compilerˉnativeˉx64ˉemitˉrecordˉcreate(
+            State.Result,
+            Typeˉindex,
+            Bytesˉslice(State.Stackˉslots, Depth * 4u32, Fields * 4u32),
+            Target,
+            Backing
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtype(Typeˉindex)
+            )
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes,
+        State.Nextˉenum,
+        State.Nextˉrecord + 1u32
+    );
+}
+
+fn Emitˉfield(
+    Instruction: Compilerˉnativeˉx64ˉrecordˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉrecordˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉrecordˉstate
+) -> Compilerˉnativeˉx64ˉrecordˉstate {
+    let Sourceˉtype: u8 = Bytesˉreadˉu8(
+        State.Stackˉtypes,
+        State.Stackˉdepth - 1u32
+    );
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Typeˉindex: u32 =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Sourceˉtype);
+    let Field: u32 = Bytesˉreadˉu32ˉlittle(
+        Instruction.Input,
+        Instruction.Offset + 1u32
+    );
+    let Type: u8 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+        Instruction.Input,
+        Types,
+        Typeˉindex,
+        Field
+    );
+    var Index: u32 = State.Nextˉi32;
+    if Type == 2u8 { Index = State.Nextˉbool; }
+    if Type == 3u8 { Index = State.Nextˉtext; }
+    if Type == 4u8 { Index = State.Nextˉu8; }
+    if Type == 5u8 { Index = State.Nextˉu32; }
+    if Type == 6u8 { Index = State.Nextˉbytes; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) {
+        Index = State.Nextˉenum;
+    }
+    let Target: u32 = Valueˉslot(Shape, Type, Index);
+    var Nextˉi32: u32 = State.Nextˉi32;
+    var Nextˉbool: u32 = State.Nextˉbool;
+    var Nextˉtext: u32 = State.Nextˉtext;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
+    var Nextˉbytes: u32 = State.Nextˉbytes;
+    var Nextˉenum: u32 = State.Nextˉenum;
+    if Type == 1u8 { Nextˉi32 = Nextˉi32 + 1u32; }
+    if Type == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
+    if Type == 3u8 { Nextˉtext = Nextˉtext + 1u32; }
+    if Type == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
+    if Type == 5u8 { Nextˉu32 = Nextˉu32 + 1u32; }
+    if Type == 6u8 { Nextˉbytes = Nextˉbytes + 1u32; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) {
+        Nextˉenum = Nextˉenum + 1u32;
+    }
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    return Compilerˉnativeˉx64ˉrecordˉstate(
+        Records.Compilerˉnativeˉx64ˉemitˉrecordˉfield(
+            State.Result,
+            Typeˉindex,
+            Field,
+            Source,
+            Target
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(Type)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        Nextˉi32,
+        Nextˉbool,
+        Nextˉtext,
+        Nextˉu8,
+        Nextˉu32,
+        Nextˉbytes,
+        Nextˉenum,
+        State.Nextˉrecord
+    );
+}
+
+fn Emitˉload(
+    Instruction: Compilerˉnativeˉx64ˉrecordˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉrecordˉlayout,
+    Localˉtypes: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    State: Compilerˉnativeˉx64ˉrecordˉstate
+) -> Compilerˉnativeˉx64ˉrecordˉstate {
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(
+        Instruction.Input,
+        Instruction.Offset + 1u32
+    );
+    let Type: u8 = Bytesˉreadˉu8(Localˉtypes, Local);
+    let Typeˉindex: u32 =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type);
+    let Target: u32 = Shape.Recordˉbase + State.Nextˉrecord;
+    let Backing: u32 = Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(
+        Storage.Scratchˉoffsets,
+        State.Nextˉrecord * 4u32
+    );
+    return Compilerˉnativeˉx64ˉrecordˉstate(
+        Records.Compilerˉnativeˉx64ˉemitˉrecordˉcopy(
+            State.Result,
+            Typeˉindex,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+                Types,
+                Typeˉindex
+            ),
+            Local,
+            Target,
+            Backing
+        ),
+        Bytesˉconcat(State.Stackˉtypes, Bytesˉfromˉu8(Type)),
+        Bytesˉconcat(
+            State.Stackˉslots,
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        State.Stackˉdepth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes,
+        State.Nextˉenum,
+        State.Nextˉrecord + 1u32
+    );
+}
+
+fn Emitˉstore(
+    Instruction: Compilerˉnativeˉx64ˉrecordˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉrecordˉlayout,
+    Localˉtypes: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    State: Compilerˉnativeˉx64ˉrecordˉstate
+) -> Compilerˉnativeˉx64ˉrecordˉstate {
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(
+        Instruction.Input,
+        Instruction.Offset + 1u32
+    );
+    let Type: u8 = Bytesˉreadˉu8(Localˉtypes, Local);
+    let Typeˉindex: u32 =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type);
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    return Compilerˉnativeˉx64ˉrecordˉstate(
+        Records.Compilerˉnativeˉx64ˉemitˉrecordˉcopy(
+            State.Result,
+            Typeˉindex,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+                Types,
+                Typeˉindex
+            ),
+            Source,
+            Local,
+            Shape.Persistentˉbase + Bytesˉreadˉu32ˉlittle(
+                Storage.Persistentˉoffsets,
+                Local * 4u32
+            )
+        ),
+        Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+        Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+        Depth,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes,
+        State.Nextˉenum,
+        State.Nextˉrecord
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉrecordˉinstruction(
+    Instruction: Compilerˉnativeˉx64ˉrecordˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉrecordˉlayout,
+    Localˉtypes: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    State: Compilerˉnativeˉx64ˉrecordˉstate
+) -> Compilerˉnativeˉx64ˉrecordˉstate {
+    if Instruction.Opcode == 104u8 {
+        return Emitˉcreate(Instruction, Shape, Types, Storage, State);
+    }
+    if Instruction.Opcode == 105u8 {
+        return Emitˉfield(Instruction, Shape, Types, State);
+    }
+    if Instruction.Opcode == 4u8 {
+        return Emitˉload(
+            Instruction,
+            Shape,
+            Localˉtypes,
+            Types,
+            Storage,
+            State
+        );
+    }
+    return Emitˉstore(
+        Instruction,
+        Shape,
+        Localˉtypes,
+        Types,
+        Storage,
+        State
+    );
+}

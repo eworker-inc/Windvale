@@ -112,15 +112,33 @@ export fn Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex: u32) -> u8 {
 }
 
 export fn Compilerˉnativeˉx64ˉtypeˉisˉenum(Type: u8) -> bool {
-    return U32ˉfromˉu8(Type) >= 128u32;
+    let Numeric: u32 = U32ˉfromˉu8(Type);
+    if Numeric < 128u32 { return false; }
+    return Numeric < 192u32;
 }
 
 export fn Compilerˉnativeˉx64ˉenumˉtypeˉindex(Type: u8) -> u32 {
     return U32ˉfromˉu8(Type) - 128u32;
 }
 
+export fn Compilerˉnativeˉx64ˉrecordˉtype(Typeˉindex: u32) -> u8 {
+    return Bytesˉreadˉu8(
+        Bytesˉfromˉu32ˉlittle(192u32 + Typeˉindex),
+        0u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type: u8) -> bool {
+    return U32ˉfromˉu8(Type) >= 192u32;
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type: u8) -> u32 {
+    return U32ˉfromˉu8(Type) - 192u32;
+}
+
 export fn Compilerˉnativeˉx64ˉruntimeˉtype(Type: u8) -> u8 {
-    if Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) { return 7u8; }
+    if Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) { return 7u8; }
+    if Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) { return 8u8; }
     return Type;
 }
 
@@ -137,17 +155,27 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
             return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, Kind);
         }
     }
-    if Kind != 8u8 { return Invalidˉshape(); }
+    if Kind != 7u8 {
+        if Kind != 8u8 { return Invalidˉshape(); }
+    }
     if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return Invalidˉshape(); }
     let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
     if Typeˉindex >= Types.Count { return Invalidˉshape(); }
-    if Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 2u8 {
-        return Invalidˉshape();
+    let Nominalˉkind: u8 = Compilerˉnativeˉx64ˉtypeˉkind(
+        Types,
+        Typeˉindex
+    );
+    var Type: u8 = Compilerˉnativeˉx64ˉrecordˉtype(Typeˉindex);
+    if Kind == 7u8 {
+        if Nominalˉkind != 1u8 { return Invalidˉshape(); }
+    } else {
+        if Nominalˉkind != 2u8 { return Invalidˉshape(); }
+        Type = Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex);
     }
     return Compilerˉnativeˉx64ˉshape(
         true,
         Cursor + 5u32,
-        Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex)
+        Type
     );
 }
 
@@ -157,7 +185,9 @@ fn Skipˉuncheckedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
     if U32ˉfromˉu8(Kind) >= 1u32 {
         if U32ˉfromˉu8(Kind) <= 6u32 { return Cursor + 1u32; }
     }
-    if Kind != 8u8 { return 0u32; }
+    if Kind != 7u8 {
+        if Kind != 8u8 { return 0u32; }
+    }
     if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return 0u32; }
     return Cursor + 5u32;
 }
@@ -249,6 +279,9 @@ export fn Compilerˉnativeˉx64ˉtypesˉread(
                 let Shape: Compilerˉnativeˉx64ˉshape =
                     Compilerˉnativeˉx64ˉshapeˉread(Input, Cursor, Limit, Types);
                 if !Shape.Valid { return Invalid(Input); }
+                if Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type) {
+                    return Invalid(Input);
+                }
                 Cursor = Shape.Next;
             } else {
                 if Scanˉitem == 0u32 {
@@ -283,4 +316,31 @@ export fn Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
     }
     let Selectedˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
     return Bytesˉreadˉi32ˉlittle(Input, Cursor + 4u32 + Selectedˉlength);
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Fieldˉindex: u32
+) -> u8 {
+    var Cursor: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+        Types,
+        Typeˉindex
+    );
+    var Field: u32 = 0u32;
+    while Field <= Fieldˉindex {
+        Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+        let Shape: Compilerˉnativeˉx64ˉshape =
+            Compilerˉnativeˉx64ˉshapeˉread(
+                Input,
+                Cursor,
+                Bytesˉlength(Input),
+                Types
+            );
+        if Field == Fieldˉindex { return Shape.Type; }
+        Cursor = Shape.Next;
+        Field = Field + 1u32;
+    }
+    return 0u8;
 }

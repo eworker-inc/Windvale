@@ -280,6 +280,9 @@
       Include="../../Compiler/Windvale/Native-X64-Lowering-Data.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Data.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Static-Data-Instructions.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Static-Data-Instructions.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Types.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Types.wv" />
     <EmbeddedResource
@@ -288,6 +291,15 @@
     <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Enum-Instructions.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Record-Storage.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Records.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Records.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Record-Instructions.wv" />
     <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Descriptors.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Descriptors.wv" />
@@ -324,6 +336,9 @@
     <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Enums.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Enums.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvb-To-Wvo-Records.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Records.wv" />
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Function-Only.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />

@@ -1,0 +1,144 @@
+module Compilerˉnativeˉx64ˉloweringˉstaticˉdataˉinstructions profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
+
+export record Compilerˉnativeˉx64ˉstaticˉdataˉinstruction {
+    Input: bytes;
+    Offset: u32;
+    Opcode: u8;
+    Boundsˉtarget: u32;
+}
+
+export record Compilerˉnativeˉx64ˉstaticˉdataˉstate {
+    Result: bytes;
+    Stackˉtypes: bytes;
+    Stackˉslots: bytes;
+    Stackˉdepth: u32;
+    Nextˉi32: u32;
+}
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Storeˉeax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉeax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
+fn Pushˉi32(
+    Result: bytes,
+    Stackˉtypes: bytes,
+    Stackˉslots: bytes,
+    Stackˉdepth: u32,
+    Nextˉi32: u32,
+    Slot: u32
+) -> Compilerˉnativeˉx64ˉstaticˉdataˉstate {
+    return Compilerˉnativeˉx64ˉstaticˉdataˉstate(
+        Result,
+        Bytesˉconcat(Stackˉtypes, Bytesˉfromˉu8(1u8)),
+        Bytesˉconcat(Stackˉslots, Bytesˉfromˉu32ˉlittle(Slot)),
+        Stackˉdepth + 1u32,
+        Nextˉi32 + 1u32
+    );
+}
+
+fn Emitˉlength(
+    Instruction: Compilerˉnativeˉx64ˉstaticˉdataˉinstruction,
+    Locals: u32,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    State: Compilerˉnativeˉx64ˉstaticˉdataˉstate
+) -> Compilerˉnativeˉx64ˉstaticˉdataˉstate {
+    let Slot: u32 = Locals + State.Nextˉi32;
+    var Result: bytes = Appendˉbyte(State.Result, 184u8);
+    Result = Appendˉu32(
+        Result,
+        Staticˉdata.Compilerˉnativeˉx64ˉdataˉlength(
+            Data,
+            Bytesˉreadˉu32ˉlittle(Instruction.Input, Instruction.Offset + 1u32)
+        )
+    );
+    return Pushˉi32(
+        Storeˉeax(Result, Slot),
+        State.Stackˉtypes,
+        State.Stackˉslots,
+        State.Stackˉdepth,
+        State.Nextˉi32,
+        Slot
+    );
+}
+
+fn Emitˉload(
+    Instruction: Compilerˉnativeˉx64ˉstaticˉdataˉinstruction,
+    Locals: u32,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    State: Compilerˉnativeˉx64ˉstaticˉdataˉstate
+) -> Compilerˉnativeˉx64ˉstaticˉdataˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Slot: u32 = Locals + State.Nextˉi32;
+    var Result: bytes = Loadˉeax(State.Result, Source);
+    Result = Appendˉbyte(Result, 61u8);
+    Result = Appendˉu32(
+        Result,
+        Staticˉdata.Compilerˉnativeˉx64ˉdataˉlength(
+            Data,
+            Bytesˉreadˉu32ˉlittle(Instruction.Input, Instruction.Offset + 1u32)
+        )
+    );
+    Result = Appendˉbyte(Result, 15u8);
+    Result = Appendˉbyte(Result, 131u8);
+    Result = Appendˉu32(
+        Result,
+        Relativeˉu32(Instruction.Boundsˉtarget, Bytesˉlength(Result) + 4u32)
+    );
+    Result = Appendˉbyte(Result, 72u8);
+    Result = Appendˉbyte(Result, 141u8);
+    Result = Appendˉbyte(Result, 21u8);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉbyte(Result, 139u8);
+    Result = Appendˉbyte(Result, 4u8);
+    Result = Appendˉbyte(Result, 130u8);
+    return Pushˉi32(
+        Storeˉeax(Result, Slot),
+        Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+        Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+        Depth,
+        State.Nextˉi32,
+        Slot
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉstaticˉdataˉinstruction(
+    Instruction: Compilerˉnativeˉx64ˉstaticˉdataˉinstruction,
+    Locals: u32,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    State: Compilerˉnativeˉx64ˉstaticˉdataˉstate
+) -> Compilerˉnativeˉx64ˉstaticˉdataˉstate {
+    if Instruction.Opcode == 6u8 {
+        return Emitˉlength(Instruction, Locals, Data, State);
+    }
+    return Emitˉload(Instruction, Locals, Data, State);
+}

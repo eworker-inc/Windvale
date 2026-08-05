@@ -20,14 +20,17 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_ENUMS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Enums.wv");
+    private static readonly string WVB_TO_WVO_RECORDS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Records.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 191_086;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 2_635_776;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 235_007;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 3_394_048;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "137c3db5f96b4b32b240c0a9043191c2b974049d85276f722d04041893c88699";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 2_637_824;
+        "b5e7ce0a1b79c7ad6624b48548bec146f0c6d46bdc81cde30f3061338db1a285";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 3_395_584;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "716053129a245c396cf80c9f78e09a47d3269d202cdd7e72de1552a9a336b6a7";
+        "fd6431ae3cce3a07f7b480325497448bda34ff4075dba616b8e804ba133a8b41";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -268,6 +271,9 @@ internal static partial class Program
                     "Compiler/Windvale/Native-X64-Lowering-Data.wv",
                     NATIVE_X64_LOWERING_DATA_SOURCE),
                 new(
+                    "Compiler/Windvale/Native-X64-Lowering-Static-Data-Instructions.wv",
+                    NATIVE_X64_LOWERING_STATIC_DATA_INSTRUCTIONS_SOURCE),
+                new(
                     "Compiler/Windvale/Native-X64-Lowering-Types.wv",
                     NATIVE_X64_LOWERING_TYPES_SOURCE),
                 new(
@@ -276,6 +282,15 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv",
                     NATIVE_X64_LOWERING_ENUM_INSTRUCTIONS_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv",
+                    NATIVE_X64_LOWERING_RECORD_STORAGE_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Records.wv",
+                    NATIVE_X64_LOWERING_RECORDS_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv",
+                    NATIVE_X64_LOWERING_RECORD_INSTRUCTIONS_SOURCE),
                 new(
                     "Compiler/Windvale/Native-X64-Lowering-Descriptors.wv",
                     NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
@@ -517,5 +532,52 @@ internal static partial class Program
             $"object-bytes={Expectedˉobject.Length}\n",
             Toolˉresult.Output);
         Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+    }
+
+    private static void Assertˉrecordˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_RECORDS_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(Expectedˉobject.AsSpan()).Value;
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 100_000_000);
+        if (Toolˉresult.Exitˉcode != 0)
+        {
+            throw new InvalidOperationException(
+                "Record lowering failed: " + Toolˉresult.Diagnostics);
+        }
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
     }
 }
