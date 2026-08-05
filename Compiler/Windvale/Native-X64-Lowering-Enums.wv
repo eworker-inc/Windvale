@@ -1,0 +1,125 @@
+module Compilerˉnativeˉx64ˉloweringˉenums profile portable;
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉi32(Result: bytes, Value: i32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉi32ˉlittle(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
+fn Loadˉeax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉecx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 139u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉeax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+export fn Compilerˉnativeˉx64ˉenumˉconstantˉbytes() -> u32 {
+    return 22u32;
+}
+
+export fn Compilerˉnativeˉx64ˉenumˉcomparisonˉbytes() -> u32 {
+    return 39u32;
+}
+
+export fn Compilerˉnativeˉx64ˉenumˉnameˉbytes() -> u32 {
+    return 52u32;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉenumˉconstant(
+    Result: bytes,
+    Value: i32,
+    Target: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 184u8);
+    Output = Appendˉi32(Output, Value);
+    return Storeˉeax(Output, Target);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉenumˉcomparison(
+    Result: bytes,
+    Left: u32,
+    Right: u32,
+    Equal: bool,
+    Target: u32
+) -> bytes {
+    var Output: bytes = Loadˉeax(Result, Left);
+    Output = Loadˉecx(Output, Right);
+    Output = Appendˉbyte(Output, 57u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Appendˉbyte(Output, 15u8);
+    if Equal {
+        Output = Appendˉbyte(Output, 148u8);
+    } else {
+        Output = Appendˉbyte(Output, 149u8);
+    }
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 182u8);
+    Output = Appendˉbyte(Output, 192u8);
+    return Storeˉeax(Output, Target);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉenumˉname(
+    Result: bytes,
+    Typeˉindex: u32,
+    Source: u32,
+    Target: u32,
+    Failureˉtarget: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 65u8);
+    Output = Appendˉbyte(Output, 184u8);
+    Output = Appendˉu32(Output, Typeˉindex);
+    Output = Loadˉeax(Output, Source);
+    Output = Appendˉbyte(Output, 65u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 193u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 141u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Target * 16u32);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 71u8);
+    Output = Appendˉbyte(Output, 24u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 64u8);
+    Output = Appendˉbyte(Output, 56u8);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Appendˉbyte(Output, 208u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 133u8);
+    return Appendˉu32(
+        Output,
+        Relativeˉu32(Failureˉtarget, Bytesˉlength(Output) + 4u32)
+    );
+}

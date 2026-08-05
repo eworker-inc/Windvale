@@ -1,0 +1,286 @@
+module Compilerˉnativeˉx64ˉloweringˉtypes profile portable;
+
+export record Compilerˉnativeˉx64ˉtypes {
+    Valid: bool;
+    Count: u32;
+    Kinds: bytes;
+    Itemˉoffsets: bytes;
+    Itemˉcounts: bytes;
+}
+
+export record Compilerˉnativeˉx64ˉshape {
+    Valid: bool;
+    Next: u32;
+    Type: u8;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉtypes {
+    let Emptyˉbytes: bytes = Empty(Input);
+    return Compilerˉnativeˉx64ˉtypes(
+        false,
+        0u32,
+        Emptyˉbytes,
+        Emptyˉbytes,
+        Emptyˉbytes
+    );
+}
+
+fn Invalidˉshape() -> Compilerˉnativeˉx64ˉshape {
+    return Compilerˉnativeˉx64ˉshape(false, 0u32, 0u8);
+}
+
+fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Identifierˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
+    if Length == 0u32 { return false; }
+    if Length > 255u32 { return false; }
+    if !Rangeˉisˉvalid(Bytesˉlength(Input), Offset, Length) { return false; }
+    let End: u32 = Offset + Length;
+    var Cursor: u32 = Offset;
+    var Wordˉstart: bool = true;
+    while Cursor < End {
+        let Current: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        var Valid: bool = false;
+        if Current >= 65u32 {
+            if Current <= 90u32 { Valid = true; }
+        }
+        if Current >= 97u32 {
+            if Current <= 122u32 { Valid = true; }
+        }
+        if Current == 95u32 { Valid = true; }
+        if !Wordˉstart {
+            if Current >= 48u32 {
+                if Current <= 57u32 { Valid = true; }
+            }
+        }
+        if Valid {
+            Wordˉstart = false;
+            Cursor = Cursor + 1u32;
+        } else {
+            if Wordˉstart { return false; }
+            if Current != 203u32 { return false; }
+            if Cursor + 1u32 >= End { return false; }
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) != 137u8 { return false; }
+            Wordˉstart = true;
+            Cursor = Cursor + 2u32;
+        }
+    }
+    return !Wordˉstart;
+}
+
+fn Skipˉname(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
+    if !Rangeˉisˉvalid(Limit, Cursor, 4u32) { return 0u32; }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    if !Rangeˉisˉvalid(Limit, Cursor + 4u32, Length) { return 0u32; }
+    if !Identifierˉisˉvalid(Input, Cursor + 4u32, Length) { return 0u32; }
+    return Cursor + 4u32 + Length;
+}
+
+export fn Compilerˉnativeˉx64ˉtypeˉkind(
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Index: u32
+) -> u8 {
+    return Bytesˉreadˉu8(Types.Kinds, Index);
+}
+
+export fn Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Types.Itemˉoffsets, Index * 4u32);
+}
+
+export fn Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Types.Itemˉcounts, Index * 4u32);
+}
+
+export fn Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex: u32) -> u8 {
+    return Bytesˉreadˉu8(
+        Bytesˉfromˉu32ˉlittle(128u32 + Typeˉindex),
+        0u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉtypeˉisˉenum(Type: u8) -> bool {
+    return U32ˉfromˉu8(Type) >= 128u32;
+}
+
+export fn Compilerˉnativeˉx64ˉenumˉtypeˉindex(Type: u8) -> u32 {
+    return U32ˉfromˉu8(Type) - 128u32;
+}
+
+export fn Compilerˉnativeˉx64ˉruntimeˉtype(Type: u8) -> u8 {
+    if Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) { return 7u8; }
+    return Type;
+}
+
+export fn Compilerˉnativeˉx64ˉshapeˉread(
+    Input: bytes,
+    Cursor: u32,
+    Limit: u32,
+    Types: Compilerˉnativeˉx64ˉtypes
+) -> Compilerˉnativeˉx64ˉshape {
+    if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
+    let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if U32ˉfromˉu8(Kind) >= 1u32 {
+        if U32ˉfromˉu8(Kind) <= 6u32 {
+            return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, Kind);
+        }
+    }
+    if Kind != 8u8 { return Invalidˉshape(); }
+    if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return Invalidˉshape(); }
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+    if Typeˉindex >= Types.Count { return Invalidˉshape(); }
+    if Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 2u8 {
+        return Invalidˉshape();
+    }
+    return Compilerˉnativeˉx64ˉshape(
+        true,
+        Cursor + 5u32,
+        Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex)
+    );
+}
+
+fn Skipˉuncheckedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
+    if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return 0u32; }
+    let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if U32ˉfromˉu8(Kind) >= 1u32 {
+        if U32ˉfromˉu8(Kind) <= 6u32 { return Cursor + 1u32; }
+    }
+    if Kind != 8u8 { return 0u32; }
+    if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return 0u32; }
+    return Cursor + 5u32;
+}
+
+export fn Compilerˉnativeˉx64ˉtypesˉread(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> Compilerˉnativeˉx64ˉtypes {
+    if !Rangeˉisˉvalid(Bytesˉlength(Input), Offset, Length) {
+        return Invalid(Input);
+    }
+    if Length < 4u32 { return Invalid(Input); }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Count > 8u32 { return Invalid(Input); }
+    let Limit: u32 = Offset + Length;
+    var Cursor: u32 = Offset + 4u32;
+    var Kinds: bytes = Empty(Input);
+    var Itemˉoffsets: bytes = Empty(Input);
+    var Itemˉcounts: bytes = Empty(Input);
+    var Priorˉkind: u8 = 0u8;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalid(Input); }
+        let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if Kind != 1u8 {
+            if Kind != 2u8 { return Invalid(Input); }
+        }
+        if U32ˉfromˉu8(Kind) < U32ˉfromˉu8(Priorˉkind) {
+            return Invalid(Input);
+        }
+        Priorˉkind = Kind;
+        Cursor = Cursor + 1u32;
+        Cursor = Skipˉname(Input, Cursor, Limit);
+        if Cursor == 0u32 { return Invalid(Input); }
+        if !Rangeˉisˉvalid(Limit, Cursor, 4u32) { return Invalid(Input); }
+        let Items: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Items == 0u32 { return Invalid(Input); }
+        if Kind == 1u8 {
+            if Items > 64u32 { return Invalid(Input); }
+        } else {
+            if Items > 256u32 { return Invalid(Input); }
+        }
+        Kinds = Bytesˉconcat(Kinds, Bytesˉfromˉu8(Kind));
+        Itemˉoffsets = Bytesˉconcat(
+            Itemˉoffsets,
+            Bytesˉfromˉu32ˉlittle(Cursor)
+        );
+        Itemˉcounts = Bytesˉconcat(
+            Itemˉcounts,
+            Bytesˉfromˉu32ˉlittle(Items)
+        );
+        var Item: u32 = 0u32;
+        while Item < Items {
+            Cursor = Skipˉname(Input, Cursor, Limit);
+            if Cursor == 0u32 { return Invalid(Input); }
+            if Kind == 1u8 {
+                Cursor = Skipˉuncheckedˉshape(Input, Cursor, Limit);
+                if Cursor == 0u32 { return Invalid(Input); }
+            } else {
+                if !Rangeˉisˉvalid(Limit, Cursor, 4u32) {
+                    return Invalid(Input);
+                }
+                Cursor = Cursor + 4u32;
+            }
+            Item = Item + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    if Cursor != Limit { return Invalid(Input); }
+    let Types: Compilerˉnativeˉx64ˉtypes = Compilerˉnativeˉx64ˉtypes(
+        true,
+        Count,
+        Kinds,
+        Itemˉoffsets,
+        Itemˉcounts
+    );
+
+    Index = 0u32;
+    while Index < Count {
+        let Scanˉkind: u8 = Compilerˉnativeˉx64ˉtypeˉkind(Types, Index);
+        let Scanˉitems: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Index);
+        Cursor = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(Types, Index);
+        var Scanˉitem: u32 = 0u32;
+        while Scanˉitem < Scanˉitems {
+            Cursor = Skipˉname(Input, Cursor, Limit);
+            if Scanˉkind == 1u8 {
+                let Shape: Compilerˉnativeˉx64ˉshape =
+                    Compilerˉnativeˉx64ˉshapeˉread(Input, Cursor, Limit, Types);
+                if !Shape.Valid { return Invalid(Input); }
+                Cursor = Shape.Next;
+            } else {
+                if Scanˉitem == 0u32 {
+                    if Bytesˉreadˉi32ˉlittle(Input, Cursor) != 0 {
+                        return Invalid(Input);
+                    }
+                }
+                Cursor = Cursor + 4u32;
+            }
+            Scanˉitem = Scanˉitem + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Types;
+}
+
+export fn Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Memberˉindex: u32
+) -> i32 {
+    var Cursor: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+        Types,
+        Typeˉindex
+    );
+    var Member: u32 = 0u32;
+    while Member < Memberˉindex {
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32 + Nameˉlength + 4u32;
+        Member = Member + 1u32;
+    }
+    let Selectedˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    return Bytesˉreadˉi32ˉlittle(Input, Cursor + 4u32 + Selectedˉlength);
+}

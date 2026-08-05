@@ -1,0 +1,177 @@
+module Compilerˉnativeˉx64ˉloweringˉenumˉinstructions profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉenums as Enums;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+
+export record Compilerˉnativeˉx64ˉenumˉinstruction {
+    Input: bytes;
+    Offset: u32;
+    Opcode: u8;
+    Failureˉtarget: u32;
+}
+
+export record Compilerˉnativeˉx64ˉenumˉlayout {
+    Locals: u32;
+    I32ˉslots: u32;
+    Boolˉslots: u32;
+    Textˉslots: u32;
+    U8ˉslots: u32;
+    U32ˉslots: u32;
+    Bytesˉslots: u32;
+}
+
+export record Compilerˉnativeˉx64ˉenumˉstate {
+    Result: bytes;
+    Stackˉtypes: bytes;
+    Stackˉslots: bytes;
+    Stackˉdepth: u32;
+    Nextˉbool: u32;
+    Nextˉtext: u32;
+    Nextˉenum: u32;
+}
+
+fn Valueˉslot(
+    Shape: Compilerˉnativeˉx64ˉenumˉlayout,
+    Type: u8,
+    Index: u32
+) -> u32 {
+    return Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+        Shape.Locals,
+        Shape.I32ˉslots,
+        Shape.Boolˉslots,
+        Shape.Textˉslots,
+        Shape.U8ˉslots,
+        Shape.U32ˉslots,
+        Shape.Bytesˉslots,
+        Type,
+        Index
+    );
+}
+
+fn Emitˉconstant(
+    Instruction: Compilerˉnativeˉx64ˉenumˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉenumˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉenumˉstate
+) -> Compilerˉnativeˉx64ˉenumˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Instruction.Input,
+        Instruction.Offset + 1u32
+    );
+    let Memberˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Instruction.Input,
+        Instruction.Offset + 5u32
+    );
+    let Type: u8 = Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex);
+    let Slot: u32 = Valueˉslot(Shape, Type, State.Nextˉenum);
+    return Compilerˉnativeˉx64ˉenumˉstate(
+        Enums.Compilerˉnativeˉx64ˉemitˉenumˉconstant(
+            State.Result,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
+                Instruction.Input,
+                Types,
+                Typeˉindex,
+                Memberˉindex
+            ),
+            Slot
+        ),
+        Bytesˉconcat(State.Stackˉtypes, Bytesˉfromˉu8(Type)),
+        Bytesˉconcat(State.Stackˉslots, Bytesˉfromˉu32ˉlittle(Slot)),
+        State.Stackˉdepth + 1u32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉenum + 1u32
+    );
+}
+
+fn Emitˉcomparison(
+    Instruction: Compilerˉnativeˉx64ˉenumˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉenumˉlayout,
+    State: Compilerˉnativeˉx64ˉenumˉstate
+) -> Compilerˉnativeˉx64ˉenumˉstate {
+    let Right: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Left: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 2u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 2u32;
+    let Target: u32 = Valueˉslot(Shape, 2u8, State.Nextˉbool);
+    return Compilerˉnativeˉx64ˉenumˉstate(
+        Enums.Compilerˉnativeˉx64ˉemitˉenumˉcomparison(
+            State.Result,
+            Left,
+            Right,
+            Instruction.Opcode == 107u8,
+            Target
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(2u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉbool + 1u32,
+        State.Nextˉtext,
+        State.Nextˉenum
+    );
+}
+
+fn Emitˉname(
+    Instruction: Compilerˉnativeˉx64ˉenumˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉenumˉlayout,
+    State: Compilerˉnativeˉx64ˉenumˉstate
+) -> Compilerˉnativeˉx64ˉenumˉstate {
+    let Type: u8 = Bytesˉreadˉu8(
+        State.Stackˉtypes,
+        State.Stackˉdepth - 1u32
+    );
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Target: u32 = Valueˉslot(Shape, 3u8, State.Nextˉtext);
+    return Compilerˉnativeˉx64ˉenumˉstate(
+        Enums.Compilerˉnativeˉx64ˉemitˉenumˉname(
+            State.Result,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtypeˉindex(Type),
+            Source,
+            Target,
+            Instruction.Failureˉtarget
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(3u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉbool,
+        State.Nextˉtext + 1u32,
+        State.Nextˉenum
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉenumˉinstruction(
+    Instruction: Compilerˉnativeˉx64ˉenumˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉenumˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉenumˉstate
+) -> Compilerˉnativeˉx64ˉenumˉstate {
+    if Instruction.Opcode == 106u8 {
+        return Emitˉconstant(Instruction, Shape, Types, State);
+    }
+    if Instruction.Opcode == 109u8 {
+        return Emitˉname(Instruction, Shape, State);
+    }
+    return Emitˉcomparison(Instruction, Shape, State);
+}

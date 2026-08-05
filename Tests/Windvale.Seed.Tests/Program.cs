@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "57ba4340976a218defaad9b2b343f4a9d8a8abf76cd9962b62c02d10aa946e79";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "608f088fd29b3594af0f56bb0dd909a0385bcc2c3f8073d1b848293fedb7c52a";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "79e4ddac4eac5e85aa4a10b14b91de9ca41a8263a3bf811bb38ec3eed5ed6f1c";
-    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "93eb0f25ddebd70b2c56edfdd7604ebd31297bdc5306d023cd8c84d63faafbb2";
-    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "3aaf9719cd776de2b7d5dd8fabb470cb0c3b0bceaf1932540845bdd1c0962e2c";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "ecc4ade816ea4f040684ba6bde5ce0770745f571527ef2e66a960a9f2e4f0c43";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "31a1fc990d11952ad13790dded7b7e88fa953eeaea929975333b04c1a264b8c3";
+    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "ffeec555fa6ff3c00b49c9510dd267050a3c5b03e9fa01d89573d31e7db94753";
+    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "4b1065fb72e9fc40494cb11681c27b42e80e4f8bacf78338db3a51bd4255fe87";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "b19c95da914042fff250049f92d2aa74c8bbdeaee871bedc76e95740292dae89";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "30b7e9fdfeca2b99f5b2793100b4f9f71e2813a7ed7f6f20bd746549a08fe313";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -732,6 +732,13 @@ internal static partial class Program
         "Windvale.Seed.Tests.Native-X64-Lowering-Core.wv");
     private static readonly string NATIVE_X64_LOWERING_DATA_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Data.wv");
+    private static readonly string NATIVE_X64_LOWERING_TYPES_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-X64-Lowering-Types.wv");
+    private static readonly string NATIVE_X64_LOWERING_ENUMS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Native-X64-Lowering-Enums.wv");
+    private static readonly string NATIVE_X64_LOWERING_ENUM_INSTRUCTIONS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Enum-Instructions.wv");
     private static readonly string NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Descriptors.wv");
     private static readonly string NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE =
@@ -2879,6 +2886,9 @@ internal static partial class Program
             new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE),
             [
                 new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
+                new("Native-X64-Lowering-Types.wv", NATIVE_X64_LOWERING_TYPES_SOURCE),
+                new("Native-X64-Lowering-Enums.wv", NATIVE_X64_LOWERING_ENUMS_SOURCE),
+                new("Native-X64-Lowering-Enum-Instructions.wv", NATIVE_X64_LOWERING_ENUM_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Descriptors.wv", NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
                 new("Native-X64-Lowering-Descriptor-Instructions.wv", NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Runtime-Descriptors.wv", NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE),
@@ -2898,6 +2908,9 @@ internal static partial class Program
             [
                 new("Native-X64-Lowering-Core.wv", NATIVE_X64_LOWERING_CORE_SOURCE),
                 new("Native-X64-Lowering-Data.wv", NATIVE_X64_LOWERING_DATA_SOURCE),
+                new("Native-X64-Lowering-Types.wv", NATIVE_X64_LOWERING_TYPES_SOURCE),
+                new("Native-X64-Lowering-Enums.wv", NATIVE_X64_LOWERING_ENUMS_SOURCE),
+                new("Native-X64-Lowering-Enum-Instructions.wv", NATIVE_X64_LOWERING_ENUM_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Descriptors.wv", NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
                 new("Native-X64-Lowering-Descriptor-Instructions.wv", NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Runtime-Descriptors.wv", NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE),
@@ -2922,6 +2935,7 @@ internal static partial class Program
         Assertˉstaticˉdescriptorˉlowering(Tool, Memory);
         Assertˉtextˉserviceˉlowering(Tool, Memory);
         Assertˉdataˉandˉtextˉlowering(Tool, Memory);
+        Assertˉenumˉlowering(Tool, Memory);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);
@@ -3418,6 +3432,19 @@ internal static partial class Program
             Codeˉpayloadˉoffset(Mismatchedˉbytesˉconcatenationˉwvb) +
             Dataˉandˉtextˉmain.Declaration.Codeˉoffset +
             Bytesˉconcatenation.Offset] = (byte)Opcode.Textˉconcat;
+        var Enumˉwvb = Compileˉsuccess(WVB_TO_WVO_ENUMS_SOURCE);
+        var Enumˉmodule = Moduleˉcodec.Readˉandˉverify(Enumˉwvb);
+        var Enumˉmain = Enumˉmodule.Functions.Single();
+        var Enumˉconstant = Enumˉmain.Instructions.First(
+            Instruction => Instruction.Opcode == Opcode.Enumˉconst);
+        var Invalidˉenumˉtypeˉwvb = Enumˉwvb.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉenumˉtypeˉwvb.AsSpan(
+                Codeˉpayloadˉoffset(Invalidˉenumˉtypeˉwvb) +
+                Enumˉmain.Declaration.Codeˉoffset +
+                Enumˉconstant.Offset + 1,
+                4),
+            1u);
         foreach (var Malformed in new[]
         {
             Underflowˉwvb,
@@ -3431,6 +3458,7 @@ internal static partial class Program
             Mismatchedˉdescriptorˉdataˉkindˉwvb,
             Mismatchedˉruntimeˉdescriptorˉwvb,
             Mismatchedˉbytesˉconcatenationˉwvb,
+            Invalidˉenumˉtypeˉwvb,
         })
         {
             Equal(

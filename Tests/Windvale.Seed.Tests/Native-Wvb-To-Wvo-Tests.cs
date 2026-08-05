@@ -17,14 +17,17 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_TEXT_SERVICES_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Text-Services.wv");
+    private static readonly string WVB_TO_WVO_ENUMS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Enums.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 167_172;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 2_275_328;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 191_086;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 2_635_776;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "8f0e817d3c1cf06c44943448fcb58441cd2884d27a8e6f8fcb7185d4539c1779";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 2_277_376;
+        "137c3db5f96b4b32b240c0a9043191c2b974049d85276f722d04041893c88699";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 2_637_824;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "d793743e8c89a46f2cabe0da29e0c82318f198aa59226715c92e017bc4757998";
+        "716053129a245c396cf80c9f78e09a47d3269d202cdd7e72de1552a9a336b6a7";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -265,6 +268,15 @@ internal static partial class Program
                     "Compiler/Windvale/Native-X64-Lowering-Data.wv",
                     NATIVE_X64_LOWERING_DATA_SOURCE),
                 new(
+                    "Compiler/Windvale/Native-X64-Lowering-Types.wv",
+                    NATIVE_X64_LOWERING_TYPES_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Enums.wv",
+                    NATIVE_X64_LOWERING_ENUMS_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv",
+                    NATIVE_X64_LOWERING_ENUM_INSTRUCTIONS_SOURCE),
+                new(
                     "Compiler/Windvale/Native-X64-Lowering-Descriptors.wv",
                     NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
                 new(
@@ -449,6 +461,49 @@ internal static partial class Program
                 $"Stage0 byte={(Firstˉdifference < 0 ? -1 : Expectedˉobject[Firstˉdifference])}, " +
                 $"Windvale byte={(Firstˉdifference < 0 ? -1 : Memoryˉresult.Bytes[Firstˉdifference])}.");
         }
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 100_000_000);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+    }
+
+    private static void Assertˉenumˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_ENUMS_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(Expectedˉobject.AsSpan()).Value;
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
 
         var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
             tool,

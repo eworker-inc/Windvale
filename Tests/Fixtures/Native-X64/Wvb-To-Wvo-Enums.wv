@@ -1,0 +1,16 @@
+module Nativeˉenumˉlowering profile portable;
+
+enum Weather {
+    Calm = 0;
+    Windy = 7;
+    Storm = 11;
+}
+
+export fn Main() -> i32 {
+    let Value = Weather.Windy;
+    if Value != Weather.Windy { return 1; }
+    if Value == Weather.Calm { return 2; }
+    let Name = Enumˉname(Value);
+    if Bytesˉreadˉu8(Textˉtoˉutf8(Name), 0u32) != 87u8 { return 3; }
+    return 42;
+}

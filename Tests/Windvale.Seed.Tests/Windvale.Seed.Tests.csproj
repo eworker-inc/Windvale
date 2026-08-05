@@ -280,6 +280,15 @@
       Include="../../Compiler/Windvale/Native-X64-Lowering-Data.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Data.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Types.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Types.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Enums.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Enums.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Enum-Instructions.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Descriptors.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Descriptors.wv" />
     <EmbeddedResource
@@ -312,6 +321,9 @@
     <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Text-Services.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Text-Services.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvb-To-Wvo-Enums.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Enums.wv" />
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Function-Only.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />

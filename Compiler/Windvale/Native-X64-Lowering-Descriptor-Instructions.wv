@@ -22,6 +22,7 @@ export record Compilerˉnativeˉx64ˉdescriptorˉlayout {
     Textˉslots: u32;
     U8ˉslots: u32;
     U32ˉslots: u32;
+    Bytesˉslots: u32;
 }
 
 export record Compilerˉnativeˉx64ˉdescriptorˉstate {
@@ -49,6 +50,7 @@ fn Valueˉslot(
         Shape.Textˉslots,
         Shape.U8ˉslots,
         Shape.U32ˉslots,
+        Shape.Bytesˉslots,
         Type,
         Index
     );

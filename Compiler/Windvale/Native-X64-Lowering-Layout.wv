@@ -82,6 +82,7 @@ export fn Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
     Textˉslots: u32,
     U8ˉslots: u32,
     U32ˉslots: u32,
+    Bytesˉslots: u32,
     Type: u8,
     Index: u32
 ) -> u32 {
@@ -96,8 +97,12 @@ export fn Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
     if Type == 5u8 {
         return Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots + Index;
     }
+    if Type == 6u8 {
+        return Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots +
+            U32ˉslots + Index;
+    }
     return Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots +
-        U32ˉslots + Index;
+        U32ˉslots + Bytesˉslots + Index;
 }
 
 export fn Compilerˉnativeˉx64ˉlayoutˉparameterˉtype(
