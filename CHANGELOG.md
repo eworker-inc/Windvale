@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Added nine digest-bound malformed-WVB fixtures to the .NET-free native test plan. `WVNT 4` reuses the fixed base64 input contract and exact native verifier oracle for eight typed-execution corruptions and one unreachable-control corruption without adding a mutator or another host-specific parser.
 - Added five digest-bound malformed-WVB envelope fixtures to the .NET-free native test plan. `WVNT 3` decodes exact base64 inputs, verifies their complete identities, and requires the qualified native verifier to reject bad magic, version, UTF-8, truncation, and trailing data with exact exit and channel behavior on both host adapters.
 - Expanded the Windvale-written native x86-64 lowerer from one optional helper to one through eight decreasing-ordinal scalar/control functions. A focused function-layout module now owns per-function offsets, signatures, and WVO symbols; the existing three-function calls/control fixture matches Stage 0 exactly while self/forward calls fail closed, and all retained one/two-function WVO bytes remain unchanged.
 - Extended native test orchestration with exact failure oracles. Digest-bound `WVNT 2` now requires deterministic exit, output channel, Windvale status, and guest-instruction reports for invalid UTF-8, out-of-range bytes, and truncated little-endian reads without consulting .NET during the run.

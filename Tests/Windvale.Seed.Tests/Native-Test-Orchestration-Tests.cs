@@ -22,7 +22,16 @@ internal static partial class Program
             "PASS  malformed-bad-utf8\n" +
             "PASS  malformed-truncated\n" +
             "PASS  malformed-trailing\n" +
-            "Tests: 13, Passed: 13, Failed: 0\n",
+            "PASS  malformed-typed-operator-stack-kind\n" +
+            "PASS  malformed-typed-local-store-kind\n" +
+            "PASS  malformed-typed-call-argument-identity\n" +
+            "PASS  malformed-typed-record-receiver-identity\n" +
+            "PASS  malformed-typed-enum-operand-identity\n" +
+            "PASS  malformed-typed-branch-condition-kind\n" +
+            "PASS  malformed-typed-declared-maximum-stack\n" +
+            "PASS  malformed-typed-capability-argument-kind\n" +
+            "PASS  malformed-control-unreachable-instruction\n" +
+            "Tests: 22, Passed: 22, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

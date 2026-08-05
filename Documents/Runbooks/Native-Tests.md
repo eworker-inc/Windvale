@@ -38,7 +38,16 @@ PASS  malformed-bad-version
 PASS  malformed-bad-utf8
 PASS  malformed-truncated
 PASS  malformed-trailing
-Tests: 13, Passed: 13, Failed: 0
+PASS  malformed-typed-operator-stack-kind
+PASS  malformed-typed-local-store-kind
+PASS  malformed-typed-call-argument-identity
+PASS  malformed-typed-record-receiver-identity
+PASS  malformed-typed-enum-operand-identity
+PASS  malformed-typed-branch-condition-kind
+PASS  malformed-typed-declared-maximum-stack
+PASS  malformed-typed-capability-argument-kind
+PASS  malformed-control-unreachable-instruction
+Tests: 22, Passed: 22, Failed: 0
 ```
 
 No .NET process is required by this command. The host dependencies are `cmd.exe`
@@ -47,11 +56,13 @@ on Linux.
 
 ## Current boundary
 
-This is a candidate portable result/runtime-failure/malformed-envelope gate, not
-the complete normal repository verifier. Continue to select one appropriate Stage
-0 verifier for changes outside these transferred fixtures. Do not run this
-candidate and progressively broader local levels merely as a checklist; use the
-narrowest gate that owns the changed behavior.
+This is a candidate portable result/runtime-failure/fixed-malformed-WVB gate, not
+the complete normal repository verifier. Its verifier cases now reach semantic,
+typed-execution, and control-reachability rejection, but they do not replace the
+complete unsafe and randomized malformed corpus. Continue to select one
+appropriate Stage 0 verifier for changes outside these transferred fixtures. Do
+not run this candidate and progressively broader local levels merely as a
+checklist; use the narrowest gate that owns the changed behavior.
 
 For changes to the native plan, launchers, projects, or fixed fixtures, review the
 managed wrapper's exact report and run `Tools\Native\Test-Seed.cmd` or

@@ -2062,3 +2062,34 @@ typed-execution and control-reachability corruptions, randomized malformed data,
 unsafe bytecode, Standard, Qualification, GitHub verification, and runner/test
 promotion remain deferred to the grouped end-of-goal gate or later focused
 transfers.
+
+## Local native typed/control malformed-WVB evidence
+
+[Decision 0230](../Decisions/0230-Native-Typed-And-Control-Malformed-Fixtures.md)
+supersedes the unqualified thirteen-case plan with the fixed twenty-two-case
+`WVNT 4` contract. Its 3,906 UTF-8/LF bytes have SHA-256
+`bb681b63e0dada74e2fc8cd0dd029a1ec17a0c341677d4f2bbcd9f568f5f022d`.
+The first thirteen rows and every prior WVB/result/failure identity remain
+unchanged.
+
+Eight typed-execution fixtures derive from the exact native-built nominal-types
+WVB, while the capability-argument fixture derives from the same hosted-capability
+source used by the existing conformance case. Their documented byte changes mirror
+the reviewed managed corruption definitions but are not interpreted at test time.
+Each checked-in base64 value is decoded and bound by its complete SHA-256 before
+the qualified native verifier runs. Eight require exact `typed-execution`
+rejection; the changed jump target requires exact `control-reachability`
+rejection.
+
+Review confirms 22 unique six-field rows, all 14 decoded fixture identities, and
+an exact match between plan order and the managed wrapper's expected PASS report.
+The direct .NET-free Windows plan passes all 22 cases in 5.794 seconds. Every new
+case returns 1, writes no standard output, and writes only its exact one-line native
+phase diagnostic to standard error.
+
+The managed wrapper was not rebuilt or rerun because its complete expected report
+was reviewed and the direct plan is the narrowest behavioral check. Linux
+execution, remaining malformed limits, randomized malformed inputs, the broader
+unsafe-bytecode corpus, Standard, Qualification, GitHub verification, and
+runner/test promotion remain deferred to the grouped end-of-goal gate or later
+focused transfers.

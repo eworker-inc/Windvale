@@ -4,7 +4,7 @@ set -uo pipefail
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Plan.txt"
-plan_digest=1b5dc525a2a5fc8883e21cbd0502bb2c3af1cb93c32fec11f5379e9f624fd870
+plan_digest=bb681b63e0dada74e2fc8cd0dd029a1ec17a0c341677d4f2bbcd9f568f5f022d
 
 if ! printf '%s  %s\n' "$plan_digest" "$plan" | sha256sum --check --strict --quiet; then
     echo 'The native test plan artifact digest is invalid.' >&2
@@ -29,14 +29,14 @@ trap cleanup EXIT
 total=0
 passed=0
 IFS= read -r header < "$plan"
-if [[ $header != 'windvale-native-tests 3' ]]; then
+if [[ $header != 'windvale-native-tests 4' ]]; then
     echo 'The native test plan header is invalid.' >&2
     exit 1
 fi
 
 while IFS='|' read -r name input_kind input expected_hash expected_kind expected_value; do
     [[ -n $name ]] || continue
-    [[ $name != 'windvale-native-tests 3' ]] || continue
+    [[ $name != 'windvale-native-tests 4' ]] || continue
     total=$((total + 1))
     output="$temporary_directory/Current.wvb"
     build_output="$temporary_directory/Build.out"
