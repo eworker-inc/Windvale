@@ -94,6 +94,7 @@ public static class Linuxˉconsoleˉapplicationˉcontract
     public const string COMPILER_TARGET_NAME = "linux-x64-console-v3";
     public const int VERIFIER_FORMAT_VERSION = 4;
     public const string VERIFIER_TARGET_NAME = "linux-x64-verifier-v1";
+    public const string INSPECTOR_TARGET_NAME = "linux-x64-wvb-inspector-v1";
     public const int BUILD_DRIVER_FORMAT_VERSION = 5;
     public const string BUILD_DRIVER_TARGET_NAME = "linux-x64-build-driver-v1";
     public const int HOSTED_STARTUP_BYTES = 217;

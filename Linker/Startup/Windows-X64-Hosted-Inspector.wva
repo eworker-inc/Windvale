@@ -1,0 +1,338 @@
+windvale-assembly 1
+
+# Canonical Windows x64 hosted-inspector startup. Stage 0 retains an independent
+# final-image encoder and parser until the native-retirement gate.
+symbol local function Windows_commit_runtime_pages in .text
+symbol export function Windows_hosted_inspector_startup in .text
+symbol import data Argument_bytes
+symbol import data Argument_table
+symbol import data Data_arena
+symbol import data Execution_context
+symbol import data File_input_scratch
+symbol import data File_input_table
+symbol import data Name_arena
+symbol import function Native_main
+symbol import data Output_table
+symbol import data Record_arena
+symbol import function Service_console_write
+symbol import function Service_diagnostic_write
+symbol import function Service_enum_name
+symbol import function Service_file_read
+symbol import function Service_i32_format
+symbol import function Service_process_argument
+symbol import function Service_process_argument_count
+symbol import data Service_table
+symbol import function Service_text_concat
+symbol import function Service_text_quote
+symbol import function Service_u32_format
+symbol import function Service_utf8
+symbol import data Snapshot_table
+symbol import data Text_arena
+symbol import data Windows_close_handle_iat
+symbol import data Windows_command_line_to_argv_iat
+symbol import data Windows_create_file_iat
+symbol import data Windows_get_command_line_iat
+symbol import data Windows_get_file_size_iat
+symbol import data Windows_get_last_error_iat
+symbol import data Windows_get_std_handle_iat
+symbol import data Windows_local_free_iat
+symbol import data Windows_multi_byte_to_wide_char_iat
+symbol import data Windows_read_file_iat
+symbol import data Windows_wide_char_to_multi_byte_iat
+symbol import data Windows_write_file_iat
+
+section code .text align 16
+define Windows_hosted_inspector_startup
+# Preserve every Windows nonvolatile register used by startup. The 136-byte
+# frame retains 32 bytes of shadow space, two stack arguments, and local cells.
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 136
+xor r12 r12
+
+# Bind the execution context to every fixed RW/NX runtime region.
+load_address r15 Execution_context
+load_address rax Service_table
+store_memory_u64 r15 none 1 24 rax
+load_address rax Record_arena
+store_memory_u64 r15 none 1 32 rax
+load_address rax Text_arena
+store_memory_u64 r15 none 1 48 rax
+load_address rax Argument_table
+store_memory_u64 r15 none 1 72 rax
+load_address rax Output_table
+store_memory_u64 r15 none 1 88 rax
+load_address rax File_input_table
+store_memory_u64 r15 none 1 96 rax
+
+# Bind file-input snapshot, name, data, scratch, and Win32 functions.
+load_address rbx File_input_table
+load_address rax Snapshot_table
+store_memory_u64 rbx none 1 16 rax
+load_address rax Name_arena
+store_memory_u64 rbx none 1 32 rax
+load_address rax Data_arena
+store_memory_u64 rbx none 1 48 rax
+load_address rax File_input_scratch
+store_memory_u64 rbx none 1 64 rax
+load_address rax Windows_multi_byte_to_wide_char_iat
+load_memory_u64 rax rax none 1 0
+store_memory_u64 rbx none 1 80 rax
+load_address rax Windows_create_file_iat
+load_memory_u64 rax rax none 1 0
+store_memory_u64 rbx none 1 88 rax
+load_address rax Windows_get_file_size_iat
+load_memory_u64 rax rax none 1 0
+store_memory_u64 rbx none 1 96 rax
+load_address rax Windows_read_file_iat
+load_memory_u64 rax rax none 1 0
+store_memory_u64 rbx none 1 104 rax
+load_address rax Windows_close_handle_iat
+load_memory_u64 rax rax none 1 0
+store_memory_u64 rbx none 1 112 rax
+load_address rax Windows_commit_runtime_pages
+store_memory_u64 rbx none 1 120 rax
+load_address rax Windows_get_last_error_iat
+load_memory_u64 rax rax none 1 0
+store_memory_u64 rbx none 1 128 rax
+
+# Bind both output handles and the shared WriteFile implementation.
+move_i32 ecx -11
+load_address rax Windows_get_std_handle_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+load_address rbx Output_table
+store_memory_u64 rbx none 1 24 rax
+move_i32 ecx -12
+load_address rax Windows_get_std_handle_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+store_memory_u64 rbx none 1 32 rax
+load_address rax Windows_write_file_iat
+load_memory_u64 rax rax none 1 0
+store_memory_u64 rbx none 1 40 rax
+
+# Bind exactly the eleven read-only module and startup services.
+load_address rbx Service_table
+load_address rax Service_console_write
+store_memory_u64 rbx none 1 8 rax
+load_address rax Service_process_argument_count
+store_memory_u64 rbx none 1 16 rax
+load_address rax Service_process_argument
+store_memory_u64 rbx none 1 24 rax
+load_address rax Service_file_read
+store_memory_u64 rbx none 1 32 rax
+load_address rax Service_utf8
+store_memory_u64 rbx none 1 40 rax
+load_address rax Service_diagnostic_write
+store_memory_u64 rbx none 1 48 rax
+load_address rax Service_enum_name
+store_memory_u64 rbx none 1 56 rax
+load_address rax Service_text_concat
+store_memory_u64 rbx none 1 64 rax
+load_address rax Service_text_quote
+store_memory_u64 rbx none 1 72 rax
+load_address rax Service_i32_format
+store_memory_u64 rbx none 1 80 rax
+load_address rax Service_u32_format
+store_memory_u64 rbx none 1 88 rax
+
+# Ask the operating system for canonical UTF-16 argv and exclude argv[0].
+load_address rax Windows_get_command_line_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test rax rax
+branch equal Failure
+move rcx rax
+move rdx rsp
+add_i32 rdx 72
+load_address rax Windows_command_line_to_argv_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test rax rax
+branch equal Failure
+move r12 rax
+load_memory_u32 eax rsp none 1 72
+compare_i32 eax 1
+branch below Failure
+subtract_i32 eax 1
+compare_i32 eax 67
+branch above Failure
+store_memory_u32 r15 none 1 80 eax
+
+xor ebx ebx
+xor ebp ebp
+load_address r13 Argument_table
+load_address r14 Argument_bytes
+load_address rdi File_input_scratch
+
+label Argument_loop
+load_memory_u32 eax r15 none 1 80
+compare ebx eax
+branch above_equal Arguments_complete
+load_memory_u64 rsi r12 rbx 8 8
+
+# Strictly convert one NUL-terminated UTF-16 argument into a bounded UTF-8
+# scratch. WideCharToMultiByte includes the trailing NUL in its result.
+move_u32 ecx 65001
+move_u32 edx 128
+move r8 rsi
+move_i32 r9d -1
+store_memory_u64 rsp none 1 32 rdi
+move_u32 eax 4097
+store_memory_u64 rsp none 1 40 rax
+xor eax eax
+store_memory_u64 rsp none 1 48 rax
+store_memory_u64 rsp none 1 56 rax
+load_address rax Windows_wide_char_to_multi_byte_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch equal Failure
+compare_i32 eax 4097
+branch above Failure
+subtract_i32 eax 1
+store_memory_u32 rsp none 1 88 eax
+move edx ebp
+add edx eax
+compare_i32 edx 65536
+branch above Failure
+
+# Reuse the exact intrinsic service as the startup UTF-8 oracle.
+xor ecx ecx
+store_memory_u32 rsp none 1 80 ecx
+move rcx rsp
+add_i32 rcx 80
+move r8 rdi
+move r9d eax
+call Service_utf8
+load_memory_u32 eax rsp none 1 80
+compare_i32 eax 1
+branch not_equal Failure
+load_memory_u32 r10d rsp none 1 88
+
+# Publish one immutable descriptor and copy its exact non-NUL bytes.
+move rdx rbx
+shift_left rdx 4
+add rdx r13
+move rsi r14
+add rsi rbp
+store_memory_u64 rdx none 1 0 rsi
+store_memory_u32 rdx none 1 8 r10d
+xor ecx ecx
+
+label Copy_argument
+compare ecx r10d
+branch above_equal Argument_copied
+load_memory_u8 al rdi rcx 1 0
+store_memory_u8 rsi rcx 1 0 al
+add_i32 ecx 1
+jump_label Copy_argument
+
+label Argument_copied
+add ebp r10d
+add_i32 ebx 1
+jump_label Argument_loop
+
+label Arguments_complete
+move rcx r12
+load_address rax Windows_local_free_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test rax rax
+branch not_equal Failure_without_cleanup
+xor r12 r12
+
+load_address rdx Execution_context
+xor rcx rcx
+move r8 rdx
+xor r9 r9
+call Native_main
+
+# Preserve only successful portable process results; map failures to one.
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Failure
+compare_i32 eax 255
+branch below_equal Mapped
+
+label Failure
+test r12 r12
+branch equal Failure_without_cleanup
+move rcx r12
+load_address rax Windows_local_free_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+
+label Failure_without_cleanup
+move_u32 eax 1
+
+label Mapped
+add_i32 rsp 136
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+
+# The PE loader has already mapped the fixed RW/NX name and data arenas. The
+# exact file-input service still asks its host adapter to commit one bounded
+# slot before first use. Accept only that MEM_COMMIT/PAGE_READWRITE contract,
+# only page-aligned addresses, and only extents wholly inside those arenas.
+define Windows_commit_runtime_pages
+compare_i32 r8d 4096
+branch not_equal Commit_rejected
+compare_i32 r9d 4
+branch not_equal Commit_rejected
+load_address rax Data_arena
+compare rcx rax
+branch above_equal Commit_data
+load_address rax Name_arena
+compare rcx rax
+branch below Commit_rejected
+compare_i32 rdx 1
+branch below Commit_rejected
+compare_i32 rdx 1048576
+branch above Commit_rejected
+test_i32 rcx 4095
+branch not_equal Commit_rejected
+move r10 rcx
+add r10 rdx
+branch below Commit_rejected
+load_address rax Data_arena
+compare r10 rax
+branch above Commit_rejected
+move rax rcx
+return
+
+label Commit_data
+compare_i32 rdx 4194304
+branch not_equal Commit_rejected
+test_i32 rcx 4095
+branch not_equal Commit_rejected
+move r10 rcx
+add r10 rdx
+branch below Commit_rejected
+load_address rax File_input_scratch
+compare r10 rax
+branch above Commit_rejected
+move rax rcx
+return
+
+label Commit_rejected
+xor eax eax
+return
+end define
+end section

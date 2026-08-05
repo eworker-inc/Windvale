@@ -51,9 +51,11 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉcontract
 
     internal static Windowsˉhostedˉverifierˉapplicationˉlayout Plan(
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
-        Validateˉbundle(bundle);
+        Validateˉbundle(bundle, profile);
         if (nativeˉentryˉoffset >= bundle.Nativeˉimageˉbytes)
         {
             throw new ArgumentOutOfRangeException(
@@ -75,7 +77,7 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉcontract
             HEADER_BYTES,
             HEADER_BYTES,
             TEXT_ADDRESS,
-            STARTUP_BYTES,
+            Startupˉbytes(profile),
             BUNDLE_TEXT_OFFSET,
             bundle.Imageˉbytes.Length,
             Textˉvirtual,
@@ -95,18 +97,33 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉcontract
             Alignˉup(checked(Relocationˉaddress + RELOCATION_BYTES), 0x1000));
     }
 
-    internal static void Validateˉbundle(Nativeˉserviceˉbundle bundle)
+    internal static void Validateˉbundle(
+        Nativeˉserviceˉbundle bundle,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
+        var Services = Hostedˉverifierˉapplicationˉmetadata.Requiredˉservices(profile);
         if (bundle is null ||
             bundle.Platform != Nativeˉserviceˉplatform.Windows ||
             bundle.Nativeˉimageˉbytes <= 0 ||
             bundle.Nativeˉimageˉbytes > bundle.Imageˉbytes.Length ||
             bundle.Imageˉbytes.Length > MAXIMUM_BUNDLE_BYTES ||
-            bundle.Placements.Length != Hostedˉverifierˉapplicationˉmetadata.SERVICE_COUNT)
+            bundle.Placements.Length != Services.Length ||
+            !bundle.Placements.Select(Placement => Placement.Service).SequenceEqual(Services))
         {
             throw new ArgumentException("The Windows hosted-verifier bundle is invalid.");
         }
     }
+
+    internal static int Startupˉbytes(Hostedˉverifierˉapplicationˉprofile profile) =>
+        profile switch
+        {
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier =>
+                Windowsˉhostedˉverifierˉstartup.BYTES,
+            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector =>
+                Windowsˉhostedˉinspectorˉstartup.BYTES,
+            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+        };
 
     private static uint Alignˉup(uint value, uint alignment) => checked(
         (value + alignment - 1) & ~(alignment - 1));

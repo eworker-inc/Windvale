@@ -124,7 +124,9 @@ internal static class Hostedˉverifierˉruntimeˉdata
         Consoleˉapplicationˉtarget target,
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
         var Layout = Plan(target);
         var Bytes = new byte[checked((int)HEADER_BYTES)];
@@ -142,7 +144,8 @@ internal static class Hostedˉverifierˉruntimeˉdata
             capabilities,
             bundle,
             BUNDLE_TEXT_OFFSET,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
         Metadata.AsSpan().CopyTo(Bytes.AsSpan(checked((int)METADATA_OFFSET)));
         return Bytes.ToImmutableArray();
     }
@@ -151,7 +154,9 @@ internal static class Hostedˉverifierˉruntimeˉdata
         ReadOnlySpan<byte> bytes,
         Consoleˉapplicationˉtarget expectedˉtarget,
         Nativeˉserviceˉbundle expectedˉbundle,
-        ReadOnlySpan<byte> actualˉbundleˉimage)
+        ReadOnlySpan<byte> actualˉbundleˉimage,
+        Hostedˉverifierˉapplicationˉprofile expectedˉprofile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
         if (bytes.Length != HEADER_BYTES)
         {
@@ -173,7 +178,8 @@ internal static class Hostedˉverifierˉruntimeˉdata
                 Hostedˉverifierˉapplicationˉmetadata.SIZE),
             expectedˉtarget,
             expectedˉbundle,
-            actualˉbundleˉimage);
+            actualˉbundleˉimage,
+            expectedˉprofile);
         Requireˉzero(
             bytes,
             checked((int)METADATA_OFFSET + Hostedˉverifierˉapplicationˉmetadata.SIZE),

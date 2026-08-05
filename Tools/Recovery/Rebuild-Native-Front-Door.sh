@@ -36,6 +36,22 @@ dotnet "$tool" aot "$destination/Wvb/Wvb-Publisher.wvb" \
 dotnet "$tool" aot "$destination/Wvb/Wvb-Publisher.wvb" \
     --target linux-x64-wvb-publisher-v1 \
     -o "$destination/linux-x64/wvpublish.elf"
+dotnet "$tool" build "$repository_root/Windvale-Compiler-Wvb-Verifier.wvproj" \
+    -o "$destination/Wvb/Compiler-Wvb-Verifier.wvb"
+dotnet "$tool" aot "$destination/Wvb/Compiler-Wvb-Verifier.wvb" \
+    --target windows-x64-verifier-v1 \
+    -o "$destination/windows-x64/wvverify.exe"
+dotnet "$tool" aot "$destination/Wvb/Compiler-Wvb-Verifier.wvb" \
+    --target linux-x64-verifier-v1 \
+    -o "$destination/linux-x64/wvverify.elf"
+dotnet "$tool" build "$repository_root/Windvale-Wvb-Inspector.wvproj" \
+    -o "$destination/Wvb/Wvb-Inspector.wvb"
+dotnet "$tool" aot "$destination/Wvb/Wvb-Inspector.wvb" \
+    --target windows-x64-wvb-inspector-v1 \
+    -o "$destination/windows-x64/wvdump.exe"
+dotnet "$tool" aot "$destination/Wvb/Wvb-Inspector.wvb" \
+    --target linux-x64-wvb-inspector-v1 \
+    -o "$destination/linux-x64/wvdump.elf"
 
 (cd -- "$destination" && sha256sum --check --strict "$canonical_root/SHA256SUMS")
 echo "Recovered native front door: $destination"

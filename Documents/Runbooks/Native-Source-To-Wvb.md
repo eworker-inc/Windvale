@@ -4,6 +4,8 @@ This runbook owns the ordinary project source-to-verified-WVB workflow introduce
 by [Decision 0213](../Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md).
 Its exact contract and non-claims are defined by the
 [native front-door specification](../../Specifications/Windvale-Native-Source-To-Wvb-Front-Door.md).
+Native verification and inspection are defined by the
+[read-only WVB front-door specification](../../Specifications/Windvale-Native-Wvb-Read-Only-Front-Door.md).
 
 ## Ordinary build
 
@@ -35,6 +37,27 @@ The project must use the current Project 1 format and may identify at most 63 so
 modules. The launchers do not discover source files, install packages, infer imports,
 create output directories, package PE/ELF applications, or execute the result.
 
+## Ordinary verification and inspection
+
+On Windows x64:
+
+```bat
+Tools\Native\Verify-Wvb.cmd <module.wvb>
+Tools\Native\Inspect-Wvb.cmd <module.wvb>
+```
+
+On Linux x64:
+
+```sh
+./Tools/Native/Verify-Wvb.sh <module.wvb>
+./Tools/Native/Inspect-Wvb.sh <module.wvb>
+```
+
+Both routes verify the pinned native application before use. Inspection first asks
+the semantic verifier to admit the exact input, then runs the read-only structural
+inspector. Neither route requires .NET or grants file-write authority. The retained
+Stage 0 CLI remains available for explicit differential and recovery work.
+
 ## Stage 0 recovery and differential route
 
 The .NET CLI remains available for recovery, independent comparison, tests, and
@@ -45,7 +68,7 @@ entry point:
 dotnet run --project Tools/Windvale.Tool -- build project.wvproj -o output.wvb
 ```
 
-To reconstruct all six pinned WVB and native application artifacts into a separate
+To reconstruct all twelve pinned WVB and native application artifacts into a separate
 directory on Windows:
 
 ```powershell
@@ -59,15 +82,17 @@ Or on Linux:
 ```
 
 Reconstruction requires the pinned .NET SDK. It builds the retained Stage 0 CLI,
-reconstructs both canonical WVB modules and all four native applications, then
+reconstructs all four canonical WVB modules and all eight native applications, then
 requires their lengths and SHA-256 identities to match the committed inventory.
 The recovery scripts refuse to target the canonical distribution directory.
 
 ## Verification boundary
 
-For a change limited to the launchers, inventory, or native-front-door integration,
-run the focused Seed test named `ordinary source-to-WVB builds use pinned native
-tools`. Run the publisher-focused test when its application construction or adapter
+For a change limited to the source build launchers, inventory, or native-front-door
+integration, run the focused Seed test named `ordinary source-to-WVB builds use
+pinned native tools`. For native WVB verification or inspection, run the focused
+test named `native WVB verifier and inspector applications own the read-only front
+door`. Run the publisher-focused test when its application construction or adapter
 inputs change. Do not run progressively broader local levels against the same source
 state; GitHub owns the independent Windows and pinned-Debian Qualification gate for
 the final committed candidate.

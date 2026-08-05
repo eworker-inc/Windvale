@@ -17,26 +17,43 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉbuilder
     internal static ImmutableArray<byte> Build(
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
         var Layout = Windowsˉhostedˉverifierˉapplicationˉcontract.Plan(
             bundle,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
         var Runtimeˉlayout = Hostedˉverifierˉruntimeˉdata.Plan(
             Consoleˉapplicationˉtarget.Windowsˉx64);
         var Runtime = Hostedˉverifierˉruntimeˉdata.Build(
             Consoleˉapplicationˉtarget.Windowsˉx64,
             capabilities,
             bundle,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
         var Imports = Windowsˉhostedˉverifierˉimports.Build(Layout.Importˉaddress);
-        var Startup = Windowsˉhostedˉverifierˉstartup.Build(
-            Layout.Textˉaddress,
-            Layout.Importˉaddress,
-            Layout.Runtimeˉaddress,
-            Runtimeˉlayout,
-            bundle,
-            nativeˉentryˉoffset);
+        var Startup = profile switch
+        {
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier =>
+                Windowsˉhostedˉverifierˉstartup.Build(
+                    Layout.Textˉaddress,
+                    Layout.Importˉaddress,
+                    Layout.Runtimeˉaddress,
+                    Runtimeˉlayout,
+                    bundle,
+                    nativeˉentryˉoffset),
+            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector =>
+                Windowsˉhostedˉinspectorˉstartup.Build(
+                    Layout.Textˉaddress,
+                    Layout.Importˉaddress,
+                    Layout.Runtimeˉaddress,
+                    Runtimeˉlayout,
+                    bundle,
+                    nativeˉentryˉoffset),
+            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+        };
         var Result = new byte[Layout.Applicationˉbytes];
 
         Writeˉu16(Result, 0x00, 0x5A4D);

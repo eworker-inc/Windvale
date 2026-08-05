@@ -16,8 +16,9 @@ The publisher applications are cross-host qualified at exact commit
 `9d36387867ebff80ee94c6f9f7996da4ef32a4a3` in GitHub
 [Verify run 30971408639](https://github.com/eworker-inc/Windvale/actions/runs/30971408639).
 The distributed front-door inventory, launchers, reconstruction route, and ordinary
-workflow cutover in the current descendant remain candidates until their own
-dual-host Qualification gate passes.
+workflow cutover are cross-host qualified at exact commit
+`d2e71c1d6491153afb715674fc13ba2c6276326a` in GitHub
+[Verify run 30974274271](https://github.com/eworker-inc/Windvale/actions/runs/30974274271).
 
 This is a source-to-WVB cutover, not complete .NET retirement. The normal assembler,
 linker, native application packaging, runtime, test runner, complete backend, and
@@ -26,14 +27,17 @@ final recovery archive still retain explicit Stage 0 responsibilities.
 ## Distribution inventory
 
 [`Artifacts/Native-Front-Door/Manifest.json`](../Artifacts/Native-Front-Door/Manifest.json)
-is the version-1 inventory. It records the semantic-freeze and publisher evidence,
-then binds exactly six artifacts by relative path, target, byte length, and lowercase
-SHA-256:
+is the shared version-1 native-front-door inventory. It records the semantic-freeze
+and publisher evidence, then binds twelve artifacts by relative path, target, byte
+length, and lowercase SHA-256. This source-build profile owns six of them:
 
 - the canonical format-5 compiler build-driver WVB;
 - the canonical publisher WVB;
 - the raw Windows x64 build driver and publisher; and
 - the raw Linux x64 build driver and publisher.
+
+The remaining two WVB modules and four applications belong to the separate
+[read-only WVB front door](Windvale-Native-Wvb-Read-Only-Front-Door.md).
 
 [`SHA256SUMS`](../Artifacts/Native-Front-Door/SHA256SUMS) repeats the byte identities
 in a standard external-tool form. Artifact paths are repository-relative and may
@@ -41,10 +45,10 @@ not escape the inventory directory. PE, ELF, WVB, and WVO files are explicitly
 binary in `.gitattributes`.
 
 The Windows launcher verifies the two executables it will invoke through the inbox
-`certutil` SHA-256 implementation. The Linux launcher verifies the complete
+`certutil` SHA-256 implementation. The Linux launcher verifies the complete shared
 `SHA256SUMS` inventory through `sha256sum`. The conformance test independently
-parses the JSON inventory and hashes all six files before executing the current-host
-ordinary workflow.
+parses the JSON inventory and hashes all twelve files before executing the
+current-host ordinary workflow.
 
 ## Ordinary invocation
 
@@ -86,11 +90,10 @@ pwsh -NoProfile -File Tools/Recovery/Rebuild-Native-Front-Door.ps1 <output-direc
 ./Tools/Recovery/Rebuild-Native-Front-Door.sh <output-directory>
 ```
 
-Those scripts build the Stage 0 CLI, compile
-`Windvale-Compiler-Build-Driver.wvproj` and `Windvale-Wvb-Publisher.wvproj`, invoke
-the four named AOT targets, and require exact agreement with the committed
-inventory. Recovery always writes a separate directory and cannot silently refresh
-the canonical distribution.
+Those scripts build the Stage 0 CLI, compile all four source projects represented
+in the shared inventory, invoke all eight named AOT targets, and require exact
+agreement with the committed inventory. Recovery always writes a separate directory
+and cannot silently refresh the canonical distribution.
 
 ## Required evidence
 

@@ -20,7 +20,7 @@ internal static partial class Program
         Equal(
             "windvale-native-front-door-1",
             Root.GetProperty("format").GetString());
-        Equal(6, Root.GetProperty("artifacts").GetArrayLength());
+        Equal(12, Root.GetProperty("artifacts").GetArrayLength());
         foreach (var Artifact in Root.GetProperty("artifacts").EnumerateArray())
         {
             var Relative = Artifact.GetProperty("path").GetString() ??
@@ -74,6 +74,40 @@ internal static partial class Program
             Equal(0, Verified.Module.Capabilities.Length);
             Equal(4, Verified.Module.Functions.Length);
 
+            var Nativeˉverify = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Verify-Wvb",
+                Outputˉpath);
+            Equal(0, Nativeˉverify.Exitˉcode);
+            Equal("wvb status=Valid profile=compiler-aligned\n", Nativeˉverify.Output);
+            Equal(string.Empty, Nativeˉverify.Error);
+            var Nativeˉinspect = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Inspect-Wvb",
+                Outputˉpath);
+            Equal(0, Nativeˉinspect.Exitˉcode);
+            Contains(Nativeˉinspect.Output, "wvdump 1\n");
+            Contains(Nativeˉinspect.Output,
+                "module version=1.11 profile=portable name=\"Composition\\u02C9demo\"");
+            Equal(string.Empty, Nativeˉinspect.Error);
+
+            Published[0] = 0;
+            File.WriteAllBytes(Outputˉpath, Published);
+            var Invalidˉverify = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Verify-Wvb",
+                Outputˉpath);
+            Equal(1, Invalidˉverify.Exitˉcode);
+            Equal(string.Empty, Invalidˉverify.Output);
+            Equal("wvb status=Invalid phase=semantic\n", Invalidˉverify.Error);
+            var Invalidˉinspect = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Inspect-Wvb",
+                Outputˉpath);
+            Equal(1, Invalidˉinspect.Exitˉcode);
+            Equal(string.Empty, Invalidˉinspect.Output);
+            Equal("wvb status=Invalid phase=semantic\n", Invalidˉinspect.Error);
+
             var Invalidˉproject = Path.Combine(Directoryˉpath, "Invalid.wvproj");
             File.WriteAllText(
                 Invalidˉproject,
@@ -92,6 +126,56 @@ internal static partial class Program
         {
             Directory.Delete(Directoryˉpath, recursive: true);
         }
+    }
+
+    private static (
+        int Exitˉcode,
+        string Output,
+        string Error) Runˉnativeˉwvbˉtool(
+        string repository,
+        string tool,
+        string module)
+    {
+        var Startˉinfo = new ProcessStartInfo
+        {
+            FileName = OperatingSystem.IsWindows()
+                ? Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe"
+                : "/usr/bin/env",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = repository,
+        };
+        var Extension = OperatingSystem.IsWindows() ? ".cmd" : ".sh";
+        var Launcher = Path.Combine(repository, "Tools", "Native", tool + Extension);
+        if (OperatingSystem.IsWindows())
+        {
+            Startˉinfo.ArgumentList.Add("/d");
+            Startˉinfo.ArgumentList.Add("/c");
+            Startˉinfo.ArgumentList.Add(Launcher);
+        }
+        else
+        {
+            Startˉinfo.ArgumentList.Add("bash");
+            Startˉinfo.ArgumentList.Add(Launcher);
+        }
+        Startˉinfo.ArgumentList.Add(module);
+        using var Process = System.Diagnostics.Process.Start(Startˉinfo) ??
+            throw new InvalidOperationException($"The native {tool} launcher did not start.");
+        var Outputˉtask = Process.StandardOutput.ReadToEndAsync();
+        var Errorˉtask = Process.StandardError.ReadToEndAsync();
+        if (!Process.WaitForExit(60_000))
+        {
+            Process.Kill(entireProcessTree: true);
+            throw new InvalidOperationException($"The native {tool} launcher did not exit.");
+        }
+        return (
+            Process.ExitCode,
+            Outputˉtask.GetAwaiter().GetResult().Replace(
+                "\r\n", "\n", StringComparison.Ordinal),
+            Errorˉtask.GetAwaiter().GetResult().Replace(
+                "\r\n", "\n", StringComparison.Ordinal));
     }
 
     private static (
@@ -137,6 +221,8 @@ internal static partial class Program
         using var Process = System.Diagnostics.Process.Start(Startˉinfo) ??
             throw new InvalidOperationException(
                 "The native source-to-WVB front door did not start.");
+        var Outputˉtask = Process.StandardOutput.ReadToEndAsync();
+        var Errorˉtask = Process.StandardError.ReadToEndAsync();
         if (!Process.WaitForExit(60_000))
         {
             Process.Kill(entireProcessTree: true);
@@ -145,8 +231,8 @@ internal static partial class Program
         }
         return (
             Process.ExitCode,
-            Process.StandardOutput.ReadToEnd(),
-            Process.StandardError.ReadToEnd());
+            Outputˉtask.GetAwaiter().GetResult(),
+            Errorˉtask.GetAwaiter().GetResult());
     }
 
     private static string Findˉrepositoryˉroot()

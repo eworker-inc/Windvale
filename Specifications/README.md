@@ -38,6 +38,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Experimental WebAssembly target and execution ABI](Windvale-WebAssembly.md)
 - [`wvdump` structural core](Wv-Dump-Core.md)
 - [`wvdump` report](Wv-Dump-Report.md)
+- [Native WVB read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md)
 
 ## Database experiment
 

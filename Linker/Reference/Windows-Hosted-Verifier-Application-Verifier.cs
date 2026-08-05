@@ -15,9 +15,15 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉverifier
 
     internal static Verifiedˉwindowsˉhostedˉverifierˉapplication Verify(
         ReadOnlySpan<byte> bytes,
-        Nativeˉserviceˉbundle expectedˉbundle)
+        Nativeˉserviceˉbundle expectedˉbundle,
+        Hostedˉverifierˉapplicationˉprofile expectedˉprofile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
-        Windowsˉhostedˉverifierˉapplicationˉcontract.Validateˉbundle(expectedˉbundle);
+        Windowsˉhostedˉverifierˉapplicationˉcontract.Validateˉbundle(
+            expectedˉbundle,
+            expectedˉprofile);
+        var Startupˉbytes =
+            Windowsˉhostedˉverifierˉapplicationˉcontract.Startupˉbytes(expectedˉprofile);
         var Textˉvirtual = checked((uint)(
             Windowsˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
             expectedˉbundle.Imageˉbytes.Length));
@@ -121,9 +127,9 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉverifier
         var Bundleˉfile = Textˉfile +
             Windowsˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET;
         Requireˉzero(bytes,
-            Textˉfile + Windowsˉhostedˉverifierˉapplicationˉcontract.STARTUP_BYTES,
+            Textˉfile + Startupˉbytes,
             Windowsˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET -
-                Windowsˉhostedˉverifierˉapplicationˉcontract.STARTUP_BYTES,
+                Startupˉbytes,
             "startup-to-bundle padding");
         if (!bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length)
                 .SequenceEqual(expectedˉbundle.Imageˉbytes.AsSpan()))
@@ -150,22 +156,37 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉverifier
                 checked((int)Windowsˉhostedˉverifierˉapplicationˉcontract.RUNTIME_FILE_BYTES)),
             Consoleˉapplicationˉtarget.Windowsˉx64,
             expectedˉbundle,
-            bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length));
+            bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length),
+            expectedˉprofile);
         if (Runtime.Metadata.Bundleˉoffset !=
                 Windowsˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET ||
             Runtime.Metadata.Bundleˉbytes != expectedˉbundle.Imageˉbytes.Length)
         {
             throw Invalid("The Windows hosted-verifier bundle metadata is inconsistent.");
         }
-        Windowsˉhostedˉverifierˉstartup.Verify(
-            bytes.Slice(Textˉfile,
-                Windowsˉhostedˉverifierˉapplicationˉcontract.STARTUP_BYTES),
-            Windowsˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS,
-            Dataˉaddress,
-            Runtimeˉaddress,
-            Runtime.Layout,
-            expectedˉbundle,
-            Runtime.Metadata.Nativeˉentryˉoffset);
+        if (expectedˉprofile ==
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
+        {
+            Windowsˉhostedˉverifierˉstartup.Verify(
+                bytes.Slice(Textˉfile, Startupˉbytes),
+                Windowsˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS,
+                Dataˉaddress,
+                Runtimeˉaddress,
+                Runtime.Layout,
+                expectedˉbundle,
+                Runtime.Metadata.Nativeˉentryˉoffset);
+        }
+        else
+        {
+            Windowsˉhostedˉinspectorˉstartup.Verify(
+                bytes.Slice(Textˉfile, Startupˉbytes),
+                Windowsˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS,
+                Dataˉaddress,
+                Runtimeˉaddress,
+                Runtime.Layout,
+                expectedˉbundle,
+                Runtime.Metadata.Nativeˉentryˉoffset);
+        }
 
         Requireˉu32(bytes, checked((int)Relocationˉfile),
             Windowsˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS,
@@ -185,7 +206,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉverifier
 
         var Layout = Windowsˉhostedˉverifierˉapplicationˉcontract.Plan(
             expectedˉbundle,
-            Runtime.Metadata.Nativeˉentryˉoffset);
+            Runtime.Metadata.Nativeˉentryˉoffset,
+            expectedˉprofile);
         return new(
             Layout,
             Runtime.Metadata.Nativeˉentryˉoffset,

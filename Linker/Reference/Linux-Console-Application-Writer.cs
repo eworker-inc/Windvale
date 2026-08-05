@@ -275,6 +275,60 @@ public static class Linuxˉconsoleˉapplicationˉwriter
         }
     }
 
+    public static Linuxˉconsoleˉapplicationˉresult Writeˉhostedˉinspector(
+        Nativeˉfragment fragment,
+        ImmutableArray<Capabilityˉdeclaration> capabilities)
+    {
+        try
+        {
+            Nativeˉfragmentˉverifier.Verify(fragment);
+            var Entries = fragment.Symbols
+                .Where(Symbol => Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
+                    Symbol.Kind == Nativeˉsymbolˉkind.Function &&
+                    Symbol.Name == "Main")
+                .ToArray();
+            if (Entries.Length != 1)
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1501",
+                    "The hosted WVB inspector requires exactly one exported Main function.");
+            }
+
+            var Bundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉinspector(
+                fragment,
+                Nativeˉserviceˉplatform.Linux);
+            var Image = Linuxˉhostedˉverifierˉapplicationˉbuilder.Build(
+                capabilities,
+                Bundle,
+                Entries[0].Offset,
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector);
+            var Verified = Linuxˉhostedˉverifierˉapplicationˉverifier.Verify(
+                Image.AsSpan(),
+                Bundle,
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector);
+            if (Verified.Nativeˉentryˉoffset != Entries[0].Offset ||
+                Verified.Runtime.Metadata.Profile !=
+                    Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector ||
+                !Verified.Bundleˉimage.AsSpan().SequenceEqual(Bundle.Imageˉbytes.AsSpan()))
+            {
+                return Linuxˉconsoleˉapplicationˉresult.Failed(
+                    "WVL1502",
+                    "The independently verified Linux WVB inspector did not reproduce its profile, entry, and service bundle.");
+            }
+            return Linuxˉconsoleˉapplicationˉresult.Succeeded(Image);
+        }
+        catch (Exception Exception) when (
+            Exception is Nativeˉbackendˉexception or
+                InvalidDataException or
+                OverflowException or
+                ArgumentException)
+        {
+            return Linuxˉconsoleˉapplicationˉresult.Failed(
+                "WVL1502",
+                $"Hosted Linux WVB inspector verification failed: {Exception.Message}");
+        }
+    }
+
     private static byte[] Buildˉimage(ReadOnlySpan<byte> nativeˉimage, uint nativeˉentryˉoffset)
     {
         var Layout = Consoleˉapplicationˉlayout.Plan(

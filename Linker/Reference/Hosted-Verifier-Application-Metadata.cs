@@ -24,8 +24,15 @@ internal enum Hostedˉverifierˉcapabilityˉsignature : uint
     Voidˉtoˉu32 = 4,
 }
 
+internal enum Hostedˉverifierˉapplicationˉprofile : uint
+{
+    Compilerˉwvbˉverifier = 2,
+    Wvbˉinspector = 4,
+}
+
 internal sealed record Verifiedˉhostedˉverifierˉmetadata(
     Consoleˉapplicationˉtarget Target,
+    Hostedˉverifierˉapplicationˉprofile Profile,
     uint Bundleˉoffset,
     uint Bundleˉbytes,
     uint Nativeˉimageˉbytes,
@@ -45,11 +52,13 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
     internal const int SERVICE_RECORD_BYTES = 64;
     internal const int CAPABILITY_COUNT = 5;
     internal const int SERVICE_COUNT = 6;
+    internal const int INSPECTOR_SERVICE_COUNT = 11;
     internal const int CAPABILITY_OFFSET = HEADER_BYTES;
     internal const int SERVICE_OFFSET =
         CAPABILITY_OFFSET + CAPABILITY_COUNT * CAPABILITY_RECORD_BYTES;
     internal const int NATIVE_SHA256_OFFSET = 96;
     internal const uint VERIFIER_PROFILE_FLAGS = 2;
+    internal const uint INSPECTOR_PROFILE_FLAGS = 4;
     internal const ulong VERIFIER_MAXIMUM_INSTRUCTIONS = 16_000_000_000;
 
     private static readonly ImmutableArray<Hostedˉverifierˉcapabilityˉcontract>
@@ -90,15 +99,38 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         Nativeˉservice.Textˉutf8ˉisˉvalid,
         Nativeˉservice.Diagnosticˉwriteˉline,
     ];
+    private static readonly ImmutableArray<Nativeˉservice> INSPECTOR_REQUIRED_SERVICES =
+    [
+        Nativeˉservice.Consoleˉwriteˉline,
+        Nativeˉservice.Processˉargumentˉcount,
+        Nativeˉservice.Processˉargument,
+        Nativeˉservice.Fileˉreadˉbytes,
+        Nativeˉservice.Textˉutf8ˉisˉvalid,
+        Nativeˉservice.Diagnosticˉwriteˉline,
+        Nativeˉservice.Enumˉname,
+        Nativeˉservice.Textˉconcat,
+        Nativeˉservice.Textˉquote,
+        Nativeˉservice.I32ˉformat,
+        Nativeˉservice.U32ˉformat,
+    ];
 
     internal static ImmutableArray<byte> Build(
         Consoleˉapplicationˉtarget target,
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
         uint bundleˉoffset,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
-        Validateˉinputs(target, capabilities, bundle, bundleˉoffset, nativeˉentryˉoffset);
+        Validateˉinputs(
+            target,
+            capabilities,
+            bundle,
+            bundleˉoffset,
+            nativeˉentryˉoffset,
+            profile);
+        var Services = Requiredˉservices(profile);
         var Bytes = new byte[SIZE];
         Writeˉu32(Bytes, 0, MAGIC);
         Writeˉu32(Bytes, 4, FORMAT_VERSION);
@@ -109,7 +141,7 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         Writeˉu32(Bytes, 24, Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
         Writeˉu32(Bytes, 28, Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
         Writeˉu32(Bytes, 32, CAPABILITY_COUNT);
-        Writeˉu32(Bytes, 36, SERVICE_COUNT);
+        Writeˉu32(Bytes, 36, checked((uint)Services.Length));
         Writeˉu32(Bytes, 40, CAPABILITY_OFFSET);
         Writeˉu32(Bytes, 44, CAPABILITY_RECORD_BYTES);
         Writeˉu32(Bytes, 48, SERVICE_OFFSET);
@@ -121,7 +153,7 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         Writeˉu32(Bytes, 72, nativeˉentryˉoffset);
         Writeˉu32(Bytes, 76, Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES);
         Writeˉu32(Bytes, 80, Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES);
-        Writeˉu32(Bytes, 84, VERIFIER_PROFILE_FLAGS);
+        Writeˉu32(Bytes, 84, (uint)profile);
         Writeˉu64(Bytes, 88, VERIFIER_MAXIMUM_INSTRUCTIONS);
 
         for (var Index = 0; Index < CAPABILITY_CONTRACTS.Length; Index++)
@@ -159,8 +191,11 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         ReadOnlySpan<byte> bytes,
         Consoleˉapplicationˉtarget expectedˉtarget,
         Nativeˉserviceˉbundle expectedˉbundle,
-        ReadOnlySpan<byte> actualˉbundleˉimage)
+        ReadOnlySpan<byte> actualˉbundleˉimage,
+        Hostedˉverifierˉapplicationˉprofile expectedˉprofile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
+        var Expectedˉservices = Requiredˉservices(expectedˉprofile);
         if (bytes.Length != SIZE)
         {
             throw Invalid("The hosted verifier metadata has an invalid size.");
@@ -184,7 +219,7 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         Require(bytes, 28, Nativeˉserviceˉtableˉcontract.FORMAT_VERSION,
             "service-table version");
         Require(bytes, 32, CAPABILITY_COUNT, "capability count");
-        Require(bytes, 36, SERVICE_COUNT, "service count");
+        Require(bytes, 36, checked((uint)Expectedˉservices.Length), "service count");
         Require(bytes, 40, CAPABILITY_OFFSET, "capability offset");
         Require(bytes, 44, CAPABILITY_RECORD_BYTES, "capability-record size");
         Require(bytes, 48, SERVICE_OFFSET, "service offset");
@@ -199,7 +234,7 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
             "record-arena size");
         Require(bytes, 80, Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES,
             "text-arena size");
-        Require(bytes, 84, VERIFIER_PROFILE_FLAGS, "profile flags");
+        Require(bytes, 84, (uint)expectedˉprofile, "profile flags");
         Requireˉu64(bytes, 88, VERIFIER_MAXIMUM_INSTRUCTIONS, "instruction budget");
         if (Bundleˉoffset % 16 != 0 || Nativeˉentry >= expectedˉbundle.Nativeˉimageˉbytes)
         {
@@ -223,8 +258,10 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
             Require(bytes, Offset + 12, 1, "capability contract version");
         }
 
-        if (expectedˉbundle.Placements.Length != SERVICE_COUNT ||
-            expectedˉbundle.Platform != Platform(expectedˉtarget))
+        if (expectedˉbundle.Placements.Length != Expectedˉservices.Length ||
+            expectedˉbundle.Platform != Platform(expectedˉtarget) ||
+            !expectedˉbundle.Placements.Select(Placement => Placement.Service)
+                .SequenceEqual(Expectedˉservices))
         {
             throw Invalid("The expected hosted verifier service bundle is invalid.");
         }
@@ -252,12 +289,13 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         }
         Requireˉzero(
             bytes,
-            SERVICE_OFFSET + SERVICE_COUNT * SERVICE_RECORD_BYTES,
-            SIZE - SERVICE_OFFSET - SERVICE_COUNT * SERVICE_RECORD_BYTES,
+            SERVICE_OFFSET + Expectedˉservices.Length * SERVICE_RECORD_BYTES,
+            SIZE - SERVICE_OFFSET - Expectedˉservices.Length * SERVICE_RECORD_BYTES,
             "reserved metadata tail");
 
         return new(
             expectedˉtarget,
+            expectedˉprofile,
             Bundleˉoffset,
             checked((uint)expectedˉbundle.Imageˉbytes.Length),
             checked((uint)expectedˉbundle.Nativeˉimageˉbytes),
@@ -272,16 +310,18 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
         uint bundleˉoffset,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile)
     {
+        var Services = Requiredˉservices(profile);
         if (!Enum.IsDefined(target) ||
             bundle is null ||
             bundle.Platform != Platform(target) ||
             bundleˉoffset % 16 != 0 ||
             nativeˉentryˉoffset >= bundle.Nativeˉimageˉbytes ||
-            bundle.Placements.Length != SERVICE_COUNT ||
+            bundle.Placements.Length != Services.Length ||
             !bundle.Placements.Select(Placement => Placement.Service)
-                .SequenceEqual(REQUIRED_SERVICES))
+                .SequenceEqual(Services))
         {
             throw new ArgumentException("The hosted verifier bundle contract is invalid.");
         }
@@ -302,6 +342,14 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
             }
         }
     }
+
+    internal static ImmutableArray<Nativeˉservice> Requiredˉservices(
+        Hostedˉverifierˉapplicationˉprofile profile) => profile switch
+    {
+        Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier => REQUIRED_SERVICES,
+        Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector => INSPECTOR_REQUIRED_SERVICES,
+        _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+    };
 
     private static Capabilityˉdeclaration Declaration(string name)
     {

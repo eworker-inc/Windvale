@@ -84,6 +84,35 @@ public static class X64ˉnativeˉserviceˉbundle
         return Build(fragment, platform, Services);
     }
 
+    public static Nativeˉserviceˉbundle Buildˉhostedˉinspector(
+        Nativeˉfragment fragment,
+        Nativeˉserviceˉplatform platform)
+    {
+        Nativeˉfragmentˉverifier.Verify(fragment);
+        ReadOnlySpan<Nativeˉservice> Expected =
+        [
+            Nativeˉservice.Consoleˉwriteˉline,
+            Nativeˉservice.Processˉargumentˉcount,
+            Nativeˉservice.Processˉargument,
+            Nativeˉservice.Fileˉreadˉbytes,
+            Nativeˉservice.Textˉutf8ˉisˉvalid,
+            Nativeˉservice.Diagnosticˉwriteˉline,
+            Nativeˉservice.Enumˉname,
+            Nativeˉservice.Textˉconcat,
+            Nativeˉservice.Textˉquote,
+            Nativeˉservice.I32ˉformat,
+            Nativeˉservice.U32ˉformat,
+        ];
+        if (!fragment.Requiredˉservices.AsSpan().SequenceEqual(Expected))
+        {
+            throw new Nativeˉbackendˉexception(
+                "WVN4019",
+                "The hosted WVB inspector requires its exact read-only service profile.");
+        }
+
+        return Build(fragment, platform, [.. Expected]);
+    }
+
     private static Nativeˉserviceˉbundle Build(
         Nativeˉfragment fragment,
         Nativeˉserviceˉplatform platform,

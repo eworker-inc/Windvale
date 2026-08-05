@@ -17,9 +17,15 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉverifier
 
     internal static Verifiedˉlinuxˉhostedˉverifierˉapplication Verify(
         ReadOnlySpan<byte> bytes,
-        Nativeˉserviceˉbundle expectedˉbundle)
+        Nativeˉserviceˉbundle expectedˉbundle,
+        Hostedˉverifierˉapplicationˉprofile expectedˉprofile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
-        Linuxˉhostedˉverifierˉapplicationˉcontract.Validateˉbundle(expectedˉbundle);
+        Linuxˉhostedˉverifierˉapplicationˉcontract.Validateˉbundle(
+            expectedˉbundle,
+            expectedˉprofile);
+        var Startupˉbytes =
+            Linuxˉhostedˉverifierˉapplicationˉcontract.Startupˉbytes(expectedˉprofile);
         var Textˉbytes = checked((uint)(
             Linuxˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
             expectedˉbundle.Imageˉbytes.Length));
@@ -97,9 +103,9 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉverifier
         var Bundleˉfile = Textˉfile +
             Linuxˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET;
         Requireˉzero(bytes,
-            Textˉfile + Linuxˉhostedˉverifierˉapplicationˉcontract.STARTUP_BYTES,
+            Textˉfile + Startupˉbytes,
             Linuxˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET -
-                Linuxˉhostedˉverifierˉapplicationˉcontract.STARTUP_BYTES,
+                Startupˉbytes,
             "startup-to-bundle padding");
         if (!bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length)
                 .SequenceEqual(expectedˉbundle.Imageˉbytes.AsSpan()))
@@ -116,7 +122,8 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉverifier
                 checked((int)Linuxˉhostedˉverifierˉapplicationˉcontract.DATA_FILE_BYTES)),
             Consoleˉapplicationˉtarget.Linuxˉx64,
             expectedˉbundle,
-            bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length));
+            bytes.Slice(Bundleˉfile, expectedˉbundle.Imageˉbytes.Length),
+            expectedˉprofile);
         if (Runtime.Metadata.Bundleˉoffset !=
                 Linuxˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET ||
             Runtime.Metadata.Bundleˉbytes != expectedˉbundle.Imageˉbytes.Length)
@@ -124,18 +131,32 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉverifier
             throw Invalid("The Linux hosted-verifier bundle metadata is inconsistent.");
         }
 
-        Linuxˉhostedˉverifierˉstartup.Verify(
-            bytes.Slice(Textˉfile,
-                Linuxˉhostedˉverifierˉapplicationˉcontract.STARTUP_BYTES),
-            Linuxˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS,
-            Dataˉoffset,
-            Runtime.Layout,
-            expectedˉbundle,
-            Runtime.Metadata.Nativeˉentryˉoffset);
+        if (expectedˉprofile ==
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
+        {
+            Linuxˉhostedˉverifierˉstartup.Verify(
+                bytes.Slice(Textˉfile, Startupˉbytes),
+                Linuxˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS,
+                Dataˉoffset,
+                Runtime.Layout,
+                expectedˉbundle,
+                Runtime.Metadata.Nativeˉentryˉoffset);
+        }
+        else
+        {
+            Linuxˉhostedˉinspectorˉstartup.Verify(
+                bytes.Slice(Textˉfile, Startupˉbytes),
+                Linuxˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS,
+                Dataˉoffset,
+                Runtime.Layout,
+                expectedˉbundle,
+                Runtime.Metadata.Nativeˉentryˉoffset);
+        }
 
         var Layout = Linuxˉhostedˉverifierˉapplicationˉcontract.Plan(
             expectedˉbundle,
-            Runtime.Metadata.Nativeˉentryˉoffset);
+            Runtime.Metadata.Nativeˉentryˉoffset,
+            expectedˉprofile);
         return new(
             Layout,
             Runtime.Metadata.Nativeˉentryˉoffset,

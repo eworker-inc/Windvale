@@ -49,6 +49,28 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     --target linux-x64-wvb-publisher-v1 `
     -o (Join-Path $Destination 'linux-x64/wvpublish.elf')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Tool build (Join-Path $RepositoryRoot 'Windvale-Compiler-Wvb-Verifier.wvproj') `
+    -o (Join-Path $Destination 'Wvb/Compiler-Wvb-Verifier.wvb')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Tool aot (Join-Path $Destination 'Wvb/Compiler-Wvb-Verifier.wvb') `
+    --target windows-x64-verifier-v1 `
+    -o (Join-Path $Destination 'windows-x64/wvverify.exe')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Tool aot (Join-Path $Destination 'Wvb/Compiler-Wvb-Verifier.wvb') `
+    --target linux-x64-verifier-v1 `
+    -o (Join-Path $Destination 'linux-x64/wvverify.elf')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Tool build (Join-Path $RepositoryRoot 'Windvale-Wvb-Inspector.wvproj') `
+    -o (Join-Path $Destination 'Wvb/Wvb-Inspector.wvb')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Tool aot (Join-Path $Destination 'Wvb/Wvb-Inspector.wvb') `
+    --target windows-x64-wvb-inspector-v1 `
+    -o (Join-Path $Destination 'windows-x64/wvdump.exe')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+& $Tool aot (Join-Path $Destination 'Wvb/Wvb-Inspector.wvb') `
+    --target linux-x64-wvb-inspector-v1 `
+    -o (Join-Path $Destination 'linux-x64/wvdump.elf')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $Manifest = Get-Content -LiteralPath (Join-Path $CanonicalRoot 'Manifest.json') `
     -Raw | ConvertFrom-Json

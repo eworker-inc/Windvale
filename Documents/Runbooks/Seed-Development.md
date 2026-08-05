@@ -142,11 +142,23 @@ Or on Linux:
 
 The launcher verifies its pinned native tools, builds a caller-owned candidate,
 and invokes the exact native publisher for verifier-admitted atomic replacement.
-The retained Stage 0 runtime can then verify, inspect, and execute that WVB:
+Verify and inspect that WVB through the ordinary native route on Windows:
+
+```bat
+Tools\Native\Verify-Wvb.cmd Artifacts\Sum-Data.wvb
+Tools\Native\Inspect-Wvb.cmd Artifacts\Sum-Data.wvb
+```
+
+Or on Linux:
+
+```sh
+./Tools/Native/Verify-Wvb.sh Artifacts/Sum-Data.wvb
+./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
+```
+
+The retained Stage 0 runtime still owns execution:
 
 ```powershell
-dotnet run --project Tools/Windvale.Tool -- verify Artifacts/Sum-Data.wvb
-dotnet run --project Tools/Windvale.Tool -- inspect Artifacts/Sum-Data.wvb
 dotnet run --project Tools/Windvale.Tool -- run Artifacts/Sum-Data.wvb
 ```
 

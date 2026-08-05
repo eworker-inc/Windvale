@@ -17,22 +17,40 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉbuilder
     internal static ImmutableArray<byte> Build(
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
         var Layout = Linuxˉhostedˉverifierˉapplicationˉcontract.Plan(
             bundle,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
         var Runtime = Hostedˉverifierˉruntimeˉdata.Build(
             Consoleˉapplicationˉtarget.Linuxˉx64,
             capabilities,
             bundle,
-            nativeˉentryˉoffset);
-        var Startup = Linuxˉhostedˉverifierˉstartup.Build(
-            Layout.Textˉaddress,
-            Layout.Dataˉaddress,
-            Hostedˉverifierˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Linuxˉx64),
-            bundle,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
+        var Startup = profile switch
+        {
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier =>
+                Linuxˉhostedˉverifierˉstartup.Build(
+                    Layout.Textˉaddress,
+                    Layout.Dataˉaddress,
+                    Hostedˉverifierˉruntimeˉdata.Plan(
+                        Consoleˉapplicationˉtarget.Linuxˉx64),
+                    bundle,
+                    nativeˉentryˉoffset),
+            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector =>
+                Linuxˉhostedˉinspectorˉstartup.Build(
+                    Layout.Textˉaddress,
+                    Layout.Dataˉaddress,
+                    Hostedˉverifierˉruntimeˉdata.Plan(
+                        Consoleˉapplicationˉtarget.Linuxˉx64),
+                    bundle,
+                    nativeˉentryˉoffset),
+            _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
+        };
         var Result = new byte[Layout.Applicationˉbytes];
 
         ReadOnlySpan<byte> Identification =

@@ -58,9 +58,9 @@ The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) an
 Requirements:
 
 - Windows x64 with the inbox command processor, or Linux x64 with Bash and
-  `sha256sum`, for the ordinary native source-to-WVB build
+  `sha256sum`, for ordinary native source-to-WVB build, verification, and inspection
 - .NET SDK 10.0.302 or a compatible later patch in the same feature band for
-  the retained Stage 0 runtime, inspection, tests, packaging, and recovery tools
+  the retained Stage 0 runtime execution, tests, packaging, and recovery tools
 
 The repository pins the SDK in `global.json` and uses no external NuGet packages.
 
@@ -77,18 +77,30 @@ Or on Linux:
 ```
 
 The checked-in native artifacts are digest-verified before use, and the publisher
-atomically replaces only a verifier-admitted output. Inspect and run the result
-through the retained Stage 0 tools:
+atomically replaces only a verifier-admitted output. Verify and inspect the result
+without .NET on Windows:
+
+```bat
+Tools\Native\Verify-Wvb.cmd Artifacts\Sum-Data.wvb
+Tools\Native\Inspect-Wvb.cmd Artifacts\Sum-Data.wvb
+```
+
+Or on Linux:
+
+```sh
+./Tools/Native/Verify-Wvb.sh Artifacts/Sum-Data.wvb
+./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
+```
+
+Execution remains on the retained Stage 0 route for now:
 
 ```powershell
-dotnet run --project Tools/Windvale.Tool -- verify Artifacts/Sum-Data.wvb
-dotnet run --project Tools/Windvale.Tool -- inspect Artifacts/Sum-Data.wvb
 dotnet run --project Tools/Windvale.Tool -- run Artifacts/Sum-Data.wvb
 ```
 
 The result is `Result: 29`.
 
-For native build details and reconstruction, see the [native source-to-WVB runbook](Documents/Runbooks/Native-Source-To-Wvb.md). For verification tiers, hosted capabilities, Stage 0 commands, bootstrap convergence, assembly, linking, and component examples, continue with the [Seed development runbook](Documents/Runbooks/Seed-Development.md).
+For native build, read-only WVB tooling, and reconstruction details, see the [native source-to-WVB runbook](Documents/Runbooks/Native-Source-To-Wvb.md). For verification tiers, hosted capabilities, Stage 0 commands, bootstrap convergence, assembly, linking, and component examples, continue with the [Seed development runbook](Documents/Runbooks/Seed-Development.md).
 
 ## Seed language example
 
