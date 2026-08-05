@@ -78,5 +78,6 @@ export fn Compilerˉnativeˉx64ˉlayoutˉhelperˉname(Function: u32) -> bytes {
     if Function == 4u32 { return Textˉtoˉutf8("$function_0004"); }
     if Function == 5u32 { return Textˉtoˉutf8("$function_0005"); }
     if Function == 6u32 { return Textˉtoˉutf8("$function_0006"); }
+    if Function == 7u32 { return Textˉtoˉutf8("$function_0007"); }
     return Textˉtoˉutf8("");
 }

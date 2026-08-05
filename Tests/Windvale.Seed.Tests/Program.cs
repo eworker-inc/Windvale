@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "ebef78182bd6385589277721b69faa08f05849307da01353fdb94c73ac08cea4";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "d4b7fcf12301de8d2be955e95a629467fcd45e719404449b3f8cc2938b82602b";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "9a32b3854270bcace52f615633f4b110d9f0777ba5fb5338157af0965dcc8ed4";
-    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "6e13d55df4e99ee60bc087ffc5bcfb290c3c922930837009405492e910e49467";
-    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "6deeddffa056de376e77b19f9c1825899579777eaede34141b2240f2da1076a6";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "9a8b45325df56722bdf9a1c552c6743056f9fc8c472a9d29b80684ccb823dc78";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "adca98f19b4b3c6d864d07285d5fb1214131976e4a11b3c0aafd0a5e71f9e230";
+    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "23298b46f524e31f4eca6e63d0815ff96a969182cce8872887c0650ab098a572";
+    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "e9237fe0bef27b4c4d4cb682872e25aae0532c9e3a7b1e2f4f43aab739b55046";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "77ab37967363200d7bf75b6f86689e6cbebe50701d47bb601e8c9e26e32f5a21";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "dbc2b2f75baceb8659d4f2c0977b3e3290abbaf38b3d47b6e40aed6b399fd2bd";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -2899,11 +2899,108 @@ internal static partial class Program
             Memory,
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 });
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);
         var Multiˉcallˉobject = Nativeˉobjectˉsink.Writeˉwvo(
             Multiˉcallˉnative.Fragment);
+        const string Generalˉcallˉsource = """
+            module Nativeˉgeneralˉcalls profile portable;
+            fn Alpha(Value: i32) -> i32 {
+                if Value == 0 { return 42; }
+                return Alpha(Value - 1);
+            }
+            fn Zeta(Value: i32) -> i32 {
+                if Value == 0 { return 42; }
+                return Zeta(Value - 1);
+            }
+            export fn Main() -> i32 { return Alpha(3) + Zeta(0) - 42; }
+            """;
+        var Generalˉcallˉwvb = Compileˉsuccess(Generalˉcallˉsource);
+        var Generalˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Generalˉcallˉwvb);
+        var Alphaˉindex = Enumerable.Range(0, Generalˉcallˉmodule.Functions.Length)
+            .Single(Index =>
+                Generalˉcallˉmodule.Functions[Index].Declaration.Name == "Alpha");
+        var Zetaˉindex = Enumerable.Range(0, Generalˉcallˉmodule.Functions.Length)
+            .Single(Index =>
+                Generalˉcallˉmodule.Functions[Index].Declaration.Name == "Zeta");
+        var Lowerˉindex = Math.Min(Alphaˉindex, Zetaˉindex);
+        var Higherˉindex = Math.Max(Alphaˉindex, Zetaˉindex);
+        var Lowerˉfunction = Generalˉcallˉmodule.Functions[Lowerˉindex];
+        var Higherˉfunction = Generalˉcallˉmodule.Functions[Higherˉindex];
+        var Mainˉindex = Enumerable.Range(0, Generalˉcallˉmodule.Functions.Length)
+            .Single(Index =>
+                Generalˉcallˉmodule.Functions[Index].Declaration.Name == "Main");
+        var Mainˉfunction = Generalˉcallˉmodule.Functions[Mainˉindex];
+        var Lowerˉcall = Lowerˉfunction.Instructions.Single(Instruction =>
+            Instruction.Opcode == Opcode.Call &&
+            Instruction.Unsignedˉoperand == (uint)Lowerˉindex);
+        var Higherˉcall = Higherˉfunction.Instructions.Single(Instruction =>
+            Instruction.Opcode == Opcode.Call &&
+            Instruction.Unsignedˉoperand == (uint)Higherˉindex);
+        var Mainˉcall = Mainˉfunction.Instructions.Single(Instruction =>
+            Instruction.Opcode == Opcode.Call &&
+            Instruction.Unsignedˉoperand == (uint)Alphaˉindex);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Generalˉcallˉwvb.AsSpan(
+                Codeˉpayloadˉoffset(Generalˉcallˉwvb) +
+                Lowerˉfunction.Declaration.Codeˉoffset +
+                Lowerˉcall.Offset + 1,
+                4),
+            (uint)Higherˉindex);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Generalˉcallˉwvb.AsSpan(
+                Codeˉpayloadˉoffset(Generalˉcallˉwvb) +
+                Higherˉfunction.Declaration.Codeˉoffset +
+                Higherˉcall.Offset + 1,
+                4),
+            (uint)Lowerˉindex);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Generalˉcallˉwvb.AsSpan(
+                Codeˉpayloadˉoffset(Generalˉcallˉwvb) +
+                Mainˉfunction.Declaration.Codeˉoffset +
+                Mainˉcall.Offset + 1,
+                4),
+            (uint)Lowerˉindex);
+        Generalˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Generalˉcallˉwvb);
+        var Generalˉcallˉinterpreted = new Referenceˉruntime(
+            Generalˉcallˉmodule,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Generalˉcallˉinterpreted.Exitˉcode);
+        var Generalˉcallˉnative = X64ˉnativeˉbackend.Compile(Generalˉcallˉmodule);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Generalˉcallˉnative.Fragment,
+                maximumˉinstructions: Generalˉcallˉinterpreted.Executedˉinstructions,
+                maximumˉcallˉdepth: 5));
+        Throwsˉnativeˉtrap(
+            "WVR3004",
+            () => _ = X64ˉnativeˉexecutor.Executeˉi32(
+                Generalˉcallˉnative.Fragment,
+                maximumˉinstructions: Generalˉcallˉinterpreted.Executedˉinstructions,
+                maximumˉcallˉdepth: 4));
+        var Generalˉcallˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            Generalˉcallˉnative.Fragment);
+        var Generalˉcallˉreference = Runˉnativeˉx64ˉloweringˉtool(
+            Tool,
+            Generalˉcallˉwvb);
+        if (Generalˉcallˉreference.Exitˉcode != 0)
+        {
+            throw new InvalidOperationException(
+                $"General-call lowering failed: {Generalˉcallˉreference.Diagnostics.Trim()} " +
+                $"functions={string.Join(',', Generalˉcallˉmodule.Functions.Select(Function => Function.Declaration.Name))}");
+        }
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Generalˉcallˉnative.Fragment.Code.Length} " +
+            $"object-bytes={Generalˉcallˉobject.Length}\n",
+            Generalˉcallˉreference.Output);
+        Sequenceˉequal(
+            Generalˉcallˉobject,
+            Generalˉcallˉreference.Writtenˉbytes);
         var Sumˉwvb = Compileˉsuccess(SUM_SOURCE);
         var Sumˉmodule = Moduleˉcodec.Readˉandˉverify(Sumˉwvb);
         var Sumˉnative = X64ˉnativeˉbackend.Compile(Sumˉmodule);
@@ -2963,6 +3060,13 @@ internal static partial class Program
                 new Referenceˉcapabilityˉhost(TextWriter.Null),
                 Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
                 .Runˉmainˉbytes(Multiˉcallˉwvb.ToImmutableArray()).Bytes);
+        Sequenceˉequal(
+            Generalˉcallˉobject,
+            new Referenceˉruntime(
+                Memory,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+                .Runˉmainˉbytes(Generalˉcallˉwvb.ToImmutableArray()).Bytes);
         var Windvaleˉsumˉobject = new Referenceˉruntime(
             Memory,
             new Referenceˉcapabilityˉhost(TextWriter.Null),
@@ -2987,7 +3091,6 @@ internal static partial class Program
                 Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 10_000_000 })
                 .Runˉmainˉbytes(wvbˉbytes[..^1].ToImmutableArray()).Bytes.Length);
 
-        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         var Reference = Runˉnativeˉx64ˉloweringˉtool(Tool, wvbˉbytes);
         Equal(0, Reference.Exitˉcode);
         Equal("native x64 status=Valid abi=22 code-bytes=406 object-bytes=479\n", Reference.Output);
@@ -3154,18 +3257,7 @@ internal static partial class Program
                 Callˉmainˉfunction.Declaration.Codeˉoffset +
                 Directˉcall.Offset + 1,
                 4),
-            1u);
-        var Forwardˉcallˉwvb = Multiˉcallˉwvb.ToArray();
-        var Buildˉfunction = Multiˉcallˉmodule.Functions[1];
-        var Buildˉcall = Buildˉfunction.Instructions.Single(
-            Instruction => Instruction.Opcode == Opcode.Call);
-        BinaryPrimitives.WriteUInt32LittleEndian(
-            Forwardˉcallˉwvb.AsSpan(
-                Codeˉpayloadˉoffset(Forwardˉcallˉwvb) +
-                Buildˉfunction.Declaration.Codeˉoffset +
-                Buildˉcall.Offset + 1,
-                4),
-            1u);
+            2u);
         var Mismatchedˉscalarˉparameterˉwvb = scalarˉargumentˉwvb.ToArray();
         var Scalarˉfunction = Functionˉpayloadˉoffset(Mismatchedˉscalarˉparameterˉwvb) + 4;
         var Scalarˉnameˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
@@ -3190,7 +3282,6 @@ internal static partial class Program
             Invalidˉbranchˉtargetˉwvb,
             Unreachableˉloopˉwvb,
             Invalidˉcallˉtargetˉwvb,
-            Forwardˉcallˉwvb,
             Mismatchedˉscalarˉparameterˉwvb,
             Invalidˉdataˉindexˉwvb,
         })
@@ -3373,6 +3464,30 @@ internal static partial class Program
                 Multiˉcallˉreference.Diagnostics,
                 Multiˉcallˉdiagnostic.Readˉtext());
             Sequenceˉequal(Multiˉcallˉobject, File.ReadAllBytes(Outputˉpath));
+
+            File.WriteAllBytes(Inputˉpath, Generalˉcallˉwvb);
+            using var Generalˉcallˉoutput = new Nativeˉoutputˉcapture();
+            using var Generalˉcallˉdiagnostic = new Nativeˉoutputˉcapture();
+            var Generalˉcallˉhost = new Nativeˉhostˉservices(
+                Generalˉcallˉoutput.Channel,
+                Authorized,
+                Resources,
+                Generalˉcallˉdiagnostic.Channel,
+                Nativeˉfileˉinput.Hostˉfileˉsystem(),
+                Nativeˉfileˉoutput.Hostˉfileˉsystem());
+            Equal(
+                0,
+                X64ˉnativeˉexecutor.Executeˉi32(
+                    Toolˉnative.Fragment,
+                    maximumˉinstructions: Generalˉcallˉreference.Executedˉinstructions,
+                    hostˉservices: Generalˉcallˉhost));
+            Equal(
+                Generalˉcallˉreference.Output,
+                Generalˉcallˉoutput.Readˉtext());
+            Equal(
+                Generalˉcallˉreference.Diagnostics,
+                Generalˉcallˉdiagnostic.Readˉtext());
+            Sequenceˉequal(Generalˉcallˉobject, File.ReadAllBytes(Outputˉpath));
 
             File.WriteAllBytes(Inputˉpath, wvbˉbytes[..^1]);
             var Sentinel = new byte[] { 0x57, 0x56, 0x4F, 0x21 };

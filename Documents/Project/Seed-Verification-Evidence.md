@@ -1921,20 +1921,29 @@ of function-directory ownership. The instruction core remains the owner of typed
 stack analysis, exact machine sizes, the `WVR3005` branch, and RIP-relative load
 selection.
 
+[Decision 0232](../Decisions/0232-General-Native-Call-Directory.md)
+replaces the decreasing-ordinal and Main-last restrictions with three bounded
+passes: complete signature admission, machine measurement, and emission. The
+export identifies parameterless `Main` at any ordinal, while every in-range exact
+scalar signature may be called forward, backward, recursively, or cyclically
+under ABI 22's shared instruction and call-depth budgets. The focused object
+writer keeps local helper symbols ordered before exported `Main`; layout adds the
+previously unnecessary `$function_0007` name.
+
 The current module identities are:
 
 - data: `9a32b3854270bcace52f615633f4b110d9f0777ba5fb5338157af0965dcc8ed4`;
-- layout: `6e13d55df4e99ee60bc087ffc5bcfb290c3c922930837009405492e910e49467`;
-- object: `6deeddffa056de376e77b19f9c1825899579777eaede34141b2240f2da1076a6`;
-- core closure: `ebef78182bd6385589277721b69faa08f05849307da01353fdb94c73ac08cea4`;
-- memory adapter: `9a8b45325df56722bdf9a1c552c6743056f9fc8c472a9d29b80684ccb823dc78`;
-- 101,687-byte hosted tool: `adca98f19b4b3c6d864d07285d5fb1214131976e4a11b3c0aafd0a5e71f9e230`.
+- layout: `23298b46f524e31f4eca6e63d0815ff96a969182cce8872887c0650ab098a572`;
+- object: `e9237fe0bef27b4c4d4cb682872e25aae0532c9e3a7b1e2f4f43aab739b55046`;
+- core closure: `d4b7fcf12301de8d2be955e95a629467fcd45e719404449b3f8cc2938b82602b`;
+- memory adapter: `77ab37967363200d7bf75b6f86689e6cbebe50701d47bb601e8c9e26e32f5a21`;
+- 103,043-byte hosted tool: `dbc2b2f75baceb8659d4f2c0977b3e3290abbaf38b3d47b6e40aed6b399fd2bd`.
 
-The tool's complete Stage 0 lowering records 1,256,704 native code bytes and a
-1,260,104-byte WVO. Its Windows candidate is 1,274,880 bytes /
-`c37d6493f453bde736eef52d01b733382eb6ac74505b915706e00b273f14f726`;
-its Linux candidate is 1,273,856 bytes /
-`80d62a7195abcfe071ddb4c3eb8c64325eb2bdad18d217b7664c311f21f14844`.
+The tool's complete Stage 0 lowering records 1,273,630 native code bytes and a
+1,277,080-byte WVO. Its Windows candidate is 1,291,776 bytes /
+`bca28bebfb3abed513d87bb1e7f3871c20cc32f8439315f568f92ae217392870`;
+its Linux candidate is 1,290,240 bytes /
+`7b15037de8cbaa47b039023410ff5a045546e6aef4c1c273247fbe46136248bc`.
 
 One stable accepted-subset fixture is 174 WVB bytes /
 `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31`.
@@ -1950,11 +1959,26 @@ bytes, `$data_0000`, and one `Relative_i32` relocation with addend `-4`. Every
 retained code-only object remains byte-identical. An encoded data index one fails
 closed as `Unsupportedˉcode`.
 
-On local Windows, the reviewed Fast shared-backend selection rebuilds in 8.68
-seconds and passes its single case in 5.429 test seconds. The distinct affected
-native WVB-to-WVO application selection rebuilds in 8.94 seconds and passes its
-single case in 5.797 test seconds, including both deterministic package identities
-and direct current-host execution. Standard, Qualification, the full Seed/OS
+The general-call oracle begins with compiler-emitted order `Alpha, Main, Zeta`,
+so `Main` contains a real forward edge. A verifier-approved same-signature
+mutation connects the two recursive helpers in both directions. The reference
+runtime and Stage 0 native path return 42 at call depth five and reach `WVR3004`
+at four. The Windvale memory adapter, hosted tool, and generated native tool
+produce Stage 0's exact 4,350-byte `.text` and 4,491-byte WVO. The retained
+out-of-range call target continues to fail closed as `Unsupportedˉcode`.
+
+The affected tests were reviewed before execution. Early focused attempts stopped
+inside the newly added oracle and exposed its initially assumed helper order and
+the real `Alpha, Main, Zeta` export layout; those findings expanded the contract
+rather than weakening the test. On the resulting source state, the one shared
+backend case completes every behavioral and exact-byte assertion in 5.405 test
+seconds after an 8.07-second build, prints all current identities, and then stops
+only at the intentionally stale layout identity. The six printed identities above
+were transcribed without replaying the already-complete behavioral case. The
+distinct package selection then rebuilds in 7.15 seconds and passes its single
+case in 5.246 test seconds, including both deterministic package identities,
+direct Windows execution, malformed-output preservation, and absence of CLR
+modules in the generated application. Standard, Qualification, the full Seed/OS
 suites, Linux execution, GitHub verification, artifact promotion, and
 ordinary-path cutover were deliberately not run.
 

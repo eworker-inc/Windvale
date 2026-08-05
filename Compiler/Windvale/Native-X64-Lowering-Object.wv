@@ -48,11 +48,13 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     Code: bytes,
     Directory: bytes,
     Functionˉcount: u32,
+    Mainˉfunction: u32,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
     Relocations: bytes
 ) -> bytes {
     if Functionˉcount == 0u32 { return Empty(Code); }
     if Functionˉcount > 8u32 { return Empty(Code); }
+    if Mainˉfunction >= Functionˉcount { return Empty(Code); }
     if !Data.Valid { return Empty(Code); }
     if Data.Count > 1u32 { return Empty(Code); }
     if Bytesˉlength(Directory) !=
@@ -115,24 +117,40 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
 
     var Function: u32 = 0u32;
     while Function < Functionˉcount {
-        let Isˉmain: bool = Function + 1u32 == Functionˉcount;
-        var Name: bytes = Layout.Compilerˉnativeˉx64ˉlayoutˉhelperˉname(Function);
-        var Binding: u8 = 1u8;
-        if Isˉmain {
-            Name = Textˉtoˉutf8("Main");
-            Binding = 2u8;
+        if Function != Mainˉfunction {
+            Result = Appendˉsymbol(
+                Result,
+                1u8,
+                1u8,
+                0u32,
+                Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+                    Directory,
+                    Function
+                ),
+                Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(
+                    Directory,
+                    Function
+                ),
+                Layout.Compilerˉnativeˉx64ˉlayoutˉhelperˉname(Function)
+            );
         }
-        Result = Appendˉsymbol(
-            Result,
-            Binding,
-            1u8,
-            0u32,
-            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(Directory, Function),
-            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(Directory, Function),
-            Name
-        );
         Function = Function + 1u32;
     }
+    Result = Appendˉsymbol(
+        Result,
+        2u8,
+        1u8,
+        0u32,
+        Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+            Directory,
+            Mainˉfunction
+        ),
+        Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(
+            Directory,
+            Mainˉfunction
+        ),
+        Textˉtoˉutf8("Main")
+    );
 
     Relocation = 0u32;
     while Relocation < Relocationˉcount {
