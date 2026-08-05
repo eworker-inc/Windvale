@@ -2584,7 +2584,7 @@ public static class X64ˉnativeˉbackend
         type switch
         {
             Enumˉtypeˉdeclaration Enum =>
-                !Enum.Members.IsDefaultOrEmpty && Enum.Members[0].Value == 0,
+                !Enum.Members.IsDefaultOrEmpty,
             Recordˉtypeˉdeclaration Record =>
                 !Record.Fields.IsDefaultOrEmpty &&
                 Record.Fields.All(Field => Field.Type.Kind is

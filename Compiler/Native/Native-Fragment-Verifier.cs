@@ -159,7 +159,6 @@ public static class Nativeˉfragmentˉverifier
             if (Type is Enumˉtypeˉdeclaration Enum)
             {
                 if (Enum.Members.IsDefaultOrEmpty ||
-                    Enum.Members[0].Value != 0 ||
                     Enum.Members.Any(Member =>
                         Member is null || !Seedˉnames.Isˉidentifier(Member.Name)) ||
                     Enum.Members.Select(Member => Member.Name).Distinct(StringComparer.Ordinal).Count() !=

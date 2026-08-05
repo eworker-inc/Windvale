@@ -1,0 +1,24 @@
+module Nativeˉx64ˉrecordˉcalls profile portable;
+
+enum Marker {
+    First = 2;
+    Second = 5;
+}
+
+record Pair {
+    Left: i32;
+    Right: i32;
+}
+
+fn Keep(Value: Pair) -> Pair {
+    return Value;
+}
+
+export fn Main() -> i32 {
+    let Value = Pair {
+        Left: 19,
+        Right: 23,
+    };
+    let Copy = Keep(Value);
+    return Copy.Left + Copy.Right;
+}

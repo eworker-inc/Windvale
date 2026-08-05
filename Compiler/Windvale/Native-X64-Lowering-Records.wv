@@ -1,11 +1,19 @@
 module Compilerˉnativeˉx64ˉloweringˉrecords profile portable;
 
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+
 fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
     return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
 }
 
 fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
     return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
 }
 
 fn Loadˉrax(Result: bytes, Slot: u32) -> bytes {
@@ -75,6 +83,62 @@ fn Typeˉtag(Result: bytes, Typeˉindex: u32) -> bytes {
     return Appendˉu32(Output, Typeˉindex);
 }
 
+fn Loadˉrecordˉargument(
+    Result: bytes,
+    Argument: u32,
+    Slot: u32
+) -> bytes {
+    var Output: bytes = Result;
+    if Argument < 2u32 {
+        Output = Appendˉbyte(Output, 76u8);
+    } else {
+        Output = Appendˉbyte(Output, 72u8);
+    }
+    Output = Appendˉbyte(Output, 139u8);
+    if Argument == 0u32 { Output = Appendˉbyte(Output, 132u8); }
+    if Argument == 1u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 2u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 3u32 { Output = Appendˉbyte(Output, 148u8); }
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉrecordˉargument(
+    Result: bytes,
+    Argument: u32,
+    Slot: u32
+) -> bytes {
+    var Output: bytes = Result;
+    if Argument < 2u32 {
+        Output = Appendˉbyte(Output, 76u8);
+    } else {
+        Output = Appendˉbyte(Output, 72u8);
+    }
+    Output = Appendˉbyte(Output, 137u8);
+    if Argument == 0u32 { Output = Appendˉbyte(Output, 132u8); }
+    if Argument == 1u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 2u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 3u32 { Output = Appendˉbyte(Output, 148u8); }
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉscalarˉargument(
+    Result: bytes,
+    Argument: u32,
+    Slot: u32
+) -> bytes {
+    var Output: bytes = Result;
+    if Argument < 2u32 { Output = Appendˉbyte(Output, 68u8); }
+    Output = Appendˉbyte(Output, 139u8);
+    if Argument == 0u32 { Output = Appendˉbyte(Output, 132u8); }
+    if Argument == 1u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 2u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 3u32 { Output = Appendˉbyte(Output, 148u8); }
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
 export fn Compilerˉnativeˉx64ˉrecordˉcreateˉbytes(Fields: u32) -> u32 {
     return 32u32 + Fields * 32u32;
 }
@@ -85,6 +149,175 @@ export fn Compilerˉnativeˉx64ˉrecordˉcopyˉbytes(Fields: u32) -> u32 {
 
 export fn Compilerˉnativeˉx64ˉrecordˉfieldˉbytes() -> u32 {
     return 54u32;
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉcallˉbytes(
+    Parameterˉtypes: bytes
+) -> u32 {
+    var Result: u32 = 61u32;
+    var Parameter: u32 = 0u32;
+    while Parameter < Bytesˉlength(Parameterˉtypes) {
+        if Parameter < 2u32 || Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+            Bytesˉreadˉu8(Parameterˉtypes, Parameter)
+        ) {
+            Result = Result + 8u32;
+        } else {
+            Result = Result + 7u32;
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉreturnˉbytes(
+    Fields: u32,
+    Hasˉdescriptors: bool
+) -> u32 {
+    var Result: u32 = 45u32 + Fields * 28u32;
+    if !Hasˉdescriptors { Result = Result + 11u32; }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉrecordˉparameter(
+    Result: bytes,
+    Argument: u32,
+    Slot: u32
+) -> bytes {
+    return Storeˉrecordˉargument(Result, Argument, Slot);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉhiddenˉrecordˉresult(
+    Result: bytes,
+    Slot: u32
+) -> bytes {
+    return Storeˉrax(Result, Slot);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉrecordˉcheckpoint(
+    Result: bytes,
+    Hiddenˉslot: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 65u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 71u8);
+    Output = Appendˉbyte(Output, 60u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Hiddenˉslot * 16u32 + 8u32);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉrecordˉcall(
+    Result: bytes,
+    Typeˉindex: u32,
+    Argumentˉslots: bytes,
+    Argumentˉtypes: bytes,
+    Backingˉcell: u32,
+    Targetˉslot: u32,
+    Targetˉmachine: u32,
+    Codeˉbase: u32,
+    Propagateˉoffset: u32
+) -> bytes {
+    var Output: bytes = Typeˉtag(Result, Typeˉindex);
+    let Parameters: u32 = Bytesˉlength(Argumentˉslots) / 4u32;
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        let Slot: u32 = Bytesˉreadˉu32ˉlittle(
+            Argumentˉslots,
+            Parameter * 4u32
+        );
+        if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+            Bytesˉreadˉu8(Argumentˉtypes, Parameter)
+        ) {
+            Output = Loadˉrecordˉargument(Output, Parameter, Slot);
+        } else {
+            Output = Loadˉscalarˉargument(Output, Parameter, Slot);
+        }
+        Parameter = Parameter + 1u32;
+    }
+    Output = Frameˉaddress(Output, Backingˉcell);
+    Output = Appendˉbyte(Output, 232u8);
+    Output = Appendˉu32(
+        Output,
+        Relativeˉu32(
+            Targetˉmachine,
+            Codeˉbase + Bytesˉlength(Output) + 4u32
+        )
+    );
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 194u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 193u8);
+    Output = Appendˉbyte(Output, 234u8);
+    Output = Appendˉbyte(Output, 32u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 210u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉu32(
+        Output,
+        Relativeˉu32(Propagateˉoffset, Bytesˉlength(Output) + 4u32)
+    );
+    Output = Frameˉaddress(Output, Backingˉcell);
+    return Storeˉrax(Output, Targetˉslot);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉrecordˉreturn(
+    Result: bytes,
+    Typeˉindex: u32,
+    Fields: u32,
+    Hasˉdescriptors: bool,
+    Sourceˉslot: u32,
+    Hiddenˉslot: u32,
+    Frameˉbytes: u32
+) -> bytes {
+    var Output: bytes = Typeˉtag(Result, Typeˉindex);
+    Output = Loadˉrdx(Output, Hiddenˉslot);
+    Output = Loadˉrax(Output, Sourceˉslot);
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        var Offset: u32 = Field * 16u32;
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 139u8);
+        Output = Appendˉbyte(Output, 136u8);
+        Output = Appendˉu32(Output, Offset);
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 137u8);
+        Output = Appendˉbyte(Output, 138u8);
+        Output = Appendˉu32(Output, Offset);
+        Offset = Offset + 8u32;
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 139u8);
+        Output = Appendˉbyte(Output, 136u8);
+        Output = Appendˉu32(Output, Offset);
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 137u8);
+        Output = Appendˉbyte(Output, 138u8);
+        Output = Appendˉu32(Output, Offset);
+        Field = Field + 1u32;
+    }
+    if !Hasˉdescriptors {
+        Output = Appendˉbyte(Output, 139u8);
+        Output = Appendˉbyte(Output, 132u8);
+        Output = Appendˉbyte(Output, 36u8);
+        Output = Appendˉu32(Output, Hiddenˉslot * 16u32 + 8u32);
+        Output = Appendˉbyte(Output, 65u8);
+        Output = Appendˉbyte(Output, 137u8);
+        Output = Appendˉbyte(Output, 71u8);
+        Output = Appendˉbyte(Output, 60u8);
+    }
+    Output = Appendˉbyte(Output, 49u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 129u8);
+    Output = Appendˉbyte(Output, 196u8);
+    Output = Appendˉu32(Output, Frameˉbytes);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Appendˉbyte(Output, 194u8);
+    return Appendˉbyte(Output, 195u8);
 }
 
 export fn Compilerˉnativeˉx64ˉemitˉrecordˉcreate(

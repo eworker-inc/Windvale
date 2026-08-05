@@ -1,6 +1,7 @@
 module Compilerˉnativeˉx64ˉloweringˉrecordˉstorage profile portable;
 
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 
 export record Compilerˉnativeˉx64ˉrecordˉstorage {
     Valid: bool;
@@ -102,6 +103,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 4u8 { return 5u32; }
     if Opcode == 5u8 { return 5u32; }
     if Opcode == 16u8 { return 1u32; }
+    if Opcode == 64u8 { return 5u32; }
     if Opcode == 81u8 { return 1u32; }
     if Opcode == 104u8 { return 5u32; }
     if Opcode == 105u8 { return 5u32; }
@@ -258,12 +260,20 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Input: bytes,
     Codeˉoffset: u32,
     Codeˉlength: u32,
+    Parameters: u32,
+    Returnˉtype: u8,
     Localˉtypes: bytes,
+    Callˉdirectory: bytes,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes
 ) -> Compilerˉnativeˉx64ˉrecordˉstorage {
     let Locals: u32 = Bytesˉlength(Localˉtypes);
     if Locals > 128u32 { return Invalid(Input); }
     var Initialized: bytes = Zeros(Input, Locals);
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        Initialized = Setˉbyte(Initialized, Parameter, 1u8);
+        Parameter = Parameter + 1u32;
+    }
     var Stackˉtypes: bytes = Empty(Input);
     var Stackˉrecords: bytes = Empty(Input);
     var Depth: u32 = 0u32;
@@ -337,6 +347,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 (Depth - 1u32) * 4u32
             );
             if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Storeˉtype) {
+                if Storeˉlocal < Parameters { return Invalid(Input); }
                 Initialized = Setˉbyte(Initialized, Storeˉlocal, 1u8);
                 Lastˉuses = Setˉu32(Lastˉuses, Usedˉrecord, Instructions);
             }
@@ -448,10 +459,90 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Stackˉrecords = Pushˉrecord(Stackˉrecords, 4294967295u32);
             Depth = Depth + 1u32;
         }
+        if Opcode == 64u8 {
+            let Callˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Codeˉoffset + Cursor + 1u32
+            );
+            if Callˉtarget >= Bytesˉlength(Callˉdirectory) /
+                Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() {
+                return Invalid(Input);
+            }
+            let Callˉparameters: u32 =
+                Layout.Compilerˉnativeˉx64ˉlayoutˉparameters(
+                    Callˉdirectory,
+                    Callˉtarget
+                );
+            if Depth < Callˉparameters { return Invalid(Input); }
+            var Callˉparameter: u32 = 0u32;
+            while Callˉparameter < Callˉparameters {
+                let Callˉargumentˉtype: u8 = Bytesˉreadˉu8(
+                    Stackˉtypes,
+                    Depth - Callˉparameters + Callˉparameter
+                );
+                if Callˉargumentˉtype !=
+                    Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉtype(
+                        Callˉdirectory,
+                        Callˉtarget,
+                        Callˉparameter
+                    ) { return Invalid(Input); }
+                if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+                    Callˉargumentˉtype
+                ) {
+                    if Usedˉrecord != 4294967295u32 { return Invalid(Input); }
+                    Usedˉrecord = Bytesˉreadˉu32ˉlittle(
+                        Stackˉrecords,
+                        (Depth - Callˉparameters + Callˉparameter) * 4u32
+                    );
+                    Lastˉuses = Setˉu32(
+                        Lastˉuses,
+                        Usedˉrecord,
+                        Instructions
+                    );
+                }
+                Callˉparameter = Callˉparameter + 1u32;
+            }
+            Depth = Depth - Callˉparameters;
+            Stackˉtypes = Popˉtypes(Stackˉtypes, Depth);
+            Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
+            let Callˉreturnˉtype: u8 =
+                Layout.Compilerˉnativeˉx64ˉlayoutˉreturnˉtype(
+                    Callˉdirectory,
+                    Callˉtarget
+                );
+            var Callˉrecord: u32 = 4294967295u32;
+            if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+                Callˉreturnˉtype
+            ) {
+                if Recordˉvalues >= 128u32 { return Invalid(Input); }
+                Callˉrecord = Recordˉvalues;
+                Resultˉrecord = Recordˉvalues;
+                Recordˉvalues = Recordˉvalues + 1u32;
+                Recordˉtypes = Bytesˉconcat(
+                    Recordˉtypes,
+                    Bytesˉfromˉu8(Callˉreturnˉtype)
+                );
+                Lastˉuses = Bytesˉconcat(
+                    Lastˉuses,
+                    Bytesˉfromˉu32ˉlittle(4294967295u32)
+                );
+            }
+            Stackˉtypes = Pushˉtype(Stackˉtypes, Callˉreturnˉtype);
+            Stackˉrecords = Pushˉrecord(Stackˉrecords, Callˉrecord);
+            Depth = Depth + 1u32;
+        }
         if Opcode == 81u8 {
             if Depth != 1u32 { return Invalid(Input); }
-            if Bytesˉreadˉu8(Stackˉtypes, 0u32) != 1u8 {
+            if Bytesˉreadˉu8(Stackˉtypes, 0u32) != Returnˉtype {
                 return Invalid(Input);
+            }
+            if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Returnˉtype) {
+                Usedˉrecord = Bytesˉreadˉu32ˉlittle(Stackˉrecords, 0u32);
+                Lastˉuses = Setˉu32(
+                    Lastˉuses,
+                    Usedˉrecord,
+                    Instructions
+                );
             }
             Depth = 0u32;
             Stackˉtypes = Empty(Input);
@@ -489,9 +580,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Input,
                 Codeˉoffset + Instructionˉcursor + 1u32
             );
-            if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
-                Bytesˉreadˉu8(Localˉtypes, Reverseˉstoreˉlocal)
-            ) {
+            if Reverseˉstoreˉlocal >= Parameters &&
+                Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+                    Bytesˉreadˉu8(Localˉtypes, Reverseˉstoreˉlocal)
+                ) {
                 Persistentˉpresent = Setˉbyte(
                     Persistentˉpresent,
                     Reverseˉstoreˉlocal,
@@ -515,9 +607,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Input,
                 Codeˉoffset + Instructionˉcursor + 1u32
             );
-            if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
-                Bytesˉreadˉu8(Localˉtypes, Reverseˉloadˉlocal)
-            ) {
+            if Reverseˉloadˉlocal >= Parameters &&
+                Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+                    Bytesˉreadˉu8(Localˉtypes, Reverseˉloadˉlocal)
+                ) {
                 Persistentˉpresent = Setˉbyte(
                     Persistentˉpresent,
                     Reverseˉloadˉlocal,

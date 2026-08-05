@@ -1,0 +1,231 @@
+module Compilerˉnativeˉx64ˉloweringˉcallˉinstructions profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉrecords as Records;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+
+export record Compilerˉnativeˉx64ˉcallˉlayout {
+    Locals: u32;
+    I32ˉslots: u32;
+    Boolˉslots: u32;
+    Textˉslots: u32;
+    U8ˉslots: u32;
+    U32ˉslots: u32;
+    Bytesˉslots: u32;
+    Recordˉbase: u32;
+    Scratchˉbase: u32;
+}
+
+export record Compilerˉnativeˉx64ˉcallˉstate {
+    Result: bytes;
+    Stackˉtypes: bytes;
+    Stackˉslots: bytes;
+    Stackˉdepth: u32;
+    Nextˉi32: u32;
+    Nextˉbool: u32;
+    Nextˉtext: u32;
+    Nextˉu8: u32;
+    Nextˉu32: u32;
+    Nextˉbytes: u32;
+    Nextˉenum: u32;
+    Nextˉrecord: u32;
+}
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
+fn Loadˉargument(
+    Result: bytes,
+    Argument: u32,
+    Slot: u32
+) -> bytes {
+    var Output: bytes = Result;
+    if Argument < 2u32 { Output = Appendˉbyte(Output, 68u8); }
+    Output = Appendˉbyte(Output, 139u8);
+    if Argument == 0u32 { Output = Appendˉbyte(Output, 132u8); }
+    if Argument == 1u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 2u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 3u32 { Output = Appendˉbyte(Output, 148u8); }
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉeax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Valueˉslot(
+    Shape: Compilerˉnativeˉx64ˉcallˉlayout,
+    Type: u8,
+    Index: u32
+) -> u32 {
+    return Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+        Shape.Locals,
+        Shape.I32ˉslots,
+        Shape.Boolˉslots,
+        Shape.Textˉslots,
+        Shape.U8ˉslots,
+        Shape.U32ˉslots,
+        Shape.Bytesˉslots,
+        Type,
+        Index
+    );
+}
+
+fn Emitˉscalarˉcall(
+    Target: u32,
+    Parameters: u32,
+    Resultˉslot: u32,
+    Callˉdirectory: bytes,
+    Codeˉbase: u32,
+    Propagateˉoffset: u32,
+    State: Compilerˉnativeˉx64ˉcallˉstate
+) -> bytes {
+    var Output: bytes = State.Result;
+    var Argument: u32 = 0u32;
+    while Argument < Parameters {
+        let Argumentˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+            State.Stackˉslots,
+            (State.Stackˉdepth - Parameters + Argument) * 4u32
+        );
+        Output = Loadˉargument(Output, Argument, Argumentˉslot);
+        Argument = Argument + 1u32;
+    }
+    Output = Appendˉbyte(Output, 232u8);
+    Output = Appendˉu32(
+        Output,
+        Relativeˉu32(
+            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+                Callˉdirectory,
+                Target
+            ),
+            Codeˉbase + Bytesˉlength(Output) + 4u32
+        )
+    );
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 194u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 193u8);
+    Output = Appendˉbyte(Output, 234u8);
+    Output = Appendˉbyte(Output, 32u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 210u8);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉu32(
+        Output,
+        Relativeˉu32(Propagateˉoffset, Bytesˉlength(Output) + 4u32)
+    );
+    return Storeˉeax(Output, Resultˉslot);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
+    Target: u32,
+    Shape: Compilerˉnativeˉx64ˉcallˉlayout,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    Callˉdirectory: bytes,
+    Codeˉbase: u32,
+    Propagateˉoffset: u32,
+    State: Compilerˉnativeˉx64ˉcallˉstate
+) -> Compilerˉnativeˉx64ˉcallˉstate {
+    let Parameters: u32 =
+        Layout.Compilerˉnativeˉx64ˉlayoutˉparameters(Callˉdirectory, Target);
+    let Returnˉtype: u8 =
+        Layout.Compilerˉnativeˉx64ˉlayoutˉreturnˉtype(Callˉdirectory, Target);
+    let Returnsˉrecord: bool =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Returnˉtype);
+    var Resultˉindex: u32 = State.Nextˉi32;
+    if Returnˉtype == 2u8 { Resultˉindex = State.Nextˉbool; }
+    if Returnˉtype == 4u8 { Resultˉindex = State.Nextˉu8; }
+    if Returnˉtype == 5u8 { Resultˉindex = State.Nextˉu32; }
+    var Resultˉslot: u32 = Valueˉslot(Shape, Returnˉtype, Resultˉindex);
+    if Returnsˉrecord {
+        Resultˉslot = Shape.Recordˉbase + State.Nextˉrecord;
+    }
+    let Depth: u32 = State.Stackˉdepth - Parameters;
+    var Output: bytes = State.Result;
+    if Returnsˉrecord {
+        Output = Records.Compilerˉnativeˉx64ˉemitˉrecordˉcall(
+            Output,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Returnˉtype),
+            Bytesˉslice(
+                State.Stackˉslots,
+                Depth * 4u32,
+                Parameters * 4u32
+            ),
+            Bytesˉslice(
+                Callˉdirectory,
+                Target * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() + 12u32,
+                Parameters
+            ),
+            Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(
+                Storage.Scratchˉoffsets,
+                State.Nextˉrecord * 4u32
+            ),
+            Resultˉslot,
+            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+                Callˉdirectory,
+                Target
+            ),
+            Codeˉbase,
+            Propagateˉoffset
+        );
+    } else {
+        Output = Emitˉscalarˉcall(
+            Target,
+            Parameters,
+            Resultˉslot,
+            Callˉdirectory,
+            Codeˉbase,
+            Propagateˉoffset,
+            State
+        );
+    }
+    var Nextˉi32: u32 = State.Nextˉi32;
+    var Nextˉbool: u32 = State.Nextˉbool;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
+    var Nextˉrecord: u32 = State.Nextˉrecord;
+    if Returnˉtype == 1u8 { Nextˉi32 = Nextˉi32 + 1u32; }
+    if Returnˉtype == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
+    if Returnˉtype == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
+    if Returnˉtype == 5u8 { Nextˉu32 = Nextˉu32 + 1u32; }
+    if Returnsˉrecord { Nextˉrecord = Nextˉrecord + 1u32; }
+    return Compilerˉnativeˉx64ˉcallˉstate(
+        Output,
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(Returnˉtype)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Resultˉslot)
+        ),
+        Depth + 1u32,
+        Nextˉi32,
+        Nextˉbool,
+        State.Nextˉtext,
+        Nextˉu8,
+        Nextˉu32,
+        State.Nextˉbytes,
+        State.Nextˉenum,
+        Nextˉrecord
+    );
+}

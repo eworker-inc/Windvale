@@ -284,11 +284,6 @@ export fn Compilerˉnativeˉx64ˉtypesˉread(
                 }
                 Cursor = Shape.Next;
             } else {
-                if Scanˉitem == 0u32 {
-                    if Bytesˉreadˉi32ˉlittle(Input, Cursor) != 0 {
-                        return Invalid(Input);
-                    }
-                }
                 Cursor = Cursor + 4u32;
             }
             Scanˉitem = Scanˉitem + 1u32;
@@ -343,4 +338,27 @@ export fn Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
         Field = Field + 1u32;
     }
     return 0u8;
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> bool {
+    let Fields: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+        Types,
+        Typeˉindex
+    );
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        let Type: u8 = Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+            Input,
+            Types,
+            Typeˉindex,
+            Field
+        );
+        if Type == 3u8 || Type == 6u8 { return true; }
+        Field = Field + 1u32;
+    }
+    return false;
 }
