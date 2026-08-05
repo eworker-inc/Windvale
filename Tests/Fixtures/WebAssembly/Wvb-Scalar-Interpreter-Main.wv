@@ -1,5 +1,7 @@
 module WebAssemblyˉwvbˉscalarˉinterpreter profile portable;
 
+import Foundationˉsha256 as Sha256;
+
 export fn Main(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
     let Requestˉlength: u32 = Bytesˉlength(Request);
@@ -2580,7 +2582,7 @@ export fn Main(Request: bytes) -> bytes {
                 Sha256ˉstackˉlength - 4u32
             );
             Stack = Bytesˉslice(Stack, 0u32, Sha256ˉstackˉlength - 8u32);
-            let Sha256ˉvalue: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(
+            let Sha256ˉvalue: bytes = Textˉtoˉutf8(Sha256.Foundationˉsha256ˉhex(
                 Bytesˉslice(Heap, Sha256ˉsourceˉoffset, Sha256ˉsourceˉlength)
             ));
             let Sha256ˉoffset: u32 = Bytesˉlength(Heap);

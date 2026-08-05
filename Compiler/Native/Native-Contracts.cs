@@ -333,6 +333,10 @@ public sealed record Nativeˉbytesˉfromˉu32ˉlittle(
     int Result,
     int Value) : Nativeˉoperation;
 
+public sealed record Nativeˉbytesˉfromˉi32ˉlittle(
+    int Result,
+    int Value) : Nativeˉoperation;
+
 public sealed record Nativeˉtextˉutf8ˉisˉvalid(
     int Result,
     int Bytes) : Nativeˉoperation;

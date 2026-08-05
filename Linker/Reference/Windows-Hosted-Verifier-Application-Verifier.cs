@@ -185,7 +185,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉverifier
                 Runtimeˉaddress,
                 Runtime.Layout,
                 expectedˉbundle,
-                Runtime.Metadata.Nativeˉentryˉoffset);
+                Runtime.Metadata.Nativeˉentryˉoffset,
+                expectedˉprofile);
         }
 
         Requireˉu32(bytes, checked((int)Relocationˉfile),

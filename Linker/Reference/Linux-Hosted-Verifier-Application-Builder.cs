@@ -41,14 +41,16 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉbuilder
                         Consoleˉapplicationˉtarget.Linuxˉx64),
                     bundle,
                     nativeˉentryˉoffset),
-            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector =>
+            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner =>
                 Linuxˉhostedˉinspectorˉstartup.Build(
                     Layout.Textˉaddress,
                     Layout.Dataˉaddress,
                     Hostedˉverifierˉruntimeˉdata.Plan(
                         Consoleˉapplicationˉtarget.Linuxˉx64),
                     bundle,
-                    nativeˉentryˉoffset),
+                    nativeˉentryˉoffset,
+                    profile),
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };
         var Result = new byte[Layout.Applicationˉbytes];

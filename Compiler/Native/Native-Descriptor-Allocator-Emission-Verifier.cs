@@ -248,7 +248,8 @@ public static class Nativeˉdescriptorˉallocatorˉemissionˉverifier
             Nativeˉbytesˉconcat or
             Nativeˉbytesˉfromˉu8 or
             Nativeˉbytesˉfromˉu16ˉlittle or
-            Nativeˉbytesˉfromˉu32ˉlittle)
+            Nativeˉbytesˉfromˉu32ˉlittle or
+            Nativeˉbytesˉfromˉi32ˉlittle)
         {
             return Nativeˉdescriptorˉallocatorˉinvocationˉsite.Generatedˉcode;
         }

@@ -77,9 +77,11 @@ internal static class Windowsˉhostedˉinspectorˉstartup
         uint runtimeˉaddress,
         Hostedˉverifierˉruntimeˉlayout layout,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector)
     {
-        Validateˉinputs(layout, bundle, nativeˉentryˉoffset);
+        Validateˉinputs(layout, bundle, nativeˉentryˉoffset, profile);
         var Bytes = Decodeˉtemplate();
         foreach (var Patch in PATCHES)
         {
@@ -106,9 +108,11 @@ internal static class Windowsˉhostedˉinspectorˉstartup
         uint runtimeˉaddress,
         Hostedˉverifierˉruntimeˉlayout layout,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector)
     {
-        Validateˉinputs(layout, bundle, nativeˉentryˉoffset);
+        Validateˉinputs(layout, bundle, nativeˉentryˉoffset, profile);
         if (bytes.Length != BYTES)
         {
             throw Invalid("The Windows hosted-inspector startup has an invalid size.");
@@ -234,7 +238,11 @@ internal static class Windowsˉhostedˉinspectorˉstartup
         Nativeˉserviceˉbundle bundle,
         Nativeˉservice service)
     {
-        var Placement = bundle.Placements.Single(Item => Item.Service == service);
+        var Placement = bundle.Placements.SingleOrDefault(Item => Item.Service == service);
+        if (Placement is null)
+        {
+            return 0;
+        }
         return checked(
             Windowsˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS +
             Windowsˉhostedˉverifierˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
@@ -244,11 +252,13 @@ internal static class Windowsˉhostedˉinspectorˉstartup
     private static void Validateˉinputs(
         Hostedˉverifierˉruntimeˉlayout layout,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉverifierˉapplicationˉprofile profile)
     {
-        var Services = Hostedˉverifierˉapplicationˉmetadata.Requiredˉservices(
-            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector);
+        var Services = Hostedˉverifierˉapplicationˉmetadata.Requiredˉservices(profile);
         if (layout.Target != Consoleˉapplicationˉtarget.Windowsˉx64 ||
+            profile is not (Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner) ||
             bundle is null ||
             bundle.Platform != Nativeˉserviceˉplatform.Windows ||
             !bundle.Placements.Select(Placement => Placement.Service).SequenceEqual(Services) ||

@@ -92,7 +92,8 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉcontract
         {
             Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier =>
                 Linuxˉhostedˉverifierˉstartup.BYTES,
-            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector =>
+            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner =>
                 Linuxˉhostedˉinspectorˉstartup.BYTES,
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };

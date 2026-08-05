@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHV 1` is the implemented manifest for packaging two Windvale-written read-only WVB tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned verifier and the complete structural `wvdump` inspector. Both run without loading .NET. The verifier applications are cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` in GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192); the inspector profile is an implemented candidate pending its own dual-host qualification. Stage 0 still lowers, packages, and independently verifies the applications until the broader native-retirement gate is qualified.
+`WVHV 1` is the implemented manifest for packaging three Windvale-written read-only WVB tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned verifier, the complete structural `wvdump` inspector, and the bounded portable-WVB runner. All run without loading .NET. The verifier and inspector applications have qualified histories; the runner profile is an implemented candidate pending dual-host qualification. Stage 0 still lowers, packages, and independently verifies the applications until the broader native-retirement gate is qualified.
 
 These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one monolithic typed walk under a `u64` host meter; the WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
 
@@ -42,7 +42,7 @@ Both modules have hosted authority and declare exactly these five capabilities i
 
 The verifier fragment requires exactly five corresponding services. Its startup additionally binds `text.utf8_is_valid` to validate the host argument snapshot. That sixth service is marked startup-internal in the manifest and is not an application capability grant.
 
-The inspector fragment requires the same read-only host services plus the capability-free `text.utf8_is_valid`, `enum.name`, `text.concat`, `text.quote`, `i32.format`, and `u32.format` report services. Its exact eleven-service sequence contains every native service through `u32.format` and excludes `file.write_bytes`. Neither profile has a file-output table, file-output scratch space, or file-write authority.
+The inspector fragment requires the same read-only host services plus the capability-free `text.utf8_is_valid`, `enum.name`, `text.concat`, `text.quote`, `i32.format`, and `u32.format` report services. Its exact eleven-service sequence contains every native service through `u32.format` and excludes `file.write_bytes`. The runner omits the unused enum-name and quoting leaves, retaining exactly nine services. No profile has a file-output table, file-output scratch space, or file-write authority.
 
 Each tool reads at most one candidate snapshot. The candidate remains bounded by the ordinary 4 MiB `bytes` limit. The runtime retains one file-input snapshot slot and no file-output table or output scratch space.
 
@@ -60,7 +60,7 @@ u32   native ABI version = 22
 u32   execution-context version
 u32   service-table version
 u32   capability count = 5
-u32   service count = 6 verifier, 11 inspector
+u32   service count = 6 verifier, 11 inspector, 9 runner
 u32   capability offset = 128
 u32   capability record bytes = 16
 u32   service offset = 208
@@ -72,7 +72,7 @@ u32   native-image bytes
 u32   native Main offset
 u32   record-arena bytes
 u32   text-arena bytes
-u32   profile flags: 2 compiler-WVB verifier, 4 WVB inspector
+u32   profile flags: 2 compiler-WVB verifier, 4 WVB inspector, 5 WVB runner
 u64   instruction budget = 16,000,000,000
 bytes native-image SHA-256[32]
 ```
@@ -91,6 +91,8 @@ For profile `2`, six 64-byte service records follow the capability records in th
 Each service record binds its service identity, capability identity or zero for startup-internal support, service-table slot, platform-adapter identity, image offset, code extent, flags, and SHA-256 digest. All reserved fields and the unused metadata tail are zero. Verification reconstructs the complete expected bundle and rejects any changed identity, ordering, address, extent, flag, digest, reserved byte, native entry, or target.
 
 Profile `4` extends that exact sequence with `enum.name`, `text.concat`, `text.quote`, `i32.format`, and `u32.format`. Those services have zero capability identity and pure-service flags. The profile identity, service count, exact order, records, and zero tail are independently verified.
+
+Profile `5` uses the verifier's first six services and then `text.concat`, `i32.format`, and `u32.format`. It reuses the inspector startup template; the two service-table slots not present in the runner profile are bound to zero and are unreachable from the independently verified runner fragment.
 
 ## Runtime and startup
 
@@ -134,6 +136,8 @@ The current canonical application is 1,007,104 bytes with SHA-256 `f15422397ad89
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its implemented candidate is 795,136 bytes with SHA-256 `61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381`.
 
+`windows-x64-wvb-runner-v1` uses metadata profile `5`. The current-host candidate is 770,560 bytes with SHA-256 `bf4fa16b9072215fadab6f1097155d85d5b77924aac01b14330acb0496f0af4c`; this identity is implementation evidence, not yet a qualified distributed artifact.
+
 ## Linux container
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
@@ -141,6 +145,8 @@ The current canonical application is 1,007,104 bytes with SHA-256 `f15422397ad89
 The current canonical application is 1,007,616 bytes with SHA-256 `dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a`.
 
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its implemented candidate is 794,624 bytes with SHA-256 `d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627`.
+
+`linux-x64-wvb-runner-v1` uses metadata profile `5`. The locally constructed candidate is 770,048 bytes with SHA-256 `28a98e35286ab0f0515b147ef34a527335dce1f3a5bf96449ea4495b8079ed0f`; execution remains pending Linux qualification.
 
 ## Construction and verification
 
@@ -153,11 +159,16 @@ windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target linux-x64-verifier-v1
 windvale build Windvale-Wvb-Inspector.wvproj
 windvale aot Windvale-Wvb-Inspector.wvb --target windows-x64-wvb-inspector-v1
 windvale aot Windvale-Wvb-Inspector.wvb --target linux-x64-wvb-inspector-v1
+windvale build Windvale-Wvb-Runner.wvproj
+windvale aot Windvale-Wvb-Runner.wvb --target windows-x64-wvb-runner-v1
+windvale aot Windvale-Wvb-Runner.wvb --target linux-x64-wvb-runner-v1
 ```
 
 The canonical WVB is 125,721 bytes with SHA-256 `259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f`.
 
 The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`.
+
+The current native-compiler runner candidate is 86,061 bytes with SHA-256 `d1c9005885fa6f05715794f88db90b1e1143e79e118785e1c954820718775c6b`.
 
 The verifier writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical verifier-fragment services; they add only the startup-internal UTF-8 service. The inspector writers require the same entry and capabilities plus the exact eleven-service read-only fragment. Both construct the outer application, parse it independently, and atomically publish it only after every profile, manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
 

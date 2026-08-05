@@ -1,0 +1,41 @@
+module Foundationˉsha256ˉknownˉanswers profile portable;
+
+import Foundationˉsha256 as Sha256;
+
+fn Matches(Actual: text, Expected: text) -> bool {
+    let Actualˉbytes: bytes = Textˉtoˉutf8(Actual);
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Bytesˉlength(Actualˉbytes) != Bytesˉlength(Expectedˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Actualˉbytes) {
+        if Bytesˉreadˉu8(Actualˉbytes, Index) != Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    if !Matches(
+        Sha256.Foundationˉsha256ˉhex(Textˉtoˉutf8("")),
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ) {
+        return 1;
+    }
+    if !Matches(
+        Sha256.Foundationˉsha256ˉhex(Textˉtoˉutf8("abc")),
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    ) {
+        return 2;
+    }
+    if !Matches(
+        Sha256.Foundationˉsha256ˉhex(Textˉtoˉutf8(
+            "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+        )),
+        "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1"
+    ) {
+        return 3;
+    }
+    return 0;
+}

@@ -306,6 +306,9 @@ internal static class Nativeˉdescriptorˉownershipˉindependentˉoracle
             case Nativeˉbytesˉfromˉu32ˉlittle Allocate:
                 Acquire(Allocate.Result);
                 break;
+            case Nativeˉbytesˉfromˉi32ˉlittle Allocate:
+                Acquire(Allocate.Result);
+                break;
             case Nativeˉenumˉname Allocate:
                 Acquire(Allocate.Result);
                 break;
@@ -745,6 +748,7 @@ internal static class Nativeˉdescriptorˉownershipˉindependentˉoracle
         Nativeˉbytesˉfromˉu8 Result => Result.Result,
         Nativeˉbytesˉfromˉu16ˉlittle Result => Result.Result,
         Nativeˉbytesˉfromˉu32ˉlittle Result => Result.Result,
+        Nativeˉbytesˉfromˉi32ˉlittle Result => Result.Result,
         Nativeˉtextˉutf8ˉisˉvalid Result => Result.Result,
         Nativeˉtextˉfromˉutf8 Result => Result.Result,
         Nativeˉtextˉtoˉutf8 Result => Result.Result,
@@ -787,6 +791,7 @@ internal static class Nativeˉdescriptorˉownershipˉindependentˉoracle
         Nativeˉbytesˉfromˉu8 Use => [Use.Value],
         Nativeˉbytesˉfromˉu16ˉlittle Use => [Use.Value],
         Nativeˉbytesˉfromˉu32ˉlittle Use => [Use.Value],
+        Nativeˉbytesˉfromˉi32ˉlittle Use => [Use.Value],
         Nativeˉtextˉutf8ˉisˉvalid Use => [Use.Bytes],
         Nativeˉtextˉfromˉutf8 Use => [Use.Bytes],
         Nativeˉtextˉtoˉutf8 Use => [Use.Text],

@@ -44,14 +44,16 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉbuilder
                     Runtimeˉlayout,
                     bundle,
                     nativeˉentryˉoffset),
-            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector =>
+            Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner =>
                 Windowsˉhostedˉinspectorˉstartup.Build(
                     Layout.Textˉaddress,
                     Layout.Importˉaddress,
                     Layout.Runtimeˉaddress,
                     Runtimeˉlayout,
                     bundle,
-                    nativeˉentryˉoffset),
+                    nativeˉentryˉoffset,
+                    profile),
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };
         var Result = new byte[Layout.Applicationˉbytes];

@@ -248,6 +248,9 @@ public static class Nativeˉdescriptorˉownershipˉplanner
             case Nativeˉbytesˉfromˉu32ˉlittle Allocate:
                 Addˉacquire(Allocate.Result);
                 return;
+            case Nativeˉbytesˉfromˉi32ˉlittle Allocate:
+                Addˉacquire(Allocate.Result);
+                return;
             case Nativeˉenumˉname Allocate:
                 Addˉacquire(Allocate.Result);
                 return;
@@ -753,6 +756,7 @@ public static class Nativeˉdescriptorˉownershipˉplanner
         Nativeˉbytesˉfromˉu8 Value => Value.Result,
         Nativeˉbytesˉfromˉu16ˉlittle Value => Value.Result,
         Nativeˉbytesˉfromˉu32ˉlittle Value => Value.Result,
+        Nativeˉbytesˉfromˉi32ˉlittle Value => Value.Result,
         Nativeˉtextˉutf8ˉisˉvalid Value => Value.Result,
         Nativeˉtextˉfromˉutf8 Value => Value.Result,
         Nativeˉtextˉtoˉutf8 Value => Value.Result,
@@ -806,6 +810,7 @@ public static class Nativeˉdescriptorˉownershipˉplanner
         Nativeˉbytesˉfromˉu8 Value => [Value.Value],
         Nativeˉbytesˉfromˉu16ˉlittle Value => [Value.Value],
         Nativeˉbytesˉfromˉu32ˉlittle Value => [Value.Value],
+        Nativeˉbytesˉfromˉi32ˉlittle Value => [Value.Value],
         Nativeˉtextˉutf8ˉisˉvalid Value => [Value.Bytes],
         Nativeˉtextˉfromˉutf8 Value => [Value.Bytes],
         Nativeˉtextˉtoˉutf8 Value => [Value.Text],

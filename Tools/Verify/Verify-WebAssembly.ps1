@@ -11,6 +11,7 @@ $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net
 $BackendProject = Join-Path $RepositoryRoot 'Windvale-WebAssembly.wvproj'
 $CompilerProject = Join-Path $RepositoryRoot 'Windvale-Compiler.wvproj'
 $CompilerMemoryProject = Join-Path $RepositoryRoot 'Windvale-Compiler-Memory.wvproj'
+$WvbScalarInterpreterProject = Join-Path $RepositoryRoot 'Windvale-Wvb-Scalar-Interpreter.wvproj'
 $SuccessSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Main.wv'
 $OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Overflow-Main.wv'
 $StraightSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Straight-I32-Main.wv'
@@ -39,7 +40,6 @@ $WvbEnvelopeVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly
 $WvbStructuralVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Structural-Verify-Main.wv'
 $WvbSemanticVerifySource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Semantic-Verify-Main.wv'
 $WvbExecutableVerifyPhaseSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Executable-Verify-Phase.wv'
-$WvbScalarInterpreterSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv'
 $WvbSemanticExpandedSource = Join-Path $ArtifactDirectory 'Wvb-Semantic-Expanded-Main.wv'
 $WvbExecutableVerifySource = Join-Path $ArtifactDirectory 'Wvb-Executable-Verify-Main.wv'
 $WvbCompilerExecutablePhaseSource = Join-Path $ArtifactDirectory 'Wvb-Compiler-Executable-Verify-Phase.wv'
@@ -403,7 +403,7 @@ Invoke-Windvale @('compile', $WvbCompilerControlVerifySource, '-o', $WvbCompiler
 Invoke-Windvale @('compile', $WvbCompilerControlSecondVerifySource, '-o', $WvbCompilerControlSecondVerifyWvb)
 Invoke-Windvale @('build', $CompilerProject, '-o', $CompilerWvb)
 Invoke-Windvale @('build', $CompilerMemoryProject, '-o', $CompilerMemoryWvb)
-Invoke-Windvale @('compile', $WvbScalarInterpreterSource, '-o', $WvbScalarInterpreterWvb)
+Invoke-Windvale @('build', $WvbScalarInterpreterProject, '-o', $WvbScalarInterpreterWvb)
 Invoke-Windvale @('compile', $ScalarFunctionOnlySource, '-o', $ScalarFunctionOnlyWvb)
 Invoke-Windvale @('compile', $BytesEntrySource, '-o', $BytesEntryWvb)
 Invoke-Windvale @('compile', $ScalarGuestSource, '-o', $ScalarGuestWvb)
@@ -496,7 +496,7 @@ $ScalarInterpreterRunArguments = @(
     '--allow', 'file.write_bytes',
     '--allow', 'process.argument',
     '--allow', 'process.argument_count',
-    '--max-steps', '425000000',
+    '--max-steps', '500000000',
     '--'
 )
 Invoke-Windvale ($ExecutableSemanticRunArguments + @(

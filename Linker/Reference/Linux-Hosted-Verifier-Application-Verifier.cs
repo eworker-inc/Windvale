@@ -150,7 +150,8 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉverifier
                 Dataˉoffset,
                 Runtime.Layout,
                 expectedˉbundle,
-                Runtime.Metadata.Nativeˉentryˉoffset);
+                Runtime.Metadata.Nativeˉentryˉoffset,
+                expectedˉprofile);
         }
 
         var Layout = Linuxˉhostedˉverifierˉapplicationˉcontract.Plan(

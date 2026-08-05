@@ -288,7 +288,8 @@ public static class Nativeˉdescriptorˉallocatorˉemissionˉplanner
         Nativeˉbytesˉconcat or
         Nativeˉbytesˉfromˉu8 or
         Nativeˉbytesˉfromˉu16ˉlittle or
-        Nativeˉbytesˉfromˉu32ˉlittle =>
+        Nativeˉbytesˉfromˉu32ˉlittle or
+        Nativeˉbytesˉfromˉi32ˉlittle =>
             Nativeˉdescriptorˉallocatorˉinvocationˉsite.Generatedˉcode,
         Nativeˉenumˉname or
         Nativeˉintegerˉformat or

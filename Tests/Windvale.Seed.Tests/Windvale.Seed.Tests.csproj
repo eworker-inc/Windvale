@@ -507,5 +507,14 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Main.wv" />
+    <EmbeddedResource
+      Include="../../Foundation/Sha256.wv"
+      LogicalName="Windvale.Seed.Tests.Foundation-Sha256.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Foundation/Sha256-Known-Answers.wv"
+      LogicalName="Windvale.Seed.Tests.Foundation-Sha256-Known-Answers.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.Run/Wvb-Runner-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-Runner-Tool.wv" />
   </ItemGroup>
 </Project>

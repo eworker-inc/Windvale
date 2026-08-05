@@ -103,6 +103,7 @@ internal static class Program
             "windows-x64-console-v3|linux-x64-console-v3|" +
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
+            "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1>] [-o <artifact>]";
         if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
@@ -160,6 +161,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME => ".exe",
+        Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         _ => ".elf",
@@ -215,6 +217,7 @@ internal static class Program
             "windows-x64-console-v3|linux-x64-console-v3|" +
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
+            "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1> [-o <artifact>]";
         if (arguments.Length is not (3 or 5) ||
@@ -290,6 +293,8 @@ internal static class Program
         Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
+        Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -418,6 +423,7 @@ internal static class Program
                 Windowsˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
+                Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
             {
@@ -433,6 +439,10 @@ internal static class Program
                             Capabilities),
                     Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME =>
                         Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉinspector(
+                            Fragment,
+                            Capabilities),
+                    Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME =>
+                        Wvbˉrunnerˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities),
                     Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME =>
@@ -477,6 +487,10 @@ internal static class Program
                         Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉinspector(
                             Fragment,
                             Capabilities),
+                    Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME =>
+                        Wvbˉrunnerˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities),
                     Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME =>
                         Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉbuildˉdriver(
                             Fragment,
@@ -513,6 +527,7 @@ internal static class Program
                     Linuxˉconsoleˉapplicationˉcontract.COMPILER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
+                    Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
@@ -991,6 +1006,7 @@ internal static class Program
             "windows-x64-console-v3|linux-x64-console-v3|" +
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
+            "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
@@ -1001,6 +1017,7 @@ internal static class Program
             "windows-x64-console-v3|linux-x64-console-v3|" +
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
+            "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");

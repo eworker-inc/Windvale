@@ -28,6 +28,7 @@ internal enum Hostedˉverifierˉapplicationˉprofile : uint
 {
     Compilerˉwvbˉverifier = 2,
     Wvbˉinspector = 4,
+    Wvbˉrunner = 5,
 }
 
 internal sealed record Verifiedˉhostedˉverifierˉmetadata(
@@ -110,6 +111,18 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         Nativeˉservice.Enumˉname,
         Nativeˉservice.Textˉconcat,
         Nativeˉservice.Textˉquote,
+        Nativeˉservice.I32ˉformat,
+        Nativeˉservice.U32ˉformat,
+    ];
+    private static readonly ImmutableArray<Nativeˉservice> RUNNER_REQUIRED_SERVICES =
+    [
+        Nativeˉservice.Consoleˉwriteˉline,
+        Nativeˉservice.Processˉargumentˉcount,
+        Nativeˉservice.Processˉargument,
+        Nativeˉservice.Fileˉreadˉbytes,
+        Nativeˉservice.Textˉutf8ˉisˉvalid,
+        Nativeˉservice.Diagnosticˉwriteˉline,
+        Nativeˉservice.Textˉconcat,
         Nativeˉservice.I32ˉformat,
         Nativeˉservice.U32ˉformat,
     ];
@@ -348,6 +361,7 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
     {
         Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier => REQUIRED_SERVICES,
         Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector => INSPECTOR_REQUIRED_SERVICES,
+        Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner => RUNNER_REQUIRED_SERVICES,
         _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
     };
 

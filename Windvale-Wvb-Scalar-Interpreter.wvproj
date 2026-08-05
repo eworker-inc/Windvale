@@ -1,0 +1,4 @@
+windvale-project 1
+root "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
+source "Foundation/Sha256.wv"
+emit wvb
