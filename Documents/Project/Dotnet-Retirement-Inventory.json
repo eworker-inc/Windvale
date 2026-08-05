@@ -1,0 +1,86 @@
+{
+  "format": "windvale-dotnet-retirement-inventory-1",
+  "updated": "2026-08-05",
+  "directManagedEntrypoints": [
+    {
+      "path": ".github/workflows/deploy-homepage.yml",
+      "lanes": [
+        "release"
+      ],
+      "owner": "homepage release"
+    },
+    {
+      "path": ".github/workflows/verify.yml",
+      "lanes": [
+        "verification",
+        "release"
+      ],
+      "owner": "dual-host qualification and homepage release"
+    },
+    {
+      "path": "Website/package.json",
+      "lanes": [
+        "development"
+      ],
+      "owner": "website-local editable playground"
+    },
+    {
+      "path": "Tools/Recovery/Rebuild-Native-Front-Door.ps1",
+      "lanes": [
+        "recovery"
+      ],
+      "owner": "Windows Stage 0 native-front-door reconstruction"
+    },
+    {
+      "path": "Tools/Recovery/Rebuild-Native-Front-Door.sh",
+      "lanes": [
+        "recovery"
+      ],
+      "owner": "Linux Stage 0 native-front-door reconstruction"
+    },
+    {
+      "path": "Tools/Verify/Verify-Bootstrap.ps1",
+      "lanes": [
+        "verification",
+        "recovery"
+      ],
+      "owner": "Windows compiler bootstrap convergence"
+    },
+    {
+      "path": "Tools/Verify/Verify-Bootstrap.sh",
+      "lanes": [
+        "verification",
+        "recovery"
+      ],
+      "owner": "Linux compiler bootstrap convergence"
+    },
+    {
+      "path": "Tools/Verify/Verify-Os-Boot.ps1",
+      "lanes": [
+        "verification"
+      ],
+      "owner": "Windvale OS image and boot qualification"
+    },
+    {
+      "path": "Tools/Verify/Verify-Seed.ps1",
+      "lanes": [
+        "verification"
+      ],
+      "owner": "Windows Seed qualification"
+    },
+    {
+      "path": "Tools/Verify/Verify-Seed.sh",
+      "lanes": [
+        "verification"
+      ],
+      "owner": "Linux Seed qualification"
+    },
+    {
+      "path": "Tools/Verify/Verify-WebAssembly.ps1",
+      "lanes": [
+        "verification"
+      ],
+      "owner": "WebAssembly generation and verification"
+    }
+  ]
+}

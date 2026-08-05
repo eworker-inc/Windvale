@@ -2,6 +2,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+$RetirementInventoryVerifier = Join-Path $PSScriptRoot 'Verify-Dotnet-Retirement-Inventory.ps1'
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
 $Cases = @(
@@ -32,6 +33,8 @@ $Cases = @(
     @{ Name = 'bytecode specification'; Paths = @('Specifications/Seed-Bytecode.md'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'runtime') },
     @{ Name = 'test harness'; Paths = @('Tests/Windvale.Seed.Tests/Program.cs'); Scope = 'qualification'; Editor = $false; Areas = $AllAreas }
 )
+
+& $RetirementInventoryVerifier -Quiet
 
 foreach ($Case in $Cases) {
     $Plan = & $Planner -ChangedPath $Case.Paths -PassThru -Quiet

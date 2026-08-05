@@ -23,6 +23,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 
 - [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
 - [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
+- [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced direct-entry-point inventory, product-surface ledger, and retained recovery owners
 - [Project vision](Project/Project-Vision.md) — purpose, intended stack, success principles, and non-goals
 - [Open questions](Project/Open-Questions.md) — unresolved choices only
 - [Windvale Database proposal](Project/Windvale-Database-Proposal.md) — EWDB-informed engine/application/service split, language-readiness boundaries, performance-transfer rules, and the implemented Stage 1 read-only experiment; no durable format or product direction is accepted
