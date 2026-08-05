@@ -199,7 +199,7 @@ internal static partial class Program
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_VERIFY_SHA256 = "6a71829c14b4beb5c20a0368574bedb65aa89b3f1d8989889bc0433118a39ca5";
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_WVB_SHA256 = "2e277f962a47f6ebf06a17de329d221913f792ee940cd68873a1cdfce63a8ac0";
     private const string WEBASSEMBLY_WVB_COMPILER_CONTROL_SECOND_VERIFY_SHA256 = "e2a906bc7e0c91b5fc8b51a220f6be192af1775b630f0627018ad70bf2e9e308";
-    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "1276436f7a6ab707a16615d48d919bd0dd24022fb784a193aad2dc210f903d74";
+    private const string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256 = "284c6be845c3079f5bdaa7675d8b165d7cfe05a61567f56c9ab63fd94238e947";
     private const string SOURCE_WVB_BYTES_ENTRY_GUEST_SHA256 = "2e76ffb1e78ccc3b4e153a5d2ada5d247f7c96c5e0f82761d06e3a496eac5b81";
     private const string SOURCE_WVB_FUNCTION_ONLY_SHA256 = "28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936";
     private const string SOURCE_WVB_MATCH_SHA256 = "a64840ef59dbf72ee48acda5e430af3d3c52eb933a3647b72b23566c12bbaf6d";
@@ -8564,7 +8564,7 @@ internal static partial class Program
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Compilerˉmeasurement.Scalar);
             Equal(0u, Compilerˉmeasurement.Recordˉarenaˉused);
-            Equal(66_059u, Compilerˉmeasurement.Textˉarenaˉused);
+            Equal(68_099u, Compilerˉmeasurement.Textˉarenaˉused);
             Equal(
                 "source wvb status=Valid functions=4 code-bytes=532 module-bytes=816\n",
                 Compilerˉoutput.Readˉtext());
@@ -16114,7 +16114,7 @@ internal static partial class Program
         var Compilerˉmemoryˉwvb = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_MEMORY_ADAPTER_SOURCE,
             "Source-Wvb-Memory-Adapter.wv");
-        Equal(912_423, Compilerˉmemoryˉwvb.Length);
+        Equal(919_577, Compilerˉmemoryˉwvb.Length);
         Equal(
             SOURCE_WVB_MEMORY_ADAPTER_SHA256,
             Moduleˉdigest.Calculateˉsha256(Compilerˉmemoryˉwvb));
@@ -16175,15 +16175,15 @@ internal static partial class Program
             200_000_000);
         Equalˉscalarˉinstructions(
             "compiler-memory-preflight",
-            76_469_173L,
+            77_102_386L,
             Compilerˉmemoryˉpreflight.Executedˉinstructions);
         Equalˉscalarˉinstructions(
             "compiler-memory-maximum",
-            77_632_105L,
+            78_265_318L,
             Compilerˉmemoryˉmaximumˉsuccess.Executedˉinstructions);
         Equalˉscalarˉinstructions(
             "compiler-memory-budget",
-            134_386_894L,
+            135_053_075L,
             Compilerˉmemoryˉbudgetˉboundary.Executedˉinstructions);
         Equal(20, Compilerˉmemoryˉbudgetˉboundary.Bytes.Length);
         Equal(
@@ -16381,7 +16381,8 @@ internal static partial class Program
             "The aggregate-heap fixture does not fail on SHA-256 allocation.");
         Equal(0, Runˉreferenceˉwebassemblyˉi32(Heapˉfailureˉwvb).Status);
         var Heapˉfailureˉinterpreted = Runˉscalarˉinterpreter(
-            Buildˉscalarˉrequest(Heapˉfailureˉwvb, 4_096, 8));
+            Buildˉscalarˉrequest(Heapˉfailureˉwvb, 4_096, 8),
+            4_000_000);
         True(
             Heapˉfailureˉinterpreted.Executedˉinstructions <= 4_000_000,
             "The SHA-256 heap-failure case exceeded its bounded interpreter budget.");

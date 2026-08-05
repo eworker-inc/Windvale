@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Immutable;
 using Windvale.Bytecode;
 using Windvale.Compiler;
@@ -40,6 +41,40 @@ internal static partial class Program
             ]);
         var Runnerˉmodule = Moduleˉcodec.Readˉandˉverify(Runnerˉbytes);
         Equal(18, Runnerˉmodule.Module.Functions.Length);
+
+        var Interpreterˉbytes = Compileˉrunnerˉmodules(
+            new(
+                "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+                WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE),
+            [new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE)]);
+        var Interpreterˉmodule = Moduleˉcodec.Readˉandˉverify(Interpreterˉbytes);
+        var Heapˉguest = Compileˉsuccess(
+            SOURCE_WVB_TEXT_BYTES_INTERPRETER_HEAP_SOURCE);
+        var Heapˉrequest = new byte[16 + Heapˉguest.Length];
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Heapˉrequest.AsSpan(0, 4),
+            0x4958_5657u);
+        BinaryPrimitives.WriteUInt16LittleEndian(Heapˉrequest.AsSpan(4, 2), 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(Heapˉrequest.AsSpan(8, 4), 4_096u);
+        BinaryPrimitives.WriteUInt32LittleEndian(Heapˉrequest.AsSpan(12, 4), 8u);
+        Heapˉguest.CopyTo(Heapˉrequest, 16);
+        var Heapˉresult = new Referenceˉruntime(
+            Interpreterˉmodule,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Maximumˉinstructions = 1_000_000,
+            }).Runˉmainˉbytes(ImmutableArray.Create(Heapˉrequest));
+        Equal(20, Heapˉresult.Bytes.Length);
+        Equal(
+            0x4F58_5657u,
+            BinaryPrimitives.ReadUInt32LittleEndian(Heapˉresult.Bytes.AsSpan(0, 4)));
+        Equal(
+            3018u,
+            BinaryPrimitives.ReadUInt32LittleEndian(Heapˉresult.Bytes.AsSpan(8, 4)));
+        Equal(
+            388u,
+            BinaryPrimitives.ReadUInt32LittleEndian(Heapˉresult.Bytes.AsSpan(12, 4)));
 
         var I32ˉcodecˉmodule = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(
             "module Nativeˉi32ˉbytes profile portable; " +

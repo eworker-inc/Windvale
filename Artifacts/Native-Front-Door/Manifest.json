@@ -44,7 +44,7 @@
       "path": "Wvb/Wvb-Runner.wvb",
       "target": "canonical-wvb-1.11",
       "bytes": 86061,
-      "sha256": "d1c9005885fa6f05715794f88db90b1e1143e79e118785e1c954820718775c6b",
+      "sha256": "117b1f1ed26e18fe6be7d1d732a9317ba17469666d57260c87089caca6d78229",
       "sourceProject": "Windvale-Wvb-Runner.wvproj"
     },
     {
@@ -84,7 +84,7 @@
       "path": "windows-x64/wvrun.exe",
       "target": "windows-x64-wvb-runner-v1",
       "bytes": 770560,
-      "sha256": "bf4fa16b9072215fadab6f1097155d85d5b77924aac01b14330acb0496f0af4c",
+      "sha256": "86059a076ca2bedc26d466c16c2c6f3efd8008a20b11ebc6e5f0305cacada690",
       "sourceWvb": "Wvb/Wvb-Runner.wvb"
     },
     {
@@ -124,7 +124,7 @@
       "path": "linux-x64/wvrun.elf",
       "target": "linux-x64-wvb-runner-v1",
       "bytes": 770048,
-      "sha256": "28a98e35286ab0f0515b147ef34a527335dce1f3a5bf96449ea4495b8079ed0f",
+      "sha256": "75162565b70066c8a2816c2bd2b6937d0d1e7e8791564cd7f3d408dcf0f98c9f",
       "sourceWvb": "Wvb/Wvb-Runner.wvb"
     }
   ]

@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Front-Door"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '28a98e35286ab0f0515b147ef34a527335dce1f3a5bf96449ea4495b8079ed0f' \
+    '75162565b70066c8a2816c2bd2b6937d0d1e7e8791564cd7f3d408dcf0f98c9f' \
     'linux-x64/wvrun.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native WVB runner artifact digest is invalid.' >&2
     exit 1

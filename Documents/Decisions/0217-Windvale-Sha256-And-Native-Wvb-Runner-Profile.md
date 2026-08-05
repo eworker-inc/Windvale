@@ -17,7 +17,7 @@ The existing inspector launcher already owns the unavoidable argument, bounded r
 
 Add `Foundation/Sha256.wv` as a portable, capability-free SHA-256 implementation over immutable bytes and specified `u32` bitwise operations. Because ordinary `u32` arithmetic is checked, the implementation performs explicit wrapping addition with bitwise carry propagation. Known-answer coverage includes the empty message, `abc`, and the 56-byte two-block padding boundary.
 
-The scalar WVB interpreter imports this module and calls its exported digest function. The semantic `Bytesˉsha256ˉhex` intrinsic remains available to targets as an optimization and oracle; it is no longer required by the native runner fragment.
+The scalar WVB interpreter imports this module and calls its exported digest function. It preflights the fixed 64-byte guest result allocation before hashing, preserving bounded heap-failure behavior for large inputs. The semantic `Bytesˉsha256ˉhex` intrinsic remains available to targets as an optimization and oracle; it is no longer required by the native runner fragment.
 
 ### Share the exact four-byte native representation
 
@@ -43,9 +43,9 @@ The current native-compiler candidates are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Runner WVB | 86,061 | `d1c9005885fa6f05715794f88db90b1e1143e79e118785e1c954820718775c6b` |
-| Windows runner | 770,560 | `bf4fa16b9072215fadab6f1097155d85d5b77924aac01b14330acb0496f0af4c` |
-| Linux runner | 770,048 | `28a98e35286ab0f0515b147ef34a527335dce1f3a5bf96449ea4495b8079ed0f` |
+| Runner WVB | 86,061 | `117b1f1ed26e18fe6be7d1d732a9317ba17469666d57260c87089caca6d78229` |
+| Windows runner | 770,560 | `86059a076ca2bedc26d466c16c2c6f3efd8008a20b11ebc6e5f0305cacada690` |
+| Linux runner | 770,048 | `75162565b70066c8a2816c2bd2b6937d0d1e7e8791564cd7f3d408dcf0f98c9f` |
 
 The exact WVB, Windows application, and Linux application are pinned in the native-front-door inventory with qualification marked `pending`. The Windows candidate directly executes a compiler-produced portable guest and reports `Result: 42`. The focused Stage 0 conformance case verifies Foundation known answers through both the reference runtime and native executor, reconstructs both package profiles, and runs the current-host startup. These are current-host implementation results; they do not replace the pending Windows/Linux Qualification gate.
 

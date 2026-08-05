@@ -136,7 +136,7 @@ The current canonical application is 1,007,104 bytes with SHA-256 `f15422397ad89
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its implemented candidate is 795,136 bytes with SHA-256 `61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381`.
 
-`windows-x64-wvb-runner-v1` uses metadata profile `5`. The pinned candidate is 770,560 bytes with SHA-256 `bf4fa16b9072215fadab6f1097155d85d5b77924aac01b14330acb0496f0af4c`; it is committed qualification input, not yet an accepted ordinary artifact.
+`windows-x64-wvb-runner-v1` uses metadata profile `5`. The pinned candidate is 770,560 bytes with SHA-256 `86059a076ca2bedc26d466c16c2c6f3efd8008a20b11ebc6e5f0305cacada690`; it is committed qualification input, not yet an accepted ordinary artifact.
 
 ## Linux container
 
@@ -146,7 +146,7 @@ The current canonical application is 1,007,616 bytes with SHA-256 `dd98cd8f42ee8
 
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its implemented candidate is 794,624 bytes with SHA-256 `d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627`.
 
-`linux-x64-wvb-runner-v1` uses metadata profile `5`. The pinned candidate is 770,048 bytes with SHA-256 `28a98e35286ab0f0515b147ef34a527335dce1f3a5bf96449ea4495b8079ed0f`; direct execution remains pending Linux qualification.
+`linux-x64-wvb-runner-v1` uses metadata profile `5`. The pinned candidate is 770,048 bytes with SHA-256 `75162565b70066c8a2816c2bd2b6937d0d1e7e8791564cd7f3d408dcf0f98c9f`; direct execution remains pending Linux qualification.
 
 ## Construction and verification
 
@@ -168,7 +168,7 @@ The canonical WVB is 125,721 bytes with SHA-256 `259db7fc70679153982ca70843cf002
 
 The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`.
 
-The current native-compiler runner candidate is 86,061 bytes with SHA-256 `d1c9005885fa6f05715794f88db90b1e1143e79e118785e1c954820718775c6b`.
+The current native-compiler runner candidate is 86,061 bytes with SHA-256 `117b1f1ed26e18fe6be7d1d732a9317ba17469666d57260c87089caca6d78229`.
 
 The verifier writers require exactly one exported `Main() -> i32`, the five canonical capability declarations, and the five canonical verifier-fragment services; they add only the startup-internal UTF-8 service. The inspector writers require the same entry and capabilities plus the exact eleven-service read-only fragment. Both construct the outer application, parse it independently, and atomically publish it only after every profile, manifest, startup, import, section, permission, extent, padding, digest, and native-entry check succeeds.
 

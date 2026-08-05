@@ -12,7 +12,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Runner=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvrun.exe"
 
-certutil -hashfile "%Runner%" SHA256 | findstr /I /C:"bf4fa16b9072215fadab6f1097155d85d5b77924aac01b14330acb0496f0af4c" >nul
+certutil -hashfile "%Runner%" SHA256 | findstr /I /C:"86059a076ca2bedc26d466c16c2c6f3efd8008a20b11ebc6e5f0305cacada690" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVB runner artifact digest is invalid.
     exit /b 1
