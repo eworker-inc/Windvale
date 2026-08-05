@@ -52,10 +52,9 @@ jobs:
             exit 1
           fi
 
-          encoded_sha="$(printf '%s' "$target_sha" | jq --raw-input --slurp --uri-encode)"
           verification="$({
             curl --fail --silent --show-error "${api_headers[@]}" \
-              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/verify.yml/runs?branch=main&head_sha=$encoded_sha&status=completed&per_page=10"
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/verify.yml/runs?branch=main&head_sha=$target_sha&status=completed&per_page=10"
           })"
           verified_count="$(
             jq --arg sha "$target_sha" \
