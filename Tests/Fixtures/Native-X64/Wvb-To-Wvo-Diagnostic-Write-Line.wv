@@ -1,0 +1,8 @@
+module Wvbˉtoˉwvoˉdiagnosticˉwriteˉline profile hosted;
+
+capability diagnostic.write_line;
+
+export fn Main() -> i32 {
+    diagnostic.write_line("A");
+    return 42;
+}

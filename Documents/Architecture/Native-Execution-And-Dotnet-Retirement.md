@@ -18,6 +18,8 @@ Accepted architectural direction under [Decision 0057](../Decisions/0057-Windval
 
 [Decision 0246](../Decisions/0246-Native-Console-Write-Line-Capability.md) adds `console.write_line(text) -> void` with exact text-plus-LF behavior and the existing partial-visibility failure boundary. The real hosted lowerer's successful input, publication, and reporting path now lowers through Windvale source; diagnostic usage and rejection output remain the final capability slice.
 
+[Decision 0247](../Decisions/0247-Native-Diagnostic-Write-Line-Capability.md) adds `diagnostic.write_line(text) -> void` through the separate diagnostic channel and a shared focused text-output emitter. All six hosted calls declared by the real lowerer now lower through Windvale source; its broader self-lowering blockers and grouped Windows/Linux qualification remain.
+
 [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) additionally makes portability a per-part and derived artifact property. Native publication must preserve the canonical module's platform scope and capability requirements even when a particular application intentionally targets only one environment.
 
 ## Destination
@@ -307,6 +309,8 @@ Decision 0244 adds the read side of the real hosted lowering shell. It passes a 
 Decision 0245 adds the mutation side through service-table slot 96. It consumes borrowed text and bytes descriptors, produces no value, and retains the exact create-or-replace, 4 MiB, durable-flush, and non-atomic contract. The direct current-host package reproduces Stage 0's exact file-write fixture WVO; grouped dual-host qualification remains pending.
 
 Decision 0246 adds successful reporting through service-table slot 8. It consumes one borrowed text descriptor, emits the exact text plus LF, produces no value, and retains runtime-service failure propagation without promising atomic visibility or retry. The direct current-host package reproduces Stage 0's exact console-output fixture WVO; grouped dual-host qualification remains pending.
+
+Decision 0247 adds usage and rejection reporting through service-table slot 48. It reuses the verified text-output machine shape while retaining a distinct capability identity, service grant, and diagnostic sink. The direct current-host package reproduces Stage 0's exact diagnostic-output fixture WVO, completing all six hosted calls admitted by this candidate; grouped dual-host qualification remains pending.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 

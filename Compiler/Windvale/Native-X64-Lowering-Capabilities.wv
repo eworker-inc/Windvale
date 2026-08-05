@@ -177,6 +177,10 @@ export fn Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉkind() -> u8 {
     return 1u8;
 }
 
+export fn Compilerˉnativeˉx64ˉdiagnosticˉwriteˉlineˉkind() -> u8 {
+    return 2u8;
+}
+
 export fn Compilerˉnativeˉx64ˉprocessˉargumentˉkind() -> u8 {
     return 5u8;
 }
@@ -193,7 +197,7 @@ export fn Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes() -> u32 {
     return 27u32;
 }
 
-export fn Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉbytes() -> u32 {
+export fn Compilerˉnativeˉx64ˉtextˉoutputˉbytes() -> u32 {
     return 44u32;
 }
 
@@ -279,7 +283,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcapability(
             Outputˉbody
         );
     }
-    if Kind == Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉkind() {
+    if Kind == Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉkind() ||
+        Kind == Compilerˉnativeˉx64ˉdiagnosticˉwriteˉlineˉkind() {
         if Bytesˉreadˉu8(Outputˉstack, Outputˉdepth - 1u32) != 3u8 {
             return Compilerˉnativeˉx64ˉcapabilityˉanalysis(
                 false,
@@ -294,7 +299,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcapability(
         Outputˉdepth = Outputˉdepth - 1u32;
         Outputˉstack = Bytesˉslice(Outputˉstack, 0u32, Outputˉdepth);
         Outputˉbody = Outputˉbody +
-            Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉbytes();
+            Compilerˉnativeˉx64ˉtextˉoutputˉbytes();
         return Compilerˉnativeˉx64ˉcapabilityˉanalysis(
             true,
             Outputˉstack,
@@ -436,9 +441,10 @@ export fn Compilerˉnativeˉx64ˉemitˉprocessˉargument(
     );
 }
 
-export fn Compilerˉnativeˉx64ˉemitˉconsoleˉwriteˉline(
+export fn Compilerˉnativeˉx64ˉemitˉtextˉoutput(
     Result: bytes,
     Source: u32,
+    Serviceˉoffset: u8,
     Failureˉtarget: u32
 ) -> bytes {
     var Output: bytes = Appendˉbyte(Result, 76u8);
@@ -458,7 +464,7 @@ export fn Compilerˉnativeˉx64ˉemitˉconsoleˉwriteˉline(
     Output = Appendˉbyte(Output, 72u8);
     Output = Appendˉbyte(Output, 139u8);
     Output = Appendˉbyte(Output, 64u8);
-    Output = Appendˉbyte(Output, 8u8);
+    Output = Appendˉbyte(Output, Serviceˉoffset);
     Output = Appendˉbyte(Output, 255u8);
     Output = Appendˉbyte(Output, 208u8);
     Output = Appendˉbyte(Output, 133u8);
@@ -641,10 +647,16 @@ export fn Compilerˉnativeˉx64ˉemitˉcapability(
     Outputˉdepth = Outputˉdepth - 1u32;
     Outputˉtypes = Bytesˉslice(Outputˉtypes, 0u32, Outputˉdepth);
     Outputˉslots = Bytesˉslice(Outputˉslots, 0u32, Outputˉdepth * 4u32);
-    if Kind == Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉkind() {
-        Outputˉresult = Compilerˉnativeˉx64ˉemitˉconsoleˉwriteˉline(
+    if Kind == Compilerˉnativeˉx64ˉconsoleˉwriteˉlineˉkind() ||
+        Kind == Compilerˉnativeˉx64ˉdiagnosticˉwriteˉlineˉkind() {
+        var Serviceˉoffset: u8 = 8u8;
+        if Kind == Compilerˉnativeˉx64ˉdiagnosticˉwriteˉlineˉkind() {
+            Serviceˉoffset = 48u8;
+        }
+        Outputˉresult = Compilerˉnativeˉx64ˉemitˉtextˉoutput(
             Outputˉresult,
             Source,
+            Serviceˉoffset,
             Failureˉtarget
         );
         return Compilerˉnativeˉx64ˉcapabilityˉstate(

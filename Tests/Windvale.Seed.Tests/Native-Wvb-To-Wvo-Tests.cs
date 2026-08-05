@@ -41,14 +41,17 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_CONSOLE_WRITE_LINE_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Console-Write-Line.wv");
+    private static readonly string WVB_TO_WVO_DIAGNOSTIC_WRITE_LINE_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Diagnostic-Write-Line.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 296_134;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_137_472;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 296_582;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_140_544;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "e96fc63a7d5e7cc914940eabec07fb01ec027343298f4495a4291c28110d49de";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_136_960;
+        "9a1e48792d601bdaa28414ff89c7bb5650198786f0e953cd13cdf422e616597f";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_141_056;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "c45f2b373b094846f5eae4d01e026331736638c26b08ab3ed9ca554354e33336";
+        "dd50e84e7a2be9c3f3d27aa5b449946a3d2f5eaf4e1a73c176e6be3b74b40d82";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -232,6 +235,16 @@ internal static partial class Program
             $"native x64 status=Valid abi=22 " +
             $"code-bytes={Expectedˉconsoleˉview.Sections[0].Data.Length} " +
             $"object-bytes={Expectedˉconsoleˉobject.Length}\n";
+        var Diagnosticˉwvb = Compileˉsuccess(WVB_TO_WVO_DIAGNOSTIC_WRITE_LINE_SOURCE);
+        var Diagnosticˉmodule = Moduleˉcodec.Readˉandˉverify(Diagnosticˉwvb);
+        var Expectedˉdiagnosticˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            X64ˉnativeˉbackend.Compile(Diagnosticˉmodule).Fragment);
+        var Expectedˉdiagnosticˉview = Objectˉcodec.Readˉandˉverify(
+            Expectedˉdiagnosticˉobject.AsSpan()).Value;
+        var Expectedˉdiagnosticˉreport =
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉdiagnosticˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉdiagnosticˉobject.Length}\n";
 
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
@@ -275,6 +288,12 @@ internal static partial class Program
             var Consoleˉoutputˉpath = Path.Combine(
                 Directoryˉpath,
                 "Console-Write-Line.wvo");
+            var Diagnosticˉinputˉpath = Path.Combine(
+                Directoryˉpath,
+                "Diagnostic-Write-Line.wvb");
+            var Diagnosticˉoutputˉpath = Path.Combine(
+                Directoryˉpath,
+                "Diagnostic-Write-Line.wvo");
             var Invalidˉpath = Path.Combine(Directoryˉpath, "Invalid.wvb");
             var Rejectedˉpath = Path.Combine(Directoryˉpath, "Rejected.wvo");
             File.WriteAllBytes(Toolˉpath, Toolˉbytes);
@@ -285,6 +304,7 @@ internal static partial class Program
             File.WriteAllBytes(Fileˉreadˉinputˉpath, Fileˉreadˉwvb);
             File.WriteAllBytes(Fileˉwriteˉinputˉpath, Fileˉwriteˉwvb);
             File.WriteAllBytes(Consoleˉinputˉpath, Consoleˉwvb);
+            File.WriteAllBytes(Diagnosticˉinputˉpath, Diagnosticˉwvb);
             File.WriteAllBytes(Invalidˉpath, Fixtureˉwvb[..^1]);
             byte[] Sentinel = [0x57, 0x56, 0x4F];
             File.WriteAllBytes(Rejectedˉpath, Sentinel);
@@ -356,6 +376,10 @@ internal static partial class Program
                     Windows.Imageˉbytes,
                     Expectedˉconsoleˉreport,
                     [Consoleˉinputˉpath, Consoleˉoutputˉpath]));
+                Equal(0, Executeˉwindowsˉapplication(
+                    Windows.Imageˉbytes,
+                    Expectedˉdiagnosticˉreport,
+                    [Diagnosticˉinputˉpath, Diagnosticˉoutputˉpath]));
             }
             if (OperatingSystem.IsLinux())
             {
@@ -405,6 +429,10 @@ internal static partial class Program
                     Linux.Imageˉbytes,
                     Expectedˉconsoleˉreport,
                     [Consoleˉinputˉpath, Consoleˉoutputˉpath]));
+                Equal(0, Executeˉlinuxˉapplication(
+                    Linux.Imageˉbytes,
+                    Expectedˉdiagnosticˉreport,
+                    [Diagnosticˉinputˉpath, Diagnosticˉoutputˉpath]));
             }
 
             Sequenceˉequal(Expectedˉobject, File.ReadAllBytes(Outputˉpath));
@@ -427,6 +455,9 @@ internal static partial class Program
             Sequenceˉequal(
                 Expectedˉconsoleˉobject,
                 File.ReadAllBytes(Consoleˉoutputˉpath));
+            Sequenceˉequal(
+                Expectedˉdiagnosticˉobject,
+                File.ReadAllBytes(Diagnosticˉoutputˉpath));
             Sequenceˉequal(Sentinel, File.ReadAllBytes(Rejectedˉpath));
             _ = Objectˉcodec.Readˉandˉverify(File.ReadAllBytes(Outputˉpath));
         }
@@ -1225,6 +1256,74 @@ internal static partial class Program
         {
             throw new InvalidOperationException(
                 "console.write_line lowering failed: " + Toolˉresult.Diagnostics);
+        }
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+    }
+
+    private static void Assertˉdiagnosticˉwriteˉlineˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_DIAGNOSTIC_WRITE_LINE_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
+        var Capability = Module.Module.Capabilities.Single();
+        Equal(Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE, Capability.Name);
+        Sequenceˉequal([Valueˉtype.Text], Capability.Parameterˉtypes);
+        Equal(Valueˉtype.Void, Capability.Returnˉtype);
+
+        var Authorized = ImmutableHashSet.Create(
+            StringComparer.Ordinal,
+            Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE);
+        var Diagnostics = new StringWriter();
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
+                [],
+                TextWriter.Null,
+                Diagnostics)),
+            new(Authorized)).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+        Equal("A\n", Diagnostics.ToString());
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Sequenceˉequal(
+            [Nativeˉservice.Diagnosticˉwriteˉline],
+            Native.Fragment.Requiredˉservices);
+        using var Nativeˉdiagnostic = new Nativeˉoutputˉcapture();
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions,
+                hostˉservices: new(
+                    null,
+                    Authorized,
+                    diagnosticˉoutput: Nativeˉdiagnostic.Channel)));
+        Equal("A\n", Nativeˉdiagnostic.Readˉtext());
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(
+            Expectedˉobject.AsSpan()).Value;
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(tool, Wvb);
+        if (Toolˉresult.Exitˉcode != 0)
+        {
+            throw new InvalidOperationException(
+                "diagnostic.write_line lowering failed: " + Toolˉresult.Diagnostics);
         }
         Equal(string.Empty, Toolˉresult.Diagnostics);
         Equal(
