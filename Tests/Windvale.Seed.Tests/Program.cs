@@ -1028,6 +1028,9 @@ internal static partial class Program
     private static readonly string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Console-Application-Verification-Bridge.wv");
 
+    private static readonly string CONSOLE_APPLICATION_PACKAGER_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Application-Packager.wv");
+
     private static readonly string WVA_ASSEMBLER_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wva-Assembler-Core.wv");
 
@@ -1125,6 +1128,8 @@ internal static partial class Program
         new("native WVB verifier and inspector applications own the read-only front door", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvbˉreadˉonlyˉtoolsˉrun),
         new("Windvale SHA-256 and the native WVB runner execute without a .NET host", [TEST_AREA_FOUNDATION, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvbˉrunnerˉruns),
         new("native test orchestration builds and runs the pinned scalar plan", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉtestˉorchestrationˉruns),
+        new("native console packager AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉpackagerˉtargetsˉareˉdiscoverable),
+        new("native console packager materializes verified PE and ELF applications", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉruns),
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native byte descriptors survive helper returns and later allocations", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉbyteˉdescriptorˉreturnsˉsurvive),
         new("native runtime service writes static UTF-8 through explicit authorization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉruntimeˉserviceˉisˉauthorized),

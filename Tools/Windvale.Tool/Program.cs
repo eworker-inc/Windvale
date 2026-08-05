@@ -108,6 +108,7 @@ internal static class Program
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
             "windows-x64-wv-linker-v1|linux-x64-wv-linker-v1|" +
+            "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1>] [-o <artifact>]";
         if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
@@ -169,6 +170,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WV_LINKER_TARGET_NAME => ".exe",
+        Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         _ => ".elf",
     };
@@ -228,6 +230,7 @@ internal static class Program
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
             "windows-x64-wv-linker-v1|linux-x64-wv-linker-v1|" +
+            "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1> [-o <artifact>]";
         if (arguments.Length is not (3 or 5) ||
             arguments[0].StartsWith("-", StringComparison.Ordinal))
@@ -312,6 +315,8 @@ internal static class Program
         Linuxˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.WV_LINKER_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.WV_LINKER_TARGET_NAME or
+        Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
 
@@ -443,6 +448,7 @@ internal static class Program
                 Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WV_LINKER_TARGET_NAME or
+                Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
             {
                 var Application = target switch
@@ -480,6 +486,11 @@ internal static class Program
                             Moduleˉname),
                     Windowsˉconsoleˉapplicationˉcontract.WV_LINKER_TARGET_NAME =>
                         Hostedˉwvˉlinkerˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME =>
+                        Hostedˉconsoleˉpackagerˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -544,6 +555,11 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Linuxˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME =>
+                        Hostedˉconsoleˉpackagerˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -580,6 +596,7 @@ internal static class Program
                     Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WV_LINKER_TARGET_NAME or
+                    Linuxˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
             {
@@ -1062,6 +1079,7 @@ internal static class Program
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
             "windows-x64-wv-linker-v1|linux-x64-wv-linker-v1|" +
+            "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
         output.WriteLine(
@@ -1076,6 +1094,7 @@ internal static class Program
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
             "windows-x64-wv-linker-v1|linux-x64-wv-linker-v1|" +
+            "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");

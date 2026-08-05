@@ -1859,3 +1859,38 @@ as the ordinary no-.NET Windows/Linux routes. The retained Stage 0 `verify` and
 Native WVB execution is the next coherent normal-path item; test orchestration,
 complete backend ownership, assembly, linking, packaging, release production,
 and the final recovery archive remain open.
+
+## Local native console-application packager candidate evidence
+
+[Decision 0223](../Decisions/0223-First-Native-Console-Application-Packager.md)
+adds paired `WVHP 1` source candidates without new startup assembly. The canonical
+58,127-byte packager WVB has SHA-256
+`7b055d4e6a456680a79eb28eaafa577e0019ea0ff1e34d9e713e9178428acc29`.
+Its 667,648-byte Windows PE and 667,648-byte Linux ELF have SHA-256 identities
+`a9cd6e222b869d838f563ffc46ae3acbde74ff8beb10c28373b6d5985c8f680f`
+and `10b1d752ab6c9c7217f833add9ef77ca0d61b6bcc02d7023b1877f42bab2a683`.
+
+The source composes the existing Windvale-owned version-1 plan, sparse
+construction, and portable verification contracts. It independently validates
+and materializes the recipe into one bounded complete application, requires exact
+target/native/entry recovery, and calls output only after success. The first
+candidate deliberately rejects a completed application above the existing
+4,194,304-byte immutable-value limit even though the sparse contract admits a
+slightly larger maximum container.
+
+On local Windows, the zero-warning Seed project build completes in 12.63 seconds,
+the source-only WVB build in 6.5 seconds, and paired AOT candidate construction in
+16.1 seconds. The reviewed discovery check passes in 613 milliseconds. The final
+focused behavior case passes in 7.273 test seconds: it reconstructs both packages,
+runs the current-host self-test, packages one six-byte return-42 image into both PE
+and ELF, recovers exact bytes and entry through the independent platform parsers,
+executes the Windows result to 42, proves deterministic repetition, preserves an
+existing output on malformed target or entry input, and observes no CLR/.NET
+module in the packager process.
+
+This is focused local candidate evidence only. Standard, Qualification, the full
+Seed/OS suites, native CLI qualification, Linux execution, GitHub verification,
+artifact promotion, and ordinary-path cutover were deliberately deferred to the
+one grouped end-of-goal gate. That final gate will begin by updating from upstream
+and reconciling the complete retirement batch, then regenerate current identities
+once before Windows/Linux qualification.

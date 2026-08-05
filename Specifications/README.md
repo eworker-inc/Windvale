@@ -65,6 +65,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Hosted compiler application manifest](Windvale-Hosted-Compiler-Application.md)
 - [Portable console-application layout plan](Windvale-Console-Application-Plan.md)
 - [Portable console-application construction recipe](Windvale-Console-Application-Construction.md)
+- [Native console-application packager](Windvale-Native-Console-Packager.md)
 - [WVA native stencils](Wva-Native-Stencil.md)
 - [Native publication plan](Windvale-Native-Publication-Plan.md)
 - [Native publication lifetime](Windvale-Native-Publication-Lifetime.md)

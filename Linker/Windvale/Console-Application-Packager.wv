@@ -1,0 +1,524 @@
+module Consoleˉapplicationˉpackager profile hosted;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Foundationˉdecimalˉparsing as Decimalˉparsing;
+import Linkerˉconsoleˉapplicationˉconstruction as Applicationˉconstruction;
+import Linkerˉconsoleˉapplicationˉverification as Applicationˉverification;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Consoleˉpackageˉstatus {
+    Valid = 0;
+    Invalidˉrequest = 1;
+    Invalidˉrecipe = 2;
+    Applicationˉlimit = 3;
+    Verificationˉfailed = 4;
+}
+
+record Consoleˉpackageˉresult {
+    Status: Consoleˉpackageˉstatus;
+    Value: bytes;
+    Target: u32;
+    Nativeˉimageˉbytes: u32;
+    Nativeˉentryˉoffset: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Failed(
+    Input: bytes,
+    Status: Consoleˉpackageˉstatus,
+    Target: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉpackageˉresult {
+    return Consoleˉpackageˉresult(
+        Status,
+        Empty(Input),
+        Target,
+        Bytesˉlength(Input),
+        Nativeˉentryˉoffset
+    );
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Request(Input: bytes, Target: u32, Nativeˉentryˉoffset: u32) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 1363367511u32
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 1u32
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 32u32
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, Target
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, Bytesˉlength(Input)
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, Nativeˉentryˉoffset
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 0u32
+    );
+    return Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 0u32
+    );
+}
+
+fn Package(
+    Input: bytes,
+    Target: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉpackageˉresult {
+    if Target != 1u32 {
+        if Target != 2u32 {
+            return Failed(
+                Input,
+                Consoleˉpackageˉstatus.Invalidˉrequest,
+                Target,
+                Nativeˉentryˉoffset
+            );
+        }
+    }
+    let Nativeˉbytes: u32 = Bytesˉlength(Input);
+    if Nativeˉbytes == 0u32 {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrequest,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Nativeˉentryˉoffset >= Nativeˉbytes {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrequest,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+
+    let Recipe: bytes = Applicationˉconstruction.Consoleˉapplicationˉconstruction(
+        Request(Input, Target, Nativeˉentryˉoffset)
+    );
+    let Recipeˉbytes: u32 = Bytesˉlength(Recipe);
+    if Recipeˉbytes < 40u32 {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 0u32) != 1128486487u32 {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 4u32) != 1u32 {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 8u32) != Recipeˉbytes {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 12u32) != 0u32 {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrequest,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 16u32) != 32u32 {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 20u32) != Target {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    let Applicationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 24u32);
+    if Applicationˉbytes > 4194304u32 {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Applicationˉlimit,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 28u32) != Nativeˉbytes {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 32u32) != Nativeˉentryˉoffset {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+
+    let Segmentˉcount: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 36u32);
+    if Target == 1u32 {
+        if Segmentˉcount != 5u32 {
+            return Failed(
+                Input,
+                Consoleˉpackageˉstatus.Invalidˉrecipe,
+                Target,
+                Nativeˉentryˉoffset
+            );
+        }
+    } else {
+        if Segmentˉcount != 4u32 {
+            return Failed(
+                Input,
+                Consoleˉpackageˉstatus.Invalidˉrecipe,
+                Target,
+                Nativeˉentryˉoffset
+            );
+        }
+    }
+    let Descriptorˉbytes: u32 = Segmentˉcount * 12u32;
+    if Descriptorˉbytes > Recipeˉbytes - 40u32 {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    var Payloadˉoffset: u32 = 40u32 + Descriptorˉbytes;
+    let Initial: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Applicationˉbytes);
+    if !Initial.Valid {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Applicationˉlimit,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+
+    var Result: bytes = Initial.Value;
+    var Previousˉend: u32 = 0u32;
+    var Nativeˉsegmentˉseen: bool = false;
+    var Index: u32 = 0u32;
+    while Index < Segmentˉcount {
+        let Descriptorˉoffset: u32 = 40u32 + Index * 12u32;
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Recipe, Descriptorˉoffset);
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Recipe, Descriptorˉoffset + 4u32);
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Recipe, Descriptorˉoffset + 8u32);
+        if Offset < Previousˉend {
+            return Failed(
+                Input,
+                Consoleˉpackageˉstatus.Invalidˉrecipe,
+                Target,
+                Nativeˉentryˉoffset
+            );
+        }
+        if Offset > Applicationˉbytes {
+            return Failed(
+                Input,
+                Consoleˉpackageˉstatus.Invalidˉrecipe,
+                Target,
+                Nativeˉentryˉoffset
+            );
+        }
+        if Length > Applicationˉbytes - Offset {
+            return Failed(
+                Input,
+                Consoleˉpackageˉstatus.Invalidˉrecipe,
+                Target,
+                Nativeˉentryˉoffset
+            );
+        }
+
+        var Segment: bytes = Empty(Input);
+        if Kind == 1u32 {
+            if Payloadˉoffset > Recipeˉbytes {
+                return Failed(
+                    Input,
+                    Consoleˉpackageˉstatus.Invalidˉrecipe,
+                    Target,
+                    Nativeˉentryˉoffset
+                );
+            }
+            if Length > Recipeˉbytes - Payloadˉoffset {
+                return Failed(
+                    Input,
+                    Consoleˉpackageˉstatus.Invalidˉrecipe,
+                    Target,
+                    Nativeˉentryˉoffset
+                );
+            }
+            Segment = Bytesˉslice(Recipe, Payloadˉoffset, Length);
+            Payloadˉoffset = Payloadˉoffset + Length;
+        } else {
+            if Kind != 2u32 {
+                return Failed(
+                    Input,
+                    Consoleˉpackageˉstatus.Invalidˉrecipe,
+                    Target,
+                    Nativeˉentryˉoffset
+                );
+            }
+            if Nativeˉsegmentˉseen {
+                return Failed(
+                    Input,
+                    Consoleˉpackageˉstatus.Invalidˉrecipe,
+                    Target,
+                    Nativeˉentryˉoffset
+                );
+            }
+            if Length != Nativeˉbytes {
+                return Failed(
+                    Input,
+                    Consoleˉpackageˉstatus.Invalidˉrecipe,
+                    Target,
+                    Nativeˉentryˉoffset
+                );
+            }
+            Segment = Input;
+            Nativeˉsegmentˉseen = true;
+        }
+
+        let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+            Byteˉconstruction.Foundationˉbytesˉreplace(
+                Result, Offset, Length, Segment
+            );
+        if !Replaced.Valid {
+            return Failed(
+                Input,
+                Consoleˉpackageˉstatus.Invalidˉrecipe,
+                Target,
+                Nativeˉentryˉoffset
+            );
+        }
+        Result = Replaced.Value;
+        Previousˉend = Offset + Length;
+        Index = Index + 1u32;
+    }
+    if Payloadˉoffset != Recipeˉbytes {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if !Nativeˉsegmentˉseen {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Invalidˉrecipe,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+
+    let Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult =
+        Applicationˉverification.Consoleˉapplicationˉverification(
+            Result, Empty(Input)
+        );
+    if Verified.Status !=
+        Applicationˉverification.Consoleˉapplicationˉverificationˉstatus.Valid {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Verificationˉfailed,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Verified.Target != Target {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Verificationˉfailed,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Verified.Applicationˉbytes != Applicationˉbytes {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Verificationˉfailed,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Verified.Nativeˉentryˉoffset != Nativeˉentryˉoffset {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Verificationˉfailed,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    if !Bytesˉareˉequal(Verified.Nativeˉimage, Input) {
+        return Failed(
+            Input,
+            Consoleˉpackageˉstatus.Verificationˉfailed,
+            Target,
+            Nativeˉentryˉoffset
+        );
+    }
+    return Consoleˉpackageˉresult(
+        Consoleˉpackageˉstatus.Valid,
+        Result,
+        Target,
+        Nativeˉbytes,
+        Nativeˉentryˉoffset
+    );
+}
+
+fn Targetˉname(Target: u32) -> text {
+    if Target == 1u32 { return "windows-x64-console-v1"; }
+    if Target == 2u32 { return "linux-x64-console-v1"; }
+    return "invalid";
+}
+
+fn Description(Result: Consoleˉpackageˉresult) -> text {
+    var Value: text = Textˉconcat("package status=", Enumˉname(Result.Status));
+    Value = Textˉconcat(Value, Textˉconcat(" target=", Targetˉname(Result.Target)));
+    Value = Textˉconcat(
+        Value,
+        Textˉconcat(" native-image-bytes=", U32ˉformat(Result.Nativeˉimageˉbytes))
+    );
+    Value = Textˉconcat(
+        Value,
+        Textˉconcat(" entry-offset=", U32ˉformat(Result.Nativeˉentryˉoffset))
+    );
+    return Textˉconcat(
+        Value,
+        Textˉconcat(" application-bytes=", U32ˉformat(Bytesˉlength(Result.Value)))
+    );
+}
+
+fn Parseˉtarget(Value: bytes) -> u32 {
+    if Bytesˉareˉequal(Value, Textˉtoˉutf8("windows-x64-console-v1")) {
+        return 1u32;
+    }
+    if Bytesˉareˉequal(Value, Textˉtoˉutf8("linux-x64-console-v1")) {
+        return 2u32;
+    }
+    return 0u32;
+}
+
+fn Runˉselfˉtests() -> i32 {
+    let Nativeˉimage: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(10936u32),
+        Bytesˉfromˉu16ˉlittle(49920u32)
+    );
+    let Windows: Consoleˉpackageˉresult = Package(Nativeˉimage, 1u32, 0u32);
+    if Windows.Status != Consoleˉpackageˉstatus.Valid { return 11; }
+    if Bytesˉreadˉu16ˉlittle(Windows.Value, 0u32) != 23117u32 { return 12; }
+    let Linux: Consoleˉpackageˉresult = Package(Nativeˉimage, 2u32, 0u32);
+    if Linux.Status != Consoleˉpackageˉstatus.Valid { return 13; }
+    if Bytesˉreadˉu32ˉlittle(Linux.Value, 0u32) != 1179403647u32 { return 14; }
+    let Badˉentry: Consoleˉpackageˉresult = Package(
+        Nativeˉimage, 1u32, Bytesˉlength(Nativeˉimage)
+    );
+    if Badˉentry.Status != Consoleˉpackageˉstatus.Invalidˉrequest { return 15; }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() == 0u32 {
+        return Runˉselfˉtests();
+    }
+    if process.argument_count() != 4u32 {
+        diagnostic.write_line(
+            "Usage: wvpack <windows-x64-console-v1|linux-x64-console-v1> <native-image.bin> <entry-offset> <output>"
+        );
+        return 64;
+    }
+
+    let Target: u32 = Parseˉtarget(Textˉtoˉutf8(process.argument(0u32)));
+    let Entryˉbytes: bytes = Textˉtoˉutf8(process.argument(2u32));
+    let Entry: Decimalˉparsing.Foundationˉu32ˉparse =
+        Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(
+            Entryˉbytes,
+            0u32,
+            Bytesˉlength(Entryˉbytes)
+        );
+    if Target == 0u32 {
+        let Targetˉfailure: Consoleˉpackageˉresult = Failed(
+            Empty(Textˉtoˉutf8(process.argument(0u32))),
+            Consoleˉpackageˉstatus.Invalidˉrequest,
+            Target,
+            0u32
+        );
+        diagnostic.write_line(Description(Targetˉfailure));
+        return 2;
+    }
+    if !Entry.Valid {
+        let Entryˉfailure: Consoleˉpackageˉresult = Failed(
+            Empty(Textˉtoˉutf8(process.argument(2u32))),
+            Consoleˉpackageˉstatus.Invalidˉrequest,
+            Target,
+            0u32
+        );
+        diagnostic.write_line(Description(Entryˉfailure));
+        return 2;
+    }
+
+    let Nativeˉimage: bytes = file.read_bytes(process.argument(1u32));
+    let Result: Consoleˉpackageˉresult = Package(
+        Nativeˉimage, Target, Entry.Value
+    );
+    let Report: text = Description(Result);
+    if Result.Status != Consoleˉpackageˉstatus.Valid {
+        diagnostic.write_line(Report);
+        return 2;
+    }
+    file.write_bytes(process.argument(3u32), Result.Value);
+    console.write_line(Report);
+    return 0;
+}

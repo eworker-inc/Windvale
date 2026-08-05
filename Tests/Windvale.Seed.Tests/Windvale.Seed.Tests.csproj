@@ -76,6 +76,9 @@
       Include="../../Linker/Windvale/Console-Application-Verification-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Console-Application-Verification-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Console-Application-Packager.wv"
+      LogicalName="Windvale.Seed.Tests.Console-Application-Packager.wv" />
+    <EmbeddedResource
       Include="../../Assembler/Windvale/Wva-Assembler-Core.wv"
       LogicalName="Windvale.Seed.Tests.Wva-Assembler-Core.wv" />
     <EmbeddedResource
