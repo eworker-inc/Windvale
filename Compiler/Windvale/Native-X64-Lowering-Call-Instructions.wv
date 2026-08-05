@@ -103,7 +103,21 @@ fn Emitˉscalarˉcall(
             State.Stackˉslots,
             (State.Stackˉdepth - Parameters + Argument) * 4u32
         );
-        Output = Loadˉargument(Output, Argument, Argumentˉslot);
+        if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+            Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉtype(
+                Callˉdirectory,
+                Target,
+                Argument
+            )
+        ) {
+            Output = Records.Compilerˉnativeˉx64ˉemitˉrecordˉargument(
+                Output,
+                Argument,
+                Argumentˉslot
+            );
+        } else {
+            Output = Loadˉargument(Output, Argument, Argumentˉslot);
+        }
         Argument = Argument + 1u32;
     }
     Output = Appendˉbyte(Output, 232u8);

@@ -292,6 +292,12 @@
       Include="../../Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Enum-Instructions.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Record-Allocation.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Record-Allocation.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Record-Local-Liveness.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Record-Local-Liveness.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Record-Storage.wv" />
     <EmbeddedResource

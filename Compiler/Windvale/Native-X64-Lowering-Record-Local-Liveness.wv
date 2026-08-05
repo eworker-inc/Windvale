@@ -1,0 +1,195 @@
+module Compilerˉnativeˉx64ˉloweringˉrecordˉlocalˉliveness profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉallocation as Allocation;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Zeros(Input: bytes, Count: u32) -> bytes {
+    var Result: bytes = Empty(Input);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Setˉbyte(Input: bytes, Index: u32, Value: u8) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Index),
+            Bytesˉfromˉu8(Value)
+        ),
+        Bytesˉslice(Input, Index + 1u32, Bytesˉlength(Input) - Index - 1u32)
+    );
+}
+
+fn Replaceˉrange(Input: bytes, Offset: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Value
+        ),
+        Bytesˉslice(
+            Input,
+            Offset + Bytesˉlength(Value),
+            Bytesˉlength(Input) - Offset - Bytesˉlength(Value)
+        )
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Parameters: u32,
+    Localˉtypes: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Blocks: u32,
+    Instructionˉoffsets: bytes,
+    Blockˉstarts: bytes,
+    Blockˉends: bytes,
+    Successorˉfirst: bytes,
+    Successorˉsecond: bytes,
+    Uses: bytes,
+    Definitions: bytes
+) -> Allocation.Compilerˉnativeˉx64ˉrecordˉallocation {
+    let Locals: u32 = Bytesˉlength(Localˉtypes);
+    var Liveˉin: bytes = Zeros(Input, Blocks * Locals);
+    var Liveˉout: bytes = Zeros(Input, Blocks * Locals);
+    var Iteration: u32 = 0u32;
+    while Iteration < Blocks {
+        var Reverseˉblock: u32 = Blocks;
+        while Reverseˉblock > 0u32 {
+            Reverseˉblock = Reverseˉblock - 1u32;
+            let First: u32 = Bytesˉreadˉu32ˉlittle(
+                Successorˉfirst,
+                Reverseˉblock * 4u32
+            );
+            let Second: u32 = Bytesˉreadˉu32ˉlittle(
+                Successorˉsecond,
+                Reverseˉblock * 4u32
+            );
+            var Newˉout: bytes = Empty(Input);
+            var Newˉin: bytes = Empty(Input);
+            var Flowˉlocal: u32 = 0u32;
+            while Flowˉlocal < Locals {
+                var Out: u8 = 0u8;
+                if First != 4294967295u32 {
+                    if Bytesˉreadˉu8(
+                        Liveˉin,
+                        First * Locals + Flowˉlocal
+                    ) == 1u8 {
+                        Out = 1u8;
+                    }
+                }
+                if Second != 4294967295u32 {
+                    if Bytesˉreadˉu8(
+                        Liveˉin,
+                        Second * Locals + Flowˉlocal
+                    ) == 1u8 {
+                        Out = 1u8;
+                    }
+                }
+                let Cell: u32 = Reverseˉblock * Locals + Flowˉlocal;
+                Newˉout = Bytesˉconcat(Newˉout, Bytesˉfromˉu8(Out));
+                var Into: u8 = Bytesˉreadˉu8(Uses, Cell);
+                if Into == 0u8 && Out == 1u8 {
+                    if Bytesˉreadˉu8(Definitions, Cell) == 0u8 {
+                        Into = 1u8;
+                    }
+                }
+                Newˉin = Bytesˉconcat(Newˉin, Bytesˉfromˉu8(Into));
+                Flowˉlocal = Flowˉlocal + 1u32;
+            }
+            Liveˉout = Replaceˉrange(
+                Liveˉout,
+                Reverseˉblock * Locals,
+                Newˉout
+            );
+            Liveˉin = Replaceˉrange(
+                Liveˉin,
+                Reverseˉblock * Locals,
+                Newˉin
+            );
+        }
+        Iteration = Iteration + 1u32;
+    }
+
+    var Present: bytes = Zeros(Input, Locals);
+    var Interference: bytes = Zeros(Input, Locals * Locals);
+    var Block: u32 = 0u32;
+    while Block < Blocks {
+        var Live: bytes = Bytesˉslice(
+            Liveˉout,
+            Block * Locals,
+            Locals
+        );
+        Interference =
+            Allocation.Compilerˉnativeˉx64ˉaddˉallˉliveˉrecordˉinterference(
+                Interference,
+                Live,
+                Locals
+            );
+        var Reverse: u32 = Bytesˉreadˉu32ˉlittle(Blockˉends, Block * 4u32);
+        let Start: u32 = Bytesˉreadˉu32ˉlittle(Blockˉstarts, Block * 4u32);
+        while Reverse > Start {
+            Reverse = Reverse - 1u32;
+            let Cursor: u32 = Bytesˉreadˉu32ˉlittle(
+                Instructionˉoffsets,
+                Reverse * 4u32
+            );
+            let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+            if Opcode == 5u8 {
+                let Storeˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Codeˉoffset + Cursor + 1u32
+                );
+                if Storeˉlocal >= Parameters &&
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+                        Bytesˉreadˉu8(Localˉtypes, Storeˉlocal)
+                    ) {
+                    Present = Setˉbyte(Present, Storeˉlocal, 1u8);
+                    Interference =
+                        Allocation.Compilerˉnativeˉx64ˉaddˉliveˉrecordˉinterference(
+                            Interference,
+                            Live,
+                            Locals,
+                            Storeˉlocal
+                        );
+                    Live = Setˉbyte(Live, Storeˉlocal, 0u8);
+                }
+            }
+            if Opcode == 4u8 {
+                let Loadˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Codeˉoffset + Cursor + 1u32
+                );
+                if Loadˉlocal >= Parameters &&
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+                        Bytesˉreadˉu8(Localˉtypes, Loadˉlocal)
+                    ) {
+                    Present = Setˉbyte(Present, Loadˉlocal, 1u8);
+                    Live = Setˉbyte(Live, Loadˉlocal, 1u8);
+                }
+            }
+            Interference =
+                Allocation.Compilerˉnativeˉx64ˉaddˉallˉliveˉrecordˉinterference(
+                    Interference,
+                    Live,
+                    Locals
+                );
+        }
+        Block = Block + 1u32;
+    }
+    return Allocation.Compilerˉnativeˉx64ˉallocateˉrecordˉoffsets(
+        Input,
+        Types,
+        Present,
+        Localˉtypes,
+        Interference,
+        Locals
+    );
+}

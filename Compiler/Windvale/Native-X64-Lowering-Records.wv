@@ -103,6 +103,14 @@ fn Loadˉrecordˉargument(
     return Appendˉu32(Output, Slot * 16u32);
 }
 
+export fn Compilerˉnativeˉx64ˉemitˉrecordˉargument(
+    Result: bytes,
+    Argument: u32,
+    Slot: u32
+) -> bytes {
+    return Loadˉrecordˉargument(Result, Argument, Slot);
+}
+
 fn Storeˉrecordˉargument(
     Result: bytes,
     Argument: u32,
@@ -154,7 +162,13 @@ export fn Compilerˉnativeˉx64ˉrecordˉfieldˉbytes() -> u32 {
 export fn Compilerˉnativeˉx64ˉrecordˉcallˉbytes(
     Parameterˉtypes: bytes
 ) -> u32 {
-    var Result: u32 = 61u32;
+    return 61u32 + Compilerˉnativeˉx64ˉargumentˉbytes(Parameterˉtypes);
+}
+
+export fn Compilerˉnativeˉx64ˉargumentˉbytes(
+    Parameterˉtypes: bytes
+) -> u32 {
+    var Result: u32 = 0u32;
     var Parameter: u32 = 0u32;
     while Parameter < Bytesˉlength(Parameterˉtypes) {
         if Parameter < 2u32 || Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(

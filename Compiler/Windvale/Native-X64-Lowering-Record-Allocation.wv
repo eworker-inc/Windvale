@@ -1,0 +1,217 @@
+module Compilerˉnativeˉx64ˉloweringˉrecordˉallocation profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+
+export record Compilerˉnativeˉx64ˉrecordˉallocation {
+    Offsets: bytes;
+    Fields: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn U32ˉvalues(Input: bytes, Count: u32, Value: u32) -> bytes {
+    var Result: bytes = Empty(Input);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Setˉbyte(Input: bytes, Index: u32, Value: u8) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Index),
+            Bytesˉfromˉu8(Value)
+        ),
+        Bytesˉslice(Input, Index + 1u32, Bytesˉlength(Input) - Index - 1u32)
+    );
+}
+
+fn Setˉu32(Input: bytes, Index: u32, Value: u32) -> bytes {
+    let Offset: u32 = Index * 4u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Interferenceˉset(
+    Matrix: bytes,
+    Count: u32,
+    Left: u32,
+    Right: u32
+) -> bytes {
+    var Result: bytes = Setˉbyte(Matrix, Left * Count + Right, 1u8);
+    return Setˉbyte(Result, Right * Count + Left, 1u8);
+}
+
+export fn Compilerˉnativeˉx64ˉaddˉliveˉrecordˉinterference(
+    Matrix: bytes,
+    Live: bytes,
+    Count: u32,
+    Value: u32
+) -> bytes {
+    var Result: bytes = Matrix;
+    var Other: u32 = 0u32;
+    while Other < Count {
+        if Other != Value {
+            if Bytesˉreadˉu8(Live, Other) == 1u8 {
+                Result = Interferenceˉset(Result, Count, Value, Other);
+            }
+        }
+        Other = Other + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉaddˉallˉliveˉrecordˉinterference(
+    Matrix: bytes,
+    Live: bytes,
+    Count: u32
+) -> bytes {
+    var Result: bytes = Matrix;
+    var Left: u32 = 0u32;
+    while Left < Count {
+        if Bytesˉreadˉu8(Live, Left) == 1u8 {
+            var Right: u32 = Left + 1u32;
+            while Right < Count {
+                if Bytesˉreadˉu8(Live, Right) == 1u8 {
+                    Result = Interferenceˉset(Result, Count, Left, Right);
+                }
+                Right = Right + 1u32;
+            }
+        }
+        Left = Left + 1u32;
+    }
+    return Result;
+}
+
+fn Recordˉwidth(
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Type: u8
+) -> u32 {
+    return Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+        Types,
+        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
+    );
+}
+
+fn Allocateˉoffsets(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Present: bytes,
+    Typeˉbyˉidentifier: bytes,
+    Interference: bytes,
+    Count: u32
+) -> bytes {
+    var Offsets: bytes = U32ˉvalues(Input, Count, 4294967295u32);
+    var Width: u32 = 64u32;
+    while Width > 0u32 {
+        var Identifier: u32 = 0u32;
+        while Identifier < Count {
+            if Bytesˉreadˉu8(Present, Identifier) == 1u8 {
+                let Type: u8 = Bytesˉreadˉu8(Typeˉbyˉidentifier, Identifier);
+                if Recordˉwidth(Types, Type) == Width {
+                    var Candidate: u32 = 0u32;
+                    var Searching: bool = true;
+                    while Searching {
+                        Searching = false;
+                        var Next: u32 = Candidate;
+                        var Other: u32 = 0u32;
+                        while Other < Count {
+                            let Otherˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                                Offsets,
+                                Other * 4u32
+                            );
+                            if Otherˉoffset != 4294967295u32 {
+                                if Bytesˉreadˉu8(
+                                    Interference,
+                                    Identifier * Count + Other
+                                ) == 1u8 {
+                                    let Otherˉwidth: u32 = Recordˉwidth(
+                                        Types,
+                                        Bytesˉreadˉu8(Typeˉbyˉidentifier, Other)
+                                    );
+                                    if Candidate < Otherˉoffset + Otherˉwidth {
+                                        if Otherˉoffset < Candidate + Width {
+                                            Searching = true;
+                                            if Otherˉoffset + Otherˉwidth > Next {
+                                                Next = Otherˉoffset + Otherˉwidth;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            Other = Other + 1u32;
+                        }
+                        Candidate = Next;
+                    }
+                    Offsets = Setˉu32(Offsets, Identifier, Candidate);
+                }
+            }
+            Identifier = Identifier + 1u32;
+        }
+        Width = Width - 1u32;
+    }
+    return Offsets;
+}
+
+fn Requiredˉfields(
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Present: bytes,
+    Typeˉbyˉidentifier: bytes,
+    Offsets: bytes,
+    Count: u32
+) -> u32 {
+    var Required: u32 = 0u32;
+    var Identifier: u32 = 0u32;
+    while Identifier < Count {
+        if Bytesˉreadˉu8(Present, Identifier) == 1u8 {
+            let End: u32 = Bytesˉreadˉu32ˉlittle(
+                Offsets,
+                Identifier * 4u32
+            ) + Recordˉwidth(
+                Types,
+                Bytesˉreadˉu8(Typeˉbyˉidentifier, Identifier)
+            );
+            if End > Required { Required = End; }
+        }
+        Identifier = Identifier + 1u32;
+    }
+    return Required;
+}
+
+export fn Compilerˉnativeˉx64ˉallocateˉrecordˉoffsets(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Present: bytes,
+    Typeˉbyˉidentifier: bytes,
+    Interference: bytes,
+    Count: u32
+) -> Compilerˉnativeˉx64ˉrecordˉallocation {
+    let Offsets: bytes = Allocateˉoffsets(
+        Input,
+        Types,
+        Present,
+        Typeˉbyˉidentifier,
+        Interference,
+        Count
+    );
+    return Compilerˉnativeˉx64ˉrecordˉallocation(
+        Offsets,
+        Requiredˉfields(
+            Types,
+            Present,
+            Typeˉbyˉidentifier,
+            Offsets,
+            Count
+        )
+    );
+}

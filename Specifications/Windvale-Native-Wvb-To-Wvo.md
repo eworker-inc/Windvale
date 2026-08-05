@@ -52,9 +52,9 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 158,172 | `60b1820a028943bcd4f4e5ee422d46f3bd82c7a5d5f3edf5962fbc5adcf421f4` |
-| Windows WVB-to-WVO tool | 2,156,544 | `2c2fde72296acea8659d36b91626285cd61b1eb6b42fbab58d67ecb2eb27e81b` |
-| Linux WVB-to-WVO tool | 2,158,592 | `5e7d980ff8048136185d580f180a081316eeae38f59f31d047af7cf6e998ff68` |
+| WVB-to-WVO tool WVB | 271,095 | `1689fdb55f3e6cd1b9bf75d7f94f7f7e8550c264a6c8c2af7008c5b176364eb2` |
+| Windows WVB-to-WVO tool | 3,846,656 | `868ce0511e84ddfac0424b65ceb2d11f8d7bf408afef3560b4dc6749bcdef35f` |
+| Linux WVB-to-WVO tool | 3,846,144 | `b6323b850d493a98a7362e0a9e01695a6d581764e4430f39129d6e645ea9eb90` |
 
 `Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 
@@ -63,7 +63,7 @@ The current candidate identities are:
 | Return-42 WVB | 174 | `7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31` |
 | Return-42 WVO | 479 | `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5` |
 
-The WVO contains 406 code bytes, one exported `Main`, no data, imports, or relocations, and is admitted by the independent WVO parser. The current-host native application must reproduce it byte for byte, repeat deterministically, reject a truncated WVB without changing a sentinel output, and load no CLR/.NET runtime. Decision 0228 adds exact Stage 0 WVO agreement for the existing three-function `Add -> Build -> Main` fixture. Decision 0231 adds the canonical 493-byte `Sum-Data.wv` differential vector with exact `.text`, `.rodata`, data symbol, and relative relocation. Decision 0232 adds arbitrary exported-Main order plus bounded forward, recursive, and cyclic scalar calls under the existing instruction and call-depth budgets. Decision 0233 adds the compiler-produced `Function-Only.wv` vector with `u8`/`u32` locals and operations plus a Boolean helper return; the Windvale memory adapter, hosted tool, and generated native tool reproduce Stage 0's exact 6,041-byte `.text` and 6,216-byte WVO. Decision 0234 expands the separate `u8`/`u32` helper-return vector across all eight bounded comparisons and reproduces its exact 5,263-byte `.text` and 5,404-byte WVO through the hosted lowerer. Decision 0235 adds exact multiple immutable data and static descriptor WVO agreement; Decision 0236 adds exact service-backed text concatenation, UTF-8 validation/conversion, and quoting agreement. None of those extensions changes the fixed return-42 vector.
+The WVO contains 406 code bytes, one exported `Main`, no data, imports, or relocations, and is admitted by the independent WVO parser. The current-host native application must reproduce it byte for byte, repeat deterministically, reject a truncated WVB without changing a sentinel output, and load no CLR/.NET runtime. Decision 0228 adds exact Stage 0 WVO agreement for the existing three-function `Add -> Build -> Main` fixture. Decision 0231 adds the canonical 493-byte `Sum-Data.wv` differential vector with exact `.text`, `.rodata`, data symbol, and relative relocation. Decision 0232 adds arbitrary exported-Main order plus bounded forward, recursive, and cyclic scalar calls under the existing instruction and call-depth budgets. Decision 0233 adds the compiler-produced `Function-Only.wv` vector with `u8`/`u32` locals and operations plus a Boolean helper return; the Windvale memory adapter, hosted tool, and generated native tool reproduce Stage 0's exact 6,041-byte `.text` and 6,216-byte WVO. Decision 0234 expands the separate `u8`/`u32` helper-return vector across all eight bounded comparisons and reproduces its exact 5,263-byte `.text` and 5,404-byte WVO through the hosted lowerer. Decisions 0235 through 0240 add exact descriptor, dynamic text/bytes, enum, direct-record, and record-call agreement. Decision 0241 adds the complete compiler-produced `Nominal-Types.wv` vector with multi-block record liveness and a scalar-returning record consumer; its 22,404-byte WVO is reproduced by the Windvale adapters and the direct current-host native package. None of those extensions changes the fixed return-42 vector.
 
 ## Qualification and retirement boundary
 

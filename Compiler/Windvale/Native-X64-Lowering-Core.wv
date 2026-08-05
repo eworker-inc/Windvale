@@ -1594,12 +1594,6 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                                                     if Recordˉcallˉparameters > 1u32 {
                                                         return Compilerˉnativeˉx64ˉinvalidˉblock();
                                                     }
-                                                    if Recordˉcallˉparameters > 0u32 &&
-                                                        !Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
-                                                            Callˉreturnˉtype
-                                                        ) {
-                                                        return Compilerˉnativeˉx64ˉinvalidˉblock();
-                                                    }
                                                     Stack = Bytesˉconcat(
                                                         Stack,
                                                         Bytesˉfromˉu8(Callˉreturnˉtype)
@@ -1631,8 +1625,12 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                                                             );
                                                     } else {
                                                         Bodyˉbytes = Bodyˉbytes + 38u32 +
-                                                            Compilerˉnativeˉx64ˉscalarˉargumentˉbytes(
-                                                                Callˉparameters
+                                                            Records.Compilerˉnativeˉx64ˉargumentˉbytes(
+                                                                Bytesˉslice(
+                                                                    Callˉdirectory,
+                                                                    Callˉtarget * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() + 12u32,
+                                                                    Callˉparameters
+                                                                )
                                                             );
                                                     }
                                                 } else {
@@ -1976,9 +1974,6 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
     var Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage =
         Recordˉstorage.Compilerˉnativeˉx64ˉemptyˉrecordˉstorage(Input);
     if Hasˉrecords {
-        if Blocks != 1u32 {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
-        }
         Storage = Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Input,
             Section.Payloadˉoffset,
@@ -1987,7 +1982,9 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             Function.Returnˉtype,
             Function.Localˉtypes,
             Callˉdirectory,
-            Types
+            Types,
+            Blocks,
+            Leaders
         );
         if !Storage.Valid {
             return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);

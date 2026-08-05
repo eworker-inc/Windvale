@@ -27,13 +27,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Record-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 256_184;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 3_708_416;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 271_095;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 3_846_656;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "96057bd9c7a6b8c96a325868c52c016a71859406441726138edb12e9d7f572b7";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 3_706_880;
+        "868ce0511e84ddfac0424b65ceb2d11f8d7bf408afef3560b4dc6749bcdef35f";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 3_846_144;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "52a1aeabe4efeac6992c5074b720f1aef96ad1034a68b61a68029c9615f4d876";
+        "b6323b850d493a98a7362e0a9e01695a6d581764e4430f39129d6e645ea9eb90";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -154,6 +154,20 @@ internal static partial class Program
             Objectˉdigest.Calculateˉsha256(Expectedˉobject.AsSpan()));
         _ = Objectˉcodec.Readˉandˉverify(Expectedˉobject.AsSpan());
 
+        var Nominalˉwvb = Compileˉsuccess(SOURCE_WVB_NOMINAL_TYPES_SOURCE);
+        Equal(
+            SOURCE_WVB_NOMINAL_TYPES_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Nominalˉwvb));
+        var Nominalˉmodule = Moduleˉcodec.Readˉandˉverify(Nominalˉwvb);
+        var Expectedˉnominalˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            X64ˉnativeˉbackend.Compile(Nominalˉmodule).Fragment);
+        var Expectedˉnominalˉview = Objectˉcodec.Readˉandˉverify(
+            Expectedˉnominalˉobject.AsSpan()).Value;
+        var Expectedˉnominalˉreport =
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉnominalˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉnominalˉobject.Length}\n";
+
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-native-wvb-to-wvo-{Guid.NewGuid():N}");
@@ -164,10 +178,13 @@ internal static partial class Program
             var Inputˉpath = Path.Combine(Directoryˉpath, "Return-42.wvb");
             var Outputˉpath = Path.Combine(Directoryˉpath, "Return-42.wvo");
             var Repeatedˉpath = Path.Combine(Directoryˉpath, "Return-42-Again.wvo");
+            var Nominalˉinputˉpath = Path.Combine(Directoryˉpath, "Nominal-Types.wvb");
+            var Nominalˉoutputˉpath = Path.Combine(Directoryˉpath, "Nominal-Types.wvo");
             var Invalidˉpath = Path.Combine(Directoryˉpath, "Invalid.wvb");
             var Rejectedˉpath = Path.Combine(Directoryˉpath, "Rejected.wvo");
             File.WriteAllBytes(Toolˉpath, Toolˉbytes);
             File.WriteAllBytes(Inputˉpath, Fixtureˉwvb);
+            File.WriteAllBytes(Nominalˉinputˉpath, Nominalˉwvb);
             File.WriteAllBytes(Invalidˉpath, Fixtureˉwvb[..^1]);
             byte[] Sentinel = [0x57, 0x56, 0x4F];
             File.WriteAllBytes(Rejectedˉpath, Sentinel);
@@ -215,6 +232,10 @@ internal static partial class Program
                     Windows.Imageˉbytes,
                     Expectedˉreport,
                     [Inputˉpath, Repeatedˉpath]));
+                Equal(0, Executeˉwindowsˉapplication(
+                    Windows.Imageˉbytes,
+                    Expectedˉnominalˉreport,
+                    [Nominalˉinputˉpath, Nominalˉoutputˉpath]));
             }
             if (OperatingSystem.IsLinux())
             {
@@ -240,10 +261,17 @@ internal static partial class Program
                     Linux.Imageˉbytes,
                     Expectedˉreport,
                     [Inputˉpath, Repeatedˉpath]));
+                Equal(0, Executeˉlinuxˉapplication(
+                    Linux.Imageˉbytes,
+                    Expectedˉnominalˉreport,
+                    [Nominalˉinputˉpath, Nominalˉoutputˉpath]));
             }
 
             Sequenceˉequal(Expectedˉobject, File.ReadAllBytes(Outputˉpath));
             Sequenceˉequal(Expectedˉobject, File.ReadAllBytes(Repeatedˉpath));
+            Sequenceˉequal(
+                Expectedˉnominalˉobject,
+                File.ReadAllBytes(Nominalˉoutputˉpath));
             Sequenceˉequal(Sentinel, File.ReadAllBytes(Rejectedˉpath));
             _ = Objectˉcodec.Readˉandˉverify(File.ReadAllBytes(Outputˉpath));
         }
@@ -285,6 +313,12 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv",
                     NATIVE_X64_LOWERING_ENUM_INSTRUCTIONS_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Record-Allocation.wv",
+                    NATIVE_X64_LOWERING_RECORD_ALLOCATION_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Record-Local-Liveness.wv",
+                    NATIVE_X64_LOWERING_RECORD_LOCAL_LIVENESS_SOURCE),
                 new(
                     "Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv",
                     NATIVE_X64_LOWERING_RECORD_STORAGE_SOURCE),
@@ -619,6 +653,54 @@ internal static partial class Program
         {
             throw new InvalidOperationException(
                 "Record-call lowering failed: " + Toolˉresult.Diagnostics);
+        }
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+    }
+
+    private static void Assertˉnominalˉtypeˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(SOURCE_WVB_NOMINAL_TYPES_SOURCE);
+        Equal(SOURCE_WVB_NOMINAL_TYPES_SHA256, Moduleˉdigest.Calculateˉsha256(Wvb));
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(11, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(
+            11,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(Expectedˉobject.AsSpan()).Value;
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 100_000_000);
+        if (Toolˉresult.Exitˉcode != 0)
+        {
+            throw new InvalidOperationException(
+                "Nominal-type lowering failed: " + Toolˉresult.Diagnostics);
         }
         Equal(string.Empty, Toolˉresult.Diagnostics);
         Equal(
