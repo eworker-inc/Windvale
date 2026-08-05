@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Windvale Assembly",
+  "scopeName": "source.windvale-assembly",
+  "fileTypes": [
+    "wva"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "match": "^\\s*(windvale-assembly)\\s+([0-9]+)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.other.header.windvale-assembly"
+        },
+        "2": {
+          "name": "constant.numeric.version.windvale-assembly"
+        }
+      }
+    },
+    {
+      "match": "\\b(symbol|section|define|end|align|in)\\b",
+      "name": "keyword.control.structure.windvale-assembly"
+    },
+    {
+      "match": "\\b(local|export|import|function|data|code|rodata|bss)\\b",
+      "name": "storage.modifier.windvale-assembly"
+    },
+    {
+      "match": "\\b(nop|return|trap|call|jump|move_i32|move_u32|move_u8|move_u16|push_i32|enable_page_protection|activate_page_table|syscall|cpuid|read_tsc|read_msr|swap_gs|interrupt_return|disable_interrupts|halt|in_u8|out_u8|out_u16|label|jump_label|branch|move|add|subtract|and|or|xor|compare|test|push|pop|call_register|jump_register|load_u8|load_u16|load_u32|load_u64|store_u8|store_u16|store_u32|store_u64|load_address|multiply|add_i8|subtract_i8|and_i8|or_i8|xor_i8|compare_i8|test_i8|add_i16|subtract_i16|and_i16|or_i16|xor_i16|compare_i16|test_i16|add_i32|subtract_i32|and_i32|or_i32|xor_i32|compare_i32|test_i32|rotate_left|rotate_right|shift_left|shift_right|shift_right_signed|load_memory_u8|load_memory_u16|load_memory_u32|load_memory_u64|store_memory_u8|store_memory_u16|store_memory_u32|store_memory_u64|set_condition|zero_extend_u8|zero_extend_u16|sign_extend_i8|sign_extend_i16|bytes|u32|i32|address_u32|zero)\\b",
+      "name": "keyword.operator.instruction.windvale-assembly"
+    },
+    {
+      "match": "\\b(al|cl|dl|bl|spl|bpl|sil|dil|r(?:8|9|1[0-5])b|ax|cx|dx|bx|sp|bp|si|di|r(?:8|9|1[0-5])w|eax|ecx|edx|ebx|esp|ebp|esi|edi|r(?:8|9|1[0-5])d|rax|rcx|rdx|rbx|rsp|rbp|rsi|rdi|r(?:8|9|1[0-5]))\\b",
+      "name": "variable.language.register.windvale-assembly"
+    },
+    {
+      "match": "\\b(overflow|not_overflow|below|above_equal|equal|not_equal|below_equal|above|sign|not_sign|parity|not_parity|less|greater_equal|less_equal|greater)\\b",
+      "name": "constant.language.condition.windvale-assembly"
+    },
+    {
+      "match": "\\bnone\\b",
+      "name": "constant.language.windvale-assembly"
+    },
+    {
+      "match": "(?<![A-Za-z0-9_.-])-?[0-9]+\\b",
+      "name": "constant.numeric.decimal.windvale-assembly"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "begin": "#",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.windvale-assembly"
+            }
+          },
+          "end": "$",
+          "name": "comment.line.number-sign.windvale-assembly"
+        }
+      ]
+    }
+  }
+}

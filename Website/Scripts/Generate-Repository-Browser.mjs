@@ -404,7 +404,14 @@ async function Readˉavailableˉfile(Repositoryˉpath) {
 
 async function Main() {
     const Outputˉdirectory = Readˉarguments();
-    const [Commit, Tree, Commitˉdate, Repositoryˉpaths, Windvaleˉgrammarˉsource] = await Promise.all([
+    const [
+        Commit,
+        Tree,
+        Commitˉdate,
+        Repositoryˉpaths,
+        Windvaleˉgrammarˉsource,
+        Windvaleˉassemblyˉgrammarˉsource,
+    ] = await Promise.all([
         process.env.GITHUB_SHA || Runˉgit(["rev-parse", "HEAD"]),
         Runˉgit(["rev-parse", "HEAD^{tree}"]),
         Runˉgit(["show", "-s", "--format=%cI", "HEAD"]),
@@ -412,6 +419,9 @@ async function Main() {
         readFile(path.join(
             Repositoryˉroot,
             "Tools/Editors/Windvale/syntaxes/Windvale.tmLanguage.json"), "utf8"),
+        readFile(path.join(
+            Repositoryˉroot,
+            "Website/Syntaxes/Windvale-Assembly.tmLanguage.json"), "utf8"),
     ]);
 
     await rm(Outputˉdirectory, { recursive: true, force: true });
@@ -452,9 +462,12 @@ async function Main() {
     const Windvaleˉgrammar = JSON.parse(Windvaleˉgrammarˉsource);
     Windvaleˉgrammar.name = "windvale";
     Windvaleˉgrammar.aliases = ["wv"];
+    const Windvaleˉassemblyˉgrammar = JSON.parse(Windvaleˉassemblyˉgrammarˉsource);
+    Windvaleˉassemblyˉgrammar.name = "windvale-assembly";
+    Windvaleˉassemblyˉgrammar.aliases = ["wva"];
     const Highlighter = await createHighlighter({
         themes: ["github-light", "github-dark"],
-        langs: [...SHIKI_LANGUAGES, Windvaleˉgrammar],
+        langs: [...SHIKI_LANGUAGES, Windvaleˉgrammar, Windvaleˉassemblyˉgrammar],
     });
 
     const Files = [];
@@ -476,7 +489,7 @@ async function Main() {
         } else if (Bytes.byteLength > MAX_HIGHLIGHTED_BYTES) {
             Reason = "too-large";
         } else {
-            const Fragment = Language === "plain" || Language === "windvale-assembly"
+            const Fragment = Language === "plain"
                 ? Plainˉcodeˉhtml(Source)
                 : Highlighter.codeToHtml(Source, {
                     lang: Language,
@@ -568,7 +581,7 @@ async function Main() {
     );
 }
 
-Main().catch((Error) => {
-    process.stderr.write(`${Error instanceof Error ? Error.stack ?? Error.message : String(Error)}\n`);
+Main().catch((Failure) => {
+    process.stderr.write(`${Failure instanceof Error ? Failure.stack ?? Failure.message : String(Failure)}\n`);
     process.exitCode = 1;
 });

@@ -9,39 +9,32 @@
 }
 
 .repository-main {
+    --repository-panel-width: 320px;
     display: grid;
-    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-columns: var(--repository-panel-width) 7px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     width: 100%;
     max-width: none;
     height: calc(100vh - 69px);
+    min-height: 0;
     margin: 0;
 }
 
 .repository-panel {
     display: flex;
     min-width: 0;
-    padding: 20px 14px 14px;
-    border-right: 1px solid var(--line);
+    min-height: 0;
+    padding: 14px 0 14px 14px;
     background: color-mix(in srgb, var(--surface-soft) 82%, var(--page));
     flex-direction: column;
 }
 
 .repository-panel-heading {
     display: flex;
-    align-items: start;
+    align-items: center;
     justify-content: space-between;
-    padding: 0 8px 14px;
-}
-
-.repository-panel-heading .kicker {
-    margin-bottom: 3px;
-    font-size: 10px;
-}
-
-.repository-panel-heading h1 {
-    margin: 0;
-    font-size: 23px;
-    letter-spacing: -0.025em;
+    min-height: 30px;
+    padding: 0 14px 8px 7px;
 }
 
 .repository-panel-close,
@@ -54,16 +47,43 @@
     grid-template-columns: 22px minmax(0, 1fr);
     align-items: center;
     gap: 4px;
-    margin: 0 4px 12px;
+    margin: 0 14px 12px 4px;
     padding: 0 9px;
     border: 1px solid var(--line-strong);
     border-radius: 9px;
     background: var(--surface);
 }
 
-.repository-search > .material-symbol {
+.repository-search-icon {
+    position: relative;
+    display: block;
+    width: 16px;
+    height: 16px;
     color: var(--muted);
-    font-size: 18px;
+}
+
+.repository-search-icon::before {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 8px;
+    height: 8px;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    content: "";
+}
+
+.repository-search-icon::after {
+    position: absolute;
+    right: 1px;
+    bottom: 2px;
+    width: 6px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: currentColor;
+    content: "";
+    transform: rotate(45deg);
+    transform-origin: right center;
 }
 
 .repository-search input {
@@ -84,8 +104,9 @@
 }
 
 .repository-tree {
+    flex: 1 1 auto;
     min-height: 0;
-    padding: 2px 4px 18px;
+    padding: 2px 0 18px 4px;
     overflow: auto;
     scrollbar-color: var(--line-strong) transparent;
 }
@@ -118,19 +139,78 @@
 }
 
 .repository-directory-name::before {
-    content: "chevron_right";
-    font-family: "Material Symbols Rounded";
-    font-size: 15px;
+    width: 7px;
+    height: 7px;
+    margin: 0 4px 0 2px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    content: "";
+    transform: rotate(-45deg);
     transition: transform 120ms ease;
 }
 
 details[open] > .repository-directory-name::before {
-    transform: rotate(90deg);
+    transform: rotate(45deg);
 }
 
-.repository-directory-name .material-symbol {
+.repository-tree-icon {
+    position: relative;
+    display: inline-block;
+    flex: 0 0 auto;
+}
+
+.repository-tree-icon.folder {
+    width: 15px;
+    height: 11px;
+    margin: 3px 1px 0 0;
     color: var(--amber);
-    font-size: 17px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+}
+
+.repository-tree-icon.folder::before {
+    position: absolute;
+    top: -4px;
+    left: -1.5px;
+    width: 7px;
+    height: 3px;
+    border: 1.5px solid currentColor;
+    border-bottom: 0;
+    border-radius: 2px 2px 0 0;
+    content: "";
+}
+
+.repository-tree-icon.file,
+.repository-tree-icon.document {
+    width: 12px;
+    height: 15px;
+    margin-left: 2px;
+    color: var(--muted);
+    border: 1.5px solid currentColor;
+    border-radius: 1.5px;
+}
+
+.repository-tree-icon.file::after,
+.repository-tree-icon.document::after {
+    position: absolute;
+    top: -1.5px;
+    right: -1.5px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid currentColor;
+    border-left: 5px solid transparent;
+    content: "";
+}
+
+.repository-tree-icon.document::before {
+    position: absolute;
+    right: 2px;
+    bottom: 3px;
+    left: 2px;
+    height: 1px;
+    background: currentColor;
+    box-shadow: 0 -3px currentColor;
+    content: "";
 }
 
 .repository-file button {
@@ -184,9 +264,11 @@ details[open] > .repository-directory-name::before {
 }
 
 .repository-snapshot-note {
-    margin: auto 7px 0;
-    padding-top: 11px;
-    border-top: 1px solid var(--line);
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .repository-snapshot-note a {
@@ -195,8 +277,100 @@ details[open] > .repository-directory-name::before {
     text-decoration: none;
 }
 
+.repository-close-icon {
+    position: relative;
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+
+.repository-close-icon::before,
+.repository-close-icon::after {
+    position: absolute;
+    top: 7px;
+    left: 1px;
+    width: 14px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: currentColor;
+    content: "";
+}
+
+.repository-close-icon::before {
+    transform: rotate(45deg);
+}
+
+.repository-close-icon::after {
+    transform: rotate(-45deg);
+}
+
+.repository-panel-toggle-icon {
+    position: relative;
+    display: inline-block;
+    width: 15px;
+    height: 11px;
+    margin-right: 2px;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+}
+
+.repository-panel-toggle-icon::before {
+    position: absolute;
+    top: -4px;
+    left: -1.5px;
+    width: 7px;
+    height: 3px;
+    border: 1.5px solid currentColor;
+    border-bottom: 0;
+    border-radius: 2px 2px 0 0;
+    content: "";
+}
+
+.repository-resizer {
+    position: relative;
+    z-index: 30;
+    width: 7px;
+    min-height: 0;
+    border-right: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface-soft) 88%, var(--page));
+    cursor: col-resize;
+    touch-action: none;
+}
+
+.repository-resizer::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 42px;
+    border-radius: 999px;
+    background: var(--line-strong);
+    content: "";
+    transform: translate(-50%, -50%);
+    transition: background 120ms ease, height 120ms ease;
+}
+
+.repository-resizer:hover::after,
+.repository-resizer:focus-visible::after,
+.repository-resizing .repository-resizer::after {
+    height: 58px;
+    background: var(--blue);
+}
+
+.repository-resizer:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: -2px;
+}
+
+.repository-resizing {
+    cursor: col-resize;
+    user-select: none;
+}
+
 .repository-viewer {
     min-width: 0;
+    min-height: 0;
     overflow: auto;
     background: var(--surface);
 }
@@ -306,12 +480,12 @@ details[open] > .repository-directory-name::before {
     min-width: 100%;
     min-height: calc(100vh - 131px);
     margin: 0;
-    padding: 18px 0 42px;
+    padding: 12px 0 42px;
     background-color: var(--shiki-light-bg, #ffffff);
     color: var(--shiki-light, #24292e);
-    font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.68;
+    font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+    line-height: 21px;
     tab-size: 4;
 }
 
@@ -340,12 +514,20 @@ details[open] > .repository-directory-name::before {
     user-select: none;
 }
 
+.code-content .shiki .line span {
+    color: var(--shiki-light) !important;
+    background-color: var(--shiki-light-bg) !important;
+    font-style: var(--shiki-light-font-style) !important;
+    font-weight: var(--shiki-light-font-weight) !important;
+    text-decoration: var(--shiki-light-text-decoration) !important;
+}
+
 .code-content .shiki .line:target {
     background: rgba(255, 213, 79, 0.17);
 }
 
 :root[data-theme="dark"] .code-content .shiki,
-:root[data-theme="dark"] .code-content .shiki span {
+:root[data-theme="dark"] .code-content .shiki .line span {
     color: var(--shiki-dark) !important;
     background-color: var(--shiki-dark-bg) !important;
     font-style: var(--shiki-dark-font-style) !important;
@@ -355,7 +537,7 @@ details[open] > .repository-directory-name::before {
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .code-content .shiki,
-    :root:not([data-theme="light"]) .code-content .shiki span {
+    :root:not([data-theme="light"]) .code-content .shiki .line span {
         color: var(--shiki-dark) !important;
         background-color: var(--shiki-dark-bg) !important;
         font-style: var(--shiki-dark-font-style) !important;
@@ -499,6 +681,10 @@ details[open] > .repository-directory-name::before {
         box-shadow: 14px 0 42px rgba(0, 0, 0, 0.22);
         transform: translateX(-110%);
         transition: transform 160ms ease;
+    }
+
+    .repository-resizer {
+        display: none;
     }
 
     .repository-panel.open {

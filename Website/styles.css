@@ -323,6 +323,19 @@ h1 {
     border-color: var(--blue);
 }
 
+.button.support {
+    color: var(--amber);
+    border-color: color-mix(in srgb, var(--amber) 42%, var(--line));
+    background: var(--amber-soft);
+}
+
+.button.support:hover,
+.button.support:focus-visible {
+    color: var(--ink);
+    border-color: var(--amber);
+    background: color-mix(in srgb, var(--amber-soft) 78%, var(--surface));
+}
+
 .runs-on {
     display: flex;
     align-items: center;

@@ -2,6 +2,7 @@ import {
     Encodeˉgithubˉpath,
     Formatˉbytes,
     Initializeˉbrowserˉpanel,
+    Initializeˉrepositoryˉresizer,
     Loadˉrepositoryˉmanifest,
     Makeˉelement,
     Renderˉrepositoryˉtree,
@@ -132,6 +133,7 @@ async function Copyˉcode() {
 
 async function Initialize() {
     Initializeˉbrowserˉpanel();
+    Initializeˉrepositoryˉresizer();
     document.querySelector("#repository-search")?.addEventListener("input", (Event) => {
         Searchˉquery = Event.target.value;
         Updateˉtree();

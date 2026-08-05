@@ -55,6 +55,17 @@ assert.match(Highlightedˉwindvale, /class="shiki shiki-themes github-light gith
 assert.match(Highlightedˉwindvale, />module</u);
 assert.doesNotMatch(Highlightedˉwindvale, /<script|javascript:/iu);
 
+const Windvaleˉassembly = Manifest.files.find(
+    (File) => File.path === "Examples/Assembler/Hello-Object.wva",
+);
+assert.equal(Windvaleˉassembly.language, "windvale-assembly");
+assert.ok(Windvaleˉassembly.publishedUrl);
+const Highlightedˉwindvaleˉassembly = await Readˉpublication(Windvaleˉassembly.publishedUrl);
+assert.match(Highlightedˉwindvaleˉassembly, /class="shiki shiki-themes github-light github-dark"/u);
+assert.match(Highlightedˉwindvaleˉassembly, />windvale-assembly</u);
+assert.match(Highlightedˉwindvaleˉassembly, />move_i32</u);
+assert.doesNotMatch(Highlightedˉwindvaleˉassembly, /shiki-plain|<script|javascript:/iu);
+
 const Readme = Manifest.documents.find((Document) => Document.path === "README.md");
 const Renderedˉreadme = await Readˉpublication(Readme.publishedUrl);
 assert.match(Renderedˉreadme, /^<h1 id="windvale">Windvale<\/h1>/u);
@@ -87,6 +98,19 @@ for (const Relativeˉpath of [
     "sitemap.xml",
 ]) {
     assert.ok((await stat(path.join(Publicationˉroot, ...Relativeˉpath.split("/")))).isFile());
+}
+
+for (const Relativeˉpath of ["code/index.html", "docs/index.html"]) {
+    const Browserˉpage = await readFile(
+        path.join(Publicationˉroot, ...Relativeˉpath.split("/")),
+        "utf8",
+    );
+    assert.match(Browserˉpage, /role="separator"/u);
+    assert.match(Browserˉpage, /class="repository-snapshot-note"/u);
+    assert.match(
+        Browserˉpage,
+        /https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=G-3PB4LZFMRE/u,
+    );
 }
 
 process.stdout.write(

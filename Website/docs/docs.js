@@ -2,6 +2,7 @@ import {
     Encodeˉgithubˉpath,
     Formatˉbytes,
     Initializeˉbrowserˉpanel,
+    Initializeˉrepositoryˉresizer,
     Loadˉrepositoryˉmanifest,
     Makeˉelement,
     Renderˉrepositoryˉtree,
@@ -107,6 +108,7 @@ function Interceptˉdocumentˉlink(Event) {
 
 async function Initialize() {
     Initializeˉbrowserˉpanel();
+    Initializeˉrepositoryˉresizer();
     document.querySelector("#document-content")?.addEventListener("click", Interceptˉdocumentˉlink);
     document.querySelector("#repository-search")?.addEventListener("input", (Event) => {
         Searchˉquery = Event.target.value;

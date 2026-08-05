@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png" />
     <link rel="stylesheet" href="../styles.css" />
     <link rel="stylesheet" href="../repository-browser.css" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3PB4LZFMRE"></script>
     <script type="module" src="/analytics.js"></script>
     <script type="module" src="../site.js"></script>
     <script type="module" src="docs.js"></script>
@@ -41,31 +42,39 @@
     <main class="repository-main">
         <aside class="repository-panel" id="repository-panel" aria-label="Document navigation">
             <div class="repository-panel-heading">
-                <div>
-                    <p class="kicker">Project library</p>
-                    <h1>Documents</h1>
-                </div>
+                <p class="repository-snapshot-note">
+                    Snapshot <a data-repository-commit href="https://github.com/eworker-inc/Windvale">loading</a>
+                </p>
                 <button id="repository-panel-close" class="repository-panel-close" type="button" aria-label="Close document navigation">
-                    <span class="material-symbol" aria-hidden="true">close</span>
+                    <span class="repository-close-icon" aria-hidden="true"></span>
                 </button>
             </div>
             <label class="repository-search">
-                <span class="material-symbol" aria-hidden="true">search</span>
+                <span class="repository-search-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Filter documents</span>
                 <input id="repository-search" type="search" placeholder="Filter documents" autocomplete="off" />
             </label>
             <nav id="repository-tree" class="repository-tree" aria-label="Repository documents">
                 <p class="repository-empty-tree">Loading documents…</p>
             </nav>
-            <p class="repository-snapshot-note">
-                Snapshot <a data-repository-commit href="https://github.com/eworker-inc/Windvale">loading</a>
-            </p>
         </aside>
+
+        <div
+            class="repository-resizer"
+            id="repository-resizer"
+            role="separator"
+            aria-label="Resize document navigation"
+            aria-orientation="vertical"
+            aria-valuemin="240"
+            aria-valuemax="640"
+            aria-valuenow="320"
+            tabindex="0"
+        ></div>
 
         <section class="repository-viewer document-viewer" id="document-viewer" aria-labelledby="document-path">
             <header class="repository-toolbar">
                 <button id="repository-panel-toggle" class="repository-panel-toggle" type="button" aria-expanded="false" aria-controls="repository-panel">
-                    <span class="material-symbol" aria-hidden="true">account_tree</span>
+                    <span class="repository-panel-toggle-icon" aria-hidden="true"></span>
                     Documents
                 </button>
                 <div class="repository-location">

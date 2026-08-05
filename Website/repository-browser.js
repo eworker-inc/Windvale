@@ -54,6 +54,12 @@ function Makeˉdirectoryˉnode(Name = "") {
     };
 }
 
+function Makeˉrepositoryˉicon(Kind) {
+    const Icon = Makeˉelement("span", `repository-tree-icon ${Kind}`);
+    Icon.setAttribute("aria-hidden", "true");
+    return Icon;
+}
+
 function Buildˉdirectoryˉmodel(Items) {
     const Root = Makeˉdirectoryˉnode();
     for (const Item of Items) {
@@ -88,7 +94,7 @@ function Renderˉdirectory(Directory, Prefix, Selectedˉpath, Selectˉitem) {
         Details.open = Containsˉselectedˉpath(Childˉprefix, Selectedˉpath);
         const Summary = Makeˉelement("summary", "repository-directory-name");
         Summary.append(
-            Makeˉelement("span", "material-symbol", "folder"),
+            Makeˉrepositoryˉicon("folder"),
             Makeˉelement("span", "", Child.name),
         );
         Details.append(
@@ -105,7 +111,7 @@ function Renderˉdirectory(Directory, Prefix, Selectedˉpath, Selectˉitem) {
         Button.type = "button";
         Button.title = File.path;
         Button.append(
-            Makeˉelement("span", "material-symbol", File.path.endsWith(".md") ? "description" : "draft"),
+            Makeˉrepositoryˉicon(File.path.endsWith(".md") ? "document" : "file"),
             Makeˉelement("span", "repository-file-name", File.path.split("/").at(-1)),
         );
         Button.addEventListener("click", () => Selectˉitem(File));
@@ -150,6 +156,145 @@ export function Initializeˉbrowserˉpanel() {
     });
     document.querySelector("#repository-panel-close")?.addEventListener("click", () => {
         Setˉbrowserˉpanelˉopen(false);
+    });
+}
+
+const REPOSITORY_PANEL_DEFAULT_WIDTH = 320;
+const REPOSITORY_PANEL_MINIMUM_WIDTH = 240;
+const REPOSITORY_VIEWER_MINIMUM_WIDTH = 420;
+const REPOSITORY_PANEL_MAXIMUM_WIDTH = 640;
+const REPOSITORY_PANEL_STORAGE_KEY = "windvale.repository-panel-width";
+
+function Repositoryˉpanelˉbounds(Main) {
+    return {
+        minimum: REPOSITORY_PANEL_MINIMUM_WIDTH,
+        maximum: Math.max(
+            REPOSITORY_PANEL_MINIMUM_WIDTH,
+            Math.min(
+                REPOSITORY_PANEL_MAXIMUM_WIDTH,
+                Main.getBoundingClientRect().width - REPOSITORY_VIEWER_MINIMUM_WIDTH,
+            ),
+        ),
+    };
+}
+
+function Readˉrepositoryˉpanelˉwidth() {
+    try {
+        const Stored = Number.parseFloat(localStorage.getItem(REPOSITORY_PANEL_STORAGE_KEY));
+        return Number.isFinite(Stored) ? Stored : REPOSITORY_PANEL_DEFAULT_WIDTH;
+    } catch {
+        return REPOSITORY_PANEL_DEFAULT_WIDTH;
+    }
+}
+
+function Storeˉrepositoryˉpanelˉwidth(Width) {
+    try {
+        localStorage.setItem(REPOSITORY_PANEL_STORAGE_KEY, String(Math.round(Width)));
+    } catch {
+        // The divider remains usable when browser storage is unavailable.
+    }
+}
+
+export function Initializeˉrepositoryˉresizer() {
+    const Main = document.querySelector(".repository-main");
+    const Resizer = document.querySelector("#repository-resizer");
+    if (!Main || !Resizer) {
+        return;
+    }
+
+    let Resizing = false;
+    const Applyˉwidth = (Requestedˉwidth, Persist = false) => {
+        const Bounds = Repositoryˉpanelˉbounds(Main);
+        const Width = Math.min(Bounds.maximum, Math.max(Bounds.minimum, Requestedˉwidth));
+        Main.style.setProperty("--repository-panel-width", `${Math.round(Width)}px`);
+        Resizer.setAttribute("aria-valuemin", String(Bounds.minimum));
+        Resizer.setAttribute("aria-valuemax", String(Math.round(Bounds.maximum)));
+        Resizer.setAttribute("aria-valuenow", String(Math.round(Width)));
+        if (Persist) {
+            Storeˉrepositoryˉpanelˉwidth(Width);
+        }
+        return Width;
+    };
+    const Currentˉwidth = () => Number.parseFloat(
+        getComputedStyle(Main).getPropertyValue("--repository-panel-width"),
+    ) || REPOSITORY_PANEL_DEFAULT_WIDTH;
+    const Finishˉresize = () => {
+        if (!Resizing) {
+            return;
+        }
+        Resizing = false;
+        document.body.classList.remove("repository-resizing");
+        Storeˉrepositoryˉpanelˉwidth(Currentˉwidth());
+    };
+
+    Applyˉwidth(Readˉrepositoryˉpanelˉwidth());
+    Resizer.addEventListener("pointerdown", (Event) => {
+        if (Event.button !== 0) {
+            return;
+        }
+        Event.preventDefault();
+        Resizing = true;
+        document.body.classList.add("repository-resizing");
+        Resizer.setPointerCapture(Event.pointerId);
+    });
+    Resizer.addEventListener("mousedown", (Event) => {
+        if (Event.button !== 0) {
+            return;
+        }
+        Event.preventDefault();
+        Resizing = true;
+        document.body.classList.add("repository-resizing");
+    });
+    Resizer.addEventListener("pointermove", (Event) => {
+        if (!Resizing) {
+            return;
+        }
+        const Mainˉleft = Main.getBoundingClientRect().left;
+        Applyˉwidth(Event.clientX - Mainˉleft);
+    });
+    Resizer.addEventListener("pointerup", (Event) => {
+        if (Resizer.hasPointerCapture(Event.pointerId)) {
+            Resizer.releasePointerCapture(Event.pointerId);
+        }
+        Finishˉresize();
+    });
+    Resizer.addEventListener("pointercancel", Finishˉresize);
+    Resizer.addEventListener("lostpointercapture", Finishˉresize);
+    window.addEventListener("mousemove", (Event) => {
+        if (!Resizing) {
+            return;
+        }
+        const Mainˉleft = Main.getBoundingClientRect().left;
+        Applyˉwidth(Event.clientX - Mainˉleft);
+    });
+    window.addEventListener("mouseup", Finishˉresize);
+    Resizer.addEventListener("dblclick", () => {
+        Applyˉwidth(REPOSITORY_PANEL_DEFAULT_WIDTH, true);
+    });
+    Resizer.addEventListener("keydown", (Event) => {
+        const Step = Event.shiftKey ? 48 : 16;
+        let Width = Currentˉwidth();
+        switch (Event.key) {
+            case "ArrowLeft":
+                Width -= Step;
+                break;
+            case "ArrowRight":
+                Width += Step;
+                break;
+            case "Home":
+                Width = Repositoryˉpanelˉbounds(Main).minimum;
+                break;
+            case "End":
+                Width = Repositoryˉpanelˉbounds(Main).maximum;
+                break;
+            default:
+                return;
+        }
+        Event.preventDefault();
+        Applyˉwidth(Width, true);
+    });
+    window.addEventListener("resize", () => {
+        Applyˉwidth(Currentˉwidth());
     });
 }
 
