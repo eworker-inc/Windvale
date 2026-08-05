@@ -1,0 +1,3 @@
+windvale-project 1
+root "Tests/Fixtures/Source-Wvb/Scalar-Interpreter-Guest.wv"
+emit wvb

@@ -28,7 +28,7 @@ final recovery archive still retain explicit Stage 0 responsibilities.
 
 [`Artifacts/Native-Front-Door/Manifest.json`](../Artifacts/Native-Front-Door/Manifest.json)
 is the shared version-1 native-front-door inventory. It records the semantic-freeze
-and publisher evidence, then binds twelve artifacts by relative path, target, byte
+and publisher evidence, then binds fifteen artifacts by relative path, target, byte
 length, and lowercase SHA-256. This source-build profile owns six of them:
 
 - the canonical format-5 compiler build-driver WVB;
@@ -36,8 +36,9 @@ length, and lowercase SHA-256. This source-build profile owns six of them:
 - the raw Windows x64 build driver and publisher; and
 - the raw Linux x64 build driver and publisher.
 
-The remaining two WVB modules and four applications belong to the separate
-[read-only WVB front door](Windvale-Native-Wvb-Read-Only-Front-Door.md).
+Of the remaining nine artifacts, two WVB modules and four applications belong to
+the separate [read-only WVB front door](Windvale-Native-Wvb-Read-Only-Front-Door.md),
+while one WVB module and two applications belong to the bounded runner profile.
 
 [`SHA256SUMS`](../Artifacts/Native-Front-Door/SHA256SUMS) repeats the byte identities
 in a standard external-tool form. Artifact paths are repository-relative and may
@@ -47,7 +48,7 @@ binary in `.gitattributes`.
 The Windows launcher verifies the two executables it will invoke through the inbox
 `certutil` SHA-256 implementation. The Linux launcher verifies the complete shared
 `SHA256SUMS` inventory through `sha256sum`. The conformance test independently
-parses the JSON inventory and hashes all twelve files before executing the
+parses the JSON inventory and hashes all fifteen files before executing the
 current-host ordinary workflow.
 
 ## Ordinary invocation

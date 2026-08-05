@@ -1,0 +1,3 @@
+windvale-native-tests 1
+calls-control|Windvale-Native-Test-Calls-Control.wvproj|04282e1d570bb68a24d9f7e531882ca192c52f8af6840f96d5380e7f9a6354e6|42
+scalar-core|Windvale-Native-Test-Scalar-Core.wvproj|e790d2162d1223f68bc374ee3c27720e1c660a4e8a2be906aade28cabc5f7713|42
