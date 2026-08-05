@@ -337,6 +337,29 @@ public static class Nativeˉrecordˉstorageˉplanner
             }
         }
 
+        void Addˉstoreˉinterference(int local, HashSet<int> live)
+        {
+            if (!Interference.TryGetValue(local, out var Neighbors))
+            {
+                Neighbors = [];
+                Interference.Add(local, Neighbors);
+            }
+            foreach (var Other in live)
+            {
+                if (Other == local)
+                {
+                    continue;
+                }
+                if (!Interference.TryGetValue(Other, out var Otherˉneighbors))
+                {
+                    Otherˉneighbors = [];
+                    Interference.Add(Other, Otherˉneighbors);
+                }
+                Neighbors.Add(Other);
+                Otherˉneighbors.Add(local);
+            }
+        }
+
         for (var Blockˉindex = 0; Blockˉindex < function.Blocks.Length; Blockˉindex++)
         {
             var Live = new HashSet<int>(Liveˉout[Blockˉindex]);
@@ -352,6 +375,10 @@ public static class Nativeˉrecordˉstorageˉplanner
                             Store.Local,
                             Store.Type,
                             storedˉrecordˉparameters):
+                        // The store writes the local's fixed backing even when this
+                        // particular definition is dead. Keep it separate from every
+                        // other record local whose value is live across the write.
+                        Addˉstoreˉinterference(Store.Local, Live);
                         Live.Remove(Store.Local);
                         break;
                     case Nativeˉlocalˉload Load when

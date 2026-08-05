@@ -4,7 +4,7 @@
 
 `Wvˉlinkerˉcore` is the complete Windvale-written implementation of Windvale Linking 1. It validates complete immutable WVO 1.0 values in verified bytecode, exposes deterministic object views, resolves multi-object symbols, computes deterministic placements and addresses, constructs and relocates the flat image, independently reconstructs every result byte, constructs canonical map version 1, and publishes the image once only after all deterministic work succeeds.
 
-The module is compiled from `Linker/Windvale/Wv-Linker-Core.wv`. The independent C# Stage 0 oracle, recovery implementation, and currently C#-only UEFI target adapter are owned by `Linker/Reference/`; canonical linker input examples remain under `Examples/Linker/`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout at `709ccb3`; immutable image construction plus checked relocation at `ec9c980`; independent complete-image reconstruction at `d8008e3`; and canonical map construction plus publish-after-success output at `40ac57d`. That complete pre-Foundation WVB 1.6 SHA-256 is `8d3cb567f6985077b3ad487627bf77a20326b4bc02bcab8d938354f48d339cfd`. The machine-contract composition was cross-host requalified at `d46af86`, ordinal byte ordering at `4fdea22`, bounded decimal parsing for the base-address request at `6d2a351`, and shared zero-fill plus immutable patching at `26e2fd1`. The current alias-qualified composed WVB 1.11 module is 110,676 bytes with SHA-256 `9e10e17d2827031a4cad216690c26fd5d96bc95a3d9d9d27c0f0e8050356c140`; its exact 24-byte image and 1,721-byte map remain unchanged, and the prior composed identity remains historical cross-host evidence.
+The module is compiled from `Linker/Windvale/Wv-Linker-Core.wv`; `Windvale-Wv-Linker.wvproj` names its exact five Foundation dependencies. The independent C# Stage 0 oracle, recovery implementation, and currently C#-only UEFI target adapter are owned by `Linker/Reference/`; canonical linker input examples remain under `Examples/Linker/`. The object-scanner slice was cross-host qualified at `3eb331a`; resolution/layout at `709ccb3`; immutable image construction plus checked relocation at `ec9c980`; independent complete-image reconstruction at `d8008e3`; and canonical map construction plus publish-after-success output at `40ac57d`. That complete pre-Foundation WVB 1.6 SHA-256 is `8d3cb567f6985077b3ad487627bf77a20326b4bc02bcab8d938354f48d339cfd`. The machine-contract composition was cross-host requalified at `d46af86`, ordinal byte ordering at `4fdea22`, bounded decimal parsing for the base-address request at `6d2a351`, and shared zero-fill plus immutable patching at `26e2fd1`. The current native-package candidate composes the Windvale SHA-256 implementation and line-output capability as a 127,482-byte WVB 1.11 module with SHA-256 `592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386`; its exact 24-byte image and 1,721-byte map remain unchanged. The paired package contract is specified by [Windvale native linker](Windvale-Native-Wv-Linker.md), and earlier composed identities remain historical cross-host evidence.
 
 ## Object boundary
 
@@ -40,7 +40,7 @@ No host collection, object decoder, resolver, or layout callback participates. R
 
 `Applyˉrelocations` walks input and source relocation order. It recomputes the source placement, resolves the local/export/import target to a defined-symbol address, evaluates `absolute-u32` or `relative-i32` using explicit signed magnitudes, rejects overflow as `WVL1009` or `WVL1010`, and replaces exactly four bytes through persistent prefix/value/suffix concatenation. The input objects and unrelocated value remain immutable.
 
-Successful analysis adds `image sha256=<lowercase-hex>` to the report. This digest equals Stage 0 on both qualified hosts, but the verifier uses complete byte equality rather than treating the digest as its acceptance predicate.
+Successful analysis adds `image sha256=<lowercase-hex>` to the report. The current implementation derives both input and image identities through `Foundationˉsha256ˉhex`; the semantic `Bytesˉsha256ˉhex` intrinsic is not a native-package dependency. The digest equals Stage 0 on both qualified hosts, but the verifier uses complete byte equality rather than treating the digest as its acceptance predicate.
 
 ## Independent reconstruction
 
@@ -54,7 +54,7 @@ Any placement, provider, address, arithmetic, length, or byte disagreement becom
 
 `Definitionˉmapˉminimumˉexceedsˉlimit` rejects a definition set whose provable minimum record size already exceeds 1 MiB. `Appendˉmapˉline` then checks the exact cumulative byte length before every append. Both paths return `WVL1012`, discard map bytes, and leave the writer unreachable. The lower-bound optimization cannot reject a map that might fit because it counts only mandatory literal bytes, minimum-width fields, LF, and the exact accepted name lengths.
 
-After the complete map succeeds, `Runˉlinkˉanalysis` invokes `file.write_bytes` exactly once with the accepted image and only then sends the already built map to `console.write`. Deterministic request, object, resolution, layout, relocation, reconstruction, or map failure invokes no writer. A native write failure is reported through the hosted-resource boundary and emits no success map.
+After the complete map succeeds, `Runˉlinkˉanalysis` invokes `file.write_bytes` exactly once with the accepted image and only then removes the map's existing final LF and sends it to `console.write_line`, which restores exactly one LF. Deterministic request, object, resolution, layout, relocation, reconstruction, or map failure invokes no writer. A native write failure is reported through the hosted-resource boundary and emits no success map.
 
 ## Hosted scan shell
 
@@ -64,7 +64,7 @@ The current shell declares the final linker's explicit hosted capabilities so ca
 object status=<status> sections=<u32> symbols=<u32> relocations=<u32> offset=<u32>
 ```
 
-Valid input sends the LF-terminated report to standard output and returns `0`. Invalid input sends it to the diagnostic sink and returns `2`. Any other argument count reports `Usage: wvlink-core [object.wvo]` and returns `64`. Native resource failures remain stable runtime diagnostics.
+Valid input sends the LF-terminated report to standard output and returns `0`. Invalid input sends it to the diagnostic sink and returns `2`. Argument counts other than zero, one, or four through 67 report `Usage: wvlink-core [object.wvo] | <base-address> <entry> <output.bin> <input.wvo>...` and return `64`. Native resource failures remain stable runtime diagnostics.
 
 The one-input form remains a focused object-inspection shell. The multi-object linker uses the accepted final argument shape:
 

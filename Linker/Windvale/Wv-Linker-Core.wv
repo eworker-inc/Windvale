@@ -4,8 +4,9 @@ import Foundationˉbyteˉconstruction as Byteˉconstruction;
 import Foundationˉbyteˉordering as Byteˉordering;
 import Foundationˉdecimalˉparsing as Decimalˉparsing;
 import Foundationˉmachineˉcontracts as Machineˉcontracts;
+import Foundationˉsha256 as Sha256;
 
-capability console.write;
+capability console.write_line;
 capability diagnostic.write_line;
 capability file.read_bytes;
 capability file.write_bytes;
@@ -1979,8 +1980,15 @@ fn Addˉmapˉu32(Line: text, Prefix: text, Value: u32) -> text {
     return Textˉconcat(Line, Textˉconcat(Prefix, U32ˉformat(Value)));
 }
 
+fn Formatˉsignedˉbits(Value: u32) -> text {
+    if Value <= 2147483647u32 { return U32ˉformat(Value); }
+    let Magnitude: u32 = (4294967295u32 - Value) + 1u32;
+    return Textˉconcat("-", U32ˉformat(Magnitude));
+}
+
 fn Addˉmapˉi32(Line: text, Prefix: text, Value: i32) -> text {
-    return Textˉconcat(Line, Textˉconcat(Prefix, I32ˉformat(Value)));
+    let Bits: u32 = Bytesˉreadˉu32ˉlittle(Bytesˉfromˉi32ˉlittle(Value), 0u32);
+    return Textˉconcat(Line, Textˉconcat(Prefix, Formatˉsignedˉbits(Bits)));
 }
 
 fn Addˉmapˉtext(Line: text, Prefix: text, Value: text) -> text {
@@ -2079,9 +2087,7 @@ fn Mapˉrelocationˉkind(Kind: u32) -> text {
 }
 
 fn Mapˉsignedˉrelocationˉvalue(Value: u32) -> text {
-    return I32ˉformat(
-        Bytesˉreadˉi32ˉlittle(Bytesˉfromˉu32ˉlittle(Value), 0u32)
-    );
+    return Formatˉsignedˉbits(Value);
 }
 
 fn Countˉlinkˉimports(Inputˉcount: u32) -> u32 {
@@ -2212,7 +2218,10 @@ fn Buildˉcanonicalˉmap(
     Result = Appendˉmapˉline(Result, Line);
     Result = Appendˉmapˉline(
         Result,
-        Textˉconcat("image sha256=", Bytesˉsha256ˉhex(Candidate.Value))
+        Textˉconcat(
+            "image sha256=",
+            Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Candidate.Value))
+        )
     );
 
     Result = Appendˉmapˉline(
@@ -2224,7 +2233,11 @@ fn Buildˉcanonicalˉmap(
         if Result.Status != Linkˉstatus.Valid { return Result; }
         let Digestˉinput: bytes = Readˉlinkˉinput(Inputˉindex);
         Line = Addˉmapˉu32("input", " index=", Inputˉindex);
-        Line = Addˉmapˉtext(Line, " sha256=", Bytesˉsha256ˉhex(Digestˉinput));
+        Line = Addˉmapˉtext(
+            Line,
+            " sha256=",
+            Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Digestˉinput))
+        );
         Result = Appendˉmapˉline(Result, Line);
         Inputˉindex = Inputˉindex + 1u32;
     }
@@ -2636,6 +2649,21 @@ fn Runˉselfˉtests() -> i32 {
     );
     if Selfˉrejection.Status != Linkˉstatus.WVL1011 { return 54; }
     if Bytesˉlength(Selfˉrejection.Value) != 0u32 { return 55; }
+    if !Byteˉvaluesˉareˉequal(Textˉtoˉutf8(Formatˉsignedˉbits(0u32)), Textˉtoˉutf8("0")) {
+        return 56;
+    }
+    if !Byteˉvaluesˉareˉequal(
+        Textˉtoˉutf8(Formatˉsignedˉbits(2147483647u32)),
+        Textˉtoˉutf8("2147483647")
+    ) { return 57; }
+    if !Byteˉvaluesˉareˉequal(
+        Textˉtoˉutf8(Formatˉsignedˉbits(2147483648u32)),
+        Textˉtoˉutf8("-2147483648")
+    ) { return 58; }
+    if !Byteˉvaluesˉareˉequal(
+        Textˉtoˉutf8(Formatˉsignedˉbits(4294967295u32)),
+        Textˉtoˉutf8("-1")
+    ) { return 59; }
     Describeˉscan(Scan);
     return 0;
 }
@@ -2648,7 +2676,7 @@ fn Runˉfileˉscan() -> i32 {
         diagnostic.write_line(Description);
         return 2;
     }
-    console.write(Textˉconcat(Description, "\n"));
+    console.write_line(Description);
     return 0;
 }
 
@@ -2707,7 +2735,11 @@ fn Runˉlinkˉanalysis() -> i32 {
         return 2;
     }
     file.write_bytes(process.argument(2u32), Verifiedˉcandidate.Value);
-    console.write(Textˉfromˉutf8(Map.Value));
+    console.write_line(Textˉfromˉutf8(Bytesˉslice(
+        Map.Value,
+        0u32,
+        Bytesˉlength(Map.Value) - 1u32
+    )));
     return 0;
 }
 

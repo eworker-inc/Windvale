@@ -29,7 +29,7 @@ internal static partial class Program
     private const string WVO_CORE_SHA256 = "15b6de9e90cd3eb3288f106bd272fac5b4b25280f972c393e8d0f0b34ecf5d07";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c";
-    private const string WVLINK_CORE_SHA256 = "9e10e17d2827031a4cad216690c26fd5d96bc95a3d9d9d27c0f0e8050356c140";
+    private const string WVLINK_CORE_SHA256 = "592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
@@ -1186,6 +1186,8 @@ internal static partial class Program
         new("native WVA assembler produces canonical WVO without .NET", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvaˉassemblerˉruns),
         new("Windvale-written WVA assembler matches Stage 0 semantics and bytes", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvaˉassemblerˉmatchesˉoracle, Testˉcost.Extended),
         new("Windvale linker core scans WVO exactly at the hosted boundary", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉcoreˉscansˉobjects),
+        new("native Windvale linker AOT targets are discoverable", [TEST_AREA_LINKER], Nativeˉwvˉlinkerˉtargetsˉareˉdiscoverable),
+        new("native Windvale linker produces canonical images without .NET", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvˉlinkerˉruns),
         new("Windvale linker emits verified deterministic images and maps", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉresolvesˉandˉlaysˉout, Testˉcost.Extended),
         new("Stage 0 linker resolves and verifies a canonical flat image", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉproducesˉcanonicalˉflatˉimage),
         new("Stage 0 linker rejects resolution, layout, and relocation failures", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉrejectsˉinvalidˉlinks),
@@ -1841,7 +1843,7 @@ internal static partial class Program
         var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
         Sequenceˉequal(
             [
-                Capabilityˉcatalog.CONSOLE_WRITE,
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
                 Capabilityˉcatalog.CONSOLE_WRITE_LINE,
                 Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
                 Capabilityˉcatalog.FILE_READ_BYTES,
@@ -5204,6 +5206,29 @@ internal static partial class Program
             maximumˉinstructions: 4_000_000);
         Equal(131_071, Repeatedˉmeasurement.Scalar);
         Equal(0u, Repeatedˉmeasurement.Recordˉarenaˉused);
+
+        var Deadˉrecordˉdefinition = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
+            module Nativeˉrecordˉdeadˉdefinition profile portable;
+            record Nativeˉaddress { Status: i32; Address: i32; }
+            record Nativeˉvalue { Status: i32; Bits: i32; }
+            export fn Main() -> i32 {
+                let Target: Nativeˉaddress = Nativeˉaddress(0, 41);
+                var Value: Nativeˉvalue = Nativeˉvalue(0, 0);
+                if Target.Status == 0 {
+                    Value = Nativeˉvalue(0, Target.Address + 1);
+                } else {
+                    Value = Nativeˉvalue(1, 0);
+                }
+                return Value.Bits;
+            }
+            """));
+        var Deadˉrecordˉnative = X64ˉnativeˉbackend.Compile(Deadˉrecordˉdefinition);
+        var Deadˉrecordˉstorage = Nativeˉrecordˉstorageˉplanner.Measure(
+            Deadˉrecordˉnative.Module);
+        Nativeˉrecordˉstorageˉisˉvalid(
+            Deadˉrecordˉnative.Module,
+            Deadˉrecordˉstorage);
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(Deadˉrecordˉnative.Fragment));
     }
 
     private static void Nativeˉdescriptorˉownershipˉisˉplanned()
@@ -18812,9 +18837,7 @@ internal static partial class Program
 
     private static void Wvˉlinkerˉcoreˉscansˉobjects()
     {
-        var Moduleˉbytes = Compileˉwithˉtoolˉfoundationˉsuccess(
-            WVLINK_CORE_SOURCE,
-            "Wv-Linker-Core.wv");
+        var Moduleˉbytes = Compileˉwvˉlinkerˉsuccess();
         var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
         Equal("Wvˉlinkerˉcore", Module.Module.Name);
         Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
@@ -18846,6 +18869,10 @@ internal static partial class Program
         Contains(Inspection, "Acceptˉreconstructedˉimage");
         Contains(Inspection, "Appendˉmapˉline");
         Contains(Inspection, "Buildˉcanonicalˉmap");
+        Contains(Inspection, "Foundationˉsha256ˉhex");
+        False(
+            Inspection.Contains("bytes.sha256_hex", StringComparison.Ordinal),
+            "The native linker retained the unsupported host digest opcode.");
 
         var Authorized = Module.Module.Capabilities
             .Select(Capability => Capability.Name)
@@ -18928,9 +18955,7 @@ internal static partial class Program
 
     private static void Wvˉlinkerˉresolvesˉandˉlaysˉout()
     {
-        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉwithˉtoolˉfoundationˉsuccess(
-            WVLINK_CORE_SOURCE,
-            "Wv-Linker-Core.wv"));
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉwvˉlinkerˉsuccess());
         var Mainˉobject = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE).ToImmutableArray();
         var Providerˉobject = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE).ToImmutableArray();
 
@@ -21978,9 +22003,7 @@ internal static partial class Program
         var Wvaˉassemblerˉbytes = Compileˉwithˉtoolˉfoundationˉsuccess(
             WVA_ASSEMBLER_CORE_SOURCE,
             "Wva-Assembler-Core.wv");
-        var Wvˉlinkerˉbytes = Compileˉwithˉtoolˉfoundationˉsuccess(
-            WVLINK_CORE_SOURCE,
-            "Wv-Linker-Core.wv");
+        var Wvˉlinkerˉbytes = Compileˉwvˉlinkerˉsuccess();
         var Wvoˉsampleˉbytes = Objectˉcodec.Write(Buildˉsampleˉobject());
         var Assemblyˉobjectˉbytes = Assembleˉsuccess(HELLO_ASSEMBLY_SOURCE);
         var Providerˉobjectˉbytes = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE);
@@ -25436,6 +25459,26 @@ internal static partial class Program
         return Result.Moduleˉbytes.ToArray();
     }
 
+    private static byte[] Compileˉwvˉlinkerˉsuccess()
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new("Wv-Linker-Core.wv", WVLINK_CORE_SOURCE),
+            [
+                new("Foundation/Machine-Contracts.wv", MACHINE_CONTRACTS_SOURCE),
+                new("Foundation/Byte-Ordering.wv", BYTE_ORDERING_SOURCE),
+                new("Foundation/Decimal-Parsing.wv", DECIMAL_PARSING_SOURCE),
+                new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Windvale linker composition failed: " + string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
     private static byte[] Assembleˉsuccess(string source)
     {
         var Result = Assemblyˉcompiler.Assemble(source);
@@ -26016,6 +26059,23 @@ internal static partial class Program
                     switch (Operations[Operationˉindex])
                     {
                         case Nativeˉlocalˉstore Store when Isˉbackedˉrecordˉlocal(Store.Local):
+                            True(
+                                Plan.Localˉrecordˉfieldˉoffsets[Store.Local] >= 0,
+                                "A record store omitted its persistent destination.");
+                            foreach (var Other in Live)
+                            {
+                                if (Other == Store.Local)
+                                {
+                                    continue;
+                                }
+                                True(
+                                    !Nativeˉstorageˉrangesˉoverlap(
+                                        Plan.Localˉrecordˉfieldˉoffsets[Store.Local],
+                                        Localˉwidth(Store.Local),
+                                        Plan.Localˉrecordˉfieldˉoffsets[Other],
+                                        Localˉwidth(Other)),
+                                    "A record store destination overlaps another live record local.");
+                            }
                             Live.Remove(Store.Local);
                             break;
                         case Nativeˉlocalˉload Load when Isˉbackedˉrecordˉlocal(Load.Local):
