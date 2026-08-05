@@ -65,7 +65,7 @@ internal static partial class Program
     private const string SOURCE_COMPOSITION_SHA256 = "2a3acaf08c23075ee2a9701ba1b35dfe2cb83fca27eb669102a9d0dbfff53419";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "8f081220fa56d5166d9a36cbdf207455c312059d8e76fcd511003fcc67ead031";
     private const string PROJECT_MANIFEST_TOOL_SHA256 = "064b6532983a5f0626212d51f1aeb838f8775d108406c43dff1208a832371bbf";
-    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "1436fb0e3d4f3f2c4cbdac048077e4761da6020b3f964b293fd090637d1ce135";
+    private const string PROJECT_MANIFEST_NATIVE_CODE_SHA256 = "c7ef9e75b2e6d90168727db85c746191c3f7e90b63b88d390df9b0aaa6bd92c7";
     private const string PROJECT_MANIFEST_NATIVE_WVO_SHA256 = "fdd83bf385dfed851462c4a02e0e1e2c72f5f4be5eb02ae68731417c46fbdd34";
     private const string MACHINE_CONTRACTS_SHA256 = "f624739461dea01862121daf234b3a838dfcafd73753e3124a038b7efa8b4fa3";
     private const string MACHINE_CONTRACTS_DEMO_SHA256 = "69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3";
@@ -8566,7 +8566,7 @@ internal static partial class Program
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Compilerˉmeasurement.Scalar);
             Equal(0u, Compilerˉmeasurement.Recordˉarenaˉused);
-            Equal(68_099u, Compilerˉmeasurement.Textˉarenaˉused);
+            Equal(68_041u, Compilerˉmeasurement.Textˉarenaˉused);
             Equal(
                 "source wvb status=Valid functions=4 code-bytes=532 module-bytes=816\n",
                 Compilerˉoutput.Readˉtext());
@@ -10340,7 +10340,7 @@ internal static partial class Program
                     Nativeˉfileˉoutput.Hostˉfileˉsystem()));
             Equal(0, Measurement.Scalar);
             Equal(0u, Measurement.Recordˉarenaˉused);
-            Equal(128_758_647u, Measurement.Textˉarenaˉused);
+            Equal(127_973_147u, Measurement.Textˉarenaˉused);
             Equal(
                 "source wvb status=Valid functions=419 code-bytes=760855 module-bytes=921900\n",
                 Compilerˉoutput.Readˉtext());
