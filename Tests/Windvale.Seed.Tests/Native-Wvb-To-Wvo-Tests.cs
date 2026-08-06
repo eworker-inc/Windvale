@@ -57,6 +57,9 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_BATCH_ADAPTER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Batch-Adapter.wv");
+    private static readonly string NATIVE_X64_LOWERING_PUBLICATION_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Publication.wv");
 
     private const int WVB_TO_WVO_TOOL_WVB_BYTES = 372_514;
     private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_348_864;
@@ -529,7 +532,8 @@ internal static partial class Program
         Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
             "Tests/Fixtures/Native-X64/Wvb-To-Wvo-Batch-Adapter.wv",
             WVB_TO_WVO_BATCH_ADAPTER_SOURCE,
-            "function-batch adapter");
+            "function-batch publication adapter",
+            includeˉpublication: true);
 
     private static void Assertˉfunctionˉbatching(Verifiedˉmodule adapter)
     {
@@ -541,7 +545,7 @@ internal static partial class Program
         var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
         var Expectedˉview = Objectˉcodec.Readˉandˉverify(
             Expectedˉobject.AsSpan()).Value;
-        var Evidence = new Referenceˉruntime(
+        var Envelope = new Referenceˉruntime(
             adapter,
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults with
@@ -552,6 +556,25 @@ internal static partial class Program
             .Bytes
             .ToArray();
 
+        True(
+            Envelope.Length >= 16,
+            "The publication evidence envelope is truncated.");
+        Sequenceˉequal("WVPE"u8.ToArray(), Envelope.AsSpan(0, 4).ToArray());
+        var Evidenceˉlength = BinaryPrimitives.ReadUInt32LittleEndian(
+            Envelope.AsSpan(4));
+        var Steps = BinaryPrimitives.ReadUInt32LittleEndian(Envelope.AsSpan(8));
+        var Objectˉlength = BinaryPrimitives.ReadUInt32LittleEndian(
+            Envelope.AsSpan(12));
+        Equal(
+            (uint)Envelope.Length,
+            16u + Evidenceˉlength + Objectˉlength);
+        var Evidence = Envelope.AsSpan(
+            16,
+            checked((int)Evidenceˉlength)).ToArray();
+        var Object = Envelope.AsSpan(
+            16 + checked((int)Evidenceˉlength),
+            checked((int)Objectˉlength)).ToArray();
+        Sequenceˉequal(Expectedˉobject, Object);
         Equal(0, Evidence.Length % Evidenceˉentryˉbytes);
         True(
             Evidence.Length >= Evidenceˉentryˉbytes * 2,
@@ -587,15 +610,16 @@ internal static partial class Program
                 .Aggregate(0u, (Total, Symbol) => Total + Symbol.Size),
             Codeˉbytes);
         Equal((uint)Expectedˉview.Relocations.Length * 8u, Relocationˉbytes);
+        Equal((uint)(Evidence.Length / Evidenceˉentryˉbytes) + 6u, Steps);
     }
 
     private static byte[] Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
         string path,
         string source,
-        string description)
+        string description,
+        bool includeˉpublication = false)
     {
-        var Result = Seedˉcompiler.Compileˉmodules(
-            new(path, source),
+        List<Sourceˉmoduleˉinput> Dependencies =
             [
                 new(
                     "Compiler/Windvale/Native-X64-Lowering-Core.wv",
@@ -660,7 +684,16 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/Native-X64-Lowering-Object.wv",
                     NATIVE_X64_LOWERING_OBJECT_SOURCE),
-            ]);
+            ];
+        if (includeˉpublication)
+        {
+            Dependencies.Add(new(
+                "Compiler/Windvale/Native-X64-Lowering-Publication.wv",
+                NATIVE_X64_LOWERING_PUBLICATION_SOURCE));
+        }
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(path, source),
+            Dependencies);
         if (!Result.Success)
         {
             throw new InvalidOperationException(

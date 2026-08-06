@@ -1,0 +1,479 @@
+module Compilerˉnativeˉx64ˉloweringˉpublication profile portable;
+
+import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
+import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉobject as Objectˉwriter;
+
+export enum Compilerˉnativeˉx64ˉpublicationˉstatus {
+    Valid = 0;
+    Complete = 1;
+    Invalidˉplan = 2;
+    Invalidˉcursor = 3;
+    Loweringˉfailure = 4;
+}
+
+export enum Compilerˉnativeˉx64ˉpublicationˉkind {
+    Prefix = 0;
+    Code = 1;
+    Padding = 2;
+    Readˉonlyˉheader = 3;
+    Readˉonlyˉdata = 4;
+    Symbols = 5;
+    Relocations = 6;
+    Complete = 7;
+}
+
+export record Compilerˉnativeˉx64ˉpublicationˉregions {
+    Valid: bool;
+    Objectˉbytes: u32;
+    Prefix: bytes;
+    Padding: bytes;
+    Readˉonlyˉheader: bytes;
+    Readˉonlyˉdata: bytes;
+    Symbols: bytes;
+    Relocationˉrecords: bytes;
+}
+
+export record Compilerˉnativeˉx64ˉpublicationˉcursor {
+    Valid: bool;
+    Kind: Compilerˉnativeˉx64ˉpublicationˉkind;
+    Nextˉfunction: u32;
+    Position: u32;
+}
+
+export record Compilerˉnativeˉx64ˉpublicationˉstep {
+    Status: Compilerˉnativeˉx64ˉpublicationˉstatus;
+    Kind: Compilerˉnativeˉx64ˉpublicationˉkind;
+    Position: u32;
+    Value: bytes;
+    Nextˉvalid: bool;
+    Nextˉkind: Compilerˉnativeˉx64ˉpublicationˉkind;
+    Nextˉfunction: u32;
+    Nextˉposition: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Data(
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan
+) -> Staticˉdata.Compilerˉnativeˉx64ˉdata {
+    return Staticˉdata.Compilerˉnativeˉx64ˉdata(
+        true,
+        Plan.Dataˉcount,
+        Plan.Dataˉkinds,
+        Plan.Dataˉlengths,
+        Plan.Dataˉoffsets,
+        Plan.Dataˉsizes,
+        Plan.Dataˉbytes
+    );
+}
+
+fn Invalidˉregions(Input: bytes)
+    -> Compilerˉnativeˉx64ˉpublicationˉregions {
+    let Emptyˉvalue: bytes = Empty(Input);
+    return Compilerˉnativeˉx64ˉpublicationˉregions(
+        false,
+        0u32,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        Emptyˉvalue
+    );
+}
+
+fn Invalidˉcursor()
+    -> Compilerˉnativeˉx64ˉpublicationˉcursor {
+    return Compilerˉnativeˉx64ˉpublicationˉcursor(
+        false,
+        Compilerˉnativeˉx64ˉpublicationˉkind.Complete,
+        0u32,
+        0u32
+    );
+}
+
+fn Stepˉfailure(
+    Input: bytes,
+    Status: Compilerˉnativeˉx64ˉpublicationˉstatus,
+    Kind: Compilerˉnativeˉx64ˉpublicationˉkind,
+    Position: u32
+) -> Compilerˉnativeˉx64ˉpublicationˉstep {
+    return Compilerˉnativeˉx64ˉpublicationˉstep(
+        Status,
+        Kind,
+        Position,
+        Empty(Input),
+        false,
+        Compilerˉnativeˉx64ˉpublicationˉkind.Complete,
+        0u32,
+        0u32
+    );
+}
+
+fn Batchˉisˉpublishable(
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Batch: Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatch
+) -> bool {
+    if Batch.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid ||
+        Batch.Functionˉcount == 0u32 ||
+        Batch.Firstˉfunction >= Plan.Functionˉcount ||
+        Batch.Nextˉfunction > Plan.Functionˉcount ||
+        Batch.Nextˉfunction != Batch.Firstˉfunction + Batch.Functionˉcount {
+        return false;
+    }
+    let Relocationˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Batch.Artifacts, 8u32);
+    let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Batch.Artifacts, 12u32);
+    if Bytesˉlength(Batch.Artifacts) !=
+        16u32 + Relocationˉbytes + Codeˉbytes {
+        return false;
+    }
+    let Codeˉbase: u32 =
+        Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+            Plan.Directory,
+            Batch.Firstˉfunction
+        );
+    if Codeˉbase > Plan.Machineˉcodeˉbytes ||
+        Codeˉbytes > Plan.Machineˉcodeˉbytes - Codeˉbase {
+        return false;
+    }
+    var Relocation: u32 = 0u32;
+    var Previousˉoffset: u32 = 0u32;
+    while Relocation < Relocationˉbytes / 8u32 {
+        let Entry: u32 = 16u32 + Relocation * 8u32;
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Batch.Artifacts,
+            Entry
+        );
+        let Targetˉdata: u32 = Bytesˉreadˉu32ˉlittle(
+            Batch.Artifacts,
+            Entry + 4u32
+        );
+        if Patchˉoffset < Codeˉbase || Targetˉdata >= Plan.Dataˉcount {
+            return false;
+        }
+        let Localˉoffset: u32 = Patchˉoffset - Codeˉbase;
+        if Localˉoffset > Codeˉbytes || 4u32 > Codeˉbytes - Localˉoffset {
+            return false;
+        }
+        if Relocation > 0u32 {
+            if Patchˉoffset < Previousˉoffset + 4u32 { return false; }
+        }
+        if Bytesˉreadˉu32ˉlittle(
+            Batch.Artifacts,
+            16u32 + Relocationˉbytes + Localˉoffset
+        ) != 0u32 {
+            return false;
+        }
+        Previousˉoffset = Patchˉoffset;
+        Relocation = Relocation + 1u32;
+    }
+    return Relocationˉbytes % 8u32 == 0u32;
+}
+
+export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Maximumˉartifactˉbytes: u32
+) -> Compilerˉnativeˉx64ˉpublicationˉregions {
+    if Plan.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        return Invalidˉregions(Input);
+    }
+    var Relocations: bytes = Empty(Input);
+    var Firstˉfunction: u32 = 0u32;
+    while Firstˉfunction < Plan.Functionˉcount {
+        let Batch: Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatch =
+            Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatchˉemit(
+                Input,
+                Plan,
+                Firstˉfunction,
+                Maximumˉartifactˉbytes
+            );
+        if !Batchˉisˉpublishable(Plan, Batch) {
+            return Invalidˉregions(Input);
+        }
+        let Relocationˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Batch.Artifacts, 8u32);
+        Relocations = Bytesˉconcat(
+            Relocations,
+            Bytesˉslice(Batch.Artifacts, 16u32, Relocationˉbytes)
+        );
+        Firstˉfunction = Batch.Nextˉfunction;
+    }
+    if Bytesˉlength(Relocations) != Plan.Relocationˉbytes {
+        return Invalidˉregions(Input);
+    }
+
+    var Padding: bytes = Empty(Input);
+    if Plan.Dataˉcount > 0u32 {
+        while (Plan.Machineˉcodeˉbytes + Bytesˉlength(Padding)) % 16u32 != 0u32 {
+            Padding = Bytesˉconcat(Padding, Bytesˉfromˉu8(144u8));
+        }
+    }
+    let Objectˉregions: Objectˉwriter.Compilerˉnativeˉx64ˉobjectˉregions =
+        Objectˉwriter.Compilerˉnativeˉx64ˉobjectˉplan(
+            Input,
+            Plan.Machineˉcodeˉbytes,
+            Padding,
+            Plan.Directory,
+            Plan.Functionˉcount,
+            Plan.Mainˉfunction,
+            Data(Plan),
+            Relocations
+        );
+    if !Objectˉregions.Valid || Objectˉregions.Objectˉbytes > 33554432u32 {
+        return Invalidˉregions(Input);
+    }
+    return Compilerˉnativeˉx64ˉpublicationˉregions(
+        true,
+        Objectˉregions.Objectˉbytes,
+        Objectˉregions.Prefix,
+        Padding,
+        Objectˉregions.Readˉonlyˉheader,
+        Plan.Dataˉbytes,
+        Objectˉregions.Symbols,
+        Objectˉregions.Relocationˉrecords
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉpublicationˉbegin(
+    Regions: Compilerˉnativeˉx64ˉpublicationˉregions
+) -> Compilerˉnativeˉx64ˉpublicationˉcursor {
+    if !Regions.Valid || Regions.Objectˉbytes == 0u32 {
+        return Invalidˉcursor();
+    }
+    return Compilerˉnativeˉx64ˉpublicationˉcursor(
+        true,
+        Compilerˉnativeˉx64ˉpublicationˉkind.Prefix,
+        0u32,
+        0u32
+    );
+}
+
+fn Expectedˉposition(
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Compilerˉnativeˉx64ˉpublicationˉregions,
+    Cursor: Compilerˉnativeˉx64ˉpublicationˉcursor
+) -> u32 {
+    let Prefixˉend: u32 = Bytesˉlength(Regions.Prefix);
+    let Codeˉend: u32 = Prefixˉend + Plan.Machineˉcodeˉbytes;
+    let Paddingˉend: u32 = Codeˉend + Bytesˉlength(Regions.Padding);
+    let Readˉonlyˉheaderˉend: u32 =
+        Paddingˉend + Bytesˉlength(Regions.Readˉonlyˉheader);
+    let Readˉonlyˉdataˉend: u32 =
+        Readˉonlyˉheaderˉend + Bytesˉlength(Regions.Readˉonlyˉdata);
+    let Symbolsˉend: u32 =
+        Readˉonlyˉdataˉend + Bytesˉlength(Regions.Symbols);
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Prefix {
+        return 0u32;
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Code {
+        if Cursor.Nextˉfunction >= Plan.Functionˉcount { return 4294967295u32; }
+        return Prefixˉend +
+            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+                Plan.Directory,
+                Cursor.Nextˉfunction
+            );
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Padding {
+        return Codeˉend;
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉheader {
+        return Paddingˉend;
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉdata {
+        return Readˉonlyˉheaderˉend;
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Symbols {
+        return Readˉonlyˉdataˉend;
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Relocations {
+        return Symbolsˉend;
+    }
+    return Symbolsˉend + Bytesˉlength(Regions.Relocationˉrecords);
+}
+
+fn Step(
+    Status: Compilerˉnativeˉx64ˉpublicationˉstatus,
+    Kind: Compilerˉnativeˉx64ˉpublicationˉkind,
+    Position: u32,
+    Value: bytes,
+    Nextˉkind: Compilerˉnativeˉx64ˉpublicationˉkind,
+    Nextˉfunction: u32
+) -> Compilerˉnativeˉx64ˉpublicationˉstep {
+    return Compilerˉnativeˉx64ˉpublicationˉstep(
+        Status,
+        Kind,
+        Position,
+        Value,
+        true,
+        Nextˉkind,
+        Nextˉfunction,
+        Position + Bytesˉlength(Value)
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉpublicationˉnext(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Compilerˉnativeˉx64ˉpublicationˉregions,
+    Cursor: Compilerˉnativeˉx64ˉpublicationˉcursor,
+    Maximumˉartifactˉbytes: u32
+) -> Compilerˉnativeˉx64ˉpublicationˉstep {
+    if Plan.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid ||
+        !Regions.Valid {
+        return Stepˉfailure(
+            Input,
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Invalidˉplan,
+            Cursor.Kind,
+            Cursor.Position
+        );
+    }
+    let Expected: u32 = Expectedˉposition(Plan, Regions, Cursor);
+    if !Cursor.Valid || Expected == 4294967295u32 ||
+        Cursor.Position != Expected ||
+        Cursor.Nextˉfunction > Plan.Functionˉcount {
+        return Stepˉfailure(
+            Input,
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Invalidˉcursor,
+            Cursor.Kind,
+            Cursor.Position
+        );
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Prefix {
+        if Cursor.Nextˉfunction != 0u32 {
+            return Stepˉfailure(
+                Input,
+                Compilerˉnativeˉx64ˉpublicationˉstatus.Invalidˉcursor,
+                Cursor.Kind,
+                Cursor.Position
+            );
+        }
+        return Step(
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,
+            Cursor.Kind,
+            Cursor.Position,
+            Regions.Prefix,
+            Compilerˉnativeˉx64ˉpublicationˉkind.Code,
+            0u32
+        );
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Code {
+        let Batch: Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatch =
+            Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatchˉemit(
+                Input,
+                Plan,
+                Cursor.Nextˉfunction,
+                Maximumˉartifactˉbytes
+            );
+        if !Batchˉisˉpublishable(Plan, Batch) {
+            return Stepˉfailure(
+                Input,
+                Compilerˉnativeˉx64ˉpublicationˉstatus.Loweringˉfailure,
+                Cursor.Kind,
+                Cursor.Position
+            );
+        }
+        let Relocationˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Batch.Artifacts, 8u32);
+        let Codeˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Batch.Artifacts, 12u32);
+        var Nextˉkind: Compilerˉnativeˉx64ˉpublicationˉkind =
+            Compilerˉnativeˉx64ˉpublicationˉkind.Code;
+        if Batch.Nextˉfunction == Plan.Functionˉcount {
+            Nextˉkind = Compilerˉnativeˉx64ˉpublicationˉkind.Padding;
+        }
+        return Step(
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,
+            Cursor.Kind,
+            Cursor.Position,
+            Bytesˉslice(
+                Batch.Artifacts,
+                16u32 + Relocationˉbytes,
+                Codeˉbytes
+            ),
+            Nextˉkind,
+            Batch.Nextˉfunction
+        );
+    }
+    if Cursor.Nextˉfunction != Plan.Functionˉcount {
+        return Stepˉfailure(
+            Input,
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Invalidˉcursor,
+            Cursor.Kind,
+            Cursor.Position
+        );
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Padding {
+        return Step(
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,
+            Cursor.Kind,
+            Cursor.Position,
+            Regions.Padding,
+            Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉheader,
+            Cursor.Nextˉfunction
+        );
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉheader {
+        return Step(
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,
+            Cursor.Kind,
+            Cursor.Position,
+            Regions.Readˉonlyˉheader,
+            Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉdata,
+            Cursor.Nextˉfunction
+        );
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉdata {
+        return Step(
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,
+            Cursor.Kind,
+            Cursor.Position,
+            Regions.Readˉonlyˉdata,
+            Compilerˉnativeˉx64ˉpublicationˉkind.Symbols,
+            Cursor.Nextˉfunction
+        );
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Symbols {
+        return Step(
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,
+            Cursor.Kind,
+            Cursor.Position,
+            Regions.Symbols,
+            Compilerˉnativeˉx64ˉpublicationˉkind.Relocations,
+            Cursor.Nextˉfunction
+        );
+    }
+    if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Relocations {
+        return Step(
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,
+            Cursor.Kind,
+            Cursor.Position,
+            Regions.Relocationˉrecords,
+            Compilerˉnativeˉx64ˉpublicationˉkind.Complete,
+            Cursor.Nextˉfunction
+        );
+    }
+    if Cursor.Position != Regions.Objectˉbytes {
+        return Stepˉfailure(
+            Input,
+            Compilerˉnativeˉx64ˉpublicationˉstatus.Invalidˉcursor,
+            Cursor.Kind,
+            Cursor.Position
+        );
+    }
+    return Compilerˉnativeˉx64ˉpublicationˉstep(
+        Compilerˉnativeˉx64ˉpublicationˉstatus.Complete,
+        Compilerˉnativeˉx64ˉpublicationˉkind.Complete,
+        Cursor.Position,
+        Empty(Input),
+        Cursor.Valid,
+        Cursor.Kind,
+        Cursor.Nextˉfunction,
+        Cursor.Position
+    );
+}

@@ -2825,3 +2825,35 @@ No C# product implementation or WebAssembly implementation changed. The
 stateful large-object publication owner, complete-tool self-lowering,
 Development, Standard, Qualification, Linux execution, artifact promotion,
 ordinary-path cutover, and the grouped end-of-goal gate remain deferred.
+
+## Local bounded native object-publication evidence
+
+[Decision 0283](../Decisions/0283-Bounded-Native-Object-Publication-Cursor.md)
+adds a focused capability-free cursor above the segmentable WVO regions and
+bounded function artifacts. Planning traverses each code batch without joining
+complete machine code, verifies every relocation's zero placeholder in its
+owned chunk, and fixes the exact 32 MiB-bounded object extent. Cursor steps
+then yield prefix, bounded code, padding, read-only header/data, symbols, and
+relocations at exact canonical positions.
+
+The reviewed ten-function adapter forces multiple 1 KiB code batches, rejects
+a changed initial cursor, reconstructs every region, and returns the complete
+object beside compact batch evidence. The independent Stage 0 WVO agrees byte
+for byte. The focused compiler selection passes 1/1 in 12.081 test seconds
+after a 17.42-second zero-warning Release build. The canonical 479-byte
+return-42 WVO remains exact at SHA-256
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`.
+
+The native source front door compiles the 22-module publication closure to
+384,821 bytes at SHA-256
+`1d95fbec5d6d52080eca1547a280b07183b666d90e48716267a5a08558159bad`
+and the 23-module adapter closure to 388,511 bytes at SHA-256
+`1c5b2e08fe17c78368e3782bdd3e5ad09e79379592d48e17f7fd8bd88914f71e`.
+Existing unpromoted Windows and Linux package identities remain unchanged.
+
+No C# product implementation or WebAssembly implementation changed. A later
+versioned host owner still must create a unique sibling, consume exact
+positioned writes with explicit partial and indeterminate outcomes, flush,
+replace atomically, and clean up failure. Complete-tool integration,
+Development, Standard, Qualification, Linux execution, artifact promotion,
+ordinary-path cutover, and the grouped end-of-goal gate remain deferred.

@@ -112,9 +112,34 @@ analysis for every batch.
 
 The ordinary complete-object entry currently requests one 4 MiB batch and
 requires it to contain every function, preserving exact ordinary WVO bytes.
-It does not join multiple batches. A later stateful publisher will traverse
-the same batch contract and the segmentable object regions without changing
-WVO 1.0 or `file.write_bytes`.
+It does not join multiple batches.
+
+### Bounded object-publication cursor
+
+The separate capability-free publication module consumes the immutable
+lowering plan and the same bounded function batches. It first traverses every
+batch to validate progress and artifact lengths, prove every relocation field
+is a zero placeholder inside the code chunk that owns it, retain canonical
+relocation order, and construct the segmentable WVO region plan without one
+complete code value. The projected object remains bounded to 32 MiB.
+
+An immutable cursor then yields one exact `(position, bytes)` step in canonical
+WVO order: prefix, one or more code batches, alignment padding, optional
+read-only header, immutable data, symbols, and relocation records. Every code
+position is derived from the plan's canonical function offset. The next cursor
+contains the exclusive next-function ordinal and exact next position; a
+changed, skipped, repeated, or out-of-range cursor fails closed. Completion is
+valid only at the planned final object length. Concatenating the yielded values
+therefore reproduces the ordinary WVO byte for byte while no yielded value
+exceeds the requested function-artifact ceiling.
+
+The plan, regions, and cursor are immutable in-process compiler evidence, not
+a serialized input format or a capability grant. This module does not create,
+resize, write, flush, rename, replace, or delete a host resource. A later
+versioned hosted owner must preserve exact positions, distinguish rejection,
+partial progress, and indeterminate mutation, durably finish a unique sibling,
+replace the requested path atomically, and clean up every prepublication
+failure. It must not silently retry an indeterminate write.
 
 ## Adapters
 

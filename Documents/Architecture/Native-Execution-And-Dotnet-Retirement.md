@@ -348,6 +348,20 @@ Decision 0272 admits lossless `u32.from_u8` through the existing descriptor-inst
 
 Decision 0277 closes the portable browser-compiler WVB seam with a separately pinned format-3 native source compiler. Its normal launcher verifies the native compiler and publisher, reads the exact project inventory, writes one temporary candidate, and reproduces the 919,577-byte compiler byte for byte without .NET. Decision 0278 closes the remaining interpreter-Wasm seam with a second named format-3 compiler-family member. The native WebAssembly compiler reproduces the exact 839,104-byte import-free execution-ABI-3 artifact, while the Node launcher independently checks its exports, memory regions, and atomic replacement. Both package constructors remain Stage 0 recovery commands; no C# product implementation changed.
 
+Decisions 0280 through 0283 advance the large native-object seam without
+widening Windvale's ordinary 4 MiB value contract. Immutable analysis evidence
+precedes emission; the WVO writer exposes separately owned canonical regions;
+maximal contiguous function batches carry bounded code and relocation values;
+and a focused capability-free publication cursor yields exact positioned WVO
+chunks through the planned final length. The cursor reproduces the independent
+Stage 0 object byte for byte and rejects changed progress state. It deliberately
+does not reuse the pre-opened random-access-storage capability, whose contract
+excludes path creation, replacement, and directory publication. A later small
+versioned hosted owner must supply unique-sibling creation, partial and
+indeterminate write behavior, durable flush, atomic replacement, cleanup, and
+complete-tool integration before this transfer can replace the whole-value
+managed publisher.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix
