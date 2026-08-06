@@ -3434,8 +3434,9 @@ broader linker-corpus transfer, and the grouped end-of-goal gate remain deferred
 ## Local fixed native console-packager rejection evidence
 
 [Decision 0313](../Decisions/0313-Fixed-Native-Console-Packager-Rejections.md)
-adds a focused .NET-free coordinator over the digest-bound console-packager and
-publisher launchers. Its dedicated six-byte image has SHA-256
+adds a focused .NET-free coordinator over the digest-bound console-packager
+launcher; all cases reject before publisher invocation. Its dedicated six-byte
+image has SHA-256
 `11db5348e275fb704be582e8005ee7d604f7f17b154d6cc644d240eef29d456a`.
 The existing 479-byte bad-magic WVO at SHA-256
 `0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288`
@@ -3462,4 +3463,31 @@ build; the complete command takes 16.9 seconds. The permanent command does not
 run .NET, build source, or link an image. No WebAssembly implementation changed.
 Linux execution, Development, Standard, Qualification, native host-container
 construction, promotion, broader packager-corpus transfer, and the grouped
+end-of-goal gate remain deferred.
+
+## Local fixed native publisher-rejection evidence
+
+[Decision 0314](../Decisions/0314-Fixed-Native-Publisher-Rejections.md) adds one
+focused .NET-free coordinator over the digest-bound console-application and WVO
+publisher launchers. The invalid candidate is the existing 479-byte bad-magic
+object at SHA-256
+`0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288`;
+the destination sentinel is the canonical 479-byte object at
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`.
+
+Console-application rejection emits complete report SHA-256
+`39db034713225109f62c272db447d75cfe93ff0c259c8d9e5211f0df5c007e1f`;
+WVO rejection emits
+`e7a127a800310d9fbaf8b511b20c7b8184159521dec1be56b641793939a5c69f`.
+Both return `1`, write no standard output, preserve the complete destination,
+and leave no `.wvpublish-*` scratch.
+
+Direct Windows execution passes both cases in about 1.1 seconds. After reviewing
+the wrapper's exact report, the focused selection
+`native publishers reject invalid candidates without changing destinations`
+passes 1/1 in 0.678 test seconds after a 15.33-second zero-warning Release build;
+the complete command takes 20.5 seconds. The permanent command invokes no .NET
+process and reconstructs no publisher. No WebAssembly implementation changed.
+Linux execution, Development, Standard, Qualification, native host-container
+construction, promotion, broader publication-fault transfer, and the grouped
 end-of-goal gate remain deferred.

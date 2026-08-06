@@ -18,6 +18,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0313](../Decisions/0313-Fixed-Native-Console-Packager-Rejections.md) does the same for entry and empty-image rejection through the public console-packager launcher, using a dedicated six-byte fixture instead of rebuilding or relinking. Linux execution, native host-container construction, and the grouped gate still precede packager promotion.
 
+[Decision 0314](../Decisions/0314-Fixed-Native-Publisher-Rejections.md) moves invalid console-application and WVO admission into one fixed .NET-free command, requiring exact phase reports, destination preservation, and zero publication scratch. Linux execution, native host-container construction, and the grouped gate still precede publisher promotion.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

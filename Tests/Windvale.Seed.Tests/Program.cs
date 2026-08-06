@@ -1249,6 +1249,7 @@ internal static partial class Program
         new("Windvale owns the WVB publisher admission front door", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvbˉpublisherˉfrontˉdoorˉruns),
         new("Windvale owns native console-application publication", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Consoleˉapplicationˉpublisherˉruns),
         new("Windvale owns native WVO publication", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvoˉpublisherˉruns),
+        new("native publishers reject invalid candidates without changing destinations", [TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉpublisherˉrejectionsˉrun),
         new("ordinary source-to-WVB builds use pinned native tools", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉsourceˉtoˉwvbˉfrontˉdoorˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes, Testˉcost.Extended),

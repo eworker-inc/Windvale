@@ -106,6 +106,30 @@ All cases require the current-host native packager to reject before publication,
 write no standard output, emit the exact host-target report identity, and leave
 the complete pre-existing destination unchanged.
 
+The focused publisher command tests pre-replacement admission and cleanup without
+running a successful package or lower operation. On Windows x64 run:
+
+```bat
+Tools\Native\Test-Publisher-Rejections.cmd
+```
+
+On Linux x64 run:
+
+```sh
+./Tools/Native/Test-Publisher-Rejections.sh
+```
+
+Its exact success report is:
+
+```text
+PASS  console-application
+PASS  wvo
+Tests: 2, Passed: 2, Failed: 0
+```
+
+Both cases require exact phase diagnostics, empty standard output, complete
+destination preservation, and zero native publication scratch files.
+
 No .NET process is required by these commands. The host dependencies are `cmd.exe`
 and `certutil` on Windows, or Bash, `sha256sum`, `base64`, `cmp`, and core utilities
 on Linux.
@@ -126,5 +150,6 @@ managed wrapper's exact report and run `Tools\Native\Test-Seed.cmd` or
 `./Tools/Native/Test-Seed.sh` directly once. For the focused linker-rejection
 boundary, review its wrapper and run only `Test-Linker-Rejections.cmd` or `.sh`.
 For the packager-rejection boundary, do the same with
-`Test-Console-Packager-Rejections.cmd` or `.sh`. GitHub owns the independent
-Windows and pinned-Debian Qualification run for a final committed candidate.
+`Test-Console-Packager-Rejections.cmd` or `.sh`; for publisher admission, use
+only `Test-Publisher-Rejections.cmd` or `.sh`. GitHub owns the independent Windows
+and pinned-Debian Qualification run for a final committed candidate.

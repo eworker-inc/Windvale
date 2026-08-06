@@ -70,9 +70,10 @@ The focused test reconstructs both containers, checks exact capabilities and ser
 ## Fixed native rejection contract
 
 `Tools/Native/Test-Console-Packager-Rejections.cmd` and `.sh` exercise only the
-digest-bound current-host packager and publisher launchers. They do not rebuild
-source, link an image, repeat the successful AOT chain, invoke .NET, or consult a
-live Stage 0 oracle.
+digest-bound current-host packager launcher. Every case rejects before the
+launcher can invoke its publisher. The commands do not rebuild source, link an
+image, repeat the successful AOT chain, invoke .NET, or consult a live Stage 0
+oracle.
 
 The fixed six-byte image is stored as
 `Tests/Native/Images/Return-42.bin.b64` and has SHA-256

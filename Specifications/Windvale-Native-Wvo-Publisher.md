@@ -104,6 +104,11 @@ suppress only that success line so the lowerer's established report remains the
 complete command output. Publisher diagnostics and failure status remain
 visible.
 
+The shared [fixed native publisher rejection contract](Windvale-Native-Publisher-Rejection-Tests.md)
+now exercises invalid WVO admission through this exact launcher, requiring
+destination preservation and zero scratch without rebuilding the publisher or
+invoking .NET.
+
 ## Remaining gate
 
 The WVB and paired applications are Stage 0-constructed because the qualified

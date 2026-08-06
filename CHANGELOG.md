@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Added a focused .NET-free native publisher rejection test shared by console-application and WVO publication. Both digest-bound launchers require exact phase reports, empty standard output, complete destination preservation, and zero `.wvpublish-*` scratch files without rebuilding either publisher.
 - Added a focused .NET-free native console-packager rejection test over a dedicated six-byte image fixture. Entry-at-end, non-decimal entry, and empty-image cases require exact host-target report hashes, empty standard output, and byte-for-byte preservation of an existing destination without rebuilding or relinking the AOT chain.
 - Added a focused .NET-free native linker-rejection test that reuses pinned WVO fixtures and the digest-bound linker launcher. Invalid base, missing entry, and malformed object cases require exact report hashes, empty standard output, and byte-for-byte preservation of an existing destination without rerunning the source-to-AOT chain.
 - Expanded the digest-bound .NET-free native test plan to 26 cases with one accepted WVO plus fixed bad-magic, truncation, and trailing-byte rejections. Complete input and verifier-report hashes replace a live C# oracle while preserving exact cross-host behavior.
