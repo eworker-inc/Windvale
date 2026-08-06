@@ -1,0 +1,51 @@
+module Sourceˉwvbˉguestˉheapˉownershipˉinterpreterˉguest profile portable;
+
+record Guestˉheapˉowner {
+    A: u32;
+    B: u32;
+    C: u32;
+    D: u32;
+    E: u32;
+    F: u32;
+    G: u32;
+    H: u32;
+    I: u32;
+    J: u32;
+    K: u32;
+    L: u32;
+    M: u32;
+    N: u32;
+    O: u32;
+    Payload: bytes;
+}
+
+fn Double(Value: bytes) -> bytes {
+    return Bytesˉconcat(Value, Value);
+}
+
+export fn Main() -> i32 {
+    var Payload: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Current: Guestˉheapˉowner = Guestˉheapˉowner(
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, Payload
+    );
+    var Index: u32 = 0u32;
+    while Index < 70u32 {
+        Bytesˉfromˉu32ˉlittle(Index);
+        Payload = Bytesˉfromˉu32ˉlittle(Index);
+        Payload = Double(Payload);
+        Payload = Double(Payload);
+        Payload = Double(Payload);
+        Payload = Double(Payload);
+        Payload = Double(Payload);
+        Payload = Double(Payload);
+        Payload = Double(Payload);
+        Payload = Double(Payload);
+        Current = Guestˉheapˉowner(
+            Index, Index, Index, Index, Index, Index, Index, Index,
+            Index, Index, Index, Index, Index, Index, Index, Payload
+        );
+        Index = Index + 1u32;
+    }
+    return Bytesˉreadˉi32ˉlittle(Current.Payload, 0u32);
+}

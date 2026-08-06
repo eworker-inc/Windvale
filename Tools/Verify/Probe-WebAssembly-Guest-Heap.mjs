@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-if (process.argv.length !== 5) {
+if (process.argv.length !== 8) {
     throw new Error(
-        "Usage: node Probe-WebAssembly-Guest-Heap.mjs " +
-            "<scalar-interpreter.wasm> <pressure.wvb> <reset.wvb>",
+        "Usage: node --liftoff-only Probe-WebAssembly-Guest-Heap.mjs " +
+            "<scalar-interpreter.wasm> <ownership-pressure.wvb> " +
+            "<text-bytes.wvb> <formatting-quote.wvb> <sha256.wvb> <reset.wvb>",
     );
 }
 
@@ -25,9 +26,15 @@ function scalarRequest(candidate, budget) {
 
 const interpreterPath = process.argv[2];
 const pressurePath = process.argv[3];
-const resetPath = process.argv[4];
+const textBytesPath = process.argv[4];
+const formattingPath = process.argv[5];
+const sha256Path = process.argv[6];
+const resetPath = process.argv[7];
 const interpreter = readFileSync(interpreterPath);
 const pressure = readFileSync(pressurePath);
+const textBytes = readFileSync(textBytesPath);
+const formatting = readFileSync(formattingPath);
+const sha256Candidate = readFileSync(sha256Path);
 const reset = readFileSync(resetPath);
 if (!WebAssembly.validate(interpreter)) {
     throw new Error(`${interpreterPath}: WebAssembly.validate rejected the module.`);
@@ -84,15 +91,61 @@ function run(candidate, guestBudget, outerBudget) {
     };
 }
 
-const pressureRun = run(pressure, 205_032, 500_000_000);
+const pressureRun = run(pressure, 15_627, 100_000_000);
 if (
     !pressureRun.validEnvelope ||
     pressureRun.outerStatus !== 0 ||
     pressureRun.guestStatus !== 0 ||
-    pressureRun.guestInstructions !== 205_032 ||
-    pressureRun.result !== 4_099
+    pressureRun.guestInstructions !== 15_627 ||
+    pressureRun.result !== 69
 ) {
     throw new Error(`Guest-heap pressure failed: ${JSON.stringify(pressureRun)}`);
+}
+
+const textBytesRun = run(textBytes, 4_096, 10_000_000);
+if (
+    !textBytesRun.validEnvelope ||
+    textBytesRun.outerStatus !== 0 ||
+    textBytesRun.guestStatus !== 0 ||
+    textBytesRun.guestInstructions !== 298 ||
+    textBytesRun.result !== 42
+) {
+    throw new Error(`Text/bytes run failed: ${JSON.stringify(textBytesRun)}`);
+}
+
+const formattingRun = run(formatting, 4_096, 20_000_000);
+if (
+    !formattingRun.validEnvelope ||
+    formattingRun.outerStatus !== 0 ||
+    formattingRun.guestStatus !== 0 ||
+    formattingRun.guestInstructions !== 4_070 ||
+    formattingRun.result !== 42
+) {
+    throw new Error(`Formatting run failed: ${JSON.stringify(formattingRun)}`);
+}
+
+const sha256Run = run(sha256Candidate, 4_096, 20_000_000);
+if (
+    !sha256Run.validEnvelope ||
+    sha256Run.outerStatus !== 0 ||
+    sha256Run.guestStatus !== 0 ||
+    sha256Run.guestInstructions !== 3_996 ||
+    sha256Run.result !== 42
+) {
+    throw new Error(`SHA-256 run failed: ${JSON.stringify(sha256Run)}`);
+}
+
+const oneShortRun = run(reset, 350, 10_000_000);
+if (
+    !oneShortRun.validEnvelope ||
+    oneShortRun.outerStatus !== 0 ||
+    oneShortRun.guestStatus !== 3_011 ||
+    oneShortRun.guestInstructions !== 350 ||
+    oneShortRun.result !== 0
+) {
+    throw new Error(
+        `Guest one-short run failed: ${JSON.stringify(oneShortRun)}`,
+    );
 }
 
 const resetRun = run(reset, 1_000, 10_000_000);
@@ -114,9 +167,14 @@ console.log(JSON.stringify({
     pressure: {
         bytes: pressure.length,
         sha256: sha256(pressure),
-        cumulativeConstructedBytes: 65_604,
+        cumulativeConstructedBytes: 143_364,
+        cumulativeRecordFieldCells: 1_136,
         ...pressureRun,
     },
+    textBytes: textBytesRun,
+    formatting: formattingRun,
+    sha256: sha256Run,
+    oneShort: oneShortRun,
     reset: {
         bytes: reset.length,
         sha256: sha256(reset),
