@@ -38,7 +38,7 @@ internal static partial class Program
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults).Runˉmain();
         Equal(42, Interpreted.Exitˉcode);
-        Assertˉu32ˉarithmeticˉobject(
+        Assertˉu32ˉloweringˉobject(
             Tool,
             Memory,
             Wvb,
@@ -68,7 +68,7 @@ internal static partial class Program
         Throwsˉnativeˉtrap(
             "WVR3007",
             () => _ = X64ˉnativeˉexecutor.Executeˉi32(Overflowˉnative.Fragment));
-        Assertˉu32ˉarithmeticˉobject(
+        Assertˉu32ˉloweringˉobject(
             Tool,
             Memory,
             Overflowˉwvb,
@@ -77,7 +77,7 @@ internal static partial class Program
             expectedˉexitˉcode: null);
     }
 
-    private static void Assertˉu32ˉarithmeticˉobject(
+    private static void Assertˉu32ˉloweringˉobject(
         Verifiedˉmodule Tool,
         Verifiedˉmodule Memory,
         byte[] Wvb,

@@ -2542,3 +2542,43 @@ identifies the next unsupported instruction as `u32.from_u8` in function 29,
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain
 deferred to the grouped end-of-goal gate.
+
+## Local native u32-from-u8 evidence
+
+[Decision 0272](../Decisions/0272-Native-U32-From-U8.md) admits lossless
+`u32.from_u8` through the existing descriptor-instruction state. Typed analysis
+consumes one `u8`, produces one `u32`, and reserves its next scalar value slot.
+The exact machine body copies the canonical 32-bit slot value with no runtime
+service, trap branch, narrowing check, or alternate representation.
+
+The affected test was reviewed before execution. Its focused helper converts
+both boundary values, `0u8` and `255u8`, and compares the complete object with
+Stage 0 through both Windvale adapters. The selection passes in 1.946 seconds.
+Its 420-byte WVB has SHA-256
+`981a9a104e69bea9f0ef808f9107e3c0dc06da40b8b595140152d056bcbcc782`;
+the exact 2,546-byte WVO contains 2,439 code bytes and has SHA-256
+`2ae4cfff8e8de357177710238a9fea7d2f33ec8049d1d66ee009c5debf5bc5cc`.
+The separate pinned-package case passes in 8.839 seconds. Both Release builds
+report zero warnings and errors.
+
+Direct Stage 0 calculation pins the 339,930-byte core closure at SHA-256
+`0f882a38caed33bbe9752302da70d51ebb030c3cc5e167363d167aab9537fe88`.
+The 334,931-byte memory adapter has SHA-256
+`8bf3e469e26d7d3ec3d933094080d472bbae9acaeb015ca5ab2a82fbe668ed9a`.
+The pinned Windows native source front door independently rebuilds the
+335,959-byte hosted tool in 17.4 seconds, byte-identical to Stage 0 at SHA-256
+`a650aa965028c91e2d71a21e0f43ce480e26276933eac81c5a6ff39d45379dc3`.
+Current unpromoted packages are 4,647,424 Windows and 4,648,960 Linux bytes at
+SHA-256
+`18fd0fd179a649d245dd9e9163d006d0c2e6d6995c5ea992fe5e1de256fb613d`
+and `87d5efffa225bf65b2e6f04036777dedc3646a041f31b6ed437c2844f97181f3`.
+
+One direct self-lowering probe remains fail-closed as `Unsupportedˉcode` and
+publishes no output. A complete ordinal scan identifies the next unsupported
+instruction at ordinal 2,602 as `u32.remainder` in function 36,
+`__WvM13F4(bytes, bytes, u32, u32, __WvM6R0, bytes) -> bytes`, at function
+offset `0x0267`.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.

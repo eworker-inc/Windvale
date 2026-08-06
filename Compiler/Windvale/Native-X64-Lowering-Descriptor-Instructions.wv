@@ -6,6 +6,11 @@ import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉruntimeˉdescriptors as Runtimeˉdescriptors;
 import Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation as Bytesˉconcatenation;
 
+data U32ˉfromˉu8ˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    137, 132, 36, 0, 0, 0, 0
+];
+
 export record Compilerˉnativeˉx64ˉdescriptorˉinstruction {
     Input: bytes;
     Offset: u32;
@@ -54,6 +59,39 @@ fn Valueˉslot(
         Type,
         Index
     );
+}
+
+fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    var Output: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+    return Bytesˉconcat(
+        Output,
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    var Output: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu8(Value));
+    return Bytesˉconcat(
+        Output,
+        Bytesˉslice(Input, Offset + 1u32, Bytesˉlength(Input) - Offset - 1u32)
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉu32ˉfromˉu8ˉbytes() -> u32 {
+    return 24u32;
+}
+
+fn Emitˉu32ˉfromˉu8ˉmachineˉcode(
+    Result: bytes,
+    Source: u32,
+    Target: u32
+) -> bytes {
+    var Instruction: bytes = U32ˉfromˉu8ˉtemplate;
+    Instruction = Patchˉu32(Instruction, 3u32, Source * 16u32);
+    Instruction = Patchˉu32(Instruction, 10u32, Target * 16u32);
+    return Bytesˉconcat(Result, Instruction);
 }
 
 fn Emitˉconstant(
@@ -478,6 +516,42 @@ fn Emitˉbyteˉconstruction(
     );
 }
 
+fn Emitˉu32ˉfromˉu8(
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Target: u32 = Valueˉslot(Shape, 5u8, State.Nextˉu32);
+    let Result: bytes = Emitˉu32ˉfromˉu8ˉmachineˉcode(
+        State.Result,
+        Source,
+        Target
+    );
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Result,
+        Replaceˉu8(
+            State.Stackˉtypes,
+            State.Stackˉdepth - 1u32,
+            5u8
+        ),
+        Patchˉu32(
+            State.Stackˉslots,
+            (State.Stackˉdepth - 1u32) * 4u32,
+            Target
+        ),
+        State.Stackˉdepth,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32 + 1u32,
+        State.Nextˉbytes
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
     Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
     Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
@@ -497,6 +571,9 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
     }
     if Instruction.Opcode == 113u8 {
         return Emitˉtextˉconcat(Instruction, Shape, State);
+    }
+    if Instruction.Opcode == 118u8 {
+        return Emitˉu32ˉfromˉu8(Shape, State);
     }
     if Instruction.Opcode == 119u8 {
         return Emitˉbytesˉconcat(Instruction, Shape, State);

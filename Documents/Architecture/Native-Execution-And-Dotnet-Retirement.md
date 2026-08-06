@@ -344,6 +344,8 @@ Decision 0269 closes the checked `u32` add/subtract/multiply family. Addition an
 
 Decision 0271 adds bounded `bytes.from_u16_little` construction to the same owned dynamic-byte path. Typed analysis preserves the `u32` input, lowering rejects values above 65,535 through the exact `WVR3016` branch, and successful construction publishes a two-byte descriptor before storing the low word. The expanded focused fixture agrees exactly with Stage 0 through both Windvale adapters. Complete self-lowering now reaches function 29's `u32.from_u8` instruction.
 
+Decision 0272 admits lossless `u32.from_u8` through the existing descriptor-instruction state. Canonical `u8` slots already contain the complete unsigned value, so the exact lowering is one 32-bit source-slot load and target-slot store with no runtime service or failure branch. Keeping the stack-state transition outside the large core preserves the retained 2,048-cell frame ceiling. The focused `0u8` and `255u8` fixture agrees exactly with Stage 0 through both Windvale adapters. Complete self-lowering now reaches function 36's `u32.remainder` instruction.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

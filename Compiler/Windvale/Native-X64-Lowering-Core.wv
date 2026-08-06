@@ -817,6 +817,7 @@ export fn Compilerˉnativeˉx64ˉdescriptorˉoperation(Opcode: u8) -> bool {
     if Opcode == 115u8 { return true; }
     if Opcode == 116u8 { return true; }
     if Opcode == 117u8 { return true; }
+    if Opcode == 118u8 { return true; }
     if Opcode == 119u8 { return true; }
     if Opcode == 120u8 { return true; }
     if Opcode == 121u8 { return true; }
@@ -903,6 +904,7 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 115u8 { return 1u32; }
     if Opcode == 116u8 { return 1u32; }
     if Opcode == 117u8 { return 1u32; }
+    if Opcode == 118u8 { return 1u32; }
     if Opcode == 119u8 { return 1u32; }
     if Opcode == 120u8 { return 1u32; }
     if Opcode == 121u8 { return 1u32; }
@@ -1004,6 +1006,19 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                 U32ˉvalues = Capabilityˉanalysis.U32ˉvalues;
                 Bytesˉvalues = Capabilityˉanalysis.Bytesˉvalues;
                 Bodyˉbytes = Capabilityˉanalysis.Bodyˉbytes;
+            }
+            if Opcode == 118u8 {
+                if Depth == 0u32 { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
+                if Bytesˉreadˉu8(Stack, Depth - 1u32) != 4u8 {
+                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                }
+                Depth = Depth - 1u32;
+                Stack = Bytesˉslice(Stack, 0u32, Depth);
+                Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(5u8));
+                Depth = Depth + 1u32;
+                U32ˉvalues = U32ˉvalues + 1u32;
+                Bodyˉbytes = Bodyˉbytes +
+                    Descriptorˉinstructions.Compilerˉnativeˉx64ˉu32ˉfromˉu8ˉbytes();
             }
             if Opcode == 104u8 {
                 let Recordˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
@@ -2689,6 +2704,9 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
     }
     if Opcode == 117u8 {
         return Runtimeˉdescriptors.Compilerˉnativeˉx64ˉtextˉquoteˉbytes();
+    }
+    if Opcode == 118u8 {
+        return Descriptorˉinstructions.Compilerˉnativeˉx64ˉu32ˉfromˉu8ˉbytes();
     }
     if Opcode == 119u8 {
         return Bytesˉconcatenation.Compilerˉnativeˉx64ˉbytesˉconcatˉbytes();

@@ -1,0 +1,11 @@
+module Wvbˉtoˉwvoˉu32ˉconversion profile portable;
+
+fn Widen(Value: u8) -> u32 {
+    return U32ˉfromˉu8(Value);
+}
+
+export fn Main() -> i32 {
+    if Widen(255u8) != 255u32 { return 1; }
+    if Widen(0u8) != 0u32 { return 2; }
+    return 42;
+}
