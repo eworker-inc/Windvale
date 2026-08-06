@@ -10,6 +10,8 @@ Use `--check` to reproduce the checked-in `Artifacts/WebAssembly-Playground/Wvb-
 
 `wvwasm.exe` and `wvwasm.elf` are named members of the bounded format-3 compiler family. The dedicated artifact adapter uses the same exact six capabilities and ten services as the source compiler, the same 48-billion-instruction ceiling and 128 MiB dynamic arena, and no CLR or .NET runtime. It does not broaden format 3 into a general hosted-application profile.
 
+The current package includes [Decision 0292](../../Documents/Decisions/0292-Bounded-Direct-WebAssembly-Static-Descriptors.md)'s bounded immutable text/bytes lowering. No-data inputs retain their previous WebAssembly identity; the exact browser compiler now reaches the next direct-lowering boundary at nominal types.
+
 The native packages are reconstructed only through the explicit Stage 0 recovery route:
 
 ```powershell
