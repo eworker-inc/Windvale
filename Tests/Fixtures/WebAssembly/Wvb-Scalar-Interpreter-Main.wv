@@ -373,6 +373,8 @@ export fn Main(Request: bytes) -> bytes {
     // scalar with an offset/length-like value as heap ownership.
     var Stackˉdescriptorˉflagsˉlow: u32 = 0u32;
     var Stackˉdescriptorˉflagsˉhigh: u32 = 0u32;
+    var Stackˉrecordˉflagsˉlow: u32 = 0u32;
+    var Stackˉrecordˉflagsˉhigh: u32 = 0u32;
     var Frames: bytes = Invalid;
     var Heap: bytes = Invalid;
     var Heapˉallocations: bytes = Invalid;
@@ -517,7 +519,7 @@ export fn Main(Request: bytes) -> bytes {
             >> ((Payloadˉlength & 7u32) * 4u32)) & 15u32;
         var Stackˉconsumed: u32 = Stackˉeffect & 3u32;
         var Stackˉproduced: bool = (Stackˉeffect & 4u32) != 0u32;
-        var Stackˉproducedˉdescriptor: bool = (Stackˉeffect & 8u32) != 0u32;
+        var Stackˉproducedˉkind: u32 = (Stackˉeffect >> 3u32) & 1u32;
         var Releasedˉdescriptors: bytes = Invalid;
         var Heapˉallocationˉrequested: bool = false;
         var Heapˉallocationˉvalue: bytes = Invalid;
@@ -749,7 +751,7 @@ export fn Main(Request: bytes) -> bytes {
                 }
             }
             if Loadedˉshapeˉkind == 5u32 || Loadedˉshapeˉkind == 6u32 {
-                Stackˉproducedˉdescriptor = true;
+                Stackˉproducedˉkind = 1u32;
                 let Loadedˉlength: u32 = Bytesˉreadˉu32ˉlittle(
                     Loadedˉvalue,
                     4u32
@@ -831,6 +833,9 @@ export fn Main(Request: bytes) -> bytes {
                         Loadedˉallocationˉsuffix
                     );
                 }
+            }
+            if Loadedˉshapeˉkind == 7u32 {
+                Stackˉproducedˉkind = 2u32;
             }
             Stack = Bytesˉconcat(Stack, Loadedˉvalue);
             Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
@@ -1595,6 +1600,7 @@ export fn Main(Request: bytes) -> bytes {
             );
             Stackˉconsumed = Recordˉfieldˉcount;
             Stackˉproduced = true;
+            Stackˉproducedˉkind = 2u32;
             let Recordˉfieldˉbytes: u32 = Recordˉfieldˉcount * 8u32;
             let Recordˉstackˉlength: u32 = Bytesˉlength(Stack);
             let Recordˉfields: bytes = Bytesˉslice(
@@ -1658,12 +1664,43 @@ export fn Main(Request: bytes) -> bytes {
                                     0u32,
                                     512u32
                                 );
-                                // Stack cells remain conservative roots. Locals,
-                                // saved frames, and construction fields have
-                                // verified static shapes, so append only their
-                                // record cells.
-                                var Recordˉreachableˉvalues: bytes =
-                                    Stack;
+                                // Dynamic stack flags and verified static shapes
+                                // admit only actual record cells as roots.
+                                var Recordˉreachableˉvalues: bytes = Invalid;
+                                var Recordˉreachableˉcursor: u32 = 0u32;
+                                while Recordˉreachableˉcursor
+                                    < Bytesˉlength(Stack) {
+                                    if Recordˉreachableˉcursor < 256u32 {
+                                        if ((Stackˉrecordˉflagsˉlow
+                                            >> (Recordˉreachableˉcursor / 8u32))
+                                            & 1u32) != 0u32 {
+                                            Recordˉreachableˉvalues = Bytesˉconcat(
+                                                Recordˉreachableˉvalues,
+                                                Bytesˉslice(
+                                                    Stack,
+                                                    Recordˉreachableˉcursor,
+                                                    8u32
+                                                )
+                                            );
+                                        }
+                                    } else {
+                                        if ((Stackˉrecordˉflagsˉhigh
+                                            >> ((Recordˉreachableˉcursor
+                                                - 256u32) / 8u32)) & 1u32)
+                                            != 0u32 {
+                                        Recordˉreachableˉvalues = Bytesˉconcat(
+                                            Recordˉreachableˉvalues,
+                                            Bytesˉslice(
+                                                Stack,
+                                                Recordˉreachableˉcursor,
+                                                8u32
+                                            )
+                                        );
+                                        }
+                                    }
+                                    Recordˉreachableˉcursor =
+                                        Recordˉreachableˉcursor + 8u32;
+                                }
                                 var Recordˉconstructionˉfieldˉcursor: u32 =
                                     Recordˉtypeˉcursor + 4u32;
                                 var Recordˉconstructionˉfieldˉindex: u32 = 0u32;
@@ -1785,7 +1822,7 @@ export fn Main(Request: bytes) -> bytes {
                                     }
                                     Recordˉframeˉend = Recordˉframeˉstart;
                                 }
-                                var Recordˉreachableˉcursor: u32 = 0u32;
+                                Recordˉreachableˉcursor = 0u32;
                                 while Recordˉreachableˉcursor
                                     < Bytesˉlength(Recordˉreachableˉvalues) {
                                     let Recordˉreachableˉremaining: u32 =
@@ -2190,7 +2227,10 @@ export fn Main(Request: bytes) -> bytes {
             Stackˉconsumed = 1u32;
             Stackˉproduced = true;
             if Selectedˉfieldˉkind == 5u32 || Selectedˉfieldˉkind == 6u32 {
-                Stackˉproducedˉdescriptor = true;
+                Stackˉproducedˉkind = 1u32;
+            }
+            if Selectedˉfieldˉkind == 7u32 {
+                Stackˉproducedˉkind = 2u32;
             }
             if Selectedˉfieldˉkind == 5u32 || Selectedˉfieldˉkind == 6u32 {
                 let Fieldˉdescriptorˉlength: u32 = Bytesˉreadˉu32ˉlittle(
@@ -3233,7 +3273,18 @@ export fn Main(Request: bytes) -> bytes {
                     >> (Stackˉdescriptorˉcount - 33u32)) & 1u32) != 0u32;
             }
             if Returnˉisˉdescriptor {
-                Stackˉproducedˉdescriptor = true;
+                Stackˉproducedˉkind = 1u32;
+            }
+            if Stackˉdescriptorˉcount <= 32u32 {
+                if ((Stackˉrecordˉflagsˉlow
+                    >> (Stackˉdescriptorˉcount - 1u32)) & 1u32) != 0u32 {
+                    Stackˉproducedˉkind = 2u32;
+                }
+            } else {
+                if ((Stackˉrecordˉflagsˉhigh
+                    >> (Stackˉdescriptorˉcount - 33u32)) & 1u32) != 0u32 {
+                    Stackˉproducedˉkind = 2u32;
+                }
             }
             var Returnˉresult: bytes = Bytesˉslice(
                 Stack,
@@ -3600,9 +3651,13 @@ export fn Main(Request: bytes) -> bytes {
                 Stackˉdescriptorˉflagsˉlow =
                     Stackˉdescriptorˉflagsˉlow & Stackˉdescriptorˉmask;
                 Stackˉdescriptorˉflagsˉhigh = 0u32;
+                Stackˉrecordˉflagsˉlow =
+                    Stackˉrecordˉflagsˉlow & Stackˉdescriptorˉmask;
+                Stackˉrecordˉflagsˉhigh = 0u32;
             }
             if Stackˉremainingˉcount == 32u32 {
                 Stackˉdescriptorˉflagsˉhigh = 0u32;
+                Stackˉrecordˉflagsˉhigh = 0u32;
             }
             if Stackˉremainingˉcount > 32u32 {
                 let Stackˉhighˉcount: u32 =
@@ -3615,9 +3670,12 @@ export fn Main(Request: bytes) -> bytes {
                 Stackˉdescriptorˉflagsˉhigh =
                     Stackˉdescriptorˉflagsˉhigh
                         & Stackˉdescriptorˉhighˉmask;
+                Stackˉrecordˉflagsˉhigh =
+                    Stackˉrecordˉflagsˉhigh
+                        & Stackˉdescriptorˉhighˉmask;
             }
             if Stackˉproduced {
-                if Stackˉproducedˉdescriptor {
+                if Stackˉproducedˉkind == 1u32 {
                     if Stackˉremainingˉcount < 32u32 {
                         Stackˉdescriptorˉflagsˉlow =
                             Stackˉdescriptorˉflagsˉlow
@@ -3626,6 +3684,18 @@ export fn Main(Request: bytes) -> bytes {
                         if Stackˉremainingˉcount >= 64u32 { return Invalid; }
                         Stackˉdescriptorˉflagsˉhigh =
                             Stackˉdescriptorˉflagsˉhigh
+                                | (1u32 << (Stackˉremainingˉcount - 32u32));
+                    }
+                }
+                if Stackˉproducedˉkind == 2u32 {
+                    if Stackˉremainingˉcount < 32u32 {
+                        Stackˉrecordˉflagsˉlow =
+                            Stackˉrecordˉflagsˉlow
+                                | (1u32 << Stackˉremainingˉcount);
+                    } else {
+                        if Stackˉremainingˉcount >= 64u32 { return Invalid; }
+                        Stackˉrecordˉflagsˉhigh =
+                            Stackˉrecordˉflagsˉhigh
                                 | (1u32 << (Stackˉremainingˉcount - 32u32));
                     }
                 }
