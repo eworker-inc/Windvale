@@ -3491,3 +3491,32 @@ process and reconstructs no publisher. No WebAssembly implementation changed.
 Linux execution, Development, Standard, Qualification, native host-container
 construction, promotion, broader publication-fault transfer, and the grouped
 end-of-goal gate remain deferred.
+
+## Local fixed native WVB-to-WVO rejection evidence
+
+[Decision 0317](../Decisions/0317-Fixed-Native-Wvb-To-Wvo-Rejections.md) adds one
+focused .NET-free coordinator over the digest-bound WVB-to-WVO lowerer launcher.
+The malformed 174-byte input has SHA-256
+`20618498d9df059d52fc0d660bf52f32df291c88b94d4b5ded224078f936108e`;
+the valid 1,698-byte unsupported-function input has
+`bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37`;
+and the 479-byte destination sentinel has
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`.
+
+Malformed admission emits complete report SHA-256
+`6dc739ce9e8c752efe41fbede32d6c373ea33e1c22159faf86772a4cc94ff323`;
+valid-but-unsupported function admission emits
+`fc854d5370fe6da10243d8e28663f932baa4d7c30402488f5193d0a3dad77ded`.
+Both return `1`, write no standard output, preserve the complete destination,
+and leave the isolated lowerer work directory empty.
+
+Direct Windows execution passes both cases in 0.788 seconds. After reviewing the
+wrapper's exact report and merging the concurrent Decisions 0315 and 0316
+WebAssembly work, the focused selection
+`native WVB-to-WVO rejections preserve existing output without .NET` passes 1/1
+in 0.867 test seconds after an 11.33-second zero-warning Release build; the
+complete command takes 17.0 seconds. The permanent coordinator invokes no .NET
+process and reconstructs no lowerer or output. This slice changes no WebAssembly
+implementation. Linux execution, Development, Standard, Qualification, native
+host-container construction, promotion, broader lowerer rejection transfer, and
+the grouped end-of-goal gate remain deferred.

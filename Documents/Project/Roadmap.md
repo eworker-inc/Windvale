@@ -20,6 +20,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0314](../Decisions/0314-Fixed-Native-Publisher-Rejections.md) moves invalid console-application and WVO admission into one fixed .NET-free command, requiring exact phase reports, destination preservation, and zero publication scratch. Linux execution, native host-container construction, and the grouped gate still precede publisher promotion.
 
+[Decision 0317](../Decisions/0317-Fixed-Native-Wvb-To-Wvo-Rejections.md) fixes malformed-WVB and valid-but-unsupported-function outcomes through the public lowerer launcher, with exact native reports, destination preservation, and isolated-work cleanup. Linux execution, native host-container construction, broader backend completion, and the grouped gate still precede lowerer promotion.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

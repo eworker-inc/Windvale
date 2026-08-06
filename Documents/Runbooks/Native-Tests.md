@@ -130,6 +130,31 @@ Tests: 2, Passed: 2, Failed: 0
 Both cases require exact phase diagnostics, empty standard output, complete
 destination preservation, and zero native publication scratch files.
 
+The focused WVB-to-WVO lowerer command tests malformed admission and one valid
+module outside the accepted native subset without rebuilding the lowerer or
+running the successful AOT chain. On Windows x64 run:
+
+```bat
+Tools\Native\Test-Lowerer-Rejections.cmd
+```
+
+On Linux x64 run:
+
+```sh
+./Tools/Native/Test-Lowerer-Rejections.sh
+```
+
+Its exact success report is:
+
+```text
+PASS  malformed
+PASS  unsupported-function
+Tests: 2, Passed: 2, Failed: 0
+```
+
+Both cases require exact native status diagnostics, empty standard output,
+complete destination preservation, and no residual private lowerer work.
+
 No .NET process is required by these commands. The host dependencies are `cmd.exe`
 and `certutil` on Windows, or Bash, `sha256sum`, `base64`, `cmp`, and core utilities
 on Linux.
@@ -151,5 +176,6 @@ managed wrapper's exact report and run `Tools\Native\Test-Seed.cmd` or
 boundary, review its wrapper and run only `Test-Linker-Rejections.cmd` or `.sh`.
 For the packager-rejection boundary, do the same with
 `Test-Console-Packager-Rejections.cmd` or `.sh`; for publisher admission, use
-only `Test-Publisher-Rejections.cmd` or `.sh`. GitHub owns the independent Windows
-and pinned-Debian Qualification run for a final committed candidate.
+only `Test-Publisher-Rejections.cmd` or `.sh`; for lowerer rejection, use only
+`Test-Lowerer-Rejections.cmd` or `.sh`. GitHub owns the independent Windows and
+pinned-Debian Qualification run for a final committed candidate.
