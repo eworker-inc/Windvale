@@ -1,95 +1,42 @@
 module WebAssemblyˉwvbˉscalarˉinterpreter profile portable;
 
 import Foundationˉsha256 as Sha256;
-import WebAssemblyˉwvbˉscalarˉinterpreterˉstackˉeffect as Stackˉeffect;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 
 export fn Main(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
-    let Requestˉlength: u32 = Bytesˉlength(Request);
-    if Requestˉlength < 17u32 { return Invalid; }
-    if Bytesˉreadˉu32ˉlittle(Request, 0u32) != 1230526039u32 {
-        return Invalid;
-    }
-    let Requestˉmajor: u32 = Bytesˉreadˉu16ˉlittle(Request, 4u32);
-    if Requestˉmajor < 1u32 { return Invalid; }
-    if Requestˉmajor > 2u32 { return Invalid; }
-    if Bytesˉreadˉu16ˉlittle(Request, 6u32) != 0u32 { return Invalid; }
-    let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Request, 8u32);
-    let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
-    if Maximumˉinstructions < 1u32 { return Invalid; }
-    if Maximumˉinstructions > 20000000u32 { return Invalid; }
-    if Maximumˉcallˉdepth < 1u32 { return Invalid; }
-    if Maximumˉcallˉdepth > 64u32 { return Invalid; }
+    let Preflight: bytes = Envelopeˉreader.Interpreterˉenvelope(Request);
+    if Bytesˉlength(Preflight) != 60u32 { return Invalid; }
+    let Requestˉmajor: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 0u32);
+    let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 4u32);
+    let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 8u32);
+    let Module: bytes = Bytesˉslice(
+        Request,
+        Bytesˉreadˉu32ˉlittle(Preflight, 12u32),
+        Bytesˉreadˉu32ˉlittle(Preflight, 16u32)
+    );
+    let Guestˉinput: bytes = Bytesˉslice(
+        Request,
+        Bytesˉreadˉu32ˉlittle(Preflight, 20u32),
+        Bytesˉreadˉu32ˉlittle(Preflight, 24u32)
+    );
+    let Data: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 28u32);
+    let Functions: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 32u32);
+    let Functionsˉend: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 36u32);
+    let Code: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 40u32);
+    let Types: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 44u32);
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 48u32);
+    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 52u32);
+    let Mainˉindex: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 56u32);
 
-    var Module: bytes = Invalid;
-    var Guestˉinput: bytes = Invalid;
-    if Requestˉmajor == 2u32 {
-        if Requestˉlength < 24u32 { return Invalid; }
-        let Moduleˉlength: u32 = Bytesˉreadˉu32ˉlittle(Request, 16u32);
-        let Guestˉinputˉlength: u32 = Bytesˉreadˉu32ˉlittle(Request, 20u32);
-        if Moduleˉlength > Requestˉlength - 24u32 { return Invalid; }
-        if Guestˉinputˉlength != Requestˉlength - 24u32 - Moduleˉlength {
-            return Invalid;
-        }
-        if Guestˉinputˉlength > 16384u32 { return Invalid; }
-        Module = Bytesˉslice(Request, 24u32, Moduleˉlength);
-        Guestˉinput = Bytesˉslice(
-            Request,
-            24u32 + Moduleˉlength,
-            Guestˉinputˉlength
-        );
-    } else {
-        Module = Bytesˉslice(Request, 16u32, Requestˉlength - 16u32);
-    }
-    let Total: u32 = Bytesˉlength(Module);
-    if Total < 12u32 { return Invalid; }
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 0u32)) != 87u32 { return Invalid; }
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 1u32)) != 86u32 { return Invalid; }
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 2u32)) != 66u32 { return Invalid; }
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return Invalid; }
-    if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
-    if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 11u32 { return Invalid; }
-    if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
-
-    var Envelope: u32 = 12u32;
-    var Sectionˉkind: u32 = 1u32;
+    var Envelope: u32 = 0u32;
+    var Sectionˉkind: u32 = 0u32;
     var Payload: u32 = 0u32;
     var Payloadˉlength: u32 = 0u32;
-    var Capabilities: u32 = 0u32;
-    var Data: u32 = 0u32;
-    var Functions: u32 = 0u32;
-    var Functionsˉend: u32 = 0u32;
-    var Code: u32 = 0u32;
-    var Exports: u32 = 0u32;
-    var Types: u32 = 0u32;
-    while Sectionˉkind <= 7u32 {
-        Payload = Envelope + 8u32;
-        Payloadˉlength = Bytesˉreadˉu32ˉlittle(Module, Envelope + 4u32);
-        if Sectionˉkind == 2u32 { Capabilities = Payload; }
-        if Sectionˉkind == 3u32 { Data = Payload; }
-        if Sectionˉkind == 4u32 {
-            Functions = Payload;
-            Functionsˉend = Payload + Payloadˉlength;
-        }
-        if Sectionˉkind == 5u32 { Code = Payload; }
-        if Sectionˉkind == 6u32 { Exports = Payload; }
-        if Sectionˉkind == 7u32 { Types = Payload; }
-        Envelope = Payload + Payloadˉlength;
-        Sectionˉkind = Sectionˉkind + 1u32;
-    }
-    if Envelope != Total { return Invalid; }
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 20u32)) != 1u32 {
-        return Invalid;
-    }
-    if Bytesˉreadˉu32ˉlittle(Module, Capabilities) != 0u32 {
-        return Invalid;
-    }
 
     let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     let Zeroˉcell: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
 
-    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Types);
-    if Typeˉcount > 1024u32 { return Invalid; }
     var Typeˉoffsets: bytes = Invalid;
     var Typeˉindex: u32 = 0u32;
     var Typeˉcursor: u32 = Types + 4u32;
@@ -147,61 +94,8 @@ export fn Main(Request: bytes) -> bytes {
         Typeˉindex = Typeˉindex + 1u32;
     }
 
-    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Functions);
-    if Functionˉcount < 1u32 { return Invalid; }
-    if Functionˉcount > 4096u32 { return Invalid; }
-
     var Mainˉfound: bool = false;
-    var Mainˉindex: u32 = 0u32;
-    let Exportˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Exports);
-    var Exportˉindex: u32 = 0u32;
-    var Exportˉcursor: u32 = Exports + 4u32;
-    while Exportˉindex < Exportˉcount {
-        let Exportˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-            Module,
-            Exportˉcursor
-        );
-        Exportˉcursor = Exportˉcursor + 4u32;
-        var Isˉmain: bool = false;
-        if Exportˉnameˉlength == 4u32 {
-            Isˉmain = true;
-            if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Exportˉcursor)) != 77u32 {
-                Isˉmain = false;
-            }
-            if U32ˉfromˉu8(
-                Bytesˉreadˉu8(Module, Exportˉcursor + 1u32)
-            ) != 97u32 {
-                Isˉmain = false;
-            }
-            if U32ˉfromˉu8(
-                Bytesˉreadˉu8(Module, Exportˉcursor + 2u32)
-            ) != 105u32 {
-                Isˉmain = false;
-            }
-            if U32ˉfromˉu8(
-                Bytesˉreadˉu8(Module, Exportˉcursor + 3u32)
-            ) != 110u32 {
-                Isˉmain = false;
-            }
-        }
-        Exportˉcursor = Exportˉcursor + Exportˉnameˉlength;
-        if Isˉmain {
-            if Mainˉfound { return Invalid; }
-            if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Exportˉcursor)) != 1u32 {
-                return Invalid;
-            }
-            Mainˉfound = true;
-            Mainˉindex = Bytesˉreadˉu32ˉlittle(Module, Exportˉcursor + 1u32);
-        }
-        Exportˉcursor = Exportˉcursor + 5u32;
-        Exportˉindex = Exportˉindex + 1u32;
-    }
-    if Mainˉfound {
-        Mainˉfound = true;
-    } else {
-        return Invalid;
-    }
-    Exportˉindex = 128u32;
+    var Exportˉindex: u32 = 128u32;
 
     var Functionˉindex: u32 = 0u32;
     var Functionˉcursor: u32 = Functions + 4u32;
@@ -533,18 +427,97 @@ export fn Main(Request: bytes) -> bytes {
         Payloadˉlength = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Payload));
         Mainˉfound = false;
         let Stackˉdescriptorˉcount: u32 = Bytesˉlength(Stack) / 8u32;
-        let Stackˉeffectˉresult: bytes = Stackˉeffect.Interpreterˉstackˉeffect(
-            Bytesˉfromˉu32ˉlittle(Payloadˉlength)
-        );
-        var Stackˉconsumed: u32 = Bytesˉreadˉu32ˉlittle(
-            Stackˉeffectˉresult, 0u32
-        );
-        let Stackˉeffectˉflags: u32 = Bytesˉreadˉu32ˉlittle(
-            Stackˉeffectˉresult, 4u32
-        );
-        var Stackˉproduced: bool = Stackˉeffectˉflags == 1u32 ||
-            Stackˉeffectˉflags == 3u32;
-        var Stackˉproducedˉdescriptor: bool = Stackˉeffectˉflags == 3u32;
+        // Eight four-bit effects fit in one word. A balanced group selection
+        // keeps static classification to five branches without a WVB data
+        // section, which the bounded root-first backend does not yet accept.
+        let Stackˉeffectˉgroup: u32 = Payloadˉlength >> 3u32;
+        var Stackˉeffectˉword: u32 = 0u32;
+        if Stackˉeffectˉgroup < 16u32 {
+            if Stackˉeffectˉgroup < 8u32 {
+                if Stackˉeffectˉgroup < 4u32 {
+                    if Stackˉeffectˉgroup < 2u32 {
+                        if Stackˉeffectˉgroup < 1u32 {
+                            Stackˉeffectˉword = 1410647104u32;
+                        } else {
+                            Stackˉeffectˉword = 1718574148u32;
+                        }
+                    } else {
+                        if Stackˉeffectˉgroup < 3u32 {
+                            Stackˉeffectˉword = 107370086u32;
+                        } else {
+                            Stackˉeffectˉword = 0u32;
+                        }
+                    }
+                } else {
+                    if Stackˉeffectˉgroup < 6u32 {
+                        if Stackˉeffectˉgroup < 5u32 {
+                            Stackˉeffectˉword = 1717986918u32;
+                        } else {
+                            Stackˉeffectˉword = 5u32;
+                        }
+                    } else {
+                        if Stackˉeffectˉgroup < 7u32 {
+                            Stackˉeffectˉword = 16u32;
+                        } else {
+                            Stackˉeffectˉword = 0u32;
+                        }
+                    }
+                }
+            } else {
+                if Stackˉeffectˉgroup < 12u32 {
+                    if Stackˉeffectˉgroup < 10u32 {
+                        Stackˉeffectˉword = 0u32;
+                    } else {
+                        if Stackˉeffectˉgroup < 11u32 {
+                            Stackˉeffectˉword = 1u32;
+                        } else {
+                            Stackˉeffectˉword = 0u32;
+                        }
+                    }
+                } else {
+                    if Stackˉeffectˉgroup < 14u32 {
+                        if Stackˉeffectˉgroup < 13u32 {
+                            Stackˉeffectˉword = 1717986918u32;
+                        } else {
+                            Stackˉeffectˉword = 3721815040u32;
+                        }
+                    } else {
+                        if Stackˉeffectˉgroup < 15u32 {
+                            Stackˉeffectˉword = 3856488173u32;
+                        } else {
+                            Stackˉeffectˉword = 14540253u32;
+                        }
+                    }
+                }
+            }
+        } else {
+            if Stackˉeffectˉgroup < 24u32 {
+                if Stackˉeffectˉgroup < 20u32 {
+                    Stackˉeffectˉword = 0u32;
+                } else {
+                    if Stackˉeffectˉgroup < 22u32 {
+                        if Stackˉeffectˉgroup < 21u32 {
+                            Stackˉeffectˉword = 1632u32;
+                        } else {
+                            Stackˉeffectˉword = 1717567488u32;
+                        }
+                    } else {
+                        if Stackˉeffectˉgroup < 23u32 {
+                            Stackˉeffectˉword = 1637u32;
+                        } else {
+                            Stackˉeffectˉword = 0u32;
+                        }
+                    }
+                }
+            } else {
+                Stackˉeffectˉword = 0u32;
+            }
+        }
+        let Stackˉeffect: u32 = (Stackˉeffectˉword
+            >> ((Payloadˉlength & 7u32) * 4u32)) & 15u32;
+        var Stackˉconsumed: u32 = Stackˉeffect & 3u32;
+        var Stackˉproduced: bool = (Stackˉeffect & 4u32) != 0u32;
+        var Stackˉproducedˉdescriptor: bool = (Stackˉeffect & 8u32) != 0u32;
         var Releasedˉdescriptors: bytes = Invalid;
         var Heapˉallocationˉrequested: bool = false;
         var Heapˉallocationˉvalue: bytes = Invalid;

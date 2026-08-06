@@ -1,0 +1,155 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope profile portable;
+
+export fn Interpreterˉenvelope(Request: bytes) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
+    let Requestˉlength: u32 = Bytesˉlength(Request);
+    if Requestˉlength < 17u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Request, 0u32) != 1230526039u32 {
+        return Invalid;
+    }
+    let Requestˉmajor: u32 = Bytesˉreadˉu16ˉlittle(Request, 4u32);
+    if Requestˉmajor < 1u32 { return Invalid; }
+    if Requestˉmajor > 2u32 { return Invalid; }
+    if Bytesˉreadˉu16ˉlittle(Request, 6u32) != 0u32 { return Invalid; }
+    let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Request, 8u32);
+    let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
+    if Maximumˉinstructions < 1u32 { return Invalid; }
+    if Maximumˉinstructions > 20000000u32 { return Invalid; }
+    if Maximumˉcallˉdepth < 1u32 { return Invalid; }
+    if Maximumˉcallˉdepth > 64u32 { return Invalid; }
+
+    var Moduleˉoffset: u32 = 16u32;
+    var Moduleˉlength: u32 = Requestˉlength - 16u32;
+    var Guestˉinputˉoffset: u32 = Requestˉlength;
+    var Guestˉinputˉlength: u32 = 0u32;
+    if Requestˉmajor == 2u32 {
+        if Requestˉlength < 24u32 { return Invalid; }
+        Moduleˉoffset = 24u32;
+        Moduleˉlength = Bytesˉreadˉu32ˉlittle(Request, 16u32);
+        Guestˉinputˉlength = Bytesˉreadˉu32ˉlittle(Request, 20u32);
+        if Moduleˉlength > Requestˉlength - 24u32 { return Invalid; }
+        if Guestˉinputˉlength != Requestˉlength - 24u32 - Moduleˉlength {
+            return Invalid;
+        }
+        if Guestˉinputˉlength > 16384u32 { return Invalid; }
+        Guestˉinputˉoffset = 24u32 + Moduleˉlength;
+    }
+
+    let Module: bytes = Bytesˉslice(Request, Moduleˉoffset, Moduleˉlength);
+    if Moduleˉlength < 12u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 0u32)) != 87u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 1u32)) != 86u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 2u32)) != 66u32 { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return Invalid; }
+    if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
+    if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 11u32 { return Invalid; }
+    if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
+
+    var Cursor: u32 = 12u32;
+    var Sectionˉkind: u32 = 1u32;
+    var Payload: u32 = 0u32;
+    var Payloadˉlength: u32 = 0u32;
+    var Capabilities: u32 = 0u32;
+    var Data: u32 = 0u32;
+    var Functions: u32 = 0u32;
+    var Functionsˉend: u32 = 0u32;
+    var Code: u32 = 0u32;
+    var Exports: u32 = 0u32;
+    var Types: u32 = 0u32;
+    while Sectionˉkind <= 7u32 {
+        Payload = Cursor + 8u32;
+        Payloadˉlength = Bytesˉreadˉu32ˉlittle(Module, Cursor + 4u32);
+        if Sectionˉkind == 2u32 { Capabilities = Payload; }
+        if Sectionˉkind == 3u32 { Data = Payload; }
+        if Sectionˉkind == 4u32 {
+            Functions = Payload;
+            Functionsˉend = Payload + Payloadˉlength;
+        }
+        if Sectionˉkind == 5u32 { Code = Payload; }
+        if Sectionˉkind == 6u32 { Exports = Payload; }
+        if Sectionˉkind == 7u32 { Types = Payload; }
+        Cursor = Payload + Payloadˉlength;
+        Sectionˉkind = Sectionˉkind + 1u32;
+    }
+    if Cursor != Moduleˉlength { return Invalid; }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 20u32)) != 1u32 {
+        return Invalid;
+    }
+    if Bytesˉreadˉu32ˉlittle(Module, Capabilities) != 0u32 {
+        return Invalid;
+    }
+
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Types);
+    if Typeˉcount > 1024u32 { return Invalid; }
+    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Functions);
+    if Functionˉcount < 1u32 { return Invalid; }
+    if Functionˉcount > 4096u32 { return Invalid; }
+
+    var Mainˉfound: bool = false;
+    var Mainˉindex: u32 = 0u32;
+    let Exportˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Exports);
+    var Exportˉindex: u32 = 0u32;
+    var Exportˉcursor: u32 = Exports + 4u32;
+    while Exportˉindex < Exportˉcount {
+        let Exportˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Exportˉcursor
+        );
+        Exportˉcursor = Exportˉcursor + 4u32;
+        var Isˉmain: bool = false;
+        if Exportˉnameˉlength == 4u32 {
+            Isˉmain = true;
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Exportˉcursor)) != 77u32 {
+                Isˉmain = false;
+            }
+            if U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Exportˉcursor + 1u32)
+            ) != 97u32 {
+                Isˉmain = false;
+            }
+            if U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Exportˉcursor + 2u32)
+            ) != 105u32 {
+                Isˉmain = false;
+            }
+            if U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Exportˉcursor + 3u32)
+            ) != 110u32 {
+                Isˉmain = false;
+            }
+        }
+        Exportˉcursor = Exportˉcursor + Exportˉnameˉlength;
+        if Isˉmain {
+            if Mainˉfound { return Invalid; }
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Exportˉcursor)) != 1u32 {
+                return Invalid;
+            }
+            Mainˉfound = true;
+            Mainˉindex = Bytesˉreadˉu32ˉlittle(Module, Exportˉcursor + 1u32);
+        }
+        Exportˉcursor = Exportˉcursor + 5u32;
+        Exportˉindex = Exportˉindex + 1u32;
+    }
+    if Mainˉfound {
+        Mainˉfound = true;
+    } else {
+        return Invalid;
+    }
+
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Requestˉmajor);
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Maximumˉinstructions)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Maximumˉcallˉdepth));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Moduleˉoffset));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Moduleˉlength));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Guestˉinputˉoffset));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Guestˉinputˉlength));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Data));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functionsˉend));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Code));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Types));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Typeˉcount));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functionˉcount));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Mainˉindex));
+}

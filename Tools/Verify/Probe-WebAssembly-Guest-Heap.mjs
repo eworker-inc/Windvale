@@ -59,8 +59,7 @@ const outputOffset = exports["Windvale.output_offset"].value;
 const outputCapacity = exports["Windvale.output_capacity"].value;
 const linearMemory = new Uint8Array(memory.buffer);
 
-function run(candidate, guestBudget, outerBudget) {
-    const request = scalarRequest(candidate, guestBudget);
+function runRequest(request, outerBudget) {
     if (request.length > inputCapacity) {
         throw new Error(`The ${request.length}-byte request exceeds input capacity.`);
     }
@@ -89,6 +88,10 @@ function run(candidate, guestBudget, outerBudget) {
             output.readUInt16LE(4) === 1 &&
             output.readUInt16LE(6) === 0,
     };
+}
+
+function run(candidate, guestBudget, outerBudget) {
+    return runRequest(scalarRequest(candidate, guestBudget), outerBudget);
 }
 
 const pressureRun = run(pressure, 15_627, 100_000_000);
@@ -159,6 +162,30 @@ if (
     throw new Error(`Post-pressure reset failed: ${JSON.stringify(resetRun)}`);
 }
 
+const malformedRequests = [
+    ["empty", Buffer.alloc(0)],
+    ["truncated", Buffer.alloc(15)],
+    ["bad magic", scalarRequest(reset, 1_000)],
+    ["bad minor", scalarRequest(reset, 1_000)],
+    ["zero budget", scalarRequest(reset, 0)],
+    ["excessive depth", scalarRequest(reset, 1_000)],
+    ["bad WVB magic", scalarRequest(reset, 1_000)],
+];
+malformedRequests[2][1].writeUInt32LE(0, 0);
+malformedRequests[3][1].writeUInt16LE(1, 6);
+malformedRequests[5][1].writeUInt32LE(65, 12);
+malformedRequests[6][1][16] = 0;
+const malformed = {};
+for (const [name, request] of malformedRequests) {
+    const actual = runRequest(request, 1_000_000);
+    if (actual.outerStatus !== 0 || actual.outputLength !== 0) {
+        throw new Error(
+            `Malformed ${name} request was not rejected: ${JSON.stringify(actual)}`,
+        );
+    }
+    malformed[name] = actual;
+}
+
 console.log(JSON.stringify({
     interpreter: {
         bytes: interpreter.length,
@@ -180,4 +207,5 @@ console.log(JSON.stringify({
         sha256: sha256(reset),
         ...resetRun,
     },
+    malformed,
 }, null, 2));

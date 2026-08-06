@@ -160,6 +160,8 @@ The completed guest-heap slice adds an exact 64-cell descriptor ownership mask, 
 
 The root-first descriptor contract now admits only fully reachable graphs whose call ordinals strictly increase, preserving a maximum of sixteen functions while making cycles and recursion structurally impossible. Opcode stack-effect classification moves into a focused Windvale helper; the composed interpreter has three functions and reduces the root from 5,740 to 5,551 locals. The 111,316-byte WVB lowers in 261,291,275 instructions to 770,608 import-free Wasm bytes. Ordinary optimizing-tier Node.js now compiles and executes the complete pressure/text/formatting/SHA/exhaustion/reset probe in one instance, including the 143,364-byte cumulative guest-heap workload. This restores normal engine compatibility; it does not yet complete portable compiler execution or remove Stage 0 from artifact production because the pinned native build driver does not bind the new three-module source composition.
 
+The next refinement uses the new graph for a focused request/WVB envelope reader and restores static opcode effects to the root as a balanced packed-word lookup. The root falls again to 5,364 locals without requiring a WVB data section, which the bounded WebAssembly backend currently rejects. Its 110,319-byte WVB lowers in 267,391,678 instructions to 791,182 import-free Wasm bytes. The retained ownership workload falls from 69,597,159 to 62,743,806 outer instructions while preserving exact results and guest meters. The exact 919,577-byte portable compiler reaches guest budget 100,000 at 192,935,833 outer instructions; this calibrates compiler execution beyond the prior 500,000-instruction evidence without claiming a complete `WVCO 1` result or spending an unmeasured multi-minute outer budget.
+
 This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not yet sustain the portable compiler through a complete source compilation, implement `break`, `continue`, browser capability authorization/imports for compiled applications, general WVB nonempty stack joins, compiler self-hosting in WebAssembly, cross-browser qualification, or complete worker containment for the editable pipeline. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
 ## Proposed playground shape
@@ -361,7 +363,7 @@ Browser equality should be claimed only for behavior defined by Windvale. Layout
 ## Open decisions
 
 - Which bounded Windvale-native component and UI produces the first useful experimental route before complete compiler execution?
-- Which compiler-scale expansion follows Decision 0174's exact sixteen-function preflight rejection?
+- Which measured interpreter or backend optimization makes complete portable compiler execution interactive enough for the normal worker route?
 - Which execution and memory limits provide useful interaction on desktop and mobile browsers while retaining the current fixed-memory ABI where applicable?
 - Which exact Chromium, Firefox, WebKit, and real-Safari versions form the first supported profile?
 - Which diagnostics and intermediate compiler evidence are safe, stable, and useful enough to expose publicly?
