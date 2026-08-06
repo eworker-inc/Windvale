@@ -9,7 +9,9 @@
     "build": "npm run generate && vite build --config Vite-Config.mjs",
     "generate": "node Scripts/Generate-Repository-Browser.mjs --output Generated",
     "verify:wasm-demo": "node ../Tools/Website/Verify-Wasm-Demo.mjs",
-    "verify:wasm-compiler-package": "node --no-liftoff ../Tools/Website/Verify-WebAssembly-Playground-Package.mjs"
+    "verify:wasm-compiler-package": "node --no-liftoff ../Tools/Website/Verify-WebAssembly-Playground-Package.mjs",
+    "verify:wasm-compiler-demo": "node ../Tools/Website/Verify-WebAssembly-Compiler-Demo.mjs",
+    "verify:wasm-compiler-core": "node --no-liftoff ../Tools/Website/Verify-WebAssembly-Compiler-Core.mjs"
   },
   "devDependencies": {
     "concurrently": "10.0.4",

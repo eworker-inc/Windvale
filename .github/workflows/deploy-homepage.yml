@@ -129,6 +129,8 @@ jobs:
         run: |
           npm run verify:wasm-demo
           npm run verify:wasm-compiler-package
+          npm run verify:wasm-compiler-demo
+          npm run verify:wasm-compiler-core
 
       - name: Publish standalone WebAssembly application
         if: ${{ steps.gate.outputs.deploy == 'true' }}

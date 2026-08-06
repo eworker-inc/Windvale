@@ -1,6 +1,6 @@
 # Windvale browser playground host contract
 
-- Status: Experimental Stage 0 host contract with a standalone direct-Wasm artifact lane
+- Status: Experimental Stage 0 host contract with standalone direct-Wasm and browser-native compiler probes
 - Implemented by: `Tools/Windvale.Playground.Engine` and `Tools/Windvale.Playground`
 - Permanent WebAssembly target: Not accepted by this contract
 
@@ -11,6 +11,8 @@ The browser playground exposes the existing Windvale source-to-WVB-to-runtime pa
 This host contract contains the experiment without making .NET or WebAssembly the definition of Windvale semantics. The source language, canonical WVB, verifier, runtime behavior, profiles, and capability names remain owned by their existing specifications.
 
 The separate `/playground/wasm-demo/` route exposes one pinned generated module without starting Blazor or .NET. It verifies the current 791-byte profile-8 artifact identity in ordinary JavaScript and passes the bytes plus an editable UTF-8 value through the same disposable-worker boundary. The artifact exercises execution ABI 3's fixed linear-memory input and output regions, strict guest-side text validation, and exact instruction budget. Its displayed `.wv` source is read-only provenance; editing the input value does not provide source compilation.
+
+The separate `/playground/webassembly-compiler/` route is the first source-to-result probe without Blazor or .NET. A disposable module worker verifies the pinned package identities, executes the portable compiler WVB under the import-free ABI-3 interpreter Wasm, parses its `WVCO 1` result, and resubmits the returned WVB through the same interpreter for verification and scalar execution. Its current source surface is deliberately bounded to the exact compiler-success proof and its measured multi-minute Chromium latency is not an interactive-playground contract.
 
 ## Pipeline
 
@@ -36,6 +38,13 @@ pinned qualified Wasm artifact
     -> editable text encoded as strict UTF-8
     -> the same disposable Web Worker validation and execution
     -> ABI 3, exact buffer layout, round-trip, success, and exhaustion evidence
+
+bounded Windvale source
+    -> SHA-256-verified portable compiler WVB and interpreter Wasm
+    -> disposable worker `WVSS 1` / `WVXI 2` compilation
+    -> strict `WVXO 2` / `WVCO 1` result admission
+    -> returned WVB resubmission through `WVXI 1`
+    -> verified scalar status, result, identities, and instruction evidence
 ```
 
 Compilation failure produces no WVB identity. Verification and playground-policy failures may retain the compiled WVB, digest, module profile, declared capabilities, and inspection report when those values were established safely before the failure. Execution starts only after bytecode verification and playground-policy checks succeed. Direct Wasm lowering is attempted only after a portable, capability-free module completes through the reference interpreter. A valid module outside the bounded Wasm selector remains a normal reference-interpreter result rather than a playground failure.
@@ -84,6 +93,8 @@ The normal runtime trap codes continue to describe instruction, call-depth, auth
 
 The Stage 0 compiler, canonical verifier, reference interpreter, and Windvale backend interpreter still run on the browser UI thread. Only the generated import-free Wasm executes in a disposable worker. Instruction and call-depth budgets contain ordinary Windvale execution, but compilation, verification, lowering, and fallback execution must also move behind a worker boundary before treating the host as hardened against arbitrary hostile source or browser main-thread denial of service.
 
+The separate browser-native compiler probe accepts at most 64 KiB of UTF-8 source, allows one to 20,000,000 result-execution instructions, gives the compiler 2,000,000 guest and 1,800,000,000 outer instructions, gives returned-WVB execution 200,000,000 outer instructions, caps call depth at 64, and terminates its worker after ten minutes. These values contain the exact experiment; they are not inherited by the normal Stage 0 playground.
+
 ## Request and result boundary
 
 The reusable engine accepts:
@@ -111,7 +122,7 @@ The UI adapter hosts a locally bundled Monaco editor. Its Windvale tokenizer mir
 
 The local Monaco ESM bundle is built with the pinned Node dependencies under `Tools/Windvale.Playground` before publishing the Blazor project. Publishing then produces static files under the publish `wwwroot` directory. The application uses a relative base path and includes `.nojekyll`, allowing the same output to be served from a domain root or a GitHub Pages project path without a server runtime. A static host must serve `.wasm` files using the `application/wasm` media type and use HTTPS outside local development.
 
-The nested `wasm-demo/` directory is copied as an ordinary static route by the same publication. Its HTML entry point imports only its local application module, the shared JavaScript worker host, presentation assets, and the site analytics bootstrap. It contains no `_framework`, Blazor, or .NET startup reference. The retained artifact is encoded as JavaScript deployment data, reconstructed byte-for-byte, and SHA-256 checked before worker transfer. The page rejects unpaired UTF-16 surrogate input before encoding; the guest and worker independently require strict UTF-8 before displaying returned text.
+The nested `wasm-demo/` and `webassembly-compiler/` directories are copied as ordinary static routes by the same publication. Their HTML entry points import only local application modules, shared JavaScript worker code, presentation assets, and the site analytics bootstrap. They contain no `_framework`, Blazor, or .NET startup reference. The direct demo's retained artifact is encoded as JavaScript deployment data, reconstructed byte-for-byte, and SHA-256 checked before worker transfer. The compiler probe loads manifest-owned package files copied during the npm build, verifies their size and SHA-256 identity before use, and transfers only the successful copied WVB result back to the page.
 
 Repository deployment and public availability are operational evidence rather than semantic guarantees of this specification.
 
@@ -132,14 +143,14 @@ Compiler, bytecode, and runtime diagnostic codes retain their existing meanings 
 This experiment does not establish:
 
 - a general Windvale-to-WebAssembly compiler backend;
-- integration of the implemented Windvale-native WVB interpreter into the standalone page's normal source path;
+- integration of the implemented Windvale-native WVB interpreter into the normal editable page's source path;
 - complete Windvale-native executable type/control-flow verification;
-- source editing or source-to-WVB compilation on the standalone direct-artifact route; its editable field is the program's input value, not source;
+- general source-to-WVB compilation on a standalone route; the compiler probe is bounded to its exact current source profile, while the direct-artifact route edits only program input;
 - WebAssembly as an accepted permanent Windvale target;
 - browser UI APIs as portable Windvale UI semantics;
 - native x86-64, PE, ELF, WVO, UEFI, or Windvale OS execution in the browser;
 - production isolation for hostile source;
-- worker containment for Stage 0 compilation, WVB verification, Windvale-authored lowering, or reference-interpreter fallback; or
+- worker containment for the normal Stage 0 compilation, WVB verification, Windvale-authored lowering, or reference-interpreter fallback; or
 - .NET-free artifact construction, qualification, recovery, or repository automation.
 
 The host contract should be reconsidered when the complete Stage 0 pipeline moves behind a worker boundary, a new browser capability is proposed, a Windvale-native interpreter can replace part of Stage 0, the direct subset expands, or cross-browser differential evidence is ready for qualification.

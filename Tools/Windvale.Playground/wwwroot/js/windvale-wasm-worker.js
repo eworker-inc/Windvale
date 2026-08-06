@@ -65,7 +65,7 @@ self.onmessage = async Event => {
             self.postMessage(Response);
         }
     }
-    catch (Error) {
+    catch (Failure) {
         self.postMessage({
             RequestId: Number.isInteger(Requestˉid) ? Requestˉid : null,
             Succeeded: false,
@@ -75,7 +75,7 @@ self.onmessage = async Event => {
             ExecutedInstructions: null,
             OutputKind: null,
             Output: null,
-            Error: Error instanceof Error ? Error.message : "The WebAssembly worker failed.",
+            Error: Failure instanceof Error ? Failure.message : "The WebAssembly worker failed.",
         });
     }
 };
@@ -188,9 +188,9 @@ function Executeˉabiˉthree(Module, Exports, Instructionˉlimit, Input) {
         Memory.grow(1);
         Grew = true;
     }
-    catch (Error) {
-        if (!(Error instanceof RangeError)) {
-            throw Error;
+    catch (Growthˉfailure) {
+        if (!(Growthˉfailure instanceof RangeError)) {
+            throw Growthˉfailure;
         }
     }
     if (Grew) {
