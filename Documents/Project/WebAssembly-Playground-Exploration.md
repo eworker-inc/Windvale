@@ -174,6 +174,8 @@ A warmed successor extracts type preflight, record-metadata construction, and in
 
 The bounded direct static-data slice then permits the interpreter to replace its balanced per-instruction opcode-effect branch tree with one immutable 256-byte lookup table. The current 110,700-byte WVB lowers through the normal .NET-free native publisher to 828,165 import-free Wasm bytes. Exact compilation preserves the 1,183,292 guest instructions, 183-byte WVB identity, verification, and result `42` while reducing outer compiler execution from 1,513,523,789 to 1,404,070,227 instructions. A complete warmup, compile, and execution run takes 59.4 seconds in Node.js on the measured Windows host. This is a useful interpreter improvement, but current-package Chromium and cross-browser measurements remain pending and the remaining 1.4-billion-operation compiler path is not yet interactive.
 
+The direct backend next completely validates up to 1,024 unused nominal declarations, including bounded record fields, enum members, nested shape references, and exact inner payload consumption. A primitive fixture with unused record and enum declarations retains byte-identical WebAssembly. The exact portable compiler now clears its 104 static declarations and 82 nominal declarations before returning `Unsupportedˉcode` without output at its 417-function executable graph. This narrows the direct-compiler frontier without claiming nominal value lowering or changing the still-interpreted browser path.
+
 ## Proposed playground shape
 
 The initial user experience could have four primary views:

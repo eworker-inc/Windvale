@@ -117,7 +117,7 @@ Equal(
     "native backend container profile",
 );
 Equal(
-    "Documents/Decisions/0292-Bounded-Direct-WebAssembly-Static-Descriptors.md",
+    "Documents/Decisions/0296-Bounded-Direct-WebAssembly-Nominal-Tables.md",
     Nativeˉbackendˉmanifest.decision,
     "native backend decision",
 );
@@ -126,7 +126,7 @@ const Nativeˉbackendˉdecision = await readFile(
     "utf8",
 );
 if (!Nativeˉbackendˉdecision.startsWith(
-    "# Decision 0292: Bounded direct WebAssembly static descriptors\n",
+    "# Decision 0296: Bounded direct WebAssembly nominal tables\n",
 )) {
     Fail("The WebAssembly native backend decision is invalid.");
 }
