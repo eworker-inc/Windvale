@@ -336,6 +336,8 @@ Decision 0262 admits `u32.format` through ABI 22's existing service-table slot, 
 
 Decision 0265 admits one-byte construction from `u8` through the existing bounded dynamic-byte arena and descriptor lifetime. Its machine template stays with byte concatenation so it can reuse the same patch machinery without expanding the pinned native compiler's binding surface with a duplicate helper module. The focused maximum-byte fixture agrees exactly with Stage 0 through both Windvale adapters. Full-tool self-lowering advances to function 2 offset `0x0019`'s `bytes.from_i32_little` instruction.
 
+Decision 0267 extends that same fixed-width construction path to `bytes.from_i32_little`. Typed analysis replaces one signed scalar with one owned four-byte descriptor; lowering checks exact four-byte arena growth, publishes length four, and stores the complete little-endian scalar without a runtime service. The combined focused fixture agrees exactly with Stage 0 through both Windvale adapters. Full-tool self-lowering advances to function 6 offset `0x0019`'s `bytes.from_u32_little` instruction.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

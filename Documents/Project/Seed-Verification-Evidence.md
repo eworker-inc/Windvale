@@ -2190,7 +2190,6 @@ Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain
 deferred to the grouped end-of-goal gate.
 
-
 ## Local compact native record-liveness evidence
 
 [Decision 0256](../Decisions/0256-Compact-Native-Record-Liveness.md) measures
@@ -2374,6 +2373,48 @@ Direct self-lowering remains fail-closed as `Unsupportedˉcode` and publishes
 no output. Inspection identifies the next unsupported instruction as
 `bytes.from_i32_little` in function 2, `__WvM10F1(bytes, i32) -> bytes`, at
 WVB offset `0x0019`.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.
+
+## Local native byte-from-i32-little evidence
+
+[Decision 0267](../Decisions/0267-Native-Byte-From-I32-Little.md) admits
+`bytes.from_i32_little` through the existing bounded dynamic-byte arena. Typed
+analysis requires one `i32` operand and produces one bytes descriptor; lowering
+checks four-byte arena growth, publishes the exact descriptor, stores all source
+bits in little-endian order, and preserves the existing arena-exhaustion and
+lifetime behavior.
+
+The affected tests were reviewed before execution. The existing selectable
+byte-construction fixture now also constructs `-7`, requires four bytes, reads
+the exact signed little-endian value back, and retains the earlier maximum-`u8`
+case. The final focused differential selection passes in 2.893 seconds and
+compares the complete Stage 0 WVO with both Windvale adapters. Its 655-byte WVB
+has SHA-256
+`a7d05bf1057ba47defac824650c26342921a0179fe095645c825755d489fb877`;
+the exact 4,884-byte WVO contains 4,811 code bytes and has SHA-256
+`cd6ec0d5f132d90c44278c46c2080a9325ad3e29c25303d0e0647f7397871208`.
+The separate pinned-package case passes in 8.451 seconds. Both Release builds
+report zero warnings and errors.
+
+Direct Stage 0 calculation pins the 333,205-byte core closure at SHA-256
+`f0d93cc849e3f3246e695872cd61b91f9c8d8ee58285b5f2b9b2e92a04a786d2`.
+The pinned Windows native source front door independently rebuilds the
+328,294-byte memory adapter and 329,322-byte hosted tool in 32.2 seconds; both
+are byte-identical to Stage 0 at SHA-256
+`bb69b780a71d2510944edc38ec30aa828b3e4a9cd2dd242215c621114315f406`
+and `2b0679507a01a5dd0c290f2c873c8360b52bf6b1699c4afb0b93cad3d25a267f`.
+Current unpromoted packages are 4,554,240 Windows and 4,554,752 Linux bytes at
+SHA-256
+`b0e1e17198494397b646adcac37ce815622e6e194cb9cc0a3dcd322fc75bcc97`
+and `6cd60b082ebbe8ef0b15bdcd3d6b58d190e029abc4c39b1ec9b04ee90d4e167a`.
+
+Direct self-lowering remains fail-closed as `Unsupportedˉcode` and publishes
+no output. Inspection identifies the next unsupported instruction as
+`bytes.from_u32_little` in function 6, `__WvM10F2(bytes, u32) -> bytes`, at WVB
+offset `0x0019`.
 
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain

@@ -74,6 +74,19 @@ data Bytesˉfromˉu8ˉtemplate: bytes = [
     0
 ];
 
+fn Patchˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    var Output: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu8(Value));
+    return Bytesˉconcat(
+        Output,
+        Bytesˉslice(
+            Input,
+            Offset + 1u32,
+            Bytesˉlength(Input) - Offset - 1u32
+        )
+    );
+}
+
 fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
     var Output: bytes = Bytesˉslice(Input, 0u32, Offset);
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
@@ -174,6 +187,33 @@ export fn Compilerˉnativeˉx64ˉemitˉbytesˉfromˉu8(
     Runtimeˉtarget: u32
 ) -> bytes {
     var Instruction: bytes = Bytesˉfromˉu8ˉtemplate;
+    Instruction = Patchˉu32(Instruction, 46u32, Target * 16u32);
+    Instruction = Patchˉu32(Instruction, 58u32, Target * 16u32 + 8u32);
+    Instruction = Patchˉu32(Instruction, 67u32, Target * 16u32 + 12u32);
+    Instruction = Patchˉu32(Instruction, 74u32, Source * 16u32);
+    let Instructionˉoffset: u32 = Bytesˉlength(Result);
+    Instruction = Patchˉu32(
+        Instruction,
+        94u32,
+        Relativeˉu32(Runtimeˉtarget, Instructionˉoffset + 98u32)
+    );
+    return Bytesˉconcat(Result, Instruction);
+}
+
+export fn Compilerˉnativeˉx64ˉbytesˉfromˉi32ˉlittleˉbytes() -> u32 {
+    return 108u32;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉbytesˉfromˉi32ˉlittle(
+    Result: bytes,
+    Source: u32,
+    Target: u32,
+    Runtimeˉtarget: u32
+) -> bytes {
+    var Instruction: bytes = Bytesˉfromˉu8ˉtemplate;
+    Instruction = Patchˉu8(Instruction, 11u32, 4u8);
+    Instruction = Patchˉu8(Instruction, 51u32, 4u8);
+    Instruction = Patchˉu8(Instruction, 78u32, 137u8);
     Instruction = Patchˉu32(Instruction, 46u32, Target * 16u32);
     Instruction = Patchˉu32(Instruction, 58u32, Target * 16u32 + 8u32);
     Instruction = Patchˉu32(Instruction, 67u32, Target * 16u32 + 12u32);

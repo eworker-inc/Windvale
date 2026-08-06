@@ -54,13 +54,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 326_867;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_522_496;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 329_322;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_554_240;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "45c0aea665f139ffe0eb87dfa6f7305e5c86fda100e9d64d1c90ce62234dd6f7";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_521_984;
+        "b0e1e17198494397b646adcac37ce815622e6e194cb9cc0a3dcd322fc75bcc97";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_554_752;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "77f0c6be7f8f84913575297fe89f5fcc8cf0c39c7f21824aff8e911012b6c0fc";
+        "6cd60b082ebbe8ef0b15bdcd3d6b58d190e029abc4c39b1ec9b04ee90d4e167a";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -1027,6 +1027,9 @@ internal static partial class Program
         True(Module.Functions.SelectMany(Function => Function.Instructions)
             .Any(Instruction => Instruction.Opcode == Opcode.Bytesˉfromˉu8),
             "The byte-construction fixture omitted bytes.from_u8.");
+        True(Module.Functions.SelectMany(Function => Function.Instructions)
+            .Any(Instruction => Instruction.Opcode == Opcode.Bytesˉfromˉi32ˉlittle),
+            "The byte-construction fixture omitted bytes.from_i32_little.");
         var Interpreted = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(TextWriter.Null),

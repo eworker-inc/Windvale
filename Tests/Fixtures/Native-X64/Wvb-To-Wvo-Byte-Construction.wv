@@ -4,5 +4,8 @@ export fn Main() -> i32 {
     let Encoded = Bytesˉfromˉu8(255u8);
     if Bytesˉlength(Encoded) != 1u32 { return 1; }
     if Bytesˉreadˉu8(Encoded, 0u32) != 255u8 { return 2; }
+    let Signed = Bytesˉfromˉi32ˉlittle(-7);
+    if Bytesˉlength(Signed) != 4u32 { return 3; }
+    if Bytesˉreadˉi32ˉlittle(Signed, 0u32) != -7 { return 4; }
     return 42;
 }
