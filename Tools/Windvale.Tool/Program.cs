@@ -174,6 +174,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         _ => ".elf",
     };
@@ -325,6 +326,8 @@ internal static class Program
         Linuxˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
 
@@ -459,6 +462,7 @@ internal static class Program
                 Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
             {
                 var Application = target switch
@@ -511,6 +515,11 @@ internal static class Program
                             Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉwindows(
+                            Module,
+                            Fragment,
+                            Bytes),
+                    Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Wvoˉstagingˉproducerˉapplicationˉwriter.Writeˉwindows(
                             Module,
                             Fragment,
                             Bytes),
@@ -590,6 +599,11 @@ internal static class Program
                             Module,
                             Fragment,
                             Bytes),
+                    Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Wvoˉstagingˉproducerˉapplicationˉwriter.Writeˉlinux(
+                            Module,
+                            Fragment,
+                            Bytes),
                     Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -629,6 +643,7 @@ internal static class Program
                     Linuxˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
             {
@@ -1114,6 +1129,8 @@ internal static class Program
             "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
+            "windows-x64-wvo-staging-producer-v1|" +
+            "linux-x64-wvo-staging-producer-v1|" +
             "windows-x64-wvo-staging-publisher-v1|" +
             "linux-x64-wvo-staging-publisher-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
@@ -1132,6 +1149,8 @@ internal static class Program
             "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
+            "windows-x64-wvo-staging-producer-v1|" +
+            "linux-x64-wvo-staging-producer-v1|" +
             "windows-x64-wvo-staging-publisher-v1|" +
             "linux-x64-wvo-staging-publisher-v1> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");

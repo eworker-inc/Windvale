@@ -3174,3 +3174,33 @@ and tests. No WebAssembly implementation changed. Linux execution, complete
 compiler self-staging integration, native constructor replacement, extended
 fault/concurrency evidence, Development, Standard, Qualification, promotion,
 ordinary-path cutover, and the grouped end-of-goal gate remain deferred.
+
+## Local native staged-WVO producer/publisher composition evidence
+
+[Decision 0300](../Decisions/0300-Native-Staged-Wvo-Producer-Publisher-Composition.md)
+packages the existing Windvale staging producer as exact Windows and Linux
+applications. The producer retains its six capabilities and ten native
+services, writes bounded publication values to distinct chunk sidecars, and
+writes the strict `WVOP 1` manifest last. Decision 0299's separate process then
+independently admits those snapshots and owns final mutation.
+
+The exact producer WVB is 394,780 bytes at SHA-256
+`77158b228c204b587dbf559621ad7c717d4eb5b418c32b783204cd350525ac76`.
+The Windows application is 5,723,136 bytes at SHA-256
+`993b2c5a531261cc5290e45edef0daa329de95b024f5ea749660895df84466de`;
+the Linux application is 5,722,112 bytes at SHA-256
+`b38352b1e8d04bd3ac3f66e4ea27dde8391a738e9ce50031ad1f4927a53065d8`.
+
+The reviewed focused compiler selection passes 1/1 in 10.783 test seconds
+after a 9.61-second zero-warning Release build; the complete command takes
+24.8 seconds. Current-host Windows composition produces exactly three chunks
+and a 60-byte manifest, then atomically publishes the canonical 479-byte WVO
+at SHA-256
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`.
+No publisher scratch remains and neither native process loads a CLR component.
+
+C# changes are limited to Stage 0/recovery package construction, CLI routing,
+and tests. No WebAssembly implementation changed. Full compiler self-lowering,
+Linux process composition, native constructor replacement, ordinary launcher
+cutover, Development, Standard, Qualification, promotion, and the grouped
+end-of-goal gate remain deferred.

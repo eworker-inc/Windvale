@@ -299,6 +299,15 @@ complete compiler self-staging integration, package promotion, native
 replacement of the Stage 0 constructor, extended fault/concurrency matrix, and
 grouped dual-host qualification remain separate gates.
 
+Decision 0300 packages the existing staging producer as exact Windows and Linux
+applications. It preserves the module's six-capability and ten-service hosted
+profile and emits the same bounded chunk sequence plus strict `WVOP 1` manifest.
+The current-host producer and fixed publisher compose as separate native
+processes on the canonical return-42 fixture without loading .NET. Full compiler
+self-lowering, Linux process composition, ordinary launcher ownership, native
+replacement of both Stage 0 constructors, promotion, and grouped qualification
+remain deferred.
+
 ## Adapters
 
 `Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv` exposes `Main(Input: bytes) -> bytes` and returns either the complete WVO or empty bytes. `Compiler/Windvale/Native-X64-Lowering-Tool.wv` is the hosted shell:
