@@ -60,8 +60,14 @@ internal static partial class Program
     private static readonly string NATIVE_X64_LOWERING_PUBLICATION_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Publication.wv");
+    private static readonly string NATIVE_X64_LOWERING_STAGING_TOOL_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Staging-Tool.wv");
 
     private const int WVB_TO_WVO_TOOL_WVB_BYTES = 372_514;
+    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 390_066;
+    private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
+        "c916610ad1d4ca3b5d1573f5775aaf1a102a89587a2fb3cba8941d42c93136ba";
     private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_348_864;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
         "0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280";
@@ -101,6 +107,16 @@ internal static partial class Program
             "Compilerˉnativeˉx64ˉloweringˉbatchˉtest",
             Batchˉadapter.Module.Name);
         Assertˉfunctionˉbatching(Batchˉadapter);
+        var Stagingˉbytes = Compileˉwvbˉtoˉwvoˉstagingˉsuccess();
+        Equal(WVB_TO_WVO_STAGING_TOOL_WVB_BYTES, Stagingˉbytes.Length);
+        Equal(
+            WVB_TO_WVO_STAGING_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Stagingˉbytes));
+        var Staging = Moduleˉcodec.Readˉandˉverify(Stagingˉbytes);
+        Equal(
+            "Compilerˉnativeˉx64ˉloweringˉstagingˉtool",
+            Staging.Module.Name);
+        Assertˉobjectˉstaging(Staging);
         var Toolˉnative = X64ˉnativeˉbackend.Compile(Toolˉmodule);
         Nativeˉfragmentˉverifier.Verify(Toolˉnative.Fragment);
         Sequenceˉequal(
@@ -535,6 +551,13 @@ internal static partial class Program
             "function-batch publication adapter",
             includeˉpublication: true);
 
+    private static byte[] Compileˉwvbˉtoˉwvoˉstagingˉsuccess() =>
+        Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
+            "Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv",
+            NATIVE_X64_LOWERING_STAGING_TOOL_SOURCE,
+            "object-staging tool",
+            includeˉpublication: true);
+
     private static void Assertˉfunctionˉbatching(Verifiedˉmodule adapter)
     {
         const int Evidenceˉentryˉbytes = 24;
@@ -611,6 +634,112 @@ internal static partial class Program
             Codeˉbytes);
         Equal((uint)Expectedˉview.Relocations.Length * 8u, Relocationˉbytes);
         Equal((uint)(Evidence.Length / Evidenceˉentryˉbytes) + 6u, Steps);
+    }
+
+    private static void Assertˉobjectˉstaging(Verifiedˉmodule staging)
+    {
+        const string Inputˉresource = "input.wvb";
+        const string Chunkˉprefix = "stage/object";
+        const string Manifestˉresource = "stage/object.wvop";
+        const int Manifestˉheaderˉbytes = 24;
+        const int Manifestˉentryˉbytes = 12;
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_RETURN_42_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Expectedˉnative = X64ˉnativeˉbackend.Compile(Module);
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            Expectedˉnative.Fragment);
+        var Reader = new Testˉfileˉreader((Resourceˉname, Maximumˉbytes) =>
+        {
+            Equal(Inputˉresource, Resourceˉname);
+            True(
+                Wvb.Length <= Maximumˉbytes,
+                "The staging input exceeded the hosted read bound.");
+            return Wvb.ToImmutableArray();
+        });
+        var Writer = new Capturingˉstagingˉwriter();
+        var Output = new StringWriter();
+        var Diagnostics = new StringWriter();
+        var Resources = new Hostedˉresourceˉcontext(
+            [Inputˉresource, Chunkˉprefix, Manifestˉresource],
+            Output,
+            Diagnostics,
+            Reader,
+            Writer);
+        var Authorized = staging.Module.Capabilities
+            .Select(Capability => Capability.Name)
+            .ToImmutableHashSet(StringComparer.Ordinal);
+        var Result = new Referenceˉruntime(
+            staging,
+            new Referenceˉcapabilityˉhost(Resources),
+            new Runtimeˉoptions(Authorized) with
+            {
+                Maximumˉinstructions = 100_000_000,
+            })
+            .Runˉmain();
+        Equal(0, Result.Exitˉcode);
+        Equal(string.Empty, Diagnostics.ToString());
+        Equal(1, Reader.Readˉcount);
+        Equal(4, Writer.Writes.Count);
+
+        var Manifestˉwrite = Writer.Writes[^1];
+        Equal(Manifestˉresource, Manifestˉwrite.Resourceˉname);
+        var Manifest = Manifestˉwrite.Bytes.AsSpan();
+        Equal(Manifestˉheaderˉbytes + 3 * Manifestˉentryˉbytes, Manifest.Length);
+        Sequenceˉequal("WVOP"u8.ToArray(), Manifest[..4].ToArray());
+        Equal((ushort)1, BinaryPrimitives.ReadUInt16LittleEndian(Manifest[4..]));
+        Equal((ushort)0, BinaryPrimitives.ReadUInt16LittleEndian(Manifest[6..]));
+        Equal(
+            (uint)Manifest.Length,
+            BinaryPrimitives.ReadUInt32LittleEndian(Manifest[8..]));
+        Equal(
+            (uint)Expectedˉobject.Length,
+            BinaryPrimitives.ReadUInt32LittleEndian(Manifest[12..]));
+        var Chunks = BinaryPrimitives.ReadUInt32LittleEndian(Manifest[16..]);
+        Equal(3u, Chunks);
+        Equal(
+            4u * 1024u * 1024u,
+            BinaryPrimitives.ReadUInt32LittleEndian(Manifest[20..]));
+
+        using var Reconstructed = new MemoryStream();
+        uint Position = 0;
+        for (var Index = 0; Index < checked((int)Chunks); Index++)
+        {
+            var Entry = Manifest.Slice(
+                Manifestˉheaderˉbytes + Index * Manifestˉentryˉbytes,
+                Manifestˉentryˉbytes);
+            Equal((uint)Index, BinaryPrimitives.ReadUInt32LittleEndian(Entry));
+            Equal(Position, BinaryPrimitives.ReadUInt32LittleEndian(Entry[4..]));
+            var Chunkˉbytes = BinaryPrimitives.ReadUInt32LittleEndian(Entry[8..]);
+            var Write = Writer.Writes[Index];
+            Equal($"{Chunkˉprefix}.chunk-{Index}", Write.Resourceˉname);
+            Equal(Chunkˉbytes, (uint)Write.Bytes.Length);
+            Reconstructed.Write(Write.Bytes.AsSpan());
+            Position += Chunkˉbytes;
+        }
+        Equal((uint)Expectedˉobject.Length, Position);
+        Sequenceˉequal(Expectedˉobject, Reconstructed.ToArray());
+        Equal(
+            $"native x64 staging status=Complete " +
+            $"object-bytes={Expectedˉobject.Length} chunks=3 " +
+            $"manifest-bytes={Manifest.Length}\n",
+            Output.ToString());
+
+        var Native = X64ˉnativeˉbackend.Compile(staging);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Sequenceˉequal(
+            [
+                Nativeˉservice.Consoleˉwriteˉline,
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+                Nativeˉservice.Enumˉname,
+                Nativeˉservice.Textˉconcat,
+                Nativeˉservice.U32ˉformat,
+                Nativeˉservice.Fileˉwriteˉbytes,
+            ],
+            Native.Fragment.Requiredˉservices);
     }
 
     private static byte[] Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
@@ -701,6 +830,28 @@ internal static partial class Program
                 string.Join(" | ", Result.Diagnostics));
         }
         return Result.Moduleˉbytes.ToArray();
+    }
+
+    private sealed record Capturedˉstagingˉwrite(
+        string Resourceˉname,
+        ImmutableArray<byte> Bytes);
+
+    private sealed class Capturingˉstagingˉwriter : IHostedˉfileˉwriter
+    {
+        public List<Capturedˉstagingˉwrite> Writes { get; } = [];
+
+        public void Writeˉbytes(
+            string resourceˉname,
+            ImmutableArray<byte> bytes,
+            int maximumˉbytes)
+        {
+            if (bytes.IsDefault || bytes.Length > maximumˉbytes)
+            {
+                throw new InvalidOperationException(
+                    "The runtime passed invalid staging bytes to the hosted writer.");
+            }
+            Writes.Add(new(resourceˉname, bytes));
+        }
     }
 
     private static void Assertˉlargeˉmoduleˉenvelopeˉlowering(

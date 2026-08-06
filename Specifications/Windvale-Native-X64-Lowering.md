@@ -141,6 +141,51 @@ partial progress, and indeterminate mutation, durably finish a unique sibling,
 replace the requested path atomically, and clean up every prepublication
 failure. It must not silently retry an indeterminate write.
 
+### Versioned object staging
+
+`Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv` carries cursor values
+across the existing hosted file boundary without widening `bytes` or adding a
+new source capability:
+
+```text
+wvnative-stage <input.wvb> <chunk-prefix> <manifest.wvop>
+```
+
+The tool requests the ordinary 4 MiB publication ceiling, omits zero-length
+cursor steps, and writes each remaining value exactly once to
+`<chunk-prefix>.chunk-<decimal-index>`. The prefix is nonempty and at most
+4,078 UTF-8 bytes, so the longest `u32` index suffix remains below the hosted
+4,096-byte argument limit. A generated chunk resource must not equal the input
+or manifest resource. Chunk index zero is the first nonempty cursor value;
+indices increase by one and their recorded WVO positions are contiguous.
+
+Only after every chunk write returns does the tool write the little-endian
+`WVOP 1.0` manifest:
+
+| Offset | Size | Meaning |
+| ---: | ---: | --- |
+| 0 | 4 | ASCII `WVOP` |
+| 4 | 2 | Major version `1` |
+| 6 | 2 | Minor version `0` |
+| 8 | 4 | Total manifest bytes, exactly `24 + chunk-count * 12` |
+| 12 | 4 | Final WVO bytes |
+| 16 | 4 | Chunk count |
+| 20 | 4 | Maximum chunk bytes, `4,194,304` |
+
+Each following 12-byte entry contains the `u32` chunk index, `u32` WVO
+position, and `u32` chunk length. The entry at ordinal `N` names
+`<chunk-prefix>.chunk-N`. The manifest is a structural staging marker, not a
+digest, capability, durable-commit record, or claim that the destination WVO
+is atomically visible.
+
+The current slice produces but does not consume this format across a trust
+boundary. A native commit adapter must bind the exact staged-resource
+identities, reject malformed or inconsistent manifests and write sequences,
+reconstruct and verify the complete WVO, and then use the qualified exclusive
+sibling, durable-write, atomic-replacement, and cleanup protocol. It must not
+silently retry an indeterminate mutation. Until that adapter exists, the
+caller supplies a unique private staging prefix and owns scratch cleanup.
+
 ## Adapters
 
 `Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv` exposes `Main(Input: bytes) -> bytes` and returns either the complete WVO or empty bytes. `Compiler/Windvale/Native-X64-Lowering-Tool.wv` is the hosted shell:

@@ -2857,3 +2857,34 @@ positioned writes with explicit partial and indeterminate outcomes, flush,
 replace atomically, and clean up failure. Complete-tool integration,
 Development, Standard, Qualification, Linux execution, artifact promotion,
 ordinary-path cutover, and the grouped end-of-goal gate remain deferred.
+
+## Local versioned native object-staging evidence
+
+[Decision 0284](../Decisions/0284-Versioned-Native-Object-Staging-Manifest.md)
+adds a focused hosted shell above the immutable object-publication cursor. It
+writes every nonempty cursor value to a separately named resource below the
+ordinary 4 MiB value ceiling, then writes a little-endian `WVOP 1` manifest as
+the final staging operation. The manifest records its exact size, final object
+size, chunk count and ceiling, followed by contiguous index, WVO-position, and
+length entries.
+
+The reviewed return-42 case captures all service writes, requires three chunks
+followed by one 60-byte manifest, parses every field, and reconstructs the
+independent Stage 0 479-byte WVO byte for byte. It also lowers the staging tool
+through the Stage 0 x64 backend and pins its exact ten-service set. The focused
+compiler selection passes 1/1 in 17.262 test seconds after a 20.92-second
+zero-warning Release build.
+
+The native source front door compiles the 23-module staging-tool closure to
+390,066 bytes at SHA-256
+`c916610ad1d4ca3b5d1573f5775aaf1a102a89587a2fb3cba8941d42c93136ba`.
+Existing unpromoted Windows and Linux package identities remain unchanged.
+
+No C# product implementation or WebAssembly implementation changed. `WVOP 1`
+is a staging marker, not atomic publication or an authority token. A fixed
+native adapter still must bind exact scratch-resource identities, reject
+malformed or inconsistent evidence, reconstruct and verify the WVO, and use
+the qualified exclusive-sibling, durable-write, replacement, and cleanup
+transaction. Complete-tool integration, Development, Standard, Qualification,
+Linux execution, WebAssembly verification, artifact promotion, ordinary-path
+cutover, and the grouped end-of-goal gate remain deferred.

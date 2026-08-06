@@ -1,0 +1,183 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉtool profile hosted;
+
+import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
+import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Pathsˉareˉequal(First: text, Second: text) -> bool {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Length: u32 = Bytesˉlength(Firstˉbytes);
+    if Length != Bytesˉlength(Secondˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Firstˉbytes, Index) !=
+            Bytesˉreadˉu8(Secondˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Chunkˉresource(Prefix: text, Index: u32) -> text {
+    return Textˉconcat(
+        Textˉconcat(Prefix, ".chunk-"),
+        U32ˉformat(Index)
+    );
+}
+
+fn Manifestˉheader(
+    Objectˉbytes: u32,
+    Chunks: u32,
+    Entryˉbytes: u32
+) -> bytes {
+    var Header: bytes = Textˉtoˉutf8("WVOP");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Appendˉu32(Header, 24u32 + Entryˉbytes);
+    Header = Appendˉu32(Header, Objectˉbytes);
+    Header = Appendˉu32(Header, Chunks);
+    return Appendˉu32(Header, 4194304u32);
+}
+
+fn Failure(Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat("native x64 staging status=", Enumˉname(Status))
+    );
+    return 1;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 3u32 {
+        diagnostic.write_line(
+            "Usage: wvnative-stage <input.wvb> <chunk-prefix> <manifest.wvop>"
+        );
+        return 2;
+    }
+    let Inputˉpath: text = process.argument(0u32);
+    let Chunkˉprefix: text = process.argument(1u32);
+    let Manifestˉpath: text = process.argument(2u32);
+    if Pathsˉareˉequal(Inputˉpath, Manifestˉpath) ||
+        Bytesˉlength(Textˉtoˉutf8(Chunkˉprefix)) == 0u32 ||
+        Bytesˉlength(Textˉtoˉutf8(Chunkˉprefix)) > 4078u32 {
+        diagnostic.write_line(
+            "Usage: wvnative-stage <input.wvb> <chunk-prefix> <manifest.wvop>"
+        );
+        return 2;
+    }
+
+    let Input: bytes = file.read_bytes(Inputˉpath);
+    let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Input);
+    if Plan.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        return Failure(Plan.Status);
+    }
+    let Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
+            Input,
+            Plan,
+            4194304u32
+        );
+    if !Regions.Valid {
+        return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
+    }
+
+    var Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉbegin(Regions);
+    if !Cursor.Valid {
+        return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
+    }
+    var Entries: bytes = Empty(Input);
+    var Chunks: u32 = 0u32;
+    var Steps: u32 = 0u32;
+    while Cursor.Kind !=
+        Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Complete {
+        let Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+            Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+                Input,
+                Plan,
+                Regions,
+                Cursor,
+                4194304u32
+            );
+        if Step.Status !=
+                Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid ||
+            !Step.Nextˉvalid {
+            return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
+        }
+        let Length: u32 = Bytesˉlength(Step.Value);
+        if Length > 0u32 {
+            let Resource: text = Chunkˉresource(Chunkˉprefix, Chunks);
+            if Pathsˉareˉequal(Resource, Inputˉpath) ||
+                Pathsˉareˉequal(Resource, Manifestˉpath) {
+                diagnostic.write_line(
+                    "native x64 staging status=Invalidˉresource"
+                );
+                return 2;
+            }
+            file.write_bytes(Resource, Step.Value);
+            Entries = Appendˉu32(Entries, Chunks);
+            Entries = Appendˉu32(Entries, Step.Position);
+            Entries = Appendˉu32(Entries, Length);
+            Chunks = Chunks + 1u32;
+        }
+        Cursor = Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+            Step.Nextˉvalid,
+            Step.Nextˉkind,
+            Step.Nextˉfunction,
+            Step.Nextˉposition
+        );
+        Steps = Steps + 1u32;
+        if Steps > Plan.Functionˉcount + 6u32 {
+            return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
+        }
+    }
+    let Complete: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+            Input,
+            Plan,
+            Regions,
+            Cursor,
+            4194304u32
+        );
+    if Complete.Status !=
+            Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Complete ||
+        Cursor.Position != Regions.Objectˉbytes ||
+        Bytesˉlength(Entries) != Chunks * 12u32 {
+        return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
+    }
+
+    let Manifest: bytes = Bytesˉconcat(
+        Manifestˉheader(
+            Regions.Objectˉbytes,
+            Chunks,
+            Bytesˉlength(Entries)
+        ),
+        Entries
+    );
+    file.write_bytes(Manifestˉpath, Manifest);
+    var Report: text = "native x64 staging status=Complete object-bytes=";
+    Report = Textˉconcat(Report, U32ˉformat(Regions.Objectˉbytes));
+    Report = Textˉconcat(Report, " chunks=");
+    Report = Textˉconcat(Report, U32ˉformat(Chunks));
+    Report = Textˉconcat(Report, " manifest-bytes=");
+    console.write_line(
+        Textˉconcat(Report, U32ˉformat(Bytesˉlength(Manifest)))
+    );
+    return 0;
+}
