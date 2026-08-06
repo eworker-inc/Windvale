@@ -1,0 +1,34 @@
+{
+  "format": "windvale-native-console-application-publisher-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0214",
+  "provenanceDecision": "0307",
+  "qualification": "pending",
+  "construction": "stage0-recovery",
+  "artifacts": [
+    {
+      "name": "console-application-publisher-wvb",
+      "path": "Console-Application-Publisher.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 56375,
+      "sha256": "1e35f7cc9e53322ebcc70c332486eef983ff59370246c62ec4e8cbcd144d8403",
+      "sourceProject": "Windvale-Console-Application-Publisher.wvproj"
+    },
+    {
+      "name": "windows-x64-console-application-publisher",
+      "path": "windows-x64-wvappublish.exe",
+      "target": "windows-x64-console-application-publisher-v1",
+      "bytes": 642048,
+      "sha256": "1bd3bbd24fc22940b96badb7e809899d42e42a25a5247dfededb00048232675d",
+      "sourceWvb": "Console-Application-Publisher.wvb"
+    },
+    {
+      "name": "linux-x64-console-application-publisher",
+      "path": "linux-x64-wvappublish.elf",
+      "target": "linux-x64-console-application-publisher-v1",
+      "bytes": 639941,
+      "sha256": "2edc7ebe23660e299d9db4bf55d4537ec102b7a3b2d46ba833e549cd355a0af7",
+      "sourceWvb": "Console-Application-Publisher.wvb"
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+module Windvaleˉconsoleˉapplicationˉpublisherˉtool profile hosted;
+
+import Linkerˉconsoleˉapplicationˉverification as Applicationˉverification;
+import Windvaleˉwvbˉpublicationˉnativeˉbridge as Nativeˉbridge;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Emptyˉbytes: bytes = [];
+
+fn Consoleˉapplicationˉpublisherˉpathˉkind(Path: text) -> u32 {
+    let Value: bytes = Textˉtoˉutf8(Path);
+    let Length: u32 = Bytesˉlength(Value);
+    if Length < 4u32 { return 0u32; }
+    if Bytesˉreadˉu8(Value, Length - 4u32) != 46u8 { return 0u32; }
+    let First: u8 = Bytesˉreadˉu8(Value, Length - 3u32);
+    let Second: u8 = Bytesˉreadˉu8(Value, Length - 2u32);
+    let Third: u8 = Bytesˉreadˉu8(Value, Length - 1u32);
+    if First == 101u8 && Second == 120u8 && Third == 101u8 { return 1u32; }
+    if First == 101u8 && Second == 108u8 && Third == 102u8 { return 2u32; }
+    return 0u32;
+}
+
+fn Consoleˉapplicationˉpublisherˉpathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) != Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Consoleˉapplicationˉpublisherˉcandidateˉstatus(Candidate: bytes) -> i32 {
+    let Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult =
+        Applicationˉverification.Consoleˉapplicationˉverification(Candidate, Emptyˉbytes);
+    if Verified.Status !=
+        Applicationˉverification.Consoleˉapplicationˉverificationˉstatus.Valid {
+        diagnostic.write_line("publication status=Rejected phase=console-application");
+        return 1;
+    }
+    return 0;
+}
+
+fn Applicationˉpublicationˉpublisherˉbegin() -> u32 {
+    return Nativeˉbridge.Wvbˉpublicationˉnativeˉbegin();
+}
+
+fn Applicationˉpublicationˉpublisherˉapply(Current: u32, Action: u32) -> u32 {
+    return Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(Current, Action);
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line(
+            "Usage: wvappublish <candidate.exe|candidate.elf> <destination.exe|destination.elf>"
+        );
+        return 64;
+    }
+
+    let Candidateˉpath: text = process.argument(0u32);
+    let Destinationˉpath: text = process.argument(1u32);
+    let Candidateˉkind: u32 = Consoleˉapplicationˉpublisherˉpathˉkind(Candidateˉpath);
+    let Destinationˉkind: u32 = Consoleˉapplicationˉpublisherˉpathˉkind(Destinationˉpath);
+    if Candidateˉkind == 0u32 ||
+        Candidateˉkind != Destinationˉkind ||
+        Consoleˉapplicationˉpublisherˉpathsˉareˉequal(
+            Candidateˉpath, Destinationˉpath
+        ) {
+        diagnostic.write_line(
+            "Usage: wvappublish <candidate.exe|candidate.elf> <destination.exe|destination.elf>"
+        );
+        return 64;
+    }
+
+    return Consoleˉapplicationˉpublisherˉcandidateˉstatus(
+        file.read_bytes(Candidateˉpath)
+    );
+}

@@ -15,10 +15,29 @@ internal sealed record Wvbˉpublisherˉapplicationˉinput(
     uint Nativeˉentry,
     int Beginˉindex,
     int Applyˉindex,
-    ImmutableArray<byte> Moduleˉbytes);
+    ImmutableArray<byte> Moduleˉbytes,
+    Nativeˉpublisherˉapplicationˉcontract Contract);
+
+internal sealed record Nativeˉpublisherˉapplicationˉcontract(
+    string Moduleˉname,
+    int Moduleˉbytes,
+    string Moduleˉsha256,
+    uint Metadataˉmagic,
+    string Beginˉfunction,
+    string Applyˉfunction,
+    string Description);
 
 internal static class Wvbˉpublisherˉapplicationˉbuilder
 {
+    internal static readonly Nativeˉpublisherˉapplicationˉcontract WVB_CONTRACT = new(
+        Wvbˉpublisherˉapplicationˉcontract.MODULE_NAME,
+        Wvbˉpublisherˉapplicationˉcontract.MODULE_BYTES,
+        Wvbˉpublisherˉapplicationˉcontract.MODULE_SHA256,
+        0x4250_5657,
+        "Wvbˉpublicationˉpublisherˉbegin",
+        "Wvbˉpublicationˉpublisherˉapply",
+        "WVB publisher");
+
     internal const string LINUX_STARTUP_RESOURCE =
         "Windvale.Linker.Linux-X64-Wvb-Publisher.wvo";
     internal const string LINUX_ADAPTER_RESOURCE =
@@ -50,26 +69,34 @@ internal static class Wvbˉpublisherˉapplicationˉbuilder
     internal static Wvbˉpublisherˉapplicationˉinput Validateˉinput(
         Verifiedˉmodule module,
         Nativeˉfragment fragment,
-        ReadOnlySpan<byte> moduleˉbytes)
+        ReadOnlySpan<byte> moduleˉbytes) =>
+        Validateˉinput(module, fragment, moduleˉbytes, WVB_CONTRACT);
+
+    internal static Wvbˉpublisherˉapplicationˉinput Validateˉinput(
+        Verifiedˉmodule module,
+        Nativeˉfragment fragment,
+        ReadOnlySpan<byte> moduleˉbytes,
+        Nativeˉpublisherˉapplicationˉcontract contract)
     {
         ArgumentNullException.ThrowIfNull(module);
         ArgumentNullException.ThrowIfNull(fragment);
-        if (moduleˉbytes.Length != Wvbˉpublisherˉapplicationˉcontract.MODULE_BYTES ||
+        ArgumentNullException.ThrowIfNull(contract);
+        if (moduleˉbytes.Length != contract.Moduleˉbytes ||
             !StringComparer.Ordinal.Equals(
                 Calculateˉsha256(moduleˉbytes),
-                Wvbˉpublisherˉapplicationˉcontract.MODULE_SHA256))
+                contract.Moduleˉsha256))
         {
             throw new ArgumentException(
-                "The WVB publisher module does not have the canonical byte identity.",
+                $"The {contract.Description} module does not have the canonical byte identity.",
                 nameof(moduleˉbytes));
         }
         if (!StringComparer.Ordinal.Equals(
                 module.Module.Name,
-                Wvbˉpublisherˉapplicationˉcontract.MODULE_NAME) ||
+                contract.Moduleˉname) ||
             module.Module.Profile != Moduleˉprofile.Hosted)
         {
             throw new ArgumentException(
-                "The WVB publisher module identity or profile is invalid.",
+                $"The {contract.Description} module identity or profile is invalid.",
                 nameof(module));
         }
         string[] Expectedˉcapabilities =
@@ -84,7 +111,7 @@ internal static class Wvbˉpublisherˉapplicationˉbuilder
                 .SequenceEqual(Expectedˉcapabilities))
         {
             throw new ArgumentException(
-                "The WVB publisher capability profile is invalid.",
+                $"The {contract.Description} capability profile is invalid.",
                 nameof(module));
         }
 
@@ -100,7 +127,7 @@ internal static class Wvbˉpublisherˉapplicationˉbuilder
         if (!fragment.Requiredˉservices.SequenceEqual(Expectedˉservices))
         {
             throw new ArgumentException(
-                "The WVB publisher native service profile is invalid.",
+                $"The {contract.Description} native service profile is invalid.",
                 nameof(fragment));
         }
         var Nativeˉentry = fragment.Symbols.Single(Item =>
@@ -109,10 +136,10 @@ internal static class Wvbˉpublisherˉapplicationˉbuilder
             Item.Name == "Main").Offset;
         var Beginˉindex = Functionˉindex(
             module,
-            "Wvbˉpublicationˉpublisherˉbegin");
+            contract.Beginˉfunction);
         var Applyˉindex = Functionˉindex(
             module,
-            "Wvbˉpublicationˉpublisherˉapply");
+            contract.Applyˉfunction);
         Requireˉprivateˉfunction(fragment, Beginˉindex, "transaction begin");
         Requireˉprivateˉfunction(fragment, Applyˉindex, "transaction apply");
         return new(
@@ -121,7 +148,8 @@ internal static class Wvbˉpublisherˉapplicationˉbuilder
             Nativeˉentry,
             Beginˉindex,
             Applyˉindex,
-            moduleˉbytes.ToArray().ToImmutableArray());
+            moduleˉbytes.ToArray().ToImmutableArray(),
+            contract);
     }
 
     internal static (ImmutableArray<byte> Bytes, Objectˉfile Object)
@@ -296,7 +324,7 @@ internal static class Wvbˉpublisherˉapplicationˉbuilder
         Wvbˉpublisherˉapplicationˉinput input)
     {
         metadata.Clear();
-        BinaryPrimitives.WriteUInt32LittleEndian(metadata[0..], 0x4250_5657);
+        BinaryPrimitives.WriteUInt32LittleEndian(metadata[0..], input.Contract.Metadataˉmagic);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[4..], 1);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[8..], 128);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[12..], (uint)target);

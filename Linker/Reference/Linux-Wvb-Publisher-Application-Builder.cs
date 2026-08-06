@@ -10,12 +10,24 @@ internal static class Linuxˉwvbˉpublisherˉapplicationˉbuilder
     internal static byte[] Build(
         Windvale.Bytecode.Verifiedˉmodule module,
         Nativeˉfragment fragment,
-        ReadOnlySpan<byte> moduleˉbytes)
+        ReadOnlySpan<byte> moduleˉbytes) =>
+        Build(
+            module,
+            fragment,
+            moduleˉbytes,
+            Wvbˉpublisherˉapplicationˉbuilder.WVB_CONTRACT);
+
+    internal static byte[] Build(
+        Windvale.Bytecode.Verifiedˉmodule module,
+        Nativeˉfragment fragment,
+        ReadOnlySpan<byte> moduleˉbytes,
+        Nativeˉpublisherˉapplicationˉcontract contract)
     {
         var Input = Wvbˉpublisherˉapplicationˉbuilder.Validateˉinput(
             module,
             fragment,
-            moduleˉbytes);
+            moduleˉbytes,
+            contract);
         var (_, Startup) = Wvbˉpublisherˉapplicationˉbuilder.Readˉobject(
             Wvbˉpublisherˉapplicationˉbuilder.LINUX_STARTUP_RESOURCE);
         var (_, Adapter) = Wvbˉpublisherˉapplicationˉbuilder.Readˉobject(

@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts and digest-bound launchers, but this is not yet an ordinary front door: Stage 0 remains the construction and recovery target packager until native construction, safe publication, the grouped Windows/Linux gate, and artifact promotion succeed.
+`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts, and Decision 0307 composes their digest-bound launchers with the native atomic console-application publisher. This is not yet an ordinary front door: Stage 0 remains the construction and recovery target packager until native construction, the grouped Windows/Linux gate, and artifact promotion succeed.
 
 The application composes the existing [console-application plan](Windvale-Console-Application-Plan.md), [construction](Windvale-Console-Application-Construction.md), and [verification](Windvale-Console-Application-Verification.md) contracts. It adds no second PE or ELF layout implementation.
 
@@ -36,7 +36,7 @@ wvpack <windows-x64-console-v1|linux-x64-console-v1> <native-image.bin> <entry-o
 
 The native image is 1 through 4,194,304 bytes. The entry offset is canonical unsigned decimal with no sign or surrounding text and must be within the image. The application constructs the exact 32-byte `WVCQ 1` request, invokes the existing sparse constructor, independently validates the complete `WVCC 1` recipe, and materializes every literal, native, and canonical-zero span.
 
-The completed application must fit in one immutable Windvale byte value, so this profile currently rejects results larger than 4,194,304 bytes. It then invokes the portable verifier and requires exact target, application length, native bytes, and entry recovery before making exactly one `file.write_bytes` call. Rejection therefore leaves a requested output missing or unchanged at the application boundary. Atomic durable replacement is a separate launcher/publication responsibility.
+The completed application must fit in one immutable Windvale byte value, so this profile currently rejects results larger than 4,194,304 bytes. It then invokes the portable verifier and requires exact target, application length, native bytes, and entry recovery before making exactly one `file.write_bytes` call. Rejection therefore leaves a requested output missing or unchanged at the raw application boundary. The digest-bound `Package-Console.cmd` and `.sh` launchers write that raw result to a private candidate and invoke the [native console-application publisher](Windvale-Native-Console-Application-Publisher.md) for atomic durable replacement.
 
 Success prints one LF-terminated report and returns 0:
 
@@ -78,4 +78,4 @@ Promotion requires one exact source commit to pass on Windows and Linux with:
 - no CLR/.NET module or mapping in the packager process; and
 - no regression in version-1 PE/ELF, native ABI, capability, construction, or verification contracts.
 
-Decision 0303 pins both platform applications and adds digest-bound candidate launchers while explicitly recording Stage 0 construction. Only an exact descendant that supplies native construction and safe publication and then passes both hosts moves ordinary version-1 materialization to the native packager. Stage 0 remains a named recovery/differential path until Decision 0057's complete archive gate permits deletion.
+Decision 0303 pins both platform applications and explicitly records Stage 0 construction. Decision 0307 adds native safe publication to their digest-bound launchers. Only an exact descendant that supplies native construction and passes both hosts moves ordinary version-1 materialization to the native packager. Stage 0 remains a named recovery/differential path until Decision 0057's complete archive gate permits deletion.

@@ -43,6 +43,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Digest-bound native console-packager candidate](Decisions/0303-Digest-Bound-Native-Console-Packager-Candidate.md) — exact bounded PE/ELF materializer packages and candidate launchers with Stage 0 construction still explicit
 - [Digest-bound native WVB-to-WVO candidate](Decisions/0304-Digest-Bound-Native-Wvb-To-Wvo-Candidate.md) — current accepted-subset lowerer packages, fixed vector, and candidate launchers without a managed runtime
 - [Digest-bound native AOT-chain test](Decisions/0305-Digest-Bound-Native-Aot-Chain-Test.md) — permanent fixed-vector source-to-executable verification through pinned native tools and result 42
+- [Native console-application publication](Decisions/0307-Native-Console-Application-Publication.md) — portable PE/ELF admission plus reused native atomic replacement for digest-bound packaging
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

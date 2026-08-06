@@ -3306,3 +3306,28 @@ passes 1/1 in 0.926 test seconds after a 7.17-second zero-warning Release
 build; the complete command takes 10.5 seconds. No WebAssembly implementation
 changed. Linux execution, grouped qualification, candidate promotion, broader
 native test transfer, and release automation remain deferred.
+
+## Local native console-application publication evidence
+
+[Decision 0307](../Decisions/0307-Native-Console-Application-Publication.md)
+pins a focused Windvale publisher as a 56,375-byte WVB at SHA-256
+`1e35f7cc9e53322ebcc70c332486eef983ff59370246c62ec4e8cbcd144d8403`,
+a 642,048-byte Windows application at SHA-256
+`1bd3bbd24fc22940b96badb7e809899d42e42a25a5247dfededb00048232675d`,
+and a 639,941-byte Linux application at SHA-256
+`2edc7ebe23660e299d9db4bf55d4537ec102b7a3b2d46ba833e549cd355a0af7`.
+The manifest records Stage 0 construction because the qualified native source
+builder rejects the complete hosted project at `Sourceˉbindings`.
+
+The publisher admits a completed version-1 `.exe` or `.elf` through the portable
+Windvale verifier, then reuses the existing native candidate snapshot,
+file-identity, exclusive-sibling, durable write/reread, atomic replacement,
+directory durability, and cleanup adapters. Direct Windows execution publishes
+the exact 2,560-byte return-42 PE and the result returns 42. The reviewed focused
+linker selection passes 1/1 in 3.261 test seconds after a 9.54-second zero-warning
+Release build; the complete command takes 17.2 seconds. Invalid application bytes
+preserve the destination, no scratch remains, and process inspection observes no
+CLR/hostfxr/hostpolicy module. The updated digest-bound AOT chain also passes in
+1.4 seconds. No WebAssembly implementation changed. Linux execution, native
+publisher/container construction, grouped qualification, promotion, and release
+integration remain deferred.

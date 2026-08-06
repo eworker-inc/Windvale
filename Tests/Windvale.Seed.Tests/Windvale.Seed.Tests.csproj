@@ -694,6 +694,9 @@
       Include="../../Tools/Windvale.Publish/Wvb-Publisher-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-Publisher-Tool.wv" />
     <EmbeddedResource
+      Include="../../Tools/Windvale.Publish/Console-Application-Publisher.wv"
+      LogicalName="Windvale.Seed.Tests.Console-Application-Publisher.wv" />
+    <EmbeddedResource
       Include="../../Linker/Startup/Linux-X64-Wvb-Publisher.wva"
       LogicalName="Windvale.Seed.Tests.Linux-X64-Wvb-Publisher.wva" />
     <EmbeddedResource

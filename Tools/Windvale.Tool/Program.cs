@@ -110,7 +110,9 @@ internal static class Program
             "windows-x64-wv-linker-v1|linux-x64-wv-linker-v1|" +
             "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
-            "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1>] [-o <artifact>]";
+            "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
+            "windows-x64-console-application-publisher-v1|" +
+            "linux-x64-console-application-publisher-v1>] [-o <artifact>]";
         if (arguments.Length == 0 || arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
             return Usageˉerror(Usage);
@@ -174,6 +176,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         _ => ".elf",
@@ -236,7 +239,9 @@ internal static class Program
             "windows-x64-wv-linker-v1|linux-x64-wv-linker-v1|" +
             "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
-            "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1> [-o <artifact>]";
+            "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
+            "windows-x64-console-application-publisher-v1|" +
+            "linux-x64-console-application-publisher-v1> [-o <artifact>]";
         if (arguments.Length is not (3 or 5) ||
             arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
@@ -326,6 +331,8 @@ internal static class Program
         Linuxˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -462,6 +469,7 @@ internal static class Program
                 Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
             {
@@ -515,6 +523,11 @@ internal static class Program
                             Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉwindows(
+                            Module,
+                            Fragment,
+                            Bytes),
+                    Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Consoleˉapplicationˉpublisherˉapplicationˉwriter.Writeˉwindows(
                             Module,
                             Fragment,
                             Bytes),
@@ -599,6 +612,11 @@ internal static class Program
                             Module,
                             Fragment,
                             Bytes),
+                    Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Consoleˉapplicationˉpublisherˉapplicationˉwriter.Writeˉlinux(
+                            Module,
+                            Fragment,
+                            Bytes),
                     Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvoˉstagingˉproducerˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -643,6 +661,7 @@ internal static class Program
                     Linuxˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
@@ -1129,6 +1148,8 @@ internal static class Program
             "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
+            "windows-x64-console-application-publisher-v1|" +
+            "linux-x64-console-application-publisher-v1|" +
             "windows-x64-wvo-staging-producer-v1|" +
             "linux-x64-wvo-staging-producer-v1|" +
             "windows-x64-wvo-staging-publisher-v1|" +
@@ -1149,6 +1170,8 @@ internal static class Program
             "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
+            "windows-x64-console-application-publisher-v1|" +
+            "linux-x64-console-application-publisher-v1|" +
             "windows-x64-wvo-staging-producer-v1|" +
             "linux-x64-wvo-staging-producer-v1|" +
             "windows-x64-wvo-staging-publisher-v1|" +

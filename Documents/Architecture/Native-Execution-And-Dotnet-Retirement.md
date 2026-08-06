@@ -311,6 +311,14 @@ to direct result 42 without a managed child or live C# oracle. Stage 0 still
 constructs several host-tool containers, and Linux execution plus grouped
 promotion remain pending.
 
+Decision 0307 closes the current console packager's publication half. A focused
+Windvale tool admits the completed version-1 PE/ELF through the portable verifier,
+then reuses the qualified native WVB publication transaction and platform adapters
+for exclusive-sibling durable write, exact reread, atomic replacement, directory
+durability, and cleanup. Digest-bound packaging no longer needs managed
+publication, but the publisher WVB and host containers remain Stage 0-constructed
+until native construction and the grouped Windows/Linux gate pass.
+
 Decision 0240 extends that accepted subset with nonzero-first enum tables plus one-block record parameter, caller-owned return, and call transport. The bounded C# enum-admission correction preserves Stage 0 as the independent WVB 1.11 oracle rather than adding forward language semantics there.
 
 Decision 0241 extends record storage through validated control-flow successors and admits scalar-returning record consumers. Its planner keeps persistent locals live across edges while requiring scratch record values to die inside their defining block, and its row-wise immutable fixed point remains within the native tool's bounded arena on the real nominal fixture.
