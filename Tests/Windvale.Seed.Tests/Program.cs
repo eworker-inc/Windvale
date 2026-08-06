@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "a9f37d0bbd551d328ca21d0aa810bc2a1c067c1ae824b866e94b08d31fe7c820";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "80066bc87774c70b4d2cc0b60b5605573480d5eea10a695f584a5d210a3f3c81";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "d641039357bfb6be0c860002a374d70e5266f39861b4c9ea7e4df192dfdf21b3";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "29f9d724e9cd5029a923e550fde3832c186de75067259c6efa8f7737d8494391";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "697d8256464fe49bcf15fc5bdb8eb34b0aa2f08d3819d154f1bb15cda7001c33";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "414e3ec8ebe2b5010f12675cb69a9a931ee3cf17974c38aed62c5dcd516b5e0f";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "aab08feba3c5694e94ba0af582a3481dfe53afa6ebefe1ca9d3312c688a31e4f";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "f3003741b9d5003575cfdadd611534ee6ba3aa7aa936b2c73184d05f023e72ff";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "450c1eb86d5ff564b04cdbd00f3919cce2c0372acdca32fbe1a5e30e0c05c414";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -3005,6 +3005,7 @@ internal static partial class Program
         Assertˉconsoleˉwriteˉlineˉlowering(Tool, Memory);
         Assertˉdiagnosticˉwriteˉlineˉlowering(Tool, Memory);
         Assertˉlargeˉmoduleˉenvelopeˉlowering(Tool, Memory);
+        Assertˉlargeˉfunctionˉenvelopeˉlowering(Tool, Memory);
         Assertˉdescriptorˉcallˉlowering(Tool, Memory);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);

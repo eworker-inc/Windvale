@@ -465,11 +465,11 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
         Input,
         Returnˉshape.Next
     );
-    if Declaredˉlocals > 1024u32 {
+    if Declaredˉlocals >= 2048u32 {
         return Compilerˉnativeˉx64ˉinvalidˉfunction();
     }
     let Locals: u32 = Parameters + Declaredˉlocals;
-    if Locals > 1024u32 {
+    if Locals >= 2048u32 {
         return Compilerˉnativeˉx64ˉinvalidˉfunction();
     }
     let Declaredˉtypesˉoffset: u32 = Returnˉshape.Next + 4u32;
@@ -505,7 +505,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Metadata + 4u32);
     let Maximumˉstack: u32 = Bytesˉreadˉu32ˉlittle(Input, Metadata + 8u32);
     if Codeˉlength == 0u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
-    if Codeˉlength > 8192u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
+    if Codeˉlength > 32768u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
     if Maximumˉstack == 0u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
     if Maximumˉstack > 1024u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
     return Compilerˉnativeˉx64ˉfunction(
@@ -573,7 +573,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcode(
         if Returned { return Compilerˉnativeˉx64ˉemptyˉanalysis(); }
         let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
         Instructions = Instructions + 1u32;
-        if Instructions > 1024u32 {
+        if Instructions > 8192u32 {
             return Compilerˉnativeˉx64ˉemptyˉanalysis();
         }
         if Opcode == 1u8 {
@@ -1855,7 +1855,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             }
         }
         Instructionˉcount = Instructionˉcount + 1u32;
-        if Instructionˉcount > 1024u32 {
+        if Instructionˉcount > 8192u32 {
             return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
         }
         Instructionsˉmap = Compilerˉnativeˉx64ˉreplaceˉbyte(

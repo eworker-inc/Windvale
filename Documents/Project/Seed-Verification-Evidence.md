@@ -2158,3 +2158,32 @@ execution, remaining malformed limits, randomized malformed inputs, the broader
 unsafe-bytecode corpus, Standard, Qualification, GitHub verification, and
 runner/test promotion remain deferred to the grouped end-of-goal gate or later
 focused transfers.
+
+## Local measured native-function-envelope evidence
+
+[Decision 0254](../Decisions/0254-Measured-Native-Function-Envelope.md)
+replaces the Windvale x86-64 lowerer's general 1,024-local, 8,192-code-byte,
+and 1,024-instruction prototype guards with measured 2,047 / 32,768 / 8,192
+ceilings. Direct inspection of the current 330-function hosted tool records
+maxima of 1,717 combined parameters/locals, 26,980 code bytes, 5,929 decoded
+instructions, and operand-stack depth 18. Independent Stage 0 lowering records
+the tightest projected native frame at 1,999 of the unchanged 2,048 cells.
+
+The affected test was reviewed before execution and now constructs a compact
+canonical module with 1,025 `i32` locals, 10,246 code bytes, and 2,050
+instructions. The exact focused native-lowering selection passes in 13.843
+seconds, including Stage 0 native execution and byte-for-byte WVO equality
+through both Windvale adapters. The rebuilt test project reports zero warnings
+and errors.
+
+The qualified Windows native source front door independently rebuilds the
+317,949-byte memory adapter and 318,977-byte hosted tool. Their SHA-256 values
+are `f3003741b9d5003575cfdadd611534ee6ba3aa7aa936b2c73184d05f023e72ff`
+and `450c1eb86d5ff564b04cdbd00f3919cce2c0372acdca32fbe1a5e30e0c05c414`,
+and both outputs are byte-identical to Stage 0. Direct self-lowering now crosses
+the general function envelope and fails closed without an output at the retained
+record planner; that separately measured boundary remains the next slice.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.

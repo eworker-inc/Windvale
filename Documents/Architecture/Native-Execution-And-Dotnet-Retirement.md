@@ -324,6 +324,8 @@ Decision 0249 admits descriptor parameters and returns inside the retained four-
 
 Decision 0251 closes that measured blocker by expanding the internal directory to 64 padded parameter types and matching ABI 22's exact register-plus-stack transport. The updated 330-function adapter closures reproduce their Stage 0 WVB identities through the pinned native build driver, and the widened descriptor fixture reproduces the complete Stage 0 WVO. Enum parameters/returns, multiple record arguments, and remaining instruction shapes are now the next measured backend gaps.
 
+Decision 0254 replaces three smaller prototype guards with one measured general-function envelope: fewer than 2,048 combined parameters/locals, at most 32,768 code bytes, and at most 8,192 instructions, still subject to the exact 2,048-cell native frame check. The real 330-function tool fits those general bounds; its separate 128-local/block/value record planner is now the first remaining rejection and stays fail-closed for a later measured slice.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

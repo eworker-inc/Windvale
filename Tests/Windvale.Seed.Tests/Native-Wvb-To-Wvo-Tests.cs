@@ -54,10 +54,10 @@ internal static partial class Program
     private const int WVB_TO_WVO_TOOL_WVB_BYTES = 318_977;
     private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_406_272;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "32089b25357de28ba9c63dbaa9718109a7f6ae87712ac5cd4cdbbc13cf7fda3a";
+        "8bfc95be0d722d3b849956c2878c9f053b4242d78242b6c4fe5dc4782e86e660";
     private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_407_296;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "170ed07261b51ee1d18c7f39465ac9fd337ddfa60d4bd745c34d1ec9c295c3f2";
+        "6cd55057461252b6c36a1165e7e39167a50c9db31afb460be24b36e0db93d6e5";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -600,6 +600,60 @@ internal static partial class Program
             $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
             $"object-bytes={Expectedˉobject.Length}\n",
             Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+    }
+
+    private static void Assertˉlargeˉfunctionˉenvelopeˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Template = Moduleˉcodec.Read(Compileˉsuccess(WVB_TO_WVO_RETURN_42_SOURCE));
+        var Code = ImmutableArray.CreateBuilder<byte>();
+        for (uint Local = 1; Local <= 1_024; Local++)
+        {
+            Code.AddRange(U32ˉinstruction(Opcode.Localˉload, Local - 1));
+            Code.AddRange(U32ˉinstruction(Opcode.Localˉstore, Local));
+        }
+        Code.AddRange(U32ˉinstruction(Opcode.Localˉload, 1_024));
+        Code.Add((byte)Opcode.Return);
+        var Localˉtypes = Enumerable.Repeat<Valueˉshape>(
+            Valueˉtype.I32,
+            1_025).ToImmutableArray();
+        var Function = Template.Functions.Single() with
+        {
+            Localˉtypes = Localˉtypes,
+            Codeˉoffset = 0,
+            Codeˉlength = Code.Count,
+            Maximumˉstackˉdepth = 1,
+        };
+        var Wvb = Moduleˉcodec.Write(Template with
+        {
+            Functions = [Function],
+            Code = Code.ToImmutable(),
+        });
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        Equal(1_025, Module.Functions[0].Declaration.Allˉlocalˉtypes.Length);
+        Equal(10_246, Module.Functions[0].Declaration.Codeˉlength);
+        Equal(2_050, Module.Functions[0].Instructions.Length);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(0, X64ˉnativeˉexecutor.Executeˉi32(Native.Fragment));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 500_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 500_000_000);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
         Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
     }
 
