@@ -1,0 +1,642 @@
+module Compilerˉwebassemblyˉcontrolˉflow profile portable;
+
+import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
+import Compilerˉwebassemblyˉexecutableˉgraph as Graphs;
+
+export record Compilerˉwebassemblyˉcontrolˉflowˉsummary {
+    Valid: bool;
+    Reachableˉfunctionˉcount: u32;
+    Instructionˉcount: u32;
+    Blockˉcount: u32;
+    Jumpˉcount: u32;
+    Branchˉcount: u32;
+    Returnˉcount: u32;
+    Functionˉentries: bytes;
+    Blockˉentries: bytes;
+    Opcodeˉset: bytes;
+    Failureˉfunction: u32;
+    Failureˉoffset: u32;
+    Failureˉopcode: u32;
+}
+
+record Controlˉscan {
+    Valid: bool;
+    Starts: bytes;
+    Opcodes: bytes;
+    Instructionˉcount: u32;
+    Jumpˉcount: u32;
+    Branchˉcount: u32;
+    Returnˉcount: u32;
+    Failureˉoffset: u32;
+    Failureˉopcode: u32;
+}
+
+record Blockˉbuild {
+    Valid: bool;
+    Entries: bytes;
+    Count: u32;
+    Instructionˉcount: u32;
+    Failureˉoffset: u32;
+    Failureˉopcode: u32;
+}
+
+record U32ˉlookup {
+    Found: bool;
+    Index: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalidˉsummary(
+    Input: bytes,
+    Function: u32,
+    Offset: u32,
+    Opcode: u32
+) -> Compilerˉwebassemblyˉcontrolˉflowˉsummary {
+    return Compilerˉwebassemblyˉcontrolˉflowˉsummary(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Function,
+        Offset,
+        Opcode
+    );
+}
+
+fn Invalidˉscan(
+    Input: bytes,
+    Offset: u32,
+    Opcode: u32
+) -> Controlˉscan {
+    return Controlˉscan(
+        false,
+        Empty(Input),
+        Empty(Input),
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Offset,
+        Opcode
+    );
+}
+
+fn Invalidˉblocks(
+    Input: bytes,
+    Offset: u32,
+    Opcode: u32
+) -> Blockˉbuild {
+    return Blockˉbuild(
+        false,
+        Empty(Input),
+        0u32,
+        0u32,
+        Offset,
+        Opcode
+    );
+}
+
+fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Containsˉu32(Values: bytes, Value: u32) -> bool {
+    let Length: u32 = Bytesˉlength(Values);
+    if Length % 4u32 != 0u32 { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        if Bytesˉreadˉu32ˉlittle(Values, Offset) == Value { return true; }
+        Offset = Offset + 4u32;
+    }
+    return false;
+}
+
+fn Insertˉu32ˉsorted(Values: bytes, Value: u32) -> bytes {
+    let Length: u32 = Bytesˉlength(Values);
+    if Length % 4u32 != 0u32 { return Empty(Values); }
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        let Current: u32 = Bytesˉreadˉu32ˉlittle(Values, Offset);
+        if Current == Value { return Values; }
+        if Current > Value {
+            var Result: bytes = Bytesˉslice(Values, 0u32, Offset);
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+            return Bytesˉconcat(
+                Result,
+                Bytesˉslice(Values, Offset, Length - Offset)
+            );
+        }
+        Offset = Offset + 4u32;
+    }
+    return Bytesˉconcat(Values, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Insertˉu8ˉsorted(Values: bytes, Value: u8) -> bytes {
+    let Length: u32 = Bytesˉlength(Values);
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        let Current: u8 = Bytesˉreadˉu8(Values, Offset);
+        if Current == Value { return Values; }
+        if U32ˉfromˉu8(Current) > U32ˉfromˉu8(Value) {
+            var Result: bytes = Bytesˉslice(Values, 0u32, Offset);
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+            return Bytesˉconcat(
+                Result,
+                Bytesˉslice(Values, Offset, Length - Offset)
+            );
+        }
+        Offset = Offset + 1u32;
+    }
+    return Bytesˉconcat(Values, Bytesˉfromˉu8(Value));
+}
+
+fn Findˉu32(Values: bytes, Value: u32) -> U32ˉlookup {
+    let Length: u32 = Bytesˉlength(Values);
+    if Length % 4u32 != 0u32 {
+        return U32ˉlookup(false, 0u32);
+    }
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        let Current: u32 = Bytesˉreadˉu32ˉlittle(Values, Offset);
+        if Current == Value { return U32ˉlookup(true, Offset / 4u32); }
+        if Current > Value { return U32ˉlookup(false, 0u32); }
+        Offset = Offset + 4u32;
+    }
+    return U32ˉlookup(false, 0u32);
+}
+
+fn Firstˉinvalidˉstart(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    Starts: bytes
+) -> u32 {
+    let Startsˉlength: u32 = Bytesˉlength(Starts);
+    if Startsˉlength == 0u32 || Startsˉlength % 4u32 != 0u32 {
+        return 0u32;
+    }
+    var Cursor: u32 = 0u32;
+    var Startˉoffset: u32 = 0u32;
+    while Startˉoffset < Startsˉlength {
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(Starts, Startˉoffset);
+        if Target >= Length { return Target; }
+        while Cursor < Target {
+            let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+                Input,
+                Code,
+                Length,
+                Cursor
+            );
+            if Width == 0u32 || Width > Target - Cursor { return Target; }
+            Cursor = Cursor + Width;
+        }
+        if Cursor != Target { return Target; }
+        Startˉoffset = Startˉoffset + 4u32;
+    }
+    return Length;
+}
+
+fn Scanˉfunction(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    Initialˉopcodes: bytes
+) -> Controlˉscan {
+    var Starts: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Opcodes: bytes = Initialˉopcodes;
+    var Instructionˉcount: u32 = 0u32;
+    var Jumpˉcount: u32 = 0u32;
+    var Branchˉcount: u32 = 0u32;
+    var Returnˉcount: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    while Cursor < Length {
+        if Instructionˉcount >= 131072u32 {
+            return Invalidˉscan(Input, Cursor, 0u32);
+        }
+        let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+            Input,
+            Code,
+            Length,
+            Cursor
+        );
+        if Width == 0u32 { return Invalidˉscan(Input, Cursor, 0u32); }
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Cursor);
+        Opcodes = Insertˉu8ˉsorted(Opcodes, Opcode);
+        let Next: u32 = Cursor + Width;
+        if Opcode == 48u8 || Opcode == 49u8 {
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Code + Cursor + 1u32
+            );
+            if Target >= Length {
+                return Invalidˉscan(Input, Cursor, U32ˉfromˉu8(Opcode));
+            }
+            Starts = Insertˉu32ˉsorted(Starts, Target);
+            if Next < Length { Starts = Insertˉu32ˉsorted(Starts, Next); }
+            if Opcode == 48u8 {
+                Jumpˉcount = Jumpˉcount + 1u32;
+            } else {
+                Branchˉcount = Branchˉcount + 1u32;
+            }
+        }
+        if Opcode == 81u8 {
+            Returnˉcount = Returnˉcount + 1u32;
+            if Next < Length { Starts = Insertˉu32ˉsorted(Starts, Next); }
+        }
+        Instructionˉcount = Instructionˉcount + 1u32;
+        Cursor = Next;
+    }
+    if Cursor != Length || Bytesˉlength(Starts) % 4u32 != 0u32 {
+        return Invalidˉscan(Input, Cursor, 0u32);
+    }
+    let Invalidˉstart: u32 = Firstˉinvalidˉstart(
+        Input,
+        Code,
+        Length,
+        Starts
+    );
+    if Invalidˉstart < Length {
+        var Failureˉcursor: u32 = 0u32;
+        while Failureˉcursor < Length {
+            let Failureˉwidth: u32 =
+                Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+                    Input,
+                    Code,
+                    Length,
+                    Failureˉcursor
+                );
+            if Failureˉwidth == 0u32 {
+                return Invalidˉscan(Input, Failureˉcursor, 0u32);
+            }
+            let Failureˉoperation: u8 = Bytesˉreadˉu8(
+                Input,
+                Code + Failureˉcursor
+            );
+            if Failureˉoperation == 48u8 || Failureˉoperation == 49u8 {
+                if Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Code + Failureˉcursor + 1u32
+                ) == Invalidˉstart {
+                    return Invalidˉscan(
+                        Input,
+                        Failureˉcursor,
+                        U32ˉfromˉu8(Failureˉoperation)
+                    );
+                }
+            }
+            Failureˉcursor = Failureˉcursor + Failureˉwidth;
+        }
+        return Invalidˉscan(Input, Invalidˉstart, 0u32);
+    }
+    return Controlˉscan(
+        true,
+        Starts,
+        Opcodes,
+        Instructionˉcount,
+        Jumpˉcount,
+        Branchˉcount,
+        Returnˉcount,
+        0u32,
+        0u32
+    );
+}
+
+fn Appendˉu32(Values: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Values, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Buildˉblocks(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    Starts: bytes
+) -> Blockˉbuild {
+    let Startsˉlength: u32 = Bytesˉlength(Starts);
+    if Startsˉlength == 0u32 || Startsˉlength % 4u32 != 0u32 {
+        return Invalidˉblocks(Input, 0u32, 0u32);
+    }
+    let Blockˉcount: u32 = Startsˉlength / 4u32;
+    if Blockˉcount > 4096u32 { return Invalidˉblocks(Input, 0u32, 0u32); }
+    var Entries: bytes = Empty(Input);
+    var Aggregateˉinstructions: u32 = 0u32;
+    var Blockˉindex: u32 = 0u32;
+    while Blockˉindex < Blockˉcount {
+        let Start: u32 = Bytesˉreadˉu32ˉlittle(
+            Starts,
+            Blockˉindex * 4u32
+        );
+        var End: u32 = Length;
+        if Blockˉindex + 1u32 < Blockˉcount {
+            End = Bytesˉreadˉu32ˉlittle(
+                Starts,
+                (Blockˉindex + 1u32) * 4u32
+            );
+        }
+        if Start >= End || End > Length {
+            return Invalidˉblocks(Input, Start, 0u32);
+        }
+        var Cursor: u32 = Start;
+        var Blockˉinstructions: u32 = 0u32;
+        var Lastˉopcode: u8 = 0u8;
+        var Lastˉoffset: u32 = Start;
+        while Cursor < End {
+            let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+                Input,
+                Code,
+                Length,
+                Cursor
+            );
+            if Width == 0u32 || Width > End - Cursor {
+                return Invalidˉblocks(Input, Cursor, 0u32);
+            }
+            Lastˉopcode = Bytesˉreadˉu8(Input, Code + Cursor);
+            Lastˉoffset = Cursor;
+            Blockˉinstructions = Blockˉinstructions + 1u32;
+            Cursor = Cursor + Width;
+            if Cursor < End &&
+                (Lastˉopcode == 48u8 || Lastˉopcode == 49u8 ||
+                    Lastˉopcode == 81u8) {
+                return Invalidˉblocks(
+                    Input,
+                    Lastˉoffset,
+                    U32ˉfromˉu8(Lastˉopcode)
+                );
+            }
+        }
+        if Cursor != End || Blockˉinstructions == 0u32 {
+            return Invalidˉblocks(Input, Start, 0u32);
+        }
+
+        let Noˉsuccessor: u32 = 4294967295u32;
+        var Kind: u32 = 0u32;
+        var Firstˉsuccessor: u32 = Noˉsuccessor;
+        var Secondˉsuccessor: u32 = Noˉsuccessor;
+        if Lastˉopcode == 48u8 {
+            let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Code + Lastˉoffset + 1u32
+            );
+            let Jumpˉlookup: U32ˉlookup = Findˉu32(Starts, Jumpˉtarget);
+            if !Jumpˉlookup.Found {
+                return Invalidˉblocks(Input, Lastˉoffset, 48u32);
+            }
+            Kind = 1u32;
+            Firstˉsuccessor = Jumpˉlookup.Index;
+        } else if Lastˉopcode == 49u8 {
+            if Blockˉindex + 1u32 >= Blockˉcount {
+                return Invalidˉblocks(Input, Lastˉoffset, 49u32);
+            }
+            let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Code + Lastˉoffset + 1u32
+            );
+            let Branchˉlookup: U32ˉlookup = Findˉu32(Starts, Branchˉtarget);
+            if !Branchˉlookup.Found {
+                return Invalidˉblocks(Input, Lastˉoffset, 49u32);
+            }
+            Kind = 2u32;
+            Firstˉsuccessor = Blockˉindex + 1u32;
+            Secondˉsuccessor = Branchˉlookup.Index;
+        } else if Lastˉopcode == 81u8 {
+            Kind = 3u32;
+        } else {
+            if Blockˉindex + 1u32 >= Blockˉcount {
+                return Invalidˉblocks(
+                    Input,
+                    Lastˉoffset,
+                    U32ˉfromˉu8(Lastˉopcode)
+                );
+            }
+            Firstˉsuccessor = Blockˉindex + 1u32;
+        }
+
+        Entries = Appendˉu32(Entries, Start);
+        Entries = Appendˉu32(Entries, End - Start);
+        Entries = Appendˉu32(Entries, Blockˉinstructions);
+        Entries = Appendˉu32(Entries, Kind);
+        Entries = Appendˉu32(Entries, Firstˉsuccessor);
+        Entries = Appendˉu32(Entries, Secondˉsuccessor);
+        Aggregateˉinstructions = Aggregateˉinstructions + Blockˉinstructions;
+        Blockˉindex = Blockˉindex + 1u32;
+    }
+    if Bytesˉlength(Entries) != Blockˉcount * 24u32 {
+        return Invalidˉblocks(Input, 0u32, 0u32);
+    }
+    return Blockˉbuild(
+        true,
+        Entries,
+        Blockˉcount,
+        Aggregateˉinstructions,
+        0u32,
+        0u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉfunctionˉentryˉwidth() -> u32 {
+    return 8u32;
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉblockˉentryˉwidth() -> u32 {
+    return 24u32;
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉbuild(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary
+) -> Compilerˉwebassemblyˉcontrolˉflowˉsummary {
+    if !Directory.Valid || !Graph.Valid ||
+        Directory.Count != Graph.Functionˉcount ||
+        Graph.Reachableˉcount == 0u32 ||
+        Graph.Reachableˉcount > Directory.Count {
+        return Invalidˉsummary(Input, 0u32, 0u32, 0u32);
+    }
+    if !Rangeˉisˉvalid(Bytesˉlength(Input), Codeˉoffset, Codeˉlength) ||
+        Bytesˉlength(Directory.Entries) != Directory.Count * 32u32 ||
+        Bytesˉlength(Graph.Reachableˉorder) !=
+            Graph.Reachableˉcount * 4u32 {
+        return Invalidˉsummary(Input, 0u32, 0u32, 0u32);
+    }
+
+    var Functionˉentries: bytes = Empty(Input);
+    var Blockˉentries: bytes = Empty(Input);
+    var Opcodeˉset: bytes = Empty(Input);
+    var Instructionˉcount: u32 = 0u32;
+    var Blockˉcount: u32 = 0u32;
+    var Jumpˉcount: u32 = 0u32;
+    var Branchˉcount: u32 = 0u32;
+    var Returnˉcount: u32 = 0u32;
+    var Functionˉindex: u32 = 0u32;
+    while Functionˉindex < Directory.Count {
+        let Firstˉblock: u32 = Blockˉcount;
+        var Functionˉblockˉcount: u32 = 0u32;
+        if Containsˉu32(Graph.Reachableˉorder, Functionˉindex) {
+            let Functionˉcodeˉrelative: u32 =
+                Functions.Compilerˉwebassemblyˉfunctionˉcodeˉoffset(
+                    Directory,
+                    Functionˉindex
+                );
+            let Functionˉcodeˉlength: u32 =
+                Functions.Compilerˉwebassemblyˉfunctionˉcodeˉlength(
+                    Directory,
+                    Functionˉindex
+                );
+            if !Rangeˉisˉvalid(
+                Codeˉlength,
+                Functionˉcodeˉrelative,
+                Functionˉcodeˉlength
+            ) {
+                return Invalidˉsummary(Input, Functionˉindex, 0u32, 0u32);
+            }
+            let Functionˉcode: u32 = Codeˉoffset + Functionˉcodeˉrelative;
+            let Scan: Controlˉscan = Scanˉfunction(
+                Input,
+                Functionˉcode,
+                Functionˉcodeˉlength,
+                Opcodeˉset
+            );
+            if !Scan.Valid {
+                return Invalidˉsummary(
+                    Input,
+                    Functionˉindex,
+                    Scan.Failureˉoffset,
+                    Scan.Failureˉopcode
+                );
+            }
+            let Blocks: Blockˉbuild = Buildˉblocks(
+                Input,
+                Functionˉcode,
+                Functionˉcodeˉlength,
+                Scan.Starts
+            );
+            if !Blocks.Valid ||
+                Blocks.Instructionˉcount != Scan.Instructionˉcount {
+                return Invalidˉsummary(
+                    Input,
+                    Functionˉindex,
+                    Blocks.Failureˉoffset,
+                    Blocks.Failureˉopcode
+                );
+            }
+            if Instructionˉcount > 200000u32 - Scan.Instructionˉcount ||
+                Blockˉcount > 32768u32 - Blocks.Count {
+                return Invalidˉsummary(Input, Functionˉindex, 0u32, 0u32);
+            }
+            Opcodeˉset = Scan.Opcodes;
+            Instructionˉcount = Instructionˉcount + Scan.Instructionˉcount;
+            Blockˉcount = Blockˉcount + Blocks.Count;
+            Jumpˉcount = Jumpˉcount + Scan.Jumpˉcount;
+            Branchˉcount = Branchˉcount + Scan.Branchˉcount;
+            Returnˉcount = Returnˉcount + Scan.Returnˉcount;
+            Blockˉentries = Bytesˉconcat(Blockˉentries, Blocks.Entries);
+            Functionˉblockˉcount = Blocks.Count;
+        }
+        Functionˉentries = Appendˉu32(Functionˉentries, Firstˉblock);
+        Functionˉentries = Appendˉu32(
+            Functionˉentries,
+            Functionˉblockˉcount
+        );
+        Functionˉindex = Functionˉindex + 1u32;
+    }
+    if Bytesˉlength(Functionˉentries) != Directory.Count * 8u32 ||
+        Bytesˉlength(Blockˉentries) != Blockˉcount * 24u32 {
+        return Invalidˉsummary(Input, 0u32, 0u32, 0u32);
+    }
+    return Compilerˉwebassemblyˉcontrolˉflowˉsummary(
+        true,
+        Graph.Reachableˉcount,
+        Instructionˉcount,
+        Blockˉcount,
+        Jumpˉcount,
+        Branchˉcount,
+        Returnˉcount,
+        Functionˉentries,
+        Blockˉentries,
+        Opcodeˉset,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉfunctionˉfirstˉblock(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Control.Functionˉentries, Function * 8u32);
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉfunctionˉblockˉcount(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Control.Functionˉentries,
+        Function * 8u32 + 4u32
+    );
+}
+
+fn Blockˉfield(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Block: u32,
+    Field: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Control.Blockˉentries,
+        Block * 24u32 + Field * 4u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉblockˉstart(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Block: u32
+) -> u32 {
+    return Blockˉfield(Control, Block, 0u32);
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉblockˉlength(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Block: u32
+) -> u32 {
+    return Blockˉfield(Control, Block, 1u32);
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉblockˉinstructionˉcount(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Block: u32
+) -> u32 {
+    return Blockˉfield(Control, Block, 2u32);
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉblockˉkind(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Block: u32
+) -> u32 {
+    return Blockˉfield(Control, Block, 3u32);
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉblockˉfirstˉsuccessor(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Block: u32
+) -> u32 {
+    return Blockˉfield(Control, Block, 4u32);
+}
+
+export fn Compilerˉwebassemblyˉcontrolˉflowˉblockˉsecondˉsuccessor(
+    Control: Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Block: u32
+) -> u32 {
+    return Blockˉfield(Control, Block, 5u32);
+}

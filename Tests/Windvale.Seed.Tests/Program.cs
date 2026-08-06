@@ -129,6 +129,7 @@ internal static partial class Program
     private const string WEBASSEMBLY_CORE_SHA256 = "2d221ab9ebaad26b5acbfb582188085178d1630a7fa48e5f1c4e933ceea668aa";
     private const string WEBASSEMBLY_TOOL_SHA256 = "78588396fbff0865025d010b3f467ac20844c2d122a9ee9d63da8b85d880c00b";
     private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "480a7dc0e0a23e86ba7f6f73d5fac5cfbf757a8080b486c3b3fa5b23eb7f54ab";
+    private const string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SHA256 = "f845490abd9dcd060f9fa7fdf7260a649cb21d5bc8b50ba92bd2dd58b6f188dd";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -933,9 +934,17 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Executable-Graph.wv");
 
+    private static readonly string WEBASSEMBLY_CONTROL_FLOW_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Control-Flow.wv");
+
     private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv");
+
+    private static readonly string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Compiler-Control-Memory-Tool.wv");
 
     private static readonly string WEBASSEMBLY_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Tool.wv");
@@ -1259,6 +1268,7 @@ internal static partial class Program
         new("Windvale lowers bounded static descriptors to WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉstaticˉdescriptorsˉrun, Testˉcost.Extended),
         new("Windvale admits bounded unused nominal tables for WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉnominalˉtablesˉrun, Testˉcost.Extended),
         new("Windvale admits a bounded compiler-scale WebAssembly function inventory", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉfunctionˉinventoryˉruns, Testˉcost.Extended),
+        new("Windvale materializes a general WebAssembly control-flow directory", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉcontrolˉflowˉruns, Testˉcost.Extended),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
         new("rights-limited directory reads return typed bounded results", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Readˉonlyˉdirectoryˉreadsˉareˉtyped),
@@ -14845,6 +14855,139 @@ internal static partial class Program
         Requireˉunsupported(Trailing);
     }
 
+    private static void Compilerˉwebassemblyˉcontrolˉflowˉruns()
+    {
+        var Toolˉbytes = Compileˉwithˉcontrolˉflowˉsuccess(
+            WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SOURCE,
+            "Compiler-Directory-Memory-Tool.wv");
+        Equal(
+            WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Mainˉindex = Array.FindIndex(
+            Tool.Functions.ToArray(),
+            Function => Function.Declaration.Name == "Main");
+        True(Mainˉindex >= 0, "The control-flow tool omitted Main.");
+
+        var Reachable = new HashSet<int> { Mainˉindex };
+        var Pending = new Queue<int>();
+        Pending.Enqueue(Mainˉindex);
+        while (Pending.Count > 0)
+        {
+            var Functionˉindex = Pending.Dequeue();
+            foreach (var Instruction in Tool.Functions[Functionˉindex].Instructions)
+            {
+                if (Instruction.Opcode == Opcode.Call &&
+                    Reachable.Add(checked((int)Instruction.Unsignedˉoperand)))
+                {
+                    Pending.Enqueue(checked((int)Instruction.Unsignedˉoperand));
+                }
+            }
+        }
+
+        var Instructionˉcount = 0;
+        var Blockˉcount = 0;
+        var Jumpˉcount = 0;
+        var Branchˉcount = 0;
+        var Returnˉcount = 0;
+        var Opcodes = new HashSet<Opcode>();
+        foreach (var Functionˉindex in Reachable)
+        {
+            var Instructions = Tool.Functions[Functionˉindex].Instructions;
+            var Starts = new HashSet<int> { 0 };
+            foreach (var Instruction in Instructions)
+            {
+                Opcodes.Add(Instruction.Opcode);
+                if (Instruction.Opcode is Opcode.Jump or Opcode.Branchˉfalse)
+                {
+                    Starts.Add(checked((int)Instruction.Unsignedˉoperand));
+                    if (Instruction.Offset + Instruction.Size <
+                        Tool.Functions[Functionˉindex].Declaration.Codeˉlength)
+                    {
+                        Starts.Add(Instruction.Offset + Instruction.Size);
+                    }
+                    if (Instruction.Opcode == Opcode.Jump) Jumpˉcount++;
+                    else Branchˉcount++;
+                }
+                if (Instruction.Opcode == Opcode.Return)
+                {
+                    Returnˉcount++;
+                    if (Instruction.Offset + Instruction.Size <
+                        Tool.Functions[Functionˉindex].Declaration.Codeˉlength)
+                    {
+                        Starts.Add(Instruction.Offset + Instruction.Size);
+                    }
+                }
+            }
+            Instructionˉcount += Instructions.Length;
+            Blockˉcount += Starts.Count;
+        }
+
+        static int Reportˉvalue(string Report, string Name)
+        {
+            var Prefix = Name + "=";
+            var Start = Report.IndexOf(Prefix, StringComparison.Ordinal);
+            True(Start >= 0, $"The control-flow report omitted '{Name}'.");
+            Start += Prefix.Length;
+            var End = Report.IndexOfAny([' ', '\n'], Start);
+            if (End < 0) End = Report.Length;
+            return int.Parse(Report.AsSpan(Start, End - Start));
+        }
+
+        var Options = Runtimeˉoptions.Portableˉdefaults with
+        {
+            Maximumˉinstructions = 500_000_000,
+            Dynamicˉallocatorˉarenaˉbytes = 128 * 1024 * 1024,
+        };
+        var Result = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Toolˉbytes.ToImmutableArray());
+        var Report = System.Text.Encoding.UTF8.GetString(Result.Bytes.AsSpan());
+        Contains(Report, "directory status=Valid");
+        Equal(Tool.Functions.Length, Reportˉvalue(Report, "functions"));
+        Equal(Reachable.Count, Reportˉvalue(Report, "reachable"));
+        Equal(Instructionˉcount, Reportˉvalue(Report, "control-instructions"));
+        Equal(Blockˉcount, Reportˉvalue(Report, "blocks"));
+        Equal(Blockˉcount * 24, Reportˉvalue(Report, "block-bytes"));
+        Equal(Jumpˉcount, Reportˉvalue(Report, "jumps"));
+        Equal(Branchˉcount, Reportˉvalue(Report, "branches"));
+        Equal(Returnˉcount, Reportˉvalue(Report, "returns"));
+        Equal(Opcodes.Count, Reportˉvalue(Report, "opcodes"));
+
+        var Mutationˉbytes = Compileˉsuccess(
+            "module WebAssemblyˉcontrolˉmutation profile portable;\n\n" +
+            "export fn Main(Input: bytes) -> bytes {\n" +
+            "    if Bytesˉlength(Input) == 0u32 { return Input; }\n" +
+            "    return Bytesˉslice(Input, 0u32, 1u32);\n" +
+            "}\n");
+        var Mutationˉmodule = Moduleˉcodec.Readˉandˉverify(Mutationˉbytes);
+        var Branchˉfunction = Mutationˉmodule.Functions.First(Function =>
+            Function.Instructions.Any(Instruction =>
+                Instruction.Opcode == Opcode.Branchˉfalse));
+        var Branch = Branchˉfunction.Instructions.First(Instruction =>
+            Instruction.Opcode == Opcode.Branchˉfalse);
+        var Invalidˉtarget = Mutationˉbytes.ToArray();
+        var Codeˉpayload = Findˉsectionˉpayload(
+            Invalidˉtarget,
+            Sectionˉkind.Code);
+        var Branchˉabsolute = checked(
+            Codeˉpayload +
+            (int)Branchˉfunction.Declaration.Codeˉoffset +
+            Branch.Offset);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉtarget.AsSpan(Branchˉabsolute + 1, 4),
+            checked((uint)(Branch.Offset + 2)));
+        var Rejected = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Invalidˉtarget.ToImmutableArray());
+        Equal(
+            $"directory status=Invalid control-flow function=0 " +
+                $"offset={Branch.Offset} opcode=49",
+            System.Text.Encoding.UTF8.GetString(Rejected.Bytes.AsSpan()));
+    }
+
     private static void Compilerˉwebassemblyˉfunctionˉinventoryˉruns()
     {
         var Toolˉbytes = Compileˉwithˉwebassemblyˉsuccess(
@@ -26926,6 +27069,39 @@ internal static partial class Program
         {
             throw new InvalidOperationException(
                 "Compiler WebAssembly directory composition failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉcontrolˉflowˉsuccess(
+        string source,
+        string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [
+                new(
+                    "Compiler/Windvale/WebAssembly-Function-Directory.wv",
+                    WEBASSEMBLY_FUNCTION_DIRECTORY_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Type-Directory.wv",
+                    WEBASSEMBLY_TYPE_DIRECTORY_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Typed-Calls.wv",
+                    WEBASSEMBLY_TYPED_CALLS_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Executable-Graph.wv",
+                    WEBASSEMBLY_EXECUTABLE_GRAPH_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Control-Flow.wv",
+                    WEBASSEMBLY_CONTROL_FLOW_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WebAssembly control-flow composition failed: " +
                 string.Join(" | ", Result.Diagnostics));
         }
 

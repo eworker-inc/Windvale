@@ -586,8 +586,14 @@
       Include="../../Compiler/Windvale/WebAssembly-Executable-Graph.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Executable-Graph.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Control-Flow.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Control-Flow.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Memory-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Control-Memory-Tool.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/WebAssembly-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />

@@ -4,6 +4,7 @@ import Compilerˉwebassemblyˉfunctionˉdirectory as Directory;
 import Compilerˉwebassemblyˉtypeˉdirectory as Types;
 import Compilerˉwebassemblyˉtypedˉcalls as Typed;
 import Compilerˉwebassemblyˉexecutableˉgraph as Executable;
+import Compilerˉwebassemblyˉcontrolˉflow as Control;
 
 fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
     if Offset > Total { return false; }
@@ -125,6 +126,31 @@ export fn Main(Input: bytes) -> bytes {
             Entry.Index
         );
     if !Graph.Valid { return Failure("executable-graph"); }
+    let Controlˉflow: Control.Compilerˉwebassemblyˉcontrolˉflowˉsummary =
+        Control.Compilerˉwebassemblyˉcontrolˉflowˉbuild(
+            Input,
+            Codeˉoffset,
+            Codeˉlength,
+            Functionˉdirectory,
+            Graph
+        );
+    if !Controlˉflow.Valid {
+        var Controlˉdiagnostic: text = "control-flow function=";
+        Controlˉdiagnostic = Textˉconcat(
+            Controlˉdiagnostic,
+            U32ˉformat(Controlˉflow.Failureˉfunction)
+        );
+        Controlˉdiagnostic = Textˉconcat(Controlˉdiagnostic, " offset=");
+        Controlˉdiagnostic = Textˉconcat(
+            Controlˉdiagnostic,
+            U32ˉformat(Controlˉflow.Failureˉoffset)
+        );
+        Controlˉdiagnostic = Textˉconcat(Controlˉdiagnostic, " opcode=");
+        return Failure(Textˉconcat(
+            Controlˉdiagnostic,
+            U32ˉformat(Controlˉflow.Failureˉopcode)
+        ));
+    }
 
     var Report: text = "directory status=Valid functions=";
     Report = Textˉconcat(Report, U32ˉformat(Functionˉdirectory.Count));
@@ -156,8 +182,31 @@ export fn Main(Input: bytes) -> bytes {
         U32ˉformat(Bytesˉlength(Graph.Functionˉentries))
     );
     Report = Textˉconcat(Report, " graph-target-bytes=");
-    return Textˉtoˉutf8(Textˉconcat(
+    Report = Textˉconcat(
         Report,
         U32ˉformat(Bytesˉlength(Graph.Callˉtargets))
+    );
+    Report = Textˉconcat(Report, " control-instructions=");
+    Report = Textˉconcat(
+        Report,
+        U32ˉformat(Controlˉflow.Instructionˉcount)
+    );
+    Report = Textˉconcat(Report, " blocks=");
+    Report = Textˉconcat(Report, U32ˉformat(Controlˉflow.Blockˉcount));
+    Report = Textˉconcat(Report, " block-bytes=");
+    Report = Textˉconcat(
+        Report,
+        U32ˉformat(Bytesˉlength(Controlˉflow.Blockˉentries))
+    );
+    Report = Textˉconcat(Report, " jumps=");
+    Report = Textˉconcat(Report, U32ˉformat(Controlˉflow.Jumpˉcount));
+    Report = Textˉconcat(Report, " branches=");
+    Report = Textˉconcat(Report, U32ˉformat(Controlˉflow.Branchˉcount));
+    Report = Textˉconcat(Report, " returns=");
+    Report = Textˉconcat(Report, U32ˉformat(Controlˉflow.Returnˉcount));
+    Report = Textˉconcat(Report, " opcodes=");
+    return Textˉtoˉutf8(Textˉconcat(
+        Report,
+        U32ˉformat(Bytesˉlength(Controlˉflow.Opcodeˉset))
     ));
 }
