@@ -1,8 +1,8 @@
-# Decision 0327: Frame-owned record WebAssembly lowering
+# Decision 0330: Frame-owned record WebAssembly lowering
 
 - Date: 2026-08-06
 - Status: Implemented candidate; exact compiler cutover pending
-- Advances: [Decision 0326](0326-Direct-Enum-WebAssembly-Lowering.md), [Decision 0296](0296-Bounded-Direct-WebAssembly-Nominal-Tables.md), and [Decision 0133](0133-Frame-Owned-Direct-Native-Records.md)
+- Advances: [Decision 0328](0328-Direct-Enum-WebAssembly-Lowering.md), [Decision 0296](0296-Bounded-Direct-WebAssembly-Nominal-Tables.md), and [Decision 0133](0133-Frame-Owned-Direct-Native-Records.md)
 
 ## Context
 
