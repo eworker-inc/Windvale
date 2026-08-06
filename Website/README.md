@@ -104,6 +104,8 @@ For a real deployment, the workflow builds `Website/dist`, assembles it with the
 
 Before publication, `npm --prefix Website run verify:wasm-demo` checks the direct route's static dependency boundary, reconstructs and hashes its exact artifact, validates its import-free export contract, and executes it twice under Node.js.
 
+`npm --prefix Website run verify:wasm-compiler-package` independently checks the pinned `Artifacts/WebAssembly-Playground` compiler package without .NET. It validates all three manifest identities, the interpreter's import-free ABI-3 and fixed-memory contract, and exact one-instruction admission of the packaged compiler WVB. Normal website publication verifies and copies this package; regeneration remains an explicit recovery operation until the remaining native front-door seams are qualified.
+
 The deployment stamps both Blazor startup requests with the Git commit so a new release cannot reuse a browser's old startup script or embedded framework manifest. Mutable entry points, startup scripts, and editor bundles request revalidation, and the Cloudflare zone's Browser Cache TTL remains set to `Respect Existing Headers`. The per-deployment stamp is a second correctness boundary if that zone policy changes. Only content-fingerprinted `.wasm`, `.pdb`, and `.dat` framework assets receive long-lived immutable caching. Keep WebAssembly integrity checks enabled: a missing or mixed-release asset is a publication or caching fault, not a reason to weaken verification.
 
 Cloudflare credentials remain outside the repository. Automation receives only the scoped API token and account identifier through GitHub Actions secrets.

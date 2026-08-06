@@ -1,0 +1,150 @@
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
+const Repositoryˉroot = path.resolve(Scriptˉdirectory, "../..");
+const Packageˉroot = path.join(
+    Repositoryˉroot,
+    "Artifacts/WebAssembly-Playground",
+);
+const Manifest = JSON.parse(await readFile(
+    path.join(Packageˉroot, "Manifest.json"),
+    "utf8",
+));
+
+Equal("windvale-webassembly-playground-1", Manifest.format, "manifest format");
+Equal("wasm32-browser-v1-experimental", Manifest.target, "manifest target");
+Equal(false, Manifest.normalPublication?.requiresDotnet, "normal .NET dependency");
+if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 3) {
+    Fail("The WebAssembly playground manifest must own exactly three artifacts.");
+}
+
+const Artifacts = new Map();
+for (const Artifact of Manifest.artifacts) {
+    if (typeof Artifact.path !== "string" ||
+        path.basename(Artifact.path) !== Artifact.path) {
+        Fail("A WebAssembly playground artifact path escapes its package.");
+    }
+    const Bytes = await readFile(path.join(Packageˉroot, Artifact.path));
+    Equal(Artifact.bytes, Bytes.byteLength, `${Artifact.name} byte length`);
+    Equal(
+        Artifact.sha256,
+        createHash("sha256").update(Bytes).digest("hex"),
+        `${Artifact.name} SHA-256`,
+    );
+    Artifacts.set(Artifact.name, Bytes);
+}
+
+const Interpreter = Artifacts.get("scalar-interpreter-wasm");
+const Compiler = Artifacts.get("portable-source-compiler");
+if (!WebAssembly.validate(Interpreter)) {
+    Fail("The packaged scalar interpreter is not valid WebAssembly.");
+}
+const Module = await WebAssembly.compile(Interpreter);
+Equal(0, WebAssembly.Module.imports(Module).length, "interpreter import count");
+Equal(
+    JSON.stringify([
+        ["Windvale.run", "function"],
+        ["Windvale.abi", "global"],
+        ["Windvale.memory", "memory"],
+        ["Windvale.input_offset", "global"],
+        ["Windvale.input_capacity", "global"],
+        ["Windvale.output_offset", "global"],
+        ["Windvale.output_capacity", "global"],
+        ["Windvale.output_length", "global"],
+        ["Windvale.output_kind", "global"],
+        ["Windvale.instructions", "global"],
+    ]),
+    JSON.stringify(WebAssembly.Module.exports(Module).map(
+        Item => [Item.name, Item.kind],
+    )),
+    "interpreter export contract",
+);
+
+const Instance = await WebAssembly.instantiate(Module, {});
+const Exports = Instance.exports;
+const Memory = Exports["Windvale.memory"];
+Equal(3, Readˉglobal(Exports, "Windvale.abi"), "execution ABI");
+if (!(Memory instanceof WebAssembly.Memory)) {
+    Fail("The packaged interpreter memory export is invalid.");
+}
+Equal(129 * 65_536, Memory.buffer.byteLength, "memory extent");
+Equal(65_536, Readˉglobal(Exports, "Windvale.input_offset"), "input offset");
+Equal(4_194_304, Readˉglobal(Exports, "Windvale.input_capacity"), "input capacity");
+Equal(4_259_840, Readˉglobal(Exports, "Windvale.output_offset"), "output offset");
+Equal(4_194_304, Readˉglobal(Exports, "Windvale.output_capacity"), "output capacity");
+
+const Source = await readFile(path.join(
+    Repositoryˉroot,
+    "Tests/Fixtures/Source-Wvb/WebAssembly-Compiler-Success.wv",
+));
+const Request = Bytesˉrequest(Compiler, Source, 1, 64);
+new Uint8Array(
+    Memory.buffer,
+    Readˉglobal(Exports, "Windvale.input_offset"),
+    Request.byteLength,
+).set(Request);
+Equal(0, Exports["Windvale.run"](100_000_000, Request.byteLength), "outer status");
+Equal(77_103_665, Readˉglobal(Exports, "Windvale.instructions"), "outer instructions");
+Equal(20, Readˉglobal(Exports, "Windvale.output_length"), "response length");
+const Output = Buffer.from(new Uint8Array(
+    Memory.buffer,
+    Readˉglobal(Exports, "Windvale.output_offset"),
+    20,
+));
+Equal(0x4F58_5657, Output.readUInt32LE(0), "WVXO magic");
+Equal(2, Output.readUInt16LE(4), "WVXO version");
+Equal(0, Output.readUInt16LE(6), "WVXO flags");
+Equal(3_011, Output.readUInt32LE(8), "guest budget status");
+Equal(1, Output.readUInt32LE(12), "guest instruction count");
+Equal(0, Output.readUInt32LE(16), "guest result length");
+
+console.log(
+    "WebAssembly playground package verification passed: " +
+    `${Interpreter.byteLength} Wasm bytes, ${Compiler.byteLength} compiler bytes, ` +
+    "exact one-instruction compiler admission.",
+);
+
+function Bytesˉrequest(Compilerˉbytes, Sourceˉbytes, Budget, Callˉdepth) {
+    const Sourceˉset = Buffer.alloc(24 + Sourceˉbytes.length);
+    Sourceˉset.writeUInt32LE(0x5353_5657, 0);
+    Sourceˉset.writeUInt16LE(1, 4);
+    Sourceˉset.writeUInt16LE(0, 6);
+    Sourceˉset.writeUInt32LE(1, 8);
+    Sourceˉset.writeUInt32LE(8, 12);
+    Sourceˉset.writeUInt32LE(24, 16);
+    Sourceˉset.writeUInt32LE(Sourceˉbytes.length, 20);
+    Sourceˉbytes.copy(Sourceˉset, 24);
+
+    const Request = Buffer.alloc(24 + Compilerˉbytes.length + Sourceˉset.length);
+    Request.writeUInt32LE(0x4958_5657, 0);
+    Request.writeUInt16LE(2, 4);
+    Request.writeUInt16LE(0, 6);
+    Request.writeUInt32LE(Budget, 8);
+    Request.writeUInt32LE(Callˉdepth, 12);
+    Request.writeUInt32LE(Compilerˉbytes.length, 16);
+    Request.writeUInt32LE(Sourceˉset.length, 20);
+    Compilerˉbytes.copy(Request, 24);
+    Sourceˉset.copy(Request, 24 + Compilerˉbytes.length);
+    return Request;
+}
+
+function Readˉglobal(Exports, Name) {
+    const Global = Exports[Name];
+    if (!(Global instanceof WebAssembly.Global) || !Number.isInteger(Global.value)) {
+        Fail(`The '${Name}' export is not an integer global.`);
+    }
+    return Global.value;
+}
+
+function Equal(Expected, Actual, Boundary) {
+    if (Expected !== Actual) {
+        Fail(`Unexpected ${Boundary}: expected ${Expected}, received ${Actual}.`);
+    }
+}
+
+function Fail(Message) {
+    throw new Error(Message);
+}

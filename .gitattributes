@@ -33,6 +33,7 @@ SHA256SUMS text eol=lf
 *.b64 text eol=lf
 *.wvb binary
 *.wvo binary
+*.wasm binary
 *.bin binary
 *.exe binary
 *.elf binary

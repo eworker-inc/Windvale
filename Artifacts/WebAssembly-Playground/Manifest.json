@@ -1,0 +1,36 @@
+{
+  "format": "windvale-webassembly-playground-1",
+  "target": "wasm32-browser-v1-experimental",
+  "sourceCommit": "650b4a93345cb09bbc460d110e896c7b5485a617",
+  "decision": "Documents/Decisions/0264-First-Exact-WebAssembly-Hosted-Compilation.md",
+  "normalPublication": {
+    "mode": "verified-copy",
+    "requiresDotnet": false
+  },
+  "artifacts": [
+    {
+      "name": "portable-source-compiler",
+      "path": "Windvale-Compiler-Memory.wvb",
+      "bytes": 919577,
+      "sha256": "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e",
+      "sourceProject": "Windvale-Compiler-Memory.wvproj",
+      "production": "stage0-recovery-baseline"
+    },
+    {
+      "name": "scalar-interpreter-wvb",
+      "path": "Wvb-Scalar-Interpreter.wvb",
+      "bytes": 110810,
+      "sha256": "58b21baac3f9a2c2f3bc52c0bb6c331230c300e81373380a9694b850373d87fe",
+      "sourceProject": "Windvale-Wvb-Scalar-Interpreter.wvproj",
+      "production": "pinned-native-front-door"
+    },
+    {
+      "name": "scalar-interpreter-wasm",
+      "path": "Wvb-Scalar-Interpreter.wasm",
+      "bytes": 816339,
+      "sha256": "fa819b439f8590bed96dba0dce2c1d79e4d5d41a9a3765dc5b6c37d54f601504",
+      "sourceWvb": "Wvb-Scalar-Interpreter.wvb",
+      "production": "stage0-hosted-webassembly-backend-recovery"
+    }
+  ]
+}

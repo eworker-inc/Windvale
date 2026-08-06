@@ -8,7 +8,8 @@
     "dev:playground": "npm run build --prefix ../Tools/Windvale.Playground && dotnet run --project ../Tools/Windvale.Playground/Windvale.Playground.csproj",
     "build": "npm run generate && vite build --config Vite-Config.mjs",
     "generate": "node Scripts/Generate-Repository-Browser.mjs --output Generated",
-    "verify:wasm-demo": "node ../Tools/Website/Verify-Wasm-Demo.mjs"
+    "verify:wasm-demo": "node ../Tools/Website/Verify-Wasm-Demo.mjs",
+    "verify:wasm-compiler-package": "node --no-liftoff ../Tools/Website/Verify-WebAssembly-Playground-Package.mjs"
   },
   "devDependencies": {
     "concurrently": "10.0.4",

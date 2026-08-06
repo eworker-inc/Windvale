@@ -126,7 +126,9 @@ jobs:
       - name: Verify direct WebAssembly demo
         if: ${{ steps.gate.outputs.deploy == 'true' }}
         working-directory: Website
-        run: npm run verify:wasm-demo
+        run: |
+          npm run verify:wasm-demo
+          npm run verify:wasm-compiler-package
 
       - name: Publish standalone WebAssembly application
         if: ${{ steps.gate.outputs.deploy == 'true' }}
