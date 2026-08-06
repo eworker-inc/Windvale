@@ -2791,3 +2791,37 @@ Complete-tool self-lowering and large-object publication remain open. Local
 Development, Standard, Qualification, the full Seed/OS suites, Linux
 execution, WebAssembly verification, GitHub verification, artifact promotion,
 and ordinary-path cutover remain deferred to the grouped end-of-goal gate.
+
+## Local bounded native function-batch evidence
+
+[Decision 0282](../Decisions/0282-Bounded-Native-Function-Batches.md)
+separates one immutable validated lowering plan from deterministic function
+emission. Exact per-function machine and relocation lengths select the largest
+contiguous `WVFA 1` range below a requested ceiling before balanced emission.
+The ordinary complete-object path consumes that same contract as one 4 MiB
+batch and retains byte-identical WVO output.
+
+The focused Windvale adapter forces the ten-function envelope through multiple
+1 KiB batches and proves contiguous progress, exact artifact lengths, bounded
+values, total canonical function-symbol code, and total canonical relocations.
+The reviewed focused compiler selection passes 1/1 in 10.610 test seconds
+after an 8.28-second zero-warning Release build. The canonical 479-byte
+return-42 WVO remains exact at SHA-256
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`.
+
+Direct native source construction produces a 377,219-byte core closure at
+SHA-256
+`71b86801e1754f423a5428c5b588e1b6e2c9b722cde53fabcbfd654e9c2dd48c`,
+a 371,486-byte memory adapter at
+`0e2b509b54b9320efe7d70080ea74afdce771d01ade33c3d915ae088d9d4b278`,
+and a 372,514-byte hosted tool at
+`f2283d33fdcae404a6dd15f6a888c3d1efa359328110fca6d54be1aa67cc1d5c`.
+Current unpromoted packages are 5,348,864 Windows and 5,349,376 Linux bytes at
+SHA-256
+`0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280`
+and `c6ba202ffcb32a261bfd9c997e4bab754ab5a636e2d0b95e5de5f55e598c6358`.
+
+No C# product implementation or WebAssembly implementation changed. The
+stateful large-object publication owner, complete-tool self-lowering,
+Development, Standard, Qualification, Linux execution, artifact promotion,
+ordinary-path cutover, and the grouped end-of-goal gate remain deferred.

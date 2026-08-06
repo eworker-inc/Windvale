@@ -88,6 +88,34 @@ producer must make the same proof within its owned function chunks before
 publication. This boundary does not itself authorize a large-native profile,
 publish a file, widen `bytes`, or change `file.write_bytes` semantics.
 
+### Bounded function artifacts
+
+The lowering core exposes one immutable analysis plan after WVB structure,
+module/profile, capability, data, type, function, export, code, and aggregate
+output validation succeeds. The plan owns the canonical 76-byte function
+directory, exact function-record cursors, per-function relocation byte counts,
+total machine-code and relocation lengths, and the already validated immutable
+data, type, and capability tables. It is phase evidence produced by the core,
+not a serialized input format or a substitute for validating the original WVB.
+
+Given that plan, a function-batch request names the first function ordinal and
+an artifact ceiling from 16 bytes through the ordinary 4 MiB value limit. The
+core selects the largest non-empty contiguous function range whose exact
+`WVFA 1` header, relocation entries, and machine code fit that ceiling. It then
+uses the existing balanced range emitter, requires the emitted relocation and
+code lengths to equal the plan, and returns the exclusive next-function
+ordinal. A function that cannot fit by itself fails with `Outputˉlimit`; an
+invalid emitted artifact fails closed. Traversing batches in ordinal order
+therefore retains canonical code order, canonical relocation order, exact
+machine offsets, and bounded complete values without re-running module
+analysis for every batch.
+
+The ordinary complete-object entry currently requests one 4 MiB batch and
+requires it to contain every function, preserving exact ordinary WVO bytes.
+It does not join multiple batches. A later stateful publisher will traverse
+the same batch contract and the segmentable object regions without changing
+WVO 1.0 or `file.write_bytes`.
+
 ## Adapters
 
 `Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv` exposes `Main(Input: bytes) -> bytes` and returns either the complete WVO or empty bytes. `Compiler/Windvale/Native-X64-Lowering-Tool.wv` is the hosted shell:

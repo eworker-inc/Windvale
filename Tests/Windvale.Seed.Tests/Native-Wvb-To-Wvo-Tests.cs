@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Immutable;
 using Windvale.Bytecode;
 using Windvale.Compiler;
@@ -53,14 +54,17 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_DESCRIPTOR_CALLS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
+    private static readonly string WVB_TO_WVO_BATCH_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Batch-Adapter.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 361_127;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_021_184;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 372_514;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_348_864;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "292ef7b86d7462f5763032ba82c453ac67e7f9f9da84d3d5bca8fff68a7cc702";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_021_696;
+        "0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_349_376;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "2b0ec426fe2b3263a41549b323f9e0c79613923584699db35c46a3fd1bea095e";
+        "c6ba202ffcb32a261bfd9c997e4bab754ab5a636e2d0b95e5de5f55e598c6358";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -88,6 +92,12 @@ internal static partial class Program
         Equal(NATIVE_X64_LOWERING_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
         var Toolˉmodule = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         Equal("Compilerˉnativeˉx64ˉloweringˉtool", Toolˉmodule.Module.Name);
+        var Batchˉadapter = Moduleˉcodec.Readˉandˉverify(
+            Compileˉwvbˉtoˉwvoˉbatchˉsuccess());
+        Equal(
+            "Compilerˉnativeˉx64ˉloweringˉbatchˉtest",
+            Batchˉadapter.Module.Name);
+        Assertˉfunctionˉbatching(Batchˉadapter);
         var Toolˉnative = X64ˉnativeˉbackend.Compile(Toolˉmodule);
         Nativeˉfragmentˉverifier.Verify(Toolˉnative.Fragment);
         Sequenceˉequal(
@@ -514,6 +524,70 @@ internal static partial class Program
             "Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv",
             NATIVE_X64_LOWERING_MEMORY_SOURCE,
             "memory adapter");
+
+    private static byte[] Compileˉwvbˉtoˉwvoˉbatchˉsuccess() =>
+        Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
+            "Tests/Fixtures/Native-X64/Wvb-To-Wvo-Batch-Adapter.wv",
+            WVB_TO_WVO_BATCH_ADAPTER_SOURCE,
+            "function-batch adapter");
+
+    private static void Assertˉfunctionˉbatching(Verifiedˉmodule adapter)
+    {
+        const int Evidenceˉentryˉbytes = 24;
+        const uint Maximumˉartifactˉbytes = 1_024;
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_LARGE_ENVELOPE_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(
+            Expectedˉobject.AsSpan()).Value;
+        var Evidence = new Referenceˉruntime(
+            adapter,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Maximumˉinstructions = 100_000_000,
+            })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray())
+            .Bytes
+            .ToArray();
+
+        Equal(0, Evidence.Length % Evidenceˉentryˉbytes);
+        True(
+            Evidence.Length >= Evidenceˉentryˉbytes * 2,
+            "The bounded function-batch fixture did not cross a batch boundary.");
+        uint Nextˉfunction = 0;
+        uint Codeˉbytes = 0;
+        uint Relocationˉbytes = 0;
+        for (var Offset = 0; Offset < Evidence.Length; Offset += Evidenceˉentryˉbytes)
+        {
+            var Entry = Evidence.AsSpan(Offset, Evidenceˉentryˉbytes);
+            var Firstˉfunction = BinaryPrimitives.ReadUInt32LittleEndian(Entry);
+            var Functionˉcount = BinaryPrimitives.ReadUInt32LittleEndian(Entry[4..]);
+            var Batchˉnext = BinaryPrimitives.ReadUInt32LittleEndian(Entry[8..]);
+            var Artifactˉbytes = BinaryPrimitives.ReadUInt32LittleEndian(Entry[12..]);
+            var Batchˉrelocationˉbytes =
+                BinaryPrimitives.ReadUInt32LittleEndian(Entry[16..]);
+            var Batchˉcodeˉbytes = BinaryPrimitives.ReadUInt32LittleEndian(Entry[20..]);
+            Equal(Nextˉfunction, Firstˉfunction);
+            True(Functionˉcount > 0, "A function batch made no progress.");
+            Equal(Firstˉfunction + Functionˉcount, Batchˉnext);
+            Equal(16u + Batchˉrelocationˉbytes + Batchˉcodeˉbytes, Artifactˉbytes);
+            True(
+                Artifactˉbytes <= Maximumˉartifactˉbytes,
+                "A function batch exceeded its requested byte limit.");
+            Nextˉfunction = Batchˉnext;
+            Codeˉbytes += Batchˉcodeˉbytes;
+            Relocationˉbytes += Batchˉrelocationˉbytes;
+        }
+        Equal((uint)Module.Functions.Length, Nextˉfunction);
+        Equal(
+            Expectedˉview.Symbols
+                .Where(Symbol => Symbol.Kind == Objectˉsymbolˉkind.Function)
+                .Aggregate(0u, (Total, Symbol) => Total + Symbol.Size),
+            Codeˉbytes);
+        Equal((uint)Expectedˉview.Relocations.Length * 8u, Relocationˉbytes);
+    }
 
     private static byte[] Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
         string path,
