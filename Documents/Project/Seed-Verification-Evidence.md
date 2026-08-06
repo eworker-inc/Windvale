@@ -3290,3 +3290,19 @@ byte for byte and independent object admission confirms one x86-64 section,
 one symbol, and zero relocations. No WebAssembly implementation changed.
 Complete backend transfer, native host-container construction, atomic WVO
 publication, grouped qualification, and promotion remain deferred.
+
+## Local digest-bound native AOT-chain test evidence
+
+[Decision 0305](../Decisions/0305-Digest-Bound-Native-Aot-Chain-Test.md)
+adds a permanent fixed-vector test over the pinned native source builder,
+accepted-subset lowerer, WVO verifier, flat linker, and console packager. The
+Windows coordinator checks the exact WVB, WVO, link-map, raw-image, and PE
+identities before directly executing the result and requiring exit 42. No
+managed process or live C# expected-result generator participates.
+
+The direct script completes in 1.4 seconds. After correcting an LF batch
+subroutine-label portability issue, the reviewed focused compiler selection
+passes 1/1 in 0.926 test seconds after a 7.17-second zero-warning Release
+build; the complete command takes 10.5 seconds. No WebAssembly implementation
+changed. Linux execution, grouped qualification, candidate promotion, broader
+native test transfer, and release automation remain deferred.

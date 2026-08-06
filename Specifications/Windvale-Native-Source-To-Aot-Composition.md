@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-This is the implemented candidate composition proof for the accepted metered scalar, structured-control, loop, and direct-call native subset. It combines existing versioned tools; it does not define a new serialized format or claim the complete backend, an ordinary AOT launcher, artifact promotion, or .NET retirement.
+This is the implemented candidate composition proof for the accepted metered scalar, structured-control, loop, and direct-call native subset. Decision 0305 exposes the proof as digest-bound `Test-Aot-Chain.cmd` and `.sh` coordinators over the pinned candidate tools. It does not define a new serialized format or claim the complete backend, an ordinary AOT launcher, artifact promotion, or .NET retirement.
 
 ```text
 Project 1 source
@@ -46,11 +46,11 @@ The focused test must:
 6. execute that container and require process result 42; and
 7. observe no named CLR, .NET host, or runtime mapping in the lowerer, linker, packager, or result process.
 
-The current C# harness constructs the unpromoted lowerer, linker, and packager applications from their exact source candidates. That construction is explicit Stage 0 setup, not part of the child-process chain and not proof that those binaries are independently reproducible from a previous native release.
+The retained C# differential harness still reconstructs the candidates as explicit Stage 0 evidence. The Decision 0305 coordinators instead consume the pinned digest-bound applications directly, check every fixed product identity, and require result 42 without a managed process or live C# expected-result generator. They are the permanent fixed-vector route intended to survive Stage 0 archival.
 
 ## Promotion and retirement boundary
 
-This composition remains candidate evidence until the accumulated source state passes the grouped Windows/Linux gate. After that gate, a separate provenance change may add the exact tool applications to the native-front-door inventory and introduce digest-bound launchers. Complete native lowering, unsupported module routing, release construction, native test ownership, clean previous-native-release bootstrap, and the final archived Stage 0 release remain mandatory under [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md).
+This composition remains candidate evidence until the accumulated source state passes the grouped Windows/Linux gate. Decisions 0301 through 0304 add the exact candidate tools and digest-bound launchers; Decision 0305 composes them without promoting them. Complete native lowering, unsupported module routing, native host-container construction and publication, release construction, broader native test ownership, clean previous-native-release bootstrap, and the final archived Stage 0 release remain mandatory under [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md).
 
 Related contracts:
 
