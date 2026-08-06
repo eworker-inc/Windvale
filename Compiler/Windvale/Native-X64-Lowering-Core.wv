@@ -792,6 +792,7 @@ export fn Compilerˉnativeˉx64ˉsignatureˉtypeˉisˉsupported(Type: u8) -> boo
     if Descriptorˉcalls.Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(Type) {
         return true;
     }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) { return true; }
     return Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type);
 }
 
@@ -1617,24 +1618,6 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                                                             Callˉdirectory,
                                                             Callˉtarget
                                                         );
-                                                    var Recordˉcallˉparameters: u32 = 0u32;
-                                                    Argument = 0u32;
-                                                    while Argument < Callˉparameters {
-                                                        if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
-                                                            Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉtype(
-                                                                Callˉdirectory,
-                                                                Callˉtarget,
-                                                                Argument
-                                                            )
-                                                        ) {
-                                                            Recordˉcallˉparameters =
-                                                                Recordˉcallˉparameters + 1u32;
-                                                        }
-                                                        Argument = Argument + 1u32;
-                                                    }
-                                                    if Recordˉcallˉparameters > 1u32 {
-                                                        return Compilerˉnativeˉx64ˉinvalidˉblock();
-                                                    }
                                                     Stack = Bytesˉconcat(
                                                         Stack,
                                                         Bytesˉfromˉu8(Callˉreturnˉtype)
@@ -1657,6 +1640,11 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                                                     }
                                                     if Callˉreturnˉtype == 6u8 {
                                                         Bytesˉvalues = Bytesˉvalues + 1u32;
+                                                    }
+                                                    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(
+                                                        Callˉreturnˉtype
+                                                    ) {
+                                                        Enumˉvalues = Enumˉvalues + 1u32;
                                                     }
                                                     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
                                                         Callˉreturnˉtype

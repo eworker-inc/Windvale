@@ -6,8 +6,12 @@ enum Weather {
     Storm = 11;
 }
 
+fn Keep(Value: Weather) -> Weather {
+    return Value;
+}
+
 export fn Main() -> i32 {
-    let Value = Weather.Windy;
+    let Value = Keep(Weather.Windy);
     if Value != Weather.Windy { return 1; }
     if Value == Weather.Calm { return 2; }
     let Name = Enumˉname(Value);

@@ -51,13 +51,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 322_484;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 322_477;
     private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_451_328;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "5c3082e718b1559a29bb53cfe9119899685fd63d4f5bf55138f1ed4a383902e6";
+        "96b30a5a0256e753774633063956f8db03e14d2feb5cf9c96212f5427d7061e4";
     private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_452_352;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "5781a507f50a1f49a55b07d92dc4604e9933b72b4a3282f9353ba590e4acbb01";
+        "1ce42f94519df8ad40e3b813c89ac5f30b7dd2d010af6270029f8c8f75f327d8";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -977,6 +977,13 @@ internal static partial class Program
     {
         var Wvb = Compileˉsuccess(WVB_TO_WVO_ENUMS_SOURCE);
         var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Keep = Module.Functions.Single(
+            Function => Function.Declaration.Name == "Keep");
+        Equal(1, Keep.Declaration.Parameterˉtypes.Length);
+        Equal(Valueˉtype.Enum, Keep.Declaration.Parameterˉtypes[0].Kind);
+        Equal(
+            Keep.Declaration.Parameterˉtypes[0],
+            Keep.Declaration.Returnˉtype);
         var Interpreted = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(TextWriter.Null),

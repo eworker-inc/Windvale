@@ -31,4 +31,4 @@ Add one compact test-built module whose record-returning helper has one scalar l
 
 ## Reconsideration triggers
 
-[Decision 0258](0258-Bounded-Native-Multi-Record-Call-Events.md) replaces the single-use record event with bounded multi-record argument accounting. Revisit the compact limits only when a qualified accepted module reaches one of them.
+[Decision 0259](0259-Bounded-Native-Multi-Record-Call-Events.md) replaces the single-use record event with bounded multi-record argument accounting. Revisit the compact limits only when a qualified accepted module reaches one of them.

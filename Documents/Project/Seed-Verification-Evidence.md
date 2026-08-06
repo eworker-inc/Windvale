@@ -2224,7 +2224,7 @@ deferred to the grouped end-of-goal gate.
 
 ## Local bounded native multi-record-call evidence
 
-[Decision 0258](../Decisions/0258-Bounded-Native-Multi-Record-Call-Events.md)
+[Decision 0259](../Decisions/0259-Bounded-Native-Multi-Record-Call-Events.md)
 replaces the record scratch planner's single optional operand with an ordered,
 bounded use list per instruction. Event replay validates every operand before
 releasing any value at its last use, so the existing 64-parameter call directory
@@ -2251,6 +2251,41 @@ and `5781a507f50a1f49a55b07d92dc4604e9933b72b4a3282f9353ba590e4acbb01`.
 A bounded direct self-lowering diagnostic remains fail-closed without output.
 Inspection identifies the active preflight gap precisely as function 117,
 `__WvM1F1(bytes, enum) -> record`; enum parameters and returns are the next slice.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.
+
+## Local native enum-signature evidence
+
+[Decision 0260](../Decisions/0260-Native-Enum-Parameters-And-Returns.md)
+admits bounded enum parameters and returns through ABI 22's existing 32-bit
+scalar path while preserving their exact nominal type in the call directory.
+Returned enum calls now consume the existing enum value-slot group, and the
+obsolete analyzer-only one-record-parameter rejection is removed.
+
+The affected enum test was reviewed before execution and now crosses
+`Keep(Weather) -> Weather` before retaining its existing nominal comparison and
+name-lookup checks. The exact focused native-lowering selection passes in 15.997
+seconds, including Stage 0 native execution returning 42 and byte-for-byte WVO
+equality through both Windvale adapters. The rebuilt test project reports zero
+warnings and errors.
+
+Direct Stage 0 calculations pin the 326,360-byte core closure at SHA-256
+`c8382621573f71770dfc4ab789a7e0938be3787eaddbb84ac333e554e05316ed`.
+The pinned Windows native source front door independently rebuilds the 321,449-byte
+memory adapter and 322,477-byte hosted tool in 31.3 seconds; both are byte-identical
+to Stage 0 at SHA-256
+`8a05ee5bad6367d98e886dc305c1628fe939052c484192bac52d2fe94c06bcef`
+and `bca63a986e4e14815a3fe83a0cafdb2fac20fa3c51bd419fc6381b017d50927d`.
+Current unpromoted Windows and Linux packages retain their 4,451,328 and 4,452,352
+byte lengths at SHA-256
+`96b30a5a0256e753774633063956f8db03e14d2feb5cf9c96212f5427d7061e4`
+and `1ce42f94519df8ad40e3b813c89ac5f30b7dd2d010af6270029f8c8f75f327d8`.
+
+The bounded self-lowering diagnostic advances from `Unsupportedˉfunction` to
+`Unsupportedˉcode` without publishing output. Inspection identifies the first
+unsupported instruction as `u32.format` in `Main` at WVB offset `0x01D1`.
 
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain

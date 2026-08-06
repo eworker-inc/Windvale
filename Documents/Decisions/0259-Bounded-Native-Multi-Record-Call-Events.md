@@ -1,4 +1,4 @@
-# Decision 0258: Bounded native multi-record call events
+# Decision 0259: Bounded native multi-record call events
 
 - Date: 2026-08-05
 - Status: Implemented candidate; grouped dual-host qualification pending
