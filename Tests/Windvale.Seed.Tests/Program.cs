@@ -131,9 +131,11 @@ internal static partial class Program
     private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "480a7dc0e0a23e86ba7f6f73d5fac5cfbf757a8080b486c3b3fa5b23eb7f54ab";
     private const string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SHA256 = "aee0e85b337a070b796b0734209bfa859e47590c33fb82bd60e97d8736f48d89";
     private const string WEBASSEMBLY_BINARY_ENCODING_MEMORY_TOOL_SHA256 = "dd68b60adaaf6eb0d2edfa8671aca08ddcc7a5702a9d1c4c79d245a21166f12a";
-    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "ff31ed0aed7fc3e40582fc74ac2bb7bd5935bc06888e1c12d1481a5b8f77abbd";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "8d0e22bf131addb5c7c0060726cfc9747ad62a4d4dc155bc5e03819da3045fb5";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "48a530bf167f6dffeb2058585409340589c605b0a365207366a04dbe13ef2f05";
+    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "c862142402d52be2a3cfa0b802094d0845e5299f177d04d60d3f2cc5a6aca672";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "e84b83c282a8e03847c46b624148726b204cc09f774c228da114a775d7573359";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "6281a72c8704997640be8164f5ec834a82006f8df33b5ab0084159275fb13767";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_WVB_SHA256 = "ec785b6ad0fe3a72574a3e6587d32bad0719054a8f7d9481ba361a0857086450";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SHA256 = "263aa2bb5c0589f679df3f415b8e3c97eb809a87a0a756d3dc312f79956244cc";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -973,6 +975,10 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Main.wv");
+
+    private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Overflow-Main.wv");
 
     private static readonly string WEBASSEMBLY_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Tool.wv");
@@ -14999,8 +15005,7 @@ internal static partial class Program
             WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Input));
         var Reference = Runˉreferenceˉwebassemblyˉi32(Input);
-        Equal(0, Reference.Status);
-        Equal(42, Reference.Result);
+        Equal(new WebAssemblyˉexecutionˉresult(0, 42, 116), Reference);
 
         var Options = Runtimeˉoptions.Portableˉdefaults with
         {
@@ -15010,7 +15015,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Input.ToImmutableArray());
-        Equal(254, First.Bytes.Length);
+        Equal(3646, First.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_SHA256,
             Moduleˉdigest.Calculateˉsha256(First.Bytes.AsSpan()));
@@ -15024,34 +15029,80 @@ internal static partial class Program
         var Reader = new WebAssemblyˉtestˉreader(First.Bytes.AsSpan());
         Reader.Readˉheader();
         var Typeˉend = Reader.Readˉsection(1);
-        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher type count is invalid.");
-        Reader.Require(Reader.Readˉbyte() == 0x60, "The dispatcher function type is invalid.");
-        Reader.Require(Reader.Readˉuleb32() == 0, "The dispatcher parameter count is invalid.");
-        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher result count is invalid.");
-        Reader.Require(Reader.Readˉbyte() == 0x7F, "The dispatcher result type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 4, "The dispatcher type count is invalid.");
+        for (var Type = 0; Type < 4; Type++)
+        {
+            Reader.Require(Reader.Readˉbyte() == 0x60, "A dispatcher function type is invalid.");
+            Reader.Require(
+                Reader.Readˉuleb32() == (Type == 0 ? 0u : 1u),
+                "A dispatcher parameter count is invalid.");
+            if (Type != 0)
+            {
+                Reader.Require(Reader.Readˉbyte() == 0x7F, "A dispatcher parameter is not i32.");
+            }
+            Reader.Require(Reader.Readˉuleb32() == 1, "A dispatcher result count is invalid.");
+            Reader.Require(Reader.Readˉbyte() == 0x7F, "A dispatcher result type is invalid.");
+        }
         Reader.Require(Reader.Position == Typeˉend, "The dispatcher type section trails.");
         var Functionˉend = Reader.Readˉsection(3);
-        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher function count is invalid.");
-        Reader.Require(Reader.Readˉuleb32() == 0, "The dispatcher type index is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 4, "The dispatcher function count is invalid.");
+        for (uint Function = 0; Function < 4; Function++)
+        {
+            Reader.Require(
+                Reader.Readˉuleb32() == Function,
+                "A dispatcher type index is invalid.");
+        }
         Reader.Require(
             Reader.Position == Functionˉend,
             "The dispatcher function section trails.");
+        var Globalˉend = Reader.Readˉsection(6);
+        Reader.Require(Reader.Readˉuleb32() == 4, "The dispatcher global count is invalid.");
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Require(Reader.Position == Globalˉend, "The dispatcher global section trails.");
         var Exportˉend = Reader.Readˉsection(7);
-        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher export count is invalid.");
-        Reader.Readˉexport("Windvale.run", 0, 0);
+        Reader.Require(Reader.Readˉuleb32() == 3, "The dispatcher export count is invalid.");
+        Reader.Readˉexport("Windvale.run", 0, 3);
+        Reader.Readˉexport("Windvale.result", 3, 0);
+        Reader.Readˉexport("Windvale.instructions", 3, 1);
         Reader.Require(Reader.Position == Exportˉend, "The dispatcher export section trails.");
         var Codeˉend = Reader.Readˉsection(10);
-        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher body count is invalid.");
-        var Bodyˉlength = Reader.Readˉuleb32();
-        Reader.Require(Bodyˉlength <= int.MaxValue, "The dispatcher body is oversized.");
-        Reader.Require(
-            Reader.Position <= Codeˉend - (int)Bodyˉlength,
-            "The dispatcher body is truncated.");
-        Reader.Skip((int)Bodyˉlength);
+        Reader.Require(Reader.Readˉuleb32() == 4, "The dispatcher body count is invalid.");
+        for (var Body = 0; Body < 4; Body++)
+        {
+            var Bodyˉlength = Reader.Readˉuleb32();
+            Reader.Require(Bodyˉlength <= int.MaxValue, "A dispatcher body is oversized.");
+            Reader.Require(
+                Reader.Position <= Codeˉend - (int)Bodyˉlength,
+                "A dispatcher body is truncated.");
+            Reader.Skip((int)Bodyˉlength);
+        }
         Reader.Require(Reader.Position == Codeˉend, "The dispatcher code section trails.");
         Reader.Require(Reader.Position == First.Bytes.Length, "The dispatcher module trails.");
 
-        var Unsupported = Compileˉsuccess(WEBASSEMBLY_SEQUENTIAL_IF_SOURCE);
+        var Overflow = Compileˉsuccess(
+            WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SOURCE);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Overflow));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(3007, 0, 14),
+            Runˉreferenceˉwebassemblyˉi32(Overflow, 100));
+        var Overflowˉlowered = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Overflow.ToImmutableArray());
+        Equal(770, Overflowˉlowered.Bytes.Length);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Overflowˉlowered.Bytes.AsSpan()));
+
+        var Unsupported = Compileˉsuccess(
+            "module Webassemblyˉgeneralˉdispatcherˉunsupported profile portable; " +
+            "export fn Main() -> u32 { let Value: bytes = Bytesˉfromˉu8(1u8); " +
+            "return Bytesˉlength(Value); }");
         Equal(
             0,
             new Referenceˉruntime(

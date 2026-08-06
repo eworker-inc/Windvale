@@ -1,4 +1,4 @@
-# Decision 0318: General scalar dispatcher WebAssembly
+# Decision 0319: General scalar dispatcher WebAssembly
 
 - Date: 2026-08-06
 - Status: Implemented for the measured scalar/control slice with local engine evidence

@@ -613,6 +613,9 @@
       Include="../Fixtures/WebAssembly/General-Dispatcher-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Main.wv" />
     <EmbeddedResource
+      Include="../Fixtures/WebAssembly/General-Dispatcher-Overflow-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Overflow-Main.wv" />
+    <EmbeddedResource
       Include="../../Examples/Compiler/WebAssembly-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />
     <EmbeddedResource

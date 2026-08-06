@@ -1,15 +1,26 @@
 module Webassemblyˉgeneralˉdispatcher profile portable;
 
+fn Signedˉanswer(Value: i32) -> i32 {
+    return -(-((Value + 2) - 1) * 1);
+}
+
+fn Unsignedˉanswer(Value: u32) -> u32 {
+    return ((Value + 2u32) - 1u32) * 1u32;
+}
+
 export fn Main() -> i32 {
     var Again: bool = true;
-    var Result: i32 = 1;
+    var Result: i32 = 40;
 
     while Again {
         Again = false;
-        if Result == 1 {
-            Result = 42;
+        if Result == 40 {
+            Result = 40;
         }
     }
 
-    return Result;
+    if Unsignedˉanswer(40u32) == 41u32 {
+        return Signedˉanswer(Result) + 1;
+    }
+    return 0;
 }
