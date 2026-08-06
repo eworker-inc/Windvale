@@ -1,0 +1,9 @@
+windvale-assembly 1
+
+symbol export data Missing in .data
+
+section data .data align 1
+define Missing
+bytes 0
+end define
+end section

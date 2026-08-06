@@ -9,9 +9,16 @@ internal static partial class Program
         Equal(0, Result.Exitˉcode);
         Equal(
             "PASS  invalid-base\n" +
-            "PASS  missing-entry\n" +
             "PASS  malformed-object\n" +
-            "Tests: 3, Passed: 3, Failed: 0\n",
+            "PASS  aggregate-limit\n" +
+            "PASS  duplicate-export\n" +
+            "PASS  undefined-import\n" +
+            "PASS  kind-mismatch\n" +
+            "PASS  missing-entry\n" +
+            "PASS  layout-overflow\n" +
+            "PASS  absolute-overflow\n" +
+            "PASS  relative-overflow\n" +
+            "Tests: 10, Passed: 10, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

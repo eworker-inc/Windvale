@@ -46,12 +46,13 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native console-application publication](Decisions/0307-Native-Console-Application-Publication.md) — portable PE/ELF admission plus reused native atomic replacement for digest-bound packaging
 - [Native WVO publication](Decisions/0308-Native-Wvo-Publication.md) — shared portable WVO admission plus reused native atomic replacement for accepted-subset lowering
 - [Fixed native WVO test cases](Decisions/0310-Fixed-Native-Wvo-Test-Cases.md) — one accepted object and three structural rejections in the digest-bound .NET-free native plan
-- [Fixed native linker rejections](Decisions/0311-Fixed-Native-Linker-Rejections.md) — exact invalid-base, missing-entry, and malformed-object reports with output preservation
+- [Fixed native linker rejections](Decisions/0311-Fixed-Native-Linker-Rejections.md) — initial invalid-base, missing-entry, and malformed-object reports with output preservation
 - [Fixed native console-packager rejections](Decisions/0313-Fixed-Native-Console-Packager-Rejections.md) — exact entry and empty-image rejection reports with destination preservation
 - [Fixed native publisher rejections](Decisions/0314-Fixed-Native-Publisher-Rejections.md) — invalid console-application and WVO admission with destination preservation and zero scratch
 - [Fixed native WVB-to-WVO rejections](Decisions/0317-Fixed-Native-Wvb-To-Wvo-Rejections.md) — malformed and valid-but-unsupported lowerer failures with exact reports and destination preservation
 - [Fixed native WVA assembler rejection families](Decisions/0321-Fixed-Native-Wva-Assembler-Rejection-Families.md) — one exact output-preserving case for every stable WVA diagnostic family
 - [Fixed native WVO read-only rejection families](Decisions/0322-Fixed-Native-Wvo-Read-Only-Rejection-Families.md) — identical exact verifier and inspector reports for all thirteen stable WVO status families
+- [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

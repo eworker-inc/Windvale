@@ -72,13 +72,22 @@ Its exact success report is:
 
 ```text
 PASS  invalid-base
-PASS  missing-entry
 PASS  malformed-object
-Tests: 3, Passed: 3, Failed: 0
+PASS  aggregate-limit
+PASS  duplicate-export
+PASS  undefined-import
+PASS  kind-mismatch
+PASS  missing-entry
+PASS  layout-overflow
+PASS  absolute-overflow
+PASS  relative-overflow
+Tests: 10, Passed: 10, Failed: 0
 ```
 
-All three cases require deterministic linker rejection, empty standard output,
-an exact report identity, and byte-for-byte preservation of an existing output.
+All ten cases require deterministic linker rejection, empty standard output, an
+exact report identity, and byte-for-byte preservation of an existing output.
+The internal `WVL1011` reconstruction trap and large-map `WVL1012` limit retain
+separate focused evidence.
 
 The focused console-packager rejection command likewise avoids source building,
 linking, and successful AOT execution. On Windows x64 run:

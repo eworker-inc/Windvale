@@ -26,6 +26,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0322](../Decisions/0322-Fixed-Native-Wvo-Read-Only-Rejection-Families.md) fixes all thirteen stable WVO 1.0 rejection families through both digest-bound native read-only launchers, requiring identical reports and unchanged inputs without a live C# oracle. Linux execution of this matrix and the grouped retirement gate still precede WVO ordinary-path promotion.
 
+[Decision 0325](../Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) expands the fixed linker command to every externally driven `WVL1001` through `WVL1010` family with exact reports and destination preservation. The internal `WVL1011` reconstruction trap and large-map `WVL1012` boundary retain separate evidence; Linux execution and the grouped gate still precede linker promotion.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

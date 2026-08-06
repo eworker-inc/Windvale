@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHL 1` packages the canonical Windvale-written `Wvˉlinkerˉcore` as paired Windows x64 and Linux x64 command-line applications. This source candidate is not yet the ordinary front door: the C# CLI remains the normal and recovery linker until the exact candidate and a later pinned-artifact promotion both pass the independent Windows/Linux gate.
+`WVHL 1` packages the canonical Windvale-written `Wvˉlinkerˉcore` as paired Windows x64 and Linux x64 command-line applications. Digest-bound candidate launchers exist for both hosts, but they are not yet the ordinary front door: the C# CLI remains the normal and recovery linker until the exact candidate passes the independent Windows/Linux gate and is promoted.
 
 The product logic remains in `Linker/Windvale/Wv-Linker-Core.wv`. It owns WVO admission, resolution, layout, relocation, independent image reconstruction, canonical-map construction, SHA-256 identities, and publish-after-success behavior. The package adds no second linker implementation.
 
@@ -60,11 +60,26 @@ The focused candidate test reconstructs both containers, checks exact capabiliti
 
 `Tools/Native/Test-Linker-Rejections.cmd` and `.sh` exercise only the pinned
 linker launcher and repository-owned WVO fixtures. They do not rebuild the
-source, repeat the successful AOT chain, invoke .NET, or consult a live Stage 0
-oracle. The decoded canonical input is 479 bytes at SHA-256
+source or fixtures, repeat the successful AOT chain, invoke .NET, or consult a
+live Stage 0 oracle. The decoded canonical input is 479 bytes at SHA-256
 `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`;
 the malformed input and output sentinel are 479 bytes at SHA-256
 `0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288`.
+
+Five compact WVA sources preserve fixture provenance. Their fixed WVO values
+are:
+
+| Fixture | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `Many-Sections.wvo` | 1,560 | `09cad03b9bf0543db2dec815f3f20deff044f5226e9347314b8c4d9a9e1020f8` |
+| `Unresolved-Import.wvo` | 126 | `569926307b578cd1bf90dfb2b3c70eeb4b5ec7eff8e638e83613e89463717617` |
+| `Wrong-Kind-Provider.wvo` | 77 | `1276a484c52d48996a7d781121f85cab93ecde729cb6ce18dd7c77b4bdb98ce6` |
+| `Absolute-Overflow.wvo` | 150 | `994bc31ed39548dbd9339e7b0d2ac9b58936250b3603f90e84bda51f74b8bb11` |
+| `Relative-Overflow.wvo` | 125 | `4d6dcc8211e02399e8ba38fbbec94dcd11c15842efe09fd8af615e25b57d7a48` |
+
+The first three are exact assembler outputs. The last two differ from their
+source-built WVO only in the final relocation addend, which is fixed to signed
+maximum `2147483647` to reach checked arithmetic rejection.
 
 Each case must return `2`, write no standard output, preserve the complete
 sentinel, and emit one LF-terminated diagnostic whose complete SHA-256 is:
@@ -72,13 +87,21 @@ sentinel, and emit one LF-terminated diagnostic whose complete SHA-256 is:
 | Case | Diagnostic | Report SHA-256 |
 | --- | --- | --- |
 | `invalid-base` | `WVL1001`, invalid unsigned base address | `b5a687af92c9eca7eb5ba850bddf6dec932c94a6be304af35357655a915056b8` |
-| `missing-entry` | `WVL1007`, missing `Missing` entry | `883ad60b71d4c010d4a2ddf168199dfaae04d1e076313ee1cf4dac8bee67a517` |
 | `malformed-object` | `WVL1002`, bad-magic input zero | `18eeeeb5d84e82c54cf14480bc5c54e593f5cd429d68686ad64110d9780a5353` |
+| `aggregate-limit` | `WVL1003`, fifth 64-section input | `33ecb82d77ff1f307b60a18993edf46807a39bf66ab7091054fc9ee7ad04ef61` |
+| `duplicate-export` | `WVL1004`, second `Main` export | `cd8c0a1c80784f3d6db68984fe07f9bcbc0657c12e548bd923efad7f2666c324` |
+| `undefined-import` | `WVL1005`, unresolved `Missing` function | `448d3e4eb8053d1aca41ebcdcf61af3d8519f3fea033859f82eb95d63ac275e0` |
+| `kind-mismatch` | `WVL1006`, function import resolved to data | `047bea593cba87e948ea03c3cee09c5b04879683a1eb5856b9d0d30f7f774441` |
+| `missing-entry` | `WVL1007`, missing `Missing` entry | `883ad60b71d4c010d4a2ddf168199dfaae04d1e076313ee1cf4dac8bee67a517` |
+| `layout-overflow` | `WVL1008`, maximum base with nonempty image | `9c393cdbef3dc4a6dbe28ae5ba0c77fc56166a84b30c845bee78475f2679912d` |
+| `absolute-overflow` | `WVL1009`, target plus signed-maximum addend | `1867b048e4c725d2ea76f0ed0dd28b80f360fe07395d17ff62b743d5bc974b74` |
+| `relative-overflow` | `WVL1010`, displacement plus signed-maximum addend | `d8a7ac5340b29066470b5656c840654221b508702cbc62ebfcecf7f36aa66e67` |
 
-Success prints the three ordered `PASS` lines followed by
-`Tests: 3, Passed: 3, Failed: 0` plus LF. This is a bounded permanent fixture
-set, not a replacement for the complete resolution, layout, relocation,
-hostile-input, randomized, or concurrency corpus.
+Success prints the ten ordered `PASS` lines followed by
+`Tests: 10, Passed: 10, Failed: 0` plus LF. `WVL1011` remains an internal
+independent-reconstruction trap rather than an externally driven family;
+`WVL1012` retains separate large-map limit evidence. This bounded permanent set
+does not replace randomized hostile-input or concurrency coverage.
 
 ## Qualification gate
 
@@ -90,4 +113,4 @@ Promotion to the ordinary linker front door requires one exact source commit to 
 - no CLR/.NET module or mapping in the linker process; and
 - no regression in WVO, Windvale Linking 1, native ABI, capability, or hosted-service contracts.
 
-After that source gate, pin both platform applications and add digest-bound native launchers in a separate provenance commit. Only the exact pinned-artifact commit passing both hosts moves ordinary linking to the launchers. `windvale link` then remains the explicit Stage 0 recovery/differential command until Decision 0057's complete archive gate permits deletion.
+Decision 0302 already pins both platform applications behind digest-bound native launchers. Only an exact descendant containing those launchers and Decision 0325's expanded rejection matrix that passes both hosts moves ordinary linking to them. `windvale link` then remains the explicit Stage 0 recovery/differential command until Decision 0057's complete archive gate permits deletion.

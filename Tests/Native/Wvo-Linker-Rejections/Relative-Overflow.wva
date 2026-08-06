@@ -1,0 +1,14 @@
+windvale-assembly 1
+
+# The fixed WVO changes this relocation addend from -4 to 2147483647.
+symbol local function Target in .text
+symbol export function Main in .text
+
+section code .text align 1
+define Main
+call Target
+end define
+define Target
+return
+end define
+end section

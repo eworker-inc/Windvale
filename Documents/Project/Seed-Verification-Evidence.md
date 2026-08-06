@@ -3404,8 +3404,11 @@ end-of-goal gate remain deferred.
 
 ## Local fixed native linker-rejection evidence
 
-[Decision 0311](../Decisions/0311-Fixed-Native-Linker-Rejections.md) adds a
-focused .NET-free coordinator over the digest-bound native linker. It reuses the
+[Decision 0311](../Decisions/0311-Fixed-Native-Linker-Rejections.md) establishes
+a focused .NET-free coordinator over the digest-bound native linker.
+[Decision 0325](../Decisions/0325-Expanded-Native-Linker-Rejection-Families.md)
+expands that command from three cases to every externally driven `WVL1001`
+through `WVL1010` family. It reuses the
 479-byte canonical WVO at SHA-256
 `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`
 and the 479-byte bad-magic WVO at SHA-256
@@ -3413,23 +3416,37 @@ and the 479-byte bad-magic WVO at SHA-256
 The latter is also copied to the output path before every case so rejection must
 preserve its complete identity.
 
-The fixed reports are:
+Five compact WVA sources preserve the new fixtures' provenance. The many-section,
+unresolved-import, and wrong-kind objects are exact assembler outputs. The
+absolute and relative overflow objects differ from their source-built WVO only
+in the final relocation addend fixed to `2147483647`. Their decoded byte lengths
+are 1,560, 126, 77, 150, and 125; all complete identities are pinned in the
+native linker contract.
 
-- invalid base, `WVL1001`:
-  `b5a687af92c9eca7eb5ba850bddf6dec932c94a6be304af35357655a915056b8`;
-- missing `Missing` entry, `WVL1007`:
-  `883ad60b71d4c010d4a2ddf168199dfaae04d1e076313ee1cf4dac8bee67a517`;
-- bad-magic object, `WVL1002`:
-  `18eeeeb5d84e82c54cf14480bc5c54e593f5cd429d68686ad64110d9780a5353`.
+The ten LF-terminated report identities are:
 
-Direct Windows execution passes all three cases in about 1.2 seconds. After
-reviewing the wrapper's exact report, the focused selection
+| Status | Case | Report SHA-256 |
+| --- | --- | --- |
+| `WVL1001` | invalid base | `b5a687af92c9eca7eb5ba850bddf6dec932c94a6be304af35357655a915056b8` |
+| `WVL1002` | bad-magic object | `18eeeeb5d84e82c54cf14480bc5c54e593f5cd429d68686ad64110d9780a5353` |
+| `WVL1003` | aggregate section limit | `33ecb82d77ff1f307b60a18993edf46807a39bf66ab7091054fc9ee7ad04ef61` |
+| `WVL1004` | duplicate export | `cd8c0a1c80784f3d6db68984fe07f9bcbc0657c12e548bd923efad7f2666c324` |
+| `WVL1005` | unresolved import | `448d3e4eb8053d1aca41ebcdcf61af3d8519f3fea033859f82eb95d63ac275e0` |
+| `WVL1006` | import kind mismatch | `047bea593cba87e948ea03c3cee09c5b04879683a1eb5856b9d0d30f7f774441` |
+| `WVL1007` | missing entry | `883ad60b71d4c010d4a2ddf168199dfaae04d1e076313ee1cf4dac8bee67a517` |
+| `WVL1008` | layout overflow | `9c393cdbef3dc4a6dbe28ae5ba0c77fc56166a84b30c845bee78475f2679912d` |
+| `WVL1009` | absolute relocation overflow | `1867b048e4c725d2ea76f0ed0dd28b80f360fe07395d17ff62b743d5bc974b74` |
+| `WVL1010` | relative relocation overflow | `d8a7ac5340b29066470b5656c840654221b508702cbc62ebfcecf7f36aa66e67` |
+
+Direct Windows execution passes 10/10 in 2.9 seconds. After reviewing the merged
+wrapper and exact report, the focused selection
 `native linker rejections preserve existing output without .NET` passes 1/1 in
-0.815 test seconds after a 15.25-second zero-warning Release build; the complete
-command takes 20.7 seconds. The permanent command does not run .NET, rebuild
-source, or repeat the successful AOT chain. No WebAssembly implementation
-changed. Linux execution, Development, Standard, Qualification, promotion,
-broader linker-corpus transfer, and the grouped end-of-goal gate remain deferred.
+2.533 test seconds after a 9.19-second zero-warning Release build; the complete
+command takes 15.1 seconds. The permanent command does not run .NET, rebuild
+the linker or fixtures, or repeat the successful AOT chain. No WebAssembly
+implementation changed. Internal `WVL1011`, large-map `WVL1012`, Linux execution,
+Development, Standard, Qualification, promotion, randomized hostile input, and
+the grouped end-of-goal gate remain deferred.
 
 ## Local fixed native console-packager rejection evidence
 

@@ -1,0 +1,17 @@
+windvale-assembly 1
+
+# The fixed WVO changes this relocation addend from 0 to 2147483647.
+symbol local data Pointer in .data
+symbol export function Main in .text
+
+section code .text align 1
+define Main
+return
+end define
+end section
+
+section data .data align 1
+define Pointer
+address_u32 Main
+end define
+end section
