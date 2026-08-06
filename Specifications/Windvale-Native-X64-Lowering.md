@@ -241,6 +241,21 @@ rejection exposes named status and zeroes. The scalar ABI bridge reruns the
 same validation over the same immutable snapshots for each query. Relocation
 semantics and code-placeholder validation remain separate.
 
+Decision 0291's following reader consumes the actual relocation chunk and
+accepts only the native compiler's canonical 20-byte `Relative_i32` records:
+zero flags/reserved fields, section zero, addend `-4`, ascending nonoverlapping
+four-byte code ranges, and targets limited to the admitted data symbols. It
+derives exact code length from the validated function ranges and requires any
+optional text padding to begin at one manifest boundary. Valid summary evidence
+exposes code bytes, text-chunk count, and relocation count; rejection exposes
+named status and zeroes. A per-text-chunk call binds the actual bounded chunk to
+its manifest entry, rejects code/padding crossings, requires every owned
+relocation placeholder to contain four zero bytes, and requires the separate
+padding chunk to contain only `0x90`. The scalar ABI bridge reruns the same
+checks over borrowed snapshots. The fixed adapter must call this validator for
+every admitted text chunk. Arbitrary non-placeholder code bytes, immutable-data
+content, and staged resource identity remain separate publication evidence.
+
 A native commit adapter must preserve the exact
 validated manifest snapshot, bind each staged-resource identity, reject
 missing or changed chunks, reconstruct and verify the complete WVO, and then

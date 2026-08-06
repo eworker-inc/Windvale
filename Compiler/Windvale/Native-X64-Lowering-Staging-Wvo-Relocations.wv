@@ -1,0 +1,304 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
+
+export enum Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus {
+    Valid = 0;
+    Symbols = 1;
+    Relocationˉchunk = 2;
+    Flags = 3;
+    Shape = 4;
+    Order = 5;
+    Range = 6;
+    Target = 7;
+    Paddingˉboundary = 8;
+    Textˉchunkˉindex = 9;
+    Textˉchunkˉlength = 10;
+    Placeholder = 11;
+    Padding = 12;
+}
+
+export record Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary {
+    Status: Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus;
+    Codeˉbytes: u32;
+    Textˉchunks: u32;
+    Relocations: u32;
+}
+
+fn Invalid(
+    Status: Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary {
+    return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary(
+        Status,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Accepted(
+    Codeˉbytes: u32,
+    Textˉchunks: u32,
+    Relocations: u32
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary {
+    return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary(
+        Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid,
+        Codeˉbytes,
+        Textˉchunks,
+        Relocations
+    );
+}
+
+fn Chunkˉlengthˉatˉposition(
+    Stagingˉmanifest: bytes,
+    Chunks: u32,
+    Position: u32
+) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Chunks {
+        let Entry: u32 = 24u32 + Index * 12u32;
+        let Entryˉposition: u32 =
+            Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+        if Entryˉposition == Position {
+            return Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32);
+        }
+        if Entryˉposition > Position { return 0u32; }
+        Index = Index + 1u32;
+    }
+    return 0u32;
+}
+
+fn Measureˉcodeˉbytes(Prefix: bytes, Symbolˉchunk: bytes) -> u32 {
+    let Symbolˉcount: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 16u32);
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Result: u32 = 0u32;
+    while Index < Symbolˉcount {
+        if Bytesˉreadˉu8(Symbolˉchunk, Cursor + 1u32) == 1u8 {
+            let Offset: u32 =
+                Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 8u32);
+            let Size: u32 =
+                Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 12u32);
+            let End: u32 = Offset + Size;
+            if End > Result { Result = End; }
+        }
+        let Nameˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 16u32);
+        Cursor = Cursor + 20u32 + Nameˉbytes;
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Textˉchunkˉcount(
+    Stagingˉmanifest: bytes,
+    Chunks: u32,
+    Textˉbytes: u32
+) -> u32 {
+    let Textˉend: u32 = 49u32 + Textˉbytes;
+    var Index: u32 = 1u32;
+    var Result: u32 = 0u32;
+    while Index < Chunks {
+        let Entry: u32 = 24u32 + Index * 12u32;
+        let Position: u32 =
+            Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+        if Position >= Textˉend { return Result; }
+        Result = Result + 1u32;
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary {
+    let Symbolˉsummary:
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk
+        );
+    if Symbolˉsummary.Status !=
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Symbols
+        );
+    }
+    if Bytesˉlength(Relocationˉchunk) != Symbolˉsummary.Relocationˉbytes {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Relocationˉchunk
+        );
+    }
+    let Envelopeˉsummary:
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader
+        );
+    let Manifestˉsummary:
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    let Codeˉlength: u32 = Measureˉcodeˉbytes(Prefix, Symbolˉchunk);
+    let Paddingˉbytes: u32 = Envelopeˉsummary.Textˉbytes - Codeˉlength;
+    if Paddingˉbytes > 0u32 {
+        if Chunkˉlengthˉatˉposition(
+            Stagingˉmanifest,
+            Manifestˉsummary.Chunks,
+            49u32 + Codeˉlength
+        ) != Paddingˉbytes {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Paddingˉboundary
+            );
+        }
+    }
+
+    var Relocation: u32 = 0u32;
+    var Previousˉoffset: u32 = 0u32;
+    while Relocation < Envelopeˉsummary.Relocations {
+        let Entry: u32 = Relocation * 20u32;
+        if Bytesˉreadˉu8(Relocationˉchunk, Entry) != 2u8 ||
+            Bytesˉreadˉu32ˉlittle(Relocationˉchunk, Entry + 4u32) != 0u32 ||
+            Bytesˉreadˉi32ˉlittle(Relocationˉchunk, Entry + 16u32) != -4 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Shape
+            );
+        }
+        if Bytesˉreadˉu8(Relocationˉchunk, Entry + 1u32) != 0u8 ||
+            Bytesˉreadˉu16ˉlittle(Relocationˉchunk, Entry + 2u32) != 0u32 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Flags
+            );
+        }
+        let Offset: u32 =
+            Bytesˉreadˉu32ˉlittle(Relocationˉchunk, Entry + 8u32);
+        if Offset > Codeˉlength || 4u32 > Codeˉlength - Offset {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Range
+            );
+        }
+        if Relocation > 0u32 {
+            if Offset < Previousˉoffset + 4u32 {
+                return Invalid(
+                    Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Order
+                );
+            }
+        }
+        if Bytesˉreadˉu32ˉlittle(
+            Relocationˉchunk,
+            Entry + 12u32
+        ) >= Symbolˉsummary.Dataˉsymbols {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Target
+            );
+        }
+        Previousˉoffset = Offset;
+        Relocation = Relocation + 1u32;
+    }
+    return Accepted(
+        Codeˉlength,
+        Textˉchunkˉcount(
+            Stagingˉmanifest,
+            Manifestˉsummary.Chunks,
+            Envelopeˉsummary.Textˉbytes
+        ),
+        Envelopeˉsummary.Relocations
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes,
+    Chunkˉindex: u32,
+    Chunk: bytes
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus {
+    let Summary: Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
+        Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if Summary.Status !=
+        Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
+        return Summary.Status;
+    }
+    let Envelopeˉsummary:
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader
+        );
+    let Manifestˉsummary:
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Chunkˉindex == 0u32 || Chunkˉindex >= Manifestˉsummary.Chunks {
+        return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Textˉchunkˉindex;
+    }
+    let Entry: u32 = 24u32 + Chunkˉindex * 12u32;
+    let Position: u32 =
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+    let Length: u32 =
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32);
+    if Length != Bytesˉlength(Chunk) {
+        return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Textˉchunkˉlength;
+    }
+    let Textˉend: u32 = 49u32 + Envelopeˉsummary.Textˉbytes;
+    if Position < 49u32 || Position >= Textˉend ||
+        Length > Textˉend - Position {
+        return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Textˉchunkˉindex;
+    }
+    let Codeˉend: u32 = 49u32 + Summary.Codeˉbytes;
+    if Position < Codeˉend {
+        if Length > Codeˉend - Position {
+            return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Paddingˉboundary;
+        }
+        var Relocation: u32 = 0u32;
+        while Relocation < Summary.Relocations {
+            let Relocationˉentry: u32 = Relocation * 20u32;
+            let Placeholderˉposition: u32 = 49u32 +
+                Bytesˉreadˉu32ˉlittle(
+                    Relocationˉchunk,
+                    Relocationˉentry + 8u32
+                );
+            if Placeholderˉposition >= Position &&
+                Placeholderˉposition < Position + Length {
+                let Localˉoffset: u32 = Placeholderˉposition - Position;
+                if 4u32 > Length - Localˉoffset ||
+                    Bytesˉreadˉu32ˉlittle(Chunk, Localˉoffset) != 0u32 {
+                    return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Placeholder;
+                }
+            }
+            Relocation = Relocation + 1u32;
+        }
+        return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid;
+    }
+    if Position != Codeˉend || Length != Envelopeˉsummary.Textˉbytes - Summary.Codeˉbytes {
+        return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Paddingˉboundary;
+    }
+    var Paddingˉindex: u32 = 0u32;
+    while Paddingˉindex < Length {
+        if Bytesˉreadˉu8(Chunk, Paddingˉindex) != 144u8 {
+            return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Padding;
+        }
+        Paddingˉindex = Paddingˉindex + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid;
+}

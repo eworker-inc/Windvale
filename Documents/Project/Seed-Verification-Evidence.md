@@ -3047,3 +3047,36 @@ Relocation semantics, code placeholders, all section-data chunks, resource
 identity, replacement/cleanup, complete-tool, Development, Standard,
 Qualification, Linux, promotion, ordinary-path, and grouped end-of-goal gates
 remain deferred.
+
+## Local bounded compiler-WVO relocation and placeholder evidence
+
+[Decision 0291](../Decisions/0291-Bounded-Compiler-Wvo-Relocation-And-Placeholder-Verification.md)
+adds a focused capability-free reader for the exact relocation chunk admitted
+by the symbol boundary. It accepts only ordered, nonoverlapping section-zero
+`Relative_i32` records with addend `-4`, ranges wholly inside derived code, and
+targets naming admitted data symbols. Its per-text-chunk call binds the actual
+bounded value to the manifest entry, proves every owned relocation field is a
+four-byte zero placeholder, and requires a separate padding chunk to contain
+only `0x90`. The API defines `Valid` plus twelve named rejection statuses;
+summary failure admits no size or count evidence.
+
+The focused matrix accepts relocation-free, one-relocation, and padded layouts.
+It rejects invalid preceding symbols, relocation length, flags, shape, order,
+range, target, padding boundary, text-chunk index and length, nonzero
+placeholders, and invalid padding. A capability-free native runner exercises
+the valid summary, valid chunk, and invalid-placeholder paths, passes fragment
+verification, requires zero services, executes as x86-64 machine code, and
+returns 42. The reviewed compiler selection passes 1/1 in 1.990 test seconds
+after a 22.55-second zero-warning Release build; total command time is 28.680
+seconds.
+
+Stage 0 and the native source front door independently produce the same
+six-module artifacts. The evidence adapter is 41,953 bytes at SHA-256
+`9e0dfc3db2e8c03f903e7a40e13bbb3c1b56a9f938420e5e5535c80c1f4c5d2a`;
+the native runner is 40,660 bytes at SHA-256
+`b254d54d29f162fb0a3232c052bbe985885d2e9b94bf7d732002c6adac1e7d30`.
+
+No C# product implementation or WebAssembly implementation changed. Arbitrary
+non-placeholder code bytes, immutable-data content, staged-resource identity,
+replacement/cleanup, complete-tool, Development, Standard, Qualification,
+Linux, promotion, ordinary-path, and grouped end-of-goal gates remain deferred.

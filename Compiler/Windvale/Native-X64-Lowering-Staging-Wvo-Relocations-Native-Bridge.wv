@@ -1,0 +1,173 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocationsˉnativeˉbridge profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations as Relocations;
+
+fn Summary(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary {
+    return Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk
+    );
+}
+
+fn Statusˉvalue(
+    Status: Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus
+) -> u32 {
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
+        return 0u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Symbols {
+        return 1u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Relocationˉchunk {
+        return 2u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Flags {
+        return 3u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Shape {
+        return 4u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Order {
+        return 5u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Range {
+        return 6u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Target {
+        return 7u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Paddingˉboundary {
+        return 8u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Textˉchunkˉindex {
+        return 9u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Textˉchunkˉlength {
+        return 10u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Placeholder {
+        return 11u32;
+    }
+    return 12u32;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉvalidate(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> u32 {
+    let Result:
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
+        Summary(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    return Statusˉvalue(
+        Result.Status
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉcodeˉbytes(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> u32 {
+    let Result:
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
+        Summary(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    return Result.Codeˉbytes;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtextˉchunks(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> u32 {
+    let Result:
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
+        Summary(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    return Result.Textˉchunks;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉcount(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> u32 {
+    let Result:
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
+        Summary(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    return Result.Relocations;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtextˉchunk(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes,
+    Chunkˉindex: u32,
+    Chunk: bytes
+) -> u32 {
+    return Statusˉvalue(
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            Chunkˉindex,
+            Chunk
+        )
+    );
+}

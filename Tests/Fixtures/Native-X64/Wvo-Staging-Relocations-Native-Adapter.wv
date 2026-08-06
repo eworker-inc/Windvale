@@ -1,0 +1,102 @@
+module Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtest profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocationsˉnativeˉbridge as Bridge;
+
+data Stagingˉmanifest: bytes = [
+    87, 86, 79, 80, 1, 0, 0, 0,
+    96, 0, 0, 0, 199, 0, 0, 0,
+    6, 0, 0, 0, 0, 0, 64, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 0,
+    1, 0, 0, 0, 49, 0, 0, 0, 10, 0, 0, 0,
+    2, 0, 0, 0, 59, 0, 0, 0, 27, 0, 0, 0,
+    3, 0, 0, 0, 86, 0, 0, 0, 5, 0, 0, 0,
+    4, 0, 0, 0, 91, 0, 0, 0, 88, 0, 0, 0,
+    5, 0, 0, 0, 179, 0, 0, 0, 20, 0, 0, 0,
+];
+
+data Prefix: bytes = [
+    87, 86, 79, 49, 1, 0, 0, 0,
+    1, 0, 0, 0, 2, 0, 0, 0,
+    3, 0, 0, 0, 1, 0, 0, 0,
+    1, 0, 0, 0, 16, 0, 0, 0,
+    10, 0, 0, 0, 10, 0, 0, 0,
+    5, 0, 0, 0, 46, 116, 101, 120, 116,
+];
+
+data Readˉonlyˉheader: bytes = [
+    2, 0, 0, 0, 16, 0, 0, 0,
+    5, 0, 0, 0, 5, 0, 0, 0,
+    7, 0, 0, 0, 46, 114, 111, 100, 97, 116, 97,
+];
+
+data Symbolˉchunk: bytes = [
+    1, 2, 0, 0, 1, 0, 0, 0,
+    0, 0, 0, 0, 5, 0, 0, 0,
+    10, 0, 0, 0, 36, 100, 97, 116, 97, 95, 48, 48, 48, 48,
+    1, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 4, 0, 0, 0,
+    14, 0, 0, 0, 36, 102, 117, 110, 99, 116, 105, 111, 110, 95,
+    48, 48, 48, 48,
+    2, 1, 0, 0, 0, 0, 0, 0,
+    4, 0, 0, 0, 6, 0, 0, 0,
+    4, 0, 0, 0, 77, 97, 105, 110,
+];
+
+data Relocationˉchunk: bytes = [
+    2, 0, 0, 0, 0, 0, 0, 0,
+    2, 0, 0, 0, 0, 0, 0, 0,
+    252, 255, 255, 255,
+];
+
+data Textˉchunk: bytes = [1, 2, 0, 0, 0, 0, 7, 8, 9, 10];
+data Invalidˉtextˉchunk: bytes = [1, 2, 1, 0, 0, 0, 7, 8, 9, 10];
+
+export fn Main() -> i32 {
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉvalidate(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk
+    ) != 0u32 { return 1; }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉcodeˉbytes(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk
+    ) != 10u32 { return 2; }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtextˉchunks(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk
+    ) != 1u32 { return 3; }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉcount(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk
+    ) != 1u32 { return 4; }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtextˉchunk(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        1u32,
+        Textˉchunk
+    ) != 0u32 { return 5; }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtextˉchunk(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        1u32,
+        Invalidˉtextˉchunk
+    ) != 11u32 { return 6; }
+    return 42;
+}
