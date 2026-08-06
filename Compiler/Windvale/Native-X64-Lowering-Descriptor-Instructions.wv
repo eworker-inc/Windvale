@@ -11,6 +11,22 @@ data U32ˉfromˉu8ˉtemplate: bytes = [
     137, 132, 36, 0, 0, 0, 0
 ];
 
+data U32ˉdivideˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    133, 201, 15, 132, 0, 0, 0, 0,
+    49, 210, 247, 241,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data U32ˉremainderˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    133, 201, 15, 132, 0, 0, 0, 0,
+    49, 210, 247, 241, 137, 208,
+    137, 132, 36, 0, 0, 0, 0
+];
+
 export record Compilerˉnativeˉx64ˉdescriptorˉinstruction {
     Input: bytes;
     Offset: u32;
@@ -18,6 +34,7 @@ export record Compilerˉnativeˉx64ˉdescriptorˉinstruction {
     Boundsˉtarget: u32;
     Runtimeˉtarget: u32;
     Invalidˉutf8ˉtarget: u32;
+    Divisionˉbyˉzeroˉtarget: u32;
 }
 
 export record Compilerˉnativeˉx64ˉdescriptorˉlayout {
@@ -92,6 +109,60 @@ fn Emitˉu32ˉfromˉu8ˉmachineˉcode(
     Instruction = Patchˉu32(Instruction, 3u32, Source * 16u32);
     Instruction = Patchˉu32(Instruction, 10u32, Target * 16u32);
     return Bytesˉconcat(Result, Instruction);
+}
+
+export fn Compilerˉnativeˉx64ˉu32ˉdivisionˉbytes(Opcode: u8) -> u32 {
+    if Opcode == 161u8 { return 43u32; }
+    return 45u32;
+}
+
+fn Emitˉu32ˉdivision(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Right: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Left: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 2u32) * 4u32
+    );
+    let Target: u32 = Valueˉslot(Shape, 5u8, State.Nextˉu32);
+    var Machine: bytes = U32ˉdivideˉtemplate;
+    var Storeˉoffset: u32 = 29u32;
+    if Instruction.Opcode == 162u8 {
+        Machine = U32ˉremainderˉtemplate;
+        Storeˉoffset = 31u32;
+    }
+    Machine = Patchˉu32(Machine, 3u32, Left * 16u32);
+    Machine = Patchˉu32(Machine, 10u32, Right * 16u32);
+    Machine = Patchˉu32(
+        Machine,
+        18u32,
+        Instruction.Divisionˉbyˉzeroˉtarget - Bytesˉlength(State.Result) - 22u32
+    );
+    Machine = Patchˉu32(Machine, Storeˉoffset, Target * 16u32);
+    let Depth: u32 = State.Stackˉdepth - 2u32;
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Bytesˉconcat(State.Result, Machine),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(5u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32 + 1u32,
+        State.Nextˉbytes
+    );
 }
 
 fn Emitˉconstant(
@@ -574,6 +645,9 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
     }
     if Instruction.Opcode == 118u8 {
         return Emitˉu32ˉfromˉu8(Shape, State);
+    }
+    if Instruction.Opcode == 161u8 || Instruction.Opcode == 162u8 {
+        return Emitˉu32ˉdivision(Instruction, Shape, State);
     }
     if Instruction.Opcode == 119u8 {
         return Emitˉbytesˉconcat(Instruction, Shape, State);

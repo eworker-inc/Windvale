@@ -2582,3 +2582,49 @@ offset `0x0267`.
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain
 deferred to the grouped end-of-goal gate.
+
+## Local native u32 division evidence
+
+[Decision 0274](../Decisions/0274-Native-U32-Division.md) admits
+`u32.divide` and `u32.remainder` as one exact Stage 0 family. Typed analysis
+consumes two `u32` values and produces one `u32`. Lowering tests the divisor,
+branches to exact runtime status `WVR3032` when it is zero, executes unsigned
+x86-64 division, and selects the quotient or remainder without a runtime
+service. The status-9 tail is present only in functions that contain this
+family.
+
+The affected test was reviewed before execution. Its focused fixture performs
+both operations on `4294967295u32` with divisor 97, stores the results in a
+record so supplemental record-storage analysis is covered, and compares the
+complete WVO with Stage 0 through both Windvale adapters. A separate zero
+fixture requires the reference runtime and Stage 0 native executor to report
+`WVR3032`, then requires both Windvale adapters to produce the same trapping
+object. The selection passes in 2.462 seconds. Its 541-byte WVB has SHA-256
+`135892131fe0fd055d97530b4e6d5a055deb700729081db28f903c396b97750c`;
+the exact 4,088-byte WVO contains 4,015 code bytes and has SHA-256
+`cf45c322014c14b81fb8dca21e14ab40a1f0ba6655a87b6ba5e21657c9c89047`.
+The separate pinned-package case passes in 8.764 seconds. Both Release builds
+report zero warnings and errors.
+
+Direct Stage 0 calculation pins the 345,343-byte core closure at SHA-256
+`03da73d82695bd9ab6db3f781c9b426bd04e22c045788b97edeb1122de18280b`.
+The 340,284-byte memory adapter has SHA-256
+`093962a628ed013029b8c40f47e4a9771c18f08b9c441e79be9c72d6c8bd3d36`.
+The pinned Windows native source front door independently rebuilds the
+341,312-byte hosted tool in 17.6 seconds, byte-identical to Stage 0 at SHA-256
+`ee1e6bc3306801fcf9258a1dd31df39a2a136cf4920d13f134619b0e16b09660`.
+Current unpromoted packages are 4,730,368 Windows and 4,730,880 Linux bytes at
+SHA-256
+`629b76bfbdf75060a72dc4162860de29b71e9675ed0cc26594a7a95c824eb9b3`
+and `ba95f29d2467206de3a3cd008301eb0171106108bd61d2d505830b3f3c1446cf`.
+
+One direct self-lowering probe remains fail-closed as `Unsupportedˉcode` and
+publishes no output. The complete tool no longer contains an unsupported
+top-level opcode. Function 0 (`Main`) requires record-storage analysis and
+starts with `call.capability` at bytecode offset `0x0000`; that supplemental
+analyzer does not yet receive or model capability signatures. Capability-aware
+record storage is therefore the next active slice.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.

@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "0f882a38caed33bbe9752302da70d51ebb030c3cc5e167363d167aab9537fe88";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "03da73d82695bd9ab6db3f781c9b426bd04e22c045788b97edeb1122de18280b";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "d641039357bfb6be0c860002a374d70e5266f39861b4c9ea7e4df192dfdf21b3";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "29f9d724e9cd5029a923e550fde3832c186de75067259c6efa8f7737d8494391";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "697d8256464fe49bcf15fc5bdb8eb34b0aa2f08d3819d154f1bb15cda7001c33";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "8bf3e469e26d7d3ec3d933094080d472bbae9acaeb015ca5ab2a82fbe668ed9a";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "a650aa965028c91e2d71a21e0f43ce480e26276933eac81c5a6ff39d45379dc3";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "093962a628ed013029b8c40f47e4a9771c18f08b9c441e79be9c72d6c8bd3d36";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "ee1e6bc3306801fcf9258a1dd31df39a2a136cf4920d13f134619b0e16b09660";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -1195,6 +1195,7 @@ internal static partial class Program
         new("native byte construction lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉbyteˉconstructionˉloweringˉagrees),
         new("native u32 arithmetic lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉarithmeticˉloweringˉagrees),
         new("native u32 conversion lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉconversionˉloweringˉagrees),
+        new("native u32 division lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉdivisionˉloweringˉagrees),
         new("native source-to-AOT front door composes without .NET child processes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉsourceˉtoˉaotˉfrontˉdoorˉcomposes),
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native byte descriptors survive helper returns and later allocations", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉbyteˉdescriptorˉreturnsˉsurvive),

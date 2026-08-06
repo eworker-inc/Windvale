@@ -911,7 +911,22 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 122u8 { return 1u32; }
     if Opcode == 123u8 { return 1u32; }
     if Opcode == 124u8 { return 1u32; }
+    if Opcode == 161u8 { return 1u32; }
+    if Opcode == 162u8 { return 1u32; }
     return 0u32;
+}
+
+fn Compilerˉnativeˉx64ˉhasˉdivision(
+    Input: bytes,
+    Section: Compilerˉnativeˉx64ˉsection
+) -> bool {
+    var Cursor: u32 = 0u32;
+    while Cursor < Section.Payloadˉlength {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor);
+        if Opcode == 161u8 || Opcode == 162u8 { return true; }
+        Cursor = Cursor + Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+    }
+    return false;
 }
 
 export fn Compilerˉnativeˉx64ˉparameterˉbytes(
@@ -972,7 +987,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
         let Size: u32 = Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
         let Next: u32 = Cursor + Size;
         if Next > End { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
-        if Opcode == 65u8 ||
+        if Opcode == 65u8 || Opcode == 161u8 || Opcode == 162u8 ||
             Compilerˉnativeˉx64ˉdescriptorˉoperation(Opcode) ||
             Compilerˉnativeˉx64ˉnominalˉoperation(Opcode) ||
             Compilerˉnativeˉx64ˉrecordˉoperation(Opcode) {
@@ -1019,6 +1034,24 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                 U32ˉvalues = U32ˉvalues + 1u32;
                 Bodyˉbytes = Bodyˉbytes +
                     Descriptorˉinstructions.Compilerˉnativeˉx64ˉu32ˉfromˉu8ˉbytes();
+            }
+            if Opcode == 161u8 || Opcode == 162u8 {
+                if Depth < 2u32 { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
+                if Bytesˉreadˉu8(Stack, Depth - 1u32) != 5u8 {
+                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                }
+                if Bytesˉreadˉu8(Stack, Depth - 2u32) != 5u8 {
+                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                }
+                Depth = Depth - 2u32;
+                Stack = Bytesˉslice(Stack, 0u32, Depth);
+                Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(5u8));
+                Depth = Depth + 1u32;
+                U32ˉvalues = U32ˉvalues + 1u32;
+                Bodyˉbytes = Bodyˉbytes +
+                    Descriptorˉinstructions.Compilerˉnativeˉx64ˉu32ˉdivisionˉbytes(
+                        Opcode
+                    );
             }
             if Opcode == 104u8 {
                 let Recordˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
@@ -2730,6 +2763,8 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
     if Opcode == 20u8 { return 39u32; }
     if Opcode == 21u8 { return 39u32; }
     if Opcode == 22u8 { return 41u32; }
+    if Opcode == 161u8 { return 43u32; }
+    if Opcode == 162u8 { return 45u32; }
     if Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode) { return 39u32; }
     if Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode) { return 39u32; }
     if Compilerˉnativeˉx64ˉisˉu32ˉcomparison(Opcode) { return 39u32; }
@@ -3210,11 +3245,71 @@ fn Compilerˉnativeˉx64ˉemitˉcallˉstep(
     );
 }
 
+fn Compilerˉnativeˉx64ˉemitˉstatusˉtails(
+    Result: bytes,
+    Frameˉbytes: u32,
+    Isˉmain: bool,
+    Hasˉdivision: bool
+) -> bytes {
+    var Output: bytes = Compilerˉnativeˉx64ˉemitˉstatusˉfor(
+        Result,
+        Frameˉbytes,
+        1u32,
+        Isˉmain
+    );
+    Output = Compilerˉnativeˉx64ˉemitˉstatusˉfor(
+        Output,
+        Frameˉbytes,
+        2u32,
+        Isˉmain
+    );
+    Output = Compilerˉnativeˉx64ˉemitˉstatusˉfor(
+        Output,
+        Frameˉbytes,
+        4u32,
+        Isˉmain
+    );
+    Output = Compilerˉnativeˉx64ˉemitˉstatusˉfor(
+        Output,
+        Frameˉbytes,
+        6u32,
+        Isˉmain
+    );
+    Output = Compilerˉnativeˉx64ˉemitˉstatusˉfor(
+        Output,
+        Frameˉbytes,
+        5u32,
+        Isˉmain
+    );
+    Output = Compilerˉnativeˉx64ˉemitˉstatusˉfor(
+        Output,
+        Frameˉbytes,
+        8u32,
+        Isˉmain
+    );
+    Output = Compilerˉnativeˉx64ˉemitˉstatusˉfor(
+        Output,
+        Frameˉbytes,
+        7u32,
+        Isˉmain
+    );
+    if Hasˉdivision {
+        Output = Compilerˉnativeˉx64ˉemitˉstatusˉfor(
+            Output,
+            Frameˉbytes,
+            9u32,
+            Isˉmain
+        );
+    }
+    return Output;
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
     Input: bytes,
     Section: Compilerˉnativeˉx64ˉsection,
     Function: Compilerˉnativeˉx64ˉfunction,
     Analysis: Compilerˉnativeˉx64ˉcontrolˉanalysis,
+    Hasˉdivision: bool,
     Isˉmain: bool,
     Codeˉbase: u32,
     Callˉdirectory: bytes,
@@ -3255,7 +3350,11 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
     let Byteˉboundsˉoffset: u32 = Overflowˉoffset + Statusˉbytes * 3u32;
     let Runtimeˉserviceˉoffset: u32 = Overflowˉoffset + Statusˉbytes * 4u32;
     let Invalidˉutf8ˉoffset: u32 = Overflowˉoffset + Statusˉbytes * 5u32;
-    let Depthˉoffset: u32 = Overflowˉoffset + Statusˉbytes * 7u32;
+    let Divisionˉbyˉzeroˉoffset: u32 = Overflowˉoffset + Statusˉbytes * 7u32;
+    var Depthˉoffset: u32 = Divisionˉbyˉzeroˉoffset;
+    if Hasˉdivision {
+        Depthˉoffset = Overflowˉoffset + Statusˉbytes * 8u32;
+    }
     let Blockˉoffsets: bytes = Compilerˉnativeˉx64ˉbuildˉblockˉoffsets(
         Input,
         Section,
@@ -3380,7 +3479,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
             Result,
             Instructionˉlimitˉoffset
         );
-        if Compilerˉnativeˉx64ˉdescriptorˉoperation(Opcode) {
+        if Compilerˉnativeˉx64ˉdescriptorˉoperation(Opcode) ||
+            Opcode == 161u8 || Opcode == 162u8 {
             let Descriptorˉstate:
                 Descriptorˉinstructions.Compilerˉnativeˉx64ˉdescriptorˉstate =
                 Descriptorˉinstructions.Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
@@ -3390,7 +3490,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                         Opcode,
                         Byteˉboundsˉoffset,
                         Runtimeˉserviceˉoffset,
-                        Invalidˉutf8ˉoffset
+                        Invalidˉutf8ˉoffset,
+                        Divisionˉbyˉzeroˉoffset
                     ),
                     Descriptorˉinstructions.Compilerˉnativeˉx64ˉdescriptorˉlayout(
                         Function.Locals,
@@ -4230,13 +4331,12 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
 
     Result = Compilerˉnativeˉx64ˉemitˉframe(Result, false, Frameˉbytes);
     Result = Compilerˉnativeˉx64ˉemitˉrestoreˉfor(Result, Isˉmain);
-    Result = Compilerˉnativeˉx64ˉemitˉstatusˉfor(Result, Frameˉbytes, 1u32, Isˉmain);
-    Result = Compilerˉnativeˉx64ˉemitˉstatusˉfor(Result, Frameˉbytes, 2u32, Isˉmain);
-    Result = Compilerˉnativeˉx64ˉemitˉstatusˉfor(Result, Frameˉbytes, 4u32, Isˉmain);
-    Result = Compilerˉnativeˉx64ˉemitˉstatusˉfor(Result, Frameˉbytes, 6u32, Isˉmain);
-    Result = Compilerˉnativeˉx64ˉemitˉstatusˉfor(Result, Frameˉbytes, 5u32, Isˉmain);
-    Result = Compilerˉnativeˉx64ˉemitˉstatusˉfor(Result, Frameˉbytes, 8u32, Isˉmain);
-    Result = Compilerˉnativeˉx64ˉemitˉstatusˉfor(Result, Frameˉbytes, 7u32, Isˉmain);
+    Result = Compilerˉnativeˉx64ˉemitˉstatusˉtails(
+        Result,
+        Frameˉbytes,
+        Isˉmain,
+        Hasˉdivision
+    );
     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 73u8);
     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 255u8);
     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 194u8);
@@ -4254,8 +4354,14 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
 export fn Compilerˉnativeˉx64ˉfunctionˉbytes(
     Function: Compilerˉnativeˉx64ˉfunction,
     Analysis: Compilerˉnativeˉx64ˉcontrolˉanalysis,
+    Hasˉdivision: bool,
     Isˉmain: bool
 ) -> u32 {
+    var Divisionˉbytes: u32 = 0u32;
+    if Hasˉdivision {
+        Divisionˉbytes = 21u32;
+        if Isˉmain { Divisionˉbytes = 23u32; }
+    }
     let Slots: u32 =
         Function.Locals + Analysis.I32ˉslots + Analysis.Boolˉslots +
         Analysis.Textˉslots + Analysis.U8ˉslots + Analysis.U32ˉslots +
@@ -4266,7 +4372,7 @@ export fn Compilerˉnativeˉx64ˉfunctionˉbytes(
         Bytesˉslice(Function.Localˉtypes, 0u32, Function.Parameters)
     );
     if Isˉmain {
-        return 222u32 + Slots * 28u32 + Analysis.Bodyˉbytes;
+        return 222u32 + Slots * 28u32 + Analysis.Bodyˉbytes + Divisionˉbytes;
     }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
         Function.Returnˉtype
@@ -4275,12 +4381,12 @@ export fn Compilerˉnativeˉx64ˉfunctionˉbytes(
     ) {
         return 182u32 + Slots * 28u32 +
             Parameterˉbytes +
-            Analysis.Bodyˉbytes;
+            Analysis.Bodyˉbytes + Divisionˉbytes;
     }
     return 191u32 +
         Slots * 28u32 +
         Parameterˉbytes +
-        Analysis.Bodyˉbytes;
+        Analysis.Bodyˉbytes + Divisionˉbytes;
 }
 
 export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
@@ -4538,6 +4644,7 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
         let Machineˉbytes: u32 = Compilerˉnativeˉx64ˉfunctionˉbytes(
             Measureˉfunction,
             Measureˉanalysis,
+            Compilerˉnativeˉx64ˉhasˉdivision(Input, Measureˉcodeˉsection),
             Isˉmeasureˉmain
         );
         if Expectedˉmachineˉcodeˉbytes > 33554432u32 {
@@ -4634,6 +4741,7 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
                 Emitˉcodeˉsection,
                 Emitˉfunction,
                 Emitˉanalysis,
+                Compilerˉnativeˉx64ˉhasˉdivision(Input, Emitˉcodeˉsection),
                 Isˉemitˉmain,
                 Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
                     Directory,

@@ -127,6 +127,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
         if Numeric <= 117u32 { return 1u32; }
     }
     if Opcode == 119u8 || Opcode == 124u8 { return 1u32; }
+    if Opcode == 161u8 || Opcode == 162u8 { return 1u32; }
     return 0u32;
 }
 
@@ -401,7 +402,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Numericˉopcode >= 32u32 && Numericˉopcode <= 39u32 ||
             Numericˉopcode >= 96u32 && Numericˉopcode <= 103u32 ||
             Opcode == 107u8 || Opcode == 108u8 || Opcode == 113u8 ||
-            Opcode == 114u8 || Opcode == 119u8 {
+            Opcode == 114u8 || Opcode == 119u8 ||
+            Opcode == 161u8 || Opcode == 162u8 {
             if Depth < 2u32 { return Invalid(Input); }
             Depth = Depth - 2u32;
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
