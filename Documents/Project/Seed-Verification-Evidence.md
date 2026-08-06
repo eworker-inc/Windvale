@@ -3246,3 +3246,25 @@ canonical map and flat image, while a short invocation is rejected with exit
 64. No WebAssembly implementation changed. Grouped Windows/Linux
 qualification, native package construction, and ordinary-path promotion remain
 deferred.
+
+## Local digest-bound native console-packager evidence
+
+[Decision 0303](../Decisions/0303-Digest-Bound-Native-Console-Packager-Candidate.md)
+pins the bounded version-1 materializer as a 58,127-byte WVB at SHA-256
+`7b055d4e6a456680a79eb28eaafa577e0019ea0ff1e34d9e713e9178428acc29`,
+a 667,648-byte Windows application at SHA-256
+`a9cd6e222b869d838f563ffc46ae3acbde74ff8beb10c28373b6d5985c8f680f`,
+and a 667,648-byte Linux application at SHA-256
+`10b1d752ab6c9c7217f833add9ef77ca0d61b6bcc02d7023b1877f42bab2a683`.
+The manifest records `stage0-recovery` construction because the qualified
+native source front door rejects this complete project's binding shape.
+
+Stage 0 regeneration took 5.1 seconds and reproduced all identities. The
+reviewed focused linker selection passes 1/1 in 1.044 test seconds after an
+11.31-second zero-warning Release build; the complete command takes 17.0
+seconds. Current-host native execution creates a structurally valid version-1
+application whose independent verifier recovers the exact six-byte return-42
+image and entry zero. No WebAssembly implementation changed. Native
+construction, atomic publication, grouped Windows/Linux qualification, general
+hosted packaging, release integration, and ordinary-path promotion remain
+deferred.

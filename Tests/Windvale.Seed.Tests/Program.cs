@@ -1193,6 +1193,7 @@ internal static partial class Program
         new("native test orchestration runs the pinned result, failure, and malformed-WVB plan", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉtestˉorchestrationˉruns),
         new("native console packager AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉpackagerˉtargetsˉareˉdiscoverable),
         new("native console packager materializes verified PE and ELF applications", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉruns),
+        new("digest-bound native console packager launcher preserves version-1 output", [TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉfrontˉdoorˉruns),
         new("native WVB-to-WVO AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL], Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable),
         new("native WVB-to-WVO lowerer emits the pinned object without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉruns),
         new("large-native WVO staging envelope is verified without one whole object", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉenvelopeˉisˉbounded),

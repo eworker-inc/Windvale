@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. This source candidate is not yet an ordinary front door: Stage 0 remains the normal and recovery target packager until the grouped Windows/Linux gate and a later pinned-artifact promotion succeed.
+`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts and digest-bound launchers, but this is not yet an ordinary front door: Stage 0 remains the construction and recovery target packager until native construction, safe publication, the grouped Windows/Linux gate, and artifact promotion succeed.
 
 The application composes the existing [console-application plan](Windvale-Console-Application-Plan.md), [construction](Windvale-Console-Application-Construction.md), and [verification](Windvale-Console-Application-Verification.md) contracts. It adds no second PE or ELF layout implementation.
 
@@ -78,4 +78,4 @@ Promotion requires one exact source commit to pass on Windows and Linux with:
 - no CLR/.NET module or mapping in the packager process; and
 - no regression in version-1 PE/ELF, native ABI, capability, construction, or verification contracts.
 
-After that source gate, pin both platform applications and add digest-bound launchers in a separate provenance commit. Only the exact pinned-artifact commit passing both hosts moves ordinary version-1 materialization to the native packager. Stage 0 remains a named recovery/differential path until Decision 0057's complete archive gate permits deletion.
+Decision 0303 pins both platform applications and adds digest-bound candidate launchers while explicitly recording Stage 0 construction. Only an exact descendant that supplies native construction and safe publication and then passes both hosts moves ordinary version-1 materialization to the native packager. Stage 0 remains a named recovery/differential path until Decision 0057's complete archive gate permits deletion.

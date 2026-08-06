@@ -1,0 +1,34 @@
+{
+  "format": "windvale-native-console-packager-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0223",
+  "provenanceDecision": "0303",
+  "qualification": "pending",
+  "construction": "stage0-recovery",
+  "artifacts": [
+    {
+      "name": "console-packager-wvb",
+      "path": "Console-Packager.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 58127,
+      "sha256": "7b055d4e6a456680a79eb28eaafa577e0019ea0ff1e34d9e713e9178428acc29",
+      "sourceProject": "Windvale-Console-Application-Packager.wvproj"
+    },
+    {
+      "name": "windows-x64-console-packager",
+      "path": "Console-Packager.exe",
+      "target": "windows-x64-console-packager-v1",
+      "bytes": 667648,
+      "sha256": "a9cd6e222b869d838f563ffc46ae3acbde74ff8beb10c28373b6d5985c8f680f",
+      "sourceWvb": "Console-Packager.wvb"
+    },
+    {
+      "name": "linux-x64-console-packager",
+      "path": "Console-Packager.elf",
+      "target": "linux-x64-console-packager-v1",
+      "bytes": 667648,
+      "sha256": "10b1d752ab6c9c7217f833add9ef77ca0d61b6bcc02d7023b1877f42bab2a683",
+      "sourceWvb": "Console-Packager.wvb"
+    }
+  ]
+}
