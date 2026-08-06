@@ -34,6 +34,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0330](../Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) composes all ten fixed native commands and 74 transferred cases through one digest-bound Windows/Linux coordinator. Exact filters remain the narrow inner loop; the unfiltered command, Linux execution, and grouped retirement gate remain deferred until the final goal candidate.
 
+[Decision 0332](../Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) replaces the linker's framework-seeded hostile-byte loop with a portable, immutable 200-input corpus and exact public `WVL1002` behavior. The retirement coordinator now owns 11 suites and 274 cases; Linux execution and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

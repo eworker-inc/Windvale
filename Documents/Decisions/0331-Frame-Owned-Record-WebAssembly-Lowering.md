@@ -1,4 +1,4 @@
-# Decision 0330: Frame-owned record WebAssembly lowering
+# Decision 0331: Frame-owned record WebAssembly lowering
 
 - Date: 2026-08-06
 - Status: Implemented candidate; exact compiler cutover pending

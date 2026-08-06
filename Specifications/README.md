@@ -63,6 +63,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Windvale linking](Windvale-Linking.md)
 - [Windvale linker core](Wv-Linker-Core.md)
 - [Native Windvale linker application](Windvale-Native-Wv-Linker.md)
+- [Native linker hostile-input tests](Windvale-Native-Linker-Hostile-Input-Tests.md)
 
 ## Native execution
 

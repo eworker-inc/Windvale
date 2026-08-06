@@ -3658,3 +3658,28 @@ The unfiltered 74-case command was deliberately not run locally because the
 complete suite is reserved for the final grouped retirement gate. Linux
 execution, Development, Standard, Qualification, promotion, and Stage 0 removal
 remain deferred. This slice changes no product or WebAssembly implementation.
+
+## Local fixed native linker hostile-input evidence
+
+[Decision 0332](../Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md)
+replaces the managed linker's live framework-seeded raw-byte loop with one
+portable fixed corpus. The 63,224-byte archive at SHA-256
+`3648bc4a00bb822096ad669d0f24828f034df5b69023f1bdb2c3b3ab2a034160`
+contains a 16,378-byte manifest plus 200 values totaling 48,877 bytes across 164
+distinct lengths, including exact zero and 511-byte boundaries. Every extracted
+length and SHA-256 matches the manifest.
+
+The first focused Windows attempt stopped before linker invocation because
+`certutil` rejected the valid zero-byte file on the current volume. The reviewed
+Windows correction recognizes only length zero paired with the canonical empty
+SHA-256; no corpus byte or expected linker result changed. The final direct
+retirement-suite filter passes all 200 cases in 55.668 seconds. Every native
+invocation returns exact `WVL1002`, writes no standard output, and preserves both
+the complete input and pre-existing destination.
+
+The other 74 fixed cases were not rerun. The current direct plan contains 11
+suites and 274 cases at SHA-256
+`088bf17789d2aaef00c1b063ac98e39cd2c3d6aa9de119bb127fd16d5c81565c`.
+Linux execution, Development, Standard, Qualification, promotion, and the
+grouped end-of-goal gate remain deferred. No product or WebAssembly
+implementation changed.

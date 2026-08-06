@@ -100,8 +100,9 @@ sentinel, and emit one LF-terminated diagnostic whose complete SHA-256 is:
 Success prints the ten ordered `PASS` lines followed by
 `Tests: 10, Passed: 10, Failed: 0` plus LF. `WVL1011` remains an internal
 independent-reconstruction trap rather than an externally driven family. This
-bounded permanent set does not replace randomized hostile-input or concurrency
-coverage.
+bounded permanent set does not replace concurrency coverage. The separate
+[native linker hostile-input contract](Windvale-Native-Linker-Hostile-Input-Tests.md)
+now owns the fixed 200-value raw-byte containment corpus.
 
 ## Fixed native map-limit contract
 

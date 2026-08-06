@@ -31,16 +31,17 @@ The exact filter names and case counts are:
 | `assembler-rejections` | 11 |
 | `lowerer-rejections` | 2 |
 | `linker-rejections` | 10 |
+| `linker-hostile` | 200 |
 | `linker-map-limit` | 1 |
 | `console-packager-rejections` | 3 |
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 10 suites and 74 cases in manifest order. Its
+Omitting `--filter` selects all 11 suites and 274 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 10, Passed: 10, Failed: 0, Cases: 74
+Suites: 11, Passed: 11, Failed: 0, Cases: 274
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -159,6 +160,25 @@ Tests: 10, Passed: 10, Failed: 0
 All ten cases require deterministic linker rejection, empty standard output, an
 exact report identity, and byte-for-byte preservation of an existing output.
 The internal `WVL1011` reconstruction trap retains separate internal evidence.
+
+The fixed hostile-linker corpus is intentionally separate from those diagnostic
+families. It expands one 63,224-byte digest-bound archive into 200 manifest-owned
+zero-through-511-byte inputs, then requires exact `WVL1002` plus complete input
+and destination preservation for each public native-linker invocation. Run its
+focused lane with:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter linker-hostile
+```
+
+or on Linux:
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter linker-hostile
+```
+
+The command generates no random value while running. Its exact success summary
+is `Tests: 200, Passed: 200, Failed: 0`.
 
 The canonical-map size boundary has its own compact generated-fixture command.
 It expands two digest-bound WVOs from a 21,046-byte archive, combines them with
@@ -287,12 +307,12 @@ temporary one-byte-over-limit zero-filled input rather than retaining a very
 large fixture.
 
 No .NET process is required by these commands. The host dependencies are
-`cmd.exe`, `certutil`, and `fsutil` on Windows, or Bash, `sha256sum`, `base64`,
-`cmp`, `truncate`, and core utilities on Linux.
+`cmd.exe`, `certutil`, `fsutil`, and `tar` on Windows, or Bash, `sha256sum`,
+`base64`, `tar`, `cmp`, `truncate`, and core utilities on Linux.
 
 ## Current boundary
 
-The 74-case coordinator is a candidate fixed native gate, not the complete normal
+The 274-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, assembler, lowerer, linker, packager, publisher, and AOT-chain
 contracts. It does not replace the complete unsafe, randomized, differential,
