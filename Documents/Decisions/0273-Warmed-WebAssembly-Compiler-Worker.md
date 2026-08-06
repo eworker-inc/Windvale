@@ -1,8 +1,8 @@
-# Decision 0270: Warmed WebAssembly compiler worker
+# Decision 0273: Warmed WebAssembly compiler worker
 
 - Date: 2026-08-06
 - Status: Implemented with focused local Node.js evidence; browser remeasurement pending
-- Advances: [Decision 0269](0269-First-Browser-Native-Source-Pipeline.md)
+- Advances: [Decision 0270](0270-First-Browser-Native-Source-Pipeline.md)
 - Target: `wasm32-browser-v1-experimental`
 
 ## Context

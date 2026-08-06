@@ -1,6 +1,6 @@
 # Decision 0274: Native u32 division and remainder
 
-- Date: 2026-08-05
+- Date: 2026-08-06
 - Status: Implemented candidate; grouped dual-host qualification pending
 - Advances: [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and [Decision 0272](0272-Native-U32-From-U8.md)
 - Contract: [Windvale-native x86-64 lowering](../../Specifications/Windvale-Native-X64-Lowering.md)
