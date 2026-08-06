@@ -2986,3 +2986,33 @@ WVO, and own replacement/cleanup. Complete-tool self-lowering, Development,
 Standard, Qualification, Linux execution, WebAssembly verification, artifact
 promotion, ordinary-path cutover, and the grouped end-of-goal gate remain
 deferred.
+
+## Local segmented large-native WVO section-envelope evidence
+
+[Decision 0288](../Decisions/0288-Segmented-Large-Native-Wvo-Section-Envelope.md)
+adds a focused capability-free reader above the strict `WVOP 1` manifest. It
+accepts the actual bounded prefix and optional read-only-header chunks, checks
+the compiler-produced WVO 1.0 x86-64 header, counts, flags, canonical `.text`
+and `.rodata` declarations, 32 MiB section extents, following metadata chunk
+boundaries, and minimum symbol/relocation tail without constructing one whole
+object value. Rejection returns one of fourteen named statuses and zeroes all
+admitted evidence.
+
+The focused matrix accepts both section layouts and an exact 32 MiB ten-chunk
+envelope, then rejects malformed manifest, first-chunk, prefix, header, count,
+section, extent, and boundary cases. A capability-free native runner calls all
+scalar evidence paths, passes fragment verification, requires zero services,
+executes as x86-64 machine code, and returns 42. The reviewed compiler
+selection passes 1/1 in 1.449 test seconds after an 11.11-second zero-warning
+Release build.
+
+The native source front door compiles the four-module evidence adapter to
+18,869 bytes at SHA-256
+`ab7893899e5f2a17bac735cdf6cb1f2e67a725a34cac82809eb2000026501106`
+and the four-module native runner to 18,449 bytes at SHA-256
+`d69a70c6c79bc1bd3e898af05f26d335b449128c4b1f19f6c9a437cdf33301f9`.
+
+No C# product implementation or WebAssembly implementation changed. Symbol,
+relocation, placeholder, all-chunk-content, resource-identity, replacement,
+cleanup, complete-tool, Development, Standard, Qualification, Linux,
+promotion, ordinary-path, and grouped end-of-goal gates remain deferred.

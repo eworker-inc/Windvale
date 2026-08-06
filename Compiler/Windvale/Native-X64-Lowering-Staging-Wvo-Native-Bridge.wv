@@ -1,0 +1,147 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉnativeˉbridge profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
+
+fn Summary(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary {
+    return Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉnativeˉvalidate(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> u32 {
+    let Result: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader);
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Valid {
+        return 0u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Manifest {
+        return 1u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Firstˉchunk {
+        return 2u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Prefixˉsize {
+        return 3u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Magic {
+        return 4u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Version {
+        return 5u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Architecture {
+        return 6u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Flags {
+        return 7u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Counts {
+        return 8u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Textˉsection {
+        return 9u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Sectionˉextent {
+        return 10u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Chunkˉboundary {
+        return 11u32;
+    }
+    if Result.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Readˉonlyˉsection {
+        return 12u32;
+    }
+    return 13u32;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉnativeˉobjectˉbytes(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> u32 {
+    let Result: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader);
+    return Result.Objectˉbytes;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉnativeˉsections(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> u32 {
+    let Result: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader);
+    return Result.Sections;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉnativeˉsymbols(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> u32 {
+    let Result: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader);
+    return Result.Symbols;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉnativeˉrelocations(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> u32 {
+    let Result: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader);
+    return Result.Relocations;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉnativeˉtextˉbytes(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> u32 {
+    let Result: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader);
+    return Result.Textˉbytes;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉnativeˉreadˉonlyˉbytes(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> u32 {
+    let Result: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader);
+    return Result.Readˉonlyˉbytes;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉnativeˉsymbolˉposition(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> u32 {
+    let Result: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader);
+    return Result.Symbolˉposition;
+}

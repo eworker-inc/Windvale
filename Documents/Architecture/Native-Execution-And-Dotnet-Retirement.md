@@ -348,7 +348,7 @@ Decision 0272 admits lossless `u32.from_u8` through the existing descriptor-inst
 
 Decision 0277 closes the portable browser-compiler WVB seam with a separately pinned format-3 native source compiler. Its normal launcher verifies the native compiler and publisher, reads the exact project inventory, writes one temporary candidate, and reproduces the 919,577-byte compiler byte for byte without .NET. Decision 0278 closes the remaining interpreter-Wasm seam with a second named format-3 compiler-family member. The native WebAssembly compiler reproduces the exact 839,104-byte import-free execution-ABI-3 artifact, while the Node launcher independently checks its exports, memory regions, and atomic replacement. Both package constructors remain Stage 0 recovery commands; no C# product implementation changed.
 
-Decisions 0280 through 0287 advance the large native-object seam without
+Decisions 0280 through 0288 advance the large native-object seam without
 widening Windvale's ordinary 4 MiB value contract. Immutable analysis evidence
 precedes emission; the WVO writer exposes separately owned canonical regions;
 maximal contiguous function batches carry bounded code and relocation values;
@@ -363,7 +363,12 @@ host mutation. A capability-free scalar bridge carries those exact status
 results and every admitted object/chunk extent across ABI 22's existing
 borrowed-descriptor call convention. Its valid, out-of-range, and malformed
 routes have executed as native machine code without a service. Platform
-assembly no longer needs to parse `WVOP 1`. These layers deliberately
+assembly no longer needs to parse `WVOP 1`. A separate segmented reader now
+validates the exact compiler-produced WVO header, `.text`, optional `.rodata`,
+32 MiB section extents, following chunk boundaries, and minimum symbol/
+relocation tail from bounded metadata chunks. Its scalar bridge also executes
+natively without a service; symbol, relocation, placeholder, and full staged-
+content validation remain. These layers deliberately
 do not reuse the pre-opened
 random-access-storage capability, whose contract
 excludes path creation, replacement, and directory publication, and do not

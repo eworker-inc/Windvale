@@ -95,8 +95,13 @@ counts, extents, indices, and contiguous positions without touching host
 resources. A tiny capability-free bridge maps its exact statuses across ABI
 22's borrowed-`bytes`/scalar-return convention and exposes only revalidated
 object/count/entry scalars to a fixed native caller. A fixed native adapter
-must preserve that snapshot, derive and bind the staged
-identities, validate chunk contents, reconstruct the exact WVO, and enter
+also receives bounded metadata chunks through a focused scalar bridge. The
+shared Windvale reader validates the compiler-produced WVO header, `.text`,
+optional `.rodata`, 32 MiB section extents, following metadata boundaries, and
+minimum record tail without constructing one whole object value. A fixed
+native adapter must preserve those snapshots, derive and bind the staged
+identities, finish symbol/relocation and chunk-content validation, reconstruct
+the exact WVO, and enter
 the qualified sibling-replacement transaction before the managed publisher can
 leave the normal path.
 

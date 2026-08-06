@@ -1,0 +1,274 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+
+export enum Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus {
+    Valid = 0;
+    Manifest = 1;
+    Firstˉchunk = 2;
+    Prefixˉsize = 3;
+    Magic = 4;
+    Version = 5;
+    Architecture = 6;
+    Flags = 7;
+    Counts = 8;
+    Textˉsection = 9;
+    Sectionˉextent = 10;
+    Chunkˉboundary = 11;
+    Readˉonlyˉsection = 12;
+    Objectˉextent = 13;
+}
+
+export record Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary {
+    Status: Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus;
+    Objectˉbytes: u32;
+    Sections: u32;
+    Symbols: u32;
+    Relocations: u32;
+    Textˉbytes: u32;
+    Readˉonlyˉbytes: u32;
+    Symbolˉposition: u32;
+}
+
+fn Invalid(
+    Status: Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary {
+    return Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Accepted(
+    Objectˉbytes: u32,
+    Sections: u32,
+    Symbols: u32,
+    Relocations: u32,
+    Textˉbytes: u32,
+    Readˉonlyˉbytes: u32,
+    Symbolˉposition: u32
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary {
+    return Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary(
+        Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Valid,
+        Objectˉbytes,
+        Sections,
+        Symbols,
+        Relocations,
+        Textˉbytes,
+        Readˉonlyˉbytes,
+        Symbolˉposition
+    );
+}
+
+fn Chunkˉlengthˉatˉposition(
+    Stagingˉmanifest: bytes,
+    Chunks: u32,
+    Position: u32
+) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Chunks {
+        let Entry: u32 = 24u32 + Index * 12u32;
+        let Entryˉposition: u32 =
+            Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+        if Entryˉposition == Position {
+            return Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32);
+        }
+        if Entryˉposition > Position { return 0u32; }
+        Index = Index + 1u32;
+    }
+    return 0u32;
+}
+
+fn Textˉheaderˉisˉvalid(Prefix: bytes) -> bool {
+    if Bytesˉreadˉu8(Prefix, 24u32) != 1u8 { return false; }
+    if Bytesˉreadˉu8(Prefix, 25u32) != 0u8 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Prefix, 26u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Prefix, 28u32) != 16u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Prefix, 32u32) !=
+        Bytesˉreadˉu32ˉlittle(Prefix, 36u32) { return false; }
+    if Bytesˉreadˉu32ˉlittle(Prefix, 40u32) != 5u32 { return false; }
+    if Bytesˉreadˉu8(Prefix, 44u32) != 46u8 { return false; }
+    if Bytesˉreadˉu8(Prefix, 45u32) != 116u8 { return false; }
+    if Bytesˉreadˉu8(Prefix, 46u32) != 101u8 { return false; }
+    if Bytesˉreadˉu8(Prefix, 47u32) != 120u8 { return false; }
+    return Bytesˉreadˉu8(Prefix, 48u32) == 116u8;
+}
+
+fn Readˉonlyˉheaderˉisˉvalid(Header: bytes) -> bool {
+    if Bytesˉreadˉu8(Header, 0u32) != 2u8 { return false; }
+    if Bytesˉreadˉu8(Header, 1u32) != 0u8 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Header, 2u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Header, 4u32) != 16u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Header, 8u32) !=
+        Bytesˉreadˉu32ˉlittle(Header, 12u32) { return false; }
+    if Bytesˉreadˉu32ˉlittle(Header, 16u32) != 7u32 { return false; }
+    if Bytesˉreadˉu8(Header, 20u32) != 46u8 { return false; }
+    if Bytesˉreadˉu8(Header, 21u32) != 114u8 { return false; }
+    if Bytesˉreadˉu8(Header, 22u32) != 111u8 { return false; }
+    if Bytesˉreadˉu8(Header, 23u32) != 100u8 { return false; }
+    if Bytesˉreadˉu8(Header, 24u32) != 97u8 { return false; }
+    if Bytesˉreadˉu8(Header, 25u32) != 116u8 { return false; }
+    return Bytesˉreadˉu8(Header, 26u32) == 97u8;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary {
+    let Manifestˉsummary:
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Manifestˉsummary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Manifest
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, 28u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, 32u32) !=
+            Bytesˉlength(Prefix) {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Firstˉchunk
+        );
+    }
+    if Bytesˉlength(Prefix) != 49u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Prefixˉsize
+        );
+    }
+    if Bytesˉreadˉu8(Prefix, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Prefix, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Prefix, 2u32) != 79u8 ||
+        Bytesˉreadˉu8(Prefix, 3u32) != 49u8 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Magic
+        );
+    }
+    if Bytesˉreadˉu16ˉlittle(Prefix, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Prefix, 6u32) != 0u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Version
+        );
+    }
+    if Bytesˉreadˉu8(Prefix, 8u32) != 1u8 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Architecture
+        );
+    }
+    if Bytesˉreadˉu8(Prefix, 9u32) != 0u8 ||
+        Bytesˉreadˉu16ˉlittle(Prefix, 10u32) != 0u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Flags
+        );
+    }
+
+    let Sections: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 12u32);
+    let Symbols: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 16u32);
+    let Relocations: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 20u32);
+    if Sections == 0u32 || Sections > 2u32 ||
+        Symbols == 0u32 || Symbols > 4096u32 ||
+        Relocations > 65536u32 ||
+        (Sections == 1u32 && Relocations != 0u32) {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Counts
+        );
+    }
+    if !Textˉheaderˉisˉvalid(Prefix) {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Textˉsection
+        );
+    }
+
+    let Objectˉbytes: u32 = Manifestˉsummary.Objectˉbytes;
+    let Textˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 36u32);
+    if Objectˉbytes < 49u32 || Textˉbytes > Objectˉbytes - 49u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Sectionˉextent
+        );
+    }
+    let Afterˉtext: u32 = 49u32 + Textˉbytes;
+    if Chunkˉlengthˉatˉposition(
+        Stagingˉmanifest,
+        Manifestˉsummary.Chunks,
+        Afterˉtext
+    ) == 0u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Chunkˉboundary
+        );
+    }
+
+    var Readˉonlyˉbytes: u32 = 0u32;
+    var Symbolˉposition: u32 = Afterˉtext;
+    if Sections == 1u32 {
+        if Bytesˉlength(Readˉonlyˉheader) != 0u32 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Readˉonlyˉsection
+            );
+        }
+    } else {
+        if Bytesˉlength(Readˉonlyˉheader) != 27u32 ||
+            Chunkˉlengthˉatˉposition(
+                Stagingˉmanifest,
+                Manifestˉsummary.Chunks,
+                Afterˉtext
+            ) != 27u32 ||
+            !Readˉonlyˉheaderˉisˉvalid(Readˉonlyˉheader) {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Readˉonlyˉsection
+            );
+        }
+        Readˉonlyˉbytes =
+            Bytesˉreadˉu32ˉlittle(Readˉonlyˉheader, 12u32);
+        if Afterˉtext > Objectˉbytes - 27u32 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Sectionˉextent
+            );
+        }
+        let Readˉonlyˉposition: u32 = Afterˉtext + 27u32;
+        if Readˉonlyˉbytes > Objectˉbytes - Readˉonlyˉposition ||
+            Readˉonlyˉbytes > 33554432u32 - Textˉbytes {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Sectionˉextent
+            );
+        }
+        Symbolˉposition = Readˉonlyˉposition + Readˉonlyˉbytes;
+        if Chunkˉlengthˉatˉposition(
+            Stagingˉmanifest,
+            Manifestˉsummary.Chunks,
+            Symbolˉposition
+        ) == 0u32 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Chunkˉboundary
+            );
+        }
+    }
+
+    let Minimumˉsymbolˉbytes: u32 = Symbols * 21u32;
+    let Minimumˉrelocationˉbytes: u32 = Relocations * 20u32;
+    if Symbolˉposition > Objectˉbytes ||
+        Minimumˉsymbolˉbytes > Objectˉbytes - Symbolˉposition ||
+        Minimumˉrelocationˉbytes >
+            Objectˉbytes - Symbolˉposition - Minimumˉsymbolˉbytes {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Objectˉextent
+        );
+    }
+    return Accepted(
+        Objectˉbytes,
+        Sections,
+        Symbols,
+        Relocations,
+        Textˉbytes,
+        Readˉonlyˉbytes,
+        Symbolˉposition
+    );
+}

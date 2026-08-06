@@ -211,6 +211,20 @@ index is bounded by the admitted chunk count before its entry offset is
 calculated. Fixed platform adapters therefore do not parse header or entry
 fields themselves; the bounded repeated scan covers at most 518 chunks.
 
+The focused large-native section-envelope reader then consumes that same
+manifest snapshot plus the actual bounded metadata chunks. Chunk zero must be
+the exact 49-byte WVO 1.0 x86-64 header and canonical `.text` declaration. The
+compiler-output profile has one or two sections; an optional `.rodata`
+declaration is an exact 27-byte chunk at the computed end of text. Counts,
+flags, alignment, equal data/memory extents, the combined 32 MiB section-data
+ceiling, following manifest boundaries, and the minimum declared symbol and
+relocation tail are checked without loading the intervening section data into
+one value. Valid evidence exposes object length, counts, both section lengths,
+and the exact symbol position; rejected evidence exposes only a named status
+and zeroes. Its ABI-22 scalar bridge reruns the same validation for each query.
+This is the compiler-produced section envelope, not yet symbol, relocation,
+placeholder, or complete staged-content verification.
+
 A native commit adapter must preserve the exact
 validated manifest snapshot, bind each staged-resource identity, reject
 missing or changed chunks, reconstruct and verify the complete WVO, and then
