@@ -54,13 +54,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 342_837;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_744_192;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 348_967;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_828_672;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "26a01262284d0ce8a8f7e647c66d1ed3529818928bf7651af1652696e72fc279";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_743_168;
+        "2dd0e91cf4e67466b68ebf7a67d9b29d4d69f8481efd9bf763b1d838aec7fdd5";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_829_184;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "14a3e79efb9faed4cd0f719c68f618131c2a8219ca5ec6d993969fa289fdcda3";
+        "41f46e75efdec87920d020c9c85b505ba238c7eb07556bb2f914e6a62ea06206";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -701,7 +701,10 @@ internal static partial class Program
             module Nativeˉrecordˉplannerˉenvelope profile portable;
             record Cell { Value: i32; }
             fn Make() -> Cell { return Cell(42); }
-            export fn Main() -> i32 { return Make().Value; }
+            export fn Main() -> i32 {
+                let Result: Cell = Make();
+                return Result.Value;
+            }
             """;
         var Template = Moduleˉcodec.Read(Compileˉsuccess(Source));
         var Helper = Template.Functions.Single(Function => Function.Name != "Main");
@@ -715,7 +718,7 @@ internal static partial class Program
         for (var Instruction = 0; Instruction < 450; Instruction++)
         {
             Helperˉcode.AddRange(U32ˉinstruction(Opcode.Localˉload, 0));
-            Helperˉcode.Add((byte)Opcode.Pop);
+            Helperˉcode.AddRange(U32ˉinstruction(Opcode.Localˉstore, 0));
         }
         Helperˉcode.AddRange(I32ˉinstruction(42));
         Helperˉcode.AddRange(U32ˉinstruction(Opcode.Recordˉcreate, 0));
@@ -760,7 +763,7 @@ internal static partial class Program
         Equal(130, Verifiedˉhelper.Declaration.Allˉlocalˉtypes.Length);
         Equal(129, Verifiedˉhelper.Declaration.Localˉtypes.Count(
             Type => Type.Kind == Valueˉtype.Record));
-        Equal(3_356, Verifiedˉhelper.Declaration.Codeˉlength);
+        Equal(5_156, Verifiedˉhelper.Declaration.Codeˉlength);
         Equal(1_032, Verifiedˉhelper.Instructions.Length);
 
         var Native = X64ˉnativeˉbackend.Compile(Module);

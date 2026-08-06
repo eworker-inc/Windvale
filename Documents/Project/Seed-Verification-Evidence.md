@@ -2673,3 +2673,45 @@ seam is therefore the next slice; the long complete proof remains deferred.
 Local Development, Standard, Qualification, the full Seed/OS suites, Linux
 execution, WebAssembly verification, GitHub verification, artifact promotion,
 and ordinary-path cutover remain deferred to the grouped end-of-goal gate.
+
+## Local bounded record-planner lifetime evidence
+
+[Decision 0279](../Decisions/0279-Bounded-Record-Planner-Lifetimes.md)
+resolves Decision 0276's unknown native exit as exact `WVR3018` text-arena
+exhaustion. Record-storage phase evidence now crosses ABI 22 as one validated
+`WVSR 1` byte value, per-function measurement returns a scalar, and final
+function code plus relocations cross as one validated `WVFA 1` value. Repeated
+zero and `u32` fills use bounded doubling, while dense liveness construction is
+grouped behind direct-byte per-block and per-iteration boundaries.
+
+The reviewed focused test validates valid and malformed packed evidence in the
+reference runtime and Stage 0 native executor, retains the hosted
+capability/record differential fixture, and exercises a 1,032-instruction,
+130-block, 129-record-local envelope through both Windvale adapters. It passes
+1/1 in 47.737 test seconds after its stale field-after-call syntax and
+unsupported filler `pop` were corrected. The separate package-pin selection
+passes 1/1 in 10.360 test seconds. Both Release builds report zero warnings and
+errors.
+
+Direct Stage 0 calculation pins the 353,068-byte core closure at SHA-256
+`e5b47b3186dff2e69d0d307fad85ae64f73e642ea21b94af3c7eaeb6dc3b99d1`.
+The 347,939-byte memory adapter has SHA-256
+`e766f51e59564f51c64158cfaf0dfe156daf3eba44869e59fcf1452d6c7edb59`;
+the hosted tool is 348,967 bytes at SHA-256
+`13642a39dc3c7074eeb36d1a4cab897a171152bd5a5c4df2ab8076c06f0bd5b0`.
+Current unpromoted packages are 4,828,672 Windows and 4,829,184 Linux bytes at
+SHA-256
+`2dd0e91cf4e67466b68ebf7a67d9b29d4d69f8481efd9bf763b1d838aec7fdd5`
+and `41f46e75efdec87920d020c9c85b505ba238c7eb07556bb2f914e6a62ea06206`.
+
+One exact native self-lowering probe remains fail-closed as `WVR3018` after
+0.806 seconds and publishes no object. A capped reference probe reports
+418,105,387 constructed dynamic bytes but only 221,418 peak live bytes;
+345,206,567 constructed bytes belong to machine-code `bytes.concat` emission.
+The next native slice is therefore chunked machine emission or integration of
+the already-designed reclaiming ownership allocator, not another arena
+increase.
+
+Local Development, Standard, Qualification, the full Seed/OS suites, Linux
+execution, WebAssembly verification, GitHub verification, artifact promotion,
+and ordinary-path cutover remain deferred to the grouped end-of-goal gate.

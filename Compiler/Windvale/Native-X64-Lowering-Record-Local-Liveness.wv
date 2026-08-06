@@ -13,24 +13,32 @@ fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
 
-fn Zeros(Input: bytes, Count: u32) -> bytes {
+fn Repeatˉbytes(Input: bytes, Count: u32, Value: bytes) -> bytes {
     var Result: bytes = Empty(Input);
-    var Index: u32 = 0u32;
-    while Index < Count {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
-        Index = Index + 1u32;
+    var Chunk: bytes = Value;
+    var Remaining: u32 = Count;
+    while Remaining > 0u32 {
+        if Remaining % 2u32 == 1u32 {
+            Result = Bytesˉconcat(Result, Chunk);
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 {
+            Chunk = Bytesˉconcat(Chunk, Chunk);
+        }
     }
     return Result;
 }
 
+fn Zeros(Input: bytes, Count: u32) -> bytes {
+    return Repeatˉbytes(Input, Count, Bytesˉfromˉu8(0u8));
+}
+
 fn U32ˉvalues(Input: bytes, Count: u32, Value: u32) -> bytes {
-    var Result: bytes = Empty(Input);
-    var Index: u32 = 0u32;
-    while Index < Count {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
-        Index = Index + 1u32;
-    }
-    return Result;
+    return Repeatˉbytes(
+        Input,
+        Count,
+        Bytesˉfromˉu32ˉlittle(Value)
+    );
 }
 
 fn Setˉbyte(Input: bytes, Index: u32, Value: u8) -> bytes {
@@ -55,6 +63,112 @@ fn Setˉu32(Input: bytes, Index: u32, Value: u32) -> bytes {
             Offset + 4u32,
             Bytesˉlength(Input) - Offset - 4u32
         )
+    );
+}
+
+fn Flowˉblock(
+    Input: bytes,
+    Recordˉlocals: u32,
+    Block: u32,
+    Successorˉfirst: bytes,
+    Successorˉsecond: bytes,
+    Uses: bytes,
+    Definitions: bytes,
+    Liveˉin: bytes,
+    Liveˉout: bytes
+) -> bytes {
+    let First: u32 = Bytesˉreadˉu32ˉlittle(
+        Successorˉfirst,
+        Block * 4u32
+    );
+    let Second: u32 = Bytesˉreadˉu32ˉlittle(
+        Successorˉsecond,
+        Block * 4u32
+    );
+    var Nextˉout: bytes = Empty(Input);
+    var Nextˉin: bytes = Empty(Input);
+    var Changed: u8 = 0u8;
+    var Local: u32 = 0u32;
+    while Local < Recordˉlocals {
+        var Out: u8 = 0u8;
+        if First != 4294967295u32 {
+            if Bytesˉreadˉu8(
+                Liveˉin,
+                First * Recordˉlocals + Local
+            ) == 1u8 {
+                Out = 1u8;
+            }
+        }
+        if Second != 4294967295u32 {
+            if Bytesˉreadˉu8(
+                Liveˉin,
+                Second * Recordˉlocals + Local
+            ) == 1u8 {
+                Out = 1u8;
+            }
+        }
+        let Cell: u32 = Block * Recordˉlocals + Local;
+        var Into: u8 = Bytesˉreadˉu8(Uses, Cell);
+        if Into == 0u8 && Out == 1u8 {
+            if Bytesˉreadˉu8(Definitions, Cell) == 0u8 {
+                Into = 1u8;
+            }
+        }
+        if Bytesˉreadˉu8(Liveˉout, Cell) != Out ||
+            Bytesˉreadˉu8(Liveˉin, Cell) != Into {
+            Changed = 1u8;
+        }
+        Nextˉout = Bytesˉconcat(Nextˉout, Bytesˉfromˉu8(Out));
+        Nextˉin = Bytesˉconcat(Nextˉin, Bytesˉfromˉu8(Into));
+        Local = Local + 1u32;
+    }
+    return Bytesˉconcat(
+        Bytesˉfromˉu8(Changed),
+        Bytesˉconcat(Nextˉout, Nextˉin)
+    );
+}
+
+fn Flowˉiteration(
+    Input: bytes,
+    Blocks: u32,
+    Recordˉlocals: u32,
+    Successorˉfirst: bytes,
+    Successorˉsecond: bytes,
+    Uses: bytes,
+    Definitions: bytes,
+    Liveˉin: bytes,
+    Liveˉout: bytes
+) -> bytes {
+    var Nextˉout: bytes = Empty(Input);
+    var Nextˉin: bytes = Empty(Input);
+    var Changed: u8 = 0u8;
+    var Block: u32 = 0u32;
+    while Block < Blocks {
+        let Values: bytes = Flowˉblock(
+            Input,
+            Recordˉlocals,
+            Block,
+            Successorˉfirst,
+            Successorˉsecond,
+            Uses,
+            Definitions,
+            Liveˉin,
+            Liveˉout
+        );
+        if Bytesˉreadˉu8(Values, 0u32) == 1u8 { Changed = 1u8; }
+        Nextˉout = Bytesˉconcat(
+            Nextˉout,
+            Bytesˉslice(Values, 1u32, Recordˉlocals)
+        );
+        Nextˉin = Bytesˉconcat(
+            Nextˉin,
+            Bytesˉslice(Values, 1u32 + Recordˉlocals, Recordˉlocals)
+        );
+        Block = Block + 1u32;
+    }
+    return Bytesˉconcat(
+        Bytesˉfromˉu8(Changed),
+        Bytesˉconcat(Nextˉout, Nextˉin)
     );
 }
 
@@ -112,63 +226,21 @@ export fn Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
     var Iteration: u32 = 0u32;
     var Changed: bool = true;
     while Changed {
-        Changed = false;
-        var Nextˉliveˉin: bytes = Empty(Input);
-        var Nextˉliveˉout: bytes = Empty(Input);
-        var Flowˉblock: u32 = 0u32;
-        while Flowˉblock < Blocks {
-            let First: u32 = Bytesˉreadˉu32ˉlittle(
-                Successorˉfirst,
-                Flowˉblock * 4u32
-            );
-            let Second: u32 = Bytesˉreadˉu32ˉlittle(
-                Successorˉsecond,
-                Flowˉblock * 4u32
-            );
-            var Flowˉlocal: u32 = 0u32;
-            while Flowˉlocal < Recordˉlocals {
-                var Out: u8 = 0u8;
-                if First != 4294967295u32 {
-                    if Bytesˉreadˉu8(
-                        Liveˉin,
-                        First * Recordˉlocals + Flowˉlocal
-                    ) == 1u8 {
-                        Out = 1u8;
-                    }
-                }
-                if Second != 4294967295u32 {
-                    if Bytesˉreadˉu8(
-                        Liveˉin,
-                        Second * Recordˉlocals + Flowˉlocal
-                    ) == 1u8 {
-                        Out = 1u8;
-                    }
-                }
-                let Cell: u32 = Flowˉblock * Recordˉlocals + Flowˉlocal;
-                var Into: u8 = Bytesˉreadˉu8(Uses, Cell);
-                if Into == 0u8 && Out == 1u8 {
-                    if Bytesˉreadˉu8(Definitions, Cell) == 0u8 {
-                        Into = 1u8;
-                    }
-                }
-                if Bytesˉreadˉu8(Liveˉout, Cell) != Out ||
-                    Bytesˉreadˉu8(Liveˉin, Cell) != Into {
-                    Changed = true;
-                }
-                Nextˉliveˉout = Bytesˉconcat(
-                    Nextˉliveˉout,
-                    Bytesˉfromˉu8(Out)
-                );
-                Nextˉliveˉin = Bytesˉconcat(
-                    Nextˉliveˉin,
-                    Bytesˉfromˉu8(Into)
-                );
-                Flowˉlocal = Flowˉlocal + 1u32;
-            }
-            Flowˉblock = Flowˉblock + 1u32;
-        }
-        Liveˉout = Nextˉliveˉout;
-        Liveˉin = Nextˉliveˉin;
+        let Cells: u32 = Blocks * Recordˉlocals;
+        let Next: bytes = Flowˉiteration(
+            Input,
+            Blocks,
+            Recordˉlocals,
+            Successorˉfirst,
+            Successorˉsecond,
+            Uses,
+            Definitions,
+            Liveˉin,
+            Liveˉout
+        );
+        Changed = Bytesˉreadˉu8(Next, 0u32) == 1u8;
+        Liveˉout = Bytesˉslice(Next, 1u32, Cells);
+        Liveˉin = Bytesˉslice(Next, 1u32 + Cells, Cells);
         Iteration = Iteration + 1u32;
         if Iteration >= Blocks { Changed = false; }
     }

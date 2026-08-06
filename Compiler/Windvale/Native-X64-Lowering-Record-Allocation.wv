@@ -11,14 +11,28 @@ fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
 
-fn U32ˉvalues(Input: bytes, Count: u32, Value: u32) -> bytes {
+fn Repeatˉbytes(Input: bytes, Count: u32, Value: bytes) -> bytes {
     var Result: bytes = Empty(Input);
-    var Index: u32 = 0u32;
-    while Index < Count {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
-        Index = Index + 1u32;
+    var Chunk: bytes = Value;
+    var Remaining: u32 = Count;
+    while Remaining > 0u32 {
+        if Remaining % 2u32 == 1u32 {
+            Result = Bytesˉconcat(Result, Chunk);
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 {
+            Chunk = Bytesˉconcat(Chunk, Chunk);
+        }
     }
     return Result;
+}
+
+fn U32ˉvalues(Input: bytes, Count: u32, Value: u32) -> bytes {
+    return Repeatˉbytes(
+        Input,
+        Count,
+        Bytesˉfromˉu32ˉlittle(Value)
+    );
 }
 
 fn Setˉbyte(Input: bytes, Index: u32, Value: u8) -> bytes {

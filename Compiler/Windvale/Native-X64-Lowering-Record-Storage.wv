@@ -19,7 +19,7 @@ fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
 
-fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉrecordˉstorage {
+fn Invalidˉstorage(Input: bytes) -> Compilerˉnativeˉx64ˉrecordˉstorage {
     let Value: bytes = Empty(Input);
     return Compilerˉnativeˉx64ˉrecordˉstorage(
         false,
@@ -29,6 +29,10 @@ fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉrecordˉstorage {
         0u32,
         0u32
     );
+}
+
+fn Invalid(Input: bytes) -> bytes {
+    return Empty(Input);
 }
 
 export fn Compilerˉnativeˉx64ˉemptyˉrecordˉstorage(Input: bytes)
@@ -44,24 +48,65 @@ export fn Compilerˉnativeˉx64ˉemptyˉrecordˉstorage(Input: bytes)
     );
 }
 
-fn Zeros(Input: bytes, Count: u32) -> bytes {
+export fn Compilerˉnativeˉx64ˉrecordˉstorageˉdecode(Input: bytes)
+    -> Compilerˉnativeˉx64ˉrecordˉstorage {
+    if Bytesˉlength(Input) < 28u32 { return Invalidˉstorage(Input); }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1381193303u32 {
+        return Invalidˉstorage(Input);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Invalidˉstorage(Input);
+    }
+    let Persistentˉfields: u32 = Bytesˉreadˉu32ˉlittle(Input, 8u32);
+    let Scratchˉfields: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Recordˉvalues: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Persistentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Scratchˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Payloadˉbytes: u32 = Bytesˉlength(Input) - 28u32;
+    if Persistentˉfields > 2048u32 || Scratchˉfields > 2048u32 ||
+        Recordˉvalues > 128u32 || Persistentˉbytes > 8192u32 ||
+        Scratchˉbytes > 512u32 || Persistentˉbytes % 4u32 != 0u32 ||
+        Scratchˉbytes % 4u32 != 0u32 ||
+        Persistentˉbytes > Payloadˉbytes ||
+        Scratchˉbytes != Payloadˉbytes - Persistentˉbytes {
+        return Invalidˉstorage(Input);
+    }
+    return Compilerˉnativeˉx64ˉrecordˉstorage(
+        true,
+        Bytesˉslice(Input, 28u32, Persistentˉbytes),
+        Bytesˉslice(Input, 28u32 + Persistentˉbytes, Scratchˉbytes),
+        Persistentˉfields,
+        Scratchˉfields,
+        Recordˉvalues
+    );
+}
+
+fn Repeatˉbytes(Input: bytes, Count: u32, Value: bytes) -> bytes {
     var Result: bytes = Empty(Input);
-    var Index: u32 = 0u32;
-    while Index < Count {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
-        Index = Index + 1u32;
+    var Chunk: bytes = Value;
+    var Remaining: u32 = Count;
+    while Remaining > 0u32 {
+        if Remaining % 2u32 == 1u32 {
+            Result = Bytesˉconcat(Result, Chunk);
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 {
+            Chunk = Bytesˉconcat(Chunk, Chunk);
+        }
     }
     return Result;
 }
 
+fn Zeros(Input: bytes, Count: u32) -> bytes {
+    return Repeatˉbytes(Input, Count, Bytesˉfromˉu8(0u8));
+}
+
 fn U32ˉvalues(Input: bytes, Count: u32, Value: u32) -> bytes {
-    var Result: bytes = Empty(Input);
-    var Index: u32 = 0u32;
-    while Index < Count {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
-        Index = Index + 1u32;
-    }
-    return Result;
+    return Repeatˉbytes(
+        Input,
+        Count,
+        Bytesˉfromˉu32ˉlittle(Value)
+    );
 }
 
 fn Setˉbyte(Input: bytes, Index: u32, Value: u8) -> bytes {
@@ -170,7 +215,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Blocks: u32,
     Leaders: bytes
-) -> Compilerˉnativeˉx64ˉrecordˉstorage {
+) -> bytes {
     let Locals: u32 = Bytesˉlength(Localˉtypes);
     if Locals >= 2048u32 || Blocks == 0u32 || Blocks > 1024u32 {
         return Invalid(Input);
@@ -823,12 +868,27 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Scratchˉinterference,
             Recordˉvalues
         );
-    return Compilerˉnativeˉx64ˉrecordˉstorage(
-        true,
-        Persistent.Offsets,
-        Scratch.Offsets,
-        Persistent.Fields,
-        Scratch.Fields,
-        Recordˉvalues
+    let Header: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(1381193303u32),
+            Bytesˉfromˉu32ˉlittle(1u32)
+        ),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Persistent.Fields),
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Scratch.Fields),
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Recordˉvalues),
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Persistent.Offsets)),
+                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Scratch.Offsets))
+                    )
+                )
+            )
+        )
+    );
+    return Bytesˉconcat(
+        Bytesˉconcat(Header, Persistent.Offsets),
+        Scratch.Offsets
     );
 }

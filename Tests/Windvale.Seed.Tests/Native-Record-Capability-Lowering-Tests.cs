@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Windvale.Bytecode;
+using Windvale.Compiler;
 using Windvale.Compiler.Native;
 using Windvale.Runtime;
 using Windvale.Runtime.Native;
@@ -11,9 +12,55 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_RECORD_CAPABILITY_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Record-Capability.wv");
+    private static readonly string NATIVE_RECORD_STORAGE_PACKED_RESULT_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-Record-Storage-Packed-Result.wv");
 
     private static void Nativeˉrecordˉcapabilityˉloweringˉagrees()
     {
+        var Codecˉcompilation = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Tests/Fixtures/Native-X64/Native-Record-Storage-Packed-Result.wv",
+                NATIVE_RECORD_STORAGE_PACKED_RESULT_SOURCE),
+            [
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv",
+                    NATIVE_X64_LOWERING_RECORD_STORAGE_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Types.wv",
+                    NATIVE_X64_LOWERING_TYPES_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Layout.wv",
+                    NATIVE_X64_LOWERING_LAYOUT_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Capabilities.wv",
+                    NATIVE_X64_LOWERING_CAPABILITIES_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Record-Allocation.wv",
+                    NATIVE_X64_LOWERING_RECORD_ALLOCATION_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Record-Local-Liveness.wv",
+                    NATIVE_X64_LOWERING_RECORD_LOCAL_LIVENESS_SOURCE),
+            ]);
+        if (!Codecˉcompilation.Success)
+        {
+            throw new InvalidOperationException(
+                "Windvale record-storage packed-result compilation failed: " +
+                string.Join(" | ", Codecˉcompilation.Diagnostics));
+        }
+        var Codec = Moduleˉcodec.Readˉandˉverify(
+            Codecˉcompilation.Moduleˉbytes.AsSpan());
+        Equal(
+            42,
+            new Referenceˉruntime(
+                Codec,
+                new Referenceˉcapabilityˉhost(TextWriter.Null),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmain().Exitˉcode);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                X64ˉnativeˉbackend.Compile(Codec).Fragment));
+
         var Tool = Moduleˉcodec.Readˉandˉverify(
             Compileˉwvbˉtoˉwvoˉtoolˉsuccess());
         var Memory = Moduleˉcodec.Readˉandˉverify(
@@ -76,5 +123,6 @@ internal static partial class Program
             Module,
             maximumˉinstructions: Interpreted.Executedˉinstructions,
             expectedˉexitˉcode: null);
+        Assertˉlargeˉrecordˉplannerˉenvelopeˉlowering(Tool, Memory);
     }
 }
