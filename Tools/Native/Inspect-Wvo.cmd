@@ -12,7 +12,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Inspector=%RepositoryRoot%\Artifacts\Native-Wvo-Object-Candidate\Wvo-Object.exe"
 
-certutil -hashfile "%Inspector%" SHA256 | findstr /I /C:"9f85375a9223fdc8c8bfe81f82b6b428432a21594a11179d1ab1375aa6c6886f" >nul
+certutil -hashfile "%Inspector%" SHA256 | findstr /I /C:"2a8f6f8ca8fc6054fff23441f7971c0b90900383d5bed0fecc54f9cac102a300" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVO inspector artifact digest is invalid.
     exit /b 1

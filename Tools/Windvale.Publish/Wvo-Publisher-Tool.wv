@@ -1,0 +1,69 @@
+module Windvaleˉwvoˉpublisherˉtool profile hosted;
+
+import Windvaleˉwvbˉpublicationˉnativeˉbridge as Nativeˉbridge;
+import Wvoˉobjectˉverification as Objectˉverification;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Wvoˉpublisherˉpathˉisˉwvo(Path: text) -> bool {
+    let Value: bytes = Textˉtoˉutf8(Path);
+    let Length: u32 = Bytesˉlength(Value);
+    if Length < 4u32 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 4u32) != 46u8 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 3u32) != 119u8 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 2u32) != 118u8 { return false; }
+    return Bytesˉreadˉu8(Value, Length - 1u32) == 111u8;
+}
+
+fn Wvoˉpublisherˉpathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) != Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Wvoˉpublisherˉcandidateˉstatus(Candidate: bytes) -> i32 {
+    if !Objectˉverification.Wvoˉobjectˉisˉvalid(Candidate) {
+        diagnostic.write_line("publication status=Rejected phase=wvo");
+        return 1;
+    }
+    return 0;
+}
+
+fn Wvoˉpublicationˉpublisherˉbegin() -> u32 {
+    return Nativeˉbridge.Wvbˉpublicationˉnativeˉbegin();
+}
+
+fn Wvoˉpublicationˉpublisherˉapply(Current: u32, Action: u32) -> u32 {
+    return Nativeˉbridge.Wvbˉpublicationˉnativeˉapply(Current, Action);
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line("Usage: wvopublish <candidate.wvo> <destination.wvo>");
+        return 64;
+    }
+
+    let Candidateˉpath: text = process.argument(0u32);
+    let Destinationˉpath: text = process.argument(1u32);
+    if !Wvoˉpublisherˉpathˉisˉwvo(Candidateˉpath) ||
+        !Wvoˉpublisherˉpathˉisˉwvo(Destinationˉpath) ||
+        Wvoˉpublisherˉpathsˉareˉequal(Candidateˉpath, Destinationˉpath) {
+        diagnostic.write_line("Usage: wvopublish <candidate.wvo> <destination.wvo>");
+        return 64;
+    }
+
+    return Wvoˉpublisherˉcandidateˉstatus(file.read_bytes(Candidateˉpath));
+}

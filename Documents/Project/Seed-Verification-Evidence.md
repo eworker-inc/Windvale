@@ -3331,3 +3331,38 @@ CLR/hostfxr/hostpolicy module. The updated digest-bound AOT chain also passes in
 1.4 seconds. No WebAssembly implementation changed. Linux execution, native
 publisher/container construction, grouped qualification, promotion, and release
 integration remain deferred.
+
+## Local native WVO publication evidence
+
+[Decision 0308](../Decisions/0308-Native-Wvo-Publication.md) extracts complete
+portable WVO admission into `Wvo-Object-Verification.wv`, shared by the read-only
+inspector shell and a new five-service publisher. The accepted-subset lowerer
+launchers now write a private candidate and invoke the publisher; the existing
+native transaction owns file identity, exclusive-sibling durable write, exact
+reread, atomic replacement, directory durability, and cleanup.
+
+The repinned inspector WVB is 60,974 bytes at SHA-256
+`b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f`.
+The Windows inspector is 606,720 bytes at SHA-256
+`2a8f6f8ca8fc6054fff23441f7971c0b90900383d5bed0fecc54f9cac102a300`;
+the Linux inspector is 606,208 bytes at SHA-256
+`bdc4817c252ecf2592299a6646161b396bfb251acabc68d3f5d75ff40891541e`.
+The new publisher WVB is 41,365 bytes at SHA-256
+`4e8c81da38f5eb06f9334c2d2c5e35120a13e73bac3a9375b5e6a2eff04438c5`.
+The Windows application is 430,080 bytes at SHA-256
+`035a1baaada6be8d057b782804a8650d978da53dd008337ab00258f2ab597cb7`;
+the Linux application is 426,949 bytes at SHA-256
+`ac2bb513e2145e9eb911a9be142fc2f1f990a1bab21f278dd841043042b51f7a`.
+
+The reviewed WVO-publication selection passes 1/1 in 2.943 test seconds after a
+13.23-second zero-warning Release build; the complete command takes 20.7
+seconds. Direct Windows execution atomically replaces a sentinel with an object
+admitted by the independent recovery codec, rejects invalid WVO without changing
+the destination, leaves no scratch, and loads no CLR component. The repinned
+inspector selection passes 1/1 in 4.236 test seconds after a 7.82-second build;
+the digest-bound launcher selection passes 1/1 in 0.671 test seconds after a
+6.95-second build. The native AOT chain passes in 1.7 seconds with result 42 and
+now traverses the publication boundary. No WebAssembly implementation changed.
+Linux execution, native host-container construction, Development, Standard,
+Qualification, promotion, release integration, and the grouped end-of-goal gate
+remain deferred.

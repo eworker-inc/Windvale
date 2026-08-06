@@ -28,4 +28,13 @@ input_directory=$(CDPATH= cd -- "$(dirname -- "$1")" && pwd -P) || exit 1
 output_directory=$(CDPATH= cd -- "$(dirname -- "$2")" && pwd -P) || exit 1
 input_path="$input_directory/$(basename -- "$1")"
 output_path="$output_directory/$(basename -- "$2")"
-"$artifact_root/Wvb-To-Wvo.elf" "$input_path" "$output_path"
+temporary_directory=$(mktemp -d "${TMPDIR:-/tmp}/windvale-native-lower.XXXXXXXX") || exit 1
+candidate_path="$temporary_directory/Candidate.wvo"
+cleanup() {
+    rm -f -- "$candidate_path"
+    rmdir -- "$temporary_directory" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+"$artifact_root/Wvb-To-Wvo.elf" "$input_path" "$candidate_path" || exit $?
+"$script_directory/Publish-Wvo.sh" "$candidate_path" "$output_path"

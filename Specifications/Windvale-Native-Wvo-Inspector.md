@@ -4,7 +4,7 @@
 
 The shared hosted-verifier container packages the canonical Windvale-written `Wvoˉobjectˉcore` as paired Windows x64 and Linux x64 read-only command-line applications. This source candidate is not yet the ordinary front door: `windvale object-verify` and `windvale object-inspect` remain Stage 0 commands until the grouped final Windows/Linux retirement gate and a later pinned-artifact promotion succeed.
 
-The product logic remains in `Object-Model/Windvale/Wvo-Object-Core.wv`. It owns complete WVO admission, deterministic verification and inspection reports, SHA-256 identity, and malformed-input status. The package adds no second object parser or platform-specific WVO logic.
+The product logic is split across two cohesive object-model modules. `Wvo-Object-Verification.wv` owns complete portable WVO admission and malformed-input status; `Wvo-Object-Core.wv` owns deterministic verification and inspection reports, SHA-256 identity, the hosted shell, and self-test. The native WVO publisher reuses the first module. The package adds no second object parser or platform-specific WVO logic.
 
 ## Construction contract
 
@@ -50,9 +50,9 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVO inspector WVB | 57,297 | `3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7` |
-| Windows WVO inspector | 577,024 | `9f85375a9223fdc8c8bfe81f82b6b428432a21594a11179d1ab1375aa6c6886f` |
-| Linux WVO inspector | 577,536 | `dc9fff2a13256cd0dfabed4c7e9369a9d446408a00aec3eee5fd95876ce88b37` |
+| WVO inspector WVB | 60,974 | `b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f` |
+| Windows WVO inspector | 606,720 | `2a8f6f8ca8fc6054fff23441f7971c0b90900383d5bed0fecc54f9cac102a300` |
+| Linux WVO inspector | 606,208 | `bdc4817c252ecf2592299a6646161b396bfb251acabc68d3f5d75ff40891541e` |
 
 The focused candidate test reconstructs and independently parses both containers, checks exact capabilities and services, exercises the public current-host AOT target, and runs the current-host raw application. It compares complete successful `verify` and `inspect` output with the Stage 0 oracle during candidate qualification, checks malformed and usage outcomes, and inspects loaded modules or mappings for CLR/.NET.
 

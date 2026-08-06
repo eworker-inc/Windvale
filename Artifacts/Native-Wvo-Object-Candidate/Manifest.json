@@ -2,31 +2,32 @@
   "format": "windvale-native-wvo-object-candidate-1",
   "status": "candidate",
   "sourceDecision": "0222",
-  "provenanceDecision": "0301",
+  "provenanceDecision": "0308",
   "qualification": "pending",
+  "construction": "stage0-recovery",
   "artifacts": [
     {
       "name": "wvo-object-wvb",
       "path": "Wvo-Object.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 57297,
-      "sha256": "3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7",
+      "bytes": 60974,
+      "sha256": "b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f",
       "sourceProject": "Windvale-Wvo-Object.wvproj"
     },
     {
       "name": "windows-x64-wvo-object",
       "path": "Wvo-Object.exe",
       "target": "windows-x64-wvo-inspector-v1",
-      "bytes": 577024,
-      "sha256": "9f85375a9223fdc8c8bfe81f82b6b428432a21594a11179d1ab1375aa6c6886f",
+      "bytes": 606720,
+      "sha256": "2a8f6f8ca8fc6054fff23441f7971c0b90900383d5bed0fecc54f9cac102a300",
       "sourceWvb": "Wvo-Object.wvb"
     },
     {
       "name": "linux-x64-wvo-object",
       "path": "Wvo-Object.elf",
       "target": "linux-x64-wvo-inspector-v1",
-      "bytes": 577536,
-      "sha256": "dc9fff2a13256cd0dfabed4c7e9369a9d446408a00aec3eee5fd95876ce88b37",
+      "bytes": 606208,
+      "sha256": "bdc4817c252ecf2592299a6646161b396bfb251acabc68d3f5d75ff40891541e",
       "sourceWvb": "Wvo-Object.wvb"
     }
   ]

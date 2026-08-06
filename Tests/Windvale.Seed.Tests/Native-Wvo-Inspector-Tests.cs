@@ -8,13 +8,13 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVO_INSPECTOR_WVB_BYTES = 57_297;
-    private const int WINDOWS_WVO_INSPECTOR_APPLICATION_BYTES = 577_024;
+    private const int WVO_INSPECTOR_WVB_BYTES = 60_974;
+    private const int WINDOWS_WVO_INSPECTOR_APPLICATION_BYTES = 606_720;
     private const string WINDOWS_WVO_INSPECTOR_APPLICATION_SHA256 =
-        "9f85375a9223fdc8c8bfe81f82b6b428432a21594a11179d1ab1375aa6c6886f";
-    private const int LINUX_WVO_INSPECTOR_APPLICATION_BYTES = 577_536;
+        "2a8f6f8ca8fc6054fff23441f7971c0b90900383d5bed0fecc54f9cac102a300";
+    private const int LINUX_WVO_INSPECTOR_APPLICATION_BYTES = 606_208;
     private const string LINUX_WVO_INSPECTOR_APPLICATION_SHA256 =
-        "dc9fff2a13256cd0dfabed4c7e9369a9d446408a00aec3eee5fd95876ce88b37";
+        "bdc4817c252ecf2592299a6646161b396bfb251acabc68d3f5d75ff40891541e";
 
     private static void Nativeˉwvoˉinspectorˉtargetsˉareˉdiscoverable()
     {

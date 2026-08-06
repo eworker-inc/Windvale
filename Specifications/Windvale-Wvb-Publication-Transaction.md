@@ -15,9 +15,9 @@ fault/concurrency qualification matrix remain pending.
 This module does not read or write files, verify an artifact, interpret paths, or
 perform a replacement. It receives only confirmed adapter milestones and makes it
 impossible for host wrappers to reinterpret a post-replacement failure as known
-unchanged. Decision 0307 reuses the same format-neutral state machine and native
-adapters after portable console-application admission; the historical WVB names
-remain the canonical version-1 source identity.
+unchanged. Decisions 0307 and 0308 reuse the same format-neutral state machine
+and native adapters after portable console-application or WVO admission; the
+historical WVB names remain the canonical version-1 source identity.
 
 ## States and actions
 

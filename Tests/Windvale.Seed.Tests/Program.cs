@@ -26,7 +26,7 @@ internal static partial class Program
     private const string FOUNDATION_SHA256 = "c13efd14485afa1bf7fa418b54cea2fdd234fe34fdc824ae52346ce062be7793";
     private const string WVDUMP_CORE_SHA256 = "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
-    private const string WVO_CORE_SHA256 = "3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7";
+    private const string WVO_CORE_SHA256 = "b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c";
     private const string WVLINK_CORE_SHA256 = "592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386";
@@ -614,6 +614,9 @@ internal static partial class Program
 
     private static readonly string WVO_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Wvo-Object-Core.wv");
+
+    private static readonly string WVO_VERIFICATION_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Wvo-Object-Verification.wv");
 
     private static readonly string MACHINE_CONTRACTS_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Machine-Contracts.wv");
@@ -1232,6 +1235,7 @@ internal static partial class Program
         new("Windvale owns atomic WVB publication transaction outcomes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvbˉpublicationˉtransactionˉruns),
         new("Windvale owns the WVB publisher admission front door", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvbˉpublisherˉfrontˉdoorˉruns),
         new("Windvale owns native console-application publication", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Consoleˉapplicationˉpublisherˉruns),
+        new("Windvale owns native WVO publication", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvoˉpublisherˉruns),
         new("ordinary source-to-WVB builds use pinned native tools", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉsourceˉtoˉwvbˉfrontˉdoorˉruns),
         new("native hosted input inspects a real WVB through bounded argument and file snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉinputˉinspectsˉwvb),
         new("native file output executes the exact compiler with bounded arena evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉfileˉoutputˉpublishes, Testˉcost.Extended),
@@ -26360,6 +26364,9 @@ internal static partial class Program
             [
                 new("Foundation/Byte-Ordering.wv", BYTE_ORDERING_SOURCE),
                 new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE),
+                new(
+                    "Object-Model/Windvale/Wvo-Object-Verification.wv",
+                    WVO_VERIFICATION_SOURCE),
             ]);
         if (!Result.Success)
         {

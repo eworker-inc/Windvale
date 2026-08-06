@@ -2,32 +2,29 @@ using System.Collections.Immutable;
 
 namespace Windvale.Linker;
 
-public static class Consoleˉapplicationˉpublisherˉapplicationˉcontract
+public static class Wvoˉpublisherˉapplicationˉcontract
 {
-    public const string WINDOWS_TARGET_NAME =
-        "windows-x64-console-application-publisher-v1";
-    public const string LINUX_TARGET_NAME =
-        "linux-x64-console-application-publisher-v1";
-    public const string MODULE_NAME =
-        "Windvaleˉconsoleˉapplicationˉpublisherˉtool";
-    public const int MODULE_BYTES = 56_375;
+    public const string WINDOWS_TARGET_NAME = "windows-x64-wvo-publisher-v1";
+    public const string LINUX_TARGET_NAME = "linux-x64-wvo-publisher-v1";
+    public const string MODULE_NAME = "Windvaleˉwvoˉpublisherˉtool";
+    public const int MODULE_BYTES = 41_365;
     public const string MODULE_SHA256 =
-        "1e35f7cc9e53322ebcc70c332486eef983ff59370246c62ec4e8cbcd144d8403";
-    public const int WINDOWS_APPLICATION_BYTES = 642_048;
+        "4e8c81da38f5eb06f9334c2d2c5e35120a13e73bac3a9375b5e6a2eff04438c5";
+    public const int WINDOWS_APPLICATION_BYTES = 430_080;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "1bd3bbd24fc22940b96badb7e809899d42e42a25a5247dfededb00048232675d";
-    public const int LINUX_APPLICATION_BYTES = 639_941;
+        "035a1baaada6be8d057b782804a8650d978da53dd008337ab00258f2ab597cb7";
+    public const int LINUX_APPLICATION_BYTES = 426_949;
     public const string LINUX_APPLICATION_SHA256 =
-        "2edc7ebe23660e299d9db4bf55d4537ec102b7a3b2d46ba833e549cd355a0af7";
+        "ac2bb513e2145e9eb911a9be142fc2f1f990a1bab21f278dd841043042b51f7a";
 
     internal static readonly Nativeˉpublisherˉapplicationˉcontract CONSTRUCTION = new(
         MODULE_NAME,
         MODULE_BYTES,
         MODULE_SHA256,
-        0x4150_5657,
-        "Applicationˉpublicationˉpublisherˉbegin",
-        "Applicationˉpublicationˉpublisherˉapply",
-        "console-application publisher",
+        0x4F50_5657,
+        "Wvoˉpublicationˉpublisherˉbegin",
+        "Wvoˉpublicationˉpublisherˉapply",
+        "WVO publisher",
         [
             Windvale.Compiler.Native.Nativeˉservice.Consoleˉwriteˉline,
             Windvale.Compiler.Native.Nativeˉservice.Processˉargumentˉcount,
@@ -37,7 +34,7 @@ public static class Consoleˉapplicationˉpublisherˉapplicationˉcontract
         ]);
 }
 
-public static class Consoleˉapplicationˉpublisherˉapplicationˉwriter
+public static class Wvoˉpublisherˉapplicationˉwriter
 {
     public static Windowsˉconsoleˉapplicationˉresult Writeˉwindows(
         Windvale.Bytecode.Verifiedˉmodule module,
@@ -50,14 +47,12 @@ public static class Consoleˉapplicationˉpublisherˉapplicationˉwriter
                 module,
                 fragment,
                 moduleˉbytes,
-                Consoleˉapplicationˉpublisherˉapplicationˉcontract.CONSTRUCTION);
+                Wvoˉpublisherˉapplicationˉcontract.CONSTRUCTION);
             Wvbˉpublisherˉapplicationˉbuilder.Requireˉapplicationˉidentity(
                 Image,
-                Consoleˉapplicationˉpublisherˉapplicationˉcontract
-                    .WINDOWS_APPLICATION_BYTES,
-                Consoleˉapplicationˉpublisherˉapplicationˉcontract
-                    .WINDOWS_APPLICATION_SHA256,
-                "Windows console-application");
+                Wvoˉpublisherˉapplicationˉcontract.WINDOWS_APPLICATION_BYTES,
+                Wvoˉpublisherˉapplicationˉcontract.WINDOWS_APPLICATION_SHA256,
+                "Windows WVO");
             return Windowsˉconsoleˉapplicationˉresult.Succeeded(
                 Image.ToImmutableArray());
         }
@@ -69,9 +64,8 @@ public static class Consoleˉapplicationˉpublisherˉapplicationˉwriter
             Windvale.ObjectModel.Objectˉformatˉexception)
         {
             return Windowsˉconsoleˉapplicationˉresult.Failed(
-                "WVW1411",
-                $"Windows console-application publisher construction failed: " +
-                Exception.Message);
+                "WVW1421",
+                $"Windows WVO publisher construction failed: {Exception.Message}");
         }
     }
 
@@ -86,14 +80,12 @@ public static class Consoleˉapplicationˉpublisherˉapplicationˉwriter
                 module,
                 fragment,
                 moduleˉbytes,
-                Consoleˉapplicationˉpublisherˉapplicationˉcontract.CONSTRUCTION);
+                Wvoˉpublisherˉapplicationˉcontract.CONSTRUCTION);
             Wvbˉpublisherˉapplicationˉbuilder.Requireˉapplicationˉidentity(
                 Image,
-                Consoleˉapplicationˉpublisherˉapplicationˉcontract
-                    .LINUX_APPLICATION_BYTES,
-                Consoleˉapplicationˉpublisherˉapplicationˉcontract
-                    .LINUX_APPLICATION_SHA256,
-                "Linux console-application");
+                Wvoˉpublisherˉapplicationˉcontract.LINUX_APPLICATION_BYTES,
+                Wvoˉpublisherˉapplicationˉcontract.LINUX_APPLICATION_SHA256,
+                "Linux WVO");
             return Linuxˉconsoleˉapplicationˉresult.Succeeded(
                 Image.ToImmutableArray());
         }
@@ -105,9 +97,8 @@ public static class Consoleˉapplicationˉpublisherˉapplicationˉwriter
             Windvale.ObjectModel.Objectˉformatˉexception)
         {
             return Linuxˉconsoleˉapplicationˉresult.Failed(
-                "WVL1411",
-                $"Linux console-application publisher construction failed: " +
-                Exception.Message);
+                "WVL1421",
+                $"Linux WVO publisher construction failed: {Exception.Message}");
         }
     }
 }

@@ -16,6 +16,7 @@ if /I not "%~x2"==".wvo" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
+set "PublisherLauncher=%RepositoryRoot%\Tools\Native\Publish-Wvo.cmd"
 
 certutil -hashfile "%Lowerer%" SHA256 | findstr /I /C:"0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280" >nul
 if errorlevel 1 (
@@ -23,8 +24,22 @@ if errorlevel 1 (
     exit /b 1
 )
 
-"%Lowerer%" "%~f1" "%~f2"
-exit /b %ERRORLEVEL%
+:allocate
+set "TemporaryDirectory=%TEMP%\windvale-native-lower-%RANDOM%-%RANDOM%-%RANDOM%"
+if exist "%TemporaryDirectory%" goto :allocate
+mkdir "%TemporaryDirectory%" || exit /b 1
+set "CandidatePath=%TemporaryDirectory%\Candidate.wvo"
+
+"%Lowerer%" "%~f1" "%CandidatePath%"
+set "Result=%ERRORLEVEL%"
+if not "%Result%"=="0" goto :cleanup
+call "%PublisherLauncher%" "%CandidatePath%" "%~f2"
+set "Result=%ERRORLEVEL%"
+
+:cleanup
+if exist "%CandidatePath%" del /f /q "%CandidatePath%" >nul 2>nul
+rmdir "%TemporaryDirectory%" >nul 2>nul
+exit /b %Result%
 
 :usage
 >&2 echo Usage: Tools\Native\Lower-Wvb-To-Wvo.cmd ^<input.wvb^> ^<output.wvo^>

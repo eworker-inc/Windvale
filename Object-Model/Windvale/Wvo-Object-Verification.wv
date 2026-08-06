@@ -1,0 +1,575 @@
+module Wvoˉobjectˉverification profile portable;
+
+import Foundationˉbyteˉordering as Byteˉordering;
+
+export enum Wvoˉstatus {
+    Valid = 0;
+    Shortˉheader = 1;
+    Badˉmagic = 2;
+    Badˉversion = 3;
+    Badˉarchitecture = 4;
+    Unsupportedˉflags = 5;
+    Limitˉexceeded = 6;
+    Outˉofˉbounds = 7;
+    Invalidˉname = 8;
+    Invalidˉsection = 9;
+    Invalidˉsymbol = 10;
+    Invalidˉrelocation = 11;
+    Noncanonicalˉorder = 12;
+    Trailingˉbytes = 13;
+}
+
+export record Wvoˉstringˉscan {
+    Status: Wvoˉstatus;
+    Cursor: u32;
+    Valueˉoffset: u32;
+    Length: u32;
+}
+
+export record Wvoˉsectionˉview {
+    Status: Wvoˉstatus;
+    Kind: u32;
+    Alignment: u32;
+    Memoryˉsize: u32;
+    Dataˉoffset: u32;
+    Dataˉlength: u32;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Cursor: u32;
+}
+
+export record Wvoˉsymbolˉview {
+    Binding: u32;
+    Kind: u32;
+    Sectionˉindex: u32;
+    Offset: u32;
+    Size: u32;
+    Nameˉoffset: u32;
+    Nameˉlength: u32;
+    Cursor: u32;
+}
+
+export record Wvoˉrelocationˉview {
+    Kind: u32;
+    Sectionˉindex: u32;
+    Offset: u32;
+    Symbolˉindex: u32;
+    Addend: i32;
+}
+
+export record Wvoˉinspection {
+    Status: Wvoˉstatus;
+    Sectionsˉseen: u32;
+    Symbolsˉseen: u32;
+    Relocationsˉseen: u32;
+    Failureˉoffset: u32;
+}
+
+fn Rangeˉisˉinside(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Alignmentˉisˉvalid(Value: u32) -> bool {
+    if Value == 1u32 { return true; }
+    if Value == 2u32 { return true; }
+    if Value == 4u32 { return true; }
+    if Value == 8u32 { return true; }
+    if Value == 16u32 { return true; }
+    if Value == 32u32 { return true; }
+    if Value == 64u32 { return true; }
+    if Value == 128u32 { return true; }
+    if Value == 256u32 { return true; }
+    if Value == 512u32 { return true; }
+    if Value == 1024u32 { return true; }
+    if Value == 2048u32 { return true; }
+    return Value == 4096u32;
+}
+
+fn Nameˉcharacterˉisˉvalid(Value: u32, First: bool) -> bool {
+    if Value >= 65u32 {
+        if Value <= 90u32 { return true; }
+    }
+    if Value >= 97u32 {
+        if Value <= 122u32 { return true; }
+    }
+    if Value == 95u32 { return true; }
+    if Value == 46u32 { return true; }
+    if Value == 36u32 { return true; }
+    if !First {
+        if Value >= 48u32 {
+            if Value <= 57u32 { return true; }
+        }
+    }
+    return false;
+}
+
+fn Utf8ˉcontinuation(Value: u32) -> bool {
+    if Value < 128u32 { return false; }
+    return Value <= 191u32;
+}
+
+fn Utf8ˉsequenceˉwidth(Value: bytes, Index: u32, Length: u32) -> u32 {
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index));
+    var Second: u32 = 0u32;
+    if First <= 127u32 { return 1u32; }
+    if First >= 194u32 && First <= 223u32 {
+        if Index + 2u32 > Length { return 0u32; }
+        if !Utf8ˉcontinuation(U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index + 1u32))) {
+            return 0u32;
+        }
+        return 2u32;
+    }
+    if First >= 224u32 && First <= 239u32 {
+        if Index + 3u32 > Length { return 0u32; }
+        Second = U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index + 1u32));
+        if First == 224u32 {
+            if Second < 160u32 || Second > 191u32 { return 0u32; }
+        }
+        if First == 237u32 {
+            if Second < 128u32 || Second > 159u32 { return 0u32; }
+        }
+        if First != 224u32 && First != 237u32 {
+            if !Utf8ˉcontinuation(Second) { return 0u32; }
+        }
+        if !Utf8ˉcontinuation(U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index + 2u32))) {
+            return 0u32;
+        }
+        return 3u32;
+    }
+    if First < 240u32 || First > 244u32 { return 0u32; }
+    if Index + 4u32 > Length { return 0u32; }
+    Second = U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index + 1u32));
+    if First == 240u32 {
+        if Second < 144u32 || Second > 191u32 { return 0u32; }
+    }
+    if First == 244u32 {
+        if Second < 128u32 || Second > 143u32 { return 0u32; }
+    }
+    if First != 240u32 && First != 244u32 {
+        if !Utf8ˉcontinuation(Second) { return 0u32; }
+    }
+    if !Utf8ˉcontinuation(U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index + 2u32))) {
+        return 0u32;
+    }
+    if !Utf8ˉcontinuation(U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index + 3u32))) {
+        return 0u32;
+    }
+    return 4u32;
+}
+
+fn Utf8ˉisˉvalid(Value: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Value);
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Width: u32 = Utf8ˉsequenceˉwidth(Value, Index, Length);
+        if Width == 0u32 { return false; }
+        Index = Index + Width;
+    }
+    return true;
+}
+
+fn Scanˉstring(Input: bytes, Cursor: u32, End: u32) -> Wvoˉstringˉscan {
+    if !Rangeˉisˉinside(End, Cursor, 4u32) {
+        return Wvoˉstringˉscan(Wvoˉstatus.Outˉofˉbounds, Cursor, Cursor, 0u32);
+    }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    if Length == 0u32 {
+        return Wvoˉstringˉscan(Wvoˉstatus.Invalidˉname, Cursor, Cursor + 4u32, Length);
+    }
+    if Length > 255u32 {
+        return Wvoˉstringˉscan(Wvoˉstatus.Limitˉexceeded, Cursor, Cursor + 4u32, Length);
+    }
+    let Valueˉoffset: u32 = Cursor + 4u32;
+    if !Rangeˉisˉinside(End, Valueˉoffset, Length) {
+        return Wvoˉstringˉscan(Wvoˉstatus.Outˉofˉbounds, Valueˉoffset, Valueˉoffset, Length);
+    }
+
+    let Value: bytes = Bytesˉslice(Input, Valueˉoffset, Length);
+    if !Utf8ˉisˉvalid(Value) {
+        return Wvoˉstringˉscan(Wvoˉstatus.Invalidˉname, Valueˉoffset, Valueˉoffset, Length);
+    }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Valueˉoffset + Index));
+        if !Nameˉcharacterˉisˉvalid(Character, Index == 0u32) {
+            return Wvoˉstringˉscan(
+                Wvoˉstatus.Invalidˉname,
+                Valueˉoffset + Index,
+                Valueˉoffset,
+                Length
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Wvoˉstringˉscan(Wvoˉstatus.Valid, Valueˉoffset + Length, Valueˉoffset, Length);
+}
+
+export fn Findˉsection(Input: bytes, Sectionˉstart: u32, Sectionˉcount: u32, Wanted: u32) -> Wvoˉsectionˉview {
+    var Cursor: u32 = Sectionˉstart;
+    var Index: u32 = 0u32;
+    while Index < Sectionˉcount {
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        let Alignment: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Memoryˉsize: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Dataˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        let Name: Wvoˉstringˉscan = Scanˉstring(Input, Cursor + 16u32, Bytesˉlength(Input));
+        if Index == Wanted {
+            return Wvoˉsectionˉview(
+                Wvoˉstatus.Valid,
+                Kind,
+                Alignment,
+                Memoryˉsize,
+                Name.Cursor,
+                Dataˉlength,
+                Name.Valueˉoffset,
+                Name.Length,
+                Name.Cursor + Dataˉlength
+            );
+        }
+        Cursor = Name.Cursor + Dataˉlength;
+        Index = Index + 1u32;
+    }
+    return Wvoˉsectionˉview(
+        Wvoˉstatus.Invalidˉsection,
+        0u32,
+        0u32,
+        0u32,
+        Cursor,
+        0u32,
+        Cursor,
+        0u32,
+        Cursor
+    );
+}
+
+export fn Sectionˉrecordsˉend(Input: bytes, Sectionˉcount: u32) -> u32 {
+    var Cursor: u32 = 24u32;
+    var Index: u32 = 0u32;
+    while Index < Sectionˉcount {
+        let View: Wvoˉsectionˉview = Findˉsection(Input, 24u32, Sectionˉcount, Index);
+        Cursor = View.Cursor;
+        Index = Index + 1u32;
+    }
+    return Cursor;
+}
+
+export fn Findˉsymbol(Input: bytes, Symbolˉstart: u32, Symbolˉcount: u32, Wanted: u32) -> Wvoˉsymbolˉview {
+    var Cursor: u32 = Symbolˉstart;
+    var Index: u32 = 0u32;
+    while Index < Symbolˉcount {
+        let Binding: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
+        let Sectionˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Size: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        let Name: Wvoˉstringˉscan = Scanˉstring(Input, Cursor + 16u32, Bytesˉlength(Input));
+        if Index == Wanted {
+            return Wvoˉsymbolˉview(
+                Binding,
+                Kind,
+                Sectionˉindex,
+                Offset,
+                Size,
+                Name.Valueˉoffset,
+                Name.Length,
+                Name.Cursor
+            );
+        }
+        Cursor = Name.Cursor;
+        Index = Index + 1u32;
+    }
+    return Wvoˉsymbolˉview(0u32, 0u32, 0u32, 0u32, 0u32, Cursor, 0u32, Cursor);
+}
+
+export fn Symbolˉrecordsˉend(Input: bytes, Symbolˉstart: u32, Symbolˉcount: u32) -> u32 {
+    var Cursor: u32 = Symbolˉstart;
+    var Index: u32 = 0u32;
+    while Index < Symbolˉcount {
+        let View: Wvoˉsymbolˉview = Findˉsymbol(Input, Symbolˉstart, Symbolˉcount, Index);
+        Cursor = View.Cursor;
+        Index = Index + 1u32;
+    }
+    return Cursor;
+}
+
+export fn Findˉrelocation(Input: bytes, Relocationˉstart: u32, Wanted: u32) -> Wvoˉrelocationˉview {
+    let Cursor: u32 = Relocationˉstart + Wanted * 20u32;
+    return Wvoˉrelocationˉview(
+        U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)),
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32),
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32),
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32),
+        Bytesˉreadˉi32ˉlittle(Input, Cursor + 16u32)
+    );
+}
+
+fn Earlierˉsectionˉnameˉexists(
+    Input: bytes,
+    Sectionˉstart: u32,
+    Currentˉindex: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Currentˉindex {
+        let Earlier: Wvoˉsectionˉview = Findˉsection(
+            Input,
+            Sectionˉstart,
+            Currentˉindex,
+            Index
+        );
+        if Byteˉordering.Foundationˉbyteˉspansˉcompare(
+            Input,
+            Earlier.Nameˉoffset,
+            Earlier.Nameˉlength,
+            Nameˉoffset,
+            Nameˉlength
+        ) == 0 {
+            return true;
+        }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
+fn Earlierˉsymbolˉnameˉexists(
+    Input: bytes,
+    Symbolˉstart: u32,
+    Currentˉindex: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Currentˉindex {
+        let Earlier: Wvoˉsymbolˉview = Findˉsymbol(
+            Input,
+            Symbolˉstart,
+            Currentˉindex,
+            Index
+        );
+        if Byteˉordering.Foundationˉbyteˉspansˉcompare(
+            Input,
+            Earlier.Nameˉoffset,
+            Earlier.Nameˉlength,
+            Nameˉoffset,
+            Nameˉlength
+        ) == 0 {
+            return true;
+        }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
+export fn Inspectˉobject(Input: bytes) -> Wvoˉinspection {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total > 4194304u32 {
+        return Wvoˉinspection(Wvoˉstatus.Limitˉexceeded, 0u32, 0u32, 0u32, 0u32);
+    }
+    if Total < 24u32 {
+        return Wvoˉinspection(Wvoˉstatus.Shortˉheader, 0u32, 0u32, 0u32, Total);
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 { return Wvoˉinspection(Wvoˉstatus.Badˉmagic, 0u32, 0u32, 0u32, 0u32); }
+    if Bytesˉreadˉu8(Input, 1u32) != 86u8 { return Wvoˉinspection(Wvoˉstatus.Badˉmagic, 0u32, 0u32, 0u32, 1u32); }
+    if Bytesˉreadˉu8(Input, 2u32) != 79u8 { return Wvoˉinspection(Wvoˉstatus.Badˉmagic, 0u32, 0u32, 0u32, 2u32); }
+    if Bytesˉreadˉu8(Input, 3u32) != 49u8 { return Wvoˉinspection(Wvoˉstatus.Badˉmagic, 0u32, 0u32, 0u32, 3u32); }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return Wvoˉinspection(Wvoˉstatus.Badˉversion, 0u32, 0u32, 0u32, 4u32); }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 { return Wvoˉinspection(Wvoˉstatus.Badˉversion, 0u32, 0u32, 0u32, 6u32); }
+    if Bytesˉreadˉu8(Input, 8u32) != 1u8 { return Wvoˉinspection(Wvoˉstatus.Badˉarchitecture, 0u32, 0u32, 0u32, 8u32); }
+    if Bytesˉreadˉu8(Input, 9u32) != 0u8 { return Wvoˉinspection(Wvoˉstatus.Unsupportedˉflags, 0u32, 0u32, 0u32, 9u32); }
+    if Bytesˉreadˉu16ˉlittle(Input, 10u32) != 0u32 { return Wvoˉinspection(Wvoˉstatus.Unsupportedˉflags, 0u32, 0u32, 0u32, 10u32); }
+
+    let Sectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Symbolˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Relocationˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Sectionˉcount == 0u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, 0u32, 0u32, 0u32, 12u32); }
+    if Sectionˉcount > 64u32 { return Wvoˉinspection(Wvoˉstatus.Limitˉexceeded, 0u32, 0u32, 0u32, 12u32); }
+    if Symbolˉcount > 4096u32 { return Wvoˉinspection(Wvoˉstatus.Limitˉexceeded, 0u32, 0u32, 0u32, 16u32); }
+    if Relocationˉcount > 65536u32 { return Wvoˉinspection(Wvoˉstatus.Limitˉexceeded, 0u32, 0u32, 0u32, 20u32); }
+
+    let Sectionˉstart: u32 = 24u32;
+    var Cursor: u32 = Sectionˉstart;
+    var Sectionˉindex: u32 = 0u32;
+    var Previousˉsectionˉkind: u32 = 0u32;
+    var Previousˉsectionˉname: u32 = 0u32;
+    var Previousˉsectionˉnameˉlength: u32 = 0u32;
+    var Totalˉdata: u32 = 0u32;
+    var Totalˉmemory: u32 = 0u32;
+    while Sectionˉindex < Sectionˉcount {
+        if !Rangeˉisˉinside(Total, Cursor, 16u32) {
+            return Wvoˉinspection(Wvoˉstatus.Outˉofˉbounds, Sectionˉindex, 0u32, 0u32, Cursor);
+        }
+        let Sectionˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Sectionˉkind < 1u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, Sectionˉindex, 0u32, 0u32, Cursor); }
+        if Sectionˉkind > 4u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, Sectionˉindex, 0u32, 0u32, Cursor); }
+        if Bytesˉreadˉu8(Input, Cursor + 1u32) != 0u8 { return Wvoˉinspection(Wvoˉstatus.Unsupportedˉflags, Sectionˉindex, 0u32, 0u32, Cursor + 1u32); }
+        if Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 { return Wvoˉinspection(Wvoˉstatus.Unsupportedˉflags, Sectionˉindex, 0u32, 0u32, Cursor + 2u32); }
+
+        let Sectionˉalignment: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Sectionˉmemory: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Sectionˉdataˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        if !Alignmentˉisˉvalid(Sectionˉalignment) { return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, Sectionˉindex, 0u32, 0u32, Cursor + 4u32); }
+        if Sectionˉkind == 4u32 {
+            if Sectionˉdataˉlength != 0u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, Sectionˉindex, 0u32, 0u32, Cursor + 12u32); }
+            if Sectionˉmemory == 0u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, Sectionˉindex, 0u32, 0u32, Cursor + 8u32); }
+        } else {
+            if Sectionˉmemory != Sectionˉdataˉlength { return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, Sectionˉindex, 0u32, 0u32, Cursor + 8u32); }
+        }
+
+        let Sectionˉname: Wvoˉstringˉscan = Scanˉstring(Input, Cursor + 16u32, Total);
+        if Sectionˉname.Status != Wvoˉstatus.Valid {
+            return Wvoˉinspection(Sectionˉname.Status, Sectionˉindex, 0u32, 0u32, Sectionˉname.Cursor);
+        }
+        if Earlierˉsectionˉnameˉexists(
+            Input,
+            Sectionˉstart,
+            Sectionˉindex,
+            Sectionˉname.Valueˉoffset,
+            Sectionˉname.Length
+        ) {
+            return Wvoˉinspection(Wvoˉstatus.Invalidˉsection, Sectionˉindex, 0u32, 0u32, Sectionˉname.Valueˉoffset);
+        }
+        if Sectionˉindex > 0u32 {
+            if Sectionˉkind < Previousˉsectionˉkind { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉindex, 0u32, 0u32, Cursor); }
+            if Sectionˉkind == Previousˉsectionˉkind {
+                if Byteˉordering.Foundationˉbyteˉspansˉcompare(
+                    Input,
+                    Previousˉsectionˉname,
+                    Previousˉsectionˉnameˉlength,
+                    Sectionˉname.Valueˉoffset,
+                    Sectionˉname.Length
+                ) >= 0 {
+                    return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉindex, 0u32, 0u32, Sectionˉname.Valueˉoffset);
+                }
+            }
+        }
+        if !Rangeˉisˉinside(Total, Sectionˉname.Cursor, Sectionˉdataˉlength) {
+            return Wvoˉinspection(Wvoˉstatus.Outˉofˉbounds, Sectionˉindex, 0u32, 0u32, Sectionˉname.Cursor);
+        }
+        if Sectionˉdataˉlength > 4194304u32 - Totalˉdata { return Wvoˉinspection(Wvoˉstatus.Limitˉexceeded, Sectionˉindex, 0u32, 0u32, Cursor + 12u32); }
+        if Sectionˉmemory > 16777216u32 - Totalˉmemory { return Wvoˉinspection(Wvoˉstatus.Limitˉexceeded, Sectionˉindex, 0u32, 0u32, Cursor + 8u32); }
+        Totalˉdata = Totalˉdata + Sectionˉdataˉlength;
+        Totalˉmemory = Totalˉmemory + Sectionˉmemory;
+        Previousˉsectionˉkind = Sectionˉkind;
+        Previousˉsectionˉname = Sectionˉname.Valueˉoffset;
+        Previousˉsectionˉnameˉlength = Sectionˉname.Length;
+        Cursor = Sectionˉname.Cursor + Sectionˉdataˉlength;
+        Sectionˉindex = Sectionˉindex + 1u32;
+    }
+
+    let Symbolˉstart: u32 = Cursor;
+    var Symbolˉindex: u32 = 0u32;
+    var Previousˉbinding: u32 = 0u32;
+    var Previousˉsymbolˉname: u32 = 0u32;
+    var Previousˉsymbolˉnameˉlength: u32 = 0u32;
+    while Symbolˉindex < Symbolˉcount {
+        if !Rangeˉisˉinside(Total, Cursor, 16u32) {
+            return Wvoˉinspection(Wvoˉstatus.Outˉofˉbounds, Sectionˉcount, Symbolˉindex, 0u32, Cursor);
+        }
+        let Symbolˉbinding: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        let Symbolˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
+        if Symbolˉbinding < 1u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor); }
+        if Symbolˉbinding > 3u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor); }
+        if Symbolˉkind < 1u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 1u32); }
+        if Symbolˉkind > 2u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 1u32); }
+        if Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 { return Wvoˉinspection(Wvoˉstatus.Unsupportedˉflags, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 2u32); }
+
+        let Symbolˉsection: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Symbolˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Symbolˉsize: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        let Symbolˉname: Wvoˉstringˉscan = Scanˉstring(Input, Cursor + 16u32, Total);
+        if Symbolˉname.Status != Wvoˉstatus.Valid {
+            return Wvoˉinspection(Symbolˉname.Status, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Cursor);
+        }
+        if Earlierˉsymbolˉnameˉexists(
+            Input,
+            Symbolˉstart,
+            Symbolˉindex,
+            Symbolˉname.Valueˉoffset,
+            Symbolˉname.Length
+        ) {
+            return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Valueˉoffset);
+        }
+        if Symbolˉindex > 0u32 {
+            if Symbolˉbinding < Previousˉbinding { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉindex, 0u32, Cursor); }
+            if Symbolˉbinding == Previousˉbinding {
+                if Byteˉordering.Foundationˉbyteˉspansˉcompare(
+                    Input,
+                    Previousˉsymbolˉname,
+                    Previousˉsymbolˉnameˉlength,
+                    Symbolˉname.Valueˉoffset,
+                    Symbolˉname.Length
+                ) >= 0 {
+                    return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉindex, 0u32, Symbolˉname.Valueˉoffset);
+                }
+            }
+        }
+        if Symbolˉbinding == 3u32 {
+            if Symbolˉsection != 4294967295u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 4u32); }
+            if Symbolˉoffset != 0u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 8u32); }
+            if Symbolˉsize != 0u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 12u32); }
+        } else {
+            if Symbolˉsection >= Sectionˉcount { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 4u32); }
+            let Symbolˉsectionˉview: Wvoˉsectionˉview = Findˉsection(Input, Sectionˉstart, Sectionˉcount, Symbolˉsection);
+            if Symbolˉoffset > Symbolˉsectionˉview.Memoryˉsize { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 8u32); }
+            if Symbolˉsize > Symbolˉsectionˉview.Memoryˉsize - Symbolˉoffset { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 12u32); }
+            if Symbolˉkind == 1u32 {
+                if Symbolˉsectionˉview.Kind != 1u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 1u32); }
+            } else {
+                if Symbolˉsectionˉview.Kind == 1u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉsymbol, Sectionˉcount, Symbolˉindex, 0u32, Cursor + 1u32); }
+            }
+        }
+        Previousˉbinding = Symbolˉbinding;
+        Previousˉsymbolˉname = Symbolˉname.Valueˉoffset;
+        Previousˉsymbolˉnameˉlength = Symbolˉname.Length;
+        Cursor = Symbolˉname.Cursor;
+        Symbolˉindex = Symbolˉindex + 1u32;
+    }
+
+    var Relocationˉindex: u32 = 0u32;
+    var Previousˉrelocationˉsection: u32 = 0u32;
+    var Previousˉrelocationˉoffset: u32 = 0u32;
+    while Relocationˉindex < Relocationˉcount {
+        if !Rangeˉisˉinside(Total, Cursor, 20u32) {
+            return Wvoˉinspection(Wvoˉstatus.Outˉofˉbounds, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor);
+        }
+        let Relocationˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Relocationˉkind < 1u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉrelocation, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor); }
+        if Relocationˉkind > 2u32 { return Wvoˉinspection(Wvoˉstatus.Invalidˉrelocation, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor); }
+        if Bytesˉreadˉu8(Input, Cursor + 1u32) != 0u8 { return Wvoˉinspection(Wvoˉstatus.Unsupportedˉflags, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor + 1u32); }
+        if Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 { return Wvoˉinspection(Wvoˉstatus.Unsupportedˉflags, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor + 2u32); }
+        let Relocationˉsection: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Relocationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Relocationˉsymbol: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        if Relocationˉsection >= Sectionˉcount { return Wvoˉinspection(Wvoˉstatus.Invalidˉrelocation, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor + 4u32); }
+        if Relocationˉsymbol >= Symbolˉcount { return Wvoˉinspection(Wvoˉstatus.Invalidˉrelocation, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor + 12u32); }
+        if Relocationˉindex > 0u32 {
+            if Relocationˉsection < Previousˉrelocationˉsection { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor + 4u32); }
+            if Relocationˉsection == Previousˉrelocationˉsection {
+                if Relocationˉoffset < Previousˉrelocationˉoffset + 4u32 { return Wvoˉinspection(Wvoˉstatus.Noncanonicalˉorder, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor + 8u32); }
+            }
+        }
+        let Relocationˉsectionˉview: Wvoˉsectionˉview = Findˉsection(Input, Sectionˉstart, Sectionˉcount, Relocationˉsection);
+        if !Rangeˉisˉinside(Relocationˉsectionˉview.Dataˉlength, Relocationˉoffset, 4u32) {
+            return Wvoˉinspection(Wvoˉstatus.Invalidˉrelocation, Sectionˉcount, Symbolˉcount, Relocationˉindex, Cursor + 8u32);
+        }
+        if Bytesˉreadˉu32ˉlittle(Input, Relocationˉsectionˉview.Dataˉoffset + Relocationˉoffset) != 0u32 {
+            return Wvoˉinspection(Wvoˉstatus.Invalidˉrelocation, Sectionˉcount, Symbolˉcount, Relocationˉindex, Relocationˉsectionˉview.Dataˉoffset + Relocationˉoffset);
+        }
+        Previousˉrelocationˉsection = Relocationˉsection;
+        Previousˉrelocationˉoffset = Relocationˉoffset;
+        Cursor = Cursor + 20u32;
+        Relocationˉindex = Relocationˉindex + 1u32;
+    }
+
+    if Cursor != Total {
+        return Wvoˉinspection(Wvoˉstatus.Trailingˉbytes, Sectionˉcount, Symbolˉcount, Relocationˉcount, Cursor);
+    }
+    return Wvoˉinspection(Wvoˉstatus.Valid, Sectionˉcount, Symbolˉcount, Relocationˉcount, Cursor);
+}
+
+export fn Wvoˉobjectˉisˉvalid(Input: bytes) -> bool {
+    let Inspection: Wvoˉinspection = Inspectˉobject(Input);
+    return Inspection.Status == Wvoˉstatus.Valid;
+}

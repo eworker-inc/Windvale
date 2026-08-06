@@ -319,6 +319,14 @@ durability, and cleanup. Digest-bound packaging no longer needs managed
 publication, but the publisher WVB and host containers remain Stage 0-constructed
 until native construction and the grouped Windows/Linux gate pass.
 
+Decision 0308 closes the current accepted-subset lowerer's whole-object
+publication half. Complete WVO admission moves into one focused portable module
+shared by the read-only inspector and a new five-service publisher. The lowerer
+launchers now write a private candidate before the same native transaction owns
+durable replacement and cleanup. The repinned inspector and new publisher remain
+Stage 0-constructed candidates pending Linux execution, native host-container
+construction, and grouped promotion.
+
 Decision 0240 extends that accepted subset with nonzero-first enum tables plus one-block record parameter, caller-owned return, and call transport. The bounded C# enum-admission correction preserves Stage 0 as the independent WVB 1.11 oracle rather than adding forward language semantics there.
 
 Decision 0241 extends record storage through validated control-flow successors and admits scalar-returning record consumers. Its planner keeps persistent locals live across edges while requiring scratch record values to die inside their defining block, and its row-wise immutable fixed point remains within the native tool's bounded arena on the real nominal fixture.

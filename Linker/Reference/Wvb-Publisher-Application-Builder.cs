@@ -25,7 +25,8 @@ internal sealed record Nativeˉpublisherˉapplicationˉcontract(
     uint Metadataˉmagic,
     string Beginˉfunction,
     string Applyˉfunction,
-    string Description);
+    string Description,
+    ImmutableArray<Nativeˉservice> Requiredˉservices);
 
 internal static class Wvbˉpublisherˉapplicationˉbuilder
 {
@@ -36,7 +37,14 @@ internal static class Wvbˉpublisherˉapplicationˉbuilder
         0x4250_5657,
         "Wvbˉpublicationˉpublisherˉbegin",
         "Wvbˉpublicationˉpublisherˉapply",
-        "WVB publisher");
+        "WVB publisher",
+        [
+            Nativeˉservice.Consoleˉwriteˉline,
+            Nativeˉservice.Processˉargumentˉcount,
+            Nativeˉservice.Processˉargument,
+            Nativeˉservice.Fileˉreadˉbytes,
+            Nativeˉservice.Diagnosticˉwriteˉline,
+        ]);
 
     internal const string LINUX_STARTUP_RESOURCE =
         "Windvale.Linker.Linux-X64-Wvb-Publisher.wvo";
@@ -116,15 +124,7 @@ internal static class Wvbˉpublisherˉapplicationˉbuilder
         }
 
         Nativeˉfragmentˉverifier.Verify(fragment);
-        Nativeˉservice[] Expectedˉservices =
-        [
-            Nativeˉservice.Consoleˉwriteˉline,
-            Nativeˉservice.Processˉargumentˉcount,
-            Nativeˉservice.Processˉargument,
-            Nativeˉservice.Fileˉreadˉbytes,
-            Nativeˉservice.Diagnosticˉwriteˉline,
-        ];
-        if (!fragment.Requiredˉservices.SequenceEqual(Expectedˉservices))
+        if (!fragment.Requiredˉservices.SequenceEqual(contract.Requiredˉservices))
         {
             throw new ArgumentException(
                 $"The {contract.Description} native service profile is invalid.",

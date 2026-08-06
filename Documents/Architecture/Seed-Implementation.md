@@ -122,7 +122,7 @@ leave the normal path.
 - Size, alignment, range, canonical-order, symbol-reference, relocation-placeholder, and overlap verification
 - Object inspection and SHA-256 identity
 
-`Object-Model/Windvale/Wvo-Object-Core.wv` owns the corresponding Windvale-written bounded verifier and complete read-only report path. `Windvale-Wvo-Object.wvproj` composes its byte-ordering and SHA-256 dependencies, while paired profile-6 Windows/Linux candidates reuse the existing eleven-service read-only inspector package without adding platform assembly or file-write authority.
+`Object-Model/Windvale/Wvo-Object-Verification.wv` owns the corresponding Windvale-written bounded reader and verifier. The smaller `Wvo-Object-Core.wv` owns only its self-test, hosted command shell, SHA-256 identity, and complete read-only report path. `Windvale-Wvo-Object.wvproj` composes those focused modules with byte ordering and SHA-256, while paired profile-6 Windows/Linux candidates reuse the existing eleven-service read-only inspector package without adding platform assembly or file-write authority. Decision 0308 also composes the portable verification module with the existing native publication transaction, so accepted-subset lowering now publishes a private whole-object candidate atomically without a second parser or managed wrapper.
 
 The C# object verifier returns a `Verifiedˉobject`; both Stage 0 CLI object commands decode and verify before reporting. During native-candidate qualification this project remains the independent recovery/differential oracle. Decision 0301 now supplies digest-bound native WVO verification and inspection launchers, but they remain candidate entry points until the grouped Windows/Linux gate promotes their exact containing commit. After promotion they become the ordinary path while C# remains explicitly named recovery evidence until the complete retirement gate passes.
 
@@ -251,7 +251,7 @@ The current bytecode 1.11 golden modules are:
 - `Compilerˉsourceˉwvbˉdemo`: `b910bd18abbca23882cdadbea289b8e1e41dbc2f5871c2f8772c10a170b42c2a`
 - `Compilerˉsourceˉwvbˉtool`: `abc2ef9839944bddee172cbeb3e11f716d7be9c0d94c1a0d4378341030ee4207`
 - `Wvˉdumpˉcore`: `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`
-- `Wvoˉobjectˉcore`: `3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7`
+- `Wvoˉobjectˉcore`: `b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f`
 - `Wvaˉassemblerˉcore`: `1589f2750fa8fcf98ed1058814907f7e03eed0ac368467999118e25fb8195a7f`
 - `Wvˉlinkerˉcore`: `592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386`
 

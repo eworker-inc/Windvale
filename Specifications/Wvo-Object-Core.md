@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Object-Model/Windvale/Wvo-Object-Core.wv` owns the Windvale-written WVO 1.0 read-only core. It constructs the canonical representative object for an internal deterministic self-test, completely validates bounded WVO input, and emits the same successful verification and inspection reports as the independent C# Stage 0 oracle.
+`Object-Model/Windvale/Wvo-Object-Core.wv` owns the Windvale-written WVO 1.0 read-only command and report shell. `Object-Model/Windvale/Wvo-Object-Verification.wv` owns its shared portable reader and complete bounded validator. The shell constructs the canonical representative object for an internal deterministic self-test and emits the same successful verification and inspection reports as the independent C# Stage 0 oracle.
 
-`Windvale-Wvo-Object.wvproj` composes the core with `Foundationˉbyteˉordering` and `Foundationˉsha256`. The current candidate WVB is 57,297 bytes with SHA-256 `3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7`. It is a source candidate pending the final grouped Windows/Linux retirement gate; this identity is not a cross-host qualification claim.
+`Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉordering` and `Foundationˉsha256`. The current candidate WVB is 60,974 bytes with SHA-256 `b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f`. It is a source candidate pending the final grouped Windows/Linux retirement gate; this identity is not a cross-host qualification claim.
 
 This module is an object verifier and inspector, not an assembler, linker, or object-file writer. Moving the source from `Examples/Foundation` into `Object-Model/Windvale` makes its ownership explicit without changing WVO 1.0.
 
@@ -20,9 +20,10 @@ The structural verifier accepts arbitrary bounded bytes and returns a nominal re
 
 ```text
 Inspectˉobject(Input: bytes) -> Wvoˉinspection
+Wvoˉobjectˉisˉvalid(Input: bytes) -> bool
 ```
 
-It checks the WVO magic, version, architecture, reserved fields, limits, section invariants, ASCII machine names, duplicate and canonical name ordering, symbol ranges and ownership, relocation references, four-byte zero placeholders, relocation ordering/non-overlap, and complete input consumption. Successful reporting reads only the verified offsets and counts.
+The verification module checks the WVO magic, version, architecture, reserved fields, limits, section invariants, strict bounded UTF-8 names, duplicate and canonical name ordering, symbol ranges and ownership, relocation references, four-byte zero placeholders, relocation ordering/non-overlap, and complete input consumption. Successful reporting reads only the verified offsets and counts. The native WVO publisher imports the boolean admission surface from this module, so inspection and mutation do not carry parallel object parsers.
 
 The C# `Objectˉverifier` and `Objectˉinspector` remain independent Stage 0 recovery/differential oracles during candidate qualification. After native promotion, ordinary coverage uses stable WVO vectors, structural assertions, deterministic digests, and malformed-input outcomes rather than generating every expected result through C# at test time.
 
@@ -60,4 +61,4 @@ The module declares exactly `console.write_line`, `diagnostic.write_line`, `file
 
 ## Ownership boundary
 
-The assembler owns WVA parsing and WVO production. The linker owns symbol resolution, layout, relocation, image construction, and maps. This object core owns only WVO validation and human-readable inspection. The paired native package and promotion gate are specified by [Windvale native WVO inspector](Windvale-Native-Wvo-Inspector.md).
+The assembler owns WVA parsing and WVO production. The linker owns symbol resolution, layout, relocation, image construction, and maps. These object modules own only WVO validation and human-readable inspection. The paired read-only package and promotion gate are specified by [Windvale native WVO inspector](Windvale-Native-Wvo-Inspector.md); atomic whole-object replacement is separately specified by the [native WVO publisher](Windvale-Native-Wvo-Publisher.md).
