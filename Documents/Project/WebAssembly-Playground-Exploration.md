@@ -178,6 +178,8 @@ The direct backend next completely validates up to 1,024 unused nominal declarat
 
 A separate compiler-scale inventory pass then admits one through 512 functions with bounded names, parameter/local/result shapes, contiguous code ranges, aggregate code, and declared stack depth. The exact compiler fits with 417 functions, 308 distinct signatures, at most 24 parameters, 1,408 locals, 21,875 code bytes, and stack depth 34. Its 2,991 calls include 2,471 backward and 32 self-calls, so the older sixteen-function forward-only emitter cannot be widened by changing one constant. The direct backend now returns `Unsupportedˉcode` only after consuming this inventory; code typing and emission remain the next boundary.
 
+The following code-inventory pass decodes all 157,844 exact-compiler instruction encodings within a 200,000-instruction bound and validates every one of its 2,991 direct-call targets within a 4,096-call bound. It also fences Boolean constants, locals, and function-relative control extents while preserving separate function-versus-code failure statuses. The recovered native tool reaches the later executable selector in 151 ms and preserves the exact interpreter Wasm. Typed call agreement, instruction-boundary control proof, nominal value storage, and general operation emission remain open.
+
 ## Proposed playground shape
 
 The initial user experience could have four primary views:

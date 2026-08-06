@@ -117,7 +117,7 @@ Equal(
     "native backend container profile",
 );
 Equal(
-    "Documents/Decisions/0297-Compiler-Scale-WebAssembly-Function-Inventory.md",
+    "Documents/Decisions/0298-Compiler-Scale-WebAssembly-Code-Inventory.md",
     Nativeˉbackendˉmanifest.decision,
     "native backend decision",
 );
@@ -126,7 +126,7 @@ const Nativeˉbackendˉdecision = await readFile(
     "utf8",
 );
 if (!Nativeˉbackendˉdecision.startsWith(
-    "# Decision 0297: Compiler-scale WebAssembly function inventory\n",
+    "# Decision 0298: Compiler-scale WebAssembly code inventory\n",
 )) {
     Fail("The WebAssembly native backend decision is invalid.");
 }
