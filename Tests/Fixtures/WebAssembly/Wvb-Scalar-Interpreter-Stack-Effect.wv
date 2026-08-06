@@ -1,0 +1,138 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉstackˉeffect profile portable;
+
+export fn Interpreterˉstackˉeffect(Input: bytes) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if Bytesˉlength(Input) != 4u32 { return Invalid; }
+    let Opcode: u32 = Bytesˉreadˉu32ˉlittle(Input, 0u32);
+    var Consumed: u32 = 0u32;
+    var Produced: bool = false;
+    var Producedˉdescriptor: bool = false;
+
+    if Opcode == 1u32 || Opcode == 2u32 { Produced = true; }
+    if Opcode == 3u32 {
+        Produced = true;
+        Producedˉdescriptor = true;
+    }
+    if Opcode == 4u32 { Produced = true; }
+    if Opcode == 5u32 { Consumed = 1u32; }
+    if Opcode == 6u32 { Produced = true; }
+    if Opcode == 7u32 {
+        Consumed = 1u32;
+        Produced = true;
+    }
+    if Opcode == 8u32 || Opcode == 9u32 { Produced = true; }
+    if Opcode == 10u32 {
+        Produced = true;
+        Producedˉdescriptor = true;
+    }
+    if Opcode == 11u32 {
+        Consumed = 1u32;
+        Produced = true;
+    }
+    if Opcode == 12u32 {
+        Consumed = 3u32;
+        Produced = true;
+        Producedˉdescriptor = true;
+    }
+    if Opcode >= 13u32 {
+        if Opcode <= 18u32 {
+            Consumed = 2u32;
+            Produced = true;
+        }
+    }
+    if Opcode == 19u32 {
+        Consumed = 1u32;
+        Produced = true;
+    }
+    if Opcode >= 20u32 {
+        if Opcode <= 22u32 {
+            Consumed = 2u32;
+            Produced = true;
+        }
+    }
+    if Opcode >= 32u32 {
+        if Opcode <= 39u32 {
+            Consumed = 2u32;
+            Produced = true;
+        }
+    }
+    if Opcode == 40u32 {
+        Consumed = 1u32;
+        Produced = true;
+    }
+    if Opcode == 49u32 { Consumed = 1u32; }
+    if Opcode == 80u32 { Consumed = 1u32; }
+    if Opcode >= 96u32 {
+        if Opcode <= 103u32 {
+            Consumed = 2u32;
+            Produced = true;
+        }
+    }
+    if Opcode == 106u32 { Produced = true; }
+    if Opcode == 107u32 || Opcode == 108u32 {
+        Consumed = 2u32;
+        Produced = true;
+    }
+    if Opcode >= 109u32 {
+        if Opcode <= 112u32 {
+            Consumed = 1u32;
+            Produced = true;
+            Producedˉdescriptor = true;
+        }
+    }
+    if Opcode == 113u32 || Opcode == 119u32 {
+        Consumed = 2u32;
+        Produced = true;
+        Producedˉdescriptor = true;
+    }
+    if Opcode == 114u32 {
+        Consumed = 2u32;
+        Produced = true;
+    }
+    if Opcode == 115u32 {
+        Consumed = 1u32;
+        Produced = true;
+    }
+    if Opcode == 116u32 || Opcode == 117u32 {
+        Consumed = 1u32;
+        Produced = true;
+        Producedˉdescriptor = true;
+    }
+    if Opcode == 118u32 {
+        Consumed = 1u32;
+        Produced = true;
+    }
+    if Opcode >= 120u32 {
+        if Opcode <= 125u32 {
+            Consumed = 1u32;
+            Produced = true;
+            Producedˉdescriptor = true;
+        }
+    }
+    if Opcode == 161u32 || Opcode == 162u32 {
+        Consumed = 2u32;
+        Produced = true;
+    }
+    if Opcode >= 173u32 {
+        if Opcode <= 175u32 {
+            Consumed = 2u32;
+            Produced = true;
+        }
+    }
+    if Opcode == 176u32 {
+        Consumed = 1u32;
+        Produced = true;
+    }
+    if Opcode == 177u32 || Opcode == 178u32 {
+        Consumed = 2u32;
+        Produced = true;
+    }
+
+    var Flags: u32 = 0u32;
+    if Produced { Flags = 1u32; }
+    if Producedˉdescriptor { Flags = 3u32; }
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Consumed),
+        Bytesˉfromˉu32ˉlittle(Flags)
+    );
+}

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 
 if (process.argv.length !== 8) {
     throw new Error(
-        "Usage: node --liftoff-only Probe-WebAssembly-Guest-Heap.mjs " +
+        "Usage: node Probe-WebAssembly-Guest-Heap.mjs " +
             "<scalar-interpreter.wasm> <ownership-pressure.wvb> " +
             "<text-bytes.wvb> <formatting-quote.wvb> <sha256.wvb> <reset.wvb>",
     );

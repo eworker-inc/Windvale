@@ -2140,7 +2140,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcalls(
     );
 }
 
-export fn Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉleaf(
+export fn Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉgraph(
     Input: bytes,
     Functions: Compilerˉwebassemblyˉsection,
     Code: Compilerˉwebassemblyˉsection,
@@ -2151,7 +2151,10 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉleaf(
             false, 0u32, 0u32, 0u32, 0u32
         );
     }
-    if Bytesˉreadˉu32ˉlittle(Input, Functions.Payloadˉoffset) != 2u32 {
+    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Functions.Payloadˉoffset
+    );
+    if Functionˉcount < 2u32 || Functionˉcount > 16u32 {
         return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
             false, 0u32, 0u32, 0u32, 0u32
         );
@@ -2167,111 +2170,115 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉleaf(
         );
     }
 
-    let Main: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
-        Compilerˉwebassemblyˉreadˉruntimeˉcallˉfunction(Input, Functions, 0u32);
-    let Leaf: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
-        Compilerˉwebassemblyˉreadˉruntimeˉcallˉfunction(Input, Functions, 1u32);
-    if !Main.Valid {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    if !Leaf.Valid {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    if !Main.Isˉmain {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    if Leaf.Isˉmain {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    if Main.Codeˉoffset != 0u32 {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    if Leaf.Codeˉoffset != Main.Codeˉlength {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    if Leaf.Codeˉoffset + Leaf.Codeˉlength != Code.Payloadˉlength {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    if Leaf.Nextˉoffset != Functions.Payloadˉoffset + Functions.Payloadˉlength {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-
-    var Cursor: u32 = 0u32;
-    let Mainˉcodeˉoffset: u32 = Code.Payloadˉoffset + Main.Codeˉoffset;
-    while Cursor < Main.Codeˉlength {
-        let Width: u32 = Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
-            Input, Mainˉcodeˉoffset, Main.Codeˉlength, Cursor
-        );
-        if Width == 0u32 {
+    var Functionˉindex: u32 = 0u32;
+    var Expectedˉcodeˉoffset: u32 = 0u32;
+    var Instructionˉcount: u32 = 0u32;
+    var Callˉcount: u32 = 0u32;
+    var Reachableˉmask: u32 = 1u32;
+    while Functionˉindex < Functionˉcount {
+        let Function: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
+            Compilerˉwebassemblyˉreadˉruntimeˉcallˉfunction(
+                Input, Functions, Functionˉindex
+            );
+        if !Function.Valid {
             return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
                 false, 0u32, 0u32, 0u32, 0u32
             );
         }
-        if Bytesˉreadˉu8(Input, Mainˉcodeˉoffset + Cursor) == 64u8 {
-            if Bytesˉreadˉu32ˉlittle(
-                Input, Mainˉcodeˉoffset + Cursor + 1u32
-            ) != 1u32 {
+        if Functionˉindex == 0u32 {
+            if !Function.Isˉmain {
+                return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
+                    false, 0u32, 0u32, 0u32, 0u32
+                );
+            }
+        } else {
+            if Function.Isˉmain {
                 return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
                     false, 0u32, 0u32, 0u32, 0u32
                 );
             }
         }
-        Cursor = Cursor + Width;
-    }
+        if Function.Codeˉoffset != Expectedˉcodeˉoffset {
+            return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
+                false, 0u32, 0u32, 0u32, 0u32
+            );
+        }
+        Expectedˉcodeˉoffset = Expectedˉcodeˉoffset + Function.Codeˉlength;
+        if Functionˉindex + 1u32 == Functionˉcount {
+            if Function.Nextˉoffset !=
+                Functions.Payloadˉoffset + Functions.Payloadˉlength {
+                return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
+                    false, 0u32, 0u32, 0u32, 0u32
+                );
+            }
+        }
+        if (Reachableˉmask & (1u32 << Functionˉindex)) == 0u32 {
+            return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
+                false, 0u32, 0u32, 0u32, 0u32
+            );
+        }
 
-    let Validatedˉmain: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
-        Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
-            Input, Functions, Code, Main, 2u32
-        );
-    let Validatedˉleaf: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
-        Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
-            Input, Functions, Code, Leaf, 1u32
-        );
-    if !Validatedˉmain.Valid {
+        let Validated: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
+            Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
+                Input, Functions, Code, Function, Functionˉcount
+            );
+        if !Validated.Valid {
+            return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
+                false, 0u32, 0u32, 0u32, 0u32
+            );
+        }
+        Instructionˉcount = Instructionˉcount + Validated.Instructionˉcount;
+        Callˉcount = Callˉcount + Validated.Callˉcount;
+        if Instructionˉcount > 400000u32 {
+            return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
+                false, 0u32, 0u32, 0u32, 0u32
+            );
+        }
+
+        var Cursor: u32 = 0u32;
+        let Codeˉoffset: u32 = Code.Payloadˉoffset + Function.Codeˉoffset;
+        while Cursor < Function.Codeˉlength {
+            let Width: u32 = Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
+                Input, Codeˉoffset, Function.Codeˉlength, Cursor
+            );
+            if Width == 0u32 {
+                return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
+                    false, 0u32, 0u32, 0u32, 0u32
+                );
+            }
+            if Bytesˉreadˉu8(Input, Codeˉoffset + Cursor) == 64u8 {
+                let Targetˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input, Codeˉoffset + Cursor + 1u32
+                );
+                if Targetˉindex <= Functionˉindex ||
+                    Targetˉindex >= Functionˉcount {
+                    return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
+                        false, 0u32, 0u32, 0u32, 0u32
+                    );
+                }
+                Reachableˉmask = Reachableˉmask | (1u32 << Targetˉindex);
+            }
+            Cursor = Cursor + Width;
+        }
+        Functionˉindex = Functionˉindex + 1u32;
+    }
+    if Expectedˉcodeˉoffset != Code.Payloadˉlength {
         return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
             false, 0u32, 0u32, 0u32, 0u32
         );
     }
-    if !Validatedˉleaf.Valid {
+    if Reachableˉmask != (1u32 << Functionˉcount) - 1u32 {
         return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
             false, 0u32, 0u32, 0u32, 0u32
         );
     }
-    if Validatedˉmain.Callˉcount == 0u32 {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    if Validatedˉleaf.Callˉcount != 0u32 {
-        return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    let Instructionˉcount: u32 =
-        Validatedˉmain.Instructionˉcount + Validatedˉleaf.Instructionˉcount;
-    if Instructionˉcount > 400000u32 {
+    if Callˉcount == 0u32 {
         return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
             false, 0u32, 0u32, 0u32, 0u32
         );
     }
     return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
-        true, 2u32, 0u32, Instructionˉcount, Validatedˉmain.Callˉcount
+        true, Functionˉcount, 0u32, Instructionˉcount, Callˉcount
     );
 }
 
@@ -10096,27 +10103,27 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
                     Mainˉexport.Functionˉindex
                 );
             if !Calls.Valid {
-                let Rootˉfirstˉleaf:
+                let Rootˉfirstˉgraph:
                     Compilerˉwebassemblyˉruntimeˉcallˉsummary =
-                    Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉleaf(
+                    Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉgraph(
                         Input,
                         Functions,
                         Code,
                         Mainˉexport.Functionˉindex
                     );
-                if Rootˉfirstˉleaf.Valid {
+                if Rootˉfirstˉgraph.Valid {
                     let Rootˉfirstˉwebassembly: bytes =
                         Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
                             Input,
                             Functions,
                             Code,
-                            Rootˉfirstˉleaf
+                            Rootˉfirstˉgraph
                         );
                     var Rootˉfirstˉoutputˉlimit: u32 = 524288u32;
                     if Code.Payloadˉlength > 65536u32 {
                         Rootˉfirstˉoutputˉlimit = 1048576u32;
                     }
-                    if Rootˉfirstˉleaf.Instructionˉcount > 200000u32 {
+                    if Rootˉfirstˉgraph.Instructionˉcount > 200000u32 {
                         Rootˉfirstˉoutputˉlimit = 1048576u32;
                     }
                     if Bytesˉlength(Rootˉfirstˉwebassembly) >

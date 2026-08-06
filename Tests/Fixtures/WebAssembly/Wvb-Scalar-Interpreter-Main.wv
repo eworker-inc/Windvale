@@ -1,6 +1,7 @@
 module WebAssemblyˉwvbˉscalarˉinterpreter profile portable;
 
 import Foundationˉsha256 as Sha256;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉstackˉeffect as Stackˉeffect;
 
 export fn Main(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
@@ -532,136 +533,21 @@ export fn Main(Request: bytes) -> bytes {
         Payloadˉlength = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Payload));
         Mainˉfound = false;
         let Stackˉdescriptorˉcount: u32 = Bytesˉlength(Stack) / 8u32;
-        var Stackˉconsumed: u32 = 0u32;
-        var Stackˉproduced: bool = false;
-        var Stackˉproducedˉdescriptor: bool = false;
+        let Stackˉeffectˉresult: bytes = Stackˉeffect.Interpreterˉstackˉeffect(
+            Bytesˉfromˉu32ˉlittle(Payloadˉlength)
+        );
+        var Stackˉconsumed: u32 = Bytesˉreadˉu32ˉlittle(
+            Stackˉeffectˉresult, 0u32
+        );
+        let Stackˉeffectˉflags: u32 = Bytesˉreadˉu32ˉlittle(
+            Stackˉeffectˉresult, 4u32
+        );
+        var Stackˉproduced: bool = Stackˉeffectˉflags == 1u32 ||
+            Stackˉeffectˉflags == 3u32;
+        var Stackˉproducedˉdescriptor: bool = Stackˉeffectˉflags == 3u32;
         var Releasedˉdescriptors: bytes = Invalid;
         var Heapˉallocationˉrequested: bool = false;
         var Heapˉallocationˉvalue: bytes = Invalid;
-
-        if Payloadˉlength == 1u32 || Payloadˉlength == 2u32 {
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength == 3u32 {
-            Stackˉproduced = true;
-            Stackˉproducedˉdescriptor = true;
-        }
-        if Payloadˉlength == 4u32 { Stackˉproduced = true; }
-        if Payloadˉlength == 5u32 { Stackˉconsumed = 1u32; }
-        if Payloadˉlength == 6u32 { Stackˉproduced = true; }
-        if Payloadˉlength == 7u32 {
-            Stackˉconsumed = 1u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength == 8u32 || Payloadˉlength == 9u32 {
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength == 10u32 {
-            Stackˉproduced = true;
-            Stackˉproducedˉdescriptor = true;
-        }
-        if Payloadˉlength == 11u32 {
-            Stackˉconsumed = 1u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength == 12u32 {
-            Stackˉconsumed = 3u32;
-            Stackˉproduced = true;
-            Stackˉproducedˉdescriptor = true;
-        }
-        if Payloadˉlength >= 13u32 {
-            if Payloadˉlength <= 18u32 {
-                Stackˉconsumed = 2u32;
-                Stackˉproduced = true;
-            }
-        }
-        if Payloadˉlength == 19u32 {
-            Stackˉconsumed = 1u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength >= 20u32 {
-            if Payloadˉlength <= 22u32 {
-                Stackˉconsumed = 2u32;
-                Stackˉproduced = true;
-            }
-        }
-        if Payloadˉlength >= 32u32 {
-            if Payloadˉlength <= 39u32 {
-                Stackˉconsumed = 2u32;
-                Stackˉproduced = true;
-            }
-        }
-        if Payloadˉlength == 40u32 {
-            Stackˉconsumed = 1u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength == 49u32 { Stackˉconsumed = 1u32; }
-        if Payloadˉlength == 80u32 { Stackˉconsumed = 1u32; }
-        if Payloadˉlength >= 96u32 {
-            if Payloadˉlength <= 103u32 {
-                Stackˉconsumed = 2u32;
-                Stackˉproduced = true;
-            }
-        }
-        if Payloadˉlength == 106u32 { Stackˉproduced = true; }
-        if Payloadˉlength == 107u32 || Payloadˉlength == 108u32 {
-            Stackˉconsumed = 2u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength >= 109u32 {
-            if Payloadˉlength <= 112u32 {
-                Stackˉconsumed = 1u32;
-                Stackˉproduced = true;
-                Stackˉproducedˉdescriptor = true;
-            }
-        }
-        if Payloadˉlength == 113u32 || Payloadˉlength == 119u32 {
-            Stackˉconsumed = 2u32;
-            Stackˉproduced = true;
-            Stackˉproducedˉdescriptor = true;
-        }
-        if Payloadˉlength == 114u32 {
-            Stackˉconsumed = 2u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength == 115u32 {
-            Stackˉconsumed = 1u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength == 116u32 || Payloadˉlength == 117u32 {
-            Stackˉconsumed = 1u32;
-            Stackˉproduced = true;
-            Stackˉproducedˉdescriptor = true;
-        }
-        if Payloadˉlength == 118u32 {
-            Stackˉconsumed = 1u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength >= 120u32 {
-            if Payloadˉlength <= 125u32 {
-                Stackˉconsumed = 1u32;
-                Stackˉproduced = true;
-                Stackˉproducedˉdescriptor = true;
-            }
-        }
-        if Payloadˉlength == 161u32 || Payloadˉlength == 162u32 {
-            Stackˉconsumed = 2u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength >= 173u32 {
-            if Payloadˉlength <= 175u32 {
-                Stackˉconsumed = 2u32;
-                Stackˉproduced = true;
-            }
-        }
-        if Payloadˉlength == 176u32 {
-            Stackˉconsumed = 1u32;
-            Stackˉproduced = true;
-        }
-        if Payloadˉlength == 177u32 || Payloadˉlength == 178u32 {
-            Stackˉconsumed = 2u32;
-            Stackˉproduced = true;
-        }
 
         if Payloadˉlength <= 22u32 {
         if Payloadˉlength == 1u32 {
