@@ -55,7 +55,32 @@ PASS  wvo-trailing
 Tests: 26, Passed: 26, Failed: 0
 ```
 
-No .NET process is required by this command. The host dependencies are `cmd.exe`
+The separate focused linker-rejection command does not rebuild source or repeat
+the successful AOT chain. On Windows x64 run:
+
+```bat
+Tools\Native\Test-Linker-Rejections.cmd
+```
+
+On Linux x64 run:
+
+```sh
+./Tools/Native/Test-Linker-Rejections.sh
+```
+
+Its exact success report is:
+
+```text
+PASS  invalid-base
+PASS  missing-entry
+PASS  malformed-object
+Tests: 3, Passed: 3, Failed: 0
+```
+
+All three cases require deterministic linker rejection, empty standard output,
+an exact report identity, and byte-for-byte preservation of an existing output.
+
+No .NET process is required by these commands. The host dependencies are `cmd.exe`
 and `certutil` on Windows, or Bash, `sha256sum`, `base64`, `cmp`, and core utilities
 on Linux.
 
@@ -72,5 +97,7 @@ merely as a checklist; use the narrowest gate that owns the changed behavior.
 
 For changes to the native plan, launchers, projects, or fixed fixtures, review the
 managed wrapper's exact report and run `Tools\Native\Test-Seed.cmd` or
-`./Tools/Native/Test-Seed.sh` directly once. GitHub owns the independent Windows
-and pinned-Debian Qualification run for a final committed candidate.
+`./Tools/Native/Test-Seed.sh` directly once. For the focused linker-rejection
+boundary, review its wrapper and run only `Test-Linker-Rejections.cmd` or `.sh`.
+GitHub owns the independent Windows and pinned-Debian Qualification run for a
+final committed candidate.

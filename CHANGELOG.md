@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Added a focused .NET-free native linker-rejection test that reuses pinned WVO fixtures and the digest-bound linker launcher. Invalid base, missing entry, and malformed object cases require exact report hashes, empty standard output, and byte-for-byte preservation of an existing destination without rerunning the source-to-AOT chain.
 - Expanded the digest-bound .NET-free native test plan to 26 cases with one accepted WVO plus fixed bad-magic, truncation, and trailing-byte rejections. Complete input and verifier-report hashes replace a live C# oracle while preserving exact cross-host behavior.
 - Added a bounded Windvale-native atomic publisher for complete WVO 1.0 objects. Complete portable admission now lives in one focused module shared by the inspector and new `WVPO 1` Windows/Linux candidates; the accepted-subset lowerer writes a private candidate and reaches durable replacement without loading .NET, while Stage 0 host-container construction and grouped qualification remain explicit.
 - Added a bounded Windvale-native atomic publisher for completed version-1 console applications. The new `WVPA 1` Windows/Linux candidates validate `.exe`/`.elf` bytes through the portable verifier, reuse the qualified native sibling/write/reread/replace transaction, and make the digest-bound console packager publish privately constructed candidates without loading .NET; Stage 0 host-container construction and grouped qualification remain explicit.

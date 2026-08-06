@@ -14,6 +14,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0310](../Decisions/0310-Fixed-Native-Wvo-Test-Cases.md) advances Phase 10 by moving one accepted WVO and three structural rejection cases into the fixed 26-case .NET-free native plan. Linux execution and the grouped end-of-goal gate still precede promotion.
 
+[Decision 0311](../Decisions/0311-Fixed-Native-Linker-Rejections.md) adds a separate three-case .NET-free linker rejection command, preserving exact diagnostics and an existing output without rebuilding the successful AOT chain. Linux execution and the grouped gate still precede linker promotion.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

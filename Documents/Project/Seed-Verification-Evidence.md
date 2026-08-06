@@ -3401,3 +3401,32 @@ command takes 24 seconds and all 26 inner cases pass. No WebAssembly
 implementation changed. Direct Linux execution, Development, Standard,
 Qualification, promotion, broader WVO-corpus transfer, and the grouped
 end-of-goal gate remain deferred.
+
+## Local fixed native linker-rejection evidence
+
+[Decision 0311](../Decisions/0311-Fixed-Native-Linker-Rejections.md) adds a
+focused .NET-free coordinator over the digest-bound native linker. It reuses the
+479-byte canonical WVO at SHA-256
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`
+and the 479-byte bad-magic WVO at SHA-256
+`0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288`.
+The latter is also copied to the output path before every case so rejection must
+preserve its complete identity.
+
+The fixed reports are:
+
+- invalid base, `WVL1001`:
+  `b5a687af92c9eca7eb5ba850bddf6dec932c94a6be304af35357655a915056b8`;
+- missing `Missing` entry, `WVL1007`:
+  `883ad60b71d4c010d4a2ddf168199dfaae04d1e076313ee1cf4dac8bee67a517`;
+- bad-magic object, `WVL1002`:
+  `18eeeeb5d84e82c54cf14480bc5c54e593f5cd429d68686ad64110d9780a5353`.
+
+Direct Windows execution passes all three cases in about 1.2 seconds. After
+reviewing the wrapper's exact report, the focused selection
+`native linker rejections preserve existing output without .NET` passes 1/1 in
+0.815 test seconds after a 15.25-second zero-warning Release build; the complete
+command takes 20.7 seconds. The permanent command does not run .NET, rebuild
+source, or repeat the successful AOT chain. No WebAssembly implementation
+changed. Linux execution, Development, Standard, Qualification, promotion,
+broader linker-corpus transfer, and the grouped end-of-goal gate remain deferred.

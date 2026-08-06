@@ -46,6 +46,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native console-application publication](Decisions/0307-Native-Console-Application-Publication.md) — portable PE/ELF admission plus reused native atomic replacement for digest-bound packaging
 - [Native WVO publication](Decisions/0308-Native-Wvo-Publication.md) — shared portable WVO admission plus reused native atomic replacement for accepted-subset lowering
 - [Fixed native WVO test cases](Decisions/0310-Fixed-Native-Wvo-Test-Cases.md) — one accepted object and three structural rejections in the digest-bound .NET-free native plan
+- [Fixed native linker rejections](Decisions/0311-Fixed-Native-Linker-Rejections.md) — exact invalid-base, missing-entry, and malformed-object reports with output preservation
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

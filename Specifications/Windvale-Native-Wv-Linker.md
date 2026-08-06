@@ -56,6 +56,30 @@ The current candidate identities are:
 
 The focused candidate test reconstructs both containers, checks exact capabilities and services, exercises the public AOT target, and runs the current-host raw application. Canonical two-object input must reproduce the complete Stage 0 image and map byte for byte, including signed addend output and all Windvale-computed SHA-256 values. Invalid WVO must preserve existing output. Current-host module or mapping inspection must find no CLR/.NET runtime.
 
+## Fixed native rejection contract
+
+`Tools/Native/Test-Linker-Rejections.cmd` and `.sh` exercise only the pinned
+linker launcher and repository-owned WVO fixtures. They do not rebuild the
+source, repeat the successful AOT chain, invoke .NET, or consult a live Stage 0
+oracle. The decoded canonical input is 479 bytes at SHA-256
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`;
+the malformed input and output sentinel are 479 bytes at SHA-256
+`0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288`.
+
+Each case must return `2`, write no standard output, preserve the complete
+sentinel, and emit one LF-terminated diagnostic whose complete SHA-256 is:
+
+| Case | Diagnostic | Report SHA-256 |
+| --- | --- | --- |
+| `invalid-base` | `WVL1001`, invalid unsigned base address | `b5a687af92c9eca7eb5ba850bddf6dec932c94a6be304af35357655a915056b8` |
+| `missing-entry` | `WVL1007`, missing `Missing` entry | `883ad60b71d4c010d4a2ddf168199dfaae04d1e076313ee1cf4dac8bee67a517` |
+| `malformed-object` | `WVL1002`, bad-magic input zero | `18eeeeb5d84e82c54cf14480bc5c54e593f5cd429d68686ad64110d9780a5353` |
+
+Success prints the three ordered `PASS` lines followed by
+`Tests: 3, Passed: 3, Failed: 0` plus LF. This is a bounded permanent fixture
+set, not a replacement for the complete resolution, layout, relocation,
+hostile-input, randomized, or concurrency corpus.
+
 ## Qualification gate
 
 Promotion to the ordinary linker front door requires one exact source commit to pass on Windows and Linux with:
