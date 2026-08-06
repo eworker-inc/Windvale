@@ -71,6 +71,22 @@ export fn Main() -> i32 {
     let R29: Guestˉrecordˉsixteen = Makeˉrecord(29);
     let R30: Guestˉrecordˉsixteen = Makeˉrecord(30);
     let R31: Guestˉrecordˉsixteen = Makeˉrecord(31);
+    let R32: Guestˉrecordˉsixteen = Makeˉrecord(32);
+    let R33: Guestˉrecordˉsixteen = Makeˉrecord(33);
+    let R34: Guestˉrecordˉsixteen = Makeˉrecord(34);
+    let R35: Guestˉrecordˉsixteen = Makeˉrecord(35);
+    let R36: Guestˉrecordˉsixteen = Makeˉrecord(36);
+    let R37: Guestˉrecordˉsixteen = Makeˉrecord(37);
+    let R38: Guestˉrecordˉsixteen = Makeˉrecord(38);
+    let R39: Guestˉrecordˉsixteen = Makeˉrecord(39);
+    let R40: Guestˉrecordˉsixteen = Makeˉrecord(40);
+    let R41: Guestˉrecordˉsixteen = Makeˉrecord(41);
+    let R42: Guestˉrecordˉsixteen = Makeˉrecord(42);
+    let R43: Guestˉrecordˉsixteen = Makeˉrecord(43);
+    let R44: Guestˉrecordˉsixteen = Makeˉrecord(44);
+    let R45: Guestˉrecordˉsixteen = Makeˉrecord(45);
+    let R46: Guestˉrecordˉsixteen = Makeˉrecord(46);
+    let R47: Guestˉrecordˉsixteen = Makeˉrecord(47);
     return Value.A
         + R0.A
         + R1.A
@@ -104,5 +120,21 @@ export fn Main() -> i32 {
         + R29.A
         + R30.A
         + R31.A
+        + R32.A
+        + R33.A
+        + R34.A
+        + R35.A
+        + R36.A
+        + R37.A
+        + R38.A
+        + R39.A
+        + R40.A
+        + R41.A
+        + R42.A
+        + R43.A
+        + R44.A
+        + R45.A
+        + R46.A
+        + R47.A
         + 42;
 }

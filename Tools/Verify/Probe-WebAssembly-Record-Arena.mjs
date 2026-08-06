@@ -90,8 +90,8 @@ if (
     !precisionRun.validEnvelope ||
     precisionRun.outerStatus !== 0 ||
     precisionRun.guestStatus !== 0 ||
-    precisionRun.guestInstructions !== 2_285 ||
-    precisionRun.result !== 539
+    precisionRun.guestInstructions !== 3_373 ||
+    precisionRun.result !== 1_171
 ) {
     throw new Error(`Frame-precision run failed: ${JSON.stringify(precisionRun)}`);
 }
@@ -111,7 +111,7 @@ if (
     !exhaustionRun.validEnvelope ||
     exhaustionRun.outerStatus !== 0 ||
     exhaustionRun.guestStatus !== 3_017 ||
-    exhaustionRun.guestInstructions !== 4_332 ||
+    exhaustionRun.guestInstructions !== 5_276 ||
     exhaustionRun.result !== 0
 ) {
     throw new Error(`Live-set exhaustion failed: ${JSON.stringify(exhaustionRun)}`);

@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-if (process.argv.length < 5 || process.argv.length > 8) {
+if (process.argv.length < 5 || process.argv.length > 9) {
     throw new Error(
         "Usage: node Probe-WebAssembly-Compiler.mjs " +
             "<scalar-interpreter.wasm> <compiler.wvb> <source.wv> " +
-            "[guest-budget] [outer-budget] [maximum-call-depth]",
+            "[guest-budget] [outer-budget] [maximum-call-depth] [expected.wvb]",
     );
 }
 
@@ -60,9 +60,11 @@ const maximumCallDepth = parseU32(
     "maximum call depth",
     process.argv[7] ?? "64",
 );
+const expectedPath = process.argv[8] ?? null;
 const interpreter = readFileSync(interpreterPath);
 const compiler = readFileSync(compilerPath);
 const source = readFileSync(sourcePath);
+const expected = expectedPath === null ? null : readFileSync(expectedPath);
 const request = bytesRequest(
     compiler,
     singleSourceSet(source),
@@ -111,6 +113,26 @@ if (outputLength < 0 || outputLength > outputCapacity) {
 const output = Buffer.from(
     linearMemory.slice(outputOffset, outputOffset + outputLength),
 );
+const resultLength = outputLength >= 20 ? output.readUInt32LE(16) : null;
+const result = resultLength !== null && outputLength === 20 + resultLength
+    ? output.subarray(20)
+    : null;
+const compilerOutputKind = result !== null && result.length >= 16
+    ? result.readUInt32LE(8)
+    : null;
+const compilerPayloadLength = result !== null && result.length >= 16
+    ? result.readUInt32LE(12)
+    : null;
+const compilerPayload = compilerPayloadLength !== null &&
+    result.length === 16 + compilerPayloadLength
+    ? result.subarray(16)
+    : null;
+let compilerDiagnostic = null;
+if (compilerOutputKind === 1 && compilerPayload !== null) {
+    compilerDiagnostic = new TextDecoder("utf-8", { fatal: true }).decode(
+        compilerPayload,
+    );
+}
 const report = {
     interpreter: {
         bytes: interpreter.length,
@@ -132,23 +154,53 @@ const report = {
     outputLength,
     guestStatus: outputLength >= 20 ? output.readUInt32LE(8) : null,
     guestInstructions: outputLength >= 20 ? output.readUInt32LE(12) : null,
-    resultLength: outputLength >= 20 ? output.readUInt32LE(16) : null,
+    resultLength,
+    compilerOutputKind,
+    compilerPayloadLength,
+    compilerPayloadSha256:
+        compilerPayload === null ? null : sha256(compilerPayload),
+    compilerDiagnostic,
+    expected: expected === null ? null : {
+        bytes: expected.length,
+        sha256: sha256(expected),
+    },
     elapsedMilliseconds,
 };
 
 if (outerStatus !== 0) {
     throw new Error(`The compiler did not enter guest execution: ${JSON.stringify(report)}`);
 }
-if (
-    outputLength !== 20 ||
+const invalidExecutionEnvelope =
+    outputLength < 20 ||
     output.readUInt32LE(0) !== 0x4F585657 ||
     output.readUInt16LE(4) !== 2 ||
-    output.readUInt16LE(6) !== 0 ||
+    output.readUInt16LE(6) !== 0;
+if (invalidExecutionEnvelope) {
+    throw new Error(`The compiler execution envelope is invalid: ${JSON.stringify(report)}`);
+}
+if (
     report.guestStatus !== 3011 ||
     report.guestInstructions !== guestBudget ||
     report.resultLength !== 0
 ) {
-    throw new Error(`The compiler entry response is invalid: ${JSON.stringify(report)}`);
+    if (
+        report.guestStatus !== 0 ||
+        result === null ||
+        result.length < 16 ||
+        result.readUInt32LE(0) !== 0x4F435657 ||
+        result.readUInt16LE(4) !== 1 ||
+        result.readUInt16LE(6) !== 0 ||
+        (compilerOutputKind !== 0 && compilerOutputKind !== 1) ||
+        compilerPayload === null
+    ) {
+        throw new Error(`The compiler entry response is invalid: ${JSON.stringify(report)}`);
+    }
+    if (
+        expected !== null &&
+        (compilerOutputKind !== 0 || !compilerPayload.equals(expected))
+    ) {
+        throw new Error(`The compiler output differs from Stage 0: ${JSON.stringify(report)}`);
+    }
 }
 
 console.log(JSON.stringify(report, null, 2));

@@ -401,16 +401,22 @@ export fn Main(Request: bytes) -> bytes {
             Bytesˉslice(Zeroˉlocals, 8u32, Functionˉcursor - 8u32)
         );
     }
+    let Recordˉcapacity: u32 = 768u32;
+    let Recordˉmetadataˉlength: u32 = Recordˉcapacity * 8u32;
     var Recordˉzeroˉslots: bytes = Zeroˉcell;
     var Recordˉzeroˉslotsˉlength: u32 = 8u32;
-    while Recordˉzeroˉslotsˉlength < 4096u32 {
+    while Recordˉzeroˉslotsˉlength < Recordˉmetadataˉlength {
         Recordˉzeroˉslots = Bytesˉconcat(
             Recordˉzeroˉslots,
             Recordˉzeroˉslots
         );
         Recordˉzeroˉslotsˉlength = Recordˉzeroˉslotsˉlength * 2u32;
     }
-    var Recordˉmetadata: bytes = Recordˉzeroˉslots;
+    var Recordˉmetadata: bytes = Bytesˉslice(
+        Recordˉzeroˉslots,
+        0u32,
+        Recordˉmetadataˉlength
+    );
     var Records: bytes = Invalid;
     // Reuse completed-preflight slots as execution state: Functionˉindex is the
     // current function, Aggregateˉinstructions is PC, Exportˉindex is depth,
@@ -1614,16 +1620,16 @@ export fn Main(Request: bytes) -> bytes {
                 Recordˉstackˉlength - Recordˉfieldˉbytes
             );
 
-            var Recordˉslot: u32 = 512u32;
+            var Recordˉslot: u32 = Recordˉcapacity;
             if Recordˉfieldˉcount == 0u32 {
                 Recordˉslot = 4294967295u32;
             } else {
                 var Recordˉallocationˉpass: u32 = 0u32;
                 while Recordˉallocationˉpass < 2u32 {
-                    if Recordˉslot == 512u32 {
+                    if Recordˉslot == Recordˉcapacity {
                         var Recordˉcandidateˉslot: u32 = 0u32;
                         var Recordˉscanˉslot: u32 = 0u32;
-                        while Recordˉscanˉslot < 512u32 {
+                        while Recordˉscanˉslot < Recordˉcapacity {
                             let Recordˉstoredˉsize: u32 =
                                 Bytesˉreadˉu32ˉlittle(
                                     Recordˉmetadata,
@@ -1632,7 +1638,7 @@ export fn Main(Request: bytes) -> bytes {
                             if Recordˉstoredˉsize == 0u32 {
                                 Recordˉscanˉslot = Recordˉscanˉslot + 1u32;
                             } else {
-                                if Recordˉslot == 512u32 {
+                                if Recordˉslot == Recordˉcapacity {
                                     if Recordˉcandidateˉslot
                                         <= Recordˉscanˉslot {
                                         if Recordˉfieldˉcount
@@ -1648,21 +1654,21 @@ export fn Main(Request: bytes) -> bytes {
                                 Recordˉscanˉslot = Recordˉcandidateˉslot;
                             }
                         }
-                        if Recordˉslot == 512u32 {
-                            if Recordˉcandidateˉslot <= 512u32 {
+                        if Recordˉslot == Recordˉcapacity {
+                            if Recordˉcandidateˉslot <= Recordˉcapacity {
                                 if Recordˉfieldˉcount
-                                    <= 512u32 - Recordˉcandidateˉslot {
+                                    <= Recordˉcapacity - Recordˉcandidateˉslot {
                                     Recordˉslot = Recordˉcandidateˉslot;
                                 }
                             }
                         }
 
-                        if Recordˉslot == 512u32 {
+                        if Recordˉslot == Recordˉcapacity {
                             if Recordˉallocationˉpass == 0u32 {
                                 var Recordˉmarks: bytes = Bytesˉslice(
                                     Recordˉzeroˉslots,
                                     0u32,
-                                    512u32
+                                    Recordˉcapacity
                                 );
                                 // Dynamic stack flags and verified static shapes
                                 // admit only actual record cells as roots.
@@ -1839,7 +1845,7 @@ export fn Main(Request: bytes) -> bytes {
                                                 Recordˉreachableˉvalues,
                                                 Recordˉreachableˉcursor + 4u32
                                             );
-                                        if Recordˉreachableˉslot < 512u32 {
+                                        if Recordˉreachableˉslot < Recordˉcapacity {
                                             let Recordˉreachableˉentry: u32 =
                                                 Recordˉreachableˉslot * 8u32;
                                             let Recordˉreachableˉowner: u32 =
@@ -1873,7 +1879,8 @@ export fn Main(Request: bytes) -> bytes {
                                                                 Recordˉmarks,
                                                                 Recordˉreachableˉslot
                                                                     + 1u32,
-                                                                511u32
+                                                                Recordˉcapacity
+                                                                    - 1u32
                                                                     - Recordˉreachableˉslot
                                                             );
                                                         Recordˉmarks = Bytesˉconcat(
@@ -1958,7 +1965,7 @@ export fn Main(Request: bytes) -> bytes {
 
                                 var Recordˉnextˉmetadata: bytes = Invalid;
                                 Recordˉscanˉslot = 0u32;
-                                while Recordˉscanˉslot < 512u32 {
+                                while Recordˉscanˉslot < Recordˉcapacity {
                                     let Recordˉmetadataˉentry: u32 =
                                         Recordˉscanˉslot * 8u32;
                                     let Recordˉmetadataˉsize: u32 =
@@ -2064,7 +2071,7 @@ export fn Main(Request: bytes) -> bytes {
                 }
             }
 
-            if Recordˉslot == 512u32 {
+            if Recordˉslot == Recordˉcapacity {
                 Sectionˉkind = 3017u32;
             } else {
                 if Recordˉfieldˉcount > 0u32 {
@@ -2078,7 +2085,9 @@ export fn Main(Request: bytes) -> bytes {
                     let Recordˉmetadataˉsuffix: bytes = Bytesˉslice(
                         Recordˉmetadata,
                         Recordˉmetadataˉoffset + 8u32,
-                        4088u32 - Recordˉmetadataˉoffset
+                        Recordˉmetadataˉlength
+                            - 8u32
+                            - Recordˉmetadataˉoffset
                     );
                     let Recordˉmetadataˉallocation: bytes = Bytesˉconcat(
                         Bytesˉfromˉu32ˉlittle(Recordˉtype + 1u32),

@@ -227,7 +227,7 @@ internal static partial class Program
     private const string SOURCE_WVB_SHA256_INTERPRETER_SHA256 = "7799233bb58eaa6dcf6911b4c46f45d544c9114edf2e28234010fdf6e5d3b622";
     private const string SOURCE_WVB_NOMINAL_TYPES_SHA256 = "b1c3543f8064732a0039d071f4e3a7da2bb901f8cfb890fb1de42193a228ff4b";
     private const string SOURCE_WVB_NOMINAL_DEFAULTS_INTERPRETER_SHA256 = "42bf1f148462ee948e676c105819396661ed1e8126c4763631144fa547abc3c0";
-    private const string SOURCE_WVB_RECORD_ARENA_INTERPRETER_SHA256 = "368ec1b0b65e510ffe7e73aaa5e528d296490a0acc6492b3106dfb7a49ae22bb";
+    private const string SOURCE_WVB_RECORD_ARENA_INTERPRETER_SHA256 = "aa809a66f881c4b2369a1e338893491aef527a5157ccbfc8c13ec96789b6e7ce";
 
     private const string COMPLETE_ASSEMBLY_SOURCE = """
         windvale-assembly 1
@@ -17112,10 +17112,10 @@ internal static partial class Program
 
         var Recordˉarenaˉwvb = Compileˉtextˉbytesˉguest(
             SOURCE_WVB_RECORD_ARENA_INTERPRETER_SOURCE,
-            4_405,
+            5_909,
             SOURCE_WVB_RECORD_ARENA_INTERPRETER_SHA256);
         Equal(
-            new WebAssemblyˉexecutionˉresult(0, 570, 4_698),
+            new WebAssemblyˉexecutionˉresult(0, 1_202, 5_786),
             Runˉreferenceˉwebassemblyˉi32(Recordˉarenaˉwvb));
         var Recordˉarenaˉinterpreted = Runˉscalarˉinterpreter(
             Buildˉscalarˉrequest(Recordˉarenaˉwvb, 10_000, 8),
@@ -17124,10 +17124,10 @@ internal static partial class Program
             Recordˉarenaˉinterpreted.Bytes);
         Equalˉscalarˉinstructions(
             "record-arena",
-            4_402_960L,
+            7_524_325L,
             Recordˉarenaˉinterpreted.Executedˉinstructions);
         Equal(
-            new WebAssemblyˉexecutionˉresult(3017, 0, 4_332),
+            new WebAssemblyˉexecutionˉresult(3017, 0, 5_276),
             Recordˉarenaˉresponse);
 
         var Scalarˉinterpreterˉlowered = Runˉwebassemblyˉtool(

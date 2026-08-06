@@ -1724,20 +1724,20 @@ function verifyRuntime(expected, module, exports, digest) {
         const recordArenaRequest = scalarRequest(candidates[16], 10_000);
         requireScalarResult(
             "record arena live-set exhaustion after reclamation",
-            runMemory(exports, recordArenaRequest, 4_071_115),
+            runMemory(exports, recordArenaRequest, 7_524_325),
             0,
-            4_071_115,
+            7_524_325,
             3017,
-            4_332,
+            5_276,
             0,
         );
         requireScalarResult(
             "record arena reset",
-            runMemory(exports, recordArenaRequest, 4_071_115),
+            runMemory(exports, recordArenaRequest, 7_524_325),
             0,
-            4_071_115,
+            7_524_325,
             3017,
-            4_332,
+            5_276,
             0,
         );
     } else if (expected.runtime === "wvb-semantic") {
