@@ -1,0 +1,46 @@
+module Compilerˉwebassemblyˉartifactˉtool profile hosted;
+
+import Compilerˉwebassembly as Webassembly;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Compilerˉwebassemblyˉartifactˉlabel() -> text {
+    return Textˉfromˉutf8(Textˉtoˉutf8("webassembly"));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line("Usage: wvwasm <input.wvb> <output.wasm>");
+        return 64;
+    }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Summary: Webassembly.Compilerˉwebassemblyˉsummary =
+        Webassembly.Compilerˉlowerˉwvbˉwebassembly(Input);
+    if Summary.Status != Webassembly.Compilerˉwebassemblyˉstatus.Valid {
+        diagnostic.write_line(Textˉconcat(
+            Textˉconcat(
+                Compilerˉwebassemblyˉartifactˉlabel(),
+                " status="
+            ),
+            Enumˉname(Summary.Status)
+        ));
+        return 1;
+    }
+    file.write_bytes(process.argument(1u32), Summary.Webassembly);
+    var Report: text = Textˉconcat(
+        Compilerˉwebassemblyˉartifactˉlabel(),
+        " status=Valid module-bytes="
+    );
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Summary.Webassembly)));
+    Report = Textˉconcat(Report, " execution-abi=");
+    console.write_line(Textˉconcat(
+        Report,
+        U32ˉformat(Summary.Executionˉabi)
+    ));
+    return 0;
+}
