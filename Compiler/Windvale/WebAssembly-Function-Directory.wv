@@ -4,6 +4,12 @@ export record Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary {
     Valid: bool;
     Count: u32;
     Entries: bytes;
+    Names: bytes;
+}
+
+export record Compilerˉwebassemblyˉfunctionˉlookupˉsummary {
+    Found: bool;
+    Index: u32;
 }
 
 export record Compilerˉwebassemblyˉcallˉinventoryˉsummary {
@@ -20,6 +26,7 @@ fn Invalid(Input: bytes) -> Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary 
     return Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary(
         false,
         0u32,
+        Empty(Input),
         Empty(Input)
     );
 }
@@ -109,6 +116,7 @@ export fn Compilerˉwebassemblyˉfunctionˉdirectoryˉbuild(
     var Cursor: u32 = Functionsˉoffset + 4u32;
     var Expectedˉcodeˉoffset: u32 = 0u32;
     var Entries: bytes = Empty(Input);
+    var Names: bytes = Empty(Input);
     var Functionˉindex: u32 = 0u32;
     while Functionˉindex < Functionˉcount {
         if !Rangeˉisˉvalid(End, Cursor, 4u32) { return Invalid(Input); }
@@ -118,6 +126,8 @@ export fn Compilerˉwebassemblyˉfunctionˉdirectoryˉbuild(
             return Invalid(Input);
         }
         if !Rangeˉisˉvalid(End, Cursor, Nameˉlength) { return Invalid(Input); }
+        Names = Appendˉu32(Names, Cursor);
+        Names = Appendˉu32(Names, Nameˉlength);
         Cursor = Cursor + Nameˉlength;
 
         if !Rangeˉisˉvalid(End, Cursor, 4u32) { return Invalid(Input); }
@@ -207,10 +217,14 @@ export fn Compilerˉwebassemblyˉfunctionˉdirectoryˉbuild(
         Compilerˉwebassemblyˉfunctionˉdirectoryˉentryˉwidth() {
         return Invalid(Input);
     }
+    if Bytesˉlength(Names) != Functionˉcount * 8u32 {
+        return Invalid(Input);
+    }
     return Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary(
         true,
         Functionˉcount,
-        Entries
+        Entries,
+        Names
     );
 }
 
@@ -272,6 +286,81 @@ export fn Compilerˉwebassemblyˉfunctionˉmaximumˉstack(
     Index: u32
 ) -> u32 {
     return Bytesˉreadˉu32ˉlittle(Directory.Entries, Entryˉoffset(Index) + 28u32);
+}
+
+export fn Compilerˉwebassemblyˉfunctionˉnameˉoffset(
+    Directory: Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Directory.Names, Index * 8u32);
+}
+
+export fn Compilerˉwebassemblyˉfunctionˉnameˉlength(
+    Directory: Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Directory.Names, Index * 8u32 + 4u32);
+}
+
+export fn Compilerˉwebassemblyˉfunctionˉfind(
+    Input: bytes,
+    Directory: Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Name: text
+) -> Compilerˉwebassemblyˉfunctionˉlookupˉsummary {
+    if !Directory.Valid {
+        return Compilerˉwebassemblyˉfunctionˉlookupˉsummary(false, 0u32);
+    }
+    if Directory.Count == 0u32 || Directory.Count > 512u32 ||
+        Bytesˉlength(Directory.Names) != Directory.Count * 8u32 {
+        return Compilerˉwebassemblyˉfunctionˉlookupˉsummary(false, 0u32);
+    }
+    let Expected: bytes = Textˉtoˉutf8(Name);
+    let Expectedˉlength: u32 = Bytesˉlength(Expected);
+    if Expectedˉlength == 0u32 || Expectedˉlength > 255u32 {
+        return Compilerˉwebassemblyˉfunctionˉlookupˉsummary(false, 0u32);
+    }
+    var Functionˉindex: u32 = 0u32;
+    while Functionˉindex < Directory.Count {
+        let Nameˉlength: u32 =
+            Compilerˉwebassemblyˉfunctionˉnameˉlength(
+                Directory,
+                Functionˉindex
+            );
+        if Nameˉlength == Expectedˉlength {
+            let Nameˉoffset: u32 =
+                Compilerˉwebassemblyˉfunctionˉnameˉoffset(
+                    Directory,
+                    Functionˉindex
+                );
+            if !Rangeˉisˉvalid(
+                Bytesˉlength(Input),
+                Nameˉoffset,
+                Nameˉlength
+            ) {
+                return Compilerˉwebassemblyˉfunctionˉlookupˉsummary(
+                    false,
+                    0u32
+                );
+            }
+            var Matches: bool = true;
+            var Nameˉindex: u32 = 0u32;
+            while Nameˉindex < Nameˉlength {
+                if Bytesˉreadˉu8(Input, Nameˉoffset + Nameˉindex) !=
+                    Bytesˉreadˉu8(Expected, Nameˉindex) {
+                    Matches = false;
+                }
+                Nameˉindex = Nameˉindex + 1u32;
+            }
+            if Matches {
+                return Compilerˉwebassemblyˉfunctionˉlookupˉsummary(
+                    true,
+                    Functionˉindex
+                );
+            }
+        }
+        Functionˉindex = Functionˉindex + 1u32;
+    }
+    return Compilerˉwebassemblyˉfunctionˉlookupˉsummary(false, 0u32);
 }
 
 export fn Compilerˉwebassemblyˉinstructionˉwidth(

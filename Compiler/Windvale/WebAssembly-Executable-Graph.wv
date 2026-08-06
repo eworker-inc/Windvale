@@ -1,0 +1,208 @@
+module Compilerˉwebassemblyˉexecutableˉgraph profile portable;
+
+import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
+
+export record Compilerˉwebassemblyˉexecutableˉgraphˉsummary {
+    Valid: bool;
+    Root: u32;
+    Functionˉcount: u32;
+    Callˉcount: u32;
+    Reachableˉcount: u32;
+    Functionˉentries: bytes;
+    Callˉtargets: bytes;
+    Reachableˉorder: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalid(Input: bytes) -> Compilerˉwebassemblyˉexecutableˉgraphˉsummary {
+    return Compilerˉwebassemblyˉexecutableˉgraphˉsummary(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Empty(Input),
+        Empty(Input),
+        Empty(Input)
+    );
+}
+
+fn Containsˉu32(Values: bytes, Value: u32) -> bool {
+    let Length: u32 = Bytesˉlength(Values);
+    if Length % 4u32 != 0u32 { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        if Bytesˉreadˉu32ˉlittle(Values, Offset) == Value { return true; }
+        Offset = Offset + 4u32;
+    }
+    return false;
+}
+
+export fn Compilerˉwebassemblyˉexecutableˉgraphˉentryˉwidth() -> u32 {
+    return 8u32;
+}
+
+export fn Compilerˉwebassemblyˉexecutableˉgraphˉbuild(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Root: u32
+) -> Compilerˉwebassemblyˉexecutableˉgraphˉsummary {
+    if !Directory.Valid || Directory.Count == 0u32 ||
+        Directory.Count > 512u32 || Root >= Directory.Count {
+        return Invalid(Input);
+    }
+    if Bytesˉlength(Directory.Entries) != Directory.Count *
+        Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉentryˉwidth() {
+        return Invalid(Input);
+    }
+    let Inventory: Functions.Compilerˉwebassemblyˉcallˉinventoryˉsummary =
+        Functions.Compilerˉwebassemblyˉcallˉinventoryˉvalidate(
+            Input,
+            Codeˉoffset,
+            Codeˉlength,
+            Directory
+        );
+    if !Inventory.Valid { return Invalid(Input); }
+
+    var Functionˉentries: bytes = Empty(Input);
+    var Callˉtargets: bytes = Empty(Input);
+    var Functionˉindex: u32 = 0u32;
+    while Functionˉindex < Directory.Count {
+        let Firstˉtarget: u32 = Bytesˉlength(Callˉtargets);
+        let Functionˉcodeˉrelative: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉcodeˉoffset(
+                Directory,
+                Functionˉindex
+            );
+        let Functionˉcodeˉlength: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉcodeˉlength(
+                Directory,
+                Functionˉindex
+            );
+        let Functionˉcode: u32 = Codeˉoffset + Functionˉcodeˉrelative;
+        var Functionˉcalls: u32 = 0u32;
+        var Cursor: u32 = 0u32;
+        while Cursor < Functionˉcodeˉlength {
+            let Width: u32 =
+                Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+                    Input,
+                    Functionˉcode,
+                    Functionˉcodeˉlength,
+                    Cursor
+                );
+            if Width == 0u32 { return Invalid(Input); }
+            if Bytesˉreadˉu8(Input, Functionˉcode + Cursor) == 64u8 {
+                let Target: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                if Target >= Directory.Count { return Invalid(Input); }
+                Callˉtargets = Bytesˉconcat(
+                    Callˉtargets,
+                    Bytesˉfromˉu32ˉlittle(Target)
+                );
+                Functionˉcalls = Functionˉcalls + 1u32;
+            }
+            Cursor = Cursor + Width;
+        }
+        Functionˉentries = Bytesˉconcat(
+            Functionˉentries,
+            Bytesˉfromˉu32ˉlittle(Firstˉtarget)
+        );
+        Functionˉentries = Bytesˉconcat(
+            Functionˉentries,
+            Bytesˉfromˉu32ˉlittle(Functionˉcalls)
+        );
+        Functionˉindex = Functionˉindex + 1u32;
+    }
+    if Bytesˉlength(Functionˉentries) != Directory.Count *
+        Compilerˉwebassemblyˉexecutableˉgraphˉentryˉwidth() {
+        return Invalid(Input);
+    }
+    if Bytesˉlength(Callˉtargets) != Inventory.Callˉcount * 4u32 {
+        return Invalid(Input);
+    }
+
+    var Reachableˉorder: bytes = Bytesˉfromˉu32ˉlittle(Root);
+    var Reachableˉcursor: u32 = 0u32;
+    while Reachableˉcursor < Bytesˉlength(Reachableˉorder) {
+        let Reachableˉfunction: u32 = Bytesˉreadˉu32ˉlittle(
+            Reachableˉorder,
+            Reachableˉcursor
+        );
+        let Entryˉoffset: u32 = Reachableˉfunction *
+            Compilerˉwebassemblyˉexecutableˉgraphˉentryˉwidth();
+        let Reachableˉfirstˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+            Functionˉentries,
+            Entryˉoffset
+        );
+        let Reachableˉfunctionˉcalls: u32 = Bytesˉreadˉu32ˉlittle(
+            Functionˉentries,
+            Entryˉoffset + 4u32
+        );
+        var Callˉindex: u32 = 0u32;
+        while Callˉindex < Reachableˉfunctionˉcalls {
+            let Reachableˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                Callˉtargets,
+                Reachableˉfirstˉtarget + Callˉindex * 4u32
+            );
+            if !Containsˉu32(Reachableˉorder, Reachableˉtarget) {
+                Reachableˉorder = Bytesˉconcat(
+                    Reachableˉorder,
+                    Bytesˉfromˉu32ˉlittle(Reachableˉtarget)
+                );
+            }
+            Callˉindex = Callˉindex + 1u32;
+        }
+        Reachableˉcursor = Reachableˉcursor + 4u32;
+    }
+    if Bytesˉlength(Reachableˉorder) > Directory.Count * 4u32 {
+        return Invalid(Input);
+    }
+    return Compilerˉwebassemblyˉexecutableˉgraphˉsummary(
+        true,
+        Root,
+        Directory.Count,
+        Inventory.Callˉcount,
+        Bytesˉlength(Reachableˉorder) / 4u32,
+        Functionˉentries,
+        Callˉtargets,
+        Reachableˉorder
+    );
+}
+
+export fn Compilerˉwebassemblyˉexecutableˉgraphˉfirstˉtarget(
+    Graph: Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Graph.Functionˉentries, Function * 8u32);
+}
+
+export fn Compilerˉwebassemblyˉexecutableˉgraphˉfunctionˉcallˉcount(
+    Graph: Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Graph.Functionˉentries,
+        Function * 8u32 + 4u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉexecutableˉgraphˉcallˉtarget(
+    Graph: Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Targetˉoffset: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Graph.Callˉtargets, Targetˉoffset);
+}
+
+export fn Compilerˉwebassemblyˉexecutableˉgraphˉreachableˉfunction(
+    Graph: Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Graph.Reachableˉorder, Index * 4u32);
+}

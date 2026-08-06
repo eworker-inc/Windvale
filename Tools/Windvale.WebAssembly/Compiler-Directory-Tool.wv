@@ -3,6 +3,7 @@ module Compilerˉwebassemblyˉcompilerˉdirectoryˉtool profile hosted;
 import Compilerˉwebassemblyˉfunctionˉdirectory as Directory;
 import Compilerˉwebassemblyˉtypeˉdirectory as Types;
 import Compilerˉwebassemblyˉtypedˉcalls as Typed;
+import Compilerˉwebassemblyˉexecutableˉgraph as Executable;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -47,9 +48,10 @@ fn Parseˉu32(Value: text) -> Parsedˉu32 {
 
 export fn Main() -> i32 {
     let Argumentˉcount: u32 = process.argument_count();
-    if Argumentˉcount != 2u32 && Argumentˉcount != 4u32 {
+    if Argumentˉcount != 2u32 && Argumentˉcount != 4u32 &&
+        Argumentˉcount != 5u32 {
         diagnostic.write_line(
-            "Usage: wvwasm-directory <input.wvb> <directory.bin> [first count]"
+            "Usage: wvwasm-directory <input.wvb> <directory.bin> [first count [graph]]"
         );
         return 64;
     }
@@ -122,7 +124,7 @@ export fn Main() -> i32 {
     if !Calls.Valid { return Failure("call-inventory"); }
     var Firstˉfunction: u32 = 0u32;
     var Typedˉfunctionˉcount: u32 = Functionˉdirectory.Count;
-    if Argumentˉcount == 4u32 {
+    if Argumentˉcount >= 4u32 {
         let Parsedˉfirst: Parsedˉu32 = Parseˉu32(process.argument(2u32));
         let Parsedˉcount: Parsedˉu32 = Parseˉu32(process.argument(3u32));
         if !Parsedˉfirst.Valid || !Parsedˉcount.Valid {
@@ -159,6 +161,49 @@ export fn Main() -> i32 {
         ));
     }
 
+    var Graphˉreport: text = "";
+    if Argumentˉcount == 5u32 {
+        if process.argument(4u32) != "graph" {
+            return Failure("graph-option");
+        }
+        let Entry: Directory.Compilerˉwebassemblyˉfunctionˉlookupˉsummary =
+            Directory.Compilerˉwebassemblyˉfunctionˉfind(
+                Input,
+                Functionˉdirectory,
+                "Main"
+            );
+        if !Entry.Found { return Failure("entry-point"); }
+        let Graph: Executable.Compilerˉwebassemblyˉexecutableˉgraphˉsummary =
+            Executable.Compilerˉwebassemblyˉexecutableˉgraphˉbuild(
+                Input,
+                Codeˉoffset,
+                Codeˉlength,
+                Functionˉdirectory,
+                Entry.Index
+            );
+        if !Graph.Valid { return Failure("executable-graph"); }
+        Graphˉreport = Textˉconcat(Graphˉreport, " root=");
+        Graphˉreport = Textˉconcat(
+            Graphˉreport,
+            U32ˉformat(Graph.Root)
+        );
+        Graphˉreport = Textˉconcat(Graphˉreport, " reachable=");
+        Graphˉreport = Textˉconcat(
+            Graphˉreport,
+            U32ˉformat(Graph.Reachableˉcount)
+        );
+        Graphˉreport = Textˉconcat(Graphˉreport, " graph-entry-bytes=");
+        Graphˉreport = Textˉconcat(
+            Graphˉreport,
+            U32ˉformat(Bytesˉlength(Graph.Functionˉentries))
+        );
+        Graphˉreport = Textˉconcat(Graphˉreport, " graph-target-bytes=");
+        Graphˉreport = Textˉconcat(
+            Graphˉreport,
+            U32ˉformat(Bytesˉlength(Graph.Callˉtargets))
+        );
+    }
+
     file.write_bytes(process.argument(1u32), Functionˉdirectory.Entries);
     var Report: text = "directory status=Valid functions=";
     Report = Textˉconcat(Report, U32ˉformat(Functionˉdirectory.Count));
@@ -176,9 +221,10 @@ export fn Main() -> i32 {
     Report = Textˉconcat(Report, " typed-calls=");
     Report = Textˉconcat(Report, U32ˉformat(Typedˉcalls.Callˉcount));
     Report = Textˉconcat(Report, " maximum-stack=");
-    console.write_line(Textˉconcat(
+    Report = Textˉconcat(
         Report,
         U32ˉformat(Typedˉcalls.Maximumˉstack)
-    ));
+    );
+    console.write_line(Textˉconcat(Report, Graphˉreport));
     return 0;
 }

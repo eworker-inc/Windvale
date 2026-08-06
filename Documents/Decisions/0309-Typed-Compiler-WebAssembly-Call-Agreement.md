@@ -58,15 +58,21 @@ instructions and 270 calls with maximum stack 14. Mutating one valid call from
 `Range(u32, u32, u32) -> bool` target is rejected at function 1, offset 97,
 opcode 64.
 
-The retained focused test checks four representative exact-compiler ranges,
-including the depth-34 range and the densest call-heavy functions, compares
-their call counts and maximum stacks with the independent Stage 0 model, checks
-deterministic directory bytes, retains the 512-function boundary, and performs
-an in-range incompatible-target mutation. It passed in 50.446 seconds; the
+At this checkpoint the focused test checked four representative exact-compiler
+ranges, including the depth-34 range and the densest call-heavy functions. It
+compared their call counts and maximum stacks with the independent Stage 0
+model, checked deterministic directory bytes, retained the 512-function
+boundary, and performed an in-range incompatible-target mutation. It passed in
+50.446 seconds; the
 complete focused wrapper, including its zero-warning Release build, completed
 in 62.8 seconds on the measured Windows host. Complete all-function evidence
 remains sharded rather than turning one long reference-interpreter run into a
 routine development gate.
+
+Decision 0312 later retains two non-redundant ranges: the general graph proof
+and the range containing the true depth-34 maximum. The complete typed result
+remains this decision's eleven-shard evidence rather than being repeated by
+every successor contract.
 
 The portable memory tool currently reaches the established direct backend's
 `Unsupportedˉcode` boundary. That is the next executable-representation gap;

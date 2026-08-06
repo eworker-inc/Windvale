@@ -3,6 +3,7 @@ module Compilerˉwebassemblyˉcompilerˉdirectoryˉmemoryˉtool profile portable
 import Compilerˉwebassemblyˉfunctionˉdirectory as Directory;
 import Compilerˉwebassemblyˉtypeˉdirectory as Types;
 import Compilerˉwebassemblyˉtypedˉcalls as Typed;
+import Compilerˉwebassemblyˉexecutableˉgraph as Executable;
 
 fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
     if Offset > Total { return false; }
@@ -108,6 +109,22 @@ export fn Main(Input: bytes) -> bytes {
             U32ˉformat(Typedˉcalls.Failureˉopcode)
         ));
     }
+    let Entry: Directory.Compilerˉwebassemblyˉfunctionˉlookupˉsummary =
+        Directory.Compilerˉwebassemblyˉfunctionˉfind(
+            Input,
+            Functionˉdirectory,
+            "Main"
+        );
+    if !Entry.Found { return Failure("entry-point"); }
+    let Graph: Executable.Compilerˉwebassemblyˉexecutableˉgraphˉsummary =
+        Executable.Compilerˉwebassemblyˉexecutableˉgraphˉbuild(
+            Input,
+            Codeˉoffset,
+            Codeˉlength,
+            Functionˉdirectory,
+            Entry.Index
+        );
+    if !Graph.Valid { return Failure("executable-graph"); }
 
     var Report: text = "directory status=Valid functions=";
     Report = Textˉconcat(Report, U32ˉformat(Functionˉdirectory.Count));
@@ -125,8 +142,22 @@ export fn Main(Input: bytes) -> bytes {
     Report = Textˉconcat(Report, " typed-calls=");
     Report = Textˉconcat(Report, U32ˉformat(Typedˉcalls.Callˉcount));
     Report = Textˉconcat(Report, " maximum-stack=");
-    return Textˉtoˉutf8(Textˉconcat(
+    Report = Textˉconcat(
         Report,
         U32ˉformat(Typedˉcalls.Maximumˉstack)
+    );
+    Report = Textˉconcat(Report, " root=");
+    Report = Textˉconcat(Report, U32ˉformat(Graph.Root));
+    Report = Textˉconcat(Report, " reachable=");
+    Report = Textˉconcat(Report, U32ˉformat(Graph.Reachableˉcount));
+    Report = Textˉconcat(Report, " graph-entry-bytes=");
+    Report = Textˉconcat(
+        Report,
+        U32ˉformat(Bytesˉlength(Graph.Functionˉentries))
+    );
+    Report = Textˉconcat(Report, " graph-target-bytes=");
+    return Textˉtoˉutf8(Textˉconcat(
+        Report,
+        U32ˉformat(Bytesˉlength(Graph.Callˉtargets))
     ));
 }

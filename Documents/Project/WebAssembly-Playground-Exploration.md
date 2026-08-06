@@ -184,6 +184,8 @@ A separate portable function-directory module now materializes one immutable 32-
 
 The next independent module adds a 12-byte nominal type directory and a compact 36-value typed stack backed by nine `u32` words. Eleven bounded shards validate all 417 exact-compiler functions; their typed-call counts sum to the independent 2,991-call inventory, maximum stack is 34, and changing one call to an in-range function with a different signature fails at its exact function-relative offset. A portable `bytes -> bytes` memory tool exercises the intended client-only boundary but still reaches `Unsupportedˉcode` in the established direct backend. This identifies the first general executable representation as the next slice without changing the deployed interpreter, adding a server compiler, or claiming a browser speed improvement.
 
+That first general representation is now a separate immutable executable graph. It retains one eight-byte entry per function, every four-byte target in source order, and a deterministic breadth-first order from an arbitrary root. The exact compiler resolves `Main` at index 2 and reaches 397 of its 417 functions through all 2,991 calls; the composed portable memory tool resolves index 1 and reaches 74 of 78 functions. Neither graph uses the prior sixteen-function bitmask, fixed `Main` placement, or a direction restriction. The established artifact compiler still rejects the valid 78-function tool as `Unsupportedˉcode`, leaving operation/control lowering and actual Wasm emission as the next honest boundary.
+
 ## Proposed playground shape
 
 The initial user experience could have four primary views:

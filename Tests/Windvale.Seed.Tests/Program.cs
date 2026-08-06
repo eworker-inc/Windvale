@@ -128,7 +128,7 @@ internal static partial class Program
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
     private const string WEBASSEMBLY_CORE_SHA256 = "2d221ab9ebaad26b5acbfb582188085178d1630a7fa48e5f1c4e933ceea668aa";
     private const string WEBASSEMBLY_TOOL_SHA256 = "78588396fbff0865025d010b3f467ac20844c2d122a9ee9d63da8b85d880c00b";
-    private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "38399403bd86d66af47c76a03aa242557a957ffb06262208f7725700cd3b7ba5";
+    private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "480a7dc0e0a23e86ba7f6f73d5fac5cfbf757a8080b486c3b3fa5b23eb7f54ab";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -928,6 +928,10 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_TYPED_CALLS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Typed-Calls.wv");
+
+    private static readonly string WEBASSEMBLY_EXECUTABLE_GRAPH_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Executable-Graph.wv");
 
     private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
@@ -14882,13 +14886,34 @@ internal static partial class Program
             WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Directoryˉtoolˉbytes));
         var Directoryˉtool = Moduleˉcodec.Readˉandˉverify(Directoryˉtoolˉbytes);
-        var Typedˉranges = new (int First, int Count)[]
+        var Typedˉranges = new (int First, int Count, bool Graph)[]
         {
-            (0, 60),
-            (240, 60),
-            (310, 5),
-            (360, 57),
+            (2, 1, true),
+            (240, 60, false),
         };
+        var Mainˉindex = Array.FindIndex(
+            Exactˉverified.Functions.ToArray(),
+            Function => Function.Declaration.Name == "Main");
+        Equal(2, Mainˉindex);
+        var Reachableˉfunctions = new HashSet<int> { Mainˉindex };
+        var Reachableˉqueue = new Queue<int>();
+        Reachableˉqueue.Enqueue(Mainˉindex);
+        while (Reachableˉqueue.Count > 0)
+        {
+            var Functionˉindex = Reachableˉqueue.Dequeue();
+            foreach (var Instruction in Exactˉverified.Functions[
+                Functionˉindex].Instructions)
+            {
+                if (Instruction.Opcode == Opcode.Call &&
+                    Reachableˉfunctions.Add(
+                        checked((int)Instruction.Unsignedˉoperand)))
+                {
+                    Reachableˉqueue.Enqueue(
+                        checked((int)Instruction.Unsignedˉoperand));
+                }
+            }
+        }
+        Equal(397, Reachableˉfunctions.Count);
         var Exactˉranges = new WebAssemblyˉtoolˉresult[Typedˉranges.Length];
         Parallel.For(
             0,
@@ -14900,7 +14925,9 @@ internal static partial class Program
                     Directoryˉtool,
                     Exactˉcompiler,
                     500_000_000,
-                    [Range.First.ToString(), Range.Count.ToString()]);
+                    Range.Graph
+                        ? [Range.First.ToString(), Range.Count.ToString(), "graph"]
+                        : [Range.First.ToString(), Range.Count.ToString()]);
             });
 
         static int Reportˉvalue(string report, string name)
@@ -14944,6 +14971,19 @@ internal static partial class Program
                     .Max(Function =>
                         Function.Declaration.Maximumˉstackˉdepth),
                 Reportˉvalue(Exactˉrange.Output, "maximum-stack"));
+            if (Range.Graph)
+            {
+                Equal(Mainˉindex, Reportˉvalue(Exactˉrange.Output, "root"));
+                Equal(
+                    Reachableˉfunctions.Count,
+                    Reportˉvalue(Exactˉrange.Output, "reachable"));
+                Equal(
+                    Exactˉverified.Functions.Length * 8,
+                    Reportˉvalue(Exactˉrange.Output, "graph-entry-bytes"));
+                Equal(
+                    2_991 * 4,
+                    Reportˉvalue(Exactˉrange.Output, "graph-target-bytes"));
+            }
         }
         Equal(
             34,
@@ -14991,15 +15031,41 @@ internal static partial class Program
         var Boundary = Runˉwebassemblyˉtool(
             Directoryˉtool,
             Boundaryˉwvb,
-            500_000_000);
+            500_000_000,
+            ["511", "1", "graph"]);
         Equal(0, Boundary.Exitˉcode);
         Equal(string.Empty, Boundary.Diagnostics);
         Equal(
             "directory status=Valid functions=512 entry-bytes=16384 " +
                 "instructions=2051 calls=1 types=0 typed-calls=1 " +
-                "maximum-stack=1\n",
+                "maximum-stack=1 root=511 reachable=2 " +
+                "graph-entry-bytes=4096 graph-target-bytes=4\n",
             Boundary.Output);
         Equal(16_384, Boundary.Writtenˉbytes.Length);
+
+        var Missingˉentry = Boundaryˉwvb.ToArray();
+        var Boundaryˉfunctionsˉpayload = Findˉsectionˉpayload(
+            Missingˉentry,
+            Sectionˉkind.Functions);
+        var Boundaryˉfunctionsˉlength = checked((int)
+            BinaryPrimitives.ReadUInt32LittleEndian(
+                Missingˉentry.AsSpan(Boundaryˉfunctionsˉpayload - 4, 4)));
+        var Mainˉnameˉrelative = Missingˉentry.AsSpan(
+            Boundaryˉfunctionsˉpayload,
+            Boundaryˉfunctionsˉlength).IndexOf("Main"u8);
+        True(Mainˉnameˉrelative >= 0, "The graph boundary omitted Main.");
+        Missingˉentry[
+            Boundaryˉfunctionsˉpayload + Mainˉnameˉrelative] = (byte)'N';
+        var Missingˉentryˉresult = Runˉwebassemblyˉtool(
+            Directoryˉtool,
+            Missingˉentry,
+            500_000_000,
+            ["511", "1", "graph"]);
+        Equal(1, Missingˉentryˉresult.Exitˉcode);
+        Equal(
+            "directory status=Invalid entry-point\n",
+            Missingˉentryˉresult.Diagnostics);
+        Equal(0, Missingˉentryˉresult.Writeˉcount);
 
         var Codeˉpayload = Findˉsectionˉpayload(
             Boundaryˉwvb,
@@ -26850,6 +26916,9 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/WebAssembly-Typed-Calls.wv",
                     WEBASSEMBLY_TYPED_CALLS_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Executable-Graph.wv",
+                    WEBASSEMBLY_EXECUTABLE_GRAPH_SOURCE),
             ]);
         if (!Result.Success)
         {

@@ -583,6 +583,9 @@
       Include="../../Compiler/Windvale/WebAssembly-Typed-Calls.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Typed-Calls.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Executable-Graph.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Executable-Graph.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
     <EmbeddedResource
