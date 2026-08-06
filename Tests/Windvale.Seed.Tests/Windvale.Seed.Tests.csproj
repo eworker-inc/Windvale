@@ -592,11 +592,26 @@
       Include="../../Compiler/Windvale/WebAssembly-Operation-Families.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Operation-Families.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Binary-Encoding.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Binary-Encoding.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
     <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Memory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Control-Memory-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.WebAssembly/Binary-Encoding-Memory-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Binary-Encoding-Memory-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.WebAssembly/Scalar-Dispatcher-Memory-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher-Memory-Tool.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/General-Dispatcher-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Main.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/WebAssembly-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />

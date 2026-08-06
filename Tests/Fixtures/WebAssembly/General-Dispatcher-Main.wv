@@ -1,0 +1,15 @@
+module Webassemblyˉgeneralˉdispatcher profile portable;
+
+export fn Main() -> i32 {
+    var Again: bool = true;
+    var Result: i32 = 1;
+
+    while Again {
+        Again = false;
+        if Result == 1 {
+            Result = 42;
+        }
+    }
+
+    return Result;
+}

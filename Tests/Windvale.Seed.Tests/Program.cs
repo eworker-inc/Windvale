@@ -130,6 +130,10 @@ internal static partial class Program
     private const string WEBASSEMBLY_TOOL_SHA256 = "78588396fbff0865025d010b3f467ac20844c2d122a9ee9d63da8b85d880c00b";
     private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "480a7dc0e0a23e86ba7f6f73d5fac5cfbf757a8080b486c3b3fa5b23eb7f54ab";
     private const string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SHA256 = "aee0e85b337a070b796b0734209bfa859e47590c33fb82bd60e97d8736f48d89";
+    private const string WEBASSEMBLY_BINARY_ENCODING_MEMORY_TOOL_SHA256 = "dd68b60adaaf6eb0d2edfa8671aca08ddcc7a5702a9d1c4c79d245a21166f12a";
+    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "ff31ed0aed7fc3e40582fc74ac2bb7bd5935bc06888e1c12d1481a5b8f77abbd";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "8d0e22bf131addb5c7c0060726cfc9747ad62a4d4dc155bc5e03819da3045fb5";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "48a530bf167f6dffeb2058585409340589c605b0a365207366a04dbe13ef2f05";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -942,6 +946,14 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Operation-Families.wv");
 
+    private static readonly string WEBASSEMBLY_BINARY_ENCODING_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Binary-Encoding.wv");
+
+    private static readonly string WEBASSEMBLY_SCALAR_DISPATCHER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher.wv");
+
     private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv");
@@ -949,6 +961,18 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Compiler-Control-Memory-Tool.wv");
+
+    private static readonly string WEBASSEMBLY_BINARY_ENCODING_MEMORY_TOOL_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Binary-Encoding-Memory-Tool.wv");
+
+    private static readonly string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher-Memory-Tool.wv");
+
+    private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Main.wv");
 
     private static readonly string WEBASSEMBLY_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Tool.wv");
@@ -1274,6 +1298,8 @@ internal static partial class Program
         new("Windvale admits bounded unused nominal tables for WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉnominalˉtablesˉrun, Testˉcost.Extended),
         new("Windvale admits a bounded compiler-scale WebAssembly function inventory", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉfunctionˉinventoryˉruns, Testˉcost.Extended),
         new("Windvale materializes a general WebAssembly control-flow directory", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉcontrolˉflowˉruns, Testˉcost.Extended),
+        new("Windvale encodes canonical general WebAssembly binary primitives", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉbinaryˉencodingˉruns),
+        new("Windvale emits general scalar dispatcher WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉscalarˉdispatcherˉruns, Testˉcost.Extended),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
         new("rights-limited directory reads return typed bounded results", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Readˉonlyˉdirectoryˉreadsˉareˉtyped),
@@ -14861,6 +14887,179 @@ internal static partial class Program
         Requireˉunsupported(Trailing);
     }
 
+    private static void Compilerˉwebassemblyˉbinaryˉencodingˉruns()
+    {
+        var Toolˉbytes = Compileˉwithˉbinaryˉencodingˉsuccess(
+            WEBASSEMBLY_BINARY_ENCODING_MEMORY_TOOL_SOURCE,
+            "Binary-Encoding-Memory-Tool.wv");
+        Equal(
+            WEBASSEMBLY_BINARY_ENCODING_MEMORY_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+
+        static byte[] Uleb32(uint Value)
+        {
+            var Result = new List<byte>();
+            do
+            {
+                var Next = (byte)(Value & 0x7Fu);
+                Value >>= 7;
+                if (Value != 0) Next |= 0x80;
+                Result.Add(Next);
+            }
+            while (Value != 0);
+            return Result.ToArray();
+        }
+
+        static byte[] Sleb32(int Value)
+        {
+            var Result = new List<byte>();
+            var Remaining = Value;
+            var Complete = false;
+            while (!Complete)
+            {
+                var Next = (byte)(Remaining & 0x7F);
+                Remaining >>= 7;
+                Complete =
+                    (Remaining == 0 && (Next & 0x40) == 0) ||
+                    (Remaining == -1 && (Next & 0x40) != 0);
+                if (!Complete) Next |= 0x80;
+                Result.Add(Next);
+            }
+            return Result.ToArray();
+        }
+
+        var Cases = new (uint Unsigned, int Signed)[]
+        {
+            (0, 0),
+            (63, 63),
+            (64, 64),
+            (127, -1),
+            (128, -64),
+            (624_485, -65),
+            (16_384, int.MinValue),
+            (2_097_151, int.MaxValue),
+        };
+        foreach (var Case in Cases)
+        {
+            var Input = new byte[8];
+            BinaryPrimitives.WriteUInt32LittleEndian(Input.AsSpan(0, 4), Case.Unsigned);
+            BinaryPrimitives.WriteInt32LittleEndian(Input.AsSpan(4, 4), Case.Signed);
+
+            var Expected = new List<byte>(
+                [0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00]);
+            Expected.AddRange(Uleb32(Case.Unsigned));
+            Expected.AddRange(Sleb32(Case.Signed));
+            Expected.Add(0x07);
+            Expected.AddRange(Uleb32(8));
+            Expected.AddRange(Input);
+            Expected.AddRange(Uleb32(8));
+            Expected.AddRange(Input);
+            Expected.Add(0x20);
+            Expected.AddRange(Uleb32(Case.Unsigned));
+            Expected.Add(0x41);
+            Expected.AddRange(Sleb32(Case.Signed));
+            Expected.Add(0x41);
+            Expected.AddRange(Sleb32(checked((int)Case.Unsigned)));
+            var Instructions = new List<byte> { 0x41 };
+            Instructions.AddRange(Sleb32(Case.Signed));
+            var Body = new List<byte> { 0x00 };
+            Body.AddRange(Instructions);
+            Body.Add(0x0B);
+            Expected.AddRange(Uleb32(checked((uint)Body.Count)));
+            Expected.AddRange(Body);
+
+            var Actual = new Referenceˉruntime(
+                Tool,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(
+                    Input.ToImmutableArray());
+            Sequenceˉequal(Expected, Actual.Bytes);
+        }
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Tool,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(
+                    ImmutableArray<byte>.Empty).Bytes.Length);
+    }
+
+    private static void Compilerˉwebassemblyˉscalarˉdispatcherˉruns()
+    {
+        var Toolˉbytes = Compileˉwithˉscalarˉdispatcherˉsuccess(
+            WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SOURCE,
+            "Scalar-Dispatcher-Memory-Tool.wv");
+        Equal(
+            WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Input = Compileˉsuccess(WEBASSEMBLY_GENERAL_DISPATCHER_SOURCE);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Input));
+        var Reference = Runˉreferenceˉwebassemblyˉi32(Input);
+        Equal(0, Reference.Status);
+        Equal(42, Reference.Result);
+
+        var Options = Runtimeˉoptions.Portableˉdefaults with
+        {
+            Maximumˉinstructions = 100_000_000,
+        };
+        var First = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Input.ToImmutableArray());
+        Equal(254, First.Bytes.Length);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_SHA256,
+            Moduleˉdigest.Calculateˉsha256(First.Bytes.AsSpan()));
+        var Second = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Input.ToImmutableArray());
+        Sequenceˉequal(First.Bytes, Second.Bytes);
+        Equal(First.Executedˉinstructions, Second.Executedˉinstructions);
+
+        var Reader = new WebAssemblyˉtestˉreader(First.Bytes.AsSpan());
+        Reader.Readˉheader();
+        var Typeˉend = Reader.Readˉsection(1);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher type count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x60, "The dispatcher function type is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 0, "The dispatcher parameter count is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher result count is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x7F, "The dispatcher result type is invalid.");
+        Reader.Require(Reader.Position == Typeˉend, "The dispatcher type section trails.");
+        var Functionˉend = Reader.Readˉsection(3);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher function count is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 0, "The dispatcher type index is invalid.");
+        Reader.Require(
+            Reader.Position == Functionˉend,
+            "The dispatcher function section trails.");
+        var Exportˉend = Reader.Readˉsection(7);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher export count is invalid.");
+        Reader.Readˉexport("Windvale.run", 0, 0);
+        Reader.Require(Reader.Position == Exportˉend, "The dispatcher export section trails.");
+        var Codeˉend = Reader.Readˉsection(10);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The dispatcher body count is invalid.");
+        var Bodyˉlength = Reader.Readˉuleb32();
+        Reader.Require(Bodyˉlength <= int.MaxValue, "The dispatcher body is oversized.");
+        Reader.Require(
+            Reader.Position <= Codeˉend - (int)Bodyˉlength,
+            "The dispatcher body is truncated.");
+        Reader.Skip((int)Bodyˉlength);
+        Reader.Require(Reader.Position == Codeˉend, "The dispatcher code section trails.");
+        Reader.Require(Reader.Position == First.Bytes.Length, "The dispatcher module trails.");
+
+        var Unsupported = Compileˉsuccess(WEBASSEMBLY_SEQUENTIAL_IF_SOURCE);
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Tool,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Options).Runˉmainˉbytes(Unsupported.ToImmutableArray()).Bytes.Length);
+    }
+
     private static void Compilerˉwebassemblyˉcontrolˉflowˉruns()
     {
         var Toolˉbytes = Compileˉwithˉcontrolˉflowˉsuccess(
@@ -27242,6 +27441,66 @@ internal static partial class Program
         {
             throw new InvalidOperationException(
                 "Compiler WebAssembly operation-family composition failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉbinaryˉencodingˉsuccess(
+        string source,
+        string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [
+                new(
+                    "Compiler/Windvale/WebAssembly-Binary-Encoding.wv",
+                    WEBASSEMBLY_BINARY_ENCODING_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WebAssembly binary-encoding composition failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉscalarˉdispatcherˉsuccess(
+        string source,
+        string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [
+                new(
+                    "Compiler/Windvale/WebAssembly-Function-Directory.wv",
+                    WEBASSEMBLY_FUNCTION_DIRECTORY_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Type-Directory.wv",
+                    WEBASSEMBLY_TYPE_DIRECTORY_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Typed-Calls.wv",
+                    WEBASSEMBLY_TYPED_CALLS_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Executable-Graph.wv",
+                    WEBASSEMBLY_EXECUTABLE_GRAPH_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Control-Flow.wv",
+                    WEBASSEMBLY_CONTROL_FLOW_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Binary-Encoding.wv",
+                    WEBASSEMBLY_BINARY_ENCODING_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv",
+                    WEBASSEMBLY_SCALAR_DISPATCHER_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WebAssembly scalar-dispatcher composition failed: " +
                 string.Join(" | ", Result.Diagnostics));
         }
 

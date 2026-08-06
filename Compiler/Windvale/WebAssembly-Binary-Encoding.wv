@@ -1,0 +1,205 @@
+module Compilerˉwebassemblyˉbinaryˉencoding profile portable;
+
+record Encodingˉdivision {
+    Quotient: u32;
+    Remainder: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Divideˉbyte(Value: u32, Divisor: u32) -> Encodingˉdivision {
+    if Divisor == 0u32 { return Encodingˉdivision(0u32, Value); }
+    var Quotient: u32 = 0u32;
+    var Remainder: u32 = Value;
+    while Remainder >= Divisor {
+        Remainder = Remainder - Divisor;
+        Quotient = Quotient + 1u32;
+    }
+    return Encodingˉdivision(Quotient, Remainder);
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉbyte(Value: u32) -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32);
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉheader() -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(1836278016u32),
+        Bytesˉfromˉu32ˉlittle(1u32)
+    );
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉuleb32(Value: u32) -> bytes {
+    var Remaining: u32 = Value;
+    var Result: bytes = Empty(Bytesˉfromˉu8(0u8));
+    var Complete: bool = false;
+    while !Complete {
+        let Quotient: u32 = Remaining / 128u32;
+        let Remainder: u32 = Remaining % 128u32;
+        var Byteˉvalue: u32 = Remainder;
+        if Quotient != 0u32 { Byteˉvalue = Byteˉvalue + 128u32; }
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉbinaryˉbyte(Byteˉvalue)
+        );
+        Remaining = Quotient;
+        if Remaining == 0u32 { Complete = true; }
+    }
+    return Result;
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉpositiveˉsleb32(
+    Value: u32
+) -> bytes {
+    var Remaining: u32 = Value;
+    var Result: bytes = Empty(Bytesˉfromˉu8(0u8));
+    var Complete: bool = false;
+    while !Complete {
+        let Quotient: u32 = Remaining / 128u32;
+        let Remainder: u32 = Remaining % 128u32;
+        var Byteˉvalue: u32 = Remainder;
+        var More: bool = Quotient != 0u32;
+        if !More && Remainder >= 64u32 { More = true; }
+        if More { Byteˉvalue = Byteˉvalue + 128u32; }
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉbinaryˉbyte(Byteˉvalue)
+        );
+        Remaining = Quotient;
+        if !More { Complete = true; }
+    }
+    return Result;
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉsleb32ˉfromˉinput(
+    Input: bytes,
+    Offset: u32
+) -> bytes {
+    let B0: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+    let B1: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32));
+    let B2: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 2u32));
+    let B3: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 3u32));
+    let D0: Encodingˉdivision = Divideˉbyte(B0, 128u32);
+    let D1: Encodingˉdivision = Divideˉbyte(B1, 64u32);
+    let D2: Encodingˉdivision = Divideˉbyte(B2, 32u32);
+    let D3: Encodingˉdivision = Divideˉbyte(B3, 16u32);
+    var G0: u32 = D0.Remainder;
+    var G1: u32 = D0.Quotient + D1.Remainder * 2u32;
+    var G2: u32 = D1.Quotient + D2.Remainder * 4u32;
+    var G3: u32 = D2.Quotient + D3.Remainder * 8u32;
+    var G4: u32 = D3.Quotient;
+    if B3 >= 128u32 { G4 = G4 + 112u32; }
+
+    let Value: i32 = Bytesˉreadˉi32ˉlittle(Input, Offset);
+    var Length: u32 = 5u32;
+    if Value >= -64 && Value <= 63 { Length = 1u32; }
+    if Length == 5u32 && Value >= -8192 && Value <= 8191 {
+        Length = 2u32;
+    }
+    if Length == 5u32 && Value >= -1048576 && Value <= 1048575 {
+        Length = 3u32;
+    }
+    if Length == 5u32 && Value >= -134217728 && Value <= 134217727 {
+        Length = 4u32;
+    }
+    if Length > 1u32 { G0 = G0 + 128u32; }
+    if Length > 2u32 { G1 = G1 + 128u32; }
+    if Length > 3u32 { G2 = G2 + 128u32; }
+    if Length > 4u32 { G3 = G3 + 128u32; }
+
+    var Result: bytes = Compilerˉwebassemblyˉbinaryˉbyte(G0);
+    if Length > 1u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉbinaryˉbyte(G1)
+        );
+    }
+    if Length > 2u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉbinaryˉbyte(G2)
+        );
+    }
+    if Length > 3u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉbinaryˉbyte(G3)
+        );
+    }
+    if Length > 4u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉbinaryˉbyte(G4)
+        );
+    }
+    return Result;
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉsection(
+    Kind: u32,
+    Payload: bytes
+) -> bytes {
+    var Result: bytes = Compilerˉwebassemblyˉbinaryˉbyte(Kind);
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉbinaryˉuleb32(Bytesˉlength(Payload))
+    );
+    return Bytesˉconcat(Result, Payload);
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉname(Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Compilerˉwebassemblyˉbinaryˉuleb32(Bytesˉlength(Value)),
+        Value
+    );
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉindexedˉinstruction(
+    Opcode: u32,
+    Index: u32
+) -> bytes {
+    return Bytesˉconcat(
+        Compilerˉwebassemblyˉbinaryˉbyte(Opcode),
+        Compilerˉwebassemblyˉbinaryˉuleb32(Index)
+    );
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉi32ˉconstantˉfromˉinput(
+    Input: bytes,
+    Offset: u32
+) -> bytes {
+    return Bytesˉconcat(
+        Compilerˉwebassemblyˉbinaryˉbyte(65u32),
+        Compilerˉwebassemblyˉbinaryˉsleb32ˉfromˉinput(
+            Input,
+            Offset
+        )
+    );
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉpositiveˉi32ˉconstant(
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(
+        Compilerˉwebassemblyˉbinaryˉbyte(65u32),
+        Compilerˉwebassemblyˉbinaryˉpositiveˉsleb32(Value)
+    );
+}
+
+export fn Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
+    Localˉdeclarations: bytes,
+    Instructions: bytes
+) -> bytes {
+    var Body: bytes = Localˉdeclarations;
+    Body = Bytesˉconcat(Body, Instructions);
+    Body = Bytesˉconcat(
+        Body,
+        Compilerˉwebassemblyˉbinaryˉbyte(11u32)
+    );
+    return Bytesˉconcat(
+        Compilerˉwebassemblyˉbinaryˉuleb32(Bytesˉlength(Body)),
+        Body
+    );
+}

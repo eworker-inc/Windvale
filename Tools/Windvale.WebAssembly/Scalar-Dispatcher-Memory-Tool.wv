@@ -1,0 +1,123 @@
+module Compilerˉwebassemblyˉscalarˉdispatcherˉmemoryˉtool profile portable;
+
+import Compilerˉwebassemblyˉfunctionˉdirectory as Directory;
+import Compilerˉwebassemblyˉtypeˉdirectory as Types;
+import Compilerˉwebassemblyˉtypedˉcalls as Typed;
+import Compilerˉwebassemblyˉexecutableˉgraph as Executable;
+import Compilerˉwebassemblyˉcontrolˉflow as Control;
+import Compilerˉwebassemblyˉscalarˉdispatcher as Dispatcher;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 12u32 { return Empty(Input); }
+    var Envelope: u32 = 12u32;
+    var Sectionˉkind: u32 = 1u32;
+    var Functionsˉoffset: u32 = 0u32;
+    var Functionsˉlength: u32 = 0u32;
+    var Codeˉoffset: u32 = 0u32;
+    var Codeˉlength: u32 = 0u32;
+    var Typesˉoffset: u32 = 0u32;
+    var Typesˉlength: u32 = 0u32;
+    while Sectionˉkind <= 7u32 {
+        if !Rangeˉisˉvalid(Total, Envelope, 8u32) { return Empty(Input); }
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Envelope)) != Sectionˉkind {
+            return Empty(Input);
+        }
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Envelope + 4u32
+        );
+        let Payloadˉoffset: u32 = Envelope + 8u32;
+        if !Rangeˉisˉvalid(Total, Payloadˉoffset, Payloadˉlength) {
+            return Empty(Input);
+        }
+        if Sectionˉkind == 4u32 {
+            Functionsˉoffset = Payloadˉoffset;
+            Functionsˉlength = Payloadˉlength;
+        }
+        if Sectionˉkind == 5u32 {
+            Codeˉoffset = Payloadˉoffset;
+            Codeˉlength = Payloadˉlength;
+        }
+        if Sectionˉkind == 7u32 {
+            Typesˉoffset = Payloadˉoffset;
+            Typesˉlength = Payloadˉlength;
+        }
+        Envelope = Payloadˉoffset + Payloadˉlength;
+        Sectionˉkind = Sectionˉkind + 1u32;
+    }
+    if Envelope != Total { return Empty(Input); }
+
+    let Functionˉdirectory:
+        Directory.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary =
+        Directory.Compilerˉwebassemblyˉfunctionˉdirectoryˉbuild(
+            Input,
+            Functionsˉoffset,
+            Functionsˉlength,
+            Codeˉlength,
+            Typesˉoffset,
+            Typesˉlength
+        );
+    if !Functionˉdirectory.Valid { return Empty(Input); }
+    let Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary =
+        Types.Compilerˉwebassemblyˉtypeˉdirectoryˉbuild(
+            Input,
+            Typesˉoffset,
+            Typesˉlength
+        );
+    if !Typeˉdirectory.Valid { return Empty(Input); }
+    let Typedˉcalls: Typed.Compilerˉwebassemblyˉtypedˉcallˉsummary =
+        Typed.Compilerˉwebassemblyˉtypedˉcallsˉvalidate(
+            Input,
+            Codeˉoffset,
+            Codeˉlength,
+            Functionˉdirectory,
+            Typeˉdirectory
+        );
+    if !Typedˉcalls.Valid { return Empty(Input); }
+    let Entry: Directory.Compilerˉwebassemblyˉfunctionˉlookupˉsummary =
+        Directory.Compilerˉwebassemblyˉfunctionˉfind(
+            Input,
+            Functionˉdirectory,
+            "Main"
+        );
+    if !Entry.Found { return Empty(Input); }
+    let Graph: Executable.Compilerˉwebassemblyˉexecutableˉgraphˉsummary =
+        Executable.Compilerˉwebassemblyˉexecutableˉgraphˉbuild(
+            Input,
+            Codeˉoffset,
+            Codeˉlength,
+            Functionˉdirectory,
+            Entry.Index
+        );
+    if !Graph.Valid { return Empty(Input); }
+    let Controlˉflow: Control.Compilerˉwebassemblyˉcontrolˉflowˉsummary =
+        Control.Compilerˉwebassemblyˉcontrolˉflowˉbuild(
+            Input,
+            Codeˉoffset,
+            Codeˉlength,
+            Functionˉdirectory,
+            Graph
+        );
+    if !Controlˉflow.Valid { return Empty(Input); }
+    let Lowered: Dispatcher.Compilerˉwebassemblyˉscalarˉdispatcherˉsummary =
+        Dispatcher.Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
+            Input,
+            Codeˉoffset,
+            Codeˉlength,
+            Functionˉdirectory,
+            Graph,
+            Controlˉflow
+        );
+    if !Lowered.Valid { return Empty(Input); }
+    return Lowered.Webassembly;
+}

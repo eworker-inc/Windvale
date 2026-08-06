@@ -1,0 +1,65 @@
+module Compilerˉwebassemblyˉbinaryˉencodingˉmemoryˉtool profile portable;
+
+import Compilerˉwebassemblyˉbinaryˉencoding as Encoding;
+
+export fn Main(Input: bytes) -> bytes {
+    if Bytesˉlength(Input) < 8u32 {
+        return Bytesˉslice(Input, 0u32, 0u32);
+    }
+    let Unsigned: u32 = Bytesˉreadˉu32ˉlittle(Input, 0u32);
+    var Result: bytes = Encoding.Compilerˉwebassemblyˉbinaryˉheader();
+    Result = Bytesˉconcat(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(Unsigned)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉsleb32ˉfromˉinput(
+            Input,
+            4u32
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉsection(
+            7u32,
+            Bytesˉslice(Input, 0u32, 8u32)
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉname(
+            Bytesˉslice(Input, 0u32, 8u32)
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉindexedˉinstruction(
+            32u32,
+            Unsigned
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉi32ˉconstantˉfromˉinput(
+            Input,
+            4u32
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉpositiveˉi32ˉconstant(
+            Unsigned
+        )
+    );
+    return Bytesˉconcat(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
+            Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(0u32),
+            Encoding.Compilerˉwebassemblyˉbinaryˉi32ˉconstantˉfromˉinput(
+                Input,
+                4u32
+            )
+        )
+    );
+}

@@ -1,0 +1,11 @@
+windvale-project 1
+root "Tools/Windvale.WebAssembly/Scalar-Dispatcher-Tool.wv"
+source "Tools/Windvale.WebAssembly/Scalar-Dispatcher-Memory-Tool.wv"
+source "Compiler/Windvale/WebAssembly-Function-Directory.wv"
+source "Compiler/Windvale/WebAssembly-Type-Directory.wv"
+source "Compiler/Windvale/WebAssembly-Typed-Calls.wv"
+source "Compiler/Windvale/WebAssembly-Executable-Graph.wv"
+source "Compiler/Windvale/WebAssembly-Control-Flow.wv"
+source "Compiler/Windvale/WebAssembly-Binary-Encoding.wv"
+source "Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv"
+emit wvb
