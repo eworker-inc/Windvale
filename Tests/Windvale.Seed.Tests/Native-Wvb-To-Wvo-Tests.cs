@@ -44,14 +44,17 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_DIAGNOSTIC_WRITE_LINE_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Diagnostic-Write-Line.wv");
+    private static readonly string WVB_TO_WVO_LARGE_ENVELOPE_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Large-Envelope.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 296_582;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_140_544;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 295_543;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_131_840;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "9a1e48792d601bdaa28414ff89c7bb5650198786f0e953cd13cdf422e616597f";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_141_056;
+        "fff0074df7f9c9c6b352932b7d6404188599db0a584df62457fc03b022469988";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_132_864;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "dd50e84e7a2be9c3f3d27aa5b449946a3d2f5eaf4e1a73c176e6be3b74b40d82";
+        "65ca225b08d9c10a919ff14d56aec39645caacfe139e9bad72ab356877e1ab19";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -546,6 +549,49 @@ internal static partial class Program
                 string.Join(" | ", Result.Diagnostics));
         }
         return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static void Assertˉlargeˉmoduleˉenvelopeˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_LARGE_ENVELOPE_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        Equal(9, Module.Module.Data.Length);
+        Equal(9, Module.Module.Types.Length);
+        Equal(10, Module.Functions.Length);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(
+            Expectedˉobject.AsSpan()).Value;
+        True(Expectedˉview.Symbols.Any(Symbol =>
+            StringComparer.Ordinal.Equals(Symbol.Name, "$data_0008")),
+            "The large-envelope WVO omitted the ninth canonical data symbol.");
+        True(Expectedˉview.Symbols.Any(Symbol =>
+            StringComparer.Ordinal.Equals(Symbol.Name, "$function_0008")),
+            "The large-envelope WVO omitted the ninth canonical helper symbol.");
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 100_000_000);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
     }
 
     private static void Assertˉstaticˉdescriptorˉlowering(

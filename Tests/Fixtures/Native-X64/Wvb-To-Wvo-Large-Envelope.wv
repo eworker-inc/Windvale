@@ -1,0 +1,35 @@
+module Testsˉnativeˉx64ˉwvbˉtoˉwvoˉlargeˉenvelope profile portable;
+
+record Itemˉzero { Value: i32; }
+record Itemˉone { Value: i32; }
+record Itemˉtwo { Value: i32; }
+record Itemˉthree { Value: i32; }
+record Itemˉfour { Value: i32; }
+record Itemˉfive { Value: i32; }
+record Itemˉsix { Value: i32; }
+record Itemˉseven { Value: i32; }
+record Itemˉeight { Value: i32; }
+
+data Valueˉzero: bytes = [0];
+data Valueˉone: bytes = [1];
+data Valueˉtwo: bytes = [2];
+data Valueˉthree: bytes = [3];
+data Valueˉfour: bytes = [4];
+data Valueˉfive: bytes = [5];
+data Valueˉsix: bytes = [6];
+data Valueˉseven: bytes = [7];
+data Valueˉeight: bytes = [8];
+
+fn Answerˉzero() -> i32 { return 0; }
+fn Answerˉone() -> i32 { return 1; }
+fn Answerˉtwo() -> i32 { return 2; }
+fn Answerˉthree() -> i32 { return 3; }
+fn Answerˉfour() -> i32 { return 4; }
+fn Answerˉfive() -> i32 { return 5; }
+fn Answerˉsix() -> i32 { return 6; }
+fn Answerˉseven() -> i32 { return 7; }
+fn Answerˉeight() -> i32 { return 42; }
+
+export fn Main() -> i32 {
+    return Answerˉeight();
+}

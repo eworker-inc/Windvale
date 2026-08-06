@@ -20,6 +20,8 @@ Accepted architectural direction under [Decision 0057](../Decisions/0057-Windval
 
 [Decision 0247](../Decisions/0247-Native-Diagnostic-Write-Line-Capability.md) adds `diagnostic.write_line(text) -> void` through the separate diagnostic channel and a shared focused text-output emitter. All six hosted calls declared by the real lowerer now lower through Windvale source; its broader self-lowering blockers and grouped Windows/Linux qualification remain.
 
+[Decision 0248](../Decisions/0248-Measured-Native-Lowering-Module-Envelope.md) replaces the lowerer's three eight-entry prototype guards with a measured bounded envelope of 512 functions, 64 immutable data declarations, and 64 nominal types. Canonical D4 WVO helper and data names are now generated through the focused layout module. The real hosted tool crosses these table boundaries; its remaining instruction and shape gaps and grouped Windows/Linux qualification remain.
+
 [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) additionally makes portability a per-part and derived artifact property. Native publication must preserve the canonical module's platform scope and capability requirements even when a particular application intentionally targets only one environment.
 
 ## Destination
@@ -311,6 +313,8 @@ Decision 0245 adds the mutation side through service-table slot 96. It consumes 
 Decision 0246 adds successful reporting through service-table slot 8. It consumes one borrowed text descriptor, emits the exact text plus LF, produces no value, and retains runtime-service failure propagation without promising atomic visibility or retry. The direct current-host package reproduces Stage 0's exact console-output fixture WVO; grouped dual-host qualification remains pending.
 
 Decision 0247 adds usage and rejection reporting through service-table slot 48. It reuses the verified text-output machine shape while retaining a distinct capability identity, service grant, and diagnostic sink. The direct current-host package reproduces Stage 0's exact diagnostic-output fixture WVO, completing all six hosted calls admitted by this candidate; grouped dual-host qualification remains pending.
+
+Decision 0248 admits the real hosted tool's 297 functions, 33 immutable data declarations, and 29 nominal types within explicit 512/64/64 bounds. One layout-owned generator replaces hard-coded names beyond ordinal seven while retaining Stage 0's exact `$function_0000` and `$data_0000` D4 contracts. A 9-data, 9-type, 10-function crossing fixture agrees byte-for-byte through Stage 0 and both Windvale adapters; later unsupported instructions and shapes remain separate measured blockers.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 

@@ -4,6 +4,10 @@ export fn Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() -> u32 {
     return 16u32;
 }
 
+export fn Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit() -> u32 {
+    return 512u32;
+}
+
 export fn Compilerˉnativeˉx64ˉlayoutˉappend(
     Directory: bytes,
     Machineˉoffset: u32,
@@ -116,14 +120,31 @@ export fn Compilerˉnativeˉx64ˉlayoutˉparameterˉtype(
     );
 }
 
+export fn Compilerˉnativeˉx64ˉlayoutˉsymbolˉname(
+    Prefix: text,
+    Index: u32,
+    Limit: u32
+) -> bytes {
+    if Index >= Limit { return Textˉtoˉutf8(""); }
+    var Name: text = Prefix;
+    if Index < 10u32 {
+        Name = Textˉconcat(Name, "000");
+    } else {
+        if Index < 100u32 {
+            Name = Textˉconcat(Name, "00");
+        } else {
+            if Index < 1000u32 {
+                Name = Textˉconcat(Name, "0");
+            }
+        }
+    }
+    return Textˉtoˉutf8(Textˉconcat(Name, U32ˉformat(Index)));
+}
+
 export fn Compilerˉnativeˉx64ˉlayoutˉhelperˉname(Function: u32) -> bytes {
-    if Function == 0u32 { return Textˉtoˉutf8("$function_0000"); }
-    if Function == 1u32 { return Textˉtoˉutf8("$function_0001"); }
-    if Function == 2u32 { return Textˉtoˉutf8("$function_0002"); }
-    if Function == 3u32 { return Textˉtoˉutf8("$function_0003"); }
-    if Function == 4u32 { return Textˉtoˉutf8("$function_0004"); }
-    if Function == 5u32 { return Textˉtoˉutf8("$function_0005"); }
-    if Function == 6u32 { return Textˉtoˉutf8("$function_0006"); }
-    if Function == 7u32 { return Textˉtoˉutf8("$function_0007"); }
-    return Textˉtoˉutf8("");
+    return Compilerˉnativeˉx64ˉlayoutˉsymbolˉname(
+        "$function_",
+        Function,
+        Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit()
+    );
 }

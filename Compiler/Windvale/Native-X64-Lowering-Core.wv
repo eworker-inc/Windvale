@@ -4256,7 +4256,7 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction
         );
     }
-    if Functionˉcount > 8u32 {
+    if Functionˉcount > Layout.Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit() {
         return Compilerˉnativeˉx64ˉfailure(
             Input,
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction

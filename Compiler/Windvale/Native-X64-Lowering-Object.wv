@@ -45,15 +45,11 @@ fn Appendˉsymbol(
 }
 
 fn Dataˉsymbolˉname(Index: u32) -> bytes {
-    if Index == 0u32 { return Textˉtoˉutf8("$data_0000"); }
-    if Index == 1u32 { return Textˉtoˉutf8("$data_0001"); }
-    if Index == 2u32 { return Textˉtoˉutf8("$data_0002"); }
-    if Index == 3u32 { return Textˉtoˉutf8("$data_0003"); }
-    if Index == 4u32 { return Textˉtoˉutf8("$data_0004"); }
-    if Index == 5u32 { return Textˉtoˉutf8("$data_0005"); }
-    if Index == 6u32 { return Textˉtoˉutf8("$data_0006"); }
-    if Index == 7u32 { return Textˉtoˉutf8("$data_0007"); }
-    return Textˉtoˉutf8("");
+    return Layout.Compilerˉnativeˉx64ˉlayoutˉsymbolˉname(
+        "$data_",
+        Index,
+        Staticˉdata.Compilerˉnativeˉx64ˉdataˉlimit()
+    );
 }
 
 export fn Compilerˉnativeˉx64ˉobjectˉemit(
@@ -65,10 +61,15 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     Relocations: bytes
 ) -> bytes {
     if Functionˉcount == 0u32 { return Empty(Code); }
-    if Functionˉcount > 8u32 { return Empty(Code); }
+    if Functionˉcount >
+        Layout.Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit() {
+        return Empty(Code);
+    }
     if Mainˉfunction >= Functionˉcount { return Empty(Code); }
     if !Data.Valid { return Empty(Code); }
-    if Data.Count > 8u32 { return Empty(Code); }
+    if Data.Count > Staticˉdata.Compilerˉnativeˉx64ˉdataˉlimit() {
+        return Empty(Code);
+    }
     if Bytesˉlength(Directory) !=
         Functionˉcount * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() {
         return Empty(Code);

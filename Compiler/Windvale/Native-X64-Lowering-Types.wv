@@ -38,6 +38,10 @@ fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
     return Length <= Total - Offset;
 }
 
+export fn Compilerˉnativeˉx64ˉtypesˉlimit() -> u32 {
+    return 64u32;
+}
+
 fn Identifierˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
     if Length == 0u32 { return false; }
     if Length > 255u32 { return false; }
@@ -202,7 +206,7 @@ export fn Compilerˉnativeˉx64ˉtypesˉread(
     }
     if Length < 4u32 { return Invalid(Input); }
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
-    if Count > 8u32 { return Invalid(Input); }
+    if Count > Compilerˉnativeˉx64ˉtypesˉlimit() { return Invalid(Input); }
     let Limit: u32 = Offset + Length;
     var Cursor: u32 = Offset + 4u32;
     var Kinds: bytes = Empty(Input);

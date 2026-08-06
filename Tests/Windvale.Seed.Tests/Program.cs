@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "867ae362331f764c918b0c6203c1b514e83467a0bfd74e369b3c7e81066463b2";
-    private const string NATIVE_X64_LOWERING_DATA_SHA256 = "79e4ddac4eac5e85aa4a10b14b91de9ca41a8263a3bf811bb38ec3eed5ed6f1c";
-    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "ffeec555fa6ff3c00b49c9510dd267050a3c5b03e9fa01d89573d31e7db94753";
-    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "4b1065fb72e9fc40494cb11681c27b42e80e4f8bacf78338db3a51bd4255fe87";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "98456a3870cd467e1699b1a007a091e8c57c86a7e98530ac5c61274ebb11157b";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "61de8ec6152a117bf0bd16c44c5709164534dc7ce4d0b75fccbbb99a545c8982";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "4e5c31c3bcb73520333db3bfac0d2eb2a4991fa1fec51577d76916ad239e1a01";
+    private const string NATIVE_X64_LOWERING_DATA_SHA256 = "d641039357bfb6be0c860002a374d70e5266f39861b4c9ea7e4df192dfdf21b3";
+    private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "277f9ad1f5ffaa27f254527f71a739599753914a5b41f1a66c6dbc3a19c3db26";
+    private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "697d8256464fe49bcf15fc5bdb8eb34b0aa2f08d3819d154f1bb15cda7001c33";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "4323858f697be2fcb9f84689c5504c1c45586cd72ae7c60128f03fc78b132d42";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "554da065fed54111d0cd2bd119b8cd630f3f11eb6ef917c991e07bf7758d745f";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -2994,6 +2994,7 @@ internal static partial class Program
         Assertˉfileˉwriteˉbytesˉlowering(Tool, Memory);
         Assertˉconsoleˉwriteˉlineˉlowering(Tool, Memory);
         Assertˉdiagnosticˉwriteˉlineˉlowering(Tool, Memory);
+        Assertˉlargeˉmoduleˉenvelopeˉlowering(Tool, Memory);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);
