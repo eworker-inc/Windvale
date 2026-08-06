@@ -1658,16 +1658,95 @@ export fn Main(Request: bytes) -> bytes {
                                     0u32,
                                     512u32
                                 );
+                                // Stack cells and the fields under construction
+                                // remain conservative roots. Locals and saved
+                                // frames have verified static shapes, so append
+                                // only their record cells and never interpret
+                                // packed PCs or scalar locals as record handles.
                                 var Recordˉreachableˉvalues: bytes =
-                                    Bytesˉconcat(Locals, Stack);
-                                Recordˉreachableˉvalues = Bytesˉconcat(
-                                    Recordˉreachableˉvalues,
-                                    Frames
-                                );
-                                Recordˉreachableˉvalues = Bytesˉconcat(
-                                    Recordˉreachableˉvalues,
-                                    Recordˉfields
-                                );
+                                    Bytesˉconcat(Stack, Recordˉfields);
+                                let Recordˉactiveˉshapeˉoffset: u32 =
+                                    Bytesˉreadˉu32ˉlittle(
+                                        Functionˉshapeˉoffsets,
+                                        Functionˉindex * 4u32
+                                    );
+                                var Recordˉactiveˉlocalˉoffset: u32 = 0u32;
+                                while Recordˉactiveˉlocalˉoffset
+                                    < Functionˉcursor {
+                                    let Recordˉactiveˉlocalˉkind: u32 =
+                                        Bytesˉreadˉu32ˉlittle(
+                                            Localˉshapes,
+                                            Recordˉactiveˉshapeˉoffset
+                                                + Recordˉactiveˉlocalˉoffset
+                                        );
+                                    if Recordˉactiveˉlocalˉkind == 7u32 {
+                                        Recordˉreachableˉvalues = Bytesˉconcat(
+                                            Recordˉreachableˉvalues,
+                                            Bytesˉslice(
+                                                Locals,
+                                                Recordˉactiveˉlocalˉoffset,
+                                                8u32
+                                            )
+                                        );
+                                    }
+                                    Recordˉactiveˉlocalˉoffset =
+                                        Recordˉactiveˉlocalˉoffset + 8u32;
+                                }
+                                var Recordˉframeˉend: u32 = Bytesˉlength(Frames);
+                                while Recordˉframeˉend > 0u32 {
+                                    if Recordˉframeˉend < 8u32 { return Invalid; }
+                                    let Recordˉframeˉfunction: u32 =
+                                        Bytesˉreadˉu32ˉlittle(
+                                            Frames,
+                                            Recordˉframeˉend - 4u32
+                                        );
+                                    if Recordˉframeˉfunction >= Functionˉcount {
+                                        return Invalid;
+                                    }
+                                    let Recordˉframeˉlocalˉlength: u32 =
+                                        Bytesˉreadˉu32ˉlittle(
+                                            Functionˉframeˉmetadata,
+                                            Recordˉframeˉfunction * 8u32 + 4u32
+                                        );
+                                    if Recordˉframeˉlocalˉlength
+                                        > Recordˉframeˉend - 8u32 {
+                                        return Invalid;
+                                    }
+                                    let Recordˉframeˉstart: u32 =
+                                        Recordˉframeˉend
+                                            - 8u32
+                                            - Recordˉframeˉlocalˉlength;
+                                    let Recordˉframeˉshapeˉoffset: u32 =
+                                        Bytesˉreadˉu32ˉlittle(
+                                            Functionˉshapeˉoffsets,
+                                            Recordˉframeˉfunction * 4u32
+                                        );
+                                    var Recordˉframeˉlocalˉoffset: u32 = 0u32;
+                                    while Recordˉframeˉlocalˉoffset
+                                        < Recordˉframeˉlocalˉlength {
+                                        let Recordˉframeˉlocalˉkind: u32 =
+                                            Bytesˉreadˉu32ˉlittle(
+                                                Localˉshapes,
+                                                Recordˉframeˉshapeˉoffset
+                                                    + Recordˉframeˉlocalˉoffset
+                                            );
+                                        if Recordˉframeˉlocalˉkind == 7u32 {
+                                            Recordˉreachableˉvalues = Bytesˉconcat(
+                                                Recordˉreachableˉvalues,
+                                                Bytesˉslice(
+                                                    Frames,
+                                                    Recordˉframeˉstart
+                                                        + 4u32
+                                                        + Recordˉframeˉlocalˉoffset,
+                                                    8u32
+                                                )
+                                            );
+                                        }
+                                        Recordˉframeˉlocalˉoffset =
+                                            Recordˉframeˉlocalˉoffset + 8u32;
+                                    }
+                                    Recordˉframeˉend = Recordˉframeˉstart;
+                                }
                                 var Recordˉreachableˉcursor: u32 = 0u32;
                                 while Recordˉreachableˉcursor
                                     < Bytesˉlength(Recordˉreachableˉvalues) {
@@ -1746,7 +1825,7 @@ export fn Main(Request: bytes) -> bytes {
                                         }
                                     }
                                     Recordˉreachableˉcursor =
-                                        Recordˉreachableˉcursor + 4u32;
+                                        Recordˉreachableˉcursor + 8u32;
                                 }
 
                                 var Recordˉnextˉmetadata: bytes = Invalid;

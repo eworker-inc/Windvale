@@ -65,10 +65,12 @@ $FormattingQuoteSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Fo
 $Sha256Source = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Sha256-Interpreter-Guest.wv'
 $NominalDefaultsSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Nominal-Defaults-Interpreter-Guest.wv'
 $RecordArenaSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Record-Arena-Interpreter-Failure.wv'
+$RecordArenaPrecisionSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Record-Arena-Frame-Precision.wv'
 $StructuralDataSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Data-And-Text.wv'
 $StructuralTypesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Nominal-Types.wv'
 $StructuralCapabilitiesSource = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv'
 $EngineVerifier = Join-Path $RepositoryRoot 'Tools/Verify/Verify-WebAssembly-Engine.mjs'
+$RecordArenaProbe = Join-Path $RepositoryRoot 'Tools/Verify/Probe-WebAssembly-Record-Arena.mjs'
 $BackendWvb = Join-Path $ArtifactDirectory 'Windvale-WebAssembly.wvb'
 $SuccessWvb = Join-Path $ArtifactDirectory 'Checked-Add-Main.wvb'
 $OverflowWvb = Join-Path $ArtifactDirectory 'Checked-Add-Overflow-Main.wvb'
@@ -124,6 +126,7 @@ $FormattingQuoteWvb = Join-Path $ArtifactDirectory 'Formatting-Quote-Interpreter
 $Sha256Wvb = Join-Path $ArtifactDirectory 'Sha256-Interpreter-Guest.wvb'
 $NominalDefaultsWvb = Join-Path $ArtifactDirectory 'Nominal-Defaults-Interpreter-Guest.wvb'
 $RecordArenaWvb = Join-Path $ArtifactDirectory 'Record-Arena-Interpreter-Failure.wvb'
+$RecordArenaPrecisionWvb = Join-Path $ArtifactDirectory 'Record-Arena-Frame-Precision.wvb'
 $StructuralDataWvb = Join-Path $ArtifactDirectory 'Structural-Data-And-Text.wvb'
 $StructuralTypesWvb = Join-Path $ArtifactDirectory 'Structural-Nominal-Types.wvb'
 $StructuralCapabilitiesWvb = Join-Path $ArtifactDirectory 'Structural-Hosted-Capabilities.wvb'
@@ -420,6 +423,7 @@ Invoke-Windvale @('compile', $FormattingQuoteSource, '-o', $FormattingQuoteWvb)
 Invoke-Windvale @('compile', $Sha256Source, '-o', $Sha256Wvb)
 Invoke-Windvale @('compile', $NominalDefaultsSource, '-o', $NominalDefaultsWvb)
 Invoke-Windvale @('compile', $RecordArenaSource, '-o', $RecordArenaWvb)
+Invoke-Windvale @('compile', $RecordArenaPrecisionSource, '-o', $RecordArenaPrecisionWvb)
 Invoke-Windvale @('compile', $StructuralDataSource, '-o', $StructuralDataWvb)
 Invoke-Windvale @('compile', $StructuralTypesSource, '-o', $StructuralTypesWvb)
 Invoke-Windvale @('compile', $StructuralCapabilitiesSource, '-o', $StructuralCapabilitiesWvb)
@@ -592,5 +596,11 @@ node $EngineVerifier `
     $WvbCompilerTypedThirdVerifyWasm `
     $WvbCompilerControlSecondVerifyWasm
 if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly engine verification failed.' }
+
+node --liftoff-only $RecordArenaProbe `
+    $WvbScalarInterpreterWasm `
+    $RecordArenaPrecisionWvb `
+    $RecordArenaWvb
+if ($LASTEXITCODE -ne 0) { throw 'The WebAssembly record-arena probe failed.' }
 
 Write-Output 'Windvale-authored WebAssembly verification passed.'
