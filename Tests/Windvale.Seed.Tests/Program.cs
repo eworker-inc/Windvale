@@ -128,7 +128,7 @@ internal static partial class Program
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
     private const string WEBASSEMBLY_CORE_SHA256 = "2d221ab9ebaad26b5acbfb582188085178d1630a7fa48e5f1c4e933ceea668aa";
     private const string WEBASSEMBLY_TOOL_SHA256 = "78588396fbff0865025d010b3f467ac20844c2d122a9ee9d63da8b85d880c00b";
-    private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "78d7ba09db7cf132b96bea1b354c67fbeff5d3b7e30bcd8030e6e7225e90ad18";
+    private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "38399403bd86d66af47c76a03aa242557a957ffb06262208f7725700cd3b7ba5";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -920,6 +920,14 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_FUNCTION_DIRECTORY_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Function-Directory.wv");
+
+    private static readonly string WEBASSEMBLY_TYPE_DIRECTORY_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Type-Directory.wv");
+
+    private static readonly string WEBASSEMBLY_TYPED_CALLS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Typed-Calls.wv");
 
     private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
@@ -14873,26 +14881,73 @@ internal static partial class Program
             WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Directoryˉtoolˉbytes));
         var Directoryˉtool = Moduleˉcodec.Readˉandˉverify(Directoryˉtoolˉbytes);
-        var Exactˉdirectory = Runˉwebassemblyˉtool(
-            Directoryˉtool,
-            Exactˉcompiler,
-            500_000_000);
-        Equal(0, Exactˉdirectory.Exitˉcode);
-        Equal(string.Empty, Exactˉdirectory.Diagnostics);
-        Equal(1, Exactˉdirectory.Readˉcount);
-        Equal(1, Exactˉdirectory.Writeˉcount);
+        var Typedˉranges = new (int First, int Count)[]
+        {
+            (0, 60),
+            (240, 60),
+            (310, 5),
+            (360, 57),
+        };
+        var Exactˉranges = new WebAssemblyˉtoolˉresult[Typedˉranges.Length];
+        Parallel.For(
+            0,
+            Typedˉranges.Length,
+            Index =>
+            {
+                var Range = Typedˉranges[Index];
+                Exactˉranges[Index] = Runˉwebassemblyˉtool(
+                    Directoryˉtool,
+                    Exactˉcompiler,
+                    500_000_000,
+                    [Range.First.ToString(), Range.Count.ToString()]);
+            });
+
+        static int Reportˉvalue(string report, string name)
+        {
+            var Prefix = name + "=";
+            var Start = report.IndexOf(Prefix, StringComparison.Ordinal);
+            True(Start >= 0, $"The directory report omitted '{name}'.");
+            Start += Prefix.Length;
+            var End = report.IndexOfAny([' ', '\n'], Start);
+            if (End < 0) End = report.Length;
+            return int.Parse(report.AsSpan(Start, End - Start));
+        }
+
+        for (var Index = 0; Index < Exactˉranges.Length; Index++)
+        {
+            var Exactˉrange = Exactˉranges[Index];
+            var Range = Typedˉranges[Index];
+            Equal(0, Exactˉrange.Exitˉcode);
+            Equal(string.Empty, Exactˉrange.Diagnostics);
+            Equal(1, Exactˉrange.Readˉcount);
+            Equal(1, Exactˉrange.Writeˉcount);
+            Contains(
+                Exactˉrange.Output,
+                "directory status=Valid functions=417 entry-bytes=13344 " +
+                    "instructions=157844 calls=2991 types=82 typed-calls=");
+            Equal(13_344, Exactˉrange.Writtenˉbytes.Length);
+            Sequenceˉequal(
+                Exactˉranges[0].Writtenˉbytes,
+                Exactˉrange.Writtenˉbytes);
+            Equal(
+                Exactˉverified.Functions
+                    .Skip(Range.First)
+                    .Take(Range.Count)
+                    .Sum(Function => Function.Instructions.Count(
+                        Instruction => Instruction.Opcode == Opcode.Call)),
+                Reportˉvalue(Exactˉrange.Output, "typed-calls"));
+            Equal(
+                Exactˉverified.Functions
+                    .Skip(Range.First)
+                    .Take(Range.Count)
+                    .Max(Function =>
+                        Function.Declaration.Maximumˉstackˉdepth),
+                Reportˉvalue(Exactˉrange.Output, "maximum-stack"));
+        }
         Equal(
-            "directory status=Valid functions=417 entry-bytes=13344 " +
-                "instructions=157844 calls=2991\n",
-            Exactˉdirectory.Output);
-        Equal(13_344, Exactˉdirectory.Writtenˉbytes.Length);
-        var Exactˉdirectoryˉrepeat = Runˉwebassemblyˉtool(
-            Directoryˉtool,
-            Exactˉcompiler,
-            500_000_000);
-        Sequenceˉequal(
-            Exactˉdirectory.Writtenˉbytes,
-            Exactˉdirectoryˉrepeat.Writtenˉbytes);
+            34,
+            Exactˉranges.Max(Result =>
+                Reportˉvalue(Result.Output, "maximum-stack")));
 
         var Exactˉfrontier = Runˉwebassemblyˉtool(
             Tool,
@@ -14940,7 +14995,8 @@ internal static partial class Program
         Equal(string.Empty, Boundary.Diagnostics);
         Equal(
             "directory status=Valid functions=512 entry-bytes=16384 " +
-                "instructions=2051 calls=1\n",
+                "instructions=2051 calls=1 types=0 typed-calls=1 " +
+                "maximum-stack=1\n",
             Boundary.Output);
         Equal(16_384, Boundary.Writtenˉbytes.Length);
 
@@ -14965,6 +15021,49 @@ internal static partial class Program
             Invalidˉcall.AsSpan(Callˉoffset + 1, 4),
             checked((uint)Boundaryˉverified.Functions.Length));
         Requireˉdirectoryˉfailure(Invalidˉcall, "call-inventory");
+
+        var Typedˉcallˉfunctionˉindex = Array.FindIndex(
+            Exactˉverified.Functions.ToArray(),
+            Function => Function.Instructions.Any(Instruction =>
+                Instruction.Opcode == Opcode.Call));
+        True(
+            Typedˉcallˉfunctionˉindex >= 0,
+            "The exact compiler omitted a direct call mutation target.");
+        var Typedˉcallˉfunction =
+            Exactˉverified.Functions[Typedˉcallˉfunctionˉindex];
+        var Typedˉcallˉinstruction = Typedˉcallˉfunction.Instructions.First(
+            Instruction => Instruction.Opcode == Opcode.Call);
+        var Originalˉtarget = checked((int)Typedˉcallˉinstruction.Unsignedˉoperand);
+        var Originalˉparameterˉcount = Exactˉverified.Functions[
+            Originalˉtarget].Declaration.Parameterˉtypes.Length;
+        var Incompatibleˉtarget = Enumerable.Range(
+            0,
+            Exactˉverified.Functions.Length).First(Index =>
+                Exactˉverified.Functions[Index].Declaration.Parameterˉtypes.Length !=
+                    Originalˉparameterˉcount);
+        var Exactˉcodeˉpayload = Findˉsectionˉpayload(
+            Exactˉcompiler,
+            Sectionˉkind.Code);
+        var Incompatibleˉcall = Exactˉcompiler.ToArray();
+        var Typedˉcallˉoffset = checked(
+            Exactˉcodeˉpayload +
+            (int)Typedˉcallˉfunction.Declaration.Codeˉoffset +
+            (int)Typedˉcallˉinstruction.Offset);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Incompatibleˉcall.AsSpan(Typedˉcallˉoffset + 1, 4),
+            checked((uint)Incompatibleˉtarget));
+        var Typedˉcallˉrejection = Runˉwebassemblyˉtool(
+            Directoryˉtool,
+            Incompatibleˉcall,
+            500_000_000,
+            [Typedˉcallˉfunctionˉindex.ToString(), "1"]);
+        Equal(1, Typedˉcallˉrejection.Exitˉcode);
+        Equal(
+            $"directory status=Invalid typed-calls function=" +
+                $"{Typedˉcallˉfunctionˉindex} offset=" +
+                $"{Typedˉcallˉinstruction.Offset} opcode=64\n",
+            Typedˉcallˉrejection.Diagnostics);
+        Equal(0, Typedˉcallˉrejection.Writeˉcount);
 
         var Excessˉfunctionsˉwvb = Compileˉsuccess(
             Buildˉfunctionˉinventoryˉsource(513));
@@ -24121,7 +24220,8 @@ internal static partial class Program
     private static WebAssemblyˉtoolˉresult Runˉwebassemblyˉtool(
         Verifiedˉmodule module,
         IEnumerable<byte> input,
-        long maximumˉinstructions = 100_000_000)
+        long maximumˉinstructions = 100_000_000,
+        IEnumerable<string>? additionalˉarguments = null)
     {
         var Input = input.ToImmutableArray();
         var Output = new StringWriter();
@@ -24136,10 +24236,15 @@ internal static partial class Program
         var Authorized = module.Module.Capabilities
             .Select(Capability => Capability.Name)
             .ToImmutableHashSet(StringComparer.Ordinal);
+        var Arguments = new List<string> { "input.wvb", "output.wasm" };
+        if (additionalˉarguments is not null)
+        {
+            Arguments.AddRange(additionalˉarguments);
+        }
         var Result = new Referenceˉruntime(
             module,
             new Referenceˉcapabilityˉhost(new Hostedˉresourceˉcontext(
-                ["input.wvb", "output.wasm"],
+                Arguments.ToImmutableArray(),
                 Output,
                 Diagnostics,
                 Reader,
@@ -26738,6 +26843,12 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/WebAssembly-Function-Directory.wv",
                     WEBASSEMBLY_FUNCTION_DIRECTORY_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Type-Directory.wv",
+                    WEBASSEMBLY_TYPE_DIRECTORY_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Typed-Calls.wv",
+                    WEBASSEMBLY_TYPED_CALLS_SOURCE),
             ]);
         if (!Result.Success)
         {

@@ -48,12 +48,32 @@ export fn Compilerˉwebassemblyˉshapeˉwidth(
     }
     if Shapeˉkind >= 1u32 && Shapeˉkind <= 6u32 { return 1u32; }
     if Shapeˉkind == 9u32 || Shapeˉkind == 10u32 { return 1u32; }
-    if Shapeˉkind != 7u32 && Shapeˉkind != 8u32 { return 0u32; }
-    if End - Cursor < 5u32 { return 0u32; }
-    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) >= Typeˉcount {
+    if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+        Shapeˉkind == 11u32 {
+        if End - Cursor < 5u32 { return 0u32; }
+        if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) >= Typeˉcount {
+            return 0u32;
+        }
+        return 5u32;
+    }
+    if Shapeˉkind != 12u32 && Shapeˉkind != 13u32 { return 0u32; }
+    if End - Cursor < 6u32 { return 0u32; }
+    let Elementˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+        Input,
+        Cursor + 1u32
+    ));
+    if Elementˉkind == 0u32 || Elementˉkind > 11u32 {
         return 0u32;
     }
-    return 5u32;
+    if Elementˉkind == 7u32 || Elementˉkind == 8u32 ||
+        Elementˉkind == 11u32 {
+        if End - Cursor < 10u32 { return 0u32; }
+        if Bytesˉreadˉu32ˉlittle(Input, Cursor + 2u32) >= Typeˉcount {
+            return 0u32;
+        }
+        return 10u32;
+    }
+    return 6u32;
 }
 
 fn Appendˉu32(Entries: bytes, Value: u32) -> bytes {
@@ -254,7 +274,7 @@ export fn Compilerˉwebassemblyˉfunctionˉmaximumˉstack(
     return Bytesˉreadˉu32ˉlittle(Directory.Entries, Entryˉoffset(Index) + 28u32);
 }
 
-fn Instructionˉwidth(
+export fn Compilerˉwebassemblyˉinstructionˉwidth(
     Input: bytes,
     Offset: u32,
     Length: u32,
@@ -334,7 +354,7 @@ export fn Compilerˉwebassemblyˉcallˉinventoryˉvalidate(
         var Cursor: u32 = 0u32;
         while Cursor < Functionˉcodeˉlength {
             if Instructionˉcount >= 200000u32 { return Invalidˉcalls(); }
-            let Width: u32 = Instructionˉwidth(
+            let Width: u32 = Compilerˉwebassemblyˉinstructionˉwidth(
                 Input,
                 Functionˉcodeˉoffset,
                 Functionˉcodeˉlength,

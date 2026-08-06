@@ -1,59 +1,19 @@
-module Compilerˉwebassemblyˉcompilerˉdirectoryˉtool profile hosted;
+module Compilerˉwebassemblyˉcompilerˉdirectoryˉmemoryˉtool profile portable;
 
 import Compilerˉwebassemblyˉfunctionˉdirectory as Directory;
 import Compilerˉwebassemblyˉtypeˉdirectory as Types;
 import Compilerˉwebassemblyˉtypedˉcalls as Typed;
-
-capability console.write_line;
-capability diagnostic.write_line;
-capability file.read_bytes;
-capability file.write_bytes;
-capability process.argument;
-capability process.argument_count;
 
 fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
     if Offset > Total { return false; }
     return Length <= Total - Offset;
 }
 
-fn Failure(Message: text) -> i32 {
-    diagnostic.write_line(Textˉconcat("directory status=Invalid ", Message));
-    return 1;
+fn Failure(Message: text) -> bytes {
+    return Textˉtoˉutf8(Textˉconcat("directory status=Invalid ", Message));
 }
 
-record Parsedˉu32 {
-    Valid: bool;
-    Value: u32;
-}
-
-fn Parseˉu32(Value: text) -> Parsedˉu32 {
-    let Input: bytes = Textˉtoˉutf8(Value);
-    let Length: u32 = Bytesˉlength(Input);
-    if Length == 0u32 || Length > 3u32 {
-        return Parsedˉu32(false, 0u32);
-    }
-    var Result: u32 = 0u32;
-    var Index: u32 = 0u32;
-    while Index < Length {
-        let Digit: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Index));
-        if Digit < 48u32 || Digit > 57u32 {
-            return Parsedˉu32(false, 0u32);
-        }
-        Result = Result * 10u32 + Digit - 48u32;
-        Index = Index + 1u32;
-    }
-    return Parsedˉu32(true, Result);
-}
-
-export fn Main() -> i32 {
-    let Argumentˉcount: u32 = process.argument_count();
-    if Argumentˉcount != 2u32 && Argumentˉcount != 4u32 {
-        diagnostic.write_line(
-            "Usage: wvwasm-directory <input.wvb> <directory.bin> [first count]"
-        );
-        return 64;
-    }
-    let Input: bytes = file.read_bytes(process.argument(0u32));
+export fn Main(Input: bytes) -> bytes {
     let Total: u32 = Bytesˉlength(Input);
     if Total < 12u32 { return Failure("envelope"); }
 
@@ -72,7 +32,10 @@ export fn Main() -> i32 {
         if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Envelope)) != Sectionˉkind {
             return Failure("section-order");
         }
-        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Envelope + 4u32);
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Envelope + 4u32
+        );
         let Payloadˉoffset: u32 = Envelope + 8u32;
         if !Rangeˉisˉvalid(Total, Payloadˉoffset, Payloadˉlength) {
             return Failure("section-payload");
@@ -120,26 +83,13 @@ export fn Main() -> i32 {
             Functionˉdirectory
         );
     if !Calls.Valid { return Failure("call-inventory"); }
-    var Firstˉfunction: u32 = 0u32;
-    var Typedˉfunctionˉcount: u32 = Functionˉdirectory.Count;
-    if Argumentˉcount == 4u32 {
-        let Parsedˉfirst: Parsedˉu32 = Parseˉu32(process.argument(2u32));
-        let Parsedˉcount: Parsedˉu32 = Parseˉu32(process.argument(3u32));
-        if !Parsedˉfirst.Valid || !Parsedˉcount.Valid {
-            return Failure("typed-range");
-        }
-        Firstˉfunction = Parsedˉfirst.Value;
-        Typedˉfunctionˉcount = Parsedˉcount.Value;
-    }
     let Typedˉcalls: Typed.Compilerˉwebassemblyˉtypedˉcallˉsummary =
-        Typed.Compilerˉwebassemblyˉtypedˉcallsˉvalidateˉrange(
+        Typed.Compilerˉwebassemblyˉtypedˉcallsˉvalidate(
             Input,
             Codeˉoffset,
             Codeˉlength,
             Functionˉdirectory,
-            Typeˉdirectory,
-            Firstˉfunction,
-            Typedˉfunctionˉcount
+            Typeˉdirectory
         );
     if !Typedˉcalls.Valid {
         var Diagnostic: text = "typed-calls function=";
@@ -159,7 +109,6 @@ export fn Main() -> i32 {
         ));
     }
 
-    file.write_bytes(process.argument(1u32), Functionˉdirectory.Entries);
     var Report: text = "directory status=Valid functions=";
     Report = Textˉconcat(Report, U32ˉformat(Functionˉdirectory.Count));
     Report = Textˉconcat(Report, " entry-bytes=");
@@ -176,9 +125,8 @@ export fn Main() -> i32 {
     Report = Textˉconcat(Report, " typed-calls=");
     Report = Textˉconcat(Report, U32ˉformat(Typedˉcalls.Callˉcount));
     Report = Textˉconcat(Report, " maximum-stack=");
-    console.write_line(Textˉconcat(
+    return Textˉtoˉutf8(Textˉconcat(
         Report,
         U32ˉformat(Typedˉcalls.Maximumˉstack)
     ));
-    return 0;
 }

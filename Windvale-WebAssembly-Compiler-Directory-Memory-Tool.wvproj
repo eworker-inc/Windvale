@@ -1,5 +1,5 @@
 windvale-project 1
-root "Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
+root "Tools/Windvale.WebAssembly/Compiler-Directory-Memory-Tool.wv"
 source "Compiler/Windvale/WebAssembly-Function-Directory.wv"
 source "Compiler/Windvale/WebAssembly-Type-Directory.wv"
 source "Compiler/Windvale/WebAssembly-Typed-Calls.wv"

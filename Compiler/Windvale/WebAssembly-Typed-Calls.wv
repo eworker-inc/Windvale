@@ -1,0 +1,943 @@
+module Compilerˉwebassemblyˉtypedˉcalls profile portable;
+
+import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
+import Compilerˉwebassemblyˉtypeˉdirectory as Types;
+
+export record Compilerˉwebassemblyˉtypedˉcallˉsummary {
+    Valid: bool;
+    Instructionˉcount: u32;
+    Callˉcount: u32;
+    Maximumˉstack: u32;
+    Failureˉfunction: u32;
+    Failureˉoffset: u32;
+    Failureˉopcode: u32;
+}
+
+record Typedˉstack {
+    Valid: bool;
+    Depth: u32;
+    Maximum: u32;
+    Firstˉword: u32;
+    Secondˉword: u32;
+    Thirdˉword: u32;
+    Fourthˉword: u32;
+    Fifthˉword: u32;
+    Sixthˉword: u32;
+    Seventhˉword: u32;
+    Eighthˉword: u32;
+    Ninthˉword: u32;
+}
+
+fn Invalidˉsummary() -> Compilerˉwebassemblyˉtypedˉcallˉsummary {
+    return Compilerˉwebassemblyˉtypedˉcallˉsummary(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Invalidˉat(
+    Function: u32,
+    Offset: u32,
+    Opcode: u32
+) -> Compilerˉwebassemblyˉtypedˉcallˉsummary {
+    return Compilerˉwebassemblyˉtypedˉcallˉsummary(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        Function,
+        Offset,
+        Opcode
+    );
+}
+
+fn Invalidˉstack(Stack: Typedˉstack) -> Typedˉstack {
+    return Typedˉstack(
+        false,
+        Stack.Depth,
+        Stack.Maximum,
+        Stack.Firstˉword,
+        Stack.Secondˉword,
+        Stack.Thirdˉword,
+        Stack.Fourthˉword,
+        Stack.Fifthˉword,
+        Stack.Sixthˉword,
+        Stack.Seventhˉword,
+        Stack.Eighthˉword,
+        Stack.Ninthˉword
+    );
+}
+
+fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Shapeˉkind(Input: bytes, Offset: u32) -> u32 {
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset));
+}
+
+fn Shapeˉnominal(Input: bytes, Offset: u32) -> u32 {
+    let Kind: u32 = Shapeˉkind(Input, Offset);
+    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 {
+        return Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+    }
+    return 0u32;
+}
+
+fn Shapeˉoffsetˉat(Input: bytes, Offset: u32, Index: u32) -> u32 {
+    var Cursor: u32 = Offset;
+    var Current: u32 = 0u32;
+    while Current < Index {
+        let Kind: u32 = Shapeˉkind(Input, Cursor);
+        var Width: u32 = 1u32;
+        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 {
+            Width = 5u32;
+        }
+        if Kind == 12u32 || Kind == 13u32 {
+            Width = 6u32;
+            let Elementˉkind: u32 = Shapeˉkind(Input, Cursor + 1u32);
+            if Elementˉkind == 7u32 || Elementˉkind == 8u32 ||
+                Elementˉkind == 11u32 {
+                Width = 10u32;
+            }
+        }
+        Cursor = Cursor + Width;
+        Current = Current + 1u32;
+    }
+    return Cursor;
+}
+
+fn Stackˉword(Stack: Typedˉstack, Index: u32) -> u32 {
+    if Index == 0u32 { return Stack.Firstˉword; }
+    if Index == 1u32 { return Stack.Secondˉword; }
+    if Index == 2u32 { return Stack.Thirdˉword; }
+    if Index == 3u32 { return Stack.Fourthˉword; }
+    if Index == 4u32 { return Stack.Fifthˉword; }
+    if Index == 5u32 { return Stack.Sixthˉword; }
+    if Index == 6u32 { return Stack.Seventhˉword; }
+    if Index == 7u32 { return Stack.Eighthˉword; }
+    if Index == 8u32 { return Stack.Ninthˉword; }
+    return 0u32;
+}
+
+fn Stackˉwithˉword(
+    Stack: Typedˉstack,
+    Index: u32,
+    Value: u32
+) -> Typedˉstack {
+    if Index > 8u32 { return Invalidˉstack(Stack); }
+    var Firstˉword: u32 = Stack.Firstˉword;
+    var Secondˉword: u32 = Stack.Secondˉword;
+    var Thirdˉword: u32 = Stack.Thirdˉword;
+    var Fourthˉword: u32 = Stack.Fourthˉword;
+    var Fifthˉword: u32 = Stack.Fifthˉword;
+    var Sixthˉword: u32 = Stack.Sixthˉword;
+    var Seventhˉword: u32 = Stack.Seventhˉword;
+    var Eighthˉword: u32 = Stack.Eighthˉword;
+    var Ninthˉword: u32 = Stack.Ninthˉword;
+    if Index == 0u32 { Firstˉword = Value; }
+    if Index == 1u32 { Secondˉword = Value; }
+    if Index == 2u32 { Thirdˉword = Value; }
+    if Index == 3u32 { Fourthˉword = Value; }
+    if Index == 4u32 { Fifthˉword = Value; }
+    if Index == 5u32 { Sixthˉword = Value; }
+    if Index == 6u32 { Seventhˉword = Value; }
+    if Index == 7u32 { Eighthˉword = Value; }
+    if Index == 8u32 { Ninthˉword = Value; }
+    return Typedˉstack(
+        Stack.Valid,
+        Stack.Depth,
+        Stack.Maximum,
+        Firstˉword,
+        Secondˉword,
+        Thirdˉword,
+        Fourthˉword,
+        Fifthˉword,
+        Sixthˉword,
+        Seventhˉword,
+        Eighthˉword,
+        Ninthˉword
+    );
+}
+
+fn Stackˉwithˉdepth(Stack: Typedˉstack, Depth: u32) -> Typedˉstack {
+    return Typedˉstack(
+        Stack.Valid,
+        Depth,
+        Stack.Maximum,
+        Stack.Firstˉword,
+        Stack.Secondˉword,
+        Stack.Thirdˉword,
+        Stack.Fourthˉword,
+        Stack.Fifthˉword,
+        Stack.Sixthˉword,
+        Stack.Seventhˉword,
+        Stack.Eighthˉword,
+        Stack.Ninthˉword
+    );
+}
+
+fn Stackˉcode(Stack: Typedˉstack, Index: u32) -> u32 {
+    let Wordˉindex: u32 = Index >> 2u32;
+    let Shift: u32 = (Index & 3u32) << 3u32;
+    return (Stackˉword(Stack, Wordˉindex) >> Shift) & 255u32;
+}
+
+fn Stackˉtopˉcode(Stack: Typedˉstack) -> u32 {
+    if Stack.Depth == 0u32 { return 0u32; }
+    return Stackˉcode(Stack, Stack.Depth - 1u32);
+}
+
+fn Stackˉtopˉnominal(Stack: Typedˉstack) -> u32 {
+    let Code: u32 = Stackˉtopˉcode(Stack);
+    if Code < 16u32 { return 0u32; }
+    return Code - 16u32;
+}
+
+fn Stackˉtopˉisˉtypeˉkind(
+    Stack: Typedˉstack,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Wanted: u32
+) -> bool {
+    let Code: u32 = Stackˉtopˉcode(Stack);
+    if Code < 16u32 { return false; }
+    let Nominal: u32 = Code - 16u32;
+    if Nominal >= Directory.Count { return false; }
+    return Types.Compilerˉwebassemblyˉtypeˉkind(
+        Directory,
+        Nominal
+    ) == Wanted;
+}
+
+fn Stackˉencodedˉkind(Kind: u32, Nominal: u32) -> u32 {
+    if Kind == 1u32 || Kind == 2u32 || Kind == 3u32 ||
+        Kind == 4u32 || Kind == 5u32 || Kind == 6u32 ||
+        Kind == 9u32 || Kind == 10u32 {
+        return Kind;
+    }
+    if (Kind == 7u32 || Kind == 8u32 || Kind == 11u32) &&
+        Nominal <= 239u32 {
+        return 16u32 + Nominal;
+    }
+    return 0u32;
+}
+
+fn Stackˉstoreˉcode(
+    Stack: Typedˉstack,
+    Index: u32,
+    Code: u32
+) -> Typedˉstack {
+    let Wordˉindex: u32 = Index >> 2u32;
+    let Shift: u32 = (Index & 3u32) << 3u32;
+    let Mask: u32 = 255u32 << Shift;
+    let Cleared: u32 = Stackˉword(Stack, Wordˉindex) &
+        (Mask ^ 4294967295u32);
+    return Stackˉwithˉword(
+        Stack,
+        Wordˉindex,
+        Cleared | (Code << Shift)
+    );
+}
+
+fn Stackˉpushˉkind(
+    Stack: Typedˉstack,
+    Kind: u32,
+    Nominal: u32,
+    Limit: u32
+) -> Typedˉstack {
+    if !Stack.Valid || Stack.Depth >= Limit || Stack.Depth >= 36u32 {
+        return Invalidˉstack(Stack);
+    }
+    let Code: u32 = Stackˉencodedˉkind(Kind, Nominal);
+    if Code == 0u32 { return Invalidˉstack(Stack); }
+    let Stored: Typedˉstack = Stackˉstoreˉcode(
+        Stack,
+        Stack.Depth,
+        Code
+    );
+    if !Stored.Valid { return Stored; }
+    let Depth: u32 = Stack.Depth + 1u32;
+    var Maximum: u32 = Stack.Maximum;
+    if Depth > Maximum { Maximum = Depth; }
+    return Typedˉstack(
+        true,
+        Depth,
+        Maximum,
+        Stored.Firstˉword,
+        Stored.Secondˉword,
+        Stored.Thirdˉword,
+        Stored.Fourthˉword,
+        Stored.Fifthˉword,
+        Stored.Sixthˉword,
+        Stored.Seventhˉword,
+        Stored.Eighthˉword,
+        Stored.Ninthˉword
+    );
+}
+
+fn Stackˉpushˉshape(
+    Input: bytes,
+    Stack: Typedˉstack,
+    Offset: u32,
+    Limit: u32
+) -> Typedˉstack {
+    return Stackˉpushˉkind(
+        Stack,
+        Shapeˉkind(Input, Offset),
+        Shapeˉnominal(Input, Offset),
+        Limit
+    );
+}
+
+fn Stackˉpopˉkind(
+    Stack: Typedˉstack,
+    Kind: u32,
+    Nominal: u32
+) -> Typedˉstack {
+    if !Stack.Valid || Stack.Depth == 0u32 {
+        return Invalidˉstack(Stack);
+    }
+    if Stackˉtopˉcode(Stack) != Stackˉencodedˉkind(Kind, Nominal) {
+        return Invalidˉstack(Stack);
+    }
+    return Stackˉwithˉdepth(Stack, Stack.Depth - 1u32);
+}
+
+fn Stackˉpopˉany(Stack: Typedˉstack) -> Typedˉstack {
+    if !Stack.Valid || Stack.Depth == 0u32 {
+        return Invalidˉstack(Stack);
+    }
+    return Stackˉwithˉdepth(Stack, Stack.Depth - 1u32);
+}
+
+fn Stackˉpopˉshape(
+    Input: bytes,
+    Stack: Typedˉstack,
+    Offset: u32
+) -> Typedˉstack {
+    return Stackˉpopˉkind(
+        Stack,
+        Shapeˉkind(Input, Offset),
+        Shapeˉnominal(Input, Offset)
+    );
+}
+
+fn Applyˉeffect(
+    Stack: Typedˉstack,
+    Popˉcount: u32,
+    Firstˉkind: u32,
+    Firstˉnominal: u32,
+    Secondˉkind: u32,
+    Secondˉnominal: u32,
+    Thirdˉkind: u32,
+    Thirdˉnominal: u32,
+    Hasˉpush: bool,
+    Pushˉkind: u32,
+    Pushˉnominal: u32,
+    Limit: u32
+) -> Typedˉstack {
+    var Result: Typedˉstack = Stack;
+    var Index: u32 = 0u32;
+    while Index < Popˉcount {
+        var Kind: u32 = Firstˉkind;
+        var Nominal: u32 = Firstˉnominal;
+        if Index == 1u32 { Kind = Secondˉkind; Nominal = Secondˉnominal; }
+        if Index == 2u32 { Kind = Thirdˉkind; Nominal = Thirdˉnominal; }
+        Result = Stackˉpopˉkind(Result, Kind, Nominal);
+        if !Result.Valid { return Result; }
+        Index = Index + 1u32;
+    }
+    if Hasˉpush {
+        Result = Stackˉpushˉkind(Result, Pushˉkind, Pushˉnominal, Limit);
+    }
+    return Result;
+}
+
+record Staticˉeffect {
+    Handled: bool;
+    Popˉcount: u32;
+    Firstˉkind: u32;
+    Secondˉkind: u32;
+    Thirdˉkind: u32;
+    Hasˉpush: bool;
+    Pushˉkind: u32;
+}
+
+data Staticˉeffectˉtable: bytes = [
+    0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 1, 3,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1,
+    1, 0, 0, 0, 0, 1, 4, 1, 0, 0, 0, 0, 1, 5, 1, 0, 0, 0, 0, 1, 6, 1, 1, 6, 0, 0, 1, 5,
+    1, 3, 5, 5, 6, 1, 6, 1, 2, 5, 6, 0, 1, 4, 1, 2, 5, 6, 0, 1, 5, 1, 2, 5, 6, 0, 1, 5,
+    1, 2, 1, 1, 0, 1, 1, 1, 2, 1, 1, 0, 1, 1, 1, 2, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1,
+    1, 2, 5, 5, 0, 1, 5, 1, 2, 5, 5, 0, 1, 5, 1, 2, 5, 5, 0, 1, 5, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 2, 1, 1, 0, 1, 2, 1, 2, 1, 1, 0, 1, 2, 1, 2, 1, 1, 0, 1, 2, 1, 2, 1, 1, 0, 1, 2,
+    1, 2, 1, 1, 0, 1, 2, 1, 2, 1, 1, 0, 1, 2, 1, 2, 2, 2, 0, 1, 2, 1, 2, 2, 2, 0, 1, 2,
+    1, 1, 2, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 2, 5, 5, 0, 1, 2, 1, 2, 5, 5, 0, 1, 2, 1, 2, 5, 5, 0, 1, 2, 1, 2, 5, 5, 0, 1, 2,
+    1, 2, 5, 5, 0, 1, 2, 1, 2, 5, 5, 0, 1, 2, 1, 2, 4, 4, 0, 1, 2, 1, 2, 4, 4, 0, 1, 2,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 5, 0, 0, 1, 3, 1, 2, 3, 3, 0, 1, 3, 1, 2, 5, 6, 0, 1, 1, 1, 1, 6, 0, 0, 1, 2,
+    1, 1, 6, 0, 0, 1, 3, 1, 1, 3, 0, 0, 1, 3, 1, 1, 4, 0, 0, 1, 5, 1, 2, 6, 6, 0, 1, 6,
+    1, 1, 4, 0, 0, 1, 6, 1, 1, 5, 0, 0, 1, 6, 1, 1, 5, 0, 0, 1, 6, 1, 1, 1, 0, 0, 1, 6,
+    1, 1, 3, 0, 0, 1, 6, 1, 1, 6, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 0, 0, 1, 9, 1, 0, 0, 0, 0, 1, 10, 1, 2, 9, 9, 0, 1, 9, 1, 2, 9, 9, 0, 1, 9,
+    1, 2, 9, 9, 0, 1, 9, 1, 1, 9, 0, 0, 1, 9, 1, 2, 10, 10, 0, 1, 10, 1, 2, 10, 10, 0, 1, 10,
+    1, 2, 10, 10, 0, 1, 10, 1, 2, 9, 9, 0, 1, 2, 1, 2, 9, 9, 0, 1, 2, 1, 2, 9, 9, 0, 1, 2,
+    1, 2, 9, 9, 0, 1, 2, 1, 2, 9, 9, 0, 1, 2, 1, 2, 9, 9, 0, 1, 2, 1, 2, 10, 10, 0, 1, 2,
+    1, 2, 10, 10, 0, 1, 2, 1, 2, 10, 10, 0, 1, 2, 1, 2, 10, 10, 0, 1, 2, 1, 2, 10, 10, 0, 1, 2,
+    1, 2, 10, 10, 0, 1, 2, 1, 1, 9, 0, 0, 1, 3, 1, 1, 10, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 1, 2, 5, 5, 0, 1, 5, 1, 2, 5, 5, 0, 1, 5, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 1, 2, 5, 5, 0, 1, 5, 1, 2, 5, 5, 0, 1, 5, 1, 2, 5, 5, 0, 1, 5,
+    1, 1, 5, 0, 0, 1, 5, 1, 2, 5, 5, 0, 1, 5, 1, 2, 5, 5, 0, 1, 5
+];
+
+fn Staticˉeffectˉfor(Opcode: u32) -> Staticˉeffect {
+    if Opcode >= 179u32 {
+        return Staticˉeffect(false, 0u32, 0u32, 0u32, 0u32, false, 0u32);
+    }
+    let Offset: u32 = Opcode * 7u32;
+    return Staticˉeffect(
+        Bytesˉreadˉu8(Staticˉeffectˉtable, Offset) == 1u8,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Staticˉeffectˉtable, Offset + 1u32)),
+        U32ˉfromˉu8(Bytesˉreadˉu8(Staticˉeffectˉtable, Offset + 2u32)),
+        U32ˉfromˉu8(Bytesˉreadˉu8(Staticˉeffectˉtable, Offset + 3u32)),
+        U32ˉfromˉu8(Bytesˉreadˉu8(Staticˉeffectˉtable, Offset + 4u32)),
+        Bytesˉreadˉu8(Staticˉeffectˉtable, Offset + 5u32) == 1u8,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Staticˉeffectˉtable, Offset + 6u32))
+    );
+}
+
+record Instructionˉresult {
+    Handled: bool;
+    Stackˉvalid: bool;
+    Stackˉdepth: u32;
+    Stackˉmaximum: u32;
+    Stackˉfirstˉword: u32;
+    Stackˉsecondˉword: u32;
+    Stackˉthirdˉword: u32;
+    Stackˉfourthˉword: u32;
+    Stackˉfifthˉword: u32;
+    Stackˉsixthˉword: u32;
+    Stackˉseventhˉword: u32;
+    Stackˉeighthˉword: u32;
+    Stackˉninthˉword: u32;
+    Callˉincrement: u32;
+}
+
+fn Instructionˉfromˉstack(
+    Handled: bool,
+    Stack: Typedˉstack,
+    Callˉincrement: u32
+) -> Instructionˉresult {
+    return Instructionˉresult(
+        Handled,
+        Stack.Valid,
+        Stack.Depth,
+        Stack.Maximum,
+        Stack.Firstˉword,
+        Stack.Secondˉword,
+        Stack.Thirdˉword,
+        Stack.Fourthˉword,
+        Stack.Fifthˉword,
+        Stack.Sixthˉword,
+        Stack.Seventhˉword,
+        Stack.Eighthˉword,
+        Stack.Ninthˉword,
+        Callˉincrement
+    );
+}
+
+fn Instructionˉstack(Result: Instructionˉresult) -> Typedˉstack {
+    return Typedˉstack(
+        Result.Stackˉvalid,
+        Result.Stackˉdepth,
+        Result.Stackˉmaximum,
+        Result.Stackˉfirstˉword,
+        Result.Stackˉsecondˉword,
+        Result.Stackˉthirdˉword,
+        Result.Stackˉfourthˉword,
+        Result.Stackˉfifthˉword,
+        Result.Stackˉsixthˉword,
+        Result.Stackˉseventhˉword,
+        Result.Stackˉeighthˉword,
+        Result.Stackˉninthˉword
+    );
+}
+
+fn Unhandledˉinstruction(Stack: Typedˉstack) -> Instructionˉresult {
+    return Instructionˉfromˉstack(false, Stack, 0u32);
+}
+
+fn Invalidˉinstruction(Stack: Typedˉstack) -> Instructionˉresult {
+    return Instructionˉfromˉstack(true, Invalidˉstack(Stack), 0u32);
+}
+
+fn Applyˉlocalˉinstruction(
+    Input: bytes,
+    Opcode: u32,
+    Operandˉoffset: u32,
+    Parameterˉcount: u32,
+    Parameterˉtypes: u32,
+    Localˉcount: u32,
+    Localˉtypes: u32,
+    Stack: Typedˉstack,
+    Limit: u32
+) -> Instructionˉresult {
+    if Opcode != 4u32 && Opcode != 5u32 {
+        return Unhandledˉinstruction(Stack);
+    }
+    let Localˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Operandˉoffset);
+    if Localˉindex >= Parameterˉcount + Localˉcount {
+        return Invalidˉinstruction(Stack);
+    }
+    var Shapes: u32 = Parameterˉtypes;
+    var Shapeˉindex: u32 = Localˉindex;
+    if Localˉindex >= Parameterˉcount {
+        Shapes = Localˉtypes;
+        Shapeˉindex = Localˉindex - Parameterˉcount;
+    }
+    let Localˉshape: u32 = Shapeˉoffsetˉat(Input, Shapes, Shapeˉindex);
+    var Result: Typedˉstack = Stack;
+    if Opcode == 4u32 {
+        Result = Stackˉpushˉshape(Input, Result, Localˉshape, Limit);
+    } else {
+        Result = Stackˉpopˉshape(Input, Result, Localˉshape);
+    }
+    return Instructionˉfromˉstack(true, Result, 0u32);
+}
+
+fn Applyˉnominalˉinstruction(
+    Input: bytes,
+    Opcode: u32,
+    Operandˉoffset: u32,
+    Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Stack: Typedˉstack,
+    Limit: u32
+) -> Instructionˉresult {
+    if Opcode < 104u32 || Opcode > 109u32 {
+        return Unhandledˉinstruction(Stack);
+    }
+    var Result: Typedˉstack = Stack;
+    if Opcode == 104u32 {
+        let Recordˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Operandˉoffset);
+        if Recordˉtype >= Typeˉdirectory.Count ||
+            Types.Compilerˉwebassemblyˉtypeˉkind(
+                Typeˉdirectory,
+                Recordˉtype
+            ) != 1u32 {
+            return Invalidˉinstruction(Stack);
+        }
+        let Recordˉfields: u32 =
+            Types.Compilerˉwebassemblyˉtypeˉitemˉcount(
+                Typeˉdirectory,
+                Recordˉtype
+            );
+        if Recordˉfields > Result.Depth { return Invalidˉinstruction(Stack); }
+        var Poppedˉfield: u32 = 0u32;
+        while Poppedˉfield < Recordˉfields {
+            let Wantedˉfield: u32 = Recordˉfields - Poppedˉfield - 1u32;
+            let Recordˉshape: u32 =
+                Types.Compilerˉwebassemblyˉrecordˉfieldˉshapeˉoffset(
+                    Input,
+                    Typeˉdirectory,
+                    Recordˉtype,
+                    Wantedˉfield
+                );
+            if Recordˉshape == 0u32 { return Invalidˉinstruction(Stack); }
+            Result = Stackˉpopˉshape(Input, Result, Recordˉshape);
+            if !Result.Valid { return Invalidˉinstruction(Stack); }
+            Poppedˉfield = Poppedˉfield + 1u32;
+        }
+        Result = Stackˉpushˉkind(Result, 7u32, Recordˉtype, Limit);
+        return Instructionˉfromˉstack(true, Result, 0u32);
+    }
+    if Opcode == 105u32 {
+        if Result.Depth == 0u32 || !Stackˉtopˉisˉtypeˉkind(
+            Result,
+            Typeˉdirectory,
+            1u32
+        ) {
+            return Invalidˉinstruction(Stack);
+        }
+        let Fieldˉrecordˉtype: u32 = Stackˉtopˉnominal(Result);
+        let Fieldˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Operandˉoffset);
+        let Fieldˉshape: u32 =
+            Types.Compilerˉwebassemblyˉrecordˉfieldˉshapeˉoffset(
+                Input,
+                Typeˉdirectory,
+                Fieldˉrecordˉtype,
+                Fieldˉindex
+            );
+        if Fieldˉshape == 0u32 { return Invalidˉinstruction(Stack); }
+        Result = Stackˉpopˉkind(Result, 7u32, Fieldˉrecordˉtype);
+        Result = Stackˉpushˉshape(Input, Result, Fieldˉshape, Limit);
+        return Instructionˉfromˉstack(true, Result, 0u32);
+    }
+    if Opcode == 106u32 {
+        let Enumˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Operandˉoffset);
+        if Enumˉtype >= Typeˉdirectory.Count ||
+            Types.Compilerˉwebassemblyˉtypeˉkind(
+                Typeˉdirectory,
+                Enumˉtype
+            ) != 2u32 {
+            return Invalidˉinstruction(Stack);
+        }
+        Result = Stackˉpushˉkind(Result, 8u32, Enumˉtype, Limit);
+        return Instructionˉfromˉstack(true, Result, 0u32);
+    }
+    if Opcode == 107u32 || Opcode == 108u32 {
+        if Result.Depth < 2u32 || !Stackˉtopˉisˉtypeˉkind(
+            Result,
+            Typeˉdirectory,
+            2u32
+        ) {
+            return Invalidˉinstruction(Stack);
+        }
+        let Comparedˉenum: u32 = Stackˉtopˉnominal(Result);
+        Result = Stackˉpopˉkind(Result, 8u32, Comparedˉenum);
+        Result = Stackˉpopˉkind(Result, 8u32, Comparedˉenum);
+        Result = Stackˉpushˉkind(Result, 2u32, 0u32, Limit);
+        return Instructionˉfromˉstack(true, Result, 0u32);
+    }
+    if Result.Depth == 0u32 || !Stackˉtopˉisˉtypeˉkind(
+        Result,
+        Typeˉdirectory,
+        2u32
+    ) {
+        return Invalidˉinstruction(Stack);
+    }
+    let Valuedˉenum: u32 = Stackˉtopˉnominal(Result);
+    Result = Stackˉpopˉkind(Result, 8u32, Valuedˉenum);
+    Result = Stackˉpushˉkind(Result, 3u32, 0u32, Limit);
+    return Instructionˉfromˉstack(true, Result, 0u32);
+}
+
+fn Applyˉcallˉinstruction(
+    Input: bytes,
+    Opcode: u32,
+    Operandˉoffset: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Stack: Typedˉstack,
+    Limit: u32
+) -> Instructionˉresult {
+    if Opcode != 64u32 { return Unhandledˉinstruction(Stack); }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, Operandˉoffset);
+    if Target >= Directory.Count { return Invalidˉinstruction(Stack); }
+    let Parameterˉcount: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+            Directory,
+            Target
+        );
+    if Parameterˉcount > Stack.Depth { return Invalidˉinstruction(Stack); }
+    let Parameterˉtypes: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
+            Directory,
+            Target
+        );
+    var Result: Typedˉstack = Stack;
+    var Argument: u32 = 0u32;
+    while Argument < Parameterˉcount {
+        let Parameter: u32 = Parameterˉcount - Argument - 1u32;
+        let Argumentˉshape: u32 = Shapeˉoffsetˉat(
+            Input,
+            Parameterˉtypes,
+            Parameter
+        );
+        Result = Stackˉpopˉshape(Input, Result, Argumentˉshape);
+        if !Result.Valid { return Invalidˉinstruction(Stack); }
+        Argument = Argument + 1u32;
+    }
+    let Resultˉshape: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
+            Directory,
+            Target
+        );
+    if Shapeˉkind(Input, Resultˉshape) != 0u32 {
+        Result = Stackˉpushˉshape(Input, Result, Resultˉshape, Limit);
+    }
+    return Instructionˉfromˉstack(true, Result, 1u32);
+}
+
+fn Applyˉcontrolˉinstruction(
+    Input: bytes,
+    Opcode: u32,
+    Resultˉshape: u32,
+    Stack: Typedˉstack
+) -> Instructionˉresult {
+    var Result: Typedˉstack = Stack;
+    if Opcode == 48u32 {
+        if Result.Depth != 0u32 { return Invalidˉinstruction(Stack); }
+        return Instructionˉfromˉstack(true, Result, 0u32);
+    }
+    if Opcode == 49u32 {
+        Result = Stackˉpopˉkind(Result, 2u32, 0u32);
+        if !Result.Valid || Result.Depth != 0u32 {
+            return Invalidˉinstruction(Stack);
+        }
+        return Instructionˉfromˉstack(true, Result, 0u32);
+    }
+    if Opcode == 80u32 {
+        if Result.Depth == 0u32 { return Invalidˉinstruction(Stack); }
+        Result = Stackˉpopˉany(Result);
+        return Instructionˉfromˉstack(true, Result, 0u32);
+    }
+    if Opcode == 81u32 {
+        if Shapeˉkind(Input, Resultˉshape) != 0u32 {
+            Result = Stackˉpopˉshape(Input, Result, Resultˉshape);
+        }
+        if !Result.Valid || Result.Depth != 0u32 {
+            return Invalidˉinstruction(Stack);
+        }
+        return Instructionˉfromˉstack(true, Result, 0u32);
+    }
+    return Unhandledˉinstruction(Stack);
+}
+
+export fn Compilerˉwebassemblyˉtypedˉcallsˉvalidateˉrange(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Firstˉfunction: u32,
+    Functionˉcount: u32
+) -> Compilerˉwebassemblyˉtypedˉcallˉsummary {
+    if !Directory.Valid || !Typeˉdirectory.Valid {
+        return Invalidˉsummary();
+    }
+    if !Rangeˉisˉvalid(Bytesˉlength(Input), Codeˉoffset, Codeˉlength) {
+        return Invalidˉsummary();
+    }
+    if Firstˉfunction > Directory.Count ||
+        Functionˉcount > Directory.Count - Firstˉfunction {
+        return Invalidˉsummary();
+    }
+    var Aggregateˉinstructions: u32 = 0u32;
+    var Aggregateˉcalls: u32 = 0u32;
+    var Aggregateˉmaximum: u32 = 0u32;
+    var Functionˉindex: u32 = Firstˉfunction;
+    let Functionˉend: u32 = Firstˉfunction + Functionˉcount;
+    while Functionˉindex < Functionˉend {
+        let Parameterˉcount: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+                Directory,
+                Functionˉindex
+            );
+        let Parameterˉtypes: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
+                Directory,
+                Functionˉindex
+            );
+        let Resultˉtype: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
+                Directory,
+                Functionˉindex
+            );
+        let Localˉcount: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉlocalˉcount(
+                Directory,
+                Functionˉindex
+            );
+        let Localˉtypes: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉlocalˉtypesˉoffset(
+                Directory,
+                Functionˉindex
+            );
+        let Functionˉcodeˉrelative: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉcodeˉoffset(
+                Directory,
+                Functionˉindex
+            );
+        let Functionˉcodeˉlength: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉcodeˉlength(
+                Directory,
+                Functionˉindex
+            );
+        let Declaredˉmaximum: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉmaximumˉstack(
+                Directory,
+                Functionˉindex
+            );
+        if Declaredˉmaximum > 36u32 { return Invalidˉsummary(); }
+        let Functionˉcode: u32 = Codeˉoffset + Functionˉcodeˉrelative;
+        var Stack: Typedˉstack = Typedˉstack(
+            true,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32
+        );
+        var Cursor: u32 = 0u32;
+        var Previousˉopcode: u32 = 0u32;
+        while Cursor < Functionˉcodeˉlength {
+            if Aggregateˉinstructions >= 200000u32 {
+                return Invalidˉsummary();
+            }
+            let Width: u32 =
+                Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+                    Input,
+                    Functionˉcode,
+                    Functionˉcodeˉlength,
+                    Cursor
+                );
+            if Width == 0u32 {
+                return Invalidˉat(Functionˉindex, Cursor, 0u32);
+            }
+            let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                Input,
+                Functionˉcode + Cursor
+            ));
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
+            let Instructionˉoperand: u32 = Functionˉcode + Cursor + 1u32;
+            var Appliedˉinstruction: Instructionˉresult =
+                Unhandledˉinstruction(Stack);
+            if Opcode == 4u32 || Opcode == 5u32 {
+                Appliedˉinstruction = Applyˉlocalˉinstruction(
+                    Input,
+                    Opcode,
+                    Instructionˉoperand,
+                    Parameterˉcount,
+                    Parameterˉtypes,
+                    Localˉcount,
+                    Localˉtypes,
+                    Stack,
+                    Declaredˉmaximum
+                );
+            } else if Opcode >= 104u32 && Opcode <= 109u32 {
+                Appliedˉinstruction = Applyˉnominalˉinstruction(
+                    Input,
+                    Opcode,
+                    Instructionˉoperand,
+                    Typeˉdirectory,
+                    Stack,
+                    Declaredˉmaximum
+                );
+            } else if Opcode == 64u32 {
+                Appliedˉinstruction = Applyˉcallˉinstruction(
+                    Input,
+                    Opcode,
+                    Instructionˉoperand,
+                    Directory,
+                    Stack,
+                    Declaredˉmaximum
+                );
+                if Aggregateˉcalls >= 4096u32 { return Invalidˉsummary(); }
+                Aggregateˉcalls = Aggregateˉcalls + 1u32;
+            } else if Opcode == 48u32 || Opcode == 49u32 ||
+                Opcode == 80u32 || Opcode == 81u32 {
+                Appliedˉinstruction = Applyˉcontrolˉinstruction(
+                    Input,
+                    Opcode,
+                    Resultˉtype,
+                    Stack
+                );
+            }
+            if Appliedˉinstruction.Handled {
+                Stack = Instructionˉstack(Appliedˉinstruction);
+            } else {
+                let Opcodeˉeffect: Staticˉeffect = Staticˉeffectˉfor(Opcode);
+                if !Opcodeˉeffect.Handled {
+                    return Invalidˉat(Functionˉindex, Cursor, Opcode);
+                }
+                Stack = Applyˉeffect(
+                    Stack,
+                    Opcodeˉeffect.Popˉcount,
+                    Opcodeˉeffect.Firstˉkind,
+                    0u32,
+                    Opcodeˉeffect.Secondˉkind,
+                    0u32,
+                    Opcodeˉeffect.Thirdˉkind,
+                    0u32,
+                    Opcodeˉeffect.Hasˉpush,
+                    Opcodeˉeffect.Pushˉkind,
+                    0u32,
+                    Declaredˉmaximum
+                );
+            }
+            if !Stack.Valid {
+                return Invalidˉat(Functionˉindex, Cursor, Opcode);
+            }
+            Previousˉopcode = Opcode;
+            Cursor = Cursor + Width;
+        }
+        if Previousˉopcode != 48u32 && Previousˉopcode != 49u32 &&
+            Previousˉopcode != 81u32 {
+            return Invalidˉat(
+                Functionˉindex,
+                Functionˉcodeˉlength,
+                Previousˉopcode
+            );
+        }
+        if Stack.Depth != 0u32 || Stack.Maximum != Declaredˉmaximum {
+            return Invalidˉat(
+                Functionˉindex,
+                Functionˉcodeˉlength,
+                Previousˉopcode
+            );
+        }
+        if Stack.Maximum > Aggregateˉmaximum {
+            Aggregateˉmaximum = Stack.Maximum;
+        }
+        Functionˉindex = Functionˉindex + 1u32;
+    }
+    return Compilerˉwebassemblyˉtypedˉcallˉsummary(
+        true,
+        Aggregateˉinstructions,
+        Aggregateˉcalls,
+        Aggregateˉmaximum,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉtypedˉcallsˉvalidate(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary
+) -> Compilerˉwebassemblyˉtypedˉcallˉsummary {
+    return Compilerˉwebassemblyˉtypedˉcallsˉvalidateˉrange(
+        Input,
+        Codeˉoffset,
+        Codeˉlength,
+        Directory,
+        Typeˉdirectory,
+        0u32,
+        Directory.Count
+    );
+}

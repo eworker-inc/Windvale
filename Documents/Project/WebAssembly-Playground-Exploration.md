@@ -182,6 +182,8 @@ The following code-inventory pass decodes all 157,844 exact-compiler instruction
 
 A separate portable function-directory module now materializes one immutable 32-byte entry per function without changing the established backend. The exact compiler produces 13,344 deterministic directory bytes, and every one of its 2,991 call targets can resolve parameter, result, local, code-range, and stack metadata in constant time. This is retained development evidence only: operand-stack typing and call signature agreement remain the next gate, and no partial compiler Wasm is published to the playground.
 
+The next independent module adds a 12-byte nominal type directory and a compact 36-value typed stack backed by nine `u32` words. Eleven bounded shards validate all 417 exact-compiler functions; their typed-call counts sum to the independent 2,991-call inventory, maximum stack is 34, and changing one call to an in-range function with a different signature fails at its exact function-relative offset. A portable `bytes -> bytes` memory tool exercises the intended client-only boundary but still reaches `Unsupportedˉcode` in the established direct backend. This identifies the first general executable representation as the next slice without changing the deployed interpreter, adding a server compiler, or claiming a browser speed improvement.
+
 ## Proposed playground shape
 
 The initial user experience could have four primary views:

@@ -1,0 +1,225 @@
+module Compilerˉwebassemblyˉtypeˉdirectory profile portable;
+
+import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
+
+export record Compilerˉwebassemblyˉtypeˉdirectoryˉsummary {
+    Valid: bool;
+    Count: u32;
+    Entries: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalid(Input: bytes) -> Compilerˉwebassemblyˉtypeˉdirectoryˉsummary {
+    return Compilerˉwebassemblyˉtypeˉdirectoryˉsummary(
+        false,
+        0u32,
+        Empty(Input)
+    );
+}
+
+fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Compilerˉwebassemblyˉtypeˉdirectoryˉentryˉwidth() -> u32 {
+    return 12u32;
+}
+
+export fn Compilerˉwebassemblyˉtypeˉdirectoryˉbuild(
+    Input: bytes,
+    Typesˉoffset: u32,
+    Typesˉlength: u32
+) -> Compilerˉwebassemblyˉtypeˉdirectoryˉsummary {
+    let Total: u32 = Bytesˉlength(Input);
+    if !Rangeˉisˉvalid(Total, Typesˉoffset, Typesˉlength) {
+        return Invalid(Input);
+    }
+    if Typesˉlength < 4u32 { return Invalid(Input); }
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Typesˉoffset);
+    if Typeˉcount > 128u32 { return Invalid(Input); }
+    let End: u32 = Typesˉoffset + Typesˉlength;
+    var Cursor: u32 = Typesˉoffset + 4u32;
+    var Entries: bytes = Empty(Input);
+    var Typeˉindex: u32 = 0u32;
+    while Typeˉindex < Typeˉcount {
+        if !Rangeˉisˉvalid(End, Cursor, 1u32) { return Invalid(Input); }
+        let Typeˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Typeˉkind < 1u32 || Typeˉkind > 3u32 {
+            return Invalid(Input);
+        }
+        Cursor = Cursor + 1u32;
+        if !Rangeˉisˉvalid(End, Cursor, 4u32) { return Invalid(Input); }
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Nameˉlength == 0u32 || Nameˉlength > 255u32 {
+            return Invalid(Input);
+        }
+        if !Rangeˉisˉvalid(End, Cursor, Nameˉlength) { return Invalid(Input); }
+        Cursor = Cursor + Nameˉlength;
+        if !Rangeˉisˉvalid(End, Cursor, 4u32) { return Invalid(Input); }
+        let Itemˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Itemˉcount > 256u32 { return Invalid(Input); }
+        let Itemsˉoffset: u32 = Cursor;
+        var Itemˉindex: u32 = 0u32;
+        while Itemˉindex < Itemˉcount {
+            if !Rangeˉisˉvalid(End, Cursor, 4u32) { return Invalid(Input); }
+            let Itemˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+            Cursor = Cursor + 4u32;
+            if Itemˉnameˉlength == 0u32 || Itemˉnameˉlength > 255u32 {
+                return Invalid(Input);
+            }
+            if !Rangeˉisˉvalid(End, Cursor, Itemˉnameˉlength) {
+                return Invalid(Input);
+            }
+            Cursor = Cursor + Itemˉnameˉlength;
+            if Typeˉkind == 1u32 {
+                let Shapeˉwidth: u32 =
+                    Functions.Compilerˉwebassemblyˉshapeˉwidth(
+                        Input,
+                        End,
+                        Cursor,
+                        Typeˉcount,
+                        false
+                    );
+                if Shapeˉwidth == 0u32 { return Invalid(Input); }
+                Cursor = Cursor + Shapeˉwidth;
+            } else if Typeˉkind == 2u32 {
+                if !Rangeˉisˉvalid(End, Cursor, 4u32) {
+                    return Invalid(Input);
+                }
+                Cursor = Cursor + 4u32;
+            } else {
+                if !Rangeˉisˉvalid(End, Cursor, 1u32) {
+                    return Invalid(Input);
+                }
+                let Payloadˉpresent: u32 = U32ˉfromˉu8(
+                    Bytesˉreadˉu8(Input, Cursor)
+                );
+                Cursor = Cursor + 1u32;
+                if Payloadˉpresent > 1u32 { return Invalid(Input); }
+                if Payloadˉpresent == 1u32 {
+                    if !Rangeˉisˉvalid(End, Cursor, 4u32) {
+                        return Invalid(Input);
+                    }
+                    let Payloadˉnameˉlength: u32 =
+                        Bytesˉreadˉu32ˉlittle(Input, Cursor);
+                    Cursor = Cursor + 4u32;
+                    if Payloadˉnameˉlength == 0u32 ||
+                        Payloadˉnameˉlength > 255u32 {
+                        return Invalid(Input);
+                    }
+                    if !Rangeˉisˉvalid(
+                        End,
+                        Cursor,
+                        Payloadˉnameˉlength
+                    ) {
+                        return Invalid(Input);
+                    }
+                    Cursor = Cursor + Payloadˉnameˉlength;
+                    let Payloadˉshapeˉwidth: u32 =
+                        Functions.Compilerˉwebassemblyˉshapeˉwidth(
+                            Input,
+                            End,
+                            Cursor,
+                            Typeˉcount,
+                            false
+                        );
+                    if Payloadˉshapeˉwidth == 0u32 {
+                        return Invalid(Input);
+                    }
+                    Cursor = Cursor + Payloadˉshapeˉwidth;
+                }
+            }
+            Itemˉindex = Itemˉindex + 1u32;
+        }
+        Entries = Appendˉu32(Entries, Typeˉkind);
+        Entries = Appendˉu32(Entries, Itemˉcount);
+        Entries = Appendˉu32(Entries, Itemsˉoffset);
+        Typeˉindex = Typeˉindex + 1u32;
+    }
+    if Cursor != End { return Invalid(Input); }
+    if Bytesˉlength(Entries) != Typeˉcount *
+        Compilerˉwebassemblyˉtypeˉdirectoryˉentryˉwidth() {
+        return Invalid(Input);
+    }
+    return Compilerˉwebassemblyˉtypeˉdirectoryˉsummary(
+        true,
+        Typeˉcount,
+        Entries
+    );
+}
+
+fn Entryˉoffset(Index: u32) -> u32 {
+    return Index * Compilerˉwebassemblyˉtypeˉdirectoryˉentryˉwidth();
+}
+
+export fn Compilerˉwebassemblyˉtypeˉkind(
+    Directory: Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Directory.Entries, Entryˉoffset(Index));
+}
+
+export fn Compilerˉwebassemblyˉtypeˉitemˉcount(
+    Directory: Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Directory.Entries, Entryˉoffset(Index) + 4u32);
+}
+
+export fn Compilerˉwebassemblyˉtypeˉitemsˉoffset(
+    Directory: Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Directory.Entries, Entryˉoffset(Index) + 8u32);
+}
+
+export fn Compilerˉwebassemblyˉrecordˉfieldˉshapeˉoffset(
+    Input: bytes,
+    Directory: Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Typeˉindex: u32,
+    Fieldˉindex: u32
+) -> u32 {
+    if !Directory.Valid || Typeˉindex >= Directory.Count {
+        return 0u32;
+    }
+    if Compilerˉwebassemblyˉtypeˉkind(Directory, Typeˉindex) != 1u32 {
+        return 0u32;
+    }
+    let Fieldˉcount: u32 = Compilerˉwebassemblyˉtypeˉitemˉcount(
+        Directory,
+        Typeˉindex
+    );
+    if Fieldˉindex >= Fieldˉcount { return 0u32; }
+    var Cursor: u32 = Compilerˉwebassemblyˉtypeˉitemsˉoffset(
+        Directory,
+        Typeˉindex
+    );
+    var Current: u32 = 0u32;
+    while Current < Fieldˉindex {
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32 + Nameˉlength;
+        let Shapeˉwidth: u32 =
+            Functions.Compilerˉwebassemblyˉshapeˉwidth(
+                Input,
+                Bytesˉlength(Input),
+                Cursor,
+                Directory.Count,
+                false
+            );
+        if Shapeˉwidth == 0u32 { return 0u32; }
+        Cursor = Cursor + Shapeˉwidth;
+        Current = Current + 1u32;
+    }
+    let Selectedˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    return Cursor + 4u32 + Selectedˉnameˉlength;
+}
