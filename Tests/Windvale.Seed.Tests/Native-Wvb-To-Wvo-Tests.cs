@@ -17,6 +17,9 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_TEXT_SERVICES_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Text-Services.wv");
+    private static readonly string WVB_TO_WVO_BYTE_CONSTRUCTION_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Byte-Construction.wv");
     private static readonly string WVB_TO_WVO_ENUMS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Enums.wv");
@@ -51,13 +54,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 323_971;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_469_248;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 326_867;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_522_496;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "2b4b8dd1877d2714d5bb86e6b7526048568918fe0551cf7a4ab891f9b46293ee";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_468_736;
+        "45c0aea665f139ffe0eb87dfa6f7305e5c86fda100e9d64d1c90ce62234dd6f7";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_521_984;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "1215b8e6d9d01f7220f72215f0e9d08e28f1617e8ca98f1ea1d317c6010bc49b";
+        "77f0c6be7f8f84913575297fe89f5fcc8cf0c39c7f21824aff8e911012b6c0fc";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -489,6 +492,15 @@ internal static partial class Program
         var Memory = Moduleˉcodec.Readˉandˉverify(
             Compileˉwvbˉtoˉwvoˉmemoryˉsuccess());
         Assertˉtextˉserviceˉlowering(Tool, Memory);
+    }
+
+    private static void Nativeˉbyteˉconstructionˉloweringˉagrees()
+    {
+        var Tool = Moduleˉcodec.Readˉandˉverify(
+            Compileˉwvbˉtoˉwvoˉtoolˉsuccess());
+        var Memory = Moduleˉcodec.Readˉandˉverify(
+            Compileˉwvbˉtoˉwvoˉmemoryˉsuccess());
+        Assertˉbyteˉconstructionˉlowering(Tool, Memory);
     }
 
     private static byte[] Compileˉwvbˉtoˉwvoˉtoolˉsuccess() =>
@@ -996,6 +1008,58 @@ internal static partial class Program
             tool,
             Wvb,
             maximumˉinstructions: 100_000_000);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(
+            $"native x64 status=Valid abi=22 " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length}\n",
+            Toolˉresult.Output);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+    }
+
+    private static void Assertˉbyteˉconstructionˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_BYTE_CONSTRUCTION_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        True(Module.Functions.SelectMany(Function => Function.Instructions)
+            .Any(Instruction => Instruction.Opcode == Opcode.Bytesˉfromˉu8),
+            "The byte-construction fixture omitted bytes.from_u8.");
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        Equal(0, Native.Fragment.Requiredˉservices.Length);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+        var Expectedˉview = Objectˉcodec.Readˉandˉverify(
+            Expectedˉobject.AsSpan()).Value;
+        Console.WriteLine(
+            $"NATIVE_BYTE_CONSTRUCTION_MEASUREMENT " +
+            $"wvb-bytes={Wvb.Length} " +
+            $"wvb-sha256={Moduleˉdigest.Calculateˉsha256(Wvb)} " +
+            $"code-bytes={Expectedˉview.Sections[0].Data.Length} " +
+            $"object-bytes={Expectedˉobject.Length} " +
+            $"object-sha256={Objectˉdigest.Calculateˉsha256(Expectedˉobject.AsSpan())}");
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(tool, Wvb);
         Equal(0, Toolˉresult.Exitˉcode);
         Equal(string.Empty, Toolˉresult.Diagnostics);
         Equal(

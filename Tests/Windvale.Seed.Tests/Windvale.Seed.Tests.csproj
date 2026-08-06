@@ -370,6 +370,9 @@
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Text-Services.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Text-Services.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvb-To-Wvo-Byte-Construction.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Byte-Construction.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Enums.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Enums.wv" />
     <EmbeddedResource

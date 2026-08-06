@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "808b7f72ed31a35d52985643df31d8dafaf255c46f3026dbf2ea168afe1ec7cf";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "c88321782dfe60224863eed5a8afb3bafd31b1c0bde1d12cc2a580d4c2de6d81";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "d641039357bfb6be0c860002a374d70e5266f39861b4c9ea7e4df192dfdf21b3";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "29f9d724e9cd5029a923e550fde3832c186de75067259c6efa8f7737d8494391";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "697d8256464fe49bcf15fc5bdb8eb34b0aa2f08d3819d154f1bb15cda7001c33";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "93553ce7cc00a0c2ec73bf6f8862b5a5a5d4c203658b37ff99f7c9f0ba50cc8e";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "0fcb9201e91f38e200d5208b042deeba8f85104c957802ba270dc08ebecf952c";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "82d1df1e15aaf0b38facf00bde04e9fdd615fd36a62ee92d7eddc0ba8168ed2e";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "ef544dc1552d5c41603b9e7a5e8e55e3ea473091193760476193d6db764c65f9";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -1192,6 +1192,7 @@ internal static partial class Program
         new("native WVB-to-WVO AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL], Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable),
         new("native WVB-to-WVO lowerer emits the pinned object without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉruns),
         new("native u32 formatting lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉformatˉloweringˉagrees),
+        new("native byte construction lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉbyteˉconstructionˉloweringˉagrees),
         new("native source-to-AOT front door composes without .NET child processes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉsourceˉtoˉaotˉfrontˉdoorˉcomposes),
         new("native borrowed bytes and unsigned scalars agree with the reference runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉborrowedˉbytesˉagree),
         new("native byte descriptors survive helper returns and later allocations", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉbyteˉdescriptorˉreturnsˉsurvive),
@@ -2963,6 +2964,7 @@ internal static partial class Program
         var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         Assertˉstaticˉdescriptorˉlowering(Tool, Memory);
         Assertˉtextˉserviceˉlowering(Tool, Memory);
+        Assertˉbyteˉconstructionˉlowering(Tool, Memory);
         Assertˉdataˉandˉtextˉlowering(Tool, Memory);
         Assertˉenumˉlowering(Tool, Memory);
         Assertˉrecordˉlowering(Tool, Memory);

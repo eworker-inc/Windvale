@@ -1,0 +1,8 @@
+module Wvbˉtoˉwvoˉbyteˉconstruction profile portable;
+
+export fn Main() -> i32 {
+    let Encoded = Bytesˉfromˉu8(255u8);
+    if Bytesˉlength(Encoded) != 1u32 { return 1; }
+    if Bytesˉreadˉu8(Encoded, 0u32) != 255u8 { return 2; }
+    return 42;
+}

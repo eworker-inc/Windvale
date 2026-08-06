@@ -431,6 +431,42 @@ fn Emitˉruntimeˉunary(
     );
 }
 
+fn Emitˉbytesˉfromˉu8(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Target: u32 = Valueˉslot(Shape, 6u8, State.Nextˉbytes);
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Bytesˉconcatenation.Compilerˉnativeˉx64ˉemitˉbytesˉfromˉu8(
+            State.Result,
+            Source,
+            Target,
+            Instruction.Runtimeˉtarget
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(6u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes + 1u32
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
     Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
     Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
@@ -453,6 +489,9 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
     }
     if Instruction.Opcode == 119u8 {
         return Emitˉbytesˉconcat(Instruction, Shape, State);
+    }
+    if Instruction.Opcode == 120u8 {
+        return Emitˉbytesˉfromˉu8(Instruction, Shape, State);
     }
     if Instruction.Opcode == 112u8 || Instruction.Opcode == 115u8 ||
         Instruction.Opcode == 116u8 ||

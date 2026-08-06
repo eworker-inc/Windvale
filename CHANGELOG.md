@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Added bounded `bytes.from_u8` lowering through the existing ABI-22 dynamic-byte arena. A focused `255u8` fixture reproduces Stage 0's complete WVO through both Windvale adapters without a runtime service; full-tool self-lowering now advances to `bytes.from_i32_little`.
 - Added ABI-22 service-backed `u32.format` to the Windvale-written native x86-64 lowerer. A focused maximum-value fixture requires decimal `4294967295` and reproduces Stage 0's complete WVO through both Windvale adapters; full-tool self-lowering now advances to `bytes.from_u8`.
 - Admitted bounded enum parameters and returns through ABI 22's existing 32-bit scalar path while preserving exact nominal identity in the call directory and assigning returned values to the enum slot group. The focused enum fixture now crosses `Keep(Weather) -> Weather`, and full-tool self-lowering advances to the first unsupported `u32.format` instruction.
 - Replaced the native record planner's single-operand event with bounded per-instruction record-use lists, allowing direct calls to consume all record arguments admitted by ABI 22's existing 64-parameter directory. A compact four-record helper reproduces Stage 0's complete WVO through both Windvale adapters.
