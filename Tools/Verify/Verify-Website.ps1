@@ -30,6 +30,7 @@ function Invoke-External {
 Invoke-External $WebsiteRoot 'npm' @('ci')
 Invoke-External $PlaygroundRoot 'npm' @('ci')
 Invoke-External $PlaygroundRoot 'npm' @('run', 'build')
+Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-demo')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-compiler-package')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-compiler-demo')
 Invoke-External $WebsiteRoot 'npm' @('run', 'verify:wasm-compiler-core')

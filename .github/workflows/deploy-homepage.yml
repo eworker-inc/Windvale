@@ -117,6 +117,7 @@ jobs:
         if: ${{ steps.gate.outputs.deploy == 'true' }}
         working-directory: Website
         run: |
+          npm run verify:wasm-demo
           npm run verify:wasm-compiler-package
           npm run verify:wasm-compiler-demo
           npm run verify:wasm-compiler-core
