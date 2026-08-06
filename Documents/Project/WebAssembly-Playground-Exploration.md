@@ -176,6 +176,8 @@ The bounded direct static-data slice then permits the interpreter to replace its
 
 The direct backend next completely validates up to 1,024 unused nominal declarations, including bounded record fields, enum members, nested shape references, and exact inner payload consumption. A primitive fixture with unused record and enum declarations retains byte-identical WebAssembly. The exact portable compiler now clears its 104 static declarations and 82 nominal declarations before returning `Unsupportedˉcode` without output at its 417-function executable graph. This narrows the direct-compiler frontier without claiming nominal value lowering or changing the still-interpreted browser path.
 
+A separate compiler-scale inventory pass then admits one through 512 functions with bounded names, parameter/local/result shapes, contiguous code ranges, aggregate code, and declared stack depth. The exact compiler fits with 417 functions, 308 distinct signatures, at most 24 parameters, 1,408 locals, 21,875 code bytes, and stack depth 34. Its 2,991 calls include 2,471 backward and 32 self-calls, so the older sixteen-function forward-only emitter cannot be widened by changing one constant. The direct backend now returns `Unsupportedˉcode` only after consuming this inventory; code typing and emission remain the next boundary.
+
 ## Proposed playground shape
 
 The initial user experience could have four primary views:

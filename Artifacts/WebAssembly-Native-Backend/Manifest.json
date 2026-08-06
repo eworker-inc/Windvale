@@ -1,7 +1,7 @@
 {
   "format": "windvale-webassembly-native-backend-1",
-  "sourceCommit": "5a1a2392a5c001166e573a9cde1f78a09826f2fe",
-  "decision": "Documents/Decisions/0296-Bounded-Direct-WebAssembly-Nominal-Tables.md",
+  "sourceCommit": "9887d6561845e3bb5c0e4992c6eed3e0503a7bb4",
+  "decision": "Documents/Decisions/0297-Compiler-Scale-WebAssembly-Function-Inventory.md",
   "sourceProject": "Windvale-WebAssembly-Artifact-Tool.wvproj",
   "containerProfile": "compiler-family-wvha-1",
   "normalUseRequiresDotnet": false,
@@ -11,24 +11,24 @@
       "name": "webassembly-compiler-wvb",
       "path": "Wvb/WebAssembly-Compiler.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 334640,
-      "sha256": "d2955805a6275b1c9c7d6d3443e04168a19812cb1d234eedde04181ac17e0019",
+      "bytes": 340435,
+      "sha256": "c195e42a0ff7814dbc2af0c0128e9ee28ffe857fe7d43a3611cda3ccb7dcd804",
       "sourceProject": "Windvale-WebAssembly-Artifact-Tool.wvproj"
     },
     {
       "name": "windows-x64-webassembly-compiler",
       "path": "windows-x64/wvwasm.exe",
       "target": "windows-x64-console-v3",
-      "bytes": 5371904,
-      "sha256": "f41a911175209d150c01dd825e6b8ad89b6fb69894dbe55b7a2a477a63d3d9d4",
+      "bytes": 5420544,
+      "sha256": "23c0675c56542cc619bb58ca359f5e5127227a9b253faf0e79ce73e9fc27d245",
       "sourceWvb": "Wvb/WebAssembly-Compiler.wvb"
     },
     {
       "name": "linux-x64-webassembly-compiler",
       "path": "linux-x64/wvwasm.elf",
       "target": "linux-x64-console-v3",
-      "bytes": 5373952,
-      "sha256": "9e430c52233cbedd972f02641ebbfd8a8c276eb76a687ba10881d203e58a900a",
+      "bytes": 5419008,
+      "sha256": "01f2e2210cbdffa9eac85467072846636c0447aa91e67f7b5eef7e3a084d0811",
       "sourceWvb": "Wvb/WebAssembly-Compiler.wvb"
     }
   ]
