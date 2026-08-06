@@ -19,6 +19,11 @@ Equal("wasm32-browser-v1-experimental", Manifest.target, "manifest target");
 Equal("verified-copy", Manifest.normalPublication?.mode, "normal publication mode");
 Equal(false, Manifest.normalPublication?.requiresDotnet, "normal .NET dependency");
 Equal(
+    "../WebAssembly-Native-Compiler/Manifest.json",
+    Manifest.nativeCompilerManifest,
+    "native compiler manifest",
+);
+Equal(
     "Documents/Decisions/0273-Warmed-WebAssembly-Compiler-Worker.md",
     Manifest.decision,
     "package decision",
@@ -29,6 +34,55 @@ if (!Decision.startsWith("# Decision 0273: Warmed WebAssembly compiler worker\n"
 }
 if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 3) {
     Fail("The WebAssembly playground manifest must own exactly three artifacts.");
+}
+
+const Nativeˉcompilerˉmanifestˉpath = path.resolve(
+    Packageˉroot,
+    Manifest.nativeCompilerManifest,
+);
+const Nativeˉcompilerˉroot = path.dirname(Nativeˉcompilerˉmanifestˉpath);
+const Nativeˉcompilerˉmanifest = JSON.parse(await readFile(
+    Nativeˉcompilerˉmanifestˉpath,
+    "utf8",
+));
+Equal(
+    "windvale-webassembly-native-compiler-1",
+    Nativeˉcompilerˉmanifest.format,
+    "native compiler package format",
+);
+Equal(false, Nativeˉcompilerˉmanifest.normalUseRequiresDotnet, "native compiler normal .NET dependency");
+Equal(true, Nativeˉcompilerˉmanifest.recoveryRequiresDotnet, "native compiler recovery .NET dependency");
+Equal("Windvale-Compiler.wvproj", Nativeˉcompilerˉmanifest.sourceProject, "native compiler project");
+Equal(
+    "Documents/Decisions/0277-Native-WebAssembly-Compiler-Regeneration.md",
+    Nativeˉcompilerˉmanifest.decision,
+    "native compiler decision",
+);
+const Nativeˉcompilerˉdecision = await readFile(
+    path.join(Repositoryˉroot, Nativeˉcompilerˉmanifest.decision),
+    "utf8",
+);
+if (!Nativeˉcompilerˉdecision.startsWith(
+    "# Decision 0277: Native WebAssembly compiler regeneration\n",
+)) {
+    Fail("The WebAssembly native compiler decision is invalid.");
+}
+if (!Array.isArray(Nativeˉcompilerˉmanifest.artifacts) ||
+    Nativeˉcompilerˉmanifest.artifacts.length !== 3) {
+    Fail("The WebAssembly native compiler manifest must own exactly three artifacts.");
+}
+for (const Artifact of Nativeˉcompilerˉmanifest.artifacts) {
+    const Artifactˉpath = path.resolve(Nativeˉcompilerˉroot, Artifact.path);
+    if (!Artifactˉpath.startsWith(`${Nativeˉcompilerˉroot}${path.sep}`)) {
+        Fail("A WebAssembly native compiler artifact path escapes its package.");
+    }
+    const Bytes = await readFile(Artifactˉpath);
+    Equal(Artifact.bytes, Bytes.byteLength, `${Artifact.name} byte length`);
+    Equal(
+        Artifact.sha256,
+        createHash("sha256").update(Bytes).digest("hex"),
+        `${Artifact.name} SHA-256`,
+    );
 }
 
 const Artifacts = new Map();
@@ -49,6 +103,11 @@ for (const Artifact of Manifest.artifacts) {
 
 const Interpreter = Artifacts.get("scalar-interpreter-wasm");
 const Compiler = Artifacts.get("portable-source-compiler");
+Equal(
+    "pinned-native-source-compiler",
+    Manifest.artifacts.find(Artifact => Artifact.name === "portable-source-compiler")?.production,
+    "portable compiler production route",
+);
 if (!WebAssembly.validate(Interpreter)) {
     Fail("The packaged scalar interpreter is not valid WebAssembly.");
 }

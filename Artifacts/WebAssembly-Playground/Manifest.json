@@ -7,6 +7,7 @@
     "mode": "verified-copy",
     "requiresDotnet": false
   },
+  "nativeCompilerManifest": "../WebAssembly-Native-Compiler/Manifest.json",
   "artifacts": [
     {
       "name": "portable-source-compiler",
@@ -14,7 +15,7 @@
       "bytes": 919577,
       "sha256": "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e",
       "sourceProject": "Windvale-Compiler-Memory.wvproj",
-      "production": "stage0-recovery-baseline"
+      "production": "pinned-native-source-compiler"
     },
     {
       "name": "scalar-interpreter-wvb",

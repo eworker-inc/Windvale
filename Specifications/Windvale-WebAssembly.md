@@ -611,10 +611,11 @@ This profile does not establish:
 - a general WVB-to-WebAssembly backend;
 - a general-WVB verifier with nonempty stack joins or a general Windvale-native WVB interpreter;
 - function values, indirect calls, unbounded recursion, arbitrary or unbounded instruction streams, unbounded record allocation, exact-precision garbage collection, collection execution, or browser capability imports;
-- complete execution or direct lowering of the Windvale compiler itself in WebAssembly;
-- replacement of the .NET playground path; or
-- production browser isolation.
+- direct lowering of the Windvale compiler itself to WebAssembly;
+- a general browser capability-isolation or production security profile.
 
 ## Next extension boundary
 
-The root-first graph and first cohesive extraction restore ordinary optimizing-tier engine evidence without changing execution ABI 3. The minimal portable source now completes from bounded `WVSS 1` to a byte-exact `WVCO 1` result. The next slice must replace Stage 0 artifact production in the normal website path: apply and publish the WebAssembly backend and exact compiler through the pinned native front door, then compose verification, compilation, and result execution inside one disposable browser worker. Further extraction should follow measured ownership boundaries rather than move the whole interpreter state through opaque packets. The existing direct-AOT selector is not a current shortcut: compiler static data, nominal values, recursion, and general verified call ordering remain unsupported there. Capability execution remains separately authorized by the worker. Indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until each has an explicit resource and evidence contract.
+The root-first graph and first cohesive extraction restore ordinary optimizing-tier engine evidence without changing execution ABI 3. The minimal portable source now completes from bounded `WVSS 1` to a byte-exact `WVCO 1` result. Decisions 0270, 0273, and 0275 compose verification, compilation, and result execution inside one disposable browser worker and make that static worker the normal website playground without a .NET browser runtime. Decision 0277 then pins the standalone native compiler packages and native publisher path that regenerate the exact portable compiler WVB without .NET in normal artifact production. The remaining regeneration seam is applying the Windvale-authored WebAssembly backend to the native-built interpreter WVB; Stage 0 remains explicit recovery for that application step until a bounded Windvale-native package is admitted.
+
+Further extraction should follow measured ownership boundaries rather than move the whole interpreter state through opaque packets. The existing direct-AOT selector is not a current shortcut: compiler static data, nominal values, recursion, and general verified call ordering remain unsupported there. Capability execution remains separately authorized by the worker. Indirect calls, `break`, `continue`, and browser capability imports remain outside the profile until each has an explicit resource and evidence contract.

@@ -1,6 +1,6 @@
 # .NET retirement inventory
 
-> Inventory snapshot: 5 August 2026
+> Inventory snapshot: 6 August 2026
 
 This is the operational ledger for moving .NET out of Windvale's normal Windows and Linux workflows under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and the [native-execution architecture](../Architecture/Native-Execution-And-Dotnet-Retirement.md). It records direct managed entry points, the replacement standing of each product surface, and the retained recovery owners. It does not declare .NET retired while any complete gate remains open.
 
@@ -33,10 +33,10 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | N2 | Complete native backend and baseline JIT | `managed-normal` | The qualified Stage 0 backend remains the complete implementation. Windvale must own general lowering, verification, publication, runtime services, and deterministic JIT/AOT behavior before cutover. |
 | T2 | Complete Seed, OS, golden, malformed, and differential suites | `managed-normal` | The C# harness owns the broad suite. Reusable cases must move to versioned fixtures and manifests rather than being ported line for line. |
 | O1 | Windvale OS image construction and boot probes | `managed-normal` | `Operating-System/Windvale.Bootstrap` and `Verify-Os-Boot.ps1` still build and orchestrate the current images. |
-| W1 | Complete WebAssembly generation and verification | `managed-normal` | The static browser demo executes without .NET, but the full generator and verification route still uses the managed tool. |
+| W1 | Complete WebAssembly generation and verification | `managed-normal` | The normal static playground compiles, verifies, and executes through Windvale-native WebAssembly, and the pinned native source compiler now regenerates its portable compiler WVB without .NET. Applying the Windvale-authored backend to regenerate the interpreter Wasm and the broader generator/verification gate still use the managed recovery tool. |
 | G1 | Independent dual-host qualification | `managed-normal` | `.github/workflows/verify.yml` installs .NET and runs the managed Seed gate. Native replacement must retain Windows/Linux independence and fail-closed verification. |
-| R1 | Homepage and playground release | `managed-normal` | Both release workflows publish the Blazor host with .NET. The static native browser path does not yet replace that release surface. |
-| D1 | Local editable browser playground | `managed-normal` | `npm run dev:playground` still starts the managed Blazor host after building the editor package. |
+| R1 | Homepage and playground release | `native-candidate` | The homepage workflow publishes the static playground and its digest-pinned native package without installing .NET. Independent release promotion evidence remains before this row is called qualified. |
+| D1 | Local editable browser playground | `native-candidate` | `npm run dev:playground` builds and serves the static Monaco/native-WebAssembly application without starting Blazor or .NET. Cross-host promotion remains. |
 | C1 | Clean bootstrap from documented native seeds | `missing` | Current recovery scripts reconstruct pinned native artifacts through Stage 0. A previous native release must rebuild the accepted toolchain without .NET. |
 | C2 | Final digest-bound Stage 0 recovery archive | `missing` | Produce and verify one final Windows/Linux recovery release before deleting retired managed source. |
 
@@ -44,11 +44,10 @@ The next transfer should close a complete row or a clearly bounded part of one r
 
 ## Direct managed entry points
 
-The companion JSON currently records 11 operational files across four lanes:
+The companion JSON currently records 10 operational files across three lanes:
 
-- development: the local editable playground command;
 - verification: Seed, bootstrap, OS, WebAssembly, and GitHub qualification;
-- release: GitHub homepage/playground publication; and
+- release: the managed independent-qualification workflow that gates publication; and
 - recovery: the explicit Stage 0 reconstruction scripts and bootstrap evidence.
 
 The verifier searches website package commands, GitHub workflows, `Tools/Verify`, and `Tools/Recovery`. A direct .NET invocation added to those scopes must be entered in the JSON in the same change. Removing an invocation requires removing its inventory entry and updating the corresponding surface row.
@@ -64,7 +63,7 @@ The verifier searches website package commands, GitHub workflows, `Tools/Verify`
 | `Tools/Windvale.Project` and `Tools/Windvale.Tool` | Managed command orchestration and project parsing | Remove from normal use as native launchers and project tooling become complete. |
 | `Tests/Windvale.Seed.Tests` and `Tests/Windvale.Os.Tests` | Broad conformance, differential, malformed-input, OS, and artifact evidence | Retain as independent evidence until equivalent native manifests/fixtures and the final gate qualify. |
 | `Operating-System/Windvale.Bootstrap` | Host-side image construction and probe orchestration | Retire only after the native OS build/probe route reproduces the qualified images and reports. |
-| `Tools/Windvale.Playground` and `Tools/Windvale.Playground.Engine` | Editable browser host and current release packaging | Retire from normal use after a complete static/native browser build and release route exists. |
+| `Tools/Windvale.Playground` and `Tools/Windvale.Playground.Engine` | The static files under `Tools/Windvale.Playground` are the normal browser product; its managed host and engine remain recovery/differential evidence | Keep the static application. Move or retire only the managed project/engine after the remaining WebAssembly artifact-production seam and final recovery gate close. |
 
 Deleting any owner early would destroy recovery or independent evidence. After every normal responsibility has a qualified native owner, the managed projects move behind explicit recovery commands; source deletion is a final action after the complete Decision 0057 gate and archived recovery proof.
 

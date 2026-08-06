@@ -1,0 +1,34 @@
+{
+  "format": "windvale-webassembly-native-compiler-1",
+  "sourceCommit": "973584df2735d52e131a52aaa71637b472b16224",
+  "decision": "Documents/Decisions/0277-Native-WebAssembly-Compiler-Regeneration.md",
+  "sourceProject": "Windvale-Compiler.wvproj",
+  "normalUseRequiresDotnet": false,
+  "recoveryRequiresDotnet": true,
+  "artifacts": [
+    {
+      "name": "source-compiler-wvb",
+      "path": "Wvb/Source-Compiler.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 921900,
+      "sha256": "fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556",
+      "sourceProject": "Windvale-Compiler.wvproj"
+    },
+    {
+      "name": "windows-x64-source-compiler",
+      "path": "windows-x64/wvcompile.exe",
+      "target": "windows-x64-console-v3",
+      "bytes": 27547648,
+      "sha256": "cba2f0754fac93cd9e79f4d87340a95cddd6491d17ec4d1ae169194a22a14c21",
+      "sourceWvb": "Wvb/Source-Compiler.wvb"
+    },
+    {
+      "name": "linux-x64-source-compiler",
+      "path": "linux-x64/wvcompile.elf",
+      "target": "linux-x64-console-v3",
+      "bytes": 27549696,
+      "sha256": "67a04374c611c7880f916639e63462af818ed807b8cf0feda9423a11a02ddbbe",
+      "sourceWvb": "Wvb/Source-Compiler.wvb"
+    }
+  ]
+}
