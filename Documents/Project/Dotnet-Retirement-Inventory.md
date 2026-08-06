@@ -40,6 +40,11 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | C1 | Clean bootstrap from documented native seeds | `missing` | Current recovery scripts reconstruct pinned native artifacts through Stage 0. A previous native release must rebuild the accepted toolchain without .NET. |
 | C2 | Final digest-bound Stage 0 recovery archive | `missing` | Produce and verify one final Windows/Linux recovery release before deleting retired managed source. |
 
+Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
+both digest-bound read-only launchers require exact semantic or typed-execution
+reports and preserve each compact fixed input without a live .NET oracle.
+Broader nominal/limit unsafe cases and seeded randomized containment remain.
+
 The next transfer should close a complete row or a clearly bounded part of one row. Candidate tools are not promoted merely because they compose once; their decoders, failure behavior, deterministic bytes, and both host packages remain part of the grouped gate.
 
 ## Direct managed entry points

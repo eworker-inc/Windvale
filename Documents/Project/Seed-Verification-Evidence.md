@@ -3614,3 +3614,26 @@ implementation, candidate artifact, WebAssembly implementation, source semantic,
 or WVO format byte changed. Linux execution of this exact matrix, Development,
 Standard, Qualification, randomized and hostile-size object transfer, promotion,
 and the grouped end-of-goal gate remain deferred.
+
+## Local fixed native unsafe-WVB rejection evidence
+
+[Decision 0329](../Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md)
+adds one focused .NET-free coordinator over both digest-bound WVB read-only
+launchers. Five 174-byte fixtures derive from the canonical
+`Wvbˉtoˉwvoˉfixture` module and fix unknown-opcode, truncated-operand,
+out-of-range local, out-of-range jump, and after-return instruction streams.
+Their complete mutations and SHA-256 identities are pinned in the test
+contract; neither host command parses or mutates WVB.
+
+Both launchers return `1`, write no standard output, preserve every input, and
+emit the exact semantic or typed-execution phase report. Direct Windows
+execution passes 5/5 in 2.411 seconds. After reviewing the merged wrapper, the
+focused selection `native WVB unsafe rejections agree without .NET` passes 1/1
+in 2.420 seconds after a 9.64-second zero-warning Release build; the complete
+command takes 16.4 seconds.
+
+The permanent coordinator invokes no .NET process, rebuilds no artifact, and
+repeats no project compilation or successful execution. No product, WVB,
+candidate artifact, or WebAssembly implementation changed. Broader nominal and
+limit cases, seeded randomized input, Linux execution, Development, Standard,
+Qualification, promotion, and the grouped end-of-goal gate remain deferred.

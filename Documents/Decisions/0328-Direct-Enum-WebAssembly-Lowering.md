@@ -1,4 +1,4 @@
-# Decision 0326: Direct enum WebAssembly lowering
+# Decision 0328: Direct enum WebAssembly lowering
 
 - Date: 2026-08-06
 - Status: Implemented for constants, comparisons, names, calls, and local defaults

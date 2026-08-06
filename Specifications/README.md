@@ -42,6 +42,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [`wvdump` structural core](Wv-Dump-Core.md)
 - [`wvdump` report](Wv-Dump-Report.md)
 - [Native WVB read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md)
+- [Native WVB unsafe rejection tests](Windvale-Native-Wvb-Unsafe-Rejection-Tests.md)
 
 ## Database experiment
 

@@ -30,6 +30,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0327](../Decisions/0327-Fixed-Native-Linker-Map-Limit.md) transfers that separate `WVL1012` boundary to a one-case .NET-free native command. A compact archive replaces large generated WVA source while preserving exact 16,384-definition, report, input, and output evidence; Linux execution and the grouped gate still precede linker promotion.
 
+[Decision 0329](../Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) transfers five core unsafe instruction-stream boundaries to both digest-bound WVB read-only launchers with immutable compact fixtures and exact phase reports. Broader nominal/limit cases, seeded randomized containment, Linux execution, and the grouped gate remain.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

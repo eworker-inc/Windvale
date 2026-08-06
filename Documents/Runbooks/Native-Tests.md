@@ -55,6 +55,34 @@ PASS  wvo-trailing
 Tests: 26, Passed: 26, Failed: 0
 ```
 
+The focused unsafe-WVB command reuses neither project builds nor successful
+execution. On Windows x64 run:
+
+```bat
+Tools\Native\Test-Wvb-Unsafe-Rejections.cmd
+```
+
+On Linux x64 run:
+
+```sh
+./Tools/Native/Test-Wvb-Unsafe-Rejections.sh
+```
+
+Its exact success report is:
+
+```text
+PASS  unknown-opcode
+PASS  truncated-operand
+PASS  local-index
+PASS  jump-target
+PASS  after-return
+Tests: 5, Passed: 5, Failed: 0
+```
+
+Both digest-bound WVB read-only launchers must reject every case with the exact
+phase report and preserve the complete input. The command decodes fixed compact
+fixtures; it does not mutate WVB or start .NET.
+
 The separate focused linker-rejection command does not rebuild source or repeat
 the successful AOT chain. On Windows x64 run:
 
