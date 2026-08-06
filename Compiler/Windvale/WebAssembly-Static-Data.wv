@@ -128,7 +128,7 @@ export fn Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
     Input: bytes,
     Summary: Compilerˉwebassemblyˉstaticˉdataˉsummary
 ) -> bytes {
-    if !Summary.Valid || Summary.Count == 0u32 { return Empty(Input); }
+    if !Summary.Valid || Summary.Staticˉlength == 0u32 { return Empty(Input); }
     var Payload: bytes = Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(1u32);
     Payload = Append(
         Payload,

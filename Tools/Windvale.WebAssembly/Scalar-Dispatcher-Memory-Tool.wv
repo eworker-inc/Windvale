@@ -7,6 +7,7 @@ import Compilerˉwebassemblyˉexecutableˉgraph as Executable;
 import Compilerˉwebassemblyˉcontrolˉflow as Control;
 import Compilerˉwebassemblyˉscalarˉdispatcher as Dispatcher;
 import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
+import Compilerˉwebassemblyˉenumˉoperations as Enums;
 
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
@@ -91,6 +92,13 @@ export fn Main(Input: bytes) -> bytes {
             Typesˉlength
         );
     if !Typeˉdirectory.Valid { return Empty(Input); }
+    let Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary =
+        Enums.Compilerˉwebassemblyˉenumˉbuild(
+            Input,
+            Typeˉdirectory,
+            Staticˉdataˉsummary
+        );
+    if !Enumˉsummary.Valid { return Empty(Input); }
     let Typedˉcalls: Typed.Compilerˉwebassemblyˉtypedˉcallˉsummary =
         Typed.Compilerˉwebassemblyˉtypedˉcallsˉvalidate(
             Input,
@@ -131,9 +139,10 @@ export fn Main(Input: bytes) -> bytes {
             Codeˉoffset,
             Codeˉlength,
             Functionˉdirectory,
+            Typeˉdirectory,
             Graph,
             Controlˉflow,
-            Staticˉdataˉsummary
+            Enumˉsummary
         );
     if !Lowered.Valid { return Empty(Input); }
     return Lowered.Webassembly;

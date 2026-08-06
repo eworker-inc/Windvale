@@ -134,7 +134,7 @@ internal static partial class Program
     private const string WEBASSEMBLY_VALUE_LAYOUT_MEMORY_TOOL_SHA256 = "7cbfe268c02608fe2c1b066fd51dfb809002f9b25cbe1050a4806291b7125a3d";
     private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_INPUT_SHA256 = "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e";
     private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_RESPONSE_SHA256 = "bc7099df2ba2525ab28f26c7b891ba71e4d24eddbdca2199010fdbb0e817552d";
-    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "ffd7db5f1944e9f17c43cc3d3fbd1c877fd5bccf74b56943c26a0b564936711b";
+    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "87868a95c5f259c3f7a0e1ba842cbf2bab2ec2204cbc46dba576d73623d72d03";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "6b8ee8e5e3707203891840157547fa1cf88368447b493015b9d0f9e48bbb69d2";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "3f90a6641648ae55a3b4ddf3a50ae2d2ad7d52ae434bf15c1718076f04232e79";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_WVB_SHA256 = "ec785b6ad0fe3a72574a3e6587d32bad0719054a8f7d9481ba361a0857086450";
@@ -147,6 +147,8 @@ internal static partial class Program
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTORS_SHA256 = "3da1365714f5320376855efb4f233f39f9eb2861e4aa33a526fe35965f27833d";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTOR_RANGE_FAILURE_WVB_SHA256 = "0c75aa907c458f10c5add7a76bdf8b9dda43cb4aa1f1569dfb6580e50f9e8a81";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTOR_RANGE_FAILURE_SHA256 = "1abaff8dd657fb0bf33d48ffde73572a5d1c10e343c65ac680926b004ccd4eea";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_WVB_SHA256 = "5966408913655f233509a0ab6f6c80dcc9d893d2ad22844a35661fa486527a30";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_SHA256 = "be287ba7ac40d001d3c3fe91796b15b09505614555004b4870d0a51eb6c6c4f8";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -982,6 +984,10 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_DESCRIPTOR_OPERATIONS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Descriptor-Operations.wv");
+
+    private static readonly string WEBASSEMBLY_ENUM_OPERATIONS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Enum-Operations.wv");
 
     private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
@@ -15410,6 +15416,23 @@ internal static partial class Program
             Moduleˉdigest.Calculateˉsha256(
                 Descriptorˉrangeˉlowered.Bytes.AsSpan()));
 
+        var Enums = Compileˉsuccess(WVB_TO_WVO_ENUMS_SOURCE);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Enums));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 64),
+            Runˉreferenceˉwebassemblyˉi32(Enums));
+        var Enumsˉlowered = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Enums.ToImmutableArray());
+        Equal(2_558, Enumsˉlowered.Bytes.Length);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Enumsˉlowered.Bytes.AsSpan()));
+        Validateˉscalarˉenumˉwebassembly(Enumsˉlowered.Bytes.AsSpan());
+
         var Unsupported = Compileˉsuccess(
             "module Webassemblyˉgeneralˉdispatcherˉunsupported profile portable; " +
             "export fn Main() -> u32 { let Value: bytes = Bytesˉfromˉu8(1u8); " +
@@ -15489,6 +15512,51 @@ internal static partial class Program
         Reader.Require(
             Reader.Position == Reader.Length,
             "The scalar descriptor module trails.");
+    }
+
+    private static void Validateˉscalarˉenumˉwebassembly(
+        ReadOnlySpan<byte> module)
+    {
+        var Reader = new WebAssemblyˉtestˉreader(module);
+        Reader.Readˉheader();
+        foreach (var Kind in new byte[] { 1, 3 })
+        {
+            var End = Reader.Readˉsection(Kind);
+            Reader.Skip(End - Reader.Position);
+        }
+        var Memoryˉend = Reader.Readˉsection(5);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The enum memory count is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 1, "The enum memory is not fixed.");
+        Reader.Require(Reader.Readˉuleb32() == 129, "The enum memory minimum is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 129, "The enum memory maximum is invalid.");
+        Reader.Require(Reader.Position == Memoryˉend, "The enum memory section trails.");
+        foreach (var Kind in new byte[] { 6, 7, 10 })
+        {
+            var End = Reader.Readˉsection(Kind);
+            Reader.Skip(End - Reader.Position);
+        }
+
+        var Expected = new byte[]
+        {
+            24, 196, 0, 0, 4, 0, 0, 0,
+            28, 196, 0, 0, 5, 0, 0, 0,
+            33, 196, 0, 0, 5, 0, 0, 0,
+            67, 97, 108, 109,
+            87, 105, 110, 100, 121,
+            83, 116, 111, 114, 109,
+        };
+        var Dataˉend = Reader.Readˉsection(11);
+        Reader.Require(Reader.Readˉuleb32() == 1, "The enum data count is invalid.");
+        Reader.Require(Reader.Readˉuleb32() == 0, "The enum data mode is invalid.");
+        Reader.Require(Reader.Readˉi32ˉconstant() == 50_176, "The enum data offset is invalid.");
+        Reader.Require(Reader.Readˉbyte() == 0x0B, "The enum data offset is unterminated.");
+        Reader.Require(Reader.Readˉuleb32() == (uint)Expected.Length, "The enum data length is invalid.");
+        foreach (var Value in Expected)
+        {
+            Reader.Require(Reader.Readˉbyte() == Value, "An enum data byte changed.");
+        }
+        Reader.Require(Reader.Position == Dataˉend, "The enum data section trails.");
+        Reader.Require(Reader.Position == Reader.Length, "The enum module trails.");
     }
 
     private static void Compilerˉwebassemblyˉcontrolˉflowˉruns()
@@ -27975,6 +28043,9 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/WebAssembly-Descriptor-Operations.wv",
                     WEBASSEMBLY_DESCRIPTOR_OPERATIONS_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Enum-Operations.wv",
+                    WEBASSEMBLY_ENUM_OPERATIONS_SOURCE),
                 new(
                     "Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv",
                     WEBASSEMBLY_SCALAR_DISPATCHER_SOURCE),

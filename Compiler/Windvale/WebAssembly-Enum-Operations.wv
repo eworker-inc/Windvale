@@ -1,0 +1,355 @@
+module Compilerˉwebassemblyˉenumˉoperations profile portable;
+
+import Compilerˉwebassemblyˉbinaryˉencoding as Encoding;
+import Compilerˉwebassemblyˉtypeˉdirectory as Types;
+import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
+
+export record Compilerˉwebassemblyˉenumˉsummary {
+    Valid: bool;
+    Memberˉcount: u32;
+    Metadataˉoffset: u32;
+    Typeˉstarts: bytes;
+    Dataˉcount: u32;
+    Staticˉlength: u32;
+    Dataˉentries: bytes;
+    Payload: bytes;
+}
+
+export record Compilerˉwebassemblyˉenumˉoperationˉemission {
+    Matched: bool;
+    Valid: bool;
+    Bytes: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Append(First: bytes, Second: bytes) -> bytes {
+    return Bytesˉconcat(First, Second);
+}
+
+fn Byte(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉbyte(Value);
+}
+
+fn Uleb(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(Value);
+}
+
+fn Indexed(Opcode: u32, Index: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉindexedˉinstruction(
+        Opcode,
+        Index
+    );
+}
+
+fn Positiveˉconstant(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉpositiveˉi32ˉconstant(
+        Value
+    );
+}
+
+fn Invalid(
+    Input: bytes,
+    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary
+) -> Compilerˉwebassemblyˉenumˉsummary {
+    return Compilerˉwebassemblyˉenumˉsummary(
+        false,
+        0u32,
+        0u32,
+        Empty(Input),
+        Data.Count,
+        Data.Staticˉlength,
+        Data.Entries,
+        Data.Payload
+    );
+}
+
+export fn Compilerˉwebassemblyˉenumˉbuild(
+    Input: bytes,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary
+) -> Compilerˉwebassemblyˉenumˉsummary {
+    if !Directory.Valid || !Data.Valid { return Invalid(Input, Data); }
+    var Typeˉstarts: bytes = Empty(Input);
+    var Memberˉcount: u32 = 0u32;
+    var Typeˉindex: u32 = 0u32;
+    while Typeˉindex < Directory.Count {
+        var Start: u32 = 4294967295u32;
+        if Types.Compilerˉwebassemblyˉtypeˉkind(
+            Directory,
+            Typeˉindex
+        ) == 2u32 {
+            Start = Memberˉcount + 1u32;
+            let Firstˉcount: u32 = Types.Compilerˉwebassemblyˉtypeˉitemˉcount(
+                Directory,
+                Typeˉindex
+            );
+            if Firstˉcount > 32768u32 - Memberˉcount {
+                return Invalid(Input, Data);
+            }
+            Memberˉcount = Memberˉcount + Firstˉcount;
+        }
+        Typeˉstarts = Append(
+            Typeˉstarts,
+            Bytesˉfromˉu32ˉlittle(Start)
+        );
+        Typeˉindex = Typeˉindex + 1u32;
+    }
+    let Metadataˉlength: u32 = Memberˉcount * 8u32;
+    if Metadataˉlength > 15360u32 - Data.Staticˉlength {
+        return Invalid(Input, Data);
+    }
+    let Metadataˉoffset: u32 = 50176u32 + Data.Staticˉlength;
+    let Namesˉoffset: u32 = Metadataˉoffset + Metadataˉlength;
+    var Metadata: bytes = Empty(Input);
+    var Names: bytes = Empty(Input);
+    Typeˉindex = 0u32;
+    while Typeˉindex < Directory.Count {
+        if Types.Compilerˉwebassemblyˉtypeˉkind(
+            Directory,
+            Typeˉindex
+        ) == 2u32 {
+            let Typeˉmemberˉcount: u32 = Types.Compilerˉwebassemblyˉtypeˉitemˉcount(
+                Directory,
+                Typeˉindex
+            );
+            var Cursor: u32 = Types.Compilerˉwebassemblyˉtypeˉitemsˉoffset(
+                Directory,
+                Typeˉindex
+            );
+            var Member: u32 = 0u32;
+            while Member < Typeˉmemberˉcount {
+                let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Cursor
+                );
+                let Nameˉoffset: u32 = Cursor + 4u32;
+                if Nameˉlength >
+                    15360u32 - Data.Staticˉlength - Metadataˉlength -
+                        Bytesˉlength(Names) {
+                    return Invalid(Input, Data);
+                }
+                Metadata = Append(
+                    Metadata,
+                    Bytesˉfromˉu32ˉlittle(
+                        Namesˉoffset + Bytesˉlength(Names)
+                    )
+                );
+                Metadata = Append(
+                    Metadata,
+                    Bytesˉfromˉu32ˉlittle(Nameˉlength)
+                );
+                Names = Append(
+                    Names,
+                    Bytesˉslice(Input, Nameˉoffset, Nameˉlength)
+                );
+                Cursor = Nameˉoffset + Nameˉlength + 4u32;
+                Member = Member + 1u32;
+            }
+        }
+        Typeˉindex = Typeˉindex + 1u32;
+    }
+    if Bytesˉlength(Metadata) != Metadataˉlength {
+        return Invalid(Input, Data);
+    }
+    let Extendedˉpayload: bytes = Append(
+        Append(Data.Payload, Metadata),
+        Names
+    );
+    let Extendedˉdata:
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary(
+            true,
+            Data.Count,
+            Bytesˉlength(Extendedˉpayload),
+            Data.Entries,
+            Extendedˉpayload
+        );
+    return Compilerˉwebassemblyˉenumˉsummary(
+        true,
+        Memberˉcount,
+        Metadataˉoffset,
+        Typeˉstarts,
+        Extendedˉdata.Count,
+        Extendedˉdata.Staticˉlength,
+        Extendedˉdata.Entries,
+        Extendedˉdata.Payload
+    );
+}
+
+export fn Compilerˉwebassemblyˉenumˉdata(
+    Summary: Compilerˉwebassemblyˉenumˉsummary
+) -> Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary {
+    return Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary(
+        Summary.Valid,
+        Summary.Dataˉcount,
+        Summary.Staticˉlength,
+        Summary.Dataˉentries,
+        Summary.Payload
+    );
+}
+
+fn Enumˉhandle(
+    Input: bytes,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Summary: Compilerˉwebassemblyˉenumˉsummary,
+    Typeˉindex: u32,
+    Memberˉindex: u32
+) -> u32 {
+    if !Summary.Valid || Typeˉindex >= Directory.Count ||
+        Types.Compilerˉwebassemblyˉtypeˉkind(
+            Directory,
+            Typeˉindex
+        ) != 2u32 ||
+        Memberˉindex >= Types.Compilerˉwebassemblyˉtypeˉitemˉcount(
+            Directory,
+            Typeˉindex
+        ) {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Summary.Typeˉstarts,
+        Typeˉindex * 4u32
+    ) + Memberˉindex;
+}
+
+export fn Compilerˉwebassemblyˉenumˉfirstˉhandle(
+    Input: bytes,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Summary: Compilerˉwebassemblyˉenumˉsummary,
+    Typeˉindex: u32
+) -> u32 {
+    return Enumˉhandle(Input, Directory, Summary, Typeˉindex, 0u32);
+}
+
+fn Emitˉearlyˉreturn(Returnsˉvalue: bool, Returnsˉi64: bool) -> bytes {
+    var Result: bytes = Byte(15u32);
+    if Returnsˉvalue {
+        if Returnsˉi64 {
+            Result = Append(Append(Byte(66u32), Byte(0u32)), Result);
+        } else {
+            Result = Append(Positiveˉconstant(0u32), Result);
+        }
+    }
+    return Result;
+}
+
+fn Emitˉfailureˉguard(
+    Status: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> bytes {
+    var Result: bytes = Byte(4u32);
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Positiveˉconstant(Status));
+    Result = Append(Result, Indexed(36u32, Statusˉglobal));
+    Result = Append(
+        Result,
+        Emitˉearlyˉreturn(Returnsˉvalue, Returnsˉi64)
+    );
+    return Append(Result, Byte(11u32));
+}
+
+fn Emitˉname(
+    Summary: Compilerˉwebassemblyˉenumˉsummary,
+    Scratch: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> bytes {
+    var Result: bytes = Indexed(33u32, Scratch);
+    Result = Append(Result, Indexed(32u32, Scratch));
+    Result = Append(Result, Byte(69u32));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(
+            3015u32,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+    Result = Append(Result, Indexed(32u32, Scratch));
+    Result = Append(Result, Positiveˉconstant(Summary.Memberˉcount));
+    Result = Append(Result, Byte(75u32));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(
+            3015u32,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+    Result = Append(Result, Indexed(32u32, Scratch));
+    Result = Append(Result, Positiveˉconstant(1u32));
+    Result = Append(Result, Byte(107u32));
+    Result = Append(Result, Positiveˉconstant(8u32));
+    Result = Append(Result, Byte(108u32));
+    Result = Append(Result, Positiveˉconstant(Summary.Metadataˉoffset));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Byte(41u32));
+    Result = Append(Result, Uleb(3u32));
+    return Append(Result, Uleb(0u32));
+}
+
+export fn Compilerˉwebassemblyˉenumˉoperationˉemit(
+    Input: bytes,
+    Code: u32,
+    Offset: u32,
+    Opcode: u8,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Summary: Compilerˉwebassemblyˉenumˉsummary,
+    Scratch: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> Compilerˉwebassemblyˉenumˉoperationˉemission {
+    let Emptyˉbytes: bytes = Empty(Input);
+    if Opcode == 106u8 {
+        let Handle: u32 = Enumˉhandle(
+            Input,
+            Directory,
+            Summary,
+            Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32),
+            Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 5u32)
+        );
+        if Handle == 0u32 {
+            return Compilerˉwebassemblyˉenumˉoperationˉemission(
+                true, false, Emptyˉbytes
+            );
+        }
+        return Compilerˉwebassemblyˉenumˉoperationˉemission(
+            true, true, Positiveˉconstant(Handle)
+        );
+    }
+    if Opcode == 107u8 {
+        return Compilerˉwebassemblyˉenumˉoperationˉemission(
+            true, true, Byte(70u32)
+        );
+    }
+    if Opcode == 108u8 {
+        return Compilerˉwebassemblyˉenumˉoperationˉemission(
+            true, true, Byte(71u32)
+        );
+    }
+    if Opcode == 109u8 {
+        return Compilerˉwebassemblyˉenumˉoperationˉemission(
+            true,
+            true,
+            Emitˉname(
+                Summary,
+                Scratch,
+                Returnsˉvalue,
+                Returnsˉi64,
+                Statusˉglobal
+            )
+        );
+    }
+    return Compilerˉwebassemblyˉenumˉoperationˉemission(
+        false, true, Emptyˉbytes
+    );
+}

@@ -8,6 +8,8 @@ import Compilerˉwebassemblyˉscalarˉoperations as Scalars;
 import Compilerˉwebassemblyˉvalueˉlayout as Layouts;
 import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
 import Compilerˉwebassemblyˉdescriptorˉoperations as Descriptors;
+import Compilerˉwebassemblyˉtypeˉdirectory as Typeˉdirectory;
+import Compilerˉwebassemblyˉenumˉoperations as Enums;
 
 export record Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     Valid: bool;
@@ -514,7 +516,8 @@ fn Emitˉoperation(
     Opcode: u8,
     Reachableˉorder: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
-    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
     Function: u32,
     Scratchˉleft: u32,
     Scratchˉright: u32,
@@ -532,6 +535,9 @@ fn Emitˉoperation(
         Directory,
         Function
     );
+    let Runtimeˉdata:
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
+        Enums.Compilerˉwebassemblyˉenumˉdata(Enumˉsummary);
     if Opcode == 1u8 || Opcode == 9u8 {
         Result = Encoding.Compilerˉwebassemblyˉbinaryˉi32ˉconstantˉfromˉinput(
             Input,
@@ -587,7 +593,7 @@ fn Emitˉoperation(
             Code,
             Offset,
             Opcode,
-            Data,
+            Runtimeˉdata,
             Scratchˉleft,
             Scratchˉright,
             Scratchˉresult,
@@ -601,6 +607,25 @@ fn Emitˉoperation(
             return Invalidˉemission(Input, Offset, U32ˉfromˉu8(Opcode));
         }
         return Emission(true, Descriptor.Bytes, 0u32, 0u32);
+    }
+    let Enum: Enums.Compilerˉwebassemblyˉenumˉoperationˉemission =
+        Enums.Compilerˉwebassemblyˉenumˉoperationˉemit(
+            Input,
+            Code,
+            Offset,
+            Opcode,
+            Types,
+            Enumˉsummary,
+            Scratchˉleft,
+            Returnsˉvalue,
+            Returnsˉi64,
+            3u32
+        );
+    if Enum.Matched {
+        if !Enum.Valid {
+            return Invalidˉemission(Input, Offset, U32ˉfromˉu8(Opcode));
+        }
+        return Emission(true, Enum.Bytes, 0u32, 0u32);
     }
     if Opcode == 16u8 {
         return Emission(
@@ -753,6 +778,47 @@ fn Emitˉsetˉprogramˉcounter(Counter: u32, Block: u32) -> bytes {
     return Append(Positiveˉconstant(Block), Indexed(33u32, Counter));
 }
 
+fn Emitˉenumˉlocalˉdefaults(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Function: u32,
+    Parameterˉcount: u32,
+    Localˉcount: u32
+) -> Emission {
+    var Result: bytes = Empty(Input);
+    var Cursor: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉtypesˉoffset(
+            Directory,
+            Function
+        );
+    var Local: u32 = 0u32;
+    while Local < Localˉcount {
+        let Kind: u32 = Shapeˉkind(Input, Cursor);
+        if Kind == 8u32 {
+            let Handle: u32 =
+                Enums.Compilerˉwebassemblyˉenumˉfirstˉhandle(
+                    Input,
+                    Types,
+                    Enumˉsummary,
+                    Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32)
+                );
+            if Handle == 0u32 {
+                return Invalidˉemission(Input, 0u32, 106u32);
+            }
+            Result = Append(Result, Positiveˉconstant(Handle));
+            Result = Append(
+                Result,
+                Indexed(33u32, Parameterˉcount + Local)
+            );
+        }
+        Cursor = Cursor + Shapeˉwidth(Input, Cursor);
+        Local = Local + 1u32;
+    }
+    return Emission(true, Result, 0u32, 0u32);
+}
+
 fn Emitˉblock(
     Input: bytes,
     Code: u32,
@@ -767,7 +833,8 @@ fn Emitˉblock(
     Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
     Reachableˉorder: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
-    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
     Function: u32
 ) -> Emission {
     let Block: u32 = Starts + Localˉblock;
@@ -824,7 +891,8 @@ fn Emitˉblock(
                 Opcode,
                 Reachableˉorder,
                 Directory,
-                Data,
+                Types,
+                Enumˉsummary,
                 Function,
                 Scratchˉleft,
                 Scratchˉright,
@@ -888,7 +956,8 @@ fn Emitˉfunction(
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
     Reachableˉorder: bytes,
-    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
     Function: u32
 ) -> Emission {
     let Typeˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
@@ -948,7 +1017,22 @@ fn Emitˉfunction(
     }
     let Localˉdeclarations: bytes = Localˉlayout.Bytes;
 
-    var Instructions: bytes = Emitˉsetˉprogramˉcounter(Counter, 0u32);
+    let Enumˉdefaults: Emission = Emitˉenumˉlocalˉdefaults(
+        Input,
+        Directory,
+        Types,
+        Enumˉsummary,
+        Function,
+        Parameterˉcount,
+        Localˉcount
+    );
+    if !Enumˉdefaults.Valid { return Enumˉdefaults; }
+
+    var Instructions: bytes = Enumˉdefaults.Bytes;
+    Instructions = Append(
+        Instructions,
+        Emitˉsetˉprogramˉcounter(Counter, 0u32)
+    );
     Instructions = Append(Instructions, Byte(3u32));
     Instructions = Append(Instructions, Byte(64u32));
     var Localˉblock: u32 = 0u32;
@@ -972,7 +1056,8 @@ fn Emitˉfunction(
             Control,
             Reachableˉorder,
             Directory,
-            Data,
+            Types,
+            Enumˉsummary,
             Function
         );
         if !Block.Valid { return Block; }
@@ -1040,11 +1125,16 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     Codeˉoffset: u32,
     Codeˉlength: u32,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
     Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
     Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
-    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary
 ) -> Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
-    if !Directory.Valid || !Graph.Valid || !Control.Valid || !Data.Valid ||
+    let Runtimeˉdata:
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
+        Enums.Compilerˉwebassemblyˉenumˉdata(Enumˉsummary);
+    if !Directory.Valid || !Types.Valid || !Graph.Valid || !Control.Valid ||
+        !Enumˉsummary.Valid || !Runtimeˉdata.Valid ||
         Directory.Count != Graph.Functionˉcount ||
         Control.Reachableˉfunctionˉcount != Graph.Reachableˉcount ||
         Bytesˉlength(Graph.Reachableˉorder) != Graph.Reachableˉcount * 4u32 ||
@@ -1108,7 +1198,8 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
             Directory,
             Control,
             Graph.Reachableˉorder,
-            Data,
+            Types,
+            Enumˉsummary,
             Function
         );
         if !Body.Valid {
@@ -1183,7 +1274,7 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         Webassembly,
         Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
             Input,
-            Data
+            Runtimeˉdata
         )
     );
     Webassembly = Append(
@@ -1202,7 +1293,7 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         Webassembly,
         Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsection(
             Input,
-            Data
+            Runtimeˉdata
         )
     );
     if Bytesˉlength(Webassembly) > 16777216u32 {

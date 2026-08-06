@@ -610,6 +610,9 @@
       Include="../../Compiler/Windvale/WebAssembly-Descriptor-Operations.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Descriptor-Operations.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Enum-Operations.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Enum-Operations.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
     <EmbeddedResource
