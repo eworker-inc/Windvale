@@ -26,11 +26,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://windvale.ca/playground/wasm-demo/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://windvale.ca/playground/webassembly-compiler/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

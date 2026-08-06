@@ -62,13 +62,10 @@
 /playground/css/*
   Cache-Control: public, max-age=0, must-revalidate
 
-/playground/wasm-demo/*
-  Cache-Control: public, max-age=0, must-revalidate
-
 /playground/webassembly-compiler/artifacts/*
   Cache-Control: public, max-age=0, must-revalidate
 
-/og.png
+/preview.png
   Cache-Control: public, max-age=86400
 
 /support-og.png

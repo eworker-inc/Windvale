@@ -8,8 +8,6 @@ Public playground: <https://windvale.ca/playground/>
 
 Focused compiler proof: <https://windvale.ca/playground/webassembly-compiler/>
 
-Direct artifact demo: <https://windvale.ca/playground/wasm-demo/>
-
 ## Native browser pipeline
 
 One normal run performs this complete sequence inside a disposable worker:
@@ -27,10 +25,6 @@ The pinned Chromium proof produces 183 WVB bytes with SHA-256 `3d29618283648cb0d
 
 The normal page retains multiple in-memory source tabs, local Monaco syntax support and completions, resizable editor and evidence panes, mobile layout, light/dark themes, and execution/diagnostic/bytecode views. The first native compiler profile is intentionally honest and narrow: one UTF-8 source module, a portable scalar `Main`, no host capabilities, and no standard-output channel yet. Other source can be edited and attempted, but unsupported surface fails explicitly.
 
-## Direct WebAssembly demo
-
-The nested `wwwroot/wasm-demo/` route remains the small direct-artifact proof. It reconstructs the exact profile-8 text-identity artifact, checks SHA-256, and sends it plus editable UTF-8 input through a disposable worker. It does not perform source compilation. Budget 4 returns status `0`, the exact input, and four instructions; budget 3 returns status `3011` (`WVR3011`), empty output, and three instructions.
-
 ## Run locally
 
 From the repository root:
@@ -41,7 +35,7 @@ npm run build --prefix Tools/Windvale.Playground
 npm run dev --prefix Tools/Windvale.Playground
 ```
 
-Open <http://127.0.0.1:5174/> for the normal playground, <http://127.0.0.1:5174/webassembly-compiler/> for the focused compiler proof, or <http://127.0.0.1:5174/wasm-demo/> for the direct artifact route.
+Open <http://127.0.0.1:5174/> for the normal playground or <http://127.0.0.1:5174/webassembly-compiler/> for the focused compiler proof.
 
 For the same-origin website integration, install the website dependencies and run `npm --prefix Website run dev`, then open <http://127.0.0.1:5173/playground/>. The website proxy preserves the public path while the internal playground server remains an ordinary Vite static server.
 
@@ -70,4 +64,4 @@ The scheduled deployment builds the editor, verifies and copies the pinned packa
 
 ## Stage 0 recovery boundary
 
-The retained C# project can still reconstruct and compare behavior during recovery, qualification, and remaining native-front-door work. It is feature-frozen under Decision 0213 and must not become the normal website path again. The pinned portable compiler WVB and interpreter Wasm still record Stage 0 recovery provenance; closing those regeneration seams is the remaining WebAssembly retirement work.
+The retained C# project can still reconstruct and compare behavior during recovery and qualification. It is feature-frozen under Decision 0213 and must not become the normal website path again. The pinned portable compiler WVB and interpreter Wasm retain Stage 0 recovery provenance, while their normal regeneration routes are Windvale-native.

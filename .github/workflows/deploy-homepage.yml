@@ -113,11 +113,10 @@ jobs:
           npm ci
           npm run build
 
-      - name: Verify direct WebAssembly demo
+      - name: Verify native WebAssembly playground
         if: ${{ steps.gate.outputs.deploy == 'true' }}
         working-directory: Website
         run: |
-          npm run verify:wasm-demo
           npm run verify:wasm-compiler-package
           npm run verify:wasm-compiler-demo
           npm run verify:wasm-compiler-core

@@ -41,7 +41,7 @@ The normal playground is a static Monaco application over the Windvale-native We
 
 **[Open the Windvale Playground](https://windvale.ca/playground/)**
 
-The **[direct WebAssembly demo](https://windvale.ca/playground/wasm-demo/)** remains as a smaller artifact-inspection route. Normal browser artifact production is also .NET-free: the native source front door rebuilds both WVB inputs, the pinned native source compiler rebuilds the portable compiler, and the pinned native WebAssembly compiler rebuilds the interpreter Wasm. Stage 0 is retained only for explicit package reconstruction and independent recovery evidence.
+Normal browser artifact production is also .NET-free: the native source front door rebuilds both WVB inputs, the pinned native source compiler rebuilds the portable compiler, and the pinned native WebAssembly compiler rebuilds the interpreter Wasm. Stage 0 is retained only for explicit package reconstruction and independent recovery evidence.
 
 Run it locally:
 

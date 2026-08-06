@@ -13,7 +13,6 @@ const [
     Host,
     Worker,
     Core,
-    Directˉwasmˉworker,
     Playgroundˉpackage,
     Websiteˉpackage,
     Deploymentˉworkflow,
@@ -27,7 +26,6 @@ const [
     readFile(path.join(Playgroundˉroot, "js/windvale-compiler-host.js"), "utf8"),
     readFile(path.join(Playgroundˉroot, "js/windvale-compiler-worker.js"), "utf8"),
     readFile(path.join(Playgroundˉroot, "js/windvale-compiler-core.js"), "utf8"),
-    readFile(path.join(Playgroundˉroot, "js/windvale-wasm-worker.js"), "utf8"),
     readFile(path.join(Repositoryˉroot, "Tools/Windvale.Playground/package.json"), "utf8"),
     readFile(path.join(Repositoryˉroot, "Website/package.json"), "utf8"),
     readFile(path.join(Repositoryˉroot, ".github/workflows/deploy-homepage.yml"), "utf8"),
@@ -41,7 +39,6 @@ for (const [Name, Source] of [
     ["host", Host],
     ["worker", Worker],
     ["core", Core],
-    ["direct WebAssembly worker", Directˉwasmˉworker],
 ]) {
     if (/catch\s*\(\s*Error\s*\)/u.test(Source)) {
         Fail(`The ${Name} shadows the global Error constructor in a catch binding.`);

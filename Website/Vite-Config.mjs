@@ -9,7 +9,7 @@ const STATIC_FILES = Object.freeze([
     "_headers",
     "robots.txt",
     "sitemap.xml",
-    "og.png",
+    "preview.png",
     "support-og.png",
     "windvale-logo.png",
     "assets/material-symbols-LICENSE.txt",
