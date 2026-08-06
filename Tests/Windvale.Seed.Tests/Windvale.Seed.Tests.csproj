@@ -316,6 +316,9 @@
       Include="../../Compiler/Windvale/Native-X64-Lowering-Descriptors.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Descriptors.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Descriptor-Calls.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Descriptor-Calls.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Descriptor-Instructions.wv" />
     <EmbeddedResource
@@ -375,6 +378,9 @@
     <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Large-Envelope.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Large-Envelope.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvb-To-Wvo-Descriptor-Calls.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv" />
     <EmbeddedResource
       Include="../Fixtures/Source-Wvb/Function-Only.wv"
       LogicalName="Windvale.Seed.Tests.Source-Wvb-Function-Only.wv" />

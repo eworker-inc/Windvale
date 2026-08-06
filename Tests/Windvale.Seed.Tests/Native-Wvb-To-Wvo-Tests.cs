@@ -47,14 +47,17 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_LARGE_ENVELOPE_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Large-Envelope.wv");
+    private static readonly string WVB_TO_WVO_DESCRIPTOR_CALLS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 295_543;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_131_840;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 315_596;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_366_336;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "fff0074df7f9c9c6b352932b7d6404188599db0a584df62457fc03b022469988";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_132_864;
+        "d812ac375e9a4373c9bcbd73a9ea1187155037951927a456c82379cb664236df";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_366_336;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "65ca225b08d9c10a919ff14d56aec39645caacfe139e9bad72ab356877e1ab19";
+        "561341765954ab808dee30ae3bebd78f9dedf2cbaa29c73a6b0d149a23c721ce";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -527,6 +530,9 @@ internal static partial class Program
                     "Compiler/Windvale/Native-X64-Lowering-Descriptors.wv",
                     NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
                 new(
+                    "Compiler/Windvale/Native-X64-Lowering-Descriptor-Calls.wv",
+                    NATIVE_X64_LOWERING_DESCRIPTOR_CALLS_SOURCE),
+                new(
                     "Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv",
                     NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
                 new(
@@ -592,6 +598,51 @@ internal static partial class Program
             $"object-bytes={Expectedˉobject.Length}\n",
             Toolˉresult.Output);
         Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+    }
+
+    private static void Assertˉdescriptorˉcallˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_DESCRIPTOR_CALLS_SOURCE);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        True(Module.Functions.Any(Function =>
+            Function.Declaration.Parameterˉtypes.Any(Type =>
+                Type.Kind is Valueˉtype.Text or Valueˉtype.Bytes)),
+            "The descriptor-call fixture omitted its descriptor parameters.");
+        True(Module.Functions.Any(Function =>
+            Function.Declaration.Returnˉtype.Kind is Valueˉtype.Text or Valueˉtype.Bytes),
+            "The descriptor-call fixture omitted its descriptor returns.");
+
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 100_000_000);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
     }
 
     private static void Assertˉstaticˉdescriptorˉlowering(

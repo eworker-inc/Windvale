@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "4e5c31c3bcb73520333db3bfac0d2eb2a4991fa1fec51577d76916ad239e1a01";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "b2b7574f65e15ce8a0d80c608f9873010148702c809b6e8f15c3657d05c7b0f5";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "d641039357bfb6be0c860002a374d70e5266f39861b4c9ea7e4df192dfdf21b3";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "277f9ad1f5ffaa27f254527f71a739599753914a5b41f1a66c6dbc3a19c3db26";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "697d8256464fe49bcf15fc5bdb8eb34b0aa2f08d3819d154f1bb15cda7001c33";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "4323858f697be2fcb9f84689c5504c1c45586cd72ae7c60128f03fc78b132d42";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "554da065fed54111d0cd2bd119b8cd630f3f11eb6ef917c991e07bf7758d745f";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "40b94897fceb0d56d75c4a19582149759327b6ec4b8ba1f37e378ea9cadef627";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "e19bc8f8a18d75ece8929f86a0f8c60aeca3e68866aeb31b98145aef04864584";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -765,6 +765,9 @@ internal static partial class Program
             "Windvale.Seed.Tests.Native-X64-Lowering-Call-Instructions.wv");
     private static readonly string NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Native-X64-Lowering-Descriptors.wv");
+    private static readonly string NATIVE_X64_LOWERING_DESCRIPTOR_CALLS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Descriptor-Calls.wv");
     private static readonly string NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Descriptor-Instructions.wv");
@@ -2931,6 +2934,7 @@ internal static partial class Program
                 new("Native-X64-Lowering-Record-Instructions.wv", NATIVE_X64_LOWERING_RECORD_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Call-Instructions.wv", NATIVE_X64_LOWERING_CALL_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Descriptors.wv", NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
+                new("Native-X64-Lowering-Descriptor-Calls.wv", NATIVE_X64_LOWERING_DESCRIPTOR_CALLS_SOURCE),
                 new("Native-X64-Lowering-Descriptor-Instructions.wv", NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Runtime-Descriptors.wv", NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE),
                 new("Native-X64-Lowering-Bytes-Concatenation.wv", NATIVE_X64_LOWERING_BYTES_CONCATENATION_SOURCE),
@@ -2961,6 +2965,7 @@ internal static partial class Program
                 new("Native-X64-Lowering-Record-Instructions.wv", NATIVE_X64_LOWERING_RECORD_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Call-Instructions.wv", NATIVE_X64_LOWERING_CALL_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Descriptors.wv", NATIVE_X64_LOWERING_DESCRIPTORS_SOURCE),
+                new("Native-X64-Lowering-Descriptor-Calls.wv", NATIVE_X64_LOWERING_DESCRIPTOR_CALLS_SOURCE),
                 new("Native-X64-Lowering-Descriptor-Instructions.wv", NATIVE_X64_LOWERING_DESCRIPTOR_INSTRUCTIONS_SOURCE),
                 new("Native-X64-Lowering-Runtime-Descriptors.wv", NATIVE_X64_LOWERING_RUNTIME_DESCRIPTORS_SOURCE),
                 new("Native-X64-Lowering-Bytes-Concatenation.wv", NATIVE_X64_LOWERING_BYTES_CONCATENATION_SOURCE),
@@ -2995,6 +3000,7 @@ internal static partial class Program
         Assertˉconsoleˉwriteˉlineˉlowering(Tool, Memory);
         Assertˉdiagnosticˉwriteˉlineˉlowering(Tool, Memory);
         Assertˉlargeˉmoduleˉenvelopeˉlowering(Tool, Memory);
+        Assertˉdescriptorˉcallˉlowering(Tool, Memory);
         var Multiˉcallˉwvb = Compileˉsuccess(WEBASSEMBLY_CALLS_WITH_CONTROL_SOURCE);
         var Multiˉcallˉmodule = Moduleˉcodec.Readˉandˉverify(Multiˉcallˉwvb);
         var Multiˉcallˉnative = X64ˉnativeˉbackend.Compile(Multiˉcallˉmodule);
@@ -3589,8 +3595,12 @@ internal static partial class Program
 
         var Toolˉnative = X64ˉnativeˉbackend.Compile(Tool);
         _ = Nativeˉfragmentˉverifier.Verify(Toolˉnative.Fragment);
-        var Toolˉnativeˉobject = Nativeˉobjectˉsink.Writeˉwvo(Toolˉnative.Fragment);
-        _ = Objectˉcodec.Readˉandˉverify(Toolˉnativeˉobject.AsSpan());
+        var Toolˉnativeˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            Toolˉnative.Fragment,
+            Objectˉadmissionˉprofile.Largeˉnative);
+        _ = Objectˉcodec.Readˉandˉverify(
+            Toolˉnativeˉobject.AsSpan(),
+            Objectˉadmissionˉprofile.Largeˉnative);
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-native-x64-lowering-{Guid.NewGuid():N}");

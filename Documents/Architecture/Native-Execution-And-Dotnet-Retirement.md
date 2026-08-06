@@ -22,6 +22,8 @@ Accepted architectural direction under [Decision 0057](../Decisions/0057-Windval
 
 [Decision 0248](../Decisions/0248-Measured-Native-Lowering-Module-Envelope.md) replaces the lowerer's three eight-entry prototype guards with a measured bounded envelope of 512 functions, 64 immutable data declarations, and 64 nominal types. Canonical D4 WVO helper and data names are now generated through the focused layout module. The real hosted tool crosses these table boundaries; its remaining instruction and shape gaps and grouped Windows/Linux qualification remain.
 
+[Decision 0249](../Decisions/0249-Bounded-Native-Descriptor-Calls.md) adds `text` and `bytes` helper parameters and returns within the existing four-register call envelope. Complete descriptor cells pass by address, caller-owned result cells pass in `RAX`, and the callee preserves borrowed values or validates and compacts arena-owned returns at its saved checkpoint. The focused descriptor-call emitter keeps this ownership-heavy machine logic outside the large core; stack-passed arguments and grouped Windows/Linux qualification remain.
+
 [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) additionally makes portability a per-part and derived artifact property. Native publication must preserve the canonical module's platform scope and capability requirements even when a particular application intentionally targets only one environment.
 
 ## Destination
@@ -315,6 +317,8 @@ Decision 0246 adds successful reporting through service-table slot 8. It consume
 Decision 0247 adds usage and rejection reporting through service-table slot 48. It reuses the verified text-output machine shape while retaining a distinct capability identity, service grant, and diagnostic sink. The direct current-host package reproduces Stage 0's exact diagnostic-output fixture WVO, completing all six hosted calls admitted by this candidate; grouped dual-host qualification remains pending.
 
 Decision 0248 admits the real hosted tool's 297 functions, 33 immutable data declarations, and 29 nominal types within explicit 512/64/64 bounds. One layout-owned generator replaces hard-coded names beyond ordinal seven while retaining Stage 0's exact `$function_0000` and `$data_0000` D4 contracts. A 9-data, 9-type, 10-function crossing fixture agrees byte-for-byte through Stage 0 and both Windvale adapters; later unsupported instructions and shapes remain separate measured blockers.
+
+Decision 0249 admits descriptor parameters and returns inside the retained four-register directory. Callers pass complete descriptor cells by address and descriptor-result destinations in `RAX`; callees preserve external values and compact owned returns against a hidden arena checkpoint. The current 321-function hosted tool now reaches its first six-parameter helper, selecting stack-passed argument transport as the next measured blocker.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 

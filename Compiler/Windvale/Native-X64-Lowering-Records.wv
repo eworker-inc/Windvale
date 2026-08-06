@@ -171,9 +171,9 @@ export fn Compilerˉnativeˉx64ˉargumentˉbytes(
     var Result: u32 = 0u32;
     var Parameter: u32 = 0u32;
     while Parameter < Bytesˉlength(Parameterˉtypes) {
-        if Parameter < 2u32 || Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
-            Bytesˉreadˉu8(Parameterˉtypes, Parameter)
-        ) {
+        let Type: u8 = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
+        if Parameter < 2u32 || Type == 3u8 || Type == 6u8 ||
+            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
             Result = Result + 8u32;
         } else {
             Result = Result + 7u32;

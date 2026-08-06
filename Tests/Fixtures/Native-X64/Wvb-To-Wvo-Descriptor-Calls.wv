@@ -1,0 +1,30 @@
+module Nativeˉx64ˉdescriptorˉcalls profile portable;
+
+data Values: bytes = [0, 1, 2, 3, 4, 5];
+
+fn Echo(Value: text) -> text {
+    return Value;
+}
+
+fn Oneˉbyte(Index: u32) -> bytes {
+    return Bytesˉslice(Values, Index, 1u32);
+}
+
+fn Append(Left: bytes, Right: bytes) -> bytes {
+    return Bytesˉconcat(Left, Right);
+}
+
+fn Build(Prefix: text) -> bytes {
+    var Result: bytes = Textˉtoˉutf8(Prefix);
+    Result = Append(Result, Oneˉbyte(1u32));
+    Result = Append(Result, Oneˉbyte(2u32));
+    return Result;
+}
+
+export fn Main() -> i32 {
+    let Result = Build(Echo("WVO1"));
+    if Bytesˉlength(Result) != 6u32 { return 1; }
+    if Bytesˉreadˉu8(Result, 4u32) != 1u8 { return 2; }
+    if Bytesˉreadˉu8(Result, 5u32) != 2u8 { return 3; }
+    return 42;
+}
