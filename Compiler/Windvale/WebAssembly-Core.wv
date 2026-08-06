@@ -1050,6 +1050,119 @@ export fn Compilerˉwebassemblyˉvalidateˉnominalˉtypes(
     return Cursor == End;
 }
 
+export fn Compilerˉwebassemblyˉinventoryˉshapeˉwidth(
+    Input: bytes,
+    End: u32,
+    Cursor: u32,
+    Typeˉcount: u32,
+    Allowˉvoid: bool
+) -> u32 {
+    if Cursor >= End { return 0u32; }
+    let Shapeˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+    if Shapeˉkind == 0u32 {
+        if Allowˉvoid { return 1u32; }
+        return 0u32;
+    }
+    if Shapeˉkind >= 1u32 && Shapeˉkind <= 6u32 { return 1u32; }
+    if Shapeˉkind == 9u32 || Shapeˉkind == 10u32 { return 1u32; }
+    if Shapeˉkind != 7u32 && Shapeˉkind != 8u32 { return 0u32; }
+    if End - Cursor < 5u32 { return 0u32; }
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32) >= Typeˉcount {
+        return 0u32;
+    }
+    return 5u32;
+}
+
+export fn Compilerˉwebassemblyˉvalidateˉfunctionˉinventory(
+    Input: bytes,
+    Functions: Compilerˉwebassemblyˉsection,
+    Code: Compilerˉwebassemblyˉsection,
+    Types: Compilerˉwebassemblyˉsection
+) -> bool {
+    if Functions.Payloadˉlength < 4u32 { return false; }
+    if Types.Payloadˉlength < 4u32 { return false; }
+    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Functions.Payloadˉoffset
+    );
+    if Functionˉcount == 0u32 || Functionˉcount > 512u32 { return false; }
+    if Code.Payloadˉlength > 1048576u32 { return false; }
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Types.Payloadˉoffset
+    );
+    let End: u32 = Functions.Payloadˉoffset + Functions.Payloadˉlength;
+    var Cursor: u32 = Functions.Payloadˉoffset + 4u32;
+    var Expectedˉcodeˉoffset: u32 = 0u32;
+    var Functionˉindex: u32 = 0u32;
+    while Functionˉindex < Functionˉcount {
+        if Cursor > End || End - Cursor < 4u32 { return false; }
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Nameˉlength == 0u32 || Nameˉlength > 255u32 { return false; }
+        if Cursor > End || Nameˉlength > End - Cursor { return false; }
+        Cursor = Cursor + Nameˉlength;
+
+        if Cursor > End || End - Cursor < 4u32 { return false; }
+        let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Parameterˉcount > 64u32 { return false; }
+        var Parameterˉindex: u32 = 0u32;
+        while Parameterˉindex < Parameterˉcount {
+            let Parameterˉwidth: u32 =
+                Compilerˉwebassemblyˉinventoryˉshapeˉwidth(
+                    Input, End, Cursor, Typeˉcount, false
+                );
+            if Parameterˉwidth == 0u32 { return false; }
+            Cursor = Cursor + Parameterˉwidth;
+            Parameterˉindex = Parameterˉindex + 1u32;
+        }
+
+        let Resultˉwidth: u32 =
+            Compilerˉwebassemblyˉinventoryˉshapeˉwidth(
+                Input, End, Cursor, Typeˉcount, true
+            );
+        if Resultˉwidth == 0u32 { return false; }
+        Cursor = Cursor + Resultˉwidth;
+
+        if Cursor > End || End - Cursor < 4u32 { return false; }
+        let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Localˉcount > 8191u32 { return false; }
+        var Localˉindex: u32 = 0u32;
+        while Localˉindex < Localˉcount {
+            let Localˉwidth: u32 =
+                Compilerˉwebassemblyˉinventoryˉshapeˉwidth(
+                    Input, End, Cursor, Typeˉcount, false
+                );
+            if Localˉwidth == 0u32 { return false; }
+            Cursor = Cursor + Localˉwidth;
+            Localˉindex = Localˉindex + 1u32;
+        }
+
+        if Cursor > End || End - Cursor < 12u32 { return false; }
+        if Bytesˉreadˉu32ˉlittle(Input, Cursor) != Expectedˉcodeˉoffset {
+            return false;
+        }
+        let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        if Codeˉlength == 0u32 || Codeˉlength > 131072u32 { return false; }
+        if Expectedˉcodeˉoffset > Code.Payloadˉlength { return false; }
+        if Codeˉlength > Code.Payloadˉlength - Expectedˉcodeˉoffset {
+            return false;
+        }
+        Expectedˉcodeˉoffset = Expectedˉcodeˉoffset + Codeˉlength;
+        let Maximumˉstack: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Cursor + 8u32
+        );
+        if Maximumˉstack == 0u32 || Maximumˉstack > 256u32 { return false; }
+        Cursor = Cursor + 12u32;
+        Functionˉindex = Functionˉindex + 1u32;
+    }
+    if Cursor != End { return false; }
+    return Expectedˉcodeˉoffset == Code.Payloadˉlength;
+}
+
 export fn Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
     Input: bytes,
     Offset: u32,
@@ -10420,6 +10533,17 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
     }
     if !Compilerˉwebassemblyˉvalidateˉnominalˉtypes(Input, Types) {
         return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
+    }
+    if !Compilerˉwebassemblyˉvalidateˉfunctionˉinventory(
+        Input,
+        Functions,
+        Code,
+        Types
+    ) {
+        return Compilerˉwebassemblyˉfailure(
+            Input,
+            Compilerˉwebassemblyˉstatus.Unsupportedˉfunction
+        );
     }
 
     if Functions.Payloadˉlength >= 4u32 {

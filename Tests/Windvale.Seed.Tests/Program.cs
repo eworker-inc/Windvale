@@ -126,8 +126,8 @@ internal static partial class Program
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
-    private const string WEBASSEMBLY_CORE_SHA256 = "61e8e82e53b125fa5d48434e9d1d2360592818c324993a401e990589fd3d8bd7";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "9113c697d670913c21b8d923f89ef4844bbf1f8669bd7bfe687ea9f91840ac4b";
+    private const string WEBASSEMBLY_CORE_SHA256 = "eb05a5cdd2bcc9b56f1fa8d5f30e4ccdda5f0384a825cf71200994260b9e5e43";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "b3dc2529776c7b1b19591212a57862164fbe9471fc13698667c316ff0ed07bd7";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -1225,6 +1225,7 @@ internal static partial class Program
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns, Testˉcost.Extended),
         new("Windvale lowers bounded static descriptors to WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉstaticˉdescriptorsˉrun, Testˉcost.Extended),
         new("Windvale admits bounded unused nominal tables for WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉnominalˉtablesˉrun, Testˉcost.Extended),
+        new("Windvale admits a bounded compiler-scale WebAssembly function inventory", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉfunctionˉinventoryˉruns, Testˉcost.Extended),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
         new("rights-limited directory reads return typed bounded results", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Readˉonlyˉdirectoryˉreadsˉareˉtyped),
@@ -14806,6 +14807,118 @@ internal static partial class Program
             Trailing.AsSpan(Nominalˉtypes - 4, 4),
             Typesˉpayloadˉlength + 1u);
         Requireˉunsupported(Trailing);
+    }
+
+    private static void Compilerˉwebassemblyˉfunctionˉinventoryˉruns()
+    {
+        var Toolˉbytes = Compileˉwithˉwebassemblyˉsuccess(
+            WEBASSEMBLY_TOOL_SOURCE,
+            "WebAssembly-Tool.wv");
+        Equal(WEBASSEMBLY_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+
+        var Exactˉcompiler = File.ReadAllBytes(
+            "Artifacts/WebAssembly-Playground/Windvale-Compiler-Memory.wvb");
+        var Exactˉverified = Moduleˉcodec.Readˉandˉverify(Exactˉcompiler);
+        Equal(417, Exactˉverified.Functions.Length);
+        Equal(
+            24,
+            Exactˉverified.Functions.Max(
+                Function => Function.Declaration.Parameterˉtypes.Length));
+        Equal(
+            1_408,
+            Exactˉverified.Functions.Max(
+                Function => Function.Declaration.Localˉtypes.Length));
+        Equal(
+            21_875,
+            Exactˉverified.Functions.Max(
+                Function => Function.Declaration.Codeˉlength));
+        Equal(
+            34,
+            Exactˉverified.Functions.Max(
+                Function => Function.Declaration.Maximumˉstackˉdepth));
+        var Exactˉfrontier = Runˉwebassemblyˉtool(Tool, Exactˉcompiler);
+        Equal(1, Exactˉfrontier.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Exactˉfrontier.Diagnostics);
+        Equal(0, Exactˉfrontier.Writeˉcount);
+
+        static string Buildˉfunctionˉinventoryˉsource(int Functionˉcount)
+        {
+            return
+                "module WebAssemblyˉfunctionˉinventory profile portable;\n\n" +
+                string.Join(
+                    "\n",
+                    Enumerable.Range(0, Functionˉcount - 1).Select(Index =>
+                        $"fn F{Index:D4}(Input: bytes) -> bytes {{ return Input; }}")) +
+                "\n\nexport fn Main(Input: bytes) -> bytes { return Input; }\n";
+        }
+
+        var Boundaryˉwvb = Compileˉsuccess(
+            Buildˉfunctionˉinventoryˉsource(512));
+        Equal(
+            512,
+            Moduleˉcodec.Readˉandˉverify(Boundaryˉwvb).Functions.Length);
+        var Boundary = Runˉwebassemblyˉtool(Tool, Boundaryˉwvb);
+        Equal(1, Boundary.Exitˉcode);
+        Equal("webassembly status=Unsupportedˉcode\n", Boundary.Diagnostics);
+        Equal(0, Boundary.Writeˉcount);
+
+        void Requireˉunsupportedˉfunction(byte[] Candidate)
+        {
+            var Rejected = Runˉwebassemblyˉtool(Tool, Candidate);
+            Equal(1, Rejected.Exitˉcode);
+            Equal(
+                "webassembly status=Unsupportedˉfunction\n",
+                Rejected.Diagnostics);
+            Equal(0, Rejected.Writeˉcount);
+        }
+
+        var Excessˉfunctionsˉwvb = Compileˉsuccess(
+            Buildˉfunctionˉinventoryˉsource(513));
+        Equal(
+            513,
+            Moduleˉcodec.Readˉandˉverify(Excessˉfunctionsˉwvb).Functions.Length);
+        Requireˉunsupportedˉfunction(Excessˉfunctionsˉwvb);
+
+        var Hostileˉname = Boundaryˉwvb.ToArray();
+        var Functionsˉpayload = Findˉsectionˉpayload(
+            Hostileˉname,
+            Sectionˉkind.Functions);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Hostileˉname.AsSpan(Functionsˉpayload + 4, 4),
+            uint.MaxValue);
+        Requireˉunsupportedˉfunction(Hostileˉname);
+
+        var Invalidˉshape = Boundaryˉwvb.ToArray();
+        var Cursor = Functionsˉpayload + 4;
+        var Nameˉlength = BinaryPrimitives.ReadUInt32LittleEndian(
+            Invalidˉshape.AsSpan(Cursor, 4));
+        Cursor = checked(Cursor + 4 + (int)Nameˉlength);
+        var Parameterˉcount = BinaryPrimitives.ReadUInt32LittleEndian(
+            Invalidˉshape.AsSpan(Cursor, 4));
+        Equal(1u, Parameterˉcount);
+        Cursor += 4;
+        Invalidˉshape[Cursor] = byte.MaxValue;
+        Requireˉunsupportedˉfunction(Invalidˉshape);
+
+        var Inconsistentˉcode = Boundaryˉwvb.ToArray();
+        Cursor += checked((int)Parameterˉcount);
+        Cursor += 1;
+        var Localˉcount = BinaryPrimitives.ReadUInt32LittleEndian(
+            Inconsistentˉcode.AsSpan(Cursor, 4));
+        Cursor = checked(Cursor + 4 + (int)Localˉcount);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Inconsistentˉcode.AsSpan(Cursor, 4),
+            1u);
+        Requireˉunsupportedˉfunction(Inconsistentˉcode);
+
+        var Overwideˉstack = Boundaryˉwvb.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Overwideˉstack.AsSpan(Cursor + 8, 4),
+            257u);
+        Requireˉunsupportedˉfunction(Overwideˉstack);
     }
 
     private static void Compilerˉwebassemblyˉruns()
