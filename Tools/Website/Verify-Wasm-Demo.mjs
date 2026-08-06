@@ -1,4 +1,5 @@
-import { readdir, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { access, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,6 +9,9 @@ const Demoˉdirectory = path.join(
     Repositoryˉroot,
     "Tools/Windvale.Playground/wwwroot/wasm-demo",
 );
+const Previewˉrelativeˉpath = "Website/preview.png";
+const Previewˉurl = "https://windvale.ca/preview.png";
+const Previewˉsha256 = "47fecbc4a2e0c3c4f0a853715e9ee30377ad95b7b6d6b9f16877645d25d6c460";
 
 const Publicˉsources = await Promise.all([
     "README.md",
@@ -35,4 +39,39 @@ if (Demoˉentries.length !== 0) {
     throw new Error("The retired direct Wasm demo still contains public files.");
 }
 
-console.log("Retired direct Wasm demo route verification passed.");
+const Previewˉbytes = await readFile(path.join(Repositoryˉroot, Previewˉrelativeˉpath));
+if (createHash("sha256").update(Previewˉbytes).digest("hex") !== Previewˉsha256) {
+    throw new Error("The social preview does not match the approved image.");
+}
+if (Previewˉbytes.readUInt32BE(16) !== 1731 || Previewˉbytes.readUInt32BE(20) !== 909) {
+    throw new Error("The social preview dimensions are not 1731 by 909 pixels.");
+}
+
+for (const Relativeˉpath of [
+    "Website/index.html",
+    "Website/progress/index.html",
+    "Tools/Windvale.Playground/wwwroot/index.html",
+]) {
+    const Source = await readFile(path.join(Repositoryˉroot, Relativeˉpath), "utf8");
+    for (const Required of [
+        Previewˉurl,
+        'property="og:image:width" content="1731"',
+        'property="og:image:height" content="909"',
+        'name="twitter:card" content="summary_large_image"',
+    ]) {
+        if (!Source.includes(Required)) {
+            throw new Error(`${Relativeˉpath} does not publish the approved social preview contract.`);
+        }
+    }
+}
+
+try {
+    await access(path.join(Repositoryˉroot, "Website/og.png"));
+    throw new Error("The superseded homepage social preview still exists.");
+} catch (Failure) {
+    if (Failure?.code !== "ENOENT") {
+        throw Failure;
+    }
+}
+
+console.log("Retired direct Wasm demo and social preview verification passed.");
