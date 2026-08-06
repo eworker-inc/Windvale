@@ -126,8 +126,8 @@ internal static partial class Program
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
-    private const string WEBASSEMBLY_CORE_SHA256 = "eb05a5cdd2bcc9b56f1fa8d5f30e4ccdda5f0384a825cf71200994260b9e5e43";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "b3dc2529776c7b1b19591212a57862164fbe9471fc13698667c316ff0ed07bd7";
+    private const string WEBASSEMBLY_CORE_SHA256 = "2d221ab9ebaad26b5acbfb582188085178d1630a7fa48e5f1c4e933ceea668aa";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "78588396fbff0865025d010b3f467ac20844c2d122a9ee9d63da8b85d880c00b";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -14837,12 +14837,35 @@ internal static partial class Program
             34,
             Exactˉverified.Functions.Max(
                 Function => Function.Declaration.Maximumˉstackˉdepth));
-        var Exactˉfrontier = Runˉwebassemblyˉtool(Tool, Exactˉcompiler);
+        Equal(
+            157_844,
+            Exactˉverified.Functions.Sum(Function => Function.Instructions.Length));
+        Equal(
+            2_991,
+            Exactˉverified.Functions.Sum(Function => Function.Instructions.Count(
+                Instruction => Instruction.Opcode == Opcode.Call)));
+        var Exactˉfrontier = Runˉwebassemblyˉtool(
+            Tool,
+            Exactˉcompiler,
+            500_000_000);
         Equal(1, Exactˉfrontier.Exitˉcode);
         Equal(
             "webassembly status=Unsupportedˉcode\n",
             Exactˉfrontier.Diagnostics);
         Equal(0, Exactˉfrontier.Writeˉcount);
+
+        void Requireˉunsupportedˉcode(byte[] Candidate)
+        {
+            var Rejected = Runˉwebassemblyˉtool(
+                Tool,
+                Candidate,
+                500_000_000);
+            Equal(1, Rejected.Exitˉcode);
+            Equal(
+                "webassembly status=Unsupportedˉcode\n",
+                Rejected.Diagnostics);
+            Equal(0, Rejected.Writeˉcount);
+        }
 
         static string Buildˉfunctionˉinventoryˉsource(int Functionˉcount)
         {
@@ -14852,18 +14875,39 @@ internal static partial class Program
                     "\n",
                     Enumerable.Range(0, Functionˉcount - 1).Select(Index =>
                         $"fn F{Index:D4}(Input: bytes) -> bytes {{ return Input; }}")) +
-                "\n\nexport fn Main(Input: bytes) -> bytes { return Input; }\n";
+                "\n\nexport fn Main(Input: bytes) -> bytes { return F0000(Input); }\n";
         }
 
         var Boundaryˉwvb = Compileˉsuccess(
             Buildˉfunctionˉinventoryˉsource(512));
-        Equal(
-            512,
-            Moduleˉcodec.Readˉandˉverify(Boundaryˉwvb).Functions.Length);
+        var Boundaryˉverified = Moduleˉcodec.Readˉandˉverify(Boundaryˉwvb);
+        Equal(512, Boundaryˉverified.Functions.Length);
         var Boundary = Runˉwebassemblyˉtool(Tool, Boundaryˉwvb);
         Equal(1, Boundary.Exitˉcode);
         Equal("webassembly status=Unsupportedˉcode\n", Boundary.Diagnostics);
         Equal(0, Boundary.Writeˉcount);
+
+        var Codeˉpayload = Findˉsectionˉpayload(
+            Boundaryˉwvb,
+            Sectionˉkind.Code);
+        var Invalidˉopcode = Boundaryˉwvb.ToArray();
+        Invalidˉopcode[Codeˉpayload] = byte.MaxValue;
+        Requireˉunsupportedˉcode(Invalidˉopcode);
+
+        var Callˉfunction = Boundaryˉverified.Functions.First(Function =>
+            Function.Instructions.Any(Instruction =>
+                Instruction.Opcode == Opcode.Call));
+        var Callˉinstruction = Callˉfunction.Instructions.First(Instruction =>
+            Instruction.Opcode == Opcode.Call);
+        var Callˉoffset = checked(
+            Codeˉpayload +
+            (int)Callˉfunction.Declaration.Codeˉoffset +
+            (int)Callˉinstruction.Offset);
+        var Invalidˉcall = Boundaryˉwvb.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Invalidˉcall.AsSpan(Callˉoffset + 1, 4),
+            checked((uint)Boundaryˉverified.Functions.Length));
+        Requireˉunsupportedˉcode(Invalidˉcall);
 
         void Requireˉunsupportedˉfunction(byte[] Candidate)
         {
