@@ -1,0 +1,283 @@
+module Compilerˉnativeˉx64ˉstagingˉcontentˉnativeˉtest profile portable;
+
+import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
+import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉcontent as Content;
+
+data Wvb: bytes = [
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    27, 0, 0, 0, 1, 21, 0, 0, 0, 87, 118, 98, 203, 137, 116,
+    111, 203, 137, 119, 118, 111, 203, 137, 102, 105, 120, 116, 117,
+    114, 101, 0, 2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3,
+    0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34,
+    0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110,
+    0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0,
+    0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 42,
+    0, 0, 0, 5, 0, 0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0,
+    0, 0, 17, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97,
+    105, 110, 1, 0, 0, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0,
+    0, 0, 0
+];
+
+data Stagingˉmanifest: bytes = [
+    87, 86, 79, 80, 1, 0, 0, 0,
+    60, 0, 0, 0, 223, 1, 0, 0,
+    3, 0, 0, 0, 0, 0, 64, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 0,
+    1, 0, 0, 0, 49, 0, 0, 0, 150, 1, 0, 0,
+    2, 0, 0, 0, 199, 1, 0, 0, 24, 0, 0, 0
+];
+
+fn Statusˉvalue(
+    Status: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus
+) -> u32 {
+    if Status ==
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Active {
+        return 0u32;
+    }
+    if Status ==
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Complete {
+        return 1u32;
+    }
+    if Status ==
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉplan {
+        return 2u32;
+    }
+    if Status ==
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉmanifest {
+        return 3u32;
+    }
+    if Status ==
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor {
+        return 4u32;
+    }
+    if Status ==
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Publication {
+        return 5u32;
+    }
+    if Status ==
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Manifestˉentry {
+        return 6u32;
+    }
+    if Status ==
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Chunkˉlength {
+        return 7u32;
+    }
+    return 8u32;
+}
+
+fn Cursorˉfromˉstep(
+    Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉcursor {
+    return Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+        Step.Nextˉvalid,
+        Step.Nextˉkind,
+        Step.Nextˉfunction,
+        Step.Nextˉposition
+    );
+}
+
+fn Advanceˉempty(
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions,
+    Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉstep {
+    if Step.Status !=
+        Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid {
+        return Step;
+    }
+    if Bytesˉlength(Step.Value) != 0u32 { return Step; }
+    return Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+        Wvb,
+        Plan,
+        Regions,
+        Cursorˉfromˉstep(Step),
+        4194304u32
+    );
+}
+
+export fn Main() -> i32 {
+    let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Wvb);
+    let Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
+            Wvb,
+            Plan,
+            4194304u32
+        );
+    var Cursor: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉbegin(
+            Stagingˉmanifest,
+            Plan,
+            Regions
+        );
+    if Statusˉvalue(Cursor.Status) != 0u32 || Cursor.Chunks != 3u32 {
+        return 1;
+    }
+
+    var Publicationˉcursor:
+        Publication.Compilerˉnativeˉx64ˉpublicationˉcursor =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉbegin(Regions);
+    var Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+            Wvb,
+            Plan,
+            Regions,
+            Publicationˉcursor,
+            4194304u32
+        );
+    let Short: bytes = Bytesˉslice(
+        Step.Value,
+        0u32,
+        Bytesˉlength(Step.Value) - 1u32
+    );
+    let Shortˉresult: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
+            Wvb,
+            Plan,
+            Regions,
+            Stagingˉmanifest,
+            Cursor,
+            Short
+        );
+    if Statusˉvalue(Shortˉresult.Status) != 7u32 { return 2; }
+
+    let Changed: bytes = Bytesˉconcat(
+        Bytesˉfromˉu8(88u8),
+        Bytesˉslice(Step.Value, 1u32, Bytesˉlength(Step.Value) - 1u32)
+    );
+    let Changedˉresult: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
+            Wvb,
+            Plan,
+            Regions,
+            Stagingˉmanifest,
+            Cursor,
+            Changed
+        );
+    if Statusˉvalue(Changedˉresult.Status) != 8u32 { return 3; }
+
+    Cursor = Content.Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
+        Wvb,
+        Plan,
+        Regions,
+        Stagingˉmanifest,
+        Cursor,
+        Step.Value
+    );
+    if Statusˉvalue(Cursor.Status) != 0u32 { return 4; }
+    Publicationˉcursor = Cursorˉfromˉstep(Step);
+    Step = Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+        Wvb,
+        Plan,
+        Regions,
+        Publicationˉcursor,
+        4194304u32
+    );
+    Cursor = Content.Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
+        Wvb,
+        Plan,
+        Regions,
+        Stagingˉmanifest,
+        Cursor,
+        Step.Value
+    );
+    if Statusˉvalue(Cursor.Status) != 0u32 { return 5; }
+
+    Publicationˉcursor = Cursorˉfromˉstep(Step);
+    Step = Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+        Wvb,
+        Plan,
+        Regions,
+        Publicationˉcursor,
+        4194304u32
+    );
+    Step = Advanceˉempty(Plan, Regions, Step);
+    Step = Advanceˉempty(Plan, Regions, Step);
+    Step = Advanceˉempty(Plan, Regions, Step);
+    Step = Advanceˉempty(Plan, Regions, Step);
+    Step = Advanceˉempty(Plan, Regions, Step);
+    Step = Advanceˉempty(Plan, Regions, Step);
+    if Step.Status !=
+            Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid ||
+        Bytesˉlength(Step.Value) == 0u32 {
+        return 6;
+    }
+    Cursor = Content.Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
+        Wvb,
+        Plan,
+        Regions,
+        Stagingˉmanifest,
+        Cursor,
+        Step.Value
+    );
+    if Statusˉvalue(Cursor.Status) != 0u32 { return 7; }
+    let Finished: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉfinish(
+            Wvb,
+            Plan,
+            Regions,
+            Stagingˉmanifest,
+            Cursor
+        );
+    if Statusˉvalue(Finished.Status) != 1u32 { return 8; }
+
+    let Invalidˉmanifest: bytes = Bytesˉslice(
+        Stagingˉmanifest,
+        0u32,
+        Bytesˉlength(Stagingˉmanifest) - 1u32
+    );
+    let Invalidˉmanifestˉresult:
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉbegin(
+            Invalidˉmanifest,
+            Plan,
+            Regions
+        );
+    if Statusˉvalue(Invalidˉmanifestˉresult.Status) != 3u32 { return 9; }
+
+    let Invalidˉwvb: bytes = Bytesˉslice(
+        Wvb,
+        0u32,
+        Bytesˉlength(Wvb) - 1u32
+    );
+    let Invalidˉplan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Invalidˉwvb);
+    let Invalidˉregions:
+        Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
+            Invalidˉwvb,
+            Invalidˉplan,
+            4194304u32
+        );
+    let Invalidˉplanˉresult:
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉbegin(
+            Stagingˉmanifest,
+            Invalidˉplan,
+            Invalidˉregions
+        );
+    if Statusˉvalue(Invalidˉplanˉresult.Status) != 2u32 { return 10; }
+
+    let Invalidˉcursor: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor(
+            Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Active,
+            3u32,
+            3u32,
+            0u32,
+            0u32,
+            0u32
+        );
+    let Invalidˉcursorˉresult:
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
+            Wvb,
+            Plan,
+            Regions,
+            Stagingˉmanifest,
+            Invalidˉcursor,
+            Step.Value
+        );
+    if Statusˉvalue(Invalidˉcursorˉresult.Status) != 4u32 { return 11; }
+    return 42;
+}

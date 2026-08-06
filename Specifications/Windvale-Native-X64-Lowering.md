@@ -253,16 +253,29 @@ its manifest entry, rejects code/padding crossings, requires every owned
 relocation placeholder to contain four zero bytes, and requires the separate
 padding chunk to contain only `0x90`. The scalar ABI bridge reruns the same
 checks over borrowed snapshots. The fixed adapter must call this validator for
-every admitted text chunk. Arbitrary non-placeholder code bytes, immutable-data
-content, and staged resource identity remain separate publication evidence.
+every admitted text chunk.
+
+Decision 0293's content cursor then binds every actual nonempty staged chunk to
+both the strict manifest entry and the retained publication cursor. The caller
+constructs and preserves one typed lowering plan and publication-region plan.
+`content.begin` captures the admitted manifest count and initial publication
+position; each `content.next` skips only canonical zero-length publication
+regions, requires the exact following position and length, compares every byte
+of the actual value with the publication value, and advances only on equality.
+`content.finish` requires all manifest entries to be consumed and publication
+to reach `Complete` at the admitted object length. The flat scalar cursor has
+nine explicit active, complete, and rejection states. It is not a serialized
+host token, and the operation never constructs one complete WVO or widens the
+ordinary 4 MiB value contract. Staged resource identity remains separate
+publication evidence.
 
 A native commit adapter must preserve the exact
 validated manifest snapshot, bind each staged-resource identity, reject
-missing or changed chunks, reconstruct and verify the complete WVO, and then
-use the qualified exclusive-sibling, durable-write, atomic-replacement, and
-cleanup protocol. It must not silently retry an indeterminate mutation. Until
-that adapter exists, the caller supplies a unique private staging prefix and
-owns scratch cleanup.
+missing or changed resources, consume only the content-verified chunk sequence,
+and then use the qualified exclusive-sibling, durable-write,
+atomic-replacement, and cleanup protocol. It must not silently retry an
+indeterminate mutation. Until that adapter exists, the caller supplies a
+unique private staging prefix and owns scratch cleanup.
 
 ## Adapters
 

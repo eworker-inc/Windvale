@@ -3080,3 +3080,38 @@ No C# product implementation or WebAssembly implementation changed. Arbitrary
 non-placeholder code bytes, immutable-data content, staged-resource identity,
 replacement/cleanup, complete-tool, Development, Standard, Qualification,
 Linux, promotion, ordinary-path, and grouped end-of-goal gates remain deferred.
+
+## Local bounded staged-WVO content-identity evidence
+
+[Decision 0293](../Decisions/0293-Bounded-Staged-Wvo-Content-Identity.md)
+adds a focused typed cursor over the retained lowering plan, publication-region
+plan, strict `WVOP 1` manifest, and actual bounded chunk. Each step skips only
+canonical zero-length publication regions, binds the following nonempty value
+to the exact manifest position and length, compares every byte, and advances
+only on equality. Finalization requires every manifest entry to be consumed
+and publication to complete at the admitted object length. No operation joins
+the complete WVO or widens the ordinary 4 MiB value contract.
+
+The focused matrix completes one- and two-section compiler objects and rejects
+malformed WVB and manifest input, a shifted but structurally valid manifest
+boundary, shortened content, changed arbitrary code, changed immutable data,
+an invalid cursor, and trailing input. The reviewed compiler selection passes
+1/1 in 6.769 test seconds after an 8.05-second zero-warning Release build; the
+complete passing command takes 19.4 seconds.
+
+The Stage 0 evidence adapter is 403,243 bytes at SHA-256
+`2fb1ad5fc4e9561faf20ecd2390e9069e635909a1aeb4cea1ffcac13004a1634`.
+The native runner is 404,838 bytes at SHA-256
+`491e504bd2c15889d6cedd282f5cc637e7011099cb6a761d815aefdb0f61eceb`;
+Stage 0 and the native source front door reproduce it byte for byte. Its exact
+three shared semantic services are `Text_utf8_is_valid`, `Text_concat`, and
+`U32_format`; independent native-fragment verification passes and current-host
+x86-64 execution returns 42. The native source front door rejects only the
+general loop-shaped evidence harness at `Source_wir`/`Source_bindings`
+function 4 operation 0 and publishes no candidate; the independently built
+runner includes and executes the complete product module.
+
+No C# product implementation or WebAssembly implementation changed. Staged
+resource identity, replacement/cleanup, complete-tool, Development, Standard,
+Qualification, Linux, promotion, ordinary-path, and grouped end-of-goal gates
+remain deferred.

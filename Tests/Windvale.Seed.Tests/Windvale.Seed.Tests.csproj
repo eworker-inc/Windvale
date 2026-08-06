@@ -343,6 +343,9 @@
       Include="../../Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Staging-Manifest.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Staging-Content.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Staging-Content.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Staging-Native-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Staging-Native-Bridge.wv" />
     <EmbeddedResource
@@ -396,6 +399,12 @@
     <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvo-Staging-Relocations-Native-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvo-Staging-Relocations-Native-Adapter.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvo-Staging-Content-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Wvo-Staging-Content-Adapter.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvo-Staging-Content-Native-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Wvo-Staging-Content-Native-Adapter.wv" />
     <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Tool.wv" />

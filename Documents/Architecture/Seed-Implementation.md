@@ -103,10 +103,12 @@ bounded reader consumes the complete compiler-produced symbol chunk, validates
 its data/function/Main order and ranges, and fixes the exact relocation-table
 extent. A third reader validates the complete canonical relocation chunk,
 exposes the exact text-chunk count, and checks zero placeholders plus canonical
-padding inside each actual bounded text chunk. A fixed native adapter must
-preserve those snapshots, derive and bind the staged identities, finish
-arbitrary code/data content validation, reconstruct
-the exact WVO, and enter
+padding inside each actual bounded text chunk. A fourth typed cursor replays
+the retained lowering publication, binds every nonempty actual chunk to its
+exact manifest entry, compares arbitrary code, data, and metadata bytes, and
+requires complete final coverage without constructing one whole WVO value. A
+fixed native adapter must preserve those snapshots, derive and bind the staged
+identities, consume the exact verified chunk sequence, and enter
 the qualified sibling-replacement transaction before the managed publisher can
 leave the normal path.
 

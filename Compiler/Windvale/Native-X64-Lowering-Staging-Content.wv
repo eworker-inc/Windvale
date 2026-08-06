@@ -1,0 +1,383 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉcontent profile portable;
+
+import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
+import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+
+export enum Compilerˉnativeˉx64ˉstagingˉcontentˉstatus {
+    Active = 0;
+    Complete = 1;
+    Invalidˉplan = 2;
+    Invalidˉmanifest = 3;
+    Invalidˉcursor = 4;
+    Publication = 5;
+    Manifestˉentry = 6;
+    Chunkˉlength = 7;
+    Content = 8;
+}
+
+export record Compilerˉnativeˉx64ˉstagingˉcontentˉcursor {
+    Status: Compilerˉnativeˉx64ˉstagingˉcontentˉstatus;
+    Chunks: u32;
+    Nextˉchunk: u32;
+    Publicationˉkind: u32;
+    Nextˉfunction: u32;
+    Position: u32;
+}
+
+fn State(
+    Status: Compilerˉnativeˉx64ˉstagingˉcontentˉstatus,
+    Chunks: u32,
+    Nextˉchunk: u32,
+    Publicationˉkind: u32,
+    Nextˉfunction: u32,
+    Position: u32
+) -> Compilerˉnativeˉx64ˉstagingˉcontentˉcursor {
+    return Compilerˉnativeˉx64ˉstagingˉcontentˉcursor(
+        Status,
+        Chunks,
+        Nextˉchunk,
+        Publicationˉkind,
+        Nextˉfunction,
+        Position
+    );
+}
+
+fn Invalid(
+    Status: Compilerˉnativeˉx64ˉstagingˉcontentˉstatus
+) -> Compilerˉnativeˉx64ˉstagingˉcontentˉcursor {
+    return State(Status, 0u32, 0u32, 7u32, 0u32, 0u32);
+}
+
+fn Kindˉvalue(
+    Kind: Publication.Compilerˉnativeˉx64ˉpublicationˉkind
+) -> u32 {
+    if Kind == Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Prefix {
+        return 0u32;
+    }
+    if Kind == Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code {
+        return 1u32;
+    }
+    if Kind == Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Padding {
+        return 2u32;
+    }
+    if Kind ==
+        Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉheader {
+        return 3u32;
+    }
+    if Kind ==
+        Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉdata {
+        return 4u32;
+    }
+    if Kind == Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Symbols {
+        return 5u32;
+    }
+    if Kind == Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Relocations {
+        return 6u32;
+    }
+    return 7u32;
+}
+
+fn Kindˉfromˉvalue(
+    Value: u32
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉkind {
+    if Value == 0u32 {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Prefix;
+    }
+    if Value == 1u32 {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code;
+    }
+    if Value == 2u32 {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Padding;
+    }
+    if Value == 3u32 {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉheader;
+    }
+    if Value == 4u32 {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Readˉonlyˉdata;
+    }
+    if Value == 5u32 {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Symbols;
+    }
+    if Value == 6u32 {
+        return Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Relocations;
+    }
+    return Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Complete;
+}
+
+fn Phaseˉisˉvalid(
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions,
+    Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary
+) -> bool {
+    if Plan.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        return false;
+    }
+    if !Regions.Valid { return false; }
+    return Regions.Objectˉbytes == Summary.Objectˉbytes;
+}
+
+fn Cursorˉfromˉstep(
+    Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉcursor {
+    return Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+        Step.Nextˉvalid,
+        Step.Nextˉkind,
+        Step.Nextˉfunction,
+        Step.Nextˉposition
+    );
+}
+
+fn Advanceˉempty(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions,
+    Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉstep {
+    if Step.Status !=
+        Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid {
+        return Step;
+    }
+    if Bytesˉlength(Step.Value) != 0u32 { return Step; }
+    return Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+        Input,
+        Plan,
+        Regions,
+        Cursorˉfromˉstep(Step),
+        4194304u32
+    );
+}
+
+fn Nextˉnonempty(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions,
+    Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉstep {
+    var Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+            Input,
+            Plan,
+            Regions,
+            Cursor,
+            4194304u32
+        );
+    Step = Advanceˉempty(Input, Plan, Regions, Step);
+    Step = Advanceˉempty(Input, Plan, Regions, Step);
+    Step = Advanceˉempty(Input, Plan, Regions, Step);
+    Step = Advanceˉempty(Input, Plan, Regions, Step);
+    Step = Advanceˉempty(Input, Plan, Regions, Step);
+    return Advanceˉempty(Input, Plan, Regions, Step);
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉcontentˉbegin(
+    Stagingˉmanifest: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions
+) -> Compilerˉnativeˉx64ˉstagingˉcontentˉcursor {
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Summary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉmanifest
+        );
+    }
+    if !Phaseˉisˉvalid(Plan, Regions, Summary) {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉplan
+        );
+    }
+    let Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉbegin(Regions);
+    if !Cursor.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Publication
+        );
+    }
+    return State(
+        Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Active,
+        Summary.Chunks,
+        0u32,
+        Kindˉvalue(Cursor.Kind),
+        Cursor.Nextˉfunction,
+        Cursor.Position
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions,
+    Stagingˉmanifest: bytes,
+    Current: Compilerˉnativeˉx64ˉstagingˉcontentˉcursor,
+    Chunk: bytes
+) -> Compilerˉnativeˉx64ˉstagingˉcontentˉcursor {
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Summary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉmanifest
+        );
+    }
+    if !Phaseˉisˉvalid(Plan, Regions, Summary) {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉplan
+        );
+    }
+    if Current.Status !=
+        Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Active {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+        );
+    }
+    if Current.Chunks != Summary.Chunks {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+        );
+    }
+    if Current.Nextˉchunk >= Summary.Chunks {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+        );
+    }
+    if Current.Publicationˉkind > 7u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+        );
+    }
+
+    let Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+            true,
+            Kindˉfromˉvalue(Current.Publicationˉkind),
+            Current.Nextˉfunction,
+            Current.Position
+        );
+    let Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+        Nextˉnonempty(Input, Plan, Regions, Cursor);
+    if Step.Status !=
+        Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Publication
+        );
+    }
+    if Bytesˉlength(Step.Value) == 0u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Publication
+        );
+    }
+
+    let Entry: u32 = 24u32 + Current.Nextˉchunk * 12u32;
+    let Position: u32 =
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+    let Length: u32 =
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32);
+    if Step.Position != Position || Bytesˉlength(Step.Value) != Length {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Manifestˉentry
+        );
+    }
+    if Bytesˉlength(Chunk) != Length {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Chunkˉlength
+        );
+    }
+    var Matches: bool = true;
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        if Bytesˉreadˉu8(Chunk, Offset) !=
+            Bytesˉreadˉu8(Step.Value, Offset) {
+            Matches = false;
+        }
+        Offset = Offset + 1u32;
+    }
+    if !Matches {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Content
+        );
+    }
+    return State(
+        Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Active,
+        Current.Chunks,
+        Current.Nextˉchunk + 1u32,
+        Kindˉvalue(Step.Nextˉkind),
+        Step.Nextˉfunction,
+        Step.Nextˉposition
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉcontentˉfinish(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions,
+    Stagingˉmanifest: bytes,
+    Current: Compilerˉnativeˉx64ˉstagingˉcontentˉcursor
+) -> Compilerˉnativeˉx64ˉstagingˉcontentˉcursor {
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Summary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉmanifest
+        );
+    }
+    if !Phaseˉisˉvalid(Plan, Regions, Summary) {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉplan
+        );
+    }
+    if Current.Status !=
+        Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Active {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+        );
+    }
+    if Current.Chunks != Summary.Chunks {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+        );
+    }
+    if Current.Nextˉchunk != Summary.Chunks {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+        );
+    }
+    if Current.Publicationˉkind > 7u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+        );
+    }
+
+    let Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+            true,
+            Kindˉfromˉvalue(Current.Publicationˉkind),
+            Current.Nextˉfunction,
+            Current.Position
+        );
+    let Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+        Nextˉnonempty(Input, Plan, Regions, Cursor);
+    if Step.Status !=
+            Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Complete ||
+        Step.Position != Summary.Objectˉbytes {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Manifestˉentry
+        );
+    }
+    return State(
+        Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Complete,
+        Current.Chunks,
+        Current.Nextˉchunk,
+        7u32,
+        Step.Nextˉfunction,
+        Step.Nextˉposition
+    );
+}
