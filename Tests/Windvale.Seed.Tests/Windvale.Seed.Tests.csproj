@@ -589,6 +589,9 @@
       Include="../../Compiler/Windvale/WebAssembly-Control-Flow.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Control-Flow.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Operation-Families.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Operation-Families.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
     <EmbeddedResource

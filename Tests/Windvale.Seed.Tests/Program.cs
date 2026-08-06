@@ -129,7 +129,7 @@ internal static partial class Program
     private const string WEBASSEMBLY_CORE_SHA256 = "2d221ab9ebaad26b5acbfb582188085178d1630a7fa48e5f1c4e933ceea668aa";
     private const string WEBASSEMBLY_TOOL_SHA256 = "78588396fbff0865025d010b3f467ac20844c2d122a9ee9d63da8b85d880c00b";
     private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "480a7dc0e0a23e86ba7f6f73d5fac5cfbf757a8080b486c3b3fa5b23eb7f54ab";
-    private const string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SHA256 = "f845490abd9dcd060f9fa7fdf7260a649cb21d5bc8b50ba92bd2dd58b6f188dd";
+    private const string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SHA256 = "aee0e85b337a070b796b0734209bfa859e47590c33fb82bd60e97d8736f48d89";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -937,6 +937,10 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_CONTROL_FLOW_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Control-Flow.wv");
+
+    private static readonly string WEBASSEMBLY_OPERATION_FAMILIES_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Operation-Families.wv");
 
     private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
@@ -14923,6 +14927,31 @@ internal static partial class Program
             Blockˉcount += Starts.Count;
         }
 
+        static int Operationˉstrategy(Opcode Operation)
+        {
+            var Code = (byte)Operation;
+            if (Code is 1 or 2 or 4 or 5 or 8 or 9 or 19 or 80 or 118 or
+                    161 or 162 ||
+                Code is >= 20 and <= 22 ||
+                Code is >= 32 and <= 40 ||
+                Code is >= 96 and <= 103 ||
+                Code is >= 173 and <= 178)
+            {
+                return 1;
+            }
+            if (Code == 3 ||
+                Code is >= 10 and <= 15 ||
+                Code is >= 110 and <= 117 ||
+                Code is >= 119 and <= 125)
+            {
+                return 2;
+            }
+            if (Code is >= 104 and <= 109) return 3;
+            if (Code == 64) return 4;
+            if (Code is 48 or 49 or 81) return 5;
+            return 0;
+        }
+
         static int Reportˉvalue(string Report, string Name)
         {
             var Prefix = Name + "=";
@@ -14954,6 +14983,91 @@ internal static partial class Program
         Equal(Branchˉcount, Reportˉvalue(Report, "branches"));
         Equal(Returnˉcount, Reportˉvalue(Report, "returns"));
         Equal(Opcodes.Count, Reportˉvalue(Report, "opcodes"));
+        Equal(Opcodes.Count * 8, Reportˉvalue(Report, "operation-entry-bytes"));
+        Equal(
+            Opcodes.Count(Operation => Operationˉstrategy(Operation) == 1),
+            Reportˉvalue(Report, "typed-direct"));
+        Equal(
+            Opcodes.Count(Operation => Operationˉstrategy(Operation) == 2),
+            Reportˉvalue(Report, "descriptor"));
+        Equal(
+            Opcodes.Count(Operation => Operationˉstrategy(Operation) == 3),
+            Reportˉvalue(Report, "nominal"));
+        Equal(
+            Opcodes.Count(Operation => Operationˉstrategy(Operation) == 4),
+            Reportˉvalue(Report, "operation-call"));
+        Equal(
+            Opcodes.Count(Operation => Operationˉstrategy(Operation) == 5),
+            Reportˉvalue(Report, "operation-control"));
+
+        var Familyˉadapterˉbytes = Compileˉwithˉoperationˉfamiliesˉsuccess(
+            "module Compilerˉwebassemblyˉoperationˉfamilyˉadapter profile portable;\n\n" +
+            "import Compilerˉwebassemblyˉoperationˉfamilies as Operations;\n\n" +
+            "export fn Main(Input: bytes) -> bytes {\n" +
+            "    let Families: Operations.Compilerˉwebassemblyˉoperationˉfamilyˉsummary =\n" +
+            "        Operations.Compilerˉwebassemblyˉoperationˉfamiliesˉbuild(Input);\n" +
+            "    if !Families.Valid { return Bytesˉslice(Input, 0u32, 0u32); }\n" +
+            "    return Families.Entries;\n" +
+            "}\n",
+            "WebAssembly-Operation-Family-Adapter.wv");
+        var Familyˉadapter = Moduleˉcodec.Readˉandˉverify(Familyˉadapterˉbytes);
+        var Exactˉcompilerˉbytes = File.ReadAllBytes(
+            "Artifacts/WebAssembly-Playground/Windvale-Compiler-Memory.wvb");
+        var Exactˉcompiler = Moduleˉcodec.Readˉandˉverify(Exactˉcompilerˉbytes);
+        var Exactˉmain = Array.FindIndex(
+            Exactˉcompiler.Functions.ToArray(),
+            Function => Function.Declaration.Name == "Main");
+        Equal(2, Exactˉmain);
+        var Exactˉreachable = new HashSet<int> { Exactˉmain };
+        var Exactˉpending = new Queue<int>();
+        Exactˉpending.Enqueue(Exactˉmain);
+        while (Exactˉpending.Count > 0)
+        {
+            var Functionˉindex = Exactˉpending.Dequeue();
+            foreach (var Instruction in Exactˉcompiler.Functions[
+                Functionˉindex].Instructions)
+            {
+                if (Instruction.Opcode == Opcode.Call &&
+                    Exactˉreachable.Add(checked((int)Instruction.Unsignedˉoperand)))
+                {
+                    Exactˉpending.Enqueue(
+                        checked((int)Instruction.Unsignedˉoperand));
+                }
+            }
+        }
+        Equal(397, Exactˉreachable.Count);
+        var Exactˉopcodes = Exactˉreachable
+            .SelectMany(Index => Exactˉcompiler.Functions[Index].Instructions)
+            .Select(Instruction => (byte)Instruction.Opcode)
+            .Distinct()
+            .Order()
+            .ToArray();
+        Equal(58, Exactˉopcodes.Length);
+        var Exactˉfamilies = new Referenceˉruntime(
+            Familyˉadapter,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(
+                Exactˉopcodes.ToImmutableArray());
+        Equal(Exactˉopcodes.Length * 8, Exactˉfamilies.Bytes.Length);
+        for (var Index = 0; Index < Exactˉopcodes.Length; Index++)
+        {
+            Equal(
+                checked((uint)Exactˉopcodes[Index]),
+                BinaryPrimitives.ReadUInt32LittleEndian(
+                    Exactˉfamilies.Bytes.AsSpan(Index * 8, 4)));
+            Equal(
+                checked((uint)Operationˉstrategy(
+                    (Opcode)Exactˉopcodes[Index])),
+                BinaryPrimitives.ReadUInt32LittleEndian(
+                    Exactˉfamilies.Bytes.AsSpan(Index * 8 + 4, 4)));
+        }
+        Equal(
+            0,
+            new Referenceˉruntime(
+                Familyˉadapter,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Runtimeˉoptions.Portableˉdefaults).Runˉmainˉbytes(
+                    ImmutableArray.Create(byte.MaxValue)).Bytes.Length);
 
         var Mutationˉbytes = Compileˉsuccess(
             "module WebAssemblyˉcontrolˉmutation profile portable;\n\n" +
@@ -27097,11 +27211,35 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/WebAssembly-Control-Flow.wv",
                     WEBASSEMBLY_CONTROL_FLOW_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Operation-Families.wv",
+                    WEBASSEMBLY_OPERATION_FAMILIES_SOURCE),
             ]);
         if (!Result.Success)
         {
             throw new InvalidOperationException(
                 "Compiler WebAssembly control-flow composition failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉoperationˉfamiliesˉsuccess(
+        string source,
+        string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [
+                new(
+                    "Compiler/Windvale/WebAssembly-Operation-Families.wv",
+                    WEBASSEMBLY_OPERATION_FAMILIES_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WebAssembly operation-family composition failed: " +
                 string.Join(" | ", Result.Diagnostics));
         }
 

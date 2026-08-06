@@ -5,4 +5,5 @@ source "Compiler/Windvale/WebAssembly-Type-Directory.wv"
 source "Compiler/Windvale/WebAssembly-Typed-Calls.wv"
 source "Compiler/Windvale/WebAssembly-Executable-Graph.wv"
 source "Compiler/Windvale/WebAssembly-Control-Flow.wv"
+source "Compiler/Windvale/WebAssembly-Operation-Families.wv"
 emit wvb

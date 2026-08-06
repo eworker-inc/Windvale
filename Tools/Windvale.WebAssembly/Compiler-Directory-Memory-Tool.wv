@@ -5,6 +5,7 @@ import Compilerˉwebassemblyˉtypeˉdirectory as Types;
 import Compilerˉwebassemblyˉtypedˉcalls as Typed;
 import Compilerˉwebassemblyˉexecutableˉgraph as Executable;
 import Compilerˉwebassemblyˉcontrolˉflow as Control;
+import Compilerˉwebassemblyˉoperationˉfamilies as Operations;
 
 fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
     if Offset > Total { return false; }
@@ -151,6 +152,17 @@ export fn Main(Input: bytes) -> bytes {
             U32ˉformat(Controlˉflow.Failureˉopcode)
         ));
     }
+    let Operationˉfamilies:
+        Operations.Compilerˉwebassemblyˉoperationˉfamilyˉsummary =
+        Operations.Compilerˉwebassemblyˉoperationˉfamiliesˉbuild(
+            Controlˉflow.Opcodeˉset
+        );
+    if !Operationˉfamilies.Valid {
+        return Failure(Textˉconcat(
+            "operation-family opcode=",
+            U32ˉformat(Operationˉfamilies.Failureˉopcode)
+        ));
+    }
 
     var Report: text = "directory status=Valid functions=";
     Report = Textˉconcat(Report, U32ˉformat(Functionˉdirectory.Count));
@@ -205,8 +217,38 @@ export fn Main(Input: bytes) -> bytes {
     Report = Textˉconcat(Report, " returns=");
     Report = Textˉconcat(Report, U32ˉformat(Controlˉflow.Returnˉcount));
     Report = Textˉconcat(Report, " opcodes=");
-    return Textˉtoˉutf8(Textˉconcat(
+    Report = Textˉconcat(
         Report,
         U32ˉformat(Bytesˉlength(Controlˉflow.Opcodeˉset))
+    );
+    Report = Textˉconcat(Report, " operation-entry-bytes=");
+    Report = Textˉconcat(
+        Report,
+        U32ˉformat(Bytesˉlength(Operationˉfamilies.Entries))
+    );
+    Report = Textˉconcat(Report, " typed-direct=");
+    Report = Textˉconcat(
+        Report,
+        U32ˉformat(Operationˉfamilies.Typedˉdirectˉcount)
+    );
+    Report = Textˉconcat(Report, " descriptor=");
+    Report = Textˉconcat(
+        Report,
+        U32ˉformat(Operationˉfamilies.Descriptorˉcount)
+    );
+    Report = Textˉconcat(Report, " nominal=");
+    Report = Textˉconcat(
+        Report,
+        U32ˉformat(Operationˉfamilies.Nominalˉcount)
+    );
+    Report = Textˉconcat(Report, " operation-call=");
+    Report = Textˉconcat(
+        Report,
+        U32ˉformat(Operationˉfamilies.Callˉcount)
+    );
+    Report = Textˉconcat(Report, " operation-control=");
+    return Textˉtoˉutf8(Textˉconcat(
+        Report,
+        U32ˉformat(Operationˉfamilies.Controlˉcount)
     ));
 }

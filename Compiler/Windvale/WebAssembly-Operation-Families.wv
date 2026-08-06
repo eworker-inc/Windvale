@@ -1,0 +1,168 @@
+module Compilerˉwebassemblyˉoperationˉfamilies profile portable;
+
+export record Compilerˉwebassemblyˉoperationˉfamilyˉsummary {
+    Valid: bool;
+    Operationˉcount: u32;
+    Typedˉdirectˉcount: u32;
+    Descriptorˉcount: u32;
+    Nominalˉcount: u32;
+    Callˉcount: u32;
+    Controlˉcount: u32;
+    Entries: bytes;
+    Failureˉopcode: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalid(
+    Input: bytes,
+    Opcode: u32
+) -> Compilerˉwebassemblyˉoperationˉfamilyˉsummary {
+    return Compilerˉwebassemblyˉoperationˉfamilyˉsummary(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Empty(Input),
+        Opcode
+    );
+}
+
+fn Appendˉu32(Values: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Values, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamilyˉtypedˉdirect() -> u32 {
+    return 1u32;
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamilyˉdescriptor() -> u32 {
+    return 2u32;
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamilyˉnominal() -> u32 {
+    return 3u32;
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamilyˉcall() -> u32 {
+    return 4u32;
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamilyˉcontrol() -> u32 {
+    return 5u32;
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamilyˉstrategy(
+    Opcode: u8
+) -> u32 {
+    let Code: u32 = U32ˉfromˉu8(Opcode);
+    if Opcode == 1u8 || Opcode == 2u8 ||
+        Opcode == 4u8 || Opcode == 5u8 ||
+        Opcode == 8u8 || Opcode == 9u8 || Opcode == 19u8 ||
+        (Code >= 20u32 && Code <= 22u32) ||
+        (Code >= 32u32 && Code <= 40u32) ||
+        Opcode == 80u8 ||
+        (Code >= 96u32 && Code <= 103u32) ||
+        Opcode == 118u8 || Opcode == 161u8 || Opcode == 162u8 ||
+        (Code >= 173u32 && Code <= 178u32) {
+        return Compilerˉwebassemblyˉoperationˉfamilyˉtypedˉdirect();
+    }
+    if Opcode == 3u8 ||
+        (Code >= 10u32 && Code <= 15u32) ||
+        (Code >= 110u32 && Code <= 117u32) ||
+        (Code >= 119u32 && Code <= 125u32) {
+        return Compilerˉwebassemblyˉoperationˉfamilyˉdescriptor();
+    }
+    if Code >= 104u32 && Code <= 109u32 {
+        return Compilerˉwebassemblyˉoperationˉfamilyˉnominal();
+    }
+    if Opcode == 64u8 {
+        return Compilerˉwebassemblyˉoperationˉfamilyˉcall();
+    }
+    if Opcode == 48u8 || Opcode == 49u8 || Opcode == 81u8 {
+        return Compilerˉwebassemblyˉoperationˉfamilyˉcontrol();
+    }
+    return 0u32;
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamiliesˉbuild(
+    Opcodes: bytes
+) -> Compilerˉwebassemblyˉoperationˉfamilyˉsummary {
+    let Operationˉcount: u32 = Bytesˉlength(Opcodes);
+    if Operationˉcount == 0u32 || Operationˉcount > 256u32 {
+        return Invalid(Opcodes, 0u32);
+    }
+    var Entries: bytes = Empty(Opcodes);
+    var Typedˉdirectˉcount: u32 = 0u32;
+    var Descriptorˉcount: u32 = 0u32;
+    var Nominalˉcount: u32 = 0u32;
+    var Callˉcount: u32 = 0u32;
+    var Controlˉcount: u32 = 0u32;
+    var Offset: u32 = 0u32;
+    var Previous: u32 = 0u32;
+    while Offset < Operationˉcount {
+        let Opcode: u8 = Bytesˉreadˉu8(Opcodes, Offset);
+        let Opcodeˉu32: u32 = U32ˉfromˉu8(Opcode);
+        if Offset > 0u32 && Opcodeˉu32 <= Previous {
+            return Invalid(Opcodes, Opcodeˉu32);
+        }
+        let Strategy: u32 =
+            Compilerˉwebassemblyˉoperationˉfamilyˉstrategy(Opcode);
+        if Strategy == 0u32 { return Invalid(Opcodes, Opcodeˉu32); }
+        if Strategy == 1u32 {
+            Typedˉdirectˉcount = Typedˉdirectˉcount + 1u32;
+        }
+        if Strategy == 2u32 {
+            Descriptorˉcount = Descriptorˉcount + 1u32;
+        }
+        if Strategy == 3u32 {
+            Nominalˉcount = Nominalˉcount + 1u32;
+        }
+        if Strategy == 4u32 { Callˉcount = Callˉcount + 1u32; }
+        if Strategy == 5u32 {
+            Controlˉcount = Controlˉcount + 1u32;
+        }
+        Entries = Appendˉu32(Entries, Opcodeˉu32);
+        Entries = Appendˉu32(Entries, Strategy);
+        Previous = Opcodeˉu32;
+        Offset = Offset + 1u32;
+    }
+    if Bytesˉlength(Entries) != Operationˉcount * 8u32 ||
+        Typedˉdirectˉcount + Descriptorˉcount + Nominalˉcount +
+            Callˉcount + Controlˉcount != Operationˉcount {
+        return Invalid(Opcodes, 0u32);
+    }
+    return Compilerˉwebassemblyˉoperationˉfamilyˉsummary(
+        true,
+        Operationˉcount,
+        Typedˉdirectˉcount,
+        Descriptorˉcount,
+        Nominalˉcount,
+        Callˉcount,
+        Controlˉcount,
+        Entries,
+        0u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamilyˉopcode(
+    Families: Compilerˉwebassemblyˉoperationˉfamilyˉsummary,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Families.Entries, Index * 8u32);
+}
+
+export fn Compilerˉwebassemblyˉoperationˉfamilyˉentryˉstrategy(
+    Families: Compilerˉwebassemblyˉoperationˉfamilyˉsummary,
+    Index: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Families.Entries,
+        Index * 8u32 + 4u32
+    );
+}
