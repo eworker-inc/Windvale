@@ -85,6 +85,63 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     if Functionˉcount < 1u32 { return Invalid; }
     if Functionˉcount > 4096u32 { return Invalid; }
 
+    var Typeˉoffsets: bytes = Invalid;
+    var Typeˉindex: u32 = 0u32;
+    var Typeˉcursor: u32 = Types + 4u32;
+    while Typeˉindex < Typeˉcount {
+        Typeˉoffsets = Bytesˉconcat(
+            Typeˉoffsets,
+            Bytesˉfromˉu32ˉlittle(Typeˉcursor)
+        );
+        let Typeˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Typeˉcursor));
+        if Typeˉkind != 1u32 {
+            if Typeˉkind != 2u32 { return Invalid; }
+        }
+        Typeˉcursor = Typeˉcursor + 1u32;
+        Typeˉcursor = Typeˉcursor + 4u32
+            + Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor);
+        let Typeˉmemberˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Module,
+            Typeˉcursor
+        );
+        Typeˉcursor = Typeˉcursor + 4u32;
+        if Typeˉmemberˉcount < 1u32 { return Invalid; }
+        if Typeˉkind == 1u32 {
+            if Typeˉmemberˉcount > 64u32 { return Invalid; }
+        } else {
+            if Typeˉmemberˉcount > 256u32 { return Invalid; }
+        }
+        var Typeˉmemberˉindex: u32 = 0u32;
+        while Typeˉmemberˉindex < Typeˉmemberˉcount {
+            Typeˉcursor = Typeˉcursor + 4u32
+                + Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor);
+            if Typeˉkind == 1u32 {
+                let Fieldˉshapeˉkind: u32 = U32ˉfromˉu8(
+                    Bytesˉreadˉu8(Module, Typeˉcursor)
+                );
+                if Fieldˉshapeˉkind < 1u32 { return Invalid; }
+                if Fieldˉshapeˉkind > 10u32 { return Invalid; }
+                Typeˉcursor = Typeˉcursor + 1u32;
+                if Fieldˉshapeˉkind == 7u32 {
+                    if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor) >= Typeˉcount {
+                        return Invalid;
+                    }
+                    Typeˉcursor = Typeˉcursor + 4u32;
+                }
+                if Fieldˉshapeˉkind == 8u32 {
+                    if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor) >= Typeˉcount {
+                        return Invalid;
+                    }
+                    Typeˉcursor = Typeˉcursor + 4u32;
+                }
+            } else {
+                Typeˉcursor = Typeˉcursor + 4u32;
+            }
+            Typeˉmemberˉindex = Typeˉmemberˉindex + 1u32;
+        }
+        Typeˉindex = Typeˉindex + 1u32;
+    }
+
     var Mainˉfound: bool = false;
     var Mainˉindex: u32 = 0u32;
     let Exportˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Exports);
@@ -151,5 +208,25 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Types));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Typeˉcount));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Functionˉcount));
-    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Mainˉindex));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Mainˉindex));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Typeˉoffsets))
+    );
+    return Bytesˉconcat(Result, Typeˉoffsets);
+}
+
+export fn Interpreterˉrecordˉmetadata(Request: bytes) -> bytes {
+    let Empty: bytes = Bytesˉslice(Request, 0u32, 0u32);
+    let Zeroˉvalue: bytes = Bytesˉconcat(
+        Empty,
+        Bytesˉfromˉu32ˉlittle(0u32)
+    );
+    var Result: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
+    var Resultˉlength: u32 = 8u32;
+    while Resultˉlength < 6144u32 {
+        Result = Bytesˉconcat(Result, Result);
+        Resultˉlength = Resultˉlength * 2u32;
+    }
+    return Bytesˉslice(Result, 0u32, 6144u32);
 }

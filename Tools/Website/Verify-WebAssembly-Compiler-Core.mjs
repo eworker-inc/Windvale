@@ -28,6 +28,11 @@ Equal(
     createHash("sha256").update(Result.Wvb).digest("hex"),
     "compiled WVB SHA-256",
 );
+Equal(100_000, Result.Warmupˉguestˉinstructions, "warmup guest instructions");
+if (!Number.isInteger(Result.Warmupˉouterˉinstructions) ||
+    Result.Warmupˉouterˉinstructions < 1) {
+    throw new Error("The compiler warmup did not report outer instructions.");
+}
 Equal(1_183_292, Result.Compilerˉguestˉinstructions, "compiler guest instructions");
 Equal(1_513_529_072, Result.Compilerˉouterˉinstructions, "compiler outer instructions");
 Equal(0, Result.Executionˉstatus, "execution status");
@@ -38,6 +43,8 @@ Equal(8_554, Result.Executionˉouterˉinstructions, "execution outer instruction
 console.log(JSON.stringify({
     wvbBytes: Result.Wvb.byteLength,
     wvbSha256: Result.Wvbˉsha256,
+    warmupGuestInstructions: Result.Warmupˉguestˉinstructions,
+    warmupOuterInstructions: Result.Warmupˉouterˉinstructions,
     compilerGuestInstructions: Result.Compilerˉguestˉinstructions,
     compilerOuterInstructions: Result.Compilerˉouterˉinstructions,
     executionStatus: Result.Executionˉstatus,

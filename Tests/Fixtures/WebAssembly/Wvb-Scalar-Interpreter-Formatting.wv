@@ -1,0 +1,52 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉformatting profile portable;
+
+export fn Interpreterˉformatˉinteger(Input: bytes) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if Bytesˉlength(Input) != 9u32 { return Invalid; }
+    let Mode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 0u32));
+    if Mode > 1u32 { return Invalid; }
+    let Raw: u32 = Bytesˉreadˉu32ˉlittle(Input, 1u32);
+    var Negative: bool = false;
+    var Magnitude: u32 = Raw;
+    if Mode == 1u32 {
+        if Raw >= 2147483648u32 {
+            Negative = true;
+            Magnitude = 4294967295u32 - Raw + 1u32;
+        }
+    }
+    var Result: bytes = Invalid;
+    if Negative {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(45u8));
+    }
+    var Place: u32 = 1000000000u32;
+    var Placeˉindex: u32 = 0u32;
+    var Started: bool = false;
+    while Placeˉindex < 10u32 {
+        var Digit: u32 = 0u32;
+        while Magnitude >= Place {
+            Magnitude = Magnitude - Place;
+            Digit = Digit + 1u32;
+        }
+        if Digit != 0u32 { Started = true; }
+        var Emit: bool = Started;
+        if Placeˉindex == 9u32 { Emit = true; }
+        if Emit {
+            let Digitˉbytes: bytes = Bytesˉfromˉu32ˉlittle(48u32 + Digit);
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Digitˉbytes, 0u32, 1u32)
+            );
+        }
+        Placeˉindex = Placeˉindex + 1u32;
+        if Placeˉindex == 1u32 { Place = 100000000u32; }
+        if Placeˉindex == 2u32 { Place = 10000000u32; }
+        if Placeˉindex == 3u32 { Place = 1000000u32; }
+        if Placeˉindex == 4u32 { Place = 100000u32; }
+        if Placeˉindex == 5u32 { Place = 10000u32; }
+        if Placeˉindex == 6u32 { Place = 1000u32; }
+        if Placeˉindex == 7u32 { Place = 100u32; }
+        if Placeˉindex == 8u32 { Place = 10u32; }
+        if Placeˉindex == 9u32 { Place = 1u32; }
+    }
+    return Result;
+}

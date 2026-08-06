@@ -2,11 +2,12 @@ module WebAssemblyˉwvbˉscalarˉinterpreter profile portable;
 
 import Foundationˉsha256 as Sha256;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
 
 export fn Main(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
     let Preflight: bytes = Envelopeˉreader.Interpreterˉenvelope(Request);
-    if Bytesˉlength(Preflight) != 60u32 { return Invalid; }
+    if Bytesˉlength(Preflight) < 64u32 { return Invalid; }
     let Requestˉmajor: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 0u32);
     let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 4u32);
     let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 8u32);
@@ -24,10 +25,19 @@ export fn Main(Request: bytes) -> bytes {
     let Functions: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 32u32);
     let Functionsˉend: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 36u32);
     let Code: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 40u32);
-    let Types: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 44u32);
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 48u32);
     let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 52u32);
     let Mainˉindex: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 56u32);
+    let Typeˉoffsetsˉlength: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 60u32);
+    if Typeˉoffsetsˉlength != Typeˉcount * 4u32 { return Invalid; }
+    if Bytesˉlength(Preflight) != 64u32 + Typeˉoffsetsˉlength {
+        return Invalid;
+    }
+    let Typeˉoffsets: bytes = Bytesˉslice(
+        Preflight,
+        64u32,
+        Typeˉoffsetsˉlength
+    );
 
     var Envelope: u32 = 0u32;
     var Sectionˉkind: u32 = 0u32;
@@ -37,63 +47,6 @@ export fn Main(Request: bytes) -> bytes {
     let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     let Zeroˉcell: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
 
-    var Typeˉoffsets: bytes = Invalid;
-    var Typeˉindex: u32 = 0u32;
-    var Typeˉcursor: u32 = Types + 4u32;
-    while Typeˉindex < Typeˉcount {
-        Typeˉoffsets = Bytesˉconcat(
-            Typeˉoffsets,
-            Bytesˉfromˉu32ˉlittle(Typeˉcursor)
-        );
-        let Typeˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Typeˉcursor));
-        if Typeˉkind != 1u32 {
-            if Typeˉkind != 2u32 { return Invalid; }
-        }
-        Typeˉcursor = Typeˉcursor + 1u32;
-        Typeˉcursor = Typeˉcursor + 4u32
-            + Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor);
-        let Typeˉmemberˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-            Module,
-            Typeˉcursor
-        );
-        Typeˉcursor = Typeˉcursor + 4u32;
-        if Typeˉmemberˉcount < 1u32 { return Invalid; }
-        if Typeˉkind == 1u32 {
-            if Typeˉmemberˉcount > 64u32 { return Invalid; }
-        } else {
-            if Typeˉmemberˉcount > 256u32 { return Invalid; }
-        }
-        var Typeˉmemberˉindex: u32 = 0u32;
-        while Typeˉmemberˉindex < Typeˉmemberˉcount {
-            Typeˉcursor = Typeˉcursor + 4u32
-                + Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor);
-            if Typeˉkind == 1u32 {
-                let Fieldˉshapeˉkind: u32 = U32ˉfromˉu8(
-                    Bytesˉreadˉu8(Module, Typeˉcursor)
-                );
-                if Fieldˉshapeˉkind < 1u32 { return Invalid; }
-                if Fieldˉshapeˉkind > 10u32 { return Invalid; }
-                Typeˉcursor = Typeˉcursor + 1u32;
-                if Fieldˉshapeˉkind == 7u32 {
-                    if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor) >= Typeˉcount {
-                        return Invalid;
-                    }
-                    Typeˉcursor = Typeˉcursor + 4u32;
-                }
-                if Fieldˉshapeˉkind == 8u32 {
-                    if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor) >= Typeˉcount {
-                        return Invalid;
-                    }
-                    Typeˉcursor = Typeˉcursor + 4u32;
-                }
-            } else {
-                Typeˉcursor = Typeˉcursor + 4u32;
-            }
-            Typeˉmemberˉindex = Typeˉmemberˉindex + 1u32;
-        }
-        Typeˉindex = Typeˉindex + 1u32;
-    }
-
     var Mainˉfound: bool = false;
     var Exportˉindex: u32 = 128u32;
 
@@ -102,17 +55,12 @@ export fn Main(Request: bytes) -> bytes {
     var Aggregateˉinstructions: u32 = 0u32;
     var Mainˉcodeˉoffset: u32 = 0u32;
     var Mainˉcodeˉlength: u32 = 0u32;
-    var Functionˉoffsets: bytes = Invalid;
     var Functionˉframeˉmetadata: bytes = Invalid;
     var Functionˉcodeˉoffsets: bytes = Invalid;
     var Functionˉcodeˉlengths: bytes = Invalid;
     var Functionˉshapeˉoffsets: bytes = Invalid;
     var Localˉshapes: bytes = Invalid;
     while Functionˉindex < Functionˉcount {
-        Functionˉoffsets = Bytesˉconcat(
-            Functionˉoffsets,
-            Bytesˉfromˉu32ˉlittle(Functionˉcursor)
-        );
         Functionˉcursor = Functionˉcursor + 4u32
             + Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor);
         let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
@@ -403,19 +351,15 @@ export fn Main(Request: bytes) -> bytes {
     }
     let Recordˉcapacity: u32 = 768u32;
     let Recordˉmetadataˉlength: u32 = Recordˉcapacity * 8u32;
-    var Recordˉzeroˉslots: bytes = Zeroˉcell;
-    var Recordˉzeroˉslotsˉlength: u32 = 8u32;
-    while Recordˉzeroˉslotsˉlength < Recordˉmetadataˉlength {
-        Recordˉzeroˉslots = Bytesˉconcat(
-            Recordˉzeroˉslots,
-            Recordˉzeroˉslots
-        );
-        Recordˉzeroˉslotsˉlength = Recordˉzeroˉslotsˉlength * 2u32;
+    var Recordˉmetadata: bytes =
+        Envelopeˉreader.Interpreterˉrecordˉmetadata(Request);
+    if Bytesˉlength(Recordˉmetadata) != Recordˉmetadataˉlength {
+        return Invalid;
     }
-    var Recordˉmetadata: bytes = Bytesˉslice(
-        Recordˉzeroˉslots,
+    let Recordˉzeroˉslots: bytes = Bytesˉslice(
+        Recordˉmetadata,
         0u32,
-        Recordˉmetadataˉlength
+        Recordˉcapacity
     );
     var Records: bytes = Invalid;
     // Reuse completed-preflight slots as execution state: Functionˉindex is the
@@ -1759,7 +1703,7 @@ export fn Main(Request: bytes) -> bytes {
                                             Localˉshapes,
                                             Recordˉactiveˉshapeˉoffset
                                                 + Recordˉactiveˉlocalˉoffset
-                                        );
+                                    );
                                     if Recordˉactiveˉlocalˉkind == 7u32 {
                                         Recordˉreachableˉvalues = Bytesˉconcat(
                                             Recordˉreachableˉvalues,
@@ -2474,79 +2418,16 @@ export fn Main(Request: bytes) -> bytes {
         if Payloadˉlength == 112u32 { Isˉintegerˉformat = true; }
         if Isˉintegerˉformat {
             let Formatˉstackˉlength: u32 = Bytesˉlength(Stack);
-            let Formatˉraw: u32 = Bytesˉreadˉu32ˉlittle(
-                Stack,
-                Formatˉstackˉlength - 8u32
+            var Formatˉmode: u8 = 0u8;
+            if Payloadˉlength == 110u32 { Formatˉmode = 1u8; }
+            let Formattedˉvalue: bytes = Formatting.Interpreterˉformatˉinteger(
+                Bytesˉconcat(
+                    Bytesˉfromˉu8(Formatˉmode),
+                    Bytesˉslice(Stack, Formatˉstackˉlength - 8u32, 8u32)
+                )
             );
+            if Bytesˉlength(Formattedˉvalue) == 0u32 { return Invalid; }
             Stack = Bytesˉslice(Stack, 0u32, Formatˉstackˉlength - 8u32);
-            var Formatˉnegative: bool = false;
-            var Formatˉmagnitude: u32 = Formatˉraw;
-            if Payloadˉlength == 110u32 {
-                if Formatˉraw >= 2147483648u32 {
-                    Formatˉnegative = true;
-                    Formatˉmagnitude =
-                        4294967295u32 - Formatˉraw + 1u32;
-                }
-            }
-            var Formattedˉvalue: bytes = Invalid;
-            if Formatˉnegative {
-                Formattedˉvalue = Bytesˉconcat(
-                    Formattedˉvalue,
-                    Bytesˉfromˉu8(45u8)
-                );
-            }
-            var Formatˉplace: u32 = 1000000000u32;
-            var Formatˉplaceˉindex: u32 = 0u32;
-            var Formatˉstarted: bool = false;
-            while Formatˉplaceˉindex < 10u32 {
-                var Formatˉdigit: u32 = 0u32;
-                while Formatˉmagnitude >= Formatˉplace {
-                    Formatˉmagnitude = Formatˉmagnitude - Formatˉplace;
-                    Formatˉdigit = Formatˉdigit + 1u32;
-                }
-                if Formatˉdigit != 0u32 { Formatˉstarted = true; }
-                var Formatˉemit: bool = Formatˉstarted;
-                if Formatˉplaceˉindex == 9u32 { Formatˉemit = true; }
-                if Formatˉemit {
-                    let Formatˉdigitˉbytes: bytes = Bytesˉfromˉu32ˉlittle(
-                        48u32 + Formatˉdigit
-                    );
-                    Formattedˉvalue = Bytesˉconcat(
-                        Formattedˉvalue,
-                        Bytesˉslice(Formatˉdigitˉbytes, 0u32, 1u32)
-                    );
-                }
-                Formatˉplaceˉindex = Formatˉplaceˉindex + 1u32;
-                if Formatˉplaceˉindex == 1u32 {
-                    Formatˉplace = 100000000u32;
-                }
-                if Formatˉplaceˉindex == 2u32 {
-                    Formatˉplace = 10000000u32;
-                }
-                if Formatˉplaceˉindex == 3u32 {
-                    Formatˉplace = 1000000u32;
-                }
-                if Formatˉplaceˉindex == 4u32 {
-                    Formatˉplace = 100000u32;
-                }
-                if Formatˉplaceˉindex == 5u32 {
-                    Formatˉplace = 10000u32;
-                }
-                if Formatˉplaceˉindex == 6u32 {
-                    Formatˉplace = 1000u32;
-                }
-                if Formatˉplaceˉindex == 7u32 {
-                    Formatˉplace = 100u32;
-                }
-                if Formatˉplaceˉindex == 8u32 {
-                    Formatˉplace = 10u32;
-                }
-                if Formatˉplaceˉindex == 9u32 {
-                    Formatˉplace = 1u32;
-                }
-            }
-            let Formattedˉlength: u32 = Bytesˉlength(Formattedˉvalue);
-            if Formattedˉlength > 16384u32 { return Invalid; }
             Heapˉallocationˉrequested = true;
             Heapˉallocationˉvalue = Formattedˉvalue;
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;

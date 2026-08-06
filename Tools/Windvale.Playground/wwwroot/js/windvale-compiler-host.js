@@ -76,6 +76,8 @@ function Failure(Error) {
         Error,
         Wvb: null,
         WvbSha256: null,
+        WarmupGuestInstructions: null,
+        WarmupOuterInstructions: null,
         CompilerGuestInstructions: null,
         CompilerOuterInstructions: null,
         ExecutionStatus: null,

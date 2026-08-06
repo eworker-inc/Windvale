@@ -3,6 +3,7 @@ const WVXO_MAGIC = 0x4F58_5657;
 const WVSS_MAGIC = 0x5353_5657;
 const WVCO_MAGIC = 0x4F43_5657;
 const MAXIMUM_SOURCE_BYTES = 64 * 1024;
+const COMPILER_WARMUP_GUEST_BUDGET = 100_000;
 const COMPILER_GUEST_BUDGET = 2_000_000;
 const COMPILER_OUTER_BUDGET = 1_800_000_000;
 const EXECUTION_OUTER_BUDGET = 200_000_000;
@@ -55,6 +56,22 @@ export async function Compileˉverifyˉexecute(
     Requireˉmemoryˉregions(Exports);
 
     const Sourceˉset = Buildˉsourceˉset(Sourceˉbytes);
+    const Warmupˉrequest = Buildˉbytesˉrequest(
+        Compilerˉbytes,
+        Sourceˉset,
+        COMPILER_WARMUP_GUEST_BUDGET,
+    );
+    const Warmupˉrun = Runˉrequest(
+        Exports,
+        Warmupˉrequest,
+        COMPILER_OUTER_BUDGET,
+    );
+    const Warmupˉresponse = Readˉwvxo(Warmupˉrun.Output, 2);
+    if (Warmupˉresponse.Status !== 3011 ||
+        Warmupˉresponse.Guestˉinstructions !== COMPILER_WARMUP_GUEST_BUDGET ||
+        Warmupˉresponse.Result.byteLength !== 0) {
+        throw new Error("The bounded WebAssembly compiler warmup was inconsistent.");
+    }
     const Compilerˉrequest = Buildˉbytesˉrequest(
         Compilerˉbytes,
         Sourceˉset,
@@ -91,6 +108,8 @@ export async function Compileˉverifyˉexecute(
     return {
         Wvb,
         Wvbˉsha256: await Sha256(Wvb),
+        Warmupˉguestˉinstructions: Warmupˉresponse.Guestˉinstructions,
+        Warmupˉouterˉinstructions: Warmupˉrun.Outerˉinstructions,
         Compilerˉguestˉinstructions: Compilerˉresponse.Guestˉinstructions,
         Compilerˉouterˉinstructions: Compilerˉrun.Outerˉinstructions,
         Executionˉstatus: Executionˉresponse.Status,

@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-if (process.argv.length < 5 || process.argv.length > 9) {
+if (process.argv.length < 5 || process.argv.length > 10) {
     throw new Error(
         "Usage: node Probe-WebAssembly-Compiler.mjs " +
             "<scalar-interpreter.wasm> <compiler.wvb> <source.wv> " +
-            "[guest-budget] [outer-budget] [maximum-call-depth] [expected.wvb]",
+            "[guest-budget] [outer-budget] [maximum-call-depth] " +
+            "[expected.wvb] [warmup-guest-budget]",
     );
 }
 
@@ -61,6 +62,9 @@ const maximumCallDepth = parseU32(
     process.argv[7] ?? "64",
 );
 const expectedPath = process.argv[8] ?? null;
+const warmupGuestBudget = process.argv[9] === undefined
+    ? null
+    : parseU32("warmup guest budget", process.argv[9]);
 const interpreter = readFileSync(interpreterPath);
 const compiler = readFileSync(compilerPath);
 const source = readFileSync(sourcePath);
@@ -71,6 +75,14 @@ const request = bytesRequest(
     guestBudget,
     maximumCallDepth,
 );
+const warmupRequest = warmupGuestBudget === null
+    ? null
+    : bytesRequest(
+        compiler,
+        singleSourceSet(source),
+        warmupGuestBudget,
+        maximumCallDepth,
+    );
 
 if (!WebAssembly.validate(interpreter)) {
     throw new Error(`${interpreterPath}: WebAssembly.validate rejected the module.`);
@@ -101,6 +113,45 @@ if (request.length > inputCapacity) {
 }
 
 const linearMemory = new Uint8Array(memory.buffer);
+let warmup = null;
+if (warmupRequest !== null) {
+    linearMemory.set(warmupRequest, inputOffset);
+    const warmupStarted = performance.now();
+    const warmupOuterStatus = exports["Windvale.run"](
+        outerBudget,
+        warmupRequest.length,
+    );
+    const warmupElapsedMilliseconds = Math.round(
+        performance.now() - warmupStarted,
+    );
+    const warmupOutputLength = exports["Windvale.output_length"].value;
+    const warmupOutput = Buffer.from(
+        linearMemory.slice(
+            outputOffset,
+            outputOffset + warmupOutputLength,
+        ),
+    );
+    warmup = {
+        guestBudget: warmupGuestBudget,
+        outerStatus: warmupOuterStatus,
+        outerInstructions: exports["Windvale.instructions"].value >>> 0,
+        outputLength: warmupOutputLength,
+        guestStatus: warmupOutputLength >= 20
+            ? warmupOutput.readUInt32LE(8)
+            : null,
+        guestInstructions: warmupOutputLength >= 20
+            ? warmupOutput.readUInt32LE(12)
+            : null,
+        elapsedMilliseconds: warmupElapsedMilliseconds,
+    };
+    if (
+        warmup.outerStatus !== 0 ||
+        warmup.guestStatus !== 3011 ||
+        warmup.guestInstructions !== warmupGuestBudget
+    ) {
+        throw new Error(`The warmup response is invalid: ${JSON.stringify(warmup)}`);
+    }
+}
 linearMemory.set(request, inputOffset);
 const started = performance.now();
 const outerStatus = exports["Windvale.run"](outerBudget, request.length);
@@ -146,6 +197,7 @@ const report = {
         bytes: source.length,
         sha256: sha256(source),
     },
+    warmup,
     guestBudget,
     maximumCallDepth,
     outerBudget,

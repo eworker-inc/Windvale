@@ -15,7 +15,7 @@ async function Runˉpipeline() {
     const Updateˉprogress = () => {
         const Seconds = Math.floor((performance.now() - Started) / 1000);
         Output.textContent =
-            "Loading the exact package and compiling inside WebAssembly…\n" +
+            "Loading, warming, and compiling entirely inside WebAssembly…\n" +
             `Elapsed      ${Seconds} seconds`;
     };
     Updateˉprogress();
@@ -36,6 +36,7 @@ async function Runˉpipeline() {
         Output.textContent = [
             `WVB          ${Result.Wvb.byteLength} bytes`,
             `SHA-256      ${Result.WvbSha256}`,
+            `Warmup       ${Result.WarmupGuestInstructions.toLocaleString()} guest · ${Result.WarmupOuterInstructions.toLocaleString()} outer instructions`,
             `Compile      ${Result.CompilerGuestInstructions.toLocaleString()} guest · ${Result.CompilerOuterInstructions.toLocaleString()} outer instructions`,
             `Verify + run status ${Result.ExecutionStatus} · result ${Result.ExecutionResult}`,
             `Execution    ${Result.ExecutionGuestInstructions.toLocaleString()} guest · ${Result.ExecutionOuterInstructions.toLocaleString()} outer instructions`,
