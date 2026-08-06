@@ -610,6 +610,12 @@
       Include="../../Compiler/Windvale/WebAssembly-Descriptor-Operations.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Descriptor-Operations.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Descriptor-Storage.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Descriptor-Storage.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Dynamic-Descriptors.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Dynamic-Descriptors.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/WebAssembly-Enum-Operations.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Enum-Operations.wv" />
     <EmbeddedResource
@@ -654,6 +660,9 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/General-Dispatcher-Records-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Records-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/General-Dispatcher-Dynamic-Descriptors-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Dynamic-Descriptors-Main.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/WebAssembly-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />

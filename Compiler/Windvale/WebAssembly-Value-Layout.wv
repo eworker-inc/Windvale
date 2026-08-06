@@ -192,7 +192,8 @@ fn Functionˉlocals(
     Input: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Function: u32,
-    Additionalˉi32: u32
+    Additionalˉi32: u32,
+    Additionalˉi64: u32
 ) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
     if !Directory.Valid || Function >= Directory.Count {
         return Compilerˉwebassemblyˉvalueˉlayoutˉemission(
@@ -268,9 +269,9 @@ fn Functionˉlocals(
     I32ˉcount = I32ˉcount + 4u32 + Additionalˉi32;
     Entries = Appendˉrun(Entries, Runˉcount, Runˉtype);
     Groupˉcount = Groupˉcount + 1u32;
-    Entries = Appendˉrun(Entries, 1u32, 126u32);
+    Entries = Appendˉrun(Entries, 1u32 + Additionalˉi64, 126u32);
     Groupˉcount = Groupˉcount + 1u32;
-    I64ˉcount = I64ˉcount + 1u32;
+    I64ˉcount = I64ˉcount + 1u32 + Additionalˉi64;
 
     return Compilerˉwebassemblyˉvalueˉlayoutˉemission(
         true,
@@ -285,7 +286,7 @@ export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉlocals(
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Function: u32
 ) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
-    return Functionˉlocals(Input, Directory, Function, 0u32);
+    return Functionˉlocals(Input, Directory, Function, 0u32, 0u32);
 }
 
 export fn Compilerˉwebassemblyˉvalueˉlayoutˉrecordˉfunctionˉlocals(
@@ -293,5 +294,21 @@ export fn Compilerˉwebassemblyˉvalueˉlayoutˉrecordˉfunctionˉlocals(
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Function: u32
 ) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
-    return Functionˉlocals(Input, Directory, Function, 1u32);
+    return Functionˉlocals(Input, Directory, Function, 1u32, 0u32);
+}
+
+export fn Compilerˉwebassemblyˉvalueˉlayoutˉruntimeˉfunctionˉlocals(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32,
+    Additionalˉi32: u32,
+    Additionalˉi64: u32
+) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
+    return Functionˉlocals(
+        Input,
+        Directory,
+        Function,
+        Additionalˉi32,
+        Additionalˉi64
+    );
 }

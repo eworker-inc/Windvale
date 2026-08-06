@@ -1,0 +1,513 @@
+module Compilerˉwebassemblyˉdescriptorˉstorage profile portable;
+
+import Compilerˉwebassemblyˉbinaryˉencoding as Encoding;
+import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
+import Compilerˉwebassemblyˉexecutableˉgraph as Graphs;
+
+export record Compilerˉwebassemblyˉdescriptorˉstorageˉsummary {
+    Valid: bool;
+    Dynamicˉoperationˉcount: u32;
+    Failureˉfunction: u32;
+    Failureˉoffset: u32;
+    Failureˉopcode: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Append(First: bytes, Second: bytes) -> bytes {
+    return Bytesˉconcat(First, Second);
+}
+
+fn Byte(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉbyte(Value);
+}
+
+fn Uleb(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(Value);
+}
+
+fn Indexed(Opcode: u32, Index: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉindexedˉinstruction(
+        Opcode,
+        Index
+    );
+}
+
+fn Constant(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉpositiveˉi32ˉconstant(Value);
+}
+
+fn Memory(Opcode: u32, Alignment: u32, Offset: u32) -> bytes {
+    var Result: bytes = Byte(Opcode);
+    Result = Append(Result, Uleb(Alignment));
+    return Append(Result, Uleb(Offset));
+}
+
+fn Load(Local: u32, Offset: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, Local);
+    return Append(Result, Memory(40u32, 2u32, Offset));
+}
+
+fn Storeˉlocal(Address: u32, Offset: u32, Value: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, Address);
+    Result = Append(Result, Indexed(32u32, Value));
+    return Append(Result, Memory(54u32, 2u32, Offset));
+}
+
+fn Storeˉconstant(Address: u32, Offset: u32, Value: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, Address);
+    Result = Append(Result, Constant(Value));
+    return Append(Result, Memory(54u32, 2u32, Offset));
+}
+
+fn Invalid(
+    Input: bytes,
+    Function: u32,
+    Offset: u32,
+    Opcode: u32
+) -> Compilerˉwebassemblyˉdescriptorˉstorageˉsummary {
+    return Compilerˉwebassemblyˉdescriptorˉstorageˉsummary(
+        false,
+        0u32,
+        Function,
+        Offset,
+        Opcode
+    );
+}
+
+fn Isˉdynamicˉoperation(Opcode: u32) -> bool {
+    if Opcode >= 110u32 && Opcode <= 113u32 { return true; }
+    if Opcode == 117u32 { return true; }
+    if Opcode >= 119u32 && Opcode <= 123u32 { return true; }
+    if Opcode == 125u32 { return true; }
+    if Opcode == 149u32 || Opcode == 150u32 || Opcode == 190u32 {
+        return true;
+    }
+    return false;
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉbuild(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary
+) -> Compilerˉwebassemblyˉdescriptorˉstorageˉsummary {
+    if !Directory.Valid || !Graph.Valid ||
+        Directory.Count != Graph.Functionˉcount ||
+        Codeˉoffset > Bytesˉlength(Input) ||
+        Codeˉlength > Bytesˉlength(Input) - Codeˉoffset ||
+        Bytesˉlength(Graph.Reachableˉorder) != Graph.Reachableˉcount * 4u32 {
+        return Invalid(Input, 0u32, 0u32, 0u32);
+    }
+    var Dynamicˉoperations: u32 = 0u32;
+    var Position: u32 = 0u32;
+    while Position < Graph.Reachableˉcount {
+        let Function: u32 = Bytesˉreadˉu32ˉlittle(
+            Graph.Reachableˉorder,
+            Position * 4u32
+        );
+        if Function >= Directory.Count {
+            return Invalid(Input, Function, 0u32, 0u32);
+        }
+        let Relative: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉcodeˉoffset(
+                Directory,
+                Function
+            );
+        let Length: u32 =
+            Functions.Compilerˉwebassemblyˉfunctionˉcodeˉlength(
+                Directory,
+                Function
+            );
+        if Relative > Codeˉlength || Length > Codeˉlength - Relative {
+            return Invalid(Input, Function, 0u32, 0u32);
+        }
+        let Code: u32 = Codeˉoffset + Relative;
+        var Cursor: u32 = 0u32;
+        while Cursor < Length {
+            let Width: u32 =
+                Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+                    Input,
+                    Code,
+                    Length,
+                    Cursor
+                );
+            if Width == 0u32 || Width > Length - Cursor {
+                return Invalid(Input, Function, Cursor, 0u32);
+            }
+            let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                Input,
+                Code + Cursor
+            ));
+            if Isˉdynamicˉoperation(Opcode) {
+                if Dynamicˉoperations == 200000u32 {
+                    return Invalid(Input, Function, Cursor, Opcode);
+                }
+                Dynamicˉoperations = Dynamicˉoperations + 1u32;
+            }
+            Cursor = Cursor + Width;
+        }
+        Position = Position + 1u32;
+    }
+    return Compilerˉwebassemblyˉdescriptorˉstorageˉsummary(
+        true,
+        Dynamicˉoperations,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉisˉdynamic(
+    Summary: Compilerˉwebassemblyˉdescriptorˉstorageˉsummary
+) -> bool {
+    if !Summary.Valid { return false; }
+    return Summary.Dynamicˉoperationˉcount != 0u32;
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉheapˉstart() -> u32 {
+    return 65536u32;
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉheapˉcapacity() -> u32 {
+    return 134217728u32;
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉheapˉend() -> u32 {
+    return 134283264u32;
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉframeˉend() -> u32 {
+    return 142671872u32;
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉmemoryˉsection(
+    Input: bytes,
+    Hasˉrecords: bool
+) -> bytes {
+    var Pages: u32 = 2049u32;
+    if Hasˉrecords { Pages = 2177u32; }
+    var Payload: bytes = Uleb(1u32);
+    Payload = Append(Payload, Byte(1u32));
+    Payload = Append(Payload, Uleb(Pages));
+    Payload = Append(Payload, Uleb(Pages));
+    return Encoding.Compilerˉwebassemblyˉbinaryˉsection(5u32, Payload);
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉinitialize(
+    Freeˉglobal: u32
+) -> bytes {
+    var Result: bytes = Constant(65536u32);
+    Result = Append(Result, Indexed(36u32, Freeˉglobal));
+    Result = Append(Result, Constant(65536u32));
+    Result = Append(Result, Constant(0u32));
+    Result = Append(Result, Memory(54u32, 2u32, 0u32));
+    Result = Append(Result, Constant(65536u32));
+    Result = Append(Result, Constant(134217728u32));
+    return Append(Result, Memory(54u32, 2u32, 4u32));
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉallocateˉbody(
+    Freeˉglobal: u32
+) -> bytes {
+    let Length: u32 = 0u32;
+    let Required: u32 = 1u32;
+    let Cursor: u32 = 2u32;
+    let Previous: u32 = 3u32;
+    let Next: u32 = 4u32;
+    let Available: u32 = 5u32;
+    let Remainder: u32 = 6u32;
+    let Candidate: u32 = 7u32;
+    let Charged: u32 = 8u32;
+
+    var Body: bytes = Uleb(1u32);
+    Body = Append(Body, Uleb(8u32));
+    Body = Append(Body, Byte(127u32));
+
+    Body = Append(Body, Indexed(32u32, Length));
+    Body = Append(Body, Byte(69u32));
+    Body = Append(Body, Byte(4u32));
+    Body = Append(Body, Byte(64u32));
+    Body = Append(Body, Constant(0u32));
+    Body = Append(Body, Byte(15u32));
+    Body = Append(Body, Byte(11u32));
+
+    Body = Append(Body, Indexed(32u32, Length));
+    Body = Append(Body, Constant(7u32));
+    Body = Append(Body, Byte(106u32));
+    Body = Append(Body, Encoding.Compilerˉwebassemblyˉbinaryˉi32ˉconstantˉfromˉinput(
+        Bytesˉfromˉu32ˉlittle(4294967288u32),
+        0u32
+    ));
+    Body = Append(Body, Byte(113u32));
+    Body = Append(Body, Constant(8u32));
+    Body = Append(Body, Byte(106u32));
+    Body = Append(Body, Indexed(33u32, Required));
+    Body = Append(Body, Indexed(35u32, Freeˉglobal));
+    Body = Append(Body, Indexed(33u32, Cursor));
+    Body = Append(Body, Constant(0u32));
+    Body = Append(Body, Indexed(33u32, Previous));
+
+    Body = Append(Body, Byte(3u32));
+    Body = Append(Body, Byte(64u32));
+    Body = Append(Body, Indexed(32u32, Cursor));
+    Body = Append(Body, Byte(69u32));
+    Body = Append(Body, Byte(4u32));
+    Body = Append(Body, Byte(64u32));
+    Body = Append(Body, Constant(0u32));
+    Body = Append(Body, Byte(15u32));
+    Body = Append(Body, Byte(11u32));
+
+    Body = Append(Body, Load(Cursor, 0u32));
+    Body = Append(Body, Indexed(33u32, Next));
+    Body = Append(Body, Load(Cursor, 4u32));
+    Body = Append(Body, Indexed(33u32, Available));
+    Body = Append(Body, Indexed(32u32, Available));
+    Body = Append(Body, Indexed(32u32, Required));
+    Body = Append(Body, Byte(79u32));
+    Body = Append(Body, Byte(4u32));
+    Body = Append(Body, Byte(64u32));
+
+    Body = Append(Body, Indexed(32u32, Available));
+    Body = Append(Body, Indexed(32u32, Required));
+    Body = Append(Body, Byte(107u32));
+    Body = Append(Body, Indexed(33u32, Remainder));
+    Body = Append(Body, Indexed(32u32, Remainder));
+    Body = Append(Body, Constant(16u32));
+    Body = Append(Body, Byte(79u32));
+    Body = Append(Body, Byte(4u32));
+    Body = Append(Body, Byte(64u32));
+
+    Body = Append(Body, Indexed(32u32, Cursor));
+    Body = Append(Body, Indexed(32u32, Required));
+    Body = Append(Body, Byte(106u32));
+    Body = Append(Body, Indexed(33u32, Candidate));
+    Body = Append(Body, Storeˉlocal(Candidate, 0u32, Next));
+    Body = Append(Body, Storeˉlocal(Candidate, 4u32, Remainder));
+    Body = Append(Body, Indexed(32u32, Previous));
+    Body = Append(Body, Byte(4u32));
+    Body = Append(Body, Byte(64u32));
+    Body = Append(Body, Storeˉlocal(Previous, 0u32, Candidate));
+    Body = Append(Body, Byte(5u32));
+    Body = Append(Body, Indexed(32u32, Candidate));
+    Body = Append(Body, Indexed(36u32, Freeˉglobal));
+    Body = Append(Body, Byte(11u32));
+    Body = Append(Body, Indexed(32u32, Required));
+    Body = Append(Body, Indexed(33u32, Charged));
+
+    Body = Append(Body, Byte(5u32));
+    Body = Append(Body, Indexed(32u32, Previous));
+    Body = Append(Body, Byte(4u32));
+    Body = Append(Body, Byte(64u32));
+    Body = Append(Body, Storeˉlocal(Previous, 0u32, Next));
+    Body = Append(Body, Byte(5u32));
+    Body = Append(Body, Indexed(32u32, Next));
+    Body = Append(Body, Indexed(36u32, Freeˉglobal));
+    Body = Append(Body, Byte(11u32));
+    Body = Append(Body, Indexed(32u32, Available));
+    Body = Append(Body, Indexed(33u32, Charged));
+    Body = Append(Body, Byte(11u32));
+
+    Body = Append(Body, Storeˉlocal(Cursor, 0u32, Charged));
+    Body = Append(Body, Storeˉconstant(Cursor, 4u32, 1u32));
+    Body = Append(Body, Indexed(32u32, Cursor));
+    Body = Append(Body, Constant(8u32));
+    Body = Append(Body, Byte(106u32));
+    Body = Append(Body, Byte(15u32));
+    Body = Append(Body, Byte(11u32));
+
+    Body = Append(Body, Indexed(32u32, Cursor));
+    Body = Append(Body, Indexed(33u32, Previous));
+    Body = Append(Body, Indexed(32u32, Next));
+    Body = Append(Body, Indexed(33u32, Cursor));
+    Body = Append(Body, Indexed(12u32, 0u32));
+    Body = Append(Body, Byte(11u32));
+    Body = Append(Body, Constant(0u32));
+    return Encoding.Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
+        Bytesˉslice(Body, 0u32, 3u32),
+        Bytesˉslice(Body, 3u32, Bytesˉlength(Body) - 3u32)
+    );
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉbody(
+    Freeˉglobal: u32
+) -> bytes {
+    let Descriptor: u32 = 0u32;
+    let Retain: u32 = 1u32;
+    let Pointer: u32 = 2u32;
+    let Base: u32 = 3u32;
+    let Charged: u32 = 4u32;
+    let References: u32 = 5u32;
+    let Previous: u32 = 6u32;
+    let Cursor: u32 = 7u32;
+    let Next: u32 = 8u32;
+    let Size: u32 = 9u32;
+
+    var Instructions: bytes = Indexed(32u32, Descriptor);
+    Instructions = Append(Instructions, Byte(167u32));
+    Instructions = Append(Instructions, Indexed(33u32, Pointer));
+    Instructions = Append(Instructions, Indexed(32u32, Pointer));
+    Instructions = Append(Instructions, Constant(65544u32));
+    Instructions = Append(Instructions, Byte(73u32));
+    Instructions = Append(Instructions, Indexed(32u32, Pointer));
+    Instructions = Append(Instructions, Constant(134283264u32));
+    Instructions = Append(Instructions, Byte(79u32));
+    Instructions = Append(Instructions, Byte(114u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, Pointer));
+    Instructions = Append(Instructions, Constant(8u32));
+    Instructions = Append(Instructions, Byte(107u32));
+    Instructions = Append(Instructions, Indexed(33u32, Base));
+    Instructions = Append(Instructions, Load(Base, 0u32));
+    Instructions = Append(Instructions, Indexed(33u32, Charged));
+    Instructions = Append(Instructions, Load(Base, 4u32));
+    Instructions = Append(Instructions, Indexed(33u32, References));
+
+    Instructions = Append(Instructions, Indexed(32u32, Retain));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(32u32, Base));
+    Instructions = Append(Instructions, Indexed(32u32, References));
+    Instructions = Append(Instructions, Constant(1u32));
+    Instructions = Append(Instructions, Byte(106u32));
+    Instructions = Append(Instructions, Memory(54u32, 2u32, 4u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, References));
+    Instructions = Append(Instructions, Constant(1u32));
+    Instructions = Append(Instructions, Byte(75u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(32u32, Base));
+    Instructions = Append(Instructions, Indexed(32u32, References));
+    Instructions = Append(Instructions, Constant(1u32));
+    Instructions = Append(Instructions, Byte(107u32));
+    Instructions = Append(Instructions, Memory(54u32, 2u32, 4u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Constant(0u32));
+    Instructions = Append(Instructions, Indexed(33u32, Previous));
+    Instructions = Append(Instructions, Indexed(35u32, Freeˉglobal));
+    Instructions = Append(Instructions, Indexed(33u32, Cursor));
+    Instructions = Append(Instructions, Byte(2u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Byte(3u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(32u32, Cursor));
+    Instructions = Append(Instructions, Byte(69u32));
+    Instructions = Append(Instructions, Indexed(13u32, 1u32));
+    Instructions = Append(Instructions, Indexed(32u32, Cursor));
+    Instructions = Append(Instructions, Indexed(32u32, Base));
+    Instructions = Append(Instructions, Byte(79u32));
+    Instructions = Append(Instructions, Indexed(13u32, 1u32));
+    Instructions = Append(Instructions, Indexed(32u32, Cursor));
+    Instructions = Append(Instructions, Indexed(33u32, Previous));
+    Instructions = Append(Instructions, Load(Cursor, 0u32));
+    Instructions = Append(Instructions, Indexed(33u32, Cursor));
+    Instructions = Append(Instructions, Indexed(12u32, 0u32));
+    Instructions = Append(Instructions, Byte(11u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, Cursor));
+    Instructions = Append(Instructions, Byte(69u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Byte(5u32));
+    Instructions = Append(Instructions, Indexed(32u32, Base));
+    Instructions = Append(Instructions, Indexed(32u32, Charged));
+    Instructions = Append(Instructions, Byte(106u32));
+    Instructions = Append(Instructions, Indexed(32u32, Cursor));
+    Instructions = Append(Instructions, Byte(70u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Load(Cursor, 0u32));
+    Instructions = Append(Instructions, Indexed(33u32, Next));
+    Instructions = Append(Instructions, Load(Cursor, 4u32));
+    Instructions = Append(Instructions, Indexed(33u32, Size));
+    Instructions = Append(Instructions, Indexed(32u32, Charged));
+    Instructions = Append(Instructions, Indexed(32u32, Size));
+    Instructions = Append(Instructions, Byte(106u32));
+    Instructions = Append(Instructions, Indexed(33u32, Charged));
+    Instructions = Append(Instructions, Byte(5u32));
+    Instructions = Append(Instructions, Indexed(32u32, Cursor));
+    Instructions = Append(Instructions, Indexed(33u32, Next));
+    Instructions = Append(Instructions, Byte(11u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Storeˉlocal(Base, 0u32, Next));
+    Instructions = Append(Instructions, Storeˉlocal(Base, 4u32, Charged));
+    Instructions = Append(Instructions, Indexed(32u32, Previous));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, Previous));
+    Instructions = Append(Instructions, Load(Previous, 4u32));
+    Instructions = Append(Instructions, Byte(106u32));
+    Instructions = Append(Instructions, Indexed(32u32, Base));
+    Instructions = Append(Instructions, Byte(70u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Load(Base, 0u32));
+    Instructions = Append(Instructions, Indexed(33u32, Next));
+    Instructions = Append(Instructions, Load(Previous, 4u32));
+    Instructions = Append(Instructions, Load(Base, 4u32));
+    Instructions = Append(Instructions, Byte(106u32));
+    Instructions = Append(Instructions, Indexed(33u32, Size));
+    Instructions = Append(Instructions, Storeˉlocal(Previous, 0u32, Next));
+    Instructions = Append(Instructions, Storeˉlocal(Previous, 4u32, Size));
+    Instructions = Append(Instructions, Byte(5u32));
+    Instructions = Append(Instructions, Storeˉlocal(Previous, 0u32, Base));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Byte(5u32));
+    Instructions = Append(Instructions, Indexed(32u32, Base));
+    Instructions = Append(Instructions, Indexed(36u32, Freeˉglobal));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    var Locals: bytes = Uleb(1u32);
+    Locals = Append(Locals, Uleb(8u32));
+    Locals = Append(Locals, Byte(127u32));
+    return Encoding.Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
+        Locals,
+        Instructions
+    );
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉallocateˉtype() -> bytes {
+    var Result: bytes = Byte(96u32);
+    Result = Append(Result, Uleb(1u32));
+    Result = Append(Result, Byte(127u32));
+    Result = Append(Result, Uleb(1u32));
+    return Append(Result, Byte(127u32));
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉtype() -> bytes {
+    var Result: bytes = Byte(96u32);
+    Result = Append(Result, Uleb(2u32));
+    Result = Append(Result, Byte(126u32));
+    Result = Append(Result, Byte(127u32));
+    return Append(Result, Uleb(0u32));
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+    Descriptorˉlocal: u32,
+    Retain: bool,
+    Referenceˉfunction: u32
+) -> bytes {
+    var Result: bytes = Indexed(32u32, Descriptorˉlocal);
+    if Retain {
+        Result = Append(Result, Constant(1u32));
+    } else {
+        Result = Append(Result, Constant(0u32));
+    }
+    return Append(Result, Indexed(16u32, Referenceˉfunction));
+}

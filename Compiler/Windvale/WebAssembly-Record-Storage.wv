@@ -330,6 +330,21 @@ fn Planˉfunction(
                 Recordˉtype
             );
         }
+        if Opcode == 80u32 {
+            if Typed.Compilerˉwebassemblyˉtypedˉinstructionˉtopˉkind(
+                State
+            ) == 7u32 {
+                Recordˉtype =
+                    Typed.Compilerˉwebassemblyˉtypedˉinstructionˉtopˉnominal(
+                        State
+                    );
+                Operationˉfields = Recordˉfieldˉcount(
+                    Input,
+                    Typeˉdirectory,
+                    Recordˉtype
+                );
+            }
+        }
         if Opcode == 64u32 {
             let Target: u32 = Bytesˉreadˉu32ˉlittle(
                 Input,

@@ -1,0 +1,339 @@
+module Compilerˉwebassemblyˉdynamicˉdescriptors profile portable;
+
+import Compilerˉwebassemblyˉbinaryˉencoding as Encoding;
+import Compilerˉwebassemblyˉdescriptorˉstorage as Storage;
+
+export record Compilerˉwebassemblyˉdynamicˉdescriptorˉemission {
+    Matched: bool;
+    Valid: bool;
+    Bytes: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Append(First: bytes, Second: bytes) -> bytes {
+    return Bytesˉconcat(First, Second);
+}
+
+fn Byte(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉbyte(Value);
+}
+
+fn Uleb(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(Value);
+}
+
+fn Indexed(Opcode: u32, Index: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉindexedˉinstruction(
+        Opcode,
+        Index
+    );
+}
+
+fn Constant(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉpositiveˉi32ˉconstant(Value);
+}
+
+fn I64ˉzero() -> bytes {
+    return Append(Byte(66u32), Byte(0u32));
+}
+
+fn Memory(Opcode: u32, Alignment: u32, Offset: u32) -> bytes {
+    var Result: bytes = Byte(Opcode);
+    Result = Append(Result, Uleb(Alignment));
+    return Append(Result, Uleb(Offset));
+}
+
+fn Memoryˉcopy() -> bytes {
+    var Result: bytes = Byte(252u32);
+    Result = Append(Result, Uleb(10u32));
+    Result = Append(Result, Uleb(0u32));
+    return Append(Result, Uleb(0u32));
+}
+
+fn Descriptorˉlength(Local: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, Local);
+    Result = Append(Result, Append(Byte(66u32), Byte(32u32)));
+    Result = Append(Result, Byte(136u32));
+    return Append(Result, Byte(167u32));
+}
+
+fn Descriptorˉpointer(Local: u32) -> bytes {
+    return Append(Indexed(32u32, Local), Byte(167u32));
+}
+
+fn Packˉdescriptor(Pointer: u32, Length: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, Pointer);
+    Result = Append(Result, Byte(173u32));
+    Result = Append(Result, Indexed(32u32, Length));
+    Result = Append(Result, Byte(173u32));
+    Result = Append(Result, Append(Byte(66u32), Byte(32u32)));
+    Result = Append(Result, Byte(134u32));
+    return Append(Result, Byte(132u32));
+}
+
+fn Emitˉearlyˉreturn(Returnsˉvalue: bool, Returnsˉi64: bool) -> bytes {
+    var Result: bytes = Byte(15u32);
+    if Returnsˉvalue {
+        if Returnsˉi64 {
+            Result = Append(I64ˉzero(), Result);
+        } else {
+            Result = Append(Constant(0u32), Result);
+        }
+    }
+    return Result;
+}
+
+fn Emitˉfailureˉguard(
+    Status: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> bytes {
+    var Result: bytes = Byte(4u32);
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Constant(Status));
+    Result = Append(Result, Indexed(36u32, Statusˉglobal));
+    Result = Append(
+        Result,
+        Emitˉearlyˉreturn(Returnsˉvalue, Returnsˉi64)
+    );
+    return Append(Result, Byte(11u32));
+}
+
+fn Release(Local: u32, Referenceˉfunction: u32) -> bytes {
+    return Storage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+        Local,
+        false,
+        Referenceˉfunction
+    );
+}
+
+fn Allocate(
+    Length: u32,
+    Pointer: u32,
+    Allocateˉfunction: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> bytes {
+    var Result: bytes = Indexed(32u32, Length);
+    Result = Append(Result, Indexed(16u32, Allocateˉfunction));
+    Result = Append(Result, Indexed(34u32, Pointer));
+    Result = Append(Result, Byte(69u32));
+    return Append(
+        Result,
+        Emitˉfailureˉguard(
+            3018u32,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+}
+
+fn Emitˉbuilder(
+    Opcode: u8,
+    Value: u32,
+    Width: u32,
+    Pointer: u32,
+    Allocateˉfunction: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> bytes {
+    var Buildˉwidth: u32 = 4u32;
+    var Storeˉopcode: u32 = 54u32;
+    var Alignment: u32 = 2u32;
+    if Opcode == 120u8 {
+        Buildˉwidth = 1u32;
+        Storeˉopcode = 58u32;
+        Alignment = 0u32;
+    }
+    if Opcode == 121u8 {
+        Buildˉwidth = 2u32;
+        Storeˉopcode = 59u32;
+        Alignment = 1u32;
+    }
+    var Result: bytes = Indexed(33u32, Value);
+    if Opcode == 121u8 {
+        Result = Append(Result, Indexed(32u32, Value));
+        Result = Append(Result, Constant(65535u32));
+        Result = Append(Result, Byte(75u32));
+        Result = Append(
+            Result,
+            Emitˉfailureˉguard(
+                3016u32,
+                Returnsˉvalue,
+                Returnsˉi64,
+                Statusˉglobal
+            )
+        );
+    }
+    Result = Append(Result, Constant(Buildˉwidth));
+    Result = Append(Result, Indexed(33u32, Width));
+    Result = Append(
+        Result,
+        Allocate(
+            Width,
+            Pointer,
+            Allocateˉfunction,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+    Result = Append(Result, Indexed(32u32, Pointer));
+    Result = Append(Result, Indexed(32u32, Value));
+    Result = Append(Result, Memory(Storeˉopcode, Alignment, 0u32));
+    return Append(Result, Packˉdescriptor(Pointer, Width));
+}
+
+fn Emitˉconcat(
+    Isˉtext: bool,
+    Leftˉlength: u32,
+    Rightˉlength: u32,
+    Total: u32,
+    Pointer: u32,
+    Left: u32,
+    Right: u32,
+    Resultˉdescriptor: u32,
+    Allocateˉfunction: u32,
+    Referenceˉfunction: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> bytes {
+    var Limit: u32 = 4194304u32;
+    var Limitˉstatus: u32 = 3015u32;
+    if Isˉtext {
+        Limit = 1048576u32;
+        Limitˉstatus = 3012u32;
+    }
+    var Result: bytes = Indexed(33u32, Right);
+    Result = Append(Result, Indexed(33u32, Left));
+    Result = Append(Result, Descriptorˉlength(Left));
+    Result = Append(Result, Indexed(33u32, Leftˉlength));
+    Result = Append(Result, Descriptorˉlength(Right));
+    Result = Append(Result, Indexed(33u32, Rightˉlength));
+    Result = Append(Result, Indexed(32u32, Leftˉlength));
+    Result = Append(Result, Indexed(32u32, Rightˉlength));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(34u32, Total));
+    Result = Append(Result, Indexed(32u32, Leftˉlength));
+    Result = Append(Result, Byte(73u32));
+    Result = Append(Result, Indexed(32u32, Total));
+    Result = Append(Result, Constant(Limit));
+    Result = Append(Result, Byte(75u32));
+    Result = Append(Result, Byte(114u32));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(
+            Limitˉstatus,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+
+    Result = Append(Result, Indexed(32u32, Total));
+    Result = Append(Result, Byte(69u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Release(Left, Referenceˉfunction));
+    Result = Append(Result, Release(Right, Referenceˉfunction));
+    Result = Append(Result, I64ˉzero());
+    Result = Append(Result, Indexed(33u32, Resultˉdescriptor));
+    Result = Append(Result, Byte(5u32));
+
+    Result = Append(
+        Result,
+        Allocate(
+            Total,
+            Pointer,
+            Allocateˉfunction,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+    Result = Append(Result, Indexed(32u32, Pointer));
+    Result = Append(Result, Descriptorˉpointer(Left));
+    Result = Append(Result, Indexed(32u32, Leftˉlength));
+    Result = Append(Result, Memoryˉcopy());
+    Result = Append(Result, Indexed(32u32, Pointer));
+    Result = Append(Result, Indexed(32u32, Leftˉlength));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Descriptorˉpointer(Right));
+    Result = Append(Result, Indexed(32u32, Rightˉlength));
+    Result = Append(Result, Memoryˉcopy());
+    Result = Append(Result, Packˉdescriptor(Pointer, Total));
+    Result = Append(Result, Indexed(33u32, Resultˉdescriptor));
+    Result = Append(Result, Release(Left, Referenceˉfunction));
+    Result = Append(Result, Release(Right, Referenceˉfunction));
+    Result = Append(Result, Byte(11u32));
+    return Append(Result, Indexed(32u32, Resultˉdescriptor));
+}
+
+export fn Compilerˉwebassemblyˉdynamicˉdescriptorˉemit(
+    Input: bytes,
+    Opcode: u8,
+    Scratchˉleft: u32,
+    Scratchˉright: u32,
+    Scratchˉresult: u32,
+    Scratchˉpointer: u32,
+    Scratchˉwideˉleft: u32,
+    Scratchˉwideˉright: u32,
+    Scratchˉwideˉresult: u32,
+    Allocateˉfunction: u32,
+    Referenceˉfunction: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> Compilerˉwebassemblyˉdynamicˉdescriptorˉemission {
+    if Opcode == 120u8 || Opcode == 121u8 || Opcode == 122u8 ||
+        Opcode == 123u8 {
+        return Compilerˉwebassemblyˉdynamicˉdescriptorˉemission(
+            true,
+            true,
+            Emitˉbuilder(
+                Opcode,
+                Scratchˉleft,
+                Scratchˉright,
+                Scratchˉpointer,
+                Allocateˉfunction,
+                Returnsˉvalue,
+                Returnsˉi64,
+                Statusˉglobal
+            )
+        );
+    }
+    if Opcode == 113u8 || Opcode == 119u8 {
+        return Compilerˉwebassemblyˉdynamicˉdescriptorˉemission(
+            true,
+            true,
+            Emitˉconcat(
+                Opcode == 113u8,
+                Scratchˉleft,
+                Scratchˉright,
+                Scratchˉresult,
+                Scratchˉpointer,
+                Scratchˉwideˉleft,
+                Scratchˉwideˉright,
+                Scratchˉwideˉresult,
+                Allocateˉfunction,
+                Referenceˉfunction,
+                Returnsˉvalue,
+                Returnsˉi64,
+                Statusˉglobal
+            )
+        );
+    }
+    return Compilerˉwebassemblyˉdynamicˉdescriptorˉemission(
+        false,
+        true,
+        Empty(Input)
+    );
+}

@@ -277,6 +277,14 @@ export fn Compilerˉwebassemblyˉtypedˉinstructionˉtopˉnominal(
     return Stackˉtopˉnominal(Privateˉstack(State));
 }
 
+export fn Compilerˉwebassemblyˉtypedˉinstructionˉtopˉkind(
+    State: Compilerˉwebassemblyˉtypedˉinstructionˉstate
+) -> u32 {
+    let Code: u32 = Stackˉtopˉcode(Privateˉstack(State));
+    if Code < 16u32 { return Code; }
+    return 7u32;
+}
+
 fn Stackˉtopˉisˉtypeˉkind(
     Stack: Typedˉstack,
     Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,

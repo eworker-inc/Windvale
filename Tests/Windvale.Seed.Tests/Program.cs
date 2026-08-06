@@ -134,7 +134,7 @@ internal static partial class Program
     private const string WEBASSEMBLY_VALUE_LAYOUT_MEMORY_TOOL_SHA256 = "7cbfe268c02608fe2c1b066fd51dfb809002f9b25cbe1050a4806291b7125a3d";
     private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_INPUT_SHA256 = "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e";
     private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_RESPONSE_SHA256 = "bc7099df2ba2525ab28f26c7b891ba71e4d24eddbdca2199010fdbb0e817552d";
-    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "58533237b210de6da05a4bcaea8a582c571e1b4224915987d8cb15feb5359dce";
+    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "0821ecb48b00b38876806c310a2a0fce80fe49d2cdc3771a6fcd0550b4094bb2";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "6b8ee8e5e3707203891840157547fa1cf88368447b493015b9d0f9e48bbb69d2";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "3f90a6641648ae55a3b4ddf3a50ae2d2ad7d52ae434bf15c1718076f04232e79";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_WVB_SHA256 = "ec785b6ad0fe3a72574a3e6587d32bad0719054a8f7d9481ba361a0857086450";
@@ -151,6 +151,8 @@ internal static partial class Program
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_SHA256 = "be287ba7ac40d001d3c3fe91796b15b09505614555004b4870d0a51eb6c6c4f8";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_WVB_SHA256 = "56cde8d1ad3723353fca2712351338d0013ab3550c24f47a24978438d04bff84";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_SHA256 = "f73c54d74a753380690e893d325a76fbdfc803553bc02cb1adfa0aae7c8a7432";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_WVB_SHA256 = "d7b888e546f7713a865d23833646580ffd3a785d1ae0b8fefa04c3ee7650c27f";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SHA256 = "9b2ccf93d4379ab49308117e55151b9a524d1922990ba7462c415a1d3c92341c";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -987,6 +989,14 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Descriptor-Operations.wv");
 
+    private static readonly string WEBASSEMBLY_DESCRIPTOR_STORAGE_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Descriptor-Storage.wv");
+
+    private static readonly string WEBASSEMBLY_DYNAMIC_DESCRIPTORS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Dynamic-Descriptors.wv");
+
     private static readonly string WEBASSEMBLY_ENUM_OPERATIONS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Enum-Operations.wv");
@@ -1046,6 +1056,10 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Records-Main.wv");
+
+    private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Dynamic-Descriptors-Main.wv");
 
     private static readonly string WEBASSEMBLY_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Tool.wv");
@@ -15468,10 +15482,37 @@ internal static partial class Program
         Validateˉscalarˉrecordˉwebassembly(
             Recordsˉlowered.Bytes.AsSpan());
 
+        var Dynamicˉdescriptors = Compileˉsuccess(
+            WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SOURCE);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Dynamicˉdescriptors));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 3_866),
+            Runˉreferenceˉwebassemblyˉi32(Dynamicˉdescriptors));
+        var Dynamicˉlowered = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Dynamicˉdescriptors.ToImmutableArray());
+        Equal(17_859, Dynamicˉlowered.Bytes.Length);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Dynamicˉlowered.Bytes.AsSpan()));
+        Validateˉscalarˉdynamicˉdescriptorˉwebassembly(
+            Dynamicˉlowered.Bytes.AsSpan());
+        var Dynamicˉrepeat = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Dynamicˉdescriptors.ToImmutableArray());
+        Sequenceˉequal(Dynamicˉlowered.Bytes, Dynamicˉrepeat.Bytes);
+        Equal(
+            Dynamicˉlowered.Executedˉinstructions,
+            Dynamicˉrepeat.Executedˉinstructions);
+
         var Unsupported = Compileˉsuccess(
             "module Webassemblyˉgeneralˉdispatcherˉunsupported profile portable; " +
-            "export fn Main() -> u32 { let Value: bytes = Bytesˉfromˉu8(1u8); " +
-            "return Bytesˉlength(Value); }");
+            "export fn Main() -> u32 { let Value: text = I32ˉformat(1); " +
+            "return Bytesˉlength(Textˉtoˉutf8(Value)); }");
         Equal(
             0,
             new Referenceˉruntime(
@@ -15547,6 +15588,78 @@ internal static partial class Program
         Reader.Require(
             Reader.Position == Reader.Length,
             "The scalar descriptor module trails.");
+    }
+
+    private static void Validateˉscalarˉdynamicˉdescriptorˉwebassembly(
+        ReadOnlySpan<byte> module)
+    {
+        var Reader = new WebAssemblyˉtestˉreader(module);
+        Reader.Readˉheader();
+
+        var Typeˉend = Reader.Readˉsection(1);
+        Reader.Require(
+            Reader.Readˉuleb32() == 7,
+            "The dynamic descriptor type count is invalid.");
+        Reader.Skip(Typeˉend - Reader.Position);
+
+        var Functionˉend = Reader.Readˉsection(3);
+        Reader.Require(
+            Reader.Readˉuleb32() == 7,
+            "The dynamic descriptor function count is invalid.");
+        Reader.Skip(Functionˉend - Reader.Position);
+
+        var Memoryˉend = Reader.Readˉsection(5);
+        Reader.Require(
+            Reader.Readˉuleb32() == 1,
+            "The dynamic descriptor memory count is invalid.");
+        Reader.Require(
+            Reader.Readˉuleb32() == 1,
+            "The dynamic descriptor memory is not fixed.");
+        Reader.Require(
+            Reader.Readˉuleb32() == 2_177,
+            "The dynamic descriptor memory minimum is invalid.");
+        Reader.Require(
+            Reader.Readˉuleb32() == 2_177,
+            "The dynamic descriptor memory maximum is invalid.");
+        Reader.Require(
+            Reader.Position == Memoryˉend,
+            "The dynamic descriptor memory section trails.");
+
+        var Globalˉend = Reader.Readˉsection(6);
+        Reader.Require(
+            Reader.Readˉuleb32() == 6,
+            "The dynamic descriptor global count is invalid.");
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 0);
+        Reader.Readˉglobal(1, 134_283_264);
+        Reader.Readˉglobal(1, 65_536);
+        Reader.Require(
+            Reader.Position == Globalˉend,
+            "The dynamic descriptor global section trails.");
+
+        var Exportˉend = Reader.Readˉsection(7);
+        Reader.Require(
+            Reader.Readˉuleb32() == 3,
+            "The dynamic descriptor export count is invalid.");
+        Reader.Readˉexport("Windvale.run", 0, 6);
+        Reader.Readˉexport("Windvale.result", 3, 0);
+        Reader.Readˉexport("Windvale.instructions", 3, 1);
+        Reader.Require(
+            Reader.Position == Exportˉend,
+            "The dynamic descriptor export section trails.");
+
+        var Codeˉend = Reader.Readˉsection(10);
+        Reader.Require(
+            Reader.Readˉuleb32() == 7,
+            "The dynamic descriptor body count is invalid.");
+        Reader.Skip(Codeˉend - Reader.Position);
+        var Dataˉend = Reader.Readˉsection(11);
+        Reader.Skip(Dataˉend - Reader.Position);
+        Reader.Require(
+            Reader.Position == Reader.Length,
+            "The dynamic descriptor module trails.");
     }
 
     private static void Validateˉscalarˉenumˉwebassembly(
@@ -28111,6 +28224,12 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/WebAssembly-Descriptor-Operations.wv",
                     WEBASSEMBLY_DESCRIPTOR_OPERATIONS_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Descriptor-Storage.wv",
+                    WEBASSEMBLY_DESCRIPTOR_STORAGE_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Dynamic-Descriptors.wv",
+                    WEBASSEMBLY_DYNAMIC_DESCRIPTORS_SOURCE),
                 new(
                     "Compiler/Windvale/WebAssembly-Enum-Operations.wv",
                     WEBASSEMBLY_ENUM_OPERATIONS_SOURCE),

@@ -2,11 +2,21 @@ module Compilerˉwebassemblyˉdescriptorˉoperations profile portable;
 
 import Compilerˉwebassemblyˉbinaryˉencoding as Encoding;
 import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
+import Compilerˉwebassemblyˉdescriptorˉstorage as Storage;
 
 export record Compilerˉwebassemblyˉdescriptorˉoperationˉemission {
     Matched: bool;
     Valid: bool;
     Bytes: bytes;
+}
+
+export record Compilerˉwebassemblyˉdescriptorˉruntime {
+    Scratchˉpointer: u32;
+    Scratchˉwideˉleft: u32;
+    Scratchˉwideˉresult: u32;
+    Manageˉownership: bool;
+    Allocateˉfunction: u32;
+    Referenceˉfunction: u32;
 }
 
 fn Empty(Input: bytes) -> bytes {
@@ -78,10 +88,49 @@ fn Emitˉdescriptorˉconstant(Pointer: u32, Length: u32) -> bytes {
     return Append(Result, Byte(132u32));
 }
 
-fn Emitˉlength() -> bytes {
+fn Emitˉpackˉdescriptor(Pointer: u32, Length: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, Pointer);
+    Result = Append(Result, Byte(173u32));
+    Result = Append(Result, Indexed(32u32, Length));
+    Result = Append(Result, Byte(173u32));
+    Result = Append(Result, I64ˉconstant(32u32));
+    Result = Append(Result, Byte(134u32));
+    return Append(Result, Byte(132u32));
+}
+
+fn Emitˉmemoryˉcopy() -> bytes {
+    var Result: bytes = Byte(252u32);
+    Result = Append(Result, Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(10u32));
+    Result = Append(Result, Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(0u32));
+    return Append(Result, Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(0u32));
+}
+
+fn Emitˉlengthˉvalue() -> bytes {
     var Result: bytes = I64ˉconstant(32u32);
     Result = Append(Result, Byte(136u32));
     return Append(Result, Byte(167u32));
+}
+
+fn Emitˉlength(
+    Scratchˉresult: u32,
+    Scratchˉdescriptor: u32,
+    Manageˉownership: bool,
+    Referenceˉfunction: u32
+) -> bytes {
+    if !Manageˉownership { return Emitˉlengthˉvalue(); }
+    var Result: bytes = Indexed(33u32, Scratchˉdescriptor);
+    Result = Append(Result, Indexed(32u32, Scratchˉdescriptor));
+    Result = Append(Result, Emitˉlengthˉvalue());
+    Result = Append(Result, Indexed(33u32, Scratchˉresult));
+    Result = Append(
+        Result,
+        Storage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+            Scratchˉdescriptor,
+            false,
+            Referenceˉfunction
+        )
+    );
+    return Append(Result, Indexed(32u32, Scratchˉresult));
 }
 
 fn Emitˉslice(
@@ -91,13 +140,18 @@ fn Emitˉslice(
     Scratchˉdescriptor: u32,
     Returnsˉvalue: bool,
     Returnsˉi64: bool,
-    Statusˉglobal: u32
+    Statusˉglobal: u32,
+    Manageˉownership: bool,
+    Referenceˉfunction: u32,
+    Scratchˉpointer: u32,
+    Scratchˉwideˉresult: u32,
+    Allocateˉfunction: u32
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Scratchˉresult);
     Result = Append(Result, Indexed(33u32, Scratchˉoffset));
     Result = Append(Result, Indexed(33u32, Scratchˉdescriptor));
     Result = Append(Result, Indexed(32u32, Scratchˉdescriptor));
-    Result = Append(Result, Emitˉlength());
+    Result = Append(Result, Emitˉlengthˉvalue());
     Result = Append(Result, Indexed(33u32, Scratchˉlength));
 
     Result = Append(Result, Indexed(32u32, Scratchˉoffset));
@@ -127,16 +181,70 @@ fn Emitˉslice(
         )
     );
 
+    if !Manageˉownership {
+        Result = Append(Result, Indexed(32u32, Scratchˉdescriptor));
+        Result = Append(Result, Byte(167u32));
+        Result = Append(Result, Indexed(32u32, Scratchˉoffset));
+        Result = Append(Result, Byte(106u32));
+        Result = Append(Result, Byte(173u32));
+        Result = Append(Result, Indexed(32u32, Scratchˉresult));
+        Result = Append(Result, Byte(173u32));
+        Result = Append(Result, I64ˉconstant(32u32));
+        Result = Append(Result, Byte(134u32));
+        return Append(Result, Byte(132u32));
+    }
+
+    Result = Append(Result, Indexed(32u32, Scratchˉresult));
+    Result = Append(Result, Byte(69u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(
+        Result,
+        Storage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+            Scratchˉdescriptor,
+            false,
+            Referenceˉfunction
+        )
+    );
+    Result = Append(Result, I64ˉconstant(0u32));
+    Result = Append(Result, Indexed(33u32, Scratchˉwideˉresult));
+    Result = Append(Result, Byte(5u32));
+
+    Result = Append(Result, Indexed(32u32, Scratchˉresult));
+    Result = Append(Result, Indexed(16u32, Allocateˉfunction));
+    Result = Append(Result, Indexed(34u32, Scratchˉpointer));
+    Result = Append(Result, Byte(69u32));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(
+            3018u32,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+    Result = Append(Result, Indexed(32u32, Scratchˉpointer));
     Result = Append(Result, Indexed(32u32, Scratchˉdescriptor));
     Result = Append(Result, Byte(167u32));
     Result = Append(Result, Indexed(32u32, Scratchˉoffset));
     Result = Append(Result, Byte(106u32));
-    Result = Append(Result, Byte(173u32));
     Result = Append(Result, Indexed(32u32, Scratchˉresult));
-    Result = Append(Result, Byte(173u32));
-    Result = Append(Result, I64ˉconstant(32u32));
-    Result = Append(Result, Byte(134u32));
-    return Append(Result, Byte(132u32));
+    Result = Append(Result, Emitˉmemoryˉcopy());
+    Result = Append(
+        Result,
+        Emitˉpackˉdescriptor(Scratchˉpointer, Scratchˉresult)
+    );
+    Result = Append(Result, Indexed(33u32, Scratchˉwideˉresult));
+    Result = Append(
+        Result,
+        Storage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+            Scratchˉdescriptor,
+            false,
+            Referenceˉfunction
+        )
+    );
+    Result = Append(Result, Byte(11u32));
+    return Append(Result, Indexed(32u32, Scratchˉwideˉresult));
 }
 
 fn Emitˉread(
@@ -147,7 +255,9 @@ fn Emitˉread(
     Scratchˉdescriptor: u32,
     Returnsˉvalue: bool,
     Returnsˉi64: bool,
-    Statusˉglobal: u32
+    Statusˉglobal: u32,
+    Manageˉownership: bool,
+    Referenceˉfunction: u32
 ) -> bytes {
     var Width: u32 = 4u32;
     var Loadˉopcode: u32 = 40u32;
@@ -166,7 +276,7 @@ fn Emitˉread(
     var Result: bytes = Indexed(33u32, Scratchˉoffset);
     Result = Append(Result, Indexed(33u32, Scratchˉdescriptor));
     Result = Append(Result, Indexed(32u32, Scratchˉdescriptor));
-    Result = Append(Result, Emitˉlength());
+    Result = Append(Result, Emitˉlengthˉvalue());
     Result = Append(Result, Indexed(33u32, Scratchˉlength));
     Result = Append(Result, Positiveˉconstant(Width));
     Result = Append(Result, Indexed(33u32, Scratchˉwidth));
@@ -204,7 +314,20 @@ fn Emitˉread(
     Result = Append(Result, Byte(106u32));
     Result = Append(Result, Byte(Loadˉopcode));
     Result = Append(Result, Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(Alignment));
-    return Append(Result, Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(0u32));
+    Result = Append(Result, Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(0u32));
+    if Manageˉownership {
+        Result = Append(Result, Indexed(33u32, Scratchˉwidth));
+        Result = Append(
+            Result,
+            Storage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+                Scratchˉdescriptor,
+                false,
+                Referenceˉfunction
+            )
+        );
+        Result = Append(Result, Indexed(32u32, Scratchˉwidth));
+    }
+    return Result;
 }
 
 export fn Compilerˉwebassemblyˉdescriptorˉoperationˉemit(
@@ -216,7 +339,7 @@ export fn Compilerˉwebassemblyˉdescriptorˉoperationˉemit(
     Scratchˉleft: u32,
     Scratchˉright: u32,
     Scratchˉresult: u32,
-    Scratchˉwide: u32,
+    Runtime: Compilerˉwebassemblyˉdescriptorˉruntime,
     Returnsˉvalue: bool,
     Returnsˉi64: bool,
     Statusˉglobal: u32
@@ -248,7 +371,14 @@ export fn Compilerˉwebassemblyˉdescriptorˉoperationˉemit(
     }
     if Opcode == 11u8 {
         return Compilerˉwebassemblyˉdescriptorˉoperationˉemission(
-            true, true, Emitˉlength()
+            true,
+            true,
+            Emitˉlength(
+                Scratchˉresult,
+                Runtime.Scratchˉwideˉleft,
+                Runtime.Manageˉownership,
+                Runtime.Referenceˉfunction
+            )
         );
     }
     if Opcode == 12u8 {
@@ -259,10 +389,15 @@ export fn Compilerˉwebassemblyˉdescriptorˉoperationˉemit(
                 Scratchˉleft,
                 Scratchˉright,
                 Scratchˉresult,
-                Scratchˉwide,
+                Runtime.Scratchˉwideˉleft,
                 Returnsˉvalue,
                 Returnsˉi64,
-                Statusˉglobal
+                Statusˉglobal,
+                Runtime.Manageˉownership,
+                Runtime.Referenceˉfunction,
+                Runtime.Scratchˉpointer,
+                Runtime.Scratchˉwideˉresult,
+                Runtime.Allocateˉfunction
             )
         );
     }
@@ -275,10 +410,12 @@ export fn Compilerˉwebassemblyˉdescriptorˉoperationˉemit(
                 Scratchˉleft,
                 Scratchˉright,
                 Scratchˉresult,
-                Scratchˉwide,
+                Runtime.Scratchˉwideˉleft,
                 Returnsˉvalue,
                 Returnsˉi64,
-                Statusˉglobal
+                Statusˉglobal,
+                Runtime.Manageˉownership,
+                Runtime.Referenceˉfunction
             )
         );
     }

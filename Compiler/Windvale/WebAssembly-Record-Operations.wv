@@ -5,11 +5,17 @@ import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
 import Compilerˉwebassemblyˉtypeˉdirectory as Types;
 import Compilerˉwebassemblyˉvalueˉlayout as Layouts;
 import Compilerˉwebassemblyˉrecordˉstorage as Storage;
+import Compilerˉwebassemblyˉdescriptorˉstorage as Descriptors;
 
 export record Compilerˉwebassemblyˉrecordˉoperationˉemission {
     Matched: bool;
     Valid: bool;
     Bytes: bytes;
+}
+
+export record Compilerˉwebassemblyˉrecordˉruntime {
+    Manageˉownership: bool;
+    Referenceˉfunction: u32;
 }
 
 fn Empty(Input: bytes) -> bytes {
@@ -60,6 +66,131 @@ fn Storeˉcell() -> bytes {
     var Result: bytes = Byte(55u32);
     Result = Append(Result, Uleb(3u32));
     return Append(Result, Uleb(0u32));
+}
+
+fn Memoryˉfill() -> bytes {
+    var Result: bytes = Byte(252u32);
+    Result = Append(Result, Uleb(11u32));
+    return Append(Result, Uleb(0u32));
+}
+
+fn Shapeˉisˉdescriptor(Input: bytes, Offset: u32) -> bool {
+    let Kind: u32 =
+        Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉkind(Input, Offset);
+    if Kind == 3u32 { return true; }
+    return Kind == 6u32;
+}
+
+fn Fieldˉisˉdescriptor(
+    Input: bytes,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Typeˉindex: u32,
+    Field: u32
+) -> bool {
+    let Shape: u32 =
+        Types.Compilerˉwebassemblyˉrecordˉfieldˉshapeˉoffset(
+            Input,
+            Directory,
+            Typeˉindex,
+            Field
+        );
+    if Shape == 0u32 { return false; }
+    return Shapeˉisˉdescriptor(Input, Shape);
+}
+
+fn Referenceˉframeˉfield(
+    Frameˉbase: u32,
+    Field: u32,
+    Retain: bool,
+    Referenceˉfunction: u32
+) -> bytes {
+    var Result: bytes = Frameˉaddress(Frameˉbase, Field * 8u32);
+    Result = Append(Result, Loadˉcell());
+    var Retainˉvalue: u32 = 0u32;
+    if Retain { Retainˉvalue = 1u32; }
+    Result = Append(Result, Positiveˉconstant(Retainˉvalue));
+    return Append(Result, Indexed(16u32, Referenceˉfunction));
+}
+
+fn Referenceˉpointerˉfield(
+    Pointerˉlocal: u32,
+    Field: u32,
+    Retain: bool,
+    Referenceˉfunction: u32
+) -> bytes {
+    var Result: bytes = Indexed(32u32, Pointerˉlocal);
+    if Field != 0u32 {
+        Result = Append(Result, Positiveˉconstant(Field * 8u32));
+        Result = Append(Result, Byte(106u32));
+    }
+    Result = Append(Result, Loadˉcell());
+    var Retainˉvalue: u32 = 0u32;
+    if Retain { Retainˉvalue = 1u32; }
+    Result = Append(Result, Positiveˉconstant(Retainˉvalue));
+    return Append(Result, Indexed(16u32, Referenceˉfunction));
+}
+
+fn Referenceˉframeˉrecord(
+    Input: bytes,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Typeˉindex: u32,
+    Frameˉbase: u32,
+    Fieldˉbase: u32,
+    Skipˉfield: u32,
+    Retain: bool,
+    Referenceˉfunction: u32
+) -> bytes {
+    let Fields: u32 = Fieldˉcount(Directory, Typeˉindex);
+    var Result: bytes = Empty(Input);
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        if Field != Skipˉfield {
+            if Fieldˉisˉdescriptor(Input, Directory, Typeˉindex, Field) {
+                Result = Append(
+                    Result,
+                    Referenceˉframeˉfield(
+                        Frameˉbase,
+                        Fieldˉbase + Field,
+                        Retain,
+                        Referenceˉfunction
+                    )
+                );
+            }
+        }
+        Field = Field + 1u32;
+    }
+    return Result;
+}
+
+fn Referenceˉpointerˉrecord(
+    Input: bytes,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Typeˉindex: u32,
+    Pointerˉlocal: u32,
+    Skipˉfield: u32,
+    Retain: bool,
+    Referenceˉfunction: u32
+) -> bytes {
+    let Fields: u32 = Fieldˉcount(Directory, Typeˉindex);
+    var Result: bytes = Empty(Input);
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        if Field != Skipˉfield {
+            if Fieldˉisˉdescriptor(Input, Directory, Typeˉindex, Field) {
+                Result = Append(
+                    Result,
+                    Referenceˉpointerˉfield(
+                        Pointerˉlocal,
+                        Field,
+                        Retain,
+                        Referenceˉfunction
+                    )
+                );
+            }
+        }
+        Field = Field + 1u32;
+    }
+    return Result;
 }
 
 fn Copyˉframeˉtoˉframe(
@@ -241,7 +372,8 @@ export fn Compilerˉwebassemblyˉrecordˉoperationˉemit(
     Function: u32,
     Frameˉbase: u32,
     Scratchˉi32: u32,
-    Scratchˉi64: u32
+    Scratchˉi64: u32,
+    Runtime: Compilerˉwebassemblyˉrecordˉruntime
 ) -> Compilerˉwebassemblyˉrecordˉoperationˉemission {
     let Operation: Storage.Compilerˉwebassemblyˉrecordˉoperation =
         Storage.Compilerˉwebassemblyˉrecordˉstorageˉoperation(
@@ -300,6 +432,21 @@ export fn Compilerˉwebassemblyˉrecordˉoperationˉemit(
             Loadˉsource,
             Fields
         );
+        if Runtime.Manageˉownership {
+            Result = Append(
+                Result,
+                Referenceˉframeˉrecord(
+                    Input,
+                    Typeˉdirectory,
+                    Operation.Typeˉindex,
+                    Frameˉbase,
+                    Loadˉdestination,
+                    4294967295u32,
+                    true,
+                    Runtime.Referenceˉfunction
+                )
+            );
+        }
         Result = Append(
             Result,
             Frameˉaddress(Frameˉbase, Loadˉdestination * 8u32)
@@ -329,6 +476,21 @@ export fn Compilerˉwebassemblyˉrecordˉoperationˉemit(
             );
         }
         Result = Indexed(33u32, Scratchˉi32);
+        if Runtime.Manageˉownership {
+            Result = Append(
+                Result,
+                Referenceˉframeˉrecord(
+                    Input,
+                    Typeˉdirectory,
+                    Operation.Typeˉindex,
+                    Frameˉbase,
+                    Storeˉdestination,
+                    4294967295u32,
+                    false,
+                    Runtime.Referenceˉfunction
+                )
+            );
+        }
         Result = Append(
             Result,
             Copyˉpointerˉtoˉframe(
@@ -381,8 +543,38 @@ export fn Compilerˉwebassemblyˉrecordˉoperationˉemit(
                 Result
             );
         }
-        Result = Positiveˉconstant(Field * 8u32);
-        Result = Append(Result, Byte(106u32));
+        if Runtime.Manageˉownership {
+            Result = Indexed(33u32, Scratchˉi32);
+            var Skipˉfield: u32 = 4294967295u32;
+            if Fieldˉisˉdescriptor(
+                Input,
+                Typeˉdirectory,
+                Operation.Typeˉindex,
+                Field
+            ) {
+                Skipˉfield = Field;
+            }
+            Result = Append(
+                Result,
+                Referenceˉpointerˉrecord(
+                    Input,
+                    Typeˉdirectory,
+                    Operation.Typeˉindex,
+                    Scratchˉi32,
+                    Skipˉfield,
+                    false,
+                    Runtime.Referenceˉfunction
+                )
+            );
+            Result = Append(Result, Indexed(32u32, Scratchˉi32));
+            if Field != 0u32 {
+                Result = Append(Result, Positiveˉconstant(Field * 8u32));
+                Result = Append(Result, Byte(106u32));
+            }
+        } else {
+            Result = Positiveˉconstant(Field * 8u32);
+            Result = Append(Result, Byte(106u32));
+        }
         let Wasmˉtype: u32 =
             Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉwasmˉtype(
                 Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉkind(
@@ -405,6 +597,28 @@ export fn Compilerˉwebassemblyˉrecordˉoperationˉemit(
         Result = Append(Result, Byte(Loadˉopcode));
         Result = Append(Result, Uleb(Alignment));
         Result = Append(Result, Uleb(0u32));
+        return Compilerˉwebassemblyˉrecordˉoperationˉemission(
+            true,
+            true,
+            Result
+        );
+    }
+    if Opcode == 80u8 {
+        Result = Indexed(33u32, Scratchˉi32);
+        if Runtime.Manageˉownership {
+            Result = Append(
+                Result,
+                Referenceˉpointerˉrecord(
+                    Input,
+                    Typeˉdirectory,
+                    Operation.Typeˉindex,
+                    Scratchˉi32,
+                    4294967295u32,
+                    false,
+                    Runtime.Referenceˉfunction
+                )
+            );
+        }
         return Compilerˉwebassemblyˉrecordˉoperationˉemission(
             true,
             true,
@@ -448,6 +662,115 @@ fn Emitˉearlyˉreturn(Returnsˉvalue: bool, Returnsˉi64: bool) -> bytes {
     return Result;
 }
 
+fn Shapeˉoffsetˉat(
+    Input: bytes,
+    Start: u32,
+    Index: u32
+) -> u32 {
+    var Cursor: u32 = Start;
+    var Current: u32 = 0u32;
+    while Current < Index {
+        Cursor = Cursor +
+            Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉwidth(
+                Input,
+                Cursor
+            );
+        Current = Current + 1u32;
+    }
+    return Cursor;
+}
+
+fn Localˉshapeˉoffset(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32,
+    Local: u32
+) -> u32 {
+    let Parameters: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+            Directory,
+            Function
+        );
+    if Local < Parameters {
+        return Shapeˉoffsetˉat(
+            Input,
+            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
+                Directory,
+                Function
+            ),
+            Local
+        );
+    }
+    return Shapeˉoffsetˉat(
+        Input,
+        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉtypesˉoffset(
+            Directory,
+            Function
+        ),
+        Local - Parameters
+    );
+}
+
+export fn Compilerˉwebassemblyˉrecordˉfunctionˉcleanup(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Recordˉstorage: Storage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Frameˉbase: u32,
+    Runtime: Compilerˉwebassemblyˉrecordˉruntime
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    if !Runtime.Manageˉownership { return Result; }
+    let Parameters: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+            Directory,
+            Function
+        );
+    let Locals: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉcount(
+            Directory,
+            Function
+        );
+    let Count: u32 = Parameters + Locals;
+    var Local: u32 = 0u32;
+    while Local < Count {
+        let Shape: u32 = Localˉshapeˉoffset(
+            Input,
+            Directory,
+            Function,
+            Local
+        );
+        if Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉkind(
+            Input,
+            Shape
+        ) == 7u32 {
+            let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Shape + 1u32);
+            let Fieldˉbase: u32 =
+                Storage.Compilerˉwebassemblyˉrecordˉstorageˉlocalˉfieldˉoffset(
+                    Recordˉstorage,
+                    Function,
+                    Local
+                );
+            Result = Append(
+                Result,
+                Referenceˉframeˉrecord(
+                    Input,
+                    Typeˉdirectory,
+                    Typeˉindex,
+                    Frameˉbase,
+                    Fieldˉbase,
+                    4294967295u32,
+                    false,
+                    Runtime.Referenceˉfunction
+                )
+            );
+        }
+        Local = Local + 1u32;
+    }
+    return Result;
+}
+
 export fn Compilerˉwebassemblyˉrecordˉfunctionˉprologue(
     Input: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
@@ -459,7 +782,9 @@ export fn Compilerˉwebassemblyˉrecordˉfunctionˉprologue(
     Returnsˉvalue: bool,
     Returnsˉi64: bool,
     Statusˉglobal: u32,
-    Frameˉglobal: u32
+    Frameˉglobal: u32,
+    Frameˉlimit: u32,
+    Runtime: Compilerˉwebassemblyˉrecordˉruntime
 ) -> bytes {
     let Frameˉbytes: u32 =
         Storage.Compilerˉwebassemblyˉrecordˉstorageˉframeˉbytes(
@@ -473,7 +798,7 @@ export fn Compilerˉwebassemblyˉrecordˉfunctionˉprologue(
     Result = Append(Result, Positiveˉconstant(Frameˉbytes));
     Result = Append(Result, Byte(106u32));
     Result = Append(Result, Indexed(34u32, Scratchˉi32));
-    Result = Append(Result, Positiveˉconstant(8454144u32));
+    Result = Append(Result, Positiveˉconstant(Frameˉlimit));
     Result = Append(Result, Byte(75u32));
     Result = Append(Result, Byte(4u32));
     Result = Append(Result, Byte(64u32));
@@ -486,6 +811,12 @@ export fn Compilerˉwebassemblyˉrecordˉfunctionˉprologue(
     Result = Append(Result, Byte(11u32));
     Result = Append(Result, Indexed(32u32, Scratchˉi32));
     Result = Append(Result, Indexed(36u32, Frameˉglobal));
+    if Runtime.Manageˉownership {
+        Result = Append(Result, Indexed(32u32, Frameˉbase));
+        Result = Append(Result, Positiveˉconstant(0u32));
+        Result = Append(Result, Positiveˉconstant(Frameˉbytes));
+        Result = Append(Result, Memoryˉfill());
+    }
 
     let Parameters: u32 =
         Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
