@@ -1,0 +1,3 @@
+windvale-assembly 1
+symbol export function Main in .text
+symbol local data Data in .data

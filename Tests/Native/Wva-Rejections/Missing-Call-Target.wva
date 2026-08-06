@@ -1,0 +1,7 @@
+windvale-assembly 1
+symbol export function Main in .text
+section code .text align 16
+define Main
+call Missing
+end define
+end section

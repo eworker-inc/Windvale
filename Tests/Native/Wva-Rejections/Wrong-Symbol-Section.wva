@@ -1,0 +1,7 @@
+windvale-assembly 1
+symbol export function Main in .rodata
+section rodata .rodata align 1
+define Main
+bytes 1
+end define
+end section

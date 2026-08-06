@@ -22,6 +22,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0317](../Decisions/0317-Fixed-Native-Wvb-To-Wvo-Rejections.md) fixes malformed-WVB and valid-but-unsupported-function outcomes through the public lowerer launcher, with exact native reports, destination preservation, and isolated-work cleanup. Linux execution, native host-container construction, broader backend completion, and the grouped gate still precede lowerer promotion.
 
+[Decision 0318](../Decisions/0318-Fixed-Native-Wva-Assembler-Rejection-Families.md) transfers one exact output-preserving case for every stable WVA diagnostic family to a focused .NET-free command. The already-qualified assembler route is unchanged; Linux execution of this matrix and the grouped retirement gate remain.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

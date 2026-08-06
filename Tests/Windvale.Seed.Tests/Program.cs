@@ -1320,6 +1320,7 @@ internal static partial class Program
         new("WVA assembler rejects malformed and inconsistent source", [TEST_AREA_ASSEMBLER], Assemblerˉrejectsˉinvalidˉsource),
         new("Windvale-written WVA assembler enforces source and token boundaries", [TEST_AREA_ASSEMBLER, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvaˉassemblerˉcoreˉrecognizesˉsource),
         new("native WVA assembler produces canonical WVO without .NET", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvaˉassemblerˉruns),
+        new("native WVA assembler rejection families preserve existing output without .NET", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvaˉassemblerˉrejectionsˉrun),
         new("Windvale-written WVA assembler matches Stage 0 semantics and bytes", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvaˉassemblerˉmatchesˉoracle, Testˉcost.Extended),
         new("Windvale linker core scans WVO exactly at the hosted boundary", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉcoreˉscansˉobjects),
         new("native Windvale linker AOT targets are discoverable", [TEST_AREA_LINKER], Nativeˉwvˉlinkerˉtargetsˉareˉdiscoverable),

@@ -1,0 +1,4 @@
+windvale-assembly 1
+section code .text align 16
+end section
+symbol export function Main in .text

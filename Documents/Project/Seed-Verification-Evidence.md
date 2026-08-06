@@ -3520,3 +3520,29 @@ process and reconstructs no lowerer or output. This slice changes no WebAssembly
 implementation. Linux execution, Development, Standard, Qualification, native
 host-container construction, promotion, broader lowerer rejection transfer, and
 the grouped end-of-goal gate remain deferred.
+
+## Local fixed native WVA assembler rejection-family evidence
+
+[Decision 0318](../Decisions/0318-Fixed-Native-Wva-Assembler-Rejection-Families.md)
+adds one focused .NET-free coordinator over the ordinary digest-bound WVA
+assembler launcher. Ten compact LF-terminated inputs represent `WVA1001` through
+`WVA1010`; their complete byte lengths and SHA-256 identities are pinned in the
+test contract. The `WVA1011` case generates a temporary 1,048,577-byte
+zero-filled source with SHA-256
+`2cb74edba754a81d121c9db6833704a8e7d417e5b13d1a19f4a52f007d644264`,
+avoiding a very large committed source file.
+
+Every case returns `2`, writes no standard output, matches a distinct complete
+diagnostic hash, and preserves the canonical 479-byte WVO destination at
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`.
+Direct Windows execution passes 11/11 in 2.929 seconds. After reviewing the
+wrapper's exact report, the focused selection
+`native WVA assembler rejection families preserve existing output without .NET`
+passes 1/1 in 2.865 test seconds after a 17.20-second zero-warning Release build;
+the complete command takes 25.1 seconds.
+
+The permanent coordinator invokes no .NET process and rebuilds no assembler.
+No product implementation, artifact, WebAssembly implementation, WVA semantic,
+or WVO format bytes changed. Linux execution of this exact matrix, Development,
+Standard, Qualification, the remaining malformed/differential corpus, and the
+grouped end-of-goal gate remain deferred.

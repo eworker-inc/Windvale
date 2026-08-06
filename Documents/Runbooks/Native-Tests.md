@@ -155,9 +155,34 @@ Tests: 2, Passed: 2, Failed: 0
 Both cases require exact native status diagnostics, empty standard output,
 complete destination preservation, and no residual private lowerer work.
 
-No .NET process is required by these commands. The host dependencies are `cmd.exe`
-and `certutil` on Windows, or Bash, `sha256sum`, `base64`, `cmp`, and core utilities
-on Linux.
+The focused WVA assembler rejection command covers every stable diagnostic
+family without rebuilding the already-qualified assembler. On Windows x64 run:
+
+```bat
+Tools\Native\Test-Assembler-Rejections.cmd
+```
+
+On Linux x64 run:
+
+```sh
+./Tools/Native/Test-Assembler-Rejections.sh
+```
+
+Its exact success report contains `PASS  wva1001` through `PASS  wva1011` in
+order, followed by:
+
+```text
+Tests: 11, Passed: 11, Failed: 0
+```
+
+Each family requires an exact input and report identity, exit `2`, empty standard
+output, and complete destination preservation. The source-limit case generates a
+temporary one-byte-over-limit zero-filled input rather than retaining a very
+large fixture.
+
+No .NET process is required by these commands. The host dependencies are
+`cmd.exe`, `certutil`, and `fsutil` on Windows, or Bash, `sha256sum`, `base64`,
+`cmp`, `truncate`, and core utilities on Linux.
 
 ## Current boundary
 
@@ -177,5 +202,6 @@ boundary, review its wrapper and run only `Test-Linker-Rejections.cmd` or `.sh`.
 For the packager-rejection boundary, do the same with
 `Test-Console-Packager-Rejections.cmd` or `.sh`; for publisher admission, use
 only `Test-Publisher-Rejections.cmd` or `.sh`; for lowerer rejection, use only
-`Test-Lowerer-Rejections.cmd` or `.sh`. GitHub owns the independent Windows and
-pinned-Debian Qualification run for a final committed candidate.
+`Test-Lowerer-Rejections.cmd` or `.sh`; for WVA assembler rejection families,
+use only `Test-Assembler-Rejections.cmd` or `.sh`. GitHub owns the independent
+Windows and pinned-Debian Qualification run for a final committed candidate.
