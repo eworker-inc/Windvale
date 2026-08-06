@@ -7,26 +7,23 @@ fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
 
-fn Appendˉsection(
-    Result: bytes,
+fn Sectionˉheader(
     Kind: u8,
     Name: text,
-    Data: bytes
+    Dataˉlength: u32
 ) -> bytes {
-    var Output: bytes = Bytesˉconcat(Result, Bytesˉfromˉu8(Kind));
+    var Output: bytes = Bytesˉfromˉu8(Kind);
     Output = Bytesˉconcat(Output, Bytesˉfromˉu8(0u8));
     Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(0u32));
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(16u32));
-    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Data)));
-    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Data)));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Dataˉlength));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Dataˉlength));
     let Nameˉbytes: bytes = Textˉtoˉutf8(Name);
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Nameˉbytes)));
-    Output = Bytesˉconcat(Output, Nameˉbytes);
-    return Bytesˉconcat(Output, Data);
+    return Bytesˉconcat(Output, Nameˉbytes);
 }
 
-fn Appendˉsymbol(
-    Result: bytes,
+fn Symbolˉrecord(
     Binding: u8,
     Kind: u8,
     Section: u32,
@@ -34,7 +31,7 @@ fn Appendˉsymbol(
     Size: u32,
     Name: bytes
 ) -> bytes {
-    var Output: bytes = Bytesˉconcat(Result, Bytesˉfromˉu8(Binding));
+    var Output: bytes = Bytesˉfromˉu8(Binding);
     Output = Bytesˉconcat(Output, Bytesˉfromˉu8(Kind));
     Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(0u32));
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Section));
@@ -42,6 +39,26 @@ fn Appendˉsymbol(
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Size));
     Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Name)));
     return Bytesˉconcat(Output, Name);
+}
+
+fn Relocationˉrecord(Relocations: bytes, Relocation: u32) -> bytes {
+    var Result: bytes = Bytesˉfromˉu8(2u8);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(
+            Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32)
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(
+            Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32 + 4u32)
+        )
+    );
+    return Bytesˉconcat(Result, Bytesˉfromˉi32ˉlittle(-4));
 }
 
 fn Dataˉsymbolˉname(Index: u32) -> bytes {
@@ -52,8 +69,23 @@ fn Dataˉsymbolˉname(Index: u32) -> bytes {
     );
 }
 
+fn Objectˉbody(
+    Code: bytes,
+    Padding: bytes,
+    Readˉonlyˉsection: bytes,
+    Symbols: bytes,
+    Relocationˉrecords: bytes
+) -> bytes {
+    let Suffix: bytes = Bytesˉconcat(
+        Readˉonlyˉsection,
+        Bytesˉconcat(Symbols, Relocationˉrecords)
+    );
+    return Bytesˉconcat(Code, Bytesˉconcat(Padding, Suffix));
+}
+
 export fn Compilerˉnativeˉx64ˉobjectˉemit(
     Code: bytes,
+    Padding: bytes,
     Directory: bytes,
     Functionˉcount: u32,
     Mainˉfunction: u32,
@@ -103,6 +135,19 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     if Expectedˉdataˉoffset != Bytesˉlength(Data.Bytes) { return Empty(Code); }
     if Data.Count == 0u32 {
         if Relocationˉcount != 0u32 { return Empty(Code); }
+        if Bytesˉlength(Padding) != 0u32 { return Empty(Code); }
+    } else {
+        if Bytesˉlength(Padding) > 15u32 { return Empty(Code); }
+        if (Bytesˉlength(Code) + Bytesˉlength(Padding)) % 16u32 != 0u32 {
+            return Empty(Code);
+        }
+        var Paddingˉindex: u32 = 0u32;
+        while Paddingˉindex < Bytesˉlength(Padding) {
+            if Bytesˉreadˉu8(Padding, Paddingˉindex) != 144u8 {
+                return Empty(Code);
+            }
+            Paddingˉindex = Paddingˉindex + 1u32;
+        }
     }
 
     var Relocation: u32 = 0u32;
@@ -130,30 +175,38 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
         Sectionˉcount = 2u32;
         Symbolˉcount = Symbolˉcount + Data.Count;
     }
-    var Result: bytes = Textˉtoˉutf8("WVO1");
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Sectionˉcount));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbolˉcount));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Relocationˉcount));
+    var Header: bytes = Textˉtoˉutf8("WVO1");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu8(1u8));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu8(0u8));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Sectionˉcount));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Symbolˉcount));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Relocationˉcount));
 
-    Result = Appendˉsection(Result, 1u8, ".text", Code);
+    let Textˉsectionˉheader: bytes = Sectionˉheader(
+        1u8,
+        ".text",
+        Bytesˉlength(Code) + Bytesˉlength(Padding)
+    );
+    var Readˉonlyˉsection: bytes = Empty(Code);
+    var Symbols: bytes = Empty(Code);
     if Data.Count > 0u32 {
-        Result = Appendˉsection(Result, 2u8, ".rodata", Data.Bytes);
+        Readˉonlyˉsection = Bytesˉconcat(
+            Sectionˉheader(2u8, ".rodata", Bytesˉlength(Data.Bytes)),
+            Data.Bytes
+        );
         Dataˉindex = 0u32;
         while Dataˉindex < Data.Count {
-        Result = Appendˉsymbol(
-            Result,
-            1u8,
-            2u8,
-            1u32,
+            Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
+                1u8,
+                2u8,
+                1u32,
                 Staticˉdata.Compilerˉnativeˉx64ˉdataˉoffset(Data, Dataˉindex),
                 Staticˉdata.Compilerˉnativeˉx64ˉdataˉsize(Data, Dataˉindex),
                 Dataˉsymbolˉname(Dataˉindex)
-        );
+            ));
             Dataˉindex = Dataˉindex + 1u32;
         }
     }
@@ -161,8 +214,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     var Function: u32 = 0u32;
     while Function < Functionˉcount {
         if Function != Mainˉfunction {
-            Result = Appendˉsymbol(
-                Result,
+            Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
                 1u8,
                 1u8,
                 0u32,
@@ -175,12 +227,11 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
                     Function
                 ),
                 Layout.Compilerˉnativeˉx64ˉlayoutˉhelperˉname(Function)
-            );
+            ));
         }
         Function = Function + 1u32;
     }
-    Result = Appendˉsymbol(
-        Result,
+    Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
         2u8,
         1u8,
         0u32,
@@ -193,28 +244,24 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
             Mainˉfunction
         ),
         Textˉtoˉutf8("Main")
-    );
+    ));
 
+    var Relocationˉrecords: bytes = Empty(Code);
     Relocation = 0u32;
     while Relocation < Relocationˉcount {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(2u8));
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉfromˉu32ˉlittle(
-                Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32)
-            )
+        Relocationˉrecords = Bytesˉconcat(
+            Relocationˉrecords,
+            Relocationˉrecord(Relocations, Relocation)
         );
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉfromˉu32ˉlittle(
-                Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32 + 4u32)
-            )
-        );
-        Result = Bytesˉconcat(Result, Bytesˉfromˉi32ˉlittle(-4));
         Relocation = Relocation + 1u32;
     }
-    return Result;
+    let Prefix: bytes = Bytesˉconcat(Header, Textˉsectionˉheader);
+    let Body: bytes = Objectˉbody(
+        Code,
+        Padding,
+        Readˉonlyˉsection,
+        Symbols,
+        Relocationˉrecords
+    );
+    return Bytesˉconcat(Prefix, Body);
 }

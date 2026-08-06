@@ -2710,7 +2710,50 @@ One exact native self-lowering probe remains fail-closed as `WVR3018` after
 345,206,567 constructed bytes belong to machine-code `bytes.concat` emission.
 The next native slice is therefore chunked machine emission or integration of
 the already-designed reclaiming ownership allocator, not another arena
-increase.
+increase. Decision 0280 records the later source reconstruction that corrected
+this hotspot attribution before implementing the next slice.
+
+Local Development, Standard, Qualification, the full Seed/OS suites, Linux
+execution, WebAssembly verification, GitHub verification, artifact promotion,
+and ordinary-path cutover remain deferred to the grouped end-of-goal gate.
+
+## Local bounded native analysis and artifact aggregation evidence
+
+[Decision 0280](../Decisions/0280-Bounded-Native-Analysis-And-Artifact-Aggregation.md)
+corrects Decision 0279's hotspot attribution and bounds the next analysis
+layers. The 345,206,567-byte `bytes.concat` total belonged to the 76-byte
+layout-directory append path, not machine-code emission. Layout entries now
+stage independently; control leaders and reachability use append-only evidence;
+record block, last-use, local-use, and definition evidence no longer replace
+whole dense maps; and ordinary-size `WVFA 1` artifacts aggregate as balanced
+ranges with separate text padding and staged WVO regions.
+
+Direct native differential checks preserve the canonical 479-byte return-42
+WVO at SHA-256
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`
+and a 2,620-byte record-bearing WVO at SHA-256
+`bf05545b4081605df90495319e9c74ccf323896836f404b0821a81d7d3cf005e`.
+The reviewed focused Seed selection passes 1/1 in 10.498 test seconds. Its one
+zero-warning Release build takes 13.36 seconds, and total command time is
+28.215 seconds.
+
+Direct Stage 0 calculation pins the 363,074-byte core closure at SHA-256
+`21f18d93f5bbc5c0e03926b659944b6b74e0c392d7bc6aece3437adbfafcbc57`.
+The 357,732-byte memory adapter has SHA-256
+`11487dfde84c82ef790dd1f07cfb56365b2c16da99b050fd0717fff3a4ffd541`;
+the hosted tool is 358,760 bytes at SHA-256
+`5bb1fb9eca7b5fe3cefdb43aa58b9db8fdfcd9ddbf0079cdfa130db5658f7b05`.
+Current unpromoted packages are 4,983,808 Windows and 4,984,832 Linux bytes at
+SHA-256
+`0cf26d5ae2e941d8cf106d92b591b977a1fb84b2f358c39e0f49c498991f2655`
+and `ddb96cdf4802c076f29c097a975e2c80195bfda7679f46ae4d5ac136f1f558b2`.
+
+The final standalone self-lowering probe still exits 1 after 5.532 seconds and
+publishes no partial WVO. Complete-tool output now needs a bounded multipart
+large-object aggregation/publication contract above the ordinary 4 MiB
+single-value and file-write envelope, or an equally explicit qualified
+builder/streaming owner. This slice does not claim self-lowering completion,
+ordinary-path cutover, or .NET retirement.
 
 Local Development, Standard, Qualification, the full Seed/OS suites, Linux
 execution, WebAssembly verification, GitHub verification, artifact promotion,

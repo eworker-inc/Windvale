@@ -69,10 +69,12 @@ inside one call frame.
   0.806 seconds and publishes no object. A separate reference-runtime probe
   reaches its explicit 100,000,000-instruction ceiling in 9.8 seconds. It
   reports 418,105,387 constructed dynamic bytes but only 221,418 peak live
-  bytes; 345,206,567 constructed bytes belong to the machine-code
-  `bytes.concat` emission helper alone. The next native slice is therefore
-  chunked machine emission or integration of the already-designed reclaiming
-  ownership allocator, not another arena increase.
+  bytes. Later symbol-to-source reconstruction corrected the original hotspot
+  attribution: 345,206,567 constructed bytes belong to the 76-byte function
+  layout-directory append path, not machine-code emission. Decision 0280
+  stages that entry independently and then addresses the control and record
+  maps exposed behind it. The remedy remains bounded construction rather than
+  another arena increase.
 - No C# product implementation or WebAssembly implementation changed. Stage 0
   remains the independent oracle and recovery path.
 

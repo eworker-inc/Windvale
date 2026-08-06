@@ -24,27 +24,24 @@ export fn Compilerˉnativeˉx64ˉlayoutˉappend(
     Returnˉtype: u8,
     Parameterˉtypes: bytes
 ) -> bytes {
-    var Result: bytes = Bytesˉconcat(
-        Directory,
-        Bytesˉfromˉu32ˉlittle(Machineˉoffset)
-    );
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Machineˉlength));
-    Result = Bytesˉconcat(
-        Result,
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Machineˉoffset);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Machineˉlength));
+    Entry = Bytesˉconcat(
+        Entry,
         Bytesˉslice(Bytesˉfromˉu32ˉlittle(Parameters), 0u32, 1u32)
     );
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Returnˉtype));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(Returnˉtype));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu16ˉlittle(0u32));
     var Parameter: u32 = 0u32;
     while Parameter < Compilerˉnativeˉx64ˉlayoutˉparameterˉlimit() {
         var Type: u8 = 0u8;
         if Parameter < Parameters {
             Type = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
         }
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Type));
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(Type));
         Parameter = Parameter + 1u32;
     }
-    return Result;
+    return Bytesˉconcat(Directory, Entry);
 }
 
 export fn Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(

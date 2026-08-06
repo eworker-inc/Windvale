@@ -119,17 +119,6 @@ fn Setˉbyte(Input: bytes, Index: u32, Value: u8) -> bytes {
     );
 }
 
-fn Setˉu32(Input: bytes, Index: u32, Value: u32) -> bytes {
-    let Offset: u32 = Index * 4u32;
-    return Bytesˉconcat(
-        Bytesˉconcat(
-            Bytesˉslice(Input, 0u32, Offset),
-            Bytesˉfromˉu32ˉlittle(Value)
-        ),
-        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
-    );
-}
-
 fn Pushˉrecord(Records: bytes, Record: u32) -> bytes {
     return Bytesˉconcat(Records, Bytesˉfromˉu32ˉlittle(Record));
 }
@@ -203,6 +192,77 @@ fn Pushˉscalar(Records: bytes) -> bytes {
     return Pushˉrecord(Records, 4294967295u32);
 }
 
+fn Blockˉforˉleader(Leaders: bytes, Offset: u32) -> u32 {
+    if Offset >= Bytesˉlength(Leaders) { return 4294967295u32; }
+    if Bytesˉreadˉu8(Leaders, Offset) != 1u8 { return 4294967295u32; }
+    var Block: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    while Cursor < Offset {
+        if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 { Block = Block + 1u32; }
+        Cursor = Cursor + 1u32;
+    }
+    return Block;
+}
+
+fn Eventsˉhaveˉlaterˉuse(
+    Events: bytes,
+    Start: u32,
+    Block: u32,
+    Record: u32
+) -> bool {
+    var Cursor: u32 = Start;
+    while Cursor < Bytesˉlength(Events) {
+        let Eventˉblock: u32 = Bytesˉreadˉu32ˉlittle(Events, Cursor);
+        if Eventˉblock != Block { return false; }
+        let Useˉcount: u32 = Bytesˉreadˉu32ˉlittle(Events, Cursor + 8u32);
+        let Useˉoffset: u32 = Cursor + 12u32;
+        var Use: u32 = 0u32;
+        while Use < Useˉcount {
+            if Bytesˉreadˉu32ˉlittle(
+                Events,
+                Useˉoffset + Use * 4u32
+            ) == Record { return true; }
+            Use = Use + 1u32;
+        }
+        Cursor = Useˉoffset + Useˉcount * 4u32;
+    }
+    return false;
+}
+
+fn Cellˉeventˉexists(
+    Events: bytes,
+    Kind: u8,
+    Cell: u32
+) -> bool {
+    if Bytesˉlength(Events) % 5u32 != 0u32 { return false; }
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Events) {
+        if Bytesˉreadˉu8(Events, Cursor) == Kind &&
+            Bytesˉreadˉu32ˉlittle(Events, Cursor + 1u32) == Cell {
+            return true;
+        }
+        Cursor = Cursor + 5u32;
+    }
+    return false;
+}
+
+fn Cellˉeventˉmap(
+    Input: bytes,
+    Events: bytes,
+    Kind: u8,
+    Cells: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    var Cell: u32 = 0u32;
+    while Cell < Cells {
+        var Value: u8 = 0u8;
+        if Cellˉeventˉexists(Events, Kind, Cell) { Value = 1u8; }
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+        Cell = Cell + 1u32;
+    }
+    return Result;
+}
+
 export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Input: bytes,
     Codeˉoffset: u32,
@@ -233,21 +293,11 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     }
     if Bytesˉreadˉu8(Leaders, 0u32) != 1u8 { return Invalid(Input); }
 
-    var Blockˉbyˉoffset: bytes = U32ˉvalues(
-        Input,
-        Codeˉlength,
-        4294967295u32
-    );
     var Countedˉblocks: u32 = 0u32;
     var Offset: u32 = 0u32;
     while Offset < Codeˉlength {
         if Bytesˉreadˉu8(Leaders, Offset) == 1u8 {
             if Countedˉblocks >= Blocks { return Invalid(Input); }
-            Blockˉbyˉoffset = Setˉu32(
-                Blockˉbyˉoffset,
-                Offset,
-                Countedˉblocks
-            );
             Countedˉblocks = Countedˉblocks + 1u32;
         }
         Offset = Offset + 1u32;
@@ -255,21 +305,15 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     if Countedˉblocks != Blocks { return Invalid(Input); }
 
     var Instructionˉoffsets: bytes = Empty(Input);
-    var Blockˉstarts: bytes = U32ˉvalues(Input, Blocks, 4294967295u32);
-    var Blockˉends: bytes = U32ˉvalues(Input, Blocks, 4294967295u32);
-    var Successorˉfirst: bytes = U32ˉvalues(Input, Blocks, 4294967295u32);
-    var Successorˉsecond: bytes = U32ˉvalues(Input, Blocks, 4294967295u32);
-    var Uses: bytes = Zeros(Input, Blocks * Recordˉlocals.Count);
-    var Definitions: bytes = Zeros(Input, Blocks * Recordˉlocals.Count);
+    var Blockˉstarts: bytes = Empty(Input);
+    var Blockˉends: bytes = Empty(Input);
+    var Successorˉfirst: bytes = Empty(Input);
+    var Successorˉsecond: bytes = Empty(Input);
+    var Cellˉevents: bytes = Empty(Input);
     var Stackˉrecords: bytes = Empty(Input);
     var Depth: u32 = 0u32;
     var Events: bytes = Empty(Input);
     var Recordˉtypes: bytes = Empty(Input);
-    var Lastˉuses: bytes = U32ˉvalues(
-        Input,
-        Blocks * 128u32,
-        4294967295u32
-    );
     var Recordˉvalues: u32 = 0u32;
     var Blockˉrecordˉvalues: u32 = 0u32;
     var Currentˉblock: u32 = 4294967295u32;
@@ -279,31 +323,28 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 {
             if Currentˉblock != 4294967295u32 {
                 if Depth != 0u32 { return Invalid(Input); }
-                if Bytesˉreadˉu32ˉlittle(
-                    Blockˉends,
-                    Currentˉblock * 4u32
-                ) == 4294967295u32 {
-                    Blockˉends = Setˉu32(
+                if Bytesˉlength(Blockˉends) / 4u32 == Currentˉblock {
+                    Blockˉends = Bytesˉconcat(
                         Blockˉends,
-                        Currentˉblock,
-                        Instructions
+                        Bytesˉfromˉu32ˉlittle(Instructions)
                     );
-                    Successorˉfirst = Setˉu32(
+                    Successorˉfirst = Bytesˉconcat(
                         Successorˉfirst,
-                        Currentˉblock,
-                        Currentˉblock + 1u32
+                        Bytesˉfromˉu32ˉlittle(Currentˉblock + 1u32)
+                    );
+                    Successorˉsecond = Bytesˉconcat(
+                        Successorˉsecond,
+                        Bytesˉfromˉu32ˉlittle(4294967295u32)
                     );
                 }
+                Currentˉblock = Currentˉblock + 1u32;
+            } else {
+                Currentˉblock = 0u32;
             }
-            Currentˉblock = Bytesˉreadˉu32ˉlittle(
-                Blockˉbyˉoffset,
-                Cursor * 4u32
-            );
-            if Currentˉblock == 4294967295u32 { return Invalid(Input); }
-            Blockˉstarts = Setˉu32(
+            if Currentˉblock >= Blocks { return Invalid(Input); }
+            Blockˉstarts = Bytesˉconcat(
                 Blockˉstarts,
-                Currentˉblock,
-                Instructions
+                Bytesˉfromˉu32ˉlittle(Instructions)
             );
             Stackˉrecords = Empty(Input);
             Depth = 0u32;
@@ -365,8 +406,15 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     }
                     let Cell: u32 =
                         Currentˉblock * Recordˉlocals.Count + Recordˉlocal;
-                    if Bytesˉreadˉu8(Definitions, Cell) == 0u8 {
-                        Uses = Setˉbyte(Uses, Cell, 1u8);
+                    if !Cellˉeventˉexists(Cellˉevents, 2u8, Cell) &&
+                        !Cellˉeventˉexists(Cellˉevents, 1u8, Cell) {
+                        Cellˉevents = Bytesˉconcat(
+                            Cellˉevents,
+                            Bytesˉconcat(
+                                Bytesˉfromˉu8(1u8),
+                                Bytesˉfromˉu32ˉlittle(Cell)
+                            )
+                        );
                     }
                 }
                 Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
@@ -392,11 +440,6 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     (Depth - 1u32) * 4u32
                 );
                 if Usedˉrecord == 4294967295u32 { return Invalid(Input); }
-                Lastˉuses = Setˉu32(
-                    Lastˉuses,
-                    Currentˉblock * 128u32 + Usedˉrecord,
-                    Instructions
-                );
                 Usedˉrecords = Bytesˉconcat(
                     Usedˉrecords,
                     Bytesˉfromˉu32ˉlittle(Usedˉrecord)
@@ -408,12 +451,21 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 if Storeˉrecord == 4294967295u32 {
                     return Invalid(Input);
                 }
-                Definitions = Setˉbyte(
-                    Definitions,
-                    Currentˉblock * Recordˉlocals.Count +
-                        Storeˉrecord,
-                    1u8
-                );
+                let Definitionˉcell: u32 =
+                    Currentˉblock * Recordˉlocals.Count + Storeˉrecord;
+                if !Cellˉeventˉexists(
+                    Cellˉevents,
+                    2u8,
+                    Definitionˉcell
+                ) {
+                    Cellˉevents = Bytesˉconcat(
+                        Cellˉevents,
+                        Bytesˉconcat(
+                            Bytesˉfromˉu8(2u8),
+                            Bytesˉfromˉu32ˉlittle(Definitionˉcell)
+                        )
+                    );
+                }
             }
             Depth = Depth - 1u32;
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
@@ -507,11 +559,6 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 (Depth - 1u32) * 4u32
             );
             if Usedˉrecord == 4294967295u32 { return Invalid(Input); }
-            Lastˉuses = Setˉu32(
-                Lastˉuses,
-                Currentˉblock * 128u32 + Usedˉrecord,
-                Instructions
-            );
             Usedˉrecords = Bytesˉconcat(
                 Usedˉrecords,
                 Bytesˉfromˉu32ˉlittle(Usedˉrecord)
@@ -552,11 +599,6 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                         (Depth - Callˉparameters + Parameter) * 4u32
                     );
                     if Usedˉrecord == 4294967295u32 { return Invalid(Input); }
-                    Lastˉuses = Setˉu32(
-                        Lastˉuses,
-                        Currentˉblock * 128u32 + Usedˉrecord,
-                        Instructions
-                    );
                     Usedˉrecords = Bytesˉconcat(
                         Usedˉrecords,
                         Bytesˉfromˉu32ˉlittle(Usedˉrecord)
@@ -648,20 +690,25 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Codeˉoffset + Cursor + 1u32
             );
             if Jumpˉtarget >= Codeˉlength { return Invalid(Input); }
-            let Jumpˉtargetˉblock: u32 = Bytesˉreadˉu32ˉlittle(
-                Blockˉbyˉoffset,
-                Jumpˉtarget * 4u32
+            let Jumpˉtargetˉblock: u32 = Blockˉforˉleader(
+                Leaders,
+                Jumpˉtarget
             );
             if Jumpˉtargetˉblock == 4294967295u32 { return Invalid(Input); }
-            Blockˉends = Setˉu32(
+            if Bytesˉlength(Blockˉends) / 4u32 != Currentˉblock {
+                return Invalid(Input);
+            }
+            Blockˉends = Bytesˉconcat(
                 Blockˉends,
-                Currentˉblock,
-                Instructions + 1u32
+                Bytesˉfromˉu32ˉlittle(Instructions + 1u32)
             );
-            Successorˉfirst = Setˉu32(
+            Successorˉfirst = Bytesˉconcat(
                 Successorˉfirst,
-                Currentˉblock,
-                Jumpˉtargetˉblock
+                Bytesˉfromˉu32ˉlittle(Jumpˉtargetˉblock)
+            );
+            Successorˉsecond = Bytesˉconcat(
+                Successorˉsecond,
+                Bytesˉfromˉu32ˉlittle(4294967295u32)
             );
             Handled = true;
         }
@@ -675,27 +722,27 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Codeˉoffset + Cursor + 1u32
             );
             if Branchˉtarget >= Codeˉlength { return Invalid(Input); }
-            let Branchˉtargetˉblock: u32 = Bytesˉreadˉu32ˉlittle(
-                Blockˉbyˉoffset,
-                Branchˉtarget * 4u32
+            let Branchˉtargetˉblock: u32 = Blockˉforˉleader(
+                Leaders,
+                Branchˉtarget
             );
             if Branchˉtargetˉblock == 4294967295u32 { return Invalid(Input); }
             Depth = 0u32;
             Stackˉrecords = Empty(Input);
-            Blockˉends = Setˉu32(
+            if Bytesˉlength(Blockˉends) / 4u32 != Currentˉblock {
+                return Invalid(Input);
+            }
+            Blockˉends = Bytesˉconcat(
                 Blockˉends,
-                Currentˉblock,
-                Instructions + 1u32
+                Bytesˉfromˉu32ˉlittle(Instructions + 1u32)
             );
-            Successorˉfirst = Setˉu32(
+            Successorˉfirst = Bytesˉconcat(
                 Successorˉfirst,
-                Currentˉblock,
-                Branchˉtargetˉblock
+                Bytesˉfromˉu32ˉlittle(Branchˉtargetˉblock)
             );
-            Successorˉsecond = Setˉu32(
+            Successorˉsecond = Bytesˉconcat(
                 Successorˉsecond,
-                Currentˉblock,
-                Currentˉblock + 1u32
+                Bytesˉfromˉu32ˉlittle(Currentˉblock + 1u32)
             );
             Handled = true;
         }
@@ -705,11 +752,6 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Returnˉtype) {
                 Usedˉrecord = Bytesˉreadˉu32ˉlittle(Stackˉrecords, 0u32);
                 if Usedˉrecord == 4294967295u32 { return Invalid(Input); }
-                Lastˉuses = Setˉu32(
-                    Lastˉuses,
-                    Currentˉblock * 128u32 + Usedˉrecord,
-                    Instructions
-                );
                 Usedˉrecords = Bytesˉconcat(
                     Usedˉrecords,
                     Bytesˉfromˉu32ˉlittle(Usedˉrecord)
@@ -717,10 +759,20 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             }
             Depth = 0u32;
             Stackˉrecords = Empty(Input);
-            Blockˉends = Setˉu32(
+            if Bytesˉlength(Blockˉends) / 4u32 != Currentˉblock {
+                return Invalid(Input);
+            }
+            Blockˉends = Bytesˉconcat(
                 Blockˉends,
-                Currentˉblock,
-                Instructions + 1u32
+                Bytesˉfromˉu32ˉlittle(Instructions + 1u32)
+            );
+            Successorˉfirst = Bytesˉconcat(
+                Successorˉfirst,
+                Bytesˉfromˉu32ˉlittle(4294967295u32)
+            );
+            Successorˉsecond = Bytesˉconcat(
+                Successorˉsecond,
+                Bytesˉfromˉu32ˉlittle(4294967295u32)
             );
             Handled = true;
         }
@@ -748,13 +800,40 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         Depth != 0u32 {
         return Invalid(Input);
     }
-    if Bytesˉreadˉu32ˉlittle(
-        Blockˉends,
-        Currentˉblock * 4u32
-    ) == 4294967295u32 {
-        Blockˉends = Setˉu32(Blockˉends, Currentˉblock, Instructions);
+    if Bytesˉlength(Blockˉends) / 4u32 == Currentˉblock {
+        Blockˉends = Bytesˉconcat(
+            Blockˉends,
+            Bytesˉfromˉu32ˉlittle(Instructions)
+        );
+        Successorˉfirst = Bytesˉconcat(
+            Successorˉfirst,
+            Bytesˉfromˉu32ˉlittle(4294967295u32)
+        );
+        Successorˉsecond = Bytesˉconcat(
+            Successorˉsecond,
+            Bytesˉfromˉu32ˉlittle(4294967295u32)
+        );
+    }
+    if Bytesˉlength(Blockˉstarts) != Blocks * 4u32 ||
+        Bytesˉlength(Blockˉends) != Blocks * 4u32 ||
+        Bytesˉlength(Successorˉfirst) != Blocks * 4u32 ||
+        Bytesˉlength(Successorˉsecond) != Blocks * 4u32 {
+        return Invalid(Input);
     }
 
+    let Livenessˉcells: u32 = Blocks * Recordˉlocals.Count;
+    let Uses: bytes = Cellˉeventˉmap(
+        Input,
+        Cellˉevents,
+        1u8,
+        Livenessˉcells
+    );
+    let Definitions: bytes = Cellˉeventˉmap(
+        Input,
+        Cellˉevents,
+        2u8,
+        Livenessˉcells
+    );
     let Persistent:
         Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
         Localˉliveness.Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
@@ -831,19 +910,23 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Events,
                 Useˉoffset + Useˉindex * 4u32
             );
-            if Bytesˉreadˉu32ˉlittle(
-                Lastˉuses,
-                (Block * 128u32 + Lastˉuse) * 4u32
-            ) == Event {
+            if !Eventsˉhaveˉlaterˉuse(
+                Events,
+                Useˉoffset + Useˉcount * 4u32,
+                Block,
+                Lastˉuse
+            ) {
                 Scratchˉlive = Setˉbyte(Scratchˉlive, Lastˉuse, 0u8);
             }
             Useˉindex = Useˉindex + 1u32;
         }
         if Result != 4294967295u32 {
-            if Bytesˉreadˉu32ˉlittle(
-                Lastˉuses,
-                (Block * 128u32 + Result) * 4u32
-            ) == 4294967295u32 {
+            if !Eventsˉhaveˉlaterˉuse(
+                Events,
+                Useˉoffset + Useˉcount * 4u32,
+                Block,
+                Result
+            ) {
                 Scratchˉlive = Setˉbyte(Scratchˉlive, Result, 0u8);
             }
         }

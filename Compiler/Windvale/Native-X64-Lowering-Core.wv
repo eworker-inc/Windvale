@@ -755,21 +755,6 @@ export fn Compilerˉnativeˉx64ˉinvalidˉblock()
     );
 }
 
-export fn Compilerˉnativeˉx64ˉreplaceˉbyte(
-    Input: bytes,
-    Offset: u32,
-    Value: u8
-) -> bytes {
-    let Length: u32 = Bytesˉlength(Input);
-    return Bytesˉconcat(
-        Bytesˉconcat(
-            Bytesˉslice(Input, 0u32, Offset),
-            Bytesˉfromˉu8(Value)
-        ),
-        Bytesˉslice(Input, Offset + 1u32, Length - Offset - 1u32)
-    );
-}
-
 export fn Compilerˉnativeˉx64ˉzeroˉmap(Input: bytes, Length: u32) -> bytes {
     var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Chunk: bytes = Bytesˉfromˉu8(0u8);
@@ -782,6 +767,68 @@ export fn Compilerˉnativeˉx64ˉzeroˉmap(Input: bytes, Length: u32) -> bytes {
         if Remaining > 0u32 {
             Chunk = Bytesˉconcat(Chunk, Chunk);
         }
+    }
+    return Result;
+}
+
+fn Compilerˉnativeˉx64ˉu32ˉlistˉcontains(
+    Values: bytes,
+    Value: u32
+) -> bool {
+    if Bytesˉlength(Values) % 4u32 != 0u32 { return false; }
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Values) {
+        if Bytesˉreadˉu32ˉlittle(Values, Cursor) == Value { return true; }
+        Cursor = Cursor + 4u32;
+    }
+    return false;
+}
+
+fn Compilerˉnativeˉx64ˉnextˉu32ˉatˉorˉafter(
+    Values: bytes,
+    Minimum: u32,
+    Limit: u32
+) -> u32 {
+    var Next: u32 = Limit;
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Values) {
+        let Candidate: u32 = Bytesˉreadˉu32ˉlittle(Values, Cursor);
+        if Candidate >= Minimum && Candidate < Next { Next = Candidate; }
+        Cursor = Cursor + 4u32;
+    }
+    return Next;
+}
+
+fn Compilerˉnativeˉx64ˉleaderˉmap(
+    Input: bytes,
+    Leaderˉoffsets: bytes,
+    Length: u32
+) -> bytes {
+    if Bytesˉlength(Leaderˉoffsets) % 4u32 != 0u32 {
+        return Compilerˉnativeˉx64ˉempty(Input);
+    }
+    var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Cursor: u32 = 0u32;
+    while Cursor < Length {
+        let Next: u32 = Compilerˉnativeˉx64ˉnextˉu32ˉatˉorˉafter(
+            Leaderˉoffsets,
+            Cursor,
+            Length
+        );
+        if Next == Length {
+            return Bytesˉconcat(
+                Result,
+                Compilerˉnativeˉx64ˉzeroˉmap(Input, Length - Cursor)
+            );
+        }
+        if Next > Cursor {
+            Result = Bytesˉconcat(
+                Result,
+                Compilerˉnativeˉx64ˉzeroˉmap(Input, Next - Cursor)
+            );
+        }
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(1u8));
+        Cursor = Next + 1u32;
     }
     return Result;
 }
@@ -920,6 +967,37 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 161u8 { return 1u32; }
     if Opcode == 162u8 { return 1u32; }
     return 0u32;
+}
+
+fn Compilerˉnativeˉx64ˉinstructionˉmap(
+    Input: bytes,
+    Payloadˉoffset: u32,
+    Length: u32
+) -> bytes {
+    var Result: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Chunk: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Cursor: u32 = 0u32;
+    while Cursor < Length {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Payloadˉoffset + Cursor);
+        let Size: u32 = Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+        var Marker: bytes = Bytesˉfromˉu8(1u8);
+        if Size > 1u32 {
+            Marker = Bytesˉconcat(
+                Marker,
+                Compilerˉnativeˉx64ˉzeroˉmap(Input, Size - 1u32)
+            );
+        }
+        Chunk = Bytesˉconcat(Chunk, Marker);
+        if Bytesˉlength(Chunk) >= 256u32 {
+            Result = Bytesˉconcat(Result, Chunk);
+            Chunk = Compilerˉnativeˉx64ˉempty(Input);
+        }
+        Cursor = Cursor + Size;
+    }
+    if Bytesˉlength(Chunk) > 0u32 {
+        Result = Bytesˉconcat(Result, Chunk);
+    }
+    return Result;
 }
 
 fn Compilerˉnativeˉx64ˉhasˉdivision(
@@ -1934,9 +2012,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
     }
     let Length: u32 = Section.Payloadˉlength;
-    var Instructionsˉmap: bytes = Compilerˉnativeˉx64ˉzeroˉmap(Input, Length);
-    var Leaders: bytes = Compilerˉnativeˉx64ˉzeroˉmap(Input, Length);
-    Leaders = Compilerˉnativeˉx64ˉreplaceˉbyte(Leaders, 0u32, 1u8);
+    var Leaderˉoffsets: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     var Instructionˉcount: u32 = 0u32;
     var Cursor: u32 = 0u32;
     while Cursor < Length {
@@ -1959,11 +2035,6 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         if Instructionˉcount > 8192u32 {
             return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
         }
-        Instructionsˉmap = Compilerˉnativeˉx64ˉreplaceˉbyte(
-            Instructionsˉmap,
-            Cursor,
-            1u8
-        );
         let Next: u32 = Cursor + Size;
         if Opcode == 48u8 {
             let Jumpˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
@@ -1973,10 +2044,9 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             if Jumpˉtarget >= Length {
                 return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
             }
-            Leaders = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                Leaders,
-                Jumpˉtarget,
-                1u8
+            Leaderˉoffsets = Bytesˉconcat(
+                Leaderˉoffsets,
+                Bytesˉfromˉu32ˉlittle(Jumpˉtarget)
             );
         }
         if Opcode == 49u8 {
@@ -1990,14 +2060,32 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             if Next >= Length {
                 return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
             }
-            Leaders = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                Leaders,
-                Branchˉtarget,
-                1u8
+            Leaderˉoffsets = Bytesˉconcat(
+                Leaderˉoffsets,
+                Bytesˉfromˉu32ˉlittle(Branchˉtarget)
             );
-            Leaders = Compilerˉnativeˉx64ˉreplaceˉbyte(Leaders, Next, 1u8);
+            Leaderˉoffsets = Bytesˉconcat(
+                Leaderˉoffsets,
+                Bytesˉfromˉu32ˉlittle(Next)
+            );
         }
         Cursor = Next;
+    }
+    let Leaders: bytes = Compilerˉnativeˉx64ˉleaderˉmap(
+        Input,
+        Leaderˉoffsets,
+        Length
+    );
+    if Bytesˉlength(Leaders) != Length {
+        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+    }
+    let Instructionsˉmap: bytes = Compilerˉnativeˉx64ˉinstructionˉmap(
+        Input,
+        Section.Payloadˉoffset,
+        Length
+    );
+    if Bytesˉlength(Instructionsˉmap) != Length {
+        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
     }
 
     var Blocks: u32 = 0u32;
@@ -2062,67 +2150,62 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Cursor = Block.Next;
     }
 
-    var Reachable: bytes = Compilerˉnativeˉx64ˉzeroˉmap(Input, Length);
-    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(Reachable, 0u32, 1u8);
-    var Reachˉiteration: u32 = 0u32;
-    while Reachˉiteration < Blocks {
-        Cursor = 0u32;
-        while Cursor < Length {
-            let Reachˉblock: Compilerˉnativeˉx64ˉblockˉanalysis =
-                Compilerˉnativeˉx64ˉanalyzeˉblock(
-                    Input,
-                    Section,
-                    Function,
-                    Leaders,
-                    Instructionsˉmap,
-                    Cursor,
-                    Isˉmain,
-                    Callableˉfunctions,
-                    Callˉdirectory,
-                    Data,
-                    Types,
-                    Capabilityˉtable
+    var Reachableˉoffsets: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Reachableˉcursor: u32 = 0u32;
+    while Reachableˉcursor < Bytesˉlength(Reachableˉoffsets) {
+        let Reachˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Reachableˉoffsets,
+            Reachableˉcursor
+        );
+        let Reachˉblock: Compilerˉnativeˉx64ˉblockˉanalysis =
+            Compilerˉnativeˉx64ˉanalyzeˉblock(
+                Input,
+                Section,
+                Function,
+                Leaders,
+                Instructionsˉmap,
+                Reachˉoffset,
+                Isˉmain,
+                Callableˉfunctions,
+                Callˉdirectory,
+                Data,
+                Types,
+                Capabilityˉtable
+            );
+        if !Reachˉblock.Valid {
+            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        }
+        if Reachˉblock.Terminator == 0u8 ||
+            Reachˉblock.Terminator == 2u8 {
+            if !Compilerˉnativeˉx64ˉu32ˉlistˉcontains(
+                Reachableˉoffsets,
+                Reachˉblock.Next
+            ) {
+                Reachableˉoffsets = Bytesˉconcat(
+                    Reachableˉoffsets,
+                    Bytesˉfromˉu32ˉlittle(Reachˉblock.Next)
                 );
-            if Bytesˉreadˉu8(Reachable, Cursor) == 1u8 {
-                if Reachˉblock.Terminator == 0u8 {
-                    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                        Reachable,
-                        Reachˉblock.Next,
-                        1u8
-                    );
-                }
-                if Reachˉblock.Terminator == 1u8 {
-                    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                        Reachable,
-                        Reachˉblock.Target,
-                        1u8
-                    );
-                }
-                if Reachˉblock.Terminator == 2u8 {
-                    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                        Reachable,
-                        Reachˉblock.Next,
-                        1u8
-                    );
-                    Reachable = Compilerˉnativeˉx64ˉreplaceˉbyte(
-                        Reachable,
-                        Reachˉblock.Target,
-                        1u8
-                    );
-                }
             }
-            Cursor = Reachˉblock.Next;
         }
-        Reachˉiteration = Reachˉiteration + 1u32;
+        if Reachˉblock.Terminator == 1u8 ||
+            Reachˉblock.Terminator == 2u8 {
+            if !Compilerˉnativeˉx64ˉu32ˉlistˉcontains(
+                Reachableˉoffsets,
+                Reachˉblock.Target
+            ) {
+                Reachableˉoffsets = Bytesˉconcat(
+                    Reachableˉoffsets,
+                    Bytesˉfromˉu32ˉlittle(Reachˉblock.Target)
+                );
+            }
+        }
+        if Bytesˉlength(Reachableˉoffsets) / 4u32 > Blocks {
+            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        }
+        Reachableˉcursor = Reachableˉcursor + 4u32;
     }
-    Cursor = 0u32;
-    while Cursor < Length {
-        if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 {
-            if Bytesˉreadˉu8(Reachable, Cursor) != 1u8 {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
-            }
-        }
-        Cursor = Cursor + 1u32;
+    if Bytesˉlength(Reachableˉoffsets) != Blocks * 4u32 {
+        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
     }
     if Maximumˉstack != Function.Maximumˉstack {
         return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
@@ -4503,6 +4586,219 @@ fn Compilerˉnativeˉx64ˉemitˉfunctionˉartifacts(
     );
 }
 
+fn Compilerˉnativeˉx64ˉfunctionˉartifactsˉareˉvalid(
+    Artifacts: bytes
+) -> bool {
+    let Artifactˉbytes: u32 = Bytesˉlength(Artifacts);
+    if Artifactˉbytes < 16u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Artifacts, 0u32) != 1095128663u32 ||
+        Bytesˉreadˉu32ˉlittle(Artifacts, 4u32) != 1u32 {
+        return false;
+    }
+    let Relocationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Artifacts, 8u32);
+    let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Artifacts, 12u32);
+    let Payloadˉbytes: u32 = Artifactˉbytes - 16u32;
+    if Relocationˉbytes > 524288u32 || Relocationˉbytes % 8u32 != 0u32 {
+        return false;
+    }
+    if Codeˉbytes > 33554432u32 { return false; }
+    if Relocationˉbytes > Payloadˉbytes {
+        return false;
+    }
+    return Codeˉbytes == Payloadˉbytes - Relocationˉbytes;
+}
+
+fn Compilerˉnativeˉx64ˉcombineˉfunctionˉartifacts(
+    Input: bytes,
+    Left: bytes,
+    Right: bytes
+) -> bytes {
+    if !Compilerˉnativeˉx64ˉfunctionˉartifactsˉareˉvalid(Left) ||
+        !Compilerˉnativeˉx64ˉfunctionˉartifactsˉareˉvalid(Right) {
+        return Compilerˉnativeˉx64ˉempty(Input);
+    }
+    let Leftˉrelocationˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Left, 8u32);
+    let Rightˉrelocationˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Right, 8u32);
+    if Leftˉrelocationˉbytes > 524288u32 ||
+        Rightˉrelocationˉbytes > 524288u32 - Leftˉrelocationˉbytes {
+        return Compilerˉnativeˉx64ˉempty(Input);
+    }
+    let Leftˉcodeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Left, 12u32);
+    let Rightˉcodeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Right, 12u32);
+    if Leftˉcodeˉbytes > 33554432u32 ||
+        Rightˉcodeˉbytes > 33554432u32 - Leftˉcodeˉbytes {
+        return Compilerˉnativeˉx64ˉempty(Input);
+    }
+    let Relocationˉbytes: u32 =
+        Leftˉrelocationˉbytes + Rightˉrelocationˉbytes;
+    let Codeˉbytes: u32 = Leftˉcodeˉbytes + Rightˉcodeˉbytes;
+    let Relocations: bytes = Bytesˉconcat(
+        Bytesˉslice(Left, 16u32, Leftˉrelocationˉbytes),
+        Bytesˉslice(Right, 16u32, Rightˉrelocationˉbytes)
+    );
+    let Code: bytes = Bytesˉconcat(
+        Bytesˉslice(
+            Left,
+            16u32 + Leftˉrelocationˉbytes,
+            Leftˉcodeˉbytes
+        ),
+        Bytesˉslice(
+            Right,
+            16u32 + Rightˉrelocationˉbytes,
+            Rightˉcodeˉbytes
+        )
+    );
+    let Header: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(1095128663u32),
+            Bytesˉfromˉu32ˉlittle(1u32)
+        ),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Relocationˉbytes),
+            Bytesˉfromˉu32ˉlittle(Codeˉbytes)
+        )
+    );
+    return Bytesˉconcat(Bytesˉconcat(Header, Relocations), Code);
+}
+
+fn Compilerˉnativeˉx64ˉfunctionˉcursorˉafter(
+    Input: bytes,
+    Functionˉcursor: u32,
+    Functionsˉlimit: u32,
+    Firstˉfunction: u32,
+    Count: u32,
+    Mainˉfunction: u32,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes
+) -> u32 {
+    var Cursor: u32 = Functionˉcursor;
+    var Offset: u32 = 0u32;
+    while Offset < Count {
+        let Function: Compilerˉnativeˉx64ˉfunction =
+            Compilerˉnativeˉx64ˉreadˉfunctionˉat(
+                Input,
+                Cursor,
+                Functionsˉlimit,
+                Firstˉfunction + Offset == Mainˉfunction,
+                Types
+            );
+        if !Function.Valid { return 4294967295u32; }
+        Cursor = Function.Nextˉoffset;
+        Offset = Offset + 1u32;
+    }
+    return Cursor;
+}
+
+fn Compilerˉnativeˉx64ˉemitˉfunctionˉrange(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Functionˉcursor: u32,
+    Functionsˉlimit: u32,
+    Firstˉfunction: u32,
+    Count: u32,
+    Mainˉfunction: u32,
+    Functionˉcount: u32,
+    Directory: bytes,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
+) -> bytes {
+    if Count == 0u32 { return Compilerˉnativeˉx64ˉempty(Input); }
+    if Count == 1u32 {
+        let Isˉmain: bool = Firstˉfunction == Mainˉfunction;
+        let Function: Compilerˉnativeˉx64ˉfunction =
+            Compilerˉnativeˉx64ˉreadˉfunctionˉat(
+                Input,
+                Functionˉcursor,
+                Functionsˉlimit,
+                Isˉmain,
+                Types
+            );
+        if !Function.Valid { return Compilerˉnativeˉx64ˉempty(Input); }
+        let Codeˉsection: Compilerˉnativeˉx64ˉsection =
+            Compilerˉnativeˉx64ˉsection(
+                true,
+                Codeˉoffset + Function.Codeˉoffset,
+                Function.Codeˉlength,
+                0u32
+            );
+        let Artifacts: bytes = Compilerˉnativeˉx64ˉemitˉfunctionˉartifacts(
+            Input,
+            Codeˉsection,
+            Function,
+            Isˉmain,
+            Functionˉcount,
+            Firstˉfunction,
+            Directory,
+            Data,
+            Types,
+            Capabilityˉtable
+        );
+        if !Compilerˉnativeˉx64ˉfunctionˉartifactsˉareˉvalid(Artifacts) {
+            return Compilerˉnativeˉx64ˉempty(Input);
+        }
+        if Bytesˉreadˉu32ˉlittle(Artifacts, 12u32) !=
+            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(
+                Directory,
+                Firstˉfunction
+            ) {
+            return Compilerˉnativeˉx64ˉempty(Input);
+        }
+        return Artifacts;
+    }
+
+    let Leftˉcount: u32 = Count / 2u32;
+    let Middleˉcursor: u32 = Compilerˉnativeˉx64ˉfunctionˉcursorˉafter(
+        Input,
+        Functionˉcursor,
+        Functionsˉlimit,
+        Firstˉfunction,
+        Leftˉcount,
+        Mainˉfunction,
+        Types
+    );
+    if Middleˉcursor == 4294967295u32 {
+        return Compilerˉnativeˉx64ˉempty(Input);
+    }
+    let Left: bytes = Compilerˉnativeˉx64ˉemitˉfunctionˉrange(
+        Input,
+        Codeˉoffset,
+        Functionˉcursor,
+        Functionsˉlimit,
+        Firstˉfunction,
+        Leftˉcount,
+        Mainˉfunction,
+        Functionˉcount,
+        Directory,
+        Data,
+        Types,
+        Capabilityˉtable
+    );
+    if Bytesˉlength(Left) == 0u32 {
+        return Compilerˉnativeˉx64ˉempty(Input);
+    }
+    let Right: bytes = Compilerˉnativeˉx64ˉemitˉfunctionˉrange(
+        Input,
+        Codeˉoffset,
+        Middleˉcursor,
+        Functionsˉlimit,
+        Firstˉfunction + Leftˉcount,
+        Count - Leftˉcount,
+        Mainˉfunction,
+        Functionˉcount,
+        Directory,
+        Data,
+        Types,
+        Capabilityˉtable
+    );
+    return Compilerˉnativeˉx64ˉcombineˉfunctionˉartifacts(
+        Input,
+        Left,
+        Right
+    );
+}
+
 export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
     -> Compilerˉnativeˉx64ˉsummary {
     let Structure: Compilerˉnativeˉx64ˉstructure =
@@ -4792,104 +5088,55 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
         );
     }
 
-    var Code: bytes = Compilerˉnativeˉx64ˉempty(Input);
-    var Relocations: bytes = Compilerˉnativeˉx64ˉempty(Input);
-    Functionˉcursor = Functions.Payloadˉoffset + 4u32;
-    Functionˉindex = 0u32;
-    while Functionˉindex < Functionˉcount {
-        let Isˉemitˉmain: bool = Functionˉindex == Mainˉfunction;
-        let Emitˉfunction: Compilerˉnativeˉx64ˉfunction =
-            Compilerˉnativeˉx64ˉreadˉfunctionˉat(
-                Input,
-                Functionˉcursor,
-                Functionsˉlimit,
-                Isˉemitˉmain,
-                Types
-            );
-        let Emitˉcodeˉsection: Compilerˉnativeˉx64ˉsection =
-            Compilerˉnativeˉx64ˉsection(
-                true,
-                Structure.Codeˉoffset + Emitˉfunction.Codeˉoffset,
-                Emitˉfunction.Codeˉlength,
-                0u32
-            );
-        let Functionˉartifacts: bytes =
-            Compilerˉnativeˉx64ˉemitˉfunctionˉartifacts(
-                Input,
-                Emitˉcodeˉsection,
-                Emitˉfunction,
-                Isˉemitˉmain,
-                Functionˉcount,
-                Functionˉindex,
-                Directory,
-                Data,
-                Types,
-                Capabilityˉtable
-            );
-        let Artifactˉbytes: u32 = Bytesˉlength(Functionˉartifacts);
-        if Artifactˉbytes == 0u32 {
-            return Compilerˉnativeˉx64ˉfailure(
-                Input,
-                Compilerˉnativeˉx64ˉstatus.Unsupportedˉcode
-            );
-        }
-        if Artifactˉbytes < 16u32 ||
-            Bytesˉreadˉu32ˉlittle(Functionˉartifacts, 0u32) !=
-                1095128663u32 ||
-            Bytesˉreadˉu32ˉlittle(Functionˉartifacts, 4u32) != 1u32 {
-            return Compilerˉnativeˉx64ˉfailure(
-                Input,
-                Compilerˉnativeˉx64ˉstatus.Outputˉlimit
-            );
-        }
-        let Relocationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(
-            Functionˉartifacts,
-            8u32
+    let Functionˉartifacts: bytes =
+        Compilerˉnativeˉx64ˉemitˉfunctionˉrange(
+            Input,
+            Structure.Codeˉoffset,
+            Functions.Payloadˉoffset + 4u32,
+            Functionsˉlimit,
+            0u32,
+            Functionˉcount,
+            Mainˉfunction,
+            Functionˉcount,
+            Directory,
+            Data,
+            Types,
+            Capabilityˉtable
         );
-        let Functionˉcodeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(
-            Functionˉartifacts,
-            12u32
+    if !Compilerˉnativeˉx64ˉfunctionˉartifactsˉareˉvalid(
+        Functionˉartifacts
+    ) {
+        return Compilerˉnativeˉx64ˉfailure(
+            Input,
+            Compilerˉnativeˉx64ˉstatus.Unsupportedˉcode
         );
-        let Payloadˉbytes: u32 = Artifactˉbytes - 16u32;
-        if Relocationˉbytes > Payloadˉbytes ||
-            Functionˉcodeˉbytes != Payloadˉbytes - Relocationˉbytes ||
-            Functionˉcodeˉbytes !=
-            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(
-                Directory,
-                Functionˉindex
-            ) {
-            return Compilerˉnativeˉx64ˉfailure(
-                Input,
-                Compilerˉnativeˉx64ˉstatus.Outputˉlimit
-            );
-        }
-        Relocations = Bytesˉconcat(
-            Relocations,
-            Bytesˉslice(Functionˉartifacts, 16u32, Relocationˉbytes)
-        );
-        let Functionˉcode: bytes = Bytesˉslice(
-            Functionˉartifacts,
-            16u32 + Relocationˉbytes,
-            Functionˉcodeˉbytes
-        );
-        Code = Bytesˉconcat(Code, Functionˉcode);
-        Functionˉcursor = Emitˉfunction.Nextˉoffset;
-        Functionˉindex = Functionˉindex + 1u32;
     }
+    let Relocationˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Functionˉartifacts, 8u32);
+    let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Functionˉartifacts, 12u32);
+    let Relocations: bytes =
+        Bytesˉslice(Functionˉartifacts, 16u32, Relocationˉbytes);
+    let Code: bytes = Bytesˉslice(
+        Functionˉartifacts,
+        16u32 + Relocationˉbytes,
+        Codeˉbytes
+    );
     if Bytesˉlength(Code) != Expectedˉmachineˉcodeˉbytes {
         return Compilerˉnativeˉx64ˉfailure(
             Input,
             Compilerˉnativeˉx64ˉstatus.Outputˉlimit
         );
     }
+    var Padding: bytes = Compilerˉnativeˉx64ˉempty(Input);
     if Data.Count > 0u32 {
-        while Bytesˉlength(Code) % 16u32 != 0u32 {
-            Code = Bytesˉconcat(Code, Bytesˉfromˉu8(144u8));
+        while (Bytesˉlength(Code) + Bytesˉlength(Padding)) % 16u32 != 0u32 {
+            Padding = Bytesˉconcat(Padding, Bytesˉfromˉu8(144u8));
         }
     }
-    let Textˉbytes: u32 = Bytesˉlength(Code);
+    let Textˉbytes: u32 = Bytesˉlength(Code) + Bytesˉlength(Padding);
     let Object: bytes = Objectˉwriter.Compilerˉnativeˉx64ˉobjectˉemit(
         Code,
+        Padding,
         Directory,
         Functionˉcount,
         Mainˉfunction,
