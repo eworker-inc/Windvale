@@ -203,15 +203,22 @@ fn Planˉfunction(
         );
     let Locals: u32 = Parameters + Declaredˉlocals;
     if Locals > 4096u32 { return Invalidˉplan(Input, 0u32, 4u32); }
+    let Localˉtypeˉoffsets: bytes =
+        Typed.Compilerˉwebassemblyˉtypedˉlocalˉtypeˉoffsets(
+            Input,
+            Directory,
+            Function
+        );
+    if Bytesˉlength(Localˉtypeˉoffsets) != Locals * 4u32 {
+        return Invalidˉplan(Input, 0u32, 4u32);
+    }
     var Localˉoffsets: bytes = Empty(Input);
     var Persistentˉfields: u32 = 0u32;
     var Local: u32 = 0u32;
     while Local < Locals {
-        let Declaredˉshape: u32 = Localˉshapeˉoffset(
-            Input,
-            Directory,
-            Function,
-            Local
+        let Declaredˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+            Localˉtypeˉoffsets,
+            Local * 4u32
         );
         if Shapeˉkind(Input, Declaredˉshape) == 7u32 {
             let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
@@ -399,6 +406,7 @@ fn Planˉfunction(
             Codeˉlength,
             Directory,
             Typeˉdirectory,
+            Localˉtypeˉoffsets,
             Function,
             Cursor,
             State

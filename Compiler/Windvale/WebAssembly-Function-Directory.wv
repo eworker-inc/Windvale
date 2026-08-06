@@ -18,6 +18,21 @@ export record Compilerˉwebassemblyˉcallˉinventoryˉsummary {
     Callˉcount: u32;
 }
 
+data Instructionˉwidths: bytes = [
+    0, 5, 2, 5, 5, 5, 5, 5, 2, 5, 5, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+    5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 9, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+    9, 9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+];
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -371,25 +386,11 @@ export fn Compilerˉwebassemblyˉinstructionˉwidth(
 ) -> u32 {
     if Cursor >= Length { return 0u32; }
     let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + Cursor));
-    var Width: u32 = 0u32;
-    if Opcode == 1u32 { Width = 5u32; }
-    if Opcode == 2u32 { Width = 2u32; }
-    if Opcode >= 3u32 && Opcode <= 7u32 { Width = 5u32; }
-    if Opcode == 8u32 { Width = 2u32; }
-    if Opcode == 9u32 || Opcode == 10u32 { Width = 5u32; }
-    if Opcode >= 11u32 && Opcode <= 22u32 { Width = 1u32; }
-    if Opcode >= 32u32 && Opcode <= 40u32 { Width = 1u32; }
-    if Opcode == 48u32 || Opcode == 49u32 { Width = 5u32; }
-    if Opcode == 64u32 || Opcode == 65u32 { Width = 5u32; }
-    if Opcode == 80u32 || Opcode == 81u32 { Width = 1u32; }
-    if Opcode >= 96u32 && Opcode <= 103u32 { Width = 1u32; }
-    if Opcode == 104u32 || Opcode == 105u32 { Width = 5u32; }
-    if Opcode == 106u32 { Width = 9u32; }
-    if Opcode >= 107u32 && Opcode <= 125u32 { Width = 1u32; }
-    if Opcode == 128u32 || Opcode == 129u32 { Width = 9u32; }
-    if Opcode >= 130u32 && Opcode <= 150u32 { Width = 1u32; }
-    if Opcode >= 151u32 && Opcode <= 154u32 { Width = 9u32; }
-    if Opcode >= 155u32 && Opcode <= 191u32 { Width = 1u32; }
+    if Opcode >= Bytesˉlength(Instructionˉwidths) { return 0u32; }
+    let Width: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+        Instructionˉwidths,
+        Opcode
+    ));
     if Width == 0u32 { return 0u32; }
     if !Rangeˉisˉvalid(Length, Cursor, Width) { return 0u32; }
     return Width;

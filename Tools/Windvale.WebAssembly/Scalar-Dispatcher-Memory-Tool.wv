@@ -5,10 +5,10 @@ import Compilerˉwebassemblyˉtypeˉdirectory as Types;
 import Compilerˉwebassemblyˉtypedˉcalls as Typed;
 import Compilerˉwebassemblyˉexecutableˉgraph as Executable;
 import Compilerˉwebassemblyˉcontrolˉflow as Control;
-import Compilerˉwebassemblyˉscalarˉdispatcher as Dispatcher;
 import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
 import Compilerˉwebassemblyˉenumˉoperations as Enums;
 import Compilerˉwebassemblyˉrecordˉstorage as Records;
+import Compilerˉwebassemblyˉscalarˉdispatcherˉphaseˉadapter as Phases;
 
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
@@ -19,9 +19,55 @@ fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
     return Length <= Total - Offset;
 }
 
-export fn Main(Input: bytes) -> bytes {
+fn Invalidˉartifact(
+    Input: bytes
+) -> Phases.Compilerˉwebassemblyˉsegmentedˉartifact {
+    let Emptyˉsegment: bytes = Empty(Input);
+    return Phases.Compilerˉwebassemblyˉsegmentedˉartifact(
+        false,
+        0u32,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment,
+        Emptyˉsegment
+    );
+}
+
+fn Compile(
+    Input: bytes
+) -> Phases.Compilerˉwebassemblyˉsegmentedˉartifact {
     let Total: u32 = Bytesˉlength(Input);
-    if Total < 12u32 { return Empty(Input); }
+    if Total < 12u32 { return Invalidˉartifact(Input); }
     var Envelope: u32 = 12u32;
     var Sectionˉkind: u32 = 1u32;
     var Functionsˉoffset: u32 = 0u32;
@@ -33,9 +79,11 @@ export fn Main(Input: bytes) -> bytes {
     var Dataˉoffset: u32 = 0u32;
     var Dataˉlength: u32 = 0u32;
     while Sectionˉkind <= 7u32 {
-        if !Rangeˉisˉvalid(Total, Envelope, 8u32) { return Empty(Input); }
+        if !Rangeˉisˉvalid(Total, Envelope, 8u32) {
+            return Invalidˉartifact(Input);
+        }
         if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Envelope)) != Sectionˉkind {
-            return Empty(Input);
+            return Invalidˉartifact(Input);
         }
         let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(
             Input,
@@ -43,7 +91,7 @@ export fn Main(Input: bytes) -> bytes {
         );
         let Payloadˉoffset: u32 = Envelope + 8u32;
         if !Rangeˉisˉvalid(Total, Payloadˉoffset, Payloadˉlength) {
-            return Empty(Input);
+            return Invalidˉartifact(Input);
         }
         if Sectionˉkind == 4u32 {
             Functionsˉoffset = Payloadˉoffset;
@@ -64,20 +112,26 @@ export fn Main(Input: bytes) -> bytes {
         Envelope = Payloadˉoffset + Payloadˉlength;
         Sectionˉkind = Sectionˉkind + 1u32;
     }
-    if Envelope != Total { return Empty(Input); }
+    if Envelope != Total { return Invalidˉartifact(Input); }
 
-    let Staticˉdataˉsummary:
-        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
-        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉbuild(
+    let Staticˉdataˉpacked: bytes =
+        Phases.Compilerˉwebassemblyˉpackedˉstaticˉdataˉbuild(
             Input,
             Dataˉoffset,
             Dataˉlength
         );
-    if !Staticˉdataˉsummary.Valid { return Empty(Input); }
+    if Bytesˉlength(Staticˉdataˉpacked) == 0u32 {
+        return Invalidˉartifact(Input);
+    }
+    let Staticˉdataˉsummary:
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
+        Phases.Compilerˉwebassemblyˉpackedˉstaticˉdataˉread(
+            Staticˉdataˉpacked
+        );
+    if !Staticˉdataˉsummary.Valid { return Invalidˉartifact(Input); }
 
-    let Functionˉdirectory:
-        Directory.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary =
-        Directory.Compilerˉwebassemblyˉfunctionˉdirectoryˉbuild(
+    let Functionˉdirectoryˉpacked: bytes =
+        Phases.Compilerˉwebassemblyˉpackedˉfunctionˉdirectoryˉbuild(
             Input,
             Functionsˉoffset,
             Functionsˉlength,
@@ -85,21 +139,39 @@ export fn Main(Input: bytes) -> bytes {
             Typesˉoffset,
             Typesˉlength
         );
-    if !Functionˉdirectory.Valid { return Empty(Input); }
-    let Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary =
-        Types.Compilerˉwebassemblyˉtypeˉdirectoryˉbuild(
+    if Bytesˉlength(Functionˉdirectoryˉpacked) == 0u32 {
+        return Invalidˉartifact(Input);
+    }
+    let Functionˉdirectory:
+        Directory.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary =
+        Phases.Compilerˉwebassemblyˉpackedˉfunctionˉdirectoryˉread(
+            Functionˉdirectoryˉpacked
+        );
+    if !Functionˉdirectory.Valid { return Invalidˉartifact(Input); }
+    let Typeˉdirectoryˉpacked: bytes =
+        Phases.Compilerˉwebassemblyˉpackedˉtypeˉdirectoryˉbuild(
             Input,
             Typesˉoffset,
             Typesˉlength
         );
-    if !Typeˉdirectory.Valid { return Empty(Input); }
-    let Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary =
-        Enums.Compilerˉwebassemblyˉenumˉbuild(
+    if Bytesˉlength(Typeˉdirectoryˉpacked) == 0u32 {
+        return Invalidˉartifact(Input);
+    }
+    let Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary =
+        Phases.Compilerˉwebassemblyˉpackedˉtypeˉdirectoryˉread(
+            Typeˉdirectoryˉpacked
+        );
+    if !Typeˉdirectory.Valid { return Invalidˉartifact(Input); }
+    let Enumˉpacked: bytes =
+        Phases.Compilerˉwebassemblyˉpackedˉenumˉbuild(
             Input,
             Typeˉdirectory,
             Staticˉdataˉsummary
         );
-    if !Enumˉsummary.Valid { return Empty(Input); }
+    if Bytesˉlength(Enumˉpacked) == 0u32 { return Invalidˉartifact(Input); }
+    let Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary =
+        Phases.Compilerˉwebassemblyˉpackedˉenumˉread(Enumˉpacked);
+    if !Enumˉsummary.Valid { return Invalidˉartifact(Input); }
     let Typedˉcalls: Typed.Compilerˉwebassemblyˉtypedˉcallˉsummary =
         Typed.Compilerˉwebassemblyˉtypedˉcallsˉvalidate(
             Input,
@@ -108,54 +180,107 @@ export fn Main(Input: bytes) -> bytes {
             Functionˉdirectory,
             Typeˉdirectory
         );
-    if !Typedˉcalls.Valid { return Empty(Input); }
-    let Recordˉstorage:
-        Records.Compilerˉwebassemblyˉrecordˉstorageˉsummary =
-        Records.Compilerˉwebassemblyˉrecordˉstorageˉbuild(
+    if !Typedˉcalls.Valid { return Invalidˉartifact(Input); }
+    let Recordˉstorageˉpacked: bytes =
+        Phases.Compilerˉwebassemblyˉpackedˉrecordˉstorageˉbuild(
             Input,
             Codeˉoffset,
             Codeˉlength,
             Functionˉdirectory,
             Typeˉdirectory
         );
-    if !Recordˉstorage.Valid { return Empty(Input); }
+    if Bytesˉlength(Recordˉstorageˉpacked) == 0u32 {
+        return Invalidˉartifact(Input);
+    }
+    let Recordˉstorage:
+        Records.Compilerˉwebassemblyˉrecordˉstorageˉsummary =
+        Phases.Compilerˉwebassemblyˉpackedˉrecordˉstorageˉread(
+            Recordˉstorageˉpacked
+        );
+    if !Recordˉstorage.Valid { return Invalidˉartifact(Input); }
     let Entry: Directory.Compilerˉwebassemblyˉfunctionˉlookupˉsummary =
         Directory.Compilerˉwebassemblyˉfunctionˉfind(
             Input,
             Functionˉdirectory,
             "Main"
         );
-    if !Entry.Found { return Empty(Input); }
-    let Graph: Executable.Compilerˉwebassemblyˉexecutableˉgraphˉsummary =
-        Executable.Compilerˉwebassemblyˉexecutableˉgraphˉbuild(
+    if !Entry.Found { return Invalidˉartifact(Input); }
+    let Graphˉpacked: bytes =
+        Phases.Compilerˉwebassemblyˉpackedˉexecutableˉgraphˉbuild(
             Input,
             Codeˉoffset,
             Codeˉlength,
             Functionˉdirectory,
             Entry.Index
         );
-    if !Graph.Valid { return Empty(Input); }
-    let Controlˉflow: Control.Compilerˉwebassemblyˉcontrolˉflowˉsummary =
-        Control.Compilerˉwebassemblyˉcontrolˉflowˉbuild(
+    if Bytesˉlength(Graphˉpacked) == 0u32 {
+        return Invalidˉartifact(Input);
+    }
+    let Graph: Executable.Compilerˉwebassemblyˉexecutableˉgraphˉsummary =
+        Phases.Compilerˉwebassemblyˉpackedˉexecutableˉgraphˉread(
+            Graphˉpacked
+        );
+    if !Graph.Valid { return Invalidˉartifact(Input); }
+    let Controlˉflowˉpacked: bytes =
+        Phases.Compilerˉwebassemblyˉpackedˉcontrolˉflowˉbuild(
             Input,
             Codeˉoffset,
             Codeˉlength,
             Functionˉdirectory,
             Graph
         );
-    if !Controlˉflow.Valid { return Empty(Input); }
-    let Lowered: Dispatcher.Compilerˉwebassemblyˉscalarˉdispatcherˉsummary =
-        Dispatcher.Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
-            Input,
-            Codeˉoffset,
-            Codeˉlength,
-            Functionˉdirectory,
-            Typeˉdirectory,
-            Graph,
-            Controlˉflow,
-            Enumˉsummary,
-            Recordˉstorage
+    if Bytesˉlength(Controlˉflowˉpacked) == 0u32 {
+        return Invalidˉartifact(Input);
+    }
+    let Controlˉflow: Control.Compilerˉwebassemblyˉcontrolˉflowˉsummary =
+        Phases.Compilerˉwebassemblyˉpackedˉcontrolˉflowˉread(
+            Controlˉflowˉpacked
         );
-    if !Lowered.Valid { return Empty(Input); }
-    return Lowered.Webassembly;
+    if !Controlˉflow.Valid { return Invalidˉartifact(Input); }
+    return Phases.Compilerˉwebassemblyˉpackedˉdispatcherˉemitˉsegmentedˉartifact(
+        Input,
+        Codeˉoffset,
+        Codeˉlength,
+        Functionˉdirectory,
+        Typeˉdirectory,
+        Graph,
+        Controlˉflow,
+        Enumˉsummary,
+        Recordˉstorage
+    );
+}
+
+fn Join(
+    Input: bytes,
+    Artifact: Phases.Compilerˉwebassemblyˉsegmentedˉartifact
+) -> bytes {
+    if !Artifact.Valid {
+        return Empty(Input);
+    }
+    var Result: bytes = Empty(Input);
+    var Segment: u32 = 0u32;
+    while Segment < 34u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Phases.Compilerˉwebassemblyˉsegmentedˉartifactˉread(
+                Artifact,
+                Segment
+            )
+        );
+        Segment = Segment + 1u32;
+    }
+    if Bytesˉlength(Result) != Artifact.Totalˉlength {
+        return Empty(Input);
+    }
+    return Result;
+}
+
+export fn Main(Input: bytes) -> bytes {
+    return Join(Input, Compile(Input));
+}
+
+export fn Segmentedˉartifact(
+    Input: bytes
+) -> Phases.Compilerˉwebassemblyˉsegmentedˉartifact {
+    return Compile(Input);
 }

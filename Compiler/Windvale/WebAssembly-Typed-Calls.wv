@@ -105,27 +105,69 @@ fn Shapeˉnominal(Input: bytes, Offset: u32) -> u32 {
     return 0u32;
 }
 
+fn Shapeˉwidth(Input: bytes, Offset: u32) -> u32 {
+    let Kind: u32 = Shapeˉkind(Input, Offset);
+    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 { return 5u32; }
+    if Kind == 12u32 || Kind == 13u32 {
+        let Elementˉkind: u32 = Shapeˉkind(Input, Offset + 1u32);
+        if Elementˉkind == 7u32 || Elementˉkind == 8u32 ||
+            Elementˉkind == 11u32 {
+            return 10u32;
+        }
+        return 6u32;
+    }
+    return 1u32;
+}
+
 fn Shapeˉoffsetˉat(Input: bytes, Offset: u32, Index: u32) -> u32 {
     var Cursor: u32 = Offset;
     var Current: u32 = 0u32;
     while Current < Index {
-        let Kind: u32 = Shapeˉkind(Input, Cursor);
-        var Width: u32 = 1u32;
-        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 {
-            Width = 5u32;
-        }
-        if Kind == 12u32 || Kind == 13u32 {
-            Width = 6u32;
-            let Elementˉkind: u32 = Shapeˉkind(Input, Cursor + 1u32);
-            if Elementˉkind == 7u32 || Elementˉkind == 8u32 ||
-                Elementˉkind == 11u32 {
-                Width = 10u32;
-            }
-        }
-        Cursor = Cursor + Width;
+        Cursor = Cursor + Shapeˉwidth(Input, Cursor);
         Current = Current + 1u32;
     }
     return Cursor;
+}
+
+export fn Compilerˉwebassemblyˉtypedˉlocalˉtypeˉoffsets(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32
+) -> bytes {
+    var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if !Directory.Valid || Function >= Directory.Count { return Result; }
+    let Parameterˉcount: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+            Directory,
+            Function
+        );
+    var Cursor: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
+            Directory,
+            Function
+        );
+    var Index: u32 = 0u32;
+    while Index < Parameterˉcount {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Cursor));
+        Cursor = Cursor + Shapeˉwidth(Input, Cursor);
+        Index = Index + 1u32;
+    }
+    let Localˉcount: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉcount(
+            Directory,
+            Function
+        );
+    Cursor = Functions.Compilerˉwebassemblyˉfunctionˉlocalˉtypesˉoffset(
+        Directory,
+        Function
+    );
+    Index = 0u32;
+    while Index < Localˉcount {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Cursor));
+        Cursor = Cursor + Shapeˉwidth(Input, Cursor);
+        Index = Index + 1u32;
+    }
+    return Result;
 }
 
 fn Stackˉword(Stack: Typedˉstack, Index: u32) -> u32 {
@@ -587,10 +629,7 @@ fn Applyˉlocalˉinstruction(
     Input: bytes,
     Opcode: u32,
     Operandˉoffset: u32,
-    Parameterˉcount: u32,
-    Parameterˉtypes: u32,
-    Localˉcount: u32,
-    Localˉtypes: u32,
+    Localˉtypeˉoffsets: bytes,
     Stack: Typedˉstack,
     Limit: u32
 ) -> Instructionˉresult {
@@ -598,16 +637,15 @@ fn Applyˉlocalˉinstruction(
         return Unhandledˉinstruction(Stack);
     }
     let Localˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Operandˉoffset);
-    if Localˉindex >= Parameterˉcount + Localˉcount {
+    let Offsetˉbytes: u32 = Bytesˉlength(Localˉtypeˉoffsets);
+    if Offsetˉbytes / 4u32 * 4u32 != Offsetˉbytes ||
+        Localˉindex >= Offsetˉbytes / 4u32 {
         return Invalidˉinstruction(Stack);
     }
-    var Shapes: u32 = Parameterˉtypes;
-    var Shapeˉindex: u32 = Localˉindex;
-    if Localˉindex >= Parameterˉcount {
-        Shapes = Localˉtypes;
-        Shapeˉindex = Localˉindex - Parameterˉcount;
-    }
-    let Localˉshape: u32 = Shapeˉoffsetˉat(Input, Shapes, Shapeˉindex);
+    let Localˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+        Localˉtypeˉoffsets,
+        Localˉindex * 4u32
+    );
     var Result: Typedˉstack = Stack;
     if Opcode == 4u32 {
         Result = Stackˉpushˉshape(Input, Result, Localˉshape, Limit);
@@ -804,20 +842,20 @@ fn Applyˉcontrolˉinstruction(
     return Unhandledˉinstruction(Stack);
 }
 
-export fn Compilerˉwebassemblyˉtypedˉinstructionˉapply(
+fn Applyˉinstruction(
     Input: bytes,
     Codeˉoffset: u32,
     Codeˉlength: u32,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Localˉtypeˉoffsets: bytes,
     Function: u32,
     Cursor: u32,
-    State: Compilerˉwebassemblyˉtypedˉinstructionˉstate
-) -> Compilerˉwebassemblyˉtypedˉinstructionˉstate {
-    let Stack: Typedˉstack = Privateˉstack(State);
+    Stack: Typedˉstack
+) -> Typedˉstack {
     if !Stack.Valid || !Directory.Valid || !Typeˉdirectory.Valid ||
         Function >= Directory.Count || Cursor >= Codeˉlength {
-        return Publicˉstate(Invalidˉstack(Stack));
+        return Invalidˉstack(Stack);
     }
     let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
         Input,
@@ -826,34 +864,14 @@ export fn Compilerˉwebassemblyˉtypedˉinstructionˉapply(
         Cursor
     );
     if Width == 0u32 || Width > Codeˉlength - Cursor {
-        return Publicˉstate(Invalidˉstack(Stack));
+        return Invalidˉstack(Stack);
     }
     let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
         Input,
         Codeˉoffset + Cursor
     ));
-    let Parameterˉcount: u32 =
-        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
-            Directory,
-            Function
-        );
-    let Parameterˉtypes: u32 =
-        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
-            Directory,
-            Function
-        );
     let Resultˉtype: u32 =
         Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
-            Directory,
-            Function
-        );
-    let Localˉcount: u32 =
-        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉcount(
-            Directory,
-            Function
-        );
-    let Localˉtypes: u32 =
-        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉtypesˉoffset(
             Directory,
             Function
         );
@@ -869,10 +887,7 @@ export fn Compilerˉwebassemblyˉtypedˉinstructionˉapply(
             Input,
             Opcode,
             Operand,
-            Parameterˉcount,
-            Parameterˉtypes,
-            Localˉcount,
-            Localˉtypes,
+            Localˉtypeˉoffsets,
             Stack,
             Declaredˉmaximum
         );
@@ -904,13 +919,13 @@ export fn Compilerˉwebassemblyˉtypedˉinstructionˉapply(
         );
     }
     if Applied.Handled {
-        return Publicˉstate(Instructionˉstack(Applied));
+        return Instructionˉstack(Applied);
     }
     let Effect: Staticˉeffect = Staticˉeffectˉfor(Opcode);
     if !Effect.Handled {
-        return Publicˉstate(Invalidˉstack(Stack));
+        return Invalidˉstack(Stack);
     }
-    return Publicˉstate(Applyˉeffect(
+    return Applyˉeffect(
         Stack,
         Effect.Popˉcount,
         Effect.Firstˉkind,
@@ -923,6 +938,30 @@ export fn Compilerˉwebassemblyˉtypedˉinstructionˉapply(
         Effect.Pushˉkind,
         0u32,
         Declaredˉmaximum
+    );
+}
+
+export fn Compilerˉwebassemblyˉtypedˉinstructionˉapply(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Localˉtypeˉoffsets: bytes,
+    Function: u32,
+    Cursor: u32,
+    State: Compilerˉwebassemblyˉtypedˉinstructionˉstate
+) -> Compilerˉwebassemblyˉtypedˉinstructionˉstate {
+    return Publicˉstate(Applyˉinstruction(
+        Input,
+        Codeˉoffset,
+        Codeˉlength,
+        Directory,
+        Typeˉdirectory,
+        Localˉtypeˉoffsets,
+        Function,
+        Cursor,
+        Privateˉstack(State)
     ));
 }
 
@@ -984,6 +1023,25 @@ export fn Compilerˉwebassemblyˉtypedˉcallsˉvalidateˉrange(
         );
         var Cursor: u32 = 0u32;
         var Previousˉopcode: u32 = 0u32;
+        let Localˉtypeˉoffsets: bytes =
+            Compilerˉwebassemblyˉtypedˉlocalˉtypeˉoffsets(
+                Input,
+                Directory,
+                Functionˉindex
+            );
+        let Expectedˉlocalˉtypeˉoffsetˉbytes: u32 = 4u32 * (
+            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+                Directory,
+                Functionˉindex
+            ) + Functions.Compilerˉwebassemblyˉfunctionˉlocalˉcount(
+                Directory,
+                Functionˉindex
+            )
+        );
+        if Bytesˉlength(Localˉtypeˉoffsets) !=
+            Expectedˉlocalˉtypeˉoffsetˉbytes {
+            return Invalidˉsummary();
+        }
         while Cursor < Functionˉcodeˉlength {
             if Aggregateˉinstructions >= 200000u32 {
                 return Invalidˉsummary();
@@ -1007,17 +1065,16 @@ export fn Compilerˉwebassemblyˉtypedˉcallsˉvalidateˉrange(
                 if Aggregateˉcalls >= 4096u32 { return Invalidˉsummary(); }
                 Aggregateˉcalls = Aggregateˉcalls + 1u32;
             }
-            Stack = Privateˉstack(
-                Compilerˉwebassemblyˉtypedˉinstructionˉapply(
-                    Input,
-                    Functionˉcode,
-                    Functionˉcodeˉlength,
-                    Directory,
-                    Typeˉdirectory,
-                    Functionˉindex,
-                    Cursor,
-                    Publicˉstate(Stack)
-                )
+            Stack = Applyˉinstruction(
+                Input,
+                Functionˉcode,
+                Functionˉcodeˉlength,
+                Directory,
+                Typeˉdirectory,
+                Localˉtypeˉoffsets,
+                Functionˉindex,
+                Cursor,
+                Stack
             );
             if !Stack.Valid {
                 return Invalidˉat(Functionˉindex, Cursor, Opcode);

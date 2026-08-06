@@ -244,268 +244,341 @@ export fn Compilerˉwebassemblyˉdescriptorˉstorageˉinitialize(
     return Append(Result, Memory(54u32, 2u32, 4u32));
 }
 
-export fn Compilerˉwebassemblyˉdescriptorˉstorageˉallocateˉbody(
-    Freeˉglobal: u32
-) -> bytes {
+fn Allocateˉdeclarations() -> bytes {
+    var Result: bytes = Uleb(1u32);
+    Result = Append(Result, Uleb(8u32));
+    return Append(Result, Byte(127u32));
+}
+
+fn Allocateˉentry(Freeˉglobal: u32) -> bytes {
     let Length: u32 = 0u32;
     let Required: u32 = 1u32;
     let Cursor: u32 = 2u32;
     let Previous: u32 = 3u32;
+
+    var Result: bytes = Indexed(32u32, Length);
+    Result = Append(Result, Byte(69u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Constant(0u32));
+    Result = Append(Result, Byte(15u32));
+    Result = Append(Result, Byte(11u32));
+
+    Result = Append(Result, Indexed(32u32, Length));
+    Result = Append(Result, Constant(7u32));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(
+        Result,
+        Encoding.Compilerˉwebassemblyˉbinaryˉi32ˉconstantˉfromˉinput(
+            Bytesˉfromˉu32ˉlittle(4294967288u32),
+            0u32
+        )
+    );
+    Result = Append(Result, Byte(113u32));
+    Result = Append(Result, Constant(8u32));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(33u32, Required));
+    Result = Append(Result, Indexed(35u32, Freeˉglobal));
+    Result = Append(Result, Indexed(33u32, Cursor));
+    Result = Append(Result, Constant(0u32));
+    return Append(Result, Indexed(33u32, Previous));
+}
+
+fn Allocateˉsearchˉhead() -> bytes {
+    let Required: u32 = 1u32;
+    let Cursor: u32 = 2u32;
     let Next: u32 = 4u32;
     let Available: u32 = 5u32;
+    let Remainder: u32 = 6u32;
+
+    var Result: bytes = Byte(3u32);
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Indexed(32u32, Cursor));
+    Result = Append(Result, Byte(69u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Constant(0u32));
+    Result = Append(Result, Byte(15u32));
+    Result = Append(Result, Byte(11u32));
+
+    Result = Append(Result, Load(Cursor, 0u32));
+    Result = Append(Result, Indexed(33u32, Next));
+    Result = Append(Result, Load(Cursor, 4u32));
+    Result = Append(Result, Indexed(33u32, Available));
+    Result = Append(Result, Indexed(32u32, Available));
+    Result = Append(Result, Indexed(32u32, Required));
+    Result = Append(Result, Byte(79u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+
+    Result = Append(Result, Indexed(32u32, Available));
+    Result = Append(Result, Indexed(32u32, Required));
+    Result = Append(Result, Byte(107u32));
+    Result = Append(Result, Indexed(33u32, Remainder));
+    Result = Append(Result, Indexed(32u32, Remainder));
+    Result = Append(Result, Constant(16u32));
+    Result = Append(Result, Byte(79u32));
+    Result = Append(Result, Byte(4u32));
+    return Append(Result, Byte(64u32));
+}
+
+fn Allocateˉsplitˉblock(Freeˉglobal: u32) -> bytes {
+    let Required: u32 = 1u32;
+    let Cursor: u32 = 2u32;
+    let Previous: u32 = 3u32;
+    let Next: u32 = 4u32;
     let Remainder: u32 = 6u32;
     let Candidate: u32 = 7u32;
     let Charged: u32 = 8u32;
 
-    var Body: bytes = Uleb(1u32);
-    Body = Append(Body, Uleb(8u32));
-    Body = Append(Body, Byte(127u32));
+    var Result: bytes = Indexed(32u32, Cursor);
+    Result = Append(Result, Indexed(32u32, Required));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(33u32, Candidate));
+    Result = Append(Result, Storeˉlocal(Candidate, 0u32, Next));
+    Result = Append(Result, Storeˉlocal(Candidate, 4u32, Remainder));
+    Result = Append(Result, Indexed(32u32, Previous));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Storeˉlocal(Previous, 0u32, Candidate));
+    Result = Append(Result, Byte(5u32));
+    Result = Append(Result, Indexed(32u32, Candidate));
+    Result = Append(Result, Indexed(36u32, Freeˉglobal));
+    Result = Append(Result, Byte(11u32));
+    Result = Append(Result, Indexed(32u32, Required));
+    return Append(Result, Indexed(33u32, Charged));
+}
 
-    Body = Append(Body, Indexed(32u32, Length));
-    Body = Append(Body, Byte(69u32));
-    Body = Append(Body, Byte(4u32));
-    Body = Append(Body, Byte(64u32));
-    Body = Append(Body, Constant(0u32));
-    Body = Append(Body, Byte(15u32));
-    Body = Append(Body, Byte(11u32));
+fn Allocateˉwholeˉblock(Freeˉglobal: u32) -> bytes {
+    let Previous: u32 = 3u32;
+    let Next: u32 = 4u32;
+    let Available: u32 = 5u32;
+    let Charged: u32 = 8u32;
 
-    Body = Append(Body, Indexed(32u32, Length));
-    Body = Append(Body, Constant(7u32));
-    Body = Append(Body, Byte(106u32));
-    Body = Append(Body, Encoding.Compilerˉwebassemblyˉbinaryˉi32ˉconstantˉfromˉinput(
-        Bytesˉfromˉu32ˉlittle(4294967288u32),
-        0u32
-    ));
-    Body = Append(Body, Byte(113u32));
-    Body = Append(Body, Constant(8u32));
-    Body = Append(Body, Byte(106u32));
-    Body = Append(Body, Indexed(33u32, Required));
-    Body = Append(Body, Indexed(35u32, Freeˉglobal));
-    Body = Append(Body, Indexed(33u32, Cursor));
-    Body = Append(Body, Constant(0u32));
-    Body = Append(Body, Indexed(33u32, Previous));
+    var Result: bytes = Byte(5u32);
+    Result = Append(Result, Indexed(32u32, Previous));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Storeˉlocal(Previous, 0u32, Next));
+    Result = Append(Result, Byte(5u32));
+    Result = Append(Result, Indexed(32u32, Next));
+    Result = Append(Result, Indexed(36u32, Freeˉglobal));
+    Result = Append(Result, Byte(11u32));
+    Result = Append(Result, Indexed(32u32, Available));
+    Result = Append(Result, Indexed(33u32, Charged));
+    return Append(Result, Byte(11u32));
+}
 
-    Body = Append(Body, Byte(3u32));
-    Body = Append(Body, Byte(64u32));
-    Body = Append(Body, Indexed(32u32, Cursor));
-    Body = Append(Body, Byte(69u32));
-    Body = Append(Body, Byte(4u32));
-    Body = Append(Body, Byte(64u32));
-    Body = Append(Body, Constant(0u32));
-    Body = Append(Body, Byte(15u32));
-    Body = Append(Body, Byte(11u32));
+fn Allocateˉcommitˉandˉadvance() -> bytes {
+    let Cursor: u32 = 2u32;
+    let Previous: u32 = 3u32;
+    let Next: u32 = 4u32;
+    let Charged: u32 = 8u32;
 
-    Body = Append(Body, Load(Cursor, 0u32));
-    Body = Append(Body, Indexed(33u32, Next));
-    Body = Append(Body, Load(Cursor, 4u32));
-    Body = Append(Body, Indexed(33u32, Available));
-    Body = Append(Body, Indexed(32u32, Available));
-    Body = Append(Body, Indexed(32u32, Required));
-    Body = Append(Body, Byte(79u32));
-    Body = Append(Body, Byte(4u32));
-    Body = Append(Body, Byte(64u32));
+    var Result: bytes = Storeˉlocal(Cursor, 0u32, Charged);
+    Result = Append(Result, Storeˉconstant(Cursor, 4u32, 1u32));
+    Result = Append(Result, Indexed(32u32, Cursor));
+    Result = Append(Result, Constant(8u32));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Byte(15u32));
+    Result = Append(Result, Byte(11u32));
 
-    Body = Append(Body, Indexed(32u32, Available));
-    Body = Append(Body, Indexed(32u32, Required));
-    Body = Append(Body, Byte(107u32));
-    Body = Append(Body, Indexed(33u32, Remainder));
-    Body = Append(Body, Indexed(32u32, Remainder));
-    Body = Append(Body, Constant(16u32));
-    Body = Append(Body, Byte(79u32));
-    Body = Append(Body, Byte(4u32));
-    Body = Append(Body, Byte(64u32));
+    Result = Append(Result, Indexed(32u32, Cursor));
+    Result = Append(Result, Indexed(33u32, Previous));
+    Result = Append(Result, Indexed(32u32, Next));
+    Result = Append(Result, Indexed(33u32, Cursor));
+    Result = Append(Result, Indexed(12u32, 0u32));
+    Result = Append(Result, Byte(11u32));
+    return Append(Result, Constant(0u32));
+}
 
-    Body = Append(Body, Indexed(32u32, Cursor));
-    Body = Append(Body, Indexed(32u32, Required));
-    Body = Append(Body, Byte(106u32));
-    Body = Append(Body, Indexed(33u32, Candidate));
-    Body = Append(Body, Storeˉlocal(Candidate, 0u32, Next));
-    Body = Append(Body, Storeˉlocal(Candidate, 4u32, Remainder));
-    Body = Append(Body, Indexed(32u32, Previous));
-    Body = Append(Body, Byte(4u32));
-    Body = Append(Body, Byte(64u32));
-    Body = Append(Body, Storeˉlocal(Previous, 0u32, Candidate));
-    Body = Append(Body, Byte(5u32));
-    Body = Append(Body, Indexed(32u32, Candidate));
-    Body = Append(Body, Indexed(36u32, Freeˉglobal));
-    Body = Append(Body, Byte(11u32));
-    Body = Append(Body, Indexed(32u32, Required));
-    Body = Append(Body, Indexed(33u32, Charged));
-
-    Body = Append(Body, Byte(5u32));
-    Body = Append(Body, Indexed(32u32, Previous));
-    Body = Append(Body, Byte(4u32));
-    Body = Append(Body, Byte(64u32));
-    Body = Append(Body, Storeˉlocal(Previous, 0u32, Next));
-    Body = Append(Body, Byte(5u32));
-    Body = Append(Body, Indexed(32u32, Next));
-    Body = Append(Body, Indexed(36u32, Freeˉglobal));
-    Body = Append(Body, Byte(11u32));
-    Body = Append(Body, Indexed(32u32, Available));
-    Body = Append(Body, Indexed(33u32, Charged));
-    Body = Append(Body, Byte(11u32));
-
-    Body = Append(Body, Storeˉlocal(Cursor, 0u32, Charged));
-    Body = Append(Body, Storeˉconstant(Cursor, 4u32, 1u32));
-    Body = Append(Body, Indexed(32u32, Cursor));
-    Body = Append(Body, Constant(8u32));
-    Body = Append(Body, Byte(106u32));
-    Body = Append(Body, Byte(15u32));
-    Body = Append(Body, Byte(11u32));
-
-    Body = Append(Body, Indexed(32u32, Cursor));
-    Body = Append(Body, Indexed(33u32, Previous));
-    Body = Append(Body, Indexed(32u32, Next));
-    Body = Append(Body, Indexed(33u32, Cursor));
-    Body = Append(Body, Indexed(12u32, 0u32));
-    Body = Append(Body, Byte(11u32));
-    Body = Append(Body, Constant(0u32));
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉallocateˉbody(
+    Freeˉglobal: u32
+) -> bytes {
+    var Body: bytes = Allocateˉdeclarations();
+    Body = Append(Body, Allocateˉentry(Freeˉglobal));
+    Body = Append(Body, Allocateˉsearchˉhead());
+    Body = Append(Body, Allocateˉsplitˉblock(Freeˉglobal));
+    Body = Append(Body, Allocateˉwholeˉblock(Freeˉglobal));
+    Body = Append(Body, Allocateˉcommitˉandˉadvance());
     return Encoding.Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
         Bytesˉslice(Body, 0u32, 3u32),
         Bytesˉslice(Body, 3u32, Bytesˉlength(Body) - 3u32)
     );
 }
 
-export fn Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉbody(
-    Freeˉglobal: u32
-) -> bytes {
+fn Referenceˉvalidateˉpointer() -> bytes {
     let Descriptor: u32 = 0u32;
-    let Retain: u32 = 1u32;
     let Pointer: u32 = 2u32;
+    let Base: u32 = 3u32;
+
+    var Result: bytes = Indexed(32u32, Descriptor);
+    Result = Append(Result, Byte(167u32));
+    Result = Append(Result, Indexed(33u32, Pointer));
+    Result = Append(Result, Indexed(32u32, Pointer));
+    Result = Append(Result, Constant(65544u32));
+    Result = Append(Result, Byte(73u32));
+    Result = Append(Result, Indexed(32u32, Pointer));
+    Result = Append(Result, Constant(134283264u32));
+    Result = Append(Result, Byte(79u32));
+    Result = Append(Result, Byte(114u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Byte(15u32));
+    Result = Append(Result, Byte(11u32));
+    Result = Append(Result, Indexed(32u32, Pointer));
+    Result = Append(Result, Constant(8u32));
+    Result = Append(Result, Byte(107u32));
+    return Append(Result, Indexed(33u32, Base));
+}
+
+fn Referenceˉupdateˉcount() -> bytes {
+    let Retain: u32 = 1u32;
     let Base: u32 = 3u32;
     let Charged: u32 = 4u32;
     let References: u32 = 5u32;
+
+    var Result: bytes = Load(Base, 0u32);
+    Result = Append(Result, Indexed(33u32, Charged));
+    Result = Append(Result, Load(Base, 4u32));
+    Result = Append(Result, Indexed(33u32, References));
+    Result = Append(Result, Indexed(32u32, Retain));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Indexed(32u32, Base));
+    Result = Append(Result, Indexed(32u32, References));
+    Result = Append(Result, Constant(1u32));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Memory(54u32, 2u32, 4u32));
+    Result = Append(Result, Byte(15u32));
+    Result = Append(Result, Byte(11u32));
+    Result = Append(Result, Indexed(32u32, References));
+    Result = Append(Result, Constant(1u32));
+    Result = Append(Result, Byte(75u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Indexed(32u32, Base));
+    Result = Append(Result, Indexed(32u32, References));
+    Result = Append(Result, Constant(1u32));
+    Result = Append(Result, Byte(107u32));
+    Result = Append(Result, Memory(54u32, 2u32, 4u32));
+    Result = Append(Result, Byte(15u32));
+    return Append(Result, Byte(11u32));
+}
+
+fn Referenceˉfindˉprevious(Freeˉglobal: u32) -> bytes {
+    let Base: u32 = 3u32;
     let Previous: u32 = 6u32;
+    let Cursor: u32 = 7u32;
+
+    var Result: bytes = Constant(0u32);
+    Result = Append(Result, Indexed(33u32, Previous));
+    Result = Append(Result, Indexed(35u32, Freeˉglobal));
+    Result = Append(Result, Indexed(33u32, Cursor));
+    Result = Append(Result, Byte(2u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Byte(3u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Indexed(32u32, Cursor));
+    Result = Append(Result, Byte(69u32));
+    Result = Append(Result, Indexed(13u32, 1u32));
+    Result = Append(Result, Indexed(32u32, Cursor));
+    Result = Append(Result, Indexed(32u32, Base));
+    Result = Append(Result, Byte(79u32));
+    Result = Append(Result, Indexed(13u32, 1u32));
+    Result = Append(Result, Indexed(32u32, Cursor));
+    Result = Append(Result, Indexed(33u32, Previous));
+    Result = Append(Result, Load(Cursor, 0u32));
+    Result = Append(Result, Indexed(33u32, Cursor));
+    Result = Append(Result, Indexed(12u32, 0u32));
+    Result = Append(Result, Byte(11u32));
+    return Append(Result, Byte(11u32));
+}
+
+fn Referenceˉmergeˉnext() -> bytes {
+    let Base: u32 = 3u32;
+    let Charged: u32 = 4u32;
     let Cursor: u32 = 7u32;
     let Next: u32 = 8u32;
     let Size: u32 = 9u32;
 
-    var Instructions: bytes = Indexed(32u32, Descriptor);
-    Instructions = Append(Instructions, Byte(167u32));
-    Instructions = Append(Instructions, Indexed(33u32, Pointer));
-    Instructions = Append(Instructions, Indexed(32u32, Pointer));
-    Instructions = Append(Instructions, Constant(65544u32));
-    Instructions = Append(Instructions, Byte(73u32));
-    Instructions = Append(Instructions, Indexed(32u32, Pointer));
-    Instructions = Append(Instructions, Constant(134283264u32));
-    Instructions = Append(Instructions, Byte(79u32));
-    Instructions = Append(Instructions, Byte(114u32));
-    Instructions = Append(Instructions, Byte(4u32));
-    Instructions = Append(Instructions, Byte(64u32));
-    Instructions = Append(Instructions, Byte(15u32));
-    Instructions = Append(Instructions, Byte(11u32));
+    var Result: bytes = Indexed(32u32, Cursor);
+    Result = Append(Result, Byte(69u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Byte(5u32));
+    Result = Append(Result, Indexed(32u32, Base));
+    Result = Append(Result, Indexed(32u32, Charged));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(32u32, Cursor));
+    Result = Append(Result, Byte(70u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Load(Cursor, 0u32));
+    Result = Append(Result, Indexed(33u32, Next));
+    Result = Append(Result, Load(Cursor, 4u32));
+    Result = Append(Result, Indexed(33u32, Size));
+    Result = Append(Result, Indexed(32u32, Charged));
+    Result = Append(Result, Indexed(32u32, Size));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(33u32, Charged));
+    Result = Append(Result, Byte(5u32));
+    Result = Append(Result, Indexed(32u32, Cursor));
+    Result = Append(Result, Indexed(33u32, Next));
+    Result = Append(Result, Byte(11u32));
+    return Append(Result, Byte(11u32));
+}
 
-    Instructions = Append(Instructions, Indexed(32u32, Pointer));
-    Instructions = Append(Instructions, Constant(8u32));
-    Instructions = Append(Instructions, Byte(107u32));
-    Instructions = Append(Instructions, Indexed(33u32, Base));
-    Instructions = Append(Instructions, Load(Base, 0u32));
-    Instructions = Append(Instructions, Indexed(33u32, Charged));
-    Instructions = Append(Instructions, Load(Base, 4u32));
-    Instructions = Append(Instructions, Indexed(33u32, References));
+fn Referenceˉmergeˉprevious(Freeˉglobal: u32) -> bytes {
+    let Base: u32 = 3u32;
+    let Charged: u32 = 4u32;
+    let Previous: u32 = 6u32;
+    let Next: u32 = 8u32;
+    let Size: u32 = 9u32;
 
-    Instructions = Append(Instructions, Indexed(32u32, Retain));
-    Instructions = Append(Instructions, Byte(4u32));
-    Instructions = Append(Instructions, Byte(64u32));
-    Instructions = Append(Instructions, Indexed(32u32, Base));
-    Instructions = Append(Instructions, Indexed(32u32, References));
-    Instructions = Append(Instructions, Constant(1u32));
-    Instructions = Append(Instructions, Byte(106u32));
-    Instructions = Append(Instructions, Memory(54u32, 2u32, 4u32));
-    Instructions = Append(Instructions, Byte(15u32));
-    Instructions = Append(Instructions, Byte(11u32));
+    var Result: bytes = Storeˉlocal(Base, 0u32, Next);
+    Result = Append(Result, Storeˉlocal(Base, 4u32, Charged));
+    Result = Append(Result, Indexed(32u32, Previous));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Indexed(32u32, Previous));
+    Result = Append(Result, Load(Previous, 4u32));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(32u32, Base));
+    Result = Append(Result, Byte(70u32));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Load(Base, 0u32));
+    Result = Append(Result, Indexed(33u32, Next));
+    Result = Append(Result, Load(Previous, 4u32));
+    Result = Append(Result, Load(Base, 4u32));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(33u32, Size));
+    Result = Append(Result, Storeˉlocal(Previous, 0u32, Next));
+    Result = Append(Result, Storeˉlocal(Previous, 4u32, Size));
+    Result = Append(Result, Byte(5u32));
+    Result = Append(Result, Storeˉlocal(Previous, 0u32, Base));
+    Result = Append(Result, Byte(11u32));
+    Result = Append(Result, Byte(5u32));
+    Result = Append(Result, Indexed(32u32, Base));
+    Result = Append(Result, Indexed(36u32, Freeˉglobal));
+    return Append(Result, Byte(11u32));
+}
 
-    Instructions = Append(Instructions, Indexed(32u32, References));
-    Instructions = Append(Instructions, Constant(1u32));
-    Instructions = Append(Instructions, Byte(75u32));
-    Instructions = Append(Instructions, Byte(4u32));
-    Instructions = Append(Instructions, Byte(64u32));
-    Instructions = Append(Instructions, Indexed(32u32, Base));
-    Instructions = Append(Instructions, Indexed(32u32, References));
-    Instructions = Append(Instructions, Constant(1u32));
-    Instructions = Append(Instructions, Byte(107u32));
-    Instructions = Append(Instructions, Memory(54u32, 2u32, 4u32));
-    Instructions = Append(Instructions, Byte(15u32));
-    Instructions = Append(Instructions, Byte(11u32));
-
-    Instructions = Append(Instructions, Constant(0u32));
-    Instructions = Append(Instructions, Indexed(33u32, Previous));
-    Instructions = Append(Instructions, Indexed(35u32, Freeˉglobal));
-    Instructions = Append(Instructions, Indexed(33u32, Cursor));
-    Instructions = Append(Instructions, Byte(2u32));
-    Instructions = Append(Instructions, Byte(64u32));
-    Instructions = Append(Instructions, Byte(3u32));
-    Instructions = Append(Instructions, Byte(64u32));
-    Instructions = Append(Instructions, Indexed(32u32, Cursor));
-    Instructions = Append(Instructions, Byte(69u32));
-    Instructions = Append(Instructions, Indexed(13u32, 1u32));
-    Instructions = Append(Instructions, Indexed(32u32, Cursor));
-    Instructions = Append(Instructions, Indexed(32u32, Base));
-    Instructions = Append(Instructions, Byte(79u32));
-    Instructions = Append(Instructions, Indexed(13u32, 1u32));
-    Instructions = Append(Instructions, Indexed(32u32, Cursor));
-    Instructions = Append(Instructions, Indexed(33u32, Previous));
-    Instructions = Append(Instructions, Load(Cursor, 0u32));
-    Instructions = Append(Instructions, Indexed(33u32, Cursor));
-    Instructions = Append(Instructions, Indexed(12u32, 0u32));
-    Instructions = Append(Instructions, Byte(11u32));
-    Instructions = Append(Instructions, Byte(11u32));
-
-    Instructions = Append(Instructions, Indexed(32u32, Cursor));
-    Instructions = Append(Instructions, Byte(69u32));
-    Instructions = Append(Instructions, Byte(4u32));
-    Instructions = Append(Instructions, Byte(64u32));
-    Instructions = Append(Instructions, Byte(5u32));
-    Instructions = Append(Instructions, Indexed(32u32, Base));
-    Instructions = Append(Instructions, Indexed(32u32, Charged));
-    Instructions = Append(Instructions, Byte(106u32));
-    Instructions = Append(Instructions, Indexed(32u32, Cursor));
-    Instructions = Append(Instructions, Byte(70u32));
-    Instructions = Append(Instructions, Byte(4u32));
-    Instructions = Append(Instructions, Byte(64u32));
-    Instructions = Append(Instructions, Load(Cursor, 0u32));
-    Instructions = Append(Instructions, Indexed(33u32, Next));
-    Instructions = Append(Instructions, Load(Cursor, 4u32));
-    Instructions = Append(Instructions, Indexed(33u32, Size));
-    Instructions = Append(Instructions, Indexed(32u32, Charged));
-    Instructions = Append(Instructions, Indexed(32u32, Size));
-    Instructions = Append(Instructions, Byte(106u32));
-    Instructions = Append(Instructions, Indexed(33u32, Charged));
-    Instructions = Append(Instructions, Byte(5u32));
-    Instructions = Append(Instructions, Indexed(32u32, Cursor));
-    Instructions = Append(Instructions, Indexed(33u32, Next));
-    Instructions = Append(Instructions, Byte(11u32));
-    Instructions = Append(Instructions, Byte(11u32));
-
-    Instructions = Append(Instructions, Storeˉlocal(Base, 0u32, Next));
-    Instructions = Append(Instructions, Storeˉlocal(Base, 4u32, Charged));
-    Instructions = Append(Instructions, Indexed(32u32, Previous));
-    Instructions = Append(Instructions, Byte(4u32));
-    Instructions = Append(Instructions, Byte(64u32));
-
-    Instructions = Append(Instructions, Indexed(32u32, Previous));
-    Instructions = Append(Instructions, Load(Previous, 4u32));
-    Instructions = Append(Instructions, Byte(106u32));
-    Instructions = Append(Instructions, Indexed(32u32, Base));
-    Instructions = Append(Instructions, Byte(70u32));
-    Instructions = Append(Instructions, Byte(4u32));
-    Instructions = Append(Instructions, Byte(64u32));
-    Instructions = Append(Instructions, Load(Base, 0u32));
-    Instructions = Append(Instructions, Indexed(33u32, Next));
-    Instructions = Append(Instructions, Load(Previous, 4u32));
-    Instructions = Append(Instructions, Load(Base, 4u32));
-    Instructions = Append(Instructions, Byte(106u32));
-    Instructions = Append(Instructions, Indexed(33u32, Size));
-    Instructions = Append(Instructions, Storeˉlocal(Previous, 0u32, Next));
-    Instructions = Append(Instructions, Storeˉlocal(Previous, 4u32, Size));
-    Instructions = Append(Instructions, Byte(5u32));
-    Instructions = Append(Instructions, Storeˉlocal(Previous, 0u32, Base));
-    Instructions = Append(Instructions, Byte(11u32));
-
-    Instructions = Append(Instructions, Byte(5u32));
-    Instructions = Append(Instructions, Indexed(32u32, Base));
-    Instructions = Append(Instructions, Indexed(36u32, Freeˉglobal));
-    Instructions = Append(Instructions, Byte(11u32));
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉbody(
+    Freeˉglobal: u32
+) -> bytes {
+    var Instructions: bytes = Referenceˉvalidateˉpointer();
+    Instructions = Append(Instructions, Referenceˉupdateˉcount());
+    Instructions = Append(
+        Instructions,
+        Referenceˉfindˉprevious(Freeˉglobal)
+    );
+    Instructions = Append(Instructions, Referenceˉmergeˉnext());
+    Instructions = Append(
+        Instructions,
+        Referenceˉmergeˉprevious(Freeˉglobal)
+    );
 
     var Locals: bytes = Uleb(1u32);
     Locals = Append(Locals, Uleb(8u32));

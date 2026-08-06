@@ -1,5 +1,6 @@
 windvale-project 1
-root "Tools/Windvale.WebAssembly/Scalar-Dispatcher-Memory-Tool.wv"
+root "Tools/Windvale.WebAssembly/Scalar-Dispatcher-Segmented-Memory-Tool.wv"
+source "Tools/Windvale.WebAssembly/Scalar-Dispatcher-Memory-Tool.wv"
 source "Compiler/Windvale/WebAssembly-Artifact-Segments.wv"
 source "Compiler/Windvale/WebAssembly-Binary-Encoding.wv"
 source "Compiler/Windvale/WebAssembly-Control-Flow.wv"

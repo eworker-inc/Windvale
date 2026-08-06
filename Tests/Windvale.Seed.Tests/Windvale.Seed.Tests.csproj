@@ -628,6 +628,9 @@
       Include="../../Compiler/Windvale/WebAssembly-Record-Operations.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Record-Operations.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Artifact-Segments.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Artifact-Segments.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
     <EmbeddedResource
@@ -642,6 +645,9 @@
     <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Scalar-Dispatcher-Memory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher-Memory-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.WebAssembly/Scalar-Dispatcher-Phase-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher-Phase-Adapter.wv" />
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/General-Dispatcher-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Main.wv" />

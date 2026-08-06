@@ -1,0 +1,10 @@
+module Compilerˉwebassemblyˉscalarˉdispatcherˉsegmentedˉmemoryˉtool profile portable;
+
+import Compilerˉwebassemblyˉscalarˉdispatcherˉmemoryˉtool as Memory;
+import Compilerˉwebassemblyˉscalarˉdispatcherˉphaseˉadapter as Phases;
+
+export fn Main(
+    Input: bytes
+) -> Phases.Compilerˉwebassemblyˉsegmentedˉartifact {
+    return Memory.Segmentedˉartifact(Input);
+}

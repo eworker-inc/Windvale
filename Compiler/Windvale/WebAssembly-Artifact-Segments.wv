@@ -1,0 +1,223 @@
+module Compilerˉwebassemblyˉartifactˉsegments profile portable;
+
+export record Compilerˉwebassemblyˉartifactˉsegmentˉblock {
+    Segment0: bytes;
+    Segment1: bytes;
+    Segment2: bytes;
+    Segment3: bytes;
+    Segment4: bytes;
+    Segment5: bytes;
+    Segment6: bytes;
+    Segment7: bytes;
+    Segment8: bytes;
+    Segment9: bytes;
+}
+
+export fn Compilerˉwebassemblyˉartifactˉsegmentˉblockˉempty(
+    Input: bytes
+) -> Compilerˉwebassemblyˉartifactˉsegmentˉblock {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty
+    );
+}
+
+export fn Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+    Block: Compilerˉwebassemblyˉartifactˉsegmentˉblock,
+    Index: u32,
+    Value: bytes
+) -> Compilerˉwebassemblyˉartifactˉsegmentˉblock {
+    if Index == 0u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Bytesˉconcat(Block.Segment0, Value),
+            Block.Segment1,
+            Block.Segment2,
+            Block.Segment3,
+            Block.Segment4,
+            Block.Segment5,
+            Block.Segment6,
+            Block.Segment7,
+            Block.Segment8,
+            Block.Segment9
+        );
+    }
+    if Index == 1u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Block.Segment0,
+            Bytesˉconcat(Block.Segment1, Value),
+            Block.Segment2,
+            Block.Segment3,
+            Block.Segment4,
+            Block.Segment5,
+            Block.Segment6,
+            Block.Segment7,
+            Block.Segment8,
+            Block.Segment9
+        );
+    }
+    if Index == 2u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Block.Segment0,
+            Block.Segment1,
+            Bytesˉconcat(Block.Segment2, Value),
+            Block.Segment3,
+            Block.Segment4,
+            Block.Segment5,
+            Block.Segment6,
+            Block.Segment7,
+            Block.Segment8,
+            Block.Segment9
+        );
+    }
+    if Index == 3u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Block.Segment0,
+            Block.Segment1,
+            Block.Segment2,
+            Bytesˉconcat(Block.Segment3, Value),
+            Block.Segment4,
+            Block.Segment5,
+            Block.Segment6,
+            Block.Segment7,
+            Block.Segment8,
+            Block.Segment9
+        );
+    }
+    if Index == 4u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Block.Segment0,
+            Block.Segment1,
+            Block.Segment2,
+            Block.Segment3,
+            Bytesˉconcat(Block.Segment4, Value),
+            Block.Segment5,
+            Block.Segment6,
+            Block.Segment7,
+            Block.Segment8,
+            Block.Segment9
+        );
+    }
+    if Index == 5u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Block.Segment0,
+            Block.Segment1,
+            Block.Segment2,
+            Block.Segment3,
+            Block.Segment4,
+            Bytesˉconcat(Block.Segment5, Value),
+            Block.Segment6,
+            Block.Segment7,
+            Block.Segment8,
+            Block.Segment9
+        );
+    }
+    if Index == 6u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Block.Segment0,
+            Block.Segment1,
+            Block.Segment2,
+            Block.Segment3,
+            Block.Segment4,
+            Block.Segment5,
+            Bytesˉconcat(Block.Segment6, Value),
+            Block.Segment7,
+            Block.Segment8,
+            Block.Segment9
+        );
+    }
+    if Index == 7u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Block.Segment0,
+            Block.Segment1,
+            Block.Segment2,
+            Block.Segment3,
+            Block.Segment4,
+            Block.Segment5,
+            Block.Segment6,
+            Bytesˉconcat(Block.Segment7, Value),
+            Block.Segment8,
+            Block.Segment9
+        );
+    }
+    if Index == 8u32 {
+        return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+            Block.Segment0,
+            Block.Segment1,
+            Block.Segment2,
+            Block.Segment3,
+            Block.Segment4,
+            Block.Segment5,
+            Block.Segment6,
+            Block.Segment7,
+            Bytesˉconcat(Block.Segment8, Value),
+            Block.Segment9
+        );
+    }
+    return Compilerˉwebassemblyˉartifactˉsegmentˉblock(
+        Block.Segment0,
+        Block.Segment1,
+        Block.Segment2,
+        Block.Segment3,
+        Block.Segment4,
+        Block.Segment5,
+        Block.Segment6,
+        Block.Segment7,
+        Block.Segment8,
+        Bytesˉconcat(Block.Segment9, Value)
+    );
+}
+
+export fn Compilerˉwebassemblyˉartifactˉsegmentˉblockˉlength(
+    Block: Compilerˉwebassemblyˉartifactˉsegmentˉblock
+) -> u32 {
+    return Bytesˉlength(Block.Segment0) +
+        Bytesˉlength(Block.Segment1) +
+        Bytesˉlength(Block.Segment2) +
+        Bytesˉlength(Block.Segment3) +
+        Bytesˉlength(Block.Segment4) +
+        Bytesˉlength(Block.Segment5) +
+        Bytesˉlength(Block.Segment6) +
+        Bytesˉlength(Block.Segment7) +
+        Bytesˉlength(Block.Segment8) +
+        Bytesˉlength(Block.Segment9);
+}
+
+export fn Compilerˉwebassemblyˉartifactˉsegmentˉblockˉitemˉlength(
+    Block: Compilerˉwebassemblyˉartifactˉsegmentˉblock,
+    Index: u32
+) -> u32 {
+    if Index == 0u32 { return Bytesˉlength(Block.Segment0); }
+    if Index == 1u32 { return Bytesˉlength(Block.Segment1); }
+    if Index == 2u32 { return Bytesˉlength(Block.Segment2); }
+    if Index == 3u32 { return Bytesˉlength(Block.Segment3); }
+    if Index == 4u32 { return Bytesˉlength(Block.Segment4); }
+    if Index == 5u32 { return Bytesˉlength(Block.Segment5); }
+    if Index == 6u32 { return Bytesˉlength(Block.Segment6); }
+    if Index == 7u32 { return Bytesˉlength(Block.Segment7); }
+    if Index == 8u32 { return Bytesˉlength(Block.Segment8); }
+    return Bytesˉlength(Block.Segment9);
+}
+
+export fn Compilerˉwebassemblyˉartifactˉsegmentˉblockˉisˉbounded(
+    Block: Compilerˉwebassemblyˉartifactˉsegmentˉblock
+) -> bool {
+    if Bytesˉlength(Block.Segment0) > 4194304u32 { return false; }
+    if Bytesˉlength(Block.Segment1) > 4194304u32 { return false; }
+    if Bytesˉlength(Block.Segment2) > 4194304u32 { return false; }
+    if Bytesˉlength(Block.Segment3) > 4194304u32 { return false; }
+    if Bytesˉlength(Block.Segment4) > 4194304u32 { return false; }
+    if Bytesˉlength(Block.Segment5) > 4194304u32 { return false; }
+    if Bytesˉlength(Block.Segment6) > 4194304u32 { return false; }
+    if Bytesˉlength(Block.Segment7) > 4194304u32 { return false; }
+    if Bytesˉlength(Block.Segment8) > 4194304u32 { return false; }
+    return Bytesˉlength(Block.Segment9) <= 4194304u32;
+}

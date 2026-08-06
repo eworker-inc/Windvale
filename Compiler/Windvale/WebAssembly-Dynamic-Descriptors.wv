@@ -193,6 +193,7 @@ fn Emitˉbuilder(
 
 fn Emitˉconcat(
     Isˉtext: bool,
+    Maximumˉbytes: u32,
     Leftˉlength: u32,
     Rightˉlength: u32,
     Total: u32,
@@ -206,7 +207,7 @@ fn Emitˉconcat(
     Returnsˉi64: bool,
     Statusˉglobal: u32
 ) -> bytes {
-    var Limit: u32 = 4194304u32;
+    var Limit: u32 = Maximumˉbytes;
     var Limitˉstatus: u32 = 3015u32;
     if Isˉtext {
         Limit = 1048576u32;
@@ -277,6 +278,89 @@ fn Emitˉconcat(
     return Append(Result, Indexed(32u32, Resultˉdescriptor));
 }
 
+fn Emitˉu32ˉformat(
+    Value: u32,
+    Digits: u32,
+    Temporary: u32,
+    Pointer: u32,
+    Descriptor: u32,
+    Allocateˉfunction: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> bytes {
+    var Result: bytes = Indexed(33u32, Value);
+    Result = Append(Result, Constant(1u32));
+    Result = Append(Result, Indexed(33u32, Digits));
+    Result = Append(Result, Indexed(32u32, Value));
+    Result = Append(Result, Indexed(33u32, Temporary));
+
+    Result = Append(Result, Byte(2u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Byte(3u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Indexed(32u32, Temporary));
+    Result = Append(Result, Constant(10u32));
+    Result = Append(Result, Byte(73u32));
+    Result = Append(Result, Indexed(13u32, 1u32));
+    Result = Append(Result, Indexed(32u32, Temporary));
+    Result = Append(Result, Constant(10u32));
+    Result = Append(Result, Byte(110u32));
+    Result = Append(Result, Indexed(33u32, Temporary));
+    Result = Append(Result, Indexed(32u32, Digits));
+    Result = Append(Result, Constant(1u32));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(33u32, Digits));
+    Result = Append(Result, Indexed(12u32, 0u32));
+    Result = Append(Result, Byte(11u32));
+    Result = Append(Result, Byte(11u32));
+
+    Result = Append(
+        Result,
+        Allocate(
+            Digits,
+            Pointer,
+            Allocateˉfunction,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+    Result = Append(Result, Packˉdescriptor(Pointer, Digits));
+    Result = Append(Result, Indexed(33u32, Descriptor));
+    Result = Append(Result, Indexed(32u32, Pointer));
+    Result = Append(Result, Indexed(32u32, Digits));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Indexed(33u32, Pointer));
+    Result = Append(Result, Indexed(32u32, Value));
+    Result = Append(Result, Indexed(33u32, Temporary));
+
+    Result = Append(Result, Byte(2u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Byte(3u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Indexed(32u32, Pointer));
+    Result = Append(Result, Constant(1u32));
+    Result = Append(Result, Byte(107u32));
+    Result = Append(Result, Indexed(34u32, Pointer));
+    Result = Append(Result, Indexed(32u32, Temporary));
+    Result = Append(Result, Constant(10u32));
+    Result = Append(Result, Byte(112u32));
+    Result = Append(Result, Constant(48u32));
+    Result = Append(Result, Byte(106u32));
+    Result = Append(Result, Memory(58u32, 0u32, 0u32));
+    Result = Append(Result, Indexed(32u32, Temporary));
+    Result = Append(Result, Constant(10u32));
+    Result = Append(Result, Byte(110u32));
+    Result = Append(Result, Indexed(34u32, Temporary));
+    Result = Append(Result, Byte(69u32));
+    Result = Append(Result, Indexed(13u32, 1u32));
+    Result = Append(Result, Indexed(12u32, 0u32));
+    Result = Append(Result, Byte(11u32));
+    Result = Append(Result, Byte(11u32));
+    return Append(Result, Indexed(32u32, Descriptor));
+}
+
 fn Emitˉutf8(
     Opcode: u8,
     Resultˉlocal: u32,
@@ -327,12 +411,30 @@ export fn Compilerˉwebassemblyˉdynamicˉdescriptorˉemit(
     Scratchˉwideˉresult: u32,
     Allocateˉfunction: u32,
     Referenceˉfunction: u32,
+    Maximumˉbytes: u32,
     Manageˉownership: bool,
     Utf8ˉfunction: u32,
     Returnsˉvalue: bool,
     Returnsˉi64: bool,
     Statusˉglobal: u32
 ) -> Compilerˉwebassemblyˉdynamicˉdescriptorˉemission {
+    if Opcode == 112u8 {
+        return Compilerˉwebassemblyˉdynamicˉdescriptorˉemission(
+            true,
+            true,
+            Emitˉu32ˉformat(
+                Scratchˉleft,
+                Scratchˉright,
+                Scratchˉresult,
+                Scratchˉpointer,
+                Scratchˉwideˉresult,
+                Allocateˉfunction,
+                Returnsˉvalue,
+                Returnsˉi64,
+                Statusˉglobal
+            )
+        );
+    }
     if Opcode == 115u8 || Opcode == 116u8 {
         return Compilerˉwebassemblyˉdynamicˉdescriptorˉemission(
             true,
@@ -373,6 +475,7 @@ export fn Compilerˉwebassemblyˉdynamicˉdescriptorˉemit(
             true,
             Emitˉconcat(
                 Opcode == 113u8,
+                Maximumˉbytes,
                 Scratchˉleft,
                 Scratchˉright,
                 Scratchˉresult,

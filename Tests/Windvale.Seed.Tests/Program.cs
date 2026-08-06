@@ -134,27 +134,27 @@ internal static partial class Program
     private const string WEBASSEMBLY_VALUE_LAYOUT_MEMORY_TOOL_SHA256 = "7cbfe268c02608fe2c1b066fd51dfb809002f9b25cbe1050a4806291b7125a3d";
     private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_INPUT_SHA256 = "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e";
     private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_RESPONSE_SHA256 = "bc7099df2ba2525ab28f26c7b891ba71e4d24eddbdca2199010fdbb0e817552d";
-    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "2d50ae8f288e34d089041a3309c6c5327644daa336c9978dacfa4c5370bfe67c";
+    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "c8c5ca7822c741a46b051e9299c20632b2adc480c9402e1066d9fe620e15976e";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "6b8ee8e5e3707203891840157547fa1cf88368447b493015b9d0f9e48bbb69d2";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "3f90a6641648ae55a3b4ddf3a50ae2d2ad7d52ae434bf15c1718076f04232e79";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "69b9bca6544ca163ad338296482731893c8fc0a9c55a4f657ba849249550abdd";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_WVB_SHA256 = "ec785b6ad0fe3a72574a3e6587d32bad0719054a8f7d9481ba361a0857086450";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SHA256 = "263aa2bb5c0589f679df3f415b8e3c97eb809a87a0a756d3dc312f79956244cc";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SHA256 = "b966cd6243d97c1335853e3d7ae6e53da97ee0661e9c9b168d6621dfe9f72004";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_WVB_SHA256 = "9bfee4a2bfd7be72406b6e83539417bc3eafe513f4340862e9f3a0b7713972b5";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_SHA256 = "5639230029a5b02e063ffd196d95f9b1b1cce5b3d131045b2cb039734debd6ef";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_SHA256 = "4cce5b035452a27666f90f548544d1d21a201349db6b9625c34ecb81a7602543";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_WVB_SHA256 = "eafd95c3ce2cd75c1a2fdd3e6f58c6d4b36b90730aadc25b80079d88309106b5";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_SHA256 = "1c339d9798c73c30dd052ee88f915df7edfbd926427f955af2f0aece8983853b";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_SHA256 = "c7eff9c4c8e866542cc59cf90f149ea559e54d5f4eeaa42f0c6856e8818e37de";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTORS_WVB_SHA256 = "0ee2ac5b3f0e71bbfb4b941df632f873ada08e3075056b4e3068a881da3b1ebc";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTORS_SHA256 = "3da1365714f5320376855efb4f233f39f9eb2861e4aa33a526fe35965f27833d";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTORS_SHA256 = "af3d703f37a8c1857993f0709010da148bae4041f08ff143f64e05f9057c6c42";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTOR_RANGE_FAILURE_WVB_SHA256 = "0c75aa907c458f10c5add7a76bdf8b9dda43cb4aa1f1569dfb6580e50f9e8a81";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTOR_RANGE_FAILURE_SHA256 = "1abaff8dd657fb0bf33d48ffde73572a5d1c10e343c65ac680926b004ccd4eea";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTOR_RANGE_FAILURE_SHA256 = "1408084bb9efc6e52b5a8834f0e2ee27d7389c55c4f5fa772cc469fd63c75d2c";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_WVB_SHA256 = "5966408913655f233509a0ab6f6c80dcc9d893d2ad22844a35661fa486527a30";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_SHA256 = "be287ba7ac40d001d3c3fe91796b15b09505614555004b4870d0a51eb6c6c4f8";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_SHA256 = "f062db9c4eb986b28f5c007791d15ca013957cfc8adc206b6f5e79cf6e4121dc";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_WVB_SHA256 = "56cde8d1ad3723353fca2712351338d0013ab3550c24f47a24978438d04bff84";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_SHA256 = "f73c54d74a753380690e893d325a76fbdfc803553bc02cb1adfa0aae7c8a7432";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_SHA256 = "59ab3a20aee374fa11327ea8c3cbfc499301c9c9b69ad68d2b81dac5786d7050";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_WVB_SHA256 = "fddf1c2bee5e4cfdd8ea8c77f5f8e774cc0db7a0fcb517808710f40abba0d380";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SHA256 = "ca6a74e87f74ad8fb5f98b2c9c7f12e09f521d996affedf4f64c23f88106ac5f";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SHA256 = "857858a7b536ad8e0cf012bcef87ea9a2baf3720b74aa0d77c59899b48b091ce";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_WVB_SHA256 = "4b6b63a67418a86b3e4a904aa295986bf63973d234f41fc390a63f453492c4af";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_SHA256 = "fe1b69d8723a455ae751371ea422ad39f44bb1503d126f37e2e5404d59778827";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_SHA256 = "3a75a90ad3c489e2e11a9604bda0db28e9ed3c9c18f940142a735ddb2db5d713";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -975,6 +975,10 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher.wv");
 
+    private static readonly string WEBASSEMBLY_ARTIFACT_SEGMENTS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Artifact-Segments.wv");
+
     private static readonly string WEBASSEMBLY_SCALAR_OPERATIONS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Scalar-Operations.wv");
@@ -1034,6 +1038,10 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher-Memory-Tool.wv");
+
+    private static readonly string WEBASSEMBLY_SCALAR_DISPATCHER_PHASE_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher-Phase-Adapter.wv");
 
     private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_SOURCE =
         Readˉembeddedˉsource(
@@ -15302,7 +15310,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Input.ToImmutableArray());
-        Equal(5881, First.Bytes.Length);
+        Equal(1433, First.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_SHA256,
             Moduleˉdigest.Calculateˉsha256(First.Bytes.AsSpan()));
@@ -15316,8 +15324,8 @@ internal static partial class Program
         var Reader = new WebAssemblyˉtestˉreader(First.Bytes.AsSpan());
         Reader.Readˉheader();
         var Typeˉend = Reader.Readˉsection(1);
-        Reader.Require(Reader.Readˉuleb32() == 4, "The dispatcher type count is invalid.");
-        for (var Type = 0; Type < 4; Type++)
+        Reader.Require(Reader.Readˉuleb32() == 5, "The dispatcher type count is invalid.");
+        for (var Type = 0; Type < 5; Type++)
         {
             Reader.Require(Reader.Readˉbyte() == 0x60, "A dispatcher function type is invalid.");
             Reader.Require(
@@ -15332,8 +15340,8 @@ internal static partial class Program
         }
         Reader.Require(Reader.Position == Typeˉend, "The dispatcher type section trails.");
         var Functionˉend = Reader.Readˉsection(3);
-        Reader.Require(Reader.Readˉuleb32() == 4, "The dispatcher function count is invalid.");
-        for (uint Function = 0; Function < 4; Function++)
+        Reader.Require(Reader.Readˉuleb32() == 5, "The dispatcher function count is invalid.");
+        for (uint Function = 0; Function < 5; Function++)
         {
             Reader.Require(
                 Reader.Readˉuleb32() == Function,
@@ -15351,13 +15359,13 @@ internal static partial class Program
         Reader.Require(Reader.Position == Globalˉend, "The dispatcher global section trails.");
         var Exportˉend = Reader.Readˉsection(7);
         Reader.Require(Reader.Readˉuleb32() == 3, "The dispatcher export count is invalid.");
-        Reader.Readˉexport("Windvale.run", 0, 3);
+        Reader.Readˉexport("Windvale.run", 0, 4);
         Reader.Readˉexport("Windvale.result", 3, 0);
         Reader.Readˉexport("Windvale.instructions", 3, 1);
         Reader.Require(Reader.Position == Exportˉend, "The dispatcher export section trails.");
         var Codeˉend = Reader.Readˉsection(10);
-        Reader.Require(Reader.Readˉuleb32() == 4, "The dispatcher body count is invalid.");
-        for (var Body = 0; Body < 4; Body++)
+        Reader.Require(Reader.Readˉuleb32() == 5, "The dispatcher body count is invalid.");
+        for (var Body = 0; Body < 5; Body++)
         {
             var Bodyˉlength = Reader.Readˉuleb32();
             Reader.Require(Bodyˉlength <= int.MaxValue, "A dispatcher body is oversized.");
@@ -15381,7 +15389,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Overflow.ToImmutableArray());
-        Equal(770, Overflowˉlowered.Bytes.Length);
+        Equal(375, Overflowˉlowered.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SHA256,
             Moduleˉdigest.Calculateˉsha256(Overflowˉlowered.Bytes.AsSpan()));
@@ -15393,13 +15401,13 @@ internal static partial class Program
                 Wvbˉsha256: WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_WVB_SHA256,
                 Wasmˉsha256: WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_SHA256,
                 Status: 3032,
-                Wasmˉbytes: 1203),
+                Wasmˉbytes: 481),
             (
                 Source: WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_SOURCE,
                 Wvbˉsha256: WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_WVB_SHA256,
                 Wasmˉsha256: WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_SHA256,
                 Status: 3033,
-                Wasmˉbytes: 1205),
+                Wasmˉbytes: 483),
         })
         {
             var Failedˉwvb = Compileˉsuccess(Failure.Source);
@@ -15431,7 +15439,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Descriptors.ToImmutableArray());
-        Equal(4_199, Descriptorsˉlowered.Bytes.Length);
+        Equal(1_374, Descriptorsˉlowered.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTORS_SHA256,
             Moduleˉdigest.Calculateˉsha256(
@@ -15449,7 +15457,7 @@ internal static partial class Program
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(
                 Descriptorˉrangeˉfailure.ToImmutableArray());
-        Equal(1_454, Descriptorˉrangeˉlowered.Bytes.Length);
+        Equal(571, Descriptorˉrangeˉlowered.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_DESCRIPTOR_RANGE_FAILURE_SHA256,
             Moduleˉdigest.Calculateˉsha256(
@@ -15466,7 +15474,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Enums.ToImmutableArray());
-        Equal(2_558, Enumsˉlowered.Bytes.Length);
+        Equal(928, Enumsˉlowered.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_SHA256,
             Moduleˉdigest.Calculateˉsha256(Enumsˉlowered.Bytes.AsSpan()));
@@ -15484,7 +15492,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Records.ToImmutableArray());
-        Equal(2_553, Recordsˉlowered.Bytes.Length);
+        Equal(1_342, Recordsˉlowered.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_SHA256,
             Moduleˉdigest.Calculateˉsha256(
@@ -15504,7 +15512,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Dynamicˉdescriptors.ToImmutableArray());
-        Equal(21_949, Dynamicˉlowered.Bytes.Length);
+        Equal(12_586, Dynamicˉlowered.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SHA256,
             Moduleˉdigest.Calculateˉsha256(Dynamicˉlowered.Bytes.AsSpan()));
@@ -15531,7 +15539,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Utf8.ToImmutableArray());
-        Equal(9_251, Utf8ˉlowered.Bytes.Length);
+        Equal(3_404, Utf8ˉlowered.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_SHA256,
             Moduleˉdigest.Calculateˉsha256(Utf8ˉlowered.Bytes.AsSpan()));
@@ -15633,13 +15641,13 @@ internal static partial class Program
 
         var Typeˉend = Reader.Readˉsection(1);
         Reader.Require(
-            Reader.Readˉuleb32() == 8,
+            Reader.Readˉuleb32() == 9,
             "The dynamic descriptor type count is invalid.");
         Reader.Skip(Typeˉend - Reader.Position);
 
         var Functionˉend = Reader.Readˉsection(3);
         Reader.Require(
-            Reader.Readˉuleb32() == 8,
+            Reader.Readˉuleb32() == 9,
             "The dynamic descriptor function count is invalid.");
         Reader.Skip(Functionˉend - Reader.Position);
 
@@ -15678,7 +15686,7 @@ internal static partial class Program
         Reader.Require(
             Reader.Readˉuleb32() == 3,
             "The dynamic descriptor export count is invalid.");
-        Reader.Readˉexport("Windvale.run", 0, 7);
+        Reader.Readˉexport("Windvale.run", 0, 8);
         Reader.Readˉexport("Windvale.result", 3, 0);
         Reader.Readˉexport("Windvale.instructions", 3, 1);
         Reader.Require(
@@ -15687,7 +15695,7 @@ internal static partial class Program
 
         var Codeˉend = Reader.Readˉsection(10);
         Reader.Require(
-            Reader.Readˉuleb32() == 8,
+            Reader.Readˉuleb32() == 9,
             "The dynamic descriptor body count is invalid.");
         Reader.Skip(Codeˉend - Reader.Position);
         var Dataˉend = Reader.Readˉsection(11);
@@ -28278,8 +28286,14 @@ internal static partial class Program
                     "Compiler/Windvale/WebAssembly-Record-Operations.wv",
                     WEBASSEMBLY_RECORD_OPERATIONS_SOURCE),
                 new(
+                    "Compiler/Windvale/WebAssembly-Artifact-Segments.wv",
+                    WEBASSEMBLY_ARTIFACT_SEGMENTS_SOURCE),
+                new(
                     "Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv",
                     WEBASSEMBLY_SCALAR_DISPATCHER_SOURCE),
+                new(
+                    "Tools/Windvale.WebAssembly/Scalar-Dispatcher-Phase-Adapter.wv",
+                    WEBASSEMBLY_SCALAR_DISPATCHER_PHASE_ADAPTER_SOURCE),
             ]);
         if (!Result.Success)
         {

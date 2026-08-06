@@ -16,15 +16,45 @@ import Compilerˉwebassemblyˉenumˉoperations as Enums;
 import Compilerˉwebassemblyˉrecordˉstorage as Recordˉstorage;
 import Compilerˉwebassemblyˉrecordˉoperations as Records;
 import Compilerˉwebassemblyˉtypedˉcalls as Typed;
+import Compilerˉwebassemblyˉartifactˉsegments as Artifactˉsegments;
 
 export record Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     Valid: bool;
+    Totalˉlength: u32;
     Webassembly: bytes;
-    Functionˉcount: u32;
-    Blockˉcount: u32;
-    Failureˉfunction: u32;
-    Failureˉoffset: u32;
-    Failureˉopcode: u32;
+    Segment1: bytes;
+    Segment2: bytes;
+    Segment3: bytes;
+    Segment4: bytes;
+    Segment5: bytes;
+    Segment6: bytes;
+    Segment7: bytes;
+    Segment8: bytes;
+    Segment9: bytes;
+    Segment10: bytes;
+    Segment11: bytes;
+    Segment12: bytes;
+    Segment13: bytes;
+    Segment14: bytes;
+    Segment15: bytes;
+    Segment16: bytes;
+    Segment17: bytes;
+    Segment18: bytes;
+    Segment19: bytes;
+    Segment20: bytes;
+    Segment21: bytes;
+    Segment22: bytes;
+    Segment23: bytes;
+    Segment24: bytes;
+    Segment25: bytes;
+    Segment26: bytes;
+    Segment27: bytes;
+    Segment28: bytes;
+    Segment29: bytes;
+    Segment30: bytes;
+    Segment31: bytes;
+    Segment32: bytes;
+    Segment33: bytes;
 }
 
 record Positionˉlookup {
@@ -45,11 +75,45 @@ record Runtimeˉhelpers {
     Allocateˉfunction: u32;
     Referenceˉfunction: u32;
     Utf8ˉfunction: u32;
+    Meterˉfunction: u32;
+    Maximumˉbytes: u32;
     Frameˉlimit: u32;
 }
 
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Codeˉsegmentˉlength(
+    Block0: Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock,
+    Block1: Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock,
+    Block2: Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock,
+    Block3: Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock,
+    Segment: u32
+) -> u32 {
+    let Blockˉsegment: u32 = Segment % 10u32;
+    if Segment < 10u32 {
+        return Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉitemˉlength(
+            Block0,
+            Blockˉsegment
+        );
+    }
+    if Segment < 20u32 {
+        return Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉitemˉlength(
+            Block1,
+            Blockˉsegment
+        );
+    }
+    if Segment < 30u32 {
+        return Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉitemˉlength(
+            Block2,
+            Blockˉsegment
+        );
+    }
+    return Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉitemˉlength(
+        Block3,
+        Blockˉsegment
+    );
 }
 
 fn Invalid(
@@ -60,12 +124,41 @@ fn Invalid(
 ) -> Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     return Compilerˉwebassemblyˉscalarˉdispatcherˉsummary(
         false,
+        0u32,
         Empty(Input),
-        0u32,
-        0u32,
-        Function,
-        Offset,
-        Opcode
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input)
     );
 }
 
@@ -258,6 +351,49 @@ fn Shapeˉisˉscalar(Kind: u32) -> bool {
     return false;
 }
 
+fn Segmentedˉrootˉisˉvalid(
+    Input: bytes,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Resultˉoffset: u32
+) -> bool {
+    if Shapeˉkind(Input, Resultˉoffset) != 7u32 {
+        return false;
+    }
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Resultˉoffset + 1u32
+    );
+    if Typeˉindex >= Types.Count ||
+        Typeˉdirectory.Compilerˉwebassemblyˉtypeˉkind(
+            Types,
+            Typeˉindex
+        ) != 1u32 ||
+        Typeˉdirectory.Compilerˉwebassemblyˉtypeˉitemˉcount(
+            Types,
+            Typeˉindex
+        ) != 36u32 {
+        return false;
+    }
+    var Field: u32 = 0u32;
+    while Field < 36u32 {
+        let Shape: u32 =
+            Typeˉdirectory.Compilerˉwebassemblyˉrecordˉfieldˉshapeˉoffset(
+                Input,
+                Types,
+                Typeˉindex,
+                Field
+            );
+        var Expected: u32 = 6u32;
+        if Field == 0u32 { Expected = 2u32; }
+        if Field == 1u32 { Expected = 5u32; }
+        if Shape == 0u32 || Shapeˉkind(Input, Shape) != Expected {
+            return false;
+        }
+        Field = Field + 1u32;
+    }
+    return true;
+}
+
 fn Reachableˉposition(Order: bytes, Function: u32) -> Positionˉlookup {
     let Length: u32 = Bytesˉlength(Order);
     if Length % 4u32 != 0u32 {
@@ -421,18 +557,25 @@ fn Emitˉfailureˉguard(
     return Append(Result, Byte(11u32));
 }
 
-fn Emitˉmeter(Returnsˉvalue: bool, Returnsˉi64: bool) -> bytes {
-    var Result: bytes = Indexed(35u32, 1u32);
-    Result = Append(Result, Indexed(35u32, 2u32));
-    Result = Append(Result, Byte(79u32));
+fn I32ˉnegativeˉoneˉconstant() -> bytes {
+    return Append(Byte(65u32), Byte(127u32));
+}
+
+fn Emitˉmeter(
+    Count: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Meterˉfunction: u32
+) -> bytes {
+    var Result: bytes = Positiveˉconstant(Count);
+    Result = Append(Result, Indexed(16u32, Meterˉfunction));
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
     Result = Append(
         Result,
-        Emitˉfailureˉguard(3011u32, Returnsˉvalue, Returnsˉi64)
+        Emitˉearlyˉreturn(Returnsˉvalue, Returnsˉi64)
     );
-    Result = Append(Result, Indexed(35u32, 1u32));
-    Result = Append(Result, Positiveˉconstant(1u32));
-    Result = Append(Result, Byte(106u32));
-    return Append(Result, Indexed(36u32, 1u32));
+    return Append(Result, Byte(11u32));
 }
 
 fn Emitˉcallˉfailureˉpropagation(
@@ -717,6 +860,7 @@ fn Emitˉoperation(
                 Scratchˉwideˉresult,
                 Runtime.Allocateˉfunction,
                 Runtime.Referenceˉfunction,
+                Runtime.Maximumˉbytes,
                 Runtime.Hasˉdynamic,
                 Runtime.Utf8ˉfunction,
                 Returnsˉvalue,
@@ -1062,6 +1206,69 @@ fn Emitˉoperation(
     return Invalidˉemission(Input, Offset, U32ˉfromˉu8(Opcode));
 }
 
+fn Packˉemission(Value: Emission) -> bytes {
+    var Valid: u32 = 0u32;
+    if Value.Valid { Valid = 1u32; }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Valid);
+    Result = Append(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Value.Failureˉoffset)
+    );
+    Result = Append(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Value.Failureˉopcode)
+    );
+    return Append(Result, Value.Bytes);
+}
+
+fn Emitˉoperationˉpacked(
+    Input: bytes,
+    Code: u32,
+    Offset: u32,
+    Opcode: u8,
+    Topˉkind: u32,
+    Reachableˉorder: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Frameˉbase: u32,
+    Scratchˉleft: u32,
+    Scratchˉright: u32,
+    Scratchˉresult: u32,
+    Scratchˉpointer: u32,
+    Scratchˉwideˉleft: u32,
+    Scratchˉwideˉright: u32,
+    Scratchˉwideˉresult: u32,
+    Runtime: Runtimeˉhelpers
+) -> bytes {
+    return Packˉemission(
+        Emitˉoperation(
+            Input,
+            Code,
+            Offset,
+            Opcode,
+            Topˉkind,
+            Reachableˉorder,
+            Directory,
+            Types,
+            Enumˉsummary,
+            Storage,
+            Function,
+            Frameˉbase,
+            Scratchˉleft,
+            Scratchˉright,
+            Scratchˉresult,
+            Scratchˉpointer,
+            Scratchˉwideˉleft,
+            Scratchˉwideˉright,
+            Scratchˉwideˉresult,
+            Runtime
+        )
+    );
+}
+
 fn Emitˉsetˉprogramˉcounter(Counter: u32, Block: u32) -> bytes {
     return Append(Positiveˉconstant(Block), Indexed(33u32, Counter));
 }
@@ -1107,6 +1314,290 @@ fn Emitˉenumˉlocalˉdefaults(
     return Emission(true, Result, 0u32, 0u32);
 }
 
+fn Packˉinstructionˉchunkˉfailure(Offset: u32, Opcode: u32) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Opcode));
+    var Field: u32 = 3u32;
+    while Field < 16u32 {
+        Result = Append(Result, Bytesˉfromˉu32ˉlittle(0u32));
+        Field = Field + 1u32;
+    }
+    return Result;
+}
+
+fn Packˉinstructionˉchunkˉsuccess(
+    Cursor: u32,
+    State: Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate,
+    Instructions: bytes
+) -> bytes {
+    var Valid: u32 = 0u32;
+    if State.Valid { Valid = 1u32; }
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Cursor));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Valid));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Depth));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Maximum));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Firstˉword));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Secondˉword));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Thirdˉword));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Fourthˉword));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Fifthˉword));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Sixthˉword));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Seventhˉword));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Eighthˉword));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(State.Ninthˉword));
+    return Append(Result, Instructions);
+}
+
+fn Emitˉinstructionˉchunkˉpacked(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    End: u32,
+    Kind: u32,
+    Start: u32,
+    Initialˉstate: Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Reachableˉorder: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Frameˉbase: u32,
+    Scratchˉleft: u32,
+    Scratchˉright: u32,
+    Scratchˉresult: u32,
+    Scratchˉpointer: u32,
+    Scratchˉwideˉleft: u32,
+    Scratchˉwideˉright: u32,
+    Scratchˉwideˉresult: u32,
+    Runtime: Runtimeˉhelpers
+) -> bytes {
+    var Instructions: bytes = Empty(Input);
+    var State: Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate =
+        Initialˉstate;
+    let Localˉtypeˉoffsets: bytes =
+        Typed.Compilerˉwebassemblyˉtypedˉlocalˉtypeˉoffsets(
+            Input,
+            Directory,
+            Function
+        );
+    var Cursor: u32 = Start;
+    var Count: u32 = 0u32;
+    while Cursor < End {
+        if Count >= 32u32 {
+            return Packˉinstructionˉchunkˉsuccess(
+                Cursor,
+                State,
+                Instructions
+            );
+        }
+        let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+            Input,
+            Code,
+            Length,
+            Cursor
+        );
+        if Width == 0u32 || Width > End - Cursor {
+            return Packˉinstructionˉchunkˉfailure(Cursor, 0u32);
+        }
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Cursor);
+        let Isˉterminator: bool = Cursor + Width == End && Kind != 0u32;
+        if !Isˉterminator {
+            let Operation: bytes = Emitˉoperationˉpacked(
+                Input,
+                Code,
+                Cursor,
+                Opcode,
+                Typed.Compilerˉwebassemblyˉtypedˉinstructionˉtopˉkind(State),
+                Reachableˉorder,
+                Directory,
+                Types,
+                Enumˉsummary,
+                Storage,
+                Function,
+                Frameˉbase,
+                Scratchˉleft,
+                Scratchˉright,
+                Scratchˉresult,
+                Scratchˉpointer,
+                Scratchˉwideˉleft,
+                Scratchˉwideˉright,
+                Scratchˉwideˉresult,
+                Runtime
+            );
+            if Bytesˉlength(Operation) < 12u32 ||
+                Bytesˉreadˉu32ˉlittle(Operation, 0u32) != 1u32 {
+                var Operationˉfailureˉoffset: u32 = Cursor;
+                var Operationˉfailureˉopcode: u32 = U32ˉfromˉu8(Opcode);
+                if Bytesˉlength(Operation) >= 12u32 {
+                    Operationˉfailureˉoffset =
+                        Bytesˉreadˉu32ˉlittle(Operation, 4u32);
+                    Operationˉfailureˉopcode =
+                        Bytesˉreadˉu32ˉlittle(Operation, 8u32);
+                }
+                return Packˉinstructionˉchunkˉfailure(
+                    Operationˉfailureˉoffset,
+                    Operationˉfailureˉopcode
+                );
+            }
+            Instructions = Append(
+                Instructions,
+                Bytesˉslice(
+                    Operation,
+                    12u32,
+                    Bytesˉlength(Operation) - 12u32
+                )
+            );
+        }
+        State = Typed.Compilerˉwebassemblyˉtypedˉinstructionˉapply(
+            Input,
+            Code,
+            Length,
+            Directory,
+            Types,
+            Localˉtypeˉoffsets,
+            Function,
+            Cursor,
+            State
+        );
+        if !State.Valid {
+            return Packˉinstructionˉchunkˉfailure(
+                Cursor,
+                U32ˉfromˉu8(Opcode)
+            );
+        }
+        Cursor = Cursor + Width;
+        Count = Count + 1u32;
+    }
+    return Packˉinstructionˉchunkˉsuccess(Cursor, State, Instructions);
+}
+
+fn Readˉinstructionˉchunkˉstate(
+    Input: bytes
+) -> Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate {
+    if Bytesˉlength(Input) < 64u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 16u32) != 1u32 {
+        return Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate(
+            false,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    return Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate(
+        true,
+        Bytesˉreadˉu32ˉlittle(Input, 20u32),
+        Bytesˉreadˉu32ˉlittle(Input, 24u32),
+        Bytesˉreadˉu32ˉlittle(Input, 28u32),
+        Bytesˉreadˉu32ˉlittle(Input, 32u32),
+        Bytesˉreadˉu32ˉlittle(Input, 36u32),
+        Bytesˉreadˉu32ˉlittle(Input, 40u32),
+        Bytesˉreadˉu32ˉlittle(Input, 44u32),
+        Bytesˉreadˉu32ˉlittle(Input, 48u32),
+        Bytesˉreadˉu32ˉlittle(Input, 52u32),
+        Bytesˉreadˉu32ˉlittle(Input, 56u32),
+        Bytesˉreadˉu32ˉlittle(Input, 60u32)
+    );
+}
+
+fn Emitˉinstructionˉgroupˉpacked(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    End: u32,
+    Kind: u32,
+    Start: u32,
+    Initialˉstate: Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Reachableˉorder: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Frameˉbase: u32,
+    Scratchˉleft: u32,
+    Scratchˉright: u32,
+    Scratchˉresult: u32,
+    Scratchˉpointer: u32,
+    Scratchˉwideˉleft: u32,
+    Scratchˉwideˉright: u32,
+    Scratchˉwideˉresult: u32,
+    Runtime: Runtimeˉhelpers
+) -> bytes {
+    var Instructions: bytes = Empty(Input);
+    var State: Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate =
+        Initialˉstate;
+    var Cursor: u32 = Start;
+    var Count: u32 = 0u32;
+    while Cursor < End {
+        if Count >= 8u32 {
+            return Packˉinstructionˉchunkˉsuccess(
+                Cursor,
+                State,
+                Instructions
+            );
+        }
+        let Chunk: bytes = Emitˉinstructionˉchunkˉpacked(
+            Input,
+            Code,
+            Length,
+            End,
+            Kind,
+            Cursor,
+            State,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Reachableˉorder,
+            Directory,
+            Types,
+            Enumˉsummary,
+            Storage,
+            Function,
+            Frameˉbase,
+            Scratchˉleft,
+            Scratchˉright,
+            Scratchˉresult,
+            Scratchˉpointer,
+            Scratchˉwideˉleft,
+            Scratchˉwideˉright,
+            Scratchˉwideˉresult,
+            Runtime
+        );
+        let Nextˉstate: Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate =
+            Readˉinstructionˉchunkˉstate(Chunk);
+        if !Nextˉstate.Valid { return Chunk; }
+        let Nextˉcursor: u32 = Bytesˉreadˉu32ˉlittle(Chunk, 12u32);
+        if Nextˉcursor <= Cursor || Nextˉcursor > End {
+            return Packˉinstructionˉchunkˉfailure(Cursor, 0u32);
+        }
+        Instructions = Append(
+            Instructions,
+            Bytesˉslice(Chunk, 64u32, Bytesˉlength(Chunk) - 64u32)
+        );
+        State = Nextˉstate;
+        Cursor = Nextˉcursor;
+        Count = Count + 1u32;
+    }
+    return Packˉinstructionˉchunkˉsuccess(Cursor, State, Instructions);
+}
+
 fn Emitˉblock(
     Input: bytes,
     Code: u32,
@@ -1149,7 +1640,26 @@ fn Emitˉblock(
         return Invalidˉemission(Input, Start, 0u32);
     }
     let End: u32 = Start + Blockˉlength;
-    var Result: bytes = Empty(Input);
+    var Instructionˉcursor: u32 = Start;
+    var Instructionˉcount: u32 = 0u32;
+    while Instructionˉcursor < End {
+        let Instructionˉwidth: u32 =
+            Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+                Input,
+                Code,
+                Length,
+                Instructionˉcursor
+            );
+        if Instructionˉwidth == 0u32 ||
+            Instructionˉwidth > End - Instructionˉcursor {
+            return Invalidˉemission(Input, Instructionˉcursor, 0u32);
+        }
+        Instructionˉcursor = Instructionˉcursor + Instructionˉwidth;
+        Instructionˉcount = Instructionˉcount + 1u32;
+    }
+    if Instructionˉcursor != End || Instructionˉcount == 0u32 {
+        return Invalidˉemission(Input, Instructionˉcursor, 0u32);
+    }
     let Returnsˉvalue: bool = Functionˉreturnsˉvalue(
         Input,
         Directory,
@@ -1160,71 +1670,72 @@ fn Emitˉblock(
         Directory,
         Function
     );
+    var Result: bytes = Emitˉmeter(
+        Instructionˉcount,
+        Returnsˉvalue,
+        Returnsˉi64,
+        Runtime.Meterˉfunction
+    );
     var State: Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate =
         Typed.Compilerˉwebassemblyˉtypedˉinstructionˉinitial();
     var Cursor: u32 = Start;
     while Cursor < End {
-        let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+        let Chunk: bytes = Emitˉinstructionˉgroupˉpacked(
             Input,
             Code,
             Length,
-            Cursor
-        );
-        if Width == 0u32 || Width > End - Cursor {
-            return Invalidˉemission(Input, Cursor, 0u32);
-        }
-        let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Cursor);
-        let Isˉterminator: bool = Cursor + Width == End && Kind != 0u32;
-        Result = Append(
-            Result,
-            Emitˉmeter(Returnsˉvalue, Returnsˉi64)
-        );
-        if !Isˉterminator {
-            let Operation: Emission = Emitˉoperation(
-                Input,
-                Code,
-                Cursor,
-                Opcode,
-                Typed.Compilerˉwebassemblyˉtypedˉinstructionˉtopˉkind(State),
-                Reachableˉorder,
-                Directory,
-                Types,
-                Enumˉsummary,
-                Storage,
-                Function,
-                Frameˉbase,
-                Scratchˉleft,
-                Scratchˉright,
-                Scratchˉresult,
-                Scratchˉpointer,
-                Scratchˉwideˉleft,
-                Scratchˉwideˉright,
-                Scratchˉwideˉresult,
-                Runtime
-            );
-            if !Operation.Valid {
-                return Invalidˉemission(
-                    Input,
-                    Operation.Failureˉoffset,
-                    Operation.Failureˉopcode
-                );
-            }
-            Result = Append(Result, Operation.Bytes);
-        }
-        State = Typed.Compilerˉwebassemblyˉtypedˉinstructionˉapply(
-            Input,
-            Code,
-            Length,
+            End,
+            Kind,
+            Cursor,
+            State,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Reachableˉorder,
             Directory,
             Types,
+            Enumˉsummary,
+            Storage,
             Function,
-            Cursor,
-            State
+            Frameˉbase,
+            Scratchˉleft,
+            Scratchˉright,
+            Scratchˉresult,
+            Scratchˉpointer,
+            Scratchˉwideˉleft,
+            Scratchˉwideˉright,
+            Scratchˉwideˉresult,
+            Runtime
         );
-        if !State.Valid {
-            return Invalidˉemission(Input, Cursor, U32ˉfromˉu8(Opcode));
+        if Bytesˉlength(Chunk) < 64u32 ||
+            Bytesˉreadˉu32ˉlittle(Chunk, 0u32) != 1u32 {
+            var Chunkˉfailureˉoffset: u32 = Cursor;
+            var Chunkˉfailureˉopcode: u32 = 0u32;
+            if Bytesˉlength(Chunk) >= 12u32 {
+                Chunkˉfailureˉoffset =
+                    Bytesˉreadˉu32ˉlittle(Chunk, 4u32);
+                Chunkˉfailureˉopcode =
+                    Bytesˉreadˉu32ˉlittle(Chunk, 8u32);
+            }
+            return Invalidˉemission(
+                Input,
+                Chunkˉfailureˉoffset,
+                Chunkˉfailureˉopcode
+            );
         }
-        Cursor = Cursor + Width;
+        let Nextˉcursor: u32 = Bytesˉreadˉu32ˉlittle(Chunk, 12u32);
+        if Nextˉcursor <= Cursor || Nextˉcursor > End ||
+            Bytesˉreadˉu32ˉlittle(Chunk, 16u32) != 1u32 {
+            return Invalidˉemission(Input, Cursor, 0u32);
+        }
+        State = Readˉinstructionˉchunkˉstate(Chunk);
+        if !State.Valid {
+            return Invalidˉemission(Input, Cursor, 0u32);
+        }
+        Result = Append(
+            Result,
+            Bytesˉslice(Chunk, 64u32, Bytesˉlength(Chunk) - 64u32)
+        );
+        Cursor = Nextˉcursor;
     }
     if Cursor != End || State.Depth != 0u32 {
         return Invalidˉemission(Input, Cursor, 0u32);
@@ -1340,6 +1851,197 @@ fn Emitˉblock(
         return Emission(true, Result, 0u32, 0u32);
     }
     return Invalidˉemission(Input, End, Kind);
+}
+
+fn Emitˉblockˉpacked(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    Starts: u32,
+    Localˉblock: u32,
+    Counter: u32,
+    Scratchˉleft: u32,
+    Scratchˉright: u32,
+    Scratchˉresult: u32,
+    Scratchˉpointer: u32,
+    Scratchˉwideˉleft: u32,
+    Scratchˉwideˉright: u32,
+    Scratchˉwideˉresult: u32,
+    Frameˉbase: u32,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Reachableˉorder: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Runtime: Runtimeˉhelpers
+) -> bytes {
+    return Packˉemission(
+        Emitˉblock(
+            Input,
+            Code,
+            Length,
+            Starts,
+            Localˉblock,
+            Counter,
+            Scratchˉleft,
+            Scratchˉright,
+            Scratchˉresult,
+            Scratchˉpointer,
+            Scratchˉwideˉleft,
+            Scratchˉwideˉright,
+            Scratchˉwideˉresult,
+            Frameˉbase,
+            Control,
+            Reachableˉorder,
+            Directory,
+            Types,
+            Enumˉsummary,
+            Storage,
+            Function,
+            Runtime
+        )
+    );
+}
+
+fn Emitˉblockˉchunkˉpacked(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    Starts: u32,
+    Start: u32,
+    End: u32,
+    Counter: u32,
+    Scratchˉleft: u32,
+    Scratchˉright: u32,
+    Scratchˉresult: u32,
+    Scratchˉpointer: u32,
+    Scratchˉwideˉleft: u32,
+    Scratchˉwideˉright: u32,
+    Scratchˉwideˉresult: u32,
+    Frameˉbase: u32,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Reachableˉorder: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Runtime: Runtimeˉhelpers
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    var Localˉblock: u32 = Start;
+    while Localˉblock < End {
+        Result = Append(Result, Indexed(32u32, Counter));
+        Result = Append(Result, Positiveˉconstant(Localˉblock));
+        Result = Append(Result, Byte(70u32));
+        Result = Append(Result, Byte(4u32));
+        Result = Append(Result, Byte(64u32));
+        let Block: bytes = Emitˉblockˉpacked(
+            Input,
+            Code,
+            Length,
+            Starts,
+            Localˉblock,
+            Counter,
+            Scratchˉleft,
+            Scratchˉright,
+            Scratchˉresult,
+            Scratchˉpointer,
+            Scratchˉwideˉleft,
+            Scratchˉwideˉright,
+            Scratchˉwideˉresult,
+            Frameˉbase,
+            Control,
+            Reachableˉorder,
+            Directory,
+            Types,
+            Enumˉsummary,
+            Storage,
+            Function,
+            Runtime
+        );
+        if Bytesˉlength(Block) < 12u32 ||
+            Bytesˉreadˉu32ˉlittle(Block, 0u32) != 1u32 {
+            return Block;
+        }
+        Result = Append(
+            Result,
+            Bytesˉslice(Block, 12u32, Bytesˉlength(Block) - 12u32)
+        );
+        Result = Append(Result, Byte(11u32));
+        Localˉblock = Localˉblock + 1u32;
+    }
+    return Packˉemission(Emission(true, Result, 0u32, 0u32));
+}
+
+fn Emitˉblockˉgroupˉpacked(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    Starts: u32,
+    Start: u32,
+    End: u32,
+    Counter: u32,
+    Scratchˉleft: u32,
+    Scratchˉright: u32,
+    Scratchˉresult: u32,
+    Scratchˉpointer: u32,
+    Scratchˉwideˉleft: u32,
+    Scratchˉwideˉright: u32,
+    Scratchˉwideˉresult: u32,
+    Frameˉbase: u32,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Reachableˉorder: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Runtime: Runtimeˉhelpers
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    var Chunkˉstart: u32 = Start;
+    while Chunkˉstart < End {
+        var Chunkˉend: u32 = Chunkˉstart + 8u32;
+        if Chunkˉend > End { Chunkˉend = End; }
+        let Chunk: bytes = Emitˉblockˉchunkˉpacked(
+            Input,
+            Code,
+            Length,
+            Starts,
+            Chunkˉstart,
+            Chunkˉend,
+            Counter,
+            Scratchˉleft,
+            Scratchˉright,
+            Scratchˉresult,
+            Scratchˉpointer,
+            Scratchˉwideˉleft,
+            Scratchˉwideˉright,
+            Scratchˉwideˉresult,
+            Frameˉbase,
+            Control,
+            Reachableˉorder,
+            Directory,
+            Types,
+            Enumˉsummary,
+            Storage,
+            Function,
+            Runtime
+        );
+        if Bytesˉlength(Chunk) < 12u32 ||
+            Bytesˉreadˉu32ˉlittle(Chunk, 0u32) != 1u32 {
+            return Chunk;
+        }
+        Result = Append(
+            Result,
+            Bytesˉslice(Chunk, 12u32, Bytesˉlength(Chunk) - 12u32)
+        );
+        Chunkˉstart = Chunkˉend;
+    }
+    return Packˉemission(Emission(true, Result, 0u32, 0u32));
 }
 
 fn Emitˉfunction(
@@ -1501,17 +2203,15 @@ fn Emitˉfunction(
     Instructions = Append(Instructions, Byte(64u32));
     var Localˉblock: u32 = 0u32;
     while Localˉblock < Blockˉcount {
-        Instructions = Append(Instructions, Indexed(32u32, Counter));
-        Instructions = Append(Instructions, Positiveˉconstant(Localˉblock));
-        Instructions = Append(Instructions, Byte(70u32));
-        Instructions = Append(Instructions, Byte(4u32));
-        Instructions = Append(Instructions, Byte(64u32));
-        let Block: Emission = Emitˉblock(
+        var Groupˉend: u32 = Localˉblock + 64u32;
+        if Groupˉend > Blockˉcount { Groupˉend = Blockˉcount; }
+        let Blocks: bytes = Emitˉblockˉgroupˉpacked(
             Input,
             Functionˉcode,
             Functionˉcodeˉlength,
             Firstˉblock,
             Localˉblock,
+            Groupˉend,
             Counter,
             Scratchˉleft,
             Scratchˉright,
@@ -1530,10 +2230,27 @@ fn Emitˉfunction(
             Function,
             Runtime
         );
-        if !Block.Valid { return Block; }
-        Instructions = Append(Instructions, Block.Bytes);
-        Instructions = Append(Instructions, Byte(11u32));
-        Localˉblock = Localˉblock + 1u32;
+        if Bytesˉlength(Blocks) < 12u32 ||
+            Bytesˉreadˉu32ˉlittle(Blocks, 0u32) != 1u32 {
+            var Blockˉfailureˉoffset: u32 = 0u32;
+            var Blockˉfailureˉopcode: u32 = 0u32;
+            if Bytesˉlength(Blocks) >= 12u32 {
+                Blockˉfailureˉoffset =
+                    Bytesˉreadˉu32ˉlittle(Blocks, 4u32);
+                Blockˉfailureˉopcode =
+                    Bytesˉreadˉu32ˉlittle(Blocks, 8u32);
+            }
+            return Invalidˉemission(
+                Input,
+                Blockˉfailureˉoffset,
+                Blockˉfailureˉopcode
+            );
+        }
+        Instructions = Append(
+            Instructions,
+            Bytesˉslice(Blocks, 12u32, Bytesˉlength(Blocks) - 12u32)
+        );
+        Localˉblock = Groupˉend;
     }
     Instructions = Append(Instructions, Byte(0u32));
     Instructions = Append(Instructions, Byte(11u32));
@@ -1546,6 +2263,306 @@ fn Emitˉfunction(
         ),
         0u32,
         0u32
+    );
+}
+
+fn Emitˉtypeˉpacked(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32
+) -> bytes {
+    return Packˉemission(Emitˉtype(Input, Directory, Storage, Function));
+}
+
+fn Emitˉfunctionˉpacked(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Reachableˉorder: bytes,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Runtime: Runtimeˉhelpers
+) -> bytes {
+    return Packˉemission(
+        Emitˉfunction(
+            Input,
+            Codeˉoffset,
+            Directory,
+            Control,
+            Reachableˉorder,
+            Types,
+            Enumˉsummary,
+            Storage,
+            Function,
+            Runtime
+        )
+    );
+}
+
+fn Packˉchunkˉfailure(
+    Function: u32,
+    Offset: u32,
+    Opcode: u32
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Function));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Opcode));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    return Append(Result, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+fn Packˉchunkˉsuccess(
+    Typeˉentries: bytes,
+    Functionˉentries: bytes,
+    Codeˉentries: bytes
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Append(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Typeˉentries))
+    );
+    Result = Append(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Functionˉentries))
+    );
+    Result = Append(Result, Typeˉentries);
+    Result = Append(Result, Functionˉentries);
+    return Append(Result, Codeˉentries);
+}
+
+fn Emitˉfunctionˉchunkˉpacked(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Runtime: Runtimeˉhelpers,
+    Start: u32,
+    End: u32
+) -> bytes {
+    var Typeˉentries: bytes = Empty(Input);
+    var Functionˉentries: bytes = Empty(Input);
+    var Codeˉentries: bytes = Empty(Input);
+    var Position: u32 = Start;
+    while Position < End {
+        let Function: u32 = Bytesˉreadˉu32ˉlittle(
+            Graph.Reachableˉorder,
+            Position * 4u32
+        );
+        if Function >= Directory.Count {
+            return Packˉchunkˉfailure(Function, 0u32, 0u32);
+        }
+        let Type: bytes = Emitˉtypeˉpacked(
+            Input,
+            Directory,
+            Storage,
+            Function
+        );
+        if Bytesˉlength(Type) < 12u32 ||
+            Bytesˉreadˉu32ˉlittle(Type, 0u32) != 1u32 {
+            var Typeˉfailureˉoffset: u32 = 0u32;
+            var Typeˉfailureˉopcode: u32 = 0u32;
+            if Bytesˉlength(Type) >= 12u32 {
+                Typeˉfailureˉoffset = Bytesˉreadˉu32ˉlittle(Type, 4u32);
+                Typeˉfailureˉopcode = Bytesˉreadˉu32ˉlittle(Type, 8u32);
+            }
+            return Packˉchunkˉfailure(
+                Function,
+                Typeˉfailureˉoffset,
+                Typeˉfailureˉopcode
+            );
+        }
+        Typeˉentries = Append(
+            Typeˉentries,
+            Bytesˉslice(Type, 12u32, Bytesˉlength(Type) - 12u32)
+        );
+        Functionˉentries = Append(Functionˉentries, Uleb(Position));
+
+        let Body: bytes = Emitˉfunctionˉpacked(
+            Input,
+            Codeˉoffset,
+            Directory,
+            Control,
+            Graph.Reachableˉorder,
+            Types,
+            Enumˉsummary,
+            Storage,
+            Function,
+            Runtime
+        );
+        if Bytesˉlength(Body) < 12u32 ||
+            Bytesˉreadˉu32ˉlittle(Body, 0u32) != 1u32 {
+            var Bodyˉfailureˉoffset: u32 = 0u32;
+            var Bodyˉfailureˉopcode: u32 = 0u32;
+            if Bytesˉlength(Body) >= 12u32 {
+                Bodyˉfailureˉoffset = Bytesˉreadˉu32ˉlittle(Body, 4u32);
+                Bodyˉfailureˉopcode = Bytesˉreadˉu32ˉlittle(Body, 8u32);
+            }
+            return Packˉchunkˉfailure(
+                Function,
+                Bodyˉfailureˉoffset,
+                Bodyˉfailureˉopcode
+            );
+        }
+        Codeˉentries = Append(
+            Codeˉentries,
+            Bytesˉslice(Body, 12u32, Bytesˉlength(Body) - 12u32)
+        );
+        Position = Position + 1u32;
+    }
+    return Packˉchunkˉsuccess(
+        Typeˉentries,
+        Functionˉentries,
+        Codeˉentries
+    );
+}
+
+fn Emitˉfunctionˉgroupˉpacked(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Runtime: Runtimeˉhelpers,
+    Start: u32,
+    End: u32
+) -> bytes {
+    var Typeˉentries: bytes = Empty(Input);
+    var Functionˉentries: bytes = Empty(Input);
+    var Codeˉentries: bytes = Empty(Input);
+    var Chunkˉstart: u32 = Start;
+    while Chunkˉstart < End {
+        var Chunkˉend: u32 = Chunkˉstart + 8u32;
+        if Chunkˉend > End { Chunkˉend = End; }
+        let Chunk: bytes = Emitˉfunctionˉchunkˉpacked(
+            Input,
+            Codeˉoffset,
+            Directory,
+            Control,
+            Graph,
+            Types,
+            Enumˉsummary,
+            Storage,
+            Runtime,
+            Chunkˉstart,
+            Chunkˉend
+        );
+        if Bytesˉlength(Chunk) < 24u32 ||
+            Bytesˉreadˉu32ˉlittle(Chunk, 0u32) != 1u32 {
+            return Chunk;
+        }
+        let Typeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Chunk, 16u32);
+        let Functionˉlength: u32 = Bytesˉreadˉu32ˉlittle(Chunk, 20u32);
+        if Typeˉlength > Bytesˉlength(Chunk) - 24u32 ||
+            Functionˉlength > Bytesˉlength(Chunk) - 24u32 - Typeˉlength {
+            return Packˉchunkˉfailure(Graph.Root, 0u32, 0u32);
+        }
+        let Functionˉoffset: u32 = 24u32 + Typeˉlength;
+        let Codeˉentryˉoffset: u32 = Functionˉoffset + Functionˉlength;
+        Typeˉentries = Append(
+            Typeˉentries,
+            Bytesˉslice(Chunk, 24u32, Typeˉlength)
+        );
+        Functionˉentries = Append(
+            Functionˉentries,
+            Bytesˉslice(Chunk, Functionˉoffset, Functionˉlength)
+        );
+        Codeˉentries = Append(
+            Codeˉentries,
+            Bytesˉslice(
+                Chunk,
+                Codeˉentryˉoffset,
+                Bytesˉlength(Chunk) - Codeˉentryˉoffset
+            )
+        );
+        Chunkˉstart = Chunkˉend;
+    }
+    return Packˉchunkˉsuccess(
+        Typeˉentries,
+        Functionˉentries,
+        Codeˉentries
+    );
+}
+
+fn Descriptorˉlength(Local: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, Local);
+    Result = Append(Result, Append(Byte(66u32), Byte(32u32)));
+    Result = Append(Result, Byte(136u32));
+    return Append(Result, Byte(167u32));
+}
+
+fn Descriptorˉpointer(Local: u32) -> bytes {
+    return Append(Indexed(32u32, Local), Byte(167u32));
+}
+
+fn Packˉdescriptor(Pointer: u32, Length: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, Pointer);
+    Result = Append(Result, Byte(173u32));
+    Result = Append(Result, Indexed(32u32, Length));
+    Result = Append(Result, Byte(173u32));
+    Result = Append(Result, Append(Byte(66u32), Byte(32u32)));
+    Result = Append(Result, Byte(134u32));
+    return Append(Result, Byte(132u32));
+}
+
+fn Memoryˉcopy() -> bytes {
+    var Result: bytes = Byte(252u32);
+    Result = Append(Result, Uleb(10u32));
+    Result = Append(Result, Uleb(0u32));
+    return Append(Result, Uleb(0u32));
+}
+
+fn Emitˉmeterˉtype() -> bytes {
+    var Result: bytes = Byte(96u32);
+    Result = Append(Result, Uleb(1u32));
+    Result = Append(Result, Byte(127u32));
+    Result = Append(Result, Uleb(1u32));
+    return Append(Result, Byte(127u32));
+}
+
+fn Emitˉmeterˉbody() -> bytes {
+    var Instructions: bytes = Indexed(35u32, 2u32);
+    Instructions = Append(Instructions, I32ˉnegativeˉoneˉconstant());
+    Instructions = Append(Instructions, Byte(71u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(35u32, 2u32));
+    Instructions = Append(Instructions, Indexed(35u32, 1u32));
+    Instructions = Append(Instructions, Byte(107u32));
+    Instructions = Append(Instructions, Indexed(32u32, 0u32));
+    Instructions = Append(Instructions, Byte(73u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(35u32, 2u32));
+    Instructions = Append(Instructions, Indexed(36u32, 1u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3011u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Positiveˉconstant(1u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+    Instructions = Append(Instructions, Byte(11u32));
+    Instructions = Append(Instructions, Indexed(35u32, 1u32));
+    Instructions = Append(Instructions, Indexed(32u32, 0u32));
+    Instructions = Append(Instructions, Byte(106u32));
+    Instructions = Append(Instructions, Indexed(36u32, 1u32));
+    Instructions = Append(Instructions, Positiveˉconstant(0u32));
+    return Encoding.Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
+        Uleb(0u32),
+        Instructions
     );
 }
 
@@ -1582,8 +2599,7 @@ fn Emitˉwrapper(
     }
 
     Instructions = Append(Instructions, Indexed(32u32, 0u32));
-    Instructions = Append(Instructions, Positiveˉconstant(0u32));
-    Instructions = Append(Instructions, Byte(76u32));
+    Instructions = Append(Instructions, Byte(69u32));
     Instructions = Append(Instructions, Byte(4u32));
     Instructions = Append(Instructions, Byte(64u32));
     Instructions = Append(Instructions, Positiveˉconstant(3011u32));
@@ -1612,7 +2628,317 @@ fn Emitˉwrapper(
     );
 }
 
-export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
+fn Emitˉmemoryˉwrapper(
+    Rootˉposition: u32,
+    Hasˉrecords: bool,
+    Freeˉglobal: u32,
+    Frameˉstart: u32,
+    Allocateˉfunction: u32,
+    Referenceˉfunction: u32,
+    Outputˉlengthˉglobal: u32
+) -> bytes {
+    let Pointer: u32 = 2u32;
+    let Descriptor: u32 = 3u32;
+    var Localˉdeclarations: bytes = Uleb(2u32);
+    Localˉdeclarations = Append(Localˉdeclarations, Uleb(1u32));
+    Localˉdeclarations = Append(Localˉdeclarations, Byte(127u32));
+    Localˉdeclarations = Append(Localˉdeclarations, Uleb(1u32));
+    Localˉdeclarations = Append(Localˉdeclarations, Byte(126u32));
+
+    var Instructions: bytes = Positiveˉconstant(0u32);
+    Instructions = Append(Instructions, Indexed(36u32, 0u32));
+    Instructions = Append(Instructions, Positiveˉconstant(0u32));
+    Instructions = Append(Instructions, Indexed(36u32, 1u32));
+    Instructions = Append(Instructions, Indexed(32u32, 0u32));
+    Instructions = Append(Instructions, Indexed(36u32, 2u32));
+    Instructions = Append(Instructions, Positiveˉconstant(0u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Positiveˉconstant(0u32));
+    Instructions = Append(
+        Instructions,
+        Indexed(36u32, Outputˉlengthˉglobal)
+    );
+    Instructions = Append(
+        Instructions,
+        Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉinitialize(
+            Freeˉglobal
+        )
+    );
+    if Hasˉrecords {
+        Instructions = Append(Instructions, Positiveˉconstant(Frameˉstart));
+        Instructions = Append(Instructions, Indexed(36u32, 4u32));
+    }
+
+    Instructions = Append(Instructions, Indexed(32u32, 0u32));
+    Instructions = Append(Instructions, Byte(69u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3011u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(Instructions, Positiveˉconstant(4194304u32));
+    Instructions = Append(Instructions, Byte(75u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3008u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(
+        Instructions,
+        Indexed(16u32, Allocateˉfunction)
+    );
+    Instructions = Append(Instructions, Indexed(34u32, Pointer));
+    Instructions = Append(Instructions, Byte(69u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3018u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+    Instructions = Append(Instructions, Indexed(32u32, Pointer));
+    Instructions = Append(Instructions, Positiveˉconstant(142671872u32));
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(Instructions, Memoryˉcopy());
+    Instructions = Append(
+        Instructions,
+        Packˉdescriptor(Pointer, 1u32)
+    );
+    Instructions = Append(Instructions, Indexed(33u32, Descriptor));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, Descriptor));
+    Instructions = Append(Instructions, Indexed(16u32, Rootˉposition));
+    Instructions = Append(Instructions, Indexed(33u32, Descriptor));
+    if Hasˉrecords {
+        Instructions = Append(Instructions, Positiveˉconstant(Frameˉstart));
+        Instructions = Append(Instructions, Indexed(36u32, 4u32));
+    }
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(
+        Instructions,
+        Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+            Descriptor,
+            false,
+            Referenceˉfunction
+        )
+    );
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Descriptorˉlength(Descriptor));
+    Instructions = Append(
+        Instructions,
+        Indexed(36u32, Outputˉlengthˉglobal)
+    );
+    Instructions = Append(
+        Instructions,
+        Indexed(35u32, Outputˉlengthˉglobal)
+    );
+    Instructions = Append(Instructions, Positiveˉconstant(16777216u32));
+    Instructions = Append(Instructions, Byte(75u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3015u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(
+        Instructions,
+        Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+            Descriptor,
+            false,
+            Referenceˉfunction
+        )
+    );
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(
+        Instructions,
+        Positiveˉconstant(146866176u32)
+    );
+    Instructions = Append(Instructions, Descriptorˉpointer(Descriptor));
+    Instructions = Append(Instructions, Descriptorˉlength(Descriptor));
+    Instructions = Append(Instructions, Memoryˉcopy());
+    Instructions = Append(Instructions, Descriptorˉlength(Descriptor));
+    Instructions = Append(
+        Instructions,
+        Indexed(36u32, Outputˉlengthˉglobal)
+    );
+    Instructions = Append(
+        Instructions,
+        Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+            Descriptor,
+            false,
+            Referenceˉfunction
+        )
+    );
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    return Encoding.Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
+        Localˉdeclarations,
+        Instructions
+    );
+}
+
+fn Emitˉsegmentedˉmemoryˉwrapper(
+    Rootˉposition: u32,
+    Hasˉrecords: bool,
+    Freeˉglobal: u32,
+    Frameˉstart: u32,
+    Allocateˉfunction: u32,
+    Referenceˉfunction: u32,
+    Outputˉlengthˉglobal: u32
+) -> bytes {
+    let Pointer: u32 = 2u32;
+    let Descriptor: u32 = 3u32;
+    var Localˉdeclarations: bytes = Uleb(2u32);
+    Localˉdeclarations = Append(Localˉdeclarations, Uleb(1u32));
+    Localˉdeclarations = Append(Localˉdeclarations, Byte(127u32));
+    Localˉdeclarations = Append(Localˉdeclarations, Uleb(1u32));
+    Localˉdeclarations = Append(Localˉdeclarations, Byte(126u32));
+
+    var Instructions: bytes = Positiveˉconstant(0u32);
+    Instructions = Append(Instructions, Indexed(36u32, 0u32));
+    Instructions = Append(Instructions, Positiveˉconstant(0u32));
+    Instructions = Append(Instructions, Indexed(36u32, 1u32));
+    Instructions = Append(Instructions, Indexed(32u32, 0u32));
+    Instructions = Append(Instructions, Indexed(36u32, 2u32));
+    Instructions = Append(Instructions, Positiveˉconstant(0u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Positiveˉconstant(0u32));
+    Instructions = Append(
+        Instructions,
+        Indexed(36u32, Outputˉlengthˉglobal)
+    );
+    Instructions = Append(
+        Instructions,
+        Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉinitialize(
+            Freeˉglobal
+        )
+    );
+    if Hasˉrecords {
+        Instructions = Append(Instructions, Positiveˉconstant(Frameˉstart));
+        Instructions = Append(Instructions, Indexed(36u32, 4u32));
+    }
+
+    Instructions = Append(Instructions, Indexed(32u32, 0u32));
+    Instructions = Append(Instructions, Byte(69u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3011u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(Instructions, Positiveˉconstant(4194304u32));
+    Instructions = Append(Instructions, Byte(75u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3008u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(
+        Instructions,
+        Indexed(16u32, Allocateˉfunction)
+    );
+    Instructions = Append(Instructions, Indexed(34u32, Pointer));
+    Instructions = Append(Instructions, Byte(69u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3018u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+    Instructions = Append(Instructions, Indexed(32u32, Pointer));
+    Instructions = Append(Instructions, Positiveˉconstant(142671872u32));
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(Instructions, Memoryˉcopy());
+    Instructions = Append(
+        Instructions,
+        Packˉdescriptor(Pointer, 1u32)
+    );
+    Instructions = Append(Instructions, Indexed(33u32, Descriptor));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, Descriptor));
+    Instructions = Append(Instructions, Positiveˉconstant(146866176u32));
+    Instructions = Append(Instructions, Indexed(16u32, Rootˉposition));
+    Instructions = Append(Instructions, Indexed(33u32, Pointer));
+    if Hasˉrecords {
+        Instructions = Append(Instructions, Positiveˉconstant(Frameˉstart));
+        Instructions = Append(Instructions, Indexed(36u32, 4u32));
+    }
+    Instructions = Append(
+        Instructions,
+        Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
+            Descriptor,
+            false,
+            Referenceˉfunction
+        )
+    );
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Indexed(32u32, Pointer));
+    Instructions = Append(Instructions, Positiveˉconstant(146866176u32));
+    Instructions = Append(Instructions, Byte(71u32));
+    Instructions = Append(Instructions, Byte(4u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Positiveˉconstant(3007u32));
+    Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    Instructions = Append(Instructions, Byte(15u32));
+    Instructions = Append(Instructions, Byte(11u32));
+
+    Instructions = Append(Instructions, Positiveˉconstant(288u32));
+    Instructions = Append(
+        Instructions,
+        Indexed(36u32, Outputˉlengthˉglobal)
+    );
+    Instructions = Append(Instructions, Indexed(35u32, 3u32));
+    return Encoding.Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
+        Localˉdeclarations,
+        Instructions
+    );
+}
+
+fn Memoryˉabiˉsection() -> bytes {
+    var Payload: bytes = Uleb(1u32);
+    Payload = Append(Payload, Byte(1u32));
+    Payload = Append(Payload, Uleb(2497u32));
+    Payload = Append(Payload, Uleb(2497u32));
+    return Encoding.Compilerˉwebassemblyˉbinaryˉsection(5u32, Payload);
+}
+
+fn Emitˉmode(
     Input: bytes,
     Codeˉoffset: u32,
     Codeˉlength: u32,
@@ -1621,7 +2947,9 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
     Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
     Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
-    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Maximumˉbytes: u32,
+    Segmented: bool
 ) -> Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     let Runtimeˉdata:
         Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
@@ -1648,10 +2976,55 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         Codeˉlength > Bytesˉlength(Input) - Codeˉoffset {
         return Invalid(Input, 0u32, 0u32, 0u32);
     }
-    let Hasˉdynamic: bool =
+    let Rootˉposition: Positionˉlookup = Reachableˉposition(
+        Graph.Reachableˉorder,
+        Graph.Root
+    );
+    if !Rootˉposition.Found {
+        return Invalid(Input, Graph.Root, 0u32, 0u32);
+    }
+    let Rootˉparameterˉcount: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+            Directory,
+            Graph.Root
+        );
+    let Rootˉresultˉoffset: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
+            Directory,
+            Graph.Root
+        );
+    let Rootˉresult: u32 = Shapeˉkind(Input, Rootˉresultˉoffset);
+    var Memoryˉroot: bool = false;
+    var Segmentedˉmemoryˉroot: bool = false;
+    if Rootˉparameterˉcount == 1u32 {
+        let Rootˉparameter: u32 = Shapeˉkind(
+            Input,
+            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
+                Directory,
+                Graph.Root
+            )
+        );
+        if Rootˉparameter == 6u32 {
+            if Rootˉresult == 6u32 { Memoryˉroot = true; }
+            if Segmentedˉrootˉisˉvalid(Input, Types, Rootˉresultˉoffset) {
+                Segmentedˉmemoryˉroot = true;
+            }
+        }
+    }
+    let Abiˉroot: bool = Memoryˉroot || Segmentedˉmemoryˉroot;
+    if !Abiˉroot && (
+        Rootˉparameterˉcount != 0u32 ||
+        !Shapeˉisˉscalar(Rootˉresult) ||
+        Rootˉresult == 7u32
+    ) {
+        return Invalid(Input, Graph.Root, 0u32, 0u32);
+    }
+
+    var Hasˉdynamic: bool =
         Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉisˉdynamic(
             Descriptorˉsummary
         );
+    if Abiˉroot { Hasˉdynamic = true; }
     let Hasˉutf8: bool =
         Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉrequiresˉutf8(
             Descriptorˉsummary
@@ -1661,6 +3034,8 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     let Referenceˉfunction: u32 = Graph.Reachableˉcount + 1u32;
     var Utf8ˉfunction: u32 = Graph.Reachableˉcount;
     if Hasˉdynamic { Utf8ˉfunction = Utf8ˉfunction + 2u32; }
+    var Meterˉfunction: u32 = Utf8ˉfunction;
+    if Hasˉutf8 { Meterˉfunction = Meterˉfunction + 1u32; }
     var Frameˉstart: u32 = 65536u32;
     var Frameˉlimit: u32 = 8454144u32;
     if Hasˉdynamic {
@@ -1675,87 +3050,167 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         Allocateˉfunction,
         Referenceˉfunction,
         Utf8ˉfunction,
+        Meterˉfunction,
+        Maximumˉbytes,
         Frameˉlimit
     );
-    let Rootˉposition: Positionˉlookup = Reachableˉposition(
-        Graph.Reachableˉorder,
-        Graph.Root
-    );
-    if !Rootˉposition.Found {
-        return Invalid(Input, Graph.Root, 0u32, 0u32);
-    }
-    if Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
-        Directory,
-        Graph.Root
-    ) != 0u32 {
-        return Invalid(Input, Graph.Root, 0u32, 0u32);
-    }
-    let Rootˉresult: u32 = Shapeˉkind(
-        Input,
-        Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
-            Directory,
-            Graph.Root
-        )
-    );
-    if !Shapeˉisˉscalar(Rootˉresult) || Rootˉresult == 7u32 {
-        return Invalid(Input, Graph.Root, 0u32, 0u32);
-    }
-
     var Typeˉentries: bytes = Empty(Input);
     var Functionˉentries: bytes = Empty(Input);
     var Codeˉentries: bytes = Empty(Input);
-    var Position: u32 = 0u32;
-    while Position < Graph.Reachableˉcount {
-        let Function: u32 = Bytesˉreadˉu32ˉlittle(
-            Graph.Reachableˉorder,
-            Position * 4u32
+    let Emptyˉcodeˉblock:
+        Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock =
+        Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉempty(
+            Input
         );
-        if Function >= Directory.Count {
-            return Invalid(Input, Function, 0u32, 0u32);
+    var Codeˉblock0: Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock =
+        Emptyˉcodeˉblock;
+    var Codeˉblock1: Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock =
+        Emptyˉcodeˉblock;
+    var Codeˉblock2: Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock =
+        Emptyˉcodeˉblock;
+    var Codeˉblock3: Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblock =
+        Emptyˉcodeˉblock;
+    var Codeˉsegment: u32 = 0u32;
+    var Chunkˉstart: u32 = 0u32;
+    while Chunkˉstart < Graph.Reachableˉcount {
+        var Chunkˉend: u32 = Chunkˉstart + 64u32;
+        if Segmented { Chunkˉend = Chunkˉstart + 16u32; }
+        if Chunkˉend > Graph.Reachableˉcount {
+            Chunkˉend = Graph.Reachableˉcount;
         }
-        let Type: Emission = Emitˉtype(
-            Input,
-            Directory,
-            Storage,
-            Function
-        );
-        if !Type.Valid {
-            return Invalid(
+        var Chunk: bytes = Empty(Input);
+        if Segmented {
+            Chunk = Emitˉfunctionˉchunkˉpacked(
                 Input,
-                Function,
-                Type.Failureˉoffset,
-                Type.Failureˉopcode
+                Codeˉoffset,
+                Directory,
+                Control,
+                Graph,
+                Types,
+                Enumˉsummary,
+                Storage,
+                Runtime,
+                Chunkˉstart,
+                Chunkˉend
+            );
+        } else {
+            Chunk = Emitˉfunctionˉgroupˉpacked(
+                Input,
+                Codeˉoffset,
+                Directory,
+                Control,
+                Graph,
+                Types,
+                Enumˉsummary,
+                Storage,
+                Runtime,
+                Chunkˉstart,
+                Chunkˉend
             );
         }
-        Typeˉentries = Append(Typeˉentries, Type.Bytes);
-        Functionˉentries = Append(Functionˉentries, Uleb(Position));
-        let Body: Emission = Emitˉfunction(
-            Input,
-            Codeˉoffset,
-            Directory,
-            Control,
-            Graph.Reachableˉorder,
-            Types,
-            Enumˉsummary,
-            Storage,
-            Function,
-            Runtime
-        );
-        if !Body.Valid {
+        if Bytesˉlength(Chunk) < 24u32 ||
+            Bytesˉreadˉu32ˉlittle(Chunk, 0u32) != 1u32 {
+            var Failureˉfunction: u32 = Graph.Root;
+            var Failureˉoffset: u32 = 0u32;
+            var Failureˉopcode: u32 = 0u32;
+            if Bytesˉlength(Chunk) >= 16u32 {
+                Failureˉfunction = Bytesˉreadˉu32ˉlittle(Chunk, 4u32);
+                Failureˉoffset = Bytesˉreadˉu32ˉlittle(Chunk, 8u32);
+                Failureˉopcode = Bytesˉreadˉu32ˉlittle(Chunk, 12u32);
+            }
             return Invalid(
                 Input,
-                Function,
-                Body.Failureˉoffset,
-                Body.Failureˉopcode
+                Failureˉfunction,
+                Failureˉoffset,
+                Failureˉopcode
             );
         }
-        Codeˉentries = Append(Codeˉentries, Body.Bytes);
-        Position = Position + 1u32;
+        let Typeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Chunk, 16u32);
+        let Functionˉlength: u32 = Bytesˉreadˉu32ˉlittle(Chunk, 20u32);
+        if Typeˉlength > Bytesˉlength(Chunk) - 24u32 ||
+            Functionˉlength > Bytesˉlength(Chunk) - 24u32 - Typeˉlength {
+            return Invalid(Input, Graph.Root, 0u32, 0u32);
+        }
+        let Functionˉoffset: u32 = 24u32 + Typeˉlength;
+        let Codeˉentryˉoffset: u32 = Functionˉoffset + Functionˉlength;
+        Typeˉentries = Append(
+            Typeˉentries,
+            Bytesˉslice(Chunk, 24u32, Typeˉlength)
+        );
+        Functionˉentries = Append(
+            Functionˉentries,
+            Bytesˉslice(Chunk, Functionˉoffset, Functionˉlength)
+        );
+        let Codeˉpart: bytes = Bytesˉslice(
+            Chunk,
+            Codeˉentryˉoffset,
+            Bytesˉlength(Chunk) - Codeˉentryˉoffset
+        );
+        if Segmented {
+            let Codeˉpartˉlength: u32 = Bytesˉlength(Codeˉpart);
+            if Codeˉpartˉlength > 4194304u32 {
+                return Invalid(Input, Graph.Root, 0u32, 0u32);
+            }
+            let Existingˉlength: u32 = Codeˉsegmentˉlength(
+                Codeˉblock0,
+                Codeˉblock1,
+                Codeˉblock2,
+                Codeˉblock3,
+                Codeˉsegment
+            );
+            if Existingˉlength > 4194304u32 - Codeˉpartˉlength {
+                Codeˉsegment = Codeˉsegment + 1u32;
+            }
+            if Codeˉsegment >= 32u32 {
+                return Invalid(Input, Graph.Root, 0u32, 0u32);
+            }
+            let Codeˉblock: u32 = Codeˉsegment / 10u32;
+            let Blockˉsegment: u32 = Codeˉsegment % 10u32;
+            if Codeˉblock == 0u32 {
+                Codeˉblock0 = Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+                    Codeˉblock0,
+                    Blockˉsegment,
+                    Codeˉpart
+                );
+            } else if Codeˉblock == 1u32 {
+                Codeˉblock1 = Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+                    Codeˉblock1,
+                    Blockˉsegment,
+                    Codeˉpart
+                );
+            } else if Codeˉblock == 2u32 {
+                Codeˉblock2 = Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+                    Codeˉblock2,
+                    Blockˉsegment,
+                    Codeˉpart
+                );
+            } else if Codeˉblock == 3u32 {
+                Codeˉblock3 = Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+                    Codeˉblock3,
+                    Blockˉsegment,
+                    Codeˉpart
+                );
+            }
+        } else {
+            Codeˉentries = Append(Codeˉentries, Codeˉpart);
+        }
+        Chunkˉstart = Chunkˉend;
     }
 
+    var Lastˉcodeˉsegment: u32 = Codeˉsegment;
+    var Helperˉentries: bytes = Empty(Input);
     var Nextˉhelper: u32 = Graph.Reachableˉcount;
     var Freeˉglobal: u32 = 4u32;
     if Hasˉrecords { Freeˉglobal = 5u32; }
+    var Runtimeˉglobalˉcount: u32 = 4u32;
+    if Hasˉrecords {
+        Runtimeˉglobalˉcount = Runtimeˉglobalˉcount + 1u32;
+    }
+    if Hasˉdynamic {
+        Runtimeˉglobalˉcount = Runtimeˉglobalˉcount + 1u32;
+    }
+    let Abiˉglobal: u32 = Runtimeˉglobalˉcount;
+    let Outputˉlengthˉglobal: u32 = Abiˉglobal + 5u32;
     if Hasˉdynamic {
         Typeˉentries = Append(
             Typeˉentries,
@@ -1773,18 +3228,21 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
             Functionˉentries,
             Uleb(Graph.Reachableˉcount + 1u32)
         );
-        Codeˉentries = Append(
-            Codeˉentries,
+        let Allocateˉbody: bytes =
             Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉallocateˉbody(
                 Freeˉglobal
-            )
-        );
-        Codeˉentries = Append(
-            Codeˉentries,
+            );
+        let Referenceˉbody: bytes =
             Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉbody(
                 Freeˉglobal
-            )
-        );
+            );
+        if Segmented {
+            Helperˉentries = Append(Helperˉentries, Allocateˉbody);
+            Helperˉentries = Append(Helperˉentries, Referenceˉbody);
+        } else {
+            Codeˉentries = Append(Codeˉentries, Allocateˉbody);
+            Codeˉentries = Append(Codeˉentries, Referenceˉbody);
+        }
         Nextˉhelper = Nextˉhelper + 2u32;
     }
     if Hasˉutf8 {
@@ -1793,19 +3251,42 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
             Utf8.Compilerˉwebassemblyˉutf8ˉvalidatorˉtype()
         );
         Functionˉentries = Append(Functionˉentries, Uleb(Nextˉhelper));
-        Codeˉentries = Append(
-            Codeˉentries,
-            Utf8.Compilerˉwebassemblyˉutf8ˉvalidatorˉbody()
-        );
+        let Utf8ˉbody: bytes =
+            Utf8.Compilerˉwebassemblyˉutf8ˉvalidatorˉbody();
+        if Segmented {
+            Helperˉentries = Append(Helperˉentries, Utf8ˉbody);
+        } else {
+            Codeˉentries = Append(Codeˉentries, Utf8ˉbody);
+        }
         Nextˉhelper = Nextˉhelper + 1u32;
     }
+    if Nextˉhelper != Meterˉfunction {
+        return Invalid(Input, Graph.Root, 0u32, 0u32);
+    }
+    Typeˉentries = Append(Typeˉentries, Emitˉmeterˉtype());
+    Functionˉentries = Append(Functionˉentries, Uleb(Nextˉhelper));
+    let Meterˉbody: bytes = Emitˉmeterˉbody();
+    if Segmented {
+        Helperˉentries = Append(Helperˉentries, Meterˉbody);
+    } else {
+        Codeˉentries = Append(Codeˉentries, Meterˉbody);
+    }
+    Nextˉhelper = Nextˉhelper + 1u32;
     let Wrapperˉtypeˉindex: u32 = Nextˉhelper;
     let Wrapperˉposition: u32 = Nextˉhelper;
     let Emittedˉfunctionˉcount: u32 = Nextˉhelper + 1u32;
 
     var Wrapperˉtype: bytes = Byte(96u32);
-    Wrapperˉtype = Append(Wrapperˉtype, Uleb(1u32));
+    var Wrapperˉparameterˉcount: u32 = 1u32;
+    if Abiˉroot { Wrapperˉparameterˉcount = 2u32; }
+    Wrapperˉtype = Append(
+        Wrapperˉtype,
+        Uleb(Wrapperˉparameterˉcount)
+    );
     Wrapperˉtype = Append(Wrapperˉtype, Byte(127u32));
+    if Abiˉroot {
+        Wrapperˉtype = Append(Wrapperˉtype, Byte(127u32));
+    }
     Wrapperˉtype = Append(Wrapperˉtype, Uleb(1u32));
     Wrapperˉtype = Append(Wrapperˉtype, Byte(127u32));
     Typeˉentries = Append(Typeˉentries, Wrapperˉtype);
@@ -1813,24 +3294,92 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         Functionˉentries,
         Uleb(Wrapperˉtypeˉindex)
     );
-    Codeˉentries = Append(
-        Codeˉentries,
-        Emitˉwrapper(
-            Rootˉposition.Position,
-            Hasˉrecords,
-            Hasˉdynamic,
-            Freeˉglobal,
-            Frameˉstart
-        )
-    );
+    var Wrapperˉbody: bytes = Empty(Input);
+    if Segmentedˉmemoryˉroot {
+        Wrapperˉbody = Emitˉsegmentedˉmemoryˉwrapper(
+                Rootˉposition.Position,
+                Hasˉrecords,
+                Freeˉglobal,
+                Frameˉstart,
+                Allocateˉfunction,
+                Referenceˉfunction,
+                Outputˉlengthˉglobal
+            );
+    } else if Memoryˉroot {
+        Wrapperˉbody = Emitˉmemoryˉwrapper(
+                Rootˉposition.Position,
+                Hasˉrecords,
+                Freeˉglobal,
+                Frameˉstart,
+                Allocateˉfunction,
+                Referenceˉfunction,
+                Outputˉlengthˉglobal
+            );
+    } else {
+        Wrapperˉbody = Emitˉwrapper(
+                Rootˉposition.Position,
+                Hasˉrecords,
+                Hasˉdynamic,
+                Freeˉglobal,
+                Frameˉstart
+            );
+    }
+    if Segmented {
+        Helperˉentries = Append(Helperˉentries, Wrapperˉbody);
+        let Helperˉlength: u32 = Bytesˉlength(Helperˉentries);
+        if Helperˉlength > 4194304u32 {
+            return Invalid(Input, Graph.Root, 0u32, 0u32);
+        }
+        let Lastˉlength: u32 = Codeˉsegmentˉlength(
+            Codeˉblock0,
+            Codeˉblock1,
+            Codeˉblock2,
+            Codeˉblock3,
+            Lastˉcodeˉsegment
+        );
+        if Lastˉlength > 4194304u32 - Helperˉlength {
+            Lastˉcodeˉsegment = Lastˉcodeˉsegment + 1u32;
+        }
+        if Lastˉcodeˉsegment >= 32u32 {
+            return Invalid(Input, Graph.Root, 0u32, 0u32);
+        }
+        let Lastˉblock: u32 = Lastˉcodeˉsegment / 10u32;
+        let Lastˉsegment: u32 = Lastˉcodeˉsegment % 10u32;
+        if Lastˉblock == 0u32 {
+            Codeˉblock0 = Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+                Codeˉblock0,
+                Lastˉsegment,
+                Helperˉentries
+            );
+        } else if Lastˉblock == 1u32 {
+            Codeˉblock1 = Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+                Codeˉblock1,
+                Lastˉsegment,
+                Helperˉentries
+            );
+        } else if Lastˉblock == 2u32 {
+            Codeˉblock2 = Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+                Codeˉblock2,
+                Lastˉsegment,
+                Helperˉentries
+            );
+        } else {
+            Codeˉblock3 = Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉappend(
+                Codeˉblock3,
+                Lastˉsegment,
+                Helperˉentries
+            );
+        }
+    } else {
+        Codeˉentries = Append(Codeˉentries, Wrapperˉbody);
+    }
 
     var Typeˉpayload: bytes = Uleb(Emittedˉfunctionˉcount);
     Typeˉpayload = Append(Typeˉpayload, Typeˉentries);
     var Functionˉpayload: bytes = Uleb(Emittedˉfunctionˉcount);
     Functionˉpayload = Append(Functionˉpayload, Functionˉentries);
-    var Globalˉcount: u32 = 4u32;
-    if Hasˉrecords { Globalˉcount = Globalˉcount + 1u32; }
-    if Hasˉdynamic { Globalˉcount = Globalˉcount + 1u32; }
+    var Globalˉcount: u32 = Runtimeˉglobalˉcount;
+    if Abiˉroot { Globalˉcount = Globalˉcount + 7u32; }
     var Globalˉpayload: bytes = Uleb(Globalˉcount);
     Globalˉpayload = Append(Globalˉpayload, Globalˉi32(true, 0u32));
     Globalˉpayload = Append(Globalˉpayload, Globalˉi32(true, 0u32));
@@ -1848,23 +3397,93 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
             Globalˉi32(true, 65536u32)
         );
     }
+    if Abiˉroot {
+        Globalˉpayload = Append(Globalˉpayload, Globalˉi32(false, 4u32));
+        Globalˉpayload = Append(
+            Globalˉpayload,
+            Globalˉi32(false, 142671872u32)
+        );
+        Globalˉpayload = Append(
+            Globalˉpayload,
+            Globalˉi32(false, 4194304u32)
+        );
+        Globalˉpayload = Append(
+            Globalˉpayload,
+            Globalˉi32(false, 146866176u32)
+        );
+        Globalˉpayload = Append(
+            Globalˉpayload,
+            Globalˉi32(false, 16777216u32)
+        );
+        Globalˉpayload = Append(Globalˉpayload, Globalˉi32(true, 0u32));
+        var Outputˉkind: u32 = 1u32;
+        if Segmentedˉmemoryˉroot { Outputˉkind = 3u32; }
+        Globalˉpayload = Append(
+            Globalˉpayload,
+            Globalˉi32(false, Outputˉkind)
+        );
+    }
     var Exportˉpayload: bytes = Uleb(3u32);
-    Exportˉpayload = Append(
-        Exportˉpayload,
-        Exportˉentry(
-            "Windvale.run",
-            0u32,
-            Wrapperˉposition
-        )
-    );
-    Exportˉpayload = Append(
-        Exportˉpayload,
-        Exportˉentry("Windvale.result", 3u32, 0u32)
-    );
-    Exportˉpayload = Append(
-        Exportˉpayload,
-        Exportˉentry("Windvale.instructions", 3u32, 1u32)
-    );
+    if Abiˉroot {
+        Exportˉpayload = Uleb(10u32);
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.run", 0u32, Wrapperˉposition)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.abi", 3u32, Abiˉglobal)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.memory", 2u32, 0u32)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.input_offset", 3u32, Abiˉglobal + 1u32)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.input_capacity", 3u32, Abiˉglobal + 2u32)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.output_offset", 3u32, Abiˉglobal + 3u32)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.output_capacity", 3u32, Abiˉglobal + 4u32)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.output_length", 3u32, Abiˉglobal + 5u32)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.output_kind", 3u32, Abiˉglobal + 6u32)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.instructions", 3u32, 1u32)
+        );
+    } else {
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry(
+                "Windvale.run",
+                0u32,
+                Wrapperˉposition
+            )
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.result", 3u32, 0u32)
+        );
+        Exportˉpayload = Append(
+            Exportˉpayload,
+            Exportˉentry("Windvale.instructions", 3u32, 1u32)
+        );
+    }
     var Codeˉpayload: bytes = Uleb(Emittedˉfunctionˉcount);
     Codeˉpayload = Append(Codeˉpayload, Codeˉentries);
     var Memoryˉsection: bytes =
@@ -1885,6 +3504,113 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
                 Input,
                 Hasˉrecords
             );
+    }
+    if Abiˉroot { Memoryˉsection = Memoryˉabiˉsection(); }
+
+    let Dataˉsection: bytes =
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsection(
+            Input,
+            Runtimeˉdata
+        );
+
+    if Segmented {
+        let Codeˉentriesˉlength: u32 =
+            Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉlength(
+                Codeˉblock0
+            ) +
+            Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉlength(
+                Codeˉblock1
+            ) +
+            Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉlength(
+                Codeˉblock2
+            ) +
+            Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉlength(
+                Codeˉblock3
+            );
+        let Codeˉcount: bytes = Uleb(Emittedˉfunctionˉcount);
+        let Codeˉpayloadˉlength: u32 =
+            Bytesˉlength(Codeˉcount) + Codeˉentriesˉlength;
+        var Prefix: bytes = Encoding.Compilerˉwebassemblyˉbinaryˉheader();
+        Prefix = Append(
+            Prefix,
+            Encoding.Compilerˉwebassemblyˉbinaryˉsection(1u32, Typeˉpayload)
+        );
+        Prefix = Append(
+            Prefix,
+            Encoding.Compilerˉwebassemblyˉbinaryˉsection(
+                3u32,
+                Functionˉpayload
+            )
+        );
+        Prefix = Append(Prefix, Memoryˉsection);
+        Prefix = Append(
+            Prefix,
+            Encoding.Compilerˉwebassemblyˉbinaryˉsection(6u32, Globalˉpayload)
+        );
+        Prefix = Append(
+            Prefix,
+            Encoding.Compilerˉwebassemblyˉbinaryˉsection(7u32, Exportˉpayload)
+        );
+        Prefix = Append(Prefix, Byte(10u32));
+        Prefix = Append(Prefix, Uleb(Codeˉpayloadˉlength));
+        Prefix = Append(Prefix, Codeˉcount);
+        let Totalˉlength: u32 = Bytesˉlength(Prefix) +
+            Codeˉentriesˉlength + Bytesˉlength(Dataˉsection);
+        if !Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉisˉbounded(
+                Codeˉblock0
+            ) ||
+            !Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉisˉbounded(
+                Codeˉblock1
+            ) ||
+            !Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉisˉbounded(
+                Codeˉblock2
+            ) ||
+            !Artifactˉsegments.Compilerˉwebassemblyˉartifactˉsegmentˉblockˉisˉbounded(
+                Codeˉblock3
+            ) ||
+            Bytesˉlength(Prefix) > 4194304u32 ||
+            Bytesˉlength(Dataˉsection) > 4194304u32 ||
+            Totalˉlength > 67108864u32 {
+            return Invalid(Input, 0u32, 0u32, 0u32);
+        }
+        return Compilerˉwebassemblyˉscalarˉdispatcherˉsummary(
+            true,
+            Totalˉlength,
+            Prefix,
+            Codeˉblock0.Segment0,
+            Codeˉblock0.Segment1,
+            Codeˉblock0.Segment2,
+            Codeˉblock0.Segment3,
+            Codeˉblock0.Segment4,
+            Codeˉblock0.Segment5,
+            Codeˉblock0.Segment6,
+            Codeˉblock0.Segment7,
+            Codeˉblock0.Segment8,
+            Codeˉblock0.Segment9,
+            Codeˉblock1.Segment0,
+            Codeˉblock1.Segment1,
+            Codeˉblock1.Segment2,
+            Codeˉblock1.Segment3,
+            Codeˉblock1.Segment4,
+            Codeˉblock1.Segment5,
+            Codeˉblock1.Segment6,
+            Codeˉblock1.Segment7,
+            Codeˉblock1.Segment8,
+            Codeˉblock1.Segment9,
+            Codeˉblock2.Segment0,
+            Codeˉblock2.Segment1,
+            Codeˉblock2.Segment2,
+            Codeˉblock2.Segment3,
+            Codeˉblock2.Segment4,
+            Codeˉblock2.Segment5,
+            Codeˉblock2.Segment6,
+            Codeˉblock2.Segment7,
+            Codeˉblock2.Segment8,
+            Codeˉblock2.Segment9,
+            Codeˉblock3.Segment0,
+            Codeˉblock3.Segment1,
+            Dataˉsection
+        );
     }
 
     var Webassembly: bytes = Encoding.Compilerˉwebassemblyˉbinaryˉheader();
@@ -1917,21 +3643,125 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     );
     Webassembly = Append(
         Webassembly,
-        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsection(
-            Input,
-            Runtimeˉdata
-        )
+        Dataˉsection
     );
     if Bytesˉlength(Webassembly) > 16777216u32 {
         return Invalid(Input, 0u32, 0u32, 0u32);
     }
     return Compilerˉwebassemblyˉscalarˉdispatcherˉsummary(
         true,
+        Bytesˉlength(Webassembly),
         Webassembly,
-        Graph.Reachableˉcount,
-        Control.Blockˉcount,
-        0u32,
-        0u32,
-        0u32
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Empty(Input)
+    );
+}
+
+export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary
+) -> Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
+    return Emitˉmode(
+        Input,
+        Codeˉoffset,
+        Codeˉlength,
+        Directory,
+        Types,
+        Graph,
+        Control,
+        Enumˉsummary,
+        Storage,
+        4194304u32,
+        false
+    );
+}
+
+export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemitˉwideˉartifact(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary
+) -> Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
+    return Emitˉmode(
+        Input,
+        Codeˉoffset,
+        Codeˉlength,
+        Directory,
+        Types,
+        Graph,
+        Control,
+        Enumˉsummary,
+        Storage,
+        16777216u32,
+        false
+    );
+}
+
+export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemitˉsegmentedˉartifact(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary
+) -> Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
+    return Emitˉmode(
+        Input,
+        Codeˉoffset,
+        Codeˉlength,
+        Directory,
+        Types,
+        Graph,
+        Control,
+        Enumˉsummary,
+        Storage,
+        4194304u32,
+        true
     );
 }
