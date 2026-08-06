@@ -51,13 +51,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 318_977;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_406_272;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 321_640;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_439_552;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "8bfc95be0d722d3b849956c2878c9f053b4242d78242b6c4fe5dc4782e86e660";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_407_296;
+        "697db83716652b39d820e769270dceacf93d4dce277adf3a03273bb2c98bb91a";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_440_064;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "6cd55057461252b6c36a1165e7e39167a50c9db31afb460be24b36e0db93d6e5";
+        "e7efe875df51c54d998862a61735cdcae2729c737949d021f154eb946ea2d8b2";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -639,6 +639,99 @@ internal static partial class Program
         var Native = X64ˉnativeˉbackend.Compile(Module);
         _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
         Equal(0, X64ˉnativeˉexecutor.Executeˉi32(Native.Fragment));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 500_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 500_000_000);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
+    }
+
+    private static void Assertˉlargeˉrecordˉplannerˉenvelopeˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        const string Source = """
+            module Nativeˉrecordˉplannerˉenvelope profile portable;
+            record Cell { Value: i32; }
+            fn Make() -> Cell { return Cell(42); }
+            export fn Main() -> i32 { return Make().Value; }
+            """;
+        var Template = Moduleˉcodec.Read(Compileˉsuccess(Source));
+        var Helper = Template.Functions.Single(Function => Function.Name != "Main");
+        var Helperˉcode = ImmutableArray.CreateBuilder<byte>();
+        for (var Block = 0; Block < 129; Block++)
+        {
+            Helperˉcode.AddRange(U32ˉinstruction(
+                Opcode.Jump,
+                (uint)Helperˉcode.Count + 5u));
+        }
+        for (var Instruction = 0; Instruction < 450; Instruction++)
+        {
+            Helperˉcode.AddRange(U32ˉinstruction(Opcode.Localˉload, 0));
+            Helperˉcode.Add((byte)Opcode.Pop);
+        }
+        Helperˉcode.AddRange(I32ˉinstruction(42));
+        Helperˉcode.AddRange(U32ˉinstruction(Opcode.Recordˉcreate, 0));
+        Helperˉcode.Add((byte)Opcode.Return);
+        var Localˉtypes = ImmutableArray.CreateBuilder<Valueˉshape>();
+        Localˉtypes.Add(Valueˉtype.I32);
+        Localˉtypes.AddRange(Enumerable.Repeat(
+            Valueˉshape.Forˉrecord(0),
+            129));
+
+        var Functions = ImmutableArray.CreateBuilder<Functionˉdeclaration>();
+        var Code = ImmutableArray.CreateBuilder<byte>();
+        foreach (var Function in Template.Functions)
+        {
+            var Functionˉcode = Function == Helper
+                ? Helperˉcode.ToImmutable()
+                : Template.Code
+                    .Skip(Function.Codeˉoffset)
+                    .Take(Function.Codeˉlength)
+                    .ToImmutableArray();
+            Functions.Add(Function with
+            {
+                Localˉtypes = Function == Helper
+                    ? Localˉtypes.ToImmutable()
+                    : Function.Localˉtypes,
+                Codeˉoffset = Code.Count,
+                Codeˉlength = Functionˉcode.Length,
+                Maximumˉstackˉdepth = Function == Helper
+                    ? 1
+                    : Function.Maximumˉstackˉdepth,
+            });
+            Code.AddRange(Functionˉcode);
+        }
+        var Wvb = Moduleˉcodec.Write(Template with
+        {
+            Functions = Functions.ToImmutable(),
+            Code = Code.ToImmutable(),
+        });
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Verifiedˉhelper = Module.Functions.Single(
+            Function => Function.Declaration.Name == Helper.Name);
+        Equal(130, Verifiedˉhelper.Declaration.Allˉlocalˉtypes.Length);
+        Equal(129, Verifiedˉhelper.Declaration.Localˉtypes.Count(
+            Type => Type.Kind == Valueˉtype.Record));
+        Equal(3_356, Verifiedˉhelper.Declaration.Codeˉlength);
+        Equal(1_032, Verifiedˉhelper.Instructions.Length);
+
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(130, Native.Module.Functions.Single(
+            Function => Function.Name == Helper.Name).Blocks.Length);
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(Native.Fragment));
         var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
 
         var Memoryˉresult = new Referenceˉruntime(

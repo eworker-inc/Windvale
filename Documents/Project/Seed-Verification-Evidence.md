@@ -2180,9 +2180,41 @@ The qualified Windows native source front door independently rebuilds the
 317,949-byte memory adapter and 318,977-byte hosted tool. Their SHA-256 values
 are `f3003741b9d5003575cfdadd611534ee6ba3aa7aa936b2c73184d05f023e72ff`
 and `450c1eb86d5ff564b04cdbd00f3919cce2c0372acdca32fbe1a5e30e0c05c414`,
-and both outputs are byte-identical to Stage 0. Direct self-lowering now crosses
-the general function envelope and fails closed without an output at the retained
-record planner; that separately measured boundary remains the next slice.
+and both outputs are byte-identical to Stage 0. Direct self-lowering crosses the
+general function envelope and fails closed without an output at function ordinal
+18's four-record-argument call. The larger ordinal-88 planner remains a separate
+later boundary.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.
+
+## Local compact native record-liveness evidence
+
+[Decision 0256](../Decisions/0256-Compact-Native-Record-Liveness.md) measures
+the current tool's record-bearing functions at maxima of 1,717 total locals but
+190 declared record locals, 729 blocks, 5,929 instructions, and 1,999 projected
+frame cells. The Windvale planner now indexes liveness, definition, use, and
+interference tables by a compact record-local directory rather than every scalar
+temporary. Its immutable fixed point stops when stable while retaining a bounded
+one-pass-per-block ceiling, and its expanded result preserves original local
+indices.
+
+The affected test was reviewed before execution and constructs a compact helper
+with 129 declared record locals, 130 reachable blocks, 3,356 code bytes, and
+1,032 instructions. The exact focused native-lowering selection passes in
+14.374 seconds, including Stage 0 execution and byte-for-byte WVO equality
+through both Windvale adapters. The rebuilt test project reports zero warnings
+and errors.
+
+The qualified Windows native source front door rebuilds 332-function memory and
+hosted closures in 32.3 seconds. Their 320,612-byte and 321,640-byte outputs are
+byte-identical to Stage 0 at SHA-256
+`f340cf67b4063b315a531b17d28eec0f8c3813cb1b98b201f74a3ff6dcda34b9`
+and `7921493f5b918073600d47e168c42d2a051dfda6e1586bf3520a723f0e0c8876`.
+A bounded direct self-lowering diagnostic returns `Unsupportedˉfunction` in 77
+milliseconds without publishing output; Stage 0 inspection identifies the next
+active gap as a function-18 call with four record arguments, not planner runtime.
 
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain

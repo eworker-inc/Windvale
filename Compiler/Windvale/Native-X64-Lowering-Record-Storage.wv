@@ -173,9 +173,17 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Leaders: bytes
 ) -> Compilerˉnativeˉx64ˉrecordˉstorage {
     let Locals: u32 = Bytesˉlength(Localˉtypes);
-    if Locals > 128u32 || Blocks == 0u32 || Blocks > 128u32 {
+    if Locals >= 2048u32 || Blocks == 0u32 || Blocks > 1024u32 {
         return Invalid(Input);
     }
+    let Recordˉlocals:
+        Localˉliveness.Compilerˉnativeˉx64ˉrecordˉlocalˉdirectory =
+        Localˉliveness.Compilerˉnativeˉx64ˉrecordˉlocalˉdirectoryˉread(
+            Input,
+            Parameters,
+            Localˉtypes
+        );
+    if Recordˉlocals.Count > 256u32 { return Invalid(Input); }
     if Codeˉlength == 0u32 || Bytesˉlength(Leaders) < Codeˉlength {
         return Invalid(Input);
     }
@@ -207,8 +215,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     var Blockˉends: bytes = U32ˉvalues(Input, Blocks, 4294967295u32);
     var Successorˉfirst: bytes = U32ˉvalues(Input, Blocks, 4294967295u32);
     var Successorˉsecond: bytes = U32ˉvalues(Input, Blocks, 4294967295u32);
-    var Uses: bytes = Zeros(Input, Blocks * Locals);
-    var Definitions: bytes = Zeros(Input, Blocks * Locals);
+    var Uses: bytes = Zeros(Input, Blocks * Recordˉlocals.Count);
+    var Definitions: bytes = Zeros(Input, Blocks * Recordˉlocals.Count);
     var Stackˉrecords: bytes = Empty(Input);
     var Depth: u32 = 0u32;
     var Events: bytes = Empty(Input);
@@ -265,7 +273,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         if Size == 0u32 || Size > Codeˉlength - Cursor {
             return Invalid(Input);
         }
-        if Instructions >= 1024u32 { return Invalid(Input); }
+        if Instructions >= 8192u32 { return Invalid(Input); }
         Instructionˉoffsets = Bytesˉconcat(
             Instructionˉoffsets,
             Bytesˉfromˉu32ˉlittle(Cursor)
@@ -303,7 +311,15 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Loadˉtype
                 );
                 if Loadˉlocal >= Parameters {
-                    let Cell: u32 = Currentˉblock * Locals + Loadˉlocal;
+                    let Recordˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                        Recordˉlocals.Indices,
+                        Loadˉlocal * 4u32
+                    );
+                    if Recordˉlocal == 4294967295u32 {
+                        return Invalid(Input);
+                    }
+                    let Cell: u32 =
+                        Currentˉblock * Recordˉlocals.Count + Recordˉlocal;
                     if Bytesˉreadˉu8(Definitions, Cell) == 0u8 {
                         Uses = Setˉbyte(Uses, Cell, 1u8);
                     }
@@ -336,9 +352,17 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Currentˉblock * 128u32 + Usedˉrecord,
                     Instructions
                 );
+                let Storeˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                    Recordˉlocals.Indices,
+                    Storeˉlocal * 4u32
+                );
+                if Storeˉrecord == 4294967295u32 {
+                    return Invalid(Input);
+                }
                 Definitions = Setˉbyte(
                     Definitions,
-                    Currentˉblock * Locals + Storeˉlocal,
+                    Currentˉblock * Recordˉlocals.Count +
+                        Storeˉrecord,
                     1u8
                 );
             }
@@ -621,8 +645,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         Localˉliveness.Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
             Input,
             Codeˉoffset,
-            Parameters,
-            Localˉtypes,
+            Recordˉlocals,
             Types,
             Blocks,
             Instructionˉoffsets,
