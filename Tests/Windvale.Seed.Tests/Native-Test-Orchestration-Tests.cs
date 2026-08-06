@@ -31,7 +31,11 @@ internal static partial class Program
             "PASS  malformed-typed-declared-maximum-stack\n" +
             "PASS  malformed-typed-capability-argument-kind\n" +
             "PASS  malformed-control-unreachable-instruction\n" +
-            "Tests: 22, Passed: 22, Failed: 0\n",
+            "PASS  wvo-return-42\n" +
+            "PASS  wvo-bad-magic\n" +
+            "PASS  wvo-truncated\n" +
+            "PASS  wvo-trailing\n" +
+            "Tests: 26, Passed: 26, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

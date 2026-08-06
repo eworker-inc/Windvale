@@ -4,7 +4,7 @@ set -uo pipefail
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Plan.txt"
-plan_digest=bb681b63e0dada74e2fc8cd0dd029a1ec17a0c341677d4f2bbcd9f568f5f022d
+plan_digest=6ad262319aad1b9df3c9e211fd1e01ed509d8e00beff0de8004642e2928457de
 
 if ! printf '%s  %s\n' "$plan_digest" "$plan" | sha256sum --check --strict --quiet; then
     echo 'The native test plan artifact digest is invalid.' >&2
@@ -29,14 +29,14 @@ trap cleanup EXIT
 total=0
 passed=0
 IFS= read -r header < "$plan"
-if [[ $header != 'windvale-native-tests 4' ]]; then
+if [[ $header != 'windvale-native-tests 5' ]]; then
     echo 'The native test plan header is invalid.' >&2
     exit 1
 fi
 
 while IFS='|' read -r name input_kind input expected_hash expected_kind expected_value; do
     [[ -n $name ]] || continue
-    [[ $name != 'windvale-native-tests 4' ]] || continue
+    [[ $name != 'windvale-native-tests 5' ]] || continue
     total=$((total + 1))
     output="$temporary_directory/Current.wvb"
     build_output="$temporary_directory/Build.out"
@@ -62,7 +62,10 @@ while IFS='|' read -r name input_kind input expected_hash expected_kind expected
             echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
             exit 1
         fi
-    elif [[ $input_kind == fixture-base64 ]]; then
+    elif [[ $input_kind == fixture-base64 || $input_kind == wvo-fixture-base64 ]]; then
+        if [[ $input_kind == wvo-fixture-base64 ]]; then
+            output="$temporary_directory/Current.wvo"
+        fi
         if ! base64 --decode "$repository_root/$input" \
             > "$output" 2> "$decode_error"; then
             echo "FAIL  $name: malformed fixture decoding failed" >&2
@@ -81,15 +84,19 @@ while IFS='|' read -r name input_kind input expected_hash expected_kind expected
         echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
         exit 1
     fi
+    output_name=${output##*/}
     if ! (cd -- "$temporary_directory" && printf '%s  %s\n' \
-        "$expected_hash" 'Current.wvb' | sha256sum --check --strict --quiet); then
-        echo "FAIL  $name: WVB identity differs" >&2
+        "$expected_hash" "$output_name" | sha256sum --check --strict --quiet); then
+        echo "FAIL  $name: input identity differs" >&2
         echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
         exit 1
     fi
 
     if [[ $expected_kind == verify-failure ]]; then
         "$repository_root/Tools/Native/Verify-Wvb.sh" "$output" \
+            > "$run_output" 2> "$run_error"
+    elif [[ $expected_kind == wvo-valid || $expected_kind == wvo-invalid ]]; then
+        "$repository_root/Tools/Native/Verify-Wvo.sh" "$output" \
             > "$run_output" 2> "$run_error"
     else
         "$repository_root/Tools/Native/Run-Wvb.sh" "$output" \
@@ -157,6 +164,44 @@ while IFS='|' read -r name input_kind input expected_hash expected_kind expected
         printf 'wvb status=Invalid phase=%s\n' "$expected_value" > "$expected_error"
         if ! cmp --silent "$expected_error" "$run_error"; then
             echo "FAIL  $name: verification report differs" >&2
+            cat -- "$run_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+    elif [[ $expected_kind == wvo-valid ]]; then
+        if ((run_status != 0)); then
+            echo "FAIL  $name: native WVO verification failed" >&2
+            cat -- "$run_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if [[ -s $run_error ]]; then
+            echo "FAIL  $name: valid WVO wrote a diagnostic" >&2
+            cat -- "$run_error" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if ! (cd -- "$temporary_directory" && printf '%s  %s\n' \
+            "$expected_value" 'Run.out' | sha256sum --check --strict --quiet); then
+            echo "FAIL  $name: valid WVO report differs" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+    elif [[ $expected_kind == wvo-invalid ]]; then
+        if ((run_status != 2)); then
+            echo "FAIL  $name: invalid WVO exit differs" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if [[ -s $run_output ]]; then
+            echo "FAIL  $name: invalid WVO wrote standard output" >&2
+            cat -- "$run_output" >&2
+            echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+            exit 1
+        fi
+        if ! (cd -- "$temporary_directory" && printf '%s  %s\n' \
+            "$expected_value" 'Run.err' | sha256sum --check --strict --quiet); then
+            echo "FAIL  $name: invalid WVO report differs" >&2
             cat -- "$run_error" >&2
             echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
             exit 1

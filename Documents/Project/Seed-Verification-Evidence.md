@@ -3366,3 +3366,38 @@ now traverses the publication boundary. No WebAssembly implementation changed.
 Linux execution, native host-container construction, Development, Standard,
 Qualification, promotion, release integration, and the grouped end-of-goal gate
 remain deferred.
+
+## Local fixed native WVO test evidence
+
+[Decision 0310](../Decisions/0310-Fixed-Native-Wvo-Test-Cases.md) advances the
+fixed test inventory from 22 WVB cases to 26 WVB/WVO cases. `WVNT 5` retains all
+existing WVB coverage and adds one accepted canonical return-42 WVO plus exact
+bad-magic, one-byte-truncated, and one-byte-trailing objects. Every decoded input
+and complete verifier report is SHA-256-bound; the run uses no .NET command or
+live C# oracle.
+
+The 4,742-byte UTF-8/LF plan has SHA-256
+`6ad262319aad1b9df3c9e211fd1e01ed509d8e00beff0de8004642e2928457de`.
+The accepted object is 479 bytes at SHA-256
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`.
+Its complete success report has SHA-256
+`0aad5d459a627ab68aaecb7f927a913178628db4e6d0ba27be8cbb7c55d27c3d`.
+The rejected objects are:
+
+- bad magic: 479 bytes at
+  `0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288`,
+  report `2e53f573d1e94159c58368c4d9ebcba284d6c13f63a286bd75264bc837a162e4`;
+- truncated: 478 bytes at
+  `6f120ce6b833f781ab014844af535b25fe28eb2d565afa2b2f4360c7a0c99371`,
+  report `9b45f12022ab0ba549e6c2ffa49cb15673d96c8f58efd5d6d9c2def87097aedb`;
+- trailing: 480 bytes at
+  `3ca5e84240e8f12be84fdb957df37f8162e74415417cd7009f92698e683ee981`,
+  report `3cdcb2fa62f4fc698e9624e68dc10dbf95e7363cf0332b280066083cc1783711`.
+
+After reviewing the wrapper expectations, the focused selection
+`native test orchestration runs the pinned WVB and WVO plan` passes 1/1 in
+7.260 test seconds after a 12.17-second zero-warning Release build; the complete
+command takes 24 seconds and all 26 inner cases pass. No WebAssembly
+implementation changed. Direct Linux execution, Development, Standard,
+Qualification, promotion, broader WVO-corpus transfer, and the grouped
+end-of-goal gate remain deferred.

@@ -327,6 +327,13 @@ durable replacement and cleanup. The repinned inspector and new publisher remain
 Stage 0-constructed candidates pending Linux execution, native host-container
 construction, and grouped promotion.
 
+Decision 0310 extends the fixed native test boundary from WVB-only inputs to one
+canonical accepted WVO plus bad-magic, truncated, and trailing-byte objects. The
+host adapters pin complete input and report identities and invoke only the native
+WVO verifier; no live C# oracle or additional object parser enters the normal
+test path. Broader malformed and randomized WVO coverage remains in the explicit
+recovery lane until separately transferred.
+
 Decision 0240 extends that accepted subset with nonzero-first enum tables plus one-block record parameter, caller-owned return, and call transport. The bounded C# enum-admission correction preserves Stage 0 as the independent WVB 1.11 oracle rather than adding forward language semantics there.
 
 Decision 0241 extends record storage through validated control-flow successors and admits scalar-returning record consumers. Its planner keeps persistent locals live across edges while requiring scratch record values to die inside their defining block, and its row-wise immutable fixed point remains within the native tool's bounded arena on the real nominal fixture.

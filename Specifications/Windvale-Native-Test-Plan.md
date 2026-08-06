@@ -2,24 +2,24 @@
 
 ## Status and scope
 
-`WVNT 4` is the fixed repository test inventory executed entirely through
-the pinned Windvale-native source-to-WVB, WVB-runner, and WVB-verifier front
-doors. It is an implemented candidate pending exact-commit Windows/Linux
-qualification.
+`WVNT 5` is the fixed repository test inventory executed entirely through
+the pinned Windvale-native source-to-WVB, WVB-runner, WVB-verifier, and
+WVO-verifier front doors. It is an implemented candidate pending exact-commit
+Windows/Linux qualification.
 
 This contract transfers one bounded orchestration slice. It does not replace the
 complete Seed, OS, golden, differential, bootstrap, or packaging suites. Its
-malformed-WVB inventory is fixed and representative rather than exhaustive. It
-is not a general test-description language.
+malformed-WVB and WVO inventories are fixed and representative rather than
+exhaustive. It is not a general test-description language.
 
 ## Exact inventory
 
-[`Tests/Native/Plan.txt`](../Tests/Native/Plan.txt) is exactly 3,906 UTF-8/LF bytes
+[`Tests/Native/Plan.txt`](../Tests/Native/Plan.txt) is exactly 4,742 UTF-8/LF bytes
 with SHA-256
-`bb681b63e0dada74e2fc8cd0dd029a1ec17a0c341677d4f2bbcd9f568f5f022d`.
-Its complete version-4 inventory is:
+`6ad262319aad1b9df3c9e211fd1e01ed509d8e00beff0de8004642e2928457de`.
+Its complete version-5 inventory is:
 
-| Test | Input kind and path | Expected WVB SHA-256 | Expected outcome |
+| Test | Input kind and path | Expected input SHA-256 | Expected outcome |
 | --- | --- | --- | --- |
 | `calls-control` | project `Windvale-Native-Test-Calls-Control.wvproj` | `04282e1d570bb68a24d9f7e531882ca192c52f8af6840f96d5380e7f9a6354e6` | `result 42` |
 | `scalar-core` | project `Windvale-Native-Test-Scalar-Core.wvproj` | `e790d2162d1223f68bc374ee3c27720e1c660a4e8a2be906aade28cabc5f7713` | `result 42` |
@@ -43,25 +43,32 @@ Its complete version-4 inventory is:
 | `malformed-typed-declared-maximum-stack` | base64 fixture `Tests/Native/Malformed-Wvb/Typed-Declared-Maximum-Stack.wvb.b64` | `e4ed0f9aa8ee47de4fb22e89227d9367f1179a93581a88e269b51c607953d673` | `verify-failure typed-execution` |
 | `malformed-typed-capability-argument-kind` | base64 fixture `Tests/Native/Malformed-Wvb/Typed-Capability-Argument-Kind.wvb.b64` | `e0204e16f5d64e559f15ab0cbb21b578f12177c98464d778085d7ac7b5d78acc` | `verify-failure typed-execution` |
 | `malformed-control-unreachable-instruction` | base64 fixture `Tests/Native/Malformed-Wvb/Control-Unreachable-Instruction.wvb.b64` | `4a76e7dbd5057efbf26b47c7edfb928eebc611da9857081bb8c03ed1b5f6c20c` | `verify-failure control-reachability` |
+| `wvo-return-42` | base64 fixture `Tests/Native/Wvo/Return-42.wvo.b64` | `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5` | accepted report SHA-256 `0aad5d459a627ab68aaecb7f927a913178628db4e6d0ba27be8cbb7c55d27c3d` |
+| `wvo-bad-magic` | base64 fixture `Tests/Native/Wvo/Bad-Magic.wvo.b64` | `0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288` | rejected report SHA-256 `2e53f573d1e94159c58368c4d9ebcba284d6c13f63a286bd75264bc837a162e4` |
+| `wvo-truncated` | base64 fixture `Tests/Native/Wvo/Truncated.wvo.b64` | `6f120ce6b833f781ab014844af535b25fe28eb2d565afa2b2f4360c7a0c99371` | rejected report SHA-256 `9b45f12022ab0ba549e6c2ffa49cb15673d96c8f58efd5d6d9c2def87097aedb` |
+| `wvo-trailing` | base64 fixture `Tests/Native/Wvo/Trailing.wvo.b64` | `3ca5e84240e8f12be84fdb957df37f8162e74415417cd7009f92698e683ee981` | rejected report SHA-256 `3cdcb2fa62f4fc698e9624e68dc10dbf95e7363cf0332b280066083cc1783711` |
 
-The first line is exactly `windvale-native-tests 4`. Each remaining line contains
+The first line is exactly `windvale-native-tests 5`. Each remaining line contains
 the exact ASCII test name, closed input kind, repository-root-relative input path,
-lowercase decoded/input WVB SHA-256 identity, expectation kind, and expectation
+lowercase decoded/input SHA-256 identity, expectation kind, and expectation
 value separated by `|`. `project` selects a Project 1 build; `fixture-base64`
 selects exact text decoding. `result` carries one signed decimal value. `failure`
 carries the unsigned status code and executed guest-instruction count separated by
-`:`, while `verify-failure` carries one exact verifier phase.
+`:`, while `verify-failure` carries one exact verifier phase. `wvo-fixture-base64`
+selects exact WVO text decoding. `wvo-valid` and `wvo-invalid` carry the SHA-256
+of the verifier's complete success or diagnostic report so the launchers do not
+need host text decoding or a live C# result generator.
 
-Version 4 is a digest-bound fixed value rather than an extensible parser surface.
+Version 5 is a digest-bound fixed value rather than an extensible parser surface.
 The launchers reject every insertion, deletion, reordering, path change, field
 change, line-ending change, truncation, or appended byte before consuming a field.
 A later dynamic plan format requires its own bounded parser, limits, malformed-input
 coverage, and version decision.
 
-The version-1, 1,074-byte version-2, and 1,983-byte version-3 predecessors added
-by Decisions 0226, 0227, and 0229 were local unqualified candidates. Version 4
-supersedes them before the grouped gate; no distributed consumer or compatibility
-promise depends on them.
+The version-1, 1,074-byte version-2, 1,983-byte version-3, and 3,906-byte
+version-4 predecessors added by Decisions 0226, 0227, 0229, and 0230 were local
+unqualified candidates. Version 5 supersedes them before the grouped gate; no
+distributed consumer or compatibility promise depends on them.
 
 ## Execution contract
 
@@ -69,20 +76,25 @@ The Windows and Linux launchers perform the same ordered steps for each entry:
 
 1. verify the exact plan digest;
 2. for `project`, build through the pinned native build driver, verifier, and
-   publisher; for `fixture-base64`, decode the fixed repository text into a
-   caller-private WVB;
-3. require the complete decoded/input WVB SHA-256 identity recorded above;
+   publisher; for `fixture-base64` or `wvo-fixture-base64`, decode the fixed
+   repository text into a caller-private WVB or WVO;
+3. require the complete decoded/input WVB or WVO SHA-256 identity recorded above;
 4. send `result` and `failure` inputs to the pinned native runner, or send
-   `verify-failure` inputs to the pinned native WVB verifier;
+   `verify-failure` inputs to the pinned native WVB verifier, or send WVO inputs
+   to the pinned native WVO verifier;
 5. for `result`, require process result `0`, empty standard error, and exact
    standard output `Result: <value>` plus LF; for `failure`, require process
    result `1`, empty standard output, and exact standard error
    `wvb run status=Failed code=<code> instructions=<count>` plus LF; for
    `verify-failure`, require process result `1`, empty standard output, and exact
-   standard error `wvb status=Invalid phase=<phase>` plus LF; and
+   standard error `wvb status=Invalid phase=<phase>` plus LF; for `wvo-valid`,
+   require process result `0`, empty standard error, and the exact complete
+   standard-output report digest; for `wvo-invalid`, require process result `2`,
+   empty standard output, and the exact complete standard-error report digest;
+   and
 6. print one `PASS  <name>` line.
 
-Success prints `Tests: 22, Passed: 22, Failed: 0` plus LF and returns `0`. The first
+Success prints `Tests: 26, Passed: 26, Failed: 0` plus LF and returns `0`. The first
 failure prints a stable `FAIL` reason and nonzero summary to standard error, returns
 `1`, and does not execute later entries. Temporary outputs are caller-private and
 removed on completion.
@@ -107,7 +119,10 @@ rejection through the qualified native semantic verifier. Eight additional fixed
 corruptions cover operator stack kind, local storage, call and nominal identities,
 branch condition kind, declared maximum stack, and capability arguments through
 the native typed-execution phase. One fixed changed jump target proves unreachable
-code rejection through the native control-reachability phase. Randomized malformed
-data, remaining semantic/structural limits, the broader unsafe-bytecode corpus, and
-tests outside this subset remain in the explicit Stage 0 lane. Qualification of
-this plan advances Decision 0057's native test condition but does not complete it.
+code rejection through the native control-reachability phase. One canonical WVO
+and three fixed WVO corruptions independently prove complete-object acceptance,
+bad-magic rejection, truncation rejection, and trailing-byte rejection through
+the native object verifier. Randomized malformed data, remaining semantic and
+structural limits, the broader unsafe-bytecode and WVO corpora, and tests outside
+this subset remain in the explicit Stage 0 lane. Qualification of this plan
+advances Decision 0057's native test condition but does not complete it.

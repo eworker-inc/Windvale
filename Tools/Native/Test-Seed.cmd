@@ -5,7 +5,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Plan.txt"
 
-certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"bb681b63e0dada74e2fc8cd0dd029a1ec17a0c341677d4f2bbcd9f568f5f022d" >nul
+certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"6ad262319aad1b9df3c9e211fd1e01ed509d8e00beff0de8004642e2928457de" >nul
 if errorlevel 1 (
     >&2 echo The native test plan artifact digest is invalid.
     exit /b 1
@@ -44,6 +44,7 @@ set "RunError=%TemporaryDirectory%\Run.err"
 
 if "%InputKind%"=="project" goto :build_project
 if "%InputKind%"=="fixture-base64" goto :decode_fixture
+if "%InputKind%"=="wvo-fixture-base64" goto :decode_wvo_fixture
 >&2 echo FAIL  %Name%: test input kind is invalid
 exit /b 1
 
@@ -62,6 +63,13 @@ for %%S in ("%BuildError%") do if not "%%~zS"=="0" (
 goto :input_ready
 
 :decode_fixture
+set "Output=%TemporaryDirectory%\Current.wvb"
+goto :decode_base64
+
+:decode_wvo_fixture
+set "Output=%TemporaryDirectory%\Current.wvo"
+
+:decode_base64
 certutil -f -decode "%RepositoryRoot%\%Input%" "%Output%" > "%DecodeOutput%" 2> "%DecodeError%"
 if errorlevel 1 (
     >&2 echo FAIL  %Name%: malformed fixture decoding failed
@@ -77,10 +85,12 @@ for %%S in ("%DecodeError%") do if not "%%~zS"=="0" (
 :input_ready
 certutil -hashfile "%Output%" SHA256 | findstr /I /C:"%ExpectedHash%" >nul
 if errorlevel 1 (
-    >&2 echo FAIL  %Name%: WVB identity differs
+    >&2 echo FAIL  %Name%: input identity differs
     exit /b 1
 )
 
+if "%ExpectedKind%"=="wvo-valid" goto :wvo_case
+if "%ExpectedKind%"=="wvo-invalid" goto :wvo_case
 if "%ExpectedKind%"=="verify-failure" goto :verify_case
 call "%RepositoryRoot%\Tools\Native\Run-Wvb.cmd" "%Output%" > "%RunOutput%" 2> "%RunError%"
 set "RunExit=%ERRORLEVEL%"
@@ -101,6 +111,18 @@ exit /b 1
 call "%RepositoryRoot%\Tools\Native\Verify-Wvb.cmd" "%Output%" > "%RunOutput%" 2> "%RunError%"
 set "RunExit=%ERRORLEVEL%"
 call :check_verify_failure
+if errorlevel 1 exit /b 1
+goto :case_passed
+
+:wvo_case
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Output%" > "%RunOutput%" 2> "%RunError%"
+set "RunExit=%ERRORLEVEL%"
+if "%ExpectedKind%"=="wvo-valid" (
+    call :check_wvo_valid
+    if errorlevel 1 exit /b 1
+    goto :case_passed
+)
+call :check_wvo_invalid
 if errorlevel 1 exit /b 1
 goto :case_passed
 
@@ -180,6 +202,42 @@ if not "%ActualReport%"=="wvb status=Invalid phase=%ExpectedValue%" (
 )
 exit /b 0
 
+:check_wvo_valid
+if not "%RunExit%"=="0" (
+    >&2 echo FAIL  %Name%: native WVO verification failed
+    type "%RunError%" >&2
+    exit /b 1
+)
+for %%S in ("%RunError%") do if not "%%~zS"=="0" (
+    >&2 echo FAIL  %Name%: valid WVO wrote a diagnostic
+    type "%RunError%" >&2
+    exit /b 1
+)
+certutil -hashfile "%RunOutput%" SHA256 | findstr /I /C:"%ExpectedValue%" >nul
+if errorlevel 1 (
+    >&2 echo FAIL  %Name%: valid WVO report differs
+    exit /b 1
+)
+exit /b 0
+
+:check_wvo_invalid
+if not "%RunExit%"=="2" (
+    >&2 echo FAIL  %Name%: invalid WVO exit differs
+    exit /b 1
+)
+for %%S in ("%RunOutput%") do if not "%%~zS"=="0" (
+    >&2 echo FAIL  %Name%: invalid WVO wrote standard output
+    type "%RunOutput%" >&2
+    exit /b 1
+)
+certutil -hashfile "%RunError%" SHA256 | findstr /I /C:"%ExpectedValue%" >nul
+if errorlevel 1 (
+    >&2 echo FAIL  %Name%: invalid WVO report differs
+    type "%RunError%" >&2
+    exit /b 1
+)
+exit /b 0
+
 :case_passed
 set /a Passed+=1
 echo PASS  %Name%
@@ -203,7 +261,7 @@ call :cleanup
 exit /b 1
 
 :cleanup
-for %%F in (Current.wvb Build.out Build.err Decode.out Decode.err Run.out Run.err) do (
+for %%F in (Current.wvb Current.wvo Build.out Build.err Decode.out Decode.err Run.out Run.err) do (
     if exist "%TemporaryDirectory%\%%F" del /f /q "%TemporaryDirectory%\%%F" >nul 2>nul
 )
 rmdir "%TemporaryDirectory%" >nul 2>nul

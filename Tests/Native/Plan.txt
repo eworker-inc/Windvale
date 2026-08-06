@@ -1,4 +1,4 @@
-windvale-native-tests 4
+windvale-native-tests 5
 calls-control|project|Windvale-Native-Test-Calls-Control.wvproj|04282e1d570bb68a24d9f7e531882ca192c52f8af6840f96d5380e7f9a6354e6|result|42
 scalar-core|project|Windvale-Native-Test-Scalar-Core.wvproj|e790d2162d1223f68bc374ee3c27720e1c660a4e8a2be906aade28cabc5f7713|result|42
 function-only|project|Windvale-Native-Test-Function-Only.wvproj|28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936|result|6
@@ -21,3 +21,7 @@ malformed-typed-branch-condition-kind|fixture-base64|Tests/Native/Malformed-Wvb/
 malformed-typed-declared-maximum-stack|fixture-base64|Tests/Native/Malformed-Wvb/Typed-Declared-Maximum-Stack.wvb.b64|e4ed0f9aa8ee47de4fb22e89227d9367f1179a93581a88e269b51c607953d673|verify-failure|typed-execution
 malformed-typed-capability-argument-kind|fixture-base64|Tests/Native/Malformed-Wvb/Typed-Capability-Argument-Kind.wvb.b64|e0204e16f5d64e559f15ab0cbb21b578f12177c98464d778085d7ac7b5d78acc|verify-failure|typed-execution
 malformed-control-unreachable-instruction|fixture-base64|Tests/Native/Malformed-Wvb/Control-Unreachable-Instruction.wvb.b64|4a76e7dbd5057efbf26b47c7edfb928eebc611da9857081bb8c03ed1b5f6c20c|verify-failure|control-reachability
+wvo-return-42|wvo-fixture-base64|Tests/Native/Wvo/Return-42.wvo.b64|0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5|wvo-valid|0aad5d459a627ab68aaecb7f927a913178628db4e6d0ba27be8cbb7c55d27c3d
+wvo-bad-magic|wvo-fixture-base64|Tests/Native/Wvo/Bad-Magic.wvo.b64|0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288|wvo-invalid|2e53f573d1e94159c58368c4d9ebcba284d6c13f63a286bd75264bc837a162e4
+wvo-truncated|wvo-fixture-base64|Tests/Native/Wvo/Truncated.wvo.b64|6f120ce6b833f781ab014844af535b25fe28eb2d565afa2b2f4360c7a0c99371|wvo-invalid|9b45f12022ab0ba549e6c2ffa49cb15673d96c8f58efd5d6d9c2def87097aedb
+wvo-trailing|wvo-fixture-base64|Tests/Native/Wvo/Trailing.wvo.b64|3ca5e84240e8f12be84fdb957df37f8162e74415417cd7009f92698e683ee981|wvo-invalid|3cdcb2fa62f4fc698e9624e68dc10dbf95e7363cf0332b280066083cc1783711

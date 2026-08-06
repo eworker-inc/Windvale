@@ -20,8 +20,9 @@ On Linux x64:
 ```
 
 The command verifies the fixed test plan, builds project cases through the pinned
-native source-to-WVB tools, decodes fixed malformed fixtures, compares every
-complete WVB identity, and dispatches only to the pinned native runner or verifier.
+native source-to-WVB tools, decodes fixed WVB and WVO fixtures, compares every
+complete input identity, and dispatches only to the pinned native runner, WVB
+verifier, or WVO verifier.
 Success is:
 
 ```text
@@ -47,7 +48,11 @@ PASS  malformed-typed-branch-condition-kind
 PASS  malformed-typed-declared-maximum-stack
 PASS  malformed-typed-capability-argument-kind
 PASS  malformed-control-unreachable-instruction
-Tests: 22, Passed: 22, Failed: 0
+PASS  wvo-return-42
+PASS  wvo-bad-magic
+PASS  wvo-truncated
+PASS  wvo-trailing
+Tests: 26, Passed: 26, Failed: 0
 ```
 
 No .NET process is required by this command. The host dependencies are `cmd.exe`
@@ -56,13 +61,14 @@ on Linux.
 
 ## Current boundary
 
-This is a candidate portable result/runtime-failure/fixed-malformed-WVB gate, not
-the complete normal repository verifier. Its verifier cases now reach semantic,
-typed-execution, and control-reachability rejection, but they do not replace the
-complete unsafe and randomized malformed corpus. Continue to select one
-appropriate Stage 0 verifier for changes outside these transferred fixtures. Do
-not run this candidate and progressively broader local levels merely as a
-checklist; use the narrowest gate that owns the changed behavior.
+This is a candidate portable result/runtime-failure/fixed-malformed-WVB-and-WVO
+gate, not the complete normal repository verifier. Its WVB cases reach semantic,
+typed-execution, and control-reachability rejection, while its small WVO matrix
+covers one accepted object plus bad magic, truncation, and trailing bytes. They do
+not replace the complete unsafe and randomized malformed corpora. Continue to
+select one appropriate Stage 0 verifier for changes outside these transferred
+fixtures. Do not run this candidate and progressively broader local levels
+merely as a checklist; use the narrowest gate that owns the changed behavior.
 
 For changes to the native plan, launchers, projects, or fixed fixtures, review the
 managed wrapper's exact report and run `Tools\Native\Test-Seed.cmd` or

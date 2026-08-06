@@ -12,6 +12,8 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0310](../Decisions/0310-Fixed-Native-Wvo-Test-Cases.md) advances Phase 10 by moving one accepted WVO and three structural rejection cases into the fixed 26-case .NET-free native plan. Linux execution and the grouped end-of-goal gate still precede promotion.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle
