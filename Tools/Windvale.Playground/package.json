@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build --config Editor/Vite-Config.mjs"
+    "build": "vite build --config Editor/Vite-Config.mjs && node ../Website/Package-WebAssembly-Playground.mjs"
   },
   "dependencies": {
     "monaco-editor": "0.56.0"
