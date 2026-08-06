@@ -131,7 +131,10 @@ internal static partial class Program
     private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "480a7dc0e0a23e86ba7f6f73d5fac5cfbf757a8080b486c3b3fa5b23eb7f54ab";
     private const string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SHA256 = "aee0e85b337a070b796b0734209bfa859e47590c33fb82bd60e97d8736f48d89";
     private const string WEBASSEMBLY_BINARY_ENCODING_MEMORY_TOOL_SHA256 = "dd68b60adaaf6eb0d2edfa8671aca08ddcc7a5702a9d1c4c79d245a21166f12a";
-    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "1089e906ae75395d0fd1d114196d33da4e0d7059ba7ac558d27a03ff74e8338c";
+    private const string WEBASSEMBLY_VALUE_LAYOUT_MEMORY_TOOL_SHA256 = "7cbfe268c02608fe2c1b066fd51dfb809002f9b25cbe1050a4806291b7125a3d";
+    private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_INPUT_SHA256 = "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e";
+    private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_RESPONSE_SHA256 = "bc7099df2ba2525ab28f26c7b891ba71e4d24eddbdca2199010fdbb0e817552d";
+    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "051c8eee830ca875e246330352633de3f44f3cece41ee64a06a5b219cf62c63c";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "6b8ee8e5e3707203891840157547fa1cf88368447b493015b9d0f9e48bbb69d2";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "3f90a6641648ae55a3b4ddf3a50ae2d2ad7d52ae434bf15c1718076f04232e79";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_WVB_SHA256 = "ec785b6ad0fe3a72574a3e6587d32bad0719054a8f7d9481ba361a0857086450";
@@ -964,6 +967,10 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Scalar-Operations.wv");
 
+    private static readonly string WEBASSEMBLY_VALUE_LAYOUT_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Value-Layout.wv");
+
     private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv");
@@ -975,6 +982,10 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_BINARY_ENCODING_MEMORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Binary-Encoding-Memory-Tool.wv");
+
+    private static readonly string WEBASSEMBLY_VALUE_LAYOUT_MEMORY_TOOL_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Value-Layout-Memory-Tool.wv");
 
     private static readonly string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
@@ -1321,6 +1332,7 @@ internal static partial class Program
         new("Windvale admits a bounded compiler-scale WebAssembly function inventory", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉfunctionˉinventoryˉruns, Testˉcost.Extended),
         new("Windvale materializes a general WebAssembly control-flow directory", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉcontrolˉflowˉruns, Testˉcost.Extended),
         new("Windvale encodes canonical general WebAssembly binary primitives", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉbinaryˉencodingˉruns),
+        new("Windvale lays out exact compiler WebAssembly values", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉvalueˉlayoutˉruns, Testˉcost.Extended),
         new("Windvale emits general scalar dispatcher WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉscalarˉdispatcherˉruns, Testˉcost.Extended),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
@@ -15008,6 +15020,198 @@ internal static partial class Program
                     ImmutableArray<byte>.Empty).Bytes.Length);
     }
 
+    private static void Compilerˉwebassemblyˉvalueˉlayoutˉruns()
+    {
+        static byte[] Uleb32(uint Value)
+        {
+            var Result = new List<byte>();
+            do
+            {
+                var Next = (byte)(Value & 0x7Fu);
+                Value >>= 7;
+                if (Value != 0) Next |= 0x80;
+                Result.Add(Next);
+            }
+            while (Value != 0);
+            return Result.ToArray();
+        }
+
+        static byte Wasmˉtype(Valueˉshape shape) => shape.Kind switch
+        {
+            Valueˉtype.Text or Valueˉtype.Bytes or
+                Valueˉtype.I64 or Valueˉtype.U64 => 0x7E,
+            Valueˉtype.I32 or Valueˉtype.Bool or Valueˉtype.U8 or
+                Valueˉtype.U32 or Valueˉtype.Record or Valueˉtype.Enum or
+                Valueˉtype.Variant or Valueˉtype.Sequence or
+                Valueˉtype.Builder => 0x7F,
+            _ => throw new InvalidOperationException(
+                $"Value shape '{shape.Kind}' has no direct Wasm layout."),
+        };
+
+        static byte[] Functionˉtype(Functionˉdeclaration function)
+        {
+            var Result = new List<byte> { 0x60 };
+            Result.AddRange(Uleb32((uint)function.Parameterˉtypes.Length));
+            Result.AddRange(function.Parameterˉtypes.Select(Wasmˉtype));
+            if (function.Returnˉtype.Kind == Valueˉtype.Void)
+            {
+                Result.Add(0);
+            }
+            else
+            {
+                Result.Add(1);
+                Result.Add(Wasmˉtype(function.Returnˉtype));
+            }
+            return Result.ToArray();
+        }
+
+        static byte[] Functionˉlocals(Functionˉdeclaration function)
+        {
+            var Groups = new List<(uint Count, byte Type)>();
+            foreach (var Local in function.Localˉtypes)
+            {
+                var Type = Wasmˉtype(Local);
+                if (Groups.Count > 0 && Groups[^1].Type == Type)
+                {
+                    Groups[^1] = (Groups[^1].Count + 1, Type);
+                }
+                else
+                {
+                    Groups.Add((1, Type));
+                }
+            }
+            if (Groups.Count > 0 && Groups[^1].Type == 0x7F)
+            {
+                Groups[^1] = (Groups[^1].Count + 4, 0x7F);
+            }
+            else
+            {
+                Groups.Add((4, 0x7F));
+            }
+            Groups.Add((1, 0x7E));
+            var Result = new List<byte>();
+            Result.AddRange(Uleb32((uint)Groups.Count));
+            foreach (var Group in Groups)
+            {
+                Result.AddRange(Uleb32(Group.Count));
+                Result.Add(Group.Type);
+            }
+            return Result.ToArray();
+        }
+
+        var Toolˉbytes = Compileˉwithˉvalueˉlayoutˉsuccess(
+            WEBASSEMBLY_VALUE_LAYOUT_MEMORY_TOOL_SOURCE,
+            "Value-Layout-Memory-Tool.wv");
+        Equal(
+            WEBASSEMBLY_VALUE_LAYOUT_MEMORY_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        var Compilerˉbytes = File.ReadAllBytes(
+            "Artifacts/WebAssembly-Playground/Windvale-Compiler-Memory.wvb");
+        Equal(
+            WEBASSEMBLY_VALUE_LAYOUT_COMPILER_INPUT_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Compilerˉbytes));
+        var Compiler = Moduleˉcodec.Readˉandˉverify(Compilerˉbytes);
+        Equal(417, Compiler.Functions.Length);
+
+        var Options = Runtimeˉoptions.Portableˉdefaults with
+        {
+            Maximumˉinstructions = 200_000_000,
+            Dynamicˉallocatorˉarenaˉbytes = 128 * 1024 * 1024,
+        };
+        var First = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Compilerˉbytes.ToImmutableArray());
+        var Second = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Compilerˉbytes.ToImmutableArray());
+        Sequenceˉequal(First.Bytes, Second.Bytes);
+        Equal(First.Executedˉinstructions, Second.Executedˉinstructions);
+        Equal(
+            WEBASSEMBLY_VALUE_LAYOUT_COMPILER_RESPONSE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(First.Bytes.AsSpan()));
+
+        var Response = First.Bytes.AsSpan();
+        True(Response.Length >= 12, "The value-layout response is truncated.");
+        True(Response[..4].SequenceEqual("WVVL"u8), "The value-layout magic changed.");
+        Equal(1u, BinaryPrimitives.ReadUInt32LittleEndian(Response[4..8]));
+        Equal(
+            (uint)Compiler.Functions.Length,
+            BinaryPrimitives.ReadUInt32LittleEndian(Response[8..12]));
+        var Cursor = 12;
+        uint Totalˉtypeˉi32 = 0;
+        uint Totalˉtypeˉi64 = 0;
+        uint Totalˉlocalˉi32 = 0;
+        uint Totalˉlocalˉi64 = 0;
+        foreach (var Function in Compiler.Functions)
+        {
+            True(Cursor <= Response.Length - 4, "A value-layout type length is truncated.");
+            var Typeˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                Response.Slice(Cursor, 4)));
+            Cursor += 4;
+            True(
+                Typeˉlength <= Response.Length - Cursor,
+                "A value-layout function type is truncated.");
+            True(
+                Response.Slice(Cursor, Typeˉlength).SequenceEqual(
+                    Functionˉtype(Function.Declaration)),
+                "A value-layout function type changed.");
+            Cursor += Typeˉlength;
+            True(Cursor <= Response.Length - 4, "A value-layout local length is truncated.");
+            var Localˉlength = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(
+                Response.Slice(Cursor, 4)));
+            Cursor += 4;
+            True(
+                Localˉlength <= Response.Length - Cursor,
+                "A value-layout local declaration is truncated.");
+            True(
+                Response.Slice(Cursor, Localˉlength).SequenceEqual(
+                    Functionˉlocals(Function.Declaration)),
+                "A value-layout local declaration changed.");
+            Cursor += Localˉlength;
+            True(Cursor <= Response.Length - 16, "Value-layout counters are truncated.");
+            var Typeˉi32 = BinaryPrimitives.ReadUInt32LittleEndian(
+                Response.Slice(Cursor, 4));
+            var Typeˉi64 = BinaryPrimitives.ReadUInt32LittleEndian(
+                Response.Slice(Cursor + 4, 4));
+            var Localˉi32 = BinaryPrimitives.ReadUInt32LittleEndian(
+                Response.Slice(Cursor + 8, 4));
+            var Localˉi64 = BinaryPrimitives.ReadUInt32LittleEndian(
+                Response.Slice(Cursor + 12, 4));
+            Cursor += 16;
+            var Expectedˉtypeˉi32 = (uint)Function.Declaration.Parameterˉtypes
+                .Count(Type => Wasmˉtype(Type) == 0x7F);
+            var Expectedˉtypeˉi64 = (uint)Function.Declaration.Parameterˉtypes
+                .Count(Type => Wasmˉtype(Type) == 0x7E);
+            if (Function.Declaration.Returnˉtype.Kind != Valueˉtype.Void)
+            {
+                if (Wasmˉtype(Function.Declaration.Returnˉtype) == 0x7F)
+                    Expectedˉtypeˉi32++;
+                else
+                    Expectedˉtypeˉi64++;
+            }
+            Equal(Expectedˉtypeˉi32, Typeˉi32);
+            Equal(Expectedˉtypeˉi64, Typeˉi64);
+            Equal(
+                (uint)Function.Declaration.Localˉtypes
+                    .Count(Type => Wasmˉtype(Type) == 0x7F) + 4u,
+                Localˉi32);
+            Equal(
+                (uint)Function.Declaration.Localˉtypes
+                    .Count(Type => Wasmˉtype(Type) == 0x7E) + 1u,
+                Localˉi64);
+            Totalˉtypeˉi32 += Typeˉi32;
+            Totalˉtypeˉi64 += Typeˉi64;
+            Totalˉlocalˉi32 += Localˉi32;
+            Totalˉlocalˉi64 += Localˉi64;
+        }
+        Equal(Response.Length, Cursor);
+        True(Totalˉtypeˉi32 > 0 && Totalˉtypeˉi64 > 0, "Compiler signatures omitted one Wasm value class.");
+        True(Totalˉlocalˉi32 > 0 && Totalˉlocalˉi64 > 0, "Compiler locals omitted one Wasm value class.");
+    }
+
     private static void Compilerˉwebassemblyˉscalarˉdispatcherˉruns()
     {
         var Toolˉbytes = Compileˉwithˉscalarˉdispatcherˉsuccess(
@@ -27581,6 +27785,33 @@ internal static partial class Program
         return Result.Moduleˉbytes.ToArray();
     }
 
+    private static byte[] Compileˉwithˉvalueˉlayoutˉsuccess(
+        string source,
+        string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [
+                new(
+                    "Compiler/Windvale/WebAssembly-Function-Directory.wv",
+                    WEBASSEMBLY_FUNCTION_DIRECTORY_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Binary-Encoding.wv",
+                    WEBASSEMBLY_BINARY_ENCODING_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Value-Layout.wv",
+                    WEBASSEMBLY_VALUE_LAYOUT_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WebAssembly value-layout composition failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
     private static byte[] Compileˉwithˉscalarˉdispatcherˉsuccess(
         string source,
         string sourceˉname)
@@ -27609,6 +27840,9 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/WebAssembly-Scalar-Operations.wv",
                     WEBASSEMBLY_SCALAR_OPERATIONS_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Value-Layout.wv",
+                    WEBASSEMBLY_VALUE_LAYOUT_SOURCE),
                 new(
                     "Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv",
                     WEBASSEMBLY_SCALAR_DISPATCHER_SOURCE),

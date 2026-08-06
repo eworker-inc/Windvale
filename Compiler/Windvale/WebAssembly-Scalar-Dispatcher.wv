@@ -5,6 +5,7 @@ import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
 import Compilerˉwebassemblyˉexecutableˉgraph as Graphs;
 import Compilerˉwebassemblyˉcontrolˉflow as Controls;
 import Compilerˉwebassemblyˉscalarˉoperations as Scalars;
+import Compilerˉwebassemblyˉvalueˉlayout as Layouts;
 
 export record Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     Valid: bool;
@@ -205,35 +206,16 @@ fn Emitˉtype(
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Function: u32
 ) -> Emission {
-    if !Validateˉscalarˉsignature(Input, Directory, Function) {
-        return Invalidˉemission(Input, 0u32, 0u32);
-    }
-    let Parameterˉcount: u32 =
-        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+    let Layout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
+        Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
+            Input,
             Directory,
             Function
         );
-    var Result: bytes = Byte(96u32);
-    Result = Append(Result, Uleb(Parameterˉcount));
-    var Parameter: u32 = 0u32;
-    while Parameter < Parameterˉcount {
-        Result = Append(Result, Byte(127u32));
-        Parameter = Parameter + 1u32;
+    if !Layout.Valid {
+        return Invalidˉemission(Input, 0u32, 0u32);
     }
-    let Resultˉkind: u32 = Shapeˉkind(
-        Input,
-        Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
-            Directory,
-            Function
-        )
-    );
-    if Resultˉkind == 0u32 {
-        Result = Append(Result, Uleb(0u32));
-    } else {
-        Result = Append(Result, Uleb(1u32));
-        Result = Append(Result, Byte(127u32));
-    }
-    return Emission(true, Result, 0u32, 0u32);
+    return Emission(true, Layout.Bytes, 0u32, 0u32);
 }
 
 fn Functionˉreturnsˉvalue(
@@ -248,6 +230,20 @@ fn Functionˉreturnsˉvalue(
             Function
         )
     ) != 0u32;
+}
+
+fn Functionˉreturnsˉi64(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32
+) -> bool {
+    return Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉisˉi64(
+        Input,
+        Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
+            Directory,
+            Function
+        )
+    );
 }
 
 fn Emitˉearlyˉreturn(Returnsˉvalue: bool) -> bytes {
@@ -285,11 +281,17 @@ fn Emitˉmeter(Returnsˉvalue: bool) -> bytes {
 fn Emitˉcallˉfailureˉpropagation(
     Returnsˉvalue: bool,
     Calledˉreturnsˉvalue: bool,
-    Scratchˉresult: u32
+    Calledˉreturnsˉi64: bool,
+    Scratchˉresult: u32,
+    Scratchˉwide: u32
 ) -> bytes {
     var Result: bytes = Empty(Byte(0u32));
     if Calledˉreturnsˉvalue {
-        Result = Append(Result, Indexed(33u32, Scratchˉresult));
+        if Calledˉreturnsˉi64 {
+            Result = Append(Result, Indexed(33u32, Scratchˉwide));
+        } else {
+            Result = Append(Result, Indexed(33u32, Scratchˉresult));
+        }
     }
     Result = Append(Result, Indexed(35u32, 3u32));
     Result = Append(Result, Byte(4u32));
@@ -297,7 +299,11 @@ fn Emitˉcallˉfailureˉpropagation(
     Result = Append(Result, Emitˉearlyˉreturn(Returnsˉvalue));
     Result = Append(Result, Byte(11u32));
     if Calledˉreturnsˉvalue {
-        Result = Append(Result, Indexed(32u32, Scratchˉresult));
+        if Calledˉreturnsˉi64 {
+            Result = Append(Result, Indexed(32u32, Scratchˉwide));
+        } else {
+            Result = Append(Result, Indexed(32u32, Scratchˉresult));
+        }
     }
     return Result;
 }
@@ -635,7 +641,9 @@ fn Emitˉoperation(
             Emitˉcallˉfailureˉpropagation(
                 Returnsˉvalue,
                 Functionˉreturnsˉvalue(Input, Directory, Target),
-                Scratchˉresult
+                Functionˉreturnsˉi64(Input, Directory, Target),
+                Scratchˉresult,
+                Scratchˉwide
             )
         );
         return Emission(true, Result, 0u32, 0u32);
@@ -774,7 +782,13 @@ fn Emitˉfunction(
     Reachableˉorder: bytes,
     Function: u32
 ) -> Emission {
-    if !Validateˉscalarˉsignature(Input, Directory, Function) {
+    let Typeˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
+        Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
+            Input,
+            Directory,
+            Function
+        );
+    if !Typeˉlayout.Valid {
         return Invalidˉemission(Input, 0u32, 0u32);
     }
     let Functionˉcodeˉrelative: u32 =
@@ -814,14 +828,16 @@ fn Emitˉfunction(
     let Scratchˉright: u32 = Counter + 2u32;
     let Scratchˉresult: u32 = Counter + 3u32;
     let Scratchˉwide: u32 = Counter + 4u32;
-    var Localˉdeclarations: bytes = Uleb(2u32);
-    Localˉdeclarations = Append(
-        Localˉdeclarations,
-        Uleb(Localˉcount + 4u32)
-    );
-    Localˉdeclarations = Append(Localˉdeclarations, Byte(127u32));
-    Localˉdeclarations = Append(Localˉdeclarations, Uleb(1u32));
-    Localˉdeclarations = Append(Localˉdeclarations, Byte(126u32));
+    let Localˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
+        Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉlocals(
+            Input,
+            Directory,
+            Function
+        );
+    if !Localˉlayout.Valid {
+        return Invalidˉemission(Input, 0u32, 0u32);
+    }
+    let Localˉdeclarations: bytes = Localˉlayout.Bytes;
 
     var Instructions: bytes = Emitˉsetˉprogramˉcounter(Counter, 0u32);
     Instructions = Append(Instructions, Byte(3u32));

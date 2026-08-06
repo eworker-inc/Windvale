@@ -601,6 +601,9 @@
       Include="../../Compiler/Windvale/WebAssembly-Scalar-Operations.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Scalar-Operations.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Value-Layout.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Value-Layout.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
     <EmbeddedResource
@@ -609,6 +612,9 @@
     <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Binary-Encoding-Memory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Binary-Encoding-Memory-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.WebAssembly/Value-Layout-Memory-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Value-Layout-Memory-Tool.wv" />
     <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Scalar-Dispatcher-Memory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher-Memory-Tool.wv" />

@@ -1,0 +1,103 @@
+module Compilerˉwebassemblyˉvalueˉlayoutˉmemoryˉtool profile portable;
+
+import Compilerˉwebassemblyˉfunctionˉdirectory as Directory;
+import Compilerˉwebassemblyˉvalueˉlayout as Layouts;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Appendˉu32(Values: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Values, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 12u32 { return Empty(Input); }
+    var Envelope: u32 = 12u32;
+    var Sectionˉkind: u32 = 1u32;
+    var Functionsˉoffset: u32 = 0u32;
+    var Functionsˉlength: u32 = 0u32;
+    var Codeˉlength: u32 = 0u32;
+    var Typesˉoffset: u32 = 0u32;
+    var Typesˉlength: u32 = 0u32;
+    while Sectionˉkind <= 7u32 {
+        if !Rangeˉisˉvalid(Total, Envelope, 8u32) { return Empty(Input); }
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Envelope)) != Sectionˉkind {
+            return Empty(Input);
+        }
+        let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Envelope + 4u32
+        );
+        let Payloadˉoffset: u32 = Envelope + 8u32;
+        if !Rangeˉisˉvalid(Total, Payloadˉoffset, Payloadˉlength) {
+            return Empty(Input);
+        }
+        if Sectionˉkind == 4u32 {
+            Functionsˉoffset = Payloadˉoffset;
+            Functionsˉlength = Payloadˉlength;
+        }
+        if Sectionˉkind == 5u32 { Codeˉlength = Payloadˉlength; }
+        if Sectionˉkind == 7u32 {
+            Typesˉoffset = Payloadˉoffset;
+            Typesˉlength = Payloadˉlength;
+        }
+        Envelope = Payloadˉoffset + Payloadˉlength;
+        Sectionˉkind = Sectionˉkind + 1u32;
+    }
+    if Envelope != Total { return Empty(Input); }
+
+    let Functions: Directory.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary =
+        Directory.Compilerˉwebassemblyˉfunctionˉdirectoryˉbuild(
+            Input,
+            Functionsˉoffset,
+            Functionsˉlength,
+            Codeˉlength,
+            Typesˉoffset,
+            Typesˉlength
+        );
+    if !Functions.Valid || Functions.Count == 0u32 ||
+        Functions.Count > 512u32 {
+        return Empty(Input);
+    }
+
+    var Result: bytes = Textˉtoˉutf8("WVVL");
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Functions.Count);
+    var Function: u32 = 0u32;
+    while Function < Functions.Count {
+        let Type: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
+            Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
+                Input,
+                Functions,
+                Function
+            );
+        let Locals: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
+            Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉlocals(
+                Input,
+                Functions,
+                Function
+            );
+        if !Type.Valid || !Locals.Valid { return Empty(Input); }
+        var Entry: bytes = Bytesˉfromˉu32ˉlittle(Bytesˉlength(Type.Bytes));
+        Entry = Bytesˉconcat(Entry, Type.Bytes);
+        Entry = Appendˉu32(Entry, Bytesˉlength(Locals.Bytes));
+        Entry = Bytesˉconcat(Entry, Locals.Bytes);
+        Entry = Appendˉu32(Entry, Type.I32ˉcount);
+        Entry = Appendˉu32(Entry, Type.I64ˉcount);
+        Entry = Appendˉu32(Entry, Locals.I32ˉcount);
+        Entry = Appendˉu32(Entry, Locals.I64ˉcount);
+        if Bytesˉlength(Entry) > 4194304u32 - Bytesˉlength(Result) {
+            return Empty(Input);
+        }
+        Result = Bytesˉconcat(Result, Entry);
+        Function = Function + 1u32;
+    }
+    return Result;
+}
