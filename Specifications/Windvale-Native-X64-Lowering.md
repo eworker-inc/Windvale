@@ -191,7 +191,18 @@ The staging shell uses the same module to build the manifest and validates the
 canonical result before its manifest-last write. The portable reader rejects
 truncated, oversized, inconsistent, reordered, duplicate, gapped, extended,
 and otherwise malformed evidence without host mutation. It does not open or
-identify chunk resources. A native commit adapter must preserve the exact
+identify chunk resources.
+
+A focused native bridge accepts the borrowed manifest descriptor through ABI
+22 and maps the reader status to one `u32`: `0` is valid; `1` through `10` are
+truncated, magic, version, manifest size, object size, chunk count, chunk
+limit, chunk index, chunk position, and chunk length. The packed native return
+continues to carry runtime failure separately from this low-word format token.
+The bridge requires no service and exposes no admitted size or count on
+failure. A fixed package builder must resolve its verified function ordinal
+before mapping the generated `$function_NNNN` symbol to a platform import.
+
+A native commit adapter must preserve the exact
 validated manifest snapshot, bind each staged-resource identity, reject
 missing or changed chunks, reconstruct and verify the complete WVO, and then
 use the qualified exclusive-sibling, durable-write, atomic-replacement, and

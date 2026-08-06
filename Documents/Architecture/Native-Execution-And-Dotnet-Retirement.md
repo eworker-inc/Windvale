@@ -348,7 +348,7 @@ Decision 0272 admits lossless `u32.from_u8` through the existing descriptor-inst
 
 Decision 0277 closes the portable browser-compiler WVB seam with a separately pinned format-3 native source compiler. Its normal launcher verifies the native compiler and publisher, reads the exact project inventory, writes one temporary candidate, and reproduces the 919,577-byte compiler byte for byte without .NET. Decision 0278 closes the remaining interpreter-Wasm seam with a second named format-3 compiler-family member. The native WebAssembly compiler reproduces the exact 839,104-byte import-free execution-ABI-3 artifact, while the Node launcher independently checks its exports, memory regions, and atomic replacement. Both package constructors remain Stage 0 recovery commands; no C# product implementation changed.
 
-Decisions 0280 through 0285 advance the large native-object seam without
+Decisions 0280 through 0286 advance the large native-object seam without
 widening Windvale's ordinary 4 MiB value contract. Immutable analysis evidence
 precedes emission; the WVO writer exposes separately owned canonical regions;
 maximal contiguous function batches carry bounded code and relocation values;
@@ -359,7 +359,10 @@ small `WVOP 1` structural manifest last. The cursor and staging sequence
 reproduce the independent Stage 0 object byte for byte. A focused portable
 reader now owns the same canonical serializer and strictly rejects malformed
 magic, version, lengths, limits, indices, positions, and final coverage before
-host mutation. These layers deliberately do not reuse the pre-opened
+host mutation. A capability-free scalar bridge carries those exact status
+results across ABI 22's existing borrowed-descriptor call convention and has
+executed as native machine code without a service. These layers deliberately
+do not reuse the pre-opened
 random-access-storage capability, whose contract
 excludes path creation, replacement, and directory publication, and do not
 claim that scratch resources are an atomic destination. A later fixed native

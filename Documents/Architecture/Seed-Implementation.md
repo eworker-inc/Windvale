@@ -92,7 +92,9 @@ bounded resource and writes the versioned `WVOP 1` manifest last. That is a
 multipart transport seam, not atomic publication. A focused capability-free
 reader owns canonical manifest serialization and strictly validates bounded
 counts, extents, indices, and contiguous positions without touching host
-resources. A fixed native adapter must preserve that snapshot, bind the staged
+resources. A tiny capability-free bridge maps its exact statuses across ABI
+22's borrowed-`bytes`/scalar-return convention for a fixed native caller. A
+fixed native adapter must preserve that snapshot, bind the staged
 identities, validate chunk contents, reconstruct the exact WVO, and enter
 the qualified sibling-replacement transaction before the managed publisher can
 leave the normal path.

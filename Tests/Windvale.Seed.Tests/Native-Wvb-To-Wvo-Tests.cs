@@ -63,20 +63,29 @@ internal static partial class Program
     private static readonly string NATIVE_X64_LOWERING_STAGING_MANIFEST_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Staging-Manifest.wv");
+    private static readonly string NATIVE_X64_LOWERING_STAGING_NATIVE_BRIDGE_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Staging-Native-Bridge.wv");
     private static readonly string NATIVE_X64_LOWERING_STAGING_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Staging-Tool.wv");
     private static readonly string WVO_STAGING_MANIFEST_ADAPTER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Manifest-Adapter.wv");
+    private static readonly string WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvo-Staging-Native-Bridge-Adapter.wv");
 
     private const int WVB_TO_WVO_TOOL_WVB_BYTES = 372_514;
     private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 394_780;
     private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
         "77158b228c204b587dbf559621ad7c717d4eb5b418c32b783204cd350525ac76";
-    private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 6_728;
+    private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 6_942;
     private const string WVO_STAGING_MANIFEST_ADAPTER_SHA256 =
-        "0d343c22a2d33bf1d90dc71f055133fedb742d88e775aaf6c2f9d1f3542300c0";
+        "f5ee0ed8d06e3c444c2cdc5a5a220d62712dd6700eebab4d66bf2995ac7ce344";
+    private const int WVO_STAGING_NATIVE_BRIDGE_ADAPTER_WVB_BYTES = 6_785;
+    private const string WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SHA256 =
+        "7bfbaf5f79fae879d534c05f5c52b9f354519d84fdbeb4acc008d9b90c0a711c";
     private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_348_864;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
         "0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280";
@@ -139,6 +148,7 @@ internal static partial class Program
             "Compilerˉnativeˉx64ˉstagingˉmanifestˉtest",
             Manifestˉadapter.Module.Name);
         Assertˉobjectˉstaging(Staging, Manifestˉadapter);
+        Assertˉstagingˉnativeˉbridge();
         var Toolˉnative = X64ˉnativeˉbackend.Compile(Toolˉmodule);
         Nativeˉfragmentˉverifier.Verify(Toolˉnative.Fragment);
         Sequenceˉequal(
@@ -591,11 +601,37 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv",
                     NATIVE_X64_LOWERING_STAGING_MANIFEST_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Staging-Native-Bridge.wv",
+                    NATIVE_X64_LOWERING_STAGING_NATIVE_BRIDGE_SOURCE),
             ]);
         if (!Result.Success)
         {
             throw new InvalidOperationException(
                 "Windvale staging-manifest adapter compilation failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwvoˉstagingˉnativeˉbridgeˉadapterˉsuccess()
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Tests/Fixtures/Native-X64/Wvo-Staging-Native-Bridge-Adapter.wv",
+                WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SOURCE),
+            [
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv",
+                    NATIVE_X64_LOWERING_STAGING_MANIFEST_SOURCE),
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Staging-Native-Bridge.wv",
+                    NATIVE_X64_LOWERING_STAGING_NATIVE_BRIDGE_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Windvale staging native-bridge adapter compilation failed: " +
                 string.Join(" | ", Result.Diagnostics));
         }
         return Result.Moduleˉbytes.ToArray();
@@ -859,6 +895,26 @@ internal static partial class Program
         var Extended = new byte[Valid.Length + 1];
         Valid.CopyTo(Extended, 0);
         Assertˉsummary(4, Extended);
+    }
+
+    private static void Assertˉstagingˉnativeˉbridge()
+    {
+        var Adapterˉbytes =
+            Compileˉwvoˉstagingˉnativeˉbridgeˉadapterˉsuccess();
+        Equal(
+            WVO_STAGING_NATIVE_BRIDGE_ADAPTER_WVB_BYTES,
+            Adapterˉbytes.Length);
+        Equal(
+            WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Adapterˉbytes));
+        var Adapter = Moduleˉcodec.Readˉandˉverify(Adapterˉbytes);
+        Equal(
+            "Compilerˉnativeˉx64ˉstagingˉnativeˉbridgeˉtest",
+            Adapter.Module.Name);
+        var Native = X64ˉnativeˉbackend.Compile(Adapter);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(0, Native.Fragment.Requiredˉservices.Length);
+        Equal(42, X64ˉnativeˉexecutor.Executeˉi32(Native.Fragment));
     }
 
     private static byte[] Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(

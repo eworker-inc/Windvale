@@ -1,0 +1,51 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉnativeˉbridge profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+
+export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉvalidate(
+    Input: bytes
+) -> u32 {
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(Input);
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return 0u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Truncated {
+        return 1u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Magic {
+        return 2u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Version {
+        return 3u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Manifestˉsize {
+        return 4u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Objectˉsize {
+        return 5u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉcount {
+        return 6u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉlimit {
+        return 7u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉindex {
+        return 8u32;
+    }
+    if Summary.Status ==
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉposition {
+        return 9u32;
+    }
+    return 10u32;
+}

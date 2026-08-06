@@ -2921,3 +2921,35 @@ Platform adapter integration, complete-tool self-lowering, Development,
 Standard, Qualification, Linux execution, WebAssembly verification, artifact
 promotion, ordinary-path cutover, and the grouped end-of-goal gate remain
 deferred.
+
+## Local scalar native staging-manifest bridge evidence
+
+[Decision 0286](../Decisions/0286-Scalar-Native-Staging-Manifest-Bridge.md)
+adds one capability-free ABI-22 bridge from a borrowed manifest descriptor to
+the strict reader's scalar status. `0` admits a complete manifest; `1` through
+`10` retain the portable reader's exact rejection order. Runtime failure
+remains in the generated function's separate packed status and rejected input
+never exposes admitted size/count evidence.
+
+The complete malformed-manifest matrix now obtains every status through that
+bridge. A separate no-capability runner calls it over one valid immutable
+manifest and one bad-magic manifest, passes independent native-fragment
+verification, requires zero services, executes as x86-64 machine code, and
+returns 42. The final reviewed compiler selection passes 1/1 in 14.872 test
+seconds after an 8.65-second zero-warning Release build.
+
+The qualified native source front door compiles the three-module malformed
+adapter to 6,942 bytes at SHA-256
+`f5ee0ed8d06e3c444c2cdc5a5a220d62712dd6700eebab4d66bf2995ac7ce344`
+and the three-module native runner to 6,785 bytes at SHA-256
+`7bfbaf5f79fae879d534c05f5c52b9f354519d84fdbeb4acc008d9b90c0a711c`.
+The 394,780-byte staging-tool identity and existing unpromoted Windows/Linux
+package identities remain unchanged.
+
+No C# product implementation or WebAssembly implementation changed. A future
+package builder must map the verified bridge ordinal to the fixed platform
+adapter import. Chunk identity/content validation, reconstructed WVO
+verification, replacement/cleanup integration, complete-tool self-lowering,
+Development, Standard, Qualification, Linux execution, WebAssembly
+verification, artifact promotion, ordinary-path cutover, and the grouped
+end-of-goal gate remain deferred.
