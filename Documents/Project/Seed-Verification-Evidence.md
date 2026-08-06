@@ -3142,3 +3142,35 @@ No C# product implementation or WebAssembly implementation changed. Native
 handle/file-ID alias checks, sibling writing, replacement, cleanup,
 complete-tool integration, Development, Standard, Qualification, Linux,
 promotion, ordinary-path, and grouped end-of-goal gates remain deferred.
+
+## Local fixed native staged-WVO publication evidence
+
+[Decision 0299](../Decisions/0299-Fixed-Native-Staged-Wvo-Publication.md)
+adds shared native-table validation plus fixed Windows and Linux publication
+adapters above Decision 0295's one-execution snapshot sequence. Each adapter
+reopens every named resource, captures native file identity, rereads complete
+bytes against the immutable snapshot, rejects a destination alias, and writes
+only the admitted chunk descriptors to one exclusive sibling. Flush, complete
+reread, exact EOF, atomic replacement, and pre-replacement cleanup follow the
+existing portable transaction states; an indeterminate mutation is not retried.
+
+The exact publisher WVB is 414,230 bytes at SHA-256
+`07b9e0eff09927208980a0acdd7d88acc6cb3f40981d0c0a582951e7d30517f1`.
+The Windows application is 6,010,880 bytes at SHA-256
+`7a319247b6f6aabbf185cb46b491650303840f1a30849f576af7cf2258b65b40`;
+the Linux application is 6,008,537 bytes at SHA-256
+`b297da74e2fc6608023cd166f9abfa6f8543aef77dd1a7b01922079d38a61bd0`.
+The wrapper uses the compiler-capacity 64-snapshot storage plan and binds the
+exact eight required service-table entries.
+
+The reviewed focused compiler selection passes 1/1 in 6.394 test seconds after
+a 13.18-second zero-warning Release build; the complete command takes 24.2
+seconds. Current-host Windows execution publishes the exact three-chunk object,
+rejects changed content while preserving a sentinel destination, rejects a
+hard-link alias, leaves no `.wvo-*` sibling, and loads no CLR component.
+
+C# changes are limited to Stage 0/recovery package construction, target routing,
+and tests. No WebAssembly implementation changed. Linux execution, complete
+compiler self-staging integration, native constructor replacement, extended
+fault/concurrency evidence, Development, Standard, Qualification, promotion,
+ordinary-path cutover, and the grouped end-of-goal gate remain deferred.

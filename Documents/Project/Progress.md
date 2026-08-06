@@ -1,6 +1,6 @@
 # Windvale progress
 
-> Status snapshot: 5 August 2026
+> Status snapshot: 6 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Windvale roadmap phase map showing qualified, ongoing, current, in-progress, and planned phases" width="100%"></a>
 
@@ -61,6 +61,7 @@ Proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults
 - ✅ Exact ABI-22 compiler → measured large-native WVO → bounded link/runtime/service profiles → cross-host-qualified direct PE/ELF Stage 2 reproduction → public atomic `compile`/`aot` recovery route
 - 🔵 Explicit `.wv` inputs or bounded Project 1 → single source snapshots → Windvale-native compiler → shared portable compiler-aligned verifier → accepted WVB publication through format-5 Windows/Linux driver packages; current-host direct evidence passes, cross-host qualification and atomic source-visible replacement remain
 - 🔵 Constant-return metadata-free WVB 1.11 subset → Windvale-owned ABI-22 x86-64 selection → exact canonical WVO 1.0; two-immediate oracle agreement, native hosted-shell execution, and malformed-input output preservation pass on the current host, while broader operations and dual-host qualification remain
+- 🔵 Bounded compiler WVO regions → exact input/manifest/chunk snapshots → fixed native identity checks → exclusive-sibling write/flush/reread/atomic replacement; current-host Windows passes without loading .NET, while Linux execution, complete self-staging integration, and grouped qualification remain
 - ✅ ABI-21 direct records → deterministic frame backing → caller-owned returns → zero record-arena use in both the exact compiler and rebuilt Probe 32
 - 🚧 Verified descriptor ownership → exact WVA allocator leaf → physical emission schedule → live W^X differential execution; full-allocator selection remains open
 - ✅ ABI-22 dynamic values → generation-owned byte buffers → verified return checkpoints → complete native Stage 2 reproduction on Windows and Debian

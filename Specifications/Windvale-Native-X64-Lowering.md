@@ -282,13 +282,22 @@ platform adapter may consume those retained snapshot descriptors only after it
 independently verifies the native table; ordinal names do not prove host file
 identity or eliminate alias checks.
 
-A native commit adapter must preserve the exact
-validated manifest snapshot, bind each staged-resource identity, reject
-missing or changed resources, consume only the content-verified chunk sequence,
-and then use the qualified exclusive-sibling, durable-write,
-atomic-replacement, and cleanup protocol. It must not silently retry an
-indeterminate mutation. Until that adapter exists, the caller supplies a
-unique private staging prefix and owns scratch cleanup.
+Decision 0299 adds that fixed commit adapter for Windows and Linux. It validates
+the exact native `WVFI` table and every canonical pointer, reopens each retained
+resource only to bind host identity and compare its complete bytes with the
+immutable snapshot, rejects destination aliases, and writes only snapshot
+ordinals two through the admitted count. One exclusive sibling is written with
+exact partial-progress accounting, durably flushed, reread against the same
+snapshots through exact EOF, and atomically renamed. Pre-replacement failure
+cleans the sibling; post-replacement failure remains distinct and is never
+silently replayed. The fixed package uses the 64-snapshot compiler-capacity
+storage plan while binding only the exact eight service-table entries required
+by the Windvale admission module.
+
+The Windows application has current-host execution evidence. The Linux image,
+complete compiler self-staging integration, package promotion, native
+replacement of the Stage 0 constructor, extended fault/concurrency matrix, and
+grouped dual-host qualification remain separate gates.
 
 ## Adapters
 
