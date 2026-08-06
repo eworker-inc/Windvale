@@ -310,6 +310,9 @@
       Include="../../Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Record-Instructions.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Call-Arguments.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Call-Instructions.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Call-Instructions.wv" />
     <EmbeddedResource

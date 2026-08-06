@@ -51,13 +51,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 315_596;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_366_336;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 318_977;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_406_272;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "d812ac375e9a4373c9bcbd73a9ea1187155037951927a456c82379cb664236df";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_366_336;
+        "32089b25357de28ba9c63dbaa9718109a7f6ae87712ac5cd4cdbbc13cf7fda3a";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_407_296;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "561341765954ab808dee30ae3bebd78f9dedf2cbaa29c73a6b0d149a23c721ce";
+        "170ed07261b51ee1d18c7f39465ac9fd337ddfa60d4bd745c34d1ec9c295c3f2";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -503,6 +503,9 @@ internal static partial class Program
                     "Compiler/Windvale/Native-X64-Lowering-Types.wv",
                     NATIVE_X64_LOWERING_TYPES_SOURCE),
                 new(
+                    "Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv",
+                    NATIVE_X64_LOWERING_CALL_ARGUMENTS_SOURCE),
+                new(
                     "Compiler/Windvale/Native-X64-Lowering-Enums.wv",
                     NATIVE_X64_LOWERING_ENUMS_SOURCE),
                 new(
@@ -613,6 +616,10 @@ internal static partial class Program
         True(Module.Functions.Any(Function =>
             Function.Declaration.Returnˉtype.Kind is Valueˉtype.Text or Valueˉtype.Bytes),
             "The descriptor-call fixture omitted its descriptor returns.");
+        True(Module.Functions.Any(Function =>
+            Function.Declaration.Parameterˉtypes.Length >
+                Nativeˉcontract.REGISTER_CALL_PARAMETERS),
+            "The descriptor-call fixture omitted its stack-argument boundary.");
 
         var Interpreted = new Referenceˉruntime(
             Module,

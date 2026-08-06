@@ -24,6 +24,8 @@ Accepted architectural direction under [Decision 0057](../Decisions/0057-Windval
 
 [Decision 0249](../Decisions/0249-Bounded-Native-Descriptor-Calls.md) adds `text` and `bytes` helper parameters and returns within the existing four-register call envelope. Complete descriptor cells pass by address, caller-owned result cells pass in `RAX`, and the callee preserves borrowed values or validates and compacts arena-owned returns at its saved checkpoint. The focused descriptor-call emitter keeps this ownership-heavy machine logic outside the large core; stack-passed arguments and grouped Windows/Linux qualification remain.
 
+[Decision 0251](../Decisions/0251-Bounded-Native-Wide-Calls.md) extends that same ABI 22 call envelope to its bounded 64-parameter maximum. The first four representations stay in registers; each later scalar, record handle, or complete descriptor uses one canonical 16-byte outgoing cell, and caller-owned result addresses account for the temporary stack adjustment. A focused call-argument module removes duplicated register-only emission from the already-large core and adjacent modules. The real hosted lowerer now crosses its measured six-through-16-parameter helpers and reproduces through the pinned native source front door; grouped Windows/Linux qualification remains.
+
 [Decision 0140](../Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) additionally makes portability a per-part and derived artifact property. Native publication must preserve the canonical module's platform scope and capability requirements even when a particular application intentionally targets only one environment.
 
 ## Destination
@@ -319,6 +321,8 @@ Decision 0247 adds usage and rejection reporting through service-table slot 48. 
 Decision 0248 admits the real hosted tool's 297 functions, 33 immutable data declarations, and 29 nominal types within explicit 512/64/64 bounds. One layout-owned generator replaces hard-coded names beyond ordinal seven while retaining Stage 0's exact `$function_0000` and `$data_0000` D4 contracts. A 9-data, 9-type, 10-function crossing fixture agrees byte-for-byte through Stage 0 and both Windvale adapters; later unsupported instructions and shapes remain separate measured blockers.
 
 Decision 0249 admits descriptor parameters and returns inside the retained four-register directory. Callers pass complete descriptor cells by address and descriptor-result destinations in `RAX`; callees preserve external values and compact owned returns against a hidden arena checkpoint. The current 321-function hosted tool now reaches its first six-parameter helper, selecting stack-passed argument transport as the next measured blocker.
+
+Decision 0251 closes that measured blocker by expanding the internal directory to 64 padded parameter types and matching ABI 22's exact register-plus-stack transport. The updated 330-function adapter closures reproduce their Stage 0 WVB identities through the pinned native build driver, and the widened descriptor fixture reproduces the complete Stage 0 WVO. Enum parameters/returns, multiple record arguments, and remaining instruction shapes are now the next measured backend gaps.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 

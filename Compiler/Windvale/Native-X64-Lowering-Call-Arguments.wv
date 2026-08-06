@@ -1,0 +1,364 @@
+module Compilerˉnativeˉx64ˉloweringˉcallˉarguments profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Typeˉisˉdescriptor(Type: u8) -> bool {
+    if Type == 3u8 { return true; }
+    return Type == 6u8;
+}
+
+fn Emitˉframeˉadjustment(
+    Result: bytes,
+    Subtract: bool,
+    Bytes: u32
+) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 129u8);
+    if Subtract {
+        Output = Appendˉbyte(Output, 236u8);
+    } else {
+        Output = Appendˉbyte(Output, 196u8);
+    }
+    return Appendˉu32(Output, Bytes);
+}
+
+fn Loadˉregisterˉargument(
+    Result: bytes,
+    Argument: u32,
+    Slot: u32,
+    Type: u8
+) -> bytes {
+    var Output: bytes = Result;
+    let Isˉrecord: bool =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type);
+    if Isˉrecord || Typeˉisˉdescriptor(Type) {
+        if Argument < 2u32 {
+            Output = Appendˉbyte(Output, 76u8);
+        } else {
+            Output = Appendˉbyte(Output, 72u8);
+        }
+        if Isˉrecord {
+            Output = Appendˉbyte(Output, 139u8);
+        } else {
+            Output = Appendˉbyte(Output, 141u8);
+        }
+    } else {
+        if Argument < 2u32 { Output = Appendˉbyte(Output, 68u8); }
+        Output = Appendˉbyte(Output, 139u8);
+    }
+    if Argument == 0u32 { Output = Appendˉbyte(Output, 132u8); }
+    if Argument == 1u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 2u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Argument == 3u32 { Output = Appendˉbyte(Output, 148u8); }
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Copyˉstackˉargument(
+    Result: bytes,
+    Argument: u32,
+    Slot: u32,
+    Type: u8,
+    Stackˉbytes: u32
+) -> bytes {
+    let Outgoingˉoffset: u32 = (Argument - 4u32) * 16u32;
+    let Sourceˉoffset: u32 = Slot * 16u32 + Stackˉbytes;
+    var Output: bytes = Result;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
+        Typeˉisˉdescriptor(Type) {
+        Output = Appendˉbyte(Output, 72u8);
+    }
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Sourceˉoffset);
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
+        Typeˉisˉdescriptor(Type) {
+        Output = Appendˉbyte(Output, 72u8);
+    }
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Outgoingˉoffset);
+    if !Typeˉisˉdescriptor(Type) { return Output; }
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Sourceˉoffset + 8u32);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Outgoingˉoffset + 8u32);
+}
+
+fn Storeˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉraxˉfield(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32 + 8u32);
+}
+
+fn Storeˉregisterˉparameter(
+    Result: bytes,
+    Parameter: u32,
+    Type: u8
+) -> bytes {
+    var Output: bytes = Result;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+        if Parameter < 2u32 {
+            Output = Appendˉbyte(Output, 76u8);
+        } else {
+            Output = Appendˉbyte(Output, 72u8);
+        }
+        Output = Appendˉbyte(Output, 137u8);
+        if Parameter == 0u32 { Output = Appendˉbyte(Output, 132u8); }
+        if Parameter == 1u32 { Output = Appendˉbyte(Output, 140u8); }
+        if Parameter == 2u32 { Output = Appendˉbyte(Output, 140u8); }
+        if Parameter == 3u32 { Output = Appendˉbyte(Output, 148u8); }
+        Output = Appendˉbyte(Output, 36u8);
+        return Appendˉu32(Output, Parameter * 16u32);
+    }
+    if Typeˉisˉdescriptor(Type) {
+        if Parameter < 2u32 {
+            Output = Appendˉbyte(Output, 73u8);
+        } else {
+            Output = Appendˉbyte(Output, 72u8);
+        }
+        Output = Appendˉbyte(Output, 139u8);
+        if Parameter == 0u32 { Output = Appendˉbyte(Output, 0u8); }
+        if Parameter == 1u32 { Output = Appendˉbyte(Output, 1u8); }
+        if Parameter == 2u32 { Output = Appendˉbyte(Output, 1u8); }
+        if Parameter == 3u32 { Output = Appendˉbyte(Output, 2u8); }
+        Output = Storeˉrax(Output, Parameter);
+        if Parameter < 2u32 {
+            Output = Appendˉbyte(Output, 73u8);
+        } else {
+            Output = Appendˉbyte(Output, 72u8);
+        }
+        Output = Appendˉbyte(Output, 139u8);
+        if Parameter == 0u32 { Output = Appendˉbyte(Output, 64u8); }
+        if Parameter == 1u32 { Output = Appendˉbyte(Output, 65u8); }
+        if Parameter == 2u32 { Output = Appendˉbyte(Output, 65u8); }
+        if Parameter == 3u32 { Output = Appendˉbyte(Output, 66u8); }
+        Output = Appendˉbyte(Output, 8u8);
+        return Storeˉraxˉfield(Output, Parameter);
+    }
+    if Parameter < 2u32 { Output = Appendˉbyte(Output, 68u8); }
+    Output = Appendˉbyte(Output, 137u8);
+    if Parameter == 0u32 { Output = Appendˉbyte(Output, 132u8); }
+    if Parameter == 1u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Parameter == 2u32 { Output = Appendˉbyte(Output, 140u8); }
+    if Parameter == 3u32 { Output = Appendˉbyte(Output, 148u8); }
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Parameter * 16u32);
+}
+
+fn Copyˉstackˉparameter(
+    Result: bytes,
+    Parameter: u32,
+    Type: u8,
+    Frameˉbytes: u32
+) -> bytes {
+    let Incomingˉoffset: u32 = Frameˉbytes + 8u32 +
+        (Parameter - 4u32) * 16u32;
+    var Output: bytes = Result;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
+        Typeˉisˉdescriptor(Type) {
+        Output = Appendˉbyte(Output, 72u8);
+    }
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Incomingˉoffset);
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
+        Typeˉisˉdescriptor(Type) {
+        Output = Storeˉrax(Output, Parameter);
+    } else {
+        Output = Appendˉbyte(Output, 137u8);
+        Output = Appendˉbyte(Output, 132u8);
+        Output = Appendˉbyte(Output, 36u8);
+        Output = Appendˉu32(Output, Parameter * 16u32);
+    }
+    if !Typeˉisˉdescriptor(Type) { return Output; }
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Incomingˉoffset + 8u32);
+    return Storeˉraxˉfield(Output, Parameter);
+}
+
+export fn Compilerˉnativeˉx64ˉcallˉregisterˉparameterˉlimit() -> u32 {
+    return 4u32;
+}
+
+export fn Compilerˉnativeˉx64ˉcallˉparameterˉlimit() -> u32 {
+    return 64u32;
+}
+
+export fn Compilerˉnativeˉx64ˉcallˉstackˉbytes(Parameters: u32) -> u32 {
+    if Parameters <= Compilerˉnativeˉx64ˉcallˉregisterˉparameterˉlimit() {
+        return 0u32;
+    }
+    return (Parameters - Compilerˉnativeˉx64ˉcallˉregisterˉparameterˉlimit()) *
+        16u32;
+}
+
+export fn Compilerˉnativeˉx64ˉcallˉargumentˉbytes(
+    Parameterˉtypes: bytes
+) -> u32 {
+    var Result: u32 = 0u32;
+    let Parameters: u32 = Bytesˉlength(Parameterˉtypes);
+    var Parameter: u32 = 0u32;
+    while Parameter < Parameters {
+        let Type: u8 = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
+        if Parameter < Compilerˉnativeˉx64ˉcallˉregisterˉparameterˉlimit() {
+            if Parameter < 2u32 || Typeˉisˉdescriptor(Type) ||
+                Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+                Result = Result + 8u32;
+            } else {
+                Result = Result + 7u32;
+            }
+        } else {
+            if Typeˉisˉdescriptor(Type) {
+                Result = Result + 32u32;
+            } else {
+                if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+                    Result = Result + 16u32;
+                } else {
+                    Result = Result + 14u32;
+                }
+            }
+        }
+        Parameter = Parameter + 1u32;
+    }
+    if Compilerˉnativeˉx64ˉcallˉstackˉbytes(Parameters) != 0u32 {
+        Result = Result + 14u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉcallˉparameterˉbytes(
+    Parameterˉtypes: bytes
+) -> u32 {
+    var Result: u32 = 0u32;
+    var Parameter: u32 = 0u32;
+    while Parameter < Bytesˉlength(Parameterˉtypes) {
+        let Type: u8 = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
+        if Parameter < Compilerˉnativeˉx64ˉcallˉregisterˉparameterˉlimit() {
+            if Typeˉisˉdescriptor(Type) {
+                Result = Result + 23u32;
+            } else {
+                if Parameter < 2u32 ||
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+                    Result = Result + 8u32;
+                } else {
+                    Result = Result + 7u32;
+                }
+            }
+        } else {
+            if Typeˉisˉdescriptor(Type) {
+                Result = Result + 32u32;
+            } else {
+                if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+                    Result = Result + 16u32;
+                } else {
+                    Result = Result + 14u32;
+                }
+            }
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉcallˉarguments(
+    Result: bytes,
+    Argumentˉslots: bytes,
+    Parameterˉtypes: bytes
+) -> bytes {
+    let Parameters: u32 = Bytesˉlength(Argumentˉslots) / 4u32;
+    let Registerˉparameters: u32 =
+        Compilerˉnativeˉx64ˉcallˉregisterˉparameterˉlimit();
+    var Registerˉarguments: u32 = Parameters;
+    if Registerˉarguments > Registerˉparameters {
+        Registerˉarguments = Registerˉparameters;
+    }
+    var Output: bytes = Result;
+    var Argument: u32 = 0u32;
+    while Argument < Registerˉarguments {
+        Output = Loadˉregisterˉargument(
+            Output,
+            Argument,
+            Bytesˉreadˉu32ˉlittle(Argumentˉslots, Argument * 4u32),
+            Bytesˉreadˉu8(Parameterˉtypes, Argument)
+        );
+        Argument = Argument + 1u32;
+    }
+    let Stackˉbytes: u32 = Compilerˉnativeˉx64ˉcallˉstackˉbytes(Parameters);
+    if Stackˉbytes == 0u32 { return Output; }
+    Output = Emitˉframeˉadjustment(Output, true, Stackˉbytes);
+    while Argument < Parameters {
+        Output = Copyˉstackˉargument(
+            Output,
+            Argument,
+            Bytesˉreadˉu32ˉlittle(Argumentˉslots, Argument * 4u32),
+            Bytesˉreadˉu8(Parameterˉtypes, Argument),
+            Stackˉbytes
+        );
+        Argument = Argument + 1u32;
+    }
+    return Output;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉcallˉstackˉrelease(
+    Result: bytes,
+    Parameters: u32
+) -> bytes {
+    let Stackˉbytes: u32 = Compilerˉnativeˉx64ˉcallˉstackˉbytes(Parameters);
+    if Stackˉbytes == 0u32 { return Result; }
+    return Emitˉframeˉadjustment(Result, false, Stackˉbytes);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉcallˉparameters(
+    Result: bytes,
+    Parameterˉtypes: bytes,
+    Frameˉbytes: u32
+) -> bytes {
+    var Output: bytes = Result;
+    var Parameter: u32 = 0u32;
+    while Parameter < Bytesˉlength(Parameterˉtypes) {
+        let Type: u8 = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
+        if Parameter < Compilerˉnativeˉx64ˉcallˉregisterˉparameterˉlimit() {
+            Output = Storeˉregisterˉparameter(Output, Parameter, Type);
+        } else {
+            Output = Copyˉstackˉparameter(
+                Output,
+                Parameter,
+                Type,
+                Frameˉbytes
+            );
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return Output;
+}

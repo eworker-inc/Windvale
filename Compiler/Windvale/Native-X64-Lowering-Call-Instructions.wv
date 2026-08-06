@@ -3,6 +3,7 @@ module Compilerˉnativeˉx64ˉloweringˉcallˉinstructions profile portable;
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
 import Compilerˉnativeˉx64ˉloweringˉrecords as Records;
 import Compilerˉnativeˉx64ˉloweringˉdescriptorˉcalls as Descriptorˉcalls;
+import Compilerˉnativeˉx64ˉloweringˉcallˉarguments as Callˉarguments;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 
@@ -47,22 +48,6 @@ fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
     return 4294967295u32 - Magnitude + 1u32;
 }
 
-fn Loadˉargument(
-    Result: bytes,
-    Argument: u32,
-    Slot: u32
-) -> bytes {
-    var Output: bytes = Result;
-    if Argument < 2u32 { Output = Appendˉbyte(Output, 68u8); }
-    Output = Appendˉbyte(Output, 139u8);
-    if Argument == 0u32 { Output = Appendˉbyte(Output, 132u8); }
-    if Argument == 1u32 { Output = Appendˉbyte(Output, 140u8); }
-    if Argument == 2u32 { Output = Appendˉbyte(Output, 140u8); }
-    if Argument == 3u32 { Output = Appendˉbyte(Output, 148u8); }
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Slot * 16u32);
-}
-
 fn Storeˉeax(Result: bytes, Slot: u32) -> bytes {
     var Output: bytes = Appendˉbyte(Result, 137u8);
     Output = Appendˉbyte(Output, 132u8);
@@ -102,43 +87,28 @@ fn Emitˉvalueˉcall(
         Layout.Compilerˉnativeˉx64ˉlayoutˉreturnˉtype(Callˉdirectory, Target);
     let Returnsˉdescriptor: bool =
         Descriptorˉcalls.Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(Returnˉtype);
-    var Argument: u32 = 0u32;
-    while Argument < Parameters {
-        let Argumentˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+    let Argumentˉtypes: bytes = Bytesˉslice(
+        Callˉdirectory,
+        Target * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() +
+            Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉtypesˉoffset(),
+        Parameters
+    );
+    Output = Callˉarguments.Compilerˉnativeˉx64ˉemitˉcallˉarguments(
+        Output,
+        Bytesˉslice(
             State.Stackˉslots,
-            (State.Stackˉdepth - Parameters + Argument) * 4u32
-        );
-        let Argumentˉtype: u8 =
-            Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉtype(
-                Callˉdirectory,
-                Target,
-                Argument
-            );
-        if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Argumentˉtype) {
-            Output = Records.Compilerˉnativeˉx64ˉemitˉrecordˉargument(
-                Output,
-                Argument,
-                Argumentˉslot
-            );
-        } else {
-        if Descriptorˉcalls.Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(
-            Argumentˉtype
-        ) {
-            Output = Descriptorˉcalls.Compilerˉnativeˉx64ˉemitˉdescriptorˉargument(
-                Output,
-                Argument,
-                Argumentˉslot
-            );
-        } else {
-            Output = Loadˉargument(Output, Argument, Argumentˉslot);
-        }
-        }
-        Argument = Argument + 1u32;
-    }
+            (State.Stackˉdepth - Parameters) * 4u32,
+            Parameters * 4u32
+        ),
+        Argumentˉtypes
+    );
+    let Stackˉbytes: u32 =
+        Callˉarguments.Compilerˉnativeˉx64ˉcallˉstackˉbytes(Parameters);
     if Returnsˉdescriptor {
         Output = Descriptorˉcalls.Compilerˉnativeˉx64ˉemitˉdescriptorˉoutput(
             Output,
-            Resultˉslot
+            Resultˉslot,
+            Stackˉbytes
         );
     }
     Output = Appendˉbyte(Output, 232u8);
@@ -151,6 +121,10 @@ fn Emitˉvalueˉcall(
             ),
             Codeˉbase + Bytesˉlength(Output) + 4u32
         )
+    );
+    Output = Callˉarguments.Compilerˉnativeˉx64ˉemitˉcallˉstackˉrelease(
+        Output,
+        Parameters
     );
     Output = Appendˉbyte(Output, 72u8);
     Output = Appendˉbyte(Output, 137u8);
@@ -212,7 +186,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
             ),
             Bytesˉslice(
                 Callˉdirectory,
-                Target * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() + 12u32,
+                Target * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() +
+                    Layout.Compilerˉnativeˉx64ˉlayoutˉparameterˉtypesˉoffset(),
                 Parameters
             ),
             Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(

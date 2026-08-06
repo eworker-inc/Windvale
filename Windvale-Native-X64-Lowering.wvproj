@@ -2,6 +2,7 @@ windvale-project 1
 root "Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Core.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Call-Instructions.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Capabilities.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Data.wv"

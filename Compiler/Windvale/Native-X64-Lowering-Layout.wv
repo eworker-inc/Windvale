@@ -1,7 +1,15 @@
 module Compilerˉnativeˉx64ˉloweringˉlayout profile portable;
 
 export fn Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() -> u32 {
-    return 16u32;
+    return 76u32;
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉparameterˉtypesˉoffset() -> u32 {
+    return 12u32;
+}
+
+export fn Compilerˉnativeˉx64ˉlayoutˉparameterˉlimit() -> u32 {
+    return 64u32;
 }
 
 export fn Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit() -> u32 {
@@ -28,7 +36,7 @@ export fn Compilerˉnativeˉx64ˉlayoutˉappend(
     Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Returnˉtype));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
     var Parameter: u32 = 0u32;
-    while Parameter < 4u32 {
+    while Parameter < Compilerˉnativeˉx64ˉlayoutˉparameterˉlimit() {
         var Type: u8 = 0u8;
         if Parameter < Parameters {
             Type = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
@@ -116,7 +124,8 @@ export fn Compilerˉnativeˉx64ˉlayoutˉparameterˉtype(
 ) -> u8 {
     return Bytesˉreadˉu8(
         Directory,
-        Function * Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() + 12u32 + Parameter
+        Function * Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() +
+            Compilerˉnativeˉx64ˉlayoutˉparameterˉtypesˉoffset() + Parameter
     );
 }
 

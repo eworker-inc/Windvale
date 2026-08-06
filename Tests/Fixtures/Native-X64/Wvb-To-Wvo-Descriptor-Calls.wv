@@ -21,8 +21,25 @@ fn Build(Prefix: text) -> bytes {
     return Result;
 }
 
+fn Wide(
+    First: bytes,
+    Second: u32,
+    Third: text,
+    Fourth: u8,
+    Fifth: i32,
+    Sixth: bytes
+) -> bytes {
+    if Bytesˉlength(First) != 6u32 { return First; }
+    if Second != 8u32 { return First; }
+    if Bytesˉlength(Textˉtoˉutf8(Third)) != 1u32 { return First; }
+    if Fourth != 9u8 { return First; }
+    if Fifth != 10 { return First; }
+    return Sixth;
+}
+
 export fn Main() -> i32 {
-    let Result = Build(Echo("WVO1"));
+    let Built = Build(Echo("WVO1"));
+    let Result = Wide(Built, 8u32, "x", 9u8, 10, Built);
     if Bytesˉlength(Result) != 6u32 { return 1; }
     if Bytesˉreadˉu8(Result, 4u32) != 1u8 { return 2; }
     if Bytesˉreadˉu8(Result, 5u32) != 2u8 { return 3; }
