@@ -41,6 +41,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Digest-bound native WVO candidate launchers](Decisions/0301-Digest-Bound-Native-Wvo-Candidate-Launchers.md) — pinned Windows/Linux object verification and inspection entry points awaiting grouped promotion
 - [Digest-bound native WVO linker candidate](Decisions/0302-Digest-Bound-Native-Wvo-Linker-Candidate.md) — clean exact linker artifacts and a pinned current-host entry point awaiting grouped promotion
 - [Digest-bound native console-packager candidate](Decisions/0303-Digest-Bound-Native-Console-Packager-Candidate.md) — exact bounded PE/ELF materializer packages and candidate launchers with Stage 0 construction still explicit
+- [Digest-bound native WVB-to-WVO candidate](Decisions/0304-Digest-Bound-Native-Wvb-To-Wvo-Candidate.md) — current accepted-subset lowerer packages, fixed vector, and candidate launchers without a managed runtime
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

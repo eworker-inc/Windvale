@@ -3268,3 +3268,25 @@ image and entry zero. No WebAssembly implementation changed. Native
 construction, atomic publication, grouped Windows/Linux qualification, general
 hosted packaging, release integration, and ordinary-path promotion remain
 deferred.
+
+## Local digest-bound native WVB-to-WVO evidence
+
+[Decision 0304](../Decisions/0304-Digest-Bound-Native-Wvb-To-Wvo-Candidate.md)
+pins the current accepted-subset lowerer as a 372,514-byte WVB at SHA-256
+`f2283d33fdcae404a6dd15f6a888c3d1efa359328110fca6d54be1aa67cc1d5c`,
+a 5,348,864-byte Windows application at SHA-256
+`0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280`,
+and a 5,349,376-byte Linux application at SHA-256
+`c6ba202ffcb32a261bfd9c997e4bab754ab5a636e2d0b95e5de5f55e598c6358`.
+The same inventory pins the native-built 174-byte return-42 WVB and its
+native-produced 479-byte WVO.
+
+Native tool-WVB construction took 18.9 seconds. Paired Stage 0 container
+construction, native fixture construction, and native WVO production took
+11.7 seconds. The reviewed focused compiler selection passes 1/1 in 0.380
+test seconds after a 9.41-second zero-warning Release build; the complete
+command takes 14.3 seconds. The candidate launcher reproduces the fixed WVO
+byte for byte and independent object admission confirms one x86-64 section,
+one symbol, and zero relocations. No WebAssembly implementation changed.
+Complete backend transfer, native host-container construction, atomic WVO
+publication, grouped qualification, and promotion remain deferred.
