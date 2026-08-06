@@ -8,6 +8,7 @@
     "requiresDotnet": false
   },
   "nativeCompilerManifest": "../WebAssembly-Native-Compiler/Manifest.json",
+  "nativeBackendManifest": "../WebAssembly-Native-Backend/Manifest.json",
   "artifacts": [
     {
       "name": "portable-source-compiler",
@@ -31,7 +32,7 @@
       "bytes": 839104,
       "sha256": "f65c4e203d4b244ec52e0619f9d1a99ce1d2809296313cb154bba8316c6d916c",
       "sourceWvb": "Wvb-Scalar-Interpreter.wvb",
-      "production": "stage0-hosted-webassembly-backend-recovery"
+      "production": "pinned-native-webassembly-compiler"
     }
   ]
 }

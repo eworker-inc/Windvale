@@ -37,21 +37,23 @@ The Stage 0 toolchain includes the typed language, compiler, bytecode verifier, 
 
 ## Browser playground
 
-The experimental Stage 0 playground compiles, verifies, and runs Windvale entirely in the browser through .NET WebAssembly. It reuses the reference compiler and interpreter as the current semantic oracle, produces canonical WVB, and exposes only explicitly checked console and diagnostic capabilities. A separate direct demo runs one pinned Windvale-generated WebAssembly artifact in a disposable worker without loading .NET.
+The normal playground is a static Monaco application over the Windvale-native WebAssembly pipeline. One disposable worker loads the digest-pinned interpreter and portable source compiler, constructs canonical `WVSS 1`, compiles to WVB, verifies the returned module again, and executes its scalar entry point. It starts no Blazor host or .NET runtime, and source stays in the browser.
 
 **[Open the Windvale Playground](https://windvale.ca/playground/)**
 
-The **[direct WebAssembly demo](https://windvale.ca/playground/wasm-demo/)** checks and executes its independently verified artifact and accepts editable text input. Artifact production and the general source compiler path still use Stage 0.
+The **[direct WebAssembly demo](https://windvale.ca/playground/wasm-demo/)** remains as a smaller artifact-inspection route. Normal browser artifact production is also .NET-free: the native source front door rebuilds both WVB inputs, the pinned native source compiler rebuilds the portable compiler, and the pinned native WebAssembly compiler rebuilds the interpreter Wasm. Stage 0 is retained only for explicit package reconstruction and independent recovery evidence.
 
 Run it locally:
 
 ```powershell
-dotnet run --project Tools/Windvale.Playground
+cd Website
+npm install
+npm run dev
 ```
 
-The [playground host specification](Specifications/Browser-Playground.md) defines its limits and non-claims. This is a browser host for the language, not a browser boot of Windvale OS and not yet an accepted permanent WebAssembly compiler target.
+The [playground host specification](Specifications/Browser-Playground.md) defines its limits and non-claims. This is a browser host for the language, not a browser boot of Windvale OS and not an assertion that WebAssembly defines Windvale semantics.
 
-The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) and [playground exploration](Documents/Project/WebAssembly-Playground-Exploration.md) describe the implemented profiles, evidence, limits, and remaining route toward a complete editable .NET-free playground. Those documents own the fast-changing backend detail.
+The [experimental WebAssembly target](Specifications/Windvale-WebAssembly.md) and [playground exploration](Documents/Project/WebAssembly-Playground-Exploration.md) describe the implemented profiles, evidence, limits, and remaining cross-host/browser-hardening work. Those documents own the fast-changing backend detail.
 
 ## Quick start
 

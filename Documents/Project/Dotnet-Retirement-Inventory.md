@@ -33,7 +33,7 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | N2 | Complete native backend and baseline JIT | `managed-normal` | The qualified Stage 0 backend remains the complete implementation. Windvale must own general lowering, verification, publication, runtime services, and deterministic JIT/AOT behavior before cutover. |
 | T2 | Complete Seed, OS, golden, malformed, and differential suites | `managed-normal` | The C# harness owns the broad suite. Reusable cases must move to versioned fixtures and manifests rather than being ported line for line. |
 | O1 | Windvale OS image construction and boot probes | `managed-normal` | `Operating-System/Windvale.Bootstrap` and `Verify-Os-Boot.ps1` still build and orchestrate the current images. |
-| W1 | Complete WebAssembly generation and verification | `managed-normal` | The normal static playground compiles, verifies, and executes through Windvale-native WebAssembly, and the pinned native source compiler now regenerates its portable compiler WVB without .NET. Applying the Windvale-authored backend to regenerate the interpreter Wasm and the broader generator/verification gate still use the managed recovery tool. |
+| W1 | Complete WebAssembly generation and verification | `native-candidate` | The normal static playground compiles, verifies, and executes through Windvale-native WebAssembly. Pinned native source and WebAssembly compilers regenerate both WVB inputs and the interpreter Wasm without .NET. The broader differential/qualification gate still retains managed oracles pending grouped promotion. |
 | G1 | Independent dual-host qualification | `managed-normal` | `.github/workflows/verify.yml` installs .NET and runs the managed Seed gate. Native replacement must retain Windows/Linux independence and fail-closed verification. |
 | R1 | Homepage and playground release | `native-candidate` | The homepage workflow publishes the static playground and its digest-pinned native package without installing .NET. Independent release promotion evidence remains before this row is called qualified. |
 | D1 | Local editable browser playground | `native-candidate` | `npm run dev:playground` builds and serves the static Monaco/native-WebAssembly application without starting Blazor or .NET. Cross-host promotion remains. |
@@ -44,7 +44,7 @@ The next transfer should close a complete row or a clearly bounded part of one r
 
 ## Direct managed entry points
 
-The companion JSON currently records 10 operational files across three lanes:
+The companion JSON currently records 11 operational files across three lanes:
 
 - verification: Seed, bootstrap, OS, WebAssembly, and GitHub qualification;
 - release: the managed independent-qualification workflow that gates publication; and

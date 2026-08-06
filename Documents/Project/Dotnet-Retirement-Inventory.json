@@ -32,6 +32,13 @@
       "owner": "WebAssembly native compiler package reconstruction"
     },
     {
+      "path": "Tools/Recovery/Rebuild-WebAssembly-Native-Backend.ps1",
+      "lanes": [
+        "recovery"
+      ],
+      "owner": "WebAssembly backend package reconstruction"
+    },
+    {
       "path": "Tools/Verify/Verify-Bootstrap.ps1",
       "lanes": [
         "verification",

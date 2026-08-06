@@ -24,6 +24,11 @@ Equal(
     "native compiler manifest",
 );
 Equal(
+    "../WebAssembly-Native-Backend/Manifest.json",
+    Manifest.nativeBackendManifest,
+    "native backend manifest",
+);
+Equal(
     "Documents/Decisions/0273-Warmed-WebAssembly-Compiler-Worker.md",
     Manifest.decision,
     "package decision",
@@ -85,6 +90,64 @@ for (const Artifact of Nativeˉcompilerˉmanifest.artifacts) {
     );
 }
 
+const Nativeˉbackendˉmanifestˉpath = path.resolve(
+    Packageˉroot,
+    Manifest.nativeBackendManifest,
+);
+const Nativeˉbackendˉroot = path.dirname(Nativeˉbackendˉmanifestˉpath);
+const Nativeˉbackendˉmanifest = JSON.parse(await readFile(
+    Nativeˉbackendˉmanifestˉpath,
+    "utf8",
+));
+Equal(
+    "windvale-webassembly-native-backend-1",
+    Nativeˉbackendˉmanifest.format,
+    "native backend package format",
+);
+Equal(false, Nativeˉbackendˉmanifest.normalUseRequiresDotnet, "native backend normal .NET dependency");
+Equal(true, Nativeˉbackendˉmanifest.recoveryRequiresDotnet, "native backend recovery .NET dependency");
+Equal(
+    "Windvale-WebAssembly-Artifact-Tool.wvproj",
+    Nativeˉbackendˉmanifest.sourceProject,
+    "native backend project",
+);
+Equal(
+    "compiler-family-wvha-1",
+    Nativeˉbackendˉmanifest.containerProfile,
+    "native backend container profile",
+);
+Equal(
+    "Documents/Decisions/0278-Native-WebAssembly-Artifact-Regeneration.md",
+    Nativeˉbackendˉmanifest.decision,
+    "native backend decision",
+);
+const Nativeˉbackendˉdecision = await readFile(
+    path.join(Repositoryˉroot, Nativeˉbackendˉmanifest.decision),
+    "utf8",
+);
+if (!Nativeˉbackendˉdecision.startsWith(
+    "# Decision 0278: Native WebAssembly artifact regeneration\n",
+)) {
+    Fail("The WebAssembly native backend decision is invalid.");
+}
+if (!Array.isArray(Nativeˉbackendˉmanifest.artifacts) ||
+    Nativeˉbackendˉmanifest.artifacts.length !== 3) {
+    Fail("The WebAssembly native backend manifest must own exactly three artifacts.");
+}
+for (const Artifact of Nativeˉbackendˉmanifest.artifacts) {
+    const Artifactˉpath = path.resolve(Nativeˉbackendˉroot, Artifact.path);
+    if (!Artifactˉpath.startsWith(`${Nativeˉbackendˉroot}${path.sep}`)) {
+        Fail("A WebAssembly native backend artifact path escapes its package.");
+    }
+    const Bytes = await readFile(Artifactˉpath);
+    Equal(Artifact.bytes, Bytes.byteLength, `${Artifact.name} byte length`);
+    Equal(
+        Artifact.sha256,
+        createHash("sha256").update(Bytes).digest("hex"),
+        `${Artifact.name} SHA-256`,
+    );
+}
+
 const Artifacts = new Map();
 for (const Artifact of Manifest.artifacts) {
     if (typeof Artifact.path !== "string" ||
@@ -107,6 +170,11 @@ Equal(
     "pinned-native-source-compiler",
     Manifest.artifacts.find(Artifact => Artifact.name === "portable-source-compiler")?.production,
     "portable compiler production route",
+);
+Equal(
+    "pinned-native-webassembly-compiler",
+    Manifest.artifacts.find(Artifact => Artifact.name === "scalar-interpreter-wasm")?.production,
+    "interpreter WebAssembly production route",
 );
 if (!WebAssembly.validate(Interpreter)) {
     Fail("The packaged scalar interpreter is not valid WebAssembly.");

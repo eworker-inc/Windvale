@@ -1,0 +1,35 @@
+{
+  "format": "windvale-webassembly-native-backend-1",
+  "sourceCommit": "cf45b817e7ba2449b16e49b6a32291a1c5b9a77e",
+  "decision": "Documents/Decisions/0278-Native-WebAssembly-Artifact-Regeneration.md",
+  "sourceProject": "Windvale-WebAssembly-Artifact-Tool.wvproj",
+  "containerProfile": "compiler-family-wvha-1",
+  "normalUseRequiresDotnet": false,
+  "recoveryRequiresDotnet": true,
+  "artifacts": [
+    {
+      "name": "webassembly-compiler-wvb",
+      "path": "Wvb/WebAssembly-Compiler.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 321699,
+      "sha256": "c674a95d1aef3317eeede3d8fd171419058fcd3868013856908215e189feefe1",
+      "sourceProject": "Windvale-WebAssembly-Artifact-Tool.wvproj"
+    },
+    {
+      "name": "windows-x64-webassembly-compiler",
+      "path": "windows-x64/wvwasm.exe",
+      "target": "windows-x64-console-v3",
+      "bytes": 5203968,
+      "sha256": "16b0f9feac13823cf1a133a72de5ed864aaee0538a6351edf060a58a7bb3d80c",
+      "sourceWvb": "Wvb/WebAssembly-Compiler.wvb"
+    },
+    {
+      "name": "linux-x64-webassembly-compiler",
+      "path": "linux-x64/wvwasm.elf",
+      "target": "linux-x64-console-v3",
+      "bytes": 5206016,
+      "sha256": "2f579e329141343296dcbe839e43a435e797e0d93be84aabdb065f0f0754dd60",
+      "sourceWvb": "Wvb/WebAssembly-Compiler.wvb"
+    }
+  ]
+}

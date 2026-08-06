@@ -346,6 +346,8 @@ Decision 0271 adds bounded `bytes.from_u16_little` construction to the same owne
 
 Decision 0272 admits lossless `u32.from_u8` through the existing descriptor-instruction state. Canonical `u8` slots already contain the complete unsigned value, so the exact lowering is one 32-bit source-slot load and target-slot store with no runtime service or failure branch. Keeping the stack-state transition outside the large core preserves the retained 2,048-cell frame ceiling. The focused `0u8` and `255u8` fixture agrees exactly with Stage 0 through both Windvale adapters. Complete self-lowering now reaches function 36's `u32.remainder` instruction.
 
+Decision 0277 closes the portable browser-compiler WVB seam with a separately pinned format-3 native source compiler. Its normal launcher verifies the native compiler and publisher, reads the exact project inventory, writes one temporary candidate, and reproduces the 919,577-byte compiler byte for byte without .NET. Decision 0278 closes the remaining interpreter-Wasm seam with a second named format-3 compiler-family member. The native WebAssembly compiler reproduces the exact 839,104-byte import-free execution-ABI-3 artifact, while the Node launcher independently checks its exports, memory regions, and atomic replacement. Both package constructors remain Stage 0 recovery commands; no C# product implementation changed.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

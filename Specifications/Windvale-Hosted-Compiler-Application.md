@@ -2,7 +2,9 @@
 
 ## Status and scope
 
-`WVHA 1` is the implemented manifest for packaging the exact ABI-22 Windvale compiler as paired Windows and Linux hosted applications. It binds the compiler's canonical six capabilities, exact ten required native services, platform adapter identities, service-table slots, service code, native image, native entry, and explicit instruction bound. The manifest, service bundles, runtime data, canonical WVA startups, independently verified PE/ELF containers, public `windows-x64-console-v3` and `linux-x64-console-v3` targets, `aot` recovery path, and atomic publication were cross-host qualified at exact commit `57d154c` in GitHub Verify run 30819768981. Both qualified raw applications directly reproduced their canonical Stage 2 WVB without loading .NET in their child processes.
+`WVHA 1` is the implemented manifest for packaging one exact ABI-22 Windvale compiler-family member as paired Windows and Linux hosted applications. It binds the canonical six compiler capabilities, exact ten required native services, platform adapter identities, service-table slots, service code, native image, native entry, and explicit instruction bound. The manifest, service bundles, runtime data, canonical WVA startups, independently verified PE/ELF containers, public `windows-x64-console-v3` and `linux-x64-console-v3` targets, `aot` recovery path, and atomic publication were cross-host qualified at exact commit `57d154c` in GitHub Verify run 30819768981. Both qualified raw source-compiler applications directly reproduced their canonical Stage 2 WVB without loading .NET in their child processes.
+
+[Decision 0278](../Documents/Decisions/0278-Native-WebAssembly-Artifact-Regeneration.md) admits the WebAssembly artifact compiler as the second named, digest-pinned member without changing any serialized field, authority, service, limit, startup, or verifier behavior. Format 3 is not a general hosted-application profile: each admitted compiler member requires its own source project, WVB and platform identities, recovery reconstruction, and exact output evidence.
 
 The Decision 0201 compiler profile preserves those formats and boundaries while advancing the exact compiler bytes, the checked hosted dynamic-value arena from 80 MiB to 128 MiB, the instruction ceiling to 48,000,000,000, and explicit large-native WVO/link admission from 20 MiB to 32 MiB. Its current identities and layouts were cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` in GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192).
 
@@ -10,9 +12,9 @@ The candidate allocates hosted container format 3 without changing the qualified
 
 The later [compiler build-driver profile](Windvale-Compiler-Build-Driver.md) deliberately reuses this exact authority/runtime/startup family but carries distinct `WVHB 1` metadata and outer container format 5. The [native WVA assembler](Windvale-Native-Wva-Assembler.md), [native linker](Windvale-Native-Wv-Linker.md), [native console packager](Windvale-Native-Console-Packager.md), and [native WVB-to-WVO lowerer](Windvale-Native-Wvb-To-Wvo.md) profiles reuse the same bounded startup and service implementation with distinct `WVHS 1`/format 6, `WVHL 1`/format 7, `WVHP 1`/format 8, and `WVHN 1`/format 9 metadata. The console packager and lowerer are profiles 5 and 6 with flags 6 and 7; both reuse the exact six compiler-authority capabilities and a ten-service application bundle whose startup adds internal UTF-8 validation. Each constructor and parser selects its expected profile explicitly; the qualified format-3 compiler bytes and identities remain unchanged.
 
-## Exact compiler requirements
+## Exact compiler-family requirements
 
-The manifest admits only the canonical exact compiler module. Its capability declarations remain in WVB order:
+The manifest admits only a named compiler module with the following canonical capability declarations in WVB order:
 
 | Identity | Canonical capability | Signature identity |
 | ---: | --- | ---: |
