@@ -2181,9 +2181,10 @@ The qualified Windows native source front door independently rebuilds the
 are `f3003741b9d5003575cfdadd611534ee6ba3aa7aa936b2c73184d05f023e72ff`
 and `450c1eb86d5ff564b04cdbd00f3919cce2c0372acdca32fbe1a5e30e0c05c414`,
 and both outputs are byte-identical to Stage 0. Direct self-lowering crosses the
-general function envelope and fails closed without an output at function ordinal
-18's four-record-argument call. The larger ordinal-88 planner remains a separate
-later boundary.
+general function envelope and fails closed without output during complete signature
+preflight at function ordinal 117's enum parameter. Static inspection separately
+identifies the later function-18 four-record call and former ordinal-88 planner
+capacity as independent boundaries.
 
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain
@@ -2213,8 +2214,43 @@ byte-identical to Stage 0 at SHA-256
 `f340cf67b4063b315a531b17d28eec0f8c3813cb1b98b201f74a3ff6dcda34b9`
 and `7921493f5b918073600d47e168c42d2a051dfda6e1586bf3520a723f0e0c8876`.
 A bounded direct self-lowering diagnostic returns `Unsupportedˉfunction` in 77
-milliseconds without publishing output; Stage 0 inspection identifies the next
-active gap as a function-18 call with four record arguments, not planner runtime.
+milliseconds without publishing output. Complete signature preflight first rejects
+function 117's enum parameter; static inspection separately identifies the later
+function-18 four-record call rather than planner runtime.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.
+
+## Local bounded native multi-record-call evidence
+
+[Decision 0258](../Decisions/0258-Bounded-Native-Multi-Record-Call-Events.md)
+replaces the record scratch planner's single optional operand with an ordered,
+bounded use list per instruction. Event replay validates every operand before
+releasing any value at its last use, so the existing 64-parameter call directory
+now also bounds record arguments without weakening scratch-liveness checks.
+
+The affected test was reviewed before execution and adds one compact source
+fixture whose helper accepts four one-field records and returns their sum. The
+exact focused native-lowering selection passes in 16.202 seconds, including a
+native result of 42 and byte-for-byte complete-WVO equality through the Stage 0,
+Windvale memory, and hosted-tool paths. The rebuilt test project reports zero
+warnings and errors.
+
+Direct Stage 0 calculations pin the 326,367-byte core closure at SHA-256
+`dac68be2db94fbb47d7b046767239a2e3306647ba2ca8a844a27c560b80d87e0`.
+The pinned Windows native source front door independently rebuilds the 321,456-byte
+memory adapter and 322,484-byte hosted tool in 32.5 seconds; both are byte-identical
+to Stage 0 at SHA-256
+`66f587377a5cc6767dcbfcbce4ce1ad3f90cc339d159d3cefa72bb0f5a9f7453`
+and `a531f5a2d3d8aa8bb66e4481688344b65ef489d159c9bb8305052933c90baf11`.
+Current unpromoted Windows and Linux packages are 4,451,328 and 4,452,352 bytes
+at SHA-256 `5c3082e718b1559a29bb53cfe9119899685fd63d4f5bf55138f1ed4a383902e6`
+and `5781a507f50a1f49a55b07d92dc4604e9933b72b4a3282f9353ba590e4acbb01`.
+
+A bounded direct self-lowering diagnostic remains fail-closed without output.
+Inspection identifies the active preflight gap precisely as function 117,
+`__WvM1F1(bytes, enum) -> record`; enum parameters and returns are the next slice.
 
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain

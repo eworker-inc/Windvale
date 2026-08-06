@@ -280,6 +280,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         );
         var Resultˉrecord: u32 = 4294967295u32;
         var Usedˉrecord: u32 = 4294967295u32;
+        var Usedˉrecords: bytes = Empty(Input);
         var Handled: bool = false;
 
         if Opcode == 1u8 || Opcode == 2u8 || Opcode == 3u8 ||
@@ -351,6 +352,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Lastˉuses,
                     Currentˉblock * 128u32 + Usedˉrecord,
                     Instructions
+                );
+                Usedˉrecords = Bytesˉconcat(
+                    Usedˉrecords,
+                    Bytesˉfromˉu32ˉlittle(Usedˉrecord)
                 );
                 let Storeˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
                     Recordˉlocals.Indices,
@@ -460,6 +465,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Currentˉblock * 128u32 + Usedˉrecord,
                 Instructions
             );
+            Usedˉrecords = Bytesˉconcat(
+                Usedˉrecords,
+                Bytesˉfromˉu32ˉlittle(Usedˉrecord)
+            );
             Depth = Depth - 1u32;
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
             Stackˉrecords = Pushˉscalar(Stackˉrecords);
@@ -491,9 +500,6 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                         Parameter
                     )
                 ) {
-                    if Usedˉrecord != 4294967295u32 {
-                        return Invalid(Input);
-                    }
                     Usedˉrecord = Bytesˉreadˉu32ˉlittle(
                         Stackˉrecords,
                         (Depth - Callˉparameters + Parameter) * 4u32
@@ -503,6 +509,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                         Lastˉuses,
                         Currentˉblock * 128u32 + Usedˉrecord,
                         Instructions
+                    );
+                    Usedˉrecords = Bytesˉconcat(
+                        Usedˉrecords,
+                        Bytesˉfromˉu32ˉlittle(Usedˉrecord)
                     );
                 }
                 Parameter = Parameter + 1u32;
@@ -604,6 +614,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Currentˉblock * 128u32 + Usedˉrecord,
                     Instructions
                 );
+                Usedˉrecords = Bytesˉconcat(
+                    Usedˉrecords,
+                    Bytesˉfromˉu32ˉlittle(Usedˉrecord)
+                );
             }
             Depth = 0u32;
             Stackˉrecords = Empty(Input);
@@ -622,7 +636,12 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Bytesˉfromˉu32ˉlittle(Currentˉblock),
                 Bytesˉconcat(
                     Bytesˉfromˉu32ˉlittle(Resultˉrecord),
-                    Bytesˉfromˉu32ˉlittle(Usedˉrecord)
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(
+                            Bytesˉlength(Usedˉrecords) / 4u32
+                        ),
+                        Usedˉrecords
+                    )
                 )
             )
         );
@@ -665,8 +684,9 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     );
     var Eventˉblock: u32 = 4294967295u32;
     var Event: u32 = 0u32;
+    var Eventˉoffset: u32 = 0u32;
     while Event < Instructions {
-        let Block: u32 = Bytesˉreadˉu32ˉlittle(Events, Event * 12u32);
+        let Block: u32 = Bytesˉreadˉu32ˉlittle(Events, Eventˉoffset);
         if Block != Eventˉblock {
             var Liveˉrecord: u32 = 0u32;
             while Liveˉrecord < Recordˉvalues {
@@ -680,12 +700,13 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         }
         let Result: u32 = Bytesˉreadˉu32ˉlittle(
             Events,
-            Event * 12u32 + 4u32
+            Eventˉoffset + 4u32
         );
-        let Use: u32 = Bytesˉreadˉu32ˉlittle(
+        let Useˉcount: u32 = Bytesˉreadˉu32ˉlittle(
             Events,
-            Event * 12u32 + 8u32
+            Eventˉoffset + 8u32
         );
+        let Useˉoffset: u32 = Eventˉoffset + 12u32;
         if Result != 4294967295u32 {
             Scratchˉpresent = Setˉbyte(Scratchˉpresent, Result, 1u8);
             Scratchˉinterference =
@@ -697,16 +718,30 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 );
             Scratchˉlive = Setˉbyte(Scratchˉlive, Result, 1u8);
         }
-        if Use != 4294967295u32 {
-            if Bytesˉreadˉu8(Scratchˉlive, Use) != 1u8 {
+        var Useˉindex: u32 = 0u32;
+        while Useˉindex < Useˉcount {
+            let Checkedˉuse: u32 = Bytesˉreadˉu32ˉlittle(
+                Events,
+                Useˉoffset + Useˉindex * 4u32
+            );
+            if Bytesˉreadˉu8(Scratchˉlive, Checkedˉuse) != 1u8 {
                 return Invalid(Input);
             }
+            Useˉindex = Useˉindex + 1u32;
+        }
+        Useˉindex = 0u32;
+        while Useˉindex < Useˉcount {
+            let Lastˉuse: u32 = Bytesˉreadˉu32ˉlittle(
+                Events,
+                Useˉoffset + Useˉindex * 4u32
+            );
             if Bytesˉreadˉu32ˉlittle(
                 Lastˉuses,
-                (Block * 128u32 + Use) * 4u32
+                (Block * 128u32 + Lastˉuse) * 4u32
             ) == Event {
-                Scratchˉlive = Setˉbyte(Scratchˉlive, Use, 0u8);
+                Scratchˉlive = Setˉbyte(Scratchˉlive, Lastˉuse, 0u8);
             }
+            Useˉindex = Useˉindex + 1u32;
         }
         if Result != 4294967295u32 {
             if Bytesˉreadˉu32ˉlittle(
@@ -716,8 +751,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Scratchˉlive = Setˉbyte(Scratchˉlive, Result, 0u8);
             }
         }
+        Eventˉoffset = Useˉoffset + Useˉcount * 4u32;
         Event = Event + 1u32;
     }
+    if Eventˉoffset != Bytesˉlength(Events) { return Invalid(Input); }
     var Remainingˉlive: u32 = 0u32;
     while Remainingˉlive < Recordˉvalues {
         if Bytesˉreadˉu8(Scratchˉlive, Remainingˉlive) == 1u8 {

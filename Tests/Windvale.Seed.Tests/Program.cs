@@ -33,12 +33,12 @@ internal static partial class Program
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
-    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "50107b76ed109819bb3578bb43174e4beb560eb792ed8dc67712606cf80b6828";
+    private const string NATIVE_X64_LOWERING_CORE_SHA256 = "dac68be2db94fbb47d7b046767239a2e3306647ba2ca8a844a27c560b80d87e0";
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "d641039357bfb6be0c860002a374d70e5266f39861b4c9ea7e4df192dfdf21b3";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "29f9d724e9cd5029a923e550fde3832c186de75067259c6efa8f7737d8494391";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "697d8256464fe49bcf15fc5bdb8eb34b0aa2f08d3819d154f1bb15cda7001c33";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "f340cf67b4063b315a531b17d28eec0f8c3813cb1b98b201f74a3ff6dcda34b9";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "7921493f5b918073600d47e168c42d2a051dfda6e1586bf3520a723f0e0c8876";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "66f587377a5cc6767dcbfcbce4ce1ad3f90cc339d159d3cefa72bb0f5a9f7453";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "a531f5a2d3d8aa8bb66e4481688344b65ef489d159c9bb8305052933c90baf11";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -2997,6 +2997,7 @@ internal static partial class Program
         Assertˉenumˉlowering(Tool, Memory);
         Assertˉrecordˉlowering(Tool, Memory);
         Assertˉrecordˉcallˉlowering(Tool, Memory);
+        Assertˉmultipleˉrecordˉcallˉlowering(Tool, Memory);
         Assertˉnominalˉtypeˉlowering(Tool, Memory);
         Assertˉprocessˉargumentˉcountˉlowering(Tool, Memory);
         Assertˉprocessˉargumentˉlowering(Tool, Memory);

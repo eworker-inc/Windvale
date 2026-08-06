@@ -23,7 +23,7 @@ Add one compact test-built module whose record-returning helper has one scalar l
 
 - Large scalar-temporary inventories no longer enlarge record-liveness matrices or record-local interference graphs.
 - The real tool's later large record-bearing functions fit the compact planner envelope without changing native frame geometry or selected WVO semantics.
-- Direct self-lowering still fails closed before those functions: ordinal 18 calls a four-record-parameter helper, while this decision deliberately retains single-record-use event accounting.
+- Direct self-lowering still fails closed during complete signature preflight at ordinal 117's enum parameter. A later function-18 call passes four records, while this decision deliberately retains single-record-use event accounting.
 - The core closure is 325,523 bytes at SHA-256 `50107b76ed109819bb3578bb43174e4beb560eb792ed8dc67712606cf80b6828`.
 - The memory adapter is 320,612 bytes at SHA-256 `f340cf67b4063b315a531b17d28eec0f8c3813cb1b98b201f74a3ff6dcda34b9`; the hosted tool is 321,640 bytes at SHA-256 `7921493f5b918073600d47e168c42d2a051dfda6e1586bf3520a723f0e0c8876`.
 - Current unpromoted packages are 4,439,552 Windows bytes at SHA-256 `697db83716652b39d820e769270dceacf93d4dce277adf3a03273bb2c98bb91a` and 4,440,064 Linux bytes at SHA-256 `e7efe875df51c54d998862a61735cdcae2729c737949d021f154eb946ea2d8b2`.
@@ -31,4 +31,4 @@ Add one compact test-built module whose record-returning helper has one scalar l
 
 ## Reconsideration triggers
 
-Replace the single-use record event with bounded multi-record argument accounting before treating a larger function as the next active rejection. Revisit the compact limits only when a qualified accepted module reaches one of them.
+[Decision 0258](0258-Bounded-Native-Multi-Record-Call-Events.md) replaces the single-use record event with bounded multi-record argument accounting. Revisit the compact limits only when a qualified accepted module reaches one of them.

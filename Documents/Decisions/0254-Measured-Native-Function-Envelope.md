@@ -22,7 +22,7 @@ Do not widen the separate record planner's 128-local, 128-block, 128-record-valu
 ## Consequences
 
 - The real hosted tool crosses its general local, code, and instruction guards while remaining below the unchanged native frame ceiling.
-- A subsequent direct self-lowering run crosses the general envelope and exposes an earlier multiple-record-argument accounting rejection in function ordinal 18. Ordinal 88 still exceeds the former record-planner capacity, but it is a later boundary rather than the first active one.
+- A subsequent direct self-lowering run crosses the general envelope and fails during complete signature preflight at function ordinal 117's enum parameter. Static inspection also identifies a later multiple-record-argument accounting rejection in function ordinal 18 and the former record-planner capacity at ordinal 88; these are independent boundaries even though their ordinals are lower.
 - The core closure is 322,860 bytes at SHA-256 `80066bc87774c70b4d2cc0b60b5605573480d5eea10a695f584a5d210a3f3c81`.
 - The memory adapter is 317,949 bytes at SHA-256 `f3003741b9d5003575cfdadd611534ee6ba3aa7aa936b2c73184d05f023e72ff`; the hosted tool is 318,977 bytes at SHA-256 `450c1eb86d5ff564b04cdbd00f3919cce2c0372acdca32fbe1a5e30e0c05c414`.
 - Current unpromoted packages remain 4,406,272 Windows bytes at SHA-256 `8bfc95be0d722d3b849956c2878c9f053b4242d78242b6c4fe5dc4782e86e660` and 4,407,296 Linux bytes at SHA-256 `6cd55057461252b6c36a1165e7e39167a50c9db31afb460be24b36e0db93d6e5`.
@@ -30,4 +30,4 @@ Do not widen the separate record planner's 128-local, 128-block, 128-record-valu
 
 ## Reconsideration triggers
 
-Measure each remaining record-call and record-planner boundary independently. Revisit the general envelope only if a qualified accepted module reaches one of these bounds, and preserve the fixed native frame limit unless a separate ABI decision changes it.
+Measure enum signatures, record calls, and record-planner boundaries independently. Revisit the general envelope only if a qualified accepted module reaches one of these bounds, and preserve the fixed native frame limit unless a separate ABI decision changes it.

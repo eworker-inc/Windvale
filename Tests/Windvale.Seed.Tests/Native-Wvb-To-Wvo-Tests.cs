@@ -51,13 +51,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 321_640;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_439_552;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 322_484;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_451_328;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "697db83716652b39d820e769270dceacf93d4dce277adf3a03273bb2c98bb91a";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_440_064;
+        "5c3082e718b1559a29bb53cfe9119899685fd63d4f5bf55138f1ed4a383902e6";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_452_352;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "e7efe875df51c54d998862a61735cdcae2729c737949d021f154eb946ea2d8b2";
+        "5781a507f50a1f49a55b07d92dc4604e9933b72b4a3282f9353ba590e4acbb01";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -1108,6 +1108,69 @@ internal static partial class Program
             Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
             .Runˉmainˉbytes(Wvb.ToImmutableArray());
         Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+    }
+
+    private static void Assertˉmultipleˉrecordˉcallˉlowering(
+        Verifiedˉmodule tool,
+        Verifiedˉmodule memory)
+    {
+        const string Source = """
+            module Nativeˉx64ˉmultipleˉrecordˉcall profile portable;
+
+            record Cell {
+                Value: i32;
+            }
+
+            fn Sum(A: Cell, B: Cell, C: Cell, D: Cell) -> i32 {
+                return A.Value + B.Value + C.Value + D.Value;
+            }
+
+            export fn Main() -> i32 {
+                let A = Cell(9);
+                let B = Cell(10);
+                let C = Cell(11);
+                let D = Cell(12);
+                return Sum(A, B, C, D);
+            }
+            """;
+        var Wvb = Compileˉsuccess(Source);
+        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Sum = Module.Functions.Single(
+            Function => Function.Declaration.Name == "Sum");
+        Equal(4, Sum.Declaration.Parameterˉtypes.Length);
+        Equal(
+            4,
+            Sum.Declaration.Parameterˉtypes.Count(
+                Type => Type.Kind == Valueˉtype.Record));
+
+        var Interpreted = new Referenceˉruntime(
+            Module,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults).Runˉmain();
+        Equal(42, Interpreted.Exitˉcode);
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Equal(
+            42,
+            X64ˉnativeˉexecutor.Executeˉi32(
+                Native.Fragment,
+                maximumˉinstructions: Interpreted.Executedˉinstructions));
+        var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
+
+        var Memoryˉresult = new Referenceˉruntime(
+            memory,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with { Maximumˉinstructions = 100_000_000 })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray());
+        Sequenceˉequal(Expectedˉobject, Memoryˉresult.Bytes);
+
+        var Toolˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            tool,
+            Wvb,
+            maximumˉinstructions: 100_000_000);
+        Equal(0, Toolˉresult.Exitˉcode);
+        Equal(string.Empty, Toolˉresult.Diagnostics);
+        Sequenceˉequal(Expectedˉobject, Toolˉresult.Writtenˉbytes);
     }
 
     private static void Assertˉnominalˉtypeˉlowering(
