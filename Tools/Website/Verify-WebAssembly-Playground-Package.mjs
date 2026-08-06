@@ -29,12 +29,12 @@ Equal(
     "native backend manifest",
 );
 Equal(
-    "Documents/Decisions/0289-Bounded-WebAssembly-Interpreter-Warmup.md",
+    "Documents/Decisions/0294-Static-WebAssembly-Opcode-Effect-Table.md",
     Manifest.decision,
     "package decision",
 );
 const Decision = await readFile(path.join(Repositoryˉroot, Manifest.decision), "utf8");
-if (!Decision.startsWith("# Decision 0289: Bounded WebAssembly interpreter warmup\n")) {
+if (!Decision.startsWith("# Decision 0294: Static WebAssembly opcode-effect table\n")) {
     Fail("The WebAssembly playground package decision is invalid.");
 }
 if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 4) {
@@ -117,7 +117,7 @@ Equal(
     "native backend container profile",
 );
 Equal(
-    "Documents/Decisions/0278-Native-WebAssembly-Artifact-Regeneration.md",
+    "Documents/Decisions/0292-Bounded-Direct-WebAssembly-Static-Descriptors.md",
     Nativeˉbackendˉmanifest.decision,
     "native backend decision",
 );
@@ -126,7 +126,7 @@ const Nativeˉbackendˉdecision = await readFile(
     "utf8",
 );
 if (!Nativeˉbackendˉdecision.startsWith(
-    "# Decision 0278: Native WebAssembly artifact regeneration\n",
+    "# Decision 0292: Bounded direct WebAssembly static descriptors\n",
 )) {
     Fail("The WebAssembly native backend decision is invalid.");
 }
@@ -247,7 +247,7 @@ new Uint8Array(
     Request.byteLength,
 ).set(Request);
 Equal(0, Exports["Windvale.run"](100_000_000, Request.byteLength), "outer status");
-Equal(77_098_382, Readˉglobal(Exports, "Windvale.instructions"), "outer instructions");
+Equal(77_098_289, Readˉglobal(Exports, "Windvale.instructions"), "outer instructions");
 Equal(20, Readˉglobal(Exports, "Windvale.output_length"), "response length");
 const Output = Buffer.from(new Uint8Array(
     Memory.buffer,
