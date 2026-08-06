@@ -126,8 +126,8 @@ internal static partial class Program
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
-    private const string WEBASSEMBLY_CORE_SHA256 = "99527233f9e5b67044d0bd2fe0009947744d94d36837c274dcbdd822be03487d";
-    private const string WEBASSEMBLY_TOOL_SHA256 = "f079f128c20e1831c38a4b117a50004dc5529f8afffa3d1cf1ffdbcf8c5833c2";
+    private const string WEBASSEMBLY_CORE_SHA256 = "61e8e82e53b125fa5d48434e9d1d2360592818c324993a401e990589fd3d8bd7";
+    private const string WEBASSEMBLY_TOOL_SHA256 = "9113c697d670913c21b8d923f89ef4844bbf1f8669bd7bfe687ea9f91840ac4b";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -1224,6 +1224,7 @@ internal static partial class Program
         new("native exact compiler reproduces full Stage 2 under the bounded text arena", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉcompilerˉbootstrapˉreproducesˉstage2, Testˉcost.Extended),
         new("Windvale lowers verified WVB profiles to deterministic WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉruns, Testˉcost.Extended),
         new("Windvale lowers bounded static descriptors to WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉstaticˉdescriptorsˉrun, Testˉcost.Extended),
+        new("Windvale admits bounded unused nominal tables for WebAssembly", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Compilerˉwebassemblyˉnominalˉtablesˉrun, Testˉcost.Extended),
         new("bounded source modules compose deterministically before bytecode lowering", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE], Sourceˉmodulesˉcompose),
         new("capability-bearing platform libraries require explicit transitive approval", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Capabilityˉbearingˉlibrariesˉcompose),
         new("rights-limited directory reads return typed bounded results", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Readˉonlyˉdirectoryˉreadsˉareˉtyped),
@@ -14610,6 +14611,201 @@ internal static partial class Program
             "webassembly status=Unsupportedˉmodule\n",
             Excessˉdeclarationsˉresult.Diagnostics);
         Equal(0, Excessˉdeclarationsˉresult.Writeˉcount);
+    }
+
+    private static void Compilerˉwebassemblyˉnominalˉtablesˉrun()
+    {
+        var Toolˉbytes = Compileˉwithˉwebassemblyˉsuccess(
+            WEBASSEMBLY_TOOL_SOURCE,
+            "WebAssembly-Tool.wv");
+        Equal(WEBASSEMBLY_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
+        var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
+        const string Functions = """
+            fn Aˉidentity(Input: bytes) -> bytes { return Input; }
+
+            export fn Main(Input: bytes) -> bytes { return Aˉidentity(Input); }
+            """;
+        const string Baselineˉsource = """
+            module WebAssemblyˉnominalˉadmission profile portable;
+
+            fn Aˉidentity(Input: bytes) -> bytes { return Input; }
+
+            export fn Main(Input: bytes) -> bytes { return Aˉidentity(Input); }
+            """;
+        const string Nominalˉsource = """
+            module WebAssemblyˉnominalˉadmission profile portable;
+
+            enum Choice {
+                First = 1;
+                Second = 2;
+            }
+
+            record Pair {
+                Count: u32;
+                State: Choice;
+                Payload: bytes;
+            }
+
+            fn Aˉidentity(Input: bytes) -> bytes { return Input; }
+
+            export fn Main(Input: bytes) -> bytes { return Aˉidentity(Input); }
+            """;
+
+        var Baselineˉwvb = Compileˉsuccess(Baselineˉsource);
+        var Baselineˉlowered = Runˉwebassemblyˉtool(Tool, Baselineˉwvb);
+        Equal(0, Baselineˉlowered.Exitˉcode);
+        var Nominalˉwvb = Compileˉsuccess(Nominalˉsource);
+        var Nominalˉverified = Moduleˉcodec.Readˉandˉverify(Nominalˉwvb);
+        Equal(2, Nominalˉverified.Module.Types.Length);
+        var Nominalˉlowered = Runˉwebassemblyˉtool(Tool, Nominalˉwvb);
+        Equal(0, Nominalˉlowered.Exitˉcode);
+        Sequenceˉequal(
+            Baselineˉlowered.Writtenˉbytes,
+            Nominalˉlowered.Writtenˉbytes);
+
+        var Exactˉcompiler = File.ReadAllBytes(
+            "Artifacts/WebAssembly-Playground/Windvale-Compiler-Memory.wvb");
+        var Exactˉfrontier = Runˉwebassemblyˉtool(Tool, Exactˉcompiler);
+        Equal(1, Exactˉfrontier.Exitˉcode);
+        Equal(
+            "webassembly status=Unsupportedˉcode\n",
+            Exactˉfrontier.Diagnostics);
+        Equal(0, Exactˉfrontier.Writeˉcount);
+
+        var Recordˉboundaryˉsource =
+            "module WebAssemblyˉnominalˉadmission profile portable;\n\n" +
+            "record Boundaryˉrecord {\n" +
+            string.Join(
+                "\n",
+                Enumerable.Range(0, 64).Select(Index =>
+                    $"    Field{Index}: u32;")) +
+            "\n}\n\n" + Functions;
+        var Recordˉboundaryˉwvb = Compileˉsuccess(Recordˉboundaryˉsource);
+        var Recordˉboundaryˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Recordˉboundaryˉwvb);
+        Equal(0, Recordˉboundaryˉlowered.Exitˉcode);
+        Sequenceˉequal(
+            Baselineˉlowered.Writtenˉbytes,
+            Recordˉboundaryˉlowered.Writtenˉbytes);
+
+        var Enumˉboundaryˉsource =
+            "module WebAssemblyˉnominalˉadmission profile portable;\n\n" +
+            "enum Boundaryˉenum {\n" +
+            string.Join(
+                "\n",
+                Enumerable.Range(0, 256).Select(Index =>
+                    $"    Member{Index} = {Index};")) +
+            "\n}\n\n" + Functions;
+        var Enumˉboundaryˉwvb = Compileˉsuccess(Enumˉboundaryˉsource);
+        var Enumˉboundaryˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Enumˉboundaryˉwvb);
+        Equal(0, Enumˉboundaryˉlowered.Exitˉcode);
+        Sequenceˉequal(
+            Baselineˉlowered.Writtenˉbytes,
+            Enumˉboundaryˉlowered.Writtenˉbytes);
+
+        var Typeˉboundaryˉsource =
+            "module WebAssemblyˉnominalˉadmission profile portable;\n\n" +
+            string.Join(
+                "\n",
+                Enumerable.Range(0, 1024).Select(Index =>
+                    $"record Record{Index} {{ Value: u32; }}")) +
+            "\n\n" + Functions;
+        var Typeˉboundaryˉwvb = Compileˉsuccess(Typeˉboundaryˉsource);
+        var Typeˉboundaryˉlowered = Runˉwebassemblyˉtool(
+            Tool,
+            Typeˉboundaryˉwvb);
+        Equal(0, Typeˉboundaryˉlowered.Exitˉcode);
+        Sequenceˉequal(
+            Baselineˉlowered.Writtenˉbytes,
+            Typeˉboundaryˉlowered.Writtenˉbytes);
+
+        void Requireˉunsupported(byte[] Mutated)
+        {
+            var Rejected = Runˉwebassemblyˉtool(Tool, Mutated);
+            Equal(1, Rejected.Exitˉcode);
+            Equal(
+                "webassembly status=Unsupportedˉmodule\n",
+                Rejected.Diagnostics);
+            Equal(0, Rejected.Writeˉcount);
+        }
+
+        var Invalidˉkind = Nominalˉwvb.ToArray();
+        var Nominalˉtypes = Findˉsectionˉpayload(
+            Invalidˉkind,
+            Sectionˉkind.Types);
+        Invalidˉkind[Nominalˉtypes + 4] = 3;
+        Requireˉunsupported(Invalidˉkind);
+
+        var Hostileˉname = Nominalˉwvb.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Hostileˉname.AsSpan(Nominalˉtypes + 5, 4),
+            uint.MaxValue);
+        Requireˉunsupported(Hostileˉname);
+
+        var Emptyˉenum = Nominalˉwvb.ToArray();
+        var Firstˉtypeˉnameˉlength = BinaryPrimitives.ReadUInt32LittleEndian(
+            Emptyˉenum.AsSpan(Nominalˉtypes + 5, 4));
+        var Firstˉmemberˉcount = checked(
+            Nominalˉtypes + 9 + (int)Firstˉtypeˉnameˉlength);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Emptyˉenum.AsSpan(Firstˉmemberˉcount, 4),
+            0u);
+        Requireˉunsupported(Emptyˉenum);
+
+        var Excessˉfields = Recordˉboundaryˉwvb.ToArray();
+        var Recordˉtypes = Findˉsectionˉpayload(
+            Excessˉfields,
+            Sectionˉkind.Types);
+        var Recordˉnameˉlength = BinaryPrimitives.ReadUInt32LittleEndian(
+            Excessˉfields.AsSpan(Recordˉtypes + 5, 4));
+        var Recordˉmemberˉcount = checked(
+            Recordˉtypes + 9 + (int)Recordˉnameˉlength);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Excessˉfields.AsSpan(Recordˉmemberˉcount, 4),
+            65u);
+        Requireˉunsupported(Excessˉfields);
+
+        var Excessˉmembers = Enumˉboundaryˉwvb.ToArray();
+        var Enumˉtypes = Findˉsectionˉpayload(
+            Excessˉmembers,
+            Sectionˉkind.Types);
+        var Enumˉnameˉlength = BinaryPrimitives.ReadUInt32LittleEndian(
+            Excessˉmembers.AsSpan(Enumˉtypes + 5, 4));
+        var Enumˉmemberˉcount = checked(
+            Enumˉtypes + 9 + (int)Enumˉnameˉlength);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Excessˉmembers.AsSpan(Enumˉmemberˉcount, 4),
+            257u);
+        Requireˉunsupported(Excessˉmembers);
+
+        var Excessˉtypes = Typeˉboundaryˉwvb.ToArray();
+        var Typeˉtypes = Findˉsectionˉpayload(
+            Excessˉtypes,
+            Sectionˉkind.Types);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Excessˉtypes.AsSpan(Typeˉtypes, 4),
+            1025u);
+        Requireˉunsupported(Excessˉtypes);
+
+        var Truncated = Nominalˉwvb.AsSpan(
+            0,
+            Nominalˉwvb.Length - 1).ToArray();
+        var Typesˉpayloadˉlength = BinaryPrimitives.ReadUInt32LittleEndian(
+            Truncated.AsSpan(Nominalˉtypes - 4, 4));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Truncated.AsSpan(Nominalˉtypes - 4, 4),
+            Typesˉpayloadˉlength - 1u);
+        Requireˉunsupported(Truncated);
+
+        var Trailing = new byte[Nominalˉwvb.Length + 1];
+        Nominalˉwvb.CopyTo(Trailing, 0);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Trailing.AsSpan(Nominalˉtypes - 4, 4),
+            Typesˉpayloadˉlength + 1u);
+        Requireˉunsupported(Trailing);
     }
 
     private static void Compilerˉwebassemblyˉruns()

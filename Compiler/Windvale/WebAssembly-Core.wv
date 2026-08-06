@@ -966,6 +966,90 @@ export fn Compilerˉwebassemblyˉruntimeˉtypeˉisˉdescriptor(Type: u8) -> bool
     return Type == 6u8;
 }
 
+export fn Compilerˉwebassemblyˉvalidateˉnominalˉtypes(
+    Input: bytes,
+    Types: Compilerˉwebassemblyˉsection
+) -> bool {
+    if Types.Payloadˉlength < 4u32 { return false; }
+    let End: u32 = Types.Payloadˉoffset + Types.Payloadˉlength;
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Input,
+        Types.Payloadˉoffset
+    );
+    if Typeˉcount > 1024u32 { return false; }
+    var Cursor: u32 = Types.Payloadˉoffset + 4u32;
+    var Typeˉindex: u32 = 0u32;
+    while Typeˉindex < Typeˉcount {
+        if Cursor >= End { return false; }
+        let Typeˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Typeˉkind != 1u32 && Typeˉkind != 2u32 { return false; }
+        Cursor = Cursor + 1u32;
+        if Cursor > End { return false; }
+        if End - Cursor < 4u32 { return false; }
+        let Typeˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Typeˉnameˉlength == 0u32 || Typeˉnameˉlength > 255u32 {
+            return false;
+        }
+        if Cursor > End { return false; }
+        if Typeˉnameˉlength > End - Cursor { return false; }
+        Cursor = Cursor + Typeˉnameˉlength;
+        if Cursor > End { return false; }
+        if End - Cursor < 4u32 { return false; }
+        let Memberˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+        if Memberˉcount == 0u32 { return false; }
+        if Typeˉkind == 1u32 {
+            if Memberˉcount > 64u32 { return false; }
+        } else {
+            if Memberˉcount > 256u32 { return false; }
+        }
+
+        var Memberˉindex: u32 = 0u32;
+        while Memberˉindex < Memberˉcount {
+            if Cursor > End { return false; }
+            if End - Cursor < 4u32 { return false; }
+            let Memberˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Cursor
+            );
+            Cursor = Cursor + 4u32;
+            if Memberˉnameˉlength == 0u32 ||
+                Memberˉnameˉlength > 255u32 {
+                return false;
+            }
+            if Cursor > End { return false; }
+            if Memberˉnameˉlength > End - Cursor { return false; }
+            Cursor = Cursor + Memberˉnameˉlength;
+            if Typeˉkind == 1u32 {
+                if Cursor >= End { return false; }
+                let Shapeˉkind: u32 = U32ˉfromˉu8(
+                    Bytesˉreadˉu8(Input, Cursor)
+                );
+                if Shapeˉkind < 1u32 || Shapeˉkind > 10u32 {
+                    return false;
+                }
+                Cursor = Cursor + 1u32;
+                if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 {
+                    if Cursor > End { return false; }
+                    if End - Cursor < 4u32 { return false; }
+                    if Bytesˉreadˉu32ˉlittle(Input, Cursor) >= Typeˉcount {
+                        return false;
+                    }
+                    Cursor = Cursor + 4u32;
+                }
+            } else {
+                if Cursor > End { return false; }
+                if End - Cursor < 4u32 { return false; }
+                Cursor = Cursor + 4u32;
+            }
+            Memberˉindex = Memberˉindex + 1u32;
+        }
+        Typeˉindex = Typeˉindex + 1u32;
+    }
+    return Cursor == End;
+}
+
 export fn Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
     Input: bytes,
     Offset: u32,
@@ -10334,10 +10418,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
     if !Runtimeˉdata.Valid {
         return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
     }
-    if Types.Payloadˉlength != 4u32 {
-        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
-    }
-    if Bytesˉreadˉu32ˉlittle(Input, Types.Payloadˉoffset) != 0u32 {
+    if !Compilerˉwebassemblyˉvalidateˉnominalˉtypes(Input, Types) {
         return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
     }
 
