@@ -203,5 +203,7 @@ For the packager-rejection boundary, do the same with
 `Test-Console-Packager-Rejections.cmd` or `.sh`; for publisher admission, use
 only `Test-Publisher-Rejections.cmd` or `.sh`; for lowerer rejection, use only
 `Test-Lowerer-Rejections.cmd` or `.sh`; for WVA assembler rejection families,
-use only `Test-Assembler-Rejections.cmd` or `.sh`. GitHub owns the independent
-Windows and pinned-Debian Qualification run for a final committed candidate.
+use only `Test-Assembler-Rejections.cmd` or `.sh`; for WVO read-only rejection
+families, use only `Test-Wvo-Read-Only-Rejections.cmd` or `.sh`. GitHub owns the
+independent Windows and pinned-Debian Qualification run for a final committed
+candidate.

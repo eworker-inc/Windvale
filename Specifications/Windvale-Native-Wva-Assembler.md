@@ -55,7 +55,7 @@ The current candidate identities are:
 
 The focused candidate test reconstructs both containers, checks the exact authority and service bundle, exercises the public AOT target, and runs the current-host raw application. Canonical input must produce the independently verified 218-byte WVO with SHA-256 `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`; malformed input must leave output absent. Current-host module or mapping inspection must find no CLR/.NET runtime.
 
-Decision 0318 adds a separate fixed rejection-family command over the ordinary
+Decision 0321 adds a separate fixed rejection-family command over the ordinary
 digest-bound launcher. It covers `WVA1001` through `WVA1011` with exact input and
 report identities plus preservation of an existing destination; the oversized
 case is generated temporarily rather than retained as a very large source file.

@@ -1,4 +1,4 @@
-# Decision 0318: Fixed native WVA assembler rejection families
+# Decision 0321: Fixed native WVA assembler rejection families
 
 - Date: 2026-08-06
 - Status: Implemented current-host evidence; Linux execution pending

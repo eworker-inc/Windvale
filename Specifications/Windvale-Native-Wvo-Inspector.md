@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The shared hosted-verifier container packages the canonical Windvale-written `Wvoˉobjectˉcore` as paired Windows x64 and Linux x64 read-only command-line applications. This source candidate is not yet the ordinary front door: `windvale object-verify` and `windvale object-inspect` remain Stage 0 commands until the grouped final Windows/Linux retirement gate and a later pinned-artifact promotion succeed.
+The shared hosted-verifier container packages the canonical Windvale-written `Wvoˉobjectˉcore` as paired Windows x64 and Linux x64 read-only command-line applications. Digest-bound candidate launchers exist for both hosts, but they are not yet the ordinary front door: `windvale object-verify` and `windvale object-inspect` remain Stage 0 commands until the grouped final Windows/Linux retirement gate and pinned-artifact promotion succeed.
 
 The product logic is split across two cohesive object-model modules. `Wvo-Object-Verification.wv` owns complete portable WVO admission and malformed-input status; `Wvo-Object-Core.wv` owns deterministic verification and inspection reports, SHA-256 identity, the hosted shell, and self-test. The native WVO publisher reuses the first module. The package adds no second object parser or platform-specific WVO logic.
 
@@ -56,6 +56,13 @@ The current candidate identities are:
 
 The focused candidate test reconstructs and independently parses both containers, checks exact capabilities and services, exercises the public current-host AOT target, and runs the current-host raw application. It compares complete successful `verify` and `inspect` output with the Stage 0 oracle during candidate qualification, checks malformed and usage outcomes, and inspects loaded modules or mappings for CLR/.NET.
 
+Decision 0322 adds a separate fixed rejection-family matrix over the digest-bound
+launchers. All thirteen stable WVO 1.0 status families require exit `2`, empty
+standard output, identical exact reports from `Verify-Wvo` and `Inspect-Wvo`,
+and byte-for-byte preservation of the input. These fixed identities replace a
+live managed oracle for that permanent boundary; randomized and hostile-size
+coverage remains independent recovery evidence until the final retirement gate.
+
 ## Qualification gate
 
 Promotion to the ordinary WVO read-only front door requires the final grouped retirement commit to pass on Windows and Linux with:
@@ -63,8 +70,9 @@ Promotion to the ordinary WVO read-only front door requires the final grouped re
 - byte-identical WVB and deterministic platform packages;
 - independently reconstructed and verified format-4 containers with profile 6;
 - current-host self-test, verify, inspect, malformed-input, and usage execution;
+- exact dual-launcher agreement for every stable WVO rejection family;
 - stable WVO vectors and structural assertions agreeing with the frozen oracle;
 - no CLR/.NET module or mapping in the WVO process; and
 - no regression in WVO 1.0, native ABI, capability, or hosted-service contracts.
 
-After that source gate, pin both platform applications and add digest-bound native launchers in a separate provenance commit. Only the exact pinned-artifact commit passing both hosts moves ordinary WVO verification and inspection to those launchers. The C# commands remain named recovery/differential paths until Decision 0057's complete archive gate permits deletion.
+Decision 0301 already pins both platform applications behind digest-bound native launchers. Only an exact descendant containing those launchers and Decision 0322's fixed rejection matrix that passes both hosts moves ordinary WVO verification and inspection to them. The C# commands remain named recovery/differential paths until Decision 0057's complete archive gate permits deletion.

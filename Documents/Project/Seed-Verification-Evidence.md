@@ -3523,7 +3523,7 @@ the grouped end-of-goal gate remain deferred.
 
 ## Local fixed native WVA assembler rejection-family evidence
 
-[Decision 0318](../Decisions/0318-Fixed-Native-Wva-Assembler-Rejection-Families.md)
+[Decision 0321](../Decisions/0321-Fixed-Native-Wva-Assembler-Rejection-Families.md)
 adds one focused .NET-free coordinator over the ordinary digest-bound WVA
 assembler launcher. Ten compact LF-terminated inputs represent `WVA1001` through
 `WVA1010`; their complete byte lengths and SHA-256 identities are pinned in the
@@ -3546,3 +3546,28 @@ No product implementation, artifact, WebAssembly implementation, WVA semantic,
 or WVO format bytes changed. Linux execution of this exact matrix, Development,
 Standard, Qualification, the remaining malformed/differential corpus, and the
 grouped end-of-goal gate remain deferred.
+
+## Local fixed native WVO read-only rejection-family evidence
+
+[Decision 0322](../Decisions/0322-Fixed-Native-Wvo-Read-Only-Rejection-Families.md)
+adds one focused .NET-free coordinator over both digest-bound WVO read-only
+launchers. It reuses the fixed bad-magic, truncated, and trailing-byte objects
+and adds ten compact base64 objects so the matrix represents all thirteen stable
+WVO 1.0 rejection families. Every complete decoded input and diagnostic identity
+is pinned in the test contract.
+
+For every case both `Verify-Wvo` and `Inspect-Wvo` independently return `2`,
+write no standard output, emit the same exact LF-terminated status report, and
+leave the input byte-for-byte unchanged. Direct Windows execution passes 13/13
+in 5.724 seconds. After reviewing the merged wrapper and exact report, the
+focused selection
+`native WVO read-only rejection families agree without .NET` passes 1/1 in
+5.620 test seconds after an 11.84-second zero-warning Release build; the complete
+command takes 22.5 seconds.
+
+The permanent coordinator performs twenty-six native launcher calls, invokes no
+.NET process, reconstructs no application, and writes no object. No product
+implementation, candidate artifact, WebAssembly implementation, source semantic,
+or WVO format byte changed. Linux execution of this exact matrix, Development,
+Standard, Qualification, randomized and hostile-size object transfer, promotion,
+and the grouped end-of-goal gate remain deferred.
