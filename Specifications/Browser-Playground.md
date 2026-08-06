@@ -14,7 +14,7 @@ This host contract contains the experiment without making .NET or WebAssembly th
 
 The separate `/playground/wasm-demo/` route exposes one pinned generated module without starting Blazor or .NET. It verifies the current 791-byte profile-8 artifact identity in ordinary JavaScript and passes the bytes plus an editable UTF-8 value through the same disposable-worker boundary. The artifact exercises execution ABI 3's fixed linear-memory input and output regions, strict guest-side text validation, and exact instruction budget. Its displayed `.wv` source is read-only provenance; editing the input value does not provide source compilation.
 
-The `/playground/webassembly-compiler/` route retains a focused presentation of the same source-to-result worker used by the normal page. A bounded warmup on the same WebAssembly instance reduces the measured Chromium proof from 378.1 seconds to about 85.9 seconds without changing the exact WVB or result. Its latency and compiler surface remain experimental rather than portable interactive-playground guarantees.
+The `/playground/webassembly-compiler/` route retains a focused presentation of the same source-to-result worker used by the normal page. A digest-pinned 292-byte scalar guest warms the same WebAssembly instance for exactly 20,000 instructions before compilation. The current local Chromium proof completes in 64.3 seconds without changing the exact WVB or result, down from 90.0 seconds with the preceding compiler self-warmup. Its latency and compiler surface remain experimental rather than portable interactive-playground guarantees.
 
 ## Pipeline
 
@@ -23,8 +23,8 @@ One normal playground run follows this sequence:
 ```text
 bounded Windvale source
     -> canonical single-module WVSS 1
-    -> SHA-256-verified compiler WVB and interpreter Wasm
-    -> exact 100,000-guest-instruction warmup on one disposable worker instance
+    -> SHA-256-verified compiler WVB, interpreter Wasm, and scalar warmup WVB
+    -> exact 20,000-guest-instruction warmup on one disposable worker instance
     -> WVXI 2 compilation and strict WVXO 2 / WVCO 1 result admission
     -> returned WVB resubmission through WVXI 1
     -> verified scalar status, result, identities, bytes, and instruction evidence
@@ -70,7 +70,7 @@ The normal browser-native host enforces these ceilings:
 | Source text | 65,536 UTF-8 bytes |
 | UI-selected result-execution budget | 10,000, 250,000, or 1,000,000 guest instructions |
 | Host-accepted result-execution budget | 1 to 20,000,000 guest instructions |
-| Compiler warmup | exactly 100,000 guest instructions and `WVR3011` |
+| Interpreter warmup | exactly 20,000 scalar guest instructions, zero result, and `WVR3011` |
 | Compiler execution | 2,000,000 guest and 1,800,000,000 outer instructions |
 | Returned-WVB execution | 200,000,000 outer instructions |
 | Call depth | 64 frames |

@@ -19,6 +19,7 @@ self.onmessage = async Event => {
         const Result = await Compileˉverifyˉexecute(
             Package.Interpreter,
             Package.Compiler,
+            Package.Warmup,
             new Uint8Array(Message.Source),
             Message.ExecutionInstructionLimit,
         );
@@ -79,7 +80,7 @@ async function Loadˉpackage() {
     if (Manifest.format !== "windvale-webassembly-playground-1" ||
         Manifest.target !== "wasm32-browser-v1-experimental" ||
         !Array.isArray(Manifest.artifacts) ||
-        Manifest.artifacts.length !== 3) {
+        Manifest.artifacts.length !== 4) {
         throw new Error("The Windvale compiler package manifest is invalid.");
     }
     const Interpreter = await Loadˉartifact(
@@ -92,7 +93,12 @@ async function Loadˉpackage() {
         Manifestˉresponse.url,
         "portable-source-compiler",
     );
-    return { Interpreter, Compiler };
+    const Warmup = await Loadˉartifact(
+        Manifest,
+        Manifestˉresponse.url,
+        "interpreter-tier-warmup",
+    );
+    return { Interpreter, Compiler, Warmup };
 }
 
 async function Loadˉartifact(Manifest, Manifestˉurl, Name) {

@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Replaced the browser compiler's 100,000-instruction self-warmup with a digest-pinned 20,000-instruction Windvale loop. The smaller guest triggers the same optimized WebAssembly interpreter tier without rescanning the 920 KiB compiler during warmup, reducing the measured exact local source-to-WVB path from about 90 seconds to about 65 seconds while preserving compiler output and execution evidence.
 - Added lossless `u32.from_u8` lowering through the existing typed instruction-state owner. A focused `0u8`/`255u8` fixture reproduces Stage 0's complete WVO through both Windvale adapters without a runtime service or failure path; full-tool self-lowering advances to function 36's `u32.remainder` frontier.
 - Added bounded `bytes.from_u16_little` lowering through the shared ABI-22 dynamic-byte arena. The focused maximum-value fixture reproduces Stage 0's complete WVO through both Windvale adapters, including the `WVR3016` narrowing-failure branch; full-tool self-lowering advances to function 29's `u32.from_u8` frontier.
 - Added checked `u32.add`, `u32.subtract`, and `u32.multiply` lowering as one typed ABI-22 arithmetic family. A focused high-value fixture and an overflow vector reproduce Stage 0's complete WVO through both Windvale adapters; full-tool self-lowering advances to function 26's `bytes.from_u16_little` frontier.

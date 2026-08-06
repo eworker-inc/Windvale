@@ -30,7 +30,7 @@ const Manifestˉbytes = await readFile(path.join(Sourceˉroot, "Manifest.json"))
 const Manifest = JSON.parse(Manifestˉbytes.toString("utf8"));
 if (Manifest.format !== "windvale-webassembly-playground-1" ||
     !Array.isArray(Manifest.artifacts) ||
-    Manifest.artifacts.length !== 3) {
+    Manifest.artifacts.length !== 4) {
     throw new Error("The WebAssembly playground package manifest is invalid.");
 }
 

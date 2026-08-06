@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-if (process.argv.length < 5 || process.argv.length > 10) {
+if (process.argv.length < 5 || process.argv.length > 11) {
     throw new Error(
         "Usage: node Probe-WebAssembly-Compiler.mjs " +
             "<scalar-interpreter.wasm> <compiler.wvb> <source.wv> " +
             "[guest-budget] [outer-budget] [maximum-call-depth] " +
-            "[expected.wvb] [warmup-guest-budget]",
+            "[expected.wvb] [warmup-guest-budget] [warmup.wvb]",
     );
 }
 
@@ -52,6 +52,17 @@ function bytesRequest(candidate, input, guestBudget, maximumCallDepth) {
     return request;
 }
 
+function scalarRequest(candidate, guestBudget, maximumCallDepth) {
+    const request = Buffer.alloc(16 + candidate.length);
+    request.writeUInt32LE(0x49585657, 0);
+    request.writeUInt16LE(1, 4);
+    request.writeUInt16LE(0, 6);
+    request.writeUInt32LE(guestBudget, 8);
+    request.writeUInt32LE(maximumCallDepth, 12);
+    candidate.copy(request, 16);
+    return request;
+}
+
 const interpreterPath = process.argv[2];
 const compilerPath = process.argv[3];
 const sourcePath = process.argv[4];
@@ -65,10 +76,14 @@ const expectedPath = process.argv[8] ?? null;
 const warmupGuestBudget = process.argv[9] === undefined
     ? null
     : parseU32("warmup guest budget", process.argv[9]);
+const warmupCandidatePath = process.argv[10] ?? null;
 const interpreter = readFileSync(interpreterPath);
 const compiler = readFileSync(compilerPath);
 const source = readFileSync(sourcePath);
 const expected = expectedPath === null ? null : readFileSync(expectedPath);
+const warmupCandidate = warmupCandidatePath === null
+    ? compiler
+    : readFileSync(warmupCandidatePath);
 const request = bytesRequest(
     compiler,
     singleSourceSet(source),
@@ -77,12 +92,18 @@ const request = bytesRequest(
 );
 const warmupRequest = warmupGuestBudget === null
     ? null
-    : bytesRequest(
-        compiler,
-        singleSourceSet(source),
-        warmupGuestBudget,
-        maximumCallDepth,
-    );
+    : warmupCandidatePath === null
+        ? bytesRequest(
+            warmupCandidate,
+            singleSourceSet(source),
+            warmupGuestBudget,
+            maximumCallDepth,
+        )
+        : scalarRequest(
+            warmupCandidate,
+            warmupGuestBudget,
+            maximumCallDepth,
+        );
 
 if (!WebAssembly.validate(interpreter)) {
     throw new Error(`${interpreterPath}: WebAssembly.validate rejected the module.`);
@@ -198,6 +219,10 @@ const report = {
         sha256: sha256(source),
     },
     warmup,
+    warmupCandidate: warmupCandidatePath === null ? null : {
+        bytes: warmupCandidate.length,
+        sha256: sha256(warmupCandidate),
+    },
     guestBudget,
     maximumCallDepth,
     outerBudget,

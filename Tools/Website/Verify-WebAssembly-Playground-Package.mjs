@@ -29,16 +29,16 @@ Equal(
     "native backend manifest",
 );
 Equal(
-    "Documents/Decisions/0273-Warmed-WebAssembly-Compiler-Worker.md",
+    "Documents/Decisions/0289-Bounded-WebAssembly-Interpreter-Warmup.md",
     Manifest.decision,
     "package decision",
 );
 const Decision = await readFile(path.join(Repositoryˉroot, Manifest.decision), "utf8");
-if (!Decision.startsWith("# Decision 0273: Warmed WebAssembly compiler worker\n")) {
+if (!Decision.startsWith("# Decision 0289: Bounded WebAssembly interpreter warmup\n")) {
     Fail("The WebAssembly playground package decision is invalid.");
 }
-if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 3) {
-    Fail("The WebAssembly playground manifest must own exactly three artifacts.");
+if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 4) {
+    Fail("The WebAssembly playground manifest must own exactly four artifacts.");
 }
 
 const Nativeˉcompilerˉmanifestˉpath = path.resolve(
@@ -166,6 +166,10 @@ for (const Artifact of Manifest.artifacts) {
 
 const Interpreter = Artifacts.get("scalar-interpreter-wasm");
 const Compiler = Artifacts.get("portable-source-compiler");
+const Warmup = Artifacts.get("interpreter-tier-warmup");
+const Warmupˉartifact = Manifest.artifacts.find(
+    Artifact => Artifact.name === "interpreter-tier-warmup",
+);
 Equal(
     "pinned-native-source-compiler",
     Manifest.artifacts.find(Artifact => Artifact.name === "portable-source-compiler")?.production,
@@ -176,6 +180,25 @@ Equal(
     Manifest.artifacts.find(Artifact => Artifact.name === "scalar-interpreter-wasm")?.production,
     "interpreter WebAssembly production route",
 );
+Equal(
+    "pinned-native-front-door",
+    Warmupˉartifact?.production,
+    "interpreter warmup production route",
+);
+Equal(
+    "Windvale-WebAssembly-Interpreter-Warmup.wvproj",
+    Warmupˉartifact?.sourceProject,
+    "interpreter warmup source project",
+);
+Equal(
+    Warmupˉartifact?.sourceSha256,
+    createHash("sha256").update(await readFile(path.join(
+        Repositoryˉroot,
+        "Tools/WebAssembly/Interpreter-Warmup.wv",
+    ))).digest("hex"),
+    "interpreter warmup source SHA-256",
+);
+Equal(292, Warmup.byteLength, "interpreter warmup WVB length");
 if (!WebAssembly.validate(Interpreter)) {
     Fail("The packaged scalar interpreter is not valid WebAssembly.");
 }

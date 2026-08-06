@@ -1,0 +1,9 @@
+module WebAssemblyˉinterpreterˉwarmup profile portable;
+
+export fn Main() -> i32 {
+    var Value: i32 = 0;
+    while Value == 0 {
+        Value = Value;
+    }
+    return 1;
+}

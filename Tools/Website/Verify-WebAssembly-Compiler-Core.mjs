@@ -7,9 +7,10 @@ import { Compileˉverifyˉexecute } from "../Windvale.Playground/wwwroot/js/wind
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = path.resolve(Scriptˉdirectory, "../..");
 const Packageˉroot = path.join(Repositoryˉroot, "Artifacts/WebAssembly-Playground");
-const [Interpreter, Compiler, Source] = await Promise.all([
+const [Interpreter, Compiler, Warmup, Source] = await Promise.all([
     readFile(path.join(Packageˉroot, "Wvb-Scalar-Interpreter.wasm")),
     readFile(path.join(Packageˉroot, "Windvale-Compiler-Memory.wvb")),
+    readFile(path.join(Packageˉroot, "Wvb-Interpreter-Warmup.wvb")),
     readFile(path.join(
         Repositoryˉroot,
         "Tests/Fixtures/Source-Wvb/WebAssembly-Compiler-Success.wv",
@@ -19,6 +20,7 @@ const [Interpreter, Compiler, Source] = await Promise.all([
 const Result = await Compileˉverifyˉexecute(
     Interpreter,
     Compiler,
+    Warmup,
     Source,
     1_000_000,
 );
@@ -28,7 +30,8 @@ Equal(
     createHash("sha256").update(Result.Wvb).digest("hex"),
     "compiled WVB SHA-256",
 );
-Equal(100_000, Result.Warmupˉguestˉinstructions, "warmup guest instructions");
+Equal(20_000, Result.Warmupˉguestˉinstructions, "warmup guest instructions");
+Equal(17_005_452, Result.Warmupˉouterˉinstructions, "warmup outer instructions");
 if (!Number.isInteger(Result.Warmupˉouterˉinstructions) ||
     Result.Warmupˉouterˉinstructions < 1) {
     throw new Error("The compiler warmup did not report outer instructions.");
