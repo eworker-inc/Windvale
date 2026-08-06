@@ -1278,6 +1278,7 @@ internal static partial class Program
         new("Windvale linker core scans WVO exactly at the hosted boundary", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉcoreˉscansˉobjects),
         new("native Windvale linker AOT targets are discoverable", [TEST_AREA_LINKER], Nativeˉwvˉlinkerˉtargetsˉareˉdiscoverable),
         new("native Windvale linker produces canonical images without .NET", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvˉlinkerˉruns),
+        new("digest-bound native WVO linker launcher preserves canonical output", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvˉlinkerˉfrontˉdoorˉruns),
         new("Windvale linker emits verified deterministic images and maps", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvˉlinkerˉresolvesˉandˉlaysˉout, Testˉcost.Extended),
         new("Stage 0 linker resolves and verifies a canonical flat image", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉproducesˉcanonicalˉflatˉimage),
         new("Stage 0 linker rejects resolution, layout, and relocation failures", [TEST_AREA_LINKER, TEST_AREA_OBJECT_MODEL], Linkerˉrejectsˉinvalidˉlinks),

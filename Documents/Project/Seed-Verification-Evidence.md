@@ -3225,3 +3225,24 @@ structural oracle exactly, and a wrong extension is rejected with exit 64.
 No native package or WebAssembly implementation changed. The exact containing
 commit still requires grouped Windows/Linux qualification before these
 launchers become the ordinary WVO path.
+
+## Local digest-bound native WVO linker evidence
+
+[Decision 0302](../Decisions/0302-Digest-Bound-Native-Wvo-Linker-Candidate.md)
+rebuilds the canonical linker WVB through the qualified native source front
+door and packages it once through the retained Stage 0 constructor. The clean
+candidate inventory pins the 127,482-byte WVB at SHA-256
+`592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386`,
+the 1,655,296-byte Windows application at SHA-256
+`ca88735061d7e36e79813346621a867a9293d04d3c01ffb0336f4ee32cbe316d`,
+and the 1,654,784-byte Linux application at SHA-256
+`994f27f5a2449990b767c0ed8c8c367e2676d41d652ee9a61eab1de36de82dc2`.
+
+Clean regeneration took 12.1 seconds and reproduced the identities already
+pinned by the reviewed package test. The focused linker selection passes 1/1
+in 0.837 test seconds after a 9.64-second zero-warning Release build; the
+complete command takes 14.9 seconds. Current-host execution emits the exact
+canonical map and flat image, while a short invocation is rejected with exit
+64. No WebAssembly implementation changed. Grouped Windows/Linux
+qualification, native package construction, and ordinary-path promotion remain
+deferred.
