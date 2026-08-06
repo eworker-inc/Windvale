@@ -26,7 +26,7 @@ Extend the selectable byte-construction fixture with `-7`, require a four-byte r
 - The core closure is 333,205 bytes at SHA-256 `f0d93cc849e3f3246e695872cd61b91f9c8d8ee58285b5f2b9b2e92a04a786d2`.
 - The memory adapter is 328,294 bytes at SHA-256 `bb69b780a71d2510944edc38ec30aa828b3e4a9cd2dd242215c621114315f406`; the hosted tool is 329,322 bytes at SHA-256 `2b0679507a01a5dd0c290f2c873c8360b52bf6b1699c4afb0b93cad3d25a267f`. Both reproduce exactly through the pinned native source front door in 32.2 seconds.
 - Current unpromoted packages are 4,554,240 Windows and 4,554,752 Linux bytes at SHA-256 `b0e1e17198494397b646adcac37ce815622e6e194cb9cc0a3dcd322fc75bcc97` and `6cd60b082ebbe8ef0b15bdcd3d6b58d190e029abc4c39b1ec9b04ee90d4e167a`.
-- Direct self-lowering remains fail-closed as `Unsupportedˉcode` without publishing output. It advances to `bytes.from_u32_little` in function 6, `__WvM10F2(bytes, u32) -> bytes`, at WVB offset `0x0019`; unsigned 32-bit little-endian construction is the next active slice.
+- Direct self-lowering remains fail-closed as `Unsupportedˉcode` without publishing output. A complete ordinal scan corrects the initial constructor-only inspection: functions 1 and 2 clear, then function 3, `__WvM10F10(bytes, i32, u32) -> bytes`, reaches unsupported `u32.multiply` at WVB offset `0x0233` before the later unsigned-constructor helper.
 - No C# implementation changed. Stage 0 remains the independent oracle and recovery path until the grouped dual-host and complete retirement gates pass.
 
 ## Reconsideration triggers

@@ -7,5 +7,8 @@ export fn Main() -> i32 {
     let Signed = Bytesˉfromˉi32ˉlittle(-7);
     if Bytesˉlength(Signed) != 4u32 { return 3; }
     if Bytesˉreadˉi32ˉlittle(Signed, 0u32) != -7 { return 4; }
+    let Unsigned = Bytesˉfromˉu32ˉlittle(2309737967u32);
+    if Bytesˉlength(Unsigned) != 4u32 { return 5; }
+    if Bytesˉreadˉu32ˉlittle(Unsigned, 0u32) != 2309737967u32 { return 6; }
     return 42;
 }

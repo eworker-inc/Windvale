@@ -200,11 +200,11 @@ export fn Compilerˉnativeˉx64ˉemitˉbytesˉfromˉu8(
     return Bytesˉconcat(Result, Instruction);
 }
 
-export fn Compilerˉnativeˉx64ˉbytesˉfromˉi32ˉlittleˉbytes() -> u32 {
+export fn Compilerˉnativeˉx64ˉbytesˉfromˉ32ˉlittleˉbytes() -> u32 {
     return 108u32;
 }
 
-export fn Compilerˉnativeˉx64ˉemitˉbytesˉfromˉi32ˉlittle(
+export fn Compilerˉnativeˉx64ˉemitˉbytesˉfromˉ32ˉlittle(
     Result: bytes,
     Source: u32,
     Target: u32,
