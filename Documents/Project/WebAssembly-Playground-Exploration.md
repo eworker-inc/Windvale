@@ -170,6 +170,8 @@ The interpreter next expands its typed record arena to 768 cells and sustains th
 
 The first complete static-worker pipeline now loads that package by manifest, verifies every artifact digest, builds canonical `WVSS 1`, admits `WVXO 2` and `WVCO 1`, resubmits the untrusted result through `WVXI 1`, and transfers the copied WVB back to ordinary JavaScript. Local Chromium produces the exact expected WVB and result with zero .NET/Blazor requests in 378.1 seconds. This is bounded browser integration, not a general backend or replacement of the .NET playground path. It does not implement `break`, `continue`, browser capability authorization/imports for compiled applications, general WVB nonempty stack joins, compiler self-hosting in WebAssembly, cross-browser qualification, or complete worker containment for the editable pipeline. The exact experimental contract is [`Specifications/Windvale-WebAssembly.md`](../../Specifications/Windvale-WebAssembly.md).
 
+A warmed successor extracts type preflight, record-metadata construction, and integer formatting into a five-function interpreter graph, then validates a 100,000-guest-instruction budget run before exact compilation on the same instance. Ordinary Node.js falls from 354.9 seconds for one cold call to about 89.9 seconds total while preserving the exact compiler result; the refreshed digest-pinned package contains the 112,216-byte native WVB and 839,104-byte import-free Wasm. Browser remeasurement remains pending, so the normal editor has not switched yet.
+
 ## Proposed playground shape
 
 The initial user experience could have four primary views:
@@ -179,7 +181,7 @@ The initial user experience could have four primary views:
 3. **Bytecode** — WVB sections, declarations, functions, data, and decoded instructions.
 4. **Execution** — verifier status, requested and granted capabilities, instruction count, memory limits, and traps.
 
-The surrounding page can use TypeScript or JavaScript, ordinary HTML, and an established browser editor. The generated Wasm subset and the exact source-to-WVB-to-result compiler proof now execute in disposable workers. The latter remains a multi-minute bounded profile rather than the normal editor engine; authorization, general diagnostics, inspection evidence, and complete editable-pipeline integration must follow without moving expensive or malicious work onto the UI thread. The Windvale program itself does not need to contain JavaScript.
+The surrounding page can use TypeScript or JavaScript, ordinary HTML, and an established browser editor. The generated Wasm subset and the exact source-to-WVB-to-result compiler proof now execute in disposable workers. The warmed exact proof is practical for continued browser development but is not yet an interactive normal editor engine; authorization, general diagnostics, inspection evidence, and complete editable-pipeline integration must follow without moving expensive or malicious work onto the UI thread. The Windvale program itself does not need to contain JavaScript.
 
 An initial playground should be deployable as static assets after its toolchain artifacts are produced. A server-executed fallback is possible, but it has materially different cost, isolation, privacy, and abuse-control requirements and should not be confused with client-side execution.
 

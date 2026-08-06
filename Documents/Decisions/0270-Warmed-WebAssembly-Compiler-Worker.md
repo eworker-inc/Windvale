@@ -1,7 +1,7 @@
 # Decision 0270: Warmed WebAssembly compiler worker
 
 - Date: 2026-08-06
-- Status: Implemented as a focused local candidate; package refresh and browser remeasurement pending
+- Status: Implemented with focused local Node.js evidence; browser remeasurement pending
 - Advances: [Decision 0269](0269-First-Browser-Native-Source-Pipeline.md)
 - Target: `wasm32-browser-v1-experimental`
 
@@ -23,6 +23,8 @@ The scalar interpreter root is also a very large function. Cold preflight, recor
 ## Consequences
 
 The native front door publishes the extracted five-function interpreter as 112,216 WVB bytes with SHA-256 `6842a32e78ce8c6b347bd76b2a0da6dd4879dee4bb0580177bfb659f5323aa3a`. The current recovery lowering produces 839,104 import-free Wasm bytes with SHA-256 `f65c4e203d4b244ec52e0619f9d1a99ce1d2809296313cb154bba8316c6d916c`.
+
+The digest-pinned browser package now owns those artifacts against source commit `f6db3cea965db39698cf5329210a7fa88498a673`. Normal website verification and publication still copy the checked identities without starting .NET.
 
 The exact compiler output remains the same 183 WVB bytes with SHA-256 `3d29618283648cb0d23987075912a218ac212d8c8fa31ec00b72f4bf3df795c6`, reached in 1,183,292 guest and 1,513,523,789 outer instructions. The extracted artifact completes in 61.469 seconds under the optimizing tier and 354.854 seconds as one cold ordinary call on the measured Windows host.
 

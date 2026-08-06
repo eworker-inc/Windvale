@@ -87,7 +87,7 @@ new Uint8Array(
     Request.byteLength,
 ).set(Request);
 Equal(0, Exports["Windvale.run"](100_000_000, Request.byteLength), "outer status");
-Equal(77_103_665, Readˉglobal(Exports, "Windvale.instructions"), "outer instructions");
+Equal(77_098_382, Readˉglobal(Exports, "Windvale.instructions"), "outer instructions");
 Equal(20, Readˉglobal(Exports, "Windvale.output_length"), "response length");
 const Output = Buffer.from(new Uint8Array(
     Memory.buffer,

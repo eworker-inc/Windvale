@@ -34,11 +34,11 @@ if (!Number.isInteger(Result.Warmupˉouterˉinstructions) ||
     throw new Error("The compiler warmup did not report outer instructions.");
 }
 Equal(1_183_292, Result.Compilerˉguestˉinstructions, "compiler guest instructions");
-Equal(1_513_529_072, Result.Compilerˉouterˉinstructions, "compiler outer instructions");
+Equal(1_513_523_789, Result.Compilerˉouterˉinstructions, "compiler outer instructions");
 Equal(0, Result.Executionˉstatus, "execution status");
 Equal(42, Result.Executionˉresult, "execution result");
 Equal(4, Result.Executionˉguestˉinstructions, "execution guest instructions");
-Equal(8_554, Result.Executionˉouterˉinstructions, "execution outer instructions");
+Equal(8_679, Result.Executionˉouterˉinstructions, "execution outer instructions");
 
 console.log(JSON.stringify({
     wvbBytes: Result.Wvb.byteLength,
