@@ -36,10 +36,14 @@ fn Negativeˉoneˉconstant() -> bytes {
     return Append(Byte(65u32), Byte(127u32));
 }
 
-fn Emitˉearlyˉreturn(Returnsˉvalue: bool) -> bytes {
+fn Emitˉearlyˉreturn(Returnsˉvalue: bool, Returnsˉi64: bool) -> bytes {
     var Result: bytes = Byte(15u32);
     if Returnsˉvalue {
-        Result = Append(Positiveˉconstant(0u32), Result);
+        if Returnsˉi64 {
+            Result = Append(Append(Byte(66u32), Byte(0u32)), Result);
+        } else {
+            Result = Append(Positiveˉconstant(0u32), Result);
+        }
     }
     return Result;
 }
@@ -47,23 +51,33 @@ fn Emitˉearlyˉreturn(Returnsˉvalue: bool) -> bytes {
 fn Emitˉstatusˉreturn(
     Status: u32,
     Returnsˉvalue: bool,
+    Returnsˉi64: bool,
     Statusˉglobal: u32
 ) -> bytes {
     var Result: bytes = Positiveˉconstant(Status);
     Result = Append(Result, Indexed(36u32, Statusˉglobal));
-    return Append(Result, Emitˉearlyˉreturn(Returnsˉvalue));
+    return Append(
+        Result,
+        Emitˉearlyˉreturn(Returnsˉvalue, Returnsˉi64)
+    );
 }
 
 fn Emitˉfailureˉguard(
     Status: u32,
     Returnsˉvalue: bool,
+    Returnsˉi64: bool,
     Statusˉglobal: u32
 ) -> bytes {
     var Result: bytes = Byte(4u32);
     Result = Append(Result, Byte(64u32));
     Result = Append(
         Result,
-        Emitˉstatusˉreturn(Status, Returnsˉvalue, Statusˉglobal)
+        Emitˉstatusˉreturn(
+            Status,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
     );
     return Append(Result, Byte(11u32));
 }
@@ -73,6 +87,7 @@ fn Emitˉu32ˉdivision(
     First: u32,
     Second: u32,
     Returnsˉvalue: bool,
+    Returnsˉi64: bool,
     Statusˉglobal: u32
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Second);
@@ -81,7 +96,12 @@ fn Emitˉu32ˉdivision(
     Result = Append(Result, Byte(69u32));
     Result = Append(
         Result,
-        Emitˉfailureˉguard(3032u32, Returnsˉvalue, Statusˉglobal)
+        Emitˉfailureˉguard(
+            3032u32,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
     );
     Result = Append(Result, Indexed(32u32, First));
     Result = Append(Result, Indexed(32u32, Second));
@@ -96,6 +116,7 @@ fn Emitˉu32ˉshift(
     First: u32,
     Second: u32,
     Returnsˉvalue: bool,
+    Returnsˉi64: bool,
     Statusˉglobal: u32
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Second);
@@ -105,7 +126,12 @@ fn Emitˉu32ˉshift(
     Result = Append(Result, Byte(79u32));
     Result = Append(
         Result,
-        Emitˉfailureˉguard(3033u32, Returnsˉvalue, Statusˉglobal)
+        Emitˉfailureˉguard(
+            3033u32,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
     );
     Result = Append(Result, Indexed(32u32, First));
     Result = Append(Result, Indexed(32u32, Second));
@@ -121,6 +147,7 @@ export fn Compilerˉwebassemblyˉscalarˉoperationˉemit(
     Scratchˉfirst: u32,
     Scratchˉsecond: u32,
     Returnsˉvalue: bool,
+    Returnsˉi64: bool,
     Statusˉglobal: u32
 ) -> Compilerˉwebassemblyˉscalarˉoperationˉemission {
     var Result: bytes = Empty(Input);
@@ -132,6 +159,7 @@ export fn Compilerˉwebassemblyˉscalarˉoperationˉemit(
                 Scratchˉfirst,
                 Scratchˉsecond,
                 Returnsˉvalue,
+                Returnsˉi64,
                 Statusˉglobal
             )
         );
@@ -167,6 +195,7 @@ export fn Compilerˉwebassemblyˉscalarˉoperationˉemit(
                 Scratchˉfirst,
                 Scratchˉsecond,
                 Returnsˉvalue,
+                Returnsˉi64,
                 Statusˉglobal
             )
         );

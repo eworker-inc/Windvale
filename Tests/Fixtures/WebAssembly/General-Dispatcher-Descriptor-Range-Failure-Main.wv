@@ -1,0 +1,13 @@
+module Webassemblyˉgeneralˉdispatcherˉdescriptorˉrangeˉfailure profile portable;
+
+data Raw: bytes = [42];
+
+fn Invalidˉslice(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 1u32, 1u32);
+}
+
+export fn Main() -> i32 {
+    let Value: bytes = Invalidˉslice(Raw);
+    if Bytesˉlength(Value) == 0u32 { return 1; }
+    return 42;
+}

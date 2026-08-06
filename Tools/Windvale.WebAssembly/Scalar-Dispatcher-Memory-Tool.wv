@@ -6,6 +6,7 @@ import Compilerˉwebassemblyˉtypedˉcalls as Typed;
 import Compilerˉwebassemblyˉexecutableˉgraph as Executable;
 import Compilerˉwebassemblyˉcontrolˉflow as Control;
 import Compilerˉwebassemblyˉscalarˉdispatcher as Dispatcher;
+import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
 
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
@@ -27,6 +28,8 @@ export fn Main(Input: bytes) -> bytes {
     var Codeˉlength: u32 = 0u32;
     var Typesˉoffset: u32 = 0u32;
     var Typesˉlength: u32 = 0u32;
+    var Dataˉoffset: u32 = 0u32;
+    var Dataˉlength: u32 = 0u32;
     while Sectionˉkind <= 7u32 {
         if !Rangeˉisˉvalid(Total, Envelope, 8u32) { return Empty(Input); }
         if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Envelope)) != Sectionˉkind {
@@ -44,6 +47,10 @@ export fn Main(Input: bytes) -> bytes {
             Functionsˉoffset = Payloadˉoffset;
             Functionsˉlength = Payloadˉlength;
         }
+        if Sectionˉkind == 3u32 {
+            Dataˉoffset = Payloadˉoffset;
+            Dataˉlength = Payloadˉlength;
+        }
         if Sectionˉkind == 5u32 {
             Codeˉoffset = Payloadˉoffset;
             Codeˉlength = Payloadˉlength;
@@ -56,6 +63,15 @@ export fn Main(Input: bytes) -> bytes {
         Sectionˉkind = Sectionˉkind + 1u32;
     }
     if Envelope != Total { return Empty(Input); }
+
+    let Staticˉdataˉsummary:
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉbuild(
+            Input,
+            Dataˉoffset,
+            Dataˉlength
+        );
+    if !Staticˉdataˉsummary.Valid { return Empty(Input); }
 
     let Functionˉdirectory:
         Directory.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary =
@@ -116,7 +132,8 @@ export fn Main(Input: bytes) -> bytes {
             Codeˉlength,
             Functionˉdirectory,
             Graph,
-            Controlˉflow
+            Controlˉflow,
+            Staticˉdataˉsummary
         );
     if !Lowered.Valid { return Empty(Input); }
     return Lowered.Webassembly;

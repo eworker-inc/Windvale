@@ -1,0 +1,178 @@
+module Compilerˉwebassemblyˉstaticˉdata profile portable;
+
+import Compilerˉwebassemblyˉbinaryˉencoding as Encoding;
+
+export record Compilerˉwebassemblyˉstaticˉdataˉsummary {
+    Valid: bool;
+    Count: u32;
+    Staticˉlength: u32;
+    Entries: bytes;
+    Payload: bytes;
+}
+
+export record Compilerˉwebassemblyˉstaticˉdataˉentry {
+    Valid: bool;
+    Kind: u32;
+    Valueˉoffset: u32;
+    Valueˉlength: u32;
+    Staticˉoffset: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Append(First: bytes, Second: bytes) -> bytes {
+    return Bytesˉconcat(First, Second);
+}
+
+fn Invalid(Input: bytes) -> Compilerˉwebassemblyˉstaticˉdataˉsummary {
+    return Compilerˉwebassemblyˉstaticˉdataˉsummary(
+        false,
+        0u32,
+        0u32,
+        Empty(Input),
+        Empty(Input)
+    );
+}
+
+fn Appendˉu32(Values: bytes, Value: u32) -> bytes {
+    return Append(Values, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Compilerˉwebassemblyˉstaticˉdataˉbuild(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> Compilerˉwebassemblyˉstaticˉdataˉsummary {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Total || Length > Total - Offset || Length < 4u32 {
+        return Invalid(Input);
+    }
+    let End: u32 = Offset + Length;
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    if Count > 256u32 { return Invalid(Input); }
+
+    var Cursor: u32 = Offset + 4u32;
+    var Index: u32 = 0u32;
+    var Staticˉlength: u32 = 0u32;
+    var Entries: bytes = Empty(Input);
+    var Payload: bytes = Empty(Input);
+    while Index < Count {
+        if Cursor > End || 4u32 > End - Cursor { return Invalid(Input); }
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if Nameˉlength == 0u32 || Nameˉlength > 255u32 {
+            return Invalid(Input);
+        }
+        Cursor = Cursor + 4u32;
+        if Cursor > End || Nameˉlength > End - Cursor {
+            return Invalid(Input);
+        }
+        Cursor = Cursor + Nameˉlength;
+        if Cursor > End || 5u32 > End - Cursor { return Invalid(Input); }
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Kind != 3u32 && Kind != 5u32 { return Invalid(Input); }
+        let Valueˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Cursor + 1u32
+        );
+        let Valueˉoffset: u32 = Cursor + 5u32;
+        if Valueˉoffset > End || Valueˉlength > End - Valueˉoffset {
+            return Invalid(Input);
+        }
+        if Valueˉlength > 15360u32 - Staticˉlength {
+            return Invalid(Input);
+        }
+        Entries = Appendˉu32(Entries, Kind);
+        Entries = Appendˉu32(Entries, Valueˉoffset);
+        Entries = Appendˉu32(Entries, Valueˉlength);
+        Entries = Appendˉu32(Entries, 50176u32 + Staticˉlength);
+        Payload = Append(
+            Payload,
+            Bytesˉslice(Input, Valueˉoffset, Valueˉlength)
+        );
+        Staticˉlength = Staticˉlength + Valueˉlength;
+        Cursor = Valueˉoffset + Valueˉlength;
+        Index = Index + 1u32;
+    }
+    if Cursor != End { return Invalid(Input); }
+    return Compilerˉwebassemblyˉstaticˉdataˉsummary(
+        true,
+        Count,
+        Staticˉlength,
+        Entries,
+        Payload
+    );
+}
+
+export fn Compilerˉwebassemblyˉstaticˉdataˉentryˉat(
+    Summary: Compilerˉwebassemblyˉstaticˉdataˉsummary,
+    Index: u32
+) -> Compilerˉwebassemblyˉstaticˉdataˉentry {
+    if !Summary.Valid || Index >= Summary.Count {
+        return Compilerˉwebassemblyˉstaticˉdataˉentry(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Offset: u32 = Index * 16u32;
+    return Compilerˉwebassemblyˉstaticˉdataˉentry(
+        true,
+        Bytesˉreadˉu32ˉlittle(Summary.Entries, Offset),
+        Bytesˉreadˉu32ˉlittle(Summary.Entries, Offset + 4u32),
+        Bytesˉreadˉu32ˉlittle(Summary.Entries, Offset + 8u32),
+        Bytesˉreadˉu32ˉlittle(Summary.Entries, Offset + 12u32)
+    );
+}
+
+export fn Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
+    Input: bytes,
+    Summary: Compilerˉwebassemblyˉstaticˉdataˉsummary
+) -> bytes {
+    if !Summary.Valid || Summary.Count == 0u32 { return Empty(Input); }
+    var Payload: bytes = Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(1u32);
+    Payload = Append(
+        Payload,
+        Encoding.Compilerˉwebassemblyˉbinaryˉbyte(1u32)
+    );
+    Payload = Append(
+        Payload,
+        Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(129u32)
+    );
+    Payload = Append(
+        Payload,
+        Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(129u32)
+    );
+    return Encoding.Compilerˉwebassemblyˉbinaryˉsection(5u32, Payload);
+}
+
+export fn Compilerˉwebassemblyˉstaticˉdataˉsection(
+    Input: bytes,
+    Summary: Compilerˉwebassemblyˉstaticˉdataˉsummary
+) -> bytes {
+    if !Summary.Valid || Summary.Staticˉlength == 0u32 {
+        return Empty(Input);
+    }
+    var Payload: bytes = Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(1u32);
+    Payload = Append(
+        Payload,
+        Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(0u32)
+    );
+    Payload = Append(
+        Payload,
+        Encoding.Compilerˉwebassemblyˉbinaryˉpositiveˉi32ˉconstant(
+            50176u32
+        )
+    );
+    Payload = Append(
+        Payload,
+        Encoding.Compilerˉwebassemblyˉbinaryˉbyte(11u32)
+    );
+    Payload = Append(
+        Payload,
+        Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(
+            Summary.Staticˉlength
+        )
+    );
+    Payload = Append(Payload, Summary.Payload);
+    return Encoding.Compilerˉwebassemblyˉbinaryˉsection(11u32, Payload);
+}

@@ -9,5 +9,7 @@ source "Compiler/Windvale/WebAssembly-Control-Flow.wv"
 source "Compiler/Windvale/WebAssembly-Binary-Encoding.wv"
 source "Compiler/Windvale/WebAssembly-Scalar-Operations.wv"
 source "Compiler/Windvale/WebAssembly-Value-Layout.wv"
+source "Compiler/Windvale/WebAssembly-Static-Data.wv"
+source "Compiler/Windvale/WebAssembly-Descriptor-Operations.wv"
 source "Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv"
 emit wvb

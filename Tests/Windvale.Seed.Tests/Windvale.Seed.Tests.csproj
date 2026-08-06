@@ -604,6 +604,12 @@
       Include="../../Compiler/Windvale/WebAssembly-Value-Layout.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Value-Layout.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Static-Data.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Static-Data.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Descriptor-Operations.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Descriptor-Operations.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
     <EmbeddedResource
@@ -630,6 +636,12 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/General-Dispatcher-Shift-Failure-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Shift-Failure-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/General-Dispatcher-Descriptors-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Descriptors-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/General-Dispatcher-Descriptor-Range-Failure-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Descriptor-Range-Failure-Main.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/WebAssembly-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />

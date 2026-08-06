@@ -6,6 +6,8 @@ import Compilerˉwebassemblyˉexecutableˉgraph as Graphs;
 import Compilerˉwebassemblyˉcontrolˉflow as Controls;
 import Compilerˉwebassemblyˉscalarˉoperations as Scalars;
 import Compilerˉwebassemblyˉvalueˉlayout as Layouts;
+import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
+import Compilerˉwebassemblyˉdescriptorˉoperations as Descriptors;
 
 export record Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     Valid: bool;
@@ -246,32 +248,53 @@ fn Functionˉreturnsˉi64(
     );
 }
 
-fn Emitˉearlyˉreturn(Returnsˉvalue: bool) -> bytes {
+fn Emitˉearlyˉreturn(Returnsˉvalue: bool, Returnsˉi64: bool) -> bytes {
     var Result: bytes = Byte(15u32);
     if Returnsˉvalue {
-        Result = Append(Positiveˉconstant(0u32), Result);
+        if Returnsˉi64 {
+            Result = Append(Append(Byte(66u32), Byte(0u32)), Result);
+        } else {
+            Result = Append(Positiveˉconstant(0u32), Result);
+        }
     }
     return Result;
 }
 
-fn Emitˉstatusˉreturn(Status: u32, Returnsˉvalue: bool) -> bytes {
+fn Emitˉstatusˉreturn(
+    Status: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
+) -> bytes {
     var Result: bytes = Positiveˉconstant(Status);
     Result = Append(Result, Indexed(36u32, 3u32));
-    return Append(Result, Emitˉearlyˉreturn(Returnsˉvalue));
+    return Append(
+        Result,
+        Emitˉearlyˉreturn(Returnsˉvalue, Returnsˉi64)
+    );
 }
 
-fn Emitˉfailureˉguard(Status: u32, Returnsˉvalue: bool) -> bytes {
+fn Emitˉfailureˉguard(
+    Status: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
+) -> bytes {
     var Result: bytes = Byte(4u32);
     Result = Append(Result, Byte(64u32));
-    Result = Append(Result, Emitˉstatusˉreturn(Status, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉstatusˉreturn(Status, Returnsˉvalue, Returnsˉi64)
+    );
     return Append(Result, Byte(11u32));
 }
 
-fn Emitˉmeter(Returnsˉvalue: bool) -> bytes {
+fn Emitˉmeter(Returnsˉvalue: bool, Returnsˉi64: bool) -> bytes {
     var Result: bytes = Indexed(35u32, 1u32);
     Result = Append(Result, Indexed(35u32, 2u32));
     Result = Append(Result, Byte(79u32));
-    Result = Append(Result, Emitˉfailureˉguard(3011u32, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(3011u32, Returnsˉvalue, Returnsˉi64)
+    );
     Result = Append(Result, Indexed(35u32, 1u32));
     Result = Append(Result, Positiveˉconstant(1u32));
     Result = Append(Result, Byte(106u32));
@@ -280,6 +303,7 @@ fn Emitˉmeter(Returnsˉvalue: bool) -> bytes {
 
 fn Emitˉcallˉfailureˉpropagation(
     Returnsˉvalue: bool,
+    Returnsˉi64: bool,
     Calledˉreturnsˉvalue: bool,
     Calledˉreturnsˉi64: bool,
     Scratchˉresult: u32,
@@ -296,7 +320,10 @@ fn Emitˉcallˉfailureˉpropagation(
     Result = Append(Result, Indexed(35u32, 3u32));
     Result = Append(Result, Byte(4u32));
     Result = Append(Result, Byte(64u32));
-    Result = Append(Result, Emitˉearlyˉreturn(Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉearlyˉreturn(Returnsˉvalue, Returnsˉi64)
+    );
     Result = Append(Result, Byte(11u32));
     if Calledˉreturnsˉvalue {
         if Calledˉreturnsˉi64 {
@@ -312,7 +339,8 @@ fn Emitˉcheckedˉi32ˉadd(
     Left: u32,
     Right: u32,
     Arithmeticˉresult: u32,
-    Returnsˉvalue: bool
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Right);
     Result = Append(Result, Indexed(33u32, Left));
@@ -328,7 +356,10 @@ fn Emitˉcheckedˉi32ˉadd(
     Result = Append(Result, Byte(113u32));
     Result = Append(Result, Positiveˉconstant(0u32));
     Result = Append(Result, Byte(72u32));
-    Result = Append(Result, Emitˉfailureˉguard(3007u32, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(3007u32, Returnsˉvalue, Returnsˉi64)
+    );
     return Append(Result, Indexed(32u32, Arithmeticˉresult));
 }
 
@@ -336,7 +367,8 @@ fn Emitˉcheckedˉi32ˉsubtract(
     Left: u32,
     Right: u32,
     Arithmeticˉresult: u32,
-    Returnsˉvalue: bool
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Right);
     Result = Append(Result, Indexed(33u32, Left));
@@ -352,7 +384,10 @@ fn Emitˉcheckedˉi32ˉsubtract(
     Result = Append(Result, Byte(113u32));
     Result = Append(Result, Positiveˉconstant(0u32));
     Result = Append(Result, Byte(72u32));
-    Result = Append(Result, Emitˉfailureˉguard(3007u32, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(3007u32, Returnsˉvalue, Returnsˉi64)
+    );
     return Append(Result, Indexed(32u32, Arithmeticˉresult));
 }
 
@@ -361,7 +396,8 @@ fn Emitˉcheckedˉi32ˉmultiply(
     Right: u32,
     Arithmeticˉresult: u32,
     Wideˉresult: u32,
-    Returnsˉvalue: bool
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Right);
     Result = Append(Result, Indexed(33u32, Left));
@@ -376,16 +412,26 @@ fn Emitˉcheckedˉi32ˉmultiply(
     Result = Append(Result, Byte(172u32));
     Result = Append(Result, Indexed(32u32, Wideˉresult));
     Result = Append(Result, Byte(82u32));
-    Result = Append(Result, Emitˉfailureˉguard(3007u32, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(3007u32, Returnsˉvalue, Returnsˉi64)
+    );
     return Append(Result, Indexed(32u32, Arithmeticˉresult));
 }
 
-fn Emitˉcheckedˉi32ˉnegate(Value: u32, Returnsˉvalue: bool) -> bytes {
+fn Emitˉcheckedˉi32ˉnegate(
+    Value: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
+) -> bytes {
     var Result: bytes = Indexed(33u32, Value);
     Result = Append(Result, Indexed(32u32, Value));
     Result = Append(Result, I32ˉminimumˉconstant());
     Result = Append(Result, Byte(70u32));
-    Result = Append(Result, Emitˉfailureˉguard(3007u32, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(3007u32, Returnsˉvalue, Returnsˉi64)
+    );
     Result = Append(Result, Positiveˉconstant(0u32));
     Result = Append(Result, Indexed(32u32, Value));
     return Append(Result, Byte(107u32));
@@ -395,7 +441,8 @@ fn Emitˉcheckedˉu32ˉadd(
     Left: u32,
     Right: u32,
     Arithmeticˉresult: u32,
-    Returnsˉvalue: bool
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Right);
     Result = Append(Result, Indexed(33u32, Left));
@@ -405,21 +452,28 @@ fn Emitˉcheckedˉu32ˉadd(
     Result = Append(Result, Indexed(34u32, Arithmeticˉresult));
     Result = Append(Result, Indexed(32u32, Left));
     Result = Append(Result, Byte(73u32));
-    Result = Append(Result, Emitˉfailureˉguard(3007u32, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(3007u32, Returnsˉvalue, Returnsˉi64)
+    );
     return Append(Result, Indexed(32u32, Arithmeticˉresult));
 }
 
 fn Emitˉcheckedˉu32ˉsubtract(
     Left: u32,
     Right: u32,
-    Returnsˉvalue: bool
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Right);
     Result = Append(Result, Indexed(33u32, Left));
     Result = Append(Result, Indexed(32u32, Left));
     Result = Append(Result, Indexed(32u32, Right));
     Result = Append(Result, Byte(73u32));
-    Result = Append(Result, Emitˉfailureˉguard(3007u32, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(3007u32, Returnsˉvalue, Returnsˉi64)
+    );
     Result = Append(Result, Indexed(32u32, Left));
     Result = Append(Result, Indexed(32u32, Right));
     return Append(Result, Byte(107u32));
@@ -430,7 +484,8 @@ fn Emitˉcheckedˉu32ˉmultiply(
     Right: u32,
     Arithmeticˉresult: u32,
     Wideˉresult: u32,
-    Returnsˉvalue: bool
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool
 ) -> bytes {
     var Result: bytes = Indexed(33u32, Right);
     Result = Append(Result, Indexed(33u32, Left));
@@ -445,7 +500,10 @@ fn Emitˉcheckedˉu32ˉmultiply(
     Result = Append(Result, Byte(173u32));
     Result = Append(Result, Indexed(32u32, Wideˉresult));
     Result = Append(Result, Byte(82u32));
-    Result = Append(Result, Emitˉfailureˉguard(3007u32, Returnsˉvalue));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(3007u32, Returnsˉvalue, Returnsˉi64)
+    );
     return Append(Result, Indexed(32u32, Arithmeticˉresult));
 }
 
@@ -456,6 +514,7 @@ fn Emitˉoperation(
     Opcode: u8,
     Reachableˉorder: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary,
     Function: u32,
     Scratchˉleft: u32,
     Scratchˉright: u32,
@@ -464,6 +523,11 @@ fn Emitˉoperation(
 ) -> Emission {
     var Result: bytes = Empty(Input);
     let Returnsˉvalue: bool = Functionˉreturnsˉvalue(
+        Input,
+        Directory,
+        Function
+    );
+    let Returnsˉi64: bool = Functionˉreturnsˉi64(
         Input,
         Directory,
         Function
@@ -510,10 +574,33 @@ fn Emitˉoperation(
             Scratchˉleft,
             Scratchˉright,
             Returnsˉvalue,
+            Returnsˉi64,
             3u32
         );
     if Scalar.Matched {
         return Emission(true, Scalar.Bytes, 0u32, 0u32);
+    }
+    let Descriptor:
+        Descriptors.Compilerˉwebassemblyˉdescriptorˉoperationˉemission =
+        Descriptors.Compilerˉwebassemblyˉdescriptorˉoperationˉemit(
+            Input,
+            Code,
+            Offset,
+            Opcode,
+            Data,
+            Scratchˉleft,
+            Scratchˉright,
+            Scratchˉresult,
+            Scratchˉwide,
+            Returnsˉvalue,
+            Returnsˉi64,
+            3u32
+        );
+    if Descriptor.Matched {
+        if !Descriptor.Valid {
+            return Invalidˉemission(Input, Offset, U32ˉfromˉu8(Opcode));
+        }
+        return Emission(true, Descriptor.Bytes, 0u32, 0u32);
     }
     if Opcode == 16u8 {
         return Emission(
@@ -522,7 +609,8 @@ fn Emitˉoperation(
                 Scratchˉleft,
                 Scratchˉright,
                 Scratchˉresult,
-                Returnsˉvalue
+                Returnsˉvalue,
+                Returnsˉi64
             ),
             0u32,
             0u32
@@ -535,7 +623,8 @@ fn Emitˉoperation(
                 Scratchˉleft,
                 Scratchˉright,
                 Scratchˉresult,
-                Returnsˉvalue
+                Returnsˉvalue,
+                Returnsˉi64
             ),
             0u32,
             0u32
@@ -549,7 +638,8 @@ fn Emitˉoperation(
                 Scratchˉright,
                 Scratchˉresult,
                 Scratchˉwide,
-                Returnsˉvalue
+                Returnsˉvalue,
+                Returnsˉi64
             ),
             0u32,
             0u32
@@ -558,7 +648,11 @@ fn Emitˉoperation(
     if Opcode == 19u8 {
         return Emission(
             true,
-            Emitˉcheckedˉi32ˉnegate(Scratchˉleft, Returnsˉvalue),
+            Emitˉcheckedˉi32ˉnegate(
+                Scratchˉleft,
+                Returnsˉvalue,
+                Returnsˉi64
+            ),
             0u32,
             0u32
         );
@@ -570,7 +664,8 @@ fn Emitˉoperation(
                 Scratchˉleft,
                 Scratchˉright,
                 Scratchˉresult,
-                Returnsˉvalue
+                Returnsˉvalue,
+                Returnsˉi64
             ),
             0u32,
             0u32
@@ -582,7 +677,8 @@ fn Emitˉoperation(
             Emitˉcheckedˉu32ˉsubtract(
                 Scratchˉleft,
                 Scratchˉright,
-                Returnsˉvalue
+                Returnsˉvalue,
+                Returnsˉi64
             ),
             0u32,
             0u32
@@ -596,7 +692,8 @@ fn Emitˉoperation(
                 Scratchˉright,
                 Scratchˉresult,
                 Scratchˉwide,
-                Returnsˉvalue
+                Returnsˉvalue,
+                Returnsˉi64
             ),
             0u32,
             0u32
@@ -640,6 +737,7 @@ fn Emitˉoperation(
             Result,
             Emitˉcallˉfailureˉpropagation(
                 Returnsˉvalue,
+                Returnsˉi64,
                 Functionˉreturnsˉvalue(Input, Directory, Target),
                 Functionˉreturnsˉi64(Input, Directory, Target),
                 Scratchˉresult,
@@ -669,6 +767,7 @@ fn Emitˉblock(
     Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
     Reachableˉorder: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary,
     Function: u32
 ) -> Emission {
     let Block: u32 = Starts + Localˉblock;
@@ -695,6 +794,11 @@ fn Emitˉblock(
         Directory,
         Function
     );
+    let Returnsˉi64: bool = Functionˉreturnsˉi64(
+        Input,
+        Directory,
+        Function
+    );
     var Cursor: u32 = Start;
     while Cursor < End {
         let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
@@ -708,7 +812,10 @@ fn Emitˉblock(
         }
         let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Cursor);
         let Isˉterminator: bool = Cursor + Width == End && Kind != 0u32;
-        Result = Append(Result, Emitˉmeter(Returnsˉvalue));
+        Result = Append(
+            Result,
+            Emitˉmeter(Returnsˉvalue, Returnsˉi64)
+        );
         if !Isˉterminator {
             let Operation: Emission = Emitˉoperation(
                 Input,
@@ -717,6 +824,7 @@ fn Emitˉblock(
                 Opcode,
                 Reachableˉorder,
                 Directory,
+                Data,
                 Function,
                 Scratchˉleft,
                 Scratchˉright,
@@ -780,6 +888,7 @@ fn Emitˉfunction(
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
     Reachableˉorder: bytes,
+    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary,
     Function: u32
 ) -> Emission {
     let Typeˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
@@ -863,6 +972,7 @@ fn Emitˉfunction(
             Control,
             Reachableˉorder,
             Directory,
+            Data,
             Function
         );
         if !Block.Valid { return Block; }
@@ -931,9 +1041,10 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     Codeˉlength: u32,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
-    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary
+    Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
+    Data: Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary
 ) -> Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
-    if !Directory.Valid || !Graph.Valid || !Control.Valid ||
+    if !Directory.Valid || !Graph.Valid || !Control.Valid || !Data.Valid ||
         Directory.Count != Graph.Functionˉcount ||
         Control.Reachableˉfunctionˉcount != Graph.Reachableˉcount ||
         Bytesˉlength(Graph.Reachableˉorder) != Graph.Reachableˉcount * 4u32 ||
@@ -997,6 +1108,7 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
             Directory,
             Control,
             Graph.Reachableˉorder,
+            Data,
             Function
         );
         if !Body.Valid {
@@ -1069,6 +1181,13 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     );
     Webassembly = Append(
         Webassembly,
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
+            Input,
+            Data
+        )
+    );
+    Webassembly = Append(
+        Webassembly,
         Encoding.Compilerˉwebassemblyˉbinaryˉsection(6u32, Globalˉpayload)
     );
     Webassembly = Append(
@@ -1078,6 +1197,13 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     Webassembly = Append(
         Webassembly,
         Encoding.Compilerˉwebassemblyˉbinaryˉsection(10u32, Codeˉpayload)
+    );
+    Webassembly = Append(
+        Webassembly,
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsection(
+            Input,
+            Data
+        )
     );
     if Bytesˉlength(Webassembly) > 16777216u32 {
         return Invalid(Input, 0u32, 0u32, 0u32);
