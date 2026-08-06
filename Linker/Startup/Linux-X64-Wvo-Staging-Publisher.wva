@@ -1,0 +1,12 @@
+windvale-assembly 1
+
+# Fixed Linux staged-WVO publisher entry. Platform mutation stays in the
+# separately owned adapter and portable admission stays in linked Windvale code.
+symbol export function Linux_wvo_staging_publisher_startup in .text
+symbol import function Linux_wvo_staging_publisher_run
+
+section code .text align 16
+define Linux_wvo_staging_publisher_startup
+jump Linux_wvo_staging_publisher_run
+end define
+end section

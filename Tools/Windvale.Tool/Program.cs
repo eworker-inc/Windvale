@@ -174,6 +174,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         _ => ".elf",
     };
 
@@ -323,7 +324,9 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
-        Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
+        Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
 
     private static int Compileˉsourceˉfiles(
         string sourceˉpath,
@@ -455,7 +458,8 @@ internal static class Program
                 Windowsˉconsoleˉapplicationˉcontract.WV_LINKER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
-                Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
+                Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
             {
                 var Application = target switch
                 {
@@ -507,6 +511,11 @@ internal static class Program
                             Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉwindows(
+                            Module,
+                            Fragment,
+                            Bytes),
+                    Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉwindows(
                             Module,
                             Fragment,
                             Bytes),
@@ -581,6 +590,11 @@ internal static class Program
                             Module,
                             Fragment,
                             Bytes),
+                    Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉlinux(
+                            Module,
+                            Fragment,
+                            Bytes),
                     _ => Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉcompiler(
                         Fragment,
                         Capabilities),
@@ -614,7 +628,8 @@ internal static class Program
                     Linuxˉconsoleˉapplicationˉcontract.WV_LINKER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
-                    Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
+                    Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
             {
                 Prepareˉtemporary = Prepareˉlinuxˉexecutable;
@@ -1098,7 +1113,9 @@ internal static class Program
             "windows-x64-wv-linker-v1|linux-x64-wv-linker-v1|" +
             "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
-            "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1>] [-o <artifact>]");
+            "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
+            "windows-x64-wvo-staging-publisher-v1|" +
+            "linux-x64-wvo-staging-publisher-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
         output.WriteLine(
             "  windvale aot <module.wvb> " +
@@ -1114,7 +1131,9 @@ internal static class Program
             "windows-x64-wv-linker-v1|linux-x64-wv-linker-v1|" +
             "windows-x64-console-packager-v1|linux-x64-console-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
-            "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1> [-o <artifact>]");
+            "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
+            "windows-x64-wvo-staging-publisher-v1|" +
+            "linux-x64-wvo-staging-publisher-v1> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
         output.WriteLine("  windvale link --base-address <u32> --entry <export> -o <image.bin> <object.wvo>...");
         output.WriteLine("  windvale inspect <module.wvb>");

@@ -1,0 +1,134 @@
+windvale-assembly 1
+
+# Shared x64 validation for the immutable file snapshots produced by staged-WVO
+# admission. The platform adapter supplies the expected file-service platform in
+# EDI. Success returns snapshot count in EAX and total chunk bytes in EDX; zero
+# in EAX rejects the table. No resource is reopened and no byte is copied here.
+symbol export function X64_wvo_staging_snapshot_table_validate in .text
+symbol import data Data_arena
+symbol import data File_input_scratch
+symbol import data File_input_table
+symbol import data Name_arena
+symbol import data Snapshot_table
+
+section code .text align 16
+define X64_wvo_staging_snapshot_table_validate
+load_address rbx File_input_table
+load_memory_u32 eax rbx none 1 0
+compare_i32 eax 1229346391
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 4
+compare_i32 eax 1
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 136
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 12
+compare eax edi
+branch not_equal Invalid
+
+load_memory_u64 rax rbx none 1 16
+load_address rcx Snapshot_table
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 24
+compare_i32 eax 64
+branch not_equal Invalid
+load_memory_u32 r11d rbx none 1 28
+compare_i32 r11d 3
+branch below Invalid
+compare_i32 r11d 64
+branch above Invalid
+
+load_memory_u64 rax rbx none 1 32
+load_address rcx Name_arena
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 40
+compare_i32 eax 1048576
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 44
+test eax eax
+branch not_equal Invalid
+load_memory_u64 rax rbx none 1 48
+load_address rcx Data_arena
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 56
+compare_i32 eax 4194304
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 60
+compare_i32 eax 4194304
+branch not_equal Invalid
+load_memory_u64 rax rbx none 1 64
+load_address rcx File_input_scratch
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 76
+test eax eax
+branch not_equal Invalid
+
+xor r8d r8d
+xor r10d r10d
+load_address r12 Snapshot_table
+load_address r13 Name_arena
+load_address r14 Data_arena
+label Record_loop
+compare r8d r11d
+branch above_equal Valid
+move r9 r8
+shift_left r9 5
+move rbx r12
+add rbx r9
+
+load_memory_u64 rax rbx none 1 0
+move rcx r8
+shift_left rcx 20
+add rcx r13
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 1
+branch below Invalid
+compare_i32 eax 4095
+branch above Invalid
+load_memory_u32 eax rbx none 1 12
+test eax eax
+branch not_equal Invalid
+
+load_memory_u64 rax rbx none 1 16
+move rcx r8
+shift_left rcx 22
+add rcx r14
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 24
+compare_i32 eax 1
+branch below Invalid
+compare_i32 eax 4194304
+branch above Invalid
+load_memory_u32 ecx rbx none 1 28
+test ecx ecx
+branch not_equal Invalid
+
+compare_i32 r8d 2
+branch below Record_next
+add r10d eax
+branch below Invalid
+compare_i32 r10d 33554432
+branch above Invalid
+label Record_next
+add_i32 r8d 1
+jump_label Record_loop
+
+label Valid
+move eax r11d
+move edx r10d
+return
+
+label Invalid
+xor eax eax
+xor edx edx
+return
+end define
+end section

@@ -1,0 +1,263 @@
+using System.Collections.Immutable;
+using Windvale.Bytecode;
+using Windvale.Compiler.Native;
+using Windvale.Linker;
+using Windvale.ObjectModel;
+using Windvale.Runtime.Native;
+
+namespace Windvale.Seed.Tests;
+
+internal static partial class Program
+{
+    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 414_230;
+    private const string WVO_STAGING_PUBLISHER_TOOL_SHA256 =
+        "07b9e0eff09927208980a0acdd7d88acc6cb3f40981d0c0a582951e7d30517f1";
+    private const string LINUX_WVO_STAGING_PUBLISHER_WVO_SHA256 =
+        "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba";
+    private const string LINUX_WVO_STAGING_ADAPTER_WVO_SHA256 =
+        "6faeb455d1f015a9080a217f84c0b9aaaa5d7f2becc512ad2bc5a2026f68d93c";
+    private const string WINDOWS_WVO_STAGING_PUBLISHER_WVO_SHA256 =
+        "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab";
+    private const string WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256 =
+        "30437e0087255da97338158d01f1ff000f61b3ec2fb343a2e3ea2893f9fa34df";
+    private const string X64_WVO_STAGING_SNAPSHOT_WVO_SHA256 =
+        "cd4674617667016ed2cbbf6842cbdbae09dbe222a12fe17156241594226a43dd";
+
+    private static readonly string LINUX_WVO_STAGING_PUBLISHER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Linux-X64-Wvo-Staging-Publisher.wva");
+    private static readonly string LINUX_WVO_STAGING_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Linux-X64-Wvo-Staging-Publication-Adapter.wva");
+    private static readonly string WINDOWS_WVO_STAGING_PUBLISHER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Windows-X64-Wvo-Staging-Publisher.wva");
+    private static readonly string WINDOWS_WVO_STAGING_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Windows-X64-Wvo-Staging-Publication-Adapter.wva");
+    private static readonly string X64_WVO_STAGING_SNAPSHOT_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.X64-Wvo-Staging-Snapshot-Table.wva");
+
+    private static void Nativeˉwvoˉstagingˉpublisherˉruns()
+    {
+        var Moduleˉbytes = Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
+            "Compiler/Windvale/Native-X64-Lowering-Staging-Admission-Tool.wv",
+            NATIVE_X64_STAGING_ADMISSION_SOURCE,
+            "staged-WVO publisher tool",
+            includeˉpublication: true,
+            includeˉstagingˉmanifest: true,
+            includeˉstagingˉcontent: true,
+            includeˉstagingˉresources: true,
+            includeˉpublicationˉtransaction: true);
+        Equal(WVO_STAGING_PUBLISHER_TOOL_BYTES, Moduleˉbytes.Length);
+        Equal(
+            WVO_STAGING_PUBLISHER_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
+        var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
+        var Native = X64ˉnativeˉbackend.Compile(Module);
+        Nativeˉfragmentˉverifier.Verify(Native.Fragment);
+        Sequenceˉequal(
+            [
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+                Nativeˉservice.Enumˉname,
+                Nativeˉservice.Textˉconcat,
+                Nativeˉservice.U32ˉformat,
+            ],
+            Native.Fragment.Requiredˉservices);
+
+        var Linuxˉstartup = Assembleˉsuccess(LINUX_WVO_STAGING_PUBLISHER_SOURCE);
+        var Linuxˉadapter = Assembleˉsuccess(LINUX_WVO_STAGING_ADAPTER_SOURCE);
+        var Windowsˉstartup = Assembleˉsuccess(WINDOWS_WVO_STAGING_PUBLISHER_SOURCE);
+        var Windowsˉadapter = Assembleˉsuccess(WINDOWS_WVO_STAGING_ADAPTER_SOURCE);
+        var Snapshot = Assembleˉsuccess(X64_WVO_STAGING_SNAPSHOT_SOURCE);
+        Assertˉstagingˉobject(
+            Linuxˉstartup,
+            180,
+            LINUX_WVO_STAGING_PUBLISHER_WVO_SHA256,
+            "Linux_wvo_staging_publisher_startup");
+        Assertˉstagingˉobject(
+            Linuxˉadapter,
+            5_221,
+            LINUX_WVO_STAGING_ADAPTER_WVO_SHA256,
+            "Linux_wvo_staging_publisher_run");
+        Assertˉstagingˉobject(
+            Windowsˉstartup,
+            184,
+            WINDOWS_WVO_STAGING_PUBLISHER_WVO_SHA256,
+            "Windows_wvo_staging_publisher_startup");
+        Assertˉstagingˉobject(
+            Windowsˉadapter,
+            9_169,
+            WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256,
+            "Windows_wvo_staging_publisher_run");
+        Assertˉstagingˉobject(
+            Snapshot,
+            1_005,
+            X64_WVO_STAGING_SNAPSHOT_WVO_SHA256,
+            "X64_wvo_staging_snapshot_table_validate");
+
+        var Windows = Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉwindows(
+            Module,
+            Native.Fragment,
+            Moduleˉbytes);
+        True(
+            Windows.Success,
+            "The Windows staged-WVO publisher package was rejected: " +
+                string.Join(" | ", Windows.Diagnostics));
+        Equal(
+            Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_APPLICATION_BYTES,
+            Windows.Imageˉbytes.Length);
+        Equal(
+            Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan()));
+
+        var Linux = Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉlinux(
+            Module,
+            Native.Fragment,
+            Moduleˉbytes);
+        True(
+            Linux.Success,
+            "The Linux staged-WVO publisher package was rejected: " +
+                string.Join(" | ", Linux.Diagnostics));
+        Equal(
+            Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_APPLICATION_BYTES,
+            Linux.Imageˉbytes.Length);
+        Equal(
+            Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan()));
+
+        var Fixture = Buildˉstagingˉcontentˉfixture(
+            WVB_TO_WVO_RETURN_42_SOURCE);
+        var Manifest = Buildˉstagingˉmanifest(
+            Fixture.Chunks.Select(Chunk => checked((uint)Chunk.Length)).ToArray());
+        var Expectedˉobject = Fixture.Chunks.SelectMany(Chunk => Chunk).ToArray();
+        Assertˉcurrentˉhostˉstagingˉpublisher(
+            OperatingSystem.IsWindows()
+                ? Windows.Imageˉbytes
+                : Linux.Imageˉbytes,
+            Fixture.Wvb,
+            Manifest,
+            Fixture.Chunks,
+            Fixture.Codeˉchunk,
+            Expectedˉobject);
+    }
+
+    private static void Assertˉstagingˉobject(
+        byte[] bytes,
+        int expectedˉbytes,
+        string expectedˉsha256,
+        string export)
+    {
+        Equal(expectedˉbytes, bytes.Length);
+        Equal(expectedˉsha256, Objectˉdigest.Calculateˉsha256(bytes));
+        var Value = Objectˉcodec.Readˉandˉverify(bytes).Value;
+        Equal(
+            export,
+            Value.Symbols.Single(Item =>
+                Item.Binding == Objectˉsymbolˉbinding.Export).Name);
+    }
+
+    private static void Assertˉcurrentˉhostˉstagingˉpublisher(
+        ImmutableArray<byte> application,
+        byte[] input,
+        byte[] manifest,
+        byte[][] chunks,
+        int changedˉchunk,
+        byte[] expectedˉobject)
+    {
+        var Directoryˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-wvo-staging-publisher-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Directoryˉpath);
+        try
+        {
+            var Inputˉpath = Path.Combine(Directoryˉpath, "input.wvb");
+            var Prefix = Path.Combine(Directoryˉpath, "object");
+            var Manifestˉpath = Path.Combine(Directoryˉpath, "object.wvop");
+            var Destinationˉpath = Path.Combine(Directoryˉpath, "output.wvo");
+            File.WriteAllBytes(Inputˉpath, input);
+            File.WriteAllBytes(Manifestˉpath, manifest);
+            Writeˉstagingˉchunks(Prefix, chunks);
+            File.WriteAllBytes(Destinationˉpath, [9, 8, 7, 6]);
+            var Loaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Equal(
+                0,
+                Executeˉstagingˉpublisher(
+                    application,
+                    [Inputˉpath, Prefix, Manifestˉpath, Destinationˉpath],
+                    Loaded));
+            Sequenceˉequal(expectedˉobject, File.ReadAllBytes(Destinationˉpath));
+            Equal(0, Directory.EnumerateFiles(Directoryˉpath, ".wvo-*").Count());
+            Equal(
+                0,
+                Loaded.Count(Name =>
+                    Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+
+            var Preserved = new byte[] { 4, 3, 2, 1 };
+            var Changed = Cloneˉstagingˉchunks(chunks);
+            Changed[changedˉchunk][0] ^= 0x01;
+            Writeˉstagingˉchunks(Prefix, Changed);
+            File.WriteAllBytes(Destinationˉpath, Preserved);
+            Equal(
+                1,
+                Executeˉstagingˉpublisher(
+                    application,
+                    [Inputˉpath, Prefix, Manifestˉpath, Destinationˉpath],
+                    expectedˉerror:
+                        "native x64 staging admission content=Content\n"));
+            Sequenceˉequal(Preserved, File.ReadAllBytes(Destinationˉpath));
+            Equal(0, Directory.EnumerateFiles(Directoryˉpath, ".wvo-*").Count());
+
+            Writeˉstagingˉchunks(Prefix, chunks);
+            File.Delete(Destinationˉpath);
+            Createˉtestˉhardˉlink(Destinationˉpath, Inputˉpath);
+            Equal(
+                1,
+                Executeˉstagingˉpublisher(
+                    application,
+                    [Inputˉpath, Prefix, Manifestˉpath, Destinationˉpath]));
+            Sequenceˉequal(input, File.ReadAllBytes(Inputˉpath));
+            Sequenceˉequal(input, File.ReadAllBytes(Destinationˉpath));
+            Equal(0, Directory.EnumerateFiles(Directoryˉpath, ".wvo-*").Count());
+        }
+        finally
+        {
+            Directory.Delete(Directoryˉpath, recursive: true);
+        }
+    }
+
+    private static int Executeˉstagingˉpublisher(
+        ImmutableArray<byte> application,
+        IReadOnlyList<string> arguments,
+        ISet<string>? loaded = null,
+        string expectedˉerror = "") =>
+        OperatingSystem.IsWindows()
+            ? Executeˉwindowsˉapplication(
+                application,
+                arguments: arguments,
+                timeoutˉmilliseconds: 60_000,
+                loadedˉmodules: loaded,
+                expectedˉerror: expectedˉerror)
+            : Executeˉlinuxˉapplication(
+                application,
+                string.Empty,
+                arguments,
+                timeoutˉmilliseconds: 60_000,
+                loadedˉmappings: loaded,
+                expectedˉerror: expectedˉerror);
+
+    private static void Writeˉstagingˉchunks(string prefix, byte[][] chunks)
+    {
+        for (var Index = 0; Index < chunks.Length; Index++)
+        {
+            File.WriteAllBytes($"{prefix}.chunk-{Index}", chunks[Index]);
+        }
+    }
+}

@@ -1,0 +1,12 @@
+windvale-assembly 1
+
+# Fixed Windows staged-WVO publisher entry. Platform mutation stays in the
+# separately owned adapter and portable admission stays in linked Windvale code.
+symbol export function Windows_wvo_staging_publisher_startup in .text
+symbol import function Windows_wvo_staging_publisher_run
+
+section code .text align 16
+define Windows_wvo_staging_publisher_startup
+jump Windows_wvo_staging_publisher_run
+end define
+end section
