@@ -4,6 +4,25 @@ import Foundationˉsha256 as Sha256;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
 
+data Stackˉeffects: bytes = [
+    0, 4, 4, 12, 4, 1, 4, 5, 4, 4, 12, 5, 15, 6, 6, 6,
+    6, 6, 6, 5, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    6, 6, 6, 6, 6, 6, 6, 6, 5, 0, 0, 0, 0, 0, 0, 0,
+    0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 4, 6, 6, 13, 13, 13,
+    13, 14, 6, 5, 13, 13, 5, 14, 13, 13, 13, 13, 13, 13, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6,
+    5, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
 export fn Main(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
     let Preflight: bytes = Envelopeˉreader.Interpreterˉenvelope(Request);
@@ -379,94 +398,9 @@ export fn Main(Request: bytes) -> bytes {
         Payloadˉlength = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Payload));
         Mainˉfound = false;
         let Stackˉdescriptorˉcount: u32 = Bytesˉlength(Stack) / 8u32;
-        // Eight four-bit effects fit in one word. A balanced group selection
-        // keeps static classification to five branches without a WVB data
-        // section, which the bounded root-first backend does not yet accept.
-        let Stackˉeffectˉgroup: u32 = Payloadˉlength >> 3u32;
-        var Stackˉeffectˉword: u32 = 0u32;
-        if Stackˉeffectˉgroup < 16u32 {
-            if Stackˉeffectˉgroup < 8u32 {
-                if Stackˉeffectˉgroup < 4u32 {
-                    if Stackˉeffectˉgroup < 2u32 {
-                        if Stackˉeffectˉgroup < 1u32 {
-                            Stackˉeffectˉword = 1410647104u32;
-                        } else {
-                            Stackˉeffectˉword = 1718574148u32;
-                        }
-                    } else {
-                        if Stackˉeffectˉgroup < 3u32 {
-                            Stackˉeffectˉword = 107370086u32;
-                        } else {
-                            Stackˉeffectˉword = 0u32;
-                        }
-                    }
-                } else {
-                    if Stackˉeffectˉgroup < 6u32 {
-                        if Stackˉeffectˉgroup < 5u32 {
-                            Stackˉeffectˉword = 1717986918u32;
-                        } else {
-                            Stackˉeffectˉword = 5u32;
-                        }
-                    } else {
-                        if Stackˉeffectˉgroup < 7u32 {
-                            Stackˉeffectˉword = 16u32;
-                        } else {
-                            Stackˉeffectˉword = 0u32;
-                        }
-                    }
-                }
-            } else {
-                if Stackˉeffectˉgroup < 12u32 {
-                    if Stackˉeffectˉgroup < 10u32 {
-                        Stackˉeffectˉword = 0u32;
-                    } else {
-                        if Stackˉeffectˉgroup < 11u32 {
-                            Stackˉeffectˉword = 1u32;
-                        } else {
-                            Stackˉeffectˉword = 0u32;
-                        }
-                    }
-                } else {
-                    if Stackˉeffectˉgroup < 14u32 {
-                        if Stackˉeffectˉgroup < 13u32 {
-                            Stackˉeffectˉword = 1717986918u32;
-                        } else {
-                            Stackˉeffectˉword = 3721815040u32;
-                        }
-                    } else {
-                        if Stackˉeffectˉgroup < 15u32 {
-                            Stackˉeffectˉword = 3856488173u32;
-                        } else {
-                            Stackˉeffectˉword = 14540253u32;
-                        }
-                    }
-                }
-            }
-        } else {
-            if Stackˉeffectˉgroup < 24u32 {
-                if Stackˉeffectˉgroup < 20u32 {
-                    Stackˉeffectˉword = 0u32;
-                } else {
-                    if Stackˉeffectˉgroup < 22u32 {
-                        if Stackˉeffectˉgroup < 21u32 {
-                            Stackˉeffectˉword = 1632u32;
-                        } else {
-                            Stackˉeffectˉword = 1717567488u32;
-                        }
-                    } else {
-                        if Stackˉeffectˉgroup < 23u32 {
-                            Stackˉeffectˉword = 1637u32;
-                        } else {
-                            Stackˉeffectˉword = 0u32;
-                        }
-                    }
-                }
-            } else {
-                Stackˉeffectˉword = 0u32;
-            }
-        }
-        let Stackˉeffect: u32 = (Stackˉeffectˉword
-            >> ((Payloadˉlength & 7u32) * 4u32)) & 15u32;
+        let Stackˉeffect: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Stackˉeffects, Payloadˉlength)
+        );
         var Stackˉconsumed: u32 = Stackˉeffect & 3u32;
         var Stackˉproduced: bool = (Stackˉeffect & 4u32) != 0u32;
         var Stackˉproducedˉkind: u32 = (Stackˉeffect >> 3u32) & 1u32;
