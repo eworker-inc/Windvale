@@ -3,6 +3,15 @@ module Compilerˉnativeˉx64ˉloweringˉobject profile portable;
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 
+export record Compilerˉnativeˉx64ˉobjectˉregions {
+    Valid: bool;
+    Prefix: bytes;
+    Readˉonlyˉheader: bytes;
+    Symbols: bytes;
+    Relocationˉrecords: bytes;
+    Objectˉbytes: u32;
+}
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -72,79 +81,128 @@ fn Dataˉsymbolˉname(Index: u32) -> bytes {
 fn Objectˉbody(
     Code: bytes,
     Padding: bytes,
-    Readˉonlyˉsection: bytes,
+    Readˉonlyˉheader: bytes,
+    Readˉonlyˉdata: bytes,
     Symbols: bytes,
     Relocationˉrecords: bytes
 ) -> bytes {
     let Suffix: bytes = Bytesˉconcat(
-        Readˉonlyˉsection,
+        Bytesˉconcat(Readˉonlyˉheader, Readˉonlyˉdata),
         Bytesˉconcat(Symbols, Relocationˉrecords)
     );
     return Bytesˉconcat(Code, Bytesˉconcat(Padding, Suffix));
 }
 
-export fn Compilerˉnativeˉx64ˉobjectˉemit(
-    Code: bytes,
+fn Invalidˉregions(Input: bytes) -> Compilerˉnativeˉx64ˉobjectˉregions {
+    let Emptyˉvalue: bytes = Empty(Input);
+    return Compilerˉnativeˉx64ˉobjectˉregions(
+        false,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        0u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉobjectˉplan(
+    Input: bytes,
+    Codeˉbytes: u32,
     Padding: bytes,
     Directory: bytes,
     Functionˉcount: u32,
     Mainˉfunction: u32,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
     Relocations: bytes
-) -> bytes {
-    if Functionˉcount == 0u32 { return Empty(Code); }
+) -> Compilerˉnativeˉx64ˉobjectˉregions {
+    if Codeˉbytes > 33554432u32 { return Invalidˉregions(Input); }
+    if Functionˉcount == 0u32 { return Invalidˉregions(Input); }
     if Functionˉcount >
         Layout.Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit() {
-        return Empty(Code);
+        return Invalidˉregions(Input);
     }
-    if Mainˉfunction >= Functionˉcount { return Empty(Code); }
-    if !Data.Valid { return Empty(Code); }
+    if Mainˉfunction >= Functionˉcount { return Invalidˉregions(Input); }
+    if !Data.Valid { return Invalidˉregions(Input); }
     if Data.Count > Staticˉdata.Compilerˉnativeˉx64ˉdataˉlimit() {
-        return Empty(Code);
+        return Invalidˉregions(Input);
     }
     if Bytesˉlength(Directory) !=
         Functionˉcount * Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() {
-        return Empty(Code);
+        return Invalidˉregions(Input);
     }
-    if Bytesˉlength(Relocations) % 8u32 != 0u32 { return Empty(Code); }
+    var Layoutˉfunction: u32 = 0u32;
+    var Expectedˉmachineˉoffset: u32 = 0u32;
+    while Layoutˉfunction < Functionˉcount {
+        if Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+            Directory,
+            Layoutˉfunction
+        ) != Expectedˉmachineˉoffset {
+            return Invalidˉregions(Input);
+        }
+        let Machineˉlength: u32 =
+            Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(
+                Directory,
+                Layoutˉfunction
+            );
+        if Expectedˉmachineˉoffset > Codeˉbytes {
+            return Invalidˉregions(Input);
+        }
+        if Machineˉlength > Codeˉbytes - Expectedˉmachineˉoffset {
+            return Invalidˉregions(Input);
+        }
+        Expectedˉmachineˉoffset = Expectedˉmachineˉoffset + Machineˉlength;
+        Layoutˉfunction = Layoutˉfunction + 1u32;
+    }
+    if Expectedˉmachineˉoffset != Codeˉbytes {
+        return Invalidˉregions(Input);
+    }
+    if Bytesˉlength(Relocations) % 8u32 != 0u32 {
+        return Invalidˉregions(Input);
+    }
     let Relocationˉcount: u32 = Bytesˉlength(Relocations) / 8u32;
-    if Relocationˉcount > 65536u32 { return Empty(Code); }
-    if Bytesˉlength(Data.Kinds) != Data.Count { return Empty(Code); }
+    if Relocationˉcount > 65536u32 { return Invalidˉregions(Input); }
+    if Bytesˉlength(Data.Kinds) != Data.Count {
+        return Invalidˉregions(Input);
+    }
     if Bytesˉlength(Data.Lengths) != Data.Count * 4u32 {
-        return Empty(Code);
+        return Invalidˉregions(Input);
     }
     if Bytesˉlength(Data.Offsets) != Data.Count * 4u32 {
-        return Empty(Code);
+        return Invalidˉregions(Input);
     }
-    if Bytesˉlength(Data.Sizes) != Data.Count * 4u32 { return Empty(Code); }
+    if Bytesˉlength(Data.Sizes) != Data.Count * 4u32 {
+        return Invalidˉregions(Input);
+    }
     var Dataˉindex: u32 = 0u32;
     var Expectedˉdataˉoffset: u32 = 0u32;
     while Dataˉindex < Data.Count {
         if Staticˉdata.Compilerˉnativeˉx64ˉdataˉoffset(Data, Dataˉindex) !=
             Expectedˉdataˉoffset {
-            return Empty(Code);
+            return Invalidˉregions(Input);
         }
         let Dataˉsize: u32 =
             Staticˉdata.Compilerˉnativeˉx64ˉdataˉsize(Data, Dataˉindex);
         if Dataˉsize > Bytesˉlength(Data.Bytes) - Expectedˉdataˉoffset {
-            return Empty(Code);
+            return Invalidˉregions(Input);
         }
         Expectedˉdataˉoffset = Expectedˉdataˉoffset + Dataˉsize;
         Dataˉindex = Dataˉindex + 1u32;
     }
-    if Expectedˉdataˉoffset != Bytesˉlength(Data.Bytes) { return Empty(Code); }
+    if Expectedˉdataˉoffset != Bytesˉlength(Data.Bytes) {
+        return Invalidˉregions(Input);
+    }
     if Data.Count == 0u32 {
-        if Relocationˉcount != 0u32 { return Empty(Code); }
-        if Bytesˉlength(Padding) != 0u32 { return Empty(Code); }
+        if Relocationˉcount != 0u32 { return Invalidˉregions(Input); }
+        if Bytesˉlength(Padding) != 0u32 { return Invalidˉregions(Input); }
     } else {
-        if Bytesˉlength(Padding) > 15u32 { return Empty(Code); }
-        if (Bytesˉlength(Code) + Bytesˉlength(Padding)) % 16u32 != 0u32 {
-            return Empty(Code);
+        if Bytesˉlength(Padding) > 15u32 { return Invalidˉregions(Input); }
+        if (Codeˉbytes + Bytesˉlength(Padding)) % 16u32 != 0u32 {
+            return Invalidˉregions(Input);
         }
         var Paddingˉindex: u32 = 0u32;
         while Paddingˉindex < Bytesˉlength(Padding) {
             if Bytesˉreadˉu8(Padding, Paddingˉindex) != 144u8 {
-                return Empty(Code);
+                return Invalidˉregions(Input);
             }
             Paddingˉindex = Paddingˉindex + 1u32;
         }
@@ -158,12 +216,13 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
             Relocations,
             Relocation * 8u32 + 4u32
         );
-        if Targetˉdata >= Data.Count { return Empty(Code); }
-        if Patchˉoffset > Bytesˉlength(Code) { return Empty(Code); }
-        if 4u32 > Bytesˉlength(Code) - Patchˉoffset { return Empty(Code); }
-        if Bytesˉreadˉu32ˉlittle(Code, Patchˉoffset) != 0u32 { return Empty(Code); }
+        if Targetˉdata >= Data.Count { return Invalidˉregions(Input); }
+        if Patchˉoffset > Codeˉbytes { return Invalidˉregions(Input); }
+        if 4u32 > Codeˉbytes - Patchˉoffset { return Invalidˉregions(Input); }
         if Relocation > 0u32 {
-            if Patchˉoffset < Previousˉoffset + 4u32 { return Empty(Code); }
+            if Patchˉoffset < Previousˉoffset + 4u32 {
+                return Invalidˉregions(Input);
+            }
         }
         Previousˉoffset = Patchˉoffset;
         Relocation = Relocation + 1u32;
@@ -188,14 +247,15 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     let Textˉsectionˉheader: bytes = Sectionˉheader(
         1u8,
         ".text",
-        Bytesˉlength(Code) + Bytesˉlength(Padding)
+        Codeˉbytes + Bytesˉlength(Padding)
     );
-    var Readˉonlyˉsection: bytes = Empty(Code);
-    var Symbols: bytes = Empty(Code);
+    var Readˉonlyˉheader: bytes = Empty(Input);
+    var Symbols: bytes = Empty(Input);
     if Data.Count > 0u32 {
-        Readˉonlyˉsection = Bytesˉconcat(
-            Sectionˉheader(2u8, ".rodata", Bytesˉlength(Data.Bytes)),
-            Data.Bytes
+        Readˉonlyˉheader = Sectionˉheader(
+            2u8,
+            ".rodata",
+            Bytesˉlength(Data.Bytes)
         );
         Dataˉindex = 0u32;
         while Dataˉindex < Data.Count {
@@ -246,7 +306,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
         Textˉtoˉutf8("Main")
     ));
 
-    var Relocationˉrecords: bytes = Empty(Code);
+    var Relocationˉrecords: bytes = Empty(Input);
     Relocation = 0u32;
     while Relocation < Relocationˉcount {
         Relocationˉrecords = Bytesˉconcat(
@@ -256,12 +316,61 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
         Relocation = Relocation + 1u32;
     }
     let Prefix: bytes = Bytesˉconcat(Header, Textˉsectionˉheader);
+    let Objectˉbytes: u32 = Bytesˉlength(Prefix) + Codeˉbytes +
+        Bytesˉlength(Padding) + Bytesˉlength(Readˉonlyˉheader) +
+        Bytesˉlength(Data.Bytes) + Bytesˉlength(Symbols) +
+        Bytesˉlength(Relocationˉrecords);
+    return Compilerˉnativeˉx64ˉobjectˉregions(
+        true,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbols,
+        Relocationˉrecords,
+        Objectˉbytes
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉobjectˉemit(
+    Code: bytes,
+    Padding: bytes,
+    Directory: bytes,
+    Functionˉcount: u32,
+    Mainˉfunction: u32,
+    Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
+    Relocations: bytes
+) -> bytes {
+    let Regions: Compilerˉnativeˉx64ˉobjectˉregions =
+        Compilerˉnativeˉx64ˉobjectˉplan(
+            Code,
+            Bytesˉlength(Code),
+            Padding,
+            Directory,
+            Functionˉcount,
+            Mainˉfunction,
+            Data,
+            Relocations
+        );
+    if !Regions.Valid { return Empty(Code); }
+    var Relocation: u32 = 0u32;
+    while Relocation < Bytesˉlength(Relocations) / 8u32 {
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Relocations,
+            Relocation * 8u32
+        );
+        if Bytesˉreadˉu32ˉlittle(Code, Patchˉoffset) != 0u32 {
+            return Empty(Code);
+        }
+        Relocation = Relocation + 1u32;
+    }
     let Body: bytes = Objectˉbody(
         Code,
         Padding,
-        Readˉonlyˉsection,
-        Symbols,
-        Relocationˉrecords
+        Regions.Readˉonlyˉheader,
+        Data.Bytes,
+        Regions.Symbols,
+        Regions.Relocationˉrecords
     );
-    return Bytesˉconcat(Prefix, Body);
+    let Result: bytes = Bytesˉconcat(Regions.Prefix, Body);
+    if Bytesˉlength(Result) != Regions.Objectˉbytes { return Empty(Code); }
+    return Result;
 }

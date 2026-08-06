@@ -52,9 +52,9 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 271,095 | `1689fdb55f3e6cd1b9bf75d7f94f7f7e8550c264a6c8c2af7008c5b176364eb2` |
-| Windows WVB-to-WVO tool | 3,846,656 | `868ce0511e84ddfac0424b65ceb2d11f8d7bf408afef3560b4dc6749bcdef35f` |
-| Linux WVB-to-WVO tool | 3,846,144 | `b6323b850d493a98a7362e0a9e01695a6d581764e4430f39129d6e645ea9eb90` |
+| WVB-to-WVO tool WVB | 361,127 | `88648ea76f05bf441232747f97f33be87324027fb4ac03e1cc045249d45c62f0` |
+| Windows WVB-to-WVO tool | 5,021,184 | `292ef7b86d7462f5763032ba82c453ac67e7f9f9da84d3d5bca8fff68a7cc702` |
+| Linux WVB-to-WVO tool | 5,021,696 | `2b0ec426fe2b3263a41549b323f9e0c79613923584699db35c46a3fd1bea095e` |
 
 `Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 

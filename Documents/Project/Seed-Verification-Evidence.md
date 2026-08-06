@@ -2758,3 +2758,36 @@ ordinary-path cutover, or .NET retirement.
 Local Development, Standard, Qualification, the full Seed/OS suites, Linux
 execution, WebAssembly verification, GitHub verification, artifact promotion,
 and ordinary-path cutover remain deferred to the grouped end-of-goal gate.
+
+## Local segmentable native object-region evidence
+
+[Decision 0281](../Decisions/0281-Segmentable-Native-Object-Regions.md)
+makes the WVO writer's prefix, read-only header/data, symbols, and relocation
+records separately owned spans around code and padding. The ordinary emitter
+reconstructs the same canonical order and checks its actual length against the
+plan. This prepares bounded function batching and stateful publication without
+widening ordinary `bytes` or changing `file.write_bytes`.
+
+The final reviewed focused compiler selection passes 1/1 in 9.770 test seconds
+after an 8.37-second zero-warning Release build. The canonical 479-byte
+return-42 WVO remains exact at SHA-256
+`0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5`.
+The 21,117-byte object module has SHA-256
+`20de442e9a8aa64f957e7d5f353ff62f8e43b2fce74e0aad572a1b8259ad9918`.
+
+Direct native source construction produces a 365,441-byte core closure at
+SHA-256
+`c084922554535592d047b559ba59e0eb7824e3c4832e0d1ee275c672e337b74a`,
+a 360,099-byte memory adapter at
+`43666ab10aac0c12d67ffda54fe7f4b04ff6d37efef689e3b755f84fe12f0758`,
+and a 361,127-byte hosted tool at
+`88648ea76f05bf441232747f97f33be87324027fb4ac03e1cc045249d45c62f0`.
+Current unpromoted packages are 5,021,184 Windows and 5,021,696 Linux bytes at
+SHA-256
+`292ef7b86d7462f5763032ba82c453ac67e7f9f9da84d3d5bca8fff68a7cc702`
+and `2b0ec426fe2b3263a41549b323f9e0c79613923584699db35c46a3fd1bea095e`.
+
+Complete-tool self-lowering and large-object publication remain open. Local
+Development, Standard, Qualification, the full Seed/OS suites, Linux
+execution, WebAssembly verification, GitHub verification, artifact promotion,
+and ordinary-path cutover remain deferred to the grouped end-of-goal gate.
