@@ -80,6 +80,32 @@ Tests: 3, Passed: 3, Failed: 0
 All three cases require deterministic linker rejection, empty standard output,
 an exact report identity, and byte-for-byte preservation of an existing output.
 
+The focused console-packager rejection command likewise avoids source building,
+linking, and successful AOT execution. On Windows x64 run:
+
+```bat
+Tools\Native\Test-Console-Packager-Rejections.cmd
+```
+
+On Linux x64 run:
+
+```sh
+./Tools/Native/Test-Console-Packager-Rejections.sh
+```
+
+Its exact success report is:
+
+```text
+PASS  entry-at-end
+PASS  invalid-entry
+PASS  empty-image
+Tests: 3, Passed: 3, Failed: 0
+```
+
+All cases require the current-host native packager to reject before publication,
+write no standard output, emit the exact host-target report identity, and leave
+the complete pre-existing destination unchanged.
+
 No .NET process is required by these commands. The host dependencies are `cmd.exe`
 and `certutil` on Windows, or Bash, `sha256sum`, `base64`, `cmp`, and core utilities
 on Linux.
@@ -99,5 +125,6 @@ For changes to the native plan, launchers, projects, or fixed fixtures, review t
 managed wrapper's exact report and run `Tools\Native\Test-Seed.cmd` or
 `./Tools/Native/Test-Seed.sh` directly once. For the focused linker-rejection
 boundary, review its wrapper and run only `Test-Linker-Rejections.cmd` or `.sh`.
-GitHub owns the independent Windows and pinned-Debian Qualification run for a
-final committed candidate.
+For the packager-rejection boundary, do the same with
+`Test-Console-Packager-Rejections.cmd` or `.sh`. GitHub owns the independent
+Windows and pinned-Debian Qualification run for a final committed candidate.

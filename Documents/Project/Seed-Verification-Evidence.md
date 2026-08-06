@@ -3430,3 +3430,36 @@ command takes 20.7 seconds. The permanent command does not run .NET, rebuild
 source, or repeat the successful AOT chain. No WebAssembly implementation
 changed. Linux execution, Development, Standard, Qualification, promotion,
 broader linker-corpus transfer, and the grouped end-of-goal gate remain deferred.
+
+## Local fixed native console-packager rejection evidence
+
+[Decision 0313](../Decisions/0313-Fixed-Native-Console-Packager-Rejections.md)
+adds a focused .NET-free coordinator over the digest-bound console-packager and
+publisher launchers. Its dedicated six-byte image has SHA-256
+`11db5348e275fb704be582e8005ee7d604f7f17b154d6cc644d240eef29d456a`.
+The existing 479-byte bad-magic WVO at SHA-256
+`0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288`
+is copied to the requested destination before every case and must remain exact.
+
+The fixed report identities are:
+
+| Case | Windows SHA-256 | Linux SHA-256 |
+| --- | --- | --- |
+| entry at end | `a48244ecee195c2171cd3bdcf93261deed94b5d3522623f81557d146ec0f4071` | `a35789de908a6275c48a6cd25f1969732cec08fe1b39cdea615c35da1e79124e` |
+| invalid entry text | `52264e728059fe229b20c14ad9e1febecc97da454ed2de58f34b85fdd99d4349` | `7ed94e6029a369b7ca0e967dae679e85be37c85017088c1e72b94c2123626c48` |
+| empty image | `52264e728059fe229b20c14ad9e1febecc97da454ed2de58f34b85fdd99d4349` | `7ed94e6029a369b7ca0e967dae679e85be37c85017088c1e72b94c2123626c48` |
+
+The first measurement correctly rejected the assumption that AOT-chain output
+was the managed test's six-byte fixture: the linked image is 406 bytes, so entry
+six is valid there. The final fixed fixture preserves the intended packager
+boundary explicitly rather than changing the expected value during execution.
+
+Direct Windows execution passes all three cases in about 1.2 seconds. After
+reviewing the wrapper's exact report, the focused selection
+`native console-packager rejections preserve existing output without .NET`
+passes 1/1 in 0.813 test seconds after an 11.59-second zero-warning Release
+build; the complete command takes 16.9 seconds. The permanent command does not
+run .NET, build source, or link an image. No WebAssembly implementation changed.
+Linux execution, Development, Standard, Qualification, native host-container
+construction, promotion, broader packager-corpus transfer, and the grouped
+end-of-goal gate remain deferred.

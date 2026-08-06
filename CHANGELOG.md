@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Added a focused .NET-free native console-packager rejection test over a dedicated six-byte image fixture. Entry-at-end, non-decimal entry, and empty-image cases require exact host-target report hashes, empty standard output, and byte-for-byte preservation of an existing destination without rebuilding or relinking the AOT chain.
 - Added a focused .NET-free native linker-rejection test that reuses pinned WVO fixtures and the digest-bound linker launcher. Invalid base, missing entry, and malformed object cases require exact report hashes, empty standard output, and byte-for-byte preservation of an existing destination without rerunning the source-to-AOT chain.
 - Expanded the digest-bound .NET-free native test plan to 26 cases with one accepted WVO plus fixed bad-magic, truncation, and trailing-byte rejections. Complete input and verifier-report hashes replace a live C# oracle while preserving exact cross-host behavior.
 - Added a general Windvale-native executable graph for direct compiler WebAssembly. The exact compiler resolves arbitrary `Main` index 2 into 417 function entries, 2,991 ordered call targets, and 397 reachable functions without the old sixteen-function mask or call-direction restriction; this is lowering input, not yet emitted compiler Wasm or a browser speed claim.

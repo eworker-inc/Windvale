@@ -16,6 +16,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0311](../Decisions/0311-Fixed-Native-Linker-Rejections.md) adds a separate three-case .NET-free linker rejection command, preserving exact diagnostics and an existing output without rebuilding the successful AOT chain. Linux execution and the grouped gate still precede linker promotion.
 
+[Decision 0313](../Decisions/0313-Fixed-Native-Console-Packager-Rejections.md) does the same for entry and empty-image rejection through the public console-packager launcher, using a dedicated six-byte fixture instead of rebuilding or relinking. Linux execution, native host-container construction, and the grouped gate still precede packager promotion.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

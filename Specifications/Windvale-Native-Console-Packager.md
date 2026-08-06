@@ -67,6 +67,37 @@ The current candidate identities are:
 
 The focused test reconstructs both containers, checks exact capabilities and services, exercises the public current-host AOT target, and runs the current-host raw application. One six-byte return-42 image must package deterministically into both target formats. The independent platform verifiers recover the exact image and zero entry, the current-host result returns 42, malformed target or entry input preserves an existing output, and process inspection finds no CLR/.NET runtime.
 
+## Fixed native rejection contract
+
+`Tools/Native/Test-Console-Packager-Rejections.cmd` and `.sh` exercise only the
+digest-bound current-host packager and publisher launchers. They do not rebuild
+source, link an image, repeat the successful AOT chain, invoke .NET, or consult a
+live Stage 0 oracle.
+
+The fixed six-byte image is stored as
+`Tests/Native/Images/Return-42.bin.b64` and has SHA-256
+`11db5348e275fb704be582e8005ee7d604f7f17b154d6cc644d240eef29d456a`.
+The empty-image case has zero bytes. The existing 479-byte bad-magic WVO at
+SHA-256
+`0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288`
+is copied to the destination as a sentinel before every case.
+
+Each case must return `2`, write no standard output, preserve the complete
+sentinel, and emit one LF-terminated diagnostic. Because the target identity is
+part of the report, the complete report hashes are host-specific:
+
+| Case | Windows report SHA-256 | Linux report SHA-256 |
+| --- | --- | --- |
+| `entry-at-end` | `a48244ecee195c2171cd3bdcf93261deed94b5d3522623f81557d146ec0f4071` | `a35789de908a6275c48a6cd25f1969732cec08fe1b39cdea615c35da1e79124e` |
+| `invalid-entry` | `52264e728059fe229b20c14ad9e1febecc97da454ed2de58f34b85fdd99d4349` | `7ed94e6029a369b7ca0e967dae679e85be37c85017088c1e72b94c2123626c48` |
+| `empty-image` | `52264e728059fe229b20c14ad9e1febecc97da454ed2de58f34b85fdd99d4349` | `7ed94e6029a369b7ca0e967dae679e85be37c85017088c1e72b94c2123626c48` |
+
+Success prints the three ordered `PASS` lines followed by
+`Tests: 3, Passed: 3, Failed: 0` plus LF. Unsupported target names remain a
+launcher usage error; they are not mislabeled as native packager execution.
+This fixed set does not replace the complete construction, verification, limit,
+publication-fault, concurrency, or hostile-input corpus.
+
 ## Qualification gate
 
 Promotion requires one exact source commit to pass on Windows and Linux with:

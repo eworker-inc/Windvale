@@ -1218,6 +1218,7 @@ internal static partial class Program
         new("native console packager AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉpackagerˉtargetsˉareˉdiscoverable),
         new("native console packager materializes verified PE and ELF applications", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉruns),
         new("digest-bound native console packager launcher preserves version-1 output", [TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉfrontˉdoorˉruns),
+        new("native console-packager rejections preserve existing output without .NET", [TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉrejectionsˉrun),
         new("native WVB-to-WVO AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL], Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable),
         new("native WVB-to-WVO lowerer emits the pinned object without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉruns),
         new("digest-bound native WVB-to-WVO launcher preserves the fixed vector", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉfrontˉdoorˉruns),
