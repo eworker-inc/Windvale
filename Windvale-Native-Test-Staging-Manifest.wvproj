@@ -1,0 +1,4 @@
+windvale-project 1
+root "Tests/Fixtures/Native-X64/Wvo-Staging-Manifest-Adapter.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
+emit wvb

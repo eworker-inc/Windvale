@@ -2,6 +2,7 @@ module Compilerˉnativeˉx64ˉloweringˉstagingˉtool profile hosted;
 
 import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -39,20 +40,6 @@ fn Chunkˉresource(Prefix: text, Index: u32) -> text {
         Textˉconcat(Prefix, ".chunk-"),
         U32ˉformat(Index)
     );
-}
-
-fn Manifestˉheader(
-    Objectˉbytes: u32,
-    Chunks: u32,
-    Entryˉbytes: u32
-) -> bytes {
-    var Header: bytes = Textˉtoˉutf8("WVOP");
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
-    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
-    Header = Appendˉu32(Header, 24u32 + Entryˉbytes);
-    Header = Appendˉu32(Header, Objectˉbytes);
-    Header = Appendˉu32(Header, Chunks);
-    return Appendˉu32(Header, 4194304u32);
 }
 
 fn Failure(Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus) -> i32 {
@@ -162,22 +149,23 @@ export fn Main() -> i32 {
         return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
     }
 
-    let Manifest: bytes = Bytesˉconcat(
-        Manifestˉheader(
+    let Manifestˉbytes: bytes =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉbuild(
+            Entries,
             Regions.Objectˉbytes,
-            Chunks,
-            Bytesˉlength(Entries)
-        ),
-        Entries
-    );
-    file.write_bytes(Manifestˉpath, Manifest);
+            Chunks
+        );
+    if Bytesˉlength(Manifestˉbytes) == 0u32 {
+        return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
+    }
+    file.write_bytes(Manifestˉpath, Manifestˉbytes);
     var Report: text = "native x64 staging status=Complete object-bytes=";
     Report = Textˉconcat(Report, U32ˉformat(Regions.Objectˉbytes));
     Report = Textˉconcat(Report, " chunks=");
     Report = Textˉconcat(Report, U32ˉformat(Chunks));
     Report = Textˉconcat(Report, " manifest-bytes=");
     console.write_line(
-        Textˉconcat(Report, U32ˉformat(Bytesˉlength(Manifest)))
+        Textˉconcat(Report, U32ˉformat(Bytesˉlength(Manifestˉbytes)))
     );
     return 0;
 }

@@ -2888,3 +2888,36 @@ the qualified exclusive-sibling, durable-write, replacement, and cleanup
 transaction. Complete-tool integration, Development, Standard, Qualification,
 Linux execution, WebAssembly verification, artifact promotion, ordinary-path
 cutover, and the grouped end-of-goal gate remain deferred.
+
+## Local strict native object-staging validation evidence
+
+[Decision 0285](../Decisions/0285-Strict-Native-Object-Staging-Manifest-Validation.md)
+moves canonical `WVOP 1` construction into a focused capability-free module
+and adds the matching strict reader. Counts are bounded before arithmetic; the
+reader admits only the exact header, version, manifest length, 32 MiB object
+ceiling, 4 MiB chunk ceiling, ordinal indices, contiguous nonempty extents, and
+exact final coverage. Rejection returns a named status with no admitted size or
+count evidence.
+
+The focused adapter accepts the producer's exact three-chunk/60-byte return-42
+manifest. It rejects truncation, bad magic and version, false declared length,
+zero and oversized object extents, zero and oversized counts, a changed chunk
+ceiling, reordered or duplicate indices, gapped positions, zero and oversized
+chunks, incomplete final coverage, and trailing bytes. The reviewed compiler
+selection passes 1/1 in 16.494 test seconds after a 24.03-second zero-warning
+Release build.
+
+The qualified native source front door compiles the checked-in 24-module
+staging-tool project to 394,780 bytes at SHA-256
+`77158b228c204b587dbf559621ad7c717d4eb5b418c32b783204cd350525ac76`
+and the two-module validation adapter to 6,728 bytes at SHA-256
+`0d343c22a2d33bf1d90dc71f055133fedb742d88e775aaf6c2f9d1f3542300c0`.
+Existing unpromoted Windows and Linux package identities remain unchanged.
+
+No C# product implementation or WebAssembly implementation changed. The
+reader does not open or retain staged resources, detect missing or changed
+chunks, verify the reconstructed WVO, or own the replacement transaction.
+Platform adapter integration, complete-tool self-lowering, Development,
+Standard, Qualification, Linux execution, WebAssembly verification, artifact
+promotion, ordinary-path cutover, and the grouped end-of-goal gate remain
+deferred.

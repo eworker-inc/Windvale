@@ -1,0 +1,173 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest profile portable;
+
+export enum Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus {
+    Valid = 0;
+    Truncated = 1;
+    Magic = 2;
+    Version = 3;
+    Manifestˉsize = 4;
+    Objectˉsize = 5;
+    Chunkˉcount = 6;
+    Chunkˉlimit = 7;
+    Chunkˉindex = 8;
+    Chunkˉposition = 9;
+    Chunkˉlength = 10;
+}
+
+export record Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary {
+    Status: Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus;
+    Objectˉbytes: u32;
+    Chunks: u32;
+    Maximumˉchunkˉbytes: u32;
+}
+
+fn Invalid(
+    Status: Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus
+) -> Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary {
+    return Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary(
+        Status,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Accepted(
+    Objectˉbytes: u32,
+    Chunks: u32,
+    Maximumˉchunkˉbytes: u32
+) -> Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary {
+    return Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary(
+        Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid,
+        Objectˉbytes,
+        Chunks,
+        Maximumˉchunkˉbytes
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+    Input: bytes
+) -> Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < 24u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Truncated
+        );
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Input, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Input, 2u32) != 79u8 ||
+        Bytesˉreadˉu8(Input, 3u32) != 80u8 {
+        return Invalid(Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Magic);
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
+        return Invalid(Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Version);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Length {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Manifestˉsize
+        );
+    }
+
+    let Objectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Objectˉbytes == 0u32 || Objectˉbytes > 33554432u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Objectˉsize
+        );
+    }
+    let Chunks: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Chunks == 0u32 || Chunks > 518u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉcount
+        );
+    }
+    if Length != 24u32 + Chunks * 12u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Manifestˉsize
+        );
+    }
+    let Maximumˉchunkˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Maximumˉchunkˉbytes != 4194304u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉlimit
+        );
+    }
+
+    var Index: u32 = 0u32;
+    var Position: u32 = 0u32;
+    while Index < Chunks {
+        let Entry: u32 = 24u32 + Index * 12u32;
+        if Bytesˉreadˉu32ˉlittle(Input, Entry) != Index {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉindex
+            );
+        }
+        if Bytesˉreadˉu32ˉlittle(Input, Entry + 4u32) != Position {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉposition
+            );
+        }
+        let Chunkˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Entry + 8u32);
+        if Chunkˉbytes == 0u32 || Chunkˉbytes > Maximumˉchunkˉbytes {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉlength
+            );
+        }
+        if Position > Objectˉbytes {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉposition
+            );
+        }
+        if Chunkˉbytes > Objectˉbytes - Position {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉlength
+            );
+        }
+        Position = Position + Chunkˉbytes;
+        Index = Index + 1u32;
+    }
+    if Position != Objectˉbytes {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Chunkˉposition
+        );
+    }
+    return Accepted(Objectˉbytes, Chunks, Maximumˉchunkˉbytes);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉbuild(
+    Entries: bytes,
+    Objectˉbytes: u32,
+    Chunks: u32
+) -> bytes {
+    if Objectˉbytes == 0u32 || Objectˉbytes > 33554432u32 {
+        return Bytesˉslice(Entries, 0u32, 0u32);
+    }
+    if Chunks == 0u32 || Chunks > 518u32 {
+        return Bytesˉslice(Entries, 0u32, 0u32);
+    }
+    if Bytesˉlength(Entries) != Chunks * 12u32 {
+        return Bytesˉslice(Entries, 0u32, 0u32);
+    }
+    var Header: bytes = Textˉtoˉutf8("WVOP");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Appendˉu32(Header, 24u32 + Bytesˉlength(Entries));
+    Header = Appendˉu32(Header, Objectˉbytes);
+    Header = Appendˉu32(Header, Chunks);
+    Header = Appendˉu32(Header, 4194304u32);
+    let Manifest: bytes = Bytesˉconcat(Header, Entries);
+    let Summary: Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(Manifest);
+    if Summary.Status !=
+        Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Bytesˉslice(Entries, 0u32, 0u32);
+    }
+    return Manifest;
+}

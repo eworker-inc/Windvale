@@ -178,13 +178,26 @@ position, and `u32` chunk length. The entry at ordinal `N` names
 digest, capability, durable-commit record, or claim that the destination WVO
 is atomically visible.
 
-The current slice produces but does not consume this format across a trust
-boundary. A native commit adapter must bind the exact staged-resource
-identities, reject malformed or inconsistent manifests and write sequences,
-reconstruct and verify the complete WVO, and then use the qualified exclusive
-sibling, durable-write, atomic-replacement, and cleanup protocol. It must not
-silently retry an indeterminate mutation. Until that adapter exists, the
-caller supplies a unique private staging prefix and owns scratch cleanup.
+The focused capability-free staging-manifest module owns canonical
+serialization and validation. A valid manifest has exactly `24 + chunks * 12`
+bytes, one through 518 chunks, a nonzero WVO no larger than 32 MiB, and the
+exact 4 MiB ceiling. Indices must equal their entry ordinals; the first
+position is zero; every nonzero length is within the ceiling and remaining WVO
+extent; positions are contiguous; and the final position equals the declared
+object length. Counts are bounded before multiplication and every rejection
+returns zeroed size/count evidence with a named status.
+
+The staging shell uses the same module to build the manifest and validates the
+canonical result before its manifest-last write. The portable reader rejects
+truncated, oversized, inconsistent, reordered, duplicate, gapped, extended,
+and otherwise malformed evidence without host mutation. It does not open or
+identify chunk resources. A native commit adapter must preserve the exact
+validated manifest snapshot, bind each staged-resource identity, reject
+missing or changed chunks, reconstruct and verify the complete WVO, and then
+use the qualified exclusive-sibling, durable-write, atomic-replacement, and
+cleanup protocol. It must not silently retry an indeterminate mutation. Until
+that adapter exists, the caller supplies a unique private staging prefix and
+owns scratch cleanup.
 
 ## Adapters
 

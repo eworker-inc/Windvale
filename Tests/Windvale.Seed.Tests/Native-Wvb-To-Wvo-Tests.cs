@@ -60,14 +60,23 @@ internal static partial class Program
     private static readonly string NATIVE_X64_LOWERING_PUBLICATION_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Publication.wv");
+    private static readonly string NATIVE_X64_LOWERING_STAGING_MANIFEST_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-X64-Lowering-Staging-Manifest.wv");
     private static readonly string NATIVE_X64_LOWERING_STAGING_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Staging-Tool.wv");
+    private static readonly string WVO_STAGING_MANIFEST_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvo-Staging-Manifest-Adapter.wv");
 
     private const int WVB_TO_WVO_TOOL_WVB_BYTES = 372_514;
-    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 390_066;
+    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 394_780;
     private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
-        "c916610ad1d4ca3b5d1573f5775aaf1a102a89587a2fb3cba8941d42c93136ba";
+        "77158b228c204b587dbf559621ad7c717d4eb5b418c32b783204cd350525ac76";
+    private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 6_728;
+    private const string WVO_STAGING_MANIFEST_ADAPTER_SHA256 =
+        "0d343c22a2d33bf1d90dc71f055133fedb742d88e775aaf6c2f9d1f3542300c0";
     private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_348_864;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
         "0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280";
@@ -116,7 +125,20 @@ internal static partial class Program
         Equal(
             "Compilerˉnativeˉx64ˉloweringˉstagingˉtool",
             Staging.Module.Name);
-        Assertˉobjectˉstaging(Staging);
+        var Manifestˉadapterˉbytes =
+            Compileˉwvoˉstagingˉmanifestˉadapterˉsuccess();
+        Equal(
+            WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES,
+            Manifestˉadapterˉbytes.Length);
+        Equal(
+            WVO_STAGING_MANIFEST_ADAPTER_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Manifestˉadapterˉbytes));
+        var Manifestˉadapter =
+            Moduleˉcodec.Readˉandˉverify(Manifestˉadapterˉbytes);
+        Equal(
+            "Compilerˉnativeˉx64ˉstagingˉmanifestˉtest",
+            Manifestˉadapter.Module.Name);
+        Assertˉobjectˉstaging(Staging, Manifestˉadapter);
         var Toolˉnative = X64ˉnativeˉbackend.Compile(Toolˉmodule);
         Nativeˉfragmentˉverifier.Verify(Toolˉnative.Fragment);
         Sequenceˉequal(
@@ -556,7 +578,28 @@ internal static partial class Program
             "Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv",
             NATIVE_X64_LOWERING_STAGING_TOOL_SOURCE,
             "object-staging tool",
-            includeˉpublication: true);
+            includeˉpublication: true,
+            includeˉstagingˉmanifest: true);
+
+    private static byte[] Compileˉwvoˉstagingˉmanifestˉadapterˉsuccess()
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Tests/Fixtures/Native-X64/Wvo-Staging-Manifest-Adapter.wv",
+                WVO_STAGING_MANIFEST_ADAPTER_SOURCE),
+            [
+                new(
+                    "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv",
+                    NATIVE_X64_LOWERING_STAGING_MANIFEST_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Windvale staging-manifest adapter compilation failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+        return Result.Moduleˉbytes.ToArray();
+    }
 
     private static void Assertˉfunctionˉbatching(Verifiedˉmodule adapter)
     {
@@ -636,7 +679,9 @@ internal static partial class Program
         Equal((uint)(Evidence.Length / Evidenceˉentryˉbytes) + 6u, Steps);
     }
 
-    private static void Assertˉobjectˉstaging(Verifiedˉmodule staging)
+    private static void Assertˉobjectˉstaging(
+        Verifiedˉmodule staging,
+        Verifiedˉmodule manifestˉadapter)
     {
         const string Inputˉresource = "input.wvb";
         const string Chunkˉprefix = "stage/object";
@@ -699,6 +744,11 @@ internal static partial class Program
         Equal(
             4u * 1024u * 1024u,
             BinaryPrimitives.ReadUInt32LittleEndian(Manifest[20..]));
+        Assertˉstagingˉmanifestˉvalidation(
+            manifestˉadapter,
+            Manifestˉwrite.Bytes,
+            (uint)Expectedˉobject.Length,
+            Chunks);
 
         using var Reconstructed = new MemoryStream();
         uint Position = 0;
@@ -742,11 +792,81 @@ internal static partial class Program
             Native.Fragment.Requiredˉservices);
     }
 
+    private static void Assertˉstagingˉmanifestˉvalidation(
+        Verifiedˉmodule adapter,
+        ImmutableArray<byte> manifest,
+        uint objectˉbytes,
+        uint chunks)
+    {
+        byte[] Run(byte[] input) => new Referenceˉruntime(
+            adapter,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults)
+            .Runˉmainˉbytes(input.ToImmutableArray())
+            .Bytes
+            .ToArray();
+
+        void Assertˉsummary(
+            uint status,
+            byte[] input,
+            uint expectedˉobjectˉbytes = 0,
+            uint expectedˉchunks = 0,
+            uint expectedˉmaximumˉchunkˉbytes = 0)
+        {
+            var Evidence = Run(input);
+            Equal(20, Evidence.Length);
+            Sequenceˉequal("WVME"u8.ToArray(), Evidence.AsSpan(0, 4).ToArray());
+            Equal(status, BinaryPrimitives.ReadUInt32LittleEndian(Evidence.AsSpan(4)));
+            Equal(
+                expectedˉobjectˉbytes,
+                BinaryPrimitives.ReadUInt32LittleEndian(Evidence.AsSpan(8)));
+            Equal(
+                expectedˉchunks,
+                BinaryPrimitives.ReadUInt32LittleEndian(Evidence.AsSpan(12)));
+            Equal(
+                expectedˉmaximumˉchunkˉbytes,
+                BinaryPrimitives.ReadUInt32LittleEndian(Evidence.AsSpan(16)));
+        }
+
+        var Valid = manifest.ToArray();
+        Assertˉsummary(0, Valid, objectˉbytes, chunks, 4u * 1024u * 1024u);
+        Assertˉsummary(1, Valid.AsSpan(0, 23).ToArray());
+
+        byte[] Withˉu32(int offset, uint value)
+        {
+            var Changed = Valid.ToArray();
+            BinaryPrimitives.WriteUInt32LittleEndian(Changed.AsSpan(offset), value);
+            return Changed;
+        }
+
+        var Badˉmagic = Valid.ToArray();
+        Badˉmagic[0] = (byte)'X';
+        Assertˉsummary(2, Badˉmagic);
+        var Badˉversion = Valid.ToArray();
+        BinaryPrimitives.WriteUInt16LittleEndian(Badˉversion.AsSpan(4), 2);
+        Assertˉsummary(3, Badˉversion);
+        Assertˉsummary(4, Withˉu32(8, (uint)Valid.Length + 1u));
+        Assertˉsummary(5, Withˉu32(12, 0));
+        Assertˉsummary(5, Withˉu32(12, 32u * 1024u * 1024u + 1u));
+        Assertˉsummary(6, Withˉu32(16, 0));
+        Assertˉsummary(6, Withˉu32(16, 519));
+        Assertˉsummary(7, Withˉu32(20, 0));
+        Assertˉsummary(8, Withˉu32(24, 1));
+        Assertˉsummary(9, Withˉu32(28, 1));
+        Assertˉsummary(10, Withˉu32(32, 0));
+        Assertˉsummary(10, Withˉu32(32, 4u * 1024u * 1024u + 1u));
+        Assertˉsummary(9, Withˉu32(12, objectˉbytes + 1u));
+        var Extended = new byte[Valid.Length + 1];
+        Valid.CopyTo(Extended, 0);
+        Assertˉsummary(4, Extended);
+    }
+
     private static byte[] Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
         string path,
         string source,
         string description,
-        bool includeˉpublication = false)
+        bool includeˉpublication = false,
+        bool includeˉstagingˉmanifest = false)
     {
         List<Sourceˉmoduleˉinput> Dependencies =
             [
@@ -819,6 +939,12 @@ internal static partial class Program
             Dependencies.Add(new(
                 "Compiler/Windvale/Native-X64-Lowering-Publication.wv",
                 NATIVE_X64_LOWERING_PUBLICATION_SOURCE));
+        }
+        if (includeˉstagingˉmanifest)
+        {
+            Dependencies.Add(new(
+                "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv",
+                NATIVE_X64_LOWERING_STAGING_MANIFEST_SOURCE));
         }
         var Result = Seedˉcompiler.Compileˉmodules(
             new(path, source),

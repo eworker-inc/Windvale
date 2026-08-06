@@ -89,8 +89,11 @@ The accepted-subset lowerer also exposes segmentable WVO regions, bounded
 function batches, and an immutable exact-position publication cursor. Its
 focused hosted staging shell writes each nonempty cursor value to a distinct
 bounded resource and writes the versioned `WVOP 1` manifest last. That is a
-multipart transport seam, not atomic publication: a fixed native adapter must
-bind the staged identities, validate and reconstruct the exact WVO, and enter
+multipart transport seam, not atomic publication. A focused capability-free
+reader owns canonical manifest serialization and strictly validates bounded
+counts, extents, indices, and contiguous positions without touching host
+resources. A fixed native adapter must preserve that snapshot, bind the staged
+identities, validate chunk contents, reconstruct the exact WVO, and enter
 the qualified sibling-replacement transaction before the managed publisher can
 leave the normal path.
 
