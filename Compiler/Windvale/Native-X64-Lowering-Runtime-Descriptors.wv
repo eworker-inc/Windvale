@@ -101,6 +101,10 @@ export fn Compilerˉnativeˉx64ˉtextˉquoteˉbytes() -> u32 {
     return 44u32;
 }
 
+export fn Compilerˉnativeˉx64ˉu32ˉformatˉbytes() -> u32 {
+    return 46u32;
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉtextˉutf8ˉisˉvalid(
     Result: bytes,
     Source: u32,
@@ -170,4 +174,17 @@ export fn Compilerˉnativeˉx64ˉemitˉtextˉquote(
         72u8,
         Failureˉtarget
     );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉu32ˉformat(
+    Result: bytes,
+    Source: u32,
+    Target: u32,
+    Failureˉtarget: u32
+) -> bytes {
+    var Output: bytes = Loadˉeax(Result, Source);
+    Output = Appendˉbyte(Output, 65u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 192u8);
+    return Serviceˉcall(Outputˉr9(Output, Target), 88u8, Failureˉtarget);
 }

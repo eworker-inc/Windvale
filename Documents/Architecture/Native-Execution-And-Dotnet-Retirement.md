@@ -332,6 +332,8 @@ Decision 0259 replaces the planner's single optional record-use event with a bou
 
 Decision 0260 admits bounded enum parameters and returns without creating another ABI representation: the call directory preserves nominal identity while the existing 32-bit scalar path carries the backing value. Returned enums use the existing enum value-slot group, and the focused `Keep(Weather) -> Weather` fixture agrees exactly with Stage 0. Full-tool self-lowering now reaches code analysis and stops at `Main` offset `0x01D1`'s `u32.format` instruction.
 
+Decision 0262 admits `u32.format` through ABI 22's existing service-table slot, with explicit unsigned input transport, caller-owned text-descriptor output, and shared runtime-failure propagation. The focused maximum-value fixture agrees exactly with Stage 0 through both Windvale adapters. Full-tool self-lowering now advances into its first byte-construction helper and stops at function 1 offset `0x0019`'s `bytes.from_u8` instruction.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

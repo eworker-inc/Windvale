@@ -51,13 +51,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 322_477;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_451_328;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 323_971;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_469_248;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "96b30a5a0256e753774633063956f8db03e14d2feb5cf9c96212f5427d7061e4";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_452_352;
+        "2b4b8dd1877d2714d5bb86e6b7526048568918fe0551cf7a4ab891f9b46293ee";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_468_736;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "1ce42f94519df8ad40e3b813c89ac5f30b7dd2d010af6270029f8c8f75f327d8";
+        "1215b8e6d9d01f7220f72215f0e9d08e28f1617e8ca98f1ea1d317c6010bc49b";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -482,10 +482,34 @@ internal static partial class Program
             Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan()));
     }
 
-    private static byte[] Compileˉwvbˉtoˉwvoˉtoolˉsuccess()
+    private static void Nativeˉu32ˉformatˉloweringˉagrees()
+    {
+        var Tool = Moduleˉcodec.Readˉandˉverify(
+            Compileˉwvbˉtoˉwvoˉtoolˉsuccess());
+        var Memory = Moduleˉcodec.Readˉandˉverify(
+            Compileˉwvbˉtoˉwvoˉmemoryˉsuccess());
+        Assertˉtextˉserviceˉlowering(Tool, Memory);
+    }
+
+    private static byte[] Compileˉwvbˉtoˉwvoˉtoolˉsuccess() =>
+        Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
+            "Compiler/Windvale/Native-X64-Lowering-Tool.wv",
+            NATIVE_X64_LOWERING_TOOL_SOURCE,
+            "tool");
+
+    private static byte[] Compileˉwvbˉtoˉwvoˉmemoryˉsuccess() =>
+        Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
+            "Compiler/Windvale/Native-X64-Lowering-Memory-Adapter.wv",
+            NATIVE_X64_LOWERING_MEMORY_SOURCE,
+            "memory adapter");
+
+    private static byte[] Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
+        string path,
+        string source,
+        string description)
     {
         var Result = Seedˉcompiler.Compileˉmodules(
-            new("Compiler/Windvale/Native-X64-Lowering-Tool.wv", NATIVE_X64_LOWERING_TOOL_SOURCE),
+            new(path, source),
             [
                 new(
                     "Compiler/Windvale/Native-X64-Lowering-Core.wv",
@@ -554,7 +578,7 @@ internal static partial class Program
         if (!Result.Success)
         {
             throw new InvalidOperationException(
-                "Windvale native x64 tool compilation failed: " +
+                $"Windvale native x64 {description} compilation failed: " +
                 string.Join(" | ", Result.Diagnostics));
         }
         return Result.Moduleˉbytes.ToArray();
@@ -864,6 +888,9 @@ internal static partial class Program
     {
         var Wvb = Compileˉsuccess(WVB_TO_WVO_TEXT_SERVICES_SOURCE);
         var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        True(Module.Functions.SelectMany(Function => Function.Instructions)
+            .Any(Instruction => Instruction.Opcode == Opcode.U32ˉformat),
+            "The text-service fixture omitted u32.format.");
         var Interpreted = new Referenceˉruntime(
             Module,
             new Referenceˉcapabilityˉhost(TextWriter.Null),
@@ -871,6 +898,14 @@ internal static partial class Program
         Equal(42, Interpreted.Exitˉcode);
 
         var Native = X64ˉnativeˉbackend.Compile(Module);
+        Sequenceˉequal(
+            [
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
+                Nativeˉservice.Textˉconcat,
+                Nativeˉservice.Textˉquote,
+                Nativeˉservice.U32ˉformat,
+            ],
+            Native.Fragment.Requiredˉservices);
         Equal(
             42,
             X64ˉnativeˉexecutor.Executeˉi32(

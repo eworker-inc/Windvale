@@ -2190,6 +2190,7 @@ Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain
 deferred to the grouped end-of-goal gate.
 
+
 ## Local compact native record-liveness evidence
 
 [Decision 0256](../Decisions/0256-Compact-Native-Record-Liveness.md) measures
@@ -2286,6 +2287,47 @@ and `1ce42f94519df8ad40e3b813c89ac5f30b7dd2d010af6270029f8c8f75f327d8`.
 The bounded self-lowering diagnostic advances from `Unsupportedˉfunction` to
 `Unsupportedˉcode` without publishing output. Inspection identifies the first
 unsupported instruction as `u32.format` in `Main` at WVB offset `0x01D1`.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.
+
+## Local native u32-formatting evidence
+
+[Decision 0262](../Decisions/0262-Native-U32-Formatting.md) admits
+`u32.format` through ABI 22's existing service-table contract. Typed analysis
+requires one unsigned operand and produces one text descriptor; lowering loads
+the value into `R8D`, supplies the caller-owned result cell through `R9`, and
+uses the shared runtime-service failure path.
+
+The affected tests were reviewed before execution. A new selectable case
+compares the complete Stage 0 WVO with both Windvale adapters without entering
+the rest of the large shared-backend sequence. It passes in 3.459 seconds. The
+separate pinned native-package case passes in 9.070 seconds and reports
+4,469,248 Windows bytes at SHA-256
+`2b4b8dd1877d2714d5bb86e6b7526048568918fe0551cf7a4ab891f9b46293ee`
+and 4,468,736 Linux bytes at SHA-256
+`1215b8e6d9d01f7220f72215f0e9d08e28f1617e8ca98f1ea1d317c6010bc49b`.
+Both Release builds report zero warnings and errors.
+
+The focused source formats `4294967295u32` and verifies the ten-byte decimal
+result. Its 773-byte WVB has SHA-256
+`93f59f977c0266a08d3763314f6f8ab962ec443a98c3440e9ea734fc45cfa611`;
+the complete 6,388-byte WVO contains 6,160 code bytes and has SHA-256
+`48669652cfd36e82ac4cab82dacdcdc1a326e92057104bf1e14927eda9c2a830`.
+
+Direct Stage 0 calculation pins the 327,854-byte core closure at SHA-256
+`808b7f72ed31a35d52985643df31d8dafaf255c46f3026dbf2ea168afe1ec7cf`.
+The pinned Windows native source front door independently rebuilds the
+322,943-byte memory adapter and 323,971-byte hosted tool in 31.403 seconds;
+both are byte-identical to Stage 0 at SHA-256
+`93553ce7cc00a0c2ec73bf6f8862b5a5a5d4c203658b37ff99f7c9f0ba50cc8e`
+and `0fcb9201e91f38e200d5208b042deeba8f85104c957802ba270dc08ebecf952c`.
+
+Direct self-lowering remains fail-closed as `Unsupportedˉcode` and publishes
+no output. Inspection identifies the next unsupported instruction as
+`bytes.from_u8` in function 1, `__WvM10F0(bytes, u8) -> bytes`, at WVB offset
+`0x0019`.
 
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain

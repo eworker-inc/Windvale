@@ -1,4 +1,4 @@
-# Decision 0259: Typed WebAssembly record stack roots
+# Decision 0261: Typed WebAssembly record stack roots
 
 - Date: 2026-08-05
 - Status: Implemented with focused local Windows and Node.js evidence
