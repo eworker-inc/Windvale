@@ -99,9 +99,41 @@ sentinel, and emit one LF-terminated diagnostic whose complete SHA-256 is:
 
 Success prints the ten ordered `PASS` lines followed by
 `Tests: 10, Passed: 10, Failed: 0` plus LF. `WVL1011` remains an internal
-independent-reconstruction trap rather than an externally driven family;
-`WVL1012` retains separate large-map limit evidence. This bounded permanent set
-does not replace randomized hostile-input or concurrency coverage.
+independent-reconstruction trap rather than an externally driven family. This
+bounded permanent set does not replace randomized hostile-input or concurrency
+coverage.
+
+## Fixed native map-limit contract
+
+`Tools/Native/Test-Linker-Map-Limit.cmd` and `.sh` provide the separate
+`WVL1012` boundary without rebuilding the linker, invoking .NET, or retaining a
+large generated WVA source. The existing 479-byte canonical `Main` WVO is
+followed by the same 4,096-local object three times and one 4,095-local object.
+The five valid inputs therefore carry exactly 16,384 definitions.
+
+The generated WVOs each contain one empty code section named `.text`, aligned
+to one, followed by zero-sized local function definitions named in ascending
+order from `L0000`. Their fixed identities are:
+
+| Fixture | Symbols | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| `Map-Locals-4096.wvo` | 4,096 | 102,449 | `a05c4f51be960c7fc900d8cc9fc39dbc525ccd0b2b1a4c55b12ca8396107ee75` |
+| `Map-Locals-4095.wvo` | 4,095 | 102,424 | `398737cfd465fb976e6319ce7ddc4dbefb9e082d39432d09474cf75f8aafffdc` |
+
+They are stored in one 21,046-byte gzip tar archive at SHA-256
+`1c6227931496f54c93677b4dfecfbfa256214a5da72ecfd05d441e49c809e27d`.
+The command verifies the archive and both extracted identities before linking.
+It must return `2`, write no standard output, preserve every input and the
+existing output, and emit exactly this report plus LF:
+
+```text
+link status=WVL1012 inputs=5 sections=5 symbols=16384 relocations=0 image-bytes=0 entry-address=0 input=4294967295
+```
+
+The complete report SHA-256 is
+`097ad88fa0e4fd48504da8d69516e47ff7f6b5979fccf186e0307b814b5af86e`.
+Success prints `PASS  canonical-map-limit` followed by
+`Tests: 1, Passed: 1, Failed: 0`, each with LF.
 
 ## Qualification gate
 
@@ -113,4 +145,4 @@ Promotion to the ordinary linker front door requires one exact source commit to 
 - no CLR/.NET module or mapping in the linker process; and
 - no regression in WVO, Windvale Linking 1, native ABI, capability, or hosted-service contracts.
 
-Decision 0302 already pins both platform applications behind digest-bound native launchers. Only an exact descendant containing those launchers and Decision 0325's expanded rejection matrix that passes both hosts moves ordinary linking to them. `windvale link` then remains the explicit Stage 0 recovery/differential command until Decision 0057's complete archive gate permits deletion.
+Decision 0302 already pins both platform applications behind digest-bound native launchers. Only an exact descendant containing those launchers, Decision 0325's expanded rejection matrix, and Decision 0327's map-limit boundary that passes both hosts moves ordinary linking to them. `windvale link` then remains the explicit Stage 0 recovery/differential command until Decision 0057's complete archive gate permits deletion.

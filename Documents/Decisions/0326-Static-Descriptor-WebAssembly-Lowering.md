@@ -1,4 +1,4 @@
-# Decision 0325: Static descriptor WebAssembly lowering
+# Decision 0326: Static descriptor WebAssembly lowering
 
 - Date: 2026-08-06
 - Status: Implemented for immutable data, borrowed views, and bounded reads

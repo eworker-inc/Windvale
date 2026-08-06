@@ -86,8 +86,33 @@ Tests: 10, Passed: 10, Failed: 0
 
 All ten cases require deterministic linker rejection, empty standard output, an
 exact report identity, and byte-for-byte preservation of an existing output.
-The internal `WVL1011` reconstruction trap and large-map `WVL1012` limit retain
-separate focused evidence.
+The internal `WVL1011` reconstruction trap retains separate internal evidence.
+
+The canonical-map size boundary has its own compact generated-fixture command.
+It expands two digest-bound WVOs from a 21,046-byte archive, combines them with
+the existing entry object into exactly 16,384 definitions, and invokes only the
+native linker. On Windows x64 run:
+
+```bat
+Tools\Native\Test-Linker-Map-Limit.cmd
+```
+
+On Linux x64 run:
+
+```sh
+./Tools/Native/Test-Linker-Map-Limit.sh
+```
+
+Its exact success report is:
+
+```text
+PASS  canonical-map-limit
+Tests: 1, Passed: 1, Failed: 0
+```
+
+The command requires exact `WVL1012`, empty standard output, and preservation
+of the entry, both generated WVOs, and the existing output. It does not build
+the WVA sources, start .NET, or repeat the successful AOT chain.
 
 The focused console-packager rejection command likewise avoids source building,
 linking, and successful AOT execution. On Windows x64 run:

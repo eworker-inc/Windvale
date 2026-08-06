@@ -28,6 +28,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0325](../Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) expands the fixed linker command to every externally driven `WVL1001` through `WVL1010` family with exact reports and destination preservation. The internal `WVL1011` reconstruction trap and large-map `WVL1012` boundary retain separate evidence; Linux execution and the grouped gate still precede linker promotion.
 
+[Decision 0327](../Decisions/0327-Fixed-Native-Linker-Map-Limit.md) transfers that separate `WVL1012` boundary to a one-case .NET-free native command. A compact archive replaces large generated WVA source while preserving exact 16,384-definition, report, input, and output evidence; Linux execution and the grouped gate still precede linker promotion.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

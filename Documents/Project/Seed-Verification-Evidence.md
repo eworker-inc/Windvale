@@ -3444,9 +3444,35 @@ wrapper and exact report, the focused selection
 2.533 test seconds after a 9.19-second zero-warning Release build; the complete
 command takes 15.1 seconds. The permanent command does not run .NET, rebuild
 the linker or fixtures, or repeat the successful AOT chain. No WebAssembly
-implementation changed. Internal `WVL1011`, large-map `WVL1012`, Linux execution,
-Development, Standard, Qualification, promotion, randomized hostile input, and
-the grouped end-of-goal gate remain deferred.
+implementation changed. Internal `WVL1011`, Linux execution, Development,
+Standard, Qualification, promotion, randomized hostile input, and the grouped
+end-of-goal gate remain deferred.
+
+## Local fixed native linker map-limit evidence
+
+[Decision 0327](../Decisions/0327-Fixed-Native-Linker-Map-Limit.md) moves the
+separate canonical-map limit boundary to the digest-bound native linker without
+a live managed oracle. The existing 479-byte `Main` WVO is linked with one
+4,096-local WVO three times and one 4,095-local WVO once, producing exactly
+16,384 definitions across five valid inputs. The two generated objects are
+102,449 and 102,424 bytes at SHA-256
+`a05c4f51be960c7fc900d8cc9fc39dbc525ccd0b2b1a4c55b12ca8396107ee75`
+and
+`398737cfd465fb976e6319ce7ddc4dbefb9e082d39432d09474cf75f8aafffdc`.
+Their shared 21,046-byte gzip tar archive has SHA-256
+`1c6227931496f54c93677b4dfecfbfa256214a5da72ecfd05d441e49c809e27d`.
+
+The native linker returns `2`, writes no standard output, preserves the entry,
+both fixture identities, and the existing output, and emits the exact
+LF-terminated `WVL1012` report at SHA-256
+`097ad88fa0e4fd48504da8d69516e47ff7f6b5979fccf186e0307b814b5af86e`.
+Direct Windows execution passes 1/1 in about 1.0 second. After reviewing the
+wrapper, `native linker map limit rejects without .NET` passes 1/1 in 1.008
+seconds after an 11.93-second zero-warning Release build; the complete command
+takes 17.4 seconds. The permanent command starts no .NET process, rebuilds no
+source or fixture, and repeats no successful link or AOT chain. Linux execution,
+Development, Standard, Qualification, promotion, randomized hostile input,
+internal `WVL1011`, and the grouped end-of-goal gate remain deferred.
 
 ## Local fixed native console-packager rejection evidence
 
