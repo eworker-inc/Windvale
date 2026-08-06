@@ -2,7 +2,7 @@
   "format": "windvale-webassembly-playground-1",
   "target": "wasm32-browser-v1-experimental",
   "sourceCommit": "f6db3cea965db39698cf5329210a7fa88498a673",
-  "decision": "Documents/Decisions/0270-Warmed-WebAssembly-Compiler-Worker.md",
+  "decision": "Documents/Decisions/0273-Warmed-WebAssembly-Compiler-Worker.md",
   "normalPublication": {
     "mode": "verified-copy",
     "requiresDotnet": false

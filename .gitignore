@@ -18,6 +18,7 @@ temp/
 .cache/
 artifacts/
 Website/Generated/
+Tools/Windvale.Playground/wwwroot/analytics.js
 build/
 Build/
 dist/

@@ -103770,7 +103770,7 @@ function RSe(e) {
 	return t;
 }
 function zSe(e, t, n, r) {
-	$9(), V9 = r, H9 = t, NSe(), ISe(), LSe();
+	$9(), V9 = typeof r == "function" ? r : () => r?.invokeMethodAsync("RunWindvaleProgram"), H9 = t, NSe(), ISe(), LSe();
 	let i = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 	B9 = f0.createModel(n, "windvale", xme.parse("inmemory://windvale/playground.wv")), z9 = f0.create(e, {
 		model: B9,
@@ -103812,7 +103812,7 @@ function zSe(e, t, n, r) {
 		id: "windvale.compile-and-run",
 		label: "Compile and Run",
 		keybindings: [d0.CtrlCmd | u0.Enter],
-		run: () => V9?.invokeMethodAsync("RunWindvaleProgram")
+		run: () => V9?.()
 	}), z9.addAction({
 		id: "windvale.insert-macron-separator",
 		label: "Insert Windvale Macron Separator (ˉ)",

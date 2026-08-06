@@ -53,26 +53,20 @@
 /playground/index.html
   Cache-Control: public, max-age=0, must-revalidate
 
-/playground/js/playground-bootstrap.js
+/playground/analytics.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/playground/js/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/playground/css/*
   Cache-Control: public, max-age=0, must-revalidate
 
 /playground/wasm-demo/*
   Cache-Control: public, max-age=0, must-revalidate
 
-/playground/_framework/blazor.webassembly.js
+/playground/webassembly-compiler/artifacts/*
   Cache-Control: public, max-age=0, must-revalidate
-
-/playground/_framework/dotnet.js
-  Cache-Control: public, max-age=0, must-revalidate
-
-/playground/_framework/*.wasm
-  Cache-Control: public, max-age=31536000, immutable
-
-/playground/_framework/*.pdb
-  Cache-Control: public, max-age=31536000, immutable
-
-/playground/_framework/*.dat
-  Cache-Control: public, max-age=31536000, immutable
 
 /og.png
   Cache-Control: public, max-age=86400

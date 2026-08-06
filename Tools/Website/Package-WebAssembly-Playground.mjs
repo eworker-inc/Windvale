@@ -17,6 +17,11 @@ const Expectedˉdestination = path.join(
     Repositoryˉroot,
     "Tools/Windvale.Playground/wwwroot/webassembly-compiler",
 );
+const Analyticsˉsource = path.join(Repositoryˉroot, "Website/analytics.js");
+const Analyticsˉdestination = path.join(
+    Repositoryˉroot,
+    "Tools/Windvale.Playground/wwwroot/analytics.js",
+);
 if (!Destinationˉroot.startsWith(`${Expectedˉdestination}${path.sep}`)) {
     throw new Error("The WebAssembly playground package destination is invalid.");
 }
@@ -52,6 +57,7 @@ await Promise.all([
         path.join(Sourceˉroot, "Manifest.json"),
         path.join(Destinationˉroot, "Manifest.json"),
     ),
+    copyFile(Analyticsˉsource, Analyticsˉdestination),
     ...Files.map(File => copyFile(
         path.join(Sourceˉroot, File),
         path.join(Destinationˉroot, File),
@@ -59,5 +65,5 @@ await Promise.all([
 ]);
 
 console.log(
-    `Packaged ${Files.length} verified WebAssembly playground artifacts without .NET.`,
+    `Packaged ${Files.length} verified WebAssembly playground artifacts and shared analytics without .NET.`,
 );

@@ -33,6 +33,7 @@ if (Requestedˉpaths.some(Path =>
     Fail("The standalone page requests a .NET or Blazor framework asset.");
 }
 Requireˉtext(Index, "./app.js", "standalone application entry");
+Requireˉtext(Index, 'src="../analytics.js"', "standalone relative analytics entry");
 Requireˉtext(Index, "Main(Input: text)", "profile-8 source provenance");
 Requireˉtext(Index, "Fixed 4 MiB input + 4 MiB output", "ABI-3 memory evidence");
 Requireˉtext(Application, "../js/windvale-wasm-host.js", "shared disposable worker host");

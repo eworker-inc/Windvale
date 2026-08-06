@@ -20,10 +20,6 @@ concurrency:
   group: windvale-homepage
   cancel-in-progress: false
 
-env:
-  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  DOTNET_NOLOGO: "1"
-
 jobs:
   deploy:
     name: Publish windvale.ca
@@ -90,12 +86,6 @@ jobs:
           ref: ${{ steps.gate.outputs.target_sha }}
           persist-credentials: false
 
-      - name: Install pinned .NET SDK
-        if: ${{ steps.gate.outputs.deploy == 'true' }}
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-        with:
-          global-json-file: global.json
-
       - name: Install pinned Node.js runtime
         if: ${{ steps.gate.outputs.deploy == 'true' }}
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
@@ -132,41 +122,13 @@ jobs:
           npm run verify:wasm-compiler-demo
           npm run verify:wasm-compiler-core
 
-      - name: Publish standalone WebAssembly application
-        if: ${{ steps.gate.outputs.deploy == 'true' }}
-        run: >-
-          dotnet publish Tools/Windvale.Playground/Windvale.Playground.csproj
-          --configuration Release
-          --output artifacts/playground
-          -p:ContinuousIntegrationBuild=true
-
-      - name: Version playground startup
-        if: ${{ steps.gate.outputs.deploy == 'true' }}
-        shell: bash
-        env:
-          TARGET_SHA: ${{ steps.gate.outputs.target_sha }}
-        run: |
-          marker="__WINDVALE_BUILD_VERSION__"
-          versioned_paths=(
-            "artifacts/playground/wwwroot/index.html"
-            "artifacts/playground/wwwroot/js/playground-bootstrap.js"
-          )
-          for versioned_path in "${versioned_paths[@]}"; do
-            grep -Fq "$marker" "$versioned_path"
-            sed -i "s/$marker/$TARGET_SHA/g" "$versioned_path"
-            if grep -Fq "$marker" "$versioned_path"; then
-              echo "Playground bootstrap version marker remained in $versioned_path." >&2
-              exit 1
-            fi
-          done
-
       - name: Assemble same-origin static site
         if: ${{ steps.gate.outputs.deploy == 'true' }}
         shell: bash
         run: |
           mkdir -p artifacts/site/playground
           cp -a Website/dist/. artifacts/site/
-          cp -a artifacts/playground/wwwroot/. artifacts/site/playground/
+          cp -a Tools/Windvale.Playground/wwwroot/. artifacts/site/playground/
 
       - name: Publish static site
         if: ${{ steps.gate.outputs.deploy == 'true' }}

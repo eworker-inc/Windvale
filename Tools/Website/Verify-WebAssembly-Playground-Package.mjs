@@ -16,7 +16,17 @@ const Manifest = JSON.parse(await readFile(
 
 Equal("windvale-webassembly-playground-1", Manifest.format, "manifest format");
 Equal("wasm32-browser-v1-experimental", Manifest.target, "manifest target");
+Equal("verified-copy", Manifest.normalPublication?.mode, "normal publication mode");
 Equal(false, Manifest.normalPublication?.requiresDotnet, "normal .NET dependency");
+Equal(
+    "Documents/Decisions/0273-Warmed-WebAssembly-Compiler-Worker.md",
+    Manifest.decision,
+    "package decision",
+);
+const Decision = await readFile(path.join(Repositoryˉroot, Manifest.decision), "utf8");
+if (!Decision.startsWith("# Decision 0273: Warmed WebAssembly compiler worker\n")) {
+    Fail("The WebAssembly playground package decision is invalid.");
+}
 if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 3) {
     Fail("The WebAssembly playground manifest must own exactly three artifacts.");
 }

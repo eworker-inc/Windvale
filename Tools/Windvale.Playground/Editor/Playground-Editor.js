@@ -30,7 +30,7 @@ const MINIMUM_RESULTS_HEIGHT = 150;
 
 let Editorˉinstance;
 let Modelˉinstance;
-let DotNetˉreference;
+let Runˉhandler;
 let Layoutˉelement;
 let Sidebarˉwidth = DEFAULT_SIDEBAR_WIDTH;
 let Resultsˉheight = DEFAULT_RESULTS_HEIGHT;
@@ -414,9 +414,11 @@ function Setˉtheme(theme) {
     return Theme;
 }
 
-export function Initialize(editorElement, layoutElement, initialSource, dotNetReference) {
+export function Initialize(editorElement, layoutElement, initialSource, runHandler) {
     Dispose();
-    DotNetˉreference = dotNetReference;
+    Runˉhandler = typeof runHandler === "function"
+        ? runHandler
+        : () => runHandler?.invokeMethodAsync("RunWindvaleProgram");
     Layoutˉelement = layoutElement;
     Readˉsavedˉlayout();
     Registerˉwindvaleˉlanguage();
@@ -460,7 +462,7 @@ export function Initialize(editorElement, layoutElement, initialSource, dotNetRe
         id: "windvale.compile-and-run",
         label: "Compile and Run",
         keybindings: [Monaco.KeyMod.CtrlCmd | Monaco.KeyCode.Enter],
-        run: () => DotNetˉreference?.invokeMethodAsync("RunWindvaleProgram"),
+        run: () => Runˉhandler?.(),
     });
     Editorˉinstance.addAction({
         id: "windvale.insert-macron-separator",
@@ -550,6 +552,6 @@ export function Dispose() {
     Modelˉinstance?.dispose();
     Editorˉinstance = undefined;
     Modelˉinstance = undefined;
-    DotNetˉreference = undefined;
+    Runˉhandler = undefined;
     Layoutˉelement = undefined;
 }

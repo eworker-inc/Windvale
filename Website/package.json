@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently --kill-others --names website,playground --prefix-colors blue,magenta \"npm:dev:site\" \"npm:dev:playground\"",
     "dev:site": "npm run generate && vite --config Vite-Config.mjs",
-    "dev:playground": "npm run build --prefix ../Tools/Windvale.Playground && dotnet run --project ../Tools/Windvale.Playground/Windvale.Playground.csproj",
+    "dev:playground": "npm run build --prefix ../Tools/Windvale.Playground && npm run dev --prefix ../Tools/Windvale.Playground",
     "build": "npm run generate && vite build --config Vite-Config.mjs",
     "generate": "node Scripts/Generate-Repository-Browser.mjs --output Generated",
     "verify:wasm-demo": "node ../Tools/Website/Verify-Wasm-Demo.mjs",

@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build --config Editor/Vite-Config.mjs && node ../Website/Package-WebAssembly-Playground.mjs"
+    "build": "vite build --config Editor/Vite-Config.mjs && node ../Website/Package-WebAssembly-Playground.mjs",
+    "dev": "vite wwwroot --host 127.0.0.1 --port 5174 --strictPort"
   },
   "dependencies": {
     "monaco-editor": "0.56.0"

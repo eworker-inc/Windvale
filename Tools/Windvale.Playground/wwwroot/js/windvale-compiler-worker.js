@@ -107,7 +107,7 @@ async function Loadˉartifact(Manifest, Manifestˉurl, Name) {
     }
     const Response = await fetch(
         new URL(encodeURIComponent(Artifact.path), Manifestˉurl),
-        { cache: "force-cache" },
+        { cache: "no-cache" },
     );
     if (!Response.ok) {
         throw new Error(`The '${Name}' package artifact is unavailable.`);

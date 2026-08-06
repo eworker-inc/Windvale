@@ -1,7 +1,7 @@
 # Decision 0273: Warmed WebAssembly compiler worker
 
 - Date: 2026-08-06
-- Status: Implemented with focused local Node.js evidence; browser remeasurement pending
+- Status: Implemented with focused local Node.js and Chromium evidence
 - Advances: [Decision 0270](0270-First-Browser-Native-Source-Pipeline.md)
 - Target: `wasm32-browser-v1-experimental`
 
@@ -30,7 +30,7 @@ The exact compiler output remains the same 183 WVB bytes with SHA-256 `3d2961828
 
 On the same ordinary engine, a 100,000-guest-instruction warmup returns `WVR3011` after 185,543,072 outer instructions in 31.755 seconds. The subsequent exact call completes in 58.136 seconds, for about 89.9 seconds total. This is a roughly 75 percent reduction from the single cold call without changing source semantics, counters, result framing, or output bytes. Wall time remains informative local evidence rather than a portable contract.
 
-The worker still does substantial work and the accepted compiler surface remains bounded. This slice makes browser execution practical for continued development; it does not by itself qualify the normal editor to retire Stage 0.
+The same warmed sequence completes in 85.9 seconds in real Chromium, down from the preceding 378.1-second cold browser proof while preserving the exact WVB, counters, result, and zero-framework-request boundary. [Decision 0275](0275-Normal-Browser-Native-Playground.md) uses that measured result to promote the bounded worker into the normal editor while retaining Stage 0 only for recovery.
 
 ## Rejected alternatives
 
