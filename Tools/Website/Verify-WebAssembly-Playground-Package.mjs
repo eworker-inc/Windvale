@@ -9,286 +9,254 @@ const Packageˉroot = path.join(
     Repositoryˉroot,
     "Artifacts/WebAssembly-Playground",
 );
-const Manifest = JSON.parse(await readFile(
-    path.join(Packageˉroot, "Manifest.json"),
-    "utf8",
-));
+const Manifest = await Readˉjson(path.join(Packageˉroot, "Manifest.json"));
 
-Equal("windvale-webassembly-playground-1", Manifest.format, "manifest format");
+Equal("windvale-webassembly-playground-2", Manifest.format, "manifest format");
 Equal("wasm32-browser-v1-experimental", Manifest.target, "manifest target");
 Equal("verified-copy", Manifest.normalPublication?.mode, "normal publication mode");
 Equal(false, Manifest.normalPublication?.requiresDotnet, "normal .NET dependency");
 Equal(
-    "../WebAssembly-Native-Compiler/Manifest.json",
-    Manifest.nativeCompilerManifest,
-    "native compiler manifest",
-);
-Equal(
-    "../WebAssembly-Native-Backend/Manifest.json",
-    Manifest.nativeBackendManifest,
-    "native backend manifest",
-);
-Equal(
-    "Documents/Decisions/0294-Static-WebAssembly-Opcode-Effect-Table.md",
+    "Documents/Decisions/0333-Segmented-Direct-WebAssembly-Compiler.md",
     Manifest.decision,
     "package decision",
 );
 const Decision = await readFile(path.join(Repositoryˉroot, Manifest.decision), "utf8");
-if (!Decision.startsWith("# Decision 0294: Static WebAssembly opcode-effect table\n")) {
+if (!Decision.startsWith("# Decision 0333: Segmented direct WebAssembly compiler\n")) {
     Fail("The WebAssembly playground package decision is invalid.");
 }
-if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 4) {
-    Fail("The WebAssembly playground manifest must own exactly four artifacts.");
+if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 2) {
+    Fail("The WebAssembly playground manifest must own exactly two browser artifacts.");
 }
 
-const Nativeˉcompilerˉmanifestˉpath = path.resolve(
-    Packageˉroot,
+await Verifyˉreferencedˉpackage(
     Manifest.nativeCompilerManifest,
-);
-const Nativeˉcompilerˉroot = path.dirname(Nativeˉcompilerˉmanifestˉpath);
-const Nativeˉcompilerˉmanifest = JSON.parse(await readFile(
-    Nativeˉcompilerˉmanifestˉpath,
-    "utf8",
-));
-Equal(
     "windvale-webassembly-native-compiler-1",
-    Nativeˉcompilerˉmanifest.format,
-    "native compiler package format",
+    3,
+    "native compiler",
 );
-Equal(false, Nativeˉcompilerˉmanifest.normalUseRequiresDotnet, "native compiler normal .NET dependency");
-Equal(true, Nativeˉcompilerˉmanifest.recoveryRequiresDotnet, "native compiler recovery .NET dependency");
-Equal("Windvale-Compiler.wvproj", Nativeˉcompilerˉmanifest.sourceProject, "native compiler project");
-Equal(
-    "Documents/Decisions/0277-Native-WebAssembly-Compiler-Regeneration.md",
-    Nativeˉcompilerˉmanifest.decision,
-    "native compiler decision",
-);
-const Nativeˉcompilerˉdecision = await readFile(
-    path.join(Repositoryˉroot, Nativeˉcompilerˉmanifest.decision),
-    "utf8",
-);
-if (!Nativeˉcompilerˉdecision.startsWith(
-    "# Decision 0277: Native WebAssembly compiler regeneration\n",
-)) {
-    Fail("The WebAssembly native compiler decision is invalid.");
-}
-if (!Array.isArray(Nativeˉcompilerˉmanifest.artifacts) ||
-    Nativeˉcompilerˉmanifest.artifacts.length !== 3) {
-    Fail("The WebAssembly native compiler manifest must own exactly three artifacts.");
-}
-for (const Artifact of Nativeˉcompilerˉmanifest.artifacts) {
-    const Artifactˉpath = path.resolve(Nativeˉcompilerˉroot, Artifact.path);
-    if (!Artifactˉpath.startsWith(`${Nativeˉcompilerˉroot}${path.sep}`)) {
-        Fail("A WebAssembly native compiler artifact path escapes its package.");
-    }
-    const Bytes = await readFile(Artifactˉpath);
-    Equal(Artifact.bytes, Bytes.byteLength, `${Artifact.name} byte length`);
-    Equal(
-        Artifact.sha256,
-        createHash("sha256").update(Bytes).digest("hex"),
-        `${Artifact.name} SHA-256`,
-    );
-}
-
-const Nativeˉbackendˉmanifestˉpath = path.resolve(
-    Packageˉroot,
+await Verifyˉreferencedˉpackage(
     Manifest.nativeBackendManifest,
-);
-const Nativeˉbackendˉroot = path.dirname(Nativeˉbackendˉmanifestˉpath);
-const Nativeˉbackendˉmanifest = JSON.parse(await readFile(
-    Nativeˉbackendˉmanifestˉpath,
-    "utf8",
-));
-Equal(
     "windvale-webassembly-native-backend-1",
-    Nativeˉbackendˉmanifest.format,
-    "native backend package format",
+    3,
+    "native backend",
 );
-Equal(false, Nativeˉbackendˉmanifest.normalUseRequiresDotnet, "native backend normal .NET dependency");
-Equal(true, Nativeˉbackendˉmanifest.recoveryRequiresDotnet, "native backend recovery .NET dependency");
-Equal(
-    "Windvale-WebAssembly-Artifact-Tool.wvproj",
-    Nativeˉbackendˉmanifest.sourceProject,
-    "native backend project",
+const Segmentedˉmanifest = await Verifyˉreferencedˉpackage(
+    Manifest.segmentedBackendManifest,
+    "windvale-webassembly-segmented-backend-1",
+    2,
+    "segmented backend",
 );
-Equal(
-    "compiler-family-wvha-1",
-    Nativeˉbackendˉmanifest.containerProfile,
-    "native backend container profile",
+Equal(false, Segmentedˉmanifest.normalUseRequiresDotnet, "segmented backend normal .NET dependency");
+Equal(true, Segmentedˉmanifest.recoveryRequiresDotnet, "segmented backend recovery .NET dependency");
+Equal(Manifest.backendCommit, Segmentedˉmanifest.sourceCommit, "segmented backend commit");
+Equal(Manifest.decision, Segmentedˉmanifest.decision, "segmented backend decision");
+
+const Compilerˉsource = await Verifyˉpackageˉentry(
+    Manifest.sourceCompiler,
+    Packageˉroot,
+    "portable-source-compiler",
 );
-Equal(
-    "Documents/Decisions/0298-Compiler-Scale-WebAssembly-Code-Inventory.md",
-    Nativeˉbackendˉmanifest.decision,
-    "native backend decision",
+const Interpreterˉsource = await Verifyˉpackageˉentry(
+    Manifest.interpreterSource,
+    Packageˉroot,
+    "scalar-interpreter-wvb",
 );
-const Nativeˉbackendˉdecision = await readFile(
-    path.join(Repositoryˉroot, Nativeˉbackendˉmanifest.decision),
-    "utf8",
-);
-if (!Nativeˉbackendˉdecision.startsWith(
-    "# Decision 0298: Compiler-scale WebAssembly code inventory\n",
-)) {
-    Fail("The WebAssembly native backend decision is invalid.");
-}
-if (!Array.isArray(Nativeˉbackendˉmanifest.artifacts) ||
-    Nativeˉbackendˉmanifest.artifacts.length !== 3) {
-    Fail("The WebAssembly native backend manifest must own exactly three artifacts.");
-}
-for (const Artifact of Nativeˉbackendˉmanifest.artifacts) {
-    const Artifactˉpath = path.resolve(Nativeˉbackendˉroot, Artifact.path);
-    if (!Artifactˉpath.startsWith(`${Nativeˉbackendˉroot}${path.sep}`)) {
-        Fail("A WebAssembly native backend artifact path escapes its package.");
-    }
-    const Bytes = await readFile(Artifactˉpath);
-    Equal(Artifact.bytes, Bytes.byteLength, `${Artifact.name} byte length`);
-    Equal(
-        Artifact.sha256,
-        createHash("sha256").update(Bytes).digest("hex"),
-        `${Artifact.name} SHA-256`,
-    );
-}
+Equal("pinned-native-source-compiler", Manifest.sourceCompiler.production, "source compiler production");
+Equal("pinned-native-front-door", Manifest.interpreterSource.production, "interpreter source production");
 
 const Artifacts = new Map();
 for (const Artifact of Manifest.artifacts) {
-    if (typeof Artifact.path !== "string" ||
-        path.basename(Artifact.path) !== Artifact.path) {
-        Fail("A WebAssembly playground artifact path escapes its package.");
+    const Bytes = await Verifyˉpackageˉentry(Artifact, Packageˉroot, Artifact.name);
+    if (Artifacts.has(Artifact.name)) {
+        Fail(`The '${Artifact.name}' browser artifact is duplicated.`);
     }
-    const Bytes = await readFile(path.join(Packageˉroot, Artifact.path));
-    Equal(Artifact.bytes, Bytes.byteLength, `${Artifact.name} byte length`);
-    Equal(
-        Artifact.sha256,
-        createHash("sha256").update(Bytes).digest("hex"),
-        `${Artifact.name} SHA-256`,
-    );
-    Artifacts.set(Artifact.name, Bytes);
+    Artifacts.set(Artifact.name, { Artifact, Bytes });
 }
+Equal(2, Artifacts.size, "browser artifact name count");
+const Direct = Requireˉartifact(Artifacts, "direct-source-compiler-wasm");
+const Interpreter = Requireˉartifact(Artifacts, "scalar-interpreter-wasm");
+Equal("Windvale-Compiler-Memory.wvb", Direct.Artifact.sourceWvb, "direct compiler source WVB");
+Equal("pinned-segmented-webassembly-compiler", Direct.Artifact.production, "direct compiler production");
+Equal("Wvb-Scalar-Interpreter.wvb", Interpreter.Artifact.sourceWvb, "interpreter source WVB");
+Equal("pinned-native-webassembly-compiler", Interpreter.Artifact.production, "interpreter production");
+Equal(Manifest.sourceCompiler.bytes, Compilerˉsource.byteLength, "source compiler byte length");
+Equal(Manifest.interpreterSource.bytes, Interpreterˉsource.byteLength, "interpreter source byte length");
 
-const Interpreter = Artifacts.get("scalar-interpreter-wasm");
-const Compiler = Artifacts.get("portable-source-compiler");
-const Warmup = Artifacts.get("interpreter-tier-warmup");
-const Warmupˉartifact = Manifest.artifacts.find(
-    Artifact => Artifact.name === "interpreter-tier-warmup",
+const Directˉinstance = await Verifyˉwebassembly(
+    Direct.Bytes,
+    4,
+    1,
+    2_497,
+    142_671_872,
+    4_194_304,
+    146_866_176,
+    16_777_216,
+    "direct compiler",
 );
-Equal(
-    "pinned-native-source-compiler",
-    Manifest.artifacts.find(Artifact => Artifact.name === "portable-source-compiler")?.production,
-    "portable compiler production route",
+await Verifyˉwebassembly(
+    Interpreter.Bytes,
+    3,
+    1,
+    129,
+    65_536,
+    4_194_304,
+    4_259_840,
+    4_194_304,
+    "scalar interpreter",
 );
-Equal(
-    "pinned-native-webassembly-compiler",
-    Manifest.artifacts.find(Artifact => Artifact.name === "scalar-interpreter-wasm")?.production,
-    "interpreter WebAssembly production route",
-);
-Equal(
-    "pinned-native-front-door",
-    Warmupˉartifact?.production,
-    "interpreter warmup production route",
-);
-Equal(
-    "Windvale-WebAssembly-Interpreter-Warmup.wvproj",
-    Warmupˉartifact?.sourceProject,
-    "interpreter warmup source project",
-);
-Equal(
-    Warmupˉartifact?.sourceSha256,
-    createHash("sha256").update(await readFile(path.join(
-        Repositoryˉroot,
-        "Tools/WebAssembly/Interpreter-Warmup.wv",
-    ))).digest("hex"),
-    "interpreter warmup source SHA-256",
-);
-Equal(292, Warmup.byteLength, "interpreter warmup WVB length");
-if (!WebAssembly.validate(Interpreter)) {
-    Fail("The packaged scalar interpreter is not valid WebAssembly.");
-}
-const Module = await WebAssembly.compile(Interpreter);
-Equal(0, WebAssembly.Module.imports(Module).length, "interpreter import count");
-Equal(
-    JSON.stringify([
-        ["Windvale.run", "function"],
-        ["Windvale.abi", "global"],
-        ["Windvale.memory", "memory"],
-        ["Windvale.input_offset", "global"],
-        ["Windvale.input_capacity", "global"],
-        ["Windvale.output_offset", "global"],
-        ["Windvale.output_capacity", "global"],
-        ["Windvale.output_length", "global"],
-        ["Windvale.output_kind", "global"],
-        ["Windvale.instructions", "global"],
-    ]),
-    JSON.stringify(WebAssembly.Module.exports(Module).map(
-        Item => [Item.name, Item.kind],
-    )),
-    "interpreter export contract",
-);
-
-const Instance = await WebAssembly.instantiate(Module, {});
-const Exports = Instance.exports;
-const Memory = Exports["Windvale.memory"];
-Equal(3, Readˉglobal(Exports, "Windvale.abi"), "execution ABI");
-if (!(Memory instanceof WebAssembly.Memory)) {
-    Fail("The packaged interpreter memory export is invalid.");
-}
-Equal(129 * 65_536, Memory.buffer.byteLength, "memory extent");
-Equal(65_536, Readˉglobal(Exports, "Windvale.input_offset"), "input offset");
-Equal(4_194_304, Readˉglobal(Exports, "Windvale.input_capacity"), "input capacity");
-Equal(4_259_840, Readˉglobal(Exports, "Windvale.output_offset"), "output offset");
-Equal(4_194_304, Readˉglobal(Exports, "Windvale.output_capacity"), "output capacity");
 
 const Source = await readFile(path.join(
     Repositoryˉroot,
     "Tests/Fixtures/Source-Wvb/WebAssembly-Compiler-Success.wv",
 ));
-const Request = Bytesˉrequest(Compiler, Source, 1, 64);
+const Sourceˉset = Buildˉsourceˉset(Source);
+const Exports = Directˉinstance.exports;
+const Memory = Exports["Windvale.memory"];
 new Uint8Array(
     Memory.buffer,
     Readˉglobal(Exports, "Windvale.input_offset"),
-    Request.byteLength,
-).set(Request);
-Equal(0, Exports["Windvale.run"](100_000_000, Request.byteLength), "outer status");
-Equal(77_098_289, Readˉglobal(Exports, "Windvale.instructions"), "outer instructions");
-Equal(20, Readˉglobal(Exports, "Windvale.output_length"), "response length");
+    Sourceˉset.byteLength,
+).set(Sourceˉset);
+Equal(0, Exports["Windvale.run"](2_000_000, Sourceˉset.byteLength), "direct compiler status");
+Equal(1_186_358, Readˉglobal(Exports, "Windvale.instructions"), "direct compiler instructions");
+Equal(199, Readˉglobal(Exports, "Windvale.output_length"), "direct compiler output length");
 const Output = Buffer.from(new Uint8Array(
     Memory.buffer,
     Readˉglobal(Exports, "Windvale.output_offset"),
-    20,
+    199,
 ));
-Equal(0x4F58_5657, Output.readUInt32LE(0), "WVXO magic");
-Equal(2, Output.readUInt16LE(4), "WVXO version");
-Equal(0, Output.readUInt16LE(6), "WVXO flags");
-Equal(3_011, Output.readUInt32LE(8), "guest budget status");
-Equal(1, Output.readUInt32LE(12), "guest instruction count");
-Equal(0, Output.readUInt32LE(16), "guest result length");
+Equal(0x4F43_5657, Output.readUInt32LE(0), "WVCO magic");
+Equal(1, Output.readUInt16LE(4), "WVCO version");
+Equal(0, Output.readUInt16LE(6), "WVCO flags");
+Equal(0, Output.readUInt32LE(8), "WVCO result kind");
+Equal(183, Output.readUInt32LE(12), "WVB result length");
+const Wvb = Output.subarray(16);
+Equal(
+    "3d29618283648cb0d23987075912a218ac212d8c8fa31ec00b72f4bf3df795c6",
+    Sha256(Wvb),
+    "compiled WVB SHA-256",
+);
 
 console.log(
     "WebAssembly playground package verification passed: " +
-    `${Interpreter.byteLength} Wasm bytes, ${Compiler.byteLength} compiler bytes, ` +
-    "exact one-instruction compiler admission.",
+    `${Direct.Bytes.byteLength} direct compiler bytes, ` +
+    `${Interpreter.Bytes.byteLength} interpreter bytes, exact 183-byte WVB.`,
 );
 
-function Bytesˉrequest(Compilerˉbytes, Sourceˉbytes, Budget, Callˉdepth) {
-    const Sourceˉset = Buffer.alloc(24 + Sourceˉbytes.length);
-    Sourceˉset.writeUInt32LE(0x5353_5657, 0);
-    Sourceˉset.writeUInt16LE(1, 4);
-    Sourceˉset.writeUInt16LE(0, 6);
-    Sourceˉset.writeUInt32LE(1, 8);
-    Sourceˉset.writeUInt32LE(8, 12);
-    Sourceˉset.writeUInt32LE(24, 16);
-    Sourceˉset.writeUInt32LE(Sourceˉbytes.length, 20);
-    Sourceˉbytes.copy(Sourceˉset, 24);
+async function Verifyˉreferencedˉpackage(
+    Relativeˉmanifest,
+    Expectedˉformat,
+    Expectedˉartifacts,
+    Boundary,
+) {
+    if (typeof Relativeˉmanifest !== "string" || Relativeˉmanifest.length === 0) {
+        Fail(`The ${Boundary} manifest path is invalid.`);
+    }
+    const Manifestˉpath = path.resolve(Packageˉroot, Relativeˉmanifest);
+    if (!Manifestˉpath.startsWith(`${path.dirname(Packageˉroot)}${path.sep}`)) {
+        Fail(`The ${Boundary} manifest path escapes the artifact inventory.`);
+    }
+    const Referenced = await Readˉjson(Manifestˉpath);
+    Equal(Expectedˉformat, Referenced.format, `${Boundary} package format`);
+    if (!Array.isArray(Referenced.artifacts) ||
+        Referenced.artifacts.length !== Expectedˉartifacts) {
+        Fail(`The ${Boundary} artifact inventory is invalid.`);
+    }
+    const Root = path.dirname(Manifestˉpath);
+    for (const Artifact of Referenced.artifacts) {
+        await Verifyˉpackageˉentry(Artifact, Root, `${Boundary} ${Artifact.name}`);
+    }
+    return Referenced;
+}
 
-    const Request = Buffer.alloc(24 + Compilerˉbytes.length + Sourceˉset.length);
-    Request.writeUInt32LE(0x4958_5657, 0);
-    Request.writeUInt16LE(2, 4);
-    Request.writeUInt16LE(0, 6);
-    Request.writeUInt32LE(Budget, 8);
-    Request.writeUInt32LE(Callˉdepth, 12);
-    Request.writeUInt32LE(Compilerˉbytes.length, 16);
-    Request.writeUInt32LE(Sourceˉset.length, 20);
-    Compilerˉbytes.copy(Request, 24);
-    Sourceˉset.copy(Request, 24 + Compilerˉbytes.length);
-    return Request;
+async function Verifyˉpackageˉentry(Artifact, Root, Boundary) {
+    if (Artifact === null || typeof Artifact !== "object" ||
+        typeof Artifact.path !== "string" || Artifact.path.length === 0 ||
+        !Number.isInteger(Artifact.bytes) || Artifact.bytes < 1 ||
+        typeof Artifact.sha256 !== "string" || !/^[0-9a-f]{64}$/u.test(Artifact.sha256)) {
+        Fail(`The ${Boundary} package entry is invalid.`);
+    }
+    const Resolved = path.resolve(Root, Artifact.path);
+    if (!Resolved.startsWith(`${path.resolve(Root)}${path.sep}`)) {
+        Fail(`The ${Boundary} path escapes its package.`);
+    }
+    const Bytes = await readFile(Resolved);
+    Equal(Artifact.bytes, Bytes.byteLength, `${Boundary} byte length`);
+    Equal(Artifact.sha256, Sha256(Bytes), `${Boundary} SHA-256`);
+    return Bytes;
+}
+
+function Requireˉartifact(Artifacts, Name) {
+    const Artifact = Artifacts.get(Name);
+    if (Artifact === undefined) {
+        Fail(`The '${Name}' browser artifact is missing.`);
+    }
+    return Artifact;
+}
+
+async function Verifyˉwebassembly(
+    Bytes,
+    Abi,
+    Outputˉkind,
+    Pages,
+    Inputˉoffset,
+    Inputˉcapacity,
+    Outputˉoffset,
+    Outputˉcapacity,
+    Boundary,
+) {
+    if (!WebAssembly.validate(Bytes)) {
+        Fail(`The packaged ${Boundary} is not valid WebAssembly.`);
+    }
+    const Module = await WebAssembly.compile(Bytes);
+    Equal(0, WebAssembly.Module.imports(Module).length, `${Boundary} import count`);
+    Equal(
+        JSON.stringify([
+            ["Windvale.run", "function"],
+            ["Windvale.abi", "global"],
+            ["Windvale.memory", "memory"],
+            ["Windvale.input_offset", "global"],
+            ["Windvale.input_capacity", "global"],
+            ["Windvale.output_offset", "global"],
+            ["Windvale.output_capacity", "global"],
+            ["Windvale.output_length", "global"],
+            ["Windvale.output_kind", "global"],
+            ["Windvale.instructions", "global"],
+        ]),
+        JSON.stringify(WebAssembly.Module.exports(Module).map(Item => [Item.name, Item.kind])),
+        `${Boundary} export contract`,
+    );
+    const Instance = await WebAssembly.instantiate(Module, {});
+    const Exports = Instance.exports;
+    const Memory = Exports["Windvale.memory"];
+    Equal(Abi, Readˉglobal(Exports, "Windvale.abi"), `${Boundary} ABI`);
+    Equal(Outputˉkind, Readˉglobal(Exports, "Windvale.output_kind"), `${Boundary} output kind`);
+    if (!(Memory instanceof WebAssembly.Memory)) {
+        Fail(`The ${Boundary} memory export is invalid.`);
+    }
+    Equal(Pages * 65_536, Memory.buffer.byteLength, `${Boundary} memory extent`);
+    Equal(Inputˉoffset, Readˉglobal(Exports, "Windvale.input_offset"), `${Boundary} input offset`);
+    Equal(Inputˉcapacity, Readˉglobal(Exports, "Windvale.input_capacity"), `${Boundary} input capacity`);
+    Equal(Outputˉoffset, Readˉglobal(Exports, "Windvale.output_offset"), `${Boundary} output offset`);
+    Equal(Outputˉcapacity, Readˉglobal(Exports, "Windvale.output_capacity"), `${Boundary} output capacity`);
+    return Instance;
+}
+
+function Buildˉsourceˉset(Source) {
+    const Result = Buffer.alloc(24 + Source.byteLength);
+    Result.writeUInt32LE(0x5353_5657, 0);
+    Result.writeUInt16LE(1, 4);
+    Result.writeUInt16LE(0, 6);
+    Result.writeUInt32LE(1, 8);
+    Result.writeUInt32LE(8, 12);
+    Result.writeUInt32LE(24, 16);
+    Result.writeUInt32LE(Source.byteLength, 20);
+    Source.copy(Result, 24);
+    return Result;
+}
+
+async function Readˉjson(Fileˉpath) {
+    return JSON.parse(await readFile(Fileˉpath, "utf8"));
 }
 
 function Readˉglobal(Exports, Name) {
@@ -297,6 +265,10 @@ function Readˉglobal(Exports, Name) {
         Fail(`The '${Name}' export is not an integer global.`);
     }
     return Global.value;
+}
+
+function Sha256(Bytes) {
+    return createHash("sha256").update(Bytes).digest("hex");
 }
 
 function Equal(Expected, Actual, Boundary) {

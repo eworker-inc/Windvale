@@ -62,7 +62,7 @@
 /playground/css/*
   Cache-Control: public, max-age=0, must-revalidate
 
-/playground/webassembly-compiler/artifacts/*
+/playground/compiler-package/*
   Cache-Control: public, max-age=0, must-revalidate
 
 /preview.png

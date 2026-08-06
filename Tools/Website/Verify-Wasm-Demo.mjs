@@ -19,7 +19,6 @@ const Publicˉsources = await Promise.all([
     "Website/sitemap.xml",
     "Tools/Windvale.Playground/README.md",
     "Tools/Windvale.Playground/wwwroot/index.html",
-    "Tools/Windvale.Playground/wwwroot/webassembly-compiler/index.html",
 ].map(Relativeˉpath => readFile(path.join(Repositoryˉroot, Relativeˉpath), "utf8")));
 
 if (Publicˉsources.some(Source => Source.toLowerCase().includes("wasm-demo"))) {

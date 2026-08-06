@@ -1,0 +1,28 @@
+{
+  "format": "windvale-webassembly-segmented-backend-1",
+  "sourceCommit": "37d7fcf69445c220ff0baae1922fc7b6f57809b8",
+  "decision": "Documents/Decisions/0333-Segmented-Direct-WebAssembly-Compiler.md",
+  "sourceProject": "Windvale-WebAssembly-Scalar-Dispatcher-Segmented-Memory-Tool.wvproj",
+  "normalUseRequiresDotnet": false,
+  "recoveryRequiresDotnet": true,
+  "artifacts": [
+    {
+      "name": "segmented-webassembly-compiler-wvb",
+      "path": "Wvb/Segmented-WebAssembly-Compiler.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 358973,
+      "sha256": "cc2fcfcff35c3b7b679a48112b2afc786cbace4d0bf84981ef7ef5b3620cda2c",
+      "sourceProject": "Windvale-WebAssembly-Scalar-Dispatcher-Segmented-Memory-Tool.wvproj"
+    },
+    {
+      "name": "segmented-webassembly-compiler-wasm",
+      "path": "Wasm/Segmented-WebAssembly-Compiler.wasm",
+      "target": "wasm32-browser-v1-experimental",
+      "bytes": 3429129,
+      "sha256": "2fc062968ffc12d34ccd1e879e11609bf5193447dfc889660ecbff81d3c97f1a",
+      "sourceWvb": "Wvb/Segmented-WebAssembly-Compiler.wvb",
+      "abi": 4,
+      "outputKind": 3
+    }
+  ]
+}

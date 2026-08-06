@@ -2,7 +2,7 @@ import * as Editor from "../editor/playground-editor.js";
 import { Compileˉandˉrun } from "./windvale-compiler-host.js";
 
 const MAXIMUM_SOURCE_TABS = 12;
-const COMPILER_TIMEOUT_MILLISECONDS = 600_000;
+const COMPILER_TIMEOUT_MILLISECONDS = 300_000;
 const EXACT_SOURCE = `module WebAssemblyˉcompilerˉsuccess profile portable;
 
 export fn Main() -> i32 {
@@ -270,7 +270,7 @@ async function Runˉprogram() {
         Resultˉviews.get("output").innerHTML = `
             <div class="running-state">
                 <span class="activity-ring" aria-hidden="true"></span>
-                <p><strong>Warming and compiling in WebAssembly…</strong><span>${Seconds.toLocaleString()} seconds elapsed</span></p>
+                <p><strong>Compiling natively in WebAssembly…</strong><span>${Seconds.toLocaleString()} seconds elapsed</span></p>
             </div>`;
     };
     Updateˉprogress();
@@ -334,11 +334,8 @@ function Renderˉpipelineˉresult(Result, Instructionˉbudget, Elapsedˉmillisec
                 ${Evidenceˉitem("WVB size", `${Result.Wvb.byteLength.toLocaleString()} bytes`)}
                 ${Evidenceˉitem("Execution budget", Instructionˉbudget.toLocaleString())}
                 ${Evidenceˉitem("Elapsed", `${(Elapsedˉmilliseconds / 1_000).toFixed(1)} seconds`)}
-                ${Evidenceˉitem("Warmup guest", Formatˉcount(Result.WarmupGuestInstructions))}
-                ${Evidenceˉitem("Compiler guest", Formatˉcount(Result.CompilerGuestInstructions))}
+                ${Evidenceˉitem("Compiler", Formatˉcount(Result.CompilerInstructions))}
                 ${Evidenceˉitem("Execution guest", Formatˉcount(Result.ExecutionGuestInstructions))}
-                ${Evidenceˉitem("Warmup outer", Formatˉcount(Result.WarmupOuterInstructions))}
-                ${Evidenceˉitem("Compiler outer", Formatˉcount(Result.CompilerOuterInstructions))}
                 ${Evidenceˉitem("Execution outer", Formatˉcount(Result.ExecutionOuterInstructions))}
             </dl>
             <div class="digest">
@@ -348,7 +345,7 @@ function Renderˉpipelineˉresult(Result, Instructionˉbudget, Elapsedˉmillisec
                 <code>compile → verify → execute</code>
                 <span>Framework requests</span>
                 <code>${Frameworkˉrequests} .NET / Blazor</code>
-                <p class="wasm-note">The compiler package is identity-checked before use. Its returned WVB is treated as untrusted input and admitted again before execution.</p>
+                <p class="wasm-note">The direct compiler package is identity-checked before use. Its returned WVB is treated as untrusted input and admitted again before execution.</p>
             </div>
         </div>`;
 }

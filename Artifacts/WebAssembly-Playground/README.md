@@ -1,6 +1,6 @@
 # WebAssembly playground artifacts
 
-This directory is the digest-pinned input package for the Windvale-native browser compiler experiment. Normal website verification and publication may validate and copy these files without starting .NET. The package is not a claim that every artifact can already be regenerated without Stage 0.
+This directory is the digest-pinned input package for the Windvale-native browser compiler. Normal website verification and publication validate and copy the two manifest-owned Wasm files without starting .NET. Compiler and interpreter WVB files remain pinned source provenance rather than browser downloads.
 
 `Wvb-Scalar-Interpreter.wvb` is reproduced by the ordinary pinned native front door:
 
@@ -24,4 +24,10 @@ node Tools/WebAssembly/Build-Interpreter-Wasm.mjs
 
 Use `--check` for temporary byte-exact reproduction. [Decision 0278](../../Documents/Decisions/0278-Native-WebAssembly-Artifact-Regeneration.md) owns the bounded format-3 compiler-family application and exact output evidence. Stage 0 remains only the explicit recovery route for reconstructing the pinned native compiler packages; it is absent from normal browser artifact production, website build, and deployment.
 
-The browser worker must validate the complete manifest identities, reject WebAssembly imports, enforce execution ABI 3 and its fixed memory regions, and treat compiler output as untrusted WVB. [Decision 0264](../../Documents/Decisions/0264-First-Exact-WebAssembly-Hosted-Compilation.md) pins the first exact source-to-WVB result. [Decision 0273](../../Documents/Decisions/0273-Warmed-WebAssembly-Compiler-Worker.md) owns the current extracted interpreter identity and its validated same-instance warmup.
+`Windvale-Compiler-Direct.wasm` is reproduced from the portable compiler WVB by the digest-pinned segmented generator:
+
+```powershell
+node Tools/WebAssembly/Build-Direct-Compiler-Wasm.mjs
+```
+
+Use `--check` for temporary byte-exact reproduction. [Decision 0333](../../Documents/Decisions/0333-Segmented-Direct-WebAssembly-Compiler.md) owns the fixed segment protocol, direct compiler ABI, exact output, and retained recovery seam for reconstructing the generator Wasm. The browser worker rejects imports, validates ABI 4 for direct compilation and ABI 3 for returned-WVB execution, enforces fixed memory regions, and treats compiler output as untrusted WVB.

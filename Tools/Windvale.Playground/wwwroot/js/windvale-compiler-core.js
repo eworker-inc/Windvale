@@ -3,22 +3,18 @@ const WVXO_MAGIC = 0x4F58_5657;
 const WVSS_MAGIC = 0x5353_5657;
 const WVCO_MAGIC = 0x4F43_5657;
 const MAXIMUM_SOURCE_BYTES = 64 * 1024;
-const INTERPRETER_WARMUP_GUEST_BUDGET = 20_000;
-const COMPILER_GUEST_BUDGET = 2_000_000;
-const COMPILER_OUTER_BUDGET = 1_800_000_000;
+const COMPILER_INSTRUCTION_BUDGET = 2_000_000;
 const EXECUTION_OUTER_BUDGET = 200_000_000;
 const MAXIMUM_CALL_DEPTH = 64;
 
 export async function Compileˉverifyˉexecute(
     Interpreterˉbytes,
     Compilerˉbytes,
-    Warmupˉbytes,
     Sourceˉbytes,
     Executionˉinstructionˉlimit = 1_000_000,
 ) {
     Requireˉbytes(Interpreterˉbytes, "interpreter");
-    Requireˉbytes(Compilerˉbytes, "compiler");
-    Requireˉbytes(Warmupˉbytes, "interpreter warmup");
+    Requireˉbytes(Compilerˉbytes, "direct compiler");
     Requireˉbytes(Sourceˉbytes, "source");
     if (Sourceˉbytes.byteLength === 0 ||
         Sourceˉbytes.byteLength > MAXIMUM_SOURCE_BYTES) {
@@ -28,77 +24,62 @@ export async function Compileˉverifyˉexecute(
     if (!WebAssembly.validate(Interpreterˉbytes)) {
         throw new Error("The browser rejected the packaged Windvale interpreter.");
     }
+    if (!WebAssembly.validate(Compilerˉbytes)) {
+        throw new Error("The browser rejected the packaged Windvale compiler.");
+    }
 
-    const Module = await WebAssembly.compile(Interpreterˉbytes);
-    if (WebAssembly.Module.imports(Module).length !== 0) {
+    const [Interpreterˉmodule, Compilerˉmodule] = await Promise.all([
+        WebAssembly.compile(Interpreterˉbytes),
+        WebAssembly.compile(Compilerˉbytes),
+    ]);
+    if (WebAssembly.Module.imports(Interpreterˉmodule).length !== 0) {
         throw new Error("The packaged Windvale interpreter imports a host capability.");
     }
-    Requireˉexports(Module);
-    const Instance = await WebAssembly.instantiate(Module, {});
-    const Exports = Instance.exports;
-    const Memory = Exports["Windvale.memory"];
-    if (Readˉglobal(Exports, "Windvale.abi") !== 3 ||
-        !(Memory instanceof WebAssembly.Memory) ||
-        Memory.buffer.byteLength !== 129 * 65_536) {
+    if (WebAssembly.Module.imports(Compilerˉmodule).length !== 0) {
+        throw new Error("The packaged Windvale compiler imports a host capability.");
+    }
+    Requireˉexports(Interpreterˉmodule, "interpreter");
+    Requireˉexports(Compilerˉmodule, "compiler");
+    const [Interpreterˉinstance, Compilerˉinstance] = await Promise.all([
+        WebAssembly.instantiate(Interpreterˉmodule, {}),
+        WebAssembly.instantiate(Compilerˉmodule, {}),
+    ]);
+    const Interpreterˉexports = Interpreterˉinstance.exports;
+    const Interpreterˉmemory = Interpreterˉexports["Windvale.memory"];
+    if (Readˉglobal(Interpreterˉexports, "Windvale.abi") !== 3 ||
+        Readˉglobal(Interpreterˉexports, "Windvale.output_kind") !== 1 ||
+        !(Interpreterˉmemory instanceof WebAssembly.Memory) ||
+        Interpreterˉmemory.buffer.byteLength !== 129 * 65_536) {
         throw new Error("The packaged interpreter violates execution ABI 3.");
     }
-    let Memoryˉgrew = false;
-    try {
-        Memory.grow(1);
-        Memoryˉgrew = true;
+    Requireˉfixedˉmemory(Interpreterˉmemory, "interpreter");
+    Requireˉinterpreterˉmemoryˉregions(Interpreterˉexports);
+
+    const Compilerˉexports = Compilerˉinstance.exports;
+    const Compilerˉmemory = Compilerˉexports["Windvale.memory"];
+    if (Readˉglobal(Compilerˉexports, "Windvale.abi") !== 4 ||
+        Readˉglobal(Compilerˉexports, "Windvale.output_kind") !== 1 ||
+        !(Compilerˉmemory instanceof WebAssembly.Memory) ||
+        Compilerˉmemory.buffer.byteLength !== 2_497 * 65_536) {
+        throw new Error("The packaged compiler violates execution ABI 4.");
     }
-    catch (Growthˉfailure) {
-        if (!(Growthˉfailure instanceof RangeError)) {
-            throw Growthˉfailure;
-        }
-    }
-    if (Memoryˉgrew) {
-        throw new Error("The packaged interpreter memory is not fixed.");
-    }
-    Requireˉmemoryˉregions(Exports);
+    Requireˉfixedˉmemory(Compilerˉmemory, "compiler");
+    Requireˉcompilerˉmemoryˉregions(Compilerˉexports);
 
     const Sourceˉset = Buildˉsourceˉset(Sourceˉbytes);
-    const Warmupˉrequest = Buildˉscalarˉrequest(
-        Warmupˉbytes,
-        INTERPRETER_WARMUP_GUEST_BUDGET,
-    );
-    const Warmupˉrun = Runˉrequest(
-        Exports,
-        Warmupˉrequest,
-        COMPILER_OUTER_BUDGET,
-    );
-    const Warmupˉresponse = Readˉwvxo(Warmupˉrun.Output, 1);
-    if (Warmupˉresponse.Status !== 3011 ||
-        Warmupˉresponse.Guestˉinstructions !== INTERPRETER_WARMUP_GUEST_BUDGET ||
-        Warmupˉresponse.Result.byteLength !== 4 ||
-        Readˉi32(Warmupˉresponse.Result, 0) !== 0) {
-        throw new Error("The bounded WebAssembly compiler warmup was inconsistent.");
-    }
-    const Compilerˉrequest = Buildˉbytesˉrequest(
-        Compilerˉbytes,
+    const Compilerˉrun = Runˉcompiler(
+        Compilerˉexports,
         Sourceˉset,
-        COMPILER_GUEST_BUDGET,
+        COMPILER_INSTRUCTION_BUDGET,
     );
-    const Compilerˉrun = Runˉrequest(
-        Exports,
-        Compilerˉrequest,
-        COMPILER_OUTER_BUDGET,
-    );
-    const Compilerˉresponse = Readˉwvxo(Compilerˉrun.Output, 2);
-    if (Compilerˉresponse.Status !== 0) {
-        throw new Error(
-            `Windvale compilation failed with WVR${Compilerˉresponse.Status} ` +
-            `after ${Compilerˉresponse.Guestˉinstructions} instructions.`,
-        );
-    }
-    const Wvb = Readˉwvco(Compilerˉresponse.Result);
+    const Wvb = Readˉwvco(Compilerˉrun.Output);
 
     const Executionˉrequest = Buildˉscalarˉrequest(
         Wvb,
         Executionˉinstructionˉlimit,
     );
     const Executionˉrun = Runˉrequest(
-        Exports,
+        Interpreterˉexports,
         Executionˉrequest,
         EXECUTION_OUTER_BUDGET,
     );
@@ -110,10 +91,7 @@ export async function Compileˉverifyˉexecute(
     return {
         Wvb,
         Wvbˉsha256: await Sha256(Wvb),
-        Warmupˉguestˉinstructions: Warmupˉresponse.Guestˉinstructions,
-        Warmupˉouterˉinstructions: Warmupˉrun.Outerˉinstructions,
-        Compilerˉguestˉinstructions: Compilerˉresponse.Guestˉinstructions,
-        Compilerˉouterˉinstructions: Compilerˉrun.Outerˉinstructions,
+        Compilerˉinstructions: Compilerˉrun.Instructions,
         Executionˉstatus: Executionˉresponse.Status,
         Executionˉresult: Readˉi32(Executionˉresponse.Result, 0),
         Executionˉguestˉinstructions: Executionˉresponse.Guestˉinstructions,
@@ -135,21 +113,6 @@ function Buildˉsourceˉset(Source) {
     return Result;
 }
 
-function Buildˉbytesˉrequest(Candidate, Input, Budget) {
-    const Result = new Uint8Array(24 + Candidate.byteLength + Input.byteLength);
-    const View = new DataView(Result.buffer);
-    Writeˉu32(View, 0, WVXI_MAGIC);
-    Writeˉu16(View, 4, 2);
-    Writeˉu16(View, 6, 0);
-    Writeˉu32(View, 8, Budget);
-    Writeˉu32(View, 12, MAXIMUM_CALL_DEPTH);
-    Writeˉu32(View, 16, Candidate.byteLength);
-    Writeˉu32(View, 20, Input.byteLength);
-    Result.set(Candidate, 24);
-    Result.set(Input, 24 + Candidate.byteLength);
-    return Result;
-}
-
 function Buildˉscalarˉrequest(Candidate, Budget) {
     const Result = new Uint8Array(16 + Candidate.byteLength);
     const View = new DataView(Result.buffer);
@@ -160,6 +123,38 @@ function Buildˉscalarˉrequest(Candidate, Budget) {
     Writeˉu32(View, 12, MAXIMUM_CALL_DEPTH);
     Result.set(Candidate, 16);
     return Result;
+}
+
+function Runˉcompiler(Exports, Input, Budget) {
+    const Memory = Exports["Windvale.memory"];
+    const Inputˉoffset = Readˉglobal(Exports, "Windvale.input_offset");
+    const Inputˉcapacity = Readˉglobal(Exports, "Windvale.input_capacity");
+    if (Input.byteLength > Inputˉcapacity) {
+        throw new Error("The compiler source set exceeds its fixed input region.");
+    }
+    new Uint8Array(Memory.buffer, Inputˉoffset, Input.byteLength).set(Input);
+    const Status = Exports["Windvale.run"](Budget, Input.byteLength);
+    const Instructions = Readˉglobal(Exports, "Windvale.instructions");
+    if (Status !== 0 || Instructions < 0 || Instructions > Budget) {
+        throw new Error(
+            `Windvale compilation failed with WVR${Status} ` +
+            `after ${Instructions} instructions.`,
+        );
+    }
+    const Outputˉlength = Readˉglobal(Exports, "Windvale.output_length");
+    const Outputˉcapacity = Readˉglobal(Exports, "Windvale.output_capacity");
+    if (Outputˉlength < 16 || Outputˉlength > Outputˉcapacity) {
+        throw new Error("The compiler returned an invalid output length.");
+    }
+    const Outputˉoffset = Readˉglobal(Exports, "Windvale.output_offset");
+    return {
+        Instructions,
+        Output: new Uint8Array(
+            Memory.buffer,
+            Outputˉoffset,
+            Outputˉlength,
+        ).slice(),
+    };
 }
 
 function Runˉrequest(Exports, Request, Outerˉbudget) {
@@ -248,7 +243,7 @@ function Readˉwvco(Bytes) {
     return Payload;
 }
 
-function Requireˉmemoryˉregions(Exports) {
+function Requireˉinterpreterˉmemoryˉregions(Exports) {
     if (Readˉglobal(Exports, "Windvale.input_offset") !== 65_536 ||
         Readˉglobal(Exports, "Windvale.input_capacity") !== 4_194_304 ||
         Readˉglobal(Exports, "Windvale.output_offset") !== 4_259_840 ||
@@ -257,7 +252,32 @@ function Requireˉmemoryˉregions(Exports) {
     }
 }
 
-function Requireˉexports(Module) {
+function Requireˉcompilerˉmemoryˉregions(Exports) {
+    if (Readˉglobal(Exports, "Windvale.input_offset") !== 142_671_872 ||
+        Readˉglobal(Exports, "Windvale.input_capacity") !== 4_194_304 ||
+        Readˉglobal(Exports, "Windvale.output_offset") !== 146_866_176 ||
+        Readˉglobal(Exports, "Windvale.output_capacity") !== 16_777_216) {
+        throw new Error("The compiler exposes invalid fixed ABI regions.");
+    }
+}
+
+function Requireˉfixedˉmemory(Memory, Name) {
+    let Memoryˉgrew = false;
+    try {
+        Memory.grow(1);
+        Memoryˉgrew = true;
+    }
+    catch (Growthˉfailure) {
+        if (!(Growthˉfailure instanceof RangeError)) {
+            throw Growthˉfailure;
+        }
+    }
+    if (Memoryˉgrew) {
+        throw new Error(`The packaged ${Name} memory is not fixed.`);
+    }
+}
+
+function Requireˉexports(Module, Name) {
     const Expected = [
         ["Windvale.run", "function"], ["Windvale.abi", "global"],
         ["Windvale.memory", "memory"], ["Windvale.input_offset", "global"],
@@ -268,7 +288,7 @@ function Requireˉexports(Module) {
     const Actual = WebAssembly.Module.exports(Module);
     if (Actual.length !== Expected.length || Expected.some((Item, Index) =>
         Actual[Index].name !== Item[0] || Actual[Index].kind !== Item[1])) {
-        throw new Error("The interpreter export contract is invalid.");
+        throw new Error(`The ${Name} export contract is invalid.`);
     }
 }
 

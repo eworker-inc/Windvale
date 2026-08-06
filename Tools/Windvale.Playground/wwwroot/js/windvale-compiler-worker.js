@@ -1,7 +1,7 @@
 import { Compileˉverifyˉexecute } from "./windvale-compiler-core.js";
 
 const Packageˉmanifestˉurl = new URL(
-    "../webassembly-compiler/artifacts/Manifest.json",
+    "../compiler-package/Manifest.json",
     import.meta.url,
 );
 let Packageˉpromise = null;
@@ -19,7 +19,6 @@ self.onmessage = async Event => {
         const Result = await Compileˉverifyˉexecute(
             Package.Interpreter,
             Package.Compiler,
-            Package.Warmup,
             new Uint8Array(Message.Source),
             Message.ExecutionInstructionLimit,
         );
@@ -30,10 +29,7 @@ self.onmessage = async Event => {
             Error: null,
             Wvb: Wvb.buffer,
             WvbSha256: Result.Wvbˉsha256,
-            WarmupGuestInstructions: Result.Warmupˉguestˉinstructions,
-            WarmupOuterInstructions: Result.Warmupˉouterˉinstructions,
-            CompilerGuestInstructions: Result.Compilerˉguestˉinstructions,
-            CompilerOuterInstructions: Result.Compilerˉouterˉinstructions,
+            CompilerInstructions: Result.Compilerˉinstructions,
             ExecutionStatus: Result.Executionˉstatus,
             ExecutionResult: Result.Executionˉresult,
             ExecutionGuestInstructions: Result.Executionˉguestˉinstructions,
@@ -49,10 +45,7 @@ self.onmessage = async Event => {
                 : "The Windvale compiler worker failed.",
             Wvb: null,
             WvbSha256: null,
-            WarmupGuestInstructions: null,
-            WarmupOuterInstructions: null,
-            CompilerGuestInstructions: null,
-            CompilerOuterInstructions: null,
+            CompilerInstructions: null,
             ExecutionStatus: null,
             ExecutionResult: null,
             ExecutionGuestInstructions: null,
@@ -77,10 +70,10 @@ async function Loadˉpackage() {
         );
     }
     const Manifest = await Manifestˉresponse.json();
-    if (Manifest.format !== "windvale-webassembly-playground-1" ||
+    if (Manifest.format !== "windvale-webassembly-playground-2" ||
         Manifest.target !== "wasm32-browser-v1-experimental" ||
         !Array.isArray(Manifest.artifacts) ||
-        Manifest.artifacts.length !== 4) {
+        Manifest.artifacts.length !== 2) {
         throw new Error("The Windvale compiler package manifest is invalid.");
     }
     const Interpreter = await Loadˉartifact(
@@ -91,14 +84,9 @@ async function Loadˉpackage() {
     const Compiler = await Loadˉartifact(
         Manifest,
         Manifestˉresponse.url,
-        "portable-source-compiler",
+        "direct-source-compiler-wasm",
     );
-    const Warmup = await Loadˉartifact(
-        Manifest,
-        Manifestˉresponse.url,
-        "interpreter-tier-warmup",
-    );
-    return { Interpreter, Compiler, Warmup };
+    return { Interpreter, Compiler };
 }
 
 async function Loadˉartifact(Manifest, Manifestˉurl, Name) {

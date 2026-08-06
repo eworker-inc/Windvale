@@ -11,11 +11,11 @@ const Sourceˉroot = path.join(
 );
 const Destinationˉroot = path.join(
     Repositoryˉroot,
-    "Tools/Windvale.Playground/wwwroot/webassembly-compiler/artifacts",
+    "Tools/Windvale.Playground/wwwroot/compiler-package",
 );
 const Expectedˉdestination = path.join(
     Repositoryˉroot,
-    "Tools/Windvale.Playground/wwwroot/webassembly-compiler",
+    "Tools/Windvale.Playground/wwwroot",
 );
 const Analyticsˉsource = path.join(Repositoryˉroot, "Website/analytics.js");
 const Analyticsˉdestination = path.join(
@@ -28,9 +28,9 @@ if (!Destinationˉroot.startsWith(`${Expectedˉdestination}${path.sep}`)) {
 
 const Manifestˉbytes = await readFile(path.join(Sourceˉroot, "Manifest.json"));
 const Manifest = JSON.parse(Manifestˉbytes.toString("utf8"));
-if (Manifest.format !== "windvale-webassembly-playground-1" ||
+if (Manifest.format !== "windvale-webassembly-playground-2" ||
     !Array.isArray(Manifest.artifacts) ||
-    Manifest.artifacts.length !== 4) {
+    Manifest.artifacts.length !== 2) {
     throw new Error("The WebAssembly playground package manifest is invalid.");
 }
 
