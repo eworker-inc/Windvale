@@ -1,8 +1,8 @@
 # Windvale
 
-![Four-panel illustrated Windvale progress snapshot showing the language leading to a compiler, runtime, operating system, and database reader](Documents/Project/Images/Windvale-Project-Progress-2026-08-04.png)
+![Four-panel Day 9 Windvale comic showing the language compiling its compiler to WebAssembly while C# keeps the recovery kit](Documents/Project/Images/Windvale-Project-History-Day-9.png)
 
-*An illustrated 4 August 2026 progress snapshot: the language grew a compiler, the compiler grew a runtime, the runtime pulled in an operating system, and a database reader joined the family.*
+*Day 9: Windvale compiled its compiler to direct WebAssembly, brought the measured browser playground run down to 2.1 seconds, and let C# retire from the normal browser path while keeping it close for recovery.*
 
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
