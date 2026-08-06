@@ -1658,13 +1658,51 @@ export fn Main(Request: bytes) -> bytes {
                                     0u32,
                                     512u32
                                 );
-                                // Stack cells and the fields under construction
-                                // remain conservative roots. Locals and saved
-                                // frames have verified static shapes, so append
-                                // only their record cells and never interpret
-                                // packed PCs or scalar locals as record handles.
+                                // Stack cells remain conservative roots. Locals,
+                                // saved frames, and construction fields have
+                                // verified static shapes, so append only their
+                                // record cells.
                                 var Recordˉreachableˉvalues: bytes =
-                                    Bytesˉconcat(Stack, Recordˉfields);
+                                    Stack;
+                                var Recordˉconstructionˉfieldˉcursor: u32 =
+                                    Recordˉtypeˉcursor + 4u32;
+                                var Recordˉconstructionˉfieldˉindex: u32 = 0u32;
+                                while Recordˉconstructionˉfieldˉindex
+                                    < Recordˉfieldˉcount {
+                                    let Recordˉconstructionˉnameˉlength: u32 =
+                                        Bytesˉreadˉu32ˉlittle(
+                                            Module,
+                                            Recordˉconstructionˉfieldˉcursor
+                                        );
+                                    Recordˉconstructionˉfieldˉcursor =
+                                        Recordˉconstructionˉfieldˉcursor
+                                            + 4u32
+                                            + Recordˉconstructionˉnameˉlength;
+                                    let Recordˉconstructionˉfieldˉkind: u32 =
+                                        U32ˉfromˉu8(Bytesˉreadˉu8(
+                                            Module,
+                                            Recordˉconstructionˉfieldˉcursor
+                                        ));
+                                    Recordˉconstructionˉfieldˉcursor =
+                                        Recordˉconstructionˉfieldˉcursor + 1u32;
+                                    if Recordˉconstructionˉfieldˉkind >= 7u32 {
+                                        Recordˉconstructionˉfieldˉcursor =
+                                            Recordˉconstructionˉfieldˉcursor + 4u32;
+                                    }
+                                    if Recordˉconstructionˉfieldˉkind == 7u32 {
+                                        Recordˉreachableˉvalues = Bytesˉconcat(
+                                            Recordˉreachableˉvalues,
+                                            Bytesˉslice(
+                                                Recordˉfields,
+                                                Recordˉconstructionˉfieldˉindex
+                                                    * 8u32,
+                                                8u32
+                                            )
+                                        );
+                                    }
+                                    Recordˉconstructionˉfieldˉindex =
+                                        Recordˉconstructionˉfieldˉindex + 1u32;
+                                }
                                 let Recordˉactiveˉshapeˉoffset: u32 =
                                     Bytesˉreadˉu32ˉlittle(
                                         Functionˉshapeˉoffsets,
@@ -1808,17 +1846,70 @@ export fn Main(Request: bytes) -> bytes {
                                                             ),
                                                             Recordˉmarkˉsuffix
                                                         );
-                                                        Recordˉreachableˉvalues =
-                                                            Bytesˉconcat(
-                                                                Recordˉreachableˉvalues,
-                                                                Bytesˉslice(
-                                                                    Records,
-                                                                    Recordˉreachableˉslot
-                                                                        * 8u32,
-                                                                    Recordˉreachableˉsize
-                                                                        * 8u32
-                                                                )
+                                                        var Recordˉnestedˉfieldˉcursor:
+                                                            u32 = Bytesˉreadˉu32ˉlittle(
+                                                                Typeˉoffsets,
+                                                                (Recordˉreachableˉowner
+                                                                    - 1u32) * 4u32
+                                                            ) + 1u32;
+                                                        let Recordˉnestedˉnameˉlength:
+                                                            u32 = Bytesˉreadˉu32ˉlittle(
+                                                                Module,
+                                                                Recordˉnestedˉfieldˉcursor
                                                             );
+                                                        Recordˉnestedˉfieldˉcursor =
+                                                            Recordˉnestedˉfieldˉcursor
+                                                                + 4u32
+                                                                + Recordˉnestedˉnameˉlength
+                                                                + 4u32;
+                                                        var Recordˉnestedˉfieldˉindex:
+                                                            u32 = 0u32;
+                                                        while Recordˉnestedˉfieldˉindex
+                                                            < Recordˉreachableˉsize {
+                                                            let Recordˉnestedˉfieldˉnameˉlength:
+                                                                u32 = Bytesˉreadˉu32ˉlittle(
+                                                                    Module,
+                                                                    Recordˉnestedˉfieldˉcursor
+                                                                );
+                                                            Recordˉnestedˉfieldˉcursor =
+                                                                Recordˉnestedˉfieldˉcursor
+                                                                    + 4u32
+                                                                    + Recordˉnestedˉfieldˉnameˉlength;
+                                                            let Recordˉnestedˉfieldˉkind:
+                                                                u32 = U32ˉfromˉu8(
+                                                                    Bytesˉreadˉu8(
+                                                                        Module,
+                                                                        Recordˉnestedˉfieldˉcursor
+                                                                    )
+                                                                );
+                                                            Recordˉnestedˉfieldˉcursor =
+                                                                Recordˉnestedˉfieldˉcursor
+                                                                    + 1u32;
+                                                            if Recordˉnestedˉfieldˉkind
+                                                                >= 7u32 {
+                                                                Recordˉnestedˉfieldˉcursor =
+                                                                    Recordˉnestedˉfieldˉcursor
+                                                                        + 4u32;
+                                                            }
+                                                            if Recordˉnestedˉfieldˉkind
+                                                                == 7u32 {
+                                                                Recordˉreachableˉvalues =
+                                                                    Bytesˉconcat(
+                                                                        Recordˉreachableˉvalues,
+                                                                        Bytesˉslice(
+                                                                            Records,
+                                                                            Recordˉreachableˉslot
+                                                                                * 8u32
+                                                                                + Recordˉnestedˉfieldˉindex
+                                                                                    * 8u32,
+                                                                            8u32
+                                                                        )
+                                                                    );
+                                                            }
+                                                            Recordˉnestedˉfieldˉindex =
+                                                                Recordˉnestedˉfieldˉindex
+                                                                    + 1u32;
+                                                        }
                                                     }
                                                 }
                                             }
