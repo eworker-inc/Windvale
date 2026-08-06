@@ -880,7 +880,7 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
         if Numeric <= 15u32 { return 1u32; }
     }
     if Numeric >= 16u32 {
-        if Numeric <= 20u32 { return 1u32; }
+        if Numeric <= 22u32 { return 1u32; }
     }
     if Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode) { return 1u32; }
     if Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode) { return 1u32; }
@@ -1539,7 +1539,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                             Bodyˉbytes = Bodyˉbytes + 45u32;
                         } else {
                         if Numericˉopcode >= 16u32 {
-                            if Numericˉopcode <= 18u32 || Numericˉopcode == 20u32 {
+                            if Numericˉopcode <= 18u32 ||
+                                (Numericˉopcode >= 20u32 && Numericˉopcode <= 22u32) {
                                 var Binaryˉtype: u8 = 1u8;
                                 if Numericˉopcode >= 20u32 { Binaryˉtype = 5u8; }
                                 if Depth < 2u32 {
@@ -1562,6 +1563,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                                 }
                                 if Opcode == 18u8 {
                                     Bodyˉbytes = Bodyˉbytes + 40u32;
+                                } else if Opcode == 22u8 {
+                                    Bodyˉbytes = Bodyˉbytes + 41u32;
                                 } else {
                                     Bodyˉbytes = Bodyˉbytes + 39u32;
                                 }
@@ -2245,6 +2248,18 @@ export fn Compilerˉnativeˉx64ˉemitˉunsignedˉoverflowˉbranch(
     );
 }
 
+export fn Compilerˉnativeˉx64ˉemitˉnonzeroˉbranch(
+    Result: bytes,
+    Target: u32
+) -> bytes {
+    var Output: bytes = Compilerˉnativeˉx64ˉappendˉbyte(Result, 15u8);
+    Output = Compilerˉnativeˉx64ˉappendˉbyte(Output, 133u8);
+    return Compilerˉnativeˉx64ˉappendˉu32(
+        Output,
+        Target - Bytesˉlength(Output) - 4u32
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉstatus(
     Result: bytes,
     Frameˉbytes: u32,
@@ -2685,6 +2700,8 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
     if Opcode == 18u8 { return 40u32; }
     if Opcode == 19u8 { return 32u32; }
     if Opcode == 20u8 { return 39u32; }
+    if Opcode == 21u8 { return 39u32; }
+    if Opcode == 22u8 { return 41u32; }
     if Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode) { return 39u32; }
     if Compilerˉnativeˉx64ˉisˉboolˉcomparison(Opcode) { return 39u32; }
     if Compilerˉnativeˉx64ˉisˉu32ˉcomparison(Opcode) { return 39u32; }
@@ -3723,7 +3740,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                     } else {
                         let Numericˉopcode: u32 = U32ˉfromˉu8(Opcode);
                         if Numericˉopcode >= 16u32 {
-                            if Numericˉopcode <= 18u32 || Numericˉopcode == 20u32 {
+                            if Numericˉopcode <= 18u32 ||
+                                (Numericˉopcode >= 20u32 && Numericˉopcode <= 22u32) {
                                 var Binaryˉtype: u8 = 1u8;
                                 var Binaryˉindex: u32 = Nextˉi32;
                                 if Numericˉopcode >= 20u32 {
@@ -3773,7 +3791,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                                     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 1u8);
                                     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 200u8);
                                 }
-                                if Opcode == 17u8 {
+                                if Opcode == 17u8 || Opcode == 21u8 {
                                     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 41u8);
                                     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 200u8);
                                 }
@@ -3782,14 +3800,26 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                                     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 175u8);
                                     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 193u8);
                                 }
+                                if Opcode == 22u8 {
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 247u8);
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 225u8);
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 133u8);
+                                    Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 210u8);
+                                }
                                 if Numericˉopcode <= 18u32 {
                                     Result = Compilerˉnativeˉx64ˉemitˉoverflowˉbranch(
                                         Result,
                                         Overflowˉoffset
                                     );
                                 }
-                                if Opcode == 20u8 {
+                                if Opcode == 20u8 || Opcode == 21u8 {
                                     Result = Compilerˉnativeˉx64ˉemitˉunsignedˉoverflowˉbranch(
+                                        Result,
+                                        Overflowˉoffset
+                                    );
+                                }
+                                if Opcode == 22u8 {
+                                    Result = Compilerˉnativeˉx64ˉemitˉnonzeroˉbranch(
                                         Result,
                                         Overflowˉoffset
                                     );

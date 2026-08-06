@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Added checked `u32.add`, `u32.subtract`, and `u32.multiply` lowering as one typed ABI-22 arithmetic family. A focused high-value fixture and an overflow vector reproduce Stage 0's complete WVO through both Windvale adapters; full-tool self-lowering advances to function 26's `bytes.from_u16_little` frontier.
 - Added bounded `bytes.from_u32_little` lowering through the shared ABI-22 four-byte construction path. The focused fixture checks a high-bit unsigned value and reproduces Stage 0's complete WVO through both Windvale adapters without a runtime service; full-tool self-lowering remains fail-closed at the earlier `u32.multiply` frontier.
 - Added bounded `bytes.from_i32_little` lowering through the existing ABI-22 dynamic-byte arena. The focused byte-construction fixture checks exact signed little-endian round-trip behavior and reproduces Stage 0's complete WVO through both Windvale adapters without a runtime service; full-tool self-lowering clears functions 1 and 2 before reaching function 3's `u32.multiply` frontier.
 - Added bounded `bytes.from_u8` lowering through the existing ABI-22 dynamic-byte arena. A focused `255u8` fixture reproduces Stage 0's complete WVO through both Windvale adapters without a runtime service; full-tool self-lowering now advances to `bytes.from_i32_little`.

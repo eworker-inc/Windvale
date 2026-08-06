@@ -2460,3 +2460,44 @@ no output. The first unsupported instruction is `u32.multiply` in function 3,
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain
 deferred to the grouped end-of-goal gate.
+
+## Local native checked-u32-arithmetic evidence
+
+[Decision 0269](../Decisions/0269-Native-Checked-U32-Arithmetic.md) admits
+checked `u32.add`, `u32.subtract`, and `u32.multiply` as one typed lowering
+family. Addition and subtraction retain the exact carry/borrow overflow branch;
+multiplication checks the high half of the full product before storing the low
+32 bits. Every overflow reaches the existing `WVR3007` tail.
+
+The affected tests were reviewed before execution. A focused fixture forces all
+three operations over high unsigned values, and a separate multiplication input
+requires `WVR3007`. The focused two-input selection passes in 2.586 seconds,
+including Stage 0 native execution and byte-for-byte WVO equality through both
+Windvale adapters. The successful 471-byte WVB has SHA-256
+`7ce9f43e05a16be16c5df444e4dc5ed80f0c206a6816cafa9a91466ebf1fa6fb`;
+its exact 3,362-byte WVO contains 3,255 code bytes and has SHA-256
+`d342e76095e397686defcddaf68a122517fba1d54606cbc738165eda0cb71591`.
+The separate pinned-package case passes in 9.357 seconds. Both Release builds
+report zero warnings and errors.
+
+Direct Stage 0 calculation pins the 335,078-byte core closure at SHA-256
+`ed4e1c0233fb2f5ad8f6af79b83f3e6fb415d1a0665cb27f4e97ba7a3d982f8d`.
+The pinned Windows native source front door independently rebuilds the
+330,079-byte memory adapter and 331,107-byte hosted tool in 32.7 seconds; both
+are byte-identical to Stage 0 at SHA-256
+`28c5c6e66d02619550d7ea4a29e973463067818789253a0ae4196ad59ea0c4a3`
+and `80e7e875d57cfb65bb9ea66875e784512d6bda03fea674919a90d55456026ace`.
+Current unpromoted packages are 4,569,088 Windows and 4,571,136 Linux bytes at
+SHA-256
+`f065af91d76cb50ea014c17a0c178a48f0b354b0414b4de4900c03f67c81adc2`
+and `dfbfaa68beafb60183734ae93fee681aed43bc145681562f31c2e7fdd990b452`.
+
+One direct self-lowering probe remains fail-closed as `Unsupportedˉcode` and
+publishes no output. A complete ordinal scan identifies the next unsupported
+instruction as `bytes.from_u16_little` in function 26,
+`__WvM12F4(bytes, u32, u32, u32, u8, bytes) -> bytes`, at function offset
+`0x0126`.
+
+Local Standard, Qualification, the full Seed/OS suites, Linux execution,
+GitHub verification, artifact promotion, and ordinary-path cutover remain
+deferred to the grouped end-of-goal gate.

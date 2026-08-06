@@ -54,13 +54,13 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Calls.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 329_856;
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_558_336;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 331_107;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 4_569_088;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "d0f023d3e4630f5588381effad7819eba7972fbfbec2077c4e90b33e474362eb";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_558_848;
+        "f065af91d76cb50ea014c17a0c178a48f0b354b0414b4de4900c03f67c81adc2";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 4_571_136;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "d8ef029a81c696ed86d24fbf41d112151f011f1e32407315f5a5a3d4a6343bf0";
+        "dfbfaa68beafb60183734ae93fee681aed43bc145681562f31c2e7fdd990b452";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
