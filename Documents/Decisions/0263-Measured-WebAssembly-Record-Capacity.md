@@ -21,9 +21,9 @@ Capacity cannot be selected independently of descriptor ownership. A prototype 1
 
 ## Consequences
 
-The exact portable compiler crosses its former 592,658-instruction record boundary. A minimal source-compilation request now reaches an ordinary `WVR3011` at its explicit 600,000 guest budget, after 785,328,885 outer instructions, with no record or descriptor-heap failure. Complete `WVCO 1` success is not yet claimed; the next execution slice must continue beyond 600,000 with a proportionate outer budget.
+The exact portable compiler crosses its former 592,658-instruction record boundary. A minimal source-compilation request reaches an ordinary `WVR3011` at its explicit 600,000 guest budget, after 785,328,885 outer instructions, with no record or descriptor-heap failure. [Decision 0264](0264-First-Exact-WebAssembly-Hosted-Compilation.md) continues the same request to complete byte-exact `WVCO 1` success.
 
-The current `Function-Only.wv` source is no longer a compiler-success fixture for this portable compiler baseline. It completes earlier with the stable 80-byte `Sourceˉbindings` diagnostic at guest instruction 163,256. `WebAssembly-Compiler-Success.wv` therefore pins a minimal accepted source separately. At 600,000 instructions it remains in progress rather than returning a diagnostic.
+The current `Function-Only.wv` source is no longer a compiler-success fixture for this portable compiler baseline. It completes earlier with the stable 80-byte `Sourceˉbindings` diagnostic at guest instruction 163,256. `WebAssembly-Compiler-Success.wv` therefore pins a minimal accepted source separately.
 
 The focused compiler probe now distinguishes an ordinary guest-budget response from a completed `WVCO 1` diagnostic or WVB result. When an expected Stage 0 WVB path is supplied, success requires kind zero and byte-for-byte payload equality; a valid diagnostic cannot be mistaken for compilation success.
 
@@ -39,7 +39,7 @@ The independent Stage 0 reference runtime completes that same true-live source n
 
 The descriptor-ownership pressure case again succeeds at guest instruction 15,627 with result 69 after 74,059,771 outer instructions. Text/bytes, formatting, SHA-256, one-short budget, reset, and seven malformed requests preserve their exact semantic results.
 
-The 100-byte minimal compiler source has SHA-256 `f2a1c48ae527b1b595b3097f67f8f0f666098a6ace9583e1ad7854d2006dbd9c`. Stage 0 emits an expected 183-byte WVB with SHA-256 `3d29618283648cb0d23987075912a218ac212d8c8fa31ec00b72f4bf3df795c6`. The WebAssembly-hosted compiler reaches exact budget status `3011/600000` after 785,328,885 outer instructions; byte comparison remains pending until it completes.
+The 100-byte minimal compiler source has SHA-256 `f2a1c48ae527b1b595b3097f67f8f0f666098a6ace9583e1ad7854d2006dbd9c`. Stage 0 emits an expected 183-byte WVB with SHA-256 `3d29618283648cb0d23987075912a218ac212d8c8fa31ec00b72f4bf3df795c6`. The WebAssembly-hosted compiler reaches exact budget status `3011/600000` after 785,328,885 outer instructions; Decision 0264 records its later byte-identical completion.
 
 ## Rejected alternatives
 
@@ -47,7 +47,7 @@ Keeping 512 cells was rejected by exact typed-root evidence from the real compil
 
 ## Reconsider when
 
-- The compiler reaches another typed record-capacity boundary beyond 600,000 instructions.
+- A broader compiler workload reaches another typed record-capacity boundary.
 - Descriptor-heap collection can request record tracing directly without waiting for record-arena pressure.
 - The minimal source completes and its WVB differs from the Stage 0 oracle.
 - Browser engines disagree on the exact capacity, meters, or result bytes.
