@@ -124,11 +124,14 @@ export fn Compilerˉwebassemblyˉstaticˉdataˉentryˉat(
     );
 }
 
-export fn Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
+fn Memoryˉsection(
     Input: bytes,
-    Summary: Compilerˉwebassemblyˉstaticˉdataˉsummary
+    Summary: Compilerˉwebassemblyˉstaticˉdataˉsummary,
+    Required: bool
 ) -> bytes {
-    if !Summary.Valid || Summary.Staticˉlength == 0u32 { return Empty(Input); }
+    if !Summary.Valid || !Required && Summary.Staticˉlength == 0u32 {
+        return Empty(Input);
+    }
     var Payload: bytes = Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(1u32);
     Payload = Append(
         Payload,
@@ -143,6 +146,20 @@ export fn Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
         Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(129u32)
     );
     return Encoding.Compilerˉwebassemblyˉbinaryˉsection(5u32, Payload);
+}
+
+export fn Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
+    Input: bytes,
+    Summary: Compilerˉwebassemblyˉstaticˉdataˉsummary
+) -> bytes {
+    return Memoryˉsection(Input, Summary, false);
+}
+
+export fn Compilerˉwebassemblyˉstaticˉdataˉrequiredˉmemoryˉsection(
+    Input: bytes,
+    Summary: Compilerˉwebassemblyˉstaticˉdataˉsummary
+) -> bytes {
+    return Memoryˉsection(Input, Summary, true);
 }
 
 export fn Compilerˉwebassemblyˉstaticˉdataˉsection(

@@ -77,10 +77,11 @@ export fn Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉisˉi64(
     ) == 126u32;
 }
 
-export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
+fn Functionˉtype(
     Input: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
-    Function: u32
+    Function: u32,
+    Recordˉdestination: bool
 ) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
     if !Directory.Valid || Function >= Directory.Count {
         return Compilerˉwebassemblyˉvalueˉlayoutˉemission(
@@ -95,8 +96,12 @@ export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
             Directory,
             Function
         );
+    var Emittedˉparameters: u32 = Parameterˉcount;
+    if Recordˉdestination {
+        Emittedˉparameters = Emittedˉparameters + 1u32;
+    }
     var Result: bytes = Byte(96u32);
-    Result = Append(Result, Uleb(Parameterˉcount));
+    Result = Append(Result, Uleb(Emittedˉparameters));
     var Cursor: u32 =
         Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
             Directory,
@@ -124,6 +129,10 @@ export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
         Cursor = Cursor +
             Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉwidth(Input, Cursor);
         Parameter = Parameter + 1u32;
+    }
+    if Recordˉdestination {
+        Result = Append(Result, Byte(127u32));
+        I32ˉcount = I32ˉcount + 1u32;
     }
     let Resultˉoffset: u32 =
         Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
@@ -158,15 +167,32 @@ export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
     );
 }
 
+export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32
+) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
+    return Functionˉtype(Input, Directory, Function, false);
+}
+
+export fn Compilerˉwebassemblyˉvalueˉlayoutˉrecordˉfunctionˉtype(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32
+) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
+    return Functionˉtype(Input, Directory, Function, true);
+}
+
 fn Appendˉrun(Entries: bytes, Count: u32, Wasmˉtype: u32) -> bytes {
     var Result: bytes = Append(Entries, Uleb(Count));
     return Append(Result, Byte(Wasmˉtype));
 }
 
-export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉlocals(
+fn Functionˉlocals(
     Input: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
-    Function: u32
+    Function: u32,
+    Additionalˉi32: u32
 ) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
     if !Directory.Valid || Function >= Directory.Count {
         return Compilerˉwebassemblyˉvalueˉlayoutˉemission(
@@ -228,18 +254,18 @@ export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉlocals(
 
     if Runˉcount == 0u32 {
         Runˉtype = 127u32;
-        Runˉcount = 4u32;
+        Runˉcount = 4u32 + Additionalˉi32;
     } else {
         if Runˉtype == 127u32 {
-            Runˉcount = Runˉcount + 4u32;
+            Runˉcount = Runˉcount + 4u32 + Additionalˉi32;
         } else {
             Entries = Appendˉrun(Entries, Runˉcount, Runˉtype);
             Groupˉcount = Groupˉcount + 1u32;
             Runˉtype = 127u32;
-            Runˉcount = 4u32;
+            Runˉcount = 4u32 + Additionalˉi32;
         }
     }
-    I32ˉcount = I32ˉcount + 4u32;
+    I32ˉcount = I32ˉcount + 4u32 + Additionalˉi32;
     Entries = Appendˉrun(Entries, Runˉcount, Runˉtype);
     Groupˉcount = Groupˉcount + 1u32;
     Entries = Appendˉrun(Entries, 1u32, 126u32);
@@ -252,4 +278,20 @@ export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉlocals(
         I32ˉcount,
         I64ˉcount
     );
+}
+
+export fn Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉlocals(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32
+) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
+    return Functionˉlocals(Input, Directory, Function, 0u32);
+}
+
+export fn Compilerˉwebassemblyˉvalueˉlayoutˉrecordˉfunctionˉlocals(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32
+) -> Compilerˉwebassemblyˉvalueˉlayoutˉemission {
+    return Functionˉlocals(Input, Directory, Function, 1u32);
 }

@@ -1,0 +1,20 @@
+module Webassemblyˉgeneralˉdispatcherˉrecords profile portable;
+
+record Pair {
+    Left: i32;
+    Right: i32;
+}
+
+fn Make(Value: i32) -> Pair {
+    return Pair(Value, 1);
+}
+
+fn Read(Value: Pair) -> i32 {
+    return Value.Left + Value.Right;
+}
+
+export fn Main() -> i32 {
+    var Value: Pair = Pair(0, 0);
+    Value = Make(40);
+    return Read(Value) + 1;
+}

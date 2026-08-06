@@ -12,5 +12,7 @@ source "Compiler/Windvale/WebAssembly-Value-Layout.wv"
 source "Compiler/Windvale/WebAssembly-Static-Data.wv"
 source "Compiler/Windvale/WebAssembly-Descriptor-Operations.wv"
 source "Compiler/Windvale/WebAssembly-Enum-Operations.wv"
+source "Compiler/Windvale/WebAssembly-Record-Storage.wv"
+source "Compiler/Windvale/WebAssembly-Record-Operations.wv"
 source "Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv"
 emit wvb

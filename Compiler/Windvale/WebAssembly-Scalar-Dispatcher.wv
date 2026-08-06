@@ -10,6 +10,8 @@ import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
 import Compilerˉwebassemblyˉdescriptorˉoperations as Descriptors;
 import Compilerˉwebassemblyˉtypeˉdirectory as Typeˉdirectory;
 import Compilerˉwebassemblyˉenumˉoperations as Enums;
+import Compilerˉwebassemblyˉrecordˉstorage as Recordˉstorage;
+import Compilerˉwebassemblyˉrecordˉoperations as Records;
 
 export record Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     Valid: bool;
@@ -133,6 +135,7 @@ fn Shapeˉisˉscalar(Kind: u32) -> bool {
     if Kind == 2u32 { return true; }
     if Kind == 4u32 { return true; }
     if Kind == 5u32 { return true; }
+    if Kind == 7u32 { return true; }
     if Kind == 8u32 { return true; }
     return false;
 }
@@ -208,14 +211,25 @@ fn Validateˉscalarˉsignature(
 fn Emitˉtype(
     Input: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
     Function: u32
 ) -> Emission {
-    let Layout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
+    var Layout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
         Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
             Input,
             Directory,
             Function
         );
+    if Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉreturnˉfields(
+        Storage,
+        Function
+    ) != 0u32 {
+        Layout = Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉrecordˉfunctionˉtype(
+            Input,
+            Directory,
+            Function
+        );
+    }
     if !Layout.Valid {
         return Invalidˉemission(Input, 0u32, 0u32);
     }
@@ -518,7 +532,9 @@ fn Emitˉoperation(
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
     Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
     Function: u32,
+    Frameˉbase: u32,
     Scratchˉleft: u32,
     Scratchˉright: u32,
     Scratchˉresult: u32,
@@ -538,6 +554,25 @@ fn Emitˉoperation(
     let Runtimeˉdata:
         Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
         Enums.Compilerˉwebassemblyˉenumˉdata(Enumˉsummary);
+    let Record: Records.Compilerˉwebassemblyˉrecordˉoperationˉemission =
+        Records.Compilerˉwebassemblyˉrecordˉoperationˉemit(
+            Input,
+            Code,
+            Offset,
+            Opcode,
+            Types,
+            Storage,
+            Function,
+            Frameˉbase,
+            Scratchˉleft,
+            Scratchˉwide
+        );
+    if Record.Matched && Opcode != 64u8 {
+        if !Record.Valid {
+            return Invalidˉemission(Input, Offset, U32ˉfromˉu8(Opcode));
+        }
+        return Emission(true, Record.Bytes, 0u32, 0u32);
+    }
     if Opcode == 1u8 || Opcode == 9u8 {
         Result = Encoding.Compilerˉwebassemblyˉbinaryˉi32ˉconstantˉfromˉinput(
             Input,
@@ -552,23 +587,45 @@ fn Emitˉoperation(
         return Emission(true, Result, 0u32, 0u32);
     }
     if Opcode == 4u8 {
+        var Loadˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Code + Offset + 1u32
+        );
+        if Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉreturnˉfields(
+            Storage,
+            Function
+        ) != 0u32 && Loadˉlocal >=
+            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+                Directory,
+                Function
+            ) {
+            Loadˉlocal = Loadˉlocal + 1u32;
+        }
         return Emission(
             true,
-            Indexed(
-                32u32,
-                Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32)
-            ),
+            Indexed(32u32, Loadˉlocal),
             0u32,
             0u32
         );
     }
     if Opcode == 5u8 {
+        var Storeˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            Code + Offset + 1u32
+        );
+        if Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉreturnˉfields(
+            Storage,
+            Function
+        ) != 0u32 && Storeˉlocal >=
+            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+                Directory,
+                Function
+            ) {
+            Storeˉlocal = Storeˉlocal + 1u32;
+        }
         return Emission(
             true,
-            Indexed(
-                33u32,
-                Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32)
-            ),
+            Indexed(33u32, Storeˉlocal),
             0u32,
             0u32
         );
@@ -757,7 +814,13 @@ fn Emitˉoperation(
         if !Position.Found {
             return Invalidˉemission(Input, Offset, U32ˉfromˉu8(Opcode));
         }
-        Result = Indexed(16u32, Position.Position);
+        if Record.Matched {
+            if !Record.Valid {
+                return Invalidˉemission(Input, Offset, U32ˉfromˉu8(Opcode));
+            }
+            Result = Append(Result, Record.Bytes);
+        }
+        Result = Append(Result, Indexed(16u32, Position.Position));
         Result = Append(
             Result,
             Emitˉcallˉfailureˉpropagation(
@@ -830,11 +893,13 @@ fn Emitˉblock(
     Scratchˉright: u32,
     Scratchˉresult: u32,
     Scratchˉwide: u32,
+    Frameˉbase: u32,
     Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
     Reachableˉorder: bytes,
     Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
     Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
     Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
     Function: u32
 ) -> Emission {
     let Block: u32 = Starts + Localˉblock;
@@ -893,7 +958,9 @@ fn Emitˉblock(
                 Directory,
                 Types,
                 Enumˉsummary,
+                Storage,
                 Function,
+                Frameˉbase,
                 Scratchˉleft,
                 Scratchˉright,
                 Scratchˉresult,
@@ -944,7 +1011,35 @@ fn Emitˉblock(
         return Emission(true, Result, 0u32, 0u32);
     }
     if Kind == 3u32 {
-        Result = Append(Result, Byte(15u32));
+        let Recordˉreturn:
+            Records.Compilerˉwebassemblyˉrecordˉoperationˉemission =
+            Records.Compilerˉwebassemblyˉrecordˉfunctionˉreturn(
+                Input,
+                Directory,
+                Storage,
+                Function,
+                Frameˉbase,
+                Scratchˉleft,
+                4u32
+            );
+        if !Recordˉreturn.Valid {
+            return Invalidˉemission(Input, End, 81u32);
+        }
+        if Recordˉreturn.Matched {
+            Result = Append(Result, Recordˉreturn.Bytes);
+        } else {
+            Result = Append(
+                Result,
+                Records.Compilerˉwebassemblyˉrecordˉfunctionˉrestore(
+                    Input,
+                    Storage,
+                    Function,
+                    Frameˉbase,
+                    4u32
+                )
+            );
+            Result = Append(Result, Byte(15u32));
+        }
         return Emission(true, Result, 0u32, 0u32);
     }
     return Invalidˉemission(Input, End, Kind);
@@ -958,14 +1053,28 @@ fn Emitˉfunction(
     Reachableˉorder: bytes,
     Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
     Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
     Function: u32
 ) -> Emission {
-    let Typeˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
+    var Typeˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
         Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
             Input,
             Directory,
             Function
         );
+    let Returnˉfields: u32 =
+        Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉreturnˉfields(
+            Storage,
+            Function
+        );
+    if Returnˉfields != 0u32 {
+        Typeˉlayout =
+            Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉrecordˉfunctionˉtype(
+                Input,
+                Directory,
+                Function
+            );
+    }
     if !Typeˉlayout.Valid {
         return Invalidˉemission(Input, 0u32, 0u32);
     }
@@ -1001,17 +1110,36 @@ fn Emitˉfunction(
             Directory,
             Function
         );
-    let Counter: u32 = Parameterˉcount + Localˉcount;
+    var Emittedˉparameterˉcount: u32 = Parameterˉcount;
+    if Returnˉfields != 0u32 {
+        Emittedˉparameterˉcount = Emittedˉparameterˉcount + 1u32;
+    }
+    let Counter: u32 = Emittedˉparameterˉcount + Localˉcount;
     let Scratchˉleft: u32 = Counter + 1u32;
     let Scratchˉright: u32 = Counter + 2u32;
     let Scratchˉresult: u32 = Counter + 3u32;
-    let Scratchˉwide: u32 = Counter + 4u32;
-    let Localˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
+    let Frameˉbytes: u32 =
+        Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉframeˉbytes(
+            Storage,
+            Function
+        );
+    let Frameˉbase: u32 = Counter + 4u32;
+    var Scratchˉwide: u32 = Counter + 4u32;
+    var Localˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
         Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉlocals(
             Input,
             Directory,
             Function
         );
+    if Frameˉbytes != 0u32 {
+        Scratchˉwide = Counter + 5u32;
+        Localˉlayout =
+            Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉrecordˉfunctionˉlocals(
+                Input,
+                Directory,
+                Function
+            );
+    }
     if !Localˉlayout.Valid {
         return Invalidˉemission(Input, 0u32, 0u32);
     }
@@ -1023,12 +1151,26 @@ fn Emitˉfunction(
         Types,
         Enumˉsummary,
         Function,
-        Parameterˉcount,
+        Emittedˉparameterˉcount,
         Localˉcount
     );
     if !Enumˉdefaults.Valid { return Enumˉdefaults; }
 
-    var Instructions: bytes = Enumˉdefaults.Bytes;
+    var Instructions: bytes =
+        Records.Compilerˉwebassemblyˉrecordˉfunctionˉprologue(
+            Input,
+            Directory,
+            Types,
+            Storage,
+            Function,
+            Frameˉbase,
+            Scratchˉresult,
+            Functionˉreturnsˉvalue(Input, Directory, Function),
+            Functionˉreturnsˉi64(Input, Directory, Function),
+            3u32,
+            4u32
+        );
+    Instructions = Append(Instructions, Enumˉdefaults.Bytes);
     Instructions = Append(
         Instructions,
         Emitˉsetˉprogramˉcounter(Counter, 0u32)
@@ -1053,11 +1195,13 @@ fn Emitˉfunction(
             Scratchˉright,
             Scratchˉresult,
             Scratchˉwide,
+            Frameˉbase,
             Control,
             Reachableˉorder,
             Directory,
             Types,
             Enumˉsummary,
+            Storage,
             Function
         );
         if !Block.Valid { return Block; }
@@ -1079,7 +1223,7 @@ fn Emitˉfunction(
     );
 }
 
-fn Emitˉwrapper(Rootˉposition: u32) -> bytes {
+fn Emitˉwrapper(Rootˉposition: u32, Hasˉrecords: bool) -> bytes {
     var Localˉdeclarations: bytes = Uleb(1u32);
     Localˉdeclarations = Append(Localˉdeclarations, Uleb(1u32));
     Localˉdeclarations = Append(Localˉdeclarations, Byte(127u32));
@@ -1092,6 +1236,10 @@ fn Emitˉwrapper(Rootˉposition: u32) -> bytes {
     Instructions = Append(Instructions, Indexed(36u32, 2u32));
     Instructions = Append(Instructions, Positiveˉconstant(0u32));
     Instructions = Append(Instructions, Indexed(36u32, 3u32));
+    if Hasˉrecords {
+        Instructions = Append(Instructions, Positiveˉconstant(65536u32));
+        Instructions = Append(Instructions, Indexed(36u32, 4u32));
+    }
 
     Instructions = Append(Instructions, Indexed(32u32, 0u32));
     Instructions = Append(Instructions, Positiveˉconstant(0u32));
@@ -1105,6 +1253,10 @@ fn Emitˉwrapper(Rootˉposition: u32) -> bytes {
     Instructions = Append(Instructions, Byte(11u32));
 
     Instructions = Append(Instructions, Indexed(16u32, Rootˉposition));
+    if Hasˉrecords {
+        Instructions = Append(Instructions, Positiveˉconstant(65536u32));
+        Instructions = Append(Instructions, Indexed(36u32, 4u32));
+    }
     Instructions = Append(Instructions, Indexed(33u32, 1u32));
     Instructions = Append(Instructions, Indexed(35u32, 3u32));
     Instructions = Append(Instructions, Byte(69u32));
@@ -1128,13 +1280,14 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     Types: Typeˉdirectory.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
     Graph: Graphs.Compilerˉwebassemblyˉexecutableˉgraphˉsummary,
     Control: Controls.Compilerˉwebassemblyˉcontrolˉflowˉsummary,
-    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary
+    Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
+    Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary
 ) -> Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     let Runtimeˉdata:
         Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉsummary =
         Enums.Compilerˉwebassemblyˉenumˉdata(Enumˉsummary);
     if !Directory.Valid || !Types.Valid || !Graph.Valid || !Control.Valid ||
-        !Enumˉsummary.Valid || !Runtimeˉdata.Valid ||
+        !Enumˉsummary.Valid || !Runtimeˉdata.Valid || !Storage.Valid ||
         Directory.Count != Graph.Functionˉcount ||
         Control.Reachableˉfunctionˉcount != Graph.Reachableˉcount ||
         Bytesˉlength(Graph.Reachableˉorder) != Graph.Reachableˉcount * 4u32 ||
@@ -1165,7 +1318,7 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
             Graph.Root
         )
     );
-    if !Shapeˉisˉscalar(Rootˉresult) {
+    if !Shapeˉisˉscalar(Rootˉresult) || Rootˉresult == 7u32 {
         return Invalid(Input, Graph.Root, 0u32, 0u32);
     }
 
@@ -1181,7 +1334,12 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         if Function >= Directory.Count {
             return Invalid(Input, Function, 0u32, 0u32);
         }
-        let Type: Emission = Emitˉtype(Input, Directory, Function);
+        let Type: Emission = Emitˉtype(
+            Input,
+            Directory,
+            Storage,
+            Function
+        );
         if !Type.Valid {
             return Invalid(
                 Input,
@@ -1200,6 +1358,7 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
             Graph.Reachableˉorder,
             Types,
             Enumˉsummary,
+            Storage,
             Function
         );
         if !Body.Valid {
@@ -1226,18 +1385,31 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     );
     Codeˉentries = Append(
         Codeˉentries,
-        Emitˉwrapper(Rootˉposition.Position)
+        Emitˉwrapper(
+            Rootˉposition.Position,
+            Storage.Maximumˉframeˉbytes != 0u32
+        )
     );
 
     var Typeˉpayload: bytes = Uleb(Graph.Reachableˉcount + 1u32);
     Typeˉpayload = Append(Typeˉpayload, Typeˉentries);
     var Functionˉpayload: bytes = Uleb(Graph.Reachableˉcount + 1u32);
     Functionˉpayload = Append(Functionˉpayload, Functionˉentries);
-    var Globalˉpayload: bytes = Uleb(4u32);
+    var Globalˉcount: u32 = 4u32;
+    if Storage.Maximumˉframeˉbytes != 0u32 {
+        Globalˉcount = 5u32;
+    }
+    var Globalˉpayload: bytes = Uleb(Globalˉcount);
     Globalˉpayload = Append(Globalˉpayload, Globalˉi32(true, 0u32));
     Globalˉpayload = Append(Globalˉpayload, Globalˉi32(true, 0u32));
     Globalˉpayload = Append(Globalˉpayload, Globalˉi32(true, 0u32));
     Globalˉpayload = Append(Globalˉpayload, Globalˉi32(true, 0u32));
+    if Storage.Maximumˉframeˉbytes != 0u32 {
+        Globalˉpayload = Append(
+            Globalˉpayload,
+            Globalˉi32(true, 65536u32)
+        );
+    }
     var Exportˉpayload: bytes = Uleb(3u32);
     Exportˉpayload = Append(
         Exportˉpayload,
@@ -1257,6 +1429,18 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     );
     var Codeˉpayload: bytes = Uleb(Graph.Reachableˉcount + 1u32);
     Codeˉpayload = Append(Codeˉpayload, Codeˉentries);
+    var Memoryˉsection: bytes =
+        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
+            Input,
+            Runtimeˉdata
+        );
+    if Storage.Maximumˉframeˉbytes != 0u32 {
+        Memoryˉsection =
+            Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉrequiredˉmemoryˉsection(
+                Input,
+                Runtimeˉdata
+            );
+    }
 
     var Webassembly: bytes = Encoding.Compilerˉwebassemblyˉbinaryˉheader();
     Webassembly = Append(
@@ -1272,10 +1456,7 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
     );
     Webassembly = Append(
         Webassembly,
-        Staticˉdata.Compilerˉwebassemblyˉstaticˉdataˉmemoryˉsection(
-            Input,
-            Runtimeˉdata
-        )
+        Memoryˉsection
     );
     Webassembly = Append(
         Webassembly,

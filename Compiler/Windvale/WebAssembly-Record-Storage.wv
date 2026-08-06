@@ -1,0 +1,614 @@
+module Compilerˉwebassemblyˉrecordˉstorage profile portable;
+
+import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
+import Compilerˉwebassemblyˉtypeˉdirectory as Types;
+import Compilerˉwebassemblyˉtypedˉcalls as Typed;
+import Compilerˉwebassemblyˉvalueˉlayout as Layouts;
+
+export record Compilerˉwebassemblyˉrecordˉstorageˉsummary {
+    Valid: bool;
+    Functionˉcount: u32;
+    Recordˉoperationˉcount: u32;
+    Maximumˉframeˉbytes: u32;
+    Functionˉentries: bytes;
+    Localˉoffsets: bytes;
+    Operationˉentries: bytes;
+    Failureˉfunction: u32;
+    Failureˉoffset: u32;
+    Failureˉopcode: u32;
+}
+
+export record Compilerˉwebassemblyˉrecordˉoperation {
+    Found: bool;
+    Opcode: u32;
+    Typeˉindex: u32;
+    Scratchˉfieldˉoffset: u32;
+}
+
+record Functionˉplan {
+    Valid: bool;
+    Functionˉentry: bytes;
+    Localˉoffsets: bytes;
+    Operationˉentries: bytes;
+    Frameˉbytes: u32;
+    Failureˉoffset: u32;
+    Failureˉopcode: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalid(
+    Input: bytes,
+    Function: u32,
+    Offset: u32,
+    Opcode: u32
+) -> Compilerˉwebassemblyˉrecordˉstorageˉsummary {
+    return Compilerˉwebassemblyˉrecordˉstorageˉsummary(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        Function,
+        Offset,
+        Opcode
+    );
+}
+
+fn Invalidˉplan(Input: bytes, Offset: u32, Opcode: u32) -> Functionˉplan {
+    return Functionˉplan(
+        false,
+        Empty(Input),
+        Empty(Input),
+        Empty(Input),
+        0u32,
+        Offset,
+        Opcode
+    );
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Shapeˉkind(Input: bytes, Offset: u32) -> u32 {
+    return Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉkind(
+        Input,
+        Offset
+    );
+}
+
+fn Shapeˉwidth(Input: bytes, Offset: u32) -> u32 {
+    return Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉshapeˉwidth(
+        Input,
+        Offset
+    );
+}
+
+fn Shapeˉoffsetˉat(Input: bytes, Start: u32, Index: u32) -> u32 {
+    var Cursor: u32 = Start;
+    var Current: u32 = 0u32;
+    while Current < Index {
+        Cursor = Cursor + Shapeˉwidth(Input, Cursor);
+        Current = Current + 1u32;
+    }
+    return Cursor;
+}
+
+fn Localˉshapeˉoffset(
+    Input: bytes,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Function: u32,
+    Local: u32
+) -> u32 {
+    let Parameters: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+            Directory,
+            Function
+        );
+    if Local < Parameters {
+        return Shapeˉoffsetˉat(
+            Input,
+            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
+                Directory,
+                Function
+            ),
+            Local
+        );
+    }
+    return Shapeˉoffsetˉat(
+        Input,
+        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉtypesˉoffset(
+            Directory,
+            Function
+        ),
+        Local - Parameters
+    );
+}
+
+fn Recordˉfieldˉcount(
+    Input: bytes,
+    Directory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Typeˉindex: u32
+) -> u32 {
+    if Typeˉindex >= Directory.Count ||
+        Types.Compilerˉwebassemblyˉtypeˉkind(
+            Directory,
+            Typeˉindex
+        ) != 1u32 {
+        return 0u32;
+    }
+    let Fields: u32 = Types.Compilerˉwebassemblyˉtypeˉitemˉcount(
+        Directory,
+        Typeˉindex
+    );
+    if Fields == 0u32 || Fields > 256u32 { return 0u32; }
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        let Shape: u32 =
+            Types.Compilerˉwebassemblyˉrecordˉfieldˉshapeˉoffset(
+                Input,
+                Directory,
+                Typeˉindex,
+                Field
+            );
+        if Shape == 0u32 { return 0u32; }
+        let Kind: u32 = Shapeˉkind(Input, Shape);
+        if Kind == 0u32 || Kind == 7u32 ||
+            Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉwasmˉtype(Kind) == 0u32 {
+            return 0u32;
+        }
+        Field = Field + 1u32;
+    }
+    return Fields;
+}
+
+fn Appendˉoperation(
+    Entries: bytes,
+    Function: u32,
+    Offset: u32,
+    Opcode: u32,
+    Typeˉindex: u32,
+    Scratchˉfieldˉoffset: u32
+) -> bytes {
+    var Result: bytes = Appendˉu32(Entries, Function);
+    Result = Appendˉu32(Result, Offset);
+    Result = Appendˉu32(Result, Opcode);
+    Result = Appendˉu32(Result, Typeˉindex);
+    return Appendˉu32(Result, Scratchˉfieldˉoffset);
+}
+
+fn Planˉfunction(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Function: u32,
+    Localˉstart: u32,
+    Operationˉstart: u32
+) -> Functionˉplan {
+    let Parameters: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+            Directory,
+            Function
+        );
+    let Declaredˉlocals: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉcount(
+            Directory,
+            Function
+        );
+    let Locals: u32 = Parameters + Declaredˉlocals;
+    if Locals > 4096u32 { return Invalidˉplan(Input, 0u32, 4u32); }
+    var Localˉoffsets: bytes = Empty(Input);
+    var Persistentˉfields: u32 = 0u32;
+    var Local: u32 = 0u32;
+    while Local < Locals {
+        let Declaredˉshape: u32 = Localˉshapeˉoffset(
+            Input,
+            Directory,
+            Function,
+            Local
+        );
+        if Shapeˉkind(Input, Declaredˉshape) == 7u32 {
+            let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Declaredˉshape + 1u32
+            );
+            let Declaredˉfields: u32 = Recordˉfieldˉcount(
+                Input,
+                Typeˉdirectory,
+                Typeˉindex
+            );
+            if Declaredˉfields == 0u32 ||
+                Declaredˉfields > 131072u32 - Persistentˉfields {
+                return Invalidˉplan(Input, 0u32, 4u32);
+            }
+            Localˉoffsets = Appendˉu32(Localˉoffsets, Persistentˉfields);
+            Persistentˉfields = Persistentˉfields + Declaredˉfields;
+        } else {
+            Localˉoffsets = Appendˉu32(Localˉoffsets, 4294967295u32);
+        }
+        Local = Local + 1u32;
+    }
+
+    let Resultˉshape: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
+            Directory,
+            Function
+        );
+    var Returnˉfields: u32 = 0u32;
+    if Shapeˉkind(Input, Resultˉshape) == 7u32 {
+        Returnˉfields = Recordˉfieldˉcount(
+            Input,
+            Typeˉdirectory,
+            Bytesˉreadˉu32ˉlittle(Input, Resultˉshape + 1u32)
+        );
+        if Returnˉfields == 0u32 {
+            return Invalidˉplan(Input, 0u32, 81u32);
+        }
+    }
+
+    let Relativeˉcode: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉcodeˉoffset(
+            Directory,
+            Function
+        );
+    let Codeˉlength: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉcodeˉlength(
+            Directory,
+            Function
+        );
+    let Code: u32 = Codeˉoffset + Relativeˉcode;
+    var State: Typed.Compilerˉwebassemblyˉtypedˉinstructionˉstate =
+        Typed.Compilerˉwebassemblyˉtypedˉinstructionˉinitial();
+    var Operationˉentries: bytes = Empty(Input);
+    var Scratchˉfields: u32 = 0u32;
+    var Scratchˉnext: u32 = 0u32;
+    var Cursor: u32 = 0u32;
+    while Cursor < Codeˉlength {
+        let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+            Input,
+            Code,
+            Codeˉlength,
+            Cursor
+        );
+        if Width == 0u32 || Width > Codeˉlength - Cursor {
+            return Invalidˉplan(Input, Cursor, 0u32);
+        }
+        let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Code + Cursor));
+        var Recordˉtype: u32 = 4294967295u32;
+        var Scratchˉoffset: u32 = 4294967295u32;
+        var Operationˉfields: u32 = 0u32;
+        if Opcode == 4u32 || Opcode == 5u32 {
+            let Selectedˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Code + Cursor + 1u32
+            );
+            if Selectedˉlocal >= Locals {
+                return Invalidˉplan(Input, Cursor, Opcode);
+            }
+            let Selectedˉshape: u32 = Localˉshapeˉoffset(
+                Input,
+                Directory,
+                Function,
+                Selectedˉlocal
+            );
+            if Shapeˉkind(Input, Selectedˉshape) == 7u32 {
+                Recordˉtype = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Selectedˉshape + 1u32
+                );
+                Operationˉfields = Recordˉfieldˉcount(
+                    Input,
+                    Typeˉdirectory,
+                    Recordˉtype
+                );
+                if Opcode == 4u32 { Scratchˉoffset = Scratchˉnext; }
+            }
+        }
+        if Opcode == 104u32 {
+            Recordˉtype = Bytesˉreadˉu32ˉlittle(Input, Code + Cursor + 1u32);
+            Operationˉfields = Recordˉfieldˉcount(
+                Input,
+                Typeˉdirectory,
+                Recordˉtype
+            );
+            Scratchˉoffset = Scratchˉnext;
+        }
+        if Opcode == 105u32 {
+            Recordˉtype =
+                Typed.Compilerˉwebassemblyˉtypedˉinstructionˉtopˉnominal(
+                    State
+                );
+            Operationˉfields = Recordˉfieldˉcount(
+                Input,
+                Typeˉdirectory,
+                Recordˉtype
+            );
+        }
+        if Opcode == 64u32 {
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Code + Cursor + 1u32
+            );
+            if Target >= Directory.Count {
+                return Invalidˉplan(Input, Cursor, Opcode);
+            }
+            let Targetˉresult: u32 =
+                Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
+                    Directory,
+                    Target
+                );
+            if Shapeˉkind(Input, Targetˉresult) == 7u32 {
+                Recordˉtype = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Targetˉresult + 1u32
+                );
+                Operationˉfields = Recordˉfieldˉcount(
+                    Input,
+                    Typeˉdirectory,
+                    Recordˉtype
+                );
+                Scratchˉoffset = Scratchˉnext;
+            }
+        }
+        if Recordˉtype != 4294967295u32 {
+            if Operationˉfields == 0u32 {
+                return Invalidˉplan(Input, Cursor, Opcode);
+            }
+            Operationˉentries = Appendˉoperation(
+                Operationˉentries,
+                Function,
+                Cursor,
+                Opcode,
+                Recordˉtype,
+                Scratchˉoffset
+            );
+            if Scratchˉoffset != 4294967295u32 {
+                if Operationˉfields > 131072u32 - Scratchˉnext {
+                    return Invalidˉplan(Input, Cursor, Opcode);
+                }
+                Scratchˉnext = Scratchˉnext + Operationˉfields;
+                if Scratchˉnext > Scratchˉfields {
+                    Scratchˉfields = Scratchˉnext;
+                }
+            }
+        }
+        State = Typed.Compilerˉwebassemblyˉtypedˉinstructionˉapply(
+            Input,
+            Code,
+            Codeˉlength,
+            Directory,
+            Typeˉdirectory,
+            Function,
+            Cursor,
+            State
+        );
+        if !State.Valid { return Invalidˉplan(Input, Cursor, Opcode); }
+        if Opcode == 48u32 || Opcode == 49u32 || Opcode == 81u32 {
+            Scratchˉnext = 0u32;
+        }
+        Cursor = Cursor + Width;
+    }
+    if !State.Valid || State.Depth != 0u32 {
+        return Invalidˉplan(Input, Codeˉlength, 0u32);
+    }
+    if Persistentˉfields > 131072u32 - Scratchˉfields {
+        return Invalidˉplan(Input, Codeˉlength, 104u32);
+    }
+    let Frameˉfields: u32 = Persistentˉfields + Scratchˉfields;
+    if Frameˉfields > 131072u32 {
+        return Invalidˉplan(Input, Codeˉlength, 104u32);
+    }
+    let Frameˉbytes: u32 = Frameˉfields * 8u32;
+    let Operationˉcount: u32 = Bytesˉlength(Operationˉentries) / 20u32;
+    var Entry: bytes = Appendˉu32(Empty(Input), Localˉstart);
+    Entry = Appendˉu32(Entry, Locals);
+    Entry = Appendˉu32(Entry, Persistentˉfields);
+    Entry = Appendˉu32(Entry, Scratchˉfields);
+    Entry = Appendˉu32(Entry, Frameˉbytes);
+    Entry = Appendˉu32(Entry, Returnˉfields);
+    Entry = Appendˉu32(Entry, Operationˉstart);
+    Entry = Appendˉu32(Entry, Operationˉcount);
+    return Functionˉplan(
+        true,
+        Entry,
+        Localˉoffsets,
+        Operationˉentries,
+        Frameˉbytes,
+        0u32,
+        0u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉrecordˉstorageˉbuild(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary
+) -> Compilerˉwebassemblyˉrecordˉstorageˉsummary {
+    if !Directory.Valid || !Typeˉdirectory.Valid ||
+        Codeˉoffset > Bytesˉlength(Input) ||
+        Codeˉlength > Bytesˉlength(Input) - Codeˉoffset {
+        return Invalid(Input, 0u32, 0u32, 0u32);
+    }
+    var Functionˉentries: bytes = Empty(Input);
+    var Localˉoffsets: bytes = Empty(Input);
+    var Operationˉentries: bytes = Empty(Input);
+    var Maximumˉframe: u32 = 0u32;
+    var Function: u32 = 0u32;
+    while Function < Directory.Count {
+        let Plan: Functionˉplan = Planˉfunction(
+            Input,
+            Codeˉoffset,
+            Directory,
+            Typeˉdirectory,
+            Function,
+            Bytesˉlength(Localˉoffsets) / 4u32,
+            Bytesˉlength(Operationˉentries) / 20u32
+        );
+        if !Plan.Valid {
+            return Invalid(
+                Input,
+                Function,
+                Plan.Failureˉoffset,
+                Plan.Failureˉopcode
+            );
+        }
+        Functionˉentries = Bytesˉconcat(
+            Functionˉentries,
+            Plan.Functionˉentry
+        );
+        Localˉoffsets = Bytesˉconcat(Localˉoffsets, Plan.Localˉoffsets);
+        Operationˉentries = Bytesˉconcat(
+            Operationˉentries,
+            Plan.Operationˉentries
+        );
+        if Plan.Frameˉbytes > Maximumˉframe {
+            Maximumˉframe = Plan.Frameˉbytes;
+        }
+        Function = Function + 1u32;
+    }
+    if Bytesˉlength(Functionˉentries) != Directory.Count * 32u32 ||
+        Bytesˉlength(Operationˉentries) % 20u32 != 0u32 {
+        return Invalid(Input, 0u32, 0u32, 0u32);
+    }
+    return Compilerˉwebassemblyˉrecordˉstorageˉsummary(
+        true,
+        Directory.Count,
+        Bytesˉlength(Operationˉentries) / 20u32,
+        Maximumˉframe,
+        Functionˉentries,
+        Localˉoffsets,
+        Operationˉentries,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Functionˉvalue(
+    Summary: Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Field: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Summary.Functionˉentries,
+        Function * 32u32 + Field * 4u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉrecordˉstorageˉpersistentˉfields(
+    Summary: Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32
+) -> u32 {
+    return Functionˉvalue(Summary, Function, 2u32);
+}
+
+export fn Compilerˉwebassemblyˉrecordˉstorageˉscratchˉfields(
+    Summary: Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32
+) -> u32 {
+    return Functionˉvalue(Summary, Function, 3u32);
+}
+
+export fn Compilerˉwebassemblyˉrecordˉstorageˉframeˉbytes(
+    Summary: Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32
+) -> u32 {
+    return Functionˉvalue(Summary, Function, 4u32);
+}
+
+export fn Compilerˉwebassemblyˉrecordˉstorageˉreturnˉfields(
+    Summary: Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32
+) -> u32 {
+    return Functionˉvalue(Summary, Function, 5u32);
+}
+
+export fn Compilerˉwebassemblyˉrecordˉstorageˉlocalˉfieldˉoffset(
+    Summary: Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Local: u32
+) -> u32 {
+    if !Summary.Valid || Function >= Summary.Functionˉcount ||
+        Local >= Functionˉvalue(Summary, Function, 1u32) {
+        return 4294967295u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Summary.Localˉoffsets,
+        (Functionˉvalue(Summary, Function, 0u32) + Local) * 4u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉrecordˉstorageˉoperation(
+    Summary: Compilerˉwebassemblyˉrecordˉstorageˉsummary,
+    Function: u32,
+    Offset: u32
+) -> Compilerˉwebassemblyˉrecordˉoperation {
+    if !Summary.Valid || Function >= Summary.Functionˉcount {
+        return Compilerˉwebassemblyˉrecordˉoperation(
+            false,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    let First: u32 = Functionˉvalue(Summary, Function, 6u32);
+    let Count: u32 = Functionˉvalue(Summary, Function, 7u32);
+    var Low: u32 = 0u32;
+    var High: u32 = Count;
+    while Low < High {
+        let Middle: u32 = Low + (High - Low) / 2u32;
+        let Middleˉentry: u32 = (First + Middle) * 20u32;
+        let Candidate: u32 = Bytesˉreadˉu32ˉlittle(
+            Summary.Operationˉentries,
+            Middleˉentry + 4u32
+        );
+        if Candidate < Offset {
+            Low = Middle + 1u32;
+        } else {
+            High = Middle;
+        }
+    }
+    if Low >= Count {
+        return Compilerˉwebassemblyˉrecordˉoperation(
+            false,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    let Selectedˉentry: u32 = (First + Low) * 20u32;
+    if Bytesˉreadˉu32ˉlittle(
+        Summary.Operationˉentries,
+        Selectedˉentry + 4u32
+    ) != Offset {
+        return Compilerˉwebassemblyˉrecordˉoperation(
+            false,
+            0u32,
+            0u32,
+            0u32
+        );
+    }
+    return Compilerˉwebassemblyˉrecordˉoperation(
+        true,
+        Bytesˉreadˉu32ˉlittle(
+            Summary.Operationˉentries,
+            Selectedˉentry + 8u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Summary.Operationˉentries,
+            Selectedˉentry + 12u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Summary.Operationˉentries,
+            Selectedˉentry + 16u32
+        )
+    );
+}

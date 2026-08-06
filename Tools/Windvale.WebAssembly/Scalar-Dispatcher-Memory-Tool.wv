@@ -8,6 +8,7 @@ import Compilerˉwebassemblyˉcontrolˉflow as Control;
 import Compilerˉwebassemblyˉscalarˉdispatcher as Dispatcher;
 import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
 import Compilerˉwebassemblyˉenumˉoperations as Enums;
+import Compilerˉwebassemblyˉrecordˉstorage as Records;
 
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
@@ -108,6 +109,16 @@ export fn Main(Input: bytes) -> bytes {
             Typeˉdirectory
         );
     if !Typedˉcalls.Valid { return Empty(Input); }
+    let Recordˉstorage:
+        Records.Compilerˉwebassemblyˉrecordˉstorageˉsummary =
+        Records.Compilerˉwebassemblyˉrecordˉstorageˉbuild(
+            Input,
+            Codeˉoffset,
+            Codeˉlength,
+            Functionˉdirectory,
+            Typeˉdirectory
+        );
+    if !Recordˉstorage.Valid { return Empty(Input); }
     let Entry: Directory.Compilerˉwebassemblyˉfunctionˉlookupˉsummary =
         Directory.Compilerˉwebassemblyˉfunctionˉfind(
             Input,
@@ -142,7 +153,8 @@ export fn Main(Input: bytes) -> bytes {
             Typeˉdirectory,
             Graph,
             Controlˉflow,
-            Enumˉsummary
+            Enumˉsummary,
+            Recordˉstorage
         );
     if !Lowered.Valid { return Empty(Input); }
     return Lowered.Webassembly;

@@ -28,6 +28,21 @@ record Typedˉstack {
     Ninthˉword: u32;
 }
 
+export record Compilerˉwebassemblyˉtypedˉinstructionˉstate {
+    Valid: bool;
+    Depth: u32;
+    Maximum: u32;
+    Firstˉword: u32;
+    Secondˉword: u32;
+    Thirdˉword: u32;
+    Fourthˉword: u32;
+    Fifthˉword: u32;
+    Sixthˉword: u32;
+    Seventhˉword: u32;
+    Eighthˉword: u32;
+    Ninthˉword: u32;
+}
+
 fn Invalidˉsummary() -> Compilerˉwebassemblyˉtypedˉcallˉsummary {
     return Compilerˉwebassemblyˉtypedˉcallˉsummary(
         false,
@@ -198,6 +213,68 @@ fn Stackˉtopˉnominal(Stack: Typedˉstack) -> u32 {
     let Code: u32 = Stackˉtopˉcode(Stack);
     if Code < 16u32 { return 0u32; }
     return Code - 16u32;
+}
+
+fn Publicˉstate(
+    Stack: Typedˉstack
+) -> Compilerˉwebassemblyˉtypedˉinstructionˉstate {
+    return Compilerˉwebassemblyˉtypedˉinstructionˉstate(
+        Stack.Valid,
+        Stack.Depth,
+        Stack.Maximum,
+        Stack.Firstˉword,
+        Stack.Secondˉword,
+        Stack.Thirdˉword,
+        Stack.Fourthˉword,
+        Stack.Fifthˉword,
+        Stack.Sixthˉword,
+        Stack.Seventhˉword,
+        Stack.Eighthˉword,
+        Stack.Ninthˉword
+    );
+}
+
+fn Privateˉstack(
+    State: Compilerˉwebassemblyˉtypedˉinstructionˉstate
+) -> Typedˉstack {
+    return Typedˉstack(
+        State.Valid,
+        State.Depth,
+        State.Maximum,
+        State.Firstˉword,
+        State.Secondˉword,
+        State.Thirdˉword,
+        State.Fourthˉword,
+        State.Fifthˉword,
+        State.Sixthˉword,
+        State.Seventhˉword,
+        State.Eighthˉword,
+        State.Ninthˉword
+    );
+}
+
+export fn Compilerˉwebassemblyˉtypedˉinstructionˉinitial()
+    -> Compilerˉwebassemblyˉtypedˉinstructionˉstate {
+    return Publicˉstate(Typedˉstack(
+        true,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    ));
+}
+
+export fn Compilerˉwebassemblyˉtypedˉinstructionˉtopˉnominal(
+    State: Compilerˉwebassemblyˉtypedˉinstructionˉstate
+) -> u32 {
+    return Stackˉtopˉnominal(Privateˉstack(State));
 }
 
 fn Stackˉtopˉisˉtypeˉkind(
@@ -719,6 +796,128 @@ fn Applyˉcontrolˉinstruction(
     return Unhandledˉinstruction(Stack);
 }
 
+export fn Compilerˉwebassemblyˉtypedˉinstructionˉapply(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Directory: Functions.Compilerˉwebassemblyˉfunctionˉdirectoryˉsummary,
+    Typeˉdirectory: Types.Compilerˉwebassemblyˉtypeˉdirectoryˉsummary,
+    Function: u32,
+    Cursor: u32,
+    State: Compilerˉwebassemblyˉtypedˉinstructionˉstate
+) -> Compilerˉwebassemblyˉtypedˉinstructionˉstate {
+    let Stack: Typedˉstack = Privateˉstack(State);
+    if !Stack.Valid || !Directory.Valid || !Typeˉdirectory.Valid ||
+        Function >= Directory.Count || Cursor >= Codeˉlength {
+        return Publicˉstate(Invalidˉstack(Stack));
+    }
+    let Width: u32 = Functions.Compilerˉwebassemblyˉinstructionˉwidth(
+        Input,
+        Codeˉoffset,
+        Codeˉlength,
+        Cursor
+    );
+    if Width == 0u32 || Width > Codeˉlength - Cursor {
+        return Publicˉstate(Invalidˉstack(Stack));
+    }
+    let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+        Input,
+        Codeˉoffset + Cursor
+    ));
+    let Parameterˉcount: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
+            Directory,
+            Function
+        );
+    let Parameterˉtypes: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
+            Directory,
+            Function
+        );
+    let Resultˉtype: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
+            Directory,
+            Function
+        );
+    let Localˉcount: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉcount(
+            Directory,
+            Function
+        );
+    let Localˉtypes: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉlocalˉtypesˉoffset(
+            Directory,
+            Function
+        );
+    let Declaredˉmaximum: u32 =
+        Functions.Compilerˉwebassemblyˉfunctionˉmaximumˉstack(
+            Directory,
+            Function
+        );
+    var Applied: Instructionˉresult = Unhandledˉinstruction(Stack);
+    let Operand: u32 = Codeˉoffset + Cursor + 1u32;
+    if Opcode == 4u32 || Opcode == 5u32 {
+        Applied = Applyˉlocalˉinstruction(
+            Input,
+            Opcode,
+            Operand,
+            Parameterˉcount,
+            Parameterˉtypes,
+            Localˉcount,
+            Localˉtypes,
+            Stack,
+            Declaredˉmaximum
+        );
+    } else if Opcode >= 104u32 && Opcode <= 109u32 {
+        Applied = Applyˉnominalˉinstruction(
+            Input,
+            Opcode,
+            Operand,
+            Typeˉdirectory,
+            Stack,
+            Declaredˉmaximum
+        );
+    } else if Opcode == 64u32 {
+        Applied = Applyˉcallˉinstruction(
+            Input,
+            Opcode,
+            Operand,
+            Directory,
+            Stack,
+            Declaredˉmaximum
+        );
+    } else if Opcode == 48u32 || Opcode == 49u32 ||
+        Opcode == 80u32 || Opcode == 81u32 {
+        Applied = Applyˉcontrolˉinstruction(
+            Input,
+            Opcode,
+            Resultˉtype,
+            Stack
+        );
+    }
+    if Applied.Handled {
+        return Publicˉstate(Instructionˉstack(Applied));
+    }
+    let Effect: Staticˉeffect = Staticˉeffectˉfor(Opcode);
+    if !Effect.Handled {
+        return Publicˉstate(Invalidˉstack(Stack));
+    }
+    return Publicˉstate(Applyˉeffect(
+        Stack,
+        Effect.Popˉcount,
+        Effect.Firstˉkind,
+        0u32,
+        Effect.Secondˉkind,
+        0u32,
+        Effect.Thirdˉkind,
+        0u32,
+        Effect.Hasˉpush,
+        Effect.Pushˉkind,
+        0u32,
+        Declaredˉmaximum
+    ));
+}
+
 export fn Compilerˉwebassemblyˉtypedˉcallsˉvalidateˉrange(
     Input: bytes,
     Codeˉoffset: u32,
@@ -744,31 +943,6 @@ export fn Compilerˉwebassemblyˉtypedˉcallsˉvalidateˉrange(
     var Functionˉindex: u32 = Firstˉfunction;
     let Functionˉend: u32 = Firstˉfunction + Functionˉcount;
     while Functionˉindex < Functionˉend {
-        let Parameterˉcount: u32 =
-            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉcount(
-                Directory,
-                Functionˉindex
-            );
-        let Parameterˉtypes: u32 =
-            Functions.Compilerˉwebassemblyˉfunctionˉparameterˉtypesˉoffset(
-                Directory,
-                Functionˉindex
-            );
-        let Resultˉtype: u32 =
-            Functions.Compilerˉwebassemblyˉfunctionˉresultˉtypeˉoffset(
-                Directory,
-                Functionˉindex
-            );
-        let Localˉcount: u32 =
-            Functions.Compilerˉwebassemblyˉfunctionˉlocalˉcount(
-                Directory,
-                Functionˉindex
-            );
-        let Localˉtypes: u32 =
-            Functions.Compilerˉwebassemblyˉfunctionˉlocalˉtypesˉoffset(
-                Directory,
-                Functionˉindex
-            );
         let Functionˉcodeˉrelative: u32 =
             Functions.Compilerˉwebassemblyˉfunctionˉcodeˉoffset(
                 Directory,
@@ -821,72 +995,22 @@ export fn Compilerˉwebassemblyˉtypedˉcallsˉvalidateˉrange(
                 Functionˉcode + Cursor
             ));
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-            let Instructionˉoperand: u32 = Functionˉcode + Cursor + 1u32;
-            var Appliedˉinstruction: Instructionˉresult =
-                Unhandledˉinstruction(Stack);
-            if Opcode == 4u32 || Opcode == 5u32 {
-                Appliedˉinstruction = Applyˉlocalˉinstruction(
-                    Input,
-                    Opcode,
-                    Instructionˉoperand,
-                    Parameterˉcount,
-                    Parameterˉtypes,
-                    Localˉcount,
-                    Localˉtypes,
-                    Stack,
-                    Declaredˉmaximum
-                );
-            } else if Opcode >= 104u32 && Opcode <= 109u32 {
-                Appliedˉinstruction = Applyˉnominalˉinstruction(
-                    Input,
-                    Opcode,
-                    Instructionˉoperand,
-                    Typeˉdirectory,
-                    Stack,
-                    Declaredˉmaximum
-                );
-            } else if Opcode == 64u32 {
-                Appliedˉinstruction = Applyˉcallˉinstruction(
-                    Input,
-                    Opcode,
-                    Instructionˉoperand,
-                    Directory,
-                    Stack,
-                    Declaredˉmaximum
-                );
+            if Opcode == 64u32 {
                 if Aggregateˉcalls >= 4096u32 { return Invalidˉsummary(); }
                 Aggregateˉcalls = Aggregateˉcalls + 1u32;
-            } else if Opcode == 48u32 || Opcode == 49u32 ||
-                Opcode == 80u32 || Opcode == 81u32 {
-                Appliedˉinstruction = Applyˉcontrolˉinstruction(
+            }
+            Stack = Privateˉstack(
+                Compilerˉwebassemblyˉtypedˉinstructionˉapply(
                     Input,
-                    Opcode,
-                    Resultˉtype,
-                    Stack
-                );
-            }
-            if Appliedˉinstruction.Handled {
-                Stack = Instructionˉstack(Appliedˉinstruction);
-            } else {
-                let Opcodeˉeffect: Staticˉeffect = Staticˉeffectˉfor(Opcode);
-                if !Opcodeˉeffect.Handled {
-                    return Invalidˉat(Functionˉindex, Cursor, Opcode);
-                }
-                Stack = Applyˉeffect(
-                    Stack,
-                    Opcodeˉeffect.Popˉcount,
-                    Opcodeˉeffect.Firstˉkind,
-                    0u32,
-                    Opcodeˉeffect.Secondˉkind,
-                    0u32,
-                    Opcodeˉeffect.Thirdˉkind,
-                    0u32,
-                    Opcodeˉeffect.Hasˉpush,
-                    Opcodeˉeffect.Pushˉkind,
-                    0u32,
-                    Declaredˉmaximum
-                );
-            }
+                    Functionˉcode,
+                    Functionˉcodeˉlength,
+                    Directory,
+                    Typeˉdirectory,
+                    Functionˉindex,
+                    Cursor,
+                    Publicˉstate(Stack)
+                )
+            );
             if !Stack.Valid {
                 return Invalidˉat(Functionˉindex, Cursor, Opcode);
             }
