@@ -22,6 +22,21 @@ record Compilerˉwebassemblyˉsection {
     Nextˉoffset: u32;
 }
 
+record Compilerˉwebassemblyˉruntimeˉdata {
+    Valid: bool;
+    Kind: u8;
+    Valueˉoffset: u32;
+    Valueˉlength: u32;
+    Staticˉoffset: u32;
+    Nextˉoffset: u32;
+}
+
+record Compilerˉwebassemblyˉruntimeˉdataˉsummary {
+    Valid: bool;
+    Count: u32;
+    Staticˉlength: u32;
+}
+
 record Compilerˉwebassemblyˉfunction {
     Valid: bool;
     Localˉcount: u32;
@@ -194,6 +209,121 @@ export fn Compilerˉwebassemblyˉreadˉsection(
         Payloadˉoffset,
         Payloadˉlength,
         Payloadˉoffset + Payloadˉlength
+    );
+}
+
+export fn Compilerˉwebassemblyˉruntimeˉdataˉfailure()
+    -> Compilerˉwebassemblyˉruntimeˉdata {
+    return Compilerˉwebassemblyˉruntimeˉdata(
+        false, 0u8, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+export fn Compilerˉwebassemblyˉreadˉruntimeˉdata(
+    Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
+    Index: u32
+) -> Compilerˉwebassemblyˉruntimeˉdata {
+    if Data.Payloadˉlength < 4u32 {
+        return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Data.Payloadˉoffset);
+    if Index >= Count {
+        return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+    }
+    let End: u32 = Data.Payloadˉoffset + Data.Payloadˉlength;
+    var Cursor: u32 = Data.Payloadˉoffset + 4u32;
+    var Staticˉoffset: u32 = 50176u32;
+    var Current: u32 = 0u32;
+    while Current < Count {
+        if !Compilerˉwebassemblyˉrangeˉisˉvalid(End, Cursor, 4u32) {
+            return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+        }
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if Nameˉlength == 0u32 || Nameˉlength > 255u32 {
+            return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+        }
+        Cursor = Cursor + 4u32;
+        if !Compilerˉwebassemblyˉrangeˉisˉvalid(End, Cursor, Nameˉlength) {
+            return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+        }
+        Cursor = Cursor + Nameˉlength;
+        if !Compilerˉwebassemblyˉrangeˉisˉvalid(End, Cursor, 5u32) {
+            return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+        }
+        let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+        if Kind != 3u8 && Kind != 5u8 {
+            return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+        }
+        let Valueˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        let Valueˉoffset: u32 = Cursor + 5u32;
+        if !Compilerˉwebassemblyˉrangeˉisˉvalid(
+            End, Valueˉoffset, Valueˉlength
+        ) {
+            return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+        }
+        let Nextˉoffset: u32 = Valueˉoffset + Valueˉlength;
+        if Current == Index {
+            return Compilerˉwebassemblyˉruntimeˉdata(
+                true,
+                Kind,
+                Valueˉoffset,
+                Valueˉlength,
+                Staticˉoffset,
+                Nextˉoffset
+            );
+        }
+        if Valueˉlength > 65536u32 - Staticˉoffset {
+            return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+        }
+        Staticˉoffset = Staticˉoffset + Valueˉlength;
+        Cursor = Nextˉoffset;
+        Current = Current + 1u32;
+    }
+    return Compilerˉwebassemblyˉruntimeˉdataˉfailure();
+}
+
+export fn Compilerˉwebassemblyˉvalidateˉruntimeˉdata(
+    Input: bytes,
+    Data: Compilerˉwebassemblyˉsection
+) -> Compilerˉwebassemblyˉruntimeˉdataˉsummary {
+    if Data.Payloadˉlength < 4u32 {
+        return Compilerˉwebassemblyˉruntimeˉdataˉsummary(false, 0u32, 0u32);
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Data.Payloadˉoffset);
+    if Count > 256u32 {
+        return Compilerˉwebassemblyˉruntimeˉdataˉsummary(false, 0u32, 0u32);
+    }
+    var Staticˉlength: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Nextˉoffset: u32 = Data.Payloadˉoffset + 4u32;
+    while Index < Count {
+        let Entry: Compilerˉwebassemblyˉruntimeˉdata =
+            Compilerˉwebassemblyˉreadˉruntimeˉdata(Input, Data, Index);
+        if !Entry.Valid {
+            return Compilerˉwebassemblyˉruntimeˉdataˉsummary(
+                false, 0u32, 0u32
+            );
+        }
+        if Entry.Staticˉoffset != 50176u32 + Staticˉlength {
+            return Compilerˉwebassemblyˉruntimeˉdataˉsummary(
+                false, 0u32, 0u32
+            );
+        }
+        Staticˉlength = Staticˉlength + Entry.Valueˉlength;
+        if Staticˉlength > 15360u32 {
+            return Compilerˉwebassemblyˉruntimeˉdataˉsummary(
+                false, 0u32, 0u32
+            );
+        }
+        Nextˉoffset = Entry.Nextˉoffset;
+        Index = Index + 1u32;
+    }
+    if Nextˉoffset != Data.Payloadˉoffset + Data.Payloadˉlength {
+        return Compilerˉwebassemblyˉruntimeˉdataˉsummary(false, 0u32, 0u32);
+    }
+    return Compilerˉwebassemblyˉruntimeˉdataˉsummary(
+        true, Count, Staticˉlength
     );
 }
 
@@ -850,11 +980,17 @@ export fn Compilerˉwebassemblyˉruntimeˉencodingˉstackˉafter(
     if Opcode == 2u8 {
         return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 2u8);
     }
+    if Opcode == 3u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 3u8);
+    }
     if Opcode == 8u8 {
         return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 4u8);
     }
     if Opcode == 9u8 {
         return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+    }
+    if Opcode == 10u8 {
+        return Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 6u8);
     }
     if Opcode == 4u8 {
         return Compilerˉwebassemblyˉruntimeˉstackˉpush(
@@ -1083,10 +1219,12 @@ export fn Compilerˉwebassemblyˉruntimeˉinstructionˉwidth(
     var Width: u32 = 0u32;
     if Opcode == 1u8 { Width = 5u32; }
     if Opcode == 2u8 { Width = 2u32; }
+    if Opcode == 3u8 { Width = 5u32; }
     if Opcode == 4u8 { Width = 5u32; }
     if Opcode == 5u8 { Width = 5u32; }
     if Opcode == 8u8 { Width = 2u32; }
     if Opcode == 9u8 { Width = 5u32; }
+    if Opcode == 10u8 { Width = 5u32; }
     if Opcode == 11u8 { Width = 1u32; }
     if Opcode == 12u8 { Width = 1u32; }
     if Opcode == 13u8 { Width = 1u32; }
@@ -1167,6 +1305,7 @@ export fn Compilerˉwebassemblyˉruntimeˉcontrolˉfollowsˉterminator(
 
 export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Functions: Compilerˉwebassemblyˉsection,
     Code: Compilerˉwebassemblyˉsection
 ) -> Compilerˉwebassemblyˉruntimeˉfunction {
@@ -1317,12 +1456,42 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 2u8);
             Handled = true;
         }
+        if Opcode == 3u8 {
+            let Textˉentry: Compilerˉwebassemblyˉruntimeˉdata =
+                Compilerˉwebassemblyˉreadˉruntimeˉdata(
+                    Input,
+                    Data,
+                    Bytesˉreadˉu32ˉlittle(
+                        Input, Code.Payloadˉoffset + Cursor + 1u32
+                    )
+                );
+            if !Textˉentry.Valid || Textˉentry.Kind != 3u8 {
+                return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
+            }
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 3u8);
+            Handled = true;
+        }
         if Opcode == 8u8 {
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 4u8);
             Handled = true;
         }
         if Opcode == 9u8 {
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+            Handled = true;
+        }
+        if Opcode == 10u8 {
+            let Bytesˉentry: Compilerˉwebassemblyˉruntimeˉdata =
+                Compilerˉwebassemblyˉreadˉruntimeˉdata(
+                    Input,
+                    Data,
+                    Bytesˉreadˉu32ˉlittle(
+                        Input, Code.Payloadˉoffset + Cursor + 1u32
+                    )
+                );
+            if !Bytesˉentry.Valid || Bytesˉentry.Kind != 5u8 {
+                return Compilerˉwebassemblyˉruntimeˉfunctionˉfailure();
+            }
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 6u8);
             Handled = true;
         }
         if Opcode == 4u8 {
@@ -1598,6 +1767,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
 
 export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Functions: Compilerˉwebassemblyˉsection,
     Code: Compilerˉwebassemblyˉsection,
     Function: Compilerˉwebassemblyˉruntimeˉcallˉfunction,
@@ -1677,12 +1847,38 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 2u8);
             Handled = true;
         }
+        if Opcode == 3u8 {
+            let Textˉentry: Compilerˉwebassemblyˉruntimeˉdata =
+                Compilerˉwebassemblyˉreadˉruntimeˉdata(
+                    Input,
+                    Data,
+                    Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32)
+                );
+            if !Textˉentry.Valid || Textˉentry.Kind != 3u8 {
+                return Compilerˉwebassemblyˉruntimeˉcallˉfunctionˉfailure();
+            }
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 3u8);
+            Handled = true;
+        }
         if Opcode == 8u8 {
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 4u8);
             Handled = true;
         }
         if Opcode == 9u8 {
             Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 5u8);
+            Handled = true;
+        }
+        if Opcode == 10u8 {
+            let Bytesˉentry: Compilerˉwebassemblyˉruntimeˉdata =
+                Compilerˉwebassemblyˉreadˉruntimeˉdata(
+                    Input,
+                    Data,
+                    Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32)
+                );
+            if !Bytesˉentry.Valid || Bytesˉentry.Kind != 5u8 {
+                return Compilerˉwebassemblyˉruntimeˉcallˉfunctionˉfailure();
+            }
+            Stack = Compilerˉwebassemblyˉruntimeˉstackˉpush(Stack, 6u8);
             Handled = true;
         }
         if Opcode == 4u8 {
@@ -2023,6 +2219,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
 
 export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcalls(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Functions: Compilerˉwebassemblyˉsection,
     Code: Compilerˉwebassemblyˉsection,
     Mainˉindex: u32
@@ -2093,6 +2290,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcalls(
         let Validated: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
             Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
                 Input,
+                Data,
                 Functions,
                 Code,
                 Function,
@@ -2142,6 +2340,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉcalls(
 
 export fn Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉgraph(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Functions: Compilerˉwebassemblyˉsection,
     Code: Compilerˉwebassemblyˉsection,
     Mainˉindex: u32
@@ -2220,7 +2419,7 @@ export fn Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉgraph(
 
         let Validated: Compilerˉwebassemblyˉruntimeˉcallˉfunction =
             Compilerˉwebassemblyˉvalidateˉruntimeˉcallˉcode(
-                Input, Functions, Code, Function, Functionˉcount
+                Input, Data, Functions, Code, Function, Functionˉcount
             );
         if !Validated.Valid {
             return Compilerˉwebassemblyˉruntimeˉcallˉsummary(
@@ -4589,6 +4788,57 @@ export fn Compilerˉwebassemblyˉruntimeˉpackˉdescriptor(
     return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(132u32));
 }
 
+export fn Compilerˉwebassemblyˉruntimeˉstaticˉdescriptor(
+    Pointer: u32,
+    Length: u32
+) -> bytes {
+    var Result: bytes = Compilerˉwebassemblyˉruntimeˉi64ˉconstant(Pointer);
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉruntimeˉi64ˉconstant(Length)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉwebassemblyˉruntimeˉi64ˉconstant(32u32)
+    );
+    Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(134u32));
+    return Bytesˉconcat(Result, Compilerˉwebassemblyˉbyte(132u32));
+}
+
+export fn Compilerˉwebassemblyˉencodeˉruntimeˉdata(
+    Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
+    Summary: Compilerˉwebassemblyˉruntimeˉdataˉsummary
+) -> bytes {
+    if Summary.Staticˉlength == 0u32 {
+        return Compilerˉwebassemblyˉempty(Input);
+    }
+    var Staticˉbytes: bytes = Compilerˉwebassemblyˉempty(Input);
+    var Index: u32 = 0u32;
+    while Index < Summary.Count {
+        let Entry: Compilerˉwebassemblyˉruntimeˉdata =
+            Compilerˉwebassemblyˉreadˉruntimeˉdata(Input, Data, Index);
+        Staticˉbytes = Bytesˉconcat(
+            Staticˉbytes,
+            Bytesˉslice(Input, Entry.Valueˉoffset, Entry.Valueˉlength)
+        );
+        Index = Index + 1u32;
+    }
+    var Payload: bytes = Compilerˉwebassemblyˉuleb32(1u32);
+    Payload = Bytesˉconcat(Payload, Compilerˉwebassemblyˉuleb32(0u32));
+    Payload = Bytesˉconcat(
+        Payload,
+        Compilerˉwebassemblyˉpositiveˉi32ˉconstant(50176u32)
+    );
+    Payload = Bytesˉconcat(Payload, Compilerˉwebassemblyˉbyte(11u32));
+    Payload = Bytesˉconcat(
+        Payload,
+        Compilerˉwebassemblyˉuleb32(Summary.Staticˉlength)
+    );
+    Payload = Bytesˉconcat(Payload, Staticˉbytes);
+    return Compilerˉwebassemblyˉsectionˉbytes(11u32, Payload);
+}
+
 export fn Compilerˉwebassemblyˉruntimeˉmemoryˉcopy() -> bytes {
     var Result: bytes = Compilerˉwebassemblyˉbyte(252u32);
     Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉuleb32(10u32));
@@ -6522,6 +6772,7 @@ export fn Compilerˉwebassemblyˉruntimeˉsha256(
 
 export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Offset: u32,
     Opcode: u8,
     Arena: u32,
@@ -6559,6 +6810,21 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
             Result,
             Compilerˉwebassemblyˉpositiveˉi32ˉconstant(
                 U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32))
+            )
+        );
+    }
+    if Opcode == 3u8 || Opcode == 10u8 {
+        let Entry: Compilerˉwebassemblyˉruntimeˉdata =
+            Compilerˉwebassemblyˉreadˉruntimeˉdata(
+                Input,
+                Data,
+                Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32)
+            );
+        return Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉruntimeˉstaticˉdescriptor(
+                Entry.Staticˉoffset,
+                Entry.Valueˉlength
             )
         );
     }
@@ -7427,6 +7693,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
 
 export fn Compilerˉwebassemblyˉencodeˉruntimeˉwrapper(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Codeˉoffset: u32,
     Function: Compilerˉwebassemblyˉruntimeˉfunction
 ) -> bytes {
@@ -7557,10 +7824,12 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉwrapper(
         var Width: u32 = 1u32;
         if Opcode == 1u8 { Width = 5u32; }
         if Opcode == 2u8 { Width = 2u32; }
+        if Opcode == 3u8 { Width = 5u32; }
         if Opcode == 4u8 { Width = 5u32; }
         if Opcode == 5u8 { Width = 5u32; }
         if Opcode == 8u8 { Width = 2u32; }
         if Opcode == 9u8 { Width = 5u32; }
+        if Opcode == 10u8 { Width = 5u32; }
         if Opcode == 81u8 {
             Body = Bytesˉconcat(Body, Compilerˉwebassemblyˉmemoryˉmeter());
             Body = Bytesˉconcat(
@@ -7619,6 +7888,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉwrapper(
                 Body,
                 Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
                     Input,
+                    Data,
                     Codeˉoffset + Cursor,
                     Opcode,
                     Arena,
@@ -7703,6 +7973,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉreturn(
 
 export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Codeˉoffset: u32,
     Function: Compilerˉwebassemblyˉruntimeˉfunction
 ) -> bytes {
@@ -7940,6 +8211,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
                         Block,
                         Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
                             Input,
+                            Data,
                             Codeˉoffset + Cursor,
                             Opcode,
                             Arena,
@@ -8113,6 +8385,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉreturn(
 
 export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Code: Compilerˉwebassemblyˉsection,
     Function: Compilerˉwebassemblyˉruntimeˉcallˉfunction
 ) -> bytes {
@@ -8380,6 +8653,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
                             Block,
                             Compilerˉwebassemblyˉencodeˉruntimeˉinstruction(
                                 Input,
+                                Data,
                                 Codeˉoffset + Cursor,
                                 Opcode,
                                 Arena,
@@ -8424,6 +8698,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
 
 export fn Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Functions: Compilerˉwebassemblyˉsection,
     Code: Compilerˉwebassemblyˉsection,
     Summary: Compilerˉwebassemblyˉruntimeˉcallˉsummary
@@ -8538,7 +8813,7 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
             );
         let Privateˉbody: bytes =
             Compilerˉwebassemblyˉencodeˉruntimeˉprivateˉbody(
-                Input, Code, Function
+                Input, Data, Code, Function
             );
         Codeˉpayload = Bytesˉconcat(
             Codeˉpayload,
@@ -8556,14 +8831,26 @@ export fn Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
     Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉsectionˉbytes(5u32, Memoryˉpayload));
     Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉsectionˉbytes(6u32, Globalˉpayload));
     Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉsectionˉbytes(7u32, Exportˉpayload));
-    return Bytesˉconcat(
+    Result = Bytesˉconcat(
         Result,
         Compilerˉwebassemblyˉsectionˉbytes(10u32, Codeˉpayload)
     );
+    let Dataˉsummary: Compilerˉwebassemblyˉruntimeˉdataˉsummary =
+        Compilerˉwebassemblyˉvalidateˉruntimeˉdata(Input, Data);
+    if Dataˉsummary.Staticˉlength > 0u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉencodeˉruntimeˉdata(
+                Input, Data, Dataˉsummary
+            )
+        );
+    }
+    return Result;
 }
 
 export fn Compilerˉwebassemblyˉencodeˉruntime(
     Input: bytes,
+    Data: Compilerˉwebassemblyˉsection,
     Codeˉoffset: u32,
     Function: Compilerˉwebassemblyˉruntimeˉfunction
 ) -> bytes {
@@ -8626,11 +8913,11 @@ export fn Compilerˉwebassemblyˉencodeˉruntime(
     Exportˉpayload = Bytesˉconcat(Exportˉpayload, Compilerˉwebassemblyˉexportˉentry(Textˉtoˉutf8("Windvale.instructions"), 3u32, 7u32));
 
     var Wrapper: bytes = Compilerˉwebassemblyˉencodeˉruntimeˉwrapper(
-        Input, Codeˉoffset, Function
+        Input, Data, Codeˉoffset, Function
     );
     if Function.Hasˉcontrol {
         Wrapper = Compilerˉwebassemblyˉencodeˉruntimeˉcontrolˉwrapper(
-            Input, Codeˉoffset, Function
+            Input, Data, Codeˉoffset, Function
         );
     }
     let Allocator: bytes =
@@ -8662,10 +8949,21 @@ export fn Compilerˉwebassemblyˉencodeˉruntime(
     Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉsectionˉbytes(5u32, Memoryˉpayload));
     Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉsectionˉbytes(6u32, Globalˉpayload));
     Result = Bytesˉconcat(Result, Compilerˉwebassemblyˉsectionˉbytes(7u32, Exportˉpayload));
-    return Bytesˉconcat(
+    Result = Bytesˉconcat(
         Result,
         Compilerˉwebassemblyˉsectionˉbytes(10u32, Codeˉpayload)
     );
+    let Dataˉsummary: Compilerˉwebassemblyˉruntimeˉdataˉsummary =
+        Compilerˉwebassemblyˉvalidateˉruntimeˉdata(Input, Data);
+    if Dataˉsummary.Staticˉlength > 0u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Compilerˉwebassemblyˉencodeˉruntimeˉdata(
+                Input, Data, Dataˉsummary
+            )
+        );
+    }
+    return Result;
 }
 
 export fn Compilerˉwebassemblyˉencodeˉconstant(
@@ -10031,10 +10329,9 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
     if Bytesˉreadˉu32ˉlittle(Input, Capabilities.Payloadˉoffset) != 0u32 {
         return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
     }
-    if Data.Payloadˉlength != 4u32 {
-        return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
-    }
-    if Bytesˉreadˉu32ˉlittle(Input, Data.Payloadˉoffset) != 0u32 {
+    let Runtimeˉdata: Compilerˉwebassemblyˉruntimeˉdataˉsummary =
+        Compilerˉwebassemblyˉvalidateˉruntimeˉdata(Input, Data);
+    if !Runtimeˉdata.Valid {
         return Compilerˉwebassemblyˉfailure(Input, Compilerˉwebassemblyˉstatus.Unsupportedˉmodule);
     }
     if Types.Payloadˉlength != 4u32 {
@@ -10059,6 +10356,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
             let Runtimeˉcalls: Compilerˉwebassemblyˉruntimeˉcallˉsummary =
                 Compilerˉwebassemblyˉvalidateˉruntimeˉcalls(
                     Input,
+                    Data,
                     Functions,
                     Code,
                     Mainˉexport.Functionˉindex
@@ -10067,6 +10365,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
                 let Runtimeˉcallˉwebassembly: bytes =
                     Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
                         Input,
+                        Data,
                         Functions,
                         Code,
                         Runtimeˉcalls
@@ -10107,6 +10406,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
                     Compilerˉwebassemblyˉruntimeˉcallˉsummary =
                     Compilerˉwebassemblyˉvalidateˉruntimeˉrootˉfirstˉgraph(
                         Input,
+                        Data,
                         Functions,
                         Code,
                         Mainˉexport.Functionˉindex
@@ -10115,6 +10415,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
                     let Rootˉfirstˉwebassembly: bytes =
                         Compilerˉwebassemblyˉencodeˉruntimeˉcalls(
                             Input,
+                            Data,
                             Functions,
                             Code,
                             Rootˉfirstˉgraph
@@ -10208,6 +10509,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
     let Runtimeˉfunction: Compilerˉwebassemblyˉruntimeˉfunction =
         Compilerˉwebassemblyˉvalidateˉruntimeˉfunction(
             Input,
+            Data,
             Functions,
             Code
         );
@@ -10227,6 +10529,7 @@ export fn Compilerˉlowerˉwvbˉwebassembly(
         let Runtimeˉwebassembly: bytes =
             Compilerˉwebassemblyˉencodeˉruntime(
                 Input,
+                Data,
                 Code.Payloadˉoffset,
                 Runtimeˉfunction
             );

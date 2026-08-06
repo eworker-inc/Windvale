@@ -1,0 +1,12 @@
+module WebAssemblyˉstaticˉdescriptors profile portable;
+
+data Greeting: text = "Windvale";
+data Suffix: bytes = [33, 42];
+
+fn Aˉprefix(Input: bytes) -> bytes {
+    return Bytesˉconcat(Textˉtoˉutf8(Greeting), Input);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    return Bytesˉconcat(Aˉprefix(Input), Suffix);
+}

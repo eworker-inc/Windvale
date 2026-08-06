@@ -634,6 +634,9 @@
       Include="../Fixtures/WebAssembly/Runtime-Calls-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Runtime-Calls-Main.wv" />
     <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Static-Descriptors-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Static-Descriptors-Main.wv" />
+    <EmbeddedResource
       Include="../Fixtures/WebAssembly/Wvb-Envelope-Verify-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Envelope-Verify-Main.wv" />
     <EmbeddedResource
