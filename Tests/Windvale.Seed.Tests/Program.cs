@@ -128,6 +128,7 @@ internal static partial class Program
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
     private const string WEBASSEMBLY_CORE_SHA256 = "2d221ab9ebaad26b5acbfb582188085178d1630a7fa48e5f1c4e933ceea668aa";
     private const string WEBASSEMBLY_TOOL_SHA256 = "78588396fbff0865025d010b3f467ac20844c2d122a9ee9d63da8b85d880c00b";
+    private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "78d7ba09db7cf132b96bea1b354c67fbeff5d3b7e30bcd8030e6e7225e90ad18";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -912,6 +913,14 @@ internal static partial class Program
 
     private static readonly string WEBASSEMBLY_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Core.wv");
+
+    private static readonly string WEBASSEMBLY_FUNCTION_DIRECTORY_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Function-Directory.wv");
+
+    private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv");
 
     private static readonly string WEBASSEMBLY_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Tool.wv");
@@ -14851,6 +14860,35 @@ internal static partial class Program
             2_991,
             Exactˉverified.Functions.Sum(Function => Function.Instructions.Count(
                 Instruction => Instruction.Opcode == Opcode.Call)));
+
+        var Directoryˉtoolˉbytes = Compileˉwithˉdirectoryˉsuccess(
+            WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE,
+            "Compiler-Directory-Tool.wv");
+        Equal(
+            WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Directoryˉtoolˉbytes));
+        var Directoryˉtool = Moduleˉcodec.Readˉandˉverify(Directoryˉtoolˉbytes);
+        var Exactˉdirectory = Runˉwebassemblyˉtool(
+            Directoryˉtool,
+            Exactˉcompiler,
+            500_000_000);
+        Equal(0, Exactˉdirectory.Exitˉcode);
+        Equal(string.Empty, Exactˉdirectory.Diagnostics);
+        Equal(1, Exactˉdirectory.Readˉcount);
+        Equal(1, Exactˉdirectory.Writeˉcount);
+        Equal(
+            "directory status=Valid functions=417 entry-bytes=13344 " +
+                "instructions=157844 calls=2991\n",
+            Exactˉdirectory.Output);
+        Equal(13_344, Exactˉdirectory.Writtenˉbytes.Length);
+        var Exactˉdirectoryˉrepeat = Runˉwebassemblyˉtool(
+            Directoryˉtool,
+            Exactˉcompiler,
+            500_000_000);
+        Sequenceˉequal(
+            Exactˉdirectory.Writtenˉbytes,
+            Exactˉdirectoryˉrepeat.Writtenˉbytes);
+
         var Exactˉfrontier = Runˉwebassemblyˉtool(
             Tool,
             Exactˉcompiler,
@@ -14861,15 +14899,15 @@ internal static partial class Program
             Exactˉfrontier.Diagnostics);
         Equal(0, Exactˉfrontier.Writeˉcount);
 
-        void Requireˉunsupportedˉcode(byte[] Candidate)
+        void Requireˉdirectoryˉfailure(byte[] Candidate, string Reason)
         {
             var Rejected = Runˉwebassemblyˉtool(
-                Tool,
+                Directoryˉtool,
                 Candidate,
                 500_000_000);
             Equal(1, Rejected.Exitˉcode);
             Equal(
-                "webassembly status=Unsupportedˉcode\n",
+                $"directory status=Invalid {Reason}\n",
                 Rejected.Diagnostics);
             Equal(0, Rejected.Writeˉcount);
         }
@@ -14889,17 +14927,24 @@ internal static partial class Program
             Buildˉfunctionˉinventoryˉsource(512));
         var Boundaryˉverified = Moduleˉcodec.Readˉandˉverify(Boundaryˉwvb);
         Equal(512, Boundaryˉverified.Functions.Length);
-        var Boundary = Runˉwebassemblyˉtool(Tool, Boundaryˉwvb);
-        Equal(1, Boundary.Exitˉcode);
-        Equal("webassembly status=Unsupportedˉcode\n", Boundary.Diagnostics);
-        Equal(0, Boundary.Writeˉcount);
+        var Boundary = Runˉwebassemblyˉtool(
+            Directoryˉtool,
+            Boundaryˉwvb,
+            500_000_000);
+        Equal(0, Boundary.Exitˉcode);
+        Equal(string.Empty, Boundary.Diagnostics);
+        Equal(
+            "directory status=Valid functions=512 entry-bytes=16384 " +
+                "instructions=2051 calls=1\n",
+            Boundary.Output);
+        Equal(16_384, Boundary.Writtenˉbytes.Length);
 
         var Codeˉpayload = Findˉsectionˉpayload(
             Boundaryˉwvb,
             Sectionˉkind.Code);
         var Invalidˉopcode = Boundaryˉwvb.ToArray();
         Invalidˉopcode[Codeˉpayload] = byte.MaxValue;
-        Requireˉunsupportedˉcode(Invalidˉopcode);
+        Requireˉdirectoryˉfailure(Invalidˉopcode, "call-inventory");
 
         var Callˉfunction = Boundaryˉverified.Functions.First(Function =>
             Function.Instructions.Any(Instruction =>
@@ -14914,24 +14959,14 @@ internal static partial class Program
         BinaryPrimitives.WriteUInt32LittleEndian(
             Invalidˉcall.AsSpan(Callˉoffset + 1, 4),
             checked((uint)Boundaryˉverified.Functions.Length));
-        Requireˉunsupportedˉcode(Invalidˉcall);
-
-        void Requireˉunsupportedˉfunction(byte[] Candidate)
-        {
-            var Rejected = Runˉwebassemblyˉtool(Tool, Candidate);
-            Equal(1, Rejected.Exitˉcode);
-            Equal(
-                "webassembly status=Unsupportedˉfunction\n",
-                Rejected.Diagnostics);
-            Equal(0, Rejected.Writeˉcount);
-        }
+        Requireˉdirectoryˉfailure(Invalidˉcall, "call-inventory");
 
         var Excessˉfunctionsˉwvb = Compileˉsuccess(
             Buildˉfunctionˉinventoryˉsource(513));
         Equal(
             513,
             Moduleˉcodec.Readˉandˉverify(Excessˉfunctionsˉwvb).Functions.Length);
-        Requireˉunsupportedˉfunction(Excessˉfunctionsˉwvb);
+        Requireˉdirectoryˉfailure(Excessˉfunctionsˉwvb, "function-inventory");
 
         var Hostileˉname = Boundaryˉwvb.ToArray();
         var Functionsˉpayload = Findˉsectionˉpayload(
@@ -14940,7 +14975,7 @@ internal static partial class Program
         BinaryPrimitives.WriteUInt32LittleEndian(
             Hostileˉname.AsSpan(Functionsˉpayload + 4, 4),
             uint.MaxValue);
-        Requireˉunsupportedˉfunction(Hostileˉname);
+        Requireˉdirectoryˉfailure(Hostileˉname, "function-inventory");
 
         var Invalidˉshape = Boundaryˉwvb.ToArray();
         var Cursor = Functionsˉpayload + 4;
@@ -14952,7 +14987,7 @@ internal static partial class Program
         Equal(1u, Parameterˉcount);
         Cursor += 4;
         Invalidˉshape[Cursor] = byte.MaxValue;
-        Requireˉunsupportedˉfunction(Invalidˉshape);
+        Requireˉdirectoryˉfailure(Invalidˉshape, "function-inventory");
 
         var Inconsistentˉcode = Boundaryˉwvb.ToArray();
         Cursor += checked((int)Parameterˉcount);
@@ -14963,13 +14998,13 @@ internal static partial class Program
         BinaryPrimitives.WriteUInt32LittleEndian(
             Inconsistentˉcode.AsSpan(Cursor, 4),
             1u);
-        Requireˉunsupportedˉfunction(Inconsistentˉcode);
+        Requireˉdirectoryˉfailure(Inconsistentˉcode, "function-inventory");
 
         var Overwideˉstack = Boundaryˉwvb.ToArray();
         BinaryPrimitives.WriteUInt32LittleEndian(
             Overwideˉstack.AsSpan(Cursor + 8, 4),
             257u);
-        Requireˉunsupportedˉfunction(Overwideˉstack);
+        Requireˉdirectoryˉfailure(Overwideˉstack, "function-inventory");
     }
 
     private static void Compilerˉwebassemblyˉruns()
@@ -26679,6 +26714,27 @@ internal static partial class Program
         {
             throw new InvalidOperationException(
                 "Compiler WebAssembly composition failed: " +
+                string.Join(" | ", Result.Diagnostics));
+        }
+
+        return Result.Moduleˉbytes.ToArray();
+    }
+
+    private static byte[] Compileˉwithˉdirectoryˉsuccess(
+        string source,
+        string sourceˉname)
+    {
+        var Result = Seedˉcompiler.Compileˉmodules(
+            new(sourceˉname, source),
+            [
+                new(
+                    "Compiler/Windvale/WebAssembly-Function-Directory.wv",
+                    WEBASSEMBLY_FUNCTION_DIRECTORY_SOURCE),
+            ]);
+        if (!Result.Success)
+        {
+            throw new InvalidOperationException(
+                "Compiler WebAssembly directory composition failed: " +
                 string.Join(" | ", Result.Diagnostics));
         }
 

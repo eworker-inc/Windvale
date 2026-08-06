@@ -571,6 +571,12 @@
       Include="../../Compiler/Windvale/WebAssembly-Core.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Core.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Function-Directory.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Function-Directory.wv" />
+    <EmbeddedResource
+      Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
+    <EmbeddedResource
       Include="../../Examples/Compiler/WebAssembly-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />
     <EmbeddedResource

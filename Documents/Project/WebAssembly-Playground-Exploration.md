@@ -180,6 +180,8 @@ A separate compiler-scale inventory pass then admits one through 512 functions w
 
 The following code-inventory pass decodes all 157,844 exact-compiler instruction encodings within a 200,000-instruction bound and validates every one of its 2,991 direct-call targets within a 4,096-call bound. It also fences Boolean constants, locals, and function-relative control extents while preserving separate function-versus-code failure statuses. The recovered native tool reaches the later executable selector in 151 ms and preserves the exact interpreter Wasm. Typed call agreement, instruction-boundary control proof, nominal value storage, and general operation emission remain open.
 
+A separate portable function-directory module now materializes one immutable 32-byte entry per function without changing the established backend. The exact compiler produces 13,344 deterministic directory bytes, and every one of its 2,991 call targets can resolve parameter, result, local, code-range, and stack metadata in constant time. This is retained development evidence only: operand-stack typing and call signature agreement remain the next gate, and no partial compiler Wasm is published to the playground.
+
 ## Proposed playground shape
 
 The initial user experience could have four primary views:
