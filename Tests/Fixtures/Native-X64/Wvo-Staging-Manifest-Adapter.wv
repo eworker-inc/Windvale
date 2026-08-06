@@ -1,6 +1,5 @@
 module Compilerˉnativeˉx64ˉstagingˉmanifestˉtest profile portable;
 
-import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉnativeˉbridge as Bridge;
 
 fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
@@ -8,14 +7,31 @@ fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
 }
 
 export fn Main(Input: bytes) -> bytes {
-    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
-        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(Input);
     var Output: bytes = Textˉtoˉutf8("WVME");
     Output = Appendˉu32(
         Output,
         Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉvalidate(Input)
     );
-    Output = Appendˉu32(Output, Summary.Objectˉbytes);
-    Output = Appendˉu32(Output, Summary.Chunks);
-    return Appendˉu32(Output, Summary.Maximumˉchunkˉbytes);
+    Output = Appendˉu32(
+        Output,
+        Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉobjectˉbytes(Input)
+    );
+    Output = Appendˉu32(
+        Output,
+        Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunks(Input)
+    );
+    Output = Appendˉu32(
+        Output,
+        Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉposition(
+            Input,
+            0u32
+        )
+    );
+    return Appendˉu32(
+        Output,
+        Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉlength(
+            Input,
+            0u32
+        )
+    );
 }

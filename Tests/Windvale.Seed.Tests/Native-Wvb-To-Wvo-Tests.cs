@@ -80,12 +80,12 @@ internal static partial class Program
     private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 394_780;
     private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
         "77158b228c204b587dbf559621ad7c717d4eb5b418c32b783204cd350525ac76";
-    private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 6_942;
+    private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 7_991;
     private const string WVO_STAGING_MANIFEST_ADAPTER_SHA256 =
-        "f5ee0ed8d06e3c444c2cdc5a5a220d62712dd6700eebab4d66bf2995ac7ce344";
-    private const int WVO_STAGING_NATIVE_BRIDGE_ADAPTER_WVB_BYTES = 6_785;
+        "e7a29d26e78c3cdae93868960d5be537709fc7ed8ef83de1c0bf84ca5e63c3fa";
+    private const int WVO_STAGING_NATIVE_BRIDGE_ADAPTER_WVB_BYTES = 8_807;
     private const string WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SHA256 =
-        "7bfbaf5f79fae879d534c05f5c52b9f354519d84fdbeb4acc008d9b90c0a711c";
+        "f4f5e00013d370a431af5b78d36beca37d9fe5504e788204aea6025341607417";
     private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_348_864;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
         "0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280";
@@ -847,10 +847,11 @@ internal static partial class Program
             byte[] input,
             uint expectedˉobjectˉbytes = 0,
             uint expectedˉchunks = 0,
-            uint expectedˉmaximumˉchunkˉbytes = 0)
+            uint expectedˉfirstˉposition = uint.MaxValue,
+            uint expectedˉfirstˉlength = 0)
         {
             var Evidence = Run(input);
-            Equal(20, Evidence.Length);
+            Equal(24, Evidence.Length);
             Sequenceˉequal("WVME"u8.ToArray(), Evidence.AsSpan(0, 4).ToArray());
             Equal(status, BinaryPrimitives.ReadUInt32LittleEndian(Evidence.AsSpan(4)));
             Equal(
@@ -860,12 +861,17 @@ internal static partial class Program
                 expectedˉchunks,
                 BinaryPrimitives.ReadUInt32LittleEndian(Evidence.AsSpan(12)));
             Equal(
-                expectedˉmaximumˉchunkˉbytes,
+                expectedˉfirstˉposition,
                 BinaryPrimitives.ReadUInt32LittleEndian(Evidence.AsSpan(16)));
+            Equal(
+                expectedˉfirstˉlength,
+                BinaryPrimitives.ReadUInt32LittleEndian(Evidence.AsSpan(20)));
         }
 
         var Valid = manifest.ToArray();
-        Assertˉsummary(0, Valid, objectˉbytes, chunks, 4u * 1024u * 1024u);
+        var Firstˉlength =
+            BinaryPrimitives.ReadUInt32LittleEndian(Valid.AsSpan(32));
+        Assertˉsummary(0, Valid, objectˉbytes, chunks, 0, Firstˉlength);
         Assertˉsummary(1, Valid.AsSpan(0, 23).ToArray());
 
         byte[] Withˉu32(int offset, uint value)

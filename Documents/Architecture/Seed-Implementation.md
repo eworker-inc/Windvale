@@ -93,8 +93,9 @@ multipart transport seam, not atomic publication. A focused capability-free
 reader owns canonical manifest serialization and strictly validates bounded
 counts, extents, indices, and contiguous positions without touching host
 resources. A tiny capability-free bridge maps its exact statuses across ABI
-22's borrowed-`bytes`/scalar-return convention for a fixed native caller. A
-fixed native adapter must preserve that snapshot, bind the staged
+22's borrowed-`bytes`/scalar-return convention and exposes only revalidated
+object/count/entry scalars to a fixed native caller. A fixed native adapter
+must preserve that snapshot, derive and bind the staged
 identities, validate chunk contents, reconstruct the exact WVO, and enter
 the qualified sibling-replacement transaction before the managed publisher can
 leave the normal path.

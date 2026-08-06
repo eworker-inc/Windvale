@@ -2953,3 +2953,36 @@ verification, replacement/cleanup integration, complete-tool self-lowering,
 Development, Standard, Qualification, Linux execution, WebAssembly
 verification, artifact promotion, ordinary-path cutover, and the grouped
 end-of-goal gate remain deferred.
+
+## Local validated native staging-manifest accessor evidence
+
+[Decision 0287](../Decisions/0287-Validated-Native-Staging-Manifest-Accessors.md)
+extends the capability-free ABI-22 bridge with revalidated object-length,
+chunk-count, chunk-position, and chunk-length queries. Invalid object/count/
+length results are zero; invalid or out-of-range positions are `0xffffffff`.
+Those sentinels cannot represent valid `WVOP 1` values, and the index is
+bounded before entry-offset arithmetic.
+
+The malformed-manifest adapter now obtains status and admitted fields entirely
+through the bridge. The native runner checks all five functions over a valid
+one-chunk manifest, the out-of-range index sentinels, and every malformed-input
+sentinel. It passes fragment verification, requires zero services, executes as
+x86-64 machine code, and returns 42. The reviewed compiler selection passes
+1/1 in 15.625 test seconds after a 16.94-second zero-warning Release build.
+
+The qualified native source front door compiles the three-module manifest
+adapter to 7,991 bytes at SHA-256
+`e7a29d26e78c3cdae93868960d5be537709fc7ed8ef83de1c0bf84ca5e63c3fa`
+and the three-module native runner to 8,807 bytes at SHA-256
+`f4f5e00013d370a431af5b78d36beca37d9fe5504e788204aea6025341607417`.
+The 394,780-byte staging tool and existing unpromoted Windows/Linux package
+identities remain unchanged.
+
+No C# product implementation or WebAssembly implementation changed. The fixed
+platform adapters no longer need to parse manifest fields, but they still must
+map the verified bridge ordinals, preserve the immutable snapshot, derive and
+retain chunk identities, compare exact content/length, verify the reconstructed
+WVO, and own replacement/cleanup. Complete-tool self-lowering, Development,
+Standard, Qualification, Linux execution, WebAssembly verification, artifact
+promotion, ordinary-path cutover, and the grouped end-of-goal gate remain
+deferred.

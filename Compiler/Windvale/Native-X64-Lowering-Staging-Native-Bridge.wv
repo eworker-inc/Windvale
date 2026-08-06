@@ -49,3 +49,47 @@ export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉvalidate(
     }
     return 10u32;
 }
+
+export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉobjectˉbytes(
+    Input: bytes
+) -> u32 {
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(Input);
+    return Summary.Objectˉbytes;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunks(
+    Input: bytes
+) -> u32 {
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(Input);
+    return Summary.Chunks;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉposition(
+    Input: bytes,
+    Index: u32
+) -> u32 {
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(Input);
+    if Summary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return 4294967295u32;
+    }
+    if Index >= Summary.Chunks { return 4294967295u32; }
+    return Bytesˉreadˉu32ˉlittle(Input, 28u32 + Index * 12u32);
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉlength(
+    Input: bytes,
+    Index: u32
+) -> u32 {
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(Input);
+    if Summary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return 0u32;
+    }
+    if Index >= Summary.Chunks { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Input, 32u32 + Index * 12u32);
+}

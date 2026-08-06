@@ -202,6 +202,15 @@ The bridge requires no service and exposes no admitted size or count on
 failure. A fixed package builder must resolve its verified function ordinal
 before mapping the generated `$function_NNNN` symbol to a platform import.
 
+The same bridge exposes validated scalar queries for object length, chunk
+count, and each chunk's position and length. Every query reruns strict
+validation over the adapter-owned immutable snapshot. Invalid object length,
+count, or chunk length is zero; invalid or out-of-range chunk position is
+`0xffffffff`. Those sentinels cannot represent valid `WVOP 1` values. The
+index is bounded by the admitted chunk count before its entry offset is
+calculated. Fixed platform adapters therefore do not parse header or entry
+fields themselves; the bounded repeated scan covers at most 518 chunks.
+
 A native commit adapter must preserve the exact
 validated manifest snapshot, bind each staged-resource identity, reject
 missing or changed chunks, reconstruct and verify the complete WVO, and then

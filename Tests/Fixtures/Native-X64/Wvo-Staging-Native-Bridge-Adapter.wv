@@ -29,5 +29,61 @@ export fn Main() -> i32 {
     ) != 2u32 {
         return 2;
     }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉobjectˉbytes(
+        Validˉmanifest
+    ) != 1u32 {
+        return 3;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunks(
+        Validˉmanifest
+    ) != 1u32 {
+        return 4;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉposition(
+        Validˉmanifest,
+        0u32
+    ) != 0u32 {
+        return 5;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉlength(
+        Validˉmanifest,
+        0u32
+    ) != 1u32 {
+        return 6;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉposition(
+        Validˉmanifest,
+        1u32
+    ) != 4294967295u32 {
+        return 7;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉlength(
+        Validˉmanifest,
+        1u32
+    ) != 0u32 {
+        return 8;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉobjectˉbytes(
+        Invalidˉmanifest
+    ) != 0u32 {
+        return 9;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunks(
+        Invalidˉmanifest
+    ) != 0u32 {
+        return 10;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉposition(
+        Invalidˉmanifest,
+        0u32
+    ) != 4294967295u32 {
+        return 11;
+    }
+    if Bridge.Compilerˉnativeˉx64ˉstagingˉmanifestˉnativeˉchunkˉlength(
+        Invalidˉmanifest,
+        0u32
+    ) != 0u32 {
+        return 12;
+    }
     return 42;
 }
