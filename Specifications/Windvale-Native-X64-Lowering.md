@@ -225,6 +225,22 @@ and zeroes. Its ABI-22 scalar bridge reruns the same validation for each query.
 This is the compiler-produced section envelope, not yet symbol, relocation,
 placeholder, or complete staged-content verification.
 
+Decision 0290's focused reader consumes the actual symbol chunk at that admitted
+position. It accepts only the native compiler's bounded symbol profile:
+sequential local `$data_NNNN` records cover `.rodata`; ascending local
+`$function_NNNN` records describe every non-main ordinal; and one final
+exported `Main` fills the one omitted ordinal and exact code-range gap. Reserved
+fields, bindings, kinds, section indices, names, ranges, data coverage, function
+coverage, and the optional zero-through-15-byte text padding are checked. The
+complete chunk must be consumed, with at most 64 data symbols, 512 functions,
+and 576 symbols total. Its end is the exact relocation position. A nonempty
+relocation table must be one following manifest chunk of `count * 20` bytes
+ending at the object extent; with no relocations, the symbol chunk ends the
+object. Valid evidence exposes data/function counts and the relocation extent;
+rejection exposes named status and zeroes. The scalar ABI bridge reruns the
+same validation over the same immutable snapshots for each query. Relocation
+semantics and code-placeholder validation remain separate.
+
 A native commit adapter must preserve the exact
 validated manifest snapshot, bind each staged-resource identity, reject
 missing or changed chunks, reconstruct and verify the complete WVO, and then

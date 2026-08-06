@@ -1,0 +1,461 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
+
+export enum Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus {
+    Valid = 0;
+    Envelope = 1;
+    Symbolˉchunk = 2;
+    Truncated = 3;
+    Flags = 4;
+    Shape = 5;
+    Name = 6;
+    Order = 7;
+    Range = 8;
+    Limits = 9;
+    Dataˉcoverage = 10;
+    Functionˉcoverage = 11;
+    Relocationˉboundary = 12;
+}
+
+export record Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
+    Status: Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus;
+    Dataˉsymbols: u32;
+    Functions: u32;
+    Relocationˉposition: u32;
+    Relocationˉbytes: u32;
+}
+
+fn Invalid(
+    Status: Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
+    return Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Accepted(
+    Dataˉsymbols: u32,
+    Functions: u32,
+    Relocationˉposition: u32,
+    Relocationˉbytes: u32
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
+    return Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary(
+        Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid,
+        Dataˉsymbols,
+        Functions,
+        Relocationˉposition,
+        Relocationˉbytes
+    );
+}
+
+fn Chunkˉlengthˉatˉposition(
+    Stagingˉmanifest: bytes,
+    Chunks: u32,
+    Position: u32
+) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Chunks {
+        let Entry: u32 = 24u32 + Index * 12u32;
+        let Entryˉposition: u32 =
+            Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+        if Entryˉposition == Position {
+            return Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32);
+        }
+        if Entryˉposition > Position { return 0u32; }
+        Index = Index + 1u32;
+    }
+    return 0u32;
+}
+
+fn Decimalˉdigit(Value: u32) -> u32 {
+    if Value < 48u32 || Value > 57u32 { return 4294967295u32; }
+    return Value - 48u32;
+}
+
+fn Decimalˉfour(Input: bytes, Offset: u32) -> u32 {
+    let Thousands: u32 = Decimalˉdigit(
+        U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset))
+    );
+    let Hundreds: u32 = Decimalˉdigit(
+        U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 1u32))
+    );
+    let Tens: u32 = Decimalˉdigit(
+        U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 2u32))
+    );
+    let Ones: u32 = Decimalˉdigit(
+        U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + 3u32))
+    );
+    if Thousands == 4294967295u32 || Hundreds == 4294967295u32 ||
+        Tens == 4294967295u32 || Ones == 4294967295u32 {
+        return 4294967295u32;
+    }
+    return Thousands * 1000u32 + Hundreds * 100u32 + Tens * 10u32 + Ones;
+}
+
+fn Dataˉnameˉordinal(Input: bytes, Offset: u32, Length: u32) -> u32 {
+    if Length != 10u32 { return 4294967295u32; }
+    if Bytesˉreadˉu8(Input, Offset) != 36u8 { return 4294967295u32; }
+    if Bytesˉreadˉu8(Input, Offset + 1u32) != 100u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 2u32) != 97u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 3u32) != 116u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 4u32) != 97u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 5u32) != 95u8 {
+        return 4294967295u32;
+    }
+    return Decimalˉfour(Input, Offset + 6u32);
+}
+
+fn Functionˉnameˉordinal(Input: bytes, Offset: u32, Length: u32) -> u32 {
+    if Length != 14u32 { return 4294967295u32; }
+    if Bytesˉreadˉu8(Input, Offset) != 36u8 { return 4294967295u32; }
+    if Bytesˉreadˉu8(Input, Offset + 1u32) != 102u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 2u32) != 117u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 3u32) != 110u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 4u32) != 99u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 5u32) != 116u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 6u32) != 105u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 7u32) != 111u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 8u32) != 110u8 {
+        return 4294967295u32;
+    }
+    if Bytesˉreadˉu8(Input, Offset + 9u32) != 95u8 {
+        return 4294967295u32;
+    }
+    return Decimalˉfour(Input, Offset + 10u32);
+}
+
+fn Mainˉnameˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
+    if Length != 4u32 { return false; }
+    if Bytesˉreadˉu8(Input, Offset) != 77u8 { return false; }
+    if Bytesˉreadˉu8(Input, Offset + 1u32) != 97u8 { return false; }
+    if Bytesˉreadˉu8(Input, Offset + 2u32) != 105u8 { return false; }
+    return Bytesˉreadˉu8(Input, Offset + 3u32) == 110u8;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes
+) -> Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
+    let Envelopeˉsummary:
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader
+        );
+    if Envelopeˉsummary.Status !=
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Envelope
+        );
+    }
+    let Manifestˉsummary:
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Envelopeˉsummary.Symbols > 576u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
+        );
+    }
+    if Chunkˉlengthˉatˉposition(
+        Stagingˉmanifest,
+        Manifestˉsummary.Chunks,
+        Envelopeˉsummary.Symbolˉposition
+    ) != Bytesˉlength(Symbolˉchunk) {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Symbolˉchunk
+        );
+    }
+
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    var Dataˉsymbols: u32 = 0u32;
+    var Expectedˉdataˉoffset: u32 = 0u32;
+    var Functionsˉstarted: bool = false;
+    var Localˉfunctions: u32 = 0u32;
+    var Nextˉfunctionˉordinal: u32 = 0u32;
+    var Expectedˉfunctionˉoffset: u32 = 0u32;
+    var Mainˉordinal: u32 = 4294967295u32;
+    var Mainˉoffset: u32 = 0u32;
+    var Afterˉmainˉoffset: u32 = 0u32;
+    var Exportˉoffset: u32 = 0u32;
+    var Exportˉsize: u32 = 0u32;
+    var Mainˉseen: bool = false;
+    while Index < Envelopeˉsummary.Symbols {
+        let Total: u32 = Bytesˉlength(Symbolˉchunk);
+        if Cursor > Total || 20u32 > Total - Cursor {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Truncated
+            );
+        }
+        let Binding: u32 =
+            U32ˉfromˉu8(Bytesˉreadˉu8(Symbolˉchunk, Cursor));
+        let Kind: u32 =
+            U32ˉfromˉu8(Bytesˉreadˉu8(Symbolˉchunk, Cursor + 1u32));
+        if Bytesˉreadˉu16ˉlittle(Symbolˉchunk, Cursor + 2u32) != 0u32 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Flags
+            );
+        }
+        let Section: u32 =
+            Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 4u32);
+        let Offset: u32 =
+            Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 8u32);
+        let Size: u32 =
+            Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 12u32);
+        let Nameˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 16u32);
+        let Nameˉoffset: u32 = Cursor + 20u32;
+        if Nameˉlength > Total - Nameˉoffset {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Truncated
+            );
+        }
+
+        if Binding == 1u32 && Kind == 2u32 {
+            if Functionsˉstarted || Mainˉseen ||
+                Envelopeˉsummary.Sections != 2u32 || Section != 1u32 {
+                return Invalid(
+                    Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape
+                );
+            }
+            let Dataˉordinal: u32 =
+                Dataˉnameˉordinal(Symbolˉchunk, Nameˉoffset, Nameˉlength);
+            if Dataˉordinal == 4294967295u32 {
+                return Invalid(
+                    Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name
+                );
+            }
+            if Dataˉordinal != Dataˉsymbols {
+                return Invalid(
+                    Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Order
+                );
+            }
+            if Dataˉsymbols >= 64u32 {
+                return Invalid(
+                    Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
+                );
+            }
+            if Offset != Expectedˉdataˉoffset ||
+                Offset > Envelopeˉsummary.Readˉonlyˉbytes ||
+                Size > Envelopeˉsummary.Readˉonlyˉbytes - Offset {
+                return Invalid(
+                    Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Range
+                );
+            }
+            Expectedˉdataˉoffset = Expectedˉdataˉoffset + Size;
+            Dataˉsymbols = Dataˉsymbols + 1u32;
+        } else {
+            if Binding == 1u32 && Kind == 1u32 {
+                if Mainˉseen || Section != 0u32 {
+                    return Invalid(
+                        Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape
+                    );
+                }
+                Functionsˉstarted = true;
+                let Functionˉordinal: u32 = Functionˉnameˉordinal(
+                    Symbolˉchunk,
+                    Nameˉoffset,
+                    Nameˉlength
+                );
+                if Functionˉordinal == 4294967295u32 {
+                    return Invalid(
+                        Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name
+                    );
+                }
+                if Functionˉordinal != Nextˉfunctionˉordinal {
+                    if Mainˉordinal != 4294967295u32 ||
+                        Functionˉordinal != Nextˉfunctionˉordinal + 1u32 {
+                        return Invalid(
+                            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Order
+                        );
+                    }
+                    Mainˉordinal = Nextˉfunctionˉordinal;
+                    Mainˉoffset = Expectedˉfunctionˉoffset;
+                    Afterˉmainˉoffset = Offset;
+                    if Afterˉmainˉoffset <= Mainˉoffset {
+                        return Invalid(
+                            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Range
+                        );
+                    }
+                    Expectedˉfunctionˉoffset = Offset;
+                }
+                if Functionˉordinal >= 512u32 ||
+                    Offset != Expectedˉfunctionˉoffset ||
+                    Size == 0u32 || Offset > Envelopeˉsummary.Textˉbytes ||
+                    Size > Envelopeˉsummary.Textˉbytes - Offset {
+                    return Invalid(
+                        Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Range
+                    );
+                }
+                Expectedˉfunctionˉoffset = Expectedˉfunctionˉoffset + Size;
+                Nextˉfunctionˉordinal = Functionˉordinal + 1u32;
+                Localˉfunctions = Localˉfunctions + 1u32;
+            } else {
+                if Binding != 2u32 || Kind != 1u32 || Section != 0u32 ||
+                    Mainˉseen || Index + 1u32 != Envelopeˉsummary.Symbols {
+                    return Invalid(
+                        Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape
+                    );
+                }
+                if !Mainˉnameˉisˉvalid(
+                    Symbolˉchunk,
+                    Nameˉoffset,
+                    Nameˉlength
+                ) {
+                    return Invalid(
+                        Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name
+                    );
+                }
+                if Size == 0u32 || Offset > Envelopeˉsummary.Textˉbytes ||
+                    Size > Envelopeˉsummary.Textˉbytes - Offset {
+                    return Invalid(
+                        Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Range
+                    );
+                }
+                Exportˉoffset = Offset;
+                Exportˉsize = Size;
+                Mainˉseen = true;
+            }
+        }
+        Cursor = Nameˉoffset + Nameˉlength;
+        Index = Index + 1u32;
+    }
+    if Cursor != Bytesˉlength(Symbolˉchunk) {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Symbolˉchunk
+        );
+    }
+    if !Mainˉseen {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape
+        );
+    }
+    if Envelopeˉsummary.Sections == 2u32 {
+        if Dataˉsymbols == 0u32 ||
+            Expectedˉdataˉoffset != Envelopeˉsummary.Readˉonlyˉbytes {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Dataˉcoverage
+            );
+        }
+    } else {
+        if Dataˉsymbols != 0u32 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Dataˉcoverage
+            );
+        }
+    }
+
+    let Functions: u32 = Localˉfunctions + 1u32;
+    if Functions > 512u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
+        );
+    }
+    var Functionˉend: u32 = Expectedˉfunctionˉoffset;
+    if Mainˉordinal == 4294967295u32 {
+        Mainˉordinal = Nextˉfunctionˉordinal;
+        if Exportˉoffset != Expectedˉfunctionˉoffset {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage
+            );
+        }
+        Functionˉend = Exportˉoffset + Exportˉsize;
+    } else {
+        if Exportˉoffset != Mainˉoffset ||
+            Exportˉsize != Afterˉmainˉoffset - Mainˉoffset ||
+            Nextˉfunctionˉordinal != Functions {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage
+            );
+        }
+    }
+    if Mainˉordinal >= Functions || Functionˉend > Envelopeˉsummary.Textˉbytes {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage
+        );
+    }
+    let Padding: u32 = Envelopeˉsummary.Textˉbytes - Functionˉend;
+    if Envelopeˉsummary.Sections == 1u32 {
+        if Padding != 0u32 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage
+            );
+        }
+    } else {
+        if Padding > 15u32 {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage
+            );
+        }
+    }
+
+    if Bytesˉlength(Symbolˉchunk) >
+        Envelopeˉsummary.Objectˉbytes - Envelopeˉsummary.Symbolˉposition {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Relocationˉboundary
+        );
+    }
+    let Relocationˉposition: u32 =
+        Envelopeˉsummary.Symbolˉposition + Bytesˉlength(Symbolˉchunk);
+    let Relocationˉbytes: u32 = Envelopeˉsummary.Relocations * 20u32;
+    if Envelopeˉsummary.Relocations == 0u32 {
+        if Relocationˉposition != Envelopeˉsummary.Objectˉbytes {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Relocationˉboundary
+            );
+        }
+    } else {
+        if Relocationˉbytes >
+            Envelopeˉsummary.Objectˉbytes - Relocationˉposition ||
+            Relocationˉposition + Relocationˉbytes !=
+                Envelopeˉsummary.Objectˉbytes ||
+            Chunkˉlengthˉatˉposition(
+                Stagingˉmanifest,
+                Manifestˉsummary.Chunks,
+                Relocationˉposition
+            ) != Relocationˉbytes {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Relocationˉboundary
+            );
+        }
+    }
+    return Accepted(
+        Dataˉsymbols,
+        Functions,
+        Relocationˉposition,
+        Relocationˉbytes
+    );
+}

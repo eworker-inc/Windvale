@@ -98,9 +98,12 @@ object/count/entry scalars to a fixed native caller. A fixed native adapter
 also receives bounded metadata chunks through a focused scalar bridge. The
 shared Windvale reader validates the compiler-produced WVO header, `.text`,
 optional `.rodata`, 32 MiB section extents, following metadata boundaries, and
-minimum record tail without constructing one whole object value. A fixed
-native adapter must preserve those snapshots, derive and bind the staged
-identities, finish symbol/relocation and chunk-content validation, reconstruct
+minimum record tail without constructing one whole object value. A second
+bounded reader consumes the complete compiler-produced symbol chunk, validates
+its data/function/Main order and ranges, and fixes the exact relocation-table
+extent. A fixed native adapter must preserve those snapshots, derive and bind
+the staged identities, finish relocation, placeholder, and chunk-content
+validation, reconstruct
 the exact WVO, and enter
 the qualified sibling-replacement transaction before the managed publisher can
 leave the normal path.

@@ -1,0 +1,120 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbolsˉnativeˉbridge profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
+
+fn Summary(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes
+) -> Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
+    return Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉvalidate(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes
+) -> u32 {
+    let Result: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk);
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid {
+        return 0u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Envelope {
+        return 1u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Symbolˉchunk {
+        return 2u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Truncated {
+        return 3u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Flags {
+        return 4u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape {
+        return 5u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Name {
+        return 6u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Order {
+        return 7u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Range {
+        return 8u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits {
+        return 9u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Dataˉcoverage {
+        return 10u32;
+    }
+    if Result.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage {
+        return 11u32;
+    }
+    return 12u32;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉdataˉsymbols(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes
+) -> u32 {
+    let Result: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk);
+    return Result.Dataˉsymbols;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉfunctions(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes
+) -> u32 {
+    let Result: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk);
+    return Result.Functions;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉrelocationˉposition(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes
+) -> u32 {
+    let Result: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk);
+    return Result.Relocationˉposition;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉnativeˉrelocationˉbytes(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes
+) -> u32 {
+    let Result: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Summary(Stagingˉmanifest, Prefix, Readˉonlyˉheader, Symbolˉchunk);
+    return Result.Relocationˉbytes;
+}

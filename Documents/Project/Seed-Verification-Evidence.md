@@ -3016,3 +3016,34 @@ No C# product implementation or WebAssembly implementation changed. Symbol,
 relocation, placeholder, all-chunk-content, resource-identity, replacement,
 cleanup, complete-tool, Development, Standard, Qualification, Linux,
 promotion, ordinary-path, and grouped end-of-goal gates remain deferred.
+
+## Local bounded compiler-WVO symbol evidence
+
+[Decision 0290](../Decisions/0290-Bounded-Compiler-Wvo-Symbol-Verification.md)
+adds a focused capability-free reader for the complete symbol chunk at the
+section envelope's admitted position. It validates sequential `$data_NNNN`
+coverage, ascending non-main `$function_NNNN` ranges, the final exported
+`Main`, Main's exact omitted ordinal/range, optional text padding, complete
+chunk consumption, and the exact following relocation extent. Rejection
+returns one of thirteen named statuses with no admitted evidence.
+
+The focused matrix accepts one- and two-section layouts plus a three-function
+object whose Main occupies the middle ordinal. It rejects invalid envelope,
+chunk length, truncation, flags, shape, name, order, range, limits, data
+coverage, function coverage, and relocation-boundary cases. A capability-free
+native runner calls every scalar query, passes fragment verification, requires
+zero services, executes as x86-64 machine code, and returns 42. The reviewed
+compiler selection passes 1/1 in 1.868 test seconds after a 25.42-second
+zero-warning Release build.
+
+The native source front door compiles the five-module evidence adapter to
+33,091 bytes at SHA-256
+`375e906a095c1c5dd8f98a92876312af434c0d2d385be280568ed1cbf15000aa`
+and the five-module native runner to 32,516 bytes at SHA-256
+`024c261ed2469410c095fabe8f8ddbd9a51dbc6de653f7874f2baec169201e3d`.
+
+No C# product implementation or WebAssembly implementation changed.
+Relocation semantics, code placeholders, all section-data chunks, resource
+identity, replacement/cleanup, complete-tool, Development, Standard,
+Qualification, Linux, promotion, ordinary-path, and grouped end-of-goal gates
+remain deferred.
