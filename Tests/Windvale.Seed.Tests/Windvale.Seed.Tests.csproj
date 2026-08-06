@@ -616,6 +616,9 @@
       Include="../../Compiler/Windvale/WebAssembly-Dynamic-Descriptors.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Dynamic-Descriptors.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Utf8.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Utf8.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/WebAssembly-Enum-Operations.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Enum-Operations.wv" />
     <EmbeddedResource
@@ -663,6 +666,9 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/General-Dispatcher-Dynamic-Descriptors-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Dynamic-Descriptors-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/General-Dispatcher-Utf8-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Utf8-Main.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/WebAssembly-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />

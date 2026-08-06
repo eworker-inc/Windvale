@@ -277,6 +277,44 @@ fn Emitˉconcat(
     return Append(Result, Indexed(32u32, Resultˉdescriptor));
 }
 
+fn Emitˉutf8(
+    Opcode: u8,
+    Resultˉlocal: u32,
+    Descriptorˉlocal: u32,
+    Manageˉownership: bool,
+    Utf8ˉfunction: u32,
+    Referenceˉfunction: u32,
+    Returnsˉvalue: bool,
+    Returnsˉi64: bool,
+    Statusˉglobal: u32
+) -> bytes {
+    var Result: bytes = Indexed(33u32, Descriptorˉlocal);
+    Result = Append(Result, Descriptorˉpointer(Descriptorˉlocal));
+    Result = Append(Result, Descriptorˉlength(Descriptorˉlocal));
+    Result = Append(Result, Indexed(16u32, Utf8ˉfunction));
+    if Opcode == 115u8 {
+        Result = Append(Result, Indexed(33u32, Resultˉlocal));
+        if Manageˉownership {
+            Result = Append(
+                Result,
+                Release(Descriptorˉlocal, Referenceˉfunction)
+            );
+        }
+        return Append(Result, Indexed(32u32, Resultˉlocal));
+    }
+    Result = Append(Result, Byte(69u32));
+    Result = Append(
+        Result,
+        Emitˉfailureˉguard(
+            3014u32,
+            Returnsˉvalue,
+            Returnsˉi64,
+            Statusˉglobal
+        )
+    );
+    return Append(Result, Indexed(32u32, Descriptorˉlocal));
+}
+
 export fn Compilerˉwebassemblyˉdynamicˉdescriptorˉemit(
     Input: bytes,
     Opcode: u8,
@@ -289,10 +327,29 @@ export fn Compilerˉwebassemblyˉdynamicˉdescriptorˉemit(
     Scratchˉwideˉresult: u32,
     Allocateˉfunction: u32,
     Referenceˉfunction: u32,
+    Manageˉownership: bool,
+    Utf8ˉfunction: u32,
     Returnsˉvalue: bool,
     Returnsˉi64: bool,
     Statusˉglobal: u32
 ) -> Compilerˉwebassemblyˉdynamicˉdescriptorˉemission {
+    if Opcode == 115u8 || Opcode == 116u8 {
+        return Compilerˉwebassemblyˉdynamicˉdescriptorˉemission(
+            true,
+            true,
+            Emitˉutf8(
+                Opcode,
+                Scratchˉresult,
+                Scratchˉwideˉleft,
+                Manageˉownership,
+                Utf8ˉfunction,
+                Referenceˉfunction,
+                Returnsˉvalue,
+                Returnsˉi64,
+                Statusˉglobal
+            )
+        );
+    }
     if Opcode == 120u8 || Opcode == 121u8 || Opcode == 122u8 ||
         Opcode == 123u8 {
         return Compilerˉwebassemblyˉdynamicˉdescriptorˉemission(

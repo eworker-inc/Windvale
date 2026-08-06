@@ -1,0 +1,45 @@
+module Webassemblyˉgeneralˉdispatcherˉutf8 profile portable;
+
+data Validˉempty: bytes = [];
+data Validˉascii: bytes = [0];
+data Validˉtwo: bytes = [194, 128];
+data Validˉthreeˉlow: bytes = [224, 160, 128];
+data Validˉsurrogateˉedge: bytes = [237, 159, 191];
+data Validˉfourˉlow: bytes = [240, 144, 128, 128];
+data Validˉfourˉhigh: bytes = [244, 143, 191, 191];
+data Invalidˉoverlongˉtwo: bytes = [192, 128];
+data Invalidˉoverlongˉthree: bytes = [224, 159, 191];
+data Invalidˉsurrogate: bytes = [237, 160, 128];
+data Invalidˉoverlongˉfour: bytes = [240, 143, 191, 191];
+data Invalidˉaboveˉmaximum: bytes = [244, 144, 128, 128];
+data Invalidˉcontinuation: bytes = [128];
+data Invalidˉtruncatedˉtwo: bytes = [194];
+data Invalidˉtruncatedˉthree: bytes = [226, 130];
+data Invalidˉtruncatedˉfour: bytes = [240, 144, 128];
+
+export fn Main() -> i32 {
+    if !Textˉutf8ˉisˉvalid(Validˉempty) { return 1; }
+    if !Textˉutf8ˉisˉvalid(Validˉascii) { return 2; }
+    if !Textˉutf8ˉisˉvalid(Validˉtwo) { return 3; }
+    if !Textˉutf8ˉisˉvalid(Validˉthreeˉlow) { return 4; }
+    if !Textˉutf8ˉisˉvalid(Validˉsurrogateˉedge) { return 5; }
+    if !Textˉutf8ˉisˉvalid(Validˉfourˉlow) { return 6; }
+    if !Textˉutf8ˉisˉvalid(Validˉfourˉhigh) { return 7; }
+    if Textˉutf8ˉisˉvalid(Invalidˉoverlongˉtwo) { return 8; }
+    if Textˉutf8ˉisˉvalid(Invalidˉoverlongˉthree) { return 9; }
+    if Textˉutf8ˉisˉvalid(Invalidˉsurrogate) { return 10; }
+    if Textˉutf8ˉisˉvalid(Invalidˉoverlongˉfour) { return 11; }
+    if Textˉutf8ˉisˉvalid(Invalidˉaboveˉmaximum) { return 12; }
+    if Textˉutf8ˉisˉvalid(Invalidˉcontinuation) { return 13; }
+    if Textˉutf8ˉisˉvalid(Invalidˉtruncatedˉtwo) { return 14; }
+    if Textˉutf8ˉisˉvalid(Invalidˉtruncatedˉthree) { return 15; }
+    if Textˉutf8ˉisˉvalid(Invalidˉtruncatedˉfour) { return 16; }
+
+    let Decoded: text = Textˉfromˉutf8(Validˉfourˉhigh);
+    let Roundˉtrip: bytes = Textˉtoˉutf8(Decoded);
+    if Bytesˉlength(Roundˉtrip) != 4u32 { return 17; }
+    if Bytesˉreadˉu32ˉlittle(Roundˉtrip, 0u32) != 3217002484u32 {
+        return 18;
+    }
+    return 42;
+}

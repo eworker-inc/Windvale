@@ -10,6 +10,7 @@ import Compilerˉwebassemblyˉstaticˉdata as Staticˉdata;
 import Compilerˉwebassemblyˉdescriptorˉoperations as Descriptors;
 import Compilerˉwebassemblyˉdescriptorˉstorage as Descriptorˉstorage;
 import Compilerˉwebassemblyˉdynamicˉdescriptors as Dynamicˉdescriptors;
+import Compilerˉwebassemblyˉutf8 as Utf8;
 import Compilerˉwebassemblyˉtypeˉdirectory as Typeˉdirectory;
 import Compilerˉwebassemblyˉenumˉoperations as Enums;
 import Compilerˉwebassemblyˉrecordˉstorage as Recordˉstorage;
@@ -36,6 +37,15 @@ record Emission {
     Bytes: bytes;
     Failureˉoffset: u32;
     Failureˉopcode: u32;
+}
+
+record Runtimeˉhelpers {
+    Hasˉdynamic: bool;
+    Hasˉutf8: bool;
+    Allocateˉfunction: u32;
+    Referenceˉfunction: u32;
+    Utf8ˉfunction: u32;
+    Frameˉlimit: u32;
 }
 
 fn Empty(Input: bytes) -> bytes {
@@ -651,9 +661,7 @@ fn Emitˉoperation(
     Scratchˉwideˉleft: u32,
     Scratchˉwideˉright: u32,
     Scratchˉwideˉresult: u32,
-    Hasˉdynamic: bool,
-    Allocateˉfunction: u32,
-    Referenceˉfunction: u32
+    Runtime: Runtimeˉhelpers
 ) -> Emission {
     var Result: bytes = Empty(Input);
     let Returnsˉvalue: bool = Functionˉreturnsˉvalue(
@@ -682,8 +690,8 @@ fn Emitˉoperation(
             Scratchˉleft,
             Scratchˉwideˉleft,
             Records.Compilerˉwebassemblyˉrecordˉruntime(
-                Hasˉdynamic,
-                Referenceˉfunction
+                Runtime.Hasˉdynamic,
+                Runtime.Referenceˉfunction
             )
         );
     if Record.Matched && Opcode != 64u8 {
@@ -692,7 +700,9 @@ fn Emitˉoperation(
         }
         return Emission(true, Record.Bytes, 0u32, 0u32);
     }
-    if Hasˉdynamic {
+    var Hasˉdescriptorˉruntime: bool = Runtime.Hasˉdynamic;
+    if Runtime.Hasˉutf8 { Hasˉdescriptorˉruntime = true; }
+    if Hasˉdescriptorˉruntime {
         let Dynamic:
             Dynamicˉdescriptors.Compilerˉwebassemblyˉdynamicˉdescriptorˉemission =
             Dynamicˉdescriptors.Compilerˉwebassemblyˉdynamicˉdescriptorˉemit(
@@ -705,8 +715,10 @@ fn Emitˉoperation(
                 Scratchˉwideˉleft,
                 Scratchˉwideˉright,
                 Scratchˉwideˉresult,
-                Allocateˉfunction,
-                Referenceˉfunction,
+                Runtime.Allocateˉfunction,
+                Runtime.Referenceˉfunction,
+                Runtime.Hasˉdynamic,
+                Runtime.Utf8ˉfunction,
                 Returnsˉvalue,
                 Returnsˉi64,
                 3u32
@@ -743,7 +755,7 @@ fn Emitˉoperation(
             Selectedˉloadˉlocal
         );
         var Loadˉbytes: bytes = Indexed(32u32, Loadˉlocal);
-        if Hasˉdynamic && Shapeˉisˉdescriptor(Shapeˉkind(
+        if Runtime.Hasˉdynamic && Shapeˉisˉdescriptor(Shapeˉkind(
             Input,
             Localˉshapeˉoffset(
                 Input,
@@ -759,7 +771,7 @@ fn Emitˉoperation(
             Loadˉbytes = Append(Loadˉbytes, Positiveˉconstant(1u32));
             Loadˉbytes = Append(
                 Loadˉbytes,
-                Indexed(16u32, Referenceˉfunction)
+                Indexed(16u32, Runtime.Referenceˉfunction)
             );
             Loadˉbytes = Append(
                 Loadˉbytes,
@@ -785,7 +797,7 @@ fn Emitˉoperation(
             Selectedˉstoreˉlocal
         );
         var Storeˉbytes: bytes = Indexed(33u32, Storeˉlocal);
-        if Hasˉdynamic && Shapeˉisˉdescriptor(Shapeˉkind(
+        if Runtime.Hasˉdynamic && Shapeˉisˉdescriptor(Shapeˉkind(
             Input,
             Localˉshapeˉoffset(
                 Input,
@@ -800,7 +812,7 @@ fn Emitˉoperation(
                 Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
                     Storeˉlocal,
                     false,
-                    Referenceˉfunction
+                    Runtime.Referenceˉfunction
                 )
             );
             Storeˉbytes = Append(
@@ -847,9 +859,9 @@ fn Emitˉoperation(
                 Scratchˉpointer,
                 Scratchˉwideˉleft,
                 Scratchˉwideˉresult,
-                Hasˉdynamic,
-                Allocateˉfunction,
-                Referenceˉfunction
+                Runtime.Hasˉdynamic,
+                Runtime.Allocateˉfunction,
+                Runtime.Referenceˉfunction
             ),
             Returnsˉvalue,
             Returnsˉi64,
@@ -998,7 +1010,7 @@ fn Emitˉoperation(
     }
     if Opcode == 118u8 { return Emission(true, Result, 0u32, 0u32); }
     if Opcode == 80u8 {
-        if Hasˉdynamic && Shapeˉisˉdescriptor(Topˉkind) {
+        if Runtime.Hasˉdynamic && Shapeˉisˉdescriptor(Topˉkind) {
             var Popˉdescriptor: bytes = Indexed(
                 33u32,
                 Scratchˉwideˉleft
@@ -1008,7 +1020,7 @@ fn Emitˉoperation(
                 Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉreferenceˉlocal(
                     Scratchˉwideˉleft,
                     false,
-                    Referenceˉfunction
+                    Runtime.Referenceˉfunction
                 )
             );
             return Emission(true, Popˉdescriptor, 0u32, 0u32);
@@ -1117,9 +1129,7 @@ fn Emitˉblock(
     Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
     Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
     Function: u32,
-    Hasˉdynamic: bool,
-    Allocateˉfunction: u32,
-    Referenceˉfunction: u32
+    Runtime: Runtimeˉhelpers
 ) -> Emission {
     let Block: u32 = Starts + Localˉblock;
     let Start: u32 = Controls.Compilerˉwebassemblyˉcontrolˉflowˉblockˉstart(
@@ -1190,9 +1200,7 @@ fn Emitˉblock(
                 Scratchˉwideˉleft,
                 Scratchˉwideˉright,
                 Scratchˉwideˉresult,
-                Hasˉdynamic,
-                Allocateˉfunction,
-                Referenceˉfunction
+                Runtime
             );
             if !Operation.Valid {
                 return Invalidˉemission(
@@ -1261,7 +1269,7 @@ fn Emitˉblock(
                 Function
             )
         );
-        if Hasˉdynamic {
+        if Runtime.Hasˉdynamic {
             if Shapeˉisˉdescriptor(Returnˉkind) {
                 Result = Append(
                     Result,
@@ -1275,7 +1283,7 @@ fn Emitˉblock(
                     Directory,
                     Storage,
                     Function,
-                    Referenceˉfunction
+                    Runtime.Referenceˉfunction
                 )
             );
             Result = Append(
@@ -1288,8 +1296,8 @@ fn Emitˉblock(
                     Function,
                     Frameˉbase,
                     Records.Compilerˉwebassemblyˉrecordˉruntime(
-                        Hasˉdynamic,
-                        Referenceˉfunction
+                        Runtime.Hasˉdynamic,
+                        Runtime.Referenceˉfunction
                     )
                 )
             );
@@ -1344,10 +1352,7 @@ fn Emitˉfunction(
     Enumˉsummary: Enums.Compilerˉwebassemblyˉenumˉsummary,
     Storage: Recordˉstorage.Compilerˉwebassemblyˉrecordˉstorageˉsummary,
     Function: u32,
-    Hasˉdynamic: bool,
-    Allocateˉfunction: u32,
-    Referenceˉfunction: u32,
-    Frameˉlimit: u32
+    Runtime: Runtimeˉhelpers
 ) -> Emission {
     var Typeˉlayout: Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉemission =
         Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉfunctionˉtype(
@@ -1418,10 +1423,10 @@ fn Emitˉfunction(
         );
     var Additionalˉi32: u32 = 0u32;
     if Frameˉbytes != 0u32 { Additionalˉi32 = Additionalˉi32 + 1u32; }
-    if Hasˉdynamic { Additionalˉi32 = Additionalˉi32 + 1u32; }
+    if Runtime.Hasˉdynamic { Additionalˉi32 = Additionalˉi32 + 1u32; }
     let Frameˉbase: u32 = Counter + 4u32;
     var Scratchˉpointer: u32 = Scratchˉresult;
-    if Hasˉdynamic {
+    if Runtime.Hasˉdynamic {
         Scratchˉpointer = Counter + 4u32;
         if Frameˉbytes != 0u32 { Scratchˉpointer = Counter + 5u32; }
     }
@@ -1442,7 +1447,7 @@ fn Emitˉfunction(
                 Function
             );
     }
-    if Hasˉdynamic {
+    if Runtime.Hasˉdynamic {
         Localˉlayout =
             Layouts.Compilerˉwebassemblyˉvalueˉlayoutˉruntimeˉfunctionˉlocals(
                 Input,
@@ -1481,10 +1486,10 @@ fn Emitˉfunction(
             Functionˉreturnsˉi64(Input, Directory, Function),
             3u32,
             4u32,
-            Frameˉlimit,
+            Runtime.Frameˉlimit,
             Records.Compilerˉwebassemblyˉrecordˉruntime(
-                Hasˉdynamic,
-                Referenceˉfunction
+                Runtime.Hasˉdynamic,
+                Runtime.Referenceˉfunction
             )
         );
     Instructions = Append(Instructions, Enumˉdefaults.Bytes);
@@ -1523,9 +1528,7 @@ fn Emitˉfunction(
             Enumˉsummary,
             Storage,
             Function,
-            Hasˉdynamic,
-            Allocateˉfunction,
-            Referenceˉfunction
+            Runtime
         );
         if !Block.Valid { return Block; }
         Instructions = Append(Instructions, Block.Bytes);
@@ -1649,9 +1652,15 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉisˉdynamic(
             Descriptorˉsummary
         );
+    let Hasˉutf8: bool =
+        Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉrequiresˉutf8(
+            Descriptorˉsummary
+        );
     let Hasˉrecords: bool = Storage.Maximumˉframeˉbytes != 0u32;
     let Allocateˉfunction: u32 = Graph.Reachableˉcount;
     let Referenceˉfunction: u32 = Graph.Reachableˉcount + 1u32;
+    var Utf8ˉfunction: u32 = Graph.Reachableˉcount;
+    if Hasˉdynamic { Utf8ˉfunction = Utf8ˉfunction + 2u32; }
     var Frameˉstart: u32 = 65536u32;
     var Frameˉlimit: u32 = 8454144u32;
     if Hasˉdynamic {
@@ -1660,6 +1669,14 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         Frameˉlimit =
             Descriptorˉstorage.Compilerˉwebassemblyˉdescriptorˉstorageˉframeˉend();
     }
+    let Runtime: Runtimeˉhelpers = Runtimeˉhelpers(
+        Hasˉdynamic,
+        Hasˉutf8,
+        Allocateˉfunction,
+        Referenceˉfunction,
+        Utf8ˉfunction,
+        Frameˉlimit
+    );
     let Rootˉposition: Positionˉlookup = Reachableˉposition(
         Graph.Reachableˉorder,
         Graph.Root
@@ -1722,10 +1739,7 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
             Enumˉsummary,
             Storage,
             Function,
-            Hasˉdynamic,
-            Allocateˉfunction,
-            Referenceˉfunction,
-            Frameˉlimit
+            Runtime
         );
         if !Body.Valid {
             return Invalid(
@@ -1739,9 +1753,7 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
         Position = Position + 1u32;
     }
 
-    var Wrapperˉtypeˉindex: u32 = Graph.Reachableˉcount;
-    var Wrapperˉposition: u32 = Graph.Reachableˉcount;
-    var Emittedˉfunctionˉcount: u32 = Graph.Reachableˉcount + 1u32;
+    var Nextˉhelper: u32 = Graph.Reachableˉcount;
     var Freeˉglobal: u32 = 4u32;
     if Hasˉrecords { Freeˉglobal = 5u32; }
     if Hasˉdynamic {
@@ -1773,10 +1785,23 @@ export fn Compilerˉwebassemblyˉscalarˉdispatcherˉemit(
                 Freeˉglobal
             )
         );
-        Wrapperˉtypeˉindex = Graph.Reachableˉcount + 2u32;
-        Wrapperˉposition = Graph.Reachableˉcount + 2u32;
-        Emittedˉfunctionˉcount = Graph.Reachableˉcount + 3u32;
+        Nextˉhelper = Nextˉhelper + 2u32;
     }
+    if Hasˉutf8 {
+        Typeˉentries = Append(
+            Typeˉentries,
+            Utf8.Compilerˉwebassemblyˉutf8ˉvalidatorˉtype()
+        );
+        Functionˉentries = Append(Functionˉentries, Uleb(Nextˉhelper));
+        Codeˉentries = Append(
+            Codeˉentries,
+            Utf8.Compilerˉwebassemblyˉutf8ˉvalidatorˉbody()
+        );
+        Nextˉhelper = Nextˉhelper + 1u32;
+    }
+    let Wrapperˉtypeˉindex: u32 = Nextˉhelper;
+    let Wrapperˉposition: u32 = Nextˉhelper;
+    let Emittedˉfunctionˉcount: u32 = Nextˉhelper + 1u32;
 
     var Wrapperˉtype: bytes = Byte(96u32);
     Wrapperˉtype = Append(Wrapperˉtype, Uleb(1u32));

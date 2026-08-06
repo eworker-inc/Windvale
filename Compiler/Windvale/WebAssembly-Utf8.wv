@@ -1,0 +1,198 @@
+module Compilerˉwebassemblyˉutf8 profile portable;
+
+import Compilerˉwebassemblyˉbinaryˉencoding as Encoding;
+
+fn Append(First: bytes, Second: bytes) -> bytes {
+    return Bytesˉconcat(First, Second);
+}
+
+fn Byte(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉbyte(Value);
+}
+
+fn Uleb(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉuleb32(Value);
+}
+
+fn Indexed(Opcode: u32, Index: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉindexedˉinstruction(
+        Opcode,
+        Index
+    );
+}
+
+fn Constant(Value: u32) -> bytes {
+    return Encoding.Compilerˉwebassemblyˉbinaryˉpositiveˉi32ˉconstant(Value);
+}
+
+fn Emitˉifˉelse(
+    Condition: bytes,
+    Trueˉinstructions: bytes,
+    Falseˉinstructions: bytes
+) -> bytes {
+    var Result: bytes = Condition;
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Trueˉinstructions);
+    Result = Append(Result, Byte(5u32));
+    Result = Append(Result, Falseˉinstructions);
+    return Append(Result, Byte(11u32));
+}
+
+fn Emitˉif(Condition: bytes, Trueˉinstructions: bytes) -> bytes {
+    var Result: bytes = Condition;
+    Result = Append(Result, Byte(4u32));
+    Result = Append(Result, Byte(64u32));
+    Result = Append(Result, Trueˉinstructions);
+    return Append(Result, Byte(11u32));
+}
+
+fn Range(Minimum: u32, Maximum: u32) -> bytes {
+    var Result: bytes = Indexed(32u32, 6u32);
+    Result = Append(Result, Constant(Minimum));
+    Result = Append(Result, Byte(79u32));
+    Result = Append(Result, Indexed(32u32, 6u32));
+    Result = Append(Result, Constant(Maximum));
+    Result = Append(Result, Byte(77u32));
+    return Append(Result, Byte(113u32));
+}
+
+fn Twoˉranges(
+    Firstˉminimum: u32,
+    Firstˉmaximum: u32,
+    Secondˉminimum: u32,
+    Secondˉmaximum: u32
+) -> bytes {
+    var Result: bytes = Range(Firstˉminimum, Firstˉmaximum);
+    Result = Append(Result, Range(Secondˉminimum, Secondˉmaximum));
+    return Append(Result, Byte(114u32));
+}
+
+fn State(Needed: u32, Minimum: u32, Maximum: u32) -> bytes {
+    var Result: bytes = Constant(Needed);
+    Result = Append(Result, Indexed(33u32, 3u32));
+    Result = Append(Result, Constant(Minimum));
+    Result = Append(Result, Indexed(33u32, 4u32));
+    Result = Append(Result, Constant(Maximum));
+    return Append(Result, Indexed(33u32, 5u32));
+}
+
+fn Ordinaryˉcontinuation() -> bytes {
+    var Result: bytes = Constant(128u32);
+    Result = Append(Result, Indexed(33u32, 4u32));
+    Result = Append(Result, Constant(191u32));
+    return Append(Result, Indexed(33u32, 5u32));
+}
+
+fn Invalid() -> bytes {
+    return Append(Constant(0u32), Byte(15u32));
+}
+
+fn Leading() -> bytes {
+    let Empty: bytes = Bytesˉslice(Byte(0u32), 0u32, 0u32);
+    let Failure: bytes = Invalid();
+    let Fourˉmaximum: bytes = Emitˉifˉelse(
+        Range(244u32, 244u32),
+        State(3u32, 128u32, 143u32),
+        Failure
+    );
+    let Fourˉordinary: bytes = Emitˉifˉelse(
+        Range(241u32, 243u32),
+        State(3u32, 128u32, 191u32),
+        Fourˉmaximum
+    );
+    let Fourˉminimum: bytes = Emitˉifˉelse(
+        Range(240u32, 240u32),
+        State(3u32, 144u32, 191u32),
+        Fourˉordinary
+    );
+    let Threeˉsurrogate: bytes = Emitˉifˉelse(
+        Range(237u32, 237u32),
+        State(2u32, 128u32, 159u32),
+        Fourˉminimum
+    );
+    let Threeˉordinary: bytes = Emitˉifˉelse(
+        Twoˉranges(225u32, 236u32, 238u32, 239u32),
+        State(2u32, 128u32, 191u32),
+        Threeˉsurrogate
+    );
+    let Threeˉminimum: bytes = Emitˉifˉelse(
+        Range(224u32, 224u32),
+        State(2u32, 160u32, 191u32),
+        Threeˉordinary
+    );
+    let Twoˉbyte: bytes = Emitˉifˉelse(
+        Range(194u32, 223u32),
+        State(1u32, 128u32, 191u32),
+        Threeˉminimum
+    );
+    return Emitˉifˉelse(Range(0u32, 127u32), Empty, Twoˉbyte);
+}
+
+fn Continuation() -> bytes {
+    var Below: bytes = Indexed(32u32, 6u32);
+    Below = Append(Below, Indexed(32u32, 4u32));
+    Below = Append(Below, Byte(73u32));
+    var Result: bytes = Emitˉif(Below, Invalid());
+
+    var Above: bytes = Indexed(32u32, 6u32);
+    Above = Append(Above, Indexed(32u32, 5u32));
+    Above = Append(Above, Byte(75u32));
+    Result = Append(Result, Emitˉif(Above, Invalid()));
+    Result = Append(Result, Indexed(32u32, 3u32));
+    Result = Append(Result, Constant(1u32));
+    Result = Append(Result, Byte(107u32));
+    Result = Append(Result, Indexed(33u32, 3u32));
+    return Append(Result, Ordinaryˉcontinuation());
+}
+
+export fn Compilerˉwebassemblyˉutf8ˉvalidatorˉtype() -> bytes {
+    var Result: bytes = Byte(96u32);
+    Result = Append(Result, Uleb(2u32));
+    Result = Append(Result, Byte(127u32));
+    Result = Append(Result, Byte(127u32));
+    Result = Append(Result, Uleb(1u32));
+    return Append(Result, Byte(127u32));
+}
+
+export fn Compilerˉwebassemblyˉutf8ˉvalidatorˉbody() -> bytes {
+    var Instructions: bytes = Byte(2u32);
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Byte(3u32));
+    Instructions = Append(Instructions, Byte(64u32));
+    Instructions = Append(Instructions, Indexed(32u32, 2u32));
+    Instructions = Append(Instructions, Indexed(32u32, 1u32));
+    Instructions = Append(Instructions, Byte(79u32));
+    Instructions = Append(Instructions, Indexed(13u32, 1u32));
+    Instructions = Append(Instructions, Indexed(32u32, 0u32));
+    Instructions = Append(Instructions, Indexed(32u32, 2u32));
+    Instructions = Append(Instructions, Byte(106u32));
+    Instructions = Append(Instructions, Byte(45u32));
+    Instructions = Append(Instructions, Uleb(0u32));
+    Instructions = Append(Instructions, Uleb(0u32));
+    Instructions = Append(Instructions, Indexed(33u32, 6u32));
+
+    var Needˉisˉzero: bytes = Indexed(32u32, 3u32);
+    Needˉisˉzero = Append(Needˉisˉzero, Byte(69u32));
+    Instructions = Append(
+        Instructions,
+        Emitˉifˉelse(Needˉisˉzero, Leading(), Continuation())
+    );
+    Instructions = Append(Instructions, Indexed(32u32, 2u32));
+    Instructions = Append(Instructions, Constant(1u32));
+    Instructions = Append(Instructions, Byte(106u32));
+    Instructions = Append(Instructions, Indexed(33u32, 2u32));
+    Instructions = Append(Instructions, Indexed(12u32, 0u32));
+    Instructions = Append(Instructions, Byte(11u32));
+    Instructions = Append(Instructions, Byte(11u32));
+    Instructions = Append(Instructions, Indexed(32u32, 3u32));
+    Instructions = Append(Instructions, Byte(69u32));
+
+    var Locals: bytes = Uleb(1u32);
+    Locals = Append(Locals, Uleb(5u32));
+    Locals = Append(Locals, Byte(127u32));
+    return Encoding.Compilerˉwebassemblyˉbinaryˉfunctionˉbody(
+        Locals,
+        Instructions
+    );
+}

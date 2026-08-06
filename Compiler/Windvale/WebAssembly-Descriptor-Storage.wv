@@ -7,6 +7,8 @@ import Compilerˉwebassemblyˉexecutableˉgraph as Graphs;
 export record Compilerˉwebassemblyˉdescriptorˉstorageˉsummary {
     Valid: bool;
     Dynamicˉoperationˉcount: u32;
+    Utf8ˉoperationˉcount: u32;
+    Sha256ˉoperationˉcount: u32;
     Failureˉfunction: u32;
     Failureˉoffset: u32;
     Failureˉopcode: u32;
@@ -71,6 +73,8 @@ fn Invalid(
     return Compilerˉwebassemblyˉdescriptorˉstorageˉsummary(
         false,
         0u32,
+        0u32,
+        0u32,
         Function,
         Offset,
         Opcode
@@ -103,6 +107,8 @@ export fn Compilerˉwebassemblyˉdescriptorˉstorageˉbuild(
         return Invalid(Input, 0u32, 0u32, 0u32);
     }
     var Dynamicˉoperations: u32 = 0u32;
+    var Utf8ˉoperations: u32 = 0u32;
+    var Sha256ˉoperations: u32 = 0u32;
     var Position: u32 = 0u32;
     while Position < Graph.Reachableˉcount {
         let Function: u32 = Bytesˉreadˉu32ˉlittle(
@@ -148,6 +154,18 @@ export fn Compilerˉwebassemblyˉdescriptorˉstorageˉbuild(
                 }
                 Dynamicˉoperations = Dynamicˉoperations + 1u32;
             }
+            if Opcode >= 115u32 && Opcode <= 117u32 {
+                if Utf8ˉoperations == 200000u32 {
+                    return Invalid(Input, Function, Cursor, Opcode);
+                }
+                Utf8ˉoperations = Utf8ˉoperations + 1u32;
+            }
+            if Opcode == 125u32 {
+                if Sha256ˉoperations == 200000u32 {
+                    return Invalid(Input, Function, Cursor, Opcode);
+                }
+                Sha256ˉoperations = Sha256ˉoperations + 1u32;
+            }
             Cursor = Cursor + Width;
         }
         Position = Position + 1u32;
@@ -155,6 +173,8 @@ export fn Compilerˉwebassemblyˉdescriptorˉstorageˉbuild(
     return Compilerˉwebassemblyˉdescriptorˉstorageˉsummary(
         true,
         Dynamicˉoperations,
+        Utf8ˉoperations,
+        Sha256ˉoperations,
         0u32,
         0u32,
         0u32
@@ -166,6 +186,20 @@ export fn Compilerˉwebassemblyˉdescriptorˉstorageˉisˉdynamic(
 ) -> bool {
     if !Summary.Valid { return false; }
     return Summary.Dynamicˉoperationˉcount != 0u32;
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉrequiresˉutf8(
+    Summary: Compilerˉwebassemblyˉdescriptorˉstorageˉsummary
+) -> bool {
+    if !Summary.Valid { return false; }
+    return Summary.Utf8ˉoperationˉcount != 0u32;
+}
+
+export fn Compilerˉwebassemblyˉdescriptorˉstorageˉrequiresˉsha256(
+    Summary: Compilerˉwebassemblyˉdescriptorˉstorageˉsummary
+) -> bool {
+    if !Summary.Valid { return false; }
+    return Summary.Sha256ˉoperationˉcount != 0u32;
 }
 
 export fn Compilerˉwebassemblyˉdescriptorˉstorageˉheapˉstart() -> u32 {

@@ -134,7 +134,7 @@ internal static partial class Program
     private const string WEBASSEMBLY_VALUE_LAYOUT_MEMORY_TOOL_SHA256 = "7cbfe268c02608fe2c1b066fd51dfb809002f9b25cbe1050a4806291b7125a3d";
     private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_INPUT_SHA256 = "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e";
     private const string WEBASSEMBLY_VALUE_LAYOUT_COMPILER_RESPONSE_SHA256 = "bc7099df2ba2525ab28f26c7b891ba71e4d24eddbdca2199010fdbb0e817552d";
-    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "0821ecb48b00b38876806c310a2a0fce80fe49d2cdc3771a6fcd0550b4094bb2";
+    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "2d50ae8f288e34d089041a3309c6c5327644daa336c9978dacfa4c5370bfe67c";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "6b8ee8e5e3707203891840157547fa1cf88368447b493015b9d0f9e48bbb69d2";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "3f90a6641648ae55a3b4ddf3a50ae2d2ad7d52ae434bf15c1718076f04232e79";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_WVB_SHA256 = "ec785b6ad0fe3a72574a3e6587d32bad0719054a8f7d9481ba361a0857086450";
@@ -151,8 +151,10 @@ internal static partial class Program
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_ENUMS_SHA256 = "be287ba7ac40d001d3c3fe91796b15b09505614555004b4870d0a51eb6c6c4f8";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_WVB_SHA256 = "56cde8d1ad3723353fca2712351338d0013ab3550c24f47a24978438d04bff84";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_RECORDS_SHA256 = "f73c54d74a753380690e893d325a76fbdfc803553bc02cb1adfa0aae7c8a7432";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_WVB_SHA256 = "d7b888e546f7713a865d23833646580ffd3a785d1ae0b8fefa04c3ee7650c27f";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SHA256 = "9b2ccf93d4379ab49308117e55151b9a524d1922990ba7462c415a1d3c92341c";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_WVB_SHA256 = "fddf1c2bee5e4cfdd8ea8c77f5f8e774cc0db7a0fcb517808710f40abba0d380";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SHA256 = "ca6a74e87f74ad8fb5f98b2c9c7f12e09f521d996affedf4f64c23f88106ac5f";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_WVB_SHA256 = "4b6b63a67418a86b3e4a904aa295986bf63973d234f41fc390a63f453492c4af";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_SHA256 = "fe1b69d8723a455ae751371ea422ad39f44bb1503d126f37e2e5404d59778827";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -997,6 +999,10 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Dynamic-Descriptors.wv");
 
+    private static readonly string WEBASSEMBLY_UTF8_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Utf8.wv");
+
     private static readonly string WEBASSEMBLY_ENUM_OPERATIONS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Enum-Operations.wv");
@@ -1060,6 +1066,10 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Dynamic-Descriptors-Main.wv");
+
+    private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Utf8-Main.wv");
 
     private static readonly string WEBASSEMBLY_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Tool.wv");
@@ -15488,13 +15498,13 @@ internal static partial class Program
             WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Dynamicˉdescriptors));
         Equal(
-            new WebAssemblyˉexecutionˉresult(0, 42, 3_866),
+            new WebAssemblyˉexecutionˉresult(0, 42, 3_922),
             Runˉreferenceˉwebassemblyˉi32(Dynamicˉdescriptors));
         var Dynamicˉlowered = new Referenceˉruntime(
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Dynamicˉdescriptors.ToImmutableArray());
-        Equal(17_859, Dynamicˉlowered.Bytes.Length);
+        Equal(21_949, Dynamicˉlowered.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_DYNAMIC_DESCRIPTORS_SHA256,
             Moduleˉdigest.Calculateˉsha256(Dynamicˉlowered.Bytes.AsSpan()));
@@ -15508,6 +15518,31 @@ internal static partial class Program
         Equal(
             Dynamicˉlowered.Executedˉinstructions,
             Dynamicˉrepeat.Executedˉinstructions);
+
+        var Utf8 = Compileˉsuccess(
+            WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_SOURCE);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Utf8));
+        Equal(
+            new WebAssemblyˉexecutionˉresult(0, 42, 198),
+            Runˉreferenceˉwebassemblyˉi32(Utf8));
+        var Utf8ˉlowered = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Utf8.ToImmutableArray());
+        Equal(9_251, Utf8ˉlowered.Bytes.Length);
+        Equal(
+            WEBASSEMBLY_GENERAL_DISPATCHER_UTF8_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Utf8ˉlowered.Bytes.AsSpan()));
+        var Utf8ˉrepeat = new Referenceˉruntime(
+            Tool,
+            new Referenceˉcapabilityˉhost(new StringWriter()),
+            Options).Runˉmainˉbytes(Utf8.ToImmutableArray());
+        Sequenceˉequal(Utf8ˉlowered.Bytes, Utf8ˉrepeat.Bytes);
+        Equal(
+            Utf8ˉlowered.Executedˉinstructions,
+            Utf8ˉrepeat.Executedˉinstructions);
 
         var Unsupported = Compileˉsuccess(
             "module Webassemblyˉgeneralˉdispatcherˉunsupported profile portable; " +
@@ -15598,13 +15633,13 @@ internal static partial class Program
 
         var Typeˉend = Reader.Readˉsection(1);
         Reader.Require(
-            Reader.Readˉuleb32() == 7,
+            Reader.Readˉuleb32() == 8,
             "The dynamic descriptor type count is invalid.");
         Reader.Skip(Typeˉend - Reader.Position);
 
         var Functionˉend = Reader.Readˉsection(3);
         Reader.Require(
-            Reader.Readˉuleb32() == 7,
+            Reader.Readˉuleb32() == 8,
             "The dynamic descriptor function count is invalid.");
         Reader.Skip(Functionˉend - Reader.Position);
 
@@ -15643,7 +15678,7 @@ internal static partial class Program
         Reader.Require(
             Reader.Readˉuleb32() == 3,
             "The dynamic descriptor export count is invalid.");
-        Reader.Readˉexport("Windvale.run", 0, 6);
+        Reader.Readˉexport("Windvale.run", 0, 7);
         Reader.Readˉexport("Windvale.result", 3, 0);
         Reader.Readˉexport("Windvale.instructions", 3, 1);
         Reader.Require(
@@ -15652,7 +15687,7 @@ internal static partial class Program
 
         var Codeˉend = Reader.Readˉsection(10);
         Reader.Require(
-            Reader.Readˉuleb32() == 7,
+            Reader.Readˉuleb32() == 8,
             "The dynamic descriptor body count is invalid.");
         Reader.Skip(Codeˉend - Reader.Position);
         var Dataˉend = Reader.Readˉsection(11);
@@ -28230,6 +28265,9 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/WebAssembly-Dynamic-Descriptors.wv",
                     WEBASSEMBLY_DYNAMIC_DESCRIPTORS_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Utf8.wv",
+                    WEBASSEMBLY_UTF8_SOURCE),
                 new(
                     "Compiler/Windvale/WebAssembly-Enum-Operations.wv",
                     WEBASSEMBLY_ENUM_OPERATIONS_SOURCE),
