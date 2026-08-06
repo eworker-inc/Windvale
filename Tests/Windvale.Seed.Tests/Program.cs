@@ -1266,6 +1266,7 @@ internal static partial class Program
         new("Windvale-written object core matches the Stage 0 oracle", [TEST_AREA_OBJECT_MODEL, TEST_AREA_FOUNDATION, TEST_AREA_RUNTIME], Wvoˉobjectˉcoreˉmatchesˉoracle),
         new("native WVO inspector AOT targets are discoverable", [TEST_AREA_OBJECT_MODEL], Nativeˉwvoˉinspectorˉtargetsˉareˉdiscoverable),
         new("native WVO verifier and inspector own the read-only front door", [TEST_AREA_OBJECT_MODEL, TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉinspectorˉruns),
+        new("digest-bound native WVO launchers preserve read-only reports", [TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉfrontˉdoorˉruns),
         new("WVA assembler emits canonical sections, symbols, and relocations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉemitsˉcanonicalˉobject),
         new("WVA assembler encodes expanded x86-64 registers, control flow, and RIP-relative data", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL], Assemblerˉencodesˉexpandedˉx64),
         new("WVA assembler encodes immediate, multiply, shift, and indexed-memory operations", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER], Assemblerˉencodesˉscalarˉx64),

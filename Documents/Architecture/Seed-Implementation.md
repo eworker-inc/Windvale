@@ -124,7 +124,7 @@ leave the normal path.
 
 `Object-Model/Windvale/Wvo-Object-Core.wv` owns the corresponding Windvale-written bounded verifier and complete read-only report path. `Windvale-Wvo-Object.wvproj` composes its byte-ordering and SHA-256 dependencies, while paired profile-6 Windows/Linux candidates reuse the existing eleven-service read-only inspector package without adding platform assembly or file-write authority.
 
-The C# object verifier returns a `Verifiedˉobject`; both Stage 0 CLI object commands decode and verify before reporting. During native-candidate qualification this project remains the independent recovery/differential oracle. After promotion, ordinary WVO verification and inspection move to digest-bound native launchers while the C# path remains explicitly named recovery evidence until the complete retirement gate passes.
+The C# object verifier returns a `Verifiedˉobject`; both Stage 0 CLI object commands decode and verify before reporting. During native-candidate qualification this project remains the independent recovery/differential oracle. Decision 0301 now supplies digest-bound native WVO verification and inspection launchers, but they remain candidate entry points until the grouped Windows/Linux gate promotes their exact containing commit. After promotion they become the ordinary path while C# remains explicitly named recovery evidence until the complete retirement gate passes.
 
 ### Windvale assembler
 

@@ -38,6 +38,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Exact native WVB publication step](Decisions/0214-Exact-Native-Wvb-Publication-Step.md) — first cross-host-qualified native publisher profile, shared verify-snapshot-and-replace logic, and remaining extended fault/concurrency hardening
 - [Fixed native staged-WVO publication](Decisions/0299-Fixed-Native-Staged-Wvo-Publication.md) — bounded multi-snapshot admission, native file-identity checks, and fixed Windows/Linux sibling-and-replace candidates
 - [Native staged-WVO producer/publisher composition](Decisions/0300-Native-Staged-Wvo-Producer-Publisher-Composition.md) — exact native staging-producer packages and a current-host .NET-free two-process publication path
+- [Digest-bound native WVO candidate launchers](Decisions/0301-Digest-Bound-Native-Wvo-Candidate-Launchers.md) — pinned Windows/Linux object verification and inspection entry points awaiting grouped promotion
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

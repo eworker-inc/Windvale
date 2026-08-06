@@ -3204,3 +3204,24 @@ and tests. No WebAssembly implementation changed. Full compiler self-lowering,
 Linux process composition, native constructor replacement, ordinary launcher
 cutover, Development, Standard, Qualification, promotion, and the grouped
 end-of-goal gate remain deferred.
+
+## Local digest-bound native WVO launcher evidence
+
+[Decision 0301](../Decisions/0301-Digest-Bound-Native-Wvo-Candidate-Launchers.md)
+pins the existing WVO read-only candidate as a 57,297-byte canonical WVB at
+SHA-256
+`3940e5aebb8dc25581080e5af3a73eb81eec5b7144c34fb2b7f4014e155b73a7`,
+a 577,024-byte Windows application at SHA-256
+`9f85375a9223fdc8c8bfe81f82b6b428432a21594a11179d1ab1375aa6c6886f`,
+and a 577,536-byte Linux application at SHA-256
+`dc9fff2a13256cd0dfabed4c7e9369a9d446408a00aec3eee5fd95876ce88b37`.
+The candidate manifest and four launchers bind those identities before any
+object is read.
+
+The reviewed focused object-model selection passes 1/1 in 0.654 test seconds
+after a 10.89-second zero-warning Release build; the complete command takes
+16.3 seconds. Current-host verification and inspection match the retained
+structural oracle exactly, and a wrong extension is rejected with exit 64.
+No native package or WebAssembly implementation changed. The exact containing
+commit still requires grouped Windows/Linux qualification before these
+launchers become the ordinary WVO path.
