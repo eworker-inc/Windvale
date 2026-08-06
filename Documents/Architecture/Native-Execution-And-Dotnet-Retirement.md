@@ -342,6 +342,8 @@ Decision 0268 admits `bytes.from_u32_little` through the same four-byte machine 
 
 Decision 0269 closes the checked `u32` add/subtract/multiply family. Addition and subtraction use the exact carry/borrow branch while multiplication rejects a nonzero high product word; every route reaches the existing `WVR3007` tail. A focused high-value fixture and overflow vector agree exactly with Stage 0 through both Windvale adapters. Complete self-lowering now reaches function 26's `bytes.from_u16_little` instruction.
 
+Decision 0271 adds bounded `bytes.from_u16_little` construction to the same owned dynamic-byte path. Typed analysis preserves the `u32` input, lowering rejects values above 65,535 through the exact `WVR3016` branch, and successful construction publishes a two-byte descriptor before storing the low word. The expanded focused fixture agrees exactly with Stage 0 through both Windvale adapters. Complete self-lowering now reaches function 29's `u32.from_u8` instruction.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

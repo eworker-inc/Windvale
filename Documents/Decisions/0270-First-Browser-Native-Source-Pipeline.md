@@ -1,4 +1,4 @@
-# Decision 0269: First browser-native source pipeline
+# Decision 0270: First browser-native source pipeline
 
 - Date: 2026-08-06
 - Status: Implemented with focused local Windows, Node.js, and Chromium evidence
