@@ -30,7 +30,7 @@ set "CandidatePath=%TemporaryDirectory%\Candidate%~x4"
 "%Packager%" "%~1" "%~f2" "%~3" "%CandidatePath%"
 set "Result=%ERRORLEVEL%"
 if not "%Result%"=="0" goto :cleanup
-call "%PublisherLauncher%" "%CandidatePath%" "%~f4"
+call "%PublisherLauncher%" "%CandidatePath%" "%~f4" >nul
 set "Result=%ERRORLEVEL%"
 
 :cleanup

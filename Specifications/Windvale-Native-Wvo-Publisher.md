@@ -98,7 +98,11 @@ details.
 
 `Tools/Native/Publish-Wvo.cmd` and `.sh` verify the current-host publisher
 digest before execution. `Lower-Wvb-To-Wvo.cmd` and `.sh` now lower into a
-private candidate and invoke this publisher for the requested destination.
+private candidate and invoke this publisher for the requested destination. The
+direct publisher retains its completion transcript; the composite launchers
+suppress only that success line so the lowerer's established report remains the
+complete command output. Publisher diagnostics and failure status remain
+visible.
 
 ## Remaining gate
 

@@ -98,7 +98,11 @@ The historical exported WVA symbol names remain internal construction details.
 
 `Tools/Native/Publish-Console.cmd` and `.sh` verify the current-host publisher
 digest before execution. `Package-Console.cmd` and `.sh` now materialize into a
-private candidate and invoke this publisher for the requested destination.
+private candidate and invoke this publisher for the requested destination. The
+direct publisher retains its completion transcript; the composite launchers
+suppress only that success line so the packager's established report remains
+the complete command output. Publisher diagnostics and failure status remain
+visible.
 
 ## Remaining gate
 

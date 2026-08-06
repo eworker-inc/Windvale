@@ -32,4 +32,4 @@ cleanup() {
 trap cleanup EXIT
 
 "$artifact_root/Console-Packager.elf" "$1" "$2" "$3" "$candidate_path" || exit $?
-"$script_directory/Publish-Console.sh" "$candidate_path" "$4"
+"$script_directory/Publish-Console.sh" "$candidate_path" "$4" >/dev/null

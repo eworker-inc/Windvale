@@ -33,7 +33,7 @@ set "CandidatePath=%TemporaryDirectory%\Candidate.wvo"
 "%Lowerer%" "%~f1" "%CandidatePath%"
 set "Result=%ERRORLEVEL%"
 if not "%Result%"=="0" goto :cleanup
-call "%PublisherLauncher%" "%CandidatePath%" "%~f2"
+call "%PublisherLauncher%" "%CandidatePath%" "%~f2" >nul
 set "Result=%ERRORLEVEL%"
 
 :cleanup

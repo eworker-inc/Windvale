@@ -37,4 +37,4 @@ cleanup() {
 trap cleanup EXIT
 
 "$artifact_root/Wvb-To-Wvo.elf" "$input_path" "$candidate_path" || exit $?
-"$script_directory/Publish-Wvo.sh" "$candidate_path" "$output_path"
+"$script_directory/Publish-Wvo.sh" "$candidate_path" "$output_path" >/dev/null
