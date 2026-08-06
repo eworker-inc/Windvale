@@ -1,0 +1,10 @@
+module Webassemblyˉgeneralˉdispatcherˉdivideˉzero profile portable;
+
+fn Divide(Value: u32, Divisor: u32) -> u32 {
+    return Value / Divisor;
+}
+
+export fn Main() -> i32 {
+    if Divide(42u32, 0u32) == 0u32 { return 0; }
+    return 1;
+}

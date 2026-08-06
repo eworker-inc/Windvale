@@ -5,7 +5,13 @@ fn Signedˉanswer(Value: i32) -> i32 {
 }
 
 fn Unsignedˉanswer(Value: u32) -> u32 {
-    return ((Value + 2u32) - 1u32) * 1u32;
+    let Arithmetic: u32 = ((Value + 2u32) - 1u32) * 2u32;
+    let Divided: u32 = Arithmetic / 2u32;
+    let Remainder: u32 = Divided % 40u32;
+    let Masked: u32 = ((Divided & 63u32) | 0u32) ^ 0u32;
+    let Complemented: u32 = ~(~Masked);
+    let Shifted: u32 = (Complemented << 1u32) >> 1u32;
+    return (Shifted + Remainder) - 1u32;
 }
 
 export fn Main() -> i32 {

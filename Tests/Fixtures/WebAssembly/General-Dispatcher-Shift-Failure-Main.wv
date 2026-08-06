@@ -1,0 +1,10 @@
+module Webassemblyˉgeneralˉdispatcherˉshiftˉfailure profile portable;
+
+fn Shift(Value: u32, Count: u32) -> u32 {
+    return Value << Count;
+}
+
+export fn Main() -> i32 {
+    if Shift(1u32, 32u32) == 0u32 { return 0; }
+    return 1;
+}

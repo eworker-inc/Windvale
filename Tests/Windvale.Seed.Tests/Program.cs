@@ -131,11 +131,15 @@ internal static partial class Program
     private const string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SHA256 = "480a7dc0e0a23e86ba7f6f73d5fac5cfbf757a8080b486c3b3fa5b23eb7f54ab";
     private const string WEBASSEMBLY_COMPILER_CONTROL_MEMORY_TOOL_SHA256 = "aee0e85b337a070b796b0734209bfa859e47590c33fb82bd60e97d8736f48d89";
     private const string WEBASSEMBLY_BINARY_ENCODING_MEMORY_TOOL_SHA256 = "dd68b60adaaf6eb0d2edfa8671aca08ddcc7a5702a9d1c4c79d245a21166f12a";
-    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "c862142402d52be2a3cfa0b802094d0845e5299f177d04d60d3f2cc5a6aca672";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "e84b83c282a8e03847c46b624148726b204cc09f774c228da114a775d7573359";
-    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "6281a72c8704997640be8164f5ec834a82006f8df33b5ab0084159275fb13767";
+    private const string WEBASSEMBLY_SCALAR_DISPATCHER_MEMORY_TOOL_SHA256 = "1089e906ae75395d0fd1d114196d33da4e0d7059ba7ac558d27a03ff74e8338c";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256 = "6b8ee8e5e3707203891840157547fa1cf88368447b493015b9d0f9e48bbb69d2";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHA256 = "3f90a6641648ae55a3b4ddf3a50ae2d2ad7d52ae434bf15c1718076f04232e79";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_WVB_SHA256 = "ec785b6ad0fe3a72574a3e6587d32bad0719054a8f7d9481ba361a0857086450";
     private const string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SHA256 = "263aa2bb5c0589f679df3f415b8e3c97eb809a87a0a756d3dc312f79956244cc";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_WVB_SHA256 = "9bfee4a2bfd7be72406b6e83539417bc3eafe513f4340862e9f3a0b7713972b5";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_SHA256 = "5639230029a5b02e063ffd196d95f9b1b1cce5b3d131045b2cb039734debd6ef";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_WVB_SHA256 = "eafd95c3ce2cd75c1a2fdd3e6f58c6d4b36b90730aadc25b80079d88309106b5";
+    private const string WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_SHA256 = "1c339d9798c73c30dd052ee88f915df7edfbd926427f955af2f0aece8983853b";
     private const string WEBASSEMBLY_DEMO_SHA256 = "87c2c74bd04a78d1e12e0807186af5b3e6c8969e3fd6b1dd69faec4afccf6369";
     private const string WEBASSEMBLY_CONSTANT_WVB_SHA256 = "51b105362f9db6cac11f0d9ec64f4a612e58c56b57bb6e0812b8c467d77231bd";
     private const string WEBASSEMBLY_CONSTANT_SHA256 = "1b62162dbc97b579c02834e9623e3ac9eccc7bc444e4b48a9e4d6c39b77ea3f1";
@@ -956,6 +960,10 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher.wv");
 
+    private static readonly string WEBASSEMBLY_SCALAR_OPERATIONS_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-Scalar-Operations.wv");
+
     private static readonly string WEBASSEMBLY_COMPILER_DIRECTORY_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv");
@@ -979,6 +987,14 @@ internal static partial class Program
     private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Overflow-Main.wv");
+
+    private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Divide-Zero-Main.wv");
+
+    private static readonly string WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Shift-Failure-Main.wv");
 
     private static readonly string WEBASSEMBLY_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Tool.wv");
@@ -15006,7 +15022,7 @@ internal static partial class Program
             WEBASSEMBLY_GENERAL_DISPATCHER_WVB_SHA256,
             Moduleˉdigest.Calculateˉsha256(Input));
         var Reference = Runˉreferenceˉwebassemblyˉi32(Input);
-        Equal(new WebAssemblyˉexecutionˉresult(0, 42, 116), Reference);
+        Equal(new WebAssemblyˉexecutionˉresult(0, 42, 200), Reference);
 
         var Options = Runtimeˉoptions.Portableˉdefaults with
         {
@@ -15016,7 +15032,7 @@ internal static partial class Program
             Tool,
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Options).Runˉmainˉbytes(Input.ToImmutableArray());
-        Equal(3646, First.Bytes.Length);
+        Equal(5881, First.Bytes.Length);
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_SHA256,
             Moduleˉdigest.Calculateˉsha256(First.Bytes.AsSpan()));
@@ -15099,6 +15115,39 @@ internal static partial class Program
         Equal(
             WEBASSEMBLY_GENERAL_DISPATCHER_OVERFLOW_SHA256,
             Moduleˉdigest.Calculateˉsha256(Overflowˉlowered.Bytes.AsSpan()));
+
+        foreach (var Failure in new[]
+        {
+            (
+                Source: WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_SOURCE,
+                Wvbˉsha256: WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_WVB_SHA256,
+                Wasmˉsha256: WEBASSEMBLY_GENERAL_DISPATCHER_DIVIDE_ZERO_SHA256,
+                Status: 3032,
+                Wasmˉbytes: 1203),
+            (
+                Source: WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_SOURCE,
+                Wvbˉsha256: WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_WVB_SHA256,
+                Wasmˉsha256: WEBASSEMBLY_GENERAL_DISPATCHER_SHIFT_FAILURE_SHA256,
+                Status: 3033,
+                Wasmˉbytes: 1205),
+        })
+        {
+            var Failedˉwvb = Compileˉsuccess(Failure.Source);
+            Equal(
+                Failure.Wvbˉsha256,
+                Moduleˉdigest.Calculateˉsha256(Failedˉwvb));
+            Equal(
+                new WebAssemblyˉexecutionˉresult(Failure.Status, 0, 14),
+                Runˉreferenceˉwebassemblyˉi32(Failedˉwvb, 100));
+            var Failedˉlowered = new Referenceˉruntime(
+                Tool,
+                new Referenceˉcapabilityˉhost(new StringWriter()),
+                Options).Runˉmainˉbytes(Failedˉwvb.ToImmutableArray());
+            Equal(Failure.Wasmˉbytes, Failedˉlowered.Bytes.Length);
+            Equal(
+                Failure.Wasmˉsha256,
+                Moduleˉdigest.Calculateˉsha256(Failedˉlowered.Bytes.AsSpan()));
+        }
 
         var Unsupported = Compileˉsuccess(
             "module Webassemblyˉgeneralˉdispatcherˉunsupported profile portable; " +
@@ -24911,6 +24960,18 @@ internal static partial class Program
                 .Sum(Item => Item.Executedˉinstructions);
             return new(3011, 0, Steps);
         }
+        catch (Runtimeˉexception Exception) when (Exception.Code == "WVR3032")
+        {
+            var Steps = Runtime.Readˉfunctionˉsteps()
+                .Sum(Item => Item.Executedˉinstructions);
+            return new(3032, 0, Steps);
+        }
+        catch (Runtimeˉexception Exception) when (Exception.Code == "WVR3033")
+        {
+            var Steps = Runtime.Readˉfunctionˉsteps()
+                .Sum(Item => Item.Executedˉinstructions);
+            return new(3033, 0, Steps);
+        }
     }
 
     private static WebAssemblyˉexecutionˉresult Executeˉstraightˉi32ˉwebassembly(
@@ -27545,6 +27606,9 @@ internal static partial class Program
                 new(
                     "Compiler/Windvale/WebAssembly-Binary-Encoding.wv",
                     WEBASSEMBLY_BINARY_ENCODING_SOURCE),
+                new(
+                    "Compiler/Windvale/WebAssembly-Scalar-Operations.wv",
+                    WEBASSEMBLY_SCALAR_OPERATIONS_SOURCE),
                 new(
                     "Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv",
                     WEBASSEMBLY_SCALAR_DISPATCHER_SOURCE),

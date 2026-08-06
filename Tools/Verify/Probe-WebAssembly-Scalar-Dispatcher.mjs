@@ -1,9 +1,40 @@
 import { readFile } from "node:fs/promises";
 
-if (process.argv.length !== 3 && process.argv.length !== 4) {
+async function Probeˉfailure(Moduleˉpath, Expectedˉstatus, Label) {
+    const Bytes = await readFile(Moduleˉpath);
+    if (!WebAssembly.validate(Bytes)) {
+        throw new Error(`The ${Label} module failed WebAssembly validation.`);
+    }
+    const Instance = new WebAssembly.Instance(new WebAssembly.Module(Bytes), {});
+    const Run = Instance.exports["Windvale.run"];
+    const Result = Instance.exports["Windvale.result"];
+    const Instructions = Instance.exports["Windvale.instructions"];
+    if (typeof Run !== "function" ||
+        !(Result instanceof WebAssembly.Global) ||
+        !(Instructions instanceof WebAssembly.Global)) {
+        throw new Error(`The ${Label} module omitted execution exports.`);
+    }
+    const Status = Run(1_000_000);
+    const Steps = Instructions.value;
+    if (Status !== Expectedˉstatus || Result.value !== 0 || Steps <= 1) {
+        throw new Error(
+            `The ${Label} result was ${Status}/${Result.value}/${Steps}; ` +
+            `expected ${Expectedˉstatus}/0/positive.`,
+        );
+    }
+    const Limited = Run(Steps - 1);
+    if (Limited !== 3011 || Result.value !== 0 ||
+        Instructions.value !== Steps - 1) {
+        throw new Error(`The ${Label} budget boundary was not exact.`);
+    }
+    return { Status, Steps };
+}
+
+if (process.argv.length < 3 || process.argv.length > 6) {
     process.stderr.write(
         "Usage: node Tools/Verify/Probe-WebAssembly-Scalar-Dispatcher.mjs " +
-        "<success.wasm> [overflow.wasm]\n",
+        "<success.wasm> [overflow.wasm] [divide-zero.wasm] " +
+        "[shift-failure.wasm]\n",
     );
     process.exitCode = 64;
 } else {
@@ -53,47 +84,26 @@ if (process.argv.length !== 3 && process.argv.length !== 4) {
             Instructionsˉglobal.value !== Instructions) {
             throw new Error("The dispatcher did not reset deterministically.");
         }
-        var Overflowˉreport = "";
-        if (process.argv.length === 4) {
-            const Overflowˉbytes = await readFile(process.argv[3]);
-            if (!WebAssembly.validate(Overflowˉbytes)) {
-                throw new Error("The overflow module failed WebAssembly validation.");
-            }
-            const Overflowˉinstance = new WebAssembly.Instance(
-                new WebAssembly.Module(Overflowˉbytes),
-                {},
+        var Failureˉreport = "";
+        const Failureˉcases = [
+            [3, 3007, "overflow"],
+            [4, 3032, "divide-zero"],
+            [5, 3033, "shift-failure"],
+        ];
+        for (const [Argument, Expectedˉstatus, Label] of Failureˉcases) {
+            if (process.argv.length <= Argument) continue;
+            const Failure = await Probeˉfailure(
+                process.argv[Argument],
+                Expectedˉstatus,
+                Label,
             );
-            const Overflowˉrun = Overflowˉinstance.exports["Windvale.run"];
-            const Overflowˉresult = Overflowˉinstance.exports["Windvale.result"];
-            const Overflowˉinstructions =
-                Overflowˉinstance.exports["Windvale.instructions"];
-            if (typeof Overflowˉrun !== "function" ||
-                !(Overflowˉresult instanceof WebAssembly.Global) ||
-                !(Overflowˉinstructions instanceof WebAssembly.Global)) {
-                throw new Error("The overflow module omitted execution exports.");
-            }
-            const Overflowˉstatus = Overflowˉrun(1_000_000);
-            const Overflowˉsteps = Overflowˉinstructions.value;
-            if (Overflowˉstatus !== 3007 || Overflowˉresult.value !== 0 ||
-                Overflowˉsteps <= 1) {
-                throw new Error(
-                    `The overflow result was ${Overflowˉstatus}/` +
-                    `${Overflowˉresult.value}/${Overflowˉsteps}; expected ` +
-                    "3007/0/positive.",
-                );
-            }
-            const Overflowˉlimited = Overflowˉrun(Overflowˉsteps - 1);
-            if (Overflowˉlimited !== 3011 || Overflowˉresult.value !== 0 ||
-                Overflowˉinstructions.value !== Overflowˉsteps - 1) {
-                throw new Error("The overflow budget boundary was not exact.");
-            }
-            Overflowˉreport = ` overflow-status=${Overflowˉstatus}` +
-                ` overflow-instructions=${Overflowˉsteps}`;
+            Failureˉreport += ` ${Label}-status=${Failure.Status}` +
+                ` ${Label}-instructions=${Failure.Steps}`;
         }
         process.stdout.write(
             `dispatcher-engine status=Valid module-bytes=${Bytes.length} ` +
             `result=${Result} instructions=${Instructions} ` +
-            `limited-status=${Limitedˉstatus}${Overflowˉreport}\n`,
+            `limited-status=${Limitedˉstatus}${Failureˉreport}\n`,
         );
     } catch (Errorˉvalue) {
         const Message = Errorˉvalue instanceof Error

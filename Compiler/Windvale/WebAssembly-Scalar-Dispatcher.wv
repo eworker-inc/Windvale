@@ -4,6 +4,7 @@ import Compilerˉwebassemblyˉbinaryˉencoding as Encoding;
 import Compilerˉwebassemblyˉfunctionˉdirectory as Functions;
 import Compilerˉwebassemblyˉexecutableˉgraph as Graphs;
 import Compilerˉwebassemblyˉcontrolˉflow as Controls;
+import Compilerˉwebassemblyˉscalarˉoperations as Scalars;
 
 export record Compilerˉwebassemblyˉscalarˉdispatcherˉsummary {
     Valid: bool;
@@ -495,6 +496,18 @@ fn Emitˉoperation(
             0u32,
             0u32
         );
+    }
+    let Scalar: Scalars.Compilerˉwebassemblyˉscalarˉoperationˉemission =
+        Scalars.Compilerˉwebassemblyˉscalarˉoperationˉemit(
+            Input,
+            Opcode,
+            Scratchˉleft,
+            Scratchˉright,
+            Returnsˉvalue,
+            3u32
+        );
+    if Scalar.Matched {
+        return Emission(true, Scalar.Bytes, 0u32, 0u32);
     }
     if Opcode == 16u8 {
         return Emission(

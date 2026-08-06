@@ -598,6 +598,9 @@
       Include="../../Compiler/Windvale/WebAssembly-Scalar-Dispatcher.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Scalar-Dispatcher.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/WebAssembly-Scalar-Operations.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Scalar-Operations.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Compiler-Directory-Tool.wv" />
     <EmbeddedResource
@@ -615,6 +618,12 @@
     <EmbeddedResource
       Include="../Fixtures/WebAssembly/General-Dispatcher-Overflow-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Overflow-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/General-Dispatcher-Divide-Zero-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Divide-Zero-Main.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/General-Dispatcher-Shift-Failure-Main.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-General-Dispatcher-Shift-Failure-Main.wv" />
     <EmbeddedResource
       Include="../../Examples/Compiler/WebAssembly-Tool.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Tool.wv" />
