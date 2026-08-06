@@ -391,6 +391,9 @@
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Record-Calls.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Record-Calls.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvb-To-Wvo-Record-Capability.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Record-Capability.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Large-Envelope.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Large-Envelope.wv" />
     <EmbeddedResource

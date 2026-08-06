@@ -2,6 +2,7 @@ module Compilerˉnativeˉx64ˉloweringˉrecordˉstorage profile portable;
 
 import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉcapabilities as Nativeˉcapabilities;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉallocation as Allocation;
 import Compilerˉnativeˉx64ˉloweringˉrecordˉlocalˉliveness as Localˉliveness;
 
@@ -105,12 +106,12 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 10u8 { return 5u32; }
     let Numeric: u32 = U32ˉfromˉu8(Opcode);
     if Numeric >= 11u32 {
-        if Numeric <= 20u32 { return 1u32; }
+        if Numeric <= 22u32 { return 1u32; }
     }
     if Numeric >= 32u32 {
         if Numeric <= 40u32 { return 1u32; }
     }
-    if Opcode == 48u8 || Opcode == 49u8 || Opcode == 64u8 {
+    if Opcode == 48u8 || Opcode == 49u8 || Opcode == 64u8 || Opcode == 65u8 {
         return 5u32;
     }
     if Opcode == 81u8 { return 1u32; }
@@ -120,13 +121,9 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 104u8 { return 5u32; }
     if Opcode == 105u8 { return 5u32; }
     if Opcode == 106u8 { return 9u32; }
-    if Opcode == 107u8 || Opcode == 108u8 || Opcode == 109u8 {
-        return 1u32;
+    if Numeric >= 107u32 {
+        if Numeric <= 124u32 { return 1u32; }
     }
-    if Numeric >= 113u32 {
-        if Numeric <= 117u32 { return 1u32; }
-    }
-    if Opcode == 119u8 || Opcode == 124u8 { return 1u32; }
     if Opcode == 161u8 || Opcode == 162u8 { return 1u32; }
     return 0u32;
 }
@@ -169,6 +166,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Returnˉtype: u8,
     Localˉtypes: bytes,
     Callˉdirectory: bytes,
+    Capabilityˉkinds: bytes,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Blocks: u32,
     Leaders: bytes
@@ -378,8 +376,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         }
 
         if Opcode == 7u8 || Opcode == 11u8 || Opcode == 19u8 ||
-            Opcode == 40u8 || Opcode == 109u8 || Opcode == 115u8 ||
-            Opcode == 116u8 || Opcode == 117u8 || Opcode == 124u8 {
+            Opcode == 40u8 ||
+            Numericˉopcode >= 109u32 && Numericˉopcode <= 112u32 ||
+            Numericˉopcode >= 115u32 && Numericˉopcode <= 118u32 ||
+            Numericˉopcode >= 120u32 && Numericˉopcode <= 124u32 {
             if Depth == 0u32 { return Invalid(Input); }
             Depth = Depth - 1u32;
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
@@ -398,7 +398,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         }
 
         if Numericˉopcode >= 13u32 && Numericˉopcode <= 18u32 ||
-            Opcode == 20u8 ||
+            Numericˉopcode >= 20u32 && Numericˉopcode <= 22u32 ||
             Numericˉopcode >= 32u32 && Numericˉopcode <= 39u32 ||
             Numericˉopcode >= 96u32 && Numericˉopcode <= 103u32 ||
             Opcode == 107u8 || Opcode == 108u8 || Opcode == 113u8 ||
@@ -544,6 +544,55 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Stackˉrecords = Pushˉscalar(Stackˉrecords);
             }
             Depth = Depth + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 65u8 {
+            let Capabilityˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Codeˉoffset + Cursor + 1u32
+            );
+            if Capabilityˉindex >= Bytesˉlength(Capabilityˉkinds) {
+                return Invalid(Input);
+            }
+            let Capabilityˉkind: u8 = Bytesˉreadˉu8(
+                Capabilityˉkinds,
+                Capabilityˉindex
+            );
+            if Capabilityˉkind == 0u8 || U32ˉfromˉu8(Capabilityˉkind) > 6u32 {
+                return Invalid(Input);
+            }
+            var Capabilityˉparameters: u32 = 1u32;
+            if Capabilityˉkind ==
+                Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() {
+                Capabilityˉparameters = 0u32;
+            }
+            if Capabilityˉkind ==
+                Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉwriteˉbytesˉkind() {
+                Capabilityˉparameters = 2u32;
+            }
+            if Depth < Capabilityˉparameters {
+                return Invalid(Input);
+            }
+            var Capabilityˉparameter: u32 = 0u32;
+            while Capabilityˉparameter < Capabilityˉparameters {
+                if Bytesˉreadˉu32ˉlittle(
+                    Stackˉrecords,
+                    (Depth - Capabilityˉparameters + Capabilityˉparameter) * 4u32
+                ) != 4294967295u32 { return Invalid(Input); }
+                Capabilityˉparameter = Capabilityˉparameter + 1u32;
+            }
+            Depth = Depth - Capabilityˉparameters;
+            Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
+            if Capabilityˉkind ==
+                    Nativeˉcapabilities.Compilerˉnativeˉx64ˉfileˉreadˉbytesˉkind() ||
+                Capabilityˉkind ==
+                    Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉkind() ||
+                Capabilityˉkind ==
+                    Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉkind() {
+                Stackˉrecords = Pushˉscalar(Stackˉrecords);
+                Depth = Depth + 1u32;
+            }
             Handled = true;
         }
 

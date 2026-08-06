@@ -2628,3 +2628,48 @@ record storage is therefore the next active slice.
 Local Standard, Qualification, the full Seed/OS suites, Linux execution,
 GitHub verification, artifact promotion, and ordinary-path cutover remain
 deferred to the grouped end-of-goal gate.
+
+## Local capability-aware record-storage evidence
+
+[Decision 0276](../Decisions/0276-Capability-Aware-Record-Storage.md) passes the
+already-validated capability-kind directory into supplemental record-storage
+analysis. `call.capability` now applies the canonical arity and scalar return
+shape for all six admitted capabilities and rejects record arguments. The
+supplemental instruction-size and stack-effect tables also cover the complete
+scalar operation set currently accepted by the top-level lowerer.
+
+The affected test was reviewed before execution. Its hosted fixture reads
+`process.argument_count`, stores it in a record, applies `u32.subtract`,
+`u32.multiply`, and `u32.add`, formats the result, checks its first UTF-8 byte,
+and returns 42 for two arguments. The reference runtime and Stage 0 native
+executor agree, and both Windvale adapters emit the exact Stage 0 object. The
+focused selection passes in 2.640 seconds. Its 637-byte WVB has SHA-256
+`8e458246eda42b3525ae0aa17b5db268bfdd0b366f244bf8bc59ae7ff6132d46`;
+the exact 4,820-byte WVO contains 4,747 code bytes and has SHA-256
+`c006214deed22a2e8765609d77c95990120042eec0e8245bfeee6c0dd13ef9f1`.
+The separate pin-sensitive package case passes in 9.535 seconds. Its Release
+build reports zero warnings and errors.
+
+Direct Stage 0 calculation pins the 346,868-byte core closure at SHA-256
+`1bb2cf8768cd91ae6edc4dce360505948dec93144c6af8a5a2a2c6fcec81b62b`.
+The 341,809-byte memory adapter has SHA-256
+`c42b38dd7092fe4e1c2b113a356b796e124aed96a3726b9f85ad865f060ee6eb`.
+The pinned Windows native source front door independently rebuilds the
+342,837-byte hosted tool in 17.9 seconds, byte-identical to Stage 0 at SHA-256
+`24d4044ccf6d1f409a2343abf38558cea9f1ff829b3100893d8a941186e975eb`.
+Current unpromoted packages are 4,744,192 Windows and 4,743,168 Linux bytes at
+SHA-256
+`26a01262284d0ce8a8f7e647c66d1ed3529818928bf7651af1652696e72fc279`
+and `14a3e79efb9faed4cd0f719c68f618131c2a8219ca5ec6d993969fa289fdcda3`.
+
+Direct self-lowering no longer reports `Unsupportedˉcode` at the previous
+function-0 or function-16 boundaries. A reference run reaches its explicit
+100,000,000-instruction limit in 8.0 seconds without output. The packaged
+native lowerer has a fixed 48-billion-instruction budget and exits 1 without a
+diagnostic or partial WVO, which does not yet distinguish instruction
+exhaustion from another native resource trap. A bounded status/measurement
+seam is therefore the next slice; the long complete proof remains deferred.
+
+Local Development, Standard, Qualification, the full Seed/OS suites, Linux
+execution, WebAssembly verification, GitHub verification, artifact promotion,
+and ordinary-path cutover remain deferred to the grouped end-of-goal gate.
