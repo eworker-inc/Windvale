@@ -706,50 +706,50 @@ export fn Main(Request: bytes) -> bytes {
                 Localˉshapes,
                 Loadedˉshapeˉoffset
             );
-            if Loadedˉshapeˉkind == 5u32 || Loadedˉshapeˉkind == 6u32 {
-                Stackˉproducedˉdescriptor = true;
-            }
-            let Loadedˉnominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
-                Localˉshapes,
-                Loadedˉshapeˉoffset + 4u32
-            );
             var Loadedˉvalue: bytes = Bytesˉslice(
                 Locals,
                 Loadedˉlocalˉindex * 8u32,
                 8u32
             );
-            if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 0u32) == 0u32 {
-                if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 4u32) == 0u32 {
-                    if Loadedˉshapeˉkind == 7u32 {
-                        Loadedˉvalue = Bytesˉconcat(
-                            Bytesˉfromˉu32ˉlittle(4294967295u32),
-                            Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtoken)
-                        );
-                    }
-                    if Loadedˉshapeˉkind == 8u32 {
-                        var Loadedˉenumˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
-                            Typeˉoffsets,
-                            (Loadedˉnominalˉtoken - 1u32) * 4u32
-                        ) + 1u32;
-                        let Loadedˉenumˉnameˉlength: u32 =
-                            Bytesˉreadˉu32ˉlittle(Module, Loadedˉenumˉcursor);
-                        Loadedˉenumˉcursor = Loadedˉenumˉcursor
-                            + 4u32
-                            + Loadedˉenumˉnameˉlength
-                            + 4u32;
-                        let Loadedˉmemberˉnameˉlength: u32 =
-                            Bytesˉreadˉu32ˉlittle(Module, Loadedˉenumˉcursor);
-                        Loadedˉenumˉcursor = Loadedˉenumˉcursor
-                            + 4u32
-                            + Loadedˉmemberˉnameˉlength;
-                        Loadedˉvalue = Bytesˉconcat(
-                            Bytesˉslice(Module, Loadedˉenumˉcursor, 4u32),
-                            Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtoken)
-                        );
+            if Loadedˉshapeˉkind == 7u32 || Loadedˉshapeˉkind == 8u32 {
+                let Loadedˉnominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
+                    Localˉshapes,
+                    Loadedˉshapeˉoffset + 4u32
+                );
+                if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 0u32) == 0u32 {
+                    if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 4u32) == 0u32 {
+                        if Loadedˉshapeˉkind == 7u32 {
+                            Loadedˉvalue = Bytesˉconcat(
+                                Bytesˉfromˉu32ˉlittle(4294967295u32),
+                                Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtoken)
+                            );
+                        }
+                        if Loadedˉshapeˉkind == 8u32 {
+                            var Loadedˉenumˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
+                                Typeˉoffsets,
+                                (Loadedˉnominalˉtoken - 1u32) * 4u32
+                            ) + 1u32;
+                            let Loadedˉenumˉnameˉlength: u32 =
+                                Bytesˉreadˉu32ˉlittle(Module, Loadedˉenumˉcursor);
+                            Loadedˉenumˉcursor = Loadedˉenumˉcursor
+                                + 4u32
+                                + Loadedˉenumˉnameˉlength
+                                + 4u32;
+                            let Loadedˉmemberˉnameˉlength: u32 =
+                                Bytesˉreadˉu32ˉlittle(Module, Loadedˉenumˉcursor);
+                            Loadedˉenumˉcursor = Loadedˉenumˉcursor
+                                + 4u32
+                                + Loadedˉmemberˉnameˉlength;
+                            Loadedˉvalue = Bytesˉconcat(
+                                Bytesˉslice(Module, Loadedˉenumˉcursor, 4u32),
+                                Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtoken)
+                            );
+                        }
                     }
                 }
             }
             if Loadedˉshapeˉkind == 5u32 || Loadedˉshapeˉkind == 6u32 {
+                Stackˉproducedˉdescriptor = true;
                 let Loadedˉlength: u32 = Bytesˉreadˉu32ˉlittle(
                     Loadedˉvalue,
                     4u32
@@ -1343,6 +1343,7 @@ export fn Main(Request: bytes) -> bytes {
         }
         }
 
+        else {
         if Payloadˉlength >= 32u32 {
         if Payloadˉlength <= 40u32 {
         if Payloadˉlength <= 37u32 {
@@ -3171,6 +3172,7 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
+        }
         if Mainˉfound {
             Mainˉfound = true;
         } else {
