@@ -32,6 +32,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0329](../Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) transfers five core unsafe instruction-stream boundaries to both digest-bound WVB read-only launchers with immutable compact fixtures and exact phase reports. Broader nominal/limit cases, seeded randomized containment, Linux execution, and the grouped gate remain.
 
+[Decision 0330](../Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) composes all ten fixed native commands and 74 transferred cases through one digest-bound Windows/Linux coordinator. Exact filters remain the narrow inner loop; the unfiltered command, Linux execution, and grouped retirement gate remain deferred until the final goal candidate.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

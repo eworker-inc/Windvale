@@ -1,0 +1,11 @@
+windvale-native-retirement-suite 1
+seed|Test-Seed|26|Tests: 26, Passed: 26, Failed: 0
+unsafe-wvb|Test-Wvb-Unsafe-Rejections|5|Tests: 5, Passed: 5, Failed: 0
+wvo-read-only|Test-Wvo-Read-Only-Rejections|13|Tests: 13, Passed: 13, Failed: 0
+assembler-rejections|Test-Assembler-Rejections|11|Tests: 11, Passed: 11, Failed: 0
+lowerer-rejections|Test-Lowerer-Rejections|2|Tests: 2, Passed: 2, Failed: 0
+linker-rejections|Test-Linker-Rejections|10|Tests: 10, Passed: 10, Failed: 0
+linker-map-limit|Test-Linker-Map-Limit|1|Tests: 1, Passed: 1, Failed: 0
+console-packager-rejections|Test-Console-Packager-Rejections|3|Tests: 3, Passed: 3, Failed: 0
+publisher-rejections|Test-Publisher-Rejections|2|Tests: 2, Passed: 2, Failed: 0
+aot-chain|Test-Aot-Chain|1|native aot chain status=Passed result=42

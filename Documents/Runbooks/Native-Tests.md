@@ -5,7 +5,51 @@ This runbook owns the first .NET-free repository test slice accepted by
 inventory and non-claims are defined by the
 [native test-plan contract](../../Specifications/Windvale-Native-Test-Plan.md).
 
-## Candidate commands
+## Retirement-suite coordinator
+
+The digest-bound coordinator composes every transferred fixed native lane
+without entering the managed Seed harness. On Windows x64, run one focused lane
+with:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter unsafe-wvb
+```
+
+On Linux x64:
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter unsafe-wvb
+```
+
+The exact filter names and case counts are:
+
+| Filter | Cases |
+| --- | ---: |
+| `seed` | 26 |
+| `unsafe-wvb` | 5 |
+| `wvo-read-only` | 13 |
+| `assembler-rejections` | 11 |
+| `lowerer-rejections` | 2 |
+| `linker-rejections` | 10 |
+| `linker-map-limit` | 1 |
+| `console-packager-rejections` | 3 |
+| `publisher-rejections` | 2 |
+| `aot-chain` | 1 |
+
+Omitting `--filter` selects all 10 suites and 74 cases in manifest order. Its
+terminal success line is:
+
+```text
+Suites: 10, Passed: 10, Failed: 0, Cases: 74
+```
+
+Do not use the unfiltered command as another inner-loop level. It is reserved
+for the final grouped retirement candidate unless the coordinator boundary
+itself changes. The plan identity, child summaries, exit/channel behavior, and
+failure rules are defined by the
+[native retirement test-suite contract](../../Specifications/Windvale-Native-Retirement-Test-Suite.md).
+
+## Individual candidate commands
 
 On Windows x64:
 
@@ -248,24 +292,18 @@ No .NET process is required by these commands. The host dependencies are
 
 ## Current boundary
 
-This is a candidate portable result/runtime-failure/fixed-malformed-WVB-and-WVO
-gate, not the complete normal repository verifier. Its WVB cases reach semantic,
-typed-execution, and control-reachability rejection, while its small WVO matrix
-covers one accepted object plus bad magic, truncation, and trailing bytes. They do
-not replace the complete unsafe and randomized malformed corpora. Continue to
-select one appropriate Stage 0 verifier for changes outside these transferred
-fixtures. Do not run this candidate and progressively broader local levels
-merely as a checklist; use the narrowest gate that owns the changed behavior.
+The 74-case coordinator is a candidate fixed native gate, not the complete normal
+repository verifier. It covers the transferred result, runtime-failure,
+malformed-WVB/WVO, assembler, lowerer, linker, packager, publisher, and AOT-chain
+contracts. It does not replace the complete unsafe, randomized, differential,
+golden, OS, or bootstrap suites. Continue to select one appropriate Stage 0
+verifier for changes outside these transferred fixtures.
 
-For changes to the native plan, launchers, projects, or fixed fixtures, review the
-managed wrapper's exact report and run `Tools\Native\Test-Seed.cmd` or
-`./Tools/Native/Test-Seed.sh` directly once. For the focused linker-rejection
-boundary, review its wrapper and run only `Test-Linker-Rejections.cmd` or `.sh`.
-For the packager-rejection boundary, do the same with
-`Test-Console-Packager-Rejections.cmd` or `.sh`; for publisher admission, use
-only `Test-Publisher-Rejections.cmd` or `.sh`; for lowerer rejection, use only
-`Test-Lowerer-Rejections.cmd` or `.sh`; for WVA assembler rejection families,
-use only `Test-Assembler-Rejections.cmd` or `.sh`; for WVO read-only rejection
-families, use only `Test-Wvo-Read-Only-Rejections.cmd` or `.sh`. GitHub owns the
-independent Windows and pinned-Debian Qualification run for a final committed
-candidate.
+Before running a filter, review its child command, fixtures, and expected
+summary against the changed behavior; update them first if the contract changed.
+Then run only `Test-Retirement-Suite.cmd --filter <suite-name>` or its `.sh`
+counterpart once. Reuse that result while relevant inputs remain unchanged. Do
+not also run the child directly or progress through broader local levels for the
+same source state. Immediately before the final grouped candidate, update from
+the shared branch and run the unfiltered Windows/Linux suite as part of the one
+broad qualification gate.

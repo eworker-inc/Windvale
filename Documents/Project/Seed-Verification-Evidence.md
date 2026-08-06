@@ -3637,3 +3637,24 @@ repeats no project compilation or successful execution. No product, WVB,
 candidate artifact, or WebAssembly implementation changed. Broader nominal and
 limit cases, seeded randomized input, Linux execution, Development, Standard,
 Qualification, promotion, and the grouped end-of-goal gate remain deferred.
+
+## Local manifest-driven native retirement-suite evidence
+
+[Decision 0330](../Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md)
+adds one direct coordinator over every fixed .NET-free native test lane. Its
+787-byte LF-only plan has SHA-256
+`4ffd86e1d5891c8968dadde7c52e745f2695cf11b309d597696b943e06b098e0`
+and fixes ten ordered command stems, 74 declared cases, and each child's exact
+terminal success summary. Both host coordinators require child exit `0`, empty
+standard error, exact summary agreement, and fail-fast behavior.
+
+Static review confirms every manifest entry has paired Windows/Linux commands
+and that the declared counts sum to 74. The Linux coordinator passes Bash syntax
+validation. After reviewing the affected scripts and manifest, the focused
+Windows command `Test-Retirement-Suite.cmd --filter unsafe-wvb` passes one suite
+and all five underlying cases in 2.624 seconds.
+
+The unfiltered 74-case command was deliberately not run locally because the
+complete suite is reserved for the final grouped retirement gate. Linux
+execution, Development, Standard, Qualification, promotion, and Stage 0 removal
+remain deferred. This slice changes no product or WebAssembly implementation.
