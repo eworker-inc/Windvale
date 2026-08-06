@@ -475,11 +475,26 @@ export fn Main(Request: bytes) -> bytes {
     );
     var Stack: bytes = Invalid;
     var Frames: bytes = Invalid;
-    var Heap: bytes = Guestˉinput;
+    var Heap: bytes = Invalid;
+    var Heapˉallocations: bytes = Invalid;
+    var Heapˉallocationˉcount: u32 = 0u32;
+    var Guestˉinputˉheapˉoffset: u32 = 0u32;
     if Requestˉmajor == 2u32 {
+        let Executionˉguestˉinputˉlength: u32 = Bytesˉlength(Guestˉinput);
+        if Executionˉguestˉinputˉlength > 0u32 {
+            Heap = Guestˉinput;
+            Heapˉallocations = Bytesˉconcat(
+                Zeroˉvalue,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Executionˉguestˉinputˉlength),
+                    Bytesˉfromˉu32ˉlittle(1u32)
+                )
+            );
+            Heapˉallocationˉcount = 1u32;
+        }
         Locals = Bytesˉconcat(
             Bytesˉconcat(
-                Zeroˉvalue,
+                Bytesˉfromˉu32ˉlittle(Guestˉinputˉheapˉoffset),
                 Bytesˉfromˉu32ˉlittle(Bytesˉlength(Guestˉinput))
             ),
             Bytesˉslice(Zeroˉlocals, 8u32, Functionˉcursor - 8u32)
@@ -632,6 +647,24 @@ export fn Main(Request: bytes) -> bytes {
                                 Selectedˉdataˉlength
                             )
                         );
+                        if Selectedˉdataˉlength > 0u32 {
+                            Heapˉallocations = Bytesˉconcat(
+                                Heapˉallocations,
+                                Bytesˉconcat(
+                                    Bytesˉfromˉu32ˉlittle(
+                                        Textˉstaticˉheapˉoffset
+                                    ),
+                                    Bytesˉconcat(
+                                        Bytesˉfromˉu32ˉlittle(
+                                            Selectedˉdataˉlength
+                                        ),
+                                        Bytesˉfromˉu32ˉlittle(1u32)
+                                    )
+                                )
+                            );
+                            Heapˉallocationˉcount =
+                                Heapˉallocationˉcount + 1u32;
+                        }
                         Stack = Bytesˉconcat(
                             Stack,
                             Bytesˉconcat(
@@ -698,6 +731,24 @@ export fn Main(Request: bytes) -> bytes {
                                 Selectedˉdataˉlength
                             )
                         );
+                        if Selectedˉdataˉlength > 0u32 {
+                            Heapˉallocations = Bytesˉconcat(
+                                Heapˉallocations,
+                                Bytesˉconcat(
+                                    Bytesˉfromˉu32ˉlittle(
+                                        Bytesˉstaticˉheapˉoffset
+                                    ),
+                                    Bytesˉconcat(
+                                        Bytesˉfromˉu32ˉlittle(
+                                            Selectedˉdataˉlength
+                                        ),
+                                        Bytesˉfromˉu32ˉlittle(1u32)
+                                    )
+                                )
+                            );
+                            Heapˉallocationˉcount =
+                                Heapˉallocationˉcount + 1u32;
+                        }
                         Stack = Bytesˉconcat(
                             Stack,
                             Bytesˉconcat(
@@ -717,6 +768,18 @@ export fn Main(Request: bytes) -> bytes {
                 Module,
                 Payload + 1u32
             );
+            let Loadedˉshapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Functionˉshapeˉoffsets,
+                Functionˉindex * 4u32
+            ) + Loadedˉlocalˉindex * 8u32;
+            let Loadedˉshapeˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                Localˉshapes,
+                Loadedˉshapeˉoffset
+            );
+            let Loadedˉnominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
+                Localˉshapes,
+                Loadedˉshapeˉoffset + 4u32
+            );
             var Loadedˉvalue: bytes = Bytesˉslice(
                 Locals,
                 Loadedˉlocalˉindex * 8u32,
@@ -724,19 +787,6 @@ export fn Main(Request: bytes) -> bytes {
             );
             if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 0u32) == 0u32 {
                 if Bytesˉreadˉu32ˉlittle(Loadedˉvalue, 4u32) == 0u32 {
-                    let Loadedˉshapeˉoffset: u32 =
-                        Bytesˉreadˉu32ˉlittle(
-                            Functionˉshapeˉoffsets,
-                            Functionˉindex * 4u32
-                        ) + Loadedˉlocalˉindex * 8u32;
-                    let Loadedˉshapeˉkind: u32 = Bytesˉreadˉu32ˉlittle(
-                        Localˉshapes,
-                        Loadedˉshapeˉoffset
-                    );
-                    let Loadedˉnominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
-                        Localˉshapes,
-                        Loadedˉshapeˉoffset + 4u32
-                    );
                     if Loadedˉshapeˉkind == 7u32 {
                         Loadedˉvalue = Bytesˉconcat(
                             Bytesˉfromˉu32ˉlittle(4294967295u32),
@@ -766,6 +816,89 @@ export fn Main(Request: bytes) -> bytes {
                     }
                 }
             }
+            if Loadedˉshapeˉkind == 5u32 || Loadedˉshapeˉkind == 6u32 {
+                let Loadedˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                    Loadedˉvalue,
+                    4u32
+                );
+                if Loadedˉlength > 0u32 {
+                    var Loadedˉallocationˉindex: u32 = 4294967295u32;
+                    var Loadedˉallocationˉscan: u32 = 0u32;
+                    while Loadedˉallocationˉscan < Heapˉallocationˉcount {
+                        let Loadedˉscanˉentry: u32 =
+                            Loadedˉallocationˉscan * 12u32;
+                        let Loadedˉscanˉreferences: u32 =
+                            Bytesˉreadˉu32ˉlittle(
+                                Heapˉallocations,
+                                Loadedˉscanˉentry + 8u32
+                            );
+                        let Loadedˉscanˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                            Heapˉallocations,
+                            Loadedˉscanˉentry
+                        );
+                        let Loadedˉscanˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                            Heapˉallocations,
+                            Loadedˉscanˉentry + 4u32
+                        );
+                        let Loadedˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                            Loadedˉvalue,
+                            0u32
+                        );
+                        if Loadedˉscanˉreferences > 0u32 {
+                            if Loadedˉoffset >= Loadedˉscanˉoffset {
+                                if Loadedˉoffset - Loadedˉscanˉoffset
+                                    <= Loadedˉscanˉlength {
+                                    if Loadedˉlength <= Loadedˉscanˉlength
+                                        - (Loadedˉoffset - Loadedˉscanˉoffset) {
+                                        Loadedˉallocationˉindex =
+                                            Loadedˉallocationˉscan;
+                                        Loadedˉallocationˉscan =
+                                            Heapˉallocationˉcount;
+                                    }
+                                }
+                            }
+                        }
+                        Loadedˉallocationˉscan = Loadedˉallocationˉscan + 1u32;
+                    }
+                    if Loadedˉallocationˉindex == 4294967295u32 {
+                        return Invalid;
+                    }
+                    let Loadedˉallocationˉentry: u32 =
+                        Loadedˉallocationˉindex * 12u32;
+                    let Loadedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
+                        Heapˉallocations,
+                        Loadedˉallocationˉentry + 8u32
+                    );
+                    if Loadedˉreferences == 4294967295u32 { return Invalid; }
+                    let Loadedˉallocationˉprefix: bytes = Bytesˉslice(
+                        Heapˉallocations,
+                        0u32,
+                        Loadedˉallocationˉentry
+                    );
+                    let Loadedˉallocationˉsuffix: bytes = Bytesˉslice(
+                        Heapˉallocations,
+                        Loadedˉallocationˉentry + 12u32,
+                        Bytesˉlength(Heapˉallocations)
+                            - Loadedˉallocationˉentry - 12u32
+                    );
+                    Heapˉallocations = Bytesˉconcat(
+                        Bytesˉconcat(
+                            Loadedˉallocationˉprefix,
+                            Bytesˉconcat(
+                                Bytesˉslice(
+                                    Heapˉallocations,
+                                    Loadedˉallocationˉentry,
+                                    8u32
+                                ),
+                                Bytesˉfromˉu32ˉlittle(
+                                    Loadedˉreferences + 1u32
+                                )
+                            )
+                        ),
+                        Loadedˉallocationˉsuffix
+                    );
+                }
+            }
             Stack = Bytesˉconcat(Stack, Loadedˉvalue);
             Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
             Mainˉfound = true;
@@ -783,6 +916,101 @@ export fn Main(Request: bytes) -> bytes {
             );
             Stack = Bytesˉslice(Stack, 0u32, Storeˉstackˉlength - 8u32);
             let Storedˉlocalˉoffset: u32 = Storedˉlocalˉindex * 8u32;
+            let Storedˉshapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Functionˉshapeˉoffsets,
+                Functionˉindex * 4u32
+            ) + Storedˉlocalˉoffset;
+            let Storedˉshapeˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                Localˉshapes,
+                Storedˉshapeˉoffset
+            );
+            if Storedˉshapeˉkind == 5u32 || Storedˉshapeˉkind == 6u32 {
+                let Previousˉstoredˉvalue: bytes = Bytesˉslice(
+                    Locals,
+                    Storedˉlocalˉoffset,
+                    8u32
+                );
+                let Previousˉstoredˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                    Previousˉstoredˉvalue,
+                    4u32
+                );
+                if Previousˉstoredˉlength > 0u32 {
+                    var Storedˉallocationˉindex: u32 = 4294967295u32;
+                    var Storedˉallocationˉscan: u32 = 0u32;
+                    while Storedˉallocationˉscan < Heapˉallocationˉcount {
+                        let Storedˉscanˉentry: u32 =
+                            Storedˉallocationˉscan * 12u32;
+                        let Storedˉscanˉreferences: u32 =
+                            Bytesˉreadˉu32ˉlittle(
+                                Heapˉallocations,
+                                Storedˉscanˉentry + 8u32
+                            );
+                        let Storedˉscanˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                            Heapˉallocations,
+                            Storedˉscanˉentry
+                        );
+                        let Storedˉscanˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                            Heapˉallocations,
+                            Storedˉscanˉentry + 4u32
+                        );
+                        let Previousˉstoredˉoffset: u32 =
+                            Bytesˉreadˉu32ˉlittle(Previousˉstoredˉvalue, 0u32);
+                        if Storedˉscanˉreferences > 0u32 {
+                            if Previousˉstoredˉoffset >= Storedˉscanˉoffset {
+                                if Previousˉstoredˉoffset - Storedˉscanˉoffset
+                                    <= Storedˉscanˉlength {
+                                    if Previousˉstoredˉlength
+                                        <= Storedˉscanˉlength
+                                            - (Previousˉstoredˉoffset
+                                                - Storedˉscanˉoffset) {
+                                        Storedˉallocationˉindex =
+                                            Storedˉallocationˉscan;
+                                        Storedˉallocationˉscan =
+                                            Heapˉallocationˉcount;
+                                    }
+                                }
+                            }
+                        }
+                        Storedˉallocationˉscan = Storedˉallocationˉscan + 1u32;
+                    }
+                    if Storedˉallocationˉindex == 4294967295u32 {
+                        return Invalid;
+                    }
+                    let Storedˉallocationˉentry: u32 =
+                        Storedˉallocationˉindex * 12u32;
+                    let Storedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
+                        Heapˉallocations,
+                        Storedˉallocationˉentry + 8u32
+                    );
+                    let Storedˉallocationˉprefix: bytes = Bytesˉslice(
+                        Heapˉallocations,
+                        0u32,
+                        Storedˉallocationˉentry
+                    );
+                    let Storedˉallocationˉsuffix: bytes = Bytesˉslice(
+                        Heapˉallocations,
+                        Storedˉallocationˉentry + 12u32,
+                        Bytesˉlength(Heapˉallocations)
+                            - Storedˉallocationˉentry - 12u32
+                    );
+                    Heapˉallocations = Bytesˉconcat(
+                        Bytesˉconcat(
+                            Storedˉallocationˉprefix,
+                            Bytesˉconcat(
+                                Bytesˉslice(
+                                    Heapˉallocations,
+                                    Storedˉallocationˉentry,
+                                    8u32
+                                ),
+                                Bytesˉfromˉu32ˉlittle(
+                                    Storedˉreferences - 1u32
+                                )
+                            )
+                        ),
+                        Storedˉallocationˉsuffix
+                    );
+                }
+            }
             let Storedˉprefix: bytes = Bytesˉslice(
                 Locals,
                 0u32,
@@ -1753,6 +1981,86 @@ export fn Main(Request: bytes) -> bytes {
                     8u32
                 );
             }
+            let Selectedˉfieldˉkind: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Selectedˉfieldˉcursor)
+            );
+            if Selectedˉfieldˉkind == 5u32 || Selectedˉfieldˉkind == 6u32 {
+                let Fieldˉdescriptorˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                    Fieldˉvalue,
+                    4u32
+                );
+                if Fieldˉdescriptorˉlength > 0u32 {
+                    var Fieldˉallocationˉindex: u32 = 4294967295u32;
+                    var Fieldˉallocationˉscan: u32 = 0u32;
+                    while Fieldˉallocationˉscan < Heapˉallocationˉcount {
+                        let Fieldˉscanˉentry: u32 = Fieldˉallocationˉscan * 12u32;
+                        let Fieldˉscanˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
+                            Heapˉallocations,
+                            Fieldˉscanˉentry + 8u32
+                        );
+                        let Fieldˉscanˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                            Heapˉallocations,
+                            Fieldˉscanˉentry
+                        );
+                        let Fieldˉscanˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                            Heapˉallocations,
+                            Fieldˉscanˉentry + 4u32
+                        );
+                        let Fieldˉdescriptorˉoffset: u32 =
+                            Bytesˉreadˉu32ˉlittle(Fieldˉvalue, 0u32);
+                        if Fieldˉscanˉreferences > 0u32 {
+                            if Fieldˉdescriptorˉoffset >= Fieldˉscanˉoffset {
+                                if Fieldˉdescriptorˉoffset - Fieldˉscanˉoffset
+                                    <= Fieldˉscanˉlength {
+                                    if Fieldˉdescriptorˉlength
+                                        <= Fieldˉscanˉlength
+                                            - (Fieldˉdescriptorˉoffset
+                                                - Fieldˉscanˉoffset) {
+                                        Fieldˉallocationˉindex =
+                                            Fieldˉallocationˉscan;
+                                        Fieldˉallocationˉscan =
+                                            Heapˉallocationˉcount;
+                                    }
+                                }
+                            }
+                        }
+                        Fieldˉallocationˉscan = Fieldˉallocationˉscan + 1u32;
+                    }
+                    if Fieldˉallocationˉindex == 4294967295u32 {
+                        return Invalid;
+                    }
+                    let Fieldˉallocationˉentry: u32 =
+                        Fieldˉallocationˉindex * 12u32;
+                    let Fieldˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
+                        Heapˉallocations,
+                        Fieldˉallocationˉentry + 8u32
+                    );
+                    if Fieldˉreferences == 4294967295u32 { return Invalid; }
+                    Heapˉallocations = Bytesˉconcat(
+                        Bytesˉconcat(
+                            Bytesˉslice(
+                                Heapˉallocations,
+                                0u32,
+                                Fieldˉallocationˉentry
+                            ),
+                            Bytesˉconcat(
+                                Bytesˉslice(
+                                    Heapˉallocations,
+                                    Fieldˉallocationˉentry,
+                                    8u32
+                                ),
+                                Bytesˉfromˉu32ˉlittle(Fieldˉreferences + 1u32)
+                            )
+                        ),
+                        Bytesˉslice(
+                            Heapˉallocations,
+                            Fieldˉallocationˉentry + 12u32,
+                            Bytesˉlength(Heapˉallocations)
+                                - Fieldˉallocationˉentry - 12u32
+                        )
+                    );
+                }
+            }
             Stack = Bytesˉconcat(Stack, Fieldˉvalue);
             Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
             Mainˉfound = true;
@@ -1905,6 +2213,19 @@ export fn Main(Request: bytes) -> bytes {
                             Selectedˉenumˉnameˉlength
                         )
                     );
+                    Heapˉallocations = Bytesˉconcat(
+                        Heapˉallocations,
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(Enumˉnameˉheapˉoffset),
+                            Bytesˉconcat(
+                                Bytesˉfromˉu32ˉlittle(
+                                    Selectedˉenumˉnameˉlength
+                                ),
+                                Bytesˉfromˉu32ˉlittle(1u32)
+                            )
+                        )
+                    );
+                    Heapˉallocationˉcount = Heapˉallocationˉcount + 1u32;
                     Stack = Bytesˉconcat(
                         Stack,
                         Bytesˉconcat(
@@ -2001,6 +2322,17 @@ export fn Main(Request: bytes) -> bytes {
                 Sectionˉkind = 3018u32;
             } else {
                 Heap = Bytesˉconcat(Heap, Formattedˉvalue);
+                Heapˉallocations = Bytesˉconcat(
+                    Heapˉallocations,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Formattedˉoffset),
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(Formattedˉlength),
+                            Bytesˉfromˉu32ˉlittle(1u32)
+                        )
+                    )
+                );
+                Heapˉallocationˉcount = Heapˉallocationˉcount + 1u32;
                 Stack = Bytesˉconcat(
                     Stack,
                     Bytesˉconcat(
@@ -2237,6 +2569,17 @@ export fn Main(Request: bytes) -> bytes {
                     Sectionˉkind = 3018u32;
                 } else {
                     Heap = Bytesˉconcat(Heap, Quotedˉvalue);
+                    Heapˉallocations = Bytesˉconcat(
+                        Heapˉallocations,
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(Quotedˉoffset),
+                            Bytesˉconcat(
+                                Bytesˉfromˉu32ˉlittle(Quotedˉlength),
+                                Bytesˉfromˉu32ˉlittle(1u32)
+                            )
+                        )
+                    );
+                    Heapˉallocationˉcount = Heapˉallocationˉcount + 1u32;
                     Stack = Bytesˉconcat(
                         Stack,
                         Bytesˉconcat(
@@ -2296,6 +2639,24 @@ export fn Main(Request: bytes) -> bytes {
                         )
                     );
                     Heap = Bytesˉconcat(Heap, Descriptorˉconcatˉvalue);
+                    if Descriptorˉconcatˉlength > 0u32 {
+                        Heapˉallocations = Bytesˉconcat(
+                            Heapˉallocations,
+                            Bytesˉconcat(
+                                Bytesˉfromˉu32ˉlittle(
+                                    Descriptorˉconcatˉoffset
+                                ),
+                                Bytesˉconcat(
+                                    Bytesˉfromˉu32ˉlittle(
+                                        Descriptorˉconcatˉlength
+                                    ),
+                                    Bytesˉfromˉu32ˉlittle(1u32)
+                                )
+                            )
+                        );
+                        Heapˉallocationˉcount =
+                            Heapˉallocationˉcount + 1u32;
+                    }
                     Stack = Bytesˉconcat(
                         Stack,
                         Bytesˉconcat(
@@ -2549,11 +2910,133 @@ export fn Main(Request: bytes) -> bytes {
                 Stack = Bytesˉslice(Stack, 0u32, Constructorˉstack - 8u32);
                 if Constructorˉvalid {
                     let Constructorˉlength: u32 = Bytesˉlength(Constructorˉvalue);
-                    let Constructorˉoffset: u32 = Bytesˉlength(Heap);
-                    if Constructorˉoffset > 65536u32 - Constructorˉlength {
+                    var Constructorˉoffset: u32 = 0u32;
+                    var Constructorˉspaceˉsearching: bool = true;
+                    while Constructorˉspaceˉsearching {
+                        var Constructorˉnearestˉoffset: u32 = 65536u32;
+                        var Constructorˉnearestˉlength: u32 = 0u32;
+                        var Constructorˉspaceˉscan: u32 = 0u32;
+                        while Constructorˉspaceˉscan
+                            < Heapˉallocationˉcount {
+                            let Constructorˉspaceˉentry: u32 =
+                                Constructorˉspaceˉscan * 12u32;
+                            let Constructorˉspaceˉreferences: u32 =
+                                Bytesˉreadˉu32ˉlittle(
+                                    Heapˉallocations,
+                                    Constructorˉspaceˉentry + 8u32
+                                );
+                            if Constructorˉspaceˉreferences > 0u32 {
+                                let Constructorˉspaceˉoffset: u32 =
+                                    Bytesˉreadˉu32ˉlittle(
+                                        Heapˉallocations,
+                                        Constructorˉspaceˉentry
+                                    );
+                                if Constructorˉspaceˉoffset
+                                    >= Constructorˉoffset {
+                                    if Constructorˉspaceˉoffset
+                                        < Constructorˉnearestˉoffset {
+                                        Constructorˉnearestˉoffset =
+                                            Constructorˉspaceˉoffset;
+                                        Constructorˉnearestˉlength =
+                                            Bytesˉreadˉu32ˉlittle(
+                                                Heapˉallocations,
+                                                Constructorˉspaceˉentry + 4u32
+                                            );
+                                    }
+                                }
+                            }
+                            Constructorˉspaceˉscan =
+                                Constructorˉspaceˉscan + 1u32;
+                        }
+                        if Constructorˉlength <= Constructorˉnearestˉoffset
+                            - Constructorˉoffset {
+                            Constructorˉspaceˉsearching = false;
+                        } else {
+                            if Constructorˉnearestˉoffset == 65536u32 {
+                                Constructorˉoffset = 4294967295u32;
+                                Constructorˉspaceˉsearching = false;
+                            } else {
+                                Constructorˉoffset = Constructorˉnearestˉoffset
+                                    + Constructorˉnearestˉlength;
+                                if Constructorˉoffset > 65536u32
+                                    - Constructorˉlength {
+                                    Constructorˉoffset = 4294967295u32;
+                                    Constructorˉspaceˉsearching = false;
+                                }
+                            }
+                        }
+                    }
+                    if Constructorˉoffset == 4294967295u32 {
                         Sectionˉkind = 3018u32;
                     } else {
-                        Heap = Bytesˉconcat(Heap, Constructorˉvalue);
+                        let Constructorˉend: u32 =
+                            Constructorˉoffset + Constructorˉlength;
+                        let Constructorˉheapˉlength: u32 = Bytesˉlength(Heap);
+                        var Constructorˉnextˉheap: bytes = Bytesˉconcat(
+                            Bytesˉslice(Heap, 0u32, Constructorˉoffset),
+                            Constructorˉvalue
+                        );
+                        if Constructorˉend < Constructorˉheapˉlength {
+                            Constructorˉnextˉheap = Bytesˉconcat(
+                                Constructorˉnextˉheap,
+                                Bytesˉslice(
+                                    Heap,
+                                    Constructorˉend,
+                                    Constructorˉheapˉlength - Constructorˉend
+                                )
+                            );
+                        }
+                        Heap = Constructorˉnextˉheap;
+                        var Constructorˉallocationˉindex: u32 =
+                            Heapˉallocationˉcount;
+                        var Constructorˉallocationˉscan: u32 = 0u32;
+                        while Constructorˉallocationˉscan
+                            < Heapˉallocationˉcount {
+                            if Bytesˉreadˉu32ˉlittle(
+                                Heapˉallocations,
+                                Constructorˉallocationˉscan * 12u32 + 8u32
+                            ) == 0u32 {
+                                Constructorˉallocationˉindex =
+                                    Constructorˉallocationˉscan;
+                                Constructorˉallocationˉscan =
+                                    Heapˉallocationˉcount;
+                            }
+                            Constructorˉallocationˉscan =
+                                Constructorˉallocationˉscan + 1u32;
+                        }
+                        let Constructorˉallocationˉvalue: bytes = Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(Constructorˉoffset),
+                            Bytesˉconcat(
+                                Bytesˉfromˉu32ˉlittle(Constructorˉlength),
+                                Bytesˉfromˉu32ˉlittle(1u32)
+                            )
+                        );
+                        if Constructorˉallocationˉindex == Heapˉallocationˉcount {
+                            Heapˉallocations = Bytesˉconcat(
+                                Heapˉallocations,
+                                Constructorˉallocationˉvalue
+                            );
+                            Heapˉallocationˉcount = Heapˉallocationˉcount + 1u32;
+                        } else {
+                            let Constructorˉallocationˉentry: u32 =
+                                Constructorˉallocationˉindex * 12u32;
+                            Heapˉallocations = Bytesˉconcat(
+                                Bytesˉconcat(
+                                    Bytesˉslice(
+                                        Heapˉallocations,
+                                        0u32,
+                                        Constructorˉallocationˉentry
+                                    ),
+                                    Constructorˉallocationˉvalue
+                                ),
+                                Bytesˉslice(
+                                    Heapˉallocations,
+                                    Constructorˉallocationˉentry + 12u32,
+                                    Bytesˉlength(Heapˉallocations)
+                                        - Constructorˉallocationˉentry - 12u32
+                                )
+                            );
+                        }
                         Stack = Bytesˉconcat(
                             Stack,
                             Bytesˉconcat(
@@ -2593,6 +3076,17 @@ export fn Main(Request: bytes) -> bytes {
                         Sha256ˉsourceˉlength
                     ));
                 Heap = Bytesˉconcat(Heap, Sha256ˉvalue);
+                Heapˉallocations = Bytesˉconcat(
+                    Heapˉallocations,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Sha256ˉoffset),
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(64u32),
+                            Bytesˉfromˉu32ˉlittle(1u32)
+                        )
+                    )
+                );
+                Heapˉallocationˉcount = Heapˉallocationˉcount + 1u32;
                 Stack = Bytesˉconcat(
                     Stack,
                     Bytesˉconcat(

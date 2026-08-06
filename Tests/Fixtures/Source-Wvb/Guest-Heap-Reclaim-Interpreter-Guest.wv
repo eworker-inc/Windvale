@@ -1,0 +1,14 @@
+module Sourceˉwvbˉguestˉheapˉreclaimˉinterpreterˉguest profile portable;
+
+export fn Main() -> i32 {
+    var Index: u32 = 0u32;
+    var Value: bytes = Bytesˉfromˉu32ˉlittle(Index);
+    while Index < 4100u32 {
+        Value = Bytesˉfromˉu32ˉlittle(Index);
+        Value = Bytesˉfromˉu32ˉlittle(Index);
+        Value = Bytesˉfromˉu32ˉlittle(Index);
+        Value = Bytesˉfromˉu32ˉlittle(Index);
+        Index = Index + 1u32;
+    }
+    return Bytesˉreadˉi32ˉlittle(Value, 0u32);
+}
