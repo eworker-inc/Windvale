@@ -348,7 +348,7 @@ Decision 0272 admits lossless `u32.from_u8` through the existing descriptor-inst
 
 Decision 0277 closes the portable browser-compiler WVB seam with a separately pinned format-3 native source compiler. Its normal launcher verifies the native compiler and publisher, reads the exact project inventory, writes one temporary candidate, and reproduces the 919,577-byte compiler byte for byte without .NET. Decision 0278 closes the remaining interpreter-Wasm seam with a second named format-3 compiler-family member. After Decisions 0292 and 0294 add bounded direct static data and consume it for opcode effects, the native WebAssembly compiler reproduces the current exact 828,165-byte import-free execution-ABI-3 artifact, while the Node launcher independently checks its exports, memory regions, and atomic replacement. Both package constructors remain Stage 0 recovery commands; no C# product implementation changed.
 
-Decisions 0280 through 0288, 0290, 0291, and 0293 advance the large native-object seam without
+Decisions 0280 through 0288, 0290, 0291, 0293, and 0295 advance the large native-object seam without
 widening Windvale's ordinary 4 MiB value contract. Immutable analysis evidence
 precedes emission; the WVO writer exposes separately owned canonical regions;
 maximal contiguous function batches carry bounded code and relocation values;
@@ -377,14 +377,19 @@ zero placeholder in its owning code chunk, and proves separate padding contains
 only `0x90`. A following typed content cursor replays that retained publication
 plan, binds every nonempty value to its exact manifest position and length,
 compares arbitrary code, data, and metadata bytes completely, and requires the
-publication cursor to finish at the admitted object length. Full staged-resource
-identity remains. These layers deliberately
+publication cursor to finish at the admitted object length. A following
+resource plan assigns the input, manifest, and no more than 62 canonical chunk
+names to the existing 64-entry first-success snapshot table. Its hosted
+admission root reads those names once in exact ordinal order, passes the same
+borrowed chunk snapshots through complete content validation, and performs no
+destination mutation. Native handle identity and alias rejection remain for
+the platform adapter. These layers deliberately
 do not reuse the pre-opened
 random-access-storage capability, whose contract
 excludes path creation, replacement, and directory publication, and do not
 claim that scratch resources are an atomic destination. A later fixed native
-adapter must preserve that validated snapshot, bind the exact staged
-resources, reject missing or changed resources, consume only the verified chunks,
+adapter must preserve that validated snapshot sequence, independently verify
+the snapshot table and native identities, consume only the verified chunks,
 then supply unique-sibling creation, partial and indeterminate
 write behavior, durable flush, atomic replacement, cleanup, and complete-tool
 integration before this transfer can replace the whole-value managed

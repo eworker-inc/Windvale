@@ -929,7 +929,8 @@ internal static partial class Program
         string description,
         bool includeˉpublication = false,
         bool includeˉstagingˉmanifest = false,
-        bool includeˉstagingˉcontent = false)
+        bool includeˉstagingˉcontent = false,
+        bool includeˉstagingˉresources = false)
     {
         List<Sourceˉmoduleˉinput> Dependencies =
             [
@@ -1014,6 +1015,12 @@ internal static partial class Program
             Dependencies.Add(new(
                 "Compiler/Windvale/Native-X64-Lowering-Staging-Content.wv",
                 NATIVE_X64_STAGING_CONTENT_SOURCE));
+        }
+        if (includeˉstagingˉresources)
+        {
+            Dependencies.Add(new(
+                "Compiler/Windvale/Native-X64-Lowering-Staging-Resources.wv",
+                NATIVE_X64_STAGING_RESOURCES_SOURCE));
         }
         var Result = Seedˉcompiler.Compileˉmodules(
             new(path, source),

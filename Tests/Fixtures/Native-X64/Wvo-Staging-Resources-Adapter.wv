@@ -1,0 +1,105 @@
+module Compilerˉnativeˉx64ˉstagingˉresourcesˉtest profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉresources as Resources;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Statusˉvalue(
+    Status: Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus
+) -> u32 {
+    if Status ==
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Valid {
+        return 0u32;
+    }
+    if Status ==
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Invalidˉresource {
+        return 1u32;
+    }
+    if Status ==
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Invalidˉprefix {
+        return 2u32;
+    }
+    if Status ==
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Duplicateˉresource {
+        return 3u32;
+    }
+    if Status ==
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Invalidˉmanifest {
+        return 4u32;
+    }
+    return 5u32;
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < 24u32 { return Empty(Input); }
+    let Inputˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 0u32);
+    let Prefixˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 4u32);
+    let Manifestˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 8u32);
+    let Destinationˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Manifestˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Query: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    var Position: u32 = 24u32;
+    if Inputˉlength > Length - Position { return Empty(Input); }
+    let Inputˉbytes: bytes = Bytesˉslice(Input, Position, Inputˉlength);
+    Position = Position + Inputˉlength;
+    if Prefixˉlength > Length - Position { return Empty(Input); }
+    let Prefixˉbytes: bytes = Bytesˉslice(Input, Position, Prefixˉlength);
+    Position = Position + Prefixˉlength;
+    if Manifestˉnameˉlength > Length - Position { return Empty(Input); }
+    let Manifestˉnameˉbytes: bytes =
+        Bytesˉslice(Input, Position, Manifestˉnameˉlength);
+    Position = Position + Manifestˉnameˉlength;
+    if Destinationˉlength > Length - Position { return Empty(Input); }
+    let Destinationˉbytes: bytes =
+        Bytesˉslice(Input, Position, Destinationˉlength);
+    Position = Position + Destinationˉlength;
+    if Manifestˉlength != Length - Position { return Empty(Input); }
+    let Manifest: bytes = Bytesˉslice(Input, Position, Manifestˉlength);
+    if !Textˉutf8ˉisˉvalid(Inputˉbytes) ||
+        !Textˉutf8ˉisˉvalid(Prefixˉbytes) ||
+        !Textˉutf8ˉisˉvalid(Manifestˉnameˉbytes) ||
+        !Textˉutf8ˉisˉvalid(Destinationˉbytes) {
+        return Empty(Input);
+    }
+
+    let Inputˉresource: text = Textˉfromˉutf8(Inputˉbytes);
+    let Prefix: text = Textˉfromˉutf8(Prefixˉbytes);
+    let Manifestˉresource: text = Textˉfromˉutf8(Manifestˉnameˉbytes);
+    let Destinationˉresource: text = Textˉfromˉutf8(Destinationˉbytes);
+    let Plan: Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉplan =
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉplanˉbuild(
+            Inputˉresource,
+            Prefix,
+            Manifestˉresource,
+            Destinationˉresource,
+            Manifest
+        );
+    let Ordinal: u32 =
+        Resources.Compilerˉnativeˉx64ˉstagingˉchunkˉsnapshotˉordinal(
+            Plan,
+            Query
+        );
+    var Chunkˉname: bytes = Empty(Input);
+    if Ordinal != 4294967295u32 {
+        Chunkˉname = Textˉtoˉutf8(
+            Resources.Compilerˉnativeˉx64ˉstagingˉchunkˉresource(
+                Prefix,
+                Query
+            )
+        );
+    }
+    var Output: bytes = Textˉtoˉutf8("WVRI");
+    Output = Appendˉu32(Output, Statusˉvalue(Plan.Status));
+    Output = Appendˉu32(Output, Plan.Chunks);
+    Output = Appendˉu32(Output, Plan.Snapshots);
+    Output = Appendˉu32(Output, Ordinal);
+    Output = Appendˉu32(Output, Bytesˉlength(Chunkˉname));
+    return Bytesˉconcat(Output, Chunkˉname);
+}

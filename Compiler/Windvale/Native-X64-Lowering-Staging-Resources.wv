@@ -1,0 +1,153 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉresources profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+
+export enum Compilerˉnativeˉx64ˉstagingˉresourceˉstatus {
+    Valid = 0;
+    Invalidˉresource = 1;
+    Invalidˉprefix = 2;
+    Duplicateˉresource = 3;
+    Invalidˉmanifest = 4;
+    Snapshotˉlimit = 5;
+}
+
+export record Compilerˉnativeˉx64ˉstagingˉresourceˉplan {
+    Status: Compilerˉnativeˉx64ˉstagingˉresourceˉstatus;
+    Chunks: u32;
+    Snapshots: u32;
+}
+
+fn Invalid(
+    Status: Compilerˉnativeˉx64ˉstagingˉresourceˉstatus
+) -> Compilerˉnativeˉx64ˉstagingˉresourceˉplan {
+    return Compilerˉnativeˉx64ˉstagingˉresourceˉplan(
+        Status,
+        0u32,
+        0u32
+    );
+}
+
+fn Resourceˉisˉvalid(Value: text) -> bool {
+    let Length: u32 = Bytesˉlength(Textˉtoˉutf8(Value));
+    if Length == 0u32 { return false; }
+    return Length <= 4095u32;
+}
+
+fn Resourcesˉareˉequal(First: text, Second: text) -> bool {
+    let Firstˉbytes: bytes = Textˉtoˉutf8(First);
+    let Secondˉbytes: bytes = Textˉtoˉutf8(Second);
+    let Length: u32 = Bytesˉlength(Firstˉbytes);
+    if Length != Bytesˉlength(Secondˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Firstˉbytes, Index) !=
+            Bytesˉreadˉu8(Secondˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉchunkˉresource(
+    Prefix: text,
+    Index: u32
+) -> text {
+    return Textˉconcat(
+        Textˉconcat(Prefix, ".chunk-"),
+        U32ˉformat(Index)
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉresourceˉpreflight(
+    Inputˉresource: text,
+    Chunkˉprefix: text,
+    Manifestˉresource: text,
+    Destinationˉresource: text
+) -> Compilerˉnativeˉx64ˉstagingˉresourceˉstatus {
+    if !Resourceˉisˉvalid(Inputˉresource) ||
+        !Resourceˉisˉvalid(Manifestˉresource) ||
+        !Resourceˉisˉvalid(Destinationˉresource) {
+        return Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Invalidˉresource;
+    }
+    let Prefixˉlength: u32 = Bytesˉlength(Textˉtoˉutf8(Chunkˉprefix));
+    if Prefixˉlength == 0u32 || Prefixˉlength > 4078u32 {
+        return Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Invalidˉprefix;
+    }
+    if Resourcesˉareˉequal(Inputˉresource, Manifestˉresource) ||
+        Resourcesˉareˉequal(Inputˉresource, Destinationˉresource) ||
+        Resourcesˉareˉequal(Manifestˉresource, Destinationˉresource) {
+        return Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Duplicateˉresource;
+    }
+    return Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Valid;
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉresourceˉplanˉbuild(
+    Inputˉresource: text,
+    Chunkˉprefix: text,
+    Manifestˉresource: text,
+    Destinationˉresource: text,
+    Stagingˉmanifest: bytes
+) -> Compilerˉnativeˉx64ˉstagingˉresourceˉplan {
+    let Preflight: Compilerˉnativeˉx64ˉstagingˉresourceˉstatus =
+        Compilerˉnativeˉx64ˉstagingˉresourceˉpreflight(
+            Inputˉresource,
+            Chunkˉprefix,
+            Manifestˉresource,
+            Destinationˉresource
+        );
+    if Preflight !=
+        Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Valid {
+        return Invalid(Preflight);
+    }
+
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Summary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Invalidˉmanifest
+        );
+    }
+    if Summary.Chunks > 62u32 {
+        return Invalid(
+            Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Snapshotˉlimit
+        );
+    }
+
+    var Index: u32 = 0u32;
+    while Index < Summary.Chunks {
+        let Chunkˉresource: text =
+            Compilerˉnativeˉx64ˉstagingˉchunkˉresource(
+                Chunkˉprefix,
+                Index
+            );
+        if Resourcesˉareˉequal(Chunkˉresource, Inputˉresource) ||
+            Resourcesˉareˉequal(Chunkˉresource, Manifestˉresource) ||
+            Resourcesˉareˉequal(Chunkˉresource, Destinationˉresource) {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Duplicateˉresource
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉstagingˉresourceˉplan(
+        Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Valid,
+        Summary.Chunks,
+        Summary.Chunks + 2u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉstagingˉchunkˉsnapshotˉordinal(
+    Plan: Compilerˉnativeˉx64ˉstagingˉresourceˉplan,
+    Index: u32
+) -> u32 {
+    if Plan.Status !=
+            Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Valid ||
+        Index >= Plan.Chunks {
+        return 4294967295u32;
+    }
+    return Index + 2u32;
+}

@@ -1,0 +1,140 @@
+module Compilerˉnativeˉx64ˉloweringˉstagingˉadmissionˉtool profile hosted;
+
+import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
+import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉcontent as Content;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉresources as Resources;
+
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Resourceˉfailure(
+    Status: Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "native x64 staging admission status=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+fn Contentˉfailure(
+    Status: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "native x64 staging admission content=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 {
+        diagnostic.write_line(
+            "Usage: wvnative-admit <input.wvb> <chunk-prefix> <manifest.wvop> <destination.wvo>"
+        );
+        return 2;
+    }
+
+    let Inputˉresource: text = process.argument(0u32);
+    let Chunkˉprefix: text = process.argument(1u32);
+    let Manifestˉresource: text = process.argument(2u32);
+    let Destinationˉresource: text = process.argument(3u32);
+    let Preflight: Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus =
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉpreflight(
+            Inputˉresource,
+            Chunkˉprefix,
+            Manifestˉresource,
+            Destinationˉresource
+        );
+    if Preflight !=
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Valid {
+        return Resourceˉfailure(Preflight);
+    }
+
+    let Input: bytes = file.read_bytes(Inputˉresource);
+    let Stagingˉmanifest: bytes = file.read_bytes(Manifestˉresource);
+    let Resourceˉplan: Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉplan =
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉplanˉbuild(
+            Inputˉresource,
+            Chunkˉprefix,
+            Manifestˉresource,
+            Destinationˉresource,
+            Stagingˉmanifest
+        );
+    if Resourceˉplan.Status !=
+        Resources.Compilerˉnativeˉx64ˉstagingˉresourceˉstatus.Valid {
+        return Resourceˉfailure(Resourceˉplan.Status);
+    }
+
+    let Loweringˉplan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
+        Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Input);
+    let Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
+        Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
+            Input,
+            Loweringˉplan,
+            4194304u32
+        );
+    var Cursor: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉbegin(
+            Stagingˉmanifest,
+            Loweringˉplan,
+            Regions
+        );
+    if Cursor.Status !=
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Active {
+        return Contentˉfailure(Cursor.Status);
+    }
+
+    var Index: u32 = 0u32;
+    while Index < Resourceˉplan.Chunks {
+        if Cursor.Nextˉchunk != Index ||
+            Resources.Compilerˉnativeˉx64ˉstagingˉchunkˉsnapshotˉordinal(
+                Resourceˉplan,
+                Index
+            ) != Index + 2u32 {
+            return Contentˉfailure(
+                Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Invalidˉcursor
+            );
+        }
+        let Chunkˉresource: text =
+            Resources.Compilerˉnativeˉx64ˉstagingˉchunkˉresource(
+                Chunkˉprefix,
+                Index
+            );
+        let Chunk: bytes = file.read_bytes(Chunkˉresource);
+        Cursor = Content.Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
+            Input,
+            Loweringˉplan,
+            Regions,
+            Stagingˉmanifest,
+            Cursor,
+            Chunk
+        );
+        if Cursor.Status !=
+            Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Active {
+            return Contentˉfailure(Cursor.Status);
+        }
+        Index = Index + 1u32;
+    }
+
+    let Complete: Content.Compilerˉnativeˉx64ˉstagingˉcontentˉcursor =
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉfinish(
+            Input,
+            Loweringˉplan,
+            Regions,
+            Stagingˉmanifest,
+            Cursor
+        );
+    if Complete.Status !=
+        Content.Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Complete {
+        return Contentˉfailure(Complete.Status);
+    }
+    return 0;
+}

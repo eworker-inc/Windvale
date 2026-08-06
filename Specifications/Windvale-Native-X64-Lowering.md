@@ -269,6 +269,19 @@ host token, and the operation never constructs one complete WVO or widens the
 ordinary 4 MiB value contract. Staged resource identity remains separate
 publication evidence.
 
+Decision 0295's resource plan fixes the execution-local acquisition contract.
+Input WVB and manifest occupy snapshot ordinals zero and one; at most 62
+canonical `<prefix>.chunk-<decimal-index>` resources occupy ordinals two
+through 63. Control names are nonempty, bounded to 4,095 UTF-8 bytes, exact-name
+distinct, and separated from every derived chunk name. The prefix is at most
+4,078 bytes so the longest `u32` suffix remains within the same fixed adapter
+buffer. A hosted admission root preflights those names, reads input and manifest
+once, reads each chunk once in index order, and passes the same borrowed values
+through the complete content cursor without creating the destination. A fixed
+platform adapter may consume those retained snapshot descriptors only after it
+independently verifies the native table; ordinal names do not prove host file
+identity or eliminate alias checks.
+
 A native commit adapter must preserve the exact
 validated manifest snapshot, bind each staged-resource identity, reject
 missing or changed resources, consume only the content-verified chunk sequence,

@@ -3115,3 +3115,30 @@ No C# product implementation or WebAssembly implementation changed. Staged
 resource identity, replacement/cleanup, complete-tool, Development, Standard,
 Qualification, Linux, promotion, ordinary-path, and grouped end-of-goal gates
 remain deferred.
+
+## Local exact staged-WVO snapshot-admission evidence
+
+[Decision 0295](../Decisions/0295-Exact-Staged-Wvo-Snapshot-Admission.md)
+adds one focused resource plan above the native runtime's existing
+first-success snapshot table. Input and manifest occupy ordinals zero and one;
+at most 62 canonical chunk names occupy ordinals two through 63. Exact control
+and derived names are bounded and distinct before chunk acquisition, and a
+malformed manifest or 63rd chunk cannot enter the sequence.
+
+The hosted admission root reads input, manifest, then every canonical chunk
+exactly once in one execution. Each borrowed chunk snapshot passes through the
+retained lowering/publication plan and Decision 0293 content cursor; successful
+completion performs no destination mutation. The focused matrix covers name
+and prefix limits, exact collisions, malformed manifest input, 62/63 chunk
+capacity boundaries, the exact real five-resource sequence, changed code, and
+both reference and current-host native execution. The reviewed selection passes
+1/1 in 5.542 test seconds after an 8.42-second zero-warning Release build; the
+complete passing command takes 18.2 seconds.
+
+Stage 0 and the pinned native source front door produce the same 404,804-byte,
+419-function WVB with 347,113 native code bytes and SHA-256
+`294126d84b7b597e700f6e917c9c9cf6d6b0ee1479675cad4f213fcc844a5805`.
+No C# product implementation or WebAssembly implementation changed. Native
+handle/file-ID alias checks, sibling writing, replacement, cleanup,
+complete-tool integration, Development, Standard, Qualification, Linux,
+promotion, ordinary-path, and grouped end-of-goal gates remain deferred.
