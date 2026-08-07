@@ -10,6 +10,8 @@ const STATIC_FILES = Object.freeze([
     "robots.txt",
     "sitemap.xml",
     "preview.png",
+    "preview-2026-08-06.jpg",
+    "preview-square-2026-08-06.png",
     "support-og.png",
     "windvale-logo.png",
     "assets/nova-scotia-coast.webp",

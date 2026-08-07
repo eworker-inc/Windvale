@@ -68,5 +68,11 @@
 /preview.png
   Cache-Control: public, max-age=86400
 
+/preview-2026-08-06.jpg
+  Cache-Control: public, max-age=31536000, immutable
+
+/preview-square-2026-08-06.png
+  Cache-Control: public, max-age=31536000, immutable
+
 /support-og.png
   Cache-Control: public, max-age=86400

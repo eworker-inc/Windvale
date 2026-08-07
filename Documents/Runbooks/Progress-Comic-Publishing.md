@@ -50,7 +50,7 @@ In `Website/index.html`:
 5. Update the collapsed transcript with the meaning or dialogue of every panel.
 6. Keep the link to the authoritative Progress dashboard.
 
-Update the root README only when the new comic is also the best repository overview. The social image `Website/og.png` is a separate editorial asset; replace it only when the public link preview should materially change.
+Update the root README only when the new comic is also the best repository overview. The social-preview source `Website/preview.png` and its versioned public derivatives are separate editorial assets; replace them only when the public link preview should materially change.
 
 ## Website presentation
 
