@@ -38,6 +38,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0334](../Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) replaces the managed PE/ELF verifier random-byte loops with 256 immutable bounded candidates through the Windvale-native publisher. Exact rejection, input/destination preservation, and zero scratch grow the coordinator to 12 suites and 530 cases; curated valid-shaped mutations, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0335](../Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) freezes the exact managed WVO differential sequence and reference decisions into 128 valid-shaped mutations plus 128 arbitrary values. The native verifier agrees on all 32 accepted and 224 rejected cases, growing the coordinator to 13 suites and 786 cases; hostile-size WVO, WVA/source differential, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

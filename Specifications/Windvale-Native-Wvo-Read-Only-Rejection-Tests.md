@@ -52,6 +52,8 @@ Success prints `PASS` for the thirteen cases in status order, followed by:
 Tests: 13, Passed: 13, Failed: 0
 ```
 
-This family matrix does not replace randomized mutation, hostile-size, or
-differential object coverage. Those remain independent managed evidence until
-the complete retirement gate qualifies their native equivalents.
+This family matrix does not replace hostile-size object coverage. The separate
+[native WVO differential contract](Windvale-Native-Wvo-Differential-Tests.md)
+now owns 128 valid-shaped mutations and 128 arbitrary values while this matrix
+continues to own exact reports for all thirteen stable status families. The
+complete retirement gate must still qualify both contracts on Windows and Linux.

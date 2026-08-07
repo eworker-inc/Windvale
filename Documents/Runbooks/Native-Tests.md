@@ -28,6 +28,7 @@ The exact filter names and case counts are:
 | `seed` | 26 |
 | `unsafe-wvb` | 5 |
 | `wvo-read-only` | 13 |
+| `wvo-differential` | 256 |
 | `assembler-rejections` | 11 |
 | `lowerer-rejections` | 2 |
 | `linker-rejections` | 10 |
@@ -38,11 +39,11 @@ The exact filter names and case counts are:
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 12 suites and 530 cases in manifest order. Its
+Omitting `--filter` selects all 13 suites and 786 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 12, Passed: 12, Failed: 0, Cases: 530
+Suites: 13, Passed: 13, Failed: 0, Cases: 786
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -128,6 +129,27 @@ Tests: 5, Passed: 5, Failed: 0
 Both digest-bound WVB read-only launchers must reject every case with the exact
 phase report and preserve the complete input. The command decodes fixed compact
 fixtures; it does not mutate WVB or start .NET.
+
+The WVO differential lane freezes the Stage 0 acceptance decision for 128
+single-byte mutations of the canonical sample plus 128 arbitrary values. It
+includes 32 valid mutations, so this is not a rejection-only corpus. Run only
+this lane on Windows with:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter wvo-differential
+```
+
+or on Linux:
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter wvo-differential
+```
+
+The native verifier must agree on all 32 accepted and 224 rejected rows and
+preserve every input. Accepted rows require their exact digest-bearing success
+report; rejected rows stay within one object-status diagnostic while the
+separate thirteen-case WVO matrix owns exact status-family reports. The exact
+terminal summary is `Tests: 256, Passed: 256, Failed: 0`.
 
 The separate focused linker-rejection command does not rebuild source or repeat
 the successful AOT chain. On Windows x64 run:
@@ -333,12 +355,13 @@ No .NET process is required by these commands. The host dependencies are
 
 ## Current boundary
 
-The 274-case coordinator is a candidate fixed native gate, not the complete normal
+The 786-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
-malformed-WVB/WVO, assembler, lowerer, linker, packager, publisher, and AOT-chain
-contracts. It does not replace the complete unsafe, randomized, differential,
-golden, OS, or bootstrap suites. Continue to select one appropriate Stage 0
-verifier for changes outside these transferred fixtures.
+malformed-WVB/WVO, WVO differential, assembler, lowerer, linker, packager,
+publisher, and AOT-chain contracts. It does not replace the remaining complete
+unsafe, source/WVB/WVA randomized or differential, golden, OS, or bootstrap
+suites. Continue to select one appropriate Stage 0 verifier for changes outside
+these transferred fixtures.
 
 Before running a filter, review its child command, fixtures, and expected
 summary against the changed behavior; update them first if the contract changed.

@@ -3700,9 +3700,9 @@ The first Windows attempt stopped before any test case because batch `set /p`
 did not isolate the LF-only manifest header; the next pre-case attempt exposed
 LF rather than required CRLF line endings in the new `.cmd`. After those two
 wrapper-only corrections, the direct focused command passes 256/256 in 74.286
-seconds. Every Windvale-native publisher call emits the exact console-application rejection,
-writes no standard output, preserves the input and destination, and leaves no
-publication scratch.
+seconds. Every Windvale-native publisher call emits the exact
+console-application rejection, writes no standard output, preserves the input
+and destination, and leaves no publication scratch.
 
 The already-passing child was not rerun through the unchanged retirement-suite
 coordinator. The reviewed 971-byte LF-only plan now contains 12 suites and 530
@@ -3712,3 +3712,35 @@ Linux execution, curated valid-shaped PE/ELF mutations, remaining WVO/WVA/source
 differential families, Development, Standard, Qualification, promotion, and the
 grouped end-of-goal gate remain deferred. No product or WebAssembly
 implementation changed.
+
+## Local fixed native WVO differential evidence
+
+[Decision 0335](../Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md)
+freezes the exact managed WVO differential sequence and its Stage 0 acceptance
+decisions at commit `c183e9a`. A one-time reviewed reference program reproduced
+the canonical 189-byte sample, seed `0x57564F31`, 128 single-byte mutations, and
+128 continued arbitrary values. It was removed after emitting the immutable
+corpus; no managed generator belongs to the permanent command.
+
+The 34,894-byte archive at SHA-256
+`74d90d981ef3665eee2fb16a5abb57ae2e9d308a8e56b1aff56c49d97997d684`
+contains 39,872 input bytes plus a 32,682-byte manifest at SHA-256
+`ef6a187dfc5d0bbffcfb61df40146af54f74d76302dee1358b4a3fbefd7aa556`.
+Static review rechecked 256 unique names, exact 128/128 family ordinals, every
+size/digest, 91 mutation offsets, 104 arbitrary lengths, 19 reference rejection
+codes, and all accepted report identities. The permanent scripts contain no
+managed invocation, and Git Bash accepts the Linux script syntax.
+
+The reviewed direct Windows command passes 256/256 in 53.553 seconds: all 32
+oracle-accepted mutations produce their exact native digest-bearing report; all
+96 rejected mutations and 128 rejected arbitrary values stay within one native
+object-status report; every input remains byte-identical. The already-passing
+child was not rerun through the unchanged retirement-suite coordinator.
+
+The reviewed 1,049-byte LF-only plan now contains 13 suites and 786 cases at
+SHA-256
+`a904dd6063f97363fcef214a498e8046d8d9796c82ab6cf63c5bc073ee7bd4a2`.
+Linux execution, hostile-size WVO, remaining WVA/source/PE/ELF differential
+families, Development, Standard, Qualification, promotion, and the grouped
+end-of-goal gate remain deferred. No product, WVO format, candidate artifact,
+or WebAssembly implementation changed.

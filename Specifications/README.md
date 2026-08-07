@@ -54,6 +54,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [WVO object core](Wvo-Object-Core.md)
 - [Native WVO inspector application](Windvale-Native-Wvo-Inspector.md)
 - [Native WVO read-only rejection tests](Windvale-Native-Wvo-Read-Only-Rejection-Tests.md)
+- [Native WVO differential tests](Windvale-Native-Wvo-Differential-Tests.md)
 - [Native WVO publisher](Windvale-Native-Wvo-Publisher.md)
 - [Windvale object format](Windvale-Object-Format.md)
 - [Windvale textual assembly](Windvale-Assembly.md)
