@@ -55,13 +55,14 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [Fixed native linker map limit](Decisions/0327-Fixed-Native-Linker-Map-Limit.md) — compact generated-fixture evidence for exact `WVL1012` rejection at 16,384 definitions
 - [Fixed native WVB unsafe rejections](Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) — five immutable unsafe instruction-stream cases through both native read-only launchers
-- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 18 native suites and 3,005 transferred cases
+- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 19 native suites and 3,009 transferred cases
 - [Fixed native linker hostile-input corpus](Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) — 200 immutable bounded inputs through exact native `WVL1002` containment
 - [Fixed native console-container hostile-input corpus](Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) — 256 immutable bounded PE/ELF candidates through the native publisher with preservation and zero-scratch evidence
 - [Fixed native WVO differential corpus](Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) — 128 valid-shaped mutations and 128 arbitrary values agree with frozen Stage 0 acceptance through the native verifier
 - [Fixed native WVA differential corpus](Decisions/0336-Fixed-Native-Wva-Differential-Corpus.md) — 200 exact seeded source mutations agree on acceptance, rejection code, and successful WVO bytes through the native assembler
 - [Fixed native random-containment corpus](Decisions/0337-Fixed-Native-Random-Containment-Corpus.md) — the exact continued 2,000-value Stage 0 source/WVB/WVO sequence is frozen behind focused native lanes
 - [Fixed native console-container mutations](Decisions/0338-Fixed-Native-Console-Container-Mutations.md) — 19 canonical PE/ELF mutations retain detailed Stage 0 provenance and fail safely through the native publisher
+- [Fixed native WVO hostile size](Decisions/0339-Fixed-Native-Wvo-Hostile-Size.md) — verify, inspect, link, and publish contain the exact first-byte-over-4-MiB input at the native snapshot boundary
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

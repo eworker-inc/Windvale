@@ -5,6 +5,7 @@ wvb-containment|Test-Wvb-Containment|1000|Tests: 1000, Passed: 1000, Failed: 0
 wvo-read-only|Test-Wvo-Read-Only-Rejections|13|Tests: 13, Passed: 13, Failed: 0
 wvo-differential|Test-Wvo-Differential|256|Tests: 256, Passed: 256, Failed: 0
 wvo-containment|Test-Wvo-Containment|500|Tests: 500, Passed: 500, Failed: 0
+wvo-hostile-size|Test-Wvo-Hostile-Size|4|Tests: 4, Passed: 4, Failed: 0
 assembler-rejections|Test-Assembler-Rejections|11|Tests: 11, Passed: 11, Failed: 0
 wva-differential|Test-Wva-Differential|200|Tests: 200, Passed: 200, Failed: 0
 source-containment|Test-Source-Containment|500|Tests: 500, Passed: 500, Failed: 0

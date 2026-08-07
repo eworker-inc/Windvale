@@ -3862,3 +3862,37 @@ version-2 mutations, hostile-size WVO, Development, Standard, Qualification,
 promotion, and the grouped end-of-goal gate remain deferred. No product,
 container format, candidate artifact, managed reference, or WebAssembly
 implementation changed.
+
+## Local fixed native WVO hostile-size evidence
+
+[Decision 0339](../Decisions/0339-Fixed-Native-Wvo-Hostile-Size.md)
+transfers the exact standard `MAX_OBJECT_BYTES + 1` boundary without weakening
+it to a smaller malformed value. The sole zero-filled input is 4,194,305 bytes
+at SHA-256
+`95e441ca65cd41fa01b2a71799e79fd60db59ed34f13af32a91e85f90378676c`.
+Its 4,178-byte archive has SHA-256
+`4c9e5ed9aa6a822c64e799378ede641d86c37a6cc639003286afd2277144ef89`.
+
+The managed linker retains `WVL1002` provenance for this value, while direct
+standard object reading retains `WVO1001`. The ordinary native tools cannot
+materialize one value beyond 4 MiB: their bounded platform file-input leaves
+classify it as `WVR3025`, and current startup normalization returns process
+result `1` with empty channels before Windvale command logic receives input.
+The evidence therefore names this as an outer snapshot boundary rather than an
+inner scanner diagnostic.
+
+Pre-run review verifies the archive has exactly one safe member, its complete
+expanded identity, all four pinned public child launchers, no permanent managed
+invocation, Bash syntax, and required line endings. The direct Windows command
+passes 4/4 in 1.375 seconds. Verify, inspect, link, and publish all preserve the
+input; link and publish preserve their sentinels; publication leaves no scratch.
+The passing child was not rerun through the changed coordinator.
+
+The reviewed 1,533-byte LF-only plan now contains 19 suites and 3,009 cases at
+SHA-256
+`83b6bab28343d2a6c4c3c4e9c69991512d8663baa628e82421e59b42748fbf8d`.
+Linux execution, large-native segmented-object transfer, segmented console-size
+rejection, hosted version-2 PE/ELF mutations, Development, Standard,
+Qualification, promotion, and the grouped end-of-goal gate remain deferred. No
+product, format, candidate artifact, managed reference, or WebAssembly
+implementation changed.

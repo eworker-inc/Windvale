@@ -109,6 +109,10 @@ now exercises invalid WVO admission through this exact launcher, requiring
 destination preservation and zero scratch without rebuilding the publisher or
 invoking .NET.
 
+The separate [hostile-size contract](Windvale-Native-Wvo-Hostile-Size-Tests.md)
+requires the first file beyond the 4-MiB snapshot limit to fail before the
+transaction while preserving the candidate, destination, and scratch boundary.
+
 ## Remaining gate
 
 The WVB and paired applications are Stage 0-constructed because the qualified

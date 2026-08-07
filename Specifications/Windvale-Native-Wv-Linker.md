@@ -104,6 +104,10 @@ bounded permanent set does not replace concurrency coverage. The separate
 [native linker hostile-input contract](Windvale-Native-Linker-Hostile-Input-Tests.md)
 now owns the fixed 200-value raw-byte containment corpus.
 
+The [native WVO hostile-size contract](Windvale-Native-Wvo-Hostile-Size-Tests.md)
+separately requires the first input beyond the 4-MiB snapshot limit to fail at
+the host boundary while preserving both the input and existing link output.
+
 ## Fixed native map-limit contract
 
 `Tools/Native/Test-Linker-Map-Limit.cmd` and `.sh` provide the separate

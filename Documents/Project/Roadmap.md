@@ -46,6 +46,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0338](../Decisions/0338-Fixed-Native-Console-Container-Mutations.md) transfers 10 canonical PE and 9 canonical ELF truncation, structural, padding, context, relocation, and trailing-byte cases to the public native publisher while retaining exact Stage 0 code provenance. The coordinator now owns 18 suites and 3,005 cases; the two segmented maximum-size values, hosted version-2 mutations, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0339](../Decisions/0339-Fixed-Native-Wvo-Hostile-Size.md) transfers the first standard WVO byte beyond the ordinary 4-MiB object/value limit to the exact native file-snapshot boundary. Verify, inspect, link, and publish all fail safely while preserving every applicable file, growing the coordinator to 19 suites and 3,009 cases; large-native segmented-object transfer, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle
