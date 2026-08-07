@@ -1,0 +1,4 @@
+windvale-project 1
+root "Runtime/Windvale/Native-X64-Integer-Format-Services-Bridge.wv"
+source "Runtime/Windvale/Native-X64-Integer-Format-Services.wv"
+emit wvb

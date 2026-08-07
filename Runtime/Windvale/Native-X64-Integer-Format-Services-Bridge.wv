@@ -1,0 +1,10 @@
+module Runtimeˉnativeˉx64ˉintegerˉformatˉservicesˉbridge profile portable;
+
+import Runtimeˉnativeˉx64ˉintegerˉformatˉservices as Integerˉformat;
+
+export fn Main() -> bytes {
+    return Bytesˉconcat(
+        Integerˉformat.Nativeˉx64ˉintegerˉformatˉserviceˉbuild(true),
+        Integerˉformat.Nativeˉx64ˉintegerˉformatˉserviceˉbuild(false)
+    );
+}

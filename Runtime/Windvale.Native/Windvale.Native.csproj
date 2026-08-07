@@ -18,6 +18,9 @@
       Include="Consumers/Native-X64-Utf8-Service-Bridge.wvb"
       LogicalName="Windvale.Native.Native-X64-Utf8-Service-Bridge.wvb" />
     <EmbeddedResource
+      Include="Consumers/Native-X64-Integer-Format-Services-Bridge.wvb"
+      LogicalName="Windvale.Native.Native-X64-Integer-Format-Services-Bridge.wvb" />
+    <EmbeddedResource
       Include="Consumers/Native-Publication-Bridge.wvb"
       LogicalName="Windvale.Native.Native-Publication-Bridge.wvb" />
     <EmbeddedResource

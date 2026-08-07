@@ -1,0 +1,312 @@
+module Runtimeˉnativeˉx64ˉintegerˉformatˉservices profile portable;
+
+record Nativeˉintegerˉformatˉbuilder {
+    Code: bytes;
+    Patches: bytes;
+}
+
+data Emptyˉbytes: bytes = [];
+
+fn Appendˉu8(Input: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Emitˉtwo(Input: bytes, A: u8, B: u8) -> bytes {
+    return Appendˉu8(Appendˉu8(Input, A), B);
+}
+
+fn Emitˉthree(Input: bytes, A: u8, B: u8, C: u8) -> bytes {
+    return Appendˉu8(Emitˉtwo(Input, A, B), C);
+}
+
+fn Emitˉfour(Input: bytes, A: u8, B: u8, C: u8, D: u8) -> bytes {
+    return Appendˉu8(Emitˉthree(Input, A, B, C), D);
+}
+
+fn Emitˉfive(Input: bytes, A: u8, B: u8, C: u8, D: u8, E: u8) -> bytes {
+    return Appendˉu8(Emitˉfour(Input, A, B, C, D), E);
+}
+
+fn Branch(
+    Builder: Nativeˉintegerˉformatˉbuilder,
+    Condition: u8,
+    Target: u32
+) -> Nativeˉintegerˉformatˉbuilder {
+    var Code: bytes = Emitˉtwo(Builder.Code, 15u8, Condition);
+    let Patchˉoffset: u32 = Bytesˉlength(Code);
+    Code = Appendˉu32(Code, 0u32);
+    var Patches: bytes = Appendˉu32(Builder.Patches, Patchˉoffset);
+    Patches = Appendˉu32(Patches, Target);
+    return Nativeˉintegerˉformatˉbuilder(Code, Patches);
+}
+
+fn Relativeˉu32(Patchˉoffset: u32, Targetˉoffset: u32) -> u32 {
+    let Sourceˉend: u32 = Patchˉoffset + 4u32;
+    if Targetˉoffset >= Sourceˉend {
+        return Targetˉoffset - Sourceˉend;
+    }
+    return 4294967295u32 - (Sourceˉend - Targetˉoffset) + 1u32;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Suffixˉoffset: u32 = Offset + 4u32;
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Value),
+            Bytesˉslice(
+                Input,
+                Suffixˉoffset,
+                Bytesˉlength(Input) - Suffixˉoffset
+            )
+        )
+    );
+}
+
+fn Finish(Builder: Nativeˉintegerˉformatˉbuilder, Labels: bytes) -> bytes {
+    var Result: bytes = Builder.Code;
+    let Patchˉcount: u32 = Bytesˉlength(Builder.Patches) / 8u32;
+    var Index: u32 = 0u32;
+    while Index < Patchˉcount {
+        let Recordˉoffset: u32 = Index * 8u32;
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Builder.Patches,
+            Recordˉoffset
+        );
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(
+            Builder.Patches,
+            Recordˉoffset + 4u32
+        );
+        let Targetˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Labels, Target * 4u32);
+        Result = Replaceˉu32(
+            Result,
+            Patchˉoffset,
+            Relativeˉu32(Patchˉoffset, Targetˉoffset)
+        );
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Nativeˉx64ˉintegerˉformatˉserviceˉbuild(Signed: bool) -> bytes {
+    let Digitˉtarget: u32 = 0u32;
+    let Lengthˉreadyˉtarget: u32 = 1u32;
+    let Arenaˉfailureˉtarget: u32 = 2u32;
+    let Copyˉtarget: u32 = 3u32;
+    let Writtenˉtarget: u32 = 4u32;
+
+    var Code: bytes = Emitˉfour(Emptyˉbytes, 72u8, 131u8, 236u8, 32u8);
+    Code = Emitˉfour(Code, 76u8, 137u8, 12u8, 36u8);
+    Code = Emitˉfour(Code, 65u8, 199u8, 71u8, 64u8);
+    Code = Appendˉu32(Code, 0u32);
+    Code = Emitˉthree(Code, 68u8, 137u8, 192u8);
+    if Signed {
+        Code = Emitˉtwo(Code, 137u8, 193u8);
+        Code = Emitˉthree(Code, 193u8, 249u8, 31u8);
+        Code = Emitˉfour(Code, 137u8, 76u8, 36u8, 16u8);
+        Code = Emitˉtwo(Code, 49u8, 200u8);
+        Code = Emitˉtwo(Code, 41u8, 200u8);
+    }
+    Code = Emitˉfive(Code, 76u8, 141u8, 76u8, 36u8, 32u8);
+    Code = Emitˉthree(Code, 69u8, 49u8, 192u8);
+    var Builder: Nativeˉintegerˉformatˉbuilder =
+        Nativeˉintegerˉformatˉbuilder(Code, Emptyˉbytes);
+
+    let Digitˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉtwo(Builder.Code, 49u8, 210u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Appendˉu32(Appendˉu8(Builder.Code, 185u8), 10u32),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉtwo(Builder.Code, 247u8, 241u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 128u8, 194u8, 48u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 73u8, 255u8, 201u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 65u8, 136u8, 17u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 65u8, 255u8, 192u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉtwo(Builder.Code, 133u8, 192u8),
+        Builder.Patches
+    );
+    Builder = Branch(Builder, 133u8, Digitˉtarget);
+
+    if Signed {
+        Builder = Nativeˉintegerˉformatˉbuilder(
+            Emitˉfive(Builder.Code, 131u8, 124u8, 36u8, 16u8, 0u8),
+            Builder.Patches
+        );
+        Builder = Branch(Builder, 132u8, Lengthˉreadyˉtarget);
+        Builder = Nativeˉintegerˉformatˉbuilder(
+            Emitˉthree(Builder.Code, 73u8, 255u8, 201u8),
+            Builder.Patches
+        );
+        Builder = Nativeˉintegerˉformatˉbuilder(
+            Emitˉfour(Builder.Code, 65u8, 198u8, 1u8, 45u8),
+            Builder.Patches
+        );
+        Builder = Nativeˉintegerˉformatˉbuilder(
+            Emitˉthree(Builder.Code, 65u8, 255u8, 192u8),
+            Builder.Patches
+        );
+    }
+
+    let Lengthˉreadyˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfive(Builder.Code, 68u8, 137u8, 68u8, 36u8, 8u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 65u8, 139u8, 79u8, 60u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 137u8, 76u8, 36u8, 12u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉtwo(Builder.Code, 137u8, 200u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 68u8, 1u8, 192u8),
+        Builder.Patches
+    );
+    Builder = Branch(Builder, 130u8, Arenaˉfailureˉtarget);
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 65u8, 59u8, 71u8, 56u8),
+        Builder.Patches
+    );
+    Builder = Branch(Builder, 135u8, Arenaˉfailureˉtarget);
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 65u8, 137u8, 71u8, 60u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 73u8, 139u8, 87u8, 48u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 139u8, 76u8, 36u8, 12u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 72u8, 1u8, 202u8),
+        Builder.Patches
+    );
+
+    let Copyˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 69u8, 133u8, 192u8),
+        Builder.Patches
+    );
+    Builder = Branch(Builder, 132u8, Writtenˉtarget);
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 65u8, 138u8, 1u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉtwo(Builder.Code, 136u8, 2u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 73u8, 255u8, 193u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 72u8, 255u8, 194u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 65u8, 255u8, 200u8),
+        Builder.Patches
+    );
+    Builder = Branch(Builder, 133u8, Copyˉtarget);
+
+    let Writtenˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 72u8, 139u8, 12u8, 36u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 73u8, 139u8, 71u8, 48u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 139u8, 84u8, 36u8, 12u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 72u8, 1u8, 208u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 72u8, 137u8, 1u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 139u8, 68u8, 36u8, 8u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉthree(Builder.Code, 137u8, 65u8, 8u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Appendˉu32(Emitˉthree(Builder.Code, 199u8, 65u8, 12u8), 0u32),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉtwo(Builder.Code, 49u8, 192u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfive(Builder.Code, 72u8, 131u8, 196u8, 32u8, 195u8),
+        Builder.Patches
+    );
+
+    let Arenaˉfailureˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfour(Builder.Code, 65u8, 199u8, 71u8, 64u8),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Appendˉu32(Builder.Code, 2u32),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Appendˉu32(Appendˉu8(Builder.Code, 184u8), 1u32),
+        Builder.Patches
+    );
+    Builder = Nativeˉintegerˉformatˉbuilder(
+        Emitˉfive(Builder.Code, 72u8, 131u8, 196u8, 32u8, 195u8),
+        Builder.Patches
+    );
+
+    var Labels: bytes = Appendˉu32(Emptyˉbytes, Digitˉoffset);
+    Labels = Appendˉu32(Labels, Lengthˉreadyˉoffset);
+    Labels = Appendˉu32(Labels, Arenaˉfailureˉoffset);
+    Labels = Appendˉu32(Labels, Copyˉoffset);
+    Labels = Appendˉu32(Labels, Writtenˉoffset);
+    return Finish(Builder, Labels);
+}

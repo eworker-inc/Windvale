@@ -168,6 +168,8 @@ $NativeStencilDemoModule = Join-Path $Artifacts 'Native-Stencil-Demo.wvb'
 $NativeStencilBridgeModule = Join-Path $Artifacts 'Native-Stencil-Bridge.wvb'
 $NativeUtf8CoreModule = Join-Path $Artifacts 'Native-X64-Utf8-Service.wvb'
 $NativeUtf8BridgeModule = Join-Path $Artifacts 'Native-X64-Utf8-Service-Bridge.wvb'
+$NativeIntegerFormatCoreModule = Join-Path $Artifacts 'Native-X64-Integer-Format-Services.wvb'
+$NativeIntegerFormatBridgeModule = Join-Path $Artifacts 'Native-X64-Integer-Format-Services-Bridge.wvb'
 $NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -682,6 +684,51 @@ if (
     $NativeUtf8BridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native UTF-8 service bridge inspection is incomplete.'
+}
+
+$NativeIntegerFormatCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Integer-Format-Services.wv'
+dotnet $ToolDll compile $NativeIntegerFormatCoreSource -o $NativeIntegerFormatCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native integer-format service core.' }
+$NativeIntegerFormatCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeIntegerFormatCoreModule).Hash.ToLowerInvariant()
+if ($NativeIntegerFormatCoreHash -ne '6b5b5660392a9f927d046eff41aa3470bdbc616970a0e297c2c467b53d3f1fa2') {
+    throw "The Windvale native integer-format service core has an unexpected digest: $NativeIntegerFormatCoreHash"
+}
+$NativeIntegerFormatCoreInspection = (dotnet $ToolDll inspect $NativeIntegerFormatCoreModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeIntegerFormatCoreInspection -notmatch 'Profile: portable' -or
+    $NativeIntegerFormatCoreInspection -notmatch 'Nativeˉx64ˉintegerˉformatˉserviceˉbuild' -or
+    $NativeIntegerFormatCoreInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native integer-format service core inspection is incomplete.'
+}
+$NativeIntegerFormatBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Integer-Format-Services-Bridge.wv'
+$NativeIntegerFormatBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Integer-Format-Services-Bridge.wvb'
+dotnet $ToolDll `
+    compile $NativeIntegerFormatBridgeSource `
+    --module $NativeIntegerFormatCoreSource `
+    -o $NativeIntegerFormatBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native integer-format service bridge.' }
+$NativeIntegerFormatBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeIntegerFormatBridgeModule).Hash.ToLowerInvariant()
+if ($NativeIntegerFormatBridgeHash -ne '851f6d8e01b62106763af518c15dc163a9af9ea30c14cdb01d62adf1538ae7f9') {
+    throw "The Windvale native integer-format service bridge has an unexpected digest: $NativeIntegerFormatBridgeHash"
+}
+$NativeIntegerFormatBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeIntegerFormatBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeIntegerFormatBridgeRetainedHash -ne $NativeIntegerFormatBridgeHash -or
+    (Get-Item -LiteralPath $NativeIntegerFormatBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeIntegerFormatBridgeModule).Length
+) {
+    throw 'The retained Windvale native integer-format service bridge does not match its exact source compilation.'
+}
+$NativeIntegerFormatBridgeInspection = (dotnet $ToolDll inspect $NativeIntegerFormatBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeIntegerFormatBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeIntegerFormatBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativeIntegerFormatBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native integer-format service bridge inspection is incomplete.'
 }
 
 $NativePublicationSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Core.wv'

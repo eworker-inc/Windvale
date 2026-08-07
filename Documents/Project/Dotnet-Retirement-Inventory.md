@@ -98,6 +98,16 @@ service bundle and application retains its exact identity. Managed native-WVB
 loading, W^X execution/publication, bundle orchestration, Linux evidence, and
 the grouped gate remain separate open items.
 
+[Decision 0356](../Decisions/0356-Windvale-Owned-Native-Integer-Format-Construction.md)
+removes the shared C# emission algorithm for the exact signed and unsigned
+integer-format leaves. One focused Windvale generator now owns both variants;
+its retained capability-free bridge builds identically through Stage 0 and the
+ordinary native source front door, then returns the unchanged 225-byte and
+191-byte leaves. The recovery wrapper only verifies, lowers, executes, splits,
+and caches them. Enum-name, concatenation, quoting, retained-WVB loading, W^X
+publication, service-bundle orchestration, Linux evidence, and the grouped gate
+remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

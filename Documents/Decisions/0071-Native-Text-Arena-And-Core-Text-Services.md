@@ -5,6 +5,7 @@
 - Refines: [Decision 0069](0069-Dynamic-Native-Text-And-Complete-Wvdump.md)'s execution-owned text arena
 - Extends: [Decision 0070](0070-First-Runtime-Native-Utf8-Service.md)'s exact runtime-native service pattern
 - Advances: Native ABI 11, execution-context version 3, kernel native bridge 6, and firmware probe 13
+- Advanced by: [Decision 0356](0356-Windvale-Owned-Native-Integer-Format-Construction.md)
 
 ## Context
 

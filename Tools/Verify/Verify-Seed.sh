@@ -163,6 +163,8 @@ NATIVE_STENCIL_DEMO_MODULE="$ARTIFACTS/Native-Stencil-Demo.wvb"
 NATIVE_STENCIL_BRIDGE_MODULE="$ARTIFACTS/Native-Stencil-Bridge.wvb"
 NATIVE_UTF8_CORE_MODULE="$ARTIFACTS/Native-X64-Utf8-Service.wvb"
 NATIVE_UTF8_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Utf8-Service-Bridge.wvb"
+NATIVE_INTEGER_FORMAT_CORE_MODULE="$ARTIFACTS/Native-X64-Integer-Format-Services.wvb"
+NATIVE_INTEGER_FORMAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Integer-Format-Services-Bridge.wvb"
 NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
@@ -569,6 +571,36 @@ NATIVE_UTF8_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_UTF8_BRIDGE_
 printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_INTEGER_FORMAT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Integer-Format-Services.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_INTEGER_FORMAT_CORE_SOURCE" -o "$NATIVE_INTEGER_FORMAT_CORE_MODULE"
+NATIVE_INTEGER_FORMAT_CORE_HASH=$(sha256sum "$NATIVE_INTEGER_FORMAT_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_INTEGER_FORMAT_CORE_HASH" != '6b5b5660392a9f927d046eff41aa3470bdbc616970a0e297c2c467b53d3f1fa2' ]; then
+    echo "The Windvale native integer-format service core has an unexpected digest: $NATIVE_INTEGER_FORMAT_CORE_HASH" >&2
+    exit 1
+fi
+NATIVE_INTEGER_FORMAT_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_INTEGER_FORMAT_CORE_MODULE")
+printf '%s\n' "$NATIVE_INTEGER_FORMAT_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_INTEGER_FORMAT_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉintegerˉformatˉserviceˉbuild' >/dev/null
+printf '%s\n' "$NATIVE_INTEGER_FORMAT_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_INTEGER_FORMAT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Integer-Format-Services-Bridge.wv"
+NATIVE_INTEGER_FORMAT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Integer-Format-Services-Bridge.wvb"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_INTEGER_FORMAT_BRIDGE_SOURCE" \
+    --module "$NATIVE_INTEGER_FORMAT_CORE_SOURCE" \
+    -o "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE"
+NATIVE_INTEGER_FORMAT_BRIDGE_HASH=$(sha256sum "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_INTEGER_FORMAT_BRIDGE_HASH" != '851f6d8e01b62106763af518c15dc163a9af9ea30c14cdb01d62adf1538ae7f9' ]; then
+    echo "The Windvale native integer-format service bridge has an unexpected digest: $NATIVE_INTEGER_FORMAT_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE" "$NATIVE_INTEGER_FORMAT_BRIDGE_RETAINED"
+NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_PUBLICATION_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wv"
 dotnet "$TOOL_DLL" \
