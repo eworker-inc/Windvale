@@ -167,10 +167,9 @@ only after the exact planned image extent. It does not call the producer linker
 module or accept producer plan evidence.
 
 This candidate does not generalize standard linking, accept multiple objects
-or imports, emit a canonical map, or publish a host resource. A fixed owner
-must run the producer and independent verifier over every admitted manifest
-chunk exactly once, preserve positions, and complete durable publication
-before it can replace the Stage 0 large-native linker in packaging.
+or imports, emit a canonical map, or publish a public host resource. The
+hosted immutable-snapshot staging boundary below now owns one private staged
+resource set; durable public publication remains separate.
 
 ### `WVLI 1.0` linked-image staging manifest
 
@@ -195,6 +194,44 @@ value ceiling and remaining image extent, and the final extent equals the
 declared image length. Rejection exposes zero size/count evidence. `WVLI` is a
 structural completion marker, not a content digest, capability, durable commit
 record, canonical link map, or executable-container manifest.
+
+### Hosted immutable-snapshot staging boundary
+
+The first hosted Windvale owner has this exact command shape:
+
+```text
+wvlink-stage <wvo-chunk-prefix> <wvo-manifest.wvop> <image-chunk-prefix> <image-manifest.wvli>
+```
+
+Manifest resource names are nonempty and at most 4,095 UTF-8 bytes. Chunk
+prefixes are nonempty and at most 4,078 UTF-8 bytes so appending
+`.chunk-<canonical-u32-decimal>` remains within the same resource-name limit.
+The two manifest names must differ, and the two chunk prefixes must differ.
+Every possible source and output chunk name is checked against both manifest
+names before chunk acquisition or mutation.
+
+The tool reads the source manifest first and admits at most 62 source chunks.
+It then calls `file.read_bytes` for every canonical source chunk in index order
+and checks each exact manifest length. These 63 distinct names fit the native
+64-snapshot input table. All later metadata discovery, linking, and
+verification reads use those same exact names and therefore receive the
+execution-owned immutable snapshots rather than reopening mutable resources.
+
+The tool locates the validated optional read-only header, symbol chunk, and
+relocation chunk from strict manifest positions. It builds the segmented plan,
+starts the independent verifier, and processes every source chunk in order. A
+nonempty linked candidate is written only after the independent cursor accepts
+its source, position, length, unchanged bytes, and relocation fields. The tool
+records each accepted output position and length, requires complete source and
+image coverage, builds a strict `WVLI 1.0` value, and writes that manifest last.
+
+This is private staging, not durable publication. Exact resource-name
+separation does not prove Windows file identity or Linux device/inode
+separation; a failed run may leave output chunks without a completion manifest;
+and the boundary does not flush, reread, rename, clean stale resources, emit a
+digest, or replace a public destination. A later fixed publisher must bind
+native identities and perform the existing sibling/reread/atomic-replacement
+transaction before exposing the image.
 
 ## Deliberate omissions
 

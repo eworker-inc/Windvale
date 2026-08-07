@@ -1384,6 +1384,7 @@ internal static partial class Program
         new("staged compiler WVO relocations and placeholders are verified by chunk", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉrelocationsˉareˉverified),
         new("segmented compiler WVO links to bounded flat-image chunks", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Compilerˉwvoˉsegmentedˉflatˉimageˉlinks),
         new("linked compiler image staging manifest is strict and bounded", [TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Compilerˉflatˉimageˉstagingˉmanifestˉruns),
+        new("staged compiler WVO links through immutable snapshots", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Compilerˉwvoˉsegmentedˉflatˉimageˉstagingˉruns),
         new("staged compiler WVO chunks match retained lowering content", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉcontentˉisˉverified),
         new("staged compiler WVO resources retain exact snapshot identities", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉresourcesˉareˉbound),
         new("staged compiler WVO snapshots publish atomically without .NET", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpublisherˉruns),

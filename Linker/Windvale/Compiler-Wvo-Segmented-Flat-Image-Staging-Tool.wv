@@ -1,0 +1,372 @@
+module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉstagingˉtool profile hosted;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
+import Linkerˉcompilerˉflatˉimageˉstagingˉmanifest as Imageˉmanifest;
+import Linkerˉcompilerˉflatˉimageˉstagingˉresources as Resources;
+import Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage as Flat;
+import Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉverification as Verification;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Resourceˉfailure(
+    Status: Resources.Linkerˉcompilerˉflatˉimageˉresourceˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "segmented compiler image staging resource=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+fn Envelopeˉfailure(
+    Status: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "segmented compiler image staging envelope=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+fn Symbolˉfailure(
+    Status: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "segmented compiler image staging symbols=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+fn Linkˉfailure(
+    Status: Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "segmented compiler image staging link=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+fn Verificationˉfailure(
+    Status:
+        Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "segmented compiler image staging verification=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+fn Sourceˉchunk(Prefix: text, Index: u32) -> bytes {
+    return file.read_bytes(
+        Resources.Linkerˉcompilerˉflatˉimageˉsourceˉchunkˉresource(
+            Prefix,
+            Index
+        )
+    );
+}
+
+fn Chunkˉatˉposition(
+    Stagingˉmanifest: bytes,
+    Chunks: u32,
+    Position: u32
+) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Chunks {
+        let Entry: u32 = 24u32 + Index * 12u32;
+        let Current: u32 =
+            Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+        if Current == Position { return Index; }
+        if Current > Position { return 4294967295u32; }
+        Index = Index + 1u32;
+    }
+    return 4294967295u32;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 {
+        diagnostic.write_line(
+            "Usage: wvlink-stage <wvo-chunk-prefix> <wvo-manifest.wvop> <image-chunk-prefix> <image-manifest.wvli>"
+        );
+        return 2;
+    }
+    let Sourceˉprefix: text = process.argument(0u32);
+    let Sourceˉmanifestˉresource: text = process.argument(1u32);
+    let Outputˉprefix: text = process.argument(2u32);
+    let Outputˉmanifestˉresource: text = process.argument(3u32);
+    let Preflight: Resources.Linkerˉcompilerˉflatˉimageˉresourceˉstatus =
+        Resources.Linkerˉcompilerˉflatˉimageˉresourceˉpreflight(
+            Sourceˉprefix,
+            Sourceˉmanifestˉresource,
+            Outputˉprefix,
+            Outputˉmanifestˉresource
+        );
+    if Preflight !=
+        Resources.Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Valid {
+        return Resourceˉfailure(Preflight);
+    }
+
+    let Stagingˉmanifest: bytes =
+        file.read_bytes(Sourceˉmanifestˉresource);
+    let Resourceˉplan:
+        Resources.Linkerˉcompilerˉflatˉimageˉresourceˉplan =
+        Resources.Linkerˉcompilerˉflatˉimageˉresourceˉplanˉbuild(
+            Sourceˉprefix,
+            Sourceˉmanifestˉresource,
+            Outputˉprefix,
+            Outputˉmanifestˉresource,
+            Stagingˉmanifest
+        );
+    if Resourceˉplan.Status !=
+        Resources.Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Valid {
+        return Resourceˉfailure(Resourceˉplan.Status);
+    }
+
+    var Snapshot: u32 = 0u32;
+    while Snapshot < Resourceˉplan.Sourceˉchunks {
+        let Value: bytes = Sourceˉchunk(Sourceˉprefix, Snapshot);
+        let Entry: u32 = 24u32 + Snapshot * 12u32;
+        if Bytesˉlength(Value) !=
+            Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32) {
+            return Resourceˉfailure(
+                Resources.Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Chunkˉlength
+            );
+        }
+        Snapshot = Snapshot + 1u32;
+    }
+
+    let Prefix: bytes = Sourceˉchunk(Sourceˉprefix, 0u32);
+    if Bytesˉlength(Prefix) != 49u32 {
+        return Envelopeˉfailure(
+            Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Prefixˉsize
+        );
+    }
+    let Sections: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 12u32);
+    let Textˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 36u32);
+    if Textˉbytes > 33554432u32 {
+        return Envelopeˉfailure(
+            Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Sectionˉextent
+        );
+    }
+    var Readˉonlyˉheader: bytes = Empty(Prefix);
+    if Sections == 2u32 {
+        let Readˉonlyˉindex: u32 = Chunkˉatˉposition(
+            Stagingˉmanifest,
+            Resourceˉplan.Sourceˉchunks,
+            49u32 + Textˉbytes
+        );
+        if Readˉonlyˉindex == 4294967295u32 {
+            return Envelopeˉfailure(
+                Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Chunkˉboundary
+            );
+        }
+        Readˉonlyˉheader = Sourceˉchunk(
+            Sourceˉprefix,
+            Readˉonlyˉindex
+        );
+    }
+    let Envelopeˉsummary:
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader
+        );
+    if Envelopeˉsummary.Status !=
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Valid {
+        return Envelopeˉfailure(Envelopeˉsummary.Status);
+    }
+
+    let Symbolˉindex: u32 = Chunkˉatˉposition(
+        Stagingˉmanifest,
+        Resourceˉplan.Sourceˉchunks,
+        Envelopeˉsummary.Symbolˉposition
+    );
+    if Symbolˉindex == 4294967295u32 {
+        return Symbolˉfailure(
+            Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Symbolˉchunk
+        );
+    }
+    let Symbolˉchunk: bytes = Sourceˉchunk(Sourceˉprefix, Symbolˉindex);
+    let Symbolˉsummary:
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk
+        );
+    if Symbolˉsummary.Status !=
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid {
+        return Symbolˉfailure(Symbolˉsummary.Status);
+    }
+
+    var Relocationˉchunk: bytes = Empty(Prefix);
+    if Symbolˉsummary.Relocationˉbytes > 0u32 {
+        let Relocationˉindex: u32 = Chunkˉatˉposition(
+            Stagingˉmanifest,
+            Resourceˉplan.Sourceˉchunks,
+            Symbolˉsummary.Relocationˉposition
+        );
+        if Relocationˉindex == 4294967295u32 {
+            return Linkˉfailure(
+                Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Relocations
+            );
+        }
+        Relocationˉchunk = Sourceˉchunk(
+            Sourceˉprefix,
+            Relocationˉindex
+        );
+    }
+
+    let Plan: Flat.Linkerˉcompilerˉwvoˉsegmentedˉplan =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if Plan.Status != Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid {
+        return Linkˉfailure(Plan.Status);
+    }
+    var Cursor:
+        Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor =
+        Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉbegin(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if Cursor.Status !=
+        Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active {
+        return Verificationˉfailure(Cursor.Status);
+    }
+
+    var Entries: bytes = Empty(Prefix);
+    var Sourceˉindex: u32 = 0u32;
+    var Outputˉindex: u32 = 0u32;
+    while Sourceˉindex < Plan.Manifestˉchunks {
+        let Source: bytes = Sourceˉchunk(Sourceˉprefix, Sourceˉindex);
+        let Linked: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunk =
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+                Stagingˉmanifest,
+                Prefix,
+                Readˉonlyˉheader,
+                Symbolˉchunk,
+                Relocationˉchunk,
+                Sourceˉindex,
+                Source
+            );
+        if Linked.Status !=
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid {
+            return Linkˉfailure(Linked.Status);
+        }
+        let Candidateˉposition: u32 = Cursor.Imageˉposition;
+        let Candidateˉbytes: u32 = Bytesˉlength(Linked.Value);
+        if Candidateˉbytes > 0u32 &&
+            Linked.Imageˉposition != Candidateˉposition {
+            return Linkˉfailure(
+                Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange
+            );
+        }
+        let Next:
+            Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor =
+            Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+                Stagingˉmanifest,
+                Prefix,
+                Readˉonlyˉheader,
+                Symbolˉchunk,
+                Relocationˉchunk,
+                Cursor,
+                Source,
+                Candidateˉposition,
+                Linked.Value
+            );
+        if Next.Status !=
+            Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active {
+            return Verificationˉfailure(Next.Status);
+        }
+        if Candidateˉbytes > 0u32 {
+            file.write_bytes(
+                Resources.Linkerˉcompilerˉflatˉimageˉoutputˉchunkˉresource(
+                    Outputˉprefix,
+                    Outputˉindex
+                ),
+                Linked.Value
+            );
+            Entries = Appendˉu32(Entries, Outputˉindex);
+            Entries = Appendˉu32(Entries, Candidateˉposition);
+            Entries = Appendˉu32(Entries, Candidateˉbytes);
+            Outputˉindex = Outputˉindex + 1u32;
+        }
+        Cursor = Next;
+        Sourceˉindex = Sourceˉindex + 1u32;
+    }
+
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉfinish(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor
+    );
+    if Cursor.Status !=
+            Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Complete ||
+        Outputˉindex != Plan.Outputˉchunks ||
+        Bytesˉlength(Entries) != Outputˉindex * 12u32 {
+        return Verificationˉfailure(Cursor.Status);
+    }
+
+    let Manifestˉbytes: bytes =
+        Imageˉmanifest.Linkerˉcompilerˉflatˉimageˉmanifestˉbuild(
+            Entries,
+            Plan.Imageˉbytes,
+            Plan.Entryˉoffset,
+            Outputˉindex
+        );
+    if Bytesˉlength(Manifestˉbytes) == 0u32 {
+        return Verificationˉfailure(
+            Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Invalidˉcursor
+        );
+    }
+    file.write_bytes(Outputˉmanifestˉresource, Manifestˉbytes);
+    var Report: text =
+        "segmented compiler image staging status=Complete image-bytes=";
+    Report = Textˉconcat(Report, U32ˉformat(Plan.Imageˉbytes));
+    Report = Textˉconcat(Report, " chunks=");
+    Report = Textˉconcat(Report, U32ˉformat(Outputˉindex));
+    Report = Textˉconcat(Report, " manifest-bytes=");
+    console.write_line(
+        Textˉconcat(Report, U32ˉformat(Bytesˉlength(Manifestˉbytes)))
+    );
+    return 0;
+}

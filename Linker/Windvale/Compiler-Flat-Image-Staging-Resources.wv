@@ -1,0 +1,157 @@
+module Linkerˉcompilerˉflatˉimageˉstagingˉresources profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+
+export enum Linkerˉcompilerˉflatˉimageˉresourceˉstatus {
+    Valid = 0;
+    Name = 1;
+    Prefix = 2;
+    Manifest = 3;
+    Chunkˉcount = 4;
+    Collision = 5;
+    Chunkˉlength = 6;
+}
+
+export record Linkerˉcompilerˉflatˉimageˉresourceˉplan {
+    Status: Linkerˉcompilerˉflatˉimageˉresourceˉstatus;
+    Sourceˉchunks: u32;
+    Snapshotˉcount: u32;
+    Maximumˉoutputˉchunks: u32;
+}
+
+fn Invalid(
+    Status: Linkerˉcompilerˉflatˉimageˉresourceˉstatus
+) -> Linkerˉcompilerˉflatˉimageˉresourceˉplan {
+    return Linkerˉcompilerˉflatˉimageˉresourceˉplan(
+        Status,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Accepted(
+    Chunks: u32
+) -> Linkerˉcompilerˉflatˉimageˉresourceˉplan {
+    return Linkerˉcompilerˉflatˉimageˉresourceˉplan(
+        Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Valid,
+        Chunks,
+        Chunks + 1u32,
+        Chunks
+    );
+}
+
+fn Textˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Nameˉisˉvalid(Value: text, Maximum: u32) -> bool {
+    let Length: u32 = Bytesˉlength(Textˉtoˉutf8(Value));
+    if Length == 0u32 { return false; }
+    if Length > Maximum { return false; }
+    return true;
+}
+
+fn Chunkˉresource(Prefix: text, Index: u32) -> text {
+    return Textˉconcat(
+        Textˉconcat(Prefix, ".chunk-"),
+        U32ˉformat(Index)
+    );
+}
+
+export fn Linkerˉcompilerˉflatˉimageˉresourceˉpreflight(
+    Sourceˉprefix: text,
+    Sourceˉmanifest: text,
+    Outputˉprefix: text,
+    Outputˉmanifest: text
+) -> Linkerˉcompilerˉflatˉimageˉresourceˉstatus {
+    if !Nameˉisˉvalid(Sourceˉmanifest, 4095u32) ||
+        !Nameˉisˉvalid(Outputˉmanifest, 4095u32) {
+        return Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Name;
+    }
+    if !Nameˉisˉvalid(Sourceˉprefix, 4078u32) ||
+        !Nameˉisˉvalid(Outputˉprefix, 4078u32) {
+        return Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Prefix;
+    }
+    if Textˉequal(Sourceˉmanifest, Outputˉmanifest) ||
+        Textˉequal(Sourceˉprefix, Outputˉprefix) {
+        return Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Collision;
+    }
+    return Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Valid;
+}
+
+export fn Linkerˉcompilerˉflatˉimageˉresourceˉplanˉbuild(
+    Sourceˉprefix: text,
+    Sourceˉmanifest: text,
+    Outputˉprefix: text,
+    Outputˉmanifest: text,
+    Stagingˉmanifest: bytes
+) -> Linkerˉcompilerˉflatˉimageˉresourceˉplan {
+    let Preflight: Linkerˉcompilerˉflatˉimageˉresourceˉstatus =
+        Linkerˉcompilerˉflatˉimageˉresourceˉpreflight(
+            Sourceˉprefix,
+            Sourceˉmanifest,
+            Outputˉprefix,
+            Outputˉmanifest
+        );
+    if Preflight != Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Valid {
+        return Invalid(Preflight);
+    }
+    let Summary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Summary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Manifest
+        );
+    }
+    if Summary.Chunks == 0u32 || Summary.Chunks > 62u32 {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Chunkˉcount
+        );
+    }
+
+    var Index: u32 = 0u32;
+    while Index < Summary.Chunks {
+        let Sourceˉchunk: text = Chunkˉresource(Sourceˉprefix, Index);
+        let Outputˉchunk: text = Chunkˉresource(Outputˉprefix, Index);
+        if Textˉequal(Sourceˉchunk, Sourceˉmanifest) ||
+            Textˉequal(Sourceˉchunk, Outputˉmanifest) ||
+            Textˉequal(Outputˉchunk, Sourceˉmanifest) ||
+            Textˉequal(Outputˉchunk, Outputˉmanifest) {
+            return Invalid(
+                Linkerˉcompilerˉflatˉimageˉresourceˉstatus.Collision
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Accepted(Summary.Chunks);
+}
+
+export fn Linkerˉcompilerˉflatˉimageˉsourceˉchunkˉresource(
+    Prefix: text,
+    Index: u32
+) -> text {
+    return Chunkˉresource(Prefix, Index);
+}
+
+export fn Linkerˉcompilerˉflatˉimageˉoutputˉchunkˉresource(
+    Prefix: text,
+    Index: u32
+) -> text {
+    return Chunkˉresource(Prefix, Index);
+}

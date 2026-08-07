@@ -48,6 +48,17 @@ the 6,449,889-byte Stage 0 WVO without loading .NET or widening the native
 arena. Linux execution, native host-package construction, remaining backend
 subset work, promotion, and grouped qualification remain open.
 
+Current L1 update: [Decision 0351](../Decisions/0351-Immutable-Snapshot-Compiler-Image-Staging.md)
+adds the first hosted Windvale owner of the segmented compiler-image path. It
+acquires a strict `WVOP` manifest plus at most 62 canonical WVO chunks into one
+execution's immutable snapshot table, reuses those values for metadata,
+producer, and independent-verifier passes, writes only accepted bounded image
+chunks, and publishes `WVLI` last. The small eight-chunk fixture crosses this
+complete Windvale boundary with nine underlying reads and exact linked bytes.
+Publisher-scale transfer, a native process package, native file-identity and
+durable replacement, canonical map evidence, Linux execution, promotion, and
+grouped qualification remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

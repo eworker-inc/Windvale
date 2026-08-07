@@ -397,6 +397,12 @@
       Include="../../Linker/Windvale/Compiler-Flat-Image-Staging-Manifest.wv"
       LogicalName="Windvale.Seed.Tests.Compiler-Flat-Image-Staging-Manifest.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Compiler-Flat-Image-Staging-Resources.wv"
+      LogicalName="Windvale.Seed.Tests.Compiler-Flat-Image-Staging-Resources.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Staging-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Compiler-Wvo-Segmented-Flat-Image-Staging-Tool.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Staging-Tool.wv" />
     <EmbeddedResource
