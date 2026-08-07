@@ -1,0 +1,82 @@
+module Linkerˉcompilerˉflatˉimageˉstagingˉmanifestˉtest profile portable;
+
+import Linkerˉcompilerˉflatˉimageˉstagingˉmanifest as Manifest;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Statusˉvalue(
+    Status: Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus
+) -> u32 {
+    if Status == Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Valid {
+        return 0u32;
+    }
+    if Status ==
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Truncated {
+        return 1u32;
+    }
+    if Status == Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Magic {
+        return 2u32;
+    }
+    if Status == Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Version {
+        return 3u32;
+    }
+    if Status ==
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Manifestˉsize {
+        return 4u32;
+    }
+    if Status ==
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Imageˉsize {
+        return 5u32;
+    }
+    if Status == Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Entry {
+        return 6u32;
+    }
+    if Status ==
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉcount {
+        return 7u32;
+    }
+    if Status ==
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉlimit {
+        return 8u32;
+    }
+    if Status ==
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉindex {
+        return 9u32;
+    }
+    if Status ==
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉposition {
+        return 10u32;
+    }
+    return 11u32;
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < 1u32 { return Empty(Input); }
+    let Mode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 0u32));
+    if Mode == 1u32 {
+        if Length < 13u32 { return Empty(Input); }
+        return Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉbuild(
+            Bytesˉslice(Input, 13u32, Length - 13u32),
+            Bytesˉreadˉu32ˉlittle(Input, 1u32),
+            Bytesˉreadˉu32ˉlittle(Input, 5u32),
+            Bytesˉreadˉu32ˉlittle(Input, 9u32)
+        );
+    }
+    if Mode != 0u32 { return Empty(Input); }
+    let Value: bytes = Bytesˉslice(Input, 1u32, Length - 1u32);
+    let Summary: Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉsummary =
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉvalidate(Value);
+    var Output: bytes = Textˉtoˉutf8("WVLM");
+    Output = Appendˉu32(Output, Statusˉvalue(Summary.Status));
+    Output = Appendˉu32(Output, Summary.Imageˉbytes);
+    Output = Appendˉu32(Output, Summary.Entryˉoffset);
+    Output = Appendˉu32(Output, Summary.Chunks);
+    return Appendˉu32(Output, Summary.Maximumˉchunkˉbytes);
+}

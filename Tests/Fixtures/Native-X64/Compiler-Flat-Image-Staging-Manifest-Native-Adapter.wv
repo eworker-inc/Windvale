@@ -1,0 +1,56 @@
+module Linkerˉcompilerˉflatˉimageˉstagingˉmanifestˉnativeˉtest profile portable;
+
+import Linkerˉcompilerˉflatˉimageˉstagingˉmanifest as Manifest;
+
+data Entries: bytes = [
+    0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0,
+    1, 0, 0, 0, 10, 0, 0, 0, 6, 0, 0, 0,
+    2, 0, 0, 0, 16, 0, 0, 0, 2, 0, 0, 0,
+    3, 0, 0, 0, 18, 0, 0, 0, 3, 0, 0, 0
+];
+
+export fn Main() -> i32 {
+    let Value: bytes = Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉbuild(
+        Entries,
+        21u32,
+        4u32,
+        4u32
+    );
+    if Bytesˉlength(Value) != 76u32 { return 1; }
+    let Summary: Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉsummary =
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉvalidate(Value);
+    if Summary.Status !=
+            Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Valid ||
+        Summary.Imageˉbytes != 21u32 || Summary.Entryˉoffset != 4u32 ||
+        Summary.Chunks != 4u32 ||
+        Summary.Maximumˉchunkˉbytes != 4194304u32 {
+        return 2;
+    }
+    if Bytesˉreadˉu32ˉlittle(Value, 28u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Value, 32u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Value, 36u32) != 10u32 ||
+        Bytesˉreadˉu32ˉlittle(Value, 64u32) != 3u32 ||
+        Bytesˉreadˉu32ˉlittle(Value, 68u32) != 18u32 ||
+        Bytesˉreadˉu32ˉlittle(Value, 72u32) != 3u32 {
+        return 3;
+    }
+    if Bytesˉlength(
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉbuild(
+            Entries,
+            21u32,
+            21u32,
+            4u32
+        )
+    ) != 0u32 {
+        return 4;
+    }
+    let Truncated: bytes = Bytesˉslice(Value, 0u32, 27u32);
+    let Truncatedˉsummary:
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉsummary =
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉvalidate(Truncated);
+    if Truncatedˉsummary.Status !=
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Truncated {
+        return 5;
+    }
+    return 42;
+}

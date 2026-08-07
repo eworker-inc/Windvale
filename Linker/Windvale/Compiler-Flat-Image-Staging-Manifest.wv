@@ -1,0 +1,173 @@
+module Linkerˉcompilerˉflatˉimageˉstagingˉmanifest profile portable;
+
+export enum Linkerˉcompilerˉflatˉimageˉmanifestˉstatus {
+    Valid = 0;
+    Truncated = 1;
+    Magic = 2;
+    Version = 3;
+    Manifestˉsize = 4;
+    Imageˉsize = 5;
+    Entry = 6;
+    Chunkˉcount = 7;
+    Chunkˉlimit = 8;
+    Chunkˉindex = 9;
+    Chunkˉposition = 10;
+    Chunkˉlength = 11;
+}
+
+export record Linkerˉcompilerˉflatˉimageˉmanifestˉsummary {
+    Status: Linkerˉcompilerˉflatˉimageˉmanifestˉstatus;
+    Imageˉbytes: u32;
+    Entryˉoffset: u32;
+    Chunks: u32;
+    Maximumˉchunkˉbytes: u32;
+}
+
+fn Invalid(
+    Status: Linkerˉcompilerˉflatˉimageˉmanifestˉstatus
+) -> Linkerˉcompilerˉflatˉimageˉmanifestˉsummary {
+    return Linkerˉcompilerˉflatˉimageˉmanifestˉsummary(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Accepted(
+    Imageˉbytes: u32,
+    Entryˉoffset: u32,
+    Chunks: u32
+) -> Linkerˉcompilerˉflatˉimageˉmanifestˉsummary {
+    return Linkerˉcompilerˉflatˉimageˉmanifestˉsummary(
+        Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Valid,
+        Imageˉbytes,
+        Entryˉoffset,
+        Chunks,
+        4194304u32
+    );
+}
+
+export fn Linkerˉcompilerˉflatˉimageˉmanifestˉvalidate(
+    Input: bytes
+) -> Linkerˉcompilerˉflatˉimageˉmanifestˉsummary {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < 28u32 {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Truncated
+        );
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Input, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Input, 2u32) != 76u8 ||
+        Bytesˉreadˉu8(Input, 3u32) != 73u8 {
+        return Invalid(Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Magic);
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
+        return Invalid(Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Version);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Length {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Manifestˉsize
+        );
+    }
+
+    let Imageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Imageˉbytes == 0u32 || Imageˉbytes > 33554432u32 {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Imageˉsize
+        );
+    }
+    let Entryˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Entryˉoffset >= Imageˉbytes {
+        return Invalid(Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Entry);
+    }
+    let Chunks: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Chunks == 0u32 || Chunks > 518u32 {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉcount
+        );
+    }
+    if Length != 28u32 + Chunks * 12u32 {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Manifestˉsize
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 24u32) != 4194304u32 {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉlimit
+        );
+    }
+
+    var Index: u32 = 0u32;
+    var Position: u32 = 0u32;
+    while Index < Chunks {
+        let Entry: u32 = 28u32 + Index * 12u32;
+        if Bytesˉreadˉu32ˉlittle(Input, Entry) != Index {
+            return Invalid(
+                Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉindex
+            );
+        }
+        if Bytesˉreadˉu32ˉlittle(Input, Entry + 4u32) != Position {
+            return Invalid(
+                Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉposition
+            );
+        }
+        let Chunkˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Entry + 8u32);
+        if Chunkˉbytes == 0u32 || Chunkˉbytes > 4194304u32 {
+            return Invalid(
+                Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉlength
+            );
+        }
+        if Position > Imageˉbytes ||
+            Chunkˉbytes > Imageˉbytes - Position {
+            return Invalid(
+                Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉlength
+            );
+        }
+        Position = Position + Chunkˉbytes;
+        Index = Index + 1u32;
+    }
+    if Position != Imageˉbytes {
+        return Invalid(
+            Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Chunkˉposition
+        );
+    }
+    return Accepted(Imageˉbytes, Entryˉoffset, Chunks);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Linkerˉcompilerˉflatˉimageˉmanifestˉbuild(
+    Entries: bytes,
+    Imageˉbytes: u32,
+    Entryˉoffset: u32,
+    Chunks: u32
+) -> bytes {
+    if Imageˉbytes == 0u32 || Imageˉbytes > 33554432u32 ||
+        Entryˉoffset >= Imageˉbytes || Chunks == 0u32 || Chunks > 518u32 ||
+        Bytesˉlength(Entries) != Chunks * 12u32 {
+        return Bytesˉslice(Entries, 0u32, 0u32);
+    }
+    var Header: bytes = Textˉtoˉutf8("WVLI");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Appendˉu32(Header, 28u32 + Bytesˉlength(Entries));
+    Header = Appendˉu32(Header, Imageˉbytes);
+    Header = Appendˉu32(Header, Entryˉoffset);
+    Header = Appendˉu32(Header, Chunks);
+    Header = Appendˉu32(Header, 4194304u32);
+    let Result: bytes = Bytesˉconcat(Header, Entries);
+    let Summary: Linkerˉcompilerˉflatˉimageˉmanifestˉsummary =
+        Linkerˉcompilerˉflatˉimageˉmanifestˉvalidate(Result);
+    if Summary.Status !=
+        Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Valid {
+        return Bytesˉslice(Entries, 0u32, 0u32);
+    }
+    return Result;
+}

@@ -172,6 +172,30 @@ must run the producer and independent verifier over every admitted manifest
 chunk exactly once, preserve positions, and complete durable publication
 before it can replace the Stage 0 large-native linker in packaging.
 
+### `WVLI 1.0` linked-image staging manifest
+
+The bounded producer records each nonempty image chunk in one strict
+little-endian manifest written only after every chunk has been staged:
+
+| Offset | Size | Meaning |
+| ---: | ---: | --- |
+| 0 | 4 | ASCII `WVLI` |
+| 4 | 2 | Major version `1` |
+| 6 | 2 | Minor version `0` |
+| 8 | 4 | Total manifest bytes, exactly `28 + chunk-count * 12` |
+| 12 | 4 | Complete flat-image bytes, one through 32 MiB |
+| 16 | 4 | `Main` entry offset, strictly inside the image |
+| 20 | 4 | Chunk count, one through 518 |
+| 24 | 4 | Maximum chunk bytes, exactly `4,194,304` |
+
+Each following 12-byte entry contains its exact `u32` chunk index, image
+position, and nonzero length. Indices equal their ordinals, the first position
+is zero, positions are contiguous, every length is within the ordinary 4 MiB
+value ceiling and remaining image extent, and the final extent equals the
+declared image length. Rejection exposes zero size/count evidence. `WVLI` is a
+structural completion marker, not a content digest, capability, durable commit
+record, canonical link map, or executable-container manifest.
+
 ## Deliberate omissions
 
 The flat target has no PE, ELF, UEFI, archive/library search, dynamic linking, weak symbols, COMDAT selection, dead stripping, section merging, executable permissions, debug data, stack/heap declaration, ABI, start-up code, 64-bit absolute relocation, internal-label model, or loader metadata. A raw flat image is not directly executed by Windows or Linux. The UEFI application adapter and capability-free `windows-x64-console-v1` and `linux-x64-console-v1` adapters are downstream targets with their own narrower input and verification rules.

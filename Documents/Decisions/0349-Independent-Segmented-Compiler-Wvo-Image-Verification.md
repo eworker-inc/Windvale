@@ -80,11 +80,11 @@ ordered cursor. A future publisher can reject a changed or incomplete output
 stream before durable exposure without calling .NET or holding the whole image
 in memory.
 
-This does not yet provide the fixed snapshot bridge, output staging manifest,
-durable publication transaction, canonical link map, actual 6.45 MiB publisher
-comparison, multi-object linking, nonzero bases, service-bundle composition,
-host-container construction, Linux execution, promotion, or grouped
-qualification.
+Decision 0350 adds the strict output staging manifest. This does not yet
+provide the fixed snapshot bridge, durable publication transaction, canonical
+link map, actual 6.45 MiB publisher comparison, multi-object linking, nonzero
+bases, service-bundle composition, host-container construction, Linux
+execution, promotion, or grouped qualification.
 
 ## Reconsideration triggers
 
