@@ -114,5 +114,10 @@ run_or_fail truncated-operand "$fixture_root/Truncated-Operand.wvb.b64" eac2a311
 run_or_fail local-index "$fixture_root/Local-Index.wvb.b64" 857f94ae40c95dd2f2e3f27ba07892c0ae351f1875fc16c91695e5a3872f56a3 "$semantic_report"
 run_or_fail jump-target "$fixture_root/Jump-Target.wvb.b64" b56e962d4e4d24d6366354e1f4798c4352de236dcad421829d4b8714db3eb2a3 "$semantic_report"
 run_or_fail after-return "$fixture_root/After-Return.wvb.b64" ece563bb06b953ef1587004c3517c21098702b644511cdda989e49d89d9061e7 "$typed_report"
+run_or_fail record-parameter-type "$fixture_root/Record-Parameter-Type.wvb.b64" 8e89cf9b526e1ea93d81d62425f95986daff4469dc7f113f5e38b580ccf163aa "$semantic_report"
+run_or_fail record-field-index "$fixture_root/Record-Field-Index.wvb.b64" 1d5ed90586e2327af309cb9fe6ba1110da879ee461f7fd56d7c5414d1c637999 "$typed_report"
+run_or_fail duplicate-record-field "$fixture_root/Duplicate-Record-Field.wvb.b64" 73867dcf74f30f4b9237091aa59ea981200f4139636b67eb730bdb71752571b6 "$semantic_report"
+run_or_fail mismatched-enum-comparison "$fixture_root/Mismatched-Enum-Comparison.wvb.b64" 6ae2e65a43f68f0aa4b46b7ca306ad1dd06b72b1328e02e611f98e9f7abc869e "$typed_report"
+run_or_fail duplicate-nominal-name "$fixture_root/Duplicate-Nominal-Name.wvb.b64" 60d12d56015678f3197a1413cfb058bff64188a8e2256d09f504280fad805f9c "$semantic_report"
 
 echo "Tests: $total, Passed: $passed, Failed: 0"

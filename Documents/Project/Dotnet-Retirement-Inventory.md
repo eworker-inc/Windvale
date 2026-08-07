@@ -53,6 +53,14 @@ both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
 Broader nominal/limit unsafe cases and seeded randomized containment remain.
 
+[Decision 0347](../Decisions/0347-Fixed-Native-Nominal-Wvb-Rejections.md)
+adds five fixed nominal-type cases to that same cohesive lane. Missing record
+types and fields, duplicate record and nominal names, and mismatched enum
+comparison now pass through both native readers without a live managed oracle.
+The current 23-suite coordinator therefore owns 3,035 fixed cases; this
+supersedes the 3,030 counts in the compact T1 and T2 ledger rows above. Nominal
+count/value-size limits and other typed opcode families remain.
+
 Decision 0330 originally composed every then-current T1 command through one 787-byte
 digest-bound manifest. The paired direct coordinators fix ten suite names, 74
 cases, child summaries, empty-error requirements, and fail-fast ordering without
@@ -94,7 +102,7 @@ consumer checks, and 15 hosted format-2 cases. Decision 0341 transfers the two
 segmented console maximum-plus-one boundaries through a dedicated two-snapshot
 read-only verifier. Decision 0342 then streams both maximum valid applications
 into bounded chunks and matches their complete Stage 0 identities. The current
-1,979-byte plan fixes 23 suites and 3,030 cases; all three focused Windows
+1,982-byte plan fixes 23 suites and 3,035 cases; all three focused Windows
 commands pass 2/2 without consulting a live .NET oracle. Native reconstruction
 now owns both console-packager WVBs, while Linux execution, native host-container
 construction, and the grouped gate remain deferred.

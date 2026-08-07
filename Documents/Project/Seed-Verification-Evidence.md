@@ -4189,3 +4189,28 @@ a zero-warning build. No broader local verification was run because these are
 the narrowest reliable checks for the changed boundary and the grouped gate is
 reserved for the end of the retirement goal. Linux packages are pinned but not
 executed by this evidence.
+
+## Local fixed native nominal-WVB rejection evidence
+
+[Decision 0347](../Decisions/0347-Fixed-Native-Nominal-Wvb-Rejections.md)
+extends the existing unsafe-WVB command with five compact fixed nominal-type
+inputs. The permanent host scripts do not generate or mutate WVB: they decode
+and digest-check each fixture, run both native read-only launchers, require
+empty standard output and exact semantic or typed-execution diagnostics, and
+prove that the complete input identity remains unchanged.
+
+The new cases cover a missing record parameter type, missing record field,
+duplicate record field name, mismatched enum comparison, and duplicate nominal
+type name. Their decoded sizes range from 191 through 234 bytes. The complete
+identities and exact mutation descriptions are pinned by the linked contract
+and Decision 0347.
+
+The reviewed retirement plan is now 1,982 LF-only bytes at SHA-256
+`b5c16309688400b138a76c72e147533d124e0b26615a9b382ebf4b55dda07aaa`.
+It retains 23 suites and grows from 3,030 to 3,035 fixed cases. The focused
+Windows command `Test-Retirement-Suite.cmd --filter unsafe-wvb` passes its one
+selected suite and all ten cases in 5.144 seconds without starting .NET or
+building an artifact. The managed wrapper and complete coordinator were not
+rerun. Linux execution, broader nominal limits and typed opcode transfer,
+Standard, Qualification, promotion, and the grouped end-of-goal gate remain
+deferred.

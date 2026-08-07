@@ -67,6 +67,12 @@ scratch-record allocation, and the exact ABI 22 hidden-result layout let the
 native producer and publisher reproduce the 6,449,889-byte Stage 0 publisher
 WVO exactly. Linux execution and grouped qualification remain open.
 
+[Decision 0347](../Decisions/0347-Fixed-Native-Nominal-Wvb-Rejections.md)
+extends the fixed native unsafe-WVB lane from five instruction-stream cases to
+ten instruction and nominal-type cases. The same 23-suite retirement plan now
+owns 3,035 cases without a live managed oracle; broader nominal limits and
+typed opcode families remain explicit later transfers.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

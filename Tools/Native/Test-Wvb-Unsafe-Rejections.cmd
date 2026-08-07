@@ -31,6 +31,16 @@ call :run_case "jump-target" "Tests\Native\Wvb-Unsafe-Rejections\Jump-Target.wvb
 if errorlevel 1 goto :failed
 call :run_case "after-return" "Tests\Native\Wvb-Unsafe-Rejections\After-Return.wvb.b64" "ece563bb06b953ef1587004c3517c21098702b644511cdda989e49d89d9061e7" "c083d8e4a7dbe48f3c72248285d6f4ace645202ca8f2013df1d51ab328db7930"
 if errorlevel 1 goto :failed
+call :run_case "record-parameter-type" "Tests\Native\Wvb-Unsafe-Rejections\Record-Parameter-Type.wvb.b64" "8e89cf9b526e1ea93d81d62425f95986daff4469dc7f113f5e38b580ccf163aa" "4938c6906dfb318e36b11a2795699638f4cdef1bef12c477b5b726137cd3d9b5"
+if errorlevel 1 goto :failed
+call :run_case "record-field-index" "Tests\Native\Wvb-Unsafe-Rejections\Record-Field-Index.wvb.b64" "1d5ed90586e2327af309cb9fe6ba1110da879ee461f7fd56d7c5414d1c637999" "c083d8e4a7dbe48f3c72248285d6f4ace645202ca8f2013df1d51ab328db7930"
+if errorlevel 1 goto :failed
+call :run_case "duplicate-record-field" "Tests\Native\Wvb-Unsafe-Rejections\Duplicate-Record-Field.wvb.b64" "73867dcf74f30f4b9237091aa59ea981200f4139636b67eb730bdb71752571b6" "4938c6906dfb318e36b11a2795699638f4cdef1bef12c477b5b726137cd3d9b5"
+if errorlevel 1 goto :failed
+call :run_case "mismatched-enum-comparison" "Tests\Native\Wvb-Unsafe-Rejections\Mismatched-Enum-Comparison.wvb.b64" "6ae2e65a43f68f0aa4b46b7ca306ad1dd06b72b1328e02e611f98e9f7abc869e" "c083d8e4a7dbe48f3c72248285d6f4ace645202ca8f2013df1d51ab328db7930"
+if errorlevel 1 goto :failed
+call :run_case "duplicate-nominal-name" "Tests\Native\Wvb-Unsafe-Rejections\Duplicate-Nominal-Name.wvb.b64" "60d12d56015678f3197a1413cfb058bff64188a8e2256d09f504280fad805f9c" "4938c6906dfb318e36b11a2795699638f4cdef1bef12c477b5b726137cd3d9b5"
+if errorlevel 1 goto :failed
 
 call :cleanup
 echo Tests: %Total%, Passed: %Passed%, Failed: 0

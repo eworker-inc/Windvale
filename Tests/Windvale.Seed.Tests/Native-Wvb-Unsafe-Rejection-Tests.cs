@@ -13,7 +13,12 @@ internal static partial class Program
             "PASS  local-index\n" +
             "PASS  jump-target\n" +
             "PASS  after-return\n" +
-            "Tests: 5, Passed: 5, Failed: 0\n",
+            "PASS  record-parameter-type\n" +
+            "PASS  record-field-index\n" +
+            "PASS  duplicate-record-field\n" +
+            "PASS  mismatched-enum-comparison\n" +
+            "PASS  duplicate-nominal-name\n" +
+            "Tests: 10, Passed: 10, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

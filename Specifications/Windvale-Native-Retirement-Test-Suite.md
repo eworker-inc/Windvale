@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 1,979 LF-only bytes with SHA-256
-`5276715f4d12a6fe003809a48a62876c4fcb0d3d58b3198c3be0387745a05a99`.
+`Tests/Native/Retirement-Suite.txt` is 1,982 LF-only bytes with SHA-256
+`b5c16309688400b138a76c72e147533d124e0b26615a9b382ebf4b55dda07aaa`.
 The first line is exactly:
 
 ```text
@@ -41,7 +41,7 @@ file. The current plan is:
 | Suite | Command | Cases | Required terminal summary |
 | --- | --- | ---: | --- |
 | `seed` | `Test-Seed` | 26 | `Tests: 26, Passed: 26, Failed: 0` |
-| `unsafe-wvb` | `Test-Wvb-Unsafe-Rejections` | 5 | `Tests: 5, Passed: 5, Failed: 0` |
+| `unsafe-wvb` | `Test-Wvb-Unsafe-Rejections` | 10 | `Tests: 10, Passed: 10, Failed: 0` |
 | `wvb-containment` | `Test-Wvb-Containment` | 1,000 | `Tests: 1000, Passed: 1000, Failed: 0` |
 | `wvo-read-only` | `Test-Wvo-Read-Only-Rejections` | 13 | `Tests: 13, Passed: 13, Failed: 0` |
 | `wvo-differential` | `Test-Wvo-Differential` | 256 | `Tests: 256, Passed: 256, Failed: 0` |
@@ -64,7 +64,7 @@ file. The current plan is:
 | `publisher-rejections` | `Test-Publisher-Rejections` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 23 suites and 3,030 cases.
+The version-1 plan therefore contains exactly 23 suites and 3,035 cases.
 
 ## Coordinator contract
 
@@ -86,14 +86,14 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 23, Passed: 23, Failed: 0, Cases: 3030
+Suites: 23, Passed: 23, Failed: 0, Cases: 3035
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:
 
 ```text
-PASS  suite unsafe-wvb cases=5
-Suites: 1, Passed: 1, Failed: 0, Cases: 5
+PASS  suite unsafe-wvb cases=10
+Suites: 1, Passed: 1, Failed: 0, Cases: 10
 ```
 
 The coordinator does not build a managed harness, invoke .NET, discover tests,
