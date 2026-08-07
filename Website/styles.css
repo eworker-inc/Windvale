@@ -8,70 +8,79 @@
 
 :root {
     color-scheme: light;
-    --page: #f7f9fc;
+    --page: #f6f8fb;
     --surface: #ffffff;
-    --surface-soft: #f3f6fb;
-    --ink: #0d1b3e;
-    --muted: #65718b;
-    --line: #dce4f0;
-    --line-strong: #c9d5e6;
-    --blue: #1768e5;
-    --blue-soft: #eaf2ff;
-    --green: #19996f;
-    --green-soft: #e7f7f0;
-    --violet: #7658db;
-    --violet-soft: #f0edff;
-    --cyan: #159aa9;
-    --cyan-soft: #e6f7f8;
-    --amber: #aa7511;
-    --amber-soft: #fff4dc;
-    --shadow: 0 12px 32px rgba(24, 52, 96, 0.07);
+    --surface-soft: #eef2f7;
+    --ink: #172033;
+    --muted: #5f6878;
+    --line: #dce2ec;
+    --line-strong: #b9c7dc;
+    --blue: #2155a5;
+    --blue-hover: #173d78;
+    --blue-soft: #eaf1fc;
+    --green: #2f745e;
+    --green-soft: #e7f3ed;
+    --violet: #6655a5;
+    --violet-soft: #f0edfb;
+    --cyan: #277f92;
+    --cyan-soft: #e7f3f6;
+    --amber: #c45f32;
+    --amber-soft: #fff0e7;
+    --red: #c92f3d;
+    --red-soft: #ffebee;
+    --shadow: 0 16px 38px rgba(45, 68, 102, 0.09);
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 :root[data-theme="dark"] {
     color-scheme: dark;
-    --page: #071018;
-    --surface: #0b1824;
-    --surface-soft: #0e1e2c;
-    --ink: #edf5ff;
-    --muted: #9db0c4;
-    --line: #1d3448;
-    --line-strong: #29475e;
-    --blue: #68a7ff;
-    --blue-soft: #102a49;
-    --green: #58d4a4;
-    --green-soft: #0d3028;
-    --violet: #aa91ff;
-    --violet-soft: #261f4a;
-    --cyan: #5dd1df;
-    --cyan-soft: #0c3036;
-    --amber: #efc365;
-    --amber-soft: #382b12;
-    --shadow: 0 18px 46px rgba(0, 0, 0, 0.22);
+    --page: #08111b;
+    --surface: #0d1a27;
+    --surface-soft: #122231;
+    --ink: #edf3fa;
+    --muted: #a2afbf;
+    --line: #24394d;
+    --line-strong: #36536d;
+    --blue: #79a9ef;
+    --blue-hover: #a5c6f6;
+    --blue-soft: #142d4b;
+    --green: #6bc4a0;
+    --green-soft: #123329;
+    --violet: #b4a2ee;
+    --violet-soft: #2a2345;
+    --cyan: #75c5d4;
+    --cyan-soft: #10343c;
+    --amber: #efa170;
+    --amber-soft: #3b241a;
+    --red: #ff7d86;
+    --red-soft: #3b1e25;
+    --shadow: 0 20px 52px rgba(0, 0, 0, 0.28);
 }
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
         color-scheme: dark;
-        --page: #071018;
-        --surface: #0b1824;
-        --surface-soft: #0e1e2c;
-        --ink: #edf5ff;
-        --muted: #9db0c4;
-        --line: #1d3448;
-        --line-strong: #29475e;
-        --blue: #68a7ff;
-        --blue-soft: #102a49;
-        --green: #58d4a4;
-        --green-soft: #0d3028;
-        --violet: #aa91ff;
-        --violet-soft: #261f4a;
-        --cyan: #5dd1df;
-        --cyan-soft: #0c3036;
-        --amber: #efc365;
-        --amber-soft: #382b12;
-        --shadow: 0 18px 46px rgba(0, 0, 0, 0.22);
+        --page: #08111b;
+        --surface: #0d1a27;
+        --surface-soft: #122231;
+        --ink: #edf3fa;
+        --muted: #a2afbf;
+        --line: #24394d;
+        --line-strong: #36536d;
+        --blue: #79a9ef;
+        --blue-hover: #a5c6f6;
+        --blue-soft: #142d4b;
+        --green: #6bc4a0;
+        --green-soft: #123329;
+        --violet: #b4a2ee;
+        --violet-soft: #2a2345;
+        --cyan: #75c5d4;
+        --cyan-soft: #10343c;
+        --amber: #efa170;
+        --amber-soft: #3b241a;
+        --red: #ff7d86;
+        --red-soft: #3b1e25;
+        --shadow: 0 20px 52px rgba(0, 0, 0, 0.28);
     }
 }
 
@@ -89,8 +98,9 @@ body {
     margin: 0;
     color: var(--ink);
     background:
-        radial-gradient(circle at 78% 12%, color-mix(in srgb, var(--blue) 7%, transparent), transparent 24rem),
-        var(--page);
+        radial-gradient(circle at 95% 2%, color-mix(in srgb, var(--red) 10%, transparent), transparent 21rem),
+        radial-gradient(circle at 72% 8%, color-mix(in srgb, var(--blue) 12%, transparent), transparent 31rem),
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 42%, var(--page)) 0, var(--page) 34rem);
     overflow-x: clip;
 }
 
@@ -143,8 +153,12 @@ figure {
 }
 
 .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
     border-bottom: 1px solid var(--line);
-    background: color-mix(in srgb, var(--page) 90%, transparent);
+    background: color-mix(in srgb, var(--page) 88%, transparent);
+    backdrop-filter: blur(18px) saturate(135%);
 }
 
 .header-inner,
@@ -208,28 +222,29 @@ main {
     padding: 9px 14px;
     color: #ffffff;
     border-radius: 9px;
-    background: #1768e5;
+    background: var(--blue);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--blue) 24%, transparent);
 }
 
 .site-header nav .nav-button:hover,
 .site-header nav .nav-button:focus-visible {
     color: #ffffff;
-    background: #0f54bd;
+    background: var(--blue-hover);
 }
 
 .site-header nav a[href="/support/"] {
     padding: 6px 9px;
-    color: var(--amber);
-    border: 1px solid color-mix(in srgb, var(--amber) 34%, var(--line));
+    color: var(--red);
+    border: 1px solid color-mix(in srgb, var(--red) 34%, var(--line));
     border-radius: 999px;
-    background: var(--amber-soft);
+    background: var(--red-soft);
 }
 
 .site-header nav a[href="/support/"]:hover,
 .site-header nav a[href="/support/"]:focus-visible,
 .site-header nav a[href="/support/"].active {
     color: var(--ink);
-    border-color: var(--amber);
+    border-color: var(--red);
 }
 
 .theme-toggle {
@@ -253,12 +268,35 @@ main {
 }
 
 .hero {
+    position: relative;
+    isolation: isolate;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(380px, 0.82fr);
     align-items: center;
     gap: clamp(42px, 6vw, 84px);
     min-height: 620px;
-    padding: 46px 0 30px;
+    margin: 24px 0 20px;
+    padding: clamp(34px, 4.5vw, 60px) clamp(26px, 5vw, 68px);
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--line-strong) 72%, transparent);
+    border-radius: 28px;
+    background:
+        linear-gradient(105deg, color-mix(in srgb, var(--surface) 84%, transparent) 0 38%, color-mix(in srgb, var(--surface) 60%, transparent) 61%, color-mix(in srgb, var(--surface) 18%, transparent) 100%),
+        url("assets/nova-scotia-coast.webp") center / cover no-repeat;
+    box-shadow: var(--shadow);
+}
+
+.hero::before {
+    position: absolute;
+    right: -8%;
+    bottom: -24%;
+    z-index: -1;
+    width: 62%;
+    height: 58%;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--blue) 9%, transparent);
+    filter: blur(10px);
+    content: "";
 }
 
 .eyebrow,
@@ -310,7 +348,7 @@ h1 {
     min-height: 46px;
     padding: 0 18px;
     border: 1px solid var(--line-strong);
-    border-radius: 9px;
+    border-radius: 14px;
     font-size: 13px;
     font-weight: 750;
     text-decoration: none;
@@ -318,14 +356,15 @@ h1 {
 
 .button.primary {
     color: #ffffff;
-    border-color: #1768e5;
-    background: #1768e5;
+    border-color: var(--blue);
+    background: var(--blue);
+    box-shadow: 0 14px 30px color-mix(in srgb, var(--blue) 24%, transparent);
 }
 
 .button.primary:hover,
 .button.primary:focus-visible {
-    border-color: #0f54bd;
-    background: #0f54bd;
+    border-color: var(--blue-hover);
+    background: var(--blue-hover);
 }
 
 .button.secondary {
@@ -339,16 +378,16 @@ h1 {
 }
 
 .button.support {
-    color: var(--amber);
-    border-color: color-mix(in srgb, var(--amber) 42%, var(--line));
-    background: var(--amber-soft);
+    color: var(--red);
+    border-color: color-mix(in srgb, var(--red) 42%, var(--line));
+    background: var(--red-soft);
 }
 
 .button.support:hover,
 .button.support:focus-visible {
     color: var(--ink);
-    border-color: var(--amber);
-    background: color-mix(in srgb, var(--amber-soft) 78%, var(--surface));
+    border-color: var(--red);
+    background: color-mix(in srgb, var(--red-soft) 78%, var(--surface));
 }
 
 .runs-on {
@@ -574,7 +613,7 @@ h1 {
     padding: 9px 12px;
     color: #ffffff;
     border-radius: 8px;
-    background: #1768e5;
+    background: var(--blue);
 }
 
 .progress-strip nav a:hover,
@@ -585,7 +624,7 @@ h1 {
 .progress-strip nav a:first-child:hover,
 .progress-strip nav a:first-child:focus-visible {
     color: #ffffff;
-    background: #0f54bd;
+    background: var(--blue-hover);
 }
 
 .progress-section {
@@ -865,11 +904,21 @@ h1 {
 }
 
 .comic-page-hero {
+    position: relative;
+    isolation: isolate;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     gap: 40px;
-    padding: 58px 0 42px;
+    margin: 28px 0 30px;
+    padding: clamp(42px, 6vw, 76px) clamp(28px, 5vw, 68px);
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--line-strong) 72%, transparent);
+    border-radius: 28px;
+    background:
+        linear-gradient(100deg, color-mix(in srgb, var(--surface) 82%, transparent) 0 42%, color-mix(in srgb, var(--surface) 55%, transparent) 68%, color-mix(in srgb, var(--surface) 14%, transparent) 100%),
+        url("assets/nova-scotia-coast.webp") center / cover no-repeat;
+    box-shadow: var(--shadow);
 }
 
 .comic-page-hero h1 {
@@ -1620,7 +1669,9 @@ button:focus-visible {
 
     .hero {
         min-height: 0;
-        padding: 34px 0 26px;
+        margin-top: 14px;
+        padding: 32px 20px 24px;
+        border-radius: 20px;
     }
 
     h1 {
@@ -1669,7 +1720,9 @@ button:focus-visible {
     }
 
     .comic-page-hero {
-        padding: 42px 0 34px;
+        margin-top: 14px;
+        padding: 34px 20px 28px;
+        border-radius: 20px;
     }
 
     .comic-page-hero nav,

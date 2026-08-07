@@ -17,10 +17,10 @@ export fn Main() -> i32 {
 `;
 const EXAMPLES = Object.freeze([
     Object.freeze({
-        Id: "compiler-proof",
-        Title: "WebAssembly compiler proof",
-        Fileˉname: "Compiler-Proof.wv",
-        Description: "The qualified single-module proof: Windvale source becomes canonical WVB, is independently admitted, and returns 42.",
+        Id: "windvale-starter",
+        Title: "Windvale WebAssembly starter",
+        Fileˉname: "WebAssembly-Starter.wv",
+        Description: "A small Windvale program compiled to canonical WVB, independently admitted, and run entirely in browser WebAssembly.",
         Source: EXACT_SOURCE,
     }),
 ]);

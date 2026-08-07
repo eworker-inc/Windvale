@@ -1,23 +1,23 @@
 :root {
     color-scheme: light;
-    --page: #f5f7fb;
+    --page: #f6f8fb;
     --panel: #ffffff;
-    --panel-muted: #f8fafc;
+    --panel-muted: #f1f4f8;
     --editor: #ffffff;
     --text: #172033;
-    --muted: #667085;
-    --faint: #98a2b3;
-    --line: #e4e7ec;
-    --line-strong: #d0d5dd;
-    --blue: #1768e5;
-    --blue-hover: #0f54bd;
-    --blue-soft: #eaf2ff;
-    --green: #18864b;
-    --green-soft: #eaf8f0;
-    --red: #d92d20;
-    --red-soft: #fff0ee;
-    --orange: #b54708;
-    --shadow: 0 12px 36px rgba(21, 31, 48, 0.08);
+    --muted: #5f6878;
+    --faint: #8b96a7;
+    --line: #dce2ec;
+    --line-strong: #b9c7dc;
+    --blue: #2155a5;
+    --blue-hover: #173d78;
+    --blue-soft: #eaf1fc;
+    --green: #2f745e;
+    --green-soft: #e7f3ed;
+    --red: #c92f3d;
+    --red-soft: #ffebee;
+    --orange: #c45f32;
+    --shadow: 0 20px 52px rgba(45, 68, 102, 0.14);
     --sidebar-width: 284px;
     --results-height: 250px;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -25,24 +25,24 @@
 
 :root[data-theme="dark"] {
     color-scheme: dark;
-    --page: #08111c;
-    --panel: #0d1723;
-    --panel-muted: #111d2a;
-    --editor: #0d1520;
-    --text: #d8e1ed;
-    --muted: #91a0b2;
-    --faint: #66778b;
-    --line: #223245;
-    --line-strong: #30445a;
-    --blue: #69a5ff;
-    --blue-hover: #8eb8ff;
-    --blue-soft: #142b49;
-    --green: #55c584;
-    --green-soft: #102c20;
-    --red: #ff7066;
-    --red-soft: #351a1c;
-    --orange: #ffb86b;
-    --shadow: 0 16px 50px rgba(0, 0, 0, 0.24);
+    --page: #08111b;
+    --panel: #0d1a27;
+    --panel-muted: #122231;
+    --editor: #0c1723;
+    --text: #edf3fa;
+    --muted: #a2afbf;
+    --faint: #718296;
+    --line: #24394d;
+    --line-strong: #36536d;
+    --blue: #79a9ef;
+    --blue-hover: #a5c6f6;
+    --blue-soft: #142d4b;
+    --green: #6bc4a0;
+    --green-soft: #123329;
+    --red: #ff7d86;
+    --red-soft: #3b1e25;
+    --orange: #efa170;
+    --shadow: 0 22px 58px rgba(0, 0, 0, 0.34);
 }
 
 * {
@@ -60,6 +60,9 @@ body {
     height: 100vh;
     margin: 0;
     color: var(--text);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--page) 70%, transparent), color-mix(in srgb, var(--page) 90%, transparent)),
+        url("/assets/nova-scotia-coast.webp") center / cover fixed no-repeat;
     overflow: hidden;
 }
 
@@ -97,11 +100,11 @@ svg {
 
 .playground-shell {
     display: grid;
-    grid-template-rows: 58px 46px minmax(0, 1fr) 27px;
+    grid-template-rows: 68px minmax(0, 1fr);
     width: 100%;
     height: 100vh;
     min-height: 540px;
-    background: var(--panel);
+    background: transparent;
 }
 
 .app-header,
@@ -112,13 +115,15 @@ svg {
 }
 
 .app-header {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 38px;
     align-items: center;
-    justify-content: space-between;
     min-width: 0;
-    padding: 0 18px;
+    gap: 24px;
+    padding: 0 clamp(18px, 3vw, 42px);
     border-bottom: 1px solid var(--line);
-    background: var(--panel);
+    background: color-mix(in srgb, var(--page) 88%, transparent);
+    backdrop-filter: blur(18px) saturate(135%);
 }
 
 .playground-brand {
@@ -131,11 +136,6 @@ svg {
     font-weight: 740;
     letter-spacing: -0.015em;
     text-decoration: none;
-}
-
-.playground-brand b {
-    color: var(--muted);
-    font-weight: 600;
 }
 
 .brand-mark {
@@ -157,8 +157,8 @@ svg {
     object-fit: contain;
 }
 
-.header-actions,
-.header-actions a,
+.playground-nav,
+.playground-nav a,
 .toolbar-actions,
 .example-picker,
 .run-button,
@@ -170,43 +170,67 @@ svg {
     align-items: center;
 }
 
-.header-actions {
-    gap: 6px;
+.playground-nav {
+    gap: 26px;
 }
 
-.header-actions a,
+.playground-nav a,
 .icon-button {
-    min-height: 34px;
     color: var(--muted);
     border: 0;
-    border-radius: 7px;
     background: transparent;
 }
 
-.header-actions a {
-    gap: 5px;
-    padding: 0 9px;
-    font-size: 12px;
+.playground-nav a {
+    font-size: 13px;
     font-weight: 650;
     text-decoration: none;
 }
 
-.header-actions a:hover,
+.playground-nav a:hover,
+.playground-nav a:focus-visible,
+.playground-nav a.active,
 .icon-button:hover {
-    color: var(--text);
-    background: var(--panel-muted);
+    color: var(--blue);
 }
 
-.header-actions a svg {
-    width: 16px;
-    height: 16px;
+.playground-nav a.playground-link {
+    padding: 9px 14px;
+    color: #ffffff;
+    border-radius: 9px;
+    background: var(--blue);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--blue) 24%, transparent);
+}
+
+.playground-nav a.playground-link:hover,
+.playground-nav a.playground-link:focus-visible {
+    color: #ffffff;
+    background: var(--blue-hover);
+}
+
+.playground-nav .support-link {
+    padding: 6px 9px;
+    color: var(--red);
+    border: 1px solid color-mix(in srgb, var(--red) 34%, var(--line));
+    border-radius: 999px;
+    background: var(--red-soft);
+}
+
+.playground-nav .support-link:hover,
+.playground-nav .support-link:focus-visible {
+    color: var(--text);
+    border-color: var(--red);
 }
 
 .icon-button {
     display: grid;
     place-items: center;
-    width: 34px;
+    width: 38px;
+    height: 38px;
     padding: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--panel);
 }
 
 .icon-button svg {
@@ -219,13 +243,30 @@ svg {
     display: none;
 }
 
+.playground-frame {
+    display: grid;
+    grid-template-rows: 46px minmax(0, 1fr) 27px;
+    width: min(1500px, calc(100% - 36px));
+    height: calc(100% - 28px);
+    min-width: 0;
+    min-height: 0;
+    margin: 14px auto;
+    overflow: hidden;
+    border: 1px solid var(--line-strong);
+    border-radius: 18px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+}
+
 .ide-toolbar {
     display: flex;
     align-items: stretch;
     justify-content: space-between;
     min-width: 0;
     border-bottom: 1px solid var(--line-strong);
-    background: var(--panel-muted);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--panel-muted) 96%, transparent), color-mix(in srgb, var(--panel-muted) 84%, transparent)),
+        url("/assets/nova-scotia-coast.webp") center 48% / cover no-repeat;
 }
 
 .native-toolbar-note {
@@ -281,13 +322,13 @@ select {
     color: #fff;
     border: 0;
     border-radius: 7px;
-    background: #1768e5;
+    background: var(--blue);
     font-size: 11px;
     font-weight: 740;
 }
 
 .run-button:hover:not(:disabled) {
-    background: #0f54bd;
+    background: var(--blue-hover);
 }
 
 .run-button:disabled {
@@ -1130,13 +1171,13 @@ select {
     min-width: 0;
     padding: 0 10px;
     color: #d8e6f5;
-    background: #123c72;
+    background: #173d78;
     font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
     font-size: 9px;
 }
 
 :root[data-theme="dark"] .status-bar {
-    background: #0f315c;
+    background: #102b48;
 }
 
 .status-bar > div {
@@ -1250,6 +1291,18 @@ select {
     font-size: 24px;
 }
 
+@media (max-width: 1120px) {
+    .playground-nav {
+        gap: 15px;
+    }
+}
+
+@media (max-width: 900px) {
+    .playground-nav a:not(.support-link):not(.playground-link):not(.project-progress-link) {
+        display: none;
+    }
+}
+
 @media (max-width: 780px) {
     body {
         height: auto;
@@ -1257,13 +1310,26 @@ select {
     }
 
     .playground-shell {
-        grid-template-rows: 56px auto auto 28px;
+        grid-template-rows: 62px auto;
         height: auto;
         min-height: 100vh;
     }
 
     .app-header {
+        gap: 10px;
         padding: 0 12px;
+    }
+
+    .playground-nav {
+        gap: 8px;
+    }
+
+    .playground-frame {
+        grid-template-rows: auto auto 28px;
+        width: calc(100% - 16px);
+        height: auto;
+        margin: 8px auto;
+        border-radius: 12px;
     }
 
     .toolbar-actions {
@@ -1349,7 +1415,7 @@ select {
 
 @media (max-width: 560px) {
     .playground-shell {
-        grid-template-rows: 52px auto auto 28px;
+        grid-template-rows: 56px auto;
     }
 
     .app-header {
@@ -1362,9 +1428,20 @@ select {
         border-radius: 9px;
     }
 
-    .playground-brand b,
-    .header-actions a {
+    .playground-brand > span:not(.brand-mark),
+    .playground-nav .project-progress-link {
         display: none;
+    }
+
+    .playground-nav .support-link,
+    .playground-nav .playground-link {
+        padding: 7px 9px;
+        font-size: 11px;
+    }
+
+    .icon-button {
+        width: 35px;
+        height: 35px;
     }
 
     .toolbar-actions {

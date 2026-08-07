@@ -12,6 +12,7 @@ const STATIC_FILES = Object.freeze([
     "preview.png",
     "support-og.png",
     "windvale-logo.png",
+    "assets/nova-scotia-coast.webp",
     "assets/material-symbols-LICENSE.txt",
 ]);
 
@@ -87,7 +88,6 @@ export default defineConfig({
                 target: "http://127.0.0.1:5174",
                 changeOrigin: true,
                 ws: true,
-                rewrite: Path => Path.replace(/^\/playground/, "") || "/",
             },
         },
     },
