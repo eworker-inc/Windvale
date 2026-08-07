@@ -397,6 +397,9 @@
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-Batch-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Batch-Adapter.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvb-To-Wvo-Bounded-Batch-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-Bounded-Batch-Adapter.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvo-Staging-Manifest-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvo-Staging-Manifest-Adapter.wv" />
     <EmbeddedResource

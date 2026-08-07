@@ -1376,6 +1376,7 @@ internal static partial class Program
         new("native console-packager rejections preserve existing output without .NET", [TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉrejectionsˉrun),
         new("native WVB-to-WVO AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL], Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable),
         new("native WVB-to-WVO lowerer emits the pinned object without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉruns),
+        new("native function batches preserve legacy bytes and bounded grouping", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉfunctionˉbatchingˉruns),
         new("digest-bound native WVB-to-WVO launcher preserves the fixed vector", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉfrontˉdoorˉruns),
         new("native WVB-to-WVO rejections preserve existing output without .NET", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉrejectionsˉrun),
         new("large-native WVO staging envelope is verified without one whole object", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉenvelopeˉisˉbounded),
@@ -1385,6 +1386,7 @@ internal static partial class Program
         new("staged compiler WVO resources retain exact snapshot identities", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉresourcesˉareˉbound),
         new("staged compiler WVO snapshots publish atomically without .NET", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpublisherˉruns),
         new("native staged WVO producer and publisher compose without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpipelineˉruns),
+        new("native staged publisher self-lowers and publishes without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpublisherˉselfˉlowers, Testˉcost.Extended),
         new("native u32 formatting lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉformatˉloweringˉagrees),
         new("native byte construction lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉbyteˉconstructionˉloweringˉagrees),
         new("native u32 arithmetic lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉarithmeticˉloweringˉagrees),
@@ -4213,7 +4215,7 @@ internal static partial class Program
 
     private static int Executeˉwindowsˉapplication(
         ImmutableArray<byte> image,
-        string expectedˉoutput = "",
+        string? expectedˉoutput = "",
         IReadOnlyList<string>? arguments = null,
         int timeoutˉmilliseconds = 10_000,
         ISet<string>? loadedˉmodules = null,
@@ -4284,10 +4286,13 @@ internal static partial class Program
             }
             var Standardˉoutput = Process.StandardOutput.ReadToEnd();
             var Standardˉerror = Process.StandardError.ReadToEnd();
-            True(
-                StringComparer.Ordinal.Equals(expectedˉoutput, Standardˉoutput),
-                $"The generated Windows application exited {Process.ExitCode} with " +
-                    $"stdout '{Standardˉoutput}' and stderr '{Standardˉerror}'.");
+            if (expectedˉoutput is not null)
+            {
+                True(
+                    StringComparer.Ordinal.Equals(expectedˉoutput, Standardˉoutput),
+                    $"The generated Windows application exited {Process.ExitCode} with " +
+                        $"stdout '{Standardˉoutput}' and stderr '{Standardˉerror}'.");
+            }
             Equal(expectedˉerror, Standardˉerror);
             return Process.ExitCode;
         }
@@ -5605,7 +5610,7 @@ internal static partial class Program
 
     private static int Executeˉlinuxˉapplication(
         ImmutableArray<byte> image,
-        string expectedˉoutput = "",
+        string? expectedˉoutput = "",
         IReadOnlyList<string>? arguments = null,
         int timeoutˉmilliseconds = 10_000,
         ISet<string>? loadedˉmappings = null,
@@ -5686,10 +5691,13 @@ internal static partial class Program
             }
             var Standardˉoutput = Process.StandardOutput.ReadToEnd();
             var Standardˉerror = Process.StandardError.ReadToEnd();
-            True(
-                StringComparer.Ordinal.Equals(expectedˉoutput, Standardˉoutput),
-                $"The generated Linux application exited {Process.ExitCode} with " +
-                    $"stdout '{Standardˉoutput}' and stderr '{Standardˉerror}'.");
+            if (expectedˉoutput is not null)
+            {
+                True(
+                    StringComparer.Ordinal.Equals(expectedˉoutput, Standardˉoutput),
+                    $"The generated Linux application exited {Process.ExitCode} with " +
+                        $"stdout '{Standardˉoutput}' and stderr '{Standardˉerror}'.");
+            }
             Equal(expectedˉerror, Standardˉerror);
             return Process.ExitCode;
         }

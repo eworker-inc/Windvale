@@ -60,6 +60,13 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0345](../Decisions/0345-Verifier-Scale-Native-Staged-Wvo-Publication.md) replaces complete-function byte accumulation with bounded emission, makes instruction-position construction linear, shortens retained record evidence, and fixes multi-iteration native staging writes and rereads on both host adapters. The Windows native chain now produces, publishes, independently verifies, and exactly reconstructs the real seven-chunk 1,049,615-byte verifier WVO without loading .NET. Deterministic Linux packages are pinned but not yet executed. The publisher's separate self-lowering probe reaches the unchanged 128 MiB text arena; resolving that measured lifetime pressure is the next narrow backend slice rather than a reason to widen the arena.
 
+[Decision 0346](../Decisions/0346-Bounded-Native-Publisher-Self-Lowering.md)
+closes that measured publisher lifetime boundary on Windows without widening
+the native arena. Bounded function-count and grouped-byte limits, block-local
+scratch-record allocation, and the exact ABI 22 hidden-result layout let the
+native producer and publisher reproduce the 6,449,889-byte Stage 0 publisher
+WVO exactly. Linux execution and grouped qualification remain open.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle
@@ -315,6 +322,13 @@ The completion gate is deterministic native AOT output, a qualified baseline-JIT
 [Decision 0187](../Decisions/0187-Project-Aware-Windvale-Native-Build-Driver.md) composes the existing portable Project 1 parser into that same driver without adding capabilities, runtime services, or another top-level compiler test. The canonical driver is now 749,460 bytes and accepts either explicit sources or a `.wvproj`; project mode retains the manifest plus at most 63 source snapshots, derives names beneath a canonical `/` resource prefix, rejects ASCII case aliases conservatively, reads each source once, and produces byte-identical three-module composition output in direct current-host execution. Malformed and duplicate projects preserve an existing output. Native source-to-PE/ELF remains blocked on Windvale ownership of the shared x64 backend rather than on container headers alone; cross-host qualification and atomic publication remain pending.
 
 [Decision 0345](../Decisions/0345-Verifier-Scale-Native-Staged-Wvo-Publication.md) advances that backend transfer from the console packagers to the real verifier-scale staged chain. One Windows native producer/publisher run now owns the exact seven-chunk 1,049,615-byte WVO through independent verification and byte reconstruction. Linux execution and the publisher's measured 128 MiB self-lowering lifetime boundary remain open; neither is hidden by increasing a configured limit.
+
+[Decision 0346](../Decisions/0346-Bounded-Native-Publisher-Self-Lowering.md)
+advances the same transfer through exact current-host publisher self-lowering.
+The earlier 128 MiB failure is resolved by bounded ownership and corrected
+record/frame evidence rather than a larger limit. Linux execution, native
+host-container reconstruction, promotion, and the final retirement gate remain
+open.
 
 The completion gate is a controlled and recoverable Windvale-native toolchain on Windows and Linux with no silent semantic fork, no normal .NET invocation, and matching native bootstrap evidence. This retires .NET as a dependency without erasing the Stage 0 historical record.
 

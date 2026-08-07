@@ -4151,3 +4151,41 @@ with runtime status 5 and detail 2, `Textˉarenaˉexhausted`, at the unchanged
 128 MiB boundary. That precise lifetime pressure is the next local slice.
 Linux execution, Standard, Qualification, promotion, and the grouped
 end-of-goal gate remain deferred.
+
+## Local bounded native publisher self-lowering evidence
+
+[Decision 0346](../Decisions/0346-Bounded-Native-Publisher-Self-Lowering.md)
+supersedes the preceding probe result. It bounds each publication batch by
+function count and grouped-function payload, gives scratch record results
+function-wide identities with independent per-block physical allocation, and
+matches ABI 22's exact hidden descriptor and record result layout.
+
+The refreshed producer WVB is 421,544 bytes at SHA-256
+`4d8fcda41a013768a10a2919d06658d9c37fc66d8acbf51bad839c5ef4d13fc6`.
+The publisher WVB is 440,994 bytes at SHA-256
+`6ef23e0db58ecd788ca97218428dc7a131662f90f5875f7644f76592a7664acc`.
+Direct Windows native execution produces and publishes the exact 6,449,889-byte
+Stage 0 WVO at SHA-256
+`050cf0f189501b1f3f433aff1dd7b8e125fd8e4f58da2ad58258e4b9327c0148`
+in multiple chunks within the 62-chunk resource ceiling, without loading .NET
+or widening the 128 MiB native text arena. The result passes independent WVO
+verification and exact byte comparison.
+
+The deterministic producer packages are 6,170,624 Windows and 6,172,672 Linux
+bytes at SHA-256
+`c18253d135f15195cad32ccf6f7243711bfa959a44696b388475165406216adb`
+and
+`e38bc7b4128afc829de112098c5844d3c3fc159d11d09d6e97ef2f79d19845d7`.
+The publisher packages are 6,458,368 Windows and 6,455,017 Linux bytes at
+SHA-256
+`07ae86a7ed2922f117e3d314b7110812ab2721f8205e86f52c659f23deb84aa8`
+and
+`9ea96ff5977b18c3dc97329601941bc892cc728bf0fb4da747f61dc8f36577ad`.
+
+After review, the focused extended self-lowering contract passes 1/1 in
+39.417 test seconds after a zero-warning Release build. The focused bounded
+batch compatibility and limit contract passes 1/1 in 1.779 test seconds after
+a zero-warning build. No broader local verification was run because these are
+the narrowest reliable checks for the changed boundary and the grouped gate is
+reserved for the end of the retirement goal. Linux packages are pinned but not
+executed by this evidence.

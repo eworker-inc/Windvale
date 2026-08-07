@@ -40,6 +40,14 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | C1 | Clean bootstrap from documented native seeds | `missing` | Current recovery scripts reconstruct pinned native artifacts through Stage 0. A previous native release must rebuild the accepted toolchain without .NET. |
 | C2 | Final digest-bound Stage 0 recovery archive | `missing` | Produce and verify one final Windows/Linux recovery release before deleting retired managed source. |
 
+Current N1 update: [Decision 0346](../Decisions/0346-Bounded-Native-Publisher-Self-Lowering.md)
+supersedes the earlier self-lowering probe result recorded in the ledger row.
+The refreshed 440,994-byte publisher WVB now lowers through the current-host
+native producer and publisher in multiple bounded chunks and exactly matches
+the 6,449,889-byte Stage 0 WVO without loading .NET or widening the native
+arena. Linux execution, native host-package construction, remaining backend
+subset work, promotion, and grouped qualification remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

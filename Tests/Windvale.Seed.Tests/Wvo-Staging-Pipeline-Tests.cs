@@ -159,18 +159,19 @@ internal static partial class Program
         ImmutableArray<byte> application,
         IReadOnlyList<string> arguments,
         ISet<string> loaded,
-        string expectedˉoutput = "") =>
+        string? expectedˉoutput = "",
+        int timeoutˉmilliseconds = 60_000) =>
         OperatingSystem.IsWindows()
             ? Executeˉwindowsˉapplication(
                 application,
                 expectedˉoutput,
                 arguments,
-                timeoutˉmilliseconds: 60_000,
+                timeoutˉmilliseconds: timeoutˉmilliseconds,
                 loadedˉmodules: loaded)
             : Executeˉlinuxˉapplication(
                 application,
                 expectedˉoutput,
                 arguments,
-                timeoutˉmilliseconds: 60_000,
+                timeoutˉmilliseconds: timeoutˉmilliseconds,
                 loadedˉmappings: loaded);
 }

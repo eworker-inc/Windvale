@@ -10,9 +10,18 @@ export record Compilerˉnativeˉx64ˉrecordˉstorage {
     Valid: bool;
     Persistentˉoffsets: bytes;
     Scratchˉoffsets: bytes;
+    Scratchˉblockˉoffsets: bytes;
     Persistentˉfields: u32;
     Scratchˉfields: u32;
     Recordˉvalues: u32;
+}
+
+record Scratchˉblockˉallocation {
+    Valid: bool;
+    Offsets: bytes;
+    Fields: u32;
+    Nextˉevent: u32;
+    Nextˉeventˉoffset: u32;
 }
 
 fn Empty(Input: bytes) -> bytes {
@@ -23,6 +32,7 @@ fn Invalidˉstorage(Input: bytes) -> Compilerˉnativeˉx64ˉrecordˉstorage {
     let Value: bytes = Empty(Input);
     return Compilerˉnativeˉx64ˉrecordˉstorage(
         false,
+        Value,
         Value,
         Value,
         0u32,
@@ -42,6 +52,7 @@ export fn Compilerˉnativeˉx64ˉemptyˉrecordˉstorage(Input: bytes)
         true,
         Value,
         Value,
+        Value,
         0u32,
         0u32,
         0u32
@@ -50,11 +61,11 @@ export fn Compilerˉnativeˉx64ˉemptyˉrecordˉstorage(Input: bytes)
 
 export fn Compilerˉnativeˉx64ˉrecordˉstorageˉdecode(Input: bytes)
     -> Compilerˉnativeˉx64ˉrecordˉstorage {
-    if Bytesˉlength(Input) < 28u32 { return Invalidˉstorage(Input); }
+    if Bytesˉlength(Input) < 32u32 { return Invalidˉstorage(Input); }
     if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1381193303u32 {
         return Invalidˉstorage(Input);
     }
-    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 2u32 {
         return Invalidˉstorage(Input);
     }
     let Persistentˉfields: u32 = Bytesˉreadˉu32ˉlittle(Input, 8u32);
@@ -62,19 +73,30 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉdecode(Input: bytes)
     let Recordˉvalues: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
     let Persistentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
     let Scratchˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
-    let Payloadˉbytes: u32 = Bytesˉlength(Input) - 28u32;
+    let Scratchˉblockˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Input, 28u32);
+    let Payloadˉbytes: u32 = Bytesˉlength(Input) - 32u32;
     if Persistentˉfields > 2048u32 || Scratchˉfields > 2048u32 ||
         Recordˉvalues > 128u32 || Persistentˉbytes > 8192u32 ||
-        Scratchˉbytes > 512u32 || Persistentˉbytes % 4u32 != 0u32 ||
+        Scratchˉbytes > 32768u32 || Scratchˉblockˉbytes > 32768u32 ||
+        Persistentˉbytes % 4u32 != 0u32 ||
         Scratchˉbytes % 4u32 != 0u32 ||
+        Scratchˉblockˉbytes % 4u32 != 0u32 ||
         Persistentˉbytes > Payloadˉbytes ||
-        Scratchˉbytes != Payloadˉbytes - Persistentˉbytes {
+        Scratchˉbytes > Payloadˉbytes - Persistentˉbytes ||
+        Scratchˉblockˉbytes != Payloadˉbytes - Persistentˉbytes -
+            Scratchˉbytes {
         return Invalidˉstorage(Input);
     }
     return Compilerˉnativeˉx64ˉrecordˉstorage(
         true,
-        Bytesˉslice(Input, 28u32, Persistentˉbytes),
-        Bytesˉslice(Input, 28u32 + Persistentˉbytes, Scratchˉbytes),
+        Bytesˉslice(Input, 32u32, Persistentˉbytes),
+        Bytesˉslice(Input, 32u32 + Persistentˉbytes, Scratchˉbytes),
+        Bytesˉslice(
+            Input,
+            32u32 + Persistentˉbytes + Scratchˉbytes,
+            Scratchˉblockˉbytes
+        ),
         Persistentˉfields,
         Scratchˉfields,
         Recordˉvalues
@@ -347,6 +369,321 @@ fn Cellˉeventˉmap(
     return Cellˉeventˉmapˉrange(Input, Relevant, Kind, 0u32, Cells);
 }
 
+fn Invalidˉscratchˉallocation(Input: bytes)
+    -> Allocation.Compilerˉnativeˉx64ˉrecordˉallocation {
+    return Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(
+        Empty(Input),
+        4294967295u32
+    );
+}
+
+fn Invalidˉscratchˉblock(Input: bytes) -> Scratchˉblockˉallocation {
+    return Scratchˉblockˉallocation(
+        false,
+        Empty(Input),
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Buildˉscratchˉblock(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Block: u32,
+    Base: u32,
+    Limit: u32,
+    Events: bytes,
+    Recordˉtypes: bytes,
+    Instructions: u32,
+    Firstˉevent: u32,
+    Firstˉeventˉoffset: u32
+) -> Scratchˉblockˉallocation {
+    let Count: u32 = Limit - Base;
+    var Present: bytes = Zeros(Input, Count);
+    var Live: bytes = Zeros(Input, Count);
+    var Interference: bytes = Zeros(Input, Count * Count);
+    var Event: u32 = Firstˉevent;
+    var Eventˉoffset: u32 = Firstˉeventˉoffset;
+    var Reading: bool = true;
+    while Reading {
+        if Event >= Instructions {
+            Reading = false;
+        } else {
+            if Eventˉoffset + 12u32 > Bytesˉlength(Events) {
+                return Invalidˉscratchˉblock(Input);
+            }
+            let Eventˉblock: u32 = Bytesˉreadˉu32ˉlittle(
+                Events,
+                Eventˉoffset
+            );
+            if Eventˉblock != Block {
+                if Eventˉblock < Block {
+                    return Invalidˉscratchˉblock(Input);
+                }
+                Reading = false;
+            } else {
+            let Resultˉidentifier: u32 = Bytesˉreadˉu32ˉlittle(
+                Events,
+                Eventˉoffset + 4u32
+            );
+            var Result: u32 = 4294967295u32;
+            if Resultˉidentifier != 4294967295u32 {
+                if Resultˉidentifier < Base || Resultˉidentifier >= Limit {
+                    return Invalidˉscratchˉblock(Input);
+                }
+                Result = Resultˉidentifier - Base;
+            }
+            let Useˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Events,
+                Eventˉoffset + 8u32
+            );
+            let Useˉoffset: u32 = Eventˉoffset + 12u32;
+            if Useˉcount > 128u32 ||
+                Useˉcount * 4u32 > Bytesˉlength(Events) - Useˉoffset {
+                return Invalidˉscratchˉblock(Input);
+            }
+            if Result != 4294967295u32 {
+                Present = Setˉbyte(Present, Result, 1u8);
+                Interference =
+                    Allocation.Compilerˉnativeˉx64ˉaddˉliveˉrecordˉinterference(
+                        Interference,
+                        Live,
+                        Count,
+                        Result
+                    );
+                Live = Setˉbyte(Live, Result, 1u8);
+            }
+            var Useˉindex: u32 = 0u32;
+            while Useˉindex < Useˉcount {
+                let Checkedˉuse: u32 = Bytesˉreadˉu32ˉlittle(
+                    Events,
+                    Useˉoffset + Useˉindex * 4u32
+                );
+                if Checkedˉuse < Base || Checkedˉuse >= Limit ||
+                    Bytesˉreadˉu8(Live, Checkedˉuse - Base) != 1u8 {
+                    return Invalidˉscratchˉblock(Input);
+                }
+                Useˉindex = Useˉindex + 1u32;
+            }
+            Useˉindex = 0u32;
+            while Useˉindex < Useˉcount {
+                let Lastˉuse: u32 = Bytesˉreadˉu32ˉlittle(
+                    Events,
+                    Useˉoffset + Useˉindex * 4u32
+                );
+                if !Eventsˉhaveˉlaterˉuse(
+                    Events,
+                    Useˉoffset + Useˉcount * 4u32,
+                    Block,
+                    Lastˉuse
+                ) {
+                    Live = Setˉbyte(Live, Lastˉuse - Base, 0u8);
+                }
+                Useˉindex = Useˉindex + 1u32;
+            }
+            if Result != 4294967295u32 && !Eventsˉhaveˉlaterˉuse(
+                Events,
+                Useˉoffset + Useˉcount * 4u32,
+                Block,
+                Resultˉidentifier
+            ) {
+                Live = Setˉbyte(Live, Result, 0u8);
+            }
+            Eventˉoffset = Useˉoffset + Useˉcount * 4u32;
+            Event = Event + 1u32;
+            }
+        }
+    }
+    var Remainingˉlive: u32 = 0u32;
+    while Remainingˉlive < Count {
+        if Bytesˉreadˉu8(Live, Remainingˉlive) == 1u8 {
+            return Invalidˉscratchˉblock(Input);
+        }
+        Remainingˉlive = Remainingˉlive + 1u32;
+    }
+    let Allocationˉresult:
+        Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Allocation.Compilerˉnativeˉx64ˉallocateˉrecordˉoffsets(
+            Input,
+            Types,
+            Present,
+            Bytesˉslice(Recordˉtypes, Base, Count),
+            Interference,
+            Count
+        );
+    return Scratchˉblockˉallocation(
+        true,
+        Allocationˉresult.Offsets,
+        Allocationˉresult.Fields,
+        Event,
+        Eventˉoffset
+    );
+}
+
+fn Buildˉscratchˉstorage(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Blocks: u32,
+    Events: bytes,
+    Recordˉtypes: bytes,
+    Scratchˉvalues: u32,
+    Scratchˉblockˉoffsets: bytes,
+    Instructions: u32
+) -> Allocation.Compilerˉnativeˉx64ˉrecordˉallocation {
+    if Bytesˉlength(Scratchˉblockˉoffsets) != Blocks * 4u32 ||
+        Bytesˉlength(Recordˉtypes) != Scratchˉvalues {
+        return Invalidˉscratchˉallocation(Input);
+    }
+    var Offsets: bytes = Empty(Input);
+    var Fields: u32 = 0u32;
+    var Event: u32 = 0u32;
+    var Eventˉoffset: u32 = 0u32;
+    var Block: u32 = 0u32;
+    while Block < Blocks {
+        let Base: u32 = Bytesˉreadˉu32ˉlittle(
+            Scratchˉblockˉoffsets,
+            Block * 4u32
+        );
+        var Limit: u32 = Scratchˉvalues;
+        if Block + 1u32 < Blocks {
+            Limit = Bytesˉreadˉu32ˉlittle(
+                Scratchˉblockˉoffsets,
+                (Block + 1u32) * 4u32
+            );
+        }
+        if Base > Limit || Limit > Scratchˉvalues || Limit - Base > 128u32 {
+            return Invalidˉscratchˉallocation(Input);
+        }
+        let Blockˉallocation: Scratchˉblockˉallocation =
+            Buildˉscratchˉblock(
+                Input,
+                Types,
+                Block,
+                Base,
+                Limit,
+                Events,
+                Recordˉtypes,
+                Instructions,
+                Event,
+                Eventˉoffset
+            );
+        if !Blockˉallocation.Valid {
+            return Invalidˉscratchˉallocation(Input);
+        }
+        Offsets = Bytesˉconcat(Offsets, Blockˉallocation.Offsets);
+        if Blockˉallocation.Fields > Fields {
+            Fields = Blockˉallocation.Fields;
+        }
+        Event = Blockˉallocation.Nextˉevent;
+        Eventˉoffset = Blockˉallocation.Nextˉeventˉoffset;
+        Block = Block + 1u32;
+    }
+    if Event != Instructions || Eventˉoffset != Bytesˉlength(Events) ||
+        Bytesˉlength(Offsets) != Scratchˉvalues * 4u32 {
+        return Invalidˉscratchˉallocation(Input);
+    }
+    return Allocation.Compilerˉnativeˉx64ˉrecordˉallocation(
+        Offsets,
+        Fields
+    );
+}
+
+fn Buildˉstorage(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Recordˉlocals: Localˉliveness.Compilerˉnativeˉx64ˉrecordˉlocalˉdirectory,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Blocks: u32,
+    Instructionˉoffsets: bytes,
+    Blockˉstarts: bytes,
+    Blockˉends: bytes,
+    Successorˉfirst: bytes,
+    Successorˉsecond: bytes,
+    Cellˉevents: bytes,
+    Events: bytes,
+    Recordˉtypes: bytes,
+    Recordˉvalues: u32,
+    Scratchˉvalues: u32,
+    Scratchˉblockˉoffsets: bytes,
+    Instructions: u32
+) -> bytes {
+    let Livenessˉcells: u32 = Blocks * Recordˉlocals.Count;
+    let Uses: bytes = Cellˉeventˉmap(
+        Input,
+        Cellˉevents,
+        1u8,
+        Livenessˉcells
+    );
+    let Definitions: bytes = Cellˉeventˉmap(
+        Input,
+        Cellˉevents,
+        2u8,
+        Livenessˉcells
+    );
+    let Persistent:
+        Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Localˉliveness.Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
+            Input,
+            Codeˉoffset,
+            Recordˉlocals,
+            Types,
+            Blocks,
+            Instructionˉoffsets,
+            Blockˉstarts,
+            Blockˉends,
+            Successorˉfirst,
+            Successorˉsecond,
+            Uses,
+            Definitions
+        );
+
+    let Scratch:
+        Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
+        Buildˉscratchˉstorage(
+            Input,
+            Types,
+            Blocks,
+            Events,
+            Recordˉtypes,
+            Scratchˉvalues,
+            Scratchˉblockˉoffsets,
+            Instructions
+        );
+    if Scratch.Fields == 4294967295u32 { return Invalid(Input); }
+    let Header: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(1381193303u32),
+            Bytesˉfromˉu32ˉlittle(2u32)
+        ),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Persistent.Fields),
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Scratch.Fields),
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Recordˉvalues),
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Persistent.Offsets)),
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Scratch.Offsets)),
+                            Bytesˉfromˉu32ˉlittle(
+                                Bytesˉlength(Scratchˉblockˉoffsets)
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    );
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉconcat(Header, Persistent.Offsets),
+            Scratch.Offsets
+        ),
+        Scratchˉblockˉoffsets
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     Input: bytes,
     Codeˉoffset: u32,
@@ -410,6 +747,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     var Events: bytes = Empty(Input);
     var Recordˉtypes: bytes = Empty(Input);
     var Recordˉvalues: u32 = 0u32;
+    var Scratchˉvalues: u32 = 0u32;
+    var Scratchˉblockˉoffsets: bytes = Empty(Input);
     var Blockˉrecordˉvalues: u32 = 0u32;
     var Currentˉblock: u32 = 4294967295u32;
     var Instructions: u32 = 0u32;
@@ -444,6 +783,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Stackˉrecords = Empty(Input);
             Depth = 0u32;
             Blockˉrecordˉvalues = 0u32;
+            Scratchˉblockˉoffsets = Bytesˉconcat(
+                Scratchˉblockˉoffsets,
+                Bytesˉfromˉu32ˉlittle(Scratchˉvalues)
+            );
         }
         if Currentˉblock == 4294967295u32 { return Invalid(Input); }
 
@@ -480,7 +823,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             let Loadˉtype: u8 = Bytesˉreadˉu8(Localˉtypes, Loadˉlocal);
             if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Loadˉtype) {
                 if Blockˉrecordˉvalues >= 128u32 { return Invalid(Input); }
-                Resultˉrecord = Blockˉrecordˉvalues;
+                Resultˉrecord = Scratchˉvalues;
+                Scratchˉvalues = Scratchˉvalues + 1u32;
                 Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;
                 if Blockˉrecordˉvalues > Recordˉvalues {
                     Recordˉvalues = Blockˉrecordˉvalues;
@@ -628,7 +972,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             }
             Depth = Depth - Fields;
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
-            Resultˉrecord = Blockˉrecordˉvalues;
+            Resultˉrecord = Scratchˉvalues;
+            Scratchˉvalues = Scratchˉvalues + 1u32;
             Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;
             if Blockˉrecordˉvalues > Recordˉvalues {
                 Recordˉvalues = Blockˉrecordˉvalues;
@@ -710,7 +1055,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 );
             if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Callˉreturn) {
                 if Blockˉrecordˉvalues >= 128u32 { return Invalid(Input); }
-                Resultˉrecord = Blockˉrecordˉvalues;
+                Resultˉrecord = Scratchˉvalues;
+                Scratchˉvalues = Scratchˉvalues + 1u32;
                 Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;
                 if Blockˉrecordˉvalues > Recordˉvalues {
                     Recordˉvalues = Blockˉrecordˉvalues;
@@ -916,157 +1262,23 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         return Invalid(Input);
     }
 
-    let Livenessˉcells: u32 = Blocks * Recordˉlocals.Count;
-    let Uses: bytes = Cellˉeventˉmap(
+    return Buildˉstorage(
         Input,
+        Codeˉoffset,
+        Recordˉlocals,
+        Types,
+        Blocks,
+        Instructionˉoffsets,
+        Blockˉstarts,
+        Blockˉends,
+        Successorˉfirst,
+        Successorˉsecond,
         Cellˉevents,
-        1u8,
-        Livenessˉcells
-    );
-    let Definitions: bytes = Cellˉeventˉmap(
-        Input,
-        Cellˉevents,
-        2u8,
-        Livenessˉcells
-    );
-    let Persistent:
-        Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
-        Localˉliveness.Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
-            Input,
-            Codeˉoffset,
-            Recordˉlocals,
-            Types,
-            Blocks,
-            Instructionˉoffsets,
-            Blockˉstarts,
-            Blockˉends,
-            Successorˉfirst,
-            Successorˉsecond,
-            Uses,
-            Definitions
-        );
-
-    var Scratchˉpresent: bytes = Zeros(Input, Recordˉvalues);
-    var Scratchˉlive: bytes = Zeros(Input, Recordˉvalues);
-    var Scratchˉinterference: bytes = Zeros(
-        Input,
-        Recordˉvalues * Recordˉvalues
-    );
-    var Eventˉblock: u32 = 4294967295u32;
-    var Event: u32 = 0u32;
-    var Eventˉoffset: u32 = 0u32;
-    while Event < Instructions {
-        let Block: u32 = Bytesˉreadˉu32ˉlittle(Events, Eventˉoffset);
-        if Block != Eventˉblock {
-            var Liveˉrecord: u32 = 0u32;
-            while Liveˉrecord < Recordˉvalues {
-                if Bytesˉreadˉu8(Scratchˉlive, Liveˉrecord) == 1u8 {
-                    return Invalid(Input);
-                }
-                Liveˉrecord = Liveˉrecord + 1u32;
-            }
-            Scratchˉlive = Zeros(Input, Recordˉvalues);
-            Eventˉblock = Block;
-        }
-        let Result: u32 = Bytesˉreadˉu32ˉlittle(
-            Events,
-            Eventˉoffset + 4u32
-        );
-        let Useˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-            Events,
-            Eventˉoffset + 8u32
-        );
-        let Useˉoffset: u32 = Eventˉoffset + 12u32;
-        if Result != 4294967295u32 {
-            Scratchˉpresent = Setˉbyte(Scratchˉpresent, Result, 1u8);
-            Scratchˉinterference =
-                Allocation.Compilerˉnativeˉx64ˉaddˉliveˉrecordˉinterference(
-                    Scratchˉinterference,
-                    Scratchˉlive,
-                    Recordˉvalues,
-                    Result
-                );
-            Scratchˉlive = Setˉbyte(Scratchˉlive, Result, 1u8);
-        }
-        var Useˉindex: u32 = 0u32;
-        while Useˉindex < Useˉcount {
-            let Checkedˉuse: u32 = Bytesˉreadˉu32ˉlittle(
-                Events,
-                Useˉoffset + Useˉindex * 4u32
-            );
-            if Bytesˉreadˉu8(Scratchˉlive, Checkedˉuse) != 1u8 {
-                return Invalid(Input);
-            }
-            Useˉindex = Useˉindex + 1u32;
-        }
-        Useˉindex = 0u32;
-        while Useˉindex < Useˉcount {
-            let Lastˉuse: u32 = Bytesˉreadˉu32ˉlittle(
-                Events,
-                Useˉoffset + Useˉindex * 4u32
-            );
-            if !Eventsˉhaveˉlaterˉuse(
-                Events,
-                Useˉoffset + Useˉcount * 4u32,
-                Block,
-                Lastˉuse
-            ) {
-                Scratchˉlive = Setˉbyte(Scratchˉlive, Lastˉuse, 0u8);
-            }
-            Useˉindex = Useˉindex + 1u32;
-        }
-        if Result != 4294967295u32 {
-            if !Eventsˉhaveˉlaterˉuse(
-                Events,
-                Useˉoffset + Useˉcount * 4u32,
-                Block,
-                Result
-            ) {
-                Scratchˉlive = Setˉbyte(Scratchˉlive, Result, 0u8);
-            }
-        }
-        Eventˉoffset = Useˉoffset + Useˉcount * 4u32;
-        Event = Event + 1u32;
-    }
-    if Eventˉoffset != Bytesˉlength(Events) { return Invalid(Input); }
-    var Remainingˉlive: u32 = 0u32;
-    while Remainingˉlive < Recordˉvalues {
-        if Bytesˉreadˉu8(Scratchˉlive, Remainingˉlive) == 1u8 {
-            return Invalid(Input);
-        }
-        Remainingˉlive = Remainingˉlive + 1u32;
-    }
-    let Scratch:
-        Allocation.Compilerˉnativeˉx64ˉrecordˉallocation =
-        Allocation.Compilerˉnativeˉx64ˉallocateˉrecordˉoffsets(
-            Input,
-            Types,
-            Scratchˉpresent,
-            Recordˉtypes,
-            Scratchˉinterference,
-            Recordˉvalues
-        );
-    let Header: bytes = Bytesˉconcat(
-        Bytesˉconcat(
-            Bytesˉfromˉu32ˉlittle(1381193303u32),
-            Bytesˉfromˉu32ˉlittle(1u32)
-        ),
-        Bytesˉconcat(
-            Bytesˉfromˉu32ˉlittle(Persistent.Fields),
-            Bytesˉconcat(
-                Bytesˉfromˉu32ˉlittle(Scratch.Fields),
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(Recordˉvalues),
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Persistent.Offsets)),
-                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Scratch.Offsets))
-                    )
-                )
-            )
-        )
-    );
-    return Bytesˉconcat(
-        Bytesˉconcat(Header, Persistent.Offsets),
-        Scratch.Offsets
+        Events,
+        Recordˉtypes,
+        Recordˉvalues,
+        Scratchˉvalues,
+        Scratchˉblockˉoffsets,
+        Instructions
     );
 }

@@ -57,6 +57,19 @@ fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
 
+fn Publicationˉfunctionˉbatchˉlimit() -> u32 {
+    return 16u32;
+}
+
+fn Publicationˉgroupedˉfunctionˉbytesˉlimit(
+    Maximumˉartifactˉbytes: u32
+) -> u32 {
+    if Maximumˉartifactˉbytes <= 16u32 { return 1u32; }
+    let Payloadˉbytes: u32 = Maximumˉartifactˉbytes - 16u32;
+    if Payloadˉbytes < 65536u32 { return Payloadˉbytes; }
+    return 65536u32;
+}
+
 fn Data(
     Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan
 ) -> Staticˉdata.Compilerˉnativeˉx64ˉdata {
@@ -175,6 +188,79 @@ fn Batchˉisˉpublishable(
     return Relocationˉbytes % 8u32 == 0u32;
 }
 
+fn Collectˉpublicationˉbatchˉrelocations(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Firstˉfunction: u32,
+    Maximumˉartifactˉbytes: u32
+) -> bytes {
+    let Batch: Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatch =
+        Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatchˉemitˉbounded(
+            Input,
+            Plan,
+            Firstˉfunction,
+            Maximumˉartifactˉbytes,
+            Publicationˉfunctionˉbatchˉlimit(),
+            Publicationˉgroupedˉfunctionˉbytesˉlimit(
+                Maximumˉartifactˉbytes
+            )
+        );
+    if !Batchˉisˉpublishable(Plan, Batch) {
+        return Empty(Input);
+    }
+    let Relocationˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Batch.Artifacts, 8u32);
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Batch.Nextˉfunction),
+        Bytesˉslice(Batch.Artifacts, 16u32, Relocationˉbytes)
+    );
+}
+
+fn Collectˉpublicationˉrelocations(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Maximumˉartifactˉbytes: u32
+) -> bytes {
+    // The leading marker distinguishes a valid zero-relocation result from a
+    // failed batch. Each inner direct bytes return compacts away that batch's
+    // much larger temporary code artifact before the next batch begins.
+    var Result: bytes = Bytesˉfromˉu8(1u8);
+    var Firstˉfunction: u32 = 0u32;
+    while Firstˉfunction < Plan.Functionˉcount {
+        let Batchˉrelocations: bytes =
+            Collectˉpublicationˉbatchˉrelocations(
+                Input,
+                Plan,
+                Firstˉfunction,
+                Maximumˉartifactˉbytes
+            );
+        if Bytesˉlength(Batchˉrelocations) < 4u32 {
+            return Empty(Input);
+        }
+        let Nextˉfunction: u32 = Bytesˉreadˉu32ˉlittle(
+            Batchˉrelocations,
+            0u32
+        );
+        if Nextˉfunction <= Firstˉfunction ||
+            Nextˉfunction > Plan.Functionˉcount {
+            return Empty(Input);
+        }
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉslice(
+                Batchˉrelocations,
+                4u32,
+                Bytesˉlength(Batchˉrelocations) - 4u32
+            )
+        );
+        Firstˉfunction = Nextˉfunction;
+    }
+    if Bytesˉlength(Result) != Plan.Relocationˉbytes + 1u32 {
+        return Empty(Input);
+    }
+    return Result;
+}
+
 export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
     Input: bytes,
     Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
@@ -183,30 +269,20 @@ export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
     if Plan.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
         return Invalidˉregions(Input);
     }
-    var Relocations: bytes = Empty(Input);
-    var Firstˉfunction: u32 = 0u32;
-    while Firstˉfunction < Plan.Functionˉcount {
-        let Batch: Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatch =
-            Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatchˉemit(
-                Input,
-                Plan,
-                Firstˉfunction,
-                Maximumˉartifactˉbytes
-            );
-        if !Batchˉisˉpublishable(Plan, Batch) {
-            return Invalidˉregions(Input);
-        }
-        let Relocationˉbytes: u32 =
-            Bytesˉreadˉu32ˉlittle(Batch.Artifacts, 8u32);
-        Relocations = Bytesˉconcat(
-            Relocations,
-            Bytesˉslice(Batch.Artifacts, 16u32, Relocationˉbytes)
-        );
-        Firstˉfunction = Batch.Nextˉfunction;
-    }
-    if Bytesˉlength(Relocations) != Plan.Relocationˉbytes {
+    let Relocationˉbundle: bytes = Collectˉpublicationˉrelocations(
+        Input,
+        Plan,
+        Maximumˉartifactˉbytes
+    );
+    if Bytesˉlength(Relocationˉbundle) != Plan.Relocationˉbytes + 1u32 ||
+        Bytesˉreadˉu8(Relocationˉbundle, 0u32) != 1u8 {
         return Invalidˉregions(Input);
     }
+    let Relocations: bytes = Bytesˉslice(
+        Relocationˉbundle,
+        1u32,
+        Plan.Relocationˉbytes
+    );
 
     var Padding: bytes = Empty(Input);
     if Plan.Dataˉcount > 0u32 {
@@ -364,11 +440,15 @@ export fn Compilerˉnativeˉx64ˉpublicationˉnext(
     }
     if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Code {
         let Batch: Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatch =
-            Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatchˉemit(
+            Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatchˉemitˉbounded(
                 Input,
                 Plan,
                 Cursor.Nextˉfunction,
-                Maximumˉartifactˉbytes
+                Maximumˉartifactˉbytes,
+                Publicationˉfunctionˉbatchˉlimit(),
+                Publicationˉgroupedˉfunctionˉbytesˉlimit(
+                    Maximumˉartifactˉbytes
+                )
             );
         if !Batchˉisˉpublishable(Plan, Batch) {
             return Stepˉfailure(

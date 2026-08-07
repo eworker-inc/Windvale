@@ -57,6 +57,9 @@ internal static partial class Program
     private static readonly string WVB_TO_WVO_BATCH_ADAPTER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvb-To-Wvo-Batch-Adapter.wv");
+    private static readonly string WVB_TO_WVO_BOUNDED_BATCH_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Bounded-Batch-Adapter.wv");
     private static readonly string NATIVE_X64_LOWERING_PUBLICATION_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Publication.wv");
@@ -119,12 +122,6 @@ internal static partial class Program
         Equal(NATIVE_X64_LOWERING_TOOL_SHA256, Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
         var Toolˉmodule = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
         Equal("Compilerˉnativeˉx64ˉloweringˉtool", Toolˉmodule.Module.Name);
-        var Batchˉadapter = Moduleˉcodec.Readˉandˉverify(
-            Compileˉwvbˉtoˉwvoˉbatchˉsuccess());
-        Equal(
-            "Compilerˉnativeˉx64ˉloweringˉbatchˉtest",
-            Batchˉadapter.Module.Name);
-        Assertˉfunctionˉbatching(Batchˉadapter);
         var Stagingˉbytes = Compileˉwvbˉtoˉwvoˉstagingˉsuccess();
         Equal(WVB_TO_WVO_STAGING_TOOL_WVB_BYTES, Stagingˉbytes.Length);
         Equal(
@@ -546,6 +543,23 @@ internal static partial class Program
             Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan()));
     }
 
+    private static void Nativeˉfunctionˉbatchingˉruns()
+    {
+        var Batchˉadapter = Moduleˉcodec.Readˉandˉverify(
+            Compileˉwvbˉtoˉwvoˉbatchˉsuccess());
+        Equal(
+            "Compilerˉnativeˉx64ˉloweringˉbatchˉtest",
+            Batchˉadapter.Module.Name);
+        Assertˉfunctionˉbatching(Batchˉadapter);
+
+        var Boundedˉbatchˉadapter = Moduleˉcodec.Readˉandˉverify(
+            Compileˉwvbˉtoˉwvoˉboundedˉbatchˉsuccess());
+        Equal(
+            "Compilerˉnativeˉx64ˉloweringˉboundedˉbatchˉtest",
+            Boundedˉbatchˉadapter.Module.Name);
+        Assertˉboundedˉfunctionˉbatching(Boundedˉbatchˉadapter);
+    }
+
     private static void Nativeˉu32ˉformatˉloweringˉagrees()
     {
         var Tool = Moduleˉcodec.Readˉandˉverify(
@@ -582,6 +596,12 @@ internal static partial class Program
             WVB_TO_WVO_BATCH_ADAPTER_SOURCE,
             "function-batch publication adapter",
             includeˉpublication: true);
+
+    private static byte[] Compileˉwvbˉtoˉwvoˉboundedˉbatchˉsuccess() =>
+        Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
+            "Tests/Fixtures/Native-X64/Wvb-To-Wvo-Bounded-Batch-Adapter.wv",
+            WVB_TO_WVO_BOUNDED_BATCH_ADAPTER_SOURCE,
+            "bounded function-batch adapter");
 
     private static byte[] Compileˉwvbˉtoˉwvoˉstagingˉsuccess() =>
         Compileˉwvbˉtoˉwvoˉapplicationˉsuccess(
@@ -713,6 +733,63 @@ internal static partial class Program
             Codeˉbytes);
         Equal((uint)Expectedˉview.Relocations.Length * 8u, Relocationˉbytes);
         Equal((uint)(Evidence.Length / Evidenceˉentryˉbytes) + 6u, Steps);
+    }
+
+    private static void Assertˉboundedˉfunctionˉbatching(
+        Verifiedˉmodule adapter)
+    {
+        const int Headerˉbytes = 8;
+        const int Evidenceˉentryˉbytes = 20;
+        const uint Maximumˉartifactˉbytes = 1_024;
+        const uint Maximumˉfunctions = 2;
+        const uint Maximumˉgroupedˉfunctionˉbytes = 512;
+        var Wvb = Compileˉsuccess(WVB_TO_WVO_LARGE_ENVELOPE_SOURCE);
+        var Evidence = new Referenceˉruntime(
+            adapter,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults with
+            {
+                Maximumˉinstructions = 100_000_000,
+            })
+            .Runˉmainˉbytes(Wvb.ToImmutableArray())
+            .Bytes
+            .ToArray();
+
+        True(
+            Evidence.Length >= Headerˉbytes + Evidenceˉentryˉbytes,
+            "The bounded function-batch evidence is truncated.");
+        Sequenceˉequal("WVBF"u8.ToArray(), Evidence.AsSpan(0, 4).ToArray());
+        Equal(0, (Evidence.Length - Headerˉbytes) % Evidenceˉentryˉbytes);
+        var Functionˉcount = BinaryPrimitives.ReadUInt32LittleEndian(
+            Evidence.AsSpan(4));
+        uint Nextˉfunction = 0;
+        for (var Offset = Headerˉbytes;
+            Offset < Evidence.Length;
+            Offset += Evidenceˉentryˉbytes)
+        {
+            var Entry = Evidence.AsSpan(Offset, Evidenceˉentryˉbytes);
+            var Firstˉfunction = BinaryPrimitives.ReadUInt32LittleEndian(Entry);
+            var Batchˉcount = BinaryPrimitives.ReadUInt32LittleEndian(Entry[4..]);
+            var Batchˉnext = BinaryPrimitives.ReadUInt32LittleEndian(Entry[8..]);
+            var Artifactˉbytes = BinaryPrimitives.ReadUInt32LittleEndian(Entry[12..]);
+            var Firstˉfunctionˉbytes =
+                BinaryPrimitives.ReadUInt32LittleEndian(Entry[16..]);
+            Equal(Nextˉfunction, Firstˉfunction);
+            True(Batchˉcount > 0, "A bounded function batch made no progress.");
+            True(
+                Batchˉcount <= Maximumˉfunctions,
+                "A bounded function batch exceeded its function-count limit.");
+            Equal(Firstˉfunction + Batchˉcount, Batchˉnext);
+            True(
+                Artifactˉbytes <= Maximumˉartifactˉbytes,
+                "A bounded function batch exceeded its artifact limit.");
+            if (Firstˉfunctionˉbytes > Maximumˉgroupedˉfunctionˉbytes)
+            {
+                Equal(1u, Batchˉcount);
+            }
+            Nextˉfunction = Batchˉnext;
+        }
+        Equal(Functionˉcount, Nextˉfunction);
     }
 
     private static void Assertˉobjectˉstaging(

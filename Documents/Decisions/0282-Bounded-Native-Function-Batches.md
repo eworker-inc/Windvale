@@ -70,6 +70,12 @@ large-object publication, ordinary-path cutover, artifact promotion, or .NET
 retirement. Development, Standard, Qualification, Linux execution,
 WebAssembly verification, and the complete grouped gate remain deferred.
 
+[Decision 0346](0346-Bounded-Native-Publisher-Self-Lowering.md) advances this
+boundary with caller-provided function-count and grouped-function byte limits
+while preserving the legacy batch API. The staged publisher now uses at most
+16 functions and 64 KiB of grouped payload per batch, allowing its complete
+current-host closure to self-lower without widening the native arena.
+
 ## Reconsideration triggers
 
 Revisit the batch artifact only if one admitted function can no longer fit in

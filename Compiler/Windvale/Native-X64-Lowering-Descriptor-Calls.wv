@@ -1,5 +1,29 @@
 module Compilerˉnativeˉx64ˉloweringˉdescriptorˉcalls profile portable;
 
+record Descriptorˉreturnˉprefix {
+    Output: bytes;
+    Resetˉbelowˉpatch: u32;
+    Preserveˉoverflowˉpatch: u32;
+    Resetˉstartˉpatch: u32;
+    Resetˉendˉpatch: u32;
+    Internalˉpatch: u32;
+    Preserveˉrangeˉpatch: u32;
+}
+
+record Descriptorˉreturnˉreset {
+    Output: bytes;
+    Preserveˉoverflowˉpatch: u32;
+    Internalˉpatch: u32;
+    Preserveˉrangeˉpatch: u32;
+    Externalˉfromˉresetˉpatch: u32;
+}
+
+record Descriptorˉreturnˉpreserve {
+    Output: bytes;
+    Internalˉpatch: u32;
+    Preserve: u32;
+}
+
 fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
     return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
 }
@@ -156,12 +180,11 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉcheckpoint(
     return Bytesˉconcat(Result, Suffix);
 }
 
-export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
+fn Buildˉdescriptorˉreturnˉprefix(
     Result: bytes,
     Sourceˉslot: u32,
-    Hiddenˉslot: u32,
-    Frameˉbytes: u32
-) -> bytes {
+    Hiddenˉslot: u32
+) -> Descriptorˉreturnˉprefix {
     var Output: bytes = Bytesˉslice(Result, 0u32, 0u32);
     Output = Loadˉeaxˉfield(Output, Hiddenˉslot);
     Output = Appendˉbyte(Output, 65u8);
@@ -228,22 +251,37 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
     Output = Appendˉbyte(Output, 135u8);
     let Preserveˉrangeˉpatch: u32 = Bytesˉlength(Output);
     Output = Appendˉu32(Output, 0u32);
+    return Descriptorˉreturnˉprefix(
+        Output,
+        Resetˉbelowˉpatch,
+        Preserveˉoverflowˉpatch,
+        Resetˉstartˉpatch,
+        Resetˉendˉpatch,
+        Internalˉpatch,
+        Preserveˉrangeˉpatch
+    );
+}
 
+fn Buildˉdescriptorˉreturnˉreset(
+    Prefix: Descriptorˉreturnˉprefix,
+    Hiddenˉslot: u32
+) -> Descriptorˉreturnˉreset {
+    var Output: bytes = Prefix.Output;
     let Reset: u32 = Bytesˉlength(Output);
     Output = Patchˉu32(
         Output,
-        Resetˉbelowˉpatch,
-        Relativeˉu32(Reset, Resetˉbelowˉpatch + 4u32)
+        Prefix.Resetˉbelowˉpatch,
+        Relativeˉu32(Reset, Prefix.Resetˉbelowˉpatch + 4u32)
     );
     Output = Patchˉu32(
         Output,
-        Resetˉstartˉpatch,
-        Relativeˉu32(Reset, Resetˉstartˉpatch + 4u32)
+        Prefix.Resetˉstartˉpatch,
+        Relativeˉu32(Reset, Prefix.Resetˉstartˉpatch + 4u32)
     );
     Output = Patchˉu32(
         Output,
-        Resetˉendˉpatch,
-        Relativeˉu32(Reset, Resetˉendˉpatch + 4u32)
+        Prefix.Resetˉendˉpatch,
+        Relativeˉu32(Reset, Prefix.Resetˉendˉpatch + 4u32)
     );
     Output = Loadˉeaxˉfield(Output, Hiddenˉslot);
     Output = Appendˉbyte(Output, 65u8);
@@ -253,22 +291,37 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
     Output = Appendˉbyte(Output, 233u8);
     let Externalˉfromˉresetˉpatch: u32 = Bytesˉlength(Output);
     Output = Appendˉu32(Output, 0u32);
+    return Descriptorˉreturnˉreset(
+        Output,
+        Prefix.Preserveˉoverflowˉpatch,
+        Prefix.Internalˉpatch,
+        Prefix.Preserveˉrangeˉpatch,
+        Externalˉfromˉresetˉpatch
+    );
+}
 
+fn Buildˉdescriptorˉreturnˉpreserve(
+    Resetˉstate: Descriptorˉreturnˉreset,
+    Sourceˉslot: u32,
+    Hiddenˉslot: u32,
+    Frameˉbytes: u32
+) -> Descriptorˉreturnˉpreserve {
+    var Output: bytes = Resetˉstate.Output;
     let Preserve: u32 = Bytesˉlength(Output);
     Output = Patchˉu32(
         Output,
-        Preserveˉoverflowˉpatch,
-        Relativeˉu32(Preserve, Preserveˉoverflowˉpatch + 4u32)
+        Resetˉstate.Preserveˉoverflowˉpatch,
+        Relativeˉu32(Preserve, Resetˉstate.Preserveˉoverflowˉpatch + 4u32)
     );
     Output = Patchˉu32(
         Output,
-        Preserveˉrangeˉpatch,
-        Relativeˉu32(Preserve, Preserveˉrangeˉpatch + 4u32)
+        Resetˉstate.Preserveˉrangeˉpatch,
+        Relativeˉu32(Preserve, Resetˉstate.Preserveˉrangeˉpatch + 4u32)
     );
     Output = Patchˉu32(
         Output,
-        Externalˉfromˉresetˉpatch,
-        Relativeˉu32(Preserve, Externalˉfromˉresetˉpatch + 4u32)
+        Resetˉstate.Externalˉfromˉresetˉpatch,
+        Relativeˉu32(Preserve, Resetˉstate.Externalˉfromˉresetˉpatch + 4u32)
     );
     Output = Loadˉrdx(Output, Hiddenˉslot);
     Output = Loadˉrax(Output, Sourceˉslot);
@@ -285,12 +338,25 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
     Output = Appendˉbyte(Output, 66u8);
     Output = Appendˉbyte(Output, 12u8);
     Output = Emitˉreturn(Output, Frameˉbytes);
+    return Descriptorˉreturnˉpreserve(
+        Output,
+        Resetˉstate.Internalˉpatch,
+        Preserve
+    );
+}
 
+fn Buildˉdescriptorˉreturnˉinternal(
+    State: Descriptorˉreturnˉpreserve,
+    Sourceˉslot: u32,
+    Hiddenˉslot: u32,
+    Frameˉbytes: u32
+) -> bytes {
+    var Output: bytes = State.Output;
     let Internal: u32 = Bytesˉlength(Output);
     Output = Patchˉu32(
         Output,
-        Internalˉpatch,
-        Relativeˉu32(Internal, Internalˉpatch + 4u32)
+        State.Internalˉpatch,
+        Relativeˉu32(Internal, State.Internalˉpatch + 4u32)
     );
     Output = Loadˉeaxˉfield(Output, Hiddenˉslot);
     Output = Appendˉbyte(Output, 65u8);
@@ -385,12 +451,42 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
     Output = Patchˉu32(
         Output,
         Internalˉoverflowˉpatch,
-        Relativeˉu32(Preserve, Internalˉoverflowˉpatch + 4u32)
+        Relativeˉu32(State.Preserve, Internalˉoverflowˉpatch + 4u32)
     );
     Output = Patchˉu32(
         Output,
         Internalˉlimitˉpatch,
-        Relativeˉu32(Preserve, Internalˉlimitˉpatch + 4u32)
+        Relativeˉu32(State.Preserve, Internalˉlimitˉpatch + 4u32)
+    );
+    return Output;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
+    Result: bytes,
+    Sourceˉslot: u32,
+    Hiddenˉslot: u32,
+    Frameˉbytes: u32
+) -> bytes {
+    let Prefix: Descriptorˉreturnˉprefix =
+        Buildˉdescriptorˉreturnˉprefix(
+            Result,
+            Sourceˉslot,
+            Hiddenˉslot
+        );
+    let Resetˉstate: Descriptorˉreturnˉreset =
+        Buildˉdescriptorˉreturnˉreset(Prefix, Hiddenˉslot);
+    let Preserveˉstate: Descriptorˉreturnˉpreserve =
+        Buildˉdescriptorˉreturnˉpreserve(
+            Resetˉstate,
+            Sourceˉslot,
+            Hiddenˉslot,
+            Frameˉbytes
+        );
+    let Output: bytes = Buildˉdescriptorˉreturnˉinternal(
+        Preserveˉstate,
+        Sourceˉslot,
+        Hiddenˉslot,
+        Frameˉbytes
     );
     return Bytesˉconcat(Result, Output);
 }
