@@ -1,0 +1,147 @@
+module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉtest profile portable;
+
+import Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage as Flat;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Statusˉvalue(
+    Status: Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus
+) -> u32 {
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid {
+        return 0u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Manifest {
+        return 1u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Envelope {
+        return 2u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Symbols {
+        return 3u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Relocations {
+        return 4u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Main {
+        return 5u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉindex {
+        return 6u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉlength {
+        return 7u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange {
+        return 8u32;
+    }
+    if Status == Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉcontent {
+        return 9u32;
+    }
+    return 10u32;
+}
+
+fn Kindˉvalue(
+    Kind: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind
+) -> u32 {
+    if Kind ==
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Metadata {
+        return 0u32;
+    }
+    if Kind == Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Text {
+        return 1u32;
+    }
+    return 2u32;
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < 28u32 { return Empty(Input); }
+    let Manifestˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 0u32);
+    let Prefixˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 4u32);
+    let Readˉonlyˉheaderˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Input, 8u32);
+    let Symbolˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Relocationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Chunkˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Chunkˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Manifestˉbytes > Length - 28u32 { return Empty(Input); }
+    let Afterˉmanifest: u32 = 28u32 + Manifestˉbytes;
+    if Prefixˉbytes > Length - Afterˉmanifest { return Empty(Input); }
+    let Afterˉprefix: u32 = Afterˉmanifest + Prefixˉbytes;
+    if Readˉonlyˉheaderˉbytes > Length - Afterˉprefix {
+        return Empty(Input);
+    }
+    let Afterˉreadˉonlyˉheader: u32 =
+        Afterˉprefix + Readˉonlyˉheaderˉbytes;
+    if Symbolˉbytes > Length - Afterˉreadˉonlyˉheader {
+        return Empty(Input);
+    }
+    let Afterˉsymbols: u32 = Afterˉreadˉonlyˉheader + Symbolˉbytes;
+    if Relocationˉbytes > Length - Afterˉsymbols { return Empty(Input); }
+    let Afterˉrelocations: u32 = Afterˉsymbols + Relocationˉbytes;
+    if Chunkˉbytes != Length - Afterˉrelocations { return Empty(Input); }
+
+    let Stagingˉmanifest: bytes =
+        Bytesˉslice(Input, 28u32, Manifestˉbytes);
+    let Prefix: bytes =
+        Bytesˉslice(Input, Afterˉmanifest, Prefixˉbytes);
+    let Readˉonlyˉheader: bytes = Bytesˉslice(
+        Input,
+        Afterˉprefix,
+        Readˉonlyˉheaderˉbytes
+    );
+    let Symbolˉchunk: bytes = Bytesˉslice(
+        Input,
+        Afterˉreadˉonlyˉheader,
+        Symbolˉbytes
+    );
+    let Relocationˉchunk: bytes = Bytesˉslice(
+        Input,
+        Afterˉsymbols,
+        Relocationˉbytes
+    );
+    let Chunk: bytes = Bytesˉslice(
+        Input,
+        Afterˉrelocations,
+        Chunkˉbytes
+    );
+
+    let Plan: Flat.Linkerˉcompilerˉwvoˉsegmentedˉplan =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    let Linked: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunk =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            Chunkˉindex,
+            Chunk
+        );
+
+    var Output: bytes = Textˉtoˉutf8("WVFL");
+    Output = Appendˉu32(Output, Statusˉvalue(Plan.Status));
+    Output = Appendˉu32(Output, Plan.Imageˉbytes);
+    Output = Appendˉu32(Output, Plan.Entryˉoffset);
+    Output = Appendˉu32(Output, Plan.Manifestˉchunks);
+    Output = Appendˉu32(Output, Plan.Outputˉchunks);
+    Output = Appendˉu32(Output, Plan.Textˉchunks);
+    Output = Appendˉu32(Output, Plan.Relocations);
+    Output = Appendˉu32(Output, Statusˉvalue(Linked.Status));
+    Output = Appendˉu32(Output, Kindˉvalue(Linked.Kind));
+    Output = Appendˉu32(Output, Linked.Imageˉposition);
+    Output = Appendˉu32(Output, Bytesˉlength(Linked.Value));
+    return Bytesˉconcat(Output, Linked.Value);
+}

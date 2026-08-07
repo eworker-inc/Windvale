@@ -1,0 +1,177 @@
+module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉnativeˉtest profile portable;
+
+import Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage as Flat;
+
+data Stagingˉmanifest: bytes = [
+    87, 86, 79, 80, 1, 0, 0, 0, 120, 0, 0, 0,
+    255, 0, 0, 0, 8, 0, 0, 0, 0, 0, 64, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 0,
+    1, 0, 0, 0, 49, 0, 0, 0, 10, 0, 0, 0,
+    2, 0, 0, 0, 59, 0, 0, 0, 6, 0, 0, 0,
+    3, 0, 0, 0, 65, 0, 0, 0, 27, 0, 0, 0,
+    4, 0, 0, 0, 92, 0, 0, 0, 2, 0, 0, 0,
+    5, 0, 0, 0, 94, 0, 0, 0, 3, 0, 0, 0,
+    6, 0, 0, 0, 97, 0, 0, 0, 118, 0, 0, 0,
+    7, 0, 0, 0, 215, 0, 0, 0, 40, 0, 0, 0
+];
+
+data Prefix: bytes = [
+    87, 86, 79, 49, 1, 0, 0, 0, 1, 0, 0, 0,
+    2, 0, 0, 0, 4, 0, 0, 0, 2, 0, 0, 0,
+    1, 0, 0, 0, 16, 0, 0, 0, 16, 0, 0, 0,
+    16, 0, 0, 0, 5, 0, 0, 0, 46, 116, 101, 120, 116
+];
+
+data Readˉonlyˉheader: bytes = [
+    2, 0, 0, 0, 16, 0, 0, 0, 5, 0, 0, 0,
+    5, 0, 0, 0, 7, 0, 0, 0, 46, 114, 111, 100,
+    97, 116, 97
+];
+
+data Symbolˉchunk: bytes = [
+    1, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0,
+    10, 0, 0, 0, 36, 100, 97, 116, 97, 95, 48, 48, 48, 48,
+    1, 2, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0,
+    10, 0, 0, 0, 36, 100, 97, 116, 97, 95, 48, 48, 48, 49,
+    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+    14, 0, 0, 0, 36, 102, 117, 110, 99, 116, 105, 111,
+    110, 95, 48, 48, 48, 48,
+    2, 1, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 6, 0, 0, 0,
+    4, 0, 0, 0, 77, 97, 105, 110
+];
+
+data Relocationˉchunk: bytes = [
+    2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+    0, 0, 0, 0, 252, 255, 255, 255,
+    2, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0,
+    1, 0, 0, 0, 252, 255, 255, 255
+];
+
+data Textˉchunk: bytes = [1, 0, 0, 0, 0, 2, 0, 0, 0, 0];
+data Linkedˉtext: bytes = [1, 11, 0, 0, 0, 2, 8, 0, 0, 0];
+data Invalidˉtext: bytes = [1, 1, 0, 0, 0, 2, 0, 0, 0, 0];
+data Padding: bytes = [144, 144, 144, 144, 144, 144];
+data Readˉonlyˉfirst: bytes = [65, 66];
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        if Bytesˉreadˉu8(Left, Offset) != Bytesˉreadˉu8(Right, Offset) {
+            return false;
+        }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    let Plan: Flat.Linkerˉcompilerˉwvoˉsegmentedˉplan =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if Plan.Status != Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid {
+        return 1;
+    }
+    if Plan.Imageˉbytes != 21u32 || Plan.Entryˉoffset != 4u32 {
+        return 2;
+    }
+    if Plan.Manifestˉchunks != 8u32 || Plan.Outputˉchunks != 4u32 ||
+        Plan.Textˉchunks != 2u32 || Plan.Relocations != 2u32 {
+        return 3;
+    }
+
+    let Text: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunk =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            1u32,
+            Textˉchunk
+        );
+    if Text.Status != Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid ||
+        Text.Kind !=
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Text ||
+        Text.Imageˉposition != 0u32 ||
+        !Bytesˉequal(Text.Value, Linkedˉtext) {
+        return 4;
+    }
+
+    let Paddingˉresult: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunk =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            2u32,
+            Padding
+        );
+    if Paddingˉresult.Status !=
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid ||
+        Paddingˉresult.Kind !=
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Text ||
+        Paddingˉresult.Imageˉposition != 10u32 ||
+        !Bytesˉequal(Paddingˉresult.Value, Padding) {
+        return 5;
+    }
+
+    let Data: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunk =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            4u32,
+            Readˉonlyˉfirst
+        );
+    if Data.Status != Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid ||
+        Data.Kind !=
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Readˉonlyˉdata ||
+        Data.Imageˉposition != 16u32 ||
+        !Bytesˉequal(Data.Value, Readˉonlyˉfirst) {
+        return 6;
+    }
+
+    let Metadata: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunk =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            0u32,
+            Prefix
+        );
+    if Metadata.Status !=
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid ||
+        Metadata.Kind !=
+            Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Metadata ||
+        Bytesˉlength(Metadata.Value) != 0u32 {
+        return 7;
+    }
+
+    let Rejected: Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunk =
+        Flat.Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            1u32,
+            Invalidˉtext
+        );
+    if Rejected.Status != Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Text ||
+        Bytesˉlength(Rejected.Value) != 0u32 {
+        return 8;
+    }
+    return 42;
+}

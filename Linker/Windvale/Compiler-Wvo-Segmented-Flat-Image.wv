@@ -1,0 +1,463 @@
+module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations as Relocations;
+
+export enum Linkerˉcompilerˉwvoˉsegmentedˉstatus {
+    Valid = 0;
+    Manifest = 1;
+    Envelope = 2;
+    Symbols = 3;
+    Relocations = 4;
+    Main = 5;
+    Chunkˉindex = 6;
+    Chunkˉlength = 7;
+    Chunkˉrange = 8;
+    Chunkˉcontent = 9;
+    Text = 10;
+}
+
+export enum Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind {
+    Metadata = 0;
+    Text = 1;
+    Readˉonlyˉdata = 2;
+}
+
+export record Linkerˉcompilerˉwvoˉsegmentedˉplan {
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉstatus;
+    Imageˉbytes: u32;
+    Entryˉoffset: u32;
+    Manifestˉchunks: u32;
+    Outputˉchunks: u32;
+    Textˉchunks: u32;
+    Relocations: u32;
+}
+
+export record Linkerˉcompilerˉwvoˉsegmentedˉchunk {
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉstatus;
+    Kind: Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind;
+    Imageˉposition: u32;
+    Value: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalidˉplan(
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉstatus
+) -> Linkerˉcompilerˉwvoˉsegmentedˉplan {
+    return Linkerˉcompilerˉwvoˉsegmentedˉplan(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Acceptedˉplan(
+    Imageˉbytes: u32,
+    Entryˉoffset: u32,
+    Manifestˉchunks: u32,
+    Outputˉchunks: u32,
+    Textˉchunks: u32,
+    Relocationˉcount: u32
+) -> Linkerˉcompilerˉwvoˉsegmentedˉplan {
+    return Linkerˉcompilerˉwvoˉsegmentedˉplan(
+        Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid,
+        Imageˉbytes,
+        Entryˉoffset,
+        Manifestˉchunks,
+        Outputˉchunks,
+        Textˉchunks,
+        Relocationˉcount
+    );
+}
+
+fn Invalidˉchunk(
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉstatus,
+    Input: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉchunk {
+    return Linkerˉcompilerˉwvoˉsegmentedˉchunk(
+        Status,
+        Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Metadata,
+        0u32,
+        Empty(Input)
+    );
+}
+
+fn Acceptedˉchunk(
+    Kind: Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind,
+    Imageˉposition: u32,
+    Value: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉchunk {
+    return Linkerˉcompilerˉwvoˉsegmentedˉchunk(
+        Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid,
+        Kind,
+        Imageˉposition,
+        Value
+    );
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        if Bytesˉreadˉu8(Left, Offset) != Bytesˉreadˉu8(Right, Offset) {
+            return false;
+        }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+fn Mainˉoffset(Prefix: bytes, Symbolˉchunk: bytes) -> u32 {
+    let Symbolˉcount: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 16u32);
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Symbolˉcount {
+        let Binding: u32 =
+            U32ˉfromˉu8(Bytesˉreadˉu8(Symbolˉchunk, Cursor));
+        let Kind: u32 =
+            U32ˉfromˉu8(Bytesˉreadˉu8(Symbolˉchunk, Cursor + 1u32));
+        if Binding == 2u32 && Kind == 1u32 {
+            return Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 8u32);
+        }
+        let Nameˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 16u32);
+        Cursor = Cursor + 20u32 + Nameˉbytes;
+        Index = Index + 1u32;
+    }
+    return 4294967295u32;
+}
+
+fn Readˉonlyˉchunkˉcount(
+    Stagingˉmanifest: bytes,
+    Manifestˉchunks: u32,
+    Start: u32,
+    End: u32
+) -> u32 {
+    var Result: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Manifestˉchunks {
+        let Entry: u32 = 24u32 + Index * 12u32;
+        let Position: u32 =
+            Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+        if Position >= Start && Position < End {
+            Result = Result + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉplan {
+    let Manifestˉsummary:
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Manifestˉsummary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Invalidˉplan(Linkerˉcompilerˉwvoˉsegmentedˉstatus.Manifest);
+    }
+    let Envelopeˉsummary:
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader
+        );
+    if Envelopeˉsummary.Status !=
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Valid {
+        return Invalidˉplan(Linkerˉcompilerˉwvoˉsegmentedˉstatus.Envelope);
+    }
+    let Symbolˉsummary:
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk
+        );
+    if Symbolˉsummary.Status !=
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid {
+        return Invalidˉplan(Linkerˉcompilerˉwvoˉsegmentedˉstatus.Symbols);
+    }
+    let Relocationˉsummary:
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if Relocationˉsummary.Status !=
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
+        return Invalidˉplan(Linkerˉcompilerˉwvoˉsegmentedˉstatus.Relocations);
+    }
+
+    let Entryˉoffset: u32 = Mainˉoffset(Prefix, Symbolˉchunk);
+    if Entryˉoffset == 4294967295u32 {
+        return Invalidˉplan(Linkerˉcompilerˉwvoˉsegmentedˉstatus.Main);
+    }
+    var Readˉonlyˉchunks: u32 = 0u32;
+    if Envelopeˉsummary.Sections == 2u32 {
+        let Readˉonlyˉstart: u32 = 76u32 + Envelopeˉsummary.Textˉbytes;
+        Readˉonlyˉchunks = Readˉonlyˉchunkˉcount(
+            Stagingˉmanifest,
+            Manifestˉsummary.Chunks,
+            Readˉonlyˉstart,
+            Envelopeˉsummary.Symbolˉposition
+        );
+        if Readˉonlyˉchunks == 0u32 {
+            return Invalidˉplan(
+                Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange
+            );
+        }
+    }
+    return Acceptedˉplan(
+        Envelopeˉsummary.Textˉbytes + Envelopeˉsummary.Readˉonlyˉbytes,
+        Entryˉoffset,
+        Manifestˉsummary.Chunks,
+        Relocationˉsummary.Textˉchunks + Readˉonlyˉchunks,
+        Relocationˉsummary.Textˉchunks,
+        Relocationˉsummary.Relocations
+    );
+}
+
+fn Patchˉtextˉchunk(
+    Envelopeˉsummary:
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes,
+    Position: u32,
+    Chunk: bytes
+) -> bytes {
+    let Length: u32 = Bytesˉlength(Chunk);
+    let End: u32 = Position + Length;
+    var Result: bytes = Empty(Chunk);
+    var Sourceˉoffset: u32 = 0u32;
+    var Relocation: u32 = 0u32;
+    while Relocation < Envelopeˉsummary.Relocations {
+        let Relocationˉentry: u32 = Relocation * 20u32;
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Relocationˉchunk,
+            Relocationˉentry + 8u32
+        );
+        let Patchˉposition: u32 = 49u32 + Patchˉoffset;
+        if Patchˉposition >= Position && Patchˉposition < End {
+            let Localˉoffset: u32 = Patchˉposition - Position;
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(
+                    Chunk,
+                    Sourceˉoffset,
+                    Localˉoffset - Sourceˉoffset
+                )
+            );
+            let Targetˉsymbol: u32 = Bytesˉreadˉu32ˉlittle(
+                Relocationˉchunk,
+                Relocationˉentry + 12u32
+            );
+            let Targetˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Symbolˉchunk,
+                Targetˉsymbol * 30u32 + 8u32
+            );
+            let Value: u32 = Envelopeˉsummary.Textˉbytes -
+                Patchˉoffset - 4u32 + Targetˉoffset;
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉfromˉu32ˉlittle(Value)
+            );
+            Sourceˉoffset = Localˉoffset + 4u32;
+        }
+        Relocation = Relocation + 1u32;
+    }
+    return Bytesˉconcat(
+        Result,
+        Bytesˉslice(Chunk, Sourceˉoffset, Length - Sourceˉoffset)
+    );
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉchunkˉlink(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes,
+    Chunkˉindex: u32,
+    Chunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉchunk {
+    let Plan: Linkerˉcompilerˉwvoˉsegmentedˉplan =
+        Linkerˉcompilerˉwvoˉsegmentedˉplanˉbuild(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if Plan.Status != Linkerˉcompilerˉwvoˉsegmentedˉstatus.Valid {
+        return Invalidˉchunk(Plan.Status, Chunk);
+    }
+    if Chunkˉindex >= Plan.Manifestˉchunks {
+        return Invalidˉchunk(
+            Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉindex,
+            Chunk
+        );
+    }
+    let Entry: u32 = 24u32 + Chunkˉindex * 12u32;
+    let Position: u32 =
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+    let Length: u32 =
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32);
+    if Bytesˉlength(Chunk) != Length {
+        return Invalidˉchunk(
+            Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉlength,
+            Chunk
+        );
+    }
+
+    let Envelopeˉsummary:
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader
+        );
+    let Symbolˉsummary:
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk
+        );
+    let Textˉend: u32 = 49u32 + Envelopeˉsummary.Textˉbytes;
+    if Position >= 49u32 && Position < Textˉend {
+        if Length > Textˉend - Position {
+            return Invalidˉchunk(
+                Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange,
+                Chunk
+            );
+        }
+        let Textˉstatus:
+            Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus =
+            Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
+                Stagingˉmanifest,
+                Prefix,
+                Readˉonlyˉheader,
+                Symbolˉchunk,
+                Relocationˉchunk,
+                Chunkˉindex,
+                Chunk
+            );
+        if Textˉstatus !=
+            Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
+            return Invalidˉchunk(
+                Linkerˉcompilerˉwvoˉsegmentedˉstatus.Text,
+                Chunk
+            );
+        }
+        return Acceptedˉchunk(
+            Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Text,
+            Position - 49u32,
+            Patchˉtextˉchunk(
+                Envelopeˉsummary,
+                Symbolˉchunk,
+                Relocationˉchunk,
+                Position,
+                Chunk
+            )
+        );
+    }
+
+    if Envelopeˉsummary.Sections == 2u32 {
+        let Readˉonlyˉstart: u32 = Textˉend + 27u32;
+        if Position >= Readˉonlyˉstart &&
+            Position < Envelopeˉsummary.Symbolˉposition {
+            if Length > Envelopeˉsummary.Symbolˉposition - Position {
+                return Invalidˉchunk(
+                    Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange,
+                    Chunk
+                );
+            }
+            return Acceptedˉchunk(
+                Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Readˉonlyˉdata,
+                Envelopeˉsummary.Textˉbytes + Position - Readˉonlyˉstart,
+                Chunk
+            );
+        }
+        if Position == Textˉend {
+            if !Bytesˉequal(Chunk, Readˉonlyˉheader) {
+                return Invalidˉchunk(
+                    Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉcontent,
+                    Chunk
+                );
+            }
+            return Acceptedˉchunk(
+                Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Metadata,
+                0u32,
+                Empty(Chunk)
+            );
+        }
+    }
+
+    if Position == 0u32 {
+        if !Bytesˉequal(Chunk, Prefix) {
+            return Invalidˉchunk(
+                Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉcontent,
+                Chunk
+            );
+        }
+        return Acceptedˉchunk(
+            Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Metadata,
+            0u32,
+            Empty(Chunk)
+        );
+    }
+    if Position == Envelopeˉsummary.Symbolˉposition {
+        if !Bytesˉequal(Chunk, Symbolˉchunk) {
+            return Invalidˉchunk(
+                Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉcontent,
+                Chunk
+            );
+        }
+        return Acceptedˉchunk(
+            Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Metadata,
+            0u32,
+            Empty(Chunk)
+        );
+    }
+    if Symbolˉsummary.Relocationˉbytes > 0u32 &&
+        Position == Symbolˉsummary.Relocationˉposition {
+        if !Bytesˉequal(Chunk, Relocationˉchunk) {
+            return Invalidˉchunk(
+                Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉcontent,
+                Chunk
+            );
+        }
+        return Acceptedˉchunk(
+            Linkerˉcompilerˉwvoˉsegmentedˉchunkˉkind.Metadata,
+            0u32,
+            Empty(Chunk)
+        );
+    }
+    return Invalidˉchunk(
+        Linkerˉcompilerˉwvoˉsegmentedˉstatus.Chunkˉrange,
+        Chunk
+    );
+}

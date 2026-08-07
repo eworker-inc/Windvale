@@ -1382,6 +1382,7 @@ internal static partial class Program
         new("large-native WVO staging envelope is verified without one whole object", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉenvelopeˉisˉbounded),
         new("staged compiler WVO symbols are verified from one bounded chunk", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉsymbolsˉareˉverified),
         new("staged compiler WVO relocations and placeholders are verified by chunk", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉrelocationsˉareˉverified),
+        new("segmented compiler WVO links to bounded flat-image chunks", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Compilerˉwvoˉsegmentedˉflatˉimageˉlinks),
         new("staged compiler WVO chunks match retained lowering content", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉcontentˉisˉverified),
         new("staged compiler WVO resources retain exact snapshot identities", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉresourcesˉareˉbound),
         new("staged compiler WVO snapshots publish atomically without .NET", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpublisherˉruns),

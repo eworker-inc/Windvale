@@ -127,6 +127,44 @@ The CLI requires exact `.wvo` inputs and a distinct `.bin` output. It reads boun
 
 The large-native profile is currently an internal Stage 0 API used to establish the exact compiler transport boundary. It is not ambient CLI policy. The qualified Windvale-written linker remains on standard admission because an ordinary Windvale `bytes` value remains limited to 4 MiB; transferring large-link ownership requires a later bounded segmented or sparse input path.
 
+## Segmented compiler-WVO flat-image candidate
+
+The first bounded large-native transfer profile is deliberately narrower than
+the general multi-object linker. It accepts one base-zero, compiler-produced
+WVO represented by a strict `WVOP 1` manifest and its separately retained
+chunks. The existing compiler-WVO envelope, symbol, relocation, placeholder,
+and padding validators must admit the same immutable metadata snapshots before
+link planning succeeds. The profile permits only the compiler's `.text` and
+optional `.rodata` sections, local data and helper symbols, one exported
+`Main`, no imports, and ordered `relative-i32` relocations with addend `-4`.
+
+The plan exposes the exact flat-image length, `Main` entry offset, manifest and
+output chunk counts, text-chunk count, and relocation count. At base zero the
+image is exactly `.text` followed by `.rodata`; the compiler's text padding
+already establishes the required 16-byte read-only-data alignment. For a
+relocation at text offset `P` targeting a data symbol at read-only offset `D`,
+the replacement bits are:
+
+```text
+text-bytes + D - P - 4
+```
+
+Each actual manifest chunk is processed separately. WVO header, section
+header, symbol, and relocation chunks must match their admitted snapshots and
+produce no image bytes. Text chunks must pass the existing per-chunk
+placeholder/padding verifier; their owned relocation fields are replaced while
+the rest of the chunk is copied exactly. Read-only-data chunks are copied at
+their derived image positions. Every input and output value remains within the
+ordinary 4 MiB value ceiling, while the complete planned image remains within
+the explicit 32 MiB large-native ceiling.
+
+This candidate does not generalize standard linking, accept multiple objects
+or imports, emit a canonical map, publish a host resource, or independently
+verify the complete output stream. A fixed owner must process every admitted
+manifest chunk exactly once, preserve positions, add an independently
+implemented chunk/stream verifier, and complete durable publication before it
+can replace the Stage 0 large-native linker in packaging.
+
 ## Deliberate omissions
 
 The flat target has no PE, ELF, UEFI, archive/library search, dynamic linking, weak symbols, COMDAT selection, dead stripping, section merging, executable permissions, debug data, stack/heap declaration, ABI, start-up code, 64-bit absolute relocation, internal-label model, or loader metadata. A raw flat image is not directly executed by Windows or Linux. The UEFI application adapter and capability-free `windows-x64-console-v1` and `linux-x64-console-v1` adapters are downstream targets with their own narrower input and verification rules.
