@@ -181,7 +181,12 @@ call Native_main
 move rdx rax
 shift_right rdx 32
 test edx edx
-branch not_equal Failure
+branch equal Native_status_valid
+# Preserve the packed native runtime status as the developer-facing process
+# status. Ordinary admission failures still retain Main's documented exit code.
+move eax edx
+jump_label Native_exit
+label Native_status_valid
 test eax eax
 branch not_equal Native_exit
 
@@ -528,6 +533,7 @@ branch above_equal Sibling_written
 xor eax eax
 store_memory_u32 rsp none 1 12716 eax
 label Sibling_write_loop
+load_memory_u32 ebx rsp none 1 12712
 move rdx rbx
 shift_left rdx 5
 load_address rbp Snapshot_table
@@ -595,6 +601,7 @@ branch above_equal Sibling_read_complete
 xor eax eax
 store_memory_u32 rsp none 1 12716 eax
 label Sibling_read_loop
+load_memory_u32 ebx rsp none 1 12712
 move rdx rbx
 shift_left rdx 5
 load_address rbp Snapshot_table

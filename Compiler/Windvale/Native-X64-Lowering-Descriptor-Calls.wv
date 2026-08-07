@@ -29,60 +29,83 @@ fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
 }
 
 fn Loadˉeaxˉfield(Result: bytes, Slot: u32) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 139u8);
-    Output = Appendˉbyte(Output, 132u8);
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Slot * 16u32 + 8u32);
+    let Prefix: bytes = Bytesˉconcat(
+        Bytesˉfromˉu16ˉlittle(33931u32),
+        Bytesˉfromˉu8(36u8)
+    );
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(
+            Prefix,
+            Bytesˉfromˉu32ˉlittle(Slot * 16u32 + 8u32)
+        )
+    );
 }
 
 fn Loadˉecxˉfield(Result: bytes, Slot: u32) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 139u8);
-    Output = Appendˉbyte(Output, 140u8);
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Slot * 16u32 + 8u32);
+    let Prefix: bytes = Bytesˉconcat(
+        Bytesˉfromˉu16ˉlittle(35979u32),
+        Bytesˉfromˉu8(36u8)
+    );
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(
+            Prefix,
+            Bytesˉfromˉu32ˉlittle(Slot * 16u32 + 8u32)
+        )
+    );
 }
 
 fn Loadˉrax(Result: bytes, Slot: u32) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 72u8);
-    Output = Appendˉbyte(Output, 139u8);
-    Output = Appendˉbyte(Output, 132u8);
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Slot * 16u32);
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(612666184u32),
+            Bytesˉfromˉu32ˉlittle(Slot * 16u32)
+        )
+    );
 }
 
 fn Loadˉrdx(Result: bytes, Slot: u32) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 72u8);
-    Output = Appendˉbyte(Output, 139u8);
-    Output = Appendˉbyte(Output, 148u8);
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Slot * 16u32);
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(613714760u32),
+            Bytesˉfromˉu32ˉlittle(Slot * 16u32)
+        )
+    );
 }
 
 fn Storeˉrax(Result: bytes, Slot: u32) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 72u8);
-    Output = Appendˉbyte(Output, 137u8);
-    Output = Appendˉbyte(Output, 132u8);
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Slot * 16u32);
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(612665672u32),
+            Bytesˉfromˉu32ˉlittle(Slot * 16u32)
+        )
+    );
 }
 
 fn Storeˉraxˉfield(Result: bytes, Slot: u32) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 72u8);
-    Output = Appendˉbyte(Output, 137u8);
-    Output = Appendˉbyte(Output, 132u8);
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Slot * 16u32 + 8u32);
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(612665672u32),
+            Bytesˉfromˉu32ˉlittle(Slot * 16u32 + 8u32)
+        )
+    );
 }
 
 fn Emitˉreturn(Result: bytes, Frameˉbytes: u32) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 72u8);
-    Output = Appendˉbyte(Output, 129u8);
-    Output = Appendˉbyte(Output, 196u8);
-    Output = Appendˉu32(Output, Frameˉbytes);
-    Output = Appendˉbyte(Output, 73u8);
-    Output = Appendˉbyte(Output, 255u8);
-    Output = Appendˉbyte(Output, 194u8);
-    return Appendˉbyte(Output, 195u8);
+    let Prefix: bytes = Bytesˉconcat(
+        Bytesˉfromˉu16ˉlittle(33096u32),
+        Bytesˉfromˉu8(196u8)
+    );
+    let Suffix: bytes = Bytesˉconcat(
+        Bytesˉconcat(Prefix, Bytesˉfromˉu32ˉlittle(Frameˉbytes)),
+        Bytesˉfromˉu32ˉlittle(3284336457u32)
+    );
+    return Bytesˉconcat(Result, Suffix);
 }
 
 export fn Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(Type: u8) -> bool {
@@ -100,11 +123,13 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉoutput(
     Slot: u32,
     Stackˉbytes: u32
 ) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 72u8);
-    Output = Appendˉbyte(Output, 141u8);
-    Output = Appendˉbyte(Output, 132u8);
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Slot * 16u32 + Stackˉbytes);
+    return Bytesˉconcat(
+        Result,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(612666696u32),
+            Bytesˉfromˉu32ˉlittle(Slot * 16u32 + Stackˉbytes)
+        )
+    );
 }
 
 export fn Compilerˉnativeˉx64ˉemitˉhiddenˉdescriptorˉresult(
@@ -118,14 +143,17 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉcheckpoint(
     Result: bytes,
     Hiddenˉslot: u32
 ) -> bytes {
-    var Output: bytes = Appendˉbyte(Result, 65u8);
-    Output = Appendˉbyte(Output, 139u8);
-    Output = Appendˉbyte(Output, 71u8);
-    Output = Appendˉbyte(Output, 60u8);
-    Output = Appendˉbyte(Output, 137u8);
-    Output = Appendˉbyte(Output, 132u8);
-    Output = Appendˉbyte(Output, 36u8);
-    return Appendˉu32(Output, Hiddenˉslot * 16u32 + 8u32);
+    let Suffix: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(1011321665u32),
+        Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉfromˉu16ˉlittle(33929u32),
+                Bytesˉfromˉu8(36u8)
+            ),
+            Bytesˉfromˉu32ˉlittle(Hiddenˉslot * 16u32 + 8u32)
+        )
+    );
+    return Bytesˉconcat(Result, Suffix);
 }
 
 export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
@@ -134,7 +162,8 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
     Hiddenˉslot: u32,
     Frameˉbytes: u32
 ) -> bytes {
-    var Output: bytes = Loadˉeaxˉfield(Result, Hiddenˉslot);
+    var Output: bytes = Bytesˉslice(Result, 0u32, 0u32);
+    Output = Loadˉeaxˉfield(Output, Hiddenˉslot);
     Output = Appendˉbyte(Output, 65u8);
     Output = Appendˉbyte(Output, 137u8);
     Output = Appendˉbyte(Output, 193u8);
@@ -358,9 +387,10 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
         Internalˉoverflowˉpatch,
         Relativeˉu32(Preserve, Internalˉoverflowˉpatch + 4u32)
     );
-    return Patchˉu32(
+    Output = Patchˉu32(
         Output,
         Internalˉlimitˉpatch,
         Relativeˉu32(Preserve, Internalˉlimitˉpatch + 4u32)
     );
+    return Bytesˉconcat(Result, Output);
 }

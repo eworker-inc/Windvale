@@ -366,3 +366,56 @@ export fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(
     }
     return false;
 }
+
+export fn Compilerˉnativeˉx64ˉanalyzeˉscalarˉarithmetic(
+    Opcode: u8,
+    Stack: bytes,
+    Depth: u32,
+    I32ˉvalues: u32,
+    U32ˉvalues: u32,
+    Bodyˉbytes: u32
+) -> bytes {
+    let Numeric: u32 = U32ˉfromˉu8(Opcode);
+    var Consumed: u32 = 2u32;
+    var Type: u8 = 1u8;
+    var Emittedˉbytes: u32 = 39u32;
+    if Opcode == 18u8 { Emittedˉbytes = 40u32; }
+    if Opcode == 19u8 {
+        Consumed = 1u32;
+        Emittedˉbytes = 32u32;
+    }
+    if Numeric >= 20u32 { Type = 5u8; }
+    if Opcode == 22u8 { Emittedˉbytes = 41u32; }
+    if Numeric >= 173u32 { Emittedˉbytes = 33u32; }
+    if Opcode == 176u8 {
+        Consumed = 1u32;
+        Emittedˉbytes = 26u32;
+    }
+    if Opcode == 177u8 || Opcode == 178u8 { Emittedˉbytes = 42u32; }
+    if Depth < Consumed { return Bytesˉfromˉu8(0u8); }
+    var Operand: u32 = 0u32;
+    while Operand < Consumed {
+        if Bytesˉreadˉu8(Stack, Depth - Operand - 1u32) != Type {
+            return Bytesˉfromˉu8(0u8);
+        }
+        Operand = Operand + 1u32;
+    }
+    let Resultˉdepth: u32 = Depth - Consumed + 1u32;
+    let Resultˉstack: bytes = Bytesˉconcat(
+        Bytesˉslice(Stack, 0u32, Depth - Consumed),
+        Bytesˉfromˉu8(Type)
+    );
+    var Resultˉi32ˉvalues: u32 = I32ˉvalues;
+    var Resultˉu32ˉvalues: u32 = U32ˉvalues;
+    if Type == 1u8 {
+        Resultˉi32ˉvalues = Resultˉi32ˉvalues + 1u32;
+    } else {
+        Resultˉu32ˉvalues = Resultˉu32ˉvalues + 1u32;
+    }
+    var Result: bytes = Bytesˉfromˉu8(1u8);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Resultˉdepth));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Resultˉi32ˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Resultˉu32ˉvalues));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bodyˉbytes + Emittedˉbytes));
+    return Bytesˉconcat(Result, Resultˉstack);
+}

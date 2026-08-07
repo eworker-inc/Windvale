@@ -1,0 +1,15 @@
+module Wvbˉtoˉwvoˉu32ˉbitwise profile portable;
+
+fn Exercise(Value: u32, Mask: u32, Count: u32) -> i32 {
+    if (Value & Mask) != 3407992u32 { return 1; }
+    if (Value | Mask) != 318723839u32 { return 2; }
+    if (Value ^ Mask) != 315315847u32 { return 3; }
+    if ~Value != 3989547399u32 { return 4; }
+    if (Value << Count) != 2443359168u32 { return 5; }
+    if (Value >> Count) != 38177487u32 { return 6; }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    return Exercise(305419896u32, 16711935u32, 3u32);
+}

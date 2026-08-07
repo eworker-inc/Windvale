@@ -14,15 +14,15 @@ public static class Wvoˉstagingˉproducerˉapplicationˉcontract
         "linux-x64-wvo-staging-producer-v1";
     public const string MODULE_NAME =
         "Compilerˉnativeˉx64ˉloweringˉstagingˉtool";
-    public const int MODULE_BYTES = 394_780;
+    public const int MODULE_BYTES = 403_791;
     public const string MODULE_SHA256 =
-        "77158b228c204b587dbf559621ad7c717d4eb5b418c32b783204cd350525ac76";
-    public const int WINDOWS_APPLICATION_BYTES = 5_723_136;
+        "229c7a940bae90592eedd4d9df2bc71a0a21191ce5b0e7bdacccc7cb01515c97";
+    public const int WINDOWS_APPLICATION_BYTES = 5_921_280;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "993b2c5a531261cc5290e45edef0daa329de95b024f5ea749660895df84466de";
-    public const int LINUX_APPLICATION_BYTES = 5_722_112;
+        "6eaea9c7f2aaa88c7c32ed7af49a2c9bc73fb2039de539c694330f5218aca3ac";
+    public const int LINUX_APPLICATION_BYTES = 5_922_816;
     public const string LINUX_APPLICATION_SHA256 =
-        "b38352b1e8d04bd3ac3f66e4ea27dde8391a738e9ce50031ad1f4927a53065d8";
+        "e8c51f1c6c7edba344d125bb92aca01ec488a8bebad1ccf3307bd1e3c7866f1e";
 }
 
 public static class Wvoˉstagingˉproducerˉapplicationˉwriter
@@ -204,7 +204,8 @@ public static class Wvoˉstagingˉproducerˉapplicationˉwriter
                 expectedˉsha256))
         {
             throw new InvalidDataException(
-                $"The {platform} staged-WVO producer application identity is invalid.");
+                $"The {platform} staged-WVO producer application identity is invalid " +
+                $"(bytes={bytes.Length}, sha256={Calculateˉsha256(bytes)}).");
         }
     }
 

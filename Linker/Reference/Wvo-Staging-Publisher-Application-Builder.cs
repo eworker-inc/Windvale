@@ -34,12 +34,12 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
     [
         (LINUX_STARTUP_RESOURCE, 180,
             "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba"),
-        (LINUX_ADAPTER_RESOURCE, 5_221,
-            "6faeb455d1f015a9080a217f84c0b9aaaa5d7f2becc512ad2bc5a2026f68d93c"),
+        (LINUX_ADAPTER_RESOURCE, 5_242,
+            "741ca0cfc1931648f6dad80911448f2299a1e1d5b0c0de4300328fd123f8cba1"),
         (WINDOWS_STARTUP_RESOURCE, 184,
             "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab"),
-        (WINDOWS_ADAPTER_RESOURCE, 9_169,
-            "30437e0087255da97338158d01f1ff000f61b3ec2fb343a2e3ea2893f9fa34df"),
+        (WINDOWS_ADAPTER_RESOURCE, 9_190,
+            "456705dd43ae9efff21a87b75971d306f0755aa9b243879064672a5ab2298f1c"),
         (SNAPSHOT_TABLE_RESOURCE, 1_005,
             "cd4674617667016ed2cbbf6842cbdbae09dbe222a12fe17156241594226a43dd"),
     ];
@@ -293,7 +293,8 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
                 expectedˉsha256))
         {
             throw new InvalidDataException(
-                $"The {platform} staged-WVO publisher application identity is invalid.");
+                $"The {platform} staged-WVO publisher application identity is invalid " +
+                $"(bytes={bytes.Length}, sha256={Calculateˉsha256(bytes)}).");
         }
     }
 

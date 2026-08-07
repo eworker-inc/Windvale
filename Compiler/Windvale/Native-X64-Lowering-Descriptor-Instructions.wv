@@ -27,6 +27,75 @@ data U32ˉremainderˉtemplate: bytes = [
     137, 132, 36, 0, 0, 0, 0
 ];
 
+data U32ˉbitwiseˉandˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    33, 200,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data U32ˉbitwiseˉorˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    9, 200,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data U32ˉbitwiseˉxorˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    49, 200,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data U32ˉbitwiseˉnotˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    247, 208,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data U32ˉshiftˉleftˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    131, 249, 32,
+    15, 131, 0, 0, 0, 0,
+    211, 224,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data U32ˉshiftˉrightˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    131, 249, 32,
+    15, 131, 0, 0, 0, 0,
+    211, 232,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data Scalarˉaddˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    1, 200,
+    15, 128, 0, 0, 0, 0,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data I32ˉmultiplyˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    15, 175, 193,
+    15, 128, 0, 0, 0, 0,
+    137, 132, 36, 0, 0, 0, 0
+];
+
+data U32ˉmultiplyˉtemplate: bytes = [
+    139, 132, 36, 0, 0, 0, 0,
+    139, 140, 36, 0, 0, 0, 0,
+    247, 225, 133, 210,
+    15, 133, 0, 0, 0, 0,
+    137, 132, 36, 0, 0, 0, 0
+];
+
 export record Compilerˉnativeˉx64ˉdescriptorˉinstruction {
     Input: bytes;
     Offset: u32;
@@ -94,6 +163,72 @@ fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
         Output,
         Bytesˉslice(Input, Offset + 1u32, Bytesˉlength(Input) - Offset - 1u32)
     );
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉscalarˉarithmetic(
+    Result: bytes,
+    Opcode: u8,
+    Left: u32,
+    Right: u32,
+    Target: u32,
+    Failureˉtarget: u32
+) -> bytes {
+    if U32ˉfromˉu8(Opcode) <= 22u32 {
+        var Arithmetic: bytes = Scalarˉaddˉtemplate;
+        var Branchˉoffset: u32 = 18u32;
+        var Branchˉend: u32 = 22u32;
+        var Storeˉoffset: u32 = 25u32;
+        if Opcode == 17u8 || Opcode == 21u8 {
+            Arithmetic = Replaceˉu8(Arithmetic, 14u32, 41u8);
+        }
+        if Opcode == 20u8 || Opcode == 21u8 {
+            Arithmetic = Replaceˉu8(Arithmetic, 17u32, 130u8);
+        }
+        if Opcode == 18u8 {
+            Arithmetic = I32ˉmultiplyˉtemplate;
+            Branchˉoffset = 19u32;
+            Branchˉend = 23u32;
+            Storeˉoffset = 26u32;
+        }
+        if Opcode == 22u8 {
+            Arithmetic = U32ˉmultiplyˉtemplate;
+            Branchˉoffset = 20u32;
+            Branchˉend = 24u32;
+            Storeˉoffset = 27u32;
+        }
+        Arithmetic = Patchˉu32(Arithmetic, 3u32, Left * 16u32);
+        Arithmetic = Patchˉu32(Arithmetic, 10u32, Right * 16u32);
+        Arithmetic = Patchˉu32(
+            Arithmetic,
+            Branchˉoffset,
+            Failureˉtarget - Bytesˉlength(Result) - Branchˉend
+        );
+        Arithmetic = Patchˉu32(Arithmetic, Storeˉoffset, Target * 16u32);
+        return Bytesˉconcat(Result, Arithmetic);
+    }
+    var Machine: bytes = U32ˉbitwiseˉandˉtemplate;
+    if Opcode == 174u8 { Machine = U32ˉbitwiseˉorˉtemplate; }
+    if Opcode == 175u8 { Machine = U32ˉbitwiseˉxorˉtemplate; }
+    if Opcode == 176u8 {
+        Machine = Patchˉu32(U32ˉbitwiseˉnotˉtemplate, 3u32, Left * 16u32);
+        Machine = Patchˉu32(Machine, 12u32, Target * 16u32);
+        return Bytesˉconcat(Result, Machine);
+    }
+    if Opcode == 177u8 { Machine = U32ˉshiftˉleftˉtemplate; }
+    if Opcode == 178u8 { Machine = U32ˉshiftˉrightˉtemplate; }
+    Machine = Patchˉu32(Machine, 3u32, Left * 16u32);
+    Machine = Patchˉu32(Machine, 10u32, Right * 16u32);
+    if Opcode == 177u8 || Opcode == 178u8 {
+        Machine = Patchˉu32(
+            Machine,
+            19u32,
+            Failureˉtarget - Bytesˉlength(Result) - 23u32
+        );
+        Machine = Patchˉu32(Machine, 28u32, Target * 16u32);
+    } else {
+        Machine = Patchˉu32(Machine, 19u32, Target * 16u32);
+    }
+    return Bytesˉconcat(Result, Machine);
 }
 
 export fn Compilerˉnativeˉx64ˉu32ˉfromˉu8ˉbytes() -> u32 {

@@ -201,10 +201,13 @@ internal static partial class Program
             includeˉstagingˉcontent: true);
 
     private static Stagingˉcontentˉfixture Buildˉstagingˉcontentˉfixture(
-        string source)
+        string source) =>
+        Buildˉstagingˉcontentˉfixture(Compileˉsuccess(source));
+
+    private static Stagingˉcontentˉfixture Buildˉstagingˉcontentˉfixture(
+        byte[] wvb)
     {
-        var Wvb = Compileˉsuccess(source);
-        var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
+        var Module = Moduleˉcodec.Readˉandˉverify(wvb);
         var Native = X64ˉnativeˉbackend.Compile(Module);
         var Object = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment).ToArray();
         var View = Objectˉcodec.Readˉandˉverify(Object).Value;
@@ -254,7 +257,7 @@ internal static partial class Program
             Chunks[Index] = Object.AsSpan(Position, Lengths[Index]).ToArray();
             Position += Lengths[Index];
         }
-        return new(Wvb, Chunks, Codeˉchunk, Dataˉchunk);
+        return new(wvb, Chunks, Codeˉchunk, Dataˉchunk);
     }
 
     private static byte[][] Cloneˉstagingˉchunks(byte[][] chunks) =>

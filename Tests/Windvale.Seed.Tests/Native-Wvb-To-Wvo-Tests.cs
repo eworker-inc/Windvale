@@ -77,9 +77,9 @@ internal static partial class Program
             "Windvale.Seed.Tests.Wvo-Staging-Native-Bridge-Adapter.wv");
 
     private const int WVB_TO_WVO_TOOL_WVB_BYTES = 372_514;
-    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 394_780;
+    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 404_512;
     private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
-        "77158b228c204b587dbf559621ad7c717d4eb5b418c32b783204cd350525ac76";
+        "95dc261bed239b4549acb2bdf418920ba4f7df76133f5d0994e8778b7115a87d";
     private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 7_991;
     private const string WVO_STAGING_MANIFEST_ADAPTER_SHA256 =
         "e7a29d26e78c3cdae93868960d5be537709fc7ed8ef83de1c0bf84ca5e63c3fa";

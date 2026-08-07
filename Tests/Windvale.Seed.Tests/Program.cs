@@ -1388,6 +1388,8 @@ internal static partial class Program
         new("native u32 formatting lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉformatˉloweringˉagrees),
         new("native byte construction lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉbyteˉconstructionˉloweringˉagrees),
         new("native u32 arithmetic lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉarithmeticˉloweringˉagrees),
+        new("native u32 bitwise operations lower through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉbitwiseˉloweringˉagrees),
+        new("native large-function emission stays exact across bounded chunks", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉchunkedˉfunctionˉemissionˉagrees),
         new("native u32 conversion lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉconversionˉloweringˉagrees),
         new("native u32 division lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉdivisionˉloweringˉagrees),
         new("native record capability and planner lifetime agree through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉrecordˉcapabilityˉloweringˉagrees),

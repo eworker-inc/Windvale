@@ -4105,3 +4105,49 @@ The passing native children are not rerun through the grouped coordinator.
 Linux execution, native service-bundle linking and host-container construction,
 broader backend support, Standard, Qualification, promotion, and the grouped
 end-of-goal gate remain deferred.
+
+## Local verifier-scale native staged-WVO evidence
+
+[Decision 0345](../Decisions/0345-Verifier-Scale-Native-Staged-Wvo-Publication.md)
+keeps every accepted limit unchanged while replacing complete-function byte
+accumulation with bounded 4 KiB emission, making instruction-position evidence
+linear, shortening retained record evidence, and packing fixed lowering
+templates. It also fixes both WVA publication adapters so every native write
+and reread iteration reloads the immutable snapshot ordinal instead of reusing
+the byte-progress cursor as a resource-table index.
+
+The exact 105,006-byte verifier WVB at SHA-256
+`1dcd5f2aeebd974649e64c90d9f473e1e75f7d13dbcde2814de1dded72cf2c0c`
+passes through the direct Windows native producer and publisher. Seven staged
+chunks plus the manifest reconstruct the exact 1,049,615-byte WVO at SHA-256
+`6a550a83ea593ca45c3c13ee6b6a4f815d88f7e05117ae50691d9025c7e45f55`.
+The published object passes independent `X86ˉ64` object verification and exact
+byte comparison against the admitted chunks. The lowerer reports 3,148,072
+peak dynamic payload bytes, 3,148,880 charged bytes, and maximum address
+4,014,976.
+
+The producer WVB is 403,791 bytes at SHA-256
+`229c7a940bae90592eedd4d9df2bc71a0a21191ce5b0e7bdacccc7cb01515c97`.
+Its Windows and Linux packages are 5,921,280 and 5,922,816 bytes at SHA-256
+`6eaea9c7f2aaa88c7c32ed7af49a2c9bc73fb2039de539c694330f5218aca3ac`
+and
+`e8c51f1c6c7edba344d125bb92aca01ec488a8bebad1ccf3307bd1e3c7866f1e`.
+The publisher WVB is 423,241 bytes at SHA-256
+`5d18bc2618938832f0e88ff9f19c6b6577e435e9174044467ae8cb9c8a65026d`.
+Its Windows and Linux packages are 6,209,024 and 6,209,257 bytes at SHA-256
+`a3a7d68543221a907012e677522c513e0a1ece04f029f4605e862f9301c085f2`
+and
+`f539d3a41d7c99fbf8255ed3eb83d67d6a068afaf4f2ad3c738f3c72bdb17c88`.
+
+After review, the focused publisher contract adds a generated code chunk above
+8,192 bytes and passes 1/1 in 6.463 test seconds after a 12.63-second
+zero-warning Release build. It retains the small success, content-mismatch,
+hard-link-alias, and destination-preservation coverage. The focused bitwise,
+exact chunked-emission, record-planner, and small staged-composition checks each
+also pass 1/1 and are not rerun on the unchanged relevant source.
+
+The separate native publisher self-lowering probe fails closed before output
+with runtime status 5 and detail 2, `Textˉarenaˉexhausted`, at the unchanged
+128 MiB boundary. That precise lifetime pressure is the next local slice.
+Linux execution, Standard, Qualification, promotion, and the grouped
+end-of-goal gate remain deferred.

@@ -192,16 +192,18 @@ fn Pushˉscalar(Records: bytes) -> bytes {
     return Pushˉrecord(Records, 4294967295u32);
 }
 
-fn Blockˉforˉleader(Leaders: bytes, Offset: u32) -> u32 {
-    if Offset >= Bytesˉlength(Leaders) { return 4294967295u32; }
-    if Bytesˉreadˉu8(Leaders, Offset) != 1u8 { return 4294967295u32; }
-    var Block: u32 = 0u32;
+fn Blockˉforˉleader(Directory: bytes, Offset: u32) -> u32 {
+    if Bytesˉlength(Directory) % 8u32 != 0u32 { return 4294967295u32; }
     var Cursor: u32 = 0u32;
-    while Cursor < Offset {
-        if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 { Block = Block + 1u32; }
-        Cursor = Cursor + 1u32;
+    while Cursor < Bytesˉlength(Directory) {
+        let Candidate: u32 = Bytesˉreadˉu32ˉlittle(Directory, Cursor);
+        if Candidate == Offset {
+            return Bytesˉreadˉu32ˉlittle(Directory, Cursor + 4u32);
+        }
+        if Candidate > Offset { return 4294967295u32; }
+        Cursor = Cursor + 8u32;
     }
-    return Block;
+    return 4294967295u32;
 }
 
 fn Eventsˉhaveˉlaterˉuse(
@@ -246,21 +248,103 @@ fn Cellˉeventˉexists(
     return false;
 }
 
-fn Cellˉeventˉmap(
+fn Cellˉeventˉmapˉleaf(
     Input: bytes,
     Events: bytes,
     Kind: u8,
+    Start: u32,
     Cells: u32
 ) -> bytes {
     var Result: bytes = Empty(Input);
     var Cell: u32 = 0u32;
     while Cell < Cells {
         var Value: u8 = 0u8;
-        if Cellˉeventˉexists(Events, Kind, Cell) { Value = 1u8; }
+        if Cellˉeventˉexists(Events, Kind, Start + Cell) { Value = 1u8; }
         Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
         Cell = Cell + 1u32;
     }
     return Result;
+}
+
+fn Cellˉeventˉmapˉrange(
+    Input: bytes,
+    Events: bytes,
+    Kind: u8,
+    Start: u32,
+    Cells: u32
+) -> bytes {
+    if Cells <= 64u32 {
+        return Cellˉeventˉmapˉleaf(Input, Events, Kind, Start, Cells);
+    }
+    let Leftˉcells: u32 = Cells / 2u32;
+    let Boundary: u32 = Start + Leftˉcells;
+    let End: u32 = Start + Cells;
+    var Leftˉevents: bytes = Empty(Input);
+    var Rightˉevents: bytes = Empty(Input);
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Events) {
+        let Cell: u32 = Bytesˉreadˉu32ˉlittle(Events, Cursor + 1u32);
+        if Cell >= Start && Cell < Boundary {
+            Leftˉevents = Bytesˉconcat(
+                Leftˉevents,
+                Bytesˉslice(Events, Cursor, 5u32)
+            );
+        } else if Cell >= Boundary && Cell < End {
+            Rightˉevents = Bytesˉconcat(
+                Rightˉevents,
+                Bytesˉslice(Events, Cursor, 5u32)
+            );
+        }
+        Cursor = Cursor + 5u32;
+    }
+    var Left: bytes = Zeros(Input, Leftˉcells);
+    if Bytesˉlength(Leftˉevents) > 0u32 {
+        Left = Cellˉeventˉmapˉrange(
+            Input,
+            Leftˉevents,
+            Kind,
+            Start,
+            Leftˉcells
+        );
+    }
+    let Rightˉcells: u32 = Cells - Leftˉcells;
+    var Right: bytes = Zeros(Input, Rightˉcells);
+    if Bytesˉlength(Rightˉevents) > 0u32 {
+        Right = Cellˉeventˉmapˉrange(
+            Input,
+            Rightˉevents,
+            Kind,
+            Boundary,
+            Rightˉcells
+        );
+    }
+    if Bytesˉlength(Left) != Leftˉcells ||
+        Bytesˉlength(Right) != Rightˉcells {
+        return Empty(Input);
+    }
+    return Bytesˉconcat(Left, Right);
+}
+
+fn Cellˉeventˉmap(
+    Input: bytes,
+    Events: bytes,
+    Kind: u8,
+    Cells: u32
+) -> bytes {
+    if Bytesˉlength(Events) % 5u32 != 0u32 { return Empty(Input); }
+    var Relevant: bytes = Empty(Input);
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Events) {
+        if Bytesˉreadˉu8(Events, Cursor) == Kind {
+            Relevant = Bytesˉconcat(
+                Relevant,
+                Bytesˉslice(Events, Cursor, 5u32)
+            );
+        }
+        Cursor = Cursor + 5u32;
+    }
+    if Bytesˉlength(Relevant) == 0u32 { return Zeros(Input, Cells); }
+    return Cellˉeventˉmapˉrange(Input, Relevant, Kind, 0u32, Cells);
 }
 
 export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
@@ -293,16 +377,27 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
     }
     if Bytesˉreadˉu8(Leaders, 0u32) != 1u8 { return Invalid(Input); }
 
+    var Blockˉdirectory: bytes = Empty(Input);
     var Countedˉblocks: u32 = 0u32;
     var Offset: u32 = 0u32;
     while Offset < Codeˉlength {
         if Bytesˉreadˉu8(Leaders, Offset) == 1u8 {
             if Countedˉblocks >= Blocks { return Invalid(Input); }
+            Blockˉdirectory = Bytesˉconcat(
+                Blockˉdirectory,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Offset),
+                    Bytesˉfromˉu32ˉlittle(Countedˉblocks)
+                )
+            );
             Countedˉblocks = Countedˉblocks + 1u32;
         }
         Offset = Offset + 1u32;
     }
-    if Countedˉblocks != Blocks { return Invalid(Input); }
+    if Countedˉblocks != Blocks ||
+        Bytesˉlength(Blockˉdirectory) != Blocks * 8u32 {
+        return Invalid(Input);
+    }
 
     var Instructionˉoffsets: bytes = Empty(Input);
     var Blockˉstarts: bytes = Empty(Input);
@@ -691,7 +786,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             );
             if Jumpˉtarget >= Codeˉlength { return Invalid(Input); }
             let Jumpˉtargetˉblock: u32 = Blockˉforˉleader(
-                Leaders,
+                Blockˉdirectory,
                 Jumpˉtarget
             );
             if Jumpˉtargetˉblock == 4294967295u32 { return Invalid(Input); }
@@ -723,7 +818,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             );
             if Branchˉtarget >= Codeˉlength { return Invalid(Input); }
             let Branchˉtargetˉblock: u32 = Blockˉforˉleader(
-                Leaders,
+                Blockˉdirectory,
                 Branchˉtarget
             );
             if Branchˉtargetˉblock == 4294967295u32 { return Invalid(Input); }

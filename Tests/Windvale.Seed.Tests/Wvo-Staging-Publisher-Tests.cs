@@ -9,17 +9,17 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 414_230;
+    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 423_241;
     private const string WVO_STAGING_PUBLISHER_TOOL_SHA256 =
-        "07b9e0eff09927208980a0acdd7d88acc6cb3f40981d0c0a582951e7d30517f1";
+        "5d18bc2618938832f0e88ff9f19c6b6577e435e9174044467ae8cb9c8a65026d";
     private const string LINUX_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba";
     private const string LINUX_WVO_STAGING_ADAPTER_WVO_SHA256 =
-        "6faeb455d1f015a9080a217f84c0b9aaaa5d7f2becc512ad2bc5a2026f68d93c";
+        "741ca0cfc1931648f6dad80911448f2299a1e1d5b0c0de4300328fd123f8cba1";
     private const string WINDOWS_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab";
     private const string WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256 =
-        "30437e0087255da97338158d01f1ff000f61b3ec2fb343a2e3ea2893f9fa34df";
+        "456705dd43ae9efff21a87b75971d306f0755aa9b243879064672a5ab2298f1c";
     private const string X64_WVO_STAGING_SNAPSHOT_WVO_SHA256 =
         "cd4674617667016ed2cbbf6842cbdbae09dbe222a12fe17156241594226a43dd";
 
@@ -82,7 +82,7 @@ internal static partial class Program
             "Linux_wvo_staging_publisher_startup");
         Assertˉstagingˉobject(
             Linuxˉadapter,
-            5_221,
+            5_242,
             LINUX_WVO_STAGING_ADAPTER_WVO_SHA256,
             "Linux_wvo_staging_publisher_run");
         Assertˉstagingˉobject(
@@ -92,7 +92,7 @@ internal static partial class Program
             "Windows_wvo_staging_publisher_startup");
         Assertˉstagingˉobject(
             Windowsˉadapter,
-            9_169,
+            9_190,
             WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256,
             "Windows_wvo_staging_publisher_run");
         Assertˉstagingˉobject(
@@ -145,6 +145,23 @@ internal static partial class Program
             Fixture.Chunks,
             Fixture.Codeˉchunk,
             Expectedˉobject);
+
+        var Chunked = Buildˉstagingˉcontentˉfixture(
+            Buildˉchunkedˉfunctionˉfixture());
+        True(
+            Chunked.Chunks[Chunked.Codeˉchunk].Length > 8_192,
+            "The staged publisher regression fixture stayed inside one iteration.");
+        Assertˉcurrentˉhostˉstagingˉpublisher(
+            OperatingSystem.IsWindows()
+                ? Windows.Imageˉbytes
+                : Linux.Imageˉbytes,
+            Chunked.Wvb,
+            Buildˉstagingˉmanifest(
+                Chunked.Chunks.Select(Chunk => checked((uint)Chunk.Length)).ToArray()),
+            Chunked.Chunks,
+            Chunked.Codeˉchunk,
+            Chunked.Chunks.SelectMany(Chunk => Chunk).ToArray(),
+            verifyˉfailureˉpaths: false);
     }
 
     private static void Assertˉstagingˉobject(
@@ -168,7 +185,8 @@ internal static partial class Program
         byte[] manifest,
         byte[][] chunks,
         int changedˉchunk,
-        byte[] expectedˉobject)
+        byte[] expectedˉobject,
+        bool verifyˉfailureˉpaths = true)
     {
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
@@ -199,6 +217,11 @@ internal static partial class Program
                     Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
                     Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
                     Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+
+            if (!verifyˉfailureˉpaths)
+            {
+                return;
+            }
 
             var Preserved = new byte[] { 4, 3, 2, 1 };
             var Changed = Cloneˉstagingˉchunks(chunks);

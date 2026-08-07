@@ -466,6 +466,9 @@
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-U32-Arithmetic.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-U32-Arithmetic.wv" />
     <EmbeddedResource
+      Include="../Fixtures/Native-X64/Wvb-To-Wvo-U32-Bitwise.wv"
+      LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-U32-Bitwise.wv" />
+    <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvb-To-Wvo-U32-Conversion.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-To-Wvo-U32-Conversion.wv" />
     <EmbeddedResource
