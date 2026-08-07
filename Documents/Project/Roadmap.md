@@ -36,6 +36,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0332](../Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) replaces the linker's framework-seeded hostile-byte loop with a portable, immutable 200-input corpus and exact public `WVL1002` behavior. The retirement coordinator now owns 11 suites and 274 cases; Linux execution and the unfiltered grouped gate remain deferred.
 
+[Decision 0334](../Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) replaces the managed PE/ELF verifier random-byte loops with 256 immutable bounded candidates through the Windvale-native publisher. Exact rejection, input/destination preservation, and zero scratch grow the coordinator to 12 suites and 530 cases; curated valid-shaped mutations, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

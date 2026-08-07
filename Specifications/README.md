@@ -76,6 +76,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Portable console-application construction recipe](Windvale-Console-Application-Construction.md)
 - [Native console-application packager](Windvale-Native-Console-Packager.md)
 - [Native console-application publisher](Windvale-Native-Console-Application-Publisher.md)
+- [Native console-container hostile-input tests](Windvale-Native-Console-Container-Hostile-Input-Tests.md)
 - [WVA native stencils](Wva-Native-Stencil.md)
 - [Native publication plan](Windvale-Native-Publication-Plan.md)
 - [Native publication lifetime](Windvale-Native-Publication-Lifetime.md)

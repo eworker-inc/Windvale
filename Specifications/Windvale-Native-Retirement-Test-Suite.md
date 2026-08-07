@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 868 LF-only bytes with SHA-256
-`088bf17789d2aaef00c1b063ac98e39cd2c3d6aa9de119bb127fd16d5c81565c`.
+`Tests/Native/Retirement-Suite.txt` is 971 LF-only bytes with SHA-256
+`436eb69af01cb74e244880ff2949d9d007cd9086b23449a68809f94197c36b94`.
 The first line is exactly:
 
 ```text
@@ -49,10 +49,11 @@ file. The current plan is:
 | `linker-hostile` | `Test-Linker-Hostile-Inputs` | 200 | `Tests: 200, Passed: 200, Failed: 0` |
 | `linker-map-limit` | `Test-Linker-Map-Limit` | 1 | `Tests: 1, Passed: 1, Failed: 0` |
 | `console-packager-rejections` | `Test-Console-Packager-Rejections` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
+| `console-container-hostile` | `Test-Console-Container-Hostile-Inputs` | 256 | `Tests: 256, Passed: 256, Failed: 0` |
 | `publisher-rejections` | `Test-Publisher-Rejections` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 11 suites and 274 cases.
+The version-1 plan therefore contains exactly 12 suites and 530 cases.
 
 ## Coordinator contract
 
@@ -74,7 +75,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 11, Passed: 11, Failed: 0, Cases: 274
+Suites: 12, Passed: 12, Failed: 0, Cases: 530
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:
@@ -92,6 +93,6 @@ a new plan digest in both coordinators, and corresponding contract evidence.
 ## Boundary
 
 This suite proves deterministic composition of the fixed native lanes. It does
-not by itself qualify Linux execution, replace broad managed randomized or
-differential evidence, promote candidate applications, authorize removal of
+not by itself qualify Linux execution, replace remaining managed valid-shaped
+or differential evidence, promote candidate applications, authorize removal of
 Stage 0, or complete the Decision 0057 retirement gate.

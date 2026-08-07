@@ -8,5 +8,6 @@ linker-rejections|Test-Linker-Rejections|10|Tests: 10, Passed: 10, Failed: 0
 linker-hostile|Test-Linker-Hostile-Inputs|200|Tests: 200, Passed: 200, Failed: 0
 linker-map-limit|Test-Linker-Map-Limit|1|Tests: 1, Passed: 1, Failed: 0
 console-packager-rejections|Test-Console-Packager-Rejections|3|Tests: 3, Passed: 3, Failed: 0
+console-container-hostile|Test-Console-Container-Hostile-Inputs|256|Tests: 256, Passed: 256, Failed: 0
 publisher-rejections|Test-Publisher-Rejections|2|Tests: 2, Passed: 2, Failed: 0
 aot-chain|Test-Aot-Chain|1|native aot chain status=Passed result=42

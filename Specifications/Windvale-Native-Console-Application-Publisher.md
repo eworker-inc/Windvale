@@ -109,6 +109,12 @@ now exercises invalid console-application admission through this exact launcher,
 requiring destination preservation and zero scratch without rebuilding the
 publisher or invoking .NET.
 
+The separate [console-container hostile-input contract](Windvale-Native-Console-Container-Hostile-Input-Tests.md)
+drives 128 immutable PE candidates and 128 immutable ELF candidates through
+this same public launcher. It requires exact rejection, complete candidate and
+destination preservation, and zero scratch without executing either container,
+generating runtime input, or consulting .NET.
+
 ## Remaining gate
 
 The WVB and paired applications are Stage 0-constructed because the qualified

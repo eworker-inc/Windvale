@@ -34,14 +34,15 @@ The exact filter names and case counts are:
 | `linker-hostile` | 200 |
 | `linker-map-limit` | 1 |
 | `console-packager-rejections` | 3 |
+| `console-container-hostile` | 256 |
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 11 suites and 274 cases in manifest order. Its
+Omitting `--filter` selects all 12 suites and 530 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 11, Passed: 11, Failed: 0, Cases: 274
+Suites: 12, Passed: 12, Failed: 0, Cases: 530
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -231,6 +232,26 @@ Tests: 3, Passed: 3, Failed: 0
 All cases require the current-host native packager to reject before publication,
 write no standard output, emit the exact host-target report identity, and leave
 the complete pre-existing destination unchanged.
+
+The console-container hostile lane expands one digest-bound archive into 128 PE
+and 128 ELF candidates, then drives both suffix-selected portable verifier paths
+through the current-host native console publisher. Run only this lane with:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter console-container-hostile
+```
+
+or on Linux:
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter console-container-hostile
+```
+
+Every manifest-owned case requires exact rejection, empty standard output,
+unchanged input and destination, and zero `.wvpublish-*` scratch. Inputs include
+explicit zero and 4,096-/9,000-byte boundaries and are never generated during
+the run. The exact terminal summary is
+`Tests: 256, Passed: 256, Failed: 0`.
 
 The focused publisher command tests pre-replacement admission and cleanup without
 running a successful package or lower operation. On Windows x64 run:

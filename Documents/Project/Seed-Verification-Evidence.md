@@ -3683,3 +3683,32 @@ suites and 274 cases at SHA-256
 Linux execution, Development, Standard, Qualification, promotion, and the
 grouped end-of-goal gate remain deferred. No product or WebAssembly
 implementation changed.
+
+## Local fixed native console-container hostile-input evidence
+
+[Decision 0334](../Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md)
+replaces both managed platform-verifier random-byte loops with one fixed
+.NET-free corpus. The 826,091-byte archive at SHA-256
+`2aa0a153aaf1c70fe650f99e302ebd2aaa9908228175e0f0bebdd9894a872112`
+contains 128 PE candidates and 128 ELF candidates totaling 802,246 bytes. Its
+27,372-byte manifest fixes every target, length, and SHA-256, including explicit
+zero and 4,096-/9,000-byte boundaries.
+
+Static review confirms unique filenames, exact 128/128 family counts, complete
+manifest agreement, and no managed invocation in either permanent host command.
+The first Windows attempt stopped before any test case because batch `set /p`
+did not isolate the LF-only manifest header; the next pre-case attempt exposed
+LF rather than required CRLF line endings in the new `.cmd`. After those two
+wrapper-only corrections, the direct focused command passes 256/256 in 74.286
+seconds. Every Windvale-native publisher call emits the exact console-application rejection,
+writes no standard output, preserves the input and destination, and leaves no
+publication scratch.
+
+The already-passing child was not rerun through the unchanged retirement-suite
+coordinator. The reviewed 971-byte LF-only plan now contains 12 suites and 530
+cases at SHA-256
+`436eb69af01cb74e244880ff2949d9d007cd9086b23449a68809f94197c36b94`.
+Linux execution, curated valid-shaped PE/ELF mutations, remaining WVO/WVA/source
+differential families, Development, Standard, Qualification, promotion, and the
+grouped end-of-goal gate remain deferred. No product or WebAssembly
+implementation changed.

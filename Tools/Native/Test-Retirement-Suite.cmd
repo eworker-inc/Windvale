@@ -12,7 +12,7 @@ set "Filter=%~2"
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Retirement-Suite.txt"
-set "PlanDigest=088bf17789d2aaef00c1b063ac98e39cd2c3d6aa9de119bb127fd16d5c81565c"
+set "PlanDigest=436eb69af01cb74e244880ff2949d9d007cd9086b23449a68809f94197c36b94"
 certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"%PlanDigest%" >nul
 if errorlevel 1 (
     >&2 echo Native retirement suite plan identity differs
