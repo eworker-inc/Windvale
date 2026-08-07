@@ -3782,3 +3782,43 @@ containment, hostile-size WVO, source/PE/ELF differential families,
 Development, Standard, Qualification, promotion, and the grouped end-of-goal
 gate remain deferred. No product, WVA/WVO format, candidate artifact, managed
 reference, or WebAssembly implementation changed.
+
+## Local fixed native random-containment evidence
+
+[Decision 0337](../Decisions/0337-Fixed-Native-Random-Containment-Corpus.md)
+freezes the exact managed `0x00575642` sequence at commit `d964660`. A one-time
+reviewed reference program retained the single continued PRNG stream across 500
+source values, 1,000 WVB values, and 500 WVO values, including the source
+compiler and assembler outcomes. It was removed after emitting the immutable
+corpus; no managed generator belongs to the permanent commands.
+
+The 617,645-byte archive at SHA-256
+`c3d17ee927d8c485fc98b85c4b50d5fb6110532b8a2d02b818d7018903f2edc6`
+contains 504,850 input bytes plus a 240,966-byte manifest at SHA-256
+`d7076c44f43192db832796553cbe605c20829361d7249e111a270ff22458186c`.
+Static review rechecked all 2,000 unique names, contiguous family ordinals,
+logical and encoded lengths, digests, Stage 0 outcomes/codes/offsets, strict
+UTF-8 source values, exact zero and maximum boundaries, and archive order. All
+Stage 0 outcomes are rejection. Permanent execution verifies the complete
+archive and manifest before selecting one lane.
+
+The reviewed direct Windows source command passes 500/500 in 27.6 seconds. Each
+value returns one bounded `WVCO 1` diagnostic from a fresh import-free ABI-4
+compiler instance, and the native assembler returns exact `WVA1001` while
+preserving both input and destination. The WVB command passes 1,000/1,000 in
+27.8 seconds, and the WVO command passes 500/500 in 22.0 seconds; both require
+one structured native rejection and preserve every input.
+
+An exploratory attempt to start the WVB and WVO commands concurrently stopped
+at `Wvb-0188` with a noncontract exit. That exact case and its four-case neighbor
+group immediately returned the required result; the complete commands then
+passed separately. The permanent retirement coordinator runs lanes
+sequentially. Passing children were not rerun through that changed coordinator.
+
+The reviewed 1,364-byte LF-only plan now contains 17 suites and 2,986 cases at
+SHA-256
+`6019c0f0577e096476d479a4de9a65a919a230064d1051c7bd587342aa5fa89a`.
+Linux execution, hostile-size WVO, remaining source/PE/ELF differential data,
+Development, Standard, Qualification, promotion, and the grouped end-of-goal
+gate remain deferred. No product, format, candidate artifact, managed reference,
+or WebAssembly implementation changed.
