@@ -56,6 +56,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0343](../Decisions/0343-Native-Console-Packager-Source-Reconstruction.md) corrects canonical dependency inventory order for both console-packager projects. The digest-bound native Project 1 front door now reconstructs, compiler-align verifies, and atomically publishes both exact WVB identities, growing the coordinator to 23 suites and 3,030 cases; native PE/ELF host-container reconstruction, durable segmented publication, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0344](../Decisions/0344-Native-Console-Packager-Wvo-Reconstruction.md) reorganizes the measured oversized packager, recipe-verification, target-header, and PE-section routines along cohesive boundaries without widening the native arena. The existing two-case source lane now requires exact native WVO reconstruction for both packagers; verifier and publisher projects also rebuild their WVBs through the native front door, while their broader hosted closures and every affected PE/ELF tool container remain explicit later lowering or Stage 0 recovery work. The coordinator stays at 23 suites and 3,030 cases.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

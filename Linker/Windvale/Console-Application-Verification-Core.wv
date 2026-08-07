@@ -23,6 +23,27 @@ export record Consoleˉapplicationˉverificationˉresult {
     Evidence: bytes;
 }
 
+record Consoleˉapplicationˉrecipeˉheaderˉverification {
+    Valid: bool;
+    Failureˉoffset: u32;
+    Segmentˉcount: u32;
+    Payloadˉoffset: u32;
+}
+
+record Consoleˉapplicationˉrecipeˉsegmentˉverification {
+    Status: Consoleˉapplicationˉverificationˉstatus;
+    Failureˉoffset: u32;
+    Nativeˉoffset: u32;
+}
+
+record Consoleˉapplicationˉheaderˉverification {
+    Status: Consoleˉapplicationˉverificationˉstatus;
+    Failureˉoffset: u32;
+    Target: u32;
+    Nativeˉimageˉbytes: u32;
+    Nativeˉentryˉoffset: u32;
+}
+
 export fn Consoleˉapplicationˉverificationˉstatusˉvalue(
     Status: Consoleˉapplicationˉverificationˉstatus
 ) -> u32 {
@@ -163,97 +184,98 @@ export fn Consoleˉapplicationˉverificationˉnativeˉimage(
     );
 }
 
-export fn Consoleˉapplicationˉverificationˉrecipe(
-    First: bytes,
-    Second: bytes,
+fn Consoleˉapplicationˉverificationˉrecipeˉheader(
+    Recipe: bytes,
     Target: u32,
     Applicationˉbytes: u32,
     Nativeˉimageˉbytes: u32,
-    Nativeˉentryˉoffset: u32,
-    Recipe: bytes
-) -> Consoleˉapplicationˉverificationˉresult {
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉapplicationˉrecipeˉheaderˉverification {
     let Recipeˉbytes: u32 = Bytesˉlength(Recipe);
     if Recipeˉbytes < 40u32 {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            0u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 0u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 0u32) != 1128486487u32 {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            0u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 0u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 4u32) != 1u32 {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            4u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 4u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 8u32) != Recipeˉbytes {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            8u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 8u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 12u32) != 0u32 {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            12u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 12u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 16u32) != 32u32 {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            16u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 16u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 20u32) != Target {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            20u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 20u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 24u32) != Applicationˉbytes {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            24u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 24u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 28u32) != Nativeˉimageˉbytes {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            28u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 28u32, 0u32, 0u32
         );
     }
     if Bytesˉreadˉu32ˉlittle(Recipe, 32u32) != Nativeˉentryˉoffset {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            32u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 32u32, 0u32, 0u32
         );
     }
     let Segmentˉcount: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 36u32);
     if Segmentˉcount == 0u32 {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            36u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 36u32, 0u32, 0u32
         );
     }
     if Segmentˉcount > 5u32 {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            36u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 36u32, 0u32, 0u32
         );
     }
-    var Descriptorˉoffset: u32 = 40u32;
-    var Payloadˉoffset: u32 = 40u32 + Segmentˉcount * 12u32;
+    let Payloadˉoffset: u32 = 40u32 + Segmentˉcount * 12u32;
     if Payloadˉoffset > Recipeˉbytes {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            Descriptorˉoffset, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉheaderˉverification(
+            false, 40u32, 0u32, 0u32
         );
     }
+    return Consoleˉapplicationˉrecipeˉheaderˉverification(
+        true, Recipeˉbytes, Segmentˉcount, Payloadˉoffset
+    );
+}
+
+fn Consoleˉapplicationˉverificationˉrecipeˉsegments(
+    First: bytes,
+    Second: bytes,
+    Applicationˉbytes: u32,
+    Nativeˉimageˉbytes: u32,
+    Recipe: bytes,
+    Segmentˉcount: u32,
+    Initialˉpayloadˉoffset: u32
+) -> Consoleˉapplicationˉrecipeˉsegmentˉverification {
+    let Recipeˉbytes: u32 = Bytesˉlength(Recipe);
+    var Descriptorˉoffset: u32 = 40u32;
+    var Payloadˉoffset: u32 = Initialˉpayloadˉoffset;
     var Previousˉend: u32 = 0u32;
     var Nativeˉoffset: u32 = 0u32;
     var Nativeˉsegments: u32 = 0u32;
@@ -263,72 +285,72 @@ export fn Consoleˉapplicationˉverificationˉrecipe(
         let Offset: u32 = Bytesˉreadˉu32ˉlittle(Recipe, Descriptorˉoffset + 4u32);
         let Length: u32 = Bytesˉreadˉu32ˉlittle(Recipe, Descriptorˉoffset + 8u32);
         if Offset < Previousˉend {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-                Descriptorˉoffset + 4u32, Target, Applicationˉbytes
+            return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+                Descriptorˉoffset + 4u32, 0u32
             );
         }
         if Offset > Applicationˉbytes {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-                Descriptorˉoffset + 4u32, Target, Applicationˉbytes
+            return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+                Descriptorˉoffset + 4u32, 0u32
             );
         }
         if Length > Applicationˉbytes - Offset {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-                Descriptorˉoffset + 8u32, Target, Applicationˉbytes
+            return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+                Descriptorˉoffset + 8u32, 0u32
             );
         }
         let Gapˉmismatch: u32 = Consoleˉapplicationˉverificationˉzeros(
             First, Second, Previousˉend, Offset - Previousˉend, Applicationˉbytes
         );
         if Gapˉmismatch != Applicationˉbytes {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉcontainer,
-                Gapˉmismatch, Target, Applicationˉbytes
+            return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                Consoleˉapplicationˉverificationˉstatus.Invalidˉcontainer,
+                Gapˉmismatch, 0u32
             );
         }
         if Kind == 1u32 {
             if Payloadˉoffset > Recipeˉbytes {
-                return Consoleˉapplicationˉverificationˉfailure(
-                    First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-                    Payloadˉoffset, Target, Applicationˉbytes
+                return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                    Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+                    Payloadˉoffset, 0u32
                 );
             }
             if Length > Recipeˉbytes - Payloadˉoffset {
-                return Consoleˉapplicationˉverificationˉfailure(
-                    First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-                    Payloadˉoffset, Target, Applicationˉbytes
+                return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                    Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+                    Payloadˉoffset, 0u32
                 );
             }
             let Literalˉmismatch: u32 = Consoleˉapplicationˉverificationˉcompare(
                 First, Second, Offset, Recipe, Payloadˉoffset, Length, Applicationˉbytes
             );
             if Literalˉmismatch != Applicationˉbytes {
-                return Consoleˉapplicationˉverificationˉfailure(
-                    First, Consoleˉapplicationˉverificationˉstatus.Invalidˉcontainer,
-                    Literalˉmismatch, Target, Applicationˉbytes
+                return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                    Consoleˉapplicationˉverificationˉstatus.Invalidˉcontainer,
+                    Literalˉmismatch, 0u32
                 );
             }
             Payloadˉoffset = Payloadˉoffset + Length;
         } else {
             if Kind != 2u32 {
-                return Consoleˉapplicationˉverificationˉfailure(
-                    First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-                    Descriptorˉoffset, Target, Applicationˉbytes
+                return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                    Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+                    Descriptorˉoffset, 0u32
                 );
             }
             if Nativeˉsegments != 0u32 {
-                return Consoleˉapplicationˉverificationˉfailure(
-                    First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-                    Descriptorˉoffset, Target, Applicationˉbytes
+                return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                    Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+                    Descriptorˉoffset, 0u32
                 );
             }
             if Length != Nativeˉimageˉbytes {
-                return Consoleˉapplicationˉverificationˉfailure(
-                    First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-                    Descriptorˉoffset + 8u32, Target, Applicationˉbytes
+                return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+                    Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+                    Descriptorˉoffset + 8u32, 0u32
                 );
             }
             Nativeˉsegments = 1u32;
@@ -339,15 +361,15 @@ export fn Consoleˉapplicationˉverificationˉrecipe(
         Segmentˉindex = Segmentˉindex + 1u32;
     }
     if Nativeˉsegments != 1u32 {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            36u32, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+            36u32, 0u32
         );
     }
     if Payloadˉoffset != Recipeˉbytes {
-        return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
-            Payloadˉoffset, Target, Applicationˉbytes
+        return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+            Payloadˉoffset, 0u32
         );
     }
     let Trailingˉmismatch: u32 = Consoleˉapplicationˉverificationˉzeros(
@@ -358,13 +380,66 @@ export fn Consoleˉapplicationˉverificationˉrecipe(
         Applicationˉbytes
     );
     if Trailingˉmismatch != Applicationˉbytes {
+        return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉcontainer,
+            Trailingˉmismatch, 0u32
+        );
+    }
+    return Consoleˉapplicationˉrecipeˉsegmentˉverification(
+        Consoleˉapplicationˉverificationˉstatus.Valid,
+        Applicationˉbytes,
+        Nativeˉoffset
+    );
+}
+
+export fn Consoleˉapplicationˉverificationˉrecipe(
+    First: bytes,
+    Second: bytes,
+    Target: u32,
+    Applicationˉbytes: u32,
+    Nativeˉimageˉbytes: u32,
+    Nativeˉentryˉoffset: u32,
+    Recipe: bytes
+) -> Consoleˉapplicationˉverificationˉresult {
+    let Header: Consoleˉapplicationˉrecipeˉheaderˉverification =
+        Consoleˉapplicationˉverificationˉrecipeˉheader(
+            Recipe,
+            Target,
+            Applicationˉbytes,
+            Nativeˉimageˉbytes,
+            Nativeˉentryˉoffset
+        );
+    if !Header.Valid {
         return Consoleˉapplicationˉverificationˉfailure(
-            First, Consoleˉapplicationˉverificationˉstatus.Invalidˉcontainer,
-            Trailingˉmismatch, Target, Applicationˉbytes
+            First,
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉrecipe,
+            Header.Failureˉoffset,
+            Target,
+            Applicationˉbytes
+        );
+    }
+
+    let Segments: Consoleˉapplicationˉrecipeˉsegmentˉverification =
+        Consoleˉapplicationˉverificationˉrecipeˉsegments(
+            First,
+            Second,
+            Applicationˉbytes,
+            Nativeˉimageˉbytes,
+            Recipe,
+            Header.Segmentˉcount,
+            Header.Payloadˉoffset
+        );
+    if Segments.Status != Consoleˉapplicationˉverificationˉstatus.Valid {
+        return Consoleˉapplicationˉverificationˉfailure(
+            First,
+            Segments.Status,
+            Segments.Failureˉoffset,
+            Target,
+            Applicationˉbytes
         );
     }
     let Nativeˉimage: bytes = Consoleˉapplicationˉverificationˉnativeˉimage(
-        First, Second, Nativeˉoffset, Nativeˉimageˉbytes
+        First, Second, Segments.Nativeˉoffset, Nativeˉimageˉbytes
     );
     let Evidence: bytes = Consoleˉapplicationˉverificationˉevidence(
         First,
@@ -383,6 +458,145 @@ export fn Consoleˉapplicationˉverificationˉrecipe(
         Nativeˉimage,
         Nativeˉentryˉoffset,
         Evidence
+    );
+}
+
+fn Consoleˉapplicationˉverificationˉwindowsˉheader(
+    First: bytes,
+    Second: bytes,
+    Applicationˉbytes: u32
+) -> Consoleˉapplicationˉheaderˉverification {
+    if Consoleˉapplicationˉverificationˉbyte(First, Second, 1u32) != 90u8 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
+            1u32, 0u32, 0u32, 0u32
+        );
+    }
+    if Applicationˉbytes < 2048u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉsize,
+            Applicationˉbytes, 1u32, 0u32, 0u32
+        );
+    }
+    if Applicationˉbytes > 4196352u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉsize,
+            Applicationˉbytes, 1u32, 0u32, 0u32
+        );
+    }
+    let Windowsˉtextˉbytes: u32 = Bytesˉreadˉu32ˉlittle(First, 400u32);
+    if Windowsˉtextˉbytes <= 112u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
+            400u32, 1u32, 0u32, 0u32
+        );
+    }
+    let Nativeˉimageˉbytes: u32 = Windowsˉtextˉbytes - 112u32;
+    if Nativeˉimageˉbytes > 4194304u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
+            400u32, 1u32, 0u32, 0u32
+        );
+    }
+    let Windowsˉcallˉdisplacement: u32 = Bytesˉreadˉu32ˉlittle(First, 566u32);
+    if Windowsˉcallˉdisplacement < 54u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉentry,
+            566u32, 1u32, 0u32, 0u32
+        );
+    }
+    return Consoleˉapplicationˉheaderˉverification(
+        Consoleˉapplicationˉverificationˉstatus.Valid,
+        Applicationˉbytes,
+        1u32,
+        Nativeˉimageˉbytes,
+        Windowsˉcallˉdisplacement - 54u32
+    );
+}
+
+fn Consoleˉapplicationˉverificationˉlinuxˉheader(
+    First: bytes,
+    Second: bytes,
+    Applicationˉbytes: u32
+) -> Consoleˉapplicationˉheaderˉverification {
+    if Consoleˉapplicationˉverificationˉbyte(First, Second, 0u32) != 127u8 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
+            0u32, 0u32, 0u32, 0u32
+        );
+    }
+    if Consoleˉapplicationˉverificationˉbyte(First, Second, 1u32) != 69u8 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
+            1u32, 0u32, 0u32, 0u32
+        );
+    }
+    if Consoleˉapplicationˉverificationˉbyte(First, Second, 2u32) != 76u8 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
+            2u32, 0u32, 0u32, 0u32
+        );
+    }
+    if Consoleˉapplicationˉverificationˉbyte(First, Second, 3u32) != 70u8 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
+            3u32, 0u32, 0u32, 0u32
+        );
+    }
+    if Applicationˉbytes < 8304u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉsize,
+            Applicationˉbytes, 2u32, 0u32, 0u32
+        );
+    }
+    if Applicationˉbytes > 4202608u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉsize,
+            Applicationˉbytes, 2u32, 0u32, 0u32
+        );
+    }
+    let Linuxˉtextˉbytes: u32 = Bytesˉreadˉu32ˉlittle(First, 152u32);
+    if Linuxˉtextˉbytes <= 160u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
+            152u32, 2u32, 0u32, 0u32
+        );
+    }
+    let Nativeˉimageˉbytes: u32 = Linuxˉtextˉbytes - 160u32;
+    if Nativeˉimageˉbytes > 4194304u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
+            152u32, 2u32, 0u32, 0u32
+        );
+    }
+    let Linuxˉcallˉdisplacement: u32 = Bytesˉreadˉu32ˉlittle(First, 4208u32);
+    if Linuxˉcallˉdisplacement < 44u32 {
+        return Consoleˉapplicationˉheaderˉverification(
+            Consoleˉapplicationˉverificationˉstatus.Invalidˉentry,
+            4208u32, 2u32, 0u32, 0u32
+        );
+    }
+    return Consoleˉapplicationˉheaderˉverification(
+        Consoleˉapplicationˉverificationˉstatus.Valid,
+        Applicationˉbytes,
+        2u32,
+        Nativeˉimageˉbytes,
+        Linuxˉcallˉdisplacement - 44u32
+    );
+}
+
+fn Consoleˉapplicationˉverificationˉheader(
+    First: bytes,
+    Second: bytes,
+    Applicationˉbytes: u32
+) -> Consoleˉapplicationˉheaderˉverification {
+    if Consoleˉapplicationˉverificationˉbyte(First, Second, 0u32) == 77u8 {
+        return Consoleˉapplicationˉverificationˉwindowsˉheader(
+            First, Second, Applicationˉbytes
+        );
+    }
+    return Consoleˉapplicationˉverificationˉlinuxˉheader(
+        First, Second, Applicationˉbytes
     );
 }
 
@@ -413,131 +627,41 @@ export fn Consoleˉapplicationˉverification(
             Applicationˉbytes, 0u32, Applicationˉbytes
         );
     }
-    var Target: u32 = 0u32;
-    var Nativeˉimageˉbytes: u32 = 0u32;
-    var Nativeˉentryˉoffset: u32 = 0u32;
-    if Consoleˉapplicationˉverificationˉbyte(First, Second, 0u32) == 77u8 {
-        if Consoleˉapplicationˉverificationˉbyte(First, Second, 1u32) != 90u8 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
-                1u32, 0u32, Applicationˉbytes
-            );
-        }
-        Target = 1u32;
-        if Applicationˉbytes < 2048u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉsize,
-                Applicationˉbytes, Target, Applicationˉbytes
-            );
-        }
-        if Applicationˉbytes > 4196352u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉsize,
-                Applicationˉbytes, Target, Applicationˉbytes
-            );
-        }
-        let Windowsˉtextˉbytes: u32 = Bytesˉreadˉu32ˉlittle(First, 400u32);
-        if Windowsˉtextˉbytes <= 112u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
-                400u32, Target, Applicationˉbytes
-            );
-        }
-        Nativeˉimageˉbytes = Windowsˉtextˉbytes - 112u32;
-        if Nativeˉimageˉbytes > 4194304u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
-                400u32, Target, Applicationˉbytes
-            );
-        }
-        let Windowsˉcallˉdisplacement: u32 = Bytesˉreadˉu32ˉlittle(First, 566u32);
-        if Windowsˉcallˉdisplacement < 54u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉentry,
-                566u32, Target, Applicationˉbytes
-            );
-        }
-        Nativeˉentryˉoffset = Windowsˉcallˉdisplacement - 54u32;
-    } else {
-        if Consoleˉapplicationˉverificationˉbyte(First, Second, 0u32) != 127u8 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
-                0u32, 0u32, Applicationˉbytes
-            );
-        }
-        if Consoleˉapplicationˉverificationˉbyte(First, Second, 1u32) != 69u8 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
-                1u32, 0u32, Applicationˉbytes
-            );
-        }
-        if Consoleˉapplicationˉverificationˉbyte(First, Second, 2u32) != 76u8 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
-                2u32, 0u32, Applicationˉbytes
-            );
-        }
-        if Consoleˉapplicationˉverificationˉbyte(First, Second, 3u32) != 70u8 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉidentity,
-                3u32, 0u32, Applicationˉbytes
-            );
-        }
-        Target = 2u32;
-        if Applicationˉbytes < 8304u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉsize,
-                Applicationˉbytes, Target, Applicationˉbytes
-            );
-        }
-        if Applicationˉbytes > 4202608u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉsize,
-                Applicationˉbytes, Target, Applicationˉbytes
-            );
-        }
-        let Linuxˉtextˉbytes: u32 = Bytesˉreadˉu32ˉlittle(First, 152u32);
-        if Linuxˉtextˉbytes <= 160u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
-                152u32, Target, Applicationˉbytes
-            );
-        }
-        Nativeˉimageˉbytes = Linuxˉtextˉbytes - 160u32;
-        if Nativeˉimageˉbytes > 4194304u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉnativeˉimage,
-                152u32, Target, Applicationˉbytes
-            );
-        }
-        let Linuxˉcallˉdisplacement: u32 = Bytesˉreadˉu32ˉlittle(First, 4208u32);
-        if Linuxˉcallˉdisplacement < 44u32 {
-            return Consoleˉapplicationˉverificationˉfailure(
-                First, Consoleˉapplicationˉverificationˉstatus.Invalidˉentry,
-                4208u32, Target, Applicationˉbytes
-            );
-        }
-        Nativeˉentryˉoffset = Linuxˉcallˉdisplacement - 44u32;
+    let Header: Consoleˉapplicationˉheaderˉverification =
+        Consoleˉapplicationˉverificationˉheader(
+            First, Second, Applicationˉbytes
+        );
+    if Header.Status != Consoleˉapplicationˉverificationˉstatus.Valid {
+        return Consoleˉapplicationˉverificationˉfailure(
+            First,
+            Header.Status,
+            Header.Failureˉoffset,
+            Header.Target,
+            Applicationˉbytes
+        );
     }
-    if Nativeˉentryˉoffset >= Nativeˉimageˉbytes {
+    if Header.Nativeˉentryˉoffset >= Header.Nativeˉimageˉbytes {
         var Entryˉoffset: u32 = 566u32;
-        if Target == 2u32 { Entryˉoffset = 4208u32; }
+        if Header.Target == 2u32 { Entryˉoffset = 4208u32; }
         return Consoleˉapplicationˉverificationˉfailure(
             First, Consoleˉapplicationˉverificationˉstatus.Invalidˉentry,
-            Entryˉoffset, Target, Applicationˉbytes
+            Entryˉoffset, Header.Target, Applicationˉbytes
         );
     }
     let Request: bytes = Consoleˉapplicationˉverificationˉrequest(
-        First, Target, Nativeˉimageˉbytes, Nativeˉentryˉoffset
+        First,
+        Header.Target,
+        Header.Nativeˉimageˉbytes,
+        Header.Nativeˉentryˉoffset
     );
     let Recipe: bytes = Applicationˉconstruction.Consoleˉapplicationˉconstruction(Request);
     return Consoleˉapplicationˉverificationˉrecipe(
         First,
         Second,
-        Target,
+        Header.Target,
         Applicationˉbytes,
-        Nativeˉimageˉbytes,
-        Nativeˉentryˉoffset,
+        Header.Nativeˉimageˉbytes,
+        Header.Nativeˉentryˉoffset,
         Recipe
     );
 }

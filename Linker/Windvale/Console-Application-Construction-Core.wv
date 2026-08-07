@@ -182,19 +182,9 @@ export fn Consoleˉapplicationˉconstructionˉwindowsˉstartup(
     return Result;
 }
 
-export fn Consoleˉapplicationˉconstructionˉwindowsˉheader(
+fn Consoleˉapplicationˉconstructionˉwindowsˉimageˉheader(
     Plan: bytes
 ) -> bytes {
-    let Textˉname: bytes = Bytesˉconcat(
-        Bytesˉfromˉu32ˉlittle(2019914798u32), Bytesˉfromˉu8(116u8)
-    );
-    let Dataˉname: bytes = Bytesˉconcat(
-        Bytesˉfromˉu32ˉlittle(1952539694u32), Bytesˉfromˉu8(97u8)
-    );
-    let Relocationˉname: bytes = Bytesˉconcat(
-        Bytesˉfromˉu32ˉlittle(1818587694u32),
-        Bytesˉfromˉu16ˉlittle(25455u32)
-    );
     var Result: bytes = Consoleˉapplicationˉconstructionˉzeros(512u32);
     Result = Consoleˉapplicationˉconstructionˉpatchˉu16(Result, 0u32, 23117u32);
     Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 60u32, 128u32);
@@ -256,6 +246,24 @@ export fn Consoleˉapplicationˉconstructionˉwindowsˉheader(
     Result = Consoleˉapplicationˉconstructionˉpatchˉu32(
         Result, 308u32, Bytesˉreadˉu32ˉlittle(Plan, 96u32)
     );
+    return Result;
+}
+
+fn Consoleˉapplicationˉconstructionˉwindowsˉsectionˉheaders(
+    Input: bytes,
+    Plan: bytes
+) -> bytes {
+    let Textˉname: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(2019914798u32), Bytesˉfromˉu8(116u8)
+    );
+    let Dataˉname: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(1952539694u32), Bytesˉfromˉu8(97u8)
+    );
+    let Relocationˉname: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(1818587694u32),
+        Bytesˉfromˉu16ˉlittle(25455u32)
+    );
+    var Result: bytes = Input;
     Result = Consoleˉapplicationˉconstructionˉreplace(
         Result, 392u32, 5u32, Textˉname
     );
@@ -305,6 +313,15 @@ export fn Consoleˉapplicationˉconstructionˉwindowsˉheader(
     );
     Result = Consoleˉapplicationˉconstructionˉpatchˉu32(Result, 508u32, 1107296320u32);
     return Result;
+}
+
+export fn Consoleˉapplicationˉconstructionˉwindowsˉheader(
+    Plan: bytes
+) -> bytes {
+    return Consoleˉapplicationˉconstructionˉwindowsˉsectionˉheaders(
+        Consoleˉapplicationˉconstructionˉwindowsˉimageˉheader(Plan),
+        Plan
+    );
 }
 
 export fn Consoleˉapplicationˉconstructionˉwindows(

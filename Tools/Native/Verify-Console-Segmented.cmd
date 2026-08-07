@@ -9,7 +9,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Verifier=%RepositoryRoot%\Artifacts\Native-Console-Application-Verifier-Candidate\windows-x64-wvappverify.exe"
 
-certutil -hashfile "%Verifier%" SHA256 | findstr /I /C:"ebc6f54884e3d93ee1fb1f3658a9062167294f3d0e936554cadc499b83bd8111" >nul
+certutil -hashfile "%Verifier%" SHA256 | findstr /I /C:"3342db37e009b32f3c41139942f6161130b874f6f49a85c4bc906ada324272dc" >nul
 if errorlevel 1 (
     >&2 echo The Windows native console-application verifier artifact digest is invalid.
     exit /b 1

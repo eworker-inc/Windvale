@@ -12,6 +12,8 @@ temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-console-packager-source.XXXXXXXX") || exit 1
 build_output="$temporary_directory/Build.out"
 build_error="$temporary_directory/Build.err"
+lower_output="$temporary_directory/Lower.out"
+lower_error="$temporary_directory/Lower.err"
 total=0
 passed=0
 
@@ -20,8 +22,10 @@ cleanup() {
         "$temporary_root"/windvale-console-packager-source.*)
             rm -f -- \
                 "$temporary_directory/ordinary-packager-source.wvb" \
+                "$temporary_directory/ordinary-packager-source.wvo" \
                 "$temporary_directory/segmented-packager-source.wvb" \
-                "$build_output" "$build_error"
+                "$temporary_directory/segmented-packager-source.wvo" \
+                "$build_output" "$build_error" "$lower_output" "$lower_error"
             rmdir -- "$temporary_directory" 2>/dev/null || true
             ;;
         *)
@@ -53,7 +57,10 @@ run_case() {
     local expected_bytes=$3
     local expected_digest=$4
     local expected_report_digest=$5
+    local expected_object_bytes=$6
+    local expected_object_digest=$7
     local candidate="$temporary_directory/$case_name.wvb"
+    local candidate_object="$temporary_directory/$case_name.wvo"
 
     total=$((total + 1))
     "$script_directory/Build-Wvb.sh" \
@@ -67,19 +74,34 @@ run_case() {
         fail "$case_name reconstructed WVB size"
     check_hash "$candidate" "$expected_digest" "$case_name reconstructed WVB identity"
     check_hash "$build_output" "$expected_report_digest" "$case_name build report"
+    "$script_directory/Lower-Wvb-To-Wvo.sh" "$candidate" "$candidate_object" \
+        > "$lower_output" 2> "$lower_error" || {
+            cat "$lower_error" >&2
+            fail "$case_name native lowering exit"
+        }
+    [[ ! -s $lower_error ]] || fail "$case_name native lowering diagnostic"
+    [[ $(wc -c < "$candidate_object") -eq "$expected_object_bytes" ]] || \
+        fail "$case_name reconstructed WVO size"
+    check_hash \
+        "$candidate_object" "$expected_object_digest" \
+        "$case_name reconstructed WVO identity"
     passed=$((passed + 1))
     echo "PASS  $case_name"
-    rm -f -- "$candidate" "$build_output" "$build_error"
+    rm -f -- \
+        "$candidate" "$candidate_object" \
+        "$build_output" "$build_error" "$lower_output" "$lower_error"
 }
 
 run_case \
-    ordinary-packager-source Windvale-Console-Application-Packager.wvproj 58127 \
-    7b055d4e6a456680a79eb28eaafa577e0019ea0ff1e34d9e713e9178428acc29 \
-    de75af11831f8d681042df015a13c33e243f613b9738c5a7177747d63538b892
+    ordinary-packager-source Windvale-Console-Application-Packager.wvproj 60797 \
+    f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c \
+    341a870f592b06d7be116af995efae06bed3ba7e7c90ef19bc344ef8799730e5 \
+    692425 fd9e289cdae2bfc7956384cd76c022c873fc4c8f39bda4824eb8b82240265695
 run_case \
-    segmented-packager-source Windvale-Console-Application-Segmented-Packager.wvproj 68451 \
-    33d7619c6115295a9eb612fd559031ab99c85196e3133a9405f880a19ac9ded2 \
-    003dea772fb69bbfc4a485dd6a024e9c0e451726745675e38afab4292f75f61b
+    segmented-packager-source Windvale-Console-Application-Segmented-Packager.wvproj 70033 \
+    c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e \
+    50488906e6b0bc9ae14da8194170ba5412bd441435e423d7e51392c45d12bbd4 \
+    789653 4cd97c60169649c466dcf185491eac326bbb7676fb97d95c840c199defb8bbda
 
 [[ $total -eq 2 && $passed -eq 2 ]] || fail 'case count'
 echo 'Tests: 2, Passed: 2, Failed: 0'

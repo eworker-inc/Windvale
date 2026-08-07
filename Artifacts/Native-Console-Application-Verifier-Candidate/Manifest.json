@@ -5,29 +5,31 @@
   "provenanceDecision": "0307",
   "qualification": "pending",
   "construction": "stage0-recovery",
+  "nativeSourceConstruction": "verified-digest-bound-front-door",
+  "nativeSourceDecision": "0344",
   "artifacts": [
     {
       "name": "console-application-verifier-wvb",
       "path": "Console-Application-Verifier.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 103424,
-      "sha256": "5894bb7180597945f4e4d49e87ae954fb3c2bba84cde4b9cb549a2f168006a91",
+      "bytes": 105006,
+      "sha256": "1dcd5f2aeebd974649e64c90d9f473e1e75f7d13dbcde2814de1dded72cf2c0c",
       "sourceProject": "Windvale-Console-Application-Verifier.wvproj"
     },
     {
       "name": "windows-x64-console-application-verifier",
       "path": "windows-x64-wvappverify.exe",
       "target": "windows-x64-console-application-verifier-v1",
-      "bytes": 1041408,
-      "sha256": "ebc6f54884e3d93ee1fb1f3658a9062167294f3d0e936554cadc499b83bd8111",
+      "bytes": 1064448,
+      "sha256": "3342db37e009b32f3c41139942f6161130b874f6f49a85c4bc906ada324272dc",
       "sourceWvb": "Console-Application-Verifier.wvb"
     },
     {
       "name": "linux-x64-console-application-verifier",
       "path": "linux-x64-wvappverify.elf",
       "target": "linux-x64-console-application-verifier-v1",
-      "bytes": 1040384,
-      "sha256": "5dbd78b3f67cc179e9848eacca6627a03f5f44ddecc6480d2e9ab98d073f792e",
+      "bytes": 1064960,
+      "sha256": "cee61bb2bf6d805cbb98766c448d7d0985b95dd0fa55a3cd80b2e3697b369a8d",
       "sourceWvb": "Console-Application-Verifier.wvb"
     }
   ]

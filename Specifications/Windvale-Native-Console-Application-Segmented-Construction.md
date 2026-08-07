@@ -47,9 +47,9 @@ The exact candidate manifest pins:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `Console-Segmented-Packager.wvb` | 68,451 | `33d7619c6115295a9eb612fd559031ab99c85196e3133a9405f880a19ac9ded2` |
-| `Console-Segmented-Packager.exe` | 782,336 | `b9c02553966a758001a7ea03428565cf306fc8e5203e58056aebc1fed6b4a253` |
-| `Console-Segmented-Packager.elf` | 782,336 | `779a87a9246e5d13eab08bf47ab53d329e627c5e64e6cfe86082cc6600450089` |
+| `Console-Segmented-Packager.wvb` | 70,033 | `c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e` |
+| `Console-Segmented-Packager.exe` | 805,376 | `e932fc5ed2bdc5252e9fa4de95c0dc02bba1e351e31bc86dd4956e372cf706d0` |
+| `Console-Segmented-Packager.elf` | 806,912 | `395ec1da4512a67b513179cad7068ee76e6598088214ca2ada56afd623eb410f` |
 
 Host-container construction remains recorded as `stage0-recovery`. Decision
 0343 corrects the project inventory order and reconstructs the exact WVB through

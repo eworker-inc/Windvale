@@ -10,15 +10,15 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int CONSOLE_PACKAGER_WVB_BYTES = 58_127;
+    private const int CONSOLE_PACKAGER_WVB_BYTES = 60_797;
     private const string CONSOLE_PACKAGER_WVB_SHA256 =
-        "7b055d4e6a456680a79eb28eaafa577e0019ea0ff1e34d9e713e9178428acc29";
-    private const int WINDOWS_CONSOLE_PACKAGER_APPLICATION_BYTES = 667_648;
+        "f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c";
+    private const int WINDOWS_CONSOLE_PACKAGER_APPLICATION_BYTES = 708_608;
     private const string WINDOWS_CONSOLE_PACKAGER_APPLICATION_SHA256 =
-        "a9cd6e222b869d838f563ffc46ae3acbde74ff8beb10c28373b6d5985c8f680f";
-    private const int LINUX_CONSOLE_PACKAGER_APPLICATION_BYTES = 667_648;
+        "c14ee974fa74227a49b407c9517cdce1fc7608a1486a8b5e2cf2fcb996ab55a5";
+    private const int LINUX_CONSOLE_PACKAGER_APPLICATION_BYTES = 708_608;
     private const string LINUX_CONSOLE_PACKAGER_APPLICATION_SHA256 =
-        "10b1d752ab6c9c7217f833add9ef77ca0d61b6bcc02d7023b1877f42bab2a683";
+        "e251b2edae1e1a500522ecb0b31c1b7a40a36086fd36959198e3a49cb04d8dad";
 
     private static void Nativeˉconsoleˉpackagerˉtargetsˉareˉdiscoverable()
     {

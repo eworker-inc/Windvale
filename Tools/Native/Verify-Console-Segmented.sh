@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Console-Application-Verifier-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '5dbd78b3f67cc179e9848eacca6627a03f5f44ddecc6480d2e9ab98d073f792e' \
+    'cee61bb2bf6d805cbb98766c448d7d0985b95dd0fa55a3cd80b2e3697b369a8d' \
     'linux-x64-wvappverify.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native console-application verifier artifact digest is invalid.' >&2
     exit 1

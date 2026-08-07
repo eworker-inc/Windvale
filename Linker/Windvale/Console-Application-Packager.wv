@@ -88,7 +88,7 @@ fn Request(Input: bytes, Target: u32, Nativeˉentryˉoffset: u32) -> bytes {
     );
 }
 
-fn Package(
+fn Prepareˉrecipe(
     Input: bytes,
     Target: u32,
     Nativeˉentryˉoffset: u32
@@ -207,6 +207,24 @@ fn Package(
         );
     }
 
+    return Consoleˉpackageˉresult(
+        Consoleˉpackageˉstatus.Valid,
+        Recipe,
+        Target,
+        Nativeˉbytes,
+        Nativeˉentryˉoffset
+    );
+}
+
+fn Constructˉapplication(
+    Input: bytes,
+    Recipe: bytes,
+    Target: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉpackageˉresult {
+    let Nativeˉbytes: u32 = Bytesˉlength(Input);
+    let Recipeˉbytes: u32 = Bytesˉlength(Recipe);
+    let Applicationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 24u32);
     let Segmentˉcount: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 36u32);
     if Target == 1u32 {
         if Segmentˉcount != 5u32 {
@@ -364,9 +382,25 @@ fn Package(
         );
     }
 
+    return Consoleˉpackageˉresult(
+        Consoleˉpackageˉstatus.Valid,
+        Result,
+        Target,
+        Nativeˉbytes,
+        Nativeˉentryˉoffset
+    );
+}
+
+fn Verifyˉapplication(
+    Input: bytes,
+    Application: bytes,
+    Expectedˉapplicationˉbytes: u32,
+    Target: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉpackageˉresult {
     let Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult =
         Applicationˉverification.Consoleˉapplicationˉverification(
-            Result, Empty(Input)
+            Application, Empty(Input)
         );
     if Verified.Status !=
         Applicationˉverification.Consoleˉapplicationˉverificationˉstatus.Valid {
@@ -385,7 +419,7 @@ fn Package(
             Nativeˉentryˉoffset
         );
     }
-    if Verified.Applicationˉbytes != Applicationˉbytes {
+    if Verified.Applicationˉbytes != Expectedˉapplicationˉbytes {
         return Failed(
             Input,
             Consoleˉpackageˉstatus.Verificationˉfailed,
@@ -411,9 +445,42 @@ fn Package(
     }
     return Consoleˉpackageˉresult(
         Consoleˉpackageˉstatus.Valid,
-        Result,
+        Application,
         Target,
-        Nativeˉbytes,
+        Bytesˉlength(Input),
+        Nativeˉentryˉoffset
+    );
+}
+
+fn Package(
+    Input: bytes,
+    Target: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉpackageˉresult {
+    let Prepared: Consoleˉpackageˉresult = Prepareˉrecipe(
+        Input,
+        Target,
+        Nativeˉentryˉoffset
+    );
+    if Prepared.Status != Consoleˉpackageˉstatus.Valid {
+        return Prepared;
+    }
+
+    let Constructed: Consoleˉpackageˉresult = Constructˉapplication(
+        Input,
+        Prepared.Value,
+        Target,
+        Nativeˉentryˉoffset
+    );
+    if Constructed.Status != Consoleˉpackageˉstatus.Valid {
+        return Constructed;
+    }
+
+    return Verifyˉapplication(
+        Input,
+        Constructed.Value,
+        Bytesˉreadˉu32ˉlittle(Prepared.Value, 24u32),
+        Target,
         Nativeˉentryˉoffset
     );
 }

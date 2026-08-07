@@ -43,10 +43,10 @@ internal static partial class Program
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
     private const string CONSOLE_APPLICATION_PLAN_BRIDGE_SHA256 = "ff611ffcede521728cb7c72f49822b5d869a5aa0a3d79a8e825d70e0e4b22222";
-    private const string CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256 = "3d1dd4f866bfe40dccd4297522fb9dd3d2eac37ccc85a53a12d3908d23913e24";
-    private const string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256 = "c6753fcd0494bd7a15fa6d066921b6f9343d0d14609dbec5fe08519e73795f17";
-    private const string CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256 = "4630aca8bc5674af7e92ee4f42d57c73c7d70062453f6fdc3127fd52956d8218";
-    private const string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256 = "0ee99abb83b71a0e60ed6c47852f5f99b57d3dc3f5737dd0f46c604be3181861";
+    private const string CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256 = "3e4a88481ec2481736d07a928e9b89287204c5d6a3c3d8c60d8033896acebc62";
+    private const string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256 = "4729dd849c72aaa4250d7d54024e8820f827fd08588fa7ba9e5493ab4b8a5d8d";
+    private const string CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256 = "904c3fd36646a62bd71089ae5a9bd1c870feea458f99590fc42712b6d35f0074";
+    private const string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256 = "460402786c3f2db63f7e13e56124197f6575f93eb8fa0f1b535275ad2c6512fa";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -4799,7 +4799,7 @@ internal static partial class Program
             Constructionˉcore.Success,
             "The Windvale console-application construction core did not compile: " +
                 string.Join(" | ", Constructionˉcore.Diagnostics));
-        Equal(30_667, Constructionˉcore.Moduleˉbytes.Length);
+        Equal(30_943, Constructionˉcore.Moduleˉbytes.Length);
         Equal(
             CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256,
             Moduleˉdigest.Calculateˉsha256(Constructionˉcore.Moduleˉbytes.AsSpan()));
@@ -4871,7 +4871,7 @@ internal static partial class Program
             Verificationˉcore.Success,
             "The Windvale console-application verification core did not compile: " +
                 string.Join(" | ", Verificationˉcore.Diagnostics));
-        Equal(45_019, Verificationˉcore.Moduleˉbytes.Length);
+        Equal(46_919, Verificationˉcore.Moduleˉbytes.Length);
         Equal(
             CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256,
             Moduleˉdigest.Calculateˉsha256(Verificationˉcore.Moduleˉbytes.AsSpan()));

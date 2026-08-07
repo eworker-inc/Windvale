@@ -80,8 +80,8 @@ On success, the hosted bridge performs exactly one `file.write_bytes` to `consol
 format-2 verifier modules are portable and capability-free. Their hosted bridge
 declares only `file.read_bytes` and `file.write_bytes`, uses the fixed resource
 names above, and is bounded to ten million instructions. The current retained
-bridge WVB is exactly 101,811 bytes with SHA-256
-`0ee99abb83b71a0e60ed6c47852f5f99b57d3dc3f5737dd0f46c604be3181861`.
+bridge WVB is exactly 103,393 bytes with SHA-256
+`460402786c3f2db63f7e13e56124197f6575f93eb8fa0f1b535275ad2c6512fa`.
 
 Both Stage 0 console writers and the [native console packager](Windvale-Native-Console-Packager.md) require the Windvale verifier to reproduce the original target, native bytes, and entry. The native packager performs this check before its one output call. The independent detailed C# PE or ELF verifier then performs the same recovery through separately maintained structural logic during transition evidence. Any rejection or disagreement prevents successful application output. The [native console-application publisher](Windvale-Native-Console-Application-Publisher.md) reuses this verifier as its mutation-admission boundary before the shared atomic transaction begins.
 

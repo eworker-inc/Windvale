@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts, and Decision 0307 composes their digest-bound launchers with the native atomic console-application publisher. Decision 0343 makes the WVB natively reconstructible. This is not yet an ordinary front door: Stage 0 remains the host-container construction and recovery target until native PE/ELF construction, the grouped Windows/Linux gate, and artifact promotion succeed.
+`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts, and Decision 0307 composes their digest-bound launchers with the native atomic console-application publisher. Decision 0343 makes the WVB natively reconstructible, and Decision 0344 extends that exact source check through native WVO lowering. This is not yet an ordinary front door: Stage 0 remains the host-container construction and recovery target until native PE/ELF construction, the grouped Windows/Linux gate, and artifact promotion succeed.
 
 The application composes the existing [console-application plan](Windvale-Console-Application-Plan.md), [construction](Windvale-Console-Application-Construction.md), and [verification](Windvale-Console-Application-Verification.md) contracts. It adds no second PE or ELF layout implementation.
 
@@ -61,17 +61,23 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Console packager WVB | 58,127 | `7b055d4e6a456680a79eb28eaafa577e0019ea0ff1e34d9e713e9178428acc29` |
-| Windows console packager | 667,648 | `a9cd6e222b869d838f563ffc46ae3acbde74ff8beb10c28373b6d5985c8f680f` |
-| Linux console packager | 667,648 | `10b1d752ab6c9c7217f833add9ef77ca0d61b6bcc02d7023b1877f42bab2a683` |
+| Console packager WVB | 60,797 | `f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c` |
+| Windows console packager | 708,608 | `c14ee974fa74227a49b407c9517cdce1fc7608a1486a8b5e2cf2fcb996ab55a5` |
+| Linux console packager | 708,608 | `e251b2edae1e1a500522ecb0b31c1b7a40a36086fd36959198e3a49cb04d8dad` |
 
 `Tools/Native/Test-Console-Packager-Source-Reconstruction.cmd` and `.sh`
 build the ordinary and segmented projects through the digest-bound native
-Project 1 front door. The ordinary reconstruction must reproduce the 58,127-byte
-identity above; the segmented sibling must reproduce 68,451 bytes at SHA-256
-`33d7619c6115295a9eb612fd559031ab99c85196e3133a9405f880a19ac9ded2`.
-Both builds include compiler-aligned WVB verification and the separate native
-atomic publisher. This proves source-WVB reconstruction, not construction of the
+Project 1 front door, then lower each reconstructed WVB through the pinned
+native WVB-to-WVO application. The ordinary reconstruction produces the WVB
+identity above and a 692,425-byte WVO at SHA-256
+`fd9e289cdae2bfc7956384cd76c022c873fc4c8f39bda4824eb8b82240265695`.
+The segmented sibling produces a 70,033-byte WVB at SHA-256
+`c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e`
+and a 789,653-byte WVO at SHA-256
+`4cd97c60169649c466dcf185491eac326bbb7676fb97d95c840c199defb8bbda`.
+Both builds include compiler-aligned WVB verification and native atomic
+publication; both lowerings include WVO verification and native atomic
+publication. This proves source-to-WVO reconstruction, not construction of the
 checked-in PE/ELF tool containers.
 
 The focused test reconstructs both containers, checks exact capabilities and services, exercises the public current-host AOT target, and runs the current-host raw application. One six-byte return-42 image must package deterministically into both target formats. The independent platform verifiers recover the exact image and zero entry, the current-host result returns 42, malformed target or entry input preserves an existing output, and process inspection finds no CLR/.NET runtime.

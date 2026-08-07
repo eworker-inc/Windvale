@@ -4068,3 +4068,40 @@ PE/ELF host-container reconstruction, durable segmented publication,
 large-native segmented-object transfer, broader unsafe/WVA evidence,
 Development, Standard, Qualification, promotion, and the grouped end-of-goal
 gate remain deferred.
+
+## Local native console-packager WVO-reconstruction evidence
+
+[Decision 0344](../Decisions/0344-Native-Console-Packager-Wvo-Reconstruction.md)
+keeps the native arena and accepted limits unchanged while extracting measured
+oversized packager, recipe-verification, target-header, and PE-section routines
+along cohesive responsibilities. The public construction and verification
+contracts, exact failure offsets, emitted applications, and recovered native
+images remain unchanged.
+
+The pinned native front doors build and lower these exact closures:
+
+| Closure | WVB bytes | WVB SHA-256 | WVO bytes | WVO SHA-256 |
+| --- | ---: | --- | ---: | --- |
+| Ordinary console packager | 60,797 | `f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c` | 692,425 | `fd9e289cdae2bfc7956384cd76c022c873fc4c8f39bda4824eb8b82240265695` |
+| Segmented console packager | 70,033 | `c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e` | 789,653 | `4cd97c60169649c466dcf185491eac326bbb7676fb97d95c840c199defb8bbda` |
+
+The ordinary and segmented WVOs contain 689,568 and 786,080 machine-code
+bytes. Direct Windows builds take 1.8 to 2.1 seconds and lowerings take 5.0 to
+6.5 seconds. The combined .NET-free source-to-WVO command passes 2/2 in 15.9
+seconds. The reviewed focused managed packager contract passes 1/1 in 8.6 test
+seconds after its build, covering both target containers, native-image recovery,
+deterministic repetition, invalid input preservation, and absence of CLR in the
+native process. The refreshed native publisher rejection command passes 2/2 in
+0.8 seconds; maximum segmented construction and independent verification pass
+2/2 in 1.8 seconds. The focused successful publisher contract passes 1/1 in
+3.4 test seconds after its build, including exact container identities, one
+native atomic replacement without CLR, and preserved rejection.
+
+Canonical inventory order also lets the verifier and publisher projects rebuild
+105,006- and 115,107-byte WVBs through the native Project 1 front door. Their
+full hosted closures correctly remain `Unsupportedˉcode` for the accepted-subset
+lowerer. The refreshed PE/ELF applications retain `stage0-recovery` provenance.
+The passing native children are not rerun through the grouped coordinator.
+Linux execution, native service-bundle linking and host-container construction,
+broader backend support, Standard, Qualification, promotion, and the grouped
+end-of-goal gate remain deferred.

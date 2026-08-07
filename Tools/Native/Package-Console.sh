@@ -17,7 +17,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Console-Packager-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '10b1d752ab6c9c7217f833add9ef77ca0d61b6bcc02d7023b1877f42bab2a683' \
+    'e251b2edae1e1a500522ecb0b31c1b7a40a36086fd36959198e3a49cb04d8dad' \
     'Console-Packager.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native console packager artifact digest is invalid.' >&2
     exit 1

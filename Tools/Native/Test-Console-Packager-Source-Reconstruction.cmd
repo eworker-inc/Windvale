@@ -14,12 +14,14 @@ if exist "%TemporaryDirectory%" goto :allocate
 mkdir "%TemporaryDirectory%" || exit /b 1
 set "BuildOutput=%TemporaryDirectory%\Build.out"
 set "BuildError=%TemporaryDirectory%\Build.err"
+set "LowerOutput=%TemporaryDirectory%\Lower.out"
+set "LowerError=%TemporaryDirectory%\Lower.err"
 set /a Total=0
 set /a Passed=0
 
-call :run_case "ordinary-packager-source" "Windvale-Console-Application-Packager.wvproj" "58127" "7b055d4e6a456680a79eb28eaafa577e0019ea0ff1e34d9e713e9178428acc29" "de75af11831f8d681042df015a13c33e243f613b9738c5a7177747d63538b892"
+call :run_case "ordinary-packager-source" "Windvale-Console-Application-Packager.wvproj" "60797" "f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c" "341a870f592b06d7be116af995efae06bed3ba7e7c90ef19bc344ef8799730e5" "692425" "fd9e289cdae2bfc7956384cd76c022c873fc4c8f39bda4824eb8b82240265695"
 if errorlevel 1 goto :failed
-call :run_case "segmented-packager-source" "Windvale-Console-Application-Segmented-Packager.wvproj" "68451" "33d7619c6115295a9eb612fd559031ab99c85196e3133a9405f880a19ac9ded2" "003dea772fb69bbfc4a485dd6a024e9c0e451726745675e38afab4292f75f61b"
+call :run_case "segmented-packager-source" "Windvale-Console-Application-Segmented-Packager.wvproj" "70033" "c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e" "50488906e6b0bc9ae14da8194170ba5412bd441435e423d7e51392c45d12bbd4" "789653" "4cd97c60169649c466dcf185491eac326bbb7676fb97d95c840c199defb8bbda"
 if errorlevel 1 goto :failed
 
 if not "%Total%"=="2" goto :count_failed
@@ -32,6 +34,7 @@ set /a Total+=1
 set "Case=%~1"
 set "Project=%RepositoryRoot%\%~2"
 set "Candidate=%TemporaryDirectory%\%~1.wvb"
+set "CandidateObject=%TemporaryDirectory%\%~1.wvo"
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%Project%" "%Candidate%" > "%BuildOutput%" 2> "%BuildError%"
 if not "%ERRORLEVEL%"=="0" (
     >&2 echo FAIL  %Case%: native build exit differs
@@ -51,9 +54,26 @@ call :check_hash "%Candidate%" "%~4" "%Case% reconstructed WVB identity differs"
 if errorlevel 1 exit /b 1
 call :check_hash "%BuildOutput%" "%~5" "%Case% build report differs"
 if errorlevel 1 exit /b 1
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Candidate%" "%CandidateObject%" > "%LowerOutput%" 2> "%LowerError%"
+if not "%ERRORLEVEL%"=="0" (
+    >&2 echo FAIL  %Case%: native lowering exit differs
+    type "%LowerError%" >&2
+    exit /b 1
+)
+for %%S in ("%LowerError%") do if not "%%~zS"=="0" (
+    >&2 echo FAIL  %Case%: native lowering wrote a diagnostic
+    type "%LowerError%" >&2
+    exit /b 1
+)
+for %%S in ("%CandidateObject%") do if not "%%~zS"=="%~6" (
+    >&2 echo FAIL  %Case%: reconstructed WVO size differs
+    exit /b 1
+)
+call :check_hash "%CandidateObject%" "%~7" "%Case% reconstructed WVO identity differs"
+if errorlevel 1 exit /b 1
 set /a Passed+=1
 echo PASS  %Case%
-del /f /q "%Candidate%" "%BuildOutput%" "%BuildError%" >nul 2>nul
+del /f /q "%Candidate%" "%CandidateObject%" "%BuildOutput%" "%BuildError%" "%LowerOutput%" "%LowerError%" >nul 2>nul
 exit /b 0
 
 :check_hash
@@ -75,6 +95,6 @@ call :cleanup
 exit /b 1
 
 :cleanup
-for %%F in (ordinary-packager-source.wvb segmented-packager-source.wvb Build.out Build.err) do if exist "%TemporaryDirectory%\%%F" del /f /q "%TemporaryDirectory%\%%F" >nul 2>nul
+for %%F in (ordinary-packager-source.wvb ordinary-packager-source.wvo segmented-packager-source.wvb segmented-packager-source.wvo Build.out Build.err Lower.out Lower.err) do if exist "%TemporaryDirectory%\%%F" del /f /q "%TemporaryDirectory%\%%F" >nul 2>nul
 rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b 0

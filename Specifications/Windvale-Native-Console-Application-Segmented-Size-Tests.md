@@ -21,11 +21,14 @@ The candidate manifest pins:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `Console-Application-Verifier.wvb` | 103,424 | `5894bb7180597945f4e4d49e87ae954fb3c2bba84cde4b9cb549a2f168006a91` |
-| `windows-x64-wvappverify.exe` | 1,041,408 | `ebc6f54884e3d93ee1fb1f3658a9062167294f3d0e936554cadc499b83bd8111` |
-| `linux-x64-wvappverify.elf` | 1,040,384 | `5dbd78b3f67cc179e9848eacca6627a03f5f44ddecc6480d2e9ab98d073f792e` |
+| `Console-Application-Verifier.wvb` | 105,006 | `1dcd5f2aeebd974649e64c90d9f473e1e75f7d13dbcde2814de1dded72cf2c0c` |
+| `windows-x64-wvappverify.exe` | 1,064,448 | `3342db37e009b32f3c41139942f6161130b874f6f49a85c4bc906ada324272dc` |
+| `linux-x64-wvappverify.elf` | 1,064,960 | `cee61bb2bf6d805cbb98766c448d7d0985b95dd0fa55a3cd80b2e3697b369a8d` |
 
-The hosted profile has exactly two immutable input snapshots and no file-write
+The WVB rebuilds through the native Project 1 front door after canonicalizing
+its order-independent source inventory. Its complete hosted-admission closure
+still reports `Unsupportedˉcode` through the accepted-subset native lowerer and
+therefore remains a later backend item. The hosted profile has exactly two immutable input snapshots and no file-write
 capability. Existing verifier, inspector, and runner profiles retain one input
 snapshot and their existing layouts. Construction is recorded as
 `stage0-recovery`; normal use of the pinned applications is .NET-free.
