@@ -334,8 +334,18 @@ a focused recipe streamer constructs each maximum valid application as one exact
 portable wrapper revalidates those values and recovers the original native image
 without joining the completed container. The outputs match the independent
 Stage 0 PE/ELF identities. The host packages are still Stage 0-constructed
-candidates; native reconstruction, durable segmented publication, Linux
-execution, and grouped promotion remain required before this boundary retires.
+candidates; native host-container reconstruction, durable segmented publication,
+Linux execution, and grouped promotion remain required before this boundary
+retires.
+
+Decision 0343 narrows that reconstruction gap. Detailed binding evidence proves
+that neither console project approaches the binding or evidence limits; the
+generic rejection came from noncanonical dependency inventory order passed
+through the pinned driver's retained order-sensitive path. Canonicalizing both
+manifests makes the native Project 1 front door reproduce the exact ordinary and
+segmented WVBs through compiler-aligned verification and atomic publication.
+Their PE/ELF host containers remain Stage 0-constructed pending a later native
+container-construction and dual-host promotion slice.
 
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module

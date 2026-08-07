@@ -73,6 +73,14 @@ The hosted shell is also the first qualified native project consumer. Under ABI 
 
 This parser and hosted-shell evidence is now consumed by the format-5 Windvale-native build driver. Its project mode retains the parser unchanged, derives bounded source resource names in the hosted adapter, reads every selected source once, invokes the Windvale compiler and shared verifier in memory, and publishes accepted WVB without loading .NET. The Stage 0 `windvale build` command remains the normal and recovery implementation pending dual-host qualification and atomic publication.
 
+The currently pinned native build driver passes dependency resources to its
+compiler in manifest order and therefore retains a narrower order-sensitivity
+defect. Projects exercised through that exact driver keep dependencies in
+canonical module-name order as a compatibility workaround. This does not change
+Project 1: source directives remain order-independent, Stage 0 remains required
+to accept any valid ordering, and a future qualified native driver should remove
+the workaround rather than make ordering part of the manifest contract.
+
 The portable parser deliberately does not resolve a manifest path against a host filesystem. The native driver's hosted adapter defines a narrower cross-host resource-name contract: the manifest name uses `/`, parsed paths append beneath its last separator, and ASCII case aliases are rejected conservatively on both hosts. This keeps separator and identity policy outside the portable parser, but it is not a general host path resolver and does not prove link, mount, short-name, or other provider alias identity. The project form admits at most 63 modules because the retained manifest plus sources must fit the fixed 64-snapshot file-input profile. A future canonical resource-identity provider can remove those conservative restrictions without changing Project 1 text.
 
 ## Boundary and deferred features

@@ -3,6 +3,7 @@
 - Status: Accepted local implementation; cross-host qualification and promotion pending
 - Date: 2026-08-07
 - Extends: [Decision 0130](0130-Windvale-Owned-Console-Application-Construction.md), [Decision 0223](0223-First-Native-Console-Application-Packager.md), and [Decision 0341](0341-Fixed-Native-Console-Segmented-Size-Rejections.md)
+- Advanced by: [Decision 0343](0343-Native-Console-Packager-Source-Reconstruction.md)
 
 ## Context
 
@@ -31,6 +32,10 @@ Windvale byte-value limit would weaken an unrelated runtime boundary.
 - Keep the candidate marked `stage0-recovery`: the current project and ordinary
   packager both reach the known native source-binding ceiling, so runnable
   artifacts are not yet reconstructible native replacements.
+
+Decision 0343 later establishes that this report came from noncanonical project
+inventory order rather than binding capacity. The exact WVB is now natively
+reconstructible; the runnable host containers remain Stage 0-constructed.
 
 ## Evidence
 

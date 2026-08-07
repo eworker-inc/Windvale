@@ -4,7 +4,8 @@
   "sourceDecision": "0342",
   "qualification": "pending",
   "construction": "stage0-recovery",
-  "nativeSourceConstruction": "blocked-known-source-bindings",
+  "nativeSourceConstruction": "verified-digest-bound-front-door",
+  "nativeSourceDecision": "0343",
   "artifacts": [
     {
       "name": "console-segmented-packager-wvb",

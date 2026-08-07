@@ -4037,3 +4037,34 @@ source/host-container reconstruction, durable public segmented publication,
 large-native segmented-object transfer, broader unsafe/WVA evidence,
 Development, Standard, Qualification, promotion, and the grouped end-of-goal
 gate remain deferred.
+
+## Local native console-packager source-reconstruction evidence
+
+[Decision 0343](../Decisions/0343-Native-Console-Packager-Source-Reconstruction.md)
+corrects the ordinary and segmented Project 1 inventories without changing any
+source module. A detailed native binding diagnostic first proves that the
+ordinary closure is valid at 51 functions, 164 parameters, 159 locals, and
+12,172 directory bytes. The segmented closure is valid at 64 functions, 198
+parameters, 181 locals, and 14,332 directory bytes. Neither approaches the
+binding or evidence limits; the earlier generic `Sourceˉbindings` report came
+from dependency inventory order passed through the pinned driver's retained
+order-sensitive path.
+
+The focused Windows command passes 2/2 in 4.4 seconds. The ordinary project
+reconstructs 58,127 WVB bytes at SHA-256
+`7b055d4e6a456680a79eb28eaafa577e0019ea0ff1e34d9e713e9178428acc29`.
+The segmented project reconstructs 68,451 WVB bytes at SHA-256
+`33d7619c6115295a9eb612fd559031ab99c85196e3133a9405f880a19ac9ded2`.
+Both exact identities match their independent Stage 0 provenance candidates.
+The native driver performs compiler-aligned verification, writes a private
+candidate, and the digest-bound publisher atomically publishes the checked
+result. No .NET process or live managed oracle participates.
+
+The reviewed 1,979-byte LF-only retirement plan now contains 23 suites and
+3,030 cases at SHA-256
+`5276715f4d12a6fe003809a48a62876c4fcb0d3d58b3198c3be0387745a05a99`.
+The passing child is not rerun through the coordinator. Linux execution, native
+PE/ELF host-container reconstruction, durable segmented publication,
+large-native segmented-object transfer, broader unsafe/WVA evidence,
+Development, Standard, Qualification, promotion, and the grouped end-of-goal
+gate remain deferred.

@@ -5,6 +5,8 @@
   "provenanceDecision": "0303",
   "qualification": "pending",
   "construction": "stage0-recovery",
+  "nativeSourceConstruction": "verified-digest-bound-front-door",
+  "nativeSourceDecision": "0343",
   "artifacts": [
     {
       "name": "console-packager-wvb",

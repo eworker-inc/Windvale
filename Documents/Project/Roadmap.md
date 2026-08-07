@@ -54,6 +54,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0342](../Decisions/0342-Native-Segmented-Console-Application-Construction.md) transfers both maximum valid version-1 constructions to a focused Windvale recipe streamer. Exact two-chunk PE/ELF outputs match the complete Stage 0 application identities and pass the independent segmented verifier, growing the coordinator to 22 suites and 3,028 cases; native source/host-container reconstruction, durable public publication, large-native segmented-object transfer, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0343](../Decisions/0343-Native-Console-Packager-Source-Reconstruction.md) corrects canonical dependency inventory order for both console-packager projects. The digest-bound native Project 1 front door now reconstructs, compiler-align verifies, and atomically publishes both exact WVB identities, growing the coordinator to 23 suites and 3,030 cases; native PE/ELF host-container reconstruction, durable segmented publication, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

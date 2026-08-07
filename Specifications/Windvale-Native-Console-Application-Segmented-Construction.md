@@ -9,8 +9,9 @@ exists as one Windvale value. The tool instead emits one exact 4 MiB first
 chunk, one bounded second chunk, and a fixed staging manifest written last.
 
 The current applications are Stage 0-constructed candidates. Normal candidate
-execution does not load .NET, but native source and host-container
-reconstruction, Linux execution, promotion, and grouped qualification remain.
+execution does not load .NET, and the project now reconstructs its exact WVB
+through the digest-bound native front door. Native host-container reconstruction,
+Linux execution, promotion, and grouped qualification remain.
 
 ## Portable construction
 
@@ -50,10 +51,10 @@ The exact candidate manifest pins:
 | `Console-Segmented-Packager.exe` | 782,336 | `b9c02553966a758001a7ea03428565cf306fc8e5203e58056aebc1fed6b4a253` |
 | `Console-Segmented-Packager.elf` | 782,336 | `779a87a9246e5d13eab08bf47ab53d329e627c5e64e6cfe86082cc6600450089` |
 
-Construction is recorded as `stage0-recovery`. The project currently reaches
-the known native source-binding ceiling shared by the ordinary console
-packager, so these artifacts remain candidates rather than rebuildable native
-front-door products.
+Host-container construction remains recorded as `stage0-recovery`. Decision
+0343 corrects the project inventory order and reconstructs the exact WVB through
+the native front door; the PE/ELF tool containers remain recovery-built
+candidates rather than complete native-front-door products.
 
 ## `WVCS 1.0` staging manifest
 
@@ -107,6 +108,6 @@ Tests: 2, Passed: 2, Failed: 0
 ## Boundary
 
 This contract does not publish the chunks atomically to a public application
-path, reconstruct the packager through the native source front door, qualify
-Linux execution, promote either candidate, transfer large-native WVO
-construction, or complete the Decision 0057 retirement gate.
+path, reconstruct the packager's PE/ELF host containers natively, qualify Linux
+execution, promote either candidate, transfer large-native WVO construction, or
+complete the Decision 0057 retirement gate.

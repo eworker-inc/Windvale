@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts, and Decision 0307 composes their digest-bound launchers with the native atomic console-application publisher. This is not yet an ordinary front door: Stage 0 remains the construction and recovery target packager until native construction, the grouped Windows/Linux gate, and artifact promotion succeed.
+`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts, and Decision 0307 composes their digest-bound launchers with the native atomic console-application publisher. Decision 0343 makes the WVB natively reconstructible. This is not yet an ordinary front door: Stage 0 remains the host-container construction and recovery target until native PE/ELF construction, the grouped Windows/Linux gate, and artifact promotion succeed.
 
 The application composes the existing [console-application plan](Windvale-Console-Application-Plan.md), [construction](Windvale-Console-Application-Construction.md), and [verification](Windvale-Console-Application-Verification.md) contracts. It adds no second PE or ELF layout implementation.
 
@@ -65,6 +65,15 @@ The current candidate identities are:
 | Windows console packager | 667,648 | `a9cd6e222b869d838f563ffc46ae3acbde74ff8beb10c28373b6d5985c8f680f` |
 | Linux console packager | 667,648 | `10b1d752ab6c9c7217f833add9ef77ca0d61b6bcc02d7023b1877f42bab2a683` |
 
+`Tools/Native/Test-Console-Packager-Source-Reconstruction.cmd` and `.sh`
+build the ordinary and segmented projects through the digest-bound native
+Project 1 front door. The ordinary reconstruction must reproduce the 58,127-byte
+identity above; the segmented sibling must reproduce 68,451 bytes at SHA-256
+`33d7619c6115295a9eb612fd559031ab99c85196e3133a9405f880a19ac9ded2`.
+Both builds include compiler-aligned WVB verification and the separate native
+atomic publisher. This proves source-WVB reconstruction, not construction of the
+checked-in PE/ELF tool containers.
+
 The focused test reconstructs both containers, checks exact capabilities and services, exercises the public current-host AOT target, and runs the current-host raw application. One six-byte return-42 image must package deterministically into both target formats. The independent platform verifiers recover the exact image and zero entry, the current-host result returns 42, malformed target or entry input preserves an existing output, and process inspection finds no CLR/.NET runtime.
 
 ## Fixed native rejection contract
@@ -110,4 +119,4 @@ Promotion requires one exact source commit to pass on Windows and Linux with:
 - no CLR/.NET module or mapping in the packager process; and
 - no regression in version-1 PE/ELF, native ABI, capability, construction, or verification contracts.
 
-Decision 0303 pins both platform applications and explicitly records Stage 0 construction. Decision 0307 adds native safe publication to their digest-bound launchers. Only an exact descendant that supplies native construction and passes both hosts moves ordinary version-1 materialization to the native packager. Stage 0 remains a named recovery/differential path until Decision 0057's complete archive gate permits deletion.
+Decision 0303 pins both platform applications and explicitly records Stage 0 construction. Decision 0307 adds native safe publication to their digest-bound launchers, and Decision 0343 closes exact WVB source reconstruction. Only an exact descendant that supplies native host-container construction and passes both hosts moves ordinary version-1 materialization to the native packager. Stage 0 remains a named recovery/differential path until Decision 0057's complete archive gate permits deletion.
