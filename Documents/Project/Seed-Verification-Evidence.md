@@ -3822,3 +3822,43 @@ Linux execution, hostile-size WVO, remaining source/PE/ELF differential data,
 Development, Standard, Qualification, promotion, and the grouped end-of-goal
 gate remain deferred. No product, format, candidate artifact, managed reference,
 or WebAssembly implementation changed.
+
+## Local fixed native console-container mutation evidence
+
+[Decision 0338](../Decisions/0338-Fixed-Native-Console-Container-Mutations.md)
+transfers the exact ordinary version-1 PE/ELF malformed-container cases at
+parent commit `977b301`. The immutable bases remain the canonical 5,120-byte PE
+at SHA-256
+`5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77`
+and 8,304-byte ELF at SHA-256
+`8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4`.
+
+The 4,432-byte archive at SHA-256
+`63b7d5187aa0f5407aa5a68be851c03fb0b64991c418f8c2407548f0ad6c89c9`
+contains 10 PE and 9 ELF values totaling 125,936 input bytes. Its 2,626-byte
+manifest at SHA-256
+`35794ce75d80a06b099f705a8c0fce91295a5d627cee2a76803617f372e13669`
+fixes each truncation, XOR-one, or append-zero operation, exact offset, Stage 0
+detailed code, size, and input digest.
+
+A reviewed one-time Stage 0 oracle passes all 19 recorded `WVW200x`/`WVL200x`
+codes in 14.110 seconds. Its source and build output were moved outside the
+repository. Independent static review then reconstructs every archived value
+byte-for-byte from its base and operation, verifies the 10/9 target and 2/15/2
+operation counts, accepts the Linux wrapper's Bash syntax, and confirms CRLF for
+the Windows command and LF for the shell command.
+
+The reviewed direct Windows native command passes 19/19 in 6.235 seconds.
+Every public publisher call returns the exact console-application rejection,
+writes no standard output, preserves the candidate and destination sentinel,
+and leaves no scratch. The passing child was not rerun through the changed
+coordinator.
+
+The reviewed 1,461-byte LF-only plan now contains 18 suites and 3,005 cases at
+SHA-256
+`f5ea90968f7e53bc885e6baa49635cbf430ec5f4abd329d2b92ca8ac4f6792f2`.
+Linux execution, the two segmented larger-than-4-MiB console-size cases, hosted
+version-2 mutations, hostile-size WVO, Development, Standard, Qualification,
+promotion, and the grouped end-of-goal gate remain deferred. No product,
+container format, candidate artifact, managed reference, or WebAssembly
+implementation changed.

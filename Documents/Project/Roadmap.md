@@ -42,6 +42,10 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0336](../Decisions/0336-Fixed-Native-Wva-Differential-Corpus.md) freezes the exact managed 200-case seeded WVA mutation sequence in one compact archive. The native assembler agrees on all 199 Stage 0 rejection codes and the sole accepted 243-byte WVO, growing the coordinator to 14 suites and 986 cases; other extended WVA vectors, arbitrary-source containment, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0337](../Decisions/0337-Fixed-Native-Random-Containment-Corpus.md) freezes the exact continued 2,000-value Stage 0 random sequence across source, WVB, and WVO families. Three focused native lanes preserve every input and assembler destination without a live managed oracle, growing the coordinator to 17 suites and 2,986 cases; Linux execution, remaining differentiated families, and the grouped gate remain deferred.
+
+[Decision 0338](../Decisions/0338-Fixed-Native-Console-Container-Mutations.md) transfers 10 canonical PE and 9 canonical ELF truncation, structural, padding, context, relocation, and trailing-byte cases to the public native publisher while retaining exact Stage 0 code provenance. The coordinator now owns 18 suites and 3,005 cases; the two segmented maximum-size values, hosted version-2 mutations, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

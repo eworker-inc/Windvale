@@ -8,10 +8,11 @@ publisher. It requires 128 bounded arbitrary PE candidates and 128 bounded
 arbitrary ELF candidates to fail through the shared portable verifier without
 a live C# oracle, destination publication, input mutation, or leftover scratch.
 
-The corpus supplements the curated construction and diagnostic cases. It does
-not replace valid-shaped one-byte mutations, maximum admitted application
-construction, successful execution, publication fault/concurrency evidence, or
-the final dual-host qualification gate.
+The corpus supplements the curated construction and diagnostic cases. The
+separate [mutation contract](Windvale-Native-Console-Container-Mutation-Tests.md)
+owns ordinary valid-shaped one-byte cases. This corpus does not replace maximum
+admitted application construction, successful execution, publication
+fault/concurrency evidence, or the final dual-host qualification gate.
 
 ## Corpus construction and identity
 
