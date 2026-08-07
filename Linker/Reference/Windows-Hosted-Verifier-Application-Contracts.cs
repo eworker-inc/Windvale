@@ -68,7 +68,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉcontract
         var Dataˉfile = checked((uint)HEADER_BYTES + Textˉfile);
         var Dataˉsection = Alignˉup(checked(TEXT_ADDRESS + Textˉvirtual), 0x1000);
         var Runtime = Hostedˉverifierˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Windowsˉx64);
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            profile);
         var Dataˉvirtual = checked(IMPORT_FILE_BYTES + Runtime.Virtualˉbytes);
         var Relocationˉfile = checked(Dataˉfile + DATA_FILE_BYTES);
         var Relocationˉaddress = Alignˉup(checked(Dataˉsection + Dataˉvirtual), 0x1000);
@@ -122,7 +123,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉcontract
                 Windowsˉhostedˉverifierˉstartup.BYTES,
             Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
                 Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner or
-                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector =>
+                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier =>
                 Windowsˉhostedˉinspectorˉstartup.BYTES,
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };

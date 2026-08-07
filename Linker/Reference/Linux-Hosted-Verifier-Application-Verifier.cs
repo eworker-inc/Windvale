@@ -33,7 +33,8 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉverifier
             Linuxˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS + Textˉbytes),
             PAGE_BYTES);
         var Runtimeˉlayout = Hostedˉverifierˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Linuxˉx64);
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            expectedˉprofile);
         var Expectedˉbytes = checked((int)(Dataˉoffset +
             Linuxˉhostedˉverifierˉapplicationˉcontract.DATA_FILE_BYTES));
         if (bytes.Length != Expectedˉbytes)

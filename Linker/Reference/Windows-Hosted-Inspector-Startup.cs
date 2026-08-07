@@ -259,7 +259,8 @@ internal static class Windowsˉhostedˉinspectorˉstartup
         if (layout.Target != Consoleˉapplicationˉtarget.Windowsˉx64 ||
             profile is not (Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
                 Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner or
-                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector) ||
+                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier) ||
             bundle is null ||
             bundle.Platform != Nativeˉserviceˉplatform.Windows ||
             !bundle.Placements.Select(Placement => Placement.Service).SequenceEqual(Services) ||

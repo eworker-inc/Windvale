@@ -30,6 +30,7 @@ internal enum Hostedˉverifierˉapplicationˉprofile : uint
     Wvbˉinspector = 4,
     Wvbˉrunner = 5,
     Wvoˉinspector = 6,
+    Consoleˉapplicationˉverifier = 7,
 }
 
 internal sealed record Verifiedˉhostedˉverifierˉmetadata(
@@ -364,6 +365,8 @@ internal static class Hostedˉverifierˉapplicationˉmetadata
         Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector => INSPECTOR_REQUIRED_SERVICES,
         Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner => RUNNER_REQUIRED_SERVICES,
         Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector => INSPECTOR_REQUIRED_SERVICES,
+        Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier =>
+            INSPECTOR_REQUIRED_SERVICES,
         _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
     };
 

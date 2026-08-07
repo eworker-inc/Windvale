@@ -1,0 +1,12 @@
+windvale-project 1
+root "Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Sha256.wv"
+source "Linker/Windvale/Console-Application-Plan-Core.wv"
+source "Linker/Windvale/Console-Application-Construction-Core.wv"
+source "Linker/Windvale/Console-Application-Verification-Core.wv"
+source "Linker/Windvale/Hosted-Console-Application-Verification-Common.wv"
+source "Linker/Windvale/Hosted-Console-Application-Verification-Windows.wv"
+source "Linker/Windvale/Hosted-Console-Application-Verification-Linux.wv"
+source "Linker/Windvale/Console-Application-Admission-Core.wv"
+emit wvb

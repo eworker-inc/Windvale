@@ -104,6 +104,8 @@ internal static class Program
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
             "windows-x64-wvo-inspector-v1|linux-x64-wvo-inspector-v1|" +
+            "windows-x64-console-application-verifier-v1|" +
+            "linux-x64-console-application-verifier-v1|" +
             "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
@@ -170,6 +172,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME => ".exe",
+        Windowsˉconsoleˉapplicationˉcontract.CONSOLE_APPLICATION_VERIFIER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME => ".exe",
@@ -235,6 +238,8 @@ internal static class Program
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
             "windows-x64-wvo-inspector-v1|linux-x64-wvo-inspector-v1|" +
+            "windows-x64-console-application-verifier-v1|" +
+            "linux-x64-console-application-verifier-v1|" +
             "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
@@ -320,6 +325,8 @@ internal static class Program
         Linuxˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME or
+        Windowsˉconsoleˉapplicationˉcontract.CONSOLE_APPLICATION_VERIFIER_TARGET_NAME or
+        Linuxˉconsoleˉapplicationˉcontract.CONSOLE_APPLICATION_VERIFIER_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
@@ -467,6 +474,7 @@ internal static class Program
                 Windowsˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME or
+                Windowsˉconsoleˉapplicationˉcontract.CONSOLE_APPLICATION_VERIFIER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME or
@@ -495,6 +503,11 @@ internal static class Program
                             Capabilities),
                     Windowsˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME =>
                         Wvoˉinspectorˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Windowsˉconsoleˉapplicationˉcontract.CONSOLE_APPLICATION_VERIFIER_TARGET_NAME =>
+                        Consoleˉapplicationˉverifierˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -589,6 +602,11 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Linuxˉconsoleˉapplicationˉcontract.CONSOLE_APPLICATION_VERIFIER_TARGET_NAME =>
+                        Consoleˉapplicationˉverifierˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME =>
                         Wvbˉrunnerˉapplicationˉwriter.Writeˉlinux(
                             Fragment,
@@ -670,6 +688,7 @@ internal static class Program
                     Linuxˉconsoleˉapplicationˉcontract.VERIFIER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.INSPECTOR_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVO_INSPECTOR_TARGET_NAME or
+                    Linuxˉconsoleˉapplicationˉcontract.CONSOLE_APPLICATION_VERIFIER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVB_RUNNER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.BUILD_DRIVER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVA_ASSEMBLER_TARGET_NAME or
@@ -1158,6 +1177,8 @@ internal static class Program
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
             "windows-x64-wvo-inspector-v1|linux-x64-wvo-inspector-v1|" +
+            "windows-x64-console-application-verifier-v1|" +
+            "linux-x64-console-application-verifier-v1|" +
             "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +
@@ -1181,6 +1202,8 @@ internal static class Program
             "windows-x64-verifier-v1|linux-x64-verifier-v1|" +
             "windows-x64-wvb-inspector-v1|linux-x64-wvb-inspector-v1|" +
             "windows-x64-wvo-inspector-v1|linux-x64-wvo-inspector-v1|" +
+            "windows-x64-console-application-verifier-v1|" +
+            "linux-x64-console-application-verifier-v1|" +
             "windows-x64-wvb-runner-v1|linux-x64-wvb-runner-v1|" +
             "windows-x64-build-driver-v1|linux-x64-build-driver-v1|" +
             "windows-x64-wva-assembler-v1|linux-x64-wva-assembler-v1|" +

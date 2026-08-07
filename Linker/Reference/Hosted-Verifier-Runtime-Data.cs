@@ -46,7 +46,9 @@ internal static class Hostedˉverifierˉruntimeˉdata
     internal const uint MAXIMUM_RUNTIME_DATA_BYTES = 512 * 1024 * 1024;
 
     internal static Hostedˉverifierˉruntimeˉlayout Plan(
-        Consoleˉapplicationˉtarget target)
+        Consoleˉapplicationˉtarget target,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
         if (!Enum.IsDefined(target))
         {
@@ -64,7 +66,10 @@ internal static class Hostedˉverifierˉruntimeˉdata
         var Snapshotˉtableˉoffset = Alignˉup(
             checked(Argumentˉbytesˉoffset + Argumentˉbytes),
             16);
-        const uint Snapshotˉcapacity = 1;
+        var Snapshotˉcapacity = profile ==
+            Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier
+            ? 2u
+            : 1u;
         var Snapshotˉtableˉbytes = checked(
             Snapshotˉcapacity *
             Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_RECORD_BYTES);
@@ -128,7 +133,7 @@ internal static class Hostedˉverifierˉruntimeˉdata
         Hostedˉverifierˉapplicationˉprofile profile =
             Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
-        var Layout = Plan(target);
+        var Layout = Plan(target, profile);
         var Bytes = new byte[checked((int)HEADER_BYTES)];
         Writeˉcontext(Bytes);
         Writeˉserviceˉtable(Bytes);
@@ -162,7 +167,7 @@ internal static class Hostedˉverifierˉruntimeˉdata
         {
             throw Invalid("The hosted verifier runtime header has an invalid size.");
         }
-        var Layout = Plan(expectedˉtarget);
+        var Layout = Plan(expectedˉtarget, expectedˉprofile);
         Verifyˉcontext(bytes);
         Verifyˉserviceˉtable(bytes);
         Verifyˉoutputˉtable(bytes, expectedˉtarget);

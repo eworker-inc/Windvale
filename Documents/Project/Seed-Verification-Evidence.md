@@ -3948,3 +3948,45 @@ SHA-256
 Linux execution, segmented console maximum-size rejection, large-native hosted
 construction, broader unsafe/WVA evidence, Development, Standard,
 Qualification, promotion, and the grouped end-of-goal gate remain deferred.
+
+## Local native console segmented-size evidence
+
+[Decision 0341](../Decisions/0341-Fixed-Native-Console-Segmented-Size-Rejections.md)
+transfers both version-1 target maximum-plus-one boundaries to a dedicated
+read-only Windvale tool with two immutable input snapshots. Existing hosted
+verifier, inspector, and runner profiles retain their one-snapshot layouts.
+
+The WVB compiles through the explicit Stage 0 recovery path to 103,424 bytes at
+SHA-256
+`5894bb7180597945f4e4d49e87ae954fb3c2bba84cde4b9cb549a2f168006a91`.
+The 1,041,408-byte Windows application has SHA-256
+`ebc6f54884e3d93ee1fb1f3658a9062167294f3d0e936554cadc499b83bd8111`;
+the 1,040,384-byte Linux application has SHA-256
+`5dbd78b3f67cc179e9848eacca6627a03f5f44ddecc6480d2e9ab98d073f792e`.
+The compile-only Stage 0 toolchain check passes with zero warnings and errors,
+and both construction writers independently reverify the profile, entry, and
+service bundle.
+
+The fixed 8,909-byte archive at SHA-256
+`d0e9aa4f6e31d3bd28fb0468606f43b275c320adb470e4d3b78034d440573200`
+contains two 4,194,304-byte first chunks plus 2,049- and 8,305-byte second
+chunks. Its 569-byte manifest has SHA-256
+`50c1c87ac9dcaaccbd5036c2d67677dde044a6b24f11fe78149784741c72ca29`.
+The target markers let one portable verifier identify Windows and Linux; the
+managed target-specific zero-array cases remain recovery provenance rather
+than a claimed byte-identical live oracle.
+
+Pre-run review verifies all artifact, archive, manifest, and expanded-input
+identities, Bash syntax, required line endings, exact report hashes, and
+post-run input preservation. The direct Windows command passes 2/2 in 1.5
+seconds. Windows returns `Invalidˉsize` at 4,196,353 bytes after selecting target
+1. The Linux-shaped pair returns `Invalidˉchunk` at the 8,305-byte second chunk
+before target selection, with 4,202,609 total bytes. Neither pair changes.
+
+The reviewed 1,751-byte LF-only plan now contains 21 suites and 3,026 cases at
+SHA-256
+`aa8b8680fe87c18186815f6dd7f4f924df86c22ed416b6f69168a1f59a287566`.
+The passing child is not rerun through the changed coordinator. Linux
+execution, maximum-size valid application construction, large-native
+segmented-object transfer, broader unsafe/WVA evidence, Development, Standard,
+Qualification, promotion, and the grouped end-of-goal gate remain deferred.

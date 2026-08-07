@@ -50,6 +50,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0340](../Decisions/0340-Windvale-Native-Hosted-Console-Admission.md) transfers format-2 hosted PE/ELF admission, SHA-256 metadata/output/native checks, canonical startup recovery, and the exact thirteen managed mutations to portable Windvale. Two valid bases and all rejections pass through the native atomic publisher, growing the coordinator to 20 suites and 3,024 cases; segmented maximum-size admission, large-native hosted construction, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0341](../Decisions/0341-Fixed-Native-Console-Segmented-Size-Rejections.md) transfers both version-1 maximum-plus-one application boundaries to a dedicated two-snapshot Windvale verifier. The fixed Windows and Linux-shaped inputs retain their Stage 0 provenance and exact portable rejection ordering, growing the coordinator to 21 suites and 3,026 cases; maximum-size valid construction, large-native segmented-object transfer, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

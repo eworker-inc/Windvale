@@ -34,7 +34,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉverifier
             Windowsˉhostedˉverifierˉapplicationˉcontract.TEXT_ADDRESS + Textˉvirtual),
             SECTION_ALIGNMENT);
         var Runtimeˉlayout = Hostedˉverifierˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Windowsˉx64);
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            expectedˉprofile);
         var Dataˉvirtual = checked(
             Windowsˉhostedˉverifierˉapplicationˉcontract.IMPORT_FILE_BYTES +
             Runtimeˉlayout.Virtualˉbytes);

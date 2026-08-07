@@ -52,7 +52,8 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉcontract
         var Textˉbytes = checked((uint)(BUNDLE_TEXT_OFFSET + bundle.Imageˉbytes.Length));
         var Dataˉoffset = Alignˉup(checked(TEXT_ADDRESS + Textˉbytes), HEADER_BYTES);
         var Runtime = Hostedˉverifierˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Linuxˉx64);
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            profile);
         return new(
             checked((int)(Dataˉoffset + DATA_FILE_BYTES)),
             HEADER_BYTES,
@@ -94,7 +95,8 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉcontract
                 Linuxˉhostedˉverifierˉstartup.BYTES,
             Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
                 Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner or
-                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector =>
+                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier =>
                 Linuxˉhostedˉinspectorˉstartup.BYTES,
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };

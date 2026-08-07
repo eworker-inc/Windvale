@@ -1,0 +1,83 @@
+module Windvaleˉconsoleˉapplicationˉverifierˉtool profile hosted;
+
+import Linkerˉconsoleˉapplicationˉverification as Applicationˉverification;
+import Linkerˉconsoleˉapplicationˉadmission as Applicationˉadmission;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Consoleˉapplicationˉverifierˉfield(
+    Report: text,
+    Name: text,
+    Value: u32
+) -> text {
+    return Textˉconcat(
+        Textˉconcat(Report, Textˉconcat(" ", Name)),
+        Textˉconcat("=", U32ˉformat(Value))
+    );
+}
+
+fn Consoleˉapplicationˉverifierˉrejection(
+    Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult
+) -> text {
+    var Report: text = "console application status=Rejected";
+    Report = Consoleˉapplicationˉverifierˉfield(
+        Report,
+        "code",
+        Applicationˉverification.Consoleˉapplicationˉverificationˉstatusˉvalue(
+            Verified.Status
+        )
+    );
+    Report = Consoleˉapplicationˉverifierˉfield(
+        Report, "offset", Verified.Failureˉoffset
+    );
+    Report = Consoleˉapplicationˉverifierˉfield(
+        Report, "target", Verified.Target
+    );
+    return Consoleˉapplicationˉverifierˉfield(
+        Report, "bytes", Verified.Applicationˉbytes
+    );
+}
+
+fn Consoleˉapplicationˉverifierˉsuccess(
+    Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult
+) -> text {
+    var Report: text = "console application status=Valid";
+    Report = Consoleˉapplicationˉverifierˉfield(
+        Report, "target", Verified.Target
+    );
+    Report = Consoleˉapplicationˉverifierˉfield(
+        Report, "bytes", Verified.Applicationˉbytes
+    );
+    Report = Consoleˉapplicationˉverifierˉfield(
+        Report, "native-bytes", Bytesˉlength(Verified.Nativeˉimage)
+    );
+    return Consoleˉapplicationˉverifierˉfield(
+        Report, "entry", Verified.Nativeˉentryˉoffset
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line(
+            "Usage: wvappverify <first-application-chunk> <second-application-chunk>"
+        );
+        return 64;
+    }
+
+    let First: bytes = file.read_bytes(process.argument(0u32));
+    let Second: bytes = file.read_bytes(process.argument(1u32));
+    let Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult =
+        Applicationˉadmission.Consoleˉapplicationˉadmission(First, Second);
+    if Verified.Status !=
+        Applicationˉverification.Consoleˉapplicationˉverificationˉstatus.Valid {
+        diagnostic.write_line(Consoleˉapplicationˉverifierˉrejection(Verified));
+        return 1;
+    }
+
+    console.write_line(Consoleˉapplicationˉverifierˉsuccess(Verified));
+    return 0;
+}

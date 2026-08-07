@@ -295,6 +295,26 @@ must emit the exact console-application report, preserve the destination
 sentinel, and leave no scratch. All inputs remain unchanged. The exact terminal
 summary is `Tests: 15, Passed: 15, Failed: 0`.
 
+The segmented console-size lane uses a separate read-only verifier because each
+first chunk is exactly 4 MiB and cannot be joined with its second chunk into one
+ordinary Windvale byte value. On Windows use:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter console-segmented-size
+```
+
+On Linux use:
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter console-segmented-size
+```
+
+The fixed corpus contains the target-marked Windows and Linux maximum-plus-one
+inputs. The runner requires exact portable rejection ordering, empty standard
+output, and unchanged hashes for both chunks. It does not invoke the managed
+target-specific oracle. The exact terminal summary is
+`Tests: 2, Passed: 2, Failed: 0`.
+
 The focused publisher command tests pre-replacement admission and cleanup without
 running a successful package or lower operation. On Windows x64 run:
 

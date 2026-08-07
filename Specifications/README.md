@@ -82,6 +82,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native console-container hostile-input tests](Windvale-Native-Console-Container-Hostile-Input-Tests.md)
 - [Native console-container mutation tests](Windvale-Native-Console-Container-Mutation-Tests.md)
 - [Native hosted-console container mutation tests](Windvale-Native-Hosted-Console-Container-Mutation-Tests.md)
+- [Native console-application segmented-size tests](Windvale-Native-Console-Application-Segmented-Size-Tests.md)
 - [WVA native stencils](Wva-Native-Stencil.md)
 - [Native publication plan](Windvale-Native-Publication-Plan.md)
 - [Native publication lifetime](Windvale-Native-Publication-Lifetime.md)

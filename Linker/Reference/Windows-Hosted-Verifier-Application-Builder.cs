@@ -26,7 +26,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉbuilder
             nativeˉentryˉoffset,
             profile);
         var Runtimeˉlayout = Hostedˉverifierˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Windowsˉx64);
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            profile);
         var Runtime = Hostedˉverifierˉruntimeˉdata.Build(
             Consoleˉapplicationˉtarget.Windowsˉx64,
             capabilities,
@@ -46,7 +47,8 @@ internal static class Windowsˉhostedˉverifierˉapplicationˉbuilder
                     nativeˉentryˉoffset),
             Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
                 Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner or
-                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector =>
+                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier =>
                 Windowsˉhostedˉinspectorˉstartup.Build(
                     Layout.Textˉaddress,
                     Layout.Importˉaddress,

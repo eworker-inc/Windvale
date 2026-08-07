@@ -38,17 +38,20 @@ internal static class Linuxˉhostedˉverifierˉapplicationˉbuilder
                     Layout.Textˉaddress,
                     Layout.Dataˉaddress,
                     Hostedˉverifierˉruntimeˉdata.Plan(
-                        Consoleˉapplicationˉtarget.Linuxˉx64),
+                        Consoleˉapplicationˉtarget.Linuxˉx64,
+                        profile),
                     bundle,
                     nativeˉentryˉoffset),
             Hostedˉverifierˉapplicationˉprofile.Wvbˉinspector or
                 Hostedˉverifierˉapplicationˉprofile.Wvbˉrunner or
-                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector =>
+                Hostedˉverifierˉapplicationˉprofile.Wvoˉinspector or
+                Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier =>
                 Linuxˉhostedˉinspectorˉstartup.Build(
                     Layout.Textˉaddress,
                     Layout.Dataˉaddress,
                     Hostedˉverifierˉruntimeˉdata.Plan(
-                        Consoleˉapplicationˉtarget.Linuxˉx64),
+                        Consoleˉapplicationˉtarget.Linuxˉx64,
+                        profile),
                     bundle,
                     nativeˉentryˉoffset,
                     profile),

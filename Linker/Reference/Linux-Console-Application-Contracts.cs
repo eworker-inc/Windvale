@@ -97,6 +97,8 @@ public static class Linuxˉconsoleˉapplicationˉcontract
     public const string INSPECTOR_TARGET_NAME = "linux-x64-wvb-inspector-v1";
     public const string WVB_RUNNER_TARGET_NAME = "linux-x64-wvb-runner-v1";
     public const string WVO_INSPECTOR_TARGET_NAME = "linux-x64-wvo-inspector-v1";
+    public const string CONSOLE_APPLICATION_VERIFIER_TARGET_NAME =
+        "linux-x64-console-application-verifier-v1";
     public const int BUILD_DRIVER_FORMAT_VERSION = 5;
     public const string BUILD_DRIVER_TARGET_NAME = "linux-x64-build-driver-v1";
     public const int WVA_ASSEMBLER_FORMAT_VERSION = 6;
