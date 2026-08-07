@@ -31,6 +31,12 @@ internal static partial class Program
         Contains(
             Help.Standardˉoutput,
             Linuxˉconsoleˉapplicationˉcontract.CONSOLE_PACKAGER_TARGET_NAME);
+        Contains(
+            Help.Standardˉoutput,
+            Windowsˉconsoleˉapplicationˉcontract.CONSOLE_SEGMENTED_PACKAGER_TARGET_NAME);
+        Contains(
+            Help.Standardˉoutput,
+            Linuxˉconsoleˉapplicationˉcontract.CONSOLE_SEGMENTED_PACKAGER_TARGET_NAME);
     }
 
     private static void Nativeˉconsoleˉpackagerˉruns()

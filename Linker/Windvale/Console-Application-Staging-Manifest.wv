@@ -1,0 +1,140 @@
+module Linkerˉconsoleˉapplicationˉstagingˉmanifest profile portable;
+
+export enum Consoleˉapplicationˉstagingˉmanifestˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉtarget = 4;
+    Invalidˉapplication = 5;
+    Invalidˉnativeˉimage = 6;
+    Invalidˉentry = 7;
+    Invalidˉchunks = 8;
+}
+
+export record Consoleˉapplicationˉstagingˉmanifestˉsummary {
+    Status: Consoleˉapplicationˉstagingˉmanifestˉstatus;
+    Target: u32;
+    Applicationˉbytes: u32;
+    Nativeˉimageˉbytes: u32;
+    Nativeˉentryˉoffset: u32;
+    Firstˉbytes: u32;
+    Secondˉbytes: u32;
+}
+
+fn Invalid(
+    Status: Consoleˉapplicationˉstagingˉmanifestˉstatus
+) -> Consoleˉapplicationˉstagingˉmanifestˉsummary {
+    return Consoleˉapplicationˉstagingˉmanifestˉsummary(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Consoleˉapplicationˉstagingˉmanifestˉvalidate(
+    Input: bytes
+) -> Consoleˉapplicationˉstagingˉmanifestˉsummary {
+    if Bytesˉlength(Input) != 60u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉsize);
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Input, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Input, 2u32) != 67u8 ||
+        Bytesˉreadˉu8(Input, 3u32) != 83u8 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉmagic);
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉversion);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 60u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉsize);
+    }
+
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Target != 1u32 && Target != 2u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉtarget);
+    }
+    let Applicationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Applicationˉbytes <= 4194304u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉapplication);
+    }
+    if Target == 1u32 && Applicationˉbytes > 4196352u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉapplication);
+    }
+    if Target == 2u32 && Applicationˉbytes > 4202608u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉapplication);
+    }
+
+    let Nativeˉimageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Nativeˉimageˉbytes == 0u32 || Nativeˉimageˉbytes > 4194304u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉnativeˉimage);
+    }
+    let Nativeˉentryˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Nativeˉentryˉoffset >= Nativeˉimageˉbytes {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉentry);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) != 4194304u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 4194304u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 48u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 52u32) != 4194304u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉchunks);
+    }
+    let Secondˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 56u32);
+    if Secondˉbytes == 0u32 || Secondˉbytes > 8304u32 ||
+        Secondˉbytes != Applicationˉbytes - 4194304u32 {
+        return Invalid(Consoleˉapplicationˉstagingˉmanifestˉstatus.Invalidˉchunks);
+    }
+    return Consoleˉapplicationˉstagingˉmanifestˉsummary(
+        Consoleˉapplicationˉstagingˉmanifestˉstatus.Valid,
+        Target,
+        Applicationˉbytes,
+        Nativeˉimageˉbytes,
+        Nativeˉentryˉoffset,
+        4194304u32,
+        Secondˉbytes
+    );
+}
+
+export fn Consoleˉapplicationˉstagingˉmanifestˉbuild(
+    Target: u32,
+    Applicationˉbytes: u32,
+    Nativeˉimageˉbytes: u32,
+    Nativeˉentryˉoffset: u32,
+    Secondˉbytes: u32
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVCS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Appendˉu32(Result, 60u32);
+    Result = Appendˉu32(Result, Target);
+    Result = Appendˉu32(Result, Applicationˉbytes);
+    Result = Appendˉu32(Result, Nativeˉimageˉbytes);
+    Result = Appendˉu32(Result, Nativeˉentryˉoffset);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, 4194304u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 4194304u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 4194304u32);
+    Result = Appendˉu32(Result, Secondˉbytes);
+    let Summary: Consoleˉapplicationˉstagingˉmanifestˉsummary =
+        Consoleˉapplicationˉstagingˉmanifestˉvalidate(Result);
+    if Summary.Status != Consoleˉapplicationˉstagingˉmanifestˉstatus.Valid {
+        return Bytesˉslice(Result, 0u32, 0u32);
+    }
+    return Result;
+}

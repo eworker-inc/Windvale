@@ -326,6 +326,17 @@ segments, and native recovery behind one shared dispatcher. The normal publisher
 no longer needs C# to admit ordinary hosted containers, while Stage 0 remains
 the constructor and frozen independent recovery oracle until final qualification.
 
+Decision 0341 freezes the two version-1 maximum-plus-one PE/ELF boundaries as
+bounded two-snapshot inputs and transfers their exact rejection ordering to a
+dedicated read-only Windvale verifier. Decision 0342 adds the accepted sibling:
+a focused recipe streamer constructs each maximum valid application as one exact
+4 MiB chunk, one bounded remainder, and a `WVCS 1.0` manifest, then a separate
+portable wrapper revalidates those values and recovers the original native image
+without joining the completed container. The outputs match the independent
+Stage 0 PE/ELF identities. The host packages are still Stage 0-constructed
+candidates; native reconstruction, durable segmented publication, Linux
+execution, and grouped promotion remain required before this boundary retires.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

@@ -18,5 +18,6 @@ console-container-hostile|Test-Console-Container-Hostile-Inputs|256|Tests: 256, 
 console-container-mutations|Test-Console-Container-Mutations|19|Tests: 19, Passed: 19, Failed: 0
 hosted-console-container-mutations|Test-Hosted-Console-Container-Mutations|15|Tests: 15, Passed: 15, Failed: 0
 console-segmented-size|Test-Console-Application-Segmented-Size-Boundaries|2|Tests: 2, Passed: 2, Failed: 0
+console-segmented-construction|Test-Console-Application-Segmented-Construction|2|Tests: 2, Passed: 2, Failed: 0
 publisher-rejections|Test-Publisher-Rejections|2|Tests: 2, Passed: 2, Failed: 0
 aot-chain|Test-Aot-Chain|1|native aot chain status=Passed result=42

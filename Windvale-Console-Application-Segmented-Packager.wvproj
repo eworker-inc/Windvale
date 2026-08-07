@@ -1,0 +1,11 @@
+windvale-project 1
+root "Linker/Windvale/Console-Application-Segmented-Packager.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Linker/Windvale/Console-Application-Plan-Core.wv"
+source "Linker/Windvale/Console-Application-Construction-Core.wv"
+source "Linker/Windvale/Console-Application-Verification-Core.wv"
+source "Linker/Windvale/Console-Application-Staging-Manifest.wv"
+source "Linker/Windvale/Console-Application-Segmented-Recipe.wv"
+source "Linker/Windvale/Console-Application-Segmented-Construction.wv"
+emit wvb

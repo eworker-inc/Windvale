@@ -1,0 +1,34 @@
+{
+  "format": "windvale-native-console-segmented-packager-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0342",
+  "qualification": "pending",
+  "construction": "stage0-recovery",
+  "nativeSourceConstruction": "blocked-known-source-bindings",
+  "artifacts": [
+    {
+      "name": "console-segmented-packager-wvb",
+      "path": "Console-Segmented-Packager.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 68451,
+      "sha256": "33d7619c6115295a9eb612fd559031ab99c85196e3133a9405f880a19ac9ded2",
+      "sourceProject": "Windvale-Console-Application-Segmented-Packager.wvproj"
+    },
+    {
+      "name": "windows-x64-console-segmented-packager",
+      "path": "Console-Segmented-Packager.exe",
+      "target": "windows-x64-console-segmented-packager-v1",
+      "bytes": 782336,
+      "sha256": "b9c02553966a758001a7ea03428565cf306fc8e5203e58056aebc1fed6b4a253",
+      "sourceWvb": "Console-Segmented-Packager.wvb"
+    },
+    {
+      "name": "linux-x64-console-segmented-packager",
+      "path": "Console-Segmented-Packager.elf",
+      "target": "linux-x64-console-segmented-packager-v1",
+      "bytes": 782336,
+      "sha256": "779a87a9246e5d13eab08bf47ab53d329e627c5e64e6cfe86082cc6600450089",
+      "sourceWvb": "Console-Segmented-Packager.wvb"
+    }
+  ]
+}

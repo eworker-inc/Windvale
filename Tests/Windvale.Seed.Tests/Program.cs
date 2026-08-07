@@ -5323,6 +5323,10 @@ internal static partial class Program
             Maximumˉnativeˉimage,
             Maximumˉentry,
             Maximumˉwindowsˉplan);
+        Equal(4_196_352, Maximumˉwindowsˉimage.Length);
+        Equal(
+            "9cf6ab6650778969c97fad9e149a58d19de8334b806a6375ccc7150c3ad7091c",
+            Objectˉdigest.Calculateˉsha256(Maximumˉwindowsˉimage.AsSpan()));
         var Maximumˉverifiedˉwindows = Consoleˉapplicationˉverification.Verify(
             Maximumˉwindowsˉimage);
         Equal(Consoleˉapplicationˉtarget.Windowsˉx64, Maximumˉverifiedˉwindows.Target);
@@ -5337,6 +5341,10 @@ internal static partial class Program
             Maximumˉnativeˉimage,
             Maximumˉentry,
             Maximumˉlinuxˉplan);
+        Equal(4_202_608, Maximumˉlinuxˉimage.Length);
+        Equal(
+            "7b5eb125ce971b53071be80c3424a34436d082b806918fd06690b32e86e87d3a",
+            Objectˉdigest.Calculateˉsha256(Maximumˉlinuxˉimage.AsSpan()));
         var Maximumˉverifiedˉlinux = Consoleˉapplicationˉverification.Verify(
             Maximumˉlinuxˉimage);
         Equal(Consoleˉapplicationˉtarget.Linuxˉx64, Maximumˉverifiedˉlinux.Target);

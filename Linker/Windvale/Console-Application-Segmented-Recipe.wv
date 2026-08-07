@@ -1,0 +1,274 @@
+module Linkerˉconsoleˉapplicationˉsegmentedˉrecipe profile portable;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+export enum Consoleˉapplicationˉsegmentedˉrecipeˉstatus {
+    Valid = 0;
+    Invalid = 1;
+    Notˉsegmented = 2;
+}
+
+export record Consoleˉapplicationˉsegmentedˉrecipeˉresult {
+    Status: Consoleˉapplicationˉsegmentedˉrecipeˉstatus;
+    First: bytes;
+    Second: bytes;
+    Applicationˉbytes: u32;
+}
+
+record Consoleˉapplicationˉsegmentedˉrecipeˉbuild {
+    Valid: bool;
+    First: bytes;
+    Second: bytes;
+    Position: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Result(
+    Input: bytes,
+    Status: Consoleˉapplicationˉsegmentedˉrecipeˉstatus,
+    Applicationˉbytes: u32
+) -> Consoleˉapplicationˉsegmentedˉrecipeˉresult {
+    let Emptyˉvalue: bytes = Empty(Input);
+    return Consoleˉapplicationˉsegmentedˉrecipeˉresult(
+        Status,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        Applicationˉbytes
+    );
+}
+
+fn Invalidˉbuild(Input: bytes) -> Consoleˉapplicationˉsegmentedˉrecipeˉbuild {
+    let Emptyˉvalue: bytes = Empty(Input);
+    return Consoleˉapplicationˉsegmentedˉrecipeˉbuild(
+        false,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        0u32
+    );
+}
+
+fn Append(
+    Build: Consoleˉapplicationˉsegmentedˉrecipeˉbuild,
+    Value: bytes,
+    Applicationˉbytes: u32
+) -> Consoleˉapplicationˉsegmentedˉrecipeˉbuild {
+    if !Build.Valid { return Build; }
+    let Length: u32 = Bytesˉlength(Value);
+    if Build.Position > Applicationˉbytes ||
+        Length > Applicationˉbytes - Build.Position {
+        return Invalidˉbuild(Value);
+    }
+
+    var First: bytes = Build.First;
+    var Second: bytes = Build.Second;
+    var Consumed: u32 = 0u32;
+    let Firstˉbytes: u32 = Bytesˉlength(First);
+    if Firstˉbytes < 4194304u32 {
+        let Available: u32 = 4194304u32 - Firstˉbytes;
+        var Take: u32 = Length;
+        if Take > Available { Take = Available; }
+        if Take > 0u32 {
+            First = Bytesˉconcat(First, Bytesˉslice(Value, 0u32, Take));
+            Consumed = Take;
+        }
+    }
+    if Consumed < Length {
+        let Remaining: u32 = Length - Consumed;
+        if Bytesˉlength(Second) > 8304u32 ||
+            Remaining > 8304u32 - Bytesˉlength(Second) {
+            return Invalidˉbuild(Value);
+        }
+        Second = Bytesˉconcat(
+            Second,
+            Bytesˉslice(Value, Consumed, Remaining)
+        );
+    }
+    return Consoleˉapplicationˉsegmentedˉrecipeˉbuild(
+        true,
+        First,
+        Second,
+        Build.Position + Length
+    );
+}
+
+fn Appendˉzeros(
+    Build: Consoleˉapplicationˉsegmentedˉrecipeˉbuild,
+    Count: u32,
+    Applicationˉbytes: u32
+) -> Consoleˉapplicationˉsegmentedˉrecipeˉbuild {
+    let Zeros: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
+    if !Zeros.Valid { return Invalidˉbuild(Build.First); }
+    return Append(Build, Zeros.Value, Applicationˉbytes);
+}
+
+fn Headerˉvalid(
+    Recipe: bytes,
+    Target: u32,
+    Nativeˉbytes: u32,
+    Nativeˉentryˉoffset: u32
+) -> bool {
+    let Recipeˉbytes: u32 = Bytesˉlength(Recipe);
+    if Recipeˉbytes < 40u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 0u32) != 1128486487u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 4u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 8u32) != Recipeˉbytes { return false; }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 12u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 16u32) != 32u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 20u32) != Target { return false; }
+    if Bytesˉreadˉu32ˉlittle(Recipe, 28u32) != Nativeˉbytes { return false; }
+    return Bytesˉreadˉu32ˉlittle(Recipe, 32u32) == Nativeˉentryˉoffset;
+}
+
+export fn Consoleˉapplicationˉsegmentedˉrecipeˉmaterialize(
+    Input: bytes,
+    Target: u32,
+    Nativeˉentryˉoffset: u32,
+    Recipe: bytes
+) -> Consoleˉapplicationˉsegmentedˉrecipeˉresult {
+    let Recipeˉbytes: u32 = Bytesˉlength(Recipe);
+    let Nativeˉbytes: u32 = Bytesˉlength(Input);
+    if !Headerˉvalid(Recipe, Target, Nativeˉbytes, Nativeˉentryˉoffset) {
+        return Result(
+            Input,
+            Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+            0u32
+        );
+    }
+    let Applicationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 24u32);
+    if Applicationˉbytes <= 4194304u32 {
+        return Result(
+            Input,
+            Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Notˉsegmented,
+            Applicationˉbytes
+        );
+    }
+    if Target == 1u32 && Applicationˉbytes > 4196352u32 {
+        return Result(
+            Input,
+            Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+            Applicationˉbytes
+        );
+    }
+    if Target == 2u32 && Applicationˉbytes > 4202608u32 {
+        return Result(
+            Input,
+            Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+            Applicationˉbytes
+        );
+    }
+
+    let Segmentˉcount: u32 = Bytesˉreadˉu32ˉlittle(Recipe, 36u32);
+    if Target == 1u32 && Segmentˉcount != 5u32 {
+        return Result(
+            Input,
+            Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+            Applicationˉbytes
+        );
+    }
+    if Target == 2u32 && Segmentˉcount != 4u32 {
+        return Result(
+            Input,
+            Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+            Applicationˉbytes
+        );
+    }
+    let Descriptorˉbytes: u32 = Segmentˉcount * 12u32;
+    if Descriptorˉbytes > Recipeˉbytes - 40u32 {
+        return Result(
+            Input,
+            Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+            Applicationˉbytes
+        );
+    }
+
+    var Build: Consoleˉapplicationˉsegmentedˉrecipeˉbuild =
+        Consoleˉapplicationˉsegmentedˉrecipeˉbuild(
+            true,
+            Empty(Input),
+            Empty(Input),
+            0u32
+        );
+    var Payloadˉoffset: u32 = 40u32 + Descriptorˉbytes;
+    var Nativeˉsegmentˉseen: bool = false;
+    var Index: u32 = 0u32;
+    while Index < Segmentˉcount {
+        let Descriptorˉoffset: u32 = 40u32 + Index * 12u32;
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Recipe, Descriptorˉoffset);
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Recipe, Descriptorˉoffset + 4u32);
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Recipe, Descriptorˉoffset + 8u32);
+        if Offset < Build.Position || Offset > Applicationˉbytes ||
+            Length > Applicationˉbytes - Offset {
+            return Result(
+                Input,
+                Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+                Applicationˉbytes
+            );
+        }
+        Build = Appendˉzeros(Build, Offset - Build.Position, Applicationˉbytes);
+        if !Build.Valid {
+            return Result(
+                Input,
+                Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+                Applicationˉbytes
+            );
+        }
+
+        var Segment: bytes = Empty(Input);
+        if Kind == 1u32 {
+            if Payloadˉoffset > Recipeˉbytes ||
+                Length > Recipeˉbytes - Payloadˉoffset {
+                return Result(
+                    Input,
+                    Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+                    Applicationˉbytes
+                );
+            }
+            Segment = Bytesˉslice(Recipe, Payloadˉoffset, Length);
+            Payloadˉoffset = Payloadˉoffset + Length;
+        } else {
+            if Kind != 2u32 || Nativeˉsegmentˉseen || Length != Nativeˉbytes {
+                return Result(
+                    Input,
+                    Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+                    Applicationˉbytes
+                );
+            }
+            Segment = Input;
+            Nativeˉsegmentˉseen = true;
+        }
+        Build = Append(Build, Segment, Applicationˉbytes);
+        if !Build.Valid {
+            return Result(
+                Input,
+                Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+                Applicationˉbytes
+            );
+        }
+        Index = Index + 1u32;
+    }
+    Build = Appendˉzeros(
+        Build,
+        Applicationˉbytes - Build.Position,
+        Applicationˉbytes
+    );
+    if !Build.Valid || Build.Position != Applicationˉbytes ||
+        Bytesˉlength(Build.First) != 4194304u32 ||
+        Bytesˉlength(Build.Second) != Applicationˉbytes - 4194304u32 ||
+        Payloadˉoffset != Recipeˉbytes || !Nativeˉsegmentˉseen {
+        return Result(
+            Input,
+            Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Invalid,
+            Applicationˉbytes
+        );
+    }
+    return Consoleˉapplicationˉsegmentedˉrecipeˉresult(
+        Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Valid,
+        Build.First,
+        Build.Second,
+        Applicationˉbytes
+    );
+}

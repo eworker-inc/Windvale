@@ -52,6 +52,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0341](../Decisions/0341-Fixed-Native-Console-Segmented-Size-Rejections.md) transfers both version-1 maximum-plus-one application boundaries to a dedicated two-snapshot Windvale verifier. The fixed Windows and Linux-shaped inputs retain their Stage 0 provenance and exact portable rejection ordering, growing the coordinator to 21 suites and 3,026 cases; maximum-size valid construction, large-native segmented-object transfer, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0342](../Decisions/0342-Native-Segmented-Console-Application-Construction.md) transfers both maximum valid version-1 constructions to a focused Windvale recipe streamer. Exact two-chunk PE/ELF outputs match the complete Stage 0 application identities and pass the independent segmented verifier, growing the coordinator to 22 suites and 3,028 cases; native source/host-container reconstruction, durable public publication, large-native segmented-object transfer, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

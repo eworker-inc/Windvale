@@ -1,0 +1,174 @@
+module Linkerˉconsoleˉapplicationˉsegmentedˉconstruction profile portable;
+
+import Linkerˉconsoleˉapplicationˉconstruction as Applicationˉconstruction;
+import Linkerˉconsoleˉapplicationˉsegmentedˉrecipe as Segmentedˉrecipe;
+import Linkerˉconsoleˉapplicationˉverification as Applicationˉverification;
+
+export enum Consoleˉapplicationˉsegmentedˉstatus {
+    Valid = 0;
+    Invalidˉrequest = 1;
+    Invalidˉrecipe = 2;
+    Notˉsegmented = 3;
+    Verificationˉfailed = 4;
+}
+
+export record Consoleˉapplicationˉsegmentedˉresult {
+    Status: Consoleˉapplicationˉsegmentedˉstatus;
+    First: bytes;
+    Second: bytes;
+    Target: u32;
+    Applicationˉbytes: u32;
+    Nativeˉimageˉbytes: u32;
+    Nativeˉentryˉoffset: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Failed(
+    Input: bytes,
+    Status: Consoleˉapplicationˉsegmentedˉstatus,
+    Target: u32,
+    Applicationˉbytes: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉapplicationˉsegmentedˉresult {
+    let Emptyˉvalue: bytes = Empty(Input);
+    return Consoleˉapplicationˉsegmentedˉresult(
+        Status,
+        Emptyˉvalue,
+        Emptyˉvalue,
+        Target,
+        Applicationˉbytes,
+        Bytesˉlength(Input),
+        Nativeˉentryˉoffset
+    );
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Request(Input: bytes, Target: u32, Nativeˉentryˉoffset: u32) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 1363367511u32
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 1u32
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 32u32
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, Target
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, Bytesˉlength(Input)
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, Nativeˉentryˉoffset
+    );
+    Result = Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 0u32
+    );
+    return Applicationˉconstruction.Consoleˉapplicationˉconstructionˉappendˉu32(
+        Result, 0u32
+    );
+}
+
+export fn Consoleˉapplicationˉsegmentedˉconstruct(
+    Input: bytes,
+    Target: u32,
+    Nativeˉentryˉoffset: u32
+) -> Consoleˉapplicationˉsegmentedˉresult {
+    let Nativeˉbytes: u32 = Bytesˉlength(Input);
+    if Target != 1u32 && Target != 2u32 {
+        return Failed(
+            Input,
+            Consoleˉapplicationˉsegmentedˉstatus.Invalidˉrequest,
+            Target,
+            0u32,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Nativeˉbytes == 0u32 || Nativeˉbytes > 4194304u32 ||
+        Nativeˉentryˉoffset >= Nativeˉbytes {
+        return Failed(
+            Input,
+            Consoleˉapplicationˉsegmentedˉstatus.Invalidˉrequest,
+            Target,
+            0u32,
+            Nativeˉentryˉoffset
+        );
+    }
+
+    let Recipe: bytes = Applicationˉconstruction.Consoleˉapplicationˉconstruction(
+        Request(Input, Target, Nativeˉentryˉoffset)
+    );
+    let Materialized: Segmentedˉrecipe.Consoleˉapplicationˉsegmentedˉrecipeˉresult =
+        Segmentedˉrecipe.Consoleˉapplicationˉsegmentedˉrecipeˉmaterialize(
+            Input,
+            Target,
+            Nativeˉentryˉoffset,
+            Recipe
+        );
+    if Materialized.Status ==
+        Segmentedˉrecipe.Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Notˉsegmented {
+        return Failed(
+            Input,
+            Consoleˉapplicationˉsegmentedˉstatus.Notˉsegmented,
+            Target,
+            Materialized.Applicationˉbytes,
+            Nativeˉentryˉoffset
+        );
+    }
+    if Materialized.Status !=
+        Segmentedˉrecipe.Consoleˉapplicationˉsegmentedˉrecipeˉstatus.Valid {
+        return Failed(
+            Input,
+            Consoleˉapplicationˉsegmentedˉstatus.Invalidˉrecipe,
+            Target,
+            Materialized.Applicationˉbytes,
+            Nativeˉentryˉoffset
+        );
+    }
+
+    let Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult =
+        Applicationˉverification.Consoleˉapplicationˉverification(
+            Materialized.First,
+            Materialized.Second
+        );
+    if Verified.Status !=
+            Applicationˉverification.Consoleˉapplicationˉverificationˉstatus.Valid ||
+        Verified.Target != Target ||
+        Verified.Applicationˉbytes != Materialized.Applicationˉbytes ||
+        Verified.Nativeˉentryˉoffset != Nativeˉentryˉoffset ||
+        !Bytesˉareˉequal(Verified.Nativeˉimage, Input) {
+        return Failed(
+            Input,
+            Consoleˉapplicationˉsegmentedˉstatus.Verificationˉfailed,
+            Target,
+            Materialized.Applicationˉbytes,
+            Nativeˉentryˉoffset
+        );
+    }
+    return Consoleˉapplicationˉsegmentedˉresult(
+        Consoleˉapplicationˉsegmentedˉstatus.Valid,
+        Materialized.First,
+        Materialized.Second,
+        Target,
+        Materialized.Applicationˉbytes,
+        Nativeˉbytes,
+        Nativeˉentryˉoffset
+    );
+}

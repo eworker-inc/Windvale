@@ -3990,3 +3990,50 @@ The passing child is not rerun through the changed coordinator. Linux
 execution, maximum-size valid application construction, large-native
 segmented-object transfer, broader unsafe/WVA evidence, Development, Standard,
 Qualification, promotion, and the grouped end-of-goal gate remain deferred.
+
+## Local native segmented console construction evidence
+
+[Decision 0342](../Decisions/0342-Native-Segmented-Console-Application-Construction.md)
+adds a focused portable recipe streamer, a separately focused verification
+wrapper, and a small hosted staging tool. The completed PE/ELF never becomes
+one Windvale value: the tool writes one 4,194,304-byte chunk, one bounded
+remainder, and the 60-byte `WVCS 1.0` manifest last.
+
+The explicit Stage 0 recovery build produces a 68,451-byte WVB at SHA-256
+`33d7619c6115295a9eb612fd559031ab99c85196e3133a9405f880a19ac9ded2`.
+Its paired 782,336-byte Windows and Linux applications have SHA-256
+`b9c02553966a758001a7ea03428565cf306fc8e5203e58056aebc1fed6b4a253`
+and `779a87a9246e5d13eab08bf47ab53d329e627c5e64e6cfe86082cc6600450089`.
+One compile-only tooling build passes with zero warnings and errors. The native
+source front door reaches the same known `Sourceˉbindings` limit for this
+project and the existing ordinary packager, so the candidate is not recorded
+as natively reconstructible.
+
+The 4,949-byte fixed archive has SHA-256
+`3363b3edc5c05f6665566f236793761cf9f7dd03aacfb29334f1535bcfcba7c9`.
+Its 1,087-byte LF-only manifest has SHA-256
+`27cd7d83d6c44a5b53c26c6b732523a46036a76e1be78f6b0ae590d6f873b005`.
+One 4,194,304-byte native image at SHA-256
+`25711ae262e606e61654606b563aa7cdc93bb5288558bba0b3e533ab6eab238c`
+drives both targets at entry offset 4,194,303.
+
+The focused Windows command passes 2/2 in 3.0 seconds. The Windows chunks form
+the exact 4,196,352-byte Stage 0 application at SHA-256
+`9cf6ab6650778969c97fad9e149a58d19de8334b806a6375ccc7150c3ad7091c`;
+the Linux-shaped chunks form the exact 4,202,608-byte Stage 0 application at
+SHA-256
+`7b5eb125ce971b53071be80c3424a34436d082b806918fd06690b32e86e87d3a`.
+Both then pass the independent digest-bound segmented verifier, and the input
+remains unchanged. The corresponding managed recovery test pins the same two
+complete identities. Its focused layout assertion passes 1/1 in 2.1 seconds;
+the separately selected segmented AOT-target discovery assertion passes 1/1 in
+0.2 seconds while reusing that build.
+
+The reviewed 1,863-byte LF-only retirement plan now contains 22 suites and
+3,028 cases at SHA-256
+`b1c5965f0c7ba5a8cb08402ebb9591cc9993eaed07976e8b862e692c39b738f6`.
+The passing child is not rerun through the coordinator. Linux execution, native
+source/host-container reconstruction, durable public segmented publication,
+large-native segmented-object transfer, broader unsafe/WVA evidence,
+Development, Standard, Qualification, promotion, and the grouped end-of-goal
+gate remain deferred.

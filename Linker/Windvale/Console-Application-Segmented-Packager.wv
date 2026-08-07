@@ -1,0 +1,131 @@
+module Consoleˉapplicationˉsegmentedˉpackager profile hosted;
+
+import Foundationˉdecimalˉparsing as Decimalˉparsing;
+import Linkerˉconsoleˉapplicationˉsegmentedˉconstruction as Segmented;
+import Linkerˉconsoleˉapplicationˉstagingˉmanifest as Manifest;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Pathsˉareˉequal(First: text, Second: text) -> bool {
+    return Bytesˉareˉequal(Textˉtoˉutf8(First), Textˉtoˉutf8(Second));
+}
+
+fn Parseˉtarget(Value: bytes) -> u32 {
+    if Bytesˉareˉequal(Value, Textˉtoˉutf8("windows-x64-console-v1")) {
+        return 1u32;
+    }
+    if Bytesˉareˉequal(Value, Textˉtoˉutf8("linux-x64-console-v1")) {
+        return 2u32;
+    }
+    return 0u32;
+}
+
+fn Targetˉname(Target: u32) -> text {
+    if Target == 1u32 { return "windows-x64-console-v1"; }
+    if Target == 2u32 { return "linux-x64-console-v1"; }
+    return "invalid";
+}
+
+fn Chunkˉresource(Prefix: text, Index: u32) -> text {
+    return Textˉconcat(Textˉconcat(Prefix, ".chunk-"), U32ˉformat(Index));
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvpack-segmented <windows-x64-console-v1|linux-x64-console-v1> <native-image.bin> <entry-offset> <chunk-prefix> <manifest.wvcs>"
+    );
+    return 64;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 5u32 { return Usage(); }
+    let Target: u32 = Parseˉtarget(Textˉtoˉutf8(process.argument(0u32)));
+    let Entryˉbytes: bytes = Textˉtoˉutf8(process.argument(2u32));
+    let Entry: Decimalˉparsing.Foundationˉu32ˉparse =
+        Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(
+            Entryˉbytes,
+            0u32,
+            Bytesˉlength(Entryˉbytes)
+        );
+    let Inputˉpath: text = process.argument(1u32);
+    let Chunkˉprefix: text = process.argument(3u32);
+    let Manifestˉpath: text = process.argument(4u32);
+    let Firstˉpath: text = Chunkˉresource(Chunkˉprefix, 0u32);
+    let Secondˉpath: text = Chunkˉresource(Chunkˉprefix, 1u32);
+    let Prefixˉbytes: u32 = Bytesˉlength(Textˉtoˉutf8(Chunkˉprefix));
+    if Target == 0u32 || !Entry.Valid || Prefixˉbytes == 0u32 ||
+        Prefixˉbytes > 4086u32 ||
+        Pathsˉareˉequal(Inputˉpath, Manifestˉpath) ||
+        Pathsˉareˉequal(Inputˉpath, Firstˉpath) ||
+        Pathsˉareˉequal(Inputˉpath, Secondˉpath) ||
+        Pathsˉareˉequal(Manifestˉpath, Firstˉpath) ||
+        Pathsˉareˉequal(Manifestˉpath, Secondˉpath) {
+        return Usage();
+    }
+
+    let Input: bytes = file.read_bytes(Inputˉpath);
+    let Result: Segmented.Consoleˉapplicationˉsegmentedˉresult =
+        Segmented.Consoleˉapplicationˉsegmentedˉconstruct(
+            Input,
+            Target,
+            Entry.Value
+        );
+    if Result.Status != Segmented.Consoleˉapplicationˉsegmentedˉstatus.Valid {
+        var Failure: text = "segmented package status=";
+        Failure = Textˉconcat(Failure, Enumˉname(Result.Status));
+        Failure = Textˉconcat(Failure, " target=");
+        Failure = Textˉconcat(Failure, Targetˉname(Result.Target));
+        Failure = Textˉconcat(Failure, " native-image-bytes=");
+        Failure = Textˉconcat(Failure, U32ˉformat(Result.Nativeˉimageˉbytes));
+        Failure = Textˉconcat(Failure, " entry-offset=");
+        Failure = Textˉconcat(Failure, U32ˉformat(Result.Nativeˉentryˉoffset));
+        Failure = Textˉconcat(Failure, " application-bytes=");
+        diagnostic.write_line(
+            Textˉconcat(Failure, U32ˉformat(Result.Applicationˉbytes))
+        );
+        return 2;
+    }
+
+    let Manifestˉbytes: bytes =
+        Manifest.Consoleˉapplicationˉstagingˉmanifestˉbuild(
+            Result.Target,
+            Result.Applicationˉbytes,
+            Result.Nativeˉimageˉbytes,
+            Result.Nativeˉentryˉoffset,
+            Bytesˉlength(Result.Second)
+        );
+    if Bytesˉlength(Manifestˉbytes) != 60u32 { return 1; }
+    file.write_bytes(Firstˉpath, Result.First);
+    file.write_bytes(Secondˉpath, Result.Second);
+    file.write_bytes(Manifestˉpath, Manifestˉbytes);
+
+    var Report: text = "segmented package status=Valid target=";
+    Report = Textˉconcat(Report, Targetˉname(Result.Target));
+    Report = Textˉconcat(Report, " native-image-bytes=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Nativeˉimageˉbytes));
+    Report = Textˉconcat(Report, " entry-offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Nativeˉentryˉoffset));
+    Report = Textˉconcat(Report, " application-bytes=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Applicationˉbytes));
+    Report = Textˉconcat(Report, " chunks=2 manifest-bytes=");
+    console.write_line(Textˉconcat(Report, U32ˉformat(Bytesˉlength(Manifestˉbytes))));
+    return 0;
+}
