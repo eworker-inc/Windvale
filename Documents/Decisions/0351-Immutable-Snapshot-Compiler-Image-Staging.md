@@ -1,9 +1,10 @@
 # Decision 0351: Immutable-snapshot compiler-image staging
 
-- Status: Accepted local implementation; native process packaging, publisher-scale transfer, and grouped qualification pending
+- Status: Accepted local implementation; publisher-scale transfer and grouped qualification pending
 - Date: 2026-08-07
 - Advances: [Decision 0350](0350-Versioned-Segmented-Compiler-Image-Staging-Manifest.md), [Decision 0349](0349-Independent-Segmented-Compiler-Wvo-Image-Verification.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale linking](../../Specifications/Windvale-Linking.md#hosted-immutable-snapshot-staging-boundary)
+- Advanced by: [Decision 0352](0352-Digest-Bound-Compiler-Image-Staging-Applications.md)
 
 ## Context
 

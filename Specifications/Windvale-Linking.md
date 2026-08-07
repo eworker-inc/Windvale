@@ -233,6 +233,27 @@ digest, or replace a public destination. A later fixed publisher must bind
 native identities and perform the existing sibling/reread/atomic-replacement
 transaction before exposing the image.
 
+Digest-bound application candidates expose this exact hosted root as
+`windows-x64-compiler-image-staging-v1` and
+`linux-x64-compiler-image-staging-v1`. The generated Windvale fragment calls
+nine services: console output, process argument count/value, file input,
+diagnostic output, enum naming, text concatenation, unsigned formatting, and
+file output. The existing hosted-container layout additionally carries its
+canonical UTF-8 adapter slot as infrastructure; generated code does not call or
+gain another capability from that slot.
+
+The exact 75,337-byte tool WVB has SHA-256
+`855983284c088cd795c119fe0c392308824066b10a9173dceb7cdc2daa219101`.
+The Windows candidate is 849,920 bytes at SHA-256
+`c6315f74f0a674e8d0cbb6e64e80c97d409a500551f51b6ce3d7fa618ca00f6e`;
+the Linux candidate is 851,968 bytes at SHA-256
+`f93db63052605ebb61ce934b351ad45fe7386d134325af8e1a8abb93bc64dd9f`.
+Both containers have independent structural verification. Current-host Windows
+execution stages the complete small fixture without loading a CLR component;
+Linux execution remains a separate qualification item. These candidate
+containers are still constructed by the Stage 0 package writer and therefore
+do not close native host-container reconstruction.
+
 ## Deliberate omissions
 
 The flat target has no PE, ELF, UEFI, archive/library search, dynamic linking, weak symbols, COMDAT selection, dead stripping, section merging, executable permissions, debug data, stack/heap declaration, ABI, start-up code, 64-bit absolute relocation, internal-label model, or loader metadata. A raw flat image is not directly executed by Windows or Linux. The UEFI application adapter and capability-free `windows-x64-console-v1` and `linux-x64-console-v1` adapters are downstream targets with their own narrower input and verification rules.

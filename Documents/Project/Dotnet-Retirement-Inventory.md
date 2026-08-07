@@ -55,9 +55,19 @@ execution's immutable snapshot table, reuses those values for metadata,
 producer, and independent-verifier passes, writes only accepted bounded image
 chunks, and publishes `WVLI` last. The small eight-chunk fixture crosses this
 complete Windvale boundary with nine underlying reads and exact linked bytes.
-Publisher-scale transfer, a native process package, native file-identity and
-durable replacement, canonical map evidence, Linux execution, promotion, and
-grouped qualification remain open.
+Publisher-scale transfer, native file-identity and durable replacement,
+canonical map evidence, Linux execution, promotion, and grouped qualification
+remain open.
+
+[Decision 0352](../Decisions/0352-Digest-Bound-Compiler-Image-Staging-Applications.md)
+closes the next L1 sub-item: exact 849,920-byte Windows and 851,968-byte Linux
+application candidates now package the 75,337-byte Windvale staging root. The
+current-host Windows process preserves all source chunks, emits exact linked
+chunks plus `WVLI`, and loads no CLR component. The Linux package is
+structurally verified but not executed. Stage 0 still constructs both host
+containers, and publisher-scale transfer, durable public publication,
+canonical map evidence, Linux execution, promotion, and grouped qualification
+remain open.
 
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
