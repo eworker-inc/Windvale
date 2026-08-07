@@ -78,6 +78,16 @@ both host containers. Linux source-build/execution evidence, native container
 construction, publisher-scale transfer, durable publication, promotion, and
 the grouped gate remain open.
 
+[Decision 0354](../Decisions/0354-Native-Compiler-Image-Staging-Reconstruction.md)
+composes that native-built WVB through the current-host segmented WVO producer
+and immutable-snapshot image staging processes. Their complete WVO, linked
+image, and entry match the independent Stage 0 oracles byte for byte, and
+neither native child loads a managed runtime. Stage 0 still constructs both
+tool-container families and remains the temporary differential oracle. Native
+service-bundle and host-container construction, a promoted composition
+launcher, durable image publication, canonical map evidence, Linux execution,
+and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

@@ -4,6 +4,7 @@
 - Date: 2026-08-07
 - Advances: [Decision 0352](0352-Digest-Bound-Compiler-Image-Staging-Applications.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale linking](../../Specifications/Windvale-Linking.md#hosted-immutable-snapshot-staging-boundary)
+- Advanced by: [Decision 0354](0354-Native-Compiler-Image-Staging-Reconstruction.md)
 
 ## Context
 

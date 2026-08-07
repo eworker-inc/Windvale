@@ -251,6 +251,15 @@ in canonical ordinal module-name order until the native project driver derives
 the order itself. Stage 0 is the differential/recovery oracle for this WVB,
 not its normal constructor.
 
+The natively built WVB also crosses the current-host segmented native
+reconstruction path. The bounded native producer writes a strict `WVOP` and no
+more than 62 chunks; this staging application consumes those immutable
+snapshots and writes a strict `WVLI`. The joined WVO, flat image, and `Main`
+entry match the independent Stage 0 recovery oracles byte for byte, and neither
+native child loads a managed runtime. The application containers used for this
+evidence remain Stage 0-constructed candidates; native service-bundle and
+PE/ELF construction are separate open boundaries.
+
 The Windows candidate is 849,920 bytes at SHA-256
 `c6315f74f0a674e8d0cbb6e64e80c97d409a500551f51b6ce3d7fa618ca00f6e`;
 the Linux candidate is 851,968 bytes at SHA-256
