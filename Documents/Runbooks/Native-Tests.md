@@ -30,6 +30,7 @@ The exact filter names and case counts are:
 | `wvo-read-only` | 13 |
 | `wvo-differential` | 256 |
 | `assembler-rejections` | 11 |
+| `wva-differential` | 200 |
 | `lowerer-rejections` | 2 |
 | `linker-rejections` | 10 |
 | `linker-hostile` | 200 |
@@ -39,11 +40,11 @@ The exact filter names and case counts are:
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 13 suites and 786 cases in manifest order. Its
+Omitting `--filter` selects all 14 suites and 986 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 13, Passed: 13, Failed: 0, Cases: 786
+Suites: 14, Passed: 14, Failed: 0, Cases: 986
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -349,19 +350,39 @@ output, and complete destination preservation. The source-limit case generates a
 temporary one-byte-over-limit zero-filled input rather than retaining a very
 large fixture.
 
+The WVA differential lane freezes the exact 200-case seeded mutation sequence
+from the managed Stage 0 test. Run only this lane on Windows with:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter wva-differential
+```
+
+or on Linux:
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter wva-differential
+```
+
+The native assembler must match all 199 Stage 0 rejection codes, preserve each
+source and rejected destination, and reproduce the sole accepted 243-byte WVO.
+That WVO then passes the native verifier with its exact digest report. The
+compact archive retains all 200 exact 432-byte sources without adding loose or
+very large source files. The exact terminal summary is
+`Tests: 200, Passed: 200, Failed: 0`.
+
 No .NET process is required by these commands. The host dependencies are
 `cmd.exe`, `certutil`, `fsutil`, and `tar` on Windows, or Bash, `sha256sum`,
 `base64`, `tar`, `cmp`, `truncate`, and core utilities on Linux.
 
 ## Current boundary
 
-The 786-case coordinator is a candidate fixed native gate, not the complete normal
+The 986-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
-malformed-WVB/WVO, WVO differential, assembler, lowerer, linker, packager,
-publisher, and AOT-chain contracts. It does not replace the remaining complete
-unsafe, source/WVB/WVA randomized or differential, golden, OS, or bootstrap
-suites. Continue to select one appropriate Stage 0 verifier for changes outside
-these transferred fixtures.
+malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
+packager, publisher, and AOT-chain contracts. It does not replace the remaining
+complete unsafe, arbitrary-source/WVB randomized, representative WVA, golden,
+OS, or bootstrap suites. Continue to select one appropriate Stage 0 verifier
+for changes outside these transferred fixtures.
 
 Before running a filter, review its child command, fixtures, and expected
 summary against the changed behavior; update them first if the contract changed.

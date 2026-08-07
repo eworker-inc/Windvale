@@ -59,9 +59,12 @@ Decision 0321 adds a separate fixed rejection-family command over the ordinary
 digest-bound launcher. It covers `WVA1001` through `WVA1011` with exact input and
 report identities plus preservation of an existing destination; the oversized
 case is generated temporarily rather than retained as a very large source file.
-This focused matrix does not replace the broader managed differential corpus.
+Decision 0336 adds a separate fixed 200-case seeded-mutation command with exact
+Stage 0 acceptance, rejection-code, and successful WVO-byte agreement. These
+focused contracts do not replace remaining representative valid-source vectors,
+arbitrary-source containment, or final dual-host qualification.
 
-The C# Stage 0 oracle supplies differential evidence during this candidate stage. After the candidate is pinned and passes the same exact commit on Windows and Linux, normal tests use fixed WVA/WVO vectors, structural WVO assertions, malformed-input outcomes, and deterministic artifact identities. They do not need a live C# result generator. Stage 0 then remains only in named recovery, differential, and final archive qualification lanes.
+The C# Stage 0 oracle supplies differential evidence during this candidate stage. After the candidate is pinned and passes the same exact commit on Windows and Linux, normal tests use fixed WVA/WVO vectors, structural WVO assertions, malformed-input outcomes, and deterministic artifact identities. The transferred seeded-mutation lane already requires no live C# result generator. Stage 0 then remains only in named recovery, differential, and final archive qualification lanes.
 
 ## Qualification gate
 

@@ -62,6 +62,9 @@ Tests: 11, Passed: 11, Failed: 0
 ```
 
 The fixed matrix represents all stable diagnostic families, not every malformed
-source spelling. Stage 0 remains the recovery/differential owner of the broader
-malformed, instruction, register, numeric, label, and hostile-input corpus until
-the final retirement gate qualifies equivalent independent evidence.
+source spelling. The separate
+[native WVA differential contract](Windvale-Native-Wva-Differential-Tests.md)
+now owns the exact 200-case seeded mutation loop and agrees on every Stage 0
+diagnostic code. Remaining representative valid vectors and arbitrary-source
+containment still require equivalent independent evidence before the final
+retirement gate.

@@ -61,6 +61,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Windvale assembler core](Wva-Assembler-Core.md)
 - [Native WVA assembler application](Windvale-Native-Wva-Assembler.md)
 - [Native WVA assembler rejection tests](Windvale-Native-Wva-Assembler-Rejection-Tests.md)
+- [Native WVA differential tests](Windvale-Native-Wva-Differential-Tests.md)
 - [Windvale linking](Windvale-Linking.md)
 - [Windvale linker core](Wv-Linker-Core.md)
 - [Native Windvale linker application](Windvale-Native-Wv-Linker.md)

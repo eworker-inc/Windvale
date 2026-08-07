@@ -40,6 +40,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0335](../Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) freezes the exact managed WVO differential sequence and reference decisions into 128 valid-shaped mutations plus 128 arbitrary values. The native verifier agrees on all 32 accepted and 224 rejected cases, growing the coordinator to 13 suites and 786 cases; hostile-size WVO, WVA/source differential, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0336](../Decisions/0336-Fixed-Native-Wva-Differential-Corpus.md) freezes the exact managed 200-case seeded WVA mutation sequence in one compact archive. The native assembler agrees on all 199 Stage 0 rejection codes and the sole accepted 243-byte WVO, growing the coordinator to 14 suites and 986 cases; other extended WVA vectors, arbitrary-source containment, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

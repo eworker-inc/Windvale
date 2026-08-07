@@ -3744,3 +3744,41 @@ Linux execution, hostile-size WVO, remaining WVA/source/PE/ELF differential
 families, Development, Standard, Qualification, promotion, and the grouped
 end-of-goal gate remain deferred. No product, WVO format, candidate artifact,
 or WebAssembly implementation changed.
+
+## Local fixed native WVA differential evidence
+
+[Decision 0336](../Decisions/0336-Fixed-Native-Wva-Differential-Corpus.md)
+freezes the exact managed 200-case WVA mutation sequence and Stage 0 results at
+commit `d933dec`. A one-time reviewed reference program loaded the compiled
+canonical source constant, reproduced seed `0x575641`, selected one through four
+assignments from the exact 71-character alphabet, assembled each value, and
+structurally verified the accepted Stage 0 WVO. It was removed after emitting
+the immutable corpus; no managed generator belongs to the permanent command.
+
+The 17,301-byte archive at SHA-256
+`b9a076cf9416488d733ed4c4887c052e61548acb45574256cd3c65d94da31970`
+contains 200 distinct 432-byte sources plus a 27,485-byte manifest at SHA-256
+`50153c0f7a6e9b596f3a7e0c4ce5bc1c6f240b01ce8657d99c5775a61d9391e4`.
+Static review independently reconstructed every source from its recorded
+operations and the authoritative 432-byte constant, rechecked all sizes and
+digests, and confirmed the 58/45/50/47 assignment-count distribution. Only
+`Case-003.wva` remains accepted because it writes space over the same space; the
+other 199 cases span seven Stage 0 rejection codes. The permanent scripts
+contain no managed invocation, and Git Bash accepts the Linux script syntax.
+
+The reviewed direct Windows command passes 200/200 in 61.325 seconds. All 199
+rejections agree on the Stage 0 diagnostic code, write no standard output, and
+preserve source and destination. The accepted case emits the exact stable
+report, reproduces the 243-byte reference WVO at SHA-256
+`fd9db82653a0de0af8950340e7b43ac215c3cd0d8f3c416268ebcb92c88b9ab3`,
+and passes the native WVO verifier. The already-passing child was not rerun
+through the changed retirement-suite coordinator.
+
+The reviewed 1,127-byte LF-only plan now contains 14 suites and 986 cases at
+SHA-256
+`d4482c944e608c2a2d39359345927a954c7423b6d152c32ccda2d3578b7d07b5`.
+Linux execution, remaining representative WVA vectors, arbitrary-source
+containment, hostile-size WVO, source/PE/ELF differential families,
+Development, Standard, Qualification, promotion, and the grouped end-of-goal
+gate remain deferred. No product, WVA/WVO format, candidate artifact, managed
+reference, or WebAssembly implementation changed.

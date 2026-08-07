@@ -4,6 +4,7 @@ unsafe-wvb|Test-Wvb-Unsafe-Rejections|5|Tests: 5, Passed: 5, Failed: 0
 wvo-read-only|Test-Wvo-Read-Only-Rejections|13|Tests: 13, Passed: 13, Failed: 0
 wvo-differential|Test-Wvo-Differential|256|Tests: 256, Passed: 256, Failed: 0
 assembler-rejections|Test-Assembler-Rejections|11|Tests: 11, Passed: 11, Failed: 0
+wva-differential|Test-Wva-Differential|200|Tests: 200, Passed: 200, Failed: 0
 lowerer-rejections|Test-Lowerer-Rejections|2|Tests: 2, Passed: 2, Failed: 0
 linker-rejections|Test-Linker-Rejections|10|Tests: 10, Passed: 10, Failed: 0
 linker-hostile|Test-Linker-Hostile-Inputs|200|Tests: 200, Passed: 200, Failed: 0
