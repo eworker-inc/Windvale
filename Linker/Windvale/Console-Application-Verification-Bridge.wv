@@ -1,6 +1,7 @@
 module Linkerˉconsoleˉapplicationˉverificationˉbridge profile hosted;
 
 import Linkerˉconsoleˉapplicationˉverification as Applicationˉverification;
+import Linkerˉconsoleˉapplicationˉadmission as Applicationˉadmission;
 
 capability file.read_bytes;
 capability file.write_bytes;
@@ -13,7 +14,7 @@ export fn Main() -> bytes {
     let First: bytes = file.read_bytes(Firstˉname);
     let Second: bytes = file.read_bytes(Secondˉname);
     let Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult =
-        Applicationˉverification.Consoleˉapplicationˉverification(First, Second);
+        Applicationˉadmission.Consoleˉapplicationˉadmission(First, Second);
     if Verified.Status == Applicationˉverification.Consoleˉapplicationˉverificationˉstatus.Valid {
         file.write_bytes(Nativeˉimageˉname, Verified.Nativeˉimage);
     }

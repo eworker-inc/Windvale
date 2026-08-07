@@ -46,7 +46,7 @@ internal static partial class Program
     private const string CONSOLE_APPLICATION_CONSTRUCTION_CORE_SHA256 = "3d1dd4f866bfe40dccd4297522fb9dd3d2eac37ccc85a53a12d3908d23913e24";
     private const string CONSOLE_APPLICATION_CONSTRUCTION_BRIDGE_SHA256 = "c6753fcd0494bd7a15fa6d066921b6f9343d0d14609dbec5fe08519e73795f17";
     private const string CONSOLE_APPLICATION_VERIFICATION_CORE_SHA256 = "4630aca8bc5674af7e92ee4f42d57c73c7d70062453f6fdc3127fd52956d8218";
-    private const string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256 = "3e286ec7da351c66ce8f78a91059c0b358b8797e078cd3de8dcd4f93948788a0";
+    private const string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SHA256 = "0ee99abb83b71a0e60ed6c47852f5f99b57d3dc3f5737dd0f46c604be3181861";
     private const string NATIVE_CONSTANT_WVO_SHA256 = "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
     private const string NATIVE_ARITHMETIC_CODE_SHA256 = "0215fb8a41dfb1f01f670149583371cb512c68bd301e2c2908a28aef47594f7c";
     private const string NATIVE_ARITHMETIC_WVO_SHA256 = "d9ac70a601afdf2fb2efb1bf8b3d958532c2efa8991fb4b9ef3f066fab63331d";
@@ -1253,6 +1253,18 @@ internal static partial class Program
 
     private static readonly string CONSOLE_APPLICATION_VERIFICATION_CORE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Console-Application-Verification-Core.wv");
+
+    private static readonly string HOSTED_CONSOLE_APPLICATION_VERIFICATION_COMMON_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Hosted-Console-Application-Verification-Common.wv");
+
+    private static readonly string HOSTED_CONSOLE_APPLICATION_VERIFICATION_WINDOWS_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Hosted-Console-Application-Verification-Windows.wv");
+
+    private static readonly string HOSTED_CONSOLE_APPLICATION_VERIFICATION_LINUX_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Hosted-Console-Application-Verification-Linux.wv");
+
+    private static readonly string CONSOLE_APPLICATION_ADMISSION_CORE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.Console-Application-Admission-Core.wv");
 
     private static readonly string CONSOLE_APPLICATION_VERIFICATION_BRIDGE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Console-Application-Verification-Bridge.wv");
@@ -4879,6 +4891,19 @@ internal static partial class Program
                 new(
                     "Linker/Windvale/Console-Application-Verification-Core.wv",
                     CONSOLE_APPLICATION_VERIFICATION_CORE_SOURCE),
+                new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE),
+                new(
+                    "Linker/Windvale/Hosted-Console-Application-Verification-Common.wv",
+                    HOSTED_CONSOLE_APPLICATION_VERIFICATION_COMMON_SOURCE),
+                new(
+                    "Linker/Windvale/Hosted-Console-Application-Verification-Windows.wv",
+                    HOSTED_CONSOLE_APPLICATION_VERIFICATION_WINDOWS_SOURCE),
+                new(
+                    "Linker/Windvale/Hosted-Console-Application-Verification-Linux.wv",
+                    HOSTED_CONSOLE_APPLICATION_VERIFICATION_LINUX_SOURCE),
+                new(
+                    "Linker/Windvale/Console-Application-Admission-Core.wv",
+                    CONSOLE_APPLICATION_ADMISSION_CORE_SOURCE),
             ]);
         True(
             Verificationˉbridge.Success,

@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 1,533 LF-only bytes with SHA-256
-`83b6bab28343d2a6c4c3c4e9c69991512d8663baa628e82421e59b42748fbf8d`.
+`Tests/Native/Retirement-Suite.txt` is 1,644 LF-only bytes with SHA-256
+`833589bcc40dfcd5017a29d10b5c8a93d7d75ed3edde7f2af3c123bccb4434b6`.
 The first line is exactly:
 
 ```text
@@ -57,10 +57,11 @@ file. The current plan is:
 | `console-packager-rejections` | `Test-Console-Packager-Rejections` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
 | `console-container-hostile` | `Test-Console-Container-Hostile-Inputs` | 256 | `Tests: 256, Passed: 256, Failed: 0` |
 | `console-container-mutations` | `Test-Console-Container-Mutations` | 19 | `Tests: 19, Passed: 19, Failed: 0` |
+| `hosted-console-container-mutations` | `Test-Hosted-Console-Container-Mutations` | 15 | `Tests: 15, Passed: 15, Failed: 0` |
 | `publisher-rejections` | `Test-Publisher-Rejections` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 19 suites and 3,009 cases.
+The version-1 plan therefore contains exactly 20 suites and 3,024 cases.
 
 ## Coordinator contract
 
@@ -82,7 +83,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 19, Passed: 19, Failed: 0, Cases: 3009
+Suites: 20, Passed: 20, Failed: 0, Cases: 3024
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:
@@ -100,6 +101,6 @@ a new plan digest in both coordinators, and corresponding contract evidence.
 ## Boundary
 
 This suite proves deterministic composition of the fixed native lanes. It does
-not by itself qualify Linux execution, replace remaining managed valid-shaped
-or differential evidence, promote candidate applications, authorize removal of
+not by itself qualify Linux execution, replace remaining managed differential
+or maximum-size evidence, promote candidate applications, authorize removal of
 Stage 0, or complete the Decision 0057 retirement gate.

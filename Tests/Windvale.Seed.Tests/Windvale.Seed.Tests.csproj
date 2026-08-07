@@ -73,6 +73,18 @@
       Include="../../Linker/Windvale/Console-Application-Verification-Core.wv"
       LogicalName="Windvale.Seed.Tests.Console-Application-Verification-Core.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Hosted-Console-Application-Verification-Common.wv"
+      LogicalName="Windvale.Seed.Tests.Hosted-Console-Application-Verification-Common.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Windvale/Hosted-Console-Application-Verification-Windows.wv"
+      LogicalName="Windvale.Seed.Tests.Hosted-Console-Application-Verification-Windows.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Windvale/Hosted-Console-Application-Verification-Linux.wv"
+      LogicalName="Windvale.Seed.Tests.Hosted-Console-Application-Verification-Linux.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Windvale/Console-Application-Admission-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Console-Application-Admission-Core.wv" />
+    <EmbeddedResource
       Include="../../Linker/Windvale/Console-Application-Verification-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Console-Application-Verification-Bridge.wv" />
     <EmbeddedResource

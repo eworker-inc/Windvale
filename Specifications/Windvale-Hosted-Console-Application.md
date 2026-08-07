@@ -4,7 +4,7 @@
 
 Hosted console application format 2 is the first standalone native container that carries an explicit Windvale capability and runtime-service requirement. The paired targets are `windows-x64-console-v2` and `linux-x64-console-v2`. Both accept exactly one verified ABI-22 scalar application requiring exactly `console.write_line`; they reject every other service set.
 
-Version 2 does not change Windvale source, WVB, WVO, native ABI 22, execution-context version 7, service-table version 5, or the existing version-1 container bytes. Its Stage 0 adapter packages the shared verified native image with a WVA startup, the existing exact native console-output leaf, initialized runtime tables, and serialized metadata. The resulting PE or ELF runs without loading .NET.
+Version 2 does not change Windvale source, WVB, WVO, native ABI 22, execution-context version 7, service-table version 5, or the existing version-1 container bytes. Its Stage 0 adapter packages the shared verified native image with a WVA startup, the existing exact native console-output leaf, initialized runtime tables, and serialized metadata. The resulting PE or ELF runs without loading .NET. Portable Windvale now owns ordinary format-2 admission and native-image recovery; Stage 0 remains the constructor and independent recovery verifier.
 
 ## Fixed runtime data layout
 
@@ -77,9 +77,14 @@ Linux format 2 is a deterministic sectionless static-PIE ELF. It has header, RX 
 
 ## Verification and publication
 
-Construction fails before publication unless the native fragment verifier, WVO/flat-link reproduction, platform container verifier, `WVHC 1` verifier, exact startup reconstruction, output-leaf digest, native-image digest, and recovered entry/service comparison all agree. Version 2 is currently a Stage 0 container-building and independent-verification path; it does not pass through the version-1 portable Windvale layout/construction/verifier modules.
+Construction fails before publication unless the native fragment verifier, WVO/flat-link reproduction, platform container verifier, `WVHC 1` verifier, exact startup reconstruction, output-leaf digest, native-image digest, and recovered entry/service comparison all agree. Version 2 remains a Stage 0 container-building and independent recovery-verification path. Ordinary admission is now implemented by focused portable Windvale common, Windows, and Linux verifier modules behind the shared console-application dispatcher; it does not change the version-1 layout, construction, or recipe verifier modules.
 
 Verifiers check outer bounds before fixed reads and reject truncated, oversized, inconsistent, trailing, noncanonical, or digest-mismatched files. The CLI publishes the complete verified executable atomically. Linux publication sets mode `0755` on Linux.
+
+The fixed [native hosted-console mutation contract](Windvale-Native-Hosted-Console-Container-Mutation-Tests.md)
+preserves both canonical valid applications and the exact thirteen managed
+valid-shaped mutations behind the public native publisher. Segmented admission
+for the theoretical maximum remains a separate boundary.
 
 ## Deliberate limits
 

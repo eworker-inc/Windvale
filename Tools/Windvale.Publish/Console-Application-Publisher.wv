@@ -1,6 +1,7 @@
 module Windvaleˉconsoleˉapplicationˉpublisherˉtool profile hosted;
 
 import Linkerˉconsoleˉapplicationˉverification as Applicationˉverification;
+import Linkerˉconsoleˉapplicationˉadmission as Applicationˉadmission;
 import Windvaleˉwvbˉpublicationˉnativeˉbridge as Nativeˉbridge;
 
 capability console.write_line;
@@ -41,7 +42,7 @@ fn Consoleˉapplicationˉpublisherˉpathsˉareˉequal(Left: text, Right: text) -
 
 fn Consoleˉapplicationˉpublisherˉcandidateˉstatus(Candidate: bytes) -> i32 {
     let Verified: Applicationˉverification.Consoleˉapplicationˉverificationˉresult =
-        Applicationˉverification.Consoleˉapplicationˉverification(Candidate, Emptyˉbytes);
+        Applicationˉadmission.Consoleˉapplicationˉadmission(Candidate, Emptyˉbytes);
     if Verified.Status !=
         Applicationˉverification.Consoleˉapplicationˉverificationˉstatus.Valid {
         diagnostic.write_line("publication status=Rejected phase=console-application");

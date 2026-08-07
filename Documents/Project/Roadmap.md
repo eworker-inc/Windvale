@@ -48,6 +48,8 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 
 [Decision 0339](../Decisions/0339-Fixed-Native-Wvo-Hostile-Size.md) transfers the first standard WVO byte beyond the ordinary 4-MiB object/value limit to the exact native file-snapshot boundary. Verify, inspect, link, and publish all fail safely while preserving every applicable file, growing the coordinator to 19 suites and 3,009 cases; large-native segmented-object transfer, Linux execution, and the unfiltered grouped gate remain deferred.
 
+[Decision 0340](../Decisions/0340-Windvale-Native-Hosted-Console-Admission.md) transfers format-2 hosted PE/ELF admission, SHA-256 metadata/output/native checks, canonical startup recovery, and the exact thirteen managed mutations to portable Windvale. Two valid bases and all rejections pass through the native atomic publisher, growing the coordinator to 20 suites and 3,024 cases; segmented maximum-size admission, large-native hosted construction, Linux execution, and the unfiltered grouped gate remain deferred.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

@@ -3896,3 +3896,55 @@ rejection, hosted version-2 PE/ELF mutations, Development, Standard,
 Qualification, promotion, and the grouped end-of-goal gate remain deferred. No
 product, format, candidate artifact, managed reference, or WebAssembly
 implementation changed.
+
+## Local Windvale-native hosted-console admission evidence
+
+[Decision 0340](../Decisions/0340-Windvale-Native-Hosted-Console-Admission.md)
+moves format-2 hosted PE/ELF admission behind one portable Windvale dispatcher.
+Focused common, Windows, and Linux modules verify bounds, platform container
+records, execution/service/output tables, `WVHC 1`, portable SHA-256 fields,
+normalized WVA startup, recovered entry, and native image. The existing
+version-1 recipe verifier remains unchanged.
+
+The successor verification bridge is 101,811 bytes at SHA-256
+`0ee99abb83b71a0e60ed6c47852f5f99b57d3dc3f5737dd0f46c604be3181861`.
+The successor publisher WVB is 113,525 bytes at SHA-256
+`39965e723bec6904c605c74123d5e4ef1590d1cd9af5cd52d6a94494435c8da5`;
+its 1,135,616-byte Windows application has SHA-256
+`1ffab13c1b94ec57f31fbdfbced5465bf598dfb1a237552995fece1d43c2ba37`,
+and its 1,135,557-byte Linux application has SHA-256
+`fdfe5876f1217b747ec637a3a8407948f1402505ec27c91aa6a44fd3e06fcfa2`.
+Construction remains explicitly `stage0-recovery` pending native host-container
+construction and grouped promotion.
+
+The canonical Windows and Linux hosted bases are respectively 3,584 bytes at
+SHA-256
+`0f59222c33828d65a086de9f2b3eb22f00fc3b8c69cf7262a19b9e8df8b4f4e0`
+and 9,216 bytes at SHA-256
+`7ad022f26e24949ddb7a4b1cb7681e7edc24c573e501c64d92a8f0c9b4bca1fd`.
+A reviewed one-time bridge oracle passes both valid bases and all thirteen
+managed mutations, 15/15, with exact target/status/native/write agreement; its
+temporary source and repository build output were then removed.
+
+The permanent 3,534-byte archive has SHA-256
+`a8027a9d4238767ae9b7ab18e3d0114da4e4fdf3edcbbc044d4358f2ce1fd055`.
+Its 2,024-byte manifest has SHA-256
+`208a309624bef868b657cc87e2e95d6c085da1528bc5bc471226dc4b22c764f9`.
+Pre-run review verifies all 16 safe members, both valid identities, every
+manifest size/digest, and byte-for-byte reconstruction of nine XOR mutations,
+including two rehashed output leaves, plus two truncations and two appends. It
+also verifies publisher/bridge pins, Bash syntax, line endings, and no permanent
+.NET invocation.
+
+The direct Windows native command passes 15/15 in 5.9 seconds. Both valid
+containers publish byte-identically with exact reports; all thirteen rejected
+containers preserve the destination sentinel; every input remains unchanged
+and publication leaves no scratch. The passing child is not rerun through the
+changed coordinator.
+
+The reviewed 1,644-byte LF-only plan now contains 20 suites and 3,024 cases at
+SHA-256
+`833589bcc40dfcd5017a29d10b5c8a93d7d75ed3edde7f2af3c123bccb4434b6`.
+Linux execution, segmented console maximum-size rejection, large-native hosted
+construction, broader unsafe/WVA evidence, Development, Standard,
+Qualification, promotion, and the grouped end-of-goal gate remain deferred.

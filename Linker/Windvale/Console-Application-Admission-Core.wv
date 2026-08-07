@@ -1,0 +1,85 @@
+module Linkerˉconsoleˉapplicationˉadmission profile portable;
+
+import Linkerˉconsoleˉapplicationˉverification as Versionˉone;
+import Linkerˉhostedˉconsoleˉapplicationˉverificationˉcommon as Hostedˉcommon;
+import Linkerˉhostedˉconsoleˉapplicationˉverificationˉwindows as Hostedˉwindows;
+import Linkerˉhostedˉconsoleˉapplicationˉverificationˉlinux as Hostedˉlinux;
+
+fn Consoleˉapplicationˉadmissionˉhostedˉresult(
+    First: bytes,
+    Second: bytes,
+    Hosted: Hostedˉcommon.Hostedˉconsoleˉverificationˉresult
+) -> Versionˉone.Consoleˉapplicationˉverificationˉresult {
+    let Applicationˉbytes: u32 = Bytesˉlength(First) + Bytesˉlength(Second);
+    if !Hosted.Valid {
+        return Versionˉone.Consoleˉapplicationˉverificationˉfailure(
+            First,
+            Versionˉone.Consoleˉapplicationˉverificationˉstatus.Invalidˉcontainer,
+            0u32,
+            Hosted.Target,
+            Applicationˉbytes
+        );
+    }
+    let Evidence: bytes = Versionˉone.Consoleˉapplicationˉverificationˉevidence(
+        First,
+        Versionˉone.Consoleˉapplicationˉverificationˉstatus.Valid,
+        Applicationˉbytes,
+        Hosted.Target,
+        Applicationˉbytes,
+        Bytesˉlength(Hosted.Nativeˉimage),
+        Hosted.Nativeˉentryˉoffset
+    );
+    return Versionˉone.Consoleˉapplicationˉverificationˉresult(
+        Versionˉone.Consoleˉapplicationˉverificationˉstatus.Valid,
+        Applicationˉbytes,
+        Hosted.Target,
+        Applicationˉbytes,
+        Hosted.Nativeˉimage,
+        Hosted.Nativeˉentryˉoffset,
+        Evidence
+    );
+}
+
+export fn Consoleˉapplicationˉadmission(
+    First: bytes,
+    Second: bytes
+) -> Versionˉone.Consoleˉapplicationˉverificationˉresult {
+    let Firstˉbytes: u32 = Bytesˉlength(First);
+    let Secondˉbytes: u32 = Bytesˉlength(Second);
+    var Hostedˉtarget: u32 = 0u32;
+    if Firstˉbytes > 154u32 &&
+        Bytesˉreadˉu8(First, 0u32) == 77u8 &&
+        Bytesˉreadˉu8(First, 1u32) == 90u8 &&
+        Bytesˉreadˉu8(First, 154u32) == 2u8 {
+        Hostedˉtarget = 1u32;
+    }
+    if Firstˉbytes > 408u32 &&
+        Bytesˉreadˉu32ˉlittle(First, 0u32) == 1179403647u32 &&
+        Bytesˉreadˉu32ˉlittle(First, 408u32) == 2u32 {
+        Hostedˉtarget = 2u32;
+    }
+    if Hostedˉtarget == 0u32 {
+        return Versionˉone.Consoleˉapplicationˉverification(First, Second);
+    }
+    if Secondˉbytes != 0u32 {
+        return Versionˉone.Consoleˉapplicationˉverificationˉfailure(
+            First,
+            Versionˉone.Consoleˉapplicationˉverificationˉstatus.Invalidˉchunk,
+            Firstˉbytes,
+            Hostedˉtarget,
+            Firstˉbytes + Secondˉbytes
+        );
+    }
+    if Hostedˉtarget == 1u32 {
+        return Consoleˉapplicationˉadmissionˉhostedˉresult(
+            First,
+            Second,
+            Hostedˉwindows.Hostedˉwindowsˉconsoleˉapplicationˉverification(First)
+        );
+    }
+    return Consoleˉapplicationˉadmissionˉhostedˉresult(
+        First,
+        Second,
+        Hostedˉlinux.Hostedˉlinuxˉconsoleˉapplicationˉverification(First)
+    );
+}

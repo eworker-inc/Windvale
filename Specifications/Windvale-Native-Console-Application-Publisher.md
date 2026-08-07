@@ -2,10 +2,10 @@
 
 ## Status and scope
 
-`WVPA 1` is the bounded Windvale-native atomic publisher for completed version-1
-Windows and Linux console applications. It admits one immutable `.exe` or `.elf`
-candidate through the portable
-[console-application verifier](Windvale-Console-Application-Verification.md),
+`WVPA 1` is the bounded Windvale-native atomic publisher for completed
+version-1 and format-2 hosted Windows and Linux console applications. It admits
+one immutable `.exe` or `.elf` candidate through the portable
+[console-application admission boundary](Windvale-Console-Application-Verification.md),
 then reuses the exact native
 [publication transaction](Windvale-Wvb-Publication-Transaction.md) to replace a
 distinct same-kind destination.
@@ -41,7 +41,9 @@ output of the current one-value native console packager but not the larger
 segmented maximum admitted by the portable verifier.
 
 The Windvale entry point passes the candidate and an empty second chunk to
-`Consoleˉapplicationˉverification`. Any non-`Valid` result reports
+`Consoleˉapplicationˉadmission`. Exact format-2 markers select the focused
+hosted verifier; all other candidates retain the version-1 recipe verifier.
+Any non-`Valid` result reports
 `publication status=Rejected phase=console-application`, returns 1, and never
 begins mutation. Wrong arguments or suffixes report usage and return 64.
 
@@ -92,9 +94,9 @@ The historical exported WVA symbol names remain internal construction details.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Publisher WVB | 56,375 | `1e35f7cc9e53322ebcc70c332486eef983ff59370246c62ec4e8cbcd144d8403` |
-| Windows publisher | 642,048 | `1bd3bbd24fc22940b96badb7e809899d42e42a25a5247dfededb00048232675d` |
-| Linux publisher | 639,941 | `2edc7ebe23660e299d9db4bf55d4537ec102b7a3b2d46ba833e549cd355a0af7` |
+| Publisher WVB | 113,525 | `39965e723bec6904c605c74123d5e4ef1590d1cd9af5cd52d6a94494435c8da5` |
+| Windows publisher | 1,135,616 | `1ffab13c1b94ec57f31fbdfbced5465bf598dfb1a237552995fece1d43c2ba37` |
+| Linux publisher | 1,135,557 | `fdfe5876f1217b747ec637a3a8407948f1402505ec27c91aa6a44fd3e06fcfa2` |
 
 `Tools/Native/Publish-Console.cmd` and `.sh` verify the current-host publisher
 digest before execution. `Package-Console.cmd` and `.sh` now materialize into a
@@ -115,13 +117,18 @@ this same public launcher. It requires exact rejection, complete candidate and
 destination preservation, and zero scratch without executing either container,
 generating runtime input, or consulting .NET.
 
+The [hosted-console mutation contract](Windvale-Native-Hosted-Console-Container-Mutation-Tests.md)
+additionally drives two valid format-2 applications and thirteen exact managed
+mutation operations through this launcher. Valid candidates must publish
+exactly; invalid candidates must preserve the existing destination and leave no
+scratch. Permanent execution does not consult .NET.
+
 ## Remaining gate
 
-The WVB and paired applications are Stage 0-constructed because the qualified
-native source builder currently rejects the complete hosted project at
-`Sourceˉbindings`. Promotion requires deterministic reconstruction and direct
-execution on Windows and Linux, the grouped native-retirement gate, and a native
-replacement for this host-container constructor. The retained WVB publisher
+The WVB and paired applications remain Stage 0-constructed recovery artifacts.
+Promotion requires deterministic native reconstruction and direct execution on
+Windows and Linux, the grouped native-retirement gate, and a native replacement
+for this host-container constructor. The retained WVB publisher
 fault/concurrency matrix continues to qualify the shared native transaction;
 this profile adds console-application admission and integration evidence rather
 than duplicating those tests.

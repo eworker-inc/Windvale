@@ -10,15 +10,15 @@ public static class Consoleˉapplicationˉpublisherˉapplicationˉcontract
         "linux-x64-console-application-publisher-v1";
     public const string MODULE_NAME =
         "Windvaleˉconsoleˉapplicationˉpublisherˉtool";
-    public const int MODULE_BYTES = 56_375;
+    public const int MODULE_BYTES = 113_525;
     public const string MODULE_SHA256 =
-        "1e35f7cc9e53322ebcc70c332486eef983ff59370246c62ec4e8cbcd144d8403";
-    public const int WINDOWS_APPLICATION_BYTES = 642_048;
+        "39965e723bec6904c605c74123d5e4ef1590d1cd9af5cd52d6a94494435c8da5";
+    public const int WINDOWS_APPLICATION_BYTES = 1_135_616;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "1bd3bbd24fc22940b96badb7e809899d42e42a25a5247dfededb00048232675d";
-    public const int LINUX_APPLICATION_BYTES = 639_941;
+        "1ffab13c1b94ec57f31fbdfbced5465bf598dfb1a237552995fece1d43c2ba37";
+    public const int LINUX_APPLICATION_BYTES = 1_135_557;
     public const string LINUX_APPLICATION_SHA256 =
-        "2edc7ebe23660e299d9db4bf55d4537ec102b7a3b2d46ba833e549cd355a0af7";
+        "fdfe5876f1217b747ec637a3a8407948f1402505ec27c91aa6a44fd3e06fcfa2";
 
     internal static readonly Nativeˉpublisherˉapplicationˉcontract CONSTRUCTION = new(
         MODULE_NAME,

@@ -276,6 +276,25 @@ explicit zero and 4,096-/9,000-byte boundaries and are never generated during
 the run. The exact terminal summary is
 `Tests: 256, Passed: 256, Failed: 0`.
 
+The hosted console-container lane uses two fixed valid format-2 applications
+and thirteen exact managed mutations. It does not rebuild either container or
+generate mutations during the run. On Windows use:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter hosted-console-container-mutations
+```
+
+On Linux use:
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter hosted-console-container-mutations
+```
+
+Both valid candidates must publish byte-identically. Every rejected candidate
+must emit the exact console-application report, preserve the destination
+sentinel, and leave no scratch. All inputs remain unchanged. The exact terminal
+summary is `Tests: 15, Passed: 15, Failed: 0`.
+
 The focused publisher command tests pre-replacement admission and cleanup without
 running a successful package or lower operation. On Windows x64 run:
 

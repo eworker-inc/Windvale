@@ -21,6 +21,7 @@ internal static partial class Program
                 CONSOLE_APPLICATION_PUBLISHER_SOURCE),
             [
                 new("Foundation/Byte-Construction.wv", BYTE_CONSTRUCTION_SOURCE),
+                new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE),
                 new(
                     "Console-Application-Plan-Core.wv",
                     CONSOLE_APPLICATION_PLAN_CORE_SOURCE),
@@ -30,6 +31,18 @@ internal static partial class Program
                 new(
                     "Console-Application-Verification-Core.wv",
                     CONSOLE_APPLICATION_VERIFICATION_CORE_SOURCE),
+                new(
+                    "Hosted-Console-Application-Verification-Common.wv",
+                    HOSTED_CONSOLE_APPLICATION_VERIFICATION_COMMON_SOURCE),
+                new(
+                    "Hosted-Console-Application-Verification-Windows.wv",
+                    HOSTED_CONSOLE_APPLICATION_VERIFICATION_WINDOWS_SOURCE),
+                new(
+                    "Hosted-Console-Application-Verification-Linux.wv",
+                    HOSTED_CONSOLE_APPLICATION_VERIFICATION_LINUX_SOURCE),
+                new(
+                    "Console-Application-Admission-Core.wv",
+                    CONSOLE_APPLICATION_ADMISSION_CORE_SOURCE),
                 new(
                     "Wvb-Publication-Transaction.wv",
                     WVB_PUBLICATION_TRANSACTION_SOURCE),

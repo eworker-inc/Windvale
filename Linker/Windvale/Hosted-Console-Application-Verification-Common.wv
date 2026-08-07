@@ -1,0 +1,390 @@
+module Linkerˉhostedˉconsoleˉapplicationˉverificationˉcommon profile portable;
+
+import Foundationˉsha256 as Sha256;
+
+export record Hostedˉconsoleˉstartupˉresult {
+    Valid: bool;
+    Entryˉoffset: u32;
+}
+
+export record Hostedˉconsoleˉverificationˉresult {
+    Valid: bool;
+    Target: u32;
+    Nativeˉimage: bytes;
+    Nativeˉentryˉoffset: u32;
+}
+
+export fn Hostedˉconsoleˉinvalid(Input: bytes, Target: u32) -> Hostedˉconsoleˉverificationˉresult {
+    return Hostedˉconsoleˉverificationˉresult(
+        false,
+        Target,
+        Bytesˉslice(Input, 0u32, 0u32),
+        0u32
+    );
+}
+
+export fn Hostedˉconsoleˉu8ˉequals(Input: bytes, Offset: u32, Expected: u32) -> bool {
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset)) == Expected;
+}
+
+export fn Hostedˉconsoleˉu16ˉequals(Input: bytes, Offset: u32, Expected: u32) -> bool {
+    return Bytesˉreadˉu16ˉlittle(Input, Offset) == Expected;
+}
+
+export fn Hostedˉconsoleˉu32ˉequals(Input: bytes, Offset: u32, Expected: u32) -> bool {
+    return Bytesˉreadˉu32ˉlittle(Input, Offset) == Expected;
+}
+
+export fn Hostedˉconsoleˉu64ˉequals(
+    Input: bytes,
+    Offset: u32,
+    Expectedˉlow: u32,
+    Expectedˉhigh: u32
+) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != Expectedˉlow { return false; }
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) == Expectedˉhigh;
+}
+
+export fn Hostedˉconsoleˉzeros(Input: bytes, Offset: u32, Length: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Hostedˉconsoleˉbytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Hostedˉconsoleˉbytesˉequalˉat(
+    Input: bytes,
+    Offset: u32,
+    Expected: bytes
+) -> bool {
+    let Length: u32 = Bytesˉlength(Expected);
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Hostedˉconsoleˉnameˉequals(Input: bytes, Offset: u32, Expected: text) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    let Length: u32 = Bytesˉlength(Expectedˉbytes);
+    if Length > 8u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        var Expectedˉbyte: u8 = 0u8;
+        if Index < Length { Expectedˉbyte = Bytesˉreadˉu8(Expectedˉbytes, Index); }
+        if Bytesˉreadˉu8(Input, Offset + Index) != Expectedˉbyte { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Hostedˉconsoleˉasciiˉequals(Input: bytes, Offset: u32, Expected: text) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    let Length: u32 = Bytesˉlength(Expectedˉbytes);
+    if !Hostedˉconsoleˉbytesˉequalˉat(Input, Offset, Expectedˉbytes) { return false; }
+    return Bytesˉreadˉu8(Input, Offset + Length) == 0u8;
+}
+
+export fn Hostedˉconsoleˉalignˉup(Value: u32, Alignment: u32) -> u32 {
+    return (Value + Alignment - 1u32) & ~(Alignment - 1u32);
+}
+
+fn Hostedˉconsoleˉhexˉascii(Value: u32) -> u32 {
+    if Value < 10u32 { return Value + 48u32; }
+    return Value + 87u32;
+}
+
+export fn Hostedˉconsoleˉdigestˉfieldˉmatches(
+    Input: bytes,
+    Offset: u32,
+    Value: bytes
+) -> bool {
+    let Digest: bytes = Sha256.Foundationˉsha256ˉhex(Value);
+    if Bytesˉlength(Digest) != 64u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        let Stored: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + Index));
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Digest, Index * 2u32)) !=
+            Hostedˉconsoleˉhexˉascii(Stored >> 4u32) {
+            return false;
+        }
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Digest, Index * 2u32 + 1u32)) !=
+            Hostedˉconsoleˉhexˉascii(Stored & 15u32) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Hostedˉconsoleˉdigestˉequals(Value: bytes, Expected: text) -> bool {
+    return Hostedˉconsoleˉbytesˉequal(
+        Sha256.Foundationˉsha256ˉhex(Value),
+        Textˉtoˉutf8(Expected)
+    );
+}
+
+fn Hostedˉconsoleˉstartupˉpatchˉcount(Target: u32) -> u32 {
+    if Target == 1u32 { return 13u32; }
+    return 9u32;
+}
+
+fn Hostedˉconsoleˉstartupˉpatch(Target: u32, Index: u32) -> u32 {
+    if Target == 1u32 {
+        if Index == 0u32 { return 10u32; }
+        if Index == 1u32 { return 17u32; }
+        if Index == 2u32 { return 32u32; }
+        if Index == 3u32 { return 47u32; }
+        if Index == 4u32 { return 62u32; }
+        if Index == 5u32 { return 77u32; }
+        if Index == 6u32 { return 84u32; }
+        if Index == 7u32 { return 104u32; }
+        if Index == 8u32 { return 121u32; }
+        if Index == 9u32 { return 136u32; }
+        if Index == 10u32 { return 151u32; }
+        if Index == 11u32 { return 166u32; }
+        return 180u32;
+    }
+    if Index == 0u32 { return 64u32; }
+    if Index == 1u32 { return 74u32; }
+    if Index == 2u32 { return 89u32; }
+    if Index == 3u32 { return 104u32; }
+    if Index == 4u32 { return 119u32; }
+    if Index == 5u32 { return 134u32; }
+    if Index == 6u32 { return 141u32; }
+    if Index == 7u32 { return 156u32; }
+    return 171u32;
+}
+
+fn Hostedˉconsoleˉstartupˉexpectedˉtarget(
+    Target: u32,
+    Index: u32,
+    Dataˉaddress: u32,
+    Outputˉoffset: u32,
+    Nativeˉoffset: u32
+) -> u32 {
+    if Target == 1u32 {
+        if Index == 0u32 { return Dataˉaddress; }
+        if Index == 1u32 { return Dataˉaddress + 112u32; }
+        if Index == 2u32 { return Dataˉaddress + 1024u32; }
+        if Index == 3u32 { return Dataˉaddress + 2098176u32; }
+        if Index == 4u32 { return Dataˉaddress + 216u32; }
+        if Index == 5u32 { return Dataˉaddress + 112u32; }
+        if Index == 6u32 { return 4096u32 + Outputˉoffset; }
+        if Index == 7u32 { return Dataˉaddress + 528u32; }
+        if Index == 8u32 { return Dataˉaddress + 216u32; }
+        if Index == 9u32 { return Dataˉaddress + 536u32; }
+        if Index == 10u32 { return Dataˉaddress + 216u32; }
+        if Index == 11u32 { return Dataˉaddress; }
+        return 4096u32 + Nativeˉoffset;
+    }
+    if Index == 0u32 { return Dataˉaddress; }
+    if Index == 1u32 { return Dataˉaddress + 112u32; }
+    if Index == 2u32 { return Dataˉaddress + 1024u32; }
+    if Index == 3u32 { return Dataˉaddress + 2098176u32; }
+    if Index == 4u32 { return Dataˉaddress + 216u32; }
+    if Index == 5u32 { return Dataˉaddress + 112u32; }
+    if Index == 6u32 { return 4096u32 + Outputˉoffset; }
+    if Index == 7u32 { return Dataˉaddress; }
+    return 4096u32 + Nativeˉoffset;
+}
+
+export fn Hostedˉconsoleˉverifyˉstartup(
+    Input: bytes,
+    Startupˉoffset: u32,
+    Startupˉbytes: u32,
+    Target: u32,
+    Dataˉaddress: u32,
+    Outputˉoffset: u32,
+    Nativeˉoffset: u32,
+    Nativeˉbytes: u32
+) -> Hostedˉconsoleˉstartupˉresult {
+    let Patchˉcount: u32 = Hostedˉconsoleˉstartupˉpatchˉcount(Target);
+    var Entry: u32 = 0u32;
+    var Patchˉindex: u32 = 0u32;
+    while Patchˉindex < Patchˉcount {
+        let Patch: u32 = Hostedˉconsoleˉstartupˉpatch(Target, Patchˉindex);
+        if Patch > Startupˉbytes - 4u32 {
+            return Hostedˉconsoleˉstartupˉresult(false, 0u32);
+        }
+        let Base: u32 = 4096u32 + Patch + 4u32;
+        let Expected: u32 = Hostedˉconsoleˉstartupˉexpectedˉtarget(
+            Target, Patchˉindex, Dataˉaddress, Outputˉoffset, Nativeˉoffset
+        );
+        if Expected < Base { return Hostedˉconsoleˉstartupˉresult(false, 0u32); }
+        let Displacement: u32 = Bytesˉreadˉu32ˉlittle(Input, Startupˉoffset + Patch);
+        if Patchˉindex + 1u32 == Patchˉcount {
+            let Minimum: u32 = Expected - Base;
+            if Displacement < Minimum { return Hostedˉconsoleˉstartupˉresult(false, 0u32); }
+            if Displacement - Minimum >= Nativeˉbytes {
+                return Hostedˉconsoleˉstartupˉresult(false, 0u32);
+            }
+            Entry = Displacement - Minimum;
+        } else {
+            if Displacement != Expected - Base {
+                return Hostedˉconsoleˉstartupˉresult(false, 0u32);
+            }
+        }
+        Patchˉindex = Patchˉindex + 1u32;
+    }
+
+    var Normalized: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Offset: u32 = 0u32;
+    while Offset < Startupˉbytes {
+        var Value: u8 = Bytesˉreadˉu8(Input, Startupˉoffset + Offset);
+        Patchˉindex = 0u32;
+        while Patchˉindex < Patchˉcount {
+            let Normalizedˉpatch: u32 = Hostedˉconsoleˉstartupˉpatch(
+                Target, Patchˉindex
+            );
+            if Offset >= Normalizedˉpatch && Offset < Normalizedˉpatch + 4u32 {
+                Value = 0u8;
+            }
+            Patchˉindex = Patchˉindex + 1u32;
+        }
+        Normalized = Bytesˉconcat(Normalized, Bytesˉfromˉu8(Value));
+        Offset = Offset + 1u32;
+    }
+    var Expectedˉdigest: text =
+        "4e9b792e2517431efe58b9d00168a3f1b085852ba37d6bf9f9484f18e0c50a7e";
+    if Target == 2u32 {
+        Expectedˉdigest =
+            "ff296788d5d7221c8e5ec06753957a678b3d249f37ac291c03829832e6b609c7";
+    }
+    if !Hostedˉconsoleˉdigestˉequals(Normalized, Expectedˉdigest) {
+        return Hostedˉconsoleˉstartupˉresult(false, 0u32);
+    }
+    return Hostedˉconsoleˉstartupˉresult(true, Entry);
+}
+
+export fn Hostedˉconsoleˉdataˉisˉvalid(
+    Input: bytes,
+    Dataˉoffset: u32,
+    Target: u32,
+    Textˉoffset: u32,
+    Nativeˉoffset: u32,
+    Nativeˉbytes: u32,
+    Nativeˉentryˉoffset: u32,
+    Outputˉoffset: u32,
+    Outputˉbytes: u32
+) -> bool {
+    if !Hostedˉconsoleˉu32ˉequals(Input, Dataˉoffset, 7u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Dataˉoffset + 4u32, 112u32) { return false; }
+    if !Hostedˉconsoleˉu64ˉequals(Input, Dataˉoffset + 8u32, 1000000u32, 0u32) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu64ˉequals(Input, Dataˉoffset + 16u32, 1024u32, 0u32) {
+        return false;
+    }
+    if !Hostedˉconsoleˉzeros(Input, Dataˉoffset + 24u32, 16u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Dataˉoffset + 40u32, 2097152u32) {
+        return false;
+    }
+    if !Hostedˉconsoleˉzeros(Input, Dataˉoffset + 44u32, 12u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Dataˉoffset + 56u32, 134217728u32) {
+        return false;
+    }
+    if !Hostedˉconsoleˉzeros(Input, Dataˉoffset + 60u32, 52u32) { return false; }
+
+    let Service: u32 = Dataˉoffset + 112u32;
+    if !Hostedˉconsoleˉu32ˉequals(Input, Service, 5u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Service + 4u32, 104u32) { return false; }
+    if !Hostedˉconsoleˉzeros(Input, Service + 8u32, 96u32) { return false; }
+
+    let Outputˉtable: u32 = Dataˉoffset + 216u32;
+    if !Hostedˉconsoleˉu32ˉequals(Input, Outputˉtable, 1330206295u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Outputˉtable + 4u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Outputˉtable + 8u32, 48u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Outputˉtable + 12u32, Target) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Outputˉtable + 16u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Outputˉtable + 20u32, 0u32) { return false; }
+    var Initialˉtarget: u32 = 0u32;
+    if Target == 2u32 { Initialˉtarget = 1u32; }
+    if !Hostedˉconsoleˉu64ˉequals(Input, Outputˉtable + 24u32, Initialˉtarget, 0u32) {
+        return false;
+    }
+    if !Hostedˉconsoleˉzeros(Input, Outputˉtable + 32u32, 16u32) { return false; }
+    if !Hostedˉconsoleˉzeros(Input, Dataˉoffset + 264u32, 8u32) { return false; }
+
+    let Metadata: u32 = Dataˉoffset + 272u32;
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata, 1128814167u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 4u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 8u32, 192u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 12u32, Target) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 16u32, 22u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 20u32, 7u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 24u32, 5u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 28u32, 2u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 32u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 36u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 40u32, 96u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 44u32, 32u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 48u32, Nativeˉoffset) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 52u32, Nativeˉbytes) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 56u32, Nativeˉentryˉoffset) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 60u32, Outputˉoffset) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 64u32, Outputˉbytes) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 68u32, 1024u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 72u32, 1024u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 76u32, 2097152u32) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 80u32, 2098176u32) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 84u32, 134217728u32) {
+        return false;
+    }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 88u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 92u32, 0u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 96u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 100u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 104u32, 8u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 108u32, Target) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 112u32, 216u32) { return false; }
+    if !Hostedˉconsoleˉu32ˉequals(Input, Metadata + 116u32, 1u32) { return false; }
+    if !Hostedˉconsoleˉzeros(Input, Metadata + 120u32, 8u32) { return false; }
+
+    let Native: bytes = Bytesˉslice(Input, Textˉoffset + Nativeˉoffset, Nativeˉbytes);
+    let Output: bytes = Bytesˉslice(Input, Textˉoffset + Outputˉoffset, Outputˉbytes);
+    if !Hostedˉconsoleˉdigestˉfieldˉmatches(Input, Metadata + 128u32, Output) {
+        return false;
+    }
+    if !Hostedˉconsoleˉdigestˉfieldˉmatches(Input, Metadata + 160u32, Native) {
+        return false;
+    }
+    var Canonicalˉoutput: text =
+        "10f3a500aca7f0236cdf9f6c20658591df88bc612e677264cdaa0bcef59a0a48";
+    if Target == 2u32 {
+        Canonicalˉoutput =
+            "c5ea073a24c46dd634b1a67a7e7041d476dbce856d058aa8adc2c4e680d3d226";
+    }
+    return Hostedˉconsoleˉdigestˉequals(Output, Canonicalˉoutput);
+}

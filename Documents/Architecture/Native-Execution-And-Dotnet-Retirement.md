@@ -319,6 +319,13 @@ durability, and cleanup. Digest-bound packaging no longer needs managed
 publication, but the publisher WVB and host containers remain Stage 0-constructed
 until native construction and the grouped Windows/Linux gate pass.
 
+Decision 0340 extends that same publication boundary to format-2 hosted PE/ELF
+without replacing the version-1 recipe modules. Focused portable common,
+Windows, and Linux verifiers own canonical startup, metadata, SHA-256, imports,
+segments, and native recovery behind one shared dispatcher. The normal publisher
+no longer needs C# to admit ordinary hosted containers, while Stage 0 remains
+the constructor and frozen independent recovery oracle until final qualification.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

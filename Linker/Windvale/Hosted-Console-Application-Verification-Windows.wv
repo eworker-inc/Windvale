@@ -1,0 +1,295 @@
+module Linkerˉhostedˉconsoleˉapplicationˉverificationˉwindows profile portable;
+
+import Linkerˉhostedˉconsoleˉapplicationˉverificationˉcommon as Common;
+
+fn Hostedˉwindowsˉinvalid(Input: bytes) -> Common.Hostedˉconsoleˉverificationˉresult {
+    return Common.Hostedˉconsoleˉinvalid(Input, 1u32);
+}
+
+fn Hostedˉwindowsˉimportsˉareˉvalid(
+    Input: bytes,
+    Dataˉoffset: u32,
+    Dataˉaddress: u32
+) -> bool {
+    let Descriptor: u32 = Dataˉoffset + 464u32;
+    if !Common.Hostedˉconsoleˉu32ˉequals(
+        Input, Descriptor, Dataˉaddress + 504u32
+    ) { return false; }
+    if !Common.Hostedˉconsoleˉzeros(Input, Descriptor + 4u32, 8u32) { return false; }
+    if !Common.Hostedˉconsoleˉu32ˉequals(
+        Input, Descriptor + 12u32, Dataˉaddress + 580u32
+    ) { return false; }
+    if !Common.Hostedˉconsoleˉu32ˉequals(
+        Input, Descriptor + 16u32, Dataˉaddress + 528u32
+    ) { return false; }
+    if !Common.Hostedˉconsoleˉzeros(Input, Descriptor + 20u32, 20u32) { return false; }
+
+    var Tableˉoffset: u32 = Dataˉoffset + 504u32;
+    var Tableˉindex: u32 = 0u32;
+    while Tableˉindex < 2u32 {
+        if !Common.Hostedˉconsoleˉu64ˉequals(
+            Input, Tableˉoffset, Dataˉaddress + 552u32, 0u32
+        ) { return false; }
+        if !Common.Hostedˉconsoleˉu64ˉequals(
+            Input, Tableˉoffset + 8u32, Dataˉaddress + 568u32, 0u32
+        ) { return false; }
+        if !Common.Hostedˉconsoleˉu64ˉequals(Input, Tableˉoffset + 16u32, 0u32, 0u32) {
+            return false;
+        }
+        Tableˉoffset = Dataˉoffset + 528u32;
+        Tableˉindex = Tableˉindex + 1u32;
+    }
+    if !Common.Hostedˉconsoleˉu16ˉequals(Input, Dataˉoffset + 552u32, 0u32) {
+        return false;
+    }
+    if !Common.Hostedˉconsoleˉasciiˉequals(
+        Input, Dataˉoffset + 554u32, "GetStdHandle"
+    ) { return false; }
+    if !Common.Hostedˉconsoleˉu16ˉequals(Input, Dataˉoffset + 568u32, 0u32) {
+        return false;
+    }
+    if !Common.Hostedˉconsoleˉasciiˉequals(Input, Dataˉoffset + 570u32, "WriteFile") {
+        return false;
+    }
+    if !Common.Hostedˉconsoleˉasciiˉequals(
+        Input, Dataˉoffset + 580u32, "KERNEL32.dll"
+    ) { return false; }
+    return Common.Hostedˉconsoleˉzeros(Input, Dataˉoffset + 593u32, 431u32);
+}
+
+export fn Hostedˉwindowsˉconsoleˉapplicationˉverification(
+    Input: bytes
+) -> Common.Hostedˉconsoleˉverificationˉresult {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < 2048u32 || Length > 4196864u32 { return Hostedˉwindowsˉinvalid(Input); }
+    if !Common.Hostedˉconsoleˉu16ˉequals(Input, 0u32, 23117u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 2u32, 58u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 60u32, 128u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 64u32, 64u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 128u32, 17744u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu16ˉequals(Input, 132u32, 34404u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu16ˉequals(Input, 134u32, 3u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 136u32, 0u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 140u32, 8u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu16ˉequals(Input, 148u32, 240u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu16ˉequals(Input, 152u32, 523u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu8ˉequals(Input, 154u32, 2u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu8ˉequals(Input, 155u32, 0u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 168u32, 4096u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 172u32, 4096u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu64ˉequals(Input, 176u32, 1073741824u32, 1u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 184u32, 4096u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 188u32, 512u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 212u32, 512u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu16ˉequals(Input, 220u32, 3u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu64ˉequals(Input, 224u32, 67108864u32, 0u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 260u32, 16u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 264u32, 8u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 280u32, 24u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 312u32, 48u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 368u32, 24u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+
+    if !Common.Hostedˉconsoleˉnameˉequals(Input, 392u32, ".text") {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    let Textˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 400u32);
+    let Textˉraw: u32 = Bytesˉreadˉu32ˉlittle(Input, 408u32);
+    if Textˉbytes <= 496u32 || Textˉbytes > 4194800u32 {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 404u32, 4096u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if Textˉraw != Common.Hostedˉconsoleˉalignˉup(Textˉbytes, 512u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 412u32, 512u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 428u32, 1610612768u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 416u32, 12u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+
+    let Nativeˉbytes: u32 = Textˉbytes - 496u32;
+    let Dataˉfile: u32 = 512u32 + Textˉraw;
+    let Dataˉaddress: u32 = Common.Hostedˉconsoleˉalignˉup(4096u32 + Textˉbytes, 4096u32);
+    let Relocationˉfile: u32 = Dataˉfile + 1024u32;
+    let Relocationˉaddress: u32 = Common.Hostedˉconsoleˉalignˉup(
+        Dataˉaddress + 136315904u32, 4096u32
+    );
+
+    if !Common.Hostedˉconsoleˉnameˉequals(Input, 432u32, ".data") {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 440u32, 136315904u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 444u32, Dataˉaddress) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 448u32, 1024u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 452u32, Dataˉfile) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 456u32, 12u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 468u32, 3221225536u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉnameˉequals(Input, 472u32, ".reloc") {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 480u32, 12u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 484u32, Relocationˉaddress) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 488u32, 512u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 492u32, Relocationˉfile) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 496u32, 12u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 508u32, 1107296320u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if Length != Relocationˉfile + 512u32 { return Hostedˉwindowsˉinvalid(Input); }
+
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 156u32, Textˉraw) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 160u32, 1536u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 164u32, 136314880u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 272u32, Dataˉaddress + 464u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 276u32, 40u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 304u32, Relocationˉaddress) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 308u32, 12u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 360u32, Dataˉaddress + 528u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, 364u32, 24u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+
+    let Startup: Common.Hostedˉconsoleˉstartupˉresult =
+        Common.Hostedˉconsoleˉverifyˉstartup(
+            Input, 512u32, 224u32, 1u32, Dataˉaddress, 224u32, 496u32, Nativeˉbytes
+        );
+    if !Startup.Valid { return Hostedˉwindowsˉinvalid(Input); }
+    if !Common.Hostedˉconsoleˉdataˉisˉvalid(
+        Input,
+        Dataˉfile,
+        1u32,
+        512u32,
+        496u32,
+        Nativeˉbytes,
+        Startup.Entryˉoffset,
+        224u32,
+        258u32
+    ) { return Hostedˉwindowsˉinvalid(Input); }
+    if !Hostedˉwindowsˉimportsˉareˉvalid(Input, Dataˉfile, Dataˉaddress) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 736u32, 0u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, 994u32, 14u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(
+        Input, 512u32 + Textˉbytes, Textˉraw - Textˉbytes
+    ) { return Hostedˉwindowsˉinvalid(Input); }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, Relocationˉfile, 4096u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, Relocationˉfile + 4u32, 12u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉu32ˉequals(Input, Relocationˉfile + 8u32, 0u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+    if !Common.Hostedˉconsoleˉzeros(Input, Relocationˉfile + 12u32, 500u32) {
+        return Hostedˉwindowsˉinvalid(Input);
+    }
+
+    return Common.Hostedˉconsoleˉverificationˉresult(
+        true,
+        1u32,
+        Bytesˉslice(Input, 1008u32, Nativeˉbytes),
+        Startup.Entryˉoffset
+    );
+}

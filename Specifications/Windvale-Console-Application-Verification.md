@@ -2,9 +2,15 @@
 
 ## Status and purpose
 
-The console-application verifier is the portable Windvale-owned acceptance boundary for completed `windows-x64-console-v1` and `linux-x64-console-v1` files. It accepts untrusted application bytes, proves every container-owned byte against the canonical Windvale construction recipe, recovers the one opaque native image and its entry offset, and emits fixed evidence.
+The console-application admission boundary is portable Windvale-owned logic for completed `windows-x64-console-v1`, `linux-x64-console-v1`, `windows-x64-console-v2`, and `linux-x64-console-v2` files. It accepts untrusted application bytes, proves every container-owned byte against the applicable canonical contract, recovers the one opaque native image and its entry offset, and emits fixed evidence.
 
-The verifier does not redefine PE, ELF, native ABI, startup, context, or process-result semantics. Those inputs remain defined by the target specifications and the [console-application construction contract](Windvale-Console-Application-Construction.md). The retained C# PE and ELF verifiers remain independent structural oracles during Stage 0.
+The verifier does not redefine PE, ELF, native ABI, startup, context, or process-result semantics. Those inputs remain defined by the target specifications, the [console-application construction contract](Windvale-Console-Application-Construction.md), and the [hosted console application contract](Windvale-Hosted-Console-Application.md). The retained C# PE and ELF verifiers remain independent structural recovery oracles during Stage 0.
+
+`Console-Application-Admission-Core.wv` dispatches exact format-2 PE/ELF
+markers to focused hosted common/platform verifiers and otherwise invokes the
+unchanged version-1 recipe verifier. Both routes produce the same `WVCV 1`
+result. Current format-2 admission requires one first-chunk value and an empty
+second chunk; segmented format-2 maximum-size evidence remains separate.
 
 ## Segmented input
 
@@ -70,8 +76,19 @@ On success, the hosted bridge performs exactly one `file.write_bytes` to `consol
 
 ## Stage 0 integration and limits
 
-`Linker/Windvale/Console-Application-Verification-Core.wv` is portable and capability-free. Its hosted bridge declares only `file.read_bytes` and `file.write_bytes`, uses the fixed resource names above, and is bounded to ten million instructions. The current retained bridge WVB is exactly 44,678 bytes with SHA-256 `93cb6b787f42b3475f403fe9272458177995d763bf62bbfbd0d5f03465761efc`; its portable core is 45,018 bytes with SHA-256 `67b292adbfe4cb6af04cb0422083eb04987b86a21269fba17f50d93c89389634`.
+`Linker/Windvale/Console-Application-Verification-Core.wv` and the focused
+format-2 verifier modules are portable and capability-free. Their hosted bridge
+declares only `file.read_bytes` and `file.write_bytes`, uses the fixed resource
+names above, and is bounded to ten million instructions. The current retained
+bridge WVB is exactly 101,811 bytes with SHA-256
+`0ee99abb83b71a0e60ed6c47852f5f99b57d3dc3f5737dd0f46c604be3181861`.
 
 Both Stage 0 console writers and the [native console packager](Windvale-Native-Console-Packager.md) require the Windvale verifier to reproduce the original target, native bytes, and entry. The native packager performs this check before its one output call. The independent detailed C# PE or ELF verifier then performs the same recovery through separately maintained structural logic during transition evidence. Any rejection or disagreement prevents successful application output. The [native console-application publisher](Windvale-Native-Console-Application-Publisher.md) reuses this verifier as its mutation-admission boundary before the shared atomic transaction begins.
 
-The existing PE and ELF malformed-input corpora are shared by both verifiers. Verifier-specific tests cover retained source/WVB identity, deterministic evidence, malformed evidence, no-write rejection, noncanonical chunks, and exact maximum-size recovery; they do not duplicate the target-specific corruption corpus.
+The existing PE and ELF malformed-input corpora are shared by both verifier
+families. Verifier-specific tests cover retained source/WVB identity,
+deterministic evidence, malformed evidence, no-write rejection, noncanonical
+chunks, and exact maximum-size recovery. The separate
+[hosted-console mutation contract](Windvale-Native-Hosted-Console-Container-Mutation-Tests.md)
+adds two valid format-2 applications and thirteen exact mutation outcomes
+without a permanent live managed oracle.
