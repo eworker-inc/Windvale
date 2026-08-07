@@ -244,6 +244,13 @@ gain another capability from that slot.
 
 The exact 75,337-byte tool WVB has SHA-256
 `855983284c088cd795c119fe0c392308824066b10a9173dceb7cdc2daa219101`.
+Its canonical repository source closure is
+`Windvale-Compiler-Image-Staging.wvproj`; the ordinary native source front door
+publishes that exact identity byte for byte. The project retains dependencies
+in canonical ordinal module-name order until the native project driver derives
+the order itself. Stage 0 is the differential/recovery oracle for this WVB,
+not its normal constructor.
+
 The Windows candidate is 849,920 bytes at SHA-256
 `c6315f74f0a674e8d0cbb6e64e80c97d409a500551f51b6ce3d7fa618ca00f6e`;
 the Linux candidate is 851,968 bytes at SHA-256

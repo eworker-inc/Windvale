@@ -69,6 +69,15 @@ containers, and publisher-scale transfer, durable public publication,
 canonical map evidence, Linux execution, promotion, and grouped qualification
 remain open.
 
+[Decision 0353](../Decisions/0353-Native-Compiler-Image-Staging-Source-Build.md)
+removes Stage 0 from construction of that 75,337-byte staging WVB. Its complete
+checked-in project closure now builds through the ordinary native source front
+door and matches the frozen Stage 0 oracle byte for byte. Stage 0 remains only
+the differential/recovery oracle for this source boundary and still constructs
+both host containers. Linux source-build/execution evidence, native container
+construction, publisher-scale transfer, durable publication, promotion, and
+the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
