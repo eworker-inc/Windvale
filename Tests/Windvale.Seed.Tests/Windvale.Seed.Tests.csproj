@@ -109,6 +109,12 @@
       Include="../../Compiler/Windvale/Native-Stencil-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Stencil-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-Utf8-Service.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Utf8-Service.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Utf8-Service-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-Publication-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-Publication-Core.wv" />
     <EmbeddedResource

@@ -4,6 +4,7 @@
 - Status: Qualified on Windows and Debian x64
 - Refines: [Decision 0069](0069-Dynamic-Native-Text-And-Complete-Wvdump.md)'s ABI-10 service implementation
 - Advances: The first ABI-10 service that executes without a managed callback or platform thunk
+- Advanced by: [Decision 0355](0355-Windvale-Owned-Native-Utf8-Service-Construction.md)
 
 ## Context
 

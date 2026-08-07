@@ -166,6 +166,8 @@ $ByteConstructionDemoModule = Join-Path $Artifacts 'Byte-Construction-Demo.wvb'
 $NativeStencilModule = Join-Path $Artifacts 'Native-Stencil-Core.wvb'
 $NativeStencilDemoModule = Join-Path $Artifacts 'Native-Stencil-Demo.wvb'
 $NativeStencilBridgeModule = Join-Path $Artifacts 'Native-Stencil-Bridge.wvb'
+$NativeUtf8CoreModule = Join-Path $Artifacts 'Native-X64-Utf8-Service.wvb'
+$NativeUtf8BridgeModule = Join-Path $Artifacts 'Native-X64-Utf8-Service-Bridge.wvb'
 $NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -635,6 +637,51 @@ if (
     $NativeStencilBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native-stencil bridge inspection is incomplete.'
+}
+
+$NativeUtf8CoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Utf8-Service.wv'
+dotnet $ToolDll compile $NativeUtf8CoreSource -o $NativeUtf8CoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native UTF-8 service core.' }
+$NativeUtf8CoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeUtf8CoreModule).Hash.ToLowerInvariant()
+if ($NativeUtf8CoreHash -ne 'adbd4843f3c0aaf003dc6118461278fc903fd2264be6e3b90835af49eb3cb2c7') {
+    throw "The Windvale native UTF-8 service core has an unexpected digest: $NativeUtf8CoreHash"
+}
+$NativeUtf8CoreInspection = (dotnet $ToolDll inspect $NativeUtf8CoreModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeUtf8CoreInspection -notmatch 'Profile: portable' -or
+    $NativeUtf8CoreInspection -notmatch 'Nativeˉx64ˉutf8ˉserviceˉbuild' -or
+    $NativeUtf8CoreInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native UTF-8 service core inspection is incomplete.'
+}
+$NativeUtf8BridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv'
+$NativeUtf8BridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service-Bridge.wvb'
+dotnet $ToolDll `
+    compile $NativeUtf8BridgeSource `
+    --module $NativeUtf8CoreSource `
+    -o $NativeUtf8BridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native UTF-8 service bridge.' }
+$NativeUtf8BridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeUtf8BridgeModule).Hash.ToLowerInvariant()
+if ($NativeUtf8BridgeHash -ne '4d3c8d50d371147d687163c6d7ab761d32445719789f1f62f1f116f2bf268c4f') {
+    throw "The Windvale native UTF-8 service bridge has an unexpected digest: $NativeUtf8BridgeHash"
+}
+$NativeUtf8BridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeUtf8BridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeUtf8BridgeRetainedHash -ne $NativeUtf8BridgeHash -or
+    (Get-Item -LiteralPath $NativeUtf8BridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeUtf8BridgeModule).Length
+) {
+    throw 'The retained Windvale native UTF-8 service bridge does not match its exact source compilation.'
+}
+$NativeUtf8BridgeInspection = (dotnet $ToolDll inspect $NativeUtf8BridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeUtf8BridgeInspection -notmatch 'Profile: portable' -or
+    $NativeUtf8BridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativeUtf8BridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native UTF-8 service bridge inspection is incomplete.'
 }
 
 $NativePublicationSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Core.wv'

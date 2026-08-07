@@ -1,0 +1,4 @@
+windvale-project 1
+root "Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv"
+source "Runtime/Windvale/Native-X64-Utf8-Service.wv"
+emit wvb

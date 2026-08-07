@@ -88,6 +88,16 @@ service-bundle and host-container construction, a promoted composition
 launcher, durable image publication, canonical map evidence, Linux execution,
 and the grouped gate remain open.
 
+[Decision 0355](../Decisions/0355-Windvale-Owned-Native-Utf8-Service-Construction.md)
+removes the normal C# byte-emission algorithm for the shared strict UTF-8
+native service. A focused Windvale core now constructs and patches the exact
+800-byte x64 leaf, and its capability-free retained bridge builds identically
+through Stage 0 and the ordinary native source front door. The recovery wrapper
+only verifies, lowers, executes, and caches the Windvale result; every existing
+service bundle and application retains its exact identity. Managed native-WVB
+loading, W^X execution/publication, bundle orchestration, Linux evidence, and
+the grouped gate remain separate open items.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

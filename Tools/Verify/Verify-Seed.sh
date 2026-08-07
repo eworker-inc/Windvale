@@ -161,6 +161,8 @@ BYTE_CONSTRUCTION_DEMO_MODULE="$ARTIFACTS/Byte-Construction-Demo.wvb"
 NATIVE_STENCIL_MODULE="$ARTIFACTS/Native-Stencil-Core.wvb"
 NATIVE_STENCIL_DEMO_MODULE="$ARTIFACTS/Native-Stencil-Demo.wvb"
 NATIVE_STENCIL_BRIDGE_MODULE="$ARTIFACTS/Native-Stencil-Bridge.wvb"
+NATIVE_UTF8_CORE_MODULE="$ARTIFACTS/Native-X64-Utf8-Service.wvb"
+NATIVE_UTF8_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Utf8-Service-Bridge.wvb"
 NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
@@ -537,6 +539,36 @@ cmp -s "$NATIVE_STENCIL_BRIDGE_MODULE" "$NATIVE_STENCIL_BRIDGE_RETAINED"
 NATIVE_STENCIL_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_STENCIL_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_UTF8_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Utf8-Service.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_UTF8_CORE_SOURCE" -o "$NATIVE_UTF8_CORE_MODULE"
+NATIVE_UTF8_CORE_HASH=$(sha256sum "$NATIVE_UTF8_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_UTF8_CORE_HASH" != 'adbd4843f3c0aaf003dc6118461278fc903fd2264be6e3b90835af49eb3cb2c7' ]; then
+    echo "The Windvale native UTF-8 service core has an unexpected digest: $NATIVE_UTF8_CORE_HASH" >&2
+    exit 1
+fi
+NATIVE_UTF8_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_UTF8_CORE_MODULE")
+printf '%s\n' "$NATIVE_UTF8_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_UTF8_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉutf8ˉserviceˉbuild' >/dev/null
+printf '%s\n' "$NATIVE_UTF8_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_UTF8_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv"
+NATIVE_UTF8_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service-Bridge.wvb"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_UTF8_BRIDGE_SOURCE" \
+    --module "$NATIVE_UTF8_CORE_SOURCE" \
+    -o "$NATIVE_UTF8_BRIDGE_MODULE"
+NATIVE_UTF8_BRIDGE_HASH=$(sha256sum "$NATIVE_UTF8_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_UTF8_BRIDGE_HASH" != '4d3c8d50d371147d687163c6d7ab761d32445719789f1f62f1f116f2bf268c4f' ]; then
+    echo "The Windvale native UTF-8 service bridge has an unexpected digest: $NATIVE_UTF8_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_UTF8_BRIDGE_MODULE" "$NATIVE_UTF8_BRIDGE_RETAINED"
+NATIVE_UTF8_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_UTF8_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_PUBLICATION_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wv"
 dotnet "$TOOL_DLL" \

@@ -1,0 +1,306 @@
+module Runtimeˉnativeˉx64ˉutf8ˉservice profile portable;
+
+record Nativeˉutf8ˉbuilder {
+    Code: bytes;
+    Patches: bytes;
+}
+
+data Emptyˉbytes: bytes = [];
+
+fn Appendˉu8(Input: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Emitˉtwo(Input: bytes, First: u8, Second: u8) -> bytes {
+    return Appendˉu8(Appendˉu8(Input, First), Second);
+}
+
+fn Emitˉthree(Input: bytes, First: u8, Second: u8, Third: u8) -> bytes {
+    return Appendˉu8(Emitˉtwo(Input, First, Second), Third);
+}
+
+fn Recordˉpatch(Patches: bytes, Offset: u32, Target: u32) -> bytes {
+    return Appendˉu32(Appendˉu32(Patches, Offset), Target);
+}
+
+fn Branch(
+    Builder: Nativeˉutf8ˉbuilder,
+    Condition: u8,
+    Target: u32
+) -> Nativeˉutf8ˉbuilder {
+    var Code: bytes = Emitˉtwo(Builder.Code, 15u8, Condition);
+    let Patchˉoffset: u32 = Bytesˉlength(Code);
+    Code = Appendˉu32(Code, 0u32);
+    return Nativeˉutf8ˉbuilder(
+        Code,
+        Recordˉpatch(Builder.Patches, Patchˉoffset, Target)
+    );
+}
+
+fn Jump(Builder: Nativeˉutf8ˉbuilder, Target: u32) -> Nativeˉutf8ˉbuilder {
+    var Code: bytes = Appendˉu8(Builder.Code, 233u8);
+    let Patchˉoffset: u32 = Bytesˉlength(Code);
+    Code = Appendˉu32(Code, 0u32);
+    return Nativeˉutf8ˉbuilder(
+        Code,
+        Recordˉpatch(Builder.Patches, Patchˉoffset, Target)
+    );
+}
+
+fn Compareˉedx(Builder: Nativeˉutf8ˉbuilder, Value: u32) -> Nativeˉutf8ˉbuilder {
+    return Nativeˉutf8ˉbuilder(
+        Appendˉu32(Emitˉtwo(Builder.Code, 129u8, 250u8), Value),
+        Builder.Patches
+    );
+}
+
+fn Requireˉremaining(
+    Builder: Nativeˉutf8ˉbuilder,
+    Length: u8,
+    Invalidˉtarget: u32
+) -> Nativeˉutf8ˉbuilder {
+    var Code: bytes = Emitˉtwo(Builder.Code, 137u8, 194u8);
+    Code = Emitˉthree(Code, 131u8, 194u8, Length);
+    Code = Emitˉthree(Code, 68u8, 57u8, 202u8);
+    return Branch(Nativeˉutf8ˉbuilder(Code, Builder.Patches), 135u8, Invalidˉtarget);
+}
+
+fn Loadˉbyte(Builder: Nativeˉutf8ˉbuilder, Offset: u8) -> Nativeˉutf8ˉbuilder {
+    var Code: bytes = Emitˉthree(Builder.Code, 65u8, 15u8, 182u8);
+    Code = Emitˉthree(Code, 84u8, 0u8, Offset);
+    return Nativeˉutf8ˉbuilder(Code, Builder.Patches);
+}
+
+fn Requireˉrange(
+    Builder: Nativeˉutf8ˉbuilder,
+    Minimum: u32,
+    Maximum: u32,
+    Invalidˉtarget: u32
+) -> Nativeˉutf8ˉbuilder {
+    var Result: Nativeˉutf8ˉbuilder = Compareˉedx(Builder, Minimum);
+    Result = Branch(Result, 130u8, Invalidˉtarget);
+    Result = Compareˉedx(Result, Maximum);
+    return Branch(Result, 135u8, Invalidˉtarget);
+}
+
+fn Requireˉcontinuation(
+    Builder: Nativeˉutf8ˉbuilder,
+    Invalidˉtarget: u32
+) -> Nativeˉutf8ˉbuilder {
+    return Requireˉrange(Builder, 128u32, 191u32, Invalidˉtarget);
+}
+
+fn Advance(
+    Builder: Nativeˉutf8ˉbuilder,
+    Length: u8,
+    Loopˉtarget: u32
+) -> Nativeˉutf8ˉbuilder {
+    return Jump(
+        Nativeˉutf8ˉbuilder(
+            Emitˉthree(Builder.Code, 131u8, 192u8, Length),
+            Builder.Patches
+        ),
+        Loopˉtarget
+    );
+}
+
+fn Relativeˉu32(Patchˉoffset: u32, Targetˉoffset: u32) -> u32 {
+    let Sourceˉend: u32 = Patchˉoffset + 4u32;
+    if Targetˉoffset >= Sourceˉend {
+        return Targetˉoffset - Sourceˉend;
+    }
+    return 4294967295u32 - (Sourceˉend - Targetˉoffset) + 1u32;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Suffixˉoffset: u32 = Offset + 4u32;
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Value),
+            Bytesˉslice(
+                Input,
+                Suffixˉoffset,
+                Bytesˉlength(Input) - Suffixˉoffset
+            )
+        )
+    );
+}
+
+fn Finish(Builder: Nativeˉutf8ˉbuilder, Labels: bytes) -> bytes {
+    var Result: bytes = Builder.Code;
+    let Patchˉcount: u32 = Bytesˉlength(Builder.Patches) / 8u32;
+    var Index: u32 = 0u32;
+    while Index < Patchˉcount {
+        let Recordˉoffset: u32 = Index * 8u32;
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Builder.Patches,
+            Recordˉoffset
+        );
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(
+            Builder.Patches,
+            Recordˉoffset + 4u32
+        );
+        let Targetˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Labels, Target * 4u32);
+        Result = Replaceˉu32(
+            Result,
+            Patchˉoffset,
+            Relativeˉu32(Patchˉoffset, Targetˉoffset)
+        );
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Nativeˉx64ˉutf8ˉserviceˉbuild() -> bytes {
+    let Loopˉtarget: u32 = 0u32;
+    let Oneˉtarget: u32 = 1u32;
+    let Twoˉtarget: u32 = 2u32;
+    let Threeˉe0ˉtarget: u32 = 3u32;
+    let Threeˉstandardˉtarget: u32 = 4u32;
+    let Threeˉedˉtarget: u32 = 5u32;
+    let Fourˉf0ˉtarget: u32 = 6u32;
+    let Fourˉstandardˉtarget: u32 = 7u32;
+    let Fourˉf4ˉtarget: u32 = 8u32;
+    let Validˉtarget: u32 = 9u32;
+    let Invalidˉtarget: u32 = 10u32;
+
+    var Initialˉcode: bytes = Emitˉtwo(Emptyˉbytes, 199u8, 1u8);
+    Initialˉcode = Appendˉu32(Initialˉcode, 0u32);
+    Initialˉcode = Emitˉtwo(Initialˉcode, 49u8, 192u8);
+    var Builder: Nativeˉutf8ˉbuilder = Nativeˉutf8ˉbuilder(
+        Initialˉcode,
+        Emptyˉbytes
+    );
+    var Labels: bytes = Appendˉu32(Emptyˉbytes, Bytesˉlength(Builder.Code));
+
+    Builder = Nativeˉutf8ˉbuilder(
+        Emitˉthree(Builder.Code, 68u8, 57u8, 200u8),
+        Builder.Patches
+    );
+    Builder = Branch(Builder, 131u8, Validˉtarget);
+    Builder = Nativeˉutf8ˉbuilder(
+        Emitˉthree(
+            Emitˉtwo(Builder.Code, 65u8, 15u8),
+            182u8,
+            20u8,
+            0u8
+        ),
+        Builder.Patches
+    );
+    Builder = Appendˉdispatch(Builder, Invalidˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Nativeˉutf8ˉbuilder(
+        Emitˉtwo(Builder.Code, 255u8, 192u8),
+        Builder.Patches
+    );
+    Builder = Jump(Builder, Loopˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Requireˉremaining(Builder, 2u8, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 1u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Advance(Builder, 2u8, Loopˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Requireˉremaining(Builder, 3u8, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 1u8);
+    Builder = Requireˉrange(Builder, 160u32, 191u32, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 2u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Advance(Builder, 3u8, Loopˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Requireˉremaining(Builder, 3u8, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 1u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 2u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Advance(Builder, 3u8, Loopˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Requireˉremaining(Builder, 3u8, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 1u8);
+    Builder = Requireˉrange(Builder, 128u32, 159u32, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 2u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Advance(Builder, 3u8, Loopˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Requireˉremaining(Builder, 4u8, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 1u8);
+    Builder = Requireˉrange(Builder, 144u32, 191u32, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 2u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 3u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Advance(Builder, 4u8, Loopˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Requireˉremaining(Builder, 4u8, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 1u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 2u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 3u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Advance(Builder, 4u8, Loopˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Requireˉremaining(Builder, 4u8, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 1u8);
+    Builder = Requireˉrange(Builder, 128u32, 143u32, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 2u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Loadˉbyte(Builder, 3u8);
+    Builder = Requireˉcontinuation(Builder, Invalidˉtarget);
+    Builder = Advance(Builder, 4u8, Loopˉtarget);
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    var Validˉcode: bytes = Emitˉtwo(Builder.Code, 199u8, 1u8);
+    Validˉcode = Appendˉu32(Validˉcode, 1u32);
+    Validˉcode = Emitˉthree(Validˉcode, 49u8, 192u8, 195u8);
+    Builder = Nativeˉutf8ˉbuilder(
+        Validˉcode,
+        Builder.Patches
+    );
+
+    Labels = Appendˉu32(Labels, Bytesˉlength(Builder.Code));
+    Builder = Nativeˉutf8ˉbuilder(
+        Emitˉthree(Builder.Code, 49u8, 192u8, 195u8),
+        Builder.Patches
+    );
+    return Finish(Builder, Labels);
+}
+
+fn Appendˉdispatch(
+    Builder: Nativeˉutf8ˉbuilder,
+    Invalidˉtarget: u32
+) -> Nativeˉutf8ˉbuilder {
+    var Result: Nativeˉutf8ˉbuilder = Compareˉedx(Builder, 127u32);
+    Result = Branch(Result, 134u8, 1u32);
+    Result = Compareˉedx(Result, 194u32);
+    Result = Branch(Result, 130u8, Invalidˉtarget);
+    Result = Compareˉedx(Result, 223u32);
+    Result = Branch(Result, 134u8, 2u32);
+    Result = Compareˉedx(Result, 224u32);
+    Result = Branch(Result, 132u8, 3u32);
+    Result = Compareˉedx(Result, 236u32);
+    Result = Branch(Result, 134u8, 4u32);
+    Result = Compareˉedx(Result, 237u32);
+    Result = Branch(Result, 132u8, 5u32);
+    Result = Compareˉedx(Result, 239u32);
+    Result = Branch(Result, 134u8, 4u32);
+    Result = Compareˉedx(Result, 240u32);
+    Result = Branch(Result, 132u8, 6u32);
+    Result = Compareˉedx(Result, 243u32);
+    Result = Branch(Result, 134u8, 7u32);
+    Result = Compareˉedx(Result, 244u32);
+    Result = Branch(Result, 132u8, 8u32);
+    return Jump(Result, Invalidˉtarget);
+}

@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉx64ˉutf8ˉserviceˉbridge profile portable;
+
+import Runtimeˉnativeˉx64ˉutf8ˉservice as Nativeˉutf8;
+
+export fn Main() -> bytes {
+    return Nativeˉutf8.Nativeˉx64ˉutf8ˉserviceˉbuild();
+}
