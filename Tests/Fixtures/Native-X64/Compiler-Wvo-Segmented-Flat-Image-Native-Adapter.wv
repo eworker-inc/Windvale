@@ -1,6 +1,7 @@
 module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉnativeˉtest profile portable;
 
 import Linkerˉcompilerˉwvoˉsegmentedˉflatˉimage as Flat;
+import Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉverification as Verification;
 
 data Stagingˉmanifest: bytes = [
     87, 86, 79, 80, 1, 0, 0, 0, 120, 0, 0, 0,
@@ -52,6 +53,7 @@ data Linkedˉtext: bytes = [1, 11, 0, 0, 0, 2, 8, 0, 0, 0];
 data Invalidˉtext: bytes = [1, 1, 0, 0, 0, 2, 0, 0, 0, 0];
 data Padding: bytes = [144, 144, 144, 144, 144, 144];
 data Readˉonlyˉfirst: bytes = [65, 66];
+data Readˉonlyˉsecond: bytes = [67, 68, 69];
 
 fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
     let Length: u32 = Bytesˉlength(Left);
@@ -172,6 +174,124 @@ export fn Main() -> i32 {
     if Rejected.Status != Flat.Linkerˉcompilerˉwvoˉsegmentedˉstatus.Text ||
         Bytesˉlength(Rejected.Value) != 0u32 {
         return 8;
+    }
+
+    let Emptyˉcandidate: bytes = Bytesˉslice(Prefix, 0u32, 0u32);
+    var Cursor:
+        Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor =
+        Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉbegin(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if Cursor.Status !=
+            Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active ||
+        Cursor.Chunks != 8u32 || Cursor.Nextˉchunk != 0u32 ||
+        Cursor.Imageˉposition != 0u32 || Cursor.Imageˉbytes != 21u32 {
+        return 9;
+    }
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor,
+        Prefix,
+        0u32,
+        Emptyˉcandidate
+    );
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor,
+        Textˉchunk,
+        0u32,
+        Linkedˉtext
+    );
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor,
+        Padding,
+        10u32,
+        Padding
+    );
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor,
+        Readˉonlyˉheader,
+        16u32,
+        Emptyˉcandidate
+    );
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor,
+        Readˉonlyˉfirst,
+        16u32,
+        Readˉonlyˉfirst
+    );
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor,
+        Readˉonlyˉsecond,
+        18u32,
+        Readˉonlyˉsecond
+    );
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor,
+        Symbolˉchunk,
+        21u32,
+        Emptyˉcandidate
+    );
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor,
+        Relocationˉchunk,
+        21u32,
+        Emptyˉcandidate
+    );
+    Cursor = Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉfinish(
+        Stagingˉmanifest,
+        Prefix,
+        Readˉonlyˉheader,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        Cursor
+    );
+    if Cursor.Status !=
+            Verification.Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Complete ||
+        Cursor.Nextˉchunk != 8u32 || Cursor.Imageˉposition != 21u32 {
+        return 10;
     }
     return 42;
 }

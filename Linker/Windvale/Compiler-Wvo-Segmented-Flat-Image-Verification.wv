@@ -1,0 +1,469 @@
+module Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉverification profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations as Relocations;
+
+export enum Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus {
+    Active = 0;
+    Complete = 1;
+    Manifest = 2;
+    Envelope = 3;
+    Symbols = 4;
+    Relocations = 5;
+    Invalidˉcursor = 6;
+    Chunkˉlength = 7;
+    Chunkˉrange = 8;
+    Source = 9;
+    Candidateˉposition = 10;
+    Candidateˉlength = 11;
+    Candidateˉcontent = 12;
+}
+
+export record Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus;
+    Chunks: u32;
+    Nextˉchunk: u32;
+    Imageˉposition: u32;
+    Imageˉbytes: u32;
+}
+
+record Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence {
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus;
+    Valid: bool;
+    Chunks: u32;
+    Imageˉbytes: u32;
+    Sections: u32;
+    Textˉbytes: u32;
+    Symbolˉposition: u32;
+    Relocationˉposition: u32;
+    Relocationˉbytes: u32;
+    Relocations: u32;
+}
+
+fn State(
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus,
+    Chunks: u32,
+    Nextˉchunk: u32,
+    Imageˉposition: u32,
+    Imageˉbytes: u32
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    return Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor(
+        Status,
+        Chunks,
+        Nextˉchunk,
+        Imageˉposition,
+        Imageˉbytes
+    );
+}
+
+fn Invalid(
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    return State(Status, 0u32, 0u32, 0u32, 0u32);
+}
+
+fn Invalidˉevidence(
+    Status: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence {
+    return Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence(
+        Status,
+        false,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32
+    );
+}
+
+fn Evidence(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence {
+    let Manifestˉsummary:
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
+            Stagingˉmanifest
+        );
+    if Manifestˉsummary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return Invalidˉevidence(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Manifest
+        );
+    }
+    let Envelopeˉsummary:
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader
+        );
+    if Envelopeˉsummary.Status !=
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Valid {
+        return Invalidˉevidence(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Envelope
+        );
+    }
+    let Symbolˉsummary:
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk
+        );
+    if Symbolˉsummary.Status !=
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid {
+        return Invalidˉevidence(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Symbols
+        );
+    }
+    let Relocationˉsummary:
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary =
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if Relocationˉsummary.Status !=
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
+        return Invalidˉevidence(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Relocations
+        );
+    }
+    return Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence(
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active,
+        true,
+        Manifestˉsummary.Chunks,
+        Envelopeˉsummary.Textˉbytes + Envelopeˉsummary.Readˉonlyˉbytes,
+        Envelopeˉsummary.Sections,
+        Envelopeˉsummary.Textˉbytes,
+        Envelopeˉsummary.Symbolˉposition,
+        Symbolˉsummary.Relocationˉposition,
+        Symbolˉsummary.Relocationˉbytes,
+        Relocationˉsummary.Relocations
+    );
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        if Bytesˉreadˉu8(Left, Offset) != Bytesˉreadˉu8(Right, Offset) {
+            return false;
+        }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+fn Rangeˉequal(
+    Left: bytes,
+    Right: bytes,
+    Offset: u32,
+    Length: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Offset + Index) !=
+            Bytesˉreadˉu8(Right, Offset + Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Textˉcandidateˉmatches(
+    Textˉbytes: u32,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes,
+    Relocationˉcount: u32,
+    Position: u32,
+    Source: bytes,
+    Candidate: bytes
+) -> bool {
+    let Length: u32 = Bytesˉlength(Source);
+    let Endˉposition: u32 = Position + Length;
+    var Uncheckedˉend: u32 = Length;
+    var Remaining: u32 = Relocationˉcount;
+    while Remaining > 0u32 {
+        let Relocation: u32 = Remaining - 1u32;
+        let Entry: u32 = Relocation * 20u32;
+        let Patchˉoffset: u32 =
+            Bytesˉreadˉu32ˉlittle(Relocationˉchunk, Entry + 8u32);
+        let Patchˉposition: u32 = 49u32 + Patchˉoffset;
+        if Patchˉposition >= Position && Patchˉposition < Endˉposition {
+            let Localˉoffset: u32 = Patchˉposition - Position;
+            let Afterˉpatch: u32 = Localˉoffset + 4u32;
+            if Afterˉpatch > Uncheckedˉend ||
+                !Rangeˉequal(
+                    Source,
+                    Candidate,
+                    Afterˉpatch,
+                    Uncheckedˉend - Afterˉpatch
+                ) {
+                return false;
+            }
+            let Targetˉsymbol: u32 =
+                Bytesˉreadˉu32ˉlittle(Relocationˉchunk, Entry + 12u32);
+            let Dataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Symbolˉchunk,
+                Targetˉsymbol * 30u32 + 8u32
+            );
+            let Expected: u32 =
+                Textˉbytes + Dataˉoffset - Patchˉoffset - 4u32;
+            if Bytesˉreadˉu32ˉlittle(Candidate, Localˉoffset) != Expected {
+                return false;
+            }
+            Uncheckedˉend = Localˉoffset;
+        }
+        Remaining = Relocation;
+    }
+    return Rangeˉequal(Source, Candidate, 0u32, Uncheckedˉend);
+}
+
+fn Cursorˉisˉvalid(
+    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor,
+    Evidence:
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence
+) -> bool {
+    if Current.Status !=
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active {
+        return false;
+    }
+    if Current.Chunks != Evidence.Chunks ||
+        Current.Imageˉbytes != Evidence.Imageˉbytes {
+        return false;
+    }
+    return Current.Imageˉposition <= Evidence.Imageˉbytes;
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉbegin(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    let Accepted:
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence = Evidence(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if !Accepted.Valid { return Invalid(Accepted.Status); }
+    return State(
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active,
+        Accepted.Chunks,
+        0u32,
+        0u32,
+        Accepted.Imageˉbytes
+    );
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉnext(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes,
+    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor,
+    Sourceˉchunk: bytes,
+    Candidateˉposition: u32,
+    Candidateˉchunk: bytes
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    let Accepted:
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence = Evidence(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if !Accepted.Valid { return Invalid(Accepted.Status); }
+    if !Cursorˉisˉvalid(Current, Accepted) ||
+        Current.Nextˉchunk >= Accepted.Chunks {
+        return Invalid(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Invalidˉcursor
+        );
+    }
+    let Entry: u32 = 24u32 + Current.Nextˉchunk * 12u32;
+    let Position: u32 =
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
+    let Length: u32 =
+        Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32);
+    if Bytesˉlength(Sourceˉchunk) != Length {
+        return Invalid(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Chunkˉlength
+        );
+    }
+    if Candidateˉposition != Current.Imageˉposition {
+        return Invalid(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Candidateˉposition
+        );
+    }
+
+    let Textˉend: u32 = 49u32 + Accepted.Textˉbytes;
+    if Position >= 49u32 && Position < Textˉend {
+        if Length > Textˉend - Position {
+            return Invalid(
+                Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Chunkˉrange
+            );
+        }
+        if Bytesˉlength(Candidateˉchunk) != Length {
+            return Invalid(
+                Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Candidateˉlength
+            );
+        }
+        if Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            Current.Nextˉchunk,
+            Sourceˉchunk
+        ) != Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid {
+            return Invalid(
+                Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Source
+            );
+        }
+        if !Textˉcandidateˉmatches(
+            Accepted.Textˉbytes,
+            Symbolˉchunk,
+            Relocationˉchunk,
+            Accepted.Relocations,
+            Position,
+            Sourceˉchunk,
+            Candidateˉchunk
+        ) {
+            return Invalid(
+                Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Candidateˉcontent
+            );
+        }
+        return State(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active,
+            Current.Chunks,
+            Current.Nextˉchunk + 1u32,
+            Current.Imageˉposition + Length,
+            Current.Imageˉbytes
+        );
+    }
+
+    if Accepted.Sections == 2u32 {
+        let Readˉonlyˉstart: u32 = Textˉend + 27u32;
+        if Position >= Readˉonlyˉstart && Position < Accepted.Symbolˉposition {
+            if Length > Accepted.Symbolˉposition - Position {
+                return Invalid(
+                    Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Chunkˉrange
+                );
+            }
+            if Bytesˉlength(Candidateˉchunk) != Length {
+                return Invalid(
+                    Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Candidateˉlength
+                );
+            }
+            if !Bytesˉequal(Sourceˉchunk, Candidateˉchunk) {
+                return Invalid(
+                    Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Candidateˉcontent
+                );
+            }
+            return State(
+                Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active,
+                Current.Chunks,
+                Current.Nextˉchunk + 1u32,
+                Current.Imageˉposition + Length,
+                Current.Imageˉbytes
+            );
+        }
+    }
+
+    var Sourceˉmatches: bool = false;
+    if Position == 0u32 {
+        Sourceˉmatches = Bytesˉequal(Sourceˉchunk, Prefix);
+    } else {
+        if Accepted.Sections == 2u32 && Position == Textˉend {
+            Sourceˉmatches = Bytesˉequal(Sourceˉchunk, Readˉonlyˉheader);
+        } else {
+            if Position == Accepted.Symbolˉposition {
+                Sourceˉmatches = Bytesˉequal(Sourceˉchunk, Symbolˉchunk);
+            } else {
+                if Accepted.Relocationˉbytes > 0u32 &&
+                    Position == Accepted.Relocationˉposition {
+                    Sourceˉmatches = Bytesˉequal(
+                        Sourceˉchunk,
+                        Relocationˉchunk
+                    );
+                } else {
+                    return Invalid(
+                        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Chunkˉrange
+                    );
+                }
+            }
+        }
+    }
+    if !Sourceˉmatches {
+        return Invalid(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Source
+        );
+    }
+    if Bytesˉlength(Candidateˉchunk) != 0u32 {
+        return Invalid(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Candidateˉlength
+        );
+    }
+    return State(
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Active,
+        Current.Chunks,
+        Current.Nextˉchunk + 1u32,
+        Current.Imageˉposition,
+        Current.Imageˉbytes
+    );
+}
+
+export fn Linkerˉcompilerˉwvoˉsegmentedˉverificationˉfinish(
+    Stagingˉmanifest: bytes,
+    Prefix: bytes,
+    Readˉonlyˉheader: bytes,
+    Symbolˉchunk: bytes,
+    Relocationˉchunk: bytes,
+    Current: Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor
+) -> Linkerˉcompilerˉwvoˉsegmentedˉverificationˉcursor {
+    let Accepted:
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉevidence = Evidence(
+            Stagingˉmanifest,
+            Prefix,
+            Readˉonlyˉheader,
+            Symbolˉchunk,
+            Relocationˉchunk
+        );
+    if !Accepted.Valid { return Invalid(Accepted.Status); }
+    if !Cursorˉisˉvalid(Current, Accepted) ||
+        Current.Nextˉchunk != Accepted.Chunks ||
+        Current.Imageˉposition != Accepted.Imageˉbytes {
+        return Invalid(
+            Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Invalidˉcursor
+        );
+    }
+    return State(
+        Linkerˉcompilerˉwvoˉsegmentedˉverificationˉstatus.Complete,
+        Current.Chunks,
+        Current.Nextˉchunk,
+        Current.Imageˉposition,
+        Current.Imageˉbytes
+    );
+}

@@ -19,6 +19,12 @@ internal static partial class Program
     private static readonly string COMPILER_WVO_SEGMENTED_FLAT_IMAGE_NATIVE_ADAPTER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Compiler-Wvo-Segmented-Flat-Image-Native-Adapter.wv");
+    private static readonly string COMPILER_WVO_SEGMENTED_FLAT_IMAGE_VERIFICATION_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Compiler-Wvo-Segmented-Flat-Image-Verification.wv");
+    private static readonly string COMPILER_WVO_SEGMENTED_FLAT_IMAGE_VERIFICATION_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Compiler-Wvo-Segmented-Flat-Image-Verification-Adapter.wv");
 
     private static void Compilerˉwvoˉsegmentedˉflatˉimageˉlinks()
     {
@@ -133,9 +139,71 @@ internal static partial class Program
             Adapter, Oneˉsectionˉmanifest, Oneˉsectionˉprefix, [], Main, [],
             1, Text, 0, 10, 0, 3, 1, 1, 0, 0, 1, 0, Text);
 
+        var Verificationˉadapterˉbytes =
+            Compileˉcompilerˉwvoˉsegmentedˉflatˉimage(
+                "Tests/Fixtures/Native-X64/Compiler-Wvo-Segmented-Flat-Image-Verification-Adapter.wv",
+                COMPILER_WVO_SEGMENTED_FLAT_IMAGE_VERIFICATION_ADAPTER_SOURCE,
+                includeˉlinker: false,
+                includeˉverification: true);
+        var Verificationˉadapter = Moduleˉcodec.Readˉandˉverify(
+            Verificationˉadapterˉbytes);
+        Equal(
+            "Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉverificationˉtest",
+            Verificationˉadapter.Module.Name);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader, Symbols,
+            Relocations, Text, 0, Linkedˉtext,
+            0, 8, 21, 0, 8, 2, 10, 21);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader, Symbols,
+            Relocations, Text, 1, Linkedˉtext,
+            0, 8, 21, 10, 0, 0, 0, 0);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader, Symbols,
+            Relocations, Text, 0, Linkedˉtext[..9],
+            0, 8, 21, 11, 0, 0, 0, 0);
+        var Changedˉcandidate = Linkedˉtext.ToArray();
+        Changedˉcandidate[5] = 3;
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader, Symbols,
+            Relocations, Text, 0, Changedˉcandidate,
+            0, 8, 21, 12, 0, 0, 0, 0);
+        var Changedˉrelocation = Linkedˉtext.ToArray();
+        Changedˉrelocation[1] = 12;
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader, Symbols,
+            Relocations, Text, 0, Changedˉrelocation,
+            0, 8, 21, 12, 0, 0, 0, 0);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader, Symbols,
+            Relocations, Invalidˉtext, 0, Linkedˉtext,
+            0, 8, 21, 9, 0, 0, 0, 0);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader, Symbols,
+            Relocations, Text[..9], 0, Linkedˉtext,
+            0, 8, 21, 7, 0, 0, 0, 0);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Invalidˉmanifest, Prefix, Readˉonlyˉheader,
+            Symbols, Relocations, Text, 0, Linkedˉtext,
+            2, 0, 0, 2, 0, 0, 0, 0);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Invalidˉprefix,
+            Readˉonlyˉheader, Symbols, Relocations, Text, 0, Linkedˉtext,
+            3, 0, 0, 3, 0, 0, 0, 0);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader,
+            Invalidˉsymbols, Relocations, Text, 0, Linkedˉtext,
+            4, 0, 0, 4, 0, 0, 0, 0);
+        Assertˉcompilerˉwvoˉsegmentedˉverification(
+            Verificationˉadapter, Manifest, Prefix, Readˉonlyˉheader,
+            Symbols, Invalidˉrelocations, Text, 0, Linkedˉtext,
+            5, 0, 0, 5, 0, 0, 0, 0);
+
         var Nativeˉadapterˉbytes = Compileˉcompilerˉwvoˉsegmentedˉflatˉimage(
             "Tests/Fixtures/Native-X64/Compiler-Wvo-Segmented-Flat-Image-Native-Adapter.wv",
-            COMPILER_WVO_SEGMENTED_FLAT_IMAGE_NATIVE_ADAPTER_SOURCE);
+            COMPILER_WVO_SEGMENTED_FLAT_IMAGE_NATIVE_ADAPTER_SOURCE,
+            includeˉlinker: true,
+            includeˉverification: true);
         var Nativeˉadapter = Moduleˉcodec.Readˉandˉverify(Nativeˉadapterˉbytes);
         Equal(
             "Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉnativeˉtest",
@@ -148,27 +216,40 @@ internal static partial class Program
 
     private static byte[] Compileˉcompilerˉwvoˉsegmentedˉflatˉimage(
         string path,
-        string source)
+        string source,
+        bool includeˉlinker = true,
+        bool includeˉverification = false)
     {
+        List<Sourceˉmoduleˉinput> Dependencies =
+        [
+            new(
+                "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv",
+                NATIVE_X64_LOWERING_STAGING_MANIFEST_SOURCE),
+            new(
+                "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv",
+                NATIVE_X64_STAGING_WVO_ENVELOPE_SOURCE),
+            new(
+                "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv",
+                NATIVE_X64_STAGING_WVO_SYMBOLS_SOURCE),
+            new(
+                "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv",
+                NATIVE_X64_STAGING_WVO_RELOCATIONS_SOURCE),
+        ];
+        if (includeˉlinker)
+        {
+            Dependencies.Add(new(
+                "Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image.wv",
+                COMPILER_WVO_SEGMENTED_FLAT_IMAGE_SOURCE));
+        }
+        if (includeˉverification)
+        {
+            Dependencies.Add(new(
+                "Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Verification.wv",
+                COMPILER_WVO_SEGMENTED_FLAT_IMAGE_VERIFICATION_SOURCE));
+        }
         var Result = Seedˉcompiler.Compileˉmodules(
             new(path, source),
-            [
-                new(
-                    "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv",
-                    NATIVE_X64_LOWERING_STAGING_MANIFEST_SOURCE),
-                new(
-                    "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv",
-                    NATIVE_X64_STAGING_WVO_ENVELOPE_SOURCE),
-                new(
-                    "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv",
-                    NATIVE_X64_STAGING_WVO_SYMBOLS_SOURCE),
-                new(
-                    "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv",
-                    NATIVE_X64_STAGING_WVO_RELOCATIONS_SOURCE),
-                new(
-                    "Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image.wv",
-                    COMPILER_WVO_SEGMENTED_FLAT_IMAGE_SOURCE),
-            ]);
+            Dependencies);
         if (!Result.Success)
         {
             throw new InvalidOperationException(
@@ -257,5 +338,85 @@ internal static partial class Program
         var Actualˉvalue = Evidence.AsSpan(48).ToArray();
         Sequenceˉequal(value, Actualˉvalue);
         return Actualˉvalue;
+    }
+
+    private static void Assertˉcompilerˉwvoˉsegmentedˉverification(
+        Verifiedˉmodule adapter,
+        byte[] manifest,
+        byte[] prefix,
+        byte[] readˉonlyˉheader,
+        byte[] symbols,
+        byte[] relocations,
+        byte[] source,
+        uint candidateˉposition,
+        byte[] candidate,
+        uint beginˉstatus,
+        uint beginˉchunks,
+        uint beginˉimageˉbytes,
+        uint nextˉstatus,
+        uint nextˉchunks,
+        uint nextˉchunk,
+        uint nextˉimageˉposition,
+        uint nextˉimageˉbytes)
+    {
+        var Request = new byte[checked(
+            32 + manifest.Length + prefix.Length + readˉonlyˉheader.Length +
+            symbols.Length + relocations.Length + source.Length +
+            candidate.Length)];
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Request, checked((uint)manifest.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Request.AsSpan(4), checked((uint)prefix.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Request.AsSpan(8), checked((uint)readˉonlyˉheader.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Request.AsSpan(12), checked((uint)symbols.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Request.AsSpan(16), checked((uint)relocations.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Request.AsSpan(20), candidateˉposition);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Request.AsSpan(24), checked((uint)source.Length));
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Request.AsSpan(28), checked((uint)candidate.Length));
+        var Offset = 32;
+        foreach (var Input in new[]
+        {
+            manifest, prefix, readˉonlyˉheader, symbols, relocations, source,
+            candidate,
+        })
+        {
+            Input.CopyTo(Request, Offset);
+            Offset += Input.Length;
+        }
+        var Evidence = new Referenceˉruntime(
+            adapter,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults)
+            .Runˉmainˉbytes(Request.ToImmutableArray())
+            .Bytes
+            .ToArray();
+        Equal(44, Evidence.Length);
+        Sequenceˉequal("WVVF"u8.ToArray(), Evidence.AsSpan(0, 4).ToArray());
+        uint[] Expected =
+        [
+            beginˉstatus,
+            beginˉchunks,
+            0,
+            0,
+            beginˉimageˉbytes,
+            nextˉstatus,
+            nextˉchunks,
+            nextˉchunk,
+            nextˉimageˉposition,
+            nextˉimageˉbytes,
+        ];
+        for (var Index = 0; Index < Expected.Length; Index++)
+        {
+            Equal(
+                Expected[Index],
+                BinaryPrimitives.ReadUInt32LittleEndian(
+                    Evidence.AsSpan(4 + Index * 4)));
+        }
     }
 }

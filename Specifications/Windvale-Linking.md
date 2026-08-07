@@ -158,12 +158,19 @@ their derived image positions. Every input and output value remains within the
 ordinary 4 MiB value ceiling, while the complete planned image remains within
 the explicit 32 MiB large-native ceiling.
 
+`Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Verification.wv` is the
+separate output verifier for this candidate. Its scalar cursor revalidates the
+same immutable WVO snapshots, consumes every manifest chunk in order, requires
+contiguous candidate image positions, compares unchanged text and read-only
+data, checks relocation fields in reverse record order, and reaches `Complete`
+only after the exact planned image extent. It does not call the producer linker
+module or accept producer plan evidence.
+
 This candidate does not generalize standard linking, accept multiple objects
-or imports, emit a canonical map, publish a host resource, or independently
-verify the complete output stream. A fixed owner must process every admitted
-manifest chunk exactly once, preserve positions, add an independently
-implemented chunk/stream verifier, and complete durable publication before it
-can replace the Stage 0 large-native linker in packaging.
+or imports, emit a canonical map, or publish a host resource. A fixed owner
+must run the producer and independent verifier over every admitted manifest
+chunk exactly once, preserve positions, and complete durable publication
+before it can replace the Stage 0 large-native linker in packaging.
 
 ## Deliberate omissions
 

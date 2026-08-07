@@ -1,9 +1,10 @@
 # Decision 0348: Bounded segmented compiler-WVO linking
 
-- Status: Accepted local implementation; publisher-scale transfer, independent verification, and grouped qualification pending
+- Status: Accepted local implementation; publisher-scale transfer and grouped qualification pending
 - Date: 2026-08-07
 - Advances: [Decision 0346](0346-Bounded-Native-Publisher-Self-Lowering.md), [Decision 0291](0291-Bounded-Compiler-Wvo-Relocation-And-Placeholder-Verification.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale linking](../../Specifications/Windvale-Linking.md#segmented-compiler-wvo-flat-image-candidate)
+- Advanced by: [Decision 0349](0349-Independent-Segmented-Compiler-Wvo-Image-Verification.md)
 
 ## Context
 
@@ -79,11 +80,11 @@ Windvale now owns the first bounded algorithm that turns staged compiler WVO
 content into exact base-zero flat-image chunks. Large-native linking no longer
 requires one in-memory WVO or one in-memory result at this layer.
 
-The actual 6.45 MiB publisher stream has not yet crossed this new module. A
-fixed snapshot adapter, independent output cursor/verifier, durable image
-publisher, publisher-scale exact comparison, and later service-bundle and
-PE/ELF construction transfer remain required before the Stage 0 package
-constructor can move to recovery-only status.
+The actual 6.45 MiB publisher stream has not yet crossed this new module.
+Decision 0349 adds the independent output cursor/verifier. A fixed snapshot
+adapter, durable image publisher, publisher-scale exact comparison, and later
+service-bundle and PE/ELF construction transfer remain required before the
+Stage 0 package constructor can move to recovery-only status.
 
 ## Reconsideration triggers
 

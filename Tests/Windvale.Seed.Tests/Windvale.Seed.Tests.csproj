@@ -391,6 +391,9 @@
       Include="../../Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image.wv"
       LogicalName="Windvale.Seed.Tests.Compiler-Wvo-Segmented-Flat-Image.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Verification.wv"
+      LogicalName="Windvale.Seed.Tests.Compiler-Wvo-Segmented-Flat-Image-Verification.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Lowering-Staging-Tool.wv" />
     <EmbeddedResource
@@ -432,6 +435,9 @@
     <EmbeddedResource
       Include="../Fixtures/Native-X64/Compiler-Wvo-Segmented-Flat-Image-Native-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Compiler-Wvo-Segmented-Flat-Image-Native-Adapter.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/Native-X64/Compiler-Wvo-Segmented-Flat-Image-Verification-Adapter.wv"
+      LogicalName="Windvale.Seed.Tests.Compiler-Wvo-Segmented-Flat-Image-Verification-Adapter.wv" />
     <EmbeddedResource
       Include="../Fixtures/Native-X64/Wvo-Staging-Content-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvo-Staging-Content-Adapter.wv" />
