@@ -537,6 +537,8 @@ printf '%s\n' "$NATIVE_STENCIL_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 NATIVE_STENCIL_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Bridge.wv"
 NATIVE_STENCIL_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Stencil-Bridge.wvb"
+NATIVE_ARGUMENT_COUNT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Argument-Count-Service.bin"
+NATIVE_ARGUMENT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Argument-Service.bin"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_STENCIL_BRIDGE_SOURCE" \
     --module "$NATIVE_STENCIL_SOURCE" \
@@ -547,6 +549,18 @@ if [ "$NATIVE_STENCIL_BRIDGE_HASH" != '0a4387f12674f08d91682898a27bf84494cbdf886
     exit 1
 fi
 cmp -s "$NATIVE_STENCIL_BRIDGE_MODULE" "$NATIVE_STENCIL_BRIDGE_RETAINED"
+NATIVE_ARGUMENT_COUNT_LEAF_HASH=$(sha256sum "$NATIVE_ARGUMENT_COUNT_LEAF_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_ARGUMENT_COUNT_LEAF_HASH" != '2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829' ] ||
+    [ "$(wc -c < "$NATIVE_ARGUMENT_COUNT_LEAF_RETAINED")" -ne 5 ]; then
+    echo "The retained Windvale process-argument-count leaf has an unexpected identity: $NATIVE_ARGUMENT_COUNT_LEAF_HASH" >&2
+    exit 1
+fi
+NATIVE_ARGUMENT_LEAF_HASH=$(sha256sum "$NATIVE_ARGUMENT_LEAF_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_ARGUMENT_LEAF_HASH" != '2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1' ] ||
+    [ "$(wc -c < "$NATIVE_ARGUMENT_LEAF_RETAINED")" -ne 70 ]; then
+    echo "The retained Windvale process-argument leaf has an unexpected identity: $NATIVE_ARGUMENT_LEAF_HASH" >&2
+    exit 1
+fi
 NATIVE_STENCIL_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_STENCIL_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null

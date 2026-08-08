@@ -12,8 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource
-      Include="Consumers/Native-Stencil-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-Stencil-Bridge.wvb" />
+      Include="Consumers/Native-X64-Argument-Count-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Argument-Count-Service.bin" />
+    <EmbeddedResource
+      Include="Consumers/Native-X64-Argument-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Argument-Service.bin" />
     <EmbeddedResource
       Include="Consumers/Native-X64-Utf8-Service.bin"
       LogicalName="Windvale.Native.Native-X64-Utf8-Service.bin" />

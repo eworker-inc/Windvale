@@ -624,6 +624,8 @@ if ($LASTEXITCODE -ne 0 -or $NativeStencilDemoOutput -notcontains 'Result: 0') {
 }
 $NativeStencilBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Stencil-Bridge.wv'
 $NativeStencilBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Stencil-Bridge.wvb'
+$NativeArgumentCountLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Argument-Count-Service.bin'
+$NativeArgumentLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Argument-Service.bin'
 dotnet $ToolDll `
     compile $NativeStencilBridgeSource `
     --module $NativeStencilSource `
@@ -640,6 +642,20 @@ if (
         (Get-Item -LiteralPath $NativeStencilBridgeModule).Length
 ) {
     throw 'The retained Windvale native-stencil bridge does not match its exact source compilation.'
+}
+$NativeArgumentCountLeafHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeArgumentCountLeafRetained).Hash.ToLowerInvariant()
+if (
+    $NativeArgumentCountLeafHash -ne '2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829' -or
+    (Get-Item -LiteralPath $NativeArgumentCountLeafRetained).Length -ne 5
+) {
+    throw "The retained Windvale process-argument-count leaf has an unexpected identity: $NativeArgumentCountLeafHash"
+}
+$NativeArgumentLeafHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeArgumentLeafRetained).Hash.ToLowerInvariant()
+if (
+    $NativeArgumentLeafHash -ne '2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1' -or
+    (Get-Item -LiteralPath $NativeArgumentLeafRetained).Length -ne 70
+) {
+    throw "The retained Windvale process-argument leaf has an unexpected identity: $NativeArgumentLeafHash"
 }
 $NativeStencilBridgeInspection = (dotnet $ToolDll inspect $NativeStencilBridgeModule) -join "`n"
 if (

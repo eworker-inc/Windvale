@@ -8038,14 +8038,22 @@ internal static partial class Program
         Equal(X64ˉnativeˉargumentˉservices.CONSUMER_CANONICAL_SIZE, Bridgeˉresult.Moduleˉbytes.Length);
         Equal(X64ˉnativeˉargumentˉservices.CONSUMER_CANONICAL_SHA256, NATIVE_STENCIL_BRIDGE_SHA256);
 
-        using (var Stream = typeof(X64ˉnativeˉargumentˉservices).Assembly
-            .GetManifestResourceStream("Windvale.Native.Native-Stencil-Bridge.wvb") ??
-            throw new InvalidOperationException("The retained native-stencil bridge was not embedded."))
-        {
-            var Retained = new byte[checked((int)Stream.Length)];
-            Stream.ReadExactly(Retained);
-            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
-        }
+        var Repository = Findˉrepositoryˉroot();
+        Sequenceˉequal(
+            Bridgeˉresult.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(
+                Repository,
+                "Runtime/Windvale.Native/Consumers/Native-Stencil-Bridge.wvb")));
+        var Retainedˉcount = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉargumentˉservices),
+            "Windvale.Native.Native-X64-Argument-Count-Service.bin");
+        var Retainedˉargument = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉargumentˉservices),
+            "Windvale.Native.Native-X64-Argument-Service.bin");
+        False(
+            typeof(X64ˉnativeˉargumentˉservices).Assembly.GetManifestResourceNames()
+                .Contains("Windvale.Native.Native-Stencil-Bridge.wvb", StringComparer.Ordinal),
+            "The normal runtime still embeds the native-stencil generator WVB.");
 
         var Bridge = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
         var Countˉdata = (Bytesˉdataˉdeclaration)Bridge.Module.Data.Single(
@@ -8074,6 +8082,14 @@ internal static partial class Program
         Expectedˉbuilder.AddRange(X64ˉnativeˉstencil.Buildˉprocessˉargumentˉcount());
         Expectedˉbuilder.AddRange(X64ˉnativeˉstencil.Buildˉprocessˉargument());
         var Expected = Expectedˉbuilder.MoveToImmutable();
+        Sequenceˉequal(
+            Expected.AsSpan(0, X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SIZE)
+                .ToArray(),
+            Retainedˉcount);
+        Sequenceˉequal(
+            Expected.AsSpan()[X64ˉnativeˉargumentˉservices.ARGUMENT_COUNT_CANONICAL_SIZE..]
+                .ToArray(),
+            Retainedˉargument);
 
         var Reference = new Referenceˉruntime(
             Bridge,

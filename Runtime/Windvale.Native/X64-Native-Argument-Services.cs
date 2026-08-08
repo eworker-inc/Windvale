@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Security.Cryptography;
-using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 
 namespace Windvale.Runtime.Native;
@@ -16,36 +15,36 @@ public static class X64ˉnativeˉargumentˉservices
     public const int ARGUMENT_CANONICAL_SIZE = 70;
     public const string ARGUMENT_CANONICAL_SHA256 =
         "2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1";
-    private const string CONSUMER_RESOURCE = "Windvale.Native.Native-Stencil-Bridge.wvb";
-    private static readonly Lazy<ImmutableArray<byte>> CONSUMER_RESULT = new(
-        Buildˉwithˉwindvale,
+    private const string ARGUMENT_COUNT_LEAF_RESOURCE =
+        "Windvale.Native.Native-X64-Argument-Count-Service.bin";
+    private const string ARGUMENT_LEAF_RESOURCE =
+        "Windvale.Native.Native-X64-Argument-Service.bin";
+    private static readonly Lazy<ImmutableArray<byte>> ARGUMENT_COUNT_LEAF = new(
+        () => Readˉartifact(
+            Nativeˉservice.Processˉargumentˉcount,
+            ARGUMENT_COUNT_LEAF_RESOURCE,
+            ARGUMENT_COUNT_CANONICAL_SIZE,
+            ARGUMENT_COUNT_CANONICAL_SHA256),
+        LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<ImmutableArray<byte>> ARGUMENT_LEAF = new(
+        () => Readˉartifact(
+            Nativeˉservice.Processˉargument,
+            ARGUMENT_LEAF_RESOURCE,
+            ARGUMENT_CANONICAL_SIZE,
+            ARGUMENT_CANONICAL_SHA256),
         LazyThreadSafetyMode.ExecutionAndPublication);
 
     // ABI-14 retains the execution-owned immutable descriptor table through R15's context.
-    // Windvale validates and instantiates both platform-neutral leaves once; the runtime only
-    // performs the bounded split needed to publish them to the native service table.
-    public static ImmutableArray<byte> Build(Nativeˉservice service)
+    // The normal runtime consumes both exact Windvale-generated leaves directly.
+    public static ImmutableArray<byte> Build(Nativeˉservice service) => service switch
     {
-        if (service is not (
-            Nativeˉservice.Processˉargumentˉcount or
-            Nativeˉservice.Processˉargument))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(service),
-                service,
-                "The requested service is not an ABI-14 native argument leaf.");
-        }
-        var Result = CONSUMER_RESULT.Value;
-        return service switch
-        {
-            Nativeˉservice.Processˉargumentˉcount =>
-                Result.AsSpan(0, ARGUMENT_COUNT_CANONICAL_SIZE).ToImmutableArray(),
-            Nativeˉservice.Processˉargument =>
-                Result.AsSpan(ARGUMENT_COUNT_CANONICAL_SIZE, ARGUMENT_CANONICAL_SIZE)
-                    .ToImmutableArray(),
-            _ => throw new InvalidOperationException("A checked native argument service became invalid."),
-        };
-    }
+        Nativeˉservice.Processˉargumentˉcount => ARGUMENT_COUNT_LEAF.Value,
+        Nativeˉservice.Processˉargument => ARGUMENT_LEAF.Value,
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(service),
+            service,
+            "The requested service is not an ABI-14 native argument leaf."),
+    };
 
     public static void Verify(Nativeˉservice service, ReadOnlySpan<byte> code)
     {
@@ -71,44 +70,29 @@ public static class X64ˉnativeˉargumentˉservices
         }
     }
 
-    private static ImmutableArray<byte> Buildˉwithˉwindvale()
+    private static ImmutableArray<byte> Readˉartifact(
+        Nativeˉservice service,
+        string resource,
+        int expectedˉsize,
+        string expectedˉsha256)
     {
         using var Stream = typeof(X64ˉnativeˉargumentˉservices).Assembly
-            .GetManifestResourceStream(CONSUMER_RESOURCE) ??
-            throw new InvalidOperationException("The Windvale native-stencil consumer is unavailable.");
-        if (Stream.Length != CONSUMER_CANONICAL_SIZE)
+            .GetManifestResourceStream(resource) ??
+            throw Invalidˉartifact(service);
+        if (Stream.Length != expectedˉsize)
         {
-            throw Invalidˉconsumer();
+            throw Invalidˉartifact(service);
         }
-        var Bytes = new byte[CONSUMER_CANONICAL_SIZE];
+        var Bytes = new byte[expectedˉsize];
         Stream.ReadExactly(Bytes);
         var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
-        if (!StringComparer.Ordinal.Equals(Hash, CONSUMER_CANONICAL_SHA256))
+        if (!StringComparer.Ordinal.Equals(Hash, expectedˉsha256))
         {
-            throw Invalidˉconsumer();
+            throw Invalidˉartifact(service);
         }
-
-        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Compilation = X64ˉnativeˉbackend.Compile(Verified);
-        var Result = X64ˉnativeˉexecutor.Executeˉbytes(Compilation.Fragment);
-        if (Result.Length != ARGUMENT_COUNT_CANONICAL_SIZE + ARGUMENT_CANONICAL_SIZE ||
-            !Hasˉidentity(
-                Result.AsSpan(0, ARGUMENT_COUNT_CANONICAL_SIZE),
-                ARGUMENT_COUNT_CANONICAL_SHA256) ||
-            !Hasˉidentity(
-                Result.AsSpan(ARGUMENT_COUNT_CANONICAL_SIZE, ARGUMENT_CANONICAL_SIZE),
-                ARGUMENT_CANONICAL_SHA256))
-        {
-            throw Invalidˉconsumer();
-        }
-        return Result;
+        return Bytes.ToImmutableArray();
     }
 
-    private static bool Hasˉidentity(ReadOnlySpan<byte> bytes, string expectedˉsha256) =>
-        StringComparer.Ordinal.Equals(
-            Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
-            expectedˉsha256);
-
-    private static InvalidOperationException Invalidˉconsumer() =>
-        new("The retained Windvale native-stencil consumer failed its exact identity contract.");
+    private static InvalidOperationException Invalidˉartifact(Nativeˉservice service) =>
+        new($"The retained Windvale native {service} leaf failed its exact identity contract.");
 }

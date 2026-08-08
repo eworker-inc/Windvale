@@ -204,6 +204,15 @@ come from Windvale. Retained-WVB decoding/lowering, segmented enum-metadata
 transport, managed service-bundle assembly, the platform W^X adapter, Linux
 evidence, and the grouped gate remain open.
 
+[Decision 0366](../Decisions/0366-Direct-Native-Argument-Service-Leaf-Consumption.md)
+removes the last fixed-output generator WVB from the normal runtime assembly.
+The 20,800-byte native-stencil bridge remains exact qualification, differential,
+and recovery evidence, while ordinary process-input service assembly consumes
+its separately digest-bound 5-byte and 70-byte leaves directly. Normal use no
+longer decodes, lowers, publishes, invokes, copies, or splits that generator.
+The three variable-input retained WVBs, managed service-bundle assembly, final
+W^X ownership, Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
