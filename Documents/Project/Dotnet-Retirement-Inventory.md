@@ -306,6 +306,15 @@ and teardown. All specialized binding tables are now Windvale-owned; the
 shared service table, execution context, W^X ownership, arenas, invocation,
 Linux evidence, and the grouped gate remain open.
 
+[Decision 0377](../Decisions/0377-Windvale-Owned-Native-Service-Table.md)
+removes C# ownership of the 104-byte shared service-table layout and its
+twelve-way byte-offset switch. Windvale validates the exact closed required
+mask and target-presence relation, then constructs version 5 from already
+published opaque targets. The managed host retains executable publication,
+placement-to-address calculation, response verification/copy, invocation, and
+teardown. The execution context, W^X ownership, arenas, result admission,
+Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

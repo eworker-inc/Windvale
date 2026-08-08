@@ -200,6 +200,8 @@ $NativeFileOutputTableCoreModule = Join-Path $Artifacts 'Native-File-Output-Tabl
 $NativeFileOutputTableBridgeModule = Join-Path $Artifacts 'Native-File-Output-Table-Bridge.wvb'
 $NativeFileInputTableCoreModule = Join-Path $Artifacts 'Native-File-Input-Table-Core.wvb'
 $NativeFileInputTableBridgeModule = Join-Path $Artifacts 'Native-File-Input-Table-Bridge.wvb'
+$NativeServiceTableCoreModule = Join-Path $Artifacts 'Native-Service-Table-Core.wvb'
+$NativeServiceTableBridgeModule = Join-Path $Artifacts 'Native-Service-Table-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
@@ -1490,6 +1492,51 @@ if (
     $NativeFileInputTableBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native file-input-table bridge inspection is incomplete.'
+}
+
+$NativeServiceTableCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Service-Table-Core.wv'
+$NativeServiceTableBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Service-Table-Bridge.wv'
+$NativeServiceTableBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Service-Table-Bridge.wvb'
+$NativeServiceTableArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Service-Table-Bridge.wvnf'
+dotnet $ToolDll compile $NativeServiceTableCoreSource -o $NativeServiceTableCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native service-table core.' }
+$NativeServiceTableCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceTableCoreModule).Hash.ToLowerInvariant()
+if ($NativeServiceTableCoreHash -ne 'ca7388bf816e7d23d5a4cd3cb7cff488ba2cb3d96c0c1a0f511ced54b4296c26') {
+    throw "The Windvale native service-table core has an unexpected digest: $NativeServiceTableCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeServiceTableBridgeSource `
+    --module $NativeServiceTableCoreSource `
+    -o $NativeServiceTableBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native service-table bridge.' }
+$NativeServiceTableBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceTableBridgeModule).Hash.ToLowerInvariant()
+if ($NativeServiceTableBridgeHash -ne '04c87116f12097c6efaeddc471c06ce831f6146c94b4cae0205a635f31bcd50b') {
+    throw "The Windvale native service-table bridge has an unexpected digest: $NativeServiceTableBridgeHash"
+}
+$NativeServiceTableBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceTableBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeServiceTableBridgeRetainedHash -ne $NativeServiceTableBridgeHash -or
+    (Get-Item -LiteralPath $NativeServiceTableBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeServiceTableBridgeModule).Length
+) {
+    throw 'The retained Windvale native service-table bridge does not match its exact source compilation.'
+}
+$NativeServiceTableArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceTableArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeServiceTableArtifactHash -ne 'e1b838652150999d13b84cd6f1c527b4e82923190530f707ef8d163d39a1f58e' -or
+    (Get-Item -LiteralPath $NativeServiceTableArtifactRetained).Length -ne 34830
+) {
+    throw "The retained Windvale native service-table fragment has an unexpected identity: $NativeServiceTableArtifactHash"
+}
+$NativeServiceTableBridgeInspection = (dotnet $ToolDll inspect $NativeServiceTableBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeServiceTableBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeServiceTableBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeServiceTableBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeServiceTableBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native service-table bridge inspection is incomplete.'
 }
 
 $NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'

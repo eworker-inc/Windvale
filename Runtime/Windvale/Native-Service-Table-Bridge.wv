@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉserviceˉtableˉbridge profile portable;
+
+import Runtimeˉnativeˉserviceˉtable as Serviceˉtable;
+
+export fn Main(Input: bytes) -> bytes {
+    return Serviceˉtable.Nativeˉserviceˉtableˉbuild(Input);
+}

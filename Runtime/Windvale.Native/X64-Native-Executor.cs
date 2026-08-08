@@ -286,21 +286,12 @@ public static class X64ˉnativeˉexecutor
 
             if (Serviceˉcode.Count != 0)
             {
-                Serviceˉtable = Marshal.AllocHGlobal(checked((int)Nativeˉserviceˉtableˉcontract.SIZE));
-                var Tableˉbytes = new byte[checked((int)Nativeˉserviceˉtableˉcontract.SIZE)];
-                BinaryPrimitives.WriteUInt32LittleEndian(
-                    Tableˉbytes.AsSpan(Nativeˉserviceˉtableˉcontract.FORMAT_VERSION_OFFSET),
-                    Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
-                BinaryPrimitives.WriteUInt32LittleEndian(
-                    Tableˉbytes.AsSpan(Nativeˉserviceˉtableˉcontract.SIZE_OFFSET),
-                    Nativeˉserviceˉtableˉcontract.SIZE);
-                foreach (var Service in fragment.Requiredˉservices)
-                {
-                    BinaryPrimitives.WriteUInt64LittleEndian(
-                        Tableˉbytes.AsSpan(Serviceˉtableˉpointerˉoffset(Service)),
-                        checked((ulong)(Address.ToInt64() + Serviceˉoffsets[Service])));
-                }
-                Marshal.Copy(Tableˉbytes, 0, Serviceˉtable, Tableˉbytes.Length);
+                var Tableˉbytes = Nativeˉserviceˉtableˉbuilder.Build(
+                    fragment.Requiredˉservices,
+                    checked((ulong)Address.ToInt64()),
+                    Serviceˉoffsets);
+                Serviceˉtable = Marshal.AllocHGlobal(Tableˉbytes.Length);
+                Marshal.Copy(Tableˉbytes.ToArray(), 0, Serviceˉtable, Tableˉbytes.Length);
             }
 
             Context = Marshal.AllocHGlobal(checked((int)Nativeˉexecutionˉcontextˉcontract.SIZE));
@@ -703,31 +694,6 @@ public static class X64ˉnativeˉexecutor
             }
         }
     }
-
-    private static int Serviceˉtableˉpointerˉoffset(Nativeˉservice service) =>
-        service switch
-        {
-            Nativeˉservice.Consoleˉwriteˉline =>
-                Nativeˉserviceˉtableˉcontract.CONSOLE_WRITE_LINE_POINTER_OFFSET,
-            Nativeˉservice.Processˉargumentˉcount =>
-                Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_COUNT_POINTER_OFFSET,
-            Nativeˉservice.Processˉargument =>
-                Nativeˉserviceˉtableˉcontract.PROCESS_ARGUMENT_POINTER_OFFSET,
-            Nativeˉservice.Fileˉreadˉbytes =>
-                Nativeˉserviceˉtableˉcontract.FILE_READ_BYTES_POINTER_OFFSET,
-            Nativeˉservice.Fileˉwriteˉbytes =>
-                Nativeˉserviceˉtableˉcontract.FILE_WRITE_BYTES_POINTER_OFFSET,
-            Nativeˉservice.Textˉutf8ˉisˉvalid =>
-                Nativeˉserviceˉtableˉcontract.TEXT_UTF8_IS_VALID_POINTER_OFFSET,
-            Nativeˉservice.Diagnosticˉwriteˉline =>
-                Nativeˉserviceˉtableˉcontract.DIAGNOSTIC_WRITE_LINE_POINTER_OFFSET,
-            Nativeˉservice.Enumˉname => Nativeˉserviceˉtableˉcontract.ENUM_NAME_POINTER_OFFSET,
-            Nativeˉservice.Textˉconcat => Nativeˉserviceˉtableˉcontract.TEXT_CONCAT_POINTER_OFFSET,
-            Nativeˉservice.Textˉquote => Nativeˉserviceˉtableˉcontract.TEXT_QUOTE_POINTER_OFFSET,
-            Nativeˉservice.I32ˉformat => Nativeˉserviceˉtableˉcontract.I32_FORMAT_POINTER_OFFSET,
-            Nativeˉservice.U32ˉformat => Nativeˉserviceˉtableˉcontract.U32_FORMAT_POINTER_OFFSET,
-            _ => throw new Nativeˉbackendˉexception("WVN4010", "Unknown native service table entry."),
-        };
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate ulong Nativeˉentry(
