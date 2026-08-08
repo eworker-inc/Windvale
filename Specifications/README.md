@@ -71,6 +71,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 ## Native execution
 
 - [Native execution context and ABI](Windvale-Native-Execution-Context.md)
+- [Native execution-context construction](Windvale-Native-Execution-Context-Construction.md)
 - [Versioned verified native-fragment artifact](Native-Fragment-Artifact.md)
 - [Windows x64 console application target](Windvale-Windows-Console-Application.md)
 - [Linux x64 console application target](Windvale-Linux-Console-Application.md)

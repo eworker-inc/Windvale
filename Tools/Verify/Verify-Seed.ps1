@@ -202,6 +202,8 @@ $NativeFileInputTableCoreModule = Join-Path $Artifacts 'Native-File-Input-Table-
 $NativeFileInputTableBridgeModule = Join-Path $Artifacts 'Native-File-Input-Table-Bridge.wvb'
 $NativeServiceTableCoreModule = Join-Path $Artifacts 'Native-Service-Table-Core.wvb'
 $NativeServiceTableBridgeModule = Join-Path $Artifacts 'Native-Service-Table-Bridge.wvb'
+$NativeExecutionContextCoreModule = Join-Path $Artifacts 'Native-Execution-Context-Core.wvb'
+$NativeExecutionContextBridgeModule = Join-Path $Artifacts 'Native-Execution-Context-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
@@ -1537,6 +1539,51 @@ if (
     $NativeServiceTableBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native service-table bridge inspection is incomplete.'
+}
+
+$NativeExecutionContextCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Execution-Context-Core.wv'
+$NativeExecutionContextBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Execution-Context-Bridge.wv'
+$NativeExecutionContextBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Execution-Context-Bridge.wvb'
+$NativeExecutionContextArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Execution-Context-Bridge.wvnf'
+dotnet $ToolDll compile $NativeExecutionContextCoreSource -o $NativeExecutionContextCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native execution-context core.' }
+$NativeExecutionContextCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeExecutionContextCoreModule).Hash.ToLowerInvariant()
+if ($NativeExecutionContextCoreHash -ne 'dda77e9fd637746bf5b1179136deee0bbae2d8d6b57982323b868b98a8daa29b') {
+    throw "The Windvale native execution-context core has an unexpected digest: $NativeExecutionContextCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeExecutionContextBridgeSource `
+    --module $NativeExecutionContextCoreSource `
+    -o $NativeExecutionContextBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native execution-context bridge.' }
+$NativeExecutionContextBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeExecutionContextBridgeModule).Hash.ToLowerInvariant()
+if ($NativeExecutionContextBridgeHash -ne '86b9a139a387eb3c4fb86f43731e442a62af8ce3c7289cf914b31a9256d21a68') {
+    throw "The Windvale native execution-context bridge has an unexpected digest: $NativeExecutionContextBridgeHash"
+}
+$NativeExecutionContextBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeExecutionContextBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeExecutionContextBridgeRetainedHash -ne $NativeExecutionContextBridgeHash -or
+    (Get-Item -LiteralPath $NativeExecutionContextBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeExecutionContextBridgeModule).Length
+) {
+    throw 'The retained Windvale native execution-context bridge does not match its exact source compilation.'
+}
+$NativeExecutionContextArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeExecutionContextArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeExecutionContextArtifactHash -ne 'acdfc7d71b5fc2f0c1cfd76242fddc59db2563a4026ac286313711f0e2eb05de' -or
+    (Get-Item -LiteralPath $NativeExecutionContextArtifactRetained).Length -ne 58363
+) {
+    throw "The retained Windvale native execution-context fragment has an unexpected identity: $NativeExecutionContextArtifactHash"
+}
+$NativeExecutionContextBridgeInspection = (dotnet $ToolDll inspect $NativeExecutionContextBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeExecutionContextBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeExecutionContextBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeExecutionContextBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeExecutionContextBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native execution-context bridge inspection is incomplete.'
 }
 
 $NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'

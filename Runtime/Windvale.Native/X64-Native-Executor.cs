@@ -176,7 +176,6 @@ public static class X64ˉnativeˉexecutor
             hostˉservices,
             Requiresˉfileˉoutput);
         var Address = IntPtr.Zero;
-        var Context = IntPtr.Zero;
         var Resultˉcell = IntPtr.Zero;
         var Serviceˉcode = new List<(Nativeˉservice Service, ImmutableArray<byte> Code)>();
         foreach (var Service in fragment.Requiredˉservices)
@@ -294,75 +293,28 @@ public static class X64ˉnativeˉexecutor
                 Marshal.Copy(Tableˉbytes.ToArray(), 0, Serviceˉtable, Tableˉbytes.Length);
             }
 
-            Context = Marshal.AllocHGlobal(checked((int)Nativeˉexecutionˉcontextˉcontract.SIZE));
-            var Contextˉbytes = new byte[checked((int)Nativeˉexecutionˉcontextˉcontract.SIZE)];
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION_OFFSET),
-                Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.SIZE_OFFSET),
-                Nativeˉexecutionˉcontextˉcontract.SIZE);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.INSTRUCTION_BUDGET_OFFSET),
-                checked((ulong)maximumˉinstructions));
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.CALL_DEPTH_BUDGET_OFFSET),
-                checked((ulong)maximumˉcallˉdepth));
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.SERVICE_TABLE_POINTER_OFFSET),
-                Serviceˉtable == IntPtr.Zero ? 0 : checked((ulong)Serviceˉtable.ToInt64()));
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_POINTER_OFFSET),
-                checked((ulong)Buffers.Recordˉarena.Address.ToInt64()));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET),
-                checked((uint)Buffers.Recordˉarena.Length));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET),
-                0);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET),
-                checked((ulong)Buffers.Textˉarena.Address.ToInt64()));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET),
-                checked((uint)Buffers.Textˉarena.Length));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET),
-                0);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET),
-                (uint)Nativeˉserviceˉfailureˉdetail.None);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.RESERVED_OFFSET),
-                0);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(
-                    Nativeˉexecutionˉcontextˉcontract.ARGUMENT_TABLE_POINTER_OFFSET),
+            var Contextˉinputs = new Nativeˉexecutionˉcontextˉinputs(
+                checked((ulong)maximumˉinstructions),
+                checked((ulong)maximumˉcallˉdepth),
+                Serviceˉtable == IntPtr.Zero ? 0 : checked((ulong)Serviceˉtable.ToInt64()),
+                checked((ulong)Buffers.Recordˉarena.Address.ToInt64()),
+                checked((uint)Buffers.Recordˉarena.Length),
+                checked((ulong)Buffers.Textˉarena.Address.ToInt64()),
+                checked((uint)Buffers.Textˉarena.Length),
                 Buffers.Argumentˉtable.Address == IntPtr.Zero
                     ? 0
-                    : checked((ulong)Buffers.Argumentˉtable.Address.ToInt64()));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.ARGUMENT_COUNT_OFFSET),
-                Buffers.Argumentˉcount);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.ARGUMENT_RESERVED_OFFSET),
-                0);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(Nativeˉexecutionˉcontextˉcontract.OUTPUT_TABLE_POINTER_OFFSET),
-                Output.Address == IntPtr.Zero ? 0 : checked((ulong)Output.Address.ToInt64()));
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(
-                    Nativeˉexecutionˉcontextˉcontract.FILE_INPUT_TABLE_POINTER_OFFSET),
+                    : checked((ulong)Buffers.Argumentˉtable.Address.ToInt64()),
+                Buffers.Argumentˉcount,
+                Output.Address == IntPtr.Zero ? 0 : checked((ulong)Output.Address.ToInt64()),
                 Fileˉinput.Address == IntPtr.Zero
                     ? 0
-                    : checked((ulong)Fileˉinput.Address.ToInt64()));
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Contextˉbytes.AsSpan(
-                    Nativeˉexecutionˉcontextˉcontract.FILE_OUTPUT_TABLE_POINTER_OFFSET),
+                    : checked((ulong)Fileˉinput.Address.ToInt64()),
                 Fileˉoutput.Address == IntPtr.Zero
                     ? 0
                     : checked((ulong)Fileˉoutput.Address.ToInt64()));
-            Marshal.Copy(Contextˉbytes, 0, Context, Contextˉbytes.Length);
+            using var Context = new Nativeˉexecutionˉcontext(
+                Contextˉinputs,
+                serviceˉfreeˉbootstrap);
 
             if (expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor)
             {
@@ -388,7 +340,7 @@ public static class X64ˉnativeˉexecutor
             }
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
             var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉentry>(new(Entryˉaddress));
-            var Contextˉpointer = checked((ulong)Context.ToInt64());
+            var Contextˉpointer = checked((ulong)Context.Address.ToInt64());
             var Resultˉpointer = Resultˉcell == IntPtr.Zero
                 ? 0UL
                 : checked((ulong)Resultˉcell.ToInt64());
@@ -399,25 +351,20 @@ public static class X64ˉnativeˉexecutor
                 Resultˉpointer,
                 0,
                 0));
-            Recordˉarenaˉused = unchecked((uint)Marshal.ReadInt32(
-                Context,
-                Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_USED_OFFSET));
-            Textˉarenaˉused = unchecked((uint)Marshal.ReadInt32(
-                Context,
-                Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET));
+            var Completion = Context.Readˉverifiedˉcompletion();
+            Recordˉarenaˉused = Completion.Recordˉarenaˉused;
+            Textˉarenaˉused = Completion.Textˉarenaˉused;
             Fileˉinput.Verifyˉcompleted();
             Fileˉoutput.Verifyˉcompleted();
-            Serviceˉfailureˉdetail = (Nativeˉserviceˉfailureˉdetail)unchecked((uint)Marshal.ReadInt32(
-                Context,
-                Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET));
+            Serviceˉfailureˉdetail = Completion.Serviceˉfailureˉdetail;
             if ((uint)(Outcome >> 32) == 0 &&
                 expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor)
             {
                 Resultˉbytes = Readˉverifiedˉbyteˉresult(
                     fragment,
                     Address,
-                    Context,
                     Buffers.Textˉarena,
+                    Textˉarenaˉused,
                     Entryˉinput,
                     Resultˉcell,
                     entry);
@@ -428,10 +375,6 @@ public static class X64ˉnativeˉexecutor
             if (Resultˉcell != IntPtr.Zero)
             {
                 Marshal.FreeHGlobal(Resultˉcell);
-            }
-            if (Context != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(Context);
             }
             if (Serviceˉtable != IntPtr.Zero)
             {
@@ -592,8 +535,8 @@ public static class X64ˉnativeˉexecutor
     private static ImmutableArray<byte> Readˉverifiedˉbyteˉresult(
         Nativeˉfragment fragment,
         IntPtr executableˉaddress,
-        IntPtr context,
         Nativeˉborrowedˉbuffer arena,
+        uint arenaˉused,
         Nativeˉborrowedˉbuffer entryˉinput,
         IntPtr resultˉcell,
         string entry)
@@ -615,15 +558,12 @@ public static class X64ˉnativeˉexecutor
             return [];
         }
 
-        var Arenaˉused = unchecked((uint)Marshal.ReadInt32(
-            context,
-            Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET));
-        if (Arenaˉused > arena.Length)
+        if (arenaˉused > arena.Length)
         {
             throw Invalidˉbyteˉresult(entry);
         }
         var Arenaˉstart = checked((ulong)arena.Address.ToInt64());
-        var Isˉarenaˉresult = Isˉinside(Pointer, Length, Arenaˉstart, Arenaˉused);
+        var Isˉarenaˉresult = Isˉinside(Pointer, Length, Arenaˉstart, arenaˉused);
         var Imageˉstart = checked((ulong)executableˉaddress.ToInt64());
         var Isˉstaticˉresult = fragment.Symbols
             .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Data)

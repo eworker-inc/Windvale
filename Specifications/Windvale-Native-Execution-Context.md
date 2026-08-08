@@ -78,7 +78,7 @@ All integer fields are little-endian. The context is exactly 112 bytes:
 | 96 | 8 | file-input-table pointer | Zero when file input is not required; otherwise points to the exact runtime-private table below |
 | 104 | 8 | file-output-table pointer | Zero when file output is not required; otherwise points to the exact runtime-private table below |
 
-The platform executor or verified OS bridge owns this memory for the complete call. Ordinary generated code does not retain the pointer after return. The current adapters construct the exact version and size; the exact generated prologue and every use are independently decoded before publication.
+The platform executor or verified OS bridge owns this memory for the complete call. Ordinary generated code does not retain the pointer after return. The [Windvale execution-context constructor](Windvale-Native-Execution-Context-Construction.md) owns the exact normal-host initial bytes and validates their cross-field relationships. The host independently verifies and copies that response, bounds the three permitted post-call mutations, and retains allocation and teardown. The exact generated prologue and every use are independently decoded before publication.
 
 ## Runtime-service table
 

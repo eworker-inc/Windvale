@@ -214,6 +214,12 @@
       Include="../../Runtime/Windvale/Native-Service-Table-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Service-Table-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Execution-Context-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Execution-Context-Core.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Execution-Context-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Execution-Context-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-Publication-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Publication-Bridge.wv" />
     <EmbeddedResource

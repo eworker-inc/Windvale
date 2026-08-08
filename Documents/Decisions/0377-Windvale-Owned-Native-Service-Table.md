@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0376](0376-Windvale-Owned-Native-File-Input-Table.md), [Decision 0373](0373-Windvale-Owned-Segmented-Service-Bundle-Materialization.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native service-table construction](../../Specifications/Windvale-Native-Service-Table-Construction.md)
+- Advanced by: [Decision 0378](0378-Windvale-Owned-Native-Execution-Context.md)
 
 ## Context
 

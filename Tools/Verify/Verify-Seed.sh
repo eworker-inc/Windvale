@@ -197,6 +197,8 @@ NATIVE_FILE_INPUT_TABLE_CORE_MODULE="$ARTIFACTS/Native-File-Input-Table-Core.wvb
 NATIVE_FILE_INPUT_TABLE_BRIDGE_MODULE="$ARTIFACTS/Native-File-Input-Table-Bridge.wvb"
 NATIVE_SERVICE_TABLE_CORE_MODULE="$ARTIFACTS/Native-Service-Table-Core.wvb"
 NATIVE_SERVICE_TABLE_BRIDGE_MODULE="$ARTIFACTS/Native-Service-Table-Bridge.wvb"
+NATIVE_EXECUTION_CONTEXT_CORE_MODULE="$ARTIFACTS/Native-Execution-Context-Core.wvb"
+NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE="$ARTIFACTS/Native-Execution-Context-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Bridge.wvb"
 SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
@@ -1207,6 +1209,38 @@ printf '%s\n' "$NATIVE_SERVICE_TABLE_BRIDGE_INSPECTION" | grep -F 'Profile: port
 printf '%s\n' "$NATIVE_SERVICE_TABLE_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
 printf '%s\n' "$NATIVE_SERVICE_TABLE_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_SERVICE_TABLE_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_EXECUTION_CONTEXT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Execution-Context-Core.wv"
+NATIVE_EXECUTION_CONTEXT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Execution-Context-Bridge.wv"
+NATIVE_EXECUTION_CONTEXT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Execution-Context-Bridge.wvb"
+NATIVE_EXECUTION_CONTEXT_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Execution-Context-Bridge.wvnf"
+dotnet "$TOOL_DLL" compile "$NATIVE_EXECUTION_CONTEXT_CORE_SOURCE" -o "$NATIVE_EXECUTION_CONTEXT_CORE_MODULE"
+NATIVE_EXECUTION_CONTEXT_CORE_HASH=$(sha256sum "$NATIVE_EXECUTION_CONTEXT_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_EXECUTION_CONTEXT_CORE_HASH" != 'dda77e9fd637746bf5b1179136deee0bbae2d8d6b57982323b868b98a8daa29b' ]; then
+    echo "The Windvale native execution-context core has an unexpected digest: $NATIVE_EXECUTION_CONTEXT_CORE_HASH" >&2
+    exit 1
+fi
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_EXECUTION_CONTEXT_BRIDGE_SOURCE" \
+    --module "$NATIVE_EXECUTION_CONTEXT_CORE_SOURCE" \
+    -o "$NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE"
+NATIVE_EXECUTION_CONTEXT_BRIDGE_HASH=$(sha256sum "$NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_EXECUTION_CONTEXT_BRIDGE_HASH" != '86b9a139a387eb3c4fb86f43731e442a62af8ce3c7289cf914b31a9256d21a68' ]; then
+    echo "The Windvale native execution-context bridge has an unexpected digest: $NATIVE_EXECUTION_CONTEXT_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE" "$NATIVE_EXECUTION_CONTEXT_BRIDGE_RETAINED"
+NATIVE_EXECUTION_CONTEXT_ARTIFACT_HASH=$(sha256sum "$NATIVE_EXECUTION_CONTEXT_ARTIFACT_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_EXECUTION_CONTEXT_ARTIFACT_HASH" != 'acdfc7d71b5fc2f0c1cfd76242fddc59db2563a4026ac286313711f0e2eb05de' ] ||
+    [ "$(wc -c < "$NATIVE_EXECUTION_CONTEXT_ARTIFACT_RETAINED")" -ne 58363 ]; then
+    echo "The retained Windvale native execution-context fragment has an unexpected identity: $NATIVE_EXECUTION_CONTEXT_ARTIFACT_HASH" >&2
+    exit 1
+fi
+NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
+printf '%s\n' "$NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_PUBLICATION_LIFETIME_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Core.wv"
 dotnet "$TOOL_DLL" \

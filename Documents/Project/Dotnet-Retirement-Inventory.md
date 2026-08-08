@@ -315,6 +315,17 @@ placement-to-address calculation, response verification/copy, invocation, and
 teardown. The execution context, W^X ownership, arenas, result admission,
 Linux evidence, and the grouped gate remain open.
 
+[Decision 0378](../Decisions/0378-Windvale-Owned-Native-Execution-Context.md)
+removes C# ownership of the ordinary 112-byte execution-context layout and
+direct mutable-word reads from the large executor. Windvale validates exact
+budgets, arenas, initial state, arguments, and optional table pointers; one
+focused host owner independently verifies/copies the result and bounds the
+three permitted completion mutations. Service-free Windvale constructors
+still require an explicitly named frozen Stage 0 context oracle to avoid a
+bootstrap recursion cycle, and focused evidence compares its bytes exactly.
+That oracle, W^X ownership, arena allocation, invocation, result admission,
+Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

@@ -1,0 +1,128 @@
+module Runtimeˉnativeˉexecutionˉcontext profile portable;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Contextˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1381520983u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Contextˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn Nonzeroˉu64(Input: bytes, Offset: u32) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != 0u32 {
+        return true;
+    }
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 0u32;
+}
+
+fn Flagˉisˉset(Flags: u32, Bit: u32) -> bool {
+    return (Flags & Bit) != 0u32;
+}
+
+export fn Nativeˉexecutionˉcontextˉbuild(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 120u32 {
+        return Failure(Input, 1u32, Total);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1364743767u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+
+    let Flags: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Flags > 31u32 {
+        return Failure(Input, 4u32, 12u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 52u32) != 0u32 {
+        return Failure(Input, 4u32, 52u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 68u32) != 0u32 {
+        return Failure(Input, 4u32, 68u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 72u32) != 0u32 {
+        return Failure(Input, 4u32, 72u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 76u32) != 0u32 {
+        return Failure(Input, 4u32, 76u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 92u32) != 0u32 {
+        return Failure(Input, 4u32, 92u32);
+    }
+
+    if !Nonzeroˉu64(Input, 16u32) {
+        return Failure(Input, 5u32, 16u32);
+    }
+    if !Nonzeroˉu64(Input, 24u32) {
+        return Failure(Input, 5u32, 24u32);
+    }
+    if Flagˉisˉset(Flags, 1u32) != Nonzeroˉu64(Input, 32u32) {
+        return Failure(Input, 6u32, 32u32);
+    }
+    if !Nonzeroˉu64(Input, 40u32) ||
+        Bytesˉreadˉu32ˉlittle(Input, 48u32) != 2097152u32 {
+        return Failure(Input, 7u32, 40u32);
+    }
+    if !Nonzeroˉu64(Input, 56u32) ||
+        Bytesˉreadˉu32ˉlittle(Input, 64u32) != 134217728u32 {
+        return Failure(Input, 8u32, 56u32);
+    }
+
+    let Argumentsˉpresent: bool = Flagˉisˉset(Flags, 2u32);
+    let Argumentˉpointerˉpresent: bool = Nonzeroˉu64(Input, 80u32);
+    let Argumentˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 88u32);
+    if Argumentsˉpresent != Argumentˉpointerˉpresent {
+        return Failure(Input, 9u32, 80u32);
+    }
+    if Argumentsˉpresent {
+        if Argumentˉcount == 0u32 || Argumentˉcount > 67u32 {
+            return Failure(Input, 9u32, 88u32);
+        }
+    } else {
+        if Argumentˉcount != 0u32 {
+            return Failure(Input, 9u32, 88u32);
+        }
+    }
+
+    if Flagˉisˉset(Flags, 4u32) != Nonzeroˉu64(Input, 96u32) {
+        return Failure(Input, 10u32, 96u32);
+    }
+    if Flagˉisˉset(Flags, 8u32) != Nonzeroˉu64(Input, 104u32) {
+        return Failure(Input, 10u32, 104u32);
+    }
+    if Flagˉisˉset(Flags, 16u32) != Nonzeroˉu64(Input, 112u32) {
+        return Failure(Input, 10u32, 112u32);
+    }
+
+    var Context: bytes = Empty(Input);
+    Context = Appendˉu32(Context, 7u32);
+    Context = Appendˉu32(Context, 112u32);
+    Context = Bytesˉconcat(Context, Bytesˉslice(Input, 16u32, 104u32));
+    return Bytesˉconcat(Responseˉheader(Input, 144u32, 0u32, Total, 112u32), Context);
+}

@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉexecutionˉcontextˉbridge profile portable;
+
+import Runtimeˉnativeˉexecutionˉcontext as Executionˉcontext;
+
+export fn Main(Input: bytes) -> bytes {
+    return Executionˉcontext.Nativeˉexecutionˉcontextˉbuild(Input);
+}
