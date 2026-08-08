@@ -1,0 +1,118 @@
+module Runtimeˉbaselineˉjitˉpatchˉplanˉverifier profile portable;
+
+export enum Baselineˉjitˉpatchˉverificationˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉheader = 2;
+    Invalidˉrecord = 3;
+    Invalidˉtemplate = 4;
+    Constructionˉfailed = 5;
+}
+
+export record Baselineˉjitˉpatchˉverificationˉresult {
+    Status: Baselineˉjitˉpatchˉverificationˉstatus;
+    Value: bytes;
+    Failureˉoffset: u32;
+}
+
+export fn Baselineˉjitˉpatchˉverificationˉfailure(
+    Input: bytes,
+    Status: Baselineˉjitˉpatchˉverificationˉstatus,
+    Failureˉoffset: u32
+) -> Baselineˉjitˉpatchˉverificationˉresult {
+    return Baselineˉjitˉpatchˉverificationˉresult(
+        Status,
+        Bytesˉslice(Input, 0u32, 0u32),
+        Failureˉoffset
+    );
+}
+
+export fn Baselineˉjitˉpatchˉplanˉheaderˉisˉexact(Input: bytes) -> bool {
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 { return false; }
+    if Bytesˉreadˉu8(Input, 1u32) != 86u8 { return false; }
+    if Bytesˉreadˉu8(Input, 2u32) != 74u8 { return false; }
+    if Bytesˉreadˉu8(Input, 3u32) != 80u8 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return false; }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 54u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 174u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) != 6u32 { return false; }
+    return Bytesˉreadˉu32ˉlittle(Input, 20u32) == 1u32;
+}
+
+export fn Baselineˉjitˉpatchˉplanˉrecordˉisˉexact(Input: bytes) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, 24u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 4u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 32u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 36u32) != 0u32 { return false; }
+    return Bytesˉreadˉu32ˉlittle(Input, 40u32) == 0u32;
+}
+
+export fn Baselineˉjitˉpatchˉplanˉtemplateˉisˉexact(Input: bytes) -> bool {
+    if Bytesˉreadˉu8(Input, 48u32) != 184u8 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 49u32) != 0u32 { return false; }
+    return Bytesˉreadˉu8(Input, 53u32) == 195u8;
+}
+
+export fn Baselineˉjitˉverifyˉandˉmaterializeˉpatchˉplan(
+    Input: bytes
+) -> Baselineˉjitˉpatchˉverificationˉresult {
+    if Bytesˉlength(Input) != 54u32 {
+        return Baselineˉjitˉpatchˉverificationˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉverificationˉstatus.Invalidˉsize,
+            Bytesˉlength(Input)
+        );
+    }
+    if !Baselineˉjitˉpatchˉplanˉheaderˉisˉexact(Input) {
+        return Baselineˉjitˉpatchˉverificationˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉverificationˉstatus.Invalidˉheader,
+            0u32
+        );
+    }
+    if !Baselineˉjitˉpatchˉplanˉrecordˉisˉexact(Input) {
+        return Baselineˉjitˉpatchˉverificationˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉverificationˉstatus.Invalidˉrecord,
+            24u32
+        );
+    }
+    if !Baselineˉjitˉpatchˉplanˉtemplateˉisˉexact(Input) {
+        return Baselineˉjitˉpatchˉverificationˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉverificationˉstatus.Invalidˉtemplate,
+            48u32
+        );
+    }
+
+    var Code: bytes = Bytesˉfromˉu8(184u8);
+    Code = Bytesˉconcat(Code, Bytesˉslice(Input, 44u32, 4u32));
+    Code = Bytesˉconcat(Code, Bytesˉfromˉu8(195u8));
+    if Bytesˉlength(Code) != 6u32 {
+        return Baselineˉjitˉpatchˉverificationˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉverificationˉstatus.Constructionˉfailed,
+            Bytesˉlength(Code)
+        );
+    }
+    if Bytesˉreadˉu8(Code, 0u32) != 184u8 {
+        return Baselineˉjitˉpatchˉverificationˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉverificationˉstatus.Constructionˉfailed,
+            0u32
+        );
+    }
+    if Bytesˉreadˉu8(Code, 5u32) != 195u8 {
+        return Baselineˉjitˉpatchˉverificationˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉverificationˉstatus.Constructionˉfailed,
+            5u32
+        );
+    }
+    return Baselineˉjitˉpatchˉverificationˉresult(
+        Baselineˉjitˉpatchˉverificationˉstatus.Valid,
+        Code,
+        54u32
+    );
+}

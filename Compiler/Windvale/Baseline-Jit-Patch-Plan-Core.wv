@@ -1,0 +1,119 @@
+module Compilerˉbaselineˉjitˉpatchˉplan profile portable;
+
+export enum Baselineˉjitˉpatchˉplanˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉwvb = 2;
+    Invalidˉshape = 3;
+    Constructionˉfailed = 4;
+}
+
+export record Baselineˉjitˉpatchˉplanˉresult {
+    Status: Baselineˉjitˉpatchˉplanˉstatus;
+    Value: bytes;
+    Failureˉoffset: u32;
+}
+
+data Canonicalˉreturnˉconstantˉwvb: bytes = [
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    27, 0, 0, 0, 1, 21, 0, 0, 0, 87, 118, 98, 203, 137, 116, 111,
+    203, 137, 119, 118, 111, 203, 137, 102, 105, 120, 116, 117, 114, 101, 0, 2,
+    0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4,
+    0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1,
+    0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0,
+    0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0, 0, 0, 5, 0,
+    0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0,
+    0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0,
+    0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+export fn Baselineˉjitˉpatchˉplanˉfailure(
+    Input: bytes,
+    Status: Baselineˉjitˉpatchˉplanˉstatus,
+    Failureˉoffset: u32
+) -> Baselineˉjitˉpatchˉplanˉresult {
+    return Baselineˉjitˉpatchˉplanˉresult(
+        Status,
+        Bytesˉslice(Input, 0u32, 0u32),
+        Failureˉoffset
+    );
+}
+
+export fn Baselineˉjitˉreturnˉconstantˉwvbˉmismatch(Input: bytes) -> u32 {
+    if Bytesˉlength(Input) != 174u32 { return Bytesˉlength(Input); }
+    var Index: u32 = 0u32;
+    while Index < 174u32 {
+        if Index < 122u32 || Index >= 126u32 {
+            if Bytesˉreadˉu8(Input, Index) !=
+                Bytesˉreadˉu8(Canonicalˉreturnˉconstantˉwvb, Index) {
+                return Index;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return 174u32;
+}
+
+export fn Baselineˉjitˉreturnˉconstantˉwvbˉisˉexact(Input: bytes) -> bool {
+    return Baselineˉjitˉreturnˉconstantˉwvbˉmismatch(Input) == 174u32;
+}
+
+export fn Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(
+    Input: bytes
+) -> Baselineˉjitˉpatchˉplanˉresult {
+    if Bytesˉlength(Input) != 174u32 {
+        return Baselineˉjitˉpatchˉplanˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉplanˉstatus.Invalidˉsize,
+            Bytesˉlength(Input)
+        );
+    }
+    let Mismatch: u32 = Baselineˉjitˉreturnˉconstantˉwvbˉmismatch(Input);
+    if Mismatch < 12u32 {
+        return Baselineˉjitˉpatchˉplanˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉplanˉstatus.Invalidˉwvb,
+            Mismatch
+        );
+    }
+    if Mismatch != 174u32 {
+        return Baselineˉjitˉpatchˉplanˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉplanˉstatus.Invalidˉshape,
+            Mismatch
+        );
+    }
+
+    var Plan: bytes = Textˉtoˉutf8("WVJP");
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu16ˉlittle(1u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu16ˉlittle(1u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(54u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(174u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(6u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(1u32));
+
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(1u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(4u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(1u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(0u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(0u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉslice(Input, 122u32, 4u32));
+
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu8(184u8));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(0u32));
+    Plan = Bytesˉconcat(Plan, Bytesˉfromˉu8(195u8));
+
+    if Bytesˉlength(Plan) != 54u32 {
+        return Baselineˉjitˉpatchˉplanˉfailure(
+            Input,
+            Baselineˉjitˉpatchˉplanˉstatus.Constructionˉfailed,
+            Bytesˉlength(Plan)
+        );
+    }
+    return Baselineˉjitˉpatchˉplanˉresult(
+        Baselineˉjitˉpatchˉplanˉstatus.Valid,
+        Plan,
+        174u32
+    );
+}

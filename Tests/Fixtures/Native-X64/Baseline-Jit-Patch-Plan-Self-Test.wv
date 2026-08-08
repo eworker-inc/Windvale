@@ -1,0 +1,139 @@
+module Baselineˉjitˉpatchˉplanˉselfˉtest profile portable;
+
+import Compilerˉbaselineˉjitˉpatchˉplan as Plan;
+import Runtimeˉbaselineˉjitˉpatchˉplanˉverifier as Verifier;
+
+data Returnˉconstantˉwvb: bytes = [
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    27, 0, 0, 0, 1, 21, 0, 0, 0, 87, 118, 98, 203, 137, 116, 111,
+    203, 137, 119, 118, 111, 203, 137, 102, 105, 120, 116, 117, 114, 101, 0, 2,
+    0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4,
+    0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1,
+    0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0,
+    0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 42, 0, 0, 0, 5, 0,
+    0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0,
+    0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0,
+    0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+fn Bytesˉareˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Replaceˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffixˉoffset: u32 = Offset + 1u32;
+    return Bytesˉconcat(
+        Prefix,
+        Bytesˉconcat(
+            Bytesˉfromˉu8(Value),
+            Bytesˉslice(Input, Suffixˉoffset, Total - Suffixˉoffset)
+        )
+    );
+}
+
+export fn Main() -> i32 {
+    if Bytesˉlength(Returnˉconstantˉwvb) != 174u32 { return 1; }
+
+    let Produced: Plan.Baselineˉjitˉpatchˉplanˉresult =
+        Plan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(Returnˉconstantˉwvb);
+    if Produced.Status != Plan.Baselineˉjitˉpatchˉplanˉstatus.Valid { return 2; }
+    if Bytesˉlength(Produced.Value) != 54u32 { return 3; }
+    if Bytesˉreadˉu32ˉlittle(Produced.Value, 8u32) != 54u32 { return 4; }
+    if Bytesˉreadˉu32ˉlittle(Produced.Value, 24u32) != 1u32 { return 5; }
+    if Bytesˉreadˉi32ˉlittle(Produced.Value, 44u32) != 42 { return 6; }
+
+    let Repeated: Plan.Baselineˉjitˉpatchˉplanˉresult =
+        Plan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(Returnˉconstantˉwvb);
+    if Repeated.Status != Plan.Baselineˉjitˉpatchˉplanˉstatus.Valid { return 7; }
+    if !Bytesˉareˉequal(Produced.Value, Repeated.Value) { return 8; }
+
+    let Verified: Verifier.Baselineˉjitˉpatchˉverificationˉresult =
+        Verifier.Baselineˉjitˉverifyˉandˉmaterializeˉpatchˉplan(Produced.Value);
+    if Verified.Status != Verifier.Baselineˉjitˉpatchˉverificationˉstatus.Valid { return 9; }
+    if Bytesˉlength(Verified.Value) != 6u32 { return 10; }
+    if Bytesˉreadˉu8(Verified.Value, 0u32) != 184u8 { return 11; }
+    if Bytesˉreadˉi32ˉlittle(Verified.Value, 1u32) != 42 { return 12; }
+    if Bytesˉreadˉu8(Verified.Value, 5u32) != 195u8 { return 13; }
+
+    let Shortˉwvb: bytes = Bytesˉslice(Returnˉconstantˉwvb, 0u32, 173u32);
+    let Shortˉresult: Plan.Baselineˉjitˉpatchˉplanˉresult =
+        Plan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(Shortˉwvb);
+    if Shortˉresult.Status != Plan.Baselineˉjitˉpatchˉplanˉstatus.Invalidˉsize {
+        return 14;
+    }
+
+    let Wrongˉmagic: Plan.Baselineˉjitˉpatchˉplanˉresult =
+        Plan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(
+            Replaceˉu8(Returnˉconstantˉwvb, 0u32, 0u8)
+        );
+    if Wrongˉmagic.Status != Plan.Baselineˉjitˉpatchˉplanˉstatus.Invalidˉwvb {
+        return 15;
+    }
+
+    let Wrongˉopcode: Plan.Baselineˉjitˉpatchˉplanˉresult =
+        Plan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(
+            Replaceˉu8(Returnˉconstantˉwvb, 121u32, 2u8)
+        );
+    if Wrongˉopcode.Status != Plan.Baselineˉjitˉpatchˉplanˉstatus.Invalidˉshape {
+        return 16;
+    }
+
+    var Negativeˉwvb: bytes = Replaceˉu8(Returnˉconstantˉwvb, 122u32, 255u8);
+    Negativeˉwvb = Replaceˉu8(Negativeˉwvb, 123u32, 255u8);
+    Negativeˉwvb = Replaceˉu8(Negativeˉwvb, 124u32, 255u8);
+    Negativeˉwvb = Replaceˉu8(Negativeˉwvb, 125u32, 255u8);
+    let Negativeˉplan: Plan.Baselineˉjitˉpatchˉplanˉresult =
+        Plan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(Negativeˉwvb);
+    if Negativeˉplan.Status != Plan.Baselineˉjitˉpatchˉplanˉstatus.Valid { return 17; }
+    let Negativeˉcode: Verifier.Baselineˉjitˉpatchˉverificationˉresult =
+        Verifier.Baselineˉjitˉverifyˉandˉmaterializeˉpatchˉplan(Negativeˉplan.Value);
+    if Negativeˉcode.Status != Verifier.Baselineˉjitˉpatchˉverificationˉstatus.Valid {
+        return 18;
+    }
+    if Bytesˉreadˉi32ˉlittle(Negativeˉcode.Value, 1u32) != -1 { return 19; }
+
+    let Shortˉplan: Verifier.Baselineˉjitˉpatchˉverificationˉresult =
+        Verifier.Baselineˉjitˉverifyˉandˉmaterializeˉpatchˉplan(
+            Bytesˉslice(Produced.Value, 0u32, 53u32)
+        );
+    if Shortˉplan.Status != Verifier.Baselineˉjitˉpatchˉverificationˉstatus.Invalidˉsize {
+        return 20;
+    }
+
+    let Badˉheader: Verifier.Baselineˉjitˉpatchˉverificationˉresult =
+        Verifier.Baselineˉjitˉverifyˉandˉmaterializeˉpatchˉplan(
+            Replaceˉu8(Produced.Value, 0u32, 0u8)
+        );
+    if Badˉheader.Status != Verifier.Baselineˉjitˉpatchˉverificationˉstatus.Invalidˉheader {
+        return 21;
+    }
+
+    let Badˉrecord: Verifier.Baselineˉjitˉpatchˉverificationˉresult =
+        Verifier.Baselineˉjitˉverifyˉandˉmaterializeˉpatchˉplan(
+            Replaceˉu8(Produced.Value, 28u32, 3u8)
+        );
+    if Badˉrecord.Status != Verifier.Baselineˉjitˉpatchˉverificationˉstatus.Invalidˉrecord {
+        return 22;
+    }
+
+    let Badˉtemplate: Verifier.Baselineˉjitˉpatchˉverificationˉresult =
+        Verifier.Baselineˉjitˉverifyˉandˉmaterializeˉpatchˉplan(
+            Replaceˉu8(Produced.Value, 49u32, 1u8)
+        );
+    if Badˉtemplate.Status != Verifier.Baselineˉjitˉpatchˉverificationˉstatus.Invalidˉtemplate {
+        return 23;
+    }
+    return 0;
+}
