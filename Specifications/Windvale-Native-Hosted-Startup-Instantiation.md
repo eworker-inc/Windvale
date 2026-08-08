@@ -34,8 +34,10 @@ address for every canonical WVO relocation, followed by the complete WVO.
 Target addresses appear in canonical relocation order. They include targets
 for imports and locally defined symbols. The hosted-container planner defined
 by Decision 0385 now derives this list from the admitted runtime metadata and
-complete target layout. The managed bridge only transmits that Windvale-owned
-list to this constructor with the exact retained WVO.
+complete target layout. The standalone
+[hosted-container startup producer](Windvale-Native-Hosted-Container-Startup.md)
+now projects that list and the exact retained WVO into this request without a
+managed bridge.
 
 ## Admitted startup-object profile
 
@@ -92,5 +94,7 @@ reproducibility and recovery evidence.
 
 The former C# template patchers remain under `Buildˉstage0` only for
 differential and recovery evidence. C# no longer projects target addresses.
-The temporary request/response relay and focused differential test retire when
-native publication invokes the planner and this constructor directly.
+The standalone hosted-container startup producer now owns exact WVO identity,
+request projection, native invocation, and response admission. The retained
+managed relay remains deletion-bound until the complete process pipeline is
+composed and promoted.

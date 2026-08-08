@@ -158,6 +158,8 @@ Normal construction now follows one ordered path:
 2. The planner derives all file/virtual layout and startup targets; the paired
    native planner command can now produce this exact plan as a separate process.
 3. The startup constructor applies that target table to the canonical WVO.
+   The paired native startup command now verifies the selected WVO and produces
+   the exact instantiated response as a separate process.
 4. The selected platform constructor emits every outer-container-owned byte.
    The paired native platform-byte command can now produce the same exact
    response as a separate process.
@@ -175,8 +177,9 @@ The former C# application builders are named `Buildˉstage0` and are called only
 by focused differential evidence. The ordinary managed builders still dispatch
 the retained planner and platform fragments while the standalone planner,
 platform-byte producer, segmenter, and publisher are composed into their
-replacement process pipeline. Startup instantiation and remaining
-runtime/resource production still need process boundaries. The C# segment-set
+replacement process pipeline. The standalone startup producer also consumes the
+plan without managed target projection. Remaining runtime/service resources and
+segment-request orchestration still need native ownership. The C# segment-set
 fixture/harness is temporary transition evidence rather than product logic.
 Linux-host execution and grouped dual-host qualification remain deferred to the
 final retirement gate.

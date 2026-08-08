@@ -1,6 +1,6 @@
 # Decision 0396: Standalone native hosted-container platform bytes
 
-- Status: Implemented candidate; pipeline integration and Linux execution pending
+- Status: Implemented candidate; advanced by [Decision 0397](0397-Standalone-Native-Hosted-Container-Startup.md)
 - Date: 2026-08-08
 - Advances: [Decision 0395](0395-Standalone-Native-Hosted-Container-Planner.md), [Decision 0385](0385-Windvale-Owned-Hosted-Container-Construction.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted-container platform bytes](../../Specifications/Windvale-Native-Hosted-Container-Platform-Bytes.md)
@@ -56,8 +56,9 @@ broader verifier was run.
   modules; the new source owns only process policy and response admission.
 - Shared deletion-bound C# package wiring now owns one identity validator rather
   than repeating it for every transition tool.
-- Startup instantiation, remaining runtime/resource production, full process
-  composition, Linux execution, promotion, and the grouped gate remain open.
+- Decision 0397 now adds exact startup instantiation; remaining runtime/resource
+  production, full process composition, Linux execution, promotion, and the
+  grouped gate remain open.
 
 ## Reconsideration triggers
 

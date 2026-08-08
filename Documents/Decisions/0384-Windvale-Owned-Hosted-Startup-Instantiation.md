@@ -4,7 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0383](0383-Windvale-Owned-Hosted-Tool-Metadata-Construction.md), [Decision 0164](0164-First-Exact-Compiler-Linux-Executable-Container.md), [Decision 0167](0167-First-Exact-Compiler-Windows-Executable-Container.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native hosted-startup instantiation](../../Specifications/Windvale-Native-Hosted-Startup-Instantiation.md)
-- Advanced by: [Decision 0385](0385-Windvale-Owned-Hosted-Container-Construction.md)
+- Advanced by: [Decision 0385](0385-Windvale-Owned-Hosted-Container-Construction.md) and [Decision 0397](0397-Standalone-Native-Hosted-Container-Startup.md)
 
 ## Context
 

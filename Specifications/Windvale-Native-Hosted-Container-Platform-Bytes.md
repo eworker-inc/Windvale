@@ -67,8 +67,9 @@ remain the sole semantic owners; the new hosted source owns only arguments,
 resource I/O, selection, response admission, and reporting.
 
 The ordinary managed hosted-application builders still dispatch retained
-service-free fragments internally. Completing their replacement requires
-standalone startup instantiation and remaining runtime/resource production,
-then composition of planner, platform-byte producer, startup producer,
-segmenter, and publisher. Linux execution, promotion, and the grouped dual-host
-retirement gate remain pending.
+service-free fragments internally. The standalone
+[startup producer](Windvale-Native-Hosted-Container-Startup.md) now closes the
+next resource boundary. Completing their replacement requires remaining
+runtime/resource production and composition of planner, platform-byte producer,
+startup producer, segmenter, and publisher. Linux execution, promotion, and the
+grouped dual-host retirement gate remain pending.

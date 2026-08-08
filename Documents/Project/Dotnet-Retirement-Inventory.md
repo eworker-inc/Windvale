@@ -478,6 +478,15 @@ execution agrees byte-for-byte with the retained fragment without loading the
 CLR. Startup instantiation, remaining runtime/resource production, complete
 process composition, Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0397](../Decisions/0397-Standalone-Native-Hosted-Container-Startup.md)
+removes managed startup-target projection from the candidate process pipeline.
+One 42,508-byte Windvale tool admits the plan and exact canonical Windows/Linux
+startup WVO, constructs `WVSI 1`, and emits the same `WVSD 1` instantiated code
+as the retained fragment. Paired packages and public CLI targets exist, and
+current-host execution loads no CLR. Remaining runtime/service resources,
+segment-request orchestration, complete composition, Linux execution, promotion,
+and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

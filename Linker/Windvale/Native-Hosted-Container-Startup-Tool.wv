@@ -1,0 +1,179 @@
+module Nativeˉhostedˉcontainerˉstartupˉtool profile hosted;
+
+import Foundationˉsha256 as Sha256;
+import Linkerˉnativeˉhostedˉstartupˉinstantiation as Instantiation;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉstartupˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhoststartup <plan.wvcd> <startup.wvo> <response.wvsd>"
+    );
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container startup status=",
+            Enumˉname(Nativeˉhostedˉcontainerˉstartupˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+fn Planˉisˉvalid(Plan: bytes, Target: u32) -> bool {
+    var Expectedˉtotal: u32 = 252u32;
+    var Expectedˉstartup: u32 = 765u32;
+    var Expectedˉtargets: u32 = 124u32;
+    if Target == 1u32 {
+        Expectedˉtotal = 360u32;
+        Expectedˉstartup = 1510u32;
+        Expectedˉtargets = 232u32;
+    }
+    if Target != 1u32 {
+        if Target != 2u32 { return false; }
+    }
+    if Bytesˉlength(Plan) != Expectedˉtotal { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 0u32) != 1145263703u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 4u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 8u32) != Expectedˉtotal { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 12u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 16u32) != 4128u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 20u32) != Target { return false; }
+    let Profile: u32 = Bytesˉreadˉu32ˉlittle(Plan, 24u32);
+    if Profile == 0u32 || Profile > 7u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 44u32) != Expectedˉstartup {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Plan, 80u32) != 4096u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 96u32) != 128u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Plan, 100u32) != Expectedˉtargets {
+        return false;
+    }
+    return Expectedˉtotal == 128u32 + Expectedˉtargets;
+}
+
+fn Objectˉisˉexact(Object: bytes, Target: u32) -> bool {
+    var Expectedˉbytes: u32 = 2390u32;
+    var Expectedˉdigest: text =
+        "0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff";
+    if Target == 1u32 {
+        Expectedˉbytes = 4334u32;
+        Expectedˉdigest =
+            "55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb";
+    }
+    if Bytesˉlength(Object) != Expectedˉbytes { return false; }
+    return Bytesˉareˉequal(
+        Sha256.Foundationˉsha256ˉhex(Object),
+        Textˉtoˉutf8(Expectedˉdigest)
+    );
+}
+
+fn Buildˉrequest(Plan: bytes, Object: bytes, Target: u32) -> bytes {
+    let Targetˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 100u32);
+    let Targetˉcount: u32 = Targetˉbytes / 4u32;
+    var Symbolˉcount: u32 = 26u32;
+    if Target == 1u32 { Symbolˉcount = 40u32; }
+    var Request: bytes = Bytesˉslice(Plan, 0u32, 0u32);
+    Request = Appendˉu32(Request, 1230198359u32);
+    Request = Appendˉu32(Request, 1u32);
+    Request = Appendˉu32(
+        Request,
+        40u32 + Targetˉbytes + Bytesˉlength(Object)
+    );
+    Request = Appendˉu32(Request, Bytesˉreadˉu32ˉlittle(Plan, 80u32));
+    Request = Appendˉu32(Request, Bytesˉreadˉu32ˉlittle(Plan, 44u32));
+    Request = Appendˉu32(Request, Symbolˉcount);
+    Request = Appendˉu32(Request, Targetˉcount);
+    Request = Appendˉu32(Request, Targetˉcount);
+    Request = Appendˉu32(Request, Bytesˉlength(Object));
+    Request = Appendˉu32(Request, 0u32);
+    Request = Bytesˉconcat(Request, Bytesˉslice(Plan, 128u32, Targetˉbytes));
+    return Bytesˉconcat(Request, Object);
+}
+
+fn Responseˉisˉvalid(Request: bytes, Codeˉbytes: u32, Response: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Response);
+    if Total != 32u32 + Codeˉbytes { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1146312279u32 {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 8u32) != Total { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 16u32) != Bytesˉlength(Request) {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 20u32) != Codeˉbytes { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 24u32) != 0u32 { return false; }
+    return Bytesˉreadˉu32ˉlittle(Response, 28u32) == 0u32;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 3u32 { return Usage(); }
+    let Planˉpath: text = process.argument(0u32);
+    let Objectˉpath: text = process.argument(1u32);
+    let Outputˉpath: text = process.argument(2u32);
+    let Planˉname: bytes = Textˉtoˉutf8(Planˉpath);
+    let Objectˉname: bytes = Textˉtoˉutf8(Objectˉpath);
+    let Outputˉname: bytes = Textˉtoˉutf8(Outputˉpath);
+    if Bytesˉareˉequal(Planˉname, Objectˉname) { return Usage(); }
+    if Bytesˉareˉequal(Planˉname, Outputˉname) { return Usage(); }
+    if Bytesˉareˉequal(Objectˉname, Outputˉname) { return Usage(); }
+
+    let Plan: bytes = file.read_bytes(Planˉpath);
+    if Bytesˉlength(Plan) < 24u32 { return Reject(); }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Plan, 20u32);
+    if !Planˉisˉvalid(Plan, Target) { return Reject(); }
+    let Object: bytes = file.read_bytes(Objectˉpath);
+    if !Objectˉisˉexact(Object, Target) { return Reject(); }
+    let Request: bytes = Buildˉrequest(Plan, Object, Target);
+    let Response: bytes =
+        Instantiation.Nativeˉhostedˉstartupˉinstantiate(Request);
+    if !Responseˉisˉvalid(
+        Request,
+        Bytesˉreadˉu32ˉlittle(Plan, 44u32),
+        Response
+    ) {
+        return Reject();
+    }
+    file.write_bytes(Outputˉpath, Response);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted container startup status=",
+                Enumˉname(Nativeˉhostedˉcontainerˉstartupˉstatus.Valid)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Response)))
+        )
+    );
+    return 0;
+}
