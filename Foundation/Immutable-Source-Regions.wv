@@ -15,6 +15,14 @@ export record Immutableˉsourceˉappend {
     Appendedˉbytes: u32;
 }
 
+export record Immutableˉsourceˉregionˉappend {
+    Valid: bool;
+    Value: bytes;
+    Logicalˉoffset: u32;
+    Logicalˉbytes: u32;
+    Appendedˉbytes: u32;
+}
+
 const HEADER_BYTES: u32 = 32u32;
 const CHUNK_RECORD_BYTES: u32 = 20u32;
 const REGION_RECORD_BYTES: u32 = 16u32;
@@ -175,5 +183,83 @@ export fn Immutableˉsourceˉappendˉchunk(
         true,
         Bytesˉconcat(Output, Bytesˉslice(Resource, Resourceˉoffset, Count)),
         Count
+    );
+}
+
+export fn Immutableˉsourceˉregionˉappendˉbegin(
+    Output: bytes,
+    Manifest: bytes,
+    Plan: Immutableˉsourceˉregionˉplan,
+    Region: u32,
+    Segmentˉstart: u32,
+    Segmentˉend: u32
+) -> Immutableˉsourceˉregionˉappend {
+    if !Plan.Valid || Region >= Plan.Regions ||
+        Segmentˉstart > Segmentˉend || Segmentˉend > Plan.Imageˉbytes {
+        return Immutableˉsourceˉregionˉappend(
+            false, Output, 0u32, 0u32, 0u32
+        );
+    }
+    let Record: u32 = Plan.Regionˉbase + Region * REGION_RECORD_BYTES;
+    let Logicalˉstart: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 4u32);
+    let Imageˉstart: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 8u32);
+    let Regionˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 12u32);
+    let Start: u32 = Maximum(Imageˉstart, Segmentˉstart);
+    let End: u32 = Minimum(Imageˉstart + Regionˉbytes, Segmentˉend);
+    if Start >= End {
+        return Immutableˉsourceˉregionˉappend(
+            true, Output, 0u32, 0u32, 0u32
+        );
+    }
+    return Immutableˉsourceˉregionˉappend(
+        true,
+        Output,
+        Logicalˉstart + Start - Imageˉstart,
+        End - Start,
+        0u32
+    );
+}
+
+export fn Immutableˉsourceˉregionˉappendˉupdate(
+    Current: Immutableˉsourceˉregionˉappend,
+    Manifest: bytes,
+    Chunk: u32,
+    Resource: bytes
+) -> Immutableˉsourceˉregionˉappend {
+    if !Current.Valid {
+        return Current;
+    }
+    let Part: Immutableˉsourceˉappend = Immutableˉsourceˉappendˉchunk(
+        Current.Value,
+        Manifest,
+        Chunk,
+        Resource,
+        Current.Logicalˉoffset,
+        Current.Logicalˉbytes
+    );
+    return Immutableˉsourceˉregionˉappend(
+        Part.Valid,
+        Part.Value,
+        Current.Logicalˉoffset,
+        Current.Logicalˉbytes,
+        Current.Appendedˉbytes + Part.Appendedˉbytes
+    );
+}
+
+export fn Immutableˉsourceˉregionˉappendˉfinish(
+    Current: Immutableˉsourceˉregionˉappend
+) -> Immutableˉsourceˉappend {
+    if !Current.Valid {
+        return Immutableˉsourceˉappend(
+            false, Current.Value, Current.Appendedˉbytes
+        );
+    }
+    return Immutableˉsourceˉappend(
+        Current.Appendedˉbytes == Current.Logicalˉbytes,
+        Current.Value,
+        Current.Appendedˉbytes
     );
 }

@@ -1,8 +1,8 @@
-module Nativeˉhostedˉserviceˉbundleˉrequestˉtool profile hosted;
+module Nativeˉhostedˉcontainerˉsegmentˉrequestˉtool profile hosted;
 
-import Compilerˉnativeˉpublication as Publication;
 import Foundationˉdecimalˉparsing as Decimal;
 import Foundationˉimmutableˉsourceˉregions as Sources;
+import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -11,12 +11,12 @@ capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
-enum Nativeˉhostedˉbundleˉrequestˉstatus {
+enum Nativeˉhostedˉcontainerˉsegmentˉrequestˉstatus {
     Valid = 0;
     Rejected = 1;
 }
 
-const SEGMENT_BYTES: u32 = 4194104u32;
+const SEGMENT_BYTES: u32 = 4194144u32;
 
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
@@ -53,62 +53,78 @@ fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
     return Bytesˉareˉequal(Textˉtoˉutf8(Left), Textˉtoˉutf8(Right));
 }
 
-fn Serviceˉidentity(Index: u32) -> u32 {
-    if Index < 8u32 { return Index + 1u32; }
-    return Index + 3u32;
-}
-
 fn Reject() -> i32 {
     diagnostic.write_line(
         Textˉconcat(
-            "hosted service-bundle request status=",
-            Enumˉname(Nativeˉhostedˉbundleˉrequestˉstatus.Rejected)
+            "hosted container segment request status=",
+            Enumˉname(
+                Nativeˉhostedˉcontainerˉsegmentˉrequestˉstatus.Rejected
+            )
         )
     );
     return 2;
 }
 
 fn Sourcesˉmatchˉplan(
-    Request: bytes,
-    Layout: bytes,
+    Planˉbytes: bytes,
     Manifest: bytes,
     Plan: Sources.Immutableˉsourceˉregionˉplan
 ) -> bool {
-    if Bytesˉlength(Request) != 144u32 || Bytesˉlength(Layout) != 152u32 ||
-        Bytesˉreadˉu32ˉlittle(Layout, 12u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Layout, 28u32) != 10u32 ||
-        !Plan.Valid || Plan.Regions != 11u32 ||
-        Plan.Imageˉbytes != Bytesˉreadˉu32ˉlittle(Layout, 24u32) {
+    if Bytesˉlength(Planˉbytes) < 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Planˉbytes, 8u32) !=
+            Bytesˉlength(Planˉbytes) ||
+        Bytesˉreadˉu32ˉlittle(Planˉbytes, 12u32) != 0u32 ||
+        !Segmentation.Nativeˉhostedˉcontainerˉplanˉisˉvalid(
+            Bytesˉslice(Planˉbytes, 0u32, 128u32)
+        ) ||
+        !Plan.Valid || Plan.Regions != 6u32 ||
+        Plan.Imageˉbytes !=
+            Bytesˉreadˉu32ˉlittle(Planˉbytes, 28u32) {
         return false;
     }
-    let Fragmentˉbytes: u32 =
-        Bytesˉreadˉu32ˉlittle(Layout, 20u32);
     var Expectedˉlogical: u32 = 0u32;
     var Index: u32 = 0u32;
-    while Index < 11u32 {
-        let Region: u32 = Plan.Regionˉbase + Index * 16u32;
+    while Index < 6u32 {
+        let Record: u32 = Plan.Regionˉbase + Index * 16u32;
         var Expectedˉimage: u32 = 0u32;
-        var Expectedˉbytes: u32 = Fragmentˉbytes;
-        if Index > 0u32 {
-            let Requestˉrecord: u32 = 24u32 + (Index - 1u32) * 12u32;
-            let Placement: u32 = 32u32 + (Index - 1u32) * 12u32;
-            if Bytesˉreadˉu32ˉlittle(Request, Requestˉrecord) !=
-                    Serviceˉidentity(Index - 1u32) ||
-                Bytesˉreadˉu32ˉlittle(Layout, Placement) !=
-                    Serviceˉidentity(Index - 1u32) {
-                return false;
-            }
+        var Expectedˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Planˉbytes, 36u32);
+        if Index == 1u32 {
             Expectedˉimage =
-                Bytesˉreadˉu32ˉlittle(Layout, Placement + 4u32);
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 40u32);
             Expectedˉbytes =
-                Bytesˉreadˉu32ˉlittle(Layout, Placement + 8u32);
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 44u32);
         }
-        if Bytesˉreadˉu32ˉlittle(Manifest, Region) != Index ||
-            Bytesˉreadˉu32ˉlittle(Manifest, Region + 4u32) !=
+        if Index == 2u32 {
+            Expectedˉimage =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 48u32);
+            Expectedˉbytes =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 52u32);
+        }
+        if Index == 3u32 {
+            Expectedˉimage =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 56u32);
+            Expectedˉbytes =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 60u32);
+        }
+        if Index == 4u32 {
+            Expectedˉimage =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 64u32);
+            Expectedˉbytes =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 68u32);
+        }
+        if Index == 5u32 {
+            Expectedˉimage =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 72u32);
+            Expectedˉbytes =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 76u32);
+        }
+        if Bytesˉreadˉu32ˉlittle(Manifest, Record) != Index ||
+            Bytesˉreadˉu32ˉlittle(Manifest, Record + 4u32) !=
                 Expectedˉlogical ||
-            Bytesˉreadˉu32ˉlittle(Manifest, Region + 8u32) !=
+            Bytesˉreadˉu32ˉlittle(Manifest, Record + 8u32) !=
                 Expectedˉimage ||
-            Bytesˉreadˉu32ˉlittle(Manifest, Region + 12u32) !=
+            Bytesˉreadˉu32ˉlittle(Manifest, Record + 12u32) !=
                 Expectedˉbytes {
             return false;
         }
@@ -127,11 +143,11 @@ fn Payloadˉbytes(
     var Total: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index < Plan.Regions {
-        let Region: u32 = Plan.Regionˉbase + Index * 16u32;
+        let Record: u32 = Plan.Regionˉbase + Index * 16u32;
         let Imageˉstart: u32 =
-            Bytesˉreadˉu32ˉlittle(Manifest, Region + 8u32);
+            Bytesˉreadˉu32ˉlittle(Manifest, Record + 8u32);
         let Imageˉend: u32 = Imageˉstart +
-            Bytesˉreadˉu32ˉlittle(Manifest, Region + 12u32);
+            Bytesˉreadˉu32ˉlittle(Manifest, Record + 12u32);
         let Start: u32 = Maximum(Imageˉstart, Segmentˉstart);
         let End: u32 = Minimum(Imageˉend, Segmentˉend);
         if Start < End { Total = Total + End - Start; }
@@ -143,17 +159,17 @@ fn Payloadˉbytes(
 export fn Main() -> i32 {
     if process.argument_count() != 5u32 {
         diagnostic.write_line(
-            "Usage: wvhostbundlerequest <plan.wvpq> <sources.wvsg> <chunk-prefix> <segment-index> <request.wvsq>"
+            "Usage: wvhostsegmentrequest <plan.wvcd> <sources.wvsg> <chunk-prefix> <segment-index> <request.wvht>"
         );
         return 64;
     }
-    let Requestˉpath: text = process.argument(0u32);
+    let Planˉpath: text = process.argument(0u32);
     let Manifestˉpath: text = process.argument(1u32);
     let Prefix: text = process.argument(2u32);
     let Indexˉtext: bytes = Textˉtoˉutf8(process.argument(3u32));
     let Outputˉpath: text = process.argument(4u32);
-    if Pathsˉareˉequal(Requestˉpath, Manifestˉpath) ||
-        Pathsˉareˉequal(Requestˉpath, Outputˉpath) ||
+    if Pathsˉareˉequal(Planˉpath, Manifestˉpath) ||
+        Pathsˉareˉequal(Planˉpath, Outputˉpath) ||
         Pathsˉareˉequal(Manifestˉpath, Outputˉpath) ||
         !Sources.Immutableˉsourceˉprefixˉisˉvalid(Prefix) {
         return Reject();
@@ -165,14 +181,14 @@ export fn Main() -> i32 {
     if !Parsed.Valid { return Reject(); }
 
     let Manifest: bytes = file.read_bytes(Manifestˉpath);
-    let Plan: Sources.Immutableˉsourceˉregionˉplan =
+    let Sourceˉplan: Sources.Immutableˉsourceˉregionˉplan =
         Sources.Immutableˉsourceˉregionsˉadmit(Manifest);
-    if !Plan.Valid { return Reject(); }
+    if !Sourceˉplan.Valid { return Reject(); }
     var Chunk: u32 = 0u32;
-    while Chunk < Plan.Chunks {
+    while Chunk < Sourceˉplan.Chunks {
         let Resourceˉpath: text =
             Sources.Immutableˉsourceˉresourceˉname(Prefix, Chunk);
-        if Pathsˉareˉequal(Resourceˉpath, Requestˉpath) ||
+        if Pathsˉareˉequal(Resourceˉpath, Planˉpath) ||
             Pathsˉareˉequal(Resourceˉpath, Manifestˉpath) ||
             Pathsˉareˉequal(Resourceˉpath, Outputˉpath) ||
             !Sources.Immutableˉsourceˉresourceˉisˉvalid(
@@ -183,14 +199,11 @@ export fn Main() -> i32 {
         Chunk = Chunk + 1u32;
     }
 
-    let Publicationˉrequest: bytes = file.read_bytes(Requestˉpath);
-    let Layout = Publication.Nativeˉpublicationˉplan(Publicationˉrequest);
-    if !Sourcesˉmatchˉplan(
-        Publicationˉrequest, Layout.Value, Manifest, Plan
-    ) {
+    let Containerˉplan: bytes = file.read_bytes(Planˉpath);
+    if !Sourcesˉmatchˉplan(Containerˉplan, Manifest, Sourceˉplan) {
         return Reject();
     }
-    let Imageˉbytes: u32 = Plan.Imageˉbytes;
+    let Imageˉbytes: u32 = Sourceˉplan.Imageˉbytes;
     var Segments: u32 = Imageˉbytes / SEGMENT_BYTES;
     if Imageˉbytes % SEGMENT_BYTES != 0u32 { Segments = Segments + 1u32; }
     if Parsed.Value >= Segments { return Reject(); }
@@ -199,35 +212,35 @@ export fn Main() -> i32 {
     if Segmentˉlength > SEGMENT_BYTES { Segmentˉlength = SEGMENT_BYTES; }
     let Segmentˉend: u32 = Segmentˉstart + Segmentˉlength;
     let Payload: u32 = Payloadˉbytes(
-        Manifest, Plan, Segmentˉstart, Segmentˉend
+        Manifest, Sourceˉplan, Segmentˉstart, Segmentˉend
     );
-    let Total: u32 = 32u32 + Bytesˉlength(Publicationˉrequest) + Payload;
+    let Total: u32 = 160u32 + Payload;
     if Total > 4194304u32 { return Reject(); }
 
-    var Result: bytes = Empty(Publicationˉrequest);
-    Result = Appendˉu32(Result, 1364416087u32);
-    Result = Appendˉu32(Result, 2u32);
+    var Result: bytes = Empty(Containerˉplan);
+    Result = Appendˉu32(Result, 1414026839u32);
+    Result = Appendˉu32(Result, 1u32);
     Result = Appendˉu32(Result, Total);
-    Result = Appendˉu32(Result, Bytesˉlength(Publicationˉrequest));
+    Result = Appendˉu32(Result, 128u32);
     Result = Appendˉu32(Result, Segmentˉstart);
     Result = Appendˉu32(Result, Segmentˉlength);
     Result = Appendˉu32(Result, Payload);
     Result = Appendˉu32(Result, 0u32);
-    Result = Bytesˉconcat(Result, Publicationˉrequest);
+    Result = Bytesˉconcat(Result, Bytesˉslice(Containerˉplan, 0u32, 128u32));
     var Appended: u32 = 0u32;
     var Region: u32 = 0u32;
-    while Region < Plan.Regions {
+    while Region < Sourceˉplan.Regions {
         var Sourceˉstate: Sources.Immutableˉsourceˉregionˉappend =
             Sources.Immutableˉsourceˉregionˉappendˉbegin(
-            Result,
-            Manifest,
-            Plan,
-            Region,
-            Segmentˉstart,
-            Segmentˉend
+                Result,
+                Manifest,
+                Sourceˉplan,
+                Region,
+                Segmentˉstart,
+                Segmentˉend
             );
         Chunk = 0u32;
-        while Chunk < Plan.Chunks {
+        while Chunk < Sourceˉplan.Chunks {
             Sourceˉstate = Sources.Immutableˉsourceˉregionˉappendˉupdate(
                 Sourceˉstate,
                 Manifest,
@@ -251,7 +264,7 @@ export fn Main() -> i32 {
         Textˉconcat(
             Textˉconcat(
                 Textˉconcat(
-                    "hosted service-bundle request status=Valid segment=",
+                    "hosted container segment request status=Valid segment=",
                     U32ˉformat(Parsed.Value)
                 ),
                 " bytes="

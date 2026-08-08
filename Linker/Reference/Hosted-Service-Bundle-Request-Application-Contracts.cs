@@ -12,15 +12,15 @@ public static class Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract
         "linux-x64-hosted-service-bundle-request-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉserviceˉbundleˉrequestˉtool";
-    public const int MODULE_BYTES = 26_615;
+    public const int MODULE_BYTES = 27_843;
     public const string MODULE_SHA256 =
-        "7eb367894051b89acee497c906c3c3282621f9d0d2a7274d79931af0ec7926e2";
-    public const int WINDOWS_APPLICATION_BYTES = 271_360;
+        "2cd2311b9053abbe92f64d533d0681b6a5438c89a0548cad5ddc5a114c1b1917";
+    public const int WINDOWS_APPLICATION_BYTES = 294_912;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "0101389e7fca09905e5aa64902df6b61d07debe4735e091cf57d01af7b217c3b";
-    public const int LINUX_APPLICATION_BYTES = 270_336;
+        "e7fe0939f62ce2403e3e24d1f4523dbb2e63c8fe469ee6930a039b1b66cc8576";
+    public const int LINUX_APPLICATION_BYTES = 294_912;
     public const string LINUX_APPLICATION_SHA256 =
-        "216dc362944945ba3259d6ffb0aeed094eb8ba2d475678641335d892e2c316ec";
+        "256304761afaa42da2df66a2f0e89303a4a00a282b95a235148a2633959d8e2c";
 }
 
 public static class Hostedˉserviceˉbundleˉrequestˉapplicationˉwriter

@@ -255,46 +255,61 @@ internal static partial class Program
             ImmutableArray<Nativeˉserviceˉcode> services,
             Nativeˉpublicationˉplan plan)
     {
-        var Logicalˉbytes = checked(
-            fragment.Length + services.Sum(Service => Service.Code.Length));
+        var Regions = new (int Imageˉoffset, ImmutableArray<byte> Bytes)[11];
+        Regions[0] = (0, fragment);
+        for (var Index = 0; Index < services.Length; Index++)
+        {
+            Regions[Index + 1] = (plan.Placements[Index].Offset, services[Index].Code);
+        }
+        return Buildˉimmutableˉsourceˉgeometry(
+            Regions,
+            plan.Imageˉbytes,
+            fragment.Length / 2);
+    }
+
+    private static (byte[] Manifest, byte[] Resourceˉzero, byte[] Resourceˉone)
+        Buildˉimmutableˉsourceˉgeometry(
+            (int Imageˉoffset, ImmutableArray<byte> Bytes)[] regions,
+            int imageˉbytes,
+            int split)
+    {
+        var Logicalˉbytes = checked(regions.Sum(Region => Region.Bytes.Length));
         var Logicalˉsource = new byte[Logicalˉbytes];
         var Logicalˉcursor = 0;
-        fragment.AsSpan().CopyTo(Logicalˉsource);
-        Logicalˉcursor += fragment.Length;
-        foreach (var Service in services)
+        foreach (var Region in regions)
         {
-            Service.Code.AsSpan().CopyTo(
-                Logicalˉsource.AsSpan(Logicalˉcursor));
-            Logicalˉcursor += Service.Code.Length;
+            Region.Bytes.AsSpan().CopyTo(Logicalˉsource.AsSpan(Logicalˉcursor));
+            Logicalˉcursor += Region.Bytes.Length;
         }
         Equal(Logicalˉbytes, Logicalˉcursor);
 
-        var Split = fragment.Length / 2;
         True(
-            Split > 0 && Split < Logicalˉbytes,
+            split > 0 && split < Logicalˉbytes,
             "The source fixture must cross an immutable resource boundary.");
         const int Resourceˉzeroˉoffset = 9;
         const int Resourceˉoneˉoffset = 7;
-        var Resourceˉzero = new byte[Resourceˉzeroˉoffset + Split + 5];
+        var Resourceˉzero = new byte[Resourceˉzeroˉoffset + split + 5];
         var Resourceˉone = new byte[
-            Resourceˉoneˉoffset + Logicalˉbytes - Split + 3];
-        Logicalˉsource.AsSpan(0, Split).CopyTo(
+            Resourceˉoneˉoffset + Logicalˉbytes - split + 3];
+        Logicalˉsource.AsSpan(0, split).CopyTo(
             Resourceˉzero.AsSpan(Resourceˉzeroˉoffset));
-        Logicalˉsource.AsSpan(Split).CopyTo(
+        Logicalˉsource.AsSpan(split).CopyTo(
             Resourceˉone.AsSpan(Resourceˉoneˉoffset));
 
-        var Manifest = new byte[32 + 2 * 20 + 11 * 16];
+        var Manifest = new byte[32 + 2 * 20 + regions.Length * 16];
         BinaryPrimitives.WriteUInt32LittleEndian(Manifest, 0x4753_5657);
         BinaryPrimitives.WriteUInt32LittleEndian(Manifest.AsSpan(4), 1);
         BinaryPrimitives.WriteUInt32LittleEndian(Manifest.AsSpan(8), (uint)Manifest.Length);
         BinaryPrimitives.WriteUInt32LittleEndian(Manifest.AsSpan(12), 2);
-        BinaryPrimitives.WriteUInt32LittleEndian(Manifest.AsSpan(16), 11);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Manifest.AsSpan(16),
+            (uint)regions.Length);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Manifest.AsSpan(20),
             (uint)Logicalˉbytes);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Manifest.AsSpan(24),
-            (uint)plan.Imageˉbytes);
+            (uint)imageˉbytes);
         BinaryPrimitives.WriteUInt32LittleEndian(Manifest.AsSpan(32), 0);
         BinaryPrimitives.WriteUInt32LittleEndian(Manifest.AsSpan(36), 0);
         BinaryPrimitives.WriteUInt32LittleEndian(
@@ -302,32 +317,28 @@ internal static partial class Program
             Resourceˉzeroˉoffset);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Manifest.AsSpan(44),
-            (uint)Split);
+            (uint)split);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Manifest.AsSpan(48),
             (uint)Resourceˉzero.Length);
         BinaryPrimitives.WriteUInt32LittleEndian(Manifest.AsSpan(52), 1);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Manifest.AsSpan(56),
-            (uint)Split);
+            (uint)split);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Manifest.AsSpan(60),
             Resourceˉoneˉoffset);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Manifest.AsSpan(64),
-            (uint)(Logicalˉbytes - Split));
+            (uint)(Logicalˉbytes - split));
         BinaryPrimitives.WriteUInt32LittleEndian(
             Manifest.AsSpan(68),
             (uint)Resourceˉone.Length);
 
         Logicalˉcursor = 0;
-        for (var Index = 0; Index < 11; Index++)
+        for (var Index = 0; Index < regions.Length; Index++)
         {
             var Record = 72 + Index * 16;
-            var Imageˉoffset = Index == 0 ? 0 : plan.Placements[Index - 1].Offset;
-            var Regionˉbytes = Index == 0
-                ? fragment.Length
-                : services[Index - 1].Code.Length;
             BinaryPrimitives.WriteUInt32LittleEndian(
                 Manifest.AsSpan(Record),
                 (uint)Index);
@@ -336,11 +347,11 @@ internal static partial class Program
                 (uint)Logicalˉcursor);
             BinaryPrimitives.WriteUInt32LittleEndian(
                 Manifest.AsSpan(Record + 8),
-                (uint)Imageˉoffset);
+                (uint)regions[Index].Imageˉoffset);
             BinaryPrimitives.WriteUInt32LittleEndian(
                 Manifest.AsSpan(Record + 12),
-                (uint)Regionˉbytes);
-            Logicalˉcursor += Regionˉbytes;
+                (uint)regions[Index].Bytes.Length);
+            Logicalˉcursor += regions[Index].Bytes.Length;
         }
         Equal(Logicalˉbytes, Logicalˉcursor);
         return (Manifest, Resourceˉzero, Resourceˉone);

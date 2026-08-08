@@ -57,9 +57,10 @@ their fill policy. The manifest never supplies implicit gap bytes.
 ## Windvale owner and limits
 
 `Foundation/Immutable-Source-Regions.wv` owns complete admission, canonical
-resource naming, exact resource-length checks, and bounded extraction of a
-logical range across chunk resources. It performs no I/O and declares no
-capability. Thirty-one chunks leave room for control and output resources
+resource naming, exact resource-length checks, bounded extraction of a logical
+range, and region-append state across chunk resources. It performs no I/O and
+declares no capability; command roots retain explicit acquisition authority.
+Thirty-one chunks leave room for control and output resources
 inside the current 64-snapshot hosted-resource ceiling.
 
 Changing the limits, record meaning, naming rule, ordering, or zero-region

@@ -36,11 +36,12 @@ slice.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Request-producer WVB | 26,615 | `7eb367894051b89acee497c906c3c3282621f9d0d2a7274d79931af0ec7926e2` |
-| Windows request producer | 271,360 | `0101389e7fca09905e5aa64902df6b61d07debe4735e091cf57d01af7b217c3b` |
-| Linux request producer | 270,336 | `216dc362944945ba3259d6ffb0aeed094eb8ba2d475678641335d892e2c316ec` |
+| Request-producer WVB | 27,843 | `2cd2311b9053abbe92f64d533d0681b6a5438c89a0548cad5ddc5a114c1b1917` |
+| Windows request producer | 294,912 | `e7fe0939f62ce2403e3e24d1f4523dbb2e63c8fe469ee6930a039b1b66cc8576` |
+| Linux request producer | 294,912 | `256304761afaa42da2df66a2f0e89303a4a00a282b95a235148a2633959d8e2c` |
 
-After review, the focused current-host test passes 1/1 in 4.672 seconds. It
+After Decision 0404's shared-state extraction, the focused current-host test
+passes 1/1 in 4.676 seconds. It
 crosses one source region over two immutable resources, matches the frozen C#
 request oracle byte-for-byte, exercises public target
 routing and the real native process without loading the CLR, preserves output
@@ -54,6 +55,7 @@ zero-warning. No broader verifier ran under the end-of-goal gate policy.
   request bytes in the candidate process pipeline.
 - `WVSG` can be reused for the six hosted-container source regions without
   conflating geometry, digests, or package resources.
+- Decision 0404 now performs that reuse and emits exact `WVHT` requests.
 - Stage 0 adds only deletion-bound package identities and the independent
   differential oracle.
 - Ordered request/response orchestration, final segment requests, Linux

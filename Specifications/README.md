@@ -88,6 +88,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native hosted service-bundle request producer](Windvale-Native-Hosted-Service-Bundle-Request.md)
 - [Native hosted metadata-request producer](Windvale-Native-Hosted-Metadata-Request.md)
 - [Native hosted-container segmenter](Windvale-Native-Hosted-Container-Segmenter.md)
+- [Native hosted-container segment-request producer](Windvale-Native-Hosted-Container-Segment-Request.md)
 - [Native hosted-container segment set](Windvale-Native-Hosted-Container-Segment-Set.md)
 - [Native hosted-tool runtime-header construction](Windvale-Native-Hosted-Tool-Runtime-Header.md)
 - [Versioned verified native-fragment artifact](Native-Fragment-Artifact.md)

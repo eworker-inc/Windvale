@@ -533,6 +533,15 @@ matches the frozen recovery oracle without loading the CLR. Ordered invocation,
 `WVSI` response/evidence composition, final hosted-container segment requests,
 Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0404](../Decisions/0404-Native-Hosted-Container-Segment-Request.md)
+reuses `WVSG` for the exact six final application source regions and removes
+managed `WVHT 1` segment selection and request-byte construction from the
+candidate pipeline. A shared capability-free append state keeps both native
+request roots focused while file acquisition remains explicit. Both current-
+host request producers cross a two-resource boundary, match frozen recovery
+oracles, and load no CLR. Ordered request/response execution, manifest
+lifecycle, Linux execution, promotion, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

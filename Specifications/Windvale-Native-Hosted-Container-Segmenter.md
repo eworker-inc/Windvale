@@ -72,6 +72,9 @@ final retirement gate.
 The new C# writer and target routing are Stage 0 package wiring. They are not
 the segment algorithm and are deletion-bound once a digest-bound native
 launcher owns package selection. The separate
+[segment-request producer](Windvale-Native-Hosted-Container-Segment-Request.md)
+now constructs exact `WVHT` inputs from immutable `WVSG` source geometry; the
+retained C# request builder is differential/recovery evidence. The separate
 [immutable segment-set contract](Windvale-Native-Hosted-Container-Segment-Set.md)
 now reconstructs and admits every ordered response without concatenating it.
 The next slice feeds that admitted set to the existing native durable

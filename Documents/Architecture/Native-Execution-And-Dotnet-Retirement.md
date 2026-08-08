@@ -578,6 +578,13 @@ canonical `WVSQ 2` without managed segment arithmetic or byte construction.
 Ordered invocation, response/evidence composition, hosted-container segment
 requests, Linux execution, promotion, and complete composition remain.
 
+[Decision 0404](../Decisions/0404-Native-Hosted-Container-Segment-Request.md)
+closes the final request-byte half. The same capability-free `WVSG` state maps
+six canonical application sources across bounded resources, while a paired
+native command emits one exact `WVHT 1` request. Managed request construction
+is now recovery/differential evidence; ordered process and manifest lifecycle,
+Linux execution, promotion, and grouped qualification remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical
