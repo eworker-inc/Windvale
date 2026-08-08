@@ -217,6 +217,7 @@ $NativeHostedStartupInstantiationModule = Join-Path $Artifacts 'Native-Hosted-St
 $NativeHostedContainerPlanModule = Join-Path $Artifacts 'Native-Hosted-Container-Construction.wvb'
 $NativeHostedContainerWindowsModule = Join-Path $Artifacts 'Native-Hosted-Container-Windows.wvb'
 $NativeHostedContainerLinuxModule = Join-Path $Artifacts 'Native-Hosted-Container-Linux.wvb'
+$NativeHostedContainerSegmentationModule = Join-Path $Artifacts 'Native-Hosted-Container-Segmentation.wvb'
 $NativeHostedToolRuntimeHeaderCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Core.wvb'
 $NativeHostedToolRuntimeHeaderBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -1874,6 +1875,17 @@ $NativeHostedContainerArtifacts = @(
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvnf'
         FragmentBytes = 124463
         FragmentHash = '0c57b13158570163b113ba8f0faf608a804725316435ecc5485aa172666bec40'
+    },
+    @{
+        Name = 'segment constructor'
+        Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Segmentation.wvproj'
+        Output = $NativeHostedContainerSegmentationModule
+        Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvb'
+        ModuleBytes = 21806
+        ModuleHash = 'c1c446d22e578eac330a0bead108d4d759b7c346c48c335601df62e19538bca4'
+        Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvnf'
+        FragmentBytes = 278243
+        FragmentHash = 'f80570a216cbf99e04b83f8e5c8f576f0f8f9d179fdc907715b7f80a57e43c3a'
     }
 )
 foreach ($Artifact in $NativeHostedContainerArtifacts) {

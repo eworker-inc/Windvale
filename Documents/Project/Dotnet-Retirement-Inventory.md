@@ -1,6 +1,6 @@
 # .NET retirement inventory
 
-> Inventory snapshot: 7 August 2026
+> Inventory snapshot: 8 August 2026
 
 This is the operational ledger for moving .NET out of Windvale's normal Windows and Linux workflows under [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) and the [native-execution architecture](../Architecture/Native-Execution-And-Dotnet-Retirement.md). It records direct managed entry points, the replacement standing of each product surface, and the retained recovery owners. It does not declare .NET retired while any complete gate remains open.
 
@@ -390,6 +390,20 @@ differential oracles. The managed bridge still projects final symbol targets,
 executes the retained WVNF, verifies its response, and passes the result to the
 outer PE/ELF writers; those responsibilities retire with native container
 planning and the final grouped gate.
+
+[Decision 0385](../Decisions/0385-Windvale-Owned-Hosted-Container-Construction.md)
+transfers hosted compiler-family layout, startup targets, PE/ELF headers,
+Windows imports and relocation, and segment positions to four bounded
+Windvale-native fragments. The former complete C# application builders are
+`Buildˉstage0` recovery/differential oracles, and neither former C# layout
+planner is called by the normal relay.
+
+[Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
+removes the remaining complete managed region writer. Windvale now constructs
+the final application as canonical sub-4-MiB segments from intersecting opaque
+source ranges and owned zero/padding bytes. Managed dispatch, bounded request
+projection, response checking, ordered concatenation, direct publication,
+Linux execution, promotion, and the grouped gate remain open.
 
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution

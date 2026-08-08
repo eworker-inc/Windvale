@@ -540,6 +540,14 @@ oversized source. Normal C# code now retains only deletion-bound native
 dispatch, independent response checking, large-result allocation/copying, and
 publication. Linux execution and the grouped gate remain open.
 
+[Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
+removes that complete managed array writer. One bounded portable Windvale
+constructor consumes only the source ranges intersecting each canonical
+sub-4-MiB segment, rederives the admitted layout, and constructs every source,
+zero, and padding byte. The deletion-bound managed session now projects and
+validates bounded requests and concatenates already completed segments; direct
+native durable publication, Linux execution, and the grouped gate remain open.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

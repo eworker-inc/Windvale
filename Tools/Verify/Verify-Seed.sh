@@ -212,6 +212,7 @@ NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE="$ARTIFACTS/Native-Hosted-Startup-Ins
 NATIVE_HOSTED_CONTAINER_PLAN_MODULE="$ARTIFACTS/Native-Hosted-Container-Construction.wvb"
 NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE="$ARTIFACTS/Native-Hosted-Container-Windows.wvb"
 NATIVE_HOSTED_CONTAINER_LINUX_MODULE="$ARTIFACTS/Native-Hosted-Container-Linux.wvb"
+NATIVE_HOSTED_CONTAINER_SEGMENTATION_MODULE="$ARTIFACTS/Native-Hosted-Container-Segmentation.wvb"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Runtime-Header-Core.wvb"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Runtime-Header-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
@@ -1488,6 +1489,14 @@ verify_hosted_container_artifact \
     12086 a502fe7e6d5aaa29bf7b629e96b14bb26346c3296256b89d2aacd069a9eede5e \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvnf" \
     124463 0c57b13158570163b113ba8f0faf608a804725316435ecc5485aa172666bec40
+verify_hosted_container_artifact \
+    'segment constructor' \
+    "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Segmentation.wvproj" \
+    "$NATIVE_HOSTED_CONTAINER_SEGMENTATION_MODULE" \
+    "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvb" \
+    21806 c1c446d22e578eac330a0bead108d4d759b7c346c48c335601df62e19538bca4 \
+    "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvnf" \
+    278243 f80570a216cbf99e04b83f8e5c8f576f0f8f9d179fdc907715b7f80a57e43c3a
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_SOURCE" \
     --module "$BYTE_CONSTRUCTION_SOURCE" \

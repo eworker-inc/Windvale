@@ -143,9 +143,7 @@ internal static class Nativeˉhostedˉcontainerˉconstructor
             throw Invalidˉresponse();
         }
 
-        var Result = new byte[checked((int)Applicationˉbytes)];
         var Containerˉbytes = Nativeˉhostedˉcontainerˉbytesˉconstructor.Build(target, response);
-        Containerˉbytes.Header.AsSpan().CopyTo(Result);
         var Targets = ImmutableArray.CreateBuilder<uint>(checked((int)(Targetˉbytes / 4)));
         for (var Offset = Targetˉpayload;
             Offset < Targetˉpayload + Targetˉbytes;
@@ -172,17 +170,14 @@ internal static class Nativeˉhostedˉcontainerˉconstructor
                 : checked((uint)Linuxˉhostedˉcompilerˉstartup.SYMBOL_COUNT),
             Targets.ToImmutable(),
             Object));
-        Startup.AsSpan().CopyTo(Result.AsSpan(checked((int)Textˉfile)));
-        bundle.Imageˉbytes.AsSpan().CopyTo(Result.AsSpan(checked((int)Bundleˉfile)));
-        if (Windows)
-        {
-            Containerˉbytes.Imports.AsSpan()
-                .CopyTo(Result.AsSpan(checked((int)Importˉfile)));
-            Containerˉbytes.Relocation.AsSpan()
-                .CopyTo(Result.AsSpan(checked((int)Relocationˉfile)));
-        }
-        runtime.AsSpan().CopyTo(Result.AsSpan(checked((int)Runtimeˉfile)));
-        return Result.ToImmutableArray();
+        return Nativeˉhostedˉcontainerˉmaterializationˉsession.Build(
+            response,
+            Containerˉbytes.Header,
+            Startup,
+            bundle.Imageˉbytes,
+            Containerˉbytes.Imports,
+            runtime,
+            Containerˉbytes.Relocation);
     }
 
     private static bool Regionˉfits(uint offset, uint bytes, uint total) =>

@@ -106,12 +106,37 @@ linker embeds their WVNF artifacts, not their WVB modules.
 | Windows container-byte WVNF | 183,406 | `49240c2aacfe806ab786fccdc5ef248775e09dae88fb5c8cb6ee703a9bde7e7c` |
 | Linux container-byte WVB | 12,086 | `a502fe7e6d5aaa29bf7b629e96b14bb26346c3296256b89d2aacd069a9eede5e` |
 | Linux container-byte WVNF | 124,463 | `0c57b13158570163b113ba8f0faf608a804725316435ecc5485aa172666bec40` |
+| Hosted-container segmentation WVB | 21,806 | `c1c446d22e578eac330a0bead108d4d759b7c346c48c335601df62e19538bca4` |
+| Hosted-container segmentation WVNF | 278,243 | `f80570a216cbf99e04b83f8e5c8f576f0f8f9d179fdc907715b7f80a57e43c3a` |
 
-The three WVB modules reconstruct byte-for-byte through the native project
+All four WVB modules reconstruct byte-for-byte through the native project
 front door. Separate fragments are required because the current bootstrap
 source-binding closure rejects the aggregate planner, startup-object parser,
 and both platform byte constructors in one source compilation. This is a
 bounded composition constraint, not a new semantic implementation.
+
+## Bounded final-image segments: `WVHT 1` / `WVHU 1`
+
+The final application is constructed through canonical segments of at most
+4,194,144 bytes. This reserves 160 request bytes for the fixed 32-byte `WVHT`
+header and successful 128-byte `WVCD` plan header while keeping every request
+and response inside the ordinary 4 MiB Windvale byte-value limit.
+
+The request records total bytes, the fixed plan-header length, canonical
+segment offset and length, intersecting payload length, and a zero reserved
+word. Its payload contains only the header, startup, actual bundle, imports,
+runtime header, and relocation byte ranges that intersect that segment, in
+file order. Padding is omitted. Portable Windvale rederives and validates the
+complete layout, rejects noncanonical segment boundaries, reconstructs every
+zero region, and returns `WVHU 1`: a 40-byte status envelope followed by the
+exact segment. The response binds the original request length, application
+length, segment extent, and six-region directory.
+
+The managed session projects bounded requests, validates every returned source
+and fill byte, and concatenates successful segments in order. It does not
+allocate the complete application in advance or place any source/fill region
+itself. Ordered managed concatenation remains deletion-bound transport until
+the same segment contract feeds the native durable publisher directly.
 
 ## Normal path and retirement boundary
 
@@ -122,14 +147,15 @@ Normal construction now follows one ordered path:
 2. The planner derives all file/virtual layout and startup targets.
 3. The startup constructor applies that target table to the canonical WVO.
 4. The selected platform constructor emits every outer-container-owned byte.
-5. The managed relay validates the bounded response envelope and region
-   extents without invoking either former C# layout planner, allocates the
-   final output, and copies the header, startup, actual bundle, imports,
-   runtime header, and relocation into the declared non-overlapping positions.
-6. The existing independent PE or ELF verifier validates the complete result.
+5. The bounded segment constructor consumes only intersecting source bytes,
+   constructs every complete segment including padding in Windvale, and returns
+   exact ordered pieces below the ordinary byte-value limit.
+6. The deletion-bound managed session validates and concatenates those pieces;
+   it no longer allocates and populates a complete image from source regions.
+7. The existing independent PE or ELF verifier validates the complete result.
 
 The former C# application builders are named `Buildˉstage0` and are called only
-by focused differential evidence. Managed native dispatch, large-result
-allocation/copying, and final publication remain deletion-bound work. Linux-host
+by focused differential evidence. Managed native dispatch, ordered segment
+concatenation, and final publication remain deletion-bound work. Linux-host
 execution and grouped dual-host qualification remain deferred to the final
 retirement gate.

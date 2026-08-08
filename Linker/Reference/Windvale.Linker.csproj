@@ -64,6 +64,9 @@
       Include="Consumers/Native-Hosted-Container-Linux.wvnf"
       LogicalName="Windvale.Linker.Native-Hosted-Container-Linux.wvnf" />
     <EmbeddedResource
+      Include="Consumers/Native-Hosted-Container-Segmentation.wvnf"
+      LogicalName="Windvale.Linker.Native-Hosted-Container-Segmentation.wvnf" />
+    <EmbeddedResource
       Include="Consumers/Windows-X64-Hosted-Compiler.wvo"
       LogicalName="Windvale.Linker.Windows-X64-Hosted-Compiler.wvo" />
     <EmbeddedResource
