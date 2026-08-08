@@ -124,6 +124,15 @@
       Include="../../Runtime/Windvale/Native-X64-Service-Code-Builder.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Service-Code-Builder.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-Output-Service-Windows.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Output-Service-Windows.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-Output-Service-Linux.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Output-Service-Linux.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-Output-Services-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-Output-Services-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Text-Concat-Service.wv" />
     <EmbeddedResource

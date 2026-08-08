@@ -1,0 +1,20 @@
+module Runtimeˉnativeˉx64ˉoutputˉservicesˉbridge profile portable;
+
+import Runtimeˉnativeˉx64ˉoutputˉserviceˉlinux as Linux;
+import Runtimeˉnativeˉx64ˉoutputˉserviceˉwindows as Windows;
+
+export fn Main() -> bytes {
+    var Result: bytes = Windows.Nativeˉx64ˉwindowsˉoutputˉserviceˉbuild(24u8);
+    Result = Bytesˉconcat(
+        Result,
+        Windows.Nativeˉx64ˉwindowsˉoutputˉserviceˉbuild(32u8)
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Linux.Nativeˉx64ˉlinuxˉoutputˉserviceˉbuild(24u8)
+    );
+    return Bytesˉconcat(
+        Result,
+        Linux.Nativeˉx64ˉlinuxˉoutputˉserviceˉbuild(32u8)
+    );
+}

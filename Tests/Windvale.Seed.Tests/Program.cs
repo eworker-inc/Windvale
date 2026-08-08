@@ -1411,6 +1411,7 @@ internal static partial class Program
         new("Windvale-assembled native stencils reproduce the argument-service leaves", [TEST_AREA_ASSEMBLER, TEST_AREA_OBJECT_MODEL, TEST_AREA_COMPILER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilsˉreproduceˉargumentˉservices),
         new("Windvale validates and patches its native stencils across every runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉconsumerˉruns),
         new("Windvale returns and publishes native argument leaves through the descriptor bridge", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉbridgeˉruns),
+        new("Windvale constructs the exact Windows and Linux native output leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉoutputˉservicesˉrun),
         new("Windvale constructs the exact native UTF-8 service leaf", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉutf8ˉserviceˉruns),
         new("Windvale constructs the exact native integer-format service leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉintegerˉformatˉservicesˉrun),
         new("Windvale constructs the exact native text-concatenation service leaf", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉtextˉconcatˉserviceˉruns),

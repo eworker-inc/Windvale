@@ -230,6 +230,15 @@ directly and no longer performs managed WVB decoding, semantic verification,
 or x86-64 lowering. Managed WVNF parsing, application lowering, bundle and W^X
 ownership, Linux evidence, and the grouped gate remain open.
 
+[Decision 0369](../Decisions/0369-Windvale-Owned-Native-Output-Leaves.md)
+removes C# instruction emission and branch patching for the four Windows/Linux
+console and diagnostic output leaves. Two focused Windvale source modules and
+one native-front-door-reproducible bridge own their unchanged exact bytes. The
+normal runtime embeds and digest-checks only the four generated leaves; the
+bridge WVB remains repository recovery/differential evidence. Platform output
+table binding, file-input/output leaf generation, bundle assembly, final W^X
+ownership, Linux execution evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

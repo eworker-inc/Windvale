@@ -18,6 +18,18 @@
       Include="Consumers/Native-X64-Argument-Service.bin"
       LogicalName="Windvale.Native.Native-X64-Argument-Service.bin" />
     <EmbeddedResource
+      Include="Consumers/Native-X64-Windows-Console-Output-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Windows-Console-Output-Service.bin" />
+    <EmbeddedResource
+      Include="Consumers/Native-X64-Windows-Diagnostic-Output-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Windows-Diagnostic-Output-Service.bin" />
+    <EmbeddedResource
+      Include="Consumers/Native-X64-Linux-Console-Output-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Linux-Console-Output-Service.bin" />
+    <EmbeddedResource
+      Include="Consumers/Native-X64-Linux-Diagnostic-Output-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Linux-Diagnostic-Output-Service.bin" />
+    <EmbeddedResource
       Include="Consumers/Native-X64-Utf8-Service.bin"
       LogicalName="Windvale.Native.Native-X64-Utf8-Service.bin" />
     <EmbeddedResource

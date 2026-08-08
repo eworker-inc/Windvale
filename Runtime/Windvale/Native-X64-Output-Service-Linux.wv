@@ -1,0 +1,160 @@
+module Runtimeˉnativeˉx64ˉoutputˉserviceˉlinux profile portable;
+
+import Runtimeˉnativeˉx64ˉserviceˉcodeˉbuilder as Serviceˉcode;
+
+fn Appendˉlabel(Labels: bytes, Offset: u32) -> bytes {
+    return Bytesˉconcat(Labels, Bytesˉfromˉu32ˉlittle(Offset));
+}
+
+export fn Nativeˉx64ˉlinuxˉoutputˉserviceˉbuild(
+    Targetˉfieldˉoffset: u8
+) -> bytes {
+    let Textˉtarget: u32 = 0u32;
+    let Newlineˉtarget: u32 = 1u32;
+    let Newlineˉcallˉtarget: u32 = 2u32;
+    let Failureˉtarget: u32 = 3u32;
+    let Returnˉtarget: u32 = 4u32;
+
+    var Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉbuilderˉempty();
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 236u8, 48u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 76u8, 137u8, 20u8, 36u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 76u8, 137u8, 92u8, 36u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 76u8, 137u8, 124u8, 36u8, 16u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 76u8, 137u8, 68u8, 36u8, 24u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 68u8, 137u8, 76u8, 36u8, 32u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 199u8, 71u8, 64u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 0u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 73u8, 139u8, 71u8, 88u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 139u8, 120u8, Targetˉfieldˉoffset
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 137u8, 124u8, 36u8, 40u8
+    );
+
+    let Textˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 131u8, 124u8, 36u8, 32u8, 0u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Newlineˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 184u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 124u8, 36u8, 40u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 116u8, 36u8, 24u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 84u8, 36u8, 32u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 15u8, 5u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 248u8, 252u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Textˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 133u8, 192u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 142u8, Failureˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 84u8, 36u8, 32u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 57u8, 208u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 135u8, Failureˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 1u8, 68u8, 36u8, 24u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 41u8, 68u8, 36u8, 32u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Textˉtarget);
+
+    let Newlineˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 198u8, 68u8, 36u8, 36u8, 10u8
+    );
+    let Newlineˉcallˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 184u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 124u8, 36u8, 40u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 141u8, 116u8, 36u8, 36u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 186u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 15u8, 5u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 248u8, 252u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Newlineˉcallˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 248u8, 1u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 133u8, Failureˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 49u8, 192u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Returnˉtarget);
+
+    let Failureˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 199u8, 71u8, 64u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 4u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 184u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1u32);
+
+    let Returnˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 76u8, 139u8, 20u8, 36u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 76u8, 139u8, 92u8, 36u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 76u8, 139u8, 124u8, 36u8, 16u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 196u8, 48u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 195u8);
+
+    var Labels: bytes = Bytesˉfromˉu32ˉlittle(Textˉoffset);
+    Labels = Appendˉlabel(Labels, Newlineˉoffset);
+    Labels = Appendˉlabel(Labels, Newlineˉcallˉoffset);
+    Labels = Appendˉlabel(Labels, Failureˉoffset);
+    Labels = Appendˉlabel(Labels, Returnˉoffset);
+    return Serviceˉcode.Nativeˉx64ˉserviceˉfinish(Builder, Labels);
+}

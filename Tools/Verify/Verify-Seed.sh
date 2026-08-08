@@ -166,6 +166,9 @@ NATIVE_UTF8_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Utf8-Service-Bridge.wvb"
 NATIVE_INTEGER_FORMAT_CORE_MODULE="$ARTIFACTS/Native-X64-Integer-Format-Services.wvb"
 NATIVE_INTEGER_FORMAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Integer-Format-Services-Bridge.wvb"
 NATIVE_SERVICE_CODE_BUILDER_MODULE="$ARTIFACTS/Native-X64-Service-Code-Builder.wvb"
+NATIVE_WINDOWS_OUTPUT_CORE_MODULE="$ARTIFACTS/Native-X64-Output-Service-Windows.wvb"
+NATIVE_LINUX_OUTPUT_CORE_MODULE="$ARTIFACTS/Native-X64-Output-Service-Linux.wvb"
+NATIVE_OUTPUT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Output-Services-Bridge.wvb"
 NATIVE_TEXT_CONCAT_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service.wvb"
 NATIVE_TEXT_CONCAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service-Bridge.wvb"
 NATIVE_TEXT_QUOTE_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Quote-Service.wvb"
@@ -653,6 +656,60 @@ printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Profile: port
 printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Nativeˉx64ˉserviceˉbuilder' >/dev/null
 printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Nativeˉx64ˉserviceˉfinish' >/dev/null
 printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Exports (10)' >/dev/null
+
+NATIVE_WINDOWS_OUTPUT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Output-Service-Windows.wv"
+NATIVE_LINUX_OUTPUT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Output-Service-Linux.wv"
+NATIVE_OUTPUT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Output-Services-Bridge.wv"
+NATIVE_OUTPUT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Output-Services-Bridge.wvb"
+NATIVE_WINDOWS_CONSOLE_OUTPUT_LEAF="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Windows-Console-Output-Service.bin"
+NATIVE_WINDOWS_DIAGNOSTIC_OUTPUT_LEAF="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Windows-Diagnostic-Output-Service.bin"
+NATIVE_LINUX_CONSOLE_OUTPUT_LEAF="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Linux-Console-Output-Service.bin"
+NATIVE_LINUX_DIAGNOSTIC_OUTPUT_LEAF="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Linux-Diagnostic-Output-Service.bin"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_WINDOWS_OUTPUT_CORE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    -o "$NATIVE_WINDOWS_OUTPUT_CORE_MODULE"
+NATIVE_WINDOWS_OUTPUT_CORE_HASH=$(sha256sum "$NATIVE_WINDOWS_OUTPUT_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_WINDOWS_OUTPUT_CORE_HASH" != 'a072c3dc92b9675d00ac833860c0c7ef7b44cf98d15a3fead38955921d321983' ]; then
+    echo "The Windvale Windows output-service core has an unexpected digest: $NATIVE_WINDOWS_OUTPUT_CORE_HASH" >&2
+    exit 1
+fi
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_LINUX_OUTPUT_CORE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    -o "$NATIVE_LINUX_OUTPUT_CORE_MODULE"
+NATIVE_LINUX_OUTPUT_CORE_HASH=$(sha256sum "$NATIVE_LINUX_OUTPUT_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_LINUX_OUTPUT_CORE_HASH" != 'd3d8c8b660694af7aed52b3f78a650fc6030bfe4ad6d8adc25396ee64ed608ad' ]; then
+    echo "The Windvale Linux output-service core has an unexpected digest: $NATIVE_LINUX_OUTPUT_CORE_HASH" >&2
+    exit 1
+fi
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_OUTPUT_BRIDGE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    --module "$NATIVE_LINUX_OUTPUT_CORE_SOURCE" \
+    --module "$NATIVE_WINDOWS_OUTPUT_CORE_SOURCE" \
+    -o "$NATIVE_OUTPUT_BRIDGE_MODULE"
+NATIVE_OUTPUT_BRIDGE_HASH=$(sha256sum "$NATIVE_OUTPUT_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_OUTPUT_BRIDGE_HASH" != '209b3fad1d03c6f9d08a20e4cfce2511c3af3ed894e1e70e3b32f05ad067ceed' ]; then
+    echo "The Windvale output-service bridge has an unexpected digest: $NATIVE_OUTPUT_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_OUTPUT_BRIDGE_MODULE" "$NATIVE_OUTPUT_BRIDGE_RETAINED"
+if [ "$(sha256sum "$NATIVE_WINDOWS_CONSOLE_OUTPUT_LEAF" | awk '{print $1}')" != '10f3a500aca7f0236cdf9f6c20658591df88bc612e677264cdaa0bcef59a0a48' ] ||
+    [ "$(wc -c < "$NATIVE_WINDOWS_CONSOLE_OUTPUT_LEAF")" -ne 258 ] ||
+    [ "$(sha256sum "$NATIVE_WINDOWS_DIAGNOSTIC_OUTPUT_LEAF" | awk '{print $1}')" != '1b4068c01b2050c3055c78eb82303c71b8488e8766f7b628fab10ffb23e5ffe2' ] ||
+    [ "$(wc -c < "$NATIVE_WINDOWS_DIAGNOSTIC_OUTPUT_LEAF")" -ne 258 ] ||
+    [ "$(sha256sum "$NATIVE_LINUX_CONSOLE_OUTPUT_LEAF" | awk '{print $1}')" != 'c5ea073a24c46dd634b1a67a7e7041d476dbce856d058aa8adc2c4e680d3d226' ] ||
+    [ "$(wc -c < "$NATIVE_LINUX_CONSOLE_OUTPUT_LEAF")" -ne 213 ] ||
+    [ "$(sha256sum "$NATIVE_LINUX_DIAGNOSTIC_OUTPUT_LEAF" | awk '{print $1}')" != '1c81018143fa9b708373eaceda62722ca40fb1e11b20808f765fe5ece33406fe' ] ||
+    [ "$(wc -c < "$NATIVE_LINUX_DIAGNOSTIC_OUTPUT_LEAF")" -ne 213 ]; then
+    echo 'A retained Windvale native output leaf has an unexpected exact identity.' >&2
+    exit 1
+fi
+NATIVE_OUTPUT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_OUTPUT_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_OUTPUT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_OUTPUT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_OUTPUT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_TEXT_CONCAT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
 dotnet "$TOOL_DLL" \
