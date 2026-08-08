@@ -14,11 +14,6 @@ internal static class Nativeˉenumˉmetadataˉbuilder
     private const int METADATA_HEADER_BYTES = 24;
     private const int METADATA_TYPE_BYTES = 8;
     private const int METADATA_MEMBER_BYTES = 16;
-    private const uint REQUEST_MAGIC = 0x51455657;
-    private const uint REQUEST_VERSION = 1;
-    private const int REQUEST_HEADER_BYTES = 24;
-    private const int REQUEST_TYPE_BYTES = 8;
-    private const int REQUEST_MEMBER_BYTES = 12;
     private const long MAXIMUM_CONSUMER_INSTRUCTIONS = 100_000_000;
     private const string CONSUMER_RESOURCE =
         "Windvale.Native.Native-Enum-Metadata-Bridge.wvb";
@@ -27,24 +22,22 @@ internal static class Nativeˉenumˉmetadataˉbuilder
         Loadˉconsumer,
         LazyThreadSafetyMode.ExecutionAndPublication);
 
-    internal const int CONSUMER_CANONICAL_SIZE = 9_619;
+    internal const int CONSUMER_CANONICAL_SIZE = 13_920;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "595dc56d36ed75bd9857bf5011e59d17271cf03ea6a346079474291842bd5a47";
+        "a43a89cedd7fc58740132c2f666ea69866ceff6ebb87d090124207ff3e9154ce";
 
     public static ImmutableArray<byte> Build(
         ImmutableArray<Nominalˉtypeˉdeclaration> types)
     {
         var Model = Measure(types);
-        var Result = Model.Totalˉbytes <= Bytecodeˉlimits.MAX_BYTE_DATA_BYTES
-            ? Buildˉwithˉwindvale(Buildˉrequest(Model))
-            : Buildˉrecovery(Model);
+        var Result = Nativeˉenumˉmetadataˉsession.Build(Model);
         Verify(types, Result.AsSpan());
         return Result;
     }
 
-    internal static ImmutableArray<byte> Buildˉrequest(
+    internal static ImmutableArray<ImmutableArray<byte>> Buildˉrequests(
         ImmutableArray<Nominalˉtypeˉdeclaration> types) =>
-        Buildˉrequest(Measure(types));
+        Nativeˉenumˉmetadataˉsession.Buildˉrequests(Measure(types));
 
     internal static ImmutableArray<byte> Buildˉwithˉwindvale(
         ImmutableArray<byte> request) =>
@@ -52,10 +45,6 @@ internal static class Nativeˉenumˉmetadataˉbuilder
             CONSUMER.Value,
             request,
             maximumˉinstructions: MAXIMUM_CONSUMER_INSTRUCTIONS);
-
-    internal static ImmutableArray<byte> Buildˉrecovery(
-        ImmutableArray<Nominalˉtypeˉdeclaration> types) =>
-        Buildˉrecovery(Measure(types));
 
     public static void Verify(
         ImmutableArray<Nominalˉtypeˉdeclaration> types,
@@ -172,8 +161,20 @@ internal static class Nativeˉenumˉmetadataˉbuilder
                 }
                 var Values = new HashSet<int>();
                 var Names = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var Member in Enum.Members)
+                var Nameˉranks = new uint[Enum.Members.Length];
+                var Orderedˉnames = Enumerable.Range(0, Enum.Members.Length)
+                    .OrderBy(
+                        Index => Enum.Members[Index].Name,
+                        StringComparer.Ordinal)
+                    .ToArray();
+                for (var Rank = 0; Rank < Orderedˉnames.Length; Rank++)
                 {
+                    Nameˉranks[Orderedˉnames[Rank]] = checked((uint)Rank);
+                }
+                var Typeˉnamesˉbytes = 0;
+                for (var Memberˉindex = 0; Memberˉindex < Enum.Members.Length; Memberˉindex++)
+                {
+                    var Member = Enum.Members[Memberˉindex];
                     var Name = STRICT_UTF8.GetBytes(Member.Name);
                     if (Name.Length is 0 or > Bytecodeˉlimits.MAX_NAME_BYTES ||
                         !Seedˉnames.Isˉidentifier(Member.Name) ||
@@ -184,16 +185,21 @@ internal static class Nativeˉenumˉmetadataˉbuilder
                             "Native enum metadata is not canonical.");
                     }
                     Namesˉbytes = checked(Namesˉbytes + Name.Length);
-                    Members.Add(new(Member.Value, Name.ToImmutableArray()));
+                    Typeˉnamesˉbytes = checked(Typeˉnamesˉbytes + Name.Length);
+                    Members.Add(new(
+                        Member.Value,
+                        Name.ToImmutableArray(),
+                        Nameˉranks[Memberˉindex]));
                 }
                 Directories.Add(new(
                     1,
                     Start,
-                    checked((uint)Enum.Members.Length)));
+                    checked((uint)Enum.Members.Length),
+                    Typeˉnamesˉbytes));
             }
             else if (Type is Recordˉtypeˉdeclaration)
             {
-                Directories.Add(new(0, Start, 0));
+                Directories.Add(new(0, Start, 0, 0));
             }
             else
             {
@@ -221,110 +227,6 @@ internal static class Nativeˉenumˉmetadataˉbuilder
             Members.ToImmutable(),
             Namesˉbytes,
             Totalˉbytes);
-    }
-
-    private static ImmutableArray<byte> Buildˉrequest(Nativeˉenumˉmetadataˉmodel model)
-    {
-        var Nameˉoffset = checked(REQUEST_HEADER_BYTES +
-            model.Directories.Length * REQUEST_TYPE_BYTES +
-            model.Members.Length * REQUEST_MEMBER_BYTES);
-        var Totalˉbytes = checked(Nameˉoffset + model.Namesˉbytes);
-        if (Totalˉbytes > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
-        {
-            throw new InvalidOperationException(
-                "Native enum metadata request exceeds the Windvale byte-input limit.");
-        }
-
-        var Result = new byte[Totalˉbytes];
-        BinaryPrimitives.WriteUInt32LittleEndian(Result, REQUEST_MAGIC);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(4), REQUEST_VERSION);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(8), checked((uint)Totalˉbytes));
-        BinaryPrimitives.WriteUInt32LittleEndian(
-            Result.AsSpan(12),
-            checked((uint)model.Directories.Length));
-        BinaryPrimitives.WriteUInt32LittleEndian(
-            Result.AsSpan(16),
-            checked((uint)model.Members.Length));
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(20), REQUEST_HEADER_BYTES);
-
-        for (var Index = 0; Index < model.Directories.Length; Index++)
-        {
-            var Offset = checked(REQUEST_HEADER_BYTES + Index * REQUEST_TYPE_BYTES);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset),
-                model.Directories[Index].Kind);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset + 4),
-                model.Directories[Index].Count);
-        }
-
-        var Currentˉname = Nameˉoffset;
-        for (var Index = 0; Index < model.Members.Length; Index++)
-        {
-            var Offset = checked(REQUEST_HEADER_BYTES +
-                model.Directories.Length * REQUEST_TYPE_BYTES +
-                Index * REQUEST_MEMBER_BYTES);
-            var Member = model.Members[Index];
-            BinaryPrimitives.WriteInt32LittleEndian(Result.AsSpan(Offset), Member.Value);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset + 4),
-                checked((uint)Currentˉname));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset + 8),
-                checked((uint)Member.Name.Length));
-            Member.Name.CopyTo(Result, Currentˉname);
-            Currentˉname = checked(Currentˉname + Member.Name.Length);
-        }
-        return Result.ToImmutableArray();
-    }
-
-    private static ImmutableArray<byte> Buildˉrecovery(Nativeˉenumˉmetadataˉmodel model)
-    {
-        var Memberˉoffset = checked(METADATA_HEADER_BYTES +
-            model.Directories.Length * METADATA_TYPE_BYTES);
-        var Nameˉoffset = checked(Memberˉoffset +
-            model.Members.Length * METADATA_MEMBER_BYTES);
-        var Result = new byte[model.Totalˉbytes];
-        BinaryPrimitives.WriteUInt32LittleEndian(Result, METADATA_MAGIC);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(4), METADATA_VERSION);
-        BinaryPrimitives.WriteUInt32LittleEndian(
-            Result.AsSpan(8),
-            checked((uint)model.Totalˉbytes));
-        BinaryPrimitives.WriteUInt32LittleEndian(
-            Result.AsSpan(12),
-            checked((uint)model.Directories.Length));
-        BinaryPrimitives.WriteUInt32LittleEndian(
-            Result.AsSpan(16),
-            checked((uint)model.Members.Length));
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(20), METADATA_HEADER_BYTES);
-
-        for (var Index = 0; Index < model.Directories.Length; Index++)
-        {
-            var Offset = checked(METADATA_HEADER_BYTES + Index * METADATA_TYPE_BYTES);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset),
-                model.Directories[Index].Start);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset + 4),
-                model.Directories[Index].Count);
-        }
-
-        var Currentˉname = Nameˉoffset;
-        for (var Index = 0; Index < model.Members.Length; Index++)
-        {
-            var Offset = checked(Memberˉoffset + Index * METADATA_MEMBER_BYTES);
-            var Member = model.Members[Index];
-            BinaryPrimitives.WriteInt32LittleEndian(Result.AsSpan(Offset), Member.Value);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset + 4),
-                checked((uint)Currentˉname));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset + 8),
-                checked((uint)Member.Name.Length));
-            Member.Name.CopyTo(Result, Currentˉname);
-            Currentˉname = checked(Currentˉname + Member.Name.Length);
-        }
-        return Result.ToImmutableArray();
     }
 
     private static Nativeˉfragment Loadˉconsumer()
@@ -362,18 +264,21 @@ internal static class Nativeˉenumˉmetadataˉbuilder
     private static InvalidOperationException Invalidˉmetadata() =>
         new("Native Enumˉname service identity metadata is invalid.");
 
-    private readonly record struct Nativeˉenumˉmetadataˉdirectory(
-        uint Kind,
-        uint Start,
-        uint Count);
-
-    private readonly record struct Nativeˉenumˉmetadataˉmember(
-        int Value,
-        ImmutableArray<byte> Name);
-
-    private sealed record Nativeˉenumˉmetadataˉmodel(
-        ImmutableArray<Nativeˉenumˉmetadataˉdirectory> Directories,
-        ImmutableArray<Nativeˉenumˉmetadataˉmember> Members,
-        int Namesˉbytes,
-        int Totalˉbytes);
 }
+
+internal readonly record struct Nativeˉenumˉmetadataˉdirectory(
+    uint Kind,
+    uint Start,
+    uint Count,
+    int Namesˉbytes);
+
+internal readonly record struct Nativeˉenumˉmetadataˉmember(
+    int Value,
+    ImmutableArray<byte> Name,
+    uint Nameˉrank);
+
+internal sealed record Nativeˉenumˉmetadataˉmodel(
+    ImmutableArray<Nativeˉenumˉmetadataˉdirectory> Directories,
+    ImmutableArray<Nativeˉenumˉmetadataˉmember> Members,
+    int Namesˉbytes,
+    int Totalˉbytes);

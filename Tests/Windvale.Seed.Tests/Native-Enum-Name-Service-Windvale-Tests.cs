@@ -13,9 +13,9 @@ internal static partial class Program
     private const int NATIVE_ENUM_NAME_CORE_SIZE = 625;
     private const string NATIVE_ENUM_NAME_CORE_SHA256 =
         "b404104b8e5ca174841b47d02ea45f197599179e0cb23ba778d6a2cdf7846948";
-    private const int NATIVE_ENUM_METADATA_CORE_SIZE = 9_640;
+    private const int NATIVE_ENUM_METADATA_CORE_SIZE = 13_946;
     private const string NATIVE_ENUM_METADATA_CORE_SHA256 =
-        "30f1fa4c85ad50991d68ac5eecfb9ada2ed63bd36229b777aff899b4cd0f0e3d";
+        "9c61f7d436854ace71ab17fcf33da73c40d37d612f68ba08bfa929ab4e710ef1";
 
     private static void Windvaleˉnativeˉenumˉnameˉserviceˉruns()
     {
@@ -172,11 +172,19 @@ internal static partial class Program
             X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Expected.AsSpan()));
 
-        var Metadataˉrequest = Nativeˉenumˉmetadataˉbuilder.Buildˉrequest(Types);
-        var Windvaleˉmetadata =
+        var Metadataˉrequests = Nativeˉenumˉmetadataˉbuilder.Buildˉrequests(Types);
+        Equal(1, Metadataˉrequests.Length);
+        var Metadataˉrequest = Metadataˉrequests[0];
+        var Metadataˉresponse =
             Nativeˉenumˉmetadataˉbuilder.Buildˉwithˉwindvale(Metadataˉrequest);
-        var Recoveryˉmetadata = Nativeˉenumˉmetadataˉbuilder.Buildˉrecovery(Types);
-        Sequenceˉequal(Recoveryˉmetadata, Windvaleˉmetadata);
+        var Windvaleˉmetadata = Nativeˉenumˉmetadataˉbuilder.Build(Types);
+        var Expectedˉmetadata = Convert.FromHexString(
+            "5756454E0100000056000000020000000200000018000000" +
+            "00000000000000000000000002000000" +
+            "FFFFFFFF480000000700000000000000" +
+            "020000004F0000000700000000000000" +
+            "53746F7070656452756E6E696E67");
+        Sequenceˉequal(Expectedˉmetadata, Windvaleˉmetadata);
         Sequenceˉequal(
             Windvaleˉmetadata,
             Bundle.AsSpan()[X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SIZE..]
@@ -206,10 +214,10 @@ internal static partial class Program
             Runtimeˉoptions.Portableˉdefaults);
         var Metadataˉnative = X64ˉnativeˉbackend.Compile(Metadataˉbridge).Fragment;
         Sequenceˉequal(
-            Windvaleˉmetadata,
+            Metadataˉresponse,
             Metadataˉreference.Runˉmainˉbytes(Metadataˉrequest).Bytes);
         Sequenceˉequal(
-            Windvaleˉmetadata,
+            Metadataˉresponse,
             X64ˉnativeˉexecutor.Executeˉbytes(Metadataˉnative, Metadataˉrequest));
 
         void Rejectˉrequest(ImmutableArray<byte> request)
@@ -224,14 +232,20 @@ internal static partial class Program
         Rejectˉrequest(Metadataˉrequest.AsSpan()[..^1].ToImmutableArray());
 
         var Duplicateˉvalue = Metadataˉrequest.ToArray();
-        const int Secondˉmemberˉoffset = 24 + 2 * 8 + 12;
+        const int Secondˉmemberˉoffset = 48 + 2 * 8 + 16;
         BinaryPrimitives.WriteInt32LittleEndian(
             Duplicateˉvalue.AsSpan(Secondˉmemberˉoffset),
             -1);
         Rejectˉrequest(Duplicateˉvalue.ToImmutableArray());
 
         var Duplicateˉname = Metadataˉrequest.ToArray();
-        const int Namesˉoffset = 24 + 2 * 8 + 2 * 12;
+        var Duplicateˉrank = Metadataˉrequest.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Duplicateˉrank.AsSpan(Secondˉmemberˉoffset + 12),
+            1);
+        Rejectˉrequest(Duplicateˉrank.ToImmutableArray());
+
+        const int Namesˉoffset = 48 + 2 * 8 + 2 * 16;
         Duplicateˉname.AsSpan(Namesˉoffset, 7).CopyTo(
             Duplicateˉname.AsSpan(Namesˉoffset + 7, 7));
         Rejectˉrequest(Duplicateˉname.ToImmutableArray());
@@ -242,40 +256,46 @@ internal static partial class Program
 
         var Boundaryˉmembers = ImmutableArray.CreateBuilder<Enumˉmemberˉdeclaration>(
             Bytecodeˉlimits.MAX_ENUM_MEMBERS);
-        Boundaryˉmembers.Add(new($"N{new string('a', 254)}", 0));
-        for (var Index = 1; Index < Bytecodeˉlimits.MAX_ENUM_MEMBERS; Index++)
+        for (var Index = 0; Index < Bytecodeˉlimits.MAX_ENUM_MEMBERS; Index++)
         {
-            Boundaryˉmembers.Add(new($"Member{Index}", Index));
+            Boundaryˉmembers.Add(new(
+                $"N{new string('a', 251)}{Index:D3}",
+                Index));
         }
         var Boundaryˉtypes = ImmutableArray.Create<Nominalˉtypeˉdeclaration>(
             new Enumˉtypeˉdeclaration(
                 "Boundary",
                 Boundaryˉmembers.MoveToImmutable()));
-        Sequenceˉequal(
-            Nativeˉenumˉmetadataˉbuilder.Buildˉrecovery(Boundaryˉtypes),
-            Nativeˉenumˉmetadataˉbuilder.Build(Boundaryˉtypes));
+        var Boundaryˉmetadata = Nativeˉenumˉmetadataˉbuilder.Build(Boundaryˉtypes);
+        Nativeˉenumˉmetadataˉbuilder.Verify(
+            Boundaryˉtypes,
+            Boundaryˉmetadata.AsSpan());
 
         var Maximumˉmembers = Enumerable.Range(0, Bytecodeˉlimits.MAX_ENUM_MEMBERS)
-            .Select(Index => new Enumˉmemberˉdeclaration($"M{Index}", Index))
+            .Select(Index => new Enumˉmemberˉdeclaration(
+                Index == Bytecodeˉlimits.MAX_ENUM_MEMBERS - 1
+                    ? $"N{new string('a', 254)}"
+                    : $"M{new string('a', Index)}",
+                Index))
             .ToImmutableArray();
+        const int Oversizedˉtypeˉcount = 114;
         var Oversizedˉtypes = ImmutableArray.CreateBuilder<Nominalˉtypeˉdeclaration>(
-            Bytecodeˉlimits.MAX_NOMINAL_TYPES);
-        for (var Index = 0; Index < Bytecodeˉlimits.MAX_NOMINAL_TYPES; Index++)
+            Oversizedˉtypeˉcount);
+        for (var Index = 0; Index < Oversizedˉtypeˉcount; Index++)
         {
             Oversizedˉtypes.Add(new Enumˉtypeˉdeclaration($"Type{Index}", Maximumˉmembers));
         }
         var Oversized = Oversizedˉtypes.MoveToImmutable();
-        var Oversizedˉrequest = Nativeˉenumˉmetadataˉbuilder.Buildˉrequest(Oversized);
+        var Oversizedˉrequests = Nativeˉenumˉmetadataˉbuilder.Buildˉrequests(Oversized);
+        Equal(15, Oversizedˉrequests.Length);
         True(
-            Oversizedˉrequest.Length <= Bytecodeˉlimits.MAX_BYTE_DATA_BYTES,
-            "The oversized-recovery request no longer fits the bounded input seam.");
-        Equal(
-            0,
-            Nativeˉenumˉmetadataˉbuilder.Buildˉwithˉwindvale(Oversizedˉrequest).Length);
+            Oversizedˉrequests.All(
+                Request => Request.Length <= Bytecodeˉlimits.MAX_BYTE_DATA_BYTES),
+            "The oversized WVEN case did not cross the segmented input seam.");
         var Oversizedˉmetadata = Nativeˉenumˉmetadataˉbuilder.Build(Oversized);
         True(
             Oversizedˉmetadata.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES,
-            "The explicit oversized WVEN recovery lane was not exercised.");
+            "The segmented WVEN case no longer exceeds one Windvale byte value.");
         Nativeˉenumˉmetadataˉbuilder.Verify(Oversized, Oversizedˉmetadata.AsSpan());
     }
 }

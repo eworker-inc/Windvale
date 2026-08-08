@@ -1,9 +1,9 @@
 # Decision 0359: Windvale-owned native enum-name leaf
 
-- Status: Accepted current-host leaf transfer; bounded WVEN advanced by Decision 0361; oversized transfer, Linux execution, and grouped qualification pending
+- Status: Accepted current-host leaf transfer; complete WVEN construction advanced by Decision 0362; Linux execution and grouped qualification pending
 - Date: 2026-08-07
 - Advances: [Decision 0072](0072-Final-Pure-Runtime-Native-Services.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
-- Advanced by: [Decision 0361](0361-Windvale-Owned-Bounded-Native-Enum-Metadata.md)
+- Advanced by: [Decision 0361](0361-Windvale-Owned-Bounded-Native-Enum-Metadata.md) and [Decision 0362](0362-Windvale-Owned-Segmented-Native-Enum-Metadata.md)
 - Contract: [Windvale native execution context](../../Specifications/Windvale-Native-Execution-Context.md#dynamic-text-and-byte-arena)
 
 ## Context

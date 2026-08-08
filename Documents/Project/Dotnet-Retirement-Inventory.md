@@ -161,6 +161,16 @@ session-owned result seam must close that last size lane without reducing the
 existing contract; retained-WVB loading, W^X publication, service-bundle
 orchestration, Linux evidence, and the grouped gate remain open.
 
+[Decision 0362](../Decisions/0362-Windvale-Owned-Segmented-Native-Enum-Metadata.md)
+closes that last size lane without widening a Windvale byte value or shrinking
+the 32 MiB `WVEN` contract. Versioned requests partition only between complete
+nominal types, and the Windvale core returns exact header, directory, member,
+and name sections in bounded envelopes. The temporary managed session validates
+and concatenates those sections but no longer contains a `WVEN` field writer;
+the former 4-to-32-MiB recovery writer is removed. Managed nominal projection,
+retained-WVB loading and lowering, W^X execution, final independent validation,
+service-bundle orchestration, Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

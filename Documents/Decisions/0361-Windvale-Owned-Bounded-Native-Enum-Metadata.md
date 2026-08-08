@@ -1,9 +1,10 @@
 # Decision 0361: Windvale-owned bounded native enum metadata
 
-- Status: Accepted current-host bounded transfer; oversized transfer, Linux execution, and grouped qualification pending
+- Status: Accepted historical bounded transfer; oversized lane advanced by Decision 0362; Linux execution and grouped qualification pending
 - Date: 2026-08-07
 - Advances: [Decision 0072](0072-Final-Pure-Runtime-Native-Services.md), [Decision 0359](0359-Windvale-Owned-Native-Enum-Name-Leaf.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Requires: [Decision 0360](0360-Native-Bounded-Byte-Entry-Input.md)
+- Advanced by: [Decision 0362](0362-Windvale-Owned-Segmented-Native-Enum-Metadata.md)
 - Contract: [Windvale native execution context](../../Specifications/Windvale-Native-Execution-Context.md#dynamic-text-and-byte-arena)
 
 ## Context

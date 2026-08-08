@@ -724,7 +724,7 @@ NATIVE_ENUM_METADATA_CORE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Enum
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_ENUM_METADATA_CORE_SOURCE" -o "$NATIVE_ENUM_METADATA_CORE_MODULE"
 NATIVE_ENUM_METADATA_CORE_HASH=$(sha256sum "$NATIVE_ENUM_METADATA_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_ENUM_METADATA_CORE_HASH" != '30f1fa4c85ad50991d68ac5eecfb9ada2ed63bd36229b777aff899b4cd0f0e3d' ]; then
+if [ "$NATIVE_ENUM_METADATA_CORE_HASH" != '9c61f7d436854ace71ab17fcf33da73c40d37d612f68ba08bfa929ab4e710ef1' ]; then
     echo "The Windvale native enum-metadata core has an unexpected digest: $NATIVE_ENUM_METADATA_CORE_HASH" >&2
     exit 1
 fi
@@ -740,7 +740,7 @@ dotnet "$TOOL_DLL" \
     --module "$NATIVE_ENUM_METADATA_CORE_SOURCE" \
     -o "$NATIVE_ENUM_METADATA_BRIDGE_MODULE"
 NATIVE_ENUM_METADATA_BRIDGE_HASH=$(sha256sum "$NATIVE_ENUM_METADATA_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_ENUM_METADATA_BRIDGE_HASH" != '595dc56d36ed75bd9857bf5011e59d17271cf03ea6a346079474291842bd5a47' ]; then
+if [ "$NATIVE_ENUM_METADATA_BRIDGE_HASH" != 'a43a89cedd7fc58740132c2f666ea69866ceff6ebb87d090124207ff3e9154ce' ]; then
     echo "The Windvale native enum-metadata bridge has an unexpected digest: $NATIVE_ENUM_METADATA_BRIDGE_HASH" >&2
     exit 1
 fi

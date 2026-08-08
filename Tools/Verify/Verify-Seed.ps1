@@ -906,7 +906,7 @@ $NativeEnumMetadataCoreSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Nat
 dotnet $ToolDll compile $NativeEnumMetadataCoreSource -o $NativeEnumMetadataCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-metadata core.' }
 $NativeEnumMetadataCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataCoreModule).Hash.ToLowerInvariant()
-if ($NativeEnumMetadataCoreHash -ne '30f1fa4c85ad50991d68ac5eecfb9ada2ed63bd36229b777aff899b4cd0f0e3d') {
+if ($NativeEnumMetadataCoreHash -ne '9c61f7d436854ace71ab17fcf33da73c40d37d612f68ba08bfa929ab4e710ef1') {
     throw "The Windvale native enum-metadata core has an unexpected digest: $NativeEnumMetadataCoreHash"
 }
 $NativeEnumMetadataCoreInspection = (dotnet $ToolDll inspect $NativeEnumMetadataCoreModule) -join "`n"
@@ -927,7 +927,7 @@ dotnet $ToolDll `
     -o $NativeEnumMetadataBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-metadata bridge.' }
 $NativeEnumMetadataBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataBridgeModule).Hash.ToLowerInvariant()
-if ($NativeEnumMetadataBridgeHash -ne '595dc56d36ed75bd9857bf5011e59d17271cf03ea6a346079474291842bd5a47') {
+if ($NativeEnumMetadataBridgeHash -ne 'a43a89cedd7fc58740132c2f666ea69866ceff6ebb87d090124207ff3e9154ce') {
     throw "The Windvale native enum-metadata bridge has an unexpected digest: $NativeEnumMetadataBridgeHash"
 }
 $NativeEnumMetadataBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataBridgeRetained).Hash.ToLowerInvariant()
