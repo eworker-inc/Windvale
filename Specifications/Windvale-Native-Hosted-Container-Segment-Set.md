@@ -93,3 +93,9 @@ publisher. Its hosted policy selects response snapshot ordinals `3,5,7...`,
 requires an even complete table, skips the 40-byte response envelope, and
 checks the aggregate payload ceiling. The paired platform transaction and real
 hosted execution remain the next boundary.
+
+Decision 0390 supplies the reusable Linux mutation half. After admission and
+host-identity checks, the hosted adapter can pass the same alternating response
+selection directly to exclusive sibling creation, exact write/reread, rename,
+and directory durability. The Windows counterpart and paired hosted launchers
+remain open.

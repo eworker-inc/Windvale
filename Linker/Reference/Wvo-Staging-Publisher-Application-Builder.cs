@@ -23,6 +23,8 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         "Windvale.Linker.Linux-X64-Wvo-Staging-Publisher.wvo";
     internal const string LINUX_ADAPTER_RESOURCE =
         "Windvale.Linker.Linux-X64-Wvo-Staging-Publication-Adapter.wvo";
+    internal const string LINUX_TRANSACTION_RESOURCE =
+        "Windvale.Linker.Linux-X64-Durable-Multi-Chunk-Publication.wvo";
     internal const string WINDOWS_STARTUP_RESOURCE =
         "Windvale.Linker.Windows-X64-Wvo-Staging-Publisher.wvo";
     internal const string WINDOWS_ADAPTER_RESOURCE =
@@ -38,8 +40,10 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
     [
         (LINUX_STARTUP_RESOURCE, 180,
             "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba"),
-        (LINUX_ADAPTER_RESOURCE, 5_242,
-            "741ca0cfc1931648f6dad80911448f2299a1e1d5b0c0de4300328fd123f8cba1"),
+        (LINUX_ADAPTER_RESOURCE, 3_499,
+            "2ca0989221f55c1b4a4e8de1bf2bf4437f758e10c1211944b36333f0d029c15d"),
+        (LINUX_TRANSACTION_RESOURCE, 2_432,
+            "47a22cd108702d6427fe5be9fca00c3c05f38cb26dd69e51c8648544b3f98e76"),
         (WINDOWS_STARTUP_RESOURCE, 184,
             "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab"),
         (WINDOWS_ADAPTER_RESOURCE, 9_190,

@@ -428,6 +428,13 @@ selection policies. Existing WVO atomic publication still passes its focused
 current-host behavior test. Connecting the hosted wrapper to Windows/Linux
 durable replacement remains open; no new managed product semantics were added.
 
+[Decision 0390](../Decisions/0390-Reusable-Linux-Durable-Multi-Chunk-Publication.md)
+moves the complete Linux durable mutation transaction behind a format-neutral
+snapshot-range interface. The WVO-specific adapter is now acquisition and
+identity policy only; hosted containers can reuse the same transaction without
+managed concatenation. Windows extraction, hosted packaging, and Linux runtime
+evidence remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

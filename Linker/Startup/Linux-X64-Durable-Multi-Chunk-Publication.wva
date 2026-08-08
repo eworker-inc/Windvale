@@ -1,0 +1,412 @@
+windvale-assembly 1
+
+# Linux x64 durable replacement over an admitted immutable snapshot sequence.
+# Input: RDI anchored directory fd, RSI NUL-terminated destination basename,
+# EDX first snapshot ordinal, ECX one-past snapshot ordinal, R8D stride (1/2),
+# R9D fixed bytes skipped at the beginning of every selected snapshot.
+# Result: EAX 0 complete, 1 rejected/unchanged, 2 indeterminate after replace.
+symbol local function Linux_durable_multi_chunk_hex8 in .text
+symbol export function Linux_durable_multi_chunk_publication_run in .text
+symbol import data File_input_scratch
+symbol import function Native_publication_apply
+symbol import function Native_publication_begin
+symbol import data Snapshot_table
+
+section code .text align 16
+define Linux_durable_multi_chunk_hex8
+move_u32 r8d 8
+label Hex_loop
+rotate_left eax 4
+move edx eax
+and_i32 edx 15
+add_i8 dl 48
+compare_i8 dl 57
+branch below_equal Hex_digit
+add_i8 dl 39
+label Hex_digit
+store_memory_u8 rdi none 1 0 dl
+add_i32 rdi 1
+subtract_i32 r8d 1
+branch not_equal Hex_loop
+return
+end define
+
+define Linux_durable_multi_chunk_publication_run
+push rbx
+push rbp
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 96
+store_memory_u64 rsp none 1 24 rdi
+store_memory_u64 rsp none 1 32 rsi
+store_memory_u32 rsp none 1 48 edx
+store_memory_u32 rsp none 1 52 ecx
+store_memory_u32 rsp none 1 56 r8d
+store_memory_u32 rsp none 1 60 r9d
+xor eax eax
+subtract_i32 rax 1
+store_memory_u64 rsp none 1 40 rax
+
+compare_i32 rdi 0
+branch below Rejected
+test rsi rsi
+branch equal Rejected
+compare edx ecx
+branch above_equal Rejected
+compare_i32 ecx 64
+branch above Rejected
+compare_i32 r8d 1
+branch equal Selector_valid
+compare_i32 r8d 2
+branch not_equal Rejected
+label Selector_valid
+compare_i32 r9d 4194303
+branch above Rejected
+
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_begin
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Rejected
+test eax eax
+branch not_equal Rejected
+store_memory_u32 rsp none 1 0 eax
+
+# Create a bounded process-unique sibling exclusively below the anchor.
+move rdi rsp
+add_i32 rdi 64
+move_u8 al 46
+store_memory_u8 rdi none 1 0 al
+move_u8 al 119
+store_memory_u8 rdi none 1 1 al
+move_u8 al 118
+store_memory_u8 rdi none 1 2 al
+move_u8 al 112
+store_memory_u8 rdi none 1 3 al
+move_u8 al 117
+store_memory_u8 rdi none 1 4 al
+move_u8 al 98
+store_memory_u8 rdi none 1 5 al
+move_u8 al 45
+store_memory_u8 rdi none 1 6 al
+move_u32 eax 39
+syscall
+store_memory_u32 rsp none 1 4 eax
+xor ebx ebx
+label Create_sibling
+load_memory_u32 eax rsp none 1 4
+add eax ebx
+move rdi rsp
+add_i32 rdi 71
+call Linux_durable_multi_chunk_hex8
+xor eax eax
+store_memory_u8 rsp none 1 79 al
+load_memory_u64 rdi rsp none 1 24
+move rsi rsp
+add_i32 rsi 64
+move_u32 edx 655554
+move_u32 r10d 384
+move_u32 eax 257
+syscall
+compare_i32 rax -17
+branch not_equal Sibling_create_result
+add_i32 ebx 1
+compare_i32 ebx 16
+branch below Create_sibling
+jump_label Rejected
+label Sibling_create_result
+compare_i32 rax -4095
+branch above_equal Rejected
+store_memory_u64 rsp none 1 40 rax
+
+load_memory_u32 r8d rsp none 1 0
+xor r9d r9d
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Scratch_failure
+compare_i32 eax 129
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 0 eax
+
+# Write selected payloads with exact partial-progress accounting.
+load_memory_u32 eax rsp none 1 48
+store_memory_u32 rsp none 1 8 eax
+label Sibling_chunk_loop
+load_memory_u32 ebx rsp none 1 8
+load_memory_u32 eax rsp none 1 52
+compare ebx eax
+branch above_equal Sibling_written
+xor eax eax
+store_memory_u32 rsp none 1 12 eax
+label Sibling_write_loop
+load_memory_u32 ebx rsp none 1 8
+move rdx rbx
+shift_left rdx 5
+load_address rbp Snapshot_table
+add rbp rdx
+load_memory_u32 r10d rbp none 1 24
+load_memory_u32 ecx rsp none 1 60
+compare r10d ecx
+branch below_equal Scratch_failure
+subtract r10d ecx
+load_memory_u32 ebx rsp none 1 12
+compare ebx r10d
+branch above_equal Sibling_chunk_written
+subtract r10d ebx
+store_memory_u32 rsp none 1 16 r10d
+load_memory_u64 rdi rsp none 1 40
+load_memory_u64 rsi rbp none 1 16
+load_memory_u32 ecx rsp none 1 60
+add rsi rcx
+add rsi rbx
+move edx r10d
+move_u32 eax 1
+syscall
+compare_i32 rax -4
+branch equal Sibling_write_loop
+compare_i32 rax 1
+branch below Scratch_failure
+load_memory_u32 r10d rsp none 1 16
+compare rax r10
+branch above Scratch_failure
+add ebx eax
+store_memory_u32 rsp none 1 12 ebx
+jump_label Sibling_write_loop
+label Sibling_chunk_written
+load_memory_u32 ebx rsp none 1 8
+load_memory_u32 eax rsp none 1 56
+add ebx eax
+branch below Scratch_failure
+store_memory_u32 rsp none 1 8 ebx
+jump_label Sibling_chunk_loop
+
+label Sibling_written
+load_memory_u64 rdi rsp none 1 40
+move_u32 eax 74
+syscall
+test rax rax
+branch not_equal Scratch_failure
+load_memory_u32 r8d rsp none 1 0
+move_u32 r9d 1
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Scratch_failure
+compare_i32 eax 130
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 0 eax
+
+# Reread the sibling in the same selection order and prove exact EOF.
+load_memory_u64 rdi rsp none 1 40
+xor esi esi
+xor edx edx
+move_u32 eax 8
+syscall
+test rax rax
+branch not_equal Scratch_failure
+load_memory_u32 eax rsp none 1 48
+store_memory_u32 rsp none 1 8 eax
+label Sibling_verify_chunk_loop
+load_memory_u32 ebx rsp none 1 8
+load_memory_u32 eax rsp none 1 52
+compare ebx eax
+branch above_equal Sibling_read_complete
+xor eax eax
+store_memory_u32 rsp none 1 12 eax
+label Sibling_read_loop
+load_memory_u32 ebx rsp none 1 8
+move rdx rbx
+shift_left rdx 5
+load_address rbp Snapshot_table
+add rbp rdx
+load_memory_u32 r10d rbp none 1 24
+load_memory_u32 ecx rsp none 1 60
+compare r10d ecx
+branch below_equal Scratch_failure
+subtract r10d ecx
+load_memory_u32 ebx rsp none 1 12
+compare ebx r10d
+branch above_equal Sibling_chunk_verified
+subtract r10d ebx
+compare_i32 r10d 4096
+branch below_equal Sibling_read_size
+move_u32 r10d 4096
+label Sibling_read_size
+store_memory_u32 rsp none 1 16 r10d
+load_memory_u64 rdi rsp none 1 40
+load_address rsi File_input_scratch
+move edx r10d
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Sibling_read_loop
+compare_i32 rax 1
+branch below Scratch_failure
+load_memory_u32 r10d rsp none 1 16
+compare rax r10
+branch above Scratch_failure
+move r9d eax
+xor ecx ecx
+load_address rdi File_input_scratch
+load_memory_u64 rsi rbp none 1 16
+load_memory_u32 eax rsp none 1 60
+add rsi rax
+add rsi rbx
+label Sibling_compare_loop
+compare ecx r9d
+branch above_equal Sibling_bytes_match
+load_memory_u8 al rdi rcx 1 0
+load_memory_u8 dl rsi rcx 1 0
+compare al dl
+branch not_equal Scratch_failure
+add_i32 ecx 1
+jump_label Sibling_compare_loop
+label Sibling_bytes_match
+add ebx r9d
+store_memory_u32 rsp none 1 12 ebx
+jump_label Sibling_read_loop
+label Sibling_chunk_verified
+load_memory_u32 ebx rsp none 1 8
+load_memory_u32 eax rsp none 1 56
+add ebx eax
+branch below Scratch_failure
+store_memory_u32 rsp none 1 8 ebx
+jump_label Sibling_verify_chunk_loop
+
+label Sibling_read_complete
+load_memory_u64 rdi rsp none 1 40
+load_address rsi File_input_scratch
+move_u32 edx 1
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Sibling_read_complete
+test rax rax
+branch not_equal Scratch_failure
+load_memory_u32 r8d rsp none 1 0
+move_u32 r9d 2
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Scratch_failure
+compare_i32 eax 131
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 0 eax
+
+# renameat is the same-directory replacement boundary; directory fsync proves
+# durable completion. Failure after rename is never reported as unchanged.
+load_memory_u64 rdi rsp none 1 24
+move rsi rsp
+add_i32 rsi 64
+move rdx rdi
+load_memory_u64 r10 rsp none 1 32
+move_u32 eax 264
+syscall
+test rax rax
+branch not_equal Scratch_failure
+load_memory_u32 r8d rsp none 1 0
+move_u32 r9d 3
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Replaced_failure
+compare_i32 eax 260
+branch not_equal Replaced_failure
+store_memory_u32 rsp none 1 0 eax
+load_memory_u64 rdi rsp none 1 24
+move_u32 eax 74
+syscall
+test rax rax
+branch not_equal Replaced_failure
+load_memory_u32 r8d rsp none 1 0
+move_u32 r9d 4
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Replaced_failure
+compare_i32 eax 311
+branch not_equal Replaced_failure
+load_memory_u64 rdi rsp none 1 40
+move_u32 eax 3
+syscall
+xor eax eax
+jump_label Complete
+
+label Scratch_failure
+load_memory_u32 eax rsp none 1 0
+compare_i32 eax 260
+branch equal Replaced_failure
+move r8d eax
+move_u32 r9d 5
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 149
+branch not_equal Replaced_failure
+load_memory_u64 rdi rsp none 1 24
+move rsi rsp
+add_i32 rsi 64
+xor edx edx
+move_u32 eax 263
+syscall
+test rax rax
+branch not_equal Replaced_failure
+move_u32 r8d 149
+move_u32 r9d 6
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 38
+branch not_equal Replaced_failure
+load_memory_u64 rdi rsp none 1 40
+move_u32 eax 3
+syscall
+label Rejected
+move_u32 eax 1
+jump_label Complete
+
+label Replaced_failure
+load_memory_u32 r8d rsp none 1 0
+move_u32 r9d 5
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+load_memory_u64 rdi rsp none 1 40
+compare_i32 rdi -1
+branch equal Replaced_without_scratch
+move_u32 eax 3
+syscall
+label Replaced_without_scratch
+move_u32 eax 2
+
+label Complete
+add_i32 rsp 96
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbp
+pop rbx
+return
+end define
+end section

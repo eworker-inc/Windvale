@@ -2,9 +2,8 @@ windvale-assembly 1
 
 # Linux x64 staged-WVO publisher. Portable Windvale code admits the exact
 # input/manifest/chunk sequence; this adapter independently validates and
-# rereads those immutable snapshots, rejects destination aliases, and owns the
-# exclusive-sibling durable atomic-replacement transaction.
-symbol local function Linux_wvo_staging_hex8 in .text
+# rereads those immutable snapshots, rejects destination aliases, and delegates
+# the admitted sequence to the shared durable atomic-replacement transaction.
 symbol export function Linux_wvo_staging_publisher_run in .text
 symbol import data Argument_bytes
 symbol import data Argument_table
@@ -12,10 +11,9 @@ symbol import data Data_arena
 symbol import data Execution_context
 symbol import data File_input_scratch
 symbol import data File_input_table
+symbol import function Linux_durable_multi_chunk_publication_run
 symbol import data Name_arena
 symbol import function Native_main
-symbol import function Native_publication_apply
-symbol import function Native_publication_begin
 symbol import data Output_table
 symbol import data Record_arena
 symbol import function Service_diagnostic_write
@@ -32,25 +30,6 @@ symbol import data Text_arena
 symbol import function X64_wvo_staging_snapshot_table_validate
 
 section code .text align 16
-define Linux_wvo_staging_hex8
-# Input: EAX value, RDI eight-byte destination. Output uses lowercase hex.
-move_u32 r8d 8
-label Hex_loop
-rotate_left eax 4
-move edx eax
-and_i32 edx 15
-add_i8 dl 48
-compare_i8 dl 57
-branch below_equal Hex_digit
-add_i8 dl 39
-label Hex_digit
-store_memory_u8 rdi none 1 0 dl
-add_i32 rdi 1
-subtract_i32 r8d 1
-branch not_equal Hex_loop
-return
-end define
-
 define Linux_wvo_staging_publisher_run
 # Preserve the kernel argc/argv stack, allocate the established bounded runtime
 # stack, and reserve its final 16 KiB for paths, identities, and transaction cells.
@@ -453,325 +432,29 @@ syscall
 jump_label Directory_failure
 
 label Resources_verified
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_begin
-move rdx rax
-shift_right rdx 32
-test edx edx
-branch not_equal Directory_failure
-test eax eax
-branch not_equal Directory_failure
-store_memory_u32 rsp none 1 12704 eax
-
-# Create a bounded process-unique sibling exclusively below the anchor.
-move rdi rsp
-add_i32 rdi 12336
-move_u8 al 46
-store_memory_u8 rdi none 1 0 al
-move_u8 al 119
-store_memory_u8 rdi none 1 1 al
-move_u8 al 118
-store_memory_u8 rdi none 1 2 al
-move_u8 al 111
-store_memory_u8 rdi none 1 3 al
-move_u8 al 45
-store_memory_u8 rdi none 1 4 al
-move_u32 eax 39
-syscall
-store_memory_u32 rsp none 1 12708 eax
-xor ebx ebx
-label Create_sibling
-load_memory_u32 eax rsp none 1 12708
-add eax ebx
-move rdi rsp
-add_i32 rdi 12341
-call Linux_wvo_staging_hex8
-move rdi rsp
-add_i32 rdi 12336
-xor eax eax
-store_memory_u8 rdi none 1 13 al
+# The shared transaction consumes the admitted WVO sequence without knowing its
+# manifest or object format. This adapter retains path and host-identity policy.
 move rdi r13
 move rsi rsp
-add_i32 rsi 12336
-move_u32 edx 655554
-move_u32 r10d 384
-move_u32 eax 257
-syscall
-compare_i32 rax -17
-branch not_equal Sibling_create_result
-add_i32 ebx 1
-compare_i32 ebx 16
-branch below Create_sibling
-jump_label Directory_failure
-label Sibling_create_result
-compare_i32 rax -4095
-branch above_equal Directory_failure
-move r14 rax
-
-load_memory_u32 r8d rsp none 1 12704
+add_i32 rsi 8224
+move_u32 edx 2
+load_memory_u32 ecx rsp none 1 12720
+move_u32 r8d 1
 xor r9d r9d
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_apply
-move rdx rax
-shift_right rdx 32
-test edx edx
-branch not_equal Scratch_failure
-compare_i32 eax 129
-branch not_equal Scratch_failure
-store_memory_u32 rsp none 1 12704 eax
-
-# Write every admitted WVO chunk directly from snapshot ordinals 2..count-1.
-move_u32 eax 2
-store_memory_u32 rsp none 1 12712 eax
-label Sibling_chunk_loop
-load_memory_u32 ebx rsp none 1 12712
-load_memory_u32 eax rsp none 1 12720
-compare ebx eax
-branch above_equal Sibling_written
-xor eax eax
-store_memory_u32 rsp none 1 12716 eax
-label Sibling_write_loop
-load_memory_u32 ebx rsp none 1 12712
-move rdx rbx
-shift_left rdx 5
-load_address rbp Snapshot_table
-add rbp rdx
-load_memory_u32 r10d rbp none 1 24
-load_memory_u32 ebx rsp none 1 12716
-compare ebx r10d
-branch above_equal Sibling_chunk_written
-subtract r10d ebx
-move rdi r14
-load_memory_u64 rsi rbp none 1 16
-add rsi rbx
-move edx r10d
-move_u32 eax 1
-syscall
-compare_i32 rax -4
-branch equal Sibling_write_loop
-compare_i32 rax 1
-branch below Scratch_failure
-compare rax r10
-branch above Scratch_failure
-add ebx eax
-store_memory_u32 rsp none 1 12716 ebx
-jump_label Sibling_write_loop
-label Sibling_chunk_written
-load_memory_u32 ebx rsp none 1 12712
-add_i32 ebx 1
-store_memory_u32 rsp none 1 12712 ebx
-jump_label Sibling_chunk_loop
-
-label Sibling_written
-move rdi r14
-move_u32 eax 74
-syscall
-test rax rax
-branch not_equal Scratch_failure
-load_memory_u32 r8d rsp none 1 12704
-move_u32 r9d 1
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_apply
-move rdx rax
-shift_right rdx 32
-test edx edx
-branch not_equal Scratch_failure
-compare_i32 eax 130
-branch not_equal Scratch_failure
-store_memory_u32 rsp none 1 12704 eax
-
-# Reread the sibling in the same descriptor order and prove exact EOF.
-move rdi r14
-xor esi esi
-xor edx edx
-move_u32 eax 8
-syscall
-test rax rax
-branch not_equal Scratch_failure
-move_u32 eax 2
-store_memory_u32 rsp none 1 12712 eax
-label Sibling_verify_chunk_loop
-load_memory_u32 ebx rsp none 1 12712
-load_memory_u32 eax rsp none 1 12720
-compare ebx eax
-branch above_equal Sibling_read_complete
-xor eax eax
-store_memory_u32 rsp none 1 12716 eax
-label Sibling_read_loop
-load_memory_u32 ebx rsp none 1 12712
-move rdx rbx
-shift_left rdx 5
-load_address rbp Snapshot_table
-add rbp rdx
-load_memory_u32 r10d rbp none 1 24
-load_memory_u32 ebx rsp none 1 12716
-compare ebx r10d
-branch above_equal Sibling_chunk_verified
-subtract r10d ebx
-compare_i32 r10d 4096
-branch below_equal Sibling_read_size
-move_u32 r10d 4096
-label Sibling_read_size
-move rdi r14
-load_address rsi File_input_scratch
-move edx r10d
-xor eax eax
-syscall
-compare_i32 rax -4
-branch equal Sibling_read_loop
-compare_i32 rax 1
-branch below Scratch_failure
-compare rax r10
-branch above Scratch_failure
-move r9d eax
-xor ecx ecx
-load_address rdi File_input_scratch
-load_memory_u64 rsi rbp none 1 16
-add rsi rbx
-label Sibling_compare_loop
-compare ecx r9d
-branch above_equal Sibling_bytes_match
-load_memory_u8 al rdi rcx 1 0
-load_memory_u8 dl rsi rcx 1 0
-compare al dl
-branch not_equal Scratch_failure
-add_i32 ecx 1
-jump_label Sibling_compare_loop
-label Sibling_bytes_match
-add ebx r9d
-store_memory_u32 rsp none 1 12716 ebx
-jump_label Sibling_read_loop
-label Sibling_chunk_verified
-load_memory_u32 ebx rsp none 1 12712
-add_i32 ebx 1
-store_memory_u32 rsp none 1 12712 ebx
-jump_label Sibling_verify_chunk_loop
-
-label Sibling_read_complete
-move rdi r14
-load_address rsi File_input_scratch
-move_u32 edx 1
-xor eax eax
-syscall
-compare_i32 rax -4
-branch equal Sibling_read_complete
-test rax rax
-branch not_equal Scratch_failure
-load_memory_u32 r8d rsp none 1 12704
-move_u32 r9d 2
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_apply
-move rdx rax
-shift_right rdx 32
-test edx edx
-branch not_equal Scratch_failure
-compare_i32 eax 131
-branch not_equal Scratch_failure
-store_memory_u32 rsp none 1 12704 eax
-
-# Rename is the same-directory replacement boundary; fsync completes durability.
-move rdi r13
-move rsi rsp
-add_i32 rsi 12336
-move rdx r13
-move r10 rsp
-add_i32 r10 8224
-move_u32 eax 264
-syscall
-test rax rax
-branch not_equal Scratch_failure
-load_memory_u32 r8d rsp none 1 12704
-move_u32 r9d 3
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_apply
-move rdx rax
-shift_right rdx 32
-test edx edx
-branch not_equal Replaced_failure
-compare_i32 eax 260
-branch not_equal Replaced_failure
-store_memory_u32 rsp none 1 12704 eax
-move rdi r13
-move_u32 eax 74
-syscall
-test rax rax
-branch not_equal Replaced_failure
-load_memory_u32 r8d rsp none 1 12704
-move_u32 r9d 4
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_apply
-move rdx rax
-shift_right rdx 32
-test edx edx
-branch not_equal Replaced_failure
-compare_i32 eax 311
-branch not_equal Replaced_failure
-
-move rdi r14
-move_u32 eax 3
-syscall
+call Linux_durable_multi_chunk_publication_run
+move ebx eax
 move rdi r13
 move_u32 eax 3
 syscall
-xor edi edi
+move edi ebx
 jump_label Exit
 
-label Scratch_failure
-load_memory_u32 eax rsp none 1 12704
-compare_i32 eax 260
-branch equal Replaced_failure
-move r8d eax
-move_u32 r9d 5
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_apply
-compare_i32 eax 149
-branch not_equal Replaced_failure
-move rdi r13
-move rsi rsp
-add_i32 rsi 12336
-xor edx edx
-move_u32 eax 263
-syscall
-test rax rax
-branch not_equal Replaced_failure
-move_u32 r8d 149
-move_u32 r9d 6
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_apply
-compare_i32 eax 38
-branch not_equal Replaced_failure
-move rdi r14
-move_u32 eax 3
-syscall
 label Directory_failure
 move rdi r13
 move_u32 eax 3
 syscall
 label Failure
 move_u32 edi 1
-jump_label Exit
-
-label Replaced_failure
-load_memory_u32 r8d rsp none 1 12704
-move_u32 r9d 5
-move_u32 r10d 100
-move_u32 r11d 1000000000
-call Native_publication_apply
-move rdi r14
-move_u32 eax 3
-syscall
-move rdi r13
-move_u32 eax 3
-syscall
-move_u32 edi 2
 jump_label Exit
 
 label Native_exit

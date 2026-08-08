@@ -20,6 +20,8 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.LINUX_STARTUP_RESOURCE);
         var Adapter = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.LINUX_ADAPTER_RESOURCE);
+        var Transaction = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Wvoˉstagingˉpublisherˉapplicationˉbuilder.LINUX_TRANSACTION_RESOURCE);
         var Snapshot = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.SNAPSHOT_TABLE_RESOURCE);
         var Sequence = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
@@ -47,8 +49,12 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             0x1000);
         var Adapterˉsection = Adapter.Sections.Single(Item =>
             Item.Kind == Objectˉsectionˉkind.Code);
-        var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
+        var Transactionˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
             Adapterˉsection.Memoryˉsize,
+            16);
+        var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
+            checked(Transactionˉoffset + Transaction.Sections.Single(Item =>
+                Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize),
             16);
         var Sequenceˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
             checked(Snapshotˉoffset + Snapshot.Sections.Single(Item =>
@@ -76,6 +82,15 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         {
             Targets.Add(Export.Key, Export.Value);
         }
+        var (Transactionˉbytes, Transactionˉexports) =
+            Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
+                Transaction,
+                checked(Adapterˉaddress + Transactionˉoffset),
+                Targets);
+        foreach (var Export in Transactionˉexports)
+        {
+            Targets.Add(Export.Key, Export.Value);
+        }
         var Adapterˉexport = Adapter.Symbols.Single(Item =>
             Item.Binding == Objectˉsymbolˉbinding.Export &&
             Item.Name == "Linux_wvo_staging_publisher_run");
@@ -89,6 +104,8 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         var Adapterˉsegment = new byte[checked(
             (int)Sequenceˉoffset + Sequenceˉbytes.Length)];
         Adapterˉbytes.CopyTo(Adapterˉsegment);
+        Transactionˉbytes.CopyTo(Adapterˉsegment.AsSpan(
+            checked((int)Transactionˉoffset)));
         Snapshotˉbytes.CopyTo(Adapterˉsegment.AsSpan(
             checked((int)Snapshotˉoffset)));
         Sequenceˉbytes.CopyTo(Adapterˉsegment.AsSpan(

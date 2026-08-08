@@ -322,6 +322,16 @@ snapshot count, and bounds at most 31 canonical segment payloads. The WVO path
 has current-host execution evidence; hosted execution remains part of its
 publisher connection slice.
 
+Decision 0390 separates the Linux durable mutation protocol from that WVO
+adapter. The format-neutral function consumes an admitted snapshot ordinal
+range, stride, and fixed header skip; it exclusively creates an anchored
+sibling, handles exact partial writes, flushes and rereads through exact EOF,
+performs same-directory replacement and directory flush, cleans pre-replacement
+failure, and preserves the distinct indeterminate outcome after replacement.
+The WVO adapter supplies `(2, count, 1, 0)`; the hosted-container adapter will
+supply `(3, count, 2, 40)`. Linux application construction is pinned locally,
+while Linux process execution remains deferred to the paired-host gate.
+
 The Windows application has current-host execution evidence. The Linux image,
 complete compiler self-staging integration, package promotion, native
 replacement of the Stage 0 constructor, extended fault/concurrency matrix, and

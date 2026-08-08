@@ -574,6 +574,13 @@ wrappers select their different ordinal sequences. The WVO publisher retains
 real current-host atomic-publication evidence; the hosted wrapper is ready for
 the paired platform transaction connection.
 
+[Decision 0390](../Decisions/0390-Reusable-Linux-Durable-Multi-Chunk-Publication.md)
+extracts Linux exclusive-sibling creation, partial writes, flush, exact reread,
+rename, directory durability, cleanup, and outcome mapping from the WVO-specific
+adapter. WVO now supplies only its ordinal policy; the hosted path can supply
+alternating response ordinals with a 40-byte skip. Linux process evidence and
+the Windows handle-relative counterpart remain open.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

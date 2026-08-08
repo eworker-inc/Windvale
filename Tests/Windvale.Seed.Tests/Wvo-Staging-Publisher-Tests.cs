@@ -15,7 +15,9 @@ internal static partial class Program
     private const string LINUX_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba";
     private const string LINUX_WVO_STAGING_ADAPTER_WVO_SHA256 =
-        "741ca0cfc1931648f6dad80911448f2299a1e1d5b0c0de4300328fd123f8cba1";
+        "2ca0989221f55c1b4a4e8de1bf2bf4437f758e10c1211944b36333f0d029c15d";
+    private const string LINUX_DURABLE_MULTI_CHUNK_WVO_SHA256 =
+        "47a22cd108702d6427fe5be9fca00c3c05f38cb26dd69e51c8648544b3f98e76";
     private const string WINDOWS_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab";
     private const string WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256 =
@@ -33,6 +35,9 @@ internal static partial class Program
     private static readonly string LINUX_WVO_STAGING_ADAPTER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Linux-X64-Wvo-Staging-Publication-Adapter.wva");
+    private static readonly string LINUX_DURABLE_MULTI_CHUNK_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Linux-X64-Durable-Multi-Chunk-Publication.wva");
     private static readonly string WINDOWS_WVO_STAGING_PUBLISHER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Windows-X64-Wvo-Staging-Publisher.wva");
@@ -82,6 +87,8 @@ internal static partial class Program
 
         var Linuxˉstartup = Assembleˉsuccess(LINUX_WVO_STAGING_PUBLISHER_SOURCE);
         var Linuxˉadapter = Assembleˉsuccess(LINUX_WVO_STAGING_ADAPTER_SOURCE);
+        var Linuxˉtransaction = Assembleˉsuccess(
+            LINUX_DURABLE_MULTI_CHUNK_SOURCE);
         var Windowsˉstartup = Assembleˉsuccess(WINDOWS_WVO_STAGING_PUBLISHER_SOURCE);
         var Windowsˉadapter = Assembleˉsuccess(WINDOWS_WVO_STAGING_ADAPTER_SOURCE);
         var Snapshot = Assembleˉsuccess(X64_WVO_STAGING_SNAPSHOT_SOURCE);
@@ -95,9 +102,14 @@ internal static partial class Program
             "Linux_wvo_staging_publisher_startup");
         Assertˉstagingˉobject(
             Linuxˉadapter,
-            5_242,
+            3_499,
             LINUX_WVO_STAGING_ADAPTER_WVO_SHA256,
             "Linux_wvo_staging_publisher_run");
+        Assertˉstagingˉobject(
+            Linuxˉtransaction,
+            2_432,
+            LINUX_DURABLE_MULTI_CHUNK_WVO_SHA256,
+            "Linux_durable_multi_chunk_publication_run");
         Assertˉstagingˉobject(
             Windowsˉstartup,
             184,

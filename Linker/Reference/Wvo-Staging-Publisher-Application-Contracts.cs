@@ -16,9 +16,9 @@ public static class Wvoˉstagingˉpublisherˉapplicationˉcontract
     public const int WINDOWS_APPLICATION_BYTES = 6_458_368;
     public const string WINDOWS_APPLICATION_SHA256 =
         "8c966338fe0a138fba967ece764883c6b34c25104fb9eb1f8c6995a040ae303b";
-    public const int LINUX_APPLICATION_BYTES = 6_455_341;
+    public const int LINUX_APPLICATION_BYTES = 6_455_773;
     public const string LINUX_APPLICATION_SHA256 =
-        "03f15565cb00ad69ecfed45beb8e58d1898d8fcb29fa5ab2c7aef982ea9f7ea7";
+        "71a70e3bf3c98a7f8a8b951a090a7f83681d25cf064046f7a9d76cd50dabb601";
 }
 
 public static class Wvoˉstagingˉpublisherˉapplicationˉwriter

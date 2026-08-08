@@ -43,6 +43,9 @@
       Include="Consumers/Linux-X64-Wvo-Staging-Publication-Adapter.wvo"
       LogicalName="Windvale.Linker.Linux-X64-Wvo-Staging-Publication-Adapter.wvo" />
     <EmbeddedResource
+      Include="Consumers/Linux-X64-Durable-Multi-Chunk-Publication.wvo"
+      LogicalName="Windvale.Linker.Linux-X64-Durable-Multi-Chunk-Publication.wvo" />
+    <EmbeddedResource
       Include="Consumers/Windows-X64-Wvo-Staging-Publisher.wvo"
       LogicalName="Windvale.Linker.Windows-X64-Wvo-Staging-Publisher.wvo" />
     <EmbeddedResource
