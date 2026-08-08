@@ -165,6 +165,9 @@ NATIVE_UTF8_CORE_MODULE="$ARTIFACTS/Native-X64-Utf8-Service.wvb"
 NATIVE_UTF8_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Utf8-Service-Bridge.wvb"
 NATIVE_INTEGER_FORMAT_CORE_MODULE="$ARTIFACTS/Native-X64-Integer-Format-Services.wvb"
 NATIVE_INTEGER_FORMAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Integer-Format-Services-Bridge.wvb"
+NATIVE_SERVICE_CODE_BUILDER_MODULE="$ARTIFACTS/Native-X64-Service-Code-Builder.wvb"
+NATIVE_TEXT_CONCAT_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service.wvb"
+NATIVE_TEXT_CONCAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service-Bridge.wvb"
 NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
@@ -601,6 +604,53 @@ NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_IN
 printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_SERVICE_CODE_BUILDER_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Service-Code-Builder.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" -o "$NATIVE_SERVICE_CODE_BUILDER_MODULE"
+NATIVE_SERVICE_CODE_BUILDER_HASH=$(sha256sum "$NATIVE_SERVICE_CODE_BUILDER_MODULE" | awk '{print $1}')
+if [ "$NATIVE_SERVICE_CODE_BUILDER_HASH" != 'adfb19e5a0668d06d40e0d6cadfadb34a729a0b0d1c12a11d03af722bd53cb06' ]; then
+    echo "The Windvale native service-code builder has an unexpected digest: $NATIVE_SERVICE_CODE_BUILDER_HASH" >&2
+    exit 1
+fi
+NATIVE_SERVICE_CODE_BUILDER_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_SERVICE_CODE_BUILDER_MODULE")
+printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Nativeˉx64ˉserviceˉbuilder' >/dev/null
+printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Nativeˉx64ˉserviceˉfinish' >/dev/null
+printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Exports (10)' >/dev/null
+
+NATIVE_TEXT_CONCAT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_TEXT_CONCAT_CORE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    -o "$NATIVE_TEXT_CONCAT_CORE_MODULE"
+NATIVE_TEXT_CONCAT_CORE_HASH=$(sha256sum "$NATIVE_TEXT_CONCAT_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_TEXT_CONCAT_CORE_HASH" != '6b03161b9b3f112c6641474e321b2764522eb57a949d1b6bfc3d7b73ac91cc73' ]; then
+    echo "The Windvale native text-concatenation service core has an unexpected digest: $NATIVE_TEXT_CONCAT_CORE_HASH" >&2
+    exit 1
+fi
+NATIVE_TEXT_CONCAT_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_CONCAT_CORE_MODULE")
+printf '%s\n' "$NATIVE_TEXT_CONCAT_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_CONCAT_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉtextˉconcatˉserviceˉbuild' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_CONCAT_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_TEXT_CONCAT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv"
+NATIVE_TEXT_CONCAT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service-Bridge.wvb"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_TEXT_CONCAT_BRIDGE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    --module "$NATIVE_TEXT_CONCAT_CORE_SOURCE" \
+    -o "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE"
+NATIVE_TEXT_CONCAT_BRIDGE_HASH=$(sha256sum "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_TEXT_CONCAT_BRIDGE_HASH" != '87bd2e3489d3a5e4b31002858f37a5f2547706fdecc9b5f9292c736c331b9a08' ]; then
+    echo "The Windvale native text-concatenation service bridge has an unexpected digest: $NATIVE_TEXT_CONCAT_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE" "$NATIVE_TEXT_CONCAT_BRIDGE_RETAINED"
+NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_PUBLICATION_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wv"
 dotnet "$TOOL_DLL" \

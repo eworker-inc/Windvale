@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉx64ˉtextˉconcatˉserviceˉbridge profile portable;
+
+import Runtimeˉnativeˉx64ˉtextˉconcatˉservice as Textˉconcat;
+
+export fn Main() -> bytes {
+    return Textˉconcat.Nativeˉx64ˉtextˉconcatˉserviceˉbuild();
+}

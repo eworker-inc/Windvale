@@ -1411,6 +1411,7 @@ internal static partial class Program
         new("Windvale returns and publishes native argument leaves through the descriptor bridge", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉbridgeˉruns),
         new("Windvale constructs the exact native UTF-8 service leaf", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉutf8ˉserviceˉruns),
         new("Windvale constructs the exact native integer-format service leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉintegerˉformatˉservicesˉrun),
+        new("Windvale constructs the exact native text-concatenation service leaf", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉtextˉconcatˉserviceˉruns),
         new("Windvale owns bounded executable-image layout before W^X publication", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlayoutˉruns),
         new("Windvale owns executable publication lifetime transitions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉpublicationˉlifetimeˉruns),
         new("Windvale owns atomic WVB publication transaction outcomes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Wvbˉpublicationˉtransactionˉruns),

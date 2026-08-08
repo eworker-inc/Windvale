@@ -170,6 +170,9 @@ $NativeUtf8CoreModule = Join-Path $Artifacts 'Native-X64-Utf8-Service.wvb'
 $NativeUtf8BridgeModule = Join-Path $Artifacts 'Native-X64-Utf8-Service-Bridge.wvb'
 $NativeIntegerFormatCoreModule = Join-Path $Artifacts 'Native-X64-Integer-Format-Services.wvb'
 $NativeIntegerFormatBridgeModule = Join-Path $Artifacts 'Native-X64-Integer-Format-Services-Bridge.wvb'
+$NativeServiceCodeBuilderModule = Join-Path $Artifacts 'Native-X64-Service-Code-Builder.wvb'
+$NativeTextConcatCoreModule = Join-Path $Artifacts 'Native-X64-Text-Concat-Service.wvb'
+$NativeTextConcatBridgeModule = Join-Path $Artifacts 'Native-X64-Text-Concat-Service-Bridge.wvb'
 $NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -729,6 +732,74 @@ if (
     $NativeIntegerFormatBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native integer-format service bridge inspection is incomplete.'
+}
+
+$NativeServiceCodeBuilderSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Service-Code-Builder.wv'
+dotnet $ToolDll compile $NativeServiceCodeBuilderSource -o $NativeServiceCodeBuilderModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native service-code builder.' }
+$NativeServiceCodeBuilderHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceCodeBuilderModule).Hash.ToLowerInvariant()
+if ($NativeServiceCodeBuilderHash -ne 'adfb19e5a0668d06d40e0d6cadfadb34a729a0b0d1c12a11d03af722bd53cb06') {
+    throw "The Windvale native service-code builder has an unexpected digest: $NativeServiceCodeBuilderHash"
+}
+$NativeServiceCodeBuilderInspection = (dotnet $ToolDll inspect $NativeServiceCodeBuilderModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeServiceCodeBuilderInspection -notmatch 'Profile: portable' -or
+    $NativeServiceCodeBuilderInspection -notmatch 'Nativeˉx64ˉserviceˉbuilder' -or
+    $NativeServiceCodeBuilderInspection -notmatch 'Nativeˉx64ˉserviceˉfinish' -or
+    $NativeServiceCodeBuilderInspection -notmatch 'Exports \(10\)'
+) {
+    throw 'The Windvale native service-code builder inspection is incomplete.'
+}
+
+$NativeTextConcatCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Concat-Service.wv'
+dotnet $ToolDll `
+    compile $NativeTextConcatCoreSource `
+    --module $NativeServiceCodeBuilderSource `
+    -o $NativeTextConcatCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native text-concatenation service core.' }
+$NativeTextConcatCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextConcatCoreModule).Hash.ToLowerInvariant()
+if ($NativeTextConcatCoreHash -ne '6b03161b9b3f112c6641474e321b2764522eb57a949d1b6bfc3d7b73ac91cc73') {
+    throw "The Windvale native text-concatenation service core has an unexpected digest: $NativeTextConcatCoreHash"
+}
+$NativeTextConcatCoreInspection = (dotnet $ToolDll inspect $NativeTextConcatCoreModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeTextConcatCoreInspection -notmatch 'Profile: portable' -or
+    $NativeTextConcatCoreInspection -notmatch 'Nativeˉx64ˉtextˉconcatˉserviceˉbuild' -or
+    $NativeTextConcatCoreInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native text-concatenation service core inspection is incomplete.'
+}
+
+$NativeTextConcatBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv'
+$NativeTextConcatBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service-Bridge.wvb'
+dotnet $ToolDll `
+    compile $NativeTextConcatBridgeSource `
+    --module $NativeServiceCodeBuilderSource `
+    --module $NativeTextConcatCoreSource `
+    -o $NativeTextConcatBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native text-concatenation service bridge.' }
+$NativeTextConcatBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextConcatBridgeModule).Hash.ToLowerInvariant()
+if ($NativeTextConcatBridgeHash -ne '87bd2e3489d3a5e4b31002858f37a5f2547706fdecc9b5f9292c736c331b9a08') {
+    throw "The Windvale native text-concatenation service bridge has an unexpected digest: $NativeTextConcatBridgeHash"
+}
+$NativeTextConcatBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextConcatBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeTextConcatBridgeRetainedHash -ne $NativeTextConcatBridgeHash -or
+    (Get-Item -LiteralPath $NativeTextConcatBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeTextConcatBridgeModule).Length
+) {
+    throw 'The retained Windvale native text-concatenation service bridge does not match its exact source compilation.'
+}
+$NativeTextConcatBridgeInspection = (dotnet $ToolDll inspect $NativeTextConcatBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeTextConcatBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeTextConcatBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativeTextConcatBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native text-concatenation service bridge inspection is incomplete.'
 }
 
 $NativePublicationSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Core.wv'

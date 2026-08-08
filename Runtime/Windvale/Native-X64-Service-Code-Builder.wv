@@ -1,0 +1,169 @@
+module Runtimeˉnativeˉx64ˉserviceˉcodeˉbuilder profile portable;
+
+export record Nativeˉx64ˉserviceˉbuilder {
+    Code: bytes;
+    Patches: bytes;
+}
+
+data Emptyˉbytes: bytes = [];
+
+export fn Nativeˉx64ˉserviceˉbuilderˉempty() -> Nativeˉx64ˉserviceˉbuilder {
+    return Nativeˉx64ˉserviceˉbuilder(Emptyˉbytes, Emptyˉbytes);
+}
+
+export fn Nativeˉx64ˉserviceˉemitˉu8(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    Value: u8
+) -> Nativeˉx64ˉserviceˉbuilder {
+    return Nativeˉx64ˉserviceˉbuilder(
+        Bytesˉconcat(Builder.Code, Bytesˉfromˉu8(Value)),
+        Builder.Patches
+    );
+}
+
+export fn Nativeˉx64ˉserviceˉemitˉu32(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    Value: u32
+) -> Nativeˉx64ˉserviceˉbuilder {
+    return Nativeˉx64ˉserviceˉbuilder(
+        Bytesˉconcat(Builder.Code, Bytesˉfromˉu32ˉlittle(Value)),
+        Builder.Patches
+    );
+}
+
+export fn Nativeˉx64ˉserviceˉemitˉtwo(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    A: u8,
+    B: u8
+) -> Nativeˉx64ˉserviceˉbuilder {
+    return Nativeˉx64ˉserviceˉemitˉu8(
+        Nativeˉx64ˉserviceˉemitˉu8(Builder, A),
+        B
+    );
+}
+
+export fn Nativeˉx64ˉserviceˉemitˉthree(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    A: u8,
+    B: u8,
+    C: u8
+) -> Nativeˉx64ˉserviceˉbuilder {
+    return Nativeˉx64ˉserviceˉemitˉu8(
+        Nativeˉx64ˉserviceˉemitˉtwo(Builder, A, B),
+        C
+    );
+}
+
+export fn Nativeˉx64ˉserviceˉemitˉfour(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    A: u8,
+    B: u8,
+    C: u8,
+    D: u8
+) -> Nativeˉx64ˉserviceˉbuilder {
+    return Nativeˉx64ˉserviceˉemitˉu8(
+        Nativeˉx64ˉserviceˉemitˉthree(Builder, A, B, C),
+        D
+    );
+}
+
+export fn Nativeˉx64ˉserviceˉemitˉfive(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    A: u8,
+    B: u8,
+    C: u8,
+    D: u8,
+    E: u8
+) -> Nativeˉx64ˉserviceˉbuilder {
+    return Nativeˉx64ˉserviceˉemitˉu8(
+        Nativeˉx64ˉserviceˉemitˉfour(Builder, A, B, C, D),
+        E
+    );
+}
+
+export fn Nativeˉx64ˉserviceˉbranch(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    Condition: u8,
+    Target: u32
+) -> Nativeˉx64ˉserviceˉbuilder {
+    var Next: Nativeˉx64ˉserviceˉbuilder =
+        Nativeˉx64ˉserviceˉemitˉtwo(Builder, 15u8, Condition);
+    let Patchˉoffset: u32 = Bytesˉlength(Next.Code);
+    Next = Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+    var Patches: bytes = Bytesˉconcat(
+        Next.Patches,
+        Bytesˉfromˉu32ˉlittle(Patchˉoffset)
+    );
+    Patches = Bytesˉconcat(Patches, Bytesˉfromˉu32ˉlittle(Target));
+    return Nativeˉx64ˉserviceˉbuilder(Next.Code, Patches);
+}
+
+export fn Nativeˉx64ˉserviceˉjump(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    Target: u32
+) -> Nativeˉx64ˉserviceˉbuilder {
+    var Next: Nativeˉx64ˉserviceˉbuilder =
+        Nativeˉx64ˉserviceˉemitˉu8(Builder, 233u8);
+    let Patchˉoffset: u32 = Bytesˉlength(Next.Code);
+    Next = Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+    var Patches: bytes = Bytesˉconcat(
+        Next.Patches,
+        Bytesˉfromˉu32ˉlittle(Patchˉoffset)
+    );
+    Patches = Bytesˉconcat(Patches, Bytesˉfromˉu32ˉlittle(Target));
+    return Nativeˉx64ˉserviceˉbuilder(Next.Code, Patches);
+}
+
+fn Relativeˉu32(Patchˉoffset: u32, Targetˉoffset: u32) -> u32 {
+    let Sourceˉend: u32 = Patchˉoffset + 4u32;
+    if Targetˉoffset >= Sourceˉend {
+        return Targetˉoffset - Sourceˉend;
+    }
+    return 4294967295u32 - (Sourceˉend - Targetˉoffset) + 1u32;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Suffixˉoffset: u32 = Offset + 4u32;
+    return Bytesˉconcat(
+        Bytesˉslice(Input, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Value),
+            Bytesˉslice(
+                Input,
+                Suffixˉoffset,
+                Bytesˉlength(Input) - Suffixˉoffset
+            )
+        )
+    );
+}
+
+export fn Nativeˉx64ˉserviceˉfinish(
+    Builder: Nativeˉx64ˉserviceˉbuilder,
+    Labels: bytes
+) -> bytes {
+    var Result: bytes = Builder.Code;
+    let Patchˉcount: u32 = Bytesˉlength(Builder.Patches) / 8u32;
+    var Index: u32 = 0u32;
+    while Index < Patchˉcount {
+        let Recordˉoffset: u32 = Index * 8u32;
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Builder.Patches,
+            Recordˉoffset
+        );
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(
+            Builder.Patches,
+            Recordˉoffset + 4u32
+        );
+        let Targetˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Labels,
+            Target * 4u32
+        );
+        Result = Replaceˉu32(
+            Result,
+            Patchˉoffset,
+            Relativeˉu32(Patchˉoffset, Targetˉoffset)
+        );
+        Index = Index + 1u32;
+    }
+    return Result;
+}

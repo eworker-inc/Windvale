@@ -22,6 +22,9 @@ public static class X64ˉnativeˉtextˉservices
     public const int TEXT_CONCAT_CANONICAL_SIZE = 249;
     public const string TEXT_CONCAT_CANONICAL_SHA256 =
         "75c5588117e1f5f58a593a23aae6156a3a68a6302df5f50153b977bccbaaa3a0";
+    public const int TEXT_CONCAT_CONSUMER_CANONICAL_SIZE = 10_232;
+    public const string TEXT_CONCAT_CONSUMER_CANONICAL_SHA256 =
+        "87bd2e3489d3a5e4b31002858f37a5f2547706fdecc9b5f9292c736c331b9a08";
     public const int I32_FORMAT_CANONICAL_SIZE = 225;
     public const string I32_FORMAT_CANONICAL_SHA256 =
         "c33758106e8d7cd31bbed8ef1e789a8e355c52736c119c75493154a4184fa41e";
@@ -36,6 +39,11 @@ public static class X64ˉnativeˉtextˉservices
         "851f6d8e01b62106763af518c15dc163a9af9ea30c14cdb01d62adf1538ae7f9";
     private const string INTEGER_FORMAT_CONSUMER_RESOURCE =
         "Windvale.Native.Native-X64-Integer-Format-Services-Bridge.wvb";
+    private const string TEXT_CONCAT_CONSUMER_RESOURCE =
+        "Windvale.Native.Native-X64-Text-Concat-Service-Bridge.wvb";
+    private static readonly Lazy<ImmutableArray<byte>> TEXT_CONCAT_RESULT = new(
+        Buildˉtextˉconcatˉwithˉwindvale,
+        LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly Lazy<ImmutableArray<byte>> INTEGER_FORMAT_RESULT = new(
         Buildˉintegerˉformatˉwithˉwindvale,
         LazyThreadSafetyMode.ExecutionAndPublication);
@@ -47,7 +55,7 @@ public static class X64ˉnativeˉtextˉservices
         ImmutableArray<Nominalˉtypeˉdeclaration> types = default) => service switch
     {
         Nativeˉservice.Enumˉname => Buildˉenumˉname(Requireˉtypes(types)),
-        Nativeˉservice.Textˉconcat => Buildˉtextˉconcat(),
+        Nativeˉservice.Textˉconcat => Readˉtextˉconcat(),
         Nativeˉservice.Textˉquote => Buildˉtextˉquote(),
         Nativeˉservice.I32ˉformat => Readˉintegerˉformat(isˉsigned: true),
         Nativeˉservice.U32ˉformat => Readˉintegerˉformat(isˉsigned: false),
@@ -129,6 +137,40 @@ public static class X64ˉnativeˉtextˉservices
             : throw new ArgumentException(
                 "Native enum-name construction requires verified nominal metadata.",
                 nameof(types));
+
+    private static ImmutableArray<byte> Readˉtextˉconcat() =>
+        TEXT_CONCAT_RESULT.Value;
+
+    private static ImmutableArray<byte> Buildˉtextˉconcatˉwithˉwindvale()
+    {
+        using var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
+            .GetManifestResourceStream(TEXT_CONCAT_CONSUMER_RESOURCE) ??
+            throw Invalidˉtextˉconcatˉconsumer();
+        if (Stream.Length != TEXT_CONCAT_CONSUMER_CANONICAL_SIZE)
+        {
+            throw Invalidˉtextˉconcatˉconsumer();
+        }
+        var Bytes = new byte[TEXT_CONCAT_CONSUMER_CANONICAL_SIZE];
+        Stream.ReadExactly(Bytes);
+        var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
+        if (!StringComparer.Ordinal.Equals(Hash, TEXT_CONCAT_CONSUMER_CANONICAL_SHA256))
+        {
+            throw Invalidˉtextˉconcatˉconsumer();
+        }
+
+        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Compilation = X64ˉnativeˉbackend.Compile(Verified);
+        var Result = X64ˉnativeˉexecutor.Executeˉbytes(Compilation.Fragment);
+        Verifyˉidentity(
+            Nativeˉservice.Textˉconcat,
+            Result.AsSpan(),
+            TEXT_CONCAT_CANONICAL_SIZE,
+            TEXT_CONCAT_CANONICAL_SHA256);
+        return Result;
+    }
+
+    private static InvalidOperationException Invalidˉtextˉconcatˉconsumer() =>
+        new("The retained Windvale native text-concatenation consumer failed its exact identity contract.");
 
     private static ImmutableArray<byte> Readˉintegerˉformat(bool isˉsigned)
     {
@@ -774,88 +816,6 @@ public static class X64ˉnativeˉtextˉservices
         Code.Mark("emit_nibble_write");
         Code.Emit(0x41, 0x88, 0x10);
         Code.Emit(0x49, 0xFF, 0xC0);
-        Code.Emit(0xC3);
-        return Code.Finish();
-    }
-
-    private static ImmutableArray<byte> Buildˉtextˉconcat()
-    {
-        var Code = new Serviceˉcodeˉbuilder();
-        Code.Emit(0x48, 0x83, 0xEC, 0x20);
-        Code.Emit(0x4C, 0x89, 0x04, 0x24);
-        Code.Emit(0x4C, 0x89, 0x4C, 0x24, 0x08);
-        Code.Emit(0x48, 0x89, 0x4C, 0x24, 0x10);
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            0x00, 0x00, 0x00, 0x00);
-        Code.Emit(0x41, 0x8B, 0x40, Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
-        Code.Emit(0x41, 0x8B, 0x49, Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
-        Code.Emit(0x01, 0xC1);
-        Code.Branch(0x82, "value_failure");
-        Code.Emit(0x81, 0xF9);
-        Code.Emitˉu32(Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES);
-        Code.Branch(0x87, "value_failure");
-        Code.Emit(0x89, 0x4C, 0x24, 0x18);
-        Code.Emit(0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET);
-        Code.Emit(0x89, 0x44, 0x24, 0x1C);
-        Code.Emit(0x01, 0xC1);
-        Code.Branch(0x82, "arena_failure");
-        Code.Emit(0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET);
-        Code.Branch(0x87, "arena_failure");
-        Code.Emit(0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET);
-        Code.Emit(0x4D, 0x8B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET);
-        Code.Emit(0x8B, 0x54, 0x24, 0x1C);
-        Code.Emit(0x49, 0x01, 0xD1);
-
-        Code.Emit(0x4C, 0x8B, 0x04, 0x24);
-        Code.Emit(0x41, 0x8B, 0x48, Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
-        Code.Emit(0x4D, 0x8B, 0x00);
-        Code.Mark("left_copy");
-        Code.Emit(0x85, 0xC9);
-        Code.Branch(0x84, "right_start");
-        Code.Emit(0x41, 0x8A, 0x00);
-        Code.Emit(0x41, 0x88, 0x01);
-        Code.Emit(0x49, 0xFF, 0xC0);
-        Code.Emit(0x49, 0xFF, 0xC1);
-        Code.Emit(0xFF, 0xC9);
-        Code.Branch(0x85, "left_copy");
-
-        Code.Mark("right_start");
-        Code.Emit(0x4C, 0x8B, 0x44, 0x24, 0x08);
-        Code.Emit(0x41, 0x8B, 0x48, Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
-        Code.Emit(0x4D, 0x8B, 0x00);
-        Code.Mark("right_copy");
-        Code.Emit(0x85, 0xC9);
-        Code.Branch(0x84, "written");
-        Code.Emit(0x41, 0x8A, 0x00);
-        Code.Emit(0x41, 0x88, 0x01);
-        Code.Emit(0x49, 0xFF, 0xC0);
-        Code.Emit(0x49, 0xFF, 0xC1);
-        Code.Emit(0xFF, 0xC9);
-        Code.Branch(0x85, "right_copy");
-
-        Code.Mark("written");
-        Code.Emit(0x48, 0x8B, 0x4C, 0x24, 0x10);
-        Code.Emit(0x49, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET);
-        Code.Emit(0x8B, 0x54, 0x24, 0x1C);
-        Code.Emit(0x48, 0x01, 0xD0);
-        Code.Emit(0x48, 0x89, 0x01);
-        Code.Emit(0x8B, 0x44, 0x24, 0x18);
-        Code.Emit(0x89, 0x41, 0x08);
-        Code.Emit(0xC7, 0x41, 0x0C, 0x00, 0x00, 0x00, 0x00);
-        Code.Emit(0x31, 0xC0);
-        Code.Emit(0x48, 0x83, 0xC4, 0x20);
-        Code.Emit(0xC3);
-
-        Code.Mark("value_failure");
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            (byte)Nativeˉserviceˉfailureˉdetail.Textˉvalueˉlimit, 0x00, 0x00, 0x00);
-        Code.Jump("failure");
-        Code.Mark("arena_failure");
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            (byte)Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted, 0x00, 0x00, 0x00);
-        Code.Mark("failure");
-        Code.Emit(0xB8, 0x01, 0x00, 0x00, 0x00);
-        Code.Emit(0x48, 0x83, 0xC4, 0x20);
         Code.Emit(0xC3);
         return Code.Finish();
     }

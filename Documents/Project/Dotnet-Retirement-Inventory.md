@@ -104,9 +104,19 @@ integer-format leaves. One focused Windvale generator now owns both variants;
 its retained capability-free bridge builds identically through Stage 0 and the
 ordinary native source front door, then returns the unchanged 225-byte and
 191-byte leaves. The recovery wrapper only verifies, lowers, executes, splits,
-and caches them. Enum-name, concatenation, quoting, retained-WVB loading, W^X
-publication, service-bundle orchestration, Linux evidence, and the grouped gate
-remain open.
+and caches them. Enum-name, quoting, retained-WVB loading, W^X publication,
+service-bundle orchestration, Linux evidence, and the grouped gate remain open.
+
+[Decision 0357](../Decisions/0357-Windvale-Owned-Native-Text-Concatenation-Construction.md)
+removes the C# emission algorithm for the exact text-concatenation leaf. A
+focused Windvale generator uses the new shared service-code builder to produce
+the unchanged 249-byte x64 leaf, and its retained capability-free bridge builds
+identically through Stage 0 and the ordinary native source front door. The
+recovery wrapper only verifies, lowers, executes, identity-checks, and caches
+the result. Existing dynamic-text evidence continues to own copy, value-limit,
+arena-exhaustion, and mixed-allocation semantics. Enum-name, quoting,
+retained-WVB loading, W^X publication, service-bundle orchestration, Linux
+evidence, and the grouped gate remain open.
 
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution

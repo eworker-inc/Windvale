@@ -1,0 +1,207 @@
+module Runtimeˉnativeˉx64ˉtextˉconcatˉservice profile portable;
+
+import Runtimeˉnativeˉx64ˉserviceˉcodeˉbuilder as Serviceˉcode;
+
+fn Appendˉlabel(Labels: bytes, Offset: u32) -> bytes {
+    return Bytesˉconcat(Labels, Bytesˉfromˉu32ˉlittle(Offset));
+}
+
+export fn Nativeˉx64ˉtextˉconcatˉserviceˉbuild() -> bytes {
+    let Leftˉcopyˉtarget: u32 = 0u32;
+    let Rightˉstartˉtarget: u32 = 1u32;
+    let Rightˉcopyˉtarget: u32 = 2u32;
+    let Writtenˉtarget: u32 = 3u32;
+    let Valueˉfailureˉtarget: u32 = 4u32;
+    let Arenaˉfailureˉtarget: u32 = 5u32;
+    let Failureˉtarget: u32 = 6u32;
+
+    var Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉbuilderˉempty();
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 236u8, 32u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 76u8, 137u8, 4u8, 36u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 76u8, 137u8, 76u8, 36u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 137u8, 76u8, 36u8, 16u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 199u8, 71u8, 64u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 0u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 139u8, 64u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 139u8, 73u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 1u8, 193u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 130u8, Valueˉfailureˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 129u8, 249u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1048576u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 135u8, Valueˉfailureˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 137u8, 76u8, 36u8, 24u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 139u8, 71u8, 60u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 137u8, 68u8, 36u8, 28u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 1u8, 193u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 130u8, Arenaˉfailureˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 59u8, 79u8, 56u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 135u8, Arenaˉfailureˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 137u8, 79u8, 60u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 77u8, 139u8, 79u8, 48u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 84u8, 36u8, 28u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 73u8, 1u8, 209u8
+    );
+
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 76u8, 139u8, 4u8, 36u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 139u8, 72u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 77u8, 139u8, 0u8
+    );
+    let Leftˉcopyˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 133u8, 201u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Rightˉstartˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 65u8, 138u8, 0u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 65u8, 136u8, 1u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 73u8, 255u8, 192u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 73u8, 255u8, 193u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 255u8, 201u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 133u8, Leftˉcopyˉtarget
+    );
+
+    let Rightˉstartˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 76u8, 139u8, 68u8, 36u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 139u8, 72u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 77u8, 139u8, 0u8
+    );
+    let Rightˉcopyˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 133u8, 201u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Writtenˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 65u8, 138u8, 0u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 65u8, 136u8, 1u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 73u8, 255u8, 192u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 73u8, 255u8, 193u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 255u8, 201u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 133u8, Rightˉcopyˉtarget
+    );
+
+    let Writtenˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 76u8, 36u8, 16u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 73u8, 139u8, 71u8, 48u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 84u8, 36u8, 28u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 1u8, 208u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 137u8, 1u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 68u8, 36u8, 24u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 137u8, 65u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 199u8, 65u8, 12u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 0u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 49u8, 192u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 196u8, 32u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 195u8);
+
+    let Valueˉfailureˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 199u8, 71u8, 64u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Failureˉtarget);
+
+    let Arenaˉfailureˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 199u8, 71u8, 64u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 2u32);
+
+    let Failureˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 184u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 196u8, 32u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 195u8);
+
+    var Labels: bytes = Bytesˉfromˉu32ˉlittle(Leftˉcopyˉoffset);
+    Labels = Appendˉlabel(Labels, Rightˉstartˉoffset);
+    Labels = Appendˉlabel(Labels, Rightˉcopyˉoffset);
+    Labels = Appendˉlabel(Labels, Writtenˉoffset);
+    Labels = Appendˉlabel(Labels, Valueˉfailureˉoffset);
+    Labels = Appendˉlabel(Labels, Arenaˉfailureˉoffset);
+    Labels = Appendˉlabel(Labels, Failureˉoffset);
+    return Serviceˉcode.Nativeˉx64ˉserviceˉfinish(Builder, Labels);
+}
