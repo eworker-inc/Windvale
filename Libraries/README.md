@@ -6,6 +6,11 @@ This tree owns reusable Windvale APIs and implementations. [Decision 0140](../Do
 
 The current compiler still uses `portable`, `hosted`, and `system` as a coarse compatibility and authority boundary. Independent platform scope, optional capabilities, typed capability values, provider binding metadata, and runtime module linking are not implemented.
 
+The proposed [post-.NET-retirement language and library stage](../Documents/Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
+recommends the next product-facing use of these layers: one package-backed
+application, one portable library, and one rights-limited platform library. It does
+not add a global namespace, package resolver, or any new library contract yet.
+
 ## Layers
 
 - `Foundation/` contains deterministic capability-free algorithms and values. `Foundation/Resources/Resource-Store.wv` owns portable `WVRS 1` validation and lookup.
@@ -41,6 +46,12 @@ it should not require every source reference to repeat a `.NET`-style global
 namespace. Module names still use Windvale source naming, import aliases define
 the local vocabulary, and capability/package/ABI identities retain their
 separately specified ASCII-safe forms.
+
+The post-retirement proposal retains this rule: prefer a focused facade only when
+it owns a small coherent family of operations. Do not turn `Platform/Filesystem`
+into one broad `System.IO` equivalent; directories, random-access storage,
+durability, watch, permissions, and native extensions have different capability,
+failure, and portability contracts.
 
 ## Static capability rules
 

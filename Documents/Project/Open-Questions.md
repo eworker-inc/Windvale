@@ -122,6 +122,7 @@ The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) 
 ## Product and release lifecycle
 
 - Does product review accept the proposed Windvale 0.1 gate—complete .NET-free normal Windows/Linux operation, exact Stage 0 recovery, one packaged useful application/library, explicit grants, signed reproducible artifacts, threat model, and offline third-party verification—or should an earlier artifact be named a development preview instead?
+- Does the [`Readˉonlyˉwvdb` snapshot path](Post-Dotnet-Retirement-Language-And-Libraries.md) become the first package-backed application workload without stabilizing `WVDB 1`, or does another existing multi-module consumer better exercise a portable library, rights-limited platform library, typed denial, and useful cross-host output?
 - Which exact canonical package-manifest, lockfile, bundle, content-store, and installed-generation encodings implement the proposed separation while recording per-part target selection, capability closure, dependency origin, license, integrity, and provenance without a registry?
 - Which independent version fields and compatibility rules belong in the first source edition, package manifest, and capability-binding implementation?
 - Which offline-root and release-key threshold, rotation overlap, revocation/freshness mechanism, verification envelope, and optional SLSA translation qualify the first official signed release while retaining unsigned local development?

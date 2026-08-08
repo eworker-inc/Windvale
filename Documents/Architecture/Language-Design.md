@@ -182,7 +182,13 @@ The recommended first family treats the maximum as part of the exact type. `sequ
 
 The first implementation may use contiguous bounded storage and explicit ownership without a tracing collector. Cycles, unbounded growth, lazy iterators, general collection generics, covariance, and concurrent mutation remain outside this family.
 
-A later `using` declaration scopes one owned capability and closes it on ordinary control-flow exits. Terminal process cleanup remains the runtime or kernel boundary; the language does not pretend that arbitrary user cleanup executes after corruption. Package resources may use typed declarations supplied by an immutable content-addressed manifest rather than native paths.
+A later `using` declaration may scope an affine resource or capability value only
+when its contract gives the caller an ordinary close operation. A prebound or
+shared provider reference is not implicitly owned or closed by lexical scope.
+Terminal process cleanup remains the runtime or kernel boundary; the language does
+not pretend that arbitrary user cleanup executes after corruption. Package
+resources may use typed declarations supplied by an immutable content-addressed
+manifest rather than native paths.
 
 ## Operators
 
@@ -231,6 +237,28 @@ General generics, value-producing conditionals and matches, bounded interpolatio
 
 Classes, inheritance, implicit null, implicit conversions, general exceptions, operator overloading, inferred overload selection, unrestricted macros, preprocessors, ambient reflection, whitespace-sensitive blocks, hidden capability acquisition, and unbounded collections are not accepted directions.
 
+## Post-.NET-retirement product-lane proposal
+
+Completing native retirement should make the Windvale toolchain normal before it
+makes the language broader. The proposed
+[post-.NET-retirement language and library stage](../Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
+therefore recommends a package-backed useful application and compact library model
+before a larger syntax batch. Source modules remain explicit dependencies with local
+import aliases rather than a global hierarchical namespace; `Foundation`,
+`Platform`, `Protocol`, and later `System` are cross-cutting library roles, not
+ambient source names or an exhaustive folder hierarchy.
+
+The recommended language order is typed rights-limited capability references and,
+separately, scoped ownership for values with an explicit caller-controlled close
+contract; then a narrow visible result-propagation form and one bounded associative
+collection selected by measured consumers. General generics, richer aggregate
+shapes, floating point, and structured concurrency remain later consumer-driven
+features. A feature becomes available on native, WebAssembly, or Windvale OS only
+after the affected target path implements and verifies it; source-only lowering
+into existing verified operations need not create a new backend contract. Target
+backends are not separate source languages and must not inherit support from another
+runtime by implication.
+
 ## Evolution order
 
 The first eight slices are implemented locally and await the final coherent-batch verification and cross-host qualification where required:
@@ -243,7 +271,14 @@ The first eight slices are implemented locally and await the final coherent-batc
 6. Payload variants and typed recoverable results.
 7. Bounded sequences/builders, consuming freeze, and bounded `for`.
 8. Division/remainder, unsigned bitwise/shifts, and text/bytes equality.
-9. Typed capabilities, `using`, and package-backed resources.
-10. Later operators and advanced syntax only from measured consumers.
+9. A package/library product baseline using current source semantics.
+10. Typed capability references and scoped ownership where an exact close contract
+    exists.
+11. Narrow result propagation and one bounded associative collection, each only
+    from measured consumers.
+12. Later operators and advanced syntax only from measured consumers.
 
-Every implemented slice advances the reference and Windvale compilers, editor package, specifications, WIR/WVB contracts where affected, interpreter/native/Wasm consumers where supported, malformed cases, deterministic bytes, and cross-host evidence together.
+Every pre-freeze implemented slice advances the reference and Windvale compilers,
+editor package, specifications, WIR/WVB contracts where affected,
+interpreter/native/Wasm consumers where supported, malformed cases, deterministic
+bytes, and cross-host evidence together. Under [Decision 0213](../Decisions/0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md), successor source features advance through the Windvale-owned compiler rather than adding new breadth to the frozen C# recovery compiler. They still require specifications, Windvale-owned verifier evidence, editor support, deterministic fixtures, and explicit target support before a native, WebAssembly, or OS claim.

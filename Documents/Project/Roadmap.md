@@ -338,6 +338,23 @@ open.
 
 The completion gate is a controlled and recoverable Windvale-native toolchain on Windows and Linux with no silent semantic fork, no normal .NET invocation, and matching native bootstrap evidence. This retires .NET as a dependency without erasing the Stage 0 historical record.
 
+### Post-.NET-retirement language and library product lane (proposed)
+
+The post-retirement product claim begins only after the complete Decision 0057 gate,
+and the next numbered phase remains the boot and minimal-kernel path below. Package,
+library, and application preparation may advance during Phase 10 when a direct
+consumer exists and the work does not widen the frozen C# compiler. In parallel
+with Phase 11, the proposed
+[post-.NET-retirement language and library stage](Post-Dotnet-Retirement-Language-And-Libraries.md)
+defines the product-facing application path: one useful package-backed application,
+one portable library, one rights-limited platform library, deterministic lock and
+package identities, and explicit capability approval/binding on Windows and Linux.
+It recommends typed capability references and, separately, scoped ownership for
+caller-closeable resources before new convenience syntax; then narrow result
+propagation and one bounded associative collection when measured consumers require
+them. It is documentation only until each contract has a focused decision and
+evidence, and it does not delay or replace Phase 11.
+
 ### Phase 11 - boot path and minimal kernel
 
 [Decisions 0084](../Decisions/0084-Minimal-Capability-Oriented-Windvale-Os-Architecture.md), [0173](../Decisions/0173-Windvale-Process-Service-And-Driver-Architecture.md), [0188](../Decisions/0188-First-Hpet-Calibrated-Local-Apic-Preemption-Proof.md), and [0196](../Decisions/0196-First-Generation-Safe-Non-Tail-Memory-Object-Reclamation.md) plus the [Windvale OS architecture](../Architecture/Windvale-Os-Architecture.md) fix the durable destination and current boundary: a small capability-oriented kernel written primarily in system-profile Windvale, a bounded WVA machine layer, one process/thread mechanism for applications, helpers, services, drivers, runtimes, and future VMMs, AOT kernel and low-level drivers, and isolated Windvale services with general JIT compilation outside privileged mode. Probe 39 supplies cross-host-qualified CPL3/capability/IPC/runtime evidence over three protected processes, a ready/wait dispatcher, and one private fixed-preemption experiment. Cross-host-qualified Probe 40 adds one independently lived, generation-safe client memory object. It is not a claim that general verification, loading, scheduling, physical-memory management, resource domains, launch plans, discovery, or supervision are complete.
