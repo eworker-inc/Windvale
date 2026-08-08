@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0377](0377-Windvale-Owned-Native-Service-Table.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native execution-context construction](../../Specifications/Windvale-Native-Execution-Context-Construction.md)
+- Advanced by: [Decision 0379](0379-Windvale-Owned-Native-Argument-Table.md)
 
 ## Context
 

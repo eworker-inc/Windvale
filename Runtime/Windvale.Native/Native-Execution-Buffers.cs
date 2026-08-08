@@ -130,22 +130,19 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
         }
 
         var Packed = Allocate(Packedˉbytes.ToImmutableArray());
-        var Tableˉbytes = new byte[checked(Arguments.Length * Nativeˉcontract.VALUE_SLOT_BYTES)];
+        var Entries = new Nativeˉargumentˉtableˉentry[Arguments.Length];
         for (var Index = 0; Index < Arguments.Length; Index++)
         {
-            var Descriptor = Tableˉbytes.AsSpan(Index * Nativeˉcontract.VALUE_SLOT_BYTES);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Descriptor[Nativeˉcontract.BORROWED_TEXT_POINTER_OFFSET..],
-                checked((ulong)(Packed.Address.ToInt64() + Offsets[Index])));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Descriptor[Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET..],
-                checked((uint)Encoded[Index].Length));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Descriptor[Nativeˉcontract.BORROWED_TEXT_RESERVED_OFFSET..],
-                0);
+            Entries[Index] = new(
+                checked((ulong)(Packed.Address.ToInt64() + Offsets[Index])),
+                checked((uint)Encoded[Index].Length),
+                checked((uint)Offsets[Index]));
         }
 
-        var Table = Allocate(Tableˉbytes.ToImmutableArray());
+        var Tableˉbytes = Nativeˉargumentˉtableˉbuilder.Build(
+            Entries.ToImmutableArray(),
+            Packedˉbytes.ToImmutableArray());
+        var Table = Allocate(Tableˉbytes);
         Verifyˉargumentˉtable(Encoded, Offsets, Packed, Table);
         Argumentˉtable = Table;
         Argumentˉcount = checked((uint)Arguments.Length);

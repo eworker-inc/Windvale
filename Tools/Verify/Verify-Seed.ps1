@@ -204,6 +204,8 @@ $NativeServiceTableCoreModule = Join-Path $Artifacts 'Native-Service-Table-Core.
 $NativeServiceTableBridgeModule = Join-Path $Artifacts 'Native-Service-Table-Bridge.wvb'
 $NativeExecutionContextCoreModule = Join-Path $Artifacts 'Native-Execution-Context-Core.wvb'
 $NativeExecutionContextBridgeModule = Join-Path $Artifacts 'Native-Execution-Context-Bridge.wvb'
+$NativeArgumentTableCoreModule = Join-Path $Artifacts 'Native-Argument-Table-Core.wvb'
+$NativeArgumentTableBridgeModule = Join-Path $Artifacts 'Native-Argument-Table-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
@@ -1584,6 +1586,51 @@ if (
     $NativeExecutionContextBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native execution-context bridge inspection is incomplete.'
+}
+
+$NativeArgumentTableCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Argument-Table-Core.wv'
+$NativeArgumentTableBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Argument-Table-Bridge.wv'
+$NativeArgumentTableBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Argument-Table-Bridge.wvb'
+$NativeArgumentTableArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Argument-Table-Bridge.wvnf'
+dotnet $ToolDll compile $NativeArgumentTableCoreSource -o $NativeArgumentTableCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native argument-table core.' }
+$NativeArgumentTableCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeArgumentTableCoreModule).Hash.ToLowerInvariant()
+if ($NativeArgumentTableCoreHash -ne '08df8569d091fc0c860988dceff1320d7a8e407b54ce571515af601c10120d75') {
+    throw "The Windvale native argument-table core has an unexpected digest: $NativeArgumentTableCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeArgumentTableBridgeSource `
+    --module $NativeArgumentTableCoreSource `
+    -o $NativeArgumentTableBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native argument-table bridge.' }
+$NativeArgumentTableBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeArgumentTableBridgeModule).Hash.ToLowerInvariant()
+if ($NativeArgumentTableBridgeHash -ne '080be2dea127948697222c23efe4be828410450b602dee5cf2a63abc11627788') {
+    throw "The Windvale native argument-table bridge has an unexpected digest: $NativeArgumentTableBridgeHash"
+}
+$NativeArgumentTableBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeArgumentTableBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeArgumentTableBridgeRetainedHash -ne $NativeArgumentTableBridgeHash -or
+    (Get-Item -LiteralPath $NativeArgumentTableBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeArgumentTableBridgeModule).Length
+) {
+    throw 'The retained Windvale native argument-table bridge does not match its exact source compilation.'
+}
+$NativeArgumentTableArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeArgumentTableArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeArgumentTableArtifactHash -ne '4a4cc1d6171126a821c1f96de11c4ffcb78ea83e98d06d5e0802e5921e9062d8' -or
+    (Get-Item -LiteralPath $NativeArgumentTableArtifactRetained).Length -ne 44775
+) {
+    throw "The retained Windvale native argument-table fragment has an unexpected identity: $NativeArgumentTableArtifactHash"
+}
+$NativeArgumentTableBridgeInspection = (dotnet $ToolDll inspect $NativeArgumentTableBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeArgumentTableBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeArgumentTableBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeArgumentTableBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeArgumentTableBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native argument-table bridge inspection is incomplete.'
 }
 
 $NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'

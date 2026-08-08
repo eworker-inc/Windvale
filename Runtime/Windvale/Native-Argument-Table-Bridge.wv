@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉargumentˉtableˉbridge profile portable;
+
+import Runtimeˉnativeˉargumentˉtable as Argumentˉtable;
+
+export fn Main(Input: bytes) -> bytes {
+    return Argumentˉtable.Nativeˉargumentˉtableˉbuild(Input);
+}

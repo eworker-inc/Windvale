@@ -1,0 +1,98 @@
+module Runtimeˉnativeˉargumentˉtable profile portable;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Tableˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1380013655u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Tableˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn Nonzeroˉu64(Input: bytes, Offset: u32) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != 0u32 {
+        return true;
+    }
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 0u32;
+}
+
+export fn Nativeˉargumentˉtableˉbuild(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 40u32 || Total > 66632u32 {
+        return Failure(Input, 1u32, Total);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1363236439u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Count == 0u32 || Count > 67u32 {
+        return Failure(Input, 4u32, 12u32);
+    }
+    let Payloadˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Payloadˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Payloadˉoffset != 24u32 + Count * 16u32 ||
+        Payloadˉbytes > 65536u32 ||
+        Payloadˉoffset + Payloadˉbytes != Total {
+        return Failure(Input, 5u32, 16u32);
+    }
+
+    var Table: bytes = Empty(Input);
+    var Index: u32 = 0u32;
+    var Runningˉoffset: u32 = 0u32;
+    while Index < Count {
+        let Entryˉoffset: u32 = 24u32 + Index * 16u32;
+        if !Nonzeroˉu64(Input, Entryˉoffset) {
+            return Failure(Input, 6u32, Entryˉoffset);
+        }
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 8u32);
+        let Sourceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Entryˉoffset + 12u32);
+        if Length > 4096u32 || Sourceˉoffset != Runningˉoffset {
+            return Failure(Input, 7u32, Entryˉoffset + 8u32);
+        }
+        if Runningˉoffset > Payloadˉbytes ||
+            Length > Payloadˉbytes - Runningˉoffset {
+            return Failure(Input, 7u32, Entryˉoffset + 8u32);
+        }
+        Table = Bytesˉconcat(Table, Bytesˉslice(Input, Entryˉoffset, 12u32));
+        Table = Appendˉu32(Table, 0u32);
+        Runningˉoffset = Runningˉoffset + Length;
+        Index = Index + 1u32;
+    }
+    if Runningˉoffset != Payloadˉbytes {
+        return Failure(Input, 7u32, 20u32);
+    }
+
+    let Tableˉbytes: u32 = Count * 16u32;
+    return Bytesˉconcat(
+        Responseˉheader(Input, 32u32 + Tableˉbytes, 0u32, Total, Tableˉbytes),
+        Table
+    );
+}

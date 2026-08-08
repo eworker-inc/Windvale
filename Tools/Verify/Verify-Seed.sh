@@ -199,6 +199,8 @@ NATIVE_SERVICE_TABLE_CORE_MODULE="$ARTIFACTS/Native-Service-Table-Core.wvb"
 NATIVE_SERVICE_TABLE_BRIDGE_MODULE="$ARTIFACTS/Native-Service-Table-Bridge.wvb"
 NATIVE_EXECUTION_CONTEXT_CORE_MODULE="$ARTIFACTS/Native-Execution-Context-Core.wvb"
 NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE="$ARTIFACTS/Native-Execution-Context-Bridge.wvb"
+NATIVE_ARGUMENT_TABLE_CORE_MODULE="$ARTIFACTS/Native-Argument-Table-Core.wvb"
+NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE="$ARTIFACTS/Native-Argument-Table-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Bridge.wvb"
 SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
@@ -1241,6 +1243,38 @@ printf '%s\n' "$NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION" | grep -F 'Profile: 
 printf '%s\n' "$NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
 printf '%s\n' "$NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_EXECUTION_CONTEXT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_ARGUMENT_TABLE_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Argument-Table-Core.wv"
+NATIVE_ARGUMENT_TABLE_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Argument-Table-Bridge.wv"
+NATIVE_ARGUMENT_TABLE_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Argument-Table-Bridge.wvb"
+NATIVE_ARGUMENT_TABLE_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Argument-Table-Bridge.wvnf"
+dotnet "$TOOL_DLL" compile "$NATIVE_ARGUMENT_TABLE_CORE_SOURCE" -o "$NATIVE_ARGUMENT_TABLE_CORE_MODULE"
+NATIVE_ARGUMENT_TABLE_CORE_HASH=$(sha256sum "$NATIVE_ARGUMENT_TABLE_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_ARGUMENT_TABLE_CORE_HASH" != '08df8569d091fc0c860988dceff1320d7a8e407b54ce571515af601c10120d75' ]; then
+    echo "The Windvale native argument-table core has an unexpected digest: $NATIVE_ARGUMENT_TABLE_CORE_HASH" >&2
+    exit 1
+fi
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_ARGUMENT_TABLE_BRIDGE_SOURCE" \
+    --module "$NATIVE_ARGUMENT_TABLE_CORE_SOURCE" \
+    -o "$NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE"
+NATIVE_ARGUMENT_TABLE_BRIDGE_HASH=$(sha256sum "$NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_ARGUMENT_TABLE_BRIDGE_HASH" != '080be2dea127948697222c23efe4be828410450b602dee5cf2a63abc11627788' ]; then
+    echo "The Windvale native argument-table bridge has an unexpected digest: $NATIVE_ARGUMENT_TABLE_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE" "$NATIVE_ARGUMENT_TABLE_BRIDGE_RETAINED"
+NATIVE_ARGUMENT_TABLE_ARTIFACT_HASH=$(sha256sum "$NATIVE_ARGUMENT_TABLE_ARTIFACT_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_ARGUMENT_TABLE_ARTIFACT_HASH" != '4a4cc1d6171126a821c1f96de11c4ffcb78ea83e98d06d5e0802e5921e9062d8' ] ||
+    [ "$(wc -c < "$NATIVE_ARGUMENT_TABLE_ARTIFACT_RETAINED")" -ne 44775 ]; then
+    echo "The retained Windvale native argument-table fragment has an unexpected identity: $NATIVE_ARGUMENT_TABLE_ARTIFACT_HASH" >&2
+    exit 1
+fi
+NATIVE_ARGUMENT_TABLE_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_ARGUMENT_TABLE_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_ARGUMENT_TABLE_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
+printf '%s\n' "$NATIVE_ARGUMENT_TABLE_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_ARGUMENT_TABLE_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_PUBLICATION_LIFETIME_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Core.wv"
 dotnet "$TOOL_DLL" \

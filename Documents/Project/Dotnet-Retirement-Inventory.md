@@ -326,6 +326,16 @@ bootstrap recursion cycle, and focused evidence compares its bytes exactly.
 That oracle, W^X ownership, arena allocation, invocation, result admission,
 Linux evidence, and the grouped gate remain open.
 
+[Decision 0379](../Decisions/0379-Windvale-Owned-Native-Argument-Table.md)
+removes the remaining C# writer for ABI 12's immutable 16-byte argument
+descriptors. Windvale validates the bounded count, opaque targets, per-entry
+lengths, canonical offsets, and exact packed-payload coverage before returning
+the complete table. The managed host retains strict UTF-8 validation, payload
+packing and allocation, address projection, independent descriptor/range/byte
+verification, and reverse-order release. Arena allocation, entry/result bridge
+cells, invocation, W^X ownership, Linux evidence, and the grouped gate remain
+open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
