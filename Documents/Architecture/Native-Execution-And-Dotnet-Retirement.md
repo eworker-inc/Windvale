@@ -571,9 +571,12 @@ Decision 0398.
 [Decision 0400](../Decisions/0400-Standalone-Native-Hosted-Service-Bundle.md)
 adds exact `WVSQ 2` to `WVSI 2` service-bundle segment production as a native
 process. It reuses the established portable publication and materialization
-cores and retains the response envelope as immutable evidence. Native resource
-acquisition, ordered request construction, metadata-request projection from
-that evidence, segment-request orchestration, and complete composition remain.
+cores and retains the response envelope as immutable evidence. Decision 0403
+adds the preceding exact request process: `WVSG 1` maps raw fragment/service
+resources into planned image regions, and one native invocation emits one
+canonical `WVSQ 2` without managed segment arithmetic or byte construction.
+Ordered invocation, response/evidence composition, hosted-container segment
+requests, Linux execution, promotion, and complete composition remain.
 
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale

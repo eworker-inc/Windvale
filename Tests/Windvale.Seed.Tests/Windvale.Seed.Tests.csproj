@@ -295,6 +295,9 @@
       Include="../../Foundation/Decimal-Parsing.wv"
       LogicalName="Windvale.Seed.Tests.Decimal-Parsing.wv" />
     <EmbeddedResource
+      Include="../../Foundation/Immutable-Source-Regions.wv"
+      LogicalName="Windvale.Seed.Tests.Immutable-Source-Regions.wv" />
+    <EmbeddedResource
       Include="../../Examples/Foundation/Decimal-Parsing-Demo.wv"
       LogicalName="Windvale.Seed.Tests.Decimal-Parsing-Demo.wv" />
     <EmbeddedResource
@@ -360,6 +363,9 @@
     <EmbeddedResource
       Include="../../Runtime/Windvale/Native-Hosted-Tool-Metadata-Request-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Metadata-Request-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Service-Bundle-Request-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Service-Bundle-Request-Tool.wv" />
     <EmbeddedResource
       Include="../../Foundation/Sha256-Compression.wv"
       LogicalName="Windvale.Seed.Tests.Sha256-Compression.wv" />

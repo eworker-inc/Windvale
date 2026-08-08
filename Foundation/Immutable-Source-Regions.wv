@@ -1,0 +1,179 @@
+module Foundationˉimmutableˉsourceˉregions profile portable;
+
+export record Immutableˉsourceˉregionˉplan {
+    Valid: bool;
+    Chunks: u32;
+    Regions: u32;
+    Logicalˉbytes: u32;
+    Imageˉbytes: u32;
+    Regionˉbase: u32;
+}
+
+export record Immutableˉsourceˉappend {
+    Valid: bool;
+    Value: bytes;
+    Appendedˉbytes: u32;
+}
+
+const HEADER_BYTES: u32 = 32u32;
+const CHUNK_RECORD_BYTES: u32 = 20u32;
+const REGION_RECORD_BYTES: u32 = 16u32;
+const MAXIMUM_CHUNKS: u32 = 31u32;
+const MAXIMUM_REGIONS: u32 = 16u32;
+const MAXIMUM_LOGICAL_BYTES: u32 = 67108864u32;
+const MAXIMUM_IMAGE_BYTES: u32 = 134217728u32;
+const MAXIMUM_RESOURCE_BYTES: u32 = 4194304u32;
+
+fn Invalid() -> Immutableˉsourceˉregionˉplan {
+    return Immutableˉsourceˉregionˉplan(
+        false, 0u32, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+fn Maximum(Left: u32, Right: u32) -> u32 {
+    if Left > Right { return Left; }
+    return Right;
+}
+
+fn Minimum(Left: u32, Right: u32) -> u32 {
+    if Left < Right { return Left; }
+    return Right;
+}
+
+export fn Immutableˉsourceˉregionsˉadmit(
+    Manifest: bytes
+) -> Immutableˉsourceˉregionˉplan {
+    let Total: u32 = Bytesˉlength(Manifest);
+    if Total < HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 0u32) != 1196643927u32 ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 8u32) != Total {
+        return Invalid();
+    }
+    let Chunks: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 12u32);
+    let Regions: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 16u32);
+    let Logicalˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 20u32);
+    let Imageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 24u32);
+    if Chunks == 0u32 || Chunks > MAXIMUM_CHUNKS ||
+        Regions == 0u32 || Regions > MAXIMUM_REGIONS ||
+        Logicalˉbytes == 0u32 || Logicalˉbytes > MAXIMUM_LOGICAL_BYTES ||
+        Imageˉbytes == 0u32 || Imageˉbytes > MAXIMUM_IMAGE_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 28u32) != 0u32 ||
+        Total != HEADER_BYTES + Chunks * CHUNK_RECORD_BYTES +
+            Regions * REGION_RECORD_BYTES {
+        return Invalid();
+    }
+
+    var Logicalˉcursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Chunks {
+        let Chunkˉrecord: u32 = HEADER_BYTES + Index * CHUNK_RECORD_BYTES;
+        let Resourceˉoffset: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 8u32);
+        let Chunkˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 12u32);
+        let Resourceˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 16u32);
+        if Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord) != Index ||
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 4u32) !=
+                Logicalˉcursor ||
+            Chunkˉbytes == 0u32 || Resourceˉbytes == 0u32 ||
+            Resourceˉbytes > MAXIMUM_RESOURCE_BYTES ||
+            Resourceˉoffset > Resourceˉbytes ||
+            Chunkˉbytes > Resourceˉbytes - Resourceˉoffset ||
+            Chunkˉbytes > Logicalˉbytes - Logicalˉcursor {
+            return Invalid();
+        }
+        Logicalˉcursor = Logicalˉcursor + Chunkˉbytes;
+        Index = Index + 1u32;
+    }
+    if Logicalˉcursor != Logicalˉbytes { return Invalid(); }
+
+    let Regionˉbase: u32 = HEADER_BYTES + Chunks * CHUNK_RECORD_BYTES;
+    Logicalˉcursor = 0u32;
+    var Imageˉcursor: u32 = 0u32;
+    Index = 0u32;
+    while Index < Regions {
+        let Regionˉrecord: u32 = Regionˉbase + Index * REGION_RECORD_BYTES;
+        let Imageˉoffset: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 8u32);
+        let Regionˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 12u32);
+        if Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord) != Index ||
+            Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 4u32) !=
+                Logicalˉcursor ||
+            Imageˉoffset < Imageˉcursor || Imageˉoffset > Imageˉbytes ||
+            Regionˉbytes > Logicalˉbytes - Logicalˉcursor ||
+            Regionˉbytes > Imageˉbytes - Imageˉoffset {
+            return Invalid();
+        }
+        Logicalˉcursor = Logicalˉcursor + Regionˉbytes;
+        Imageˉcursor = Imageˉoffset + Regionˉbytes;
+        Index = Index + 1u32;
+    }
+    if Logicalˉcursor != Logicalˉbytes { return Invalid(); }
+    return Immutableˉsourceˉregionˉplan(
+        true, Chunks, Regions, Logicalˉbytes, Imageˉbytes, Regionˉbase
+    );
+}
+
+export fn Immutableˉsourceˉresourceˉname(Prefix: text, Index: u32) -> text {
+    return Textˉconcat(Textˉconcat(Prefix, ".chunk-"), U32ˉformat(Index));
+}
+
+export fn Immutableˉsourceˉprefixˉisˉvalid(Prefix: text) -> bool {
+    let Length: u32 = Bytesˉlength(Textˉtoˉutf8(Prefix));
+    if Length == 0u32 { return false; }
+    return Length <= 4076u32;
+}
+
+export fn Immutableˉsourceˉresourceˉisˉvalid(
+    Manifest: bytes,
+    Chunk: u32,
+    Resource: bytes
+) -> bool {
+    let Plan: Immutableˉsourceˉregionˉplan =
+        Immutableˉsourceˉregionsˉadmit(Manifest);
+    if !Plan.Valid || Chunk >= Plan.Chunks { return false; }
+    let Record: u32 = HEADER_BYTES + Chunk * CHUNK_RECORD_BYTES;
+    return Bytesˉlength(Resource) ==
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 16u32);
+}
+
+export fn Immutableˉsourceˉappendˉchunk(
+    Output: bytes,
+    Manifest: bytes,
+    Chunk: u32,
+    Resource: bytes,
+    Logicalˉoffset: u32,
+    Logicalˉbytes: u32
+) -> Immutableˉsourceˉappend {
+    let Plan: Immutableˉsourceˉregionˉplan =
+        Immutableˉsourceˉregionsˉadmit(Manifest);
+    if !Plan.Valid || Chunk >= Plan.Chunks ||
+        Logicalˉoffset > Plan.Logicalˉbytes ||
+        Logicalˉbytes > Plan.Logicalˉbytes - Logicalˉoffset ||
+        !Immutableˉsourceˉresourceˉisˉvalid(Manifest, Chunk, Resource) {
+        return Immutableˉsourceˉappend(false, Output, 0u32);
+    }
+    let Record: u32 = HEADER_BYTES + Chunk * CHUNK_RECORD_BYTES;
+    let Chunkˉoffset: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 4u32);
+    let Chunkˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 12u32);
+    let Start: u32 = Maximum(Logicalˉoffset, Chunkˉoffset);
+    let End: u32 = Minimum(
+        Logicalˉoffset + Logicalˉbytes,
+        Chunkˉoffset + Chunkˉbytes
+    );
+    if Start >= End { return Immutableˉsourceˉappend(true, Output, 0u32); }
+    let Resourceˉoffset: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 8u32) +
+        Start - Chunkˉoffset;
+    let Count: u32 = End - Start;
+    return Immutableˉsourceˉappend(
+        true,
+        Bytesˉconcat(Output, Bytesˉslice(Resource, Resourceˉoffset, Count)),
+        Count
+    );
+}

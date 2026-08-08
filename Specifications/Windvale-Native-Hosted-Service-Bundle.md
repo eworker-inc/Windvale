@@ -62,8 +62,9 @@ admission, and immutable response-file production now have a native process
 boundary on both hosts. The new C# target writer is deletion-bound package
 layout and identity wiring.
 
-Native selection and acquisition of fragment/service resources plus
-construction of ordered `WVSQ` requests remain to be orchestrated. The
+The [native request producer](Windvale-Native-Hosted-Service-Bundle-Request.md)
+now selects source intersections and constructs one exact `WVSQ` request from
+immutable `WVSG` resources. Ordered invocation remains to be orchestrated. The
 [native metadata-request producer](Windvale-Native-Hosted-Metadata-Request.md)
 now recomputes multi-segment evidence and constructs `WVHM`. Complete pipeline
 composition, Linux execution, promotion, and the grouped dual-host retirement

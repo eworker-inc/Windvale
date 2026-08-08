@@ -61,6 +61,9 @@ No broader verifier was run under the agreed end-of-goal verification policy.
 - The next slice can orchestrate the service-bundle responses, metadata request,
   metadata constructor, runtime header, planner, platform/startup pieces, and
   bounded segment requests as one native process path.
+- Decision 0403 supplies exact per-segment service-bundle request construction
+  from immutable source geometry; its ordered invocation and response/evidence
+  composition remain part of that process path.
 - Stage 0 remains frozen recovery/differential evidence until the final gate.
 
 ## Reconsideration triggers

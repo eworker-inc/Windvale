@@ -132,6 +132,8 @@ internal static class Program
             "linux-x64-streaming-sha256-evidence-v1|" +
             "windows-x64-hosted-metadata-request-v1|" +
             "linux-x64-hosted-metadata-request-v1|" +
+            "windows-x64-hosted-service-bundle-request-v1|" +
+            "linux-x64-hosted-service-bundle-request-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -211,6 +213,7 @@ internal static class Program
         Hostedˉserviceˉbundleˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
@@ -299,6 +302,8 @@ internal static class Program
             "linux-x64-streaming-sha256-evidence-v1|" +
             "windows-x64-hosted-metadata-request-v1|" +
             "linux-x64-hosted-metadata-request-v1|" +
+            "windows-x64-hosted-service-bundle-request-v1|" +
+            "linux-x64-hosted-service-bundle-request-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -414,6 +419,8 @@ internal static class Program
         Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -568,6 +575,7 @@ internal static class Program
                 Hostedˉserviceˉbundleˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -675,6 +683,11 @@ internal static class Program
                             Moduleˉname),
                     Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Hostedˉmetadataˉrequestˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉserviceˉbundleˉrequestˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -829,6 +842,11 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉserviceˉbundleˉrequestˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -903,6 +921,7 @@ internal static class Program
                     Hostedˉserviceˉbundleˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
@@ -1414,6 +1433,8 @@ internal static class Program
             "linux-x64-streaming-sha256-evidence-v1|" +
             "windows-x64-hosted-metadata-request-v1|" +
             "linux-x64-hosted-metadata-request-v1|" +
+            "windows-x64-hosted-service-bundle-request-v1|" +
+            "linux-x64-hosted-service-bundle-request-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -1461,6 +1482,8 @@ internal static class Program
             "linux-x64-streaming-sha256-evidence-v1|" +
             "windows-x64-hosted-metadata-request-v1|" +
             "linux-x64-hosted-metadata-request-v1|" +
+            "windows-x64-hosted-service-bundle-request-v1|" +
+            "linux-x64-hosted-service-bundle-request-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +

@@ -54,8 +54,10 @@ verifier was run.
 - Decision 0401 supplies bounded native SHA-256 evidence across ordered
   multi-resource regions, and Decision 0402 recomputes the actual planned
   leaves while constructing the exact metadata request. Ordered resource and
-  service-bundle request orchestration, complete composition, Linux execution,
-  promotion, and the grouped gate remain.
+  service-bundle request orchestration remained. Decision 0403 now supplies
+  one exact native `WVSQ` request from immutable `WVSG` source geometry;
+  ordered invocation, complete composition, Linux execution, promotion, and
+  the grouped gate remain.
 
 ## Reconsideration triggers
 

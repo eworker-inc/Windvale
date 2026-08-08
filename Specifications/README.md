@@ -14,6 +14,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Foundation byte ordering](Foundation-Byte-Ordering.md)
 - [Foundation decimal parsing](Foundation-Decimal-Parsing.md)
 - [Foundation byte construction](Foundation-Byte-Construction.md)
+- [Immutable source geometry](Windvale-Immutable-Source-Geometry.md)
 
 ## Compiler and project input
 
@@ -84,6 +85,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native hosted-container runtime-header producer](Windvale-Native-Hosted-Container-Runtime.md)
 - [Native hosted-container metadata constructor](Windvale-Native-Hosted-Container-Metadata.md)
 - [Native hosted service-bundle producer](Windvale-Native-Hosted-Service-Bundle.md)
+- [Native hosted service-bundle request producer](Windvale-Native-Hosted-Service-Bundle-Request.md)
 - [Native hosted metadata-request producer](Windvale-Native-Hosted-Metadata-Request.md)
 - [Native hosted-container segmenter](Windvale-Native-Hosted-Container-Segmenter.md)
 - [Native hosted-container segment set](Windvale-Native-Hosted-Container-Segment-Set.md)

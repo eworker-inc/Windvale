@@ -523,6 +523,16 @@ CLR, and the native build front door reproduces the Stage 0 WVB exactly.
 Ordered service-bundle resource/request orchestration, segment requests,
 complete composition, Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0403](../Decisions/0403-Native-Hosted-Service-Bundle-Request.md)
+removes managed service-bundle segment selection and `WVSQ 2` byte construction
+from the candidate pipeline. The reusable `WVSG 1` geometry maps bounded raw
+fragment/service resources into planned image regions without conflicting with
+the existing `WVRS` package store or trusting geometry as identity. One paired
+native command produces an exact canonical request for a selected segment and
+matches the frozen recovery oracle without loading the CLR. Ordered invocation,
+`WVSI` response/evidence composition, final hosted-container segment requests,
+Linux execution, promotion, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
