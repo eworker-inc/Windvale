@@ -193,6 +193,17 @@ teardown in the normal path. Variable-input constructors, managed bundle
 assembly, final W^X publication, Linux evidence, and the grouped gate remain
 open.
 
+[Decision 0365](../Decisions/0365-Native-Publication-Planner-Execution.md)
+removes the managed reference interpreter and synthetic `file.read_bytes`
+capability from normal executable-image layout and publication-lifetime
+planning. Both retained bridges are now capability-free portable
+`Main(bytes) -> bytes` modules lowered to verified native fragments. One small
+service-free bootstrap publishes only those planners and is checked against
+their accepted Windvale results; final application layout and lifetime still
+come from Windvale. Retained-WVB decoding/lowering, segmented enum-metadata
+transport, managed service-bundle assembly, the platform W^X adapter, Linux
+evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

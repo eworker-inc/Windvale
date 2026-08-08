@@ -62,9 +62,9 @@ internal static partial class Program
     private const string NATIVE_STENCIL_BRIDGE_SHA256 = "0a4387f12674f08d91682898a27bf84494cbdf886c34542beeb52fd9c4a538da";
     private const string NATIVE_STENCIL_DEMO_SHA256 = "6b27fbd10d5f06855354f433ec0b8c9b1af1761ef04458817931e675c26e0da8";
     private const string NATIVE_PUBLICATION_CORE_SHA256 = "3048902ce708d6e640d484507efc1d567399bcafed6e2c133ca2827aff83189f";
-    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "99a2732e499682ba6dff7c361b2ad207fb877f34f02b2da3f4766247f242e20e";
+    private const string NATIVE_PUBLICATION_BRIDGE_SHA256 = "111608af768b18adb9be8b531214aeb14c472efef482fad507224aaa1b18909c";
     private const string NATIVE_PUBLICATION_LIFETIME_CORE_SHA256 = "a9e540c5c9ddaaeb4f45ab08a902a0a9019ce8155d544e319485c023b7d485d3";
-    private const string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256 = "a975756734084b143bba70fa915fd4c021a8a0139f05abef0c37bcda6309c418";
+    private const string NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256 = "f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554";
     private const string SOURCE_COMPOSITION_SHA256 = "2a3acaf08c23075ee2a9701ba1b35dfe2cb83fca27eb669102a9d0dbfff53419";
     private const string PROJECT_MANIFEST_CORE_SHA256 = "8f081220fa56d5166d9a36cbdf207455c312059d8e76fcd511003fcc67ead031";
     private const string PROJECT_MANIFEST_TOOL_SHA256 = "064b6532983a5f0626212d51f1aeb838f8775d108406c43dff1208a832371bbf";
@@ -8198,10 +8198,22 @@ internal static partial class Program
         }
 
         var Bridge = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
-        Equal(Moduleˉprofile.Hosted, Bridge.Module.Profile);
-        Equal(Capabilityˉcatalog.FILE_READ_BYTES, Bridge.Module.Capabilities.Single().Name);
+        Equal(Moduleˉprofile.Portable, Bridge.Module.Profile);
+        True(Bridge.Module.Capabilities.IsEmpty, "The publication planner retained a host capability.");
         var Main = Bridge.Module.Exports.Single(Export => Export.Name == "Main");
-        Equal(Valueˉtype.Bytes, Bridge.Module.Functions[Main.Targetˉindex].Returnˉtype.Kind);
+        var Mainˉdeclaration = Bridge.Module.Functions[Main.Targetˉindex];
+        Equal(Valueˉtype.Bytes, Mainˉdeclaration.Parameterˉtypes.Single().Kind);
+        Equal(Valueˉtype.Bytes, Mainˉdeclaration.Returnˉtype.Kind);
+        var Reference = new Referenceˉruntime(
+            Bridge,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults);
+        var Native = X64ˉnativeˉbackend.Compile(Bridge).Fragment;
+        Equal(
+            new Nativeˉentryˉshape(
+                Nativeˉentryˉinputˉkind.Bytes,
+                Nativeˉentryˉresultˉkind.Descriptor),
+            Nativeˉfragmentˉverifier.Verifyˉentryˉshape(Native));
 
         var Noˉservices = ImmutableArray<Nativeˉpublicationˉservice>.Empty;
         var Emptyˉplan = X64ˉnativeˉpublicationˉlayout.Plan(5, Noˉservices);
@@ -8289,6 +8301,17 @@ internal static partial class Program
         var Request = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(5, Services);
         var Response = X64ˉnativeˉpublicationˉlayout.Evaluateˉrequest(Request);
         var Repeatedˉresponse = X64ˉnativeˉpublicationˉlayout.Evaluateˉrequest(Request);
+        Sequenceˉequal(Reference.Runˉmainˉbytes(Request).Bytes, Response);
+        Sequenceˉequal(
+            Response,
+            X64ˉnativeˉexecutor.Executeˉplannerˉbytes(Native, Request, 250_000));
+        var Bootstrapˉlayout = Nativeˉplannerˉbootstrap.Planˉlayout(Native);
+        var Windvaleˉlayout = X64ˉnativeˉpublicationˉlayout.Plan(
+            Native.Code.Length,
+            []);
+        Equal(Windvaleˉlayout.Fragmentˉbytes, Bootstrapˉlayout.Fragmentˉbytes);
+        Equal(Windvaleˉlayout.Imageˉbytes, Bootstrapˉlayout.Imageˉbytes);
+        Sequenceˉequal(Windvaleˉlayout.Placements, Bootstrapˉlayout.Placements);
         Sequenceˉequal(Response, Repeatedˉresponse);
         Sequenceˉequal(
             First.Placements,
@@ -8304,12 +8327,13 @@ internal static partial class Program
             return Result.ToImmutableArray();
         }
 
-        static void Expectˉrequestˉfailure(
+        void Expectˉrequestˉfailure(
             ImmutableArray<byte> request,
             Nativeˉpublicationˉstatus status,
             uint failureˉoffset)
         {
             var Result = X64ˉnativeˉpublicationˉlayout.Evaluateˉrequest(request);
+            Sequenceˉequal(Reference.Runˉmainˉbytes(request).Bytes, Result);
             Equal(X64ˉnativeˉpublicationˉlayout.RESPONSE_HEADER_BYTES, Result.Length);
             Equal(
                 X64ˉnativeˉpublicationˉlayout.RESPONSE_MAGIC,
@@ -8486,10 +8510,24 @@ internal static partial class Program
         }
 
         var Bridge = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
-        Equal(Moduleˉprofile.Hosted, Bridge.Module.Profile);
-        Equal(Capabilityˉcatalog.FILE_READ_BYTES, Bridge.Module.Capabilities.Single().Name);
+        Equal(Moduleˉprofile.Portable, Bridge.Module.Profile);
+        True(
+            Bridge.Module.Capabilities.IsEmpty,
+            "The publication-lifetime planner retained a host capability.");
         var Main = Bridge.Module.Exports.Single(Export => Export.Name == "Main");
-        Equal(Valueˉtype.Bytes, Bridge.Module.Functions[Main.Targetˉindex].Returnˉtype.Kind);
+        var Mainˉdeclaration = Bridge.Module.Functions[Main.Targetˉindex];
+        Equal(Valueˉtype.Bytes, Mainˉdeclaration.Parameterˉtypes.Single().Kind);
+        Equal(Valueˉtype.Bytes, Mainˉdeclaration.Returnˉtype.Kind);
+        var Reference = new Referenceˉruntime(
+            Bridge,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults);
+        var Native = X64ˉnativeˉbackend.Compile(Bridge).Fragment;
+        Equal(
+            new Nativeˉentryˉshape(
+                Nativeˉentryˉinputˉkind.Bytes,
+                Nativeˉentryˉresultˉkind.Descriptor),
+            Nativeˉfragmentˉverifier.Verifyˉentryˉshape(Native));
 
         var Expected = ImmutableArray.Create(
             new Nativeˉpublicationˉtransition(
@@ -8550,6 +8588,13 @@ internal static partial class Program
 
         var Request = X64ˉnativeˉpublicationˉlifetime.Buildˉrequest(102);
         var Response = X64ˉnativeˉpublicationˉlifetime.Evaluateˉrequest(Request);
+        Sequenceˉequal(Reference.Runˉmainˉbytes(Request).Bytes, Response);
+        Sequenceˉequal(
+            Response,
+            X64ˉnativeˉexecutor.Executeˉplannerˉbytes(Native, Request, 100_000));
+        Sequenceˉequal(
+            Plan.Transitions,
+            Nativeˉplannerˉbootstrap.Planˉlifetime(Plan.Imageˉbytes).Transitions);
         Sequenceˉequal(
             Response,
             X64ˉnativeˉpublicationˉlifetime.Evaluateˉrequest(Request));
@@ -8567,12 +8612,13 @@ internal static partial class Program
             return Result.ToImmutableArray();
         }
 
-        static void Expectˉrequestˉfailure(
+        void Expectˉrequestˉfailure(
             ImmutableArray<byte> request,
             Nativeˉpublicationˉlifetimeˉstatus status,
             uint failureˉoffset)
         {
             var Result = X64ˉnativeˉpublicationˉlifetime.Evaluateˉrequest(request);
+            Sequenceˉequal(Reference.Runˉmainˉbytes(request).Bytes, Result);
             Equal(X64ˉnativeˉpublicationˉlifetime.RESPONSE_HEADER_BYTES, Result.Length);
             Equal(
                 X64ˉnativeˉpublicationˉlifetime.RESPONSE_MAGIC,

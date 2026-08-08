@@ -58,6 +58,18 @@ public static class X64ˉnativeˉexecutor
             maximumˉcallˉdepth,
             hostˉservices).Bytes;
 
+    internal static ImmutableArray<byte> Executeˉplannerˉbytes(
+        Nativeˉfragment fragment,
+        ImmutableArray<byte> input,
+        long maximumˉinstructions) =>
+        Executeˉentry(
+            fragment,
+            Nativeˉentryˉinputˉkind.Bytes,
+            Nativeˉentryˉresultˉkind.Descriptor,
+            input,
+            maximumˉinstructions: maximumˉinstructions,
+            plannerˉbootstrap: true).Bytes;
+
     internal static Nativeˉexecutionˉmeasurement Measureˉi32(
         Nativeˉfragment fragment,
         string entry = "Main",
@@ -85,7 +97,8 @@ public static class X64ˉnativeˉexecutor
         string entry = "Main",
         long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
         int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH,
-        Nativeˉhostˉservices? hostˉservices = null)
+        Nativeˉhostˉservices? hostˉservices = null,
+        bool plannerˉbootstrap = false)
     {
         var Actualˉshape = Nativeˉfragmentˉverifier.Verifyˉentryˉshape(fragment);
         ArgumentNullException.ThrowIfNull(entry);
@@ -121,6 +134,11 @@ public static class X64ˉnativeˉexecutor
             throw new PlatformNotSupportedException("The first native executor requires an x86-64 process.");
         }
         Requireˉservices(fragment, hostˉservices);
+        if (plannerˉbootstrap && !fragment.Requiredˉservices.IsEmpty)
+        {
+            throw new InvalidOperationException(
+                "The publication-planner bootstrap requires a service-free fragment.");
+        }
         var Entry = fragment.Symbols.SingleOrDefault(Symbol =>
             Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
             Symbol.Kind == Nativeˉsymbolˉkind.Function &&
@@ -222,17 +240,21 @@ public static class X64ˉnativeˉexecutor
             }
             Serviceˉcode.Add((Service, Nativeˉserviceˉcode));
         }
-        var Publicationˉplan = X64ˉnativeˉpublicationˉlayout.Plan(
-            fragment.Code.Length,
-            Serviceˉcode
-                .Select(Item => new Nativeˉpublicationˉservice(Item.Service, Item.Code.Length))
-                .ToImmutableArray());
+        var Publicationˉplan = plannerˉbootstrap
+            ? Nativeˉplannerˉbootstrap.Planˉlayout(fragment)
+            : X64ˉnativeˉpublicationˉlayout.Plan(
+                fragment.Code.Length,
+                Serviceˉcode
+                    .Select(Item => new Nativeˉpublicationˉservice(Item.Service, Item.Code.Length))
+                    .ToImmutableArray());
         var Allocationˉbytes = Publicationˉplan.Imageˉbytes;
         var Serviceˉoffsets = Publicationˉplan.Placements.ToDictionary(
             Placement => Placement.Service,
             Placement => Placement.Offset);
-        using var Executableˉimage = Nativeˉexecutableˉimage.Allocateˉwritable(
-            X64ˉnativeˉpublicationˉlifetime.Plan(Allocationˉbytes));
+        var Lifetimeˉplan = plannerˉbootstrap
+            ? Nativeˉplannerˉbootstrap.Planˉlifetime(Allocationˉbytes)
+            : X64ˉnativeˉpublicationˉlifetime.Plan(Allocationˉbytes);
+        using var Executableˉimage = Nativeˉexecutableˉimage.Allocateˉwritable(Lifetimeˉplan);
         var Serviceˉtable = IntPtr.Zero;
         var Serviceˉfailureˉdetail = Nativeˉserviceˉfailureˉdetail.None;
         var Resultˉbytes = ImmutableArray<byte>.Empty;

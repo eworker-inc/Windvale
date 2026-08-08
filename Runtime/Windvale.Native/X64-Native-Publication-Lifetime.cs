@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using System.Security.Cryptography;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
-using Windvale.Runtime;
 
 namespace Windvale.Runtime.Native;
 
@@ -56,15 +55,12 @@ public static class X64ˉnativeˉpublicationˉlifetime
     public const int TRANSITION_RECORD_BYTES = 12;
     public const int TRANSITION_COUNT = 9;
     public const int RESPONSE_BYTES = RESPONSE_HEADER_BYTES + TRANSITION_COUNT * TRANSITION_RECORD_BYTES;
-    public const int PLANNER_CANONICAL_SIZE = 4_565;
+    public const int PLANNER_CANONICAL_SIZE = 4_442;
     public const string PLANNER_CANONICAL_SHA256 =
-        "a975756734084b143bba70fa915fd4c021a8a0139f05abef0c37bcda6309c418";
+        "f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554";
 
-    private const string REQUEST_NAME = "native-publication-lifetime-request.bin";
     private const string PLANNER_RESOURCE = "Windvale.Native.Native-Publication-Lifetime-Bridge.wvb";
     private const long MAXIMUM_PLANNER_INSTRUCTIONS = 100_000;
-    private static readonly ImmutableHashSet<string> AUTHORIZED_CAPABILITIES =
-        ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.FILE_READ_BYTES);
     private static readonly ImmutableArray<Nativeˉpublicationˉtransition> EXPECTED_TRANSITIONS =
     [
         new(Nativeˉpublicationˉstate.Unallocated, Nativeˉpublicationˉaction.Allocateˉwritable, Nativeˉpublicationˉstate.Writable),
@@ -77,7 +73,7 @@ public static class X64ˉnativeˉpublicationˉlifetime
         new(Nativeˉpublicationˉstate.Invoked, Nativeˉpublicationˉaction.Release, Nativeˉpublicationˉstate.Released),
         new(Nativeˉpublicationˉstate.Released, Nativeˉpublicationˉaction.Complete, Nativeˉpublicationˉstate.Released),
     ];
-    private static readonly Lazy<Verifiedˉmodule> PLANNER = new(
+    private static readonly Lazy<Nativeˉfragment> PLANNER = new(
         Readˉplanner,
         LazyThreadSafetyMode.ExecutionAndPublication);
 
@@ -109,20 +105,10 @@ public static class X64ˉnativeˉpublicationˉlifetime
                 nameof(request));
         }
 
-        var Resources = new Hostedˉresourceˉcontext(
-            [],
-            TextWriter.Null,
-            TextWriter.Null,
-            new Lifetimeˉrequestˉreader(request));
-        var Result = new Referenceˉruntime(
+        return X64ˉnativeˉexecutor.Executeˉplannerˉbytes(
             PLANNER.Value,
-            new Referenceˉcapabilityˉhost(Resources),
-            new Runtimeˉoptions(
-                AUTHORIZED_CAPABILITIES,
-                MAXIMUM_PLANNER_INSTRUCTIONS,
-                Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH))
-            .Runˉmainˉbytes();
-        return Result.Bytes;
+            request,
+            MAXIMUM_PLANNER_INSTRUCTIONS);
     }
 
     public static Nativeˉpublicationˉlifetimeˉplan Verifyˉresponse(
@@ -214,7 +200,7 @@ public static class X64ˉnativeˉpublicationˉlifetime
         }
     }
 
-    private static Verifiedˉmodule Readˉplanner()
+    private static Nativeˉfragment Readˉplanner()
     {
         using var Stream = typeof(X64ˉnativeˉpublicationˉlifetime).Assembly
             .GetManifestResourceStream(PLANNER_RESOURCE) ??
@@ -230,7 +216,16 @@ public static class X64ˉnativeˉpublicationˉlifetime
         {
             throw Invalidˉplanner();
         }
-        return Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Fragment = X64ˉnativeˉbackend.Compile(Verified).Fragment;
+        var Shape = Nativeˉfragmentˉverifier.Verifyˉentryˉshape(Fragment);
+        if (Shape != new Nativeˉentryˉshape(
+                Nativeˉentryˉinputˉkind.Bytes,
+                Nativeˉentryˉresultˉkind.Descriptor))
+        {
+            throw Invalidˉplanner();
+        }
+        return Fragment;
     }
 
     private static Nativeˉbackendˉexception Invalidˉresponse(string message) =>
@@ -238,25 +233,4 @@ public static class X64ˉnativeˉpublicationˉlifetime
 
     private static InvalidOperationException Invalidˉplanner() =>
         new("The retained Windvale native publication-lifetime planner failed its exact identity contract.");
-
-    private sealed class Lifetimeˉrequestˉreader(ImmutableArray<byte> request)
-        : IHostedˉfileˉreader
-    {
-        public ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes)
-        {
-            if (!StringComparer.Ordinal.Equals(resourceˉname, REQUEST_NAME))
-            {
-                throw new Hostedˉfileˉexception(
-                    Hostedˉfileˉerror.Notˉfound,
-                    "The native publication-lifetime planner requested an unknown resource.");
-            }
-            if (request.Length > maximumˉbytes)
-            {
-                throw new Hostedˉfileˉexception(
-                    Hostedˉfileˉerror.Tooˉlarge,
-                    "The native publication-lifetime request exceeds the hosted byte limit.");
-            }
-            return request;
-        }
-    }
 }

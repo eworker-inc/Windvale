@@ -1,13 +1,8 @@
-module Compilerˉnativeˉpublicationˉlifetimeˉbridge profile hosted;
+module Compilerˉnativeˉpublicationˉlifetimeˉbridge profile portable;
 
 import Compilerˉnativeˉpublicationˉlifetime as Publicationˉlifetime;
 
-capability file.read_bytes;
-
-data Requestˉname: text = "native-publication-lifetime-request.bin";
-
-export fn Main() -> bytes {
-    let Input: bytes = file.read_bytes(Requestˉname);
+export fn Main(Input: bytes) -> bytes {
     let Plan: Publicationˉlifetime.Nativeˉpublicationˉlifetimeˉresult =
         Publicationˉlifetime.Nativeˉpublicationˉlifetimeˉplan(Input);
     return Plan.Value;

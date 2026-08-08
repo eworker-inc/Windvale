@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using System.Security.Cryptography;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
-using Windvale.Runtime;
 
 namespace Windvale.Runtime.Native;
 
@@ -45,16 +44,13 @@ public static class X64ˉnativeˉpublicationˉlayout
     public const int SERVICE_RECORD_BYTES = 12;
     public const int MAXIMUM_SERVICES = 12;
     public const int MAXIMUM_IMAGE_BYTES = 34 * 1024 * 1024;
-    public const int PLANNER_CANONICAL_SIZE = 6_872;
+    public const int PLANNER_CANONICAL_SIZE = 6_758;
     public const string PLANNER_CANONICAL_SHA256 =
-        "99a2732e499682ba6dff7c361b2ad207fb877f34f02b2da3f4766247f242e20e";
+        "111608af768b18adb9be8b531214aeb14c472efef482fad507224aaa1b18909c";
 
-    private const string REQUEST_NAME = "native-publication-request.bin";
     private const string PLANNER_RESOURCE = "Windvale.Native.Native-Publication-Bridge.wvb";
     private const long MAXIMUM_PLANNER_INSTRUCTIONS = 250_000;
-    private static readonly ImmutableHashSet<string> AUTHORIZED_CAPABILITIES =
-        ImmutableHashSet.Create(StringComparer.Ordinal, Capabilityˉcatalog.FILE_READ_BYTES);
-    private static readonly Lazy<Verifiedˉmodule> PLANNER = new(
+    private static readonly Lazy<Nativeˉfragment> PLANNER = new(
         Readˉplanner,
         LazyThreadSafetyMode.ExecutionAndPublication);
 
@@ -101,20 +97,10 @@ public static class X64ˉnativeˉpublicationˉlayout
                 nameof(request));
         }
 
-        var Resources = new Hostedˉresourceˉcontext(
-            [],
-            TextWriter.Null,
-            TextWriter.Null,
-            new Publicationˉrequestˉreader(request));
-        var Result = new Referenceˉruntime(
+        return X64ˉnativeˉexecutor.Executeˉplannerˉbytes(
             PLANNER.Value,
-            new Referenceˉcapabilityˉhost(Resources),
-            new Runtimeˉoptions(
-                AUTHORIZED_CAPABILITIES,
-                MAXIMUM_PLANNER_INSTRUCTIONS,
-                Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH))
-            .Runˉmainˉbytes();
-        return Result.Bytes;
+            request,
+            MAXIMUM_PLANNER_INSTRUCTIONS);
     }
 
     public static Nativeˉpublicationˉplan Verifyˉresponse(
@@ -235,7 +221,7 @@ public static class X64ˉnativeˉpublicationˉlayout
 
     private static int Alignˉtoˉsixteen(int value) => checked((value + 15) & ~15);
 
-    private static Verifiedˉmodule Readˉplanner()
+    private static Nativeˉfragment Readˉplanner()
     {
         using var Stream = typeof(X64ˉnativeˉpublicationˉlayout).Assembly
             .GetManifestResourceStream(PLANNER_RESOURCE) ??
@@ -251,7 +237,16 @@ public static class X64ˉnativeˉpublicationˉlayout
         {
             throw Invalidˉplanner();
         }
-        return Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Fragment = X64ˉnativeˉbackend.Compile(Verified).Fragment;
+        var Shape = Nativeˉfragmentˉverifier.Verifyˉentryˉshape(Fragment);
+        if (Shape != new Nativeˉentryˉshape(
+                Nativeˉentryˉinputˉkind.Bytes,
+                Nativeˉentryˉresultˉkind.Descriptor))
+        {
+            throw Invalidˉplanner();
+        }
+        return Fragment;
     }
 
     private static Nativeˉbackendˉexception Invalidˉresponse(string message) =>
@@ -259,25 +254,4 @@ public static class X64ˉnativeˉpublicationˉlayout
 
     private static InvalidOperationException Invalidˉplanner() =>
         new("The retained Windvale native-publication planner failed its exact identity contract.");
-
-    private sealed class Publicationˉrequestˉreader(ImmutableArray<byte> request)
-        : IHostedˉfileˉreader
-    {
-        public ImmutableArray<byte> Readˉbytes(string resourceˉname, int maximumˉbytes)
-        {
-            if (!StringComparer.Ordinal.Equals(resourceˉname, REQUEST_NAME))
-            {
-                throw new Hostedˉfileˉexception(
-                    Hostedˉfileˉerror.Notˉfound,
-                    "The native publication planner requested an unknown resource.");
-            }
-            if (request.Length > maximumˉbytes)
-            {
-                throw new Hostedˉfileˉexception(
-                    Hostedˉfileˉerror.Tooˉlarge,
-                    "The native publication request exceeds the hosted byte limit.");
-            }
-            return request;
-        }
-    }
 }

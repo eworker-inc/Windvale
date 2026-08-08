@@ -1011,7 +1011,7 @@ dotnet $ToolDll `
     -o $NativePublicationBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-publication bridge.' }
 $NativePublicationBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationBridgeModule).Hash.ToLowerInvariant()
-if ($NativePublicationBridgeHash -ne '99a2732e499682ba6dff7c361b2ad207fb877f34f02b2da3f4766247f242e20e') {
+if ($NativePublicationBridgeHash -ne '111608af768b18adb9be8b531214aeb14c472efef482fad507224aaa1b18909c') {
     throw "The Windvale native-publication bridge has an unexpected digest: $NativePublicationBridgeHash"
 }
 $NativePublicationBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationBridgeRetained).Hash.ToLowerInvariant()
@@ -1025,10 +1025,9 @@ if (
 $NativePublicationBridgeInspection = (dotnet $ToolDll inspect $NativePublicationBridgeModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $NativePublicationBridgeInspection -notmatch 'Profile: hosted' -or
-    $NativePublicationBridgeInspection -notmatch 'Capabilities \(1\)' -or
-    $NativePublicationBridgeInspection -notmatch 'file\.read_bytes' -or
-    $NativePublicationBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativePublicationBridgeInspection -notmatch 'Profile: portable' -or
+    $NativePublicationBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativePublicationBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
     $NativePublicationBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native-publication bridge inspection is incomplete.'
@@ -1061,7 +1060,7 @@ dotnet $ToolDll `
     -o $NativePublicationLifetimeBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native publication-lifetime bridge.' }
 $NativePublicationLifetimeBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeBridgeModule).Hash.ToLowerInvariant()
-if ($NativePublicationLifetimeBridgeHash -ne 'a975756734084b143bba70fa915fd4c021a8a0139f05abef0c37bcda6309c418') {
+if ($NativePublicationLifetimeBridgeHash -ne 'f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554') {
     throw "The Windvale native publication-lifetime bridge has an unexpected digest: $NativePublicationLifetimeBridgeHash"
 }
 $NativePublicationLifetimeBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeBridgeRetained).Hash.ToLowerInvariant()
@@ -1075,10 +1074,9 @@ if (
 $NativePublicationLifetimeBridgeInspection = (dotnet $ToolDll inspect $NativePublicationLifetimeBridgeModule) -join "`n"
 if (
     $LASTEXITCODE -ne 0 -or
-    $NativePublicationLifetimeBridgeInspection -notmatch 'Profile: hosted' -or
-    $NativePublicationLifetimeBridgeInspection -notmatch 'Capabilities \(1\)' -or
-    $NativePublicationLifetimeBridgeInspection -notmatch 'file\.read_bytes' -or
-    $NativePublicationLifetimeBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativePublicationLifetimeBridgeInspection -notmatch 'Profile: portable' -or
+    $NativePublicationLifetimeBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativePublicationLifetimeBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
     $NativePublicationLifetimeBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native publication-lifetime bridge inspection is incomplete.'

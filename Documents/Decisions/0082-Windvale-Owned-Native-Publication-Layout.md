@@ -4,6 +4,7 @@
 - Status: Accepted, implemented, and cross-host qualified
 - Extends: [Decision 0080](0080-Native-Byte-Result-And-Live-Stencil-Consumption.md)
 - Preserves: Native ABI 14, execution-context version 6, service-table version 4, WVB 1.6, WVO 1.0, kernel bridge 9, the qualified firmware-probe-17 identities, and all final runtime-service leaf identities
+- Advanced by: [Decision 0365](0365-Native-Publication-Planner-Execution.md)
 
 ## Context
 
