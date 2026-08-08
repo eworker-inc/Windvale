@@ -10,9 +10,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_SIZE = 15_245;
+    private const int NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_SIZE = 17_185;
     private const string NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_SHA256 =
-        "54a0cb83cba3c9c9118cfc209aaef43938f9f9a9f4212ccb9d4657ce6a139ba1";
+        "97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008";
 
     private static void Windvaleˉnativeˉserviceˉbundleˉmaterializationˉruns()
     {
@@ -103,23 +103,24 @@ internal static partial class Program
             Services.Select(Service => new Nativeˉpublicationˉservice(
                 Service.Service,
                 Service.Code.Length)).ToImmutableArray());
-        var Request = X64ˉnativeˉserviceˉbundleˉmaterialization.Buildˉrequest(
+        var Request = Nativeˉserviceˉbundleˉmaterializationˉsession.Buildˉrequest(
             Fragment,
-            Services);
+            Services,
+            Plan,
+            0);
         var Reference = new Referenceˉruntime(
             Bridge,
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults);
         var Interpreted = Reference.Runˉmainˉbytes(Request).Bytes;
-        var Executed = X64ˉnativeˉexecutor.Executeˉserviceˉfreeˉbootstrapˉbytes(
-            Native,
-            Request,
-            1_000_000_000);
+        var Executed = X64ˉnativeˉserviceˉbundleˉmaterialization.Buildˉwithˉwindvale(
+            Request);
         Sequenceˉequal(Interpreted, Executed);
-        var Image = X64ˉnativeˉserviceˉbundleˉmaterialization.Verifyˉresponse(
+        var Image = Nativeˉserviceˉbundleˉmaterializationˉsession.Verifyˉresponse(
             Fragment,
             Services,
             Plan,
+            0,
             Request.Length,
             Executed);
         Equal(102, Image.Length);
@@ -142,12 +143,10 @@ internal static partial class Program
         void Expectˉfailure(ImmutableArray<byte> request, uint status, uint failureˉoffset)
         {
             var Referenceˉresult = Reference.Runˉmainˉbytes(request).Bytes;
-            var Nativeˉresult = X64ˉnativeˉexecutor.Executeˉserviceˉfreeˉbootstrapˉbytes(
-                Native,
-                request,
-                1_000_000_000);
+            var Nativeˉresult =
+                X64ˉnativeˉserviceˉbundleˉmaterialization.Buildˉwithˉwindvale(request);
             Sequenceˉequal(Referenceˉresult, Nativeˉresult);
-            Equal(36, Nativeˉresult.Length);
+            Equal(40, Nativeˉresult.Length);
             Equal(status, BinaryPrimitives.ReadUInt32LittleEndian(Nativeˉresult.AsSpan()[12..]));
             Equal(
                 failureˉoffset,
@@ -155,11 +154,68 @@ internal static partial class Program
         }
 
         Expectˉfailure(Replaceˉu32(Request, 0, 0), 2, 0);
-        Expectˉfailure(Replaceˉu32(Request, 4, 2), 3, 4);
+        Expectˉfailure(Replaceˉu32(Request, 4, 1), 3, 4);
         Expectˉfailure(Replaceˉu32(Request, 8, checked((uint)Request.Length - 1)), 1, 8);
-        Expectˉfailure(Replaceˉu32(Request, 20, 1), 4, 20);
-        Expectˉfailure(Replaceˉu32(Request, 24, 0), 5, 24);
-        Expectˉfailure(Replaceˉu32(Request, 16, checked((uint)Request.Length)), 1, 16);
+        Expectˉfailure(Replaceˉu32(Request, 28, 1), 4, 28);
+        Expectˉfailure(Replaceˉu32(Request, 32, 0), 5, 32);
+        Expectˉfailure(Replaceˉu32(Request, 24, checked((uint)Request.Length)), 1, 24);
+        Expectˉfailure(Replaceˉu32(Request, 16, 1), 6, 16);
+        Expectˉfailure(Replaceˉu32(Request, 20, 1), 6, 20);
+
+        var Largeˉfragment = Enumerable.Range(
+                0,
+                Nativeˉserviceˉbundleˉmaterializationˉsession.MAXIMUM_SEGMENT_BYTES + 23)
+            .Select(Value => checked((byte)(Value % 251)))
+            .ToImmutableArray();
+        var Largeˉservices = ImmutableArray.Create(
+            new Nativeˉserviceˉcode(
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉserviceˉadapter.Argumentˉsnapshot,
+                ImmutableArray.Create<byte>(201, 202, 203, 204, 205)),
+            new Nativeˉserviceˉcode(
+                Nativeˉservice.Processˉargument,
+                Nativeˉserviceˉadapter.Argumentˉsnapshot,
+                Enumerable.Range(0, 70)
+                    .Select(Value => checked((byte)(100 + Value)))
+                    .ToImmutableArray()));
+        var Largeˉplan = X64ˉnativeˉpublicationˉlayout.Plan(
+            Largeˉfragment.Length,
+            Largeˉservices.Select(Service => new Nativeˉpublicationˉservice(
+                Service.Service,
+                Service.Code.Length)).ToImmutableArray());
+        var Largeˉrequests =
+            Nativeˉserviceˉbundleˉmaterializationˉsession.Buildˉrequests(
+                Largeˉfragment,
+                Largeˉservices,
+                Largeˉplan);
+        Equal(2, Largeˉrequests.Length);
+        True(
+            Largeˉrequests.All(Value => Value.Length <= Bytecodeˉlimits.MAX_BYTE_DATA_BYTES),
+            "A segmented service-bundle request exceeds the byte-value limit.");
+        var Largeˉimage = X64ˉnativeˉserviceˉbundleˉmaterialization.Materialize(
+            Largeˉfragment,
+            Largeˉservices,
+            Largeˉplan);
+        Equal(Largeˉplan.Imageˉbytes, Largeˉimage.Length);
+        Sequenceˉequal(Largeˉfragment, Largeˉimage[..Largeˉfragment.Length]);
+        True(
+            Largeˉimage[Largeˉfragment.Length..Largeˉplan.Placements[0].Offset]
+                .All(Value => Value == 0),
+            "The segmented initial gap is not zero-filled.");
+        Sequenceˉequal(
+            Largeˉservices[0].Code,
+            Largeˉimage[
+                Largeˉplan.Placements[0].Offset..
+                (Largeˉplan.Placements[0].Offset + Largeˉplan.Placements[0].Size)]);
+        var Largeˉfirstˉend = checked(
+            Largeˉplan.Placements[0].Offset + Largeˉplan.Placements[0].Size);
+        True(
+            Largeˉimage[Largeˉfirstˉend..Largeˉplan.Placements[1].Offset]
+                .All(Value => Value == 0x90),
+            "The segmented later gap is not NOP-filled.");
+        Sequenceˉequal(
+            Largeˉservices[1].Code,
+            Largeˉimage[Largeˉplan.Placements[1].Offset..]);
 
         var Hosted = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess("""
             module Nativeˉboundedˉbundle profile hosted;
@@ -191,12 +247,6 @@ internal static partial class Program
             var Hostedˉplan = X64ˉnativeˉpublicationˉlayout.Plan(
                 Hostedˉfragment.Code.Length,
                 [new(Nativeˉservice.Consoleˉwriteˉline, Leaf.Length)]);
-            True(
-                X64ˉnativeˉserviceˉbundleˉmaterialization.Canˉmaterialize(
-                    Hostedˉfragment.Code,
-                    Components,
-                    Hostedˉplan),
-                "The bounded hosted bundle did not select Windvale materialization.");
             Sequenceˉequal(
                 Bundle.Imageˉbytes,
                 X64ˉnativeˉserviceˉbundleˉmaterialization.Materialize(

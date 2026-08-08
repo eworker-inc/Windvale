@@ -2,121 +2,135 @@
 
 ## Status and scope
 
-`WVSQ 1` and `WVSI 1` are versioned internal contracts for constructing one
-bounded native fragment plus its already verified runtime-service leaves into
-the exact executable image selected by the Windvale publication plan. They
-transfer fragment/service copying and canonical alignment fill from Stage 0 to
-portable Windvale without moving operating-system allocation, pointers,
-service tables, W^X authority, invocation, or teardown.
+`WVSQ 2` and `WVSI 2` are versioned internal contracts for constructing one
+verified native fragment plus its already verified runtime-service leaves in
+bounded segments of the exact executable image selected by the Windvale
+publication plan. They transfer fragment/service copying and canonical
+alignment fill from Stage 0 to portable Windvale without widening the ordinary
+4 MiB `bytes` value.
 
-This first materializer is deliberately limited by the ordinary Windvale
-4 MiB `bytes` value. Both the complete request and complete response must fit
-that limit. Larger compiler-family bundles remain on the explicit Stage 0
-large-bundle materializer until a segmented Windvale contract replaces it.
-They must not be silently split or truncated by this format.
+The segmented session covers every accepted publication image through the
+existing 34 MiB limit. It replaces the bounded version-1 whole-image contract;
+version 1 remains historical evidence and is not accepted by the current
+bridge. Operating-system allocation, pointers, service tables, W^X authority,
+invocation, and teardown remain outside this contract.
 
 All integers are unsigned 32-bit little-endian values. Unknown versions,
 nonzero reserved fields, truncation, trailing bytes, inconsistent extents, and
 malformed embedded publication plans are rejected.
 
-## Request envelope: `WVSQ 1`
+## Canonical segmentation
 
-The fixed request header is 24 bytes:
+One segment contains at most `4,194,104` image bytes. That value reserves the
+32-byte `WVSQ 2` header and the maximum 168-byte `WVPQ 1` request inside one
+4 MiB request even when the complete segment is source data.
+
+Segments are canonical and independently constructible:
+
+- the first starts at image offset zero;
+- every later start is an exact multiple of `4,194,104`;
+- every nonfinal segment has exactly `4,194,104` image bytes;
+- the final segment has the exact remaining positive extent; and
+- ordered segments cover the `WVPL` image exactly once without a gap or overlap.
+
+## Request envelope: `WVSQ 2`
+
+The fixed request header is 32 bytes:
 
 | Offset | Bytes | Field | Rule |
 | ---: | ---: | --- | --- |
 | 0 | 4 | magic | ASCII `WVSQ`, encoded as `0x51535657` |
-| 4 | 4 | version | `1` |
+| 4 | 4 | version | `2` |
 | 8 | 4 | total bytes | Exact complete request length, at most 4 MiB |
-| 12 | 4 | plan bytes | Exact embedded `WVPQ 1` length, at least 24 |
-| 16 | 4 | payload bytes | Exact remaining payload length |
-| 20 | 4 | reserved | Zero |
+| 12 | 4 | plan bytes | Exact embedded `WVPQ 1` length, 24 through 168 |
+| 16 | 4 | segment offset | Canonical image-segment start |
+| 20 | 4 | segment bytes | Canonical positive image-segment extent |
+| 24 | 4 | payload bytes | Exact remaining source payload length |
+| 28 | 4 | reserved | Zero |
 
 The header is followed by one complete canonical
 [`WVPQ 1`](Windvale-Native-Publication-Plan.md#request-envelope-wvpq-1)
-request. Its fragment length, ordered service IDs, and service lengths define
-the payload that follows it:
+request. The remaining payload contains only source bytes that intersect the
+requested image segment, in this order:
 
-1. exact verified native-fragment code bytes;
-2. exact verified service-leaf bytes in `WVPQ` record order.
+1. the intersecting verified native-fragment bytes, if any;
+2. each intersecting verified service-leaf range in `WVPQ` order.
 
-The payload has no alignment, names, hashes, pointers, or trailing bytes.
-Service identity verification and platform selection happen before request
+Alignment fill is omitted from the payload. The Windvale constructor derives
+all source intersections and fill regions from the independently validated
+publication plan. Service identity and platform selection occur before request
 construction; materialization does not authorize a service or reinterpret its
 machine code.
 
-## Response envelope: `WVSI 1`
+## Response envelope: `WVSI 2`
 
-A successful response begins with this 36-byte header:
+A successful response begins with this 40-byte header:
 
 | Offset | Bytes | Field | Rule |
 | ---: | ---: | --- | --- |
 | 0 | 4 | magic | ASCII `WVSI`, encoded as `0x49535657` |
-| 4 | 4 | version | `1` |
+| 4 | 4 | version | `2` |
 | 8 | 4 | total bytes | Exact complete response length, at most 4 MiB |
 | 12 | 4 | status | Zero (`Valid`) |
 | 16 | 4 | failure offset | Exact accepted `WVSQ` length |
 | 20 | 4 | plan bytes | Exact embedded request-plan length |
-| 24 | 4 | fragment bytes | Exact accepted fragment length |
-| 28 | 4 | image bytes | Exact `WVPL` final image extent |
-| 32 | 4 | service count | Exact `WVPL` service count |
+| 24 | 4 | image bytes | Exact `WVPL` final image extent |
+| 28 | 4 | segment offset | Exact accepted segment start |
+| 32 | 4 | segment bytes | Exact accepted segment extent |
+| 36 | 4 | service count | Exact `WVPL` service count |
 
-The header is followed by the exact `WVPL 1` placement records, twelve bytes
-per service, and then the complete materialized image. Placement records keep
-their existing service ID, image offset, and leaf-length fields. The final
-response length is therefore:
+The header is followed by exactly `segment bytes` constructed image bytes. The
+complete response length is therefore `40 + segment_bytes`.
 
-```text
-36 + service_count * 12 + image_bytes
-```
-
-The image preserves these established bytes exactly:
+Across the ordered session, the image preserves these established bytes:
 
 - the verified fragment begins at offset zero unchanged;
 - the gap before the first service is zero-filled;
 - every later service-alignment gap is filled with x86 NOP byte `0x90`;
 - every service leaf is copied unchanged at its `WVPL` offset;
-- a service-free fragment is zero-filled through its final aligned extent;
+- a service-free fragment is zero-filled through its final aligned extent; and
 - no alignment follows the final service.
 
-The managed transport independently checks the response envelope, all plan
-evidence, every placement, fragment and leaf byte, every zero/NOP gap, and the
-complete final extent before accepting the image.
+The managed session accepts only canonical offsets in ascending order,
+concatenates the returned segments, and independently checks each source and
+fill region plus the complete final extent. It does not write an image source
+byte or choose an alignment-fill byte.
 
 ## Failure response
 
-A rejected request returns exactly the 36-byte `WVSI 1` header. Plan,
-fragment, image, and service-count fields are zero. `failure_offset` identifies
-the first relevant `WVSQ` byte; an embedded publication-plan failure is
-translated to `24 + WVPQ failure_offset`.
+A rejected request returns exactly the 40-byte `WVSI 2` header. Plan, image,
+segment, and service-count fields are zero. `failure_offset` identifies the
+first relevant `WVSQ` byte; an embedded publication-plan failure is translated
+to `32 + WVPQ failure_offset`.
 
 | Value | Name | Meaning |
 | ---: | --- | --- |
-| 0 | `Valid` | Complete placement records and image follow |
-| 1 | `Invalid_size` | Truncation, declared-size mismatch, or inconsistent plan/payload extent |
+| 0 | `Valid` | The exact constructed segment follows |
+| 1 | `Invalid_size` | Truncation, declared-size mismatch, or inconsistent payload extent |
 | 2 | `Invalid_magic` | Request magic differs |
 | 3 | `Invalid_version` | Request version differs |
 | 4 | `Invalid_reserved` | Reserved field is nonzero |
 | 5 | `Invalid_plan` | Embedded `WVPQ 1` is rejected |
-| 6 | `Invalid_payload` | Fragment/service payload does not exactly match the accepted plan |
-| 7 | `Value_limit` | The complete response would exceed 4 MiB |
+| 6 | `Invalid_segment` | Segment start or extent is not canonical for the image |
+| 7 | `Invalid_payload` | Source payload does not exactly cover the segment intersections |
+| 8 | `Value_limit` | Segment construction cannot remain within the bounded value contract |
 
 ## Windvale owner and bootstrap
 
 `Runtime/Windvale/Native-Service-Bundle-Materialization-Core.wv` owns request
-validation, publication-plan consumption, exact image construction, and the
-response. Its bridge is capability-free `Main(bytes) -> bytes`.
+validation, publication-plan consumption, source/fill intersection, exact
+segment construction, and the response. Its bridge is capability-free
+`Main(bytes) -> bytes`.
 
-The retained bridge WVB is 15,253 bytes with SHA-256
-`25512a7c3e6eae0dd060426d5a51a93abfc7a7127f59538fd2a315242ed2b660`.
-The normal runtime embeds only its 157,174-byte WVNF 1 artifact with SHA-256
-`8bb1f06bd8b25d9a5ff78971ad4af36b609c618b080ed0fa9b17fe4b51669629`.
-The separately compiled core is 15,245 bytes with SHA-256
-`54a0cb83cba3c9c9118cfc209aaef43938f9f9a9f4212ccb9d4657ce6a139ba1`.
+The retained bridge WVB is 17,150 bytes with SHA-256
+`327b753062d46755b934cfe6e6bc16550ec711c8b7d2aff46eac4bf0d8d9d902`.
+The normal runtime embeds only its 179,452-byte WVNF 1 artifact with SHA-256
+`d0b12e426e891f6ee78209ab817dde7c547c0f68541750d39dd665607434e7a9`.
+The separately compiled core is 17,185 bytes with SHA-256
+`97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008`.
 
-The existing narrow bootstrap is generalized from publication-planner naming
-to service-free bootstrap naming. It may publish only internally selected,
-digest-bound, independently verified fragments with no runtime services; it
+The narrow service-free bootstrap may publish only internally selected,
+digest-bound, independently verified fragments with no runtime services. It
 does not accept an ambient WVB, bind capabilities, or replace the ordinary
 publication planner. Layout and lifetime for the materializer itself remain
 the independently checked fixed service-free bootstrap case, avoiding bundle

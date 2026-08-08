@@ -170,15 +170,10 @@ public static partial class X64ˉnativeˉserviceˉbundle
             [.. Services.Select(Item => new Nativeˉpublicationˉservice(
                 Item.Service,
                 Item.Code.Length))]);
-        var Image = X64ˉnativeˉserviceˉbundleˉmaterialization.Canˉmaterialize(
+        var Image = X64ˉnativeˉserviceˉbundleˉmaterialization.Materialize(
             fragment.Code,
             Services,
-            Plan)
-            ? X64ˉnativeˉserviceˉbundleˉmaterialization.Materialize(
-                fragment.Code,
-                Services,
-                Plan)
-            : Materializeˉstage0ˉlargeˉbundle(fragment.Code, Services, Plan);
+            Plan);
         var Placements = ImmutableArray.CreateBuilder<Nativeˉserviceˉbundleˉplacement>(
             Services.Length);
         for (var Index = 0; Index < Services.Length; Index++)
@@ -199,29 +194,6 @@ public static partial class X64ˉnativeˉserviceˉbundle
             fragment.Code.Length,
             Image,
             Placements.MoveToImmutable());
-    }
-
-    private static ImmutableArray<byte> Materializeˉstage0ˉlargeˉbundle(
-        ImmutableArray<byte> fragment,
-        ImmutableArray<Nativeˉserviceˉcode> services,
-        Nativeˉpublicationˉplan plan)
-    {
-        var Image = new byte[plan.Imageˉbytes];
-        fragment.AsSpan().CopyTo(Image);
-        var Previousˉserviceˉend = fragment.Length;
-        for (var Index = 0; Index < services.Length; Index++)
-        {
-            var Placement = plan.Placements[Index];
-            if (Index != 0)
-            {
-                Image.AsSpan(
-                    Previousˉserviceˉend,
-                    Placement.Offset - Previousˉserviceˉend).Fill(0x90);
-            }
-            services[Index].Code.AsSpan().CopyTo(Image.AsSpan(Placement.Offset));
-            Previousˉserviceˉend = checked(Placement.Offset + Placement.Size);
-        }
-        return Image.ToImmutableArray();
     }
 
     private static Nativeˉserviceˉcode Buildˉservice(

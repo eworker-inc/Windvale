@@ -1311,7 +1311,7 @@ dotnet $ToolDll `
     -o $NativeServiceBundleMaterializationCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale service-bundle materialization core.' }
 $NativeServiceBundleMaterializationCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationCoreModule).Hash.ToLowerInvariant()
-if ($NativeServiceBundleMaterializationCoreHash -ne '54a0cb83cba3c9c9118cfc209aaef43938f9f9a9f4212ccb9d4657ce6a139ba1') {
+if ($NativeServiceBundleMaterializationCoreHash -ne '97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008') {
     throw "The Windvale service-bundle materialization core has an unexpected digest: $NativeServiceBundleMaterializationCoreHash"
 }
 dotnet $ToolDll `
@@ -1322,7 +1322,7 @@ dotnet $ToolDll `
     -o $NativeServiceBundleMaterializationBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale service-bundle materialization bridge.' }
 $NativeServiceBundleMaterializationBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationBridgeModule).Hash.ToLowerInvariant()
-if ($NativeServiceBundleMaterializationBridgeHash -ne '25512a7c3e6eae0dd060426d5a51a93abfc7a7127f59538fd2a315242ed2b660') {
+if ($NativeServiceBundleMaterializationBridgeHash -ne '327b753062d46755b934cfe6e6bc16550ec711c8b7d2aff46eac4bf0d8d9d902') {
     throw "The Windvale service-bundle materialization bridge has an unexpected digest: $NativeServiceBundleMaterializationBridgeHash"
 }
 $NativeServiceBundleMaterializationBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationBridgeRetained).Hash.ToLowerInvariant()
@@ -1335,8 +1335,8 @@ if (
 }
 $NativeServiceBundleMaterializationArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeServiceBundleMaterializationArtifactHash -ne '8bb1f06bd8b25d9a5ff78971ad4af36b609c618b080ed0fa9b17fe4b51669629' -or
-    (Get-Item -LiteralPath $NativeServiceBundleMaterializationArtifactRetained).Length -ne 157174
+    $NativeServiceBundleMaterializationArtifactHash -ne 'd0b12e426e891f6ee78209ab817dde7c547c0f68541750d39dd665607434e7a9' -or
+    (Get-Item -LiteralPath $NativeServiceBundleMaterializationArtifactRetained).Length -ne 179452
 ) {
     throw "The retained Windvale service-bundle materialization fragment has an unexpected identity: $NativeServiceBundleMaterializationArtifactHash"
 }

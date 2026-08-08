@@ -269,6 +269,16 @@ until segmented Windvale construction replaces it. Managed adapter/table-slot
 metadata, `WVFI`/`WVFO`/`WVIO` binding, W^X ownership, contexts, arenas,
 invocation, Linux evidence, and the grouped gate remain open.
 
+[Decision 0373](../Decisions/0373-Windvale-Owned-Segmented-Service-Bundle-Materialization.md)
+removes the remaining compiler-scale C# bundle writer. Canonical bounded
+requests carry the complete publication plan and only the source ranges that
+intersect one image segment; Windvale constructs every fragment, leaf, zero,
+and NOP byte. One managed session projects requests, validates returned
+segments independently, and concatenates them in order. Both small and large
+bundles now use this sole path. Managed adapter/table-slot metadata,
+`WVFI`/`WVFO`/`WVIO` binding, W^X ownership, contexts, arenas, invocation,
+Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

@@ -8,6 +8,12 @@ export record Nativeˉserviceˉbundleˉmaterializationˉresult {
     Value: bytes;
 }
 
+record Nativeˉserviceˉbundleˉappendˉresult {
+    Valid: bool;
+    Value: bytes;
+    Payloadˉoffset: u32;
+}
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -22,19 +28,21 @@ fn Responseˉheader(
     Status: u32,
     Failureˉoffset: u32,
     Planˉbytes: u32,
-    Fragmentˉbytes: u32,
     Imageˉbytes: u32,
+    Segmentˉoffset: u32,
+    Segmentˉbytes: u32,
     Serviceˉcount: u32
 ) -> bytes {
     var Result: bytes = Empty(Input);
     Result = Appendˉu32(Result, 1230198359u32);
-    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 2u32);
     Result = Appendˉu32(Result, Totalˉbytes);
     Result = Appendˉu32(Result, Status);
     Result = Appendˉu32(Result, Failureˉoffset);
     Result = Appendˉu32(Result, Planˉbytes);
-    Result = Appendˉu32(Result, Fragmentˉbytes);
     Result = Appendˉu32(Result, Imageˉbytes);
+    Result = Appendˉu32(Result, Segmentˉoffset);
+    Result = Appendˉu32(Result, Segmentˉbytes);
     return Appendˉu32(Result, Serviceˉcount);
 }
 
@@ -44,9 +52,10 @@ fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32)
         false,
         Responseˉheader(
             Input,
-            36u32,
+            40u32,
             Status,
             Failureˉoffset,
+            0u32,
             0u32,
             0u32,
             0u32,
@@ -55,52 +64,130 @@ fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32)
     );
 }
 
-fn Appendˉrepeat(Input: bytes, Value: u8, Count: u32)
-    -> Nativeˉserviceˉbundleˉmaterializationˉresult {
-    let Repeated: Byteˉconstruction.Foundationˉbytesˉresult =
-        Byteˉconstruction.Foundationˉbytesˉrepeat(Value, Count);
-    if !Repeated.Valid {
-        return Nativeˉserviceˉbundleˉmaterializationˉresult(false, Empty(Input));
+fn Overlapˉstart(
+    Regionˉstart: u32,
+    Segmentˉstart: u32
+) -> u32 {
+    if Regionˉstart > Segmentˉstart {
+        return Regionˉstart;
     }
-    return Nativeˉserviceˉbundleˉmaterializationˉresult(
+    return Segmentˉstart;
+}
+
+fn Overlapˉend(
+    Regionˉend: u32,
+    Segmentˉend: u32
+) -> u32 {
+    if Regionˉend < Segmentˉend {
+        return Regionˉend;
+    }
+    return Segmentˉend;
+}
+
+fn Appendˉdata(
+    Input: bytes,
+    Result: bytes,
+    Payloadˉoffset: u32,
+    Regionˉstart: u32,
+    Regionˉbytes: u32,
+    Segmentˉstart: u32,
+    Segmentˉend: u32
+) -> Nativeˉserviceˉbundleˉappendˉresult {
+    let Start: u32 = Overlapˉstart(Regionˉstart, Segmentˉstart);
+    let End: u32 = Overlapˉend(Regionˉstart + Regionˉbytes, Segmentˉend);
+    if Start >= End {
+        return Nativeˉserviceˉbundleˉappendˉresult(
+            true,
+            Result,
+            Payloadˉoffset
+        );
+    }
+    let Count: u32 = End - Start;
+    let Total: u32 = Bytesˉlength(Input);
+    if Payloadˉoffset > Total || Count > Total - Payloadˉoffset {
+        return Nativeˉserviceˉbundleˉappendˉresult(
+            false,
+            Result,
+            Payloadˉoffset
+        );
+    }
+    return Nativeˉserviceˉbundleˉappendˉresult(
         true,
-        Bytesˉconcat(Input, Repeated.Value)
+        Bytesˉconcat(Result, Bytesˉslice(Input, Payloadˉoffset, Count)),
+        Payloadˉoffset + Count
+    );
+}
+
+fn Appendˉfill(
+    Input: bytes,
+    Result: bytes,
+    Payloadˉoffset: u32,
+    Regionˉstart: u32,
+    Regionˉbytes: u32,
+    Segmentˉstart: u32,
+    Segmentˉend: u32,
+    Value: u8
+) -> Nativeˉserviceˉbundleˉappendˉresult {
+    let Start: u32 = Overlapˉstart(Regionˉstart, Segmentˉstart);
+    let End: u32 = Overlapˉend(Regionˉstart + Regionˉbytes, Segmentˉend);
+    if Start >= End {
+        return Nativeˉserviceˉbundleˉappendˉresult(
+            true,
+            Result,
+            Payloadˉoffset
+        );
+    }
+    let Repeated: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(Value, End - Start);
+    if !Repeated.Valid {
+        return Nativeˉserviceˉbundleˉappendˉresult(
+            false,
+            Result,
+            Payloadˉoffset
+        );
+    }
+    return Nativeˉserviceˉbundleˉappendˉresult(
+        true,
+        Bytesˉconcat(Result, Repeated.Value),
+        Payloadˉoffset
     );
 }
 
 export fn Nativeˉserviceˉbundleˉmaterialize(Input: bytes)
     -> Nativeˉserviceˉbundleˉmaterializationˉresult {
     let Total: u32 = Bytesˉlength(Input);
-    if Total < 24u32 {
+    if Total < 32u32 {
         return Failure(Input, 1u32, Total);
     }
     if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1364416087u32 {
         return Failure(Input, 2u32, 0u32);
     }
-    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 2u32 {
         return Failure(Input, 3u32, 4u32);
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
         return Failure(Input, 1u32, 8u32);
     }
-    if Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 {
-        return Failure(Input, 4u32, 20u32);
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Failure(Input, 4u32, 28u32);
     }
 
     let Planˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
-    let Payloadˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
-    if Planˉbytes < 24u32 || Planˉbytes > Total - 24u32 {
+    let Segmentˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Segmentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Payloadˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Planˉbytes < 24u32 || Planˉbytes > Total - 32u32 {
         return Failure(Input, 1u32, 12u32);
     }
-    if Payloadˉbytes != Total - 24u32 - Planˉbytes {
-        return Failure(Input, 1u32, 16u32);
+    if Payloadˉbytes != Total - 32u32 - Planˉbytes {
+        return Failure(Input, 1u32, 24u32);
     }
 
-    let Planˉrequest: bytes = Bytesˉslice(Input, 24u32, Planˉbytes);
+    let Planˉrequest: bytes = Bytesˉslice(Input, 32u32, Planˉbytes);
     let Plan: Nativeˉpublication.Nativeˉpublicationˉresult =
         Nativeˉpublication.Nativeˉpublicationˉplan(Planˉrequest);
     if Bytesˉreadˉu32ˉlittle(Plan.Value, 12u32) != 0u32 {
-        return Failure(Input, 5u32, 24u32 + Plan.Failureˉoffset);
+        return Failure(Input, 5u32, 32u32 + Plan.Failureˉoffset);
     }
 
     let Fragmentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan.Value, 20u32);
@@ -108,95 +195,126 @@ export fn Nativeˉserviceˉbundleˉmaterialize(Input: bytes)
     let Serviceˉcount: u32 = Bytesˉreadˉu32ˉlittle(Plan.Value, 28u32);
     let Recordˉbytes: u32 = Serviceˉcount * 12u32;
     if Bytesˉlength(Plan.Value) != 32u32 + Recordˉbytes {
-        return Failure(Input, 5u32, 24u32);
+        return Failure(Input, 5u32, 32u32);
+    }
+    if Segmentˉoffset >= Imageˉbytes ||
+        Segmentˉoffset % 4194104u32 != 0u32 {
+        return Failure(Input, 6u32, 16u32);
+    }
+    var Expectedˉsegmentˉbytes: u32 = Imageˉbytes - Segmentˉoffset;
+    if Expectedˉsegmentˉbytes > 4194104u32 {
+        Expectedˉsegmentˉbytes = 4194104u32;
+    }
+    if Segmentˉbytes != Expectedˉsegmentˉbytes {
+        return Failure(Input, 6u32, 20u32);
     }
 
-    var Requiredˉpayload: u32 = Fragmentˉbytes;
-    if Requiredˉpayload > Payloadˉbytes {
-        return Failure(Input, 6u32, 24u32 + Planˉbytes);
-    }
-    var Index: u32 = 0u32;
-    while Index < Serviceˉcount {
-        let Recordˉoffset: u32 = 32u32 + Index * 12u32;
-        let Serviceˉbytes: u32 = Bytesˉreadˉu32ˉlittle(
-            Plan.Value,
-            Recordˉoffset + 8u32
-        );
-        if Serviceˉbytes > Payloadˉbytes - Requiredˉpayload {
-            return Failure(Input, 6u32, 24u32 + Planˉbytes + Requiredˉpayload);
-        }
-        Requiredˉpayload = Requiredˉpayload + Serviceˉbytes;
-        Index = Index + 1u32;
-    }
-    if Requiredˉpayload != Payloadˉbytes {
-        return Failure(Input, 6u32, 24u32 + Planˉbytes + Requiredˉpayload);
-    }
-
-    let Responseˉmetadataˉbytes: u32 = 36u32 + Recordˉbytes;
-    if Imageˉbytes > 4194304u32 - Responseˉmetadataˉbytes {
-        return Failure(Input, 7u32, 16u32);
-    }
-
-    let Payloadˉoffset: u32 = 24u32 + Planˉbytes;
-    var Image: bytes = Bytesˉslice(Input, Payloadˉoffset, Fragmentˉbytes);
-    var Sourceˉoffset: u32 = Payloadˉoffset + Fragmentˉbytes;
-    Index = 0u32;
-    while Index < Serviceˉcount {
-        let Placementˉrecordˉoffset: u32 = 32u32 + Index * 12u32;
-        let Placementˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-            Plan.Value,
-            Placementˉrecordˉoffset + 4u32
-        );
-        let Placementˉbytes: u32 = Bytesˉreadˉu32ˉlittle(
-            Plan.Value,
-            Placementˉrecordˉoffset + 8u32
-        );
-        let Paddingˉbytes: u32 = Placementˉoffset - Bytesˉlength(Image);
-        var Padding: Nativeˉserviceˉbundleˉmaterializationˉresult =
-            Appendˉrepeat(Image, 144u8, Paddingˉbytes);
-        if Index == 0u32 {
-            Padding = Appendˉrepeat(Image, 0u8, Paddingˉbytes);
-        }
-        if !Padding.Valid {
-            return Failure(Input, 7u32, 16u32);
-        }
-        Image = Bytesˉconcat(
-            Padding.Value,
-            Bytesˉslice(Input, Sourceˉoffset, Placementˉbytes)
-        );
-        Sourceˉoffset = Sourceˉoffset + Placementˉbytes;
-        Index = Index + 1u32;
+    let Segmentˉend: u32 = Segmentˉoffset + Segmentˉbytes;
+    var Current: Nativeˉserviceˉbundleˉappendˉresult = Appendˉdata(
+        Input,
+        Empty(Input),
+        32u32 + Planˉbytes,
+        0u32,
+        Fragmentˉbytes,
+        Segmentˉoffset,
+        Segmentˉend
+    );
+    if !Current.Valid {
+        return Failure(Input, 7u32, Current.Payloadˉoffset);
     }
 
     if Serviceˉcount == 0u32 {
-        let Trailing: Nativeˉserviceˉbundleˉmaterializationˉresult =
-            Appendˉrepeat(Image, 0u8, Imageˉbytes - Bytesˉlength(Image));
-        if !Trailing.Valid {
-            return Failure(Input, 7u32, 16u32);
+        Current = Appendˉfill(
+            Input,
+            Current.Value,
+            Current.Payloadˉoffset,
+            Fragmentˉbytes,
+            Imageˉbytes - Fragmentˉbytes,
+            Segmentˉoffset,
+            Segmentˉend,
+            0u8
+        );
+    } else {
+        let Firstˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Plan.Value, 36u32);
+        Current = Appendˉfill(
+            Input,
+            Current.Value,
+            Current.Payloadˉoffset,
+            Fragmentˉbytes,
+            Firstˉoffset - Fragmentˉbytes,
+            Segmentˉoffset,
+            Segmentˉend,
+            0u8
+        );
+        var Index: u32 = 0u32;
+        while Index < Serviceˉcount {
+            if !Current.Valid {
+                return Failure(Input, 8u32, 24u32);
+            }
+            let Recordˉoffset: u32 = 32u32 + Index * 12u32;
+            let Placementˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Plan.Value,
+                Recordˉoffset + 4u32
+            );
+            let Placementˉbytes: u32 = Bytesˉreadˉu32ˉlittle(
+                Plan.Value,
+                Recordˉoffset + 8u32
+            );
+            Current = Appendˉdata(
+                Input,
+                Current.Value,
+                Current.Payloadˉoffset,
+                Placementˉoffset,
+                Placementˉbytes,
+                Segmentˉoffset,
+                Segmentˉend
+            );
+            if Index + 1u32 < Serviceˉcount {
+                if !Current.Valid {
+                    return Failure(Input, 8u32, 24u32);
+                }
+                let Nextˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                    Plan.Value,
+                    Recordˉoffset + 16u32
+                );
+                Current = Appendˉfill(
+                    Input,
+                    Current.Value,
+                    Current.Payloadˉoffset,
+                    Placementˉoffset + Placementˉbytes,
+                    Nextˉoffset - Placementˉoffset - Placementˉbytes,
+                    Segmentˉoffset,
+                    Segmentˉend,
+                    144u8
+                );
+            }
+            Index = Index + 1u32;
         }
-        Image = Trailing.Value;
     }
-    if Sourceˉoffset != Total || Bytesˉlength(Image) != Imageˉbytes {
-        return Failure(Input, 6u32, Sourceˉoffset);
+    if !Current.Valid {
+        return Failure(Input, 8u32, 24u32);
+    }
+    if Current.Payloadˉoffset != Total {
+        return Failure(Input, 7u32, Current.Payloadˉoffset);
+    }
+    if Bytesˉlength(Current.Value) != Segmentˉbytes {
+        return Failure(Input, 8u32, 20u32);
     }
 
-    let Responseˉbytes: u32 = Responseˉmetadataˉbytes + Imageˉbytes;
-    var Response: bytes = Responseˉheader(
+    let Responseˉbytes: u32 = 40u32 + Segmentˉbytes;
+    let Response: bytes = Responseˉheader(
         Input,
         Responseˉbytes,
         0u32,
         Total,
         Planˉbytes,
-        Fragmentˉbytes,
         Imageˉbytes,
+        Segmentˉoffset,
+        Segmentˉbytes,
         Serviceˉcount
-    );
-    Response = Bytesˉconcat(
-        Response,
-        Bytesˉslice(Plan.Value, 32u32, Recordˉbytes)
     );
     return Nativeˉserviceˉbundleˉmaterializationˉresult(
         true,
-        Bytesˉconcat(Response, Image)
+        Bytesˉconcat(Response, Current.Value)
     );
 }

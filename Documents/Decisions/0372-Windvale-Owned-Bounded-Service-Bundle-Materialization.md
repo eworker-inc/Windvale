@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0371](0371-Windvale-Owned-Native-File-Input-Leaves.md), [Decision 0365](0365-Native-Publication-Planner-Execution.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native service-bundle materialization](../../Specifications/Windvale-Native-Service-Bundle-Materialization.md)
+- Advanced by: [Decision 0373](0373-Windvale-Owned-Segmented-Service-Bundle-Materialization.md)
 
 ## Context
 
