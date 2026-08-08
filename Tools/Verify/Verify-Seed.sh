@@ -189,6 +189,8 @@ NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
 NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_MODULE="$ARTIFACTS/Native-Service-Bundle-Materialization-Core.wvb"
 NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE="$ARTIFACTS/Native-Service-Bundle-Materialization-Bridge.wvb"
+NATIVE_OUTPUT_TABLE_CORE_MODULE="$ARTIFACTS/Native-Output-Table-Core.wvb"
+NATIVE_OUTPUT_TABLE_BRIDGE_MODULE="$ARTIFACTS/Native-Output-Table-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Bridge.wvb"
 SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
@@ -1071,6 +1073,38 @@ printf '%s\n' "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION" | grep 
 printf '%s\n' "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
 printf '%s\n' "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_OUTPUT_TABLE_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Output-Table-Core.wv"
+NATIVE_OUTPUT_TABLE_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Output-Table-Bridge.wv"
+NATIVE_OUTPUT_TABLE_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Output-Table-Bridge.wvb"
+NATIVE_OUTPUT_TABLE_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Output-Table-Bridge.wvnf"
+dotnet "$TOOL_DLL" compile "$NATIVE_OUTPUT_TABLE_CORE_SOURCE" -o "$NATIVE_OUTPUT_TABLE_CORE_MODULE"
+NATIVE_OUTPUT_TABLE_CORE_HASH=$(sha256sum "$NATIVE_OUTPUT_TABLE_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_OUTPUT_TABLE_CORE_HASH" != 'ab51993aea2370d84b8fe116634e3da71882756bfa87822f1bce180bb01b04a8' ]; then
+    echo "The Windvale native output-table core has an unexpected digest: $NATIVE_OUTPUT_TABLE_CORE_HASH" >&2
+    exit 1
+fi
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_OUTPUT_TABLE_BRIDGE_SOURCE" \
+    --module "$NATIVE_OUTPUT_TABLE_CORE_SOURCE" \
+    -o "$NATIVE_OUTPUT_TABLE_BRIDGE_MODULE"
+NATIVE_OUTPUT_TABLE_BRIDGE_HASH=$(sha256sum "$NATIVE_OUTPUT_TABLE_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_OUTPUT_TABLE_BRIDGE_HASH" != 'b5b20dc0213e55790e4f39e8a512a17e2a0304b0202d488a9342905ee35e80a8' ]; then
+    echo "The Windvale native output-table bridge has an unexpected digest: $NATIVE_OUTPUT_TABLE_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_OUTPUT_TABLE_BRIDGE_MODULE" "$NATIVE_OUTPUT_TABLE_BRIDGE_RETAINED"
+NATIVE_OUTPUT_TABLE_ARTIFACT_HASH=$(sha256sum "$NATIVE_OUTPUT_TABLE_ARTIFACT_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_OUTPUT_TABLE_ARTIFACT_HASH" != 'f444e80b2afbaaee251892ab7a7a6a879b3e5cffcbf029b0fc382b64bef97afb' ] ||
+    [ "$(wc -c < "$NATIVE_OUTPUT_TABLE_ARTIFACT_RETAINED")" -ne 50493 ]; then
+    echo "The retained Windvale native output-table fragment has an unexpected identity: $NATIVE_OUTPUT_TABLE_ARTIFACT_HASH" >&2
+    exit 1
+fi
+NATIVE_OUTPUT_TABLE_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_OUTPUT_TABLE_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_OUTPUT_TABLE_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_OUTPUT_TABLE_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
+printf '%s\n' "$NATIVE_OUTPUT_TABLE_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_OUTPUT_TABLE_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_PUBLICATION_LIFETIME_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Core.wv"
 dotnet "$TOOL_DLL" \

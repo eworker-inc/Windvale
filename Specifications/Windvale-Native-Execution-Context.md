@@ -121,7 +121,7 @@ Output-table version 1 is exactly 48 bytes. It is host state for one native exec
 | 32 | 8 | diagnostic target | Windows file handle or zero-extended Linux file descriptor; zero when absent |
 | 40 | 8 | Windows writer | Exact `WriteFile` address on Windows; required zero on Linux |
 
-The C# Stage 0 executor still constructs this table, pins the supplied safe handles for the complete native call, independently rereads every byte and host input, and releases the table afterward. Each required channel must belong to the current platform and pass preflight before executable publication. The caller owns externally supplied handles; the execution context owns only a bounded lifetime reference. Standard-output helpers expose process stdout and stderr without transferring ownership.
+The [Windvale output-table constructor](Windvale-Native-Output-Table-Construction.md) owns the exact table bytes. The C# Stage 0 adapter projects its bounded request, pins the supplied safe handles for the complete native call, resolves the Windows writer, independently checks and copies the response, rereads every byte and host input, and releases the table afterward. Each required channel must belong to the current platform and pass preflight before executable publication. The caller owns externally supplied handles; the execution context owns only a bounded lifetime reference. Standard-output helpers expose process stdout and stderr without transferring ownership.
 
 ## `console.write_line` service
 

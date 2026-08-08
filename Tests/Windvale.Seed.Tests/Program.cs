@@ -1412,6 +1412,7 @@ internal static partial class Program
         new("Windvale validates and patches its native stencils across every runtime", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉconsumerˉruns),
         new("Windvale returns and publishes native argument leaves through the descriptor bridge", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉstencilˉbridgeˉruns),
         new("Windvale constructs the exact Windows and Linux native output leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉoutputˉservicesˉrun),
+        new("Windvale constructs the native output binding table", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉoutputˉtableˉruns),
         new("Windvale constructs the exact Windows and Linux native file-output leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉfileˉoutputˉservicesˉrun),
         new("Windvale constructs the exact Windows and Linux native file-input leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉfileˉinputˉservicesˉrun),
         new("Windvale materializes segmented native service bundles", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉserviceˉbundleˉmaterializationˉruns),

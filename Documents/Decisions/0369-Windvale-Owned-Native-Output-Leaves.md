@@ -4,6 +4,7 @@
 - Date: 2026-08-07
 - Advances: [Decision 0364](0364-Direct-Fixed-Native-Service-Leaf-Consumption.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native execution context](../../Specifications/Windvale-Native-Execution-Context.md#output-table-version-1)
+- Advanced by: [Decision 0374](0374-Windvale-Owned-Native-Output-Table.md)
 
 ## Context
 

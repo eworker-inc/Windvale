@@ -279,6 +279,14 @@ bundles now use this sole path. Managed adapter/table-slot metadata,
 `WVFI`/`WVFO`/`WVIO` binding, W^X ownership, contexts, arenas, invocation,
 Linux evidence, and the grouped gate remain open.
 
+[Decision 0374](../Decisions/0374-Windvale-Owned-Native-Output-Table.md)
+removes C# ownership of the 48-byte `WVIO` layout. Windvale validates an exact
+bounded request containing already acquired opaque targets and constructs the
+complete table; the managed host retains only channel acquisition/pinning,
+Windows writer resolution, response verification/copy, and teardown. `WVFI`,
+`WVFO`, the service table, execution context, W^X ownership, arenas, invocation,
+Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

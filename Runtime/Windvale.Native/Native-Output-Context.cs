@@ -67,37 +67,18 @@ internal sealed class Nativeˉoutputˉcontext : IDisposable
                 Writeˉfunction = NativeLibrary.GetExport(Writeˉlibrary, "WriteFile");
             }
 
-            var Bytes = new byte[checked((int)Nativeˉoutputˉtableˉcontract.SIZE)];
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉoutputˉtableˉcontract.MAGIC_OFFSET),
-                Nativeˉoutputˉtableˉcontract.MAGIC);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉoutputˉtableˉcontract.FORMAT_VERSION_OFFSET),
-                Nativeˉoutputˉtableˉcontract.FORMAT_VERSION);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉoutputˉtableˉcontract.SIZE_OFFSET),
-                Nativeˉoutputˉtableˉcontract.SIZE);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉoutputˉtableˉcontract.PLATFORM_OFFSET),
-                (uint)Platform);
             var Flags = (requireˉconsole ? Nativeˉoutputˉtableˉcontract.CONSOLE_PRESENT : 0) |
                 (requireˉdiagnostic ? Nativeˉoutputˉtableˉcontract.DIAGNOSTIC_PRESENT : 0);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉoutputˉtableˉcontract.FLAGS_OFFSET),
-                Flags);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Bytes.AsSpan(Nativeˉoutputˉtableˉcontract.CONSOLE_TARGET_OFFSET),
-                requireˉconsole ? Handleˉvalue(Consoleˉhandle!) : 0);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Bytes.AsSpan(Nativeˉoutputˉtableˉcontract.DIAGNOSTIC_TARGET_OFFSET),
-                requireˉdiagnostic ? Handleˉvalue(Diagnosticˉhandle!) : 0);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Bytes.AsSpan(Nativeˉoutputˉtableˉcontract.WRITE_FUNCTION_POINTER_OFFSET),
+            var Bytes = Nativeˉoutputˉtableˉbuilder.Build(
+                Platform,
+                Flags,
+                requireˉconsole ? Handleˉvalue(Consoleˉhandle!) : 0,
+                requireˉdiagnostic ? Handleˉvalue(Diagnosticˉhandle!) : 0,
                 Writeˉfunction == IntPtr.Zero ? 0 : checked((ulong)Writeˉfunction.ToInt64()));
 
             Address = Marshal.AllocHGlobal(Bytes.Length);
-            Marshal.Copy(Bytes, 0, Address, Bytes.Length);
-            Verifyˉtable(Bytes, requireˉconsole, requireˉdiagnostic, Platform);
+            Marshal.Copy(Bytes.ToArray(), 0, Address, Bytes.Length);
+            Verifyˉtable(Bytes.AsSpan(), requireˉconsole, requireˉdiagnostic, Platform);
         }
         catch
         {

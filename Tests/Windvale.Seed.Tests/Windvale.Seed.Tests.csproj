@@ -190,6 +190,12 @@
       Include="../../Runtime/Windvale/Native-Service-Bundle-Materialization-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Service-Bundle-Materialization-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Output-Table-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Output-Table-Core.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Output-Table-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Output-Table-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-Publication-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Publication-Bridge.wv" />
     <EmbeddedResource
