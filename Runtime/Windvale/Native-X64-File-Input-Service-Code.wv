@@ -1,0 +1,153 @@
+module Runtimeˉnativeˉx64ˉfileˉinputˉserviceˉcode profile portable;
+
+import Runtimeˉnativeˉx64ˉserviceˉcodeˉbuilder as Serviceˉcode;
+
+fn Compareˉwindowsˉu32(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder,
+    Error: u32,
+    Target: u32
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 61u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, Error);
+    return Serviceˉcode.Nativeˉx64ˉserviceˉbranch(Next, 132u8, Target);
+}
+
+fn Compareˉi8(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder,
+    Error: u8,
+    Target: u32
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+            Builder, 72u8, 131u8, 248u8, Error
+        );
+    return Serviceˉcode.Nativeˉx64ˉserviceˉbranch(Next, 132u8, Target);
+}
+
+export fn Nativeˉx64ˉfileˉinputˉwindowsˉerrorˉmapping(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder,
+    Invalidˉtarget: u32,
+    Notˉfoundˉtarget: u32,
+    Deniedˉtarget: u32,
+    Unavailableˉtarget: u32
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder = Compareˉwindowsˉu32(
+        Builder, 123u32, Invalidˉtarget
+    );
+    Next = Compareˉwindowsˉu32(Next, 161u32, Invalidˉtarget);
+    Next = Compareˉwindowsˉu32(Next, 206u32, Invalidˉtarget);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 131u8, 248u8, 2u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Next, 132u8, Notˉfoundˉtarget
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 131u8, 248u8, 3u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Next, 132u8, Notˉfoundˉtarget
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 131u8, 248u8, 5u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Next, 132u8, Deniedˉtarget
+    );
+    return Serviceˉcode.Nativeˉx64ˉserviceˉjump(Next, Unavailableˉtarget);
+}
+
+export fn Nativeˉx64ˉfileˉinputˉlinuxˉerrorˉmapping(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder,
+    Invalidˉtarget: u32,
+    Notˉfoundˉtarget: u32,
+    Deniedˉtarget: u32,
+    Unavailableˉtarget: u32
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder = Compareˉi8(
+        Builder, 234u8, Invalidˉtarget
+    );
+    Next = Compareˉi8(Next, 220u8, Invalidˉtarget);
+    Next = Compareˉi8(Next, 254u8, Notˉfoundˉtarget);
+    Next = Compareˉi8(Next, 236u8, Notˉfoundˉtarget);
+    Next = Compareˉi8(Next, 255u8, Deniedˉtarget);
+    Next = Compareˉi8(Next, 243u8, Deniedˉtarget);
+    Next = Compareˉi8(Next, 235u8, Deniedˉtarget);
+    return Serviceˉcode.Nativeˉx64ˉserviceˉjump(Next, Unavailableˉtarget);
+}
+
+export fn Nativeˉx64ˉfileˉinputˉwriteˉwindowsˉdescriptor(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+            Builder, 72u8, 139u8, 66u8, 16u8
+        );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 73u8, 137u8, 4u8, 36u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 139u8, 66u8, 24u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 65u8, 137u8, 68u8, 36u8, 8u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 65u8, 199u8, 68u8, 36u8, 12u8
+    );
+    return Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+}
+
+export fn Nativeˉx64ˉfileˉinputˉwriteˉlinuxˉdescriptor(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+            Builder, 72u8, 139u8, 66u8, 16u8
+        );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 124u8, 36u8, 32u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 137u8, 7u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 139u8, 66u8, 24u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 137u8, 71u8, 8u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 199u8, 71u8, 12u8
+    );
+    return Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+}
+
+export fn Nativeˉx64ˉfileˉinputˉstoreˉdetail(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder,
+    Detail: u8
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+            Builder, 199u8, 68u8, 36u8, 76u8, Detail
+        );
+    return Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 0u8, 0u8, 0u8
+    );
+}
+
+export fn Nativeˉx64ˉfileˉinputˉdirectˉfailure(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder,
+    Detail: u8,
+    Returnˉtarget: u32
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+            Builder, 65u8, 199u8, 71u8, 64u8, Detail
+        );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(Next, 0u8, 0u8, 0u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Next, 184u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 1u32);
+    return Serviceˉcode.Nativeˉx64ˉserviceˉjump(Next, Returnˉtarget);
+}

@@ -36,6 +36,12 @@
       Include="Consumers/Native-X64-Linux-File-Output-Service.bin"
       LogicalName="Windvale.Native.Native-X64-Linux-File-Output-Service.bin" />
     <EmbeddedResource
+      Include="Consumers/Native-X64-Windows-File-Input-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Windows-File-Input-Service.bin" />
+    <EmbeddedResource
+      Include="Consumers/Native-X64-Linux-File-Input-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Linux-File-Input-Service.bin" />
+    <EmbeddedResource
       Include="Consumers/Native-X64-Utf8-Service.bin"
       LogicalName="Windvale.Native.Native-X64-Utf8-Service.bin" />
     <EmbeddedResource

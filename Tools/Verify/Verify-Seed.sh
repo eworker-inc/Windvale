@@ -173,6 +173,10 @@ NATIVE_FILE_OUTPUT_CODE_MODULE="$ARTIFACTS/Native-X64-File-Output-Service-Code.w
 NATIVE_WINDOWS_FILE_OUTPUT_CORE_MODULE="$ARTIFACTS/Native-X64-File-Output-Service-Windows.wvb"
 NATIVE_LINUX_FILE_OUTPUT_CORE_MODULE="$ARTIFACTS/Native-X64-File-Output-Service-Linux.wvb"
 NATIVE_FILE_OUTPUT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-File-Output-Services-Bridge.wvb"
+NATIVE_FILE_INPUT_CODE_MODULE="$ARTIFACTS/Native-X64-File-Input-Service-Code.wvb"
+NATIVE_WINDOWS_FILE_INPUT_CORE_MODULE="$ARTIFACTS/Native-X64-File-Input-Service-Windows.wvb"
+NATIVE_LINUX_FILE_INPUT_CORE_MODULE="$ARTIFACTS/Native-X64-File-Input-Service-Linux.wvb"
+NATIVE_FILE_INPUT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-File-Input-Services-Bridge.wvb"
 NATIVE_TEXT_CONCAT_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service.wvb"
 NATIVE_TEXT_CONCAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service-Bridge.wvb"
 NATIVE_TEXT_QUOTE_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Quote-Service.wvb"
@@ -775,6 +779,67 @@ NATIVE_FILE_OUTPUT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_FILE_
 printf '%s\n' "$NATIVE_FILE_OUTPUT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_FILE_OUTPUT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_FILE_OUTPUT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_FILE_INPUT_CODE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-File-Input-Service-Code.wv"
+NATIVE_WINDOWS_FILE_INPUT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-File-Input-Service-Windows.wv"
+NATIVE_LINUX_FILE_INPUT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-File-Input-Service-Linux.wv"
+NATIVE_FILE_INPUT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-File-Input-Services-Bridge.wv"
+NATIVE_FILE_INPUT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-File-Input-Services-Bridge.wvb"
+NATIVE_WINDOWS_FILE_INPUT_LEAF="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Windows-File-Input-Service.bin"
+NATIVE_LINUX_FILE_INPUT_LEAF="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Linux-File-Input-Service.bin"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_FILE_INPUT_CODE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    -o "$NATIVE_FILE_INPUT_CODE_MODULE"
+NATIVE_FILE_INPUT_CODE_HASH=$(sha256sum "$NATIVE_FILE_INPUT_CODE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_FILE_INPUT_CODE_HASH" != 'e2bfd4521b8f22529f3747eef196bdf7fa7aa0e97644db23ed45939aa10a1a7a' ]; then
+    echo "The shared Windvale file-input code module has an unexpected digest: $NATIVE_FILE_INPUT_CODE_HASH" >&2
+    exit 1
+fi
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_WINDOWS_FILE_INPUT_CORE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    --module "$NATIVE_FILE_INPUT_CODE_SOURCE" \
+    -o "$NATIVE_WINDOWS_FILE_INPUT_CORE_MODULE"
+NATIVE_WINDOWS_FILE_INPUT_CORE_HASH=$(sha256sum "$NATIVE_WINDOWS_FILE_INPUT_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_WINDOWS_FILE_INPUT_CORE_HASH" != '795e45f1efb6c8a864962fc01a6e8374d758fa4e098eda8900b6639a02b8cf2e' ]; then
+    echo "The Windvale Windows file-input core has an unexpected digest: $NATIVE_WINDOWS_FILE_INPUT_CORE_HASH" >&2
+    exit 1
+fi
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_LINUX_FILE_INPUT_CORE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    --module "$NATIVE_FILE_INPUT_CODE_SOURCE" \
+    -o "$NATIVE_LINUX_FILE_INPUT_CORE_MODULE"
+NATIVE_LINUX_FILE_INPUT_CORE_HASH=$(sha256sum "$NATIVE_LINUX_FILE_INPUT_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_LINUX_FILE_INPUT_CORE_HASH" != '49b7990dd51ae3108f387331d907f4127c18726d95a453a8f768459016ad497e' ]; then
+    echo "The Windvale Linux file-input core has an unexpected digest: $NATIVE_LINUX_FILE_INPUT_CORE_HASH" >&2
+    exit 1
+fi
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_FILE_INPUT_BRIDGE_SOURCE" \
+    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
+    --module "$NATIVE_FILE_INPUT_CODE_SOURCE" \
+    --module "$NATIVE_WINDOWS_FILE_INPUT_CORE_SOURCE" \
+    --module "$NATIVE_LINUX_FILE_INPUT_CORE_SOURCE" \
+    -o "$NATIVE_FILE_INPUT_BRIDGE_MODULE"
+NATIVE_FILE_INPUT_BRIDGE_HASH=$(sha256sum "$NATIVE_FILE_INPUT_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_FILE_INPUT_BRIDGE_HASH" != '81cb5ed76e0e885055b13ae23bfbca118c99c7ea905d3ae75a5bc87ccb35269b' ]; then
+    echo "The Windvale file-input bridge has an unexpected digest: $NATIVE_FILE_INPUT_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_FILE_INPUT_BRIDGE_MODULE" "$NATIVE_FILE_INPUT_BRIDGE_RETAINED"
+if [ "$(sha256sum "$NATIVE_WINDOWS_FILE_INPUT_LEAF" | awk '{print $1}')" != '3d2fffc028083cdc4cfd39e553dea603e9a1ae661bb5df3f14ca438c4d3e3cf8' ] ||
+    [ "$(wc -c < "$NATIVE_WINDOWS_FILE_INPUT_LEAF")" -ne 1218 ] ||
+    [ "$(sha256sum "$NATIVE_LINUX_FILE_INPUT_LEAF" | awk '{print $1}')" != '55ae4524c463f064aee0964d7f9b64438701fb4375a97c53d11f2f17902c12cb' ] ||
+    [ "$(wc -c < "$NATIVE_LINUX_FILE_INPUT_LEAF")" -ne 996 ]; then
+    echo 'A retained Windvale native file-input leaf has an unexpected exact identity.' >&2
+    exit 1
+fi
+NATIVE_FILE_INPUT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_FILE_INPUT_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_FILE_INPUT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_FILE_INPUT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_FILE_INPUT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_TEXT_CONCAT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
 dotnet "$TOOL_DLL" \

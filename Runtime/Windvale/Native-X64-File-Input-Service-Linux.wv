@@ -1,0 +1,584 @@
+module Runtimeˉnativeˉx64ˉfileˉinputˉserviceˉlinux profile portable;
+
+import Runtimeˉnativeˉx64ˉfileˉinputˉserviceˉcode as Fileˉcode;
+import Runtimeˉnativeˉx64ˉserviceˉcodeˉbuilder as Serviceˉcode;
+
+fn Appendˉlabel(Labels: bytes, Offset: u32) -> bytes {
+    return Bytesˉconcat(Labels, Bytesˉfromˉu32ˉlittle(Offset));
+}
+
+fn Emitˉentry(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+            Builder, 72u8, 129u8, 236u8
+        );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 128u32);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 76u8, 137u8, 20u8, 36u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 76u8, 137u8, 92u8, 36u8, 8u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 76u8, 137u8, 124u8, 36u8, 16u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 76u8, 137u8, 68u8, 36u8, 24u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 137u8, 76u8, 36u8, 32u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 68u8, 137u8, 76u8, 36u8, 76u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 65u8, 199u8, 71u8, 64u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 73u8, 139u8, 71u8, 96u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 137u8, 68u8, 36u8, 40u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 139u8, 64u8, 28u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 137u8, 68u8, 36u8, 48u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 199u8, 68u8, 36u8, 52u8
+    );
+    return Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+}
+
+fn Emitˉopen(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder,
+    Failureˉsnapshotˉlimitˉtarget: u32,
+    Failureˉinvalidˉtarget: u32,
+    Openˉerrorˉtarget: u32
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+            Builder, 131u8, 124u8, 36u8, 48u8, 64u8
+        );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Next, 131u8, Failureˉsnapshotˉlimitˉtarget
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 131u8, 124u8, 36u8, 76u8, 0u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Next, 132u8, Failureˉinvalidˉtarget
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 68u8, 36u8, 40u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 139u8, 80u8, 40u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 57u8, 84u8, 36u8, 76u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Next, 135u8, Failureˉinvalidˉtarget
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Next, 49u8, 192u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 124u8, 36u8, 24u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 139u8, 76u8, 36u8, 76u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Next, 242u8, 174u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Next, 132u8, Failureˉinvalidˉtarget
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 68u8, 36u8, 40u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 72u8, 139u8, 120u8, 64u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 137u8, 124u8, 36u8, 96u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 116u8, 36u8, 24u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 139u8, 76u8, 36u8, 76u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Next, 243u8, 164u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 198u8, 7u8, 0u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Next, 184u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 257u32);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 199u8, 199u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 4294967196u32);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 116u8, 36u8, 96u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Next, 186u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 524288u32);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 69u8, 49u8, 210u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Next, 15u8, 5u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 133u8, 192u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Next, 136u8, Openˉerrorˉtarget
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 137u8, 68u8, 36u8, 56u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 68u8, 36u8, 40u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 72u8, 139u8, 64u8, 48u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 139u8, 76u8, 36u8, 48u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 72u8, 193u8, 225u8, 22u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 1u8, 200u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 137u8, 68u8, 36u8, 64u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 199u8, 68u8, 36u8, 72u8, 0u8
+    );
+    return Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 0u8, 0u8, 0u8
+    );
+}
+
+fn Emitˉpublish(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder,
+    Returnˉtarget: u32
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+            Builder, 72u8, 139u8, 68u8, 36u8, 40u8
+        );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 72u8, 139u8, 120u8, 32u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 139u8, 76u8, 36u8, 48u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 72u8, 193u8, 225u8, 20u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 1u8, 207u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 137u8, 124u8, 36u8, 96u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 116u8, 36u8, 24u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 139u8, 76u8, 36u8, 76u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Next, 243u8, 164u8);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 72u8, 139u8, 80u8, 16u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 139u8, 76u8, 36u8, 48u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 72u8, 193u8, 225u8, 5u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 1u8, 202u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 124u8, 36u8, 96u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 137u8, 58u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 139u8, 76u8, 36u8, 76u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 137u8, 74u8, 8u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 199u8, 66u8, 12u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 124u8, 36u8, 64u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 72u8, 137u8, 122u8, 16u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 139u8, 76u8, 36u8, 72u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 137u8, 74u8, 24u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 199u8, 66u8, 28u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Next, 131u8, 64u8, 28u8, 1u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 72u8, 139u8, 84u8, 36u8, 32u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 137u8, 58u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 137u8, 74u8, 8u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 199u8, 66u8, 12u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 0u32);
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Next, 49u8, 192u8);
+    return Serviceˉcode.Nativeˉx64ˉserviceˉjump(Next, Returnˉtarget);
+}
+
+fn Emitˉreturn(
+    Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder
+) -> Serviceˉcode.Nativeˉx64ˉserviceˉbuilder {
+    var Next: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+            Builder, 76u8, 139u8, 20u8, 36u8
+        );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 76u8, 139u8, 92u8, 36u8, 8u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Next, 76u8, 139u8, 124u8, 36u8, 16u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Next, 72u8, 129u8, 196u8
+    );
+    Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Next, 128u32);
+    return Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Next, 195u8);
+}
+
+export fn Nativeˉx64ˉlinuxˉfileˉinputˉserviceˉbuild() -> bytes {
+    let Cacheˉloopˉtarget: u32 = 0u32;
+    let Cacheˉnextˉtarget: u32 = 1u32;
+    let Cacheˉmissˉtarget: u32 = 2u32;
+    let Readˉloopˉtarget: u32 = 3u32;
+    let Readˉrequestˉreadyˉtarget: u32 = 4u32;
+    let Readˉcallˉtarget: u32 = 5u32;
+    let Overflowˉprobeˉtarget: u32 = 6u32;
+    let Overflowˉcallˉtarget: u32 = 7u32;
+    let Successˉcloseˉtarget: u32 = 8u32;
+    let Openˉerrorˉtarget: u32 = 9u32;
+    let Readˉerrorˉtarget: u32 = 10u32;
+    let Closeˉinvalidˉtarget: u32 = 11u32;
+    let Closeˉnotˉfoundˉtarget: u32 = 12u32;
+    let Closeˉdeniedˉtarget: u32 = 13u32;
+    let Closeˉunavailableˉtarget: u32 = 14u32;
+    let Closeˉtooˉlargeˉtarget: u32 = 15u32;
+    let Closeˉfailureˉtarget: u32 = 16u32;
+    let Failureˉinvalidˉtarget: u32 = 17u32;
+    let Failureˉnotˉfoundˉtarget: u32 = 18u32;
+    let Failureˉdeniedˉtarget: u32 = 19u32;
+    let Failureˉunavailableˉtarget: u32 = 20u32;
+    let Failureˉsnapshotˉlimitˉtarget: u32 = 21u32;
+    let Returnˉtarget: u32 = 22u32;
+
+    var Builder: Serviceˉcode.Nativeˉx64ˉserviceˉbuilder =
+        Emitˉentry(Serviceˉcode.Nativeˉx64ˉserviceˉbuilderˉempty());
+
+    let Cacheˉloopˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 68u8, 36u8, 52u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 59u8, 68u8, 36u8, 48u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 131u8, Cacheˉmissˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 84u8, 36u8, 40u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 139u8, 82u8, 16u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 193u8, 224u8, 5u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 1u8, 194u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 139u8, 66u8, 8u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 59u8, 68u8, 36u8, 76u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 133u8, Cacheˉnextˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 139u8, 50u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 124u8, 36u8, 24u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 76u8, 36u8, 76u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 243u8, 166u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 133u8, Cacheˉnextˉtarget
+    );
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉwriteˉlinuxˉdescriptor(Builder);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 49u8, 192u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Returnˉtarget);
+
+    let Cacheˉnextˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 131u8, 68u8, 36u8, 52u8, 1u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Cacheˉloopˉtarget);
+
+    let Cacheˉmissˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Emitˉopen(
+        Builder,
+        Failureˉsnapshotˉlimitˉtarget,
+        Failureˉinvalidˉtarget,
+        Openˉerrorˉtarget
+    );
+
+    let Readˉloopˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 68u8, 36u8, 72u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 61u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 4194304u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Overflowˉprobeˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 186u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 4194304u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 41u8, 194u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 129u8, 250u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 65536u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 134u8, Readˉrequestˉreadyˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 186u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 65536u32);
+    let Readˉrequestˉreadyˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 137u8, 84u8, 36u8, 104u8
+    );
+    let Readˉcallˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 49u8, 192u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 124u8, 36u8, 56u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 116u8, 36u8, 64u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 76u8, 36u8, 72u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 1u8, 206u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 84u8, 36u8, 104u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 15u8, 5u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 248u8, 252u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Readˉcallˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 133u8, 192u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 136u8, Readˉerrorˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Successˉcloseˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 84u8, 36u8, 104u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 57u8, 208u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 135u8, Closeˉunavailableˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 1u8, 68u8, 36u8, 72u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Readˉloopˉtarget);
+
+    let Overflowˉprobeˉoffset: u32 = Bytesˉlength(Builder.Code);
+    let Overflowˉcallˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 49u8, 192u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 124u8, 36u8, 56u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 116u8, 36u8, 96u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 186u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 15u8, 5u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 72u8, 131u8, 248u8, 252u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Overflowˉcallˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 133u8, 192u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 136u8, Readˉerrorˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 132u8, Successˉcloseˉtarget
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Closeˉtooˉlargeˉtarget);
+
+    let Successˉcloseˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 184u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 3u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 124u8, 36u8, 56u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 15u8, 5u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
+        Builder, 72u8, 133u8, 192u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉbranch(
+        Builder, 136u8, Failureˉunavailableˉtarget
+    );
+    Builder = Emitˉpublish(Builder, Returnˉtarget);
+
+    let Openˉerrorˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉlinuxˉerrorˉmapping(
+        Builder,
+        Failureˉinvalidˉtarget,
+        Failureˉnotˉfoundˉtarget,
+        Failureˉdeniedˉtarget,
+        Failureˉunavailableˉtarget
+    );
+    let Readˉerrorˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉlinuxˉerrorˉmapping(
+        Builder,
+        Closeˉinvalidˉtarget,
+        Closeˉnotˉfoundˉtarget,
+        Closeˉdeniedˉtarget,
+        Closeˉunavailableˉtarget
+    );
+
+    let Closeˉinvalidˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉstoreˉdetail(Builder, 5u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Closeˉfailureˉtarget);
+    let Closeˉnotˉfoundˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉstoreˉdetail(Builder, 6u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Closeˉfailureˉtarget);
+    let Closeˉdeniedˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉstoreˉdetail(Builder, 7u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Closeˉfailureˉtarget);
+    let Closeˉunavailableˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉstoreˉdetail(Builder, 8u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Closeˉfailureˉtarget);
+    let Closeˉtooˉlargeˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉstoreˉdetail(Builder, 9u8);
+
+    let Closeˉfailureˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 184u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 3u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfive(
+        Builder, 72u8, 139u8, 124u8, 36u8, 56u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉtwo(Builder, 15u8, 5u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 139u8, 68u8, 36u8, 76u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
+        Builder, 65u8, 137u8, 71u8, 64u8
+    );
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu8(Builder, 184u8);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉu32(Builder, 1u32);
+    Builder = Serviceˉcode.Nativeˉx64ˉserviceˉjump(Builder, Returnˉtarget);
+
+    let Failureˉinvalidˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉdirectˉfailure(
+        Builder, 5u8, Returnˉtarget
+    );
+    let Failureˉnotˉfoundˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉdirectˉfailure(
+        Builder, 6u8, Returnˉtarget
+    );
+    let Failureˉdeniedˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉdirectˉfailure(
+        Builder, 7u8, Returnˉtarget
+    );
+    let Failureˉunavailableˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉdirectˉfailure(
+        Builder, 8u8, Returnˉtarget
+    );
+    let Failureˉsnapshotˉlimitˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Fileˉcode.Nativeˉx64ˉfileˉinputˉdirectˉfailure(
+        Builder, 10u8, Returnˉtarget
+    );
+
+    let Returnˉoffset: u32 = Bytesˉlength(Builder.Code);
+    Builder = Emitˉreturn(Builder);
+
+    var Labels: bytes = Bytesˉfromˉu32ˉlittle(Cacheˉloopˉoffset);
+    Labels = Appendˉlabel(Labels, Cacheˉnextˉoffset);
+    Labels = Appendˉlabel(Labels, Cacheˉmissˉoffset);
+    Labels = Appendˉlabel(Labels, Readˉloopˉoffset);
+    Labels = Appendˉlabel(Labels, Readˉrequestˉreadyˉoffset);
+    Labels = Appendˉlabel(Labels, Readˉcallˉoffset);
+    Labels = Appendˉlabel(Labels, Overflowˉprobeˉoffset);
+    Labels = Appendˉlabel(Labels, Overflowˉcallˉoffset);
+    Labels = Appendˉlabel(Labels, Successˉcloseˉoffset);
+    Labels = Appendˉlabel(Labels, Openˉerrorˉoffset);
+    Labels = Appendˉlabel(Labels, Readˉerrorˉoffset);
+    Labels = Appendˉlabel(Labels, Closeˉinvalidˉoffset);
+    Labels = Appendˉlabel(Labels, Closeˉnotˉfoundˉoffset);
+    Labels = Appendˉlabel(Labels, Closeˉdeniedˉoffset);
+    Labels = Appendˉlabel(Labels, Closeˉunavailableˉoffset);
+    Labels = Appendˉlabel(Labels, Closeˉtooˉlargeˉoffset);
+    Labels = Appendˉlabel(Labels, Closeˉfailureˉoffset);
+    Labels = Appendˉlabel(Labels, Failureˉinvalidˉoffset);
+    Labels = Appendˉlabel(Labels, Failureˉnotˉfoundˉoffset);
+    Labels = Appendˉlabel(Labels, Failureˉdeniedˉoffset);
+    Labels = Appendˉlabel(Labels, Failureˉunavailableˉoffset);
+    Labels = Appendˉlabel(Labels, Failureˉsnapshotˉlimitˉoffset);
+    Labels = Appendˉlabel(Labels, Returnˉoffset);
+    return Serviceˉcode.Nativeˉx64ˉserviceˉfinish(Builder, Labels);
+}

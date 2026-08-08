@@ -249,6 +249,15 @@ and differential evidence. The managed `WVFO` table owner, file-input leaf
 construction, service-bundle construction, W^X ownership, invocation, Linux
 evidence, and grouped gate remain open.
 
+[Decision 0371](../Decisions/0371-Windvale-Owned-Native-File-Input-Leaves.md)
+removes the final C# platform-leaf instruction generator for Windows and Linux
+`file.read_bytes`. Shared and platform-focused Windvale modules plus one
+native-front-door-reproducible bridge own the unchanged 1,218-byte and 996-byte
+adapters. The normal runtime embeds and digest-checks only those two generated
+leaves; the bridge WVB remains recovery and differential evidence. Managed
+`WVFI`/`WVFO` table binding, service-bundle construction, W^X ownership,
+invocation, Linux execution evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

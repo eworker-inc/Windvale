@@ -145,6 +145,18 @@
       Include="../../Runtime/Windvale/Native-X64-File-Output-Services-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-File-Output-Services-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-File-Input-Service-Code.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-File-Input-Service-Code.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-File-Input-Service-Windows.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-File-Input-Service-Windows.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-File-Input-Service-Linux.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-File-Input-Service-Linux.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-X64-File-Input-Services-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-X64-File-Input-Services-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Text-Concat-Service.wv" />
     <EmbeddedResource
