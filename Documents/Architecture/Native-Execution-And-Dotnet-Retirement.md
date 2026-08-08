@@ -630,8 +630,15 @@ Linux execution, promotion, and the grouped gate remain.
 keeps orchestration binary formats out of the permanent-host scripts. Its
 portable core constructs `WVMI` and projects admitted `WVSG` into `WVHS`; the
 paired process writes one control file per invocation. Host adapters can now
-concentrate on digest-bound tool selection, ordering, bounded iteration, and
-private teardown. Complete composition and grouped qualification remain.
+concentrate on the later resource boundary; final source-set projection was
+still separate from this metadata-control slice.
+
+[Decision 0411](../Decisions/0411-Native-Hosted-Container-Source-Set.md)
+closes that final-source boundary. The paired process admits platform, startup,
+bundle, and runtime outputs, recomputes every bundle identity leaf, keeps large
+payloads segmented, and emits the exact six-region `WVSG` consumed by Decision
+0404. The final segment-set manifest, digest-bound process ordering, private
+teardown, Linux execution, promotion, and grouped qualification remain.
 
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale

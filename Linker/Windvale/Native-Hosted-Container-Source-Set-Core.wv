@@ -1,0 +1,319 @@
+module Linkerˉnativeˉhostedˉcontainerˉsourceˉsetˉcore profile portable;
+
+import Foundationˉimmutableˉsourceˉregions as Sources;
+import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
+
+export record Nativeˉhostedˉcontainerˉsourceˉsetˉplan {
+    Valid: bool;
+    Target: u32;
+    Applicationˉbytes: u32;
+    Headerˉbytes: u32;
+    Startupˉoffset: u32;
+    Startupˉbytes: u32;
+    Bundleˉoffset: u32;
+    Bundleˉbytes: u32;
+    Importˉoffset: u32;
+    Importˉbytes: u32;
+    Runtimeˉoffset: u32;
+    Runtimeˉbytes: u32;
+    Relocationˉoffset: u32;
+    Relocationˉbytes: u32;
+    Bundleˉsegments: u32;
+    Chunks: u32;
+    Logicalˉbytes: u32;
+}
+
+const BUNDLE_SEGMENT_BYTES: u32 = 4194104u32;
+const MAXIMUM_LOGICAL_BYTES: u32 = 67108864u32;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Invalid() -> Nativeˉhostedˉcontainerˉsourceˉsetˉplan {
+    return Nativeˉhostedˉcontainerˉsourceˉsetˉplan(
+        false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+fn Profileˉfromˉcontainer(Container: u32) -> u32 {
+    if Container == 3u32 { return 1u32; }
+    if Container >= 5u32 && Container <= 10u32 {
+        return Container - 3u32;
+    }
+    return 0u32;
+}
+
+export fn Nativeˉhostedˉcontainerˉsourceˉsetˉplanˉadmit(
+    Plan: bytes
+) -> Nativeˉhostedˉcontainerˉsourceˉsetˉplan {
+    if Bytesˉlength(Plan) < 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan, 8u32) != Bytesˉlength(Plan) ||
+        !Segmentation.Nativeˉhostedˉcontainerˉplanˉisˉvalid(
+            Bytesˉslice(Plan, 0u32, 128u32)
+        ) {
+        return Invalid();
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Plan, 20u32);
+    let Headerˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 36u32);
+    let Startupˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 44u32);
+    let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 52u32);
+    let Importˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 60u32);
+    let Runtimeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 68u32);
+    let Relocationˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 76u32);
+    let Logicalˉbytes: u32 = Headerˉbytes + Startupˉbytes + Bundleˉbytes +
+        Importˉbytes + Runtimeˉbytes + Relocationˉbytes;
+    if Logicalˉbytes > MAXIMUM_LOGICAL_BYTES { return Invalid(); }
+    var Bundleˉsegments: u32 = Bundleˉbytes / BUNDLE_SEGMENT_BYTES;
+    if Bundleˉbytes % BUNDLE_SEGMENT_BYTES != 0u32 {
+        Bundleˉsegments = Bundleˉsegments + 1u32;
+    }
+    var Chunks: u32 = Bundleˉsegments + 3u32;
+    if Target == 1u32 { Chunks = Chunks + 2u32; }
+    return Nativeˉhostedˉcontainerˉsourceˉsetˉplan(
+        true,
+        Target,
+        Bytesˉreadˉu32ˉlittle(Plan, 28u32),
+        Headerˉbytes,
+        Bytesˉreadˉu32ˉlittle(Plan, 40u32),
+        Startupˉbytes,
+        Bytesˉreadˉu32ˉlittle(Plan, 48u32),
+        Bundleˉbytes,
+        Bytesˉreadˉu32ˉlittle(Plan, 56u32),
+        Importˉbytes,
+        Bytesˉreadˉu32ˉlittle(Plan, 64u32),
+        Runtimeˉbytes,
+        Bytesˉreadˉu32ˉlittle(Plan, 72u32),
+        Relocationˉbytes,
+        Bundleˉsegments,
+        Chunks,
+        Logicalˉbytes
+    );
+}
+
+export fn Nativeˉhostedˉcontainerˉplatformˉresponseˉisˉvalid(
+    Planˉbytes: u32,
+    Admitted: Nativeˉhostedˉcontainerˉsourceˉsetˉplan,
+    Response: bytes
+) -> bool {
+    if !Admitted.Valid || Bytesˉlength(Response) < 32u32 {
+        return false;
+    }
+    var Magic: u32 = 1112299095u32;
+    if Admitted.Target == 1u32 { Magic = 1113019991u32; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != Magic ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Bytesˉlength(Response) ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != Planˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) != Admitted.Headerˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 24u32) != Admitted.Importˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 28u32) != Admitted.Relocationˉbytes {
+        return false;
+    }
+    return Bytesˉlength(Response) == 32u32 + Admitted.Headerˉbytes +
+        Admitted.Importˉbytes + Admitted.Relocationˉbytes;
+}
+
+export fn Nativeˉhostedˉcontainerˉstartupˉresponseˉisˉvalid(
+    Admitted: Nativeˉhostedˉcontainerˉsourceˉsetˉplan,
+    Response: bytes
+) -> bool {
+    var Requestˉbytes: u32 = 2554u32;
+    if Admitted.Target == 1u32 { Requestˉbytes = 4606u32; }
+    if !Admitted.Valid ||
+        Bytesˉlength(Response) != 32u32 + Admitted.Startupˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1146312279u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Bytesˉlength(Response) ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != Requestˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) != Admitted.Startupˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 24u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 28u32) != 0u32 {
+        return false;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉcontainerˉbundleˉresponseˉisˉvalid(
+    Admitted: Nativeˉhostedˉcontainerˉsourceˉsetˉplan,
+    Index: u32,
+    Response: bytes
+) -> bool {
+    if !Admitted.Valid || Index >= Admitted.Bundleˉsegments ||
+        Bytesˉlength(Response) < 40u32 {
+        return false;
+    }
+    let Offset: u32 = Index * BUNDLE_SEGMENT_BYTES;
+    var Segmentˉbytes: u32 = Admitted.Bundleˉbytes - Offset;
+    if Segmentˉbytes > BUNDLE_SEGMENT_BYTES {
+        Segmentˉbytes = BUNDLE_SEGMENT_BYTES;
+    }
+    let Acceptedˉrequest: u32 =
+        Bytesˉreadˉu32ˉlittle(Response, 16u32);
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1230198359u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Bytesˉlength(Response) ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Acceptedˉrequest < 176u32 || Acceptedˉrequest > 4194304u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) != 144u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 24u32) != Admitted.Bundleˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 28u32) != Offset ||
+        Bytesˉreadˉu32ˉlittle(Response, 32u32) != Segmentˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 36u32) != 10u32 ||
+        Bytesˉlength(Response) != 40u32 + Segmentˉbytes {
+        return false;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉcontainerˉruntimeˉisˉvalid(
+    Plan: bytes,
+    Admitted: Nativeˉhostedˉcontainerˉsourceˉsetˉplan,
+    Runtime: bytes
+) -> bool {
+    if !Admitted.Valid || Bytesˉlength(Runtime) != 4096u32 ||
+        Admitted.Runtimeˉbytes != 4096u32 {
+        return false;
+    }
+    let Profile: u32 = Profileˉfromˉcontainer(
+        Bytesˉreadˉu32ˉlittle(Runtime, 496u32)
+    );
+    if Bytesˉreadˉu32ˉlittle(Runtime, 492u32) != Admitted.Target ||
+        Profile != Bytesˉreadˉu32ˉlittle(Plan, 24u32) ||
+        Bytesˉreadˉu32ˉlittle(Runtime, 540u32) != Admitted.Bundleˉbytes {
+        return false;
+    }
+    return true;
+}
+
+fn Appendˉchunk(
+    Records: bytes,
+    Index: u32,
+    Logicalˉoffset: u32,
+    Chunkˉbytes: u32
+) -> bytes {
+    var Result: bytes = Appendˉu32(Records, Index);
+    Result = Appendˉu32(Result, Logicalˉoffset);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, Chunkˉbytes);
+    return Appendˉu32(Result, Chunkˉbytes);
+}
+
+fn Appendˉregion(
+    Records: bytes,
+    Index: u32,
+    Logicalˉoffset: u32,
+    Imageˉoffset: u32,
+    Regionˉbytes: u32
+) -> bytes {
+    var Result: bytes = Appendˉu32(Records, Index);
+    Result = Appendˉu32(Result, Logicalˉoffset);
+    Result = Appendˉu32(Result, Imageˉoffset);
+    return Appendˉu32(Result, Regionˉbytes);
+}
+
+export fn Nativeˉhostedˉcontainerˉsourceˉmanifest(
+    Admitted: Nativeˉhostedˉcontainerˉsourceˉsetˉplan,
+    Seed: bytes
+) -> bytes {
+    if !Admitted.Valid { return Empty(Seed); }
+    var Chunks: bytes = Empty(Seed);
+    var Chunk: u32 = 0u32;
+    var Logical: u32 = 0u32;
+    Chunks = Appendˉchunk(Chunks, Chunk, Logical, Admitted.Headerˉbytes);
+    Chunk = Chunk + 1u32;
+    Logical = Logical + Admitted.Headerˉbytes;
+    Chunks = Appendˉchunk(Chunks, Chunk, Logical, Admitted.Startupˉbytes);
+    Chunk = Chunk + 1u32;
+    Logical = Logical + Admitted.Startupˉbytes;
+    var Index: u32 = 0u32;
+    while Index < Admitted.Bundleˉsegments {
+        let Offset: u32 = Index * BUNDLE_SEGMENT_BYTES;
+        var Count: u32 = Admitted.Bundleˉbytes - Offset;
+        if Count > BUNDLE_SEGMENT_BYTES { Count = BUNDLE_SEGMENT_BYTES; }
+        Chunks = Appendˉchunk(Chunks, Chunk, Logical, Count);
+        Chunk = Chunk + 1u32;
+        Logical = Logical + Count;
+        Index = Index + 1u32;
+    }
+    if Admitted.Importˉbytes > 0u32 {
+        Chunks = Appendˉchunk(
+            Chunks, Chunk, Logical, Admitted.Importˉbytes
+        );
+        Chunk = Chunk + 1u32;
+        Logical = Logical + Admitted.Importˉbytes;
+    }
+    Chunks = Appendˉchunk(Chunks, Chunk, Logical, Admitted.Runtimeˉbytes);
+    Chunk = Chunk + 1u32;
+    Logical = Logical + Admitted.Runtimeˉbytes;
+    if Admitted.Relocationˉbytes > 0u32 {
+        Chunks = Appendˉchunk(
+            Chunks, Chunk, Logical, Admitted.Relocationˉbytes
+        );
+        Chunk = Chunk + 1u32;
+        Logical = Logical + Admitted.Relocationˉbytes;
+    }
+    if Chunk != Admitted.Chunks || Logical != Admitted.Logicalˉbytes {
+        return Empty(Seed);
+    }
+
+    var Regions: bytes = Empty(Seed);
+    Logical = 0u32;
+    Regions = Appendˉregion(
+        Regions, 0u32, Logical, 0u32, Admitted.Headerˉbytes
+    );
+    Logical = Logical + Admitted.Headerˉbytes;
+    Regions = Appendˉregion(
+        Regions, 1u32, Logical, Admitted.Startupˉoffset,
+        Admitted.Startupˉbytes
+    );
+    Logical = Logical + Admitted.Startupˉbytes;
+    Regions = Appendˉregion(
+        Regions, 2u32, Logical, Admitted.Bundleˉoffset,
+        Admitted.Bundleˉbytes
+    );
+    Logical = Logical + Admitted.Bundleˉbytes;
+    Regions = Appendˉregion(
+        Regions, 3u32, Logical, Admitted.Importˉoffset,
+        Admitted.Importˉbytes
+    );
+    Logical = Logical + Admitted.Importˉbytes;
+    Regions = Appendˉregion(
+        Regions, 4u32, Logical, Admitted.Runtimeˉoffset,
+        Admitted.Runtimeˉbytes
+    );
+    Logical = Logical + Admitted.Runtimeˉbytes;
+    Regions = Appendˉregion(
+        Regions, 5u32, Logical, Admitted.Relocationˉoffset,
+        Admitted.Relocationˉbytes
+    );
+
+    let Total: u32 = 32u32 + Admitted.Chunks * 20u32 + 96u32;
+    var Manifest: bytes = Empty(Seed);
+    Manifest = Appendˉu32(Manifest, 1196643927u32);
+    Manifest = Appendˉu32(Manifest, 1u32);
+    Manifest = Appendˉu32(Manifest, Total);
+    Manifest = Appendˉu32(Manifest, Admitted.Chunks);
+    Manifest = Appendˉu32(Manifest, 6u32);
+    Manifest = Appendˉu32(Manifest, Admitted.Logicalˉbytes);
+    Manifest = Appendˉu32(Manifest, Admitted.Applicationˉbytes);
+    Manifest = Appendˉu32(Manifest, 0u32);
+    Manifest = Bytesˉconcat(Manifest, Chunks);
+    Manifest = Bytesˉconcat(Manifest, Regions);
+    let Sourceˉplan: Sources.Immutableˉsourceˉregionˉplan =
+        Sources.Immutableˉsourceˉregionsˉadmit(Manifest);
+    if !Sourceˉplan.Valid || Sourceˉplan.Chunks != Admitted.Chunks ||
+        Sourceˉplan.Regions != 6u32 ||
+        Sourceˉplan.Logicalˉbytes != Admitted.Logicalˉbytes ||
+        Sourceˉplan.Imageˉbytes != Admitted.Applicationˉbytes {
+        return Empty(Seed);
+    }
+    return Manifest;
+}

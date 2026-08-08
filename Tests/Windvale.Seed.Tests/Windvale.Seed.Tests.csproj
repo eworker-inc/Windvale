@@ -382,6 +382,12 @@
       Include="../../Runtime/Windvale/Native-Hosted-Orchestration-Control-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Orchestration-Control-Tool.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Native-Hosted-Container-Source-Set-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Source-Set-Core.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Windvale/Native-Hosted-Container-Source-Set-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Source-Set-Tool.wv" />
+    <EmbeddedResource
       Include="../../Linker/Windvale/Native-Hosted-Container-Segment-Request-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segment-Request-Tool.wv" />
     <EmbeddedResource

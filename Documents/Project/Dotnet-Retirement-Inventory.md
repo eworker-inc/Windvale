@@ -588,8 +588,17 @@ gate remain.
 removes the remaining managed `WVMI` serialization and `WVSG`-to-`WVHS`
 projection from the candidate metadata path. One focused Windvale process now
 owns both single-output control modes. Tool-package acquisition, ordered child
-execution, segment iteration, private cleanup, Linux execution, promotion, and
-the grouped gate remain.
+execution, final source-set production, segment iteration, private cleanup,
+Linux execution, promotion, and the grouped gate remain.
+
+[Decision 0411](../Decisions/0411-Native-Hosted-Container-Source-Set.md)
+removes managed producer-response extraction, whole-bundle concatenation, and
+six-region final `WVSG` construction. One paired native process admits all
+producer envelopes, streams the native fragment and ten service digests against
+runtime-bound metadata, emits bounded raw chunks, preserves empty Linux region
+ordinals, and writes the self-admitted manifest last. Native final segment-set
+`WVHM` construction, digest-bound ordered child execution, private cleanup,
+Linux execution, promotion, and the grouped gate remain.
 
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution

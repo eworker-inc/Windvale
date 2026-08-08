@@ -1,0 +1,320 @@
+module Nativeˉhostedˉcontainerˉsourceˉsetˉtool profile hosted;
+
+import Foundationˉimmutableˉsourceˉregions as Sources;
+import Foundationˉsha256ˉstreaming as Sha256;
+import Linkerˉnativeˉhostedˉcontainerˉsourceˉsetˉcore as Sourceˉset;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉsourceˉsetˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    return Bytesˉareˉequal(Textˉtoˉutf8(Left), Textˉtoˉutf8(Right));
+}
+
+fn Bundleˉresponseˉname(Prefix: text, Index: u32) -> text {
+    return Textˉconcat(
+        Textˉconcat(Prefix, ".response-"), U32ˉformat(Index)
+    );
+}
+
+fn Maximum(Left: u32, Right: u32) -> u32 {
+    if Left > Right { return Left; }
+    return Right;
+}
+
+fn Minimum(Left: u32, Right: u32) -> u32 {
+    if Left < Right { return Left; }
+    return Right;
+}
+
+fn Bundleˉregionˉoffset(Runtime: bytes, Region: u32) -> u32 {
+    if Region == 0u32 { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(
+        Runtime, 720u32 + (Region - 1u32) * 64u32
+    );
+}
+
+fn Bundleˉregionˉbytes(Runtime: bytes, Region: u32) -> u32 {
+    if Region == 0u32 {
+        return Bytesˉreadˉu32ˉlittle(Runtime, 548u32);
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Runtime, 724u32 + (Region - 1u32) * 64u32
+    );
+}
+
+fn Bundleˉregionˉdigest(Runtime: bytes, Region: u32) -> bytes {
+    if Region == 0u32 { return Bytesˉslice(Runtime, 576u32, 32u32); }
+    return Bytesˉslice(
+        Runtime, 736u32 + (Region - 1u32) * 64u32, 32u32
+    );
+}
+
+fn Bundleˉregionˉisˉvalid(
+    Admitted: Sourceˉset.Nativeˉhostedˉcontainerˉsourceˉsetˉplan,
+    Runtime: bytes,
+    Prefix: text,
+    Region: u32
+) -> bool {
+    let Startˉoffset: u32 = Bundleˉregionˉoffset(Runtime, Region);
+    let Count: u32 = Bundleˉregionˉbytes(Runtime, Region);
+    let Endˉoffset: u32 = Startˉoffset + Count;
+    var Hashedˉbytes: u32 = 0u32;
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Runtime);
+    var Segment: u32 = 0u32;
+    while Segment < Admitted.Bundleˉsegments {
+        let Response: bytes = file.read_bytes(
+            Bundleˉresponseˉname(Prefix, Segment)
+        );
+        if !Sourceˉset.Nativeˉhostedˉcontainerˉbundleˉresponseˉisˉvalid(
+            Admitted, Segment, Response
+        ) {
+            return false;
+        }
+        let Segmentˉstart: u32 =
+            Bytesˉreadˉu32ˉlittle(Response, 28u32);
+        let Segmentˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Response, 32u32);
+        let Segmentˉend: u32 = Segmentˉstart + Segmentˉbytes;
+        let Start: u32 = Maximum(Startˉoffset, Segmentˉstart);
+        let End: u32 = Minimum(Endˉoffset, Segmentˉend);
+        if Start < End {
+            State = Sha256.Foundationˉsha256ˉupdate(
+                State,
+                Bytesˉslice(
+                    Response,
+                    40u32 + Start - Segmentˉstart,
+                    End - Start
+                )
+            );
+            Hashedˉbytes = Hashedˉbytes + End - Start;
+        }
+        Segment = Segment + 1u32;
+    }
+    if Hashedˉbytes != Count { return false; }
+    return Bytesˉareˉequal(
+        Sha256.Foundationˉsha256ˉfinishˉraw(State),
+        Bundleˉregionˉdigest(Runtime, Region)
+    );
+}
+
+fn Bundleˉevidenceˉisˉvalid(
+    Admitted: Sourceˉset.Nativeˉhostedˉcontainerˉsourceˉsetˉplan,
+    Runtime: bytes,
+    Prefix: text
+) -> bool {
+    var Region: u32 = 0u32;
+    while Region < 11u32 {
+        if !Bundleˉregionˉisˉvalid(Admitted, Runtime, Prefix, Region) {
+            return false;
+        }
+        Region = Region + 1u32;
+    }
+    return true;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container source set status=",
+            Enumˉname(Nativeˉhostedˉcontainerˉsourceˉsetˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+fn Inputˉaliases(
+    Value: text,
+    Plan: text,
+    Platform: text,
+    Startup: text,
+    Runtime: text,
+    Manifest: text
+) -> bool {
+    if Pathsˉareˉequal(Value, Plan) { return true; }
+    if Pathsˉareˉequal(Value, Platform) { return true; }
+    if Pathsˉareˉequal(Value, Startup) { return true; }
+    if Pathsˉareˉequal(Value, Runtime) { return true; }
+    return Pathsˉareˉequal(Value, Manifest);
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 7u32 {
+        diagnostic.write_line(
+            "Usage: wvhostsources <plan.wvcd> <platform.wvhb> <startup.wvsd> <bundle-prefix> <runtime.wvhr> <chunk-prefix> <sources.wvsg>"
+        );
+        return 64;
+    }
+    let Planˉpath: text = process.argument(0u32);
+    let Platformˉpath: text = process.argument(1u32);
+    let Startupˉpath: text = process.argument(2u32);
+    let Bundleˉprefix: text = process.argument(3u32);
+    let Runtimeˉpath: text = process.argument(4u32);
+    let Chunkˉprefix: text = process.argument(5u32);
+    let Manifestˉpath: text = process.argument(6u32);
+    if Pathsˉareˉequal(Planˉpath, Platformˉpath) ||
+        Pathsˉareˉequal(Planˉpath, Startupˉpath) ||
+        Pathsˉareˉequal(Planˉpath, Runtimeˉpath) ||
+        Pathsˉareˉequal(Planˉpath, Manifestˉpath) ||
+        Pathsˉareˉequal(Platformˉpath, Startupˉpath) ||
+        Pathsˉareˉequal(Platformˉpath, Runtimeˉpath) ||
+        Pathsˉareˉequal(Platformˉpath, Manifestˉpath) ||
+        Pathsˉareˉequal(Startupˉpath, Runtimeˉpath) ||
+        Pathsˉareˉequal(Startupˉpath, Manifestˉpath) ||
+        Pathsˉareˉequal(Runtimeˉpath, Manifestˉpath) ||
+        Pathsˉareˉequal(Bundleˉprefix, Chunkˉprefix) ||
+        !Sources.Immutableˉsourceˉprefixˉisˉvalid(Bundleˉprefix) ||
+        !Sources.Immutableˉsourceˉprefixˉisˉvalid(Chunkˉprefix) {
+        return Reject();
+    }
+
+    let Plan: bytes = file.read_bytes(Planˉpath);
+    let Admitted: Sourceˉset.Nativeˉhostedˉcontainerˉsourceˉsetˉplan =
+        Sourceˉset.Nativeˉhostedˉcontainerˉsourceˉsetˉplanˉadmit(Plan);
+    let Platform: bytes = file.read_bytes(Platformˉpath);
+    let Startup: bytes = file.read_bytes(Startupˉpath);
+    let Runtime: bytes = file.read_bytes(Runtimeˉpath);
+    if !Admitted.Valid ||
+        !Sourceˉset.Nativeˉhostedˉcontainerˉplatformˉresponseˉisˉvalid(
+            Bytesˉlength(Plan), Admitted, Platform
+        ) ||
+        !Sourceˉset.Nativeˉhostedˉcontainerˉstartupˉresponseˉisˉvalid(
+            Admitted, Startup
+        ) ||
+        !Sourceˉset.Nativeˉhostedˉcontainerˉruntimeˉisˉvalid(
+            Plan, Admitted, Runtime
+        ) {
+        return Reject();
+    }
+
+    var Index: u32 = 0u32;
+    while Index < Admitted.Bundleˉsegments {
+        let Responseˉpath: text = Bundleˉresponseˉname(Bundleˉprefix, Index);
+        if Inputˉaliases(
+                Responseˉpath, Planˉpath, Platformˉpath, Startupˉpath,
+                Runtimeˉpath, Manifestˉpath
+            ) ||
+            !Sourceˉset.Nativeˉhostedˉcontainerˉbundleˉresponseˉisˉvalid(
+                Admitted, Index, file.read_bytes(Responseˉpath)
+            ) {
+            return Reject();
+        }
+        Index = Index + 1u32;
+    }
+    if !Bundleˉevidenceˉisˉvalid(Admitted, Runtime, Bundleˉprefix) {
+        return Reject();
+    }
+
+    Index = 0u32;
+    while Index < Admitted.Chunks {
+        let Chunkˉpath: text =
+            Sources.Immutableˉsourceˉresourceˉname(Chunkˉprefix, Index);
+        if Inputˉaliases(
+            Chunkˉpath, Planˉpath, Platformˉpath, Startupˉpath,
+            Runtimeˉpath, Manifestˉpath
+        ) {
+            return Reject();
+        }
+        var Candidate: u32 = 0u32;
+        while Candidate < Admitted.Bundleˉsegments {
+            if Pathsˉareˉequal(
+                Chunkˉpath, Bundleˉresponseˉname(Bundleˉprefix, Candidate)
+            ) {
+                return Reject();
+            }
+            Candidate = Candidate + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+
+    let Manifest: bytes =
+        Sourceˉset.Nativeˉhostedˉcontainerˉsourceˉmanifest(Admitted, Plan);
+    if Bytesˉlength(Manifest) == 0u32 { return Reject(); }
+
+    var Chunk: u32 = 0u32;
+    file.write_bytes(
+        Sources.Immutableˉsourceˉresourceˉname(Chunkˉprefix, Chunk),
+        Bytesˉslice(Platform, 32u32, Admitted.Headerˉbytes)
+    );
+    Chunk = Chunk + 1u32;
+    file.write_bytes(
+        Sources.Immutableˉsourceˉresourceˉname(Chunkˉprefix, Chunk),
+        Bytesˉslice(Startup, 32u32, Admitted.Startupˉbytes)
+    );
+    Chunk = Chunk + 1u32;
+    Index = 0u32;
+    while Index < Admitted.Bundleˉsegments {
+        let Response: bytes = file.read_bytes(
+            Bundleˉresponseˉname(Bundleˉprefix, Index)
+        );
+        file.write_bytes(
+            Sources.Immutableˉsourceˉresourceˉname(Chunkˉprefix, Chunk),
+            Bytesˉslice(Response, 40u32, Bytesˉlength(Response) - 40u32)
+        );
+        Chunk = Chunk + 1u32;
+        Index = Index + 1u32;
+    }
+    if Admitted.Importˉbytes > 0u32 {
+        file.write_bytes(
+            Sources.Immutableˉsourceˉresourceˉname(Chunkˉprefix, Chunk),
+            Bytesˉslice(
+                Platform, 32u32 + Admitted.Headerˉbytes,
+                Admitted.Importˉbytes
+            )
+        );
+        Chunk = Chunk + 1u32;
+    }
+    file.write_bytes(
+        Sources.Immutableˉsourceˉresourceˉname(Chunkˉprefix, Chunk), Runtime
+    );
+    Chunk = Chunk + 1u32;
+    if Admitted.Relocationˉbytes > 0u32 {
+        file.write_bytes(
+            Sources.Immutableˉsourceˉresourceˉname(Chunkˉprefix, Chunk),
+            Bytesˉslice(
+                Platform,
+                32u32 + Admitted.Headerˉbytes + Admitted.Importˉbytes,
+                Admitted.Relocationˉbytes
+            )
+        );
+        Chunk = Chunk + 1u32;
+    }
+    if Chunk != Admitted.Chunks { return Reject(); }
+    file.write_bytes(Manifestˉpath, Manifest);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                Textˉconcat(
+                    "hosted container source set status=Valid chunks=",
+                    U32ˉformat(Admitted.Chunks)
+                ),
+                " bytes="
+            ),
+            U32ˉformat(Bytesˉlength(Manifest))
+        )
+    );
+    return 0;
+}
