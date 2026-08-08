@@ -68,5 +68,8 @@
     <EmbeddedResource
       Include="Consumers/Native-Publication-Lifetime-Bridge.wvnf"
       LogicalName="Windvale.Native.Native-Publication-Lifetime-Bridge.wvnf" />
+    <EmbeddedResource
+      Include="Consumers/Native-Service-Bundle-Materialization-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-Service-Bundle-Materialization-Bridge.wvnf" />
   </ItemGroup>
 </Project>

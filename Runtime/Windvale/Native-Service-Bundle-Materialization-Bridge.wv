@@ -1,0 +1,9 @@
+module Runtimeˉnativeˉserviceˉbundleˉmaterializationˉbridge profile portable;
+
+import Runtimeˉnativeˉserviceˉbundleˉmaterialization as Materialization;
+
+export fn Main(Input: bytes) -> bytes {
+    let Result: Materialization.Nativeˉserviceˉbundleˉmaterializationˉresult =
+        Materialization.Nativeˉserviceˉbundleˉmaterialize(Input);
+    return Result.Value;
+}

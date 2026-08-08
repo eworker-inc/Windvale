@@ -108,7 +108,7 @@ public static class X64ˉnativeˉpublicationˉlifetime
                 nameof(request));
         }
 
-        return X64ˉnativeˉexecutor.Executeˉplannerˉbytes(
+        return X64ˉnativeˉexecutor.Executeˉserviceˉfreeˉbootstrapˉbytes(
             PLANNER.Value,
             request,
             MAXIMUM_PLANNER_INSTRUCTIONS);

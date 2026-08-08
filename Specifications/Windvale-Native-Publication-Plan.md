@@ -83,7 +83,7 @@ The live host validates its own inputs before serialization. A nonzero planner s
 
 `Compiler/Windvale/Native-Publication-Core.wv` is portable and owns validation, checked layout, status selection, and canonical response construction. `Compiler/Windvale/Native-Publication-Bridge.wv` is a capability-free portable `Main(bytes) -> bytes` wrapper that returns the core response directly.
 
-The retained bridge is digest-checked, verified, lowered to one native fragment, and cached. A narrow service-free bootstrap independently verifies and publishes only that planner fragment without consulting the planner recursively. The bootstrap supplies no runtime services and owns no ordinary application policy. The host then independently reconstructs every returned placement before using it. The reference interpreter remains differential and recovery evidence rather than the normal execution path.
+The retained bridge is represented by a digest-checked, verified native-fragment artifact and cached. A narrow service-free bootstrap independently verifies and publishes only internally selected digest-bound fragments without consulting the planner recursively. The bootstrap supplies no runtime services and owns no ordinary application policy. [Bounded service-bundle materialization](Windvale-Native-Service-Bundle-Materialization.md) later reuses that exact service-free mechanism for one named WVNF while keeping ambient WVB and service-bearing fragments excluded. The host then independently reconstructs every returned placement before using it. The reference interpreter remains differential and recovery evidence rather than the normal execution path.
 
 ## Publication boundary
 

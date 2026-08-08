@@ -184,6 +184,12 @@
       Include="../../Compiler/Windvale/Native-Publication-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-Publication-Core.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Service-Bundle-Materialization-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Service-Bundle-Materialization-Core.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Service-Bundle-Materialization-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Service-Bundle-Materialization-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-Publication-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Publication-Bridge.wv" />
     <EmbeddedResource

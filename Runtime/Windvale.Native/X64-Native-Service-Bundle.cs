@@ -170,22 +170,21 @@ public static partial class X64ˉnativeˉserviceˉbundle
             [.. Services.Select(Item => new Nativeˉpublicationˉservice(
                 Item.Service,
                 Item.Code.Length))]);
-        var Image = new byte[Plan.Imageˉbytes];
-        fragment.Code.AsSpan().CopyTo(Image);
+        var Image = X64ˉnativeˉserviceˉbundleˉmaterialization.Canˉmaterialize(
+            fragment.Code,
+            Services,
+            Plan)
+            ? X64ˉnativeˉserviceˉbundleˉmaterialization.Materialize(
+                fragment.Code,
+                Services,
+                Plan)
+            : Materializeˉstage0ˉlargeˉbundle(fragment.Code, Services, Plan);
         var Placements = ImmutableArray.CreateBuilder<Nativeˉserviceˉbundleˉplacement>(
             Services.Length);
-        var Previousˉserviceˉend = fragment.Code.Length;
         for (var Index = 0; Index < Services.Length; Index++)
         {
             var Service = Services[Index];
             var Placement = Plan.Placements[Index];
-            if (Index != 0)
-            {
-                Image.AsSpan(
-                    Previousˉserviceˉend,
-                    Placement.Offset - Previousˉserviceˉend).Fill(0x90);
-            }
-            Service.Code.AsSpan().CopyTo(Image.AsSpan(Placement.Offset));
             Placements.Add(new(
                 Service.Service,
                 Service.Adapter,
@@ -193,14 +192,36 @@ public static partial class X64ˉnativeˉserviceˉbundle
                 Placement.Offset,
                 Placement.Size,
                 Calculateˉsha256(Service.Code.AsSpan())));
-            Previousˉserviceˉend = checked(Placement.Offset + Placement.Size);
         }
 
         return new(
             platform,
             fragment.Code.Length,
-            Image.ToImmutableArray(),
+            Image,
             Placements.MoveToImmutable());
+    }
+
+    private static ImmutableArray<byte> Materializeˉstage0ˉlargeˉbundle(
+        ImmutableArray<byte> fragment,
+        ImmutableArray<Nativeˉserviceˉcode> services,
+        Nativeˉpublicationˉplan plan)
+    {
+        var Image = new byte[plan.Imageˉbytes];
+        fragment.AsSpan().CopyTo(Image);
+        var Previousˉserviceˉend = fragment.Length;
+        for (var Index = 0; Index < services.Length; Index++)
+        {
+            var Placement = plan.Placements[Index];
+            if (Index != 0)
+            {
+                Image.AsSpan(
+                    Previousˉserviceˉend,
+                    Placement.Offset - Previousˉserviceˉend).Fill(0x90);
+            }
+            services[Index].Code.AsSpan().CopyTo(Image.AsSpan(Placement.Offset));
+            Previousˉserviceˉend = checked(Placement.Offset + Placement.Size);
+        }
+        return Image.ToImmutableArray();
     }
 
     private static Nativeˉserviceˉcode Buildˉservice(
@@ -307,8 +328,4 @@ public static partial class X64ˉnativeˉserviceˉbundle
     private static string Calculateˉsha256(ReadOnlySpan<byte> bytes) =>
         Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
 
-    private sealed record Nativeˉserviceˉcode(
-        Nativeˉservice Service,
-        Nativeˉserviceˉadapter Adapter,
-        ImmutableArray<byte> Code);
 }

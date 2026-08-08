@@ -192,6 +192,8 @@ $NativeEnumMetadataCoreModule = Join-Path $Artifacts 'Native-Enum-Metadata-Core.
 $NativeEnumMetadataBridgeModule = Join-Path $Artifacts 'Native-Enum-Metadata-Bridge.wvb'
 $NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
+$NativeServiceBundleMaterializationCoreModule = Join-Path $Artifacts 'Native-Service-Bundle-Materialization-Core.wvb'
+$NativeServiceBundleMaterializationBridgeModule = Join-Path $Artifacts 'Native-Service-Bundle-Materialization-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
@@ -1296,6 +1298,57 @@ if (
     $NativePublicationBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native-publication bridge inspection is incomplete.'
+}
+
+$NativeServiceBundleMaterializationCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Service-Bundle-Materialization-Core.wv'
+$NativeServiceBundleMaterializationBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Service-Bundle-Materialization-Bridge.wv'
+$NativeServiceBundleMaterializationBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Service-Bundle-Materialization-Bridge.wvb'
+$NativeServiceBundleMaterializationArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Service-Bundle-Materialization-Bridge.wvnf'
+dotnet $ToolDll `
+    compile $NativeServiceBundleMaterializationCoreSource `
+    --module $NativePublicationSource `
+    --module $ByteConstructionSource `
+    -o $NativeServiceBundleMaterializationCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale service-bundle materialization core.' }
+$NativeServiceBundleMaterializationCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationCoreModule).Hash.ToLowerInvariant()
+if ($NativeServiceBundleMaterializationCoreHash -ne '54a0cb83cba3c9c9118cfc209aaef43938f9f9a9f4212ccb9d4657ce6a139ba1') {
+    throw "The Windvale service-bundle materialization core has an unexpected digest: $NativeServiceBundleMaterializationCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeServiceBundleMaterializationBridgeSource `
+    --module $NativePublicationSource `
+    --module $ByteConstructionSource `
+    --module $NativeServiceBundleMaterializationCoreSource `
+    -o $NativeServiceBundleMaterializationBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale service-bundle materialization bridge.' }
+$NativeServiceBundleMaterializationBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationBridgeModule).Hash.ToLowerInvariant()
+if ($NativeServiceBundleMaterializationBridgeHash -ne '25512a7c3e6eae0dd060426d5a51a93abfc7a7127f59538fd2a315242ed2b660') {
+    throw "The Windvale service-bundle materialization bridge has an unexpected digest: $NativeServiceBundleMaterializationBridgeHash"
+}
+$NativeServiceBundleMaterializationBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeServiceBundleMaterializationBridgeRetainedHash -ne $NativeServiceBundleMaterializationBridgeHash -or
+    (Get-Item -LiteralPath $NativeServiceBundleMaterializationBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeServiceBundleMaterializationBridgeModule).Length
+) {
+    throw 'The retained Windvale service-bundle materialization bridge does not match its exact source compilation.'
+}
+$NativeServiceBundleMaterializationArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeServiceBundleMaterializationArtifactHash -ne '8bb1f06bd8b25d9a5ff78971ad4af36b609c618b080ed0fa9b17fe4b51669629' -or
+    (Get-Item -LiteralPath $NativeServiceBundleMaterializationArtifactRetained).Length -ne 157174
+) {
+    throw "The retained Windvale service-bundle materialization fragment has an unexpected identity: $NativeServiceBundleMaterializationArtifactHash"
+}
+$NativeServiceBundleMaterializationBridgeInspection = (dotnet $ToolDll inspect $NativeServiceBundleMaterializationBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeServiceBundleMaterializationBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeServiceBundleMaterializationBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeServiceBundleMaterializationBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeServiceBundleMaterializationBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale service-bundle materialization bridge inspection is incomplete.'
 }
 
 $NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'

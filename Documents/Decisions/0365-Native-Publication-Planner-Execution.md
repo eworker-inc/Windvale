@@ -3,6 +3,7 @@
 - Status: Accepted current-host normal-path interpreter removal; Linux execution and grouped qualification pending
 - Date: 2026-08-07
 - Advances: [Decision 0082](0082-Windvale-Owned-Native-Publication-Layout.md), [Decision 0083](0083-Windvale-Owned-Native-Publication-Lifetime.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
+- Advanced by: [Decision 0372](0372-Windvale-Owned-Bounded-Service-Bundle-Materialization.md)
 - Contracts: [Windvale native publication plan](../../Specifications/Windvale-Native-Publication-Plan.md) and [Windvale native publication lifetime](../../Specifications/Windvale-Native-Publication-Lifetime.md)
 
 ## Context
@@ -67,9 +68,16 @@ adapter, assembles service bundles, constructs segmented enum metadata, owns
 contexts and arenas, and invokes applications. Linux execution and the final
 grouped retirement gate remain deferred.
 
+Decision 0372 later generalizes the bootstrap name to its actual service-free
+role and uses it for one additional internally selected, digest-bound WVNF:
+bounded service-bundle materialization. It does not admit ambient WVBs or bind
+services. The original two planner WVBs are also replaced in the normal path
+by direct verified-fragment artifacts under Decisions 0367 and 0368.
+
 ## Reconsideration triggers
 
-Replace the bootstrap when a qualified native loader can publish the two exact
-planner fragments without managed code. It must remain service-free and bounded
-until then; widening it into general publication policy would recreate the
-duplicate implementation this decision removes.
+Replace the bootstrap when a qualified native loader can publish every exact
+internally selected service-free fragment without managed code. It must remain
+service-free, digest-bound, and bounded until then; widening it into ambient
+loading or general publication policy would recreate the duplicate
+implementation this decision removes.

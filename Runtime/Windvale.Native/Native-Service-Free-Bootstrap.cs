@@ -3,7 +3,7 @@ using Windvale.Compiler.Native;
 
 namespace Windvale.Runtime.Native;
 
-internal static class Nativeˉplannerˉbootstrap
+internal static class Nativeˉserviceˉfreeˉbootstrap
 {
     public static Nativeˉpublicationˉplan Planˉlayout(Nativeˉfragment fragment)
     {
@@ -12,14 +12,14 @@ internal static class Nativeˉplannerˉbootstrap
         if (!fragment.Requiredˉservices.IsEmpty)
         {
             throw Invalidˉbootstrap(
-                "The publication-planner bootstrap cannot bind runtime services.");
+                "The service-free bootstrap cannot bind runtime services.");
         }
 
         var Imageˉbytes = checked((fragment.Code.Length + 15) & ~15);
         if (Imageˉbytes > X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES)
         {
             throw Invalidˉbootstrap(
-                "The publication-planner bootstrap image exceeds its bounded extent.");
+                "The service-free bootstrap image exceeds its bounded extent.");
         }
         return new(fragment.Code.Length, Imageˉbytes, []);
     }
@@ -29,7 +29,7 @@ internal static class Nativeˉplannerˉbootstrap
         if (imageˉbytes is < 1 or > X64ˉnativeˉpublicationˉlayout.MAXIMUM_IMAGE_BYTES)
         {
             throw Invalidˉbootstrap(
-                "The publication-planner bootstrap lifetime extent is invalid.");
+                "The service-free bootstrap lifetime extent is invalid.");
         }
 
         ImmutableArray<Nativeˉpublicationˉtransition> Transitions =
@@ -50,5 +50,5 @@ internal static class Nativeˉplannerˉbootstrap
     }
 
     private static InvalidOperationException Invalidˉbootstrap(string message) =>
-        new($"The native publication-planner bootstrap is invalid. {message}");
+        new($"The native service-free bootstrap is invalid. {message}");
 }

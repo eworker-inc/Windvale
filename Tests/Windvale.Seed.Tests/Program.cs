@@ -1414,6 +1414,7 @@ internal static partial class Program
         new("Windvale constructs the exact Windows and Linux native output leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉoutputˉservicesˉrun),
         new("Windvale constructs the exact Windows and Linux native file-output leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉfileˉoutputˉservicesˉrun),
         new("Windvale constructs the exact Windows and Linux native file-input leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉfileˉinputˉservicesˉrun),
+        new("Windvale materializes bounded native service bundles", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉserviceˉbundleˉmaterializationˉruns),
         new("Windvale constructs the exact native UTF-8 service leaf", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉutf8ˉserviceˉruns),
         new("Windvale constructs the exact native integer-format service leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉintegerˉformatˉservicesˉrun),
         new("Windvale constructs the exact native text-concatenation service leaf", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉtextˉconcatˉserviceˉruns),
@@ -8339,8 +8340,11 @@ internal static partial class Program
         Sequenceˉequal(Reference.Runˉmainˉbytes(Request).Bytes, Response);
         Sequenceˉequal(
             Response,
-            X64ˉnativeˉexecutor.Executeˉplannerˉbytes(Native, Request, 250_000));
-        var Bootstrapˉlayout = Nativeˉplannerˉbootstrap.Planˉlayout(Native);
+            X64ˉnativeˉexecutor.Executeˉserviceˉfreeˉbootstrapˉbytes(
+                Native,
+                Request,
+                250_000));
+        var Bootstrapˉlayout = Nativeˉserviceˉfreeˉbootstrap.Planˉlayout(Native);
         var Windvaleˉlayout = X64ˉnativeˉpublicationˉlayout.Plan(
             Native.Code.Length,
             []);
@@ -8642,10 +8646,13 @@ internal static partial class Program
         Sequenceˉequal(Reference.Runˉmainˉbytes(Request).Bytes, Response);
         Sequenceˉequal(
             Response,
-            X64ˉnativeˉexecutor.Executeˉplannerˉbytes(Native, Request, 100_000));
+            X64ˉnativeˉexecutor.Executeˉserviceˉfreeˉbootstrapˉbytes(
+                Native,
+                Request,
+                100_000));
         Sequenceˉequal(
             Plan.Transitions,
-            Nativeˉplannerˉbootstrap.Planˉlifetime(Plan.Imageˉbytes).Transitions);
+            Nativeˉserviceˉfreeˉbootstrap.Planˉlifetime(Plan.Imageˉbytes).Transitions);
         Sequenceˉequal(
             Response,
             X64ˉnativeˉpublicationˉlifetime.Evaluateˉrequest(Request));

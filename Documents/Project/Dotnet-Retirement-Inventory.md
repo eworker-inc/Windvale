@@ -258,6 +258,17 @@ leaves; the bridge WVB remains recovery and differential evidence. Managed
 `WVFI`/`WVFO` table binding, service-bundle construction, W^X ownership,
 invocation, Linux execution evidence, and the grouped gate remain open.
 
+[Decision 0372](../Decisions/0372-Windvale-Owned-Bounded-Service-Bundle-Materialization.md)
+removes C# image copying and alignment-fill policy from every service bundle
+whose complete request and response fit the ordinary 4 MiB byte-value limit.
+One digest-bound service-free WVNF consumes the exact Windvale publication
+plan plus already verified fragment/leaf bytes and returns the completely
+materialized image; the host independently checks every placement and byte.
+Compiler-scale bundles retain an explicitly named Stage 0 large-image fallback
+until segmented Windvale construction replaces it. Managed adapter/table-slot
+metadata, `WVFI`/`WVFO`/`WVIO` binding, W^X ownership, contexts, arenas,
+invocation, Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
