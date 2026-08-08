@@ -177,6 +177,8 @@ $NativeTextQuoteCoreModule = Join-Path $Artifacts 'Native-X64-Text-Quote-Service
 $NativeTextQuoteBridgeModule = Join-Path $Artifacts 'Native-X64-Text-Quote-Service-Bridge.wvb'
 $NativeEnumNameCoreModule = Join-Path $Artifacts 'Native-X64-Enum-Name-Service.wvb'
 $NativeEnumNameBridgeModule = Join-Path $Artifacts 'Native-X64-Enum-Name-Service-Bridge.wvb'
+$NativeEnumMetadataCoreModule = Join-Path $Artifacts 'Native-Enum-Metadata-Core.wvb'
+$NativeEnumMetadataBridgeModule = Join-Path $Artifacts 'Native-Enum-Metadata-Bridge.wvb'
 $NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -898,6 +900,52 @@ if (
     $NativeEnumNameBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native enum-name service bridge inspection is incomplete.'
+}
+
+$NativeEnumMetadataCoreSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Enum-Metadata-Core.wv'
+dotnet $ToolDll compile $NativeEnumMetadataCoreSource -o $NativeEnumMetadataCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-metadata core.' }
+$NativeEnumMetadataCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataCoreModule).Hash.ToLowerInvariant()
+if ($NativeEnumMetadataCoreHash -ne '30f1fa4c85ad50991d68ac5eecfb9ada2ed63bd36229b777aff899b4cd0f0e3d') {
+    throw "The Windvale native enum-metadata core has an unexpected digest: $NativeEnumMetadataCoreHash"
+}
+$NativeEnumMetadataCoreInspection = (dotnet $ToolDll inspect $NativeEnumMetadataCoreModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeEnumMetadataCoreInspection -notmatch 'Profile: portable' -or
+    $NativeEnumMetadataCoreInspection -notmatch 'Nativeˉenumˉmetadataˉbuild' -or
+    $NativeEnumMetadataCoreInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native enum-metadata core inspection is incomplete.'
+}
+
+$NativeEnumMetadataBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Enum-Metadata-Bridge.wv'
+$NativeEnumMetadataBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvb'
+dotnet $ToolDll `
+    compile $NativeEnumMetadataBridgeSource `
+    --module $NativeEnumMetadataCoreSource `
+    -o $NativeEnumMetadataBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-metadata bridge.' }
+$NativeEnumMetadataBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataBridgeModule).Hash.ToLowerInvariant()
+if ($NativeEnumMetadataBridgeHash -ne '595dc56d36ed75bd9857bf5011e59d17271cf03ea6a346079474291842bd5a47') {
+    throw "The Windvale native enum-metadata bridge has an unexpected digest: $NativeEnumMetadataBridgeHash"
+}
+$NativeEnumMetadataBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeEnumMetadataBridgeRetainedHash -ne $NativeEnumMetadataBridgeHash -or
+    (Get-Item -LiteralPath $NativeEnumMetadataBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeEnumMetadataBridgeModule).Length
+) {
+    throw 'The retained Windvale native enum-metadata bridge does not match its exact source compilation.'
+}
+$NativeEnumMetadataBridgeInspection = (dotnet $ToolDll inspect $NativeEnumMetadataBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeEnumMetadataBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeEnumMetadataBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeEnumMetadataBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native enum-metadata bridge inspection is incomplete.'
 }
 
 $NativePublicationSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Core.wv'

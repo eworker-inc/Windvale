@@ -142,6 +142,12 @@
       Include="../../Runtime/Windvale/Native-X64-Enum-Name-Service-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-X64-Enum-Name-Service-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-Enum-Metadata-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Enum-Metadata-Core.wv" />
+    <EmbeddedResource
+      Include="../../Compiler/Windvale/Native-Enum-Metadata-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Enum-Metadata-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-Publication-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-Publication-Core.wv" />
     <EmbeddedResource

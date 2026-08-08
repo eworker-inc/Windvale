@@ -1,0 +1,7 @@
+module Compilerˉnativeˉenumˉmetadataˉbridge profile portable;
+
+import Compilerˉnativeˉenumˉmetadata as Metadata;
+
+export fn Main(Input: bytes) -> bytes {
+    return Metadata.Nativeˉenumˉmetadataˉbuild(Input);
+}

@@ -1,7 +1,5 @@
-using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Security.Cryptography;
-using System.Text;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 
@@ -9,13 +7,6 @@ namespace Windvale.Runtime.Native;
 
 public static class X64ˉnativeˉtextˉservices
 {
-    private const uint ENUM_METADATA_MAGIC = 0x4E455657;
-    private const uint ENUM_METADATA_VERSION = 1;
-    private const int ENUM_METADATA_HEADER_BYTES = 24;
-    private const int ENUM_METADATA_TYPE_BYTES = 8;
-    private const int ENUM_METADATA_MEMBER_BYTES = 16;
-    private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
-
     public const int ENUM_NAME_CANONICAL_SIZE = 323;
     public const string ENUM_NAME_CANONICAL_SHA256 =
         "fb05590c5b6e1791380ba288c4112387e791a18722428c90276796bd409d130a";
@@ -99,17 +90,9 @@ public static class X64ˉnativeˉtextˉservices
                 code[..ENUM_NAME_CANONICAL_SIZE],
                 ENUM_NAME_CANONICAL_SIZE,
                 ENUM_NAME_CANONICAL_SHA256);
-            Verifyˉenumˉmetadata(Types, code[ENUM_NAME_CANONICAL_SIZE..]);
-            var Expected = Buildˉenumˉname(Types);
-            if (!code.SequenceEqual(Expected.AsSpan()))
-            {
-                var Hash = Convert.ToHexString(SHA256.HashData(code)).ToLowerInvariant();
-                var Expectedˉbundleˉhash = Convert.ToHexString(SHA256.HashData(Expected.AsSpan()))
-                    .ToLowerInvariant();
-                throw new InvalidOperationException(
-                    $"Native {service} service identity bundle is {code.Length} bytes / {Hash}; " +
-                    $"expected {Expected.Length} bytes / {Expectedˉbundleˉhash}.");
-            }
+            Nativeˉenumˉmetadataˉbuilder.Verify(
+                Types,
+                code[ENUM_NAME_CANONICAL_SIZE..]);
             return;
         }
 
@@ -310,198 +293,12 @@ public static class X64ˉnativeˉtextˉservices
     private static ImmutableArray<byte> Buildˉenumˉname(
         ImmutableArray<Nominalˉtypeˉdeclaration> types)
     {
-        var Metadata = Buildˉenumˉmetadata(types);
+        var Metadata = Nativeˉenumˉmetadataˉbuilder.Build(types);
         var Code = Readˉenumˉname();
         var Result = ImmutableArray.CreateBuilder<byte>(Code.Length + Metadata.Length);
         Result.AddRange(Code);
         Result.AddRange(Metadata);
         return Result.MoveToImmutable();
     }
-
-    private static ImmutableArray<byte> Buildˉenumˉmetadata(
-        ImmutableArray<Nominalˉtypeˉdeclaration> types)
-    {
-        if (types.Length > Bytecodeˉlimits.MAX_NOMINAL_TYPES)
-        {
-            throw new InvalidOperationException("Native enum metadata exceeds the nominal-type limit.");
-        }
-
-        var Directories = new List<(uint Start, uint Count)>(types.Length);
-        var Members = new List<(int Value, byte[] Name)>();
-        var Namesˉbytes = 0;
-        foreach (var Type in types)
-        {
-            var Start = checked((uint)Members.Count);
-            if (Type is Enumˉtypeˉdeclaration Enum)
-            {
-                if (Enum.Members.IsDefaultOrEmpty ||
-                    Enum.Members.Length > Bytecodeˉlimits.MAX_ENUM_MEMBERS)
-                {
-                    throw new InvalidOperationException("Native enum metadata has an invalid member count.");
-                }
-                var Values = new HashSet<int>();
-                var Names = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var Member in Enum.Members)
-                {
-                    var Name = STRICT_UTF8.GetBytes(Member.Name);
-                    if (Name.Length is 0 or > Bytecodeˉlimits.MAX_NAME_BYTES ||
-                        !Seedˉnames.Isˉidentifier(Member.Name) ||
-                        !Names.Add(Member.Name) ||
-                        !Values.Add(Member.Value))
-                    {
-                        throw new InvalidOperationException("Native enum metadata is not canonical.");
-                    }
-                    Namesˉbytes = checked(Namesˉbytes + Name.Length);
-                    Members.Add((Member.Value, Name));
-                }
-                Directories.Add((Start, checked((uint)Enum.Members.Length)));
-            }
-            else if (Type is Recordˉtypeˉdeclaration)
-            {
-                Directories.Add((Start, 0));
-            }
-            else
-            {
-                throw new InvalidOperationException("Native enum metadata contains an unknown nominal type.");
-            }
-        }
-        if (Members.Count == 0)
-        {
-            throw new InvalidOperationException("Native enum metadata contains no enum members.");
-        }
-
-        var Memberˉoffset = checked(ENUM_METADATA_HEADER_BYTES +
-            types.Length * ENUM_METADATA_TYPE_BYTES);
-        var Nameˉoffset = checked(Memberˉoffset + Members.Count * ENUM_METADATA_MEMBER_BYTES);
-        var Totalˉbytes = checked(Nameˉoffset + Namesˉbytes);
-        if (Totalˉbytes > Nativeˉcontract.MAXIMUM_ENUM_METADATA_BYTES)
-        {
-            throw new InvalidOperationException(
-                $"Native enum metadata exceeds {Nativeˉcontract.MAXIMUM_ENUM_METADATA_BYTES} bytes.");
-        }
-
-        var Result = new byte[Totalˉbytes];
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(0), ENUM_METADATA_MAGIC);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(4), ENUM_METADATA_VERSION);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(8), checked((uint)Totalˉbytes));
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(12), checked((uint)types.Length));
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(16), checked((uint)Members.Count));
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(20), ENUM_METADATA_HEADER_BYTES);
-
-        for (var Index = 0; Index < Directories.Count; Index++)
-        {
-            var Offset = checked(ENUM_METADATA_HEADER_BYTES + Index * ENUM_METADATA_TYPE_BYTES);
-            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(Offset), Directories[Index].Start);
-            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(Offset + 4), Directories[Index].Count);
-        }
-
-        var Currentˉnameˉoffset = Nameˉoffset;
-        for (var Index = 0; Index < Members.Count; Index++)
-        {
-            var Offset = checked(Memberˉoffset + Index * ENUM_METADATA_MEMBER_BYTES);
-            BinaryPrimitives.WriteInt32LittleEndian(Result.AsSpan(Offset), Members[Index].Value);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset + 4),
-                checked((uint)Currentˉnameˉoffset));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Result.AsSpan(Offset + 8),
-                checked((uint)Members[Index].Name.Length));
-            Members[Index].Name.CopyTo(Result, Currentˉnameˉoffset);
-            Currentˉnameˉoffset = checked(Currentˉnameˉoffset + Members[Index].Name.Length);
-        }
-        return Result.ToImmutableArray();
-    }
-
-    private static void Verifyˉenumˉmetadata(
-        ImmutableArray<Nominalˉtypeˉdeclaration> types,
-        ReadOnlySpan<byte> metadata)
-    {
-        var Expectedˉmembers = 0;
-        foreach (var Type in types)
-        {
-            if (Type is Enumˉtypeˉdeclaration Enum)
-            {
-                Expectedˉmembers = checked(Expectedˉmembers + Enum.Members.Length);
-            }
-            else if (Type is not Recordˉtypeˉdeclaration)
-            {
-                throw Invalidˉenumˉmetadata();
-            }
-        }
-        if (Expectedˉmembers == 0 || metadata.Length < ENUM_METADATA_HEADER_BYTES ||
-            BinaryPrimitives.ReadUInt32LittleEndian(metadata) != ENUM_METADATA_MAGIC ||
-            BinaryPrimitives.ReadUInt32LittleEndian(metadata[4..]) != ENUM_METADATA_VERSION ||
-            BinaryPrimitives.ReadUInt32LittleEndian(metadata[8..]) != metadata.Length ||
-            BinaryPrimitives.ReadUInt32LittleEndian(metadata[12..]) != types.Length ||
-            BinaryPrimitives.ReadUInt32LittleEndian(metadata[16..]) != Expectedˉmembers ||
-            BinaryPrimitives.ReadUInt32LittleEndian(metadata[20..]) != ENUM_METADATA_HEADER_BYTES)
-        {
-            throw Invalidˉenumˉmetadata();
-        }
-
-        int Memberˉoffset;
-        int Nameˉoffset;
-        try
-        {
-            Memberˉoffset = checked(ENUM_METADATA_HEADER_BYTES +
-                types.Length * ENUM_METADATA_TYPE_BYTES);
-            Nameˉoffset = checked(Memberˉoffset +
-                Expectedˉmembers * ENUM_METADATA_MEMBER_BYTES);
-        }
-        catch (OverflowException)
-        {
-            throw Invalidˉenumˉmetadata();
-        }
-        if (Nameˉoffset > metadata.Length)
-        {
-            throw Invalidˉenumˉmetadata();
-        }
-
-        var Currentˉmember = 0;
-        var Currentˉname = Nameˉoffset;
-        for (var Typeˉindex = 0; Typeˉindex < types.Length; Typeˉindex++)
-        {
-            var Directoryˉoffset = checked(ENUM_METADATA_HEADER_BYTES +
-                Typeˉindex * ENUM_METADATA_TYPE_BYTES);
-            var Expectedˉcount = types[Typeˉindex] is Enumˉtypeˉdeclaration Enum
-                ? Enum.Members.Length
-                : 0;
-            if (BinaryPrimitives.ReadUInt32LittleEndian(metadata[Directoryˉoffset..]) != Currentˉmember ||
-                BinaryPrimitives.ReadUInt32LittleEndian(metadata[(Directoryˉoffset + 4)..]) != Expectedˉcount)
-            {
-                throw Invalidˉenumˉmetadata();
-            }
-
-            if (types[Typeˉindex] is not Enumˉtypeˉdeclaration Currentˉenum)
-            {
-                continue;
-            }
-            foreach (var Member in Currentˉenum.Members)
-            {
-                var Entryˉoffset = checked(Memberˉoffset +
-                    Currentˉmember * ENUM_METADATA_MEMBER_BYTES);
-                var Name = STRICT_UTF8.GetBytes(Member.Name);
-                if (BinaryPrimitives.ReadInt32LittleEndian(metadata[Entryˉoffset..]) != Member.Value ||
-                    BinaryPrimitives.ReadUInt32LittleEndian(metadata[(Entryˉoffset + 4)..]) != Currentˉname ||
-                    BinaryPrimitives.ReadUInt32LittleEndian(metadata[(Entryˉoffset + 8)..]) != Name.Length ||
-                    BinaryPrimitives.ReadUInt32LittleEndian(metadata[(Entryˉoffset + 12)..]) != 0 ||
-                    Currentˉname > metadata.Length - Name.Length ||
-                    !metadata.Slice(Currentˉname, Name.Length).SequenceEqual(Name))
-                {
-                    throw Invalidˉenumˉmetadata();
-                }
-                Currentˉmember++;
-                Currentˉname = checked(Currentˉname + Name.Length);
-            }
-        }
-        if (Currentˉmember != Expectedˉmembers || Currentˉname != metadata.Length)
-        {
-            throw Invalidˉenumˉmetadata();
-        }
-    }
-
-    private static InvalidOperationException Invalidˉenumˉmetadata() =>
-        new("Native Enumˉname service identity metadata is invalid.");
-
 
 }

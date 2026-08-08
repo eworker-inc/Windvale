@@ -149,6 +149,18 @@ capabilities remain unchanged. The C# executor still owns temporary input
 copying, W^X invocation, and output copying; moving those host responsibilities
 remains part of the larger retirement gate.
 
+[Decision 0361](../Decisions/0361-Windvale-Owned-Bounded-Native-Enum-Metadata.md)
+moves canonical `WVEN` construction through the ordinary 4 MiB Windvale byte
+limit into one portable, strict request consumer. Its retained bridge builds
+identically through Stage 0 and the native source front door, then validates
+and converts a versioned `WVEQ` projection through native `Main(bytes) ->
+bytes`. The managed wrapper still projects the request, loads and executes the
+retained WVB, independently validates the result, and preserves an explicit
+recovery writer only for valid 4-to-32-MiB metadata. A streaming or
+session-owned result seam must close that last size lane without reducing the
+existing contract; retained-WVB loading, W^X publication, service-bundle
+orchestration, Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

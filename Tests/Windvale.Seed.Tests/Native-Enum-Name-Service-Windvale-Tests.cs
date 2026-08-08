@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Immutable;
 using Windvale.Bytecode;
 using Windvale.Compiler;
@@ -12,6 +13,9 @@ internal static partial class Program
     private const int NATIVE_ENUM_NAME_CORE_SIZE = 625;
     private const string NATIVE_ENUM_NAME_CORE_SHA256 =
         "b404104b8e5ca174841b47d02ea45f197599179e0cb23ba778d6a2cdf7846948";
+    private const int NATIVE_ENUM_METADATA_CORE_SIZE = 9_640;
+    private const string NATIVE_ENUM_METADATA_CORE_SHA256 =
+        "30f1fa4c85ad50991d68ac5eecfb9ada2ed63bd36229b777aff899b4cd0f0e3d";
 
     private static void Windvaleˉnativeˉenumˉnameˉserviceˉruns()
     {
@@ -22,6 +26,13 @@ internal static partial class Program
         var Coreˉinput = new Sourceˉmoduleˉinput(
             "Runtime/Windvale/Native-X64-Enum-Name-Service.wv",
             Coreˉsource);
+        var Metadataˉcoreˉsource = Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-Enum-Metadata-Core.wv");
+        var Metadataˉbridgeˉsource = Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Native-Enum-Metadata-Bridge.wv");
+        var Metadataˉcoreˉinput = new Sourceˉmoduleˉinput(
+            "Compiler/Windvale/Native-Enum-Metadata-Core.wv",
+            Metadataˉcoreˉsource);
 
         var Coreˉresult = Seedˉcompiler.Compileˉmodules(Coreˉinput, []);
         True(
@@ -49,6 +60,35 @@ internal static partial class Program
             X64ˉnativeˉtextˉservices.ENUM_NAME_CONSUMER_CANONICAL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
 
+        var Metadataˉcoreˉresult = Seedˉcompiler.Compileˉmodules(
+            Metadataˉcoreˉinput,
+            []);
+        True(
+            Metadataˉcoreˉresult.Success,
+            "The Windvale enum-metadata core did not compile: " +
+                string.Join(" | ", Metadataˉcoreˉresult.Diagnostics));
+        Equal(NATIVE_ENUM_METADATA_CORE_SIZE, Metadataˉcoreˉresult.Moduleˉbytes.Length);
+        Equal(
+            NATIVE_ENUM_METADATA_CORE_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Metadataˉcoreˉresult.Moduleˉbytes.AsSpan()));
+
+        var Metadataˉbridgeˉresult = Seedˉcompiler.Compileˉmodules(
+            new(
+                "Compiler/Windvale/Native-Enum-Metadata-Bridge.wv",
+                Metadataˉbridgeˉsource),
+            [Metadataˉcoreˉinput]);
+        True(
+            Metadataˉbridgeˉresult.Success,
+            "The Windvale enum-metadata bridge did not compile: " +
+                string.Join(" | ", Metadataˉbridgeˉresult.Diagnostics));
+        Equal(
+            Nativeˉenumˉmetadataˉbuilder.CONSUMER_CANONICAL_SIZE,
+            Metadataˉbridgeˉresult.Moduleˉbytes.Length);
+        Equal(
+            Nativeˉenumˉmetadataˉbuilder.CONSUMER_CANONICAL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Metadataˉbridgeˉresult.Moduleˉbytes.AsSpan()));
+
         using (var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
             .GetManifestResourceStream(
                 "Windvale.Native.Native-X64-Enum-Name-Service-Bridge.wvb") ??
@@ -58,6 +98,16 @@ internal static partial class Program
             var Retained = new byte[checked((int)Stream.Length)];
             Stream.ReadExactly(Retained);
             Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
+        }
+        using (var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
+            .GetManifestResourceStream(
+                "Windvale.Native.Native-Enum-Metadata-Bridge.wvb") ??
+            throw new InvalidOperationException(
+                "The retained Windvale enum-metadata bridge was not embedded."))
+        {
+            var Retained = new byte[checked((int)Stream.Length)];
+            Stream.ReadExactly(Retained);
+            Sequenceˉequal(Metadataˉbridgeˉresult.Moduleˉbytes, Retained);
         }
 
         var Repository = Findˉrepositoryˉroot();
@@ -79,6 +129,19 @@ internal static partial class Program
             Sequenceˉequal(
                 Bridgeˉresult.Moduleˉbytes,
                 File.ReadAllBytes(Nativeˉpath));
+
+            var Metadataˉpath = Path.Combine(Directoryˉpath, "Enum-Metadata.wvb");
+            var Metadataˉbuild = Runˉnativeˉfrontˉdoor(
+                Repository,
+                Path.Combine(
+                    Repository,
+                    "Windvale-Native-Enum-Metadata.wvproj"),
+                Metadataˉpath);
+            Equal(0, Metadataˉbuild.Exitˉcode);
+            Equal(string.Empty, Metadataˉbuild.Error);
+            Sequenceˉequal(
+                Metadataˉbridgeˉresult.Moduleˉbytes,
+                File.ReadAllBytes(Metadataˉpath));
         }
         finally
         {
@@ -109,6 +172,16 @@ internal static partial class Program
             X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Expected.AsSpan()));
 
+        var Metadataˉrequest = Nativeˉenumˉmetadataˉbuilder.Buildˉrequest(Types);
+        var Windvaleˉmetadata =
+            Nativeˉenumˉmetadataˉbuilder.Buildˉwithˉwindvale(Metadataˉrequest);
+        var Recoveryˉmetadata = Nativeˉenumˉmetadataˉbuilder.Buildˉrecovery(Types);
+        Sequenceˉequal(Recoveryˉmetadata, Windvaleˉmetadata);
+        Sequenceˉequal(
+            Windvaleˉmetadata,
+            Bundle.AsSpan()[X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SIZE..]
+                .ToImmutableArray());
+
         var Bridge = Moduleˉcodec.Readˉandˉverify(
             Bridgeˉresult.Moduleˉbytes.AsSpan());
         var Interpreted = new Referenceˉruntime(
@@ -124,5 +197,85 @@ internal static partial class Program
             X64ˉnativeˉexecutor.Executeˉbytes(
                 Native.Fragment,
                 maximumˉinstructions: Interpreted.Executedˉinstructions));
+
+        var Metadataˉbridge = Moduleˉcodec.Readˉandˉverify(
+            Metadataˉbridgeˉresult.Moduleˉbytes.AsSpan());
+        var Metadataˉreference = new Referenceˉruntime(
+            Metadataˉbridge,
+            new Referenceˉcapabilityˉhost(TextWriter.Null),
+            Runtimeˉoptions.Portableˉdefaults);
+        var Metadataˉnative = X64ˉnativeˉbackend.Compile(Metadataˉbridge).Fragment;
+        Sequenceˉequal(
+            Windvaleˉmetadata,
+            Metadataˉreference.Runˉmainˉbytes(Metadataˉrequest).Bytes);
+        Sequenceˉequal(
+            Windvaleˉmetadata,
+            X64ˉnativeˉexecutor.Executeˉbytes(Metadataˉnative, Metadataˉrequest));
+
+        void Rejectˉrequest(ImmutableArray<byte> request)
+        {
+            Equal(0, Metadataˉreference.Runˉmainˉbytes(request).Bytes.Length);
+            Equal(0, X64ˉnativeˉexecutor.Executeˉbytes(Metadataˉnative, request).Length);
+        }
+
+        var Badˉmagic = Metadataˉrequest.ToArray();
+        Badˉmagic[0] ^= 0x01;
+        Rejectˉrequest(Badˉmagic.ToImmutableArray());
+        Rejectˉrequest(Metadataˉrequest.AsSpan()[..^1].ToImmutableArray());
+
+        var Duplicateˉvalue = Metadataˉrequest.ToArray();
+        const int Secondˉmemberˉoffset = 24 + 2 * 8 + 12;
+        BinaryPrimitives.WriteInt32LittleEndian(
+            Duplicateˉvalue.AsSpan(Secondˉmemberˉoffset),
+            -1);
+        Rejectˉrequest(Duplicateˉvalue.ToImmutableArray());
+
+        var Duplicateˉname = Metadataˉrequest.ToArray();
+        const int Namesˉoffset = 24 + 2 * 8 + 2 * 12;
+        Duplicateˉname.AsSpan(Namesˉoffset, 7).CopyTo(
+            Duplicateˉname.AsSpan(Namesˉoffset + 7, 7));
+        Rejectˉrequest(Duplicateˉname.ToImmutableArray());
+
+        var Invalidˉidentifier = Metadataˉrequest.ToArray();
+        Invalidˉidentifier[Namesˉoffset] = 203;
+        Rejectˉrequest(Invalidˉidentifier.ToImmutableArray());
+
+        var Boundaryˉmembers = ImmutableArray.CreateBuilder<Enumˉmemberˉdeclaration>(
+            Bytecodeˉlimits.MAX_ENUM_MEMBERS);
+        Boundaryˉmembers.Add(new($"N{new string('a', 254)}", 0));
+        for (var Index = 1; Index < Bytecodeˉlimits.MAX_ENUM_MEMBERS; Index++)
+        {
+            Boundaryˉmembers.Add(new($"Member{Index}", Index));
+        }
+        var Boundaryˉtypes = ImmutableArray.Create<Nominalˉtypeˉdeclaration>(
+            new Enumˉtypeˉdeclaration(
+                "Boundary",
+                Boundaryˉmembers.MoveToImmutable()));
+        Sequenceˉequal(
+            Nativeˉenumˉmetadataˉbuilder.Buildˉrecovery(Boundaryˉtypes),
+            Nativeˉenumˉmetadataˉbuilder.Build(Boundaryˉtypes));
+
+        var Maximumˉmembers = Enumerable.Range(0, Bytecodeˉlimits.MAX_ENUM_MEMBERS)
+            .Select(Index => new Enumˉmemberˉdeclaration($"M{Index}", Index))
+            .ToImmutableArray();
+        var Oversizedˉtypes = ImmutableArray.CreateBuilder<Nominalˉtypeˉdeclaration>(
+            Bytecodeˉlimits.MAX_NOMINAL_TYPES);
+        for (var Index = 0; Index < Bytecodeˉlimits.MAX_NOMINAL_TYPES; Index++)
+        {
+            Oversizedˉtypes.Add(new Enumˉtypeˉdeclaration($"Type{Index}", Maximumˉmembers));
+        }
+        var Oversized = Oversizedˉtypes.MoveToImmutable();
+        var Oversizedˉrequest = Nativeˉenumˉmetadataˉbuilder.Buildˉrequest(Oversized);
+        True(
+            Oversizedˉrequest.Length <= Bytecodeˉlimits.MAX_BYTE_DATA_BYTES,
+            "The oversized-recovery request no longer fits the bounded input seam.");
+        Equal(
+            0,
+            Nativeˉenumˉmetadataˉbuilder.Buildˉwithˉwindvale(Oversizedˉrequest).Length);
+        var Oversizedˉmetadata = Nativeˉenumˉmetadataˉbuilder.Build(Oversized);
+        True(
+            Oversizedˉmetadata.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES,
+            "The explicit oversized WVEN recovery lane was not exercised.");
+        Nativeˉenumˉmetadataˉbuilder.Verify(Oversized, Oversizedˉmetadata.AsSpan());
     }
 }
