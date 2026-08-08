@@ -548,6 +548,16 @@ zero, and padding byte. The deletion-bound managed session now projects and
 validates bounded requests and concatenates already completed segments; direct
 native durable publication, Linux execution, and the grouped gate remain open.
 
+[Decision 0387](../Decisions/0387-Standalone-Native-Hosted-Container-Segmenter.md)
+packages that same constructor as the standalone profile-7 `WVHG`
+Windows/Linux segmenter. One focused core serves separate one-entry
+service-free and hosted wrappers, so the native export invariant remains
+strict. The current-host application reproduces the retained fragment response
+and preserves an existing output on malformed input without loading .NET.
+Managed dispatch and concatenation remain the next deletion boundary: an
+immutable ordered segment set must feed the existing native durable
+multi-chunk transaction.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

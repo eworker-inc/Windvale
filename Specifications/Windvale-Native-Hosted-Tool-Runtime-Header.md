@@ -82,10 +82,10 @@ The capability-free bridge exposes `Main(bytes) -> bytes`.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata-admission WVB | 10,550 | `e43c712431e386eba159cd17f87b279cc4a4b5b99084d3a738a3718633099c78` |
-| Runtime-header core WVB | 18,911 | `700efbbad9619b58d06561be3e805e18b5498f1e13881646e6e121c2b8ab7564` |
-| Retained bridge WVB | 18,864 | `0bbf1c0e5c67c14b3e90bef5243d9c5aea64b3343ad11cfd3f7f93067648fe3d` |
-| Retained bridge WVNF | 190,709 | `31e7b98c738972b4f9b23075d48bb1724aac229e5f77d8e517877b5b5733dfe4` |
+| Metadata-admission WVB | 10,626 | `bd87ae0427462e77c0a23ead7dd771a36756a05033839eb40d4ddf8b6a7955f3` |
+| Runtime-header core WVB | 18,987 | `76f4958cffadc3a3d56b898755dadf7355a933a0a4a8e12b4fa10fe0ee7ddb84` |
+| Retained bridge WVB | 18,940 | `c09d1949ae9d016b4f7e33121122528d8959e29d058d721dc5f86bda1e25c3f1` |
+| Retained bridge WVNF | 191,208 | `929f0a129b233e466dd0fb11152e80d0a82607d9b83a44b12b1a477834dd2237` |
 
 The normal managed packaging seam embeds only the digest-bound WVNF. The
 former C# byte writer is retained under an explicit Stage 0 oracle name for

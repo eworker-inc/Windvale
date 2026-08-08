@@ -7,12 +7,12 @@ namespace Windvale.Linker;
 
 internal static class Nativeˉhostedˉcontainerˉsegmentˉconstructor
 {
-    internal const int CONSUMER_CANONICAL_SIZE = 21_806;
+    internal const int CONSUMER_CANONICAL_SIZE = 21_832;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "c1c446d22e578eac330a0bead108d4d759b7c346c48c335601df62e19538bca4";
-    internal const int CONSUMER_ARTIFACT_SIZE = 278_243;
+        "af869ba326f99eaa8d1a2c0898c14145a62c4f046da7bbcccf511d7918e79056";
+    internal const int CONSUMER_ARTIFACT_SIZE = 281_719;
     internal const string CONSUMER_ARTIFACT_SHA256 =
-        "f80570a216cbf99e04b83f8e5c8f576f0f8f9d179fdc907715b7f80a57e43c3a";
+        "ab96ecad8d37f9383626d24c2e97c7e6615dd3c92c2ed5f9dc816cf77f3dc7d7";
 
     private const long MAXIMUM_INSTRUCTIONS = 1_000_000_000;
     private const string CONSUMER_RESOURCE =

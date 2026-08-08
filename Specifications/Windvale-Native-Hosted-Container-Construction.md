@@ -10,7 +10,7 @@ The complete 27 MiB application is never represented as one Windvale `bytes`
 value: a deletion-bound managed relay copies already verified large bundle and
 runtime inputs into Windvale-declared positions.
 
-The contract covers both x64 targets and all six hosted profiles. It does not
+The contract covers both x64 targets and all seven hosted profiles. It does not
 change their public container formats, startup WVOs, runtime metadata, service
 bundle, file bytes, virtual-memory policy, or independent PE/ELF verification.
 
@@ -24,7 +24,7 @@ The request is exactly 4,128 bytes. All integers are little-endian `u32`.
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `4,128` |
 | 12 | 4 | target | `1` Windows or `2` Linux |
-| 16 | 4 | hosted profile | `1` through `6` |
+| 16 | 4 | hosted profile | `1` through `7` |
 | 20 | 4 | runtime-header bytes | `4,096` |
 | 24 | 8 | reserved | Zero |
 | 32 | 4,096 | runtime header | Exact Windvale-owned initial header |
@@ -100,14 +100,14 @@ linker embeds their WVNF artifacts, not their WVB modules.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Hosted-container planner WVB | 33,591 | `c62b671c06212fb7450bd4d1335284988bd825402713565f94e45f5592330483` |
-| Hosted-container planner WVNF | 536,691 | `58f4e2553ee423c2fcf492f69dcb494f7bd618c47a0ecd54939e04c75e87279b` |
-| Windows container-byte WVB | 17,409 | `f3e47f2d447ac968c2b56df2fc4656ceaffbf7f3a2c84cd16c7347e29fb3b70b` |
-| Windows container-byte WVNF | 183,406 | `49240c2aacfe806ab786fccdc5ef248775e09dae88fb5c8cb6ee703a9bde7e7c` |
-| Linux container-byte WVB | 12,086 | `a502fe7e6d5aaa29bf7b629e96b14bb26346c3296256b89d2aacd069a9eede5e` |
-| Linux container-byte WVNF | 124,463 | `0c57b13158570163b113ba8f0faf608a804725316435ecc5485aa172666bec40` |
-| Hosted-container segmentation WVB | 21,806 | `c1c446d22e578eac330a0bead108d4d759b7c346c48c335601df62e19538bca4` |
-| Hosted-container segmentation WVNF | 278,243 | `f80570a216cbf99e04b83f8e5c8f576f0f8f9d179fdc907715b7f80a57e43c3a` |
+| Hosted-container planner WVB | 33,667 | `55b89d7b5ca5e6118214bfadf7c8597a959348bf18b230954c623a7549e27509` |
+| Hosted-container planner WVNF | 537,190 | `6a9ba7b7bf7cc058f3a3a8bde5e694891dc857ee66521a4c7496aa6bc0fd6634` |
+| Windows container-byte WVB | 17,409 | `a63a185af4b58226f8afd5416b9a7b96f6d25ca8151cfa42f5d9a3cb70daaee8` |
+| Windows container-byte WVNF | 183,406 | `7e04baf6105eab333b2898142f7dd2d4f636f445471620ae67cb5125e1cb2d02` |
+| Linux container-byte WVB | 12,086 | `c4cdd9b71c677359de324201206ec215df2c5a92a2622912ba1a425074f29ca2` |
+| Linux container-byte WVNF | 124,463 | `3c8cbb6f1b06794fb25e7fda136cee1081b5bc13f15cf6f09f0b6c01a0d5556a` |
+| Hosted-container segmentation WVB | 21,832 | `af869ba326f99eaa8d1a2c0898c14145a62c4f046da7bbcccf511d7918e79056` |
+| Hosted-container segmentation WVNF | 281,719 | `ab96ecad8d37f9383626d24c2e97c7e6615dd3c92c2ed5f9dc816cf77f3dc7d7` |
 
 All four WVB modules reconstruct byte-for-byte through the native project
 front door. Separate fragments are required because the current bootstrap
@@ -133,10 +133,11 @@ exact segment. The response binds the original request length, application
 length, segment extent, and six-region directory.
 
 The managed session projects bounded requests, validates every returned source
-and fill byte, and concatenates successful segments in order. It does not
-allocate the complete application in advance or place any source/fill region
-itself. Ordered managed concatenation remains deletion-bound transport until
-the same segment contract feeds the native durable publisher directly.
+and fill byte, and concatenates successful segments in order. The standalone
+[native hosted-container segmenter](Windvale-Native-Hosted-Container-Segmenter.md)
+now accepts the same request and produces the same response without loading
+.NET. Ordered managed dispatch and concatenation remain deletion-bound until
+the segmenter feeds the native durable publisher directly.
 
 ## Normal path and retirement boundary
 
@@ -150,8 +151,9 @@ Normal construction now follows one ordered path:
 5. The bounded segment constructor consumes only intersecting source bytes,
    constructs every complete segment including padding in Windvale, and returns
    exact ordered pieces below the ordinary byte-value limit.
-6. The deletion-bound managed session validates and concatenates those pieces;
-   it no longer allocates and populates a complete image from source regions.
+6. The native segmenter can construct each exact piece as a standalone
+   Windows/Linux process; the deletion-bound managed session still dispatches
+   and concatenates those pieces in the ordinary Stage 0 path.
 7. The existing independent PE or ELF verifier validates the complete result.
 
 The former C# application builders are named `Buildˉstage0` and are called only

@@ -110,6 +110,8 @@ public static class Linuxˉconsoleˉapplicationˉcontract
     public const string CONSOLE_SEGMENTED_PACKAGER_TARGET_NAME =
         "linux-x64-console-segmented-packager-v1";
     public const string WVB_TO_WVO_TARGET_NAME = "linux-x64-wvb-to-wvo-v1";
+    public const string HOSTED_CONTAINER_SEGMENTER_TARGET_NAME =
+        "linux-x64-hosted-container-segmenter-v1";
     public const int HOSTED_STARTUP_BYTES = 217;
     public const int HOSTED_OUTPUT_SERVICE_OFFSET = 224;
     public const int HOSTED_NATIVE_IMAGE_OFFSET = 448;

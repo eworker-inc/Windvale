@@ -75,7 +75,7 @@ export fn Nativeˉhostedˉcontainerˉplan(
     Profile: u32
 ) -> Nativeˉhostedˉcontainerˉlayout {
     if Bytesˉlength(Metadata) != 1024u32 || Target < 1u32 || Target > 2u32 ||
-        Profile < 1u32 || Profile > 6u32 {
+        Profile < 1u32 || Profile > 7u32 {
         return Invalid(Target, Profile);
     }
     let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Metadata, 60u32);

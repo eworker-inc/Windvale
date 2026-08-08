@@ -325,6 +325,12 @@
       Include="../../Linker/Windvale/Native-Hosted-Container-Segmentation.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segmentation.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Native-Hosted-Container-Segmentation-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segmentation-Core.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Windvale/Native-Hosted-Container-Segmenter-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segmenter-Tool.wv" />
+    <EmbeddedResource
       Include="../../Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Metadata-Admission.wv" />
     <EmbeddedResource

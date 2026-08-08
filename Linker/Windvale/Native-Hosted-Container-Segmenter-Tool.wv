@@ -1,0 +1,70 @@
+module Nativeˉhostedˉcontainerˉsegmenterˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉsegmenterˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line("Usage: wvhostsegment <request.wvht> <response.wvhu>");
+    return 64;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Inputˉpath: text = process.argument(0u32);
+    let Outputˉpath: text = process.argument(1u32);
+    if Bytesˉareˉequal(Textˉtoˉutf8(Inputˉpath), Textˉtoˉutf8(Outputˉpath)) {
+        return Usage();
+    }
+
+    let Request: bytes = file.read_bytes(Inputˉpath);
+    let Response: bytes =
+        Segmentation.Nativeˉhostedˉcontainerˉsegmentˉconstruct(Request);
+    if Bytesˉlength(Response) < 40u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1430804055u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Bytesˉlength(Response) ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 {
+        diagnostic.write_line(
+            Textˉconcat(
+                "hosted container segment status=",
+                Enumˉname(Nativeˉhostedˉcontainerˉsegmenterˉstatus.Rejected)
+            )
+        );
+        return 2;
+    }
+    file.write_bytes(Outputˉpath, Response);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted container segment status=",
+                Enumˉname(Nativeˉhostedˉcontainerˉsegmenterˉstatus.Valid)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Response)))
+        )
+    );
+    return 0;
+}

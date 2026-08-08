@@ -14,15 +14,15 @@ internal readonly record struct Nativeˉhostedˉtoolˉmetadataˉinputs(
 
 internal static class Nativeˉhostedˉtoolˉmetadataˉbuilder
 {
-    internal const int CORE_CANONICAL_SIZE = 23_725;
+    internal const int CORE_CANONICAL_SIZE = 23_877;
     internal const string CORE_CANONICAL_SHA256 =
-        "d67f0f247b73f0ff483a158713e51239206ab176d3414f80744e0dd4a6797d22";
-    internal const int CONSUMER_CANONICAL_SIZE = 23_626;
+        "e6addd08b83caa9345259b26210bd99f5d8cdfe5b4b302c64a7ecee5930b0c98";
+    internal const int CONSUMER_CANONICAL_SIZE = 23_778;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "e229fecdee3d70fc6937f6f2b0e3a0c28f6bef6ff1b3f737cfdccb29137ef983";
-    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 211_629;
+        "0b89246f7423f99c01fafdbc6054f7b38cca80c27fee036a272990e4e1a59379";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 212_627;
     internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
-        "1d8f6f2c45a13c3c996ae00a950c84a12a107a94a85fd83c3c8471cb767cff7c";
+        "b077111fd4aa796003f947d4e82facb6754ab83a53951ef8c514025983ca26f4";
 
     private const uint REQUEST_MAGIC = 0x4D48_5657;
     private const uint RESPONSE_MAGIC = 0x4448_5657;
@@ -134,7 +134,7 @@ internal static class Nativeˉhostedˉtoolˉmetadataˉbuilder
     {
         var Bundle = inputs.Bundle;
         if (inputs.Target is < 1 or > 2 ||
-            inputs.Profile is < 1 or > 6 ||
+            inputs.Profile is < 1 or > 7 ||
             inputs.Bundleˉoffset != 4096 ||
             Bundle is null ||
             (uint)Bundle.Platform != inputs.Target ||

@@ -9,12 +9,12 @@ namespace Windvale.Linker;
 internal static class Nativeˉhostedˉcontainerˉconstructor
 {
     // Transitional managed materializer; native recipe publication owns its removal.
-    internal const int CONSUMER_CANONICAL_SIZE = 33_591;
+    internal const int CONSUMER_CANONICAL_SIZE = 33_667;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "c62b671c06212fb7450bd4d1335284988bd825402713565f94e45f5592330483";
-    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 536_691;
+        "55b89d7b5ca5e6118214bfadf7c8597a959348bf18b230954c623a7549e27509";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 537_190;
     internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
-        "58f4e2553ee423c2fcf492f69dcb494f7bd618c47a0ecd54939e04c75e87279b";
+        "6a9ba7b7bf7cc058f3a3a8bde5e694891dc857ee66521a4c7496aa6bc0fd6634";
 
     private const uint REQUEST_MAGIC = 0x5243_5657;
     private const uint RESPONSE_MAGIC = 0x4443_5657;

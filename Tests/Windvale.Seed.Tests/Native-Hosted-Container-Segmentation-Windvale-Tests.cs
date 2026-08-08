@@ -28,6 +28,9 @@ internal static partial class Program
                 Source(
                     "Linker/Windvale/Native-Hosted-Container-Layout.wv",
                     "Native-Hosted-Container-Layout.wv"),
+                Source(
+                    "Linker/Windvale/Native-Hosted-Container-Segmentation-Core.wv",
+                    "Native-Hosted-Container-Segmentation-Core.wv"),
             ]);
         True(Compiled.Success, string.Join(" | ", Compiled.Diagnostics));
         Equal(

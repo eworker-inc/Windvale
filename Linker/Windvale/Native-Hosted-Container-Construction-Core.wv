@@ -209,7 +209,7 @@ fn Nativeˉhostedˉcontainerˉconstruct(Input: bytes) -> bytes {
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
     let Runtimeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
     let Reservedˉone: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
-    if Target < 1u32 || Target > 2u32 || Profile < 1u32 || Profile > 6u32 ||
+    if Target < 1u32 || Target > 2u32 || Profile < 1u32 || Profile > 7u32 ||
         Runtimeˉbytes != 4096u32 || Reservedˉone != 0u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
         return Failure(Input, 4u32, 12u32);

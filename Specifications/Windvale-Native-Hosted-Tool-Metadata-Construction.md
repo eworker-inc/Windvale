@@ -90,9 +90,9 @@ bundle. The capability-free bridge exposes `Main(bytes) -> bytes`.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata-construction core WVB | 23,725 | `d67f0f247b73f0ff483a158713e51239206ab176d3414f80744e0dd4a6797d22` |
-| Retained bridge WVB | 23,626 | `e229fecdee3d70fc6937f6f2b0e3a0c28f6bef6ff1b3f737cfdccb29137ef983` |
-| Retained bridge WVNF | 211,629 | `1d8f6f2c45a13c3c996ae00a950c84a12a107a94a85fd83c3c8471cb767cff7c` |
+| Metadata-construction core WVB | 23,877 | `e6addd08b83caa9345259b26210bd99f5d8cdfe5b4b302c64a7ecee5930b0c98` |
+| Retained bridge WVB | 23,778 | `0b89246f7423f99c01fafdbc6054f7b38cca80c27fee036a272990e4e1a59379` |
+| Retained bridge WVNF | 212,627 | `b077111fd4aa796003f947d4e82facb6754ab83a53951ef8c514025983ca26f4` |
 
 The normal managed packaging seam embeds only the digest-bound WVNF. The
 former C# constructor is retained under the explicit `Buildˉstage0` name for

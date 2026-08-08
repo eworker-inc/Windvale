@@ -405,6 +405,15 @@ source ranges and owned zero/padding bytes. Managed dispatch, bounded request
 projection, response checking, ordered concatenation, direct publication,
 Linux execution, promotion, and the grouped gate remain open.
 
+[Decision 0387](../Decisions/0387-Standalone-Native-Hosted-Container-Segmenter.md)
+adds the paired profile-7 native process that consumes those same bounded
+requests. Its exact source reconstructs through the native Project 1 front
+door; the current-host process agrees with the retained fragment and preserves
+an existing output on rejection. The new C# writer is deletion-bound Stage 0
+package wiring. The next transfer joins an immutable ordered segment set to the
+existing native durable multi-chunk transaction, then removes managed dispatch,
+concatenation, and publication from the normal route.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

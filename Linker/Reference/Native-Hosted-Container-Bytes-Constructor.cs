@@ -15,16 +15,16 @@ internal static class Nativeˉhostedˉcontainerˉbytesˉconstructor
 {
     internal const int WINDOWS_CANONICAL_SIZE = 17_409;
     internal const string WINDOWS_CANONICAL_SHA256 =
-        "f3e47f2d447ac968c2b56df2fc4656ceaffbf7f3a2c84cd16c7347e29fb3b70b";
+        "a63a185af4b58226f8afd5416b9a7b96f6d25ca8151cfa42f5d9a3cb70daaee8";
     internal const int WINDOWS_ARTIFACT_SIZE = 183_406;
     internal const string WINDOWS_ARTIFACT_SHA256 =
-        "49240c2aacfe806ab786fccdc5ef248775e09dae88fb5c8cb6ee703a9bde7e7c";
+        "7e04baf6105eab333b2898142f7dd2d4f636f445471620ae67cb5125e1cb2d02";
     internal const int LINUX_CANONICAL_SIZE = 12_086;
     internal const string LINUX_CANONICAL_SHA256 =
-        "a502fe7e6d5aaa29bf7b629e96b14bb26346c3296256b89d2aacd069a9eede5e";
+        "c4cdd9b71c677359de324201206ec215df2c5a92a2622912ba1a425074f29ca2";
     internal const int LINUX_ARTIFACT_SIZE = 124_463;
     internal const string LINUX_ARTIFACT_SHA256 =
-        "0c57b13158570163b113ba8f0faf608a804725316435ecc5485aa172666bec40";
+        "3c8cbb6f1b06794fb25e7fda136cee1081b5bc13f15cf6f09f0b6c01a0d5556a";
 
     private const long MAXIMUM_INSTRUCTIONS = 20_000_000;
     private static readonly Lazy<Nativeˉfragment> WINDOWS = new(

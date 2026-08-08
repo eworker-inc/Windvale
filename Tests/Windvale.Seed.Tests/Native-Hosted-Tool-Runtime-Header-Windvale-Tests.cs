@@ -176,7 +176,7 @@ internal static partial class Program
         Expectˉfailure(Replaceˉu32(Valid, 4, 2), 3, 4);
         Expectˉfailure(Replaceˉu32(Valid, 8, 1047), 1, 8);
         Expectˉfailure(Replaceˉu32(Valid, 12, 0), 4, 12);
-        Expectˉfailure(Replaceˉu32(Valid, 16, 7), 4, 12);
+        Expectˉfailure(Replaceˉu32(Valid, 16, 8), 4, 12);
         Expectˉfailure(Replaceˉu32(Valid, 20, 1), 4, 12);
         Expectˉfailure(Replaceˉu32(Valid, 24, 0), 5, 24);
         Expectˉfailure(Replaceˉu32(Valid, 24 + 12, 2), 5, 24);
