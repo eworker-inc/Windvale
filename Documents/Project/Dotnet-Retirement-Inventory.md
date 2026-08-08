@@ -213,6 +213,14 @@ longer decodes, lowers, publishes, invokes, copies, or splits that generator.
 The three variable-input retained WVBs, managed service-bundle assembly, final
 W^X ownership, Linux evidence, and the grouped gate remain open.
 
+[Decision 0367](../Decisions/0367-Versioned-Verified-Native-Fragment-Artifact.md)
+defines the bounded `WVNF 1.0` handoff needed by the three variable-input
+consumers. Unlike raw code or WVO alone, it preserves the explicit target, ABI,
+final code, symbols, patches, nominal types, and required services consumed by
+the existing native verifier. Focused valid, boundary, malformed, and hostile
+tests pass locally. Production artifact generation and loader cutover are the
+next slice; the managed WVB loaders remain active until that cutover.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
