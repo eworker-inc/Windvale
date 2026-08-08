@@ -136,8 +136,7 @@ internal static partial class Program
             includeˉpublication: true,
             includeˉstagingˉmanifest: true,
             includeˉstagingˉcontent: true,
-            includeˉstagingˉresources: true,
-            includeˉpublicationˉtransaction: true);
+            includeˉstagingˉresources: true);
         var Admission = Moduleˉcodec.Readˉandˉverify(Admissionˉbytes);
         Equal(
             "Compilerˉnativeˉx64ˉloweringˉstagingˉadmissionˉtool",

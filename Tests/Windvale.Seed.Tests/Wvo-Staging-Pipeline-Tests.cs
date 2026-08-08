@@ -57,8 +57,7 @@ internal static partial class Program
                 includeˉpublication: true,
                 includeˉstagingˉmanifest: true,
                 includeˉstagingˉcontent: true,
-                includeˉstagingˉresources: true,
-                includeˉpublicationˉtransaction: true);
+                includeˉstagingˉresources: true);
         var Publisherˉmodule = Moduleˉcodec.Readˉandˉverify(
             Publisherˉmoduleˉbytes);
         var Publisherˉnative = X64ˉnativeˉbackend.Compile(Publisherˉmodule);

@@ -359,6 +359,12 @@ construct exact packages; current-host Windows execution proves admitted
 multi-segment publication, content and alias rejection, preservation, and zero
 scratch without loading .NET.
 
+Decision 0394 removes the superseded private WVB publication bridge from the
+staged admission source closure. The admission project now contains 26 modules,
+431,568 WVB bytes, and no publication-transaction dependency. Its paired
+packages continue to resolve `Native_publication_begin` and
+`Native_publication_apply` only from the shared WVA object.
+
 The Windows WVO and hosted-container applications have current-host execution
 evidence. The Linux images,
 complete compiler self-staging integration, package promotion, native

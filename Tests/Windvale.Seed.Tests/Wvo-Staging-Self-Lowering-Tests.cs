@@ -7,9 +7,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int STAGING_PUBLISHER_WVO_BYTES = 6_449_889;
+    private const int STAGING_PUBLISHER_WVO_BYTES = 6_355_569;
     private const string STAGING_PUBLISHER_WVO_SHA256 =
-        "050cf0f189501b1f3f433aff1dd7b8e125fd8e4f58da2ad58258e4b9327c0148";
+        "727e7da06f11340dcee4552f119de3422dee17968c49438906242bbf1166e7e5";
 
     private static void Nativeˉwvoˉstagingˉpublisherˉselfˉlowers()
     {
@@ -35,8 +35,7 @@ internal static partial class Program
                 includeˉpublication: true,
                 includeˉstagingˉmanifest: true,
                 includeˉstagingˉcontent: true,
-                includeˉstagingˉresources: true,
-                includeˉpublicationˉtransaction: true);
+                includeˉstagingˉresources: true);
         var Publisherˉmodule = Moduleˉcodec.Readˉandˉverify(
             Publisherˉmoduleˉbytes);
         var Publisherˉnative = X64ˉnativeˉbackend.Compile(Publisherˉmodule);

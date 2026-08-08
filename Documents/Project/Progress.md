@@ -38,12 +38,12 @@ The latest Phase 10 local increments are [Decision 0330](../Decisions/0330-Manif
 
 [Decision 0346](../Decisions/0346-Bounded-Native-Publisher-Self-Lowering.md)
 closes the measured Decision 0345 publisher lifetime boundary on Windows. The
-native producer and publisher now lower the refreshed 440,994-byte publisher
-WVB in bounded function groups and reproduce the exact 6,449,889-byte Stage 0
-WVO without loading .NET or widening the arena. The focused exact self-lowering
-and bounded-batch contracts pass; Linux execution and the grouped retirement
-gate remain pending. This update supersedes the open self-lowering statement
-in the preceding Phase 10 increment summary.
+native producer and publisher established bounded self-lowering without loading
+.NET or widening the arena. Decision 0394 later prunes the now-unused portable
+publication bridge from that admission closure; the current exact identities
+are 431,568-byte WVB and 6,355,569-byte WVO. Extended execution of the refreshed
+self-lowering case, Linux execution, and the grouped retirement gate remain
+pending.
 
 [Decision 0347](../Decisions/0347-Fixed-Native-Nominal-Wvb-Rejections.md)
 transfers five representative nominal-type rejection cases into the existing
@@ -67,6 +67,14 @@ content and a destination alias, preserves existing state, leaves no scratch,
 and loads no CLR. Shared WVA now owns the publication-state token ABI. Native
 reconstruction of Stage 0 package construction, Linux execution, promotion, and
 the final grouped dual-host gate remain open.
+
+[Decision 0394](../Decisions/0394-Pruned-Staged-Publisher-Bridge-Closure.md)
+removes the two dormant private publication functions and their two-module
+source dependency from the staged admission project. The focused publisher
+still passes native atomic publication through shared WVA, while the smaller
+admission WVB and paired packages retain exact identities. This makes the next
+remaining boundary explicit: replace Stage 0 hosted-package construction and
+orchestration rather than carrying duplicate publication logic.
 
 The current unqualified language candidate advances Stage 0 and the Windvale-written compiler together through WVB 1.11: inference and trailing commas; constants; privacy, aliases, qualified identities, and metadata; named records and `else if`; exhaustive `match`; nominal payload variants and recoverable-result shapes; bounded sequences, affine builders, and `for`; loop control and short-circuit flow; compound assignment; checked division/remainder; bitwise operations and shifts; and exact text/bytes equality. The ordinary native compiler path, deterministic artifacts, editor grammar, and focused compiler/runtime/WebAssembly cases are synchronized. Resource-lifetime syntax remains at its explicit design gate until provider values, cleanup ordering/failures, and immutable manifest representation are decided.
 

@@ -1,6 +1,6 @@
 # Decision 0393: Paired native hosted-container publishers
 
-- Status: Implemented candidate; Linux execution pending
+- Status: Implemented candidate; advanced by [Decision 0394](0394-Pruned-Staged-Publisher-Bridge-Closure.md)
 - Date: 2026-08-08
 - Advances: [Decision 0392](0392-Shared-Immutable-Snapshot-Publisher-Shells.md), [Decision 0388](0388-Immutable-Hosted-Container-Segment-Set.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contracts: [Native hosted-container segment set](../../Specifications/Windvale-Native-Hosted-Container-Segment-Set.md) and [WVB publication transaction](../../Specifications/Windvale-Wvb-Publication-Transaction.md)

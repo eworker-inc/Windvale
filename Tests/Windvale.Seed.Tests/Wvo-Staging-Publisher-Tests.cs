@@ -9,9 +9,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 440_994;
+    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 431_568;
     private const string WVO_STAGING_PUBLISHER_TOOL_SHA256 =
-        "6ef23e0db58ecd788ca97218428dc7a131662f90f5875f7644f76592a7664acc";
+        "9ca9c1225eb5b9b9e95021b7ef897faf97e14121c5a94d72d9489b95b4d0e4c2";
     private const string LINUX_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba";
     private const string LINUX_WVO_STAGING_ADAPTER_WVO_SHA256 =
@@ -93,8 +93,7 @@ internal static partial class Program
             includeˉpublication: true,
             includeˉstagingˉmanifest: true,
             includeˉstagingˉcontent: true,
-            includeˉstagingˉresources: true,
-            includeˉpublicationˉtransaction: true);
+            includeˉstagingˉresources: true);
         Equal(WVO_STAGING_PUBLISHER_TOOL_BYTES, Moduleˉbytes.Length);
         Equal(
             WVO_STAGING_PUBLISHER_TOOL_SHA256,

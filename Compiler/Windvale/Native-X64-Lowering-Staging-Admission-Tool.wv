@@ -4,7 +4,6 @@ import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉpublication as Publication;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉcontent as Content;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉresources as Resources;
-import Windvaleˉwvbˉpublicationˉnativeˉbridge as Nativeˉpublication;
 
 capability diagnostic.write_line;
 capability file.read_bytes;
@@ -33,17 +32,6 @@ fn Contentˉfailure(
         )
     );
     return 1;
-}
-
-fn Compilerˉnativeˉx64ˉstagingˉpublicationˉbegin() -> u32 {
-    return Nativeˉpublication.Wvbˉpublicationˉnativeˉbegin();
-}
-
-fn Compilerˉnativeˉx64ˉstagingˉpublicationˉapply(
-    Current: u32,
-    Action: u32
-) -> u32 {
-    return Nativeˉpublication.Wvbˉpublicationˉnativeˉapply(Current, Action);
 }
 
 export fn Main() -> i32 {

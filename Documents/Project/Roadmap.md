@@ -64,8 +64,11 @@ This roadmap owns the forward phase gates, sequencing, and next deliverables. It
 closes that measured publisher lifetime boundary on Windows without widening
 the native arena. Bounded function-count and grouped-byte limits, block-local
 scratch-record allocation, and the exact ABI 22 hidden-result layout let the
-native producer and publisher reproduce the 6,449,889-byte Stage 0 publisher
-WVO exactly. Linux execution and grouped qualification remain open.
+native producer and publisher reproduce the Stage 0 publisher WVO exactly.
+Decision 0394 removes the later-unused publication bridge from that closure;
+the current admission WVB is 431,568 bytes and its WVO is 6,355,569 bytes.
+Refreshed extended execution, Linux execution, and grouped qualification remain
+open.
 
 [Decision 0347](../Decisions/0347-Fixed-Native-Nominal-Wvb-Rejections.md)
 extends the fixed native unsafe-WVB lane from five instruction-stream cases to

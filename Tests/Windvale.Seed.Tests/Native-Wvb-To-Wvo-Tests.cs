@@ -1007,8 +1007,7 @@ internal static partial class Program
         bool includeˉpublication = false,
         bool includeˉstagingˉmanifest = false,
         bool includeˉstagingˉcontent = false,
-        bool includeˉstagingˉresources = false,
-        bool includeˉpublicationˉtransaction = false)
+        bool includeˉstagingˉresources = false)
     {
         List<Sourceˉmoduleˉinput> Dependencies =
             [
@@ -1099,15 +1098,6 @@ internal static partial class Program
             Dependencies.Add(new(
                 "Compiler/Windvale/Native-X64-Lowering-Staging-Resources.wv",
                 NATIVE_X64_STAGING_RESOURCES_SOURCE));
-        }
-        if (includeˉpublicationˉtransaction)
-        {
-            Dependencies.Add(new(
-                "Tools/Windvale.Publish/Wvb-Publication-Transaction.wv",
-                WVB_PUBLICATION_TRANSACTION_SOURCE));
-            Dependencies.Add(new(
-                "Tools/Windvale.Publish/Wvb-Publication-Native-Bridge.wv",
-                WVB_PUBLICATION_NATIVE_BRIDGE_SOURCE));
         }
         var Result = Seedˉcompiler.Compileˉmodules(
             new(path, source),

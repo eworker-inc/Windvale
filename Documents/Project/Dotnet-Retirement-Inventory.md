@@ -40,13 +40,13 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | C1 | Clean bootstrap from documented native seeds | `missing` | Current recovery scripts reconstruct pinned native artifacts through Stage 0. A previous native release must rebuild the accepted toolchain without .NET. |
 | C2 | Final digest-bound Stage 0 recovery archive | `missing` | Produce and verify one final Windows/Linux recovery release before deleting retired managed source. |
 
-Current N1 update: [Decision 0346](../Decisions/0346-Bounded-Native-Publisher-Self-Lowering.md)
-supersedes the earlier self-lowering probe result recorded in the ledger row.
-The refreshed 440,994-byte publisher WVB now lowers through the current-host
-native producer and publisher in multiple bounded chunks and exactly matches
-the 6,449,889-byte Stage 0 WVO without loading .NET or widening the native
-arena. Linux execution, native host-package construction, remaining backend
-subset work, promotion, and grouped qualification remain open.
+Current N1 update: [Decision 0394](../Decisions/0394-Pruned-Staged-Publisher-Bridge-Closure.md)
+advances the Decision 0346 self-lowering result after shared WVA took ownership
+of publication-state execution. The admission-only closure is now a 431,568-byte
+WVB and its Stage 0 WVO is 6,355,569 bytes; two unused publication modules and
+their private bridge functions no longer inflate the product candidate. Linux
+execution, native host-package construction, remaining backend subset work,
+promotion, and grouped qualification remain open.
 
 Current L1 update: [Decision 0351](../Decisions/0351-Immutable-Snapshot-Compiler-Image-Staging.md)
 adds the first hosted Windvale owner of the segmented compiler-image path. It
