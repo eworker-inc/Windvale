@@ -116,6 +116,8 @@ internal static class Program
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-hosted-container-segmenter-v1|" +
             "linux-x64-hosted-container-segmenter-v1|" +
+            "windows-x64-hosted-container-planner-v1|" +
+            "linux-x64-hosted-container-planner-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -187,6 +189,7 @@ internal static class Program
         Windowsˉconsoleˉapplicationˉcontract.CONSOLE_SEGMENTED_PACKAGER_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME => ".exe",
         Windowsˉconsoleˉapplicationˉcontract.HOSTED_CONTAINER_SEGMENTER_TARGET_NAME => ".exe",
+        Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
@@ -259,6 +262,8 @@ internal static class Program
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-hosted-container-segmenter-v1|" +
             "linux-x64-hosted-container-segmenter-v1|" +
+            "windows-x64-hosted-container-planner-v1|" +
+            "linux-x64-hosted-container-planner-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -358,6 +363,8 @@ internal static class Program
         Linuxˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
         Windowsˉconsoleˉapplicationˉcontract.HOSTED_CONTAINER_SEGMENTER_TARGET_NAME or
         Linuxˉconsoleˉapplicationˉcontract.HOSTED_CONTAINER_SEGMENTER_TARGET_NAME or
+        Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉcontainerˉplannerˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -504,6 +511,7 @@ internal static class Program
                 Windowsˉconsoleˉapplicationˉcontract.CONSOLE_SEGMENTED_PACKAGER_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
                 Windowsˉconsoleˉapplicationˉcontract.HOSTED_CONTAINER_SEGMENTER_TARGET_NAME or
+                Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -571,6 +579,11 @@ internal static class Program
                             Moduleˉname),
                     Windowsˉconsoleˉapplicationˉcontract.HOSTED_CONTAINER_SEGMENTER_TARGET_NAME =>
                         Hostedˉcontainerˉsegmenterˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉcontainerˉplannerˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -685,6 +698,11 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Hostedˉcontainerˉplannerˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉcontainerˉplannerˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -751,6 +769,7 @@ internal static class Program
                     Linuxˉconsoleˉapplicationˉcontract.CONSOLE_SEGMENTED_PACKAGER_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.WVB_TO_WVO_TARGET_NAME or
                     Linuxˉconsoleˉapplicationˉcontract.HOSTED_CONTAINER_SEGMENTER_TARGET_NAME or
+                    Hostedˉcontainerˉplannerˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
@@ -1246,6 +1265,8 @@ internal static class Program
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-hosted-container-segmenter-v1|" +
             "linux-x64-hosted-container-segmenter-v1|" +
+            "windows-x64-hosted-container-planner-v1|" +
+            "linux-x64-hosted-container-planner-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -1277,6 +1298,8 @@ internal static class Program
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-hosted-container-segmenter-v1|" +
             "linux-x64-hosted-container-segmenter-v1|" +
+            "windows-x64-hosted-container-planner-v1|" +
+            "linux-x64-hosted-container-planner-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +

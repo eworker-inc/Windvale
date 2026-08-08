@@ -331,6 +331,9 @@
       Include="../../Linker/Windvale/Native-Hosted-Container-Segmenter-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segmenter-Tool.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Native-Hosted-Container-Planner-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Planner-Tool.wv" />
+    <EmbeddedResource
       Include="../../Linker/Windvale/Native-Hosted-Container-Segment-Set-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segment-Set-Core.wv" />
     <EmbeddedResource

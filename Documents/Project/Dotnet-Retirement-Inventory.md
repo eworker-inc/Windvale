@@ -461,6 +461,14 @@ response concatenation and final publication are no longer candidate runtime
 logic. Native reconstruction of Stage 0 package layout, Linux execution,
 promotion, and grouped qualification remain open.
 
+[Decision 0395](../Decisions/0395-Standalone-Native-Hosted-Container-Planner.md)
+adds the missing process-level plan producer. A 37,289-byte Windvale tool reads
+the exact runtime header and produces the same `WVCD 1` layout and target plan
+as the retained service-free fragment; paired packages and the public CLI target
+exist, and current-host execution loads no CLR. Runtime/region resource
+production, process-pipeline composition, Linux execution, promotion, and the
+grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

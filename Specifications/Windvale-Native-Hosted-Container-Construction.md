@@ -13,6 +13,8 @@ runtime inputs into Windvale-declared positions.
 The contract covers both x64 targets and all seven hosted profiles. It does not
 change their public container formats, startup WVOs, runtime metadata, service
 bundle, file bytes, virtual-memory policy, or independent PE/ELF verification.
+The same planner is now also available through the standalone
+[native hosted-container planner](Windvale-Native-Hosted-Container-Planner.md).
 
 ## Planner request: `WVCR 1`
 
@@ -147,7 +149,8 @@ Normal construction now follows one ordered path:
 
 1. Windvale constructs and managed code independently verifies metadata and
    the initial runtime header against the actual bundle.
-2. The planner derives all file/virtual layout and startup targets.
+2. The planner derives all file/virtual layout and startup targets; the paired
+   native planner command can now produce this exact plan as a separate process.
 3. The startup constructor applies that target table to the canonical WVO.
 4. The selected platform constructor emits every outer-container-owned byte.
 5. The bounded segment constructor consumes only intersecting source bytes,
@@ -161,7 +164,9 @@ Normal construction now follows one ordered path:
 8. The existing independent PE or ELF verifier validates the complete result.
 
 The former C# application builders are named `Buildˉstage0` and are called only
-by focused differential evidence. Managed final publication remains
-deletion-bound work; the new C# segment-set fixture/harness is also temporary
-transition evidence rather than product logic. Linux-host execution and grouped
-dual-host qualification remain deferred to the final retirement gate.
+by focused differential evidence. The ordinary managed builders still dispatch
+the retained planner and platform fragments while the standalone planner,
+segmenter, and publisher are composed into their replacement process pipeline.
+The C# segment-set fixture/harness is temporary transition evidence rather than
+product logic. Linux-host execution and grouped dual-host qualification remain
+deferred to the final retirement gate.

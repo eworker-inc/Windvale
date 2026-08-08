@@ -1,0 +1,107 @@
+module Nativeˉhostedˉcontainerˉplannerˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
+import Linkerˉnativeˉhostedˉcontainerˉconstruction as Construction;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉplannerˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line("Usage: wvhostplan <runtime.wvhr> <plan.wvcd>");
+    return 64;
+}
+
+fn Profileˉfromˉcontainer(Container: u32) -> u32 {
+    if Container == 3u32 { return 1u32; }
+    if Container == 5u32 { return 2u32; }
+    if Container == 6u32 { return 3u32; }
+    if Container == 7u32 { return 4u32; }
+    if Container == 8u32 { return 5u32; }
+    if Container == 9u32 { return 6u32; }
+    if Container == 10u32 { return 7u32; }
+    return 0u32;
+}
+
+fn Request(Runtime: bytes) -> bytes {
+    var Result: bytes = Build.Empty(Runtime);
+    Result = Build.Appendˉu32(Result, 1380144727u32);
+    Result = Build.Appendˉu32(Result, 1u32);
+    Result = Build.Appendˉu32(Result, 32u32 + Bytesˉlength(Runtime));
+    Result = Build.Appendˉu32(
+        Result,
+        Bytesˉreadˉu32ˉlittle(Runtime, 492u32)
+    );
+    Result = Build.Appendˉu32(
+        Result,
+        Profileˉfromˉcontainer(Bytesˉreadˉu32ˉlittle(Runtime, 496u32))
+    );
+    Result = Build.Appendˉu32(Result, Bytesˉlength(Runtime));
+    Result = Build.Appendˉu32(Result, 0u32);
+    Result = Build.Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Runtime);
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container plan status=",
+            Enumˉname(Nativeˉhostedˉcontainerˉplannerˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Inputˉpath: text = process.argument(0u32);
+    let Outputˉpath: text = process.argument(1u32);
+    if Bytesˉareˉequal(Textˉtoˉutf8(Inputˉpath), Textˉtoˉutf8(Outputˉpath)) {
+        return Usage();
+    }
+
+    let Runtime: bytes = file.read_bytes(Inputˉpath);
+    if Bytesˉlength(Runtime) != 4096u32 { return Reject(); }
+    let Plannerˉrequest: bytes = Request(Runtime);
+    let Plan: bytes = Construction.Main(Plannerˉrequest);
+    if Bytesˉlength(Plan) < 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan, 0u32) != 1145263703u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan, 8u32) != Bytesˉlength(Plan) ||
+        Bytesˉreadˉu32ˉlittle(Plan, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan, 16u32) != Bytesˉlength(Plannerˉrequest) {
+        return Reject();
+    }
+    file.write_bytes(Outputˉpath, Plan);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted container plan status=",
+                Enumˉname(Nativeˉhostedˉcontainerˉplannerˉstatus.Valid)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Plan)))
+        )
+    );
+    return 0;
+}

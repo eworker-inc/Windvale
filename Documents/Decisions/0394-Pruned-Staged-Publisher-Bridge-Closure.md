@@ -1,6 +1,6 @@
 # Decision 0394: Pruned staged-publisher bridge closure
 
-- Status: Implemented candidate; extended self-lowering and Linux execution pending
+- Status: Implemented candidate; advanced by [Decision 0395](0395-Standalone-Native-Hosted-Container-Planner.md)
 - Date: 2026-08-08
 - Advances: [Decision 0393](0393-Paired-Native-Hosted-Container-Publishers.md), [Decision 0346](0346-Bounded-Native-Publisher-Self-Lowering.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native x64 lowering](../../Specifications/Windvale-Native-X64-Lowering.md)

@@ -540,6 +540,13 @@ oversized source. Normal C# code now retains only deletion-bound native
 dispatch, independent response checking, large-result allocation/copying, and
 publication. Linux execution and the grouped gate remain open.
 
+[Decision 0395](../Decisions/0395-Standalone-Native-Hosted-Container-Planner.md)
+packages that existing Windvale planner as an exact Windows/Linux process. It
+accepts the 4,096-byte runtime header and emits the same `WVCD 1` layout and
+target plan as the retained service-free fragment without loading .NET. This is
+the first explicit process in the replacement host-package construction
+pipeline; startup/platform resource production and complete orchestration remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical
