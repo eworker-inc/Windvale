@@ -1,0 +1,141 @@
+module Linkerˉnativeˉhostedˉcontainerˉsegmentˉsetˉcore profile portable;
+
+import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
+
+export enum Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus {
+    Valid = 0;
+    Invalidˉplan = 1;
+    Truncated = 2;
+    Invalidˉmagic = 3;
+    Invalidˉversion = 4;
+    Invalidˉsize = 5;
+    Invalidˉapplication = 6;
+    Invalidˉsegmentˉcount = 7;
+    Invalidˉsegmentˉlimit = 8;
+    Invalidˉsegmentˉindex = 9;
+    Invalidˉsegmentˉoffset = 10;
+    Invalidˉsegmentˉbytes = 11;
+    Invalidˉrequestˉbytes = 12;
+    Invalidˉresponseˉbytes = 13;
+}
+
+export record Nativeˉhostedˉcontainerˉsegmentˉsetˉplan {
+    Status: Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus;
+    Applicationˉbytes: u32;
+    Segments: u32;
+}
+
+fn Read(Input: bytes, Offset: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Input, Offset);
+}
+
+fn Invalid(
+    Status: Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus
+) -> Nativeˉhostedˉcontainerˉsegmentˉsetˉplan {
+    return Nativeˉhostedˉcontainerˉsegmentˉsetˉplan(Status, 0u32, 0u32);
+}
+
+export fn Nativeˉhostedˉcontainerˉsegmentˉsetˉadmit(
+    Plan: bytes,
+    Manifest: bytes
+) -> Nativeˉhostedˉcontainerˉsegmentˉsetˉplan {
+    if Bytesˉlength(Plan) < 128u32 {
+        return Invalid(
+            Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉplan
+        );
+    }
+    let Planˉheader: bytes = Bytesˉslice(Plan, 0u32, 128u32);
+    if Read(Plan, 8u32) != Bytesˉlength(Plan) ||
+        !Segmentation.Nativeˉhostedˉcontainerˉplanˉisˉvalid(Planˉheader) {
+        return Invalid(
+            Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉplan
+        );
+    }
+    if Bytesˉlength(Manifest) < 32u32 {
+        return Invalid(Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Truncated);
+    }
+    if Read(Manifest, 0u32) != 1296586327u32 {
+        return Invalid(Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉmagic);
+    }
+    if Read(Manifest, 4u32) != 1u32 {
+        return Invalid(
+            Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉversion
+        );
+    }
+    if Read(Manifest, 8u32) != Bytesˉlength(Manifest) {
+        return Invalid(Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉsize);
+    }
+    let Applicationˉbytes: u32 = Read(Plan, 28u32);
+    if Applicationˉbytes == 0u32 ||
+        Read(Manifest, 12u32) != Applicationˉbytes ||
+        Read(Manifest, 24u32) != Bytesˉlength(Plan) ||
+        Read(Manifest, 28u32) != 0u32 {
+        return Invalid(
+            Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉapplication
+        );
+    }
+    if Read(Manifest, 20u32) != 4194144u32 {
+        return Invalid(
+            Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉsegmentˉlimit
+        );
+    }
+    var Expectedˉsegments: u32 = Applicationˉbytes / 4194144u32;
+    if Applicationˉbytes % 4194144u32 != 0u32 {
+        Expectedˉsegments = Expectedˉsegments + 1u32;
+    }
+    let Segments: u32 = Read(Manifest, 16u32);
+    if Segments == 0u32 || Segments > 31u32 || Segments != Expectedˉsegments {
+        return Invalid(
+            Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉsegmentˉcount
+        );
+    }
+    if Bytesˉlength(Manifest) != 32u32 + Segments * 20u32 {
+        return Invalid(Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉsize);
+    }
+
+    var Index: u32 = 0u32;
+    var Position: u32 = 0u32;
+    while Index < Segments {
+        let Entry: u32 = 32u32 + Index * 20u32;
+        if Read(Manifest, Entry) != Index {
+            return Invalid(
+                Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉsegmentˉindex
+            );
+        }
+        if Read(Manifest, Entry + 4u32) != Position {
+            return Invalid(
+                Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉsegmentˉoffset
+            );
+        }
+        var Expectedˉbytes: u32 = Applicationˉbytes - Position;
+        if Expectedˉbytes > 4194144u32 { Expectedˉbytes = 4194144u32; }
+        if Read(Manifest, Entry + 8u32) != Expectedˉbytes {
+            return Invalid(
+                Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉsegmentˉbytes
+            );
+        }
+        let Requestˉbytes: u32 = Read(Manifest, Entry + 12u32);
+        if Requestˉbytes < 160u32 || Requestˉbytes > 4194304u32 {
+            return Invalid(
+                Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉrequestˉbytes
+            );
+        }
+        if Read(Manifest, Entry + 16u32) != 40u32 + Expectedˉbytes {
+            return Invalid(
+                Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉresponseˉbytes
+            );
+        }
+        Position = Position + Expectedˉbytes;
+        Index = Index + 1u32;
+    }
+    if Position != Applicationˉbytes {
+        return Invalid(
+            Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Invalidˉsegmentˉoffset
+        );
+    }
+    return Nativeˉhostedˉcontainerˉsegmentˉsetˉplan(
+        Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Valid,
+        Applicationˉbytes,
+        Segments
+    );
+}

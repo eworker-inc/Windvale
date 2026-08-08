@@ -1,0 +1,149 @@
+module Nativeˉhostedˉcontainerˉsegmentˉsetˉadmissionˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
+import Linkerˉnativeˉhostedˉcontainerˉsegmentˉsetˉcore as Segmentˉset;
+
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus {
+    Valid = 0;
+    Invalidˉresource = 1;
+    Invalidˉrequest = 2;
+    Invalidˉresponse = 3;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Textˉisˉequal(Left: text, Right: text) -> bool {
+    return Bytesˉareˉequal(Textˉtoˉutf8(Left), Textˉtoˉutf8(Right));
+}
+
+fn Resourceˉname(Prefix: text, Kind: text, Index: u32) -> text {
+    return Textˉconcat(
+        Textˉconcat(Prefix, Kind),
+        U32ˉformat(Index)
+    );
+}
+
+fn Contentˉfailure(
+    Status: Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container segment set content=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+fn Planˉfailure(
+    Status: Segmentˉset.Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container segment set status=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 {
+        diagnostic.write_line(
+            "Usage: wvhostadmit <plan.wvcd> <segment-prefix> <manifest.wvhm> <destination>"
+        );
+        return 64;
+    }
+    let Planˉresource: text = process.argument(0u32);
+    let Prefix: text = process.argument(1u32);
+    let Manifestˉresource: text = process.argument(2u32);
+    let Destinationˉresource: text = process.argument(3u32);
+    let Prefixˉbytes: u32 = Bytesˉlength(Textˉtoˉutf8(Prefix));
+    if Prefixˉbytes == 0u32 || Prefixˉbytes > 4076u32 ||
+        Textˉisˉequal(Planˉresource, Manifestˉresource) ||
+        Textˉisˉequal(Planˉresource, Destinationˉresource) ||
+        Textˉisˉequal(Manifestˉresource, Destinationˉresource) {
+        return Contentˉfailure(
+            Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus.Invalidˉresource
+        );
+    }
+
+    let Plan: bytes = file.read_bytes(Planˉresource);
+    let Manifest: bytes = file.read_bytes(Manifestˉresource);
+    let Admitted: Segmentˉset.Nativeˉhostedˉcontainerˉsegmentˉsetˉplan =
+        Segmentˉset.Nativeˉhostedˉcontainerˉsegmentˉsetˉadmit(
+            Plan, Manifest
+        );
+    if Admitted.Status !=
+        Segmentˉset.Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Valid {
+        return Planˉfailure(Admitted.Status);
+    }
+
+    var Index: u32 = 0u32;
+    while Index < Admitted.Segments {
+        let Requestˉresource: text =
+            Resourceˉname(Prefix, ".request-", Index);
+        let Responseˉresource: text =
+            Resourceˉname(Prefix, ".response-", Index);
+        if Textˉisˉequal(Requestˉresource, Planˉresource) ||
+            Textˉisˉequal(Requestˉresource, Manifestˉresource) ||
+            Textˉisˉequal(Requestˉresource, Destinationˉresource) ||
+            Textˉisˉequal(Responseˉresource, Planˉresource) ||
+            Textˉisˉequal(Responseˉresource, Manifestˉresource) ||
+            Textˉisˉequal(Responseˉresource, Destinationˉresource) {
+            return Contentˉfailure(
+                Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus.Invalidˉresource
+            );
+        }
+        let Entry: u32 = 32u32 + Index * 20u32;
+        let Request: bytes = file.read_bytes(Requestˉresource);
+        if Bytesˉlength(Request) !=
+            Bytesˉreadˉu32ˉlittle(Manifest, Entry + 12u32) ||
+            !Bytesˉareˉequal(
+                Bytesˉslice(Request, 32u32, 128u32),
+                Bytesˉslice(Plan, 0u32, 128u32)
+            ) {
+            return Contentˉfailure(
+                Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus.Invalidˉrequest
+            );
+        }
+        let Response: bytes = file.read_bytes(Responseˉresource);
+        if Bytesˉlength(Response) !=
+            Bytesˉreadˉu32ˉlittle(Manifest, Entry + 16u32) {
+            return Contentˉfailure(
+                Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus.Invalidˉresponse
+            );
+        }
+        let Expected: bytes =
+            Segmentation.Nativeˉhostedˉcontainerˉsegmentˉconstruct(Request);
+        if !Bytesˉareˉequal(Expected, Response) ||
+            Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Response, 24u32) != Admitted.Applicationˉbytes ||
+            Bytesˉreadˉu32ˉlittle(Response, 28u32) !=
+                Bytesˉreadˉu32ˉlittle(Manifest, Entry + 4u32) ||
+            Bytesˉreadˉu32ˉlittle(Response, 32u32) !=
+                Bytesˉreadˉu32ˉlittle(Manifest, Entry + 8u32) {
+            return Contentˉfailure(
+                Nativeˉhostedˉcontainerˉsegmentˉcontentˉstatus.Invalidˉresponse
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return 0;
+}

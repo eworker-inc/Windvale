@@ -414,6 +414,13 @@ package wiring. The next transfer joins an immutable ordered segment set to the
 existing native durable multi-chunk transaction, then removes managed dispatch,
 concatenation, and publication from the normal route.
 
+[Decision 0388](../Decisions/0388-Immutable-Hosted-Container-Segment-Set.md)
+adds the `WVHM 1` ordered-set boundary and a Windvale admission tool. It binds
+each request to the selected layout header, reruns the shared constructor, and
+compares every response byte before any mutation. The C# fixture/harness is
+explicitly deletion-bound. Native durable multi-chunk publication is the
+remaining boundary for this hosted-container slice.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

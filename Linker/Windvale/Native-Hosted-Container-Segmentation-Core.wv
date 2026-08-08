@@ -54,7 +54,7 @@ fn Minimum(Left: u32, Right: u32) -> u32 {
     return Right;
 }
 
-fn Planˉisˉvalid(Plan: bytes) -> bool {
+export fn Nativeˉhostedˉcontainerˉplanˉisˉvalid(Plan: bytes) -> bool {
     if Bytesˉlength(Plan) != 128u32 || Read(Plan, 0u32) != 1145263703u32 ||
         Read(Plan, 4u32) != 1u32 || Read(Plan, 12u32) != 0u32 ||
         Read(Plan, 16u32) != 4128u32 {
@@ -186,7 +186,9 @@ export fn Nativeˉhostedˉcontainerˉsegmentˉconstruct(Input: bytes) -> bytes {
     let Payloadˉbytes: u32 = Read(Input, 24u32);
     if Payloadˉbytes != Total - 160u32 { return Failure(Input, 4u32, 24u32); }
     let Plan: bytes = Bytesˉslice(Input, 32u32, 128u32);
-    if !Planˉisˉvalid(Plan) { return Failure(Input, 5u32, 32u32); }
+    if !Nativeˉhostedˉcontainerˉplanˉisˉvalid(Plan) {
+        return Failure(Input, 5u32, 32u32);
+    }
     let Applicationˉbytes: u32 = Read(Plan, 28u32);
     if Segmentˉoffset >= Applicationˉbytes ||
         Segmentˉoffset % 4194144u32 != 0u32 {

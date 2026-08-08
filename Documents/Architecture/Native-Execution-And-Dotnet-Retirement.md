@@ -558,6 +558,14 @@ Managed dispatch and concatenation remain the next deletion boundary: an
 immutable ordered segment set must feed the existing native durable
 multi-chunk transaction.
 
+[Decision 0388](../Decisions/0388-Immutable-Hosted-Container-Segment-Set.md)
+adds that immutable ordered set. A bounded `WVHM 1` manifest fixes canonical
+segment extents and snapshot sizes; Windvale then requires every request to
+carry the selected layout header and reconstructs every response byte before
+mutation. The retained C# fixture builder and runtime driver are deletion-bound
+transition evidence. Extracting the focused native durable transaction and
+removing managed final publication are next.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

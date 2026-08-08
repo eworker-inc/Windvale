@@ -136,8 +136,10 @@ The managed session projects bounded requests, validates every returned source
 and fill byte, and concatenates successful segments in order. The standalone
 [native hosted-container segmenter](Windvale-Native-Hosted-Container-Segmenter.md)
 now accepts the same request and produces the same response without loading
-.NET. Ordered managed dispatch and concatenation remain deletion-bound until
-the segmenter feeds the native durable publisher directly.
+.NET. The [immutable segment-set admission](Windvale-Native-Hosted-Container-Segment-Set.md)
+now binds the selected layout header and reconstructs every complete response
+before mutation. Managed final publication remains deletion-bound until that
+set feeds the native durable publisher directly.
 
 ## Normal path and retirement boundary
 
@@ -152,12 +154,14 @@ Normal construction now follows one ordered path:
    constructs every complete segment including padding in Windvale, and returns
    exact ordered pieces below the ordinary byte-value limit.
 6. The native segmenter can construct each exact piece as a standalone
-   Windows/Linux process; the deletion-bound managed session still dispatches
-   and concatenates those pieces in the ordinary Stage 0 path.
-7. The existing independent PE or ELF verifier validates the complete result.
+   Windows/Linux process.
+7. The immutable segment-set tool admits every request/response pair without
+   joining its payloads; the deletion-bound managed session still performs
+   final publication in the ordinary Stage 0 path.
+8. The existing independent PE or ELF verifier validates the complete result.
 
 The former C# application builders are named `Buildˉstage0` and are called only
-by focused differential evidence. Managed native dispatch, ordered segment
-concatenation, and final publication remain deletion-bound work. Linux-host
-execution and grouped dual-host qualification remain deferred to the final
-retirement gate.
+by focused differential evidence. Managed final publication remains
+deletion-bound work; the new C# segment-set fixture/harness is also temporary
+transition evidence rather than product logic. Linux-host execution and grouped
+dual-host qualification remain deferred to the final retirement gate.

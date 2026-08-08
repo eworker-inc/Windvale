@@ -71,7 +71,9 @@ final retirement gate.
 
 The new C# writer and target routing are Stage 0 package wiring. They are not
 the segment algorithm and are deletion-bound once a digest-bound native
-launcher owns package selection. The next slice admits an immutable ordered
-segment set and feeds it to the existing native durable multi-chunk publisher;
-that removes managed segment dispatch, concatenation, and final publication
-from the normal route.
+launcher owns package selection. The separate
+[immutable segment-set contract](Windvale-Native-Hosted-Container-Segment-Set.md)
+now reconstructs and admits every ordered response without concatenating it.
+The next slice feeds that admitted set to the existing native durable
+multi-chunk publisher, removing managed segment dispatch, concatenation, and
+final publication from the normal route.
