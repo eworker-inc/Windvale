@@ -336,6 +336,17 @@ verification, and reverse-order release. Arena allocation, entry/result bridge
 cells, invocation, W^X ownership, Linux evidence, and the grouped gate remain
 open.
 
+[Decision 0380](../Decisions/0380-Windvale-Owned-Native-Entry-Bridge.md)
+removes C# ownership of the native entry/result bridge layout and its direct
+descriptor decode from the large executor. Windvale constructs the exact
+16-byte zero result cell and optional immutable 16-byte input descriptor from
+one bounded request. A focused host owner allocates and copies the result,
+admits result-cell mutation, rejects any input-descriptor mutation, and passes
+the parsed result to the unchanged range verifier. The service-free constructor
+lane retains one named frozen Stage 0 bridge oracle to avoid recursion. Input
+allocation, result copying, arenas, invocation, W^X ownership, Linux evidence,
+and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

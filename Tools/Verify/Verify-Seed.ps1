@@ -206,6 +206,8 @@ $NativeExecutionContextCoreModule = Join-Path $Artifacts 'Native-Execution-Conte
 $NativeExecutionContextBridgeModule = Join-Path $Artifacts 'Native-Execution-Context-Bridge.wvb'
 $NativeArgumentTableCoreModule = Join-Path $Artifacts 'Native-Argument-Table-Core.wvb'
 $NativeArgumentTableBridgeModule = Join-Path $Artifacts 'Native-Argument-Table-Bridge.wvb'
+$NativeEntryBridgeCoreModule = Join-Path $Artifacts 'Native-Entry-Bridge-Core.wvb'
+$NativeEntryBridgeBridgeModule = Join-Path $Artifacts 'Native-Entry-Bridge-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
@@ -1631,6 +1633,51 @@ if (
     $NativeArgumentTableBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native argument-table bridge inspection is incomplete.'
+}
+
+$NativeEntryBridgeCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Entry-Bridge-Core.wv'
+$NativeEntryBridgeBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Entry-Bridge-Bridge.wv'
+$NativeEntryBridgeBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Entry-Bridge-Bridge.wvb'
+$NativeEntryBridgeArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Entry-Bridge-Bridge.wvnf'
+dotnet $ToolDll compile $NativeEntryBridgeCoreSource -o $NativeEntryBridgeCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native entry-bridge core.' }
+$NativeEntryBridgeCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEntryBridgeCoreModule).Hash.ToLowerInvariant()
+if ($NativeEntryBridgeCoreHash -ne '8eab863c7b214e559c48c822381b822eef22bd852ce16252bb392ebdfbcefdae') {
+    throw "The Windvale native entry-bridge core has an unexpected digest: $NativeEntryBridgeCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeEntryBridgeBridgeSource `
+    --module $NativeEntryBridgeCoreSource `
+    -o $NativeEntryBridgeBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native entry bridge.' }
+$NativeEntryBridgeBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEntryBridgeBridgeModule).Hash.ToLowerInvariant()
+if ($NativeEntryBridgeBridgeHash -ne 'd66a34430da6db3271103cfb9c2064a3a5a9de455c564ed87144cf4a0a4994c1') {
+    throw "The Windvale native entry bridge has an unexpected digest: $NativeEntryBridgeBridgeHash"
+}
+$NativeEntryBridgeBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEntryBridgeBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeEntryBridgeBridgeRetainedHash -ne $NativeEntryBridgeBridgeHash -or
+    (Get-Item -LiteralPath $NativeEntryBridgeBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeEntryBridgeBridgeModule).Length
+) {
+    throw 'The retained Windvale native entry bridge does not match its exact source compilation.'
+}
+$NativeEntryBridgeArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEntryBridgeArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeEntryBridgeArtifactHash -ne '2abde6462aa470f4037aa87ae486f16f2a106932d3022344e85fa5763d44623b' -or
+    (Get-Item -LiteralPath $NativeEntryBridgeArtifactRetained).Length -ne 37374
+) {
+    throw "The retained Windvale native entry-bridge fragment has an unexpected identity: $NativeEntryBridgeArtifactHash"
+}
+$NativeEntryBridgeBridgeInspection = (dotnet $ToolDll inspect $NativeEntryBridgeBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeEntryBridgeBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeEntryBridgeBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeEntryBridgeBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeEntryBridgeBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native entry-bridge inspection is incomplete.'
 }
 
 $NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'

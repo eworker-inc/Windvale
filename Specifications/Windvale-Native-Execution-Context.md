@@ -26,6 +26,16 @@ or oversized host input fails as `WVN4020` before publication. This added entry
 shape was previously rejected, so ABI 22 and all existing entry bytes remain
 unchanged.
 
+[Decision 0380](../Documents/Decisions/0380-Windvale-Owned-Native-Entry-Bridge.md)
+transfers initial construction of both bridge forms to the exact
+[Windvale entry-bridge construction contract](Windvale-Native-Entry-Bridge-Construction.md).
+The host independently verifies and copies the constructed bytes, then admits
+only mutation of the first result descriptor. Every byte of the optional input
+descriptor must remain unchanged after native return, including a trapped
+return. The normal application path uses the retained service-free Windvale
+constructor; only the constructor bootstrap cycle uses its frozen Stage 0
+oracle.
+
 Internal functions accept at most 64 parameters, matching the source-language declaration limit. The first four positions retain `R8`, `R9`, `RCX`, and `RDX`; `i32`, `bool`, `u8`, `u32`, and enums use the low dword. A record uses the complete register as a pointer to verified caller-owned backing, while borrowed `text` or `bytes` uses the complete register as a pointer to the caller's verified 16-byte descriptor. For positions 4 through 63, the caller reserves exactly one 16-byte outgoing cell per parameter. Scalars occupy the low dword, a record occupies the low machine word, and borrowed descriptors copy both machine words. After allocating its own frame, the callee copies each later cell from `RSP + frame-bytes + 8 + (position - 4) * 16`; the eight-byte term is the internal return address. The caller releases the exact reservation before testing the packed status. The maximum outgoing reservation is 960 bytes and the fragment verifier reconstructs its size, cell offsets and types, hidden-result adjustment, call target, release, and callee agreement. Packed scalar/enum values and statuses return in `RAX`; records and descriptors use the caller-owned result conventions below. Every internal call preserves the shared resource counters.
 
 For a `text` or `bytes` return, the caller places its verified result-cell address in `RAX` after loading explicit arguments. For a record return, the caller instead passes the exact planned backing address in `RAX`. The callee saves either hidden pointer before clearing ordinary cells. A successful descriptor return copies both descriptor words to the hidden result. A successful record return copies every direct 16-byte field to the hidden destination. Both return zero status in `RAX`; traps retain their packed nonzero status. After a record call succeeds, the caller publishes its destination address in the result handle. A void call uses the same status path but has no hidden result or stored scalar. The independent decoder cross-checks every call shape against the callee's single decoded return kind.

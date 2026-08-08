@@ -1,0 +1,81 @@
+module Runtimeˉnativeˉentryˉbridge profile portable;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Bridgeˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1380603479u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Bridgeˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn Nonzeroˉu64(Input: bytes, Offset: u32) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != 0u32 {
+        return true;
+    }
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 0u32;
+}
+
+export fn Nativeˉentryˉbridgeˉbuild(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 32u32 {
+        return Failure(Input, 1u32, Total);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1363826263u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+    let Flags: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Flags > 1u32 || Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Failure(Input, 4u32, 12u32);
+    }
+    let Inputˉpresent: bool = (Flags & 1u32) != 0u32;
+    if Inputˉpresent != Nonzeroˉu64(Input, 16u32) {
+        return Failure(Input, 5u32, 16u32);
+    }
+    let Inputˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if (!Inputˉpresent && Inputˉbytes != 0u32) || Inputˉbytes > 4194304u32 {
+        return Failure(Input, 6u32, 24u32);
+    }
+
+    var Bridge: bytes = Empty(Input);
+    Bridge = Appendˉu32(Bridge, 0u32);
+    Bridge = Appendˉu32(Bridge, 0u32);
+    Bridge = Appendˉu32(Bridge, 0u32);
+    Bridge = Appendˉu32(Bridge, 0u32);
+    if Inputˉpresent {
+        Bridge = Bytesˉconcat(Bridge, Bytesˉslice(Input, 16u32, 12u32));
+        Bridge = Appendˉu32(Bridge, 0u32);
+    }
+    let Bridgeˉbytes: u32 = Bytesˉlength(Bridge);
+    return Bytesˉconcat(
+        Responseˉheader(Input, 32u32 + Bridgeˉbytes, 0u32, Total, Bridgeˉbytes),
+        Bridge
+    );
+}

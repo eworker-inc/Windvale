@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using Windvale.Bytecode;
@@ -176,7 +175,6 @@ public static class X64ˉnativeˉexecutor
             hostˉservices,
             Requiresˉfileˉoutput);
         var Address = IntPtr.Zero;
-        var Resultˉcell = IntPtr.Zero;
         var Serviceˉcode = new List<(Nativeˉservice Service, ImmutableArray<byte> Code)>();
         foreach (var Service in fragment.Requiredˉservices)
         {
@@ -315,35 +313,21 @@ public static class X64ˉnativeˉexecutor
             using var Context = new Nativeˉexecutionˉcontext(
                 Contextˉinputs,
                 serviceˉfreeˉbootstrap);
-
-            if (expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor)
-            {
-                var Bridgeˉbytes = new byte[
-                    expectedˉinput == Nativeˉentryˉinputˉkind.Bytes
-                        ? 2 * Nativeˉcontract.VALUE_SLOT_BYTES
-                        : Nativeˉcontract.VALUE_SLOT_BYTES];
-                if (expectedˉinput == Nativeˉentryˉinputˉkind.Bytes)
-                {
-                    var Descriptor = Bridgeˉbytes.AsSpan(Nativeˉcontract.VALUE_SLOT_BYTES);
-                    BinaryPrimitives.WriteUInt64LittleEndian(
-                        Descriptor[Nativeˉcontract.BORROWED_BYTES_POINTER_OFFSET..],
-                        checked((ulong)Entryˉinput.Address.ToInt64()));
-                    BinaryPrimitives.WriteUInt32LittleEndian(
-                        Descriptor[Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET..],
-                        checked((uint)Entryˉinput.Length));
-                    BinaryPrimitives.WriteUInt32LittleEndian(
-                        Descriptor[Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET..],
-                        0);
-                }
-                Resultˉcell = Marshal.AllocHGlobal(Bridgeˉbytes.Length);
-                Marshal.Copy(Bridgeˉbytes, 0, Resultˉcell, Bridgeˉbytes.Length);
-            }
+            var Bridgeˉinputs = new Nativeˉentryˉbridgeˉinputs(
+                expectedˉinput,
+                Entryˉinput.Address == IntPtr.Zero
+                    ? 0
+                    : checked((ulong)Entryˉinput.Address.ToInt64()),
+                checked((uint)Entryˉinput.Length));
+            using var Entryˉbridge = expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor
+                ? new Nativeˉentryˉbridge(Bridgeˉinputs, serviceˉfreeˉbootstrap)
+                : null;
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
             var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉentry>(new(Entryˉaddress));
             var Contextˉpointer = checked((ulong)Context.Address.ToInt64());
-            var Resultˉpointer = Resultˉcell == IntPtr.Zero
+            var Resultˉpointer = Entryˉbridge is null
                 ? 0UL
-                : checked((ulong)Resultˉcell.ToInt64());
+                : checked((ulong)Entryˉbridge.Address.ToInt64());
             Outcome = Executableˉimage.Invoke(_ => Function(
                 Resultˉpointer,
                 Contextˉpointer,
@@ -357,6 +341,9 @@ public static class X64ˉnativeˉexecutor
             Fileˉinput.Verifyˉcompleted();
             Fileˉoutput.Verifyˉcompleted();
             Serviceˉfailureˉdetail = Completion.Serviceˉfailureˉdetail;
+            var Resultˉdescriptor = Entryˉbridge is null
+                ? default
+                : Entryˉbridge.Readˉverifiedˉresultˉdescriptor();
             if ((uint)(Outcome >> 32) == 0 &&
                 expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor)
             {
@@ -366,16 +353,12 @@ public static class X64ˉnativeˉexecutor
                     Buffers.Textˉarena,
                     Textˉarenaˉused,
                     Entryˉinput,
-                    Resultˉcell,
+                    Resultˉdescriptor,
                     entry);
             }
         }
         finally
         {
-            if (Resultˉcell != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(Resultˉcell);
-            }
             if (Serviceˉtable != IntPtr.Zero)
             {
                 Marshal.FreeHGlobal(Serviceˉtable);
@@ -538,22 +521,14 @@ public static class X64ˉnativeˉexecutor
         Nativeˉborrowedˉbuffer arena,
         uint arenaˉused,
         Nativeˉborrowedˉbuffer entryˉinput,
-        IntPtr resultˉcell,
+        Nativeˉentryˉresultˉdescriptor descriptor,
         string entry)
     {
-        var Descriptor = new byte[Nativeˉcontract.VALUE_SLOT_BYTES];
-        Marshal.Copy(resultˉcell, Descriptor, 0, Descriptor.Length);
-        var Pointer = BinaryPrimitives.ReadUInt64LittleEndian(
-            Descriptor.AsSpan(Nativeˉcontract.BORROWED_BYTES_POINTER_OFFSET));
-        var Length = BinaryPrimitives.ReadUInt32LittleEndian(
-            Descriptor.AsSpan(Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET));
-        var Reserved = BinaryPrimitives.ReadUInt32LittleEndian(
-            Descriptor.AsSpan(Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET));
-        if (Reserved != 0 || Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+        if (descriptor.Reserved != 0 || descriptor.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
         {
             throw Invalidˉbyteˉresult(entry);
         }
-        if (Length == 0 && Pointer == 0)
+        if (descriptor.Length == 0 && descriptor.Pointer == 0)
         {
             return [];
         }
@@ -563,18 +538,22 @@ public static class X64ˉnativeˉexecutor
             throw Invalidˉbyteˉresult(entry);
         }
         var Arenaˉstart = checked((ulong)arena.Address.ToInt64());
-        var Isˉarenaˉresult = Isˉinside(Pointer, Length, Arenaˉstart, arenaˉused);
+        var Isˉarenaˉresult = Isˉinside(
+            descriptor.Pointer,
+            descriptor.Length,
+            Arenaˉstart,
+            arenaˉused);
         var Imageˉstart = checked((ulong)executableˉaddress.ToInt64());
         var Isˉstaticˉresult = fragment.Symbols
             .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Data)
             .Any(Symbol => Isˉinside(
-                Pointer,
-                Length,
+                descriptor.Pointer,
+                descriptor.Length,
                 checked(Imageˉstart + Symbol.Offset),
                 Symbol.Size));
         var Isˉinputˉresult = entryˉinput.Address != IntPtr.Zero && Isˉinside(
-            Pointer,
-            Length,
+            descriptor.Pointer,
+            descriptor.Length,
             checked((ulong)entryˉinput.Address.ToInt64()),
             checked((uint)entryˉinput.Length));
         if (!Isˉarenaˉresult && !Isˉstaticˉresult && !Isˉinputˉresult)
@@ -582,10 +561,14 @@ public static class X64ˉnativeˉexecutor
             throw Invalidˉbyteˉresult(entry);
         }
 
-        var Bytes = new byte[checked((int)Length)];
+        var Bytes = new byte[checked((int)descriptor.Length)];
         if (Bytes.Length != 0)
         {
-            Marshal.Copy(new IntPtr(checked((long)Pointer)), Bytes, 0, Bytes.Length);
+            Marshal.Copy(
+                new IntPtr(checked((long)descriptor.Pointer)),
+                Bytes,
+                0,
+                Bytes.Length);
         }
         return Bytes.ToImmutableArray();
     }

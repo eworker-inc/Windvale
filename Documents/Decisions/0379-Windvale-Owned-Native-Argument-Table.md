@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0378](0378-Windvale-Owned-Native-Execution-Context.md), [Decision 0073](0073-Native-Argument-Table-And-Process-Input-Services.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native argument-table construction](../../Specifications/Windvale-Native-Argument-Table-Construction.md)
+- Advanced by: [Decision 0380](0380-Windvale-Owned-Native-Entry-Bridge.md)
 
 ## Context
 

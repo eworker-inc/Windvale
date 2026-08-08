@@ -89,5 +89,8 @@
     <EmbeddedResource
       Include="Consumers/Native-Argument-Table-Bridge.wvnf"
       LogicalName="Windvale.Native.Native-Argument-Table-Bridge.wvnf" />
+    <EmbeddedResource
+      Include="Consumers/Native-Entry-Bridge-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-Entry-Bridge-Bridge.wvnf" />
   </ItemGroup>
 </Project>
