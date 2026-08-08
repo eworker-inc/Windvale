@@ -349,6 +349,15 @@
       Include="../../Runtime/Windvale/Native-Hosted-Service-Bundle-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Service-Bundle-Tool.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Streaming-Sha256-Evidence-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Streaming-Sha256-Evidence-Tool.wv" />
+    <EmbeddedResource
+      Include="../../Foundation/Sha256-Compression.wv"
+      LogicalName="Windvale.Seed.Tests.Sha256-Compression.wv" />
+    <EmbeddedResource
+      Include="../../Foundation/Sha256-Streaming.wv"
+      LogicalName="Windvale.Seed.Tests.Sha256-Streaming.wv" />
+    <EmbeddedResource
       Include="../../Linker/Windvale/Native-Hosted-Container-Segment-Set-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segment-Set-Core.wv" />
     <EmbeddedResource

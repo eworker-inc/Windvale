@@ -100,6 +100,7 @@ differential and recovery evidence and is not called by normal packaging. The
 standalone
 [metadata constructor](Windvale-Native-Hosted-Container-Metadata.md) now owns
 request dispatch, response admission, and raw metadata output. Managed request
-projection remains until a native owner verifies actual fragment/service
-evidence. The Stage 0 oracle leaves the product tree only after the final
-recovery archive.
+projection remains until a native owner combines the new
+[streaming SHA-256 evidence](Windvale-Native-Streaming-Sha256-Evidence.md) with
+the actual fragment/service plan and constructs the exact `WVHM` request. The
+Stage 0 oracle leaves the product tree only after the final recovery archive.

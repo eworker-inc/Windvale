@@ -1,0 +1,185 @@
+module Foundationˉsha256ˉstreaming profile portable;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Foundationˉsha256ˉcompression as Compression;
+
+export record Foundationˉsha256ˉstream {
+    Valid: bool;
+    Totalˉbytes: u32;
+    Tail: bytes;
+    Hashˉzero: u32;
+    Hashˉone: u32;
+    Hashˉtwo: u32;
+    Hashˉthree: u32;
+    Hashˉfour: u32;
+    Hashˉfive: u32;
+    Hashˉsix: u32;
+    Hashˉseven: u32;
+}
+
+const MAXIMUM_SHA256_BYTES: u32 = 67108864u32;
+
+export fn Foundationˉsha256ˉbegin(Input: bytes)
+    -> Foundationˉsha256ˉstream {
+    let Hash: Compression.Foundationˉsha256ˉhash =
+        Compression.Foundationˉsha256ˉinitial();
+    return Foundationˉsha256ˉstream(
+        true,
+        0u32,
+        Bytesˉslice(Input, 0u32, 0u32),
+        Hash.Zero,
+        Hash.One,
+        Hash.Two,
+        Hash.Three,
+        Hash.Four,
+        Hash.Five,
+        Hash.Six,
+        Hash.Seven
+    );
+}
+
+fn Invalid(State: Foundationˉsha256ˉstream)
+    -> Foundationˉsha256ˉstream {
+    return Foundationˉsha256ˉstream(
+        false,
+        State.Totalˉbytes,
+        State.Tail,
+        State.Hashˉzero,
+        State.Hashˉone,
+        State.Hashˉtwo,
+        State.Hashˉthree,
+        State.Hashˉfour,
+        State.Hashˉfive,
+        State.Hashˉsix,
+        State.Hashˉseven
+    );
+}
+
+export fn Foundationˉsha256ˉupdate(
+    State: Foundationˉsha256ˉstream,
+    Input: bytes
+) -> Foundationˉsha256ˉstream {
+    let Inputˉbytes: u32 = Bytesˉlength(Input);
+    if !State.Valid ||
+        State.Totalˉbytes > MAXIMUM_SHA256_BYTES ||
+        Inputˉbytes > MAXIMUM_SHA256_BYTES - State.Totalˉbytes ||
+        Bytesˉlength(State.Tail) >= 64u32 {
+        return Invalid(State);
+    }
+
+    var Hash: Compression.Foundationˉsha256ˉhash =
+        Compression.Foundationˉsha256ˉhash(
+            true,
+            State.Hashˉzero,
+            State.Hashˉone,
+            State.Hashˉtwo,
+            State.Hashˉthree,
+            State.Hashˉfour,
+            State.Hashˉfive,
+            State.Hashˉsix,
+            State.Hashˉseven
+        );
+    var Cursor: u32 = 0u32;
+    let Tailˉbytes: u32 = Bytesˉlength(State.Tail);
+    if Tailˉbytes > 0u32 && Inputˉbytes >= 64u32 - Tailˉbytes {
+        let Needed: u32 = 64u32 - Tailˉbytes;
+        let Block: bytes = Bytesˉconcat(
+            State.Tail,
+            Bytesˉslice(Input, 0u32, Needed)
+        );
+        Hash = Compression.Foundationˉsha256ˉcompress(Hash, Block, 0u32);
+        Cursor = Needed;
+    }
+
+    while 64u32 <= Inputˉbytes - Cursor {
+        Hash = Compression.Foundationˉsha256ˉcompress(Hash, Input, Cursor);
+        Cursor = Cursor + 64u32;
+    }
+    if !Hash.Valid { return Invalid(State); }
+
+    var Tail: bytes = State.Tail;
+    if Cursor > 0u32 || Tailˉbytes == 0u32 {
+        Tail = Bytesˉslice(Input, Cursor, Inputˉbytes - Cursor);
+    } else if Inputˉbytes > 0u32 {
+        Tail = Bytesˉconcat(State.Tail, Input);
+    }
+    return Foundationˉsha256ˉstream(
+        true,
+        State.Totalˉbytes + Inputˉbytes,
+        Tail,
+        Hash.Zero,
+        Hash.One,
+        Hash.Two,
+        Hash.Three,
+        Hash.Four,
+        Hash.Five,
+        Hash.Six,
+        Hash.Seven
+    );
+}
+
+fn Appendˉbigˉu32(Output: bytes, Value: u32) -> bytes {
+    var Result: bytes = Output;
+    var Index: u32 = 0u32;
+    while Index < 4u32 {
+        let Shift: u32 = (3u32 - Index) * 8u32;
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉslice(
+                Bytesˉfromˉu32ˉlittle((Value >> Shift) & 255u32),
+                0u32,
+                1u32
+            )
+        );
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Foundationˉsha256ˉfinishˉraw(
+    State: Foundationˉsha256ˉstream
+) -> bytes {
+    var Empty: bytes = Bytesˉslice(State.Tail, 0u32, 0u32);
+    if !State.Valid ||
+        Bytesˉlength(State.Tail) >= 64u32 {
+        return Empty;
+    }
+    let Tailˉbytes: u32 = Bytesˉlength(State.Tail);
+    var Paddingˉbytes: u32 = 64u32;
+    if Tailˉbytes >= 56u32 { Paddingˉbytes = 128u32; }
+    var Padding: bytes = Bytesˉconcat(State.Tail, Bytesˉfromˉu8(128u8));
+    let Zeroˉbytes: u32 = Paddingˉbytes - Tailˉbytes - 9u32;
+    let Zeroes: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Zeroˉbytes + 4u32);
+    if !Zeroes.Valid { return Empty; }
+    Padding = Bytesˉconcat(Padding, Zeroes.Value);
+    Padding = Appendˉbigˉu32(Padding, State.Totalˉbytes * 8u32);
+    if Bytesˉlength(Padding) != Paddingˉbytes { return Empty; }
+
+    let Currentˉhash: Compression.Foundationˉsha256ˉhash =
+        Compression.Foundationˉsha256ˉhash(
+            true,
+            State.Hashˉzero,
+            State.Hashˉone,
+            State.Hashˉtwo,
+            State.Hashˉthree,
+            State.Hashˉfour,
+            State.Hashˉfive,
+            State.Hashˉsix,
+            State.Hashˉseven
+        );
+    var Hash: Compression.Foundationˉsha256ˉhash =
+        Compression.Foundationˉsha256ˉcompress(Currentˉhash, Padding, 0u32);
+    if Paddingˉbytes == 128u32 {
+        Hash = Compression.Foundationˉsha256ˉcompress(Hash, Padding, 64u32);
+    }
+    if !Hash.Valid { return Empty; }
+    Empty = Appendˉbigˉu32(Empty, Hash.Zero);
+    Empty = Appendˉbigˉu32(Empty, Hash.One);
+    Empty = Appendˉbigˉu32(Empty, Hash.Two);
+    Empty = Appendˉbigˉu32(Empty, Hash.Three);
+    Empty = Appendˉbigˉu32(Empty, Hash.Four);
+    Empty = Appendˉbigˉu32(Empty, Hash.Five);
+    Empty = Appendˉbigˉu32(Empty, Hash.Six);
+    return Appendˉbigˉu32(Empty, Hash.Seven);
+}
