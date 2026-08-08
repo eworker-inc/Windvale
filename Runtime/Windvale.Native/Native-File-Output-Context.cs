@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using Windvale.Bytecode;
 
@@ -65,37 +66,15 @@ internal sealed class Nativeˉfileˉoutputˉcontext : IDisposable
                 ];
             }
 
-            var Bytes = new byte[checked((int)Nativeˉfileˉoutputˉtableˉcontract.SIZE)];
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉoutputˉtableˉcontract.MAGIC_OFFSET),
-                Nativeˉfileˉoutputˉtableˉcontract.MAGIC);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉoutputˉtableˉcontract.FORMAT_VERSION_OFFSET),
-                Nativeˉfileˉoutputˉtableˉcontract.FORMAT_VERSION);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉoutputˉtableˉcontract.SIZE_OFFSET),
-                Nativeˉfileˉoutputˉtableˉcontract.SIZE);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉoutputˉtableˉcontract.PLATFORM_OFFSET),
-                (uint)Platform);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉoutputˉtableˉcontract.SCRATCH_POINTER_OFFSET),
-                checked((ulong)Scratch.ToInt64()));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉoutputˉtableˉcontract.SCRATCH_BYTES_OFFSET),
-                checked((uint)Scratchˉbytes));
-            for (var Index = 0; Index < Functions.Length; Index++)
-            {
-                BinaryPrimitives.WriteUInt64LittleEndian(
-                    Bytes.AsSpan(
-                        Nativeˉfileˉoutputˉtableˉcontract.WINDOWS_UTF8_TO_UTF16_POINTER_OFFSET +
-                        (Index * sizeof(ulong))),
-                    Functions[Index]);
-            }
+            var Bytes = Nativeˉfileˉoutputˉtableˉbuilder.Build(
+                Platform,
+                checked((ulong)Scratch.ToInt64()),
+                checked((uint)Scratchˉbytes),
+                Functions.ToImmutableArray());
 
-            Initialˉtable = Bytes;
+            Initialˉtable = Bytes.ToArray();
             Address = Marshal.AllocHGlobal(Bytes.Length);
-            Marshal.Copy(Bytes, 0, Address, Bytes.Length);
+            Marshal.Copy(Initialˉtable, 0, Address, Bytes.Length);
             Verify();
         }
         catch

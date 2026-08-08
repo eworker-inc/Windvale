@@ -1,0 +1,4 @@
+windvale-project 1
+root "Runtime/Windvale/Native-File-Output-Table-Bridge.wv"
+source "Runtime/Windvale/Native-File-Output-Table-Core.wv"
+emit wvb

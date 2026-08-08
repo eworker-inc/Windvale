@@ -287,6 +287,15 @@ Windows writer resolution, response verification/copy, and teardown. `WVFI`,
 `WVFO`, the service table, execution context, W^X ownership, arenas, invocation,
 Linux evidence, and the grouped gate remain open.
 
+[Decision 0375](../Decisions/0375-Windvale-Owned-Native-File-Output-Table.md)
+removes C# ownership of the 80-byte `WVFO` layout. Windvale validates the
+already allocated scratch target/capacity and six opaque Windows-function
+ranges, constructs the complete table, and rejects Linux function targets. The
+managed host retains allocation, library/export acquisition, response
+verification/copy, and teardown. `WVFI`, the service table, execution context,
+W^X ownership, arenas, invocation, Linux evidence, and the grouped gate remain
+open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

@@ -74,5 +74,8 @@
     <EmbeddedResource
       Include="Consumers/Native-Output-Table-Bridge.wvnf"
       LogicalName="Windvale.Native.Native-Output-Table-Bridge.wvnf" />
+    <EmbeddedResource
+      Include="Consumers/Native-File-Output-Table-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-File-Output-Table-Bridge.wvnf" />
   </ItemGroup>
 </Project>

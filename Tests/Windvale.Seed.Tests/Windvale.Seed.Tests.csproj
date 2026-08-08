@@ -196,6 +196,12 @@
       Include="../../Runtime/Windvale/Native-Output-Table-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Output-Table-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-File-Output-Table-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-File-Output-Table-Core.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-File-Output-Table-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-File-Output-Table-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-Publication-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Publication-Bridge.wv" />
     <EmbeddedResource

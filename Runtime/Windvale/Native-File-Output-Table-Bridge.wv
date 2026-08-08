@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉfileˉoutputˉtableˉbridge profile portable;
+
+import Runtimeˉnativeˉfileˉoutputˉtable as Fileˉoutputˉtable;
+
+export fn Main(Input: bytes) -> bytes {
+    return Fileˉoutputˉtable.Nativeˉfileˉoutputˉtableˉbuild(Input);
+}

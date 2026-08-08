@@ -1414,6 +1414,7 @@ internal static partial class Program
         new("Windvale constructs the exact Windows and Linux native output leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉoutputˉservicesˉrun),
         new("Windvale constructs the native output binding table", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉoutputˉtableˉruns),
         new("Windvale constructs the exact Windows and Linux native file-output leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉfileˉoutputˉservicesˉrun),
+        new("Windvale constructs the native file-output binding table", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉfileˉoutputˉtableˉruns),
         new("Windvale constructs the exact Windows and Linux native file-input leaves", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉfileˉinputˉservicesˉrun),
         new("Windvale materializes segmented native service bundles", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉserviceˉbundleˉmaterializationˉruns),
         new("Windvale constructs the exact native UTF-8 service leaf", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉutf8ˉserviceˉruns),
