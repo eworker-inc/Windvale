@@ -238,6 +238,15 @@
       Include="../../Runtime/Windvale/Native-Byte-Result-Admission-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Byte-Result-Admission-Bridge.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Metadata-Admission.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Runtime-Header-Core.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Runtime-Header-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Compiler/Windvale/Native-Publication-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Native-Publication-Bridge.wv" />
     <EmbeddedResource

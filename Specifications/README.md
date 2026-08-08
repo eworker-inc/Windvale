@@ -75,6 +75,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native argument-table construction](Windvale-Native-Argument-Table-Construction.md)
 - [Native entry-bridge construction](Windvale-Native-Entry-Bridge-Construction.md)
 - [Native byte-result admission](Windvale-Native-Byte-Result-Admission.md)
+- [Native hosted-tool runtime-header construction](Windvale-Native-Hosted-Tool-Runtime-Header.md)
 - [Versioned verified native-fragment artifact](Native-Fragment-Artifact.md)
 - [Windows x64 console application target](Windvale-Windows-Console-Application.md)
 - [Linux x64 console application target](Windvale-Linux-Console-Application.md)

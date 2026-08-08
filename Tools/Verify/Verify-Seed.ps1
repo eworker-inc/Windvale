@@ -210,6 +210,9 @@ $NativeEntryBridgeCoreModule = Join-Path $Artifacts 'Native-Entry-Bridge-Core.wv
 $NativeEntryBridgeBridgeModule = Join-Path $Artifacts 'Native-Entry-Bridge-Bridge.wvb'
 $NativeByteResultAdmissionCoreModule = Join-Path $Artifacts 'Native-Byte-Result-Admission-Core.wvb'
 $NativeByteResultAdmissionBridgeModule = Join-Path $Artifacts 'Native-Byte-Result-Admission-Bridge.wvb'
+$NativeHostedToolMetadataAdmissionModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Admission.wvb'
+$NativeHostedToolRuntimeHeaderCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Core.wvb'
+$NativeHostedToolRuntimeHeaderBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
@@ -1725,6 +1728,64 @@ if (
     $NativeByteResultAdmissionBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native byte-result admission bridge inspection is incomplete.'
+}
+
+$NativeHostedToolMetadataAdmissionSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv'
+$NativeHostedToolRuntimeHeaderCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Core.wv'
+$NativeHostedToolRuntimeHeaderBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Bridge.wv'
+$NativeHostedToolRuntimeHeaderBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
+$NativeHostedToolRuntimeHeaderArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvnf'
+dotnet $ToolDll compile $NativeHostedToolMetadataAdmissionSource -o $NativeHostedToolMetadataAdmissionModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-tool metadata admission.' }
+$NativeHostedToolMetadataAdmissionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataAdmissionModule).Hash.ToLowerInvariant()
+if ($NativeHostedToolMetadataAdmissionHash -ne 'e43c712431e386eba159cd17f87b279cc4a4b5b99084d3a738a3718633099c78') {
+    throw "The hosted-tool metadata admission module has an unexpected digest: $NativeHostedToolMetadataAdmissionHash"
+}
+dotnet $ToolDll `
+    compile $NativeHostedToolRuntimeHeaderCoreSource `
+    --module $ByteConstructionSource `
+    --module $NativeHostedToolMetadataAdmissionSource `
+    -o $NativeHostedToolRuntimeHeaderCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool runtime-header core.' }
+$NativeHostedToolRuntimeHeaderCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderCoreModule).Hash.ToLowerInvariant()
+if ($NativeHostedToolRuntimeHeaderCoreHash -ne '700efbbad9619b58d06561be3e805e18b5498f1e13881646e6e121c2b8ab7564') {
+    throw "The hosted-tool runtime-header core has an unexpected digest: $NativeHostedToolRuntimeHeaderCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeHostedToolRuntimeHeaderBridgeSource `
+    --module $ByteConstructionSource `
+    --module $NativeHostedToolMetadataAdmissionSource `
+    --module $NativeHostedToolRuntimeHeaderCoreSource `
+    -o $NativeHostedToolRuntimeHeaderBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool runtime-header bridge.' }
+$NativeHostedToolRuntimeHeaderBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderBridgeModule).Hash.ToLowerInvariant()
+if ($NativeHostedToolRuntimeHeaderBridgeHash -ne '0bbf1c0e5c67c14b3e90bef5243d9c5aea64b3343ad11cfd3f7f93067648fe3d') {
+    throw "The hosted-tool runtime-header bridge has an unexpected digest: $NativeHostedToolRuntimeHeaderBridgeHash"
+}
+$NativeHostedToolRuntimeHeaderBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeHostedToolRuntimeHeaderBridgeRetainedHash -ne $NativeHostedToolRuntimeHeaderBridgeHash -or
+    (Get-Item -LiteralPath $NativeHostedToolRuntimeHeaderBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeHostedToolRuntimeHeaderBridgeModule).Length
+) {
+    throw 'The retained hosted-tool runtime-header bridge does not match its exact source compilation.'
+}
+$NativeHostedToolRuntimeHeaderArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeHostedToolRuntimeHeaderArtifactHash -ne '31e7b98c738972b4f9b23075d48bb1724aac229e5f77d8e517877b5b5733dfe4' -or
+    (Get-Item -LiteralPath $NativeHostedToolRuntimeHeaderArtifactRetained).Length -ne 190709
+) {
+    throw "The retained hosted-tool runtime-header fragment has an unexpected identity: $NativeHostedToolRuntimeHeaderArtifactHash"
+}
+$NativeHostedToolRuntimeHeaderBridgeInspection = (dotnet $ToolDll inspect $NativeHostedToolRuntimeHeaderBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeHostedToolRuntimeHeaderBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeHostedToolRuntimeHeaderBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeHostedToolRuntimeHeaderBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeHostedToolRuntimeHeaderBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale hosted-tool runtime-header bridge inspection is incomplete.'
 }
 
 $NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'

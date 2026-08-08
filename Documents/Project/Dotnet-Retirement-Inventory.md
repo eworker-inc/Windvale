@@ -357,6 +357,18 @@ service-free constructor lane retains the former algorithm as a named frozen
 Stage 0 admission oracle. Arena and input allocation, invocation, W^X ownership,
 Linux evidence, and the grouped gate remain open.
 
+[Decision 0382](../Decisions/0382-Windvale-Owned-Hosted-Tool-Runtime-Header.md)
+removes C# ownership of the shared initial 4,096-byte hosted-tool runtime
+header. Windvale validates the exact fixed metadata directory and constructs
+all five initial ABI tables, metadata placement, and reserved bytes for every
+implemented compiler-family profile on both targets. Normal packaging invokes
+and independently verifies one retained service-free WVNF. The former C# byte
+writer is recovery/differential-only under an explicit Stage 0 oracle name;
+the managed invocation/verification bridge is temporary and must disappear
+when native host-container construction consumes the same contract directly.
+Metadata and service-bundle construction, outer PE/ELF construction, Linux
+execution, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

@@ -498,6 +498,17 @@ constructor, extended fault/concurrency evidence, promotion, and grouped
 dual-host qualification remain before this transfer replaces the managed
 ordinary route.
 
+[Decision 0382](../Decisions/0382-Windvale-Owned-Hosted-Tool-Runtime-Header.md)
+removes C# ownership of the shared initial 4 KiB hosted-tool runtime header.
+Two focused Windvale modules admit the existing fixed `WVH* 1` metadata and
+construct the exact context, service table, output table, file tables,
+metadata extent, and reserved tail for Windows and Linux. Normal hosted
+application builders consume and independently verify the digest-bound WVNF;
+the former byte writer remains only as an explicitly named Stage 0
+differential oracle. Metadata production, service-bundle production, outer
+PE/ELF construction, and the temporary managed invocation bridge remain, so a
+complete hosted tool is not yet reconstructible without Stage 0.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

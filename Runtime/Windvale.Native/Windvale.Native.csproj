@@ -9,6 +9,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Windvale.Seed.Tests" />
     <InternalsVisibleTo Include="Windvale.Os.Tests" />
+    <InternalsVisibleTo Include="Windvale.Linker" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource
@@ -95,5 +96,8 @@
     <EmbeddedResource
       Include="Consumers/Native-Byte-Result-Admission-Bridge.wvnf"
       LogicalName="Windvale.Native.Native-Byte-Result-Admission-Bridge.wvnf" />
+    <EmbeddedResource
+      Include="Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-Hosted-Tool-Runtime-Header-Bridge.wvnf" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉhostedˉtoolˉruntimeˉheaderˉbridge profile portable;
+
+import Runtimeˉnativeˉhostedˉtoolˉruntimeˉheader as Runtimeˉheader;
+
+export fn Main(Input: bytes) -> bytes {
+    return Runtimeˉheader.Nativeˉhostedˉtoolˉruntimeˉheaderˉbuild(Input);
+}

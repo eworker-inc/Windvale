@@ -125,13 +125,6 @@ internal static class Hostedˉcompilerˉruntimeˉdata
         Hostedˉcompilerˉapplicationˉprofile profile =
             Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
-        var Layout = Plan(target);
-        var Bytes = new byte[checked((int)HEADER_BYTES)];
-        Writeˉcontext(Bytes);
-        Writeˉserviceˉtable(Bytes);
-        Writeˉoutputˉtable(Bytes, target);
-        Writeˉfileˉinputˉtable(Bytes, Layout);
-        Writeˉfileˉoutputˉtable(Bytes, Layout);
         var Metadata = Hostedˉcompilerˉapplicationˉmetadata.Build(
             target,
             capabilities,
@@ -139,8 +132,12 @@ internal static class Hostedˉcompilerˉruntimeˉdata
             BUNDLE_TEXT_OFFSET,
             nativeˉentryˉoffset,
             profile);
-        Metadata.AsSpan().CopyTo(Bytes.AsSpan(checked((int)METADATA_OFFSET)));
-        return Bytes.ToImmutableArray();
+        var Header = Nativeˉhostedˉtoolˉruntimeˉheaderˉbuilder.Build(new(
+            (uint)target,
+            (uint)profile,
+            Metadata));
+        _ = Verify(Header.AsSpan(), target, bundle, bundle.Imageˉbytes.AsSpan(), profile);
+        return Header;
     }
 
     internal static Verifiedˉhostedˉcompilerˉruntimeˉdata Verify(
@@ -176,23 +173,6 @@ internal static class Hostedˉcompilerˉruntimeˉdata
                 (checked((int)METADATA_OFFSET) + Hostedˉcompilerˉapplicationˉmetadata.SIZE)),
             "reserved header tail");
         return new(Layout, Metadata);
-    }
-
-    private static void Writeˉcontext(byte[] bytes)
-    {
-        var Base = checked((int)CONTEXT_OFFSET);
-        Writeˉu32(bytes, Base + Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION_OFFSET,
-            Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION);
-        Writeˉu32(bytes, Base + Nativeˉexecutionˉcontextˉcontract.SIZE_OFFSET,
-            Nativeˉexecutionˉcontextˉcontract.SIZE);
-        Writeˉu64(bytes, Base + Nativeˉexecutionˉcontextˉcontract.INSTRUCTION_BUDGET_OFFSET,
-            Hostedˉcompilerˉapplicationˉmetadata.COMPILER_MAXIMUM_INSTRUCTIONS);
-        Writeˉu64(bytes, Base + Nativeˉexecutionˉcontextˉcontract.CALL_DEPTH_BUDGET_OFFSET,
-            checked((ulong)Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH));
-        Writeˉu32(bytes, Base + Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET,
-            Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES);
-        Writeˉu32(bytes, Base + Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
-            Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES);
     }
 
     private static void Verifyˉcontext(ReadOnlySpan<byte> bytes)
@@ -231,15 +211,6 @@ internal static class Hostedˉcompilerˉruntimeˉdata
             24, "initial hosted table pointers");
     }
 
-    private static void Writeˉserviceˉtable(byte[] bytes)
-    {
-        var Base = checked((int)SERVICE_TABLE_OFFSET);
-        Writeˉu32(bytes, Base + Nativeˉserviceˉtableˉcontract.FORMAT_VERSION_OFFSET,
-            Nativeˉserviceˉtableˉcontract.FORMAT_VERSION);
-        Writeˉu32(bytes, Base + Nativeˉserviceˉtableˉcontract.SIZE_OFFSET,
-            Nativeˉserviceˉtableˉcontract.SIZE);
-    }
-
     private static void Verifyˉserviceˉtable(ReadOnlySpan<byte> bytes)
     {
         var Base = checked((int)SERVICE_TABLE_OFFSET);
@@ -250,29 +221,6 @@ internal static class Hostedˉcompilerˉruntimeˉdata
         Requireˉzero(bytes, Base + 8,
             checked((int)Nativeˉserviceˉtableˉcontract.SIZE - 8),
             "initial service-table pointers");
-    }
-
-    private static void Writeˉoutputˉtable(
-        byte[] bytes,
-        Consoleˉapplicationˉtarget target)
-    {
-        var Base = checked((int)OUTPUT_TABLE_OFFSET);
-        Writeˉu32(bytes, Base + Nativeˉoutputˉtableˉcontract.MAGIC_OFFSET,
-            Nativeˉoutputˉtableˉcontract.MAGIC);
-        Writeˉu32(bytes, Base + Nativeˉoutputˉtableˉcontract.FORMAT_VERSION_OFFSET,
-            Nativeˉoutputˉtableˉcontract.FORMAT_VERSION);
-        Writeˉu32(bytes, Base + Nativeˉoutputˉtableˉcontract.SIZE_OFFSET,
-            Nativeˉoutputˉtableˉcontract.SIZE);
-        Writeˉu32(bytes, Base + Nativeˉoutputˉtableˉcontract.PLATFORM_OFFSET,
-            (uint)Platform(target));
-        Writeˉu32(bytes, Base + Nativeˉoutputˉtableˉcontract.FLAGS_OFFSET,
-            Nativeˉoutputˉtableˉcontract.CONSOLE_PRESENT |
-                Nativeˉoutputˉtableˉcontract.DIAGNOSTIC_PRESENT);
-        if (target == Consoleˉapplicationˉtarget.Linuxˉx64)
-        {
-            Writeˉu64(bytes, Base + Nativeˉoutputˉtableˉcontract.CONSOLE_TARGET_OFFSET, 1);
-            Writeˉu64(bytes, Base + Nativeˉoutputˉtableˉcontract.DIAGNOSTIC_TARGET_OFFSET, 2);
-        }
     }
 
     private static void Verifyˉoutputˉtable(
@@ -302,31 +250,6 @@ internal static class Hostedˉcompilerˉruntimeˉdata
             "initial diagnostic target");
         Requireˉu64(bytes, Base + Nativeˉoutputˉtableˉcontract.WRITE_FUNCTION_POINTER_OFFSET,
             0, "initial output function");
-    }
-
-    private static void Writeˉfileˉinputˉtable(
-        byte[] bytes,
-        Hostedˉcompilerˉruntimeˉlayout layout)
-    {
-        var Base = checked((int)FILE_INPUT_TABLE_OFFSET);
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.MAGIC_OFFSET,
-            Nativeˉfileˉinputˉtableˉcontract.MAGIC);
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.FORMAT_VERSION_OFFSET,
-            Nativeˉfileˉinputˉtableˉcontract.FORMAT_VERSION);
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.SIZE_OFFSET,
-            Nativeˉfileˉinputˉtableˉcontract.SIZE);
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.PLATFORM_OFFSET,
-            (uint)Fileˉplatform(layout.Target));
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY_OFFSET,
-            Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY);
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_OFFSET,
-            Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES);
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.DATA_STRIDE_OFFSET,
-            Nativeˉfileˉinputˉtableˉcontract.DATA_STRIDE_BYTES);
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.MAXIMUM_DATA_BYTES_OFFSET,
-            Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
-        Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.SCRATCH_BYTES_OFFSET,
-            layout.Fileˉinputˉscratchˉbytes);
     }
 
     private static void Verifyˉfileˉinputˉtable(
@@ -369,23 +292,6 @@ internal static class Hostedˉcompilerˉruntimeˉdata
         Requireˉzero(bytes,
             Base + Nativeˉfileˉinputˉtableˉcontract.WINDOWS_UTF8_TO_UTF16_POINTER_OFFSET,
             7 * sizeof(ulong), "initial file-input platform functions");
-    }
-
-    private static void Writeˉfileˉoutputˉtable(
-        byte[] bytes,
-        Hostedˉcompilerˉruntimeˉlayout layout)
-    {
-        var Base = checked((int)FILE_OUTPUT_TABLE_OFFSET);
-        Writeˉu32(bytes, Base + Nativeˉfileˉoutputˉtableˉcontract.MAGIC_OFFSET,
-            Nativeˉfileˉoutputˉtableˉcontract.MAGIC);
-        Writeˉu32(bytes, Base + Nativeˉfileˉoutputˉtableˉcontract.FORMAT_VERSION_OFFSET,
-            Nativeˉfileˉoutputˉtableˉcontract.FORMAT_VERSION);
-        Writeˉu32(bytes, Base + Nativeˉfileˉoutputˉtableˉcontract.SIZE_OFFSET,
-            Nativeˉfileˉoutputˉtableˉcontract.SIZE);
-        Writeˉu32(bytes, Base + Nativeˉfileˉoutputˉtableˉcontract.PLATFORM_OFFSET,
-            (uint)Fileˉplatform(layout.Target));
-        Writeˉu32(bytes, Base + Nativeˉfileˉoutputˉtableˉcontract.SCRATCH_BYTES_OFFSET,
-            layout.Fileˉoutputˉscratchˉbytes);
     }
 
     private static void Verifyˉfileˉoutputˉtable(
@@ -482,12 +388,6 @@ internal static class Hostedˉcompilerˉruntimeˉdata
 
     private static ulong Readˉu64(ReadOnlySpan<byte> bytes, int offset) =>
         BinaryPrimitives.ReadUInt64LittleEndian(bytes.Slice(offset, sizeof(ulong)));
-
-    private static void Writeˉu32(byte[] bytes, int offset, uint value) =>
-        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(offset, sizeof(uint)), value);
-
-    private static void Writeˉu64(byte[] bytes, int offset, ulong value) =>
-        BinaryPrimitives.WriteUInt64LittleEndian(bytes.AsSpan(offset, sizeof(ulong)), value);
 
     private static InvalidDataException Invalid(string message) => new(message);
 }
