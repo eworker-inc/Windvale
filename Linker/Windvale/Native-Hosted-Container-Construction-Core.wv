@@ -1,0 +1,247 @@
+module Linkerˉnativeˉhostedˉcontainerˉconstruction profile portable;
+
+import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
+import Linkerˉnativeˉhostedˉcontainerˉlayout as Layout;
+import Runtimeˉnativeˉhostedˉtoolˉmetadataˉadmission as Metadataˉadmission;
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Value: Layout.Nativeˉhostedˉcontainerˉlayout,
+    Targetˉpayload: u32,
+    Targetˉbytes: u32
+) -> bytes {
+    var Result: bytes = Build.Empty(Input);
+    Result = Build.Appendˉu32(Result, 1145263703u32);
+    Result = Build.Appendˉu32(Result, 1u32);
+    Result = Build.Appendˉu32(Result, Totalˉbytes);
+    Result = Build.Appendˉu32(Result, Status);
+    Result = Build.Appendˉu32(Result, Failureˉoffset);
+    Result = Build.Appendˉu32(Result, Value.Target);
+    Result = Build.Appendˉu32(Result, Value.Profile);
+    Result = Build.Appendˉu32(Result, Value.Applicationˉbytes);
+    Result = Build.Appendˉu32(Result, 0u32);
+    Result = Build.Appendˉu32(Result, Value.Headerˉbytes);
+    Result = Build.Appendˉu32(Result, Value.Textˉfileˉoffset);
+    Result = Build.Appendˉu32(Result, Value.Startupˉbytes);
+    Result = Build.Appendˉu32(Result, Value.Textˉfileˉoffset + Value.Bundleˉoffset);
+    Result = Build.Appendˉu32(Result, Value.Bundleˉbytes);
+    Result = Build.Appendˉu32(Result, Value.Importˉfileˉoffset);
+    var Importˉbytes: u32 = 0u32;
+    var Relocationˉbytes: u32 = 0u32;
+    if Value.Target == 1u32 {
+        Importˉbytes = 4096u32;
+        Relocationˉbytes = 12u32;
+    }
+    Result = Build.Appendˉu32(Result, Importˉbytes);
+    Result = Build.Appendˉu32(Result, Value.Runtimeˉfileˉoffset);
+    Result = Build.Appendˉu32(Result, 4096u32);
+    Result = Build.Appendˉu32(Result, Value.Relocationˉfileˉoffset);
+    Result = Build.Appendˉu32(Result, Relocationˉbytes);
+    Result = Build.Appendˉu32(Result, Value.Textˉaddress);
+    Result = Build.Appendˉu32(Result, Value.Dataˉaddress);
+    Result = Build.Appendˉu32(Result, Value.Runtimeˉaddress);
+    Result = Build.Appendˉu32(Result, Value.Imageˉvirtualˉbytes);
+    Result = Build.Appendˉu32(Result, Targetˉpayload);
+    Result = Build.Appendˉu32(Result, Targetˉbytes);
+    Result = Build.Appendˉu32(Result, Value.Relocationˉaddress);
+    Result = Build.Appendˉu32(Result, Value.Importˉaddress);
+    Result = Build.Appendˉu32(Result, Value.Textˉvirtualˉbytes);
+    Result = Build.Appendˉu32(Result, Value.Textˉfileˉbytes);
+    Result = Build.Appendˉu32(Result, Value.Dataˉfileˉbytes);
+    return Build.Appendˉu32(Result, Value.Dataˉvirtualˉbytes);
+}
+
+fn Failure(Input: bytes, Status: u32, Offset: u32) -> bytes {
+    let Invalid: Layout.Nativeˉhostedˉcontainerˉlayout =
+        Layout.Nativeˉhostedˉcontainerˉplan(Build.Empty(Input), 0u32, 0u32);
+    return Responseˉheader(Input, 128u32, Status, Offset, Invalid, 128u32, 0u32);
+}
+
+fn Serviceˉaddress(Metadata: bytes, Index: u32) -> u32 {
+    return 8192u32 + Bytesˉreadˉu32ˉlittle(Metadata, 240u32 + Index * 64u32);
+}
+
+fn Runtimeˉaddress(
+    Value: Layout.Nativeˉhostedˉcontainerˉlayout,
+    Index: u32
+) -> u32 {
+    return Value.Runtimeˉaddress + Layout.Runtimeˉoffset(Index, Value.Target);
+}
+
+fn Add(Input: bytes, Value: u32) -> bytes {
+    return Build.Appendˉu32(Input, Value);
+}
+
+fn Windowsˉtargets(
+    Input: bytes,
+    Value: Layout.Nativeˉhostedˉcontainerˉlayout,
+    Metadata: bytes
+) -> bytes {
+    let Import: u32 = Value.Importˉaddress;
+    var Result: bytes = Build.Empty(Input);
+    Result = Add(Result, Runtimeˉaddress(Value, 0u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 1u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 2u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 3u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 6u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 7u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 8u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 7u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 9u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 12u32));
+    Result = Add(Result, Import + 256u32);
+    Result = Add(Result, Import + 200u32);
+    Result = Add(Result, Import + 224u32);
+    Result = Add(Result, Import + 264u32);
+    Result = Add(Result, Import + 192u32);
+    Result = Add(Result, Value.Textˉaddress + 1320u32);
+    Result = Add(Result, Import + 232u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 8u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 13u32));
+    Result = Add(Result, Import + 256u32);
+    Result = Add(Result, Import + 200u32);
+    Result = Add(Result, Import + 280u32);
+    Result = Add(Result, Import + 208u32);
+    Result = Add(Result, Import + 192u32);
+    Result = Add(Result, Import + 232u32);
+    Result = Add(Result, Import + 240u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 6u32));
+    Result = Add(Result, Import + 240u32);
+    Result = Add(Result, Import + 280u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 1u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 0u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 1u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 2u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 3u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 4u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 5u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 6u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 7u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 8u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 9u32));
+    Result = Add(Result, Import + 216u32);
+    Result = Add(Result, Import + 304u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 5u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 12u32));
+    Result = Add(Result, Import + 272u32);
+    Result = Add(Result, Serviceˉaddress(Metadata, 4u32));
+    Result = Add(Result, Import + 248u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 0u32));
+    Result = Add(Result, 8192u32 + Value.Nativeˉentry);
+    Result = Add(Result, Import + 248u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    return Add(Result, Runtimeˉaddress(Value, 12u32));
+}
+
+fn Linuxˉtargets(
+    Input: bytes,
+    Value: Layout.Nativeˉhostedˉcontainerˉlayout,
+    Metadata: bytes
+) -> bytes {
+    var Result: bytes = Build.Empty(Input);
+    Result = Add(Result, Runtimeˉaddress(Value, 0u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 1u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 2u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 3u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 6u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 7u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 8u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 7u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 9u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 12u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 8u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 13u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 1u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 0u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 1u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 2u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 3u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 4u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 5u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 6u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 7u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 8u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 9u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 5u32));
+    Result = Add(Result, Serviceˉaddress(Metadata, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 0u32));
+    return Add(Result, 8192u32 + Value.Nativeˉentry);
+}
+
+fn Targetˉbytes(
+    Input: bytes,
+    Value: Layout.Nativeˉhostedˉcontainerˉlayout,
+    Metadata: bytes
+) -> bytes {
+    var Targets: bytes = Linuxˉtargets(Input, Value, Metadata);
+    if Value.Target == 1u32 {
+        Targets = Windowsˉtargets(Input, Value, Metadata);
+    }
+    return Targets;
+}
+
+fn Nativeˉhostedˉcontainerˉconstruct(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 32u32 { return Failure(Input, 1u32, Total); }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1380144727u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Runtimeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Reservedˉone: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Target < 1u32 || Target > 2u32 || Profile < 1u32 || Profile > 6u32 ||
+        Runtimeˉbytes != 4096u32 || Reservedˉone != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Failure(Input, 4u32, 12u32);
+    }
+    if Total != 32u32 + Runtimeˉbytes {
+        return Failure(Input, 4u32, 20u32);
+    }
+    let Runtime: bytes = Bytesˉslice(Input, 32u32, Runtimeˉbytes);
+    let Metadata: bytes = Bytesˉslice(Runtime, 480u32, 1024u32);
+    if !Metadataˉadmission.Nativeˉhostedˉtoolˉmetadataˉisˉvalid(
+        Metadata, 0u32, Target, Profile
+    ) {
+        return Failure(Input, 5u32, 32u32 + 480u32);
+    }
+    let Value: Layout.Nativeˉhostedˉcontainerˉlayout =
+        Layout.Nativeˉhostedˉcontainerˉplan(Metadata, Target, Profile);
+    if !Value.Valid { return Failure(Input, 6u32, 32u32 + 480u32); }
+    let Targets: bytes = Targetˉbytes(Input, Value, Metadata);
+    var Expectedˉtargetˉbytes: u32 = 124u32;
+    if Target == 1u32 { Expectedˉtargetˉbytes = 232u32; }
+    if Bytesˉlength(Targets) != Expectedˉtargetˉbytes {
+        return Failure(Input, 7u32, 32u32 + 480u32);
+    }
+    let Targetˉpayload: u32 = 128u32;
+    let Responseˉbytes: u32 = Targetˉpayload + Bytesˉlength(Targets);
+    var Response: bytes = Responseˉheader(
+        Input, Responseˉbytes, 0u32, Total, Value, Targetˉpayload,
+        Bytesˉlength(Targets)
+    );
+    return Bytesˉconcat(Response, Targets);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    return Nativeˉhostedˉcontainerˉconstruct(Input);
+}

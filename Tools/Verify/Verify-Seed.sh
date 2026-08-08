@@ -209,6 +209,9 @@ NATIVE_HOSTED_TOOL_METADATA_ADMISSION_MODULE="$ARTIFACTS/Native-Hosted-Tool-Meta
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Metadata-Construction-Core.wvb"
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Metadata-Construction-Bridge.wvb"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE="$ARTIFACTS/Native-Hosted-Startup-Instantiation.wvb"
+NATIVE_HOSTED_CONTAINER_PLAN_MODULE="$ARTIFACTS/Native-Hosted-Container-Construction.wvb"
+NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE="$ARTIFACTS/Native-Hosted-Container-Windows.wvb"
+NATIVE_HOSTED_CONTAINER_LINUX_MODULE="$ARTIFACTS/Native-Hosted-Container-Linux.wvb"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Runtime-Header-Core.wvb"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Runtime-Header-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
@@ -1398,23 +1401,23 @@ printf '%s\n' "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION" | gr
 printf '%s\n' "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
 printf '%s\n' "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-NATIVE_HOSTED_STARTUP_INSTANTIATION_SOURCE="$REPOSITORY_ROOT/Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv"
+NATIVE_HOSTED_STARTUP_INSTANTIATION_PROJECT="$REPOSITORY_ROOT/Windvale-Native-Hosted-Startup-Instantiation.wvproj"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_RETAINED="$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvb"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvnf"
 WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED="$REPOSITORY_ROOT/Linker/Reference/Consumers/Windows-X64-Hosted-Compiler.wvo"
 LINUX_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED="$REPOSITORY_ROOT/Linker/Reference/Consumers/Linux-X64-Hosted-Compiler.wvo"
 dotnet "$TOOL_DLL" \
-    compile "$NATIVE_HOSTED_STARTUP_INSTANTIATION_SOURCE" \
+    build "$NATIVE_HOSTED_STARTUP_INSTANTIATION_PROJECT" \
     -o "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_HASH=$(sha256sum "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_STARTUP_INSTANTIATION_HASH" != '4cd40719ecbfe8f42f5ded4b0b2ba4df4e48a8463f4ea236c7c0831d22a3eb52' ]; then
+if [ "$NATIVE_HOSTED_STARTUP_INSTANTIATION_HASH" != '03b1324c25bfae312705a7de74919299aa417e7a27a5de5d465113f760ae359b' ]; then
     echo "The hosted-startup instantiation module has an unexpected digest: $NATIVE_HOSTED_STARTUP_INSTANTIATION_HASH" >&2
     exit 1
 fi
 cmp -s "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE" "$NATIVE_HOSTED_STARTUP_INSTANTIATION_RETAINED"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH=$(sha256sum "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_RETAINED" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH" != 'b499e5f6ec3fb09c4efc33aa364533c6c6b0daa680fd3847b0054e2c7f346311' ] ||
-    [ "$(wc -c < "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_RETAINED")" -ne 185841 ]; then
+if [ "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH" != 'c26980323050ccf8afc47ac1215d3203d4d4aa4b5621dc249529a7405570b6f8' ] ||
+    [ "$(wc -c < "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_RETAINED")" -ne 185819 ]; then
     echo "The retained hosted-startup instantiation fragment has an unexpected identity: $NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH" >&2
     exit 1
 fi
@@ -1430,6 +1433,61 @@ printf '%s\n' "$NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION" | grep -F 'Profi
 printf '%s\n' "$NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
 printf '%s\n' "$NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+verify_hosted_container_artifact() {
+    name="$1"
+    project="$2"
+    output="$3"
+    retained="$4"
+    module_bytes="$5"
+    module_hash="$6"
+    fragment="$7"
+    fragment_bytes="$8"
+    fragment_hash="$9"
+    dotnet "$TOOL_DLL" build "$project" -o "$output"
+    actual_module_hash=$(sha256sum "$output" | awk '{print $1}')
+    if [ "$actual_module_hash" != "$module_hash" ] ||
+        [ "$(wc -c < "$output")" -ne "$module_bytes" ] ||
+        [ "$(sha256sum "$retained" | awk '{print $1}')" != "$module_hash" ] ||
+        [ "$(wc -c < "$retained")" -ne "$module_bytes" ]; then
+        echo "The hosted-container $name WVB has an unexpected identity: $actual_module_hash" >&2
+        exit 1
+    fi
+    actual_fragment_hash=$(sha256sum "$fragment" | awk '{print $1}')
+    if [ "$actual_fragment_hash" != "$fragment_hash" ] ||
+        [ "$(wc -c < "$fragment")" -ne "$fragment_bytes" ]; then
+        echo "The hosted-container $name WVNF has an unexpected identity: $actual_fragment_hash" >&2
+        exit 1
+    fi
+    inspection=$(dotnet "$TOOL_DLL" inspect "$output")
+    printf '%s\n' "$inspection" | grep -F 'Profile: portable' >/dev/null
+    printf '%s\n' "$inspection" | grep -F 'Capabilities (0)' >/dev/null
+    printf '%s\n' "$inspection" | grep -F 'Main(bytes) -> bytes' >/dev/null
+    printf '%s\n' "$inspection" | grep -F 'Exports (1)' >/dev/null
+}
+verify_hosted_container_artifact \
+    'planner' \
+    "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Construction.wvproj" \
+    "$NATIVE_HOSTED_CONTAINER_PLAN_MODULE" \
+    "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvb" \
+    33591 c62b671c06212fb7450bd4d1335284988bd825402713565f94e45f5592330483 \
+    "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvnf" \
+    536691 58f4e2553ee423c2fcf492f69dcb494f7bd618c47a0ecd54939e04c75e87279b
+verify_hosted_container_artifact \
+    'Windows byte constructor' \
+    "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Windows.wvproj" \
+    "$NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE" \
+    "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvb" \
+    17409 f3e47f2d447ac968c2b56df2fc4656ceaffbf7f3a2c84cd16c7347e29fb3b70b \
+    "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvnf" \
+    183406 49240c2aacfe806ab786fccdc5ef248775e09dae88fb5c8cb6ee703a9bde7e7c
+verify_hosted_container_artifact \
+    'Linux byte constructor' \
+    "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Linux.wvproj" \
+    "$NATIVE_HOSTED_CONTAINER_LINUX_MODULE" \
+    "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvb" \
+    12086 a502fe7e6d5aaa29bf7b629e96b14bb26346c3296256b89d2aacd069a9eede5e \
+    "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvnf" \
+    124463 0c57b13158570163b113ba8f0faf608a804725316435ecc5485aa172666bec40
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_SOURCE" \
     --module "$BYTE_CONSTRUCTION_SOURCE" \

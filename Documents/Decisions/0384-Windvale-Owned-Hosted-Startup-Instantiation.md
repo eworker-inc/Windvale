@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0383](0383-Windvale-Owned-Hosted-Tool-Metadata-Construction.md), [Decision 0164](0164-First-Exact-Compiler-Linux-Executable-Container.md), [Decision 0167](0167-First-Exact-Compiler-Windows-Executable-Container.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native hosted-startup instantiation](../../Specifications/Windvale-Native-Hosted-Startup-Instantiation.md)
+- Advanced by: [Decision 0385](0385-Windvale-Owned-Hosted-Container-Construction.md)
 
 ## Context
 
@@ -40,8 +41,8 @@ front door or duplicating the general verifier.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Startup-instantiation WVB | 20,078 | `4cd40719ecbfe8f42f5ded4b0b2ba4df4e48a8463f4ea236c7c0831d22a3eb52` |
-| Startup-instantiation WVNF | 185,841 | `b499e5f6ec3fb09c4efc33aa364533c6c6b0daa680fd3847b0054e2c7f346311` |
+| Startup-instantiation WVB | 19,935 | `03b1324c25bfae312705a7de74919299aa417e7a27a5de5d465113f760ae359b` |
+| Startup-instantiation WVNF | 185,819 | `c26980323050ccf8afc47ac1215d3203d4d4aa4b5621dc249529a7405570b6f8` |
 | Windows hosted startup WVO | 4,334 | `55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb` |
 | Linux hosted startup WVO | 2,390 | `0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff` |
 
@@ -56,11 +57,10 @@ verifiers. Fourteen malformed request/object/relocation cases agree across the
 interpreter and native executor. The Release test application builds with zero
 warnings and errors, and the focused case passes 1/1 in about four seconds.
 
-Normal hosted startup bytes are now constructed by Windvale from the canonical
-WVOs. C# still projects final target addresses, invokes and verifies the native
-fragment, constructs the surrounding PE/ELF, and retains the independent
-template oracle. The next slice should transfer target resolution and the
-complete outer-container plan rather than create another startup encoding.
+Normal hosted startup bytes are constructed by Windvale from the canonical
+WVOs. Decision 0385 now supplies their complete target lists from Windvale and
+constructs the surrounding PE/ELF-owned bytes. C# retains only bounded native
+dispatch, response verification, segment copying, and the independent oracle.
 
 Broad Development, Standard, Qualification, Linux-host execution, and grouped
 dual-host gates remain deferred under the active retirement goal.

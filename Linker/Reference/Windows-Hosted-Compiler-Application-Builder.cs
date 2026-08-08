@@ -21,6 +21,27 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉbuilder
         Hostedˉcompilerˉapplicationˉprofile profile =
             Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
+        var Runtime = Hostedˉcompilerˉruntimeˉdata.Build(
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            capabilities,
+            bundle,
+            nativeˉentryˉoffset,
+            profile);
+        return Nativeˉhostedˉcontainerˉconstructor.Build(
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            profile,
+            bundle,
+            nativeˉentryˉoffset,
+            Runtime);
+    }
+
+    internal static ImmutableArray<byte> Buildˉstage0(
+        ImmutableArray<Capabilityˉdeclaration> capabilities,
+        Nativeˉserviceˉbundle bundle,
+        uint nativeˉentryˉoffset,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
+    {
         var Layout = Windowsˉhostedˉcompilerˉapplicationˉcontract.Plan(
             bundle,
             nativeˉentryˉoffset);
@@ -33,7 +54,7 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉbuilder
             nativeˉentryˉoffset,
             profile);
         var Imports = Windowsˉhostedˉcompilerˉimports.Build(Layout.Importˉaddress);
-        var Startup = Windowsˉhostedˉcompilerˉstartup.Build(
+        var Startup = Windowsˉhostedˉcompilerˉstartup.Buildˉstage0(
             Layout.Textˉaddress,
             Layout.Importˉaddress,
             Layout.Runtimeˉaddress,

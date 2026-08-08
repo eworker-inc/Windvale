@@ -1,0 +1,222 @@
+module Linkerˉnativeˉhostedˉcontainerˉwindows profile portable;
+
+import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
+
+fn Read(Input: bytes, Offset: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Input, Offset);
+}
+
+fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
+    return (Value + Alignment - 1u32) & ~(Alignment - 1u32);
+}
+
+fn Validˉplan(Input: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 360u32 || Read(Input, 0u32) != 1145263703u32 ||
+        Read(Input, 4u32) != 1u32 || Read(Input, 8u32) != Total ||
+        Read(Input, 12u32) != 0u32 || Read(Input, 16u32) != 4128u32 ||
+        Read(Input, 20u32) != 1u32 || Read(Input, 24u32) < 1u32 ||
+        Read(Input, 24u32) > 6u32 {
+        return false;
+    }
+    let Bundleˉbytes: u32 = Read(Input, 52u32);
+    if Bundleˉbytes == 0u32 || Bundleˉbytes > 67108864u32 { return false; }
+    let Textˉvirtual: u32 = 4096u32 + Bundleˉbytes;
+    let Textˉfile: u32 = Alignˉup(Textˉvirtual, 512u32);
+    let Dataˉfile: u32 = 512u32 + Textˉfile;
+    let Dataˉaddress: u32 = Alignˉup(4096u32 + Textˉvirtual, 4096u32);
+    let Dataˉvirtual: u32 = 4096u32 + 476135424u32;
+    let Runtimeˉfile: u32 = Dataˉfile + 4096u32;
+    let Runtimeˉaddress: u32 = Dataˉaddress + 4096u32;
+    let Relocationˉfile: u32 = Dataˉfile + 8192u32;
+    let Relocationˉaddress: u32 = Alignˉup(
+        Dataˉaddress + Dataˉvirtual, 4096u32
+    );
+    if Read(Input, 28u32) != Relocationˉfile + 512u32 ||
+        Read(Input, 32u32) != 0u32 || Read(Input, 36u32) != 512u32 ||
+        Read(Input, 40u32) != 512u32 || Read(Input, 44u32) != 1510u32 {
+        return false;
+    }
+    if Read(Input, 48u32) != 4608u32 || Read(Input, 56u32) != Dataˉfile ||
+        Read(Input, 60u32) != 4096u32 || Read(Input, 64u32) != Runtimeˉfile ||
+        Read(Input, 68u32) != 4096u32 {
+        return false;
+    }
+    if Read(Input, 72u32) != Relocationˉfile || Read(Input, 76u32) != 12u32 ||
+        Read(Input, 80u32) != 4096u32 || Read(Input, 84u32) != Dataˉaddress ||
+        Read(Input, 88u32) != Runtimeˉaddress {
+        return false;
+    }
+    if Read(Input, 92u32) != Alignˉup(Relocationˉaddress + 12u32, 4096u32) ||
+        Read(Input, 96u32) != 128u32 || Read(Input, 100u32) != 232u32 ||
+        Read(Input, 104u32) != Relocationˉaddress ||
+        Read(Input, 108u32) != Dataˉaddress {
+        return false;
+    }
+    if Read(Input, 112u32) != Textˉvirtual ||
+        Read(Input, 116u32) != Textˉfile || Read(Input, 120u32) != 8192u32 ||
+        Read(Input, 124u32) != Dataˉvirtual {
+        return false;
+    }
+    return true;
+}
+
+fn Containerˉformat(Profile: u32) -> u32 {
+    if Profile == 1u32 { return 3u32; }
+    return Profile + 3u32;
+}
+
+fn Writeˉsection(
+    Input: bytes,
+    Offset: u32,
+    Name: text,
+    Virtualˉbytes: u32,
+    Address: u32,
+    Fileˉbytes: u32,
+    Fileˉoffset: u32,
+    Characteristics: u32
+) -> bytes {
+    var Result: bytes = Build.Writeˉascii(Input, Offset, Name);
+    Result = Build.Patchˉu32(Result, Offset + 8u32, Virtualˉbytes);
+    Result = Build.Patchˉu32(Result, Offset + 12u32, Address);
+    Result = Build.Patchˉu32(Result, Offset + 16u32, Fileˉbytes);
+    Result = Build.Patchˉu32(Result, Offset + 20u32, Fileˉoffset);
+    Result = Build.Patchˉu32(Result, Offset + 36u32, Characteristics);
+    return Result;
+}
+
+fn Header(Plan: bytes) -> bytes {
+    let Profile: u32 = Read(Plan, 24u32);
+    let Textˉfileˉbytes: u32 = Read(Plan, 116u32);
+    let Dataˉfileˉbytes: u32 = Read(Plan, 120u32);
+    let Dataˉvirtualˉbytes: u32 = Read(Plan, 124u32);
+    let Textˉaddress: u32 = Read(Plan, 80u32);
+    let Dataˉaddress: u32 = Read(Plan, 84u32);
+    let Importˉaddress: u32 = Dataˉaddress;
+    let Relocationˉaddress: u32 = Read(Plan, 104u32);
+    var Result: bytes = Build.Zeros(512u32);
+    Result = Build.Patchˉu16(Result, 0u32, 23117u32);
+    Result = Build.Patchˉu32(Result, 60u32, 128u32);
+    Result = Build.Patchˉu32(Result, 128u32, 17744u32);
+    Result = Build.Patchˉu16(Result, 132u32, 34404u32);
+    Result = Build.Patchˉu16(Result, 134u32, 3u32);
+    Result = Build.Patchˉu16(Result, 148u32, 240u32);
+    Result = Build.Patchˉu16(Result, 150u32, 34u32);
+
+    Result = Build.Patchˉu16(Result, 152u32, 523u32);
+    Result = Build.Patchˉu16(Result, 154u32, Containerˉformat(Profile));
+    Result = Build.Patchˉu32(Result, 156u32, Textˉfileˉbytes);
+    Result = Build.Patchˉu32(Result, 160u32, Dataˉfileˉbytes + 512u32);
+    Result = Build.Patchˉu32(
+        Result, 164u32, Dataˉvirtualˉbytes - Dataˉfileˉbytes
+    );
+    Result = Build.Patchˉu32(Result, 168u32, Textˉaddress);
+    Result = Build.Patchˉu32(Result, 172u32, Textˉaddress);
+    Result = Build.Patchˉu64(Result, 176u32, 1073741824u32, 1u32);
+    Result = Build.Patchˉu32(Result, 184u32, 4096u32);
+    Result = Build.Patchˉu32(Result, 188u32, 512u32);
+    Result = Build.Patchˉu16(Result, 192u32, 6u32);
+    Result = Build.Patchˉu16(Result, 200u32, 6u32);
+    Result = Build.Patchˉu32(Result, 208u32, Read(Plan, 92u32));
+    Result = Build.Patchˉu32(Result, 212u32, 512u32);
+    Result = Build.Patchˉu16(Result, 220u32, 3u32);
+    Result = Build.Patchˉu16(Result, 222u32, 352u32);
+    Result = Build.Patchˉu64(Result, 224u32, 67108864u32, 0u32);
+    Result = Build.Patchˉu64(Result, 232u32, 67108864u32, 0u32);
+    Result = Build.Patchˉu64(Result, 240u32, 1048576u32, 0u32);
+    Result = Build.Patchˉu64(Result, 248u32, 4096u32, 0u32);
+    Result = Build.Patchˉu32(Result, 260u32, 16u32);
+    Result = Build.Patchˉu32(Result, 272u32, Importˉaddress);
+    Result = Build.Patchˉu32(Result, 276u32, 60u32);
+    Result = Build.Patchˉu32(Result, 304u32, Relocationˉaddress);
+    Result = Build.Patchˉu32(Result, 308u32, 12u32);
+    Result = Build.Patchˉu32(Result, 360u32, Importˉaddress + 192u32);
+    Result = Build.Patchˉu32(Result, 364u32, 128u32);
+
+    Result = Writeˉsection(
+        Result, 392u32, ".text", Read(Plan, 112u32), Textˉaddress,
+        Textˉfileˉbytes, Read(Plan, 40u32), 1610612768u32
+    );
+    Result = Writeˉsection(
+        Result, 432u32, ".data", Dataˉvirtualˉbytes, Dataˉaddress,
+        Dataˉfileˉbytes, Read(Plan, 56u32), 3221225536u32
+    );
+    return Writeˉsection(
+        Result, 472u32, ".reloc", 12u32, Relocationˉaddress,
+        512u32, Read(Plan, 72u32), 1107296320u32
+    );
+}
+
+fn Importˉentry(
+    Input: bytes,
+    Importˉaddress: u32,
+    Index: u32,
+    Nameˉoffset: u32,
+    Name: text
+) -> bytes {
+    let Address: u32 = Importˉaddress + Nameˉoffset;
+    var Result: bytes = Build.Patchˉu64(Input, 64u32 + Index * 8u32, Address, 0u32);
+    Result = Build.Patchˉu64(Result, 192u32 + Index * 8u32, Address, 0u32);
+    Result = Build.Writeˉascii(Result, Nameˉoffset + 2u32, Name);
+    return Result;
+}
+
+fn Imports(Plan: bytes) -> bytes {
+    let Address: u32 = Read(Plan, 84u32);
+    var Result: bytes = Build.Zeros(4096u32);
+    Result = Build.Patchˉu32(Result, 0u32, Address + 64u32);
+    Result = Build.Patchˉu32(Result, 12u32, Address + 536u32);
+    Result = Build.Patchˉu32(Result, 16u32, Address + 192u32);
+    Result = Build.Patchˉu32(Result, 20u32, Address + 176u32);
+    Result = Build.Patchˉu32(Result, 32u32, Address + 549u32);
+    Result = Build.Patchˉu32(Result, 36u32, Address + 304u32);
+    Result = Importˉentry(Result, Address, 0u32, 320u32, "CloseHandle");
+    Result = Importˉentry(Result, Address, 1u32, 334u32, "CreateFileW");
+    Result = Importˉentry(Result, Address, 2u32, 348u32, "FlushFileBuffers");
+    Result = Importˉentry(Result, Address, 3u32, 368u32, "GetCommandLineW");
+    Result = Importˉentry(Result, Address, 4u32, 386u32, "GetFileSizeEx");
+    Result = Importˉentry(Result, Address, 5u32, 402u32, "GetLastError");
+    Result = Importˉentry(Result, Address, 6u32, 418u32, "GetStdHandle");
+    Result = Importˉentry(Result, Address, 7u32, 434u32, "LocalFree");
+    Result = Importˉentry(Result, Address, 8u32, 446u32, "MultiByteToWideChar");
+    Result = Importˉentry(Result, Address, 9u32, 468u32, "ReadFile");
+    Result = Importˉentry(Result, Address, 10u32, 480u32, "WideCharToMultiByte");
+    Result = Importˉentry(Result, Address, 11u32, 502u32, "WriteFile");
+    let Shellˉname: u32 = Address + 514u32;
+    Result = Build.Patchˉu64(Result, 176u32, Shellˉname, 0u32);
+    Result = Build.Patchˉu64(Result, 304u32, Shellˉname, 0u32);
+    Result = Build.Writeˉascii(Result, 516u32, "CommandLineToArgvW");
+    Result = Build.Writeˉascii(Result, 536u32, "KERNEL32.dll");
+    return Build.Writeˉascii(Result, 549u32, "SHELL32.dll");
+}
+
+fn Relocation(Plan: bytes) -> bytes {
+    var Result: bytes = Build.Zeros(12u32);
+    Result = Build.Patchˉu32(Result, 0u32, Read(Plan, 80u32));
+    return Build.Patchˉu32(Result, 4u32, 12u32);
+}
+
+fn Response(Input: bytes, Status: u32, Offset: u32) -> bytes {
+    var Result: bytes = Build.Empty(Input);
+    Result = Build.Appendˉu32(Result, 1113019991u32);
+    Result = Build.Appendˉu32(Result, 1u32);
+    var Total: u32 = 32u32;
+    if Status == 0u32 { Total = 4652u32; }
+    Result = Build.Appendˉu32(Result, Total);
+    Result = Build.Appendˉu32(Result, Status);
+    Result = Build.Appendˉu32(Result, Offset);
+    Result = Build.Appendˉu32(Result, 512u32);
+    Result = Build.Appendˉu32(Result, 4096u32);
+    return Build.Appendˉu32(Result, 12u32);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if !Validˉplan(Input) {
+        return Response(Input, 1u32, Total);
+    }
+    var Result: bytes = Response(Input, 0u32, Total);
+    Result = Bytesˉconcat(Result, Header(Input));
+    Result = Bytesˉconcat(Result, Imports(Input));
+    return Bytesˉconcat(Result, Relocation(Input));
+}

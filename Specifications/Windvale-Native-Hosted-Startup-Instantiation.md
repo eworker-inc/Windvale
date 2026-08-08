@@ -32,9 +32,10 @@ address for every canonical WVO relocation, followed by the complete WVO.
 | 36 | 4 | reserved | Zero |
 
 Target addresses appear in canonical relocation order. They include targets
-for imports and locally defined symbols. The current managed bridge projects
-this list temporarily; the native outer-container planner must take over that
-projection before the bridge is retired.
+for imports and locally defined symbols. The hosted-container planner defined
+by Decision 0385 now derives this list from the admitted runtime metadata and
+complete target layout. The managed bridge only transmits that Windvale-owned
+list to this constructor with the exact retained WVO.
 
 ## Admitted startup-object profile
 
@@ -77,18 +78,19 @@ the relocated startup code.
 
 ## Windvale owner and retained artifacts
 
-The portable source exports service-free `Main(bytes) -> bytes`. The normal
-linker embeds only the exact WVNF plus the two exact WVO resources; the WVB is
-retained for reproducibility and recovery evidence.
+The reusable portable core exports the bounded constructor, and a focused
+bridge exports service-free `Main(bytes) -> bytes`. The normal linker embeds
+only the exact WVNF plus the two exact WVO resources; the WVB is retained for
+reproducibility and recovery evidence.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Startup-instantiation WVB | 20,078 | `4cd40719ecbfe8f42f5ded4b0b2ba4df4e48a8463f4ea236c7c0831d22a3eb52` |
-| Startup-instantiation WVNF | 185,841 | `b499e5f6ec3fb09c4efc33aa364533c6c6b0daa680fd3847b0054e2c7f346311` |
+| Startup-instantiation WVB | 19,935 | `03b1324c25bfae312705a7de74919299aa417e7a27a5de5d465113f760ae359b` |
+| Startup-instantiation WVNF | 185,819 | `c26980323050ccf8afc47ac1215d3203d4d4aa4b5621dc249529a7405570b6f8` |
 | Windows hosted startup WVO | 4,334 | `55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb` |
 | Linux hosted startup WVO | 2,390 | `0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff` |
 
 The former C# template patchers remain under `Buildˉstage0` only for
-differential and recovery evidence. The temporary C# target projection,
-request/response adapter, and focused test retire after native outer-container
-construction and native qualification consume this contract directly.
+differential and recovery evidence. C# no longer projects target addresses.
+The temporary request/response relay and focused differential test retire when
+native publication invokes the planner and this constructor directly.

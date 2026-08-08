@@ -289,7 +289,7 @@ fn Relativeˉrelocationˉvalue(
     return Relativeˉvalue(true, Magnitude);
 }
 
-fn Nativeˉhostedˉstartupˉinstantiate(Input: bytes) -> bytes {
+export fn Nativeˉhostedˉstartupˉinstantiate(Input: bytes) -> bytes {
     let Total: u32 = Bytesˉlength(Input);
     if Total < 40u32 { return Failure(Input, 1u32, Total); }
     if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1230198359u32 {
@@ -361,8 +361,4 @@ fn Nativeˉhostedˉstartupˉinstantiate(Input: bytes) -> bytes {
         Responseˉheader(Input, 32u32 + Codeˉbytes, 0u32, Total, Codeˉbytes),
         Code
     );
-}
-
-export fn Main(Input: bytes) -> bytes {
-    return Nativeˉhostedˉstartupˉinstantiate(Input);
 }

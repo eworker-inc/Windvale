@@ -1,0 +1,144 @@
+module Linkerˉnativeˉhostedˉcontainerˉlayout profile portable;
+
+export record Nativeˉhostedˉcontainerˉlayout {
+    Valid: bool;
+    Target: u32;
+    Profile: u32;
+    Containerˉformat: u32;
+    Applicationˉbytes: u32;
+    Headerˉbytes: u32;
+    Textˉfileˉoffset: u32;
+    Textˉaddress: u32;
+    Startupˉbytes: u32;
+    Bundleˉoffset: u32;
+    Bundleˉbytes: u32;
+    Nativeˉbytes: u32;
+    Nativeˉentry: u32;
+    Textˉvirtualˉbytes: u32;
+    Textˉfileˉbytes: u32;
+    Dataˉfileˉoffset: u32;
+    Dataˉaddress: u32;
+    Dataˉfileˉbytes: u32;
+    Dataˉvirtualˉbytes: u32;
+    Importˉfileˉoffset: u32;
+    Importˉaddress: u32;
+    Runtimeˉfileˉoffset: u32;
+    Runtimeˉaddress: u32;
+    Relocationˉfileˉoffset: u32;
+    Relocationˉaddress: u32;
+    Imageˉvirtualˉbytes: u32;
+}
+
+fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
+    return (Value + Alignment - 1u32) & ~(Alignment - 1u32);
+}
+
+fn Invalid(Target: u32, Profile: u32) -> Nativeˉhostedˉcontainerˉlayout {
+    return Nativeˉhostedˉcontainerˉlayout(
+        false, Target, Profile, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+fn Containerˉformat(Profile: u32) -> u32 {
+    if Profile == 1u32 { return 3u32; }
+    return Profile + 3u32;
+}
+
+export fn Runtimeˉvirtualˉbytes(Target: u32) -> u32 {
+    if Target == 1u32 { return 476135424u32; }
+    return 474038272u32;
+}
+
+export fn Runtimeˉoffset(Index: u32, Target: u32) -> u32 {
+    if Index == 0u32 { return 0u32; }
+    if Index == 1u32 { return 112u32; }
+    if Index == 2u32 { return 73728u32; }
+    if Index == 3u32 { return 2170880u32; }
+    if Index == 4u32 { return 4096u32; }
+    if Index == 5u32 { return 5168u32; }
+    if Index == 6u32 { return 216u32; }
+    if Index == 7u32 { return 264u32; }
+    if Index == 8u32 { return 400u32; }
+    if Index == 9u32 { return 70704u32; }
+    if Index == 10u32 { return 136388608u32; }
+    if Index == 11u32 { return 203497472u32; }
+    if Index == 12u32 { return 471932928u32; }
+    if Target == 1u32 { return 474034176u32; }
+    return 472985600u32;
+}
+
+export fn Nativeˉhostedˉcontainerˉplan(
+    Metadata: bytes,
+    Target: u32,
+    Profile: u32
+) -> Nativeˉhostedˉcontainerˉlayout {
+    if Bytesˉlength(Metadata) != 1024u32 || Target < 1u32 || Target > 2u32 ||
+        Profile < 1u32 || Profile > 6u32 {
+        return Invalid(Target, Profile);
+    }
+    let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Metadata, 60u32);
+    let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Metadata, 68u32);
+    let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Metadata, 72u32);
+    if Bundleˉbytes == 0u32 || Bundleˉbytes > 67108864u32 ||
+        Nativeˉbytes == 0u32 || Nativeˉbytes > Bundleˉbytes || Nativeˉentry >= Nativeˉbytes {
+        return Invalid(Target, Profile);
+    }
+
+    var Headerˉbytes: u32 = 4096u32;
+    var Startupˉbytes: u32 = 765u32;
+    if Target == 1u32 {
+        Headerˉbytes = 512u32;
+        Startupˉbytes = 1510u32;
+    }
+    let Textˉvirtual: u32 = 4096u32 + Bundleˉbytes;
+    var Textˉfile: u32 = Textˉvirtual;
+    var Dataˉfile: u32 = 0u32;
+    var Dataˉaddress: u32 = 0u32;
+    var Dataˉfileˉbytes: u32 = 4096u32;
+    var Dataˉvirtual: u32 = Runtimeˉvirtualˉbytes(Target);
+    var Importˉfile: u32 = 0u32;
+    var Importˉaddress: u32 = 0u32;
+    var Runtimeˉfile: u32 = 0u32;
+    var Runtimeˉaddress: u32 = 0u32;
+    var Relocationˉfile: u32 = 0u32;
+    var Relocationˉaddress: u32 = 0u32;
+    var Applicationˉbytes: u32 = 0u32;
+    var Imageˉvirtual: u32 = 0u32;
+
+    if Target == 1u32 {
+        Textˉfile = Alignˉup(Textˉvirtual, 512u32);
+        Dataˉfile = Headerˉbytes + Textˉfile;
+        Dataˉaddress = Alignˉup(4096u32 + Textˉvirtual, 4096u32);
+        Dataˉfileˉbytes = 8192u32;
+        Dataˉvirtual = 4096u32 + Runtimeˉvirtualˉbytes(Target);
+        Importˉfile = Dataˉfile;
+        Importˉaddress = Dataˉaddress;
+        Runtimeˉfile = Dataˉfile + 4096u32;
+        Runtimeˉaddress = Dataˉaddress + 4096u32;
+        Relocationˉfile = Dataˉfile + Dataˉfileˉbytes;
+        Relocationˉaddress = Alignˉup(Dataˉaddress + Dataˉvirtual, 4096u32);
+        Applicationˉbytes = Relocationˉfile + 512u32;
+        Imageˉvirtual = Alignˉup(Relocationˉaddress + 12u32, 4096u32);
+    } else {
+        Dataˉfile = Alignˉup(4096u32 + Textˉvirtual, 4096u32);
+        Dataˉaddress = Dataˉfile;
+        Runtimeˉfile = Dataˉfile;
+        Runtimeˉaddress = Dataˉaddress;
+        Applicationˉbytes = Dataˉfile + 4096u32;
+        Imageˉvirtual = Dataˉaddress + Dataˉvirtual;
+    }
+
+    if Applicationˉbytes < Bundleˉbytes || Imageˉvirtual < Dataˉaddress {
+        return Invalid(Target, Profile);
+    }
+    return Nativeˉhostedˉcontainerˉlayout(
+        true, Target, Profile, Containerˉformat(Profile), Applicationˉbytes,
+        Headerˉbytes, Headerˉbytes, 4096u32, Startupˉbytes, 4096u32,
+        Bundleˉbytes, Nativeˉbytes, Nativeˉentry, Textˉvirtual, Textˉfile,
+        Dataˉfile, Dataˉaddress, Dataˉfileˉbytes, Dataˉvirtual,
+        Importˉfile, Importˉaddress, Runtimeˉfile, Runtimeˉaddress,
+        Relocationˉfile, Relocationˉaddress, Imageˉvirtual
+    );
+}

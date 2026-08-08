@@ -528,7 +528,17 @@ applies every relative-i32 relocation through a bounded service-free native
 fragment. Normal hosted builders independently verify the result, while the
 former template patchers are explicit Stage 0 oracles. Managed target-address
 projection, native invocation, outer PE/ELF construction, Linux execution, and
-the grouped gate remain open.
+the grouped gate remained open at that slice.
+
+[Decision 0385](../Decisions/0385-Windvale-Owned-Hosted-Container-Construction.md)
+removes C# ownership of hosted layout, startup-target projection, PE/ELF
+headers, Windows imports, relocation bytes, and segment positions. One bounded
+Windvale planner composes with separate Windows/Linux byte constructors and the
+canonical startup-WVO instantiator; separating the fragments keeps every WVB
+reconstructible through the current native source front door and avoids one
+oversized source. Normal C# code now retains only deletion-bound native
+dispatch, independent response checking, large-result allocation/copying, and
+publication. Linux execution and the grouped gate remain open.
 
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 

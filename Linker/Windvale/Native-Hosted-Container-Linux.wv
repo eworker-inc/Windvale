@@ -1,0 +1,132 @@
+module Linkerˉnativeˉhostedˉcontainerˉlinux profile portable;
+
+import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
+
+fn Read(Input: bytes, Offset: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Input, Offset);
+}
+
+fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
+    return (Value + Alignment - 1u32) & ~(Alignment - 1u32);
+}
+
+fn Validˉplan(Input: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 252u32 || Read(Input, 0u32) != 1145263703u32 ||
+        Read(Input, 4u32) != 1u32 || Read(Input, 8u32) != Total ||
+        Read(Input, 12u32) != 0u32 || Read(Input, 16u32) != 4128u32 ||
+        Read(Input, 20u32) != 2u32 || Read(Input, 24u32) < 1u32 ||
+        Read(Input, 24u32) > 6u32 {
+        return false;
+    }
+    let Bundleˉbytes: u32 = Read(Input, 52u32);
+    if Bundleˉbytes == 0u32 || Bundleˉbytes > 67108864u32 { return false; }
+    let Textˉbytes: u32 = 4096u32 + Bundleˉbytes;
+    let Dataˉfile: u32 = Alignˉup(4096u32 + Textˉbytes, 4096u32);
+    let Dataˉvirtual: u32 = 474038272u32;
+    if Read(Input, 28u32) != Dataˉfile + 4096u32 ||
+        Read(Input, 32u32) != 0u32 || Read(Input, 36u32) != 4096u32 ||
+        Read(Input, 40u32) != 4096u32 || Read(Input, 44u32) != 765u32 {
+        return false;
+    }
+    if Read(Input, 48u32) != 8192u32 || Read(Input, 56u32) != 0u32 ||
+        Read(Input, 60u32) != 0u32 || Read(Input, 64u32) != Dataˉfile ||
+        Read(Input, 68u32) != 4096u32 {
+        return false;
+    }
+    if Read(Input, 72u32) != 0u32 || Read(Input, 76u32) != 0u32 ||
+        Read(Input, 80u32) != 4096u32 || Read(Input, 84u32) != Dataˉfile ||
+        Read(Input, 88u32) != Dataˉfile {
+        return false;
+    }
+    if Read(Input, 92u32) != Dataˉfile + Dataˉvirtual ||
+        Read(Input, 96u32) != 128u32 || Read(Input, 100u32) != 124u32 ||
+        Read(Input, 104u32) != 0u32 || Read(Input, 108u32) != 0u32 {
+        return false;
+    }
+    if Read(Input, 112u32) != Textˉbytes || Read(Input, 116u32) != Textˉbytes ||
+        Read(Input, 120u32) != 4096u32 || Read(Input, 124u32) != Dataˉvirtual {
+        return false;
+    }
+    return true;
+}
+
+fn Containerˉformat(Profile: u32) -> u32 {
+    if Profile == 1u32 { return 3u32; }
+    return Profile + 3u32;
+}
+
+fn Programˉheader(
+    Input: bytes,
+    Offset: u32,
+    Type: u32,
+    Flags: u32,
+    Fileˉoffset: u32,
+    Address: u32,
+    Fileˉbytes: u32,
+    Memoryˉbytes: u32,
+    Alignment: u32
+) -> bytes {
+    var Result: bytes = Build.Patchˉu32(Input, Offset, Type);
+    Result = Build.Patchˉu32(Result, Offset + 4u32, Flags);
+    Result = Build.Patchˉu64(Result, Offset + 8u32, Fileˉoffset, 0u32);
+    Result = Build.Patchˉu64(Result, Offset + 16u32, Address, 0u32);
+    Result = Build.Patchˉu64(Result, Offset + 32u32, Fileˉbytes, 0u32);
+    Result = Build.Patchˉu64(Result, Offset + 40u32, Memoryˉbytes, 0u32);
+    Result = Build.Patchˉu64(Result, Offset + 48u32, Alignment, 0u32);
+    return Result;
+}
+
+fn Header(Plan: bytes) -> bytes {
+    let Textˉaddress: u32 = Read(Plan, 80u32);
+    let Dataˉaddress: u32 = Read(Plan, 84u32);
+    let Textˉbytes: u32 = Read(Plan, 112u32);
+    var Result: bytes = Build.Zeros(4096u32);
+    Result = Build.Patchˉu32(Result, 0u32, 1179403647u32);
+    Result = Build.Patchˉu32(Result, 4u32, 65794u32);
+    Result = Build.Patchˉu16(Result, 16u32, 3u32);
+    Result = Build.Patchˉu16(Result, 18u32, 62u32);
+    Result = Build.Patchˉu32(Result, 20u32, 1u32);
+    Result = Build.Patchˉu64(Result, 24u32, Textˉaddress, 0u32);
+    Result = Build.Patchˉu64(Result, 32u32, 64u32, 0u32);
+    Result = Build.Patchˉu16(Result, 52u32, 64u32);
+    Result = Build.Patchˉu16(Result, 54u32, 56u32);
+    Result = Build.Patchˉu16(Result, 56u32, 5u32);
+    Result = Programˉheader(Result, 64u32, 1u32, 4u32, 0u32, 0u32,
+        4096u32, 4096u32, 4096u32);
+    Result = Programˉheader(Result, 120u32, 1u32, 5u32, Read(Plan, 40u32),
+        Textˉaddress, Textˉbytes, Textˉbytes, 4096u32);
+    Result = Programˉheader(Result, 176u32, 1u32, 6u32, Read(Plan, 64u32),
+        Dataˉaddress, Read(Plan, 120u32), Read(Plan, 124u32), 4096u32);
+    Result = Programˉheader(Result, 232u32, 4u32, 4u32, 384u32, 384u32,
+        28u32, 28u32, 4u32);
+    Result = Programˉheader(Result, 288u32, 1685382481u32, 6u32, 0u32, 0u32,
+        0u32, 67108864u32, 16u32);
+    Result = Build.Patchˉu32(Result, 384u32, 9u32);
+    Result = Build.Patchˉu32(Result, 388u32, 4u32);
+    Result = Build.Patchˉu32(Result, 392u32, 1u32);
+    Result = Build.Writeˉascii(Result, 396u32, "Windvale");
+    return Build.Patchˉu32(Result, 408u32, Containerˉformat(Read(Plan, 24u32)));
+}
+
+fn Response(Input: bytes, Status: u32, Offset: u32) -> bytes {
+    var Result: bytes = Build.Empty(Input);
+    Result = Build.Appendˉu32(Result, 1112299095u32);
+    Result = Build.Appendˉu32(Result, 1u32);
+    var Total: u32 = 32u32;
+    if Status == 0u32 { Total = 4128u32; }
+    Result = Build.Appendˉu32(Result, Total);
+    Result = Build.Appendˉu32(Result, Status);
+    Result = Build.Appendˉu32(Result, Offset);
+    Result = Build.Appendˉu32(Result, 4096u32);
+    Result = Build.Appendˉu32(Result, 0u32);
+    return Build.Appendˉu32(Result, 0u32);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if !Validˉplan(Input) {
+        return Response(Input, 1u32, Total);
+    }
+    return Bytesˉconcat(Response(Input, 0u32, Total), Header(Input));
+}

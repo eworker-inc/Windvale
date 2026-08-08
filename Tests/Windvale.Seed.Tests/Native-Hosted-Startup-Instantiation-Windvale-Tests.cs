@@ -13,11 +13,15 @@ internal static partial class Program
 {
     private static void Windvaleˉnativeˉhostedˉstartupˉinstantiationˉruns()
     {
+        var Bridgeˉinput = new Sourceˉmoduleˉinput(
+            "Linker/Windvale/Native-Hosted-Startup-Instantiation-Bridge.wv",
+            Readˉembeddedˉsource(
+                "Windvale.Seed.Tests.Native-Hosted-Startup-Instantiation-Bridge.wv"));
         var Coreˉinput = new Sourceˉmoduleˉinput(
             "Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv",
             Readˉembeddedˉsource(
                 "Windvale.Seed.Tests.Native-Hosted-Startup-Instantiation-Core.wv"));
-        var Coreˉresult = Seedˉcompiler.Compileˉmodules(Coreˉinput, []);
+        var Coreˉresult = Seedˉcompiler.Compileˉmodules(Bridgeˉinput, [Coreˉinput]);
         True(Coreˉresult.Success, string.Join(" | ", Coreˉresult.Diagnostics));
         Equal(
             Nativeˉhostedˉstartupˉinstantiator.CONSUMER_CANONICAL_SIZE,
@@ -145,22 +149,6 @@ internal static partial class Program
                 Linuxˉruntime,
                 Linuxˉbundle,
                 0));
-
-        var Capabilities = Hostedˉtoolˉtestˉcapabilities();
-        var Windowsˉapplication = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
-            Capabilities,
-            Windowsˉbundle,
-            0);
-        _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
-            Windowsˉapplication.AsSpan(),
-            Windowsˉbundle);
-        var Linuxˉapplication = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
-            Capabilities,
-            Linuxˉbundle,
-            0);
-        _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
-            Linuxˉapplication.AsSpan(),
-            Linuxˉbundle);
 
         static ImmutableArray<byte> Replaceˉu32(
             ImmutableArray<byte> input,

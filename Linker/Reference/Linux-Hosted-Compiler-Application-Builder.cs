@@ -21,6 +21,27 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉbuilder
         Hostedˉcompilerˉapplicationˉprofile profile =
             Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
+        var Runtime = Hostedˉcompilerˉruntimeˉdata.Build(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            capabilities,
+            bundle,
+            nativeˉentryˉoffset,
+            profile);
+        return Nativeˉhostedˉcontainerˉconstructor.Build(
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            profile,
+            bundle,
+            nativeˉentryˉoffset,
+            Runtime);
+    }
+
+    internal static ImmutableArray<byte> Buildˉstage0(
+        ImmutableArray<Capabilityˉdeclaration> capabilities,
+        Nativeˉserviceˉbundle bundle,
+        uint nativeˉentryˉoffset,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
+    {
         var Layout = Linuxˉhostedˉcompilerˉapplicationˉcontract.Plan(
             bundle,
             nativeˉentryˉoffset);
@@ -30,7 +51,7 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉbuilder
             bundle,
             nativeˉentryˉoffset,
             profile);
-        var Startup = Linuxˉhostedˉcompilerˉstartup.Build(
+        var Startup = Linuxˉhostedˉcompilerˉstartup.Buildˉstage0(
             Layout.Textˉaddress,
             Layout.Dataˉaddress,
             Hostedˉcompilerˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Linuxˉx64),

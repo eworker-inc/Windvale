@@ -1,0 +1,46 @@
+module Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction profile portable;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+export fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Zeros(Count: u32) -> bytes {
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
+    return Result.Value;
+}
+
+export fn Replace(Input: bytes, Offset: u32, Length: u32, Value: bytes) -> bytes {
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(Input, Offset, Length, Value);
+    return Result.Value;
+}
+
+export fn Patchˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Replace(Input, Offset, 1u32, Bytesˉfromˉu8(Value));
+}
+
+export fn Patchˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replace(Input, Offset, 2u32, Bytesˉfromˉu16ˉlittle(Value));
+}
+
+export fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replace(Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Patchˉu64(Input: bytes, Offset: u32, Low: u32, High: u32) -> bytes {
+    var Result: bytes = Patchˉu32(Input, Offset, Low);
+    Result = Patchˉu32(Result, Offset + 4u32, High);
+    return Result;
+}
+
+export fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Writeˉascii(Input: bytes, Offset: u32, Value: text) -> bytes {
+    let Encoded: bytes = Textˉtoˉutf8(Value);
+    return Replace(Input, Offset, Bytesˉlength(Encoded), Encoded);
+}

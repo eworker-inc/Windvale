@@ -1,0 +1,7 @@
+module Linkerˉnativeˉhostedˉstartupˉinstantiationˉbridge profile portable;
+
+import Linkerˉnativeˉhostedˉstartupˉinstantiation as Instantiation;
+
+export fn Main(Input: bytes) -> bytes {
+    return Instantiation.Nativeˉhostedˉstartupˉinstantiate(Input);
+}

@@ -214,6 +214,9 @@ $NativeHostedToolMetadataAdmissionModule = Join-Path $Artifacts 'Native-Hosted-T
 $NativeHostedToolMetadataConstructionCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Construction-Core.wvb'
 $NativeHostedToolMetadataConstructionBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Construction-Bridge.wvb'
 $NativeHostedStartupInstantiationModule = Join-Path $Artifacts 'Native-Hosted-Startup-Instantiation.wvb'
+$NativeHostedContainerPlanModule = Join-Path $Artifacts 'Native-Hosted-Container-Construction.wvb'
+$NativeHostedContainerWindowsModule = Join-Path $Artifacts 'Native-Hosted-Container-Windows.wvb'
+$NativeHostedContainerLinuxModule = Join-Path $Artifacts 'Native-Hosted-Container-Linux.wvb'
 $NativeHostedToolRuntimeHeaderCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Core.wvb'
 $NativeHostedToolRuntimeHeaderBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -1794,29 +1797,29 @@ if (
 ) {
     throw 'The Windvale hosted-tool metadata-construction bridge inspection is incomplete.'
 }
-$NativeHostedStartupInstantiationSource = Join-Path $RepositoryRoot 'Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv'
+$NativeHostedStartupInstantiationProject = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Startup-Instantiation.wvproj'
 $NativeHostedStartupInstantiationRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvb'
 $NativeHostedStartupInstantiationArtifactRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvnf'
 $WindowsHostedCompilerStartupObjectRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Windows-X64-Hosted-Compiler.wvo'
 $LinuxHostedCompilerStartupObjectRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Linux-X64-Hosted-Compiler.wvo'
 dotnet $ToolDll `
-    compile $NativeHostedStartupInstantiationSource `
+    build $NativeHostedStartupInstantiationProject `
     -o $NativeHostedStartupInstantiationModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-startup instantiation.' }
 $NativeHostedStartupInstantiationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationModule).Hash.ToLowerInvariant()
-if ($NativeHostedStartupInstantiationHash -ne '4cd40719ecbfe8f42f5ded4b0b2ba4df4e48a8463f4ea236c7c0831d22a3eb52') {
+if ($NativeHostedStartupInstantiationHash -ne '03b1324c25bfae312705a7de74919299aa417e7a27a5de5d465113f760ae359b') {
     throw "The hosted-startup instantiation module has an unexpected digest: $NativeHostedStartupInstantiationHash"
 }
 if (
     (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationRetained).Hash.ToLowerInvariant() -ne $NativeHostedStartupInstantiationHash -or
-    (Get-Item -LiteralPath $NativeHostedStartupInstantiationRetained).Length -ne 20078
+    (Get-Item -LiteralPath $NativeHostedStartupInstantiationRetained).Length -ne 19935
 ) {
     throw 'The retained hosted-startup instantiation WVB has an unexpected identity.'
 }
 $NativeHostedStartupInstantiationArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeHostedStartupInstantiationArtifactHash -ne 'b499e5f6ec3fb09c4efc33aa364533c6c6b0daa680fd3847b0054e2c7f346311' -or
-    (Get-Item -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Length -ne 185841
+    $NativeHostedStartupInstantiationArtifactHash -ne 'c26980323050ccf8afc47ac1215d3203d4d4aa4b5621dc249529a7405570b6f8' -or
+    (Get-Item -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Length -ne 185819
 ) {
     throw "The retained hosted-startup instantiation fragment has an unexpected identity: $NativeHostedStartupInstantiationArtifactHash"
 }
@@ -1837,6 +1840,71 @@ if (
     $NativeHostedStartupInstantiationInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale hosted-startup instantiation inspection is incomplete.'
+}
+$NativeHostedContainerArtifacts = @(
+    @{
+        Name = 'planner'
+        Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Construction.wvproj'
+        Output = $NativeHostedContainerPlanModule
+        Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvb'
+        ModuleBytes = 33591
+        ModuleHash = 'c62b671c06212fb7450bd4d1335284988bd825402713565f94e45f5592330483'
+        Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvnf'
+        FragmentBytes = 536691
+        FragmentHash = '58f4e2553ee423c2fcf492f69dcb494f7bd618c47a0ecd54939e04c75e87279b'
+    },
+    @{
+        Name = 'Windows byte constructor'
+        Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Windows.wvproj'
+        Output = $NativeHostedContainerWindowsModule
+        Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvb'
+        ModuleBytes = 17409
+        ModuleHash = 'f3e47f2d447ac968c2b56df2fc4656ceaffbf7f3a2c84cd16c7347e29fb3b70b'
+        Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvnf'
+        FragmentBytes = 183406
+        FragmentHash = '49240c2aacfe806ab786fccdc5ef248775e09dae88fb5c8cb6ee703a9bde7e7c'
+    },
+    @{
+        Name = 'Linux byte constructor'
+        Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Linux.wvproj'
+        Output = $NativeHostedContainerLinuxModule
+        Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvb'
+        ModuleBytes = 12086
+        ModuleHash = 'a502fe7e6d5aaa29bf7b629e96b14bb26346c3296256b89d2aacd069a9eede5e'
+        Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvnf'
+        FragmentBytes = 124463
+        FragmentHash = '0c57b13158570163b113ba8f0faf608a804725316435ecc5485aa172666bec40'
+    }
+)
+foreach ($Artifact in $NativeHostedContainerArtifacts) {
+    dotnet $ToolDll build $Artifact.Project -o $Artifact.Output
+    if ($LASTEXITCODE -ne 0) { throw "The Seed CLI failed to build the hosted-container $($Artifact.Name)." }
+    $ModuleHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Artifact.Output).Hash.ToLowerInvariant()
+    if (
+        $ModuleHash -ne $Artifact.ModuleHash -or
+        (Get-Item -LiteralPath $Artifact.Output).Length -ne $Artifact.ModuleBytes -or
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $Artifact.Retained).Hash.ToLowerInvariant() -ne $Artifact.ModuleHash -or
+        (Get-Item -LiteralPath $Artifact.Retained).Length -ne $Artifact.ModuleBytes
+    ) {
+        throw "The hosted-container $($Artifact.Name) WVB has an unexpected identity: $ModuleHash"
+    }
+    $FragmentHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Artifact.Fragment).Hash.ToLowerInvariant()
+    if (
+        $FragmentHash -ne $Artifact.FragmentHash -or
+        (Get-Item -LiteralPath $Artifact.Fragment).Length -ne $Artifact.FragmentBytes
+    ) {
+        throw "The hosted-container $($Artifact.Name) WVNF has an unexpected identity: $FragmentHash"
+    }
+    $Inspection = (dotnet $ToolDll inspect $Artifact.Output) -join "`n"
+    if (
+        $LASTEXITCODE -ne 0 -or
+        $Inspection -notmatch 'Profile: portable' -or
+        $Inspection -notmatch 'Capabilities \(0\)' -or
+        $Inspection -notmatch 'Main\(bytes\) -> bytes' -or
+        $Inspection -notmatch 'Exports \(1\)'
+    ) {
+        throw "The hosted-container $($Artifact.Name) inspection is incomplete."
+    }
 }
 dotnet $ToolDll `
     compile $NativeHostedToolRuntimeHeaderCoreSource `

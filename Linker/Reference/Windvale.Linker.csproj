@@ -55,6 +55,15 @@
       Include="Consumers/Native-Hosted-Startup-Instantiation.wvnf"
       LogicalName="Windvale.Linker.Native-Hosted-Startup-Instantiation.wvnf" />
     <EmbeddedResource
+      Include="Consumers/Native-Hosted-Container-Construction.wvnf"
+      LogicalName="Windvale.Linker.Native-Hosted-Container-Construction.wvnf" />
+    <EmbeddedResource
+      Include="Consumers/Native-Hosted-Container-Windows.wvnf"
+      LogicalName="Windvale.Linker.Native-Hosted-Container-Windows.wvnf" />
+    <EmbeddedResource
+      Include="Consumers/Native-Hosted-Container-Linux.wvnf"
+      LogicalName="Windvale.Linker.Native-Hosted-Container-Linux.wvnf" />
+    <EmbeddedResource
       Include="Consumers/Windows-X64-Hosted-Compiler.wvo"
       LogicalName="Windvale.Linker.Windows-X64-Hosted-Compiler.wvo" />
     <EmbeddedResource
