@@ -566,9 +566,14 @@ metadata admission and runtime-table construction and writes the exact raw
 [Decision 0399](../Decisions/0399-Standalone-Native-Hosted-Container-Metadata.md)
 adds the preceding request-to-metadata process. It reuses complete Windvale
 metadata construction and admission and emits the raw 1,024-byte record for
-Decision 0398. Native request construction from immutable fragment/service
-evidence, service-bundle resource production, segment-request orchestration,
-and complete process composition remain.
+Decision 0398.
+
+[Decision 0400](../Decisions/0400-Standalone-Native-Hosted-Service-Bundle.md)
+adds exact `WVSQ 2` to `WVSI 2` service-bundle segment production as a native
+process. It reuses the established portable publication and materialization
+cores and retains the response envelope as immutable evidence. Native resource
+acquisition, ordered request construction, metadata-request projection from
+that evidence, segment-request orchestration, and complete composition remain.
 
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale

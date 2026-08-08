@@ -1,0 +1,68 @@
+# Windvale native hosted service-bundle producer
+
+## Status and scope
+
+This contract packages the portable segmented native service-bundle
+materializer as one standalone Windows/Linux command. It consumes one exact
+`WVSQ 2` request and writes the complete exact `WVSI 2` response for that
+canonical segment.
+
+The command does not select a native fragment or service leaves, construct the
+publication-plan request, acquire immutable source resources, or orchestrate a
+multi-segment bundle. Those remain a preceding resource-evidence boundary. This
+command owns request validation, canonical fragment/service copying, alignment
+fill, response admission, and one immutable segment result.
+
+## Command contract
+
+```text
+wvhostbundle <request.wvsq> <response.wvsi>
+```
+
+The input is the exact bounded `WVSQ 2` envelope defined by
+[native service-bundle materialization](Windvale-Native-Service-Bundle-Materialization.md).
+The shared portable core validates the embedded `WVPQ 1` publication request,
+canonical segment extent, source intersections, and complete payload. It emits
+the exact `WVSI 2` response, including the 40-byte evidence header and the
+constructed segment.
+
+The hosted shell accepts only a successful response whose total length,
+accepted request length, embedded-plan length, segment offset, segment length,
+service count, and payload extent agree with the admitted request. Identical
+input/output names return usage status 64. Any request or response rejection
+returns status 2 and leaves an existing output unchanged. Success returns zero
+and reports the complete response byte count.
+
+The module declares exactly `console.write_line`, `diagnostic.write_line`,
+`file.read_bytes`, `file.write_bytes`, `process.argument`, and
+`process.argument_count`. Its native fragment requires the existing nine host
+services shared by the hosted-container transition tools.
+
+## Targets and exact identities
+
+- `windows-x64-hosted-service-bundle-v1`, producing `.exe`;
+- `linux-x64-hosted-service-bundle-v1`, producing `.elf`.
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Service-bundle producer WVB | 20,144 | `2284d3896b013bd81ad75ff9de658a07fa4ae0f7ad6d7522e4cdf2abf36917ec` |
+| Windows service-bundle producer | 220,672 | `2f2d012829fda83a2a6109b95c0f59f96605a5a33434f50ae8d6ba0bea2a0e86` |
+| Linux service-bundle producer | 221,184 | `e474714f8b33dd8fbc8a4ace8a2440ac9fdbcbda3cc23d736101c80cf3da8878` |
+
+The WVB reconstructs through the native Project 1 front door. Focused
+current-host evidence builds the public CLI target, materializes one canonical
+hosted-tool fixture request exactly, independently admits the response, observes
+no CLR load, preserves an existing output after request corruption, and rejects
+an output alias.
+
+## Retirement boundary
+
+`WVSQ` validation, segmented bundle-byte construction, `WVSI` response
+admission, and immutable response-file production now have a native process
+boundary on both hosts. The new C# target writer is deletion-bound package
+layout and identity wiring.
+
+Native selection and acquisition of fragment/service resources, construction
+of ordered `WVSQ` requests, multi-segment evidence, metadata-request
+construction, complete pipeline composition, Linux execution, promotion, and
+the grouped dual-host retirement gate remain pending.

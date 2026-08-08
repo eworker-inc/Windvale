@@ -1,0 +1,108 @@
+module Nativeˉhostedˉserviceˉbundleˉtool profile hosted;
+
+import Runtimeˉnativeˉserviceˉbundleˉmaterialization as Materialization;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉserviceˉbundleˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostbundle <request.wvsq> <response.wvsi>"
+    );
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted service bundle status=",
+            Enumˉname(Nativeˉhostedˉserviceˉbundleˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+fn Responseˉisˉvalid(Request: bytes, Response: bytes) -> bool {
+    if Bytesˉlength(Response) < 40u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1230198359u32 {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 2u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 8u32) != Bytesˉlength(Response) {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 16u32) != Bytesˉlength(Request) {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 20u32) !=
+        Bytesˉreadˉu32ˉlittle(Request, 12u32) {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 28u32) !=
+        Bytesˉreadˉu32ˉlittle(Request, 16u32) {
+        return false;
+    }
+    let Segmentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Request, 20u32);
+    if Bytesˉreadˉu32ˉlittle(Response, 32u32) != Segmentˉbytes {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 36u32) !=
+        Bytesˉreadˉu32ˉlittle(Request, 48u32) {
+        return false;
+    }
+    return Bytesˉlength(Response) == 40u32 + Segmentˉbytes;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Requestˉpath: text = process.argument(0u32);
+    let Responseˉpath: text = process.argument(1u32);
+    if Bytesˉareˉequal(
+        Textˉtoˉutf8(Requestˉpath),
+        Textˉtoˉutf8(Responseˉpath)
+    ) {
+        return Usage();
+    }
+
+    let Request: bytes = file.read_bytes(Requestˉpath);
+    let Result: Materialization.Nativeˉserviceˉbundleˉmaterializationˉresult =
+        Materialization.Nativeˉserviceˉbundleˉmaterialize(Request);
+    if !Result.Valid || !Responseˉisˉvalid(Request, Result.Value) {
+        return Reject();
+    }
+
+    file.write_bytes(Responseˉpath, Result.Value);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted service bundle status=",
+                Enumˉname(Nativeˉhostedˉserviceˉbundleˉstatus.Valid)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Result.Value)))
+        )
+    );
+    return 0;
+}

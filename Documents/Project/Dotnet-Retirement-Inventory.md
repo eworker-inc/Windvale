@@ -505,6 +505,15 @@ exist, and current-host execution loads no CLR. Native request construction
 from immutable resources, service-bundle production, segment requests,
 complete composition, Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0400](../Decisions/0400-Standalone-Native-Hosted-Service-Bundle.md)
+removes managed service-bundle constructor invocation for one canonical segment.
+One 20,144-byte Windvale tool validates `WVSQ 2`, constructs and admits
+`WVSI 2`, and writes the exact immutable response consumed by the next evidence
+boundary. Paired packages and public CLI targets exist, and current-host
+execution loads no CLR. Native resource acquisition, ordered bundle requests,
+metadata-request evidence, complete composition, Linux execution, promotion,
+and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

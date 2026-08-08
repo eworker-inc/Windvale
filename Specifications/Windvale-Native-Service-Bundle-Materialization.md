@@ -139,3 +139,10 @@ construction recursion.
 Any format, limit, fill, ordering, payload, or bootstrap change requires a new
 accepted contract version, regenerated WVB/WVNF identities, malformed-input
 coverage, and Windows/Linux qualification.
+
+The standalone
+[hosted service-bundle producer](Windvale-Native-Hosted-Service-Bundle.md) now
+executes this contract as a native process and writes one complete `WVSI 2`
+response. Native resource acquisition and ordered `WVSQ 2` request construction
+remain separate so immutable fragment/service identity is not inferred from an
+untrusted request payload.

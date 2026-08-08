@@ -60,7 +60,9 @@ metadata admission, and raw runtime-input production now have a native process
 boundary on both hosts. The new C# target writer is deletion-bound package
 layout and identity wiring.
 
-Native request construction from immutable fragment/service evidence,
-service-bundle resource production, segment-request orchestration, complete
-pipeline composition, Linux execution, promotion, and the grouped dual-host
-retirement gate remain pending.
+The standalone
+[service-bundle producer](Windvale-Native-Hosted-Service-Bundle.md) now emits
+one exact immutable segment response. Native acquisition of fragment/service
+resources, ordered bundle requests, metadata-request construction from that
+evidence, segment-request orchestration, complete pipeline composition, Linux
+execution, promotion, and the grouped dual-host retirement gate remain pending.

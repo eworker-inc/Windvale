@@ -49,9 +49,10 @@ WVB through the native front door. No broader verifier was run.
   into Decision 0398's raw metadata input.
 - Metadata policy remains in the existing focused portable modules; the hosted
   shell is 106 lines.
-- Native request construction from immutable resources, service-bundle
-  production, segment requests, complete composition, Linux execution,
-  promotion, and the grouped gate remain.
+- Decision 0400 now produces one immutable service-bundle segment response;
+  native resource acquisition, ordered bundle requests, metadata-request
+  construction from that evidence, segment requests, complete composition,
+  Linux execution, promotion, and the grouped gate remain.
 
 ## Reconsideration triggers
 
