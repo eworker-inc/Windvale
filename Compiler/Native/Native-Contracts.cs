@@ -586,6 +586,16 @@ public enum Nativeˉentryˉresultˉkind : byte
     Descriptor = 2,
 }
 
+public enum Nativeˉentryˉinputˉkind : byte
+{
+    None = 0,
+    Bytes = 1,
+}
+
+public readonly record struct Nativeˉentryˉshape(
+    Nativeˉentryˉinputˉkind Input,
+    Nativeˉentryˉresultˉkind Result);
+
 public sealed record Nativeˉcompilation(
     Nativeˉmodule Module,
     Nativeˉfragment Fragment);

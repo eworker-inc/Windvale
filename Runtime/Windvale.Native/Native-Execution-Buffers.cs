@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text;
+using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 using Windvale.Runtime;
 
@@ -42,6 +43,33 @@ internal sealed class Nativeˉexecutionˉbuffers : IDisposable
     public Nativeˉborrowedˉbuffer Argumentˉtable { get; private set; }
 
     public uint Argumentˉcount { get; private set; }
+
+    public Nativeˉborrowedˉbuffer Prepareˉentryˉinput(ImmutableArray<byte> input)
+    {
+        if (input.IsDefault || input.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+        {
+            throw new Nativeˉbackendˉexception(
+                "WVN4020",
+                $"Native entry byte input must be initialized and no larger than " +
+                    $"{Bytecodeˉlimits.MAX_BYTE_DATA_BYTES} bytes.");
+        }
+
+        var Buffer = Allocate(input);
+        if (Buffer.Length != input.Length || Buffer.Allocationˉlength < Math.Max(1, input.Length))
+        {
+            throw new InvalidOperationException("The native entry input has an invalid bounded layout.");
+        }
+        var Actual = new byte[input.Length];
+        if (Actual.Length != 0)
+        {
+            Marshal.Copy(Buffer.Address, Actual, 0, Actual.Length);
+        }
+        if (!Actual.AsSpan().SequenceEqual(input.AsSpan()))
+        {
+            throw new InvalidOperationException("The native entry input did not retain its immutable bytes.");
+        }
+        return Buffer;
+    }
 
     public void Dispose()
     {

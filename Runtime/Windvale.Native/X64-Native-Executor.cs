@@ -17,7 +17,9 @@ public static class X64ˉnativeˉexecutor
         Nativeˉhostˉservices? hostˉservices = null) =>
         Executeˉentry(
             fragment,
+            Nativeˉentryˉinputˉkind.None,
             Nativeˉentryˉresultˉkind.Scalar,
+            [],
             entry,
             maximumˉinstructions,
             maximumˉcallˉdepth,
@@ -31,7 +33,26 @@ public static class X64ˉnativeˉexecutor
         Nativeˉhostˉservices? hostˉservices = null) =>
         Executeˉentry(
             fragment,
+            Nativeˉentryˉinputˉkind.None,
             Nativeˉentryˉresultˉkind.Descriptor,
+            [],
+            entry,
+            maximumˉinstructions,
+            maximumˉcallˉdepth,
+            hostˉservices).Bytes;
+
+    public static ImmutableArray<byte> Executeˉbytes(
+        Nativeˉfragment fragment,
+        ImmutableArray<byte> input,
+        string entry = "Main",
+        long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
+        int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH,
+        Nativeˉhostˉservices? hostˉservices = null) =>
+        Executeˉentry(
+            fragment,
+            Nativeˉentryˉinputˉkind.Bytes,
+            Nativeˉentryˉresultˉkind.Descriptor,
+            input,
             entry,
             maximumˉinstructions,
             maximumˉcallˉdepth,
@@ -46,7 +67,9 @@ public static class X64ˉnativeˉexecutor
     {
         var Outcome = Executeˉentry(
             fragment,
+            Nativeˉentryˉinputˉkind.None,
             Nativeˉentryˉresultˉkind.Scalar,
+            [],
             entry,
             maximumˉinstructions,
             maximumˉcallˉdepth,
@@ -56,19 +79,30 @@ public static class X64ˉnativeˉexecutor
 
     private static Nativeˉexecutionˉoutcome Executeˉentry(
         Nativeˉfragment fragment,
+        Nativeˉentryˉinputˉkind expectedˉinput,
         Nativeˉentryˉresultˉkind expectedˉresult,
+        ImmutableArray<byte> input,
         string entry = "Main",
         long maximumˉinstructions = Nativeˉcontract.DEFAULT_MAXIMUM_INSTRUCTIONS,
         int maximumˉcallˉdepth = Nativeˉcontract.DEFAULT_MAXIMUM_CALL_DEPTH,
         Nativeˉhostˉservices? hostˉservices = null)
     {
-        var Actualˉresult = Nativeˉfragmentˉverifier.Verifyˉentryˉresultˉkind(fragment);
+        var Actualˉshape = Nativeˉfragmentˉverifier.Verifyˉentryˉshape(fragment);
         ArgumentNullException.ThrowIfNull(entry);
-        if (Actualˉresult != expectedˉresult)
+        if (Actualˉshape.Input != expectedˉinput || Actualˉshape.Result != expectedˉresult)
         {
             throw new Nativeˉbackendˉexception(
                 "WVN4011",
-                $"Native entry '{entry}' returns {Actualˉresult}; the selected executor requires {expectedˉresult}.");
+                $"Native entry '{entry}' has shape {Actualˉshape.Input} -> {Actualˉshape.Result}; " +
+                    $"the selected executor requires {expectedˉinput} -> {expectedˉresult}.");
+        }
+        if (expectedˉinput == Nativeˉentryˉinputˉkind.Bytes &&
+            (input.IsDefault || input.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES))
+        {
+            throw new Nativeˉbackendˉexception(
+                "WVN4020",
+                $"Native entry byte input must be initialized and no larger than " +
+                    $"{Bytecodeˉlimits.MAX_BYTE_DATA_BYTES} bytes.");
         }
         if (maximumˉinstructions <= 0)
         {
@@ -102,6 +136,9 @@ public static class X64ˉnativeˉexecutor
         using var Buffers = new Nativeˉexecutionˉbuffers(
             hostˉservices?.Resources,
             Requiresˉarguments);
+        var Entryˉinput = expectedˉinput == Nativeˉentryˉinputˉkind.Bytes
+            ? Buffers.Prepareˉentryˉinput(input)
+            : default;
         var Requiresˉconsole = fragment.Requiredˉservices.Contains(
             Nativeˉservice.Consoleˉwriteˉline);
         var Requiresˉdiagnostic = fragment.Requiredˉservices.Contains(
@@ -316,8 +353,25 @@ public static class X64ˉnativeˉexecutor
 
             if (expectedˉresult == Nativeˉentryˉresultˉkind.Descriptor)
             {
-                Resultˉcell = Marshal.AllocHGlobal(Nativeˉcontract.VALUE_SLOT_BYTES);
-                Marshal.Copy(new byte[Nativeˉcontract.VALUE_SLOT_BYTES], 0, Resultˉcell, Nativeˉcontract.VALUE_SLOT_BYTES);
+                var Bridgeˉbytes = new byte[
+                    expectedˉinput == Nativeˉentryˉinputˉkind.Bytes
+                        ? 2 * Nativeˉcontract.VALUE_SLOT_BYTES
+                        : Nativeˉcontract.VALUE_SLOT_BYTES];
+                if (expectedˉinput == Nativeˉentryˉinputˉkind.Bytes)
+                {
+                    var Descriptor = Bridgeˉbytes.AsSpan(Nativeˉcontract.VALUE_SLOT_BYTES);
+                    BinaryPrimitives.WriteUInt64LittleEndian(
+                        Descriptor[Nativeˉcontract.BORROWED_BYTES_POINTER_OFFSET..],
+                        checked((ulong)Entryˉinput.Address.ToInt64()));
+                    BinaryPrimitives.WriteUInt32LittleEndian(
+                        Descriptor[Nativeˉcontract.BORROWED_BYTES_LENGTH_OFFSET..],
+                        checked((uint)Entryˉinput.Length));
+                    BinaryPrimitives.WriteUInt32LittleEndian(
+                        Descriptor[Nativeˉcontract.BORROWED_BYTES_RESERVED_OFFSET..],
+                        0);
+                }
+                Resultˉcell = Marshal.AllocHGlobal(Bridgeˉbytes.Length);
+                Marshal.Copy(Bridgeˉbytes, 0, Resultˉcell, Bridgeˉbytes.Length);
             }
             var Entryˉaddress = checked(Address.ToInt64() + Entry.Offset);
             var Function = Marshal.GetDelegateForFunctionPointer<Nativeˉentry>(new(Entryˉaddress));
@@ -351,6 +405,7 @@ public static class X64ˉnativeˉexecutor
                     Address,
                     Context,
                     Buffers.Textˉarena,
+                    Entryˉinput,
                     Resultˉcell,
                     entry);
             }
@@ -526,6 +581,7 @@ public static class X64ˉnativeˉexecutor
         IntPtr executableˉaddress,
         IntPtr context,
         Nativeˉborrowedˉbuffer arena,
+        Nativeˉborrowedˉbuffer entryˉinput,
         IntPtr resultˉcell,
         string entry)
     {
@@ -563,7 +619,12 @@ public static class X64ˉnativeˉexecutor
                 Length,
                 checked(Imageˉstart + Symbol.Offset),
                 Symbol.Size));
-        if (!Isˉarenaˉresult && !Isˉstaticˉresult)
+        var Isˉinputˉresult = entryˉinput.Address != IntPtr.Zero && Isˉinside(
+            Pointer,
+            Length,
+            checked((ulong)entryˉinput.Address.ToInt64()),
+            checked((uint)entryˉinput.Length));
+        if (!Isˉarenaˉresult && !Isˉstaticˉresult && !Isˉinputˉresult)
         {
             throw Invalidˉbyteˉresult(entry);
         }
@@ -589,7 +650,7 @@ public static class X64ˉnativeˉexecutor
     private static Nativeˉbackendˉexception Invalidˉbyteˉresult(string entry) =>
         new(
             "WVN4012",
-            $"Native entry '{entry}' returned a byte descriptor outside its verified immutable data or execution arena.");
+            $"Native entry '{entry}' returned a byte descriptor outside its verified immutable data, entry input, or execution arena.");
 
     private static void Requireˉservices(
         Nativeˉfragment fragment,

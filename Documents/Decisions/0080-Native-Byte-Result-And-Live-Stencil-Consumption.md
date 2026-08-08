@@ -4,6 +4,7 @@
 - Status: Accepted, implemented, and cross-host qualified
 - Extends: [Decision 0079](0079-First-Windvale-Native-Stencil-Consumer.md)
 - Preserves: Native ABI 14, execution-context version 6, service-table version 4, WVB 1.6, WVO 1.0, kernel bridge 9, firmware probe 16, and both final process-input leaf identities
+- Advanced by: [Decision 0360](0360-Native-Bounded-Byte-Entry-Input.md)
 
 ## Context
 

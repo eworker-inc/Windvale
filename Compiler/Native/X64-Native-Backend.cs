@@ -65,14 +65,22 @@ public static class X64ˉnativeˉbackend
 
         var Mainˉexport = Module.Exports[0];
         var Main = verifiedˉmodule.Functions[Mainˉexport.Targetˉindex];
+        var Isˉparameterlessˉscalar =
+            Main.Declaration.Parameterˉtypes.IsEmpty &&
+            Main.Declaration.Returnˉtype.Kind == Valueˉtype.I32;
+        var Isˉportableˉbyteˉentry =
+            Isˉportable &&
+            Main.Declaration.Returnˉtype.Kind == Valueˉtype.Bytes &&
+            (Main.Declaration.Parameterˉtypes.IsEmpty ||
+                (Main.Declaration.Parameterˉtypes.Length == 1 &&
+                    Main.Declaration.Parameterˉtypes[0].Kind == Valueˉtype.Bytes));
         if (!StringComparer.Ordinal.Equals(Main.Declaration.Name, "Main") ||
-            !Main.Declaration.Parameterˉtypes.IsEmpty ||
-            Main.Declaration.Returnˉtype.Kind is not (Valueˉtype.I32 or Valueˉtype.Bytes) ||
-            (Main.Declaration.Returnˉtype.Kind == Valueˉtype.Bytes && !Isˉportable))
+            (!Isˉparameterlessˉscalar && !Isˉportableˉbyteˉentry))
         {
             Fail(
                 "WVN2002",
-                "The baseline native entry must be Main() -> i32, or capability-free portable Main() -> bytes; " +
+                "The baseline native entry must be Main() -> i32, capability-free portable Main() -> bytes, " +
+                "or capability-free portable Main(bytes) -> bytes; " +
                 $"found name='{Main.Declaration.Name}', parameters={Main.Declaration.Parameterˉtypes.Length}, " +
                 $"return={Main.Declaration.Returnˉtype}.");
         }
@@ -1078,6 +1086,12 @@ public static class X64ˉnativeˉbackend
                     Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
                 ]);
                 Emitˉstoreˉeaxˉatˉfield(Code, Hiddenˉresultˉslot, sizeof(ulong));
+            }
+            if (Isˉmain && Function.Parameterˉtypes.Length != 0)
+            {
+                // The second cell in the exported descriptor bridge owns the
+                // immutable byte input for the complete native call.
+                Code.AddRange([0x4C, 0x8D, 0x41, Nativeˉcontract.VALUE_SLOT_BYTES]);
             }
             for (var Parameter = 0; Parameter < Function.Parameterˉtypes.Length; Parameter++)
             {

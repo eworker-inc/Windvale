@@ -25,11 +25,15 @@ public static class Nativeˉfragmentˉverifier
 
     public static Nativeˉfragment Verify(Nativeˉfragment fragment)
     {
-        _ = Verifyˉentryˉresultˉkind(fragment);
+        _ = Verifyˉentryˉshape(fragment);
         return fragment;
     }
 
     public static Nativeˉentryˉresultˉkind Verifyˉentryˉresultˉkind(
+        Nativeˉfragment fragment) =>
+        Verifyˉentryˉshape(fragment).Result;
+
+    public static Nativeˉentryˉshape Verifyˉentryˉshape(
         Nativeˉfragment fragment)
     {
         ArgumentNullException.ThrowIfNull(fragment);
@@ -231,7 +235,7 @@ public static class Nativeˉfragmentˉverifier
         }
     }
 
-    private static Nativeˉentryˉresultˉkind Verifyˉtargetˉshape(
+    private static Nativeˉentryˉshape Verifyˉtargetˉshape(
         Nativeˉfragment fragment)
     {
         var Functions = fragment.Symbols
@@ -333,13 +337,32 @@ public static class Nativeˉfragmentˉverifier
             }
         }
         var Main = Functions.Single(Function => Function.Binding == Nativeˉsymbolˉbinding.Export);
-        return Decoded[checked((int)Main.Offset)].Returnˉkind switch
+        var Decodedˉmain = Decoded[checked((int)Main.Offset)];
+        var Input = Decodedˉmain.Parameterˉkinds switch
+        {
+            [] => Nativeˉentryˉinputˉkind.None,
+            [Decodedˉargumentˉkind.Borrowedˉbytes] => Nativeˉentryˉinputˉkind.Bytes,
+            _ => throw Invalidˉentryˉshape(),
+        };
+        var Result = Decodedˉmain.Returnˉkind switch
         {
             Decodedˉreturnˉkind.Void => Nativeˉentryˉresultˉkind.Void,
             Decodedˉreturnˉkind.Scalar => Nativeˉentryˉresultˉkind.Scalar,
             Decodedˉreturnˉkind.Descriptor => Nativeˉentryˉresultˉkind.Descriptor,
             _ => throw new InvalidOperationException("Verified native entry result became invalid."),
         };
+        if (Input == Nativeˉentryˉinputˉkind.Bytes &&
+            Result != Nativeˉentryˉresultˉkind.Descriptor)
+        {
+            Failˉshape();
+        }
+        return new(Input, Result);
+
+        static InvalidOperationException Invalidˉentryˉshape()
+        {
+            Failˉshape();
+            return new("Verified native entry input became invalid.");
+        }
     }
 
     private static Decodedˉfunction Decodeˉfunction(
@@ -454,6 +477,15 @@ public static class Nativeˉfragmentˉverifier
             Index += 11;
         }
 
+        var Hasˉentryˉinputˉbridge = Isˉmain && Matches(
+            Code,
+            Index,
+            0x4C, 0x8D, 0x41, Nativeˉcontract.VALUE_SLOT_BYTES);
+        if (Hasˉentryˉinputˉbridge)
+        {
+            Index += 4;
+        }
+
         var Parameterˉkinds = new List<Decodedˉargumentˉkind>();
         while (Parameterˉkinds.Count < Nativeˉcontract.MAXIMUM_CALL_PARAMETERS &&
             Tryˉstoreˉargument(
@@ -467,7 +499,12 @@ public static class Nativeˉfragmentˉverifier
             Parameterˉkinds.Add(Parameterˉkind);
             Index += Parameterˉlength;
         }
-        if (Isˉmain && Parameterˉkinds.Count != 0)
+        var Hasˉentryˉbyteˉinput = Parameterˉkinds is
+            [Decodedˉargumentˉkind.Borrowedˉbytes];
+        if (Isˉmain &&
+            (Hasˉentryˉinputˉbridge != Hasˉentryˉbyteˉinput ||
+                Parameterˉkinds.Count > 1 ||
+                (Parameterˉkinds.Count == 1 && !Hasˉentryˉbyteˉinput)))
         {
             Failˉshape();
         }

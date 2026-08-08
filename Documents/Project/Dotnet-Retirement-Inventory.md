@@ -139,6 +139,16 @@ temporary C# wrapper still constructs and validates the type-dependent adjacent
 that metadata builder, retained-WVB loading, W^X publication, service-bundle
 orchestration, Linux evidence, and the grouped gate remain open.
 
+[Decision 0360](../Decisions/0360-Native-Bounded-Byte-Entry-Input.md)
+adds the bounded native `Main(bytes) -> bytes` entry needed by variable-input
+Windvale constructors such as the next `WVEN` metadata builder. The existing
+cross-host result bridge now has an exact two-cell form only for that new entry
+shape: one output descriptor and one immutable, execution-owned input
+descriptor. Parameterless entry bytes, ABI 22, the execution context, and
+capabilities remain unchanged. The C# executor still owns temporary input
+copying, W^X invocation, and output copying; moving those host responsibilities
+remains part of the larger retirement gate.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
