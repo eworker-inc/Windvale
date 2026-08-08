@@ -594,6 +594,12 @@ requires every resulting placement to match before publication. Managed
 manifest lifecycle, Linux execution, promotion, and grouped qualification
 remain.
 
+[Decision 0406](../Decisions/0406-Native-Hosted-Source-Geometry-Production.md)
+closes the hidden managed input to that seam. A focused paired command derives
+canonical `WVSG 1` directly from bounded fragment and service resources and
+self-admits it before publication. Raw resource production, ordered process
+lifecycle, Linux execution, promotion, and grouped qualification remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

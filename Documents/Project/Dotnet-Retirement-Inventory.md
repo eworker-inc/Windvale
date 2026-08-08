@@ -551,6 +551,13 @@ host application matches the frozen request oracle and loads no CLR. Ordered
 request/response execution, manifest lifecycle, Linux execution, promotion,
 and the grouped gate remain.
 
+[Decision 0406](../Decisions/0406-Native-Hosted-Source-Geometry-Production.md)
+removes managed `WVSG` construction from that candidate path. A paired native
+command reads the canonical bounded fragment and ten service resources once,
+derives exact logical extents and aligned placements, and self-admits the
+manifest before publication. Raw resource production, ordered process and
+manifest lifecycle, Linux execution, promotion, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

@@ -1,0 +1,161 @@
+module Nativeˉhostedˉsourceˉgeometryˉtool profile hosted;
+
+import Foundationˉdecimalˉparsing as Decimal;
+import Foundationˉimmutableˉsourceˉregions as Sources;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉsourceˉgeometryˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+const MAXIMUM_CHUNK_BYTES: u32 = 4194304u32;
+const SERVICE_REGIONS: u32 = 10u32;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Alignˉsixteen(Value: u32) -> u32 {
+    return ((Value + 15u32) / 16u32) * 16u32;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted source geometry status=",
+            Enumˉname(Nativeˉhostedˉsourceˉgeometryˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 3u32 {
+        diagnostic.write_line(
+            "Usage: wvhostsourcegeometry <chunk-prefix> <fragment-chunks> <sources.wvsg>"
+        );
+        return 64;
+    }
+    let Prefix: text = process.argument(0u32);
+    let Countˉtext: bytes = Textˉtoˉutf8(process.argument(1u32));
+    let Outputˉpath: text = process.argument(2u32);
+    let Parsed: Decimal.Foundationˉu32ˉparse =
+        Decimal.Foundationˉu32ˉdecimalˉparse(
+            Countˉtext, 0u32, Bytesˉlength(Countˉtext)
+        );
+    if !Parsed.Valid || Parsed.Value == 0u32 || Parsed.Value > 8u32 ||
+        !Sources.Immutableˉsourceˉprefixˉisˉvalid(Prefix) {
+        return Reject();
+    }
+
+    let Chunks: u32 = Parsed.Value + SERVICE_REGIONS;
+    var Chunkˉrecords: bytes = Empty(Countˉtext);
+    var Regionˉsizes: bytes = Empty(Countˉtext);
+    var Logicalˉbytes: u32 = 0u32;
+    var Fragmentˉbytes: u32 = 0u32;
+    var Chunk: u32 = 0u32;
+    while Chunk < Chunks {
+        let Resourceˉpath: text =
+            Sources.Immutableˉsourceˉresourceˉname(Prefix, Chunk);
+        if Pathsˉareˉequal(Resourceˉpath, Outputˉpath) { return Reject(); }
+        let Resource: bytes = file.read_bytes(Resourceˉpath);
+        let Resourceˉbytes: u32 = Bytesˉlength(Resource);
+        if Resourceˉbytes == 0u32 || Resourceˉbytes > MAXIMUM_CHUNK_BYTES ||
+            (Chunk + 1u32 < Parsed.Value &&
+                Resourceˉbytes != MAXIMUM_CHUNK_BYTES) {
+            return Reject();
+        }
+        Chunkˉrecords = Appendˉu32(Chunkˉrecords, Chunk);
+        Chunkˉrecords = Appendˉu32(Chunkˉrecords, Logicalˉbytes);
+        Chunkˉrecords = Appendˉu32(Chunkˉrecords, 0u32);
+        Chunkˉrecords = Appendˉu32(Chunkˉrecords, Resourceˉbytes);
+        Chunkˉrecords = Appendˉu32(Chunkˉrecords, Resourceˉbytes);
+        Logicalˉbytes = Logicalˉbytes + Resourceˉbytes;
+        if Chunk < Parsed.Value {
+            Fragmentˉbytes = Fragmentˉbytes + Resourceˉbytes;
+        } else {
+            Regionˉsizes = Appendˉu32(Regionˉsizes, Resourceˉbytes);
+        }
+        Chunk = Chunk + 1u32;
+    }
+
+    var Regionˉrecords: bytes = Empty(Countˉtext);
+    Regionˉrecords = Appendˉu32(Regionˉrecords, 0u32);
+    Regionˉrecords = Appendˉu32(Regionˉrecords, 0u32);
+    Regionˉrecords = Appendˉu32(Regionˉrecords, 0u32);
+    Regionˉrecords = Appendˉu32(Regionˉrecords, Fragmentˉbytes);
+    var Logicalˉcursor: u32 = Fragmentˉbytes;
+    var Imageˉcursor: u32 = Fragmentˉbytes;
+    var Service: u32 = 0u32;
+    while Service < SERVICE_REGIONS {
+        let Serviceˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Regionˉsizes, Service * 4u32);
+        Imageˉcursor = Alignˉsixteen(Imageˉcursor);
+        Regionˉrecords = Appendˉu32(Regionˉrecords, Service + 1u32);
+        Regionˉrecords = Appendˉu32(Regionˉrecords, Logicalˉcursor);
+        Regionˉrecords = Appendˉu32(Regionˉrecords, Imageˉcursor);
+        Regionˉrecords = Appendˉu32(Regionˉrecords, Serviceˉbytes);
+        Logicalˉcursor = Logicalˉcursor + Serviceˉbytes;
+        Imageˉcursor = Imageˉcursor + Serviceˉbytes;
+        Service = Service + 1u32;
+    }
+    if Logicalˉcursor != Logicalˉbytes { return Reject(); }
+
+    let Total: u32 = 32u32 + Chunks * 20u32 + 11u32 * 16u32;
+    var Manifest: bytes = Empty(Countˉtext);
+    Manifest = Appendˉu32(Manifest, 1196643927u32);
+    Manifest = Appendˉu32(Manifest, 1u32);
+    Manifest = Appendˉu32(Manifest, Total);
+    Manifest = Appendˉu32(Manifest, Chunks);
+    Manifest = Appendˉu32(Manifest, 11u32);
+    Manifest = Appendˉu32(Manifest, Logicalˉbytes);
+    Manifest = Appendˉu32(Manifest, Imageˉcursor);
+    Manifest = Appendˉu32(Manifest, 0u32);
+    Manifest = Bytesˉconcat(Manifest, Chunkˉrecords);
+    Manifest = Bytesˉconcat(Manifest, Regionˉrecords);
+    let Plan: Sources.Immutableˉsourceˉregionˉplan =
+        Sources.Immutableˉsourceˉregionsˉadmit(Manifest);
+    if !Plan.Valid || Plan.Chunks != Chunks || Plan.Regions != 11u32 ||
+        Plan.Logicalˉbytes != Logicalˉbytes ||
+        Plan.Imageˉbytes != Imageˉcursor || Bytesˉlength(Manifest) != Total {
+        return Reject();
+    }
+    file.write_bytes(Outputˉpath, Manifest);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted source geometry status=Valid chunks=",
+                U32ˉformat(Chunks)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Total))
+        )
+    );
+    return 0;
+}

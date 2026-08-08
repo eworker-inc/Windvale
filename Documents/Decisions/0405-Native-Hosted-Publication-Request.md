@@ -48,6 +48,7 @@ end-of-goal gate policy.
 ## Consequences
 
 - C# no longer owns `WVPQ` construction in the candidate hosted process path.
+- Decision 0406 supplies its `WVSG` directly from real bounded resources.
 - The publication planner independently checks the geometry before output;
   `WVSG` still does not become content identity or authority.
 - The new root is 134 lines and reuses focused portable owners rather than
