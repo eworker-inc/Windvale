@@ -1,0 +1,44 @@
+{
+  "format": "windvale-native-compiler-seed-1",
+  "status": "candidate",
+  "semanticFreezeCommit": "524e84afb6e5bab6bbd95ebc0b9eeaf886af834b",
+  "semanticFreezeTree": "9d06e2548b075a0dfda31022f989954b9efee4aa",
+  "semanticFreezeQualification": "https://github.com/eworker-inc/Windvale/actions/runs/30964566192",
+  "reconstructionCommit": "3824f39d0997e3d7ab523f7cc1fe0f4bd8288e35",
+  "reconstructionTree": "4b3574a297cf287d956cbeaf9dd08b3a836a0bd0",
+  "reconstructionQualification": "pending",
+  "bootstrapSourceCommit": "3824f39d0997e3d7ab523f7cc1fe0f4bd8288e35",
+  "bootstrapProject": "Windvale-Compiler.wvproj",
+  "bootstrapProjectBytes": 649,
+  "bootstrapProjectSha256": "e097e9d007909a3cf17476ccfce41ace5fa89c566386d15ae24c7d91d9f91e7b",
+  "bootstrapOutputBytes": 921900,
+  "bootstrapOutputSha256": "fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556",
+  "publisherCommit": "9d36387867ebff80ee94c6f9f7996da4ef32a4a3",
+  "publisherQualification": "https://github.com/eworker-inc/Windvale/actions/runs/30971408639",
+  "artifacts": [
+    {
+      "name": "native-compiler-seed-wvb",
+      "path": "Wvb/Windvale-Compiler.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 914746,
+      "sha256": "48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6",
+      "sourceProject": "Windvale-Compiler.wvproj"
+    },
+    {
+      "name": "windows-x64-native-compiler-seed",
+      "path": "windows-x64/wvcompiler.exe",
+      "target": "windows-x64-console-v3",
+      "bytes": 27467776,
+      "sha256": "344940f66b26b516b8b4e10a712a6b2c01cbff95aa7ff18aac0789ba9197f970",
+      "sourceWvb": "Wvb/Windvale-Compiler.wvb"
+    },
+    {
+      "name": "linux-x64-native-compiler-seed",
+      "path": "linux-x64/wvcompiler.elf",
+      "target": "linux-x64-console-v3",
+      "bytes": 27467776,
+      "sha256": "2f745e2c4dddb7333926783796f06b6f02ef356742fb5873a2efffdca16c696a",
+      "sourceWvb": "Wvb/Windvale-Compiler.wvb"
+    }
+  ]
+}

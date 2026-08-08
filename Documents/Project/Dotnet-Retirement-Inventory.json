@@ -11,6 +11,20 @@
       "owner": "dual-host qualification and homepage release"
     },
     {
+      "path": "Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1",
+      "lanes": [
+        "recovery"
+      ],
+      "owner": "Windows Stage 0 native compiler seed reconstruction"
+    },
+    {
+      "path": "Tools/Recovery/Rebuild-Native-Compiler-Seed.sh",
+      "lanes": [
+        "recovery"
+      ],
+      "owner": "Linux Stage 0 native compiler seed reconstruction"
+    },
+    {
       "path": "Tools/Recovery/Rebuild-Native-Front-Door.ps1",
       "lanes": [
         "recovery"

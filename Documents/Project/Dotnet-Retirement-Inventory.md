@@ -37,8 +37,17 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | G1 | Independent dual-host qualification | `managed-normal` | `.github/workflows/verify.yml` installs .NET and runs the managed Seed gate. Native replacement must retain Windows/Linux independence and fail-closed verification. |
 | R1 | Homepage and playground release | `native-candidate` | The homepage workflow publishes the static playground and its digest-pinned native package without installing .NET. Independent release promotion evidence remains before this row is called qualified. |
 | D1 | Local editable browser playground | `native-candidate` | `npm run dev:playground` builds and serves the static Monaco/native-WebAssembly application without starting Blazor or .NET. Cross-host promotion remains. |
-| C1 | Clean bootstrap from documented native seeds | `missing` | Current recovery scripts reconstruct pinned native artifacts through Stage 0. A previous native release must rebuild the accepted toolchain without .NET. |
+| C1 | Clean bootstrap from documented native seeds | `native-candidate` | The versioned compiler WVB and paired native compiler seeds, copied-seed host launchers, exact accepted compiler output, and Stage 0 reconstruction route exist. Independent Linux execution, paired-host promotion, native rebuilding of the seed applications and remaining accepted tools, and consumption from a later release remain. |
 | C2 | Final digest-bound Stage 0 recovery archive | `missing` | Produce and verify one final Windows/Linux recovery release before deleting retired managed source. |
+
+Current C1 update: the [native compiler seed bootstrap](../../Specifications/Windvale-Native-Compiler-Seed-Bootstrap.md)
+pins the semantic-freeze compiler WVB and paired format-3 applications, consumes
+the qualified native publisher, and rebuilds the current thirteen-module compiler
+to the exact 921,900-byte accepted WVB without invoking .NET. The Windows route
+passes from a copied seed root and rejects an altered seed while preserving the
+existing destination. Linux execution, dual-host promotion, native reconstruction
+of the seed PE/ELF, remaining accepted-tool reconstruction, and a later release's
+use of this candidate as its previous seed remain before C1 is complete.
 
 Current N1 update: [Decision 0394](../Decisions/0394-Pruned-Staged-Publisher-Bridge-Closure.md)
 advances the Decision 0346 self-lowering result after shared WVA took ownership
@@ -672,7 +681,7 @@ The next transfer should close a complete row or a clearly bounded part of one r
 
 ## Direct managed entry points
 
-The companion JSON currently records 11 operational files across three lanes:
+The companion JSON currently records 13 operational files across three lanes:
 
 - verification: Seed, bootstrap, OS, WebAssembly, and GitHub qualification;
 - release: the managed independent-qualification workflow that gates publication; and
