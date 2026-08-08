@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉhostedˉtoolˉmetadataˉconstructionˉbridge profile portable;
+
+import Runtimeˉnativeˉhostedˉtoolˉmetadataˉconstruction as Metadataˉconstruction;
+
+export fn Main(Input: bytes) -> bytes {
+    return Metadataˉconstruction.Nativeˉhostedˉtoolˉmetadataˉbuild(Input);
+}

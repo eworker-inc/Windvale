@@ -509,6 +509,17 @@ differential oracle. Metadata production, service-bundle production, outer
 PE/ELF construction, and the temporary managed invocation bridge remain, so a
 complete hosted tool is not yet reconstructible without Stage 0.
 
+[Decision 0383](../Decisions/0383-Windvale-Owned-Hosted-Tool-Metadata-Construction.md)
+removes C# ownership of the canonical 1 KiB `WVH* 1` metadata record. Windvale
+now derives all six profile directories, the capability and service mappings,
+target adapters, fixed limits, layout, and reserved bytes from verified raw
+bundle extents and digests, then reuses the separate admission core as a final
+self-check. Normal runtime-data construction consumes and independently
+verifies the digest-bound WVNF before invoking Decision 0382's header
+constructor. The former C# constructor is an explicitly named Stage 0 oracle.
+Service-bundle production, outer PE/ELF construction, direct native invocation,
+Linux execution, and the grouped gate remain open.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

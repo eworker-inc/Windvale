@@ -1422,6 +1422,7 @@ internal static partial class Program
         new("Windvale constructs the native argument table", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉargumentˉtableˉruns),
         new("Windvale constructs and guards the native entry bridge", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉentryˉbridgeˉruns),
         new("Windvale admits native byte-result ranges", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉbyteˉresultˉadmissionˉruns),
+        new("Windvale constructs hosted-tool metadata", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉtoolˉmetadataˉruns),
         new("Windvale constructs hosted-tool runtime headers", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉtoolˉruntimeˉheaderˉruns),
         new("Windvale materializes segmented native service bundles", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉserviceˉbundleˉmaterializationˉruns),
         new("Windvale constructs the exact native UTF-8 service leaf", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉutf8ˉserviceˉruns),
@@ -9708,13 +9709,13 @@ internal static partial class Program
                     Nativeˉservice.Fileˉwriteˉbytes))
                 .Select(Placement => (Placement.Service, Placement.Adapter, Placement.Sha256)));
 
-        var Windowsˉmetadata = Hostedˉcompilerˉapplicationˉmetadata.Build(
+        var Windowsˉmetadata = Hostedˉcompilerˉapplicationˉmetadata.Buildˉstage0(
             Consoleˉapplicationˉtarget.Windowsˉx64,
             Compilerˉtool.Module.Capabilities,
             Windowsˉbundle,
             4096,
             Nativeˉentry);
-        var Linuxˉmetadata = Hostedˉcompilerˉapplicationˉmetadata.Build(
+        var Linuxˉmetadata = Hostedˉcompilerˉapplicationˉmetadata.Buildˉstage0(
             Consoleˉapplicationˉtarget.Linuxˉx64,
             Compilerˉtool.Module.Capabilities,
             Linuxˉbundle,

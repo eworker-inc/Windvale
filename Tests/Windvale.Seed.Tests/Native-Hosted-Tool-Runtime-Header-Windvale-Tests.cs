@@ -106,7 +106,7 @@ internal static partial class Program
             var Bundle = Hostedˉtoolˉtestˉbundle(Target);
             foreach (var Profile in Enum.GetValues<Hostedˉcompilerˉapplicationˉprofile>())
             {
-                var Metadata = Hostedˉcompilerˉapplicationˉmetadata.Build(
+                var Metadata = Hostedˉcompilerˉapplicationˉmetadata.Buildˉstage0(
                     Target,
                     Capabilities,
                     Bundle,

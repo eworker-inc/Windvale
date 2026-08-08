@@ -369,6 +369,18 @@ when native host-container construction consumes the same contract directly.
 Metadata and service-bundle construction, outer PE/ELF construction, Linux
 execution, and the grouped gate remain open.
 
+[Decision 0383](../Decisions/0383-Windvale-Owned-Hosted-Tool-Metadata-Construction.md)
+removes C# ownership of the embedded 1,024-byte `WVH* 1` hosted-tool metadata.
+Windvale derives every profile field, capability and service identity, table
+slot, target adapter, fixed limit, layout field, and reserved byte from a
+bounded request containing only verified bundle extents and raw digests. The
+normal runtime-data path consumes and independently verifies the retained
+service-free WVNF; the former C# constructor is now `Buildˉstage0` and serves
+only recovery/differential tests. The managed request/response adapter and C#
+test are explicitly temporary until native host-container construction and
+native qualification consume the same contract. Service-bundle and outer
+PE/ELF construction, Linux execution, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

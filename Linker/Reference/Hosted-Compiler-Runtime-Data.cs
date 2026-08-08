@@ -125,12 +125,23 @@ internal static class Hostedˉcompilerˉruntimeˉdata
         Hostedˉcompilerˉapplicationˉprofile profile =
             Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
-        var Metadata = Hostedˉcompilerˉapplicationˉmetadata.Build(
+        Hostedˉcompilerˉapplicationˉmetadata.Validateˉinputs(
             target,
             capabilities,
             bundle,
             BUNDLE_TEXT_OFFSET,
+            nativeˉentryˉoffset);
+        var Metadata = Nativeˉhostedˉtoolˉmetadataˉbuilder.Build(new(
+            (uint)target,
+            (uint)profile,
+            BUNDLE_TEXT_OFFSET,
             nativeˉentryˉoffset,
+            bundle));
+        _ = Hostedˉcompilerˉapplicationˉmetadata.Verify(
+            Metadata.AsSpan(),
+            target,
+            bundle,
+            bundle.Imageˉbytes.AsSpan(),
             profile);
         var Header = Nativeˉhostedˉtoolˉruntimeˉheaderˉbuilder.Build(new(
             (uint)target,

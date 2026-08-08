@@ -128,7 +128,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         Nativeˉservice.Fileˉwriteˉbytes,
     ];
 
-    internal static ImmutableArray<byte> Build(
+    internal static ImmutableArray<byte> Buildˉstage0(
         Consoleˉapplicationˉtarget target,
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,
@@ -345,7 +345,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
             _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, null),
         };
 
-    private static void Validateˉinputs(
+    internal static void Validateˉinputs(
         Consoleˉapplicationˉtarget target,
         ImmutableArray<Capabilityˉdeclaration> capabilities,
         Nativeˉserviceˉbundle bundle,

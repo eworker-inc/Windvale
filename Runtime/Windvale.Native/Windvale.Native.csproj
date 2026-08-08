@@ -99,5 +99,8 @@
     <EmbeddedResource
       Include="Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvnf"
       LogicalName="Windvale.Native.Native-Hosted-Tool-Runtime-Header-Bridge.wvnf" />
+    <EmbeddedResource
+      Include="Consumers/Native-Hosted-Tool-Metadata-Construction-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-Hosted-Tool-Metadata-Construction-Bridge.wvnf" />
   </ItemGroup>
 </Project>

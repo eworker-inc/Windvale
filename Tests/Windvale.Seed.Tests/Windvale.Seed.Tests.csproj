@@ -241,6 +241,12 @@
       Include="../../Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Metadata-Admission.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Metadata-Construction-Core.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Metadata-Construction-Bridge.wv" />
+    <EmbeddedResource
       Include="../../Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Runtime-Header-Core.wv" />
     <EmbeddedResource

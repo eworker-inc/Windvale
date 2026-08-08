@@ -211,6 +211,8 @@ $NativeEntryBridgeBridgeModule = Join-Path $Artifacts 'Native-Entry-Bridge-Bridg
 $NativeByteResultAdmissionCoreModule = Join-Path $Artifacts 'Native-Byte-Result-Admission-Core.wvb'
 $NativeByteResultAdmissionBridgeModule = Join-Path $Artifacts 'Native-Byte-Result-Admission-Bridge.wvb'
 $NativeHostedToolMetadataAdmissionModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Admission.wvb'
+$NativeHostedToolMetadataConstructionCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Construction-Core.wvb'
+$NativeHostedToolMetadataConstructionBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Construction-Bridge.wvb'
 $NativeHostedToolRuntimeHeaderCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Core.wvb'
 $NativeHostedToolRuntimeHeaderBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -1740,6 +1742,56 @@ if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-tool met
 $NativeHostedToolMetadataAdmissionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataAdmissionModule).Hash.ToLowerInvariant()
 if ($NativeHostedToolMetadataAdmissionHash -ne 'e43c712431e386eba159cd17f87b279cc4a4b5b99084d3a738a3718633099c78') {
     throw "The hosted-tool metadata admission module has an unexpected digest: $NativeHostedToolMetadataAdmissionHash"
+}
+$NativeHostedToolMetadataConstructionCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv'
+$NativeHostedToolMetadataConstructionBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Bridge.wv'
+$NativeHostedToolMetadataConstructionBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Metadata-Construction-Bridge.wvb'
+$NativeHostedToolMetadataConstructionArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Metadata-Construction-Bridge.wvnf'
+dotnet $ToolDll `
+    compile $NativeHostedToolMetadataConstructionCoreSource `
+    --module $ByteConstructionSource `
+    --module $NativeHostedToolMetadataAdmissionSource `
+    -o $NativeHostedToolMetadataConstructionCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool metadata-construction core.' }
+$NativeHostedToolMetadataConstructionCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionCoreModule).Hash.ToLowerInvariant()
+if ($NativeHostedToolMetadataConstructionCoreHash -ne 'd67f0f247b73f0ff483a158713e51239206ab176d3414f80744e0dd4a6797d22') {
+    throw "The hosted-tool metadata-construction core has an unexpected digest: $NativeHostedToolMetadataConstructionCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeHostedToolMetadataConstructionBridgeSource `
+    --module $ByteConstructionSource `
+    --module $NativeHostedToolMetadataAdmissionSource `
+    --module $NativeHostedToolMetadataConstructionCoreSource `
+    -o $NativeHostedToolMetadataConstructionBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool metadata-construction bridge.' }
+$NativeHostedToolMetadataConstructionBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionBridgeModule).Hash.ToLowerInvariant()
+if ($NativeHostedToolMetadataConstructionBridgeHash -ne 'e229fecdee3d70fc6937f6f2b0e3a0c28f6bef6ff1b3f737cfdccb29137ef983') {
+    throw "The hosted-tool metadata-construction bridge has an unexpected digest: $NativeHostedToolMetadataConstructionBridgeHash"
+}
+$NativeHostedToolMetadataConstructionBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeHostedToolMetadataConstructionBridgeRetainedHash -ne $NativeHostedToolMetadataConstructionBridgeHash -or
+    (Get-Item -LiteralPath $NativeHostedToolMetadataConstructionBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeHostedToolMetadataConstructionBridgeModule).Length
+) {
+    throw 'The retained hosted-tool metadata-construction bridge does not match its exact source compilation.'
+}
+$NativeHostedToolMetadataConstructionArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeHostedToolMetadataConstructionArtifactHash -ne '1d8f6f2c45a13c3c996ae00a950c84a12a107a94a85fd83c3c8471cb767cff7c' -or
+    (Get-Item -LiteralPath $NativeHostedToolMetadataConstructionArtifactRetained).Length -ne 211629
+) {
+    throw "The retained hosted-tool metadata-construction fragment has an unexpected identity: $NativeHostedToolMetadataConstructionArtifactHash"
+}
+$NativeHostedToolMetadataConstructionBridgeInspection = (dotnet $ToolDll inspect $NativeHostedToolMetadataConstructionBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale hosted-tool metadata-construction bridge inspection is incomplete.'
 }
 dotnet $ToolDll `
     compile $NativeHostedToolRuntimeHeaderCoreSource `
