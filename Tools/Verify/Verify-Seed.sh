@@ -168,6 +168,8 @@ NATIVE_INTEGER_FORMAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Integer-Format-Servic
 NATIVE_SERVICE_CODE_BUILDER_MODULE="$ARTIFACTS/Native-X64-Service-Code-Builder.wvb"
 NATIVE_TEXT_CONCAT_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service.wvb"
 NATIVE_TEXT_CONCAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service-Bridge.wvb"
+NATIVE_TEXT_QUOTE_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Quote-Service.wvb"
+NATIVE_TEXT_QUOTE_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Quote-Service-Bridge.wvb"
 NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
@@ -651,6 +653,37 @@ NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_
 printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_TEXT_QUOTE_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Quote-Service.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_TEXT_QUOTE_CORE_SOURCE" -o "$NATIVE_TEXT_QUOTE_CORE_MODULE"
+NATIVE_TEXT_QUOTE_CORE_HASH=$(sha256sum "$NATIVE_TEXT_QUOTE_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_TEXT_QUOTE_CORE_HASH" != 'b23c077329de43fcc307f7e7f564aefe318ca1dd7dc6543bfa10160ab724c453' ]; then
+    echo "The Windvale native text-quote service core has an unexpected digest: $NATIVE_TEXT_QUOTE_CORE_HASH" >&2
+    exit 1
+fi
+NATIVE_TEXT_QUOTE_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_QUOTE_CORE_MODULE")
+printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉtextˉquoteˉleaf: bytes length=1165' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉtextˉquoteˉserviceˉbuild' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_TEXT_QUOTE_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Quote-Service-Bridge.wv"
+NATIVE_TEXT_QUOTE_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service-Bridge.wvb"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_TEXT_QUOTE_BRIDGE_SOURCE" \
+    --module "$NATIVE_TEXT_QUOTE_CORE_SOURCE" \
+    -o "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE"
+NATIVE_TEXT_QUOTE_BRIDGE_HASH=$(sha256sum "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_TEXT_QUOTE_BRIDGE_HASH" != '306b76bcf7e6b3252ce0f9509664acc5ee5a2bcc8fa411e8fdcf2c6a1fb4b631' ]; then
+    echo "The Windvale native text-quote service bridge has an unexpected digest: $NATIVE_TEXT_QUOTE_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE" "$NATIVE_TEXT_QUOTE_BRIDGE_RETAINED"
+NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_PUBLICATION_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wv"
 dotnet "$TOOL_DLL" \

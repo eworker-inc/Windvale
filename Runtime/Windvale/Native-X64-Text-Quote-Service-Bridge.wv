@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉx64ˉtextˉquoteˉserviceˉbridge profile portable;
+
+import Runtimeˉnativeˉx64ˉtextˉquoteˉservice as Textˉquote;
+
+export fn Main() -> bytes {
+    return Textˉquote.Nativeˉx64ˉtextˉquoteˉserviceˉbuild();
+}

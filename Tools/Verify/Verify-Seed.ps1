@@ -173,6 +173,8 @@ $NativeIntegerFormatBridgeModule = Join-Path $Artifacts 'Native-X64-Integer-Form
 $NativeServiceCodeBuilderModule = Join-Path $Artifacts 'Native-X64-Service-Code-Builder.wvb'
 $NativeTextConcatCoreModule = Join-Path $Artifacts 'Native-X64-Text-Concat-Service.wvb'
 $NativeTextConcatBridgeModule = Join-Path $Artifacts 'Native-X64-Text-Concat-Service-Bridge.wvb'
+$NativeTextQuoteCoreModule = Join-Path $Artifacts 'Native-X64-Text-Quote-Service.wvb'
+$NativeTextQuoteBridgeModule = Join-Path $Artifacts 'Native-X64-Text-Quote-Service-Bridge.wvb'
 $NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -800,6 +802,53 @@ if (
     $NativeTextConcatBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native text-concatenation service bridge inspection is incomplete.'
+}
+
+$NativeTextQuoteCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Quote-Service.wv'
+dotnet $ToolDll compile $NativeTextQuoteCoreSource -o $NativeTextQuoteCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native text-quote service core.' }
+$NativeTextQuoteCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextQuoteCoreModule).Hash.ToLowerInvariant()
+if ($NativeTextQuoteCoreHash -ne 'b23c077329de43fcc307f7e7f564aefe318ca1dd7dc6543bfa10160ab724c453') {
+    throw "The Windvale native text-quote service core has an unexpected digest: $NativeTextQuoteCoreHash"
+}
+$NativeTextQuoteCoreInspection = (dotnet $ToolDll inspect $NativeTextQuoteCoreModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeTextQuoteCoreInspection -notmatch 'Profile: portable' -or
+    $NativeTextQuoteCoreInspection -notmatch 'Nativeˉx64ˉtextˉquoteˉleaf: bytes length=1165' -or
+    $NativeTextQuoteCoreInspection -notmatch 'Nativeˉx64ˉtextˉquoteˉserviceˉbuild' -or
+    $NativeTextQuoteCoreInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native text-quote service core inspection is incomplete.'
+}
+
+$NativeTextQuoteBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Quote-Service-Bridge.wv'
+$NativeTextQuoteBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service-Bridge.wvb'
+dotnet $ToolDll `
+    compile $NativeTextQuoteBridgeSource `
+    --module $NativeTextQuoteCoreSource `
+    -o $NativeTextQuoteBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native text-quote service bridge.' }
+$NativeTextQuoteBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextQuoteBridgeModule).Hash.ToLowerInvariant()
+if ($NativeTextQuoteBridgeHash -ne '306b76bcf7e6b3252ce0f9509664acc5ee5a2bcc8fa411e8fdcf2c6a1fb4b631') {
+    throw "The Windvale native text-quote service bridge has an unexpected digest: $NativeTextQuoteBridgeHash"
+}
+$NativeTextQuoteBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextQuoteBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeTextQuoteBridgeRetainedHash -ne $NativeTextQuoteBridgeHash -or
+    (Get-Item -LiteralPath $NativeTextQuoteBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeTextQuoteBridgeModule).Length
+) {
+    throw 'The retained Windvale native text-quote service bridge does not match its exact source compilation.'
+}
+$NativeTextQuoteBridgeInspection = (dotnet $ToolDll inspect $NativeTextQuoteBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeTextQuoteBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeTextQuoteBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativeTextQuoteBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native text-quote service bridge inspection is incomplete.'
 }
 
 $NativePublicationSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Core.wv'

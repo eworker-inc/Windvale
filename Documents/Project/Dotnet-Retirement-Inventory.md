@@ -114,9 +114,20 @@ the unchanged 249-byte x64 leaf, and its retained capability-free bridge builds
 identically through Stage 0 and the ordinary native source front door. The
 recovery wrapper only verifies, lowers, executes, identity-checks, and caches
 the result. Existing dynamic-text evidence continues to own copy, value-limit,
-arena-exhaustion, and mixed-allocation semantics. Enum-name, quoting,
-retained-WVB loading, W^X publication, service-bundle orchestration, Linux
-evidence, and the grouped gate remain open.
+arena-exhaustion, and mixed-allocation semantics. Enum-name, retained-WVB
+loading, W^X publication, service-bundle orchestration, Linux evidence, and
+the grouped gate remain open.
+
+[Decision 0358](../Decisions/0358-Windvale-Owned-Native-Text-Quote-Leaf.md)
+removes the large C# emission algorithm for the exact deterministic text-quote
+leaf. One compact Windvale machine-template source now owns the unchanged
+1,165-byte x64 implementation, and its retained capability-free bridge builds
+identically through Stage 0 and the ordinary native source front door. Quote
+semantics remain in the specification and existing dynamic-text coverage;
+the recovery wrapper only verifies, lowers, executes, identity-checks, and
+caches the leaf. Enum-name construction/metadata, retained-WVB loading, W^X
+publication, service-bundle orchestration, Linux evidence, and the grouped
+gate remain open.
 
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution

@@ -24,6 +24,9 @@
       Include="Consumers/Native-X64-Text-Concat-Service-Bridge.wvb"
       LogicalName="Windvale.Native.Native-X64-Text-Concat-Service-Bridge.wvb" />
     <EmbeddedResource
+      Include="Consumers/Native-X64-Text-Quote-Service-Bridge.wvb"
+      LogicalName="Windvale.Native.Native-X64-Text-Quote-Service-Bridge.wvb" />
+    <EmbeddedResource
       Include="Consumers/Native-Publication-Bridge.wvb"
       LogicalName="Windvale.Native.Native-Publication-Bridge.wvb" />
     <EmbeddedResource

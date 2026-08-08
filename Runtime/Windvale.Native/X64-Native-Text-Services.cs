@@ -34,6 +34,9 @@ public static class X64ˉnativeˉtextˉservices
     public const int TEXT_QUOTE_CANONICAL_SIZE = 1165;
     public const string TEXT_QUOTE_CANONICAL_SHA256 =
         "4f334af9b6349437d36fd703edb6b5882416f033fae47906a40a4bafdc083bb7";
+    public const int TEXT_QUOTE_CONSUMER_CANONICAL_SIZE = 1_435;
+    public const string TEXT_QUOTE_CONSUMER_CANONICAL_SHA256 =
+        "306b76bcf7e6b3252ce0f9509664acc5ee5a2bcc8fa411e8fdcf2c6a1fb4b631";
     public const int INTEGER_FORMAT_CONSUMER_CANONICAL_SIZE = 11_598;
     public const string INTEGER_FORMAT_CONSUMER_CANONICAL_SHA256 =
         "851f6d8e01b62106763af518c15dc163a9af9ea30c14cdb01d62adf1538ae7f9";
@@ -41,8 +44,13 @@ public static class X64ˉnativeˉtextˉservices
         "Windvale.Native.Native-X64-Integer-Format-Services-Bridge.wvb";
     private const string TEXT_CONCAT_CONSUMER_RESOURCE =
         "Windvale.Native.Native-X64-Text-Concat-Service-Bridge.wvb";
+    private const string TEXT_QUOTE_CONSUMER_RESOURCE =
+        "Windvale.Native.Native-X64-Text-Quote-Service-Bridge.wvb";
     private static readonly Lazy<ImmutableArray<byte>> TEXT_CONCAT_RESULT = new(
         Buildˉtextˉconcatˉwithˉwindvale,
+        LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<ImmutableArray<byte>> TEXT_QUOTE_RESULT = new(
+        Buildˉtextˉquoteˉwithˉwindvale,
         LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly Lazy<ImmutableArray<byte>> INTEGER_FORMAT_RESULT = new(
         Buildˉintegerˉformatˉwithˉwindvale,
@@ -56,7 +64,7 @@ public static class X64ˉnativeˉtextˉservices
     {
         Nativeˉservice.Enumˉname => Buildˉenumˉname(Requireˉtypes(types)),
         Nativeˉservice.Textˉconcat => Readˉtextˉconcat(),
-        Nativeˉservice.Textˉquote => Buildˉtextˉquote(),
+        Nativeˉservice.Textˉquote => Readˉtextˉquote(),
         Nativeˉservice.I32ˉformat => Readˉintegerˉformat(isˉsigned: true),
         Nativeˉservice.U32ˉformat => Readˉintegerˉformat(isˉsigned: false),
         _ => throw new ArgumentOutOfRangeException(
@@ -171,6 +179,40 @@ public static class X64ˉnativeˉtextˉservices
 
     private static InvalidOperationException Invalidˉtextˉconcatˉconsumer() =>
         new("The retained Windvale native text-concatenation consumer failed its exact identity contract.");
+
+    private static ImmutableArray<byte> Readˉtextˉquote() =>
+        TEXT_QUOTE_RESULT.Value;
+
+    private static ImmutableArray<byte> Buildˉtextˉquoteˉwithˉwindvale()
+    {
+        using var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
+            .GetManifestResourceStream(TEXT_QUOTE_CONSUMER_RESOURCE) ??
+            throw Invalidˉtextˉquoteˉconsumer();
+        if (Stream.Length != TEXT_QUOTE_CONSUMER_CANONICAL_SIZE)
+        {
+            throw Invalidˉtextˉquoteˉconsumer();
+        }
+        var Bytes = new byte[TEXT_QUOTE_CONSUMER_CANONICAL_SIZE];
+        Stream.ReadExactly(Bytes);
+        var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
+        if (!StringComparer.Ordinal.Equals(Hash, TEXT_QUOTE_CONSUMER_CANONICAL_SHA256))
+        {
+            throw Invalidˉtextˉquoteˉconsumer();
+        }
+
+        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Compilation = X64ˉnativeˉbackend.Compile(Verified);
+        var Result = X64ˉnativeˉexecutor.Executeˉbytes(Compilation.Fragment);
+        Verifyˉidentity(
+            Nativeˉservice.Textˉquote,
+            Result.AsSpan(),
+            TEXT_QUOTE_CANONICAL_SIZE,
+            TEXT_QUOTE_CANONICAL_SHA256);
+        return Result;
+    }
+
+    private static InvalidOperationException Invalidˉtextˉquoteˉconsumer() =>
+        new("The retained Windvale native text-quote consumer failed its exact identity contract.");
 
     private static ImmutableArray<byte> Readˉintegerˉformat(bool isˉsigned)
     {
@@ -511,314 +553,6 @@ public static class X64ˉnativeˉtextˉservices
     private static InvalidOperationException Invalidˉenumˉmetadata() =>
         new("Native Enumˉname service identity metadata is invalid.");
 
-    private static ImmutableArray<byte> Buildˉtextˉquote()
-    {
-        var Code = new Serviceˉcodeˉbuilder();
-        Code.Emit(0x48, 0x83, 0xEC, 0x40);
-        Code.Emit(0x4C, 0x89, 0x14, 0x24);
-        Code.Emit(0x4C, 0x89, 0x5C, 0x24, 0x08);
-        Code.Emit(0x4C, 0x89, 0x4C, 0x24, 0x10);
-        Code.Emit(0x4C, 0x89, 0x44, 0x24, 0x18);
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            0x00, 0x00, 0x00, 0x00);
-        Code.Emit(0x4D, 0x8B, 0x10);
-        Code.Emit(0x45, 0x8B, 0x58, Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
-        Code.Emit(0x41, 0xB9, 0x02, 0x00, 0x00, 0x00);
-
-        Code.Mark("measure");
-        Code.Emit(0x45, 0x85, 0xDB);
-        Code.Branch(0x84, "length_ready");
-        Code.Emit(0x41, 0x0F, 0xB6, 0x02);
-        Code.Emit(0x49, 0xFF, 0xC2);
-        Code.Emit(0x41, 0xFF, 0xCB);
-        Code.Emit(0xA8, 0x80);
-        Code.Branch(0x85, "measure_multibyte");
-        foreach (var Escaped in new byte[] { 0x22, 0x5C, 0x08, 0x0C, 0x0A, 0x0D, 0x09 })
-        {
-            Code.Emit(0x3C, Escaped);
-            Code.Branch(0x84, "measure_two");
-        }
-        Code.Emit(0x3C, 0x20);
-        Code.Branch(0x82, "measure_six");
-        Code.Emit(0x3C, 0x7E);
-        Code.Branch(0x86, "measure_one");
-        Code.Jump("measure_six");
-
-        Code.Mark("measure_one");
-        Code.Emit(0x41, 0x83, 0xC1, 0x01);
-        Code.Jump("measure_check");
-        Code.Mark("measure_two");
-        Code.Emit(0x41, 0x83, 0xC1, 0x02);
-        Code.Jump("measure_check");
-        Code.Mark("measure_six");
-        Code.Emit(0x41, 0x83, 0xC1, 0x06);
-        Code.Jump("measure_check");
-        Code.Mark("measure_twelve");
-        Code.Emit(0x41, 0x83, 0xC1, 0x0C);
-
-        Code.Mark("measure_check");
-        Code.Emit(0x41, 0x81, 0xF9);
-        Code.Emitˉu32(Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES);
-        Code.Branch(0x87, "value_failure");
-        Code.Jump("measure");
-
-        Code.Mark("measure_multibyte");
-        Code.Emit(0x3C, 0xC2);
-        Code.Branch(0x82, "failure");
-        Code.Emit(0x3C, 0xDF);
-        Code.Branch(0x86, "measure_two_byte");
-        Code.Emit(0x3C, 0xEF);
-        Code.Branch(0x86, "measure_three_byte");
-        Code.Emit(0x3C, 0xF4);
-        Code.Branch(0x86, "measure_four_byte");
-        Code.Jump("failure");
-
-        Code.Mark("measure_two_byte");
-        Code.Emit(0x41, 0x83, 0xFB, 0x01);
-        Code.Branch(0x82, "failure");
-        Code.Emit(0x41, 0x0F, 0xB6, 0x0A);
-        Code.Emit(0x81, 0xE1, 0xC0, 0x00, 0x00, 0x00);
-        Code.Emit(0x81, 0xF9, 0x80, 0x00, 0x00, 0x00);
-        Code.Branch(0x85, "failure");
-        Code.Emit(0x49, 0xFF, 0xC2);
-        Code.Emit(0x41, 0xFF, 0xCB);
-        Code.Jump("measure_six");
-
-        Code.Mark("measure_three_byte");
-        Code.Emit(0x41, 0x83, 0xFB, 0x02);
-        Code.Branch(0x82, "failure");
-        Code.Emit(0x41, 0x0F, 0xB6, 0x0A);
-        Code.Emit(0x41, 0x0F, 0xB6, 0x52, 0x01);
-        Code.Emit(0x41, 0x89, 0xC8);
-        Code.Emit(0x41, 0x81, 0xE0, 0xC0, 0x00, 0x00, 0x00);
-        Code.Emit(0x41, 0x81, 0xF8, 0x80, 0x00, 0x00, 0x00);
-        Code.Branch(0x85, "failure");
-        Code.Emit(0x41, 0x89, 0xD0);
-        Code.Emit(0x41, 0x81, 0xE0, 0xC0, 0x00, 0x00, 0x00);
-        Code.Emit(0x41, 0x81, 0xF8, 0x80, 0x00, 0x00, 0x00);
-        Code.Branch(0x85, "failure");
-        Code.Emit(0x3C, 0xE0);
-        Code.Branch(0x85, "measure_not_overlong_three");
-        Code.Emit(0x80, 0xF9, 0xA0);
-        Code.Branch(0x82, "failure");
-        Code.Mark("measure_not_overlong_three");
-        Code.Emit(0x3C, 0xED);
-        Code.Branch(0x85, "measure_three_valid");
-        Code.Emit(0x80, 0xF9, 0x9F);
-        Code.Branch(0x87, "failure");
-        Code.Mark("measure_three_valid");
-        Code.Emit(0x49, 0x83, 0xC2, 0x02);
-        Code.Emit(0x41, 0x83, 0xEB, 0x02);
-        Code.Jump("measure_six");
-
-        Code.Mark("measure_four_byte");
-        Code.Emit(0x41, 0x83, 0xFB, 0x03);
-        Code.Branch(0x82, "failure");
-        Code.Emit(0x41, 0x0F, 0xB6, 0x0A);
-        Code.Emit(0x41, 0x0F, 0xB6, 0x52, 0x01);
-        Code.Emit(0x45, 0x0F, 0xB6, 0x42, 0x02);
-        Code.Emit(0x44, 0x89, 0x4C, 0x24, 0x20);
-        Code.Emit(0x41, 0x89, 0xC9);
-        Code.Emit(0x41, 0x81, 0xE1, 0xC0, 0x00, 0x00, 0x00);
-        Code.Emit(0x41, 0x81, 0xF9, 0x80, 0x00, 0x00, 0x00);
-        Code.Branch(0x85, "failure");
-        Code.Emit(0x41, 0x89, 0xD1);
-        Code.Emit(0x41, 0x81, 0xE1, 0xC0, 0x00, 0x00, 0x00);
-        Code.Emit(0x41, 0x81, 0xF9, 0x80, 0x00, 0x00, 0x00);
-        Code.Branch(0x85, "failure");
-        Code.Emit(0x45, 0x89, 0xC1);
-        Code.Emit(0x41, 0x81, 0xE1, 0xC0, 0x00, 0x00, 0x00);
-        Code.Emit(0x41, 0x81, 0xF9, 0x80, 0x00, 0x00, 0x00);
-        Code.Branch(0x85, "failure");
-        Code.Emit(0x3C, 0xF0);
-        Code.Branch(0x85, "measure_not_overlong_four");
-        Code.Emit(0x80, 0xF9, 0x90);
-        Code.Branch(0x82, "failure");
-        Code.Mark("measure_not_overlong_four");
-        Code.Emit(0x3C, 0xF4);
-        Code.Branch(0x85, "measure_four_valid");
-        Code.Emit(0x80, 0xF9, 0x8F);
-        Code.Branch(0x87, "failure");
-        Code.Mark("measure_four_valid");
-        Code.Emit(0x44, 0x8B, 0x4C, 0x24, 0x20);
-        Code.Emit(0x49, 0x83, 0xC2, 0x03);
-        Code.Emit(0x41, 0x83, 0xEB, 0x03);
-        Code.Jump("measure_twelve");
-
-        Code.Mark("length_ready");
-        Code.Emit(0x44, 0x89, 0x4C, 0x24, 0x28);
-        Code.Emit(0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET);
-        Code.Emit(0x89, 0x44, 0x24, 0x2C);
-        Code.Emit(0x89, 0xC1);
-        Code.Emit(0x44, 0x01, 0xC9);
-        Code.Branch(0x82, "arena_failure");
-        Code.Emit(0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET);
-        Code.Branch(0x87, "arena_failure");
-        Code.Emit(0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET);
-        Code.Emit(0x4D, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET);
-        Code.Emit(0x8B, 0x44, 0x24, 0x2C);
-        Code.Emit(0x49, 0x01, 0xC0);
-        Code.Emit(0x4C, 0x89, 0x44, 0x24, 0x30);
-        Code.Emit(0x41, 0xC6, 0x00, 0x22);
-        Code.Emit(0x49, 0xFF, 0xC0);
-        Code.Emit(0x4C, 0x8B, 0x54, 0x24, 0x18);
-        Code.Emit(0x45, 0x8B, 0x5A, Nativeˉcontract.BORROWED_TEXT_LENGTH_OFFSET);
-        Code.Emit(0x4D, 0x8B, 0x12);
-
-        Code.Mark("write");
-        Code.Emit(0x45, 0x85, 0xDB);
-        Code.Branch(0x84, "write_close");
-        Code.Emit(0x41, 0x0F, 0xB6, 0x02);
-        Code.Emit(0x49, 0xFF, 0xC2);
-        Code.Emit(0x41, 0xFF, 0xCB);
-        Code.Emit(0xA8, 0x80);
-        Code.Branch(0x85, "write_multibyte");
-        foreach (var Escape in new (byte Value, byte Output)[]
-        {
-            (0x22, 0x22), (0x5C, 0x5C), (0x08, 0x62), (0x0C, 0x66),
-            (0x0A, 0x6E), (0x0D, 0x72), (0x09, 0x74),
-        })
-        {
-            Code.Emit(0x3C, Escape.Value);
-            Code.Branch(0x85, $"write_not_{Escape.Value:X2}");
-            Code.Emit(0xB0, Escape.Output);
-            Code.Jump("write_pair");
-            Code.Mark($"write_not_{Escape.Value:X2}");
-        }
-        Code.Emit(0x3C, 0x20);
-        Code.Branch(0x82, "write_unicode");
-        Code.Emit(0x3C, 0x7E);
-        Code.Branch(0x87, "write_unicode");
-        Code.Emit(0x41, 0x88, 0x00);
-        Code.Emit(0x49, 0xFF, 0xC0);
-        Code.Jump("write");
-
-        Code.Mark("write_pair");
-        Code.Emit(0x41, 0xC6, 0x00, 0x5C);
-        Code.Emit(0x41, 0x88, 0x40, 0x01);
-        Code.Emit(0x49, 0x83, 0xC0, 0x02);
-        Code.Jump("write");
-        Code.Mark("write_unicode");
-        Code.Call("emit_u16");
-        Code.Jump("write");
-
-        Code.Mark("write_multibyte");
-        Code.Emit(0x3C, 0xDF);
-        Code.Branch(0x86, "write_two_byte");
-        Code.Emit(0x3C, 0xEF);
-        Code.Branch(0x86, "write_three_byte");
-        Code.Jump("write_four_byte");
-
-        Code.Mark("write_two_byte");
-        Code.Emit(0x83, 0xE0, 0x1F);
-        Code.Emit(0xC1, 0xE0, 0x06);
-        Code.Emit(0x41, 0x0F, 0xB6, 0x0A);
-        Code.Emit(0x49, 0xFF, 0xC2);
-        Code.Emit(0x41, 0xFF, 0xCB);
-        Code.Emit(0x83, 0xE1, 0x3F);
-        Code.Emit(0x09, 0xC8);
-        Code.Call("emit_u16");
-        Code.Jump("write");
-
-        Code.Mark("write_three_byte");
-        Code.Emit(0x83, 0xE0, 0x0F);
-        Code.Emit(0xC1, 0xE0, 0x0C);
-        Code.Emit(0x41, 0x0F, 0xB6, 0x0A);
-        Code.Emit(0x41, 0x0F, 0xB6, 0x52, 0x01);
-        Code.Emit(0x49, 0x83, 0xC2, 0x02);
-        Code.Emit(0x41, 0x83, 0xEB, 0x02);
-        Code.Emit(0x83, 0xE1, 0x3F);
-        Code.Emit(0xC1, 0xE1, 0x06);
-        Code.Emit(0x09, 0xC8);
-        Code.Emit(0x83, 0xE2, 0x3F);
-        Code.Emit(0x09, 0xD0);
-        Code.Call("emit_u16");
-        Code.Jump("write");
-
-        Code.Mark("write_four_byte");
-        Code.Emit(0x83, 0xE0, 0x07);
-        Code.Emit(0xC1, 0xE0, 0x12);
-        Code.Emit(0x41, 0x0F, 0xB6, 0x0A);
-        Code.Emit(0x41, 0x0F, 0xB6, 0x52, 0x01);
-        Code.Emit(0x45, 0x0F, 0xB6, 0x4A, 0x02);
-        Code.Emit(0x49, 0x83, 0xC2, 0x03);
-        Code.Emit(0x41, 0x83, 0xEB, 0x03);
-        Code.Emit(0x83, 0xE1, 0x3F);
-        Code.Emit(0xC1, 0xE1, 0x0C);
-        Code.Emit(0x09, 0xC8);
-        Code.Emit(0x83, 0xE2, 0x3F);
-        Code.Emit(0xC1, 0xE2, 0x06);
-        Code.Emit(0x09, 0xD0);
-        Code.Emit(0x41, 0x83, 0xE1, 0x3F);
-        Code.Emit(0x44, 0x09, 0xC8);
-        Code.Emit(0x2D, 0x00, 0x00, 0x01, 0x00);
-        Code.Emit(0x89, 0xC2);
-        Code.Emit(0xC1, 0xE8, 0x0A);
-        Code.Emit(0x05, 0x00, 0xD8, 0x00, 0x00);
-        Code.Emit(0x81, 0xE2, 0xFF, 0x03, 0x00, 0x00);
-        Code.Emit(0x81, 0xC2, 0x00, 0xDC, 0x00, 0x00);
-        Code.Emit(0x41, 0x89, 0xD1);
-        Code.Call("emit_u16");
-        Code.Emit(0x44, 0x89, 0xC8);
-        Code.Call("emit_u16");
-        Code.Jump("write");
-
-        Code.Mark("write_close");
-        Code.Emit(0x41, 0xC6, 0x00, 0x22);
-        Code.Emit(0x48, 0x8B, 0x4C, 0x24, 0x10);
-        Code.Emit(0x48, 0x8B, 0x44, 0x24, 0x30);
-        Code.Emit(0x48, 0x89, 0x01);
-        Code.Emit(0x8B, 0x54, 0x24, 0x28);
-        Code.Emit(0x89, 0x51, 0x08);
-        Code.Emit(0xC7, 0x41, 0x0C, 0x00, 0x00, 0x00, 0x00);
-        Code.Emit(0x31, 0xC0);
-        Code.Jump("return");
-
-        Code.Mark("value_failure");
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            (byte)Nativeˉserviceˉfailureˉdetail.Textˉvalueˉlimit, 0x00, 0x00, 0x00);
-        Code.Jump("failure");
-        Code.Mark("arena_failure");
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            (byte)Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted, 0x00, 0x00, 0x00);
-        Code.Mark("failure");
-        Code.Emit(0xB8, 0x01, 0x00, 0x00, 0x00);
-        Code.Mark("return");
-        Code.Emit(0x4C, 0x8B, 0x14, 0x24);
-        Code.Emit(0x4C, 0x8B, 0x5C, 0x24, 0x08);
-        Code.Emit(0x48, 0x83, 0xC4, 0x40);
-        Code.Emit(0xC3);
-
-        Code.Mark("emit_u16");
-        Code.Emit(0x41, 0xC6, 0x00, 0x5C);
-        Code.Emit(0x41, 0xC6, 0x40, 0x01, 0x75);
-        Code.Emit(0x49, 0x83, 0xC0, 0x02);
-        Code.Emit(0x89, 0xC1);
-        foreach (var Shift in new byte[] { 12, 8, 4, 0 })
-        {
-            Code.Emit(0x89, 0xCA);
-            if (Shift != 0)
-            {
-                Code.Emit(0xC1, 0xEA, Shift);
-            }
-            Code.Emit(0x83, 0xE2, 0x0F);
-            Code.Call("emit_nibble");
-        }
-        Code.Emit(0xC3);
-
-        Code.Mark("emit_nibble");
-        Code.Emit(0x80, 0xFA, 0x09);
-        Code.Branch(0x86, "emit_digit");
-        Code.Emit(0x80, 0xC2, 0x37);
-        Code.Jump("emit_nibble_write");
-        Code.Mark("emit_digit");
-        Code.Emit(0x80, 0xC2, 0x30);
-        Code.Mark("emit_nibble_write");
-        Code.Emit(0x41, 0x88, 0x10);
-        Code.Emit(0x49, 0xFF, 0xC0);
-        Code.Emit(0xC3);
-        return Code.Finish();
-    }
 
     private sealed class Serviceˉcodeˉbuilder
     {

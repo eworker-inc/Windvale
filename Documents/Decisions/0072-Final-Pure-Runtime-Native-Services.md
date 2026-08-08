@@ -4,6 +4,7 @@
 - Status: Qualified on Windows and Debian x64
 - Extends: [Decision 0071](0071-Native-Text-Arena-And-Core-Text-Services.md)'s exact runtime-native service pattern
 - Retains: Native ABI 11, execution-context version 3, service-table version 4, kernel native bridge 6, and firmware probe 13
+- Advanced by: [Decision 0358](0358-Windvale-Owned-Native-Text-Quote-Leaf.md)
 
 ## Context
 
