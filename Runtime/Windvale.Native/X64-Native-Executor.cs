@@ -354,6 +354,7 @@ public static class X64ˉnativeˉexecutor
                     Textˉarenaˉused,
                     Entryˉinput,
                     Resultˉdescriptor,
+                    serviceˉfreeˉbootstrap,
                     entry);
             }
         }
@@ -522,65 +523,45 @@ public static class X64ˉnativeˉexecutor
         uint arenaˉused,
         Nativeˉborrowedˉbuffer entryˉinput,
         Nativeˉentryˉresultˉdescriptor descriptor,
+        bool serviceˉfreeˉbootstrap,
         string entry)
     {
-        if (descriptor.Reserved != 0 || descriptor.Length > Bytecodeˉlimits.MAX_BYTE_DATA_BYTES)
+        var Arenaˉstart = checked((ulong)arena.Address.ToInt64());
+        var Imageˉstart = checked((ulong)executableˉaddress.ToInt64());
+        var Staticˉranges = fragment.Symbols
+            .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Data)
+            .Select(Symbol => new Nativeˉbyteˉresultˉrange(
+                checked(Imageˉstart + Symbol.Offset),
+                Symbol.Size))
+            .ToImmutableArray();
+        var Admissionˉinputs = new Nativeˉbyteˉresultˉadmissionˉinputs(
+            descriptor,
+            Arenaˉstart,
+            arenaˉused,
+            entryˉinput.Address == IntPtr.Zero
+                ? 0
+                : checked((ulong)entryˉinput.Address.ToInt64()),
+            checked((uint)entryˉinput.Length),
+            Staticˉranges);
+        var Isˉadmitted = serviceˉfreeˉbootstrap
+            ? Nativeˉstage0ˉbyteˉresultˉadmissionˉoracle.Admit(Admissionˉinputs)
+            : Nativeˉbyteˉresultˉadmissionˉbuilder.Admit(Admissionˉinputs);
+        if (!Isˉadmitted)
         {
             throw Invalidˉbyteˉresult(entry);
         }
-        if (descriptor.Length == 0 && descriptor.Pointer == 0)
+
+        if (descriptor.Length == 0)
         {
             return [];
         }
-
-        if (arenaˉused > arena.Length)
-        {
-            throw Invalidˉbyteˉresult(entry);
-        }
-        var Arenaˉstart = checked((ulong)arena.Address.ToInt64());
-        var Isˉarenaˉresult = Isˉinside(
-            descriptor.Pointer,
-            descriptor.Length,
-            Arenaˉstart,
-            arenaˉused);
-        var Imageˉstart = checked((ulong)executableˉaddress.ToInt64());
-        var Isˉstaticˉresult = fragment.Symbols
-            .Where(Symbol => Symbol.Kind == Nativeˉsymbolˉkind.Data)
-            .Any(Symbol => Isˉinside(
-                descriptor.Pointer,
-                descriptor.Length,
-                checked(Imageˉstart + Symbol.Offset),
-                Symbol.Size));
-        var Isˉinputˉresult = entryˉinput.Address != IntPtr.Zero && Isˉinside(
-            descriptor.Pointer,
-            descriptor.Length,
-            checked((ulong)entryˉinput.Address.ToInt64()),
-            checked((uint)entryˉinput.Length));
-        if (!Isˉarenaˉresult && !Isˉstaticˉresult && !Isˉinputˉresult)
-        {
-            throw Invalidˉbyteˉresult(entry);
-        }
-
         var Bytes = new byte[checked((int)descriptor.Length)];
-        if (Bytes.Length != 0)
-        {
-            Marshal.Copy(
-                new IntPtr(checked((long)descriptor.Pointer)),
-                Bytes,
-                0,
-                Bytes.Length);
-        }
+        Marshal.Copy(
+            new IntPtr(checked((long)descriptor.Pointer)),
+            Bytes,
+            0,
+            Bytes.Length);
         return Bytes.ToImmutableArray();
-    }
-
-    private static bool Isˉinside(ulong pointer, uint length, ulong start, uint available)
-    {
-        if (pointer < start)
-        {
-            return false;
-        }
-        var Offset = pointer - start;
-        return Offset <= available && length <= available - Offset;
     }
 
     private static Nativeˉbackendˉexception Invalidˉbyteˉresult(string entry) =>

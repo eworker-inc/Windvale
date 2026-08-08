@@ -42,6 +42,15 @@ For a `text` or `bytes` return, the caller places its verified result-cell addre
 
 After a successful exported byte return, the host requires a zero reserved word, a length no greater than 4 MiB, and a complete pointer range inside one exact immutable fragment-data symbol, the committed used prefix of the execution arena, or the current verified immutable entry-input buffer. It copies the accepted result before releasing the fragment, context, bridge cell, input, and arenas. A null pointer is accepted only for an empty result. Every other descriptor fails as `WVN4012`; a descriptor cannot escape its run. The parameterless exported byte-result contract is cross-host qualified under Decision 0080 at exact commit `f547af8dcf8e257ab8ad8a76a49bbdd1b9136677`; the input extension is implemented under [Decision 0360](../Documents/Decisions/0360-Native-Bounded-Byte-Entry-Input.md) with grouped cross-host qualification deferred.
 
+[Decision 0381](../Documents/Decisions/0381-Windvale-Owned-Native-Byte-Result-Admission.md)
+transfers that range decision to the exact
+[Windvale byte-result admission contract](Windvale-Native-Byte-Result-Admission.md).
+The host projects only verified live arena, entry-input, and static-symbol
+ranges, verifies the retained response and unchanged descriptor, and performs
+the final memory copy. Ordinary application results no longer use C# range
+arithmetic; service-free constructor execution retains the frozen prior
+algorithm only as its explicit bootstrap oracle.
+
 ## Value-slot and borrowed-descriptor layout
 
 Each native local and physical temporary owns one zero-initialized 16-byte frame slot. ABI 22 retains deterministic persistent record-local backing, block-reused record-result backing, and an optional record-return pointer cell in the same projected frame. The complete projected frame remains limited to 2,048 cells, or 32 KiB, before any separate outgoing-call reservation. Scalars use the low four bytes. Descriptors and direct record fields use complete cells. The wider cell is an internal representation boundary, not a host object or a claim that every future Windvale value will use this exact shape.

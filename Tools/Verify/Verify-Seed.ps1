@@ -208,6 +208,8 @@ $NativeArgumentTableCoreModule = Join-Path $Artifacts 'Native-Argument-Table-Cor
 $NativeArgumentTableBridgeModule = Join-Path $Artifacts 'Native-Argument-Table-Bridge.wvb'
 $NativeEntryBridgeCoreModule = Join-Path $Artifacts 'Native-Entry-Bridge-Core.wvb'
 $NativeEntryBridgeBridgeModule = Join-Path $Artifacts 'Native-Entry-Bridge-Bridge.wvb'
+$NativeByteResultAdmissionCoreModule = Join-Path $Artifacts 'Native-Byte-Result-Admission-Core.wvb'
+$NativeByteResultAdmissionBridgeModule = Join-Path $Artifacts 'Native-Byte-Result-Admission-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
@@ -1678,6 +1680,51 @@ if (
     $NativeEntryBridgeBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native entry-bridge inspection is incomplete.'
+}
+
+$NativeByteResultAdmissionCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Byte-Result-Admission-Core.wv'
+$NativeByteResultAdmissionBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Byte-Result-Admission-Bridge.wv'
+$NativeByteResultAdmissionBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Byte-Result-Admission-Bridge.wvb'
+$NativeByteResultAdmissionArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Byte-Result-Admission-Bridge.wvnf'
+dotnet $ToolDll compile $NativeByteResultAdmissionCoreSource -o $NativeByteResultAdmissionCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native byte-result admission core.' }
+$NativeByteResultAdmissionCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeByteResultAdmissionCoreModule).Hash.ToLowerInvariant()
+if ($NativeByteResultAdmissionCoreHash -ne 'eacc3c6bce78f9b07d11b13a46059e92cf8a34fc1f659b896d444e7e3c937c04') {
+    throw "The Windvale native byte-result admission core has an unexpected digest: $NativeByteResultAdmissionCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeByteResultAdmissionBridgeSource `
+    --module $NativeByteResultAdmissionCoreSource `
+    -o $NativeByteResultAdmissionBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native byte-result admission bridge.' }
+$NativeByteResultAdmissionBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeByteResultAdmissionBridgeModule).Hash.ToLowerInvariant()
+if ($NativeByteResultAdmissionBridgeHash -ne '9106356cf441c995b7c8478b3a5a779628328cd82acac87621de9a45bbb2becf') {
+    throw "The Windvale native byte-result admission bridge has an unexpected digest: $NativeByteResultAdmissionBridgeHash"
+}
+$NativeByteResultAdmissionBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeByteResultAdmissionBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeByteResultAdmissionBridgeRetainedHash -ne $NativeByteResultAdmissionBridgeHash -or
+    (Get-Item -LiteralPath $NativeByteResultAdmissionBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeByteResultAdmissionBridgeModule).Length
+) {
+    throw 'The retained Windvale native byte-result admission bridge does not match its exact source compilation.'
+}
+$NativeByteResultAdmissionArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeByteResultAdmissionArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeByteResultAdmissionArtifactHash -ne '35c29fa9bbc41a00e8797f7812eb1bbf0f95c7f07b96227ca666cc5bf8fd38c2' -or
+    (Get-Item -LiteralPath $NativeByteResultAdmissionArtifactRetained).Length -ne 68608
+) {
+    throw "The retained Windvale native byte-result admission fragment has an unexpected identity: $NativeByteResultAdmissionArtifactHash"
+}
+$NativeByteResultAdmissionBridgeInspection = (dotnet $ToolDll inspect $NativeByteResultAdmissionBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeByteResultAdmissionBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeByteResultAdmissionBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeByteResultAdmissionBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeByteResultAdmissionBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native byte-result admission bridge inspection is incomplete.'
 }
 
 $NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'

@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉbyteˉresultˉadmissionˉbridge profile portable;
+
+import Runtimeˉnativeˉbyteˉresultˉadmission as Admission;
+
+export fn Main(Input: bytes) -> bytes {
+    return Admission.Nativeˉbyteˉresultˉadmit(Input);
+}

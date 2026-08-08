@@ -1,0 +1,165 @@
+module Runtimeˉnativeˉbyteˉresultˉadmission profile portable;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Descriptorˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1381127767u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Descriptorˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn Nonzeroˉu64(Input: bytes, Offset: u32) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != 0u32 {
+        return true;
+    }
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 0u32;
+}
+
+fn Differenceˉfits(Difference: u32, Available: u32, Length: u32) -> bool {
+    if Difference > Available {
+        return false;
+    }
+    return Length <= Available - Difference;
+}
+
+fn Sameˉhighˉcontains(
+    Pointerˉlow: u32,
+    Startˉlow: u32,
+    Available: u32,
+    Length: u32
+) -> bool {
+    if Pointerˉlow < Startˉlow {
+        return false;
+    }
+    return Differenceˉfits(Pointerˉlow - Startˉlow, Available, Length);
+}
+
+fn Nextˉhighˉcontains(
+    Pointerˉlow: u32,
+    Startˉlow: u32,
+    Available: u32,
+    Length: u32
+) -> bool {
+    if Pointerˉlow >= Startˉlow {
+        return false;
+    }
+    let Difference: u32 =
+        (4294967295u32 - Startˉlow) + 1u32 + Pointerˉlow;
+    return Differenceˉfits(Difference, Available, Length);
+}
+
+fn Rangeˉcontains(
+    Input: bytes,
+    Pointerˉoffset: u32,
+    Rangeˉoffset: u32,
+    Length: u32
+) -> bool {
+    let Pointerˉlow: u32 = Bytesˉreadˉu32ˉlittle(Input, Pointerˉoffset);
+    let Pointerˉhigh: u32 = Bytesˉreadˉu32ˉlittle(Input, Pointerˉoffset + 4u32);
+    let Startˉlow: u32 = Bytesˉreadˉu32ˉlittle(Input, Rangeˉoffset);
+    let Startˉhigh: u32 = Bytesˉreadˉu32ˉlittle(Input, Rangeˉoffset + 4u32);
+    let Available: u32 = Bytesˉreadˉu32ˉlittle(Input, Rangeˉoffset + 8u32);
+    if Pointerˉhigh == Startˉhigh {
+        return Sameˉhighˉcontains(Pointerˉlow, Startˉlow, Available, Length);
+    }
+    if Startˉhigh == 4294967295u32 ||
+        Pointerˉhigh != Startˉhigh + 1u32 {
+        return false;
+    }
+    return Nextˉhighˉcontains(Pointerˉlow, Startˉlow, Available, Length);
+}
+
+export fn Nativeˉbyteˉresultˉadmit(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 64u32 {
+        return Failure(Input, 1u32, Total);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1364350551u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+    let Staticˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Staticˉcount > 4096u32 || Total != 64u32 + Staticˉcount * 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 60u32) != 0u32 {
+        return Failure(Input, 4u32, 12u32);
+    }
+
+    let Resultˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 ||
+        Resultˉlength > 4194304u32 ||
+        (!Nonzeroˉu64(Input, 16u32) && Resultˉlength != 0u32) {
+        return Failure(Input, 5u32, 16u32);
+    }
+    if !Nonzeroˉu64(Input, 32u32) ||
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) > 134217728u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 0u32 {
+        return Failure(Input, 6u32, 32u32);
+    }
+    let Inputˉpresent: bool = Nonzeroˉu64(Input, 48u32);
+    let Inputˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 56u32);
+    if (!Inputˉpresent && Inputˉlength != 0u32) || Inputˉlength > 4194304u32 {
+        return Failure(Input, 7u32, 48u32);
+    }
+    var Index: u32 = 0u32;
+    while Index < Staticˉcount {
+        let Rangeˉoffset: u32 = 64u32 + Index * 16u32;
+        if !Nonzeroˉu64(Input, Rangeˉoffset) ||
+            Bytesˉreadˉu32ˉlittle(Input, Rangeˉoffset + 8u32) > 33554432u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Rangeˉoffset + 12u32) != 0u32 {
+            return Failure(Input, 8u32, Rangeˉoffset);
+        }
+        Index = Index + 1u32;
+    }
+
+    if !Nonzeroˉu64(Input, 16u32) && Resultˉlength == 0u32 {
+        return Bytesˉconcat(
+            Responseˉheader(Input, 48u32, 0u32, Total, 16u32),
+            Bytesˉslice(Input, 16u32, 16u32)
+        );
+    }
+    if Rangeˉcontains(Input, 16u32, 32u32, Resultˉlength) ||
+        (Inputˉpresent && Rangeˉcontains(Input, 16u32, 48u32, Resultˉlength)) {
+        return Bytesˉconcat(
+            Responseˉheader(Input, 48u32, 0u32, Total, 16u32),
+            Bytesˉslice(Input, 16u32, 16u32)
+        );
+    }
+    Index = 0u32;
+    while Index < Staticˉcount {
+        if Rangeˉcontains(Input, 16u32, 64u32 + Index * 16u32, Resultˉlength) {
+            return Bytesˉconcat(
+                Responseˉheader(Input, 48u32, 0u32, Total, 16u32),
+                Bytesˉslice(Input, 16u32, 16u32)
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Failure(Input, 9u32, 16u32);
+}

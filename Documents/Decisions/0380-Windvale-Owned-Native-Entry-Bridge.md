@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0379](0379-Windvale-Owned-Native-Argument-Table.md), [Decision 0360](0360-Native-Bounded-Byte-Entry-Input.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native entry-bridge construction](../../Specifications/Windvale-Native-Entry-Bridge-Construction.md)
+- Advanced by: [Decision 0381](0381-Windvale-Owned-Native-Byte-Result-Admission.md)
 
 ## Context
 

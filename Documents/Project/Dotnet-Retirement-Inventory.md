@@ -347,6 +347,16 @@ lane retains one named frozen Stage 0 bridge oracle to avoid recursion. Input
 allocation, result copying, arenas, invocation, W^X ownership, Linux evidence,
 and the grouped gate remain open.
 
+[Decision 0381](../Decisions/0381-Windvale-Owned-Native-Byte-Result-Admission.md)
+removes the remaining C# result-range arithmetic from ordinary execution.
+Windvale admits the untrusted descriptor only inside the committed arena,
+immutable entry input, or one of at most 4,096 verified static-data ranges,
+including checked address-boundary cases. The host retains evidence projection,
+response verification, admitted real-memory copying, and teardown. The
+service-free constructor lane retains the former algorithm as a named frozen
+Stage 0 admission oracle. Arena and input allocation, invocation, W^X ownership,
+Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

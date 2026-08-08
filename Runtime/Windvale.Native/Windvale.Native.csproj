@@ -92,5 +92,8 @@
     <EmbeddedResource
       Include="Consumers/Native-Entry-Bridge-Bridge.wvnf"
       LogicalName="Windvale.Native.Native-Entry-Bridge-Bridge.wvnf" />
+    <EmbeddedResource
+      Include="Consumers/Native-Byte-Result-Admission-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-Byte-Result-Admission-Bridge.wvnf" />
   </ItemGroup>
 </Project>
