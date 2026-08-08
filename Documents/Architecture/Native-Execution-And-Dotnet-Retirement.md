@@ -626,6 +626,13 @@ metadata-request process remains the digest owner over the staged fragment and
 all ten services. Ordered process/resource lifecycle, complete composition,
 Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0410](../Decisions/0410-Native-Hosted-Orchestration-Control.md)
+keeps orchestration binary formats out of the permanent-host scripts. Its
+portable core constructs `WVMI` and projects admitted `WVSG` into `WVHS`; the
+paired process writes one control file per invocation. Host adapters can now
+concentrate on digest-bound tool selection, ordering, bounded iteration, and
+private teardown. Complete composition and grouped qualification remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

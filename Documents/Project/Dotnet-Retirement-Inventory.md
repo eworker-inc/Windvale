@@ -584,6 +584,13 @@ gate over the actual staged resources. Ordered process and private-resource
 lifecycle, complete composition, Linux execution, promotion, and the grouped
 gate remain.
 
+[Decision 0410](../Decisions/0410-Native-Hosted-Orchestration-Control.md)
+removes the remaining managed `WVMI` serialization and `WVSG`-to-`WVHS`
+projection from the candidate metadata path. One focused Windvale process now
+owns both single-output control modes. Tool-package acquisition, ordered child
+execution, segment iteration, private cleanup, Linux execution, promotion, and
+the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

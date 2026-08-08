@@ -1437,6 +1437,7 @@ internal static partial class Program
         new("native hosted publication request reproduces exact layout input", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉpublicationˉrequestˉruns),
         new("native hosted source geometry derives exact resource layout", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉsourceˉgeometryˉruns),
         new("native fixed-service acquisition stages canonical source geometry", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉfixedˉservicesˉrun),
+        new("native orchestration control produces exact metadata and evidence inputs", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉorchestrationˉcontrolˉruns),
         new("native hosted enum processes reproduce the exact variable service", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉenumˉprocessesˉrun),
         new("native hosted-container segment request reproduces exact segmented input", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉsegmentˉrequestˉruns),
         new("native hosted metadata request recomputes exact bundle evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉmetadataˉrequestˉruns),

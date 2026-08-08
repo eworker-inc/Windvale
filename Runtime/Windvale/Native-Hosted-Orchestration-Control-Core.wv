@@ -1,0 +1,141 @@
+module Nativeˉhostedˉorchestrationˉcontrol profile portable;
+
+import Foundationˉimmutableˉsourceˉregions as Sources;
+
+export record Nativeˉhostedˉcontrolˉresult {
+    Valid: bool;
+    Value: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Invalid(Input: bytes) -> Nativeˉhostedˉcontrolˉresult {
+    return Nativeˉhostedˉcontrolˉresult(false, Empty(Input));
+}
+
+export fn Nativeˉhostedˉmetadataˉinputˉbuild(
+    Input: bytes,
+    Target: u32,
+    Profile: u32,
+    Nativeˉentry: u32
+) -> Nativeˉhostedˉcontrolˉresult {
+    if Target == 0u32 || Target > 2u32 ||
+        Profile == 0u32 || Profile > 7u32 ||
+        Nativeˉentry >= 33554432u32 {
+        return Invalid(Input);
+    }
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1229805143u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 32u32);
+    Result = Appendˉu32(Result, Target);
+    Result = Appendˉu32(Result, Profile);
+    Result = Appendˉu32(Result, Nativeˉentry);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    return Nativeˉhostedˉcontrolˉresult(
+        Bytesˉlength(Result) == 32u32,
+        Result
+    );
+}
+
+fn Evidenceˉmanifestˉmatches(
+    Sourcesˉvalue: bytes,
+    Result: bytes,
+    Chunks: u32,
+    Regions: u32,
+    Logicalˉbytes: u32
+) -> bool {
+    if Bytesˉlength(Result) != 32u32 + Chunks * 20u32 + Regions * 12u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 0u32) != 1397249623u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 8u32) != Bytesˉlength(Result) ||
+        Bytesˉreadˉu32ˉlittle(Result, 12u32) != Chunks ||
+        Bytesˉreadˉu32ˉlittle(Result, 16u32) != Regions ||
+        Bytesˉreadˉu32ˉlittle(Result, 20u32) != Logicalˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Result, 24u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Result, 28u32) != 0u32 {
+        return false;
+    }
+    let Resultˉregions: u32 = 32u32 + Chunks * 20u32;
+    let Sourceˉregions: u32 = Resultˉregions;
+    var Index: u32 = 0u32;
+    while Index < Chunks * 20u32 {
+        if Bytesˉreadˉu8(Result, 32u32 + Index) !=
+            Bytesˉreadˉu8(Sourcesˉvalue, 32u32 + Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    Index = 0u32;
+    while Index < Regions {
+        let Source: u32 = Sourceˉregions + Index * 16u32;
+        let Target: u32 = Resultˉregions + Index * 12u32;
+        if Bytesˉreadˉu32ˉlittle(Result, Target) != Index ||
+            Bytesˉreadˉu32ˉlittle(Result, Target + 4u32) !=
+                Bytesˉreadˉu32ˉlittle(Sourcesˉvalue, Source + 4u32) ||
+            Bytesˉreadˉu32ˉlittle(Result, Target + 8u32) !=
+                Bytesˉreadˉu32ˉlittle(Sourcesˉvalue, Source + 12u32) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉevidenceˉmanifestˉbuild(Sourcesˉvalue: bytes)
+    -> Nativeˉhostedˉcontrolˉresult {
+    let Plan: Sources.Immutableˉsourceˉregionˉplan =
+        Sources.Immutableˉsourceˉregionsˉadmit(Sourcesˉvalue);
+    if !Plan.Valid || Plan.Chunks < 11u32 || Plan.Chunks > 18u32 ||
+        Plan.Regions != 11u32 || Plan.Logicalˉbytes == 0u32 {
+        return Invalid(Sourcesˉvalue);
+    }
+    var Result: bytes = Empty(Sourcesˉvalue);
+    Result = Appendˉu32(Result, 1397249623u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(
+        Result,
+        32u32 + Plan.Chunks * 20u32 + Plan.Regions * 12u32
+    );
+    Result = Appendˉu32(Result, Plan.Chunks);
+    Result = Appendˉu32(Result, Plan.Regions);
+    Result = Appendˉu32(Result, Plan.Logicalˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉslice(Sourcesˉvalue, 32u32, Plan.Chunks * 20u32)
+    );
+    let Regionˉbase: u32 = 32u32 + Plan.Chunks * 20u32;
+    var Region: u32 = 0u32;
+    while Region < Plan.Regions {
+        let Record: u32 = Regionˉbase + Region * 16u32;
+        Result = Appendˉu32(Result, Region);
+        Result = Appendˉu32(
+            Result,
+            Bytesˉreadˉu32ˉlittle(Sourcesˉvalue, Record + 4u32)
+        );
+        Result = Appendˉu32(
+            Result,
+            Bytesˉreadˉu32ˉlittle(Sourcesˉvalue, Record + 12u32)
+        );
+        Region = Region + 1u32;
+    }
+    return Nativeˉhostedˉcontrolˉresult(
+        Evidenceˉmanifestˉmatches(
+            Sourcesˉvalue,
+            Result,
+            Plan.Chunks,
+            Plan.Regions,
+            Plan.Logicalˉbytes
+        ),
+        Result
+    );
+}

@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0408](0408-Native-Enum-Service-Fragment-Reconstruction.md), [Decision 0402](0402-Native-Hosted-Metadata-Request.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted fixed-service acquisition](../../Specifications/Windvale-Native-Hosted-Fixed-Services.md)
+- Advanced by: [Decision 0410](0410-Native-Hosted-Orchestration-Control.md)
 
 ## Context and decision
 
