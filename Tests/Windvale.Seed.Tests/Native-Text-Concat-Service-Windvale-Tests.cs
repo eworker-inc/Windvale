@@ -66,18 +66,15 @@ internal static partial class Program
             X64ˉnativeˉtextˉservices.TEXT_CONCAT_CONSUMER_CANONICAL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
 
-        using (var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
-            .GetManifestResourceStream(
-                "Windvale.Native.Native-X64-Text-Concat-Service-Bridge.wvb") ??
-            throw new InvalidOperationException(
-                "The retained Windvale text-concatenation service bridge was not embedded."))
-        {
-            var Retained = new byte[checked((int)Stream.Length)];
-            Stream.ReadExactly(Retained);
-            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
-        }
-
         var Repository = Findˉrepositoryˉroot();
+        Sequenceˉequal(
+            Bridgeˉresult.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(
+                Repository,
+                "Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service-Bridge.wvb")));
+        var Retainedˉleaf = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉtextˉservices),
+            "Windvale.Native.Native-X64-Text-Concat-Service.bin");
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-native-text-concat-service-{Guid.NewGuid():N}");
@@ -107,6 +104,7 @@ internal static partial class Program
         Equal(
             X64ˉnativeˉtextˉservices.TEXT_CONCAT_CANONICAL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Expected.AsSpan()));
+        Sequenceˉequal(Expected, Retainedˉleaf);
         X64ˉnativeˉtextˉservices.Verify(
             Nativeˉservice.Textˉconcat,
             Expected.AsSpan());

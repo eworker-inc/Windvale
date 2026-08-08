@@ -566,6 +566,7 @@ printf '%s\n' "$NATIVE_UTF8_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_UTF8_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv"
 NATIVE_UTF8_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service-Bridge.wvb"
+NATIVE_UTF8_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service.bin"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_UTF8_BRIDGE_SOURCE" \
     --module "$NATIVE_UTF8_CORE_SOURCE" \
@@ -576,6 +577,11 @@ if [ "$NATIVE_UTF8_BRIDGE_HASH" != '4d3c8d50d371147d687163c6d7ab761d32445719789f
     exit 1
 fi
 cmp -s "$NATIVE_UTF8_BRIDGE_MODULE" "$NATIVE_UTF8_BRIDGE_RETAINED"
+if [ "$(sha256sum "$NATIVE_UTF8_LEAF_RETAINED" | awk '{print $1}')" != '4c3d2e370d62c8d2f54a3c453f39b94cf46ddabd6db3c2f3d6b65f0713b68aaf' ] ||
+    [ "$(wc -c < "$NATIVE_UTF8_LEAF_RETAINED")" -ne 800 ]; then
+    echo 'The retained Windvale native UTF-8 service leaf has an unexpected exact identity.' >&2
+    exit 1
+fi
 NATIVE_UTF8_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_UTF8_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
@@ -596,6 +602,8 @@ printf '%s\n' "$NATIVE_INTEGER_FORMAT_CORE_INSPECTION" | grep -F 'Exports (1)' >
 
 NATIVE_INTEGER_FORMAT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Integer-Format-Services-Bridge.wv"
 NATIVE_INTEGER_FORMAT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Integer-Format-Services-Bridge.wvb"
+NATIVE_I32_FORMAT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-I32-Format-Service.bin"
+NATIVE_U32_FORMAT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-U32-Format-Service.bin"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_INTEGER_FORMAT_BRIDGE_SOURCE" \
     --module "$NATIVE_INTEGER_FORMAT_CORE_SOURCE" \
@@ -606,6 +614,13 @@ if [ "$NATIVE_INTEGER_FORMAT_BRIDGE_HASH" != '851f6d8e01b62106763af518c15dc163a9
     exit 1
 fi
 cmp -s "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE" "$NATIVE_INTEGER_FORMAT_BRIDGE_RETAINED"
+if [ "$(sha256sum "$NATIVE_I32_FORMAT_LEAF_RETAINED" | awk '{print $1}')" != 'c33758106e8d7cd31bbed8ef1e789a8e355c52736c119c75493154a4184fa41e' ] ||
+    [ "$(wc -c < "$NATIVE_I32_FORMAT_LEAF_RETAINED")" -ne 225 ] ||
+    [ "$(sha256sum "$NATIVE_U32_FORMAT_LEAF_RETAINED" | awk '{print $1}')" != 'b98f2d55e30bb7369e233f94e4ade5f3e8917a7730114446f1ebc81f353e1e43' ] ||
+    [ "$(wc -c < "$NATIVE_U32_FORMAT_LEAF_RETAINED")" -ne 191 ]; then
+    echo 'The retained Windvale native integer-format leaves have unexpected exact identities.' >&2
+    exit 1
+fi
 NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
@@ -642,6 +657,7 @@ printf '%s\n' "$NATIVE_TEXT_CONCAT_CORE_INSPECTION" | grep -F 'Exports (1)' >/de
 
 NATIVE_TEXT_CONCAT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv"
 NATIVE_TEXT_CONCAT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service-Bridge.wvb"
+NATIVE_TEXT_CONCAT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service.bin"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_TEXT_CONCAT_BRIDGE_SOURCE" \
     --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
@@ -653,6 +669,11 @@ if [ "$NATIVE_TEXT_CONCAT_BRIDGE_HASH" != '87bd2e3489d3a5e4b31002858f37a5f254770
     exit 1
 fi
 cmp -s "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE" "$NATIVE_TEXT_CONCAT_BRIDGE_RETAINED"
+if [ "$(sha256sum "$NATIVE_TEXT_CONCAT_LEAF_RETAINED" | awk '{print $1}')" != '75c5588117e1f5f58a593a23aae6156a3a68a6302df5f50153b977bccbaaa3a0' ] ||
+    [ "$(wc -c < "$NATIVE_TEXT_CONCAT_LEAF_RETAINED")" -ne 249 ]; then
+    echo 'The retained Windvale native text-concatenation leaf has an unexpected exact identity.' >&2
+    exit 1
+fi
 NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
@@ -674,6 +695,7 @@ printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev
 
 NATIVE_TEXT_QUOTE_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Quote-Service-Bridge.wv"
 NATIVE_TEXT_QUOTE_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service-Bridge.wvb"
+NATIVE_TEXT_QUOTE_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service.bin"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_TEXT_QUOTE_BRIDGE_SOURCE" \
     --module "$NATIVE_TEXT_QUOTE_CORE_SOURCE" \
@@ -684,6 +706,11 @@ if [ "$NATIVE_TEXT_QUOTE_BRIDGE_HASH" != '306b76bcf7e6b3252ce0f9509664acc5ee5a2b
     exit 1
 fi
 cmp -s "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE" "$NATIVE_TEXT_QUOTE_BRIDGE_RETAINED"
+if [ "$(sha256sum "$NATIVE_TEXT_QUOTE_LEAF_RETAINED" | awk '{print $1}')" != '4f334af9b6349437d36fd703edb6b5882416f033fae47906a40a4bafdc083bb7' ] ||
+    [ "$(wc -c < "$NATIVE_TEXT_QUOTE_LEAF_RETAINED")" -ne 1165 ]; then
+    echo 'The retained Windvale native text-quote leaf has an unexpected exact identity.' >&2
+    exit 1
+fi
 NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null

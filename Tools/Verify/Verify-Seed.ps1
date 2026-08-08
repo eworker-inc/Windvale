@@ -668,6 +668,7 @@ if (
 }
 $NativeUtf8BridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv'
 $NativeUtf8BridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service-Bridge.wvb'
+$NativeUtf8LeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service.bin'
 dotnet $ToolDll `
     compile $NativeUtf8BridgeSource `
     --module $NativeUtf8CoreSource `
@@ -684,6 +685,11 @@ if (
         (Get-Item -LiteralPath $NativeUtf8BridgeModule).Length
 ) {
     throw 'The retained Windvale native UTF-8 service bridge does not match its exact source compilation.'
+}
+$NativeUtf8LeafRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeUtf8LeafRetained).Hash.ToLowerInvariant()
+if ($NativeUtf8LeafRetainedHash -ne '4c3d2e370d62c8d2f54a3c453f39b94cf46ddabd6db3c2f3d6b65f0713b68aaf' -or
+    (Get-Item -LiteralPath $NativeUtf8LeafRetained).Length -ne 800) {
+    throw 'The retained Windvale native UTF-8 service leaf has an unexpected exact identity.'
 }
 $NativeUtf8BridgeInspection = (dotnet $ToolDll inspect $NativeUtf8BridgeModule) -join "`n"
 if (
@@ -713,6 +719,8 @@ if (
 }
 $NativeIntegerFormatBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Integer-Format-Services-Bridge.wv'
 $NativeIntegerFormatBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Integer-Format-Services-Bridge.wvb'
+$NativeI32FormatLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-I32-Format-Service.bin'
+$NativeU32FormatLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-U32-Format-Service.bin'
 dotnet $ToolDll `
     compile $NativeIntegerFormatBridgeSource `
     --module $NativeIntegerFormatCoreSource `
@@ -729,6 +737,14 @@ if (
         (Get-Item -LiteralPath $NativeIntegerFormatBridgeModule).Length
 ) {
     throw 'The retained Windvale native integer-format service bridge does not match its exact source compilation.'
+}
+$NativeI32FormatLeafRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeI32FormatLeafRetained).Hash.ToLowerInvariant()
+$NativeU32FormatLeafRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeU32FormatLeafRetained).Hash.ToLowerInvariant()
+if ($NativeI32FormatLeafRetainedHash -ne 'c33758106e8d7cd31bbed8ef1e789a8e355c52736c119c75493154a4184fa41e' -or
+    (Get-Item -LiteralPath $NativeI32FormatLeafRetained).Length -ne 225 -or
+    $NativeU32FormatLeafRetainedHash -ne 'b98f2d55e30bb7369e233f94e4ade5f3e8917a7730114446f1ebc81f353e1e43' -or
+    (Get-Item -LiteralPath $NativeU32FormatLeafRetained).Length -ne 191) {
+    throw 'The retained Windvale native integer-format leaves have unexpected exact identities.'
 }
 $NativeIntegerFormatBridgeInspection = (dotnet $ToolDll inspect $NativeIntegerFormatBridgeModule) -join "`n"
 if (
@@ -780,6 +796,7 @@ if (
 
 $NativeTextConcatBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv'
 $NativeTextConcatBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service-Bridge.wvb'
+$NativeTextConcatLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service.bin'
 dotnet $ToolDll `
     compile $NativeTextConcatBridgeSource `
     --module $NativeServiceCodeBuilderSource `
@@ -797,6 +814,11 @@ if (
         (Get-Item -LiteralPath $NativeTextConcatBridgeModule).Length
 ) {
     throw 'The retained Windvale native text-concatenation service bridge does not match its exact source compilation.'
+}
+$NativeTextConcatLeafRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextConcatLeafRetained).Hash.ToLowerInvariant()
+if ($NativeTextConcatLeafRetainedHash -ne '75c5588117e1f5f58a593a23aae6156a3a68a6302df5f50153b977bccbaaa3a0' -or
+    (Get-Item -LiteralPath $NativeTextConcatLeafRetained).Length -ne 249) {
+    throw 'The retained Windvale native text-concatenation leaf has an unexpected exact identity.'
 }
 $NativeTextConcatBridgeInspection = (dotnet $ToolDll inspect $NativeTextConcatBridgeModule) -join "`n"
 if (
@@ -828,6 +850,7 @@ if (
 
 $NativeTextQuoteBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Quote-Service-Bridge.wv'
 $NativeTextQuoteBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service-Bridge.wvb'
+$NativeTextQuoteLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service.bin'
 dotnet $ToolDll `
     compile $NativeTextQuoteBridgeSource `
     --module $NativeTextQuoteCoreSource `
@@ -844,6 +867,11 @@ if (
         (Get-Item -LiteralPath $NativeTextQuoteBridgeModule).Length
 ) {
     throw 'The retained Windvale native text-quote service bridge does not match its exact source compilation.'
+}
+$NativeTextQuoteLeafRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextQuoteLeafRetained).Hash.ToLowerInvariant()
+if ($NativeTextQuoteLeafRetainedHash -ne '4f334af9b6349437d36fd703edb6b5882416f033fae47906a40a4bafdc083bb7' -or
+    (Get-Item -LiteralPath $NativeTextQuoteLeafRetained).Length -ne 1165) {
+    throw 'The retained Windvale native text-quote leaf has an unexpected exact identity.'
 }
 $NativeTextQuoteBridgeInspection = (dotnet $ToolDll inspect $NativeTextQuoteBridgeModule) -join "`n"
 if (

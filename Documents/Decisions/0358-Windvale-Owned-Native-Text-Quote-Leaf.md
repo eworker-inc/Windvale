@@ -1,8 +1,9 @@
 # Decision 0358: Windvale-owned native text-quote leaf
 
-- Status: Accepted current-host ownership transfer; Linux execution and grouped qualification pending
+- Status: Accepted current-host ownership transfer; direct normal consumption advanced by Decision 0364; Linux execution and grouped qualification pending
 - Date: 2026-08-07
 - Advances: [Decision 0072](0072-Final-Pure-Runtime-Native-Services.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
+- Advanced by: [Decision 0364](0364-Direct-Fixed-Native-Service-Leaf-Consumption.md)
 - Contract: [Windvale native execution context](../../Specifications/Windvale-Native-Execution-Context.md#dynamic-text-and-byte-arena)
 
 ## Context

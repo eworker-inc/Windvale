@@ -1,9 +1,10 @@
 # Decision 0363: Direct native enum-name leaf consumption
 
-- Status: Accepted current-host normal-path loader reduction; Linux execution and grouped qualification pending
+- Status: Accepted current-host normal-path loader reduction; pattern completed by Decision 0364; Linux execution and grouped qualification pending
 - Date: 2026-08-07
 - Advances: [Decision 0359](0359-Windvale-Owned-Native-Enum-Name-Leaf.md), [Decision 0362](0362-Windvale-Owned-Segmented-Native-Enum-Metadata.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native execution context](../../Specifications/Windvale-Native-Execution-Context.md#dynamic-text-and-byte-arena)
+- Advanced by: [Decision 0364](0364-Direct-Fixed-Native-Service-Leaf-Consumption.md)
 
 ## Context
 

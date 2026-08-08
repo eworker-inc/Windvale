@@ -1,8 +1,9 @@
 # Decision 0355: Windvale-owned native UTF-8 service construction
 
-- Status: Accepted current-host ownership transfer; Linux execution and grouped qualification pending
+- Status: Accepted current-host ownership transfer; direct normal consumption advanced by Decision 0364; Linux execution and grouped qualification pending
 - Date: 2026-08-07
 - Advances: [Decision 0070](0070-First-Runtime-Native-Utf8-Service.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
+- Advanced by: [Decision 0364](0364-Direct-Fixed-Native-Service-Leaf-Consumption.md)
 - Contract: [Windvale native execution context](../../Specifications/Windvale-Native-Execution-Context.md#pure-utf-8-validation-service)
 
 ## Context

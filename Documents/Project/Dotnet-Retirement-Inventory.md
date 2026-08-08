@@ -182,6 +182,17 @@ bundle assembly, final W^X publication, Linux evidence, and the grouped gate
 remain open. The same direct-artifact pattern can now move the other fixed
 Windvale-owned service leaves out of live generator execution.
 
+[Decision 0364](../Decisions/0364-Direct-Fixed-Native-Service-Leaf-Consumption.md)
+applies that proven boundary to strict UTF-8 validation, text concatenation,
+text quoting, and signed and unsigned integer formatting. The normal runtime
+assembly now embeds all six fixed exact service leaves and none of their five
+generator WVBs. Sources, projects, and retained WVBs remain exact
+qualification/recovery evidence, but no fixed pure service performs managed
+WVB decode, lowering, temporary W^X generator execution, result copying, or
+teardown in the normal path. Variable-input constructors, managed bundle
+assembly, final W^X publication, Linux evidence, and the grouped gate remain
+open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

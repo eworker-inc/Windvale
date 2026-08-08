@@ -15,17 +15,20 @@
       Include="Consumers/Native-Stencil-Bridge.wvb"
       LogicalName="Windvale.Native.Native-Stencil-Bridge.wvb" />
     <EmbeddedResource
-      Include="Consumers/Native-X64-Utf8-Service-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-X64-Utf8-Service-Bridge.wvb" />
+      Include="Consumers/Native-X64-Utf8-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Utf8-Service.bin" />
     <EmbeddedResource
-      Include="Consumers/Native-X64-Integer-Format-Services-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-X64-Integer-Format-Services-Bridge.wvb" />
+      Include="Consumers/Native-X64-I32-Format-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-I32-Format-Service.bin" />
     <EmbeddedResource
-      Include="Consumers/Native-X64-Text-Concat-Service-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-X64-Text-Concat-Service-Bridge.wvb" />
+      Include="Consumers/Native-X64-U32-Format-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-U32-Format-Service.bin" />
     <EmbeddedResource
-      Include="Consumers/Native-X64-Text-Quote-Service-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-X64-Text-Quote-Service-Bridge.wvb" />
+      Include="Consumers/Native-X64-Text-Concat-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Text-Concat-Service.bin" />
+    <EmbeddedResource
+      Include="Consumers/Native-X64-Text-Quote-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Text-Quote-Service.bin" />
     <EmbeddedResource
       Include="Consumers/Native-X64-Enum-Name-Service.bin"
       LogicalName="Windvale.Native.Native-X64-Enum-Name-Service.bin" />

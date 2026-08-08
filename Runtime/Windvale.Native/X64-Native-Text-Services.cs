@@ -34,25 +34,50 @@ public static class X64ˉnativeˉtextˉservices
     public const int INTEGER_FORMAT_CONSUMER_CANONICAL_SIZE = 11_598;
     public const string INTEGER_FORMAT_CONSUMER_CANONICAL_SHA256 =
         "851f6d8e01b62106763af518c15dc163a9af9ea30c14cdb01d62adf1538ae7f9";
-    private const string INTEGER_FORMAT_CONSUMER_RESOURCE =
-        "Windvale.Native.Native-X64-Integer-Format-Services-Bridge.wvb";
-    private const string TEXT_CONCAT_CONSUMER_RESOURCE =
-        "Windvale.Native.Native-X64-Text-Concat-Service-Bridge.wvb";
-    private const string TEXT_QUOTE_CONSUMER_RESOURCE =
-        "Windvale.Native.Native-X64-Text-Quote-Service-Bridge.wvb";
+    private const string I32_FORMAT_LEAF_RESOURCE =
+        "Windvale.Native.Native-X64-I32-Format-Service.bin";
+    private const string U32_FORMAT_LEAF_RESOURCE =
+        "Windvale.Native.Native-X64-U32-Format-Service.bin";
+    private const string TEXT_CONCAT_LEAF_RESOURCE =
+        "Windvale.Native.Native-X64-Text-Concat-Service.bin";
+    private const string TEXT_QUOTE_LEAF_RESOURCE =
+        "Windvale.Native.Native-X64-Text-Quote-Service.bin";
     private const string ENUM_NAME_LEAF_RESOURCE =
         "Windvale.Native.Native-X64-Enum-Name-Service.bin";
     private static readonly Lazy<ImmutableArray<byte>> ENUM_NAME_RESULT = new(
-        Readˉenumˉnameˉartifact,
+        () => Readˉartifact(
+            Nativeˉservice.Enumˉname,
+            ENUM_NAME_LEAF_RESOURCE,
+            ENUM_NAME_CANONICAL_SIZE,
+            ENUM_NAME_CANONICAL_SHA256),
         LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly Lazy<ImmutableArray<byte>> TEXT_CONCAT_RESULT = new(
-        Buildˉtextˉconcatˉwithˉwindvale,
+        () => Readˉartifact(
+            Nativeˉservice.Textˉconcat,
+            TEXT_CONCAT_LEAF_RESOURCE,
+            TEXT_CONCAT_CANONICAL_SIZE,
+            TEXT_CONCAT_CANONICAL_SHA256),
         LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly Lazy<ImmutableArray<byte>> TEXT_QUOTE_RESULT = new(
-        Buildˉtextˉquoteˉwithˉwindvale,
+        () => Readˉartifact(
+            Nativeˉservice.Textˉquote,
+            TEXT_QUOTE_LEAF_RESOURCE,
+            TEXT_QUOTE_CANONICAL_SIZE,
+            TEXT_QUOTE_CANONICAL_SHA256),
         LazyThreadSafetyMode.ExecutionAndPublication);
-    private static readonly Lazy<ImmutableArray<byte>> INTEGER_FORMAT_RESULT = new(
-        Buildˉintegerˉformatˉwithˉwindvale,
+    private static readonly Lazy<ImmutableArray<byte>> I32_FORMAT_RESULT = new(
+        () => Readˉartifact(
+            Nativeˉservice.I32ˉformat,
+            I32_FORMAT_LEAF_RESOURCE,
+            I32_FORMAT_CANONICAL_SIZE,
+            I32_FORMAT_CANONICAL_SHA256),
+        LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<ImmutableArray<byte>> U32_FORMAT_RESULT = new(
+        () => Readˉartifact(
+            Nativeˉservice.U32ˉformat,
+            U32_FORMAT_LEAF_RESOURCE,
+            U32_FORMAT_CANONICAL_SIZE,
+            U32_FORMAT_CANONICAL_SHA256),
         LazyThreadSafetyMode.ExecutionAndPublication);
 
     // ABI-13 retains the text arena and service-failure detail through R15's context.
@@ -140,146 +165,36 @@ public static class X64ˉnativeˉtextˉservices
     private static ImmutableArray<byte> Readˉtextˉconcat() =>
         TEXT_CONCAT_RESULT.Value;
 
-    private static ImmutableArray<byte> Buildˉtextˉconcatˉwithˉwindvale()
-    {
-        using var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
-            .GetManifestResourceStream(TEXT_CONCAT_CONSUMER_RESOURCE) ??
-            throw Invalidˉtextˉconcatˉconsumer();
-        if (Stream.Length != TEXT_CONCAT_CONSUMER_CANONICAL_SIZE)
-        {
-            throw Invalidˉtextˉconcatˉconsumer();
-        }
-        var Bytes = new byte[TEXT_CONCAT_CONSUMER_CANONICAL_SIZE];
-        Stream.ReadExactly(Bytes);
-        var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
-        if (!StringComparer.Ordinal.Equals(Hash, TEXT_CONCAT_CONSUMER_CANONICAL_SHA256))
-        {
-            throw Invalidˉtextˉconcatˉconsumer();
-        }
-
-        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Compilation = X64ˉnativeˉbackend.Compile(Verified);
-        var Result = X64ˉnativeˉexecutor.Executeˉbytes(Compilation.Fragment);
-        Verifyˉidentity(
-            Nativeˉservice.Textˉconcat,
-            Result.AsSpan(),
-            TEXT_CONCAT_CANONICAL_SIZE,
-            TEXT_CONCAT_CANONICAL_SHA256);
-        return Result;
-    }
-
-    private static InvalidOperationException Invalidˉtextˉconcatˉconsumer() =>
-        new("The retained Windvale native text-concatenation consumer failed its exact identity contract.");
-
     private static ImmutableArray<byte> Readˉtextˉquote() =>
         TEXT_QUOTE_RESULT.Value;
 
-    private static ImmutableArray<byte> Buildˉtextˉquoteˉwithˉwindvale()
-    {
-        using var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
-            .GetManifestResourceStream(TEXT_QUOTE_CONSUMER_RESOURCE) ??
-            throw Invalidˉtextˉquoteˉconsumer();
-        if (Stream.Length != TEXT_QUOTE_CONSUMER_CANONICAL_SIZE)
-        {
-            throw Invalidˉtextˉquoteˉconsumer();
-        }
-        var Bytes = new byte[TEXT_QUOTE_CONSUMER_CANONICAL_SIZE];
-        Stream.ReadExactly(Bytes);
-        var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
-        if (!StringComparer.Ordinal.Equals(Hash, TEXT_QUOTE_CONSUMER_CANONICAL_SHA256))
-        {
-            throw Invalidˉtextˉquoteˉconsumer();
-        }
-
-        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Compilation = X64ˉnativeˉbackend.Compile(Verified);
-        var Result = X64ˉnativeˉexecutor.Executeˉbytes(Compilation.Fragment);
-        Verifyˉidentity(
-            Nativeˉservice.Textˉquote,
-            Result.AsSpan(),
-            TEXT_QUOTE_CANONICAL_SIZE,
-            TEXT_QUOTE_CANONICAL_SHA256);
-        return Result;
-    }
-
-    private static InvalidOperationException Invalidˉtextˉquoteˉconsumer() =>
-        new("The retained Windvale native text-quote consumer failed its exact identity contract.");
-
     private static ImmutableArray<byte> Readˉintegerˉformat(bool isˉsigned)
-    {
-        var Result = INTEGER_FORMAT_RESULT.Value;
-        if (isˉsigned)
-        {
-            return Result.AsSpan(0, I32_FORMAT_CANONICAL_SIZE).ToImmutableArray();
-        }
-        return Result.AsSpan(I32_FORMAT_CANONICAL_SIZE, U32_FORMAT_CANONICAL_SIZE)
-            .ToImmutableArray();
-    }
-
-    private static ImmutableArray<byte> Buildˉintegerˉformatˉwithˉwindvale()
-    {
-        using var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
-            .GetManifestResourceStream(INTEGER_FORMAT_CONSUMER_RESOURCE) ??
-            throw Invalidˉintegerˉformatˉconsumer();
-        if (Stream.Length != INTEGER_FORMAT_CONSUMER_CANONICAL_SIZE)
-        {
-            throw Invalidˉintegerˉformatˉconsumer();
-        }
-        var Bytes = new byte[INTEGER_FORMAT_CONSUMER_CANONICAL_SIZE];
-        Stream.ReadExactly(Bytes);
-        var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
-        if (!StringComparer.Ordinal.Equals(Hash, INTEGER_FORMAT_CONSUMER_CANONICAL_SHA256))
-        {
-            throw Invalidˉintegerˉformatˉconsumer();
-        }
-
-        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Compilation = X64ˉnativeˉbackend.Compile(Verified);
-        var Result = X64ˉnativeˉexecutor.Executeˉbytes(Compilation.Fragment);
-        if (Result.Length != I32_FORMAT_CANONICAL_SIZE + U32_FORMAT_CANONICAL_SIZE)
-        {
-            throw Invalidˉintegerˉformatˉconsumer();
-        }
-        Verifyˉidentity(
-            Nativeˉservice.I32ˉformat,
-            Result.AsSpan(0, I32_FORMAT_CANONICAL_SIZE),
-            I32_FORMAT_CANONICAL_SIZE,
-            I32_FORMAT_CANONICAL_SHA256);
-        Verifyˉidentity(
-            Nativeˉservice.U32ˉformat,
-            Result.AsSpan(I32_FORMAT_CANONICAL_SIZE, U32_FORMAT_CANONICAL_SIZE),
-            U32_FORMAT_CANONICAL_SIZE,
-            U32_FORMAT_CANONICAL_SHA256);
-        return Result;
-    }
-
-    private static InvalidOperationException Invalidˉintegerˉformatˉconsumer() =>
-        new("The retained Windvale native integer-format consumer failed its exact identity contract.");
+        => isˉsigned ? I32_FORMAT_RESULT.Value : U32_FORMAT_RESULT.Value;
 
     private static ImmutableArray<byte> Readˉenumˉname() =>
         ENUM_NAME_RESULT.Value;
 
-    private static ImmutableArray<byte> Readˉenumˉnameˉartifact()
+    private static ImmutableArray<byte> Readˉartifact(
+        Nativeˉservice service,
+        string resource,
+        int expectedˉsize,
+        string expectedˉhash)
     {
         using var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
-            .GetManifestResourceStream(ENUM_NAME_LEAF_RESOURCE) ??
-            throw Invalidˉenumˉnameˉartifact();
-        if (Stream.Length != ENUM_NAME_CANONICAL_SIZE)
+            .GetManifestResourceStream(resource) ??
+            throw Invalidˉartifact(service);
+        if (Stream.Length != expectedˉsize)
         {
-            throw Invalidˉenumˉnameˉartifact();
+            throw Invalidˉartifact(service);
         }
-        var Bytes = new byte[ENUM_NAME_CANONICAL_SIZE];
+        var Bytes = new byte[expectedˉsize];
         Stream.ReadExactly(Bytes);
-        Verifyˉidentity(
-            Nativeˉservice.Enumˉname,
-            Bytes,
-            ENUM_NAME_CANONICAL_SIZE,
-            ENUM_NAME_CANONICAL_SHA256);
+        Verifyˉidentity(service, Bytes, expectedˉsize, expectedˉhash);
         return Bytes.ToImmutableArray();
     }
 
-    private static InvalidOperationException Invalidˉenumˉnameˉartifact() =>
-        new("The retained Windvale native enum-name leaf failed its exact identity contract.");
+    private static InvalidOperationException Invalidˉartifact(Nativeˉservice service) =>
+        new($"The retained Windvale native {service} leaf failed its exact identity contract.");
 
     private static ImmutableArray<byte> Buildˉenumˉname(
         ImmutableArray<Nominalˉtypeˉdeclaration> types)

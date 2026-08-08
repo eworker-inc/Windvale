@@ -53,18 +53,18 @@ internal static partial class Program
             X64ˉnativeˉtextˉservices.INTEGER_FORMAT_CONSUMER_CANONICAL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
 
-        using (var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
-            .GetManifestResourceStream(
-                "Windvale.Native.Native-X64-Integer-Format-Services-Bridge.wvb") ??
-            throw new InvalidOperationException(
-                "The retained Windvale integer-format service bridge was not embedded."))
-        {
-            var Retained = new byte[checked((int)Stream.Length)];
-            Stream.ReadExactly(Retained);
-            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
-        }
-
         var Repository = Findˉrepositoryˉroot();
+        Sequenceˉequal(
+            Bridgeˉresult.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(
+                Repository,
+                "Runtime/Windvale.Native/Consumers/Native-X64-Integer-Format-Services-Bridge.wvb")));
+        var Retainedˉi32 = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉtextˉservices),
+            "Windvale.Native.Native-X64-I32-Format-Service.bin");
+        var Retainedˉu32 = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉtextˉservices),
+            "Windvale.Native.Native-X64-U32-Format-Service.bin");
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-native-integer-format-services-{Guid.NewGuid():N}");
@@ -91,6 +91,8 @@ internal static partial class Program
 
         var I32 = X64ˉnativeˉtextˉservices.Build(Nativeˉservice.I32ˉformat);
         var U32 = X64ˉnativeˉtextˉservices.Build(Nativeˉservice.U32ˉformat);
+        Sequenceˉequal(I32, Retainedˉi32);
+        Sequenceˉequal(U32, Retainedˉu32);
         X64ˉnativeˉtextˉservices.Verify(Nativeˉservice.I32ˉformat, I32.AsSpan());
         X64ˉnativeˉtextˉservices.Verify(Nativeˉservice.U32ˉformat, U32.AsSpan());
         var Expectedˉbuilder = ImmutableArray.CreateBuilder<byte>(I32.Length + U32.Length);

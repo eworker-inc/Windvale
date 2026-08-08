@@ -52,18 +52,15 @@ internal static partial class Program
             NATIVE_UTF8_BRIDGE_SHA256,
             Moduleˉdigest.Calculateˉsha256(Bridgeˉresult.Moduleˉbytes.AsSpan()));
 
-        using (var Stream = typeof(X64ˉnativeˉutf8ˉservice).Assembly
-            .GetManifestResourceStream(
-                "Windvale.Native.Native-X64-Utf8-Service-Bridge.wvb") ??
-            throw new InvalidOperationException(
-                "The retained Windvale UTF-8 service bridge was not embedded."))
-        {
-            var Retained = new byte[checked((int)Stream.Length)];
-            Stream.ReadExactly(Retained);
-            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
-        }
-
         var Repository = Findˉrepositoryˉroot();
+        Sequenceˉequal(
+            Bridgeˉresult.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(
+                Repository,
+                "Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service-Bridge.wvb")));
+        var Retainedˉleaf = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉutf8ˉservice),
+            "Windvale.Native.Native-X64-Utf8-Service.bin");
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-native-utf8-service-{Guid.NewGuid():N}");
@@ -96,6 +93,7 @@ internal static partial class Program
             X64ˉnativeˉutf8ˉservice.CANONICAL_SHA256,
             Convert.ToHexString(SHA256.HashData(Expected.AsSpan()))
                 .ToLowerInvariant());
+        Sequenceˉequal(Expected, Retainedˉleaf);
 
         var Interpreted = new Referenceˉruntime(
             Bridge,
