@@ -40,6 +40,9 @@
       Include="Consumers/Linux-X64-Wvo-Staging-Publisher.wvo"
       LogicalName="Windvale.Linker.Linux-X64-Wvo-Staging-Publisher.wvo" />
     <EmbeddedResource
+      Include="Consumers/Linux-X64-Hosted-Container-Publisher.wvo"
+      LogicalName="Windvale.Linker.Linux-X64-Hosted-Container-Publisher.wvo" />
+    <EmbeddedResource
       Include="Consumers/Linux-X64-Wvo-Staging-Publication-Adapter.wvo"
       LogicalName="Windvale.Linker.Linux-X64-Wvo-Staging-Publication-Adapter.wvo" />
     <EmbeddedResource
@@ -54,6 +57,9 @@
     <EmbeddedResource
       Include="Consumers/Windows-X64-Wvo-Staging-Publisher.wvo"
       LogicalName="Windvale.Linker.Windows-X64-Wvo-Staging-Publisher.wvo" />
+    <EmbeddedResource
+      Include="Consumers/Windows-X64-Hosted-Container-Publisher.wvo"
+      LogicalName="Windvale.Linker.Windows-X64-Hosted-Container-Publisher.wvo" />
     <EmbeddedResource
       Include="Consumers/Windows-X64-Wvo-Staging-Publication-Adapter.wvo"
       LogicalName="Windvale.Linker.Windows-X64-Wvo-Staging-Publication-Adapter.wvo" />
@@ -75,6 +81,9 @@
     <EmbeddedResource
       Include="Consumers/X64-Hosted-Container-Snapshot-Table.wvo"
       LogicalName="Windvale.Linker.X64-Hosted-Container-Snapshot-Table.wvo" />
+    <EmbeddedResource
+      Include="Consumers/X64-Publication-Transaction-State.wvo"
+      LogicalName="Windvale.Linker.X64-Publication-Transaction-State.wvo" />
     <EmbeddedResource
       Include="Consumers/Native-Hosted-Startup-Instantiation.wvnf"
       LogicalName="Windvale.Linker.Native-Hosted-Startup-Instantiation.wvnf" />

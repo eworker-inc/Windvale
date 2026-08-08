@@ -9,20 +9,40 @@ using Windvale.Runtime.Native;
 
 namespace Windvale.Linker;
 
-internal sealed record Wvoˉstagingˉpublisherˉapplicationˉinput(
+internal sealed record Immutableˉsnapshotˉpublisherˉapplicationˉinput(
     Verifiedˉmodule Module,
     Nativeˉfragment Fragment,
     uint Nativeˉentry,
-    int Beginˉindex,
-    int Applyˉindex,
     ImmutableArray<byte> Moduleˉbytes);
 
-internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
+internal sealed record Immutableˉsnapshotˉpublisherˉapplicationˉprofile(
+    string Description,
+    string Moduleˉname,
+    int Moduleˉbytes,
+    string Moduleˉsha256,
+    ImmutableArray<string> Moduleˉcapabilities,
+    ImmutableArray<Nativeˉservice> Moduleˉservices,
+    string Linuxˉstartupˉresource,
+    string Linuxˉadapterˉresource,
+    string Linuxˉstartupˉexport,
+    string Linuxˉadapterˉexport,
+    string Windowsˉstartupˉresource,
+    string Windowsˉadapterˉresource,
+    string Windowsˉstartupˉexport,
+    string Windowsˉadapterˉexport,
+    string Snapshotˉresource,
+    uint Metadataˉmagic);
+
+internal static class Immutableˉsnapshotˉpublisherˉapplicationˉbuilder
 {
     internal const string LINUX_STARTUP_RESOURCE =
         "Windvale.Linker.Linux-X64-Wvo-Staging-Publisher.wvo";
     internal const string LINUX_ADAPTER_RESOURCE =
         "Windvale.Linker.Linux-X64-Wvo-Staging-Publication-Adapter.wvo";
+    internal const string LINUX_HOSTED_STARTUP_RESOURCE =
+        "Windvale.Linker.Linux-X64-Hosted-Container-Publisher.wvo";
+    internal const string LINUX_HOSTED_ADAPTER_RESOURCE =
+        "Windvale.Linker.Linux-X64-Hosted-Container-Publication-Adapter.wvo";
     internal const string LINUX_SHELL_RESOURCE =
         "Windvale.Linker.Linux-X64-Immutable-Snapshot-Publisher.wvo";
     internal const string LINUX_TRANSACTION_RESOURCE =
@@ -31,6 +51,10 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         "Windvale.Linker.Windows-X64-Wvo-Staging-Publisher.wvo";
     internal const string WINDOWS_ADAPTER_RESOURCE =
         "Windvale.Linker.Windows-X64-Wvo-Staging-Publication-Adapter.wvo";
+    internal const string WINDOWS_HOSTED_STARTUP_RESOURCE =
+        "Windvale.Linker.Windows-X64-Hosted-Container-Publisher.wvo";
+    internal const string WINDOWS_HOSTED_ADAPTER_RESOURCE =
+        "Windvale.Linker.Windows-X64-Hosted-Container-Publication-Adapter.wvo";
     internal const string WINDOWS_SHELL_RESOURCE =
         "Windvale.Linker.Windows-X64-Immutable-Snapshot-Publisher.wvo";
     internal const string WINDOWS_TRANSACTION_RESOURCE =
@@ -41,21 +65,31 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         "Windvale.Linker.X64-Immutable-Snapshot-Sequence.wvo";
     internal const string HOSTED_CONTAINER_SNAPSHOT_RESOURCE =
         "Windvale.Linker.X64-Hosted-Container-Snapshot-Table.wvo";
+    internal const string PUBLICATION_STATE_RESOURCE =
+        "Windvale.Linker.X64-Publication-Transaction-State.wvo";
 
     private static readonly (string Resource, int Bytes, string Sha256)[] OBJECTS =
     [
         (LINUX_STARTUP_RESOURCE, 180,
             "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba"),
+        (LINUX_HOSTED_STARTUP_RESOURCE, 190,
+            "88d45c0936a81d1727a36a6013353e4b01da2ac3c3e121baa7cf21ee17234965"),
         (LINUX_ADAPTER_RESOURCE, 281,
             "d0a3cb41b6ffcc0fe6e616e1d2ac3b067252fe1ae20c8c40532505bcd6491be5"),
+        (LINUX_HOSTED_ADAPTER_RESOURCE, 294,
+            "fe6b4d60fcf459d2f3f624b58b461b95fc9bf325421712e19ac9aa72dcebf527"),
         (LINUX_SHELL_RESOURCE, 3_485,
             "423bd086f68c03b3fd26c296a1789392ebd72a74e5fd10adf0d2e596d2fd2e6d"),
         (LINUX_TRANSACTION_RESOURCE, 2_432,
             "47a22cd108702d6427fe5be9fca00c3c05f38cb26dd69e51c8648544b3f98e76"),
         (WINDOWS_STARTUP_RESOURCE, 184,
             "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab"),
+        (WINDOWS_HOSTED_STARTUP_RESOURCE, 194,
+            "84475183f21b69abde8d73cc9748cca7b7c8377335d4a8ddabe8a9dfc88ea57b"),
         (WINDOWS_ADAPTER_RESOURCE, 285,
             "86dd44e921418a82c69aa155b671662fa2961041d0ead661a0328f3371f7f045"),
+        (WINDOWS_HOSTED_ADAPTER_RESOURCE, 298,
+            "bfb42ca6a679a25c7a45660bf0743ee3f4e64febceeede6b079126e1df0aab75"),
         (WINDOWS_SHELL_RESOURCE, 6_116,
             "d5233eb678b1c96eb6c8c4108ff10d7bcc263678defb81915ab1c67a6b398110"),
         (WINDOWS_TRANSACTION_RESOURCE, 4_001,
@@ -66,85 +100,124 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
             "7c6ea6b16ac8cfcfed9e0983b7e6aedc3ead4aab3a54cb207b75d22a228db676"),
         (HOSTED_CONTAINER_SNAPSHOT_RESOURCE, 256,
             "390ee99e24e02cfa904f64d1ab772d76f5de358783c3f75e0310e37750cc5e86"),
+        (PUBLICATION_STATE_RESOURCE, 433,
+            "54f18e6221bd40ee9c32a5ad32a747706de9857b5e605c6658a31aaf9c13a0ec"),
     ];
 
-    internal static Wvoˉstagingˉpublisherˉapplicationˉinput Validateˉinput(
+    internal static readonly Immutableˉsnapshotˉpublisherˉapplicationˉprofile
+        WVO_STAGING_PROFILE = new(
+            "staged-WVO",
+            Wvoˉstagingˉpublisherˉapplicationˉcontract.MODULE_NAME,
+            Wvoˉstagingˉpublisherˉapplicationˉcontract.MODULE_BYTES,
+            Wvoˉstagingˉpublisherˉapplicationˉcontract.MODULE_SHA256,
+            [
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            [
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+                Nativeˉservice.Enumˉname,
+                Nativeˉservice.Textˉconcat,
+                Nativeˉservice.U32ˉformat,
+            ],
+            LINUX_STARTUP_RESOURCE,
+            LINUX_ADAPTER_RESOURCE,
+            "Linux_wvo_staging_publisher_startup",
+            "Linux_wvo_staging_publisher_run",
+            WINDOWS_STARTUP_RESOURCE,
+            WINDOWS_ADAPTER_RESOURCE,
+            "Windows_wvo_staging_publisher_startup",
+            "Windows_wvo_staging_publisher_run",
+            SNAPSHOT_TABLE_RESOURCE,
+            0x5053_5657);
+
+    internal static readonly Immutableˉsnapshotˉpublisherˉapplicationˉprofile
+        HOSTED_CONTAINER_PROFILE = new(
+            "hosted-container",
+            Hostedˉcontainerˉpublisherˉapplicationˉcontract.MODULE_NAME,
+            Hostedˉcontainerˉpublisherˉapplicationˉcontract.MODULE_BYTES,
+            Hostedˉcontainerˉpublisherˉapplicationˉcontract.MODULE_SHA256,
+            [
+                Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
+                Capabilityˉcatalog.FILE_READ_BYTES,
+                Capabilityˉcatalog.PROCESS_ARGUMENT,
+                Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
+            ],
+            [
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+                Nativeˉservice.Enumˉname,
+                Nativeˉservice.Textˉconcat,
+                Nativeˉservice.U32ˉformat,
+            ],
+            LINUX_HOSTED_STARTUP_RESOURCE,
+            LINUX_HOSTED_ADAPTER_RESOURCE,
+            "Linux_hosted_container_publisher_startup",
+            "Linux_hosted_container_publisher_run",
+            WINDOWS_HOSTED_STARTUP_RESOURCE,
+            WINDOWS_HOSTED_ADAPTER_RESOURCE,
+            "Windows_hosted_container_publisher_startup",
+            "Windows_hosted_container_publisher_run",
+            HOSTED_CONTAINER_SNAPSHOT_RESOURCE,
+            0x5048_5657);
+
+    internal static Immutableˉsnapshotˉpublisherˉapplicationˉinput Validateˉinput(
         Verifiedˉmodule module,
         Nativeˉfragment fragment,
-        ReadOnlySpan<byte> moduleˉbytes)
+        ReadOnlySpan<byte> moduleˉbytes,
+        Immutableˉsnapshotˉpublisherˉapplicationˉprofile profile)
     {
         ArgumentNullException.ThrowIfNull(module);
         ArgumentNullException.ThrowIfNull(fragment);
-        if (moduleˉbytes.Length !=
-                Wvoˉstagingˉpublisherˉapplicationˉcontract.MODULE_BYTES ||
+        if (moduleˉbytes.Length != profile.Moduleˉbytes ||
             !StringComparer.Ordinal.Equals(
                 Calculateˉsha256(moduleˉbytes),
-                Wvoˉstagingˉpublisherˉapplicationˉcontract.MODULE_SHA256))
+                profile.Moduleˉsha256))
         {
             throw new ArgumentException(
-                "The staged-WVO publisher module does not have the canonical byte identity.",
+                $"The {profile.Description} publisher module does not have the canonical byte identity.",
                 nameof(moduleˉbytes));
         }
         if (!StringComparer.Ordinal.Equals(
                 module.Module.Name,
-                Wvoˉstagingˉpublisherˉapplicationˉcontract.MODULE_NAME) ||
+                profile.Moduleˉname) ||
             module.Module.Profile != Moduleˉprofile.Hosted)
         {
             throw new ArgumentException(
-                "The staged-WVO publisher module identity or profile is invalid.",
+                $"The {profile.Description} publisher module identity or profile is invalid.",
                 nameof(module));
         }
-        string[] Expectedˉcapabilities =
-        [
-            Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
-            Capabilityˉcatalog.FILE_READ_BYTES,
-            Capabilityˉcatalog.PROCESS_ARGUMENT,
-            Capabilityˉcatalog.PROCESS_ARGUMENT_COUNT,
-        ];
         if (!module.Module.Capabilities.Select(Item => Item.Name)
-                .SequenceEqual(Expectedˉcapabilities))
+                .SequenceEqual(profile.Moduleˉcapabilities))
         {
             throw new ArgumentException(
-                "The staged-WVO publisher capability profile is invalid.",
+                $"The {profile.Description} publisher capability profile is invalid.",
                 nameof(module));
         }
 
         Nativeˉfragmentˉverifier.Verify(fragment);
-        Nativeˉservice[] Expectedˉservices =
-        [
-            Nativeˉservice.Processˉargumentˉcount,
-            Nativeˉservice.Processˉargument,
-            Nativeˉservice.Fileˉreadˉbytes,
-            Nativeˉservice.Textˉutf8ˉisˉvalid,
-            Nativeˉservice.Diagnosticˉwriteˉline,
-            Nativeˉservice.Enumˉname,
-            Nativeˉservice.Textˉconcat,
-            Nativeˉservice.U32ˉformat,
-        ];
-        if (!fragment.Requiredˉservices.SequenceEqual(Expectedˉservices))
+        if (!fragment.Requiredˉservices.SequenceEqual(profile.Moduleˉservices))
         {
             throw new ArgumentException(
-                "The staged-WVO publisher native service profile is invalid.",
+                $"The {profile.Description} publisher native service profile is invalid.",
                 nameof(fragment));
         }
         var Nativeˉentry = fragment.Symbols.Single(Item =>
             Item.Binding == Nativeˉsymbolˉbinding.Export &&
             Item.Kind == Nativeˉsymbolˉkind.Function &&
             Item.Name == "Main").Offset;
-        var Beginˉindex = Functionˉindex(
-            module,
-            "Compilerˉnativeˉx64ˉstagingˉpublicationˉbegin");
-        var Applyˉindex = Functionˉindex(
-            module,
-            "Compilerˉnativeˉx64ˉstagingˉpublicationˉapply");
-        Requireˉprivateˉfunction(fragment, Beginˉindex, "transaction begin");
-        Requireˉprivateˉfunction(fragment, Applyˉindex, "transaction apply");
         return new(
             module,
             fragment,
             Nativeˉentry,
-            Beginˉindex,
-            Applyˉindex,
             moduleˉbytes.ToArray().ToImmutableArray());
     }
 
@@ -154,7 +227,7 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         using var Stream = Assembly.GetExecutingAssembly()
             .GetManifestResourceStream(resource) ??
             throw new InvalidDataException(
-                $"The embedded staged-WVO publisher object '{resource}' is missing.");
+                $"The embedded immutable-snapshot publisher object '{resource}' is missing.");
         using var Buffer = new MemoryStream();
         Stream.CopyTo(Buffer);
         var Bytes = Buffer.ToArray();
@@ -164,7 +237,7 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
                 Contract.Sha256))
         {
             throw new InvalidDataException(
-                $"The embedded staged-WVO publisher object '{resource}' has an invalid identity.");
+                $"The embedded immutable-snapshot publisher object '{resource}' has an invalid identity.");
         }
         return Objectˉcodec.Readˉandˉverify(Bytes).Value;
     }
@@ -213,7 +286,7 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
     internal static Dictionary<string, uint> Linuxˉtargets(
         Verifiedˉlinuxˉhostedˉcompilerˉapplication application,
         Nativeˉserviceˉbundle bundle,
-        Wvoˉstagingˉpublisherˉapplicationˉinput input)
+        Immutableˉsnapshotˉpublisherˉapplicationˉinput input)
     {
         uint Service(Nativeˉservice service) => checked(
             application.Layout.Textˉaddress +
@@ -227,8 +300,6 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
             application.Layout.Dataˉaddress,
             application.Runtime.Layout,
             Native("Main"),
-            Native($"$function_{input.Beginˉindex:D4}"),
-            Native($"$function_{input.Applyˉindex:D4}"),
             Service);
     }
 
@@ -238,7 +309,7 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         uint importˉaddress,
         uint runtimeˉaddress,
         Nativeˉserviceˉbundle bundle,
-        Wvoˉstagingˉpublisherˉapplicationˉinput input)
+        Immutableˉsnapshotˉpublisherˉapplicationˉinput input)
     {
         uint Service(Nativeˉservice service) => checked(
             textˉaddress +
@@ -252,8 +323,6 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
             runtimeˉaddress,
             runtime,
             Native("Main"),
-            Native($"$function_{input.Beginˉindex:D4}"),
-            Native($"$function_{input.Applyˉindex:D4}"),
             Service);
         void Iat(string name, int offset) =>
             Result[name] = checked(importˉaddress + (uint)offset);
@@ -282,10 +351,14 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         Consoleˉapplicationˉtarget target,
         ReadOnlySpan<byte> startup,
         uint startupˉentry,
-        Wvoˉstagingˉpublisherˉapplicationˉinput input)
+        uint publicationˉbeginˉoffset,
+        uint publicationˉapplyˉoffset,
+        Immutableˉsnapshotˉpublisherˉapplicationˉinput input,
+        Immutableˉsnapshotˉpublisherˉapplicationˉprofile profile)
     {
         metadata.Clear();
-        BinaryPrimitives.WriteUInt32LittleEndian(metadata[0..], 0x5053_5657);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            metadata[0..], profile.Metadataˉmagic);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[4..], 1);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[8..], 128);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[12..], (uint)target);
@@ -293,12 +366,10 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[20..], checked((uint)startup.Length));
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[24..], startupˉentry);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[28..], input.Nativeˉentry);
-        BinaryPrimitives.WriteUInt32LittleEndian(metadata[32..],
-            input.Fragment.Symbols.Single(Item =>
-                Item.Name == $"$function_{input.Beginˉindex:D4}").Offset);
-        BinaryPrimitives.WriteUInt32LittleEndian(metadata[36..],
-            input.Fragment.Symbols.Single(Item =>
-                Item.Name == $"$function_{input.Applyˉindex:D4}").Offset);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            metadata[32..], publicationˉbeginˉoffset);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            metadata[36..], publicationˉapplyˉoffset);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[40..], 4 * 1024 * 1024);
         BinaryPrimitives.WriteUInt32LittleEndian(metadata[44..], 64);
         SHA256.HashData(startup, metadata[48..80]);
@@ -309,7 +380,8 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         ReadOnlySpan<byte> bytes,
         int expectedˉbytes,
         string expectedˉsha256,
-        string platform)
+        string platform,
+        string description)
     {
         if (bytes.Length != expectedˉbytes ||
             !StringComparer.Ordinal.Equals(
@@ -317,7 +389,7 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
                 expectedˉsha256))
         {
             throw new InvalidDataException(
-                $"The {platform} staged-WVO publisher application identity is invalid " +
+                $"The {platform} {description} publisher application identity is invalid " +
                 $"(bytes={bytes.Length}, sha256={Calculateˉsha256(bytes)}).");
         }
     }
@@ -326,8 +398,6 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         uint data,
         Hostedˉcompilerˉruntimeˉlayout runtime,
         uint nativeˉmain,
-        uint nativeˉbegin,
-        uint nativeˉapply,
         Func<Nativeˉservice, uint> service) =>
         new(StringComparer.Ordinal)
         {
@@ -340,8 +410,6 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
                 data + Hostedˉcompilerˉruntimeˉdata.FILE_INPUT_TABLE_OFFSET),
             ["Name_arena"] = checked(data + runtime.Nameˉarenaˉoffset),
             ["Native_main"] = nativeˉmain,
-            ["Native_publication_apply"] = nativeˉapply,
-            ["Native_publication_begin"] = nativeˉbegin,
             ["Output_table"] = checked(
                 data + Hostedˉcompilerˉruntimeˉdata.OUTPUT_TABLE_OFFSET),
             ["Record_arena"] = checked(data + runtime.Recordˉarenaˉoffset),
@@ -359,24 +427,6 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
             ["Snapshot_table"] = checked(data + runtime.Snapshotˉtableˉoffset),
             ["Text_arena"] = checked(data + runtime.Textˉarenaˉoffset),
         };
-
-    private static int Functionˉindex(Verifiedˉmodule module, string name) =>
-        module.Functions
-            .Select((Item, Index) => (Item, Index))
-            .Single(Item => Item.Item.Declaration.Name == name).Index;
-
-    private static void Requireˉprivateˉfunction(
-        Nativeˉfragment fragment,
-        int index,
-        string field)
-    {
-        if (!fragment.Symbols.Any(Item => Item.Name == $"$function_{index:D4}"))
-        {
-            throw new ArgumentException(
-                $"The staged-WVO publisher native fragment omitted its {field} bridge.",
-                nameof(fragment));
-        }
-    }
 
     private static string Calculateˉsha256(ReadOnlySpan<byte> bytes) =>
         Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();

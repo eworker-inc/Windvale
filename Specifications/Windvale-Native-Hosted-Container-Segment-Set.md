@@ -73,8 +73,9 @@ It reconstructs byte-for-byte through the native Project 1 front door.
 The focused current-host test admits a real hosted-container segment set,
 rejects payload corruption, rejects a request carrying a different valid plan
 header, rejects a reordered manifest entry, rejects an alias before any read,
-and reconstructs the pinned WVB. Native durable publication, Linux execution,
-and grouped dual-host qualification remain deferred.
+and reconstructs the pinned WVB. The paired publisher test additionally performs
+real Windows durable publication without loading .NET. Linux execution and the
+grouped dual-host qualification remain deferred.
 
 ## Retirement boundary
 
@@ -83,9 +84,11 @@ runtime. It is transition evidence, not product logic. It can leave the normal
 test path when the digest-bound native launcher and native hostile-input lane
 own equivalent evidence; the frozen recovery archive may retain it.
 
-The paired native publisher will consume admitted response payloads directly,
-skip each 40-byte `WVHU 1` envelope, and atomically replace the destination
-without managed concatenation.
+The paired native publisher consumes admitted response payloads directly, skips
+each 40-byte `WVHU 1` envelope, and atomically replaces the destination without
+managed concatenation. Its public targets are
+`windows-x64-hosted-container-publisher-v1` and
+`linux-x64-hosted-container-publisher-v1`.
 
 Decision 0389 supplies the shared native snapshot-table admission beneath that
 publisher. Its hosted policy selects response snapshot ordinals `3,5,7...`,
@@ -105,5 +108,11 @@ one Linux immutable-snapshot shell own runtime setup, complete resource
 reopening and comparison, native identity, destination-alias rejection, and
 durable-transaction invocation. The 14-line hosted policy entries select
 ordinals `3,5,7...`, stride two, the 40-byte skip, and the hosted validator.
-Packaging the admission root with those shells, the existing validator, and the
-durable transactions is the remaining application boundary.
+Decision 0393 packages the admission root with those shells, the existing
+validator, the shared native publication-state object, and the durable
+transactions. The exact Windows application is 379,904 bytes at SHA-256
+`823b9ed3bafdb4a8cb8e5a5a3fe4c9d834f6702771766add5fbf439d8d5d2b37`;
+the Linux application is 377,725 bytes at SHA-256
+`02602e7fb552dafcb6bf2ed2a858eec9c17e257bfd4bc097c47f55fd155a50c9`.
+Native reconstruction of the Stage 0 host-package layout, Linux execution,
+promotion, and grouped qualification remain.

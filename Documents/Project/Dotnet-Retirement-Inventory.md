@@ -451,6 +451,16 @@ hosted snapshot rules. The Windows WVO route passes its focused behavior test;
 Linux execution, hosted application packaging, and deletion of managed hosted
 dispatch, concatenation, and final publication remain open.
 
+[Decision 0393](../Decisions/0393-Paired-Native-Hosted-Container-Publishers.md)
+closes that hosted application connection. Exact Windows/Linux packages compose
+Windvale admission, alternating-response selection, shared acquisition, and
+durable replacement; the public CLI builds the current-host target and Windows
+executes success and rejection paths without loading .NET. A shared WVA object
+also replaces the private WVB-fragment publication-state bridge. Managed
+response concatenation and final publication are no longer candidate runtime
+logic. Native reconstruction of Stage 0 package layout, Linux execution,
+promotion, and grouped qualification remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

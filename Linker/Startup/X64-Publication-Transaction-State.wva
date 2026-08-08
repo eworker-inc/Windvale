@@ -1,0 +1,95 @@
+windvale-assembly 1
+
+# Shared native publication state machine. R8D carries the current token and
+# R9D the action for apply. EAX returns the next token; the high result status
+# remains zero so callers use the same narrow ABI as the former WVB bridge.
+symbol export function Native_publication_apply in .text
+symbol export function Native_publication_begin in .text
+
+section code .text align 16
+define Native_publication_begin
+xor eax eax
+return
+end define
+
+define Native_publication_apply
+compare_i32 r9d 0
+branch equal Create_sibling
+compare_i32 r9d 1
+branch equal Flush_sibling
+compare_i32 r9d 2
+branch equal Verify_sibling
+compare_i32 r9d 3
+branch equal Replace_destination
+compare_i32 r9d 4
+branch equal Flush_directory
+compare_i32 r9d 5
+branch equal Fail
+compare_i32 r9d 6
+branch equal Clean_sibling
+jump_label Invalid
+
+label Create_sibling
+test r8d r8d
+branch not_equal Invalid
+move_u32 eax 129
+return
+
+label Flush_sibling
+compare_i32 r8d 129
+branch not_equal Invalid
+move_u32 eax 130
+return
+
+label Verify_sibling
+compare_i32 r8d 130
+branch not_equal Invalid
+move_u32 eax 131
+return
+
+label Replace_destination
+compare_i32 r8d 131
+branch not_equal Invalid
+move_u32 eax 260
+return
+
+label Flush_directory
+compare_i32 r8d 260
+branch not_equal Invalid
+move_u32 eax 311
+return
+
+label Fail
+test r8d r8d
+branch equal Rejected_unchanged
+compare_i32 r8d 129
+branch equal Cleanup_required
+compare_i32 r8d 130
+branch equal Cleanup_required
+compare_i32 r8d 131
+branch equal Cleanup_required
+compare_i32 r8d 260
+branch equal Indeterminate
+jump_label Invalid
+
+label Clean_sibling
+compare_i32 r8d 149
+branch not_equal Invalid
+label Rejected_unchanged
+move_u32 eax 38
+return
+
+label Cleanup_required
+move_u32 eax 149
+return
+
+label Indeterminate
+move_u32 eax 328
+return
+
+label Invalid
+xor eax eax
+subtract_i32 eax 1
+return
+end define
+end section

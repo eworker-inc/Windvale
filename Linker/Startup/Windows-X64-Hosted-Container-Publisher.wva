@@ -1,0 +1,11 @@
+windvale-assembly 1
+
+# Fixed Windows hosted-container publisher entry over the shared acquisition shell.
+symbol export function Windows_hosted_container_publisher_startup in .text
+symbol import function Windows_hosted_container_publisher_run
+
+section code .text align 16
+define Windows_hosted_container_publisher_startup
+jump Windows_hosted_container_publisher_run
+end define
+end section

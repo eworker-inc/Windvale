@@ -116,6 +116,8 @@ internal static class Program
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-hosted-container-segmenter-v1|" +
             "linux-x64-hosted-container-segmenter-v1|" +
+            "windows-x64-hosted-container-publisher-v1|" +
+            "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
@@ -190,6 +192,7 @@ internal static class Program
         Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         _ => ".elf",
     };
 
@@ -256,6 +259,8 @@ internal static class Program
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-hosted-container-segmenter-v1|" +
             "linux-x64-hosted-container-segmenter-v1|" +
+            "windows-x64-hosted-container-publisher-v1|" +
+            "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
@@ -362,7 +367,9 @@ internal static class Program
         Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
-        Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
+        Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
 
     private static int Compileˉsourceˉfiles(
         string sourceˉpath,
@@ -501,7 +508,8 @@ internal static class Program
                 Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
-                Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
+                Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
             {
                 var Application = target switch
                 {
@@ -588,6 +596,11 @@ internal static class Program
                             Bytes),
                     Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉwindows(
+                            Module,
+                            Fragment,
+                            Bytes),
+                    Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉcontainerˉpublisherˉapplicationˉwriter.Writeˉwindows(
                             Module,
                             Fragment,
                             Bytes),
@@ -697,6 +710,11 @@ internal static class Program
                             Module,
                             Fragment,
                             Bytes),
+                    Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉcontainerˉpublisherˉapplicationˉwriter.Writeˉlinux(
+                            Module,
+                            Fragment,
+                            Bytes),
                     _ => Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉcompiler(
                         Fragment,
                         Capabilities),
@@ -737,7 +755,8 @@ internal static class Program
                     Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
-                    Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
+                    Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
             {
                 Prepareˉtemporary = Prepareˉlinuxˉexecutable;
@@ -1227,6 +1246,8 @@ internal static class Program
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-hosted-container-segmenter-v1|" +
             "linux-x64-hosted-container-segmenter-v1|" +
+            "windows-x64-hosted-container-publisher-v1|" +
+            "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
@@ -1256,6 +1277,8 @@ internal static class Program
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
             "windows-x64-hosted-container-segmenter-v1|" +
             "linux-x64-hosted-container-segmenter-v1|" +
+            "windows-x64-hosted-container-publisher-v1|" +
+            "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +

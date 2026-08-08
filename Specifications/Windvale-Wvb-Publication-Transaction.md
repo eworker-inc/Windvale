@@ -19,6 +19,13 @@ unchanged. Decisions 0307 and 0308 reuse the same format-neutral state machine
 and native adapters after portable console-application or WVO admission; the
 historical WVB names remain the canonical version-1 source identity.
 
+Decision 0393 adds a capability-free x64 WVA state object exporting
+`Native_publication_begin` and `Native_publication_apply`. The durable WVO and
+hosted-container transactions call this shared native token owner directly;
+their product packages no longer depend on private bridge functions extracted
+from a Stage 0-compiled WVB fragment. The portable `.wv` module remains the
+semantic source and recovery oracle for the complete typed result contract.
+
 ## States and actions
 
 The transaction begins only after the caller's candidate snapshot was admitted by

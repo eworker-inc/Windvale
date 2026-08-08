@@ -596,6 +596,14 @@ snapshot validation without duplicating the platform boundary. The Windows WVO
 route executes through the shared shell; Linux execution and the paired hosted
 applications remain part of their later host gates.
 
+[Decision 0393](../Decisions/0393-Paired-Native-Hosted-Container-Publishers.md)
+packages those hosted policies as exact Windows/Linux applications and exposes
+them through the normal CLI target surface. The Windows package publishes the
+admitted segment payloads through the shared durable transaction without CLR
+loading, managed concatenation, or managed mutation. A small shared WVA object
+owns publication-state tokens for both WVO and hosted paths. The Stage 0 package
+constructor, Linux process evidence, promotion, and grouped gate remain.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

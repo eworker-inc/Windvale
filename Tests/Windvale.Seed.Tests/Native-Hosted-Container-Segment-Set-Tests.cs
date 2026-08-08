@@ -4,6 +4,7 @@ using Windvale.Bytecode;
 using Windvale.Compiler;
 using Windvale.Compiler.Native;
 using Windvale.Linker;
+using Windvale.ObjectModel;
 using Windvale.Runtime;
 
 namespace Windvale.Seed.Tests;
@@ -13,6 +14,10 @@ internal static partial class Program
     private const int NATIVE_HOSTED_CONTAINER_SEGMENT_SET_WVB_BYTES = 31_271;
     private const string NATIVE_HOSTED_CONTAINER_SEGMENT_SET_WVB_SHA256 =
         "6ce0c3a4bf48b6d0db4c50574805655777be93f6a10555a4d423947b00bd0018";
+    private const string LINUX_HOSTED_CONTAINER_PUBLISHER_STARTUP_SHA256 =
+        "88d45c0936a81d1727a36a6013353e4b01da2ac3c3e121baa7cf21ee17234965";
+    private const string WINDOWS_HOSTED_CONTAINER_PUBLISHER_STARTUP_SHA256 =
+        "84475183f21b69abde8d73cc9748cca7b7c8377335d4a8ddabe8a9dfc88ea57b";
 
     private static void Nativeˉhostedˉcontainerˉsegmentˉsetˉruns()
     {
@@ -63,6 +68,57 @@ internal static partial class Program
                 Nativeˉservice.U32ˉformat,
             ],
             Native.Requiredˉservices);
+
+        Assertˉstagingˉobject(
+            Assembleˉsuccess(Readˉembeddedˉsource(
+                "Windvale.Seed.Tests.Linux-X64-Hosted-Container-Publisher.wva")),
+            190,
+            LINUX_HOSTED_CONTAINER_PUBLISHER_STARTUP_SHA256,
+            "Linux_hosted_container_publisher_startup");
+        Assertˉstagingˉobject(
+            Assembleˉsuccess(Readˉembeddedˉsource(
+                "Windvale.Seed.Tests.Windows-X64-Hosted-Container-Publisher.wva")),
+            194,
+            WINDOWS_HOSTED_CONTAINER_PUBLISHER_STARTUP_SHA256,
+            "Windows_hosted_container_publisher_startup");
+
+        var Windowsˉpublisher =
+            Hostedˉcontainerˉpublisherˉapplicationˉwriter.Writeˉwindows(
+                Module,
+                Native,
+                Compiled.Moduleˉbytes.AsSpan());
+        True(
+            Windowsˉpublisher.Success,
+            "The Windows hosted-container publisher package was rejected: " +
+                string.Join(" | ", Windowsˉpublisher.Diagnostics));
+        Equal(
+            Hostedˉcontainerˉpublisherˉapplicationˉcontract
+                .WINDOWS_APPLICATION_BYTES,
+            Windowsˉpublisher.Imageˉbytes.Length);
+        Equal(
+            Hostedˉcontainerˉpublisherˉapplicationˉcontract
+                .WINDOWS_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(
+                Windowsˉpublisher.Imageˉbytes.AsSpan()));
+
+        var Linuxˉpublisher =
+            Hostedˉcontainerˉpublisherˉapplicationˉwriter.Writeˉlinux(
+                Module,
+                Native,
+                Compiled.Moduleˉbytes.AsSpan());
+        True(
+            Linuxˉpublisher.Success,
+            "The Linux hosted-container publisher package was rejected: " +
+                string.Join(" | ", Linuxˉpublisher.Diagnostics));
+        Equal(
+            Hostedˉcontainerˉpublisherˉapplicationˉcontract
+                .LINUX_APPLICATION_BYTES,
+            Linuxˉpublisher.Imageˉbytes.Length);
+        Equal(
+            Hostedˉcontainerˉpublisherˉapplicationˉcontract
+                .LINUX_APPLICATION_SHA256,
+            Objectˉdigest.Calculateˉsha256(
+                Linuxˉpublisher.Imageˉbytes.AsSpan()));
 
         var Target = OperatingSystem.IsWindows()
             ? Consoleˉapplicationˉtarget.Windowsˉx64
@@ -214,7 +270,94 @@ internal static partial class Program
         Directory.CreateDirectory(Directoryˉpath);
         try
         {
-            var Output = Path.Combine(Directoryˉpath, "Admission.wvb");
+            var Moduleˉpath = Path.Combine(Directoryˉpath, "Admission.wvb");
+            File.WriteAllBytes(Moduleˉpath, Compiled.Moduleˉbytes.AsSpan());
+            var Cliˉtarget = OperatingSystem.IsWindows()
+                ? Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME
+                : Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
+            var Cliˉapplication = Executeˉinspectorˉtool(
+                "aot",
+                Moduleˉpath,
+                "--target",
+                Cliˉtarget);
+            Equal(0, Cliˉapplication.Exitˉcode);
+            Equal(string.Empty, Cliˉapplication.Standardˉerror);
+            Contains(Cliˉapplication.Standardˉoutput, $"Target: {Cliˉtarget}");
+            Sequenceˉequal(
+                OperatingSystem.IsWindows()
+                    ? Windowsˉpublisher.Imageˉbytes
+                    : Linuxˉpublisher.Imageˉbytes,
+                File.ReadAllBytes(Path.ChangeExtension(
+                    Moduleˉpath,
+                    Windvale.Tool.Program.Targetˉoutputˉextension(Cliˉtarget))));
+
+            var Planˉpath = Path.Combine(Directoryˉpath, "container.wvcd");
+            var Prefixˉpath = Path.Combine(Directoryˉpath, "container");
+            var Manifestˉpath = Path.Combine(Directoryˉpath, "container.wvhm");
+            var Requestˉpath = $"{Prefixˉpath}.request-0";
+            var Responseˉpath = $"{Prefixˉpath}.response-0";
+            var Destinationˉpath = Path.Combine(Directoryˉpath, "application.bin");
+            File.WriteAllBytes(Planˉpath, Plan.AsSpan());
+            File.WriteAllBytes(Manifestˉpath, Manifest.AsSpan());
+            File.WriteAllBytes(Requestˉpath, Request.AsSpan());
+            File.WriteAllBytes(Responseˉpath, Response.AsSpan());
+            File.WriteAllBytes(Destinationˉpath, [9, 8, 7, 6]);
+            var Application = OperatingSystem.IsWindows()
+                ? Windowsˉpublisher.Imageˉbytes
+                : Linuxˉpublisher.Imageˉbytes;
+            var Arguments = new[]
+            {
+                Planˉpath,
+                Prefixˉpath,
+                Manifestˉpath,
+                Destinationˉpath,
+            };
+            var Loaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Equal(
+                0,
+                Executeˉhostedˉcontainerˉpublisher(
+                    Application,
+                    Arguments,
+                    Loaded));
+            var Payloadˉbytes = checked((int)
+                BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan()[32..]));
+            Sequenceˉequal(
+                Response.AsSpan(40, Payloadˉbytes).ToArray(),
+                File.ReadAllBytes(Destinationˉpath));
+            Equal(
+                0,
+                Loaded.Count(Name =>
+                    Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+            Equal(0, Directory.EnumerateFiles(Directoryˉpath, ".wvpub-*").Count());
+
+            byte[] Preserved = [4, 3, 2, 1];
+            var Changedˉresponse = Response.ToArray();
+            Changedˉresponse[^1] ^= 1;
+            File.WriteAllBytes(Responseˉpath, Changedˉresponse);
+            File.WriteAllBytes(Destinationˉpath, Preserved);
+            Equal(
+                1,
+                Executeˉhostedˉcontainerˉpublisher(
+                    Application,
+                    Arguments,
+                    expectedˉerror:
+                        "hosted container segment set content=Invalidˉresponse\n"));
+            Sequenceˉequal(Preserved, File.ReadAllBytes(Destinationˉpath));
+            Equal(0, Directory.EnumerateFiles(Directoryˉpath, ".wvpub-*").Count());
+
+            File.WriteAllBytes(Responseˉpath, Response.AsSpan());
+            File.Delete(Destinationˉpath);
+            Createˉtestˉhardˉlink(Destinationˉpath, Planˉpath);
+            Equal(
+                1,
+                Executeˉhostedˉcontainerˉpublisher(Application, Arguments));
+            Sequenceˉequal(Plan, File.ReadAllBytes(Planˉpath));
+            Sequenceˉequal(Plan, File.ReadAllBytes(Destinationˉpath));
+            Equal(0, Directory.EnumerateFiles(Directoryˉpath, ".wvpub-*").Count());
+
+            var Output = Path.Combine(Directoryˉpath, "Native-Admission.wvb");
             var Build = Runˉnativeˉfrontˉdoor(
                 Repository,
                 Path.Combine(
@@ -230,6 +373,26 @@ internal static partial class Program
             Directory.Delete(Directoryˉpath, recursive: true);
         }
     }
+
+    private static int Executeˉhostedˉcontainerˉpublisher(
+        ImmutableArray<byte> application,
+        IReadOnlyList<string> arguments,
+        ISet<string>? loaded = null,
+        string expectedˉerror = "") =>
+        OperatingSystem.IsWindows()
+            ? Executeˉwindowsˉapplication(
+                application,
+                arguments: arguments,
+                timeoutˉmilliseconds: 60_000,
+                loadedˉmodules: loaded,
+                expectedˉerror: expectedˉerror)
+            : Executeˉlinuxˉapplication(
+                application,
+                string.Empty,
+                arguments,
+                timeoutˉmilliseconds: 60_000,
+                loadedˉmappings: loaded,
+                expectedˉerror: expectedˉerror);
 
     private static ImmutableArray<byte> Buildˉhostedˉcontainerˉsegmentˉsetˉmanifest(
         ImmutableArray<byte> plan,

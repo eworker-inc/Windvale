@@ -5,36 +5,40 @@ using Windvale.Runtime.Native;
 
 namespace Windvale.Linker;
 
-internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
+internal static class Windowsˉimmutableˉsnapshotˉpublisherˉapplicationˉbuilder
 {
     internal static byte[] Build(
         Windvale.Bytecode.Verifiedˉmodule module,
         Nativeˉfragment fragment,
-        ReadOnlySpan<byte> moduleˉbytes)
+        ReadOnlySpan<byte> moduleˉbytes,
+        Immutableˉsnapshotˉpublisherˉapplicationˉprofile profile)
     {
-        var Input = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Validateˉinput(
+        var Input = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Validateˉinput(
             module,
             fragment,
-            moduleˉbytes);
-        var Startup = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_STARTUP_RESOURCE);
-        var Adapter = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_ADAPTER_RESOURCE);
-        var Shell = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_SHELL_RESOURCE);
-        var Transaction = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_TRANSACTION_RESOURCE);
-        var Snapshot = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.SNAPSHOT_TABLE_RESOURCE);
-        var Sequence = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder
+            moduleˉbytes,
+            profile);
+        var Startup = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            profile.Windowsˉstartupˉresource);
+        var Adapter = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            profile.Windowsˉadapterˉresource);
+        var Shell = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.WINDOWS_SHELL_RESOURCE);
+        var Transaction = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.WINDOWS_TRANSACTION_RESOURCE);
+        var State = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.PUBLICATION_STATE_RESOURCE);
+        var Snapshot = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            profile.Snapshotˉresource);
+        var Sequence = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder
                 .IMMUTABLE_SNAPSHOT_SEQUENCE_RESOURCE);
 
-        var Bundle = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Buildˉcontainerˉbundle(
+        var Bundle = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Buildˉcontainerˉbundle(
             Input.Fragment,
             Nativeˉserviceˉplatform.Windows);
         var Baseˉapplication = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.Containerˉcapabilities(),
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Containerˉcapabilities(),
             Bundle,
             Input.Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Compiler);
@@ -55,8 +59,11 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         var Transactionˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
             Shellˉoffset + Shell.Sections.Single(Item =>
                 Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize), 16);
-        var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
+        var Stateˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
             Transactionˉoffset + Transaction.Sections.Single(Item =>
+                Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize), 16);
+        var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
+            Stateˉoffset + State.Sections.Single(Item =>
                 Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize), 16);
         var Sequenceˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
             Snapshotˉoffset + Snapshot.Sections.Single(Item =>
@@ -86,7 +93,7 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Baseˉverified.Layout.Runtimeˉfileˉoffset + Fileˉdelta);
         var Relocationˉfile = checked(
             Baseˉverified.Layout.Relocationˉfileˉoffset + Fileˉdelta);
-        var Targets = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Windowsˉtargets(
+        var Targets = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Windowsˉtargets(
             Baseˉverified.Runtime.Layout,
             Baseˉverified.Layout.Textˉaddress,
             Importˉaddress,
@@ -111,6 +118,15 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         {
             Targets.Add(Export.Key, Export.Value);
         }
+        var (Stateˉbytes, Stateˉexports) =
+            Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
+                State,
+                checked(Baseˉverified.Layout.Textˉaddress + Stateˉoffset),
+                Targets);
+        foreach (var Export in Stateˉexports)
+        {
+            Targets.Add(Export.Key, Export.Value);
+        }
         var (Transactionˉbytes, Transactionˉexports) =
             Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
                 Transaction,
@@ -131,8 +147,8 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         }
         var Adapterˉexport = Adapter.Symbols.Single(Item =>
             Item.Binding == Objectˉsymbolˉbinding.Export &&
-            Item.Name == "Windows_wvo_staging_publisher_run");
-        Targets["Windows_wvo_staging_publisher_run"] = checked(
+            Item.Name == profile.Windowsˉadapterˉexport);
+        Targets[profile.Windowsˉadapterˉexport] = checked(
             Baseˉverified.Layout.Textˉaddress +
             Adapterˉoffset +
             Adapterˉexport.Offset);
@@ -147,13 +163,13 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
                 Baseˉverified.Layout.Textˉaddress,
                 Targets);
         var Startupˉentry = checked(
-            Startupˉexports["Windows_wvo_staging_publisher_startup"] -
+            Startupˉexports[profile.Windowsˉstartupˉexport] -
             Baseˉverified.Layout.Textˉaddress);
         if (Startupˉbytes.Length >
             Windowsˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET)
         {
             throw new InvalidDataException(
-                "The Windows staged-WVO publisher startup exceeds its fixed extent.");
+                $"The Windows {profile.Description} publisher startup exceeds its fixed extent.");
         }
 
         var Application = new byte[checked(
@@ -175,6 +191,8 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Baseˉverified.Layout.Textˉfileˉoffset + (int)Shellˉoffset)));
         Transactionˉbytes.CopyTo(Application.AsSpan(checked(
             Baseˉverified.Layout.Textˉfileˉoffset + (int)Transactionˉoffset)));
+        Stateˉbytes.CopyTo(Application.AsSpan(checked(
+            Baseˉverified.Layout.Textˉfileˉoffset + (int)Stateˉoffset)));
         Snapshotˉbytes.CopyTo(Application.AsSpan(checked(
             Baseˉverified.Layout.Textˉfileˉoffset + (int)Snapshotˉoffset)));
         Sequenceˉbytes.CopyTo(Application.AsSpan(checked(
@@ -211,7 +229,7 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         BinaryPrimitives.WriteUInt32LittleEndian(
             Application.AsSpan(0x98 + 212, sizeof(uint)),
             Windowsˉwvbˉpublisherˉimports.IAT_BYTES);
-        Wvoˉstagingˉpublisherˉapplicationˉbuilder.Writeˉmetadata(
+        Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Writeˉmetadata(
             Application.AsSpan(checked(
                 (int)Runtimeˉfile +
                 (int)Hostedˉcompilerˉruntimeˉdata.METADATA_OFFSET +
@@ -220,7 +238,12 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Consoleˉapplicationˉtarget.Windowsˉx64,
             Startupˉbytes,
             Startupˉentry,
-            Input);
+            checked(Stateˉexports["Native_publication_begin"] -
+                Baseˉverified.Layout.Textˉaddress),
+            checked(Stateˉexports["Native_publication_apply"] -
+                Baseˉverified.Layout.Textˉaddress),
+            Input,
+            profile);
         BinaryPrimitives.WriteUInt32LittleEndian(
             Application.AsSpan(0x188 + 8, sizeof(uint)),
             Textˉvirtual);

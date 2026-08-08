@@ -351,7 +351,16 @@ validator. A thin hosted-container wrapper selects `(3, 2, 40)` and the hosted
 validator. Policy wrappers must preserve the original platform entry stack and
 alignment, and no shell may infer format policy from a filename or payload.
 
-The Windows application has current-host execution evidence. The Linux image,
+Decision 0393 connects the hosted policy, shared shell, validator, and durable
+transaction as paired Windows/Linux publisher applications. A shared 433-byte
+WVA object now owns the narrow publication-token ABI formerly supplied by
+private WVB-fragment bridge functions. The public `compile` and `aot` targets
+construct exact packages; current-host Windows execution proves admitted
+multi-segment publication, content and alias rejection, preservation, and zero
+scratch without loading .NET.
+
+The Windows WVO and hosted-container applications have current-host execution
+evidence. The Linux images,
 complete compiler self-staging integration, package promotion, native
 replacement of the Stage 0 constructor, extended fault/concurrency matrix, and
 grouped dual-host qualification remain separate gates.

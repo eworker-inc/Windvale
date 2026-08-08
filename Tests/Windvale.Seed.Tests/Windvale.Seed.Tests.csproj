@@ -1042,6 +1042,9 @@
       Include="../../Linker/Startup/Linux-X64-Wvo-Staging-Publisher.wva"
       LogicalName="Windvale.Seed.Tests.Linux-X64-Wvo-Staging-Publisher.wva" />
     <EmbeddedResource
+      Include="../../Linker/Startup/Linux-X64-Hosted-Container-Publisher.wva"
+      LogicalName="Windvale.Seed.Tests.Linux-X64-Hosted-Container-Publisher.wva" />
+    <EmbeddedResource
       Include="../../Linker/Startup/Linux-X64-Wvo-Staging-Publication-Adapter.wva"
       LogicalName="Windvale.Seed.Tests.Linux-X64-Wvo-Staging-Publication-Adapter.wva" />
     <EmbeddedResource
@@ -1056,6 +1059,9 @@
     <EmbeddedResource
       Include="../../Linker/Startup/Windows-X64-Wvo-Staging-Publisher.wva"
       LogicalName="Windvale.Seed.Tests.Windows-X64-Wvo-Staging-Publisher.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/Windows-X64-Hosted-Container-Publisher.wva"
+      LogicalName="Windvale.Seed.Tests.Windows-X64-Hosted-Container-Publisher.wva" />
     <EmbeddedResource
       Include="../../Linker/Startup/Windows-X64-Wvo-Staging-Publication-Adapter.wva"
       LogicalName="Windvale.Seed.Tests.Windows-X64-Wvo-Staging-Publication-Adapter.wva" />
@@ -1077,6 +1083,9 @@
     <EmbeddedResource
       Include="../../Linker/Startup/X64-Hosted-Container-Snapshot-Table.wva"
       LogicalName="Windvale.Seed.Tests.X64-Hosted-Container-Snapshot-Table.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/X64-Publication-Transaction-State.wva"
+      LogicalName="Windvale.Seed.Tests.X64-Publication-Transaction-State.wva" />
     <EmbeddedResource
       Include="../Fixtures/Publication/Wvb-Publication-Transaction-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-Publication-Transaction-Adapter.wv" />

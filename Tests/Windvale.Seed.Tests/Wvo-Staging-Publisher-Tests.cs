@@ -32,6 +32,8 @@ internal static partial class Program
         "bfb42ca6a679a25c7a45660bf0743ee3f4e64febceeede6b079126e1df0aab75";
     private const string WINDOWS_DURABLE_MULTI_CHUNK_WVO_SHA256 =
         "3795ab62b6dc5008748ba7c4332b885419a14479c9c11369bcc13885cad8974b";
+    private const string X64_PUBLICATION_TRANSACTION_STATE_WVO_SHA256 =
+        "54f18e6221bd40ee9c32a5ad32a747706de9857b5e605c6658a31aaf9c13a0ec";
     private const string X64_WVO_STAGING_SNAPSHOT_WVO_SHA256 =
         "03ff27e8a8fce7b3eddfb0191b6626c20971df32790f8f7274cd9091a4b69628";
     private const string X64_IMMUTABLE_SNAPSHOT_SEQUENCE_WVO_SHA256 =
@@ -69,6 +71,9 @@ internal static partial class Program
     private static readonly string WINDOWS_DURABLE_MULTI_CHUNK_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Windows-X64-Durable-Multi-Chunk-Publication.wva");
+    private static readonly string X64_PUBLICATION_TRANSACTION_STATE_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.X64-Publication-Transaction-State.wva");
     private static readonly string X64_WVO_STAGING_SNAPSHOT_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.X64-Wvo-Staging-Snapshot-Table.wva");
@@ -126,6 +131,8 @@ internal static partial class Program
             WINDOWS_HOSTED_CONTAINER_ADAPTER_SOURCE);
         var Windowsˉtransaction = Assembleˉsuccess(
             WINDOWS_DURABLE_MULTI_CHUNK_SOURCE);
+        var Publicationˉstate = Assembleˉsuccess(
+            X64_PUBLICATION_TRANSACTION_STATE_SOURCE);
         var Snapshot = Assembleˉsuccess(X64_WVO_STAGING_SNAPSHOT_SOURCE);
         var Sequence = Assembleˉsuccess(X64_IMMUTABLE_SNAPSHOT_SEQUENCE_SOURCE);
         var Hostedˉsnapshot = Assembleˉsuccess(
@@ -180,6 +187,17 @@ internal static partial class Program
             4_001,
             WINDOWS_DURABLE_MULTI_CHUNK_WVO_SHA256,
             "Windows_durable_multi_chunk_publication_run");
+        Equal(433, Publicationˉstate.Length);
+        Equal(
+            X64_PUBLICATION_TRANSACTION_STATE_WVO_SHA256,
+            Objectˉdigest.Calculateˉsha256(Publicationˉstate));
+        var Publicationˉstateˉobject =
+            Objectˉcodec.Readˉandˉverify(Publicationˉstate).Value;
+        Sequenceˉequal(
+            ["Native_publication_apply", "Native_publication_begin"],
+            Publicationˉstateˉobject.Symbols
+                .Where(Item => Item.Binding == Objectˉsymbolˉbinding.Export)
+                .Select(Item => Item.Name));
         Assertˉstagingˉobject(
             Snapshot,
             224,

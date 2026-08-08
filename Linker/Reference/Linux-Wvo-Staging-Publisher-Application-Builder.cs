@@ -5,36 +5,40 @@ using Windvale.Runtime.Native;
 
 namespace Windvale.Linker;
 
-internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
+internal static class Linuxˉimmutableˉsnapshotˉpublisherˉapplicationˉbuilder
 {
     internal static byte[] Build(
         Windvale.Bytecode.Verifiedˉmodule module,
         Nativeˉfragment fragment,
-        ReadOnlySpan<byte> moduleˉbytes)
+        ReadOnlySpan<byte> moduleˉbytes,
+        Immutableˉsnapshotˉpublisherˉapplicationˉprofile profile)
     {
-        var Input = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Validateˉinput(
+        var Input = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Validateˉinput(
             module,
             fragment,
-            moduleˉbytes);
-        var Startup = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.LINUX_STARTUP_RESOURCE);
-        var Adapter = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.LINUX_ADAPTER_RESOURCE);
-        var Shell = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.LINUX_SHELL_RESOURCE);
-        var Transaction = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.LINUX_TRANSACTION_RESOURCE);
-        var Snapshot = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.SNAPSHOT_TABLE_RESOURCE);
-        var Sequence = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder
+            moduleˉbytes,
+            profile);
+        var Startup = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            profile.Linuxˉstartupˉresource);
+        var Adapter = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            profile.Linuxˉadapterˉresource);
+        var Shell = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.LINUX_SHELL_RESOURCE);
+        var Transaction = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.LINUX_TRANSACTION_RESOURCE);
+        var State = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.PUBLICATION_STATE_RESOURCE);
+        var Snapshot = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            profile.Snapshotˉresource);
+        var Sequence = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder
                 .IMMUTABLE_SNAPSHOT_SEQUENCE_RESOURCE);
 
-        var Bundle = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Buildˉcontainerˉbundle(
+        var Bundle = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Buildˉcontainerˉbundle(
             Input.Fragment,
             Nativeˉserviceˉplatform.Linux);
         var Baseˉapplication = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
-            Wvoˉstagingˉpublisherˉapplicationˉbuilder.Containerˉcapabilities(),
+            Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Containerˉcapabilities(),
             Bundle,
             Input.Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Compiler);
@@ -58,15 +62,19 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             checked(Shellˉoffset + Shell.Sections.Single(Item =>
                 Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize),
             16);
-        var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
+        var Stateˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
             checked(Transactionˉoffset + Transaction.Sections.Single(Item =>
+                Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize),
+            16);
+        var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
+            checked(Stateˉoffset + State.Sections.Single(Item =>
                 Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize),
             16);
         var Sequenceˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
             checked(Snapshotˉoffset + Snapshot.Sections.Single(Item =>
                 Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize),
             16);
-        var Targets = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Linuxˉtargets(
+        var Targets = Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Linuxˉtargets(
             Baseˉverified,
             Bundle,
             Input);
@@ -85,6 +93,15 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
                 checked(Adapterˉaddress + Snapshotˉoffset),
                 Targets);
         foreach (var Export in Snapshotˉexports)
+        {
+            Targets.Add(Export.Key, Export.Value);
+        }
+        var (Stateˉbytes, Stateˉexports) =
+            Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
+                State,
+                checked(Adapterˉaddress + Stateˉoffset),
+                Targets);
+        foreach (var Export in Stateˉexports)
         {
             Targets.Add(Export.Key, Export.Value);
         }
@@ -108,8 +125,8 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         }
         var Adapterˉexport = Adapter.Symbols.Single(Item =>
             Item.Binding == Objectˉsymbolˉbinding.Export &&
-            Item.Name == "Linux_wvo_staging_publisher_run");
-        Targets["Linux_wvo_staging_publisher_run"] = checked(
+            Item.Name == profile.Linuxˉadapterˉexport);
+        Targets[profile.Linuxˉadapterˉexport] = checked(
             Adapterˉaddress + Adapterˉexport.Offset);
         var (Adapterˉbytes, _) =
             Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
@@ -123,6 +140,8 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             checked((int)Shellˉoffset)));
         Transactionˉbytes.CopyTo(Adapterˉsegment.AsSpan(
             checked((int)Transactionˉoffset)));
+        Stateˉbytes.CopyTo(Adapterˉsegment.AsSpan(
+            checked((int)Stateˉoffset)));
         Snapshotˉbytes.CopyTo(Adapterˉsegment.AsSpan(
             checked((int)Snapshotˉoffset)));
         Sequenceˉbytes.CopyTo(Adapterˉsegment.AsSpan(
@@ -134,13 +153,13 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
                 Baseˉverified.Layout.Textˉaddress,
                 Targets);
         var Startupˉentry = checked(
-            Startupˉexports["Linux_wvo_staging_publisher_startup"] -
+            Startupˉexports[profile.Linuxˉstartupˉexport] -
             Baseˉverified.Layout.Textˉaddress);
         if (Startupˉbytes.Length >
             Linuxˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET)
         {
             throw new InvalidDataException(
-                "The Linux staged-WVO publisher startup exceeds its fixed extent.");
+                $"The Linux {profile.Description} publisher startup exceeds its fixed extent.");
         }
 
         var Application = new byte[checked(
@@ -176,7 +195,7 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         BinaryPrimitives.WriteUInt32LittleEndian(
             Application.AsSpan(0x200 + 24, sizeof(uint)),
             5);
-        Wvoˉstagingˉpublisherˉapplicationˉbuilder.Writeˉmetadata(
+        Immutableˉsnapshotˉpublisherˉapplicationˉbuilder.Writeˉmetadata(
             Application.AsSpan(checked(
                 (int)Baseˉverified.Layout.Dataˉfileˉoffset +
                 (int)Hostedˉcompilerˉruntimeˉdata.METADATA_OFFSET +
@@ -185,7 +204,12 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Consoleˉapplicationˉtarget.Linuxˉx64,
             Startupˉbytes,
             Startupˉentry,
-            Input);
+            checked(Stateˉexports["Native_publication_begin"] -
+                Baseˉverified.Layout.Textˉaddress),
+            checked(Stateˉexports["Native_publication_apply"] -
+                Baseˉverified.Layout.Textˉaddress),
+            Input,
+            profile);
         return Application;
     }
 

@@ -60,6 +60,14 @@ entries select the admitted snapshot sequence. The focused Windows WVO route
 passes through the new shell. Linux execution, paired hosted application
 packaging, managed-publication deletion, and the grouped gate remain open.
 
+[Decision 0393](../Decisions/0393-Paired-Native-Hosted-Container-Publishers.md)
+adds exact paired hosted-container publisher applications and public CLI
+targets. The focused Windows run publishes the admitted payload, rejects changed
+content and a destination alias, preserves existing state, leaves no scratch,
+and loads no CLR. Shared WVA now owns the publication-state token ABI. Native
+reconstruction of Stage 0 package construction, Linux execution, promotion, and
+the final grouped dual-host gate remain open.
+
 The current unqualified language candidate advances Stage 0 and the Windvale-written compiler together through WVB 1.11: inference and trailing commas; constants; privacy, aliases, qualified identities, and metadata; named records and `else if`; exhaustive `match`; nominal payload variants and recoverable-result shapes; bounded sequences, affine builders, and `for`; loop control and short-circuit flow; compound assignment; checked division/remainder; bitwise operations and shifts; and exact text/bytes equality. The ordinary native compiler path, deterministic artifacts, editor grammar, and focused compiler/runtime/WebAssembly cases are synchronized. Resource-lifetime syntax remains at its explicit design gate until provider values, cleanup ordering/failures, and immutable manifest representation are decided.
 
 Implemented-candidate [Decision 0207](../Decisions/0207-U64-Binary-Fields-For-Durable-Storage.md) adds exact little-endian `u64` byte codecs for future durable storage fields. [Decision 0209](../Decisions/0209-Single-Current-Wvb-1-11-Format.md) folds them into canonical WVB 1.11 and brings the Windvale-written compiler to the same source/WVB surface; native, WebAssembly, and Windvale OS profiles retain explicit narrower 1.11 subsets. Implemented-candidate [Decision 0208](../Decisions/0208-Native-Read-Only-Directory-Snapshot-Binding.md) also gives `windvale run` an explicit bounded Windows/Linux snapshot binding for the already qualified directory-read contract; independent Linux qualification remains pending.
