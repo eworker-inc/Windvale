@@ -41,11 +41,15 @@ read/write, and process argument/count capabilities.
 | Enum-request WVB | 25,098 | `cd3332893277fbdc5c64e90e62900458bad506ec10be5d8b381ea9ca61a14b97` |
 | Windows enum-request application | 279,040 | `64b6cad08646204af01dc6b6d06b581f54cfc2993ddb8f3d28b22b6f3f9cf032` |
 | Linux enum-request application | 278,528 | `e601e3e9a9259f48c0f8d7e59f9212422d4f520ce4d4b5bbe30f6381e4970a9f` |
-| Enum-service WVB | 17,511 | `2aaa45372322f39c751e6abb3062c72c14d949eb29c6edd7ca756d4378955255` |
-| Windows enum-service application | 162,304 | `c4f2a7190ee68e39bc76f5870577be6db15e3763b18656ad40ec4ccd591cd1a8` |
-| Linux enum-service application | 163,840 | `1c118fc24c2948a64cd9f6c1a49163cfc62333330b86b30f54998307fa6a99dc` |
+| Enum-service WVB | 18,976 | `493226f5b61894cb43e3428555e96293310c03571f6cff905eb50fabc7721676` |
+| Enum-service WVO | 168,342 | `0ded580f703ae2d982740fe673d1e04dee581cab8785bb5d0ba8894800cb2963` |
+| Enum-service raw fragment | 167,274 | `cec5c423e32a3c0bc5602551e2b1da2e82929b2edd84b2756c4062bf0f223870` |
+| Windows enum-service application | 185,344 | `61d8b79ea57082c2ea85de5057a66e7c10045c44a9b8997d2ed491f3a1d90a83` |
+| Linux enum-service application | 184,320 | `cd6f3b01df9a57bfe1acf2fa226c58f10c8ba51d2096a75572628cfbea427cf0` |
 
-The focused contract uses the native front door as the module producer and
-retains the C# implementation only as a frozen differential oracle. Package
+The focused contract uses the native front door as the module producer, the
+digest-bound native WVB-to-WVO candidate as the object producer, and the
+digest-bound native linker at base zero as the raw-fragment producer. Each
+result must agree byte for byte with the frozen C# differential oracle. Package
 wiring remains deletion-bound Stage 0 evidence until ordered native
 orchestration and the final retirement gate qualify.

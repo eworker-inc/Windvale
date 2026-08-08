@@ -1,5 +1,10 @@
 module Compilerˉnativeˉenumˉmetadata profile portable;
 
+record Nativeˉenumˉvalidationˉcursor {
+    Valid: bool;
+    Nextˉname: u32;
+}
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -90,6 +95,125 @@ fn Nameˉisˉless(
     return Leftˉlength < Rightˉlength;
 }
 
+fn Priorˉmembersˉareˉvalid(
+    Input: bytes,
+    Memberˉoffset: u32,
+    Currentˉmember: u32,
+    Member: u32,
+    Value: i32,
+    Nameˉstart: u32,
+    Nameˉlength: u32,
+    Nameˉrank: u32
+) -> bool {
+    var Prior: u32 = 0u32;
+    while Prior < Member {
+        let Priorˉentry: u32 =
+            Memberˉoffset + (Currentˉmember + Prior) * 16u32;
+        let Priorˉname: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Priorˉentry + 4u32);
+        let Priorˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Priorˉentry + 8u32);
+        let Priorˉrank: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Priorˉentry + 12u32);
+        if Bytesˉreadˉi32ˉlittle(Input, Priorˉentry) == Value ||
+            Priorˉrank == Nameˉrank {
+            return false;
+        }
+        if Priorˉrank + 1u32 == Nameˉrank && !Nameˉisˉless(
+                Input,
+                Priorˉname,
+                Priorˉlength,
+                Nameˉstart,
+                Nameˉlength
+        ) {
+            return false;
+        }
+        if Nameˉrank + 1u32 == Priorˉrank && !Nameˉisˉless(
+                Input,
+                Nameˉstart,
+                Nameˉlength,
+                Priorˉname,
+                Priorˉlength
+        ) {
+            return false;
+        }
+        Prior = Prior + 1u32;
+    }
+    return true;
+}
+
+fn Typeˉmembersˉareˉvalid(
+    Input: bytes,
+    Memberˉoffset: u32,
+    Currentˉmember: u32,
+    Count: u32,
+    Currentˉname: u32
+) -> Nativeˉenumˉvalidationˉcursor {
+    var Nextˉname: u32 = Currentˉname;
+    var Member: u32 = 0u32;
+    while Member < Count {
+        let Entry: u32 = Memberˉoffset + (Currentˉmember + Member) * 16u32;
+        let Value: i32 = Bytesˉreadˉi32ˉlittle(Input, Entry);
+        let Nameˉstart: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 4u32);
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 8u32);
+        let Nameˉrank: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 12u32);
+        if Nameˉstart != Nextˉname || Nameˉlength == 0u32 ||
+            Nameˉlength > 255u32 || Nameˉrank >= Count ||
+            !Identifierˉisˉvalid(Input, Nameˉstart, Nameˉlength) ||
+            !Priorˉmembersˉareˉvalid(
+                Input,
+                Memberˉoffset,
+                Currentˉmember,
+                Member,
+                Value,
+                Nameˉstart,
+                Nameˉlength,
+                Nameˉrank
+            ) {
+            return Nativeˉenumˉvalidationˉcursor(false, Nextˉname);
+        }
+        Nextˉname = Nextˉname + Nameˉlength;
+        Member = Member + 1u32;
+    }
+    return Nativeˉenumˉvalidationˉcursor(true, Nextˉname);
+}
+
+fn Directoryˉisˉvalid(
+    Input: bytes,
+    Groupˉtypeˉcount: u32,
+    Groupˉmemberˉcount: u32,
+    Memberˉoffset: u32,
+    Nameˉoffset: u32
+) -> bool {
+    var Currentˉmember: u32 = 0u32;
+    var Currentˉname: u32 = Nameˉoffset;
+    var Type: u32 = 0u32;
+    while Type < Groupˉtypeˉcount {
+        let Directory: u32 = 48u32 + Type * 8u32;
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Input, Directory);
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Directory + 4u32);
+        if (Kind == 0u32 && Count != 0u32) ||
+            (Kind == 1u32 && (Count == 0u32 || Count > 256u32)) ||
+            Kind > 1u32 || Count > Groupˉmemberˉcount - Currentˉmember {
+            return false;
+        }
+        let Validation: Nativeˉenumˉvalidationˉcursor =
+            Typeˉmembersˉareˉvalid(
+                Input,
+                Memberˉoffset,
+                Currentˉmember,
+                Count,
+                Currentˉname
+            );
+        if !Validation.Valid { return false; }
+        Currentˉname = Validation.Nextˉname;
+        Currentˉmember = Currentˉmember + Count;
+        Type = Type + 1u32;
+    }
+    if Currentˉmember != Groupˉmemberˉcount { return false; }
+    return Currentˉname == Bytesˉlength(Input);
+}
+
 fn Requestˉisˉvalid(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
     if Total < 48u32 || Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1363498583u32 ||
@@ -146,76 +270,93 @@ fn Requestˉisˉvalid(Input: bytes) -> bool {
         Groupˉnameˉbytes;
     if Responseˉbytes > 4194304u32 { return false; }
 
-    var Currentˉmember: u32 = 0u32;
-    var Currentˉname: u32 = Nameˉoffset;
+    return Directoryˉisˉvalid(
+        Input,
+        Groupˉtypeˉcount,
+        Groupˉmemberˉcount,
+        Memberˉoffset,
+        Nameˉoffset
+    );
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Responseˉbytes: u32,
+    Headerˉbytes: u32,
+    Directoryˉbytes: u32,
+    Memberˉbytes: u32,
+    Nameˉbytes: u32
+) -> bytes {
+    var Output: bytes = Empty(Input);
+    Output = Appendˉu32(Output, 1128617559u32);
+    Output = Appendˉu32(Output, 1u32);
+    Output = Appendˉu32(Output, Responseˉbytes);
+    Output = Appendˉu32(Output, Headerˉbytes);
+    Output = Appendˉu32(Output, Directoryˉbytes);
+    Output = Appendˉu32(Output, Memberˉbytes);
+    Output = Appendˉu32(Output, Nameˉbytes);
+    return Appendˉu32(Output, 0u32);
+}
+
+fn Metadataˉheader(
+    Output: bytes,
+    Wvenˉtotal: u32,
+    Typeˉcount: u32,
+    Memberˉcount: u32
+) -> bytes {
+    var Result: bytes = Appendˉu32(Output, 1313166935u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Wvenˉtotal);
+    Result = Appendˉu32(Result, Typeˉcount);
+    Result = Appendˉu32(Result, Memberˉcount);
+    return Appendˉu32(Result, 24u32);
+}
+
+fn Appendˉdirectory(
+    Input: bytes,
+    Output: bytes,
+    Groupˉtypeˉcount: u32,
+    Groupˉmemberˉstart: u32
+) -> bytes {
+    var Result: bytes = Output;
+    var Currentˉmember: u32 = Groupˉmemberˉstart;
     var Type: u32 = 0u32;
     while Type < Groupˉtypeˉcount {
-        let Directory: u32 = 48u32 + Type * 8u32;
-        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Input, Directory);
-        let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Directory + 4u32);
-        if (Kind == 0u32 && Count != 0u32) ||
-            (Kind == 1u32 && (Count == 0u32 || Count > 256u32)) ||
-            Kind > 1u32 || Count > Groupˉmemberˉcount - Currentˉmember {
-            return false;
-        }
-
-        var Member: u32 = 0u32;
-        while Member < Count {
-            let Entry: u32 = Memberˉoffset + (Currentˉmember + Member) * 16u32;
-            let Value: i32 = Bytesˉreadˉi32ˉlittle(Input, Entry);
-            let Nameˉstart: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 4u32);
-            let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 8u32);
-            let Nameˉrank: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 12u32);
-            if Nameˉstart != Currentˉname || Nameˉlength == 0u32 ||
-                Nameˉlength > 255u32 || Nameˉrank >= Count ||
-                !Identifierˉisˉvalid(Input, Nameˉstart, Nameˉlength) {
-                return false;
-            }
-
-            var Prior: u32 = 0u32;
-            while Prior < Member {
-                let Priorˉentry: u32 =
-                    Memberˉoffset + (Currentˉmember + Prior) * 16u32;
-                let Priorˉname: u32 =
-                    Bytesˉreadˉu32ˉlittle(Input, Priorˉentry + 4u32);
-                let Priorˉlength: u32 =
-                    Bytesˉreadˉu32ˉlittle(Input, Priorˉentry + 8u32);
-                let Priorˉrank: u32 =
-                    Bytesˉreadˉu32ˉlittle(Input, Priorˉentry + 12u32);
-                if Bytesˉreadˉi32ˉlittle(Input, Priorˉentry) == Value {
-                    return false;
-                }
-                if Priorˉrank == Nameˉrank {
-                    return false;
-                }
-                if Priorˉrank + 1u32 == Nameˉrank && !Nameˉisˉless(
-                        Input,
-                        Priorˉname,
-                        Priorˉlength,
-                        Nameˉstart,
-                        Nameˉlength
-                ) {
-                    return false;
-                }
-                if Nameˉrank + 1u32 == Priorˉrank && !Nameˉisˉless(
-                        Input,
-                        Nameˉstart,
-                        Nameˉlength,
-                        Priorˉname,
-                        Priorˉlength
-                    ) {
-                    return false;
-                }
-                Prior = Prior + 1u32;
-            }
-            Currentˉname = Currentˉname + Nameˉlength;
-            Member = Member + 1u32;
-        }
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(
+            Input,
+            48u32 + Type * 8u32 + 4u32
+        );
+        Result = Appendˉu32(Result, Currentˉmember);
+        Result = Appendˉu32(Result, Count);
         Currentˉmember = Currentˉmember + Count;
         Type = Type + 1u32;
     }
-    if Currentˉmember != Groupˉmemberˉcount { return false; }
-    return Currentˉname == Total;
+    return Result;
+}
+
+fn Appendˉmembers(
+    Input: bytes,
+    Output: bytes,
+    Memberˉoffset: u32,
+    Groupˉmemberˉcount: u32,
+    Groupˉnameˉstart: u32
+) -> bytes {
+    var Result: bytes = Output;
+    var Currentˉname: u32 = Groupˉnameˉstart;
+    var Member: u32 = 0u32;
+    while Member < Groupˉmemberˉcount {
+        let Entry: u32 = Memberˉoffset + Member * 16u32;
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 8u32);
+        Result = Appendˉmember(
+            Result,
+            Bytesˉreadˉi32ˉlittle(Input, Entry),
+            Currentˉname,
+            Length
+        );
+        Currentˉname = Currentˉname + Length;
+        Member = Member + 1u32;
+    }
+    return Result;
 }
 
 export fn Nativeˉenumˉmetadataˉbuild(Input: bytes) -> bytes {
@@ -241,48 +382,35 @@ export fn Nativeˉenumˉmetadataˉbuild(Input: bytes) -> bytes {
     let Responseˉbytes: u32 =
         32u32 + Headerˉbytes + Directoryˉbytes + Memberˉbytes + Nameˉbytes;
 
-    var Output: bytes = Empty(Input);
-    Output = Appendˉu32(Output, 1128617559u32);
-    Output = Appendˉu32(Output, 1u32);
-    Output = Appendˉu32(Output, Responseˉbytes);
-    Output = Appendˉu32(Output, Headerˉbytes);
-    Output = Appendˉu32(Output, Directoryˉbytes);
-    Output = Appendˉu32(Output, Memberˉbytes);
-    Output = Appendˉu32(Output, Nameˉbytes);
-    Output = Appendˉu32(Output, 0u32);
+    var Output: bytes = Responseˉheader(
+        Input,
+        Responseˉbytes,
+        Headerˉbytes,
+        Directoryˉbytes,
+        Memberˉbytes,
+        Nameˉbytes
+    );
 
     if Headerˉbytes != 0u32 {
-        Output = Appendˉu32(Output, 1313166935u32);
-        Output = Appendˉu32(Output, 1u32);
-        Output = Appendˉu32(Output, Wvenˉtotal);
-        Output = Appendˉu32(Output, Typeˉcount);
-        Output = Appendˉu32(Output, Memberˉcount);
-        Output = Appendˉu32(Output, 24u32);
-    }
-
-    var Currentˉmember: u32 = Groupˉmemberˉstart;
-    var Type: u32 = 0u32;
-    while Type < Groupˉtypeˉcount {
-        let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, 48u32 + Type * 8u32 + 4u32);
-        Output = Appendˉu32(Output, Currentˉmember);
-        Output = Appendˉu32(Output, Count);
-        Currentˉmember = Currentˉmember + Count;
-        Type = Type + 1u32;
-    }
-
-    var Currentˉname: u32 = Groupˉnameˉstart;
-    var Member: u32 = 0u32;
-    while Member < Groupˉmemberˉcount {
-        let Entry: u32 = Memberˉoffset + Member * 16u32;
-        let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 8u32);
-        Output = Appendˉmember(
+        Output = Metadataˉheader(
             Output,
-            Bytesˉreadˉi32ˉlittle(Input, Entry),
-            Currentˉname,
-            Length
+            Wvenˉtotal,
+            Typeˉcount,
+            Memberˉcount
         );
-        Currentˉname = Currentˉname + Length;
-        Member = Member + 1u32;
     }
+    Output = Appendˉdirectory(
+        Input,
+        Output,
+        Groupˉtypeˉcount,
+        Groupˉmemberˉstart
+    );
+    Output = Appendˉmembers(
+        Input,
+        Output,
+        Memberˉoffset,
+        Groupˉmemberˉcount,
+        Groupˉnameˉstart
+    );
     return Bytesˉconcat(Output, Bytesˉslice(Input, Nameˉoffset, Nameˉbytes));
 }

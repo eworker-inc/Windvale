@@ -11,15 +11,15 @@ public static class Hostedˉenumˉserviceˉapplicationˉcontract
     public const string LINUX_TARGET_NAME =
         "linux-x64-hosted-enum-service-v1";
     public const string MODULE_NAME = "Nativeˉhostedˉenumˉserviceˉtool";
-    public const int MODULE_BYTES = 17_511;
+    public const int MODULE_BYTES = 18_976;
     public const string MODULE_SHA256 =
-        "2aaa45372322f39c751e6abb3062c72c14d949eb29c6edd7ca756d4378955255";
-    public const int WINDOWS_APPLICATION_BYTES = 162_304;
+        "493226f5b61894cb43e3428555e96293310c03571f6cff905eb50fabc7721676";
+    public const int WINDOWS_APPLICATION_BYTES = 185_344;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "c4f2a7190ee68e39bc76f5870577be6db15e3763b18656ad40ec4ccd591cd1a8";
-    public const int LINUX_APPLICATION_BYTES = 163_840;
+        "61d8b79ea57082c2ea85de5057a66e7c10045c44a9b8997d2ed491f3a1d90a83";
+    public const int LINUX_APPLICATION_BYTES = 184_320;
     public const string LINUX_APPLICATION_SHA256 =
-        "1c118fc24c2948a64cd9f6c1a49163cfc62333330b86b30f54998307fa6a99dc";
+        "cd6f3b01df9a57bfe1acf2fa226c58f10c8ba51d2096a75572628cfbea427cf0";
 }
 
 public static class Hostedˉenumˉserviceˉapplicationˉwriter

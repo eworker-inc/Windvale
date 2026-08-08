@@ -68,6 +68,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native segmented console-application construction](Decisions/0342-Native-Segmented-Console-Application-Construction.md) — maximum valid PE/ELF construction as bounded chunks plus an independently verified `WVCS 1.0` manifest
 - [Native console-packager source reconstruction](Decisions/0343-Native-Console-Packager-Source-Reconstruction.md) — both console-packager WVBs rebuilt exactly through the digest-bound .NET-free Project 1 front door
 - [Native console-packager WVO reconstruction](Decisions/0344-Native-Console-Packager-Wvo-Reconstruction.md) — both source-built packager closures lowered to exact WVO without widening the bounded native emitter
+- [Native enum-service fragment reconstruction](Decisions/0408-Native-Enum-Service-Fragment-Reconstruction.md) — focused enum-metadata helpers let the pinned native lowerer and linker reproduce the exact service WVO and raw fragment without .NET
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

@@ -42,6 +42,43 @@ internal static partial class Program
                 Requestˉmodule).Fragment;
             var Serviceˉfragment = X64ˉnativeˉbackend.Compile(
                 Serviceˉmodule).Fragment;
+            var Serviceˉobjectˉpath = Path.Combine(Directoryˉpath,
+                "Enum-Service.wvo");
+            var Expectedˉserviceˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+                Serviceˉfragment);
+            var Loweredˉservice = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Lower-Wvb-To-Wvo",
+                Serviceˉmoduleˉpath,
+                Serviceˉobjectˉpath);
+            Equal(0, Loweredˉservice.Exitˉcode);
+            Equal(
+                "native x64 status=Valid abi=22 code-bytes=166864 " +
+                    "object-bytes=168342\n",
+                Loweredˉservice.Output);
+            Equal(string.Empty, Loweredˉservice.Error);
+            Sequenceˉequal(
+                Expectedˉserviceˉobject,
+                File.ReadAllBytes(Serviceˉobjectˉpath));
+
+            var Serviceˉfragmentˉpath = Path.Combine(Directoryˉpath,
+                "Enum-Service.bin");
+            var Linkedˉservice = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Link-Wvo",
+                "0",
+                "Main",
+                Serviceˉfragmentˉpath,
+                Serviceˉobjectˉpath);
+            Equal(0, Linkedˉservice.Exitˉcode);
+            Contains(Linkedˉservice.Output,
+                "base-address=0 image-bytes=167274");
+            Contains(Linkedˉservice.Output,
+                "image sha256=cec5c423e32a3c0bc5602551e2b1da2e82929b2edd84b2756c4062bf0f223870");
+            Equal(string.Empty, Linkedˉservice.Error);
+            Sequenceˉequal(
+                Serviceˉfragment.Code,
+                File.ReadAllBytes(Serviceˉfragmentˉpath));
             var Requestˉwindows =
                 Hostedˉenumˉrequestˉapplicationˉwriter.Writeˉwindows(
                     Requestˉfragment,

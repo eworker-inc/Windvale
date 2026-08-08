@@ -22,12 +22,12 @@ internal static class Nativeˉenumˉmetadataˉbuilder
         Loadˉconsumer,
         LazyThreadSafetyMode.ExecutionAndPublication);
 
-    internal const int CONSUMER_CANONICAL_SIZE = 13_920;
+    internal const int CONSUMER_CANONICAL_SIZE = 15_385;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "a43a89cedd7fc58740132c2f666ea69866ceff6ebb87d090124207ff3e9154ce";
-    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 115_167;
+        "5292abe7ab6f1bc31a15e49a0e182ded9abe0c0619cd408e44330bcc3e07cca2";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 138_550;
     internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
-        "d2f53cd0fdd7812699a06234e19586f18492ffbca68ae0e5f507b09253c5a39b";
+        "f529acc6dbf5e9dca9cb3a1c56d0fb2198104b5da249c7363bbf38cc2b38e806";
 
     public static ImmutableArray<byte> Build(
         ImmutableArray<Nominalˉtypeˉdeclaration> types)

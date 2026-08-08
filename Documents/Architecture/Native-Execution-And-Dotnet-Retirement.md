@@ -610,6 +610,14 @@ the frozen differential/package oracle. Fragment production, fixed-resource
 acquisition, ordered orchestration, larger segmented metadata, promotion, and
 the grouped gate remain.
 
+[Decision 0408](../Decisions/0408-Native-Enum-Service-Fragment-Reconstruction.md)
+closes that enum-service fragment-production seam without increasing an arena
+or format limit. Cohesive validation and construction helpers reduce generated
+function lifetime enough for the pinned native lowerer to reproduce the exact
+WVO; the pinned native linker then reproduces the exact raw fragment at base
+zero. Fixed-resource acquisition, ordered orchestration, larger segmented enum
+metadata, Linux execution, promotion, and the grouped gate remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

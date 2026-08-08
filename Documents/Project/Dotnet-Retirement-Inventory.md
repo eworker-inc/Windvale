@@ -567,6 +567,14 @@ recovery oracle and loads no CLR. Fragment resource production, the nine fixed
 service resources, ordered manifest/process lifecycle, larger segmented enum
 metadata, Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0408](../Decisions/0408-Native-Enum-Service-Fragment-Reconstruction.md)
+removes the enum-service fragment from that remaining list. Focused source
+extraction lets the existing digest-bound native lowerer reproduce the exact
+WVO without a larger arena, and the digest-bound native linker reproduces the
+exact raw fragment. The nine fixed service resources, ordered manifest/process
+lifecycle, larger segmented metadata, Linux execution, promotion, and the
+grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

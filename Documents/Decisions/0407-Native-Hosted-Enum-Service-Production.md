@@ -3,6 +3,7 @@
 - Status: Implemented candidate; ordered resource orchestration pending
 - Date: 2026-08-08
 - Advances: [Decision 0406](0406-Native-Hosted-Source-Geometry-Production.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
+- Advanced by: [Decision 0408](0408-Native-Enum-Service-Fragment-Reconstruction.md)
 - Contract: [Native hosted enum processes](../../Specifications/Windvale-Native-Hosted-Enum-Processes.md)
 
 ## Context and decision
