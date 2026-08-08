@@ -63,7 +63,8 @@ metadata while preserving an existing plan, and rejects an input/output alias.
 The new C# target writer is deletion-bound package layout and identity wiring.
 The planner source, runtime behavior, layout semantics, and failure decisions
 are Windvale-owned. The ordinary managed hosted-application builders still
-dispatch the retained planner fragment internally; promoting this process into
-the complete plan/segment/publish pipeline requires native production of its
-runtime and remaining region resources, followed by Linux execution and the
-grouped dual-host gate.
+dispatch the retained planner fragment internally. The standalone
+[platform-byte producer](Windvale-Native-Hosted-Container-Platform-Bytes.md)
+now consumes this plan for PE/ELF-owned regions; completing the process pipeline
+still requires startup instantiation, remaining runtime/resource production,
+composition, Linux execution, and the grouped dual-host gate.

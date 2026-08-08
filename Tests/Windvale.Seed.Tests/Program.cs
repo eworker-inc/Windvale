@@ -1428,6 +1428,7 @@ internal static partial class Program
         new("Windvale constructs bounded hosted-tool container segments", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉcontainerˉsegmentationˉruns),
         new("native hosted-container segmenter reproduces exact bounded segments", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉsegmenterˉruns),
         new("native hosted-container planner reproduces exact layout plans", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉplannerˉruns),
+        new("native hosted-container platform bytes reproduce exact target regions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉplatformˉbytesˉrun),
         new("Windvale admits immutable hosted-container segment sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉsegmentˉsetˉruns),
         new("Windvale constructs hosted-tool runtime headers", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉtoolˉruntimeˉheaderˉruns),
         new("Windvale materializes segmented native service bundles", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉserviceˉbundleˉmaterializationˉruns),

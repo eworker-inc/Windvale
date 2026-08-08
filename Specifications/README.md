@@ -79,6 +79,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native hosted-startup instantiation](Windvale-Native-Hosted-Startup-Instantiation.md)
 - [Native hosted-container construction](Windvale-Native-Hosted-Container-Construction.md)
 - [Native hosted-container planner](Windvale-Native-Hosted-Container-Planner.md)
+- [Native hosted-container platform bytes](Windvale-Native-Hosted-Container-Platform-Bytes.md)
 - [Native hosted-container segmenter](Windvale-Native-Hosted-Container-Segmenter.md)
 - [Native hosted-container segment set](Windvale-Native-Hosted-Container-Segment-Set.md)
 - [Native hosted-tool runtime-header construction](Windvale-Native-Hosted-Tool-Runtime-Header.md)

@@ -469,6 +469,15 @@ exist, and current-host execution loads no CLR. Runtime/region resource
 production, process-pipeline composition, Linux execution, promotion, and the
 grouped gate remain open.
 
+[Decision 0396](../Decisions/0396-Standalone-Native-Hosted-Container-Platform-Bytes.md)
+adds the next process-level resource producer. One 29,793-byte Windvale tool
+selects the existing portable Windows or Linux constructor from a successful
+plan and emits the exact `WVWB 1` PE-header/import/relocation bundle or `WVLB 1`
+ELF-header bundle. Paired packages and public CLI targets exist, and current-host
+execution agrees byte-for-byte with the retained fragment without loading the
+CLR. Startup instantiation, remaining runtime/resource production, complete
+process composition, Linux execution, promotion, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

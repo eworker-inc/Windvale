@@ -80,8 +80,11 @@ orchestration rather than carrying duplicate publication logic.
 starts that replacement pipeline with an exact standalone Windows/Linux planner.
 The current-host process turns a real 4,096-byte runtime header into the same
 Windvale-owned layout/target plan as the retained fragment without loading .NET.
-Producing the remaining startup/platform region resources and composing
-planner, segmenter, and publisher are the next construction boundaries.
+Decision 0396 adds the paired standalone platform-byte producer: the current
+host turns that plan into the exact Windvale-owned PE header/import/relocation
+or ELF header response without loading .NET. Producing startup and remaining
+runtime resources, then composing planner, resource producers, segmenter, and
+publisher, are the next construction boundaries.
 
 The current unqualified language candidate advances Stage 0 and the Windvale-written compiler together through WVB 1.11: inference and trailing commas; constants; privacy, aliases, qualified identities, and metadata; named records and `else if`; exhaustive `match`; nominal payload variants and recoverable-result shapes; bounded sequences, affine builders, and `for`; loop control and short-circuit flow; compound assignment; checked division/remainder; bitwise operations and shifts; and exact text/bytes equality. The ordinary native compiler path, deterministic artifacts, editor grammar, and focused compiler/runtime/WebAssembly cases are synchronized. Resource-lifetime syntax remains at its explicit design gate until provider values, cleanup ordering/failures, and immutable manifest representation are decided.
 

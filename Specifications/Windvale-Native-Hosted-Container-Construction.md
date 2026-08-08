@@ -15,6 +15,8 @@ change their public container formats, startup WVOs, runtime metadata, service
 bundle, file bytes, virtual-memory policy, or independent PE/ELF verification.
 The same planner is now also available through the standalone
 [native hosted-container planner](Windvale-Native-Hosted-Container-Planner.md).
+The same platform constructors are available through the standalone
+[native hosted-container platform-byte producer](Windvale-Native-Hosted-Container-Platform-Bytes.md).
 
 ## Planner request: `WVCR 1`
 
@@ -98,6 +100,10 @@ Both fragments reject truncated, oversized, misidentified, wrong-target, and
 internally inconsistent plan envelopes before returning owned bytes. The
 linker embeds their WVNF artifacts, not their WVB modules.
 
+The standalone platform-byte producer selects these same fragments from the
+admitted plan target and emits their exact response through a native
+Windows/Linux process. It adds no second PE/ELF construction implementation.
+
 ## Exact retained artifacts
 
 | Artifact | Bytes | SHA-256 |
@@ -153,6 +159,8 @@ Normal construction now follows one ordered path:
    native planner command can now produce this exact plan as a separate process.
 3. The startup constructor applies that target table to the canonical WVO.
 4. The selected platform constructor emits every outer-container-owned byte.
+   The paired native platform-byte command can now produce the same exact
+   response as a separate process.
 5. The bounded segment constructor consumes only intersecting source bytes,
    constructs every complete segment including padding in Windvale, and returns
    exact ordered pieces below the ordinary byte-value limit.
@@ -166,7 +174,9 @@ Normal construction now follows one ordered path:
 The former C# application builders are named `Buildˉstage0` and are called only
 by focused differential evidence. The ordinary managed builders still dispatch
 the retained planner and platform fragments while the standalone planner,
-segmenter, and publisher are composed into their replacement process pipeline.
-The C# segment-set fixture/harness is temporary transition evidence rather than
-product logic. Linux-host execution and grouped dual-host qualification remain
-deferred to the final retirement gate.
+platform-byte producer, segmenter, and publisher are composed into their
+replacement process pipeline. Startup instantiation and remaining
+runtime/resource production still need process boundaries. The C# segment-set
+fixture/harness is temporary transition evidence rather than product logic.
+Linux-host execution and grouped dual-host qualification remain deferred to the
+final retirement gate.

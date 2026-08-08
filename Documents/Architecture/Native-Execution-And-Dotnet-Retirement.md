@@ -545,7 +545,14 @@ packages that existing Windvale planner as an exact Windows/Linux process. It
 accepts the 4,096-byte runtime header and emits the same `WVCD 1` layout and
 target plan as the retained service-free fragment without loading .NET. This is
 the first explicit process in the replacement host-package construction
-pipeline; startup/platform resource production and complete orchestration remain.
+pipeline.
+
+[Decision 0396](../Decisions/0396-Standalone-Native-Hosted-Container-Platform-Bytes.md)
+packages the existing Windows/Linux PE/ELF byte constructors as the next exact
+process. It consumes that plan and emits the same `WVWB 1` header, imports, and
+relocation response or `WVLB 1` header response as the retained fragment without
+loading .NET. Startup instantiation, remaining runtime/resource production, and
+complete orchestration remain.
 
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale

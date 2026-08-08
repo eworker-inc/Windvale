@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Security.Cryptography;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 
@@ -38,7 +37,12 @@ public static class Hostedˉcontainerˉplannerˉapplicationˉwriter
             Hostedˉcompilerˉapplicationˉprofile.Compiler,
             "container-planner",
             "WVW2251");
-        return Requireˉwindowsˉidentity(Result);
+        return Hostedˉcontainerˉtoolˉapplicationˉbuilder.Requireˉwindowsˉidentity(
+            Result,
+            Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_APPLICATION_BYTES,
+            Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_APPLICATION_SHA256,
+            "hosted-container planner",
+            "WVW2251");
     }
 
     public static Linuxˉconsoleˉapplicationˉresult Writeˉlinux(
@@ -54,50 +58,11 @@ public static class Hostedˉcontainerˉplannerˉapplicationˉwriter
             Hostedˉcompilerˉapplicationˉprofile.Compiler,
             "container-planner",
             "WVL2251");
-        return Requireˉlinuxˉidentity(Result);
-    }
-
-    private static Windowsˉconsoleˉapplicationˉresult Requireˉwindowsˉidentity(
-        Windowsˉconsoleˉapplicationˉresult result)
-    {
-        if (!result.Success) { return result; }
-        if (!Identityˉmatches(result.Imageˉbytes.AsSpan(),
-            Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_APPLICATION_BYTES,
-            Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_APPLICATION_SHA256))
-        {
-            return Windowsˉconsoleˉapplicationˉresult.Failed(
-                "WVW2251",
-                $"Windows hosted-container planner identity is invalid " +
-                $"(bytes={result.Imageˉbytes.Length}, " +
-                $"sha256={Calculateˉsha256(result.Imageˉbytes.AsSpan())}).");
-        }
-        return result;
-    }
-
-    private static Linuxˉconsoleˉapplicationˉresult Requireˉlinuxˉidentity(
-        Linuxˉconsoleˉapplicationˉresult result)
-    {
-        if (!result.Success) { return result; }
-        if (!Identityˉmatches(result.Imageˉbytes.AsSpan(),
+        return Hostedˉcontainerˉtoolˉapplicationˉbuilder.Requireˉlinuxˉidentity(
+            Result,
             Hostedˉcontainerˉplannerˉapplicationˉcontract.LINUX_APPLICATION_BYTES,
-            Hostedˉcontainerˉplannerˉapplicationˉcontract.LINUX_APPLICATION_SHA256))
-        {
-            return Linuxˉconsoleˉapplicationˉresult.Failed(
-                "WVL2251",
-                $"Linux hosted-container planner identity is invalid " +
-                $"(bytes={result.Imageˉbytes.Length}, " +
-                $"sha256={Calculateˉsha256(result.Imageˉbytes.AsSpan())}).");
-        }
-        return result;
+            Hostedˉcontainerˉplannerˉapplicationˉcontract.LINUX_APPLICATION_SHA256,
+            "hosted-container planner",
+            "WVL2251");
     }
-
-    private static bool Identityˉmatches(
-        ReadOnlySpan<byte> bytes,
-        int expectedˉbytes,
-        string expectedˉsha256) =>
-        bytes.Length == expectedˉbytes &&
-        StringComparer.Ordinal.Equals(Calculateˉsha256(bytes), expectedˉsha256);
-
-    private static string Calculateˉsha256(ReadOnlySpan<byte> bytes) =>
-        Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
 }

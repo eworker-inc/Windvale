@@ -1,6 +1,6 @@
 # Decision 0395: Standalone native hosted-container planner
 
-- Status: Implemented candidate; pipeline integration and Linux execution pending
+- Status: Implemented candidate; advanced by [Decision 0396](0396-Standalone-Native-Hosted-Container-Platform-Bytes.md)
 - Date: 2026-08-08
 - Advances: [Decision 0394](0394-Pruned-Staged-Publisher-Bridge-Closure.md), [Decision 0385](0385-Windvale-Owned-Hosted-Container-Construction.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted-container planner](../../Specifications/Windvale-Native-Hosted-Container-Planner.md)
@@ -49,8 +49,8 @@ verifier was run.
 
 - Hosted layout planning now has a real native process boundary on both hosts.
 - Planner behavior is not copied into C# or a second Windvale implementation.
-- The next construction slice can consume this plan while transferring startup
-  and platform-region production into process resources.
+- Decision 0396 now consumes this plan through a native platform-byte producer;
+  startup and remaining runtime/resource production still need process owners.
 - Stage 0 still constructs the planner packages and the ordinary hosted builders
   still use the embedded fragment until the complete pipeline is promoted.
 

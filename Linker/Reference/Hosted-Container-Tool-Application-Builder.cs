@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Security.Cryptography;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 using Windvale.Runtime.Native;
@@ -8,6 +9,44 @@ namespace Windvale.Linker;
 // Deletion-bound Stage 0 package wiring shared by native hosted-container tools.
 internal static class Hostedˉcontainerˉtoolˉapplicationˉbuilder
 {
+    internal static Windowsˉconsoleˉapplicationˉresult Requireˉwindowsˉidentity(
+        Windowsˉconsoleˉapplicationˉresult result,
+        int expectedˉbytes,
+        string expectedˉsha256,
+        string description,
+        string diagnosticˉcode)
+    {
+        if (!result.Success) { return result; }
+        if (Identityˉmatches(result.Imageˉbytes.AsSpan(), expectedˉbytes, expectedˉsha256))
+        {
+            return result;
+        }
+        return Windowsˉconsoleˉapplicationˉresult.Failed(
+            diagnosticˉcode,
+            $"Windows {description} identity is invalid " +
+            $"(bytes={result.Imageˉbytes.Length}, " +
+            $"sha256={Calculateˉsha256(result.Imageˉbytes.AsSpan())}).");
+    }
+
+    internal static Linuxˉconsoleˉapplicationˉresult Requireˉlinuxˉidentity(
+        Linuxˉconsoleˉapplicationˉresult result,
+        int expectedˉbytes,
+        string expectedˉsha256,
+        string description,
+        string diagnosticˉcode)
+    {
+        if (!result.Success) { return result; }
+        if (Identityˉmatches(result.Imageˉbytes.AsSpan(), expectedˉbytes, expectedˉsha256))
+        {
+            return result;
+        }
+        return Linuxˉconsoleˉapplicationˉresult.Failed(
+            diagnosticˉcode,
+            $"Linux {description} identity is invalid " +
+            $"(bytes={result.Imageˉbytes.Length}, " +
+            $"sha256={Calculateˉsha256(result.Imageˉbytes.AsSpan())}).");
+    }
+
     internal static Windowsˉconsoleˉapplicationˉresult Writeˉwindows(
         Nativeˉfragment fragment,
         ImmutableArray<Capabilityˉdeclaration> capabilities,
@@ -128,4 +167,14 @@ internal static class Hostedˉcontainerˉtoolˉapplicationˉbuilder
                 $"The {platform} {description} did not reproduce its entry and service bundle.");
         }
     }
+
+    private static bool Identityˉmatches(
+        ReadOnlySpan<byte> bytes,
+        int expectedˉbytes,
+        string expectedˉsha256) =>
+        bytes.Length == expectedˉbytes &&
+        StringComparer.Ordinal.Equals(Calculateˉsha256(bytes), expectedˉsha256);
+
+    private static string Calculateˉsha256(ReadOnlySpan<byte> bytes) =>
+        Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
 }

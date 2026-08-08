@@ -1,0 +1,104 @@
+module Nativeˉhostedˉcontainerˉplatformˉbytesˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉcontainerˉlinux as Linux;
+import Linkerˉnativeˉhostedˉcontainerˉwindows as Windows;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉplatformˉbytesˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line("Usage: wvhostbytes <plan.wvcd> <regions.wvhb>");
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container platform bytes status=",
+            Enumˉname(
+                Nativeˉhostedˉcontainerˉplatformˉbytesˉstatus.Rejected
+            )
+        )
+    );
+    return 2;
+}
+
+fn Responseˉisˉvalid(Plan: bytes, Target: u32, Response: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Response);
+    if Total < 32u32 { return false; }
+    var Magic: u32 = 1112299095u32;
+    var Header: u32 = 4096u32;
+    var Imports: u32 = 0u32;
+    var Relocation: u32 = 0u32;
+    if Target == 1u32 {
+        Magic = 1113019991u32;
+        Header = 512u32;
+        Imports = 4096u32;
+        Relocation = 12u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != Magic { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 8u32) != Total { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 16u32) != Bytesˉlength(Plan) {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 20u32) != Header { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 24u32) != Imports { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 28u32) != Relocation { return false; }
+    return Total == 32u32 + Header + Imports + Relocation;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Inputˉpath: text = process.argument(0u32);
+    let Outputˉpath: text = process.argument(1u32);
+    if Bytesˉareˉequal(Textˉtoˉutf8(Inputˉpath), Textˉtoˉutf8(Outputˉpath)) {
+        return Usage();
+    }
+
+    let Plan: bytes = file.read_bytes(Inputˉpath);
+    if Bytesˉlength(Plan) < 128u32 { return Reject(); }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Plan, 20u32);
+    var Response: bytes = Linux.Main(Plan);
+    if Target == 1u32 { Response = Windows.Main(Plan); }
+    if (Target != 1u32 && Target != 2u32) ||
+        !Responseˉisˉvalid(Plan, Target, Response) {
+        return Reject();
+    }
+    file.write_bytes(Outputˉpath, Response);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted container platform bytes status=",
+                Enumˉname(
+                    Nativeˉhostedˉcontainerˉplatformˉbytesˉstatus.Valid
+                )
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Response)))
+        )
+    );
+    return 0;
+}
