@@ -1,6 +1,6 @@
 # Decision 0383: Windvale-owned hosted-tool metadata construction
 
-- Status: Accepted current-host normal-path construction transfer; native outer-container composition, Linux execution, and grouped qualification pending
+- Status: Accepted current-host normal-path construction transfer; advanced by [Decision 0399](0399-Standalone-Native-Hosted-Container-Metadata.md)
 - Date: 2026-08-08
 - Advances: [Decision 0382](0382-Windvale-Owned-Hosted-Tool-Runtime-Header.md), [Decision 0161](0161-Exact-Compiler-Service-Bundle-And-Manifest.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native hosted-tool metadata construction](../../Specifications/Windvale-Native-Hosted-Tool-Metadata-Construction.md)

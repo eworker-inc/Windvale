@@ -94,9 +94,12 @@ bundle. The capability-free bridge exposes `Main(bytes) -> bytes`.
 | Retained bridge WVB | 23,778 | `0b89246f7423f99c01fafdbc6054f7b38cca80c27fee036a272990e4e1a59379` |
 | Retained bridge WVNF | 212,627 | `b077111fd4aa796003f947d4e82facb6754ab83a53951ef8c514025983ca26f4` |
 
-The normal managed packaging seam embeds only the digest-bound WVNF. The
+The normal managed packaging seam still embeds only the digest-bound WVNF. The
 former C# constructor is retained under the explicit `Buildˉstage0` name for
 differential and recovery evidence and is not called by normal packaging. The
-temporary managed request/response bridge retires when native hosted-tool
-container construction invokes this Windvale contract directly; the Stage 0
-oracle leaves the product tree only after the final recovery archive.
+standalone
+[metadata constructor](Windvale-Native-Hosted-Container-Metadata.md) now owns
+request dispatch, response admission, and raw metadata output. Managed request
+projection remains until a native owner verifies actual fragment/service
+evidence. The Stage 0 oracle leaves the product tree only after the final
+recovery archive.

@@ -1,0 +1,106 @@
+module Nativeˉhostedˉcontainerˉmetadataˉtool profile hosted;
+
+import Runtimeˉnativeˉhostedˉtoolˉmetadataˉadmission as Metadataˉadmission;
+import Runtimeˉnativeˉhostedˉtoolˉmetadataˉconstruction as Metadataˉconstruction;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉmetadataˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostmetadata <request.wvhq> <metadata.wvhm>"
+    );
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container metadata status=",
+            Enumˉname(Nativeˉhostedˉcontainerˉmetadataˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+fn Responseˉisˉvalid(
+    Request: bytes,
+    Response: bytes,
+    Target: u32,
+    Profile: u32
+) -> bool {
+    if Bytesˉlength(Response) != 1056u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1145591383u32 {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 8u32) != 1056u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 16u32) != Bytesˉlength(Request) {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 20u32) != 1024u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 24u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 28u32) != 0u32 { return false; }
+    return Metadataˉadmission.Nativeˉhostedˉtoolˉmetadataˉisˉvalid(
+        Bytesˉslice(Response, 32u32, 1024u32),
+        0u32,
+        Target,
+        Profile
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Requestˉpath: text = process.argument(0u32);
+    let Metadataˉpath: text = process.argument(1u32);
+    if Bytesˉareˉequal(
+        Textˉtoˉutf8(Requestˉpath),
+        Textˉtoˉutf8(Metadataˉpath)
+    ) {
+        return Usage();
+    }
+
+    let Request: bytes = file.read_bytes(Requestˉpath);
+    if Bytesˉlength(Request) != 576u32 { return Reject(); }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
+    let Profile: u32 = Bytesˉreadˉu32ˉlittle(Request, 16u32);
+    let Response: bytes =
+        Metadataˉconstruction.Nativeˉhostedˉtoolˉmetadataˉbuild(Request);
+    if !Responseˉisˉvalid(Request, Response, Target, Profile) { return Reject(); }
+
+    let Metadata: bytes = Bytesˉslice(Response, 32u32, 1024u32);
+    file.write_bytes(Metadataˉpath, Metadata);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted container metadata status=",
+                Enumˉname(Nativeˉhostedˉcontainerˉmetadataˉstatus.Valid)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Metadata)))
+        )
+    );
+    return 0;
+}

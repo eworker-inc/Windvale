@@ -496,6 +496,15 @@ current-host execution loads no CLR. Metadata request construction,
 service-bundle production, segment requests, complete composition, Linux
 execution, promotion, and the grouped gate remain.
 
+[Decision 0399](../Decisions/0399-Standalone-Native-Hosted-Container-Metadata.md)
+removes managed metadata-constructor invocation from the candidate pipeline.
+One 26,748-byte Windvale tool validates `WVHM 1`, constructs and admits
+`WVHD 1`, and writes the exact raw 1,024-byte metadata record consumed by the
+standalone runtime-header producer. Paired packages and public CLI targets
+exist, and current-host execution loads no CLR. Native request construction
+from immutable resources, service-bundle production, segment requests,
+complete composition, Linux execution, promotion, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

@@ -87,9 +87,11 @@ startup producer: it verifies the canonical target WVO, projects the plan's
 target table into `WVSI 1`, and emits exact instantiated code without loading
 .NET. Decision 0398 adds the paired runtime-header producer: canonical metadata
 now becomes the exact raw 4,096-byte planner input without loading .NET.
-Producing metadata/service-bundle evidence and segment requests, then composing
-planner, resource producers, segmenter, and publisher, are the next construction
-boundaries.
+Decision 0399 adds the preceding metadata constructor: `WVHM 1` now becomes the
+exact raw 1,024-byte metadata record without loading .NET. Producing the
+metadata request from immutable fragment/service evidence, producing service
+bundle resources and segment requests, then composing planner, resource
+producers, segmenter, and publisher, are the next construction boundaries.
 
 The current unqualified language candidate advances Stage 0 and the Windvale-written compiler together through WVB 1.11: inference and trailing commas; constants; privacy, aliases, qualified identities, and metadata; named records and `else if`; exhaustive `match`; nominal payload variants and recoverable-result shapes; bounded sequences, affine builders, and `for`; loop control and short-circuit flow; compound assignment; checked division/remainder; bitwise operations and shifts; and exact text/bytes equality. The ordinary native compiler path, deterministic artifacts, editor grammar, and focused compiler/runtime/WebAssembly cases are synchronized. Resource-lifetime syntax remains at its explicit design gate until provider values, cleanup ordering/failures, and immutable manifest representation are decided.
 

@@ -1,6 +1,6 @@
 # Decision 0398: Standalone native hosted-container runtime header
 
-- Status: Implemented candidate; metadata producer and pipeline integration pending
+- Status: Implemented candidate; advanced by [Decision 0399](0399-Standalone-Native-Hosted-Container-Metadata.md)
 - Date: 2026-08-08
 - Advances: [Decision 0397](0397-Standalone-Native-Hosted-Container-Startup.md), [Decision 0382](0382-Windvale-Owned-Hosted-Tool-Runtime-Header.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted-container runtime-header producer](../../Specifications/Windvale-Native-Hosted-Container-Runtime.md)
@@ -49,8 +49,10 @@ rebuilds the WVB through the native front door. No broader verifier was run.
   directly into the standalone planner's raw runtime-header input.
 - Runtime table and metadata placement semantics remain in the existing focused
   portable modules; the hosted shell is 135 lines.
-- Metadata request construction, service-bundle production, segment-request
-  orchestration, full composition, Linux execution, and the grouped gate remain.
+- Decision 0399 now supplies raw canonical metadata from `WVHM 1`; native
+  construction of that request from immutable fragment/service evidence,
+  service-bundle production, segment-request orchestration, full composition,
+  Linux execution, and the grouped gate remain.
 
 ## Reconsideration triggers
 

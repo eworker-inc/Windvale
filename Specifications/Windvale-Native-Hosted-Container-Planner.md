@@ -70,5 +70,7 @@ now consumes this plan for PE/ELF-owned regions, and the standalone
 target table with the canonical WVO. Completing the process pipeline still
 requires metadata/service-bundle evidence and composition. The standalone
 [runtime-header producer](Windvale-Native-Hosted-Container-Runtime.md) now
-supplies this tool's raw input. Linux execution and the grouped dual-host gate
-remain open.
+supplies this tool's raw input, with metadata supplied by the standalone
+[metadata constructor](Windvale-Native-Hosted-Container-Metadata.md).
+Metadata-request/service-bundle evidence, Linux execution, and the grouped
+dual-host gate remain open.

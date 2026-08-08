@@ -561,8 +561,13 @@ Windvale object/relocation constructor rather than copying startup instructions.
 [Decision 0398](../Decisions/0398-Standalone-Native-Hosted-Container-Runtime.md)
 adds the paired metadata-to-runtime process. It reuses complete Windvale
 metadata admission and runtime-table construction and writes the exact raw
-4,096-byte header already consumed by the standalone planner. Metadata request
-construction, service-bundle resource production, segment-request orchestration,
+4,096-byte header already consumed by the standalone planner.
+
+[Decision 0399](../Decisions/0399-Standalone-Native-Hosted-Container-Metadata.md)
+adds the preceding request-to-metadata process. It reuses complete Windvale
+metadata construction and admission and emits the raw 1,024-byte record for
+Decision 0398. Native request construction from immutable fragment/service
+evidence, service-bundle resource production, segment-request orchestration,
 and complete process composition remain.
 
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)

@@ -65,7 +65,9 @@ and raw planner-input production now have a native process boundary on both
 hosts. The new C# target writer is deletion-bound package layout and identity
 wiring.
 
-Metadata request construction from immutable fragment/service evidence,
-service-bundle resource production, segment-request orchestration, complete
-pipeline composition, Linux execution, promotion, and the grouped dual-host
-retirement gate remain pending.
+The standalone
+[metadata constructor](Windvale-Native-Hosted-Container-Metadata.md) now
+supplies this command's raw input from an exact `WVHM 1` request. Native request
+construction from immutable fragment/service evidence, service-bundle resource
+production, segment-request orchestration, complete pipeline composition,
+Linux execution, promotion, and the grouped dual-host retirement gate remain.

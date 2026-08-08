@@ -71,7 +71,9 @@ service-free fragments internally. The standalone
 [startup producer](Windvale-Native-Hosted-Container-Startup.md) now closes the
 next resource boundary, and
 [runtime-header production](Windvale-Native-Hosted-Container-Runtime.md) is now
-also standalone. Completing their replacement requires metadata/service-bundle
-evidence and composition of the planner, resource producers, segmenter, and
-publisher. Linux execution, promotion, and the grouped dual-host retirement gate
-remain pending.
+also standalone. The preceding
+[metadata constructor](Windvale-Native-Hosted-Container-Metadata.md) is
+standalone as well. Completing their replacement requires
+metadata-request/service-bundle evidence and composition of the planner,
+resource producers, segmenter, and publisher. Linux execution, promotion, and
+the grouped dual-host retirement gate remain pending.
