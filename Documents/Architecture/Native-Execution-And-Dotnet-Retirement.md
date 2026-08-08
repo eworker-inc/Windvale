@@ -581,6 +581,13 @@ adapter. WVO now supplies only its ordinal policy; the hosted path can supply
 alternating response ordinals with a 40-byte skip. Linux process evidence and
 the Windows handle-relative counterpart remain open.
 
+[Decision 0391](../Decisions/0391-Reusable-Windows-Durable-Multi-Chunk-Publication.md)
+extracts the matching Windows full-path creation, handle anchoring, partial I/O,
+flush/reread, handle-relative rename, delete-on-close cleanup, and outcome
+mapping. The changed Windows transaction passes real current-host publication
+and failure-preservation evidence. Both platform transactions are now ready for
+the hosted-container admission connection.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

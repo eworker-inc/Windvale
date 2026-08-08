@@ -1,0 +1,569 @@
+windvale-assembly 1
+
+# Windows x64 durable replacement over an admitted immutable snapshot sequence.
+# Input: RCX anchored directory handle, RDX NUL-terminated directory path,
+# R8 NUL-terminated destination basename, R9D destination basename characters,
+# EDI first snapshot ordinal, ESI one-past ordinal, EBP stride (1/2), and
+# EBX fixed bytes skipped at the beginning of every selected snapshot.
+# Result: EAX 0 complete, 1 rejected/unchanged, 2 indeterminate after replace.
+symbol local function Windows_durable_multi_chunk_hex8_utf16 in .text
+symbol export function Windows_durable_multi_chunk_publication_run in .text
+symbol import data File_input_scratch
+symbol import function Native_publication_apply
+symbol import function Native_publication_begin
+symbol import data Snapshot_table
+symbol import data Windows_close_handle_iat
+symbol import data Windows_create_file_iat
+symbol import data Windows_flush_file_buffers_iat
+symbol import data Windows_get_last_error_iat
+symbol import data Windows_nt_set_file_information_iat
+symbol import data Windows_read_file_iat
+symbol import data Windows_set_file_information_iat
+symbol import data Windows_set_file_pointer_iat
+symbol import data Windows_write_file_iat
+
+section code .text align 16
+define Windows_durable_multi_chunk_hex8_utf16
+move_u32 r8d 8
+label Hex_loop
+rotate_left eax 4
+move edx eax
+and_i32 edx 15
+add_i8 dl 48
+compare_i8 dl 57
+branch below_equal Hex_digit
+add_i8 dl 39
+label Hex_digit
+store_memory_u16 rdi none 1 0 dx
+add_i32 rdi 2
+subtract_i32 r8d 1
+branch not_equal Hex_loop
+return
+end define
+
+define Windows_durable_multi_chunk_publication_run
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 17224
+store_memory_u64 rsp none 1 80 rcx
+store_memory_u64 rsp none 1 88 rdx
+store_memory_u64 rsp none 1 96 r8
+store_memory_u32 rsp none 1 104 r9d
+store_memory_u32 rsp none 1 108 edi
+store_memory_u32 rsp none 1 112 esi
+store_memory_u32 rsp none 1 116 ebp
+store_memory_u32 rsp none 1 120 ebx
+xor eax eax
+subtract_i32 rax 1
+store_memory_u64 rsp none 1 72 rax
+
+compare_i32 rcx -1
+branch equal Rejected
+test rdx rdx
+branch equal Rejected
+test r8 r8
+branch equal Rejected
+compare_i32 r9d 1
+branch below Rejected
+compare_i32 r9d 4095
+branch above Rejected
+compare edi esi
+branch above_equal Rejected
+compare_i32 esi 64
+branch above Rejected
+compare_i32 ebp 1
+branch equal Selector_valid
+compare_i32 ebp 2
+branch not_equal Rejected
+label Selector_valid
+compare_i32 ebx 4194303
+branch above Rejected
+
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_begin
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch not_equal Rejected
+test eax eax
+branch not_equal Rejected
+store_memory_u32 rsp none 1 64 eax
+
+# Build the fixed sibling stem and a bounded full path for exclusive creation.
+move rdi rsp
+add_i32 rdi 192
+move_u16 ax 46
+store_memory_u16 rdi none 1 0 ax
+move_u16 ax 119
+store_memory_u16 rdi none 1 2 ax
+move_u16 ax 118
+store_memory_u16 rdi none 1 4 ax
+move_u16 ax 112
+store_memory_u16 rdi none 1 6 ax
+move_u16 ax 117
+store_memory_u16 rdi none 1 8 ax
+move_u16 ax 98
+store_memory_u16 rdi none 1 10 ax
+move_u16 ax 45
+store_memory_u16 rdi none 1 12 ax
+xor ebx ebx
+label Create_sibling
+move eax ebx
+move rdi rsp
+add_i32 rdi 206
+call Windows_durable_multi_chunk_hex8_utf16
+xor eax eax
+store_memory_u16 rsp none 1 222 ax
+
+load_memory_u64 rsi rsp none 1 88
+move rdi rsp
+add_i32 rdi 256
+xor ecx ecx
+label Stage_directory_copy
+load_memory_u16 ax rsi rcx 2 0
+test ax ax
+branch equal Stage_directory_copied
+store_memory_u16 rdi rcx 2 0 ax
+add_i32 ecx 1
+compare_i32 ecx 4080
+branch below Stage_directory_copy
+jump_label Rejected
+label Stage_directory_copied
+test ecx ecx
+branch equal Rejected
+move edx ecx
+subtract_i32 edx 1
+load_memory_u16 ax rdi rdx 2 0
+compare_i16 ax 92
+branch equal Stage_separator_ready
+compare_i16 ax 47
+branch equal Stage_separator_ready
+move_u16 ax 92
+store_memory_u16 rdi rcx 2 0 ax
+add_i32 ecx 1
+label Stage_separator_ready
+move rsi rsp
+add_i32 rsi 192
+xor edx edx
+label Stage_name_copy
+load_memory_u16 ax rsi rdx 2 0
+store_memory_u16 rdi rcx 2 0 ax
+test ax ax
+branch equal Stage_path_ready
+add_i32 edx 1
+add_i32 ecx 1
+jump_label Stage_name_copy
+label Stage_path_ready
+
+move rcx rsp
+add_i32 rcx 256
+move_u32 edx 3221291008
+xor r8d r8d
+xor r9d r9d
+move_u32 eax 1
+store_memory_u64 rsp none 1 32 rax
+move_u32 eax 134217856
+store_memory_u64 rsp none 1 40 rax
+xor eax eax
+store_memory_u64 rsp none 1 48 rax
+load_address rax Windows_create_file_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+compare_i32 rax -1
+branch not_equal Stage_created
+load_address rax Windows_get_last_error_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+compare_i32 eax 80
+branch equal Stage_collision
+compare_i32 eax 183
+branch not_equal Rejected
+label Stage_collision
+add_i32 ebx 1
+compare_i32 ebx 256
+branch below Create_sibling
+jump_label Rejected
+
+label Stage_created
+store_memory_u64 rsp none 1 72 rax
+# FILE_RENAME_INFO: no replacement, anchored root, 30-byte sibling name.
+move rdi rsp
+add_i32 rdi 8704
+xor eax eax
+store_memory_u32 rdi none 1 0 eax
+load_memory_u64 rax rsp none 1 80
+store_memory_u64 rdi none 1 8 rax
+move_u32 eax 30
+store_memory_u32 rdi none 1 16 eax
+move rsi rsp
+add_i32 rsi 192
+xor ecx ecx
+label Copy_sibling_rename_name
+compare_i32 ecx 15
+branch above_equal Sibling_rename_ready
+load_memory_u16 ax rsi rcx 2 0
+store_memory_u16 rdi rcx 2 20 ax
+add_i32 ecx 1
+jump_label Copy_sibling_rename_name
+label Sibling_rename_ready
+load_memory_u64 rcx rsp none 1 72
+move rdx rsp
+add_i32 rdx 160
+move r8 rdi
+move_u32 r9d 50
+move_u32 eax 10
+store_memory_u64 rsp none 1 32 rax
+load_address rax Windows_nt_set_file_information_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch not_equal Unanchored_scratch_failure
+
+load_memory_u32 r8d rsp none 1 64
+xor r9d r9d
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 129
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 64 eax
+
+# Write selected payloads with exact partial-progress accounting.
+load_memory_u32 eax rsp none 1 108
+store_memory_u32 rsp none 1 132 eax
+label Sibling_chunk_loop
+load_memory_u32 ebx rsp none 1 132
+load_memory_u32 eax rsp none 1 112
+compare ebx eax
+branch above_equal Sibling_written
+xor eax eax
+store_memory_u32 rsp none 1 128 eax
+label Sibling_write_loop
+load_memory_u32 ebx rsp none 1 132
+move rdx rbx
+shift_left rdx 5
+load_address rbp Snapshot_table
+add rbp rdx
+load_memory_u32 r10d rbp none 1 24
+load_memory_u32 ecx rsp none 1 120
+compare r10d ecx
+branch below_equal Scratch_failure
+subtract r10d ecx
+load_memory_u32 ebx rsp none 1 128
+compare ebx r10d
+branch above_equal Sibling_chunk_written
+subtract r10d ebx
+store_memory_u32 rsp none 1 136 r10d
+load_memory_u64 rcx rsp none 1 72
+load_memory_u64 rdx rbp none 1 16
+load_memory_u32 eax rsp none 1 120
+add rdx rax
+add rdx rbx
+move r8d r10d
+move r9 rsp
+add_i32 r9 124
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+load_address rax Windows_write_file_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch equal Scratch_failure
+load_memory_u32 eax rsp none 1 124
+compare_i32 eax 1
+branch below Scratch_failure
+load_memory_u32 r10d rsp none 1 136
+compare eax r10d
+branch above Scratch_failure
+add ebx eax
+store_memory_u32 rsp none 1 128 ebx
+jump_label Sibling_write_loop
+label Sibling_chunk_written
+load_memory_u32 ebx rsp none 1 132
+load_memory_u32 eax rsp none 1 116
+add ebx eax
+branch below Scratch_failure
+store_memory_u32 rsp none 1 132 ebx
+jump_label Sibling_chunk_loop
+
+label Sibling_written
+load_memory_u64 rcx rsp none 1 72
+load_address rax Windows_flush_file_buffers_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch equal Scratch_failure
+load_memory_u32 r8d rsp none 1 64
+move_u32 r9d 1
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 130
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 64 eax
+
+# Reread in the same selection order and require exact EOF.
+xor eax eax
+store_memory_u32 rsp none 1 144 eax
+load_memory_u64 rcx rsp none 1 72
+xor rdx rdx
+move r8 rsp
+add_i32 r8 144
+xor r9d r9d
+load_address rax Windows_set_file_pointer_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch equal Scratch_failure
+load_memory_u32 eax rsp none 1 108
+store_memory_u32 rsp none 1 132 eax
+label Sibling_verify_chunk_loop
+load_memory_u32 ebx rsp none 1 132
+load_memory_u32 eax rsp none 1 112
+compare ebx eax
+branch above_equal Sibling_read_complete
+xor eax eax
+store_memory_u32 rsp none 1 128 eax
+label Sibling_read_loop
+load_memory_u32 ebx rsp none 1 132
+move rdx rbx
+shift_left rdx 5
+load_address rbp Snapshot_table
+add rbp rdx
+load_memory_u32 r10d rbp none 1 24
+load_memory_u32 ecx rsp none 1 120
+compare r10d ecx
+branch below_equal Scratch_failure
+subtract r10d ecx
+load_memory_u32 ebx rsp none 1 128
+compare ebx r10d
+branch above_equal Sibling_chunk_verified
+subtract r10d ebx
+compare_i32 r10d 4096
+branch below_equal Sibling_read_size
+move_u32 r10d 4096
+label Sibling_read_size
+store_memory_u32 rsp none 1 136 r10d
+load_memory_u64 rcx rsp none 1 72
+load_address rdx File_input_scratch
+move r8d r10d
+move r9 rsp
+add_i32 r9 124
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+load_address rax Windows_read_file_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch equal Scratch_failure
+load_memory_u32 r9d rsp none 1 124
+compare_i32 r9d 1
+branch below Scratch_failure
+load_memory_u32 r10d rsp none 1 136
+compare r9d r10d
+branch above Scratch_failure
+xor ecx ecx
+load_address rdi File_input_scratch
+load_memory_u64 rsi rbp none 1 16
+load_memory_u32 eax rsp none 1 120
+add rsi rax
+add rsi rbx
+label Sibling_compare_loop
+compare ecx r9d
+branch above_equal Sibling_bytes_match
+load_memory_u8 al rdi rcx 1 0
+load_memory_u8 dl rsi rcx 1 0
+compare al dl
+branch not_equal Scratch_failure
+add_i32 ecx 1
+jump_label Sibling_compare_loop
+label Sibling_bytes_match
+add ebx r9d
+store_memory_u32 rsp none 1 128 ebx
+jump_label Sibling_read_loop
+label Sibling_chunk_verified
+load_memory_u32 ebx rsp none 1 132
+load_memory_u32 eax rsp none 1 116
+add ebx eax
+branch below Scratch_failure
+store_memory_u32 rsp none 1 132 ebx
+jump_label Sibling_verify_chunk_loop
+
+label Sibling_read_complete
+load_memory_u64 rcx rsp none 1 72
+load_address rdx File_input_scratch
+move_u32 r8d 1
+move r9 rsp
+add_i32 r9 124
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+load_address rax Windows_read_file_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch equal Scratch_failure
+load_memory_u32 eax rsp none 1 124
+test eax eax
+branch not_equal Scratch_failure
+load_memory_u32 r8d rsp none 1 64
+move_u32 r9d 2
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 131
+branch not_equal Scratch_failure
+store_memory_u32 rsp none 1 64 eax
+
+# Replace through the anchored handle and flush the renamed handle durably.
+move rdi rsp
+add_i32 rdi 8704
+move_u32 eax 1
+store_memory_u32 rdi none 1 0 eax
+load_memory_u64 rax rsp none 1 80
+store_memory_u64 rdi none 1 8 rax
+load_memory_u32 ecx rsp none 1 104
+move eax ecx
+shift_left eax 1
+store_memory_u32 rdi none 1 16 eax
+load_memory_u64 rsi rsp none 1 96
+xor edx edx
+label Copy_destination_rename_name
+compare edx ecx
+branch above_equal Destination_rename_ready
+load_memory_u16 ax rsi rdx 2 0
+store_memory_u16 rdi rdx 2 20 ax
+add_i32 edx 1
+jump_label Copy_destination_rename_name
+label Destination_rename_ready
+load_memory_u64 rcx rsp none 1 72
+move rdx rsp
+add_i32 rdx 160
+move r8 rdi
+load_memory_u32 r9d rdi none 1 16
+add_i32 r9d 20
+move_u32 eax 10
+store_memory_u64 rsp none 1 32 rax
+load_address rax Windows_nt_set_file_information_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch not_equal Scratch_failure
+load_memory_u32 r8d rsp none 1 64
+move_u32 r9d 3
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 260
+branch not_equal Replaced_failure
+store_memory_u32 rsp none 1 64 eax
+load_memory_u64 rcx rsp none 1 72
+load_address rax Windows_flush_file_buffers_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch equal Replaced_failure
+load_memory_u32 r8d rsp none 1 64
+move_u32 r9d 4
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 311
+branch not_equal Replaced_failure
+load_memory_u64 rcx rsp none 1 72
+load_address rax Windows_close_handle_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+xor eax eax
+jump_label Complete
+
+label Unanchored_scratch_failure
+# Delete the exclusively created file through its handle if anchoring failed.
+move_u32 eax 1
+store_memory_u32 rsp none 1 152 eax
+load_memory_u64 rcx rsp none 1 72
+move_u32 edx 4
+move r8 rsp
+add_i32 r8 152
+move_u32 r9d 1
+load_address rax Windows_set_file_information_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+load_memory_u64 rcx rsp none 1 72
+load_address rax Windows_close_handle_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+jump_label Rejected
+
+label Scratch_failure
+load_memory_u32 eax rsp none 1 64
+compare_i32 eax 260
+branch equal Replaced_failure
+move r8d eax
+move_u32 r9d 5
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 149
+branch not_equal Replaced_failure
+move_u32 eax 1
+store_memory_u32 rsp none 1 152 eax
+load_memory_u64 rcx rsp none 1 72
+move_u32 edx 4
+move r8 rsp
+add_i32 r8 152
+move_u32 r9d 1
+load_address rax Windows_set_file_information_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+test eax eax
+branch equal Replaced_failure
+move_u32 r8d 149
+move_u32 r9d 6
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+compare_i32 eax 38
+branch not_equal Replaced_failure
+load_memory_u64 rcx rsp none 1 72
+load_address rax Windows_close_handle_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+label Rejected
+move_u32 eax 1
+jump_label Complete
+
+label Replaced_failure
+load_memory_u32 r8d rsp none 1 64
+move_u32 r9d 5
+move_u32 r10d 100
+move_u32 r11d 1000000000
+call Native_publication_apply
+load_memory_u64 rcx rsp none 1 72
+compare_i32 rcx -1
+branch equal Replaced_without_scratch
+load_address rax Windows_close_handle_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+label Replaced_without_scratch
+move_u32 eax 2
+
+label Complete
+add_i32 rsp 17224
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+end section

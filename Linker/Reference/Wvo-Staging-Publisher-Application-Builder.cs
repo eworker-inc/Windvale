@@ -29,6 +29,8 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         "Windvale.Linker.Windows-X64-Wvo-Staging-Publisher.wvo";
     internal const string WINDOWS_ADAPTER_RESOURCE =
         "Windvale.Linker.Windows-X64-Wvo-Staging-Publication-Adapter.wvo";
+    internal const string WINDOWS_TRANSACTION_RESOURCE =
+        "Windvale.Linker.Windows-X64-Durable-Multi-Chunk-Publication.wvo";
     internal const string SNAPSHOT_TABLE_RESOURCE =
         "Windvale.Linker.X64-Wvo-Staging-Snapshot-Table.wvo";
     internal const string IMMUTABLE_SNAPSHOT_SEQUENCE_RESOURCE =
@@ -46,8 +48,10 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
             "47a22cd108702d6427fe5be9fca00c3c05f38cb26dd69e51c8648544b3f98e76"),
         (WINDOWS_STARTUP_RESOURCE, 184,
             "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab"),
-        (WINDOWS_ADAPTER_RESOURCE, 9_190,
-            "456705dd43ae9efff21a87b75971d306f0755aa9b243879064672a5ab2298f1c"),
+        (WINDOWS_ADAPTER_RESOURCE, 6_144,
+            "89c3516eb56ecb274ba34b3168d1f33987b959cca44a70396eaa0cb5e1ffb258"),
+        (WINDOWS_TRANSACTION_RESOURCE, 4_001,
+            "3795ab62b6dc5008748ba7c4332b885419a14479c9c11369bcc13885cad8974b"),
         (SNAPSHOT_TABLE_RESOURCE, 224,
             "03ff27e8a8fce7b3eddfb0191b6626c20971df32790f8f7274cd9091a4b69628"),
         (IMMUTABLE_SNAPSHOT_SEQUENCE_RESOURCE, 1_282,

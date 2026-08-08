@@ -97,5 +97,6 @@ hosted execution remain the next boundary.
 Decision 0390 supplies the reusable Linux mutation half. After admission and
 host-identity checks, the hosted adapter can pass the same alternating response
 selection directly to exclusive sibling creation, exact write/reread, rename,
-and directory durability. The Windows counterpart and paired hosted launchers
-remain open.
+and directory durability. Decision 0391 supplies the matching Windows
+handle-relative transaction with current-host execution evidence. The paired
+hosted adapters and launchers are now the remaining connection boundary.

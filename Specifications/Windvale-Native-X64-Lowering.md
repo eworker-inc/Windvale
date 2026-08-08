@@ -332,6 +332,15 @@ The WVO adapter supplies `(2, count, 1, 0)`; the hosted-container adapter will
 supply `(3, count, 2, 40)`. Linux application construction is pinned locally,
 while Linux process execution remains deferred to the paired-host gate.
 
+Decision 0391 establishes the matching Windows boundary. The shared Windows
+function exclusively creates a full-path sibling, anchors it without replacement
+below the verified directory handle, performs exact partial writes and
+flush/reread comparison, replaces through handle-relative `FILE_RENAME_INFO`,
+flushes the renamed handle, cleans pre-replacement failure, and preserves the
+indeterminate outcome. WVO supplies `(2, count, 1, 0)`; hosted containers will
+supply `(3, count, 2, 40)`. The extracted Windows path has real current-host
+success, corruption, alias, preservation, and cleanup evidence.
+
 The Windows application has current-host execution evidence. The Linux image,
 complete compiler self-staging integration, package promotion, native
 replacement of the Stage 0 constructor, extended fault/concurrency matrix, and

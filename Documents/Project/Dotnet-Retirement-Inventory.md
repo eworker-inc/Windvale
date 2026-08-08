@@ -435,6 +435,13 @@ identity policy only; hosted containers can reuse the same transaction without
 managed concatenation. Windows extraction, hosted packaging, and Linux runtime
 evidence remain open.
 
+[Decision 0391](../Decisions/0391-Reusable-Windows-Durable-Multi-Chunk-Publication.md)
+moves the equivalent Windows handle-relative transaction behind the same
+selection contract. Its current-host success, rejection, alias preservation,
+and cleanup evidence passes. Both platform mutation owners are now independent
+of WVO; connecting the hosted-container admission root and deleting managed
+final publication remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

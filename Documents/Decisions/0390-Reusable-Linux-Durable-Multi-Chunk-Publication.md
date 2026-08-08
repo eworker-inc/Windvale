@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0389](0389-Shared-Immutable-Snapshot-Sequence.md), [Decision 0351](0351-Immutable-Snapshot-Compiler-Image-Staging.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native x64 lowering](../../Specifications/Windvale-Native-X64-Lowering.md#hosted-immutable-snapshot-staging-boundary)
+- Advanced by: [Decision 0391](0391-Reusable-Windows-Durable-Multi-Chunk-Publication.md)
 
 ## Context
 
