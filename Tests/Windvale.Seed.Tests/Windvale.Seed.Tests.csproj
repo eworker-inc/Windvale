@@ -304,6 +304,9 @@
       Include="../../Foundation/Byte-Construction.wv"
       LogicalName="Windvale.Seed.Tests.Byte-Construction.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Startup-Instantiation-Core.wv" />
+    <EmbeddedResource
       Include="../../Libraries/Foundation/Resources/Resource-Store.wv"
       LogicalName="Windvale.Seed.Tests.Resource-Store.wv" />
     <EmbeddedResource

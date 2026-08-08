@@ -213,6 +213,7 @@ $NativeByteResultAdmissionBridgeModule = Join-Path $Artifacts 'Native-Byte-Resul
 $NativeHostedToolMetadataAdmissionModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Admission.wvb'
 $NativeHostedToolMetadataConstructionCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Construction-Core.wvb'
 $NativeHostedToolMetadataConstructionBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Construction-Bridge.wvb'
+$NativeHostedStartupInstantiationModule = Join-Path $Artifacts 'Native-Hosted-Startup-Instantiation.wvb'
 $NativeHostedToolRuntimeHeaderCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Core.wvb'
 $NativeHostedToolRuntimeHeaderBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
@@ -1792,6 +1793,50 @@ if (
     $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale hosted-tool metadata-construction bridge inspection is incomplete.'
+}
+$NativeHostedStartupInstantiationSource = Join-Path $RepositoryRoot 'Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv'
+$NativeHostedStartupInstantiationRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvb'
+$NativeHostedStartupInstantiationArtifactRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvnf'
+$WindowsHostedCompilerStartupObjectRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Windows-X64-Hosted-Compiler.wvo'
+$LinuxHostedCompilerStartupObjectRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Linux-X64-Hosted-Compiler.wvo'
+dotnet $ToolDll `
+    compile $NativeHostedStartupInstantiationSource `
+    -o $NativeHostedStartupInstantiationModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-startup instantiation.' }
+$NativeHostedStartupInstantiationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationModule).Hash.ToLowerInvariant()
+if ($NativeHostedStartupInstantiationHash -ne '4cd40719ecbfe8f42f5ded4b0b2ba4df4e48a8463f4ea236c7c0831d22a3eb52') {
+    throw "The hosted-startup instantiation module has an unexpected digest: $NativeHostedStartupInstantiationHash"
+}
+if (
+    (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationRetained).Hash.ToLowerInvariant() -ne $NativeHostedStartupInstantiationHash -or
+    (Get-Item -LiteralPath $NativeHostedStartupInstantiationRetained).Length -ne 20078
+) {
+    throw 'The retained hosted-startup instantiation WVB has an unexpected identity.'
+}
+$NativeHostedStartupInstantiationArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeHostedStartupInstantiationArtifactHash -ne 'b499e5f6ec3fb09c4efc33aa364533c6c6b0daa680fd3847b0054e2c7f346311' -or
+    (Get-Item -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Length -ne 185841
+) {
+    throw "The retained hosted-startup instantiation fragment has an unexpected identity: $NativeHostedStartupInstantiationArtifactHash"
+}
+if (
+    (Get-FileHash -Algorithm SHA256 -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne '55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb' -or
+    (Get-Item -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Length -ne 4334 -or
+    (Get-FileHash -Algorithm SHA256 -LiteralPath $LinuxHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne '0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff' -or
+    (Get-Item -LiteralPath $LinuxHostedCompilerStartupObjectRetained).Length -ne 2390
+) {
+    throw 'A retained hosted-compiler startup WVO has an unexpected identity.'
+}
+$NativeHostedStartupInstantiationInspection = (dotnet $ToolDll inspect $NativeHostedStartupInstantiationModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeHostedStartupInstantiationInspection -notmatch 'Profile: portable' -or
+    $NativeHostedStartupInstantiationInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeHostedStartupInstantiationInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeHostedStartupInstantiationInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale hosted-startup instantiation inspection is incomplete.'
 }
 dotnet $ToolDll `
     compile $NativeHostedToolRuntimeHeaderCoreSource `

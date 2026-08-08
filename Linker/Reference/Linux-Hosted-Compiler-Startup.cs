@@ -9,6 +9,8 @@ namespace Windvale.Linker;
 internal static class Linuxˉhostedˉcompilerˉstartup
 {
     internal const int BYTES = 765;
+    internal const int WVO_BYTES = 2_390;
+    internal const int SYMBOL_COUNT = 26;
     internal const string WVO_SHA256 =
         "0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff";
     internal const string TEMPLATE_SHA256 =
@@ -53,6 +55,56 @@ internal static class Linuxˉhostedˉcompilerˉstartup
     ];
 
     internal static ImmutableArray<byte> Build(
+        uint startupˉaddress,
+        uint dataˉaddress,
+        Hostedˉcompilerˉruntimeˉlayout layout,
+        Nativeˉserviceˉbundle bundle,
+        uint nativeˉentryˉoffset)
+    {
+        var Inputs = Buildˉinputs(
+            startupˉaddress,
+            dataˉaddress,
+            layout,
+            bundle,
+            nativeˉentryˉoffset);
+        var Bytes = Nativeˉhostedˉstartupˉinstantiator.Build(Inputs);
+        Verify(
+            Bytes.AsSpan(),
+            startupˉaddress,
+            dataˉaddress,
+            layout,
+            bundle,
+            nativeˉentryˉoffset);
+        return Bytes;
+    }
+
+    internal static Nativeˉhostedˉstartupˉinputs Buildˉinputs(
+        uint startupˉaddress,
+        uint dataˉaddress,
+        Hostedˉcompilerˉruntimeˉlayout layout,
+        Nativeˉserviceˉbundle bundle,
+        uint nativeˉentryˉoffset)
+    {
+        Validateˉinputs(layout, bundle, nativeˉentryˉoffset);
+        var Targets = PATCHES.Select(Patch => Address(
+            Patch.Target,
+            dataˉaddress,
+            layout,
+            bundle,
+            nativeˉentryˉoffset)).ToImmutableArray();
+        return new(
+            startupˉaddress,
+            BYTES,
+            SYMBOL_COUNT,
+            Targets,
+            Nativeˉhostedˉstartupˉinstantiator.Readˉobject(
+                typeof(Linuxˉhostedˉcompilerˉstartup),
+                "Windvale.Linker.Linux-X64-Hosted-Compiler.wvo",
+                WVO_BYTES,
+                WVO_SHA256));
+    }
+
+    internal static ImmutableArray<byte> Buildˉstage0(
         uint startupˉaddress,
         uint dataˉaddress,
         Hostedˉcompilerˉruntimeˉlayout layout,

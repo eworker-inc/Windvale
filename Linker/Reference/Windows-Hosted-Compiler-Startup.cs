@@ -9,10 +9,14 @@ namespace Windvale.Linker;
 internal static class Windowsˉhostedˉcompilerˉstartup
 {
     internal const int BYTES = 1510;
+    internal const int WVO_BYTES = 4_334;
+    internal const int SYMBOL_COUNT = 40;
     internal const string WVO_SHA256 =
         "55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb";
     internal const string TEMPLATE_SHA256 =
         "59a3f3b794c5b81bde8385aab77d86fae01bfc0c728bc5f412459cff5eb7310a";
+    private const int LOCAL_COMMIT_RELOCATION_INDEX = 18;
+    private const uint LOCAL_COMMIT_OFFSET = 1320;
 
     private const string TEMPLATE_BASE64 =
         "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";
@@ -79,6 +83,64 @@ internal static class Windowsˉhostedˉcompilerˉstartup
     ];
 
     internal static ImmutableArray<byte> Build(
+        uint startupˉaddress,
+        uint importˉaddress,
+        uint runtimeˉaddress,
+        Hostedˉcompilerˉruntimeˉlayout layout,
+        Nativeˉserviceˉbundle bundle,
+        uint nativeˉentryˉoffset)
+    {
+        var Inputs = Buildˉinputs(
+            startupˉaddress,
+            importˉaddress,
+            runtimeˉaddress,
+            layout,
+            bundle,
+            nativeˉentryˉoffset);
+        var Bytes = Nativeˉhostedˉstartupˉinstantiator.Build(Inputs);
+        Verify(
+            Bytes.AsSpan(),
+            startupˉaddress,
+            importˉaddress,
+            runtimeˉaddress,
+            layout,
+            bundle,
+            nativeˉentryˉoffset);
+        return Bytes;
+    }
+
+    internal static Nativeˉhostedˉstartupˉinputs Buildˉinputs(
+        uint startupˉaddress,
+        uint importˉaddress,
+        uint runtimeˉaddress,
+        Hostedˉcompilerˉruntimeˉlayout layout,
+        Nativeˉserviceˉbundle bundle,
+        uint nativeˉentryˉoffset)
+    {
+        Validateˉinputs(layout, bundle, nativeˉentryˉoffset);
+        var Targets = PATCHES.Select(Patch => Address(
+            Patch.Target,
+            importˉaddress,
+            runtimeˉaddress,
+            layout,
+            bundle,
+            nativeˉentryˉoffset)).ToList();
+        Targets.Insert(
+            LOCAL_COMMIT_RELOCATION_INDEX,
+            checked(startupˉaddress + LOCAL_COMMIT_OFFSET));
+        return new(
+            startupˉaddress,
+            BYTES,
+            SYMBOL_COUNT,
+            Targets.ToImmutableArray(),
+            Nativeˉhostedˉstartupˉinstantiator.Readˉobject(
+                typeof(Windowsˉhostedˉcompilerˉstartup),
+                "Windvale.Linker.Windows-X64-Hosted-Compiler.wvo",
+                WVO_BYTES,
+                WVO_SHA256));
+    }
+
+    internal static ImmutableArray<byte> Buildˉstage0(
         uint startupˉaddress,
         uint importˉaddress,
         uint runtimeˉaddress,

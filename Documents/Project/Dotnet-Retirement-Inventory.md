@@ -381,6 +381,16 @@ test are explicitly temporary until native host-container construction and
 native qualification consume the same contract. Service-bundle and outer
 PE/ELF construction, Linux execution, and the grouped gate remain open.
 
+[Decision 0384](../Decisions/0384-Windvale-Owned-Hosted-Startup-Instantiation.md)
+removes C# ownership of the normal Windows and Linux hosted startup bytes.
+Windvale now validates and instantiates the exact WVOs assembled from the
+canonical WVA sources, so no second copy of their 2,275 machine-code bytes is
+introduced. The former C# template patchers are `Buildˉstage0` recovery and
+differential oracles. The managed bridge still projects final symbol targets,
+executes the retained WVNF, verifies its response, and passes the result to the
+outer PE/ELF writers; those responsibilities retire with native container
+planning and the final grouped gate.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

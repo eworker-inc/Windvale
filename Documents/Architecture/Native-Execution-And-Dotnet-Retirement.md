@@ -520,6 +520,16 @@ constructor. The former C# constructor is an explicitly named Stage 0 oracle.
 Service-bundle production, outer PE/ELF construction, direct native invocation,
 Linux execution, and the grouped gate remain open.
 
+[Decision 0384](../Decisions/0384-Windvale-Owned-Hosted-Startup-Instantiation.md)
+removes C# ownership of hosted startup construction without creating another
+copy of the startup machine code. The existing Windows and Linux WVA sources
+remain canonical; portable Windvale validates their exact WVO objects and
+applies every relative-i32 relocation through a bounded service-free native
+fragment. Normal hosted builders independently verify the result, while the
+former template patchers are explicit Stage 0 oracles. Managed target-address
+projection, native invocation, outer PE/ELF construction, Linux execution, and
+the grouped gate remain open.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

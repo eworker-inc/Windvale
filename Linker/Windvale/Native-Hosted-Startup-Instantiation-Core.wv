@@ -1,0 +1,368 @@
+module Linkerˉnativeˉhostedˉstartupˉinstantiation profile portable;
+
+record Relativeˉvalue {
+    Valid: bool;
+    Bits: u32;
+}
+
+record Nameˉscan {
+    Valid: bool;
+    Valueˉoffset: u32;
+    Length: u32;
+    Cursor: u32;
+}
+
+record Startupˉobjectˉview {
+    Valid: bool;
+    Failureˉoffset: u32;
+    Codeˉoffset: u32;
+    Relocationˉoffset: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Replace(Input: bytes, Offset: u32, Length: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Value),
+        Bytesˉslice(Input, Offset + Length, Bytesˉlength(Input) - Offset - Length)
+    );
+}
+
+fn Rangeˉisˉinside(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Nameˉcharacterˉisˉvalid(Value: u32, First: bool) -> bool {
+    if Value >= 65u32 && Value <= 90u32 { return true; }
+    if Value >= 97u32 && Value <= 122u32 { return true; }
+    if Value == 95u32 || Value == 46u32 || Value == 36u32 { return true; }
+    if !First && Value >= 48u32 && Value <= 57u32 { return true; }
+    return false;
+}
+
+fn Scanˉname(Input: bytes, Cursor: u32, End: u32) -> Nameˉscan {
+    if !Rangeˉisˉinside(End, Cursor, 4u32) {
+        return Nameˉscan(false, Cursor, 0u32, Cursor);
+    }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    let Valueˉoffset: u32 = Cursor + 4u32;
+    if Length == 0u32 || Length > 255u32 || !Rangeˉisˉinside(End, Valueˉoffset, Length) {
+        return Nameˉscan(false, Valueˉoffset, Length, Valueˉoffset);
+    }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if !Nameˉcharacterˉisˉvalid(
+            U32ˉfromˉu8(Bytesˉreadˉu8(Input, Valueˉoffset + Index)),
+            Index == 0u32
+        ) {
+            return Nameˉscan(false, Valueˉoffset, Length, Valueˉoffset + Index);
+        }
+        Index = Index + 1u32;
+    }
+    return Nameˉscan(true, Valueˉoffset, Length, Valueˉoffset + Length);
+}
+
+fn Nameˉisˉafterˉorˉequal(
+    Input: bytes,
+    Earlierˉoffset: u32,
+    Earlierˉlength: u32,
+    Currentˉoffset: u32,
+    Currentˉlength: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    var Shared: u32 = Earlierˉlength;
+    if Currentˉlength < Shared { Shared = Currentˉlength; }
+    while Index < Shared {
+        let Earlier: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Earlierˉoffset + Index));
+        let Current: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Currentˉoffset + Index));
+        if Earlier > Current { return true; }
+        if Earlier < Current { return false; }
+        Index = Index + 1u32;
+    }
+    return Earlierˉlength >= Currentˉlength;
+}
+
+fn Textˉsectionˉname(Input: bytes, Offset: u32, Length: u32) -> bool {
+    if Length != 5u32 { return false; }
+    if Bytesˉreadˉu8(Input, Offset) != 46u8 { return false; }
+    if Bytesˉreadˉu8(Input, Offset + 1u32) != 116u8 { return false; }
+    if Bytesˉreadˉu8(Input, Offset + 2u32) != 101u8 { return false; }
+    if Bytesˉreadˉu8(Input, Offset + 3u32) != 120u8 { return false; }
+    return Bytesˉreadˉu8(Input, Offset + 4u32) == 116u8;
+}
+
+fn Inspectˉstartupˉobject(
+    Input: bytes,
+    Codeˉbytes: u32,
+    Symbolˉcount: u32,
+    Relocationˉcount: u32
+) -> Startupˉobjectˉview {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 24u32 { return Startupˉobjectˉview(false, Total, 0u32, 0u32); }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Input, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Input, 2u32) != 79u8 ||
+        Bytesˉreadˉu8(Input, 3u32) != 49u8 {
+        return Startupˉobjectˉview(false, 0u32, 0u32, 0u32);
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 ||
+        Bytesˉreadˉu8(Input, 8u32) != 1u8 ||
+        Bytesˉreadˉu8(Input, 9u32) != 0u8 ||
+        Bytesˉreadˉu16ˉlittle(Input, 10u32) != 0u32 {
+        return Startupˉobjectˉview(false, 4u32, 0u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 16u32) != Symbolˉcount ||
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) != Relocationˉcount {
+        return Startupˉobjectˉview(false, 12u32, 0u32, 0u32);
+    }
+    if !Rangeˉisˉinside(Total, 24u32, 16u32) {
+        return Startupˉobjectˉview(false, 24u32, 0u32, 0u32);
+    }
+    if Bytesˉreadˉu8(Input, 24u32) != 1u8 ||
+        Bytesˉreadˉu8(Input, 25u32) != 0u8 ||
+        Bytesˉreadˉu16ˉlittle(Input, 26u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) != 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) != Codeˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != Codeˉbytes {
+        return Startupˉobjectˉview(false, 24u32, 0u32, 0u32);
+    }
+    let Sectionˉname: Nameˉscan = Scanˉname(Input, 40u32, Total);
+    if !Sectionˉname.Valid ||
+        !Textˉsectionˉname(Input, Sectionˉname.Valueˉoffset, Sectionˉname.Length) ||
+        !Rangeˉisˉinside(Total, Sectionˉname.Cursor, Codeˉbytes) {
+        return Startupˉobjectˉview(false, 40u32, 0u32, 0u32);
+    }
+    let Codeˉoffset: u32 = Sectionˉname.Cursor;
+    var Cursor: u32 = Codeˉoffset + Codeˉbytes;
+    var Index: u32 = 0u32;
+    var Previousˉbinding: u32 = 0u32;
+    var Previousˉnameˉoffset: u32 = 0u32;
+    var Previousˉnameˉlength: u32 = 0u32;
+    while Index < Symbolˉcount {
+        if !Rangeˉisˉinside(Total, Cursor, 16u32) {
+            return Startupˉobjectˉview(false, Cursor, 0u32, 0u32);
+        }
+        let Binding: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
+        let Sectionˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Symbolˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        let Size: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        if Binding < 1u32 || Binding > 3u32 || Kind < 1u32 || Kind > 2u32 ||
+            Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 {
+            return Startupˉobjectˉview(false, Cursor, 0u32, 0u32);
+        }
+        if Binding == 3u32 {
+            if Sectionˉindex != 4294967295u32 || Symbolˉoffset != 0u32 || Size != 0u32 {
+                return Startupˉobjectˉview(false, Cursor + 4u32, 0u32, 0u32);
+            }
+        } else {
+            if Kind != 1u32 || Sectionˉindex != 0u32 || Symbolˉoffset > Codeˉbytes ||
+                Size > Codeˉbytes - Symbolˉoffset {
+                return Startupˉobjectˉview(false, Cursor + 4u32, 0u32, 0u32);
+            }
+        }
+        let Symbolˉname: Nameˉscan = Scanˉname(Input, Cursor + 16u32, Total);
+        if !Symbolˉname.Valid {
+            return Startupˉobjectˉview(false, Symbolˉname.Cursor, 0u32, 0u32);
+        }
+        if Index > 0u32 {
+            if Binding < Previousˉbinding ||
+                (Binding == Previousˉbinding && Nameˉisˉafterˉorˉequal(
+                    Input,
+                    Previousˉnameˉoffset,
+                    Previousˉnameˉlength,
+                    Symbolˉname.Valueˉoffset,
+                    Symbolˉname.Length
+                )) {
+                return Startupˉobjectˉview(false, Symbolˉname.Valueˉoffset, 0u32, 0u32);
+            }
+        }
+        Previousˉbinding = Binding;
+        Previousˉnameˉoffset = Symbolˉname.Valueˉoffset;
+        Previousˉnameˉlength = Symbolˉname.Length;
+        Cursor = Symbolˉname.Cursor;
+        Index = Index + 1u32;
+    }
+    let Relocationˉoffset: u32 = Cursor;
+    var Previousˉrelocationˉoffset: u32 = 0u32;
+    Index = 0u32;
+    while Index < Relocationˉcount {
+        if !Rangeˉisˉinside(Total, Cursor, 20u32) {
+            return Startupˉobjectˉview(false, Cursor, 0u32, 0u32);
+        }
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32);
+        if Bytesˉreadˉu8(Input, Cursor) != 2u8 ||
+            Bytesˉreadˉu8(Input, Cursor + 1u32) != 0u8 ||
+            Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32) != 0u32 ||
+            Patchˉoffset > Codeˉbytes - 4u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32) >= Symbolˉcount ||
+            Bytesˉreadˉi32ˉlittle(Input, Cursor + 16u32) != -4 ||
+            Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Patchˉoffset) != 0u32 {
+            return Startupˉobjectˉview(false, Cursor, 0u32, 0u32);
+        }
+        if Index > 0u32 && Patchˉoffset < Previousˉrelocationˉoffset + 4u32 {
+            return Startupˉobjectˉview(false, Cursor + 8u32, 0u32, 0u32);
+        }
+        Previousˉrelocationˉoffset = Patchˉoffset;
+        Cursor = Cursor + 20u32;
+        Index = Index + 1u32;
+    }
+    if Cursor != Total { return Startupˉobjectˉview(false, Cursor, 0u32, 0u32); }
+    return Startupˉobjectˉview(true, Total, Codeˉoffset, Relocationˉoffset);
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Codeˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1146312279u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Codeˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn I32ˉmagnitude(Value: i32) -> u32 {
+    let Encoded: bytes = Bytesˉfromˉi32ˉlittle(Value);
+    let Bits: u32 = Bytesˉreadˉu32ˉlittle(Encoded, 0u32);
+    if Value >= 0 { return Bits; }
+    return 4294967295u32 - Bits + 1u32;
+}
+
+fn Relativeˉrelocationˉvalue(
+    Target: u32,
+    Patchˉaddress: u32,
+    Addend: i32
+) -> Relativeˉvalue {
+    var Negative: bool = Patchˉaddress > Target;
+    var Magnitude: u32 = 0u32;
+    if Negative {
+        Magnitude = Patchˉaddress - Target;
+    } else {
+        Magnitude = Target - Patchˉaddress;
+    }
+
+    let Addendˉnegative: bool = Addend < 0;
+    let Addendˉmagnitude: u32 = I32ˉmagnitude(Addend);
+    if Negative == Addendˉnegative {
+        var Limit: u32 = 2147483647u32;
+        if Negative { Limit = 2147483648u32; }
+        if Magnitude > Limit || Addendˉmagnitude > Limit - Magnitude {
+            return Relativeˉvalue(false, 0u32);
+        }
+        Magnitude = Magnitude + Addendˉmagnitude;
+    } else {
+        if Magnitude < Addendˉmagnitude {
+            Magnitude = Addendˉmagnitude - Magnitude;
+            Negative = Addendˉnegative;
+        } else {
+            Magnitude = Magnitude - Addendˉmagnitude;
+        }
+    }
+    if Negative {
+        if Magnitude > 2147483648u32 { return Relativeˉvalue(false, 0u32); }
+        if Magnitude == 0u32 { return Relativeˉvalue(true, 0u32); }
+        return Relativeˉvalue(true, 4294967295u32 - Magnitude + 1u32);
+    }
+    if Magnitude > 2147483647u32 { return Relativeˉvalue(false, 0u32); }
+    return Relativeˉvalue(true, Magnitude);
+}
+
+fn Nativeˉhostedˉstartupˉinstantiate(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 40u32 { return Failure(Input, 1u32, Total); }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1230198359u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+
+    let Startupˉaddress: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Symbolˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Relocationˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Targetˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
+    let Objectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    if Startupˉaddress != 4096u32 || Codeˉbytes < 4u32 || Codeˉbytes > 4096u32 ||
+        Symbolˉcount == 0u32 || Symbolˉcount > 128u32 ||
+        Relocationˉcount == 0u32 || Relocationˉcount > 256u32 ||
+        Targetˉcount != Relocationˉcount || Objectˉbytes == 0u32 ||
+        Objectˉbytes > 65536u32 || Bytesˉreadˉu32ˉlittle(Input, 36u32) != 0u32 {
+        return Failure(Input, 4u32, 12u32);
+    }
+    if Targetˉcount > (Total - 40u32) / 4u32 {
+        return Failure(Input, 1u32, 28u32);
+    }
+    let Objectˉoffset: u32 = 40u32 + Targetˉcount * 4u32;
+    if Objectˉoffset > Total || Objectˉbytes != Total - Objectˉoffset {
+        return Failure(Input, 1u32, 32u32);
+    }
+    var Index: u32 = 0u32;
+    while Index < Targetˉcount {
+        if Bytesˉreadˉu32ˉlittle(Input, 40u32 + Index * 4u32) == 0u32 {
+            return Failure(Input, 4u32, 40u32 + Index * 4u32);
+        }
+        Index = Index + 1u32;
+    }
+
+    let Object: bytes = Bytesˉslice(Input, Objectˉoffset, Objectˉbytes);
+    let Inspection: Startupˉobjectˉview = Inspectˉstartupˉobject(
+        Object,
+        Codeˉbytes,
+        Symbolˉcount,
+        Relocationˉcount
+    );
+    if !Inspection.Valid {
+        return Failure(Input, 5u32, Objectˉoffset + Inspection.Failureˉoffset);
+    }
+    var Code: bytes = Bytesˉslice(Object, Inspection.Codeˉoffset, Codeˉbytes);
+    Index = 0u32;
+    while Index < Relocationˉcount {
+        let Relocationˉoffset: u32 = Inspection.Relocationˉoffset + Index * 20u32;
+        let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Object, Relocationˉoffset + 8u32);
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32 + Index * 4u32);
+        let Value: Relativeˉvalue = Relativeˉrelocationˉvalue(
+            Target,
+            Startupˉaddress + Patchˉoffset,
+            Bytesˉreadˉi32ˉlittle(Object, Relocationˉoffset + 16u32)
+        );
+        if !Value.Valid {
+            return Failure(Input, 6u32, 40u32 + Index * 4u32);
+        }
+        Code = Replace(Code, Patchˉoffset, 4u32, Bytesˉfromˉu32ˉlittle(Value.Bits));
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(
+        Responseˉheader(Input, 32u32 + Codeˉbytes, 0u32, Total, Codeˉbytes),
+        Code
+    );
+}
+
+export fn Main(Input: bytes) -> bytes {
+    return Nativeˉhostedˉstartupˉinstantiate(Input);
+}

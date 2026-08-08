@@ -1,6 +1,6 @@
 {
   "format": "windvale-dotnet-retirement-inventory-1",
-  "updated": "2026-08-06",
+  "updated": "2026-08-08",
   "directManagedEntrypoints": [
     {
       "path": ".github/workflows/verify.yml",
