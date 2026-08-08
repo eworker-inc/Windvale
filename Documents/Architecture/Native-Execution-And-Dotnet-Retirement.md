@@ -566,6 +566,14 @@ mutation. The retained C# fixture builder and runtime driver are deletion-bound
 transition evidence. Extracting the focused native durable transaction and
 removing managed final publication are next.
 
+[Decision 0389](../Decisions/0389-Shared-Immutable-Snapshot-Sequence.md)
+extracts native immutable-table admission from the WVO-specific policy. One
+focused x64 object now validates table identity, arena and record pointers,
+selected payload bounds, header skips, and aggregate size. Thin WVO and hosted
+wrappers select their different ordinal sequences. The WVO publisher retains
+real current-host atomic-publication evidence; the hosted wrapper is ready for
+the paired platform transaction connection.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix

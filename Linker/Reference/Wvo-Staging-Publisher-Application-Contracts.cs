@@ -15,10 +15,10 @@ public static class Wvoˉstagingˉpublisherˉapplicationˉcontract
         "6ef23e0db58ecd788ca97218428dc7a131662f90f5875f7644f76592a7664acc";
     public const int WINDOWS_APPLICATION_BYTES = 6_458_368;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "07ae86a7ed2922f117e3d314b7110812ab2721f8205e86f52c659f23deb84aa8";
-    public const int LINUX_APPLICATION_BYTES = 6_455_017;
+        "8c966338fe0a138fba967ece764883c6b34c25104fb9eb1f8c6995a040ae303b";
+    public const int LINUX_APPLICATION_BYTES = 6_455_341;
     public const string LINUX_APPLICATION_SHA256 =
-        "9ea96ff5977b18c3dc97329601941bc892cc728bf0fb4da747f61dc8f36577ad";
+        "03f15565cb00ad69ecfed45beb8e58d1898d8fcb29fa5ab2c7aef982ea9f7ea7";
 }
 
 public static class Wvoˉstagingˉpublisherˉapplicationˉwriter

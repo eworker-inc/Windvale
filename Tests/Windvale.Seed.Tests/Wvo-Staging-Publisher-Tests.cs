@@ -21,7 +21,11 @@ internal static partial class Program
     private const string WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256 =
         "456705dd43ae9efff21a87b75971d306f0755aa9b243879064672a5ab2298f1c";
     private const string X64_WVO_STAGING_SNAPSHOT_WVO_SHA256 =
-        "cd4674617667016ed2cbbf6842cbdbae09dbe222a12fe17156241594226a43dd";
+        "03ff27e8a8fce7b3eddfb0191b6626c20971df32790f8f7274cd9091a4b69628";
+    private const string X64_IMMUTABLE_SNAPSHOT_SEQUENCE_WVO_SHA256 =
+        "7c6ea6b16ac8cfcfed9e0983b7e6aedc3ead4aab3a54cb207b75d22a228db676";
+    private const string X64_HOSTED_CONTAINER_SNAPSHOT_WVO_SHA256 =
+        "390ee99e24e02cfa904f64d1ab772d76f5de358783c3f75e0310e37750cc5e86";
 
     private static readonly string LINUX_WVO_STAGING_PUBLISHER_SOURCE =
         Readˉembeddedˉsource(
@@ -38,6 +42,12 @@ internal static partial class Program
     private static readonly string X64_WVO_STAGING_SNAPSHOT_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.X64-Wvo-Staging-Snapshot-Table.wva");
+    private static readonly string X64_IMMUTABLE_SNAPSHOT_SEQUENCE_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.X64-Immutable-Snapshot-Sequence.wva");
+    private static readonly string X64_HOSTED_CONTAINER_SNAPSHOT_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.X64-Hosted-Container-Snapshot-Table.wva");
 
     private static void Nativeˉwvoˉstagingˉpublisherˉruns()
     {
@@ -75,6 +85,9 @@ internal static partial class Program
         var Windowsˉstartup = Assembleˉsuccess(WINDOWS_WVO_STAGING_PUBLISHER_SOURCE);
         var Windowsˉadapter = Assembleˉsuccess(WINDOWS_WVO_STAGING_ADAPTER_SOURCE);
         var Snapshot = Assembleˉsuccess(X64_WVO_STAGING_SNAPSHOT_SOURCE);
+        var Sequence = Assembleˉsuccess(X64_IMMUTABLE_SNAPSHOT_SEQUENCE_SOURCE);
+        var Hostedˉsnapshot = Assembleˉsuccess(
+            X64_HOSTED_CONTAINER_SNAPSHOT_SOURCE);
         Assertˉstagingˉobject(
             Linuxˉstartup,
             180,
@@ -97,9 +110,19 @@ internal static partial class Program
             "Windows_wvo_staging_publisher_run");
         Assertˉstagingˉobject(
             Snapshot,
-            1_005,
+            224,
             X64_WVO_STAGING_SNAPSHOT_WVO_SHA256,
             "X64_wvo_staging_snapshot_table_validate");
+        Assertˉstagingˉobject(
+            Sequence,
+            1_282,
+            X64_IMMUTABLE_SNAPSHOT_SEQUENCE_WVO_SHA256,
+            "X64_immutable_snapshot_sequence_validate");
+        Assertˉstagingˉobject(
+            Hostedˉsnapshot,
+            256,
+            X64_HOSTED_CONTAINER_SNAPSHOT_WVO_SHA256,
+            "X64_hosted_container_snapshot_table_validate");
 
         var Windows = Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉwindows(
             Module,

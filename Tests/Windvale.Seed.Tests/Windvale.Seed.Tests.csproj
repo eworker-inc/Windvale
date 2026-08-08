@@ -1054,6 +1054,12 @@
       Include="../../Linker/Startup/X64-Wvo-Staging-Snapshot-Table.wva"
       LogicalName="Windvale.Seed.Tests.X64-Wvo-Staging-Snapshot-Table.wva" />
     <EmbeddedResource
+      Include="../../Linker/Startup/X64-Immutable-Snapshot-Sequence.wva"
+      LogicalName="Windvale.Seed.Tests.X64-Immutable-Snapshot-Sequence.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/X64-Hosted-Container-Snapshot-Table.wva"
+      LogicalName="Windvale.Seed.Tests.X64-Hosted-Container-Snapshot-Table.wva" />
+    <EmbeddedResource
       Include="../Fixtures/Publication/Wvb-Publication-Transaction-Adapter.wv"
       LogicalName="Windvale.Seed.Tests.Wvb-Publication-Transaction-Adapter.wv" />
     <EmbeddedResource

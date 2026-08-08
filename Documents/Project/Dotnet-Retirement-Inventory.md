@@ -421,6 +421,13 @@ compares every response byte before any mutation. The C# fixture/harness is
 explicitly deletion-bound. Native durable multi-chunk publication is the
 remaining boundary for this hosted-container slice.
 
+[Decision 0389](../Decisions/0389-Shared-Immutable-Snapshot-Sequence.md)
+makes the first durable-publication extraction reusable. Native x64 now has one
+focused immutable snapshot-table verifier plus thin WVO and hosted-container
+selection policies. Existing WVO atomic publication still passes its focused
+current-host behavior test. Connecting the hosted wrapper to Windows/Linux
+durable replacement remains open; no new managed product semantics were added.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

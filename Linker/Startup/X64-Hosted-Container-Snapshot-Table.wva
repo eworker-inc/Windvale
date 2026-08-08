@@ -1,0 +1,27 @@
+windvale-assembly 1
+
+# Hosted-container policy wrapper over the shared immutable snapshot-sequence
+# validator. Admission reads plan and manifest first, then alternating WVHT
+# request and WVHU response snapshots. Only response payloads are published.
+symbol export function X64_hosted_container_snapshot_table_validate in .text
+symbol import function X64_immutable_snapshot_sequence_validate
+
+section code .text align 16
+define X64_hosted_container_snapshot_table_validate
+move_u32 esi 4
+move_u32 edx 64
+move_u32 ecx 3
+move_u32 r8d 2
+move_u32 r9d 40
+move_u32 r10d 130018464
+call X64_immutable_snapshot_sequence_validate
+test eax eax
+branch equal Complete
+test_i32 eax 1
+branch equal Complete
+xor eax eax
+xor edx edx
+label Complete
+return
+end define
+end section

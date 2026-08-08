@@ -22,6 +22,9 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.LINUX_ADAPTER_RESOURCE);
         var Snapshot = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.SNAPSHOT_TABLE_RESOURCE);
+        var Sequence = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Wvoˉstagingˉpublisherˉapplicationˉbuilder
+                .IMMUTABLE_SNAPSHOT_SEQUENCE_RESOURCE);
 
         var Bundle = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Buildˉcontainerˉbundle(
             Input.Fragment,
@@ -47,10 +50,23 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
             Adapterˉsection.Memoryˉsize,
             16);
+        var Sequenceˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
+            checked(Snapshotˉoffset + Snapshot.Sections.Single(Item =>
+                Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize),
+            16);
         var Targets = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Linuxˉtargets(
             Baseˉverified,
             Bundle,
             Input);
+        var (Sequenceˉbytes, Sequenceˉexports) =
+            Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
+                Sequence,
+                checked(Adapterˉaddress + Sequenceˉoffset),
+                Targets);
+        foreach (var Export in Sequenceˉexports)
+        {
+            Targets.Add(Export.Key, Export.Value);
+        }
         var (Snapshotˉbytes, Snapshotˉexports) =
             Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
                 Snapshot,
@@ -71,10 +87,12 @@ internal static class Linuxˉwvoˉstagingˉpublisherˉapplicationˉbuilder
                 Adapterˉaddress,
                 Targets);
         var Adapterˉsegment = new byte[checked(
-            (int)Snapshotˉoffset + Snapshotˉbytes.Length)];
+            (int)Sequenceˉoffset + Sequenceˉbytes.Length)];
         Adapterˉbytes.CopyTo(Adapterˉsegment);
         Snapshotˉbytes.CopyTo(Adapterˉsegment.AsSpan(
             checked((int)Snapshotˉoffset)));
+        Sequenceˉbytes.CopyTo(Adapterˉsegment.AsSpan(
+            checked((int)Sequenceˉoffset)));
 
         var (Startupˉbytes, Startupˉexports) =
             Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(

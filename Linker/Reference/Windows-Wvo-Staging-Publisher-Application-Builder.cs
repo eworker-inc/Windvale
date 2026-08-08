@@ -22,6 +22,9 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_ADAPTER_RESOURCE);
         var Snapshot = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.SNAPSHOT_TABLE_RESOURCE);
+        var Sequence = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Wvoˉstagingˉpublisherˉapplicationˉbuilder
+                .IMMUTABLE_SNAPSHOT_SEQUENCE_RESOURCE);
 
         var Bundle = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Buildˉcontainerˉbundle(
             Input.Fragment,
@@ -45,8 +48,11 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             16);
         var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
             Adapterˉoffset + Adapterˉsection.Memoryˉsize), 16);
-        var Textˉvirtual = checked(
+        var Sequenceˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
             Snapshotˉoffset + Snapshot.Sections.Single(Item =>
+                Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize), 16);
+        var Textˉvirtual = checked(
+            Sequenceˉoffset + Sequence.Sections.Single(Item =>
                 Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize);
         var Textˉfile = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(
             Textˉvirtual,
@@ -77,6 +83,15 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Runtimeˉaddress,
             Bundle,
             Input);
+        var (Sequenceˉbytes, Sequenceˉexports) =
+            Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
+                Sequence,
+                checked(Baseˉverified.Layout.Textˉaddress + Sequenceˉoffset),
+                Targets);
+        foreach (var Export in Sequenceˉexports)
+        {
+            Targets.Add(Export.Key, Export.Value);
+        }
         var (Snapshotˉbytes, Snapshotˉexports) =
             Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
                 Snapshot,
@@ -130,6 +145,8 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Baseˉverified.Layout.Textˉfileˉoffset + (int)Adapterˉoffset)));
         Snapshotˉbytes.CopyTo(Application.AsSpan(checked(
             Baseˉverified.Layout.Textˉfileˉoffset + (int)Snapshotˉoffset)));
+        Sequenceˉbytes.CopyTo(Application.AsSpan(checked(
+            Baseˉverified.Layout.Textˉfileˉoffset + (int)Sequenceˉoffset)));
         var Imports = Windowsˉwvbˉpublisherˉimports.Build(Importˉaddress);
         Imports.AsSpan().CopyTo(Application.AsSpan(checked((int)Importˉfile)));
         Windowsˉwvbˉpublisherˉimports.Verify(

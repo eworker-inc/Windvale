@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Contract: [Windvale native hosted-container segment set](../../Specifications/Windvale-Native-Hosted-Container-Segment-Set.md)
 - Predecessor: [Decision 0387](0387-Standalone-Native-Hosted-Container-Segmenter.md)
+- Advanced by: [Decision 0389](0389-Shared-Immutable-Snapshot-Sequence.md)
 
 ## Context
 

@@ -29,6 +29,10 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         "Windvale.Linker.Windows-X64-Wvo-Staging-Publication-Adapter.wvo";
     internal const string SNAPSHOT_TABLE_RESOURCE =
         "Windvale.Linker.X64-Wvo-Staging-Snapshot-Table.wvo";
+    internal const string IMMUTABLE_SNAPSHOT_SEQUENCE_RESOURCE =
+        "Windvale.Linker.X64-Immutable-Snapshot-Sequence.wvo";
+    internal const string HOSTED_CONTAINER_SNAPSHOT_RESOURCE =
+        "Windvale.Linker.X64-Hosted-Container-Snapshot-Table.wvo";
 
     private static readonly (string Resource, int Bytes, string Sha256)[] OBJECTS =
     [
@@ -40,8 +44,12 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
             "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab"),
         (WINDOWS_ADAPTER_RESOURCE, 9_190,
             "456705dd43ae9efff21a87b75971d306f0755aa9b243879064672a5ab2298f1c"),
-        (SNAPSHOT_TABLE_RESOURCE, 1_005,
-            "cd4674617667016ed2cbbf6842cbdbae09dbe222a12fe17156241594226a43dd"),
+        (SNAPSHOT_TABLE_RESOURCE, 224,
+            "03ff27e8a8fce7b3eddfb0191b6626c20971df32790f8f7274cd9091a4b69628"),
+        (IMMUTABLE_SNAPSHOT_SEQUENCE_RESOURCE, 1_282,
+            "7c6ea6b16ac8cfcfed9e0983b7e6aedc3ead4aab3a54cb207b75d22a228db676"),
+        (HOSTED_CONTAINER_SNAPSHOT_RESOURCE, 256,
+            "390ee99e24e02cfa904f64d1ab772d76f5de358783c3f75e0310e37750cc5e86"),
     ];
 
     internal static Wvoˉstagingˉpublisherˉapplicationˉinput Validateˉinput(

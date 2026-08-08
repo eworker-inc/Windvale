@@ -311,6 +311,17 @@ silently replayed. The fixed package uses the 64-snapshot compiler-capacity
 storage plan while binding only the exact eight service-table entries required
 by the Windvale admission module.
 
+Decision 0389 extracts the format-neutral part of that snapshot admission into
+one focused x64 object. It validates the exact `WVFI 1` table, arena geometry,
+record pointers and bounds, then selects immutable payload records by a bounded
+first ordinal, stride of one or two, and fixed header skip with checked aggregate
+accounting. The staged-WVO wrapper retains ordinals two onward with no skip and
+the 32 MiB ceiling. The hosted-container wrapper selects alternating response
+ordinals three onward, skips each 40-byte `WVHU 1` envelope, requires an even
+snapshot count, and bounds at most 31 canonical segment payloads. The WVO path
+has current-host execution evidence; hosted execution remains part of its
+publisher connection slice.
+
 The Windows application has current-host execution evidence. The Linux image,
 complete compiler self-staging integration, package promotion, native
 replacement of the Stage 0 constructor, extended fault/concurrency matrix, and

@@ -87,3 +87,9 @@ The next slice extracts the existing native durable multi-chunk transaction
 behind a focused WVA-owned boundary. That publisher will consume the admitted
 response payloads directly, skipping each 40-byte `WVHU 1` envelope, and will
 atomically replace the destination without managed concatenation.
+
+Decision 0389 supplies the shared native snapshot-table admission beneath that
+publisher. Its hosted policy selects response snapshot ordinals `3,5,7...`,
+requires an even complete table, skips the 40-byte response envelope, and
+checks the aggregate payload ceiling. The paired platform transaction and real
+hosted execution remain the next boundary.

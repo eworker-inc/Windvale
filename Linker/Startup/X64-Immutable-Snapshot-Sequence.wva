@@ -1,0 +1,205 @@
+windvale-assembly 1
+
+# Format-neutral validation for immutable file snapshots produced by the hosted
+# file-read service. The caller selects payload records by first ordinal,
+# stride (one or two), and a fixed per-record header skip.
+#
+# Inputs: EDI platform, ESI minimum records, EDX maximum records,
+# ECX first payload ordinal, R8D payload stride, R9D payload header bytes,
+# R10D maximum aggregate payload bytes.
+# Success: EAX snapshot count and EDX aggregate selected payload bytes.
+# Failure: EAX and EDX zero. The table and snapshot bytes remain unchanged.
+symbol export function X64_immutable_snapshot_sequence_validate in .text
+symbol import data Data_arena
+symbol import data File_input_scratch
+symbol import data File_input_table
+symbol import data Name_arena
+symbol import data Snapshot_table
+
+section code .text align 16
+define X64_immutable_snapshot_sequence_validate
+push rbx
+push rbp
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 16
+move ebp edi
+move r12d esi
+move r13d edx
+move r14d ecx
+move r15d r8d
+store_memory_u32 rsp none 1 0 r9d
+store_memory_u32 rsp none 1 4 r10d
+xor eax eax
+store_memory_u32 rsp none 1 8 eax
+
+compare_i32 ebp 1
+branch below Invalid
+compare_i32 ebp 2
+branch above Invalid
+compare_i32 r12d 1
+branch below Invalid
+compare r12d r13d
+branch above Invalid
+compare_i32 r13d 64
+branch above Invalid
+compare r14d r13d
+branch above_equal Invalid
+compare_i32 r15d 1
+branch equal Selector_valid
+compare_i32 r15d 2
+branch not_equal Invalid
+label Selector_valid
+load_memory_u32 eax rsp none 1 0
+compare_i32 eax 4194303
+branch above Invalid
+load_memory_u32 eax rsp none 1 4
+test eax eax
+branch equal Invalid
+
+load_address rbx File_input_table
+load_memory_u32 eax rbx none 1 0
+compare_i32 eax 1229346391
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 4
+compare_i32 eax 1
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 136
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 12
+compare eax ebp
+branch not_equal Invalid
+
+load_memory_u64 rax rbx none 1 16
+load_address rcx Snapshot_table
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 24
+compare_i32 eax 64
+branch not_equal Invalid
+load_memory_u32 r11d rbx none 1 28
+compare r11d r12d
+branch below Invalid
+compare r11d r13d
+branch above Invalid
+
+load_memory_u64 rax rbx none 1 32
+load_address rcx Name_arena
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 40
+compare_i32 eax 1048576
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 44
+test eax eax
+branch not_equal Invalid
+load_memory_u64 rax rbx none 1 48
+load_address rcx Data_arena
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 56
+compare_i32 eax 4194304
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 60
+compare_i32 eax 4194304
+branch not_equal Invalid
+load_memory_u64 rax rbx none 1 64
+load_address rcx File_input_scratch
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 76
+test eax eax
+branch not_equal Invalid
+
+xor r8d r8d
+xor r10d r10d
+label Record_loop
+compare r8d r11d
+branch above_equal Records_valid
+move r9 r8
+shift_left r9 5
+load_address rbx Snapshot_table
+add rbx r9
+
+load_memory_u64 rax rbx none 1 0
+move rcx r8
+shift_left rcx 20
+load_address rdx Name_arena
+add rcx rdx
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 8
+compare_i32 eax 1
+branch below Invalid
+compare_i32 eax 4095
+branch above Invalid
+load_memory_u32 eax rbx none 1 12
+test eax eax
+branch not_equal Invalid
+
+load_memory_u64 rax rbx none 1 16
+move rcx r8
+shift_left rcx 22
+load_address rdx Data_arena
+add rcx rdx
+compare rax rcx
+branch not_equal Invalid
+load_memory_u32 eax rbx none 1 24
+compare_i32 eax 1
+branch below Invalid
+compare_i32 eax 4194304
+branch above Invalid
+load_memory_u32 ecx rbx none 1 28
+test ecx ecx
+branch not_equal Invalid
+
+compare r8d r14d
+branch below Record_next
+move ecx r8d
+subtract ecx r14d
+compare_i32 r15d 2
+branch not_equal Payload_selected
+test_i32 ecx 1
+branch not_equal Record_next
+label Payload_selected
+load_memory_u32 ecx rsp none 1 0
+compare eax ecx
+branch below_equal Invalid
+subtract eax ecx
+add r10d eax
+branch below Invalid
+load_memory_u32 ecx rsp none 1 4
+compare r10d ecx
+branch above Invalid
+load_memory_u32 ecx rsp none 1 8
+add_i32 ecx 1
+store_memory_u32 rsp none 1 8 ecx
+label Record_next
+add_i32 r8d 1
+jump_label Record_loop
+
+label Records_valid
+load_memory_u32 eax rsp none 1 8
+test eax eax
+branch equal Invalid
+move eax r11d
+move edx r10d
+jump_label Complete
+
+label Invalid
+xor eax eax
+xor edx edx
+label Complete
+add_i32 rsp 16
+pop r15
+pop r14
+pop r13
+pop r12
+pop rbp
+pop rbx
+return
+end define
+end section
