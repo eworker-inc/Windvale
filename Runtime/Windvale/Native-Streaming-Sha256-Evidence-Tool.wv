@@ -1,6 +1,6 @@
 module Nativeˉstreamingˉsha256ˉevidenceˉtool profile hosted;
 
-import Foundationˉsha256ˉstreaming as Sha256;
+import Runtimeˉstreamingˉsha256ˉresourceˉevidence as Resources;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -12,20 +12,6 @@ capability process.argument_count;
 enum Nativeˉstreamingˉsha256ˉevidenceˉstatus {
     Valid = 0;
     Rejected = 1;
-}
-
-const MANIFEST_HEADER_BYTES: u32 = 32u32;
-const CHUNK_RECORD_BYTES: u32 = 20u32;
-const REGION_RECORD_BYTES: u32 = 12u32;
-const EVIDENCE_HEADER_BYTES: u32 = 64u32;
-const EVIDENCE_RECORD_BYTES: u32 = 44u32;
-const MAXIMUM_CHUNKS: u32 = 16u32;
-const MAXIMUM_REGIONS: u32 = 16u32;
-const MAXIMUM_LOGICAL_BYTES: u32 = 67108864u32;
-const MAXIMUM_RESOURCE_BYTES: u32 = 4194304u32;
-
-fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
-    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
 }
 
 fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
@@ -45,13 +31,6 @@ fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
     return Bytesˉareˉequal(Textˉtoˉutf8(Left), Textˉtoˉutf8(Right));
 }
 
-fn Resourceˉname(Prefix: text, Index: u32) -> text {
-    return Textˉconcat(
-        Textˉconcat(Prefix, ".chunk-"),
-        U32ˉformat(Index)
-    );
-}
-
 fn Reject() -> i32 {
     diagnostic.write_line(
         Textˉconcat(
@@ -60,79 +39,6 @@ fn Reject() -> i32 {
         )
     );
     return 2;
-}
-
-fn Manifestˉisˉvalid(Manifest: bytes) -> bool {
-    let Total: u32 = Bytesˉlength(Manifest);
-    if Total < MANIFEST_HEADER_BYTES ||
-        Bytesˉreadˉu32ˉlittle(Manifest, 0u32) != 1397249623u32 ||
-        Bytesˉreadˉu32ˉlittle(Manifest, 4u32) != 1u32 ||
-        Bytesˉreadˉu32ˉlittle(Manifest, 8u32) != Total {
-        return false;
-    }
-    let Chunks: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 12u32);
-    let Regions: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 16u32);
-    let Logicalˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 20u32);
-    if Chunks == 0u32 || Chunks > MAXIMUM_CHUNKS ||
-        Regions == 0u32 || Regions > MAXIMUM_REGIONS ||
-        Logicalˉbytes == 0u32 || Logicalˉbytes > MAXIMUM_LOGICAL_BYTES ||
-        Bytesˉreadˉu32ˉlittle(Manifest, 24u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Manifest, 28u32) != 0u32 ||
-        Total != MANIFEST_HEADER_BYTES + Chunks * CHUNK_RECORD_BYTES +
-            Regions * REGION_RECORD_BYTES {
-        return false;
-    }
-
-    var Cursor: u32 = 0u32;
-    var Index: u32 = 0u32;
-    while Index < Chunks {
-        let Chunkˉrecord: u32 = MANIFEST_HEADER_BYTES + Index * CHUNK_RECORD_BYTES;
-        let Resourceˉoffset: u32 =
-            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 8u32);
-        let Chunkˉbytes: u32 =
-            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 12u32);
-        let Resourceˉbytes: u32 =
-            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 16u32);
-        if Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord) != Index ||
-            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 4u32) != Cursor ||
-            Chunkˉbytes == 0u32 || Resourceˉbytes == 0u32 ||
-            Resourceˉbytes > MAXIMUM_RESOURCE_BYTES ||
-            Resourceˉoffset > Resourceˉbytes ||
-            Chunkˉbytes > Resourceˉbytes - Resourceˉoffset ||
-            Chunkˉbytes > Logicalˉbytes - Cursor {
-            return false;
-        }
-        Cursor = Cursor + Chunkˉbytes;
-        Index = Index + 1u32;
-    }
-    if Cursor != Logicalˉbytes { return false; }
-
-    let Regionˉbase: u32 = MANIFEST_HEADER_BYTES + Chunks * CHUNK_RECORD_BYTES;
-    var Previousˉend: u32 = 0u32;
-    Index = 0u32;
-    while Index < Regions {
-        let Regionˉrecord: u32 = Regionˉbase + Index * REGION_RECORD_BYTES;
-        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 4u32);
-        let Length: u32 = Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 8u32);
-        if Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord) != Index ||
-            Offset < Previousˉend || Offset >= Logicalˉbytes ||
-            Length == 0u32 || Length > Logicalˉbytes - Offset {
-            return false;
-        }
-        Previousˉend = Offset + Length;
-        Index = Index + 1u32;
-    }
-    return true;
-}
-
-fn Overlapˉstart(Left: u32, Right: u32) -> u32 {
-    if Left > Right { return Left; }
-    return Right;
-}
-
-fn Overlapˉend(Left: u32, Right: u32) -> u32 {
-    if Left < Right { return Left; }
-    return Right;
 }
 
 export fn Main() -> i32 {
@@ -145,105 +51,66 @@ export fn Main() -> i32 {
     let Manifestˉpath: text = process.argument(0u32);
     let Prefix: text = process.argument(1u32);
     let Evidenceˉpath: text = process.argument(2u32);
-    if Pathsˉareˉequal(Manifestˉpath, Evidenceˉpath) ||
-        Bytesˉlength(Textˉtoˉutf8(Prefix)) == 0u32 ||
-        Bytesˉlength(Textˉtoˉutf8(Prefix)) > 4076u32 {
+    if Pathsˉareˉequal(Manifestˉpath, Evidenceˉpath) {
         return Reject();
     }
 
     let Manifest: bytes = file.read_bytes(Manifestˉpath);
-    if !Manifestˉisˉvalid(Manifest) { return Reject(); }
-    let Chunks: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 12u32);
-    let Regions: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 16u32);
-    let Logicalˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 20u32);
-    let Regionˉbase: u32 = MANIFEST_HEADER_BYTES + Chunks * CHUNK_RECORD_BYTES;
-
-    var Manifestˉstate: Sha256.Foundationˉsha256ˉstream =
-        Sha256.Foundationˉsha256ˉbegin(Manifest);
-    Manifestˉstate = Sha256.Foundationˉsha256ˉupdate(
-        Manifestˉstate,
-        Manifest
-    );
-    let Manifestˉdigest: bytes =
-        Sha256.Foundationˉsha256ˉfinishˉraw(Manifestˉstate);
-    if Bytesˉlength(Manifestˉdigest) != 32u32 { return Reject(); }
-
-    let Evidenceˉbytes: u32 =
-        EVIDENCE_HEADER_BYTES + Regions * EVIDENCE_RECORD_BYTES;
-    var Evidence: bytes = Bytesˉslice(Manifest, 0u32, 0u32);
-    Evidence = Appendˉu32(Evidence, 1162368599u32);
-    Evidence = Appendˉu32(Evidence, 1u32);
-    Evidence = Appendˉu32(Evidence, Evidenceˉbytes);
-    Evidence = Appendˉu32(Evidence, Logicalˉbytes);
-    Evidence = Appendˉu32(Evidence, Regions);
-    Evidence = Appendˉu32(Evidence, Bytesˉlength(Manifest));
-    Evidence = Bytesˉconcat(Evidence, Manifestˉdigest);
-    Evidence = Appendˉu32(Evidence, 0u32);
-    Evidence = Appendˉu32(Evidence, 0u32);
-
-    var Regionˉindex: u32 = 0u32;
-    while Regionˉindex < Regions {
-        let Regionˉrecord: u32 =
-            Regionˉbase + Regionˉindex * REGION_RECORD_BYTES;
-        let Regionˉoffset: u32 =
-            Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 4u32);
-        let Regionˉbytes: u32 =
-            Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 8u32);
-        let Regionˉend: u32 = Regionˉoffset + Regionˉbytes;
-        var State: Sha256.Foundationˉsha256ˉstream =
-            Sha256.Foundationˉsha256ˉbegin(Manifest);
-        var Hashedˉbytes: u32 = 0u32;
-        var Chunkˉindex: u32 = 0u32;
-        while Chunkˉindex < Chunks {
-            let Chunkˉrecord: u32 =
-                MANIFEST_HEADER_BYTES + Chunkˉindex * CHUNK_RECORD_BYTES;
-            let Chunkˉoffset: u32 =
-                Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 4u32);
-            let Chunkˉbytes: u32 =
-                Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 12u32);
-            let Chunkˉend: u32 = Chunkˉoffset + Chunkˉbytes;
-            let Start: u32 = Overlapˉstart(Regionˉoffset, Chunkˉoffset);
-            let End: u32 = Overlapˉend(Regionˉend, Chunkˉend);
-            if Start < End {
-                let Resourceˉpath: text = Resourceˉname(Prefix, Chunkˉindex);
-                if Pathsˉareˉequal(Resourceˉpath, Manifestˉpath) ||
-                    Pathsˉareˉequal(Resourceˉpath, Evidenceˉpath) {
-                    return Reject();
-                }
-                let Resource: bytes = file.read_bytes(Resourceˉpath);
-                let Expectedˉresourceˉbytes: u32 =
-                    Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 16u32);
-                if Bytesˉlength(Resource) != Expectedˉresourceˉbytes {
-                    return Reject();
-                }
-                let Resourceˉoffset: u32 =
-                    Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 8u32) +
-                    Start - Chunkˉoffset;
-                State = Sha256.Foundationˉsha256ˉupdate(
-                    State,
-                    Bytesˉslice(Resource, Resourceˉoffset, End - Start)
-                );
-                Hashedˉbytes = Hashedˉbytes + End - Start;
-            }
-            Chunkˉindex = Chunkˉindex + 1u32;
-        }
-        let Digest: bytes = Sha256.Foundationˉsha256ˉfinishˉraw(State);
-        if !State.Valid || Hashedˉbytes != Regionˉbytes ||
-            Bytesˉlength(Digest) != 32u32 {
+    let Chunks: u32 = Resources.Streamingˉsha256ˉresourceˉcount(Manifest);
+    let Regions: u32 =
+        Resources.Streamingˉsha256ˉresourceˉregionˉcount(Manifest);
+    if Chunks == 0u32 || Regions == 0u32 ||
+        !Resources.Streamingˉsha256ˉresourceˉprefixˉisˉvalid(Prefix) {
+        return Reject();
+    }
+    var Index: u32 = 0u32;
+    while Index < Chunks {
+        let Resourceˉpath: text =
+            Resources.Streamingˉsha256ˉresourceˉname(Prefix, Index);
+        if Pathsˉareˉequal(Resourceˉpath, Manifestˉpath) ||
+            Pathsˉareˉequal(Resourceˉpath, Evidenceˉpath) {
             return Reject();
         }
-        Evidence = Appendˉu32(Evidence, Regionˉindex);
-        Evidence = Appendˉu32(Evidence, Regionˉoffset);
-        Evidence = Appendˉu32(Evidence, Regionˉbytes);
-        Evidence = Bytesˉconcat(Evidence, Digest);
-        Regionˉindex = Regionˉindex + 1u32;
+        Index = Index + 1u32;
     }
-    if Bytesˉlength(Evidence) != Evidenceˉbytes { return Reject(); }
-    file.write_bytes(Evidenceˉpath, Evidence);
+
+    var Output: bytes =
+        Resources.Streamingˉsha256ˉresourceˉevidenceˉbegin(Manifest);
+    var Region: u32 = 0u32;
+    while Region < Regions {
+        var State = Resources.Streamingˉsha256ˉresourceˉregionˉbegin(
+            Manifest, Region
+        );
+        Index = 0u32;
+        while Index < Chunks {
+            State = Resources.Streamingˉsha256ˉresourceˉregionˉupdate(
+                State,
+                Manifest,
+                Index,
+                file.read_bytes(
+                    Resources.Streamingˉsha256ˉresourceˉname(Prefix, Index)
+                )
+            );
+            Index = Index + 1u32;
+        }
+        Output = Resources.Streamingˉsha256ˉresourceˉevidenceˉappend(
+            Output,
+            Manifest,
+            Region,
+            Resources.Streamingˉsha256ˉresourceˉregionˉfinish(State)
+        );
+        Region = Region + 1u32;
+    }
+    if !Resources.Streamingˉsha256ˉresourceˉevidenceˉisˉvalid(
+        Manifest, Output
+    ) {
+        return Reject();
+    }
+    file.write_bytes(Evidenceˉpath, Output);
     console.write_line(
         Textˉconcat(
             "streaming sha256 evidence status=Valid bytes=",
-            U32ˉformat(Evidenceˉbytes)
+            U32ˉformat(Bytesˉlength(Output))
         )
     );
     return 0;

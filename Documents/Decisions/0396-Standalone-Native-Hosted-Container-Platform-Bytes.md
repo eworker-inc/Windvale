@@ -56,9 +56,10 @@ broader verifier was run.
   modules; the new source owns only process policy and response admission.
 - Shared deletion-bound C# package wiring now owns one identity validator rather
   than repeating it for every transition tool.
-- Decisions 0397 through 0399 now add exact startup, runtime-header, and metadata
-  production; metadata-request/service-bundle evidence, full process
-  composition, Linux execution, promotion, and the grouped gate remain open.
+- Decisions 0397 through 0402 now add exact startup, runtime-header, metadata,
+  service-bundle, and metadata-request production. Ordered resource/request
+  orchestration, full process composition, Linux execution, promotion, and the
+  grouped gate remain open.
 
 ## Reconsideration triggers
 

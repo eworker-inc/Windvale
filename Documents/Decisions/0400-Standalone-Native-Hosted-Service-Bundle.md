@@ -51,10 +51,10 @@ verifier was run.
   evidence without a managed runtime process.
 - Materialization policy remains in the existing focused portable modules; the
   hosted shell is 108 lines.
-- Decision 0401 now supplies bounded native SHA-256 evidence across ordered
-  multi-resource regions. Native resource acquisition, ordered request
-  construction, binding real `WVSI` responses into that evidence, exact
-  metadata-request construction, complete composition, Linux execution,
+- Decision 0401 supplies bounded native SHA-256 evidence across ordered
+  multi-resource regions, and Decision 0402 recomputes the actual planned
+  leaves while constructing the exact metadata request. Ordered resource and
+  service-bundle request orchestration, complete composition, Linux execution,
   promotion, and the grouped gate remain.
 
 ## Reconsideration triggers

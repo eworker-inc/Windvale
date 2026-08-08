@@ -1,0 +1,165 @@
+module Runtimeˉstreamingˉsha256ˉevidence profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+
+export record Streamingˉsha256ˉmanifestˉplan {
+    Valid: bool;
+    Chunks: u32;
+    Regions: u32;
+    Logicalˉbytes: u32;
+    Regionˉbase: u32;
+}
+
+const MANIFEST_HEADER_BYTES: u32 = 32u32;
+const CHUNK_RECORD_BYTES: u32 = 20u32;
+const REGION_RECORD_BYTES: u32 = 12u32;
+const EVIDENCE_HEADER_BYTES: u32 = 64u32;
+const EVIDENCE_RECORD_BYTES: u32 = 44u32;
+const MAXIMUM_CHUNKS: u32 = 16u32;
+const MAXIMUM_REGIONS: u32 = 16u32;
+const MAXIMUM_LOGICAL_BYTES: u32 = 67108864u32;
+const MAXIMUM_RESOURCE_BYTES: u32 = 4194304u32;
+
+fn Invalid() -> Streamingˉsha256ˉmanifestˉplan {
+    return Streamingˉsha256ˉmanifestˉplan(
+        false, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Allˉzero(Value: bytes, Offset: u32, Length: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Value, Offset + Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Streamingˉsha256ˉmanifestˉadmit(Manifest: bytes)
+    -> Streamingˉsha256ˉmanifestˉplan {
+    let Total: u32 = Bytesˉlength(Manifest);
+    if Total < MANIFEST_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 0u32) != 1397249623u32 ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 8u32) != Total {
+        return Invalid();
+    }
+    let Chunks: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 12u32);
+    let Regions: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 16u32);
+    let Logicalˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Manifest, 20u32);
+    if Chunks == 0u32 || Chunks > MAXIMUM_CHUNKS ||
+        Regions == 0u32 || Regions > MAXIMUM_REGIONS ||
+        Logicalˉbytes == 0u32 || Logicalˉbytes > MAXIMUM_LOGICAL_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 24u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Manifest, 28u32) != 0u32 ||
+        Total != MANIFEST_HEADER_BYTES + Chunks * CHUNK_RECORD_BYTES +
+            Regions * REGION_RECORD_BYTES {
+        return Invalid();
+    }
+
+    var Cursor: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Chunks {
+        let Chunkˉrecord: u32 =
+            MANIFEST_HEADER_BYTES + Index * CHUNK_RECORD_BYTES;
+        let Resourceˉoffset: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 8u32);
+        let Chunkˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 12u32);
+        let Resourceˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 16u32);
+        if Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord) != Index ||
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 4u32) != Cursor ||
+            Chunkˉbytes == 0u32 || Resourceˉbytes == 0u32 ||
+            Resourceˉbytes > MAXIMUM_RESOURCE_BYTES ||
+            Resourceˉoffset > Resourceˉbytes ||
+            Chunkˉbytes > Resourceˉbytes - Resourceˉoffset ||
+            Chunkˉbytes > Logicalˉbytes - Cursor {
+            return Invalid();
+        }
+        Cursor = Cursor + Chunkˉbytes;
+        Index = Index + 1u32;
+    }
+    if Cursor != Logicalˉbytes { return Invalid(); }
+
+    let Regionˉbase: u32 =
+        MANIFEST_HEADER_BYTES + Chunks * CHUNK_RECORD_BYTES;
+    var Previousˉend: u32 = 0u32;
+    Index = 0u32;
+    while Index < Regions {
+        let Regionˉrecord: u32 = Regionˉbase + Index * REGION_RECORD_BYTES;
+        let Offset: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 4u32);
+        let Length: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 8u32);
+        if Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord) != Index ||
+            Offset < Previousˉend || Offset >= Logicalˉbytes ||
+            Length == 0u32 || Length > Logicalˉbytes - Offset {
+            return Invalid();
+        }
+        Previousˉend = Offset + Length;
+        Index = Index + 1u32;
+    }
+    return Streamingˉsha256ˉmanifestˉplan(
+        true, Chunks, Regions, Logicalˉbytes, Regionˉbase
+    );
+}
+
+export fn Streamingˉsha256ˉmanifestˉdigest(Manifest: bytes) -> bytes {
+    let Plan = Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    if !Plan.Valid { return Bytesˉslice(Manifest, 0u32, 0u32); }
+    var State = Sha256.Foundationˉsha256ˉbegin(Manifest);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Manifest);
+    return Sha256.Foundationˉsha256ˉfinishˉraw(State);
+}
+
+export fn Streamingˉsha256ˉevidenceˉisˉvalid(
+    Manifest: bytes,
+    Evidence: bytes
+) -> bool {
+    let Plan = Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    if !Plan.Valid ||
+        Bytesˉlength(Evidence) !=
+            EVIDENCE_HEADER_BYTES + Plan.Regions * EVIDENCE_RECORD_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Evidence, 0u32) != 1162368599u32 ||
+        Bytesˉreadˉu32ˉlittle(Evidence, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Evidence, 8u32) != Bytesˉlength(Evidence) ||
+        Bytesˉreadˉu32ˉlittle(Evidence, 12u32) != Plan.Logicalˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Evidence, 16u32) != Plan.Regions ||
+        Bytesˉreadˉu32ˉlittle(Evidence, 20u32) != Bytesˉlength(Manifest) ||
+        !Bytesˉareˉequal(
+            Bytesˉslice(Evidence, 24u32, 32u32),
+            Streamingˉsha256ˉmanifestˉdigest(Manifest)
+        ) ||
+        !Allˉzero(Evidence, 56u32, 8u32) {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < Plan.Regions {
+        let Manifestˉrecord: u32 = Plan.Regionˉbase + Index * 12u32;
+        let Evidenceˉrecord: u32 = EVIDENCE_HEADER_BYTES + Index * 44u32;
+        if Bytesˉreadˉu32ˉlittle(Evidence, Evidenceˉrecord) != Index ||
+            Bytesˉreadˉu32ˉlittle(Evidence, Evidenceˉrecord + 4u32) !=
+                Bytesˉreadˉu32ˉlittle(Manifest, Manifestˉrecord + 4u32) ||
+            Bytesˉreadˉu32ˉlittle(Evidence, Evidenceˉrecord + 8u32) !=
+                Bytesˉreadˉu32ˉlittle(Manifest, Manifestˉrecord + 8u32) ||
+            Allˉzero(Evidence, Evidenceˉrecord + 12u32, 32u32) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}

@@ -55,10 +55,10 @@ was run.
   existing structural and relocation validator runs.
 - The new source remains 179 lines and reuses focused SHA-256 and startup-core
   modules rather than growing one large source file.
-- Decisions 0398 and 0399 now supply the raw runtime header and metadata;
-  metadata-request construction, service-bundle production, segment-request
-  orchestration, complete pipeline composition, Linux execution, promotion,
-  and the grouped gate remain.
+- Decisions 0398 through 0402 now supply the raw runtime header, metadata,
+  service-bundle segments, and metadata request. Ordered resource requests,
+  segment-request orchestration, complete pipeline composition, Linux
+  execution, promotion, and the grouped gate remain.
 
 ## Reconsideration triggers
 

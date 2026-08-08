@@ -73,7 +73,8 @@ next resource boundary, and
 [runtime-header production](Windvale-Native-Hosted-Container-Runtime.md) is now
 also standalone. The preceding
 [metadata constructor](Windvale-Native-Hosted-Container-Metadata.md) is
-standalone as well. Completing their replacement requires
-metadata-request/service-bundle evidence and composition of the planner,
-resource producers, segmenter, and publisher. Linux execution, promotion, and
-the grouped dual-host retirement gate remain pending.
+standalone as well. Native service-bundle and metadata-request producers now
+own their bounded construction and evidence. Completing replacement requires
+ordered resource/request orchestration and composition of the planner,
+producers, segmenter, and publisher. Linux execution, promotion, and the
+grouped dual-host retirement gate remain pending.

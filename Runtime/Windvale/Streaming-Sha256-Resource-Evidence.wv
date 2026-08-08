@@ -1,0 +1,274 @@
+module Runtimeˉstreamingˉsha256ˉresourceˉevidence profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+import Runtimeˉstreamingˉsha256ˉevidence as Evidence;
+
+export record Streamingˉsha256ˉresourceˉregionˉstate {
+    Valid: bool;
+    Region: u32;
+    Chunks: u32;
+    Offset: u32;
+    Length: u32;
+    Hashedˉbytes: u32;
+    Hashˉvalid: bool;
+    Totalˉbytes: u32;
+    Tail: bytes;
+    Hashˉzero: u32;
+    Hashˉone: u32;
+    Hashˉtwo: u32;
+    Hashˉthree: u32;
+    Hashˉfour: u32;
+    Hashˉfive: u32;
+    Hashˉsix: u32;
+    Hashˉseven: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Allˉzero(Value: bytes) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Value) {
+        if Bytesˉreadˉu8(Value, Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Overlapˉstart(Left: u32, Right: u32) -> u32 {
+    if Left > Right { return Left; }
+    return Right;
+}
+
+fn Overlapˉend(Left: u32, Right: u32) -> u32 {
+    if Left < Right { return Left; }
+    return Right;
+}
+
+export fn Streamingˉsha256ˉresourceˉname(Prefix: text, Index: u32) -> text {
+    return Textˉconcat(
+        Textˉconcat(Prefix, ".chunk-"),
+        U32ˉformat(Index)
+    );
+}
+
+export fn Streamingˉsha256ˉresourceˉprefixˉisˉvalid(Prefix: text) -> bool {
+    let Length: u32 = Bytesˉlength(Textˉtoˉutf8(Prefix));
+    if Length == 0u32 { return false; }
+    return Length <= 4076u32;
+}
+
+export fn Streamingˉsha256ˉresourceˉcount(Manifest: bytes) -> u32 {
+    let Plan = Evidence.Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    if !Plan.Valid { return 0u32; }
+    return Plan.Chunks;
+}
+
+export fn Streamingˉsha256ˉresourceˉregionˉcount(Manifest: bytes) -> u32 {
+    let Plan = Evidence.Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    if !Plan.Valid { return 0u32; }
+    return Plan.Regions;
+}
+
+export fn Streamingˉsha256ˉresourceˉlogicalˉbytes(Manifest: bytes) -> u32 {
+    let Plan = Evidence.Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    if !Plan.Valid { return 0u32; }
+    return Plan.Logicalˉbytes;
+}
+
+export fn Streamingˉsha256ˉresourceˉregionˉbase(Manifest: bytes) -> u32 {
+    let Plan = Evidence.Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    if !Plan.Valid { return 0u32; }
+    return Plan.Regionˉbase;
+}
+
+export fn Streamingˉsha256ˉresourceˉevidenceˉbegin(Manifest: bytes) -> bytes {
+    let Plan = Evidence.Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    if !Plan.Valid { return Empty(Manifest); }
+    let Manifestˉdigest: bytes =
+        Evidence.Streamingˉsha256ˉmanifestˉdigest(Manifest);
+    if Bytesˉlength(Manifestˉdigest) != 32u32 { return Empty(Manifest); }
+
+    var Output: bytes = Empty(Manifest);
+    Output = Appendˉu32(Output, 1162368599u32);
+    Output = Appendˉu32(Output, 1u32);
+    Output = Appendˉu32(Output, 64u32 + Plan.Regions * 44u32);
+    Output = Appendˉu32(Output, Plan.Logicalˉbytes);
+    Output = Appendˉu32(Output, Plan.Regions);
+    Output = Appendˉu32(Output, Bytesˉlength(Manifest));
+    Output = Bytesˉconcat(Output, Manifestˉdigest);
+    Output = Appendˉu32(Output, 0u32);
+    return Appendˉu32(Output, 0u32);
+}
+
+export fn Streamingˉsha256ˉresourceˉregionˉbegin(
+    Manifest: bytes,
+    Region: u32
+) -> Streamingˉsha256ˉresourceˉregionˉstate {
+    let Plan = Evidence.Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    let Initial = Sha256.Foundationˉsha256ˉbegin(Manifest);
+    if !Plan.Valid || Region >= Plan.Regions {
+        return Streamingˉsha256ˉresourceˉregionˉstate(
+            false, Region, 0u32, 0u32, 0u32, 0u32,
+            Initial.Valid, Initial.Totalˉbytes, Initial.Tail,
+            Initial.Hashˉzero, Initial.Hashˉone, Initial.Hashˉtwo,
+            Initial.Hashˉthree, Initial.Hashˉfour, Initial.Hashˉfive,
+            Initial.Hashˉsix, Initial.Hashˉseven
+        );
+    }
+    let Record: u32 = Plan.Regionˉbase + Region * 12u32;
+    return Streamingˉsha256ˉresourceˉregionˉstate(
+        true,
+        Region,
+        Plan.Chunks,
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 4u32),
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 8u32),
+        0u32,
+        Initial.Valid, Initial.Totalˉbytes, Initial.Tail,
+        Initial.Hashˉzero, Initial.Hashˉone, Initial.Hashˉtwo,
+        Initial.Hashˉthree, Initial.Hashˉfour, Initial.Hashˉfive,
+        Initial.Hashˉsix, Initial.Hashˉseven
+    );
+}
+
+fn Invalid(State: Streamingˉsha256ˉresourceˉregionˉstate)
+    -> Streamingˉsha256ˉresourceˉregionˉstate {
+    return Streamingˉsha256ˉresourceˉregionˉstate(
+        false,
+        State.Region,
+        State.Chunks,
+        State.Offset,
+        State.Length,
+        State.Hashedˉbytes,
+        State.Hashˉvalid, State.Totalˉbytes, State.Tail,
+        State.Hashˉzero, State.Hashˉone, State.Hashˉtwo,
+        State.Hashˉthree, State.Hashˉfour, State.Hashˉfive,
+        State.Hashˉsix, State.Hashˉseven
+    );
+}
+
+export fn Streamingˉsha256ˉresourceˉregionˉupdate(
+    State: Streamingˉsha256ˉresourceˉregionˉstate,
+    Manifest: bytes,
+    Chunk: u32,
+    Resource: bytes
+) -> Streamingˉsha256ˉresourceˉregionˉstate {
+    if !State.Valid || Chunk >= State.Chunks {
+        return Invalid(State);
+    }
+    let Chunkˉrecord: u32 = 32u32 + Chunk * 20u32;
+    if Bytesˉlength(Resource) !=
+        Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 16u32) {
+        return Invalid(State);
+    }
+    let Chunkˉoffset: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 4u32);
+    let Chunkˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 12u32);
+    let Start: u32 = Overlapˉstart(State.Offset, Chunkˉoffset);
+    let End: u32 = Overlapˉend(
+        State.Offset + State.Length,
+        Chunkˉoffset + Chunkˉbytes
+    );
+    var Hash: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉstream(
+            State.Hashˉvalid,
+            State.Totalˉbytes,
+            State.Tail,
+            State.Hashˉzero,
+            State.Hashˉone,
+            State.Hashˉtwo,
+            State.Hashˉthree,
+            State.Hashˉfour,
+            State.Hashˉfive,
+            State.Hashˉsix,
+            State.Hashˉseven
+        );
+    var Hashedˉbytes: u32 = State.Hashedˉbytes;
+    if Start < End {
+        let Resourceˉoffset: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 8u32) +
+            Start - Chunkˉoffset;
+        Hash = Sha256.Foundationˉsha256ˉupdate(
+            Hash,
+            Bytesˉslice(Resource, Resourceˉoffset, End - Start)
+        );
+        Hashedˉbytes = Hashedˉbytes + End - Start;
+    }
+    return Streamingˉsha256ˉresourceˉregionˉstate(
+        Hash.Valid,
+        State.Region,
+        State.Chunks,
+        State.Offset,
+        State.Length,
+        Hashedˉbytes,
+        Hash.Valid, Hash.Totalˉbytes, Hash.Tail,
+        Hash.Hashˉzero, Hash.Hashˉone, Hash.Hashˉtwo,
+        Hash.Hashˉthree, Hash.Hashˉfour, Hash.Hashˉfive,
+        Hash.Hashˉsix, Hash.Hashˉseven
+    );
+}
+
+export fn Streamingˉsha256ˉresourceˉregionˉfinish(
+    State: Streamingˉsha256ˉresourceˉregionˉstate
+) -> bytes {
+    let Hash: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉstream(
+            State.Hashˉvalid,
+            State.Totalˉbytes,
+            State.Tail,
+            State.Hashˉzero,
+            State.Hashˉone,
+            State.Hashˉtwo,
+            State.Hashˉthree,
+            State.Hashˉfour,
+            State.Hashˉfive,
+            State.Hashˉsix,
+            State.Hashˉseven
+        );
+    if !State.Valid || State.Hashedˉbytes != State.Length {
+        return Empty(Hash.Tail);
+    }
+    let Digest: bytes = Sha256.Foundationˉsha256ˉfinishˉraw(Hash);
+    if Bytesˉlength(Digest) != 32u32 || Allˉzero(Digest) {
+        return Empty(Hash.Tail);
+    }
+    return Digest;
+}
+
+export fn Streamingˉsha256ˉresourceˉevidenceˉappend(
+    Output: bytes,
+    Manifest: bytes,
+    Region: u32,
+    Digest: bytes
+) -> bytes {
+    let Plan = Evidence.Streamingˉsha256ˉmanifestˉadmit(Manifest);
+    if !Plan.Valid || Region >= Plan.Regions ||
+        Bytesˉlength(Output) != 64u32 + Region * 44u32 ||
+        Bytesˉlength(Digest) != 32u32 || Allˉzero(Digest) {
+        return Empty(Output);
+    }
+    let Record: u32 = Plan.Regionˉbase + Region * 12u32;
+    var Result: bytes = Appendˉu32(Output, Region);
+    Result = Appendˉu32(
+        Result,
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 4u32)
+    );
+    Result = Appendˉu32(
+        Result,
+        Bytesˉreadˉu32ˉlittle(Manifest, Record + 8u32)
+    );
+    return Bytesˉconcat(Result, Digest);
+}
+
+export fn Streamingˉsha256ˉresourceˉevidenceˉisˉvalid(
+    Manifest: bytes,
+    Output: bytes
+) -> bool {
+    return Evidence.Streamingˉsha256ˉevidenceˉisˉvalid(Manifest, Output);
+}

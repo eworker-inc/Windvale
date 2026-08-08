@@ -352,6 +352,15 @@
       Include="../../Runtime/Windvale/Native-Streaming-Sha256-Evidence-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Streaming-Sha256-Evidence-Tool.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Streaming-Sha256-Evidence-Core.wv"
+      LogicalName="Windvale.Seed.Tests.Streaming-Sha256-Evidence-Core.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Streaming-Sha256-Resource-Evidence.wv"
+      LogicalName="Windvale.Seed.Tests.Streaming-Sha256-Resource-Evidence.wv" />
+    <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Tool-Metadata-Request-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Metadata-Request-Tool.wv" />
+    <EmbeddedResource
       Include="../../Foundation/Sha256-Compression.wv"
       LogicalName="Windvale.Seed.Tests.Sha256-Compression.wv" />
     <EmbeddedResource

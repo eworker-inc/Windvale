@@ -87,9 +87,11 @@ multi-value update, padding, and raw digest encoding. A compression call builds
 only its 256-byte schedule and returns before the next block, so dynamic state
 does not grow with the logical input.
 
-The evidence shell is separate from both modules. It owns resource naming,
-manifest admission, region-to-chunk overlap, immutable snapshot acquisition,
-envelope construction, and no-write failure behavior.
+`Streaming-Sha256-Evidence-Core.wv` owns manifest/evidence admission, while
+`Streaming-Sha256-Resource-Evidence.wv` owns portable region-to-chunk state and
+envelope construction. The small hosted shell owns only resource acquisition,
+path alias rejection, and no-write failure behavior. The same portable state is
+reused by the native metadata-request producer.
 
 ## Targets and exact identities
 
@@ -98,9 +100,9 @@ envelope construction, and no-write failure behavior.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Streaming evidence WVB | 28,826 | `9601b57c570b1cad2e14d72d815aeefda2de08a957790077aedbce438402e745` |
-| Windows streaming evidence tool | 382,976 | `988d390fe4d62cacd36ce810036553a3446d2cdfb9553a85337eeb03e2b53bb0` |
-| Linux streaming evidence tool | 385,024 | `0f666286fb8e1c8b6b0f45d0afe479134680412b5506d6bf5218c04fe8f59cb4` |
+| Streaming evidence WVB | 39,483 | `9ea136c44f76d9a53474d81e989f38cf15ffa8dc267638e2224e20f733205e6b` |
+| Windows streaming evidence tool | 646,656 | `e69a9a4c0a33d4bc05d98e5c977ba537715081d08d8c8493da87990989547af3` |
+| Linux streaming evidence tool | 647,168 | `eb1ba149a94741801732e53773f566aee752a19510d22f8e2768def7614d396c` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring; the
@@ -110,8 +112,8 @@ product process and all digest decisions are Windvale-owned.
 
 Large immutable resource sequences and their ordered identity regions can now
 produce manifest-bound raw SHA-256 evidence without a managed runtime process.
-The next slice must bind real ordered `WVSI` responses to a canonical service
-bundle plan, construct the exact 11-region manifest, consume `WVHE` into the
-576-byte `WVHM` request, and invoke the existing native metadata constructor.
-Linux execution, normal-path promotion, and the final grouped retirement gate
-remain pending.
+The [native metadata-request producer](Windvale-Native-Hosted-Metadata-Request.md)
+reuses this state to compute the eleven actual bundle leaves and construct
+`WVHM` without trusting a loose evidence file. Ordered `WVSI` orchestration,
+complete composition, Linux execution, normal-path promotion, and the final
+grouped retirement gate remain pending.

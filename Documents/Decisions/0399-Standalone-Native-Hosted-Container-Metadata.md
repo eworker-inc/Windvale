@@ -1,9 +1,10 @@
 # Decision 0399: Standalone native hosted-container metadata
 
-- Status: Implemented candidate; native request evidence and pipeline integration pending
+- Status: Implemented candidate; native request supplied by Decision 0402
 - Date: 2026-08-08
 - Advances: [Decision 0398](0398-Standalone-Native-Hosted-Container-Runtime.md), [Decision 0383](0383-Windvale-Owned-Hosted-Tool-Metadata-Construction.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted-container metadata constructor](../../Specifications/Windvale-Native-Hosted-Container-Metadata.md)
+- Advanced by: [Decision 0402](0402-Native-Hosted-Metadata-Request.md)
 
 ## Context
 
@@ -49,10 +50,11 @@ WVB through the native front door. No broader verifier was run.
   into Decision 0398's raw metadata input.
 - Metadata policy remains in the existing focused portable modules; the hosted
   shell is 106 lines.
-- Decision 0400 now produces one immutable service-bundle segment response;
-  native resource acquisition, ordered bundle requests, metadata-request
-  construction from that evidence, segment requests, complete composition,
-  Linux execution, promotion, and the grouped gate remain.
+- Decision 0400 produces immutable service-bundle segment responses, and
+  Decision 0402 recomputes their planned identity leaves and constructs the
+  exact metadata request. Ordered resource/request orchestration, segment
+  requests, complete composition, Linux execution, promotion, and the grouped
+  gate remain.
 
 ## Reconsideration triggers
 

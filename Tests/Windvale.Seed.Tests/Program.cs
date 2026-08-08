@@ -1433,6 +1433,7 @@ internal static partial class Program
         new("native hosted-container runtime reproduces the exact initial header", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉruntimeˉruns),
         new("native hosted-container metadata reproduces the exact canonical record", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉmetadataˉruns),
         new("native hosted service-bundle process reproduces exact materialization", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉserviceˉbundleˉruns),
+        new("native hosted metadata request recomputes exact bundle evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉmetadataˉrequestˉruns),
         new("native streaming SHA-256 evidence crosses the byte-value limit", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉstreamingˉsha256ˉevidenceˉruns),
         new("Windvale admits immutable hosted-container segment sets", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉsegmentˉsetˉruns),
         new("Windvale constructs hosted-tool runtime headers", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉtoolˉruntimeˉheaderˉruns),

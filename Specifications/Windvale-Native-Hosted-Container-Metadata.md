@@ -8,11 +8,12 @@ standalone native Windows/Linux command. It consumes the existing exact
 1,024-byte canonical `WVH* 1` metadata record consumed by the standalone
 runtime-header producer.
 
-The command does not construct or trust resource evidence implicitly. A prior
-boundary must still acquire the verified native fragment and ten service
-leaves, calculate their exact extents and SHA-256 values, and construct the
-576-byte request. This command owns request validation, canonical metadata
-policy, response admission, and raw metadata output.
+The command does not construct or trust resource evidence implicitly. The
+paired [native metadata-request producer](Windvale-Native-Hosted-Metadata-Request.md)
+now acquires immutable bundle chunks, recomputes the fragment and ten service
+digests, and constructs the 576-byte request in its own process. This command
+owns request validation, canonical metadata policy, response admission, and raw
+metadata output.
 
 ## Command contract
 
@@ -62,7 +63,8 @@ layout and identity wiring.
 
 The standalone
 [service-bundle producer](Windvale-Native-Hosted-Service-Bundle.md) now emits
-one exact immutable segment response. Native acquisition of fragment/service
-resources, ordered bundle requests, metadata-request construction from that
-evidence, segment-request orchestration, complete pipeline composition, Linux
-execution, promotion, and the grouped dual-host retirement gate remain pending.
+one exact immutable segment response, and the native metadata-request producer
+binds admitted bundle resources to `WVHM`. Ordered bundle-request/resource
+orchestration, segment-request orchestration, complete pipeline composition,
+Linux execution, promotion, and the grouped dual-host retirement gate remain
+pending.

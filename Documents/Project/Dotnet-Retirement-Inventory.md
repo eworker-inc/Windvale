@@ -511,8 +511,17 @@ One 20,144-byte Windvale tool validates `WVSQ 2`, constructs and admits
 `WVSI 2`, and writes the exact immutable response consumed by the next evidence
 boundary. Paired packages and public CLI targets exist, and current-host
 execution loads no CLR. Native resource acquisition, ordered bundle requests,
-metadata-request evidence, complete composition, Linux execution, promotion,
-and the grouped gate remain.
+complete composition, Linux execution, promotion, and the grouped gate remain.
+
+[Decision 0402](../Decisions/0402-Native-Hosted-Metadata-Request.md) removes
+managed digest projection and `WVHM` request construction from the candidate
+pipeline. One 54,135-byte Windvale tool admits the canonical publication plan
+and manifest, reads the actual immutable chunk resources, recomputes the native
+fragment and ten service SHA-256 leaves, and emits the exact 576-byte request.
+Paired packages and public CLI targets exist, current-host execution loads no
+CLR, and the native build front door reproduces the Stage 0 WVB exactly.
+Ordered service-bundle resource/request orchestration, segment requests,
+complete composition, Linux execution, promotion, and the grouped gate remain.
 
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution

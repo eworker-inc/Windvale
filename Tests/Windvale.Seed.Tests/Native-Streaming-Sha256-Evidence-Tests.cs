@@ -28,6 +28,12 @@ internal static partial class Program
                 Source(
                     "Foundation/Sha256-Streaming.wv",
                     "Sha256-Streaming.wv"),
+                Source(
+                    "Runtime/Windvale/Streaming-Sha256-Evidence-Core.wv",
+                    "Streaming-Sha256-Evidence-Core.wv"),
+                Source(
+                    "Runtime/Windvale/Streaming-Sha256-Resource-Evidence.wv",
+                    "Streaming-Sha256-Resource-Evidence.wv"),
             ]);
         True(Compiled.Success, string.Join(" | ", Compiled.Diagnostics));
         Equal(

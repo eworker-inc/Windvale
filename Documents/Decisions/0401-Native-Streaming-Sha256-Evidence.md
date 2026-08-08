@@ -1,9 +1,10 @@
 # Decision 0401: Native streaming SHA-256 evidence
 
-- Status: Implemented candidate; hosted metadata-request integration pending
+- Status: Implemented candidate; advanced by Decision 0402
 - Date: 2026-08-08
 - Advances: [Decision 0400](0400-Standalone-Native-Hosted-Service-Bundle.md), [Decision 0399](0399-Standalone-Native-Hosted-Container-Metadata.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native streaming SHA-256 evidence](../../Specifications/Windvale-Native-Streaming-Sha256-Evidence.md)
+- Advanced by: [Decision 0402](0402-Native-Hosted-Metadata-Request.md)
 
 ## Context
 
@@ -42,12 +43,12 @@ digests.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Streaming evidence WVB | 28,826 | `9601b57c570b1cad2e14d72d815aeefda2de08a957790077aedbce438402e745` |
-| Windows streaming evidence tool | 382,976 | `988d390fe4d62cacd36ce810036553a3446d2cdfb9553a85337eeb03e2b53bb0` |
-| Linux streaming evidence tool | 385,024 | `0f666286fb8e1c8b6b0f45d0afe479134680412b5506d6bf5218c04fe8f59cb4` |
+| Streaming evidence WVB | 39,483 | `9ea136c44f76d9a53474d81e989f38cf15ffa8dc267638e2224e20f733205e6b` |
+| Windows streaming evidence tool | 646,656 | `e69a9a4c0a33d4bc05d98e5c977ba537715081d08d8c8493da87990989547af3` |
+| Linux streaming evidence tool | 647,168 | `eb1ba149a94741801732e53773f566aee752a19510d22f8e2768def7614d396c` |
 
-The reviewed focused test passes 1/1 in 16.038 seconds after a 9.50-second
-zero-warning incremental build. It hashes three regions over a 4,194,401-byte
+The reviewed focused test passes 1/1 in 15.231 seconds on the final shared
+source state. It hashes three regions over a 4,194,401-byte
 logical sequence split across two immutable resources. The first region alone
 is 4,194,200 bytes and crosses the resource boundary. Independent platform SHA
 checks match the manifest and all three raw region digests. The test also pins
@@ -61,10 +62,10 @@ the WVB through the native front door. No broader verifier was run.
   oversized Windvale value or a managed hashing process.
 - Digest numbers are outputs bound to actual immutable resources and an exact
   manifest; they are not behavioral test oracles.
-- Compression, streaming state, and hosted resource orchestration remain three
-  reviewable source files rather than one large mixed owner.
-- Construction of the real bundle manifest and `WVHM` request remains the next
-  retirement slice; this decision does not promote or delete the managed path.
+- Compression, streaming state, evidence admission, portable resource state,
+  and hosted I/O remain focused owners rather than one large mixed source.
+- Decision 0402 now recomputes actual bundle evidence and constructs `WVHM` in
+  one native process; this decision still does not promote or delete Stage 0.
 
 ## Reconsideration triggers
 

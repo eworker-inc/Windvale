@@ -1,5 +1,6 @@
 windvale-project 1
-root "Runtime/Windvale/Native-Streaming-Sha256-Evidence-Tool.wv"
+root "Runtime/Windvale/Native-Hosted-Tool-Metadata-Request-Tool.wv"
+source "Compiler/Windvale/Native-Publication-Core.wv"
 source "Foundation/Byte-Construction.wv"
 source "Foundation/Sha256-Compression.wv"
 source "Foundation/Sha256-Streaming.wv"

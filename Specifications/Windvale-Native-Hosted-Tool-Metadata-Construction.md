@@ -99,8 +99,9 @@ former C# constructor is retained under the explicit `Buildˉstage0` name for
 differential and recovery evidence and is not called by normal packaging. The
 standalone
 [metadata constructor](Windvale-Native-Hosted-Container-Metadata.md) now owns
-request dispatch, response admission, and raw metadata output. Managed request
-projection remains until a native owner combines the new
-[streaming SHA-256 evidence](Windvale-Native-Streaming-Sha256-Evidence.md) with
-the actual fragment/service plan and constructs the exact `WVHM` request. The
-Stage 0 oracle leaves the product tree only after the final recovery archive.
+request dispatch, response admission, and raw metadata output. The
+[native metadata-request producer](Windvale-Native-Hosted-Metadata-Request.md)
+now combines the publication plan with actual immutable chunk bytes, recomputes
+all eleven manifest-bound SHA-256 leaves, and constructs the exact `WVHM`
+request without managed projection. The Stage 0 oracle leaves the product tree
+only after the final recovery archive.

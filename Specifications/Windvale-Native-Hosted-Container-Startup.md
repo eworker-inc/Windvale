@@ -74,12 +74,12 @@ machine code or relocation algorithm is copied into the hosted shell. The new
 C# target writer is deletion-bound package layout and identity wiring.
 
 The ordinary managed hosted-application builders still invoke the retained
-fragment internally. Completing their replacement requires native production
-or immutable acquisition of metadata-request, service-bundle, and
-materialization resources; the standalone
+fragment internally. Native service-bundle and metadata-request producers now
+own their bounded outputs; ordered acquisition/request orchestration remains.
+The standalone
 [runtime-header producer](Windvale-Native-Hosted-Container-Runtime.md) now owns
 the initial header, and the standalone
 [metadata constructor](Windvale-Native-Hosted-Container-Metadata.md) owns raw
 metadata output. Composition of the planner, resource producers, segmenter, and
-publisher, Linux execution, promotion, and the grouped dual-host retirement gate
-remain pending.
+publisher, Linux execution, promotion, and the grouped dual-host retirement
+gate remain pending.

@@ -154,9 +154,9 @@ set feeds the native durable publisher directly.
 Normal construction now follows one ordered path:
 
 1. Windvale constructs metadata and the initial runtime header from exact
-   admitted requests. Paired native commands now turn an exact metadata request
-   into canonical metadata and then the exact raw planner input. The upstream
-   seam still binds actual bundle evidence into the metadata request.
+   admitted requests. A native producer now recomputes actual bundle evidence
+   and constructs the exact metadata request; paired native commands turn that
+   request into canonical metadata and then the exact raw planner input.
    A standalone native producer can now construct each exact service-bundle
    segment response; resource acquisition and ordered requests remain upstream.
 2. The planner derives all file/virtual layout and startup targets; the paired
@@ -184,8 +184,8 @@ platform-byte producer, segmenter, and publisher are composed into their
 replacement process pipeline. The standalone startup producer also consumes the
 plan without managed target projection. Metadata and the runtime header now
 have their own processes; service-bundle response production is also native.
-Bundle-resource/request evidence, metadata-request construction, and
-segment-request orchestration still need native ownership. The C# segment-set
+Ordered bundle-resource/request orchestration and segment-request orchestration
+still need native ownership. The C# segment-set
 fixture/harness is temporary transition evidence rather than product logic.
 Linux-host execution and grouped dual-host qualification remain deferred to the
 final retirement gate.
