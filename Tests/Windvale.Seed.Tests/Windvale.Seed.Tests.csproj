@@ -403,6 +403,9 @@
       Include="../../Linker/Windvale/Native-Hosted-Container-Segment-Set-Admission-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segment-Set-Admission-Tool.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Native-Hosted-Container-Segment-Manifest-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segment-Manifest-Tool.wv" />
+    <EmbeddedResource
       Include="../../Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Tool-Metadata-Admission.wv" />
     <EmbeddedResource

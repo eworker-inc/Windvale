@@ -91,6 +91,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native hosted fixed-service acquisition](Windvale-Native-Hosted-Fixed-Services.md)
 - [Native hosted orchestration control](Windvale-Native-Hosted-Orchestration-Control.md)
 - [Native hosted-container source set](Windvale-Native-Hosted-Container-Source-Set.md)
+- [Native hosted-container segment manifest](Windvale-Native-Hosted-Container-Segment-Manifest.md)
 - [Native hosted enum processes](Windvale-Native-Hosted-Enum-Processes.md)
 - [Native hosted metadata-request producer](Windvale-Native-Hosted-Metadata-Request.md)
 - [Native hosted-container segmenter](Windvale-Native-Hosted-Container-Segmenter.md)

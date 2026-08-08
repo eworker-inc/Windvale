@@ -640,6 +640,14 @@ payloads segmented, and emits the exact six-region `WVSG` consumed by Decision
 0404. The final segment-set manifest, digest-bound process ordering, private
 teardown, Linux execution, promotion, and grouped qualification remain.
 
+[Decision 0412](../Decisions/0412-Native-Hosted-Container-Segment-Manifest.md)
+closes the remaining final segment-set format seam. The producer binds each
+canonical `WVHT`/`WVHU` resource and emits self-admitted `WVHM`; the existing
+publisher-side admission still reconstructs and compares every response
+payload. Hosted-container format ownership is now native, while digest-bound
+process ordering, private lifecycle, Linux execution, promotion, and grouped
+qualification remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

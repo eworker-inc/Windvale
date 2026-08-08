@@ -1,0 +1,199 @@
+module Nativeˉhostedˉcontainerˉsegmentˉmanifestˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
+import Linkerˉnativeˉhostedˉcontainerˉsegmentˉsetˉcore as Segmentˉset;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉsegmentˉmanifestˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    return Bytesˉareˉequal(Textˉtoˉutf8(Left), Textˉtoˉutf8(Right));
+}
+
+fn Resourceˉname(Prefix: text, Kind: text, Index: u32) -> text {
+    return Textˉconcat(Textˉconcat(Prefix, Kind), U32ˉformat(Index));
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container segment manifest status=",
+            Enumˉname(
+                Nativeˉhostedˉcontainerˉsegmentˉmanifestˉstatus.Rejected
+            )
+        )
+    );
+    return 2;
+}
+
+fn Requestˉisˉvalid(
+    Plan: bytes,
+    Request: bytes,
+    Offset: u32,
+    Segmentˉbytes: u32
+) -> bool {
+    if Bytesˉlength(Request) < 160u32 ||
+        Bytesˉlength(Request) > 4194304u32 ||
+        Bytesˉreadˉu32ˉlittle(Request, 0u32) != 1414026839u32 ||
+        Bytesˉreadˉu32ˉlittle(Request, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Request, 8u32) != Bytesˉlength(Request) ||
+        Bytesˉreadˉu32ˉlittle(Request, 12u32) != 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Request, 16u32) != Offset ||
+        Bytesˉreadˉu32ˉlittle(Request, 20u32) != Segmentˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Request, 28u32) != 0u32 ||
+        !Bytesˉareˉequal(
+            Bytesˉslice(Request, 32u32, 128u32),
+            Bytesˉslice(Plan, 0u32, 128u32)
+        ) {
+        return false;
+    }
+    return Bytesˉlength(Request) == 160u32 +
+        Bytesˉreadˉu32ˉlittle(Request, 24u32);
+}
+
+fn Responseˉisˉvalid(
+    Requestˉbytes: u32,
+    Applicationˉbytes: u32,
+    Response: bytes,
+    Offset: u32,
+    Segmentˉbytes: u32
+) -> bool {
+    if Bytesˉlength(Response) != 40u32 + Segmentˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1430804055u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Bytesˉlength(Response) ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != Requestˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) != 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 24u32) != Applicationˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 28u32) != Offset ||
+        Bytesˉreadˉu32ˉlittle(Response, 32u32) != Segmentˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 36u32) != 6u32 {
+        return false;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 3u32 {
+        diagnostic.write_line(
+            "Usage: wvhostsegmentmanifest <plan.wvcd> <segment-prefix> <manifest.wvhm>"
+        );
+        return 64;
+    }
+    let Planˉpath: text = process.argument(0u32);
+    let Prefix: text = process.argument(1u32);
+    let Outputˉpath: text = process.argument(2u32);
+    let Prefixˉbytes: u32 = Bytesˉlength(Textˉtoˉutf8(Prefix));
+    if Prefixˉbytes == 0u32 || Prefixˉbytes > 4076u32 ||
+        Pathsˉareˉequal(Planˉpath, Outputˉpath) {
+        return Reject();
+    }
+    let Plan: bytes = file.read_bytes(Planˉpath);
+    if Bytesˉlength(Plan) < 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan, 8u32) != Bytesˉlength(Plan) ||
+        !Segmentation.Nativeˉhostedˉcontainerˉplanˉisˉvalid(
+            Bytesˉslice(Plan, 0u32, 128u32)
+        ) {
+        return Reject();
+    }
+    let Applicationˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Plan, 28u32);
+    var Segments: u32 = Applicationˉbytes / 4194144u32;
+    if Applicationˉbytes % 4194144u32 != 0u32 {
+        Segments = Segments + 1u32;
+    }
+    if Segments == 0u32 || Segments > 31u32 { return Reject(); }
+
+    var Entries: bytes = Empty(Plan);
+    var Index: u32 = 0u32;
+    var Offset: u32 = 0u32;
+    while Index < Segments {
+        let Requestˉpath: text = Resourceˉname(Prefix, ".request-", Index);
+        let Responseˉpath: text = Resourceˉname(Prefix, ".response-", Index);
+        if Pathsˉareˉequal(Requestˉpath, Planˉpath) ||
+            Pathsˉareˉequal(Requestˉpath, Outputˉpath) ||
+            Pathsˉareˉequal(Responseˉpath, Planˉpath) ||
+            Pathsˉareˉequal(Responseˉpath, Outputˉpath) {
+            return Reject();
+        }
+        var Segmentˉbytes: u32 = Applicationˉbytes - Offset;
+        if Segmentˉbytes > 4194144u32 { Segmentˉbytes = 4194144u32; }
+        let Request: bytes = file.read_bytes(Requestˉpath);
+        let Response: bytes = file.read_bytes(Responseˉpath);
+        if !Requestˉisˉvalid(Plan, Request, Offset, Segmentˉbytes) ||
+            !Responseˉisˉvalid(
+                Bytesˉlength(Request), Applicationˉbytes, Response,
+                Offset, Segmentˉbytes
+            ) {
+            return Reject();
+        }
+        Entries = Appendˉu32(Entries, Index);
+        Entries = Appendˉu32(Entries, Offset);
+        Entries = Appendˉu32(Entries, Segmentˉbytes);
+        Entries = Appendˉu32(Entries, Bytesˉlength(Request));
+        Entries = Appendˉu32(Entries, Bytesˉlength(Response));
+        Offset = Offset + Segmentˉbytes;
+        Index = Index + 1u32;
+    }
+    if Offset != Applicationˉbytes { return Reject(); }
+    var Result: bytes = Empty(Entries);
+    Result = Appendˉu32(Result, 1296586327u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 32u32 + Bytesˉlength(Entries));
+    Result = Appendˉu32(Result, Applicationˉbytes);
+    Result = Appendˉu32(Result, Segments);
+    Result = Appendˉu32(Result, 4194144u32);
+    Result = Appendˉu32(Result, Bytesˉlength(Plan));
+    Result = Appendˉu32(Result, 0u32);
+    Result = Bytesˉconcat(Result, Entries);
+    let Admitted: Segmentˉset.Nativeˉhostedˉcontainerˉsegmentˉsetˉplan =
+        Segmentˉset.Nativeˉhostedˉcontainerˉsegmentˉsetˉadmit(Plan, Result);
+    if Admitted.Status !=
+            Segmentˉset.Nativeˉhostedˉcontainerˉsegmentˉsetˉstatus.Valid ||
+        Admitted.Applicationˉbytes != Applicationˉbytes ||
+        Admitted.Segments != Segments {
+        return Reject();
+    }
+    file.write_bytes(Outputˉpath, Result);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted container segment manifest status=Valid segments=",
+                U32ˉformat(Segments)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Result)))
+        )
+    );
+    return 0;
+}

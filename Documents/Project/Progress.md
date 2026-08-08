@@ -126,8 +126,11 @@ into one focused Windvale-native process. Decision 0411 then admits all final
 container producer responses, verifies their bundle payloads against runtime-
 bound SHA-256 evidence, emits bounded raw chunks, and constructs the exact six-
 region `WVSG` without managed extraction or concatenation. Native final
-segment-set manifest construction, ordered process/private-resource lifecycle,
-Linux execution, promotion, and the grouped gate remain.
+segment-set manifest construction follows in Decision 0412: exact final
+`WVHT`/`WVHU` resources now become a self-admitted `WVHM` through a paired
+native process. All identified hosted-container binary formats therefore have
+native owners. Ordered process/private-resource lifecycle, Linux execution,
+promotion, and the grouped gate remain.
 
 The current unqualified language candidate advances Stage 0 and the Windvale-written compiler together through WVB 1.11: inference and trailing commas; constants; privacy, aliases, qualified identities, and metadata; named records and `else if`; exhaustive `match`; nominal payload variants and recoverable-result shapes; bounded sequences, affine builders, and `for`; loop control and short-circuit flow; compound assignment; checked division/remainder; bitwise operations and shifts; and exact text/bytes equality. The ordinary native compiler path, deterministic artifacts, editor grammar, and focused compiler/runtime/WebAssembly cases are synchronized. Resource-lifetime syntax remains at its explicit design gate until provider values, cleanup ordering/failures, and immutable manifest representation are decided.
 

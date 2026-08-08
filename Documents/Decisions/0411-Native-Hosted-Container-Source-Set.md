@@ -39,10 +39,10 @@ execution without CLR loading. No broad local verifier ran.
 
 The final container-segment request path can now consume native producer
 outputs without managed response extraction, managed bundle concatenation, or
-managed source geometry. The remaining binary-format seam is construction of
-the final segment-set `WVHM 1`; the remaining lifecycle work is digest-bound
-tool selection, ordered bounded iteration, private cleanup, Linux execution,
-promotion, and grouped qualification.
+managed source geometry. [Decision 0412](0412-Native-Hosted-Container-Segment-Manifest.md)
+now owns the final segment-set `WVHM 1`. Remaining lifecycle work is digest-
+bound tool selection, ordered bounded iteration, private cleanup, Linux
+execution, promotion, and grouped qualification.
 
 ## Reconsideration triggers
 

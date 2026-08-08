@@ -600,6 +600,15 @@ ordinals, and writes the self-admitted manifest last. Native final segment-set
 `WVHM` construction, digest-bound ordered child execution, private cleanup,
 Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0412](../Decisions/0412-Native-Hosted-Container-Segment-Manifest.md)
+removes the last identified managed hosted-container format seam. One paired
+native command derives canonical final segment resources from the admitted
+plan, binds exact `WVHT`/`WVHU` envelopes and lengths, constructs `WVHM`, and
+self-admits it through the existing segment-set core. The downstream native
+admission/publisher remains the independent payload gate. Digest-bound ordered
+child execution, private cleanup, complete composition, Linux execution,
+promotion, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

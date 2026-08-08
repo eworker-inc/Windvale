@@ -74,7 +74,8 @@ service bundle, copy final raw regions, or construct the six-region `WVSG` in
 the candidate pipeline. The following native segment-request producer consumes
 the result without a format adapter.
 
-The remaining composition work includes digest-bound tool acquisition, ordered
-child execution, bounded bundle and application segment iteration, native
-construction of the final `WVHM 1` segment-set manifest, private resource
-cleanup, Linux execution, promotion, and the grouped retirement gate.
+The [native segment-manifest producer](Windvale-Native-Hosted-Container-Segment-Manifest.md)
+now supplies the final `WVHM 1`. Remaining composition work is digest-bound
+tool acquisition, ordered child execution, bounded bundle and application
+segment iteration, private cleanup, Linux execution, promotion, and the grouped
+retirement gate.

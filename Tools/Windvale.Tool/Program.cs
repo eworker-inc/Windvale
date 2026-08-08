@@ -146,6 +146,8 @@ internal static class Program
             "linux-x64-hosted-orchestration-control-v1|" +
             "windows-x64-hosted-container-source-set-v1|" +
             "linux-x64-hosted-container-source-set-v1|" +
+            "windows-x64-hosted-container-segment-manifest-v1|" +
+            "linux-x64-hosted-container-segment-manifest-v1|" +
             "windows-x64-hosted-enum-request-v1|" +
             "linux-x64-hosted-enum-request-v1|" +
             "windows-x64-hosted-enum-service-v1|" +
@@ -236,6 +238,7 @@ internal static class Program
         Hostedˉfixedˉservicesˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉorchestrationˉcontrolˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉcontainerˉsourceˉsetˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉenumˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉenumˉserviceˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
@@ -340,6 +343,8 @@ internal static class Program
             "linux-x64-hosted-orchestration-control-v1|" +
             "windows-x64-hosted-container-source-set-v1|" +
             "linux-x64-hosted-container-source-set-v1|" +
+            "windows-x64-hosted-container-segment-manifest-v1|" +
+            "linux-x64-hosted-container-segment-manifest-v1|" +
             "windows-x64-hosted-enum-request-v1|" +
             "linux-x64-hosted-enum-request-v1|" +
             "windows-x64-hosted-enum-service-v1|" +
@@ -473,6 +478,8 @@ internal static class Program
         Hostedˉorchestrationˉcontrolˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉsourceˉsetˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉcontainerˉsourceˉsetˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉenumˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉenumˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉenumˉserviceˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -638,6 +645,7 @@ internal static class Program
                 Hostedˉfixedˉservicesˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉorchestrationˉcontrolˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉcontainerˉsourceˉsetˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉenumˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉenumˉserviceˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -782,6 +790,11 @@ internal static class Program
                             Moduleˉname),
                     Hostedˉcontainerˉsourceˉsetˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Hostedˉcontainerˉsourceˉsetˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -981,6 +994,11 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Hostedˉenumˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Hostedˉenumˉrequestˉapplicationˉwriter.Writeˉlinux(
                             Fragment,
@@ -1072,6 +1090,7 @@ internal static class Program
                     Hostedˉfixedˉservicesˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉorchestrationˉcontrolˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉcontainerˉsourceˉsetˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉenumˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉenumˉserviceˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
@@ -1599,6 +1618,8 @@ internal static class Program
             "linux-x64-hosted-orchestration-control-v1|" +
             "windows-x64-hosted-container-source-set-v1|" +
             "linux-x64-hosted-container-source-set-v1|" +
+            "windows-x64-hosted-container-segment-manifest-v1|" +
+            "linux-x64-hosted-container-segment-manifest-v1|" +
             "windows-x64-hosted-enum-request-v1|" +
             "linux-x64-hosted-enum-request-v1|" +
             "windows-x64-hosted-enum-service-v1|" +
@@ -1664,6 +1685,8 @@ internal static class Program
             "linux-x64-hosted-orchestration-control-v1|" +
             "windows-x64-hosted-container-source-set-v1|" +
             "linux-x64-hosted-container-source-set-v1|" +
+            "windows-x64-hosted-container-segment-manifest-v1|" +
+            "linux-x64-hosted-container-segment-manifest-v1|" +
             "windows-x64-hosted-enum-request-v1|" +
             "linux-x64-hosted-enum-request-v1|" +
             "windows-x64-hosted-enum-service-v1|" +
