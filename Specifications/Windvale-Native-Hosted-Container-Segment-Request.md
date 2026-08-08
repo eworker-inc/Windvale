@@ -61,5 +61,5 @@ segment, alias, and output-preservation behavior.
 
 The managed `Build_request` is now differential/recovery evidence. Ordered
 invocation of the service-bundle and hosted-container request/response tools,
-manifest publication, Linux execution, normal-path promotion, and the grouped
-retirement gate remain.
+including Decision 0405's upstream publication request, manifest publication,
+Linux execution, normal-path promotion, and the grouped retirement gate remain.

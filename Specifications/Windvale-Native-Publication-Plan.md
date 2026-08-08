@@ -85,6 +85,8 @@ The live host validates its own inputs before serialization. A nonzero planner s
 
 The retained bridge is represented by a digest-checked, verified native-fragment artifact and cached. A narrow service-free bootstrap independently verifies and publishes only internally selected digest-bound fragments without consulting the planner recursively. The bootstrap supplies no runtime services and owns no ordinary application policy. [Bounded service-bundle materialization](Windvale-Native-Service-Bundle-Materialization.md) later reuses that exact service-free mechanism for one named WVNF while keeping ambient WVB and service-bearing fragments excluded. The host then independently reconstructs every returned placement before using it. The reference interpreter remains differential and recovery evidence rather than the normal execution path.
 
+[Decision 0405](../Documents/Decisions/0405-Native-Hosted-Publication-Request.md) adds a paired native hosted command that derives the canonical ten-service request from admitted `WVSG 1` fragment/service geometry and requires this planner's complete response to reproduce that geometry before publication. The retained C# request serializer is differential and recovery evidence for that candidate process path; resource bytes and identity remain checked at their later consuming boundaries.
+
 ## Publication boundary
 
 Before planning, the native fragment verifier proves that every relative patch field already contains its exact base-independent displacement. Publication therefore copies verified fragment bytes unchanged; there is no second C# relocation rewrite. After accepting the Windvale plan, the platform adapter alone:

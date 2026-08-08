@@ -1,0 +1,134 @@
+module Nativeˉhostedˉpublicationˉrequestˉtool profile hosted;
+
+import Compilerˉnativeˉpublication as Publication;
+import Foundationˉimmutableˉsourceˉregions as Sources;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉpublicationˉrequestˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Serviceˉidentity(Index: u32) -> u32 {
+    if Index < 8u32 { return Index + 1u32; }
+    return Index + 3u32;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted publication request status=",
+            Enumˉname(Nativeˉhostedˉpublicationˉrequestˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+fn Build(
+    Manifest: bytes,
+    Plan: Sources.Immutableˉsourceˉregionˉplan
+) -> bytes {
+    if !Plan.Valid || Plan.Regions != 11u32 { return Empty(Manifest); }
+    let Fragmentˉrecord: u32 = Plan.Regionˉbase;
+    let Fragmentˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Fragmentˉrecord + 12u32);
+    if Bytesˉreadˉu32ˉlittle(Manifest, Fragmentˉrecord + 8u32) != 0u32 ||
+        Fragmentˉbytes == 0u32 {
+        return Empty(Manifest);
+    }
+
+    var Request: bytes = Empty(Manifest);
+    Request = Appendˉu32(Request, 1364219479u32);
+    Request = Appendˉu32(Request, 1u32);
+    Request = Appendˉu32(Request, 144u32);
+    Request = Appendˉu32(Request, Fragmentˉbytes);
+    Request = Appendˉu32(Request, 10u32);
+    Request = Appendˉu32(Request, 0u32);
+    var Index: u32 = 0u32;
+    while Index < 10u32 {
+        let Sourceˉregion: u32 = Plan.Regionˉbase + (Index + 1u32) * 16u32;
+        let Serviceˉbytes: u32 =
+            Bytesˉreadˉu32ˉlittle(Manifest, Sourceˉregion + 12u32);
+        if Serviceˉbytes == 0u32 { return Empty(Manifest); }
+        Request = Appendˉu32(Request, Serviceˉidentity(Index));
+        Request = Appendˉu32(Request, Serviceˉbytes);
+        Request = Appendˉu32(Request, 0u32);
+        Index = Index + 1u32;
+    }
+    if Bytesˉlength(Request) != 144u32 { return Empty(Manifest); }
+
+    let Layout = Publication.Nativeˉpublicationˉplan(Request);
+    if Bytesˉlength(Layout.Value) != 152u32 ||
+        Bytesˉreadˉu32ˉlittle(Layout.Value, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Layout.Value, 20u32) != Fragmentˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Layout.Value, 24u32) != Plan.Imageˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Layout.Value, 28u32) != 10u32 {
+        return Empty(Manifest);
+    }
+    Index = 0u32;
+    while Index < 10u32 {
+        let Layoutˉregion: u32 = Plan.Regionˉbase + (Index + 1u32) * 16u32;
+        let Placement: u32 = 32u32 + Index * 12u32;
+        if Bytesˉreadˉu32ˉlittle(Layout.Value, Placement) !=
+                Serviceˉidentity(Index) ||
+            Bytesˉreadˉu32ˉlittle(Layout.Value, Placement + 4u32) !=
+                Bytesˉreadˉu32ˉlittle(Manifest, Layoutˉregion + 8u32) ||
+            Bytesˉreadˉu32ˉlittle(Layout.Value, Placement + 8u32) !=
+                Bytesˉreadˉu32ˉlittle(Manifest, Layoutˉregion + 12u32) {
+            return Empty(Manifest);
+        }
+        Index = Index + 1u32;
+    }
+    return Request;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line(
+            "Usage: wvhostpublicationrequest <sources.wvsg> <request.wvpq>"
+        );
+        return 64;
+    }
+    let Inputˉpath: text = process.argument(0u32);
+    let Outputˉpath: text = process.argument(1u32);
+    if Bytesˉareˉequal(
+        Textˉtoˉutf8(Inputˉpath), Textˉtoˉutf8(Outputˉpath)
+    ) {
+        return Reject();
+    }
+    let Manifest: bytes = file.read_bytes(Inputˉpath);
+    let Plan: Sources.Immutableˉsourceˉregionˉplan =
+        Sources.Immutableˉsourceˉregionsˉadmit(Manifest);
+    let Request: bytes = Build(Manifest, Plan);
+    if Bytesˉlength(Request) != 144u32 { return Reject(); }
+    file.write_bytes(Outputˉpath, Request);
+    console.write_line("hosted publication request status=Valid bytes=144");
+    return 0;
+}

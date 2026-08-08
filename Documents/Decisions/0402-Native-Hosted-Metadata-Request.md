@@ -64,6 +64,8 @@ No broader verifier was run under the agreed end-of-goal verification policy.
 - Decision 0403 supplies exact per-segment service-bundle request construction
   from immutable source geometry; its ordered invocation and response/evidence
   composition remain part of that process path.
+- Decision 0405 supplies the preceding exact publication request from that
+  admitted geometry, leaving only process and resource lifecycle composition.
 - Stage 0 remains frozen recovery/differential evidence until the final gate.
 
 ## Reconsideration triggers

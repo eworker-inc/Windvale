@@ -367,6 +367,9 @@
       Include="../../Runtime/Windvale/Native-Hosted-Service-Bundle-Request-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Service-Bundle-Request-Tool.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Publication-Request-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Publication-Request-Tool.wv" />
+    <EmbeddedResource
       Include="../../Linker/Windvale/Native-Hosted-Container-Segment-Request-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segment-Request-Tool.wv" />
     <EmbeddedResource

@@ -62,7 +62,8 @@ without loading the CLR, rejects malformed geometry and an out-of-range
 segment without changing output, and rejects an output/source alias.
 
 The retained managed `Build_request` is now differential/recovery evidence.
-Ordered invocation of this producer and the standalone `WVSQ` to `WVSI`
-constructor, construction of the resulting `WVHS` evidence manifest, final
-hosted-container segment requests, Linux execution, promotion, and the grouped
-retirement gate remain.
+Decision 0405 supplies the preceding `WVPQ` from the same admitted source
+geometry. Ordered invocation of this producer and the standalone `WVSQ` to
+`WVSI` constructor, construction of the resulting `WVHS` evidence manifest,
+final hosted-container segment requests, Linux execution, promotion, and the
+grouped retirement gate remain.

@@ -136,6 +136,8 @@ internal static class Program
             "linux-x64-hosted-service-bundle-request-v1|" +
             "windows-x64-hosted-container-segment-request-v1|" +
             "linux-x64-hosted-container-segment-request-v1|" +
+            "windows-x64-hosted-publication-request-v1|" +
+            "linux-x64-hosted-publication-request-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -217,6 +219,7 @@ internal static class Program
         Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Hostedˉpublicationˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
@@ -309,6 +312,8 @@ internal static class Program
             "linux-x64-hosted-service-bundle-request-v1|" +
             "windows-x64-hosted-container-segment-request-v1|" +
             "linux-x64-hosted-container-segment-request-v1|" +
+            "windows-x64-hosted-publication-request-v1|" +
+            "linux-x64-hosted-publication-request-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -428,6 +433,8 @@ internal static class Program
         Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉpublicationˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉpublicationˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -584,6 +591,7 @@ internal static class Program
                 Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Hostedˉpublicationˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -701,6 +709,11 @@ internal static class Program
                             Moduleˉname),
                     Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Hostedˉcontainerˉsegmentˉrequestˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉpublicationˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉpublicationˉrequestˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -865,6 +878,11 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Hostedˉpublicationˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉpublicationˉrequestˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -941,6 +959,7 @@ internal static class Program
                     Hostedˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Hostedˉpublicationˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
@@ -1456,6 +1475,8 @@ internal static class Program
             "linux-x64-hosted-service-bundle-request-v1|" +
             "windows-x64-hosted-container-segment-request-v1|" +
             "linux-x64-hosted-container-segment-request-v1|" +
+            "windows-x64-hosted-publication-request-v1|" +
+            "linux-x64-hosted-publication-request-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -1507,6 +1528,8 @@ internal static class Program
             "linux-x64-hosted-service-bundle-request-v1|" +
             "windows-x64-hosted-container-segment-request-v1|" +
             "linux-x64-hosted-container-segment-request-v1|" +
+            "windows-x64-hosted-publication-request-v1|" +
+            "linux-x64-hosted-publication-request-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +

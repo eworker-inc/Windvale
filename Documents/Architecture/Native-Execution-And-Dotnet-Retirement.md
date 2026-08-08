@@ -585,6 +585,15 @@ native command emits one exact `WVHT 1` request. Managed request construction
 is now recovery/differential evidence; ordered process and manifest lifecycle,
 Linux execution, promotion, and grouped qualification remain.
 
+[Decision 0405](../Decisions/0405-Native-Hosted-Publication-Request.md)
+closes the upstream publication-request seam rather than encoding it in a host
+script. A focused paired command derives the canonical 144-byte `WVPQ 1` from
+the same eleven-region `WVSG`, runs the Windvale planner internally, and
+requires every resulting placement to match before publication. Managed
+`WVPQ` construction is now recovery/differential evidence; ordered process and
+manifest lifecycle, Linux execution, promotion, and grouped qualification
+remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

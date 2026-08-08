@@ -542,6 +542,15 @@ host request producers cross a two-resource boundary, match frozen recovery
 oracles, and load no CLR. Ordered request/response execution, manifest
 lifecycle, Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0405](../Decisions/0405-Native-Hosted-Publication-Request.md)
+removes the preceding managed `WVPQ 1` construction seam. One focused paired
+native command derives the fragment and canonical ten-service sizes from the
+admitted `WVSG`, executes the Windvale publication planner internally, and
+publishes only when all placements reproduce that geometry. The public current-
+host application matches the frozen request oracle and loads no CLR. Ordered
+request/response execution, manifest lifecycle, Linux execution, promotion,
+and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

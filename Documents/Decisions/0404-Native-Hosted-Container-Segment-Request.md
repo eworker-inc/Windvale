@@ -57,6 +57,7 @@ door. The Release build is zero-warning. No broader verifier ran.
 ## Consequences
 
 - C# no longer owns `WVHT` request selection or bytes in the candidate path.
+- Decision 0405 also removes managed construction of the upstream `WVPQ`.
 - One portable resource-to-region state serves both request producers without
   importing a capability-bearing helper or duplicating the algorithm.
 - The shared sources remain reviewable rather than growing one broad

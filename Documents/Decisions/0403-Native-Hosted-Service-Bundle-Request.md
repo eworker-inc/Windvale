@@ -56,6 +56,8 @@ zero-warning. No broader verifier ran under the end-of-goal gate policy.
 - `WVSG` can be reused for the six hosted-container source regions without
   conflating geometry, digests, or package resources.
 - Decision 0404 now performs that reuse and emits exact `WVHT` requests.
+- Decision 0405 now supplies the exact upstream `WVPQ` from admitted `WVSG`
+  geometry without managed request construction.
 - Stage 0 adds only deletion-bound package identities and the independent
   differential oracle.
 - Ordered request/response orchestration, final segment requests, Linux
