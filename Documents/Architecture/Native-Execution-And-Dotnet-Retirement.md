@@ -618,6 +618,14 @@ WVO; the pinned native linker then reproduces the exact raw fragment at base
 zero. Fixed-resource acquisition, ordered orchestration, larger segmented enum
 metadata, Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0409](../Decisions/0409-Native-Fixed-Service-Acquisition.md)
+closes fixed-resource selection and staging with one small paired Windvale
+process. It owns target choice, exact size admission, immutable single reads,
+alias rejection, and canonical service-slot placement. The existing native
+metadata-request process remains the digest owner over the staged fragment and
+all ten services. Ordered process/resource lifecycle, complete composition,
+Linux execution, promotion, and the grouped gate remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

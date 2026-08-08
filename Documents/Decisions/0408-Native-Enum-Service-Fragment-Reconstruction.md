@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0407](0407-Native-Hosted-Enum-Service-Production.md), [Decision 0304](0304-Digest-Bound-Native-Wvb-To-Wvo-Candidate.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted enum processes](../../Specifications/Windvale-Native-Hosted-Enum-Processes.md)
+- Advanced by: [Decision 0409](0409-Native-Fixed-Service-Acquisition.md)
 
 ## Context and decision
 

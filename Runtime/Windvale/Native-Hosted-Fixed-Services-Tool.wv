@@ -1,0 +1,171 @@
+module Nativeˉhostedˉfixedˉservicesˉtool profile hosted;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉfixedˉservicesˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+data Regionˉindices: bytes = [
+    1u8, 2u8, 3u8, 4u8, 5u8, 6u8, 8u8, 9u8, 10u8,
+];
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Textˉisˉequal(Left: text, Right: text) -> bool {
+    return Bytesˉareˉequal(Textˉtoˉutf8(Left), Textˉtoˉutf8(Right));
+}
+
+fn Fragmentˉchunksˉfromˉtext(Value: bytes) -> u32 {
+    if Bytesˉlength(Value) != 1u32 { return 0u32; }
+    let Digit: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Value, 0u32));
+    if Digit < 49u32 || Digit > 56u32 { return 0u32; }
+    return Digit - 48u32;
+}
+
+fn Prefixˉisˉvalid(Prefix: text) -> bool {
+    let Length: u32 = Bytesˉlength(Textˉtoˉutf8(Prefix));
+    if Length == 0u32 { return false; }
+    return Length <= 4076u32;
+}
+
+fn Resourceˉname(Prefix: text, Index: u32) -> text {
+    return Textˉconcat(Textˉconcat(Prefix, ".chunk-"), U32ˉformat(Index));
+}
+
+fn Expectedˉbytes(Target: u32, Region: u32) -> u32 {
+    if Region == 1u32 {
+        if Target == 1u32 { return 258u32; }
+        return 213u32;
+    }
+    if Region == 2u32 { return 5u32; }
+    if Region == 3u32 { return 70u32; }
+    if Region == 4u32 {
+        if Target == 1u32 { return 1218u32; }
+        return 996u32;
+    }
+    if Region == 5u32 { return 800u32; }
+    if Region == 6u32 {
+        if Target == 1u32 { return 258u32; }
+        return 213u32;
+    }
+    if Region == 8u32 { return 249u32; }
+    if Region == 9u32 { return 191u32; }
+    if Target == 1u32 { return 787u32; }
+    return 823u32;
+}
+
+fn Targetˉfromˉtext(Value: text) -> u32 {
+    if Textˉisˉequal(Value, "windows") { return 1u32; }
+    if Textˉisˉequal(Value, "linux") { return 2u32; }
+    return 0u32;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted fixed services status=",
+            Enumˉname(Nativeˉhostedˉfixedˉservicesˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 12u32 {
+        diagnostic.write_line(
+            "Usage: wvhostfixedservices <windows|linux> <chunk-prefix> <fragment-chunks> <service-1> <service-2> <service-3> <service-4> <service-5> <service-6> <service-8> <service-11> <service-12>"
+        );
+        return 64;
+    }
+    let Target: u32 = Targetˉfromˉtext(process.argument(0u32));
+    let Prefix: text = process.argument(1u32);
+    let Countˉtext: bytes = Textˉtoˉutf8(process.argument(2u32));
+    let Count: u32 = Fragmentˉchunksˉfromˉtext(Countˉtext);
+    if Target == 0u32 || Count == 0u32 || !Prefixˉisˉvalid(Prefix) {
+        return Reject();
+    }
+
+    var Inputˉindex: u32 = 0u32;
+    while Inputˉindex < 9u32 {
+        let Inputˉpath: text = process.argument(3u32 + Inputˉindex);
+        var Priorˉinput: u32 = 0u32;
+        while Priorˉinput < Inputˉindex {
+            if Textˉisˉequal(
+                Inputˉpath,
+                process.argument(3u32 + Priorˉinput)
+            ) { return Reject(); }
+            Priorˉinput = Priorˉinput + 1u32;
+        }
+        var Outputˉindex: u32 = 0u32;
+        while Outputˉindex < 9u32 {
+            let Outputˉregion: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Regionˉindices, Outputˉindex)
+            );
+            let Outputˉpath: text = Resourceˉname(
+                Prefix,
+                Count + Outputˉregion - 1u32
+            );
+            if Textˉisˉequal(Inputˉpath, Outputˉpath) { return Reject(); }
+            Outputˉindex = Outputˉindex + 1u32;
+        }
+        Inputˉindex = Inputˉindex + 1u32;
+    }
+
+    let Serviceˉone: bytes = file.read_bytes(process.argument(3u32));
+    let Serviceˉtwo: bytes = file.read_bytes(process.argument(4u32));
+    let Serviceˉthree: bytes = file.read_bytes(process.argument(5u32));
+    let Serviceˉfour: bytes = file.read_bytes(process.argument(6u32));
+    let Serviceˉfive: bytes = file.read_bytes(process.argument(7u32));
+    let Serviceˉsix: bytes = file.read_bytes(process.argument(8u32));
+    let Serviceˉeight: bytes = file.read_bytes(process.argument(9u32));
+    let Serviceˉeleven: bytes = file.read_bytes(process.argument(10u32));
+    let Serviceˉtwelve: bytes = file.read_bytes(process.argument(11u32));
+    if Bytesˉlength(Serviceˉone) != Expectedˉbytes(Target, 1u32) ||
+        Bytesˉlength(Serviceˉtwo) != Expectedˉbytes(Target, 2u32) ||
+        Bytesˉlength(Serviceˉthree) != Expectedˉbytes(Target, 3u32) ||
+        Bytesˉlength(Serviceˉfour) != Expectedˉbytes(Target, 4u32) ||
+        Bytesˉlength(Serviceˉfive) != Expectedˉbytes(Target, 5u32) ||
+        Bytesˉlength(Serviceˉsix) != Expectedˉbytes(Target, 6u32) ||
+        Bytesˉlength(Serviceˉeight) != Expectedˉbytes(Target, 8u32) ||
+        Bytesˉlength(Serviceˉeleven) != Expectedˉbytes(Target, 9u32) ||
+        Bytesˉlength(Serviceˉtwelve) != Expectedˉbytes(Target, 10u32) {
+        return Reject();
+    }
+    file.write_bytes(Resourceˉname(Prefix, Count), Serviceˉone);
+    file.write_bytes(Resourceˉname(Prefix, Count + 1u32), Serviceˉtwo);
+    file.write_bytes(Resourceˉname(Prefix, Count + 2u32), Serviceˉthree);
+    file.write_bytes(Resourceˉname(Prefix, Count + 3u32), Serviceˉfour);
+    file.write_bytes(Resourceˉname(Prefix, Count + 4u32), Serviceˉfive);
+    file.write_bytes(Resourceˉname(Prefix, Count + 5u32), Serviceˉsix);
+    file.write_bytes(Resourceˉname(Prefix, Count + 7u32), Serviceˉeight);
+    file.write_bytes(Resourceˉname(Prefix, Count + 8u32), Serviceˉeleven);
+    file.write_bytes(Resourceˉname(Prefix, Count + 9u32), Serviceˉtwelve);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted fixed services status=",
+                Enumˉname(Nativeˉhostedˉfixedˉservicesˉstatus.Valid)
+            ),
+            " resources=9"
+        )
+    );
+    return 0;
+}

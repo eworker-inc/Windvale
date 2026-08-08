@@ -575,6 +575,15 @@ exact raw fragment. The nine fixed service resources, ordered manifest/process
 lifecycle, larger segmented metadata, Linux execution, promotion, and the
 grouped gate remain.
 
+[Decision 0409](../Decisions/0409-Native-Fixed-Service-Acquisition.md)
+removes managed platform selection and staging for those nine fixed resources.
+One paired Windvale process admits their exact target-specific sizes, snapshots
+each once, and places them around the separately produced service-7 slot. The
+downstream native metadata-request producer remains the single SHA-256 identity
+gate over the actual staged resources. Ordered process and private-resource
+lifecycle, complete composition, Linux execution, promotion, and the grouped
+gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
