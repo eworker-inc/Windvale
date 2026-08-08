@@ -19,6 +19,9 @@ public static class X64ˉnativeˉtextˉservices
     public const int ENUM_NAME_CANONICAL_SIZE = 323;
     public const string ENUM_NAME_CANONICAL_SHA256 =
         "fb05590c5b6e1791380ba288c4112387e791a18722428c90276796bd409d130a";
+    public const int ENUM_NAME_CONSUMER_CANONICAL_SIZE = 592;
+    public const string ENUM_NAME_CONSUMER_CANONICAL_SHA256 =
+        "46d806adcceee597a139976748c2e1d5a25dbf57a3fba61c6836b6cf3ce1f76c";
     public const int TEXT_CONCAT_CANONICAL_SIZE = 249;
     public const string TEXT_CONCAT_CANONICAL_SHA256 =
         "75c5588117e1f5f58a593a23aae6156a3a68a6302df5f50153b977bccbaaa3a0";
@@ -46,6 +49,11 @@ public static class X64ˉnativeˉtextˉservices
         "Windvale.Native.Native-X64-Text-Concat-Service-Bridge.wvb";
     private const string TEXT_QUOTE_CONSUMER_RESOURCE =
         "Windvale.Native.Native-X64-Text-Quote-Service-Bridge.wvb";
+    private const string ENUM_NAME_CONSUMER_RESOURCE =
+        "Windvale.Native.Native-X64-Enum-Name-Service-Bridge.wvb";
+    private static readonly Lazy<ImmutableArray<byte>> ENUM_NAME_RESULT = new(
+        Buildˉenumˉnameˉwithˉwindvale,
+        LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly Lazy<ImmutableArray<byte>> TEXT_CONCAT_RESULT = new(
         Buildˉtextˉconcatˉwithˉwindvale,
         LazyThreadSafetyMode.ExecutionAndPublication);
@@ -265,107 +273,49 @@ public static class X64ˉnativeˉtextˉservices
     private static InvalidOperationException Invalidˉintegerˉformatˉconsumer() =>
         new("The retained Windvale native integer-format consumer failed its exact identity contract.");
 
+    private static ImmutableArray<byte> Readˉenumˉname() =>
+        ENUM_NAME_RESULT.Value;
+
+    private static ImmutableArray<byte> Buildˉenumˉnameˉwithˉwindvale()
+    {
+        using var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
+            .GetManifestResourceStream(ENUM_NAME_CONSUMER_RESOURCE) ??
+            throw Invalidˉenumˉnameˉconsumer();
+        if (Stream.Length != ENUM_NAME_CONSUMER_CANONICAL_SIZE)
+        {
+            throw Invalidˉenumˉnameˉconsumer();
+        }
+        var Bytes = new byte[ENUM_NAME_CONSUMER_CANONICAL_SIZE];
+        Stream.ReadExactly(Bytes);
+        var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
+        if (!StringComparer.Ordinal.Equals(Hash, ENUM_NAME_CONSUMER_CANONICAL_SHA256))
+        {
+            throw Invalidˉenumˉnameˉconsumer();
+        }
+
+        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
+        var Compilation = X64ˉnativeˉbackend.Compile(Verified);
+        var Result = X64ˉnativeˉexecutor.Executeˉbytes(Compilation.Fragment);
+        Verifyˉidentity(
+            Nativeˉservice.Enumˉname,
+            Result.AsSpan(),
+            ENUM_NAME_CANONICAL_SIZE,
+            ENUM_NAME_CANONICAL_SHA256);
+        return Result;
+    }
+
+    private static InvalidOperationException Invalidˉenumˉnameˉconsumer() =>
+        new("The retained Windvale native enum-name consumer failed its exact identity contract.");
+
     private static ImmutableArray<byte> Buildˉenumˉname(
         ImmutableArray<Nominalˉtypeˉdeclaration> types)
     {
         var Metadata = Buildˉenumˉmetadata(types);
-        var Code = new Serviceˉcodeˉbuilder();
-        Code.Emit(0x48, 0x83, 0xEC, 0x30);
-        Code.Emit(0x4C, 0x89, 0x14, 0x24);
-        Code.Emit(0x4C, 0x89, 0x5C, 0x24, 0x08);
-        Code.Emit(0x48, 0x89, 0x4C, 0x24, 0x10);
-        Code.Emit(0x44, 0x89, 0x44, 0x24, 0x18);
-        Code.Emit(0x44, 0x89, 0x4C, 0x24, 0x1C);
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            0x00, 0x00, 0x00, 0x00);
-        Code.Emit(0x48, 0x8D, 0x15);
-        Code.Reference("metadata");
-        Code.Emit(0x81, 0x3A);
-        Code.Emitˉu32(ENUM_METADATA_MAGIC);
-        Code.Branch(0x85, "failure");
-        Code.Emit(0x83, 0x7A, 0x04, (byte)ENUM_METADATA_VERSION);
-        Code.Branch(0x85, "failure");
-        Code.Emit(0x8B, 0x44, 0x24, 0x18);
-        Code.Emit(0x3B, 0x42, 0x0C);
-        Code.Branch(0x83, "failure");
-        Code.Emit(0x4C, 0x8D, 0x54, 0xC2, ENUM_METADATA_HEADER_BYTES);
-        Code.Emit(0x41, 0x8B, 0x0A);
-        Code.Emit(0x45, 0x8B, 0x42, 0x04);
-        Code.Emit(0x45, 0x85, 0xC0);
-        Code.Branch(0x84, "failure");
-        Code.Emit(0x8B, 0x42, 0x0C);
-        Code.Emit(0x4C, 0x8D, 0x54, 0xC2, ENUM_METADATA_HEADER_BYTES);
-        Code.Emit(0x89, 0xC8);
-        Code.Emit(0x48, 0xC1, 0xE0, 0x04);
-        Code.Emit(0x49, 0x01, 0xC2);
-
-        Code.Mark("member");
-        Code.Emit(0x45, 0x85, 0xC0);
-        Code.Branch(0x84, "failure");
-        Code.Emit(0x8B, 0x44, 0x24, 0x1C);
-        Code.Emit(0x41, 0x39, 0x02);
-        Code.Branch(0x84, "member_found");
-        Code.Emit(0x49, 0x83, 0xC2, ENUM_METADATA_MEMBER_BYTES);
-        Code.Emit(0x41, 0xFF, 0xC8);
-        Code.Jump("member");
-
-        Code.Mark("member_found");
-        Code.Emit(0x45, 0x8B, 0x5A, 0x08);
-        Code.Emit(0x41, 0x81, 0xFB);
-        Code.Emitˉu32(Bytecodeˉlimits.MAX_UTF8_VALUE_BYTES);
-        Code.Branch(0x87, "value_failure");
-        Code.Emit(0x41, 0x8B, 0x47, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET);
-        Code.Emit(0x89, 0x44, 0x24, 0x20);
-        Code.Emit(0x89, 0xC1);
-        Code.Emit(0x44, 0x01, 0xD9);
-        Code.Branch(0x82, "arena_failure");
-        Code.Emit(0x41, 0x3B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET);
-        Code.Branch(0x87, "arena_failure");
-        Code.Emit(0x41, 0x89, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET);
-        Code.Emit(0x4D, 0x8B, 0x4F, Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET);
-        Code.Emit(0x8B, 0x44, 0x24, 0x20);
-        Code.Emit(0x49, 0x01, 0xC1);
-        Code.Emit(0x4C, 0x89, 0x4C, 0x24, 0x28);
-        Code.Emit(0x41, 0x8B, 0x42, 0x04);
-        Code.Emit(0x48, 0x01, 0xC2);
-        Code.Emit(0x44, 0x89, 0xD9);
-
-        Code.Mark("copy");
-        Code.Emit(0x85, 0xC9);
-        Code.Branch(0x84, "written");
-        Code.Emit(0x8A, 0x02);
-        Code.Emit(0x41, 0x88, 0x01);
-        Code.Emit(0x48, 0xFF, 0xC2);
-        Code.Emit(0x49, 0xFF, 0xC1);
-        Code.Emit(0xFF, 0xC9);
-        Code.Jump("copy");
-
-        Code.Mark("written");
-        Code.Emit(0x48, 0x8B, 0x4C, 0x24, 0x10);
-        Code.Emit(0x48, 0x8B, 0x44, 0x24, 0x28);
-        Code.Emit(0x48, 0x89, 0x01);
-        Code.Emit(0x44, 0x89, 0x59, 0x08);
-        Code.Emit(0xC7, 0x41, 0x0C, 0x00, 0x00, 0x00, 0x00);
-        Code.Emit(0x31, 0xC0);
-        Code.Jump("return");
-
-        Code.Mark("value_failure");
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            (byte)Nativeˉserviceˉfailureˉdetail.Textˉvalueˉlimit, 0x00, 0x00, 0x00);
-        Code.Jump("failure");
-        Code.Mark("arena_failure");
-        Code.Emit(0x41, 0xC7, 0x47, Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
-            (byte)Nativeˉserviceˉfailureˉdetail.Textˉarenaˉexhausted, 0x00, 0x00, 0x00);
-        Code.Mark("failure");
-        Code.Emit(0xB8, 0x01, 0x00, 0x00, 0x00);
-        Code.Mark("return");
-        Code.Emit(0x4C, 0x8B, 0x14, 0x24);
-        Code.Emit(0x4C, 0x8B, 0x5C, 0x24, 0x08);
-        Code.Emit(0x48, 0x83, 0xC4, 0x30);
-        Code.Emit(0xC3);
-        Code.Mark("metadata");
-        Code.Emit(Metadata.AsSpan());
-        return Code.Finish();
+        var Code = Readˉenumˉname();
+        var Result = ImmutableArray.CreateBuilder<byte>(Code.Length + Metadata.Length);
+        Result.AddRange(Code);
+        Result.AddRange(Metadata);
+        return Result.MoveToImmutable();
     }
 
     private static ImmutableArray<byte> Buildˉenumˉmetadata(
@@ -554,75 +504,4 @@ public static class X64ˉnativeˉtextˉservices
         new("Native Enumˉname service identity metadata is invalid.");
 
 
-    private sealed class Serviceˉcodeˉbuilder
-    {
-        private readonly List<byte> Bytes = [];
-        private readonly Dictionary<string, int> Labels = new(StringComparer.Ordinal);
-        private readonly List<(int Offset, string Label)> Patches = [];
-
-        public void Emit(params ReadOnlySpan<byte> bytes)
-        {
-            foreach (var Value in bytes)
-            {
-                Bytes.Add(Value);
-            }
-        }
-
-        public void Emitˉu32(uint value)
-        {
-            Span<byte> Value = stackalloc byte[sizeof(uint)];
-            BinaryPrimitives.WriteUInt32LittleEndian(Value, value);
-            Emit(Value);
-        }
-
-        public void Reference(string label)
-        {
-            Patches.Add((Bytes.Count, label));
-            Emit(0x00, 0x00, 0x00, 0x00);
-        }
-
-        public void Mark(string label)
-        {
-            if (!Labels.TryAdd(label, Bytes.Count))
-            {
-                throw new InvalidOperationException($"Duplicate native text-service label '{label}'.");
-            }
-        }
-
-        public void Branch(byte condition, string label)
-        {
-            Emit(0x0F, condition);
-            Patches.Add((Bytes.Count, label));
-            Emit(0x00, 0x00, 0x00, 0x00);
-        }
-
-        public void Jump(string label)
-        {
-            Emit(0xE9);
-            Reference(label);
-        }
-
-        public void Call(string label)
-        {
-            Emit(0xE8);
-            Reference(label);
-        }
-
-        public ImmutableArray<byte> Finish()
-        {
-            var Result = Bytes.ToArray();
-            foreach (var Patch in Patches)
-            {
-                if (!Labels.TryGetValue(Patch.Label, out var Target))
-                {
-                    throw new InvalidOperationException(
-                        $"Unknown native text-service label '{Patch.Label}'.");
-                }
-                BinaryPrimitives.WriteInt32LittleEndian(
-                    Result.AsSpan(Patch.Offset, sizeof(int)),
-                    checked(Target - (Patch.Offset + sizeof(int))));
-            }
-            return Result.ToImmutableArray();
-        }
-    }
 }

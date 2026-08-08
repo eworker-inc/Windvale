@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉx64ˉenumˉnameˉserviceˉbridge profile portable;
+
+import Runtimeˉnativeˉx64ˉenumˉnameˉservice as Enumˉname;
+
+export fn Main() -> bytes {
+    return Enumˉname.Nativeˉx64ˉenumˉnameˉserviceˉbuild();
+}

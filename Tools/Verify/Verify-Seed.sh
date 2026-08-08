@@ -170,6 +170,8 @@ NATIVE_TEXT_CONCAT_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service.wvb"
 NATIVE_TEXT_CONCAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service-Bridge.wvb"
 NATIVE_TEXT_QUOTE_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Quote-Service.wvb"
 NATIVE_TEXT_QUOTE_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Quote-Service-Bridge.wvb"
+NATIVE_ENUM_NAME_CORE_MODULE="$ARTIFACTS/Native-X64-Enum-Name-Service.wvb"
+NATIVE_ENUM_NAME_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Enum-Name-Service-Bridge.wvb"
 NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
@@ -684,6 +686,37 @@ NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_Q
 printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
 printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_ENUM_NAME_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Enum-Name-Service.wv"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_ENUM_NAME_CORE_SOURCE" -o "$NATIVE_ENUM_NAME_CORE_MODULE"
+NATIVE_ENUM_NAME_CORE_HASH=$(sha256sum "$NATIVE_ENUM_NAME_CORE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_ENUM_NAME_CORE_HASH" != 'b404104b8e5ca174841b47d02ea45f197599179e0cb23ba778d6a2cdf7846948' ]; then
+    echo "The Windvale native enum-name service core has an unexpected digest: $NATIVE_ENUM_NAME_CORE_HASH" >&2
+    exit 1
+fi
+NATIVE_ENUM_NAME_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ENUM_NAME_CORE_MODULE")
+printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉenumˉnameˉleaf: bytes length=323' >/dev/null
+printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉenumˉnameˉserviceˉbuild' >/dev/null
+printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
+
+NATIVE_ENUM_NAME_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Enum-Name-Service-Bridge.wv"
+NATIVE_ENUM_NAME_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service-Bridge.wvb"
+dotnet "$TOOL_DLL" \
+    compile "$NATIVE_ENUM_NAME_BRIDGE_SOURCE" \
+    --module "$NATIVE_ENUM_NAME_CORE_SOURCE" \
+    -o "$NATIVE_ENUM_NAME_BRIDGE_MODULE"
+NATIVE_ENUM_NAME_BRIDGE_HASH=$(sha256sum "$NATIVE_ENUM_NAME_BRIDGE_MODULE" | awk '{print $1}')
+if [ "$NATIVE_ENUM_NAME_BRIDGE_HASH" != '46d806adcceee597a139976748c2e1d5a25dbf57a3fba61c6836b6cf3ce1f76c' ]; then
+    echo "The Windvale native enum-name service bridge has an unexpected digest: $NATIVE_ENUM_NAME_BRIDGE_HASH" >&2
+    exit 1
+fi
+cmp -s "$NATIVE_ENUM_NAME_BRIDGE_MODULE" "$NATIVE_ENUM_NAME_BRIDGE_RETAINED"
+NATIVE_ENUM_NAME_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ENUM_NAME_BRIDGE_MODULE")
+printf '%s\n' "$NATIVE_ENUM_NAME_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
+printf '%s\n' "$NATIVE_ENUM_NAME_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
+printf '%s\n' "$NATIVE_ENUM_NAME_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_PUBLICATION_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wv"
 dotnet "$TOOL_DLL" \

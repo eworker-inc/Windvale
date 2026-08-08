@@ -125,9 +125,19 @@ leaf. One compact Windvale machine-template source now owns the unchanged
 identically through Stage 0 and the ordinary native source front door. Quote
 semantics remain in the specification and existing dynamic-text coverage;
 the recovery wrapper only verifies, lowers, executes, identity-checks, and
-caches the leaf. Enum-name construction/metadata, retained-WVB loading, W^X
-publication, service-bundle orchestration, Linux evidence, and the grouped
-gate remain open.
+caches the leaf. Enum-name metadata construction, retained-WVB loading, W^X
+publication, service-bundle orchestration, Linux evidence, and the grouped gate
+remain open.
+
+[Decision 0359](../Decisions/0359-Windvale-Owned-Native-Enum-Name-Leaf.md)
+removes the last C# native-service byte emitter and its now-unused general code
+builder. One compact Windvale machine-template source owns the unchanged
+323-byte enum-name leaf, and its retained capability-free bridge builds
+identically through Stage 0 and the ordinary native source front door. The
+temporary C# wrapper still constructs and validates the type-dependent adjacent
+`WVEN` block, then combines it with the verified Windvale leaf. Transferring
+that metadata builder, retained-WVB loading, W^X publication, service-bundle
+orchestration, Linux evidence, and the grouped gate remain open.
 
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
