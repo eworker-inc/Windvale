@@ -1436,6 +1436,7 @@ internal static partial class Program
         new("native hosted service-bundle request reproduces exact segmented input", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉserviceˉbundleˉrequestˉruns),
         new("native hosted publication request reproduces exact layout input", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉpublicationˉrequestˉruns),
         new("native hosted source geometry derives exact resource layout", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉsourceˉgeometryˉruns),
+        new("native hosted enum processes reproduce the exact variable service", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉenumˉprocessesˉrun),
         new("native hosted-container segment request reproduces exact segmented input", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉcontainerˉsegmentˉrequestˉruns),
         new("native hosted metadata request recomputes exact bundle evidence", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉmetadataˉrequestˉruns),
         new("native streaming SHA-256 evidence crosses the byte-value limit", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉstreamingˉsha256ˉevidenceˉruns),

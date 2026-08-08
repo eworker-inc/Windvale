@@ -1,0 +1,256 @@
+module Nativeˉhostedˉenumˉserviceˉrequest profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Types;
+
+export record Nativeˉhostedˉenumˉrequest {
+    Valid: bool;
+    Value: bytes;
+}
+
+record Nativeˉhostedˉtypesˉsection {
+    Valid: bool;
+    Offset: u32;
+    Length: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Invalid(Input: bytes) -> Nativeˉhostedˉenumˉrequest {
+    return Nativeˉhostedˉenumˉrequest(false, Empty(Input));
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
+    if Offset > Total { return false; }
+    return Length <= Total - Offset;
+}
+
+fn Typesˉsection(Input: bytes) -> Nativeˉhostedˉtypesˉsection {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 12u32 || Bytesˉreadˉu8(Input, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Input, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Input, 2u32) != 66u8 ||
+        Bytesˉreadˉu8(Input, 3u32) != 49u8 ||
+        Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
+        return Nativeˉhostedˉtypesˉsection(false, 0u32, 0u32);
+    }
+    var Cursor: u32 = 12u32;
+    var Kind: u32 = 1u32;
+    while Kind <= 7u32 {
+        if !Rangeˉisˉvalid(Total, Cursor, 8u32) ||
+            U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != Kind ||
+            Bytesˉreadˉu8(Input, Cursor + 1u32) != 0u8 ||
+            Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) != 0u32 {
+            return Nativeˉhostedˉtypesˉsection(false, 0u32, 0u32);
+        }
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        let Offset: u32 = Cursor + 8u32;
+        if !Rangeˉisˉvalid(Total, Offset, Length) {
+            return Nativeˉhostedˉtypesˉsection(false, 0u32, 0u32);
+        }
+        Cursor = Offset + Length;
+        if Kind == 7u32 {
+            if Cursor != Total {
+                return Nativeˉhostedˉtypesˉsection(false, 0u32, 0u32);
+            }
+            return Nativeˉhostedˉtypesˉsection(true, Offset, Length);
+        }
+        Kind = Kind + 1u32;
+    }
+    return Nativeˉhostedˉtypesˉsection(false, 0u32, 0u32);
+}
+
+fn Memberˉcursor(
+    Input: bytes,
+    Nominals: Types.Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Memberˉindex: u32
+) -> u32 {
+    var Cursor: u32 = Types.Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+        Nominals, Typeˉindex
+    );
+    var Member: u32 = 0u32;
+    while Member < Memberˉindex {
+        Cursor = Cursor + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Member = Member + 1u32;
+    }
+    return Cursor;
+}
+
+fn Nameˉisˉless(
+    Input: bytes,
+    Left: u32,
+    Right: u32
+) -> bool {
+    let Leftˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Left);
+    let Rightˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Right);
+    var Common: u32 = Leftˉlength;
+    if Rightˉlength < Common { Common = Rightˉlength; }
+    var Index: u32 = 0u32;
+    while Index < Common {
+        let Leftˉbyte: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Input, Left + 4u32 + Index)
+        );
+        let Rightˉbyte: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Input, Right + 4u32 + Index)
+        );
+        if Leftˉbyte < Rightˉbyte { return true; }
+        if Leftˉbyte > Rightˉbyte { return false; }
+        Index = Index + 1u32;
+    }
+    return Leftˉlength < Rightˉlength;
+}
+
+fn Nameˉrank(
+    Input: bytes,
+    Nominals: Types.Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Memberˉindex: u32
+) -> u32 {
+    let Selected: u32 = Memberˉcursor(
+        Input, Nominals, Typeˉindex, Memberˉindex
+    );
+    let Members: u32 = Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+        Nominals, Typeˉindex
+    );
+    var Rank: u32 = 0u32;
+    var Other: u32 = 0u32;
+    while Other < Members {
+        if Other != Memberˉindex && Nameˉisˉless(
+            Input,
+            Memberˉcursor(Input, Nominals, Typeˉindex, Other),
+            Selected
+        ) {
+            Rank = Rank + 1u32;
+        }
+        Other = Other + 1u32;
+    }
+    return Rank;
+}
+
+export fn Nativeˉhostedˉenumˉrequestˉbuild(
+    Input: bytes
+) -> Nativeˉhostedˉenumˉrequest {
+    let Section: Nativeˉhostedˉtypesˉsection = Typesˉsection(Input);
+    if !Section.Valid { return Invalid(Input); }
+    let Nominals: Types.Compilerˉnativeˉx64ˉtypes =
+        Types.Compilerˉnativeˉx64ˉtypesˉread(
+            Input, Section.Offset, Section.Length
+        );
+    if !Nominals.Valid || Nominals.Count == 0u32 {
+        return Invalid(Input);
+    }
+
+    var Members: u32 = 0u32;
+    var Nameˉbytes: u32 = 0u32;
+    var Typeˉindex: u32 = 0u32;
+    while Typeˉindex < Nominals.Count {
+        if Types.Compilerˉnativeˉx64ˉtypeˉkind(Nominals, Typeˉindex) == 2u8 {
+            let Scanˉitems: u32 = Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+                Nominals, Typeˉindex
+            );
+            Members = Members + Scanˉitems;
+            var Scanˉitem: u32 = 0u32;
+            while Scanˉitem < Scanˉitems {
+                Nameˉbytes = Nameˉbytes + Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Memberˉcursor(Input, Nominals, Typeˉindex, Scanˉitem)
+                );
+                Scanˉitem = Scanˉitem + 1u32;
+            }
+        }
+        Typeˉindex = Typeˉindex + 1u32;
+    }
+    if Members == 0u32 { return Invalid(Input); }
+
+    let Wvenˉnameˉoffset: u32 =
+        24u32 + Nominals.Count * 8u32 + Members * 16u32;
+    let Wvenˉbytes: u32 = Wvenˉnameˉoffset + Nameˉbytes;
+    let Requestˉnameˉoffset: u32 =
+        48u32 + Nominals.Count * 8u32 + Members * 16u32;
+    let Requestˉbytes: u32 = Requestˉnameˉoffset + Nameˉbytes;
+    if Wvenˉbytes > 4193971u32 || Requestˉbytes > 4194304u32 {
+        return Invalid(Input);
+    }
+
+    var Request: bytes = Empty(Input);
+    Request = Appendˉu32(Request, 1363498583u32);
+    Request = Appendˉu32(Request, 2u32);
+    Request = Appendˉu32(Request, Requestˉbytes);
+    Request = Appendˉu32(Request, Wvenˉbytes);
+    Request = Appendˉu32(Request, Nominals.Count);
+    Request = Appendˉu32(Request, Members);
+    Request = Appendˉu32(Request, 0u32);
+    Request = Appendˉu32(Request, Nominals.Count);
+    Request = Appendˉu32(Request, 0u32);
+    Request = Appendˉu32(Request, Members);
+    Request = Appendˉu32(Request, Wvenˉnameˉoffset);
+    Request = Appendˉu32(Request, 48u32);
+
+    Typeˉindex = 0u32;
+    while Typeˉindex < Nominals.Count {
+        let Kind: u8 = Types.Compilerˉnativeˉx64ˉtypeˉkind(
+            Nominals, Typeˉindex
+        );
+        var Directoryˉitems: u32 = 0u32;
+        if Kind == 2u8 {
+            Directoryˉitems = Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+                Nominals, Typeˉindex
+            );
+        }
+        Request = Appendˉu32(Request, U32ˉfromˉu8(Kind) - 1u32);
+        Request = Appendˉu32(Request, Directoryˉitems);
+        Typeˉindex = Typeˉindex + 1u32;
+    }
+
+    var Names: bytes = Empty(Input);
+    var Nameˉcursor: u32 = Requestˉnameˉoffset;
+    Typeˉindex = 0u32;
+    while Typeˉindex < Nominals.Count {
+        if Types.Compilerˉnativeˉx64ˉtypeˉkind(Nominals, Typeˉindex) == 2u8 {
+            let Emitˉitems: u32 = Types.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+                Nominals, Typeˉindex
+            );
+            var Emitˉitem: u32 = 0u32;
+            while Emitˉitem < Emitˉitems {
+                let Cursor: u32 = Memberˉcursor(
+                    Input, Nominals, Typeˉindex, Emitˉitem
+                );
+                let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+                Request = Bytesˉconcat(
+                    Request,
+                    Bytesˉfromˉi32ˉlittle(
+                        Types.Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
+                            Input, Nominals, Typeˉindex, Emitˉitem
+                        )
+                    )
+                );
+                Request = Appendˉu32(Request, Nameˉcursor);
+                Request = Appendˉu32(Request, Length);
+                Request = Appendˉu32(
+                    Request,
+                    Nameˉrank(Input, Nominals, Typeˉindex, Emitˉitem)
+                );
+                Names = Bytesˉconcat(
+                    Names,
+                    Bytesˉslice(Input, Cursor + 4u32, Length)
+                );
+                Nameˉcursor = Nameˉcursor + Length;
+                Emitˉitem = Emitˉitem + 1u32;
+            }
+        }
+        Typeˉindex = Typeˉindex + 1u32;
+    }
+    Request = Bytesˉconcat(Request, Names);
+    if Nameˉcursor != Requestˉbytes || Bytesˉlength(Request) != Requestˉbytes {
+        return Invalid(Input);
+    }
+    return Nativeˉhostedˉenumˉrequest(true, Request);
+}

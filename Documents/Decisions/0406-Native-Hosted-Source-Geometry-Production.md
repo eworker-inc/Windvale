@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0405](0405-Native-Hosted-Publication-Request.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted source geometry](../../Specifications/Windvale-Native-Hosted-Source-Geometry.md)
+- Advanced by: [Decision 0407](0407-Native-Hosted-Enum-Service-Production.md)
 
 ## Context and decision
 

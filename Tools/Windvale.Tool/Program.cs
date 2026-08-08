@@ -140,6 +140,10 @@ internal static class Program
             "linux-x64-hosted-publication-request-v1|" +
             "windows-x64-hosted-source-geometry-v1|" +
             "linux-x64-hosted-source-geometry-v1|" +
+            "windows-x64-hosted-enum-request-v1|" +
+            "linux-x64-hosted-enum-request-v1|" +
+            "windows-x64-hosted-enum-service-v1|" +
+            "linux-x64-hosted-enum-service-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -223,6 +227,8 @@ internal static class Program
         Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉpublicationˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉsourceˉgeometryˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Hostedˉenumˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Hostedˉenumˉserviceˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
@@ -319,6 +325,10 @@ internal static class Program
             "linux-x64-hosted-publication-request-v1|" +
             "windows-x64-hosted-source-geometry-v1|" +
             "linux-x64-hosted-source-geometry-v1|" +
+            "windows-x64-hosted-enum-request-v1|" +
+            "linux-x64-hosted-enum-request-v1|" +
+            "windows-x64-hosted-enum-service-v1|" +
+            "linux-x64-hosted-enum-service-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -442,6 +452,10 @@ internal static class Program
         Hostedˉpublicationˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉsourceˉgeometryˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉsourceˉgeometryˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉenumˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉenumˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉenumˉserviceˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉenumˉserviceˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -600,6 +614,8 @@ internal static class Program
                 Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉpublicationˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉsourceˉgeometryˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Hostedˉenumˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Hostedˉenumˉserviceˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -727,6 +743,16 @@ internal static class Program
                             Moduleˉname),
                     Hostedˉsourceˉgeometryˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Hostedˉsourceˉgeometryˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉenumˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉenumˉrequestˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉenumˉserviceˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉenumˉserviceˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -901,6 +927,16 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Hostedˉenumˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉenumˉrequestˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉenumˉserviceˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉenumˉserviceˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -979,6 +1015,8 @@ internal static class Program
                     Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉpublicationˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉsourceˉgeometryˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Hostedˉenumˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Hostedˉenumˉserviceˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
@@ -1498,6 +1536,10 @@ internal static class Program
             "linux-x64-hosted-publication-request-v1|" +
             "windows-x64-hosted-source-geometry-v1|" +
             "linux-x64-hosted-source-geometry-v1|" +
+            "windows-x64-hosted-enum-request-v1|" +
+            "linux-x64-hosted-enum-request-v1|" +
+            "windows-x64-hosted-enum-service-v1|" +
+            "linux-x64-hosted-enum-service-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -1553,6 +1595,10 @@ internal static class Program
             "linux-x64-hosted-publication-request-v1|" +
             "windows-x64-hosted-source-geometry-v1|" +
             "linux-x64-hosted-source-geometry-v1|" +
+            "windows-x64-hosted-enum-request-v1|" +
+            "linux-x64-hosted-enum-request-v1|" +
+            "windows-x64-hosted-enum-service-v1|" +
+            "linux-x64-hosted-enum-service-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +

@@ -600,6 +600,16 @@ canonical `WVSG 1` directly from bounded fragment and service resources and
 self-admits it before publication. Raw resource production, ordered process
 lifecycle, Linux execution, promotion, and grouped qualification remain.
 
+[Decision 0407](../Decisions/0407-Native-Hosted-Enum-Service-Production.md)
+removes managed construction of the variable service-7 resource from the
+bounded candidate path. One native process derives an exact single-group
+`WVEQ 2` request from verified WVB 1.11 nominal types; a second reuses the
+Windvale-owned metadata core and fixed 323-byte leaf to produce the complete
+service bytes. The native front door owns both WVBs, while Stage 0 remains only
+the frozen differential/package oracle. Fragment production, fixed-resource
+acquisition, ordered orchestration, larger segmented metadata, promotion, and
+the grouped gate remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

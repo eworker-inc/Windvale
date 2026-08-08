@@ -558,6 +558,15 @@ derives exact logical extents and aligned placements, and self-admits the
 manifest before publication. Raw resource production, ordered process and
 manifest lifecycle, Linux execution, promotion, and the grouped gate remain.
 
+[Decision 0407](../Decisions/0407-Native-Hosted-Enum-Service-Production.md)
+removes the bounded managed constructor for variable service 7. Two focused
+native processes derive the existing single-group `WVEQ 2` from verified WVB
+nominal types and turn its admitted `WVEN 1` into the exact leaf-plus-metadata
+resource. The focused current-host processes agree byte for byte with the frozen
+recovery oracle and loads no CLR. Fragment resource production, the nine fixed
+service resources, ordered manifest/process lifecycle, larger segmented enum
+metadata, Linux execution, promotion, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
