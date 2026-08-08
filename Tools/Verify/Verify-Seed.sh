@@ -705,6 +705,7 @@ printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/
 
 NATIVE_ENUM_NAME_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Enum-Name-Service-Bridge.wv"
 NATIVE_ENUM_NAME_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service-Bridge.wvb"
+NATIVE_ENUM_NAME_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service.bin"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_ENUM_NAME_BRIDGE_SOURCE" \
     --module "$NATIVE_ENUM_NAME_CORE_SOURCE" \
@@ -715,6 +716,12 @@ if [ "$NATIVE_ENUM_NAME_BRIDGE_HASH" != '46d806adcceee597a139976748c2e1d5a25dbf5
     exit 1
 fi
 cmp -s "$NATIVE_ENUM_NAME_BRIDGE_MODULE" "$NATIVE_ENUM_NAME_BRIDGE_RETAINED"
+NATIVE_ENUM_NAME_LEAF_RETAINED_HASH=$(sha256sum "$NATIVE_ENUM_NAME_LEAF_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_ENUM_NAME_LEAF_RETAINED_HASH" != 'fb05590c5b6e1791380ba288c4112387e791a18722428c90276796bd409d130a' ] ||
+    [ "$(wc -c < "$NATIVE_ENUM_NAME_LEAF_RETAINED")" -ne 323 ]; then
+    echo 'The retained Windvale native enum-name leaf has an unexpected exact identity.' >&2
+    exit 1
+fi
 NATIVE_ENUM_NAME_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ENUM_NAME_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_ENUM_NAME_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_ENUM_NAME_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null

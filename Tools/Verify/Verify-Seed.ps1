@@ -875,6 +875,7 @@ if (
 
 $NativeEnumNameBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Enum-Name-Service-Bridge.wv'
 $NativeEnumNameBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service-Bridge.wvb'
+$NativeEnumNameLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service.bin'
 dotnet $ToolDll `
     compile $NativeEnumNameBridgeSource `
     --module $NativeEnumNameCoreSource `
@@ -891,6 +892,13 @@ if (
         (Get-Item -LiteralPath $NativeEnumNameBridgeModule).Length
 ) {
     throw 'The retained Windvale native enum-name service bridge does not match its exact source compilation.'
+}
+$NativeEnumNameLeafRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumNameLeafRetained).Hash.ToLowerInvariant()
+if (
+    $NativeEnumNameLeafRetainedHash -ne 'fb05590c5b6e1791380ba288c4112387e791a18722428c90276796bd409d130a' -or
+    (Get-Item -LiteralPath $NativeEnumNameLeafRetained).Length -ne 323
+) {
+    throw 'The retained Windvale native enum-name leaf has an unexpected exact identity.'
 }
 $NativeEnumNameBridgeInspection = (dotnet $ToolDll inspect $NativeEnumNameBridgeModule) -join "`n"
 if (

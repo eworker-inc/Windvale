@@ -27,8 +27,8 @@
       Include="Consumers/Native-X64-Text-Quote-Service-Bridge.wvb"
       LogicalName="Windvale.Native.Native-X64-Text-Quote-Service-Bridge.wvb" />
     <EmbeddedResource
-      Include="Consumers/Native-X64-Enum-Name-Service-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-X64-Enum-Name-Service-Bridge.wvb" />
+      Include="Consumers/Native-X64-Enum-Name-Service.bin"
+      LogicalName="Windvale.Native.Native-X64-Enum-Name-Service.bin" />
     <EmbeddedResource
       Include="Consumers/Native-Enum-Metadata-Bridge.wvb"
       LogicalName="Windvale.Native.Native-Enum-Metadata-Bridge.wvb" />

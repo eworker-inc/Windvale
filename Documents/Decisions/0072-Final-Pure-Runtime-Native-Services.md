@@ -4,7 +4,7 @@
 - Status: Qualified on Windows and Debian x64
 - Extends: [Decision 0071](0071-Native-Text-Arena-And-Core-Text-Services.md)'s exact runtime-native service pattern
 - Retains: Native ABI 11, execution-context version 3, service-table version 4, kernel native bridge 6, and firmware probe 13
-- Advanced by: [Decision 0358](0358-Windvale-Owned-Native-Text-Quote-Leaf.md), [Decision 0359](0359-Windvale-Owned-Native-Enum-Name-Leaf.md), [Decision 0361](0361-Windvale-Owned-Bounded-Native-Enum-Metadata.md), and [Decision 0362](0362-Windvale-Owned-Segmented-Native-Enum-Metadata.md)
+- Advanced by: [Decision 0358](0358-Windvale-Owned-Native-Text-Quote-Leaf.md), [Decision 0359](0359-Windvale-Owned-Native-Enum-Name-Leaf.md), [Decision 0361](0361-Windvale-Owned-Bounded-Native-Enum-Metadata.md), [Decision 0362](0362-Windvale-Owned-Segmented-Native-Enum-Metadata.md), and [Decision 0363](0363-Direct-Native-Enum-Name-Leaf-Consumption.md)
 
 ## Context
 

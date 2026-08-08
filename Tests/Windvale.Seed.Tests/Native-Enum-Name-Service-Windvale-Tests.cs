@@ -89,15 +89,23 @@ internal static partial class Program
             Moduleˉdigest.Calculateˉsha256(
                 Metadataˉbridgeˉresult.Moduleˉbytes.AsSpan()));
 
+        var Repository = Findˉrepositoryˉroot();
+        Sequenceˉequal(
+            Bridgeˉresult.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(
+                Repository,
+                "Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service-Bridge.wvb")));
+
+        ImmutableArray<byte> Retainedˉenumˉleaf;
         using (var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
             .GetManifestResourceStream(
-                "Windvale.Native.Native-X64-Enum-Name-Service-Bridge.wvb") ??
+                "Windvale.Native.Native-X64-Enum-Name-Service.bin") ??
             throw new InvalidOperationException(
-                "The retained Windvale enum-name service bridge was not embedded."))
+                "The retained Windvale enum-name service leaf was not embedded."))
         {
             var Retained = new byte[checked((int)Stream.Length)];
             Stream.ReadExactly(Retained);
-            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
+            Retainedˉenumˉleaf = Retained.ToImmutableArray();
         }
         using (var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
             .GetManifestResourceStream(
@@ -110,7 +118,6 @@ internal static partial class Program
             Sequenceˉequal(Metadataˉbridgeˉresult.Moduleˉbytes, Retained);
         }
 
-        var Repository = Findˉrepositoryˉroot();
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-native-enum-name-service-{Guid.NewGuid():N}");
@@ -171,6 +178,7 @@ internal static partial class Program
         Equal(
             X64ˉnativeˉtextˉservices.ENUM_NAME_CANONICAL_SHA256,
             Moduleˉdigest.Calculateˉsha256(Expected.AsSpan()));
+        Sequenceˉequal(Expected, Retainedˉenumˉleaf);
 
         var Metadataˉrequests = Nativeˉenumˉmetadataˉbuilder.Buildˉrequests(Types);
         Equal(1, Metadataˉrequests.Length);

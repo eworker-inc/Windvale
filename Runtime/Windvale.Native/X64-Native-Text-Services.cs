@@ -40,10 +40,10 @@ public static class X64ˉnativeˉtextˉservices
         "Windvale.Native.Native-X64-Text-Concat-Service-Bridge.wvb";
     private const string TEXT_QUOTE_CONSUMER_RESOURCE =
         "Windvale.Native.Native-X64-Text-Quote-Service-Bridge.wvb";
-    private const string ENUM_NAME_CONSUMER_RESOURCE =
-        "Windvale.Native.Native-X64-Enum-Name-Service-Bridge.wvb";
+    private const string ENUM_NAME_LEAF_RESOURCE =
+        "Windvale.Native.Native-X64-Enum-Name-Service.bin";
     private static readonly Lazy<ImmutableArray<byte>> ENUM_NAME_RESULT = new(
-        Buildˉenumˉnameˉwithˉwindvale,
+        Readˉenumˉnameˉartifact,
         LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly Lazy<ImmutableArray<byte>> TEXT_CONCAT_RESULT = new(
         Buildˉtextˉconcatˉwithˉwindvale,
@@ -259,36 +259,27 @@ public static class X64ˉnativeˉtextˉservices
     private static ImmutableArray<byte> Readˉenumˉname() =>
         ENUM_NAME_RESULT.Value;
 
-    private static ImmutableArray<byte> Buildˉenumˉnameˉwithˉwindvale()
+    private static ImmutableArray<byte> Readˉenumˉnameˉartifact()
     {
         using var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
-            .GetManifestResourceStream(ENUM_NAME_CONSUMER_RESOURCE) ??
-            throw Invalidˉenumˉnameˉconsumer();
-        if (Stream.Length != ENUM_NAME_CONSUMER_CANONICAL_SIZE)
+            .GetManifestResourceStream(ENUM_NAME_LEAF_RESOURCE) ??
+            throw Invalidˉenumˉnameˉartifact();
+        if (Stream.Length != ENUM_NAME_CANONICAL_SIZE)
         {
-            throw Invalidˉenumˉnameˉconsumer();
+            throw Invalidˉenumˉnameˉartifact();
         }
-        var Bytes = new byte[ENUM_NAME_CONSUMER_CANONICAL_SIZE];
+        var Bytes = new byte[ENUM_NAME_CANONICAL_SIZE];
         Stream.ReadExactly(Bytes);
-        var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
-        if (!StringComparer.Ordinal.Equals(Hash, ENUM_NAME_CONSUMER_CANONICAL_SHA256))
-        {
-            throw Invalidˉenumˉnameˉconsumer();
-        }
-
-        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Compilation = X64ˉnativeˉbackend.Compile(Verified);
-        var Result = X64ˉnativeˉexecutor.Executeˉbytes(Compilation.Fragment);
         Verifyˉidentity(
             Nativeˉservice.Enumˉname,
-            Result.AsSpan(),
+            Bytes,
             ENUM_NAME_CANONICAL_SIZE,
             ENUM_NAME_CANONICAL_SHA256);
-        return Result;
+        return Bytes.ToImmutableArray();
     }
 
-    private static InvalidOperationException Invalidˉenumˉnameˉconsumer() =>
-        new("The retained Windvale native enum-name consumer failed its exact identity contract.");
+    private static InvalidOperationException Invalidˉenumˉnameˉartifact() =>
+        new("The retained Windvale native enum-name leaf failed its exact identity contract.");
 
     private static ImmutableArray<byte> Buildˉenumˉname(
         ImmutableArray<Nominalˉtypeˉdeclaration> types)
