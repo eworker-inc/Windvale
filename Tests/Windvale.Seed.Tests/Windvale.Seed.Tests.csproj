@@ -340,6 +340,9 @@
       Include="../../Linker/Windvale/Native-Hosted-Container-Startup-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Startup-Tool.wv" />
     <EmbeddedResource
+      Include="../../Runtime/Windvale/Native-Hosted-Container-Runtime-Tool.wv"
+      LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Runtime-Tool.wv" />
+    <EmbeddedResource
       Include="../../Linker/Windvale/Native-Hosted-Container-Segment-Set-Core.wv"
       LogicalName="Windvale.Seed.Tests.Native-Hosted-Container-Segment-Set-Core.wv" />
     <EmbeddedResource

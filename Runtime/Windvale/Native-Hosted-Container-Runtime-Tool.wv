@@ -1,0 +1,135 @@
+module Nativeˉhostedˉcontainerˉruntimeˉtool profile hosted;
+
+import Runtimeˉnativeˉhostedˉtoolˉmetadataˉadmission as Metadata;
+import Runtimeˉnativeˉhostedˉtoolˉruntimeˉheader as Runtimeˉheader;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉcontainerˉruntimeˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Appendˉu32(Value: bytes, Field: u32) -> bytes {
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Field));
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostruntime <metadata.wvhm> <runtime.wvhr>"
+    );
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "hosted container runtime status=",
+            Enumˉname(Nativeˉhostedˉcontainerˉruntimeˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+fn Profile(Metadataˉbytes: bytes) -> u32 {
+    let Container: u32 = Bytesˉreadˉu32ˉlittle(Metadataˉbytes, 16u32);
+    if Container == 3u32 { return 1u32; }
+    if Container >= 5u32 {
+        if Container <= 10u32 { return Container - 3u32; }
+    }
+    return 0u32;
+}
+
+fn Buildˉrequest(Metadataˉbytes: bytes, Target: u32, Hostedˉprofile: u32) -> bytes {
+    var Request: bytes = Bytesˉslice(Metadataˉbytes, 0u32, 0u32);
+    Request = Appendˉu32(Request, 1380472407u32);
+    Request = Appendˉu32(Request, 1u32);
+    Request = Appendˉu32(Request, 1048u32);
+    Request = Appendˉu32(Request, Target);
+    Request = Appendˉu32(Request, Hostedˉprofile);
+    Request = Appendˉu32(Request, 0u32);
+    return Bytesˉconcat(Request, Metadataˉbytes);
+}
+
+fn Responseˉisˉvalid(
+    Metadataˉbytes: bytes,
+    Request: bytes,
+    Response: bytes
+) -> bool {
+    if Bytesˉlength(Response) != 4128u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1397249623u32 {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 8u32) != 4128u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 16u32) != Bytesˉlength(Request) {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 20u32) != 4096u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 24u32) != 0u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 28u32) != 0u32 { return false; }
+    return Bytesˉareˉequal(
+        Metadataˉbytes,
+        Bytesˉslice(Response, 512u32, 1024u32)
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Metadataˉpath: text = process.argument(0u32);
+    let Runtimeˉpath: text = process.argument(1u32);
+    if Bytesˉareˉequal(
+        Textˉtoˉutf8(Metadataˉpath),
+        Textˉtoˉutf8(Runtimeˉpath)
+    ) {
+        return Usage();
+    }
+
+    let Metadataˉbytes: bytes = file.read_bytes(Metadataˉpath);
+    if Bytesˉlength(Metadataˉbytes) != 1024u32 { return Reject(); }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Metadataˉbytes, 12u32);
+    let Hostedˉprofile: u32 = Profile(Metadataˉbytes);
+    if !Metadata.Nativeˉhostedˉtoolˉmetadataˉisˉvalid(
+        Metadataˉbytes,
+        0u32,
+        Target,
+        Hostedˉprofile
+    ) {
+        return Reject();
+    }
+    let Request: bytes = Buildˉrequest(Metadataˉbytes, Target, Hostedˉprofile);
+    let Response: bytes =
+        Runtimeˉheader.Nativeˉhostedˉtoolˉruntimeˉheaderˉbuild(Request);
+    if !Responseˉisˉvalid(Metadataˉbytes, Request, Response) { return Reject(); }
+    let Runtime: bytes = Bytesˉslice(Response, 32u32, 4096u32);
+    file.write_bytes(Runtimeˉpath, Runtime);
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "hosted container runtime status=",
+                Enumˉname(Nativeˉhostedˉcontainerˉruntimeˉstatus.Valid)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(Bytesˉlength(Runtime)))
+        )
+    );
+    return 0;
+}

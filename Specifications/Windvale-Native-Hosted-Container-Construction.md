@@ -155,6 +155,8 @@ Normal construction now follows one ordered path:
 
 1. Windvale constructs and managed code independently verifies metadata and
    the initial runtime header against the actual bundle.
+   The paired native runtime-header command now turns canonical metadata into
+   the exact raw planner input as a separate process.
 2. The planner derives all file/virtual layout and startup targets; the paired
    native planner command can now produce this exact plan as a separate process.
 3. The startup constructor applies that target table to the canonical WVO.
@@ -178,8 +180,9 @@ by focused differential evidence. The ordinary managed builders still dispatch
 the retained planner and platform fragments while the standalone planner,
 platform-byte producer, segmenter, and publisher are composed into their
 replacement process pipeline. The standalone startup producer also consumes the
-plan without managed target projection. Remaining runtime/service resources and
-segment-request orchestration still need native ownership. The C# segment-set
+plan without managed target projection. The runtime header now has its own
+process; metadata/service-bundle evidence and segment-request orchestration
+still need native ownership. The C# segment-set
 fixture/harness is temporary transition evidence rather than product logic.
 Linux-host execution and grouped dual-host qualification remain deferred to the
 final retirement gate.

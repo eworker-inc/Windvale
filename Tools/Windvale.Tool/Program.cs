@@ -122,6 +122,8 @@ internal static class Program
             "linux-x64-hosted-container-platform-bytes-v1|" +
             "windows-x64-hosted-container-startup-v1|" +
             "linux-x64-hosted-container-startup-v1|" +
+            "windows-x64-hosted-container-runtime-v1|" +
+            "linux-x64-hosted-container-runtime-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -196,6 +198,7 @@ internal static class Program
         Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉcontainerˉplatformˉbytesˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉcontainerˉstartupˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Hostedˉcontainerˉruntimeˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
@@ -274,6 +277,8 @@ internal static class Program
             "linux-x64-hosted-container-platform-bytes-v1|" +
             "windows-x64-hosted-container-startup-v1|" +
             "linux-x64-hosted-container-startup-v1|" +
+            "windows-x64-hosted-container-runtime-v1|" +
+            "linux-x64-hosted-container-runtime-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -379,6 +384,8 @@ internal static class Program
         Hostedˉcontainerˉplatformˉbytesˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉstartupˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉcontainerˉstartupˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉcontainerˉruntimeˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉcontainerˉruntimeˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -528,6 +535,7 @@ internal static class Program
                 Hostedˉcontainerˉplannerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉcontainerˉplatformˉbytesˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉcontainerˉstartupˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Hostedˉcontainerˉruntimeˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvbˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -610,6 +618,11 @@ internal static class Program
                             Moduleˉname),
                     Hostedˉcontainerˉstartupˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Hostedˉcontainerˉstartupˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉcontainerˉruntimeˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉcontainerˉruntimeˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -739,6 +752,11 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Hostedˉcontainerˉruntimeˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉcontainerˉruntimeˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvbˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -808,6 +826,7 @@ internal static class Program
                     Hostedˉcontainerˉplannerˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉcontainerˉplatformˉbytesˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉcontainerˉstartupˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Hostedˉcontainerˉruntimeˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvbˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
@@ -1309,6 +1328,8 @@ internal static class Program
             "linux-x64-hosted-container-platform-bytes-v1|" +
             "windows-x64-hosted-container-startup-v1|" +
             "linux-x64-hosted-container-startup-v1|" +
+            "windows-x64-hosted-container-runtime-v1|" +
+            "linux-x64-hosted-container-runtime-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
@@ -1346,6 +1367,8 @@ internal static class Program
             "linux-x64-hosted-container-platform-bytes-v1|" +
             "windows-x64-hosted-container-startup-v1|" +
             "linux-x64-hosted-container-startup-v1|" +
+            "windows-x64-hosted-container-runtime-v1|" +
+            "linux-x64-hosted-container-runtime-v1|" +
             "windows-x64-hosted-container-publisher-v1|" +
             "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +

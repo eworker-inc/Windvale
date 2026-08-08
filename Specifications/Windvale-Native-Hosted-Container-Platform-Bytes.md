@@ -69,7 +69,9 @@ resource I/O, selection, response admission, and reporting.
 The ordinary managed hosted-application builders still dispatch retained
 service-free fragments internally. The standalone
 [startup producer](Windvale-Native-Hosted-Container-Startup.md) now closes the
-next resource boundary. Completing their replacement requires remaining
-runtime/resource production and composition of planner, platform-byte producer,
-startup producer, segmenter, and publisher. Linux execution, promotion, and the
-grouped dual-host retirement gate remain pending.
+next resource boundary, and
+[runtime-header production](Windvale-Native-Hosted-Container-Runtime.md) is now
+also standalone. Completing their replacement requires metadata/service-bundle
+evidence and composition of the planner, resource producers, segmenter, and
+publisher. Linux execution, promotion, and the grouped dual-host retirement gate
+remain pending.

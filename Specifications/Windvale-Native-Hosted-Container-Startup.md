@@ -75,7 +75,9 @@ C# target writer is deletion-bound package layout and identity wiring.
 
 The ordinary managed hosted-application builders still invoke the retained
 fragment internally. Completing their replacement requires native production
-or immutable acquisition of the remaining runtime, service-bundle, and
-materialization resources, followed by composition of the planner, resource
-producers, segmenter, and publisher. Linux execution, promotion, and the grouped
-dual-host retirement gate remain pending.
+or immutable acquisition of metadata, service-bundle, and materialization
+resources; the standalone
+[runtime-header producer](Windvale-Native-Hosted-Container-Runtime.md) now owns
+the initial header. Composition of the planner, resource producers, segmenter,
+and publisher, Linux execution, promotion, and the grouped dual-host retirement
+gate remain pending.

@@ -49,8 +49,9 @@ verifier was run.
 
 - Hosted layout planning now has a real native process boundary on both hosts.
 - Planner behavior is not copied into C# or a second Windvale implementation.
-- Decision 0396 now consumes this plan through a native platform-byte producer;
-  startup and remaining runtime/resource production still need process owners.
+- Decisions 0396 and 0397 now consume this plan for platform and startup bytes;
+  Decision 0398 supplies its raw runtime-header input. Metadata/service-bundle
+  evidence and segment-request orchestration remain.
 - Stage 0 still constructs the planner packages and the ordinary hosted builders
   still use the embedded fragment until the complete pipeline is promoted.
 

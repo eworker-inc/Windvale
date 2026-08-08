@@ -6,12 +6,14 @@
 initial 4,096-byte runtime header embedded in hosted Windows and Linux tools.
 Portable Windvale owns admission of the fixed `WVH* 1` metadata shape and the
 exact execution-context, service-table, output-table, file-table, metadata,
-and zero-tail byte layout. The host still projects already verified metadata,
-executes the retained constructor, independently verifies the response, and
-owns the outer PE/ELF container.
+and zero-tail byte layout. The standalone
+[hosted-container runtime-header producer](Windvale-Native-Hosted-Container-Runtime.md)
+now projects already verified metadata, executes the constructor, verifies the
+response, and writes the raw planner input without a managed runtime bridge.
 
-This version accepts the six implemented hosted profiles: compiler,
-build-driver, WVA assembler, WV linker, console packager, and WVB-to-WVO.
+This version accepts the seven implemented hosted profiles: compiler,
+build-driver, WVA assembler, WV linker, console packager, WVB-to-WVO, and the
+hosted-container segmenter authority shared by the transition tools.
 
 ## Request envelope: `WVHR 1`
 
@@ -23,7 +25,7 @@ The request is exactly 1,048 bytes:
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `1,048` |
 | 12 | 4 | target | `1` Windows x64 or `2` Linux x64 |
-| 16 | 4 | hosted profile | `1` through `6` |
+| 16 | 4 | hosted profile | `1` through `7` |
 | 20 | 4 | reserved | Zero |
 | 24 | 1,024 | hosted metadata | Exact canonical `WVH* 1` record |
 
@@ -91,5 +93,6 @@ The normal managed packaging seam embeds only the digest-bound WVNF. The
 former C# byte writer is retained under an explicit Stage 0 oracle name for
 differential and recovery evidence; it is not called by normal packaging and
 is removed from the product tree after the final recovery archive. The
-temporary managed request/response bridge also retires when native hosted-tool
-container construction invokes this Windvale contract directly.
+standalone runtime-header producer now owns the process boundary. The retained
+managed bridge remains only until complete pipeline promotion and recovery
+archiving.

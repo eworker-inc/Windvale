@@ -12,8 +12,8 @@ reserved bytes.
 The host projects already verified bundle extents and raw SHA-256 evidence.
 It independently verifies the returned metadata against the actual service
 bundle before outer-container construction. This version accepts the compiler,
-build-driver, WVA assembler, WV linker, console packager, and WVB-to-WVO
-profiles.
+build-driver, WVA assembler, WV linker, console packager, WVB-to-WVO, and
+hosted-container segmenter profiles.
 
 ## Request envelope: `WVHM 1`
 
@@ -26,7 +26,7 @@ service-placement records.
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `576` |
 | 12 | 4 | target | `1` Windows x64 or `2` Linux x64 |
-| 16 | 4 | hosted profile | `1` through `6` |
+| 16 | 4 | hosted profile | `1` through `7` |
 | 20 | 4 | bundle offset | Exactly `4,096` |
 | 24 | 4 | bundle bytes | `1` through 34 MiB |
 | 28 | 4 | native-image bytes | `1` through 32 MiB and no larger than the bundle |

@@ -1,6 +1,6 @@
 # Decision 0397: Standalone native hosted-container startup
 
-- Status: Implemented candidate; pipeline integration and Linux execution pending
+- Status: Implemented candidate; advanced by [Decision 0398](0398-Standalone-Native-Hosted-Container-Runtime.md)
 - Date: 2026-08-08
 - Advances: [Decision 0396](0396-Standalone-Native-Hosted-Container-Platform-Bytes.md), [Decision 0384](0384-Windvale-Owned-Hosted-Startup-Instantiation.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted-container startup producer](../../Specifications/Windvale-Native-Hosted-Container-Startup.md)
@@ -55,8 +55,9 @@ was run.
   existing structural and relocation validator runs.
 - The new source remains 179 lines and reuses focused SHA-256 and startup-core
   modules rather than growing one large source file.
-- Runtime/service resource production, segment-request orchestration, complete
-  pipeline composition, Linux execution, promotion, and the grouped gate remain.
+- Decision 0398 now supplies the raw runtime header; metadata construction,
+  service-bundle production, segment-request orchestration, complete pipeline
+  composition, Linux execution, promotion, and the grouped gate remain.
 
 ## Reconsideration triggers
 

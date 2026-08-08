@@ -557,7 +557,12 @@ loading .NET.
 adds exact plan-to-`WVSI 1` projection and `WVSD 1` startup instantiation as a
 paired process. It verifies the canonical WVO identity and reuses the portable
 Windvale object/relocation constructor rather than copying startup instructions.
-Remaining runtime/service resource production, segment-request orchestration,
+
+[Decision 0398](../Decisions/0398-Standalone-Native-Hosted-Container-Runtime.md)
+adds the paired metadata-to-runtime process. It reuses complete Windvale
+metadata admission and runtime-table construction and writes the exact raw
+4,096-byte header already consumed by the standalone planner. Metadata request
+construction, service-bundle resource production, segment-request orchestration,
 and complete process composition remain.
 
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)

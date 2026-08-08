@@ -68,5 +68,7 @@ dispatch the retained planner fragment internally. The standalone
 now consumes this plan for PE/ELF-owned regions, and the standalone
 [startup producer](Windvale-Native-Hosted-Container-Startup.md) consumes its
 target table with the canonical WVO. Completing the process pipeline still
-requires remaining runtime/resource production, composition, Linux execution,
-and the grouped dual-host gate.
+requires metadata/service-bundle evidence and composition. The standalone
+[runtime-header producer](Windvale-Native-Hosted-Container-Runtime.md) now
+supplies this tool's raw input. Linux execution and the grouped dual-host gate
+remain open.

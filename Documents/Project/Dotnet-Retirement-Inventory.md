@@ -487,6 +487,15 @@ current-host execution loads no CLR. Remaining runtime/service resources,
 segment-request orchestration, complete composition, Linux execution, promotion,
 and the grouped gate remain.
 
+[Decision 0398](../Decisions/0398-Standalone-Native-Hosted-Container-Runtime.md)
+removes managed runtime-header request projection from the candidate pipeline.
+One 22,956-byte Windvale tool admits a raw canonical metadata record, constructs
+`WVHR 1`, verifies `WVHS 1`, and writes the exact 4,096-byte raw header consumed
+by the standalone planner. Paired packages and public CLI targets exist, and
+current-host execution loads no CLR. Metadata request construction,
+service-bundle production, segment requests, complete composition, Linux
+execution, promotion, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

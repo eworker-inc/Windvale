@@ -1,6 +1,6 @@
 # Decision 0382: Windvale-owned hosted-tool runtime header
 
-- Status: Accepted current-host normal-path construction transfer; native outer-container composition, Linux execution, and grouped qualification pending
+- Status: Accepted current-host normal-path construction transfer; advanced by [Decision 0398](0398-Standalone-Native-Hosted-Container-Runtime.md)
 - Date: 2026-08-08
 - Advances: [Decision 0381](0381-Windvale-Owned-Native-Byte-Result-Admission.md), [Decision 0163](0163-Bounded-Hosted-Compiler-Runtime-Data.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native hosted-tool runtime header](../../Specifications/Windvale-Native-Hosted-Tool-Runtime-Header.md)
