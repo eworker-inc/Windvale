@@ -68,6 +68,13 @@ fn Reject() -> i32 {
     return 2;
 }
 
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostbundlerequest <plan.wvpq> <sources.wvsg> <chunk-prefix> count | wvhostbundlerequest <plan.wvpq> <sources.wvsg> <chunk-prefix> <segment-index> <request.wvsq>"
+    );
+    return 64;
+}
+
 fn Sourcesˉmatchˉplan(
     Request: bytes,
     Layout: bytes,
@@ -141,20 +148,22 @@ fn Payloadˉbytes(
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() != 5u32 {
-        diagnostic.write_line(
-            "Usage: wvhostbundlerequest <plan.wvpq> <sources.wvsg> <chunk-prefix> <segment-index> <request.wvsq>"
-        );
-        return 64;
-    }
+    let Arguments: u32 = process.argument_count();
+    if Arguments != 4u32 && Arguments != 5u32 { return Usage(); }
     let Requestˉpath: text = process.argument(0u32);
     let Manifestˉpath: text = process.argument(1u32);
     let Prefix: text = process.argument(2u32);
-    let Indexˉtext: bytes = Textˉtoˉutf8(process.argument(3u32));
-    let Outputˉpath: text = process.argument(4u32);
+    var Indexˉtext: bytes = Textˉtoˉutf8(process.argument(3u32));
+    let Countˉmode: bool =
+        Bytesˉareˉequal(Indexˉtext, Textˉtoˉutf8("count"));
+    if (Arguments == 4u32 && !Countˉmode) ||
+        (Arguments == 5u32 && Countˉmode) { return Usage(); }
+    var Outputˉpath: text = Requestˉpath;
+    if Arguments == 5u32 { Outputˉpath = process.argument(4u32); }
+    if Countˉmode { Indexˉtext = Textˉtoˉutf8("0"); }
     if Pathsˉareˉequal(Requestˉpath, Manifestˉpath) ||
-        Pathsˉareˉequal(Requestˉpath, Outputˉpath) ||
-        Pathsˉareˉequal(Manifestˉpath, Outputˉpath) ||
+        (!Countˉmode && Pathsˉareˉequal(Requestˉpath, Outputˉpath)) ||
+        (!Countˉmode && Pathsˉareˉequal(Manifestˉpath, Outputˉpath)) ||
         !Sources.Immutableˉsourceˉprefixˉisˉvalid(Prefix) {
         return Reject();
     }
@@ -174,7 +183,7 @@ export fn Main() -> i32 {
             Sources.Immutableˉsourceˉresourceˉname(Prefix, Chunk);
         if Pathsˉareˉequal(Resourceˉpath, Requestˉpath) ||
             Pathsˉareˉequal(Resourceˉpath, Manifestˉpath) ||
-            Pathsˉareˉequal(Resourceˉpath, Outputˉpath) ||
+            (!Countˉmode && Pathsˉareˉequal(Resourceˉpath, Outputˉpath)) ||
             !Sources.Immutableˉsourceˉresourceˉisˉvalid(
                 Manifest, Chunk, file.read_bytes(Resourceˉpath)
             ) {
@@ -193,6 +202,15 @@ export fn Main() -> i32 {
     let Imageˉbytes: u32 = Plan.Imageˉbytes;
     var Segments: u32 = Imageˉbytes / SEGMENT_BYTES;
     if Imageˉbytes % SEGMENT_BYTES != 0u32 { Segments = Segments + 1u32; }
+    if Countˉmode {
+        console.write_line(
+            Textˉconcat(
+                "hosted service-bundle request status=Valid segments=",
+                U32ˉformat(Segments)
+            )
+        );
+        return 0;
+    }
     if Parsed.Value >= Segments { return Reject(); }
     let Segmentˉstart: u32 = Parsed.Value * SEGMENT_BYTES;
     var Segmentˉlength: u32 = Imageˉbytes - Segmentˉstart;

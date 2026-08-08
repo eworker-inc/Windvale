@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0411](0411-Native-Hosted-Container-Source-Set.md), [Decision 0388](0388-Immutable-Hosted-Container-Segment-Set.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted-container segment manifest](../../Specifications/Windvale-Native-Hosted-Container-Segment-Manifest.md)
+- Advanced by: [Decision 0413](0413-Native-Hosted-Segment-Iteration-Control.md)
 
 ## Context and decision
 
@@ -42,9 +43,10 @@ response while preserving output, and reconstructs through the native front
 door. No broad local verifier ran.
 
 All currently identified hosted-container binary records now have native
-process owners. The next slice is ordered digest-bound composition and private
-resource lifecycle, followed by Linux execution, promotion, and the grouped
-retirement gate.
+process owners. Decision 0413 additionally removes host-side binary decoding
+from both bounded segment loops. The next slice is ordered digest-bound
+composition and private resource lifecycle, followed by Linux execution,
+promotion, and the grouped retirement gate.
 
 ## Reconsideration triggers
 

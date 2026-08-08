@@ -618,6 +618,15 @@ admission/publisher remains the independent payload gate. Digest-bound ordered
 child execution, private cleanup, complete composition, Linux execution,
 promotion, and the grouped gate remain.
 
+[Decision 0413](../Decisions/0413-Native-Hosted-Segment-Iteration-Control.md)
+removes host-side decoding and failure-sentinel discovery from both remaining
+bounded loops. The existing native request producers now admit their complete
+plans, geometry, and immutable resources before reporting exact service-bundle
+or final-container segment counts. The host adapter therefore owns only
+digest-bound tool acquisition, ordered child execution, and private cleanup.
+Complete Windows composition, Linux execution, promotion, and the grouped gate
+remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

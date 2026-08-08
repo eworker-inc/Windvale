@@ -199,6 +199,16 @@ internal static partial class Program
             Sequenceˉequal(Expected, File.ReadAllBytes(Outputˉpath));
             Equal(
                 0,
+                Executeˉhostedˉcontainerˉsegmentˉrequestˉcount(
+                    Application,
+                    Planˉpath,
+                    Manifestˉpath,
+                    Prefix,
+                    $"hosted container segment request status=Valid segments=" +
+                        $"{(Read(28) + 4_194_144 - 1) / 4_194_144}\n",
+                    Loaded));
+            Equal(
+                0,
                 Loaded.Count(Name =>
                     Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
                     Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
@@ -298,4 +308,23 @@ internal static partial class Program
                 [plan, manifest, prefix, segment, output],
                 loadedˉmappings: loaded,
                 expectedˉerror: expectedˉerror);
+
+    private static int Executeˉhostedˉcontainerˉsegmentˉrequestˉcount(
+        ImmutableArray<byte> application,
+        string plan,
+        string manifest,
+        string prefix,
+        string expectedˉoutput,
+        ISet<string>? loaded = null) =>
+        OperatingSystem.IsWindows()
+            ? Executeˉwindowsˉapplication(
+                application,
+                expectedˉoutput,
+                [plan, manifest, prefix, "count"],
+                loadedˉmodules: loaded)
+            : Executeˉlinuxˉapplication(
+                application,
+                expectedˉoutput,
+                [plan, manifest, prefix, "count"],
+                loadedˉmappings: loaded);
 }

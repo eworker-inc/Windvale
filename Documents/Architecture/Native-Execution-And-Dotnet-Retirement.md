@@ -648,6 +648,13 @@ payload. Hosted-container format ownership is now native, while digest-bound
 process ordering, private lifecycle, Linux execution, promotion, and grouped
 qualification remain.
 
+[Decision 0413](../Decisions/0413-Native-Hosted-Segment-Iteration-Control.md)
+keeps loop discovery on the native side of that boundary. Each existing
+request producer admits the same plan, source geometry, and immutable resources
+before reporting its bounded decimal count. Platform scripts may sequence those
+counts and manage private names, but must not decode `WVPQ` or `WVCD`, construct
+Windvale formats, or interpret request rejection as normal loop completion.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

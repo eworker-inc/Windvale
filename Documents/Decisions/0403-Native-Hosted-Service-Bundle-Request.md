@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0400](0400-Standalone-Native-Hosted-Service-Bundle.md), [Decision 0402](0402-Native-Hosted-Metadata-Request.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contracts: [Immutable source geometry](../../Specifications/Windvale-Immutable-Source-Geometry.md) and [native service-bundle request producer](../../Specifications/Windvale-Native-Hosted-Service-Bundle-Request.md)
+- Advanced by: [Decision 0413](0413-Native-Hosted-Segment-Iteration-Control.md)
 
 ## Context
 
@@ -58,6 +59,7 @@ zero-warning. No broader verifier ran under the end-of-goal gate policy.
 - Decision 0404 now performs that reuse and emits exact `WVHT` requests.
 - Decision 0405 now supplies the exact upstream `WVPQ` from admitted `WVSG`
   geometry without managed request construction.
+- Decision 0413 adds read-only admitted count mode for bounded host iteration.
 - Stage 0 adds only deletion-bound package identities and the independent
   differential oracle.
 - Ordered request/response orchestration, final segment requests, Linux

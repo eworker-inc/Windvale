@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0403](0403-Native-Hosted-Service-Bundle-Request.md), [Decision 0387](0387-Standalone-Native-Hosted-Container-Segmenter.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Native hosted-container segment-request producer](../../Specifications/Windvale-Native-Hosted-Container-Segment-Request.md)
+- Advanced by: [Decision 0413](0413-Native-Hosted-Segment-Iteration-Control.md)
 
 ## Context
 
@@ -62,6 +63,7 @@ door. The Release build is zero-warning. No broader verifier ran.
   importing a capability-bearing helper or duplicating the algorithm.
 - The shared sources remain reviewable rather than growing one broad
   orchestration file.
+- Decision 0413 lets this producer report its already admitted iteration count.
 - Ordered process execution, response/manifest lifecycle, Linux execution,
   promotion, and grouped qualification remain.
 
