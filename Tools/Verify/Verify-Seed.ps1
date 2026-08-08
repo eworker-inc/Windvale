@@ -174,6 +174,10 @@ $NativeServiceCodeBuilderModule = Join-Path $Artifacts 'Native-X64-Service-Code-
 $NativeWindowsOutputCoreModule = Join-Path $Artifacts 'Native-X64-Output-Service-Windows.wvb'
 $NativeLinuxOutputCoreModule = Join-Path $Artifacts 'Native-X64-Output-Service-Linux.wvb'
 $NativeOutputBridgeModule = Join-Path $Artifacts 'Native-X64-Output-Services-Bridge.wvb'
+$NativeFileOutputCodeModule = Join-Path $Artifacts 'Native-X64-File-Output-Service-Code.wvb'
+$NativeWindowsFileOutputCoreModule = Join-Path $Artifacts 'Native-X64-File-Output-Service-Windows.wvb'
+$NativeLinuxFileOutputCoreModule = Join-Path $Artifacts 'Native-X64-File-Output-Service-Linux.wvb'
+$NativeFileOutputBridgeModule = Join-Path $Artifacts 'Native-X64-File-Output-Services-Bridge.wvb'
 $NativeTextConcatCoreModule = Join-Path $Artifacts 'Native-X64-Text-Concat-Service.wvb'
 $NativeTextConcatBridgeModule = Join-Path $Artifacts 'Native-X64-Text-Concat-Service-Bridge.wvb'
 $NativeTextQuoteCoreModule = Join-Path $Artifacts 'Native-X64-Text-Quote-Service.wvb'
@@ -859,6 +863,83 @@ if (
     $NativeOutputBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale output-service bridge inspection is incomplete.'
+}
+
+$NativeFileOutputCodeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Output-Service-Code.wv'
+$NativeWindowsFileOutputCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Output-Service-Windows.wv'
+$NativeLinuxFileOutputCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Output-Service-Linux.wv'
+$NativeFileOutputBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Output-Services-Bridge.wv'
+$NativeFileOutputBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-File-Output-Services-Bridge.wvb'
+$NativeWindowsFileOutputLeaf = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Windows-File-Output-Service.bin'
+$NativeLinuxFileOutputLeaf = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Linux-File-Output-Service.bin'
+dotnet $ToolDll `
+    compile $NativeFileOutputCodeSource `
+    --module $NativeServiceCodeBuilderSource `
+    -o $NativeFileOutputCodeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the shared Windvale file-output code module.' }
+$NativeFileOutputCodeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileOutputCodeModule).Hash.ToLowerInvariant()
+if ($NativeFileOutputCodeHash -ne '7ed9baf3a21912933045b99cb82d22d73620a318a716931db86670e5ea2212c6') {
+    throw "The shared Windvale file-output code module has an unexpected digest: $NativeFileOutputCodeHash"
+}
+dotnet $ToolDll `
+    compile $NativeWindowsFileOutputCoreSource `
+    --module $NativeServiceCodeBuilderSource `
+    --module $NativeFileOutputCodeSource `
+    -o $NativeWindowsFileOutputCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale Windows file-output core.' }
+$NativeWindowsFileOutputCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeWindowsFileOutputCoreModule).Hash.ToLowerInvariant()
+if ($NativeWindowsFileOutputCoreHash -ne '9ca03bf6f5b8678389c81e281438160ff4c96c86f11a048aba90238fdc81a45d') {
+    throw "The Windvale Windows file-output core has an unexpected digest: $NativeWindowsFileOutputCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeLinuxFileOutputCoreSource `
+    --module $NativeServiceCodeBuilderSource `
+    --module $NativeFileOutputCodeSource `
+    -o $NativeLinuxFileOutputCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale Linux file-output core.' }
+$NativeLinuxFileOutputCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeLinuxFileOutputCoreModule).Hash.ToLowerInvariant()
+if ($NativeLinuxFileOutputCoreHash -ne '834d0c45b85b26ffd3ee43e49a85c8c4ffa08f36581c02785729b276eeccdb48') {
+    throw "The Windvale Linux file-output core has an unexpected digest: $NativeLinuxFileOutputCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeFileOutputBridgeSource `
+    --module $NativeServiceCodeBuilderSource `
+    --module $NativeFileOutputCodeSource `
+    --module $NativeWindowsFileOutputCoreSource `
+    --module $NativeLinuxFileOutputCoreSource `
+    -o $NativeFileOutputBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale file-output bridge.' }
+$NativeFileOutputBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileOutputBridgeModule).Hash.ToLowerInvariant()
+if ($NativeFileOutputBridgeHash -ne '441db0e0e5a90f98c7e4b12b17086f56487e7d754d7b6378a0eb2972591e64f6') {
+    throw "The Windvale file-output bridge has an unexpected digest: $NativeFileOutputBridgeHash"
+}
+$NativeFileOutputBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileOutputBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeFileOutputBridgeRetainedHash -ne $NativeFileOutputBridgeHash -or
+    (Get-Item -LiteralPath $NativeFileOutputBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeFileOutputBridgeModule).Length
+) {
+    throw 'The retained Windvale file-output bridge does not match its exact source compilation.'
+}
+$NativeFileOutputLeaves = @(
+    @($NativeWindowsFileOutputLeaf, 787, 'a331248b12fc5830587f6fd8ddf06a546859b8f57366e205032aa2c37db48bb1'),
+    @($NativeLinuxFileOutputLeaf, 823, 'fc688f2a84936dc1082fcb5654667a8a60b0581bff29b1868d48ef2d4af77422')
+)
+foreach ($NativeFileOutputLeaf in $NativeFileOutputLeaves) {
+    $NativeFileOutputLeafHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileOutputLeaf[0]).Hash.ToLowerInvariant()
+    if ($NativeFileOutputLeafHash -ne $NativeFileOutputLeaf[2] -or
+        (Get-Item -LiteralPath $NativeFileOutputLeaf[0]).Length -ne $NativeFileOutputLeaf[1]) {
+        throw "The retained Windvale native file-output leaf has an unexpected identity: $($NativeFileOutputLeaf[0])"
+    }
+}
+$NativeFileOutputBridgeInspection = (dotnet $ToolDll inspect $NativeFileOutputBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeFileOutputBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeFileOutputBridgeInspection -notmatch 'Main\(\) -> bytes' -or
+    $NativeFileOutputBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale file-output bridge inspection is incomplete.'
 }
 
 $NativeTextConcatCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Concat-Service.wv'

@@ -239,6 +239,16 @@ bridge WVB remains repository recovery/differential evidence. Platform output
 table binding, file-input/output leaf generation, bundle assembly, final W^X
 ownership, Linux execution evidence, and the grouped gate remain open.
 
+[Decision 0370](../Decisions/0370-Windvale-Owned-Native-File-Output-Leaves.md)
+removes the corresponding C# instruction emission and branch patching for the
+Windows and Linux `file.write_bytes` leaves. Shared and platform-focused
+Windvale modules plus one native-front-door-reproducible bridge own their
+unchanged 787-byte and 823-byte machine adapters. The normal runtime embeds and
+digest-checks only those two generated leaves; the bridge WVB remains recovery
+and differential evidence. The managed `WVFO` table owner, file-input leaf
+construction, service-bundle construction, W^X ownership, invocation, Linux
+evidence, and grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.
