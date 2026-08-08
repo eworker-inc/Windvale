@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text;
 using Windvale.Bytecode;
@@ -118,58 +119,18 @@ internal sealed class Nativeˉfileˉinputˉcontext : IDisposable
                 ];
             }
 
-            var Bytes = new byte[checked((int)Nativeˉfileˉinputˉtableˉcontract.SIZE)];
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.MAGIC_OFFSET),
-                Nativeˉfileˉinputˉtableˉcontract.MAGIC);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.FORMAT_VERSION_OFFSET),
-                Nativeˉfileˉinputˉtableˉcontract.FORMAT_VERSION);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.SIZE_OFFSET),
-                Nativeˉfileˉinputˉtableˉcontract.SIZE);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.PLATFORM_OFFSET),
-                (uint)Platform);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_TABLE_POINTER_OFFSET),
-                checked((ulong)Snapshotˉtable.ToInt64()));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY_OFFSET),
-                Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.NAME_ARENA_POINTER_OFFSET),
-                checked((ulong)Nameˉarena.ToInt64()));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_OFFSET),
-                Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.DATA_ARENA_POINTER_OFFSET),
-                checked((ulong)Dataˉarena.ToInt64()));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.DATA_STRIDE_OFFSET),
-                Nativeˉfileˉinputˉtableˉcontract.DATA_STRIDE_BYTES);
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.MAXIMUM_DATA_BYTES_OFFSET),
-                Bytecodeˉlimits.MAX_BYTE_DATA_BYTES);
-            BinaryPrimitives.WriteUInt64LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.SCRATCH_POINTER_OFFSET),
-                checked((ulong)Scratch.ToInt64()));
-            BinaryPrimitives.WriteUInt32LittleEndian(
-                Bytes.AsSpan(Nativeˉfileˉinputˉtableˉcontract.SCRATCH_BYTES_OFFSET),
-                checked((uint)Scratchˉbytes));
-            for (var Index = 0; Index < Functions.Length; Index++)
-            {
-                BinaryPrimitives.WriteUInt64LittleEndian(
-                    Bytes.AsSpan(
-                        Nativeˉfileˉinputˉtableˉcontract.WINDOWS_UTF8_TO_UTF16_POINTER_OFFSET +
-                        (Index * sizeof(ulong))),
-                    Functions[Index]);
-            }
+            var Bytes = Nativeˉfileˉinputˉtableˉbuilder.Build(
+                Platform,
+                checked((ulong)Snapshotˉtable.ToInt64()),
+                checked((ulong)Nameˉarena.ToInt64()),
+                checked((ulong)Dataˉarena.ToInt64()),
+                checked((ulong)Scratch.ToInt64()),
+                checked((uint)Scratchˉbytes),
+                Functions.ToImmutableArray());
 
-            Initialˉtable = Bytes;
+            Initialˉtable = Bytes.ToArray();
             Address = Marshal.AllocHGlobal(Bytes.Length);
-            Marshal.Copy(Bytes, 0, Address, Bytes.Length);
+            Marshal.Copy(Initialˉtable, 0, Address, Bytes.Length);
             Verifyˉtable(completed: false);
         }
         catch

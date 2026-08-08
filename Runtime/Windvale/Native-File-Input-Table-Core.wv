@@ -1,0 +1,112 @@
+module Runtimeˉnativeˉfileˉinputˉtable profile portable;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Tableˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1380865623u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Tableˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn Nonzeroˉu64(Input: bytes, Offset: u32) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != 0u32 {
+        return true;
+    }
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 0u32;
+}
+
+export fn Nativeˉfileˉinputˉtableˉbuild(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 136u32 {
+        return Failure(Input, 1u32, Total);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1364088407u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Failure(Input, 4u32, 28u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 44u32) != 0u32 {
+        return Failure(Input, 4u32, 44u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 76u32) != 0u32 {
+        return Failure(Input, 4u32, 76u32);
+    }
+
+    let Platform: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Platform < 1u32 || Platform > 2u32 {
+        return Failure(Input, 5u32, 12u32);
+    }
+    if !Nonzeroˉu64(Input, 16u32) ||
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) != 64u32 {
+        return Failure(Input, 6u32, 16u32);
+    }
+    if !Nonzeroˉu64(Input, 32u32) ||
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) != 1048576u32 {
+        return Failure(Input, 7u32, 32u32);
+    }
+    if !Nonzeroˉu64(Input, 48u32) ||
+        Bytesˉreadˉu32ˉlittle(Input, 56u32) != 4194304u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 60u32) != 4194304u32 {
+        return Failure(Input, 8u32, 48u32);
+    }
+    if !Nonzeroˉu64(Input, 64u32) {
+        return Failure(Input, 9u32, 64u32);
+    }
+    let Scratchˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 72u32);
+    if (Platform == 1u32 && Scratchˉbytes != 2097154u32) ||
+        (Platform == 2u32 && Scratchˉbytes != 1048577u32) {
+        return Failure(Input, 9u32, 72u32);
+    }
+
+    var Index: u32 = 0u32;
+    while Index < 7u32 {
+        let Offset: u32 = 80u32 + Index * 8u32;
+        let Present: bool = Nonzeroˉu64(Input, Offset);
+        if Platform == 1u32 {
+            if !Present {
+                return Failure(Input, 10u32, Offset);
+            }
+        } else {
+            if Present {
+                return Failure(Input, 10u32, Offset);
+            }
+        }
+        Index = Index + 1u32;
+    }
+
+    var Table: bytes = Empty(Input);
+    Table = Appendˉu32(Table, 1229346391u32);
+    Table = Appendˉu32(Table, 1u32);
+    Table = Appendˉu32(Table, 136u32);
+    Table = Bytesˉconcat(Table, Bytesˉslice(Input, 12u32, 124u32));
+    return Bytesˉconcat(Responseˉheader(Input, 168u32, 0u32, Total, 136u32), Table);
+}

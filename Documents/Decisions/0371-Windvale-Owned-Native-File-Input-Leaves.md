@@ -4,6 +4,7 @@
 - Date: 2026-08-08
 - Advances: [Decision 0370](0370-Windvale-Owned-Native-File-Output-Leaves.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale native execution context](../../Specifications/Windvale-Native-Execution-Context.md#runtime-private-file-input-table)
+- Advanced by: [Decision 0376](0376-Windvale-Owned-Native-File-Input-Table.md)
 
 ## Context
 

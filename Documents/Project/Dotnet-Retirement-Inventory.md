@@ -296,6 +296,16 @@ verification/copy, and teardown. `WVFI`, the service table, execution context,
 W^X ownership, arenas, invocation, Linux evidence, and the grouped gate remain
 open.
 
+[Decision 0376](../Decisions/0376-Windvale-Owned-Native-File-Input-Table.md)
+removes C# ownership of the immutable initial 136-byte `WVFI` layout. Windvale
+validates four already allocated arena targets, exact capacities, zero initial
+snapshot state, and seven opaque Windows-function ranges before constructing
+the complete table. The managed host retains allocation, library/export
+acquisition, response verification/copy, mutable snapshot publication checks,
+and teardown. All specialized binding tables are now Windvale-owned; the
+shared service table, execution context, W^X ownership, arenas, invocation,
+Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

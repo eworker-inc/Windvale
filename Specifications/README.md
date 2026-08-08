@@ -91,6 +91,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native service-bundle materialization](Windvale-Native-Service-Bundle-Materialization.md)
 - [Native output-table construction](Windvale-Native-Output-Table-Construction.md)
 - [Native file-output-table construction](Windvale-Native-File-Output-Table-Construction.md)
+- [Native file-input-table construction](Windvale-Native-File-Input-Table-Construction.md)
 - [WVB publication transaction](Windvale-Wvb-Publication-Transaction.md)
 - [Compiler build-driver application](Windvale-Compiler-Build-Driver.md)
 - [Bounded x86-64 kernel target](Windvale-X64-Kernel-Target.md)

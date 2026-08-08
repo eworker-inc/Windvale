@@ -188,6 +188,8 @@ File-input-table version 1 is exactly 136 bytes and is never serialized into WVB
 
 Each snapshot record contains name pointer/length/reserved at offsets 0/8/12 and data pointer/length/reserved at 16/24/28. Record `i` must point to canonical name slot `i * 1 MiB` and data slot `i * 4 MiB`. After native return, the owner verifies count, every pointer and bound, zero reserved fields, strict UTF-8 names, and ordinal uniqueness before releasing the execution.
 
+The [Windvale file-input-table constructor](Windvale-Native-File-Input-Table-Construction.md) owns the exact immutable initial `WVFI` bytes from already allocated arena targets and resolved opaque functions. The host independently verifies every initial table field before publication and permits only the specified snapshot-count/record mutations during execution, followed by the complete post-execution checks above.
+
 ## Runtime-private file-output table
 
 File-output-table version 1 is exactly 80 bytes and is never serialized into WVB or WVO:

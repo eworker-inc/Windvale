@@ -198,6 +198,8 @@ $NativeOutputTableCoreModule = Join-Path $Artifacts 'Native-Output-Table-Core.wv
 $NativeOutputTableBridgeModule = Join-Path $Artifacts 'Native-Output-Table-Bridge.wvb'
 $NativeFileOutputTableCoreModule = Join-Path $Artifacts 'Native-File-Output-Table-Core.wvb'
 $NativeFileOutputTableBridgeModule = Join-Path $Artifacts 'Native-File-Output-Table-Bridge.wvb'
+$NativeFileInputTableCoreModule = Join-Path $Artifacts 'Native-File-Input-Table-Core.wvb'
+$NativeFileInputTableBridgeModule = Join-Path $Artifacts 'Native-File-Input-Table-Bridge.wvb'
 $NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
@@ -1443,6 +1445,51 @@ if (
     $NativeFileOutputTableBridgeInspection -notmatch 'Exports \(1\)'
 ) {
     throw 'The Windvale native file-output-table bridge inspection is incomplete.'
+}
+
+$NativeFileInputTableCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-File-Input-Table-Core.wv'
+$NativeFileInputTableBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-File-Input-Table-Bridge.wv'
+$NativeFileInputTableBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-File-Input-Table-Bridge.wvb'
+$NativeFileInputTableArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-File-Input-Table-Bridge.wvnf'
+dotnet $ToolDll compile $NativeFileInputTableCoreSource -o $NativeFileInputTableCoreModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native file-input-table core.' }
+$NativeFileInputTableCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileInputTableCoreModule).Hash.ToLowerInvariant()
+if ($NativeFileInputTableCoreHash -ne '0c6b66ae7fcef5a0b73df1d56bbfd0a5376ae2978f6ae762470abcf544b6a438') {
+    throw "The Windvale native file-input-table core has an unexpected digest: $NativeFileInputTableCoreHash"
+}
+dotnet $ToolDll `
+    compile $NativeFileInputTableBridgeSource `
+    --module $NativeFileInputTableCoreSource `
+    -o $NativeFileInputTableBridgeModule
+if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native file-input-table bridge.' }
+$NativeFileInputTableBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileInputTableBridgeModule).Hash.ToLowerInvariant()
+if ($NativeFileInputTableBridgeHash -ne 'e7d33fc579c0bc2d001a3e7e2ad68e6403091cae6bda270e51578e10f04c4bd9') {
+    throw "The Windvale native file-input-table bridge has an unexpected digest: $NativeFileInputTableBridgeHash"
+}
+$NativeFileInputTableBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileInputTableBridgeRetained).Hash.ToLowerInvariant()
+if (
+    $NativeFileInputTableBridgeRetainedHash -ne $NativeFileInputTableBridgeHash -or
+    (Get-Item -LiteralPath $NativeFileInputTableBridgeRetained).Length -ne
+        (Get-Item -LiteralPath $NativeFileInputTableBridgeModule).Length
+) {
+    throw 'The retained Windvale native file-input-table bridge does not match its exact source compilation.'
+}
+$NativeFileInputTableArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileInputTableArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeFileInputTableArtifactHash -ne '378240d8f8770a4707d7f2ae86daae24036fc2eb9fd273d5ab737c9c03e3e70d' -or
+    (Get-Item -LiteralPath $NativeFileInputTableArtifactRetained).Length -ne 52334
+) {
+    throw "The retained Windvale native file-input-table fragment has an unexpected identity: $NativeFileInputTableArtifactHash"
+}
+$NativeFileInputTableBridgeInspection = (dotnet $ToolDll inspect $NativeFileInputTableBridgeModule) -join "`n"
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeFileInputTableBridgeInspection -notmatch 'Profile: portable' -or
+    $NativeFileInputTableBridgeInspection -notmatch 'Capabilities \(0\)' -or
+    $NativeFileInputTableBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
+    $NativeFileInputTableBridgeInspection -notmatch 'Exports \(1\)'
+) {
+    throw 'The Windvale native file-input-table bridge inspection is incomplete.'
 }
 
 $NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'
