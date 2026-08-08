@@ -1,6 +1,6 @@
 # Decision 0413: Native hosted segment iteration control
 
-- Status: Implemented candidate; ordered host-process composition pending
+- Status: Implemented candidate; Windows composition complete under Decision 0414
 - Date: 2026-08-08
 - Advances: [Decision 0403](0403-Native-Hosted-Service-Bundle-Request.md), [Decision 0404](0404-Native-Hosted-Container-Segment-Request.md), and [Decision 0412](0412-Native-Hosted-Container-Segment-Manifest.md)
 - Contracts: [Native service-bundle requests](../../Specifications/Windvale-Native-Hosted-Service-Bundle-Request.md) and [native container-segment requests](../../Specifications/Windvale-Native-Hosted-Container-Segment-Request.md)
@@ -43,10 +43,11 @@ counts, current-host native execution, existing request equality, malformed
 and alias rejection, output preservation, and zero CLR/hostfxr/hostpolicy
 loads. No broad verifier ran.
 
-The remaining host boundary is now digest-bound tool acquisition, ordered
+[Decision 0414](0414-Digest-Bound-Native-Hosted-Container-Composition.md)
+closes the Windows host boundary with digest-bound tool acquisition, ordered
 child execution, and private-resource cleanup rather than binary parsing or
 loop discovery. Linux execution, promotion, and the grouped retirement gate
-remain after that adapter.
+remain.
 
 ## Reconsideration triggers
 

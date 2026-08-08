@@ -627,6 +627,15 @@ digest-bound tool acquisition, ordered child execution, and private cleanup.
 Complete Windows composition, Linux execution, promotion, and the grouped gate
 remain.
 
+[Decision 0414](../Decisions/0414-Digest-Bound-Native-Hosted-Container-Composition.md)
+closes that Windows composition boundary. One exact inventory binds 19 WVBs and
+their paired applications; the reviewed launcher sequences only native tools,
+uses one private temporary directory, and reproduces the independent hosted
+container byte for byte. Its end-to-end run also corrected a previously hidden
+logical-source versus aligned-image metadata mismatch and added a focused
+alignment-gap test. Linux execution, focused failure preservation, artifact
+promotion, managed-entry-point cutover, and the grouped gate remain.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

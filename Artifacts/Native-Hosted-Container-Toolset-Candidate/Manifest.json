@@ -1,0 +1,31 @@
+{
+  "format": "windvale-native-hosted-container-toolset-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0414",
+  "qualification": "pending",
+  "construction": "stage0-recovery-package-wiring",
+  "nativeSourceConstruction": "verified-digest-bound-front-door",
+  "sha256SumsBytes": 5426,
+  "sha256SumsSha256": "5f6fd8be149729285590ba649c3a034ffce117d7a8db1c06b3fc689f9f2d8804",
+  "commands": [
+    { "name": "wvhostenumrequest", "sourceProject": "Windvale-Native-Hosted-Enum-Request-Tool.wvproj", "target": "hosted-enum-request-v1" },
+    { "name": "wvhostenumservice", "sourceProject": "Windvale-Native-Hosted-Enum-Service-Tool.wvproj", "target": "hosted-enum-service-v1" },
+    { "name": "wvhostfixedservices", "sourceProject": "Windvale-Native-Hosted-Fixed-Services-Tool.wvproj", "target": "hosted-fixed-services-v1" },
+    { "name": "wvhostsourcegeometry", "sourceProject": "Windvale-Native-Hosted-Source-Geometry-Tool.wvproj", "target": "hosted-source-geometry-v1" },
+    { "name": "wvhostpublicationrequest", "sourceProject": "Windvale-Native-Hosted-Publication-Request-Tool.wvproj", "target": "hosted-publication-request-v1" },
+    { "name": "wvhostcontrol", "sourceProject": "Windvale-Native-Hosted-Orchestration-Control-Tool.wvproj", "target": "hosted-orchestration-control-v1" },
+    { "name": "wvhostrequest", "sourceProject": "Windvale-Native-Hosted-Tool-Metadata-Request.wvproj", "target": "hosted-metadata-request-v1" },
+    { "name": "wvhostmetadata", "sourceProject": "Windvale-Native-Hosted-Container-Metadata-Tool.wvproj", "target": "hosted-container-metadata-v1" },
+    { "name": "wvhostruntime", "sourceProject": "Windvale-Native-Hosted-Container-Runtime-Tool.wvproj", "target": "hosted-container-runtime-v1" },
+    { "name": "wvhostplan", "sourceProject": "Windvale-Native-Hosted-Container-Planner-Tool.wvproj", "target": "hosted-container-planner-v1" },
+    { "name": "wvhostbytes", "sourceProject": "Windvale-Native-Hosted-Container-Platform-Bytes-Tool.wvproj", "target": "hosted-container-platform-bytes-v1" },
+    { "name": "wvhoststartup", "sourceProject": "Windvale-Native-Hosted-Container-Startup-Tool.wvproj", "target": "hosted-container-startup-v1" },
+    { "name": "wvhostbundlerequest", "sourceProject": "Windvale-Native-Hosted-Service-Bundle-Request-Tool.wvproj", "target": "hosted-service-bundle-request-v1" },
+    { "name": "wvhostbundle", "sourceProject": "Windvale-Native-Hosted-Service-Bundle-Tool.wvproj", "target": "hosted-service-bundle-v1" },
+    { "name": "wvhostsources", "sourceProject": "Windvale-Native-Hosted-Container-Source-Set-Tool.wvproj", "target": "hosted-container-source-set-v1" },
+    { "name": "wvhostsegmentrequest", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Request-Tool.wvproj", "target": "hosted-container-segment-request-v1" },
+    { "name": "wvhostsegment", "sourceProject": "Windvale-Native-Hosted-Container-Segmenter-Tool.wvproj", "target": "hosted-container-segmenter-v1" },
+    { "name": "wvhostsegmentmanifest", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Manifest-Tool.wvproj", "target": "hosted-container-segment-manifest-v1" },
+    { "name": "wvhostpublish", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Set-Admission-Tool.wvproj", "target": "hosted-container-publisher-v1" }
+  ]
+}

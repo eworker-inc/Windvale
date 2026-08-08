@@ -655,6 +655,14 @@ before reporting its bounded decimal count. Platform scripts may sequence those
 counts and manage private names, but must not decode `WVPQ` or `WVCD`, construct
 Windvale formats, or interpret request rejection as normal loop completion.
 
+[Decision 0414](../Decisions/0414-Digest-Bound-Native-Hosted-Container-Composition.md)
+composes all 19 native owners through one checksum-bound toolset and one focused
+launcher per permanent host. It keeps binary formats and digest decisions in
+Windvale processes while platform scripts own only exact acquisition, ordered
+execution, bounded decimal loop control, and private cleanup. The Windows path
+reproduces the independently packaged PE byte for byte. Linux execution,
+failure/preservation evidence, promotion, and grouped qualification remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

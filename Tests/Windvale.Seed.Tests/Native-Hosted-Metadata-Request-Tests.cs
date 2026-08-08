@@ -144,19 +144,27 @@ internal static partial class Program
             0,
             Bundle);
         var Expected = Nativeˉhostedˉtoolˉmetadataˉbuilder.Buildˉrequest(Inputs);
+        var Resources = new[] { Fragment.ToArray() }
+            .Concat(Serviceˉcode.Select(Service => Service.Code.ToArray()))
+            .ToArray();
+        var Logicalˉbytes = Resources.Sum(Resource => Resource.Length);
+        True(
+            Bundle.Imageˉbytes.Length > Logicalˉbytes,
+            "The focused fixture must contain an image-alignment gap.");
         var Regions = new (int Offset, int Bytes)[1 + Bundle.Placements.Length];
-        Regions[0] = (0, Bundle.Nativeˉimageˉbytes);
+        var Logicalˉoffset = 0;
+        Regions[0] = (Logicalˉoffset, Bundle.Nativeˉimageˉbytes);
+        Logicalˉoffset += Bundle.Nativeˉimageˉbytes;
         for (var Index = 0; Index < Bundle.Placements.Length; Index++)
         {
             Regions[Index + 1] = (
-                Bundle.Placements[Index].Imageˉoffset,
+                Logicalˉoffset,
                 Bundle.Placements[Index].Codeˉbytes);
+            Logicalˉoffset += Bundle.Placements[Index].Codeˉbytes;
         }
         var Manifest = Buildˉmetadataˉrequestˉmanifest(
-            Bundle.Imageˉbytes.Length,
+            Resources,
             Regions);
-        var Resource = new byte[40 + Bundle.Imageˉbytes.Length];
-        Bundle.Imageˉbytes.CopyTo(Resource, 40);
 
         var Inputˉbytes = new byte[32];
         BinaryPrimitives.WriteUInt32LittleEndian(Inputˉbytes, 0x494D_5657);
@@ -198,7 +206,10 @@ internal static partial class Program
             File.WriteAllBytes(Inputsˉpath, Inputˉbytes);
             File.WriteAllBytes(Planˉpath, Planˉrequest.AsSpan());
             File.WriteAllBytes(Manifestˉpath, Manifest);
-            File.WriteAllBytes(Prefix + ".chunk-0", Resource);
+            for (var Index = 0; Index < Resources.Length; Index++)
+            {
+                File.WriteAllBytes(Prefix + $".chunk-{Index}", Resources[Index]);
+            }
             var Application = OperatingSystem.IsWindows()
                 ? Windows.Imageˉbytes
                 : Linux.Imageˉbytes;
@@ -260,24 +271,38 @@ internal static partial class Program
     }
 
     private static byte[] Buildˉmetadataˉrequestˉmanifest(
-        int logicalˉbytes,
+        IReadOnlyList<byte[]> resources,
         (int Offset, int Bytes)[] regions)
     {
-        var Result = new byte[32 + 20 + regions.Length * 12];
+        var Logicalˉbytes = resources.Sum(Resource => Resource.Length);
+        var Result = new byte[32 + resources.Count * 20 + regions.Length * 12];
         BinaryPrimitives.WriteUInt32LittleEndian(Result, 0x5348_5657);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(4), 1);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(8), (uint)Result.Length);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(12), 1);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(12), (uint)resources.Count);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(16), (uint)regions.Length);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(20), (uint)logicalˉbytes);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(32), 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(36), 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(40), 40);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(44), (uint)logicalˉbytes);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(48), (uint)(40 + logicalˉbytes));
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(20), (uint)Logicalˉbytes);
+        var Logicalˉoffset = 0;
+        for (var Index = 0; Index < resources.Count; Index++)
+        {
+            var Record = 32 + Index * 20;
+            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(Record), (uint)Index);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Result.AsSpan(Record + 4),
+                (uint)Logicalˉoffset);
+            BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(Record + 8), 0);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Result.AsSpan(Record + 12),
+                (uint)resources[Index].Length);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                Result.AsSpan(Record + 16),
+                (uint)resources[Index].Length);
+            Logicalˉoffset += resources[Index].Length;
+        }
+        var Regionˉbase = 32 + resources.Count * 20;
         for (var Index = 0; Index < regions.Length; Index++)
         {
-            var Record = 52 + Index * 12;
+            var Record = Regionˉbase + Index * 12;
             BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(Record), (uint)Index);
             BinaryPrimitives.WriteUInt32LittleEndian(
                 Result.AsSpan(Record + 4),

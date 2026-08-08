@@ -54,15 +54,21 @@ The command executes the shared Windvale publication planner and requires the
 canonical ordered service identities `1` through `8`, then `11` and `12`.
 Its successful layout is exactly 152 bytes.
 
-The admitted `WVHS 1` manifest must describe the planned logical image and
-exactly eleven ordered regions: region zero is the complete native fragment;
-regions one through ten are the exact planned service placements. Padding gaps
-may exist but never become identity leaves.
+The admitted `WVHS 1` manifest must describe the logical concatenation of the
+actual source resources and exactly eleven ordered regions: region zero is the
+complete native fragment; regions one through ten are the exact service bytes
+in canonical publication order. These regions are contiguous in logical-source
+space. Their independently admitted publication placements may contain
+alignment gaps in image space; those padding bytes are not source resources,
+do not enter the logical byte count, and never become identity leaves.
 
 The process reads each named chunk and drives the shared portable streaming
 SHA-256 state. It constructs and validates the corresponding 548-byte `WVHE 1`
-value in memory. The native-image digest and ten service digests are copied
-into `WVHM 1` only after that evidence is bound to the exact manifest.
+value in memory. It separately requires the manifest logical byte count to
+equal the fragment byte count plus all ten planned service byte counts. The
+native-image digest and ten service digests are copied into `WVHM 1` only after
+that evidence is bound to the exact manifest and the image placements remain
+bound to the publication plan.
 
 ## Targets and exact identities
 
@@ -71,9 +77,9 @@ into `WVHM 1` only after that evidence is bound to the exact manifest.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata-request WVB | 54,135 | `db433d551ac3530c8b9c36e8bf035177181c3d403912030ef9fd5bba37698034` |
-| Windows metadata-request tool | 782,848 | `73fac9bc9d023f9ad4dca1f8c7fbcad899b26a92227f4ca32eaae6eeb36a5596` |
-| Linux metadata-request tool | 782,336 | `86fc9a3860b68eabe8500ba0256c5d01dbf6918baed3fbc4e3711c6670258443` |
+| Metadata-request WVB | 54,397 | `683538840f21325469324a62e3296582c43f4df9f396908263dd9f074c5b19b9` |
+| Windows metadata-request tool | 784,896 | `8261f3092c95bdc16bbf0444e96208a47ba142edd5955582e49a5bbddab24ef8` |
+| Linux metadata-request tool | 786,432 | `2311b8a237e0001a7437c6767d88153bbe57c100f696f4b045ec232a11faa73b` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring; no
@@ -89,8 +95,9 @@ a documented bootstrap constraint, not permission to duplicate the algorithm
 or grow numbered source fragments; re-extract it when the native compiler can
 compile the same graph.
 
-Immutable bundle resources can now flow through a native process into the
-existing native metadata constructor without managed hashing or request
-projection. Ordered service-bundle request/resource orchestration, final
-segment requests, complete process composition, Linux-host execution,
-promotion, and the grouped dual-host retirement gate remain pending.
+Immutable bundle resources now flow through a native process into the existing
+native metadata constructor without managed hashing or request projection.
+[Decision 0414](../Documents/Decisions/0414-Digest-Bound-Native-Hosted-Container-Composition.md)
+composes that producer into the complete Windows candidate and verifies a real
+alignment gap. Linux-host execution, promotion, managed-entry-point cutover,
+and the grouped dual-host retirement gate remain pending.

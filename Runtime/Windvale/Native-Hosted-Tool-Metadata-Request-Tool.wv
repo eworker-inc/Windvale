@@ -67,10 +67,17 @@ fn Metadataˉrequestˉbuild(
     }
     let Fragmentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Layout.Value, 20u32);
     let Imageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Layout.Value, 24u32);
+    var Expectedˉlogicalˉbytes: u32 = Fragmentˉbytes;
+    var Service: u32 = 0u32;
+    while Service < 10u32 {
+        Expectedˉlogicalˉbytes = Expectedˉlogicalˉbytes +
+            Bytesˉreadˉu32ˉlittle(Layout.Value, 40u32 + Service * 12u32);
+        Service = Service + 1u32;
+    }
     if Nativeˉentry >= Fragmentˉbytes {
         return Metadataˉrequestˉempty(Inputs);
     }
-    if Logicalˉbytes != Imageˉbytes || Regionˉbase < 52u32 ||
+    if Logicalˉbytes != Expectedˉlogicalˉbytes || Regionˉbase < 52u32 ||
         Regionˉbase + 132u32 != Bytesˉlength(Manifest) ||
         Bytesˉlength(Digestˉevidence) != 548u32 ||
         Bytesˉreadˉu32ˉlittle(Digestˉevidence, 0u32) != 1162368599u32 ||
@@ -83,9 +90,9 @@ fn Metadataˉrequestˉbuild(
     }
 
     var Index: u32 = 0u32;
+    var Expectedˉlogicalˉoffset: u32 = 0u32;
     while Index < 11u32 {
         let Regionˉrecord: u32 = Regionˉbase + Index * 12u32;
-        var Expectedˉoffset: u32 = 0u32;
         var Expectedˉbytes: u32 = Fragmentˉbytes;
         if Index > 0u32 {
             let Placementˉrecord: u32 = 32u32 + (Index - 1u32) * 12u32;
@@ -96,20 +103,18 @@ fn Metadataˉrequestˉbuild(
                     Metadataˉrequestˉserviceˉidentity(Index - 1u32) {
                 return Metadataˉrequestˉempty(Inputs);
             }
-            Expectedˉoffset = Bytesˉreadˉu32ˉlittle(
-                Layout.Value, Placementˉrecord + 4u32
-            );
             Expectedˉbytes = Bytesˉreadˉu32ˉlittle(
                 Layout.Value, Placementˉrecord + 8u32
             );
         }
         if Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord) != Index ||
             Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 4u32) !=
-                Expectedˉoffset ||
+                Expectedˉlogicalˉoffset ||
             Bytesˉreadˉu32ˉlittle(Manifest, Regionˉrecord + 8u32) !=
                 Expectedˉbytes {
             return Metadataˉrequestˉempty(Inputs);
         }
+        Expectedˉlogicalˉoffset = Expectedˉlogicalˉoffset + Expectedˉbytes;
         Index = Index + 1u32;
     }
 
