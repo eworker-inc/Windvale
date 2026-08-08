@@ -47,8 +47,11 @@ public static class X64ˉnativeˉpublicationˉlayout
     public const int PLANNER_CANONICAL_SIZE = 6_758;
     public const string PLANNER_CANONICAL_SHA256 =
         "111608af768b18adb9be8b531214aeb14c472efef482fad507224aaa1b18909c";
+    public const int PLANNER_ARTIFACT_CANONICAL_SIZE = 61_583;
+    public const string PLANNER_ARTIFACT_CANONICAL_SHA256 =
+        "9deeb8c4ab8f080cbc187036e0b015932379956930ec9cd1b7f51f7d1daa1f47";
 
-    private const string PLANNER_RESOURCE = "Windvale.Native.Native-Publication-Bridge.wvb";
+    private const string PLANNER_RESOURCE = "Windvale.Native.Native-Publication-Bridge.wvnf";
     private const long MAXIMUM_PLANNER_INSTRUCTIONS = 250_000;
     private static readonly Lazy<Nativeˉfragment> PLANNER = new(
         Readˉplanner,
@@ -226,19 +229,18 @@ public static class X64ˉnativeˉpublicationˉlayout
         using var Stream = typeof(X64ˉnativeˉpublicationˉlayout).Assembly
             .GetManifestResourceStream(PLANNER_RESOURCE) ??
             throw Invalidˉplanner();
-        if (Stream.Length != PLANNER_CANONICAL_SIZE)
+        if (Stream.Length != PLANNER_ARTIFACT_CANONICAL_SIZE)
         {
             throw Invalidˉplanner();
         }
-        var Bytes = new byte[PLANNER_CANONICAL_SIZE];
+        var Bytes = new byte[PLANNER_ARTIFACT_CANONICAL_SIZE];
         Stream.ReadExactly(Bytes);
         var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
-        if (!StringComparer.Ordinal.Equals(Hash, PLANNER_CANONICAL_SHA256))
+        if (!StringComparer.Ordinal.Equals(Hash, PLANNER_ARTIFACT_CANONICAL_SHA256))
         {
             throw Invalidˉplanner();
         }
-        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Fragment = X64ˉnativeˉbackend.Compile(Verified).Fragment;
+        var Fragment = Nativeˉfragmentˉartifactˉcodec.Readˉandˉverify(Bytes);
         var Shape = Nativeˉfragmentˉverifier.Verifyˉentryˉshape(Fragment);
         if (Shape != new Nativeˉentryˉshape(
                 Nativeˉentryˉinputˉkind.Bytes,

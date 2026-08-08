@@ -16,7 +16,7 @@ internal static class Nativeˉenumˉmetadataˉbuilder
     private const int METADATA_MEMBER_BYTES = 16;
     private const long MAXIMUM_CONSUMER_INSTRUCTIONS = 100_000_000;
     private const string CONSUMER_RESOURCE =
-        "Windvale.Native.Native-Enum-Metadata-Bridge.wvb";
+        "Windvale.Native.Native-Enum-Metadata-Bridge.wvnf";
     private static readonly UTF8Encoding STRICT_UTF8 = new(false, true);
     private static readonly Lazy<Nativeˉfragment> CONSUMER = new(
         Loadˉconsumer,
@@ -25,6 +25,9 @@ internal static class Nativeˉenumˉmetadataˉbuilder
     internal const int CONSUMER_CANONICAL_SIZE = 13_920;
     internal const string CONSUMER_CANONICAL_SHA256 =
         "a43a89cedd7fc58740132c2f666ea69866ceff6ebb87d090124207ff3e9154ce";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 115_167;
+    internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
+        "d2f53cd0fdd7812699a06234e19586f18492ffbca68ae0e5f507b09253c5a39b";
 
     public static ImmutableArray<byte> Build(
         ImmutableArray<Nominalˉtypeˉdeclaration> types)
@@ -234,20 +237,19 @@ internal static class Nativeˉenumˉmetadataˉbuilder
         using var Stream = typeof(Nativeˉenumˉmetadataˉbuilder).Assembly
             .GetManifestResourceStream(CONSUMER_RESOURCE) ??
             throw Invalidˉconsumer();
-        if (Stream.Length != CONSUMER_CANONICAL_SIZE)
+        if (Stream.Length != CONSUMER_ARTIFACT_CANONICAL_SIZE)
         {
             throw Invalidˉconsumer();
         }
-        var Bytes = new byte[CONSUMER_CANONICAL_SIZE];
+        var Bytes = new byte[CONSUMER_ARTIFACT_CANONICAL_SIZE];
         Stream.ReadExactly(Bytes);
         var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
-        if (!StringComparer.Ordinal.Equals(Hash, CONSUMER_CANONICAL_SHA256))
+        if (!StringComparer.Ordinal.Equals(Hash, CONSUMER_ARTIFACT_CANONICAL_SHA256))
         {
             throw Invalidˉconsumer();
         }
 
-        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Fragment = X64ˉnativeˉbackend.Compile(Verified).Fragment;
+        var Fragment = Nativeˉfragmentˉartifactˉcodec.Readˉandˉverify(Bytes);
         var Shape = Nativeˉfragmentˉverifier.Verifyˉentryˉshape(Fragment);
         if (Shape != new Nativeˉentryˉshape(
                 Nativeˉentryˉinputˉkind.Bytes,
@@ -259,7 +261,7 @@ internal static class Nativeˉenumˉmetadataˉbuilder
     }
 
     private static InvalidOperationException Invalidˉconsumer() =>
-        new("The retained Windvale native enum-metadata consumer failed its exact identity contract.");
+        new("The retained Windvale native enum-metadata fragment failed its exact identity contract.");
 
     private static InvalidOperationException Invalidˉmetadata() =>
         new("Native Enumˉname service identity metadata is invalid.");

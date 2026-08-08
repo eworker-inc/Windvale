@@ -1,7 +1,7 @@
 # Decision 0057: Windvale-native execution and .NET retirement
 
 - Date: 2026-07-31
-- Status: Accepted direction; condition 1 has qualified evidence, Decisions 0059 through 0367 partially advance conditions 2 through 8, and the complete retirement gate remains open
+- Status: Accepted direction; condition 1 has qualified evidence, Decisions 0059 through 0368 partially advance conditions 2 through 8, and the complete retirement gate remains open
 - Refines: [Decision 0002](0002-Windvale-Seed-Bootstrap.md)'s long-term bootstrap and recovery role
 
 ## Context

@@ -36,13 +36,13 @@
       Include="Consumers/Native-X64-Enum-Name-Service.bin"
       LogicalName="Windvale.Native.Native-X64-Enum-Name-Service.bin" />
     <EmbeddedResource
-      Include="Consumers/Native-Enum-Metadata-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-Enum-Metadata-Bridge.wvb" />
+      Include="Consumers/Native-Enum-Metadata-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-Enum-Metadata-Bridge.wvnf" />
     <EmbeddedResource
-      Include="Consumers/Native-Publication-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-Publication-Bridge.wvb" />
+      Include="Consumers/Native-Publication-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-Publication-Bridge.wvnf" />
     <EmbeddedResource
-      Include="Consumers/Native-Publication-Lifetime-Bridge.wvb"
-      LogicalName="Windvale.Native.Native-Publication-Lifetime-Bridge.wvb" />
+      Include="Consumers/Native-Publication-Lifetime-Bridge.wvnf"
+      LogicalName="Windvale.Native.Native-Publication-Lifetime-Bridge.wvnf" />
   </ItemGroup>
 </Project>

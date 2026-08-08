@@ -973,6 +973,7 @@ if (
 
 $NativeEnumMetadataBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Enum-Metadata-Bridge.wv'
 $NativeEnumMetadataBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvb'
+$NativeEnumMetadataArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvnf'
 dotnet $ToolDll `
     compile $NativeEnumMetadataBridgeSource `
     --module $NativeEnumMetadataCoreSource `
@@ -989,6 +990,13 @@ if (
         (Get-Item -LiteralPath $NativeEnumMetadataBridgeModule).Length
 ) {
     throw 'The retained Windvale native enum-metadata bridge does not match its exact source compilation.'
+}
+$NativeEnumMetadataArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativeEnumMetadataArtifactHash -ne 'd2f53cd0fdd7812699a06234e19586f18492ffbca68ae0e5f507b09253c5a39b' -or
+    (Get-Item -LiteralPath $NativeEnumMetadataArtifactRetained).Length -ne 115167
+) {
+    throw "The retained Windvale native enum-metadata fragment has an unexpected identity: $NativeEnumMetadataArtifactHash"
 }
 $NativeEnumMetadataBridgeInspection = (dotnet $ToolDll inspect $NativeEnumMetadataBridgeModule) -join "`n"
 if (
@@ -1021,6 +1029,7 @@ if (
 }
 $NativePublicationBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Bridge.wv'
 $NativePublicationBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvb'
+$NativePublicationArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvnf'
 dotnet $ToolDll `
     compile $NativePublicationBridgeSource `
     --module $NativePublicationSource `
@@ -1037,6 +1046,13 @@ if (
         (Get-Item -LiteralPath $NativePublicationBridgeModule).Length
 ) {
     throw 'The retained Windvale native-publication bridge does not match its exact source compilation.'
+}
+$NativePublicationArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativePublicationArtifactHash -ne '9deeb8c4ab8f080cbc187036e0b015932379956930ec9cd1b7f51f7d1daa1f47' -or
+    (Get-Item -LiteralPath $NativePublicationArtifactRetained).Length -ne 61583
+) {
+    throw "The retained Windvale native-publication fragment has an unexpected identity: $NativePublicationArtifactHash"
 }
 $NativePublicationBridgeInspection = (dotnet $ToolDll inspect $NativePublicationBridgeModule) -join "`n"
 if (
@@ -1070,6 +1086,7 @@ if (
 }
 $NativePublicationLifetimeBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv'
 $NativePublicationLifetimeBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvb'
+$NativePublicationLifetimeArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvnf'
 dotnet $ToolDll `
     compile $NativePublicationLifetimeBridgeSource `
     --module $NativePublicationLifetimeSource `
@@ -1086,6 +1103,13 @@ if (
         (Get-Item -LiteralPath $NativePublicationLifetimeBridgeModule).Length
 ) {
     throw 'The retained Windvale native publication-lifetime bridge does not match its exact source compilation.'
+}
+$NativePublicationLifetimeArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeArtifactRetained).Hash.ToLowerInvariant()
+if (
+    $NativePublicationLifetimeArtifactHash -ne '4d87911f2f442e6a2e4dd2364138f35a0037ddc0bff0775a16e37156768777a8' -or
+    (Get-Item -LiteralPath $NativePublicationLifetimeArtifactRetained).Length -ne 46125
+) {
+    throw "The retained Windvale native publication-lifetime fragment has an unexpected identity: $NativePublicationLifetimeArtifactHash"
 }
 $NativePublicationLifetimeBridgeInspection = (dotnet $ToolDll inspect $NativePublicationLifetimeBridgeModule) -join "`n"
 if (

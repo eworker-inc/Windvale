@@ -95,6 +95,11 @@ internal static partial class Program
             File.ReadAllBytes(Path.Combine(
                 Repository,
                 "Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service-Bridge.wvb")));
+        Sequenceˉequal(
+            Metadataˉbridgeˉresult.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(
+                Repository,
+                "Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvb")));
 
         ImmutableArray<byte> Retainedˉenumˉleaf;
         using (var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
@@ -107,16 +112,19 @@ internal static partial class Program
             Stream.ReadExactly(Retained);
             Retainedˉenumˉleaf = Retained.ToImmutableArray();
         }
-        using (var Stream = typeof(X64ˉnativeˉtextˉservices).Assembly
-            .GetManifestResourceStream(
-                "Windvale.Native.Native-Enum-Metadata-Bridge.wvb") ??
-            throw new InvalidOperationException(
-                "The retained Windvale enum-metadata bridge was not embedded."))
-        {
-            var Retained = new byte[checked((int)Stream.Length)];
-            Stream.ReadExactly(Retained);
-            Sequenceˉequal(Metadataˉbridgeˉresult.Moduleˉbytes, Retained);
-        }
+        var Retainedˉmetadataˉartifact = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉtextˉservices),
+            "Windvale.Native.Native-Enum-Metadata-Bridge.wvnf");
+        Equal(
+            Nativeˉenumˉmetadataˉbuilder.CONSUMER_ARTIFACT_CANONICAL_SIZE,
+            Retainedˉmetadataˉartifact.Length);
+        Equal(
+            Nativeˉenumˉmetadataˉbuilder.CONSUMER_ARTIFACT_CANONICAL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Retainedˉmetadataˉartifact.AsSpan()));
+        False(
+            typeof(X64ˉnativeˉtextˉservices).Assembly.GetManifestResourceNames()
+                .Contains("Windvale.Native.Native-Enum-Metadata-Bridge.wvb", StringComparer.Ordinal),
+            "The normal runtime still embeds the enum-metadata WVB.");
 
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
@@ -221,6 +229,11 @@ internal static partial class Program
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults);
         var Metadataˉnative = X64ˉnativeˉbackend.Compile(Metadataˉbridge).Fragment;
+        Sequenceˉequal(
+            Retainedˉmetadataˉartifact,
+            Nativeˉfragmentˉartifactˉcodec.Write(Metadataˉnative));
+        _ = Nativeˉfragmentˉartifactˉcodec.Readˉandˉverify(
+            Retainedˉmetadataˉartifact.AsSpan());
         Sequenceˉequal(
             Metadataˉresponse,
             Metadataˉreference.Runˉmainˉbytes(Metadataˉrequest).Bytes);

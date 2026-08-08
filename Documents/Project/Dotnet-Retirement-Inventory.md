@@ -221,6 +221,15 @@ the existing native verifier. Focused valid, boundary, malformed, and hostile
 tests pass locally. Production artifact generation and loader cutover are the
 next slice; the managed WVB loaders remain active until that cutover.
 
+[Decision 0368](../Decisions/0368-Direct-Verified-Native-Fragment-Consumption.md)
+completes that cutover for segmented enum metadata and both publication
+planners. Their exact WVBs remain source-reproducible recovery/differential
+evidence but are absent from the normal runtime assembly, which now embeds no
+WVB helpers or generators. Ordinary first use verifies the digest-bound WVNF
+directly and no longer performs managed WVB decoding, semantic verification,
+or x86-64 lowering. Managed WVNF parsing, application lowering, bundle and W^X
+ownership, Linux evidence, and the grouped gate remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

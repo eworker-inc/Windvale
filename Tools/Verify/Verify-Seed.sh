@@ -783,6 +783,7 @@ printf '%s\n' "$NATIVE_ENUM_METADATA_CORE_INSPECTION" | grep -F 'Exports (1)' >/
 
 NATIVE_ENUM_METADATA_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Enum-Metadata-Bridge.wv"
 NATIVE_ENUM_METADATA_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvb"
+NATIVE_ENUM_METADATA_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvnf"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_ENUM_METADATA_BRIDGE_SOURCE" \
     --module "$NATIVE_ENUM_METADATA_CORE_SOURCE" \
@@ -793,6 +794,12 @@ if [ "$NATIVE_ENUM_METADATA_BRIDGE_HASH" != 'a43a89cedd7fc58740132c2f666ea69866c
     exit 1
 fi
 cmp -s "$NATIVE_ENUM_METADATA_BRIDGE_MODULE" "$NATIVE_ENUM_METADATA_BRIDGE_RETAINED"
+NATIVE_ENUM_METADATA_ARTIFACT_HASH=$(sha256sum "$NATIVE_ENUM_METADATA_ARTIFACT_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_ENUM_METADATA_ARTIFACT_HASH" != 'd2f53cd0fdd7812699a06234e19586f18492ffbca68ae0e5f507b09253c5a39b' ] ||
+    [ "$(wc -c < "$NATIVE_ENUM_METADATA_ARTIFACT_RETAINED")" -ne 115167 ]; then
+    echo "The retained Windvale native enum-metadata fragment has an unexpected identity: $NATIVE_ENUM_METADATA_ARTIFACT_HASH" >&2
+    exit 1
+fi
 NATIVE_ENUM_METADATA_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ENUM_METADATA_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_ENUM_METADATA_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_ENUM_METADATA_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
@@ -815,6 +822,7 @@ printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Exports (8)' >/dev/nul
 
 NATIVE_PUBLICATION_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Bridge.wv"
 NATIVE_PUBLICATION_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvb"
+NATIVE_PUBLICATION_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvnf"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_PUBLICATION_BRIDGE_SOURCE" \
     --module "$NATIVE_PUBLICATION_SOURCE" \
@@ -825,6 +833,12 @@ if [ "$NATIVE_PUBLICATION_BRIDGE_HASH" != '111608af768b18adb9be8b531214aeb14c472
     exit 1
 fi
 cmp -s "$NATIVE_PUBLICATION_BRIDGE_MODULE" "$NATIVE_PUBLICATION_BRIDGE_RETAINED"
+NATIVE_PUBLICATION_ARTIFACT_HASH=$(sha256sum "$NATIVE_PUBLICATION_ARTIFACT_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_PUBLICATION_ARTIFACT_HASH" != '9deeb8c4ab8f080cbc187036e0b015932379956930ec9cd1b7f51f7d1daa1f47' ] ||
+    [ "$(wc -c < "$NATIVE_PUBLICATION_ARTIFACT_RETAINED")" -ne 61583 ]; then
+    echo "The retained Windvale native-publication fragment has an unexpected identity: $NATIVE_PUBLICATION_ARTIFACT_HASH" >&2
+    exit 1
+fi
 NATIVE_PUBLICATION_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
@@ -848,6 +862,7 @@ printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Exports (7)' 
 
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv"
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvb"
+NATIVE_PUBLICATION_LIFETIME_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvnf"
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_SOURCE" \
     --module "$NATIVE_PUBLICATION_LIFETIME_SOURCE" \
@@ -858,6 +873,12 @@ if [ "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_HASH" != 'f966e7f7553def7f3d57be0d3bed
     exit 1
 fi
 cmp -s "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE" "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_RETAINED"
+NATIVE_PUBLICATION_LIFETIME_ARTIFACT_HASH=$(sha256sum "$NATIVE_PUBLICATION_LIFETIME_ARTIFACT_RETAINED" | awk '{print $1}')
+if [ "$NATIVE_PUBLICATION_LIFETIME_ARTIFACT_HASH" != '4d87911f2f442e6a2e4dd2364138f35a0037ddc0bff0775a16e37156768777a8' ] ||
+    [ "$(wc -c < "$NATIVE_PUBLICATION_LIFETIME_ARTIFACT_RETAINED")" -ne 46125 ]; then
+    echo "The retained Windvale native publication-lifetime fragment has an unexpected identity: $NATIVE_PUBLICATION_LIFETIME_ARTIFACT_HASH" >&2
+    exit 1
+fi
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE")
 printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
 printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null

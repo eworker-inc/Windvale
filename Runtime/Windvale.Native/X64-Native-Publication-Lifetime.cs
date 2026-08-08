@@ -58,8 +58,11 @@ public static class X64ˉnativeˉpublicationˉlifetime
     public const int PLANNER_CANONICAL_SIZE = 4_442;
     public const string PLANNER_CANONICAL_SHA256 =
         "f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554";
+    public const int PLANNER_ARTIFACT_CANONICAL_SIZE = 46_125;
+    public const string PLANNER_ARTIFACT_CANONICAL_SHA256 =
+        "4d87911f2f442e6a2e4dd2364138f35a0037ddc0bff0775a16e37156768777a8";
 
-    private const string PLANNER_RESOURCE = "Windvale.Native.Native-Publication-Lifetime-Bridge.wvb";
+    private const string PLANNER_RESOURCE = "Windvale.Native.Native-Publication-Lifetime-Bridge.wvnf";
     private const long MAXIMUM_PLANNER_INSTRUCTIONS = 100_000;
     private static readonly ImmutableArray<Nativeˉpublicationˉtransition> EXPECTED_TRANSITIONS =
     [
@@ -205,19 +208,18 @@ public static class X64ˉnativeˉpublicationˉlifetime
         using var Stream = typeof(X64ˉnativeˉpublicationˉlifetime).Assembly
             .GetManifestResourceStream(PLANNER_RESOURCE) ??
             throw Invalidˉplanner();
-        if (Stream.Length != PLANNER_CANONICAL_SIZE)
+        if (Stream.Length != PLANNER_ARTIFACT_CANONICAL_SIZE)
         {
             throw Invalidˉplanner();
         }
-        var Bytes = new byte[PLANNER_CANONICAL_SIZE];
+        var Bytes = new byte[PLANNER_ARTIFACT_CANONICAL_SIZE];
         Stream.ReadExactly(Bytes);
         var Hash = Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant();
-        if (!StringComparer.Ordinal.Equals(Hash, PLANNER_CANONICAL_SHA256))
+        if (!StringComparer.Ordinal.Equals(Hash, PLANNER_ARTIFACT_CANONICAL_SHA256))
         {
             throw Invalidˉplanner();
         }
-        var Verified = Moduleˉcodec.Readˉandˉverify(Bytes);
-        var Fragment = X64ˉnativeˉbackend.Compile(Verified).Fragment;
+        var Fragment = Nativeˉfragmentˉartifactˉcodec.Readˉandˉverify(Bytes);
         var Shape = Nativeˉfragmentˉverifier.Verifyˉentryˉshape(Fragment);
         if (Shape != new Nativeˉentryˉshape(
                 Nativeˉentryˉinputˉkind.Bytes,

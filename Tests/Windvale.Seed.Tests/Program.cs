@@ -8205,14 +8205,25 @@ internal static partial class Program
             X64ˉnativeˉpublicationˉlayout.PLANNER_CANONICAL_SHA256,
             NATIVE_PUBLICATION_BRIDGE_SHA256);
 
-        using (var Stream = typeof(X64ˉnativeˉpublicationˉlayout).Assembly
-            .GetManifestResourceStream("Windvale.Native.Native-Publication-Bridge.wvb") ??
-            throw new InvalidOperationException("The retained native-publication bridge was not embedded."))
-        {
-            var Retained = new byte[checked((int)Stream.Length)];
-            Stream.ReadExactly(Retained);
-            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
-        }
+        var Repository = Findˉrepositoryˉroot();
+        Sequenceˉequal(
+            Bridgeˉresult.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(
+                Repository,
+                "Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvb")));
+        var Retainedˉartifact = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉpublicationˉlayout),
+            "Windvale.Native.Native-Publication-Bridge.wvnf");
+        Equal(
+            X64ˉnativeˉpublicationˉlayout.PLANNER_ARTIFACT_CANONICAL_SIZE,
+            Retainedˉartifact.Length);
+        Equal(
+            X64ˉnativeˉpublicationˉlayout.PLANNER_ARTIFACT_CANONICAL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Retainedˉartifact.AsSpan()));
+        False(
+            typeof(X64ˉnativeˉpublicationˉlayout).Assembly.GetManifestResourceNames()
+                .Contains("Windvale.Native.Native-Publication-Bridge.wvb", StringComparer.Ordinal),
+            "The normal runtime still embeds the publication-planner WVB.");
 
         var Bridge = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
         Equal(Moduleˉprofile.Portable, Bridge.Module.Profile);
@@ -8226,6 +8237,10 @@ internal static partial class Program
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults);
         var Native = X64ˉnativeˉbackend.Compile(Bridge).Fragment;
+        Sequenceˉequal(
+            Retainedˉartifact,
+            Nativeˉfragmentˉartifactˉcodec.Write(Native));
+        _ = Nativeˉfragmentˉartifactˉcodec.Readˉandˉverify(Retainedˉartifact.AsSpan());
         Equal(
             new Nativeˉentryˉshape(
                 Nativeˉentryˉinputˉkind.Bytes,
@@ -8516,15 +8531,27 @@ internal static partial class Program
             X64ˉnativeˉpublicationˉlifetime.PLANNER_CANONICAL_SHA256,
             NATIVE_PUBLICATION_LIFETIME_BRIDGE_SHA256);
 
-        using (var Stream = typeof(X64ˉnativeˉpublicationˉlifetime).Assembly
-            .GetManifestResourceStream("Windvale.Native.Native-Publication-Lifetime-Bridge.wvb") ??
-            throw new InvalidOperationException(
-                "The retained native publication-lifetime bridge was not embedded."))
-        {
-            var Retained = new byte[checked((int)Stream.Length)];
-            Stream.ReadExactly(Retained);
-            Sequenceˉequal(Bridgeˉresult.Moduleˉbytes, Retained);
-        }
+        var Repository = Findˉrepositoryˉroot();
+        Sequenceˉequal(
+            Bridgeˉresult.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(
+                Repository,
+                "Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvb")));
+        var Retainedˉartifact = Readˉembeddedˉnativeˉartifact(
+            typeof(X64ˉnativeˉpublicationˉlifetime),
+            "Windvale.Native.Native-Publication-Lifetime-Bridge.wvnf");
+        Equal(
+            X64ˉnativeˉpublicationˉlifetime.PLANNER_ARTIFACT_CANONICAL_SIZE,
+            Retainedˉartifact.Length);
+        Equal(
+            X64ˉnativeˉpublicationˉlifetime.PLANNER_ARTIFACT_CANONICAL_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Retainedˉartifact.AsSpan()));
+        False(
+            typeof(X64ˉnativeˉpublicationˉlifetime).Assembly.GetManifestResourceNames()
+                .Contains(
+                    "Windvale.Native.Native-Publication-Lifetime-Bridge.wvb",
+                    StringComparer.Ordinal),
+            "The normal runtime still embeds the publication-lifetime WVB.");
 
         var Bridge = Moduleˉcodec.Readˉandˉverify(Bridgeˉresult.Moduleˉbytes.AsSpan());
         Equal(Moduleˉprofile.Portable, Bridge.Module.Profile);
@@ -8540,6 +8567,10 @@ internal static partial class Program
             new Referenceˉcapabilityˉhost(TextWriter.Null),
             Runtimeˉoptions.Portableˉdefaults);
         var Native = X64ˉnativeˉbackend.Compile(Bridge).Fragment;
+        Sequenceˉequal(
+            Retainedˉartifact,
+            Nativeˉfragmentˉartifactˉcodec.Write(Native));
+        _ = Nativeˉfragmentˉartifactˉcodec.Readˉandˉverify(Retainedˉartifact.AsSpan());
         Equal(
             new Nativeˉentryˉshape(
                 Nativeˉentryˉinputˉkind.Bytes,
