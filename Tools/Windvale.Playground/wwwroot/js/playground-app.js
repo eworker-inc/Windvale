@@ -1,29 +1,9 @@
 import * as Editor from "../editor/playground-editor.js";
 import { Compileˉandˉrun } from "./windvale-compiler-host.js";
+import { EXAMPLES, SCRATCH_SOURCE } from "./playground-examples.js";
 
 const MAXIMUM_SOURCE_TABS = 12;
 const COMPILER_TIMEOUT_MILLISECONDS = 300_000;
-const EXACT_SOURCE = `module WebAssemblyˉcompilerˉsuccess profile portable;
-
-export fn Main() -> i32 {
-    return 42;
-}
-`;
-const SCRATCH_SOURCE = `module Scratch profile portable;
-
-export fn Main() -> i32 {
-    return 0;
-}
-`;
-const EXAMPLES = Object.freeze([
-    Object.freeze({
-        Id: "windvale-starter",
-        Title: "Windvale WebAssembly starter",
-        Fileˉname: "WebAssembly-Starter.wv",
-        Description: "A small Windvale program compiled to canonical WVB, independently admitted, and run entirely in browser WebAssembly.",
-        Source: EXACT_SOURCE,
-    }),
-]);
 
 const Shell = document.getElementById("playground-shell");
 const Editorˉelement = document.getElementById("monaco-editor");

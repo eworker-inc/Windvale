@@ -3,7 +3,7 @@ const WVXO_MAGIC = 0x4F58_5657;
 const WVSS_MAGIC = 0x5353_5657;
 const WVCO_MAGIC = 0x4F43_5657;
 const MAXIMUM_SOURCE_BYTES = 64 * 1024;
-const COMPILER_INSTRUCTION_BUDGET = 2_000_000;
+const COMPILER_INSTRUCTION_BUDGET = 20_000_000;
 const EXECUTION_OUTER_BUDGET = 200_000_000;
 const MAXIMUM_CALL_DEPTH = 64;
 
@@ -135,6 +135,13 @@ function Runˉcompiler(Exports, Input, Budget) {
     new Uint8Array(Memory.buffer, Inputˉoffset, Input.byteLength).set(Input);
     const Status = Exports["Windvale.run"](Budget, Input.byteLength);
     const Instructions = Readˉglobal(Exports, "Windvale.instructions");
+    if (Status === 3011 && Instructions === Budget) {
+        throw new Error(
+            "Windvale compilation exceeded the " +
+            `${Budget.toLocaleString()}-instruction browser limit. ` +
+            "The browser compiler is still experimental; try a smaller source module.",
+        );
+    }
     if (Status !== 0 || Instructions < 0 || Instructions > Budget) {
         throw new Error(
             `Windvale compilation failed with WVR${Status} ` +

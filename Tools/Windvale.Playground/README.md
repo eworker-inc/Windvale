@@ -19,7 +19,7 @@ One normal run performs this sequence inside a disposable worker:
 7. treat the returned WVB as untrusted input and resubmit it through `WVXI 1`; and
 8. report status, scalar result, instruction evidence, WVB bytes, and WVB SHA-256.
 
-The pinned proof produces 183 WVB bytes with SHA-256 `3d29618283648cb0d23987075912a218ac212d8c8fa31ec00b72f4bf3df795c6`, returns `42`, and requests zero .NET or Blazor assets. The measured direct compiler execution takes about one second on the Windows development host. Initial download and WebAssembly compilation vary by browser, network, cache, and CPU; that timing is evidence rather than a portable performance contract.
+The pinned proof produces 183 WVB bytes with SHA-256 `3d29618283648cb0d23987075912a218ac212d8c8fa31ec00b72f4bf3df795c6`, returns `42`, and requests zero .NET or Blazor assets. The measured direct compiler execution takes about one second on the Windows development host. Larger bundled examples exercise arithmetic, functions, loops, module data, records, and enums. Initial download and WebAssembly compilation vary by browser, network, cache, and CPU; that timing is evidence rather than a portable performance contract.
 
 The page retains multiple in-memory source tabs, local Monaco syntax support and completions, resizable editor and evidence panes, mobile layout, light/dark themes, and execution/diagnostic/bytecode views. The first browser execution profile remains deliberately narrow: one UTF-8 source module, capability-free compilation, and a scalar `Main` result. Unsupported execution surface fails explicitly.
 
@@ -49,7 +49,7 @@ Deploy `Tools/Windvale.Playground/wwwroot` below the website's `/playground/` pa
 ## Current boundary
 
 - Source: one canonical `WVSS 1` root, strict UTF-8, at most 64 KiB.
-- Compiler: import-free ABI 4 direct Wasm, 2,000,000 instructions, fixed 2,497-page memory, and a 16 MiB output region.
+- Compiler: import-free ABI 4 direct Wasm, 20,000,000 instructions, fixed 2,497-page memory, and a 16 MiB output region.
 - Execution: import-free ABI 3 interpreter Wasm; user-selectable 10,000, 250,000, or 1,000,000 guest instructions; 200,000,000 outer instructions; 64 call frames.
 - Isolation: package loading, compilation, WVB admission, and execution occur in a disposable worker with a five-minute containment timeout.
 - Evidence: pipeline status, scalar result, elapsed time, compiler/execution counters, canonical WVB bytes and digest, and a zero-framework-request assertion.
