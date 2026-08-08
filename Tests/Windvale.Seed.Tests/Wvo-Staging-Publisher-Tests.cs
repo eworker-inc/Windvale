@@ -15,13 +15,21 @@ internal static partial class Program
     private const string LINUX_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba";
     private const string LINUX_WVO_STAGING_ADAPTER_WVO_SHA256 =
-        "2ca0989221f55c1b4a4e8de1bf2bf4437f758e10c1211944b36333f0d029c15d";
+        "d0a3cb41b6ffcc0fe6e616e1d2ac3b067252fe1ae20c8c40532505bcd6491be5";
+    private const string LINUX_IMMUTABLE_SNAPSHOT_SHELL_WVO_SHA256 =
+        "423bd086f68c03b3fd26c296a1789392ebd72a74e5fd10adf0d2e596d2fd2e6d";
+    private const string LINUX_HOSTED_CONTAINER_ADAPTER_WVO_SHA256 =
+        "fe6b4d60fcf459d2f3f624b58b461b95fc9bf325421712e19ac9aa72dcebf527";
     private const string LINUX_DURABLE_MULTI_CHUNK_WVO_SHA256 =
         "47a22cd108702d6427fe5be9fca00c3c05f38cb26dd69e51c8648544b3f98e76";
     private const string WINDOWS_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab";
     private const string WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256 =
-        "89c3516eb56ecb274ba34b3168d1f33987b959cca44a70396eaa0cb5e1ffb258";
+        "86dd44e921418a82c69aa155b671662fa2961041d0ead661a0328f3371f7f045";
+    private const string WINDOWS_IMMUTABLE_SNAPSHOT_SHELL_WVO_SHA256 =
+        "d5233eb678b1c96eb6c8c4108ff10d7bcc263678defb81915ab1c67a6b398110";
+    private const string WINDOWS_HOSTED_CONTAINER_ADAPTER_WVO_SHA256 =
+        "bfb42ca6a679a25c7a45660bf0743ee3f4e64febceeede6b079126e1df0aab75";
     private const string WINDOWS_DURABLE_MULTI_CHUNK_WVO_SHA256 =
         "3795ab62b6dc5008748ba7c4332b885419a14479c9c11369bcc13885cad8974b";
     private const string X64_WVO_STAGING_SNAPSHOT_WVO_SHA256 =
@@ -37,6 +45,12 @@ internal static partial class Program
     private static readonly string LINUX_WVO_STAGING_ADAPTER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Linux-X64-Wvo-Staging-Publication-Adapter.wva");
+    private static readonly string LINUX_IMMUTABLE_SNAPSHOT_SHELL_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Linux-X64-Immutable-Snapshot-Publisher.wva");
+    private static readonly string LINUX_HOSTED_CONTAINER_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Linux-X64-Hosted-Container-Publication-Adapter.wva");
     private static readonly string LINUX_DURABLE_MULTI_CHUNK_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Linux-X64-Durable-Multi-Chunk-Publication.wva");
@@ -46,6 +60,12 @@ internal static partial class Program
     private static readonly string WINDOWS_WVO_STAGING_ADAPTER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Windows-X64-Wvo-Staging-Publication-Adapter.wva");
+    private static readonly string WINDOWS_IMMUTABLE_SNAPSHOT_SHELL_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Windows-X64-Immutable-Snapshot-Publisher.wva");
+    private static readonly string WINDOWS_HOSTED_CONTAINER_ADAPTER_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Windows-X64-Hosted-Container-Publication-Adapter.wva");
     private static readonly string WINDOWS_DURABLE_MULTI_CHUNK_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Windows-X64-Durable-Multi-Chunk-Publication.wva");
@@ -92,10 +112,18 @@ internal static partial class Program
 
         var Linuxˉstartup = Assembleˉsuccess(LINUX_WVO_STAGING_PUBLISHER_SOURCE);
         var Linuxˉadapter = Assembleˉsuccess(LINUX_WVO_STAGING_ADAPTER_SOURCE);
+        var Linuxˉshell = Assembleˉsuccess(
+            LINUX_IMMUTABLE_SNAPSHOT_SHELL_SOURCE);
+        var Linuxˉhostedˉadapter = Assembleˉsuccess(
+            LINUX_HOSTED_CONTAINER_ADAPTER_SOURCE);
         var Linuxˉtransaction = Assembleˉsuccess(
             LINUX_DURABLE_MULTI_CHUNK_SOURCE);
         var Windowsˉstartup = Assembleˉsuccess(WINDOWS_WVO_STAGING_PUBLISHER_SOURCE);
         var Windowsˉadapter = Assembleˉsuccess(WINDOWS_WVO_STAGING_ADAPTER_SOURCE);
+        var Windowsˉshell = Assembleˉsuccess(
+            WINDOWS_IMMUTABLE_SNAPSHOT_SHELL_SOURCE);
+        var Windowsˉhostedˉadapter = Assembleˉsuccess(
+            WINDOWS_HOSTED_CONTAINER_ADAPTER_SOURCE);
         var Windowsˉtransaction = Assembleˉsuccess(
             WINDOWS_DURABLE_MULTI_CHUNK_SOURCE);
         var Snapshot = Assembleˉsuccess(X64_WVO_STAGING_SNAPSHOT_SOURCE);
@@ -109,9 +137,19 @@ internal static partial class Program
             "Linux_wvo_staging_publisher_startup");
         Assertˉstagingˉobject(
             Linuxˉadapter,
-            3_499,
+            281,
             LINUX_WVO_STAGING_ADAPTER_WVO_SHA256,
             "Linux_wvo_staging_publisher_run");
+        Assertˉstagingˉobject(
+            Linuxˉshell,
+            3_485,
+            LINUX_IMMUTABLE_SNAPSHOT_SHELL_WVO_SHA256,
+            "Linux_immutable_snapshot_publisher_run");
+        Assertˉstagingˉobject(
+            Linuxˉhostedˉadapter,
+            294,
+            LINUX_HOSTED_CONTAINER_ADAPTER_WVO_SHA256,
+            "Linux_hosted_container_publisher_run");
         Assertˉstagingˉobject(
             Linuxˉtransaction,
             2_432,
@@ -124,9 +162,19 @@ internal static partial class Program
             "Windows_wvo_staging_publisher_startup");
         Assertˉstagingˉobject(
             Windowsˉadapter,
-            6_144,
+            285,
             WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256,
             "Windows_wvo_staging_publisher_run");
+        Assertˉstagingˉobject(
+            Windowsˉshell,
+            6_116,
+            WINDOWS_IMMUTABLE_SNAPSHOT_SHELL_WVO_SHA256,
+            "Windows_immutable_snapshot_publisher_run");
+        Assertˉstagingˉobject(
+            Windowsˉhostedˉadapter,
+            298,
+            WINDOWS_HOSTED_CONTAINER_ADAPTER_WVO_SHA256,
+            "Windows_hosted_container_publisher_run");
         Assertˉstagingˉobject(
             Windowsˉtransaction,
             4_001,

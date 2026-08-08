@@ -341,6 +341,16 @@ indeterminate outcome. WVO supplies `(2, count, 1, 0)`; hosted containers will
 supply `(3, count, 2, 40)`. The extracted Windows path has real current-host
 success, corruption, alias, preservation, and cleanup evidence.
 
+Decision 0392 separates the remaining platform acquisition shell from WVO
+policy. Each Windows/Linux shell receives the selected first ordinal, stride,
+header skip, and exact validator address; it owns process arguments, hosted
+runtime storage, resource reopening and complete byte comparison, native file
+identity, destination-alias rejection, and invocation of the reusable durable
+transaction. A thin tail-jump WVO wrapper selects `(2, 1, 0)` and the WVO
+validator. A thin hosted-container wrapper selects `(3, 2, 40)` and the hosted
+validator. Policy wrappers must preserve the original platform entry stack and
+alignment, and no shell may infer format policy from a filename or payload.
+
 The Windows application has current-host execution evidence. The Linux image,
 complete compiler self-staging integration, package promotion, native
 replacement of the Stage 0 constructor, extended fault/concurrency matrix, and

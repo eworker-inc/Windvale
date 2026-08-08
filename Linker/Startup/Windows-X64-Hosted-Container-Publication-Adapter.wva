@@ -1,0 +1,16 @@
+windvale-assembly 1
+
+# Hosted-container policy entry over the shared immutable-snapshot publisher.
+symbol export function Windows_hosted_container_publisher_run in .text
+symbol import function Windows_immutable_snapshot_publisher_run
+symbol import function X64_hosted_container_snapshot_table_validate
+
+section code .text align 16
+define Windows_hosted_container_publisher_run
+move_u32 edi 3
+move_u32 esi 2
+move_u32 ebp 40
+load_address r10 X64_hosted_container_snapshot_table_validate
+jump Windows_immutable_snapshot_publisher_run
+end define
+end section

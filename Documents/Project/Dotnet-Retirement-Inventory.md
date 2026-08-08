@@ -442,6 +442,15 @@ and cleanup evidence passes. Both platform mutation owners are now independent
 of WVO; connecting the hosted-container admission root and deleting managed
 final publication remain open.
 
+[Decision 0392](../Decisions/0392-Shared-Immutable-Snapshot-Publisher-Shells.md)
+removes the last WVO-specific duplication from platform acquisition. One
+Windows and one Linux shell now own argument/runtime setup, immutable resource
+reopening and byte comparison, native identity, destination-alias rejection,
+and durable-transaction dispatch. Four 14-line policy wrappers select WVO or
+hosted snapshot rules. The Windows WVO route passes its focused behavior test;
+Linux execution, hosted application packaging, and deletion of managed hosted
+dispatch, concatenation, and final publication remain open.
+
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution
 reports and preserve each compact fixed input without a live .NET oracle.

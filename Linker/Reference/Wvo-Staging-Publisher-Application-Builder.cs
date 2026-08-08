@@ -23,12 +23,16 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
         "Windvale.Linker.Linux-X64-Wvo-Staging-Publisher.wvo";
     internal const string LINUX_ADAPTER_RESOURCE =
         "Windvale.Linker.Linux-X64-Wvo-Staging-Publication-Adapter.wvo";
+    internal const string LINUX_SHELL_RESOURCE =
+        "Windvale.Linker.Linux-X64-Immutable-Snapshot-Publisher.wvo";
     internal const string LINUX_TRANSACTION_RESOURCE =
         "Windvale.Linker.Linux-X64-Durable-Multi-Chunk-Publication.wvo";
     internal const string WINDOWS_STARTUP_RESOURCE =
         "Windvale.Linker.Windows-X64-Wvo-Staging-Publisher.wvo";
     internal const string WINDOWS_ADAPTER_RESOURCE =
         "Windvale.Linker.Windows-X64-Wvo-Staging-Publication-Adapter.wvo";
+    internal const string WINDOWS_SHELL_RESOURCE =
+        "Windvale.Linker.Windows-X64-Immutable-Snapshot-Publisher.wvo";
     internal const string WINDOWS_TRANSACTION_RESOURCE =
         "Windvale.Linker.Windows-X64-Durable-Multi-Chunk-Publication.wvo";
     internal const string SNAPSHOT_TABLE_RESOURCE =
@@ -42,14 +46,18 @@ internal static class Wvoˉstagingˉpublisherˉapplicationˉbuilder
     [
         (LINUX_STARTUP_RESOURCE, 180,
             "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba"),
-        (LINUX_ADAPTER_RESOURCE, 3_499,
-            "2ca0989221f55c1b4a4e8de1bf2bf4437f758e10c1211944b36333f0d029c15d"),
+        (LINUX_ADAPTER_RESOURCE, 281,
+            "d0a3cb41b6ffcc0fe6e616e1d2ac3b067252fe1ae20c8c40532505bcd6491be5"),
+        (LINUX_SHELL_RESOURCE, 3_485,
+            "423bd086f68c03b3fd26c296a1789392ebd72a74e5fd10adf0d2e596d2fd2e6d"),
         (LINUX_TRANSACTION_RESOURCE, 2_432,
             "47a22cd108702d6427fe5be9fca00c3c05f38cb26dd69e51c8648544b3f98e76"),
         (WINDOWS_STARTUP_RESOURCE, 184,
             "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab"),
-        (WINDOWS_ADAPTER_RESOURCE, 6_144,
-            "89c3516eb56ecb274ba34b3168d1f33987b959cca44a70396eaa0cb5e1ffb258"),
+        (WINDOWS_ADAPTER_RESOURCE, 285,
+            "86dd44e921418a82c69aa155b671662fa2961041d0ead661a0328f3371f7f045"),
+        (WINDOWS_SHELL_RESOURCE, 6_116,
+            "d5233eb678b1c96eb6c8c4108ff10d7bcc263678defb81915ab1c67a6b398110"),
         (WINDOWS_TRANSACTION_RESOURCE, 4_001,
             "3795ab62b6dc5008748ba7c4332b885419a14479c9c11369bcc13885cad8974b"),
         (SNAPSHOT_TABLE_RESOURCE, 224,

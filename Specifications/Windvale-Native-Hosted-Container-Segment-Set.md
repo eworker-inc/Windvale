@@ -83,10 +83,9 @@ runtime. It is transition evidence, not product logic. It can leave the normal
 test path when the digest-bound native launcher and native hostile-input lane
 own equivalent evidence; the frozen recovery archive may retain it.
 
-The next slice extracts the existing native durable multi-chunk transaction
-behind a focused WVA-owned boundary. That publisher will consume the admitted
-response payloads directly, skipping each 40-byte `WVHU 1` envelope, and will
-atomically replace the destination without managed concatenation.
+The paired native publisher will consume admitted response payloads directly,
+skip each 40-byte `WVHU 1` envelope, and atomically replace the destination
+without managed concatenation.
 
 Decision 0389 supplies the shared native snapshot-table admission beneath that
 publisher. Its hosted policy selects response snapshot ordinals `3,5,7...`,
@@ -100,3 +99,11 @@ selection directly to exclusive sibling creation, exact write/reread, rename,
 and directory durability. Decision 0391 supplies the matching Windows
 handle-relative transaction with current-host execution evidence. The paired
 hosted adapters and launchers are now the remaining connection boundary.
+
+Decision 0392 supplies the shared platform acquisition half. One Windows and
+one Linux immutable-snapshot shell own runtime setup, complete resource
+reopening and comparison, native identity, destination-alias rejection, and
+durable-transaction invocation. The 14-line hosted policy entries select
+ordinals `3,5,7...`, stride two, the 40-byte skip, and the hosted validator.
+Packaging the admission root with those shells, the existing validator, and the
+durable transactions is the remaining application boundary.

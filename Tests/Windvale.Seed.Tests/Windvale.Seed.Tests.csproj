@@ -1045,6 +1045,12 @@
       Include="../../Linker/Startup/Linux-X64-Wvo-Staging-Publication-Adapter.wva"
       LogicalName="Windvale.Seed.Tests.Linux-X64-Wvo-Staging-Publication-Adapter.wva" />
     <EmbeddedResource
+      Include="../../Linker/Startup/Linux-X64-Immutable-Snapshot-Publisher.wva"
+      LogicalName="Windvale.Seed.Tests.Linux-X64-Immutable-Snapshot-Publisher.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/Linux-X64-Hosted-Container-Publication-Adapter.wva"
+      LogicalName="Windvale.Seed.Tests.Linux-X64-Hosted-Container-Publication-Adapter.wva" />
+    <EmbeddedResource
       Include="../../Linker/Startup/Linux-X64-Durable-Multi-Chunk-Publication.wva"
       LogicalName="Windvale.Seed.Tests.Linux-X64-Durable-Multi-Chunk-Publication.wva" />
     <EmbeddedResource
@@ -1053,6 +1059,12 @@
     <EmbeddedResource
       Include="../../Linker/Startup/Windows-X64-Wvo-Staging-Publication-Adapter.wva"
       LogicalName="Windvale.Seed.Tests.Windows-X64-Wvo-Staging-Publication-Adapter.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/Windows-X64-Immutable-Snapshot-Publisher.wva"
+      LogicalName="Windvale.Seed.Tests.Windows-X64-Immutable-Snapshot-Publisher.wva" />
+    <EmbeddedResource
+      Include="../../Linker/Startup/Windows-X64-Hosted-Container-Publication-Adapter.wva"
+      LogicalName="Windvale.Seed.Tests.Windows-X64-Hosted-Container-Publication-Adapter.wva" />
     <EmbeddedResource
       Include="../../Linker/Startup/Windows-X64-Durable-Multi-Chunk-Publication.wva"
       LogicalName="Windvale.Seed.Tests.Windows-X64-Durable-Multi-Chunk-Publication.wva" />

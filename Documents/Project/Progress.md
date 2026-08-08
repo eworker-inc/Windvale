@@ -1,6 +1,6 @@
 # Windvale progress
 
-> Status snapshot: 7 August 2026
+> Status snapshot: 8 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Windvale roadmap phase map showing qualified, ongoing, current, in-progress, and planned phases" width="100%"></a>
 
@@ -51,6 +51,14 @@ native unsafe-WVB lane. Both digest-bound readers now agree on all ten fixed
 inputs without .NET; the retirement coordinator remains 23 suites and grows to
 3,035 cases. Nominal count/value-size limits and other typed opcode families
 remain later test-transfer work.
+
+[Decision 0392](../Decisions/0392-Shared-Immutable-Snapshot-Publisher-Shells.md)
+completes the format-neutral publisher extraction on both permanent hosts. One
+platform shell now owns immutable resource acquisition, comparison, identity,
+alias rejection, and transaction dispatch; tiny WVO and hosted-container policy
+entries select the admitted snapshot sequence. The focused Windows WVO route
+passes through the new shell. Linux execution, paired hosted application
+packaging, managed-publication deletion, and the grouped gate remain open.
 
 The current unqualified language candidate advances Stage 0 and the Windvale-written compiler together through WVB 1.11: inference and trailing commas; constants; privacy, aliases, qualified identities, and metadata; named records and `else if`; exhaustive `match`; nominal payload variants and recoverable-result shapes; bounded sequences, affine builders, and `for`; loop control and short-circuit flow; compound assignment; checked division/remainder; bitwise operations and shifts; and exact text/bytes equality. The ordinary native compiler path, deterministic artifacts, editor grammar, and focused compiler/runtime/WebAssembly cases are synchronized. Resource-lifetime syntax remains at its explicit design gate until provider values, cleanup ordering/failures, and immutable manifest representation are decided.
 

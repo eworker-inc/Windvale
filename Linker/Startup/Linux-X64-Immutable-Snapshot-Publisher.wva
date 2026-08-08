@@ -1,0 +1,477 @@
+windvale-assembly 1
+
+# Linux x64 immutable-snapshot publisher shell. Portable Windvale code owns
+# format admission; this shell binds arguments and immutable file snapshots,
+# rereads host identities and bytes, rejects destination aliases, and delegates
+# the selected payload sequence to the shared durable transaction.
+symbol export function Linux_immutable_snapshot_publisher_run in .text
+symbol import data Argument_bytes
+symbol import data Argument_table
+symbol import data Data_arena
+symbol import data Execution_context
+symbol import data File_input_scratch
+symbol import data File_input_table
+symbol import function Linux_durable_multi_chunk_publication_run
+symbol import data Name_arena
+symbol import function Native_main
+symbol import data Output_table
+symbol import data Record_arena
+symbol import function Service_diagnostic_write
+symbol import function Service_enum_name
+symbol import function Service_file_read
+symbol import function Service_process_argument
+symbol import function Service_process_argument_count
+symbol import data Service_table
+symbol import function Service_text_concat
+symbol import function Service_u32_format
+symbol import function Service_utf8
+symbol import data Snapshot_table
+symbol import data Text_arena
+
+section code .text align 16
+define Linux_immutable_snapshot_publisher_run
+# Input policy: EDI first payload ordinal, ESI stride, EBP header skip, and
+# R10 the exact immutable-snapshot policy validator.
+move r12 rsp
+move r13d edi
+move r14d esi
+move r15d ebp
+move rbx r10
+# Preserve the kernel argc/argv stack, allocate the established bounded runtime
+# stack, and reserve its final 16 KiB for paths, identities, and transaction cells.
+xor edi edi
+move_u32 esi 67108864
+move_u32 edx 3
+move_u32 r10d 131106
+xor r8 r8
+subtract_i32 r8 1
+xor r9d r9d
+move_u32 eax 9
+syscall
+compare_i32 rax -4095
+branch above_equal Failure
+move rsp rax
+add_i32 rsp 67108864
+subtract_i32 rsp 16384
+store_memory_u64 rsp none 1 12672 rbx
+store_memory_u32 rsp none 1 12680 r13d
+store_memory_u32 rsp none 1 12684 r14d
+store_memory_u32 rsp none 1 12688 r15d
+
+# Bind the fixed execution regions and the eight services used by admission.
+load_address r15 Execution_context
+load_address rax Service_table
+store_memory_u64 r15 none 1 24 rax
+load_address rax Record_arena
+store_memory_u64 r15 none 1 32 rax
+load_address rax Text_arena
+store_memory_u64 r15 none 1 48 rax
+load_address rax Argument_table
+store_memory_u64 r15 none 1 72 rax
+load_address rax Output_table
+store_memory_u64 r15 none 1 88 rax
+load_address rax File_input_table
+store_memory_u64 r15 none 1 96 rax
+
+load_address rbx File_input_table
+load_address rax Snapshot_table
+store_memory_u64 rbx none 1 16 rax
+load_address rax Name_arena
+store_memory_u64 rbx none 1 32 rax
+load_address rax Data_arena
+store_memory_u64 rbx none 1 48 rax
+load_address rax File_input_scratch
+store_memory_u64 rbx none 1 64 rax
+
+load_address rbx Service_table
+load_address rax Service_process_argument_count
+store_memory_u64 rbx none 1 16 rax
+load_address rax Service_process_argument
+store_memory_u64 rbx none 1 24 rax
+load_address rax Service_file_read
+store_memory_u64 rbx none 1 32 rax
+load_address rax Service_utf8
+store_memory_u64 rbx none 1 40 rax
+load_address rax Service_diagnostic_write
+store_memory_u64 rbx none 1 48 rax
+load_address rax Service_enum_name
+store_memory_u64 rbx none 1 56 rax
+load_address rax Service_text_concat
+store_memory_u64 rbx none 1 64 rax
+load_address rax Service_u32_format
+store_memory_u64 rbx none 1 88 rax
+
+# Exclude argv[0] and retain exactly four strict UTF-8 arguments.
+load_memory_u64 rax r12 none 1 0
+compare_i32 rax 5
+branch not_equal Failure
+move_u32 eax 4
+store_memory_u32 r15 none 1 80 eax
+xor ebx ebx
+xor ebp ebp
+load_address r13 Argument_table
+load_address r14 Argument_bytes
+label Argument_loop
+compare_i32 ebx 4
+branch above_equal Arguments_ready
+load_memory_u64 rsi r12 rbx 8 16
+xor ecx ecx
+label Scan_argument
+load_memory_u8 dl rsi rcx 1 0
+test dl dl
+branch equal Argument_length
+compare_i32 ecx 4096
+branch above_equal Failure
+add_i32 ecx 1
+jump_label Scan_argument
+label Argument_length
+move r10d ecx
+move edx ebp
+add edx ecx
+compare_i32 edx 65536
+branch above Failure
+subtract_i32 rsp 16
+move rcx rsp
+move r8 rsi
+move r9d r10d
+call Service_utf8
+load_memory_u32 eax rsp none 1 0
+add_i32 rsp 16
+compare_i32 eax 1
+branch not_equal Failure
+move rdx rbx
+shift_left rdx 4
+add rdx r13
+move rdi r14
+add rdi rbp
+store_memory_u64 rdx none 1 0 rdi
+store_memory_u32 rdx none 1 8 r10d
+xor ecx ecx
+label Copy_argument
+compare ecx r10d
+branch above_equal Argument_copied
+load_memory_u8 al rsi rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Copy_argument
+label Argument_copied
+add ebp r10d
+add_i32 ebx 1
+jump_label Argument_loop
+
+label Arguments_ready
+load_address rdx Execution_context
+xor edi edi
+xor ecx ecx
+xor r8d r8d
+xor r9d r9d
+call Native_main
+move rdx rax
+shift_right rdx 32
+test edx edx
+branch equal Native_status_valid
+# Preserve the packed native runtime status as the developer-facing process
+# status. Ordinary admission failures still retain Main's documented exit code.
+move eax edx
+jump_label Native_exit
+label Native_status_valid
+test eax eax
+branch not_equal Native_exit
+
+move_u32 edi 2
+load_memory_u64 rax rsp none 1 12672
+call_register rax
+test eax eax
+branch equal Failure
+store_memory_u32 rsp none 1 12720 eax
+store_memory_u32 rsp none 1 12724 edx
+
+# Split the destination argument into an anchored directory and basename.
+load_address rbx Argument_table
+load_memory_u64 rsi rbx none 1 48
+load_memory_u32 ebp rbx none 1 56
+test ebp ebp
+branch equal Failure
+xor ecx ecx
+move_u32 r10d 4294967295
+label Destination_scan
+compare ecx ebp
+branch above_equal Destination_scanned
+load_memory_u8 al rsi rcx 1 0
+compare_i8 al 47
+branch not_equal Destination_scan_next
+move r10d ecx
+label Destination_scan_next
+add_i32 ecx 1
+jump_label Destination_scan
+label Destination_scanned
+move eax r10d
+add_i32 eax 1
+compare eax ebp
+branch above_equal Failure
+move rdi rsp
+add_i32 rdi 4112
+compare_i32 r10d -1
+branch not_equal Destination_has_slash
+move_u8 al 46
+store_memory_u8 rdi none 1 0 al
+xor eax eax
+store_memory_u8 rdi none 1 1 al
+xor r11d r11d
+jump_label Copy_destination_base
+label Destination_has_slash
+test r10d r10d
+branch not_equal Copy_destination_directory
+move_u8 al 47
+store_memory_u8 rdi none 1 0 al
+xor eax eax
+store_memory_u8 rdi none 1 1 al
+move_u32 r11d 1
+jump_label Copy_destination_base
+label Copy_destination_directory
+xor ecx ecx
+label Destination_directory_loop
+compare ecx r10d
+branch above_equal Destination_directory_ready
+load_memory_u8 al rsi rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Destination_directory_loop
+label Destination_directory_ready
+xor eax eax
+store_memory_u8 rdi rcx 1 0 al
+move r11d r10d
+add_i32 r11d 1
+label Copy_destination_base
+move rdi rsp
+add_i32 rdi 8224
+xor ecx ecx
+label Destination_base_loop
+move eax r11d
+add eax ecx
+compare eax ebp
+branch above_equal Destination_base_ready
+load_memory_u8 dl rsi rax 1 0
+store_memory_u8 rdi rcx 1 0 dl
+add_i32 ecx 1
+jump_label Destination_base_loop
+label Destination_base_ready
+test ecx ecx
+branch equal Failure
+xor eax eax
+store_memory_u8 rdi rcx 1 0 al
+
+# Anchor every mutation to one opened destination directory.
+move_i32 edi -100
+move rsi rsp
+add_i32 rsi 4112
+move_u32 edx 720896
+xor r10d r10d
+move_u32 eax 257
+syscall
+compare_i32 rax -4095
+branch above_equal Failure
+move r13 rax
+
+# Capture an existing destination identity. ENOENT is the sole absent result.
+xor eax eax
+store_memory_u32 rsp none 1 12732 eax
+move rdi r13
+move rsi rsp
+add_i32 rsi 8224
+move_u32 edx 655360
+xor r10d r10d
+move_u32 eax 257
+syscall
+compare_i32 rax -2
+branch equal Destination_ready
+compare_i32 rax -4095
+branch above_equal Directory_failure
+move rbx rax
+move rdi rbx
+move rsi rsp
+add_i32 rsi 12560
+move_u32 eax 5
+syscall
+test rax rax
+branch not_equal Destination_close_failure
+move_u32 eax 1
+store_memory_u32 rsp none 1 12732 eax
+move rdi rbx
+move_u32 eax 3
+syscall
+test rax rax
+branch not_equal Directory_failure
+jump_label Destination_ready
+label Destination_close_failure
+move rdi rbx
+move_u32 eax 3
+syscall
+jump_label Directory_failure
+
+label Destination_ready
+# Reopen each admitted exact name only to bind native identity and compare the
+# current handle byte-for-byte with the immutable execution snapshot.
+xor eax eax
+store_memory_u32 rsp none 1 12712 eax
+label Resource_loop
+load_memory_u32 ebx rsp none 1 12712
+load_memory_u32 eax rsp none 1 12720
+compare ebx eax
+branch above_equal Resources_verified
+move rdx rbx
+shift_left rdx 5
+load_address rsi Snapshot_table
+add rsi rdx
+load_memory_u64 r8 rsi none 1 0
+load_memory_u32 r9d rsi none 1 8
+move rdi rsp
+xor ecx ecx
+label Copy_resource_path
+compare ecx r9d
+branch above_equal Resource_path_ready
+load_memory_u8 al r8 rcx 1 0
+store_memory_u8 rdi rcx 1 0 al
+add_i32 ecx 1
+jump_label Copy_resource_path
+label Resource_path_ready
+xor eax eax
+store_memory_u8 rdi rcx 1 0 al
+move_i32 edi -100
+move rsi rsp
+move_u32 edx 524288
+xor r10d r10d
+move_u32 eax 257
+syscall
+compare_i32 rax -4095
+branch above_equal Directory_failure
+move r14 rax
+move rdi r14
+move rsi rsp
+add_i32 rsi 12416
+move_u32 eax 5
+syscall
+test rax rax
+branch not_equal Resource_failure
+load_memory_u32 eax rsp none 1 12732
+test eax eax
+branch equal Resource_identity_ready
+load_memory_u64 rax rsp none 1 12416
+load_memory_u64 rdx rsp none 1 12560
+compare rax rdx
+branch not_equal Resource_identity_ready
+load_memory_u64 rax rsp none 1 12424
+load_memory_u64 rdx rsp none 1 12568
+compare rax rdx
+branch equal Resource_failure
+label Resource_identity_ready
+move rdi r14
+xor esi esi
+xor edx edx
+move_u32 eax 8
+syscall
+test rax rax
+branch not_equal Resource_failure
+xor ebp ebp
+label Resource_read_loop
+load_memory_u32 ebx rsp none 1 12712
+move rdx rbx
+shift_left rdx 5
+load_address rbx Snapshot_table
+add rbx rdx
+load_memory_u32 r10d rbx none 1 24
+compare ebp r10d
+branch above_equal Resource_read_complete
+subtract r10d ebp
+compare_i32 r10d 4096
+branch below_equal Resource_read_size
+move_u32 r10d 4096
+label Resource_read_size
+move rdi r14
+load_address rsi File_input_scratch
+move edx r10d
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Resource_read_loop
+compare_i32 rax 1
+branch below Resource_failure
+compare rax r10
+branch above Resource_failure
+move r9d eax
+xor ecx ecx
+load_address rdi File_input_scratch
+load_memory_u64 rsi rbx none 1 16
+add rsi rbp
+label Resource_compare_loop
+compare ecx r9d
+branch above_equal Resource_chunk_matches
+load_memory_u8 al rdi rcx 1 0
+load_memory_u8 dl rsi rcx 1 0
+compare al dl
+branch not_equal Resource_failure
+add_i32 ecx 1
+jump_label Resource_compare_loop
+label Resource_chunk_matches
+add ebp r9d
+jump_label Resource_read_loop
+label Resource_read_complete
+move rdi r14
+load_address rsi File_input_scratch
+move_u32 edx 1
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Resource_read_complete
+test rax rax
+branch not_equal Resource_failure
+move rdi r14
+move_u32 eax 3
+syscall
+test rax rax
+branch not_equal Directory_failure
+load_memory_u32 eax rsp none 1 12712
+add_i32 eax 1
+store_memory_u32 rsp none 1 12712 eax
+jump_label Resource_loop
+
+label Resource_failure
+move rdi r14
+move_u32 eax 3
+syscall
+jump_label Directory_failure
+
+label Resources_verified
+# The shared transaction consumes the policy-selected payload sequence without
+# knowing its manifest or format. This shell retains host-identity policy.
+move rdi r13
+move rsi rsp
+add_i32 rsi 8224
+load_memory_u32 edx rsp none 1 12680
+load_memory_u32 ecx rsp none 1 12720
+load_memory_u32 r8d rsp none 1 12684
+load_memory_u32 r9d rsp none 1 12688
+call Linux_durable_multi_chunk_publication_run
+move ebx eax
+move rdi r13
+move_u32 eax 3
+syscall
+move edi ebx
+jump_label Exit
+
+label Directory_failure
+move rdi r13
+move_u32 eax 3
+syscall
+label Failure
+move_u32 edi 1
+jump_label Exit
+
+label Native_exit
+move edi eax
+label Exit
+move_u32 eax 60
+syscall
+trap
+end define
+end section

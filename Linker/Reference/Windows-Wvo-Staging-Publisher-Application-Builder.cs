@@ -20,6 +20,8 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_STARTUP_RESOURCE);
         var Adapter = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_ADAPTER_RESOURCE);
+        var Shell = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
+            Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_SHELL_RESOURCE);
         var Transaction = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
             Wvoˉstagingˉpublisherˉapplicationˉbuilder.WINDOWS_TRANSACTION_RESOURCE);
         var Snapshot = Wvoˉstagingˉpublisherˉapplicationˉbuilder.Readˉobject(
@@ -48,8 +50,11 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
                 Windowsˉhostedˉcompilerˉapplicationˉcontract.BUNDLE_TEXT_OFFSET +
                 Bundle.Imageˉbytes.Length)),
             16);
-        var Transactionˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
+        var Shellˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
             Adapterˉoffset + Adapterˉsection.Memoryˉsize), 16);
+        var Transactionˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
+            Shellˉoffset + Shell.Sections.Single(Item =>
+                Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize), 16);
         var Snapshotˉoffset = Wvbˉpublisherˉapplicationˉbuilder.Alignˉup(checked(
             Transactionˉoffset + Transaction.Sections.Single(Item =>
                 Item.Kind == Objectˉsectionˉkind.Code).Memoryˉsize), 16);
@@ -115,6 +120,15 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
         {
             Targets.Add(Export.Key, Export.Value);
         }
+        var (Shellˉbytes, Shellˉexports) =
+            Wvbˉpublisherˉapplicationˉbuilder.Instantiateˉobject(
+                Shell,
+                checked(Baseˉverified.Layout.Textˉaddress + Shellˉoffset),
+                Targets);
+        foreach (var Export in Shellˉexports)
+        {
+            Targets.Add(Export.Key, Export.Value);
+        }
         var Adapterˉexport = Adapter.Symbols.Single(Item =>
             Item.Binding == Objectˉsymbolˉbinding.Export &&
             Item.Name == "Windows_wvo_staging_publisher_run");
@@ -157,6 +171,8 @@ internal static class Windowsˉwvoˉstagingˉpublisherˉapplicationˉbuilder
             Baseˉverified.Layout.Textˉfileˉoffset));
         Adapterˉbytes.CopyTo(Application.AsSpan(checked(
             Baseˉverified.Layout.Textˉfileˉoffset + (int)Adapterˉoffset)));
+        Shellˉbytes.CopyTo(Application.AsSpan(checked(
+            Baseˉverified.Layout.Textˉfileˉoffset + (int)Shellˉoffset)));
         Transactionˉbytes.CopyTo(Application.AsSpan(checked(
             Baseˉverified.Layout.Textˉfileˉoffset + (int)Transactionˉoffset)));
         Snapshotˉbytes.CopyTo(Application.AsSpan(checked(

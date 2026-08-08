@@ -588,6 +588,14 @@ mapping. The changed Windows transaction passes real current-host publication
 and failure-preservation evidence. Both platform transactions are now ready for
 the hosted-container admission connection.
 
+[Decision 0392](../Decisions/0392-Shared-Immutable-Snapshot-Publisher-Shells.md)
+extracts the remaining resource acquisition, immutable-byte comparison, native
+identity, and destination-alias policy into one format-neutral shell per host.
+Four tiny tail-jump policy entries select either staged-WVO or hosted-container
+snapshot validation without duplicating the platform boundary. The Windows WVO
+route executes through the shared shell; Linux execution and the paired hosted
+applications remain part of their later host gates.
+
 Removing .NET from automation before the [Decision 0057 retirement gate](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md#native-retirement-gate) would trade an explicit bootstrap dependency for an undocumented binary trust dependency and is not accepted.
 
 ## Qualification matrix
