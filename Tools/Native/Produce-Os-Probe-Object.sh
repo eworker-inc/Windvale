@@ -2,7 +2,7 @@
 set -uo pipefail
 
 if [[ $# -ne 2 || $2 != *.wvo ]]; then
-    echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support> <output.wvo>' >&2
+    echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging> <output.wvo>' >&2
     exit 64
 fi
 case $1 in
@@ -18,8 +18,12 @@ case $1 in
         expected_bytes=461
         expected_digest=472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b
         ;;
+    paging)
+        expected_bytes=1292
+        expected_digest=a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d
+        ;;
     *)
-        echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support> <output.wvo>' >&2
+        echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging> <output.wvo>' >&2
         exit 64
         ;;
 esac
@@ -38,9 +42,9 @@ if [[ -e $output ]]; then
     echo 'The native OS Probe object output already exists.' >&2
     exit 1
 fi
-if [[ ! -f $producer || $(wc -c < "$producer") -ne 434176 ]] ||
+if [[ ! -f $producer || $(wc -c < "$producer") -ne 462848 ]] ||
     ! printf '%s  %s\n' \
-        '4ae292f582b309b0ce0fad9ccf90a5f115cf46f5f3ff489f587d313cb97231c5' \
+        'c4e22a9f67d5bdb4f186ddfbb63aa93032712ea7bdc260ed28076b12f0217e80' \
         "$producer" | sha256sum --check --strict --quiet; then
     echo 'The Linux native OS Probe object producer identity is invalid.' >&2
     exit 1

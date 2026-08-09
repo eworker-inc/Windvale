@@ -1,6 +1,6 @@
 # Decision 0450: Native Probe 40 native bridge and support producer
 
-- Status: Implemented current-host native-build candidate; Linux execution pending
+- Status: Implemented current-host native-build candidate; package identities superseded by [Decision 0451](0451-Native-Probe-40-Paging-Object-Producer.md); Linux execution pending
 - Date: 2026-08-09
 - Advances: [Decision 0449](0449-Native-Probe-40-Admission-Bridge-Producer.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contracts: [OS Probe object producer](../../Specifications/Windvale-Os-Probe-Object-Producer.md) and [WVO object construction](../../Specifications/Windvale-Wvo-Object-Construction.md)

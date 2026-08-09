@@ -124,6 +124,11 @@ if ! "$script_directory/Produce-Os-Probe-Object.sh" exceptions \
     cat -- "$work/09.log" >&2
     exit 1
 fi
+if ! "$script_directory/Produce-Os-Probe-Object.sh" paging \
+    "$work/10-paging.wvo" >"$work/10.log" 2>&1; then
+    cat -- "$work/10.log" >&2
+    exit 1
+fi
 if ! "$script_directory/Produce-Os-Probe-Object.sh" wvb-admission-bridge \
     "$work/12-wvb-admission-bridge.wvo" >"$work/12.log" 2>&1; then
     cat -- "$work/12.log" >&2
@@ -140,10 +145,11 @@ if ! "$script_directory/Assemble-Wva.sh" \
     cat -- "$work/11.log" >&2
     exit 1
 fi
-if ! printf '%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n' \
+if ! printf '%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n' \
     'fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee' "$work/06-memory-object-shims.wvo" \
     'e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344' "$work/07-timer-shims.wvo" \
     '9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c' "$work/09-exceptions.wvo" \
+    'a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d' "$work/10-paging.wvo" \
     '271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d' "$work/12-wvb-admission-bridge.wvo" \
     '472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b' "$work/13-native-bridge-and-support.wvo" \
     '845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193' "$work/11-kernel-shims.wvo" |
@@ -163,7 +169,7 @@ if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$work/07-timer-shims.wvo" \
     "$object_root/08-memory.wvo" \
     "$work/09-exceptions.wvo" \
-    "$object_root/10-paging.wvo" \
+    "$work/10-paging.wvo" \
     "$work/11-kernel-shims.wvo" \
     "$work/12-wvb-admission-bridge.wvo" \
     "$work/13-native-bridge-and-support.wvo" >"$work/Link.map" 2>&1; then

@@ -177,6 +177,9 @@ frozen producers without retaining a second host package.
 [Decision 0450](../Decisions/0450-Native-Probe-40-Native-Bridge-And-Support-Producer.md)
 adds the native bridge/support recipe to the same bounded producer, leaving six
 frozen producers and keeping its source at a reviewable 211 lines.
+[Decision 0451](../Decisions/0451-Native-Probe-40-Paging-Object-Producer.md)
+adds the exact paging installer without widening WVA, leaving five frozen
+producers and a 317-line source that must not absorb memory without reassessment.
 Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.

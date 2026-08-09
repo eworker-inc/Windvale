@@ -4847,3 +4847,33 @@ It owns 28 suites with 3,133 fixed cases. The seed retains six frozen WVOs
 totaling 663,579 bytes and records five native-produced objects totaling 29,071
 bytes. Linux execution, the complete coordinator, broad Seed/OS, QEMU,
 Standard, Qualification, and non-normal scenarios did not run.
+
+## Local native Probe 40 paging-object producer evidence
+
+[Decision 0451](../Decisions/0451-Native-Probe-40-Paging-Object-Producer.md)
+moves `10-paging.wvo` from the frozen seed and adds its exact one-section recipe
+to the selector-bound OS Probe object producer. The 42,835-byte Project 1 WVB
+has SHA-256
+`ab26d2cd8820887fc15475a4ee29aaf884af9b5a0d8bd3313a847d00cc03e042`.
+Its retained Windows application is 461,312 bytes at SHA-256
+`fcd22c975ed04534d30733c5ddabb7811a9b9578effd0d27839d171bdac76d0c`;
+the Linux application is 462,848 bytes at SHA-256
+`c4e22a9f67d5bdb4f186ddfbb63aa93032712ea7bdc260ed28076b12f0217e80`.
+
+Current-host execution reproduces all four exact former seed objects. The new
+paging object is 1,292 bytes at SHA-256
+`a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d`
+and passes independent native WVO admission.
+
+After affected-test review, the combined Windows producer lane passes 7/7 and
+the ordinary `os-probe` lane passes construction and existing-output
+preservation 2/2. The combined focused command takes 13.1 seconds. The final EFI
+remains 683,008 bytes at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retirement plan remains 2,331 LF-only bytes and now has SHA-256
+`c3925ba946d62bdfb7d949bf4d369edd3e5d792931057fd1ca6c1d5766f1a39b`.
+It owns 28 suites with 3,134 fixed cases. The seed retains five frozen WVOs
+totaling 662,287 bytes and records six native-produced objects totaling 30,363
+bytes. Linux execution, the complete coordinator, broad Seed/OS, QEMU,
+Standard, Qualification, and non-normal scenarios did not run.

@@ -50,15 +50,15 @@ The exact filter names and case counts are:
 | `publisher-rejections` | 2 |
 | `uefi-packager` | 3 |
 | `wvo-export-renamer` | 4 |
-| `os-probe-object` | 6 |
+| `os-probe-object` | 7 |
 | `os-probe` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 28 suites and 3,133 cases in manifest order. Its
+Omitting `--filter` selects all 28 suites and 3,134 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 28, Passed: 28, Failed: 0, Cases: 3133
+Suites: 28, Passed: 28, Failed: 0, Cases: 3134
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -515,10 +515,10 @@ Tools\Native\Build-Os-Probe.cmd C:\path\to\BOOTX64.EFI
 ./Tools/Native/Build-Os-Probe.sh /path/to/BOOTX64.EFI
 ```
 
-It validates six frozen Stage 0 WVOs; compiles, lowers, and export-renames the
+It validates five frozen Stage 0 WVOs; compiles, lowers, and export-renames the
 canonical admission source; compiles and lowers the canonical native-probe
-source; constructs the focused x64 exception, WVB admission-bridge, and native
-bridge/support objects through one digest-bound Windvale-native producer;
+source; constructs the focused x64 exception, paging, WVB admission-bridge, and
+native bridge/support objects through one digest-bound Windvale-native producer;
 assembles three top-level WVA objects natively; links fourteen inputs; and
 packages the exact EFI. Use the focused retirement lane to check construction
 plus existing-output preservation:
@@ -527,8 +527,8 @@ plus existing-output preservation:
 Tools\Native\Test-Retirement-Suite.cmd --filter os-probe
 ```
 
-The frozen seed is a candidate bootstrap/distribution input. Five object
-producers have moved to the native path; the other six have not. Use the recovery
+The frozen seed is a candidate bootstrap/distribution input. Six object
+producers have moved to the native path; the other five have not. Use the recovery
 command below only to regenerate and compare that provenance.
 
 To construct and independently admit any focused object, use:
@@ -537,12 +537,14 @@ To construct and independently admit any focused object, use:
 Tools\Native\Produce-Os-Probe-Object.cmd exceptions output.wvo
 Tools\Native\Produce-Os-Probe-Object.cmd wvb-admission-bridge output.wvo
 Tools\Native\Produce-Os-Probe-Object.cmd native-bridge-and-support output.wvo
+Tools\Native\Produce-Os-Probe-Object.cmd paging output.wvo
 ```
 
 ```sh
 ./Tools/Native/Produce-Os-Probe-Object.sh exceptions output.wvo
 ./Tools/Native/Produce-Os-Probe-Object.sh wvb-admission-bridge output.wvo
 ./Tools/Native/Produce-Os-Probe-Object.sh native-bridge-and-support output.wvo
+./Tools/Native/Produce-Os-Probe-Object.sh paging output.wvo
 ```
 
 Run `--filter os-probe-object` when any recipe, its shared WVO constructor, or
@@ -603,7 +605,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,133-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,134-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining
