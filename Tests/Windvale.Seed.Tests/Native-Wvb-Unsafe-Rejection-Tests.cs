@@ -24,7 +24,11 @@ internal static partial class Program
             "PASS  invalid-enum-member\n" +
             "PASS  enum-const-on-record\n" +
             "PASS  duplicate-enum-value\n" +
-            "Tests: 16, Passed: 16, Failed: 0\n",
+            "PASS  stack-capacity\n" +
+            "PASS  record-field-on-primitive\n" +
+            "PASS  enum-name-on-primitive\n" +
+            "PASS  wrong-nominal-kind\n" +
+            "Tests: 20, Passed: 20, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

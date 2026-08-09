@@ -125,5 +125,9 @@ run_or_fail record-create-wrong-field-type "$fixture_root/Record-Create-Wrong-Fi
 run_or_fail invalid-enum-member "$fixture_root/Invalid-Enum-Member.wvb.b64" ddd000954aeb8d0c02775128ae52615d9bf4237bda9741eb39e6f9efb4f2ddbe "$semantic_report"
 run_or_fail enum-const-on-record "$fixture_root/Enum-Const-On-Record.wvb.b64" 3d09445c44bf2d1e3f5b811f254e0bccc902366ad242ea4cf101fc44f23b99d8 "$semantic_report"
 run_or_fail duplicate-enum-value "$fixture_root/Duplicate-Enum-Value.wvb.b64" da453ca0cbe661ab695e21ce8f2ee2530a303ad996bbedfe6f0ae5e9bbb0a00c "$semantic_report"
+run_or_fail stack-capacity "$fixture_root/Stack-Capacity.wvb.b64" ba69564377f6e9b2ded8b9c6125205654eaf22cb4015be535015de33af23c728 "$typed_report"
+run_or_fail record-field-on-primitive "$fixture_root/Record-Field-On-Primitive.wvb.b64" d5deb4c26a19234066db169a40e5a2eaac99a4e03a4f0d08b816485431ca3396 "$typed_report"
+run_or_fail enum-name-on-primitive "$fixture_root/Enum-Name-On-Primitive.wvb.b64" 155d619ae7732c705b7881693ba1e6f1cd7db3cbbe2e8a5687fbd27e60097405 "$typed_report"
+run_or_fail wrong-nominal-kind "$fixture_root/Wrong-Nominal-Kind.wvb.b64" da375377c69ca8c87fe17f34460617330fdcc1763e1a465de4805e1ead98cc93 "$semantic_report"
 
 echo "Tests: $total, Passed: $passed, Failed: 0"

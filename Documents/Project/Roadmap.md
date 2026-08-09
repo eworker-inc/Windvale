@@ -89,6 +89,13 @@ remains 24 suites and now owns 3,044 cases. Larger value-limit cases, additional
 typed opcode families and dynamic WVA vectors, Linux execution, and the grouped
 gate remain.
 
+[Decision 0431](../Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md)
+extends that lane to twenty cases with four compact stack, receiver, and
+nominal-kind rejections. The 24-suite plan now owns 3,048 cases. Redundant scalar
+truncation, non-serializable invalid UTF-16, and multi-megabyte value limits keep
+their decoder, recovery-object, or hostile-size owners; dynamic WVA vectors,
+Linux execution, and the grouped gate remain.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

@@ -4262,6 +4262,29 @@ passes its one selected suite and all 16 cases in 7.1 seconds. The other 23
 lanes, managed wrapper, broad local verifier, Linux execution, and grouped
 retirement gate were not run.
 
+## Local compact native WVB rejection-closure evidence
+
+[Decision 0431](../Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md)
+adds four 157-to-204-byte fixed inputs for declared stack agreement, record-field
+receiver typing, enum-name receiver typing, and nominal-kind agreement. Each
+fixture starts from a separately verified valid WVB and changes exactly one
+byte. The permanent scripts only decode, digest-check, inspect, verify, and
+preserve the immutable input.
+
+The focused managed source assertion passed 1/1 in 59 ms while establishing
+fixture provenance. Its temporary generator code was removed, the authoritative
+`Program.cs` remained unchanged, and the generated directory was sent to the
+Recycle Bin. The duplicate fixed-width scalar truncation, non-serializable
+invalid UTF-16 object, and multi-megabyte value-limit cases retain their decoder,
+recovery-object, or hostile-size owners rather than becoming duplicate fixtures.
+
+The reviewed retirement plan remains 2,054 LF-only bytes and now has SHA-256
+`9c960e03e59a9fdd76fecfbf962e0cae9b33b96e941fa3c8254288380ef52960`,
+covering 24 suites and 3,048 fixed cases. The reviewed Windows command
+`Test-Retirement-Suite.cmd --filter unsafe-wvb` passes its one selected suite and
+all 20 cases in 8.9 seconds. The other 23 lanes, managed wrapper, broad local
+verifier, Linux execution, and grouped retirement gate were not run.
+
 ## Local multi-fragment current-lowerer reconstruction evidence
 
 [Decision 0420](../Decisions/0420-Multi-Fragment-Current-Lowerer-Reconstruction.md)

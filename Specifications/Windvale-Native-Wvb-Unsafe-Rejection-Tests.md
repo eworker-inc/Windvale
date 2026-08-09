@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-This fixed contract exercises sixteen unsafe instruction-stream, typed, and nominal-type
+This fixed contract exercises twenty unsafe instruction-stream, typed, and nominal-type
 boundaries through both digest-bound native WVB read-only launchers. It
 transfers stable phase, read-only, and process behavior without a live .NET
 oracle. It is not a replacement for the broader managed verifier suite or
@@ -49,6 +49,15 @@ are permanent:
 | `enum-const-on-record` | 225 | nominal byte 114, enum `1` to record `0` | `semantic` | `3d09445c44bf2d1e3f5b811f254e0bccc902366ad242ea4cf101fc44f23b99d8` |
 | `duplicate-enum-value` | 192 | second value byte 188, `1` to duplicate `0` | `semantic` | `da453ca0cbe661ab695e21ce8f2ee2530a303ad996bbedfe6f0ae5e9bbb0a00c` |
 
+Four final compact verifier fixtures use the same construction rule:
+
+| Case | Bytes | Mutation | Phase | SHA-256 |
+| --- | ---: | --- | --- | --- |
+| `stack-capacity` | 157 | maximum-stack byte 101, `1` to `0` | `typed-execution` | `ba69564377f6e9b2ded8b9c6125205654eaf22cb4015be535015de33af23c728` |
+| `record-field-on-primitive` | 190 | code byte 118, `local.load` to `u32.const` | `typed-execution` | `d5deb4c26a19234066db169a40e5a2eaac99a4e03a4f0d08b816485431ca3396` |
+| `enum-name-on-primitive` | 204 | code byte 118, `local.load` to `i32.const` | `typed-execution` | `155d619ae7732c705b7881693ba1e6f1cd7db3cbbe2e8a5687fbd27e60097405` |
+| `wrong-nominal-kind` | 197 | parameter-shape byte 88, enum `8` to record `7` | `semantic` | `da375377c69ca8c87fe17f34460617330fdcc1763e1a465de4805e1ead98cc93` |
+
 ## Rejection contract
 
 For every fixture, `Verify-Wvb.cmd` / `.sh` and `Inspect-Wvb.cmd` / `.sh` must:
@@ -64,12 +73,15 @@ The typed report is `wvb status=Invalid phase=typed-execution` plus LF at
 SHA-256
 `c083d8e4a7dbe48f3c72248285d6f4ace645202ca8f2013df1d51ab328db7930`.
 
-Success prints the sixteen ordered `PASS` lines followed by:
+Success prints the twenty ordered `PASS` lines followed by:
 
 ```text
-Tests: 16, Passed: 16, Failed: 0
+Tests: 20, Passed: 20, Failed: 0
 ```
 
-The fixture set is representative, not exhaustive. Nominal count and value-size
-limits, remaining typed opcode families, hostile lengths, seeded random bytes,
-and random source/assembly remain separate evidence.
+The fixture set is representative, not exhaustive. The duplicate `i64.const`
+truncation assertion is covered by the same fixed-width operand decoder as the
+retained truncated scalar case. Invalid in-memory UTF-16 cannot exist in
+canonical WVB and remains an object-model recovery assertion. Nominal count and
+value-size limits, hostile lengths, seeded random bytes, and random
+source/assembly remain separate focused evidence.
