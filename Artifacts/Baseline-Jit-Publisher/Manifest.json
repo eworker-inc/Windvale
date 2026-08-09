@@ -65,11 +65,14 @@
       "sha256": "bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c",
       "provenance": "windvale-lowerer-reference-reconstruction",
       "nativeReconstruction": {
-        "status": "windows-passed-linux-pending",
+        "status": "paired-passed",
         "lowererToolWvbBytes": 399691,
         "lowererToolWvbSha256": "92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508",
         "windowsApplicationBytes": 5792768,
-        "windowsApplicationSha256": "e096dc7fec20e3318364da1f3b5289f772b53c16cc370f29622dfac35780e2bf"
+        "windowsApplicationSha256": "e096dc7fec20e3318364da1f3b5289f772b53c16cc370f29622dfac35780e2bf",
+        "linuxApplicationBytes": 5791744,
+        "linuxApplicationSha256": "a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e",
+        "pairedWorkflowRun": 31290136463
       }
     }
   ],

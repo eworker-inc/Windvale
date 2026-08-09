@@ -73,9 +73,10 @@ It reconstructs byte-for-byte through the native Project 1 front door.
 The focused current-host test admits a real hosted-container segment set,
 rejects payload corruption, rejects a request carrying a different valid plan
 header, rejects a reordered manifest entry, rejects an alias before any read,
-and reconstructs the pinned WVB. The paired publisher test additionally performs
-real Windows durable publication without loading .NET. Linux execution and the
-grouped dual-host qualification remain deferred.
+and reconstructs the pinned WVB. The paired publisher workflow additionally
+performs real Windows and Debian durable publication without loading .NET and
+requires the published ELF to be executable. Grouped dual-host qualification
+remains deferred.
 
 ## Retirement boundary
 
@@ -118,4 +119,6 @@ Decision 0422 makes the Linux hosted policy select exact mode `0755` while the
 shared staged-WVO policy retains `0600`; the reusable transaction admits only
 those two values and creates the private sibling in its final mode before
 atomic replacement. Native reconstruction of the Stage 0 host-package layout,
-paired Linux execution rerun, promotion, and grouped qualification remain.
+promotion, and grouped qualification remain. GitHub run
+[`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
+supplies the paired Windows/Debian execution evidence for this publisher.

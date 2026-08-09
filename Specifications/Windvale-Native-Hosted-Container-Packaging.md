@@ -109,4 +109,8 @@ Focused GitHub run
 [`31286313268`](https://github.com/eworker-inc/Windvale/actions/runs/31286313268)
 passes both cases on genuine Windows and Debian hosts. Artifact promotion,
 ordinary-path cutover, and the grouped dual-host retirement gate remain
-pending.
+pending. After Decision 0422 adds the exact atomic Linux executable-mode
+policy, run
+[`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
+passes both ordinary cases and both current-lowerer segmented cases on genuine
+Windows and Debian hosts.

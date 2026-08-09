@@ -1,6 +1,6 @@
 # Decision 0420: Multi-fragment current-lowerer reconstruction
 
-- Status: Implemented Windows reconstruction; Linux execution, paired promotion, and grouped qualification pending
+- Status: Implemented paired Windows/Debian reconstruction; promotion and grouped qualification pending
 - Date: 2026-08-08
 - Advances: [Decision 0418](0418-Segmented-Compiler-Hosted-Package-Composition.md), [Decision 0419](0419-Descriptor-Returning-Native-Main.md), and [Decision 0304](0304-Digest-Bound-Native-Wvb-To-Wvo-Candidate.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
@@ -48,13 +48,19 @@ SHA-256
 `9936663f45c194441bfc5e8464286e57f83cd3a18948597a8011af608a4faa51`
 and the exact retained 56,226-byte baseline-JIT bridge WVO at SHA-256
 `bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c`.
-The focused Windows smoke passes 2/2 in 89.7 seconds. No C# compiler or runtime
-implementation changed.
+The focused Windows smoke passes 2/2 in 89.7 seconds. After Decision 0422 makes
+Linux hosted publication atomically executable, GitHub run
+[`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
+passes the ordinary and segmented smokes 2/2 on both Windows and Debian. The
+exact Linux application is 5,791,744 bytes at SHA-256
+`a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e`
+and reproduces the same two WVOs. No C# compiler or runtime implementation
+changed.
 
-This closes current-lowerer native host-container reconstruction on Windows.
-The supporting segmented process containers and the paired current lowerer
-remain candidates: genuine Linux reconstruction/execution, artifact promotion,
-ordinary-launcher cutover, and the grouped Decision 0057 gate remain required.
+This closes current-lowerer native host-container reconstruction on both
+permanent hosts. The supporting segmented process containers and paired current
+lowerer remain candidates: artifact promotion, ordinary-launcher cutover, and
+the grouped Decision 0057 gate remain required.
 
 ## Reconsideration triggers
 

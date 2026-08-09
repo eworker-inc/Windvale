@@ -668,10 +668,11 @@ corrects the image-mode service-resource index exposed by the first real
 two-fragment consumer. Fixed and variable services now share the same
 fragment-relative geometry. The native source, staged-WVO, linked-image,
 canonical-transport, and hosted-container processes reconstruct the current
-409-function lowerer as the exact independently pinned Windows application;
-that native process reproduces the descriptor-entry and baseline-JIT bridge
-WVOs byte for byte. Linux reconstruction, paired promotion, ordinary-launcher
-cutover, and grouped qualification remain.
+409-function lowerer as exact independently pinned Windows and Linux
+applications; each native process reproduces the descriptor-entry and
+baseline-JIT bridge WVOs byte for byte. Paired Windows/Debian execution passes
+in GitHub run 31290136463. Promotion, ordinary-launcher cutover, and grouped
+qualification remain.
 
 [Decision 0422](../Decisions/0422-Atomic-Linux-Hosted-Executable-Mode.md)
 closes the native publication-mode defect exposed by the first genuine Debian
@@ -679,8 +680,8 @@ current-lowerer reconstruction. The reusable Linux transaction now admits an
 explicit final mode, with staged WVO data fixed at `0600` and hosted
 applications fixed at `0755`, and applies it to the private sibling before
 write, durability checks, and atomic replacement. No post-publication shell
-permission repair is part of the contract. The paired rerun and promotion
-remain pending.
+permission repair is part of the contract. The paired rerun passes in GitHub
+run 31290136463; promotion remains pending.
 
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale

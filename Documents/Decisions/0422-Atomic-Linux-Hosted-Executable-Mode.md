@@ -1,6 +1,6 @@
 # Decision 0422: Atomic Linux hosted executable mode
 
-- Status: Implemented candidate; paired Windows/Debian rerun pending
+- Status: Implemented with paired Windows/Debian evidence; promotion and grouped qualification pending
 - Date: 2026-08-08
 - Advances: [Decision 0420](0420-Multi-Fragment-Current-Lowerer-Reconstruction.md), [Decision 0414](0414-Native-Hosted-Wvb-Package-Composition.md), and [Decision 0390](0390-Linux-Durable-Multi-Chunk-Publication.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
@@ -55,8 +55,13 @@ The focused staged-publisher and hosted-segment-set tests pass locally. The
 ordinary and segmented Windows process smokes pass 2/2 each against the new
 inventory. GitHub run
 [`31289330407`](https://github.com/eworker-inc/Windvale/actions/runs/31289330407)
-records the Debian mode failure that selected this boundary. Its paired rerun,
-candidate promotion, ordinary-launcher cutover, Standard, Qualification, and
+records the Debian mode failure that selected this boundary. Successor run
+[`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
+passes both ordinary and segmented smokes 2/2 on Windows and Debian. Debian
+reconstructs and executes the exact 5,791,744-byte current lowerer at SHA-256
+`a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e`
+and reproduces the descriptor-entry and baseline-JIT bridge WVOs byte for byte.
+Candidate promotion, ordinary-launcher cutover, Standard, Qualification, and
 the grouped Decision 0057 gate remain pending.
 
 ## Reconsideration triggers

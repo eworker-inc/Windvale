@@ -4237,10 +4237,15 @@ descriptor-entry WVO at SHA-256
 `9936663f45c194441bfc5e8464286e57f83cd3a18948597a8011af608a4faa51`
 and the exact retained 56,226-byte baseline-JIT bridge WVO at SHA-256
 `bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c`.
-The permanent focused Windows smoke passes 2/2 in 89.7 seconds. No C# compiler
-or runtime implementation changes. Linux script syntax, genuine Linux
-reconstruction/execution, paired promotion, Standard, Qualification, and the
-grouped end gate remain separate.
+The permanent focused Windows smoke passes 2/2 in 89.7 seconds. Successor
+GitHub run
+[`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
+passes the ordinary and segmented smokes 2/2 on both Windows and Debian. The
+exact 5,791,744-byte Linux application at SHA-256
+`a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e`
+reproduces the same two retained WVOs. No C# compiler or runtime implementation
+changes. Paired promotion, Standard, Qualification, and the grouped end gate
+remain separate.
 
 ## Local atomic Linux hosted-mode evidence
 
@@ -4259,5 +4264,10 @@ the regenerated 5,426-byte inventory at SHA-256
 `9d60316098f3854cc286a03982b59cce80ced7cd7ab08e8ceef6dc6ecf58b040`.
 The Linux hosted publisher is 377,789 bytes at SHA-256
 `5d8eb97eff9c18e91f1dcb6d2060dd214530474ee046bc2e276e9c603262bd1b`.
-The paired rerun, Standard, Qualification, promotion, and grouped end gate
-remain separate.
+Successor GitHub run
+[`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
+passes the ordinary and segmented smokes 2/2 on both Windows and Debian. Debian
+requires both published ELFs to be executable, reconstructs the exact current
+lowerer application, executes it twice, and reproduces the descriptor-entry and
+baseline-JIT bridge WVOs byte for byte. Standard, Qualification, promotion, and
+the grouped end gate remain separate.

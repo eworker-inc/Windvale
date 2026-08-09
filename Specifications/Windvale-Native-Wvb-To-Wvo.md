@@ -67,7 +67,9 @@ SHA-256
 That native application reproduces both the descriptor-entry and baseline-JIT
 bridge WVOs byte for byte. The paired 5,791,744-byte Linux identity at SHA-256
 `a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e`
-remains an exact expected reconstruction pending genuine Linux execution.
+passes genuine Debian reconstruction and execution in GitHub run
+[`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
+and reproduces the same two retained WVOs.
 Ordinary consumers continue to use digest-bound retained WVOs until paired
 promotion replaces the older candidate applications.
 
