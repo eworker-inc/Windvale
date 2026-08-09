@@ -253,7 +253,7 @@ The current bytecode 1.11 golden modules are:
 - `Wvˉdumpˉcore`: `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`
 - `Wvoˉobjectˉcore`: `b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f`
 - `Wvaˉassemblerˉcore`: `1589f2750fa8fcf98ed1058814907f7e03eed0ac368467999118e25fb8195a7f`
-- `Wvˉlinkerˉcore`: `592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386`
+- `Wvˉlinkerˉcore`: `02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874`
 
 The canonical WVO 1.0 representative object is 189 bytes with SHA-256 `006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a`.
 

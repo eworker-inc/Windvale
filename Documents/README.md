@@ -67,7 +67,8 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native linker to UEFI packaging](Decisions/0437-Native-Linker-To-Uefi-Packaging.md) — real digest-bound flat-link output and entry evidence through a hosted Windvale EFI packager
 - [Retained native UEFI packager containers](Decisions/0438-Retained-Native-Uefi-Packager-Containers.md) — paired native-built PE/ELF tools, digest-bound launchers, and a permanent three-case native lane
 - [Native UEFI recovery-packaging cutover](Decisions/0439-Native-Uefi-Recovery-Packaging-Cutover.md) — real Probe 40 linked payload through the retained native packager, with managed object production/linking still explicit
-- [Probe 40 object-inventory boundary](Decisions/0440-Probe-40-Object-Inventory-Boundary.md) — fourteen verified WVO containers expose the next native-link transfer and its measured map-resource blocker
+- [Probe 40 object-inventory boundary](Decisions/0440-Probe-40-Object-Inventory-Boundary.md) — fourteen verified WVO containers expose the native-link transfer boundary
+- [Scale-safe native Wv-Linker relocation emission](Decisions/0441-Scale-Safe-Native-Wv-Linker-Relocation-Emission.md) — resolves the measured 128 MiB arena blocker without changing link bytes or maps
 - [Fixed native linker hostile-input corpus](Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) — 200 immutable bounded inputs through exact native `WVL1002` containment
 - [Fixed native console-container hostile-input corpus](Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) — 256 immutable bounded PE/ELF candidates through the native publisher with preservation and zero-scratch evidence
 - [Fixed native WVO differential corpus](Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) — 128 valid-shaped mutations and 128 arbitrary values agree with frozen Stage 0 acceptance through the native verifier

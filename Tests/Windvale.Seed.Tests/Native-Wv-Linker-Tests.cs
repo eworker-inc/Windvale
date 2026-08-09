@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
 using Windvale.Linker;
@@ -8,13 +9,13 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WV_LINKER_WVB_BYTES = 127_482;
-    private const int WINDOWS_WV_LINKER_APPLICATION_BYTES = 1_655_296;
+    private const int WV_LINKER_WVB_BYTES = 135_740;
+    private const int WINDOWS_WV_LINKER_APPLICATION_BYTES = 1_796_608;
     private const string WINDOWS_WV_LINKER_APPLICATION_SHA256 =
-        "ca88735061d7e36e79813346621a867a9293d04d3c01ffb0336f4ee32cbe316d";
-    private const int LINUX_WV_LINKER_APPLICATION_BYTES = 1_654_784;
+        "c42b75a033fc79c5a967330e83fc498704840d2cb45723471a8c752dadf0b6e3";
+    private const int LINUX_WV_LINKER_APPLICATION_BYTES = 1_798_144;
     private const string LINUX_WV_LINKER_APPLICATION_SHA256 =
-        "994f27f5a2449990b767c0ed8c8c367e2676d41d652ee9a61eab1de36de82dc2";
+        "4007b083e7c612e4b7bb9e77d35625fa564c17a077a7183f3f489456468bf4fb";
 
     private static void Nativeˉwvˉlinkerˉtargetsˉareˉdiscoverable()
     {
@@ -112,6 +113,8 @@ internal static partial class Program
             var Moduleˉpath = Path.Combine(Directoryˉpath, "Wv-Linker.wvb");
             var Mainˉpath = Path.Combine(Directoryˉpath, "Main.wvo");
             var Providerˉpath = Path.Combine(Directoryˉpath, "Provider.wvo");
+            var Maximumˉimageˉpath = Path.Combine(Directoryˉpath, "Maximum-Image.wvo");
+            var Relocationˉscaleˉpath = Path.Combine(Directoryˉpath, "Relocation-Scale.wvo");
             var Invalidˉpath = Path.Combine(Directoryˉpath, "Invalid.wvo");
             var Outputˉpath = Path.Combine(Directoryˉpath, "Application.bin");
             File.WriteAllBytes(Moduleˉpath, Linkerˉbytes);
@@ -119,6 +122,51 @@ internal static partial class Program
             var Providerˉbytes = Assembleˉsuccess(CONSOLE_PROVIDER_ASSEMBLY_SOURCE);
             File.WriteAllBytes(Mainˉpath, Mainˉbytes);
             File.WriteAllBytes(Providerˉpath, Providerˉbytes);
+            var Maximumˉimageˉbytes = Objectˉcodec.Write(new Objectˉfile(
+                Objectˉarchitecture.X86ˉ64,
+                [
+                    new(".text", Objectˉsectionˉkind.Code, 1, 1, [0xC3]),
+                    new(
+                        ".bss",
+                        Objectˉsectionˉkind.Zeroˉfill,
+                        1,
+                        Linkˉlimits.MAX_IMAGE_BYTES - 1,
+                        []),
+                ],
+                [new(
+                    "Main",
+                    Objectˉsymbolˉbinding.Export,
+                    Objectˉsymbolˉkind.Function,
+                    0,
+                    0,
+                    1)],
+                []));
+            File.WriteAllBytes(Maximumˉimageˉpath, Maximumˉimageˉbytes);
+            const int RELOCATION_SCALE_IMAGE_BYTES = 681_913;
+            const int RELOCATION_SCALE_COUNT = 498;
+            var Relocationˉscaleˉbytes = Objectˉcodec.Write(new Objectˉfile(
+                Objectˉarchitecture.X86ˉ64,
+                [new(
+                    ".text",
+                    Objectˉsectionˉkind.Code,
+                    1,
+                    RELOCATION_SCALE_IMAGE_BYTES,
+                    ImmutableArray.Create(new byte[RELOCATION_SCALE_IMAGE_BYTES]))],
+                [new(
+                    "Main",
+                    Objectˉsymbolˉbinding.Export,
+                    Objectˉsymbolˉkind.Function,
+                    0,
+                    0,
+                    1)],
+                [.. Enumerable.Range(0, RELOCATION_SCALE_COUNT).Select(Index =>
+                    new Objectˉrelocation(
+                        Objectˉrelocationˉkind.Absoluteˉu32,
+                        0,
+                        checked((uint)(Index * 4)),
+                        0,
+                        0))]));
+            File.WriteAllBytes(Relocationˉscaleˉpath, Relocationˉscaleˉbytes);
             File.WriteAllBytes(Invalidˉpath, [0]);
 
             var Oracle = Linkˉsuccess(
@@ -153,6 +201,30 @@ internal static partial class Program
                 Mainˉpath,
                 Providerˉpath,
             };
+            var Maximumˉimageˉoracle = Linkˉsuccess(
+                [Maximumˉimageˉbytes],
+                new(0, "Main"));
+            var Maximumˉimageˉarguments = new[]
+            {
+                "0",
+                "Main",
+                Outputˉpath,
+                Maximumˉimageˉpath,
+            };
+            var Maximumˉimageˉmap =
+                System.Text.Encoding.UTF8.GetString(Maximumˉimageˉoracle.Mapˉbytes.AsSpan());
+            var Relocationˉscaleˉoracle = Linkˉsuccess(
+                [Relocationˉscaleˉbytes],
+                new(0, "Main"));
+            var Relocationˉscaleˉarguments = new[]
+            {
+                "0",
+                "Main",
+                Outputˉpath,
+                Relocationˉscaleˉpath,
+            };
+            var Relocationˉscaleˉmap =
+                System.Text.Encoding.UTF8.GetString(Relocationˉscaleˉoracle.Mapˉbytes.AsSpan());
             const string Invalidˉdiagnostic =
                 "link status=WVL1002 inputs=1 sections=0 symbols=0 relocations=0 " +
                 "image-bytes=0 entry-address=0 input=0\n";
@@ -171,6 +243,20 @@ internal static partial class Program
                     Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
                     Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
                 Sequenceˉequal(Oracle.Imageˉbytes, File.ReadAllBytes(Outputˉpath));
+                Equal(0, Executeˉwindowsˉapplication(
+                    Windows.Imageˉbytes,
+                    Maximumˉimageˉmap,
+                    Maximumˉimageˉarguments,
+                    timeoutˉmilliseconds: 30_000));
+                Equal(
+                    Objectˉdigest.Calculateˉsha256(Maximumˉimageˉoracle.Imageˉbytes.AsSpan()),
+                    Objectˉdigest.Calculateˉsha256(File.ReadAllBytes(Outputˉpath)));
+                Equal(0, Executeˉwindowsˉapplication(
+                    Windows.Imageˉbytes,
+                    Relocationˉscaleˉmap,
+                    Relocationˉscaleˉarguments,
+                    timeoutˉmilliseconds: 30_000));
+                Sequenceˉequal(Relocationˉscaleˉoracle.Imageˉbytes, File.ReadAllBytes(Outputˉpath));
                 File.WriteAllBytes(Outputˉpath, Existingˉoutput);
                 Equal(2, Executeˉwindowsˉapplication(
                     Windows.Imageˉbytes,
@@ -198,6 +284,20 @@ internal static partial class Program
                     Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
                     Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
                 Sequenceˉequal(Oracle.Imageˉbytes, File.ReadAllBytes(Outputˉpath));
+                Equal(0, Executeˉlinuxˉapplication(
+                    Linux.Imageˉbytes,
+                    Maximumˉimageˉmap,
+                    Maximumˉimageˉarguments,
+                    timeoutˉmilliseconds: 30_000));
+                Equal(
+                    Objectˉdigest.Calculateˉsha256(Maximumˉimageˉoracle.Imageˉbytes.AsSpan()),
+                    Objectˉdigest.Calculateˉsha256(File.ReadAllBytes(Outputˉpath)));
+                Equal(0, Executeˉlinuxˉapplication(
+                    Linux.Imageˉbytes,
+                    Relocationˉscaleˉmap,
+                    Relocationˉscaleˉarguments,
+                    timeoutˉmilliseconds: 30_000));
+                Sequenceˉequal(Relocationˉscaleˉoracle.Imageˉbytes, File.ReadAllBytes(Outputˉpath));
                 File.WriteAllBytes(Outputˉpath, Existingˉoutput);
                 Equal(2, Executeˉlinuxˉapplication(
                     Linux.Imageˉbytes,

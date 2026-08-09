@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Windvale.Compiler;
 using Windvale.Linker;
 using Windvale.ObjectModel;
 
@@ -41,7 +42,7 @@ public static partial class Firmwareˉprobe
                 } ||
             Nativeˉbridge.Symbols[2] is not
                 {
-                    Name: KERNEL_ENTRY_SYMBOL,
+                    Name: X64ˉkernelˉcontract.KERNEL_MAIN_SYMBOL,
                     Binding: Objectˉsymbolˉbinding.Import,
                 } ||
             Support.Symbols[0] is not

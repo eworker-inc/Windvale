@@ -140,9 +140,11 @@ native object production/linking, the other four scenarios, Linux execution,
 and promotion remain.
 [Decision 0440](../Decisions/0440-Probe-40-Object-Inventory-Boundary.md)
 exposes fifteen logical components as fourteen ordered WVO containers and
-proves their managed differential link remains byte-identical. The retained
-native linker now admits the real case but exits through its narrow v1 runtime
-resource mapping before publication; improving that one linker is the next transfer.
+proves their managed differential link remains byte-identical.
+[Decision 0441](../Decisions/0441-Scale-Safe-Native-Wv-Linker-Relocation-Emission.md)
+isolates the retained linker's 128 MiB arena failure and makes the current
+Windows candidate reproduce the exact image without enlarging that arena.
+Independent Linux execution and recovery-command cutover are the next transfer.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

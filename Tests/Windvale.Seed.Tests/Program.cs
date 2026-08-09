@@ -29,7 +29,7 @@ internal static partial class Program
     private const string WVO_CORE_SHA256 = "b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c";
-    private const string WVLINK_CORE_SHA256 = "592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386";
+    private const string WVLINK_CORE_SHA256 = "02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874";
     private const string LINK_IMAGE_SHA256 = "0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a";
     private const string LINK_MAP_SHA256 = "31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4";
     private const string NATIVE_CONSTANT_CODE_SHA256 = "7c05565142850adab1d63d999479977a23ef50c7264c03ee55ce5b323df26408";
@@ -4296,6 +4296,8 @@ internal static partial class Program
             }
             using var Process = System.Diagnostics.Process.Start(Startˉinfo) ??
                 throw new InvalidOperationException("Windows did not start the generated application.");
+            var Standardˉoutputˉtask = Process.StandardOutput.ReadToEndAsync();
+            var Standardˉerrorˉtask = Process.StandardError.ReadToEndAsync();
             if (loadedˉmodules is null)
             {
                 if (!Process.WaitForExit(timeoutˉmilliseconds))
@@ -4339,8 +4341,8 @@ internal static partial class Program
                     }
                 }
             }
-            var Standardˉoutput = Process.StandardOutput.ReadToEnd();
-            var Standardˉerror = Process.StandardError.ReadToEnd();
+            var Standardˉoutput = Standardˉoutputˉtask.GetAwaiter().GetResult();
+            var Standardˉerror = Standardˉerrorˉtask.GetAwaiter().GetResult();
             if (expectedˉoutput is not null)
             {
                 True(
@@ -5697,6 +5699,8 @@ internal static partial class Program
             }
             using var Process = System.Diagnostics.Process.Start(Startˉinfo) ??
                 throw new InvalidOperationException("Linux did not start the generated application.");
+            var Standardˉoutputˉtask = Process.StandardOutput.ReadToEndAsync();
+            var Standardˉerrorˉtask = Process.StandardError.ReadToEndAsync();
             if (loadedˉmappings is null)
             {
                 if (!Process.WaitForExit(timeoutˉmilliseconds))
@@ -5744,8 +5748,8 @@ internal static partial class Program
                     }
                 }
             }
-            var Standardˉoutput = Process.StandardOutput.ReadToEnd();
-            var Standardˉerror = Process.StandardError.ReadToEnd();
+            var Standardˉoutput = Standardˉoutputˉtask.GetAwaiter().GetResult();
+            var Standardˉerror = Standardˉerrorˉtask.GetAwaiter().GetResult();
             if (expectedˉoutput is not null)
             {
                 True(
@@ -21747,36 +21751,6 @@ internal static partial class Program
             Complete.Output);
         Equal(1, Complete.Writeˉcount);
         Sequenceˉequal(Completeˉoracle.Imageˉbytes, Complete.Writtenˉbytes);
-
-        var Maximumˉimageˉobject = Objectˉcodec.Write(new Objectˉfile(
-            Objectˉarchitecture.X86ˉ64,
-            [
-                new(".text", Objectˉsectionˉkind.Code, 1, 1, [0xC3]),
-                new(".bss", Objectˉsectionˉkind.Zeroˉfill, 1, Linkˉlimits.MAX_IMAGE_BYTES - 1, []),
-            ],
-            [new("Main", Objectˉsymbolˉbinding.Export, Objectˉsymbolˉkind.Function, 0, 0, 1)],
-            [])).ToImmutableArray();
-        var Maximumˉimageˉoracle = Linkˉsuccess(
-            [Maximumˉimageˉobject.ToArray()],
-            new(0, "Main"));
-        var Maximumˉimage = Runˉwvˉlinkerˉanalysisˉwithˉlimit(
-            Module,
-            "0",
-            "Main",
-            200_000_000,
-            Maximumˉimageˉobject);
-        Equal(0, Maximumˉimage.Exitˉcode);
-        Equal(
-            System.Text.Encoding.UTF8.GetString(Maximumˉimageˉoracle.Mapˉbytes.AsSpan()),
-            Maximumˉimage.Output);
-        Equal(1, Maximumˉimage.Readˉcount);
-        Equal(1, Maximumˉimage.Writeˉcount);
-        Equal(
-            Objectˉdigest.Calculateˉsha256(Maximumˉimageˉoracle.Imageˉbytes.AsSpan()),
-            Objectˉdigest.Calculateˉsha256(Maximumˉimage.Writtenˉbytes.AsSpan()));
-        True(
-            Maximumˉimage.Executedˉinstructions < 200_000_000,
-            "The maximum-image verifier exhausted its explicit instruction budget.");
 
         var Mapˉlimitˉlocals = Enumerable.Range(0, Objectˉlimits.MAX_SYMBOLS)
             .Select(Index => new Objectˉsymbol(

@@ -1,7 +1,7 @@
 {
   "format": "windvale-native-wv-linker-candidate-1",
   "status": "candidate",
-  "sourceDecision": "0221",
+  "sourceDecision": "0441",
   "provenanceDecision": "0302",
   "qualification": "pending",
   "artifacts": [
@@ -9,24 +9,24 @@
       "name": "wv-linker-wvb",
       "path": "Wv-Linker.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 127482,
-      "sha256": "592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386",
+      "bytes": 135740,
+      "sha256": "02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874",
       "sourceProject": "Windvale-Wv-Linker.wvproj"
     },
     {
       "name": "windows-x64-wv-linker",
       "path": "Wv-Linker.exe",
       "target": "windows-x64-wv-linker-v1",
-      "bytes": 1655296,
-      "sha256": "ca88735061d7e36e79813346621a867a9293d04d3c01ffb0336f4ee32cbe316d",
+      "bytes": 1796608,
+      "sha256": "c42b75a033fc79c5a967330e83fc498704840d2cb45723471a8c752dadf0b6e3",
       "sourceWvb": "Wv-Linker.wvb"
     },
     {
       "name": "linux-x64-wv-linker",
       "path": "Wv-Linker.elf",
       "target": "linux-x64-wv-linker-v1",
-      "bytes": 1654784,
-      "sha256": "994f27f5a2449990b767c0ed8c8c367e2676d41d652ee9a61eab1de36de82dc2",
+      "bytes": 1798144,
+      "sha256": "4007b083e7c612e4b7bb9e77d35625fa564c17a077a7183f3f489456468bf4fb",
       "sourceWvb": "Wv-Linker.wvb"
     }
   ]

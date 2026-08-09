@@ -50,11 +50,11 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Linker WVB | 127,482 | `592467003974dab240e1f90b5a647d360cfd4cc6d7186bfdedbcc3ba8788f386` |
-| Windows linker | 1,655,296 | `ca88735061d7e36e79813346621a867a9293d04d3c01ffb0336f4ee32cbe316d` |
-| Linux linker | 1,654,784 | `994f27f5a2449990b767c0ed8c8c367e2676d41d652ee9a61eab1de36de82dc2` |
+| Linker WVB | 135,740 | `02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874` |
+| Windows linker | 1,796,608 | `c42b75a033fc79c5a967330e83fc498704840d2cb45723471a8c752dadf0b6e3` |
+| Linux linker | 1,798,144 | `4007b083e7c612e4b7bb9e77d35625fa564c17a077a7183f3f489456468bf4fb` |
 
-The focused candidate test reconstructs both containers, checks exact capabilities and services, exercises the public AOT target, and runs the current-host raw application. Canonical two-object input must reproduce the complete Stage 0 image and map byte for byte, including signed addend output and all Windvale-computed SHA-256 values. Invalid WVO must preserve existing output. Current-host module or mapping inspection must find no CLR/.NET runtime.
+The focused candidate test reconstructs both containers, checks exact capabilities and services, exercises the public AOT target, and runs the current-host raw application. Canonical two-object input must reproduce the complete Stage 0 image and map byte for byte, including signed addend output and all Windvale-computed SHA-256 values. The same raw native application must accept the exact 4 MiB image boundary. Invalid WVO must preserve existing output. Current-host module or mapping inspection must find no CLR/.NET runtime.
 
 ## Fixed native rejection contract
 
@@ -144,14 +144,15 @@ Success prints `PASS  canonical-map-limit` followed by
 
 Decision 0440 supplies fourteen ordered standard-profile WVO inputs whose
 managed differential result is a 681,913-byte image and a 663-line,
-129,387-byte canonical map. The current retained v1 Windows container admits
-the argument and object envelopes but exits through its generic native resource
-mapping before publication; the failing internal phase is not yet isolated.
-This is a candidate implementation-capacity gap,
-not a change to WVO, layout, relocation, map, or diagnostic semantics. The
-ordinary native linker is not qualified for this case until the same source
-preserves the complete canonical map within its bounded runtime on Windows and
-Linux.
+129,387-byte canonical map. Decision 0441 isolates the old Windows failure as
+exhaustion of the native runtime's 134,217,728-byte text/dynamic arena: 498
+relocations caused the production and verifier paths to retain complete image
+generations. The scale-safe candidate validates the established traversal
+orders, emits patches in strictly ascending canonical placement order, and
+reproduces the exact image at SHA-256
+`76aa64cc03c8b86dfe96f83d761be40e8128b988a182fd971004a287a5990af0`
+in 4.3 seconds on the current Windows host. This is current-host candidate
+evidence, not Windows/Linux qualification or ordinary-path promotion.
 
 ## Qualification gate
 

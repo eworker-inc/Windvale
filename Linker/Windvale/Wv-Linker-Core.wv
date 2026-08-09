@@ -15,6 +15,24 @@ capability process.argument_count;
 
 data Emptyˉbytes: bytes = [];
 data Unitˉbyte: bytes = [0];
+data Byteˉvalues: bytes = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+    48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+    64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+    80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+    96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+    112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+    128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+    144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
+    160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+    176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
+    192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
+    208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
+    224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
+    240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
+];
 data Sampleˉobject: bytes = [
     87, 86, 79, 49, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0,
     3, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 16, 0, 0, 0,
@@ -1446,11 +1464,15 @@ fn Applyˉrelocations(
     Baseˉaddress: u32,
     Initial: Imageˉresult
 ) -> Imageˉresult {
-    var Image: bytes = Initial.Value;
+    // Preserve source-order failure selection before constructing immutable output.
     var Inputˉindex: u32 = 0u32;
+    var Hasˉrelocations: bool = false;
     while Inputˉindex < Inputˉcount {
         let Input: bytes = Readˉlinkˉinput(Inputˉindex);
         let Scan: Wvoˉscan = Acceptedˉobjectˉview(Input);
+        if Scan.Relocationˉcount > 0u32 {
+            Hasˉrelocations = true;
+        }
         var Relocationˉindex: u32 = 0u32;
         while Relocationˉindex < Scan.Relocationˉcount {
             let Relocation: Wvoˉrelocationˉview = Findˉrelocation(
@@ -1480,7 +1502,6 @@ fn Applyˉrelocations(
             if Target.Status != Linkˉstatus.Valid {
                 return Imageˉwithˉstatus(Target.Status, Inputˉindex, Initial, Emptyˉbytes);
             }
-            let Patchˉoffset: u32 = Placement.Imageˉoffset + Relocation.Offset;
             let Patchˉaddress: u32 = Placement.Address + Relocation.Offset;
             var Value: Relocationˉvalue = Relocationˉvalue(Linkˉstatus.Valid, 0u32);
             if Relocation.Kind == 1u32 {
@@ -1495,10 +1516,170 @@ fn Applyˉrelocations(
             if Value.Status != Linkˉstatus.Valid {
                 return Imageˉwithˉstatus(Value.Status, Inputˉindex, Initial, Emptyˉbytes);
             }
-            Image = Patchˉu32(Image, Patchˉoffset, Value.Bits);
             Relocationˉindex = Relocationˉindex + 1u32;
         }
         Inputˉindex = Inputˉindex + 1u32;
+    }
+    if !Hasˉrelocations {
+        return Initial;
+    }
+
+    // Walk final section order so every patch offset is ascending. Appending
+    // borrowed source spans and borrowed one-byte table entries lets the native
+    // backend grow one owned result instead of retaining one full image per patch.
+    var Image: bytes = Emptyˉbytes;
+    var Imageˉcursor: u32 = 0u32;
+    var Layoutˉcursor: u32 = 0u32;
+    var Kind: u32 = 1u32;
+    while Kind <= 4u32 {
+        Inputˉindex = 0u32;
+        while Inputˉindex < Inputˉcount {
+            let Emissionˉinput: bytes = Readˉlinkˉinput(Inputˉindex);
+            let Emissionˉscan: Wvoˉscan = Acceptedˉobjectˉview(Emissionˉinput);
+            var Sectionˉcursor: u32 = 24u32;
+            var Sectionˉindex: u32 = 0u32;
+            while Sectionˉindex < Emissionˉscan.Sectionˉcount {
+                let Section: Wvoˉsectionˉview = Readˉsection(Emissionˉinput, Sectionˉcursor);
+                if Section.Kind == Kind {
+                    let Emissionˉplacement: Layoutˉstep = Placeˉsection(
+                        Baseˉaddress,
+                        Layoutˉcursor,
+                        Section
+                    );
+                    if Emissionˉplacement.Status != Linkˉstatus.Valid {
+                        return Imageˉwithˉstatus(
+                            Linkˉstatus.WVL1011,
+                            Inputˉindex,
+                            Initial,
+                            Emptyˉbytes
+                        );
+                    }
+                    var Emissionˉrelocationˉindex: u32 = 0u32;
+                    while Emissionˉrelocationˉindex < Emissionˉscan.Relocationˉcount {
+                        let Emissionˉrelocation: Wvoˉrelocationˉview = Findˉrelocation(
+                            Emissionˉinput,
+                            Emissionˉscan,
+                            Emissionˉrelocationˉindex
+                        );
+                        if Emissionˉrelocation.Sectionˉindex == Sectionˉindex {
+                            let Emissionˉsourceˉsymbol: Wvoˉsymbolˉview = Findˉsymbol(
+                                Emissionˉinput,
+                                Emissionˉscan,
+                                Emissionˉrelocation.Symbolˉindex
+                            );
+                            let Emissionˉtarget: Addressˉresult = Relocationˉtargetˉaddress(
+                                Inputˉcount,
+                                Baseˉaddress,
+                                Inputˉindex,
+                                Emissionˉrelocation.Symbolˉindex,
+                                Emissionˉsourceˉsymbol,
+                                Emissionˉinput
+                            );
+                            if Emissionˉtarget.Status != Linkˉstatus.Valid {
+                                return Imageˉwithˉstatus(
+                                    Linkˉstatus.WVL1011,
+                                    Inputˉindex,
+                                    Initial,
+                                    Emptyˉbytes
+                                );
+                            }
+                            let Emissionˉpatchˉoffset: u32 =
+                                Emissionˉplacement.Imageˉoffset + Emissionˉrelocation.Offset;
+                            let Emissionˉpatchˉaddress: u32 =
+                                Emissionˉplacement.Address + Emissionˉrelocation.Offset;
+                            var Emissionˉvalue: Relocationˉvalue = Relocationˉvalue(
+                                Linkˉstatus.Valid,
+                                0u32
+                            );
+                            if Emissionˉrelocation.Kind == 1u32 {
+                                Emissionˉvalue = Absoluteˉrelocationˉvalue(
+                                    Emissionˉtarget.Address,
+                                    Emissionˉrelocation.Addend
+                                );
+                            } else {
+                                Emissionˉvalue = Relativeˉrelocationˉvalue(
+                                    Emissionˉtarget.Address,
+                                    Emissionˉpatchˉaddress,
+                                    Emissionˉrelocation.Addend
+                                );
+                            }
+                            if Emissionˉvalue.Status != Linkˉstatus.Valid ||
+                                Emissionˉpatchˉoffset < Imageˉcursor {
+                                return Imageˉwithˉstatus(
+                                    Linkˉstatus.WVL1011,
+                                    Inputˉindex,
+                                    Initial,
+                                    Emptyˉbytes
+                                );
+                            }
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(
+                                    Initial.Value,
+                                    Imageˉcursor,
+                                    Emissionˉpatchˉoffset - Imageˉcursor
+                                )
+                            );
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(Byteˉvalues, Emissionˉvalue.Bits & 255u32, 1u32)
+                            );
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(
+                                    Byteˉvalues,
+                                    (Emissionˉvalue.Bits >> 8u32) & 255u32,
+                                    1u32
+                                )
+                            );
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(
+                                    Byteˉvalues,
+                                    (Emissionˉvalue.Bits >> 16u32) & 255u32,
+                                    1u32
+                                )
+                            );
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(Byteˉvalues, Emissionˉvalue.Bits >> 24u32, 1u32)
+                            );
+                            Imageˉcursor = Emissionˉpatchˉoffset + 4u32;
+                        }
+                        Emissionˉrelocationˉindex = Emissionˉrelocationˉindex + 1u32;
+                    }
+                    Layoutˉcursor = Emissionˉplacement.Imageˉsize;
+                }
+                Sectionˉcursor = Section.Cursor;
+                Sectionˉindex = Sectionˉindex + 1u32;
+            }
+            Inputˉindex = Inputˉindex + 1u32;
+        }
+        Kind = Kind + 1u32;
+    }
+    if Imageˉcursor > Initial.Imageˉsize {
+        return Imageˉwithˉstatus(
+            Linkˉstatus.WVL1011,
+            4294967295u32,
+            Initial,
+            Emptyˉbytes
+        );
+    }
+    Image = Bytesˉconcat(
+        Image,
+        Bytesˉslice(
+            Initial.Value,
+            Imageˉcursor,
+            Initial.Imageˉsize - Imageˉcursor
+        )
+    );
+    if Bytesˉlength(Image) != Initial.Imageˉsize {
+        return Imageˉwithˉstatus(
+            Linkˉstatus.WVL1011,
+            4294967295u32,
+            Initial,
+            Emptyˉbytes
+        );
     }
     return Imageˉwithˉstatus(Linkˉstatus.Valid, 4294967295u32, Initial, Image);
 }
@@ -1841,12 +2022,16 @@ fn Verifierˉapplyˉrelocationsˉreverse(
     Baseˉaddress: u32,
     Initial: Imageˉresult
 ) -> Imageˉresult {
-    var Image: bytes = Initial.Value;
+    // Keep the independent reverse-order validation pass as verifier evidence.
     var Remainingˉinputs: u32 = Inputˉcount;
+    var Hasˉrelocations: bool = false;
     while Remainingˉinputs > 0u32 {
         let Inputˉindex: u32 = Remainingˉinputs - 1u32;
         let Input: bytes = Readˉlinkˉinput(Inputˉindex);
         let Scan: Wvoˉscan = Acceptedˉobjectˉview(Input);
+        if Scan.Relocationˉcount > 0u32 {
+            Hasˉrelocations = true;
+        }
         var Remainingˉrelocations: u32 = Scan.Relocationˉcount;
         while Remainingˉrelocations > 0u32 {
             let Relocationˉindex: u32 = Remainingˉrelocations - 1u32;
@@ -1894,14 +2079,186 @@ fn Verifierˉapplyˉrelocationsˉreverse(
             if Value.Status != Linkˉstatus.Valid {
                 return Imageˉwithˉstatus(Linkˉstatus.WVL1011, Inputˉindex, Initial, Emptyˉbytes);
             }
-            Image = Patchˉu32(
-                Image,
-                Placement.Imageˉoffset + Relocation.Offset,
-                Value.Bits
-            );
             Remainingˉrelocations = Relocationˉindex;
         }
         Remainingˉinputs = Inputˉindex;
+    }
+    if !Hasˉrelocations {
+        return Initial;
+    }
+
+    // Reconstruct the verified image in ascending placement order. The value
+    // calculations remain verifier-owned; only the immutable emission order is
+    // changed so the native arena holds one growing image rather than one image
+    // generation for every relocation.
+    var Image: bytes = Emptyˉbytes;
+    var Imageˉcursor: u32 = 0u32;
+    var Layoutˉcursor: u32 = 0u32;
+    var Kind: u32 = 1u32;
+    while Kind <= 4u32 {
+        var Reconstructionˉinputˉindex: u32 = 0u32;
+        while Reconstructionˉinputˉindex < Inputˉcount {
+            let Reconstructionˉinput: bytes = Readˉlinkˉinput(Reconstructionˉinputˉindex);
+            let Reconstructionˉscan: Wvoˉscan =
+                Acceptedˉobjectˉview(Reconstructionˉinput);
+            var Sectionˉcursor: u32 = 24u32;
+            var Sectionˉindex: u32 = 0u32;
+            while Sectionˉindex < Reconstructionˉscan.Sectionˉcount {
+                let Section: Wvoˉsectionˉview =
+                    Readˉsection(Reconstructionˉinput, Sectionˉcursor);
+                if Section.Kind == Kind {
+                    let Reconstructionˉplacement: Layoutˉstep = Verifierˉplaceˉsection(
+                        Baseˉaddress,
+                        Layoutˉcursor,
+                        Section
+                    );
+                    if Reconstructionˉplacement.Status != Linkˉstatus.Valid {
+                        return Imageˉwithˉstatus(
+                            Linkˉstatus.WVL1011,
+                            Reconstructionˉinputˉindex,
+                            Initial,
+                            Emptyˉbytes
+                        );
+                    }
+                    var Reconstructionˉrelocationˉindex: u32 = 0u32;
+                    while Reconstructionˉrelocationˉindex <
+                        Reconstructionˉscan.Relocationˉcount {
+                        let Reconstructionˉrelocation: Wvoˉrelocationˉview = Findˉrelocation(
+                            Reconstructionˉinput,
+                            Reconstructionˉscan,
+                            Reconstructionˉrelocationˉindex
+                        );
+                        if Reconstructionˉrelocation.Sectionˉindex == Sectionˉindex {
+                            let Reconstructionˉsourceˉsymbol: Wvoˉsymbolˉview = Findˉsymbol(
+                                Reconstructionˉinput,
+                                Reconstructionˉscan,
+                                Reconstructionˉrelocation.Symbolˉindex
+                            );
+                            let Reconstructionˉtarget: Addressˉresult =
+                                Verifierˉrelocationˉtarget(
+                                Inputˉcount,
+                                Baseˉaddress,
+                                Reconstructionˉinputˉindex,
+                                Reconstructionˉrelocation.Symbolˉindex,
+                                Reconstructionˉsourceˉsymbol,
+                                Reconstructionˉinput
+                            );
+                            if Reconstructionˉtarget.Status != Linkˉstatus.Valid {
+                                return Imageˉwithˉstatus(
+                                    Linkˉstatus.WVL1011,
+                                    Reconstructionˉinputˉindex,
+                                    Initial,
+                                    Emptyˉbytes
+                                );
+                            }
+                            let Reconstructionˉpatchˉoffset: u32 =
+                                Reconstructionˉplacement.Imageˉoffset +
+                                Reconstructionˉrelocation.Offset;
+                            let Reconstructionˉpatchˉaddress: u32 =
+                                Reconstructionˉplacement.Address +
+                                Reconstructionˉrelocation.Offset;
+                            var Reconstructionˉvalue: Relocationˉvalue = Relocationˉvalue(
+                                Linkˉstatus.Valid,
+                                0u32
+                            );
+                            if Reconstructionˉrelocation.Kind == 1u32 {
+                                Reconstructionˉvalue = Verifierˉabsoluteˉvalue(
+                                    Reconstructionˉtarget.Address,
+                                    Reconstructionˉrelocation.Addend
+                                );
+                            } else {
+                                Reconstructionˉvalue = Verifierˉrelativeˉvalue(
+                                    Reconstructionˉtarget.Address,
+                                    Reconstructionˉpatchˉaddress,
+                                    Reconstructionˉrelocation.Addend
+                                );
+                            }
+                            if Reconstructionˉvalue.Status != Linkˉstatus.Valid ||
+                                Reconstructionˉpatchˉoffset < Imageˉcursor {
+                                return Imageˉwithˉstatus(
+                                    Linkˉstatus.WVL1011,
+                                    Reconstructionˉinputˉindex,
+                                    Initial,
+                                    Emptyˉbytes
+                                );
+                            }
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(
+                                    Initial.Value,
+                                    Imageˉcursor,
+                                    Reconstructionˉpatchˉoffset - Imageˉcursor
+                                )
+                            );
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(
+                                    Byteˉvalues,
+                                    Reconstructionˉvalue.Bits & 255u32,
+                                    1u32
+                                )
+                            );
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(
+                                    Byteˉvalues,
+                                    (Reconstructionˉvalue.Bits >> 8u32) & 255u32,
+                                    1u32
+                                )
+                            );
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(
+                                    Byteˉvalues,
+                                    (Reconstructionˉvalue.Bits >> 16u32) & 255u32,
+                                    1u32
+                                )
+                            );
+                            Image = Bytesˉconcat(
+                                Image,
+                                Bytesˉslice(
+                                    Byteˉvalues,
+                                    Reconstructionˉvalue.Bits >> 24u32,
+                                    1u32
+                                )
+                            );
+                            Imageˉcursor = Reconstructionˉpatchˉoffset + 4u32;
+                        }
+                        Reconstructionˉrelocationˉindex =
+                            Reconstructionˉrelocationˉindex + 1u32;
+                    }
+                    Layoutˉcursor = Reconstructionˉplacement.Imageˉsize;
+                }
+                Sectionˉcursor = Section.Cursor;
+                Sectionˉindex = Sectionˉindex + 1u32;
+            }
+            Reconstructionˉinputˉindex = Reconstructionˉinputˉindex + 1u32;
+        }
+        Kind = Kind + 1u32;
+    }
+    if Imageˉcursor > Initial.Imageˉsize {
+        return Imageˉwithˉstatus(
+            Linkˉstatus.WVL1011,
+            4294967295u32,
+            Initial,
+            Emptyˉbytes
+        );
+    }
+    Image = Bytesˉconcat(
+        Image,
+        Bytesˉslice(
+            Initial.Value,
+            Imageˉcursor,
+            Initial.Imageˉsize - Imageˉcursor
+        )
+    );
+    if Bytesˉlength(Image) != Initial.Imageˉsize {
+        return Imageˉwithˉstatus(
+            Linkˉstatus.WVL1011,
+            4294967295u32,
+            Initial,
+            Emptyˉbytes
+        );
     }
     return Imageˉwithˉstatus(Linkˉstatus.Valid, 4294967295u32, Initial, Image);
 }

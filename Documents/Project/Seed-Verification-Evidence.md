@@ -4564,3 +4564,28 @@ generic native resource mapping before publication. Rebuilding its Windows
 container through both available routes reproduces the retained 1,655,296-byte
 artifact exactly, so stale packaging is excluded. No recovery rerun, QEMU, OS
 suite, Seed suite, or broad gate followed this focused measurement.
+
+## Local scale-safe native WVO linker evidence
+
+[Decision 0441](../Decisions/0441-Scale-Safe-Native-Wv-Linker-Relocation-Emission.md)
+identifies the preceding generic failure exactly: repeated complete-image
+relocation generations exhausted the native runtime's 134,217,728-byte
+text/dynamic arena. The linker now preserves its production and verifier
+validation orders, then emits immutable patch spans in ascending canonical
+placement order through one growing owned result.
+
+The current candidate is a 135,740-byte WVB at SHA-256
+`02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874`,
+a 1,796,608-byte Windows application at SHA-256
+`c42b75a033fc79c5a967330e83fc498704840d2cb45723471a8c752dadf0b6e3`,
+and a 1,798,144-byte Linux application at SHA-256
+`4007b083e7c612e4b7bb9e77d35625fa564c17a077a7183f3f489456468bf4fb`.
+The focused source/map contract and current-host native package contract each
+pass 1/1. The native package contract also owns the exact 4 MiB image boundary.
+
+The regenerated Windows candidate consumes the fourteen exact Probe 40 WVOs,
+returns `0` in 4.3 seconds, and publishes the established 681,913-byte image at
+SHA-256
+`76aa64cc03c8b86dfe96f83d761be40e8128b988a182fd971004a287a5990af0`.
+No broad Seed, OS, QEMU, Qualification, or Linux execution gate ran; ordinary
+recovery linking therefore remains managed pending the dual-host gate.

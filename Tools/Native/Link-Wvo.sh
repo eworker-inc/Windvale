@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Wv-Linker-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '994f27f5a2449990b767c0ed8c8c367e2676d41d652ee9a61eab1de36de82dc2' \
+    '4007b083e7c612e4b7bb9e77d35625fa564c17a077a7183f3f489456468bf4fb' \
     'Wv-Linker.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native WVO linker artifact digest is invalid.' >&2
     exit 1
