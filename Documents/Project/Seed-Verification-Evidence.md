@@ -4271,3 +4271,28 @@ requires both published ELFs to be executable, reconstructs the exact current
 lowerer application, executes it twice, and reproduces the descriptor-entry and
 baseline-JIT bridge WVOs byte for byte. Standard, Qualification, promotion, and
 the grouped end gate remain separate.
+
+## Paired native baseline-JIT publisher evidence
+
+[Decision 0424](../Decisions/0424-Paired-Native-Baseline-Jit-Publication.md)
+adds a manual paired workflow over the existing permanent publisher scripts.
+Initial GitHub run
+[`31291005460`](https://github.com/eworker-inc/Windvale/actions/runs/31291005460)
+stops on Debian because the digest-pinned native WVO verifier was tracked with
+non-executable Git mode. Repository preflight found five affected Linux
+candidate ELFs; commit `6e73c4dce73d7e332fa4514e643821a5fd489dfd`
+restores mode `100755` without changing any bytes or hashes.
+
+Successor run
+[`31291079619`](https://github.com/eworker-inc/Windvale/actions/runs/31291079619)
+passes on Windows and Debian. Each host rebuilds the exact producer WVB,
+verifies its retained WVO, assembles and verifies the shared plan and platform
+objects, links and packages the exact candidate, compares it with the retained
+artifact, and executes all five evidence cases. The 59,904-byte Windows
+publisher at SHA-256
+`8ea1a0d6371c9447031db4ae2b56ecfef5f022a83b6bdd7831020a2628bee01c`
+and 65,648-byte Linux publisher at SHA-256
+`29538c93d28bcd1feae175519f5b2950d5e8dfcde24afa3f0039863fb1706a90`
+both return zero without diagnostics or a .NET runtime. Complete backend/JIT
+integration, Standard, Qualification, promotion, and the grouped end gate
+remain separate.

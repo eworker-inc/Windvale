@@ -1,6 +1,6 @@
 # Windvale native baseline-JIT publication
 
-Status: implemented candidate
+Status: implemented paired candidate
 
 ## Purpose
 
@@ -79,9 +79,10 @@ Each application performs these checks in a single native process:
 
 Windows forces failure with a zero-length `VirtualProtect`. Linux uses an
 unaligned `mprotect` address. Success is process result `0` with no diagnostic
-output. The Windows artifact has passed locally. The Linux artifact is
-deterministically reconstructed but requires execution on Linux before this
-candidate has paired-host evidence.
+output. GitHub run
+[`31291079619`](https://github.com/eworker-inc/Windvale/actions/runs/31291079619)
+reconstructs and executes both exact artifacts on Windows and Debian, including
+the RW-to-RX transition, results `42` and `-1`, forced seal failure, and release.
 
 ## Ownership and non-claims
 
@@ -93,11 +94,11 @@ candidate has paired-host evidence.
   import-directory bindings. Normal tests use the native `.cmd` or `.sh`
   route and the digest-bound candidate artifacts.
 - The bridge WVB is reconstructed through the native source front door and
-  compared with the retained artifact. The retained WVO is produced by the
+  compared with the retained artifact. The retained WVO was produced by the
   Windvale lowerer from that exact WVB under the Stage 0 reference execution
-  host. Normal build and execution consume the verified WVO and do not load
-  .NET. Promotion and native reconstruction of the current 409-function
-  lowerer tool remain the separate N1 blocker.
+  host and has separate paired native reconstruction evidence. Normal build
+  and execution consume the verified WVO and do not load .NET. Promotion of
+  the independently evolving current lowerer remains a separate N1 concern.
 - This candidate does not implement general WVB admission, general machine
   lowering, calls, control flow, runtime services, code-cache accounting,
   concurrent publication, or Windvale OS publication.

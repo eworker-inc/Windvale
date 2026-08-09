@@ -7,6 +7,11 @@
   "allocationBytes": 4096,
   "producerArenaBytes": 16777216,
   "producerBundleBytes": 108,
+  "pairedExecution": {
+    "status": "passed",
+    "commit": "6e73c4dce73d7e332fa4514e643821a5fd489dfd",
+    "workflowRun": 31291079619
+  },
   "sources": [
     {
       "path": "Compiler/Windvale/Baseline-Jit-Patch-Plan-Bridge.wv",
@@ -89,7 +94,7 @@
       "target": "linux-x64-console-v1",
       "bytes": 65648,
       "sha256": "29538c93d28bcd1feae175519f5b2950d5e8dfcde24afa3f0039863fb1706a90",
-      "localExecution": "pending"
+      "localExecution": "passed"
     }
   ]
 }

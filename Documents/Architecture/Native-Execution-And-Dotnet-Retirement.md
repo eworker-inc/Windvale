@@ -683,6 +683,14 @@ write, durability checks, and atomic replacement. No post-publication shell
 permission repair is part of the contract. The paired rerun passes in GitHub
 run 31290136463; promotion remains pending.
 
+[Decision 0424](../Decisions/0424-Paired-Native-Baseline-Jit-Publication.md)
+supplies genuine Windows/Debian execution for the bounded native baseline-JIT
+publisher. Both hosts rebuild and verify its producer, plan, platform object,
+linked image, and retained application, then exercise strict RW-to-RX
+publication, results `42` and `-1`, forced seal failure, and teardown without
+loading .NET. This closes the Linux-execution sub-item, not complete backend
+integration, qualification, or promotion.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical
