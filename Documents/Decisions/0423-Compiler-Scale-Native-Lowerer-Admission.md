@@ -112,3 +112,8 @@ raise a bound solely to clear a generic failure. Add measured evidence and a
 focused boundary test first. Version serialized storage evidence if its external
 shape changes; internal packed representations may evolve while exact valid WVO
 bytes remain unchanged.
+
+[Decision 0425](0425-Compiler-Scale-Native-Wvo-Resource-Staging.md) advances
+this candidate by reducing the exact compiler WVO from 167 publication
+resources to 36 staging resources without changing shared publication policy or
+WVO bytes.

@@ -487,13 +487,14 @@ loading .NET. The Linux package is structurally pinned but still awaits the
 grouped execution gate. A separately digest-bound Windows/Linux staging
 producer now emits the exact chunks and manifest, and the current-host native
 producer/publisher processes compose on the canonical small fixture without
-loading .NET. Full compiler self-lowering remains in the final grouped gate.
+loading .NET. Decisions 0423 and 0425 now stage the exact full compiler WVO as
+36 bounded resources on Windows; Linux execution and the grouped gate remain.
 These layers deliberately
 do not reuse the pre-opened
 random-access-storage capability, whose contract
 excludes path creation, replacement, and directory publication, and do not
-claim that scratch resources are an atomic destination. Complete compiler
-self-staging integration, native replacement of the Stage 0 package
+claim that scratch resources are an atomic destination. Final compiler-image
+link/transport on that exact manifest, native replacement of the Stage 0 package
 constructor, extended fault/concurrency evidence, promotion, and grouped
 dual-host qualification remain before this transfer replaces the managed
 ordinary route.

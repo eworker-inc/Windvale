@@ -144,9 +144,16 @@ internal static partial class Program
             0,
             Bundle);
         var Expected = Nativeˉhostedˉtoolˉmetadataˉbuilder.Buildˉrequest(Inputs);
-        var Resources = new[] { Fragment.ToArray() }
+        var Fragmentˉbytes = Fragment.ToArray();
+        var Fragmentˉresources = Enumerable.Range(0, 8)
+            .Select(Index => Fragmentˉbytes[
+                (Index * Fragmentˉbytes.Length / 8)..
+                ((Index + 1) * Fragmentˉbytes.Length / 8)])
+            .ToArray();
+        var Resources = Fragmentˉresources
             .Concat(Serviceˉcode.Select(Service => Service.Code.ToArray()))
             .ToArray();
+        Equal(18, Resources.Length);
         var Logicalˉbytes = Resources.Sum(Resource => Resource.Length);
         True(
             Bundle.Imageˉbytes.Length > Logicalˉbytes,
@@ -234,6 +241,43 @@ internal static partial class Program
                     Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
 
             byte[] Sentinel = [0x57, 0x56, 0x48, 0x51];
+            var Tooˉmanyˉfragmentˉresources = Enumerable.Range(0, 9)
+                .Select(Index => Fragmentˉbytes[
+                    (Index * Fragmentˉbytes.Length / 9)..
+                    ((Index + 1) * Fragmentˉbytes.Length / 9)])
+                .ToArray();
+            var Tooˉmanyˉresources = Tooˉmanyˉfragmentˉresources
+                .Concat(Serviceˉcode.Select(Service => Service.Code.ToArray()))
+                .ToArray();
+            Equal(19, Tooˉmanyˉresources.Length);
+            var Tooˉmanyˉmanifest = Buildˉmetadataˉrequestˉmanifest(
+                Tooˉmanyˉresources,
+                Regions);
+            var Tooˉmanyˉmanifestˉpath = Path.Combine(
+                Directoryˉpath,
+                "Too-Many.wvhs");
+            var Tooˉmanyˉprefix = Path.Combine(Directoryˉpath, "Too-Many");
+            File.WriteAllBytes(Tooˉmanyˉmanifestˉpath, Tooˉmanyˉmanifest);
+            for (var Index = 0; Index < Tooˉmanyˉresources.Length; Index++)
+            {
+                File.WriteAllBytes(
+                    Tooˉmanyˉprefix + $".chunk-{Index}",
+                    Tooˉmanyˉresources[Index]);
+            }
+            File.WriteAllBytes(Requestˉpath, Sentinel);
+            Equal(
+                2,
+                Executeˉhostedˉmetadataˉrequest(
+                    Application,
+                    Inputsˉpath,
+                    Planˉpath,
+                    Tooˉmanyˉmanifestˉpath,
+                    Tooˉmanyˉprefix,
+                    Requestˉpath,
+                    string.Empty,
+                    expectedˉerror: "hosted metadata request status=Rejected\n"));
+            Sequenceˉequal(Sentinel, File.ReadAllBytes(Requestˉpath));
+
             var Changedˉplan = Planˉrequest.ToArray();
             Changedˉplan[0] ^= 0x01;
             File.WriteAllBytes(Planˉpath, Changedˉplan);

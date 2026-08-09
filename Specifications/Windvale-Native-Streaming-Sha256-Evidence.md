@@ -19,8 +19,10 @@ wvsha256evidence <manifest.wvhs> <chunk-prefix> <evidence.wvhe>
 ```
 
 Chunk resource `N` is named `<chunk-prefix>.chunk-N`. The prefix contains one
-through 16 chunks. Each resource remains at most 4,194,304 bytes, but their
-logical concatenation may contain up to 67,108,864 bytes. The command reads
+through 18 chunks. This admits the hosted-container maximum of eight native
+fragments followed by exactly ten fixed service resources. Each resource
+remains at most 4,194,304 bytes, but their logical concatenation may contain up
+to 67,108,864 bytes. The command reads
 only the manifest and the named chunks, and publishes the evidence only after
 the complete plan and every used resource extent have been admitted.
 
@@ -41,7 +43,7 @@ record per region.
 | 0 | 4 | magic | ASCII `WVHS`, `0x53485657` |
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | Exact header plus records |
-| 12 | 4 | chunk count | `1` through `16` |
+| 12 | 4 | chunk count | `1` through `18` |
 | 16 | 4 | region count | `1` through `16` |
 | 20 | 4 | logical bytes | `1` through 64 MiB |
 | 24 | 8 | reserved | Zero |
@@ -100,9 +102,9 @@ reused by the native metadata-request producer.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Streaming evidence WVB | 39,483 | `9ea136c44f76d9a53474d81e989f38cf15ffa8dc267638e2224e20f733205e6b` |
-| Windows streaming evidence tool | 646,656 | `e69a9a4c0a33d4bc05d98e5c977ba537715081d08d8c8493da87990989547af3` |
-| Linux streaming evidence tool | 647,168 | `eb1ba149a94741801732e53773f566aee752a19510d22f8e2768def7614d396c` |
+| Streaming evidence WVB | 40,261 | `1b15d4640027d415e9e8d6de9d22b04eaed7cc3c4b8d27ddd84d17fb69cda104` |
+| Windows streaming evidence tool | 664,576 | `4c9761003e6ff2b3040a1197762d50a603768b7b7f170bfd5e30d6cb4f939be5` |
+| Linux streaming evidence tool | 663,552 | `d1a5c87df95f8881c380680c7de965fdc051909691757974e68165adc83c31a1` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring; the

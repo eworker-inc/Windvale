@@ -50,6 +50,23 @@ fn Overlapˉend(Left: u32, Right: u32) -> u32 {
     return Right;
 }
 
+export fn Streamingˉsha256ˉresourceˉregionˉusesˉchunk(
+    State: Streamingˉsha256ˉresourceˉregionˉstate,
+    Manifest: bytes,
+    Chunk: u32
+) -> bool {
+    if !State.Valid || Chunk >= State.Chunks { return false; }
+    let Chunkˉrecord: u32 = 32u32 + Chunk * 20u32;
+    let Chunkˉoffset: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 4u32);
+    let Chunkˉbytes: u32 =
+        Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 12u32);
+    return Overlapˉstart(State.Offset, Chunkˉoffset) < Overlapˉend(
+        State.Offset + State.Length,
+        Chunkˉoffset + Chunkˉbytes
+    );
+}
+
 export fn Streamingˉsha256ˉresourceˉname(Prefix: text, Index: u32) -> text {
     return Textˉconcat(
         Textˉconcat(Prefix, ".chunk-"),

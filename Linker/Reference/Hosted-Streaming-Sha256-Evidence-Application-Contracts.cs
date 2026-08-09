@@ -12,15 +12,15 @@ public static class Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract
         "linux-x64-streaming-sha256-evidence-v1";
     public const string MODULE_NAME =
         "Nativeˉstreamingˉsha256ˉevidenceˉtool";
-    public const int MODULE_BYTES = 39_483;
+    public const int MODULE_BYTES = 40_261;
     public const string MODULE_SHA256 =
-        "9ea136c44f76d9a53474d81e989f38cf15ffa8dc267638e2224e20f733205e6b";
-    public const int WINDOWS_APPLICATION_BYTES = 646_656;
+        "1b15d4640027d415e9e8d6de9d22b04eaed7cc3c4b8d27ddd84d17fb69cda104";
+    public const int WINDOWS_APPLICATION_BYTES = 664_576;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "e69a9a4c0a33d4bc05d98e5c977ba537715081d08d8c8493da87990989547af3";
-    public const int LINUX_APPLICATION_BYTES = 647_168;
+        "4c9761003e6ff2b3040a1197762d50a603768b7b7f170bfd5e30d6cb4f939be5";
+    public const int LINUX_APPLICATION_BYTES = 663_552;
     public const string LINUX_APPLICATION_SHA256 =
-        "eb1ba149a94741801732e53773f566aee752a19510d22f8e2768def7614d396c";
+        "d1a5c87df95f8881c380680c7de965fdc051909691757974e68165adc83c31a1";
 }
 
 public static class Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉwriter

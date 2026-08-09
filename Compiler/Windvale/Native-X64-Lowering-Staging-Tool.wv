@@ -11,6 +11,8 @@ capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
+const STAGING_RESOURCE_BYTES: u32 = 1048576u32;
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -105,6 +107,8 @@ export fn Main() -> i32 {
     var Entries: bytes = Empty(Input);
     var Chunks: u32 = 0u32;
     var Steps: u32 = 0u32;
+    var Pending: bytes = Empty(Input);
+    var Pendingˉposition: u32 = 0u32;
     while Cursor.Kind !=
         Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Complete {
         let Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
@@ -122,19 +126,50 @@ export fn Main() -> i32 {
         }
         let Length: u32 = Bytesˉlength(Step.Value);
         if Length > 0u32 {
-            let Resource: text = Chunkˉresource(Chunkˉprefix, Chunks);
-            if Pathsˉareˉequal(Resource, Inputˉpath) ||
-                Pathsˉareˉequal(Resource, Manifestˉpath) {
-                diagnostic.write_line(
-                    "native x64 staging status=Invalidˉresource"
-                );
-                return 2;
+            let Pendingˉbytes: u32 = Bytesˉlength(Pending);
+            if Pendingˉbytes > 0u32 &&
+                (Step.Kind !=
+                        Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code ||
+                    Pendingˉbytes > STAGING_RESOURCE_BYTES ||
+                    Length > STAGING_RESOURCE_BYTES - Pendingˉbytes) {
+                let Pendingˉresource: text =
+                    Chunkˉresource(Chunkˉprefix, Chunks);
+                if Pathsˉareˉequal(Pendingˉresource, Inputˉpath) ||
+                    Pathsˉareˉequal(Pendingˉresource, Manifestˉpath) {
+                    diagnostic.write_line(
+                        "native x64 staging status=Invalidˉresource"
+                    );
+                    return 2;
+                }
+                file.write_bytes(Pendingˉresource, Pending);
+                Entries = Appendˉu32(Entries, Chunks);
+                Entries = Appendˉu32(Entries, Pendingˉposition);
+                Entries = Appendˉu32(Entries, Pendingˉbytes);
+                Chunks = Chunks + 1u32;
+                Pending = Empty(Input);
             }
-            file.write_bytes(Resource, Step.Value);
-            Entries = Appendˉu32(Entries, Chunks);
-            Entries = Appendˉu32(Entries, Step.Position);
-            Entries = Appendˉu32(Entries, Length);
-            Chunks = Chunks + 1u32;
+            if Step.Kind !=
+                    Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code {
+                let Directˉresource: text =
+                    Chunkˉresource(Chunkˉprefix, Chunks);
+                if Pathsˉareˉequal(Directˉresource, Inputˉpath) ||
+                    Pathsˉareˉequal(Directˉresource, Manifestˉpath) {
+                    diagnostic.write_line(
+                        "native x64 staging status=Invalidˉresource"
+                    );
+                    return 2;
+                }
+                file.write_bytes(Directˉresource, Step.Value);
+                Entries = Appendˉu32(Entries, Chunks);
+                Entries = Appendˉu32(Entries, Step.Position);
+                Entries = Appendˉu32(Entries, Length);
+                Chunks = Chunks + 1u32;
+            } else if Bytesˉlength(Pending) == 0u32 {
+                Pendingˉposition = Step.Position;
+                Pending = Step.Value;
+            } else {
+                Pending = Bytesˉconcat(Pending, Step.Value);
+            }
         }
         Cursor = Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
             Step.Nextˉvalid,
@@ -146,6 +181,19 @@ export fn Main() -> i32 {
         if Steps > Plan.Functionˉcount + 6u32 {
             return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
         }
+    }
+    if Bytesˉlength(Pending) > 0u32 {
+        let Finalˉresource: text = Chunkˉresource(Chunkˉprefix, Chunks);
+        if Pathsˉareˉequal(Finalˉresource, Inputˉpath) ||
+            Pathsˉareˉequal(Finalˉresource, Manifestˉpath) {
+            diagnostic.write_line("native x64 staging status=Invalidˉresource");
+            return 2;
+        }
+        file.write_bytes(Finalˉresource, Pending);
+        Entries = Appendˉu32(Entries, Chunks);
+        Entries = Appendˉu32(Entries, Pendingˉposition);
+        Entries = Appendˉu32(Entries, Bytesˉlength(Pending));
+        Chunks = Chunks + 1u32;
     }
     let Complete: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
         Publication.Compilerˉnativeˉx64ˉpublicationˉnext(

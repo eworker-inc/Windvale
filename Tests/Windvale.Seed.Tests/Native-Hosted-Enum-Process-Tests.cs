@@ -166,6 +166,52 @@ internal static partial class Program
                 $"hosted enum service status=Valid bytes={Expectedˉservice.Length}\n",
                 Loaded));
             Sequenceˉequal(Expectedˉservice, File.ReadAllBytes(Serviceˉpath));
+
+            var Compilerˉmoduleˉpath = Path.Combine(
+                Repository,
+                "Artifacts",
+                "Native-Compiler-Seed",
+                "Wvb",
+                "Windvale-Compiler.wvb");
+            var Compilerˉmodule = Moduleˉcodec.Readˉandˉverify(
+                File.ReadAllBytes(Compilerˉmoduleˉpath));
+            Equal(79, Compilerˉmodule.Module.Types.Length);
+            var Compilerˉrequests = Nativeˉenumˉmetadataˉbuilder.Buildˉrequests(
+                Compilerˉmodule.Module.Types);
+            Equal(1, Compilerˉrequests.Length);
+            Equal(13_265, Compilerˉrequests[0].Length);
+            Equal(
+                "a254e4b611a031298bc002859b89d5a2f586a91d21c1f5604826efbdcfae4f69",
+                Moduleˉdigest.Calculateˉsha256(Compilerˉrequests[0].AsSpan()));
+            var Compilerˉservice = X64ˉnativeˉtextˉservices.Build(
+                Nativeˉservice.Enumˉname,
+                Compilerˉmodule.Module.Types);
+            Equal(13_564, Compilerˉservice.Length);
+            Equal(
+                "c30f555317b06e88fd9e501c9da57d102b8d2ea96d9f705f3c6a0035988e8b2f",
+                Moduleˉdigest.Calculateˉsha256(Compilerˉservice.AsSpan()));
+            var Compilerˉrequestˉpath = Path.Combine(
+                Directoryˉpath,
+                "Compiler.wveq");
+            var Compilerˉserviceˉpath = Path.Combine(
+                Directoryˉpath,
+                "Compiler-Enum-Service.bin");
+            Equal(0, Executeˉhostedˉenumˉapplication(
+                Requestˉapplication,
+                [Compilerˉmoduleˉpath, Compilerˉrequestˉpath],
+                "hosted enum request status=Valid bytes=13265\n",
+                Loaded));
+            Sequenceˉequal(
+                Compilerˉrequests[0],
+                File.ReadAllBytes(Compilerˉrequestˉpath));
+            Equal(0, Executeˉhostedˉenumˉapplication(
+                Serviceˉapplication,
+                [Compilerˉrequestˉpath, Compilerˉserviceˉpath],
+                "hosted enum service status=Valid bytes=13564\n",
+                Loaded));
+            Sequenceˉequal(
+                Compilerˉservice,
+                File.ReadAllBytes(Compilerˉserviceˉpath));
             Equal(0, Loaded.Count(Name => Name.Contains("clr",
                 StringComparison.OrdinalIgnoreCase)));
 

@@ -17,8 +17,9 @@ wvhostenumservice <request.wveq> <service.bin>
 `wvhostenumrequest` is sequenced after the full native WVB verifier. It
 revalidates the WVB 1.11 envelope with seven exact sections and the nominal-
 type section covered by the current native x64 type decoder; it is not a
-replacement for whole-module semantic verification. It
-supports at most 64 nominal types and the current single complete `WVEQ 2`
+replacement for whole-module semantic verification. It supports at most 128
+nominal types (with no more than 64 records or 64 enums) and the current
+single complete `WVEQ 2`
 group whose request and resulting `WVEN 1` each fit one 4 MiB Windvale byte
 value. At least one enum member is required. Records receive zero-member
 directory entries; enum values, strict source names, and lexical ranks are
@@ -38,9 +39,9 @@ read/write, and process argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Enum-request WVB | 25,098 | `cd3332893277fbdc5c64e90e62900458bad506ec10be5d8b381ea9ca61a14b97` |
-| Windows enum-request application | 279,040 | `64b6cad08646204af01dc6b6d06b581f54cfc2993ddb8f3d28b22b6f3f9cf032` |
-| Linux enum-request application | 278,528 | `e601e3e9a9259f48c0f8d7e59f9212422d4f520ce4d4b5bbe30f6381e4970a9f` |
+| Enum-request WVB | 26,167 | `1471775aab260d48db4852cd055f04698b036224f877fcab958f3e1bd9814b83` |
+| Windows enum-request application | 292,352 | `44e11d1105ab685e51ccce2dc6f800b0c2c1d7e897539cd7b65a436d4ff67f21` |
+| Linux enum-request application | 294,912 | `c767e5f0c509e803dbcfe3fc1283f8bcf1208c80a0fee478d5348116f9187040` |
 | Enum-service WVB | 18,976 | `493226f5b61894cb43e3428555e96293310c03571f6cff905eb50fabc7721676` |
 | Enum-service WVO | 168,342 | `0ded580f703ae2d982740fe673d1e04dee581cab8785bb5d0ba8894800cb2963` |
 | Enum-service raw fragment | 167,274 | `cec5c423e32a3c0bc5602551e2b1da2e82929b2edd84b2756c4062bf0f223870` |
