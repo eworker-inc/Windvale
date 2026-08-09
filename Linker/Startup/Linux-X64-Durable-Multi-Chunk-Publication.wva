@@ -45,6 +45,7 @@ store_memory_u32 rsp none 1 48 edx
 store_memory_u32 rsp none 1 52 ecx
 store_memory_u32 rsp none 1 56 r8d
 store_memory_u32 rsp none 1 60 r9d
+store_memory_u32 rsp none 1 20 r10d
 xor eax eax
 subtract_i32 rax 1
 store_memory_u64 rsp none 1 40 rax
@@ -64,6 +65,11 @@ branch not_equal Rejected
 label Selector_valid
 compare_i32 r9d 4194303
 branch above Rejected
+compare_i32 r10d 384
+branch equal Publication_mode_valid
+compare_i32 r10d 493
+branch not_equal Rejected
+label Publication_mode_valid
 
 move_u32 r10d 100
 move_u32 r11d 1000000000
@@ -109,7 +115,7 @@ load_memory_u64 rdi rsp none 1 24
 move rsi rsp
 add_i32 rsi 64
 move_u32 edx 655554
-move_u32 r10d 384
+load_memory_u32 r10d rsp none 1 20
 move_u32 eax 257
 syscall
 compare_i32 rax -17

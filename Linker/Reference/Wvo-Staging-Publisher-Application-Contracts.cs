@@ -10,15 +10,15 @@ public static class Wvoˉstagingˉpublisherˉapplicationˉcontract
         "linux-x64-wvo-staging-publisher-v1";
     public const string MODULE_NAME =
         "Compilerˉnativeˉx64ˉloweringˉstagingˉadmissionˉtool";
-    public const int MODULE_BYTES = 431_568;
+    public const int MODULE_BYTES = 433_523;
     public const string MODULE_SHA256 =
-        "9ca9c1225eb5b9b9e95021b7ef897faf97e14121c5a94d72d9489b95b4d0e4c2";
-    public const int WINDOWS_APPLICATION_BYTES = 6_364_672;
+        "221b20ab5db8785ec495d2151088c532f53fc8c9c66fbb021156f05b62e32ca3";
+    public const int WINDOWS_APPLICATION_BYTES = 6_390_784;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "5d9d2d8e899732b2821b6a07b98dde99532dce40d34f2e10eeb53104f3081635";
-    public const int LINUX_APPLICATION_BYTES = 6_361_965;
+        "adcdde6363b79e107f26e7042c2970996fabfa972d9a4fe91f5c8a5d5238faa6";
+    public const int LINUX_APPLICATION_BYTES = 6_390_685;
     public const string LINUX_APPLICATION_SHA256 =
-        "f2166008e744b856f9df18949230b47e0fceba3cdec65dfb6784be38edd5577b";
+        "eed27297af45813c824558aaee8ac515f62b36fdcfdd76845e2ed15a0f924ce4";
 }
 
 public static class Wvoˉstagingˉpublisherˉapplicationˉwriter

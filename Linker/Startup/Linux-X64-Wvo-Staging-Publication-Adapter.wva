@@ -11,6 +11,7 @@ move_u32 edi 2
 move_u32 esi 1
 xor ebp ebp
 load_address r10 X64_wvo_staging_snapshot_table_validate
+move_u32 r11d 384
 jump Linux_immutable_snapshot_publisher_run
 end define
 end section

@@ -73,6 +73,16 @@ descriptor-entry and retained baseline-JIT bridge WVOs byte for byte. Genuine
 Linux reconstruction, paired candidate promotion, ordinary-launcher cutover,
 and grouped qualification remain open.
 
+[Decision 0422](../Decisions/0422-Atomic-Linux-Hosted-Executable-Mode.md)
+records the first paired run's next exact finding: Debian produced the correct
+hosted ELF bytes through native composition, but the shared transaction had
+created the destination with staged-data mode `0600`. The native transaction
+now consumes an admitted final-mode policy, preserves `0600` for WVO data, and
+creates hosted application siblings at `0755` before atomic replacement. Local
+focused publisher tests and both Windows hosted smokes pass; the paired rerun,
+candidate promotion, ordinary-launcher cutover, and grouped qualification
+remain open.
+
 Current L1 update: [Decision 0351](../Decisions/0351-Immutable-Snapshot-Compiler-Image-Staging.md)
 adds the first hosted Windvale owner of the segmented compiler-image path. It
 acquires a strict `WVOP` manifest plus at most 62 canonical WVO chunks into one

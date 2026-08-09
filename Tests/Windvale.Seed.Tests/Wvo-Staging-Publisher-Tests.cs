@@ -9,19 +9,19 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 431_568;
+    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 433_523;
     private const string WVO_STAGING_PUBLISHER_TOOL_SHA256 =
-        "9ca9c1225eb5b9b9e95021b7ef897faf97e14121c5a94d72d9489b95b4d0e4c2";
+        "221b20ab5db8785ec495d2151088c532f53fc8c9c66fbb021156f05b62e32ca3";
     private const string LINUX_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba";
     private const string LINUX_WVO_STAGING_ADAPTER_WVO_SHA256 =
-        "d0a3cb41b6ffcc0fe6e616e1d2ac3b067252fe1ae20c8c40532505bcd6491be5";
+        "c4f51956b86d477a93232091da491b0c8a4a117150125dbf24e817234d0a1da1";
     private const string LINUX_IMMUTABLE_SNAPSHOT_SHELL_WVO_SHA256 =
-        "423bd086f68c03b3fd26c296a1789392ebd72a74e5fd10adf0d2e596d2fd2e6d";
+        "939c7dc5bf6a0ddf94bc4f406f40b0733f15f21d323b7eae5cd8e58103004481";
     private const string LINUX_HOSTED_CONTAINER_ADAPTER_WVO_SHA256 =
-        "fe6b4d60fcf459d2f3f624b58b461b95fc9bf325421712e19ac9aa72dcebf527";
+        "7cdbf94f43d53252db293fda79c69773c5d40b03a1acbd120256614487583929";
     private const string LINUX_DURABLE_MULTI_CHUNK_WVO_SHA256 =
-        "47a22cd108702d6427fe5be9fca00c3c05f38cb26dd69e51c8648544b3f98e76";
+        "01eb64695ef008da75b282079fde1cb93766bdc37a518695b2377eecee7b3f85";
     private const string WINDOWS_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "7e4ef5d1565aed7dddb325faa74f800f5d006567d0de84a84e8bc9b898f420ab";
     private const string WINDOWS_WVO_STAGING_ADAPTER_WVO_SHA256 =
@@ -143,22 +143,22 @@ internal static partial class Program
             "Linux_wvo_staging_publisher_startup");
         Assertˉstagingˉobject(
             Linuxˉadapter,
-            281,
+            287,
             LINUX_WVO_STAGING_ADAPTER_WVO_SHA256,
             "Linux_wvo_staging_publisher_run");
         Assertˉstagingˉobject(
             Linuxˉshell,
-            3_485,
+            3_503,
             LINUX_IMMUTABLE_SNAPSHOT_SHELL_WVO_SHA256,
             "Linux_immutable_snapshot_publisher_run");
         Assertˉstagingˉobject(
             Linuxˉhostedˉadapter,
-            294,
+            300,
             LINUX_HOSTED_CONTAINER_ADAPTER_WVO_SHA256,
             "Linux_hosted_container_publisher_run");
         Assertˉstagingˉobject(
             Linuxˉtransaction,
-            2_432,
+            2_468,
             LINUX_DURABLE_MULTI_CHUNK_WVO_SHA256,
             "Linux_durable_multi_chunk_publication_run");
         Assertˉstagingˉobject(

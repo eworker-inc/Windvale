@@ -37,7 +37,7 @@ set "Toolset=%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Candidat
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "Startup=%RepositoryRoot%\Linker\Reference\Consumers\Windows-X64-Hosted-Compiler.wvo"
 
-call :verify_file "%Toolset%\SHA256SUMS" 5426 6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522 "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 5426 9d60316098f3854cc286a03982b59cce80ced7cd7ab08e8ceef6dc6ecf58b040 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"

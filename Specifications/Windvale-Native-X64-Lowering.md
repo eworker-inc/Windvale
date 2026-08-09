@@ -324,13 +324,14 @@ publisher connection slice.
 
 Decision 0390 separates the Linux durable mutation protocol from that WVO
 adapter. The format-neutral function consumes an admitted snapshot ordinal
-range, stride, and fixed header skip; it exclusively creates an anchored
-sibling, handles exact partial writes, flushes and rereads through exact EOF,
-performs same-directory replacement and directory flush, cleans pre-replacement
-failure, and preserves the distinct indeterminate outcome after replacement.
-The WVO adapter supplies `(2, count, 1, 0)`; the hosted-container adapter will
-supply `(3, count, 2, 40)`. Linux application construction is pinned locally,
-while Linux process execution remains deferred to the paired-host gate.
+range, stride, fixed header skip, and exact final mode; it exclusively creates
+an anchored sibling with that mode, handles exact partial writes, flushes and
+rereads through exact EOF, performs same-directory replacement and directory
+flush, cleans pre-replacement failure, and preserves the distinct indeterminate
+outcome after replacement. Decision 0422 admits only `0600` and `0755`. The WVO
+adapter supplies `(2, count, 1, 0, 0600)`; the hosted-container adapter supplies
+`(3, count, 2, 40, 0755)`. Mode is therefore complete before atomic replacement
+rather than repaired afterward by a host script.
 
 Decision 0391 establishes the matching Windows boundary. The shared Windows
 function exclusively creates a full-path sibling, anchors it without replacement

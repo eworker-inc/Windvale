@@ -72,6 +72,7 @@ check_file \
     'valid package'
 cmp --silent -- "$test_directory/Valid.elf" "$toolset/linux-x64/wvhostcontrol.elf" ||
     fail 'valid package differs from the candidate'
+[[ -x $test_directory/Valid.elf ]] || fail 'valid package is not executable'
 check_no_scratch
 echo 'PASS  hosted packaging exact Linux application'
 
@@ -84,11 +85,11 @@ status=$?
 [[ $status -ne 0 ]] || fail 'invalid WVB was accepted'
 check_file \
     "$test_directory/Destination.elf" 5426 \
-    6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522 \
+    9d60316098f3854cc286a03982b59cce80ced7cd7ab08e8ceef6dc6ecf58b040 \
     'preserved destination'
 check_file \
     "$test_directory/Invalid.wvb" 5426 \
-    6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522 \
+    9d60316098f3854cc286a03982b59cce80ced7cd7ab08e8ceef6dc6ecf58b040 \
     'preserved input'
 check_no_scratch
 echo 'PASS  hosted packaging rejects invalid WVB and preserves resources'

@@ -673,6 +673,15 @@ that native process reproduces the descriptor-entry and baseline-JIT bridge
 WVOs byte for byte. Linux reconstruction, paired promotion, ordinary-launcher
 cutover, and grouped qualification remain.
 
+[Decision 0422](../Decisions/0422-Atomic-Linux-Hosted-Executable-Mode.md)
+closes the native publication-mode defect exposed by the first genuine Debian
+current-lowerer reconstruction. The reusable Linux transaction now admits an
+explicit final mode, with staged WVO data fixed at `0600` and hosted
+applications fixed at `0755`, and applies it to the private sibling before
+write, durability checks, and atomic replacement. No post-publication shell
+permission repair is part of the contract. The paired rerun and promotion
+remain pending.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

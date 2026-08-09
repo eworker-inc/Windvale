@@ -30,13 +30,14 @@ symbol import data Text_arena
 
 section code .text align 16
 define Linux_immutable_snapshot_publisher_run
-# Input policy: EDI first payload ordinal, ESI stride, EBP header skip, and
-# R10 the exact immutable-snapshot policy validator.
+# Input policy: EDI first payload ordinal, ESI stride, EBP header skip, R10 the
+# exact immutable-snapshot policy validator, and R11D the final file mode.
 move r12 rsp
 move r13d edi
 move r14d esi
 move r15d ebp
 move rbx r10
+move ebp r11d
 # Preserve the kernel argc/argv stack, allocate the established bounded runtime
 # stack, and reserve its final 16 KiB for paths, identities, and transaction cells.
 xor edi edi
@@ -57,6 +58,7 @@ store_memory_u64 rsp none 1 12672 rbx
 store_memory_u32 rsp none 1 12680 r13d
 store_memory_u32 rsp none 1 12684 r14d
 store_memory_u32 rsp none 1 12688 r15d
+store_memory_u32 rsp none 1 12692 ebp
 
 # Bind the fixed execution regions and the eight services used by admission.
 load_address r15 Execution_context
@@ -451,6 +453,7 @@ load_memory_u32 edx rsp none 1 12680
 load_memory_u32 ecx rsp none 1 12720
 load_memory_u32 r8d rsp none 1 12684
 load_memory_u32 r9d rsp none 1 12688
+load_memory_u32 r10d rsp none 1 12692
 call Linux_durable_multi_chunk_publication_run
 move ebx eax
 move rdi r13

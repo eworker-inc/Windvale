@@ -41,7 +41,7 @@ applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 5,426 | `6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522` |
+| `SHA256SUMS` | 5,426 | `9d60316098f3854cc286a03982b59cce80ced7cd7ab08e8ceef6dc6ecf58b040` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front
@@ -88,6 +88,12 @@ a pre-existing destination remain byte-identical. The test redirects the
 launcher's temporary root into its own private directory and rejects any
 remaining package scratch. These two cases are the focused composition check;
 they do not replace malformed-format suites or the final qualification gate.
+
+On Linux, the shared native durable transaction creates the private hosted
+application sibling with its exact final `0755` mode before writing, flushing,
+rereading, and atomically replacing the destination. Staged WVO publication
+uses the same transaction with `0600`. The launchers do not apply a later
+`chmod`, so successful replacement cannot expose an intermediate wrong mode.
 
 `Test-Segmented-Compiler-Packaging` additionally exercises image mode with the
 current two-fragment WVB-to-WVO lowerer. It requires the exact current host

@@ -4241,3 +4241,23 @@ The permanent focused Windows smoke passes 2/2 in 89.7 seconds. No C# compiler
 or runtime implementation changes. Linux script syntax, genuine Linux
 reconstruction/execution, paired promotion, Standard, Qualification, and the
 grouped end gate remain separate.
+
+## Local atomic Linux hosted-mode evidence
+
+[Decision 0422](../Decisions/0422-Atomic-Linux-Hosted-Executable-Mode.md)
+records the Linux publication-mode boundary exposed by GitHub run
+[`31289330407`](https://github.com/eworker-inc/Windvale/actions/runs/31289330407).
+Debian completed native hosted composition with exact bytes, then rejected the
+output because the shared durable transaction had created it with staged-data
+mode `0600`. The native policy now admits `0600` for WVO data and `0755` for
+hosted applications and applies the selected mode to the exclusive sibling
+before write, flush, reread, and atomic replacement.
+
+Focused staged-publisher and hosted-segment-set tests pass locally. The Windows
+ordinary and current-lowerer segmented packaging smokes each pass 2/2 against
+the regenerated 5,426-byte inventory at SHA-256
+`9d60316098f3854cc286a03982b59cce80ced7cd7ab08e8ceef6dc6ecf58b040`.
+The Linux hosted publisher is 377,789 bytes at SHA-256
+`5d8eb97eff9c18e91f1dcb6d2060dd214530474ee046bc2e276e9c603262bd1b`.
+The paired rerun, Standard, Qualification, promotion, and grouped end gate
+remain separate.
