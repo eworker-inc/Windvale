@@ -525,13 +525,15 @@ pwsh -NoProfile -File Tools/Recovery/Rebuild-Os-Probe.ps1 `
     -Scenario normal
 ```
 
-Stage 0 still produces the fourteen reviewed Probe 40 WVOs. The recovery
-command admits their reported order, invokes the current host's digest-bound
-native linker, parses its canonical entry address, and then invokes the
-digest-bound native UEFI packager. It refuses an existing destination and
-removes its private objects, linked payload, and EFI candidate. It is
-provenance and differential infrastructure, not the normal boot path; upstream
-object/scenario production still requires .NET, while managed linking and UEFI
+Stage 0 produces eleven reviewed Probe 40 WVOs. The recovery command assembles
+the memory-object, timer, and kernel shim WVA sources through the current
+host's digest-bound native assembler, admits all three exact hashes, restores
+the reviewed fourteen-object order, invokes the digest-bound native linker,
+parses its canonical entry address, and then invokes the digest-bound native
+UEFI packager. It refuses an existing destination and removes its private
+objects, linked payload, and EFI candidate. It is provenance and differential
+infrastructure, not the normal boot path; remaining object/scenario production
+still requires .NET, while managed top-level WVA assembly, linking, and UEFI
 packaging are retained only as recovery/differential implementations.
 
 ## Current boundary

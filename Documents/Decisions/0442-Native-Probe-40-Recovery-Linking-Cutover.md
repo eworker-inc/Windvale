@@ -1,6 +1,6 @@
 # Decision 0442: Native Probe 40 recovery linking cutover
 
-- Status: Implemented current-host normal-scenario recovery cutover; Linux execution pending
+- Status: Implemented current-host normal-scenario recovery cutover; Linux execution pending; top-level WVA assembly advanced by [Decision 0443](0443-Native-Probe-40-Top-Level-Wva-Assembly.md)
 - Date: 2026-08-09
 - Advances: [Decision 0439](0439-Native-Uefi-Recovery-Packaging-Cutover.md), [Decision 0441](0441-Scale-Safe-Native-Wv-Linker-Relocation-Emission.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)

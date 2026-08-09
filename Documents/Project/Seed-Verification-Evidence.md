@@ -4606,3 +4606,28 @@ Its private object directory, linked image, and EFI candidate are absent after
 publication. No broad Seed, OS, QEMU, Qualification, or Linux recovery command
 ran. Stage 0 object/scenario production remains the command's only executed
 .NET dependency.
+
+## Local native Probe 40 top-level WVA evidence
+
+[Decision 0443](../Decisions/0443-Native-Probe-40-Top-Level-Wva-Assembly.md)
+adds an explicit Stage 0 scope that returns eleven objects and omits the three
+top-level WVA products. The recovery command assembles those repository-owned
+sources through the digest-bound native assembler and restores the exact
+fourteen-object order before native linking.
+
+The native memory-object shim is 2,538 bytes at SHA-256
+`fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`;
+the timer shim is 1,202 bytes at SHA-256
+`e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344`;
+and the kernel shim is 1,894 bytes at SHA-256
+`845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193`.
+The focused Bootstrap Release build succeeds with zero warnings, and the
+updated current-host recovery command completes in 16.0 seconds with the exact
+683,008-byte normal EFI at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The object-inventory implementation moves from the 752-line broad firmware
+source into its focused owner; the broad source is now 590 lines and the
+focused inventory source is 281 lines. No broad Seed, OS, QEMU, Qualification,
+or Linux recovery command ran. Inner process-image WVA assembly and all other
+Stage 0 object-production dependencies remain explicit.

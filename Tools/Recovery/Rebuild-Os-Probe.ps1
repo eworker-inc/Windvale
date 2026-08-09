@@ -32,6 +32,11 @@ $NativeLinker = if ($IsWindows) {
 } else {
     Fail-Recovery 'The native WVO linker supports only Windows and Linux.'
 }
+$NativeAssembler = if ($IsWindows) {
+    Join-Path $RepositoryRoot 'Tools/Native/Assemble-Wva.cmd'
+} else {
+    Join-Path $RepositoryRoot 'Tools/Native/Assemble-Wva.sh'
+}
 $NativePackager = if ($IsWindows) {
     Join-Path $RepositoryRoot 'Tools/Native/Package-Uefi.cmd'
 } else {
@@ -39,6 +44,9 @@ $NativePackager = if ($IsWindows) {
 }
 if (!(Test-Path -LiteralPath $NativeLinker -PathType Leaf)) {
     Fail-Recovery 'The digest-bound native WVO linker launcher is unavailable.'
+}
+if (!(Test-Path -LiteralPath $NativeAssembler -PathType Leaf)) {
+    Fail-Recovery 'The digest-bound native WVA assembler launcher is unavailable.'
 }
 if (!(Test-Path -LiteralPath $NativePackager -PathType Leaf)) {
     Fail-Recovery 'The digest-bound native UEFI packager launcher is unavailable.'
@@ -70,7 +78,7 @@ try {
             --project $BuilderProject `
             --configuration Release `
             -- `
-            --object-directory $ObjectDirectory `
+            --object-directory-native-wva $ObjectDirectory `
             --scenario $Scenario 2>&1
     )
     if ($LASTEXITCODE -ne 0) {
@@ -80,9 +88,9 @@ try {
 
     $BuilderLines = @($BuilderOutput | ForEach-Object { $_.ToString() })
     if (@($BuilderLines | Where-Object {
-        $_ -eq 'windvale-os-probe-object-inventory 40'
+        $_ -eq 'windvale-os-probe-native-wva-inventory 40'
     }).Count -ne 1) {
-        Fail-Recovery 'The Stage 0 object builder did not report the Probe 40 inventory format.'
+        Fail-Recovery 'The Stage 0 object builder did not report the native-WVA inventory format.'
     }
     $EntryLines = @($BuilderLines | Where-Object { $_ -like 'entry-symbol=*' })
     if ($EntryLines.Count -ne 1 -or
@@ -91,30 +99,85 @@ try {
     }
     $EntrySymbol = $Matches[1]
     $CountLines = @($BuilderLines | Where-Object { $_ -like 'object-count=*' })
-    if ($CountLines.Count -ne 1 -or $CountLines[0] -ne 'object-count=14') {
-        Fail-Recovery 'The Stage 0 object builder did not report the reviewed 14-object inventory.'
+    if ($CountLines.Count -ne 1 -or $CountLines[0] -ne 'object-count=11') {
+        Fail-Recovery 'The Stage 0 object builder did not report the reviewed 11-object inventory.'
     }
     $ObjectLines = @($BuilderLines | Where-Object { $_ -like 'object=*' })
-    if ($ObjectLines.Count -ne 14) {
-        Fail-Recovery 'The Stage 0 object builder did not report 14 ordered object names.'
+    $StageZeroObjectNames = @(
+        '00-loader.wvo',
+        '01-kernel.wvo',
+        '02-wvb-admission-native.wvo',
+        '03-native-wvb-probe.wvo',
+        '04-process-policy.wvo',
+        '05-process.wvo',
+        '08-memory.wvo',
+        '09-exceptions.wvo',
+        '10-paging.wvo',
+        '12-wvb-admission-bridge.wvo',
+        '13-native-bridge-and-support.wvo'
+    )
+    $ReportedObjectNames = @($ObjectLines | ForEach-Object {
+        $_.Substring('object='.Length)
+    })
+    if ($ReportedObjectNames.Count -ne $StageZeroObjectNames.Count -or
+        (Compare-Object $StageZeroObjectNames $ReportedObjectNames -SyncWindow 0)) {
+        Fail-Recovery 'The Stage 0 object builder did not report the reviewed ordered object names.'
     }
-    $ObjectPaths = @()
-    $ObjectNames = @{}
-    foreach ($ObjectLine in $ObjectLines) {
-        $ObjectName = $ObjectLine.Substring('object='.Length)
-        if ([string]::IsNullOrWhiteSpace($ObjectName) -or
-            [IO.Path]::GetFileName($ObjectName) -cne $ObjectName -or
-            [IO.Path]::GetExtension($ObjectName) -cne '.wvo' -or
-            $ObjectNames.ContainsKey($ObjectName)) {
-            Fail-Recovery 'The Stage 0 object builder reported an invalid or duplicate object name.'
-        }
-        $ObjectNames.Add($ObjectName, $true)
+
+    foreach ($ObjectName in $StageZeroObjectNames) {
         $ObjectPath = Join-Path $ObjectDirectory $ObjectName
         if (!(Test-Path -LiteralPath $ObjectPath -PathType Leaf)) {
             Fail-Recovery "The Stage 0 object builder did not publish '$ObjectName'."
         }
-        $ObjectPaths += $ObjectPath
     }
+
+    $NativeWvaObjects = @(
+        @(
+            'Operating-System/Kernel/X64-Memory-Object-Shims.wva',
+            '06-memory-object-shims.wvo',
+            'fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee'
+        ),
+        @(
+            'Operating-System/Kernel/X64-Timer-Shims.wva',
+            '07-timer-shims.wvo',
+            'e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344'
+        ),
+        @(
+            'Operating-System/Kernel/X64-Kernel-Shims.wva',
+            '11-kernel-shims.wvo',
+            '845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193'
+        )
+    )
+    foreach ($NativeWvaObject in $NativeWvaObjects) {
+        $SourcePath = Join-Path $RepositoryRoot $NativeWvaObject[0]
+        $ObjectPath = Join-Path $ObjectDirectory $NativeWvaObject[1]
+        $AssemblerOutput = @(& $NativeAssembler $SourcePath $ObjectPath 2>&1)
+        if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $ObjectPath -PathType Leaf)) {
+            $AssemblerMessage = ($AssemblerOutput | ForEach-Object { $_.ToString() }) -join ' '
+            Fail-Recovery "The native WVA assembly step failed. $AssemblerMessage"
+        }
+        $ObjectSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $ObjectPath).Hash.ToLowerInvariant()
+        if ($ObjectSha256 -cne $NativeWvaObject[2]) {
+            Fail-Recovery "The native WVA object '$($NativeWvaObject[1])' has an unexpected digest."
+        }
+    }
+
+    $ObjectPaths = @(
+        '00-loader.wvo',
+        '01-kernel.wvo',
+        '02-wvb-admission-native.wvo',
+        '03-native-wvb-probe.wvo',
+        '04-process-policy.wvo',
+        '05-process.wvo',
+        '06-memory-object-shims.wvo',
+        '07-timer-shims.wvo',
+        '08-memory.wvo',
+        '09-exceptions.wvo',
+        '10-paging.wvo',
+        '11-kernel-shims.wvo',
+        '12-wvb-admission-bridge.wvo',
+        '13-native-bridge-and-support.wvo'
+    ) | ForEach-Object { Join-Path $ObjectDirectory $_ }
 
     $LinkerOutput = @(
         & $NativeLinker 0 $EntrySymbol $LinkedPath @ObjectPaths 2>&1

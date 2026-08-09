@@ -149,6 +149,10 @@ Independent Linux execution is the next qualification transfer.
 removes the managed link from the current-host normal recovery command. Stage 0
 now ends at ordered object production; Linux recovery execution and native
 Probe 40 object/scenario production are the next transfer.
+[Decision 0443](../Decisions/0443-Native-Probe-40-Top-Level-Wva-Assembly.md)
+moves the three top-level WVA shim objects to the qualified native assembler
+and leaves Stage 0 producing eleven link inputs. Inner process-image WVA,
+remaining object construction, and Linux recovery execution are next.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
