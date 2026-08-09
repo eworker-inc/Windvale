@@ -90,9 +90,12 @@ containers are retained under
 `Package-Uefi.cmd` and `.sh` launchers select the matching permanent-host
 artifact. The three-case native lane composes the real native linker at base
 zero, deterministic packaging, and invalid-entry destination preservation.
-The managed writer and verifier remain frozen differential evidence until
-independent Linux execution, Probe 40 composition, and the complete native
-retirement gate qualify this replacement on both permanent hosts.
+The explicit Probe 40 recovery command now gives its Stage 0-produced linked
+payload and entry to this retained native packager, so that workflow no longer
+executes the managed writer. Managed object production and linking, the writer,
+and the verifier remain frozen recovery/differential evidence until independent
+Linux execution, native Probe 40 composition, and the complete retirement gate
+qualify the replacement on both permanent hosts.
 
 ## Diagnostics
 

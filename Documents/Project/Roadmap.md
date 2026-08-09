@@ -133,6 +133,11 @@ then makes hosted packaging explicitly cross-target, retains paired native-built
 UEFI packager containers behind digest-bound launchers, and transfers three
 cases into the native retirement plan. Independent Linux execution, durable
 UEFI publication, upstream five-scenario composition, and promotion remain.
+[Decision 0439](../Decisions/0439-Native-Uefi-Recovery-Packaging-Cutover.md)
+then cuts the normal Probe 40 recovery workflow over to that retained native
+packager. Stage 0 still creates the scenario objects and links their flat image;
+native object production/linking, the other four scenarios, Linux execution,
+and promotion remain.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

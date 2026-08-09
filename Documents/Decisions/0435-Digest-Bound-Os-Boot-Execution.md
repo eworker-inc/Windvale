@@ -63,7 +63,9 @@ promotion.
 
 No firmware image, generated cache, or vendor-specific metadata is committed.
 The normal boot process no longer invokes Stage 0, while native image
-construction and the remaining promotion gate stay explicit.
+construction and the remaining promotion gate stay explicit. Decision 0439
+later moves final recovery EFI construction to the retained native packager;
+Stage 0 still owns Probe 40 object production and linking.
 
 ## Reconsideration triggers
 

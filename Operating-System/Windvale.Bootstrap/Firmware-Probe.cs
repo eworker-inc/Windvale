@@ -151,7 +151,7 @@ public static class Firmwareˉprobe
     private const uint FREE_POOL_OFFSET = 0x48;
     private const uint EXIT_BOOT_SERVICES_OFFSET = 0xE8;
 
-    public static ImmutableArray<byte> Buildˉapplication(
+    public static Linkˉresult Buildˉlinkedˉimage(
         Firmwareˉprobeˉscenario scenario = Firmwareˉprobeˉscenario.Normal)
     {
         if (scenario is not Firmwareˉprobeˉscenario.Normal and
@@ -320,7 +320,13 @@ public static class Firmwareˉprobe
                 $"{Kernelˉpagingˉcontract.EXECUTABLE_BYTES}-byte executable window.");
         }
 
-        var Application = Uefiˉapplicationˉwriter.Write(Link);
+        return Link;
+    }
+
+    public static ImmutableArray<byte> Buildˉapplication(
+        Firmwareˉprobeˉscenario scenario = Firmwareˉprobeˉscenario.Normal)
+    {
+        var Application = Uefiˉapplicationˉwriter.Write(Buildˉlinkedˉimage(scenario));
         if (!Application.Success)
         {
             throw new InvalidOperationException(

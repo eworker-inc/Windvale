@@ -517,7 +517,7 @@ the supplied image, private copy, firmware code, and variable-store template
 did not change. Run only the affected scenario during the inner loop. All five
 scenarios belong to the final OS qualification gate.
 
-To reconstruct an image through the retained managed Stage 0 explicitly, use:
+To reconstruct an image through the explicit recovery boundary, use:
 
 ```powershell
 pwsh -NoProfile -File Tools/Recovery/Rebuild-Os-Probe.ps1 `
@@ -525,9 +525,11 @@ pwsh -NoProfile -File Tools/Recovery/Rebuild-Os-Probe.ps1 `
     -Scenario normal
 ```
 
-The recovery command refuses an existing destination. It is provenance and
-differential infrastructure, not the normal boot path or a native image
-constructor.
+Stage 0 still produces and links the Probe 40 payload, then the digest-bound
+retained native UEFI packager constructs the final EFI. The recovery command
+refuses an existing destination and removes its private linked payload. It is
+provenance and differential infrastructure, not the normal boot path; upstream
+object production and linking still require .NET.
 
 ## Current boundary
 

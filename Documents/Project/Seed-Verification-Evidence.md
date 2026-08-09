@@ -4534,3 +4534,16 @@ seconds without constructing either host container and confirms no CLR in the
 retained process. The plan now owns 25 suites and 3,121 cases. Independent
 Linux execution, durable UEFI publication, Probe 40 composition, broad gates,
 and promotion remain deferred.
+
+## Local native UEFI recovery-packaging cutover evidence
+
+[Decision 0439](../Decisions/0439-Native-Uefi-Recovery-Packaging-Cutover.md)
+makes the explicit normal Probe 40 recovery command hand its existing linked
+payload and decimal entry offset to the retained native UEFI packager. The one
+reviewed focused command completes in 16.5 seconds and reproduces the exact
+683,008-byte normal EFI at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+Only the requested EFI remains; the private linked payload and candidate are
+absent. This is construction evidence, not a QEMU or broad verification rerun.
+Stage 0 object production/linking, the other four scenarios, Linux execution,
+durable publication, and the grouped retirement gate remain deferred.
