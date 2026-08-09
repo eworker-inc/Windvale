@@ -136,7 +136,7 @@ The package constructors retain only the zero-relocation templates plus typed pa
 
 `windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the one bounded input snapshot.
 
-The current corrected-backend reconstruction candidate is 1,004,032 bytes with SHA-256 `aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a`.
+The current WVB 1.11 reconstruction candidate is 1,199,104 bytes with SHA-256 `ef0e57d9c1e9d3c4da134611ac0154926c3489b5315bf0bd643fb2f468769460`.
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its current corrected-backend candidate is 793,600 bytes with SHA-256 `31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c`.
 
@@ -148,7 +148,7 @@ The current corrected-backend reconstruction candidate is 1,004,032 bytes with S
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
 
-The current corrected-backend reconstruction candidate is 1,003,520 bytes with SHA-256 `26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b`.
+The current WVB 1.11 reconstruction candidate is 1,200,128 bytes with SHA-256 `8a3edd4ea8d56746e37dcd49bddfb55adcf0dd8f52967d3d435867b4d7b4f938`.
 
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its current corrected-backend candidate is 794,624 bytes with SHA-256 `cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e`.
 
@@ -177,7 +177,7 @@ windvale aot Windvale-Wvo-Object.wvb --target windows-x64-wvo-inspector-v1
 windvale aot Windvale-Wvo-Object.wvb --target linux-x64-wvo-inspector-v1
 ```
 
-The canonical WVB is 125,721 bytes with SHA-256 `259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f`.
+The current canonical-source reconstruction candidate is 148,351 bytes with SHA-256 `519c32fda8d95167d54c723a35860eb80663be5f90ff12e4555ffa6031d505e6`. The digest-bound ordinary front door retains its previously qualified artifact until this candidate passes the exact-commit dual-host promotion gate.
 
 The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`.
 

@@ -1,0 +1,112 @@
+module Databaseˉstorageˉgeometryˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉstorageˉgeometry as Geometry;
+
+fn Databaseˉgeometryˉvalid(
+    Headerˉsize: u64,
+    Pageˉsize: u32,
+    Pageˉidentifier: u64,
+    Storageˉlength: u64,
+    Expectedˉoffset: u64,
+    Expectedˉend: u64
+) -> bool {
+    let Result: Geometry.Databaseˉpageˉrangeˉresult =
+        Geometry.Databaseˉstorageˉpageˉrange(
+            Headerˉsize,
+            Pageˉsize,
+            Pageˉidentifier,
+            Storageˉlength
+        );
+    var Matches: bool = false;
+    match Result {
+        case Geometry.Databaseˉpageˉrangeˉresult.Valid(Value) {
+            Matches = Value.Pageˉidentifier == Pageˉidentifier &&
+                Value.Offset == Expectedˉoffset &&
+                Value.Length == U64ˉfromˉu32(Pageˉsize) &&
+                Value.Endˉexclusive == Expectedˉend;
+        }
+        case Geometry.Databaseˉpageˉrangeˉresult.Failure(Error) {
+            Matches = false;
+        }
+    }
+    return Matches;
+}
+
+fn Databaseˉgeometryˉfailure(
+    Headerˉsize: u64,
+    Pageˉsize: u32,
+    Pageˉidentifier: u64,
+    Storageˉlength: u64,
+    Expected: Geometry.Databaseˉpageˉrangeˉerror
+) -> bool {
+    let Result: Geometry.Databaseˉpageˉrangeˉresult =
+        Geometry.Databaseˉstorageˉpageˉrange(
+            Headerˉsize,
+            Pageˉsize,
+            Pageˉidentifier,
+            Storageˉlength
+        );
+    var Matches: bool = false;
+    match Result {
+        case Geometry.Databaseˉpageˉrangeˉresult.Valid(Value) {
+            Matches = false;
+        }
+        case Geometry.Databaseˉpageˉrangeˉresult.Failure(Error) {
+            Matches = Error == Expected;
+        }
+    }
+    return Matches;
+}
+
+export fn Main() -> i32 {
+    if !Databaseˉgeometryˉvalid(4096u64, 4096u32, 2u64, 16384u64, 12288u64, 16384u64) {
+        return 1;
+    }
+    if !Databaseˉgeometryˉvalid(
+        0u64,
+        4096u32,
+        4294967295u64,
+        17592186044416u64,
+        17592186040320u64,
+        17592186044416u64
+    ) {
+        return 2;
+    }
+    if !Databaseˉgeometryˉfailure(
+        0u64,
+        0u32,
+        0u64,
+        0u64,
+        Geometry.Databaseˉpageˉrangeˉerror.Invalidˉpageˉsize
+    ) {
+        return 3;
+    }
+    if !Databaseˉgeometryˉfailure(
+        18446744073709551615u64,
+        1u32,
+        0u64,
+        18446744073709551615u64,
+        Geometry.Databaseˉpageˉrangeˉerror.Arithmeticˉoverflow
+    ) {
+        return 4;
+    }
+    if !Databaseˉgeometryˉfailure(
+        0u64,
+        4096u32,
+        18446744073709551615u64,
+        18446744073709551615u64,
+        Geometry.Databaseˉpageˉrangeˉerror.Arithmeticˉoverflow
+    ) {
+        return 5;
+    }
+    if !Databaseˉgeometryˉfailure(
+        4096u64,
+        4096u32,
+        2u64,
+        16383u64,
+        Geometry.Databaseˉpageˉrangeˉerror.Outsideˉstorage
+    ) {
+        return 6;
+    }
+    return 42;
+}

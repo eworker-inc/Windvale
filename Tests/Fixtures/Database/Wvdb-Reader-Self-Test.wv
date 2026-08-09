@@ -1,0 +1,203 @@
+module Wvdbˉreaderˉselfˉtest profile portable;
+
+import Wvdbˉtestˉfixtures as Fixtures;
+import Windvaleˉdatabaseˉreader as Database;
+
+fn Wvdbˉtestˉfound(Input: bytes, Key: u32, Expected: i32) -> bool {
+    let Result: Database.Wvdbˉlookupˉresult = Database.Wvdbˉreaderˉlookup(Input, Key);
+    var Matches: bool = false;
+    match Result {
+        case Database.Wvdbˉlookupˉresult.Found(Value) { Matches = Value == Expected; }
+        case Database.Wvdbˉlookupˉresult.Missing { Matches = false; }
+        case Database.Wvdbˉlookupˉresult.Failure(Failure) { Matches = false; }
+    }
+    return Matches;
+}
+
+fn Wvdbˉtestˉmissing(Input: bytes, Key: u32) -> bool {
+    let Result: Database.Wvdbˉlookupˉresult = Database.Wvdbˉreaderˉlookup(Input, Key);
+    var Matches: bool = false;
+    match Result {
+        case Database.Wvdbˉlookupˉresult.Found(Value) { Matches = false; }
+        case Database.Wvdbˉlookupˉresult.Missing { Matches = true; }
+        case Database.Wvdbˉlookupˉresult.Failure(Failure) { Matches = false; }
+    }
+    return Matches;
+}
+
+fn Wvdbˉtestˉfailure(
+    Input: bytes,
+    Key: u32,
+    Expectedˉerror: Database.Wvdbˉerror,
+    Expectedˉoffset: u32
+) -> bool {
+    let Result: Database.Wvdbˉlookupˉresult = Database.Wvdbˉreaderˉlookup(Input, Key);
+    var Matches: bool = false;
+    match Result {
+        case Database.Wvdbˉlookupˉresult.Found(Value) { Matches = false; }
+        case Database.Wvdbˉlookupˉresult.Missing { Matches = false; }
+        case Database.Wvdbˉlookupˉresult.Failure(Failure) {
+            Matches = Failure.Error == Expectedˉerror && Failure.Offset == Expectedˉoffset;
+        }
+    }
+    return Matches;
+}
+
+export fn Main() -> i32 {
+    let Tree: bytes = Fixtures.Wvdbˉtestˉtree();
+    if !Wvdbˉtestˉfound(Tree, 10u32, 7) { return 1; }
+    if !Wvdbˉtestˉfound(Tree, 20u32, 11) { return 2; }
+    if !Wvdbˉtestˉfound(Tree, 30u32, 42) { return 3; }
+    if !Wvdbˉtestˉfound(Tree, 40u32, -5) { return 4; }
+    if !Wvdbˉtestˉmissing(Tree, 0u32) { return 5; }
+    if !Wvdbˉtestˉmissing(Tree, 25u32) { return 6; }
+    if !Wvdbˉtestˉmissing(Tree, 4294967295u32) { return 7; }
+    if !Wvdbˉtestˉmissing(Fixtures.Wvdbˉtestˉmaximumˉempty(), 7u32) { return 8; }
+
+    let Empty: bytes = Bytesˉslice(Tree, 0u32, 0u32);
+    if !Wvdbˉtestˉfailure(Empty, 7u32, Database.Wvdbˉerror.Invalidˉsize, 0u32) {
+        return 9;
+    }
+    let Oversized: bytes = Fixtures.Wvdbˉtestˉoversized();
+    if !Wvdbˉtestˉfailure(
+        Oversized,
+        7u32,
+        Database.Wvdbˉerror.Invalidˉsize,
+        16417u32
+    ) {
+        return 10;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, 0u32, 0u32),
+        7u32,
+        Database.Wvdbˉerror.Invalidˉmagic,
+        0u32
+    ) {
+        return 11;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, 4u32, 2u32),
+        7u32,
+        Database.Wvdbˉerror.Unsupportedˉversion,
+        4u32
+    ) {
+        return 12;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, 8u32, 799u32),
+        7u32,
+        Database.Wvdbˉerror.Invalidˉheader,
+        8u32
+    ) {
+        return 13;
+    }
+
+    let Pageˉtwo: u32 = 544u32;
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, Pageˉtwo, 0u32),
+        7u32,
+        Database.Wvdbˉerror.Invalidˉpageˉmagic,
+        Pageˉtwo
+    ) {
+        return 14;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, Pageˉtwo + 4u32, 2u32),
+        7u32,
+        Database.Wvdbˉerror.Unsupportedˉpageˉversion,
+        Pageˉtwo + 4u32
+    ) {
+        return 15;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, Pageˉtwo + 8u32, 1u32),
+        7u32,
+        Database.Wvdbˉerror.Invalidˉpageˉidentity,
+        Pageˉtwo + 8u32
+    ) {
+        return 16;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, Pageˉtwo + 12u32, 3u32),
+        7u32,
+        Database.Wvdbˉerror.Invalidˉpageˉkind,
+        Pageˉtwo + 12u32
+    ) {
+        return 17;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, 48u32, 29u32),
+        7u32,
+        Database.Wvdbˉerror.Invalidˉpageˉcount,
+        48u32
+    ) {
+        return 18;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, 52u32, 1u32),
+        7u32,
+        Database.Wvdbˉerror.Invalidˉpageˉreserved,
+        52u32
+    ) {
+        return 19;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉsetˉu8(Tree, Pageˉtwo + 36u32, 43u8),
+        30u32,
+        Database.Wvdbˉerror.Invalidˉpageˉchecksum,
+        Pageˉtwo + 24u32
+    ) {
+        return 20;
+    }
+
+    let Badˉorderˉunsealed: bytes =
+        Fixtures.Wvdbˉtestˉsetˉu32(Tree, Pageˉtwo + 40u32, 30u32);
+    let Badˉorder: bytes = Fixtures.Wvdbˉtestˉfinalizeˉpage(Badˉorderˉunsealed, 2u32);
+    if !Wvdbˉtestˉfailure(
+        Badˉorder,
+        30u32,
+        Database.Wvdbˉerror.Invalidˉpageˉorder,
+        Pageˉtwo + 40u32
+    ) {
+        return 21;
+    }
+    let Badˉchildˉunsealed: bytes = Fixtures.Wvdbˉtestˉsetˉu32(Tree, 68u32, 3u32);
+    let Badˉchild: bytes = Fixtures.Wvdbˉtestˉfinalizeˉpage(Badˉchildˉunsealed, 0u32);
+    if !Wvdbˉtestˉfailure(
+        Badˉchild,
+        10u32,
+        Database.Wvdbˉerror.Invalidˉchild,
+        68u32
+    ) {
+        return 22;
+    }
+    let Badˉpaddingˉunsealed: bytes = Fixtures.Wvdbˉtestˉsetˉu8(Tree, 336u32, 1u8);
+    let Badˉpadding: bytes = Fixtures.Wvdbˉtestˉfinalizeˉpage(Badˉpaddingˉunsealed, 1u32);
+    if !Wvdbˉtestˉfailure(
+        Badˉpadding,
+        10u32,
+        Database.Wvdbˉerror.Invalidˉpageˉpadding,
+        336u32
+    ) {
+        return 23;
+    }
+    let Cycleˉunsealed: bytes = Fixtures.Wvdbˉtestˉsetˉu32(Tree, 68u32, 0u32);
+    let Cycle: bytes = Fixtures.Wvdbˉtestˉfinalizeˉpage(Cycleˉunsealed, 0u32);
+    if !Wvdbˉtestˉfailure(
+        Cycle,
+        10u32,
+        Database.Wvdbˉerror.Invalidˉcycle,
+        32u32
+    ) {
+        return 24;
+    }
+    if !Wvdbˉtestˉfailure(
+        Fixtures.Wvdbˉtestˉdepthˉchain(),
+        7u32,
+        Database.Wvdbˉerror.Invalidˉdepth,
+        24u32
+    ) {
+        return 25;
+    }
+    return 42;
+}

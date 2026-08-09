@@ -89,11 +89,11 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The canonical driver WVB is 1,078,247 bytes with SHA-256 `c609e6a4ed90da3e8e3a52cfe6266da7501ebb3142df4d1746bfcd9457051b00`.
+The current canonical-source reconstruction candidate is 1,100,882 bytes with SHA-256 `3829c63064a8c055940a2e4d606f17dfa6f692f6deb049d7a1406003bc86ea50`. The qualified native front door remains pinned until the candidate passes self-convergence and the exact-commit dual-host gate.
 
-The current corrected-backend `windows-x64-build-driver-v1` candidate emits a 28,917,248-byte PE32+ application with SHA-256 `9d6de1b4b9fd6c9359357c70e282add08ab895f18fcf8712a14010ab6a7c13b9`.
+The current WVB 1.11 recovery reconstruction for `windows-x64-build-driver-v1` emits a 29,112,320-byte PE32+ application with SHA-256 `a6e7d312aeb06b5103aafa840556f2166842ec68728d505a7db02f6bf7a9f73a`.
 
-The current corrected-backend `linux-x64-build-driver-v1` candidate emits a 28,917,760-byte sectionless static-PIE ELF application with SHA-256 `2e6480adbccdffbe75ac5442bd1e2e841770274766c7392061131fb831a91999`.
+The current WVB 1.11 recovery reconstruction for `linux-x64-build-driver-v1` emits a 29,114,368-byte sectionless static-PIE ELF application with SHA-256 `8e4ab2ec3c5f8062f0c7dcccc431543dccd878b88daf9046f83051752fc000e9`.
 
 These are reconstruction candidates produced after the Decision 0220 descriptor-return correction. The digest-bound ordinary native-front-door inventory deliberately retains its previously qualified build-driver applications until this exact descendant passes the Windows/Linux replacement gate; historical qualification identities remain recorded in that inventory and its evidence documents.
 

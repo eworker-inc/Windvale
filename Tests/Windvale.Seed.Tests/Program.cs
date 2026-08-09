@@ -117,12 +117,12 @@ internal static partial class Program
     private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "499ae95f433ab3fc925ef66f599d3198b7a60f633e4e88e37f6e7256654283ab";
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "d526b0214aa3c331808b5c4db6afa38da55c105fb20c52a0c65a1dca259c4612";
     private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "b2dc418a95c79802e2804433f77f779f17ca40033840e02e28417430df21178d";
-    private const string COMPILER_WVB_VERIFIER_SHA256 = "259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f";
-    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a";
-    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b";
-    private const string COMPILER_BUILD_DRIVER_SHA256 = "c609e6a4ed90da3e8e3a52cfe6266da7501ebb3142df4d1746bfcd9457051b00";
-    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "9d6de1b4b9fd6c9359357c70e282add08ab895f18fcf8712a14010ab6a7c13b9";
-    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "2e6480adbccdffbe75ac5442bd1e2e841770274766c7392061131fb831a91999";
+    private const string COMPILER_WVB_VERIFIER_SHA256 = "519c32fda8d95167d54c723a35860eb80663be5f90ff12e4555ffa6031d505e6";
+    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "ef0e57d9c1e9d3c4da134611ac0154926c3489b5315bf0bd643fb2f468769460";
+    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "8a3edd4ea8d56746e37dcd49bddfb55adcf0dd8f52967d3d435867b4d7b4f938";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "3829c63064a8c055940a2e4d606f17dfa6f692f6deb049d7a1406003bc86ea50";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "a6e7d312aeb06b5103aafa840556f2166842ec68728d505a7db02f6bf7a9f73a";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "8e4ab2ec3c5f8062f0c7dcccc431543dccd878b88daf9046f83051752fc000e9";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
@@ -10358,11 +10358,11 @@ internal static partial class Program
                 COMPILER_WVB_VERIFIER_TOOL_SOURCE),
             [
                 new(
-                    "Compiler-Wvb-Verifier-Semantic-Core.wv",
-                    COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
-                new(
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
+                new(
+                    "Compiler-Wvb-Verifier-Semantic-Core.wv",
+                    COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
             ]);
         if (!Compilation.Success)
         {
@@ -10372,7 +10372,7 @@ internal static partial class Program
         }
 
         var Verifierˉbytes = Compilation.Moduleˉbytes.ToArray();
-        Equal(125_721, Verifierˉbytes.Length);
+        Equal(148_351, Verifierˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_SHA256,
             Objectˉdigest.Calculateˉsha256(Verifierˉbytes));
@@ -10444,7 +10444,7 @@ internal static partial class Program
             Windowsˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(1_004_032, Firstˉwindows.Imageˉbytes.Length);
+        Equal(1_199_104, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -10465,7 +10465,7 @@ internal static partial class Program
             Linuxˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(1_003_520, Firstˉlinux.Imageˉbytes.Length);
+        Equal(1_200_128, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -10783,13 +10783,13 @@ internal static partial class Program
                     "Project-Manifest-Core.wv",
                     PROJECT_MANIFEST_CORE_SOURCE),
                 new(
-                    "Compiler-Wvb-Verifier-Semantic-Core.wv",
-                    COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
-                new(
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
+                new(
+                    "Compiler-Wvb-Verifier-Semantic-Core.wv",
+                    COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
             ]);
-        Equal(1_078_247, Driverˉbytes.Length);
+        Equal(1_100_882, Driverˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_SHA256,
             Objectˉdigest.Calculateˉsha256(Driverˉbytes));
@@ -10853,7 +10853,7 @@ internal static partial class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(28_917_248, Firstˉwindows.Imageˉbytes.Length);
+        Equal(29_112_320, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -10885,7 +10885,7 @@ internal static partial class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(28_917_760, Firstˉlinux.Imageˉbytes.Length);
+        Equal(29_114_368, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));

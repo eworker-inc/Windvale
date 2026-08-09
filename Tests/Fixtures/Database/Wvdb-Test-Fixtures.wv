@@ -1,0 +1,161 @@
+module Wvdbˉtestˉfixtures profile portable;
+
+import Foundationˉbyteˉconstruction as Construction;
+
+const DATABASE_MAGIC: u32 = 1111774807u32;
+const PAGE_MAGIC: u32 = 1196447319u32;
+const PAGE_SIZE: u32 = 256u32;
+const DATABASE_HEADER_SIZE: u32 = 32u32;
+const PAGE_HEADER_SIZE: u32 = 32u32;
+const MAXIMUM_KEY: u32 = 4294967295u32;
+
+fn Wvdbˉtestˉzeroes(Length: u32) -> bytes {
+    let Result: Construction.Foundationˉbytesˉresult =
+        Construction.Foundationˉbytesˉrepeat(0u8, Length);
+    return Result.Value;
+}
+
+fn Wvdbˉtestˉreplace(Input: bytes, Offset: u32, Replacement: bytes) -> bytes {
+    let Result: Construction.Foundationˉbytesˉresult =
+        Construction.Foundationˉbytesˉreplace(
+            Input,
+            Offset,
+            Bytesˉlength(Replacement),
+            Replacement
+        );
+    return Result.Value;
+}
+
+export fn Wvdbˉtestˉsetˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Wvdbˉtestˉreplace(Input, Offset, Bytesˉfromˉu8(Value));
+}
+
+export fn Wvdbˉtestˉsetˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Wvdbˉtestˉreplace(Input, Offset, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Wvdbˉtestˉsetˉi32(Input: bytes, Offset: u32, Value: i32) -> bytes {
+    return Wvdbˉtestˉreplace(Input, Offset, Bytesˉfromˉi32ˉlittle(Value));
+}
+
+fn Wvdbˉtestˉpageˉoffset(Pageˉidentifier: u32) -> u32 {
+    return DATABASE_HEADER_SIZE + Pageˉidentifier * PAGE_SIZE;
+}
+
+fn Wvdbˉtestˉpageˉchecksum(Input: bytes, Pageˉoffset: u32) -> u32 {
+    var Checksum: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < PAGE_SIZE {
+        if Index < 24u32 || Index >= 28u32 {
+            Checksum = Checksum + U32ˉfromˉu8(Bytesˉreadˉu8(Input, Pageˉoffset + Index));
+        }
+        Index = Index + 1u32;
+    }
+    return Checksum;
+}
+
+export fn Wvdbˉtestˉfinalizeˉpage(Input: bytes, Pageˉidentifier: u32) -> bytes {
+    let Pageˉoffset: u32 = Wvdbˉtestˉpageˉoffset(Pageˉidentifier);
+    let Cleared: bytes = Wvdbˉtestˉsetˉu32(Input, Pageˉoffset + 24u32, 0u32);
+    return Wvdbˉtestˉsetˉu32(
+        Cleared,
+        Pageˉoffset + 24u32,
+        Wvdbˉtestˉpageˉchecksum(Cleared, Pageˉoffset)
+    );
+}
+
+fn Wvdbˉtestˉdatabase(Pageˉcount: u32, Rootˉpage: u32, Depthˉlimit: u32) -> bytes {
+    let Length: u32 = DATABASE_HEADER_SIZE + Pageˉcount * PAGE_SIZE;
+    var Result: bytes = Wvdbˉtestˉzeroes(Length);
+    Result = Wvdbˉtestˉsetˉu32(Result, 0u32, DATABASE_MAGIC);
+    Result = Wvdbˉtestˉsetˉu32(Result, 4u32, 1u32);
+    Result = Wvdbˉtestˉsetˉu32(Result, 8u32, Length);
+    Result = Wvdbˉtestˉsetˉu32(Result, 12u32, PAGE_SIZE);
+    Result = Wvdbˉtestˉsetˉu32(Result, 16u32, Pageˉcount);
+    Result = Wvdbˉtestˉsetˉu32(Result, 20u32, Rootˉpage);
+    return Wvdbˉtestˉsetˉu32(Result, 24u32, Depthˉlimit);
+}
+
+fn Wvdbˉtestˉinitializeˉpage(
+    Input: bytes,
+    Pageˉidentifier: u32,
+    Pageˉkind: u32,
+    Entryˉcount: u32
+) -> bytes {
+    let Offset: u32 = Wvdbˉtestˉpageˉoffset(Pageˉidentifier);
+    var Result: bytes = Wvdbˉtestˉsetˉu32(Input, Offset, PAGE_MAGIC);
+    Result = Wvdbˉtestˉsetˉu32(Result, Offset + 4u32, 1u32);
+    Result = Wvdbˉtestˉsetˉu32(Result, Offset + 8u32, Pageˉidentifier);
+    Result = Wvdbˉtestˉsetˉu32(Result, Offset + 12u32, Pageˉkind);
+    return Wvdbˉtestˉsetˉu32(Result, Offset + 16u32, Entryˉcount);
+}
+
+fn Wvdbˉtestˉsetˉentry(
+    Input: bytes,
+    Pageˉidentifier: u32,
+    Entryˉindex: u32,
+    Key: u32,
+    Value: u32
+) -> bytes {
+    let Offset: u32 = Wvdbˉtestˉpageˉoffset(Pageˉidentifier) +
+        PAGE_HEADER_SIZE + Entryˉindex * 8u32;
+    let Withˉkey: bytes = Wvdbˉtestˉsetˉu32(Input, Offset, Key);
+    return Wvdbˉtestˉsetˉu32(Withˉkey, Offset + 4u32, Value);
+}
+
+fn Wvdbˉtestˉsetˉleafˉentry(
+    Input: bytes,
+    Pageˉidentifier: u32,
+    Entryˉindex: u32,
+    Key: u32,
+    Value: i32
+) -> bytes {
+    let Offset: u32 = Wvdbˉtestˉpageˉoffset(Pageˉidentifier) +
+        PAGE_HEADER_SIZE + Entryˉindex * 8u32;
+    let Withˉkey: bytes = Wvdbˉtestˉsetˉu32(Input, Offset, Key);
+    return Wvdbˉtestˉsetˉi32(Withˉkey, Offset + 4u32, Value);
+}
+
+export fn Wvdbˉtestˉtree() -> bytes {
+    var Result: bytes = Wvdbˉtestˉdatabase(3u32, 0u32, 16u32);
+    Result = Wvdbˉtestˉinitializeˉpage(Result, 0u32, 2u32, 2u32);
+    Result = Wvdbˉtestˉsetˉentry(Result, 0u32, 0u32, 20u32, 1u32);
+    Result = Wvdbˉtestˉsetˉentry(Result, 0u32, 1u32, MAXIMUM_KEY, 2u32);
+    Result = Wvdbˉtestˉinitializeˉpage(Result, 1u32, 1u32, 2u32);
+    Result = Wvdbˉtestˉsetˉleafˉentry(Result, 1u32, 0u32, 10u32, 7);
+    Result = Wvdbˉtestˉsetˉleafˉentry(Result, 1u32, 1u32, 20u32, 11);
+    Result = Wvdbˉtestˉinitializeˉpage(Result, 2u32, 1u32, 2u32);
+    Result = Wvdbˉtestˉsetˉleafˉentry(Result, 2u32, 0u32, 30u32, 42);
+    Result = Wvdbˉtestˉsetˉleafˉentry(Result, 2u32, 1u32, 40u32, -5);
+    Result = Wvdbˉtestˉfinalizeˉpage(Result, 0u32);
+    Result = Wvdbˉtestˉfinalizeˉpage(Result, 1u32);
+    return Wvdbˉtestˉfinalizeˉpage(Result, 2u32);
+}
+
+export fn Wvdbˉtestˉmaximumˉempty() -> bytes {
+    var Result: bytes = Wvdbˉtestˉdatabase(64u32, 0u32, 16u32);
+    var Page: u32 = 0u32;
+    while Page < 64u32 {
+        Result = Wvdbˉtestˉinitializeˉpage(Result, Page, 1u32, 0u32);
+        Result = Wvdbˉtestˉfinalizeˉpage(Result, Page);
+        Page = Page + 1u32;
+    }
+    return Result;
+}
+
+export fn Wvdbˉtestˉdepthˉchain() -> bytes {
+    var Result: bytes = Wvdbˉtestˉdatabase(17u32, 0u32, 16u32);
+    var Page: u32 = 0u32;
+    while Page < 16u32 {
+        Result = Wvdbˉtestˉinitializeˉpage(Result, Page, 2u32, 1u32);
+        Result = Wvdbˉtestˉsetˉentry(Result, Page, 0u32, MAXIMUM_KEY, Page + 1u32);
+        Result = Wvdbˉtestˉfinalizeˉpage(Result, Page);
+        Page = Page + 1u32;
+    }
+    Result = Wvdbˉtestˉinitializeˉpage(Result, 16u32, 1u32, 0u32);
+    return Wvdbˉtestˉfinalizeˉpage(Result, 16u32);
+}
+
+export fn Wvdbˉtestˉoversized() -> bytes {
+    return Wvdbˉtestˉzeroes(16417u32);
+}
