@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $InventoryPath = Join-Path $RepositoryRoot 'Documents/Project/Dotnet-Retirement-Inventory.json'
 $AllowedLanes = @('development', 'verification', 'release', 'recovery')
+$AllowedModes = @('normal', 'recovery')
 
 function Test-DirectManagedInvocation {
     param(
@@ -38,6 +39,10 @@ if ($Entries.Count -eq 0) {
 $ExpectedPaths = [System.Collections.Generic.List[string]]::new()
 $SeenPaths = [System.Collections.Generic.HashSet[string]]::new(
     [System.StringComparer]::Ordinal)
+$ModeCounts = @{
+    normal = 0
+    recovery = 0
+}
 
 foreach ($Entry in $Entries) {
     $Path = [string]$Entry.path
@@ -62,6 +67,11 @@ foreach ($Entry in $Entries) {
         throw "Inventory path '$Path' has no owner."
     }
 
+    $Mode = [string]$Entry.mode
+    if ($Mode -notin $AllowedModes) {
+        throw "Inventory path '$Path' has unsupported mode '$Mode'."
+    }
+
     $Lanes = @($Entry.lanes)
     if ($Lanes.Count -eq 0) {
         throw "Inventory path '$Path' has no lane."
@@ -80,6 +90,13 @@ foreach ($Entry in $Entries) {
         }
     }
 
+    if ($Mode -eq 'recovery' -and ($Lanes.Count -ne 1 -or $Lanes[0] -ne 'recovery')) {
+        throw "Recovery inventory path '$Path' must own only the recovery lane."
+    }
+    if ($Mode -eq 'normal' -and 'recovery' -in $Lanes) {
+        throw "Normal inventory path '$Path' cannot own the recovery lane."
+    }
+
     $FullPath = Join-Path $RepositoryRoot $Path
     if (!(Test-Path -LiteralPath $FullPath -PathType Leaf)) {
         throw "Inventory path '$Path' does not exist."
@@ -91,6 +108,7 @@ foreach ($Entry in $Entries) {
     }
 
     $ExpectedPaths.Add($Path)
+    $ModeCounts[$Mode]++
 }
 
 $CandidateFiles = @(
@@ -132,5 +150,7 @@ if ($UntrackedPaths.Count -ne 0 -or $StalePaths.Count -ne 0) {
 }
 
 if (!$Quiet) {
-    Write-Host ".NET retirement inventory passed ($($ExpectedPaths.Count) direct entry points)."
+    Write-Host (
+        ".NET retirement inventory passed ($($ExpectedPaths.Count) direct entry points; " +
+        "$($ModeCounts.normal) normal, $($ModeCounts.recovery) recovery).")
 }

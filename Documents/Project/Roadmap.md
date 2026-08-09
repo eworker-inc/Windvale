@@ -199,8 +199,14 @@ portable process-policy source, leaving only the large process object frozen.
 that process object's 463,531 payload bytes from canonical Windvale sources,
 WVA shims, and versioned records while retaining one 46,678-byte reviewed
 architecture fixture. The normal Probe 40 object inventory now has eleven
-native producers and zero frozen WVOs. Linux execution, the normal-path audit,
-final Decision 0057 qualification, and the digest-bound recovery release remain.
+native producers and zero frozen WVOs. Linux execution, final Decision 0057
+qualification, and the digest-bound recovery release remain.
+[Decision 0457](../Decisions/0457-Normal-Path-Dotnet-Audit.md) completes that
+audit: only four direct normal managed files remain, all in verification, plus
+one indirect local call into the managed Seed gate. Nine other direct entries
+are correctly isolated recovery tools. The next slice is a native changed-file
+verification front door, followed by evidence-gap closure and one GitHub
+dual-host cutover rather than a line-for-line managed-test rewrite.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

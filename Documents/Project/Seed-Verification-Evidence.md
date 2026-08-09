@@ -5028,3 +5028,19 @@ It owns 31 suites with 3,147 fixed cases. The normal object seed contains zero
 WVOs and records eleven native-produced objects totaling 692,650 bytes. Linux
 execution, the complete coordinator, broad Seed/OS, QEMU, Standard,
 Qualification, the normal-path audit, and non-normal scenarios did not run.
+
+## Local normal-path .NET audit evidence
+
+[Decision 0457](../Decisions/0457-Normal-Path-Dotnet-Audit.md) audits executable
+repository entry points after the final Probe object transfer. Direct invocation
+discovery and call-chain review identify 13 managed files: four normal
+verification entries and nine explicit recovery entries. `Verify-Changed.ps1`
+is the sole additional indirect local dependency because it dispatches to the
+managed Windows Seed verifier for qualification-scoped changes.
+
+Ordinary build, inspect, execute, assemble, lower, link, package, publish,
+compiler-convergence, Probe construction/boot, website verification, and
+homepage deployment entry points contain no .NET invocation. The inventory
+format now records and verifies `normal` versus `recovery` mode. No broad or
+behavioral test ran for this documentation/inventory boundary; the focused
+inventory verifier is its complete executable check.

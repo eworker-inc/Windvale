@@ -4,6 +4,7 @@
   "directManagedEntrypoints": [
     {
       "path": ".github/workflows/verify.yml",
+      "mode": "normal",
       "lanes": [
         "verification",
         "release"
@@ -12,6 +13,7 @@
     },
     {
       "path": "Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -19,6 +21,7 @@
     },
     {
       "path": "Tools/Recovery/Rebuild-Native-Compiler-Seed.sh",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -26,6 +29,7 @@
     },
     {
       "path": "Tools/Recovery/Rebuild-Native-Front-Door.ps1",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -33,6 +37,7 @@
     },
     {
       "path": "Tools/Recovery/Rebuild-Native-Front-Door.sh",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -40,6 +45,7 @@
     },
     {
       "path": "Tools/Recovery/Rebuild-WebAssembly-Native-Compiler.ps1",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -47,6 +53,7 @@
     },
     {
       "path": "Tools/Recovery/Rebuild-WebAssembly-Native-Backend.ps1",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -54,6 +61,7 @@
     },
     {
       "path": "Tools/Recovery/Verify-Managed-Bootstrap.ps1",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -61,6 +69,7 @@
     },
     {
       "path": "Tools/Recovery/Verify-Managed-Bootstrap.sh",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -68,6 +77,7 @@
     },
     {
       "path": "Tools/Recovery/Rebuild-Os-Probe.ps1",
+      "mode": "recovery",
       "lanes": [
         "recovery"
       ],
@@ -75,6 +85,7 @@
     },
     {
       "path": "Tools/Verify/Verify-Seed.ps1",
+      "mode": "normal",
       "lanes": [
         "verification"
       ],
@@ -82,6 +93,7 @@
     },
     {
       "path": "Tools/Verify/Verify-Seed.sh",
+      "mode": "normal",
       "lanes": [
         "verification"
       ],
@@ -89,6 +101,7 @@
     },
     {
       "path": "Tools/Verify/Verify-WebAssembly.ps1",
+      "mode": "normal",
       "lanes": [
         "verification"
       ],
