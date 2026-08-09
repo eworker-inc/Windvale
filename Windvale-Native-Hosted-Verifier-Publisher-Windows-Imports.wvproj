@@ -1,0 +1,6 @@
+windvale-project 1
+root "Linker/Windvale/Native-Hosted-Verifier-Publisher-Windows-Imports-Bridge.wv"
+source "Foundation/Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Publisher-Windows-Imports-Core.wv"
+emit wvb

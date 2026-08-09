@@ -1,0 +1,7 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉimportsˉbridge profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉimports as Imports;
+
+export fn Main(Input: bytes) -> bytes {
+    return Imports.Publisherˉwindowsˉimports(Input);
+}

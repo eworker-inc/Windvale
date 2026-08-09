@@ -73,7 +73,10 @@ The focused test checks its pinned identity, service-free entry shape,
 interpreter/native equality, exact component equality with both canonical
 publisher applications, and narrow malformed rejection.
 
-The next slice must consume these bytes with `WVCR` and Decision 0475 metadata
-to perform the exact Windows PE and Linux ELF mutations. The frozen C# writer
-remains Stage 0 recovery/differential evidence until that materialization and
-the broader dual-host retirement gates are complete.
+[Decision 0478](../Documents/Decisions/0478-Native-WVHV-Publisher-Windows-Imports.md)
+now constructs the remaining publisher-only Windows import page. The next
+slice must consume these bytes with `WVCR`, Decision 0475 metadata, and the
+admitted base application to perform the exact Windows PE and Linux ELF
+mutations. The frozen C# writer remains Stage 0 recovery/differential evidence
+until that materialization and the broader dual-host retirement gates are
+complete.

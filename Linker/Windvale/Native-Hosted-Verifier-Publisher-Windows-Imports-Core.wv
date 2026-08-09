@@ -1,0 +1,94 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉimports profile portable;
+
+import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
+
+fn Importˉentry(
+    Input: bytes,
+    Address: u32,
+    Lookupˉoffset: u32,
+    Iatˉoffset: u32,
+    Index: u32,
+    Nameˉoffset: u32,
+    Name: text
+) -> bytes {
+    let Nameˉaddress: u32 = Address + Nameˉoffset;
+    var Result: bytes = Build.Patchˉu64(
+        Input, Lookupˉoffset + Index * 8u32, Nameˉaddress, 0u32
+    );
+    Result = Build.Patchˉu64(
+        Result, Iatˉoffset + Index * 8u32, Nameˉaddress, 0u32
+    );
+    return Build.Writeˉascii(Result, Nameˉoffset + 2u32, Name);
+}
+
+fn Descriptor(
+    Input: bytes,
+    Offset: u32,
+    Lookup: u32,
+    Name: u32,
+    Iat: u32
+) -> bytes {
+    var Result: bytes = Build.Patchˉu32(Input, Offset, Lookup);
+    Result = Build.Patchˉu32(Result, Offset + 12u32, Name);
+    return Build.Patchˉu32(Result, Offset + 16u32, Iat);
+}
+
+fn Imports(Address: u32) -> bytes {
+    var Result: bytes = Build.Zeros(4096u32);
+    Result = Descriptor(Result, 0u32, Address + 80u32, Address + 724u32, Address + 240u32);
+    Result = Descriptor(Result, 20u32, Address + 208u32, Address + 738u32, Address + 368u32);
+    Result = Descriptor(Result, 40u32, Address + 224u32, Address + 748u32, Address + 384u32);
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 0u32, 400u32, "CloseHandle");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 1u32, 414u32, "CreateFileW");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 2u32, 428u32, "FlushFileBuffers");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 3u32, 448u32, "GetCommandLineW");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 4u32, 466u32, "GetFileInformationByHandle");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 5u32, 496u32, "GetFileSizeEx");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 6u32, 512u32, "GetLastError");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 7u32, 528u32, "GetStdHandle");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 8u32, 544u32, "LocalFree");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 9u32, 556u32, "MultiByteToWideChar");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 10u32, 578u32, "ReadFile");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 11u32, 590u32, "SetFileInformationByHandle");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 12u32, 620u32, "SetFilePointerEx");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 13u32, 640u32, "WideCharToMultiByte");
+    Result = Importˉentry(Result, Address, 80u32, 240u32, 14u32, 662u32, "WriteFile");
+    Result = Importˉentry(Result, Address, 208u32, 368u32, 0u32, 674u32, "NtSetInformationFile");
+    Result = Importˉentry(Result, Address, 224u32, 384u32, 0u32, 702u32, "CommandLineToArgvW");
+    Result = Build.Writeˉascii(Result, 724u32, "KERNEL32.dll");
+    Result = Build.Writeˉascii(Result, 738u32, "ntdll.dll");
+    return Build.Writeˉascii(Result, 748u32, "SHELL32.dll");
+}
+
+fn Response(Input: bytes, Status: u32) -> bytes {
+    var Result: bytes = Build.Empty(Input);
+    Result = Build.Appendˉu32(Result, 1296651863u32);
+    Result = Build.Appendˉu32(Result, 1u32);
+    var Total: u32 = 32u32;
+    var Pageˉoffset: u32 = 0u32;
+    var Pageˉbytes: u32 = 0u32;
+    var Address: u32 = 0u32;
+    if Status == 0u32 {
+        Total = 4128u32;
+        Pageˉoffset = 32u32;
+        Pageˉbytes = 4096u32;
+        Address = 253952u32;
+    }
+    Result = Build.Appendˉu32(Result, Total);
+    Result = Build.Appendˉu32(Result, Status);
+    Result = Build.Appendˉu32(Result, Bytesˉlength(Input));
+    Result = Build.Appendˉu32(Result, Pageˉoffset);
+    Result = Build.Appendˉu32(Result, Pageˉbytes);
+    return Build.Appendˉu32(Result, Address);
+}
+
+export fn Publisherˉwindowsˉimports(Input: bytes) -> bytes {
+    if Bytesˉlength(Input) != 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1380537943u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) != 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 12u32) != 253952u32 {
+        return Response(Input, 1u32);
+    }
+    return Bytesˉconcat(Response(Input, 0u32), Imports(253952u32));
+}
