@@ -71,5 +71,7 @@ Its recovery-only retained targets are
 `dc42cd573e26ba8617a7323089f2c140f0488ec0cb3b9a6e4b77d5c4d7fbd4d5`
 and 188,416-byte Linux SHA-256
 `cfd0071c3d103ca0feedb33370b81bc3edb0b41e8bb95ee9744d1b53342fb6bd`.
-The C# writer owns only deletion-bound recovery target/identity wiring; native
-reconstruction and promotion remain pending.
+The C# writer owns only deletion-bound recovery target/identity wiring.
+[Decision 0466](../Documents/Decisions/0466-Native-WVHV-Request-Container-Reconstruction.md)
+adds exact native reconstruction of both products; independent Linux execution
+and promotion remain pending.

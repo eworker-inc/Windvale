@@ -1,0 +1,86 @@
+module Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉtool profile hosted;
+
+import Nativeˉhostedˉverifierˉserviceˉbundleˉrequest as Request;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉverifierˉbundleˉrequestˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostverifierbundle <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <request.wvsq>"
+    );
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "verifier service-bundle request status=",
+            Enumˉname(Nativeˉhostedˉverifierˉbundleˉrequestˉstatus.Rejected)
+        )
+    );
+    return 2;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 8u32 { return Usage(); }
+    let Outputˉpath: text = process.argument(7u32);
+    var Index: u32 = 0u32;
+    while Index < 7u32 {
+        let Inputˉpath: text = process.argument(Index);
+        if Pathsˉareˉequal(Inputˉpath, Outputˉpath) { return Usage(); }
+        var Prior: u32 = 0u32;
+        while Prior < Index {
+            if Pathsˉareˉequal(Inputˉpath, process.argument(Prior)) {
+                return Reject();
+            }
+            Prior = Prior + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+
+    let Result: Request.Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉresult =
+        Request.Nativeˉhostedˉverifierˉserviceˉbundleˉrequest(
+            file.read_bytes(process.argument(0u32)),
+            file.read_bytes(process.argument(1u32)),
+            file.read_bytes(process.argument(2u32)),
+            file.read_bytes(process.argument(3u32)),
+            file.read_bytes(process.argument(4u32)),
+            file.read_bytes(process.argument(5u32)),
+            file.read_bytes(process.argument(6u32))
+        );
+    if !Result.Valid { return Reject(); }
+    file.write_bytes(Outputˉpath, Result.Value);
+    console.write_line(
+        Textˉconcat(
+            "verifier service-bundle request status=Valid bytes=",
+            U32ˉformat(Bytesˉlength(Result.Value))
+        )
+    );
+    return 0;
+}
