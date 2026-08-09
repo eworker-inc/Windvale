@@ -1,4 +1,4 @@
-# Decision 0420: Import-free browser console envelope
+# Decision 0421: Import-free browser console envelope
 
 - Status: Implemented candidate; cross-browser qualification pending
 - Date: 2026-08-08

@@ -320,7 +320,7 @@ Every well-formed version-3 execution result uses this exact `WVXO 3` layout:
 | 24 | 4 | Diagnostic-output byte length, currently zero |
 | 28 | Standard-output byte length | Exact accumulated standard-output bytes |
 
-The exact `Hello-Windvale.wv` source compiles in the direct browser compiler to 253 WVB bytes with SHA-256 `0a9230e700a10d14e718340e49562e5b0184a3c3a71b5cd29915126a6b28c28f`. With the grant it succeeds after eight guest instructions, returns zero, and publishes `Hello from Windvale` plus LF; without the grant it returns `WVR3010` before executing guest code. [Decision 0420](../Documents/Decisions/0420-Import-Free-Browser-Console-Envelope.md) owns this boundary.
+The exact `Hello-Windvale.wv` source compiles in the direct browser compiler to 253 WVB bytes with SHA-256 `0a9230e700a10d14e718340e49562e5b0184a3c3a71b5cd29915126a6b28c28f`. With the grant it succeeds after eight guest instructions, returns zero, and publishes `Hello from Windvale` plus LF; without the grant it returns `WVR3010` before executing guest code. [Decision 0421](../Documents/Decisions/0421-Import-Free-Browser-Console-Envelope.md) owns this boundary.
 
 ### Retained profile-16 interpreter: compiler-scale execution entry
 

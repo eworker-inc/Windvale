@@ -24,6 +24,20 @@ const Decision = await readFile(path.join(Repositoryˉroot, Manifest.decision), 
 if (!Decision.startsWith("# Decision 0333: Segmented direct WebAssembly compiler\n")) {
     Fail("The WebAssembly playground package decision is invalid.");
 }
+Equal(
+    "Documents/Decisions/0421-Import-Free-Browser-Console-Envelope.md",
+    Manifest.executionDecision,
+    "browser execution decision",
+);
+const Executionˉdecision = await readFile(
+    path.join(Repositoryˉroot, Manifest.executionDecision),
+    "utf8",
+);
+if (!Executionˉdecision.startsWith(
+    "# Decision 0421: Import-free browser console envelope\n",
+)) {
+    Fail("The browser execution decision is invalid.");
+}
 if (!Array.isArray(Manifest.artifacts) || Manifest.artifacts.length !== 2) {
     Fail("The WebAssembly playground manifest must own exactly two browser artifacts.");
 }
