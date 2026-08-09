@@ -27,18 +27,18 @@ $Dependencies = @(
     'Foundation/Byte-Construction.wv',
     'Foundation/Decimal-Parsing.wv'
 ) | ForEach-Object { Join-Path $RepositoryRoot $_ }
-$Stage1 = Join-Path $Artifacts 'Bootstrap-Stage1-Source-Wvb-Tool.wvb'
-$Stage2 = Join-Path $Artifacts 'Bootstrap-Stage2-Source-Wvb-Tool.wvb'
+$Stage1 = Join-Path $Artifacts 'Recovery-Bootstrap-Stage1-Source-Wvb-Tool.wvb'
+$Stage2 = Join-Path $Artifacts 'Recovery-Bootstrap-Stage2-Source-Wvb-Tool.wvb'
 
 New-Item -ItemType Directory -Force -Path $Artifacts | Out-Null
 dotnet build $ToolProject --configuration $Configuration --nologo
 if ($LASTEXITCODE -ne 0) {
-    throw "The Stage 0 tool build failed with exit code $LASTEXITCODE."
+    throw "The Stage 0 recovery tool build failed with exit code $LASTEXITCODE."
 }
 
 dotnet $ToolDll build $ProjectManifest -o $Stage1
 if ($LASTEXITCODE -ne 0) {
-    throw 'Stage 0 failed to produce the Stage 1 compiler from Windvale-Compiler.wvproj.'
+    throw 'Stage 0 recovery failed to produce the Stage 1 compiler.'
 }
 
 $CapabilityArguments = @(
@@ -65,7 +65,7 @@ if (
 
 dotnet $ToolDll verify $Stage2
 if ($LASTEXITCODE -ne 0) {
-    throw 'Independent verification rejected the Stage 2 compiler.'
+    throw 'Independent recovery verification rejected the Stage 2 compiler.'
 }
 
 $Stage1Bytes = [IO.File]::ReadAllBytes($Stage1)
@@ -75,7 +75,7 @@ if (![Linq.Enumerable]::SequenceEqual($Stage1Bytes, $Stage2Bytes)) {
 }
 
 $Digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $Stage2).Hash.ToLowerInvariant()
-Write-Host 'Windvale bootstrap convergence passed.'
+Write-Host 'Managed recovery bootstrap convergence passed.'
 Write-Host "Compiler bytes: $($Stage2Bytes.Length)"
 Write-Host "Compiler SHA-256: $Digest"
 Write-Host "Stage 1: $Stage1"

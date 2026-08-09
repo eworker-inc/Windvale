@@ -21,7 +21,15 @@ Use three evidence-preserving optimizations and make full convergence a dedicate
 
 The public `WVSS 1`, `WVSD 1`, `WVLB 1`, `WVIR 1`, and `WVB 1.6` formats, language semantics, canonical ordering, diagnostic identities, and five Stage 0 differential fixture outputs do not change.
 
-`Tools/Verify/Verify-Bootstrap.ps1` and `Tools/Verify/Verify-Bootstrap.sh` own the expensive proof outside the Fast, Standard, and ordinary Qualification inner loop. They use one canonical root plus eleven explicit dependencies, build Stage 1 with the C# reference/recovery compiler, execute Stage 1 with only its six declared hosted capabilities, independently verify Stage 2, and require complete Stage 1/Stage 2 byte equality. The default bootstrap ceiling remains 8,000,000,000 instructions.
+The scripts now retained as `Tools/Recovery/Verify-Managed-Bootstrap.ps1` and
+`Tools/Recovery/Verify-Managed-Bootstrap.sh` own the expensive proof outside the
+Fast, Standard, and ordinary Qualification inner loop. They use one canonical
+root plus eleven explicit dependencies, build Stage 1 with the C#
+reference/recovery compiler, execute Stage 1 with only its six declared hosted
+capabilities, independently verify Stage 2, and require complete Stage 1/Stage 2
+byte equality. This decision's original default ceiling was 8,000,000,000
+instructions; the retained recovery scripts now default to the later measured
+48,000,000,000-instruction compiler envelope.
 
 ## Rejected alternatives
 

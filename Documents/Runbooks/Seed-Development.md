@@ -61,7 +61,7 @@ Choose the gate that protects the changed boundary:
 | Coherent cross-area development batch | `Development` |
 | Complete regular and extended in-process candidate | `Standard` |
 | Release, qualification, or changed portable artifact identity | Cross-host `Qualification` |
-| Compiler inventory, project, or convergence change | `Verify-Bootstrap.ps1` or `.sh` once for the final candidate |
+| Compiler inventory or project change | Native `Verify-Bootstrap.cmd` or `.sh` once for the final candidate |
 | OS boot, image, firmware, or kernel-seam change | Focused OS tests and the relevant live boot gate |
 
 The no-argument verifier defaults to `Development`. Request complete Qualification explicitly on Windows:
@@ -112,19 +112,23 @@ pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1
 
 The verifier requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained arithmetic contracts. For execution ABI 2 it requires exact single-loop success at budget 157, `3011` exhaustion at 156, nonterminating-loop containment at 50, mixed sequential-control success/exhaustion at 184/183 and 331/330 across both conditional routes, two-`if` success/exhaustion at 41/40, shared-budget direct-call success/exhaustion at 66/65, and callee-overflow propagation as `3007/0/14`. Every retained repeat resets exactly. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
 
-## Compiler bootstrap convergence
+## Native compiler bootstrap verification
 
-Bootstrap convergence is separate from the normal development suite because it executes billions of verified VM instructions. Run it once for a final compiler candidate:
+The digest-bound native bootstrap is separate from the normal development suite. Run it once for a final compiler candidate:
 
-```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Bootstrap.ps1
+```bat
+Tools\Verify\Verify-Bootstrap.cmd
 ```
 
 ```sh
 ./Tools/Verify/Verify-Bootstrap.sh
 ```
 
-The verifier builds Stage 1 with the C# recovery compiler, asks that Windvale bytecode compiler to build Stage 2 from the canonical source inventory, independently verifies both modules, and requires complete byte equality.
+The verifier admits the versioned native compiler seed and publisher, rebuilds
+the current canonical compiler WVB from the exact project inventory, requires
+its pinned byte identity, and publishes it through the qualified native front
+door. The older Stage 0 → Stage 1 → Stage 2 convergence proof remains available
+only as `Tools/Recovery/Verify-Managed-Bootstrap.ps1` or `.sh`.
 
 ## Compile and run a portable program
 

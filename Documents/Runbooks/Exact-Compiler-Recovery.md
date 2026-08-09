@@ -26,14 +26,14 @@ git rev-parse 'HEAD^{tree}'
 dotnet --version
 ```
 
-`git status --short` must be empty and `dotnet --version` must report `10.0.302` for the current evidence. First reproduce bytecode compiler convergence through the existing paired-host bootstrap procedure:
+`git status --short` must be empty and `dotnet --version` must report `10.0.302` for the current evidence. First reproduce bytecode compiler convergence through the explicitly retained managed recovery procedure:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Bootstrap.ps1
+pwsh -NoProfile -File Tools/Recovery/Verify-Managed-Bootstrap.ps1
 ```
 
 ```sh
-./Tools/Verify/Verify-Bootstrap.sh
+./Tools/Recovery/Verify-Managed-Bootstrap.sh
 ```
 
 Then build the Stage 0 tool once and use the canonical project manifest for every recovered artifact:

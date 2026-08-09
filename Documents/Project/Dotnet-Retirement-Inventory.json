@@ -1,6 +1,6 @@
 {
   "format": "windvale-dotnet-retirement-inventory-1",
-  "updated": "2026-08-08",
+  "updated": "2026-08-09",
   "directManagedEntrypoints": [
     {
       "path": ".github/workflows/verify.yml",
@@ -53,20 +53,18 @@
       "owner": "WebAssembly backend package reconstruction"
     },
     {
-      "path": "Tools/Verify/Verify-Bootstrap.ps1",
+      "path": "Tools/Recovery/Verify-Managed-Bootstrap.ps1",
       "lanes": [
-        "verification",
         "recovery"
       ],
-      "owner": "Windows compiler bootstrap convergence"
+      "owner": "Windows managed compiler convergence recovery"
     },
     {
-      "path": "Tools/Verify/Verify-Bootstrap.sh",
+      "path": "Tools/Recovery/Verify-Managed-Bootstrap.sh",
       "lanes": [
-        "verification",
         "recovery"
       ],
-      "owner": "Linux compiler bootstrap convergence"
+      "owner": "Linux managed compiler convergence recovery"
     },
     {
       "path": "Tools/Verify/Verify-Os-Boot.ps1",

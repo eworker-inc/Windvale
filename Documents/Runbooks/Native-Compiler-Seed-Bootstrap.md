@@ -6,6 +6,20 @@ It does not invoke .NET on the ordinary bootstrap path.
 
 ## Bootstrap the compiler
 
+The ordinary verification wrappers select the repository's checked-in artifact
+and source roots automatically:
+
+```bat
+Tools\Verify\Verify-Bootstrap.cmd
+```
+
+```sh
+./Tools/Verify/Verify-Bootstrap.sh
+```
+
+Use the lower-level launchers below when proving a copied release seed or
+selecting an explicit destination.
+
 On Windows x64:
 
 ```bat

@@ -61,13 +61,17 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
 
 The verifier performs a Release build, runs the 60-test conformance suite, produces a Windows report, publishes the CLI as framework-dependent `linux-x64`, and exercises real source composition, project selection, Foundation/compiler module composition, the complete compiler frontend through typed WVIR and the qualified canonical function/data/nominal/capability WVB backend, shared native fragments, Windvale-owned runtime stencils, module, Windvale/Stage 0 assembly, Windvale WVO scan, complete Windvale and Stage 0 link, object, inspect, verify, and runtime CLI paths. It checks dependency-order independence, semantic and binary-evidence rejection, output preservation, capability refusal and authorized execution, deterministic file snapshots, opt-in executed-instruction reporting, SHA-256 sequence/slice behavior, byte-for-byte compiler and assembler equality, independent complete-image reconstruction, exact Windvale/Stage 0 image and map equality, maximum image and map-limit cases, publish-after-success behavior, no file for rejected source/link or a missing parent, and preservation of existing outputs when validation fails. The current WVB 1.6 Windows report SHA-256 is `c34a2199e548631323b2186dda0dcf8ffcb0a3a3c6eb7d53d9a405c314837a4b`.
 
-The expensive compiler convergence proof remains separate from the ordinary suite:
+The ordinary compiler bootstrap check now uses the digest-bound native seed:
 
-```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Bootstrap.ps1
+```bat
+Tools\Verify\Verify-Bootstrap.cmd
 ```
 
-It builds Stage 1 from the exact inventory with the reference/recovery compiler, runs Stage 1 to build Stage 2, independently verifies Stage 2, and requires complete byte equality. Linux uses `./Tools/Verify/Verify-Bootstrap.sh` with the same inventory and ceiling.
+It rebuilds the pinned current compiler WVB from the exact inventory without
+invoking `dotnet`; Linux uses `./Tools/Verify/Verify-Bootstrap.sh`. The historical
+Stage 0 → Stage 1 → Stage 2 byte-equality proof is retained as
+`Tools/Recovery/Verify-Managed-Bootstrap.ps1` and `.sh` for recovery and
+differential evidence.
 
 ## WVB 1.6 linker-prerequisite qualification
 
