@@ -23,6 +23,8 @@ internal static class Stage0ˉrecoveryˉaotˉtargets
         Hostedˉserviceˉbundleˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or

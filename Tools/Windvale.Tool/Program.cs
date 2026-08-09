@@ -200,6 +200,7 @@ internal static class Program
         Hostedˉserviceˉbundleˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉpublicationˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
@@ -412,6 +413,8 @@ internal static class Program
         Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -590,6 +593,7 @@ internal static class Program
                 Hostedˉserviceˉbundleˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉpublicationˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -709,6 +713,11 @@ internal static class Program
                             Moduleˉname),
                     Hostedˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Hostedˉmetadataˉrequestˉapplicationˉwriter.Writeˉwindows(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
+                    Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Hostedˉverifierˉmetadataˉrequestˉapplicationˉwriter.Writeˉwindows(
                             Fragment,
                             Capabilities,
                             Moduleˉname),
@@ -923,6 +932,11 @@ internal static class Program
                             Fragment,
                             Capabilities,
                             Moduleˉname),
+                    Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Hostedˉverifierˉmetadataˉrequestˉapplicationˉwriter.Writeˉlinux(
+                            Fragment,
+                            Capabilities,
+                            Moduleˉname),
                     Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Hostedˉserviceˉbundleˉrequestˉapplicationˉwriter.Writeˉlinux(
                             Fragment,
@@ -1057,6 +1071,7 @@ internal static class Program
                     Hostedˉserviceˉbundleˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉserviceˉbundleˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉpublicationˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or

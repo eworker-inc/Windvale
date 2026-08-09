@@ -9,6 +9,11 @@ capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
+enum Nativeˉhostedˉverifierˉrequestˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
 fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
     let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
     let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
@@ -26,7 +31,12 @@ fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
 }
 
 fn Reject() -> i32 {
-    diagnostic.write_line("verifier metadata request status=Rejected");
+    diagnostic.write_line(
+        Textˉconcat(
+            "verifier metadata request status=",
+            Enumˉname(Nativeˉhostedˉverifierˉrequestˉstatus.Rejected)
+        )
+    );
     return 2;
 }
 
@@ -52,6 +62,14 @@ export fn Main() -> i32 {
         return Reject();
     }
     file.write_bytes(Outputˉpath, Bytesˉslice(Response, 32u32, 384u32));
-    console.write_line("verifier metadata request status=Valid bytes=384");
+    console.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "verifier metadata request status=",
+                Enumˉname(Nativeˉhostedˉverifierˉrequestˉstatus.Valid)
+            ),
+            Textˉconcat(" bytes=", U32ˉformat(384u32))
+        )
+    );
     return 0;
 }

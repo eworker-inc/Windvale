@@ -10,9 +10,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_REQUEST_TOOL_BYTES = 17_010;
+    private const int NATIVE_HOSTED_VERIFIER_REQUEST_TOOL_BYTES = 17_204;
     private const string NATIVE_HOSTED_VERIFIER_REQUEST_TOOL_SHA256 =
-        "955907aa104c057d89071ee386d00913c05077bc4463c88a6d14547bd0539fad";
+        "c5aeb2ff6f50760bd01843d43a307fb23988d9fe6c8865b4c549d21f52486f25";
 
     private static void Nativeˉhostedˉverifierˉevidenceˉprocessesˉrun()
     {
@@ -66,6 +66,42 @@ internal static partial class Program
                     Nativeˉentryˉinputˉkind.None,
                     Nativeˉentryˉresultˉkind.Scalar),
                 Nativeˉfragmentˉverifier.Verifyˉentryˉshape(Requestˉnative));
+            var Windowsˉrequestˉtool =
+                Hostedˉverifierˉmetadataˉrequestˉapplicationˉwriter.Writeˉwindows(
+                    Requestˉnative,
+                    Requestˉmodule.Module.Capabilities,
+                    Requestˉmodule.Module.Name);
+            True(
+                Windowsˉrequestˉtool.Success,
+                string.Join(" | ", Windowsˉrequestˉtool.Diagnostics));
+            var Linuxˉrequestˉtool =
+                Hostedˉverifierˉmetadataˉrequestˉapplicationˉwriter.Writeˉlinux(
+                    Requestˉnative,
+                    Requestˉmodule.Module.Capabilities,
+                    Requestˉmodule.Module.Name);
+            True(
+                Linuxˉrequestˉtool.Success,
+                string.Join(" | ", Linuxˉrequestˉtool.Diagnostics));
+            var Requestˉtoolˉpath = Path.Combine(Directoryˉpath, "Request-Tool.wvb");
+            var Cliˉtarget = OperatingSystem.IsWindows()
+                ? Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract
+                    .WINDOWS_TARGET_NAME
+                : Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract
+                    .LINUX_TARGET_NAME;
+            var Cli = Executeˉinspectorˉtool(
+                "recovery-aot",
+                Requestˉtoolˉpath,
+                "--target",
+                Cliˉtarget);
+            Equal(0, Cli.Exitˉcode);
+            Equal(string.Empty, Cli.Standardˉerror);
+            Sequenceˉequal(
+                OperatingSystem.IsWindows()
+                    ? Windowsˉrequestˉtool.Imageˉbytes
+                    : Linuxˉrequestˉtool.Imageˉbytes,
+                File.ReadAllBytes(Path.ChangeExtension(
+                    Requestˉtoolˉpath,
+                    Windvale.Tool.Program.Targetˉoutputˉextension(Cliˉtarget))));
 
             int Run(
                 Verifiedˉmodule module,
@@ -175,8 +211,19 @@ internal static partial class Program
                 Equal(0, Run(Evidenceˉmodule, Evidenceˉnative,
                     [Inputsˉpath, Planˉpath, Manifestˉpath, Prefix, Evidenceˉpath]));
                 Equal(352, File.ReadAllBytes(Evidenceˉpath).Length);
-                Equal(0, Run(Requestˉmodule, Requestˉnative,
-                    [Evidenceˉpath, Requestˉpath]));
+                var Requestˉapplication = OperatingSystem.IsWindows()
+                    ? Windowsˉrequestˉtool.Imageˉbytes
+                    : Linuxˉrequestˉtool.Imageˉbytes;
+                var Requestˉexit = OperatingSystem.IsWindows()
+                    ? Executeˉwindowsˉapplication(
+                        Requestˉapplication,
+                        "verifier metadata request status=Valid bytes=384\n",
+                        [Evidenceˉpath, Requestˉpath])
+                    : Executeˉlinuxˉapplication(
+                        Requestˉapplication,
+                        "verifier metadata request status=Valid bytes=384\n",
+                        [Evidenceˉpath, Requestˉpath]);
+                Equal(0, Requestˉexit);
                 Sequenceˉequal(
                     Buildˉhostedˉverifierˉmetadataˉrequest(
                         Target,
