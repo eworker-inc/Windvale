@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequestˉbridge profile portable;
+
+import Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequest as Request;
+
+export fn Main(Input: bytes) -> bytes {
+    return Request.Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input);
+}

@@ -83,7 +83,8 @@ service count, native digest, reserved bytes, and malformed service records.
 The frozen C# source compiler does not compile this new module; new source
 semantics belong to the Windvale compiler under Decision 0213. C# participates
 only after native WVB construction as differential metadata and execution
-evidence. Native request production, retained application packaging, verifier
-startup selection, outer layout/segmentation, independent Linux execution, and
-promotion remain separate later slices. The exact runtime header is now owned
-by the verifier-specific Windvale constructor under Decision 0462.
+evidence. Native immutable evidence acquisition, retained application
+packaging, verifier startup selection, outer layout/segmentation, independent
+Linux execution, and promotion remain separate later slices. Exact `WVVR`
+projection and the runtime header are now owned by verifier-specific Windvale
+constructors under Decisions 0463 and 0462.

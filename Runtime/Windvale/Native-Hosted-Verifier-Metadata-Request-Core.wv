@@ -1,0 +1,154 @@
+module Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequest profile portable;
+
+import Compilerˉnativeˉpublication as Publication;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Zeroes(Input: bytes, Count: u32) -> bytes {
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
+    return Result.Value;
+}
+
+fn Allˉzero(Input: bytes, Offset: u32, Count: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Bytesˉreadˉu8(Input, Offset + Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Requestˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1146508887u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Requestˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn Publicationˉisˉcanonical(Input: bytes) -> bool {
+    if Bytesˉreadˉu32ˉlittle(Input, 24u32) != 1364219479u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) != 96u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 0u32 {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < 6u32 {
+        let Record: u32 = 48u32 + Index * 12u32;
+        if Bytesˉreadˉu32ˉlittle(Input, Record) != Index + 1u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Record + 4u32) == 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Record + 8u32) != 0u32 {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 352u32 { return Failure(Input, 1u32, Total); }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1163286103u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Target < 1u32 || Target > 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 16u32) != 2u32 ||
+        !Allˉzero(Input, 344u32, 8u32) {
+        return Failure(Input, 4u32, 12u32);
+    }
+    if !Publicationˉisˉcanonical(Input) {
+        return Failure(Input, 5u32, 24u32);
+    }
+
+    let Plan = Publication.Nativeˉpublicationˉplan(
+        Bytesˉslice(Input, 24u32, 96u32)
+    );
+    if Bytesˉlength(Plan.Value) != 104u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan.Value, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Plan.Value, 28u32) != 6u32 {
+        return Failure(Input, 5u32, 24u32);
+    }
+    let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan.Value, 20u32);
+    let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan.Value, 24u32);
+    if Nativeˉentry >= Nativeˉbytes {
+        return Failure(Input, 4u32, 20u32);
+    }
+
+    var Digest: u32 = 0u32;
+    while Digest < 7u32 {
+        let Digestˉoffset: u32 = 120u32 + Digest * 32u32;
+        if Allˉzero(Input, Digestˉoffset, 32u32) {
+            return Failure(Input, 6u32, Digestˉoffset);
+        }
+        Digest = Digest + 1u32;
+    }
+
+    var Request: bytes = Empty(Input);
+    Request = Appendˉu32(Request, 1381389911u32);
+    Request = Appendˉu32(Request, 1u32);
+    Request = Appendˉu32(Request, 384u32);
+    Request = Appendˉu32(Request, Target);
+    Request = Appendˉu32(Request, 2u32);
+    Request = Appendˉu32(Request, 4096u32);
+    Request = Appendˉu32(Request, Bundleˉbytes);
+    Request = Appendˉu32(Request, Nativeˉbytes);
+    Request = Appendˉu32(Request, Nativeˉentry);
+    Request = Appendˉu32(Request, 6u32);
+    Request = Bytesˉconcat(Request, Bytesˉslice(Input, 120u32, 32u32));
+    Request = Bytesˉconcat(Request, Zeroes(Input, 24u32));
+
+    var Index: u32 = 0u32;
+    while Index < 6u32 {
+        let Placement: u32 = 32u32 + Index * 12u32;
+        Request = Appendˉu32(
+            Request,
+            Bytesˉreadˉu32ˉlittle(Plan.Value, Placement + 4u32)
+        );
+        Request = Appendˉu32(
+            Request,
+            Bytesˉreadˉu32ˉlittle(Plan.Value, Placement + 8u32)
+        );
+        Request = Bytesˉconcat(
+            Request,
+            Bytesˉslice(Input, 152u32 + Index * 32u32, 32u32)
+        );
+        Request = Bytesˉconcat(Request, Zeroes(Input, 8u32));
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(
+        Responseˉheader(Input, 416u32, 0u32, Total, 384u32),
+        Request
+    );
+}
