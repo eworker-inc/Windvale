@@ -59,10 +59,12 @@ check_no_scratch() {
     [[ ! -e ${scratch[0]} ]] || fail 'private package scratch remains'
 }
 
-"$script_directory/Package-Hosted-Wvb.sh" 1 \
+if ! "$script_directory/Package-Hosted-Wvb.sh" 1 \
     "$toolset/Wvb/wvhostcontrol.wvb" "$test_directory/Valid.elf" \
-    >"$test_directory/Valid.out" 2>"$test_directory/Valid.err" ||
+    >"$test_directory/Valid.out" 2>"$test_directory/Valid.err"; then
+    cat -- "$test_directory/Valid.out" "$test_directory/Valid.err" >&2
     fail 'valid packaging failed'
+fi
 [[ ! -s $test_directory/Valid.err ]] || fail 'valid packaging wrote a diagnostic'
 check_file \
     "$test_directory/Valid.elf" 237568 \
