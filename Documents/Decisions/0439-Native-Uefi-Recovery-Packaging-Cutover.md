@@ -1,6 +1,6 @@
 # Decision 0439: Native UEFI recovery-packaging cutover
 
-- Status: Implemented current-host normal-scenario recovery cutover; native Probe 40 linking and composition pending
+- Status: Implemented; native linking advanced by [Decision 0442](0442-Native-Probe-40-Recovery-Linking-Cutover.md)
 - Date: 2026-08-09
 - Advances: [Decision 0438](0438-Retained-Native-Uefi-Packager-Containers.md), [Decision 0435](0435-Digest-Bound-Os-Boot-Execution.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale UEFI application format](../../Specifications/Windvale-Uefi-Application.md)

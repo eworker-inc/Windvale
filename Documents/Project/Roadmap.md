@@ -144,7 +144,11 @@ proves their managed differential link remains byte-identical.
 [Decision 0441](../Decisions/0441-Scale-Safe-Native-Wv-Linker-Relocation-Emission.md)
 isolates the retained linker's 128 MiB arena failure and makes the current
 Windows candidate reproduce the exact image without enlarging that arena.
-Independent Linux execution and recovery-command cutover are the next transfer.
+Independent Linux execution is the next qualification transfer.
+[Decision 0442](../Decisions/0442-Native-Probe-40-Recovery-Linking-Cutover.md)
+removes the managed link from the current-host normal recovery command. Stage 0
+now ends at ordered object production; Linux recovery execution and native
+Probe 40 object/scenario production are the next transfer.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

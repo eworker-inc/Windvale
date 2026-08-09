@@ -63,12 +63,13 @@ both pass; the latter also accepts the exact 4 MiB image boundary. No broad
 Seed, OS, QEMU, Qualification, or Linux execution gate ran for this local
 candidate.
 
-The normal recovery command still uses the managed linker. Cut that command
-over only after current upstream work is integrated and this exact candidate
-passes on Linux as well as Windows. The large linker source remains a focused
-organization concern; extract a cohesive module only when its shared view and
-error-order invariants can remain explicit, rather than splitting it into
-numbered fragments for line count alone.
+[Decision 0442](0442-Native-Probe-40-Recovery-Linking-Cutover.md) removes the
+managed linker from the current-host normal recovery command while retaining
+Stage 0 object production and the frozen managed recovery/differential seam.
+Linux recovery execution remains pending. The large linker source remains a
+focused organization concern; extract a cohesive module only when its shared
+view and error-order invariants can remain explicit, rather than splitting it
+into numbered fragments for line count alone.
 
 ## Reconsideration triggers
 

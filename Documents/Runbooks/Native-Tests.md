@@ -525,11 +525,14 @@ pwsh -NoProfile -File Tools/Recovery/Rebuild-Os-Probe.ps1 `
     -Scenario normal
 ```
 
-Stage 0 still produces and links the Probe 40 payload, then the digest-bound
-retained native UEFI packager constructs the final EFI. The recovery command
-refuses an existing destination and removes its private linked payload. It is
+Stage 0 still produces the fourteen reviewed Probe 40 WVOs. The recovery
+command admits their reported order, invokes the current host's digest-bound
+native linker, parses its canonical entry address, and then invokes the
+digest-bound native UEFI packager. It refuses an existing destination and
+removes its private objects, linked payload, and EFI candidate. It is
 provenance and differential infrastructure, not the normal boot path; upstream
-object production and linking still require .NET.
+object/scenario production still requires .NET, while managed linking and UEFI
+packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 

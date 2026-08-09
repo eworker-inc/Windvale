@@ -4587,5 +4587,22 @@ The regenerated Windows candidate consumes the fourteen exact Probe 40 WVOs,
 returns `0` in 4.3 seconds, and publishes the established 681,913-byte image at
 SHA-256
 `76aa64cc03c8b86dfe96f83d761be40e8128b988a182fd971004a287a5990af0`.
-No broad Seed, OS, QEMU, Qualification, or Linux execution gate ran; ordinary
-recovery linking therefore remains managed pending the dual-host gate.
+No broad Seed, OS, QEMU, Qualification, or Linux execution gate ran for that
+scale candidate; ordinary recovery linking was still managed at that checkpoint.
+
+## Local native Probe 40 recovery-link cutover evidence
+
+[Decision 0442](../Decisions/0442-Native-Probe-40-Recovery-Linking-Cutover.md)
+changes the explicit normal recovery command to request the reviewed fourteen
+WVOs from Stage 0, admit their exact inventory report, run the digest-bound
+native linker, parse its canonical entry address, and invoke the already-native
+UEFI packager. The frozen `--linked-output` managed seam remains available but
+is no longer executed by that command.
+
+The focused current-host recovery run completes in 15.6 seconds and reproduces
+the exact 683,008-byte normal EFI at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+Its private object directory, linked image, and EFI candidate are absent after
+publication. No broad Seed, OS, QEMU, Qualification, or Linux recovery command
+ran. Stage 0 object/scenario production remains the command's only executed
+.NET dependency.
