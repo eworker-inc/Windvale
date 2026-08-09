@@ -39,7 +39,7 @@ fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
 }
 
 export fn Compilerˉnativeˉx64ˉtypesˉlimit() -> u32 {
-    return 64u32;
+    return 128u32;
 }
 
 fn Identifierˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
@@ -108,9 +108,29 @@ export fn Compilerˉnativeˉx64ˉtypeˉitemˉcount(
     return Bytesˉreadˉu32ˉlittle(Types.Itemˉcounts, Index * 4u32);
 }
 
-export fn Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex: u32) -> u8 {
+fn Compilerˉnativeˉx64ˉfirstˉenumˉtype(
+    Types: Compilerˉnativeˉx64ˉtypes
+) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Types.Count {
+        if Compilerˉnativeˉx64ˉtypeˉkind(Types, Index) == 2u8 {
+            return Index;
+        }
+        Index = Index + 1u32;
+    }
+    return Types.Count;
+}
+
+export fn Compilerˉnativeˉx64ˉenumˉtype(
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> u8 {
+    let First: u32 = Compilerˉnativeˉx64ˉfirstˉenumˉtype(Types);
+    if Typeˉindex < First || Typeˉindex >= Types.Count {
+        return 0u8;
+    }
     return Bytesˉreadˉu8(
-        Bytesˉfromˉu32ˉlittle(128u32 + Typeˉindex),
+        Bytesˉfromˉu32ˉlittle(128u32 + Typeˉindex - First),
         0u32
     );
 }
@@ -121,8 +141,12 @@ export fn Compilerˉnativeˉx64ˉtypeˉisˉenum(Type: u8) -> bool {
     return Numeric < 192u32;
 }
 
-export fn Compilerˉnativeˉx64ˉenumˉtypeˉindex(Type: u8) -> u32 {
-    return U32ˉfromˉu8(Type) - 128u32;
+export fn Compilerˉnativeˉx64ˉenumˉtypeˉindex(
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Type: u8
+) -> u32 {
+    return Compilerˉnativeˉx64ˉfirstˉenumˉtype(Types) +
+        U32ˉfromˉu8(Type) - 128u32;
 }
 
 export fn Compilerˉnativeˉx64ˉrecordˉtype(Typeˉindex: u32) -> u8 {
@@ -174,7 +198,7 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
         if Nominalˉkind != 1u8 { return Invalidˉshape(); }
     } else {
         if Nominalˉkind != 2u8 { return Invalidˉshape(); }
-        Type = Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex);
+        Type = Compilerˉnativeˉx64ˉenumˉtype(Types, Typeˉindex);
     }
     return Compilerˉnativeˉx64ˉshape(
         true,
@@ -213,6 +237,8 @@ export fn Compilerˉnativeˉx64ˉtypesˉread(
     var Itemˉoffsets: bytes = Empty(Input);
     var Itemˉcounts: bytes = Empty(Input);
     var Priorˉkind: u8 = 0u8;
+    var Records: u32 = 0u32;
+    var Enums: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index < Count {
         if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalid(Input); }
@@ -224,6 +250,13 @@ export fn Compilerˉnativeˉx64ˉtypesˉread(
             return Invalid(Input);
         }
         Priorˉkind = Kind;
+        if Kind == 1u8 {
+            Records = Records + 1u32;
+            if Records > 64u32 { return Invalid(Input); }
+        } else {
+            Enums = Enums + 1u32;
+            if Enums > 64u32 { return Invalid(Input); }
+        }
         Cursor = Cursor + 1u32;
         Cursor = Skipˉname(Input, Cursor, Limit);
         if Cursor == 0u32 { return Invalid(Input); }

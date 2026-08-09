@@ -37,8 +37,8 @@ internal static partial class Program
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "d641039357bfb6be0c860002a374d70e5266f39861b4c9ea7e4df192dfdf21b3";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "b762f94fe45634910cbc62d6285860b506d0c01df7461da0c14680ebce390517";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "20de442e9a8aa64f957e7d5f353ff62f8e43b2fce74e0aad572a1b8259ad9918";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "6d48f40df3b75d75abc9f74a7c6b4c9cb530a9ea9b48f6eb979fca8fbda92a3f";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "0e2b509b54b9320efe7d70080ea74afdce771d01ade33c3d915ae088d9d4b278";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "f5433e71ca8da5e8b495f3ae3ee63835a226568b6309aa6c6c5e27fad7f933cc";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -1376,6 +1376,9 @@ internal static partial class Program
         new("native console-packager rejections preserve existing output without .NET", [TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉconsoleˉpackagerˉrejectionsˉrun),
         new("native WVB-to-WVO AOT targets are discoverable", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL], Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable),
         new("native WVB-to-WVO lowerer emits the pinned object without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉruns),
+        new("native WVB-to-WVO lowerer accepts the compiler static-data envelope", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉstaticˉdataˉenvelopeˉlowers),
+        new("native WVB-to-WVO lowerer accepts the compiler nominal-type envelope", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉnominalˉtypeˉenvelopeˉlowers),
+        new("native WVB-to-WVO lowerer accepts the compiler record-local envelope", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉrecordˉlocalˉenvelopeˉlowers),
         new("native function batches preserve legacy bytes and bounded grouping", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉfunctionˉbatchingˉruns),
         new("digest-bound native WVB-to-WVO launcher preserves the fixed vector", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉfrontˉdoorˉruns),
         new("native WVB-to-WVO rejections preserve existing output without .NET", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvbˉtoˉwvoˉrejectionsˉrun),

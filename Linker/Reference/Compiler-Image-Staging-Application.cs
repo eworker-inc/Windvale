@@ -11,15 +11,15 @@ public static class Compilerˉimageˉstagingˉapplicationˉcontract
         "linux-x64-compiler-image-staging-v1";
     public const string MODULE_NAME =
         "Linkerˉcompilerˉwvoˉsegmentedˉflatˉimageˉstagingˉtool";
-    public const int MODULE_BYTES = 75_503;
+    public const int MODULE_BYTES = 75_553;
     public const string MODULE_SHA256 =
-        "e43e2cc868b5f7ac3ffbee322bef60ce748c736e666889aaeda7c06a90daa5bb";
-    public const int WINDOWS_APPLICATION_BYTES = 851_968;
+        "14521acae6052d08add386833a35dd22c36e0dd07a1fad494961ee8064119d1c";
+    public const int WINDOWS_APPLICATION_BYTES = 852_480;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "967827e4592c23f30e2a70b9a60a43837c1dfec6112584596c09d382058e2752";
+        "ec62a4e026d395aca20141472dd24f820fcf6e766ff1723d7d2cb71045faace6";
     public const int LINUX_APPLICATION_BYTES = 851_968;
     public const string LINUX_APPLICATION_SHA256 =
-        "02b07d23b763fa4dd2d11bb9c9ca94be32bdbd698b1f9ce7b466af90b768eef8";
+        "28dad5b1be0795c5372887ed11e6dc4a6e826dc8952f0f8a6d97f187666328ff";
 }
 
 public static class Compilerˉimageˉstagingˉapplicationˉwriter

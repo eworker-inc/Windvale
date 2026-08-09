@@ -56,14 +56,58 @@ fn Setˉu32(Input: bytes, Index: u32, Value: u32) -> bytes {
     );
 }
 
+export fn Compilerˉnativeˉx64ˉrecordˉinterferenceˉbytes(Count: u32) -> u32 {
+    return (Count * Count + 7u32) / 8u32;
+}
+
 fn Interferenceˉset(
     Matrix: bytes,
     Count: u32,
     Left: u32,
     Right: u32
 ) -> bytes {
-    var Result: bytes = Setˉbyte(Matrix, Left * Count + Right, 1u8);
-    return Setˉbyte(Result, Right * Count + Left, 1u8);
+    let Bit: u32 = Left * Count + Right;
+    let Byteˉoffset: u32 = Bit / 8u32;
+    let Mask: u32 = 1u32 << (Bit % 8u32);
+    let Current: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Matrix, Byteˉoffset));
+    if (Current & Mask) != 0u32 { return Matrix; }
+    let Updated: bytes = Bytesˉslice(
+        Bytesˉfromˉu32ˉlittle(Current | Mask),
+        0u32,
+        1u32
+    );
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Matrix, 0u32, Byteˉoffset),
+            Updated
+        ),
+        Bytesˉslice(
+            Matrix,
+            Byteˉoffset + 1u32,
+            Bytesˉlength(Matrix) - Byteˉoffset - 1u32
+        )
+    );
+}
+
+fn Interferenceˉexists(
+    Matrix: bytes,
+    Count: u32,
+    Left: u32,
+    Right: u32
+) -> bool {
+    let Bit: u32 = Left * Count + Right;
+    let Current: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Matrix, Bit / 8u32));
+    return (Current & (1u32 << (Bit % 8u32))) != 0u32;
+}
+
+fn Interferenceˉsetˉpair(
+    Matrix: bytes,
+    Count: u32,
+    Left: u32,
+    Right: u32
+) -> bytes {
+    var Result: bytes = Interferenceˉset(Matrix, Count, Left, Right);
+    return Interferenceˉset(Result, Count, Right, Left);
 }
 
 export fn Compilerˉnativeˉx64ˉaddˉliveˉrecordˉinterference(
@@ -77,7 +121,7 @@ export fn Compilerˉnativeˉx64ˉaddˉliveˉrecordˉinterference(
     while Other < Count {
         if Other != Value {
             if Bytesˉreadˉu8(Live, Other) == 1u8 {
-                Result = Interferenceˉset(Result, Count, Value, Other);
+                Result = Interferenceˉsetˉpair(Result, Count, Value, Other);
             }
         }
         Other = Other + 1u32;
@@ -97,7 +141,7 @@ export fn Compilerˉnativeˉx64ˉaddˉallˉliveˉrecordˉinterference(
             var Right: u32 = Left + 1u32;
             while Right < Count {
                 if Bytesˉreadˉu8(Live, Right) == 1u8 {
-                    Result = Interferenceˉset(Result, Count, Left, Right);
+                    Result = Interferenceˉsetˉpair(Result, Count, Left, Right);
                 }
                 Right = Right + 1u32;
             }
@@ -145,10 +189,12 @@ fn Allocateˉoffsets(
                                 Other * 4u32
                             );
                             if Otherˉoffset != 4294967295u32 {
-                                if Bytesˉreadˉu8(
+                                if Interferenceˉexists(
                                     Interference,
-                                    Identifier * Count + Other
-                                ) == 1u8 {
+                                    Count,
+                                    Identifier,
+                                    Other
+                                ) {
                                     let Otherˉwidth: u32 = Recordˉwidth(
                                         Types,
                                         Bytesˉreadˉu8(Typeˉbyˉidentifier, Other)

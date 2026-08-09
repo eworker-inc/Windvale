@@ -35,7 +35,7 @@ actual_bytes=$(wc -c < "$output") || exit 1
 }
 actual_line=$(sha256sum -- "$output") || exit 1
 actual_sha256=${actual_line%% *}
-[[ $actual_sha256 == '02b07d23b763fa4dd2d11bb9c9ca94be32bdbd698b1f9ce7b466af90b768eef8' ]] || {
+[[ $actual_sha256 == '28dad5b1be0795c5372887ed11e6dc4a6e826dc8952f0f8a6d97f187666328ff' ]] || {
     echo "Unexpected Linux output digest: $actual_sha256" >&2
     exit 1
 }

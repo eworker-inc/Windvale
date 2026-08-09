@@ -21,7 +21,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" 6 ^
     "%Candidate%\Compiler-Image-Staging.wvb" "%Output%" >nul
 if errorlevel 1 goto :cleanup
 for %%F in ("%Output%") do if not "%%~zF"=="851968" goto :cleanup
-certutil -hashfile "%Output%" SHA256 | findstr /I /C:"967827e4592c23f30e2a70b9a60a43837c1dfec6112584596c09d382058e2752" >nul
+certutil -hashfile "%Output%" SHA256 | findstr /I /C:"ec62a4e026d395aca20141472dd24f820fcf6e766ff1723d7d2cb71045faace6" >nul
 if errorlevel 1 goto :cleanup
 fc /b "%Output%" "%Candidate%\windows-x64-wvlinkstage.exe" >nul
 if errorlevel 1 goto :cleanup

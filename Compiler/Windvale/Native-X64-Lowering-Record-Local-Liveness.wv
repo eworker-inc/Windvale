@@ -299,7 +299,9 @@ export fn Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
     var Present: bytes = Zeros(Input, Recordˉlocals);
     var Interference: bytes = Zeros(
         Input,
-        Recordˉlocals * Recordˉlocals
+        Allocation.Compilerˉnativeˉx64ˉrecordˉinterferenceˉbytes(
+            Recordˉlocals
+        )
     );
     var Block: u32 = 0u32;
     while Block < Blocks {

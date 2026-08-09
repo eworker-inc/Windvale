@@ -72,6 +72,19 @@ export fn Main() -> i32 {
     let Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan =
         Nativeˉx64.Compilerˉnativeˉx64ˉplanˉbuild(Input);
     if Plan.Status != Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+        if Plan.Status ==
+            Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Unsupportedˉcode {
+            diagnostic.write_line(
+                Textˉconcat(
+                    Textˉconcat(
+                        "native x64 staging status=Unsupportedˉcode function=",
+                        U32ˉformat(Plan.Failureˉfunction)
+                    ),
+                    Textˉconcat(" detail=", U32ˉformat(Plan.Failureˉdetail))
+                )
+            );
+            return 1;
+        }
         return Failure(Plan.Status);
     }
     let Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions =

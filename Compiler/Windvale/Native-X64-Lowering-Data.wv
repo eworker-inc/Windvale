@@ -33,7 +33,7 @@ fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
 }
 
 export fn Compilerˉnativeˉx64ˉdataˉlimit() -> u32 {
-    return 64u32;
+    return 256u32;
 }
 
 fn Identifierˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {

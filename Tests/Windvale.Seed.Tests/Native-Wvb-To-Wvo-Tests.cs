@@ -82,22 +82,22 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Native-Bridge-Adapter.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 399_691;
-    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 423_499;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 403_806;
+    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 427_996;
     private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
-        "e4e1c4a616f7d8f69693e2a5929d514c5e493d69af51efcdb910fdfb8508b481";
+        "239b155bbc8c7adeff0cc4d44696b7fc631111fc000f9eb36c009e0528081e7a";
     private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 7_991;
     private const string WVO_STAGING_MANIFEST_ADAPTER_SHA256 =
         "e7a29d26e78c3cdae93868960d5be537709fc7ed8ef83de1c0bf84ca5e63c3fa";
     private const int WVO_STAGING_NATIVE_BRIDGE_ADAPTER_WVB_BYTES = 8_807;
     private const string WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SHA256 =
         "f4f5e00013d370a431af5b78d36beca37d9fe5504e788204aea6025341607417";
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_792_768;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_867_520;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "e096dc7fec20e3318364da1f3b5289f772b53c16cc370f29622dfac35780e2bf";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_791_744;
+        "9e18ec08c894a569c182a8426f51654564ade58a74f66b80e718fff0e1e367db";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_869_568;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e";
+        "700194c0caa339a78271921a6ccd211173ab3cdc9eaa6288fbffdb72ee2ef0ee";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -1294,6 +1294,13 @@ internal static partial class Program
         }
         Helperˉcode.AddRange(I32ˉinstruction(42));
         Helperˉcode.AddRange(U32ˉinstruction(Opcode.Recordˉcreate, 0));
+        Helperˉcode.AddRange(U32ˉinstruction(Opcode.Localˉstore, 1));
+        for (var Recordˉvalue = 0; Recordˉvalue < 214; Recordˉvalue++)
+        {
+            Helperˉcode.AddRange(U32ˉinstruction(Opcode.Localˉload, 1));
+            Helperˉcode.AddRange(U32ˉinstruction(Opcode.Localˉstore, 1));
+        }
+        Helperˉcode.AddRange(U32ˉinstruction(Opcode.Localˉload, 1));
         Helperˉcode.Add((byte)Opcode.Return);
         var Localˉtypes = ImmutableArray.CreateBuilder<Valueˉshape>();
         Localˉtypes.Add(Valueˉtype.I32);
@@ -1335,13 +1342,19 @@ internal static partial class Program
         Equal(130, Verifiedˉhelper.Declaration.Allˉlocalˉtypes.Length);
         Equal(129, Verifiedˉhelper.Declaration.Localˉtypes.Count(
             Type => Type.Kind == Valueˉtype.Record));
-        Equal(5_156, Verifiedˉhelper.Declaration.Codeˉlength);
-        Equal(1_032, Verifiedˉhelper.Instructions.Length);
+        Equal(7_306, Verifiedˉhelper.Declaration.Codeˉlength);
+        Equal(1_462, Verifiedˉhelper.Instructions.Length);
 
         var Native = X64ˉnativeˉbackend.Compile(Module);
         _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);
-        Equal(130, Native.Module.Functions.Single(
-            Function => Function.Name == Helper.Name).Blocks.Length);
+        var Nativeˉhelper = Native.Module.Functions.Single(
+            Function => Function.Name == Helper.Name);
+        Equal(130, Nativeˉhelper.Blocks.Length);
+        Equal(
+            216,
+            Nativeˉrecordˉstorageˉplanner.Measure(Native.Module).Single(
+                Function => Function.Functionˉname == Helper.Name)
+                .Recordˉvalueˉidentifiers);
         Equal(42, X64ˉnativeˉexecutor.Executeˉi32(Native.Fragment));
         var Expectedˉobject = Nativeˉobjectˉsink.Writeˉwvo(Native.Fragment);
 

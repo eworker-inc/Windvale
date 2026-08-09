@@ -96,6 +96,30 @@ internal static partial class Program
             Module.Functions.SelectMany(Function => Function.Instructions)
                 .Any(Instruction => Instruction.Opcode == Opcode.U32ˉmultiply),
             "The record-capability fixture omitted u32.multiply.");
+        True(
+            Module.Functions.SelectMany(Function => Function.Instructions)
+                .Any(Instruction => Instruction.Opcode == Opcode.U32ˉshiftˉleft),
+            "The record-capability fixture omitted u32.shift_left.");
+        True(
+            Module.Functions.SelectMany(Function => Function.Instructions)
+                .Any(Instruction => Instruction.Opcode == Opcode.U32ˉshiftˉright),
+            "The record-capability fixture omitted u32.shift_right.");
+        True(
+            Module.Functions.SelectMany(Function => Function.Instructions)
+                .Any(Instruction => Instruction.Opcode == Opcode.U32ˉbitwiseˉand),
+            "The record-capability fixture omitted u32.bitwise_and.");
+        True(
+            Module.Functions.SelectMany(Function => Function.Instructions)
+                .Any(Instruction => Instruction.Opcode == Opcode.U32ˉbitwiseˉor),
+            "The record-capability fixture omitted u32.bitwise_or.");
+        True(
+            Module.Functions.SelectMany(Function => Function.Instructions)
+                .Any(Instruction => Instruction.Opcode == Opcode.U32ˉbitwiseˉxor),
+            "The record-capability fixture omitted u32.bitwise_xor.");
+        True(
+            Module.Functions.SelectMany(Function => Function.Instructions)
+                .Any(Instruction => Instruction.Opcode == Opcode.U32ˉbitwiseˉnot),
+            "The record-capability fixture omitted u32.bitwise_not.");
 
         var Authorized = ImmutableHashSet.Create(
             StringComparer.Ordinal,

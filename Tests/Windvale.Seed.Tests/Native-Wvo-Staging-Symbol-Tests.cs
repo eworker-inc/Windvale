@@ -24,12 +24,12 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Symbols-Native-Adapter.wv");
 
-    private const int WVO_STAGING_SYMBOLS_ADAPTER_WVB_BYTES = 33_091;
+    private const int WVO_STAGING_SYMBOLS_ADAPTER_WVB_BYTES = 33_141;
     private const string WVO_STAGING_SYMBOLS_ADAPTER_SHA256 =
-        "375e906a095c1c5dd8f98a92876312af434c0d2d385be280568ed1cbf15000aa";
-    private const int WVO_STAGING_SYMBOLS_NATIVE_ADAPTER_WVB_BYTES = 32_516;
+        "2128f5b5badf319b5b9674a114bdb6267d063bebf35ffc0527fc11324dc1c4a1";
+    private const int WVO_STAGING_SYMBOLS_NATIVE_ADAPTER_WVB_BYTES = 32_566;
     private const string WVO_STAGING_SYMBOLS_NATIVE_ADAPTER_SHA256 =
-        "024c261ed2469410c095fabe8f8ddbd9a51dbc6de653f7874f2baec169201e3d";
+        "1c98c23e57ea0f47a97536b802d7f37db6fa8a2ad672762cdebfe83a8d90a47f";
 
     private static void Nativeˉwvoˉstagingˉsymbolsˉareˉverified()
     {
@@ -79,6 +79,47 @@ internal static partial class Program
             functions: 2,
             relocationˉposition: 179,
             relocationˉbytes: 20);
+
+        const int Compilerˉdataˉsymbols = 110;
+        var Compilerˉsymbolˉrecords = new List<byte[]>(Compilerˉdataˉsymbols + 1);
+        for (var Index = 0; Index < Compilerˉdataˉsymbols; Index++)
+        {
+            Compilerˉsymbolˉrecords.Add(Buildˉstagingˉwvoˉsymbol(
+                1,
+                2,
+                1,
+                checked((uint)Index),
+                1,
+                $"$data_{Index:D4}"));
+        }
+        Compilerˉsymbolˉrecords.Add(
+            Buildˉstagingˉwvoˉsymbol(2, 1, 0, 0, 10, "Main"));
+        var Compilerˉsymbols = Combineˉstagingˉwvoˉrecords(
+            [.. Compilerˉsymbolˉrecords]);
+        var Compilerˉprefix = Buildˉstagingˉwvoˉprefix(
+            2,
+            Compilerˉdataˉsymbols + 1,
+            0,
+            10);
+        var Compilerˉreadˉonlyˉheader =
+            Buildˉstagingˉwvoˉreadˉonlyˉheader(Compilerˉdataˉsymbols);
+        var Compilerˉmanifest = Buildˉstagingˉmanifest(
+            49,
+            10,
+            27,
+            Compilerˉdataˉsymbols,
+            checked((uint)Compilerˉsymbols.Length));
+        Assertˉstagingˉwvoˉsymbols(
+            Adapter,
+            0,
+            Compilerˉmanifest,
+            Compilerˉprefix,
+            Compilerˉreadˉonlyˉheader,
+            Compilerˉsymbols,
+            dataˉsymbols: Compilerˉdataˉsymbols,
+            functions: 1,
+            relocationˉposition: checked(196u + (uint)Compilerˉsymbols.Length),
+            relocationˉbytes: 0);
 
         var Middleˉmainˉsymbols = Combineˉstagingˉwvoˉrecords(
             Buildˉstagingˉwvoˉsymbol(1, 2, 1, 0, 5, "$data_0000"),

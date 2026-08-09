@@ -98,6 +98,10 @@ fn Decimalˉfour(Input: bytes, Offset: u32) -> u32 {
     return Thousands * 1000u32 + Hundreds * 100u32 + Tens * 10u32 + Ones;
 }
 
+fn Dataˉsymbolˉlimit() -> u32 {
+    return 256u32;
+}
+
 fn Dataˉnameˉordinal(Input: bytes, Offset: u32, Length: u32) -> u32 {
     if Length != 10u32 { return 4294967295u32; }
     if Bytesˉreadˉu8(Input, Offset) != 36u8 { return 4294967295u32; }
@@ -263,7 +267,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                     Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Order
                 );
             }
-            if Dataˉsymbols >= 64u32 {
+            if Dataˉsymbols >= Dataˉsymbolˉlimit() {
                 return Invalid(
                     Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
                 );

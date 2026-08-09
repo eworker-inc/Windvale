@@ -63,7 +63,10 @@ fn Emitˉconstant(
         Instruction.Input,
         Instruction.Offset + 5u32
     );
-    let Type: u8 = Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtype(Typeˉindex);
+    let Type: u8 = Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtype(
+        Types,
+        Typeˉindex
+    );
     let Slot: u32 = Valueˉslot(Shape, Type, State.Nextˉenum);
     return Compilerˉnativeˉx64ˉenumˉstate(
         Enums.Compilerˉnativeˉx64ˉemitˉenumˉconstant(
@@ -126,6 +129,7 @@ fn Emitˉcomparison(
 fn Emitˉname(
     Instruction: Compilerˉnativeˉx64ˉenumˉinstruction,
     Shape: Compilerˉnativeˉx64ˉenumˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     State: Compilerˉnativeˉx64ˉenumˉstate
 ) -> Compilerˉnativeˉx64ˉenumˉstate {
     let Type: u8 = Bytesˉreadˉu8(
@@ -141,7 +145,10 @@ fn Emitˉname(
     return Compilerˉnativeˉx64ˉenumˉstate(
         Enums.Compilerˉnativeˉx64ˉemitˉenumˉname(
             State.Result,
-            Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtypeˉindex(Type),
+            Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtypeˉindex(
+                Types,
+                Type
+            ),
             Source,
             Target,
             Instruction.Failureˉtarget
@@ -171,7 +178,7 @@ export fn Compilerˉnativeˉx64ˉemitˉenumˉinstruction(
         return Emitˉconstant(Instruction, Shape, Types, State);
     }
     if Instruction.Opcode == 109u8 {
-        return Emitˉname(Instruction, Shape, State);
+        return Emitˉname(Instruction, Shape, Types, State);
     }
     return Emitˉcomparison(Instruction, Shape, State);
 }

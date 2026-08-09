@@ -77,7 +77,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉdecode(Input: bytes)
         Bytesˉreadˉu32ˉlittle(Input, 28u32);
     let Payloadˉbytes: u32 = Bytesˉlength(Input) - 32u32;
     if Persistentˉfields > 2048u32 || Scratchˉfields > 2048u32 ||
-        Recordˉvalues > 128u32 || Persistentˉbytes > 8192u32 ||
+        Recordˉvalues > 256u32 || Persistentˉbytes > 8192u32 ||
         Scratchˉbytes > 32768u32 || Scratchˉblockˉbytes > 32768u32 ||
         Persistentˉbytes % 4u32 != 0u32 ||
         Scratchˉbytes % 4u32 != 0u32 ||
@@ -181,6 +181,9 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
         if Numeric <= 124u32 { return 1u32; }
     }
     if Opcode == 161u8 || Opcode == 162u8 { return 1u32; }
+    if Numeric >= 173u32 {
+        if Numeric <= 178u32 { return 1u32; }
+    }
     return 0u32;
 }
 
@@ -402,7 +405,10 @@ fn Buildˉscratchˉblock(
     let Count: u32 = Limit - Base;
     var Present: bytes = Zeros(Input, Count);
     var Live: bytes = Zeros(Input, Count);
-    var Interference: bytes = Zeros(Input, Count * Count);
+    var Interference: bytes = Zeros(
+        Input,
+        Allocation.Compilerˉnativeˉx64ˉrecordˉinterferenceˉbytes(Count)
+    );
     var Event: u32 = Firstˉevent;
     var Eventˉoffset: u32 = Firstˉeventˉoffset;
     var Reading: bool = true;
@@ -552,7 +558,7 @@ fn Buildˉscratchˉstorage(
                 (Block + 1u32) * 4u32
             );
         }
-        if Base > Limit || Limit > Scratchˉvalues || Limit - Base > 128u32 {
+        if Base > Limit || Limit > Scratchˉvalues || Limit - Base > 256u32 {
             return Invalidˉscratchˉallocation(Input);
         }
         let Blockˉallocation: Scratchˉblockˉallocation =
@@ -708,7 +714,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Parameters,
             Localˉtypes
         );
-    if Recordˉlocals.Count > 256u32 { return Invalid(Input); }
+    if Recordˉlocals.Count > 1024u32 { return Invalid(Input); }
     if Codeˉlength == 0u32 || Bytesˉlength(Leaders) < Codeˉlength {
         return Invalid(Input);
     }
@@ -822,7 +828,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             if Loadˉlocal >= Locals { return Invalid(Input); }
             let Loadˉtype: u8 = Bytesˉreadˉu8(Localˉtypes, Loadˉlocal);
             if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Loadˉtype) {
-                if Blockˉrecordˉvalues >= 128u32 { return Invalid(Input); }
+                if Blockˉrecordˉvalues >= 256u32 { return Invalid(Input); }
                 Resultˉrecord = Scratchˉvalues;
                 Scratchˉvalues = Scratchˉvalues + 1u32;
                 Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;
@@ -912,6 +918,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         }
 
         if Opcode == 7u8 || Opcode == 11u8 || Opcode == 19u8 ||
+            Opcode == 176u8 ||
             Opcode == 40u8 ||
             Numericˉopcode >= 109u32 && Numericˉopcode <= 112u32 ||
             Numericˉopcode >= 115u32 && Numericˉopcode <= 118u32 ||
@@ -939,7 +946,9 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Numericˉopcode >= 96u32 && Numericˉopcode <= 103u32 ||
             Opcode == 107u8 || Opcode == 108u8 || Opcode == 113u8 ||
             Opcode == 114u8 || Opcode == 119u8 ||
-            Opcode == 161u8 || Opcode == 162u8 {
+            Opcode == 161u8 || Opcode == 162u8 ||
+            Numericˉopcode >= 173u32 && Numericˉopcode <= 175u32 ||
+            Opcode == 177u8 || Opcode == 178u8 {
             if Depth < 2u32 { return Invalid(Input); }
             Depth = Depth - 2u32;
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
@@ -959,7 +968,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Types,
                     Typeˉindex
                 );
-            if Depth < Fields || Blockˉrecordˉvalues >= 128u32 {
+            if Depth < Fields || Blockˉrecordˉvalues >= 256u32 {
                 return Invalid(Input);
             }
             var Field: u32 = 0u32;
@@ -1054,7 +1063,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Callˉtarget
                 );
             if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Callˉreturn) {
-                if Blockˉrecordˉvalues >= 128u32 { return Invalid(Input); }
+                if Blockˉrecordˉvalues >= 256u32 { return Invalid(Input); }
                 Resultˉrecord = Scratchˉvalues;
                 Scratchˉvalues = Scratchˉvalues + 1u32;
                 Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;

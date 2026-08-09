@@ -86,6 +86,8 @@ export record Compilerˉnativeˉx64ˉplan {
     Typeˉitemˉcounts: bytes;
     Capabilityˉcount: u32;
     Capabilityˉkinds: bytes;
+    Failureˉfunction: u32;
+    Failureˉdetail: u32;
 }
 
 export record Compilerˉnativeˉx64ˉfunctionˉbatch {
@@ -221,7 +223,45 @@ fn Compilerˉnativeˉx64ˉplanˉfailure(
         Empty,
         Empty,
         0u32,
-        Empty
+        Empty,
+        4294967295u32,
+        4294967295u32
+    );
+}
+
+fn Compilerˉnativeˉx64ˉplanˉfunctionˉfailure(
+    Input: bytes,
+    Status: Compilerˉnativeˉx64ˉstatus,
+    Function: u32,
+    Detail: u32
+) -> Compilerˉnativeˉx64ˉplan {
+    let Empty: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    return Compilerˉnativeˉx64ˉplan(
+        Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Empty,
+        Empty,
+        Empty,
+        0u32,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        Empty,
+        0u32,
+        Empty,
+        Empty,
+        Empty,
+        0u32,
+        Empty,
+        Function,
+        Detail
     );
 }
 
@@ -848,7 +888,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcode(
     );
 }
 
-export fn Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input: bytes)
+fn Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input: bytes, Detail: u32)
     -> Compilerˉnativeˉx64ˉcontrolˉanalysis {
     return Compilerˉnativeˉx64ˉcontrolˉanalysis(
         false,
@@ -862,7 +902,7 @@ export fn Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input: bytes)
         0u32,
         0u32,
         0u32,
-        0u32,
+        Detail,
         false,
         false,
         0u32,
@@ -874,6 +914,11 @@ export fn Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input: bytes)
         0u32,
         0u32
     );
+}
+
+export fn Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input: bytes)
+    -> Compilerˉnativeˉx64ˉcontrolˉanalysis {
+    return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 0u32);
 }
 
 export fn Compilerˉnativeˉx64ˉinvalidˉblock()
@@ -1365,6 +1410,7 @@ fn Compilerˉnativeˉx64ˉanalyzeˉnominalˉvalueˉinstruction(
             Stack,
             Bytesˉfromˉu8(
                 Nominalˉtypes.Compilerˉnativeˉx64ˉenumˉtype(
+                    Types,
                     Enumˉtypeˉindex
                 )
             )
@@ -2261,7 +2307,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
     Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
 ) -> Compilerˉnativeˉx64ˉcontrolˉanalysis {
     if Section.Payloadˉlength != Function.Codeˉlength {
-        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 1u32);
     }
     let Length: u32 = Section.Payloadˉlength;
     var Leaderˉoffsets: bytes = Bytesˉfromˉu32ˉlittle(0u32);
@@ -2275,21 +2321,21 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         if Opcode == 161u8 || Opcode == 162u8 { Hasˉdivision = true; }
         if Opcode == 177u8 || Opcode == 178u8 { Hasˉshift = true; }
         if Size == 0u32 {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 1u32);
         }
         if Size > Length - Cursor {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 1u32);
         }
         if Opcode == 2u8 {
             if U32ˉfromˉu8(
                 Bytesˉreadˉu8(Input, Section.Payloadˉoffset + Cursor + 1u32)
             ) > 1u32 {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+                return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 1u32);
             }
         }
         Instructionˉcount = Instructionˉcount + 1u32;
         if Instructionˉcount > 8192u32 {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 1u32);
         }
         let Next: u32 = Cursor + Size;
         if Opcode == 48u8 {
@@ -2298,7 +2344,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                 Section.Payloadˉoffset + Cursor + 1u32
             );
             if Jumpˉtarget >= Length {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+                return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 1u32);
             }
             Leaderˉoffsets = Bytesˉconcat(
                 Leaderˉoffsets,
@@ -2311,10 +2357,10 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                 Section.Payloadˉoffset + Cursor + 1u32
             );
             if Branchˉtarget >= Length {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+                return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 1u32);
             }
             if Next >= Length {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+                return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 1u32);
             }
             Leaderˉoffsets = Bytesˉconcat(
                 Leaderˉoffsets,
@@ -2333,7 +2379,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Length
     );
     if Bytesˉlength(Leaders) != Length {
-        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 2u32);
     }
     let Instructionsˉmap: bytes = Compilerˉnativeˉx64ˉinstructionˉmap(
         Input,
@@ -2341,7 +2387,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Length
     );
     if Bytesˉlength(Instructionsˉmap) != Length {
-        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 2u32);
     }
 
     var Blockˉoffsets: bytes = Compilerˉnativeˉx64ˉempty(Input);
@@ -2350,7 +2396,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
     while Cursor < Length {
         if Bytesˉreadˉu8(Leaders, Cursor) == 1u8 {
             if Bytesˉreadˉu8(Instructionsˉmap, Cursor) == 0u8 {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+                return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 3u32);
             }
             Blockˉoffsets = Bytesˉconcat(
                 Blockˉoffsets,
@@ -2361,7 +2407,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Cursor = Cursor + 1u32;
     }
     if Bytesˉlength(Blockˉoffsets) != Blocks * 4u32 {
-        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 3u32);
     }
 
     var I32ˉslots: u32 = 0u32;
@@ -2379,7 +2425,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
     Cursor = 0u32;
     while Cursor < Length {
         if Bytesˉreadˉu8(Leaders, Cursor) != 1u8 {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 3u32);
         }
         var Blockˉend: u32 = Length;
         if Blockˉindex + 1u32 < Blocks {
@@ -2404,7 +2450,10 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                 Capabilityˉtable
             );
         if !Block.Valid {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(
+                Input,
+                1000u32 + Blockˉindex
+            );
         }
         if Block.I32ˉvalues > I32ˉslots { I32ˉslots = Block.I32ˉvalues; }
         if Block.Boolˉvalues > Boolˉslots { Boolˉslots = Block.Boolˉvalues; }
@@ -2432,7 +2481,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
     }
     if Blockˉindex != Blocks ||
         Bytesˉlength(Controlˉedges) != Blocks * 5u32 {
-        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 4u32);
     }
 
     var Reachableˉblocks: bytes = Bytesˉfromˉu32ˉlittle(0u32);
@@ -2448,14 +2497,14 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             Reachableˉcursor
         );
         if Reachˉblock >= Blocks {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 5u32);
         }
         let Edgeˉoffset: u32 = Reachˉblock * 5u32;
         let Terminator: u8 = Bytesˉreadˉu8(Controlˉedges, Edgeˉoffset);
         if Terminator == 0u8 || Terminator == 2u8 {
             let Nextˉblock: u32 = Reachˉblock + 1u32;
             if Nextˉblock >= Blocks {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+                return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 5u32);
             }
             if Bytesˉreadˉu8(Reachableˉmap, Nextˉblock) == 0u8 {
                 Reachableˉmap = Compilerˉnativeˉx64ˉsetˉmapˉbyte(
@@ -2478,7 +2527,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
                 Targetˉoffset
             );
             if Targetˉblock >= Blocks {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+                return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 5u32);
             }
             if Bytesˉreadˉu8(Reachableˉmap, Targetˉblock) == 0u8 {
                 Reachableˉmap = Compilerˉnativeˉx64ˉsetˉmapˉbyte(
@@ -2492,15 +2541,15 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             }
         }
         if Bytesˉlength(Reachableˉblocks) / 4u32 > Blocks {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 5u32);
         }
         Reachableˉcursor = Reachableˉcursor + 4u32;
     }
     if Bytesˉlength(Reachableˉblocks) != Blocks * 4u32 {
-        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 5u32);
     }
     if Maximumˉstack != Function.Maximumˉstack {
-        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 6u32);
     }
     var Hasˉrecords: bool = Recordˉslots > 0u32 ||
         Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
@@ -2534,13 +2583,13 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             Storageˉbytes
         );
         if !Storage.Valid {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 7u32);
         }
         if Storage.Recordˉvalues != Recordˉslots {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 8u32);
         }
         if Bytesˉlength(Storage.Scratchˉblockˉoffsets) != Blocks * 4u32 {
-            return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+            return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 9u32);
         }
         let Scratchˉvalues: u32 = Bytesˉlength(Storage.Scratchˉoffsets) / 4u32;
         var Scratchˉblock: u32 = 0u32;
@@ -2553,7 +2602,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
             if Scratchˉbase > Scratchˉvalues ||
                 Scratchˉbase < Previousˉscratchˉbase ||
                 Scratchˉblock == 0u32 && Scratchˉbase != 0u32 {
-                return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+                return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 10u32);
             }
             Previousˉscratchˉbase = Scratchˉbase;
             Scratchˉblock = Scratchˉblock + 1u32;
@@ -2564,7 +2613,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Storage.Persistentˉfields + Storage.Scratchˉfields +
         Compilerˉnativeˉx64ˉhiddenˉresultˉslots(Function.Returnˉtype) >
         2048u32 {
-        return Compilerˉnativeˉx64ˉemptyˉcontrolˉanalysis(Input);
+        return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 11u32);
     }
     return Compilerˉnativeˉx64ˉcontrolˉanalysis(
         true,
@@ -5057,7 +5106,7 @@ fn Compilerˉnativeˉx64ˉmeasureˉfunction(
             Types,
             Capabilityˉtable
         );
-    if !Analysis.Valid { return 4294967295u32; }
+    if !Analysis.Valid { return 2147483648u32 + Analysis.Bodyˉbytes; }
     return Compilerˉnativeˉx64ˉfunctionˉbytes(
         Function,
         Analysis,
@@ -5610,10 +5659,12 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
             Types,
             Capabilityˉtable
         );
-        if Machineˉbytes == 4294967295u32 {
-            return Compilerˉnativeˉx64ˉplanˉfailure(
+        if Machineˉbytes >= 2147483648u32 {
+            return Compilerˉnativeˉx64ˉplanˉfunctionˉfailure(
                 Input,
-                Compilerˉnativeˉx64ˉstatus.Unsupportedˉcode
+                Compilerˉnativeˉx64ˉstatus.Unsupportedˉcode,
+                Functionˉindex,
+                Machineˉbytes - 2147483648u32
             );
         }
         if Expectedˉmachineˉcodeˉbytes > 33554432u32 {
@@ -5707,7 +5758,9 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
         Types.Itemˉoffsets,
         Types.Itemˉcounts,
         Capabilityˉtable.Count,
-        Capabilityˉtable.Kinds
+        Capabilityˉtable.Kinds,
+        4294967295u32,
+        4294967295u32
     );
 }
 

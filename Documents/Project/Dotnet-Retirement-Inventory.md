@@ -41,6 +41,19 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | C1 | Clean bootstrap from documented native seeds | `native-candidate` | The versioned compiler WVB and paired native compiler seeds, copied-seed host launchers, exact accepted compiler output, and Stage 0 reconstruction route exist. Independent Linux execution, paired-host promotion, native rebuilding of the seed applications and remaining accepted tools, and consumption from a later release remain. |
 | C2 | Final digest-bound Stage 0 recovery archive | `missing` | Produce and verify one final Windows/Linux recovery release before deleting retired managed source. |
 
+Decision [0423](../Decisions/0423-Compiler-Scale-Native-Lowerer-Admission.md)
+advances N1 beyond the older limits embedded in the ledger row: the accepted
+candidate now owns 256 static-data declarations, 64 records plus 64 enums,
+1,024 declared record locals, 256 produced record values per block, packed
+record interference, and the complete admitted `u32` bitwise/shift family.
+Focused differential tests pin the current compiler's 110-data,
+63-record/16-enum, 674-record-local, and 214-value measured envelopes. The
+413-function compiler input clears the earlier functions 39, 245, 246, and 308;
+function 312 now reaches the real 674-local liveness workload but the current
+native staging process exits before returning a status or publishing a first
+chunk. Reducing that immutable liveness/interference lifetime is the next N1
+slice; another capacity increase is not currently justified.
+
 Current C1 update: the [native compiler seed bootstrap](../../Specifications/Windvale-Native-Compiler-Seed-Bootstrap.md)
 pins the semantic-freeze compiler WVB and paired format-3 applications, consumes
 the qualified native publisher, and rebuilds the current thirteen-module compiler

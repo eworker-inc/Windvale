@@ -52,12 +52,13 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 372,514 | `f2283d33fdcae404a6dd15f6a888c3d1efa359328110fca6d54be1aa67cc1d5c` |
-| Windows WVB-to-WVO tool | 5,348,864 | `0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280` |
-| Linux WVB-to-WVO tool | 5,349,376 | `c6ba202ffcb32a261bfd9c997e4bab754ab5a636e2d0b95e5de5f55e598c6358` |
+| WVB-to-WVO tool WVB | 403,806 | `f5433e71ca8da5e8b495f3ae3ee63835a226568b6309aa6c6c5e27fad7f933cc` |
+| Windows WVB-to-WVO tool | 5,867,520 | `9e18ec08c894a569c182a8426f51654564ade58a74f66b80e718fff0e1e367db` |
+| Linux WVB-to-WVO tool | 5,869,568 | `700194c0caa339a78271921a6ccd211173ab3cdc9eaa6288fbffdb72ee2ef0ee` |
 
-These pinned applications predate Decision 0419. The current Windvale source
-contract additionally admits parameterless `Main() -> bytes`. Decision 0420's
+These pinned candidate applications include Decision 0419's parameterless
+`Main() -> bytes` contract and Decision 0423's compiler-scale admission work,
+but their Stage 0-constructed host containers remain unpromoted. Decision 0420's
 segmented native construction accepts the current 409-function, 399,691-byte
 lowerer WVB at SHA-256
 `92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508`
@@ -71,7 +72,7 @@ passes genuine Debian reconstruction and execution in GitHub run
 [`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
 and reproduces the same two retained WVOs.
 Ordinary consumers continue to use digest-bound retained WVOs until paired
-promotion replaces the older candidate applications.
+promotion qualifies the current candidate applications.
 
 `Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 
