@@ -51,6 +51,7 @@ byte for byte with the frozen Stage 0 application contracts. On the current
 Windows host it also executes the packaged composer and then the verifier it
 produced, requires the canonical successful WVB report, and observes no CLR,
 hostfxr, or hostpolicy module. The test additionally proves digest rejection
-and destination preservation. Format-4 admission must join the existing native
-console-application publisher before its durable transaction is reused;
+and destination preservation. The separate
+[application-publisher contract](Windvale-Native-Hosted-Verifier-Application-Publisher.md)
+now pins both completed outputs and reuses the native durable transaction;
 independent Linux execution remains pending.

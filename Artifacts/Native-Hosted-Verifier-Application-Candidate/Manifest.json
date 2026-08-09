@@ -1,0 +1,26 @@
+{
+  "format": "windvale-native-hosted-verifier-application-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0474",
+  "provenanceDecision": "0470",
+  "qualification": "current-host-focused",
+  "construction": "stage0-recovery",
+  "artifacts": [
+    {
+      "name": "windows-x64-native-hosted-verifier",
+      "path": "windows-x64-wvverify.exe",
+      "target": "windows-x64-compiler-verifier-v4",
+      "bytes": 1004032,
+      "sha256": "aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a",
+      "sourceWvb": "../Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb"
+    },
+    {
+      "name": "linux-x64-native-hosted-verifier",
+      "path": "linux-x64-wvverify.elf",
+      "target": "linux-x64-compiler-verifier-v4",
+      "bytes": 1003520,
+      "sha256": "26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b",
+      "sourceWvb": "../Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb"
+    }
+  ]
+}

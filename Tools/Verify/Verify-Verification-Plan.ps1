@@ -78,6 +78,22 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'hosted verifier application publisher boundary'
+        Paths = @(
+            'Linker/Windvale/Native-Hosted-Verifier-Application-Admission.wv',
+            'Linker/Windvale/Native-Hosted-Verifier-Application-Tool.wv',
+            'Tools/Windvale.Publish/Native-Hosted-Verifier-Application-Publisher.wv',
+            'Tools/Native/Publish-Hosted-Verifier-Application.cmd',
+            'Artifacts/Native-Hosted-Verifier-Application-Publisher-Candidate/Manifest.json',
+            'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher.md',
+            'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
+            'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
+        )
+        Suites = @('publisher-rejections')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'database gap'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
         Suites = @()

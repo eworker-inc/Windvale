@@ -3,7 +3,8 @@
 ## Status and scope
 
 This fixed candidate contract exercises pre-replacement rejection through the
-digest-bound console-application and WVO publisher launchers. It transfers one
+digest-bound console-application, hosted-verifier-application, and WVO publisher
+launchers. It transfers one
 permanent no-.NET admission and cleanup slice; it does not duplicate the shared
 publication transaction's hard-link, concurrency, injected-fault, replacement,
 directory-durability, or indeterminate-completion matrix.
@@ -29,6 +30,7 @@ The ordered cases are:
 | Case | Launcher | Complete diagnostic | Report SHA-256 |
 | --- | --- | --- | --- |
 | `console-application` | `Publish-Console.cmd` / `.sh` | `publication status=Rejected phase=console-application` plus LF | `39db034713225109f62c272db447d75cfe93ff0c259c8d9e5211f0df5c007e1f` |
+| `hosted-verifier-application` | `Publish-Hosted-Verifier-Application.cmd` / `.sh` | `publication status=Rejected phase=native-hosted-verifier-application` plus LF | `d56759e7c74de5f7c15f2940b87f5d89cd7c5d9dff647854560cdd8cd1749c24` |
 | `wvo` | `Publish-Wvo.cmd` / `.sh` | `publication status=Rejected phase=wvo` plus LF | `e7a127a800310d9fbaf8b511b20c7b8184159521dec1be56b641793939a5c69f` |
 
 For each case the coordinator must:
@@ -44,8 +46,9 @@ Success prints:
 
 ```text
 PASS  console-application
+PASS  hosted-verifier-application
 PASS  wvo
-Tests: 2, Passed: 2, Failed: 0
+Tests: 3, Passed: 3, Failed: 0
 ```
 
 The command invokes no .NET process and does not rebuild publisher artifacts.

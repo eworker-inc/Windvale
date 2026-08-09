@@ -29,6 +29,8 @@ if errorlevel 1 goto :failed
 
 call :run_case "console-application" "Publish-Console.cmd" "Candidate.exe" "Destination.exe" "39db034713225109f62c272db447d75cfe93ff0c259c8d9e5211f0df5c007e1f"
 if errorlevel 1 goto :failed
+call :run_case "hosted-verifier-application" "Publish-Hosted-Verifier-Application.cmd" "Candidate.exe" "Destination.exe" "d56759e7c74de5f7c15f2940b87f5d89cd7c5d9dff647854560cdd8cd1749c24"
+if errorlevel 1 goto :failed
 call :run_case "wvo" "Publish-Wvo.cmd" "Candidate.wvo" "Destination.wvo" "e7a127a800310d9fbaf8b511b20c7b8184159521dec1be56b641793939a5c69f"
 if errorlevel 1 goto :failed
 

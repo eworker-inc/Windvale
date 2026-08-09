@@ -1,0 +1,42 @@
+module Linkerˉnativeˉhostedˉverifierˉapplicationˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉverifierˉapplicationˉadmission as Admission;
+
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line(
+            "Usage: wvhostverifieradmit <windows|linux> <application.exe|application.elf>"
+        );
+        return 64;
+    }
+    let Platform: text = process.argument(0u32);
+    var Target: u32 = 0u32;
+    if Platform == "windows" { Target = 1u32; }
+    if Platform == "linux" { Target = 2u32; }
+    if Target == 0u32 {
+        diagnostic.write_line(
+            "Usage: wvhostverifieradmit <windows|linux> <application.exe|application.elf>"
+        );
+        return 64;
+    }
+    let Valid: bool =
+        Admission.Nativeˉhostedˉverifierˉapplicationˉverification(
+            file.read_bytes(process.argument(1u32)),
+            Target
+        );
+    if !Valid {
+        diagnostic.write_line(
+            "native hosted verifier application status=Invalid"
+        );
+        return 2;
+    }
+    diagnostic.write_line(
+        "native hosted verifier application status=Valid"
+    );
+    return 0;
+}

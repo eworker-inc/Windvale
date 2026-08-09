@@ -134,6 +134,15 @@ run_case \
         exit 1
     }
 run_case \
+    'hosted-verifier-application' \
+    'Publish-Hosted-Verifier-Application.sh' \
+    'Candidate.elf' \
+    'Destination.elf' \
+    'd56759e7c74de5f7c15f2940b87f5d89cd7c5d9dff647854560cdd8cd1749c24' || {
+        echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+        exit 1
+    }
+run_case \
     'wvo' \
     'Publish-Wvo.sh' \
     'Candidate.wvo' \

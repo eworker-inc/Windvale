@@ -1,0 +1,5 @@
+windvale-project 1
+root "Linker/Windvale/Native-Hosted-Verifier-Application-Tool.wv"
+source "Foundation/Sha256.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Application-Admission.wv"
+emit wvb

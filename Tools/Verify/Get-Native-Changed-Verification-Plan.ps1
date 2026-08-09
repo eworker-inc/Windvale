@@ -133,6 +133,8 @@ function Add-Native-Tool-Suite {
         Add-Bytecode-Suites
     } elseif ($Stem -match 'Package-Uefi') {
         Add-Suite 'uefi-packager'
+    } elseif ($Stem -eq 'Publish-Hosted-Verifier-Application') {
+        Add-Suite 'publisher-rejections'
     } elseif ($Stem -match 'Console|Package-Hosted|Segmented') {
         Add-Suite @(
             'console-packager-rejections',
@@ -237,10 +239,19 @@ foreach ($Path in $Paths) {
         Add-Assembler-Suites
     } elseif ($Path.StartsWith('Assembler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-assembler-recovery-source'
+    } elseif ($Path.StartsWith(
+        'Linker/Windvale/Native-Hosted-Verifier-Application-',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'publisher-rejections'
     } elseif ($Path.StartsWith('Linker/Windvale/', [StringComparison]::Ordinal)) {
         Add-Linker-Suites
     } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-linker-recovery-source'
+    } elseif ($Path.StartsWith('Tools/Windvale.Publish/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Artifacts/Native-Hosted-Verifier-Application-',
+            [StringComparison]::Ordinal)) {
+        Add-Suite 'publisher-rejections'
     } elseif ($Path.StartsWith('Libraries/Database/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal)) {
         Add-Gap 'database-native-tests'
@@ -254,7 +265,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
-        if ($Path -match 'Assembly|Wva-') {
+        if ($Path -eq 'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher.md') {
+            Add-Suite 'publisher-rejections'
+        } elseif ($Path -match 'Assembly|Wva-') {
             Add-Assembler-Suites
         } elseif ($Path -match 'Linking|Linker') {
             Add-Linker-Suites
@@ -269,6 +282,11 @@ foreach ($Path in $Paths) {
         } else {
             Add-Gap "specification:$([IO.Path]::GetFileName($Path))"
         }
+    } elseif ($Path -in @(
+        'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
+        'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
+    )) {
+        Add-Suite 'publisher-rejections'
     } elseif ($Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'seed'
     } elseif ($Path.StartsWith('Examples/', [StringComparison]::Ordinal)) {

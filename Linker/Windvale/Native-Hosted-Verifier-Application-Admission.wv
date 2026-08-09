@@ -1,0 +1,38 @@
+module Linkerˉnativeˉhostedˉverifierˉapplicationˉadmission profile portable;
+
+import Foundationˉsha256 as Sha256;
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉverifierˉapplicationˉverification(
+    Input: bytes,
+    Target: u32
+) -> bool {
+    var Expectedˉbytes: u32 = 1004032u32;
+    var Expectedˉsha256: text =
+        "aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a";
+    if Target == 2u32 {
+        Expectedˉbytes = 1003520u32;
+        Expectedˉsha256 =
+            "26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b";
+    }
+    if Target < 1u32 || Target > 2u32 ||
+        Bytesˉlength(Input) != Expectedˉbytes {
+        return false;
+    }
+    return Bytesˉequal(
+        Sha256.Foundationˉsha256ˉhex(Input),
+        Textˉtoˉutf8(Expectedˉsha256)
+    );
+}
