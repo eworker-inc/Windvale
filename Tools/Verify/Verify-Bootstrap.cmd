@@ -5,16 +5,11 @@ if not "%~1"=="" goto :usage
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
-set "Artifacts=%RepositoryRoot%\artifacts"
-set "Output=%Artifacts%\Bootstrap-Windvale-Compiler.wvb"
-
-if not exist "%Artifacts%\." mkdir "%Artifacts%" || exit /b 1
-call "%RepositoryRoot%\Tools\Native\Bootstrap-Compiler.cmd" ^
-    "%RepositoryRoot%\Artifacts" "%RepositoryRoot%" "%Output%"
+call "%RepositoryRoot%\Tools\Native\Verify-Compiler-Convergence.cmd" ^
+    "%RepositoryRoot%\Artifacts" "%RepositoryRoot%"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
 echo Native compiler bootstrap verification passed.
-echo Compiler: %Output%
 exit /b 0
 
 :usage

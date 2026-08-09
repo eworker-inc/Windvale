@@ -40,21 +40,8 @@ if exist "%TemporaryDirectory%" goto :allocate
 mkdir "%TemporaryDirectory%" || exit /b 1
 set "Candidate=%TemporaryDirectory%\Candidate.wvb"
 
-"%Compiler%" ^
-    "%SourceRoot%\Examples\Compiler\Source-Wvb-Tool.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Bindings-Core.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Body-Parser.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Declaration-Parser.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Graph-Core.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Lexer-Core.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Set-Core.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Symbols-Core.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Wir-Core.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Wvb-Core.wv" ^
-    "%SourceRoot%\Compiler\Windvale\Source-Wvb-Temporary-Slots.wv" ^
-    "%SourceRoot%\Foundation\Byte-Construction.wv" ^
-    "%SourceRoot%\Foundation\Decimal-Parsing.wv" ^
-    "%Candidate%"
+call "%RepositoryRoot%\Tools\Native\Compile-Compiler-Source-Set.cmd" ^
+    "%Compiler%" "%SourceRoot%" "%Candidate%"
 set "Result=%ERRORLEVEL%"
 if not "%Result%"=="0" goto :cleanup
 

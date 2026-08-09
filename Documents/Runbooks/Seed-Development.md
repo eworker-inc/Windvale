@@ -125,10 +125,10 @@ Tools\Verify\Verify-Bootstrap.cmd
 ```
 
 The verifier admits the versioned native compiler seed and publisher, rebuilds
-the current canonical compiler WVB from the exact project inventory, requires
-its pinned byte identity, and publishes it through the qualified native front
-door. The older Stage 0 → Stage 1 → Stage 2 convergence proof remains available
-only as `Tools/Recovery/Verify-Managed-Bootstrap.ps1` or `.sh`.
+Stage 1 from the exact project inventory, packages and executes that newly built
+compiler, independently verifies Stage 2, and requires complete Stage 1/Stage 2
+byte equality. The older managed Stage 0 → Stage 1 → Stage 2 proof remains
+available only as `Tools/Recovery/Verify-Managed-Bootstrap.ps1` or `.sh`.
 
 ## Compile and run a portable program
 

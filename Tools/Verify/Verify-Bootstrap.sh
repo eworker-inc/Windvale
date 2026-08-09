@@ -8,12 +8,7 @@ fi
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPOSITORY_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
-ARTIFACTS="$REPOSITORY_ROOT/artifacts"
-OUTPUT="$ARTIFACTS/Bootstrap-Windvale-Compiler.wvb"
-
-mkdir -p "$ARTIFACTS"
-"$REPOSITORY_ROOT/Tools/Native/Bootstrap-Compiler.sh" \
-    "$REPOSITORY_ROOT/Artifacts" "$REPOSITORY_ROOT" "$OUTPUT"
+"$REPOSITORY_ROOT/Tools/Native/Verify-Compiler-Convergence.sh" \
+    "$REPOSITORY_ROOT/Artifacts" "$REPOSITORY_ROOT"
 
 echo 'Native compiler bootstrap verification passed.'
-echo "Compiler: $OUTPUT"

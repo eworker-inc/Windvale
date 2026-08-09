@@ -70,3 +70,22 @@ children, destination-preservation checks, malformed or altered seed rejection,
 and an exact-commit qualification reference in the seed manifest. A later release
 must then use the promoted previous seed before Decision 0057 condition 7 can be
 called complete.
+
+## Native self-convergence coordinator
+
+The ordinary bootstrap verification entry points require more than a one-stage
+seed rebuild. `Tools/Native/Verify-Compiler-Convergence.cmd` and `.sh` admit the
+native verifier, build and publish Stage 1 through the seed launchers, package
+that exact WVB through the segmented compiler-WVB profile, execute the newly
+packaged Stage 1 compiler over the canonical project inventory, independently
+verify Stage 2, and require complete Stage 1/Stage 2 byte equality.
+
+`Tools/Native/Compile-Compiler-Source-Set.cmd` and `.sh` own the exact ordered
+source invocation shared by the seed and convergence routes. They do not discover
+files, parse the project, or weaken the project-manifest identity check.
+
+The Windows candidate completes this chain with identical 921,900-byte outputs
+at SHA-256
+`fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556`.
+The paired Linux coordinator has the same fail-closed contract; its independent
+execution and promotion remain part of the grouped retirement qualification.

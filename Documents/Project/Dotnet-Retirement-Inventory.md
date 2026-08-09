@@ -38,7 +38,7 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | G1 | Independent dual-host qualification | `managed-normal` | `.github/workflows/verify.yml` installs .NET and runs the managed Seed gate. Native replacement must retain Windows/Linux independence and fail-closed verification. |
 | R1 | Homepage and playground release | `native-candidate` | The homepage workflow publishes the static playground and its digest-pinned native package without installing .NET. Independent release promotion evidence remains before this row is called qualified. |
 | D1 | Local editable browser playground | `native-candidate` | `npm run dev:playground` builds and serves the static Monaco/native-WebAssembly application without starting Blazor or .NET. Cross-host promotion remains. |
-| C1 | Clean bootstrap from documented native seeds | `native-candidate` | The versioned compiler WVB and paired native compiler seeds, copied-seed host launchers, exact accepted compiler output, and Stage 0 reconstruction route exist. The ordinary bootstrap verifier now uses this native route; managed Stage 1/Stage 2 convergence is recovery-only. Independent Linux execution, paired-host promotion, native rebuilding of the seed applications and remaining accepted tools, and consumption from a later release remain. |
+| C1 | Clean bootstrap from documented native seeds | `native-candidate` | The versioned compiler WVB and paired native compiler seeds, copied-seed host launchers, exact accepted compiler output, and Stage 0 reconstruction route exist. The ordinary bootstrap verifier now performs native Stage 1/Stage 2 self-convergence; the Windows path passes exact byte equality and managed convergence is recovery-only. Independent Linux execution, paired-host promotion, native rebuilding of the seed applications and remaining accepted tools, and consumption from a later release remain. |
 | C2 | Final digest-bound Stage 0 recovery archive | `missing` | Produce and verify one final Windows/Linux recovery release before deleting retired managed source. |
 
 Decisions [0423](../Decisions/0423-Compiler-Scale-Native-Lowerer-Admission.md),
@@ -72,9 +72,11 @@ use of this candidate as its previous seed remain before C1 is complete.
 makes that candidate the ordinary `Verify-Bootstrap` route. The former managed
 Stage 0 → Stage 1 → Stage 2 convergence scripts now live under `Tools/Recovery`
 with explicit managed names; they remain independent recovery and differential
-evidence rather than a normal verification dependency. Native Stage 1 → Stage 2
-self-convergence, Linux execution, promotion, and later-release consumption
-remain open.
+evidence rather than a normal verification dependency.
+[Decision 0428](../Decisions/0428-Native-Compiler-Self-Convergence.md) adds the
+native Stage 1 → Stage 2 coordinator, whose Windows route now passes exact
+byte equality after packaging and executing the newly built Stage 1 compiler.
+Linux execution, promotion, and later-release consumption remain open.
 
 Current N1 update: [Decision 0419](../Decisions/0419-Descriptor-Returning-Native-Main.md)
 closes the smaller entry-shape gap exposed after Decision 0394's pruned staged

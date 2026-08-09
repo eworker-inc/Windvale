@@ -14,6 +14,7 @@ source_root=$(CDPATH= cd -- "$2" && pwd -P) || {
     echo 'The compiler source root does not exist.' >&2
     exit 64
 }
+script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 output_directory=$(CDPATH= cd -- "$(dirname -- "$3")" && pwd -P) || exit 64
 output_path="$output_directory/$(basename -- "$3")"
 if [[ $output_path != *.wvb ]]; then
@@ -81,21 +82,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-"$compiler" \
-    "$source_root/Examples/Compiler/Source-Wvb-Tool.wv" \
-    "$source_root/Compiler/Windvale/Source-Bindings-Core.wv" \
-    "$source_root/Compiler/Windvale/Source-Body-Parser.wv" \
-    "$source_root/Compiler/Windvale/Source-Declaration-Parser.wv" \
-    "$source_root/Compiler/Windvale/Source-Graph-Core.wv" \
-    "$source_root/Compiler/Windvale/Source-Lexer-Core.wv" \
-    "$source_root/Compiler/Windvale/Source-Set-Core.wv" \
-    "$source_root/Compiler/Windvale/Source-Symbols-Core.wv" \
-    "$source_root/Compiler/Windvale/Source-Wir-Core.wv" \
-    "$source_root/Compiler/Windvale/Source-Wvb-Core.wv" \
-    "$source_root/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv" \
-    "$source_root/Foundation/Byte-Construction.wv" \
-    "$source_root/Foundation/Decimal-Parsing.wv" \
-    "$candidate"
+"$script_directory/Compile-Compiler-Source-Set.sh" \
+    "$compiler" "$source_root" "$candidate"
 result=$?
 if [[ $result -ne 0 ]]; then
     exit "$result"

@@ -7,7 +7,8 @@ It does not invoke .NET on the ordinary bootstrap path.
 ## Bootstrap the compiler
 
 The ordinary verification wrappers select the repository's checked-in artifact
-and source roots automatically:
+and source roots automatically. They build Stage 1, package and execute that
+newly built compiler, and require exact Stage 2 equality:
 
 ```bat
 Tools\Verify\Verify-Bootstrap.cmd
@@ -17,8 +18,9 @@ Tools\Verify\Verify-Bootstrap.cmd
 ./Tools/Verify/Verify-Bootstrap.sh
 ```
 
-Use the lower-level launchers below when proving a copied release seed or
-selecting an explicit destination.
+Use the lower-level one-stage launchers below when proving a copied release seed
+or selecting an explicit destination. They publish Stage 1 but do not run the
+self-convergence coordinator.
 
 On Windows x64:
 

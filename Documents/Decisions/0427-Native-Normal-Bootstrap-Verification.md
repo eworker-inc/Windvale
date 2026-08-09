@@ -54,11 +54,11 @@ paths receive focused static verification in this slice. The expensive native
 compiler rebuild is not repeated because its implementation and admitted
 inputs are unchanged and its latest passing result is reused.
 
-This does not yet prove all-native Stage 1 → Stage 2 self-convergence. That
-requires packaging and executing the newly rebuilt Stage 1 compiler through the
-promoted native compiler-scale pipeline, then requiring exact Stage 2 equality.
-Linux execution, paired-host promotion, later-release seed consumption, and the
-final grouped retirement gate also remain open.
+[Decision 0428](0428-Native-Compiler-Self-Convergence.md) adds the all-native
+Stage 1 → Stage 2 proof. Windows now packages and executes the newly rebuilt
+Stage 1 compiler through the compiler-scale pipeline and requires exact Stage 2
+equality. Linux execution, paired-host promotion, later-release seed consumption,
+and the final grouped retirement gate remain open.
 
 ## Reconsideration triggers
 
