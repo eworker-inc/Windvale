@@ -47,6 +47,8 @@ internal static class Stage0ˉrecoveryˉaotˉtargets
         Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
         Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Compilerˉimageˉtransportˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Compilerˉimageˉtransportˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
 }

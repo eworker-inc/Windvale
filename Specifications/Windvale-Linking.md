@@ -273,6 +273,31 @@ These candidate containers are constructed only through the explicit Stage 0
 recovery command and therefore do not close native host-container
 reconstruction.
 
+### Canonical compiler-image transport
+
+`Linker/Windvale/Compiler-Image-Canonical-Transport-Tool.wv` converts a strict
+`WVLI 1.0` sequence of semantic linker chunks into the canonical fragment
+geometry consumed by hosted packaging. Its four arguments are the source chunk
+prefix, source `WVLI`, output chunk prefix, and output `WVLI`.
+
+Before reading any chunk, the portable resource plan validates both manifests
+and prefixes, rejects every control/chunk collision, admits one through 62
+source chunks, and derives one through eight output chunks from the declared
+image length. The process reads every source chunk once in manifest order and
+checks its exact length. It preserves the byte sequence while emitting every
+non-final output at exactly 4,194,304 bytes and one nonempty final remainder.
+The image length and entry offset remain unchanged. A newly validated `WVLI` is
+written last; incomplete output chunks are not completion evidence.
+
+The exact transport WVB is 23,836 bytes at SHA-256
+`dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d`.
+The Windows application is 269,312 bytes at SHA-256
+`6c204b9b3ee90a4d73ecdaa1ae0f0c4d5f3056973f3ccd3a8489789c6b46ef6d`;
+the Linux application is 270,336 bytes at SHA-256
+`4b7aa91e78880617c3abc8a1cbd59c098cfb274c020d2ecbe7dee214ed9576cd`.
+Both application constructors are Stage 0 recovery-only. The checked-in native
+processes and digest-bound launchers are the normal candidate front door.
+
 ## Deliberate omissions
 
 The flat target has no PE, ELF, UEFI, archive/library search, dynamic linking, weak symbols, COMDAT selection, dead stripping, section merging, executable permissions, debug data, stack/heap declaration, ABI, start-up code, 64-bit absolute relocation, internal-label model, or loader metadata. A raw flat image is not directly executed by Windows or Linux. The UEFI application adapter and capability-free `windows-x64-console-v1` and `linux-x64-console-v1` adapters are downstream targets with their own narrower input and verification rules.

@@ -215,6 +215,7 @@ internal static class Program
         Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Compilerˉimageˉtransportˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         _ => ".elf",
@@ -441,6 +442,8 @@ internal static class Program
         Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
         Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Compilerˉimageˉtransportˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Compilerˉimageˉtransportˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -602,6 +605,7 @@ internal static class Program
                 Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Compilerˉimageˉtransportˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
             {
@@ -780,6 +784,11 @@ internal static class Program
                             Bytes),
                     Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Compilerˉimageˉstagingˉapplicationˉwriter.Writeˉwindows(
+                            Module,
+                            Fragment,
+                            Bytes),
+                    Compilerˉimageˉtransportˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Compilerˉimageˉtransportˉapplicationˉwriter.Writeˉwindows(
                             Module,
                             Fragment,
                             Bytes),
@@ -989,6 +998,11 @@ internal static class Program
                             Module,
                             Fragment,
                             Bytes),
+                    Compilerˉimageˉtransportˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Compilerˉimageˉtransportˉapplicationˉwriter.Writeˉlinux(
+                            Module,
+                            Fragment,
+                            Bytes),
                     Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -1058,6 +1072,7 @@ internal static class Program
                     Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Compilerˉimageˉtransportˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
                 OperatingSystem.IsLinux())

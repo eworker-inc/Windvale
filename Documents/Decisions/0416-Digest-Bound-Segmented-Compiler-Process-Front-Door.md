@@ -3,6 +3,7 @@
 - Status: Implemented candidate; canonical image rechunking, hosted-package composition, native container construction, Linux execution, and grouped qualification pending
 - Date: 2026-08-08
 - Advances: [Decision 0354](0354-Native-Compiler-Image-Staging-Reconstruction.md), [Decision 0415](0415-Managed-Hosted-Tool-Aot-Recovery-Lane.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
+- Advanced by: [Decision 0417](0417-Canonical-Compiler-Image-Transport.md)
 - Contract: [Windvale linking](../../Specifications/Windvale-Linking.md#hosted-immutable-snapshot-staging-boundary)
 
 ## Context

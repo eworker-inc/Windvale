@@ -1,0 +1,168 @@
+module Linkerˉcompilerˉimageˉcanonicalˉtransportˉtool profile hosted;
+
+import Linkerˉcompilerˉflatˉimageˉstagingˉmanifest as Manifest;
+import Linkerˉcompilerˉimageˉtransportˉresources as Resources;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+const CHUNK_BYTES: u32 = 4194304u32;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Minimum(Left: u32, Right: u32) -> u32 {
+    if Left < Right { return Left; }
+    return Right;
+}
+
+fn Appendˉentry(
+    Entries: bytes,
+    Index: u32,
+    Position: u32,
+    Length: u32
+) -> bytes {
+    var Result: bytes =
+        Bytesˉconcat(Entries, Bytesˉfromˉu32ˉlittle(Index));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Position));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Length));
+}
+
+fn Rejectˉresource(
+    Status: Resources.Linkerˉcompilerˉimageˉtransportˉresourceˉstatus
+) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "compiler image transport resource=",
+            Enumˉname(Status)
+        )
+    );
+    return 1;
+}
+
+fn Rejectˉchunk(Index: u32) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            "compiler image transport chunk=",
+            U32ˉformat(Index)
+        )
+    );
+    return 1;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 {
+        diagnostic.write_line(
+            "Usage: wvimagetransport <source-chunk-prefix> <source.wvli> <output-chunk-prefix> <output.wvli>"
+        );
+        return 64;
+    }
+    let Sourceˉprefix: text = process.argument(0u32);
+    let Sourceˉmanifest: text = process.argument(1u32);
+    let Outputˉprefix: text = process.argument(2u32);
+    let Outputˉmanifest: text = process.argument(3u32);
+    let Manifestˉbytes: bytes = file.read_bytes(Sourceˉmanifest);
+    let Plan: Resources.Linkerˉcompilerˉimageˉtransportˉresourceˉplan =
+        Resources.Linkerˉcompilerˉimageˉtransportˉresourceˉplanˉbuild(
+            Sourceˉprefix,
+            Sourceˉmanifest,
+            Outputˉprefix,
+            Outputˉmanifest,
+            Manifestˉbytes
+        );
+    if Plan.Status !=
+        Resources.Linkerˉcompilerˉimageˉtransportˉresourceˉstatus.Valid {
+        return Rejectˉresource(Plan.Status);
+    }
+
+    var Pending: bytes = Empty(Manifestˉbytes);
+    var Entries: bytes = Empty(Manifestˉbytes);
+    var Sourceˉindex: u32 = 0u32;
+    var Outputˉindex: u32 = 0u32;
+    var Imageˉposition: u32 = 0u32;
+    while Sourceˉindex < Plan.Sourceˉchunks {
+        let Source: bytes = file.read_bytes(
+            Resources.Linkerˉcompilerˉimageˉtransportˉresource(
+                Sourceˉprefix, Sourceˉindex
+            )
+        );
+        let Sourceˉentry: u32 = 28u32 + Sourceˉindex * 12u32;
+        if Bytesˉlength(Source) !=
+            Bytesˉreadˉu32ˉlittle(Manifestˉbytes, Sourceˉentry + 8u32) {
+            return Rejectˉchunk(Sourceˉindex);
+        }
+        var Sourceˉposition: u32 = 0u32;
+        while Sourceˉposition < Bytesˉlength(Source) {
+            let Capacity: u32 = CHUNK_BYTES - Bytesˉlength(Pending);
+            let Remaining: u32 =
+                Bytesˉlength(Source) - Sourceˉposition;
+            let Take: u32 = Minimum(Capacity, Remaining);
+            Pending = Bytesˉconcat(
+                Pending,
+                Bytesˉslice(Source, Sourceˉposition, Take)
+            );
+            Sourceˉposition = Sourceˉposition + Take;
+            if Bytesˉlength(Pending) == CHUNK_BYTES {
+                file.write_bytes(
+                    Resources.Linkerˉcompilerˉimageˉtransportˉresource(
+                        Outputˉprefix, Outputˉindex
+                    ),
+                    Pending
+                );
+                Entries = Appendˉentry(
+                    Entries, Outputˉindex, Imageˉposition, CHUNK_BYTES
+                );
+                Imageˉposition = Imageˉposition + CHUNK_BYTES;
+                Outputˉindex = Outputˉindex + 1u32;
+                Pending = Empty(Manifestˉbytes);
+            }
+        }
+        Sourceˉindex = Sourceˉindex + 1u32;
+    }
+    if Bytesˉlength(Pending) > 0u32 {
+        let Finalˉbytes: u32 = Bytesˉlength(Pending);
+        file.write_bytes(
+            Resources.Linkerˉcompilerˉimageˉtransportˉresource(
+                Outputˉprefix, Outputˉindex
+            ),
+            Pending
+        );
+        Entries = Appendˉentry(
+            Entries, Outputˉindex, Imageˉposition, Finalˉbytes
+        );
+        Imageˉposition = Imageˉposition + Finalˉbytes;
+        Outputˉindex = Outputˉindex + 1u32;
+    }
+    if Imageˉposition != Plan.Imageˉbytes ||
+        Outputˉindex != Plan.Outputˉchunks ||
+        Bytesˉlength(Entries) != Outputˉindex * 12u32 {
+        return Rejectˉchunk(Sourceˉindex);
+    }
+    let Canonicalˉmanifest: bytes =
+        Manifest.Linkerˉcompilerˉflatˉimageˉmanifestˉbuild(
+            Entries,
+            Plan.Imageˉbytes,
+            Plan.Entryˉoffset,
+            Outputˉindex
+        );
+    if Bytesˉlength(Canonicalˉmanifest) == 0u32 {
+        return Rejectˉchunk(Sourceˉindex);
+    }
+    file.write_bytes(Outputˉmanifest, Canonicalˉmanifest);
+    var Report: text = "compiler image transport status=Complete image-bytes=";
+    Report = Textˉconcat(Report, U32ˉformat(Plan.Imageˉbytes));
+    Report = Textˉconcat(Report, " entry-offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Plan.Entryˉoffset));
+    Report = Textˉconcat(Report, " chunks=");
+    Report = Textˉconcat(Report, U32ˉformat(Outputˉindex));
+    Report = Textˉconcat(Report, " manifest-bytes=");
+    console.write_line(
+        Textˉconcat(Report, U32ˉformat(Bytesˉlength(Canonicalˉmanifest)))
+    );
+    return 0;
+}

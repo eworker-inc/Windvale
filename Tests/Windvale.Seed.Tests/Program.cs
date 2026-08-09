@@ -1388,6 +1388,7 @@ internal static partial class Program
         new("staged compiler image runs as a native process", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Compilerˉwvoˉsegmentedˉflatˉimageˉapplicationˉruns),
         new("compiler image staging WVB builds through the native front door", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Compilerˉimageˉstagingˉbuildsˉnatively),
         new("compiler image staging reconstructs its native image through native processes", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Compilerˉimageˉstagingˉreconstructsˉnativeˉimage),
+        new("compiler image transport canonicalizes staged chunks without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Compilerˉimageˉtransportˉcanonicalizesˉchunks),
         new("staged compiler WVO chunks match retained lowering content", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉcontentˉisˉverified),
         new("staged compiler WVO resources retain exact snapshot identities", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉresourcesˉareˉbound),
         new("staged compiler WVO snapshots publish atomically without .NET", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpublisherˉruns),

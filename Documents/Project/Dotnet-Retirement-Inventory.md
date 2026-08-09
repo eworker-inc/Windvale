@@ -112,6 +112,17 @@ entry and chunk count, so orchestration does not decode `WVLI`. Canonical
 two recovery-built host containers, Linux execution, and the grouped gate
 remain open.
 
+[Decision 0417](../Decisions/0417-Canonical-Compiler-Image-Transport.md)
+closes the next L1 transport sub-item. A 23,836-byte Windvale tool validates a
+strict `WVLI` plus at most 62 semantic source chunks, reads each immutable
+source once, and emits one through eight canonical hosted fragment chunks with
+every non-final chunk exactly 4 MiB. It preserves the image and `Main` entry,
+writes a new `WVLI` last, runs without CLR modules, and is pinned behind paired
+digest-bound launchers. Its managed container targets are recovery-only.
+Hosted-package composition, complete compiler execution, native reconstruction
+of the three process containers, Linux execution, and the grouped gate remain
+open.
+
 [Decision 0355](../Decisions/0355-Windvale-Owned-Native-Utf8-Service-Construction.md)
 removes the normal C# byte-emission algorithm for the shared strict UTF-8
 native service. A focused Windvale core now constructs and patches the exact

@@ -1,0 +1,6 @@
+windvale-project 1
+root "Linker/Windvale/Compiler-Image-Canonical-Transport-Tool.wv"
+source "Foundation/Immutable-Source-Regions.wv"
+source "Linker/Windvale/Compiler-Flat-Image-Staging-Manifest.wv"
+source "Linker/Windvale/Compiler-Image-Transport-Resources.wv"
+emit wvb

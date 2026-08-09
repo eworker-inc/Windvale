@@ -53,6 +53,30 @@
       "bytes": 851968,
       "sha256": "02b07d23b763fa4dd2d11bb9c9ca94be32bdbd698b1f9ce7b466af90b768eef8",
       "sourceWvb": "Compiler-Image-Staging.wvb"
+    },
+    {
+      "name": "compiler-image-canonical-transport-wvb",
+      "path": "Compiler-Image-Canonical-Transport.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 23836,
+      "sha256": "dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d",
+      "sourceProject": "Windvale-Compiler-Image-Canonical-Transport.wvproj"
+    },
+    {
+      "name": "windows-x64-compiler-image-canonical-transport",
+      "path": "windows-x64-wvimagetransport.exe",
+      "target": "windows-x64-compiler-image-transport-v1",
+      "bytes": 269312,
+      "sha256": "6c204b9b3ee90a4d73ecdaa1ae0f0c4d5f3056973f3ccd3a8489789c6b46ef6d",
+      "sourceWvb": "Compiler-Image-Canonical-Transport.wvb"
+    },
+    {
+      "name": "linux-x64-compiler-image-canonical-transport",
+      "path": "linux-x64-wvimagetransport.elf",
+      "target": "linux-x64-compiler-image-transport-v1",
+      "bytes": 270336,
+      "sha256": "4b7aa91e78880617c3abc8a1cbd59c098cfb274c020d2ecbe7dee214ed9576cd",
+      "sourceWvb": "Compiler-Image-Canonical-Transport.wvb"
     }
   ]
 }
