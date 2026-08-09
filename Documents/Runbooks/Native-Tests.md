@@ -54,11 +54,11 @@ The exact filter names and case counts are:
 | `os-probe` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 29 suites and 3,143 cases in manifest order. Its
+Omitting `--filter` selects all 30 suites and 3,145 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 29, Passed: 29, Failed: 0, Cases: 3143
+Suites: 30, Passed: 30, Failed: 0, Cases: 3145
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -515,14 +515,16 @@ Tools\Native\Build-Os-Probe.cmd C:\path\to\BOOTX64.EFI
 ./Tools/Native/Build-Os-Probe.sh /path/to/BOOTX64.EFI
 ```
 
-It validates two frozen Stage 0 WVOs; compiles, lowers, and export-renames the
+It validates one frozen Stage 0 WVO; compiles, lowers, and export-renames the
 canonical admission source; compiles and lowers the canonical native-probe
 source; constructs the focused x64 exception, paging, WVB admission-bridge, and
 native bridge/support objects through one digest-bound Windvale-native producer;
 constructs the normal memory object through a separate focused producer;
 constructs the normal UEFI loader object from a separately pinned architecture
 fixture and focused producer; compiles the canonical system-kernel source to WVB
-and lowers it through the bounded Windvale-native kernel target;
+and lowers it through the bounded Windvale-native kernel target; compiles,
+lowers, and export-renames the portable process-policy source through the
+general native tools;
 assembles three top-level WVA objects natively; links fourteen inputs; and
 packages the exact EFI. Use the focused retirement lane to check construction
 plus existing-output preservation:
@@ -531,8 +533,8 @@ plus existing-output preservation:
 Tools\Native\Test-Retirement-Suite.cmd --filter os-probe
 ```
 
-The frozen seed is a candidate bootstrap/distribution input. Nine object
-producers have moved to the native path; the other two have not. Use the recovery
+The frozen seed is a candidate bootstrap/distribution input. Ten object
+producers have moved to the native path; the final process object has not. Use the recovery
 command below only to regenerate and compare that provenance.
 
 To exercise the kernel target directly:
@@ -545,6 +547,18 @@ Tools\Native\Test-Retirement-Suite.cmd --filter os-kernel-target
 ```sh
 ./Tools/Native/Lower-Os-Kernel-Wvb.sh input.wvb output.wvo
 ./Tools/Native/Test-Retirement-Suite.sh --filter os-kernel-target
+```
+
+To construct the process-policy object directly:
+
+```bat
+Tools\Native\Build-Os-Process-Policy-Object.cmd output.wvo
+Tools\Native\Test-Retirement-Suite.cmd --filter os-process-policy
+```
+
+```sh
+./Tools/Native/Build-Os-Process-Policy-Object.sh output.wvo
+./Tools/Native/Test-Retirement-Suite.sh --filter os-process-policy
 ```
 
 To construct and independently admit any focused object, use:
@@ -625,7 +639,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,143-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,145-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

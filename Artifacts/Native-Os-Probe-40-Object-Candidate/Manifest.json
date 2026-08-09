@@ -1,18 +1,18 @@
 {
-  "format": "windvale-native-os-probe-object-candidate-10",
+  "format": "windvale-native-os-probe-object-candidate-11",
   "status": "candidate",
   "probeFormat": 40,
   "scenario": "normal",
   "entrySymbol": "Windvale_boot_probe",
-  "sourceDecision": "0454",
+  "sourceDecision": "0455",
   "provenanceDecision": "0446",
   "sourceCommit": "957ed051ed226ce1b1694d19ad13b2c7e64a968a",
   "nativeSourceCommit": "48f6f414f708aead62bcbcac6866129d58de1d9a",
   "qualification": "pending",
-  "construction": "stage0-frozen-two-object-inventory-plus-nine-native-source-producers",
-  "nativeConsumption": "produce-loader-compile-kernel-source-lower-system-kernel-compile-lower-rename-admission-compile-lower-probe-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
-  "frozenObjectBytes": 642288,
-  "nativeObjectBytes": 50362,
+  "construction": "stage0-frozen-one-object-inventory-plus-ten-native-source-producers",
+  "nativeConsumption": "produce-loader-compile-kernel-source-lower-system-kernel-compile-lower-rename-admission-compile-lower-probe-compile-lower-rename-process-policy-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
+  "frozenObjectBytes": 512978,
+  "nativeObjectBytes": 179672,
   "totalObjectBytes": 692650,
   "nativeProducers": [
     {
@@ -64,6 +64,18 @@
       "objectSha256": "046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c"
     },
     {
+      "name": "04-process-policy.wvo",
+      "project": "Windvale-Os-Process-Policy.wvproj",
+      "source": "Operating-System/Kernel/Process-Foundation.wv",
+      "moduleBytes": 18764,
+      "moduleSha256": "c46c6b3780cad8d292607ed687a7e511e2e3c47fbc6fc21526ecc0ffeb937895",
+      "unrenamedObjectBytes": 129284,
+      "unrenamedObjectSha256": "11e1796c176dcdeb2f643108b646363751347707ca4b16b0e914b8c0b384987e",
+      "objectBytes": 129310,
+      "objectSha256": "35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678",
+      "exportRename": "Main=>Windvale_kernel_process_policy"
+    },
+    {
       "name": "08-memory.wvo",
       "project": "Windvale-Os-Memory-Object-Producer.wvproj",
       "source": "Operating-System/Tools/Memory-Object-Producer.wv",
@@ -110,11 +122,6 @@
     }
   ],
   "objects": [
-    {
-      "name": "04-process-policy.wvo",
-      "bytes": 129310,
-      "sha256": "35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678"
-    },
     {
       "name": "05-process.wvo",
       "bytes": 512978,

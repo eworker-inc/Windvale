@@ -147,6 +147,19 @@ if [[ $(wc -c < "$work/03-native-wvb-probe.wvo") -ne 7306 ]] ||
     exit 1
 fi
 
+if ! "$script_directory/Build-Os-Process-Policy-Object.sh" \
+    "$work/04-process-policy.wvo" >"$work/04.log" 2>&1; then
+    cat -- "$work/04.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/04-process-policy.wvo") -ne 129310 ]] ||
+    ! printf '%s  %s\n' \
+        '35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678' \
+        "$work/04-process-policy.wvo" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 process-policy object is invalid.' >&2
+    exit 1
+fi
+
 if ! "$script_directory/Assemble-Wva.sh" \
     "$repository_root/Operating-System/Kernel/X64-Memory-Object-Shims.wva" \
     "$work/06-memory-object-shims.wvo" >"$work/06.log" 2>&1; then
@@ -209,7 +222,7 @@ if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$work/01-kernel.wvo" \
     "$work/02-wvb-admission-native.wvo" \
     "$work/03-native-wvb-probe.wvo" \
-    "$object_root/04-process-policy.wvo" \
+    "$work/04-process-policy.wvo" \
     "$object_root/05-process.wvo" \
     "$work/06-memory-object-shims.wvo" \
     "$work/07-timer-shims.wvo" \

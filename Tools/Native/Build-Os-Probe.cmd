@@ -27,12 +27,11 @@ set "Packager=%RepositoryRoot%\Tools\Native\Package-Uefi.cmd"
 set "Renamer=%RepositoryRoot%\Tools\Native\Rename-Wvo-Export.cmd"
 set "ObjectProducer=%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd"
 set "KernelLowerer=%RepositoryRoot%\Tools\Native\Lower-Os-Kernel-Wvb.cmd"
+set "PolicyProducer=%RepositoryRoot%\Tools\Native\Build-Os-Process-Policy-Object.cmd"
 set "AdmissionProject=%RepositoryRoot%\Windvale-Os-Wvb-Admission.wvproj"
 set "KernelProject=%RepositoryRoot%\Windvale-Os-Kernel-Markers.wvproj"
 set "NativeProbeProject=%RepositoryRoot%\Windvale-Os-Native-Wvb-Probe.wvproj"
 
-call :verify "%Objects%\04-process-policy.wvo" 129310 35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678
-if errorlevel 1 exit /b 1
 call :verify "%Objects%\05-process.wvo" 512978 dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa
 if errorlevel 1 exit /b 1
 set "Work=%OutputDirectory%.windvale-os-probe-native-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -87,6 +86,12 @@ set "FailureStep=native-probe-lower"
 cmd /d /c call "%Lowerer%" "%Work%\03-native-wvb-probe.wvb" "%Work%\03-native-wvb-probe.wvo" >"%Work%\03-lower.log" 2>&1
 if errorlevel 1 goto :failure
 call :verify "%Work%\03-native-wvb-probe.wvo" 7306 046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c
+if errorlevel 1 goto :failure
+
+set "FailureStep=process-policy"
+cmd /d /c call "%PolicyProducer%" "%Work%\04-process-policy.wvo" >"%Work%\04.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\04-process-policy.wvo" 129310 35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678
 if errorlevel 1 goto :failure
 
 set "FailureStep=memory-object-shims"
@@ -145,7 +150,7 @@ cmd /d /c call "%Linker%" 0 Windvale_boot_probe "%Work%\Probe40.bin" ^
     "%Work%\01-kernel.wvo" ^
     "%Work%\02-wvb-admission-native.wvo" ^
     "%Work%\03-native-wvb-probe.wvo" ^
-    "%Objects%\04-process-policy.wvo" ^
+    "%Work%\04-process-policy.wvo" ^
     "%Objects%\05-process.wvo" ^
     "%Work%\06-memory-object-shims.wvo" ^
     "%Work%\07-timer-shims.wvo" ^
@@ -185,6 +190,7 @@ if exist "%Work%\02-lower.log" type "%Work%\02-lower.log" 1>&2
 if exist "%Work%\02-rename.log" type "%Work%\02-rename.log" 1>&2
 if exist "%Work%\03-build.log" type "%Work%\03-build.log" 1>&2
 if exist "%Work%\03-lower.log" type "%Work%\03-lower.log" 1>&2
+if exist "%Work%\04.log" type "%Work%\04.log" 1>&2
 if exist "%Work%\06.log" type "%Work%\06.log" 1>&2
 if exist "%Work%\07.log" type "%Work%\07.log" 1>&2
 if exist "%Work%\08.log" type "%Work%\08.log" 1>&2

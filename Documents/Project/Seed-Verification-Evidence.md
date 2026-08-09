@@ -4971,3 +4971,31 @@ It owns 29 suites with 3,143 fixed cases. The seed retains two frozen WVOs
 totaling 642,288 bytes and records nine native-produced objects totaling 50,362
 bytes. Linux execution, the complete coordinator, broad Seed/OS, QEMU,
 Standard, Qualification, and non-normal scenarios did not run.
+
+## Local native Probe 40 process-policy source-path evidence
+
+[Decision 0455](../Decisions/0455-Native-Probe-40-Process-Policy-Source-Path.md)
+moves normal `04-process-policy.wvo` from the frozen seed into a composition of
+the existing native Project 1 builder, accepted-subset lowerer, verified export
+renamer, and independent WVO verifier.
+
+The portable source builds to an 18,764-byte WVB at SHA-256
+`c46c6b3780cad8d292607ed687a7e511e2e3c47fbc6fc21526ecc0ffeb937895`.
+The general lowerer produces a 129,284-byte `Main` WVO at SHA-256
+`11e1796c176dcdeb2f643108b646363751347707ca4b16b0e914b8c0b384987e`.
+Renaming that export to `Windvale_kernel_process_policy` reproduces the former
+129,310-byte seed object byte for byte at SHA-256
+`35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678`.
+
+After affected-test review, `os-process-policy` passes 2/2 in 3.1 seconds and
+the ordinary `os-probe` lane passes construction and existing-output
+preservation 2/2 in 15.6 seconds. The final EFI remains 683,008 bytes at
+SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retirement plan is 2,484 LF-only bytes at SHA-256
+`5138c5e7fb517f269cab07e3cd2840577114b822b51ce77fd1d9850bdd620c4d`.
+It owns 30 suites with 3,145 fixed cases. The seed retains one 512,978-byte WVO
+and records ten native-produced objects totaling 179,672 bytes. Linux
+execution, the complete coordinator, broad Seed/OS, QEMU, Standard,
+Qualification, and non-normal scenarios did not run.

@@ -192,6 +192,9 @@ duplicating 6,115 decimal byte literals or prematurely widening WVA.
 replaces the frozen kernel object with a real Windvale source-to-WVB-to-WVO
 path. Its bounded reader and hosted emitter remain separate reviewable sources,
 leaving two frozen producers without treating machine bytes as source.
+[Decision 0455](../Decisions/0455-Native-Probe-40-Process-Policy-Source-Path.md)
+uses the general native builder, lowerer, and export renamer for the existing
+portable process-policy source, leaving only the large process object frozen.
 Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
