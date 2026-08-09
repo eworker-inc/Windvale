@@ -40,6 +40,19 @@ cleanup() {
 }
 trap cleanup EXIT
 
+if ! "$script_directory/Produce-Os-Probe-Object.sh" loader \
+    "$work/00-loader.wvo" >"$work/00.log" 2>&1; then
+    cat -- "$work/00.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/00-loader.wvo") -ne 6336 ]] ||
+    ! printf '%s  %s\n' \
+        'b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804' \
+        "$work/00-loader.wvo" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 loader object is invalid.' >&2
+    exit 1
+fi
+
 if ! "$script_directory/Build-Wvb.sh" \
     "$repository_root/Windvale-Os-Wvb-Admission.wvproj" \
     "$work/02-wvb-admission.wvb" >"$work/02-build.log" 2>&1; then
@@ -165,7 +178,7 @@ if ! printf '%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n' \
 fi
 
 if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
-    "$object_root/00-loader.wvo" \
+    "$work/00-loader.wvo" \
     "$object_root/01-kernel.wvo" \
     "$work/02-wvb-admission-native.wvo" \
     "$work/03-native-wvb-probe.wvo" \

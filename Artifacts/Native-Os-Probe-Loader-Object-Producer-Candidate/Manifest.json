@@ -1,0 +1,45 @@
+{
+  "format": "windvale-native-os-probe-loader-object-producer-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0453",
+  "parentCommit": "9ef32f0cd9f8ace86286a1d2e0c07f1b8d4fe388",
+  "project": "Windvale-Os-Loader-Object-Producer.wvproj",
+  "source": "Operating-System/Tools/Loader-Object-Producer.wv",
+  "objectConstruction": "Object-Model/Windvale/Wvo-Object-Construction.wv",
+  "hostedProfile": 1,
+  "qualification": "pending",
+  "outputs": [
+    {
+      "kind": "loader",
+      "name": "00-loader.wvo",
+      "bytes": 6336,
+      "sha256": "b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "normal-x64-loader.bin",
+      "target": "x86-64-normal-loader-code",
+      "bytes": 6115,
+      "sha256": "19008f698db52c206dae920cf57ca4461eb009d47d8ecba258d6b021b05a2eed"
+    },
+    {
+      "name": "Os-Probe-Loader-Object-Producer.wvb",
+      "target": "portable-wvb",
+      "bytes": 36009,
+      "sha256": "427ffcdaf7e9656f7bc17584de06b7954fddd38266663b295151d5a054f020d5"
+    },
+    {
+      "name": "windows-x64-os-probe-loader-object.exe",
+      "target": "windows-x64",
+      "bytes": 387072,
+      "sha256": "1ce2a2e3dd84d5af9a614b06382226c105e6051ba07d205a66c6d47e8d0e373c"
+    },
+    {
+      "name": "linux-x64-os-probe-loader-object.elf",
+      "target": "linux-x64",
+      "bytes": 389120,
+      "sha256": "616cc30cdd6c46dba15ead2dc7881f4ce53df187e485939337cfd0c5a540dc42"
+    }
+  ]
+}

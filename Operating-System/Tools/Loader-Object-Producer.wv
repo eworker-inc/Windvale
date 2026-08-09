@@ -1,0 +1,75 @@
+module Probeˉloaderˉobjectˉproducer profile hosted;
+
+import Wvoˉobjectˉconstruction as Construction;
+
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Loaderˉselector: bytes = [108, 111, 97, 100, 101, 114];
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Buildˉloaderˉobject(Code: bytes) -> bytes {
+    let Section: bytes = Construction.Encodeˉsection(
+        ".text", 1u8, 16u32, Bytesˉlength(Code), Code
+    );
+    var Symbols: bytes = Construction.Encodeˉsymbol(
+        "Windvale_boot_probe", 2u8, 1u8, 0u32, 0u32, Bytesˉlength(Code)
+    );
+    Symbols = Bytesˉconcat(Symbols, Construction.Encodeˉsymbol(
+        "Windvale_kernel_entry", 3u8, 1u8, 4294967295u32, 0u32, 0u32
+    ));
+    Symbols = Bytesˉconcat(Symbols, Construction.Encodeˉsymbol(
+        "Windvale_kernel_x64_q35_shutdown",
+        3u8, 1u8, 4294967295u32, 0u32, 0u32
+    ));
+    var Relocations: bytes = Construction.Encodeˉrelocation(
+        2u8, 0u32, 2782u32, 1u32, -4
+    );
+    Relocations = Bytesˉconcat(Relocations, Construction.Encodeˉrelocation(
+        2u8, 0u32, 5526u32, 2u32, -4
+    ));
+    return Construction.Constructˉobject(
+        1u32, 3u32, 2u32, Section, Symbols, Relocations
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 3u32 {
+        diagnostic.write_line(
+            "Usage: probe-loader-object <loader> <code.bin> <output.wvo>"
+        );
+        return 64;
+    }
+    let Selector: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if !Bytesˉequal(Selector, Loaderˉselector) {
+        diagnostic.write_line("probe loader object status=Unsupported");
+        return 64;
+    }
+    let Code: bytes = file.read_bytes(process.argument(1u32));
+    if Bytesˉlength(Code) != 6115u32 {
+        diagnostic.write_line("probe loader object status=Rejected");
+        return 1;
+    }
+    let Result: bytes = Buildˉloaderˉobject(Code);
+    if Bytesˉlength(Result) != 6336u32 {
+        diagnostic.write_line("probe loader object status=Rejected");
+        return 1;
+    }
+    file.write_bytes(process.argument(2u32), Result);
+    return 0;
+}

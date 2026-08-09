@@ -14,6 +14,7 @@ set "Admission=%TemporaryDirectory%\12-wvb-admission-bridge.wvo"
 set "NativeBridge=%TemporaryDirectory%\13-native-bridge-and-support.wvo"
 set "Paging=%TemporaryDirectory%\10-paging.wvo"
 set "Memory=%TemporaryDirectory%\08-memory.wvo"
+set "Loader=%TemporaryDirectory%\00-loader.wvo"
 set "Existing=%TemporaryDirectory%\Existing.wvo"
 set "Unknown=%TemporaryDirectory%\Unknown.wvo"
 set "Invalid=%TemporaryDirectory%\Invalid.bin"
@@ -64,6 +65,15 @@ if errorlevel 1 goto :failure
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Memory%" >nul 2>&1
 if errorlevel 1 goto :failure
 
+call "%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd" loader "%Loader%" >nul 2>&1
+if errorlevel 1 goto :failure
+if not exist "%Loader%" goto :failure
+for %%F in ("%Loader%") do if not "%%~zF"=="6336" goto :failure
+certutil -hashfile "%Loader%" SHA256 | findstr /i /x /c:"b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804" >nul
+if errorlevel 1 goto :failure
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Loader%" >nul 2>&1
+if errorlevel 1 goto :failure
+
 >"%Existing%" echo preserved
 for /f "tokens=1" %%H in ('certutil -hashfile "%Existing%" SHA256 ^| findstr /r /x "[0-9a-fA-F][0-9a-fA-F]*"') do set "ExistingDigest=%%H"
 if not defined ExistingDigest goto :failure
@@ -80,7 +90,7 @@ call "%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd" exceptions "%In
 if not "%ERRORLEVEL%"=="64" goto :failure
 if exist "%Invalid%" goto :failure
 
-echo Tests: 8, Passed: 8, Failed: 0
+echo Tests: 9, Passed: 9, Failed: 0
 set "Status=0"
 goto :cleanup
 

@@ -147,5 +147,6 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Kernel CPU exceptions](Windvale-Kernel-Exceptions.md)
 - [Native OS Probe object producer](Windvale-Os-Probe-Object-Producer.md)
 - [Native OS memory-object producer](Windvale-Os-Memory-Object-Producer.md)
+- [Native OS loader-object producer](Windvale-Os-Loader-Object-Producer.md)
 - [Native x64 exception object producer](Windvale-X64-Exception-Object-Producer.md)
 - [Kernel shutdown](Windvale-Kernel-Shutdown.md)

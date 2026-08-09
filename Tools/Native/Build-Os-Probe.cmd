@@ -29,8 +29,6 @@ set "ObjectProducer=%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd"
 set "AdmissionProject=%RepositoryRoot%\Windvale-Os-Wvb-Admission.wvproj"
 set "NativeProbeProject=%RepositoryRoot%\Windvale-Os-Native-Wvb-Probe.wvproj"
 
-call :verify "%Objects%\00-loader.wvo" 6336 b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804
-if errorlevel 1 exit /b 1
 call :verify "%Objects%\01-kernel.wvo" 12134 bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8
 if errorlevel 1 exit /b 1
 call :verify "%Objects%\04-process-policy.wvo" 129310 35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678
@@ -47,6 +45,12 @@ if errorlevel 1 (
     >&2 echo The native Probe 40 private path could not be created.
     exit /b 1
 )
+set "FailureStep=loader"
+cmd /d /c call "%ObjectProducer%" loader "%Work%\00-loader.wvo" >"%Work%\00.log" 2>&1
+if errorlevel 1 goto :failure
+set "FailureStep=verify-loader"
+call :verify "%Work%\00-loader.wvo" 6336 b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804
+if errorlevel 1 goto :failure
 set "FailureStep=admission-build"
 cmd /d /c call "%Builder%" "%AdmissionProject%" "%Work%\02-wvb-admission.wvb" >"%Work%\02-build.log" 2>&1
 if errorlevel 1 goto :failure
@@ -127,7 +131,7 @@ if errorlevel 1 goto :failure
 
 set "FailureStep=link"
 cmd /d /c call "%Linker%" 0 Windvale_boot_probe "%Work%\Probe40.bin" ^
-    "%Objects%\00-loader.wvo" ^
+    "%Work%\00-loader.wvo" ^
     "%Objects%\01-kernel.wvo" ^
     "%Work%\02-wvb-admission-native.wvo" ^
     "%Work%\03-native-wvb-probe.wvo" ^
@@ -163,6 +167,7 @@ exit /b 0
 
 :failure
 >&2 echo The native Probe 40 build failed at step %FailureStep%.
+if exist "%Work%\00.log" type "%Work%\00.log" 1>&2
 if exist "%Work%\02-build.log" type "%Work%\02-build.log" 1>&2
 if exist "%Work%\02-lower.log" type "%Work%\02-lower.log" 1>&2
 if exist "%Work%\02-rename.log" type "%Work%\02-rename.log" 1>&2

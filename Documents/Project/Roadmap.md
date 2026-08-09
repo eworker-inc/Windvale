@@ -184,6 +184,10 @@ producers and a 317-line source that must not absorb memory without reassessment
 adds the normal memory object through a separate 158-line producer behind the
 same public launcher, leaving four frozen producers without growing the compact
 recipe source into a catch-all.
+[Decision 0453](../Decisions/0453-Native-Probe-40-Loader-Object-Producer.md)
+reconstructs the normal UEFI loader object from one pinned architecture fixture
+through a 75-line Windvale producer, leaving three frozen producers without
+duplicating 6,115 decimal byte literals or prematurely widening WVA.
 Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.

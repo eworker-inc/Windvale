@@ -2,7 +2,7 @@
 set -uo pipefail
 
 if [[ $# -ne 2 || $2 != *.wvo ]]; then
-    echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging|memory> <output.wvo>' >&2
+    echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging|memory|loader> <output.wvo>' >&2
     exit 64
 fi
 case $1 in
@@ -26,15 +26,25 @@ case $1 in
         expected_bytes=1529
         expected_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
         ;;
+    loader)
+        expected_bytes=6336
+        expected_digest=b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804
+        ;;
     *)
-        echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging|memory> <output.wvo>' >&2
+        echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging|memory|loader> <output.wvo>' >&2
         exit 64
         ;;
 esac
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
-if [[ $1 == memory ]]; then
+code_fixture=
+if [[ $1 == loader ]]; then
+    producer="$repository_root/Artifacts/Native-Os-Probe-Loader-Object-Producer-Candidate/linux-x64-os-probe-loader-object.elf"
+    producer_bytes=389120
+    producer_digest=616cc30cdd6c46dba15ead2dc7881f4ce53df187e485939337cfd0c5a540dc42
+    code_fixture="$repository_root/Artifacts/Native-Os-Probe-Loader-Object-Producer-Candidate/normal-x64-loader.bin"
+elif [[ $1 == memory ]]; then
     producer="$repository_root/Artifacts/Native-Os-Probe-Memory-Object-Producer-Candidate/linux-x64-os-probe-memory-object.elf"
     producer_bytes=401408
     producer_digest=02280b115ead806f8b6e2f1dd066d7d06a85ae571d790c66d05daecf2acc6554
@@ -61,8 +71,20 @@ if [[ ! -f $producer || $(wc -c < "$producer") -ne $producer_bytes ]] ||
     echo 'The Linux native OS Probe object producer identity is invalid.' >&2
     exit 1
 fi
+if [[ -n $code_fixture ]] &&
+    { [[ ! -f $code_fixture || $(wc -c < "$code_fixture") -ne 6115 ]] ||
+        ! printf '%s  %s\n' \
+            '19008f698db52c206dae920cf57ca4461eb009d47d8ecba258d6b021b05a2eed' \
+            "$code_fixture" | sha256sum --check --strict --quiet; }; then
+    echo 'The native OS Probe loader code fixture identity is invalid.' >&2
+    exit 1
+fi
 
-"$producer" "$1" "$output"
+if [[ -n $code_fixture ]]; then
+    "$producer" "$1" "$code_fixture" "$output"
+else
+    "$producer" "$1" "$output"
+fi
 status=$?
 if [[ $status -ne 0 || ! -f $output || $(wc -c < "$output") -ne $expected_bytes ]] ||
     ! printf '%s  %s\n' "$expected_digest" "$output" |

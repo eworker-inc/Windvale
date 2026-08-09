@@ -65,11 +65,11 @@ file. The current plan is:
 | `publisher-rejections` | `Test-Publisher-Rejections` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `uefi-packager` | `Test-Uefi-Packager` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
 | `wvo-export-renamer` | `Test-Wvo-Export-Renamer` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
-| `os-probe-object` | `Test-Os-Probe-Object-Producer` | 8 | `Tests: 8, Passed: 8, Failed: 0` |
+| `os-probe-object` | `Test-Os-Probe-Object-Producer` | 9 | `Tests: 9, Passed: 9, Failed: 0` |
 | `os-probe` | `Test-Os-Probe` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 28 suites and 3,135 cases.
+The version-1 plan therefore contains exactly 28 suites and 3,136 cases.
 
 ## Coordinator contract
 
@@ -91,7 +91,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 28, Passed: 28, Failed: 0, Cases: 3135
+Suites: 28, Passed: 28, Failed: 0, Cases: 3136
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

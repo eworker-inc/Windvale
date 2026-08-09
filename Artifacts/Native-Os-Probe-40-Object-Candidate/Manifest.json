@@ -1,19 +1,30 @@
 {
-  "format": "windvale-native-os-probe-object-candidate-8",
+  "format": "windvale-native-os-probe-object-candidate-9",
   "status": "candidate",
   "probeFormat": 40,
   "scenario": "normal",
   "entrySymbol": "Windvale_boot_probe",
-  "sourceDecision": "0452",
+  "sourceDecision": "0453",
   "provenanceDecision": "0446",
   "sourceCommit": "957ed051ed226ce1b1694d19ad13b2c7e64a968a",
   "nativeSourceCommit": "48f6f414f708aead62bcbcac6866129d58de1d9a",
   "qualification": "pending",
-  "construction": "stage0-frozen-four-object-inventory-plus-seven-native-source-producers",
-  "nativeConsumption": "compile-lower-rename-admission-compile-lower-probe-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
-  "frozenObjectBytes": 660758,
+  "construction": "stage0-frozen-three-object-inventory-plus-eight-native-source-producers",
+  "nativeConsumption": "produce-loader-compile-lower-rename-admission-compile-lower-probe-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
+  "frozenObjectBytes": 654422,
   "totalObjectBytes": 692650,
   "nativeProducers": [
+    {
+      "name": "00-loader.wvo",
+      "project": "Windvale-Os-Loader-Object-Producer.wvproj",
+      "source": "Operating-System/Tools/Loader-Object-Producer.wv",
+      "codeFixtureBytes": 6115,
+      "codeFixtureSha256": "19008f698db52c206dae920cf57ca4461eb009d47d8ecba258d6b021b05a2eed",
+      "producerModuleBytes": 36009,
+      "producerModuleSha256": "427ffcdaf7e9656f7bc17584de06b7954fddd38266663b295151d5a054f020d5",
+      "objectBytes": 6336,
+      "objectSha256": "b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804"
+    },
     {
       "name": "02-wvb-admission-native.wvo",
       "project": "Windvale-Os-Wvb-Admission.wvproj",
@@ -82,11 +93,6 @@
     }
   ],
   "objects": [
-    {
-      "name": "00-loader.wvo",
-      "bytes": 6336,
-      "sha256": "b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804"
-    },
     {
       "name": "01-kernel.wvo",
       "bytes": 12134,
