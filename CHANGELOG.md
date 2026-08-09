@@ -8,6 +8,7 @@ Once releases begin, Windvale will use `v0.y.z` tags while public contracts rema
 
 ### Added
 
+- Exposed Probe 40's fifteen logical object components as fourteen ordered verified WVO containers, keeping the managed recovery link byte-identical while measuring the retained native linker's canonical-map resource blocker precisely. The already-large probe source now delegates the inventory/link boundary to a focused file.
 - Cut the Probe 40 recovery workflow over to the retained native UEFI packager. Stage 0 now emits only its already-verified linked payload and entry evidence for this path; the native tool reconstructs the exact established normal EFI while managed object production and linking remain explicit follow-up work.
 - Retained paired native-built Windows/Linux UEFI packager candidates with digest-bound launchers and a three-case `.NET-free` retirement lane. The shared hosted-WVB chain now accepts an explicit cross target, while the UEFI lane composes real native linker output, exact deterministic EFI construction, and invalid-entry destination preservation without a managed container constructor.
 - Connected the digest-bound native flat linker to canonical UEFI packaging through a focused hosted Windvale tool. The packager consumes exact linked bytes and entry evidence, invokes the independently verified portable constructor, preserves existing output on rejection, and rebuilds through a pinned Project 1 front door; retained host containers and complete Probe 40 composition remain explicit follow-up work.

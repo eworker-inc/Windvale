@@ -2,10 +2,13 @@ using Windvale.Bootstrap;
 using Windvale.ObjectModel;
 
 const string Usage =
-    "Usage: Windvale.Bootstrap <--output <BOOTX64.EFI>|--linked-output <IMAGE.BIN>> " +
+    "Usage: Windvale.Bootstrap " +
+    "<--output <BOOTX64.EFI>|--linked-output <IMAGE.BIN>|--object-directory <DIRECTORY>> " +
     "[--scenario <normal|invalid-opcode|general-protection|user-fault|service-fault>]";
 if ((args.Length != 2 && args.Length != 4) ||
-    (args[0] != "--output" && args[0] != "--linked-output") ||
+    (args[0] != "--output" &&
+        args[0] != "--linked-output" &&
+        args[0] != "--object-directory") ||
     string.IsNullOrWhiteSpace(args[1]) ||
     (args.Length == 4 && (args[2] != "--scenario" || string.IsNullOrWhiteSpace(args[3]))))
 {
@@ -38,6 +41,36 @@ if (args.Length == 4)
 
 try
 {
+    if (args[0] == "--object-directory")
+    {
+        if (!Directory.Exists(args[1]) || Directory.EnumerateFileSystemEntries(args[1]).Any())
+        {
+            throw new InvalidOperationException(
+                "The object-inventory destination must be an existing empty directory.");
+        }
+
+        var Inventory = Firmwareˉprobe.Buildˉobjectˉinventory(Scenario);
+        foreach (var Object in Inventory.Objects)
+        {
+            var Objectˉpath = Path.Combine(args[1], Object.Fileˉname);
+            using var Output = new FileStream(
+                Objectˉpath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None);
+            Output.Write(Object.Bytes.AsSpan());
+        }
+
+        Console.WriteLine($"windvale-os-probe-object-inventory {Firmwareˉprobe.FORMAT_VERSION}");
+        Console.WriteLine($"entry-symbol={Inventory.Entryˉsymbol}");
+        Console.WriteLine($"object-count={Inventory.Objects.Length}");
+        foreach (var Object in Inventory.Objects)
+        {
+            Console.WriteLine($"object={Object.Fileˉname}");
+        }
+        return 0;
+    }
+
     if (args[0] == "--linked-output")
     {
         var Link = Firmwareˉprobe.Buildˉlinkedˉimage(Scenario);

@@ -15,7 +15,7 @@ public enum Firmwareˉprobeˉscenario
     Serviceˉfault,
 }
 
-public static class Firmwareˉprobe
+public static partial class Firmwareˉprobe
 {
     public const int FORMAT_VERSION = 40;
     public const string ENTRY_SYMBOL = "Windvale_boot_probe";
@@ -151,7 +151,7 @@ public static class Firmwareˉprobe
     private const uint FREE_POOL_OFFSET = 0x48;
     private const uint EXIT_BOOT_SERVICES_OFFSET = 0xE8;
 
-    public static Linkˉresult Buildˉlinkedˉimage(
+    public static Firmwareˉprobeˉobjectˉinventory Buildˉobjectˉinventory(
         Firmwareˉprobeˉscenario scenario = Firmwareˉprobeˉscenario.Normal)
     {
         if (scenario is not Firmwareˉprobeˉscenario.Normal and
@@ -289,38 +289,28 @@ public static class Firmwareˉprobe
         var Memoryˉobjectˉbytes = Objectˉcodec.Write(Memoryˉobject).ToImmutableArray();
         var Assemblyˉshimˉobjectˉbytes = Kernelˉassemblyˉshim.Buildˉobject();
         var Supportˉobjectˉbytes = Objectˉcodec.Write(Supportˉobject).ToImmutableArray();
-        var Link = Linkˉcompiler.Link(
+        return new(
+            ENTRY_SYMBOL,
             [
-                new(Loaderˉobjectˉbytes),
-                new(Kernel.Objectˉbytes),
-                new(Admission.Admissionˉnativeˉobjectˉbytes),
-                new(Nativeˉprobe.Nativeˉobjectˉbytes),
-                new(Processˉimage.Policyˉnativeˉobjectˉbytes),
-                new(Process.Objectˉbytes),
-                new(Memoryˉobjectˉshimˉbytes),
-                new(Timerˉobjectˉbytes),
-                new(Memoryˉobjectˉbytes),
-                new(Exceptions.Objectˉbytes),
-                new(Paging.Objectˉbytes),
-                new(Assemblyˉshimˉobjectˉbytes),
-                new(Admission.Bridgeˉobjectˉbytes),
-                new(Nativeˉprobe.Bridgeˉobjectˉbytes),
-                new(Supportˉobjectˉbytes),
-            ],
-            new(Uefiˉapplicationˉcontract.REQUIRED_LINK_BASE_ADDRESS, ENTRY_SYMBOL));
-        if (!Link.Success)
-        {
-            throw new InvalidOperationException(
-                $"The firmware probe did not link: {Link.Diagnostics[0].Code}: {Link.Diagnostics[0].Message}");
-        }
-        if (Link.Entryˉaddress != 0 || Link.Imageˉbytes.Length > (int)Kernelˉpagingˉcontract.EXECUTABLE_BYTES)
-        {
-            throw new InvalidOperationException(
-                $"The linked firmware payload is {Link.Imageˉbytes.Length} bytes and does not fit the fixed " +
-                $"{Kernelˉpagingˉcontract.EXECUTABLE_BYTES}-byte executable window.");
-        }
-
-        return Link;
+                new("00-loader.wvo", Loaderˉobjectˉbytes),
+                new("01-kernel.wvo", Kernel.Objectˉbytes),
+                new("02-wvb-admission-native.wvo", Admission.Admissionˉnativeˉobjectˉbytes),
+                new("03-native-wvb-probe.wvo", Nativeˉprobe.Nativeˉobjectˉbytes),
+                new("04-process-policy.wvo", Processˉimage.Policyˉnativeˉobjectˉbytes),
+                new("05-process.wvo", Process.Objectˉbytes),
+                new("06-memory-object-shims.wvo", Memoryˉobjectˉshimˉbytes),
+                new("07-timer-shims.wvo", Timerˉobjectˉbytes),
+                new("08-memory.wvo", Memoryˉobjectˉbytes),
+                new("09-exceptions.wvo", Exceptions.Objectˉbytes),
+                new("10-paging.wvo", Paging.Objectˉbytes),
+                new("11-kernel-shims.wvo", Assemblyˉshimˉobjectˉbytes),
+                new("12-wvb-admission-bridge.wvo", Admission.Bridgeˉobjectˉbytes),
+                new(
+                    "13-native-bridge-and-support.wvo",
+                    Packˉnativeˉbridgeˉandˉsupport(
+                        Nativeˉprobe.Bridgeˉobjectˉbytes,
+                        Supportˉobjectˉbytes)),
+            ]);
     }
 
     public static ImmutableArray<byte> Buildˉapplication(

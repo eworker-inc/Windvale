@@ -4547,3 +4547,20 @@ Only the requested EFI remains; the private linked payload and candidate are
 absent. This is construction evidence, not a QEMU or broad verification rerun.
 Stage 0 object production/linking, the other four scenarios, Linux execution,
 durable publication, and the grouped retirement gate remain deferred.
+
+## Local Probe 40 object-inventory boundary evidence
+
+[Decision 0440](../Decisions/0440-Probe-40-Object-Inventory-Boundary.md)
+exposes fifteen logical Probe 40 components as fourteen ordered verified WVO
+containers. The managed differential link produces the established
+681,913-byte payload at SHA-256
+`76aa64cc03c8b86dfe96f83d761be40e8128b988a182fd971004a287a5990af0`;
+its canonical map contains 663 lines and 129,387 UTF-8 bytes. Native UEFI
+packaging then reproduces the exact 683,008-byte normal EFI at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retained native linker enters with fourteen inputs but exits through its
+generic native resource mapping before publication. Rebuilding its Windows
+container through both available routes reproduces the retained 1,655,296-byte
+artifact exactly, so stale packaging is excluded. No recovery rerun, QEMU, OS
+suite, Seed suite, or broad gate followed this focused measurement.

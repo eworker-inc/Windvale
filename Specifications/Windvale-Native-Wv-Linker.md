@@ -140,6 +140,18 @@ The complete report SHA-256 is
 Success prints `PASS  canonical-map-limit` followed by
 `Tests: 1, Passed: 1, Failed: 0`, each with LF.
 
+## Measured Probe 40 scale boundary
+
+Decision 0440 supplies fourteen ordered standard-profile WVO inputs whose
+managed differential result is a 681,913-byte image and a 663-line,
+129,387-byte canonical map. The current retained v1 Windows container admits
+the argument and object envelopes but exits through its generic native resource
+mapping before publication. This is a candidate implementation-capacity gap,
+not a change to WVO, layout, relocation, map, or diagnostic semantics. The
+ordinary native linker is not qualified for this case until the same source
+preserves the complete canonical map within its bounded runtime on Windows and
+Linux.
+
 ## Qualification gate
 
 Promotion to the ordinary linker front door requires one exact source commit to pass on Windows and Linux with:
