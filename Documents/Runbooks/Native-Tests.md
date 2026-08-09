@@ -26,25 +26,35 @@ The exact filter names and case counts are:
 | Filter | Cases |
 | --- | ---: |
 | `seed` | 26 |
-| `unsafe-wvb` | 5 |
+| `unsafe-wvb` | 10 |
+| `wvb-containment` | 1,000 |
 | `wvo-read-only` | 13 |
 | `wvo-differential` | 256 |
+| `wvo-containment` | 500 |
+| `wvo-hostile-size` | 4 |
 | `assembler-rejections` | 11 |
+| `assembler-golden` | 3 |
 | `wva-differential` | 200 |
+| `source-containment` | 500 |
 | `lowerer-rejections` | 2 |
 | `linker-rejections` | 10 |
 | `linker-hostile` | 200 |
 | `linker-map-limit` | 1 |
 | `console-packager-rejections` | 3 |
 | `console-container-hostile` | 256 |
+| `console-container-mutations` | 19 |
+| `hosted-console-container-mutations` | 15 |
+| `console-segmented-size` | 2 |
+| `console-segmented-construction` | 2 |
+| `console-packager-source-reconstruction` | 2 |
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 14 suites and 986 cases in manifest order. Its
+Omitting `--filter` selects all 24 suites and 3,038 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 14, Passed: 14, Failed: 0, Cases: 986
+Suites: 24, Passed: 24, Failed: 0, Cases: 3038
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -124,12 +134,39 @@ PASS  truncated-operand
 PASS  local-index
 PASS  jump-target
 PASS  after-return
-Tests: 5, Passed: 5, Failed: 0
+PASS  record-parameter-type
+PASS  record-field-index
+PASS  duplicate-record-field
+PASS  mismatched-enum-comparison
+PASS  duplicate-nominal-name
+Tests: 10, Passed: 10, Failed: 0
 ```
 
 Both digest-bound WVB read-only launchers must reject every case with the exact
 phase report and preserve the complete input. The command decodes fixed compact
 fixtures; it does not mutate WVB or start .NET.
+
+The positive assembler-golden lane admits three repository source identities,
+assembles each twice, requires exact success reports and WVO identities, verifies
+the first object independently, and compares both generated objects byte for
+byte. Run it on Windows with:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter assembler-golden
+```
+
+On Linux x64:
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter assembler-golden
+```
+
+Success is:
+
+```text
+PASS  suite assembler-golden cases=3
+Suites: 1, Passed: 1, Failed: 0, Cases: 3
+```
 
 The WVO differential lane freezes the Stage 0 acceptance decision for 128
 single-byte mutations of the canonical sample plus 128 arbitrary values. It

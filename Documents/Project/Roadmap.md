@@ -76,6 +76,12 @@ ten instruction and nominal-type cases. The same 23-suite retirement plan now
 owns 3,035 cases without a live managed oracle; broader nominal limits and
 typed opcode families remain explicit later transfers.
 
+[Decision 0429](../Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md)
+adds one focused positive assembler lane for the canonical Hello, expanded-x64,
+and typed-scalar-x64 sources. Repeated native assembly, exact WVO identities,
+and independent WVO admission grow the plan to 24 suites and 3,038 cases.
+Additional dynamic WVA vectors, Linux execution, and the grouped gate remain.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

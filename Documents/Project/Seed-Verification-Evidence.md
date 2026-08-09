@@ -4219,6 +4219,27 @@ rerun. Linux execution, broader nominal limits and typed opcode transfer,
 Standard, Qualification, promotion, and the grouped end-of-goal gate remain
 deferred.
 
+## Local fixed native assembler golden-object evidence
+
+[Decision 0429](../Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md)
+adds one focused native lane for the canonical Hello, expanded-x64, and
+typed-scalar-x64 WVA sources. Each case pins its complete source identity,
+assembles twice, requires the exact two-line native success report, independently
+admits the first WVO, and compares both generated objects byte for byte.
+
+The accepted outputs are respectively 218, 238, and 396 bytes at SHA-256
+`992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`,
+`678551e9936ca1c901e2dc5ec129d2add73427edb1ea3d086bb4badbf1b6e4ad`,
+and `860680074517025c69a2a6edf1dd9ff196475e05f9c50f95b53480c848c650c5`.
+The retirement plan is now 2,054 LF-only bytes at SHA-256
+`923b6a067d4cc10798af862a749dbaa06adaa0a1f965cfa40d946f2f120b23ac`,
+covering 24 suites and 3,038 fixed cases.
+
+The reviewed Windows filter passes 3/3 in 2.1 seconds without starting .NET.
+The other 23 lanes, managed wrapper, broad local verifier, Linux execution, and
+the grouped retirement gate were not run. Additional dynamic WVA vectors remain
+independent managed evidence until separately transferred or judged redundant.
+
 ## Local multi-fragment current-lowerer reconstruction evidence
 
 [Decision 0420](../Decisions/0420-Multi-Fragment-Current-Lowerer-Reconstruction.md)
