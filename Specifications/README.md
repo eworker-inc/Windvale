@@ -145,5 +145,6 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Kernel native seam](Windvale-Kernel-Native-Seam.md)
 - [Kernel trap frame](Windvale-Kernel-Trap-Frame.md)
 - [Kernel CPU exceptions](Windvale-Kernel-Exceptions.md)
+- [Native OS Probe object producer](Windvale-Os-Probe-Object-Producer.md)
 - [Native x64 exception object producer](Windvale-X64-Exception-Object-Producer.md)
 - [Kernel shutdown](Windvale-Kernel-Shutdown.md)

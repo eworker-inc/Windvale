@@ -1,6 +1,6 @@
 # Decision 0448: Native Probe 40 exception object producer
 
-- Status: Implemented current-host native-build candidate; Linux execution pending
+- Status: Implemented current-host candidate; package consolidated by [Decision 0449](0449-Native-Probe-40-Admission-Bridge-Producer.md)
 - Date: 2026-08-09
 - Advances: [Decision 0447](0447-Native-Probe-40-Admission-Source-Producer.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contracts: [WVO object construction](../../Specifications/Windvale-Wvo-Object-Construction.md) and [x64 exception object producer](../../Specifications/Windvale-X64-Exception-Object-Producer.md)

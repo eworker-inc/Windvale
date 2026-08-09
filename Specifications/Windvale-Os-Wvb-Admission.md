@@ -86,6 +86,11 @@ the verified [WVO export renamer](Windvale-Wvo-Export-Renamer.md) changes only
 `Main` to `Windvale_kernel_wvb_admit` and reproduces the retained 20,337-byte
 link-facing object at SHA-256
 `37e47bd2fed0242ad5cae9c9cc684927dc17041d4cd1d154658616be8b140c32`.
+Decision 0449 moves the current 162-code-byte admission bridge to the shared
+[native OS Probe object producer](Windvale-Os-Probe-Object-Producer.md). It
+reproduces the current 484-byte link object at SHA-256
+`271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d`
+without invoking Stage 0; the older qualified table remains historical evidence.
 Current Linux execution and grouped cross-host qualification remain pending.
 
 ## Non-claims and next boundary

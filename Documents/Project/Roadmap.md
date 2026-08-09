@@ -171,6 +171,9 @@ through the same ordinary compiler/lowerer path, leaving nine frozen producers.
 [Decision 0448](../Decisions/0448-Native-Probe-40-Exception-Object-Producer.md)
 adds a focused Windvale-native x64 exception-object producer over verified WVO
 construction, leaving eight frozen producers.
+[Decision 0449](../Decisions/0449-Native-Probe-40-Admission-Bridge-Producer.md)
+consolidates that producer with the WVB admission-bridge recipe, leaving seven
+frozen producers without retaining a second host package.
 Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.

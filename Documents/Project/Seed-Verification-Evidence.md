@@ -4786,3 +4786,34 @@ and owns 28 suites with 3,130 fixed cases. The seed retains eight frozen WVOs
 totaling 664,524 bytes and records three native producers. Linux execution, the
 complete coordinator, broad Seed/OS, QEMU, Standard, Qualification, and
 non-normal scenarios did not run.
+
+## Local native Probe 40 admission-bridge producer evidence
+
+[Decision 0449](../Decisions/0449-Native-Probe-40-Admission-Bridge-Producer.md)
+moves `12-wvb-admission-bridge.wvo` from the frozen seed and consolidates the
+exception-only producer into one selector-bound OS Probe object producer. The
+38,229-byte Project 1 WVB has SHA-256
+`41696bba17570dda638abf9c0f58938950d8363b1f5044cb6dcf619b25d54cce`.
+Its retained Windows and Linux applications are both 413,696 bytes at SHA-256
+`895237d4a651b4fb0a8a458a7bfa55f952c0364304d6e2af3f30fdc945ba5889`
+and
+`4c651c82379d3dc7f83781504182f33e3931b1b9e50a2574c23eb08faf3066bf`.
+
+Current-host execution reproduces both exact former seed objects: the 483-byte
+exception object at SHA-256
+`9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c`
+and the 484-byte admission bridge at SHA-256
+`271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d`.
+
+After affected-test review, the combined Windows producer lane passes 5/5. The
+ordinary `os-probe` lane then passes construction and existing-output
+preservation 2/2 in 13.5 seconds. The final EFI remains 683,008 bytes at
+SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retirement plan is now 2,331 LF-only bytes at SHA-256
+`bbeab9638c54b419824b366efe9597b484e592f8da13eb5f72f7c85f9f2b904b`
+and owns 28 suites with 3,132 fixed cases. The seed retains seven frozen WVOs
+totaling 664,040 bytes and records four native-produced objects. Linux
+execution, the complete coordinator, broad Seed/OS, QEMU, Standard,
+Qualification, and non-normal scenarios did not run.

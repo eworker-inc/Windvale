@@ -8,8 +8,8 @@ the exception ABI or making privileged x64 instruction encoding part of WVA.
 The retained host entry points are:
 
 ```text
-Tools/Native/Produce-X64-Exception-Object.cmd <output.wvo>
-Tools/Native/Produce-X64-Exception-Object.sh <output.wvo>
+Tools/Native/Produce-Os-Probe-Object.cmd exceptions <output.wvo>
+Tools/Native/Produce-Os-Probe-Object.sh exceptions <output.wvo>
 ```
 
 The launchers admit the exact paired native application, require a new `.wvo`
