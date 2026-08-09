@@ -1,0 +1,75 @@
+module Bootˉresourceˉobjectˉtool profile hosted;
+
+import Wvoˉobjectˉconstruction as Construction;
+import Wvoˉobjectˉverification as Verification;
+
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Stencilˉsectionˉname: bytes = [46, 114, 111, 100, 97, 116, 97];
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Stencilˉisˉexpected(Input: bytes) -> bool {
+    if Bytesˉlength(Input) != 462u32 { return false; }
+    let Inspection: Verification.Wvoˉinspection =
+        Verification.Inspectˉobject(Input);
+    if Inspection.Status != Verification.Wvoˉstatus.Valid { return false; }
+    if Inspection.Sectionsˉseen != 1u32 { return false; }
+    if Inspection.Symbolsˉseen != 1u32 { return false; }
+    if Inspection.Relocationsˉseen != 0u32 { return false; }
+    if Bytesˉreadˉu8(Input, 24u32) != 2u8 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 1u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 32u32) != 347u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 36u32) != 347u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Input, 40u32) != 7u32 { return false; }
+    return Bytesˉequal(
+        Bytesˉslice(Input, 44u32, 7u32),
+        Stencilˉsectionˉname
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line(
+            "Usage: boot-resource-object <stencil.wvo> <output.wvo>"
+        );
+        return 64;
+    }
+    let Stencil: bytes = file.read_bytes(process.argument(0u32));
+    if !Stencilˉisˉexpected(Stencil) {
+        diagnostic.write_line("boot resource object status=Rejected");
+        return 1;
+    }
+    let Code: bytes = Bytesˉslice(Stencil, 51u32, 347u32);
+    let Section: bytes = Construction.Encodeˉsection(
+        ".text.bresource", 1u8, 16u32, 347u32, Code
+    );
+    let Symbol: bytes = Construction.Encodeˉsymbol(
+        "Windvale_os_boot_resource_read_bytes",
+        2u8, 1u8, 0u32, 0u32, 347u32
+    );
+    let Result: bytes = Construction.Constructˉobject(
+        1u32, 1u32, 0u32, Section, Symbol, Bytesˉslice(Code, 0u32, 0u32)
+    );
+    if Bytesˉlength(Result) == 0u32 {
+        diagnostic.write_line("boot resource object status=Rejected");
+        return 1;
+    }
+    file.write_bytes(process.argument(1u32), Result);
+    return 0;
+}

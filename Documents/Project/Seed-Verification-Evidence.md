@@ -4999,3 +4999,32 @@ It owns 30 suites with 3,145 fixed cases. The seed retains one 512,978-byte WVO
 and records ten native-produced objects totaling 179,672 bytes. Linux
 execution, the complete coordinator, broad Seed/OS, QEMU, Standard,
 Qualification, and non-normal scenarios did not run.
+
+## Local native Probe 40 process-object evidence
+
+[Decision 0456](../Decisions/0456-Native-Probe-40-Process-Object.md) removes the
+last frozen WVO from the ordinary Probe 40 build. The native composition rebuilds
+the init/resource service, directory process service, bytecode interpreter,
+canonical admitted program, three linked images, resource store, and directory
+snapshot. Only the 46,678-byte `.text.process` architecture fixture remains
+pinned; its SHA-256 is
+`05938e22e02abac6d396fa5a64342d94609900a6401b112f18de0fb5421a41b5`.
+
+The generated payloads total 463,531 bytes. Focused layout, relocation,
+resource-store, snapshot, boot-resource, and hosted orchestration sources produce
+the byte-identical 512,978-byte WVO at SHA-256
+`dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa`.
+The largest new Windvale source is 179 lines; the former managed construction
+was not copied into one monolithic replacement.
+
+After affected-test review, `os-process-object` passes exact construction and
+existing-output preservation 2/2 in 17.8 seconds. The integrated `os-probe` lane
+passes 2/2 in 29.9 seconds and retains the exact 683,008-byte EFI identity
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retirement plan is 2,558 LF-only bytes at SHA-256
+`f8ab968d081a7ad053ab08d4414057f53b27a7bc653b2ee975ef15c2f6c2eae4`.
+It owns 31 suites with 3,147 fixed cases. The normal object seed contains zero
+WVOs and records eleven native-produced objects totaling 692,650 bytes. Linux
+execution, the complete coordinator, broad Seed/OS, QEMU, Standard,
+Qualification, the normal-path audit, and non-normal scenarios did not run.

@@ -1,18 +1,18 @@
 {
-  "format": "windvale-native-os-probe-object-candidate-11",
+  "format": "windvale-native-os-probe-object-candidate-12",
   "status": "candidate",
   "probeFormat": 40,
   "scenario": "normal",
   "entrySymbol": "Windvale_boot_probe",
-  "sourceDecision": "0455",
+  "sourceDecision": "0456",
   "provenanceDecision": "0446",
   "sourceCommit": "957ed051ed226ce1b1694d19ad13b2c7e64a968a",
   "nativeSourceCommit": "48f6f414f708aead62bcbcac6866129d58de1d9a",
   "qualification": "pending",
-  "construction": "stage0-frozen-one-object-inventory-plus-ten-native-source-producers",
-  "nativeConsumption": "produce-loader-compile-kernel-source-lower-system-kernel-compile-lower-rename-admission-compile-lower-probe-compile-lower-rename-process-policy-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
-  "frozenObjectBytes": 512978,
-  "nativeObjectBytes": 179672,
+  "construction": "zero-frozen-object-inventory-plus-eleven-native-source-producers",
+  "nativeConsumption": "produce-loader-compile-kernel-source-lower-system-kernel-compile-lower-rename-admission-compile-lower-probe-compile-lower-rename-process-policy-rebuild-process-object-from-source-and-reviewed-machine-code-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
+  "frozenObjectBytes": 0,
+  "nativeObjectBytes": 692650,
   "totalObjectBytes": 692650,
   "nativeProducers": [
     {
@@ -76,6 +76,22 @@
       "exportRename": "Main=>Windvale_kernel_process_policy"
     },
     {
+      "name": "05-process.wvo",
+      "producer": "Tools/Native/Build-Os-Process-Object",
+      "toolset": "Artifacts/Native-Os-Process-Object-Toolset-Candidate",
+      "sources": [
+        "Operating-System/Kernel/Init-Resource-Service.wv",
+        "Operating-System/Kernel/Directory-Process-Service.wv",
+        "Operating-System/Runtime/Bytecode-Interpreter.wv",
+        "Tests/Fixtures/Source-Wvb/Function-Only.wv"
+      ],
+      "architectureFixtureBytes": 46678,
+      "architectureFixtureSha256": "05938e22e02abac6d396fa5a64342d94609900a6401b112f18de0fb5421a41b5",
+      "generatedPayloadBytes": 463531,
+      "objectBytes": 512978,
+      "objectSha256": "dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa"
+    },
+    {
       "name": "08-memory.wvo",
       "project": "Windvale-Os-Memory-Object-Producer.wvproj",
       "source": "Operating-System/Tools/Memory-Object-Producer.wv",
@@ -121,11 +137,5 @@
       "objectSha256": "a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d"
     }
   ],
-  "objects": [
-    {
-      "name": "05-process.wvo",
-      "bytes": 512978,
-      "sha256": "dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa"
-    }
-  ]
+  "objects": []
 }

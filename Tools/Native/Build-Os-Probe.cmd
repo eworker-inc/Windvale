@@ -18,7 +18,6 @@ if not exist "%OutputDirectory%" (
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
-set "Objects=%RepositoryRoot%\Artifacts\Native-Os-Probe-40-Object-Candidate"
 set "Assembler=%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd"
 set "Builder=%RepositoryRoot%\Tools\Native\Build-Wvb.cmd"
 set "Lowerer=%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd"
@@ -28,12 +27,11 @@ set "Renamer=%RepositoryRoot%\Tools\Native\Rename-Wvo-Export.cmd"
 set "ObjectProducer=%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd"
 set "KernelLowerer=%RepositoryRoot%\Tools\Native\Lower-Os-Kernel-Wvb.cmd"
 set "PolicyProducer=%RepositoryRoot%\Tools\Native\Build-Os-Process-Policy-Object.cmd"
+set "ProcessProducer=%RepositoryRoot%\Tools\Native\Build-Os-Process-Object.cmd"
 set "AdmissionProject=%RepositoryRoot%\Windvale-Os-Wvb-Admission.wvproj"
 set "KernelProject=%RepositoryRoot%\Windvale-Os-Kernel-Markers.wvproj"
 set "NativeProbeProject=%RepositoryRoot%\Windvale-Os-Native-Wvb-Probe.wvproj"
 
-call :verify "%Objects%\05-process.wvo" 512978 dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa
-if errorlevel 1 exit /b 1
 set "Work=%OutputDirectory%.windvale-os-probe-native-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" (
     >&2 echo The native Probe 40 private path already exists.
@@ -94,6 +92,12 @@ if errorlevel 1 goto :failure
 call :verify "%Work%\04-process-policy.wvo" 129310 35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678
 if errorlevel 1 goto :failure
 
+set "FailureStep=process-object"
+cmd /d /c call "%ProcessProducer%" "%Work%\05-process.wvo" >"%Work%\05.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\05-process.wvo" 512978 dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa
+if errorlevel 1 goto :failure
+
 set "FailureStep=memory-object-shims"
 cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Memory-Object-Shims.wva" "%Work%\06-memory-object-shims.wvo" >"%Work%\06.log" 2>&1
 if errorlevel 1 goto :failure
@@ -151,7 +155,7 @@ cmd /d /c call "%Linker%" 0 Windvale_boot_probe "%Work%\Probe40.bin" ^
     "%Work%\02-wvb-admission-native.wvo" ^
     "%Work%\03-native-wvb-probe.wvo" ^
     "%Work%\04-process-policy.wvo" ^
-    "%Objects%\05-process.wvo" ^
+    "%Work%\05-process.wvo" ^
     "%Work%\06-memory-object-shims.wvo" ^
     "%Work%\07-timer-shims.wvo" ^
     "%Work%\08-memory.wvo" ^
@@ -191,6 +195,7 @@ if exist "%Work%\02-rename.log" type "%Work%\02-rename.log" 1>&2
 if exist "%Work%\03-build.log" type "%Work%\03-build.log" 1>&2
 if exist "%Work%\03-lower.log" type "%Work%\03-lower.log" 1>&2
 if exist "%Work%\04.log" type "%Work%\04.log" 1>&2
+if exist "%Work%\05.log" type "%Work%\05.log" 1>&2
 if exist "%Work%\06.log" type "%Work%\06.log" 1>&2
 if exist "%Work%\07.log" type "%Work%\07.log" 1>&2
 if exist "%Work%\08.log" type "%Work%\08.log" 1>&2

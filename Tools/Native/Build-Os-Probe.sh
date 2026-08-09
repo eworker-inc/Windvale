@@ -8,7 +8,6 @@ fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
-object_root="$repository_root/Artifacts/Native-Os-Probe-40-Object-Candidate"
 output_directory=$(dirname -- "$1")
 output_name=$(basename -- "$1")
 if [[ ! -d $output_directory ]]; then
@@ -19,11 +18,6 @@ output_directory=$(CDPATH= cd -- "$output_directory" && pwd -P)
 output="$output_directory/$output_name"
 if [[ -e $output ]]; then
     echo 'The native Probe 40 output already exists.' >&2
-    exit 1
-fi
-
-if ! (cd -- "$object_root" && sha256sum --check --strict --quiet SHA256SUMS); then
-    echo 'The native Probe 40 object candidate is invalid.' >&2
     exit 1
 fi
 
@@ -160,6 +154,19 @@ if [[ $(wc -c < "$work/04-process-policy.wvo") -ne 129310 ]] ||
     exit 1
 fi
 
+if ! "$script_directory/Build-Os-Process-Object.sh" \
+    "$work/05-process.wvo" >"$work/05.log" 2>&1; then
+    cat -- "$work/05.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/05-process.wvo") -ne 512978 ]] ||
+    ! printf '%s  %s\n' \
+        'dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa' \
+        "$work/05-process.wvo" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 process object is invalid.' >&2
+    exit 1
+fi
+
 if ! "$script_directory/Assemble-Wva.sh" \
     "$repository_root/Operating-System/Kernel/X64-Memory-Object-Shims.wva" \
     "$work/06-memory-object-shims.wvo" >"$work/06.log" 2>&1; then
@@ -223,7 +230,7 @@ if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$work/02-wvb-admission-native.wvo" \
     "$work/03-native-wvb-probe.wvo" \
     "$work/04-process-policy.wvo" \
-    "$object_root/05-process.wvo" \
+    "$work/05-process.wvo" \
     "$work/06-memory-object-shims.wvo" \
     "$work/07-timer-shims.wvo" \
     "$work/08-memory.wvo" \

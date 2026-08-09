@@ -130,6 +130,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Bounded x86-64 kernel target](Windvale-X64-Kernel-Target.md)
 - [Windvale-native system-kernel target](Windvale-System-Kernel-Target.md)
 - [Windvale OS process-policy object build](Windvale-Os-Process-Policy-Object.md)
+- [Windvale OS process-object build](Windvale-Os-Process-Object.md)
 
 ## Boot and operating system
 

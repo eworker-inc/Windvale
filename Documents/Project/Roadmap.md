@@ -195,7 +195,12 @@ leaving two frozen producers without treating machine bytes as source.
 [Decision 0455](../Decisions/0455-Native-Probe-40-Process-Policy-Source-Path.md)
 uses the general native builder, lowerer, and export renamer for the existing
 portable process-policy source, leaving only the large process object frozen.
-Linux execution and the remaining producer transfers stay pending.
+[Decision 0456](../Decisions/0456-Native-Probe-40-Process-Object.md) regenerates
+that process object's 463,531 payload bytes from canonical Windvale sources,
+WVA shims, and versioned records while retaining one 46,678-byte reviewed
+architecture fixture. The normal Probe 40 object inventory now has eleven
+native producers and zero frozen WVOs. Linux execution, the normal-path audit,
+final Decision 0057 qualification, and the digest-bound recovery release remain.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

@@ -1,0 +1,58 @@
+module Processˉcodeˉextractorˉtool profile hosted;
+
+import Wvoˉobjectˉverification as Verification;
+
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Processˉsectionˉname: bytes = [
+    46, 116, 101, 120, 116, 46, 112, 114, 111, 99, 101, 115, 115
+];
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line(
+            "Usage: process-code-extractor <process.wvo> <code.bin>"
+        );
+        return 64;
+    }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Inspection: Verification.Wvoˉinspection =
+        Verification.Inspectˉobject(Input);
+    if Bytesˉlength(Input) != 512978u32 ||
+        Inspection.Status != Verification.Wvoˉstatus.Valid ||
+        Inspection.Sectionsˉseen != 8u32 ||
+        Inspection.Symbolsˉseen != 25u32 ||
+        Inspection.Relocationsˉseen != 55u32 ||
+        Bytesˉreadˉu8(Input, 24u32) != 1u8 ||
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) != 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) != 46678u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != 46678u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) != 13u32 ||
+        !Bytesˉequal(
+            Bytesˉslice(Input, 44u32, 13u32), Processˉsectionˉname
+        ) {
+        diagnostic.write_line("process code extraction status=Rejected");
+        return 1;
+    }
+    file.write_bytes(
+        process.argument(1u32), Bytesˉslice(Input, 57u32, 46678u32)
+    );
+    return 0;
+}

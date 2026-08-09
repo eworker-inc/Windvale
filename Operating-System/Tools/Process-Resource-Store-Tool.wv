@@ -1,0 +1,99 @@
+module Processˉresourceˉstoreˉtool profile hosted;
+
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Toolˉstatus {
+    Ready = 0;
+    Rejected = 1;
+}
+
+data Configuration: bytes = [3, 5, 8, 13];
+data Budgetˉdigest: text = "add7f2a4843f8c512c0e2875546581db11b9ba227ee008b5f719dfacb125de76";
+data Configurationˉdigest: text = "992cfe75c02f11b17a6ce1c2dd83d34948be3b82c11b62e8302c8bbf53c93cbd";
+data Programˉdigest: text = "28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936";
+
+fn Append(Left: bytes, Right: bytes) -> bytes {
+    return Bytesˉconcat(Left, Right);
+}
+
+fn Appendˉu32(Left: bytes, Value: u32) -> bytes {
+    return Append(Left, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Encodeˉentry(
+    Identifier: u32,
+    Kind: u32,
+    Nameˉoffset: u32,
+    Nameˉbytes: u32,
+    Dataˉoffset: u32,
+    Value: bytes,
+    Digest: text
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Identifier);
+    Result = Appendˉu32(Result, Kind);
+    Result = Appendˉu32(Result, 7u32);
+    Result = Appendˉu32(Result, Nameˉoffset);
+    Result = Appendˉu32(Result, Nameˉbytes);
+    Result = Appendˉu32(Result, Dataˉoffset);
+    Result = Appendˉu32(Result, Bytesˉlength(Value));
+    Result = Appendˉu32(Result, 0u32);
+    return Append(Result, Textˉtoˉutf8(Digest));
+}
+
+fn Buildˉstore(Program: bytes) -> bytes {
+    let Budget: bytes = Bytesˉfromˉu32ˉlittle(199u32);
+    let Budgetˉname: bytes = Textˉtoˉutf8("boot:main.budget");
+    let Configurationˉname: bytes = Textˉtoˉutf8("boot:main.configuration");
+    let Programˉname: bytes = Textˉtoˉutf8("boot:main.wvb");
+
+    var Header: bytes = Textˉtoˉutf8("WVRS");
+    Header = Appendˉu32(Header, 1u32);
+    Header = Appendˉu32(Header, 1196u32);
+    Header = Appendˉu32(Header, 3u32);
+    Header = Appendˉu32(Header, 288u32);
+    Header = Appendˉu32(Header, 52u32);
+    Header = Appendˉu32(Header, 824u32);
+    Header = Appendˉu32(Header, 0u32);
+
+    var Directory: bytes = Encodeˉentry(
+        2u32, 2u32, 320u32, 16u32, 372u32, Budget, Budgetˉdigest
+    );
+    Directory = Append(Directory, Encodeˉentry(
+        3u32, 3u32, 336u32, 23u32, 376u32, Configuration,
+        Configurationˉdigest
+    ));
+    Directory = Append(Directory, Encodeˉentry(
+        1u32, 1u32, 359u32, 13u32, 380u32, Program, Programˉdigest
+    ));
+
+    var Names: bytes = Append(Budgetˉname, Configurationˉname);
+    Names = Append(Names, Programˉname);
+    var Data: bytes = Append(Budget, Configuration);
+    Data = Append(Data, Program);
+    return Append(Append(Header, Directory), Append(Names, Data));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line(
+            "Usage: process-resource-store <program.wvb> <output.wvrs>"
+        );
+        return 64;
+    }
+    let Program: bytes = file.read_bytes(process.argument(0u32));
+    if Bytesˉlength(Program) != 816u32 {
+        diagnostic.write_line("process resource store status=Rejected");
+        return 1;
+    }
+    let Result: bytes = Buildˉstore(Program);
+    if Bytesˉlength(Result) != 1196u32 {
+        diagnostic.write_line("process resource store status=Rejected");
+        return 1;
+    }
+    file.write_bytes(process.argument(1u32), Result);
+    return 0;
+}

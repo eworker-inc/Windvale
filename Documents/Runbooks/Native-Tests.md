@@ -51,14 +51,17 @@ The exact filter names and case counts are:
 | `uefi-packager` | 3 |
 | `wvo-export-renamer` | 4 |
 | `os-probe-object` | 9 |
+| `os-kernel-target` | 7 |
+| `os-process-policy` | 2 |
+| `os-process-object` | 2 |
 | `os-probe` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 30 suites and 3,145 cases in manifest order. Its
+Omitting `--filter` selects all 31 suites and 3,147 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 30, Passed: 30, Failed: 0, Cases: 3145
+Suites: 31, Passed: 31, Failed: 0, Cases: 3147
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -504,8 +507,8 @@ script repeatedly or use a passing Windows result as Linux execution evidence.
 
 ## Windvale OS boot execution
 
-The ordinary normal-scenario native build candidate consumes the digest-bound
-Probe 40 object seed and does not invoke `.NET`:
+The ordinary normal-scenario native build candidate constructs every Probe 40
+object and does not invoke `.NET`:
 
 ```bat
 Tools\Native\Build-Os-Probe.cmd C:\path\to\BOOTX64.EFI
@@ -515,8 +518,8 @@ Tools\Native\Build-Os-Probe.cmd C:\path\to\BOOTX64.EFI
 ./Tools/Native/Build-Os-Probe.sh /path/to/BOOTX64.EFI
 ```
 
-It validates one frozen Stage 0 WVO; compiles, lowers, and export-renames the
-canonical admission source; compiles and lowers the canonical native-probe
+It compiles, lowers, and export-renames the canonical admission source;
+compiles and lowers the canonical native-probe
 source; constructs the focused x64 exception, paging, WVB admission-bridge, and
 native bridge/support objects through one digest-bound Windvale-native producer;
 constructs the normal memory object through a separate focused producer;
@@ -524,7 +527,8 @@ constructs the normal UEFI loader object from a separately pinned architecture
 fixture and focused producer; compiles the canonical system-kernel source to WVB
 and lowers it through the bounded Windvale-native kernel target; compiles,
 lowers, and export-renames the portable process-policy source through the
-general native tools;
+general native tools; rebuilds the process object from its canonical Windvale
+sources, WVA shims, versioned records, and one reviewed architecture fixture;
 assembles three top-level WVA objects natively; links fourteen inputs; and
 packages the exact EFI. Use the focused retirement lane to check construction
 plus existing-output preservation:
@@ -533,9 +537,9 @@ plus existing-output preservation:
 Tools\Native\Test-Retirement-Suite.cmd --filter os-probe
 ```
 
-The frozen seed is a candidate bootstrap/distribution input. Ten object
-producers have moved to the native path; the final process object has not. Use the recovery
-command below only to regenerate and compare that provenance.
+The normal object seed is now empty. All eleven formerly frozen objects have
+moved to native producers. Use the recovery command below only to regenerate
+and compare Stage 0 provenance.
 
 To exercise the kernel target directly:
 
@@ -560,6 +564,23 @@ Tools\Native\Test-Retirement-Suite.cmd --filter os-process-policy
 ./Tools/Native/Build-Os-Process-Policy-Object.sh output.wvo
 ./Tools/Native/Test-Retirement-Suite.sh --filter os-process-policy
 ```
+
+To construct the normal process object directly:
+
+```bat
+Tools\Native\Build-Os-Process-Object.cmd output.wvo
+Tools\Native\Test-Retirement-Suite.cmd --filter os-process-object
+```
+
+```sh
+./Tools/Native/Build-Os-Process-Object.sh output.wvo
+./Tools/Native/Test-Retirement-Suite.sh --filter os-process-object
+```
+
+This path regenerates the three embedded images, canonical program, resource
+store, and directory snapshot. Only the 46,678-byte process machine-code section
+is a reviewed architecture fixture. The focused test checks exact final identity,
+independent WVO admission, output preservation, and private-work cleanup.
 
 To construct and independently admit any focused object, use:
 
@@ -639,7 +660,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,145-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,147-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining
