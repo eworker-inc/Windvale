@@ -114,6 +114,14 @@ condition materialization, label-scope, and RIP-relative vector. The plan remain
 24 suites and grows to 3,118 cases. Remaining WVA inventory, Linux execution,
 and the grouped gate remain.
 
+[Decision 0435](../Decisions/0435-Digest-Bound-Os-Boot-Execution.md)
+separates digest-bound Probe 40 QEMU execution from Stage 0 image construction.
+The verifier now accepts and preserves one exact caller-supplied EFI without
+invoking `dotnet`; the builder has an explicit recovery command. The current
+normal image reaches `boot-services=exited` and then reports `status=fail`, so
+guest repair, all five scenarios, native image construction, and promotion
+remain open.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

@@ -498,9 +498,39 @@ the hosted-container candidate is promoted. Run the Windows and Linux halves
 from the same fetched commit during the final grouped gate; do not run one host
 script repeatedly or use a passing Windows result as Linux execution evidence.
 
+## Windvale OS boot execution
+
+The ordinary boot verifier consumes an already constructed EFI application; it
+does not build one or invoke `dotnet`. Bind the supplied bytes explicitly:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 `
+    -EfiPath <probe.efi> `
+    -ExpectedEfiSha256 <64-lowercase-hex-digest> `
+    -Scenario normal
+```
+
+The verifier copies the admitted image into a unique FAT root, runs the pinned
+QEMU/firmware contract, checks the complete scenario marker, and proves that
+the supplied image, private copy, firmware code, and variable-store template
+did not change. Run only the affected scenario during the inner loop. All five
+scenarios belong to the final OS qualification gate.
+
+To reconstruct an image through the retained managed Stage 0 explicitly, use:
+
+```powershell
+pwsh -NoProfile -File Tools/Recovery/Rebuild-Os-Probe.ps1 `
+    -OutputPath <new-probe.efi> `
+    -Scenario normal
+```
+
+The recovery command refuses an existing destination. It is provenance and
+differential infrastructure, not the normal boot path or a native image
+constructor.
+
 ## Current boundary
 
-The 986-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,118-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 packager, publisher, and AOT-chain contracts. It does not replace the remaining

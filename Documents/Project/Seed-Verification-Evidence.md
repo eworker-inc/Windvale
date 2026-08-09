@@ -4445,3 +4445,20 @@ and 65,648-byte Linux publisher at SHA-256
 both return zero without diagnostics or a .NET runtime. Complete backend/JIT
 integration, Standard, Qualification, promotion, and the grouped end gate
 remain separate.
+
+## Local digest-bound OS boot-execution evidence
+
+[Decision 0435](../Decisions/0435-Digest-Bound-Os-Boot-Execution.md) separates
+Probe 40 image construction from QEMU execution. The boot verifier contains no
+`dotnet` or Stage 0 builder invocation and requires one exact caller-supplied
+EFI SHA-256 before copying it into the private FAT root. The new recovery-only
+command reconstructs the current normal image as 683,008 bytes at SHA-256
+`6eeb2a73e32b54872687186447662f917e80b973d48f670d1498e76ffd376820`.
+
+The pinned QEMU 11/OVMF environment remains ready. One focused boot of that
+exact image reaches `windvale-os-boot 40`, passes entry, system-table,
+memory-map, and boot-services exit, then reports `status=fail`; QEMU exits `3`
+instead of the normal scenario's expected `0`. One diagnostic rerun retained
+the same serial evidence. The other four scenarios and every broad verifier
+remain deferred. This is failure evidence for the current O1 blocker, not a
+qualification or regression fix.

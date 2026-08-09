@@ -62,6 +62,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Fixed native scalar-x64 golden object](Decisions/0432-Fixed-Native-Scalar-X64-Golden-Object.md) — exact immediate, multiply, shift, rotate, and indexed-memory source through repeated native assembly
 - [Fixed native WVA positive matrix](Decisions/0433-Fixed-Native-Wva-Positive-Matrix.md) — every paired 8/16-bit register plus typed narrow immediate/shift groups in one compact exact corpus
 - [Expanded native WVA positive matrix](Decisions/0434-Expanded-Native-Wva-Positive-Matrix.md) — every paired 32/64-bit register, condition code, label scope, and RIP-relative vector in the same compact owner
+- [Digest-bound OS boot execution](Decisions/0435-Digest-Bound-Os-Boot-Execution.md) — supplied-image QEMU verification without Stage 0, with image construction retained explicitly as recovery
 - [Fixed native linker hostile-input corpus](Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) — 200 immutable bounded inputs through exact native `WVL1002` containment
 - [Fixed native console-container hostile-input corpus](Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) — 256 immutable bounded PE/ELF candidates through the native publisher with preservation and zero-scratch evidence
 - [Fixed native WVO differential corpus](Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) — 128 valid-shaped mutations and 128 arbitrary values agree with frozen Stage 0 acceptance through the native verifier

@@ -1,5 +1,10 @@
 [CmdletBinding()]
 param(
+    [Parameter(Mandatory)]
+    [string]$EfiPath,
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[0-9a-fA-F]{64}$')]
+    [string]$ExpectedEfiSha256,
     [string]$QemuPath,
     [string]$FirmwareCodePath,
     [string]$FirmwareVariablesTemplatePath,
@@ -76,7 +81,6 @@ function Remove-ValidatedRunDirectory {
     }
 }
 
-$RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $EnvironmentVerifier = Join-Path $PSScriptRoot 'Verify-Os-Environment.ps1'
 $EnvironmentArguments = @{
     PassThru = $true
@@ -93,10 +97,15 @@ if (![string]::IsNullOrWhiteSpace($FirmwareVariablesTemplatePath)) {
 }
 $Environment = & $EnvironmentVerifier @EnvironmentArguments
 
-$Dotnet = Get-Command dotnet -CommandType Application -ErrorAction SilentlyContinue |
-    Select-Object -First 1
-if ($null -eq $Dotnet) {
-    Fail-Boot 'WVOS3001' 'The .NET SDK host is unavailable.'
+$InputEfiPath = [IO.Path]::GetFullPath($EfiPath)
+if (!(Test-Path -LiteralPath $InputEfiPath -PathType Leaf)) {
+    Fail-Boot 'WVOS3001' "The supplied EFI application is unavailable: $InputEfiPath"
+}
+$ExpectedEfiSha256 = $ExpectedEfiSha256.ToLowerInvariant()
+$InputEfiIdentity = Get-Item -LiteralPath $InputEfiPath
+$InputEfiSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $InputEfiPath).Hash.ToLowerInvariant()
+if ($InputEfiSha256 -ne $ExpectedEfiSha256) {
+    Fail-Boot 'WVOS3001' 'The supplied EFI application does not match its expected SHA-256 identity.'
 }
 
 $RunDirectory = Join-Path (
@@ -104,7 +113,7 @@ $RunDirectory = Join-Path (
     'windvale-os-boot-' + [guid]::NewGuid().ToString('N'))
 $BootRoot = Join-Path $RunDirectory 'boot'
 $EfiDirectory = Join-Path $BootRoot 'EFI/BOOT'
-$EfiPath = Join-Path $EfiDirectory 'BOOTX64.EFI'
+$RunEfiPath = Join-Path $EfiDirectory 'BOOTX64.EFI'
 $VariablesPath = Join-Path $RunDirectory 'OVMF_VARS.fd'
 $SerialPath = Join-Path $RunDirectory 'serial.log'
 $StandardOutputPath = Join-Path $RunDirectory 'qemu.stdout.log'
@@ -119,23 +128,12 @@ $FirmwareCodeHashBefore = (
 try {
     $null = New-Item -ItemType Directory -Path $EfiDirectory
     Copy-Item -LiteralPath $Environment.FirmwareVariablesTemplatePath -Destination $VariablesPath
-
-    $BuilderProject = Join-Path $RepositoryRoot 'Operating-System/Windvale.Bootstrap/Windvale.Bootstrap.csproj'
-    $BuilderOutput = @(
-        & $Dotnet.Source run `
-            --project $BuilderProject `
-            --configuration Release `
-            -- `
-            --output $EfiPath `
-            --scenario $Scenario 2>&1
-    )
-    if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $EfiPath -PathType Leaf)) {
-        $BuilderMessage = ($BuilderOutput | ForEach-Object { $_.ToString() }) -join ' '
-        Fail-Boot 'WVOS3001' "The firmware probe build failed. $BuilderMessage"
+    Copy-Item -LiteralPath $InputEfiPath -Destination $RunEfiPath
+    $EfiIdentity = Get-Item -LiteralPath $RunEfiPath
+    $EfiSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $RunEfiPath).Hash.ToLowerInvariant()
+    if ($EfiIdentity.Length -ne $InputEfiIdentity.Length -or $EfiSha256 -ne $ExpectedEfiSha256) {
+        Fail-Boot 'WVOS3001' 'The run-private EFI application does not match the admitted input.'
     }
-
-    $EfiIdentity = Get-Item -LiteralPath $EfiPath
-    $EfiSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $EfiPath).Hash.ToLowerInvariant()
 
     $StartInfo = [Diagnostics.ProcessStartInfo]::new()
     $StartInfo.FileName = $Environment.QemuPath
@@ -202,10 +200,14 @@ try {
         Fail-Boot 'WVOS3005' "The serial evidence contains the other fault marker for scenario '$Scenario'."
     }
 
-    if (!(Test-Path -LiteralPath $EfiPath -PathType Leaf)) {
-        Fail-Boot 'WVOS3006' 'The generated EFI application disappeared during the boot run.'
+    if (!(Test-Path -LiteralPath $RunEfiPath -PathType Leaf)) {
+        Fail-Boot 'WVOS3006' 'The run-private EFI application disappeared during the boot run.'
     }
-    $EfiHashAfter = (Get-FileHash -Algorithm SHA256 -LiteralPath $EfiPath).Hash.ToLowerInvariant()
+    if (!(Test-Path -LiteralPath $InputEfiPath -PathType Leaf)) {
+        Fail-Boot 'WVOS3006' 'The supplied EFI application disappeared during the boot run.'
+    }
+    $EfiHashAfter = (Get-FileHash -Algorithm SHA256 -LiteralPath $RunEfiPath).Hash.ToLowerInvariant()
+    $InputEfiHashAfter = (Get-FileHash -Algorithm SHA256 -LiteralPath $InputEfiPath).Hash.ToLowerInvariant()
     $VariablesTemplateHashAfter = (
         Get-FileHash -Algorithm SHA256 -LiteralPath $Environment.FirmwareVariablesTemplatePath
     ).Hash.ToLowerInvariant()
@@ -214,10 +216,11 @@ try {
     ).Hash.ToLowerInvariant()
     if (
         $EfiHashAfter -ne $EfiSha256 -or
+        $InputEfiHashAfter -ne $InputEfiSha256 -or
         $VariablesTemplateHashAfter -ne $VariablesTemplateHashBefore -or
         $FirmwareCodeHashAfter -ne $FirmwareCodeHashBefore
     ) {
-        Fail-Boot 'WVOS3006' 'A generated application or installed firmware input changed during the boot run.'
+        Fail-Boot 'WVOS3006' 'An EFI application or installed firmware input changed during the boot run.'
     }
 
     $Report = [pscustomobject][ordered]@{

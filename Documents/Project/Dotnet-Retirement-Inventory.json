@@ -67,11 +67,11 @@
       "owner": "Linux managed compiler convergence recovery"
     },
     {
-      "path": "Tools/Verify/Verify-Os-Boot.ps1",
+      "path": "Tools/Recovery/Rebuild-Os-Probe.ps1",
       "lanes": [
-        "verification"
+        "recovery"
       ],
-      "owner": "Windvale OS image and boot qualification"
+      "owner": "Windvale OS Stage 0 probe-image reconstruction"
     },
     {
       "path": "Tools/Verify/Verify-Seed.ps1",
