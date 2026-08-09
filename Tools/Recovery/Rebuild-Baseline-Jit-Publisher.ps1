@@ -127,7 +127,7 @@ try {
 
     Copy-Item -LiteralPath $WindowsApplication -Destination (Join-Path $WindowsDestination 'Baseline-Jit-Publisher.exe') -Force
     Copy-Item -LiteralPath $LinuxApplication -Destination (Join-Path $LinuxDestination 'Baseline-Jit-Publisher.elf') -Force
-    Write-Output 'baseline jit publisher rebuild status=Complete bridge-wvo=retained-stage0 windows-result=0 linux-execution=pending'
+    Write-Output 'baseline jit publisher rebuild status=Complete bridge-wvo=windvale-lowered windows-result=0 linux-execution=pending'
 }
 finally {
     $ExpectedParent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')

@@ -120,15 +120,23 @@ fn Storeˉraxˉfield(Result: bytes, Slot: u32) -> bytes {
     );
 }
 
-fn Emitˉreturn(Result: bytes, Frameˉbytes: u32) -> bytes {
+fn Emitˉreturn(
+    Result: bytes,
+    Frameˉbytes: u32,
+    Restoreˉcontext: bool
+) -> bytes {
     let Prefix: bytes = Bytesˉconcat(
         Bytesˉfromˉu16ˉlittle(33096u32),
         Bytesˉfromˉu8(196u8)
     );
-    let Suffix: bytes = Bytesˉconcat(
+    var Suffix: bytes = Bytesˉconcat(
         Bytesˉconcat(Prefix, Bytesˉfromˉu32ˉlittle(Frameˉbytes)),
-        Bytesˉfromˉu32ˉlittle(3284336457u32)
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(65353u32), Bytesˉfromˉu8(194u8))
     );
+    if Restoreˉcontext {
+        Suffix = Bytesˉconcat(Suffix, Bytesˉfromˉu16ˉlittle(24385u32));
+    }
+    Suffix = Appendˉbyte(Suffix, 195u8);
     return Bytesˉconcat(Result, Suffix);
 }
 
@@ -137,8 +145,12 @@ export fn Compilerˉnativeˉx64ˉtypeˉisˉdescriptor(Type: u8) -> bool {
     return Type == 6u8;
 }
 
-export fn Compilerˉnativeˉx64ˉdescriptorˉreturnˉbytes() -> u32 {
+export fn Compilerˉnativeˉx64ˉdescriptorˉreturnˉbytes(
+    Restoreˉcontext: bool
+) -> u32 {
     // The ABI return sequence is 296 bytes plus the 10-byte instruction charge.
+    // Exported entry publishes directly because its caller retains the arena.
+    if Restoreˉcontext { return 57u32; }
     return 306u32;
 }
 
@@ -161,6 +173,45 @@ export fn Compilerˉnativeˉx64ˉemitˉhiddenˉdescriptorˉresult(
     Slot: u32
 ) -> bytes {
     return Storeˉrax(Result, Slot);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉhiddenˉmainˉdescriptorˉresult(
+    Result: bytes,
+    Slot: u32
+) -> bytes {
+    return Storeˉrax(
+        Bytesˉconcat(
+            Result,
+            Bytesˉconcat(
+                Bytesˉfromˉu16ˉlittle(35144u32),
+                Bytesˉfromˉu8(200u8)
+            )
+        ),
+        Slot
+    );
+}
+
+fn Emitˉmainˉdescriptorˉreturn(
+    Result: bytes,
+    Sourceˉslot: u32,
+    Hiddenˉslot: u32,
+    Frameˉbytes: u32
+) -> bytes {
+    var Output: bytes = Loadˉrdx(Result, Hiddenˉslot);
+    Output = Loadˉrax(Output, Sourceˉslot);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 2u8);
+    Output = Loadˉeaxˉfield(Output, Sourceˉslot);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 66u8);
+    Output = Appendˉbyte(Output, 8u8);
+    Output = Appendˉbyte(Output, 49u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 66u8);
+    Output = Appendˉbyte(Output, 12u8);
+    return Emitˉreturn(Output, Frameˉbytes, true);
 }
 
 export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉcheckpoint(
@@ -337,7 +388,7 @@ fn Buildˉdescriptorˉreturnˉpreserve(
     Output = Appendˉbyte(Output, 137u8);
     Output = Appendˉbyte(Output, 66u8);
     Output = Appendˉbyte(Output, 12u8);
-    Output = Emitˉreturn(Output, Frameˉbytes);
+    Output = Emitˉreturn(Output, Frameˉbytes, false);
     return Descriptorˉreturnˉpreserve(
         Output,
         Resetˉstate.Internalˉpatch,
@@ -447,7 +498,7 @@ fn Buildˉdescriptorˉreturnˉinternal(
     Output = Appendˉbyte(Output, 137u8);
     Output = Appendˉbyte(Output, 66u8);
     Output = Appendˉbyte(Output, 12u8);
-    Output = Emitˉreturn(Output, Frameˉbytes);
+    Output = Emitˉreturn(Output, Frameˉbytes, false);
     Output = Patchˉu32(
         Output,
         Internalˉoverflowˉpatch,
@@ -465,8 +516,17 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉreturn(
     Result: bytes,
     Sourceˉslot: u32,
     Hiddenˉslot: u32,
-    Frameˉbytes: u32
+    Frameˉbytes: u32,
+    Restoreˉcontext: bool
 ) -> bytes {
+    if Restoreˉcontext {
+        return Emitˉmainˉdescriptorˉreturn(
+            Result,
+            Sourceˉslot,
+            Hiddenˉslot,
+            Frameˉbytes
+        );
+    }
     let Prefix: Descriptorˉreturnˉprefix =
         Buildˉdescriptorˉreturnˉprefix(
             Result,

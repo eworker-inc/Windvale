@@ -48,12 +48,13 @@ pwsh -NoProfile -File Tools/Recovery/Rebuild-Baseline-Jit-Publisher.ps1 `
 
 That recovery script invokes the native source builder, assembler, WVO
 verifier, linker, and console packager. It rebuilds and checks the bridge WVB,
-but deliberately consumes the digest-bound retained bridge WVO. That WVO has
-Stage 0 recovery provenance because the native lowerer does not yet admit a
-descriptor-returning `Main() -> bytes`. PowerShell validates and writes the
-two Windows PE data-directory entries needed to expose the four fixed imports;
-the normal build, verification, and execution path does not compile or execute
-C#.
+but deliberately consumes the digest-bound retained bridge WVO. That WVO was
+produced by the Windvale lowerer from the exact retained WVB while the Stage 0
+reference runtime hosted the lowering module; the current pinned native
+lowerer applications predate this descriptor-returning entry support.
+PowerShell validates and writes the two Windows PE data-directory entries
+needed to expose the four fixed imports. The normal build, verification, and
+execution path does not compile or execute C#.
 
 Passing one launcher is current-host evidence only. Both launchers must pass
 at one exact commit before cross-host qualification is claimed.

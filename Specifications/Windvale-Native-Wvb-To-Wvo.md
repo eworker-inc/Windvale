@@ -56,6 +56,15 @@ The current candidate identities are:
 | Windows WVB-to-WVO tool | 5,348,864 | `0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280` |
 | Linux WVB-to-WVO tool | 5,349,376 | `c6ba202ffcb32a261bfd9c997e4bab754ab5a636e2d0b95e5de5f55e598c6358` |
 
+These pinned applications predate Decision 0419. The current Windvale source
+contract additionally admits parameterless `Main() -> bytes`, but promotion
+requires a native application that reconstructs the current 409-function
+399,691-byte lowerer WVB at SHA-256
+`92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508`.
+Until that separate tool promotion completes, descriptor-entry evidence uses
+the current Windvale lowerer under the explicit Stage 0 reference execution
+host; ordinary consumers may use only digest-bound retained WVOs.
+
 `Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 
 | Artifact | Bytes | SHA-256 |

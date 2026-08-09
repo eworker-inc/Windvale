@@ -1,0 +1,5 @@
+module Wvbˉtoˉwvoˉdescriptorˉmainˉfixture profile portable;
+
+export fn Main() -> bytes {
+    return Bytesˉfromˉu8(42u8);
+}

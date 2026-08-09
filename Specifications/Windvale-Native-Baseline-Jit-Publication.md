@@ -93,11 +93,11 @@ candidate has paired-host evidence.
   import-directory bindings. Normal tests use the native `.cmd` or `.sh`
   route and the digest-bound candidate artifacts.
 - The bridge WVB is reconstructed through the native source front door and
-  compared with the retained artifact. Its WVO remains a verified Stage 0
-  recovery artifact because the accepted-subset native lowerer does not yet
-  admit descriptor-returning `Main() -> bytes`; normal build and execution do
-  not load .NET. Native reconstruction of that WVO is the next explicit N1
-  blocker.
+  compared with the retained artifact. The retained WVO is produced by the
+  Windvale lowerer from that exact WVB under the Stage 0 reference execution
+  host. Normal build and execution consume the verified WVO and do not load
+  .NET. Promotion and native reconstruction of the current 409-function
+  lowerer tool remain the separate N1 blocker.
 - This candidate does not implement general WVB admission, general machine
   lowering, calls, control flow, runtime services, code-cache accounting,
   concurrent publication, or Windvale OS publication.

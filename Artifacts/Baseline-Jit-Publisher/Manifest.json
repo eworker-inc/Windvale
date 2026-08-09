@@ -1,5 +1,5 @@
 {
-  "format": "windvale-baseline-jit-publisher-candidate-2",
+  "format": "windvale-baseline-jit-publisher-candidate-3",
   "status": "candidate",
   "contract": "WVJP 1 plus WVLT 1",
   "architecture": "x86-64",
@@ -34,6 +34,24 @@
       "sha256": "f1eb4992a76c2e31301f4ac5a48e537859cfb4dc9c53a813692f3dad7a5524f2"
     }
   ],
+  "loweringEvidence": {
+    "executionHost": "stage0-reference-runtime",
+    "lowererWvbBytes": 398663,
+    "lowererWvbSha256": "6d48f40df3b75d75abc9f74a7c6b4c9cb530a9ea9b48f6eb979fca8fbda92a3f",
+    "executedInstructions": 8932333,
+    "changedSourcePins": [
+      {
+        "path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+        "bytes": 240129,
+        "sha256": "2090c14f5dfdd609e81facbf568fff8118618f72efc6a7463c8d997b8a5ca6c8"
+      },
+      {
+        "path": "Compiler/Windvale/Native-X64-Lowering-Descriptor-Calls.wv",
+        "bytes": 17914,
+        "sha256": "0405dc8403d2cca7572d833eef9d0cc3f1d616981a5fe7565c307bd536044b73"
+      }
+    ]
+  },
   "producerArtifacts": [
     {
       "path": "Wvb/Baseline-Jit-Patch-Plan-Bridge.wvb",
@@ -45,8 +63,8 @@
       "path": "Wvo/Baseline-Jit-Patch-Plan-Bridge.wvo",
       "bytes": 56226,
       "sha256": "bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c",
-      "provenance": "stage0-recovery",
-      "nativeReconstruction": "pending-descriptor-main-lowering"
+      "provenance": "windvale-lowerer-reference-reconstruction",
+      "nativeReconstruction": "pending-current-lowerer-tool-promotion"
     }
   ],
   "artifacts": [

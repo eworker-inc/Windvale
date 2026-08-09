@@ -72,6 +72,9 @@ internal static partial class Program
     private static readonly string NATIVE_X64_LOWERING_STAGING_TOOL_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Native-X64-Lowering-Staging-Tool.wv");
+    private static readonly string WVB_TO_WVO_DESCRIPTOR_MAIN_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Wvb-To-Wvo-Descriptor-Main.wv");
     private static readonly string WVO_STAGING_MANIFEST_ADAPTER_SOURCE =
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Manifest-Adapter.wv");
@@ -79,28 +82,34 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Native-Bridge-Adapter.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 372_514;
-    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 404_512;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 399_691;
+    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 423_499;
     private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
-        "95dc261bed239b4549acb2bdf418920ba4f7df76133f5d0994e8778b7115a87d";
+        "e4e1c4a616f7d8f69693e2a5929d514c5e493d69af51efcdb910fdfb8508b481";
     private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 7_991;
     private const string WVO_STAGING_MANIFEST_ADAPTER_SHA256 =
         "e7a29d26e78c3cdae93868960d5be537709fc7ed8ef83de1c0bf84ca5e63c3fa";
     private const int WVO_STAGING_NATIVE_BRIDGE_ADAPTER_WVB_BYTES = 8_807;
     private const string WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SHA256 =
         "f4f5e00013d370a431af5b78d36beca37d9fe5504e788204aea6025341607417";
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_348_864;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_792_768;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "0e0d0c87f82f6576b11f888cfa26469f86f157064ea605a4bb188bcee5e3b280";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_349_376;
+        "e096dc7fec20e3318364da1f3b5289f772b53c16cc370f29622dfac35780e2bf";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_791_744;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "c6ba202ffcb32a261bfd9c997e4bab754ab5a636e2d0b95e5de5f55e598c6358";
+        "a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
     private const int WVB_TO_WVO_FIXTURE_OBJECT_BYTES = 479;
     private const string WVB_TO_WVO_FIXTURE_OBJECT_SHA256 =
         "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5";
+    private const int WVB_TO_WVO_DESCRIPTOR_MAIN_WVB_BYTES = 201;
+    private const string WVB_TO_WVO_DESCRIPTOR_MAIN_WVB_SHA256 =
+        "e736d9d1b1223ae1e90ee0660a42af671f9b7faee5c38ba8187b56b045bd6d8f";
+    private const int WVB_TO_WVO_DESCRIPTOR_MAIN_OBJECT_BYTES = 793;
+    private const string WVB_TO_WVO_DESCRIPTOR_MAIN_OBJECT_SHA256 =
+        "9936663f45c194441bfc5e8464286e57f83cd3a18948597a8011af608a4faa51";
 
     private static void Nativeˉwvbˉtoˉwvoˉtargetsˉareˉdiscoverable()
     {
@@ -238,6 +247,32 @@ internal static partial class Program
             WVB_TO_WVO_FIXTURE_OBJECT_SHA256,
             Objectˉdigest.Calculateˉsha256(Expectedˉobject.AsSpan()));
         _ = Objectˉcodec.Readˉandˉverify(Expectedˉobject.AsSpan());
+
+        var Descriptorˉmainˉwvb = Compileˉsuccess(
+            WVB_TO_WVO_DESCRIPTOR_MAIN_SOURCE);
+        Equal(WVB_TO_WVO_DESCRIPTOR_MAIN_WVB_BYTES, Descriptorˉmainˉwvb.Length);
+        Equal(
+            WVB_TO_WVO_DESCRIPTOR_MAIN_WVB_SHA256,
+            Moduleˉdigest.Calculateˉsha256(Descriptorˉmainˉwvb));
+        var Descriptorˉmainˉmodule = Moduleˉcodec.Readˉandˉverify(
+            Descriptorˉmainˉwvb);
+        var Expectedˉdescriptorˉmainˉobject = Nativeˉobjectˉsink.Writeˉwvo(
+            X64ˉnativeˉbackend.Compile(Descriptorˉmainˉmodule).Fragment);
+        Equal(
+            WVB_TO_WVO_DESCRIPTOR_MAIN_OBJECT_BYTES,
+            Expectedˉdescriptorˉmainˉobject.Length);
+        Equal(
+            WVB_TO_WVO_DESCRIPTOR_MAIN_OBJECT_SHA256,
+            Objectˉdigest.Calculateˉsha256(
+                Expectedˉdescriptorˉmainˉobject.AsSpan()));
+        var Descriptorˉmainˉresult = Runˉnativeˉx64ˉloweringˉtool(
+            Toolˉmodule,
+            Descriptorˉmainˉwvb);
+        Equal(0, Descriptorˉmainˉresult.Exitˉcode);
+        Equal(string.Empty, Descriptorˉmainˉresult.Diagnostics);
+        Sequenceˉequal(
+            Expectedˉdescriptorˉmainˉobject,
+            Descriptorˉmainˉresult.Writtenˉbytes);
 
         var Nominalˉwvb = Compileˉsuccess(SOURCE_WVB_NOMINAL_TYPES_SOURCE);
         Equal(
