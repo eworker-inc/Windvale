@@ -1,0 +1,44 @@
+name: Verify native baseline JIT publisher
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-baseline-jit-publisher:
+    name: Windows native baseline JIT publisher
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify native baseline JIT publisher
+        shell: cmd
+        run: Tools\Native\Test-Baseline-Jit-Publisher.cmd
+
+  linux-baseline-jit-publisher:
+    name: Linux native baseline JIT publisher
+    runs-on: ubuntu-latest
+    container:
+      image: debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
+    timeout-minutes: 5
+    steps:
+      - name: Prepare Debian host
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends ca-certificates git
+
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify native baseline JIT publisher
+        shell: bash
+        run: ./Tools/Native/Test-Baseline-Jit-Publisher.sh
