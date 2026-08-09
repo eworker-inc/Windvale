@@ -168,6 +168,9 @@ producers. Linux execution and the remaining producer transfers stay pending.
 [Decision 0447](../Decisions/0447-Native-Probe-40-Admission-Source-Producer.md)
 adds a verified native WVO export rename and moves the admission Windvale source
 through the same ordinary compiler/lowerer path, leaving nine frozen producers.
+[Decision 0448](../Decisions/0448-Native-Probe-40-Exception-Object-Producer.md)
+adds a focused Windvale-native x64 exception-object producer over verified WVO
+construction, leaving eight frozen producers.
 Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.

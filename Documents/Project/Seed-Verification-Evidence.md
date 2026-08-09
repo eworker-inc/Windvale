@@ -4753,3 +4753,36 @@ and owns 27 suites with 3,127 fixed cases. The seed retains nine frozen WVOs
 totaling 665,007 bytes and records two native source producers. Linux execution,
 the complete coordinator, broad Seed/OS, QEMU, Standard, Qualification, and
 non-normal scenarios did not run.
+
+## Local native Probe 40 exception-object producer evidence
+
+[Decision 0448](../Decisions/0448-Native-Probe-40-Exception-Object-Producer.md)
+moves `09-exceptions.wvo` from the frozen seed to a focused Windvale-native
+producer. The shared portable constructor writes canonical WVO section, symbol,
+and relocation records and admits the complete candidate through the independent
+WVO verifier. The hosted recipe retains the 222-byte x64 installer code, three
+symbols, and two relative-i32 relocations without widening WVA or treating the
+managed generator as the ordinary implementation.
+
+Native Project 1 compilation produces a 35,685-byte WVB at SHA-256
+`dd20dfbcaa0cd9749da77116e8ec38fc48b4f7175fd646489221414c51c4358c`.
+The retained 387,584-byte Windows and 389,120-byte Linux packages have SHA-256
+`80dd0c525f4bf8cf97743852b4e874eddcea7799a5dc98cff4845b97b409580a`
+and
+`fa385758a5e167e5cf489e84a50efd34f85be9fbdeefb391e3292285554ba945`.
+Current-host execution reproduces the exact former 483-byte seed object at
+SHA-256
+`9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c`.
+
+After affected-test review, the focused Windows producer lane passes 3/3 in
+about one second. The ordinary `os-probe` lane passes construction and
+existing-output preservation 2/2 in 10.9 seconds. The final EFI remains 683,008
+bytes at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retirement plan is now 2,341 LF-only bytes at SHA-256
+`36cc4d5beb438242699e6a176aa4658f44e566cd10d525ab60180b17df9be4d6`
+and owns 28 suites with 3,130 fixed cases. The seed retains eight frozen WVOs
+totaling 664,524 bytes and records three native producers. Linux execution, the
+complete coordinator, broad Seed/OS, QEMU, Standard, Qualification, and
+non-normal scenarios did not run.

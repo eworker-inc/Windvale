@@ -55,7 +55,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [Fixed native linker map limit](Decisions/0327-Fixed-Native-Linker-Map-Limit.md) — compact generated-fixture evidence for exact `WVL1012` rejection at 16,384 definitions
 - [Fixed native WVB unsafe rejections](Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) — five immutable unsafe instruction-stream cases through both native read-only launchers
-- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 27 native suites and 3,127 transferred cases
+- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 28 native suites and 3,130 transferred cases
 - [Fixed native assembler golden objects](Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md) — three exact positive WVA products with repeated native assembly and independent WVO admission
 - [Fixed native typed WVB rejections](Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md) — six compact single-byte typed/control/nominal mutations through both native readers
 - [Compact native WVB rejection closure](Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md) — four final compact stack, receiver, and nominal-kind mutations plus explicit ownership of excluded cases
@@ -75,6 +75,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Digest-bound native Probe 40 object seed](Decisions/0445-Digest-Bound-Native-Probe-40-Object-Seed.md) — constructs the exact normal EFI through native Windows/Linux launchers without invoking .NET while retaining explicit Stage 0 provenance
 - [Native Probe 40 Windvale source producer](Decisions/0446-Native-Probe-40-Windvale-Source-Producer.md) — compiles and lowers the canonical native-probe source in the ordinary build and removes its exact WVO from the frozen seed
 - [Native Probe 40 admission source producer](Decisions/0447-Native-Probe-40-Admission-Source-Producer.md) — adds a verified native WVO export rename, builds admission from Windvale source, and reduces the frozen seed to nine objects
+- [Native Probe 40 exception object producer](Decisions/0448-Native-Probe-40-Exception-Object-Producer.md) — adds verified WVO construction, builds the x64 exception installer through Windvale-native tooling, and reduces the frozen seed to eight objects
 - [Fixed native linker hostile-input corpus](Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) — 200 immutable bounded inputs through exact native `WVL1002` containment
 - [Fixed native console-container hostile-input corpus](Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) — 256 immutable bounded PE/ELF candidates through the native publisher with preservation and zero-scratch evidence
 - [Fixed native WVO differential corpus](Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) — 128 valid-shaped mutations and 128 arbitrary values agree with frozen Stage 0 acceptance through the native verifier

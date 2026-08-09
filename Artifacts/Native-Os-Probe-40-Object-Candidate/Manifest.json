@@ -1,17 +1,17 @@
 {
-  "format": "windvale-native-os-probe-object-candidate-3",
+  "format": "windvale-native-os-probe-object-candidate-4",
   "status": "candidate",
   "probeFormat": 40,
   "scenario": "normal",
   "entrySymbol": "Windvale_boot_probe",
-  "sourceDecision": "0447",
+  "sourceDecision": "0448",
   "provenanceDecision": "0446",
   "sourceCommit": "957ed051ed226ce1b1694d19ad13b2c7e64a968a",
   "nativeSourceCommit": "48f6f414f708aead62bcbcac6866129d58de1d9a",
   "qualification": "pending",
-  "construction": "stage0-frozen-nine-object-inventory-plus-two-native-source-producers",
-  "nativeConsumption": "compile-lower-rename-admission-compile-lower-probe-assemble-three-link-fourteen-package-uefi",
-  "frozenObjectBytes": 665007,
+  "construction": "stage0-frozen-eight-object-inventory-plus-three-native-source-producers",
+  "nativeConsumption": "compile-lower-rename-admission-compile-lower-probe-assemble-three-produce-exception-link-fourteen-package-uefi",
+  "frozenObjectBytes": 664524,
   "totalObjectBytes": 692650,
   "nativeProducers": [
     {
@@ -34,6 +34,15 @@
       "moduleSha256": "af5f93c881f006be06565f15857efb72b201b8f694a6c7e40a90deeaa86cd2c2",
       "objectBytes": 7306,
       "objectSha256": "046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c"
+    },
+    {
+      "name": "09-exceptions.wvo",
+      "project": "Windvale-X64-Exception-Object-Producer.wvproj",
+      "source": "Operating-System/Tools/X64-Exception-Object-Producer.wv",
+      "producerModuleBytes": 35685,
+      "producerModuleSha256": "dd20dfbcaa0cd9749da77116e8ec38fc48b4f7175fd646489221414c51c4358c",
+      "objectBytes": 483,
+      "objectSha256": "9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c"
     }
   ],
   "objects": [
@@ -61,11 +70,6 @@
       "name": "08-memory.wvo",
       "bytes": 1529,
       "sha256": "2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    },
-    {
-      "name": "09-exceptions.wvo",
-      "bytes": 483,
-      "sha256": "9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c"
     },
     {
       "name": "10-paging.wvo",

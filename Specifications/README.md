@@ -56,6 +56,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 ## Assembly, objects, and linking
 
 - [WVO object core](Wvo-Object-Core.md)
+- [Verified WVO object construction](Windvale-Wvo-Object-Construction.md)
 - [Native WVO inspector application](Windvale-Native-Wvo-Inspector.md)
 - [Native WVO read-only rejection tests](Windvale-Native-Wvo-Read-Only-Rejection-Tests.md)
 - [Native WVO differential tests](Windvale-Native-Wvo-Differential-Tests.md)
@@ -144,4 +145,5 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Kernel native seam](Windvale-Kernel-Native-Seam.md)
 - [Kernel trap frame](Windvale-Kernel-Trap-Frame.md)
 - [Kernel CPU exceptions](Windvale-Kernel-Exceptions.md)
+- [Native x64 exception object producer](Windvale-X64-Exception-Object-Producer.md)
 - [Kernel shutdown](Windvale-Kernel-Shutdown.md)

@@ -1,0 +1,111 @@
+module Wvoˉobjectˉconstruction profile portable;
+
+import Wvoˉobjectˉverification as Verification;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Append(Left: bytes, Right: bytes) -> bytes {
+    return Bytesˉconcat(Left, Right);
+}
+
+fn Encodeˉstring(Value: text) -> bytes {
+    let Encoded: bytes = Textˉtoˉutf8(Value);
+    return Append(Bytesˉfromˉu32ˉlittle(Bytesˉlength(Encoded)), Encoded);
+}
+
+export fn Encodeˉsection(
+    Name: text,
+    Kind: u8,
+    Alignment: u32,
+    Memoryˉsize: u32,
+    Contents: bytes
+) -> bytes {
+    let Kindˉvalue: u32 = U32ˉfromˉu8(Kind);
+    if Kindˉvalue < 1u32 || Kindˉvalue > 4u32 { return Empty(Contents); }
+    var Result: bytes = Bytesˉfromˉu8(Kind);
+    Result = Append(Result, Bytesˉfromˉu8(0u8));
+    Result = Append(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Alignment));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Memoryˉsize));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Contents)));
+    Result = Append(Result, Encodeˉstring(Name));
+    return Append(Result, Contents);
+}
+
+export fn Encodeˉsymbol(
+    Name: text,
+    Binding: u8,
+    Kind: u8,
+    Sectionˉindex: u32,
+    Offset: u32,
+    Size: u32
+) -> bytes {
+    let Emptyˉvalue: bytes = Textˉtoˉutf8("");
+    let Bindingˉvalue: u32 = U32ˉfromˉu8(Binding);
+    let Kindˉvalue: u32 = U32ˉfromˉu8(Kind);
+    if Bindingˉvalue < 1u32 || Bindingˉvalue > 3u32 {
+        return Empty(Emptyˉvalue);
+    }
+    if Kindˉvalue < 1u32 || Kindˉvalue > 2u32 {
+        return Empty(Emptyˉvalue);
+    }
+    var Result: bytes = Bytesˉfromˉu8(Binding);
+    Result = Append(Result, Bytesˉfromˉu8(Kind));
+    Result = Append(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Sectionˉindex));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Size));
+    return Append(Result, Encodeˉstring(Name));
+}
+
+export fn Encodeˉrelocation(
+    Kind: u8,
+    Sectionˉindex: u32,
+    Offset: u32,
+    Symbolˉindex: u32,
+    Addend: i32
+) -> bytes {
+    let Emptyˉvalue: bytes = Bytesˉfromˉu8(0u8);
+    let Kindˉvalue: u32 = U32ˉfromˉu8(Kind);
+    if Kindˉvalue < 1u32 || Kindˉvalue > 2u32 {
+        return Empty(Emptyˉvalue);
+    }
+    var Result: bytes = Bytesˉfromˉu8(Kind);
+    Result = Append(Result, Bytesˉfromˉu8(0u8));
+    Result = Append(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Sectionˉindex));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    Result = Append(Result, Bytesˉfromˉu32ˉlittle(Symbolˉindex));
+    return Append(Result, Bytesˉfromˉi32ˉlittle(Addend));
+}
+
+export fn Constructˉobject(
+    Sectionˉcount: u32,
+    Symbolˉcount: u32,
+    Relocationˉcount: u32,
+    Sections: bytes,
+    Symbols: bytes,
+    Relocations: bytes
+) -> bytes {
+    var Header: bytes = Textˉtoˉutf8("WVO1");
+    Header = Append(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Append(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Append(Header, Bytesˉfromˉu8(1u8));
+    Header = Append(Header, Bytesˉfromˉu8(0u8));
+    Header = Append(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Append(Header, Bytesˉfromˉu32ˉlittle(Sectionˉcount));
+    Header = Append(Header, Bytesˉfromˉu32ˉlittle(Symbolˉcount));
+    Header = Append(Header, Bytesˉfromˉu32ˉlittle(Relocationˉcount));
+    let Candidate: bytes = Append(
+        Append(Header, Sections),
+        Append(Symbols, Relocations)
+    );
+    let Inspection: Verification.Wvoˉinspection =
+        Verification.Inspectˉobject(Candidate);
+    if Inspection.Status != Verification.Wvoˉstatus.Valid {
+        return Empty(Candidate);
+    }
+    return Candidate;
+}

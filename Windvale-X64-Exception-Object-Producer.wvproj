@@ -1,0 +1,6 @@
+windvale-project 1
+root "Operating-System/Tools/X64-Exception-Object-Producer.wv"
+source "Foundation/Byte-Ordering.wv"
+source "Object-Model/Windvale/Wvo-Object-Construction.wv"
+source "Object-Model/Windvale/Wvo-Object-Verification.wv"
+emit wvb

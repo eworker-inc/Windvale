@@ -119,15 +119,21 @@ if ! "$script_directory/Assemble-Wva.sh" \
     cat -- "$work/07.log" >&2
     exit 1
 fi
+if ! "$script_directory/Produce-X64-Exception-Object.sh" \
+    "$work/09-exceptions.wvo" >"$work/09.log" 2>&1; then
+    cat -- "$work/09.log" >&2
+    exit 1
+fi
 if ! "$script_directory/Assemble-Wva.sh" \
     "$repository_root/Operating-System/Kernel/X64-Kernel-Shims.wva" \
     "$work/11-kernel-shims.wvo" >"$work/11.log" 2>&1; then
     cat -- "$work/11.log" >&2
     exit 1
 fi
-if ! printf '%s  %s\n%s  %s\n%s  %s\n' \
+if ! printf '%s  %s\n%s  %s\n%s  %s\n%s  %s\n' \
     'fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee' "$work/06-memory-object-shims.wvo" \
     'e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344' "$work/07-timer-shims.wvo" \
+    '9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c' "$work/09-exceptions.wvo" \
     '845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193' "$work/11-kernel-shims.wvo" |
     sha256sum --check --strict --quiet; then
     echo 'A native Probe 40 top-level WVA object is invalid.' >&2
@@ -144,7 +150,7 @@ if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$work/06-memory-object-shims.wvo" \
     "$work/07-timer-shims.wvo" \
     "$object_root/08-memory.wvo" \
-    "$object_root/09-exceptions.wvo" \
+    "$work/09-exceptions.wvo" \
     "$object_root/10-paging.wvo" \
     "$work/11-kernel-shims.wvo" \
     "$object_root/12-wvb-admission-bridge.wvo" \

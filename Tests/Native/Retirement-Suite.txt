@@ -24,5 +24,6 @@ console-packager-source-reconstruction|Test-Console-Packager-Source-Reconstructi
 publisher-rejections|Test-Publisher-Rejections|2|Tests: 2, Passed: 2, Failed: 0
 uefi-packager|Test-Uefi-Packager|3|Tests: 3, Passed: 3, Failed: 0
 wvo-export-renamer|Test-Wvo-Export-Renamer|4|Tests: 4, Passed: 4, Failed: 0
+x64-exception-object|Test-X64-Exception-Object-Producer|3|Tests: 3, Passed: 3, Failed: 0
 os-probe|Test-Os-Probe|2|Tests: 2, Passed: 2, Failed: 0
 aot-chain|Test-Aot-Chain|1|native aot chain status=Passed result=42
