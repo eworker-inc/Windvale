@@ -31,9 +31,9 @@ nor an identity leaf.
 ## Evidence and consequences
 
 The candidate toolset contains 59 files including its manifest and checksum
-inventory, totaling 14,458,202 bytes. Its `SHA256SUMS` has 57 entries, is 5,426
+inventory, totaling 14,475,488 bytes. Its `SHA256SUMS` has 57 entries, is 5,426
 bytes, has SHA-256
-`5f6fd8be149729285590ba649c3a034ffce117d7a8db1c06b3fc689f9f2d8804`,
+`00863c0f1c4c9b93293d27de08b36ecc6c2a909a455c3aba435bfbc19d103c63`,
 and verifies every listed artifact.
 
 The changed metadata-request WVB reconstructs through the native front door at
@@ -54,6 +54,15 @@ managed test code. The Windows script passes 2/2 in 13.1 seconds: exact package
 equality, then invalid-WVB rejection with input/destination preservation and no
 private scratch. Git Bash accepts both Linux scripts syntactically; this host
 has no Linux execution environment, so genuine ELF evidence remains pending.
+
+The first focused Linux execution also exposed two host-specific assumptions:
+three retained ELF dependencies had lost executable mode, and empty Linux
+import and relocation regions inherited the plan's zero absent-section offset.
+The candidate now preserves executable mode and anchors each empty region at
+the preceding region's image end. The updated source-set contract passes its
+reviewed focused test 1/1 in 8.241 seconds, and the changed candidate inventory
+passes the Windows packaging smoke 2/2 in 12.3 seconds. A fresh Linux run from
+this exact inventory remains the promotion evidence.
 
 This is a candidate rather than an ordinary-path promotion. Linux process
 execution must pass from the same inventory, both launchers need focused

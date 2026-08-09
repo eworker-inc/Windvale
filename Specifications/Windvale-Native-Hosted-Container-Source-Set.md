@@ -40,9 +40,11 @@ manifest. Chunks remain below the ordinary 4 MiB byte-value ceiling:
 
 The manifest always contains six regions in header, startup, bundle, imports,
 runtime, and relocation order. Empty Linux imports and relocation retain their
-region ordinals but do not create empty chunks. Region offsets and lengths must
-match the admitted plan exactly. The shared immutable-source admission core
-validates the complete manifest before it is written.
+region ordinals but do not create empty chunks. A nonempty region uses its exact
+admitted plan offset. An empty region is anchored at the preceding region's
+image end rather than copying the plan's zero absent-section sentinel, keeping
+the manifest's image offsets nondecreasing. The shared immutable-source
+admission core validates the complete manifest before it is written.
 
 All input, derived response, derived chunk, and manifest names are checked for
 textual aliases. The command admits every response and its bundle evidence
@@ -59,9 +61,9 @@ argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Source-set WVB | 72,997 | `5d5b7c36643bbe29f19e9e31d49d635abe7b0a46260aa9ded541239c0bd0eda9` |
-| Windows application | 1,021,952 | `378110b7961b374803e0f541f8ffc643672942e1ad7535aa1a3f22af56b4771a` |
-| Linux application | 1,024,000 | `aa519c28dc8a0010bdc891899031c0ce6b5f8c30a7ae7f623c5fb53582922831` |
+| Source-set WVB | 73,387 | `4b519338e12b852efa1df2a97ce09deb02c2ace4a708ce4b60025cf13083762c` |
+| Windows application | 1,030,656 | `b54effc87ff43dd5871712555ce6afa800ce3a2d535048a40fc1b79cf094d87f` |
+| Linux application | 1,032,192 | `ceaa9546c8520b32892a97906d04a827754483dfaa4df86ed8d54af846cb31ed` |
 
 The Stage 0 recovery compiler and native Project 1 front door produce identical
 WVB bytes. Package layout and identity wiring remain deletion-bound Stage 0
@@ -75,7 +77,7 @@ the candidate pipeline. The following native segment-request producer consumes
 the result without a format adapter.
 
 The [native segment-manifest producer](Windvale-Native-Hosted-Container-Segment-Manifest.md)
-now supplies the final `WVHM 1`. Remaining composition work is digest-bound
-tool acquisition, ordered child execution, bounded bundle and application
-segment iteration, private cleanup, Linux execution, promotion, and the grouped
-retirement gate.
+now supplies the final `WVHM 1`. Decision 0414 composes the complete candidate
+through digest-bound tool acquisition, ordered child execution, bounded bundle
+and application segment iteration, and private cleanup. Remaining retirement
+work is focused Linux execution, promotion, and the grouped retirement gate.

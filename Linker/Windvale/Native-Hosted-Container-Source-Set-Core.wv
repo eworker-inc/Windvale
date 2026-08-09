@@ -280,8 +280,12 @@ export fn Nativeˉhostedˉcontainerˉsourceˉmanifest(
         Admitted.Bundleˉbytes
     );
     Logical = Logical + Admitted.Bundleˉbytes;
+    var Importˉoffset: u32 = Admitted.Importˉoffset;
+    if Admitted.Importˉbytes == 0u32 {
+        Importˉoffset = Admitted.Bundleˉoffset + Admitted.Bundleˉbytes;
+    }
     Regions = Appendˉregion(
-        Regions, 3u32, Logical, Admitted.Importˉoffset,
+        Regions, 3u32, Logical, Importˉoffset,
         Admitted.Importˉbytes
     );
     Logical = Logical + Admitted.Importˉbytes;
@@ -290,8 +294,12 @@ export fn Nativeˉhostedˉcontainerˉsourceˉmanifest(
         Admitted.Runtimeˉbytes
     );
     Logical = Logical + Admitted.Runtimeˉbytes;
+    var Relocationˉoffset: u32 = Admitted.Relocationˉoffset;
+    if Admitted.Relocationˉbytes == 0u32 {
+        Relocationˉoffset = Admitted.Runtimeˉoffset + Admitted.Runtimeˉbytes;
+    }
     Regions = Appendˉregion(
-        Regions, 5u32, Logical, Admitted.Relocationˉoffset,
+        Regions, 5u32, Logical, Relocationˉoffset,
         Admitted.Relocationˉbytes
     );
 

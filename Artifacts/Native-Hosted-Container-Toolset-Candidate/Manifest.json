@@ -6,7 +6,7 @@
   "construction": "stage0-recovery-package-wiring",
   "nativeSourceConstruction": "verified-digest-bound-front-door",
   "sha256SumsBytes": 5426,
-  "sha256SumsSha256": "5f6fd8be149729285590ba649c3a034ffce117d7a8db1c06b3fc689f9f2d8804",
+  "sha256SumsSha256": "00863c0f1c4c9b93293d27de08b36ecc6c2a909a455c3aba435bfbc19d103c63",
   "commands": [
     { "name": "wvhostenumrequest", "sourceProject": "Windvale-Native-Hosted-Enum-Request-Tool.wvproj", "target": "hosted-enum-request-v1" },
     { "name": "wvhostenumservice", "sourceProject": "Windvale-Native-Hosted-Enum-Service-Tool.wvproj", "target": "hosted-enum-service-v1" },

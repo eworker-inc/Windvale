@@ -75,6 +75,14 @@ internal static partial class Program
             var Planˉoffset = Index == 0 ? 32 : 32 + Index * 8;
             var Imageˉoffset = Index == 0 ? 0u : Plan(Planˉoffset);
             var Regionˉbytes = Plan(Planˉoffset + 4);
+            if (Regionˉbytes == 0 && Index == 3)
+            {
+                Imageˉoffset = Plan(48) + Plan(52);
+            }
+            else if (Regionˉbytes == 0 && Index == 5)
+            {
+                Imageˉoffset = Plan(64) + Plan(68);
+            }
             Equal((uint)Index, Read(Record));
             Equal(Regionˉlogical, Read(Record + 4));
             Equal(Imageˉoffset, Read(Record + 8));
