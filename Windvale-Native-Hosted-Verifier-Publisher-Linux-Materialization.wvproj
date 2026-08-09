@@ -1,0 +1,6 @@
+windvale-project 1
+root "Linker/Windvale/Native-Hosted-Verifier-Publisher-Linux-Materialization-Bridge.wv"
+source "Foundation/Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Publisher-Linux-Materialization-Core.wv"
+emit wvb

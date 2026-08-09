@@ -33,6 +33,7 @@ The constructor WVB is 9,310 bytes with SHA-256
 
 One focused test checks native/interpreter equality, service-free entry shape,
 exact equality with the page embedded in the canonical Windows publisher, and
-malformed request rejection. The next slice combines this response, Decision
-0477 object bytes, Decision 0475 metadata, and the admitted base application
-to perform the final Windows PE and Linux ELF materialization.
+malformed request rejection. [Decision 0479](../Documents/Decisions/0479-Native-WVHV-Publisher-Linux-Materialization.md)
+now performs the complete Linux ELF materialization. The Windows PE counterpart
+must combine this response, Decision 0477 object bytes, Decision 0475 metadata,
+and the admitted base application.

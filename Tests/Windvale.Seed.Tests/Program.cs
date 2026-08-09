@@ -1476,6 +1476,7 @@ internal static partial class Program
         new("Windvale owns native hosted-verifier publisher construction requests", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉconstructionˉrequestsˉrun),
         new("Windvale instantiates native hosted-verifier publisher objects", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉobjectsˉinstantiate),
         new("Windvale constructs native hosted-verifier publisher Windows imports", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉwindowsˉimportsˉconstruct),
+        new("Windvale materializes the native hosted-verifier publisher Linux application", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉlinuxˉmaterializes),
         new("Windvale owns native WVO publication", [TEST_AREA_COMPILER, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Wvoˉpublisherˉruns),
         new("native publishers reject invalid candidates without changing destinations", [TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉpublisherˉrejectionsˉrun),
         new("ordinary source-to-WVB builds use pinned native tools", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉsourceˉtoˉwvbˉfrontˉdoorˉruns),
