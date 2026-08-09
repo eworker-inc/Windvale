@@ -49,13 +49,14 @@ The exact filter names and case counts are:
 | `console-packager-source-reconstruction` | 2 |
 | `publisher-rejections` | 2 |
 | `uefi-packager` | 3 |
+| `os-probe` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 25 suites and 3,121 cases in manifest order. Its
+Omitting `--filter` selects all 26 suites and 3,123 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 25, Passed: 25, Failed: 0, Cases: 3121
+Suites: 26, Passed: 26, Failed: 0, Cases: 3123
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -501,6 +502,29 @@ script repeatedly or use a passing Windows result as Linux execution evidence.
 
 ## Windvale OS boot execution
 
+The ordinary normal-scenario native build candidate consumes the digest-bound
+Probe 40 object seed and does not invoke `.NET`:
+
+```bat
+Tools\Native\Build-Os-Probe.cmd C:\path\to\BOOTX64.EFI
+```
+
+```sh
+./Tools/Native/Build-Os-Probe.sh /path/to/BOOTX64.EFI
+```
+
+It validates eleven frozen Stage 0 WVOs, assembles three top-level WVA objects
+natively, links fourteen inputs, and packages the exact EFI. Use the focused
+retirement lane to check construction plus existing-output preservation:
+
+```bat
+Tools\Native\Test-Retirement-Suite.cmd --filter os-probe
+```
+
+The frozen seed is a candidate bootstrap/distribution input, not evidence that
+its eleven source producers have already been reconstructed natively. Use the
+recovery command below only to regenerate and compare that provenance.
+
 The ordinary boot verifier consumes an already constructed EFI application; it
 does not build one or invoke `dotnet`. Bind the supplied bytes explicitly:
 
@@ -542,7 +566,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,121-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,123-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

@@ -4666,3 +4666,36 @@ No broad Seed, OS, QEMU, Qualification, Linux recovery, or non-normal recovery
 scenario ran for Decision 0444. Managed WVA assembly is absent from the normal
 recovery command; managed source compilation, native lowering, boot-resource
 adaptation, three inner links, and remaining object construction stay explicit.
+
+## Local digest-bound native Probe 40 object-seed evidence
+
+[Decision 0445](../Decisions/0445-Digest-Bound-Native-Probe-40-Object-Seed.md)
+freezes the eleven normal-scenario Stage 0 WVOs produced from exact commit
+`957ed051ed226ce1b1694d19ad13b2c7e64a968a`. Their manifest contains the exact
+order, entry, individual sizes and SHA-256 values, and 692,650-byte aggregate.
+The ordinary Windows and Linux launchers contain no `dotnet`, PowerShell, CLR,
+or Stage 0 invocation.
+
+The current-host Windows launcher validates the seed, assembles objects `06`,
+`07`, and `11` natively, links the exact fourteen-object order, and packages
+the exact 683,008-byte EFI at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`
+in 9.1 seconds. It removes every private path. Repeating against the existing
+destination returns `1`, preserves the bytes, and creates no private path.
+
+The new focused `.NET`-free coordinator lane passes in 9.5 seconds:
+
+```text
+PASS  suite os-probe cases=2
+Suites: 1, Passed: 1, Failed: 0, Cases: 2
+```
+
+The plan is now 2,176 LF-only bytes at SHA-256
+`25cdb5ac330a8b769823c843c83a28ee1014a468149d79296a9de1effc509e4f`
+and owns 26 suites with 3,123 fixed cases. Both new Linux scripts pass Bash
+syntax validation. Linux execution, the complete coordinator, broad Seed/OS,
+QEMU, Qualification, and non-normal scenarios did not run.
+
+This is ordinary native consumption of an explicit Stage 0 seed, not native
+reconstruction of its eleven objects. Stage 0 remains the regeneration and
+differential route until those individual producers transfer and qualify.

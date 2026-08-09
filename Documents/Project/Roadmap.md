@@ -157,6 +157,10 @@ remaining object construction, and Linux recovery execution are next.
 moves the four scenario-selected inner WVA objects to the same native assembler
 and feeds their exact WVOs into Stage 0 composition. The three inner links,
 remaining object construction, and Linux recovery execution are next.
+[Decision 0445](../Decisions/0445-Digest-Bound-Native-Probe-40-Object-Seed.md)
+freezes those eleven remaining normal-scenario WVOs as an explicit Stage 0 seed
+and adds a native-only ordinary Windows/Linux build. Linux execution and native
+replacement of each frozen producer remain before promotion.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

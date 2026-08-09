@@ -55,7 +55,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [Fixed native linker map limit](Decisions/0327-Fixed-Native-Linker-Map-Limit.md) — compact generated-fixture evidence for exact `WVL1012` rejection at 16,384 definitions
 - [Fixed native WVB unsafe rejections](Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) — five immutable unsafe instruction-stream cases through both native read-only launchers
-- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 25 native suites and 3,121 transferred cases
+- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 26 native suites and 3,123 transferred cases
 - [Fixed native assembler golden objects](Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md) — three exact positive WVA products with repeated native assembly and independent WVO admission
 - [Fixed native typed WVB rejections](Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md) — six compact single-byte typed/control/nominal mutations through both native readers
 - [Compact native WVB rejection closure](Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md) — four final compact stack, receiver, and nominal-kind mutations plus explicit ownership of excluded cases
@@ -72,6 +72,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native Probe 40 recovery linking cutover](Decisions/0442-Native-Probe-40-Recovery-Linking-Cutover.md) — removes the managed linker from the normal recovery command while retaining Stage 0 object production
 - [Native Probe 40 top-level WVA assembly](Decisions/0443-Native-Probe-40-Top-Level-Wva-Assembly.md) — moves three exact OS shim objects to the qualified native assembler and focuses inventory ownership
 - [Native Probe 40 inner process-image WVA handoff](Decisions/0444-Native-Probe-40-Inner-Process-Wva-Handoff.md) — feeds four exact native-assembled WVOs into Stage 0 process-image composition while retaining its frozen fallback
+- [Digest-bound native Probe 40 object seed](Decisions/0445-Digest-Bound-Native-Probe-40-Object-Seed.md) — constructs the exact normal EFI through native Windows/Linux launchers without invoking .NET while retaining explicit Stage 0 provenance
 - [Fixed native linker hostile-input corpus](Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) — 200 immutable bounded inputs through exact native `WVL1002` containment
 - [Fixed native console-container hostile-input corpus](Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) — 256 immutable bounded PE/ELF candidates through the native publisher with preservation and zero-scratch evidence
 - [Fixed native WVO differential corpus](Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) — 128 valid-shaped mutations and 128 arbitrary values agree with frozen Stage 0 acceptance through the native verifier

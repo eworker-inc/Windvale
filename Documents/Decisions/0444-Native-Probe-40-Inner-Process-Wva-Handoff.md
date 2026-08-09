@@ -1,6 +1,6 @@
 # Decision 0444: Native Probe 40 inner process-image WVA handoff
 
-- Status: Implemented current-host normal-scenario cutover; Linux execution pending
+- Status: Implemented current-host normal-scenario cutover; Linux execution pending; ordinary native build advanced by [Decision 0445](0445-Digest-Bound-Native-Probe-40-Object-Seed.md)
 - Date: 2026-08-09
 - Advances: [Decision 0443](0443-Native-Probe-40-Top-Level-Wva-Assembly.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
