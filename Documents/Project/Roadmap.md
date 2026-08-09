@@ -161,6 +161,10 @@ remaining object construction, and Linux recovery execution are next.
 freezes those eleven remaining normal-scenario WVOs as an explicit Stage 0 seed
 and adds a native-only ordinary Windows/Linux build. Linux execution and native
 replacement of each frozen producer remain before promotion.
+[Decision 0446](../Decisions/0446-Native-Probe-40-Windvale-Source-Producer.md)
+then compiles and lowers the existing native-probe Windvale source through the
+ordinary native toolchain, removes its WVO from the seed, and leaves ten frozen
+producers. Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

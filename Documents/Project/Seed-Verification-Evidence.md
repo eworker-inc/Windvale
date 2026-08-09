@@ -4699,3 +4699,30 @@ QEMU, Qualification, and non-normal scenarios did not run.
 This is ordinary native consumption of an explicit Stage 0 seed, not native
 reconstruction of its eleven objects. Stage 0 remains the regeneration and
 differential route until those individual producers transfer and qualify.
+
+## Local native Probe 40 Windvale-source producer evidence
+
+[Decision 0446](../Decisions/0446-Native-Probe-40-Windvale-Source-Producer.md)
+moves `03-native-wvb-probe.wvo` from the frozen seed to the ordinary native
+source path. The new Project 1 manifest compiles the existing canonical
+`Operating-System/Kernel/Native-Wvb-Probe.wv` source to a 930-byte WVB at
+SHA-256
+`af5f93c881f006be06565f15857efb72b201b8f694a6c7e40a90deeaa86cd2c2`.
+The native WVB-to-WVO path reproduces the exact former 7,306-byte seed object at
+SHA-256
+`046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c`.
+The first isolated source-to-WVO comparison completed in 0.632 seconds.
+
+After the ordinary build was cut over, its existing focused lane passed in
+9.383 seconds:
+
+```text
+PASS  suite os-probe cases=2
+Suites: 1, Passed: 1, Failed: 0, Cases: 2
+```
+
+The final EFI identity remains 683,008 bytes at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+The candidate manifest now distinguishes ten frozen WVOs totaling 685,344
+bytes from the exact native source producer. The Linux launcher passes Bash
+syntax validation; Linux execution and every broader suite remain pending.

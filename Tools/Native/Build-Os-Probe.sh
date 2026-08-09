@@ -40,6 +40,33 @@ cleanup() {
 }
 trap cleanup EXIT
 
+if ! "$script_directory/Build-Wvb.sh" \
+    "$repository_root/Windvale-Os-Native-Wvb-Probe.wvproj" \
+    "$work/03-native-wvb-probe.wvb" >"$work/03-build.log" 2>&1; then
+    cat -- "$work/03-build.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/03-native-wvb-probe.wvb") -ne 930 ]] ||
+    ! printf '%s  %s\n' \
+        'af5f93c881f006be06565f15857efb72b201b8f694a6c7e40a90deeaa86cd2c2' \
+        "$work/03-native-wvb-probe.wvb" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 source module is invalid.' >&2
+    exit 1
+fi
+if ! "$script_directory/Lower-Wvb-To-Wvo.sh" \
+    "$work/03-native-wvb-probe.wvb" \
+    "$work/03-native-wvb-probe.wvo" >"$work/03-lower.log" 2>&1; then
+    cat -- "$work/03-lower.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/03-native-wvb-probe.wvo") -ne 7306 ]] ||
+    ! printf '%s  %s\n' \
+        '046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c' \
+        "$work/03-native-wvb-probe.wvo" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 lowered object is invalid.' >&2
+    exit 1
+fi
+
 if ! "$script_directory/Assemble-Wva.sh" \
     "$repository_root/Operating-System/Kernel/X64-Memory-Object-Shims.wva" \
     "$work/06-memory-object-shims.wvo" >"$work/06.log" 2>&1; then
@@ -71,7 +98,7 @@ if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$object_root/00-loader.wvo" \
     "$object_root/01-kernel.wvo" \
     "$object_root/02-wvb-admission-native.wvo" \
-    "$object_root/03-native-wvb-probe.wvo" \
+    "$work/03-native-wvb-probe.wvo" \
     "$object_root/04-process-policy.wvo" \
     "$object_root/05-process.wvo" \
     "$work/06-memory-object-shims.wvo" \

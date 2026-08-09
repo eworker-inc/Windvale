@@ -513,17 +513,18 @@ Tools\Native\Build-Os-Probe.cmd C:\path\to\BOOTX64.EFI
 ./Tools/Native/Build-Os-Probe.sh /path/to/BOOTX64.EFI
 ```
 
-It validates eleven frozen Stage 0 WVOs, assembles three top-level WVA objects
-natively, links fourteen inputs, and packages the exact EFI. Use the focused
-retirement lane to check construction plus existing-output preservation:
+It validates ten frozen Stage 0 WVOs, compiles and lowers the canonical
+native-probe Windvale source, assembles three top-level WVA objects natively,
+links fourteen inputs, and packages the exact EFI. Use the focused retirement
+lane to check construction plus existing-output preservation:
 
 ```bat
 Tools\Native\Test-Retirement-Suite.cmd --filter os-probe
 ```
 
-The frozen seed is a candidate bootstrap/distribution input, not evidence that
-its eleven source producers have already been reconstructed natively. Use the
-recovery command below only to regenerate and compare that provenance.
+The frozen seed is a candidate bootstrap/distribution input. One source
+producer has moved to the native path; the other ten have not. Use the recovery
+command below only to regenerate and compare that provenance.
 
 The ordinary boot verifier consumes an already constructed EFI application; it
 does not build one or invoke `dotnet`. Bind the supplied bytes explicitly:

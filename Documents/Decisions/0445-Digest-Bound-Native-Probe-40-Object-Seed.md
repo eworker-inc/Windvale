@@ -1,6 +1,6 @@
 # Decision 0445: Digest-bound native Probe 40 object seed
 
-- Status: Implemented current-host native-build candidate; Linux execution pending
+- Status: Implemented current-host native-build candidate; Linux execution pending; first source producer advanced by [Decision 0446](0446-Native-Probe-40-Windvale-Source-Producer.md)
 - Date: 2026-08-09
 - Advances: [Decision 0444](0444-Native-Probe-40-Inner-Process-Wva-Handoff.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)

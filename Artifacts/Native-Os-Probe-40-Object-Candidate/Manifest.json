@@ -1,16 +1,29 @@
 {
-  "format": "windvale-native-os-probe-object-candidate-1",
+  "format": "windvale-native-os-probe-object-candidate-2",
   "status": "candidate",
   "probeFormat": 40,
   "scenario": "normal",
   "entrySymbol": "Windvale_boot_probe",
-  "sourceDecision": "0445",
-  "provenanceDecision": "0444",
+  "sourceDecision": "0446",
+  "provenanceDecision": "0445",
   "sourceCommit": "957ed051ed226ce1b1694d19ad13b2c7e64a968a",
+  "nativeSourceCommit": "48f6f414f708aead62bcbcac6866129d58de1d9a",
   "qualification": "pending",
-  "construction": "stage0-frozen-eleven-object-inventory",
-  "nativeConsumption": "assemble-three-link-fourteen-package-uefi",
+  "construction": "stage0-frozen-ten-object-inventory-plus-native-probe-source",
+  "nativeConsumption": "compile-lower-probe-assemble-three-link-fourteen-package-uefi",
+  "frozenObjectBytes": 685344,
   "totalObjectBytes": 692650,
+  "nativeProducers": [
+    {
+      "name": "03-native-wvb-probe.wvo",
+      "project": "Windvale-Os-Native-Wvb-Probe.wvproj",
+      "source": "Operating-System/Kernel/Native-Wvb-Probe.wv",
+      "moduleBytes": 930,
+      "moduleSha256": "af5f93c881f006be06565f15857efb72b201b8f694a6c7e40a90deeaa86cd2c2",
+      "objectBytes": 7306,
+      "objectSha256": "046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c"
+    }
+  ],
   "objects": [
     {
       "name": "00-loader.wvo",
@@ -26,11 +39,6 @@
       "name": "02-wvb-admission-native.wvo",
       "bytes": 20337,
       "sha256": "37e47bd2fed0242ad5cae9c9cc684927dc17041d4cd1d154658616be8b140c32"
-    },
-    {
-      "name": "03-native-wvb-probe.wvo",
-      "bytes": 7306,
-      "sha256": "046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c"
     },
     {
       "name": "04-process-policy.wvo",

@@ -20,16 +20,17 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Objects=%RepositoryRoot%\Artifacts\Native-Os-Probe-40-Object-Candidate"
 set "Assembler=%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd"
+set "Builder=%RepositoryRoot%\Tools\Native\Build-Wvb.cmd"
+set "Lowerer=%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd"
 set "Linker=%RepositoryRoot%\Tools\Native\Link-Wvo.cmd"
 set "Packager=%RepositoryRoot%\Tools\Native\Package-Uefi.cmd"
+set "NativeProbeProject=%RepositoryRoot%\Windvale-Os-Native-Wvb-Probe.wvproj"
 
 call :verify "%Objects%\00-loader.wvo" 6336 b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804
 if errorlevel 1 exit /b 1
 call :verify "%Objects%\01-kernel.wvo" 12134 bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8
 if errorlevel 1 exit /b 1
 call :verify "%Objects%\02-wvb-admission-native.wvo" 20337 37e47bd2fed0242ad5cae9c9cc684927dc17041d4cd1d154658616be8b140c32
-if errorlevel 1 exit /b 1
-call :verify "%Objects%\03-native-wvb-probe.wvo" 7306 046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c
 if errorlevel 1 exit /b 1
 call :verify "%Objects%\04-process-policy.wvo" 129310 35d751147a7285fb926ba68e77da4ef554bcf68a58963520153f23ea3e8c4678
 if errorlevel 1 exit /b 1
@@ -58,6 +59,15 @@ if errorlevel 1 (
 )
 set "Status=1"
 
+cmd /d /c call "%Builder%" "%NativeProbeProject%" "%Work%\03-native-wvb-probe.wvb" >"%Work%\03-build.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\03-native-wvb-probe.wvb" 930 af5f93c881f006be06565f15857efb72b201b8f694a6c7e40a90deeaa86cd2c2
+if errorlevel 1 goto :failure
+cmd /d /c call "%Lowerer%" "%Work%\03-native-wvb-probe.wvb" "%Work%\03-native-wvb-probe.wvo" >"%Work%\03-lower.log" 2>&1
+if errorlevel 1 goto :failure
+call :verify "%Work%\03-native-wvb-probe.wvo" 7306 046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c
+if errorlevel 1 goto :failure
+
 call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Memory-Object-Shims.wva" "%Work%\06-memory-object-shims.wvo" >"%Work%\06.log" 2>&1
 if errorlevel 1 goto :failure
 call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Timer-Shims.wva" "%Work%\07-timer-shims.wvo" >"%Work%\07.log" 2>&1
@@ -76,7 +86,7 @@ call "%Linker%" 0 Windvale_boot_probe "%Work%\Probe40.bin" ^
     "%Objects%\00-loader.wvo" ^
     "%Objects%\01-kernel.wvo" ^
     "%Objects%\02-wvb-admission-native.wvo" ^
-    "%Objects%\03-native-wvb-probe.wvo" ^
+    "%Work%\03-native-wvb-probe.wvo" ^
     "%Objects%\04-process-policy.wvo" ^
     "%Objects%\05-process.wvo" ^
     "%Work%\06-memory-object-shims.wvo" ^
@@ -108,6 +118,8 @@ goto :cleanup
 
 :failure
 >&2 echo The native Probe 40 build failed.
+if exist "%Work%\03-build.log" type "%Work%\03-build.log" 1>&2
+if exist "%Work%\03-lower.log" type "%Work%\03-lower.log" 1>&2
 if exist "%Work%\Link.map" type "%Work%\Link.map" 1>&2
 if exist "%Work%\Package.log" type "%Work%\Package.log" 1>&2
 
