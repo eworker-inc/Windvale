@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_CONTAINER_BYTES = 53_900;
+    private const int NATIVE_HOSTED_VERIFIER_CONTAINER_BYTES = 69_165;
     private const string NATIVE_HOSTED_VERIFIER_CONTAINER_SHA256 =
-        "78973e37b7baa2ab5befd83bfa8df5b6676e40ef58a218ffe7a7c7ce4e53a5fe";
+        "908dd3261d4075ee0f34a5976832e81f6bd16e742caf9469b48bcad43c773872";
 
     private static void Nativeˉhostedˉverifierˉcontainerˉprocessˉruns()
     {
@@ -229,6 +229,18 @@ internal static partial class Program
             File.WriteAllBytes(Sentinelˉpath, Sentinel);
             Equal(2, Run([
                 Paths[0], Paths[1], Paths[2], Rejectedˉpath, Sentinelˉpath,
+            ]));
+            Sequenceˉequal(Sentinel, File.ReadAllBytes(Sentinelˉpath));
+
+            var Rejectedˉstartup = File.ReadAllBytes(Paths[2]);
+            Rejectedˉstartup[57] ^= 1;
+            var Rejectedˉstartupˉpath = Path.Combine(
+                Directoryˉpath,
+                "Rejected-Startup.wvsd");
+            File.WriteAllBytes(Rejectedˉstartupˉpath, Rejectedˉstartup);
+            File.WriteAllBytes(Sentinelˉpath, Sentinel);
+            Equal(2, Run([
+                Paths[0], Paths[1], Rejectedˉstartupˉpath, Paths[3], Sentinelˉpath,
             ]));
             Sequenceˉequal(Sentinel, File.ReadAllBytes(Sentinelˉpath));
             Equal(64, Run([Paths[0], Paths[1], Paths[2], Paths[3], Paths[0]]));

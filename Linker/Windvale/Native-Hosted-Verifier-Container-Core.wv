@@ -3,6 +3,7 @@ module Linkerˉnativeˉhostedˉverifierˉcontainer profile portable;
 import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
 import Linkerˉnativeˉhostedˉverifierˉbundleˉadmission as Bundleˉadmission;
 import Linkerˉnativeˉhostedˉverifierˉlayout as Layout;
+import Linkerˉnativeˉhostedˉverifierˉstartupˉadmission as Startupˉadmission;
 
 export record Nativeˉhostedˉverifierˉcontainerˉresult {
     Valid: bool;
@@ -65,6 +66,12 @@ export fn Nativeˉhostedˉverifierˉcontainer(
         return Failure(Runtime, 2u32);
     }
     if !Startupˉisˉvalid(Startup, Value.Startupˉbytes) {
+        return Failure(Runtime, 3u32);
+    }
+    if !Startupˉadmission.Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalid(
+        Runtime,
+        Bytesˉslice(Startup, 32u32, Value.Startupˉbytes)
+    ) {
         return Failure(Runtime, 3u32);
     }
     if !Bundleˉadmission.Nativeˉhostedˉverifierˉbundleˉisˉvalid(

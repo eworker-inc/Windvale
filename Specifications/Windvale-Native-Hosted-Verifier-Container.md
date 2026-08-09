@@ -10,7 +10,10 @@ durable filesystem replacement.
 
 The constructor derives every destination offset and extent from the admitted
 4,096-byte `WVHV` runtime. It accepts only the matching target's version-1
-platform response and exact startup size. The version-2 bundle response must
+platform response and exact startup size. Every startup relocation must match
+the shared runtime/import/service/native-entry target model, and the template
+remaining after those fields are zeroed must match its canonical SHA-256. The
+version-2 bundle response must
 contain one complete segment, six services, and the exact declared image size.
 The native fragment and every service body must match the SHA-256 evidence in
 the runtime metadata; initial zero alignment and inter-service `0x90` padding
@@ -39,9 +42,9 @@ usage, returns 64, and preserves the input.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Tool WVB | 53,900 | `78973e37b7baa2ab5befd83bfa8df5b6676e40ef58a218ffe7a7c7ce4e53a5fe` |
-| Windows application | 822,784 | `8394b3a76ed26401ac3c1b127dc548488d98d1af7295079feadf92fc5059ce1a` |
-| Linux application | 823,296 | `e501594c90a2f8c0c2d3c4528aef2bafa1fff437af6f6320a276c5dc3df1e66c` |
+| Tool WVB | 69,165 | `908dd3261d4075ee0f34a5976832e81f6bd16e742caf9469b48bcad43c773872` |
+| Windows application | 1,088,000 | `a84e7aac58ce5d1f41ffb82efd0bf4c4fceb6cabdf9515d919a160a39e94a9ff` |
+| Linux application | 1,089,536 | `b2d8f2a3fe23f974ee23c313840d14f195f0043a7a237c119d22ff7d2ae3d304` |
 
 One focused current-host test compares both completed verifier applications
 byte for byte with the frozen Stage 0 application contracts. On the current

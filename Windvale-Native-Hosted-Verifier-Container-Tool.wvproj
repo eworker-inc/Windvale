@@ -7,5 +7,7 @@ source "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv"
 source "Linker/Windvale/Native-Hosted-Verifier-Bundle-Admission.wv"
 source "Linker/Windvale/Native-Hosted-Verifier-Container-Core.wv"
 source "Linker/Windvale/Native-Hosted-Verifier-Layout-Core.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Startup-Admission.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Startup-Targets.wv"
 source "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv"
 emit wvb
