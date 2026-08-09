@@ -4308,6 +4308,34 @@ covering 24 suites and 3,049 fixed cases. The reviewed Windows command
 suite and all four cases in 2.4 seconds. The other 23 lanes, broad local
 verifier, Linux execution, and grouped retirement gate were not run.
 
+## Local fixed native WVA positive-matrix evidence
+
+[Decision 0433](../Decisions/0433-Fixed-Native-Wva-Positive-Matrix.md)
+freezes sixteen paired 8/16-bit register sources and the typed narrow
+immediate/shift source from the managed positive assembler assertion. Their 17
+LF-terminated inputs total 4,123 bytes and their exact Stage 0 WVOs total 1,707
+bytes. One deterministic compact archive avoids both loose fixtures and one
+large generated source.
+
+The 5,080-byte manifest has SHA-256
+`81172a33451d422ccc1e6c2a418041d6fc6436ad801d15f1adda45afe685ce28`.
+The decoded 3,576-byte archive has SHA-256
+`ebb9e8e4ae5d90ace39f828996ebab9b75fc66d78c62ac7c58e86cf05ba9ba00`,
+and its 4,769-byte LF-only base64 representation has SHA-256
+`a2e6a55419d7b4aaa3d1dbb6f7101e3a02aefb27f7d1d7309280e3b73877970b`.
+
+The focused managed assertion passed 1/1 in 527 ms while establishing source
+and WVO provenance. Its temporary exporter was removed, the authoritative
+`Program.cs` remained unchanged, and the staging directory was removed after
+independent archive comparison.
+
+The reviewed retirement plan remains 2,054 LF-only bytes and now has SHA-256
+`521488bb63e001cccc673db3e41c6718b20313a11b28a9e9421d735c6b992f56`,
+covering 24 suites and 3,066 fixed cases. The reviewed Windows command
+`Test-Wva-Differential.cmd --positive-only` passes all 17 cases in 7.0 seconds.
+The unchanged 200-case mutation corpus, complete 217-case lane, other 23 lanes,
+broad local verifier, Linux execution, and grouped retirement gate were not run.
+
 ## Local multi-fragment current-lowerer reconstruction evidence
 
 [Decision 0420](../Decisions/0420-Multi-Fragment-Current-Lowerer-Reconstruction.md)

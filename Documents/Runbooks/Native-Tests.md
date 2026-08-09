@@ -34,7 +34,7 @@ The exact filter names and case counts are:
 | `wvo-hostile-size` | 4 |
 | `assembler-rejections` | 11 |
 | `assembler-golden` | 4 |
-| `wva-differential` | 200 |
+| `wva-differential` | 217 |
 | `source-containment` | 500 |
 | `lowerer-rejections` | 2 |
 | `linker-rejections` | 10 |
@@ -50,11 +50,11 @@ The exact filter names and case counts are:
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 24 suites and 3,049 cases in manifest order. Its
+Omitting `--filter` selects all 24 suites and 3,066 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 24, Passed: 24, Failed: 0, Cases: 3049
+Suites: 24, Passed: 24, Failed: 0, Cases: 3066
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -437,7 +437,8 @@ temporary one-byte-over-limit zero-filled input rather than retaining a very
 large fixture.
 
 The WVA differential lane freezes the exact 200-case seeded mutation sequence
-from the managed Stage 0 test. Run only this lane on Windows with:
+and 17 managed positive scalar/register vectors. Run the complete lane on
+Windows with:
 
 ```bat
 Tools\Native\Test-Retirement-Suite.cmd --filter wva-differential
@@ -450,11 +451,24 @@ or on Linux:
 ```
 
 The native assembler must match all 199 Stage 0 rejection codes, preserve each
-source and rejected destination, and reproduce the sole accepted 243-byte WVO.
-That WVO then passes the native verifier with its exact digest report. The
-compact archive retains all 200 exact 432-byte sources without adding loose or
-very large source files. The exact terminal summary is
-`Tests: 200, Passed: 200, Failed: 0`.
+source and rejected destination, and reproduce all 18 accepted Stage 0 WVOs.
+Every WVO then passes the native verifier with its exact digest report. Two
+compact archives retain all 217 exact inputs without adding loose or very large
+source files. The exact terminal summary is
+`Tests: 217, Passed: 217, Failed: 0`.
+
+For the narrow positive-matrix inner loop, use:
+
+```bat
+Tools\Native\Test-Wva-Differential.cmd --positive-only
+```
+
+```sh
+./Tools/Native/Test-Wva-Differential.sh --positive-only
+```
+
+That selection ends with `Tests: 17, Passed: 17, Failed: 0` and does not rerun
+the unchanged 200-case mutation corpus.
 
 No .NET process is required by these commands. The host dependencies are
 `cmd.exe`, `certutil`, `fsutil`, and `tar` on Windows, or Bash, `sha256sum`,

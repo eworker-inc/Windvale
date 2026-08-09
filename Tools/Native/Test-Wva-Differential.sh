@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 0 ]]; then
-    echo 'Usage: ./Tools/Native/Test-Wva-Differential.sh' >&2
+mode=all
+if [[ $# -eq 1 && $1 == --positive-only ]]; then
+    mode=positive
+elif [[ $# -ne 0 ]]; then
+    echo 'Usage: ./Tools/Native/Test-Wva-Differential.sh [--positive-only]' >&2
     exit 64
 fi
 
@@ -12,9 +15,13 @@ temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-wva-differential.XXXXXXXX") || exit 1
 corpus_directory="$temporary_directory/Corpus"
 mkdir -- "$corpus_directory" || exit 1
+positive_directory="$temporary_directory/Positive"
+mkdir -- "$positive_directory" || exit 1
 
 archive="$temporary_directory/Corpus.tar.gz"
 manifest="$corpus_directory/Manifest.txt"
+positive_archive="$temporary_directory/Positive-Corpus.tar.gz"
+positive_manifest="$positive_directory/Manifest.txt"
 destination="$temporary_directory/Destination.wvo"
 sentinel="$temporary_directory/Sentinel.wvo"
 run_output="$temporary_directory/Run.out"
@@ -26,6 +33,8 @@ extract_output="$temporary_directory/Extract.out"
 extract_error="$temporary_directory/Extract.err"
 archive_digest=b9a076cf9416488d733ed4c4887c052e61548acb45574256cd3c65d94da31970
 manifest_digest=50153c0f7a6e9b596f3a7e0c4ce5bc1c6f240b01ce8657d99c5775a61d9391e4
+positive_archive_digest=ebb9e8e4ae5d90ace39f828996ebab9b75fc66d78c62ac7c58e86cf05ba9ba00
+positive_manifest_digest=81172a33451d422ccc1e6c2a418041d6fc6436ad801d15f1adda45afe685ce28
 sentinel_digest=0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
 assembly_report_digest=4713cc6a74e88cab45421a8bed22b4c72de19fb330f77212a8193aa0e1224c73
 verify_report_digest=4a31e8a0ea20ff90039366745ec6df8ce8abe87361395c0643c95b72a054e4e7
@@ -43,8 +52,11 @@ cleanup() {
         "$temporary_root"/windvale-wva-differential.*)
             rm -f -- "$corpus_directory"/Case-???.wva "$manifest"
             rmdir -- "$corpus_directory"
+            rm -f -- "$positive_directory"/*.wva "$positive_manifest"
+            rmdir -- "$positive_directory"
             rm -f -- \
                 "$archive" \
+                "$positive_archive" \
                 "$destination" \
                 "$sentinel" \
                 "$run_output" \
@@ -121,7 +133,9 @@ run_case() {
     local oracle_code=$5
     local object_size=$6
     local object_digest=$7
-    local input="$corpus_directory/$name"
+    local report_digest=$8
+    local verification_digest=$9
+    local input="$active_corpus_directory/$name"
     local actual_size
     local run_status
 
@@ -156,7 +170,7 @@ run_case() {
                 cat -- "$run_error" >&2
                 return 1
             fi
-            check_hash "$run_output" "$assembly_report_digest" || {
+            check_hash "$run_output" "$report_digest" || {
                 echo "FAIL  $name: accepted report differs" >&2
                 return 1
             }
@@ -182,7 +196,7 @@ run_case() {
                 cat -- "$verify_error" >&2
                 return 1
             fi
-            check_hash "$verify_output" "$verify_report_digest" || {
+            check_hash "$verify_output" "$verification_digest" || {
                 echo "FAIL  $name: native object verification report differs" >&2
                 return 1
             }
@@ -225,57 +239,99 @@ run_case() {
 }
 
 decode_fixture \
-    "$repository_root/Tests/Native/Wva-Differential/Corpus.tar.gz.b64" \
-    "$archive" \
-    "$archive_digest"
-decode_fixture \
     "$repository_root/Tests/Native/Wvo/Return-42.wvo.b64" \
     "$sentinel" \
     "$sentinel_digest"
 
-if ! tar -xzf "$archive" -C "$corpus_directory" \
+if [[ $mode == all ]]; then
+    decode_fixture \
+        "$repository_root/Tests/Native/Wva-Differential/Corpus.tar.gz.b64" \
+        "$archive" \
+        "$archive_digest"
+
+    if ! tar -xzf "$archive" -C "$corpus_directory" \
+        > "$extract_output" 2> "$extract_error"; then
+        cat -- "$extract_error" >&2
+        fail 'corpus archive could not be extracted'
+    fi
+    if [[ -s $extract_output || -s $extract_error ]]; then
+        cat -- "$extract_output" "$extract_error" >&2
+        fail 'corpus extractor wrote output'
+    fi
+    check_hash "$manifest" "$manifest_digest" || fail 'manifest identity differs'
+
+    IFS= read -r header < "$manifest"
+    if [[ $header != 'windvale-wva-differential-corpus 1' ]]; then
+        fail 'manifest header differs'
+    fi
+
+    active_corpus_directory=$corpus_directory
+    while IFS='|' read -r name case_number assignment_count operations source_size source_digest outcome oracle_code oracle_line oracle_column object_size object_digest sections symbols relocations; do
+        record_assignment "$assignment_count" || fail "$name assignment count differs"
+        run_case \
+            "$name" "$source_size" "$source_digest" "$outcome" "$oracle_code" \
+            "$object_size" "$object_digest" "$assembly_report_digest" \
+            "$verify_report_digest" || fail "$name failed"
+    done < <(tail -n +3 -- "$manifest")
+
+    if ((total != 200)); then
+        fail 'total case count differs'
+    fi
+    if ((accepted_cases != 1)); then
+        fail 'accepted case count differs'
+    fi
+    if ((rejected_cases != 199)); then
+        fail 'rejected case count differs'
+    fi
+    if ((assignment_1 != 58)); then
+        fail 'one-assignment case count differs'
+    fi
+    if ((assignment_2 != 45)); then
+        fail 'two-assignment case count differs'
+    fi
+    if ((assignment_3 != 50)); then
+        fail 'three-assignment case count differs'
+    fi
+    if ((assignment_4 != 47)); then
+        fail 'four-assignment case count differs'
+    fi
+fi
+
+decode_fixture \
+    "$repository_root/Tests/Native/Wva-Differential/Positive-Corpus.tar.gz.b64" \
+    "$positive_archive" \
+    "$positive_archive_digest"
+if ! tar -xzf "$positive_archive" -C "$positive_directory" \
     > "$extract_output" 2> "$extract_error"; then
     cat -- "$extract_error" >&2
-    fail 'corpus archive could not be extracted'
+    fail 'positive corpus archive could not be extracted'
 fi
 if [[ -s $extract_output || -s $extract_error ]]; then
     cat -- "$extract_output" "$extract_error" >&2
-    fail 'corpus extractor wrote output'
+    fail 'positive corpus extractor wrote output'
 fi
-check_hash "$manifest" "$manifest_digest" || fail 'manifest identity differs'
+check_hash "$positive_manifest" "$positive_manifest_digest" || \
+    fail 'positive manifest identity differs'
 
-IFS= read -r header < "$manifest"
-if [[ $header != 'windvale-wva-differential-corpus 1' ]]; then
-    fail 'manifest header differs'
+IFS= read -r positive_header < "$positive_manifest"
+if [[ $positive_header != 'windvale-wva-positive-corpus 1' ]]; then
+    fail 'positive manifest header differs'
 fi
 
-while IFS='|' read -r name case_number assignment_count operations source_size source_digest outcome oracle_code oracle_line oracle_column object_size object_digest sections symbols relocations; do
-    record_assignment "$assignment_count" || fail "$name assignment count differs"
+active_corpus_directory=$positive_directory
+while IFS='|' read -r name source_size source_digest object_size object_digest sections symbols relocations report_digest verification_digest; do
     run_case \
-        "$name" "$source_size" "$source_digest" "$outcome" "$oracle_code" \
-        "$object_size" "$object_digest" || fail "$name failed"
-done < <(tail -n +3 -- "$manifest")
+        "$name" "$source_size" "$source_digest" accepted - \
+        "$object_size" "$object_digest" "$report_digest" \
+        "$verification_digest" || fail "$name failed"
+done < <(tail -n +3 -- "$positive_manifest")
 
-if ((total != 200)); then
-    fail 'total case count differs'
-fi
-if ((accepted_cases != 1)); then
-    fail 'accepted case count differs'
-fi
-if ((rejected_cases != 199)); then
-    fail 'rejected case count differs'
-fi
-if ((assignment_1 != 58)); then
-    fail 'one-assignment case count differs'
-fi
-if ((assignment_2 != 45)); then
-    fail 'two-assignment case count differs'
-fi
-if ((assignment_3 != 50)); then
-    fail 'three-assignment case count differs'
-fi
-if ((assignment_4 != 47)); then
-    fail 'four-assignment case count differs'
+if [[ $mode == positive ]]; then
+    if ((total != 17 || accepted_cases != 17 || rejected_cases != 0)); then
+        fail 'positive case counts differ'
+    fi
+elif ((total != 217 || accepted_cases != 18 || rejected_cases != 199)); then
+    fail 'positive case counts differ'
 fi
 
 echo "Tests: $total, Passed: $passed, Failed: 0"

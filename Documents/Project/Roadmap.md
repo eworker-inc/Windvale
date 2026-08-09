@@ -102,6 +102,12 @@ lane. Its exact 199-byte WVO covers immediate ALU, multiply, shifts, rotates,
 and indexed memory, growing the 24-suite plan to 3,049 cases. Generated dynamic
 register vectors, Linux execution, and the grouped gate remain.
 
+[Decision 0433](../Decisions/0433-Fixed-Native-Wva-Positive-Matrix.md)
+adds every paired 8/16-bit register vector plus the typed narrow immediate and
+shift groups to the existing WVA differential lane through one compact archive.
+The plan remains 24 suites and grows to 3,066 cases. Other WVA inventory, Linux
+execution, and the grouped gate remain.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

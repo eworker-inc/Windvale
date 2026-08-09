@@ -2,19 +2,19 @@
 
 ## Status and scope
 
-This fixed contract transfers the 200-case deterministic mutation loop from the
-Stage 0 WVA differential test to the ordinary digest-bound native assembler. It
-freezes every mutated source, the reference assembler's accepted/rejected
-decision, the reference diagnostic code for rejection, and the exact reference
-WVO identity for acceptance. The permanent test consumes those values without
-starting .NET or regenerating input.
+This fixed contract transfers the 200-case deterministic mutation loop and 17
+distinct managed positive scalar/register vectors to the ordinary digest-bound
+native assembler. It freezes every source, the reference assembler's
+accepted/rejected decision, the reference diagnostic code for rejection, and
+every exact reference WVO identity for acceptance. The permanent test consumes
+those values without starting .NET or regenerating input.
 
 The separate [native WVA rejection matrix](Windvale-Native-Wva-Assembler-Rejection-Tests.md)
 owns one complete report for every stable `WVA1001` through `WVA1011` family.
 This differential contract instead owns the exact seeded mutation sequence and
-its acceptance, diagnostic-family, and successful-byte agreement. It does not
-replace the remaining representative valid-source vectors, arbitrary-source
-containment, Linux execution, or final grouped qualification.
+the compact generated positive matrix with their acceptance,
+diagnostic-family, and successful-byte agreement. It does not replace
+arbitrary-source containment, Linux execution, or final grouped qualification.
 
 ## Reference provenance and corpus
 
@@ -72,10 +72,34 @@ Its repository representation is 23,372 LF-only base64 bytes at SHA-256
 `b40567d2d0208f2f4ec3a5a93050e703efd1d8e0b7a5f708c3db96577cb10dcb`.
 The generator and its managed build products are not retained.
 
+The positive corpus was produced once from the managed
+`Assemblerˉencodesˉtypedˉscalarˉx64` assertion. Sixteen sources cover every
+paired 8-bit and 16-bit register through immediate move, same-register move,
+condition materialization, and 16-bit multiply. The seventeenth covers the
+complete narrow immediate ALU, test/compare, rotate, logical shift, and signed
+shift groups. Its 17 LF-terminated sources total 4,123 bytes and produce 1,707
+WVO bytes.
+
+`Manifest.txt` begins with `windvale-wva-positive-corpus 1` and contains this
+grammar:
+
+```text
+filename|source-bytes|source-sha256|object-bytes|object-sha256|sections|symbols|relocations|report-sha256|verify-report-sha256
+```
+
+The 5,080-byte manifest has SHA-256
+`81172a33451d422ccc1e6c2a418041d6fc6436ad801d15f1adda45afe685ce28`.
+The manifest and sources form one deterministic 3,576-byte gzip tar archive at
+SHA-256
+`ebb9e8e4ae5d90ace39f828996ebab9b75fc66d78c62ac7c58e86cf05ba9ba00`.
+Its repository representation is 4,769 LF-only base64 bytes at SHA-256
+`a2e6a55419d7b4aaa3d1dbb6f7101e3a02aefb27f7d1d7309280e3b73877970b`.
+The one-time source/WVO exporter and managed build products are not retained.
+
 ## Native comparison contract
 
-`Tools/Native/Test-Wva-Differential.cmd` and `.sh` verify the archive,
-manifest, assignment distribution, family totals, and every complete source
+`Tools/Native/Test-Wva-Differential.cmd` and `.sh` verify both archives,
+manifests, assignment distribution, family totals, and every complete source
 identity. Each case starts with the fixed return-42 WVO as its destination
 sentinel and invokes only the ordinary `Assemble-Wva` launcher. Every source is
 rehashed afterward.
@@ -98,10 +122,19 @@ including the final LF. That 111-byte report has SHA-256
 The output then passes the existing native WVO verifier with its exact
 digest-bearing report.
 
-Success prints all 200 manifest-ordered `PASS` lines followed by:
+Every positive-matrix row must also return `0`, write no diagnostic, reproduce
+its exact Stage 0 WVO, and match its own complete assembler and native-verifier
+report digests. `--positive-only` selects only those 17 rows as the narrow
+development check and ends with:
 
 ```text
-Tests: 200, Passed: 200, Failed: 0
+Tests: 17, Passed: 17, Failed: 0
+```
+
+The unfiltered command prints all 217 manifest-ordered `PASS` lines followed by:
+
+```text
+Tests: 217, Passed: 217, Failed: 0
 ```
 
 The permanent command generates no source or expected result, starts no managed
