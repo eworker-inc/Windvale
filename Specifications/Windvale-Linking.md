@@ -298,6 +298,27 @@ the Linux application is 270,336 bytes at SHA-256
 Both application constructors are Stage 0 recovery-only. The checked-in native
 processes and digest-bound launchers are the normal candidate front door.
 
+### Segmented compiler hosted-package composition
+
+`Tools/Native/Package-Segmented-Compiler-Wvb.cmd` and `.sh` compose the pinned
+segmented WVO producer, segmented image linker, canonical image transport, and
+hosted-container toolset. The launcher owns only process orchestration and
+parsing of the transport process's strict decimal completion line.
+
+The shared `Package-Hosted-Wvb` launcher exposes a separate image-input form:
+`image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry-offset>
+<output>`. It admits profile 1 through 7, one through eight canonical chunks,
+and a decimal entry. The native source-geometry process independently reopens
+and validates exact chunk lengths and the canonical non-final 4 MiB rule before
+metadata or container construction. The source WVB remains the capability and
+enum evidence owner; the supplied image and entry remain the generated-code
+owner.
+
+Image-input mode reuses the exact fixed-service, evidence, metadata, runtime,
+layout, bundle, source-set, segment, manifest, and durable publication chain of
+ordinary hosted packaging. It does not lower or link again, and it has no
+fallback to Stage 0 or the whole-value lowerer.
+
 ## Deliberate omissions
 
 The flat target has no PE, ELF, UEFI, archive/library search, dynamic linking, weak symbols, COMDAT selection, dead stripping, section merging, executable permissions, debug data, stack/heap declaration, ABI, start-up code, 64-bit absolute relocation, internal-label model, or loader metadata. A raw flat image is not directly executed by Windows or Linux. The UEFI application adapter and capability-free `windows-x64-console-v1` and `linux-x64-console-v1` adapters are downstream targets with their own narrower input and verification rules.

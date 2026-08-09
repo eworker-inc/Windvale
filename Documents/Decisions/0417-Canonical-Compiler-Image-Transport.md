@@ -3,6 +3,7 @@
 - Status: Implemented Windows candidate; Linux execution, hosted-package composition, native container construction, and grouped qualification pending
 - Date: 2026-08-08
 - Advances: [Decision 0416](0416-Digest-Bound-Segmented-Compiler-Process-Front-Door.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
+- Advanced by: [Decision 0418](0418-Segmented-Compiler-Hosted-Package-Composition.md)
 - Contract: [Windvale linking](../../Specifications/Windvale-Linking.md#canonical-compiler-image-transport)
 
 ## Context

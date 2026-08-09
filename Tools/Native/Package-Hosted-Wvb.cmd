@@ -1,19 +1,41 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+set "ImageMode=0"
+if /I "%~1"=="image" goto :image_arguments
 if "%~3"=="" goto :usage
 if not "%~4"=="" goto :usage
 echo(%~1| findstr /r /x "[1-7]" >nul || goto :usage
 if /I not "%~x2"==".wvb" goto :usage
 if /I not "%~x3"==".exe" goto :usage
+set "Profile=%~1"
+set "Input=%~f2"
+set "Output=%~f3"
+goto :arguments_ready
+
+:image_arguments
+if "%~7"=="" goto :usage
+if not "%~8"=="" goto :usage
+echo(%~2| findstr /r /x "[1-7]" >nul || goto :usage
+if /I not "%~x3"==".wvb" goto :usage
+echo(%~5| findstr /r /x "[1-8]" >nul || goto :usage
+echo(%~6| findstr /r /x "[0-9][0-9]*" >nul || goto :usage
+if /I not "%~x7"==".exe" goto :usage
+set "ImageMode=1"
+set "Profile=%~2"
+set "Input=%~f3"
+set "ExternalBundleSources=%~f4"
+set "FragmentCount=%~5"
+set "NativeEntry=%~6"
+set "Output=%~f7"
+
+:arguments_ready
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Toolset=%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Candidate"
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "Startup=%RepositoryRoot%\Linker\Reference\Consumers\Windows-X64-Hosted-Compiler.wvo"
-set "Input=%~f2"
-set "Output=%~f3"
 
 call :verify_file "%Toolset%\SHA256SUMS" 5426 6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
@@ -52,16 +74,21 @@ set "ApplicationSources=%TemporaryDirectory%\Application-Sources"
 set "ApplicationSegments=%TemporaryDirectory%\Application-Segments"
 set "Result=1"
 
-call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Input%" "%TemporaryDirectory%\Input.wvo" >"%TemporaryDirectory%\Lower.txt"
-if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TemporaryDirectory%\Native.bin" "%TemporaryDirectory%\Input.wvo" >"%TemporaryDirectory%\Link.txt"
-if errorlevel 1 goto :cleanup
-set "NativeEntry="
-for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Main address=" "%TemporaryDirectory%\Link.txt"') do set "NativeEntry=%%E"
-if not defined NativeEntry goto :cleanup
-copy /b "%TemporaryDirectory%\Native.bin" "%BundleSources%.chunk-0" >nul || goto :cleanup
+if "%ImageMode%"=="1" (
+    set "BundleSources=%ExternalBundleSources%"
+) else (
+    call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Input%" "%TemporaryDirectory%\Input.wvo" >"%TemporaryDirectory%\Lower.txt"
+    if errorlevel 1 goto :cleanup
+    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TemporaryDirectory%\Native.bin" "%TemporaryDirectory%\Input.wvo" >"%TemporaryDirectory%\Link.txt"
+    if errorlevel 1 goto :cleanup
+    set "NativeEntry="
+    for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Main address=" "%TemporaryDirectory%\Link.txt"') do set "NativeEntry=%%E"
+    if not defined NativeEntry goto :cleanup
+    set "FragmentCount=1"
+    copy /b "%TemporaryDirectory%\Native.bin" "%BundleSources%.chunk-0" >nul || goto :cleanup
+)
 
-"%Toolset%\windows-x64\wvhostfixedservices.exe" windows "%BundleSources%" 1 ^
+"%Toolset%\windows-x64\wvhostfixedservices.exe" windows "%BundleSources%" %FragmentCount% ^
     "%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin" ^
     "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" ^
     "%ServiceRoot%\Native-X64-Argument-Service.bin" ^
@@ -76,13 +103,13 @@ if errorlevel 1 goto :cleanup
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostenumservice.exe" "%TemporaryDirectory%\Enum.wveq" "%BundleSources%.chunk-7"
 if errorlevel 1 goto :cleanup
-"%Toolset%\windows-x64\wvhostsourcegeometry.exe" "%BundleSources%" 1 "%TemporaryDirectory%\Bundle-Sources.wvsg"
+"%Toolset%\windows-x64\wvhostsourcegeometry.exe" "%BundleSources%" %FragmentCount% "%TemporaryDirectory%\Bundle-Sources.wvsg"
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostpublicationrequest.exe" "%TemporaryDirectory%\Bundle-Sources.wvsg" "%TemporaryDirectory%\Publication.wvpq"
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostcontrol.exe" evidence "%TemporaryDirectory%\Bundle-Sources.wvsg" "%TemporaryDirectory%\Evidence.wvhs"
 if errorlevel 1 goto :cleanup
-"%Toolset%\windows-x64\wvhostcontrol.exe" metadata windows %~1 %NativeEntry% "%TemporaryDirectory%\Metadata-Input.wvmi"
+"%Toolset%\windows-x64\wvhostcontrol.exe" metadata windows %Profile% %NativeEntry% "%TemporaryDirectory%\Metadata-Input.wvmi"
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostrequest.exe" "%TemporaryDirectory%\Metadata-Input.wvmi" "%TemporaryDirectory%\Publication.wvpq" "%TemporaryDirectory%\Evidence.wvhs" "%BundleSources%" "%TemporaryDirectory%\Metadata-Request.wvhq"
 if errorlevel 1 goto :cleanup
@@ -163,4 +190,5 @@ exit /b 0
 
 :usage
 >&2 echo Usage: Tools\Native\Package-Hosted-Wvb.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<output.exe^>
+>&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd image ^<profile-1-through-7^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-8^> ^<entry-offset^> ^<output.exe^>
 exit /b 64

@@ -1,8 +1,23 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 3 || ! $1 =~ ^[1-7]$ || $2 != *.wvb || $3 != *.elf ]]; then
+image_mode=0
+if [[ $# -eq 3 && $1 =~ ^[1-7]$ && $2 == *.wvb && $3 == *.elf ]]; then
+    profile=$1
+    input_argument=$2
+    output_argument=$3
+elif [[ $# -eq 7 && $1 == image && $2 =~ ^[1-7]$ &&
+        $3 == *.wvb && $5 =~ ^[1-8]$ && $6 =~ ^[0-9]+$ && $7 == *.elf ]]; then
+    image_mode=1
+    profile=$2
+    input_argument=$3
+    external_bundle_sources=$4
+    fragment_count=$5
+    native_entry=$6
+    output_argument=$7
+else
     echo 'Usage: ./Tools/Native/Package-Hosted-Wvb.sh <profile-1-through-7> <input.wvb> <output.elf>' >&2
+    echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh image <profile-1-through-7> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-8> <entry-offset> <output.elf>' >&2
     exit 64
 fi
 
@@ -11,10 +26,10 @@ repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 toolset="$repository_root/Artifacts/Native-Hosted-Container-Toolset-Candidate"
 service_root="$repository_root/Runtime/Windvale.Native/Consumers"
 startup="$repository_root/Linker/Reference/Consumers/Linux-X64-Hosted-Compiler.wvo"
-input_directory=$(CDPATH= cd -- "$(dirname -- "$2")" && pwd -P) || exit 64
-input="$input_directory/$(basename -- "$2")"
-output_directory=$(CDPATH= cd -- "$(dirname -- "$3")" && pwd -P) || exit 64
-output="$output_directory/$(basename -- "$3")"
+input_directory=$(CDPATH= cd -- "$(dirname -- "$input_argument")" && pwd -P) || exit 64
+input="$input_directory/$(basename -- "$input_argument")"
+output_directory=$(CDPATH= cd -- "$(dirname -- "$output_argument")" && pwd -P) || exit 64
+output="$output_directory/$(basename -- "$output_argument")"
 
 verify_file() {
     local path=$1
@@ -74,16 +89,21 @@ bundle_segments="$temporary_directory/Bundle-Segments"
 application_sources="$temporary_directory/Application-Sources"
 application_segments="$temporary_directory/Application-Segments"
 
-"$script_directory/Lower-Wvb-To-Wvo.sh" "$input" "$temporary_directory/Input.wvo" >"$temporary_directory/Lower.txt" || exit $?
-"$script_directory/Link-Wvo.sh" 0 Main "$temporary_directory/Native.bin" "$temporary_directory/Input.wvo" >"$temporary_directory/Link.txt" || exit $?
-native_entry=$(sed -n 's/^entry name=Main address=//p' "$temporary_directory/Link.txt")
-case "$native_entry" in
-    ''|*[!0-9]*) echo 'The native linker did not report one decimal Main address.' >&2; exit 1 ;;
-esac
-cp -- "$temporary_directory/Native.bin" "$bundle_sources.chunk-0" || exit 1
+if [[ $image_mode -eq 1 ]]; then
+    bundle_sources=$external_bundle_sources
+else
+    "$script_directory/Lower-Wvb-To-Wvo.sh" "$input" "$temporary_directory/Input.wvo" >"$temporary_directory/Lower.txt" || exit $?
+    "$script_directory/Link-Wvo.sh" 0 Main "$temporary_directory/Native.bin" "$temporary_directory/Input.wvo" >"$temporary_directory/Link.txt" || exit $?
+    native_entry=$(sed -n 's/^entry name=Main address=//p' "$temporary_directory/Link.txt")
+    case "$native_entry" in
+        ''|*[!0-9]*) echo 'The native linker did not report one decimal Main address.' >&2; exit 1 ;;
+    esac
+    fragment_count=1
+    cp -- "$temporary_directory/Native.bin" "$bundle_sources.chunk-0" || exit 1
+fi
 
 host="$toolset/linux-x64"
-"$host/wvhostfixedservices.elf" linux "$bundle_sources" 1 \
+"$host/wvhostfixedservices.elf" linux "$bundle_sources" "$fragment_count" \
     "$service_root/Native-X64-Linux-Console-Output-Service.bin" \
     "$service_root/Native-X64-Argument-Count-Service.bin" \
     "$service_root/Native-X64-Argument-Service.bin" \
@@ -95,10 +115,10 @@ host="$toolset/linux-x64"
     "$service_root/Native-X64-Linux-File-Output-Service.bin" || exit $?
 "$host/wvhostenumrequest.elf" "$input" "$temporary_directory/Enum.wveq" || exit $?
 "$host/wvhostenumservice.elf" "$temporary_directory/Enum.wveq" "$bundle_sources.chunk-7" || exit $?
-"$host/wvhostsourcegeometry.elf" "$bundle_sources" 1 "$temporary_directory/Bundle-Sources.wvsg" || exit $?
+"$host/wvhostsourcegeometry.elf" "$bundle_sources" "$fragment_count" "$temporary_directory/Bundle-Sources.wvsg" || exit $?
 "$host/wvhostpublicationrequest.elf" "$temporary_directory/Bundle-Sources.wvsg" "$temporary_directory/Publication.wvpq" || exit $?
 "$host/wvhostcontrol.elf" evidence "$temporary_directory/Bundle-Sources.wvsg" "$temporary_directory/Evidence.wvhs" || exit $?
-"$host/wvhostcontrol.elf" metadata linux "$1" "$native_entry" "$temporary_directory/Metadata-Input.wvmi" || exit $?
+"$host/wvhostcontrol.elf" metadata linux "$profile" "$native_entry" "$temporary_directory/Metadata-Input.wvmi" || exit $?
 "$host/wvhostrequest.elf" "$temporary_directory/Metadata-Input.wvmi" "$temporary_directory/Publication.wvpq" "$temporary_directory/Evidence.wvhs" "$bundle_sources" "$temporary_directory/Metadata-Request.wvhq" || exit $?
 "$host/wvhostmetadata.elf" "$temporary_directory/Metadata-Request.wvhq" "$temporary_directory/Metadata.wvhm" || exit $?
 "$host/wvhostruntime.elf" "$temporary_directory/Metadata.wvhm" "$temporary_directory/Runtime.wvhr" || exit $?

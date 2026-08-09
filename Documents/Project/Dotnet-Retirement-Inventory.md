@@ -123,6 +123,16 @@ Hosted-package composition, complete compiler execution, native reconstruction
 of the three process containers, Linux execution, and the grouped gate remain
 open.
 
+[Decision 0418](../Decisions/0418-Segmented-Compiler-Hosted-Package-Composition.md)
+connects the digest-bound staging producer, segmented linker, canonical image
+transport, and hosted-container toolset without a managed child process. The
+shared hosted packager now has a validated canonical-image mode instead of a
+duplicated second pipeline. The Windows composition reproduces the exact
+profile-6 staging application byte for byte, and the unchanged ordinary
+packaging smoke remains 2/2. Linux execution, the complete compiler run, native
+construction of the three process containers, console-v3 recovery cutover,
+and the grouped gate remain open.
+
 [Decision 0355](../Decisions/0355-Windvale-Owned-Native-Utf8-Service-Construction.md)
 removes the normal C# byte-emission algorithm for the shared strict UTF-8
 native service. A focused Windvale core now constructs and patches the exact
