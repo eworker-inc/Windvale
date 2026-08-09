@@ -41,8 +41,9 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | C1 | Clean bootstrap from documented native seeds | `native-candidate` | The versioned compiler WVB and paired native compiler seeds, copied-seed host launchers, exact accepted compiler output, and Stage 0 reconstruction route exist. Independent Linux execution, paired-host promotion, native rebuilding of the seed applications and remaining accepted tools, and consumption from a later release remain. |
 | C2 | Final digest-bound Stage 0 recovery archive | `missing` | Produce and verify one final Windows/Linux recovery release before deleting retired managed source. |
 
-Decisions [0423](../Decisions/0423-Compiler-Scale-Native-Lowerer-Admission.md)
-and [0425](../Decisions/0425-Compiler-Scale-Native-Wvo-Resource-Staging.md)
+Decisions [0423](../Decisions/0423-Compiler-Scale-Native-Lowerer-Admission.md),
+[0425](../Decisions/0425-Compiler-Scale-Native-Wvo-Resource-Staging.md), and
+[0426](../Decisions/0426-Fixed-Space-Compiler-Scale-Hosted-Sha256.md)
 advance N1 beyond the older limits embedded in the ledger row. The accepted
 candidate now owns 256 static-data declarations, 64 records plus 64 enums,
 1,024 declared record locals, 256 produced record values per block, packed
@@ -52,8 +53,11 @@ consecutive code steps. It stages the pinned 413-function compiler into the
 exact 27,458,862-byte WVO as 36 resources plus a 456-byte manifest, clearing
 the 62-resource immutable snapshot gate. The segmented native linker consumes
 the same boundary contract in focused reconstruction without loading .NET.
-Final compiler-image link/transport with this exact manifest, compiler hosted
-packaging, Linux execution, promotion, and grouped qualification remain open.
+The fixed-space portable SHA-256 path now clears the 27 MiB metadata region,
+and the complete Windows native hosted pipeline reconstructs the exact
+27,467,776-byte compiler seed application. That compiler passes a byte-exact
+`Sum-Data.wv` smoke against the qualified native front door. Linux execution,
+promotion, and grouped qualification remain open.
 
 Current C1 update: the [native compiler seed bootstrap](../../Specifications/Windvale-Native-Compiler-Seed-Bootstrap.md)
 pins the semantic-freeze compiler WVB and paired format-3 applications, consumes

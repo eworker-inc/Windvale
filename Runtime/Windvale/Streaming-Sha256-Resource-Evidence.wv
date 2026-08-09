@@ -211,9 +211,11 @@ export fn Streamingˉsha256ˉresourceˉregionˉupdate(
         let Resourceˉoffset: u32 =
             Bytesˉreadˉu32ˉlittle(Manifest, Chunkˉrecord + 8u32) +
             Start - Chunkˉoffset;
-        Hash = Sha256.Foundationˉsha256ˉupdate(
+        Hash = Sha256.Foundationˉsha256ˉupdateˉrange(
             Hash,
-            Bytesˉslice(Resource, Resourceˉoffset, End - Start)
+            Resource,
+            Resourceˉoffset,
+            End - Start
         );
         Hashedˉbytes = Hashedˉbytes + End - Start;
     }

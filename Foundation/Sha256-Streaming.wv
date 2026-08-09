@@ -55,12 +55,16 @@ fn Invalid(State: Foundationˉsha256ˉstream)
     );
 }
 
-export fn Foundationˉsha256ˉupdate(
+export fn Foundationˉsha256ˉupdateˉrange(
     State: Foundationˉsha256ˉstream,
-    Input: bytes
+    Input: bytes,
+    Inputˉoffset: u32,
+    Inputˉbytes: u32
 ) -> Foundationˉsha256ˉstream {
-    let Inputˉbytes: u32 = Bytesˉlength(Input);
-    if !State.Valid ||
+    let Availableˉbytes: u32 = Bytesˉlength(Input);
+    if Inputˉoffset > Availableˉbytes ||
+        Inputˉbytes > Availableˉbytes - Inputˉoffset ||
+        !State.Valid ||
         State.Totalˉbytes > MAXIMUM_SHA256_BYTES ||
         Inputˉbytes > MAXIMUM_SHA256_BYTES - State.Totalˉbytes ||
         Bytesˉlength(State.Tail) >= 64u32 {
@@ -85,23 +89,36 @@ export fn Foundationˉsha256ˉupdate(
         let Needed: u32 = 64u32 - Tailˉbytes;
         let Block: bytes = Bytesˉconcat(
             State.Tail,
-            Bytesˉslice(Input, 0u32, Needed)
+            Bytesˉslice(Input, Inputˉoffset, Needed)
         );
         Hash = Compression.Foundationˉsha256ˉcompress(Hash, Block, 0u32);
         Cursor = Needed;
     }
 
-    while 64u32 <= Inputˉbytes - Cursor {
-        Hash = Compression.Foundationˉsha256ˉcompress(Hash, Input, Cursor);
-        Cursor = Cursor + 64u32;
+    let Blockˉbytes: u32 = ((Inputˉbytes - Cursor) / 64u32) * 64u32;
+    if Blockˉbytes > 0u32 {
+        Hash = Compression.Foundationˉsha256ˉcompressˉblocks(
+            Hash,
+            Input,
+            Inputˉoffset + Cursor,
+            Blockˉbytes
+        );
+        Cursor = Cursor + Blockˉbytes;
     }
     if !Hash.Valid { return Invalid(State); }
 
     var Tail: bytes = State.Tail;
     if Cursor > 0u32 || Tailˉbytes == 0u32 {
-        Tail = Bytesˉslice(Input, Cursor, Inputˉbytes - Cursor);
+        Tail = Bytesˉslice(
+            Input,
+            Inputˉoffset + Cursor,
+            Inputˉbytes - Cursor
+        );
     } else if Inputˉbytes > 0u32 {
-        Tail = Bytesˉconcat(State.Tail, Input);
+        Tail = Bytesˉconcat(
+            State.Tail,
+            Bytesˉslice(Input, Inputˉoffset, Inputˉbytes)
+        );
     }
     return Foundationˉsha256ˉstream(
         true,
@@ -115,6 +132,18 @@ export fn Foundationˉsha256ˉupdate(
         Hash.Five,
         Hash.Six,
         Hash.Seven
+    );
+}
+
+export fn Foundationˉsha256ˉupdate(
+    State: Foundationˉsha256ˉstream,
+    Input: bytes
+) -> Foundationˉsha256ˉstream {
+    return Foundationˉsha256ˉupdateˉrange(
+        State,
+        Input,
+        0u32,
+        Bytesˉlength(Input)
     );
 }
 

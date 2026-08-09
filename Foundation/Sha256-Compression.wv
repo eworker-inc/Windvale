@@ -12,17 +12,22 @@ export record Foundationˉsha256ˉhash {
     Seven: u32;
 }
 
+record Workingˉhash {
+    A: u32;
+    B: u32;
+    C: u32;
+    D: u32;
+    E: u32;
+    F: u32;
+    G: u32;
+    H: u32;
+}
+
 export fn Foundationˉsha256ˉinitial() -> Foundationˉsha256ˉhash {
     return Foundationˉsha256ˉhash(
         true,
-        1779033703u32,
-        3144134277u32,
-        1013904242u32,
-        2773480762u32,
-        1359893119u32,
-        2600822924u32,
-        528734635u32,
-        1541459225u32
+        1779033703u32, 3144134277u32, 1013904242u32, 2773480762u32,
+        1359893119u32, 2600822924u32, 528734635u32, 1541459225u32
     );
 }
 
@@ -37,11 +42,7 @@ fn Addˉfour(Zero: u32, One: u32, Two: u32, Three: u32) -> u32 {
 }
 
 fn Addˉfive(
-    Zero: u32,
-    One: u32,
-    Two: u32,
-    Three: u32,
-    Four: u32
+    Zero: u32, One: u32, Two: u32, Three: u32, Four: u32
 ) -> u32 {
     return Addˉwrap(Addˉfour(Zero, One, Two, Three), Four);
 }
@@ -58,71 +59,329 @@ fn Readˉbigˉu32(Value: bytes, Offset: u32) -> u32 {
         U32ˉfromˉu8(Bytesˉreadˉu8(Value, Offset + 3u32));
 }
 
-fn Roundˉconstant(Round: u32) -> u32 {
-    if Round == 0u32 { return 1116352408u32; }
-    if Round == 1u32 { return 1899447441u32; }
-    if Round == 2u32 { return 3049323471u32; }
-    if Round == 3u32 { return 3921009573u32; }
-    if Round == 4u32 { return 961987163u32; }
-    if Round == 5u32 { return 1508970993u32; }
-    if Round == 6u32 { return 2453635748u32; }
-    if Round == 7u32 { return 2870763221u32; }
-    if Round == 8u32 { return 3624381080u32; }
-    if Round == 9u32 { return 310598401u32; }
-    if Round == 10u32 { return 607225278u32; }
-    if Round == 11u32 { return 1426881987u32; }
-    if Round == 12u32 { return 1925078388u32; }
-    if Round == 13u32 { return 2162078206u32; }
-    if Round == 14u32 { return 2614888103u32; }
-    if Round == 15u32 { return 3248222580u32; }
-    if Round == 16u32 { return 3835390401u32; }
-    if Round == 17u32 { return 4022224774u32; }
-    if Round == 18u32 { return 264347078u32; }
-    if Round == 19u32 { return 604807628u32; }
-    if Round == 20u32 { return 770255983u32; }
-    if Round == 21u32 { return 1249150122u32; }
-    if Round == 22u32 { return 1555081692u32; }
-    if Round == 23u32 { return 1996064986u32; }
-    if Round == 24u32 { return 2554220882u32; }
-    if Round == 25u32 { return 2821834349u32; }
-    if Round == 26u32 { return 2952996808u32; }
-    if Round == 27u32 { return 3210313671u32; }
-    if Round == 28u32 { return 3336571891u32; }
-    if Round == 29u32 { return 3584528711u32; }
-    if Round == 30u32 { return 113926993u32; }
-    if Round == 31u32 { return 338241895u32; }
-    if Round == 32u32 { return 666307205u32; }
-    if Round == 33u32 { return 773529912u32; }
-    if Round == 34u32 { return 1294757372u32; }
-    if Round == 35u32 { return 1396182291u32; }
-    if Round == 36u32 { return 1695183700u32; }
-    if Round == 37u32 { return 1986661051u32; }
-    if Round == 38u32 { return 2177026350u32; }
-    if Round == 39u32 { return 2456956037u32; }
-    if Round == 40u32 { return 2730485921u32; }
-    if Round == 41u32 { return 2820302411u32; }
-    if Round == 42u32 { return 3259730800u32; }
-    if Round == 43u32 { return 3345764771u32; }
-    if Round == 44u32 { return 3516065817u32; }
-    if Round == 45u32 { return 3600352804u32; }
-    if Round == 46u32 { return 4094571909u32; }
-    if Round == 47u32 { return 275423344u32; }
-    if Round == 48u32 { return 430227734u32; }
-    if Round == 49u32 { return 506948616u32; }
-    if Round == 50u32 { return 659060556u32; }
-    if Round == 51u32 { return 883997877u32; }
-    if Round == 52u32 { return 958139571u32; }
-    if Round == 53u32 { return 1322822218u32; }
-    if Round == 54u32 { return 1537002063u32; }
-    if Round == 55u32 { return 1747873779u32; }
-    if Round == 56u32 { return 1955562222u32; }
-    if Round == 57u32 { return 2024104815u32; }
-    if Round == 58u32 { return 2227730452u32; }
-    if Round == 59u32 { return 2361852424u32; }
-    if Round == 60u32 { return 2428436474u32; }
-    if Round == 61u32 { return 2756734187u32; }
-    if Round == 62u32 { return 3204031479u32; }
-    return 3329325298u32;
+fn Expand(
+    Minusˉsixteen: u32, Minusˉfifteen: u32,
+    Minusˉseven: u32, Minusˉtwo: u32
+) -> u32 {
+    let Smallˉzero: u32 = Rotateˉright(Minusˉfifteen, 7u32) ^
+        Rotateˉright(Minusˉfifteen, 18u32) ^ (Minusˉfifteen >> 3u32);
+    let Smallˉone: u32 = Rotateˉright(Minusˉtwo, 17u32) ^
+        Rotateˉright(Minusˉtwo, 19u32) ^ (Minusˉtwo >> 10u32);
+    return Addˉfour(Minusˉsixteen, Smallˉzero, Minusˉseven, Smallˉone);
+}
+
+fn Compressˉround(
+    State: Workingˉhash, Constant: u32, Word: u32
+) -> Workingˉhash {
+    let Bigˉone: u32 = Rotateˉright(State.E, 6u32) ^
+        Rotateˉright(State.E, 11u32) ^ Rotateˉright(State.E, 25u32);
+    let Choice: u32 = (State.E & State.F) ^ (~State.E & State.G);
+    let Temporaryˉone: u32 = Addˉfive(
+        State.H, Bigˉone, Choice, Constant, Word
+    );
+    let Bigˉzero: u32 = Rotateˉright(State.A, 2u32) ^
+        Rotateˉright(State.A, 13u32) ^ Rotateˉright(State.A, 22u32);
+    let Majority: u32 =
+        (State.A & State.B) ^ (State.A & State.C) ^ (State.B & State.C);
+    let Temporaryˉtwo: u32 = Addˉwrap(Bigˉzero, Majority);
+    return Workingˉhash(
+        Addˉwrap(Temporaryˉone, Temporaryˉtwo),
+        State.A, State.B, State.C,
+        Addˉwrap(State.D, Temporaryˉone),
+        State.E, State.F, State.G
+    );
+}
+
+fn Compressˉroundsˉzeroˉthroughˉfifteen(
+    State: Workingˉhash,
+    Wordˉzero: u32,
+    Wordˉone: u32,
+    Wordˉtwo: u32,
+    Wordˉthree: u32,
+    Wordˉfour: u32,
+    Wordˉfive: u32,
+    Wordˉsix: u32,
+    Wordˉseven: u32,
+    Wordˉeight: u32,
+    Wordˉnine: u32,
+    Wordˉten: u32,
+    Wordˉeleven: u32,
+    Wordˉtwelve: u32,
+    Wordˉthirteen: u32,
+    Wordˉfourteen: u32,
+    Wordˉfifteen: u32
+) -> Workingˉhash {
+    var Result: Workingˉhash = State;
+    Result = Compressˉround(Result, 1116352408u32, Wordˉzero);
+    Result = Compressˉround(Result, 1899447441u32, Wordˉone);
+    Result = Compressˉround(Result, 3049323471u32, Wordˉtwo);
+    Result = Compressˉround(Result, 3921009573u32, Wordˉthree);
+    Result = Compressˉround(Result, 961987163u32, Wordˉfour);
+    Result = Compressˉround(Result, 1508970993u32, Wordˉfive);
+    Result = Compressˉround(Result, 2453635748u32, Wordˉsix);
+    Result = Compressˉround(Result, 2870763221u32, Wordˉseven);
+    Result = Compressˉround(Result, 3624381080u32, Wordˉeight);
+    Result = Compressˉround(Result, 310598401u32, Wordˉnine);
+    Result = Compressˉround(Result, 607225278u32, Wordˉten);
+    Result = Compressˉround(Result, 1426881987u32, Wordˉeleven);
+    Result = Compressˉround(Result, 1925078388u32, Wordˉtwelve);
+    Result = Compressˉround(Result, 2162078206u32, Wordˉthirteen);
+    Result = Compressˉround(Result, 2614888103u32, Wordˉfourteen);
+    Result = Compressˉround(Result, 3248222580u32, Wordˉfifteen);
+    return Result;
+}
+
+fn Compressˉroundsˉsixteenˉthroughˉthirtyˉone(
+    State: Workingˉhash,
+    Wordˉsixteen: u32,
+    Wordˉseventeen: u32,
+    Wordˉeighteen: u32,
+    Wordˉnineteen: u32,
+    Wordˉtwenty: u32,
+    Wordˉtwentyˉone: u32,
+    Wordˉtwentyˉtwo: u32,
+    Wordˉtwentyˉthree: u32,
+    Wordˉtwentyˉfour: u32,
+    Wordˉtwentyˉfive: u32,
+    Wordˉtwentyˉsix: u32,
+    Wordˉtwentyˉseven: u32,
+    Wordˉtwentyˉeight: u32,
+    Wordˉtwentyˉnine: u32,
+    Wordˉthirty: u32,
+    Wordˉthirtyˉone: u32
+) -> Workingˉhash {
+    var Result: Workingˉhash = State;
+    Result = Compressˉround(Result, 3835390401u32, Wordˉsixteen);
+    Result = Compressˉround(Result, 4022224774u32, Wordˉseventeen);
+    Result = Compressˉround(Result, 264347078u32, Wordˉeighteen);
+    Result = Compressˉround(Result, 604807628u32, Wordˉnineteen);
+    Result = Compressˉround(Result, 770255983u32, Wordˉtwenty);
+    Result = Compressˉround(Result, 1249150122u32, Wordˉtwentyˉone);
+    Result = Compressˉround(Result, 1555081692u32, Wordˉtwentyˉtwo);
+    Result = Compressˉround(Result, 1996064986u32, Wordˉtwentyˉthree);
+    Result = Compressˉround(Result, 2554220882u32, Wordˉtwentyˉfour);
+    Result = Compressˉround(Result, 2821834349u32, Wordˉtwentyˉfive);
+    Result = Compressˉround(Result, 2952996808u32, Wordˉtwentyˉsix);
+    Result = Compressˉround(Result, 3210313671u32, Wordˉtwentyˉseven);
+    Result = Compressˉround(Result, 3336571891u32, Wordˉtwentyˉeight);
+    Result = Compressˉround(Result, 3584528711u32, Wordˉtwentyˉnine);
+    Result = Compressˉround(Result, 113926993u32, Wordˉthirty);
+    Result = Compressˉround(Result, 338241895u32, Wordˉthirtyˉone);
+    return Result;
+}
+
+fn Compressˉroundsˉthirtyˉtwoˉthroughˉfortyˉseven(
+    State: Workingˉhash,
+    Wordˉthirtyˉtwo: u32,
+    Wordˉthirtyˉthree: u32,
+    Wordˉthirtyˉfour: u32,
+    Wordˉthirtyˉfive: u32,
+    Wordˉthirtyˉsix: u32,
+    Wordˉthirtyˉseven: u32,
+    Wordˉthirtyˉeight: u32,
+    Wordˉthirtyˉnine: u32,
+    Wordˉforty: u32,
+    Wordˉfortyˉone: u32,
+    Wordˉfortyˉtwo: u32,
+    Wordˉfortyˉthree: u32,
+    Wordˉfortyˉfour: u32,
+    Wordˉfortyˉfive: u32,
+    Wordˉfortyˉsix: u32,
+    Wordˉfortyˉseven: u32
+) -> Workingˉhash {
+    var Result: Workingˉhash = State;
+    Result = Compressˉround(Result, 666307205u32, Wordˉthirtyˉtwo);
+    Result = Compressˉround(Result, 773529912u32, Wordˉthirtyˉthree);
+    Result = Compressˉround(Result, 1294757372u32, Wordˉthirtyˉfour);
+    Result = Compressˉround(Result, 1396182291u32, Wordˉthirtyˉfive);
+    Result = Compressˉround(Result, 1695183700u32, Wordˉthirtyˉsix);
+    Result = Compressˉround(Result, 1986661051u32, Wordˉthirtyˉseven);
+    Result = Compressˉround(Result, 2177026350u32, Wordˉthirtyˉeight);
+    Result = Compressˉround(Result, 2456956037u32, Wordˉthirtyˉnine);
+    Result = Compressˉround(Result, 2730485921u32, Wordˉforty);
+    Result = Compressˉround(Result, 2820302411u32, Wordˉfortyˉone);
+    Result = Compressˉround(Result, 3259730800u32, Wordˉfortyˉtwo);
+    Result = Compressˉround(Result, 3345764771u32, Wordˉfortyˉthree);
+    Result = Compressˉround(Result, 3516065817u32, Wordˉfortyˉfour);
+    Result = Compressˉround(Result, 3600352804u32, Wordˉfortyˉfive);
+    Result = Compressˉround(Result, 4094571909u32, Wordˉfortyˉsix);
+    Result = Compressˉround(Result, 275423344u32, Wordˉfortyˉseven);
+    return Result;
+}
+
+fn Compressˉroundsˉfortyˉeightˉthroughˉsixtyˉthree(
+    State: Workingˉhash,
+    Wordˉfortyˉeight: u32,
+    Wordˉfortyˉnine: u32,
+    Wordˉfifty: u32,
+    Wordˉfiftyˉone: u32,
+    Wordˉfiftyˉtwo: u32,
+    Wordˉfiftyˉthree: u32,
+    Wordˉfiftyˉfour: u32,
+    Wordˉfiftyˉfive: u32,
+    Wordˉfiftyˉsix: u32,
+    Wordˉfiftyˉseven: u32,
+    Wordˉfiftyˉeight: u32,
+    Wordˉfiftyˉnine: u32,
+    Wordˉsixty: u32,
+    Wordˉsixtyˉone: u32,
+    Wordˉsixtyˉtwo: u32,
+    Wordˉsixtyˉthree: u32
+) -> Workingˉhash {
+    var Result: Workingˉhash = State;
+    Result = Compressˉround(Result, 430227734u32, Wordˉfortyˉeight);
+    Result = Compressˉround(Result, 506948616u32, Wordˉfortyˉnine);
+    Result = Compressˉround(Result, 659060556u32, Wordˉfifty);
+    Result = Compressˉround(Result, 883997877u32, Wordˉfiftyˉone);
+    Result = Compressˉround(Result, 958139571u32, Wordˉfiftyˉtwo);
+    Result = Compressˉround(Result, 1322822218u32, Wordˉfiftyˉthree);
+    Result = Compressˉround(Result, 1537002063u32, Wordˉfiftyˉfour);
+    Result = Compressˉround(Result, 1747873779u32, Wordˉfiftyˉfive);
+    Result = Compressˉround(Result, 1955562222u32, Wordˉfiftyˉsix);
+    Result = Compressˉround(Result, 2024104815u32, Wordˉfiftyˉseven);
+    Result = Compressˉround(Result, 2227730452u32, Wordˉfiftyˉeight);
+    Result = Compressˉround(Result, 2361852424u32, Wordˉfiftyˉnine);
+    Result = Compressˉround(Result, 2428436474u32, Wordˉsixty);
+    Result = Compressˉround(Result, 2756734187u32, Wordˉsixtyˉone);
+    Result = Compressˉround(Result, 3204031479u32, Wordˉsixtyˉtwo);
+    Result = Compressˉround(Result, 3329325298u32, Wordˉsixtyˉthree);
+    return Result;
+}
+
+fn Compressˉblock(
+    Hash: Foundationˉsha256ˉhash,
+    Value: bytes,
+    Offset: u32
+) -> Foundationˉsha256ˉhash {
+    let Wordˉzero: u32 = Readˉbigˉu32(Value, Offset + 0u32);
+    let Wordˉone: u32 = Readˉbigˉu32(Value, Offset + 4u32);
+    let Wordˉtwo: u32 = Readˉbigˉu32(Value, Offset + 8u32);
+    let Wordˉthree: u32 = Readˉbigˉu32(Value, Offset + 12u32);
+    let Wordˉfour: u32 = Readˉbigˉu32(Value, Offset + 16u32);
+    let Wordˉfive: u32 = Readˉbigˉu32(Value, Offset + 20u32);
+    let Wordˉsix: u32 = Readˉbigˉu32(Value, Offset + 24u32);
+    let Wordˉseven: u32 = Readˉbigˉu32(Value, Offset + 28u32);
+    let Wordˉeight: u32 = Readˉbigˉu32(Value, Offset + 32u32);
+    let Wordˉnine: u32 = Readˉbigˉu32(Value, Offset + 36u32);
+    let Wordˉten: u32 = Readˉbigˉu32(Value, Offset + 40u32);
+    let Wordˉeleven: u32 = Readˉbigˉu32(Value, Offset + 44u32);
+    let Wordˉtwelve: u32 = Readˉbigˉu32(Value, Offset + 48u32);
+    let Wordˉthirteen: u32 = Readˉbigˉu32(Value, Offset + 52u32);
+    let Wordˉfourteen: u32 = Readˉbigˉu32(Value, Offset + 56u32);
+    let Wordˉfifteen: u32 = Readˉbigˉu32(Value, Offset + 60u32);
+    let Wordˉsixteen: u32 = Expand(Wordˉzero, Wordˉone, Wordˉnine, Wordˉfourteen);
+    let Wordˉseventeen: u32 = Expand(Wordˉone, Wordˉtwo, Wordˉten, Wordˉfifteen);
+    let Wordˉeighteen: u32 = Expand(Wordˉtwo, Wordˉthree, Wordˉeleven, Wordˉsixteen);
+    let Wordˉnineteen: u32 = Expand(Wordˉthree, Wordˉfour, Wordˉtwelve, Wordˉseventeen);
+    let Wordˉtwenty: u32 = Expand(Wordˉfour, Wordˉfive, Wordˉthirteen, Wordˉeighteen);
+    let Wordˉtwentyˉone: u32 = Expand(Wordˉfive, Wordˉsix, Wordˉfourteen, Wordˉnineteen);
+    let Wordˉtwentyˉtwo: u32 = Expand(Wordˉsix, Wordˉseven, Wordˉfifteen, Wordˉtwenty);
+    let Wordˉtwentyˉthree: u32 = Expand(Wordˉseven, Wordˉeight, Wordˉsixteen, Wordˉtwentyˉone);
+    let Wordˉtwentyˉfour: u32 = Expand(Wordˉeight, Wordˉnine, Wordˉseventeen, Wordˉtwentyˉtwo);
+    let Wordˉtwentyˉfive: u32 = Expand(Wordˉnine, Wordˉten, Wordˉeighteen, Wordˉtwentyˉthree);
+    let Wordˉtwentyˉsix: u32 = Expand(Wordˉten, Wordˉeleven, Wordˉnineteen, Wordˉtwentyˉfour);
+    let Wordˉtwentyˉseven: u32 = Expand(Wordˉeleven, Wordˉtwelve, Wordˉtwenty, Wordˉtwentyˉfive);
+    let Wordˉtwentyˉeight: u32 = Expand(Wordˉtwelve, Wordˉthirteen, Wordˉtwentyˉone, Wordˉtwentyˉsix);
+    let Wordˉtwentyˉnine: u32 = Expand(Wordˉthirteen, Wordˉfourteen, Wordˉtwentyˉtwo, Wordˉtwentyˉseven);
+    let Wordˉthirty: u32 = Expand(Wordˉfourteen, Wordˉfifteen, Wordˉtwentyˉthree, Wordˉtwentyˉeight);
+    let Wordˉthirtyˉone: u32 = Expand(Wordˉfifteen, Wordˉsixteen, Wordˉtwentyˉfour, Wordˉtwentyˉnine);
+    let Wordˉthirtyˉtwo: u32 = Expand(Wordˉsixteen, Wordˉseventeen, Wordˉtwentyˉfive, Wordˉthirty);
+    let Wordˉthirtyˉthree: u32 = Expand(Wordˉseventeen, Wordˉeighteen, Wordˉtwentyˉsix, Wordˉthirtyˉone);
+    let Wordˉthirtyˉfour: u32 = Expand(Wordˉeighteen, Wordˉnineteen, Wordˉtwentyˉseven, Wordˉthirtyˉtwo);
+    let Wordˉthirtyˉfive: u32 = Expand(Wordˉnineteen, Wordˉtwenty, Wordˉtwentyˉeight, Wordˉthirtyˉthree);
+    let Wordˉthirtyˉsix: u32 = Expand(Wordˉtwenty, Wordˉtwentyˉone, Wordˉtwentyˉnine, Wordˉthirtyˉfour);
+    let Wordˉthirtyˉseven: u32 = Expand(Wordˉtwentyˉone, Wordˉtwentyˉtwo, Wordˉthirty, Wordˉthirtyˉfive);
+    let Wordˉthirtyˉeight: u32 = Expand(Wordˉtwentyˉtwo, Wordˉtwentyˉthree, Wordˉthirtyˉone, Wordˉthirtyˉsix);
+    let Wordˉthirtyˉnine: u32 = Expand(Wordˉtwentyˉthree, Wordˉtwentyˉfour, Wordˉthirtyˉtwo, Wordˉthirtyˉseven);
+    let Wordˉforty: u32 = Expand(Wordˉtwentyˉfour, Wordˉtwentyˉfive, Wordˉthirtyˉthree, Wordˉthirtyˉeight);
+    let Wordˉfortyˉone: u32 = Expand(Wordˉtwentyˉfive, Wordˉtwentyˉsix, Wordˉthirtyˉfour, Wordˉthirtyˉnine);
+    let Wordˉfortyˉtwo: u32 = Expand(Wordˉtwentyˉsix, Wordˉtwentyˉseven, Wordˉthirtyˉfive, Wordˉforty);
+    let Wordˉfortyˉthree: u32 = Expand(Wordˉtwentyˉseven, Wordˉtwentyˉeight, Wordˉthirtyˉsix, Wordˉfortyˉone);
+    let Wordˉfortyˉfour: u32 = Expand(Wordˉtwentyˉeight, Wordˉtwentyˉnine, Wordˉthirtyˉseven, Wordˉfortyˉtwo);
+    let Wordˉfortyˉfive: u32 = Expand(Wordˉtwentyˉnine, Wordˉthirty, Wordˉthirtyˉeight, Wordˉfortyˉthree);
+    let Wordˉfortyˉsix: u32 = Expand(Wordˉthirty, Wordˉthirtyˉone, Wordˉthirtyˉnine, Wordˉfortyˉfour);
+    let Wordˉfortyˉseven: u32 = Expand(Wordˉthirtyˉone, Wordˉthirtyˉtwo, Wordˉforty, Wordˉfortyˉfive);
+    let Wordˉfortyˉeight: u32 = Expand(Wordˉthirtyˉtwo, Wordˉthirtyˉthree, Wordˉfortyˉone, Wordˉfortyˉsix);
+    let Wordˉfortyˉnine: u32 = Expand(Wordˉthirtyˉthree, Wordˉthirtyˉfour, Wordˉfortyˉtwo, Wordˉfortyˉseven);
+    let Wordˉfifty: u32 = Expand(Wordˉthirtyˉfour, Wordˉthirtyˉfive, Wordˉfortyˉthree, Wordˉfortyˉeight);
+    let Wordˉfiftyˉone: u32 = Expand(Wordˉthirtyˉfive, Wordˉthirtyˉsix, Wordˉfortyˉfour, Wordˉfortyˉnine);
+    let Wordˉfiftyˉtwo: u32 = Expand(Wordˉthirtyˉsix, Wordˉthirtyˉseven, Wordˉfortyˉfive, Wordˉfifty);
+    let Wordˉfiftyˉthree: u32 = Expand(Wordˉthirtyˉseven, Wordˉthirtyˉeight, Wordˉfortyˉsix, Wordˉfiftyˉone);
+    let Wordˉfiftyˉfour: u32 = Expand(Wordˉthirtyˉeight, Wordˉthirtyˉnine, Wordˉfortyˉseven, Wordˉfiftyˉtwo);
+    let Wordˉfiftyˉfive: u32 = Expand(Wordˉthirtyˉnine, Wordˉforty, Wordˉfortyˉeight, Wordˉfiftyˉthree);
+    let Wordˉfiftyˉsix: u32 = Expand(Wordˉforty, Wordˉfortyˉone, Wordˉfortyˉnine, Wordˉfiftyˉfour);
+    let Wordˉfiftyˉseven: u32 = Expand(Wordˉfortyˉone, Wordˉfortyˉtwo, Wordˉfifty, Wordˉfiftyˉfive);
+    let Wordˉfiftyˉeight: u32 = Expand(Wordˉfortyˉtwo, Wordˉfortyˉthree, Wordˉfiftyˉone, Wordˉfiftyˉsix);
+    let Wordˉfiftyˉnine: u32 = Expand(Wordˉfortyˉthree, Wordˉfortyˉfour, Wordˉfiftyˉtwo, Wordˉfiftyˉseven);
+    let Wordˉsixty: u32 = Expand(Wordˉfortyˉfour, Wordˉfortyˉfive, Wordˉfiftyˉthree, Wordˉfiftyˉeight);
+    let Wordˉsixtyˉone: u32 = Expand(Wordˉfortyˉfive, Wordˉfortyˉsix, Wordˉfiftyˉfour, Wordˉfiftyˉnine);
+    let Wordˉsixtyˉtwo: u32 = Expand(Wordˉfortyˉsix, Wordˉfortyˉseven, Wordˉfiftyˉfive, Wordˉsixty);
+    let Wordˉsixtyˉthree: u32 = Expand(Wordˉfortyˉseven, Wordˉfortyˉeight, Wordˉfiftyˉsix, Wordˉsixtyˉone);
+    var Working: Workingˉhash = Workingˉhash(
+        Hash.Zero, Hash.One, Hash.Two, Hash.Three,
+        Hash.Four, Hash.Five, Hash.Six, Hash.Seven
+    );
+    Working = Compressˉroundsˉzeroˉthroughˉfifteen(
+        Working,
+        Wordˉzero, Wordˉone, Wordˉtwo, Wordˉthree,
+        Wordˉfour, Wordˉfive, Wordˉsix, Wordˉseven,
+        Wordˉeight, Wordˉnine, Wordˉten, Wordˉeleven,
+        Wordˉtwelve, Wordˉthirteen, Wordˉfourteen, Wordˉfifteen
+    );
+    Working = Compressˉroundsˉsixteenˉthroughˉthirtyˉone(
+        Working,
+        Wordˉsixteen, Wordˉseventeen, Wordˉeighteen, Wordˉnineteen,
+        Wordˉtwenty, Wordˉtwentyˉone, Wordˉtwentyˉtwo, Wordˉtwentyˉthree,
+        Wordˉtwentyˉfour, Wordˉtwentyˉfive, Wordˉtwentyˉsix, Wordˉtwentyˉseven,
+        Wordˉtwentyˉeight, Wordˉtwentyˉnine, Wordˉthirty, Wordˉthirtyˉone
+    );
+    Working = Compressˉroundsˉthirtyˉtwoˉthroughˉfortyˉseven(
+        Working,
+        Wordˉthirtyˉtwo, Wordˉthirtyˉthree, Wordˉthirtyˉfour, Wordˉthirtyˉfive,
+        Wordˉthirtyˉsix, Wordˉthirtyˉseven, Wordˉthirtyˉeight, Wordˉthirtyˉnine,
+        Wordˉforty, Wordˉfortyˉone, Wordˉfortyˉtwo, Wordˉfortyˉthree,
+        Wordˉfortyˉfour, Wordˉfortyˉfive, Wordˉfortyˉsix, Wordˉfortyˉseven
+    );
+    Working = Compressˉroundsˉfortyˉeightˉthroughˉsixtyˉthree(
+        Working,
+        Wordˉfortyˉeight, Wordˉfortyˉnine, Wordˉfifty, Wordˉfiftyˉone,
+        Wordˉfiftyˉtwo, Wordˉfiftyˉthree, Wordˉfiftyˉfour, Wordˉfiftyˉfive,
+        Wordˉfiftyˉsix, Wordˉfiftyˉseven, Wordˉfiftyˉeight, Wordˉfiftyˉnine,
+        Wordˉsixty, Wordˉsixtyˉone, Wordˉsixtyˉtwo, Wordˉsixtyˉthree
+    );
+    return Foundationˉsha256ˉhash(
+        true,
+        Addˉwrap(Hash.Zero, Working.A),
+        Addˉwrap(Hash.One, Working.B),
+        Addˉwrap(Hash.Two, Working.C),
+        Addˉwrap(Hash.Three, Working.D),
+        Addˉwrap(Hash.Four, Working.E),
+        Addˉwrap(Hash.Five, Working.F),
+        Addˉwrap(Hash.Six, Working.G),
+        Addˉwrap(Hash.Seven, Working.H)
+    );
+}
+
+export fn Foundationˉsha256ˉcompressˉblocks(
+    Hash: Foundationˉsha256ˉhash,
+    Value: bytes,
+    Offset: u32,
+    Blockˉbytes: u32
+) -> Foundationˉsha256ˉhash {
+    let Length: u32 = Bytesˉlength(Value);
+    if !Hash.Valid || Blockˉbytes == 0u32 || Blockˉbytes % 64u32 != 0u32 ||
+        Offset > Length || Blockˉbytes > Length - Offset {
+        return Foundationˉsha256ˉhash(
+            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    var Result: Foundationˉsha256ˉhash = Hash;
+    var Blockˉoffset: u32 = Offset;
+    while Blockˉoffset < Offset + Blockˉbytes {
+        Result = Compressˉblock(Result, Value, Blockˉoffset);
+        Blockˉoffset = Blockˉoffset + 64u32;
+    }
+    return Result;
 }
 
 export fn Foundationˉsha256ˉcompress(
@@ -130,93 +389,5 @@ export fn Foundationˉsha256ˉcompress(
     Value: bytes,
     Offset: u32
 ) -> Foundationˉsha256ˉhash {
-    let Length: u32 = Bytesˉlength(Value);
-    if !Hash.Valid || Offset > Length || 64u32 > Length - Offset {
-        return Foundationˉsha256ˉhash(
-            false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32
-        );
-    }
-    var Schedule: bytes = Bytesˉslice(Value, 0u32, 0u32);
-    var Scheduleˉindex: u32 = 0u32;
-    while Scheduleˉindex < 16u32 {
-        Schedule = Bytesˉconcat(
-            Schedule,
-            Bytesˉfromˉu32ˉlittle(
-                Readˉbigˉu32(Value, Offset + Scheduleˉindex * 4u32)
-            )
-        );
-        Scheduleˉindex = Scheduleˉindex + 1u32;
-    }
-    var A: u32 = Hash.Zero;
-    var B: u32 = Hash.One;
-    var C: u32 = Hash.Two;
-    var D: u32 = Hash.Three;
-    var E: u32 = Hash.Four;
-    var F: u32 = Hash.Five;
-    var G: u32 = Hash.Six;
-    var H: u32 = Hash.Seven;
-    var Round: u32 = 0u32;
-    while Round < 64u32 {
-        if Round >= 16u32 {
-            let Minusˉfifteen: u32 = Bytesˉreadˉu32ˉlittle(
-                Schedule, (Round - 15u32) * 4u32
-            );
-            let Minusˉtwo: u32 = Bytesˉreadˉu32ˉlittle(
-                Schedule, (Round - 2u32) * 4u32
-            );
-            let Smallˉzero: u32 = Rotateˉright(Minusˉfifteen, 7u32) ^
-                Rotateˉright(Minusˉfifteen, 18u32) ^
-                (Minusˉfifteen >> 3u32);
-            let Smallˉone: u32 = Rotateˉright(Minusˉtwo, 17u32) ^
-                Rotateˉright(Minusˉtwo, 19u32) ^
-                (Minusˉtwo >> 10u32);
-            Schedule = Bytesˉconcat(
-                Schedule,
-                Bytesˉfromˉu32ˉlittle(Addˉfour(
-                    Bytesˉreadˉu32ˉlittle(
-                        Schedule, (Round - 16u32) * 4u32
-                    ),
-                    Smallˉzero,
-                    Bytesˉreadˉu32ˉlittle(
-                        Schedule, (Round - 7u32) * 4u32
-                    ),
-                    Smallˉone
-                ))
-            );
-        }
-        let Bigˉone: u32 = Rotateˉright(E, 6u32) ^
-            Rotateˉright(E, 11u32) ^ Rotateˉright(E, 25u32);
-        let Choice: u32 = (E & F) ^ (~E & G);
-        let Temporaryˉone: u32 = Addˉfive(
-            H,
-            Bigˉone,
-            Choice,
-            Roundˉconstant(Round),
-            Bytesˉreadˉu32ˉlittle(Schedule, Round * 4u32)
-        );
-        let Bigˉzero: u32 = Rotateˉright(A, 2u32) ^
-            Rotateˉright(A, 13u32) ^ Rotateˉright(A, 22u32);
-        let Majority: u32 = (A & B) ^ (A & C) ^ (B & C);
-        let Temporaryˉtwo: u32 = Addˉwrap(Bigˉzero, Majority);
-        H = G;
-        G = F;
-        F = E;
-        E = Addˉwrap(D, Temporaryˉone);
-        D = C;
-        C = B;
-        B = A;
-        A = Addˉwrap(Temporaryˉone, Temporaryˉtwo);
-        Round = Round + 1u32;
-    }
-    return Foundationˉsha256ˉhash(
-        true,
-        Addˉwrap(Hash.Zero, A),
-        Addˉwrap(Hash.One, B),
-        Addˉwrap(Hash.Two, C),
-        Addˉwrap(Hash.Three, D),
-        Addˉwrap(Hash.Four, E),
-        Addˉwrap(Hash.Five, F),
-        Addˉwrap(Hash.Six, G),
-        Addˉwrap(Hash.Seven, H)
-    );
+    return Foundationˉsha256ˉcompressˉblocks(Hash, Value, Offset, 64u32);
 }

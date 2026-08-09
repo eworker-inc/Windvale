@@ -61,9 +61,9 @@ argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Source-set WVB | 73,387 | `4b519338e12b852efa1df2a97ce09deb02c2ace4a708ce4b60025cf13083762c` |
-| Windows application | 1,030,656 | `b54effc87ff43dd5871712555ce6afa800ce3a2d535048a40fc1b79cf094d87f` |
-| Linux application | 1,032,192 | `ceaa9546c8520b32892a97906d04a827754483dfaa4df86ed8d54af846cb31ed` |
+| Source-set WVB | 81,502 | `d8cb87c7c8b1da83572d13ff92c4555c16b19f44c1d649c5b5cb35f9e9fd60ce` |
+| Windows application | 1,280,512 | `a84dbdc7f96eafaab2ed17b076897338cfc86271be4ffddf4bef627d17d12083` |
+| Linux application | 1,282,048 | `872cca3fa39763a58b2183f9cf145d60c666d57fe0c7cd5984070cd55e1b6786` |
 
 The Stage 0 recovery compiler and native Project 1 front door produce identical
 WVB bytes. Package layout and identity wiring remain deletion-bound Stage 0

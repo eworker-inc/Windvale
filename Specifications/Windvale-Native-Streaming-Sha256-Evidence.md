@@ -84,10 +84,12 @@ every region descriptor before using a digest in another format.
 
 `Foundation/Sha256-Compression.wv` owns one exact 64-byte SHA-256 compression
 step and uses checked 16-bit halves for wrapping addition; every intermediate
-sum is at most 131,071. `Foundation/Sha256-Streaming.wv` owns tail retention,
-multi-value update, padding, and raw digest encoding. A compression call builds
-only its 256-byte schedule and returns before the next block, so dynamic state
-does not grow with the logical input.
+sum is at most 131,071. It expands one fixed 64-word scalar schedule and runs
+the rounds in four bounded groups, so compression does not accumulate dynamic
+array state. `Foundation/Sha256-Streaming.wv` owns tail retention, contiguous
+resource-range updates, padding, and raw digest encoding. A compression call
+returns before the next block, so dynamic state does not grow with the logical
+input.
 
 `Streaming-Sha256-Evidence-Core.wv` owns manifest/evidence admission, while
 `Streaming-Sha256-Resource-Evidence.wv` owns portable region-to-chunk state and
@@ -102,9 +104,9 @@ reused by the native metadata-request producer.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Streaming evidence WVB | 40,261 | `1b15d4640027d415e9e8d6de9d22b04eaed7cc3c4b8d27ddd84d17fb69cda104` |
-| Windows streaming evidence tool | 664,576 | `4c9761003e6ff2b3040a1197762d50a603768b7b7f170bfd5e30d6cb4f939be5` |
-| Linux streaming evidence tool | 663,552 | `d1a5c87df95f8881c380680c7de965fdc051909691757974e68165adc83c31a1` |
+| Streaming evidence WVB | 48,364 | `95a112cc469c7667e8158cd57770a806501ede1bdea9a82a797b770b9e59dea4` |
+| Windows streaming evidence tool | 914,432 | `16719d10c539c8950b620c7eee73e23d82a915b5e395977da9eabdf88e18e9a9` |
+| Linux streaming evidence tool | 913,408 | `e0383452a56712748a17ffbe1f780817c338bf1900d3ef914706604ce592b6ea` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring; the
@@ -116,6 +118,7 @@ Large immutable resource sequences and their ordered identity regions can now
 produce manifest-bound raw SHA-256 evidence without a managed runtime process.
 The [native metadata-request producer](Windvale-Native-Hosted-Metadata-Request.md)
 reuses this state to compute the eleven actual bundle leaves and construct
-`WVHM` without trusting a loose evidence file. Ordered `WVSI` orchestration,
-complete composition, Linux execution, normal-path promotion, and the final
-grouped retirement gate remain pending.
+`WVHM` without trusting a loose evidence file. Ordered `WVSI` orchestration and
+complete Windows compiler-image composition now pass through the native hosted
+front door. Linux execution, normal-path promotion, and the final grouped
+retirement gate remain pending.
