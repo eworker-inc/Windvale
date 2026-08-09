@@ -66,6 +66,25 @@ fn Setˉu32(Input: bytes, Index: u32, Value: u32) -> bytes {
     );
 }
 
+fn Packedˉrowˉbytes(Recordˉlocals: u32) -> u32 {
+    return (Recordˉlocals + 7u32) / 8u32;
+}
+
+fn Packedˉliveˉat(
+    Values: bytes,
+    Recordˉlocals: u32,
+    Block: u32,
+    Local: u32
+) -> u8 {
+    let Rowˉbytes: u32 = Packedˉrowˉbytes(Recordˉlocals);
+    let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+        Values,
+        Block * Rowˉbytes + Local / 8u32
+    ));
+    if (Value & (1u32 << (Local % 8u32))) != 0u32 { return 1u8; }
+    return 0u8;
+}
+
 fn Liveˉinˉat(
     Liveˉin: bytes,
     Updatedˉin: bytes,
@@ -75,14 +94,18 @@ fn Liveˉinˉat(
     Local: u32
 ) -> u8 {
     if Block >= Updatedˉstart {
-        return Bytesˉreadˉu8(
+        return Packedˉliveˉat(
             Updatedˉin,
-            (Block - Updatedˉstart) * Recordˉlocals + Local
+            Recordˉlocals,
+            Block - Updatedˉstart,
+            Local
         );
     }
-    return Bytesˉreadˉu8(
+    return Packedˉliveˉat(
         Liveˉin,
-        Block * Recordˉlocals + Local
+        Recordˉlocals,
+        Block,
+        Local
     );
 }
 
@@ -109,6 +132,8 @@ fn Flowˉblock(
     var Nextˉin: bytes = Empty(Input);
     var Changed: u8 = 0u8;
     var Local: u32 = 0u32;
+    var Packed: u32 = 0u32;
+    var Bit: u32 = 0u32;
     while Local < Recordˉlocals {
         var Out: u8 = 0u8;
         if First != 4294967295u32 {
@@ -142,10 +167,19 @@ fn Flowˉblock(
                 Into = 1u8;
             }
         }
-        if Bytesˉreadˉu8(Liveˉin, Cell) != Into {
+        if Packedˉliveˉat(Liveˉin, Recordˉlocals, Block, Local) != Into {
             Changed = 1u8;
         }
-        Nextˉin = Bytesˉconcat(Nextˉin, Bytesˉfromˉu8(Into));
+        if Into == 1u8 { Packed = Packed | (1u32 << Bit); }
+        Bit = Bit + 1u32;
+        if Bit == 8u32 || Local + 1u32 == Recordˉlocals {
+            Nextˉin = Bytesˉconcat(
+                Nextˉin,
+                Bytesˉslice(Bytesˉfromˉu32ˉlittle(Packed), 0u32, 1u32)
+            );
+            Packed = 0u32;
+            Bit = 0u32;
+        }
         Local = Local + 1u32;
     }
     return Bytesˉconcat(Bytesˉfromˉu8(Changed), Nextˉin);
@@ -163,6 +197,7 @@ fn Flowˉiteration(
 ) -> bytes {
     var Nextˉin: bytes = Empty(Input);
     var Changed: u8 = 0u8;
+    let Rowˉbytes: u32 = Packedˉrowˉbytes(Recordˉlocals);
     var Remaining: u32 = Blocks;
     while Remaining > 0u32 {
         let Block: u32 = Remaining - 1u32;
@@ -180,7 +215,7 @@ fn Flowˉiteration(
         );
         if Bytesˉreadˉu8(Values, 0u32) == 1u8 { Changed = 1u8; }
         Nextˉin = Bytesˉconcat(
-            Bytesˉslice(Values, 1u32, Recordˉlocals),
+            Bytesˉslice(Values, 1u32, Rowˉbytes),
             Nextˉin
         );
         Remaining = Block;
@@ -209,15 +244,19 @@ fn Blockˉliveˉout(
     while Local < Recordˉlocals {
         var Out: u8 = 0u8;
         if First != 4294967295u32 {
-            if Bytesˉreadˉu8(
+            if Packedˉliveˉat(
                 Liveˉin,
-                First * Recordˉlocals + Local
+                Recordˉlocals,
+                First,
+                Local
             ) == 1u8 { Out = 1u8; }
         }
         if Second != 4294967295u32 {
-            if Bytesˉreadˉu8(
+            if Packedˉliveˉat(
                 Liveˉin,
-                Second * Recordˉlocals + Local
+                Recordˉlocals,
+                Second,
+                Local
             ) == 1u8 { Out = 1u8; }
         }
         Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Out));
@@ -275,11 +314,11 @@ export fn Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
     Definitions: bytes
 ) -> Allocation.Compilerˉnativeˉx64ˉrecordˉallocation {
     let Recordˉlocals: u32 = Directory.Count;
-    var Liveˉin: bytes = Zeros(Input, Blocks * Recordˉlocals);
+    let Liveˉinˉbytes: u32 = Blocks * Packedˉrowˉbytes(Recordˉlocals);
+    var Liveˉin: bytes = Zeros(Input, Liveˉinˉbytes);
     var Iteration: u32 = 0u32;
     var Changed: bool = true;
     while Changed {
-        let Cells: u32 = Blocks * Recordˉlocals;
         let Next: bytes = Flowˉiteration(
             Input,
             Blocks,
@@ -291,7 +330,7 @@ export fn Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
             Liveˉin
         );
         Changed = Bytesˉreadˉu8(Next, 0u32) == 1u8;
-        Liveˉin = Bytesˉslice(Next, 1u32, Cells);
+        Liveˉin = Bytesˉslice(Next, 1u32, Liveˉinˉbytes);
         Iteration = Iteration + 1u32;
         if Iteration >= Blocks { Changed = false; }
     }

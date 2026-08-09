@@ -82,22 +82,22 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Native-Bridge-Adapter.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 403_806;
-    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 427_996;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 404_793;
+    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 428_983;
     private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
-        "239b155bbc8c7adeff0cc4d44696b7fc631111fc000f9eb36c009e0528081e7a";
+        "a5fc54291f46a0581e0c2c191ccc558e3254a9c4936def78b2ca7568496636a9";
     private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 7_991;
     private const string WVO_STAGING_MANIFEST_ADAPTER_SHA256 =
         "e7a29d26e78c3cdae93868960d5be537709fc7ed8ef83de1c0bf84ca5e63c3fa";
     private const int WVO_STAGING_NATIVE_BRIDGE_ADAPTER_WVB_BYTES = 8_807;
     private const string WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SHA256 =
         "f4f5e00013d370a431af5b78d36beca37d9fe5504e788204aea6025341607417";
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_867_520;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_875_712;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "9e18ec08c894a569c182a8426f51654564ade58a74f66b80e718fff0e1e367db";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_869_568;
+        "f6c533ab78ea0e3ac83468cd94640e7a6489241918bdc4413f69153fc813e627";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_877_760;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "700194c0caa339a78271921a6ccd211173ab3cdc9eaa6288fbffdb72ee2ef0ee";
+        "2db94aecb8a851aa62bb22549f18a5380ebcfd5213f51636e2a900ac8a533238";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";

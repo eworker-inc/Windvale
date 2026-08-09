@@ -72,8 +72,17 @@ field cells, so frame capacity is not the blocker. The next N1 slice must reduce
 immutable liveness/interference update lifetime; increasing another semantic or
 frame limit is not justified by this evidence.
 
-The current ordinary candidate is a 403,806-byte WVB with SHA-256
-`f5433e71ca8da5e8b495f3ae3ee63835a226568b6309aa6c6c5e27fad7f933cc`.
+The first lifetime slice stores the fixed-point `Liveˉin` table as row-aligned
+packed bits, reducing function 312's table from 178,610 bytes to 22,525 bytes
+without changing uses, definitions, interference, allocation order, or WVO
+output. The focused differential owner passes, and the native compiler probe
+falls from about 46 seconds to about 35 seconds before the same pre-status exit.
+Repeated immutable interference-row replacement is therefore the next measured
+hotspot; the packed fixed-point table is retained as an independently verified
+improvement.
+
+The current ordinary candidate is a 404,793-byte WVB with SHA-256
+`2c51319b5dd62c43dca5942b276bb4a29a145cf3b67a51c0e77e3e5b44353317`.
 Its Stage 0-constructed Windows and Linux containers remain candidate artifacts,
 not qualified replacements. No C# compiler or runtime implementation changes
 are part of this decision.
