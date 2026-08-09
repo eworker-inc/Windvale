@@ -1,12 +1,12 @@
 {
-  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-8",
+  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-9",
   "status": "candidate",
-  "sourceDecision": "0483",
+  "sourceDecision": "0484",
   "provenanceDecision": "0474",
   "qualification": "current-host-focused",
   "construction": "verified-digest-bound-front-door",
-  "sha256SumsBytes": 4527,
-  "sha256SumsSha256": "5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881",
+  "sha256SumsBytes": 4634,
+  "sha256SumsSha256": "83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273",
   "commands": [
     {
       "name": "wvhostverifieridentity",
@@ -197,9 +197,16 @@
     {
       "name": "publisher-application-admission-tool",
       "path": "Publisher-Application-Admission-Tool.wvb",
-      "bytes": 30325,
-      "sha256": "cdcda2e2bcdb7915a769ab9a79f7434e2b26bfbf4e0412a183bd7525769ef954",
+      "bytes": 30837,
+      "sha256": "f1e7497dc1acba1a08190021d4dac83ec65c3e6b58f80edb3bfcd62eeda55ed3",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Application-Tool.wvproj"
+    },
+    {
+      "name": "publisher-application-admission-native-object",
+      "path": "Publisher-Application-Admission-Tool.wvo",
+      "bytes": 556273,
+      "sha256": "ac5972e8de83ad962874217ed6e0fba49586096df4c3b69d61abdf7509e2dff5",
+      "sourceWvb": "Publisher-Application-Admission-Tool.wvb"
     }
   ],
   "packages": [

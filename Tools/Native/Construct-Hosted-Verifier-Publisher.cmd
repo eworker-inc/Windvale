@@ -82,7 +82,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 4527 5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 4634 83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"

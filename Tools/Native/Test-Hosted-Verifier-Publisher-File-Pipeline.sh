@@ -85,8 +85,8 @@ fail() {
 }
 
 total=$((total + 1))
-check_file "$construction/SHA256SUMS" 4527 \
-    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
+check_file "$construction/SHA256SUMS" 4634 \
+    83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
@@ -96,11 +96,23 @@ check_file "$construction/SHA256SUMS" 4527 \
     2> "$test_directory/Admission-Build.err" || fail
 check_empty "$test_directory/Admission-Build.err" \
     'admission source build wrote a diagnostic' || fail
-check_file "$test_directory/Publisher-Application-Admission-Tool.wvb" 30325 \
-    cdcda2e2bcdb7915a769ab9a79f7434e2b26bfbf4e0412a183bd7525769ef954 \
+check_file "$test_directory/Publisher-Application-Admission-Tool.wvb" 30837 \
+    f1e7497dc1acba1a08190021d4dac83ec65c3e6b58f80edb3bfcd62eeda55ed3 \
     'native-built publisher admission WVB' || fail
 cmp --silent "$construction/Publisher-Application-Admission-Tool.wvb" \
     "$test_directory/Publisher-Application-Admission-Tool.wvb" || fail
+"$repository_root/Tools/Native/Lower-Wvb-To-Wvo.sh" \
+    "$test_directory/Publisher-Application-Admission-Tool.wvb" \
+    "$test_directory/Publisher-Application-Admission-Tool.wvo" \
+    > "$test_directory/Admission-Lower.out" \
+    2> "$test_directory/Admission-Lower.err" || fail
+check_empty "$test_directory/Admission-Lower.err" \
+    'admission native lowering wrote a diagnostic' || fail
+check_file "$test_directory/Publisher-Application-Admission-Tool.wvo" 556273 \
+    ac5972e8de83ad962874217ed6e0fba49586096df4c3b69d61abdf7509e2dff5 \
+    'native-lowered publisher admission WVO' || fail
+cmp --silent "$construction/Publisher-Application-Admission-Tool.wvo" \
+    "$test_directory/Publisher-Application-Admission-Tool.wvo" || fail
 pass 'publisher construction inventory'
 
 total=$((total + 1))
@@ -138,19 +150,19 @@ total=$((total + 1))
 [[ $? -eq 2 ]] || fail
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
-check_file "$test_directory/Invalid.wvsq" 4527 \
-    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
+check_file "$test_directory/Invalid.wvsq" 4634 \
+    83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 \
     'rejected metadata input' || fail
-check_file "$test_directory/Sentinel.wvhv" 4527 \
-    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
+check_file "$test_directory/Sentinel.wvhv" 4634 \
+    83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
     "$test_directory/Invalid.wvsq" "$test_directory/Sentinel.wvhr" \
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
-check_file "$test_directory/Sentinel.wvhr" 4527 \
-    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
+check_file "$test_directory/Sentinel.wvhr" 4634 \
+    83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -165,8 +177,8 @@ total=$((total + 1))
 [[ $? -eq 64 ]] || fail
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
-check_file "$test_directory/Invalid.wvsq" 4527 \
-    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
+check_file "$test_directory/Invalid.wvsq" 4634 \
+    83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
 

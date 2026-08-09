@@ -40,17 +40,19 @@ process-argument capabilities. Success reports the admitted byte count and
 returns zero. Invalid arguments return 64; a wrong target, length, or digest
 reports one rejection diagnostic and returns 2. It never writes a file.
 
-The canonical command WVB is 30,325 bytes with SHA-256
-`cdcda2e2bcdb7915a769ab9a79f7434e2b26bfbf4e0412a183bd7525769ef954`.
-It builds through the native Project 1 front door and is pinned in version 8 of
-the publisher-construction candidate.
+The canonical command WVB is 30,837 bytes with SHA-256
+`f1e7497dc1acba1a08190021d4dac83ec65c3e6b58f80edb3bfcd62eeda55ed3`.
+It builds through the native Project 1 front door. The accepted native ABI-22
+lowerer produces a 556,273-byte WVO with SHA-256
+`ac5972e8de83ad962874217ed6e0fba49586096df4c3b69d61abdf7509e2dff5`.
+Both are pinned in version 9 of the publisher-construction candidate.
 
 ## Remaining boundary
 
 No existing hosted profile may be relabeled for this command. In particular,
-profile 7 is already the hosted-container segmenter. The current accepted
-native lowerer reports `Unsupportedˉcode` for this WVB, so paired executable
-packaging requires a separately reviewed lowerer/profile extension.
+profile 7 is already the hosted-container segmenter. Paired executable
+packaging therefore requires a separately reviewed hosted-profile extension;
+the WVB-to-WVO boundary itself no longer blocks that work.
 
 Read-only admission also must not be followed by a host-side copy or rename:
 that would admit one snapshot and mutate from another. Durable promotion needs
