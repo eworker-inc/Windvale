@@ -121,7 +121,7 @@ internal static partial class Program
                 ? Hostedˉcontainerˉmetadataˉapplicationˉcontract.WINDOWS_TARGET_NAME
                 : Hostedˉcontainerˉmetadataˉapplicationˉcontract.LINUX_TARGET_NAME;
             var Cliˉapplication = Executeˉinspectorˉtool(
-                "aot", Moduleˉpath, "--target", Cliˉtarget);
+                "recovery-aot", Moduleˉpath, "--target", Cliˉtarget);
             Equal(0, Cliˉapplication.Exitˉcode);
             Equal(string.Empty, Cliˉapplication.Standardˉerror);
             Contains(Cliˉapplication.Standardˉoutput, $"Target: {Cliˉtarget}");

@@ -60,7 +60,7 @@ internal static partial class Program
                 ? Hostedˉsourceˉgeometryˉapplicationˉcontract.WINDOWS_TARGET_NAME
                 : Hostedˉsourceˉgeometryˉapplicationˉcontract.LINUX_TARGET_NAME;
             var Cli = Executeˉinspectorˉtool(
-                "aot", Moduleˉpath, "--target", Cliˉtarget);
+                "recovery-aot", Moduleˉpath, "--target", Cliˉtarget);
             Equal(0, Cli.Exitˉcode);
             Equal(string.Empty, Cli.Standardˉerror);
             Sequenceˉequal(

@@ -166,8 +166,44 @@ internal static partial class Program
             var Cliˉtarget = OperatingSystem.IsWindows()
                 ? Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.WINDOWS_TARGET_NAME
                 : Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME;
-            var Cliˉapplication = Executeˉinspectorˉtool(
+            var Ordinaryˉcompile = Executeˉinspectorˉtool(
+                "compile",
+                Path.Combine(Directoryˉpath, "Not-Read.wv"),
+                "--target",
+                Cliˉtarget);
+            Equal(64, Ordinaryˉcompile.Exitˉcode);
+            Equal(string.Empty, Ordinaryˉcompile.Standardˉoutput);
+            Contains(
+                Ordinaryˉcompile.Standardˉerror,
+                $"The {Cliˉtarget} compile target is Stage 0 recovery-only;");
+            Contains(
+                Ordinaryˉcompile.Standardˉerror,
+                "compile to WVB and use 'windvale recovery-aot'.");
+            var Ordinaryˉcli = Executeˉinspectorˉtool(
                 "aot", Moduleˉpath, "--target", Cliˉtarget);
+            Equal(64, Ordinaryˉcli.Exitˉcode);
+            Equal(string.Empty, Ordinaryˉcli.Standardˉoutput);
+            Contains(
+                Ordinaryˉcli.Standardˉerror,
+                $"The {Cliˉtarget} AOT target is Stage 0 recovery-only;");
+            Contains(
+                Ordinaryˉcli.Standardˉerror,
+                "use 'windvale recovery-aot'.");
+            var Ordinaryˉtarget = OperatingSystem.IsWindows()
+                ? Windowsˉconsoleˉapplicationˉcontract.TARGET_NAME
+                : Linuxˉconsoleˉapplicationˉcontract.TARGET_NAME;
+            var Invalidˉrecoveryˉcli = Executeˉinspectorˉtool(
+                "recovery-aot", Moduleˉpath, "--target", Ordinaryˉtarget);
+            Equal(64, Invalidˉrecoveryˉcli.Exitˉcode);
+            Equal(string.Empty, Invalidˉrecoveryˉcli.Standardˉoutput);
+            Contains(
+                Invalidˉrecoveryˉcli.Standardˉerror,
+                $"The {Ordinaryˉtarget} AOT target is not owned by Stage 0 recovery;");
+            Contains(
+                Invalidˉrecoveryˉcli.Standardˉerror,
+                "use 'windvale aot'.");
+            var Cliˉapplication = Executeˉinspectorˉtool(
+                "recovery-aot", Moduleˉpath, "--target", Cliˉtarget);
             Equal(0, Cliˉapplication.Exitˉcode);
             Equal(string.Empty, Cliˉapplication.Standardˉerror);
             Contains(Cliˉapplication.Standardˉoutput, $"Target: {Cliˉtarget}");

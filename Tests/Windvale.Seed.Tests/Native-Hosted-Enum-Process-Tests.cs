@@ -242,7 +242,8 @@ internal static partial class Program
         string target,
         ImmutableArray<byte> expected)
     {
-        var Cli = Executeˉinspectorˉtool("aot", moduleˉpath, "--target", target);
+        var Cli = Executeˉinspectorˉtool(
+            "recovery-aot", moduleˉpath, "--target", target);
         Equal(0, Cli.Exitˉcode);
         Equal(string.Empty, Cli.Standardˉerror);
         Sequenceˉequal(expected, File.ReadAllBytes(Path.ChangeExtension(

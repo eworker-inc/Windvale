@@ -84,7 +84,7 @@ internal static partial class Program
                 ? Hostedˉorchestrationˉcontrolˉapplicationˉcontract.WINDOWS_TARGET_NAME
                 : Hostedˉorchestrationˉcontrolˉapplicationˉcontract.LINUX_TARGET_NAME;
             var Cli = Executeˉinspectorˉtool(
-                "aot", Moduleˉpath, "--target", Cliˉtarget);
+                "recovery-aot", Moduleˉpath, "--target", Cliˉtarget);
             Equal(0, Cli.Exitˉcode);
             Equal(string.Empty, Cli.Standardˉerror);
             var Application = OperatingSystem.IsWindows()

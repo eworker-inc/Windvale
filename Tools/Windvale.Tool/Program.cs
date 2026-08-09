@@ -41,7 +41,8 @@ internal static class Program
             {
                 "compile" => Compile(arguments[1..]),
                 "build" => Build(arguments[1..]),
-                "aot" => Aot(arguments[1..]),
+                "aot" => Aot(arguments[1..], stage0ˉrecovery: false),
+                "recovery-aot" => Aot(arguments[1..], stage0ˉrecovery: true),
                 "assemble" => Assemble(arguments[1..]),
                 "link" => Link(arguments[1..]),
                 "inspect" => Inspect(arguments[1..]),
@@ -114,46 +115,8 @@ internal static class Program
             "windows-x64-console-segmented-packager-v1|" +
             "linux-x64-console-segmented-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
-            "windows-x64-hosted-container-segmenter-v1|" +
-            "linux-x64-hosted-container-segmenter-v1|" +
-            "windows-x64-hosted-container-planner-v1|" +
-            "linux-x64-hosted-container-planner-v1|" +
-            "windows-x64-hosted-container-platform-bytes-v1|" +
-            "linux-x64-hosted-container-platform-bytes-v1|" +
-            "windows-x64-hosted-container-startup-v1|" +
-            "linux-x64-hosted-container-startup-v1|" +
-            "windows-x64-hosted-container-runtime-v1|" +
-            "linux-x64-hosted-container-runtime-v1|" +
-            "windows-x64-hosted-container-metadata-v1|" +
-            "linux-x64-hosted-container-metadata-v1|" +
-            "windows-x64-hosted-service-bundle-v1|" +
-            "linux-x64-hosted-service-bundle-v1|" +
             "windows-x64-streaming-sha256-evidence-v1|" +
             "linux-x64-streaming-sha256-evidence-v1|" +
-            "windows-x64-hosted-metadata-request-v1|" +
-            "linux-x64-hosted-metadata-request-v1|" +
-            "windows-x64-hosted-service-bundle-request-v1|" +
-            "linux-x64-hosted-service-bundle-request-v1|" +
-            "windows-x64-hosted-container-segment-request-v1|" +
-            "linux-x64-hosted-container-segment-request-v1|" +
-            "windows-x64-hosted-publication-request-v1|" +
-            "linux-x64-hosted-publication-request-v1|" +
-            "windows-x64-hosted-source-geometry-v1|" +
-            "linux-x64-hosted-source-geometry-v1|" +
-            "windows-x64-hosted-fixed-services-v1|" +
-            "linux-x64-hosted-fixed-services-v1|" +
-            "windows-x64-hosted-orchestration-control-v1|" +
-            "linux-x64-hosted-orchestration-control-v1|" +
-            "windows-x64-hosted-container-source-set-v1|" +
-            "linux-x64-hosted-container-source-set-v1|" +
-            "windows-x64-hosted-container-segment-manifest-v1|" +
-            "linux-x64-hosted-container-segment-manifest-v1|" +
-            "windows-x64-hosted-enum-request-v1|" +
-            "linux-x64-hosted-enum-request-v1|" +
-            "windows-x64-hosted-enum-service-v1|" +
-            "linux-x64-hosted-enum-service-v1|" +
-            "windows-x64-hosted-container-publisher-v1|" +
-            "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
@@ -197,6 +160,12 @@ internal static class Program
         if (!Isˉcompileˉtarget(Target))
         {
             return Usageˉerror($"Unknown compile target '{Target}'.");
+        }
+        if (Stage0ˉrecoveryˉaotˉtargets.Contains(Target))
+        {
+            return Usageˉerror(
+                $"The {Target} compile target is Stage 0 recovery-only; " +
+                "compile to WVB and use 'windvale recovery-aot'.");
         }
 
         var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(
@@ -291,9 +260,9 @@ internal static class Program
         return Compileˉsourceˉfiles(Plan.Rootˉpath, Plan.Sourceˉpaths, Outputˉpath, "wvb");
     }
 
-    private static int Aot(string[] arguments)
+    private static int Aot(string[] arguments, bool stage0ˉrecovery)
     {
-        const string Usage =
+        const string Ordinaryˉusage =
             "Usage: windvale aot <module.wvb> " +
             "--target <windows-x64-console-v1|linux-x64-console-v1|" +
             "windows-x64-console-v2|linux-x64-console-v2|" +
@@ -311,50 +280,16 @@ internal static class Program
             "windows-x64-console-segmented-packager-v1|" +
             "linux-x64-console-segmented-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
-            "windows-x64-hosted-container-segmenter-v1|" +
-            "linux-x64-hosted-container-segmenter-v1|" +
-            "windows-x64-hosted-container-planner-v1|" +
-            "linux-x64-hosted-container-planner-v1|" +
-            "windows-x64-hosted-container-platform-bytes-v1|" +
-            "linux-x64-hosted-container-platform-bytes-v1|" +
-            "windows-x64-hosted-container-startup-v1|" +
-            "linux-x64-hosted-container-startup-v1|" +
-            "windows-x64-hosted-container-runtime-v1|" +
-            "linux-x64-hosted-container-runtime-v1|" +
-            "windows-x64-hosted-container-metadata-v1|" +
-            "linux-x64-hosted-container-metadata-v1|" +
-            "windows-x64-hosted-service-bundle-v1|" +
-            "linux-x64-hosted-service-bundle-v1|" +
             "windows-x64-streaming-sha256-evidence-v1|" +
             "linux-x64-streaming-sha256-evidence-v1|" +
-            "windows-x64-hosted-metadata-request-v1|" +
-            "linux-x64-hosted-metadata-request-v1|" +
-            "windows-x64-hosted-service-bundle-request-v1|" +
-            "linux-x64-hosted-service-bundle-request-v1|" +
-            "windows-x64-hosted-container-segment-request-v1|" +
-            "linux-x64-hosted-container-segment-request-v1|" +
-            "windows-x64-hosted-publication-request-v1|" +
-            "linux-x64-hosted-publication-request-v1|" +
-            "windows-x64-hosted-source-geometry-v1|" +
-            "linux-x64-hosted-source-geometry-v1|" +
-            "windows-x64-hosted-fixed-services-v1|" +
-            "linux-x64-hosted-fixed-services-v1|" +
-            "windows-x64-hosted-orchestration-control-v1|" +
-            "linux-x64-hosted-orchestration-control-v1|" +
-            "windows-x64-hosted-container-source-set-v1|" +
-            "linux-x64-hosted-container-source-set-v1|" +
-            "windows-x64-hosted-container-segment-manifest-v1|" +
-            "linux-x64-hosted-container-segment-manifest-v1|" +
-            "windows-x64-hosted-enum-request-v1|" +
-            "linux-x64-hosted-enum-request-v1|" +
-            "windows-x64-hosted-enum-service-v1|" +
-            "linux-x64-hosted-enum-service-v1|" +
-            "windows-x64-hosted-container-publisher-v1|" +
-            "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
             "windows-x64-wvo-publisher-v1|linux-x64-wvo-publisher-v1> [-o <artifact>]";
+        var Usage = stage0ˉrecovery
+            ? "Usage: windvale recovery-aot <module.wvb> " +
+                "--target <Stage-0-hosted-tool-target> [-o <artifact>]"
+            : Ordinaryˉusage;
         if (arguments.Length is not (3 or 5) ||
             arguments[0].StartsWith("-", StringComparison.Ordinal))
         {
@@ -387,6 +322,17 @@ internal static class Program
         if (Target is null || Target == "wvb" || !Isˉcompileˉtarget(Target))
         {
             return Usageˉerror($"Unknown or missing AOT target '{Target}'.");
+        }
+        var Recoveryˉtarget = Stage0ˉrecoveryˉaotˉtargets.Contains(Target);
+        if (Recoveryˉtarget != stage0ˉrecovery)
+        {
+            return Recoveryˉtarget
+                ? Usageˉerror(
+                    $"The {Target} AOT target is Stage 0 recovery-only; " +
+                    "use 'windvale recovery-aot'.")
+                : Usageˉerror(
+                    $"The {Target} AOT target is not owned by Stage 0 recovery; " +
+                    "use 'windvale aot'.");
         }
 
         var Outputˉpath = Requestedˉoutputˉpath ?? Path.ChangeExtension(
@@ -1586,46 +1532,8 @@ internal static class Program
             "windows-x64-console-segmented-packager-v1|" +
             "linux-x64-console-segmented-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
-            "windows-x64-hosted-container-segmenter-v1|" +
-            "linux-x64-hosted-container-segmenter-v1|" +
-            "windows-x64-hosted-container-planner-v1|" +
-            "linux-x64-hosted-container-planner-v1|" +
-            "windows-x64-hosted-container-platform-bytes-v1|" +
-            "linux-x64-hosted-container-platform-bytes-v1|" +
-            "windows-x64-hosted-container-startup-v1|" +
-            "linux-x64-hosted-container-startup-v1|" +
-            "windows-x64-hosted-container-runtime-v1|" +
-            "linux-x64-hosted-container-runtime-v1|" +
-            "windows-x64-hosted-container-metadata-v1|" +
-            "linux-x64-hosted-container-metadata-v1|" +
-            "windows-x64-hosted-service-bundle-v1|" +
-            "linux-x64-hosted-service-bundle-v1|" +
             "windows-x64-streaming-sha256-evidence-v1|" +
             "linux-x64-streaming-sha256-evidence-v1|" +
-            "windows-x64-hosted-metadata-request-v1|" +
-            "linux-x64-hosted-metadata-request-v1|" +
-            "windows-x64-hosted-service-bundle-request-v1|" +
-            "linux-x64-hosted-service-bundle-request-v1|" +
-            "windows-x64-hosted-container-segment-request-v1|" +
-            "linux-x64-hosted-container-segment-request-v1|" +
-            "windows-x64-hosted-publication-request-v1|" +
-            "linux-x64-hosted-publication-request-v1|" +
-            "windows-x64-hosted-source-geometry-v1|" +
-            "linux-x64-hosted-source-geometry-v1|" +
-            "windows-x64-hosted-fixed-services-v1|" +
-            "linux-x64-hosted-fixed-services-v1|" +
-            "windows-x64-hosted-orchestration-control-v1|" +
-            "linux-x64-hosted-orchestration-control-v1|" +
-            "windows-x64-hosted-container-source-set-v1|" +
-            "linux-x64-hosted-container-source-set-v1|" +
-            "windows-x64-hosted-container-segment-manifest-v1|" +
-            "linux-x64-hosted-container-segment-manifest-v1|" +
-            "windows-x64-hosted-enum-request-v1|" +
-            "linux-x64-hosted-enum-request-v1|" +
-            "windows-x64-hosted-enum-service-v1|" +
-            "linux-x64-hosted-enum-service-v1|" +
-            "windows-x64-hosted-container-publisher-v1|" +
-            "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
@@ -1635,6 +1543,9 @@ internal static class Program
             "windows-x64-wvo-staging-publisher-v1|" +
             "linux-x64-wvo-staging-publisher-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
+        output.WriteLine(
+            "  windvale recovery-aot <module.wvb> " +
+            "--target <Stage-0-hosted-tool-target> [-o <artifact>]");
         output.WriteLine(
             "  windvale aot <module.wvb> " +
             "--target <windows-x64-console-v1|linux-x64-console-v1|" +
@@ -1653,46 +1564,8 @@ internal static class Program
             "windows-x64-console-segmented-packager-v1|" +
             "linux-x64-console-segmented-packager-v1|" +
             "windows-x64-wvb-to-wvo-v1|linux-x64-wvb-to-wvo-v1|" +
-            "windows-x64-hosted-container-segmenter-v1|" +
-            "linux-x64-hosted-container-segmenter-v1|" +
-            "windows-x64-hosted-container-planner-v1|" +
-            "linux-x64-hosted-container-planner-v1|" +
-            "windows-x64-hosted-container-platform-bytes-v1|" +
-            "linux-x64-hosted-container-platform-bytes-v1|" +
-            "windows-x64-hosted-container-startup-v1|" +
-            "linux-x64-hosted-container-startup-v1|" +
-            "windows-x64-hosted-container-runtime-v1|" +
-            "linux-x64-hosted-container-runtime-v1|" +
-            "windows-x64-hosted-container-metadata-v1|" +
-            "linux-x64-hosted-container-metadata-v1|" +
-            "windows-x64-hosted-service-bundle-v1|" +
-            "linux-x64-hosted-service-bundle-v1|" +
             "windows-x64-streaming-sha256-evidence-v1|" +
             "linux-x64-streaming-sha256-evidence-v1|" +
-            "windows-x64-hosted-metadata-request-v1|" +
-            "linux-x64-hosted-metadata-request-v1|" +
-            "windows-x64-hosted-service-bundle-request-v1|" +
-            "linux-x64-hosted-service-bundle-request-v1|" +
-            "windows-x64-hosted-container-segment-request-v1|" +
-            "linux-x64-hosted-container-segment-request-v1|" +
-            "windows-x64-hosted-publication-request-v1|" +
-            "linux-x64-hosted-publication-request-v1|" +
-            "windows-x64-hosted-source-geometry-v1|" +
-            "linux-x64-hosted-source-geometry-v1|" +
-            "windows-x64-hosted-fixed-services-v1|" +
-            "linux-x64-hosted-fixed-services-v1|" +
-            "windows-x64-hosted-orchestration-control-v1|" +
-            "linux-x64-hosted-orchestration-control-v1|" +
-            "windows-x64-hosted-container-source-set-v1|" +
-            "linux-x64-hosted-container-source-set-v1|" +
-            "windows-x64-hosted-container-segment-manifest-v1|" +
-            "linux-x64-hosted-container-segment-manifest-v1|" +
-            "windows-x64-hosted-enum-request-v1|" +
-            "linux-x64-hosted-enum-request-v1|" +
-            "windows-x64-hosted-enum-service-v1|" +
-            "linux-x64-hosted-enum-service-v1|" +
-            "windows-x64-hosted-container-publisher-v1|" +
-            "linux-x64-hosted-container-publisher-v1|" +
             "windows-x64-wvb-publisher-v1|linux-x64-wvb-publisher-v1|" +
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +

@@ -276,7 +276,7 @@ internal static partial class Program
                 ? Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME
                 : Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
             var Cliˉapplication = Executeˉinspectorˉtool(
-                "aot",
+                "recovery-aot",
                 Moduleˉpath,
                 "--target",
                 Cliˉtarget);
