@@ -52,6 +52,34 @@ The optional header uses:
 
 The writer invokes that separate parser before publication and compares the parser's recovered code and entry offset with the verified flat link. A failure publishes no bytes.
 
+## Windvale-native construction boundary
+
+The portable Windvale implementation separates reusable format logic from its
+single-entry process bridges:
+
+- `Uefi-Application-Verification-Core.wv` parses untrusted application bytes
+  and returns typed status, failure offset, entry offset, and recovered code;
+- `Uefi-Application-Verification-Bridge.wv` exposes that result as one
+  capability-free `Main(bytes) -> bytes` entry point; and
+- `Uefi-Application-Construction-Core.wv` constructs the canonical file from
+  an already verified flat image, invokes the independent verifier, and
+  publishes no image unless the recovered code and entry are exact.
+
+The internal construction request is `WVUR 1`: a 16-byte little-endian header
+containing magic, version, total bytes, and entry offset, followed by 1 through
+4,194,304 linked-image bytes. Its `WVUC 1` response is a 32-byte header
+containing magic, version, total bytes, status, failure offset, recovered entry,
+image length, and zero reserved field, followed by the image only on success.
+The verifier bridge uses the analogous `WVUV 1` response and appends recovered
+code only on success. These bridge envelopes are native-tool interfaces, not a
+new UEFI application-format version.
+
+`Windvale-Native-Uefi-Application-Construction.wvproj` and
+`Windvale-Native-Uefi-Application-Verification.wvproj` are the canonical
+Project 1 front doors. The managed writer and verifier remain frozen recovery
+and differential evidence until Probe 40 construction and the complete native
+retirement gate qualify this replacement on both permanent hosts.
+
 ## Diagnostics
 
 Writer failures return one diagnostic and no application bytes:

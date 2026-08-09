@@ -1,0 +1,51 @@
+module Linkerˉuefiˉapplicationˉverificationˉbridge profile portable;
+
+import Linkerˉuefiˉapplicationˉverification as Verification;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Statusˉcode(Status: Verification.Uefiˉapplicationˉverificationˉstatus) -> u32 {
+    if Status == Verification.Uefiˉapplicationˉverificationˉstatus.Invalidˉsize {
+        return 1u32;
+    }
+    if Status == Verification.Uefiˉapplicationˉverificationˉstatus.Invalidˉdos {
+        return 2u32;
+    }
+    if Status == Verification.Uefiˉapplicationˉverificationˉstatus.Invalidˉcoff {
+        return 3u32;
+    }
+    if Status ==
+        Verification.Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader {
+        return 4u32;
+    }
+    if Status == Verification.Uefiˉapplicationˉverificationˉstatus.Invalidˉsection {
+        return 5u32;
+    }
+    if Status == Verification.Uefiˉapplicationˉverificationˉstatus.Invalidˉrelocation {
+        return 6u32;
+    }
+    if Status == Verification.Uefiˉapplicationˉverificationˉstatus.Invalidˉpadding {
+        return 7u32;
+    }
+    return 0u32;
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Verified: Verification.Uefiˉapplicationˉverificationˉresult =
+        Verification.Uefiˉapplicationˉverify(Input);
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1448433239u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 32u32 + Bytesˉlength(Verified.Code));
+    Result = Appendˉu32(Result, Statusˉcode(Verified.Status));
+    Result = Appendˉu32(Result, Verified.Failureˉoffset);
+    Result = Appendˉu32(Result, Verified.Entryˉoffset);
+    Result = Appendˉu32(Result, Bytesˉlength(Verified.Code));
+    Result = Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Verified.Code);
+}

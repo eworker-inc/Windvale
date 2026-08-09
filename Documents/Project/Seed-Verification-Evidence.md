@@ -4474,3 +4474,20 @@ produced a 683,008-byte normal image at SHA-256
 One digest-bound normal boot passed the complete Probe 40 serial contract and
 QEMU exited `0`. The other four scenarios and broad verifiers remain deferred;
 this is focused repair evidence, not five-scenario promotion.
+
+## Local Windvale-native UEFI construction evidence
+
+[Decision 0436](../Decisions/0436-Windvale-Native-Uefi-Application-Construction.md)
+transfers the final flat-image-to-UEFI-v3 adapter into portable Windvale. A
+separate core parses untrusted application bytes, while the constructor invokes
+that parser and publishes only when recovered code and entry remain exact.
+Small `WVUR`, `WVUC`, and `WVUV` envelopes give both single-entry native tools
+explicit version, size, status, offset, entry, length, and reserved fields.
+
+The reviewed focused Seed case passes in 4.344 seconds. It proves exact bytes
+against the frozen Stage 0 writer for entry-zero and nonzero-entry images,
+deterministic repetition, interpreter/native-x64 agreement, capability-free
+profiles, representative malformed structure and request rejection, and exact
+native-front-door WVB reconstruction. Broad Seed, OS, Standard, Qualification,
+dual-host execution, five-scenario image reconstruction, and promotion remain
+deferred to their documented gates.

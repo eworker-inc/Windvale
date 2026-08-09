@@ -1,0 +1,320 @@
+module Linkerˉuefiˉapplicationˉverification profile portable;
+
+export enum Uefiˉapplicationˉverificationˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉdos = 2;
+    Invalidˉcoff = 3;
+    Invalidˉoptionalˉheader = 4;
+    Invalidˉsection = 5;
+    Invalidˉrelocation = 6;
+    Invalidˉpadding = 7;
+}
+
+export record Uefiˉapplicationˉverificationˉresult {
+    Status: Uefiˉapplicationˉverificationˉstatus;
+    Failureˉoffset: u32;
+    Entryˉoffset: u32;
+    Code: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Failure(
+    Input: bytes,
+    Status: Uefiˉapplicationˉverificationˉstatus,
+    Offset: u32
+) -> Uefiˉapplicationˉverificationˉresult {
+    return Uefiˉapplicationˉverificationˉresult(Status, Offset, 0u32, Empty(Input));
+}
+
+fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
+    return (Value + Alignment - 1u32) & ~(Alignment - 1u32);
+}
+
+fn U16ˉequals(Input: bytes, Offset: u32, Expected: u32) -> bool {
+    return Bytesˉreadˉu16ˉlittle(Input, Offset) == Expected;
+}
+
+fn U32ˉequals(Input: bytes, Offset: u32, Expected: u32) -> bool {
+    return Bytesˉreadˉu32ˉlittle(Input, Offset) == Expected;
+}
+
+fn U64ˉequals(Input: bytes, Offset: u32, Low: u32, High: u32) -> bool {
+    if !U32ˉequals(Input, Offset, Low) { return false; }
+    return U32ˉequals(Input, Offset + 4u32, High);
+}
+
+fn Firstˉnonzero(Input: bytes, Offset: u32, Length: u32) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) != 0u8 {
+            return Offset + Index;
+        }
+        Index = Index + 1u32;
+    }
+    return 4294967295u32;
+}
+
+export fn Uefiˉapplicationˉverify(
+    Input: bytes
+) -> Uefiˉapplicationˉverificationˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 1536u32 || Total > 4195328u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉsize,
+            Total
+        );
+    }
+
+    if !U16ˉequals(Input, 0u32, 23117u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉdos, 0u32);
+    }
+    let Dosˉheaderˉnonzero: u32 = Firstˉnonzero(Input, 2u32, 58u32);
+    if Dosˉheaderˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉdos,
+            Dosˉheaderˉnonzero
+        );
+    }
+    if !U32ˉequals(Input, 60u32, 128u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉdos, 60u32);
+    }
+    let Dosˉstubˉnonzero: u32 = Firstˉnonzero(Input, 64u32, 64u32);
+    if Dosˉstubˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉdos,
+            Dosˉstubˉnonzero
+        );
+    }
+
+    if !U32ˉequals(Input, 128u32, 17744u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉcoff, 128u32);
+    }
+    if !U16ˉequals(Input, 132u32, 34404u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉcoff, 132u32);
+    }
+    if !U16ˉequals(Input, 134u32, 2u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉcoff, 134u32);
+    }
+    if !U32ˉequals(Input, 136u32, 0u32) ||
+        !U32ˉequals(Input, 140u32, 0u32) ||
+        !U32ˉequals(Input, 144u32, 0u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉcoff, 136u32);
+    }
+    if !U16ˉequals(Input, 148u32, 240u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉcoff, 148u32);
+    }
+    if !U16ˉequals(Input, 150u32, 34u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉcoff, 150u32);
+    }
+
+    if !U16ˉequals(Input, 152u32, 523u32) {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            152u32
+        );
+    }
+    if Bytesˉreadˉu8(Input, 154u32) != 3u8 ||
+        Bytesˉreadˉu8(Input, 155u32) != 0u8 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            154u32
+        );
+    }
+    let Textˉrawˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 156u32);
+    if Textˉrawˉbytes < 512u32 || Textˉrawˉbytes > 4194304u32 ||
+        (Textˉrawˉbytes & 511u32) != 0u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            156u32
+        );
+    }
+    if !U32ˉequals(Input, 160u32, 512u32) ||
+        !U32ˉequals(Input, 164u32, 0u32) {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            160u32
+        );
+    }
+    let Entryˉrva: u32 = Bytesˉreadˉu32ˉlittle(Input, 168u32);
+    if !U32ˉequals(Input, 172u32, 4096u32) ||
+        !U64ˉequals(Input, 176u32, 4194304u32, 0u32) ||
+        !U32ˉequals(Input, 184u32, 4096u32) ||
+        !U32ˉequals(Input, 188u32, 512u32) {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            172u32
+        );
+    }
+    let Versionˉnonzero: u32 = Firstˉnonzero(Input, 192u32, 16u32);
+    if Versionˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            Versionˉnonzero
+        );
+    }
+    let Imageˉmemoryˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 208u32);
+    if !U32ˉequals(Input, 212u32, 512u32) ||
+        !U32ˉequals(Input, 216u32, 0u32) ||
+        !U16ˉequals(Input, 220u32, 10u32) ||
+        !U16ˉequals(Input, 222u32, 320u32) ||
+        !U64ˉequals(Input, 224u32, 1048576u32, 0u32) ||
+        !U64ˉequals(Input, 232u32, 4096u32, 0u32) ||
+        !U64ˉequals(Input, 240u32, 1048576u32, 0u32) ||
+        !U64ˉequals(Input, 248u32, 4096u32, 0u32) ||
+        !U32ˉequals(Input, 256u32, 0u32) ||
+        !U32ˉequals(Input, 260u32, 16u32) {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            208u32
+        );
+    }
+    let Beforeˉrelocationˉnonzero: u32 = Firstˉnonzero(Input, 264u32, 40u32);
+    if Beforeˉrelocationˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            Beforeˉrelocationˉnonzero
+        );
+    }
+    let Relocationˉdirectoryˉrva: u32 = Bytesˉreadˉu32ˉlittle(Input, 304u32);
+    if !U32ˉequals(Input, 308u32, 12u32) {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            308u32
+        );
+    }
+    let Afterˉrelocationˉnonzero: u32 = Firstˉnonzero(Input, 312u32, 80u32);
+    if Afterˉrelocationˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉoptionalˉheader,
+            Afterˉrelocationˉnonzero
+        );
+    }
+
+    if !U32ˉequals(Input, 392u32, 2019914798u32) ||
+        Bytesˉreadˉu8(Input, 396u32) != 116u8 ||
+        !U16ˉequals(Input, 397u32, 0u32) ||
+        Bytesˉreadˉu8(Input, 399u32) != 0u8 {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsection, 392u32);
+    }
+    let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 400u32);
+    if Codeˉbytes == 0u32 || Codeˉbytes > 4194304u32 {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsection, 400u32);
+    }
+    if !U32ˉequals(Input, 404u32, 4096u32) ||
+        !U32ˉequals(Input, 408u32, Textˉrawˉbytes) ||
+        !U32ˉequals(Input, 412u32, 512u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsection, 404u32);
+    }
+    let Textˉmetadataˉnonzero: u32 = Firstˉnonzero(Input, 416u32, 12u32);
+    if Textˉmetadataˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉsection,
+            Textˉmetadataˉnonzero
+        );
+    }
+    if !U32ˉequals(Input, 428u32, 1610612768u32) ||
+        Textˉrawˉbytes != Alignˉup(Codeˉbytes, 512u32) ||
+        Entryˉrva < 4096u32 || Entryˉrva - 4096u32 >= Codeˉbytes {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsection, 428u32);
+    }
+
+    if !U32ˉequals(Input, 432u32, 1818587694u32) ||
+        !U16ˉequals(Input, 436u32, 25455u32) ||
+        !U16ˉequals(Input, 438u32, 0u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsection, 432u32);
+    }
+    let Expectedˉrelocationˉrva: u32 = Alignˉup(4096u32 + Codeˉbytes, 4096u32);
+    let Expectedˉrelocationˉraw: u32 = 512u32 + Textˉrawˉbytes;
+    if !U32ˉequals(Input, 440u32, 12u32) ||
+        !U32ˉequals(Input, 444u32, Expectedˉrelocationˉrva) ||
+        Relocationˉdirectoryˉrva != Expectedˉrelocationˉrva ||
+        !U32ˉequals(Input, 448u32, 512u32) ||
+        !U32ˉequals(Input, 452u32, Expectedˉrelocationˉraw) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsection, 440u32);
+    }
+    let Relocationˉmetadataˉnonzero: u32 = Firstˉnonzero(Input, 456u32, 12u32);
+    if Relocationˉmetadataˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉsection,
+            Relocationˉmetadataˉnonzero
+        );
+    }
+    if !U32ˉequals(Input, 468u32, 1107296320u32) {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsection, 468u32);
+    }
+    let Headerˉpaddingˉnonzero: u32 = Firstˉnonzero(Input, 472u32, 40u32);
+    if Headerˉpaddingˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉpadding,
+            Headerˉpaddingˉnonzero
+        );
+    }
+
+    let Expectedˉimageˉmemory: u32 = Alignˉup(Expectedˉrelocationˉrva + 12u32, 4096u32);
+    if Imageˉmemoryˉbytes != Expectedˉimageˉmemory {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsection, 208u32);
+    }
+    let Expectedˉfileˉbytes: u32 = Expectedˉrelocationˉraw + 512u32;
+    if Total != Expectedˉfileˉbytes {
+        return Failure(Input, Uefiˉapplicationˉverificationˉstatus.Invalidˉsize, Total);
+    }
+    let Textˉpaddingˉnonzero: u32 = Firstˉnonzero(
+        Input,
+        512u32 + Codeˉbytes,
+        Textˉrawˉbytes - Codeˉbytes
+    );
+    if Textˉpaddingˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉpadding,
+            Textˉpaddingˉnonzero
+        );
+    }
+    if !U32ˉequals(Input, Expectedˉrelocationˉraw, 4096u32) ||
+        !U32ˉequals(Input, Expectedˉrelocationˉraw + 4u32, 12u32) ||
+        !U32ˉequals(Input, Expectedˉrelocationˉraw + 8u32, 0u32) {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉrelocation,
+            Expectedˉrelocationˉraw
+        );
+    }
+    let Relocationˉpaddingˉnonzero: u32 = Firstˉnonzero(
+        Input,
+        Expectedˉrelocationˉraw + 12u32,
+        500u32
+    );
+    if Relocationˉpaddingˉnonzero != 4294967295u32 {
+        return Failure(
+            Input,
+            Uefiˉapplicationˉverificationˉstatus.Invalidˉpadding,
+            Relocationˉpaddingˉnonzero
+        );
+    }
+    return Uefiˉapplicationˉverificationˉresult(
+        Uefiˉapplicationˉverificationˉstatus.Valid,
+        Total,
+        Entryˉrva - 4096u32,
+        Bytesˉslice(Input, 512u32, Codeˉbytes)
+    );
+}

@@ -1,0 +1,262 @@
+module Linkerˉuefiˉapplicationˉconstruction profile portable;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Linkerˉuefiˉapplicationˉverification as Verification;
+
+export enum Uefiˉapplicationˉconstructionˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉentry = 4;
+    Verificationˉfailure = 5;
+}
+
+fn Statusˉcode(Status: Uefiˉapplicationˉconstructionˉstatus) -> u32 {
+    if Status == Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize { return 1u32; }
+    if Status == Uefiˉapplicationˉconstructionˉstatus.Invalidˉmagic { return 2u32; }
+    if Status == Uefiˉapplicationˉconstructionˉstatus.Invalidˉversion { return 3u32; }
+    if Status == Uefiˉapplicationˉconstructionˉstatus.Invalidˉentry { return 4u32; }
+    if Status == Uefiˉapplicationˉconstructionˉstatus.Verificationˉfailure {
+        return 5u32;
+    }
+    return 0u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Zeros(Count: u32) -> bytes {
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
+    return Result.Value;
+}
+
+fn Replace(Input: bytes, Offset: u32, Length: u32, Value: bytes) -> bytes {
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(Input, Offset, Length, Value);
+    return Result.Value;
+}
+
+fn Patchˉu8(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Replace(Input, Offset, 1u32, Bytesˉfromˉu8(Value));
+}
+
+fn Patchˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replace(Input, Offset, 2u32, Bytesˉfromˉu16ˉlittle(Value));
+}
+
+fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replace(Input, Offset, 4u32, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Patchˉu64(Input: bytes, Offset: u32, Low: u32, High: u32) -> bytes {
+    var Result: bytes = Patchˉu32(Input, Offset, Low);
+    Result = Patchˉu32(Result, Offset + 4u32, High);
+    return Result;
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
+    return (Value + Alignment - 1u32) & ~(Alignment - 1u32);
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Offset: u32 = 0u32;
+    while Offset < Length {
+        if Bytesˉreadˉu8(Left, Offset) != Bytesˉreadˉu8(Right, Offset) {
+            return false;
+        }
+        Offset = Offset + 1u32;
+    }
+    return true;
+}
+
+fn Buildˉheader(
+    Codeˉbytes: u32,
+    Entryˉoffset: u32,
+    Textˉrawˉbytes: u32,
+    Relocationˉrva: u32,
+    Relocationˉrawˉoffset: u32,
+    Imageˉmemoryˉbytes: u32
+) -> bytes {
+    var Result: bytes = Zeros(512u32);
+    Result = Patchˉu16(Result, 0u32, 23117u32);
+    Result = Patchˉu32(Result, 60u32, 128u32);
+    Result = Patchˉu32(Result, 128u32, 17744u32);
+    Result = Patchˉu16(Result, 132u32, 34404u32);
+    Result = Patchˉu16(Result, 134u32, 2u32);
+    Result = Patchˉu16(Result, 148u32, 240u32);
+    Result = Patchˉu16(Result, 150u32, 34u32);
+
+    Result = Patchˉu16(Result, 152u32, 523u32);
+    Result = Patchˉu8(Result, 154u32, 3u8);
+    Result = Patchˉu32(Result, 156u32, Textˉrawˉbytes);
+    Result = Patchˉu32(Result, 160u32, 512u32);
+    Result = Patchˉu32(Result, 168u32, 4096u32 + Entryˉoffset);
+    Result = Patchˉu32(Result, 172u32, 4096u32);
+    Result = Patchˉu64(Result, 176u32, 4194304u32, 0u32);
+    Result = Patchˉu32(Result, 184u32, 4096u32);
+    Result = Patchˉu32(Result, 188u32, 512u32);
+    Result = Patchˉu32(Result, 208u32, Imageˉmemoryˉbytes);
+    Result = Patchˉu32(Result, 212u32, 512u32);
+    Result = Patchˉu16(Result, 220u32, 10u32);
+    Result = Patchˉu16(Result, 222u32, 320u32);
+    Result = Patchˉu64(Result, 224u32, 1048576u32, 0u32);
+    Result = Patchˉu64(Result, 232u32, 4096u32, 0u32);
+    Result = Patchˉu64(Result, 240u32, 1048576u32, 0u32);
+    Result = Patchˉu64(Result, 248u32, 4096u32, 0u32);
+    Result = Patchˉu32(Result, 260u32, 16u32);
+    Result = Patchˉu32(Result, 304u32, Relocationˉrva);
+    Result = Patchˉu32(Result, 308u32, 12u32);
+
+    Result = Replace(
+        Result,
+        392u32,
+        5u32,
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2019914798u32), Bytesˉfromˉu8(116u8))
+    );
+    Result = Patchˉu32(Result, 400u32, Codeˉbytes);
+    Result = Patchˉu32(Result, 404u32, 4096u32);
+    Result = Patchˉu32(Result, 408u32, Textˉrawˉbytes);
+    Result = Patchˉu32(Result, 412u32, 512u32);
+    Result = Patchˉu32(Result, 428u32, 1610612768u32);
+
+    Result = Replace(
+        Result,
+        432u32,
+        6u32,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(1818587694u32),
+            Bytesˉfromˉu16ˉlittle(25455u32)
+        )
+    );
+    Result = Patchˉu32(Result, 440u32, 12u32);
+    Result = Patchˉu32(Result, 444u32, Relocationˉrva);
+    Result = Patchˉu32(Result, 448u32, 512u32);
+    Result = Patchˉu32(Result, 452u32, Relocationˉrawˉoffset);
+    Result = Patchˉu32(Result, 468u32, 1107296320u32);
+    return Result;
+}
+
+fn Buildˉimage(Code: bytes, Entryˉoffset: u32) -> bytes {
+    let Codeˉbytes: u32 = Bytesˉlength(Code);
+    let Textˉrawˉbytes: u32 = Alignˉup(Codeˉbytes, 512u32);
+    let Relocationˉrva: u32 = Alignˉup(4096u32 + Codeˉbytes, 4096u32);
+    let Relocationˉrawˉoffset: u32 = 512u32 + Textˉrawˉbytes;
+    let Imageˉmemoryˉbytes: u32 = Alignˉup(Relocationˉrva + 12u32, 4096u32);
+    let Header: bytes = Buildˉheader(
+        Codeˉbytes,
+        Entryˉoffset,
+        Textˉrawˉbytes,
+        Relocationˉrva,
+        Relocationˉrawˉoffset,
+        Imageˉmemoryˉbytes
+    );
+    let Textˉpadding: bytes = Zeros(Textˉrawˉbytes - Codeˉbytes);
+    var Relocation: bytes = Zeros(512u32);
+    Relocation = Patchˉu32(Relocation, 0u32, 4096u32);
+    Relocation = Patchˉu32(Relocation, 4u32, 12u32);
+    return Bytesˉconcat(
+        Bytesˉconcat(Header, Bytesˉconcat(Code, Textˉpadding)),
+        Relocation
+    );
+}
+
+fn Response(
+    Input: bytes,
+    Status: Uefiˉapplicationˉconstructionˉstatus,
+    Failureˉoffset: u32,
+    Entryˉoffset: u32,
+    Image: bytes
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1129666135u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 32u32 + Bytesˉlength(Image));
+    Result = Appendˉu32(Result, Statusˉcode(Status));
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Entryˉoffset);
+    Result = Appendˉu32(Result, Bytesˉlength(Image));
+    Result = Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Image);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 17u32 || Total > 4194320u32 {
+        return Response(
+            Input,
+            Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize,
+            Total,
+            0u32,
+            Empty(Input)
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1381324375u32 {
+        return Response(
+            Input,
+            Uefiˉapplicationˉconstructionˉstatus.Invalidˉmagic,
+            0u32,
+            0u32,
+            Empty(Input)
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Response(
+            Input,
+            Uefiˉapplicationˉconstructionˉstatus.Invalidˉversion,
+            4u32,
+            0u32,
+            Empty(Input)
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Response(
+            Input,
+            Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize,
+            8u32,
+            0u32,
+            Empty(Input)
+        );
+    }
+    let Codeˉbytes: u32 = Total - 16u32;
+    let Entryˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Entryˉoffset >= Codeˉbytes {
+        return Response(
+            Input,
+            Uefiˉapplicationˉconstructionˉstatus.Invalidˉentry,
+            12u32,
+            0u32,
+            Empty(Input)
+        );
+    }
+    let Code: bytes = Bytesˉslice(Input, 16u32, Codeˉbytes);
+    let Image: bytes = Buildˉimage(Code, Entryˉoffset);
+    let Verified: Verification.Uefiˉapplicationˉverificationˉresult =
+        Verification.Uefiˉapplicationˉverify(Image);
+    if Verified.Status != Verification.Uefiˉapplicationˉverificationˉstatus.Valid ||
+        Verified.Entryˉoffset != Entryˉoffset ||
+        !Bytesˉequal(Verified.Code, Code) {
+        return Response(
+            Input,
+            Uefiˉapplicationˉconstructionˉstatus.Verificationˉfailure,
+            Verified.Failureˉoffset,
+            0u32,
+            Empty(Input)
+        );
+    }
+    return Response(
+        Input,
+        Uefiˉapplicationˉconstructionˉstatus.Valid,
+        Total,
+        Entryˉoffset,
+        Image
+    );
+}
