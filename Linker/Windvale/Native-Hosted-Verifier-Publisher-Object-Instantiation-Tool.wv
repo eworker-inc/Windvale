@@ -1,0 +1,100 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiationˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiation as Instantiation;
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉfileˉtoolˉsupport as Support;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostverifierpublishobjects <request.wvcr> <targets.wvpt> <startup.wvo> <adapter.wvo> <sha256.wvo> <objects.wvio>"
+    );
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line("publisher object instantiation status=Rejected");
+    return 2;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 6u32 { return Usage(); }
+    let Outputˉpath: text = process.argument(5u32);
+    var Index: u32 = 0u32;
+    while Index < 5u32 {
+        if Support.Pathsˉareˉequal(process.argument(Index), Outputˉpath) { return Usage(); }
+        Index = Index + 1u32;
+    }
+    let Construction: bytes = file.read_bytes(process.argument(0u32));
+    let Targets: bytes = file.read_bytes(process.argument(1u32));
+    let Startup: bytes = file.read_bytes(process.argument(2u32));
+    let Adapter: bytes = file.read_bytes(process.argument(3u32));
+    let Sha256: bytes = file.read_bytes(process.argument(4u32));
+    if Bytesˉlength(Construction) != 416u32 ||
+        Bytesˉreadˉu32ˉlittle(Construction, 0u32) != 1380144727u32 ||
+        Bytesˉreadˉu32ˉlittle(Construction, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Construction, 8u32) != 416u32 ||
+        Bytesˉlength(Targets) < 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Targets, 0u32) != 1414551127u32 ||
+        Bytesˉreadˉu32ˉlittle(Targets, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Targets, 8u32) != Bytesˉlength(Targets) ||
+        Bytesˉreadˉu32ˉlittle(Targets, 12u32) !=
+            Bytesˉreadˉu32ˉlittle(Construction, 12u32) {
+        return Reject();
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Construction, 12u32);
+    var Targetˉcount: u32 = 44u32;
+    var Startupˉbytes: u32 = 168u32;
+    var Adapterˉbytes: u32 = 9544u32;
+    if Target == 2u32 {
+        Targetˉcount = 27u32;
+        Startupˉbytes = 164u32;
+        Adapterˉbytes = 5507u32;
+    }
+    if (Target != 1u32 && Target != 2u32) ||
+        Bytesˉreadˉu32ˉlittle(Construction, 20u32) != Targetˉcount ||
+        Bytesˉreadˉu32ˉlittle(Construction, 76u32) != Startupˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Construction, 92u32) != Adapterˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Construction, 108u32) != 2176u32 ||
+        Bytesˉlength(Targets) != 16u32 + Targetˉcount * 4u32 ||
+        Bytesˉlength(Startup) != Startupˉbytes ||
+        Bytesˉlength(Adapter) != Adapterˉbytes ||
+        Bytesˉlength(Sha256) != 2176u32 {
+        return Reject();
+    }
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1481201239u32);
+    Request = Support.Appendˉu32(Request, 1u32);
+    Request = Support.Appendˉu32(
+        Request,
+        48u32 + Targetˉcount * 4u32 + Bytesˉlength(Startup) +
+            Bytesˉlength(Adapter) + Bytesˉlength(Sha256)
+    );
+    Request = Support.Appendˉu32(Request, Target);
+    Request = Support.Appendˉu32(Request, 4096u32);
+    Request = Support.Appendˉu32(Request, Bytesˉreadˉu32ˉlittle(Construction, 136u32));
+    Request = Support.Appendˉu32(Request, Bytesˉreadˉu32ˉlittle(Construction, 144u32));
+    Request = Support.Appendˉu32(Request, Targetˉcount);
+    Request = Support.Appendˉu32(Request, Bytesˉlength(Startup));
+    Request = Support.Appendˉu32(Request, Bytesˉlength(Adapter));
+    Request = Support.Appendˉu32(Request, Bytesˉlength(Sha256));
+    Request = Support.Appendˉu32(Request, 0u32);
+    Request = Bytesˉconcat(Request, Bytesˉslice(Targets, 16u32, Targetˉcount * 4u32));
+    Request = Bytesˉconcat(Request, Startup);
+    Request = Bytesˉconcat(Request, Adapter);
+    Request = Bytesˉconcat(Request, Sha256);
+    let Response: bytes = Instantiation.Publisherˉobjectsˉinstantiate(Request);
+    if Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 { return Reject(); }
+    file.write_bytes(Outputˉpath, Response);
+    console.write_line(
+        Textˉconcat(
+            "publisher object instantiation status=Valid bytes=",
+            U32ˉformat(Bytesˉlength(Response))
+        )
+    );
+    return 0;
+}

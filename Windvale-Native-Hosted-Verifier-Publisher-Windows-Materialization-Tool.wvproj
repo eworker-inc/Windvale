@@ -1,0 +1,7 @@
+windvale-project 1
+root "Linker/Windvale/Native-Hosted-Verifier-Publisher-Windows-Materialization-Tool.wv"
+source "Foundation/Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Publisher-File-Tool-Support.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Publisher-Windows-Materialization-Core.wv"
+emit wvb

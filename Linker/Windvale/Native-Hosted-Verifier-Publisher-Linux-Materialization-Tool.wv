@@ -1,0 +1,59 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉlinuxˉmaterializationˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉfileˉtoolˉsupport as Support;
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉlinuxˉmaterialization as Materialization;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Usage() -> i32 {
+    diagnostic.write_line("Usage: wvhostverifierpublishlinux <base.elf> <request.wvcr> <objects.wvio> <metadata.wvvp> <application.elf>");
+    return 64;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 5u32 { return Usage(); }
+    let Outputˉpath: text = process.argument(4u32);
+    var Index: u32 = 0u32;
+    while Index < 4u32 {
+        if Support.Pathsˉareˉequal(process.argument(Index), Outputˉpath) { return Usage(); }
+        Index = Index + 1u32;
+    }
+    let Base: bytes = file.read_bytes(process.argument(0u32));
+    let Construction: bytes = file.read_bytes(process.argument(1u32));
+    let Objects: bytes = file.read_bytes(process.argument(2u32));
+    let Metadata: bytes = file.read_bytes(process.argument(3u32));
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1296848471u32);
+    Request = Support.Appendˉu32(Request, 1u32);
+    Request = Support.Appendˉu32(Request, 255581u32);
+    Request = Support.Appendˉu32(Request, 2u32);
+    Request = Support.Appendˉu32(Request, 64u32);
+    Request = Support.Appendˉu32(Request, Bytesˉlength(Base));
+    Request = Support.Appendˉu32(Request, 249920u32);
+    Request = Support.Appendˉu32(Request, Bytesˉlength(Construction));
+    Request = Support.Appendˉu32(Request, 250336u32);
+    Request = Support.Appendˉu32(Request, Bytesˉlength(Objects));
+    Request = Support.Appendˉu32(Request, 255453u32);
+    Request = Support.Appendˉu32(Request, Bytesˉlength(Metadata));
+    Request = Support.Appendˉu32(Request, 0u32);
+    Request = Support.Appendˉu32(Request, 0u32);
+    Request = Support.Appendˉu32(Request, 0u32);
+    Request = Support.Appendˉu32(Request, 0u32);
+    Request = Bytesˉconcat(Request, Base);
+    Request = Bytesˉconcat(Request, Construction);
+    Request = Bytesˉconcat(Request, Objects);
+    Request = Bytesˉconcat(Request, Metadata);
+    let Response: bytes = Materialization.Publisherˉlinuxˉmaterialize(Request);
+    if Bytesˉlength(Response) != 254949u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 {
+        diagnostic.write_line("publisher Linux materialization status=Rejected");
+        return 2;
+    }
+    file.write_bytes(Outputˉpath, Bytesˉslice(Response, 32u32, 254917u32));
+    console.write_line("publisher Linux materialization status=Valid bytes=254917");
+    return 0;
+}

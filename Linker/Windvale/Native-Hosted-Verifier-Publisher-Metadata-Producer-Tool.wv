@@ -1,0 +1,75 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉmetadataˉproducerˉtool profile hosted;
+
+import Foundationˉdecimalˉparsing as Decimal;
+import Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉconstruction as Construction;
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉmetadataˉrequest as Request;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostverifierproducemetadata <target:1|2> <publisher.wvb> <startup.wvo> <metadata.wvvp>"
+    );
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line("publisher metadata production status=Rejected");
+    return 2;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 { return Usage(); }
+    let Outputˉpath: text = process.argument(3u32);
+    if Pathsˉareˉequal(process.argument(1u32), Outputˉpath) ||
+        Pathsˉareˉequal(process.argument(2u32), Outputˉpath) {
+        return Usage();
+    }
+    let Targetˉtext: bytes = Textˉtoˉutf8(process.argument(0u32));
+    let Target: Decimal.Foundationˉu32ˉparse =
+        Decimal.Foundationˉu32ˉdecimalˉparse(
+            Targetˉtext, 0u32, Bytesˉlength(Targetˉtext)
+        );
+    if !Target.Valid { return Reject(); }
+    let Requestˉresult: Request.Publisherˉmetadataˉrequestˉresult =
+        Request.Publisherˉmetadataˉrequest(
+            Target.Value,
+            file.read_bytes(process.argument(1u32)),
+            file.read_bytes(process.argument(2u32))
+        );
+    if !Requestˉresult.Valid { return Reject(); }
+    let Response: bytes =
+        Construction.Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(
+            Requestˉresult.Value
+        );
+    if Bytesˉlength(Response) != 160u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1146115671u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != 160u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != 112u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) != 128u32 {
+        return Reject();
+    }
+    file.write_bytes(Outputˉpath, Bytesˉslice(Response, 32u32, 128u32));
+    console.write_line("publisher metadata production status=Valid bytes=128");
+    return 0;
+}

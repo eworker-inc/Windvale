@@ -1475,6 +1475,7 @@ internal static partial class Program
         new("Windvale owns exact native hosted-verifier publisher metadata", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉmetadataˉruns),
         new("Windvale owns native hosted-verifier publisher construction requests", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉconstructionˉrequestsˉrun),
         new("Windvale instantiates native hosted-verifier publisher objects", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉobjectsˉinstantiate),
+        new("native hosted-verifier publisher file pipeline reproduces exact applications", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉverifierˉpublisherˉfileˉpipelineˉruns),
         new("Windvale constructs native hosted-verifier publisher Windows imports", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉwindowsˉimportsˉconstruct),
         new("Windvale materializes the native hosted-verifier publisher Linux application", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉlinuxˉmaterializes),
         new("Windvale materializes the native hosted-verifier publisher Windows application", [TEST_AREA_COMPILER, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉpublisherˉwindowsˉmaterializes),

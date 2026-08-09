@@ -1,0 +1,32 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉimportsˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉimports as Imports;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Usage() -> i32 {
+    diagnostic.write_line("Usage: wvhostverifierpublishimports <imports.wvim>");
+    return 64;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 { return Usage(); }
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1380537943u32);
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(16u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(253952u32));
+    let Response: bytes = Imports.Publisherˉwindowsˉimports(Request);
+    if Bytesˉlength(Response) != 4128u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1296651863u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 {
+        diagnostic.write_line("publisher Windows imports status=Rejected");
+        return 2;
+    }
+    file.write_bytes(process.argument(0u32), Response);
+    console.write_line("publisher Windows imports status=Valid bytes=4128");
+    return 0;
+}

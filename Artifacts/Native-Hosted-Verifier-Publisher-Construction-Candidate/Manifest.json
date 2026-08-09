@@ -1,7 +1,7 @@
 {
-  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-5",
+  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-6",
   "status": "candidate",
-  "sourceDecision": "0480",
+  "sourceDecision": "0481",
   "provenanceDecision": "0474",
   "qualification": "current-host-focused",
   "construction": "verified-digest-bound-front-door",
@@ -77,11 +77,32 @@
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.wvproj"
     },
     {
+      "name": "publisher-metadata-producer-tool",
+      "path": "Publisher-Metadata-Producer-Tool.wvb",
+      "bytes": 53009,
+      "sha256": "74de7ca9a0c959c782837d6674c30db1dcccb07ed258d50017c968ad38d503bc",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Metadata-Producer-Tool.wvproj"
+    },
+    {
+      "name": "publisher-object-instantiation-tool",
+      "path": "Publisher-Object-Instantiation-Tool.wvb",
+      "bytes": 21724,
+      "sha256": "410e4f93c24a2f7cac168298e1e3f2bc3d62f9738c36227b69805ad65591b341",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation-Tool.wvproj"
+    },
+    {
       "name": "publisher-windows-imports",
       "path": "Publisher-Windows-Imports.wvb",
       "bytes": 9310,
       "sha256": "8d233b54d0387e9a1348447f9095e683415075da31104f4b80c935b09c960831",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.wvproj"
+    },
+    {
+      "name": "publisher-windows-imports-tool",
+      "path": "Publisher-Windows-Imports-Tool.wvb",
+      "bytes": 10464,
+      "sha256": "63b87f2618c9fd413238a9a2919bc6cdb1c769e72f4dca2de47c1c7e1c697a29",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports-Tool.wvproj"
     },
     {
       "name": "publisher-linux-materialization",
@@ -91,11 +112,25 @@
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj"
     },
     {
+      "name": "publisher-linux-materialization-tool",
+      "path": "Publisher-Linux-Materialization-Tool.wvb",
+      "bytes": 16600,
+      "sha256": "84bec5e36d1ae61f05b28c506b8285526022ec05990153bb0079beb61badeacc",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization-Tool.wvproj"
+    },
+    {
       "name": "publisher-windows-materialization",
       "path": "Publisher-Windows-Materialization.wvb",
       "bytes": 15431,
       "sha256": "73786b8bb60f8dc472c8ff111104480e16d1ac46e485125713a3fa4159aee633",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj"
+    },
+    {
+      "name": "publisher-windows-materialization-tool",
+      "path": "Publisher-Windows-Materialization-Tool.wvb",
+      "bytes": 18658,
+      "sha256": "2c9092e5781cadf6a675168415c73ed65303737f6134a5d0bb9a59d874a7cbd2",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization-Tool.wvproj"
     }
   ]
 }
