@@ -1,0 +1,113 @@
+module Linkerˉnativeˉhostedˉverifierˉstartupˉtargets profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉlayout as Layout;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Add(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Runtimeˉaddress(
+    Value: Layout.Nativeˉhostedˉverifierˉlayout,
+    Index: u32
+) -> u32 {
+    return Value.Runtimeˉaddress +
+        Layout.Nativeˉhostedˉverifierˉruntimeˉoffset(Index);
+}
+
+fn Windowsˉtargets(
+    Runtime: bytes,
+    Value: Layout.Nativeˉhostedˉverifierˉlayout
+) -> bytes {
+    let Import: u32 = Value.Importˉaddress;
+    var Result: bytes = Empty(Runtime);
+    Result = Add(Result, Runtimeˉaddress(Value, 0u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 1u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 2u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 3u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 6u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 7u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 7u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 8u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 9u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Import + 248u32);
+    Result = Add(Result, Import + 200u32);
+    Result = Add(Result, Import + 216u32);
+    Result = Add(Result, Import + 256u32);
+    Result = Add(Result, Import + 192u32);
+    Result = Add(Result, Value.Textˉaddress + 1085u32);
+    Result = Add(Result, Import + 224u32);
+    Result = Add(Result, Import + 232u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 6u32));
+    Result = Add(Result, Import + 232u32);
+    Result = Add(Result, Import + 272u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 1u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 0u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 1u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 2u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 3u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 4u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 5u32));
+    Result = Add(Result, Import + 208u32);
+    Result = Add(Result, Import + 304u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 5u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Import + 264u32);
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 4u32));
+    Result = Add(Result, Import + 240u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 0u32));
+    Result = Add(Result, 8192u32 + Value.Nativeˉentry);
+    Result = Add(Result, Import + 240u32);
+    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 9u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    return Add(Result, Runtimeˉaddress(Value, 11u32));
+}
+
+fn Linuxˉtargets(
+    Runtime: bytes,
+    Value: Layout.Nativeˉhostedˉverifierˉlayout
+) -> bytes {
+    var Result: bytes = Empty(Runtime);
+    Result = Add(Result, Runtimeˉaddress(Value, 0u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 1u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 2u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 3u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 6u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 7u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 7u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 8u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 9u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 1u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 0u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 1u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 2u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 3u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 4u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 5u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 5u32));
+    Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 4u32));
+    Result = Add(Result, Runtimeˉaddress(Value, 0u32));
+    return Add(Result, 8192u32 + Value.Nativeˉentry);
+}
+
+export fn Nativeˉhostedˉverifierˉstartupˉtargets(
+    Runtime: bytes,
+    Value: Layout.Nativeˉhostedˉverifierˉlayout
+) -> bytes {
+    if !Value.Valid { return Empty(Runtime); }
+    if Value.Target == 1u32 { return Windowsˉtargets(Runtime, Value); }
+    if Value.Target == 2u32 { return Linuxˉtargets(Runtime, Value); }
+    return Empty(Runtime);
+}

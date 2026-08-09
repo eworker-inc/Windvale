@@ -96,7 +96,7 @@ verify_file() {
     }
 }
 
-verify_file "$toolset/SHA256SUMS" 6927 a3566d34a19243aed706b1b2f972ace8698f859a21a91aa060bf78a2763057d5 'hosted toolset inventory' || exit 1
+verify_file "$toolset/SHA256SUMS" 6927 7986dae7404baf5443758a2dc6d30df95337e4d3c35c44fc30181b98fd196161 'hosted toolset inventory' || exit 1
 (cd -- "$toolset" && sha256sum --check --strict --quiet SHA256SUMS) || {
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1
