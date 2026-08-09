@@ -17,11 +17,14 @@ From the repository root on Linux:
 ./Tools/Native/Test-Baseline-Jit-Publisher.sh
 ```
 
-The launchers assemble and verify the shared plan component and current-host
-adapter, link them, check every pinned intermediate identity and entry offset,
-and verify the committed application digest. Linux additionally reconstructs
-the complete ELF byte for byte. Windows executes the import-bound candidate
-PE; its import-directory construction remains an explicit recovery operation.
+The launchers first build the Windvale producer bridge WVB through the native
+source front door, compare it byte for byte with the retained WVB, and verify
+the retained producer WVO. They then assemble and verify the shared plan
+component and current-host adapter, link all three objects, check every pinned
+intermediate identity and entry offset, and verify the committed application
+digest. Linux additionally reconstructs the complete ELF byte for byte.
+Windows executes the import-bound candidate PE; its import-directory
+construction remains an explicit recovery operation.
 
 A passing run prints one of:
 
@@ -43,10 +46,14 @@ pwsh -NoProfile -File Tools/Recovery/Rebuild-Baseline-Jit-Publisher.ps1 `
   -Destination Artifacts/Baseline-Jit-Publisher
 ```
 
-That recovery script invokes only Windvale's native assembler, linker, and
-console packager for code construction. PowerShell validates and writes the
+That recovery script invokes the native source builder, assembler, WVO
+verifier, linker, and console packager. It rebuilds and checks the bridge WVB,
+but deliberately consumes the digest-bound retained bridge WVO. That WVO has
+Stage 0 recovery provenance because the native lowerer does not yet admit a
+descriptor-returning `Main() -> bytes`. PowerShell validates and writes the
 two Windows PE data-directory entries needed to expose the four fixed imports;
-it does not compile or execute C#.
+the normal build, verification, and execution path does not compile or execute
+C#.
 
 Passing one launcher is current-host evidence only. Both launchers must pass
 at one exact commit before cross-host qualification is claimed.

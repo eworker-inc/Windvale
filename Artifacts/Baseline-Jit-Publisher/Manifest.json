@@ -1,40 +1,67 @@
 {
-  "format": "windvale-baseline-jit-publisher-candidate-1",
+  "format": "windvale-baseline-jit-publisher-candidate-2",
   "status": "candidate",
   "contract": "WVJP 1 plus WVLT 1",
   "architecture": "x86-64",
   "materializedCodeBytes": 6,
   "allocationBytes": 4096,
+  "producerArenaBytes": 16777216,
+  "producerBundleBytes": 108,
   "sources": [
     {
+      "path": "Compiler/Windvale/Baseline-Jit-Patch-Plan-Bridge.wv",
+      "bytes": 3482,
+      "sha256": "e911ef7ec9e267e11b7d5d21a869e2b17d7f54c93874d34b101da0f87f859204"
+    },
+    {
+      "path": "Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj",
+      "bytes": 146,
+      "sha256": "e936fd88e38d905f17ef1327b4a8dbcd67ee6ad071a48b57f164d437e2116b0b"
+    },
+    {
       "path": "Runtime/Native/Baseline-Jit-Patch-Plan-X64.wva",
-      "bytes": 3674,
-      "sha256": "4ffcde403c7ddbf32e8a38091d55845eaeacdaba77b6f632890aeee158881ce8"
+      "bytes": 5414,
+      "sha256": "40990e27766b3199a2ed64458267b2bd9d706a8df4ccc165852b1416450ad0e1"
     },
     {
       "path": "Runtime/Native/Windows-X64-Baseline-Jit-Publisher.wva",
-      "bytes": 6639,
-      "sha256": "32a568e6b171b4c465d85afb3b2866de77dd6087e60f9328b56181fa7f062c4c"
+      "bytes": 7750,
+      "sha256": "aa5359daddaba78b5a4f0c65bd354a1e355ca8bcebc932fe7c754229886a8dae"
     },
     {
       "path": "Runtime/Native/Linux-X64-Baseline-Jit-Publisher.wva",
-      "bytes": 4105,
-      "sha256": "65ffb459a490ff0d466c208d6c2582d89a8b9ea6ad07bbd8089951d5a404392c"
+      "bytes": 5099,
+      "sha256": "f1eb4992a76c2e31301f4ac5a48e537859cfb4dc9c53a813692f3dad7a5524f2"
+    }
+  ],
+  "producerArtifacts": [
+    {
+      "path": "Wvb/Baseline-Jit-Patch-Plan-Bridge.wvb",
+      "bytes": 4574,
+      "sha256": "2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9",
+      "provenance": "native-source-build"
+    },
+    {
+      "path": "Wvo/Baseline-Jit-Patch-Plan-Bridge.wvo",
+      "bytes": 56226,
+      "sha256": "bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c",
+      "provenance": "stage0-recovery",
+      "nativeReconstruction": "pending-descriptor-main-lowering"
     }
   ],
   "artifacts": [
     {
       "path": "windows-x64/Baseline-Jit-Publisher.exe",
       "target": "windows-x64",
-      "bytes": 3584,
-      "sha256": "fc7566f38457229444836b88aff48df09309b3bad242d1cac2eb2f432311ab39",
+      "bytes": 59904,
+      "sha256": "8ea1a0d6371c9447031db4ae2b56ecfef5f022a83b6bdd7831020a2628bee01c",
       "localExecution": "passed"
     },
     {
       "path": "linux-x64/Baseline-Jit-Publisher.elf",
       "target": "linux-x64-console-v1",
-      "bytes": 8304,
-      "sha256": "371f0aaaa5200c5767947892f99376e3c649b86dfa8ae5d78e2474aad4a667ea",
+      "bytes": 65648,
+      "sha256": "29538c93d28bcd1feae175519f5b2950d5e8dfcde24afa3f0039863fb1706a90",
       "localExecution": "pending"
     }
   ]

@@ -65,8 +65,8 @@ if (-not [IO.Directory]::Exists($OutputDirectory)) {
 }
 
 [byte[]] $Application = [IO.File]::ReadAllBytes($InputPath)
-if ($Application.Length -ne 3584) {
-    throw "The input application is $($Application.Length) bytes, expected 3584."
+if ($Application.Length -ne 59904) {
+    throw "The input application is $($Application.Length) bytes, expected 59904."
 }
 if ((Read-U16 $Application 0) -ne 23117) {
     throw 'The input application does not begin with MZ.'

@@ -1,17 +1,117 @@
 windvale-assembly 1
 
-# Shared closed WVJP 1 admission leaf and fixed evidence plans. R8 points to
-# exactly 54 readable bytes. EAX returns zero only for the exact version-1
-# x86-64 one-record shape; the immediate at bytes 44..47 may vary.
+# Shared closed WVJP 1 producer bridge and admission leaf. The producer bridge
+# invokes the linked Windvale Main() -> bytes fragment with an exact context-7
+# execution context and descriptor result cell, then copies a range-checked bundle.
 symbol export data Baseline_jit_lifetime_invalid in .rodata
 symbol export data Baseline_jit_lifetime_plan in .rodata
 symbol export function Baseline_jit_lifetime_verify in .text
-symbol export data Baseline_jit_plan_42 in .rodata
 symbol export data Baseline_jit_plan_invalid in .rodata
-symbol export data Baseline_jit_plan_negative in .rodata
 symbol export function Baseline_jit_plan_verify in .text
+symbol export function Baseline_jit_produce_bundle in .text
+symbol import function Main
 
 section code .text align 16
+define Baseline_jit_produce_bundle
+# R8 is a 16 MiB RW/NX arena and RCX is a private 108-byte output. The linked
+# parameterless Windvale bridge owns the canonical WVB inputs and WVJP producer.
+push rbx
+push rbp
+push rsi
+push rdi
+push r13
+push r14
+push r15
+subtract_i32 rsp 144
+move r13 r8
+move r14 rcx
+
+# Clear the 112-byte context and 16-byte result bridge cell.
+xor eax eax
+xor ecx ecx
+label Producer_clear
+compare_i32 ecx 128
+branch above_equal Producer_context
+store_memory_u64 rsp rcx 1 0 rax
+add_i32 ecx 8
+jump_label Producer_clear
+
+label Producer_context
+move_u32 eax 7
+store_memory_u32 rsp none 1 0 eax
+move_u32 eax 112
+store_memory_u32 rsp none 1 4 eax
+move_u32 eax 1000000
+store_memory_u64 rsp none 1 8 rax
+move_u32 eax 1024
+store_memory_u64 rsp none 1 16 rax
+store_memory_u64 rsp none 1 48 r13
+move_u32 eax 16777216
+store_memory_u32 rsp none 1 56 eax
+
+move rcx rsp
+add_i32 rcx 112
+move rdx rsp
+call Main
+test rax rax
+branch not_equal Producer_invalid
+
+# The generated entry may mutate only result and arena-used fields.
+load_memory_u64 rax rsp none 1 48
+compare rax r13
+branch not_equal Producer_invalid
+load_memory_u32 eax rsp none 1 56
+compare_i32 eax 16777216
+branch not_equal Producer_invalid
+
+load_memory_u64 rbx rsp none 1 112
+load_memory_u32 eax rsp none 1 120
+compare_i32 eax 108
+branch not_equal Producer_invalid
+load_memory_u32 eax rsp none 1 124
+test eax eax
+branch not_equal Producer_invalid
+compare rbx r13
+branch below Producer_invalid
+
+load_memory_u32 r15d rsp none 1 60
+compare_i32 r15d 16777216
+branch above Producer_invalid
+move rax r13
+add rax r15
+branch below Producer_invalid
+move rdx rbx
+add_i32 rdx 108
+branch below Producer_invalid
+compare rdx rax
+branch above Producer_invalid
+
+xor ecx ecx
+label Producer_copy
+compare_i32 ecx 108
+branch above_equal Producer_valid
+load_memory_u8 al rbx rcx 1 0
+store_memory_u8 r14 rcx 1 0 al
+add_i32 ecx 1
+jump_label Producer_copy
+
+label Producer_valid
+xor eax eax
+jump_label Producer_complete
+label Producer_invalid
+move_u32 eax 1
+label Producer_complete
+add_i32 rsp 144
+pop r15
+pop r14
+pop r13
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+
 define Baseline_jit_lifetime_verify
 load_address r9 Baseline_jit_lifetime_plan
 xor ecx ecx
@@ -115,13 +215,6 @@ bytes 4 0 0 0 5 0 0 0 5 0 0 0
 bytes 5 0 0 0 6 0 0 0 5 0 0 0
 end define
 
-define Baseline_jit_plan_42
-bytes 87 86 74 80 1 0 1 0 54 0 0 0 174 0 0 0
-bytes 6 0 0 0 1 0 0 0 1 0 0 0 4 0 0 0
-bytes 1 0 0 0 0 0 0 0 0 0 0 0 42 0 0 0
-bytes 184 0 0 0 0 195
-end define
-
 define Baseline_jit_plan_invalid
 bytes 0 86 74 80 1 0 1 0 54 0 0 0 174 0 0 0
 bytes 6 0 0 0 1 0 0 0 1 0 0 0 4 0 0 0
@@ -129,10 +222,4 @@ bytes 1 0 0 0 0 0 0 0 0 0 0 0 42 0 0 0
 bytes 184 0 0 0 0 195
 end define
 
-define Baseline_jit_plan_negative
-bytes 87 86 74 80 1 0 1 0 54 0 0 0 174 0 0 0
-bytes 6 0 0 0 1 0 0 0 1 0 0 0 4 0 0 0
-bytes 1 0 0 0 0 0 0 0 0 0 0 0 255 255 255 255
-bytes 184 0 0 0 0 195
-end define
 end section

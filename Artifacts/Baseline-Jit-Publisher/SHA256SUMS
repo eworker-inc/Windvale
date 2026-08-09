@@ -1,2 +1,4 @@
-371f0aaaa5200c5767947892f99376e3c649b86dfa8ae5d78e2474aad4a667ea  linux-x64/Baseline-Jit-Publisher.elf
-fc7566f38457229444836b88aff48df09309b3bad242d1cac2eb2f432311ab39  windows-x64/Baseline-Jit-Publisher.exe
+2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9  Wvb/Baseline-Jit-Patch-Plan-Bridge.wvb
+bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c  Wvo/Baseline-Jit-Patch-Plan-Bridge.wvo
+29538c93d28bcd1feae175519f5b2950d5e8dfcde24afa3f0039863fb1706a90  linux-x64/Baseline-Jit-Publisher.elf
+8ea1a0d6371c9447031db4ae2b56ecfef5f022a83b6bdd7831020a2628bee01c  windows-x64/Baseline-Jit-Publisher.exe

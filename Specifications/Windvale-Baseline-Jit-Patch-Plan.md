@@ -90,11 +90,13 @@ length has been established.
   retirement gate by itself.
 
 The bounded [native publication candidate](Windvale-Native-Baseline-Jit-Publication.md)
-now publishes these verified materialized bytes through the exact `WVLT 1`
-write-then-execute lifetime: writable while copying, executable only after a
-successful permission transition, never writable and executable at the same
-time, and torn down on every completion or failure path. Windows execution is
-locally proven; Linux execution and paired-host qualification remain.
+now invokes this actual producer over canonical WVB inputs, independently
+verifies its returned plans, and publishes the materialized bytes through the
+exact `WVLT 1` write-then-execute lifetime: writable while copying, executable
+only after a successful permission transition, never writable and executable
+at the same time, and torn down on every completion or failure path. Windows
+execution is locally proven; Linux execution and paired-host qualification
+remain.
 
 ## Verification
 

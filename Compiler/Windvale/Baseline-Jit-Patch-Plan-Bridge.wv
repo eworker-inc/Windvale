@@ -1,0 +1,78 @@
+module Compilerˉbaselineˉjitˉpatchˉplanˉbridge profile portable;
+
+import Compilerˉbaselineˉjitˉpatchˉplan as Patchˉplan;
+
+data Returnˉfortyˉtwoˉwvb: bytes = [
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    27, 0, 0, 0, 1, 21, 0, 0, 0, 87, 118, 98, 203, 137, 116, 111,
+    203, 137, 119, 118, 111, 203, 137, 102, 105, 120, 116, 117, 114, 101, 0, 2,
+    0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4,
+    0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1,
+    0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0,
+    0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 42, 0, 0, 0, 5, 0,
+    0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0,
+    0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0,
+    0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+data Returnˉnegativeˉoneˉwvb: bytes = [
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    27, 0, 0, 0, 1, 21, 0, 0, 0, 87, 118, 98, 203, 137, 116, 111,
+    203, 137, 119, 118, 111, 203, 137, 102, 105, 120, 116, 117, 114, 101, 0, 2,
+    0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4,
+    0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1,
+    0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0,
+    0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 255, 255, 255, 255, 5, 0,
+    0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0,
+    0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0,
+    0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+data Invalidˉwvb: bytes = [
+    0, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    27, 0, 0, 0, 1, 21, 0, 0, 0, 87, 118, 98, 203, 137, 116, 111,
+    203, 137, 119, 118, 111, 203, 137, 102, 105, 120, 116, 117, 114, 101, 0, 2,
+    0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4,
+    0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 34, 0, 0, 0, 1,
+    0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 1, 0, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0,
+    0, 5, 0, 0, 0, 16, 0, 0, 0, 1, 42, 0, 0, 0, 5, 0,
+    0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0,
+    0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 0, 0,
+    0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+export fn Main() -> bytes {
+    let Returnˉfortyˉtwo: Patchˉplan.Baselineˉjitˉpatchˉplanˉresult =
+        Patchˉplan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(
+            Returnˉfortyˉtwoˉwvb
+        );
+    if Returnˉfortyˉtwo.Status != Patchˉplan.Baselineˉjitˉpatchˉplanˉstatus.Valid {
+        return Bytesˉslice(Returnˉfortyˉtwoˉwvb, 0u32, 0u32);
+    }
+
+    let Returnˉnegativeˉone: Patchˉplan.Baselineˉjitˉpatchˉplanˉresult =
+        Patchˉplan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(
+            Returnˉnegativeˉoneˉwvb
+        );
+    if Returnˉnegativeˉone.Status != Patchˉplan.Baselineˉjitˉpatchˉplanˉstatus.Valid {
+        return Bytesˉslice(Returnˉfortyˉtwoˉwvb, 0u32, 0u32);
+    }
+
+    let Rejected: Patchˉplan.Baselineˉjitˉpatchˉplanˉresult =
+        Patchˉplan.Baselineˉjitˉproduceˉreturnˉconstantˉpatchˉplan(Invalidˉwvb);
+    if Rejected.Status != Patchˉplan.Baselineˉjitˉpatchˉplanˉstatus.Invalidˉwvb {
+        return Bytesˉslice(Returnˉfortyˉtwoˉwvb, 0u32, 0u32);
+    }
+
+    let Bundle: bytes = Bytesˉconcat(
+        Returnˉfortyˉtwo.Value,
+        Returnˉnegativeˉone.Value
+    );
+    if Bytesˉlength(Bundle) != 108u32 {
+        return Bytesˉslice(Returnˉfortyˉtwoˉwvb, 0u32, 0u32);
+    }
+    return Bundle;
+}

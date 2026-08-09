@@ -4,22 +4,56 @@ windvale-assembly 1
 # permitted to hold a raw mapping address or issue publication syscalls.
 symbol local function Linux_baseline_jit_run_one in .text
 symbol local function Linux_baseline_jit_seal_failure in .text
-symbol export function Main in .text
+symbol export function Linux_baseline_jit_entry in .text
 symbol import data Baseline_jit_lifetime_invalid
 symbol import data Baseline_jit_lifetime_plan
 symbol import function Baseline_jit_lifetime_verify
-symbol import data Baseline_jit_plan_42
 symbol import data Baseline_jit_plan_invalid
-symbol import data Baseline_jit_plan_negative
 symbol import function Baseline_jit_plan_verify
+symbol import function Baseline_jit_produce_bundle
 
 section code .text align 16
 define Linux_baseline_jit_run_one
 push rbx
 push r12
 push r13
-move r12 r8
+push r14
+subtract_i32 rsp 136
+move r12d r8d
 move r13d r9d
+
+# Give the Windvale producer one bounded RW/NX arena. Copy its admitted result
+# into the private stack buffer, then release the arena before JIT publication.
+xor edi edi
+move_u32 esi 16777216
+move_u32 edx 3
+move_u32 r10d 34
+xor r8 r8
+subtract_i32 r8 1
+xor r9d r9d
+move_u32 eax 9
+syscall
+compare_i32 rax -4095
+branch above_equal Producer_allocate_failed
+move rbx rax
+
+move r8 rbx
+move rcx rsp
+call Baseline_jit_produce_bundle
+move r14d eax
+
+move rdi rbx
+move_u32 esi 16777216
+move_u32 eax 11
+syscall
+test rax rax
+branch not_equal Producer_release_failed
+test r14d r14d
+branch not_equal Invalid_bundle
+
+move r14 rsp
+add r14 r12
+move r8 r14
 call Baseline_jit_plan_verify
 test eax eax
 branch not_equal Invalid_plan
@@ -42,7 +76,7 @@ move rbx rax
 # Materialize exactly B8 <i32> C3 while the page is RW/NX.
 move_u8 al 184
 store_memory_u8 rbx none 1 0 al
-load_memory_u32 eax r12 none 1 44
+load_memory_u32 eax r14 none 1 44
 store_memory_u32 rbx none 1 1 eax
 move_u8 al 195
 store_memory_u8 rbx none 1 5 al
@@ -72,6 +106,8 @@ branch equal Complete
 move_u32 r12d 5
 label Complete
 move eax r12d
+add_i32 rsp 136
+pop r14
 pop r13
 pop r12
 pop rbx
@@ -83,13 +119,44 @@ jump_label Release
 
 label Allocate_failed
 move_u32 eax 2
+add_i32 rsp 136
+pop r14
 pop r13
 pop r12
 pop rbx
 return
 
 label Invalid_plan
+move_u32 eax 11
+add_i32 rsp 136
+pop r14
+pop r13
+pop r12
+pop rbx
+return
+
+label Invalid_bundle
 move_u32 eax 1
+add_i32 rsp 136
+pop r14
+pop r13
+pop r12
+pop rbx
+return
+
+label Producer_allocate_failed
+move_u32 eax 9
+add_i32 rsp 136
+pop r14
+pop r13
+pop r12
+pop rbx
+return
+
+label Producer_release_failed
+move_u32 eax 10
+add_i32 rsp 136
+pop r14
 pop r13
 pop r12
 pop rbx
@@ -147,7 +214,7 @@ pop rbx
 return
 end define
 
-define Main
+define Linux_baseline_jit_entry
 push rbx
 
 # Bind the host owner to the exact Windvale-authored WVLT 1 graph.
@@ -176,7 +243,7 @@ move_u32 eax 12
 jump_label Main_complete
 
 label Valid_cases
-load_address r8 Baseline_jit_plan_42
+xor r8d r8d
 move_u32 r9d 42
 call Linux_baseline_jit_run_one
 test eax eax
@@ -185,7 +252,7 @@ add_i32 eax 20
 jump_label Main_complete
 
 label Negative_case
-load_address r8 Baseline_jit_plan_negative
+move_u32 r8d 54
 move_i32 r9d -1
 call Linux_baseline_jit_run_one
 test eax eax

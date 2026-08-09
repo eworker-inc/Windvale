@@ -15,48 +15,67 @@ mkdir "%TemporaryDirectory%" || exit /b 1
 
 set "PlanWvo=%TemporaryDirectory%\Plan.wvo"
 set "PlatformWvo=%TemporaryDirectory%\Windows.wvo"
+set "BridgeWvb=%TemporaryDirectory%\Bridge.wvb"
+set "RetainedBridgeWvb=%RepositoryRoot%\Artifacts\Baseline-Jit-Publisher\Wvb\Baseline-Jit-Patch-Plan-Bridge.wvb"
+set "BridgeWvo=%RepositoryRoot%\Artifacts\Baseline-Jit-Publisher\Wvo\Baseline-Jit-Patch-Plan-Bridge.wvo"
 set "Image=%TemporaryDirectory%\Windows.bin"
 set "Map=%TemporaryDirectory%\Windows.wvmap"
 set "UnpatchedApplication=%TemporaryDirectory%\Baseline-Jit-Publisher-Unpatched.exe"
 set "ApplicationError=%TemporaryDirectory%\Application.err"
 set "Application=%RepositoryRoot%\Artifacts\Baseline-Jit-Publisher\windows-x64\Baseline-Jit-Publisher.exe"
 
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj" "%BridgeWvb%" >nul
+if errorlevel 1 goto :failed
+call :verify_hash "%BridgeWvb%" 2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9 "producer-bridge WVB"
+if errorlevel 1 goto :failed
+call :verify_hash "%RetainedBridgeWvb%" 2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9 "retained producer-bridge WVB"
+if errorlevel 1 goto :failed
+fc /b "%BridgeWvb%" "%RetainedBridgeWvb%" >nul
+if errorlevel 1 (
+    >&2 echo The rebuilt and retained native baseline-JIT producer-bridge WVBs differ.
+    goto :failed
+)
+call :verify_hash "%BridgeWvo%" bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c "retained producer-bridge WVO"
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%BridgeWvo%" >nul
+if errorlevel 1 goto :failed
+
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%RepositoryRoot%\Runtime\Native\Baseline-Jit-Patch-Plan-X64.wva" "%PlanWvo%" >nul
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%PlanWvo%" >nul
 if errorlevel 1 goto :failed
-call :verify_hash "%PlanWvo%" 9074413259924bb50e8a98ca14690e0ec34a65b28c15f0d27a69799c7071f763 "shared-plan WVO"
+call :verify_hash "%PlanWvo%" 8cc9c7460229a479adf34631a970c9d196b37361ceaa35fdea85e15fce9d91b1 "shared-plan WVO"
 if errorlevel 1 goto :failed
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%RepositoryRoot%\Runtime\Native\Windows-X64-Baseline-Jit-Publisher.wva" "%PlatformWvo%" >nul
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%PlatformWvo%" >nul
 if errorlevel 1 goto :failed
-call :verify_hash "%PlatformWvo%" 3f5069815b01798374b0974f20e8d344b562d1a08797c6f15dc9125373ba18d6 "Windows-adapter WVO"
+call :verify_hash "%PlatformWvo%" fc9c59e7005a0c60dd1a9a0240635b4416e509ef5e273745e35f1b2aca94b4ca "Windows-adapter WVO"
 if errorlevel 1 goto :failed
 
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 4208 Main "%Image%" "%PlatformWvo%" "%PlanWvo%" > "%Map%"
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 4208 Windows_baseline_jit_entry "%Image%" "%PlatformWvo%" "%PlanWvo%" "%BridgeWvo%" > "%Map%"
 if errorlevel 1 goto :failed
-call :verify_hash "%Image%" 43c58d27a733f74fdec15413a2cc649356eade3c0b9f7651b0c8d81d47b219d9 "Windows flat image"
+call :verify_hash "%Image%" db35482f2886077701c4a8a78f6783fae5adeeaf2821411cbcf21bb480f1bdd3 "Windows flat image"
 if errorlevel 1 goto :failed
 
 set "EntryAddress="
-for /f "tokens=5 delims== " %%E in ('findstr /B /C:"entry name=Main address=" "%Map%"') do set "EntryAddress=%%E"
+for /f "tokens=5 delims== " %%E in ('findstr /B /C:"entry name=Windows_baseline_jit_entry address=" "%Map%"') do set "EntryAddress=%%E"
 if not defined EntryAddress (
     >&2 echo The native baseline-JIT publisher entry is missing from the link map.
     goto :failed
 )
 set /a EntryOffset=EntryAddress-4208
-if not "%EntryOffset%"=="513" (
-    >&2 echo The native baseline-JIT publisher entry offset is %EntryOffset%, expected 513.
+if not "%EntryOffset%"=="718" (
+    >&2 echo The native baseline-JIT publisher entry offset is %EntryOffset%, expected 718.
     goto :failed
 )
 
 call "%RepositoryRoot%\Tools\Native\Package-Console.cmd" windows-x64-console-v1 "%Image%" "%EntryOffset%" "%UnpatchedApplication%" >nul
 if errorlevel 1 goto :failed
-call :verify_hash "%UnpatchedApplication%" 0c27a724a85daa54fc23a5d7f09e1e6f9344d711080e46aef80cfc2d91b1ceed "unpatched Windows application"
+call :verify_hash "%UnpatchedApplication%" e53b7aa85eb65db57bb93a1ad00065ab1462219d8030096120f7ce32a1eeb599 "unpatched Windows application"
 if errorlevel 1 goto :failed
-call :verify_hash "%Application%" fc7566f38457229444836b88aff48df09309b3bad242d1cac2eb2f432311ab39 "published Windows application"
+call :verify_hash "%Application%" 8ea1a0d6371c9447031db4ae2b56ecfef5f022a83b6bdd7831020a2628bee01c "published Windows application"
 if errorlevel 1 goto :failed
 
 "%Application%" >nul 2> "%ApplicationError%"
@@ -89,6 +108,7 @@ exit /b 1
 :cleanup
 if exist "%PlanWvo%" del /f /q "%PlanWvo%" >nul 2>nul
 if exist "%PlatformWvo%" del /f /q "%PlatformWvo%" >nul 2>nul
+if exist "%BridgeWvb%" del /f /q "%BridgeWvb%" >nul 2>nul
 if exist "%Image%" del /f /q "%Image%" >nul 2>nul
 if exist "%Map%" del /f /q "%Map%" >nul 2>nul
 if exist "%UnpatchedApplication%" del /f /q "%UnpatchedApplication%" >nul 2>nul

@@ -11,18 +11,26 @@ that admits a typed patch plan, materializes machine bytes into writable and
 non-executable memory, removes write permission, invokes the verified entry,
 and releases the mapping without loading .NET.
 
-The profile remains deliberately small. It admits exactly one 54-byte x86-64
-`WVJP 1` record and materializes the six bytes `B8 <i32> C3`. Its evidence
-plans return `42` and `-1`. Publication reserves one 4,096-byte page, copies
-only the six admitted bytes, invokes the page once, and releases the complete
-page.
+The profile remains deliberately small. A Windvale bridge submits two exact
+canonical WVB modules to the real `WVJP 1` producer and returns their two
+54-byte x86-64 plans as one 108-byte bundle. The plans materialize the six
+bytes `B8 <i32> C3` and return `42` and `-1`. Publication reserves one
+4,096-byte page, copies only the six admitted bytes, invokes the page once,
+and releases the complete page.
 
 ## Shared admission
 
-`Runtime/Native/Baseline-Jit-Patch-Plan-X64.wva` independently checks every
-fixed `WVJP 1` field before a platform allocation is reachable. The four
-immediate bytes may vary; all other header, record, and template bytes must
-match version 1 exactly.
+`Compiler/Windvale/Baseline-Jit-Patch-Plan-Bridge.wv` owns the canonical WVB
+inputs and calls `Compiler/Windvale/Baseline-Jit-Patch-Plan-Core.wv` for both
+valid plans and one invalid-WVB check. The shared WVA bridge runs that code in
+a bounded 16 MiB RW/NX arena, validates the descriptor result and arena range,
+copies exactly 108 bytes into private host-owned storage, and releases the
+producer arena before any JIT allocation. No valid plan is embedded in WVA.
+
+`Runtime/Native/Baseline-Jit-Patch-Plan-X64.wva` then independently checks
+every fixed `WVJP 1` field before an executable-memory allocation is reachable.
+The four immediate bytes may vary; all other header, record, and template
+bytes must match version 1 exactly.
 
 The same component binds the publisher to the exact 140-byte `WVLT 1` response
 for an image extent of six bytes. All nine state/action/next-state records are
@@ -84,6 +92,12 @@ candidate has paired-host evidence.
 - PowerShell is used only by the recovery constructor that adds the Windows PE
   import-directory bindings. Normal tests use the native `.cmd` or `.sh`
   route and the digest-bound candidate artifacts.
+- The bridge WVB is reconstructed through the native source front door and
+  compared with the retained artifact. Its WVO remains a verified Stage 0
+  recovery artifact because the accepted-subset native lowerer does not yet
+  admit descriptor-returning `Main() -> bytes`; normal build and execution do
+  not load .NET. Native reconstruction of that WVO is the next explicit N1
+  blocker.
 - This candidate does not implement general WVB admission, general machine
   lowering, calls, control flow, runtime services, code-cache accounting,
   concurrent publication, or Windvale OS publication.

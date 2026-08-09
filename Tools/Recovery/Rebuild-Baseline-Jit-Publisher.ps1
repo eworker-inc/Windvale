@@ -42,6 +42,9 @@ New-Item -ItemType Directory -Force -Path $LinuxDestination | Out-Null
 $TemporaryRoot = [IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetTempPath()) ("windvale-baseline-jit-publisher-" + [Guid]::NewGuid().ToString('N'))))
 New-Item -ItemType Directory -Path $TemporaryRoot | Out-Null
 
+$BridgeWvb = Join-Path $TemporaryRoot 'Bridge.wvb'
+$RetainedBridgeWvb = Join-Path $RepositoryRoot 'Artifacts\Baseline-Jit-Publisher\Wvb\Baseline-Jit-Patch-Plan-Bridge.wvb'
+$BridgeWvo = Join-Path $RepositoryRoot 'Artifacts\Baseline-Jit-Publisher\Wvo\Baseline-Jit-Patch-Plan-Bridge.wvo'
 $PlanWvo = Join-Path $TemporaryRoot 'Plan.wvo'
 $LinuxWvo = Join-Path $TemporaryRoot 'Linux.wvo'
 $WindowsWvo = Join-Path $TemporaryRoot 'Windows.wvo'
@@ -54,6 +57,18 @@ $WindowsUnpatched = Join-Path $TemporaryRoot 'Baseline-Jit-Publisher-Unpatched.e
 $WindowsApplication = Join-Path $TemporaryRoot 'Baseline-Jit-Publisher.exe'
 
 try {
+    Invoke-Checked {
+        & (Join-Path $RepositoryRoot 'Tools\Native\Build-Wvb.cmd') `
+            (Join-Path $RepositoryRoot 'Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj') `
+            $BridgeWvb
+    } 'Windvale producer-bridge build'
+    Assert-File $BridgeWvb 4574 '2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9' 'producer-bridge WVB'
+    Assert-File $RetainedBridgeWvb 4574 '2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9' 'retained producer-bridge WVB'
+    Assert-File $BridgeWvo 56226 'bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c' 'retained producer-bridge WVO'
+    Invoke-Checked {
+        & (Join-Path $RepositoryRoot 'Tools\Native\Verify-Wvo.cmd') $BridgeWvo
+    } 'producer-bridge WVO verification'
+
     Invoke-Checked {
         & (Join-Path $RepositoryRoot 'Tools\Native\Assemble-Wva.cmd') `
             (Join-Path $RepositoryRoot 'Runtime\Native\Baseline-Jit-Patch-Plan-X64.wva') `
@@ -70,40 +85,40 @@ try {
             $WindowsWvo
     } 'Windows adapter assembly'
 
-    Assert-File $PlanWvo 1196 '9074413259924bb50e8a98ca14690e0ec34a65b28c15f0d27a69799c7071f763' 'shared plan WVO'
-    Assert-File $LinuxWvo 1310 'b3cfb37c9d9bf17821673ad04a1e3fcd2a6cbb28d65df59838c56599626867c7' 'Linux adapter WVO'
-    Assert-File $WindowsWvo 2429 '3f5069815b01798374b0974f20e8d344b562d1a08797c6f15dc9125373ba18d6' 'Windows adapter WVO'
+    Assert-File $PlanWvo 1463 '8cc9c7460229a479adf34631a970c9d196b37361ceaa35fdea85e15fce9d91b1' 'shared plan WVO'
+    Assert-File $LinuxWvo 1472 '7a6556a0b5f59935edfa5fd380874a63ae594ac91deaeea88fd31383a60267b8' 'Linux adapter WVO'
+    Assert-File $WindowsWvo 2632 'fc9c59e7005a0c60dd1a9a0240635b4416e509ef5e273745e35f1b2aca94b4ca' 'Windows adapter WVO'
 
     $LinuxMapLines = & (Join-Path $RepositoryRoot 'Tools\Native\Link-Wvo.cmd') `
-        1048576 Main $LinuxImage $LinuxWvo $PlanWvo
+        1048576 Linux_baseline_jit_entry $LinuxImage $LinuxWvo $PlanWvo $BridgeWvo
     if ($LASTEXITCODE -ne 0) { throw 'Linux adapter linking failed.' }
     Write-Link-Map $LinuxMap $LinuxMapLines
 
     $WindowsMapLines = & (Join-Path $RepositoryRoot 'Tools\Native\Link-Wvo.cmd') `
-        4208 Main $WindowsImage $WindowsWvo $PlanWvo
+        4208 Windows_baseline_jit_entry $WindowsImage $WindowsWvo $PlanWvo $BridgeWvo
     if ($LASTEXITCODE -ne 0) { throw 'Windows adapter linking failed.' }
     Write-Link-Map $WindowsMap $WindowsMapLines
 
-    Assert-File $LinuxImage 1374 '991b6218758fe34514733b5ca71ff98baf61f1ab6103f15dc8c6b4c6b6623902' 'Linux flat image'
-    Assert-File $WindowsImage 1714 '43c58d27a733f74fdec15413a2cc649356eade3c0b9f7651b0c8d81d47b219d9' 'Windows flat image'
+    Assert-File $LinuxImage 57500 'c77ab84774f7c1f188855c095b30b7e8182c31523d579a6a72b4735d7524c78a' 'Linux flat image'
+    Assert-File $WindowsImage 57836 'db35482f2886077701c4a8a78f6783fae5adeeaf2821411cbcf21bb480f1bdd3' 'Windows flat image'
 
     Invoke-Checked {
         & (Join-Path $RepositoryRoot 'Tools\Native\Package-Console.cmd') `
-            linux-x64-console-v1 $LinuxImage 389 $LinuxApplication
+            linux-x64-console-v1 $LinuxImage 595 $LinuxApplication
     } 'Linux application packaging'
     Invoke-Checked {
         & (Join-Path $RepositoryRoot 'Tools\Native\Package-Console.cmd') `
-            windows-x64-console-v1 $WindowsImage 513 $WindowsUnpatched
+            windows-x64-console-v1 $WindowsImage 718 $WindowsUnpatched
     } 'Windows application packaging'
 
-    Assert-File $LinuxApplication 8304 '371f0aaaa5200c5767947892f99376e3c649b86dfa8ae5d78e2474aad4a667ea' 'Linux application'
-    Assert-File $WindowsUnpatched 3584 '0c27a724a85daa54fc23a5d7f09e1e6f9344d711080e46aef80cfc2d91b1ceed' 'unpatched Windows application'
+    Assert-File $LinuxApplication 65648 '29538c93d28bcd1feae175519f5b2950d5e8dfcde24afa3f0039863fb1706a90' 'Linux application'
+    Assert-File $WindowsUnpatched 59904 'e53b7aa85eb65db57bb93a1ad00065ab1462219d8030096120f7ce32a1eeb599' 'unpatched Windows application'
 
     & (Join-Path $RepositoryRoot 'Tools\Recovery\New-Baseline-Jit-Windows-Application.ps1') `
         -InputApplication $WindowsUnpatched `
         -LinkMap $WindowsMap `
         -OutputApplication $WindowsApplication
-    Assert-File $WindowsApplication 3584 'fc7566f38457229444836b88aff48df09309b3bad242d1cac2eb2f432311ab39' 'Windows application'
+    Assert-File $WindowsApplication 59904 '8ea1a0d6371c9447031db4ae2b56ecfef5f022a83b6bdd7831020a2628bee01c' 'Windows application'
 
     $Process = Start-Process -FilePath $WindowsApplication -WindowStyle Hidden -Wait -PassThru
     if ($Process.ExitCode -ne 0) {
@@ -112,7 +127,7 @@ try {
 
     Copy-Item -LiteralPath $WindowsApplication -Destination (Join-Path $WindowsDestination 'Baseline-Jit-Publisher.exe') -Force
     Copy-Item -LiteralPath $LinuxApplication -Destination (Join-Path $LinuxDestination 'Baseline-Jit-Publisher.elf') -Force
-    Write-Output 'baseline jit publisher rebuild status=Complete windows-result=0 linux-execution=pending'
+    Write-Output 'baseline jit publisher rebuild status=Complete bridge-wvo=retained-stage0 windows-result=0 linux-execution=pending'
 }
 finally {
     $ExpectedParent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')

@@ -10,28 +10,67 @@ symbol local data Windows_jit_name_flush_instruction_cache in .rodata
 symbol local data Windows_jit_name_virtual_alloc in .rodata
 symbol local data Windows_jit_name_virtual_free in .rodata
 symbol local data Windows_jit_name_virtual_protect in .rodata
-symbol export function Main in .text
+symbol export function Windows_baseline_jit_entry in .text
 symbol export data Windows_jit_import_addresses in .rodata
 symbol export data Windows_jit_import_descriptor in .rodata
 symbol import data Baseline_jit_lifetime_invalid
 symbol import data Baseline_jit_lifetime_plan
 symbol import function Baseline_jit_lifetime_verify
-symbol import data Baseline_jit_plan_42
 symbol import data Baseline_jit_plan_invalid
-symbol import data Baseline_jit_plan_negative
 symbol import function Baseline_jit_plan_verify
+symbol import function Baseline_jit_produce_bundle
 
 section code .text align 16
 define Windows_baseline_jit_run_one
 push rbx
 push rsi
 push rdi
-subtract_i32 rsp 48
-move rsi r8
+subtract_i32 rsp 160
+move esi r8d
 move edi r9d
+
+# Give the Windvale producer one bounded RW/NX arena. Copy its admitted result
+# into the private stack buffer, then release the arena before JIT publication.
+xor rcx rcx
+move_u32 edx 16777216
+move_u32 r8d 12288
+move_u32 r9d 4
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 0
+call_register rax
+test rax rax
+branch equal Producer_allocate_failed
+move rbx rax
+
+move r8 rbx
+move rcx rsp
+add_i32 rcx 48
+call Baseline_jit_produce_bundle
+store_memory_u32 rsp none 1 40 eax
+
+move rcx rbx
+xor edx edx
+move_u32 r8d 32768
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 24
+call_register rax
+test eax eax
+branch equal Producer_release_failed
+load_memory_u32 eax rsp none 1 40
+test eax eax
+branch not_equal Invalid_bundle
+
+move rdx rsp
+add_i32 rdx 48
+add rdx rsi
+move r8 rdx
 call Baseline_jit_plan_verify
 test eax eax
 branch not_equal Invalid_plan
+move rdx rsp
+add_i32 rdx 48
+add rdx rsi
+move rsi rdx
 
 # VirtualAlloc(NULL, 4096, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE)
 xor rcx rcx
@@ -94,7 +133,7 @@ branch not_equal Complete
 move_u32 esi 5
 label Complete
 move eax esi
-add_i32 rsp 48
+add_i32 rsp 160
 pop rdi
 pop rsi
 pop rbx
@@ -110,15 +149,39 @@ jump_label Release
 
 label Allocate_failed
 move_u32 eax 2
-add_i32 rsp 48
+add_i32 rsp 160
 pop rdi
 pop rsi
 pop rbx
 return
 
 label Invalid_plan
+move_u32 eax 11
+add_i32 rsp 160
+pop rdi
+pop rsi
+pop rbx
+return
+
+label Invalid_bundle
 move_u32 eax 1
-add_i32 rsp 48
+add_i32 rsp 160
+pop rdi
+pop rsi
+pop rbx
+return
+
+label Producer_allocate_failed
+move_u32 eax 9
+add_i32 rsp 160
+pop rdi
+pop rsi
+pop rbx
+return
+
+label Producer_release_failed
+move_u32 eax 10
+add_i32 rsp 160
 pop rdi
 pop rsi
 pop rbx
@@ -184,7 +247,7 @@ pop rbx
 return
 end define
 
-define Main
+define Windows_baseline_jit_entry
 push rbx
 load_address r8 Baseline_jit_lifetime_plan
 call Baseline_jit_lifetime_verify
@@ -210,7 +273,7 @@ move_u32 eax 12
 jump_label Main_complete
 
 label Valid_cases
-load_address r8 Baseline_jit_plan_42
+xor r8d r8d
 move_u32 r9d 42
 call Windows_baseline_jit_run_one
 test eax eax
@@ -219,7 +282,7 @@ add_i32 eax 20
 jump_label Main_complete
 
 label Negative_case
-load_address r8 Baseline_jit_plan_negative
+move_u32 r8d 54
 move_i32 r9d -1
 call Windows_baseline_jit_run_one
 test eax eax

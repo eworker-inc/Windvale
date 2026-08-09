@@ -1,0 +1,4 @@
+windvale-project 1
+root "Compiler/Windvale/Baseline-Jit-Patch-Plan-Bridge.wv"
+source "Compiler/Windvale/Baseline-Jit-Patch-Plan-Core.wv"
+emit wvb
