@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉhostedˉverifierˉruntimeˉheaderˉbridge profile portable;
+
+import Runtimeˉnativeˉhostedˉverifierˉruntimeˉheader as Runtimeˉheader;
+
+export fn Main(Input: bytes) -> bytes {
+    return Runtimeˉheader.Nativeˉhostedˉverifierˉruntimeˉheaderˉbuild(Input);
+}

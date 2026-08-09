@@ -1,0 +1,148 @@
+module Runtimeˉnativeˉhostedˉverifierˉruntimeˉheader profile portable;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Runtimeˉnativeˉhostedˉverifierˉmetadataˉadmission as Metadataˉadmission;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Appendˉu64(Input: bytes, Low: u32, High: u32) -> bytes {
+    return Appendˉu32(Appendˉu32(Input, Low), High);
+}
+
+fn Zeroes(Input: bytes, Count: u32) -> bytes {
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
+    return Result.Value;
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Headerˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1397249623u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Headerˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn Context(Input: bytes) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 7u32);
+    Result = Appendˉu32(Result, 112u32);
+    Result = Appendˉu64(Result, 3115098112u32, 3u32);
+    Result = Appendˉu64(Result, 1024u32, 0u32);
+    Result = Bytesˉconcat(Result, Zeroes(Input, 16u32));
+    Result = Appendˉu32(Result, 2097152u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu64(Result, 0u32, 0u32);
+    Result = Appendˉu32(Result, 134217728u32);
+    Result = Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Zeroes(Input, 48u32));
+}
+
+fn Serviceˉtable(Input: bytes) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 5u32);
+    Result = Appendˉu32(Result, 104u32);
+    return Bytesˉconcat(Result, Zeroes(Input, 96u32));
+}
+
+fn Outputˉtable(Input: bytes, Target: u32) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1330206295u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 48u32);
+    Result = Appendˉu32(Result, Target);
+    Result = Appendˉu32(Result, 3u32);
+    Result = Appendˉu32(Result, 0u32);
+    if Target == 1u32 {
+        return Bytesˉconcat(Result, Zeroes(Input, 24u32));
+    }
+    Result = Appendˉu64(Result, 1u32, 0u32);
+    Result = Appendˉu64(Result, 2u32, 0u32);
+    return Appendˉu64(Result, 0u32, 0u32);
+}
+
+fn Scratchˉbytes(Target: u32) -> u32 {
+    if Target == 1u32 { return 2097154u32; }
+    return 1048577u32;
+}
+
+fn Fileˉinputˉtable(Input: bytes, Target: u32) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1229346391u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 136u32);
+    Result = Appendˉu32(Result, Target);
+    Result = Appendˉu64(Result, 0u32, 0u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu64(Result, 0u32, 0u32);
+    Result = Appendˉu32(Result, 1048576u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu64(Result, 0u32, 0u32);
+    Result = Appendˉu32(Result, 4194304u32);
+    Result = Appendˉu32(Result, 4194304u32);
+    Result = Appendˉu64(Result, 0u32, 0u32);
+    Result = Appendˉu32(Result, Scratchˉbytes(Target));
+    Result = Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Zeroes(Input, 56u32));
+}
+
+export fn Nativeˉhostedˉverifierˉruntimeˉheaderˉbuild(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 1048u32 { return Failure(Input, 1u32, Total); }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1380472407u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Target < 1u32 || Target > 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 16u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 {
+        return Failure(Input, 4u32, 12u32);
+    }
+    if !Metadataˉadmission.Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
+        Input,
+        24u32,
+        Target
+    ) {
+        return Failure(Input, 5u32, 24u32);
+    }
+
+    var Header: bytes = Context(Input);
+    Header = Bytesˉconcat(Header, Serviceˉtable(Input));
+    Header = Bytesˉconcat(Header, Outputˉtable(Input, Target));
+    Header = Bytesˉconcat(Header, Fileˉinputˉtable(Input, Target));
+    Header = Bytesˉconcat(Header, Zeroes(Input, 80u32));
+    Header = Bytesˉconcat(Header, Bytesˉslice(Input, 24u32, 1024u32));
+    Header = Bytesˉconcat(Header, Zeroes(Input, 2592u32));
+    return Bytesˉconcat(
+        Responseˉheader(Input, 4128u32, 0u32, Total, 4096u32),
+        Header
+    );
+}

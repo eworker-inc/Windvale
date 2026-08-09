@@ -1430,6 +1430,7 @@ internal static partial class Program
         new("Windvale admits native byte-result ranges", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Windvaleˉnativeˉbyteˉresultˉadmissionˉruns),
         new("Windvale constructs hosted-tool metadata", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉtoolˉmetadataˉruns),
         new("Windvale constructs exact WVHV verifier metadata", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉmetadataˉruns),
+        new("Windvale constructs exact WVHV verifier runtime headers", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉruntimeˉruns),
         new("Windvale instantiates hosted-tool startup objects", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉstartupˉinstantiationˉruns),
         new("Windvale constructs hosted-tool PE and ELF containers", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉcontainerˉconstructionˉruns),
         new("Windvale constructs bounded hosted-tool container segments", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉcontainerˉsegmentationˉruns),

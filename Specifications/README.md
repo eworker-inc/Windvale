@@ -103,6 +103,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native hosted-container segment set](Windvale-Native-Hosted-Container-Segment-Set.md)
 - [Native hosted-container packaging](Windvale-Native-Hosted-Container-Packaging.md)
 - [Native hosted-tool runtime-header construction](Windvale-Native-Hosted-Tool-Runtime-Header.md)
+- [Native hosted-verifier runtime-header construction](Windvale-Native-Hosted-Verifier-Runtime-Header.md)
 - [Versioned verified native-fragment artifact](Native-Fragment-Artifact.md)
 - [Windows x64 console application target](Windvale-Windows-Console-Application.md)
 - [Linux x64 console application target](Windvale-Linux-Console-Application.md)
