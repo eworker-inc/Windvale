@@ -25,6 +25,22 @@ jobs:
         shell: cmd
         run: Tools\Native\Test-Segmented-Compiler-Packaging.cmd
 
+      - name: Reconstruct current Windows lowerer candidate
+        shell: cmd
+        run: |
+          mkdir "%RUNNER_TEMP%\windvale-current-lowerer"
+          Tools\Native\Build-Wvb.cmd Windvale-Native-X64-Lowering-Tool.wvproj "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.wvb"
+          Tools\Native\Package-Segmented-Compiler-Wvb.cmd 6 "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.wvb" "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.exe"
+
+      - name: Export current Windows lowerer candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: current-wvb-to-wvo-windows-${{ github.sha }}
+          path: ${{ runner.temp }}\windvale-current-lowerer\*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
   linux-hosted-packaging:
     name: Linux native hosted packaging
     runs-on: ubuntu-latest
@@ -50,3 +66,19 @@ jobs:
       - name: Verify segmented compiler packaging
         shell: bash
         run: ./Tools/Native/Test-Segmented-Compiler-Packaging.sh
+
+      - name: Reconstruct current Linux lowerer candidate
+        shell: bash
+        run: |
+          mkdir -p -- "$RUNNER_TEMP/windvale-current-lowerer"
+          ./Tools/Native/Build-Wvb.sh Windvale-Native-X64-Lowering-Tool.wvproj "$RUNNER_TEMP/windvale-current-lowerer/Wvb-To-Wvo.wvb"
+          ./Tools/Native/Package-Segmented-Compiler-Wvb.sh 6 "$RUNNER_TEMP/windvale-current-lowerer/Wvb-To-Wvo.wvb" "$RUNNER_TEMP/windvale-current-lowerer/Wvb-To-Wvo.elf"
+
+      - name: Export current Linux lowerer candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: current-wvb-to-wvo-linux-${{ github.sha }}
+          path: ${{ runner.temp }}/windvale-current-lowerer/*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
