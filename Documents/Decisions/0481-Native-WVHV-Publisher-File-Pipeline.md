@@ -34,14 +34,14 @@ metadata it was meant to create.
 
 ## Evidence and consequences
 
-Five WVBs build through the digest-bound native front door and are pinned in
-version 6 of the publisher-construction candidate manifest. The reviewed
-focused test passes 1/1 in 12.523 seconds, after a one-time Release build, and
+Five WVBs build through the digest-bound native source front door and are pinned
+in version 6 of the publisher-construction candidate manifest. The reviewed
+focused test passes 1/1 in 13.614 seconds, after a one-time Release build, and
 reproduces both canonical publisher applications byte for byte:
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Windows x64 | 256,000 | `7ba65ba1bd74511339a2fc6772ded8ad6b71fa7f1246b2b8e10f50c8a6f80d95` |
+| Windows x64 | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
 | Linux x64 | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
 
 The test additionally rejects a corrupt publisher WVB, a zeroed ordered target,

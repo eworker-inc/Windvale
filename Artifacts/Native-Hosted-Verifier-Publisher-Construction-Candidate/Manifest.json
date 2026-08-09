@@ -1,10 +1,58 @@
 {
-  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-6",
+  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-7",
   "status": "candidate",
-  "sourceDecision": "0481",
+  "sourceDecision": "0482",
   "provenanceDecision": "0474",
   "qualification": "current-host-focused",
   "construction": "verified-digest-bound-front-door",
+  "sha256SumsBytes": 4420,
+  "sha256SumsSha256": "430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5",
+  "commands": [
+    {
+      "name": "wvhostverifieridentity",
+      "sourceArtifact": "Publisher-Identity-Request-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierstructure",
+      "sourceArtifact": "Publisher-Structure-Request-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierconstructrequest",
+      "sourceArtifact": "Publisher-Construction-Request-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifiertargets",
+      "sourceArtifact": "Publisher-Target-Request-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierproducemetadata",
+      "sourceArtifact": "Publisher-Metadata-Producer-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierpublishobjects",
+      "sourceArtifact": "Publisher-Object-Instantiation-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierpublishimports",
+      "sourceArtifact": "Publisher-Windows-Imports-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierpublishlinux",
+      "sourceArtifact": "Publisher-Linux-Materialization-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierpublishwindows",
+      "sourceArtifact": "Publisher-Windows-Materialization-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierpublisherbasemetadata",
+      "sourceArtifact": "Publisher-Base-Metadata-Tool.wvb"
+    },
+    {
+      "name": "wvhostverifierpublisherbaseruntime",
+      "sourceArtifact": "Publisher-Base-Runtime-Tool.wvb"
+    }
+  ],
   "artifacts": [
     {
       "name": "publisher-native-object",
@@ -131,6 +179,198 @@
       "bytes": 18658,
       "sha256": "2c9092e5781cadf6a675168415c73ed65303737f6134a5d0bb9a59d874a7cbd2",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization-Tool.wvproj"
+    },
+    {
+      "name": "publisher-base-metadata-tool",
+      "path": "Publisher-Base-Metadata-Tool.wvb",
+      "bytes": 70166,
+      "sha256": "6c79bd1b190e7d28190d1481a4ea1c602c227274806a885062af29d06c972630",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj"
+    },
+    {
+      "name": "publisher-base-runtime-tool",
+      "path": "Publisher-Base-Runtime-Tool.wvb",
+      "bytes": 20387,
+      "sha256": "56d329c2710322b4a3f74565dd5fb862be8ac4c26c7fb76f7c2bfafc66a9f8e2",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Base-Runtime-Tool.wvproj"
+    }
+  ],
+  "packages": [
+    {
+      "name": "windows-x64-wvhostverifieridentity",
+      "path": "windows-x64/wvhostverifieridentity.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 683520,
+      "sha256": "7ec09f9fbac2e9fac711669fb6f3e2c6e07a0718b0cd38a0c603edfdbdb1ddcb",
+      "sourceArtifact": "Publisher-Identity-Request-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifieridentity",
+      "path": "linux-x64/wvhostverifieridentity.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 684032,
+      "sha256": "8dbb6c66eb7a5ac5aa5d41d55b5d705115b7b5ae2756afcb5f786eebb886af39",
+      "sourceArtifact": "Publisher-Identity-Request-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierstructure",
+      "path": "windows-x64/wvhostverifierstructure.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 181248,
+      "sha256": "af9118ede6a6be73a09b078574f91691f06dca3d2cfaf5e2edafce760df2e2a0",
+      "sourceArtifact": "Publisher-Structure-Request-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierstructure",
+      "path": "linux-x64/wvhostverifierstructure.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 180224,
+      "sha256": "2ddd510474f27e5c1fb4735f00de19d5036ed8a7b43bc8519b80c49ad5379221",
+      "sourceArtifact": "Publisher-Structure-Request-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierconstructrequest",
+      "path": "windows-x64/wvhostverifierconstructrequest.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 145408,
+      "sha256": "42684a6f837422564d43f691e821d5b60ab54d5024570babea62f59b5c9ed9ba",
+      "sourceArtifact": "Publisher-Construction-Request-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierconstructrequest",
+      "path": "linux-x64/wvhostverifierconstructrequest.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 147456,
+      "sha256": "e46437fe1b26514ce3bc790a97195f3e84b1672f52aa8845f1d46b0574251b14",
+      "sourceArtifact": "Publisher-Construction-Request-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifiertargets",
+      "path": "windows-x64/wvhostverifiertargets.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 87552,
+      "sha256": "51d4fac92fe884860d53b61949a9a2eabe66a3a5e69c041068ed13a45e60fa01",
+      "sourceArtifact": "Publisher-Target-Request-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifiertargets",
+      "path": "linux-x64/wvhostverifiertargets.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 90112,
+      "sha256": "15628a94ce6efa031a190bceeffbe7d5b6b8bbaf7b5adf7a257b327c3965aa85",
+      "sourceArtifact": "Publisher-Target-Request-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierproducemetadata",
+      "path": "windows-x64/wvhostverifierproducemetadata.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 764928,
+      "sha256": "01ce210564592a339079a5f47b8772af60cd068951bb8d26415ef405bed5b586",
+      "sourceArtifact": "Publisher-Metadata-Producer-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierproducemetadata",
+      "path": "linux-x64/wvhostverifierproducemetadata.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 765952,
+      "sha256": "d622a5f1c95d0e8719f93e24e055ce1754b73e97dced18db89a73ff84c2957b8",
+      "sourceArtifact": "Publisher-Metadata-Producer-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierpublishobjects",
+      "path": "windows-x64/wvhostverifierpublishobjects.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 255488,
+      "sha256": "29e914ddf3052bae6d343e3397d373b28f07bb5f84a1348cc28cd25db8a9ac6d",
+      "sourceArtifact": "Publisher-Object-Instantiation-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierpublishobjects",
+      "path": "linux-x64/wvhostverifierpublishobjects.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 258048,
+      "sha256": "21b1c4f191060f2854bdda8b2ea003556f58ce3b0de434a1759593513038ea12",
+      "sourceArtifact": "Publisher-Object-Instantiation-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierpublishimports",
+      "path": "windows-x64/wvhostverifierpublishimports.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 131584,
+      "sha256": "d1b0f378f7f900ef6d777705f3139af21a22ddd5960dc1d6fa3eef9d6eeba3ab",
+      "sourceArtifact": "Publisher-Windows-Imports-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierpublishimports",
+      "path": "linux-x64/wvhostverifierpublishimports.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 131072,
+      "sha256": "76486c028089ea34b14847072d3106623e6ca7b20a6beb55e177387e39f0ae28",
+      "sourceArtifact": "Publisher-Windows-Imports-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierpublishlinux",
+      "path": "windows-x64/wvhostverifierpublishlinux.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 192512,
+      "sha256": "4d6bb14be767fcb1ae14ae944b3036c7c805764ee25126bfd520585bab12b204",
+      "sourceArtifact": "Publisher-Linux-Materialization-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierpublishlinux",
+      "path": "linux-x64/wvhostverifierpublishlinux.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 192512,
+      "sha256": "e16146ccc97d7c324d005791b043753900810a36ab673aa187d3293c6e4cfe72",
+      "sourceArtifact": "Publisher-Linux-Materialization-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierpublishwindows",
+      "path": "windows-x64/wvhostverifierpublishwindows.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 213504,
+      "sha256": "adbd5e9ed1c094c97ab1f39801ee7d975036df82d3fec70791676e99e58fb6a6",
+      "sourceArtifact": "Publisher-Windows-Materialization-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierpublishwindows",
+      "path": "linux-x64/wvhostverifierpublishwindows.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 212992,
+      "sha256": "83fea5f46bc75d01738aae05a7a87f35ae0977514b33e66df9837f60e6ab5f9c",
+      "sourceArtifact": "Publisher-Windows-Materialization-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierpublisherbasemetadata",
+      "path": "windows-x64/wvhostverifierpublisherbasemetadata.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 945664,
+      "sha256": "008d6322d64a299fd7364051ab97bd810f61cbcf75dc1b49b862bd0915e8ee85",
+      "sourceArtifact": "Publisher-Base-Metadata-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierpublisherbasemetadata",
+      "path": "linux-x64/wvhostverifierpublisherbasemetadata.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 946176,
+      "sha256": "5d09accfbd04fd99a4b23b8f40ec42ac5e3482a873fee06bd796140dd2006e37",
+      "sourceArtifact": "Publisher-Base-Metadata-Tool.wvb"
+    },
+    {
+      "name": "windows-x64-wvhostverifierpublisherbaseruntime",
+      "path": "windows-x64/wvhostverifierpublisherbaseruntime.exe",
+      "target": "windows-x64-native-hosted-tool-v1",
+      "bytes": 222208,
+      "sha256": "54a4edd7398ae90299d18d9d025c0ec0df828e89b35845a01b7ea5d37dbef117",
+      "sourceArtifact": "Publisher-Base-Runtime-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-wvhostverifierpublisherbaseruntime",
+      "path": "linux-x64/wvhostverifierpublisherbaseruntime.elf",
+      "target": "linux-x64-native-hosted-tool-v1",
+      "bytes": 221184,
+      "sha256": "61d2e1fefd8060ba69d5d9bb9de191809aca02116545d10bec5ca8f9e84022da",
+      "sourceArtifact": "Publisher-Base-Runtime-Tool.wvb"
     }
   ]
 }

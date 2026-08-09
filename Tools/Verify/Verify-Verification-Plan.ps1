@@ -78,7 +78,7 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'hosted verifier application publisher boundary'
+        Name = 'hosted verifier publisher boundaries'
         Paths = @(
             'Linker/Windvale/Native-Hosted-Verifier-Application-Admission.wv',
             'Linker/Windvale/Native-Hosted-Verifier-Application-Tool.wv',
@@ -88,8 +88,11 @@ $NativeCases = @(
             'Linker/Windvale/Native-Hosted-Verifier-Publisher-Windows-Imports-Core.wv',
             'Linker/Windvale/Native-Hosted-Verifier-Publisher-Linux-Materialization-Core.wv',
             'Linker/Windvale/Native-Hosted-Verifier-Publisher-Windows-Materialization-Core.wv',
+            'Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-Metadata-Core.wv',
+            'Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-Runtime-Tool.wv',
             'Tools/Windvale.Publish/Native-Hosted-Verifier-Application-Publisher.wv',
             'Tools/Native/Publish-Hosted-Verifier-Application.cmd',
+            'Tools/Native/Construct-Hosted-Verifier-Publisher.cmd',
             'Artifacts/Native-Hosted-Verifier-Application-Publisher-Candidate/Manifest.json',
             'Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate/Manifest.json',
             'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher.md',
@@ -107,9 +110,10 @@ $NativeCases = @(
             'Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj',
+            'Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj',
             'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
         )
-        Suites = @('publisher-rejections')
+        Suites = @('publisher-rejections', 'hosted-verifier-publisher-files')
         Gaps = @()
         VerifyPlan = $false
     },

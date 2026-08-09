@@ -1,0 +1,45 @@
+module Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉruntimeˉtool profile hosted;
+
+import Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉfileˉtoolˉsupport as Support;
+import Runtimeˉnativeˉhostedˉverifierˉruntimeˉheader as Runtimeˉheader;
+
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return 64; }
+    let Inputˉpath: text = process.argument(0u32);
+    let Outputˉpath: text = process.argument(1u32);
+    if Support.Pathsˉareˉequal(Inputˉpath, Outputˉpath) { return 64; }
+
+    let Metadata: bytes = file.read_bytes(Inputˉpath);
+    if Bytesˉlength(Metadata) != 1024u32 { return 2; }
+    var Request: bytes = Bytesˉslice(Metadata, 0u32, 0u32);
+    Request = Appendˉu32(Request, 1380472407u32);
+    Request = Appendˉu32(Request, 1u32);
+    Request = Appendˉu32(Request, 1048u32);
+    Request = Appendˉu32(Request, Bytesˉreadˉu32ˉlittle(Metadata, 12u32));
+    Request = Appendˉu32(Request, 2u32);
+    Request = Appendˉu32(Request, 0u32);
+    Request = Bytesˉconcat(Request, Metadata);
+
+    let Response: bytes =
+        Runtimeˉheader.Nativeˉhostedˉverifierˉruntimeˉheaderˉbuild(Request);
+    if Bytesˉlength(Response) != 4128u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1397249623u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != 4128u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != 1048u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) != 4096u32 {
+        return 2;
+    }
+    file.write_bytes(Outputˉpath, Bytesˉslice(Response, 32u32, 4096u32));
+    return 0;
+}

@@ -62,16 +62,13 @@ All WVBs are built through the digest-bound native source front door.
 
 ## Evidence and remaining work
 
-The reviewed focused test builds all five WVBs, runs the complete file pipeline
+The reviewed managed differential test builds all five WVBs, runs the file pipeline
 for both targets, and reproduces the 256,000-byte Windows and 254,917-byte Linux
 publisher applications exactly. Corrupt publisher identity, corrupt ordered
 targets, and output aliasing reject while preserving existing destinations.
 
-The test still obtains the generic six-service publisher base application from
-the frozen managed builder as differential input. Therefore this contract does
-not claim an ordinary end-to-end .NET-free publisher reconstruction yet. The
-next slice must wire the already-existing native `WVHV` metadata, runtime,
-bundle, startup, platform, and container tools into one native Windows/Linux
-base-construction command, keep every intermediate under private orchestration,
-and require complete final application admission. Packaged process execution, independent Linux
-execution, grouped qualification, and promotion remain after that wiring.
+The [publisher base-construction contract](Windvale-Native-Hosted-Verifier-Publisher-Base-Construction.md)
+now supplies the former managed input through exact packaged Windvale processes
+and owns the normal candidate lane. This managed test remains only independent
+recovery evidence. Independent Linux execution, completed-publisher durable
+publication, grouped qualification, promotion, and release integration remain.

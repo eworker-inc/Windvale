@@ -135,6 +135,8 @@ function Add-Native-Tool-Suite {
         Add-Suite 'uefi-packager'
     } elseif ($Stem -eq 'Publish-Hosted-Verifier-Application') {
         Add-Suite 'publisher-rejections'
+    } elseif ($Stem -eq 'Construct-Hosted-Verifier-Publisher') {
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Stem -match 'Console|Package-Hosted|Segmented') {
         Add-Suite @(
             'console-packager-rejections',
@@ -220,6 +222,10 @@ foreach ($Path in $Paths) {
         Add-Compiler-Suites
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-compiler-recovery-source'
+    } elseif ($Path.StartsWith(
+        'Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path.StartsWith('Runtime/Windvale.Bytecode/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Runtime/Windvale.Runtime/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Runtime/Windvale.Native/', [StringComparison]::Ordinal)) {
@@ -246,17 +252,25 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith(
         'Linker/Windvale/Native-Hosted-Verifier-Publisher-',
         [StringComparison]::Ordinal)) {
-        Add-Suite 'publisher-rejections'
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path.StartsWith('Linker/Windvale/', [StringComparison]::Ordinal)) {
         Add-Linker-Suites
     } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-linker-recovery-source'
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path.StartsWith('Tools/Windvale.Publish/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Artifacts/Native-Hosted-Verifier-Application-Publisher-Candidate/',
+            [StringComparison]::Ordinal)) {
+        Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
+    } elseif (
         $Path.StartsWith(
             'Artifacts/Native-Hosted-Verifier-Application-',
             [StringComparison]::Ordinal) -or
-        $Path.StartsWith(
-            'Artifacts/Native-Hosted-Verifier-Publisher-',
+        $Path.StartsWith('Artifacts/Native-Hosted-Verifier-Publisher-',
             [StringComparison]::Ordinal)) {
         Add-Suite 'publisher-rejections'
     } elseif ($Path.StartsWith('Libraries/Database/', [StringComparison]::Ordinal) -or
@@ -276,9 +290,14 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher',
             [StringComparison]::Ordinal) -or
             $Path.StartsWith(
-            'Specifications/Windvale-Native-Hosted-Verifier-Publisher-',
-            [StringComparison]::Ordinal)) {
-            Add-Suite 'publisher-rejections'
+                'Specifications/Windvale-Native-Hosted-Verifier-Publisher-',
+                [StringComparison]::Ordinal)) {
+            Add-Suite 'hosted-verifier-publisher-files'
+            if ($Path.StartsWith(
+                'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher',
+                [StringComparison]::Ordinal)) {
+                Add-Suite 'publisher-rejections'
+            }
         } elseif ($Path -match 'Assembly|Wva-') {
             Add-Assembler-Suites
         } elseif ($Path -match 'Linking|Linker') {
@@ -298,10 +317,12 @@ foreach ($Path in $Paths) {
         'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
-    ) -or $Path.StartsWith(
+    )) {
+        Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
+    } elseif ($Path.StartsWith(
         'Windvale-Native-Hosted-Verifier-Publisher-',
         [StringComparison]::Ordinal)) {
-        Add-Suite 'publisher-rejections'
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'seed'
     } elseif ($Path.StartsWith('Examples/', [StringComparison]::Ordinal)) {

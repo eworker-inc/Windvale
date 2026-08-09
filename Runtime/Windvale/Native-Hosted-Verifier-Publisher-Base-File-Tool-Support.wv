@@ -1,0 +1,15 @@
+module Runtimeˉnativeˉhostedˉverifierˉpublisherˉbaseˉfileˉtoolˉsupport profile portable;
+
+export fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}

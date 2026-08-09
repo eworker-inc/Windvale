@@ -22,6 +22,7 @@ console-segmented-size|Test-Console-Application-Segmented-Size-Boundaries|2|Test
 console-segmented-construction|Test-Console-Application-Segmented-Construction|2|Tests: 2, Passed: 2, Failed: 0
 console-packager-source-reconstruction|Test-Console-Packager-Source-Reconstruction|2|Tests: 2, Passed: 2, Failed: 0
 publisher-rejections|Test-Publisher-Rejections|3|Tests: 3, Passed: 3, Failed: 0
+hosted-verifier-publisher-files|Test-Hosted-Verifier-Publisher-File-Pipeline|6|Tests: 6, Passed: 6, Failed: 0
 uefi-packager|Test-Uefi-Packager|3|Tests: 3, Passed: 3, Failed: 0
 wvo-export-renamer|Test-Wvo-Export-Renamer|4|Tests: 4, Passed: 4, Failed: 0
 os-probe-object|Test-Os-Probe-Object-Producer|9|Tests: 9, Passed: 9, Failed: 0
