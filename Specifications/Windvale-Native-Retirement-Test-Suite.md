@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 2,176 LF-only bytes with SHA-256
-`25cdb5ac330a8b769823c843c83a28ee1014a468149d79296a9de1effc509e4f`.
+`Tests/Native/Retirement-Suite.txt` is 2,252 LF-only bytes with SHA-256
+`5592f53ed81c436386b1df50efb97b85f416cfb39be823497dc14b2f4dde5ad3`.
 The first line is exactly:
 
 ```text
@@ -64,10 +64,11 @@ file. The current plan is:
 | `console-packager-source-reconstruction` | `Test-Console-Packager-Source-Reconstruction` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `publisher-rejections` | `Test-Publisher-Rejections` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `uefi-packager` | `Test-Uefi-Packager` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
+| `wvo-export-renamer` | `Test-Wvo-Export-Renamer` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `os-probe` | `Test-Os-Probe` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 26 suites and 3,123 cases.
+The version-1 plan therefore contains exactly 27 suites and 3,127 cases.
 
 ## Coordinator contract
 
@@ -89,7 +90,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 26, Passed: 26, Failed: 0, Cases: 3123
+Suites: 27, Passed: 27, Failed: 0, Cases: 3127
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

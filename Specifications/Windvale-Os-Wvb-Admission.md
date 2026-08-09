@@ -46,7 +46,8 @@ Changed magic, section shape, code, and one-byte truncation must reject. The cod
 
 ## AOT symbols and call order
 
-Stage 0 renames only verified WVO export symbols:
+The ordinary native build and frozen Stage 0 recovery path rename only verified
+WVO export symbols:
 
 | Source module | Boot-image export |
 | --- | --- |
@@ -74,6 +75,18 @@ The canonical program's AOT derivative is retained only as deterministic differe
 | Admission bridge WVO | 484 | `2b5b67bfe04ba87c473d7a9c9fbcc213e864a9bcf39bbd58d0c10f5314aad606` |
 
 Windows and digest-pinned Debian 12 each pass the complete qualification gate with these identities.
+
+Decision 0447 adds a current native-source candidate without changing the
+qualified historical identities above. The native Project 1 front door produces
+a 4,071-byte admission WVB at SHA-256
+`69727bb8151aea164690be4f69adcda481532b965d9ae02ec92db21087f3d669`.
+Native lowering produces a 20,316-byte WVO at SHA-256
+`676a91062e7f1b4483ca9f332b17614a6b75988d21f9ff99caabcbfd51839568`;
+the verified [WVO export renamer](Windvale-Wvo-Export-Renamer.md) changes only
+`Main` to `Windvale_kernel_wvb_admit` and reproduces the retained 20,337-byte
+link-facing object at SHA-256
+`37e47bd2fed0242ad5cae9c9cc684927dc17041d4cd1d154658616be8b140c32`.
+Current Linux execution and grouped cross-host qualification remain pending.
 
 ## Non-claims and next boundary
 

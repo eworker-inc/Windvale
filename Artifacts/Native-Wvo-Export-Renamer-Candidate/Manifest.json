@@ -1,0 +1,30 @@
+{
+  "format": "windvale-native-wvo-export-renamer-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0447",
+  "parentCommit": "828ee67ec918e2db6efc65d55c85b759c80b45cc",
+  "project": "Windvale-Wvo-Export-Renamer.wvproj",
+  "source": "Object-Model/Windvale/Wvo-Export-Renamer.wv",
+  "hostedProfile": 1,
+  "qualification": "pending",
+  "artifacts": [
+    {
+      "name": "Wvo-Export-Renamer.wvb",
+      "target": "portable-wvb",
+      "bytes": 37036,
+      "sha256": "7429577711817c534b17bfcb083fd136468a3c33b2fd692e28bf6c3bb1642395"
+    },
+    {
+      "name": "windows-x64-wvorename.exe",
+      "target": "windows-x64",
+      "bytes": 391680,
+      "sha256": "2cf43335af7782676e21ecdd5cb946cb3c9a7309572e21eadac5c7f5d33d2244"
+    },
+    {
+      "name": "linux-x64-wvorename.elf",
+      "target": "linux-x64",
+      "bytes": 393216,
+      "sha256": "c27787ee970d551ad0d85026ee7f9c0ac9de72d933e563398ac356d5561ed0ae"
+    }
+  ]
+}

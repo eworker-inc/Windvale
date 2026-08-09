@@ -1,0 +1,10 @@
+windvale-assembly 1
+
+symbol export function Renamed_entry in .text
+
+section code .text align 16
+define Renamed_entry
+move_i32 eax 42
+return
+end define
+end section

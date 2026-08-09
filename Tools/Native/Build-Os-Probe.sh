@@ -41,6 +41,46 @@ cleanup() {
 trap cleanup EXIT
 
 if ! "$script_directory/Build-Wvb.sh" \
+    "$repository_root/Windvale-Os-Wvb-Admission.wvproj" \
+    "$work/02-wvb-admission.wvb" >"$work/02-build.log" 2>&1; then
+    cat -- "$work/02-build.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/02-wvb-admission.wvb") -ne 4071 ]] ||
+    ! printf '%s  %s\n' \
+        '69727bb8151aea164690be4f69adcda481532b965d9ae02ec92db21087f3d669' \
+        "$work/02-wvb-admission.wvb" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 admission module is invalid.' >&2
+    exit 1
+fi
+if ! "$script_directory/Lower-Wvb-To-Wvo.sh" \
+    "$work/02-wvb-admission.wvb" \
+    "$work/02-unrenamed.wvo" >"$work/02-lower.log" 2>&1; then
+    cat -- "$work/02-lower.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/02-unrenamed.wvo") -ne 20316 ]] ||
+    ! printf '%s  %s\n' \
+        '676a91062e7f1b4483ca9f332b17614a6b75988d21f9ff99caabcbfd51839568' \
+        "$work/02-unrenamed.wvo" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 unrenamed admission object is invalid.' >&2
+    exit 1
+fi
+if ! "$script_directory/Rename-Wvo-Export.sh" \
+    "$work/02-unrenamed.wvo" Main Windvale_kernel_wvb_admit \
+    "$work/02-wvb-admission-native.wvo" >"$work/02-rename.log" 2>&1; then
+    cat -- "$work/02-rename.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/02-wvb-admission-native.wvo") -ne 20337 ]] ||
+    ! printf '%s  %s\n' \
+        '37e47bd2fed0242ad5cae9c9cc684927dc17041d4cd1d154658616be8b140c32' \
+        "$work/02-wvb-admission-native.wvo" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 renamed admission object is invalid.' >&2
+    exit 1
+fi
+
+if ! "$script_directory/Build-Wvb.sh" \
     "$repository_root/Windvale-Os-Native-Wvb-Probe.wvproj" \
     "$work/03-native-wvb-probe.wvb" >"$work/03-build.log" 2>&1; then
     cat -- "$work/03-build.log" >&2
@@ -97,7 +137,7 @@ fi
 if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$object_root/00-loader.wvo" \
     "$object_root/01-kernel.wvo" \
-    "$object_root/02-wvb-admission-native.wvo" \
+    "$work/02-wvb-admission-native.wvo" \
     "$work/03-native-wvb-probe.wvo" \
     "$object_root/04-process-policy.wvo" \
     "$object_root/05-process.wvo" \

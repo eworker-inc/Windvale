@@ -4726,3 +4726,30 @@ The final EFI identity remains 683,008 bytes at SHA-256
 The candidate manifest now distinguishes ten frozen WVOs totaling 685,344
 bytes from the exact native source producer. The Linux launcher passes Bash
 syntax validation; Linux execution and every broader suite remain pending.
+
+## Local native Probe 40 admission-source producer evidence
+
+[Decision 0447](../Decisions/0447-Native-Probe-40-Admission-Source-Producer.md)
+moves `02-wvb-admission-native.wvo` from the frozen seed to the ordinary native
+source path. Native Project 1 compilation produces a 4,071-byte WVB at SHA-256
+`69727bb8151aea164690be4f69adcda481532b965d9ae02ec92db21087f3d669`.
+Native lowering produces a 20,316-byte unrenamed WVO at SHA-256
+`676a91062e7f1b4483ca9f332b17614a6b75988d21f9ff99caabcbfd51839568`.
+The new verified WVO export renamer changes `Main` to
+`Windvale_kernel_wvb_admit` and reproduces the exact retained 20,337-byte object
+at SHA-256
+`37e47bd2fed0242ad5cae9c9cc684927dc17041d4cd1d154658616be8b140c32`.
+
+After test review, the focused Windows renamer lane passes all four positive,
+missing-export, invalid-name, and existing-output cases in 1.187 seconds. The
+ordinary `os-probe` lane then passes both construction and preservation cases;
+the combined focused run takes 12.006 seconds. The final EFI remains 683,008
+bytes at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retirement plan is now 2,252 LF-only bytes at SHA-256
+`5592f53ed81c436386b1df50efb97b85f416cfb39be823497dc14b2f4dde5ad3`
+and owns 27 suites with 3,127 fixed cases. The seed retains nine frozen WVOs
+totaling 665,007 bytes and records two native source producers. Linux execution,
+the complete coordinator, broad Seed/OS, QEMU, Standard, Qualification, and
+non-normal scenarios did not run.

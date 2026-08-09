@@ -1,19 +1,31 @@
 {
-  "format": "windvale-native-os-probe-object-candidate-2",
+  "format": "windvale-native-os-probe-object-candidate-3",
   "status": "candidate",
   "probeFormat": 40,
   "scenario": "normal",
   "entrySymbol": "Windvale_boot_probe",
-  "sourceDecision": "0446",
-  "provenanceDecision": "0445",
+  "sourceDecision": "0447",
+  "provenanceDecision": "0446",
   "sourceCommit": "957ed051ed226ce1b1694d19ad13b2c7e64a968a",
   "nativeSourceCommit": "48f6f414f708aead62bcbcac6866129d58de1d9a",
   "qualification": "pending",
-  "construction": "stage0-frozen-ten-object-inventory-plus-native-probe-source",
-  "nativeConsumption": "compile-lower-probe-assemble-three-link-fourteen-package-uefi",
-  "frozenObjectBytes": 685344,
+  "construction": "stage0-frozen-nine-object-inventory-plus-two-native-source-producers",
+  "nativeConsumption": "compile-lower-rename-admission-compile-lower-probe-assemble-three-link-fourteen-package-uefi",
+  "frozenObjectBytes": 665007,
   "totalObjectBytes": 692650,
   "nativeProducers": [
+    {
+      "name": "02-wvb-admission-native.wvo",
+      "project": "Windvale-Os-Wvb-Admission.wvproj",
+      "source": "Operating-System/Kernel/Wvb-Admission.wv",
+      "moduleBytes": 4071,
+      "moduleSha256": "69727bb8151aea164690be4f69adcda481532b965d9ae02ec92db21087f3d669",
+      "unrenamedObjectBytes": 20316,
+      "unrenamedObjectSha256": "676a91062e7f1b4483ca9f332b17614a6b75988d21f9ff99caabcbfd51839568",
+      "objectBytes": 20337,
+      "objectSha256": "37e47bd2fed0242ad5cae9c9cc684927dc17041d4cd1d154658616be8b140c32",
+      "exportRename": "Main=>Windvale_kernel_wvb_admit"
+    },
     {
       "name": "03-native-wvb-probe.wvo",
       "project": "Windvale-Os-Native-Wvb-Probe.wvproj",
@@ -34,11 +46,6 @@
       "name": "01-kernel.wvo",
       "bytes": 12134,
       "sha256": "bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8"
-    },
-    {
-      "name": "02-wvb-admission-native.wvo",
-      "bytes": 20337,
-      "sha256": "37e47bd2fed0242ad5cae9c9cc684927dc17041d4cd1d154658616be8b140c32"
     },
     {
       "name": "04-process-policy.wvo",

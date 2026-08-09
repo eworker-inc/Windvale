@@ -1,0 +1,145 @@
+module Wvoˉexportˉrenamer profile hosted;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Wvoˉobjectˉverification as Verification;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+record Wvoˉrenameˉresult {
+    Valid: bool;
+    Value: bytes;
+}
+
+fn Pathˉisˉwvo(Path: text) -> bool {
+    let Value: bytes = Textˉtoˉutf8(Path);
+    let Length: u32 = Bytesˉlength(Value);
+    if Length < 4u32 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 4u32) != 46u8 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 3u32) != 119u8 { return false; }
+    if Bytesˉreadˉu8(Value, Length - 2u32) != 118u8 { return false; }
+    return Bytesˉreadˉu8(Value, Length - 1u32) == 111u8;
+}
+
+fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Rangeˉequals(Input: bytes, Offset: u32, Expected: bytes) -> bool {
+    let Total: u32 = Bytesˉlength(Input);
+    let Length: u32 = Bytesˉlength(Expected);
+    if Offset > Total { return false; }
+    if Length > Total - Offset { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Renameˉoneˉexport(Input: bytes, Oldˉname: bytes, Newˉname: bytes) -> Wvoˉrenameˉresult {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Inspection: Verification.Wvoˉinspection = Verification.Inspectˉobject(Input);
+    if Inspection.Status != Verification.Wvoˉstatus.Valid {
+        return Wvoˉrenameˉresult(false, Empty);
+    }
+    if Bytesˉlength(Oldˉname) == 0u32 || Bytesˉlength(Newˉname) == 0u32 {
+        return Wvoˉrenameˉresult(false, Empty);
+    }
+    if Bytesˉareˉequal(Oldˉname, Newˉname) {
+        return Wvoˉrenameˉresult(false, Empty);
+    }
+
+    let Sectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Symbolˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Symbolˉstart: u32 = Verification.Sectionˉrecordsˉend(Input, Sectionˉcount);
+    var Matchˉcount: u32 = 0u32;
+    var Nameˉoffset: u32 = 0u32;
+    var Nameˉlength: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Symbolˉcount {
+        let Symbol: Verification.Wvoˉsymbolˉview = Verification.Findˉsymbol(
+            Input,
+            Symbolˉstart,
+            Symbolˉcount,
+            Index
+        );
+        if Symbol.Binding == 2u32 && Symbol.Kind == 1u32 &&
+            Symbol.Nameˉlength == Bytesˉlength(Oldˉname) &&
+            Rangeˉequals(Input, Symbol.Nameˉoffset, Oldˉname) {
+            Matchˉcount = Matchˉcount + 1u32;
+            Nameˉoffset = Symbol.Nameˉoffset;
+            Nameˉlength = Symbol.Nameˉlength;
+        }
+        Index = Index + 1u32;
+    }
+    if Matchˉcount != 1u32 || Nameˉoffset < 4u32 {
+        return Wvoˉrenameˉresult(false, Empty);
+    }
+
+    let Encodedˉname: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Newˉname)),
+        Newˉname
+    );
+    let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Input,
+            Nameˉoffset - 4u32,
+            Nameˉlength + 4u32,
+            Encodedˉname
+        );
+    if !Replaced.Valid { return Wvoˉrenameˉresult(false, Empty); }
+
+    let Candidateˉinspection: Verification.Wvoˉinspection =
+        Verification.Inspectˉobject(Replaced.Value);
+    if Candidateˉinspection.Status != Verification.Wvoˉstatus.Valid {
+        return Wvoˉrenameˉresult(false, Empty);
+    }
+    return Wvoˉrenameˉresult(true, Replaced.Value);
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 4u32 {
+        diagnostic.write_line("Usage: wvorename <input.wvo> <old-export> <new-export> <output.wvo>");
+        return 64;
+    }
+
+    let Inputˉpath: text = process.argument(0u32);
+    let Oldˉname: text = process.argument(1u32);
+    let Newˉname: text = process.argument(2u32);
+    let Outputˉpath: text = process.argument(3u32);
+    if !Pathˉisˉwvo(Inputˉpath) || !Pathˉisˉwvo(Outputˉpath) ||
+        Bytesˉareˉequal(Textˉtoˉutf8(Inputˉpath), Textˉtoˉutf8(Outputˉpath)) {
+        diagnostic.write_line("Usage: wvorename <input.wvo> <old-export> <new-export> <output.wvo>");
+        return 64;
+    }
+
+    let Result: Wvoˉrenameˉresult = Renameˉoneˉexport(
+        file.read_bytes(Inputˉpath),
+        Textˉtoˉutf8(Oldˉname),
+        Textˉtoˉutf8(Newˉname)
+    );
+    if !Result.Valid {
+        diagnostic.write_line("wvorename status=Rejected");
+        return 1;
+    }
+    file.write_bytes(Outputˉpath, Result.Value);
+    console.write_line("wvorename status=Complete");
+    return 0;
+}

@@ -49,14 +49,15 @@ The exact filter names and case counts are:
 | `console-packager-source-reconstruction` | 2 |
 | `publisher-rejections` | 2 |
 | `uefi-packager` | 3 |
+| `wvo-export-renamer` | 4 |
 | `os-probe` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 26 suites and 3,123 cases in manifest order. Its
+Omitting `--filter` selects all 27 suites and 3,127 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 26, Passed: 26, Failed: 0, Cases: 3123
+Suites: 27, Passed: 27, Failed: 0, Cases: 3127
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -513,18 +514,32 @@ Tools\Native\Build-Os-Probe.cmd C:\path\to\BOOTX64.EFI
 ./Tools/Native/Build-Os-Probe.sh /path/to/BOOTX64.EFI
 ```
 
-It validates ten frozen Stage 0 WVOs, compiles and lowers the canonical
-native-probe Windvale source, assembles three top-level WVA objects natively,
-links fourteen inputs, and packages the exact EFI. Use the focused retirement
-lane to check construction plus existing-output preservation:
+It validates nine frozen Stage 0 WVOs; compiles, lowers, and export-renames the
+canonical admission source; compiles and lowers the canonical native-probe
+source; assembles three top-level WVA objects natively; links fourteen inputs;
+and packages the exact EFI. Use the focused retirement lane to check construction
+plus existing-output preservation:
 
 ```bat
 Tools\Native\Test-Retirement-Suite.cmd --filter os-probe
 ```
 
-The frozen seed is a candidate bootstrap/distribution input. One source
-producer has moved to the native path; the other ten have not. Use the recovery
+The frozen seed is a candidate bootstrap/distribution input. Two source
+producers have moved to the native path; the other nine have not. Use the recovery
 command below only to regenerate and compare that provenance.
+
+To rename one admitted WVO export through the digest-bound native tool, use:
+
+```bat
+Tools\Native\Rename-Wvo-Export.cmd input.wvo Main Link_name output.wvo
+```
+
+```sh
+./Tools/Native/Rename-Wvo-Export.sh input.wvo Main Link_name output.wvo
+```
+
+The exact transformation and rejection rules are defined by the
+[WVO export-renamer contract](../../Specifications/Windvale-Wvo-Export-Renamer.md).
 
 The ordinary boot verifier consumes an already constructed EFI application; it
 does not build one or invoke `dotnet`. Bind the supplied bytes explicitly:
@@ -567,7 +582,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,123-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,127-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

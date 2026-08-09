@@ -1,6 +1,6 @@
 # Decision 0446: Native Probe 40 Windvale source producer
 
-- Status: Implemented current-host native-producer candidate; Linux execution pending
+- Status: Implemented current-host native-producer candidate; Linux execution pending; second source producer advanced by [Decision 0447](0447-Native-Probe-40-Admission-Source-Producer.md)
 - Date: 2026-08-09
 - Advances: [Decision 0445](0445-Digest-Bound-Native-Probe-40-Object-Seed.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
