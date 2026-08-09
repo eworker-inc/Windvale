@@ -119,5 +119,11 @@ run_or_fail record-field-index "$fixture_root/Record-Field-Index.wvb.b64" 1d5ed9
 run_or_fail duplicate-record-field "$fixture_root/Duplicate-Record-Field.wvb.b64" 73867dcf74f30f4b9237091aa59ea981200f4139636b67eb730bdb71752571b6 "$semantic_report"
 run_or_fail mismatched-enum-comparison "$fixture_root/Mismatched-Enum-Comparison.wvb.b64" 6ae2e65a43f68f0aa4b46b7ca306ad1dd06b72b1328e02e611f98e9f7abc869e "$typed_report"
 run_or_fail duplicate-nominal-name "$fixture_root/Duplicate-Nominal-Name.wvb.b64" 60d12d56015678f3197a1413cfb058bff64188a8e2256d09f504280fad805f9c "$semantic_report"
+run_or_fail mismatched-merge "$fixture_root/Mismatched-Merge.wvb.b64" f3f98931b5a701c805e9889768abe2c8536fb4ff04fd6a614ddf7f0732f6b7a2 "$typed_report"
+run_or_fail bytes-length-on-i32 "$fixture_root/Bytes-Length-On-I32.wvb.b64" f06d084a5f78b8d12e8503cfacd841565527c7a075dbcad40626e48f6d9e48c0 "$typed_report"
+run_or_fail record-create-wrong-field-type "$fixture_root/Record-Create-Wrong-Field-Type.wvb.b64" a074c6a8229870bb45a3de8764a2ffd51b8091f0e4d50f48330c560927ca4c59 "$typed_report"
+run_or_fail invalid-enum-member "$fixture_root/Invalid-Enum-Member.wvb.b64" ddd000954aeb8d0c02775128ae52615d9bf4237bda9741eb39e6f9efb4f2ddbe "$semantic_report"
+run_or_fail enum-const-on-record "$fixture_root/Enum-Const-On-Record.wvb.b64" 3d09445c44bf2d1e3f5b811f254e0bccc902366ad242ea4cf101fc44f23b99d8 "$semantic_report"
+run_or_fail duplicate-enum-value "$fixture_root/Duplicate-Enum-Value.wvb.b64" da453ca0cbe661ab695e21ce8f2ee2530a303ad996bbedfe6f0ae5e9bbb0a00c "$semantic_report"
 
 echo "Tests: $total, Passed: $passed, Failed: 0"

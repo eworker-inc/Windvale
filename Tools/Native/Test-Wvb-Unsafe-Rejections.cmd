@@ -41,6 +41,18 @@ call :run_case "mismatched-enum-comparison" "Tests\Native\Wvb-Unsafe-Rejections\
 if errorlevel 1 goto :failed
 call :run_case "duplicate-nominal-name" "Tests\Native\Wvb-Unsafe-Rejections\Duplicate-Nominal-Name.wvb.b64" "60d12d56015678f3197a1413cfb058bff64188a8e2256d09f504280fad805f9c" "4938c6906dfb318e36b11a2795699638f4cdef1bef12c477b5b726137cd3d9b5"
 if errorlevel 1 goto :failed
+call :run_case "mismatched-merge" "Tests\Native\Wvb-Unsafe-Rejections\Mismatched-Merge.wvb.b64" "f3f98931b5a701c805e9889768abe2c8536fb4ff04fd6a614ddf7f0732f6b7a2" "c083d8e4a7dbe48f3c72248285d6f4ace645202ca8f2013df1d51ab328db7930"
+if errorlevel 1 goto :failed
+call :run_case "bytes-length-on-i32" "Tests\Native\Wvb-Unsafe-Rejections\Bytes-Length-On-I32.wvb.b64" "f06d084a5f78b8d12e8503cfacd841565527c7a075dbcad40626e48f6d9e48c0" "c083d8e4a7dbe48f3c72248285d6f4ace645202ca8f2013df1d51ab328db7930"
+if errorlevel 1 goto :failed
+call :run_case "record-create-wrong-field-type" "Tests\Native\Wvb-Unsafe-Rejections\Record-Create-Wrong-Field-Type.wvb.b64" "a074c6a8229870bb45a3de8764a2ffd51b8091f0e4d50f48330c560927ca4c59" "c083d8e4a7dbe48f3c72248285d6f4ace645202ca8f2013df1d51ab328db7930"
+if errorlevel 1 goto :failed
+call :run_case "invalid-enum-member" "Tests\Native\Wvb-Unsafe-Rejections\Invalid-Enum-Member.wvb.b64" "ddd000954aeb8d0c02775128ae52615d9bf4237bda9741eb39e6f9efb4f2ddbe" "4938c6906dfb318e36b11a2795699638f4cdef1bef12c477b5b726137cd3d9b5"
+if errorlevel 1 goto :failed
+call :run_case "enum-const-on-record" "Tests\Native\Wvb-Unsafe-Rejections\Enum-Const-On-Record.wvb.b64" "3d09445c44bf2d1e3f5b811f254e0bccc902366ad242ea4cf101fc44f23b99d8" "4938c6906dfb318e36b11a2795699638f4cdef1bef12c477b5b726137cd3d9b5"
+if errorlevel 1 goto :failed
+call :run_case "duplicate-enum-value" "Tests\Native\Wvb-Unsafe-Rejections\Duplicate-Enum-Value.wvb.b64" "da453ca0cbe661ab695e21ce8f2ee2530a303ad996bbedfe6f0ae5e9bbb0a00c" "4938c6906dfb318e36b11a2795699638f4cdef1bef12c477b5b726137cd3d9b5"
+if errorlevel 1 goto :failed
 
 call :cleanup
 echo Tests: %Total%, Passed: %Passed%, Failed: 0

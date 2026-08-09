@@ -4240,6 +4240,28 @@ The other 23 lanes, managed wrapper, broad local verifier, Linux execution, and
 the grouped retirement gate were not run. Additional dynamic WVA vectors remain
 independent managed evidence until separately transferred or judged redundant.
 
+## Local fixed native typed-WVB rejection evidence
+
+[Decision 0430](../Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md)
+extends the existing unsafe-WVB lane with six compact fixed inputs covering a
+mismatched control-flow merge, `bytes.length` on `i32`, a record field with the
+wrong scalar type, an invalid enum member, `enum.const` on a record, and a
+duplicate enum value. Each 168-to-225-byte fixture is a separately verified
+valid base with one exact byte changed; the permanent host scripts only decode,
+digest-check, inspect, verify, and preserve those immutable inputs.
+
+The reviewed retirement plan remains 2,054 LF-only bytes and now has SHA-256
+`6ed50d6552342c996f2b109f30494a5aad94187046bbfe4907af1bbf0c0e6efb`,
+covering 24 suites and 3,044 fixed cases. The focused managed source assertion
+passed 1/1 while establishing fixture provenance. Its temporary instrumentation
+and binary generation directory were then removed, and the authoritative
+`Program.cs` remained unchanged.
+
+The reviewed Windows command `Test-Retirement-Suite.cmd --filter unsafe-wvb`
+passes its one selected suite and all 16 cases in 7.1 seconds. The other 23
+lanes, managed wrapper, broad local verifier, Linux execution, and grouped
+retirement gate were not run.
+
 ## Local multi-fragment current-lowerer reconstruction evidence
 
 [Decision 0420](../Decisions/0420-Multi-Fragment-Current-Lowerer-Reconstruction.md)

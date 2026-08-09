@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-This fixed contract exercises ten unsafe instruction-stream and nominal-type
+This fixed contract exercises sixteen unsafe instruction-stream, typed, and nominal-type
 boundaries through both digest-bound native WVB read-only launchers. It
 transfers stable phase, read-only, and process behavior without a live .NET
 oracle. It is not a replacement for the broader managed verifier suite or
@@ -36,6 +36,19 @@ rather than a host-side generator, are the permanent inputs:
 | `mismatched-enum-comparison` | 234 | second `enum.const` nominal index `0` to distinct enum `1` | `typed-execution` | `6ae2e65a43f68f0aa4b46b7ca306ad1dd06b72b1328e02e611f98e9f7abc869e` |
 | `duplicate-nominal-name` | 211 | enum name `Secon` to duplicate record name `First` | `semantic` | `60d12d56015678f3197a1413cfb058bff64188a8e2256d09f504280fad805f9c` |
 
+Six further compact fixtures start from valid WVB values serialized by the
+frozen Stage 0 oracle and change exactly one byte. Only the mutated base64 values
+are permanent:
+
+| Case | Bytes | Mutation | Phase | SHA-256 |
+| --- | ---: | --- | --- | --- |
+| `mismatched-merge` | 168 | branch target byte 116, `7` to `17` | `typed-execution` | `f3f98931b5a701c805e9889768abe2c8536fb4ff04fd6a614ddf7f0732f6b7a2` |
+| `bytes-length-on-i32` | 173 | code byte 128, `bytes.const` to `i32.const` | `typed-execution` | `f06d084a5f78b8d12e8503cfacd841565527c7a075dbcad40626e48f6d9e48c0` |
+| `record-create-wrong-field-type` | 185 | code byte 113, `u32.const` to `i32.const` | `typed-execution` | `a074c6a8229870bb45a3de8764a2ffd51b8091f0e4d50f48330c560927ca4c59` |
+| `invalid-enum-member` | 202 | member byte 118, `1` to missing `2` | `semantic` | `ddd000954aeb8d0c02775128ae52615d9bf4237bda9741eb39e6f9efb4f2ddbe` |
+| `enum-const-on-record` | 225 | nominal byte 114, enum `1` to record `0` | `semantic` | `3d09445c44bf2d1e3f5b811f254e0bccc902366ad242ea4cf101fc44f23b99d8` |
+| `duplicate-enum-value` | 192 | second value byte 188, `1` to duplicate `0` | `semantic` | `da453ca0cbe661ab695e21ce8f2ee2530a303ad996bbedfe6f0ae5e9bbb0a00c` |
+
 ## Rejection contract
 
 For every fixture, `Verify-Wvb.cmd` / `.sh` and `Inspect-Wvb.cmd` / `.sh` must:
@@ -51,12 +64,12 @@ The typed report is `wvb status=Invalid phase=typed-execution` plus LF at
 SHA-256
 `c083d8e4a7dbe48f3c72248285d6f4ace645202ca8f2013df1d51ab328db7930`.
 
-Success prints the ten ordered `PASS` lines followed by:
+Success prints the sixteen ordered `PASS` lines followed by:
 
 ```text
-Tests: 10, Passed: 10, Failed: 0
+Tests: 16, Passed: 16, Failed: 0
 ```
 
 The fixture set is representative, not exhaustive. Nominal count and value-size
-limits, every typed opcode family, hostile lengths, seeded random bytes, and
-random source/assembly remain separate evidence.
+limits, remaining typed opcode families, hostile lengths, seeded random bytes,
+and random source/assembly remain separate evidence.

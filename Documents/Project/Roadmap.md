@@ -82,6 +82,13 @@ and typed-scalar-x64 sources. Repeated native assembly, exact WVO identities,
 and independent WVO admission grow the plan to 24 suites and 3,038 cases.
 Additional dynamic WVA vectors, Linux execution, and the grouped gate remain.
 
+[Decision 0430](../Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md)
+extends the existing unsafe-WVB lane from ten to sixteen compact fixed cases by
+transferring six typed-control and nominal-shape rejections. The retirement plan
+remains 24 suites and now owns 3,044 cases. Larger value-limit cases, additional
+typed opcode families and dynamic WVA vectors, Linux execution, and the grouped
+gate remain.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

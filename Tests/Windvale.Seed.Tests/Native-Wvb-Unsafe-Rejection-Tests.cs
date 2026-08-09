@@ -18,7 +18,13 @@ internal static partial class Program
             "PASS  duplicate-record-field\n" +
             "PASS  mismatched-enum-comparison\n" +
             "PASS  duplicate-nominal-name\n" +
-            "Tests: 10, Passed: 10, Failed: 0\n",
+            "PASS  mismatched-merge\n" +
+            "PASS  bytes-length-on-i32\n" +
+            "PASS  record-create-wrong-field-type\n" +
+            "PASS  invalid-enum-member\n" +
+            "PASS  enum-const-on-record\n" +
+            "PASS  duplicate-enum-value\n" +
+            "Tests: 16, Passed: 16, Failed: 0\n",
             Result.Output);
         Equal(string.Empty, Result.Error);
     }

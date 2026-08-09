@@ -26,7 +26,7 @@ The exact filter names and case counts are:
 | Filter | Cases |
 | --- | ---: |
 | `seed` | 26 |
-| `unsafe-wvb` | 10 |
+| `unsafe-wvb` | 16 |
 | `wvb-containment` | 1,000 |
 | `wvo-read-only` | 13 |
 | `wvo-differential` | 256 |
@@ -50,11 +50,11 @@ The exact filter names and case counts are:
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 24 suites and 3,038 cases in manifest order. Its
+Omitting `--filter` selects all 24 suites and 3,044 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 24, Passed: 24, Failed: 0, Cases: 3038
+Suites: 24, Passed: 24, Failed: 0, Cases: 3044
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -139,7 +139,13 @@ PASS  record-field-index
 PASS  duplicate-record-field
 PASS  mismatched-enum-comparison
 PASS  duplicate-nominal-name
-Tests: 10, Passed: 10, Failed: 0
+PASS  mismatched-merge
+PASS  bytes-length-on-i32
+PASS  record-create-wrong-field-type
+PASS  invalid-enum-member
+PASS  enum-const-on-record
+PASS  duplicate-enum-value
+Tests: 16, Passed: 16, Failed: 0
 ```
 
 Both digest-bound WVB read-only launchers must reject every case with the exact
