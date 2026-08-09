@@ -81,7 +81,7 @@ set "FileOutputServiceSha256=fc688f2a84936dc1082fcb5654667a8a60b0581bff29b1868d4
 
 :target_ready
 
-call :verify_file "%Toolset%\SHA256SUMS" 5426 f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 5728 7e06db3950f3f89edfff09afd7a081ac9fccff49844f184cbbc58771acda2379 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"

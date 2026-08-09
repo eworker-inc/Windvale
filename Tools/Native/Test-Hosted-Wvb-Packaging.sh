@@ -24,6 +24,12 @@ cleanup() {
                 "$test_directory/Cross-Target.exe" \
                 "$test_directory/Cross-Target.out" \
                 "$test_directory/Cross-Target.err" \
+                "$test_directory/Verifier-Request.elf" \
+                "$test_directory/Verifier-Request.exe" \
+                "$test_directory/Verifier-Request.out" \
+                "$test_directory/Verifier-Request.err" \
+                "$test_directory/Verifier-Request-Windows.out" \
+                "$test_directory/Verifier-Request-Windows.err" \
                 "$test_directory/Invalid.wvb" \
                 "$test_directory/Destination.elf" \
                 "$test_directory/Invalid.out" \
@@ -95,6 +101,39 @@ cmp --silent -- "$test_directory/Cross-Target.exe" "$toolset/windows-x64/wvhostc
 check_no_scratch
 echo 'PASS  hosted packaging exact cross-target Windows application'
 
+if ! "$script_directory/Package-Hosted-Wvb.sh" 1 \
+    "$toolset/Wvb/wvhostverifierrequest.wvb" "$test_directory/Verifier-Request.elf" \
+    >"$test_directory/Verifier-Request.out" 2>"$test_directory/Verifier-Request.err"; then
+    cat -- "$test_directory/Verifier-Request.out" "$test_directory/Verifier-Request.err" >&2
+    fail 'verifier request packaging failed'
+fi
+[[ ! -s $test_directory/Verifier-Request.err ]] || fail 'verifier request packaging wrote a diagnostic'
+check_file \
+    "$test_directory/Verifier-Request.elf" 188416 \
+    cfd0071c3d103ca0feedb33370b81bc3edb0b41e8bb95ee9744d1b53342fb6bd \
+    'verifier request package'
+cmp --silent -- "$test_directory/Verifier-Request.elf" "$toolset/linux-x64/wvhostverifierrequest.elf" ||
+    fail 'verifier request package differs from the candidate'
+[[ -x $test_directory/Verifier-Request.elf ]] || fail 'verifier request package is not executable'
+check_no_scratch
+echo 'PASS  hosted packaging exact verifier request Linux application'
+
+if ! "$script_directory/Package-Hosted-Wvb.sh" 1 \
+    "$toolset/Wvb/wvhostverifierrequest.wvb" "$test_directory/Verifier-Request.exe" windows \
+    >"$test_directory/Verifier-Request-Windows.out" 2>"$test_directory/Verifier-Request-Windows.err"; then
+    cat -- "$test_directory/Verifier-Request-Windows.out" "$test_directory/Verifier-Request-Windows.err" >&2
+    fail 'cross-target verifier request packaging failed'
+fi
+[[ ! -s $test_directory/Verifier-Request-Windows.err ]] || fail 'cross-target verifier request packaging wrote a diagnostic'
+check_file \
+    "$test_directory/Verifier-Request.exe" 187904 \
+    dc42cd573e26ba8617a7323089f2c140f0488ec0cb3b9a6e4b77d5c4d7fbd4d5 \
+    'cross-target verifier request package'
+cmp --silent -- "$test_directory/Verifier-Request.exe" "$toolset/windows-x64/wvhostverifierrequest.exe" ||
+    fail 'cross-target verifier request package differs from the candidate'
+check_no_scratch
+echo 'PASS  hosted packaging exact cross-target verifier request Windows application'
+
 cp -- "$toolset/SHA256SUMS" "$test_directory/Invalid.wvb" || fail 'invalid input staging failed'
 cp -- "$toolset/SHA256SUMS" "$test_directory/Destination.elf" || fail 'sentinel staging failed'
 "$script_directory/Package-Hosted-Wvb.sh" 1 \
@@ -103,15 +142,15 @@ cp -- "$toolset/SHA256SUMS" "$test_directory/Destination.elf" || fail 'sentinel 
 status=$?
 [[ $status -ne 0 ]] || fail 'invalid WVB was accepted'
 check_file \
-    "$test_directory/Destination.elf" 5426 \
-    f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d \
+    "$test_directory/Destination.elf" 5728 \
+    7e06db3950f3f89edfff09afd7a081ac9fccff49844f184cbbc58771acda2379 \
     'preserved destination'
 check_file \
-    "$test_directory/Invalid.wvb" 5426 \
-    f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d \
+    "$test_directory/Invalid.wvb" 5728 \
+    7e06db3950f3f89edfff09afd7a081ac9fccff49844f184cbbc58771acda2379 \
     'preserved input'
 check_no_scratch
 echo 'PASS  hosted packaging rejects invalid WVB and preserves resources'
 result=0
-echo 'Tests: 3, Passed: 3, Failed: 0'
+echo 'Tests: 5, Passed: 5, Failed: 0'
 exit "$result"

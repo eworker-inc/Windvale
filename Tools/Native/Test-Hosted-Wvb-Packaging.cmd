@@ -51,6 +51,40 @@ call :check_no_scratch
 if errorlevel 1 goto :failed
 echo PASS  hosted packaging exact cross-target Linux application
 
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
+    "%Toolset%\Wvb\wvhostverifierrequest.wvb" "%TestDirectory%\Verifier-Request.exe" ^
+    >"%TestDirectory%\Verifier-Request.out" 2>"%TestDirectory%\Verifier-Request.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Verifier-Request.err" "verifier request packaging wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Verifier-Request.exe" 187904 dc42cd573e26ba8617a7323089f2c140f0488ec0cb3b9a6e4b77d5c4d7fbd4d5 "verifier request package"
+if errorlevel 1 goto :failed
+fc /b "%TestDirectory%\Verifier-Request.exe" "%Toolset%\windows-x64\wvhostverifierrequest.exe" >nul
+if errorlevel 1 (
+    >&2 echo FAIL  hosted packaging: verifier request package differs from the candidate
+    goto :failed
+)
+call :check_no_scratch
+if errorlevel 1 goto :failed
+echo PASS  hosted packaging exact verifier request Windows application
+
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
+    "%Toolset%\Wvb\wvhostverifierrequest.wvb" "%TestDirectory%\Verifier-Request.elf" linux ^
+    >"%TestDirectory%\Verifier-Request-Linux.out" 2>"%TestDirectory%\Verifier-Request-Linux.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Verifier-Request-Linux.err" "cross-target verifier request packaging wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Verifier-Request.elf" 188416 cfd0071c3d103ca0feedb33370b81bc3edb0b41e8bb95ee9744d1b53342fb6bd "cross-target verifier request package"
+if errorlevel 1 goto :failed
+fc /b "%TestDirectory%\Verifier-Request.elf" "%Toolset%\linux-x64\wvhostverifierrequest.elf" >nul
+if errorlevel 1 (
+    >&2 echo FAIL  hosted packaging: cross-target verifier request package differs from the candidate
+    goto :failed
+)
+call :check_no_scratch
+if errorlevel 1 goto :failed
+echo PASS  hosted packaging exact cross-target verifier request Linux application
+
 copy /y "%Toolset%\SHA256SUMS" "%TestDirectory%\Invalid.wvb" >nul || goto :failed
 copy /y "%Toolset%\SHA256SUMS" "%TestDirectory%\Destination.exe" >nul || goto :failed
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
@@ -60,9 +94,9 @@ if not errorlevel 1 (
     >&2 echo FAIL  hosted packaging: invalid WVB was accepted
     goto :failed
 )
-call :check_file "%TestDirectory%\Destination.exe" 5426 f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d "preserved destination"
+call :check_file "%TestDirectory%\Destination.exe" 5728 7e06db3950f3f89edfff09afd7a081ac9fccff49844f184cbbc58771acda2379 "preserved destination"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvb" 5426 f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d "preserved input"
+call :check_file "%TestDirectory%\Invalid.wvb" 5728 7e06db3950f3f89edfff09afd7a081ac9fccff49844f184cbbc58771acda2379 "preserved input"
 if errorlevel 1 goto :failed
 call :check_no_scratch
 if errorlevel 1 goto :failed
@@ -106,9 +140,9 @@ set "Result=1"
 
 :cleanup
 set "TEMP=%OriginalTemp%"
-for %%F in (Valid.exe Valid.out Valid.err Cross-Target.elf Cross-Target.out Cross-Target.err Invalid.wvb Destination.exe Invalid.out Invalid.err) do (
+for %%F in (Valid.exe Valid.out Valid.err Cross-Target.elf Cross-Target.out Cross-Target.err Verifier-Request.exe Verifier-Request.elf Verifier-Request.out Verifier-Request.err Verifier-Request-Linux.out Verifier-Request-Linux.err Invalid.wvb Destination.exe Invalid.out Invalid.err) do (
     if exist "%TestDirectory%\%%F" del /f /q "%TestDirectory%\%%F" >nul 2>nul
 )
 rmdir "%TestDirectory%" >nul 2>nul
-if "%Result%"=="0" echo Tests: 3, Passed: 3, Failed: 0
+if "%Result%"=="0" echo Tests: 5, Passed: 5, Failed: 0
 exit /b %Result%

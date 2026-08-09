@@ -1,12 +1,12 @@
 {
   "format": "windvale-native-hosted-container-toolset-candidate-1",
   "status": "candidate",
-  "sourceDecision": "0460",
+  "sourceDecision": "0466",
   "qualification": "pending",
   "construction": "stage0-recovery-package-wiring",
   "nativeSourceConstruction": "verified-digest-bound-front-door",
-  "sha256SumsBytes": 5426,
-  "sha256SumsSha256": "f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d",
+  "sha256SumsBytes": 5728,
+  "sha256SumsSha256": "7e06db3950f3f89edfff09afd7a081ac9fccff49844f184cbbc58771acda2379",
   "commands": [
     { "name": "wvhostenumrequest", "sourceProject": "Windvale-Native-Hosted-Enum-Request-Tool.wvproj", "target": "hosted-enum-request-v1" },
     { "name": "wvhostenumservice", "sourceProject": "Windvale-Native-Hosted-Enum-Service-Tool.wvproj", "target": "hosted-enum-service-v1" },
@@ -26,6 +26,7 @@
     { "name": "wvhostsegmentrequest", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Request-Tool.wvproj", "target": "hosted-container-segment-request-v1" },
     { "name": "wvhostsegment", "sourceProject": "Windvale-Native-Hosted-Container-Segmenter-Tool.wvproj", "target": "hosted-container-segmenter-v1" },
     { "name": "wvhostsegmentmanifest", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Manifest-Tool.wvproj", "target": "hosted-container-segment-manifest-v1" },
-    { "name": "wvhostpublish", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Set-Admission-Tool.wvproj", "target": "hosted-container-publisher-v1" }
+    { "name": "wvhostpublish", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Set-Admission-Tool.wvproj", "target": "hosted-container-publisher-v1" },
+    { "name": "wvhostverifierrequest", "sourceProject": "Windvale-Native-Hosted-Verifier-Metadata-Request-Tool.wvproj", "target": "hosted-verifier-metadata-request-v1" }
   ]
 }

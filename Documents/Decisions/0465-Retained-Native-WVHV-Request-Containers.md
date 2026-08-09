@@ -1,6 +1,6 @@
 # Decision 0465: Retained native WVHV request containers
 
-- Status: Implemented current-host candidate; native package reconstruction and dual-host promotion pending
+- Status: Implemented candidate; native package reconstruction completed by Decision 0466, dual-host promotion pending
 - Date: 2026-08-09
 - Advances: [Decision 0464](0464-Native-WVHV-Evidence-Process.md), [Decision 0415](0415-Managed-Hosted-Tool-Aot-Recovery-Lane.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [native hosted-verifier metadata request](../../Specifications/Windvale-Native-Hosted-Verifier-Metadata-Request.md)
@@ -47,10 +47,11 @@ native hashing process, and reproduces the exact frozen-oracle request for both
 verifier targets.
 
 This closes retained Stage 0 container identities and current-host execution
-for the request wrapper. Native reconstruction of those containers, the
-six-service verifier bundle process, startup, final verifier container,
-independent Linux execution, and promotion remain. No broad Seed, OS,
-Standard, Qualification, WebAssembly, or QEMU gate ran.
+for the request wrapper. [Decision 0466](0466-Native-WVHV-Request-Container-Reconstruction.md)
+subsequently closes native reconstruction of both containers. The six-service
+verifier bundle process, startup, final verifier container, independent Linux
+execution, and promotion remain. No broad Seed, OS, Standard, Qualification,
+WebAssembly, or QEMU gate ran.
 
 ## Reconsideration triggers
 
