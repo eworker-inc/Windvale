@@ -1,0 +1,41 @@
+{
+  "format": "windvale-baseline-jit-publisher-candidate-1",
+  "status": "candidate",
+  "contract": "WVJP 1 plus WVLT 1",
+  "architecture": "x86-64",
+  "materializedCodeBytes": 6,
+  "allocationBytes": 4096,
+  "sources": [
+    {
+      "path": "Runtime/Native/Baseline-Jit-Patch-Plan-X64.wva",
+      "bytes": 3674,
+      "sha256": "4ffcde403c7ddbf32e8a38091d55845eaeacdaba77b6f632890aeee158881ce8"
+    },
+    {
+      "path": "Runtime/Native/Windows-X64-Baseline-Jit-Publisher.wva",
+      "bytes": 6639,
+      "sha256": "32a568e6b171b4c465d85afb3b2866de77dd6087e60f9328b56181fa7f062c4c"
+    },
+    {
+      "path": "Runtime/Native/Linux-X64-Baseline-Jit-Publisher.wva",
+      "bytes": 4105,
+      "sha256": "65ffb459a490ff0d466c208d6c2582d89a8b9ea6ad07bbd8089951d5a404392c"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "windows-x64/Baseline-Jit-Publisher.exe",
+      "target": "windows-x64",
+      "bytes": 3584,
+      "sha256": "fc7566f38457229444836b88aff48df09309b3bad242d1cac2eb2f432311ab39",
+      "localExecution": "passed"
+    },
+    {
+      "path": "linux-x64/Baseline-Jit-Publisher.elf",
+      "target": "linux-x64-console-v1",
+      "bytes": 8304,
+      "sha256": "371f0aaaa5200c5767947892f99376e3c649b86dfa8ae5d78e2474aad4a667ea",
+      "localExecution": "pending"
+    }
+  ]
+}

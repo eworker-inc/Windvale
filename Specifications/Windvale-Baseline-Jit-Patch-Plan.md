@@ -89,11 +89,12 @@ length has been established.
   invoke generated code, provide a general baseline JIT, or satisfy the .NET
   retirement gate by itself.
 
-The next contract must publish verified materialized bytes through an explicit
+The bounded [native publication candidate](Windvale-Native-Baseline-Jit-Publication.md)
+now publishes these verified materialized bytes through the exact `WVLT 1`
 write-then-execute lifetime: writable while copying, executable only after a
 successful permission transition, never writable and executable at the same
-time, and torn down on every completion or failure path. Windows and Linux
-must qualify that boundary independently.
+time, and torn down on every completion or failure path. Windows execution is
+locally proven; Linux execution and paired-host qualification remain.
 
 ## Verification
 

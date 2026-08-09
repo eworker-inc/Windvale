@@ -1,0 +1,305 @@
+windvale-assembly 1
+
+# Windows x64 WVJP 1 publication owner. The PE import directory binds exactly
+# VirtualAlloc, VirtualProtect, FlushInstructionCache, and VirtualFree.
+symbol local function Windows_baseline_jit_run_one in .text
+symbol local function Windows_baseline_jit_seal_failure in .text
+symbol local data Windows_jit_import_lookup in .rodata
+symbol local data Windows_jit_kernel32_name in .rodata
+symbol local data Windows_jit_name_flush_instruction_cache in .rodata
+symbol local data Windows_jit_name_virtual_alloc in .rodata
+symbol local data Windows_jit_name_virtual_free in .rodata
+symbol local data Windows_jit_name_virtual_protect in .rodata
+symbol export function Main in .text
+symbol export data Windows_jit_import_addresses in .rodata
+symbol export data Windows_jit_import_descriptor in .rodata
+symbol import data Baseline_jit_lifetime_invalid
+symbol import data Baseline_jit_lifetime_plan
+symbol import function Baseline_jit_lifetime_verify
+symbol import data Baseline_jit_plan_42
+symbol import data Baseline_jit_plan_invalid
+symbol import data Baseline_jit_plan_negative
+symbol import function Baseline_jit_plan_verify
+
+section code .text align 16
+define Windows_baseline_jit_run_one
+push rbx
+push rsi
+push rdi
+subtract_i32 rsp 48
+move rsi r8
+move edi r9d
+call Baseline_jit_plan_verify
+test eax eax
+branch not_equal Invalid_plan
+
+# VirtualAlloc(NULL, 4096, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE)
+xor rcx rcx
+move_u32 edx 4096
+move_u32 r8d 12288
+move_u32 r9d 4
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 0
+call_register rax
+test rax rax
+branch equal Allocate_failed
+move rbx rax
+
+# Materialize exactly B8 <i32> C3 while the page is RW/NX.
+move_u8 al 184
+store_memory_u8 rbx none 1 0 al
+load_memory_u32 eax rsi none 1 44
+store_memory_u32 rbx none 1 1 eax
+move_u8 al 195
+store_memory_u8 rbx none 1 5 al
+
+# VirtualProtect(base, 4096, PAGE_EXECUTE_READ, &old_protect)
+move rcx rbx
+move_u32 edx 4096
+move_u32 r8d 32
+move r9 rsp
+add_i32 r9 32
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 8
+call_register rax
+test eax eax
+branch equal Seal_failed
+
+# FlushInstructionCache((HANDLE)-1, base, 6)
+xor rcx rcx
+subtract_i32 rcx 1
+move rdx rbx
+move_u32 r8d 6
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 16
+call_register rax
+test eax eax
+branch equal Flush_failed
+
+call_register rbx
+xor esi esi
+compare eax edi
+branch equal Release
+move_u32 esi 4
+
+label Release
+move rcx rbx
+xor edx edx
+move_u32 r8d 32768
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 24
+call_register rax
+test eax eax
+branch not_equal Complete
+move_u32 esi 5
+label Complete
+move eax esi
+add_i32 rsp 48
+pop rdi
+pop rsi
+pop rbx
+return
+
+label Flush_failed
+move_u32 esi 6
+jump_label Release
+
+label Seal_failed
+move_u32 esi 3
+jump_label Release
+
+label Allocate_failed
+move_u32 eax 2
+add_i32 rsp 48
+pop rdi
+pop rsi
+pop rbx
+return
+
+label Invalid_plan
+move_u32 eax 1
+add_i32 rsp 48
+pop rdi
+pop rsi
+pop rbx
+return
+end define
+
+define Windows_baseline_jit_seal_failure
+push rbx
+push rsi
+push rdi
+subtract_i32 rsp 48
+xor rcx rcx
+move_u32 edx 4096
+move_u32 r8d 12288
+move_u32 r9d 4
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 0
+call_register rax
+test rax rax
+branch equal Failure_allocate
+move rbx rax
+
+# A zero-length transition must fail and leave the RW/NX mapping releasable.
+move rcx rbx
+xor edx edx
+move_u32 r8d 32
+move r9 rsp
+add_i32 r9 32
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 8
+call_register rax
+test eax eax
+branch equal Expected_failure
+move_u32 esi 7
+jump_label Failure_release
+
+label Expected_failure
+xor esi esi
+label Failure_release
+move rcx rbx
+xor edx edx
+move_u32 r8d 32768
+load_address rax Windows_jit_import_addresses
+load_memory_u64 rax rax none 1 24
+call_register rax
+test eax eax
+branch not_equal Failure_complete
+move_u32 esi 8
+label Failure_complete
+move eax esi
+add_i32 rsp 48
+pop rdi
+pop rsi
+pop rbx
+return
+
+label Failure_allocate
+move_u32 eax 9
+add_i32 rsp 48
+pop rdi
+pop rsi
+pop rbx
+return
+end define
+
+define Main
+push rbx
+load_address r8 Baseline_jit_lifetime_plan
+call Baseline_jit_lifetime_verify
+test eax eax
+branch equal Invalid_lifetime_case
+move_u32 eax 10
+jump_label Main_complete
+
+label Invalid_lifetime_case
+load_address r8 Baseline_jit_lifetime_invalid
+call Baseline_jit_lifetime_verify
+test eax eax
+branch not_equal Invalid_patch_case
+move_u32 eax 11
+jump_label Main_complete
+
+label Invalid_patch_case
+load_address r8 Baseline_jit_plan_invalid
+call Baseline_jit_plan_verify
+test eax eax
+branch not_equal Valid_cases
+move_u32 eax 12
+jump_label Main_complete
+
+label Valid_cases
+load_address r8 Baseline_jit_plan_42
+move_u32 r9d 42
+call Windows_baseline_jit_run_one
+test eax eax
+branch equal Negative_case
+add_i32 eax 20
+jump_label Main_complete
+
+label Negative_case
+load_address r8 Baseline_jit_plan_negative
+move_i32 r9d -1
+call Windows_baseline_jit_run_one
+test eax eax
+branch equal Seal_failure_case
+add_i32 eax 30
+jump_label Main_complete
+
+label Seal_failure_case
+call Windows_baseline_jit_seal_failure
+test eax eax
+branch equal Main_success
+add_i32 eax 40
+jump_label Main_complete
+
+label Main_success
+xor eax eax
+label Main_complete
+pop rbx
+return
+end define
+end section
+
+section rodata .rodata align 8
+define Windows_jit_import_lookup
+address_u32 Windows_jit_name_virtual_alloc
+u32 0
+address_u32 Windows_jit_name_virtual_protect
+u32 0
+address_u32 Windows_jit_name_flush_instruction_cache
+u32 0
+address_u32 Windows_jit_name_virtual_free
+u32 0
+u32 0
+u32 0
+end define
+
+define Windows_jit_import_addresses
+address_u32 Windows_jit_name_virtual_alloc
+u32 0
+address_u32 Windows_jit_name_virtual_protect
+u32 0
+address_u32 Windows_jit_name_flush_instruction_cache
+u32 0
+address_u32 Windows_jit_name_virtual_free
+u32 0
+u32 0
+u32 0
+end define
+
+define Windows_jit_import_descriptor
+address_u32 Windows_jit_import_lookup
+u32 0
+u32 0
+address_u32 Windows_jit_kernel32_name
+address_u32 Windows_jit_import_addresses
+u32 0
+u32 0
+u32 0
+u32 0
+u32 0
+end define
+
+define Windows_jit_kernel32_name
+bytes 75 69 82 78 69 76 51 50 46 100 108 108 0 0
+end define
+
+define Windows_jit_name_virtual_alloc
+bytes 0 0 86 105 114 116 117 97 108 65 108 108 111 99 0 0
+end define
+
+define Windows_jit_name_virtual_protect
+bytes 0 0 86 105 114 116 117 97 108 80 114 111 116 101 99 116 0 0
+end define
+
+define Windows_jit_name_flush_instruction_cache
+bytes 0 0 70 108 117 115 104 73 110 115 116 114 117 99
+bytes 116 105 111 110 67 97 99 104 101 0
+end define
+
+define Windows_jit_name_virtual_free
+bytes 0 0 86 105 114 116 117 97 108 70 114 101 101 0
+end define
+end section

@@ -47,6 +47,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native WVB unsafe rejection tests](Windvale-Native-Wvb-Unsafe-Rejection-Tests.md)
 - [Native retirement test suite](Windvale-Native-Retirement-Test-Suite.md)
 - [Baseline-JIT patch plan](Windvale-Baseline-Jit-Patch-Plan.md)
+- [Native baseline-JIT publication](Windvale-Native-Baseline-Jit-Publication.md)
 
 ## Database experiment
 

@@ -1,0 +1,138 @@
+windvale-assembly 1
+
+# Shared closed WVJP 1 admission leaf and fixed evidence plans. R8 points to
+# exactly 54 readable bytes. EAX returns zero only for the exact version-1
+# x86-64 one-record shape; the immediate at bytes 44..47 may vary.
+symbol export data Baseline_jit_lifetime_invalid in .rodata
+symbol export data Baseline_jit_lifetime_plan in .rodata
+symbol export function Baseline_jit_lifetime_verify in .text
+symbol export data Baseline_jit_plan_42 in .rodata
+symbol export data Baseline_jit_plan_invalid in .rodata
+symbol export data Baseline_jit_plan_negative in .rodata
+symbol export function Baseline_jit_plan_verify in .text
+
+section code .text align 16
+define Baseline_jit_lifetime_verify
+load_address r9 Baseline_jit_lifetime_plan
+xor ecx ecx
+label Lifetime_compare
+compare_i32 ecx 140
+branch above_equal Lifetime_valid
+load_memory_u8 al r8 rcx 1 0
+load_memory_u8 dl r9 rcx 1 0
+compare al dl
+branch not_equal Lifetime_invalid
+add_i32 ecx 1
+jump_label Lifetime_compare
+
+label Lifetime_valid
+xor eax eax
+return
+label Lifetime_invalid
+move_u32 eax 1
+return
+end define
+
+define Baseline_jit_plan_verify
+load_memory_u32 eax r8 none 1 0
+compare_i32 eax 1347049047
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 4
+compare_i32 eax 65537
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 8
+compare_i32 eax 54
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 12
+compare_i32 eax 174
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 16
+compare_i32 eax 6
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 20
+compare_i32 eax 1
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 24
+compare_i32 eax 1
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 28
+compare_i32 eax 4
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 32
+compare_i32 eax 1
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 36
+test eax eax
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 40
+test eax eax
+branch not_equal Invalid
+load_memory_u32 eax r8 none 1 48
+compare_i32 eax 184
+branch not_equal Invalid
+load_memory_u8 al r8 none 1 52
+test al al
+branch not_equal Invalid
+load_memory_u8 al r8 none 1 53
+move_u8 cl 195
+compare al cl
+branch not_equal Invalid
+xor eax eax
+return
+
+label Invalid
+move_u32 eax 1
+return
+end define
+end section
+
+section rodata .rodata align 4
+define Baseline_jit_lifetime_invalid
+bytes 0 86 76 84 1 0 0 0 140 0 0 0 0 0 0 0
+bytes 20 0 0 0 6 0 0 0 9 0 0 0 0 0 0 0
+bytes 0 0 0 0 1 0 0 0 1 0 0 0
+bytes 1 0 0 0 2 0 0 0 2 0 0 0
+bytes 1 0 0 0 5 0 0 0 5 0 0 0
+bytes 2 0 0 0 3 0 0 0 3 0 0 0
+bytes 2 0 0 0 5 0 0 0 5 0 0 0
+bytes 3 0 0 0 4 0 0 0 4 0 0 0
+bytes 3 0 0 0 5 0 0 0 5 0 0 0
+bytes 4 0 0 0 5 0 0 0 5 0 0 0
+bytes 5 0 0 0 6 0 0 0 5 0 0 0
+end define
+
+define Baseline_jit_lifetime_plan
+bytes 87 86 76 84 1 0 0 0 140 0 0 0 0 0 0 0
+bytes 20 0 0 0 6 0 0 0 9 0 0 0 0 0 0 0
+bytes 0 0 0 0 1 0 0 0 1 0 0 0
+bytes 1 0 0 0 2 0 0 0 2 0 0 0
+bytes 1 0 0 0 5 0 0 0 5 0 0 0
+bytes 2 0 0 0 3 0 0 0 3 0 0 0
+bytes 2 0 0 0 5 0 0 0 5 0 0 0
+bytes 3 0 0 0 4 0 0 0 4 0 0 0
+bytes 3 0 0 0 5 0 0 0 5 0 0 0
+bytes 4 0 0 0 5 0 0 0 5 0 0 0
+bytes 5 0 0 0 6 0 0 0 5 0 0 0
+end define
+
+define Baseline_jit_plan_42
+bytes 87 86 74 80 1 0 1 0 54 0 0 0 174 0 0 0
+bytes 6 0 0 0 1 0 0 0 1 0 0 0 4 0 0 0
+bytes 1 0 0 0 0 0 0 0 0 0 0 0 42 0 0 0
+bytes 184 0 0 0 0 195
+end define
+
+define Baseline_jit_plan_invalid
+bytes 0 86 74 80 1 0 1 0 54 0 0 0 174 0 0 0
+bytes 6 0 0 0 1 0 0 0 1 0 0 0 4 0 0 0
+bytes 1 0 0 0 0 0 0 0 0 0 0 0 42 0 0 0
+bytes 184 0 0 0 0 195
+end define
+
+define Baseline_jit_plan_negative
+bytes 87 86 74 80 1 0 1 0 54 0 0 0 174 0 0 0
+bytes 6 0 0 0 1 0 0 0 1 0 0 0 4 0 0 0
+bytes 1 0 0 0 0 0 0 0 0 0 0 0 255 255 255 255
+bytes 184 0 0 0 0 195
+end define
+end section
