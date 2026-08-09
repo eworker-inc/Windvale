@@ -1,6 +1,6 @@
 # Decision 0423: Compiler-scale native lowerer admission
 
-- Status: Implemented candidate; compiler-scale liveness lifetime work pending
+- Status: Implemented candidate; compiler-scale native staging completes
 - Date: 2026-08-08
 - Advances: [Decision 0420](0420-Multi-Fragment-Current-Lowerer-Reconstruction.md) and [Decision 0304](0304-Digest-Bound-Native-Wvb-To-Wvo-Candidate.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
@@ -65,12 +65,10 @@ byte.
 Compiler probes successively clear function 39's 350-local dense-interference
 failure, function 245's missing shifts, function 246's missing bitwise family,
 function 308's 214-value block, and function 312's former 512-local admission
-failure. Function 312 then begins the real 674-local fixed-point liveness work,
-but the current native staging process exits before returning a Windvale status
-or writing a first chunk. Its Stage 0 plan uses 229 persistent and 147 scratch
-field cells, so frame capacity is not the blocker. The next N1 slice must reduce
-immutable liveness/interference update lifetime; increasing another semantic or
-frame limit is not justified by this evidence.
+failure. Function 312's Stage 0 plan uses 229 persistent and 147 scratch field
+cells, so frame capacity is not the blocker. The remaining failures were native
+lifetime failures caused by repeatedly rebuilding growing immutable byte
+buffers; increasing another semantic or frame limit was not justified.
 
 The first lifetime slice stores the fixed-point `Liveˉin` table as row-aligned
 packed bits, reducing function 312's table from 178,610 bytes to 22,525 bytes
@@ -81,8 +79,27 @@ Repeated immutable interference-row replacement is therefore the next measured
 hotspot; the packed fixed-point table is retained as an independently verified
 improvement.
 
-The current ordinary candidate is a 404,793-byte WVB with SHA-256
-`2c51319b5dd62c43dca5942b276bb4a29a145cf3b67a51c0e77e3e5b44353317`.
+The second lifetime slice records interference evidence per control-flow block,
+folds each bounded event set into a row-aligned packed matrix, and constructs
+the expanded local-offset directory sequentially. Function 312's complete
+persistent and scratch storage plan then returns in about five seconds. The
+first newly reachable emission failure is function 306,
+`Compilerˉsourceˉwirˉcompileˉexpression`, whose 1,303 locals approach the
+2,048-cell frame envelope. Bounded 4 KiB code and prologue chunks with a 64 KiB
+aggregation tier preserve exact machine bytes without repeatedly rebuilding a
+large function prefix.
+
+A direct Windows native staging probe now completes the 914,746-byte compiler
+input in about 98 seconds. It reports a 27,458,862-byte WVO split into 167
+bounded chunks with a 2,028-byte manifest. The focused record-lifetime,
+674-record-local, and maximum-frame chunked-emission owners pass exact
+differential comparison. This is candidate evidence, not the final dual-host
+qualification gate.
+
+The current ordinary candidate is a 408,243-byte WVB with SHA-256
+`a118468779796449dfadbdaeba202b4460748963573fa74fbd9fda4b1ff2e755`.
+The segmented producer is a 432,433-byte WVB with SHA-256
+`cf305684a62441bce0d532872e04b9ad9e62a200be62be01ecf120f31f9a8835`.
 Its Stage 0-constructed Windows and Linux containers remain candidate artifacts,
 not qualified replacements. No C# compiler or runtime implementation changes
 are part of this decision.

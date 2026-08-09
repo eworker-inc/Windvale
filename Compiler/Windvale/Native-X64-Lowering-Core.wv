@@ -3951,6 +3951,8 @@ fn Compilerˉnativeˉx64ˉemitˉcontrolˉprologue(
     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 49u8);
     Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 192u8);
     let Hasˉhiddenˉresult: bool = Returnsˉrecord || Returnsˉdescriptor;
+    var Zeroˉprefix: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Zeroˉgroup: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Zeroˉoffset: u32 = 0u32;
     while Zeroˉoffset < Frameˉbytes {
         if !Hasˉhiddenˉresult || Zeroˉoffset < Hiddenˉresultˉslot * 16u32 ||
@@ -3961,6 +3963,14 @@ fn Compilerˉnativeˉx64ˉemitˉcontrolˉprologue(
             );
         }
         Zeroˉoffset = Zeroˉoffset + 4u32;
+        if Bytesˉlength(Result) >= 4096u32 {
+            Zeroˉgroup = Bytesˉconcat(Zeroˉgroup, Result);
+            Result = Compilerˉnativeˉx64ˉempty(Input);
+            if Bytesˉlength(Zeroˉgroup) >= 65536u32 {
+                Zeroˉprefix = Bytesˉconcat(Zeroˉprefix, Zeroˉgroup);
+                Zeroˉgroup = Compilerˉnativeˉx64ˉempty(Input);
+            }
+        }
     }
     if Returnsˉrecord {
         Result = Records.Compilerˉnativeˉx64ˉemitˉrecordˉcheckpoint(
@@ -3974,10 +3984,13 @@ fn Compilerˉnativeˉx64ˉemitˉcontrolˉprologue(
             Hiddenˉresultˉslot
         );
     }
-    return Callˉarguments.Compilerˉnativeˉx64ˉemitˉcallˉparameters(
-        Result,
-        Bytesˉslice(Function.Localˉtypes, 0u32, Function.Parameters),
-        Frameˉbytes
+    return Bytesˉconcat(
+        Bytesˉconcat(Zeroˉprefix, Zeroˉgroup),
+        Callˉarguments.Compilerˉnativeˉx64ˉemitˉcallˉparameters(
+            Result,
+            Bytesˉslice(Function.Localˉtypes, 0u32, Function.Parameters),
+            Frameˉbytes
+        )
     );
 }
 
@@ -4499,6 +4512,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
             Analysis
         );
     var Emittedˉprefix: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Emittedˉgroup: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Emittedˉprefixˉbytes: u32 = 0u32;
     var Result: bytes = Compilerˉnativeˉx64ˉemitˉcontrolˉprologue(
         Input,
@@ -5001,10 +5015,17 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
         Cursor = Cursor + Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
         // Keep immutable code assembly bounded while preserving function-relative offsets.
         if Bytesˉlength(Result) >= 4096u32 {
-            Emittedˉprefix = Bytesˉconcat(Emittedˉprefix, Result);
+            Emittedˉgroup = Bytesˉconcat(Emittedˉgroup, Result);
             Emittedˉprefixˉbytes = Emittedˉprefixˉbytes +
                 Bytesˉlength(Result);
             Result = Compilerˉnativeˉx64ˉempty(Input);
+            if Bytesˉlength(Emittedˉgroup) >= 65536u32 {
+                Emittedˉprefix = Bytesˉconcat(
+                    Emittedˉprefix,
+                    Emittedˉgroup
+                );
+                Emittedˉgroup = Compilerˉnativeˉx64ˉempty(Input);
+            }
         }
     }
 
@@ -5029,7 +5050,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
         Result = Compilerˉnativeˉx64ˉappendˉbyte(Result, 95u8);
     }
     return Bytesˉconcat(
-        Emittedˉprefix,
+        Bytesˉconcat(Emittedˉprefix, Emittedˉgroup),
         Compilerˉnativeˉx64ˉappendˉbyte(Result, 195u8)
     );
 }

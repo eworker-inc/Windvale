@@ -16,8 +16,8 @@ internal static partial class Program
         var Expectedˉview = Objectˉcodec.Readˉandˉverify(
             Expectedˉobject.AsSpan()).Value;
         True(
-            Expectedˉview.Sections[0].Data.Length > 8_192,
-            "The chunked-emission fixture did not cross two 4-KiB boundaries.");
+            Expectedˉview.Sections[0].Data.Length > 65_536,
+            "The chunked-emission fixture did not cross the 64-KiB group boundary.");
 
         var Tool = Moduleˉcodec.Readˉandˉverify(
             Compileˉwvbˉtoˉwvoˉtoolˉsuccess());
@@ -34,7 +34,7 @@ internal static partial class Program
 
     private static byte[] Buildˉchunkedˉfunctionˉfixture()
     {
-        const int LOCAL_COUNT = 192;
+        const int LOCAL_COUNT = 1_023;
         var Template = Moduleˉcodec.Read(
             Compileˉsuccess(WVB_TO_WVO_RETURN_42_SOURCE));
         var Code = ImmutableArray.CreateBuilder<byte>();
