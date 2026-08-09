@@ -39,8 +39,8 @@ set "ExtractOutput=%TemporaryDirectory%\Extract.out"
 set "ExtractError=%TemporaryDirectory%\Extract.err"
 set "ArchiveDigest=b9a076cf9416488d733ed4c4887c052e61548acb45574256cd3c65d94da31970"
 set "ManifestDigest=50153c0f7a6e9b596f3a7e0c4ce5bc1c6f240b01ce8657d99c5775a61d9391e4"
-set "PositiveArchiveDigest=ebb9e8e4ae5d90ace39f828996ebab9b75fc66d78c62ac7c58e86cf05ba9ba00"
-set "PositiveManifestDigest=81172a33451d422ccc1e6c2a418041d6fc6436ad801d15f1adda45afe685ce28"
+set "PositiveArchiveDigest=c17bb829636608f8d38b983d5d5979f64c24bfc4b9b3a4d753fdf1620425aaab"
+set "PositiveManifestDigest=fdf5c5e63cf323fee11a4ac08e0786e5167acbfa8a63e1fc245659936026fde2"
 set "SentinelDigest=0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5"
 set "AssemblyReportDigest=4713cc6a74e88cab45421a8bed22b4c72de19fb330f77212a8193aa0e1224c73"
 set "VerifyReportDigest=4a31e8a0ea20ff90039366745ec6df8ce8abe87361395c0643c95b72a054e4e7"
@@ -133,7 +133,7 @@ call :check_hash "%PositiveManifest%" "%PositiveManifestDigest%" "positive manif
 if errorlevel 1 goto :failed
 set "PositiveHeader="
 for /f "usebackq delims=" %%H in ("%PositiveManifest%") do if not defined PositiveHeader set "PositiveHeader=%%H"
-if not "%PositiveHeader%"=="windvale-wva-positive-corpus 1" (
+if not "%PositiveHeader%"=="windvale-wva-positive-corpus 2" (
     >&2 echo FAIL  wva-differential: positive manifest header differs
     goto :failed
 )
@@ -144,12 +144,12 @@ for /f "usebackq skip=2 tokens=1-10 delims=|" %%A in ("%PositiveManifest%") do (
     if errorlevel 1 goto :failed
 )
 if "%Mode%"=="positive" (
-    if not "%Total%"=="17" goto :positive_count_failed
-    if not "%AcceptedCases%"=="17" goto :positive_count_failed
+    if not "%Total%"=="69" goto :positive_count_failed
+    if not "%AcceptedCases%"=="69" goto :positive_count_failed
     if not "%RejectedCases%"=="0" goto :positive_count_failed
 ) else (
-    if not "%Total%"=="217" goto :positive_count_failed
-    if not "%AcceptedCases%"=="18" goto :positive_count_failed
+    if not "%Total%"=="269" goto :positive_count_failed
+    if not "%AcceptedCases%"=="70" goto :positive_count_failed
     if not "%RejectedCases%"=="199" goto :positive_count_failed
 )
 

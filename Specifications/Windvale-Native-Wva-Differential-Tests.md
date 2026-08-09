@@ -2,8 +2,8 @@
 
 ## Status and scope
 
-This fixed contract transfers the 200-case deterministic mutation loop and 17
-distinct managed positive scalar/register vectors to the ordinary digest-bound
+This fixed contract transfers the 200-case deterministic mutation loop and 69
+distinct managed positive assembler vectors to the ordinary digest-bound
 native assembler. It freezes every source, the reference assembler's
 accepted/rejected decision, the reference diagnostic code for rejection, and
 every exact reference WVO identity for acceptance. The permanent test consumes
@@ -72,28 +72,31 @@ Its repository representation is 23,372 LF-only base64 bytes at SHA-256
 `b40567d2d0208f2f4ec3a5a93050e703efd1d8e0b7a5f708c3db96577cb10dcb`.
 The generator and its managed build products are not retained.
 
-The positive corpus was produced once from the managed
-`Assemblerˉencodesˉtypedˉscalarˉx64` assertion. Sixteen sources cover every
-paired 8-bit and 16-bit register through immediate move, same-register move,
-condition materialization, and 16-bit multiply. The seventeenth covers the
-complete narrow immediate ALU, test/compare, rotate, logical shift, and signed
-shift groups. Its 17 LF-terminated sources total 4,123 bytes and produce 1,707
-WVO bytes.
+The positive corpus was produced once from the managed typed-scalar and
+expanded-x64 assertions. Sixteen sources cover every paired 8-bit and 16-bit
+register through immediate move, same-register move, condition materialization,
+and 16-bit multiply. One covers the complete narrow immediate ALU,
+test/compare, rotate, logical shift, and signed shift groups. Another 52 cover
+every paired 32/64-bit register, the combined expanded register operations,
+local and definition-scoped labels, all sixteen branch encodings, all sixteen
+condition-materialization encodings, and the complete RIP-relative load, store,
+address, relocation, and link shape. The 69 LF-terminated sources total 13,274
+bytes and produce 6,238 WVO bytes.
 
-`Manifest.txt` begins with `windvale-wva-positive-corpus 1` and contains this
+`Manifest.txt` begins with `windvale-wva-positive-corpus 2` and contains this
 grammar:
 
 ```text
 filename|source-bytes|source-sha256|object-bytes|object-sha256|sections|symbols|relocations|report-sha256|verify-report-sha256
 ```
 
-The 5,080-byte manifest has SHA-256
-`81172a33451d422ccc1e6c2a418041d6fc6436ad801d15f1adda45afe685ce28`.
-The manifest and sources form one deterministic 3,576-byte gzip tar archive at
+The 20,206-byte manifest has SHA-256
+`fdf5c5e63cf323fee11a4ac08e0786e5167acbfa8a63e1fc245659936026fde2`.
+The manifest and sources form one deterministic 12,906-byte gzip tar archive at
 SHA-256
-`ebb9e8e4ae5d90ace39f828996ebab9b75fc66d78c62ac7c58e86cf05ba9ba00`.
-Its repository representation is 4,769 LF-only base64 bytes at SHA-256
-`a2e6a55419d7b4aaa3d1dbb6f7101e3a02aefb27f7d1d7309280e3b73877970b`.
+`c17bb829636608f8d38b983d5d5979f64c24bfc4b9b3a4d753fdf1620425aaab`.
+Its repository representation is 17,209 LF-only base64 bytes at SHA-256
+`595c405e54c4eda6ebe0bc14e4174ffae2ba34c5621aa4929639ef336fc426ff`.
 The one-time source/WVO exporter and managed build products are not retained.
 
 ## Native comparison contract
@@ -124,17 +127,17 @@ digest-bearing report.
 
 Every positive-matrix row must also return `0`, write no diagnostic, reproduce
 its exact Stage 0 WVO, and match its own complete assembler and native-verifier
-report digests. `--positive-only` selects only those 17 rows as the narrow
+report digests. `--positive-only` selects only those 69 rows as the narrow
 development check and ends with:
 
 ```text
-Tests: 17, Passed: 17, Failed: 0
+Tests: 69, Passed: 69, Failed: 0
 ```
 
-The unfiltered command prints all 217 manifest-ordered `PASS` lines followed by:
+The unfiltered command prints all 269 manifest-ordered `PASS` lines followed by:
 
 ```text
-Tests: 217, Passed: 217, Failed: 0
+Tests: 269, Passed: 269, Failed: 0
 ```
 
 The permanent command generates no source or expected result, starts no managed

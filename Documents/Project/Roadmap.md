@@ -108,6 +108,12 @@ shift groups to the existing WVA differential lane through one compact archive.
 The plan remains 24 suites and grows to 3,066 cases. Other WVA inventory, Linux
 execution, and the grouped gate remain.
 
+[Decision 0434](../Decisions/0434-Expanded-Native-Wva-Positive-Matrix.md)
+extends the same archive with every paired 32/64-bit register, condition branch,
+condition materialization, label-scope, and RIP-relative vector. The plan remains
+24 suites and grows to 3,118 cases. Remaining WVA inventory, Linux execution,
+and the grouped gate remain.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

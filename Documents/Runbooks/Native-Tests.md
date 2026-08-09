@@ -34,7 +34,7 @@ The exact filter names and case counts are:
 | `wvo-hostile-size` | 4 |
 | `assembler-rejections` | 11 |
 | `assembler-golden` | 4 |
-| `wva-differential` | 217 |
+| `wva-differential` | 269 |
 | `source-containment` | 500 |
 | `lowerer-rejections` | 2 |
 | `linker-rejections` | 10 |
@@ -50,11 +50,11 @@ The exact filter names and case counts are:
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 24 suites and 3,066 cases in manifest order. Its
+Omitting `--filter` selects all 24 suites and 3,118 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 24, Passed: 24, Failed: 0, Cases: 3066
+Suites: 24, Passed: 24, Failed: 0, Cases: 3118
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -437,7 +437,7 @@ temporary one-byte-over-limit zero-filled input rather than retaining a very
 large fixture.
 
 The WVA differential lane freezes the exact 200-case seeded mutation sequence
-and 17 managed positive scalar/register vectors. Run the complete lane on
+and 69 managed positive register/control/relocation vectors. Run the complete lane on
 Windows with:
 
 ```bat
@@ -451,11 +451,11 @@ or on Linux:
 ```
 
 The native assembler must match all 199 Stage 0 rejection codes, preserve each
-source and rejected destination, and reproduce all 18 accepted Stage 0 WVOs.
+source and rejected destination, and reproduce all 70 accepted Stage 0 WVOs.
 Every WVO then passes the native verifier with its exact digest report. Two
 compact archives retain all 217 exact inputs without adding loose or very large
 source files. The exact terminal summary is
-`Tests: 217, Passed: 217, Failed: 0`.
+`Tests: 269, Passed: 269, Failed: 0`.
 
 For the narrow positive-matrix inner loop, use:
 
@@ -467,7 +467,7 @@ Tools\Native\Test-Wva-Differential.cmd --positive-only
 ./Tools/Native/Test-Wva-Differential.sh --positive-only
 ```
 
-That selection ends with `Tests: 17, Passed: 17, Failed: 0` and does not rerun
+That selection ends with `Tests: 69, Passed: 69, Failed: 0` and does not rerun
 the unchanged 200-case mutation corpus.
 
 No .NET process is required by these commands. The host dependencies are

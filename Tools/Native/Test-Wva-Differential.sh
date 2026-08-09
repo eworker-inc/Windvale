@@ -33,8 +33,8 @@ extract_output="$temporary_directory/Extract.out"
 extract_error="$temporary_directory/Extract.err"
 archive_digest=b9a076cf9416488d733ed4c4887c052e61548acb45574256cd3c65d94da31970
 manifest_digest=50153c0f7a6e9b596f3a7e0c4ce5bc1c6f240b01ce8657d99c5775a61d9391e4
-positive_archive_digest=ebb9e8e4ae5d90ace39f828996ebab9b75fc66d78c62ac7c58e86cf05ba9ba00
-positive_manifest_digest=81172a33451d422ccc1e6c2a418041d6fc6436ad801d15f1adda45afe685ce28
+positive_archive_digest=c17bb829636608f8d38b983d5d5979f64c24bfc4b9b3a4d753fdf1620425aaab
+positive_manifest_digest=fdf5c5e63cf323fee11a4ac08e0786e5167acbfa8a63e1fc245659936026fde2
 sentinel_digest=0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
 assembly_report_digest=4713cc6a74e88cab45421a8bed22b4c72de19fb330f77212a8193aa0e1224c73
 verify_report_digest=4a31e8a0ea20ff90039366745ec6df8ce8abe87361395c0643c95b72a054e4e7
@@ -314,7 +314,7 @@ check_hash "$positive_manifest" "$positive_manifest_digest" || \
     fail 'positive manifest identity differs'
 
 IFS= read -r positive_header < "$positive_manifest"
-if [[ $positive_header != 'windvale-wva-positive-corpus 1' ]]; then
+if [[ $positive_header != 'windvale-wva-positive-corpus 2' ]]; then
     fail 'positive manifest header differs'
 fi
 
@@ -327,10 +327,10 @@ while IFS='|' read -r name source_size source_digest object_size object_digest s
 done < <(tail -n +3 -- "$positive_manifest")
 
 if [[ $mode == positive ]]; then
-    if ((total != 17 || accepted_cases != 17 || rejected_cases != 0)); then
+    if ((total != 69 || accepted_cases != 69 || rejected_cases != 0)); then
         fail 'positive case counts differ'
     fi
-elif ((total != 217 || accepted_cases != 18 || rejected_cases != 199)); then
+elif ((total != 269 || accepted_cases != 70 || rejected_cases != 199)); then
     fail 'positive case counts differ'
 fi
 
