@@ -84,10 +84,15 @@ the hosted command
 typed construction core. Its `Windvale-Uefi-Application-Packager.wvproj` front
 door uses only explicit argument, diagnostic, console, file-read, and
 file-write capabilities. It writes no destination unless construction and
-independent verification succeed. The managed writer and verifier remain
-frozen recovery and differential evidence until retained native host
-containers, Probe 40 construction, and the complete native retirement gate
-qualify this replacement on both permanent hosts.
+independent verification succeed. The exact WVB and paired profile-5 PE/ELF
+containers are retained under
+`Artifacts/Native-Uefi-Packager-Candidate/Manifest.json`; digest-bound
+`Package-Uefi.cmd` and `.sh` launchers select the matching permanent-host
+artifact. The three-case native lane composes the real native linker at base
+zero, deterministic packaging, and invalid-entry destination preservation.
+The managed writer and verifier remain frozen differential evidence until
+independent Linux execution, Probe 40 composition, and the complete native
+retirement gate qualify this replacement on both permanent hosts.
 
 ## Diagnostics
 
@@ -114,4 +119,4 @@ The untrusted-byte verifier throws a bounded format exception:
 
 ## Deliberate limits
 
-Version 3 has no general PE section mapping, writable data mapping, separately protected `.rdata`, PE import table, PE export table, resources, debug data, authenticode signature, exception/unwind table, TLS, absolute WVO-to-PE relocation translation, Secure Boot signature, or compatibility mode. It does not make PE an implicit definition of Windvale semantics. Generalization requires another concrete native-backend or boot-stage case and an independently verifiable rule.
+Version 3 has no general PE section mapping, writable data mapping, separately protected `.rdata`, PE import table, PE export table, resources, debug data, authenticode signature, exception/unwind table, TLS, absolute WVO-to-PE relocation translation, Secure Boot signature, or compatibility mode. The current hosted packager preserves an existing destination on every validation failure but does not yet use a UEFI-specific durable sibling/reread/atomic-replacement transaction after successful construction. It does not make PE an implicit definition of Windvale semantics. Generalization requires another concrete native-backend or boot-stage case and an independently verifiable rule.

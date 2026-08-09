@@ -55,7 +55,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [Fixed native linker map limit](Decisions/0327-Fixed-Native-Linker-Map-Limit.md) — compact generated-fixture evidence for exact `WVL1012` rejection at 16,384 definitions
 - [Fixed native WVB unsafe rejections](Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) — five immutable unsafe instruction-stream cases through both native read-only launchers
-- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 24 native suites and 3,118 transferred cases
+- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 25 native suites and 3,121 transferred cases
 - [Fixed native assembler golden objects](Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md) — three exact positive WVA products with repeated native assembly and independent WVO admission
 - [Fixed native typed WVB rejections](Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md) — six compact single-byte typed/control/nominal mutations through both native readers
 - [Compact native WVB rejection closure](Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md) — four final compact stack, receiver, and nominal-kind mutations plus explicit ownership of excluded cases
@@ -65,6 +65,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Digest-bound OS boot execution](Decisions/0435-Digest-Bound-Os-Boot-Execution.md) — supplied-image QEMU verification without Stage 0, with image construction retained explicitly as recovery
 - [Windvale-native UEFI application construction](Decisions/0436-Windvale-Native-Uefi-Application-Construction.md) — portable canonical EFI construction, independent verification, and native Project 1 front doors
 - [Native linker to UEFI packaging](Decisions/0437-Native-Linker-To-Uefi-Packaging.md) — real digest-bound flat-link output and entry evidence through a hosted Windvale EFI packager
+- [Retained native UEFI packager containers](Decisions/0438-Retained-Native-Uefi-Packager-Containers.md) — paired native-built PE/ELF tools, digest-bound launchers, and a permanent three-case native lane
 - [Fixed native linker hostile-input corpus](Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) — 200 immutable bounded inputs through exact native `WVL1002` containment
 - [Fixed native console-container hostile-input corpus](Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) — 256 immutable bounded PE/ELF candidates through the native publisher with preservation and zero-scratch evidence
 - [Fixed native WVO differential corpus](Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) — 128 valid-shaped mutations and 128 arbitrary values agree with frozen Stage 0 acceptance through the native verifier

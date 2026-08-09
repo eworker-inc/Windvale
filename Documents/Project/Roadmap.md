@@ -126,7 +126,13 @@ scenarios, upstream native Probe 40 composition, and promotion remain open.
 [Decision 0437](../Decisions/0437-Native-Linker-To-Uefi-Packaging.md) connects
 the real digest-bound native linker output and its entry evidence to one hosted
 Windvale packager. Retained host-container construction, independent Linux
-execution, complete five-scenario composition, and promotion remain open.
+execution, complete five-scenario composition, and promotion are open at that
+checkpoint.
+[Decision 0438](../Decisions/0438-Retained-Native-Uefi-Packager-Containers.md)
+then makes hosted packaging explicitly cross-target, retains paired native-built
+UEFI packager containers behind digest-bound launchers, and transfers three
+cases into the native retirement plan. Independent Linux execution, durable
+UEFI publication, upstream five-scenario composition, and promotion remain.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

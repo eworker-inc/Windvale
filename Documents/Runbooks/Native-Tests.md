@@ -48,13 +48,14 @@ The exact filter names and case counts are:
 | `console-segmented-construction` | 2 |
 | `console-packager-source-reconstruction` | 2 |
 | `publisher-rejections` | 2 |
+| `uefi-packager` | 3 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 24 suites and 3,118 cases in manifest order. Its
+Omitting `--filter` selects all 25 suites and 3,121 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 24, Passed: 24, Failed: 0, Cases: 3118
+Suites: 25, Passed: 25, Failed: 0, Cases: 3121
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -530,10 +531,10 @@ constructor.
 
 ## Current boundary
 
-The 3,118-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,121-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
-packager, publisher, and AOT-chain contracts. It does not replace the remaining
+console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining
 complete unsafe, arbitrary-source/WVB randomized, representative WVA, golden,
 OS, or bootstrap suites. Continue to select one appropriate Stage 0 verifier
 for changes outside these transferred fixtures.

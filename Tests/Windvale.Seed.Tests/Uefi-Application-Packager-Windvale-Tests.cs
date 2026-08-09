@@ -1,10 +1,10 @@
 using System.Collections.Immutable;
+using System.Security.Cryptography;
+using System.Text.Json;
 using Windvale.Bytecode;
 using Windvale.Compiler;
-using Windvale.Compiler.Native;
 using Windvale.Linker;
 using Windvale.ObjectModel;
-using Windvale.Runtime.Native;
 
 namespace Windvale.Seed.Tests;
 
@@ -59,50 +59,69 @@ internal static partial class Program
                 .Order(StringComparer.Ordinal)
                 .ToArray());
 
-        var Native = X64ˉnativeˉbackend.Compile(Module).Fragment;
-        Nativeˉfragmentˉverifier.Verify(Native);
+        var Repository = Findˉrepositoryˉroot();
+        var Artifactˉroot = Path.Combine(
+            Repository,
+            "Artifacts",
+            "Native-Uefi-Packager-Candidate");
+        using var Manifest = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(Artifactˉroot, "Manifest.json")));
+        var Manifestˉroot = Manifest.RootElement;
+        Equal(
+            "windvale-native-uefi-packager-candidate-1",
+            Manifestˉroot.GetProperty("format").GetString());
+        Equal("candidate", Manifestˉroot.GetProperty("status").GetString());
+        Equal("0437", Manifestˉroot.GetProperty("sourceDecision").GetString());
+        Equal("0438", Manifestˉroot.GetProperty("provenanceDecision").GetString());
+        Equal("pending", Manifestˉroot.GetProperty("qualification").GetString());
+        Equal(
+            "native-cross-target-hosted-toolset",
+            Manifestˉroot.GetProperty("construction").GetString());
+        Equal(3, Manifestˉroot.GetProperty("artifacts").GetArrayLength());
+        foreach (var Artifact in Manifestˉroot.GetProperty("artifacts").EnumerateArray())
+        {
+            var Relative = Artifact.GetProperty("path").GetString() ??
+                throw new InvalidDataException(
+                    "A native UEFI packager artifact path is missing.");
+            var Path = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                Artifactˉroot,
+                Relative.Replace('/', System.IO.Path.DirectorySeparatorChar)));
+            True(
+                Path.StartsWith(
+                    Artifactˉroot + System.IO.Path.DirectorySeparatorChar,
+                    OperatingSystem.IsWindows()
+                        ? StringComparison.OrdinalIgnoreCase
+                        : StringComparison.Ordinal),
+                "A native UEFI packager manifest path escaped its artifact root.");
+            var Bytes = File.ReadAllBytes(Path);
+            Equal(Artifact.GetProperty("bytes").GetInt32(), Bytes.Length);
+            Equal(
+                Artifact.GetProperty("sha256").GetString(),
+                Convert.ToHexString(SHA256.HashData(Bytes)).ToLowerInvariant());
+        }
         Sequenceˉequal(
-            [
-                Nativeˉservice.Consoleˉwriteˉline,
-                Nativeˉservice.Processˉargumentˉcount,
-                Nativeˉservice.Processˉargument,
-                Nativeˉservice.Fileˉreadˉbytes,
-                Nativeˉservice.Diagnosticˉwriteˉline,
-                Nativeˉservice.Enumˉname,
-                Nativeˉservice.Textˉconcat,
-                Nativeˉservice.U32ˉformat,
-                Nativeˉservice.Fileˉwriteˉbytes,
-            ],
-            Native.Requiredˉservices);
-
-        var Windowsˉbundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉconsoleˉpackager(
-            Native,
-            Nativeˉserviceˉplatform.Windows);
-        var Linuxˉbundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉconsoleˉpackager(
-            Native,
-            Nativeˉserviceˉplatform.Linux);
-        var Nativeˉentry = Native.Symbols.Single(Symbol =>
-            Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
-            Symbol.Kind == Nativeˉsymbolˉkind.Function &&
-            Symbol.Name == "Main").Offset;
-        var Windows = Windowsˉhostedˉcompilerˉapplicationˉbuilder.Build(
-            Module.Module.Capabilities,
-            Windowsˉbundle,
-            Nativeˉentry,
-            Hostedˉcompilerˉapplicationˉprofile.Consoleˉpackager);
-        var Linux = Linuxˉhostedˉcompilerˉapplicationˉbuilder.Build(
-            Module.Module.Capabilities,
-            Linuxˉbundle,
-            Nativeˉentry,
-            Hostedˉcompilerˉapplicationˉprofile.Consoleˉpackager);
-        _ = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
-            Windows.AsSpan(),
-            Windowsˉbundle,
-            Hostedˉcompilerˉapplicationˉprofile.Consoleˉpackager);
-        _ = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
-            Linux.AsSpan(),
-            Linuxˉbundle,
-            Hostedˉcompilerˉapplicationˉprofile.Consoleˉpackager);
+            Compiled.Moduleˉbytes,
+            File.ReadAllBytes(Path.Combine(Artifactˉroot, "Uefi-Packager.wvb")));
+        var Windowsˉlauncher = File.ReadAllText(Path.Combine(
+            Repository,
+            "Tools",
+            "Native",
+            "Package-Uefi.cmd"));
+        var Linuxˉlauncher = File.ReadAllText(Path.Combine(
+            Repository,
+            "Tools",
+            "Native",
+            "Package-Uefi.sh"));
+        Contains(
+            Windowsˉlauncher,
+            "326401d0e3d9e6b1c1e329a1fa0c7f5e550f4d48e073d0ab83f6f8657edff320");
+        Contains(
+            Linuxˉlauncher,
+            "9b1c3a364e21b3fb66b246fb89df907b523272fee4e3ac5eaa39f5414e39e5b6");
+        var Nativeˉapplication = File.ReadAllBytes(Path.Combine(
+                Artifactˉroot,
+                OperatingSystem.IsWindows() ? "Uefi-Packager.exe" : "Uefi-Packager.elf"))
+            .ToImmutableArray();
 
         static ImmutableArray<byte> Expectedˉapplication(
             ImmutableArray<byte> code,
@@ -126,7 +145,6 @@ internal static partial class Program
             return Application.Imageˉbytes;
         }
 
-        var Repository = Findˉrepositoryˉroot();
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
             $"windvale-uefi-packager-{Guid.NewGuid():N}");
@@ -168,37 +186,23 @@ internal static partial class Program
             var Report =
                 "uefi-package status=Valid native-image-bytes=6 " +
                 "entry-offset=1 application-bytes=1536\n";
-            string[] Arguments = [Inputˉpath, "1", Outputˉpath];
-
             if (OperatingSystem.IsWindows())
             {
-                Equal(0, Executeˉwindowsˉapplication(Windows));
-                var Loadedˉmodules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                Equal(0, Executeˉwindowsˉapplication(
-                    Windows,
-                    Report,
-                    Arguments,
-                    loadedˉmodules: Loadedˉmodules));
-                Equal(0, Loadedˉmodules.Count(Name =>
-                    Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
-                    Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
-                    Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+                Equal(0, Executeˉwindowsˉapplication(Nativeˉapplication));
             }
             if (OperatingSystem.IsLinux())
             {
-                Equal(0, Executeˉlinuxˉapplication(Linux));
-                var Loadedˉmappings = new HashSet<string>(StringComparer.Ordinal);
-                Equal(0, Executeˉlinuxˉapplication(
-                    Linux,
-                    Report,
-                    Arguments,
-                    loadedˉmappings: Loadedˉmappings));
-                Equal(0, Loadedˉmappings.Count(Name =>
-                    Name.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
-                    Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||
-                    Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
-                    Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+                Equal(0, Executeˉlinuxˉapplication(Nativeˉapplication));
             }
+            var Packaged = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Package-Uefi",
+                Inputˉpath,
+                "1",
+                Outputˉpath);
+            Equal(0, Packaged.Exitˉcode);
+            Equal(Report, Packaged.Output);
+            Equal(string.Empty, Packaged.Error);
             Sequenceˉequal(Expected, File.ReadAllBytes(Outputˉpath));
             var Verified = Uefiˉapplicationˉverifier.Verify(
                 File.ReadAllBytes(Outputˉpath));
@@ -208,37 +212,45 @@ internal static partial class Program
             string[] Repeatˉarguments = [Inputˉpath, "1", Repeatˉpath];
             if (OperatingSystem.IsWindows())
             {
+                var Loadedˉmodules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 Equal(0, Executeˉwindowsˉapplication(
-                    Windows,
+                    Nativeˉapplication,
                     Report,
-                    Repeatˉarguments));
+                    Repeatˉarguments,
+                    loadedˉmodules: Loadedˉmodules));
+                Equal(0, Loadedˉmodules.Count(Name =>
+                    Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
             }
             if (OperatingSystem.IsLinux())
             {
+                var Loadedˉmappings = new HashSet<string>(StringComparer.Ordinal);
                 Equal(0, Executeˉlinuxˉapplication(
-                    Linux,
+                    Nativeˉapplication,
                     Report,
-                    Repeatˉarguments));
+                    Repeatˉarguments,
+                    loadedˉmappings: Loadedˉmappings));
+                Equal(0, Loadedˉmappings.Count(Name =>
+                    Name.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                    Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
             }
             Sequenceˉequal(Expected, File.ReadAllBytes(Repeatˉpath));
 
             var Invalidˉentryˉerror =
                 "uefi-package status=Invalidˉentry native-image-bytes=6 " +
                 "entry-offset=6 application-bytes=0\n";
-            if (OperatingSystem.IsWindows())
-            {
-                Equal(2, Executeˉwindowsˉapplication(
-                    Windows,
-                    arguments: [Inputˉpath, "6", Rejectedˉpath],
-                    expectedˉerror: Invalidˉentryˉerror));
-            }
-            if (OperatingSystem.IsLinux())
-            {
-                Equal(2, Executeˉlinuxˉapplication(
-                    Linux,
-                    arguments: [Inputˉpath, "6", Rejectedˉpath],
-                    expectedˉerror: Invalidˉentryˉerror));
-            }
+            var Rejected = Runˉnativeˉwvbˉtool(
+                Repository,
+                "Package-Uefi",
+                Inputˉpath,
+                "6",
+                Rejectedˉpath);
+            Equal(2, Rejected.Exitˉcode);
+            Equal(string.Empty, Rejected.Output);
+            Equal(Invalidˉentryˉerror, Rejected.Error);
             Sequenceˉequal(Sentinel, File.ReadAllBytes(Rejectedˉpath));
 
             var Nativeˉpath = Path.Combine(Directoryˉpath, "Uefi-Packager.wvb");

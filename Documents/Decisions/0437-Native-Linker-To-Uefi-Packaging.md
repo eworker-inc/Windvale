@@ -1,6 +1,6 @@
 # Decision 0437: Native linker to UEFI packaging
 
-- Status: Implemented current-host integration candidate; retained host-container publication and Probe 40 composition pending
+- Status: Implemented current-host integration candidate; host-container seam advanced by Decision 0438; Probe 40 composition pending
 - Date: 2026-08-09
 - Advances: [Decision 0436](0436-Windvale-Native-Uefi-Application-Construction.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [Windvale UEFI application format](../../Specifications/Windvale-Uefi-Application.md)
@@ -52,11 +52,11 @@ Native Project 1 builds reproduce these pinned WVB identities:
 | Hosted UEFI packager | 25,999 | `063f95f53e39390c76bcf31fbf7bdc87eed6194388101fadc4d60ee41b2802e4` |
 
 This closes the source/tool handoff from native flat linking to canonical EFI
-bytes. It does not yet promote O2. The focused test constructs the temporary
-Windows/Linux hosted containers with the frozen Stage 0 builders as
-differential evidence. Retained digest-bound host-container construction,
-independent Linux execution, upstream native Probe 40 object composition, all
-five scenario images, and the grouped retirement gate remain open.
+bytes. It does not yet promote O2. [Decision 0438](0438-Retained-Native-Uefi-Packager-Containers.md)
+replaces the temporary Stage 0 host-container construction with paired retained
+native-built candidates and a permanent native lane. Independent Linux
+execution, upstream native Probe 40 object composition, all five scenario
+images, and the grouped retirement gate remain open.
 
 ## Reconsideration triggers
 

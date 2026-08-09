@@ -34,6 +34,23 @@ call :check_no_scratch
 if errorlevel 1 goto :failed
 echo PASS  hosted packaging exact Windows application
 
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
+    "%Toolset%\Wvb\wvhostcontrol.wvb" "%TestDirectory%\Cross-Target.elf" linux ^
+    >"%TestDirectory%\Cross-Target.out" 2>"%TestDirectory%\Cross-Target.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Cross-Target.err" "cross-target packaging wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Cross-Target.elf" 237568 f7b40ac03478d54bdf8fed468fdfbe52a9449159a9fb45c05da6603935e24c67 "cross-target Linux package"
+if errorlevel 1 goto :failed
+fc /b "%TestDirectory%\Cross-Target.elf" "%Toolset%\linux-x64\wvhostcontrol.elf" >nul
+if errorlevel 1 (
+    >&2 echo FAIL  hosted packaging: cross-target Linux package differs from the candidate
+    goto :failed
+)
+call :check_no_scratch
+if errorlevel 1 goto :failed
+echo PASS  hosted packaging exact cross-target Linux application
+
 copy /y "%Toolset%\SHA256SUMS" "%TestDirectory%\Invalid.wvb" >nul || goto :failed
 copy /y "%Toolset%\SHA256SUMS" "%TestDirectory%\Destination.exe" >nul || goto :failed
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
@@ -89,9 +106,9 @@ set "Result=1"
 
 :cleanup
 set "TEMP=%OriginalTemp%"
-for %%F in (Valid.exe Valid.out Valid.err Invalid.wvb Destination.exe Invalid.out Invalid.err) do (
+for %%F in (Valid.exe Valid.out Valid.err Cross-Target.elf Cross-Target.out Cross-Target.err Invalid.wvb Destination.exe Invalid.out Invalid.err) do (
     if exist "%TestDirectory%\%%F" del /f /q "%TestDirectory%\%%F" >nul 2>nul
 )
 rmdir "%TestDirectory%" >nul 2>nul
-if "%Result%"=="0" echo Tests: 2, Passed: 2, Failed: 0
+if "%Result%"=="0" echo Tests: 3, Passed: 3, Failed: 0
 exit /b %Result%

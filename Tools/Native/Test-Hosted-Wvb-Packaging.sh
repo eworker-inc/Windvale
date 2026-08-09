@@ -21,6 +21,9 @@ cleanup() {
                 "$test_directory/Valid.elf" \
                 "$test_directory/Valid.out" \
                 "$test_directory/Valid.err" \
+                "$test_directory/Cross-Target.exe" \
+                "$test_directory/Cross-Target.out" \
+                "$test_directory/Cross-Target.err" \
                 "$test_directory/Invalid.wvb" \
                 "$test_directory/Destination.elf" \
                 "$test_directory/Invalid.out" \
@@ -76,6 +79,22 @@ cmp --silent -- "$test_directory/Valid.elf" "$toolset/linux-x64/wvhostcontrol.el
 check_no_scratch
 echo 'PASS  hosted packaging exact Linux application'
 
+if ! "$script_directory/Package-Hosted-Wvb.sh" 1 \
+    "$toolset/Wvb/wvhostcontrol.wvb" "$test_directory/Cross-Target.exe" windows \
+    >"$test_directory/Cross-Target.out" 2>"$test_directory/Cross-Target.err"; then
+    cat -- "$test_directory/Cross-Target.out" "$test_directory/Cross-Target.err" >&2
+    fail 'cross-target Windows packaging failed'
+fi
+[[ ! -s $test_directory/Cross-Target.err ]] || fail 'cross-target packaging wrote a diagnostic'
+check_file \
+    "$test_directory/Cross-Target.exe" 236032 \
+    eeec7c229b20ac006ed366849c91e2f03e035a9e3ee29da2e9aeb408c76b2709 \
+    'cross-target Windows package'
+cmp --silent -- "$test_directory/Cross-Target.exe" "$toolset/windows-x64/wvhostcontrol.exe" ||
+    fail 'cross-target Windows package differs from the candidate'
+check_no_scratch
+echo 'PASS  hosted packaging exact cross-target Windows application'
+
 cp -- "$toolset/SHA256SUMS" "$test_directory/Invalid.wvb" || fail 'invalid input staging failed'
 cp -- "$toolset/SHA256SUMS" "$test_directory/Destination.elf" || fail 'sentinel staging failed'
 "$script_directory/Package-Hosted-Wvb.sh" 1 \
@@ -94,5 +113,5 @@ check_file \
 check_no_scratch
 echo 'PASS  hosted packaging rejects invalid WVB and preserves resources'
 result=0
-echo 'Tests: 2, Passed: 2, Failed: 0'
+echo 'Tests: 3, Passed: 3, Failed: 0'
 exit "$result"

@@ -307,8 +307,10 @@ parsing of the transport process's strict decimal completion line.
 
 The shared `Package-Hosted-Wvb` launcher exposes a separate image-input form:
 `image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry-offset>
-<output>`. It admits profile 1 through 7, one through eight canonical chunks,
-and a decimal entry. The native source-geometry process independently reopens
+<output> [target]`. Its ordinary form accepts the same optional final
+`windows` or `linux` target; omission retains current-host selection. It admits
+profile 1 through 7, one through eight canonical chunks, and a decimal entry.
+The native source-geometry process independently reopens
 and validates exact chunk lengths and the canonical non-final 4 MiB rule before
 metadata or container construction. The source WVB remains the capability and
 enum evidence owner; the supplied image and entry remain the generated-code

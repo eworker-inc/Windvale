@@ -3,7 +3,7 @@
 ## Status and scope
 
 This contract composes the existing Windvale-native hosted-container producers
-into one digest-bound current-host WVB-to-application command. The platform
+into one digest-bound WVB-to-application command. The platform
 script owns only exact tool acquisition, ordered child-process execution,
 bounded decimal loop control, private temporary names, and cleanup. Windvale
 processes continue to own every binary format, source transformation,
@@ -23,16 +23,21 @@ script to decode a Windvale format.
 ```text
 Tools\Native\Package-Hosted-Wvb.cmd <profile> <input.wvb> <output.exe>
 ./Tools/Native/Package-Hosted-Wvb.sh <profile> <input.wvb> <output.elf>
+Tools\Native\Package-Hosted-Wvb.cmd <profile> <input.wvb> <output.exe|output.elf> [windows|linux]
+./Tools/Native/Package-Hosted-Wvb.sh <profile> <input.wvb> <output.elf|output.exe> [linux|windows]
 Tools\Native\Package-Hosted-Wvb.cmd image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry> <output.exe>
 ./Tools/Native/Package-Hosted-Wvb.sh image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry> <output.elf>
 Tools\Native\Package-Segmented-Compiler-Wvb.cmd <profile> <input.wvb> <output.exe>
 ./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile> <input.wvb> <output.elf>
 ```
 
-The input and output suffixes must match the selected host command. Wrong
-argument count, invalid profile, or wrong suffix returns 64. Any failed digest,
-native child, status-line admission, or publication returns nonzero and does
-not treat a rejected segment request as loop completion.
+Omitting the optional target preserves the original current-host behavior.
+Supplying `windows` or `linux` selects that target's startup object and fixed
+service leaves while the invoking host's native Windvale tools still construct
+the result. The output suffix must match the selected target. Wrong argument
+count, invalid profile or target, or wrong suffix returns 64. Any failed
+digest, native child, status-line admission, or publication returns nonzero and
+does not treat a rejected segment request as loop completion.
 
 Before lowering begins, the command verifies the exact `SHA256SUMS` inventory,
 all 57 tool artifacts, nine target-specific fixed service leaves, and the
@@ -45,8 +50,10 @@ applications. Its exact identity is:
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front
-door. Their paired PE/ELF construction remains explicit Stage 0 recovery
-package wiring until this complete toolset is promoted.
+door. The 57 tool artifacts themselves retain explicit Stage 0 recovery
+provenance until this complete toolset is promoted. Their digest-bound native
+processes now construct either target container without calling that recovery
+path.
 
 ## Ordered path
 
@@ -82,12 +89,14 @@ Tools\Native\Test-Hosted-Wvb-Packaging.cmd
 ```
 
 Each host test packages the pinned orchestration-control WVB and requires exact
-equality with the corresponding independent candidate. It then supplies a
-fixed invalid `.wvb`, requires rejection, and verifies that both the input and
-a pre-existing destination remain byte-identical. The test redirects the
-launcher's temporary root into its own private directory and rejects any
-remaining package scratch. These two cases are the focused composition check;
-they do not replace malformed-format suites or the final qualification gate.
+equality with the corresponding independent candidate, then cross-constructs
+the opposite target and requires exact equality with its candidate. It finally
+supplies a fixed invalid `.wvb`, requires rejection, and verifies that both the
+input and a pre-existing destination remain byte-identical. The test redirects
+the launcher's temporary root into its own private directory and rejects any
+remaining package scratch. These three cases are the focused composition
+check; they do not replace malformed-format suites or the final qualification
+gate.
 
 On Linux, the shared native durable transaction creates the private hosted
 application sibling with its exact final `0755` mode before writing, flushing,
@@ -114,3 +123,9 @@ policy, run
 [`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
 passes both ordinary cases and both current-lowerer segmented cases on genuine
 Windows and Debian hosts.
+
+Decision 0438 adds explicit cross-target selection. The focused Windows command
+passes 3/3 and constructs the established Linux orchestration-control ELF byte
+for byte without .NET. Independent execution of the new cross-target form on
+Linux remains part of the next paired-host evidence rather than being inferred
+from byte equality.

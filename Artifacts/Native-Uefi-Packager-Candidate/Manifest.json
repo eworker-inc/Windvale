@@ -1,0 +1,35 @@
+{
+  "format": "windvale-native-uefi-packager-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0437",
+  "provenanceDecision": "0438",
+  "qualification": "pending",
+  "construction": "native-cross-target-hosted-toolset",
+  "nativeSourceConstruction": "verified-digest-bound-front-door",
+  "artifacts": [
+    {
+      "name": "uefi-packager-wvb",
+      "path": "Uefi-Packager.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 25999,
+      "sha256": "063f95f53e39390c76bcf31fbf7bdc87eed6194388101fadc4d60ee41b2802e4",
+      "sourceProject": "Windvale-Uefi-Application-Packager.wvproj"
+    },
+    {
+      "name": "windows-x64-uefi-packager",
+      "path": "Uefi-Packager.exe",
+      "target": "windows-x64-uefi-packager-v1",
+      "bytes": 278528,
+      "sha256": "326401d0e3d9e6b1c1e329a1fa0c7f5e550f4d48e073d0ab83f6f8657edff320",
+      "sourceWvb": "Uefi-Packager.wvb"
+    },
+    {
+      "name": "linux-x64-uefi-packager",
+      "path": "Uefi-Packager.elf",
+      "target": "linux-x64-uefi-packager-v1",
+      "bytes": 278528,
+      "sha256": "9b1c3a364e21b3fb66b246fb89df907b523272fee4e3ac5eaa39f5414e39e5b6",
+      "sourceWvb": "Uefi-Packager.wvb"
+    }
+  ]
+}

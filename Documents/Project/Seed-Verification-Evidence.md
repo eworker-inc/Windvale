@@ -4508,6 +4508,29 @@ the 24,811-byte constructor bridge at SHA-256
 `858f718b26e34966f19d53ff725a215935bd6dcaa0a93a2b5329367bbdece956`,
 and the 25,999-byte hosted packager at SHA-256
 `063f95f53e39390c76bcf31fbf7bdc87eed6194388101fadc4d60ee41b2802e4`.
-The temporary host containers remain Stage 0 differential fixtures; retained
-native host-container construction, Linux execution, complete Probe 40
-composition, Standard, Qualification, and promotion remain deferred.
+Decision 0438 replaces the temporary host containers with retained paired
+native-built candidates. Linux execution, complete Probe 40 composition,
+Standard, Qualification, and promotion remain deferred.
+
+## Local retained native UEFI packager evidence
+
+[Decision 0438](../Decisions/0438-Retained-Native-Uefi-Packager-Containers.md)
+adds explicit target selection to the shared 19-tool native hosted-container
+path. Its reviewed Windows composition command passes 3/3 in 18.3 seconds,
+including byte-identical construction of the established Linux container. The
+native Project 1 and hosted paths then construct the 25,999-byte packager WVB,
+278,528-byte Windows PE, and 278,528-byte Linux ELF in 15.7 seconds at SHA-256
+`063f95f53e39390c76bcf31fbf7bdc87eed6194388101fadc4d60ee41b2802e4`,
+`326401d0e3d9e6b1c1e329a1fa0c7f5e550f4d48e073d0ab83f6f8657edff320`,
+and `9b1c3a364e21b3fb66b246fb89df907b523272fee4e3ac5eaa39f5414e39e5b6`.
+
+The permanent native UEFI command passes 3/3 in 1.1 seconds. It consumes the
+real base-zero native link, constructs the exact 1,536-byte EFI at SHA-256
+`7d30fd4d220a2d578b0ce3da4cbb6006175f012268b7d3a08e80543e7e388b09`,
+repeats it exactly, and preserves the destination for an invalid entry. The
+digest-bound `uefi-packager` retirement filter passes only those three cases in
+1.2 seconds. The reduced focused C# differential test passes in 2.544 test
+seconds without constructing either host container and confirms no CLR in the
+retained process. The plan now owns 25 suites and 3,121 cases. Independent
+Linux execution, durable UEFI publication, Probe 40 composition, broad gates,
+and promotion remain deferred.
