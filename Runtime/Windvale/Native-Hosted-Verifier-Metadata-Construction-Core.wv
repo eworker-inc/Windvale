@@ -1,0 +1,200 @@
+module Runtimeˉnativeˉhostedˉverifierˉmetadataˉconstruction profile portable;
+
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Runtimeˉnativeˉhostedˉverifierˉmetadataˉadmission as Admission;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Zeroes(Input: bytes, Count: u32) -> bytes {
+    let Result: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
+    return Result.Value;
+}
+
+fn Allˉzero(Input: bytes, Offset: u32, Count: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Bytesˉreadˉu8(Input, Offset + Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Metadataˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1145591383u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Metadataˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+fn Serviceˉcapability(Index: u32) -> u32 {
+    if Index == 0u32 { return 1u32; }
+    if Index == 1u32 { return 5u32; }
+    if Index == 2u32 { return 4u32; }
+    if Index == 3u32 { return 3u32; }
+    if Index == 5u32 { return 2u32; }
+    return 0u32;
+}
+
+fn Serviceˉadapter(Index: u32, Target: u32) -> u32 {
+    if Index == 0u32 { return Target; }
+    if Index == 1u32 || Index == 2u32 { return 3u32; }
+    if Index == 3u32 { return Target + 3u32; }
+    if Index == 4u32 { return 6u32; }
+    return Target + 6u32;
+}
+
+fn Appendˉcapabilities(Input: bytes, Metadata: bytes) -> bytes {
+    var Result: bytes = Metadata;
+    var Index: u32 = 0u32;
+    while Index < 5u32 {
+        var Service: u32 = 0u32;
+        var Signature: u32 = 0u32;
+        if Index == 0u32 { Service = 1u32; Signature = 1u32; }
+        if Index == 1u32 { Service = 6u32; Signature = 1u32; }
+        if Index == 2u32 { Service = 4u32; Signature = 2u32; }
+        if Index == 3u32 { Service = 3u32; Signature = 3u32; }
+        if Index == 4u32 { Service = 2u32; Signature = 4u32; }
+        Result = Appendˉu32(Result, Index + 1u32);
+        Result = Appendˉu32(Result, Service);
+        Result = Appendˉu32(Result, Signature);
+        Result = Appendˉu32(Result, 1u32);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Appendˉservices(Input: bytes, Metadata: bytes, Target: u32) -> bytes {
+    var Result: bytes = Metadata;
+    var Index: u32 = 0u32;
+    while Index < 6u32 {
+        let Requestˉrecord: u32 = 96u32 + Index * 48u32;
+        let Capability: u32 = Serviceˉcapability(Index);
+        Result = Appendˉu32(Result, Index + 1u32);
+        Result = Appendˉu32(Result, Capability);
+        Result = Appendˉu32(Result, 8u32 + Index * 8u32);
+        Result = Appendˉu32(Result, Serviceˉadapter(Index, Target));
+        Result = Bytesˉconcat(Result, Bytesˉslice(Input, Requestˉrecord, 8u32));
+        if Capability == 0u32 {
+            Result = Appendˉu32(Result, 2u32);
+        } else {
+            Result = Appendˉu32(Result, 1u32);
+        }
+        Result = Appendˉu32(Result, 0u32);
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉslice(Input, Requestˉrecord + 8u32, 32u32)
+        );
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Nativeˉhostedˉverifierˉmetadataˉbuild(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 384u32 { return Failure(Input, 1u32, Total); }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1381389911u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Bundleˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
+    let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    if Target < 1u32 || Target > 2u32 || Profile != 2u32 ||
+        Bundleˉoffset != 4096u32 ||
+        Bundleˉbytes == 0u32 || Bundleˉbytes > 35651584u32 ||
+        Nativeˉbytes == 0u32 || Nativeˉbytes > 33554432u32 ||
+        Nativeˉbytes > Bundleˉbytes || Nativeˉentry >= Nativeˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != 6u32 ||
+        Allˉzero(Input, 40u32, 32u32) ||
+        !Allˉzero(Input, 72u32, 24u32) {
+        return Failure(Input, 4u32, 12u32);
+    }
+
+    var Previousˉend: u32 = Nativeˉbytes;
+    var Index: u32 = 0u32;
+    while Index < 6u32 {
+        let Record: u32 = 96u32 + Index * 48u32;
+        let Imageˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Record);
+        let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, Record + 4u32);
+        if Imageˉoffset < Previousˉend || Imageˉoffset >= Bundleˉbytes ||
+            Codeˉbytes == 0u32 || Codeˉbytes > Bundleˉbytes - Imageˉoffset ||
+            Allˉzero(Input, Record + 8u32, 32u32) ||
+            !Allˉzero(Input, Record + 40u32, 8u32) {
+            return Failure(Input, 5u32, Record);
+        }
+        Previousˉend = Imageˉoffset + Codeˉbytes;
+        Index = Index + 1u32;
+    }
+
+    var Metadata: bytes = Empty(Input);
+    Metadata = Appendˉu32(Metadata, 1447581271u32);
+    Metadata = Appendˉu32(Metadata, 1u32);
+    Metadata = Appendˉu32(Metadata, 1024u32);
+    Metadata = Appendˉu32(Metadata, Target);
+    Metadata = Appendˉu32(Metadata, 4u32);
+    Metadata = Appendˉu32(Metadata, 22u32);
+    Metadata = Appendˉu32(Metadata, 7u32);
+    Metadata = Appendˉu32(Metadata, 5u32);
+    Metadata = Appendˉu32(Metadata, 5u32);
+    Metadata = Appendˉu32(Metadata, 6u32);
+    Metadata = Appendˉu32(Metadata, 128u32);
+    Metadata = Appendˉu32(Metadata, 16u32);
+    Metadata = Appendˉu32(Metadata, 208u32);
+    Metadata = Appendˉu32(Metadata, 64u32);
+    Metadata = Appendˉu32(Metadata, Bundleˉoffset);
+    Metadata = Appendˉu32(Metadata, Bundleˉbytes);
+    Metadata = Appendˉu32(Metadata, 0u32);
+    Metadata = Appendˉu32(Metadata, Nativeˉbytes);
+    Metadata = Appendˉu32(Metadata, Nativeˉentry);
+    Metadata = Appendˉu32(Metadata, 2097152u32);
+    Metadata = Appendˉu32(Metadata, 134217728u32);
+    Metadata = Appendˉu32(Metadata, 2u32);
+    Metadata = Appendˉu32(Metadata, 3115098112u32);
+    Metadata = Appendˉu32(Metadata, 3u32);
+    Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 40u32, 32u32));
+    Metadata = Appendˉcapabilities(Input, Metadata);
+    Metadata = Appendˉservices(Input, Metadata, Target);
+    Metadata = Bytesˉconcat(Metadata, Zeroes(Input, 432u32));
+    if !Admission.Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
+        Metadata,
+        0u32,
+        Target
+    ) {
+        return Failure(Input, 6u32, 12u32);
+    }
+    return Bytesˉconcat(
+        Responseˉheader(Input, 1056u32, 0u32, Total, 1024u32),
+        Metadata
+    );
+}

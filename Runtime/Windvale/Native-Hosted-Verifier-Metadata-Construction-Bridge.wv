@@ -1,0 +1,7 @@
+module Runtimeˉnativeˉhostedˉverifierˉmetadataˉbridge profile portable;
+
+import Runtimeˉnativeˉhostedˉverifierˉmetadataˉconstruction as Construction;
+
+export fn Main(Input: bytes) -> bytes {
+    return Construction.Nativeˉhostedˉverifierˉmetadataˉbuild(Input);
+}

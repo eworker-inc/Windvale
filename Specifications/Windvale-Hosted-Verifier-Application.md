@@ -4,6 +4,13 @@
 
 `WVHV 1` is the implemented manifest for packaging four fixed Windvale-written read-only binary tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned WVB verifier, the complete structural `wvdump` inspector, the bounded portable-WVB runner, and the WVO verifier/inspector. All run without loading .NET. The WVB verifier and inspector applications have qualified histories; the runner and WVO profiles are implemented candidates pending the grouped dual-host retirement gate. Stage 0 still lowers, packages, and independently verifies the applications until the broader native-retirement gate is qualified.
 
+[Decision 0461](../Documents/Decisions/0461-Native-WVHV-Metadata-Ownership.md)
+adds the first native-construction replacement for this family: an exact
+`WVVR 1` request now drives portable Windvale construction and independent
+admission of compiler-verifier profile 2 metadata. Runtime, startup, outer
+container construction, and promotion remain pending and do not reuse the
+separate `WVHB` build-driver meaning of numeric profile 2.
+
 These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one monolithic typed walk under a `u64` host meter; the WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
 
 The canonical source project is [`Windvale-Compiler-Wvb-Verifier.wvproj`](../Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
