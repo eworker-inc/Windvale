@@ -80,6 +80,11 @@ they do not replace malformed-format suites or the final qualification gate.
 
 The Windows candidate composes `wvhostcontrol.wvb` into a 236,032-byte PE with
 SHA-256 `eeec7c229b20ac006ed366849c91e2f03e035a9e3ee29da2e9aeb408c76b2709`,
-byte-for-byte equal to the independently constructed candidate. Linux process
-execution, artifact promotion, ordinary-path cutover, and the grouped dual-host
-retirement gate remain pending.
+byte-for-byte equal to the independently constructed candidate. The Linux
+candidate is a 237,568-byte ELF with SHA-256
+`f7b40ac03478d54bdf8fed468fdfbe52a9449159a9fb45c05da6603935e24c67`.
+Focused GitHub run
+[`31286313268`](https://github.com/eworker-inc/Windvale/actions/runs/31286313268)
+passes both cases on genuine Windows and Debian hosts. Artifact promotion,
+ordinary-path cutover, and the grouped dual-host retirement gate remain
+pending.

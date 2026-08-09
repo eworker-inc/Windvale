@@ -1,6 +1,6 @@
 # Decision 0414: Digest-bound native hosted-container composition
 
-- Status: Implemented candidate on Windows; Linux execution and promotion pending
+- Status: Implemented candidate on Windows and Linux; promotion pending
 - Date: 2026-08-08
 - Advances: [Decision 0413](0413-Native-Hosted-Segment-Iteration-Control.md)
 - Contract: [Native hosted-container packaging](../../Specifications/Windvale-Native-Hosted-Container-Packaging.md)
@@ -78,14 +78,14 @@ forms over the preserved Linux-target resources: segment request, segment
 construction, segment manifest, and publication all accept the source set and
 produce the exact 237,568-byte ELF with SHA-256
 `f7b40ac03478d54bdf8fed468fdfbe52a9449159a9fb45c05da6603935e24c67`.
-A fresh genuine Linux run from this exact inventory remains the promotion
-evidence.
+Focused GitHub run
+[`31286313268`](https://github.com/eworker-inc/Windvale/actions/runs/31286313268)
+then passes the paired success, invalid-input, preservation, and private-cleanup
+smokes on genuine Windows and Debian hosts from commit `88084533`.
 
-This is a candidate rather than an ordinary-path promotion. Linux process
-execution must pass from the same inventory, both launchers need focused
-failure/preservation checks, and the complete containing commit must pass the
-grouped Windows/Linux gate before managed hosted-container construction moves
-to recovery-only status.
+This remains a candidate rather than an ordinary-path promotion. The complete
+containing commit must pass the grouped Windows/Linux gate before managed
+hosted-container construction moves to recovery-only status.
 
 ## Reconsideration triggers
 
