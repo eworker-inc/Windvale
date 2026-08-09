@@ -123,6 +123,10 @@ normal image passes its exact supplied-image boot contract.
 then transfers canonical UEFI v3 construction and independent verification to
 portable Windvale with native Project 1 front doors. The other four boot
 scenarios, upstream native Probe 40 composition, and promotion remain open.
+[Decision 0437](../Decisions/0437-Native-Linker-To-Uefi-Packaging.md) connects
+the real digest-bound native linker output and its entry evidence to one hosted
+Windvale packager. Retained host-container construction, independent Linux
+execution, complete five-scenario composition, and promotion remain open.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

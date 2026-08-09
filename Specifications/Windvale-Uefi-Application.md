@@ -63,7 +63,9 @@ single-entry process bridges:
   capability-free `Main(bytes) -> bytes` entry point; and
 - `Uefi-Application-Construction-Core.wv` constructs the canonical file from
   an already verified flat image, invokes the independent verifier, and
-  publishes no image unless the recovered code and entry are exact.
+  returns no image unless the recovered code and entry are exact; and
+- `Uefi-Application-Construction-Bridge.wv` owns the versioned byte envelope
+  for the single-entry portable constructor application.
 
 The internal construction request is `WVUR 1`: a 16-byte little-endian header
 containing magic, version, total bytes, and entry offset, followed by 1 through
@@ -76,9 +78,16 @@ new UEFI application-format version.
 
 `Windvale-Native-Uefi-Application-Construction.wvproj` and
 `Windvale-Native-Uefi-Application-Verification.wvproj` are the canonical
-Project 1 front doors. The managed writer and verifier remain frozen recovery
-and differential evidence until Probe 40 construction and the complete native
-retirement gate qualify this replacement on both permanent hosts.
+portable Project 1 front doors. `Uefi-Application-Packager.wv` instead exposes
+the hosted command
+`wvuefi <native-image.bin> <entry-offset> <output.efi>` and directly invokes the
+typed construction core. Its `Windvale-Uefi-Application-Packager.wvproj` front
+door uses only explicit argument, diagnostic, console, file-read, and
+file-write capabilities. It writes no destination unless construction and
+independent verification succeed. The managed writer and verifier remain
+frozen recovery and differential evidence until retained native host
+containers, Probe 40 construction, and the complete native retirement gate
+qualify this replacement on both permanent hosts.
 
 ## Diagnostics
 

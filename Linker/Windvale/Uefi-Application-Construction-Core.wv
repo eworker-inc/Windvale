@@ -12,15 +12,11 @@ export enum Uefiˉapplicationˉconstructionˉstatus {
     Verificationˉfailure = 5;
 }
 
-fn Statusˉcode(Status: Uefiˉapplicationˉconstructionˉstatus) -> u32 {
-    if Status == Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize { return 1u32; }
-    if Status == Uefiˉapplicationˉconstructionˉstatus.Invalidˉmagic { return 2u32; }
-    if Status == Uefiˉapplicationˉconstructionˉstatus.Invalidˉversion { return 3u32; }
-    if Status == Uefiˉapplicationˉconstructionˉstatus.Invalidˉentry { return 4u32; }
-    if Status == Uefiˉapplicationˉconstructionˉstatus.Verificationˉfailure {
-        return 5u32;
-    }
-    return 0u32;
+export record Uefiˉapplicationˉconstructionˉresult {
+    Status: Uefiˉapplicationˉconstructionˉstatus;
+    Failureˉoffset: u32;
+    Entryˉoffset: u32;
+    Image: bytes;
 }
 
 fn Empty(Input: bytes) -> bytes {
@@ -55,10 +51,6 @@ fn Patchˉu64(Input: bytes, Offset: u32, Low: u32, High: u32) -> bytes {
     var Result: bytes = Patchˉu32(Input, Offset, Low);
     Result = Patchˉu32(Result, Offset + 4u32, High);
     return Result;
-}
-
-fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
-    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
 }
 
 fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
@@ -169,93 +161,43 @@ fn Buildˉimage(Code: bytes, Entryˉoffset: u32) -> bytes {
     );
 }
 
-fn Response(
-    Input: bytes,
-    Status: Uefiˉapplicationˉconstructionˉstatus,
-    Failureˉoffset: u32,
-    Entryˉoffset: u32,
-    Image: bytes
-) -> bytes {
-    var Result: bytes = Empty(Input);
-    Result = Appendˉu32(Result, 1129666135u32);
-    Result = Appendˉu32(Result, 1u32);
-    Result = Appendˉu32(Result, 32u32 + Bytesˉlength(Image));
-    Result = Appendˉu32(Result, Statusˉcode(Status));
-    Result = Appendˉu32(Result, Failureˉoffset);
-    Result = Appendˉu32(Result, Entryˉoffset);
-    Result = Appendˉu32(Result, Bytesˉlength(Image));
-    Result = Appendˉu32(Result, 0u32);
-    return Bytesˉconcat(Result, Image);
-}
-
-export fn Main(Input: bytes) -> bytes {
-    let Total: u32 = Bytesˉlength(Input);
-    if Total < 17u32 || Total > 4194320u32 {
-        return Response(
-            Input,
+export fn Uefiˉapplicationˉconstruct(
+    Code: bytes,
+    Entryˉoffset: u32
+) -> Uefiˉapplicationˉconstructionˉresult {
+    let Codeˉbytes: u32 = Bytesˉlength(Code);
+    if Codeˉbytes == 0u32 || Codeˉbytes > 4194304u32 {
+        return Uefiˉapplicationˉconstructionˉresult(
             Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize,
-            Total,
+            Codeˉbytes,
             0u32,
-            Empty(Input)
+            Empty(Code)
         );
     }
-    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1381324375u32 {
-        return Response(
-            Input,
-            Uefiˉapplicationˉconstructionˉstatus.Invalidˉmagic,
-            0u32,
-            0u32,
-            Empty(Input)
-        );
-    }
-    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
-        return Response(
-            Input,
-            Uefiˉapplicationˉconstructionˉstatus.Invalidˉversion,
-            4u32,
-            0u32,
-            Empty(Input)
-        );
-    }
-    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
-        return Response(
-            Input,
-            Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize,
-            8u32,
-            0u32,
-            Empty(Input)
-        );
-    }
-    let Codeˉbytes: u32 = Total - 16u32;
-    let Entryˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     if Entryˉoffset >= Codeˉbytes {
-        return Response(
-            Input,
+        return Uefiˉapplicationˉconstructionˉresult(
             Uefiˉapplicationˉconstructionˉstatus.Invalidˉentry,
-            12u32,
-            0u32,
-            Empty(Input)
+            Entryˉoffset,
+            Entryˉoffset,
+            Empty(Code)
         );
     }
-    let Code: bytes = Bytesˉslice(Input, 16u32, Codeˉbytes);
     let Image: bytes = Buildˉimage(Code, Entryˉoffset);
     let Verified: Verification.Uefiˉapplicationˉverificationˉresult =
         Verification.Uefiˉapplicationˉverify(Image);
     if Verified.Status != Verification.Uefiˉapplicationˉverificationˉstatus.Valid ||
         Verified.Entryˉoffset != Entryˉoffset ||
         !Bytesˉequal(Verified.Code, Code) {
-        return Response(
-            Input,
+        return Uefiˉapplicationˉconstructionˉresult(
             Uefiˉapplicationˉconstructionˉstatus.Verificationˉfailure,
             Verified.Failureˉoffset,
             0u32,
-            Empty(Input)
+            Empty(Code)
         );
     }
-    return Response(
-        Input,
+    return Uefiˉapplicationˉconstructionˉresult(
         Uefiˉapplicationˉconstructionˉstatus.Valid,
-        Total,
+        Codeˉbytes,
         Entryˉoffset,
         Image
     );

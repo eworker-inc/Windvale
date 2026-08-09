@@ -4491,3 +4491,23 @@ profiles, representative malformed structure and request rejection, and exact
 native-front-door WVB reconstruction. Broad Seed, OS, Standard, Qualification,
 dual-host execution, five-scenario image reconstruction, and promotion remain
 deferred to their documented gates.
+
+## Local native linker to UEFI packaging evidence
+
+[Decision 0437](../Decisions/0437-Native-Linker-To-Uefi-Packaging.md) separates
+the typed constructor from its byte-envelope bridge and adds a hosted Windvale
+packager over an already linked image and verified entry offset. The reviewed
+combined Fast linker selection passes 2/2 in 6.854 seconds. It invokes the real
+digest-bound native linker, packages its exact output without loading the CLR,
+matches the frozen Stage 0 EFI bytes, re-verifies code and entry, repeats
+deterministically, and preserves an existing destination for an invalid entry.
+
+Native Project 1 builds reproduce the 14,831-byte verifier at SHA-256
+`dc069d256ec0cba2c402afc7fc32421704a7c20c5d332b3bde013a11f80aa83e`,
+the 24,811-byte constructor bridge at SHA-256
+`858f718b26e34966f19d53ff725a215935bd6dcaa0a93a2b5329367bbdece956`,
+and the 25,999-byte hosted packager at SHA-256
+`063f95f53e39390c76bcf31fbf7bdc87eed6194388101fadc4d60ee41b2802e4`.
+The temporary host containers remain Stage 0 differential fixtures; retained
+native host-container construction, Linux execution, complete Probe 40
+composition, Standard, Qualification, and promotion remain deferred.

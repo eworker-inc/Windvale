@@ -1,6 +1,6 @@
 # Decision 0436: Windvale-native UEFI application construction
 
-- Status: Implemented current-host format core and native front doors; Probe 40 integration pending
+- Status: Implemented current-host format core and native front doors; linker handoff advanced by Decision 0437; Probe 40 composition pending
 - Date: 2026-08-09
 - Advances: [Decision 0045](0045-First-Uefi-Application-And-Boot-Probe.md), [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), and [Decision 0435](0435-Digest-Bound-Os-Boot-Execution.md)
 - Contract: [Windvale UEFI application format](../../Specifications/Windvale-Uefi-Application.md)
@@ -49,8 +49,9 @@ single focused Fast selection passes in 4.344 seconds after test review.
 
 O2 therefore becomes a native candidate, but it is not promoted: the managed
 Probe 40 coordinator still produces and links the upstream scenario-specific
-objects before calling its writer. The next O2 slice should connect the native
-link result to this constructor without adding a second PE implementation.
+objects before calling its writer. [Decision 0437](0437-Native-Linker-To-Uefi-Packaging.md)
+connects the real native link result to this typed constructor without adding a
+second PE implementation; upstream scenario composition remains open.
 
 ## Reconsideration triggers
 

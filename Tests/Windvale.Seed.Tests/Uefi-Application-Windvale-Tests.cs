@@ -12,6 +12,13 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
+    private const int NATIVE_UEFI_APPLICATION_VERIFICATION_SIZE = 14_831;
+    private const string NATIVE_UEFI_APPLICATION_VERIFICATION_SHA256 =
+        "dc069d256ec0cba2c402afc7fc32421704a7c20c5d332b3bde013a11f80aa83e";
+    private const int NATIVE_UEFI_APPLICATION_CONSTRUCTION_SIZE = 24_811;
+    private const string NATIVE_UEFI_APPLICATION_CONSTRUCTION_SHA256 =
+        "858f718b26e34966f19d53ff725a215935bd6dcaa0a93a2b5329367bbdece956";
+
     private static void Windvaleˉuefiˉapplicationˉconstructionˉruns()
     {
         Sourceˉmoduleˉinput Source(string path, string resource) =>
@@ -29,6 +36,9 @@ internal static partial class Program
         var Constructionˉinput = Source(
             "Linker/Windvale/Uefi-Application-Construction-Core.wv",
             "Uefi-Application-Construction-Core.wv");
+        var Constructionˉbridgeˉinput = Source(
+            "Linker/Windvale/Uefi-Application-Construction-Bridge.wv",
+            "Uefi-Application-Construction-Bridge.wv");
 
         var Verificationˉcompilation = Seedˉcompiler.Compileˉmodules(
             Verificationˉbridgeˉinput,
@@ -38,12 +48,26 @@ internal static partial class Program
             "The Windvale UEFI verifier did not compile: " +
                 string.Join(" | ", Verificationˉcompilation.Diagnostics));
         var Constructionˉcompilation = Seedˉcompiler.Compileˉmodules(
-            Constructionˉinput,
-            [Byteˉconstruction, Verificationˉinput]);
+            Constructionˉbridgeˉinput,
+            [Byteˉconstruction, Constructionˉinput, Verificationˉinput]);
         True(
             Constructionˉcompilation.Success,
             "The Windvale UEFI constructor did not compile: " +
                 string.Join(" | ", Constructionˉcompilation.Diagnostics));
+        Equal(
+            NATIVE_UEFI_APPLICATION_VERIFICATION_SIZE,
+            Verificationˉcompilation.Moduleˉbytes.Length);
+        Equal(
+            NATIVE_UEFI_APPLICATION_VERIFICATION_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Verificationˉcompilation.Moduleˉbytes.AsSpan()));
+        Equal(
+            NATIVE_UEFI_APPLICATION_CONSTRUCTION_SIZE,
+            Constructionˉcompilation.Moduleˉbytes.Length);
+        Equal(
+            NATIVE_UEFI_APPLICATION_CONSTRUCTION_SHA256,
+            Moduleˉdigest.Calculateˉsha256(
+                Constructionˉcompilation.Moduleˉbytes.AsSpan()));
 
         var Verificationˉmodule = Moduleˉcodec.Readˉandˉverify(
             Verificationˉcompilation.Moduleˉbytes.AsSpan());

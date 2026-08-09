@@ -1359,6 +1359,7 @@ internal static partial class Program
         new("paired hosted console applications serialize one capability and execute", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Hostedˉconsoleˉapplicationsˉrun),
         new("Windvale owns bounded Windows and Linux console-application layout, construction, and verification", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉconsoleˉapplicationˉlayoutˉruns),
         new("Windvale owns canonical UEFI application construction and verification", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉuefiˉapplicationˉconstructionˉruns),
+        new("Windvale packages native linker images as canonical UEFI applications", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉuefiˉapplicationˉpackagerˉruns),
         new("native console application publication is atomic", [TEST_AREA_COMPILER, TEST_AREA_LINKER], Nativeˉconsoleˉapplicationˉpublicationˉisˉatomic),
         new("bounded wide native calls agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwideˉcallsˉagree),
         new("native enums and records agree across interpreter, JIT, and WVO AOT", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉnominalˉvaluesˉagree),

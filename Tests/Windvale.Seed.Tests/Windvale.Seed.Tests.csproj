@@ -76,6 +76,12 @@
       Include="../../Linker/Windvale/Uefi-Application-Construction-Core.wv"
       LogicalName="Windvale.Seed.Tests.Uefi-Application-Construction-Core.wv" />
     <EmbeddedResource
+      Include="../../Linker/Windvale/Uefi-Application-Construction-Bridge.wv"
+      LogicalName="Windvale.Seed.Tests.Uefi-Application-Construction-Bridge.wv" />
+    <EmbeddedResource
+      Include="../../Linker/Windvale/Uefi-Application-Packager.wv"
+      LogicalName="Windvale.Seed.Tests.Uefi-Application-Packager.wv" />
+    <EmbeddedResource
       Include="../../Linker/Windvale/Console-Application-Construction-Bridge.wv"
       LogicalName="Windvale.Seed.Tests.Console-Application-Construction-Bridge.wv" />
     <EmbeddedResource

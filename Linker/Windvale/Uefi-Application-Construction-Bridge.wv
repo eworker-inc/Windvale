@@ -1,0 +1,116 @@
+module Linkerˉuefiˉapplicationˉconstructionˉbridge profile portable;
+
+import Linkerˉuefiˉapplicationˉconstruction as Construction;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Statusˉcode(Status: Construction.Uefiˉapplicationˉconstructionˉstatus) -> u32 {
+    if Status == Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize {
+        return 1u32;
+    }
+    if Status == Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉmagic {
+        return 2u32;
+    }
+    if Status == Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉversion {
+        return 3u32;
+    }
+    if Status == Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉentry {
+        return 4u32;
+    }
+    if Status ==
+        Construction.Uefiˉapplicationˉconstructionˉstatus.Verificationˉfailure {
+        return 5u32;
+    }
+    return 0u32;
+}
+
+fn Response(
+    Input: bytes,
+    Status: Construction.Uefiˉapplicationˉconstructionˉstatus,
+    Failureˉoffset: u32,
+    Entryˉoffset: u32,
+    Image: bytes
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1129666135u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, 32u32 + Bytesˉlength(Image));
+    Result = Appendˉu32(Result, Statusˉcode(Status));
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Entryˉoffset);
+    Result = Appendˉu32(Result, Bytesˉlength(Image));
+    Result = Appendˉu32(Result, 0u32);
+    return Bytesˉconcat(Result, Image);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 17u32 || Total > 4194320u32 {
+        return Response(
+            Input,
+            Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize,
+            Total,
+            0u32,
+            Empty(Input)
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1381324375u32 {
+        return Response(
+            Input,
+            Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉmagic,
+            0u32,
+            0u32,
+            Empty(Input)
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Response(
+            Input,
+            Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉversion,
+            4u32,
+            0u32,
+            Empty(Input)
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Response(
+            Input,
+            Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉsize,
+            8u32,
+            0u32,
+            Empty(Input)
+        );
+    }
+    let Codeˉbytes: u32 = Total - 16u32;
+    let Entryˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Code: bytes = Bytesˉslice(Input, 16u32, Codeˉbytes);
+    let Constructed: Construction.Uefiˉapplicationˉconstructionˉresult =
+        Construction.Uefiˉapplicationˉconstruct(Code, Entryˉoffset);
+    if Constructed.Status != Construction.Uefiˉapplicationˉconstructionˉstatus.Valid {
+        var Failureˉoffset: u32 = Constructed.Failureˉoffset;
+        if Constructed.Status ==
+            Construction.Uefiˉapplicationˉconstructionˉstatus.Invalidˉentry {
+            Failureˉoffset = 12u32;
+        }
+        return Response(
+            Input,
+            Constructed.Status,
+            Failureˉoffset,
+            0u32,
+            Empty(Input)
+        );
+    }
+    return Response(
+        Input,
+        Constructed.Status,
+        Total,
+        Constructed.Entryˉoffset,
+        Constructed.Image
+    );
+}
