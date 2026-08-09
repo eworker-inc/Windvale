@@ -21,6 +21,10 @@ jobs:
         shell: cmd
         run: Tools\Native\Test-Hosted-Wvb-Packaging.cmd
 
+      - name: Verify segmented compiler packaging
+        shell: cmd
+        run: Tools\Native\Test-Segmented-Compiler-Packaging.cmd
+
   linux-hosted-packaging:
     name: Linux native hosted packaging
     runs-on: ubuntu-latest
@@ -42,3 +46,7 @@ jobs:
       - name: Verify native hosted packaging
         shell: bash
         run: ./Tools/Native/Test-Hosted-Wvb-Packaging.sh
+
+      - name: Verify segmented compiler packaging
+        shell: bash
+        run: ./Tools/Native/Test-Segmented-Compiler-Packaging.sh
