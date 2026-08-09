@@ -17,6 +17,35 @@ function Fail-Recovery {
     throw "WVOS2001: $Message"
 }
 
+function Invoke-NativeWvaAssembly {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Assembler,
+        [Parameter(Mandatory)]
+        [string]$RepositoryRoot,
+        [Parameter(Mandatory)]
+        [string]$OutputDirectory,
+        [Parameter(Mandatory)]
+        [string]$SourceName,
+        [Parameter(Mandatory)]
+        [string]$ObjectName,
+        [Parameter(Mandatory)]
+        [string]$ExpectedSha256
+    )
+
+    $SourcePath = Join-Path $RepositoryRoot $SourceName
+    $ObjectPath = Join-Path $OutputDirectory $ObjectName
+    $AssemblerOutput = @(& $Assembler $SourcePath $ObjectPath 2>&1)
+    if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $ObjectPath -PathType Leaf)) {
+        $AssemblerMessage = ($AssemblerOutput | ForEach-Object { $_.ToString() }) -join ' '
+        Fail-Recovery "The native WVA assembly step failed. $AssemblerMessage"
+    }
+    $ObjectSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $ObjectPath).Hash.ToLowerInvariant()
+    if ($ObjectSha256 -cne $ExpectedSha256) {
+        Fail-Recovery "The native WVA object '$ObjectName' has an unexpected digest."
+    }
+}
+
 $Dotnet = Get-Command dotnet -CommandType Application -ErrorAction SilentlyContinue |
     Select-Object -First 1
 if ($null -eq $Dotnet) {
@@ -71,14 +100,69 @@ $LinkedPath = Join-Path $OutputDirectory (
     '.windvale-os-probe-linked-' + $CandidateToken + '.bin')
 $ObjectDirectory = Join-Path $OutputDirectory (
     '.windvale-os-probe-objects-' + $CandidateToken)
+$ProcessWvaDirectory = Join-Path $OutputDirectory (
+    '.windvale-os-probe-process-wva-' + $CandidateToken)
 try {
     $null = New-Item -ItemType Directory -Path $ObjectDirectory
+    $null = New-Item -ItemType Directory -Path $ProcessWvaDirectory
+    $ClientWvaObject = switch ($Scenario) {
+        'user-fault' {
+            @(
+                'Operating-System/Kernel/Process-User-Fault-Shim.wva',
+                'Process-User-Fault-Shim.wvo',
+                '19c6b672873d86187e7588aadc0a485ec1f0ece9406529ad0fe045db9463b090'
+            )
+        }
+        'service-fault' {
+            @(
+                'Operating-System/Kernel/Process-Service-Fault-Shim.wva',
+                'Process-Service-Fault-Shim.wvo',
+                '72f87e1b283cdb0d5dfc86149d749ec3e011f3a6e5e3da7397dce54d325bd27e'
+            )
+        }
+        default {
+            @(
+                'Operating-System/Kernel/Process-User-Shim.wva',
+                'Process-User-Shim.wvo',
+                '69ea7402a3a752e5c4b45689aeeb902b7e2ff1ce87a34bc9bad81417a3992fe6'
+            )
+        }
+    }
+    $ProcessWvaObjects = @(
+        @(
+            'Operating-System/Kernel/Init-Resource-Service-Shim.wva',
+            'Init-Resource-Service-Shim.wvo',
+            '52098aac184961fda7c3a23c8577851df6c18736555cb169b340d7b0c7249359'
+        ),
+        @(
+            'Operating-System/Kernel/Directory-Process-Service-Shim.wva',
+            'Directory-Process-Service-Shim.wvo',
+            'c0a7524130b8733ed17a3ce52fc04986cb449394c9ee509280120b86a3ed8c88'
+        ),
+        @(
+            'Operating-System/Runtime/Boot-Resource-Service.wva',
+            'Boot-Resource-Service.wvo',
+            'fde44aad9549731d53c5ccf3a57733b3619df94369b61ef27a693e1059784bc9'
+        ),
+        $ClientWvaObject
+    )
+    foreach ($ProcessWvaObject in $ProcessWvaObjects) {
+        Invoke-NativeWvaAssembly `
+            -Assembler $NativeAssembler `
+            -RepositoryRoot $RepositoryRoot `
+            -OutputDirectory $ProcessWvaDirectory `
+            -SourceName $ProcessWvaObject[0] `
+            -ObjectName $ProcessWvaObject[1] `
+            -ExpectedSha256 $ProcessWvaObject[2]
+    }
+
     $BuilderOutput = @(
         & $Dotnet.Source run `
             --project $BuilderProject `
             --configuration Release `
             -- `
             --object-directory-native-wva $ObjectDirectory `
+            --process-wva-directory $ProcessWvaDirectory `
             --scenario $Scenario 2>&1
     )
     if ($LASTEXITCODE -ne 0) {
@@ -149,17 +233,13 @@ try {
         )
     )
     foreach ($NativeWvaObject in $NativeWvaObjects) {
-        $SourcePath = Join-Path $RepositoryRoot $NativeWvaObject[0]
-        $ObjectPath = Join-Path $ObjectDirectory $NativeWvaObject[1]
-        $AssemblerOutput = @(& $NativeAssembler $SourcePath $ObjectPath 2>&1)
-        if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $ObjectPath -PathType Leaf)) {
-            $AssemblerMessage = ($AssemblerOutput | ForEach-Object { $_.ToString() }) -join ' '
-            Fail-Recovery "The native WVA assembly step failed. $AssemblerMessage"
-        }
-        $ObjectSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $ObjectPath).Hash.ToLowerInvariant()
-        if ($ObjectSha256 -cne $NativeWvaObject[2]) {
-            Fail-Recovery "The native WVA object '$($NativeWvaObject[1])' has an unexpected digest."
-        }
+        Invoke-NativeWvaAssembly `
+            -Assembler $NativeAssembler `
+            -RepositoryRoot $RepositoryRoot `
+            -OutputDirectory $ObjectDirectory `
+            -SourceName $NativeWvaObject[0] `
+            -ObjectName $NativeWvaObject[1] `
+            -ExpectedSha256 $NativeWvaObject[2]
     }
 
     $ObjectPaths = @(
@@ -221,5 +301,8 @@ try {
     }
     if (Test-Path -LiteralPath $ObjectDirectory) {
         Remove-Item -LiteralPath $ObjectDirectory -Recurse -Force
+    }
+    if (Test-Path -LiteralPath $ProcessWvaDirectory) {
+        Remove-Item -LiteralPath $ProcessWvaDirectory -Recurse -Force
     }
 }

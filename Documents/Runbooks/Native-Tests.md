@@ -525,16 +525,20 @@ pwsh -NoProfile -File Tools/Recovery/Rebuild-Os-Probe.ps1 `
     -Scenario normal
 ```
 
-Stage 0 produces eleven reviewed Probe 40 WVOs. The recovery command assembles
-the memory-object, timer, and kernel shim WVA sources through the current
-host's digest-bound native assembler, admits all three exact hashes, restores
-the reviewed fourteen-object order, invokes the digest-bound native linker,
-parses its canonical entry address, and then invokes the digest-bound native
-UEFI packager. It refuses an existing destination and removes its private
-objects, linked payload, and EFI candidate. It is provenance and differential
-infrastructure, not the normal boot path; remaining object/scenario production
-still requires .NET, while managed top-level WVA assembly, linking, and UEFI
-packaging are retained only as recovery/differential implementations.
+Stage 0 produces eleven reviewed Probe 40 WVOs. Before invoking it, the recovery
+command assembles the init-service, directory-service, boot-resource, and
+scenario-selected client WVA objects through the current host's digest-bound
+native assembler. It passes that exact four-object directory into Stage 0 for
+checked process-image composition. The command then assembles the top-level
+memory-object, timer, and kernel shims natively, admits all seven exact hashes,
+restores the reviewed fourteen-object order, invokes the digest-bound native
+linker, parses its canonical entry address, and invokes the digest-bound native
+UEFI packager. It refuses an existing destination and removes its private WVA,
+object, linked-payload, and EFI-candidate paths. It is provenance and
+differential infrastructure, not the normal boot path; remaining source
+compilation, native lowering, three inner links, and other object/scenario
+production still require .NET. Managed WVA assembly, top-level linking, and
+UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 

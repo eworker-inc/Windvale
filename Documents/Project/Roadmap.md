@@ -153,6 +153,10 @@ Probe 40 object/scenario production are the next transfer.
 moves the three top-level WVA shim objects to the qualified native assembler
 and leaves Stage 0 producing eleven link inputs. Inner process-image WVA,
 remaining object construction, and Linux recovery execution are next.
+[Decision 0444](../Decisions/0444-Native-Probe-40-Inner-Process-Wva-Handoff.md)
+moves the four scenario-selected inner WVA objects to the same native assembler
+and feeds their exact WVOs into Stage 0 composition. The three inner links,
+remaining object construction, and Linux recovery execution are next.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

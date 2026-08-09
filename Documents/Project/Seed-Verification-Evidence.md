@@ -4631,3 +4631,38 @@ source into its focused owner; the broad source is now 590 lines and the
 focused inventory source is 281 lines. No broad Seed, OS, QEMU, Qualification,
 or Linux recovery command ran. Inner process-image WVA assembly and all other
 Stage 0 object-production dependencies remain explicit.
+
+## Local native Probe 40 inner process-WVA evidence
+
+[Decision 0444](../Decisions/0444-Native-Probe-40-Inner-Process-Wva-Handoff.md)
+adds an explicit immutable handoff for the init-service, directory-service,
+boot-resource, and selected client WVOs. The native assembler reproduces the
+six possible source products at these SHA-256 identities:
+
+- init service: `52098aac184961fda7c3a23c8577851df6c18736555cb169b340d7b0c7249359`;
+- directory service: `c0a7524130b8733ed17a3ce52fc04986cb449394c9ee509280120b86a3ed8c88`;
+- boot resource: `fde44aad9549731d53c5ccf3a57733b3619df94369b61ef27a693e1059784bc9`;
+- normal client: `69ea7402a3a752e5c4b45689aeeb902b7e2ff1ce87a34bc9bad81417a3992fe6`;
+- user-fault client: `19c6b672873d86187e7588aadc0a485ec1f0ece9406529ad0fe045db9463b090`;
+- service-fault client: `72f87e1b283cdb0d5dfc86149d749ec3e011f3a6e5e3da7397dce54d325bd27e`.
+
+The zero-warning Release solution build succeeds. The updated normal recovery
+command completes in 23.1 seconds and reproduces the exact 683,008-byte EFI at
+SHA-256 `080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+The broad process-image source falls from 810 to 788 lines while its 28-line
+WVA handoff owner keeps Stage 0 fallback plumbing focused.
+One direct negative CLI check supplies an empty process-WVA directory; it
+returns `WVOS2001` with exit code 1 and leaves the destination empty.
+
+The preceding GitHub Qualification run `31308545988` at `a2a18f7f` is not
+qualification evidence: both hosts built successfully but the accumulated
+208-test Seed gate failed. Two native-linker assertions affected by Decision
+0441 were stale; after aligning them with streamed `console.write_line`, the
+Decision 0441 manifest, and the durable SHA-256 map contract, their focused
+current-host runs pass in 1.690 and 0.459 seconds. The other accumulated broad
+failures remain intentionally deferred to the grouped final retirement gate.
+
+No broad Seed, OS, QEMU, Qualification, Linux recovery, or non-normal recovery
+scenario ran for Decision 0444. Managed WVA assembly is absent from the normal
+recovery command; managed source compilation, native lowering, boot-resource
+adaptation, three inner links, and remaining object construction stay explicit.

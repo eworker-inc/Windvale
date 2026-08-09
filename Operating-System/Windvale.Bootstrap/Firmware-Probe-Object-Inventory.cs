@@ -84,7 +84,8 @@ public static partial class Firmwareˉprobe
     public static Firmwareˉprobeˉobjectˉinventory Buildˉobjectˉinventory(
         Firmwareˉprobeˉscenario scenario = Firmwareˉprobeˉscenario.Normal,
         Firmwareˉprobeˉobjectˉinventoryˉscope scope =
-            Firmwareˉprobeˉobjectˉinventoryˉscope.Complete)
+            Firmwareˉprobeˉobjectˉinventoryˉscope.Complete,
+        Kernelˉprocessˉimageˉwvaˉobjects? processˉwvaˉobjects = null)
     {
         if (scenario is not Firmwareˉprobeˉscenario.Normal and
             not Firmwareˉprobeˉscenario.Invalidˉopcode and
@@ -117,7 +118,10 @@ public static partial class Firmwareˉprobe
             Firmwareˉprobeˉscenario.Serviceˉfault => Kernelˉprocessˉscenario.Serviceˉfault,
             _ => Kernelˉprocessˉscenario.Normal,
         };
-        var Processˉimage = Kernelˉprocessˉimage.Build(Admission, Processˉscenario);
+        var Processˉimage = Kernelˉprocessˉimage.Build(
+            Admission,
+            Processˉscenario,
+            processˉwvaˉobjects);
         var Process = Kernelˉprocessˉx64.Build(Processˉimage, Processˉscenario);
         var Nativeˉprobe = Kernelˉnativeˉprobe.Build();
         var Exceptions = Kernelˉexceptionˉx64.Build();

@@ -1,6 +1,6 @@
 # Decision 0443: Native Probe 40 top-level WVA assembly
 
-- Status: Implemented current-host normal-scenario cutover; Linux execution pending
+- Status: Implemented current-host normal-scenario cutover; Linux execution pending; inner WVA advanced by [Decision 0444](0444-Native-Probe-40-Inner-Process-Wva-Handoff.md)
 - Date: 2026-08-09
 - Advances: [Decision 0442](0442-Native-Probe-40-Recovery-Linking-Cutover.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
@@ -53,13 +53,14 @@ exact 683,008-byte normal EFI at SHA-256
 Private objects, linked image, and EFI candidate are removed after completion.
 
 No broad Seed, OS, QEMU, Qualification, or Linux recovery command ran for this
-local cutover. Stage 0 now produces eleven top-level link objects. Its remaining
-executed assembly, source compilation, native lowering, machine-code/object
-construction, and object composition stay explicit for later slices.
+local cutover. Stage 0 now produces eleven top-level link objects. Decision 0444
+later removes the remaining managed WVA assembly from the normal recovery
+command; source compilation, native lowering, machine-code/object construction,
+and object composition stay explicit for later slices.
 
 ## Reconsideration triggers
 
-Reconsider the exact three-object split when another top-level object acquires
-a stable repository-owned WVA source or when process-image WVA components are
-exposed as independently linkable objects. Any object name, source, or digest
-change requires review before the recovery script accepts it.
+Decision 0444 meets the inner-process-WVA reconsideration trigger. Reconsider
+the exact three-object top-level split when another top-level object acquires a
+stable repository-owned WVA source. Any object name, source, or digest change
+requires review before the recovery script accepts it.

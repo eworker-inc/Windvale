@@ -71,6 +71,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Scale-safe native Wv-Linker relocation emission](Decisions/0441-Scale-Safe-Native-Wv-Linker-Relocation-Emission.md) — resolves the measured 128 MiB arena blocker without changing link bytes or maps
 - [Native Probe 40 recovery linking cutover](Decisions/0442-Native-Probe-40-Recovery-Linking-Cutover.md) — removes the managed linker from the normal recovery command while retaining Stage 0 object production
 - [Native Probe 40 top-level WVA assembly](Decisions/0443-Native-Probe-40-Top-Level-Wva-Assembly.md) — moves three exact OS shim objects to the qualified native assembler and focuses inventory ownership
+- [Native Probe 40 inner process-image WVA handoff](Decisions/0444-Native-Probe-40-Inner-Process-Wva-Handoff.md) — feeds four exact native-assembled WVOs into Stage 0 process-image composition while retaining its frozen fallback
 - [Fixed native linker hostile-input corpus](Decisions/0332-Fixed-Native-Linker-Hostile-Input-Corpus.md) — 200 immutable bounded inputs through exact native `WVL1002` containment
 - [Fixed native console-container hostile-input corpus](Decisions/0334-Fixed-Native-Console-Container-Hostile-Input-Corpus.md) — 256 immutable bounded PE/ELF candidates through the native publisher with preservation and zero-scratch evidence
 - [Fixed native WVO differential corpus](Decisions/0335-Fixed-Native-Wvo-Differential-Corpus.md) — 128 valid-shaped mutations and 128 arbitrary values agree with frozen Stage 0 acceptance through the native verifier

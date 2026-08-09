@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Windvale.Bootstrap;
 using Windvale.ObjectModel;
 
@@ -5,23 +6,33 @@ const string Usage =
     "Usage: Windvale.Bootstrap " +
     "<--output <BOOTX64.EFI>|--linked-output <IMAGE.BIN>|--object-directory <DIRECTORY>|" +
     "--object-directory-native-wva <DIRECTORY>> " +
+    "[--process-wva-directory <DIRECTORY>] " +
     "[--scenario <normal|invalid-opcode|general-protection|user-fault|service-fault>]";
-if ((args.Length != 2 && args.Length != 4) ||
-    (args[0] != "--output" &&
-        args[0] != "--linked-output" &&
-        args[0] != "--object-directory" &&
-        args[0] != "--object-directory-native-wva") ||
+var Mode = args.Length == 0 ? string.Empty : args[0];
+var Hasˉprocessˉwvaˉdirectory =
+    Mode == "--object-directory-native-wva" &&
+    args.Length >= 4 &&
+    args[2] == "--process-wva-directory";
+var Baseˉargumentˉcount = Hasˉprocessˉwvaˉdirectory ? 4 : 2;
+if ((args.Length != Baseˉargumentˉcount && args.Length != Baseˉargumentˉcount + 2) ||
+    (Mode != "--output" &&
+        Mode != "--linked-output" &&
+        Mode != "--object-directory" &&
+        Mode != "--object-directory-native-wva") ||
     string.IsNullOrWhiteSpace(args[1]) ||
-    (args.Length == 4 && (args[2] != "--scenario" || string.IsNullOrWhiteSpace(args[3]))))
+    (Hasˉprocessˉwvaˉdirectory && string.IsNullOrWhiteSpace(args[3])) ||
+    (args.Length == Baseˉargumentˉcount + 2 &&
+        (args[Baseˉargumentˉcount] != "--scenario" ||
+            string.IsNullOrWhiteSpace(args[Baseˉargumentˉcount + 1]))))
 {
     Console.Error.WriteLine(Usage);
     return 64;
 }
 
 var Scenario = Firmwareˉprobeˉscenario.Normal;
-if (args.Length == 4)
+if (args.Length == Baseˉargumentˉcount + 2)
 {
-    Scenario = args[3] switch
+    Scenario = args[Baseˉargumentˉcount + 1] switch
     {
         "normal" => Firmwareˉprobeˉscenario.Normal,
         "invalid-opcode" => Firmwareˉprobeˉscenario.Invalidˉopcode,
@@ -54,7 +65,50 @@ try
         var Scope = args[0] == "--object-directory-native-wva"
             ? Firmwareˉprobeˉobjectˉinventoryˉscope.Nativeˉwvaˉexternal
             : Firmwareˉprobeˉobjectˉinventoryˉscope.Complete;
-        var Inventory = Firmwareˉprobe.Buildˉobjectˉinventory(Scenario, Scope);
+        Kernelˉprocessˉimageˉwvaˉobjects? Processˉwvaˉobjects = null;
+        if (Hasˉprocessˉwvaˉdirectory)
+        {
+            var Processˉwvaˉdirectory = args[3];
+            if (!Directory.Exists(Processˉwvaˉdirectory))
+            {
+                throw new InvalidOperationException(
+                    "The native process-WVA input directory does not exist.");
+            }
+
+            var Clientˉobjectˉname = Scenario switch
+            {
+                Firmwareˉprobeˉscenario.Userˉfault => "Process-User-Fault-Shim.wvo",
+                Firmwareˉprobeˉscenario.Serviceˉfault => "Process-Service-Fault-Shim.wvo",
+                _ => "Process-User-Shim.wvo",
+            };
+            var Expectedˉnames = new[]
+            {
+                "Init-Resource-Service-Shim.wvo",
+                "Directory-Process-Service-Shim.wvo",
+                "Boot-Resource-Service.wvo",
+                Clientˉobjectˉname,
+            };
+            var Actualˉnames = Directory.EnumerateFileSystemEntries(Processˉwvaˉdirectory)
+                .Select(Path.GetFileName)
+                .OrderBy(Name => Name, StringComparer.Ordinal);
+            if (!Expectedˉnames.OrderBy(Name => Name, StringComparer.Ordinal)
+                    .SequenceEqual(Actualˉnames, StringComparer.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    "The native process-WVA input directory does not contain the exact reviewed objects.");
+            }
+
+            Processˉwvaˉobjects = new(
+                Readˉobject(Processˉwvaˉdirectory, "Init-Resource-Service-Shim.wvo"),
+                Readˉobject(Processˉwvaˉdirectory, "Directory-Process-Service-Shim.wvo"),
+                Readˉobject(Processˉwvaˉdirectory, "Boot-Resource-Service.wvo"),
+                Readˉobject(Processˉwvaˉdirectory, Clientˉobjectˉname));
+        }
+
+        var Inventory = Firmwareˉprobe.Buildˉobjectˉinventory(
+            Scenario,
+            Scope,
+            Processˉwvaˉobjects);
         foreach (var Object in Inventory.Objects)
         {
             var Objectˉpath = Path.Combine(args[1], Object.Fileˉname);
@@ -102,4 +156,9 @@ catch (Exception Exception)
 {
     Console.Error.WriteLine($"WVOS2001: The firmware probe could not be written: {Exception.Message}");
     return 1;
+}
+
+static ImmutableArray<byte> Readˉobject(string directory, string name)
+{
+    return File.ReadAllBytes(Path.Combine(directory, name)).ToImmutableArray();
 }

@@ -2,7 +2,6 @@ using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
-using Windvale.Assembler;
 using Windvale.Bytecode;
 using Windvale.Compiler;
 using Windvale.Compiler.Native;
@@ -45,7 +44,7 @@ public sealed record Kernelˉprocessˉimageˉartifacts(
     uint Clientˉpreemptionˉprobeˉoffset,
     Kernelˉprocessˉscenario Scenario);
 
-public static class Kernelˉprocessˉimage
+public static partial class Kernelˉprocessˉimage
 {
     private const string POLICY_RESOURCE = "Windvale.Os.Kernel.Process-Foundation.wv";
     private const string INIT_SERVICE_RESOURCE = "Windvale.Os.Kernel.Init-Resource-Service.wv";
@@ -69,7 +68,8 @@ public static class Kernelˉprocessˉimage
 
     public static Kernelˉprocessˉimageˉartifacts Build(
         Kernelˉwvbˉadmissionˉartifacts admission,
-        Kernelˉprocessˉscenario scenario)
+        Kernelˉprocessˉscenario scenario,
+        Kernelˉprocessˉimageˉwvaˉobjects? wvaˉobjects = null)
     {
         ArgumentNullException.ThrowIfNull(admission);
         if (scenario is not Kernelˉprocessˉscenario.Normal and
@@ -92,20 +92,15 @@ public static class Kernelˉprocessˉimage
         var Serviceˉobject = Kernelˉwvbˉadmission.Renameˉmainˉexport(
             Nativeˉobjectˉsink.Writeˉwvo(Serviceˉnative.Fragment),
             Kernelˉprocessˉcontract.INIT_SERVICE_MAIN_SYMBOL);
-        var Serviceˉassembly = Assemblyˉcompiler.Assemble(Loadˉsource(INIT_SERVICE_SHIM_RESOURCE));
-        if (!Serviceˉassembly.Success)
-        {
-            throw new InvalidOperationException(
-                $"The init/resource service shim did not assemble: {Serviceˉassembly.Diagnostics[0].Code}: " +
-                Serviceˉassembly.Diagnostics[0].Message);
-        }
+        var Serviceˉshimˉobject = wvaˉobjects?.Initˉserviceˉshimˉobjectˉbytes ??
+            Assembleˉwvaˉresource(INIT_SERVICE_SHIM_RESOURCE, "init/resource service shim");
         Verifyˉshim(
-            Serviceˉassembly.Objectˉbytes,
+            Serviceˉshimˉobject,
             Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.INIT_SERVICE_MAIN_SYMBOL,
             9);
         var Serviceˉlink = Linkˉcompiler.Link(
-            [new(Serviceˉassembly.Objectˉbytes), new(Serviceˉobject)],
+            [new(Serviceˉshimˉobject), new(Serviceˉobject)],
             new(0, Kernelˉprocessˉcontract.INIT_SERVICE_ENTRY_SYMBOL));
         Verifyˉlinkedˉimage(
             Serviceˉlink,
@@ -113,7 +108,7 @@ public static class Kernelˉprocessˉimage
             Kernelˉprocessˉcontract.INIT_CODE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES);
         var Initˉpreemptionˉprobeˉoffset = Readˉlinkedˉfunctionˉoffset(
             Serviceˉlink,
-            Serviceˉassembly.Objectˉbytes,
+            Serviceˉshimˉobject,
             Kernelˉprocessˉcontract.PREEMPTION_PROBE_SYMBOL);
         var Serviceˉdigest = SHA256.HashData(Serviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
         var Serviceˉidentity = Convert.ToHexString(Serviceˉdigest.AsSpan());
@@ -140,22 +135,16 @@ public static class Kernelˉprocessˉimage
         var Directoryˉserviceˉobject = Kernelˉwvbˉadmission.Renameˉmainˉexport(
             Nativeˉobjectˉsink.Writeˉwvo(Directoryˉserviceˉnative.Fragment),
             Kernelˉprocessˉcontract.DIRECTORY_SERVICE_MAIN_SYMBOL);
-        var Directoryˉserviceˉassembly = Assemblyˉcompiler.Assemble(
-            Loadˉsource(DIRECTORY_SERVICE_SHIM_RESOURCE));
-        if (!Directoryˉserviceˉassembly.Success)
-        {
-            throw new InvalidOperationException(
-                $"The directory process shim did not assemble: " +
-                $"{Directoryˉserviceˉassembly.Diagnostics[0].Code}: " +
-                Directoryˉserviceˉassembly.Diagnostics[0].Message);
-        }
+        var Directoryˉserviceˉshimˉobject =
+            wvaˉobjects?.Directoryˉserviceˉshimˉobjectˉbytes ??
+            Assembleˉwvaˉresource(DIRECTORY_SERVICE_SHIM_RESOURCE, "directory process shim");
         Verifyˉshim(
-            Directoryˉserviceˉassembly.Objectˉbytes,
+            Directoryˉserviceˉshimˉobject,
             Kernelˉprocessˉcontract.DIRECTORY_SERVICE_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.DIRECTORY_SERVICE_MAIN_SYMBOL,
             5);
         var Directoryˉserviceˉlink = Linkˉcompiler.Link(
-            [new(Directoryˉserviceˉassembly.Objectˉbytes), new(Directoryˉserviceˉobject)],
+            [new(Directoryˉserviceˉshimˉobject), new(Directoryˉserviceˉobject)],
             new(0, Kernelˉprocessˉcontract.DIRECTORY_SERVICE_ENTRY_SYMBOL));
         Verifyˉlinkedˉimage(
             Directoryˉserviceˉlink,
@@ -163,7 +152,7 @@ public static class Kernelˉprocessˉimage
             Kernelˉprocessˉcontract.DIRECTORY_CODE_PAGES * Kernelˉpagingˉcontract.PAGE_BYTES);
         var Directoryˉpreemptionˉprobeˉoffset = Readˉlinkedˉfunctionˉoffset(
             Directoryˉserviceˉlink,
-            Directoryˉserviceˉassembly.Objectˉbytes,
+            Directoryˉserviceˉshimˉobject,
             Kernelˉprocessˉcontract.PREEMPTION_PROBE_SYMBOL);
         var Directoryˉserviceˉdigest = SHA256.HashData(
             Directoryˉserviceˉcompilation.Moduleˉbytes.AsSpan()).ToImmutableArray();
@@ -225,17 +214,11 @@ public static class Kernelˉprocessˉimage
                 $"The user-space interpreter has an unexpected WVB identity: {Interpreterˉidentity}.");
         }
 
-        var Bootˉresourceˉassembly = Assemblyˉcompiler.Assemble(
-            Loadˉsource(BOOT_RESOURCE_SERVICE_RESOURCE));
-        if (!Bootˉresourceˉassembly.Success)
-        {
-            throw new InvalidOperationException(
-                $"The boot-resource service did not assemble: " +
-                $"{Bootˉresourceˉassembly.Diagnostics[0].Code}: " +
-                Bootˉresourceˉassembly.Diagnostics[0].Message);
-        }
+        var Bootˉresourceˉstencilˉobject =
+            wvaˉobjects?.Bootˉresourceˉserviceˉobjectˉbytes ??
+            Assembleˉwvaˉresource(BOOT_RESOURCE_SERVICE_RESOURCE, "boot-resource service");
         var Bootˉresourceˉserviceˉobject = Publishˉbootˉresourceˉservice(
-            Bootˉresourceˉassembly.Objectˉbytes);
+            Bootˉresourceˉstencilˉobject);
 
         var Policyˉcompilation = Seedˉcompiler.Compile(Loadˉsource(POLICY_RESOURCE), "Process-Foundation.wv");
         if (!Policyˉcompilation.Success)
@@ -257,21 +240,16 @@ public static class Kernelˉprocessˉimage
             Kernelˉprocessˉscenario.Serviceˉfault => SERVICE_FAULT_RESOURCE,
             _ => throw new ArgumentOutOfRangeException(nameof(scenario)),
         };
-        var Userˉassembly = Assemblyˉcompiler.Assemble(Loadˉsource(Userˉresource));
-        if (!Userˉassembly.Success)
-        {
-            throw new InvalidOperationException(
-                $"The process user shim did not assemble: {Userˉassembly.Diagnostics[0].Code}: " +
-                Userˉassembly.Diagnostics[0].Message);
-        }
+        var Userˉshimˉobject = wvaˉobjects?.Clientˉshimˉobjectˉbytes ??
+            Assembleˉwvaˉresource(Userˉresource, "process user shim");
         Verifyˉshim(
-            Userˉassembly.Objectˉbytes,
+            Userˉshimˉobject,
             Kernelˉprocessˉcontract.USER_ENTRY_SYMBOL,
             Kernelˉprocessˉcontract.BYTECODE_INTERPRETER_MAIN_SYMBOL,
             scenario == Kernelˉprocessˉscenario.Normal ? 4 : 3);
         var Userˉlink = Linkˉcompiler.Link(
             [
-                new(Userˉassembly.Objectˉbytes),
+                new(Userˉshimˉobject),
                 new(Interpreterˉobject),
                 new(Bootˉresourceˉserviceˉobject),
             ],
@@ -281,7 +259,7 @@ public static class Kernelˉprocessˉimage
             Userˉlink, Bootˉresourceˉserviceˉobject, BOOT_RESOURCE_SERVICE_SYMBOL);
         var Clientˉpreemptionˉprobeˉoffset = Readˉlinkedˉfunctionˉoffset(
             Userˉlink,
-            Userˉassembly.Objectˉbytes,
+            Userˉshimˉobject,
             Kernelˉprocessˉcontract.PREEMPTION_PROBE_SYMBOL);
 
         var Admittedˉprogramˉdigest = SHA256.HashData(admission.Embeddedˉmoduleˉbytes.AsSpan()).ToImmutableArray();
@@ -312,20 +290,20 @@ public static class Kernelˉprocessˉimage
             Policyˉobject,
             Serviceˉcompilation.Moduleˉbytes,
             Serviceˉobject,
-            Serviceˉassembly.Objectˉbytes,
+            Serviceˉshimˉobject,
             Serviceˉlink.Imageˉbytes,
             Initˉpreemptionˉprobeˉoffset,
             Serviceˉdigest,
             Directoryˉserviceˉcompilation.Moduleˉbytes,
             Directoryˉserviceˉobject,
-            Directoryˉserviceˉassembly.Objectˉbytes,
+            Directoryˉserviceˉshimˉobject,
             Directoryˉserviceˉlink.Imageˉbytes,
             Directoryˉpreemptionˉprobeˉoffset,
             Directoryˉserviceˉdigest,
             Interpreterˉcompilation.Moduleˉbytes,
             Interpreterˉobject,
             Interpreterˉdigest,
-            Bootˉresourceˉassembly.Objectˉbytes,
+            Bootˉresourceˉstencilˉobject,
             Bootˉresourceˉserviceˉobject,
             Bootˉresourceˉserviceˉoffset,
             admission.Embeddedˉmoduleˉbytes,
@@ -336,7 +314,7 @@ public static class Kernelˉprocessˉimage
             Resourceˉstoreˉdigest,
             Directoryˉsnapshotˉbytes,
             Directoryˉsnapshotˉdigest,
-            Userˉassembly.Objectˉbytes,
+            Userˉshimˉobject,
             Userˉlink.Imageˉbytes,
             Clientˉpreemptionˉprobeˉoffset,
             scenario);
