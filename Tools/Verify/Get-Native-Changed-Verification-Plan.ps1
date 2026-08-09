@@ -265,7 +265,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
-        if ($Path -eq 'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher.md') {
+        if ($Path.StartsWith(
+            'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher',
+            [StringComparison]::Ordinal)) {
             Add-Suite 'publisher-rejections'
         } elseif ($Path -match 'Assembly|Wva-') {
             Add-Assembler-Suites
@@ -284,6 +286,7 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path -in @(
         'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
+        'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
     )) {
         Add-Suite 'publisher-rejections'

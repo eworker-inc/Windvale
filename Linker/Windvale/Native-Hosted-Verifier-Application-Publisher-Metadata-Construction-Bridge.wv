@@ -1,0 +1,7 @@
+module Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉbridge profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉconstruction as Construction;
+
+export fn Main(Input: bytes) -> bytes {
+    return Construction.Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(Input);
+}

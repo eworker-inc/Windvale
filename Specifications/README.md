@@ -106,6 +106,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Native hosted-verifier metadata-request construction](Windvale-Native-Hosted-Verifier-Metadata-Request.md)
 - [Native hosted-verifier runtime-header construction](Windvale-Native-Hosted-Verifier-Runtime-Header.md)
 - [Native hosted-verifier application publisher](Windvale-Native-Hosted-Verifier-Application-Publisher.md)
+- [Native hosted-verifier publisher metadata](Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.md)
 - [Versioned verified native-fragment artifact](Native-Fragment-Artifact.md)
 - [Windows x64 console application target](Windvale-Windows-Console-Application.md)
 - [Linux x64 console application target](Windvale-Linux-Console-Application.md)

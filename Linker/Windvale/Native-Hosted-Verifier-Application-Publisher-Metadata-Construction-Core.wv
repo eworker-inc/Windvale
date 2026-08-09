@@ -1,0 +1,103 @@
+module Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉconstruction profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉadmission as Admission;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Allˉzero(Input: bytes, Offset: u32, Count: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Bytesˉreadˉu8(Input, Offset + Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Responseˉheader(
+    Input: bytes,
+    Totalˉbytes: u32,
+    Status: u32,
+    Failureˉoffset: u32,
+    Metadataˉbytes: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1146115671u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Totalˉbytes);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Failureˉoffset);
+    Result = Appendˉu32(Result, Metadataˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    return Appendˉu32(Result, 0u32);
+}
+
+fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
+    return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
+}
+
+export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(
+    Input: bytes
+) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 112u32 { return Failure(Input, 1u32, Total); }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1297110615u32 {
+        return Failure(Input, 2u32, 0u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 {
+        return Failure(Input, 3u32, 4u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Failure(Input, 1u32, 8u32);
+    }
+
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Target < 1u32 || Target > 2u32 {
+        return Failure(Input, 4u32, 12u32);
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) != 5u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) != 3001u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) != 789u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) != 0u32 ||
+        !Allˉzero(Input, 36u32, 12u32) {
+        return Failure(Input, 4u32, 16u32);
+    }
+    if !Admission.Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalid(
+        Input, 48u32, Target
+    ) {
+        return Failure(Input, 4u32, 48u32);
+    }
+    if !Admission.Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalid(
+        Input, 80u32
+    ) {
+        return Failure(Input, 4u32, 80u32);
+    }
+
+    var Metadata: bytes = Empty(Input);
+    Metadata = Appendˉu32(Metadata, 1347835479u32);
+    Metadata = Appendˉu32(Metadata, 1u32);
+    Metadata = Appendˉu32(Metadata, 128u32);
+    Metadata = Appendˉu32(Metadata, Target);
+    Metadata = Appendˉu32(Metadata, 5u32);
+    Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 16u32, 20u32));
+    Metadata = Appendˉu32(Metadata, 4194304u32);
+    Metadata = Appendˉu32(Metadata, 1u32);
+    Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 48u32, 64u32));
+    Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 36u32, 12u32));
+    Metadata = Appendˉu32(Metadata, 0u32);
+    if !Admission.Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalid(
+        Metadata, 0u32, Target
+    ) {
+        return Failure(Input, 5u32, 12u32);
+    }
+    return Bytesˉconcat(
+        Responseˉheader(Input, 160u32, 0u32, Total, 128u32),
+        Metadata
+    );
+}

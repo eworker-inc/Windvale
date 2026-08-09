@@ -61,6 +61,10 @@ the installed verifier against canonical WVB, observes no CLR/hostfxr/hostpolicy
 and proves corruption preserves candidate, destination, and scratch state. The
 native publisher-rejection suite owns the permanent launcher rejection case.
 
+The separate [publisher-metadata contract](Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.md)
+now owns construction and admission of the exact `WVVP 1` record without
+creating a publisher-WVB digest self-reference.
+
 Independent Linux execution, grouped native retirement qualification, ordinary
 path promotion, release integration, and replacement of the Stage 0 publisher
 container writer remain.

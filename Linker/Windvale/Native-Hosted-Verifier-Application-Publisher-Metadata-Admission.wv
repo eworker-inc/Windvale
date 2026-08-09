@@ -1,0 +1,116 @@
+module Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉadmission profile portable;
+
+fn Allˉzero(Input: bytes, Offset: u32, Count: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Bytesˉreadˉu8(Input, Offset + Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Startupˉdigestˉword(Index: u32, Target: u32) -> u32 {
+    if Target == 1u32 {
+        if Index == 0u32 { return 2925244891u32; }
+        if Index == 1u32 { return 3665714992u32; }
+        if Index == 2u32 { return 1586712129u32; }
+        if Index == 3u32 { return 4186885183u32; }
+        if Index == 4u32 { return 3911555790u32; }
+        if Index == 5u32 { return 340654835u32; }
+        if Index == 6u32 { return 1565791272u32; }
+        return 2661219382u32;
+    }
+    if Index == 0u32 { return 961867554u32; }
+    if Index == 1u32 { return 1835165924u32; }
+    if Index == 2u32 { return 1819063489u32; }
+    if Index == 3u32 { return 1775435410u32; }
+    if Index == 4u32 { return 3530955624u32; }
+    if Index == 5u32 { return 3139781555u32; }
+    if Index == 6u32 { return 320650148u32; }
+    return 3619038940u32;
+}
+
+fn Moduleˉdigestˉword(Index: u32) -> u32 {
+    if Index == 0u32 { return 1257490039u32; }
+    if Index == 1u32 { return 298073986u32; }
+    if Index == 2u32 { return 1299997813u32; }
+    if Index == 3u32 { return 1342719756u32; }
+    if Index == 4u32 { return 2092546170u32; }
+    if Index == 5u32 { return 3374716795u32; }
+    if Index == 6u32 { return 2525960323u32; }
+    return 2672874799u32;
+}
+
+export fn Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalid(
+    Input: bytes,
+    Offset: u32,
+    Target: u32
+) -> bool {
+    if Target < 1u32 || Target > 2u32 ||
+        Offset > Bytesˉlength(Input) ||
+        32u32 > Bytesˉlength(Input) - Offset {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        if Bytesˉreadˉu32ˉlittle(Input, Offset + Index * 4u32) !=
+            Startupˉdigestˉword(Index, Target) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalid(
+    Input: bytes,
+    Offset: u32
+) -> bool {
+    if Offset > Bytesˉlength(Input) ||
+        32u32 > Bytesˉlength(Input) - Offset {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        if Bytesˉreadˉu32ˉlittle(Input, Offset + Index * 4u32) !=
+            Moduleˉdigestˉword(Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalid(
+    Input: bytes,
+    Offset: u32,
+    Target: u32
+) -> bool {
+    if Offset > Bytesˉlength(Input) ||
+        128u32 > Bytesˉlength(Input) - Offset ||
+        Target < 1u32 || Target > 2u32 {
+        return false;
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != 1347835479u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32) != 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32) != Target ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 16u32) != 5u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 20u32) != 5u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 24u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 28u32) != 3001u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 32u32) != 789u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 36u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 40u32) != 4194304u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 44u32) != 1u32 ||
+        !Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalid(
+            Input, Offset + 48u32, Target
+        ) ||
+        !Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalid(
+            Input, Offset + 80u32
+        ) ||
+        !Allˉzero(Input, Offset + 112u32, 16u32) {
+        return false;
+    }
+    return true;
+}
