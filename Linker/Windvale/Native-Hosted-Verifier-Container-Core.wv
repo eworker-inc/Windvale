@@ -1,0 +1,117 @@
+module Linkerˉnativeˉhostedˉverifierˉcontainer profile portable;
+
+import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
+import Linkerˉnativeˉhostedˉverifierˉbundleˉadmission as Bundleˉadmission;
+import Linkerˉnativeˉhostedˉverifierˉlayout as Layout;
+
+export record Nativeˉhostedˉverifierˉcontainerˉresult {
+    Valid: bool;
+    Value: bytes;
+    Failure: u32;
+}
+
+fn Failure(Input: bytes, Code: u32)
+    -> Nativeˉhostedˉverifierˉcontainerˉresult {
+    return Nativeˉhostedˉverifierˉcontainerˉresult(
+        false,
+        Build.Empty(Input),
+        Code
+    );
+}
+
+fn Platformˉisˉvalid(Input: bytes, Target: u32) -> bool {
+    var Magic: u32 = 1112299095u32;
+    var Header: u32 = 4096u32;
+    var Imports: u32 = 0u32;
+    var Relocation: u32 = 0u32;
+    if Target == 1u32 {
+        Magic = 1113019991u32;
+        Header = 512u32;
+        Imports = 4096u32;
+        Relocation = 12u32;
+    }
+    return Bytesˉlength(Input) == 32u32 + Header + Imports + Relocation &&
+        Bytesˉreadˉu32ˉlittle(Input, 0u32) == Magic &&
+        Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) == Bytesˉlength(Input) &&
+        Bytesˉreadˉu32ˉlittle(Input, 12u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 16u32) == 4096u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) == Header &&
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) == Imports &&
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) == Relocation;
+}
+
+fn Startupˉisˉvalid(Input: bytes, Codeˉbytes: u32) -> bool {
+    return Bytesˉlength(Input) == 32u32 + Codeˉbytes &&
+        Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1146312279u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) == Bytesˉlength(Input) &&
+        Bytesˉreadˉu32ˉlittle(Input, 12u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) == Codeˉbytes &&
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) == 0u32;
+}
+
+export fn Nativeˉhostedˉverifierˉcontainer(
+    Runtime: bytes,
+    Platform: bytes,
+    Startup: bytes,
+    Bundle: bytes
+) -> Nativeˉhostedˉverifierˉcontainerˉresult {
+    let Value: Layout.Nativeˉhostedˉverifierˉlayout =
+        Layout.Nativeˉhostedˉverifierˉplan(Runtime);
+    if !Value.Valid { return Failure(Runtime, 1u32); }
+    if !Platformˉisˉvalid(Platform, Value.Target) {
+        return Failure(Runtime, 2u32);
+    }
+    if !Startupˉisˉvalid(Startup, Value.Startupˉbytes) {
+        return Failure(Runtime, 3u32);
+    }
+    if !Bundleˉadmission.Nativeˉhostedˉverifierˉbundleˉisˉvalid(
+        Runtime,
+        Bundle
+    ) {
+        return Failure(Runtime, 4u32);
+    }
+
+    var Result: bytes = Build.Zeros(Value.Applicationˉbytes);
+    Result = Build.Replace(
+        Result,
+        0u32,
+        Value.Headerˉbytes,
+        Bytesˉslice(Platform, 32u32, Value.Headerˉbytes)
+    );
+    Result = Build.Replace(
+        Result,
+        Value.Textˉfileˉoffset,
+        Value.Startupˉbytes,
+        Bytesˉslice(Startup, 32u32, Value.Startupˉbytes)
+    );
+    Result = Build.Replace(
+        Result,
+        Value.Textˉfileˉoffset + Value.Bundleˉoffset,
+        Value.Bundleˉbytes,
+        Bytesˉslice(Bundle, 40u32, Value.Bundleˉbytes)
+    );
+    if Value.Target == 1u32 {
+        Result = Build.Replace(
+            Result,
+            Value.Importˉfileˉoffset,
+            4096u32,
+            Bytesˉslice(Platform, 544u32, 4096u32)
+        );
+        Result = Build.Replace(
+            Result,
+            Value.Relocationˉfileˉoffset,
+            12u32,
+            Bytesˉslice(Platform, 4640u32, 12u32)
+        );
+    }
+    Result = Build.Replace(
+        Result,
+        Value.Runtimeˉfileˉoffset,
+        4096u32,
+        Runtime
+    );
+    return Nativeˉhostedˉverifierˉcontainerˉresult(true, Result, 0u32);
+}

@@ -1434,6 +1434,7 @@ internal static partial class Program
         new("native verifier service-bundle process reproduces exact bundles", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_RUNTIME], Nativeˉhostedˉverifierˉserviceˉbundleˉprocessˉruns),
         new("native hosted-verifier startup reproduces exact instantiated code", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉverifierˉstartupˉprocessˉruns),
         new("native hosted-verifier platform process reproduces exact regions", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉverifierˉplatformˉprocessˉruns),
+        new("native hosted-verifier container process reproduces exact applications", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉhostedˉverifierˉcontainerˉprocessˉruns),
         new("Windvale constructs exact WVHV verifier metadata", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉmetadataˉruns),
         new("Windvale constructs exact WVHV verifier runtime headers", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉverifierˉruntimeˉruns),
         new("Windvale instantiates hosted-tool startup objects", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Windvaleˉnativeˉhostedˉstartupˉinstantiationˉruns),

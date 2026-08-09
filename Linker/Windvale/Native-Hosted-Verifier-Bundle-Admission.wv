@@ -1,0 +1,106 @@
+module Linkerˉnativeˉhostedˉverifierˉbundleˉadmission profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+
+fn Equalˉrange(
+    Left: bytes,
+    Leftˉoffset: u32,
+    Right: bytes,
+    Rightˉoffset: u32,
+    Count: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Bytesˉreadˉu8(Left, Leftˉoffset + Index) !=
+            Bytesˉreadˉu8(Right, Rightˉoffset + Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Filled(Input: bytes, Offset: u32, Count: u32, Value: u8) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Bytesˉreadˉu8(Input, Offset + Index) != Value { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Digestˉmatches(
+    Bundle: bytes,
+    Bundleˉoffset: u32,
+    Count: u32,
+    Runtime: bytes,
+    Digestˉoffset: u32
+) -> bool {
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Bundle);
+    State = Sha256.Foundationˉsha256ˉupdate(
+        State,
+        Bytesˉslice(Bundle, Bundleˉoffset, Count)
+    );
+    return Equalˉrange(
+        Sha256.Foundationˉsha256ˉfinishˉraw(State),
+        0u32,
+        Runtime,
+        Digestˉoffset,
+        32u32
+    );
+}
+
+export fn Nativeˉhostedˉverifierˉbundleˉisˉvalid(
+    Runtime: bytes,
+    Response: bytes
+) -> bool {
+    if Bytesˉlength(Runtime) != 4096u32 || Bytesˉlength(Response) < 40u32 {
+        return false;
+    }
+    let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 540u32);
+    if Bundleˉbytes == 0u32 ||
+        Bytesˉlength(Response) != 40u32 + Bundleˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1230198359u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Bytesˉlength(Response) ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 24u32) != Bundleˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 28u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 32u32) != Bundleˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 36u32) != 6u32 {
+        return false;
+    }
+
+    let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 548u32);
+    if Nativeˉbytes == 0u32 || Nativeˉbytes > Bundleˉbytes ||
+        !Digestˉmatches(Response, 40u32, Nativeˉbytes, Runtime, 576u32) {
+        return false;
+    }
+
+    var Previousˉend: u32 = Nativeˉbytes;
+    var Index: u32 = 0u32;
+    while Index < 6u32 {
+        let Record: u32 = 688u32 + Index * 64u32;
+        let Imageˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Runtime, Record + 16u32);
+        let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Runtime, Record + 20u32);
+        var Fill: u8 = 144u8;
+        if Index == 0u32 { Fill = 0u8; }
+        if Imageˉoffset < Previousˉend || Imageˉoffset > Bundleˉbytes ||
+            Codeˉbytes == 0u32 || Codeˉbytes > Bundleˉbytes - Imageˉoffset ||
+            !Filled(Response, 40u32 + Previousˉend,
+                Imageˉoffset - Previousˉend, Fill) ||
+            !Digestˉmatches(
+                Response,
+                40u32 + Imageˉoffset,
+                Codeˉbytes,
+                Runtime,
+                Record + 32u32
+            ) {
+            return false;
+        }
+        Previousˉend = Imageˉoffset + Codeˉbytes;
+        Index = Index + 1u32;
+    }
+    return Previousˉend == Bundleˉbytes;
+}
