@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`x86-64-kernel-entry-wvo-v2` is the first compiler-native target over Windvale's typed WIR with a separate validated entry wrapper and source-derived Main export. It produces one verified, position-independent WVO object for the UEFI boot path. It is a bounded integration target, not the general Windvale native ABI or completion of the native-backend phase. [Decision 0049](../Documents/Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) owns the original source-to-boot boundary; [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the version 2 split used for the kernel stack.
+`x86-64-kernel-entry-wvo-v2` is the first compiler-native target over Windvale's typed WIR with a separate validated entry wrapper and source-derived Main export. It produces one verified, position-independent WVO object for the UEFI boot path. It is a bounded integration target, not the general Windvale native ABI or completion of the native-backend phase. [Decision 0049](../Documents/Decisions/0049-First-Compiler-Generated-Windvale-Boot-Item.md) owns the original source-to-boot boundary; [Decision 0052](../Documents/Decisions/0052-First-Kernel-Owned-Memory-Foundation.md) owns the version 2 split used for the kernel stack; and the [Windvale system-kernel target](Windvale-System-Kernel-Target.md) defines its current normal WVB-to-WVO implementation.
 
-The C# reference/recovery compiler implements version 2 as `X64ˉkernelˉcompiler`. It uses the ordinary source lexer, parser, module composition, and semantic compiler before examining typed WIR. A successful result is serialized by `Objectˉcodec` and decoded and verified again before publication. Source or WIR that falls outside this specification fails explicitly; it is never interpreted as a similar supported program.
+The normal path now compiles source to canonical WVB through the Windvale compiler, then uses the Windvale-written bounded system-kernel target. The C# `X64ˉkernelˉcompiler` remains feature-frozen recovery and differential evidence. Source, WIR, or WVB outside this specification fails explicitly; it is never interpreted as a similar supported program or silently delegated to Stage 0.
 
 ## Source and WIR subset
 
@@ -48,7 +48,7 @@ The first adapter polls legacy COM1 transmitter readiness and writes the low byt
 
 ## Diagnostics and validation boundary
 
-Native-target diagnostics use phase `native-backend`:
+The frozen C# recovery target retains these `native-backend` diagnostics:
 
 | Code | Meaning |
 | --- | --- |
@@ -63,6 +63,6 @@ Frontend and semantic diagnostics retain their existing `WVC` codes and phases. 
 
 ## Determinism and current evidence
 
-Identical source and target version produce identical WVO bytes. The canonical probe-29 `Hello-World.wv` input produced a 2,954-byte WVO object with SHA-256 `61df8691c2b1c6eff31a6782cca144669aad32c26294e60fb97b8d5b15ff4de4` and no absolute relocation. Probe 30 added source-owned `process-reuse=pass`; current Probe 40 additionally emits `memory-object-reuse=pass`, while compiler target semantics and version remain unchanged. The firmware probe links this special object with memory/paging/process layers, the bidirectional WVA seam, fixed Windvale-owned admission and two-generation process policy, separate interpreter, init, and directory CPL3 AOT images, the retained ABI-22 portable object, both native bridges, normalized exception destinations, and the WVA Q35 adapter. Main executes only after verifier token 73, process-policy token 97, two atomic typed-resource grants, two budgeted interpreter executions, two generation-matched cleanups, generation-safe non-tail client-object release/zero/reuse while the directory object remains live, both results 29, and retained native result 29.
+Identical source and target version produce identical WVO bytes. The current Probe 40 `Hello-World.wv` source compiles natively to a 1,484-byte WVB at SHA-256 `7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c`, then lowers to the established 12,134-byte WVO at SHA-256 `bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8` with no absolute relocation. The firmware probe links this special object with memory/paging/process layers, the bidirectional WVA seam, fixed Windvale-owned admission and two-generation process policy, separate interpreter, init, and directory CPL3 AOT images, the retained ABI-22 portable object, both native bridges, normalized exception destinations, and the WVA Q35 adapter. Main executes only after verifier token 73, process-policy token 97, two atomic typed-resource grants, two budgeted interpreter executions, two generation-matched cleanups, generation-safe non-tail client-object release/zero/reuse while the directory object remains live, both results 29, and retained native result 29.
 
 This special target does not support general expressions, locals, calls, branches, Unicode console output, static-data addressing, multiple functions, optimization, unwind information, Windows or Linux executable production, or compiler self-hosting. The current probe retains AOT execution of broader shared-ABI portable modules and composes paging, fixed WVB admission, two-generation process isolation, a typed two-resource grant, budgeted user-space interpretation, memory-object cleanup/reuse, IPC, and target-specific exception/shutdown mechanics outside this compiler target; none make the special target general or give it a general WVB loader. Each expansion requires focused semantics, encoding, relocation, and differential evidence rather than silent fallback.

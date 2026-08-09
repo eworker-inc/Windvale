@@ -4939,3 +4939,35 @@ It owns 28 suites with 3,136 fixed cases. The seed retains three frozen WVOs
 totaling 654,422 bytes and records eight native-produced objects totaling
 38,228 bytes. Linux execution, the complete coordinator, broad Seed/OS, QEMU,
 Standard, Qualification, and non-normal scenarios did not run.
+
+## Local native Probe 40 system-kernel target evidence
+
+[Decision 0454](../Decisions/0454-Native-Probe-40-System-Kernel-Target.md)
+moves normal `01-kernel.wvo` from the frozen seed into a real Windvale
+source-to-WVB-to-WVO path. The canonical system source produces a 1,484-byte
+WVB at SHA-256
+`7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c`.
+The Windvale-written target WVB is 57,129 bytes at SHA-256
+`9a7149ee7e0cb7533ef95baa199af24c36b5819217e634e362dd4f70e92bd3e8`.
+Its retained Windows application is 613,888 bytes at SHA-256
+`af00f5bdb8934b07e9cbfec6881446d9e7fdc19264c2248e96e2a5df5566c027`;
+the Linux application is 614,400 bytes at SHA-256
+`ca3730b7da3dcc645d353743cc14771a9bee9d669ecef89111d0342dabbf0147`.
+
+Current-host execution reproduces the former 12,134-byte seed object byte for
+byte at SHA-256
+`bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8`
+and passes independent native WVO admission.
+
+After affected-test review, the new `os-kernel-target` lane passes 7/7 in 3.9
+seconds and the ordinary `os-probe` lane passes construction and
+existing-output preservation 2/2 in 13.2 seconds. The final EFI remains 683,008
+bytes at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retirement plan is 2,403 LF-only bytes at SHA-256
+`4327d606866d7be6dd0107ac9a78466b5e5b64596e1ae3d7c33c5f2daaeba497`.
+It owns 29 suites with 3,143 fixed cases. The seed retains two frozen WVOs
+totaling 642,288 bytes and records nine native-produced objects totaling 50,362
+bytes. Linux execution, the complete coordinator, broad Seed/OS, QEMU,
+Standard, Qualification, and non-normal scenarios did not run.

@@ -1,0 +1,7 @@
+windvale-project 1
+root "Compiler/Windvale/System-Kernel-Target-Tool.wv"
+source "Compiler/Windvale/System-Kernel-Target-Reader.wv"
+source "Foundation/Byte-Ordering.wv"
+source "Object-Model/Windvale/Wvo-Object-Construction.wv"
+source "Object-Model/Windvale/Wvo-Object-Verification.wv"
+emit wvb

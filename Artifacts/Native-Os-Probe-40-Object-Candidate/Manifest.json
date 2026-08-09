@@ -1,17 +1,18 @@
 {
-  "format": "windvale-native-os-probe-object-candidate-9",
+  "format": "windvale-native-os-probe-object-candidate-10",
   "status": "candidate",
   "probeFormat": 40,
   "scenario": "normal",
   "entrySymbol": "Windvale_boot_probe",
-  "sourceDecision": "0453",
+  "sourceDecision": "0454",
   "provenanceDecision": "0446",
   "sourceCommit": "957ed051ed226ce1b1694d19ad13b2c7e64a968a",
   "nativeSourceCommit": "48f6f414f708aead62bcbcac6866129d58de1d9a",
   "qualification": "pending",
-  "construction": "stage0-frozen-three-object-inventory-plus-eight-native-source-producers",
-  "nativeConsumption": "produce-loader-compile-lower-rename-admission-compile-lower-probe-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
-  "frozenObjectBytes": 654422,
+  "construction": "stage0-frozen-two-object-inventory-plus-nine-native-source-producers",
+  "nativeConsumption": "produce-loader-compile-kernel-source-lower-system-kernel-compile-lower-rename-admission-compile-lower-probe-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
+  "frozenObjectBytes": 642288,
+  "nativeObjectBytes": 50362,
   "totalObjectBytes": 692650,
   "nativeProducers": [
     {
@@ -24,6 +25,22 @@
       "producerModuleSha256": "427ffcdaf7e9656f7bc17584de06b7954fddd38266663b295151d5a054f020d5",
       "objectBytes": 6336,
       "objectSha256": "b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804"
+    },
+    {
+      "name": "01-kernel.wvo",
+      "sourceProject": "Windvale-Os-Kernel-Markers.wvproj",
+      "source": "Operating-System/Kernel/Hello-World.wv",
+      "moduleBytes": 1484,
+      "moduleSha256": "7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c",
+      "targetProject": "Windvale-Os-Kernel-Target.wvproj",
+      "targetSources": [
+        "Compiler/Windvale/System-Kernel-Target-Reader.wv",
+        "Compiler/Windvale/System-Kernel-Target-Tool.wv"
+      ],
+      "targetModuleBytes": 57129,
+      "targetModuleSha256": "9a7149ee7e0cb7533ef95baa199af24c36b5819217e634e362dd4f70e92bd3e8",
+      "objectBytes": 12134,
+      "objectSha256": "bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8"
     },
     {
       "name": "02-wvb-admission-native.wvo",
@@ -93,11 +110,6 @@
     }
   ],
   "objects": [
-    {
-      "name": "01-kernel.wvo",
-      "bytes": 12134,
-      "sha256": "bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8"
-    },
     {
       "name": "04-process-policy.wvo",
       "bytes": 129310,

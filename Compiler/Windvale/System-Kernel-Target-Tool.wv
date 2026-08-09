@@ -1,0 +1,118 @@
+module Compilerˉsystemˉkernelˉtargetˉtool profile hosted;
+
+import Compilerˉsystemˉkernelˉtargetˉreader as Kernelˉreader;
+import Wvoˉobjectˉconstruction as Construction;
+
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Entryˉcode: bytes = [
+    72, 133, 201, 15, 132, 154, 0, 0, 0, 72, 184, 87, 86, 75, 72, 65,
+    78, 68, 49, 72, 57, 1, 15, 133, 135, 0, 0, 0, 131, 121, 8, 1,
+    15, 133, 125, 0, 0, 0, 131, 121, 12, 48, 15, 133, 115, 0, 0, 0,
+    72, 131, 121, 16, 0, 15, 132, 104, 0, 0, 0, 72, 139, 65, 24, 72,
+    133, 192, 15, 132, 91, 0, 0, 0, 72, 61, 0, 0, 16, 0, 15, 135,
+    79, 0, 0, 0, 72, 139, 65, 32, 72, 131, 248, 40, 15, 130, 65, 0,
+    0, 0, 72, 61, 0, 1, 0, 0, 15, 135, 53, 0, 0, 0, 131, 121,
+    40, 1, 15, 133, 43, 0, 0, 0, 131, 121, 44, 0, 15, 133, 33, 0,
+    0, 0, 72, 139, 65, 24, 49, 210, 72, 247, 113, 32, 72, 133, 210, 15,
+    133, 14, 0, 0, 0, 72, 131, 236, 40, 232, 0, 0, 0, 0, 72, 131,
+    196, 40, 195, 184, 1, 0, 0, 0, 195, 144, 144, 144, 144, 144, 144, 144
+];
+data Mainˉprologue: bytes = [72, 131, 236, 40];
+data Writeˉcall: bytes = [232, 0, 0, 0, 0];
+data Mainˉepilogue: bytes = [72, 131, 196, 40, 184];
+
+fn Appendˉkernelˉbytes(Left: bytes, Right: bytes) -> bytes {
+    return Bytesˉconcat(Left, Right);
+}
+
+fn Encodeˉkernelˉrelocation(Offset: u32, Symbolˉindex: u32) -> bytes {
+    var Result: bytes = Bytesˉfromˉu8(2u8);
+    Result = Appendˉkernelˉbytes(Result, Bytesˉfromˉu8(0u8));
+    Result = Appendˉkernelˉbytes(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Appendˉkernelˉbytes(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Appendˉkernelˉbytes(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    Result = Appendˉkernelˉbytes(Result, Bytesˉfromˉu32ˉlittle(Symbolˉindex));
+    return Appendˉkernelˉbytes(Result, Bytesˉfromˉi32ˉlittle(-4));
+}
+
+fn Emitˉmain(Output: bytes, Returnˉvalue: i32) -> bytes {
+    var Result: bytes = Mainˉprologue;
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Output) {
+        Result = Appendˉkernelˉbytes(Result, Bytesˉfromˉu8(185u8));
+        Result = Appendˉkernelˉbytes(
+            Result,
+            Bytesˉfromˉu32ˉlittle(U32ˉfromˉu8(Bytesˉreadˉu8(Output, Index)))
+        );
+        Result = Appendˉkernelˉbytes(Result, Writeˉcall);
+        Index = Index + 1u32;
+    }
+    Result = Appendˉkernelˉbytes(Result, Mainˉepilogue);
+    Result = Appendˉkernelˉbytes(Result, Bytesˉfromˉi32ˉlittle(Returnˉvalue));
+    return Appendˉkernelˉbytes(Result, Bytesˉfromˉu8(195u8));
+}
+
+fn Buildˉkernelˉobject(Output: bytes, Returnˉvalue: i32) -> bytes {
+    if Bytesˉlength(Output) > 4096u32 {
+        return Bytesˉslice(Output, 0u32, 0u32);
+    }
+    let Mainˉcode: bytes = Emitˉmain(Output, Returnˉvalue);
+    let Code: bytes = Appendˉkernelˉbytes(Entryˉcode, Mainˉcode);
+    let Section: bytes = Construction.Encodeˉsection(
+        ".text", 1u8, 16u32, Bytesˉlength(Code), Code
+    );
+    var Symbols: bytes = Construction.Encodeˉsymbol(
+        "Windvale_kernel_entry", 2u8, 1u8, 0u32, 0u32, 176u32
+    );
+    Symbols = Appendˉkernelˉbytes(Symbols, Construction.Encodeˉsymbol(
+        "Windvale_kernel_main",
+        2u8, 1u8, 0u32, 176u32, Bytesˉlength(Mainˉcode)
+    ));
+    Symbols = Appendˉkernelˉbytes(Symbols, Construction.Encodeˉsymbol(
+        "Windvale_kernel_memory_enter",
+        3u8, 1u8, 4294967295u32, 0u32, 0u32
+    ));
+    Symbols = Appendˉkernelˉbytes(Symbols, Construction.Encodeˉsymbol(
+        "Windvale_kernel_write_byte",
+        3u8, 1u8, 4294967295u32, 0u32, 0u32
+    ));
+    var Relocations: bytes = Encodeˉkernelˉrelocation(154u32, 2u32);
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Output) {
+        Relocations = Appendˉkernelˉbytes(
+            Relocations,
+            Encodeˉkernelˉrelocation(186u32 + Index * 10u32, 3u32)
+        );
+        Index = Index + 1u32;
+    }
+    return Construction.Constructˉobject(
+        1u32, 4u32, Bytesˉlength(Output) + 1u32,
+        Section, Symbols, Relocations
+    );
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line("Usage: kernel-target <input.wvb> <output.wvo>");
+        return 64;
+    }
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Plan: Kernelˉreader.Kernelˉtargetˉplan =
+        Kernelˉreader.Readˉkernelˉtarget(Input);
+    if Plan.Status != Kernelˉreader.Kernelˉtargetˉstatus.Valid {
+        diagnostic.write_line("kernel target status=Unsupported");
+        return 2;
+    }
+    let Result: bytes = Buildˉkernelˉobject(Plan.Output, Plan.Returnˉvalue);
+    if Bytesˉlength(Result) == 0u32 {
+        diagnostic.write_line("kernel target status=Rejected");
+        return 1;
+    }
+    file.write_bytes(process.argument(1u32), Result);
+    return 0;
+}

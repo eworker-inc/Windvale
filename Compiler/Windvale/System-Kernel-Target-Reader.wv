@@ -1,0 +1,386 @@
+module Compilerˉsystemˉkernelˉtargetˉreader profile portable;
+
+export enum Kernelˉtargetˉstatus {
+    Valid = 0;
+    Invalidˉwvb = 1;
+    Unsupportedˉmodule = 2;
+    Outputˉlimit = 3;
+}
+
+record Kernelˉtargetˉsection {
+    Valid: bool;
+    Payload: u32;
+    Length: u32;
+    Next: u32;
+}
+
+record Kernelˉtargetˉstring {
+    Valid: bool;
+    Payload: u32;
+    Length: u32;
+    Next: u32;
+}
+
+record Kernelˉtargetˉdata {
+    Valid: bool;
+    Count: u32;
+    Offsets: bytes;
+    Lengths: bytes;
+}
+
+record Kernelˉtargetˉfunction {
+    Valid: bool;
+    Calls: u32;
+    Codeˉlength: u32;
+}
+
+export record Kernelˉtargetˉplan {
+    Status: Kernelˉtargetˉstatus;
+    Output: bytes;
+    Returnˉvalue: i32;
+}
+
+data Wvbˉmagic: bytes = [87, 86, 66, 49];
+data Consoleˉname: bytes = [
+    99, 111, 110, 115, 111, 108, 101, 46,
+    119, 114, 105, 116, 101, 95, 108, 105, 110, 101
+];
+data Mainˉname: bytes = [77, 97, 105, 110];
+
+fn Emptyˉkernelˉtargetˉbytes(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Failure(Input: bytes, Status: Kernelˉtargetˉstatus) -> Kernelˉtargetˉplan {
+    return Kernelˉtargetˉplan(Status, Emptyˉkernelˉtargetˉbytes(Input), 0);
+}
+
+fn Rangeˉvalid(Offset: u32, Length: u32, Limit: u32) -> bool {
+    return Offset <= Limit && Length <= Limit - Offset;
+}
+
+fn Bytesˉequalˉrange(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Expected: bytes
+) -> bool {
+    if Length != Bytesˉlength(Expected) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) !=
+            Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Readˉstring(Input: bytes, Offset: u32, Limit: u32) -> Kernelˉtargetˉstring {
+    if !Rangeˉvalid(Offset, 4u32, Limit) {
+        return Kernelˉtargetˉstring(false, 0u32, 0u32, 0u32);
+    }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+    let Payload: u32 = Offset + 4u32;
+    if !Rangeˉvalid(Payload, Length, Limit) {
+        return Kernelˉtargetˉstring(false, 0u32, 0u32, 0u32);
+    }
+    return Kernelˉtargetˉstring(true, Payload, Length, Payload + Length);
+}
+
+fn Readˉsection(
+    Input: bytes,
+    Offset: u32,
+    Kind: u8
+) -> Kernelˉtargetˉsection {
+    let Limit: u32 = Bytesˉlength(Input);
+    if !Rangeˉvalid(Offset, 8u32, Limit) {
+        return Kernelˉtargetˉsection(false, 0u32, 0u32, 0u32);
+    }
+    if Bytesˉreadˉu8(Input, Offset) != Kind ||
+        Bytesˉreadˉu8(Input, Offset + 1u32) != 0u8 ||
+        Bytesˉreadˉu16ˉlittle(Input, Offset + 2u32) != 0u32 {
+        return Kernelˉtargetˉsection(false, 0u32, 0u32, 0u32);
+    }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32);
+    let Payload: u32 = Offset + 8u32;
+    if !Rangeˉvalid(Payload, Length, Limit) {
+        return Kernelˉtargetˉsection(false, 0u32, 0u32, 0u32);
+    }
+    return Kernelˉtargetˉsection(true, Payload, Length, Payload + Length);
+}
+
+fn Readˉdata(Input: bytes, Section: Kernelˉtargetˉsection)
+    -> Kernelˉtargetˉdata {
+    let Limit: u32 = Section.Payload + Section.Length;
+    if !Rangeˉvalid(Section.Payload, 4u32, Limit) {
+        return Kernelˉtargetˉdata(
+            false, 0u32,
+            Emptyˉkernelˉtargetˉbytes(Input), Emptyˉkernelˉtargetˉbytes(Input)
+        );
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Section.Payload);
+    if Count > 4096u32 {
+        return Kernelˉtargetˉdata(
+            false, 0u32,
+            Emptyˉkernelˉtargetˉbytes(Input), Emptyˉkernelˉtargetˉbytes(Input)
+        );
+    }
+    var Cursor: u32 = Section.Payload + 4u32;
+    var Offsets: bytes = Emptyˉkernelˉtargetˉbytes(Input);
+    var Lengths: bytes = Emptyˉkernelˉtargetˉbytes(Input);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Name: Kernelˉtargetˉstring = Readˉstring(Input, Cursor, Limit);
+        if !Name.Valid || !Rangeˉvalid(Name.Next, 1u32, Limit) ||
+            Bytesˉreadˉu8(Input, Name.Next) != 3u8 {
+            return Kernelˉtargetˉdata(
+                false, 0u32,
+                Emptyˉkernelˉtargetˉbytes(Input), Emptyˉkernelˉtargetˉbytes(Input)
+            );
+        }
+        let Value: Kernelˉtargetˉstring = Readˉstring(
+            Input, Name.Next + 1u32, Limit
+        );
+        if !Value.Valid {
+            return Kernelˉtargetˉdata(
+                false, 0u32,
+                Emptyˉkernelˉtargetˉbytes(Input), Emptyˉkernelˉtargetˉbytes(Input)
+            );
+        }
+        Offsets = Bytesˉconcat(Offsets, Bytesˉfromˉu32ˉlittle(Value.Payload));
+        Lengths = Bytesˉconcat(Lengths, Bytesˉfromˉu32ˉlittle(Value.Length));
+        Cursor = Value.Next;
+        Index = Index + 1u32;
+    }
+    return Kernelˉtargetˉdata(
+        Cursor == Limit, Count, Offsets, Lengths
+    );
+}
+
+fn Readˉfunction(Input: bytes, Section: Kernelˉtargetˉsection)
+    -> Kernelˉtargetˉfunction {
+    let Limit: u32 = Section.Payload + Section.Length;
+    if !Rangeˉvalid(Section.Payload, 4u32, Limit) ||
+        Bytesˉreadˉu32ˉlittle(Input, Section.Payload) != 1u32 {
+        return Kernelˉtargetˉfunction(false, 0u32, 0u32);
+    }
+    let Name: Kernelˉtargetˉstring = Readˉstring(
+        Input, Section.Payload + 4u32, Limit
+    );
+    if !Name.Valid || !Bytesˉequalˉrange(
+        Input, Name.Payload, Name.Length, Mainˉname
+    ) || !Rangeˉvalid(Name.Next, 9u32, Limit) {
+        return Kernelˉtargetˉfunction(false, 0u32, 0u32);
+    }
+    var Cursor: u32 = Name.Next;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 0u32 {
+        return Kernelˉtargetˉfunction(false, 0u32, 0u32);
+    }
+    Cursor = Cursor + 4u32;
+    if Bytesˉreadˉu8(Input, Cursor) != 1u8 {
+        return Kernelˉtargetˉfunction(false, 0u32, 0u32);
+    }
+    Cursor = Cursor + 1u32;
+    let Locals: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    Cursor = Cursor + 4u32;
+    if Locals == 0u32 || Locals > 4097u32 ||
+        !Rangeˉvalid(Cursor, Locals, Limit) {
+        return Kernelˉtargetˉfunction(false, 0u32, 0u32);
+    }
+    let Calls: u32 = Locals - 1u32;
+    var Local: u32 = 0u32;
+    while Local < Calls {
+        if Bytesˉreadˉu8(Input, Cursor + Local) != 3u8 {
+            return Kernelˉtargetˉfunction(false, 0u32, 0u32);
+        }
+        Local = Local + 1u32;
+    }
+    if Bytesˉreadˉu8(Input, Cursor + Calls) != 1u8 {
+        return Kernelˉtargetˉfunction(false, 0u32, 0u32);
+    }
+    Cursor = Cursor + Locals;
+    if !Rangeˉvalid(Cursor, 12u32, Limit) ||
+        Bytesˉreadˉu32ˉlittle(Input, Cursor) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32) != 1u32 {
+        return Kernelˉtargetˉfunction(false, 0u32, 0u32);
+    }
+    let Codeˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+    return Kernelˉtargetˉfunction(
+        Cursor + 12u32 == Limit, Calls, Codeˉlength
+    );
+}
+
+fn Exportˉvalid(Input: bytes, Section: Kernelˉtargetˉsection) -> bool {
+    let Limit: u32 = Section.Payload + Section.Length;
+    if !Rangeˉvalid(Section.Payload, 4u32, Limit) ||
+        Bytesˉreadˉu32ˉlittle(Input, Section.Payload) != 1u32 {
+        return false;
+    }
+    let Name: Kernelˉtargetˉstring = Readˉstring(
+        Input, Section.Payload + 4u32, Limit
+    );
+    return Name.Valid && Bytesˉequalˉrange(
+        Input, Name.Payload, Name.Length, Mainˉname
+    ) && Rangeˉvalid(Name.Next, 5u32, Limit) &&
+        Bytesˉreadˉu8(Input, Name.Next) == 1u8 &&
+        Bytesˉreadˉu32ˉlittle(Input, Name.Next + 1u32) == 0u32 &&
+        Name.Next + 5u32 == Limit;
+}
+
+fn Appendˉline(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Output: bytes
+) -> bytes {
+    let Used: u32 = Bytesˉlength(Output);
+    if Used >= 4096u32 || Length >= 4096u32 - Used {
+        return Emptyˉkernelˉtargetˉbytes(Input);
+    }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Offset + Index)) > 127u32 {
+            return Emptyˉkernelˉtargetˉbytes(Input);
+        }
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(
+        Bytesˉconcat(Output, Bytesˉslice(Input, Offset, Length)),
+        Bytesˉfromˉu8(10u8)
+    );
+}
+
+export fn Readˉkernelˉtarget(Input: bytes) -> Kernelˉtargetˉplan {
+    let Length: u32 = Bytesˉlength(Input);
+    if !Rangeˉvalid(0u32, 12u32, Length) ||
+        !Bytesˉequalˉrange(Input, 0u32, 4u32, Wvbˉmagic) ||
+        Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 11u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
+        return Failure(Input, Kernelˉtargetˉstatus.Invalidˉwvb);
+    }
+    let Module: Kernelˉtargetˉsection = Readˉsection(Input, 12u32, 1u8);
+    let Capabilities: Kernelˉtargetˉsection = Readˉsection(
+        Input, Module.Next, 2u8
+    );
+    let Data: Kernelˉtargetˉsection = Readˉsection(
+        Input, Capabilities.Next, 3u8
+    );
+    let Functions: Kernelˉtargetˉsection = Readˉsection(
+        Input, Data.Next, 4u8
+    );
+    let Code: Kernelˉtargetˉsection = Readˉsection(
+        Input, Functions.Next, 5u8
+    );
+    let Exports: Kernelˉtargetˉsection = Readˉsection(
+        Input, Code.Next, 6u8
+    );
+    let Types: Kernelˉtargetˉsection = Readˉsection(
+        Input, Exports.Next, 7u8
+    );
+    if !Module.Valid || !Capabilities.Valid || !Data.Valid ||
+        !Functions.Valid || !Code.Valid || !Exports.Valid || !Types.Valid ||
+        Types.Next != Length {
+        return Failure(Input, Kernelˉtargetˉstatus.Invalidˉwvb);
+    }
+
+    let Moduleˉlimit: u32 = Module.Payload + Module.Length;
+    if !Rangeˉvalid(Module.Payload, 1u32, Moduleˉlimit) ||
+        Bytesˉreadˉu8(Input, Module.Payload) != 3u8 {
+        return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+    }
+    let Moduleˉname: Kernelˉtargetˉstring = Readˉstring(
+        Input, Module.Payload + 1u32, Moduleˉlimit
+    );
+    if !Moduleˉname.Valid || !Rangeˉvalid(Moduleˉname.Next, 1u32, Moduleˉlimit) ||
+        Bytesˉreadˉu8(Input, Moduleˉname.Next) != 0u8 ||
+        Moduleˉname.Next + 1u32 != Moduleˉlimit {
+        return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+    }
+
+    let Capabilityˉlimit: u32 = Capabilities.Payload + Capabilities.Length;
+    if !Rangeˉvalid(Capabilities.Payload, 4u32, Capabilityˉlimit) ||
+        Bytesˉreadˉu32ˉlittle(Input, Capabilities.Payload) != 1u32 {
+        return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+    }
+    let Capabilityˉname: Kernelˉtargetˉstring = Readˉstring(
+        Input, Capabilities.Payload + 4u32, Capabilityˉlimit
+    );
+    if !Capabilityˉname.Valid || !Bytesˉequalˉrange(
+        Input, Capabilityˉname.Payload, Capabilityˉname.Length, Consoleˉname
+    ) || !Rangeˉvalid(Capabilityˉname.Next, 6u32, Capabilityˉlimit) ||
+        Bytesˉreadˉu32ˉlittle(Input, Capabilityˉname.Next) != 1u32 ||
+        Bytesˉreadˉu8(Input, Capabilityˉname.Next + 4u32) != 3u8 ||
+        Bytesˉreadˉu8(Input, Capabilityˉname.Next + 5u32) != 0u8 ||
+        Capabilityˉname.Next + 6u32 != Capabilityˉlimit {
+        return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+    }
+
+    let Dataˉdirectory: Kernelˉtargetˉdata = Readˉdata(Input, Data);
+    let Function: Kernelˉtargetˉfunction = Readˉfunction(Input, Functions);
+    if !Dataˉdirectory.Valid || !Function.Valid ||
+        Function.Codeˉlength != Code.Length ||
+        !Exportˉvalid(Input, Exports) || Types.Length != 4u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Types.Payload) != 0u32 {
+        return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+    }
+    if Function.Calls > 4096u32 ||
+        Code.Length != Function.Calls * 20u32 + 16u32 {
+        return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+    }
+
+    var Output: bytes = Emptyˉkernelˉtargetˉbytes(Input);
+    var Cursor: u32 = Code.Payload;
+    var Call: u32 = 0u32;
+    while Call < Function.Calls {
+        if Bytesˉreadˉu8(Input, Cursor) != 3u8 ||
+            Bytesˉreadˉu8(Input, Cursor + 5u32) != 5u8 ||
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 6u32) != Call ||
+            Bytesˉreadˉu8(Input, Cursor + 10u32) != 4u8 ||
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 11u32) != Call ||
+            Bytesˉreadˉu8(Input, Cursor + 15u32) != 65u8 ||
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 16u32) != 0u32 {
+            return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+        }
+        let Dataˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        if Dataˉindex >= Dataˉdirectory.Count {
+            return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+        }
+        let Dataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Dataˉdirectory.Offsets, Dataˉindex * 4u32
+        );
+        let Dataˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Dataˉdirectory.Lengths, Dataˉindex * 4u32
+        );
+        let Outputˉlength: u32 = Bytesˉlength(Output);
+        if Outputˉlength >= 4096u32 ||
+            Dataˉlength >= 4096u32 - Outputˉlength {
+            return Failure(Input, Kernelˉtargetˉstatus.Outputˉlimit);
+        }
+        let Appended: bytes = Appendˉline(
+            Input, Dataˉoffset, Dataˉlength, Output
+        );
+        if Bytesˉlength(Appended) != Outputˉlength + Dataˉlength + 1u32 {
+            return Failure(Input, Kernelˉtargetˉstatus.Outputˉlimit);
+        }
+        Output = Appended;
+        Cursor = Cursor + 20u32;
+        Call = Call + 1u32;
+    }
+
+    if Bytesˉreadˉu8(Input, Cursor) != 1u8 ||
+        Bytesˉreadˉu8(Input, Cursor + 5u32) != 5u8 ||
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 6u32) != Function.Calls ||
+        Bytesˉreadˉu8(Input, Cursor + 10u32) != 4u8 ||
+        Bytesˉreadˉu32ˉlittle(Input, Cursor + 11u32) != Function.Calls ||
+        Bytesˉreadˉu8(Input, Cursor + 15u32) != 81u8 {
+        return Failure(Input, Kernelˉtargetˉstatus.Unsupportedˉmodule);
+    }
+    return Kernelˉtargetˉplan(
+        Kernelˉtargetˉstatus.Valid,
+        Output,
+        Bytesˉreadˉi32ˉlittle(Input, Cursor + 1u32)
+    );
+}

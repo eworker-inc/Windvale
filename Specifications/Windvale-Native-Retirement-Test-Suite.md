@@ -69,7 +69,7 @@ file. The current plan is:
 | `os-probe` | `Test-Os-Probe` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 28 suites and 3,136 cases.
+The version-1 plan therefore contains exactly 29 suites and 3,143 cases.
 
 ## Coordinator contract
 
@@ -91,7 +91,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 28, Passed: 28, Failed: 0, Cases: 3136
+Suites: 29, Passed: 29, Failed: 0, Cases: 3143
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

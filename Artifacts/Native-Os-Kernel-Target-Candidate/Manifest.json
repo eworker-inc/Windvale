@@ -1,0 +1,44 @@
+{
+  "format": "windvale-native-os-kernel-target-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0454",
+  "parentCommit": "6cf4bda357944ca0a863e614e28f25ba08c62ae4",
+  "project": "Windvale-Os-Kernel-Target.wvproj",
+  "sources": [
+    "Compiler/Windvale/System-Kernel-Target-Reader.wv",
+    "Compiler/Windvale/System-Kernel-Target-Tool.wv"
+  ],
+  "inputProject": "Windvale-Os-Kernel-Markers.wvproj",
+  "inputSource": "Operating-System/Kernel/Hello-World.wv",
+  "objectConstruction": "Object-Model/Windvale/Wvo-Object-Construction.wv",
+  "hostedProfile": 1,
+  "qualification": "pending",
+  "acceptedInput": "verified WVB 1.11 system module containing one canonical console.write_line Main function",
+  "outputs": [
+    {
+      "name": "01-kernel.wvo",
+      "bytes": 12134,
+      "sha256": "bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "Os-Kernel-Target.wvb",
+      "target": "portable-wvb",
+      "bytes": 57129,
+      "sha256": "9a7149ee7e0cb7533ef95baa199af24c36b5819217e634e362dd4f70e92bd3e8"
+    },
+    {
+      "name": "windows-x64-os-kernel-target.exe",
+      "target": "windows-x64",
+      "bytes": 613888,
+      "sha256": "af00f5bdb8934b07e9cbfec6881446d9e7fdc19264c2248e96e2a5df5566c027"
+    },
+    {
+      "name": "linux-x64-os-kernel-target.elf",
+      "target": "linux-x64",
+      "bytes": 614400,
+      "sha256": "ca3730b7da3dcc645d353743cc14771a9bee9d669ecef89111d0342dabbf0147"
+    }
+  ]
+}

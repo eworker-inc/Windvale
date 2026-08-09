@@ -128,6 +128,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [WVB publication transaction](Windvale-Wvb-Publication-Transaction.md)
 - [Compiler build-driver application](Windvale-Compiler-Build-Driver.md)
 - [Bounded x86-64 kernel target](Windvale-X64-Kernel-Target.md)
+- [Windvale-native system-kernel target](Windvale-System-Kernel-Target.md)
 
 ## Boot and operating system
 

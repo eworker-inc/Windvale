@@ -54,6 +54,33 @@ if [[ $(wc -c < "$work/00-loader.wvo") -ne 6336 ]] ||
 fi
 
 if ! "$script_directory/Build-Wvb.sh" \
+    "$repository_root/Windvale-Os-Kernel-Markers.wvproj" \
+    "$work/01-kernel.wvb" >"$work/01-build.log" 2>&1; then
+    cat -- "$work/01-build.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/01-kernel.wvb") -ne 1484 ]] ||
+    ! printf '%s  %s\n' \
+        '7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c' \
+        "$work/01-kernel.wvb" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 kernel module is invalid.' >&2
+    exit 1
+fi
+if ! "$script_directory/Lower-Os-Kernel-Wvb.sh" \
+    "$work/01-kernel.wvb" \
+    "$work/01-kernel.wvo" >"$work/01-lower.log" 2>&1; then
+    cat -- "$work/01-lower.log" >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/01-kernel.wvo") -ne 12134 ]] ||
+    ! printf '%s  %s\n' \
+        'bf13c1b103c297e87f4aa14f5bf7eba57ef2a30caa21b4c67dba34abc0a7f7a8' \
+        "$work/01-kernel.wvo" | sha256sum --check --strict --quiet; then
+    echo 'The native Probe 40 kernel object is invalid.' >&2
+    exit 1
+fi
+
+if ! "$script_directory/Build-Wvb.sh" \
     "$repository_root/Windvale-Os-Wvb-Admission.wvproj" \
     "$work/02-wvb-admission.wvb" >"$work/02-build.log" 2>&1; then
     cat -- "$work/02-build.log" >&2
@@ -179,7 +206,7 @@ fi
 
 if ! "$script_directory/Link-Wvo.sh" 0 Windvale_boot_probe "$work/Probe40.bin" \
     "$work/00-loader.wvo" \
-    "$object_root/01-kernel.wvo" \
+    "$work/01-kernel.wvo" \
     "$work/02-wvb-admission-native.wvo" \
     "$work/03-native-wvb-probe.wvo" \
     "$object_root/04-process-policy.wvo" \

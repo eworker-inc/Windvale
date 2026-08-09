@@ -188,6 +188,10 @@ recipe source into a catch-all.
 reconstructs the normal UEFI loader object from one pinned architecture fixture
 through a 75-line Windvale producer, leaving three frozen producers without
 duplicating 6,115 decimal byte literals or prematurely widening WVA.
+[Decision 0454](../Decisions/0454-Native-Probe-40-System-Kernel-Target.md)
+replaces the frozen kernel object with a real Windvale source-to-WVB-to-WVO
+path. Its bounded reader and hosted emitter remain separate reviewable sources,
+leaving two frozen producers without treating machine bytes as source.
 Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
