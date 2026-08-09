@@ -4877,3 +4877,33 @@ It owns 28 suites with 3,134 fixed cases. The seed retains five frozen WVOs
 totaling 662,287 bytes and records six native-produced objects totaling 30,363
 bytes. Linux execution, the complete coordinator, broad Seed/OS, QEMU,
 Standard, Qualification, and non-normal scenarios did not run.
+
+## Local native Probe 40 memory-object producer evidence
+
+[Decision 0452](../Decisions/0452-Native-Probe-40-Memory-Object-Producer.md)
+moves normal `08-memory.wvo` from the frozen seed into a separate focused
+Windvale producer behind the unified object launcher. The 37,769-byte Project 1
+WVB has SHA-256
+`2ae5f3a2f108b74a86150854c78f7f2dc0335cff2cb1e071be7718fce40e17e7`.
+Its retained Windows application is 399,872 bytes at SHA-256
+`79461480b72cc1865278ea6f06170b8f4e9f4e849898d7b3c06aa3d36ff70032`;
+the Linux application is 401,408 bytes at SHA-256
+`02280b115ead806f8b6e2f1dd066d7d06a85ae571d790c66d05daecf2acc6554`.
+
+Current-host execution reproduces the former 1,529-byte seed object byte for
+byte at SHA-256
+`2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed`
+and passes independent native WVO admission.
+
+After affected-test review, the combined Windows producer lane passes 8/8 in
+1.7 seconds and the ordinary `os-probe` lane passes construction and
+existing-output preservation 2/2 in 11.4 seconds. The final EFI remains 683,008
+bytes at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+
+The retirement plan remains 2,331 LF-only bytes and now has SHA-256
+`b9fddc319c4185393e255917c9b22d426101336cb3e2901d6f8043c6a043faab`.
+It owns 28 suites with 3,135 fixed cases. The seed retains four frozen WVOs
+totaling 660,758 bytes and records seven native-produced objects totaling
+31,892 bytes. Linux execution, the complete coordinator, broad Seed/OS, QEMU,
+Standard, Qualification, and non-normal scenarios did not run.

@@ -2,7 +2,7 @@
 set -uo pipefail
 
 if [[ $# -ne 2 || $2 != *.wvo ]]; then
-    echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging> <output.wvo>' >&2
+    echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging|memory> <output.wvo>' >&2
     exit 64
 fi
 case $1 in
@@ -22,15 +22,27 @@ case $1 in
         expected_bytes=1292
         expected_digest=a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d
         ;;
+    memory)
+        expected_bytes=1529
+        expected_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
+        ;;
     *)
-        echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging> <output.wvo>' >&2
+        echo 'Usage: ./Tools/Native/Produce-Os-Probe-Object.sh <exceptions|wvb-admission-bridge|native-bridge-and-support|paging|memory> <output.wvo>' >&2
         exit 64
         ;;
 esac
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
-producer="$repository_root/Artifacts/Native-Os-Probe-Object-Producer-Candidate/linux-x64-os-probe-object.elf"
+if [[ $1 == memory ]]; then
+    producer="$repository_root/Artifacts/Native-Os-Probe-Memory-Object-Producer-Candidate/linux-x64-os-probe-memory-object.elf"
+    producer_bytes=401408
+    producer_digest=02280b115ead806f8b6e2f1dd066d7d06a85ae571d790c66d05daecf2acc6554
+else
+    producer="$repository_root/Artifacts/Native-Os-Probe-Object-Producer-Candidate/linux-x64-os-probe-object.elf"
+    producer_bytes=462848
+    producer_digest=c4e22a9f67d5bdb4f186ddfbb63aa93032712ea7bdc260ed28076b12f0217e80
+fi
 output_directory=$(dirname -- "$2")
 if [[ ! -d $output_directory ]]; then
     echo 'The native OS Probe object output directory does not exist.' >&2
@@ -42,9 +54,9 @@ if [[ -e $output ]]; then
     echo 'The native OS Probe object output already exists.' >&2
     exit 1
 fi
-if [[ ! -f $producer || $(wc -c < "$producer") -ne 462848 ]] ||
+if [[ ! -f $producer || $(wc -c < "$producer") -ne $producer_bytes ]] ||
     ! printf '%s  %s\n' \
-        'c4e22a9f67d5bdb4f186ddfbb63aa93032712ea7bdc260ed28076b12f0217e80' \
+        "$producer_digest" \
         "$producer" | sha256sum --check --strict --quiet; then
     echo 'The Linux native OS Probe object producer identity is invalid.' >&2
     exit 1

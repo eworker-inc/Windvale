@@ -17,7 +17,10 @@ Tools/Native/Produce-Os-Probe-Object.sh <kind> <output.wvo>
 
 The launchers admit the exact host application, require a new `.wvo` destination
 in an existing directory, reject an unknown exact kind, remove a newly created
-invalid result, and require the recipe's complete output identity.
+invalid result, and require the recipe's complete output identity. The public
+launcher dispatches `memory` to the separately owned
+[memory-object producer](Windvale-Os-Memory-Object-Producer.md); the four compact
+recipes remain in the original focused package.
 
 ## Recipe inventory
 
@@ -27,6 +30,7 @@ invalid result, and require the recipe's complete output identity.
 | `wvb-admission-bridge` | `12-wvb-admission-bridge.wvo` | 484 | `271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d` |
 | `native-bridge-and-support` | `13-native-bridge-and-support.wvo` | 461 | `472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b` |
 | `paging` | `10-paging.wvo` | 1,292 | `a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d` |
+| `memory` | `08-memory.wvo` | 1,529 | `2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed` |
 
 The exception recipe is defined by the focused
 [x64 exception-object contract](Windvale-X64-Exception-Object-Producer.md).
@@ -48,7 +52,7 @@ The paging recipe contains one 899-byte `.text` section. It exports
 and `Windvale_kernel_x64_page_table_activate`, and carries relative-i32
 relocations at offsets 254, 306, 715, and 723 with addend `-4`.
 
-All four recipes contain only reviewed architecture-specific code bytes and explicit
+The four compact recipes contain only reviewed architecture-specific code bytes and explicit
 WVO records. Each complete candidate is admitted through the shared portable
 WVO verifier before host publication. A new recipe requires its own exact ABI,
 identity, focused cases, and normal-link evidence; the selector is not an open
@@ -62,7 +66,7 @@ extension or compatibility registry.
 | Windows x64 application | 461,312 | `fcd22c975ed04534d30733c5ddabb7811a9b9578effd0d27839d171bdac76d0c` |
 | Linux x64 application | 462,848 | `c4e22a9f67d5bdb4f186ddfbb63aa93032712ea7bdc260ed28076b12f0217e80` |
 
-The seven-case fixed lane requires all four exact outputs plus independent WVO
+The eight-case fixed lane requires all five exact outputs plus independent WVO
 admission, existing-destination preservation, unknown-kind rejection, and
 invalid-extension rejection. These fixed native expectations remain executable
 after the managed recovery generators are archived or removed.

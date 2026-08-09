@@ -21,6 +21,7 @@ exceptions="$temporary_directory/09-exceptions.wvo"
 admission="$temporary_directory/12-wvb-admission-bridge.wvo"
 native_bridge="$temporary_directory/13-native-bridge-and-support.wvo"
 paging="$temporary_directory/10-paging.wvo"
+memory="$temporary_directory/08-memory.wvo"
 existing="$temporary_directory/Existing.wvo"
 unknown="$temporary_directory/Unknown.wvo"
 invalid="$temporary_directory/Invalid.bin"
@@ -54,6 +55,11 @@ verify_output "$paging" 1292 \
     a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d || exit 1
 "$script_directory/Verify-Wvo.sh" "$paging" >/dev/null 2>&1 || exit 1
 
+"$script_directory/Produce-Os-Probe-Object.sh" memory "$memory" >/dev/null 2>&1 || exit 1
+verify_output "$memory" 1529 \
+    2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed || exit 1
+"$script_directory/Verify-Wvo.sh" "$memory" >/dev/null 2>&1 || exit 1
+
 printf '%s\n' preserved > "$existing"
 existing_sha256=$(sha256sum -- "$existing") || exit 1
 existing_sha256=${existing_sha256%% *}
@@ -75,4 +81,4 @@ if [[ $invalid_status -ne 64 || -e $invalid ]]; then
     exit 1
 fi
 
-echo 'Tests: 7, Passed: 7, Failed: 0'
+echo 'Tests: 8, Passed: 8, Failed: 0'

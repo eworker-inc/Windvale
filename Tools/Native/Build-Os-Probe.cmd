@@ -37,8 +37,6 @@ call :verify "%Objects%\04-process-policy.wvo" 129310 35d751147a7285fb926ba68e77
 if errorlevel 1 exit /b 1
 call :verify "%Objects%\05-process.wvo" 512978 dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa
 if errorlevel 1 exit /b 1
-call :verify "%Objects%\08-memory.wvo" 1529 2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
-if errorlevel 1 exit /b 1
 set "Work=%OutputDirectory%.windvale-os-probe-native-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" (
     >&2 echo The native Probe 40 private path already exists.
@@ -83,6 +81,9 @@ if errorlevel 1 goto :failure
 set "FailureStep=timer-shims"
 cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Timer-Shims.wva" "%Work%\07-timer-shims.wvo" >"%Work%\07.log" 2>&1
 if errorlevel 1 goto :failure
+set "FailureStep=memory"
+cmd /d /c call "%ObjectProducer%" memory "%Work%\08-memory.wvo" >"%Work%\08.log" 2>&1
+if errorlevel 1 goto :failure
 set "FailureStep=exceptions"
 cmd /d /c call "%ObjectProducer%" exceptions "%Work%\09-exceptions.wvo" >"%Work%\09.log" 2>&1
 if errorlevel 1 goto :failure
@@ -104,6 +105,9 @@ call :verify "%Work%\06-memory-object-shims.wvo" 2538 fe0a94461b743be58319d2e2f8
 if errorlevel 1 goto :failure
 set "FailureStep=verify-timer-shims"
 call :verify "%Work%\07-timer-shims.wvo" 1202 e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344
+if errorlevel 1 goto :failure
+set "FailureStep=verify-memory"
+call :verify "%Work%\08-memory.wvo" 1529 2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
 if errorlevel 1 goto :failure
 set "FailureStep=verify-exceptions"
 call :verify "%Work%\09-exceptions.wvo" 483 9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c
@@ -131,7 +135,7 @@ cmd /d /c call "%Linker%" 0 Windvale_boot_probe "%Work%\Probe40.bin" ^
     "%Objects%\05-process.wvo" ^
     "%Work%\06-memory-object-shims.wvo" ^
     "%Work%\07-timer-shims.wvo" ^
-    "%Objects%\08-memory.wvo" ^
+    "%Work%\08-memory.wvo" ^
     "%Work%\09-exceptions.wvo" ^
     "%Work%\10-paging.wvo" ^
     "%Work%\11-kernel-shims.wvo" ^
@@ -166,6 +170,7 @@ if exist "%Work%\03-build.log" type "%Work%\03-build.log" 1>&2
 if exist "%Work%\03-lower.log" type "%Work%\03-lower.log" 1>&2
 if exist "%Work%\06.log" type "%Work%\06.log" 1>&2
 if exist "%Work%\07.log" type "%Work%\07.log" 1>&2
+if exist "%Work%\08.log" type "%Work%\08.log" 1>&2
 if exist "%Work%\09.log" type "%Work%\09.log" 1>&2
 if exist "%Work%\10.log" type "%Work%\10.log" 1>&2
 if exist "%Work%\11.log" type "%Work%\11.log" 1>&2

@@ -180,6 +180,10 @@ frozen producers and keeping its source at a reviewable 211 lines.
 [Decision 0451](../Decisions/0451-Native-Probe-40-Paging-Object-Producer.md)
 adds the exact paging installer without widening WVA, leaving five frozen
 producers and a 317-line source that must not absorb memory without reassessment.
+[Decision 0452](../Decisions/0452-Native-Probe-40-Memory-Object-Producer.md)
+adds the normal memory object through a separate 158-line producer behind the
+same public launcher, leaving four frozen producers without growing the compact
+recipe source into a catch-all.
 Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.

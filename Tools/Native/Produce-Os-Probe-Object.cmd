@@ -17,6 +17,9 @@ if "%~1"=="exceptions" (
 ) else if "%~1"=="paging" (
     set "ExpectedBytes=1292"
     set "ExpectedDigest=a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d"
+) else if "%~1"=="memory" (
+    set "ExpectedBytes=1529"
+    set "ExpectedDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
 ) else goto :usage
 
 set "Output=%~f2"
@@ -32,16 +35,24 @@ if not exist "%OutputDirectory%" (
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
-set "Producer=%RepositoryRoot%\Artifacts\Native-Os-Probe-Object-Producer-Candidate\windows-x64-os-probe-object.exe"
+if "%~1"=="memory" (
+    set "Producer=%RepositoryRoot%\Artifacts\Native-Os-Probe-Memory-Object-Producer-Candidate\windows-x64-os-probe-memory-object.exe"
+    set "ProducerBytes=399872"
+    set "ProducerDigest=79461480b72cc1865278ea6f06170b8f4e9f4e849898d7b3c06aa3d36ff70032"
+) else (
+    set "Producer=%RepositoryRoot%\Artifacts\Native-Os-Probe-Object-Producer-Candidate\windows-x64-os-probe-object.exe"
+    set "ProducerBytes=461312"
+    set "ProducerDigest=fcd22c975ed04534d30733c5ddabb7811a9b9578effd0d27839d171bdac76d0c"
+)
 if not exist "%Producer%" (
     >&2 echo The Windows native OS Probe object producer is missing.
     exit /b 1
 )
-for %%F in ("%Producer%") do if not "%%~zF"=="461312" (
+for %%F in ("%Producer%") do if not "%%~zF"=="%ProducerBytes%" (
     >&2 echo The Windows native OS Probe object producer length is invalid.
     exit /b 1
 )
-certutil -hashfile "%Producer%" SHA256 | findstr /i /x /c:"fcd22c975ed04534d30733c5ddabb7811a9b9578effd0d27839d171bdac76d0c" >nul
+certutil -hashfile "%Producer%" SHA256 | findstr /i /x /c:"%ProducerDigest%" >nul
 if errorlevel 1 (
     >&2 echo The Windows native OS Probe object producer digest is invalid.
     exit /b 1
@@ -60,5 +71,5 @@ if exist "%Output%" del /f /q "%Output%" >nul 2>nul
 exit /b 1
 
 :usage
->&2 echo Usage: Tools\Native\Produce-Os-Probe-Object.cmd ^<exceptions^|wvb-admission-bridge^|native-bridge-and-support^|paging^> ^<output.wvo^>
+>&2 echo Usage: Tools\Native\Produce-Os-Probe-Object.cmd ^<exceptions^|wvb-admission-bridge^|native-bridge-and-support^|paging^|memory^> ^<output.wvo^>
 exit /b 64

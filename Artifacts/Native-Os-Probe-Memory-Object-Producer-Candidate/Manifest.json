@@ -1,0 +1,39 @@
+{
+  "format": "windvale-native-os-probe-memory-object-producer-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0452",
+  "parentCommit": "3431c0193abae0e81621b534d955a2ff2b6594df",
+  "project": "Windvale-Os-Memory-Object-Producer.wvproj",
+  "source": "Operating-System/Tools/Memory-Object-Producer.wv",
+  "objectConstruction": "Object-Model/Windvale/Wvo-Object-Construction.wv",
+  "hostedProfile": 1,
+  "qualification": "pending",
+  "outputs": [
+    {
+      "kind": "memory",
+      "name": "08-memory.wvo",
+      "bytes": 1529,
+      "sha256": "2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "Os-Probe-Memory-Object-Producer.wvb",
+      "target": "portable-wvb",
+      "bytes": 37769,
+      "sha256": "2ae5f3a2f108b74a86150854c78f7f2dc0335cff2cb1e071be7718fce40e17e7"
+    },
+    {
+      "name": "windows-x64-os-probe-memory-object.exe",
+      "target": "windows-x64",
+      "bytes": 399872,
+      "sha256": "79461480b72cc1865278ea6f06170b8f4e9f4e849898d7b3c06aa3d36ff70032"
+    },
+    {
+      "name": "linux-x64-os-probe-memory-object.elf",
+      "target": "linux-x64",
+      "bytes": 401408,
+      "sha256": "02280b115ead806f8b6e2f1dd066d7d06a85ae571d790c66d05daecf2acc6554"
+    }
+  ]
+}

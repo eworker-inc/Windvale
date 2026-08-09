@@ -1,17 +1,17 @@
 {
-  "format": "windvale-native-os-probe-object-candidate-7",
+  "format": "windvale-native-os-probe-object-candidate-8",
   "status": "candidate",
   "probeFormat": 40,
   "scenario": "normal",
   "entrySymbol": "Windvale_boot_probe",
-  "sourceDecision": "0451",
+  "sourceDecision": "0452",
   "provenanceDecision": "0446",
   "sourceCommit": "957ed051ed226ce1b1694d19ad13b2c7e64a968a",
   "nativeSourceCommit": "48f6f414f708aead62bcbcac6866129d58de1d9a",
   "qualification": "pending",
-  "construction": "stage0-frozen-five-object-inventory-plus-six-native-source-producers",
-  "nativeConsumption": "compile-lower-rename-admission-compile-lower-probe-assemble-three-produce-four-small-architecture-objects-link-fourteen-package-uefi",
-  "frozenObjectBytes": 662287,
+  "construction": "stage0-frozen-four-object-inventory-plus-seven-native-source-producers",
+  "nativeConsumption": "compile-lower-rename-admission-compile-lower-probe-assemble-three-produce-four-small-and-one-memory-architecture-objects-link-fourteen-package-uefi",
+  "frozenObjectBytes": 660758,
   "totalObjectBytes": 692650,
   "nativeProducers": [
     {
@@ -34,6 +34,15 @@
       "moduleSha256": "af5f93c881f006be06565f15857efb72b201b8f694a6c7e40a90deeaa86cd2c2",
       "objectBytes": 7306,
       "objectSha256": "046f4fa32293b4f02bdc51a3ec71d562d7a064b31056ca77a43e2083b281cd2c"
+    },
+    {
+      "name": "08-memory.wvo",
+      "project": "Windvale-Os-Memory-Object-Producer.wvproj",
+      "source": "Operating-System/Tools/Memory-Object-Producer.wv",
+      "producerModuleBytes": 37769,
+      "producerModuleSha256": "2ae5f3a2f108b74a86150854c78f7f2dc0335cff2cb1e071be7718fce40e17e7",
+      "objectBytes": 1529,
+      "objectSha256": "2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
     },
     {
       "name": "09-exceptions.wvo",
@@ -92,11 +101,6 @@
       "name": "05-process.wvo",
       "bytes": 512978,
       "sha256": "dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa"
-    },
-    {
-      "name": "08-memory.wvo",
-      "bytes": 1529,
-      "sha256": "2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
     }
   ]
 }
