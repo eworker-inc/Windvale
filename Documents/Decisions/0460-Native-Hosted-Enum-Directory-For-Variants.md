@@ -1,6 +1,6 @@
 # Decision 0460: Native hosted enum directory for variants
 
-- Status: Implemented current-host candidate; toolset repin and dual-host promotion pending
+- Status: Implemented current-host candidate; enlarged-verifier image construction and dual-host promotion pending
 - Date: 2026-08-09
 - Advances: [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md), [Decision 0459](0459-Native-Wvb-1-11-Verifier-Admission.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [native hosted enum processes](../../Specifications/Windvale-Native-Hosted-Enum-Processes.md)
@@ -67,10 +67,22 @@ The focused variant-only fixture compiles to a 665-byte WVB with SHA-256
 Two reviewed current-host focused tests pass: the hosted request/service process
 test, including exact zero-enum variant output, and the retained enum-name and
 metadata source/artifact identity test. This closes the previously measured
-enum-request rejection. It does not yet promote a new hosted toolset or prove
-the complete package workflow: the digest-bound candidate inventory, complete
-package composition, independent Linux execution, and grouped retirement gate
-remain explicit next work.
+enum-request rejection.
+
+The 57-artifact hosted-container candidate inventory is repinned around the six
+new request/service WVB and Windows/Linux products. Its 5,426-byte `SHA256SUMS`
+has SHA-256
+`f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d`,
+and every listed artifact matches. The existing focused package workflow passes
+all three current-host cases in 17.6 seconds: exact Windows construction, exact
+cross-target Linux construction, and invalid-WVB rejection with input/output
+preservation and no private scratch. This proves candidate-toolset integration
+without promoting it.
+
+The enlarged verifier's exact pre-lowered native chunk set and entry offset are
+not retained in this checkout, so its separate image-mode container construction
+has not run. That construction, independent Linux execution, grouped retirement
+gate, and ordinary-path promotion remain explicit next work.
 
 No broad Seed, OS, Standard, Qualification, WebAssembly, QEMU, or complete
 retirement gate ran. Those checks remain grouped at the end of the active
