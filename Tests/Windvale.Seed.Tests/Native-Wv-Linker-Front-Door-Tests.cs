@@ -20,7 +20,7 @@ internal static partial class Program
         var Root = Manifest.RootElement;
         Equal("windvale-native-wv-linker-candidate-1", Root.GetProperty("format").GetString());
         Equal("candidate", Root.GetProperty("status").GetString());
-        Equal("0221", Root.GetProperty("sourceDecision").GetString());
+        Equal("0441", Root.GetProperty("sourceDecision").GetString());
         Equal("0302", Root.GetProperty("provenanceDecision").GetString());
         Equal("pending", Root.GetProperty("qualification").GetString());
         Equal(3, Root.GetProperty("artifacts").GetArrayLength());

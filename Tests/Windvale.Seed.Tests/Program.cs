@@ -21574,7 +21574,7 @@ internal static partial class Program
         Equal(Moduleˉprofile.Hosted, Module.Module.Profile);
         Sequenceˉequal(
             [
-                Capabilityˉcatalog.CONSOLE_WRITE,
+                Capabilityˉcatalog.CONSOLE_WRITE_LINE,
                 Capabilityˉcatalog.DIAGNOSTIC_WRITE_LINE,
                 Capabilityˉcatalog.FILE_READ_BYTES,
                 Capabilityˉcatalog.FILE_WRITE_BYTES,
@@ -21600,7 +21600,7 @@ internal static partial class Program
         Contains(Inspection, "Acceptˉreconstructedˉimage");
         Contains(Inspection, "Appendˉmapˉline");
         Contains(Inspection, "Buildˉcanonicalˉmap");
-        Contains(Inspection, "Foundationˉsha256ˉhex");
+        Contains(Inspection, "image sha256=");
         False(
             Inspection.Contains("bytes.sha256_hex", StringComparison.Ordinal),
             "The native linker retained the unsupported host digest opcode.");
