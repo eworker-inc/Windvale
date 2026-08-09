@@ -1,7 +1,7 @@
 # WebAssembly and browser playground exploration
 
 - Date: 2026-08-01
-- Status: Accepted staged product direction under [Decision 0182](../Decisions/0182-Browser-And-WebAssembly-Product-Direction.md), with an implemented Stage 0 playground and bounded Windvale-authored backend; not yet an accepted permanent WebAssembly host or target
+- Status: Accepted staged product direction under [Decision 0182](../Decisions/0182-Browser-And-WebAssembly-Product-Direction.md), with the normal browser-native playground specified separately; not yet an accepted permanent WebAssembly host or target
 
 ## Purpose
 
@@ -201,20 +201,20 @@ An initial playground should be deployable as static assets after its toolchain 
 
 ## Demonstration catalog
 
-The strongest gallery should explain Windvale's architecture rather than present only generic programming exercises.
+The strongest future gallery should explain Windvale's architecture rather than present only generic programming exercises. The current browser-native profile accepts only capability-free `portable` modules with `export fn Main() -> i32`; it does not accept every demonstration proposed below.
 
 ### Initial language and Foundation demonstrations
 
-- Hello World with explicit `console.write_line` authorization.
+- Hello World with explicit `console.write_line` authorization (planned; the current browser-native profile has no console capability).
 - Checked arithmetic, loops, functions, and bounded recursion.
 - Immutable records and nominal enums.
 - Strict UTF-8 validation, quoting, integer formatting, and decimal parsing.
 - Immutable byte construction, slicing, fixed-width little-endian reads, and ordering.
 - Deterministic success and failure diagnostics.
 
-Existing examples that could seed this gallery include:
+Existing examples that could seed this future gallery include:
 
-- [`Examples/Seed/Hello-Windvale.wv`](../../Examples/Seed/Hello-Windvale.wv)
+- [`Examples/Seed/Hello-Windvale.wv`](../../Examples/Seed/Hello-Windvale.wv) — a valid hosted CLI/runtime example, but not a current browser-playground input
 - [`Examples/Foundation/Decimal-Parsing-Demo.wv`](../../Examples/Foundation/Decimal-Parsing-Demo.wv)
 - [`Examples/Foundation/Byte-Construction-Demo.wv`](../../Examples/Foundation/Byte-Construction-Demo.wv)
 - [`Examples/Foundation/Wvb-Header-Inspector.wv`](../../Examples/Foundation/Wvb-Header-Inspector.wv)

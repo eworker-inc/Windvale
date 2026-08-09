@@ -179,6 +179,13 @@ function Runˉrequest(Exports, Request, Outerˉbudget) {
     const Outerˉinstructions = Readˉglobal(Exports, "Windvale.instructions");
     const Outputˉlength = Readˉglobal(Exports, "Windvale.output_length");
     const Outputˉcapacity = Readˉglobal(Exports, "Windvale.output_capacity");
+    if (Outerˉstatus === 0 && Outputˉlength === 0) {
+        throw new Error(
+            "The compiled module is outside the browser execution profile. " +
+            "Use a capability-free portable module with export fn Main() -> i32; " +
+            "hosted modules and capabilities such as console.write_line are not available.",
+        );
+    }
     if (Outerˉstatus !== 0 ||
         Outerˉinstructions < 0 ||
         Outerˉinstructions > Outerˉbudget ||

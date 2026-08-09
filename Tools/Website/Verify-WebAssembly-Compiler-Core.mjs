@@ -7,12 +7,16 @@ import { Compileˉverifyˉexecute } from "../Windvale.Playground/wwwroot/js/wind
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = path.resolve(Scriptˉdirectory, "../..");
 const Packageˉroot = path.join(Repositoryˉroot, "Artifacts/WebAssembly-Playground");
-const [Interpreter, Compiler, Source] = await Promise.all([
+const [Interpreter, Compiler, Source, Hostedˉsource] = await Promise.all([
     readFile(path.join(Packageˉroot, "Wvb-Scalar-Interpreter.wasm")),
     readFile(path.join(Packageˉroot, "Windvale-Compiler-Direct.wasm")),
     readFile(path.join(
         Repositoryˉroot,
         "Tests/Fixtures/Source-Wvb/WebAssembly-Compiler-Success.wv",
+    )),
+    readFile(path.join(
+        Repositoryˉroot,
+        "Examples/Seed/Hello-Windvale.wv",
     )),
 ]);
 
@@ -34,6 +38,17 @@ Equal(42, Result.Executionˉresult, "execution result");
 Equal(4, Result.Executionˉguestˉinstructions, "execution guest instructions");
 Equal(8_309, Result.Executionˉouterˉinstructions, "execution outer instructions");
 
+await Rejects(
+    () => Compileˉverifyˉexecute(
+        Interpreter,
+        Compiler,
+        Hostedˉsource,
+        1_000_000,
+    ),
+    "The compiled module is outside the browser execution profile.",
+    "hosted module profile",
+);
+
 console.log(JSON.stringify({
     wvbBytes: Result.Wvb.byteLength,
     wvbSha256: Result.Wvbˉsha256,
@@ -50,4 +65,19 @@ function Equal(Expected, Actual, Boundary) {
             `Unexpected ${Boundary}: expected ${Expected}, received ${Actual}.`,
         );
     }
+}
+
+async function Rejects(Action, Expected, Boundary) {
+    try {
+        await Action();
+    }
+    catch (Failure) {
+        if (Failure instanceof Error && Failure.message.includes(Expected)) {
+            return;
+        }
+        throw new Error(
+            `Unexpected ${Boundary} failure: ${Failure instanceof Error ? Failure.message : Failure}.`,
+        );
+    }
+    throw new Error(`The ${Boundary} was unexpectedly accepted.`);
 }
