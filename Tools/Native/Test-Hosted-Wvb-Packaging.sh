@@ -142,12 +142,12 @@ cp -- "$toolset/SHA256SUMS" "$test_directory/Destination.elf" || fail 'sentinel 
 status=$?
 [[ $status -ne 0 ]] || fail 'invalid WVB was accepted'
 check_file \
-    "$test_directory/Destination.elf" 6329 \
-    b457d99c99f84cf608fe3fd3f1e4177cbbf30b8d4d369eb25b0659ebf6dd2008 \
+    "$test_directory/Destination.elf" 6625 \
+    c01a37482d5eaaf3cfbcc5d89362ef5698edeb0b8689bf5952e4f9eff787fc59 \
     'preserved destination'
 check_file \
-    "$test_directory/Invalid.wvb" 6329 \
-    b457d99c99f84cf608fe3fd3f1e4177cbbf30b8d4d369eb25b0659ebf6dd2008 \
+    "$test_directory/Invalid.wvb" 6625 \
+    c01a37482d5eaaf3cfbcc5d89362ef5698edeb0b8689bf5952e4f9eff787fc59 \
     'preserved input'
 check_no_scratch
 echo 'PASS  hosted packaging rejects invalid WVB and preserves resources'

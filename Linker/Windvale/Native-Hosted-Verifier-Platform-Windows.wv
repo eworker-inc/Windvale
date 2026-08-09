@@ -1,0 +1,153 @@
+module Linkerˉnativeˉhostedˉverifierˉplatformˉwindows profile portable;
+
+import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
+import Linkerˉnativeˉhostedˉverifierˉlayout as Layout;
+
+fn Writeˉsection(
+    Input: bytes,
+    Offset: u32,
+    Name: text,
+    Virtualˉbytes: u32,
+    Address: u32,
+    Fileˉbytes: u32,
+    Fileˉoffset: u32,
+    Characteristics: u32
+) -> bytes {
+    var Result: bytes = Build.Writeˉascii(Input, Offset, Name);
+    Result = Build.Patchˉu32(Result, Offset + 8u32, Virtualˉbytes);
+    Result = Build.Patchˉu32(Result, Offset + 12u32, Address);
+    Result = Build.Patchˉu32(Result, Offset + 16u32, Fileˉbytes);
+    Result = Build.Patchˉu32(Result, Offset + 20u32, Fileˉoffset);
+    return Build.Patchˉu32(Result, Offset + 36u32, Characteristics);
+}
+
+fn Header(Value: Layout.Nativeˉhostedˉverifierˉlayout) -> bytes {
+    let Textˉvirtual: u32 = 4096u32 + Value.Bundleˉbytes;
+    let Dataˉvirtual: u32 = 4096u32 + Value.Runtimeˉvirtualˉbytes;
+    var Result: bytes = Build.Zeros(512u32);
+    Result = Build.Patchˉu16(Result, 0u32, 23117u32);
+    Result = Build.Patchˉu32(Result, 60u32, 128u32);
+    Result = Build.Patchˉu32(Result, 128u32, 17744u32);
+    Result = Build.Patchˉu16(Result, 132u32, 34404u32);
+    Result = Build.Patchˉu16(Result, 134u32, 3u32);
+    Result = Build.Patchˉu16(Result, 148u32, 240u32);
+    Result = Build.Patchˉu16(Result, 150u32, 34u32);
+
+    Result = Build.Patchˉu16(Result, 152u32, 523u32);
+    Result = Build.Patchˉu8(Result, 154u32, 4u8);
+    Result = Build.Patchˉu32(Result, 156u32, Value.Textˉfileˉbytes);
+    Result = Build.Patchˉu32(Result, 160u32, 8704u32);
+    Result = Build.Patchˉu32(Result, 164u32, Dataˉvirtual - 8192u32);
+    Result = Build.Patchˉu32(Result, 168u32, Value.Textˉaddress);
+    Result = Build.Patchˉu32(Result, 172u32, Value.Textˉaddress);
+    Result = Build.Patchˉu64(Result, 176u32, 1073741824u32, 1u32);
+    Result = Build.Patchˉu32(Result, 184u32, 4096u32);
+    Result = Build.Patchˉu32(Result, 188u32, 512u32);
+    Result = Build.Patchˉu16(Result, 192u32, 6u32);
+    Result = Build.Patchˉu16(Result, 200u32, 6u32);
+    Result = Build.Patchˉu32(Result, 208u32, Value.Imageˉvirtualˉbytes);
+    Result = Build.Patchˉu32(Result, 212u32, 512u32);
+    Result = Build.Patchˉu16(Result, 220u32, 3u32);
+    Result = Build.Patchˉu16(Result, 222u32, 352u32);
+    Result = Build.Patchˉu64(Result, 224u32, 67108864u32, 0u32);
+    Result = Build.Patchˉu64(Result, 232u32, 67108864u32, 0u32);
+    Result = Build.Patchˉu64(Result, 240u32, 1048576u32, 0u32);
+    Result = Build.Patchˉu64(Result, 248u32, 4096u32, 0u32);
+    Result = Build.Patchˉu32(Result, 260u32, 16u32);
+    Result = Build.Patchˉu32(Result, 272u32, Value.Importˉaddress);
+    Result = Build.Patchˉu32(Result, 276u32, 60u32);
+    Result = Build.Patchˉu32(Result, 304u32, Value.Relocationˉaddress);
+    Result = Build.Patchˉu32(Result, 308u32, 12u32);
+    Result = Build.Patchˉu32(Result, 360u32, Value.Importˉaddress + 192u32);
+    Result = Build.Patchˉu32(Result, 364u32, 128u32);
+
+    Result = Writeˉsection(
+        Result, 392u32, ".text", Textˉvirtual, Value.Textˉaddress,
+        Value.Textˉfileˉbytes, Value.Textˉfileˉoffset, 1610612768u32
+    );
+    Result = Writeˉsection(
+        Result, 432u32, ".data", Dataˉvirtual, Value.Dataˉaddress,
+        8192u32, Value.Dataˉfileˉoffset, 3221225536u32
+    );
+    return Writeˉsection(
+        Result, 472u32, ".reloc", 12u32, Value.Relocationˉaddress,
+        512u32, Value.Relocationˉfileˉoffset, 1107296320u32
+    );
+}
+
+fn Importˉentry(
+    Input: bytes,
+    Address: u32,
+    Index: u32,
+    Nameˉoffset: u32,
+    Name: text
+) -> bytes {
+    let Nameˉaddress: u32 = Address + Nameˉoffset;
+    var Result: bytes = Build.Patchˉu64(
+        Input, 64u32 + Index * 8u32, Nameˉaddress, 0u32
+    );
+    Result = Build.Patchˉu64(
+        Result, 192u32 + Index * 8u32, Nameˉaddress, 0u32
+    );
+    return Build.Writeˉascii(Result, Nameˉoffset + 2u32, Name);
+}
+
+fn Imports(Address: u32) -> bytes {
+    var Result: bytes = Build.Zeros(4096u32);
+    Result = Build.Patchˉu32(Result, 0u32, Address + 64u32);
+    Result = Build.Patchˉu32(Result, 12u32, Address + 536u32);
+    Result = Build.Patchˉu32(Result, 16u32, Address + 192u32);
+    Result = Build.Patchˉu32(Result, 20u32, Address + 176u32);
+    Result = Build.Patchˉu32(Result, 32u32, Address + 549u32);
+    Result = Build.Patchˉu32(Result, 36u32, Address + 304u32);
+    Result = Importˉentry(Result, Address, 0u32, 320u32, "CloseHandle");
+    Result = Importˉentry(Result, Address, 1u32, 334u32, "CreateFileW");
+    Result = Importˉentry(Result, Address, 2u32, 368u32, "GetCommandLineW");
+    Result = Importˉentry(Result, Address, 3u32, 386u32, "GetFileSizeEx");
+    Result = Importˉentry(Result, Address, 4u32, 402u32, "GetLastError");
+    Result = Importˉentry(Result, Address, 5u32, 418u32, "GetStdHandle");
+    Result = Importˉentry(Result, Address, 6u32, 434u32, "LocalFree");
+    Result = Importˉentry(
+        Result, Address, 7u32, 446u32, "MultiByteToWideChar"
+    );
+    Result = Importˉentry(Result, Address, 8u32, 468u32, "ReadFile");
+    Result = Importˉentry(
+        Result, Address, 9u32, 480u32, "WideCharToMultiByte"
+    );
+    Result = Importˉentry(Result, Address, 10u32, 502u32, "WriteFile");
+    let Shellˉname: u32 = Address + 514u32;
+    Result = Build.Patchˉu64(Result, 176u32, Shellˉname, 0u32);
+    Result = Build.Patchˉu64(Result, 304u32, Shellˉname, 0u32);
+    Result = Build.Writeˉascii(Result, 516u32, "CommandLineToArgvW");
+    Result = Build.Writeˉascii(Result, 536u32, "KERNEL32.dll");
+    return Build.Writeˉascii(Result, 549u32, "SHELL32.dll");
+}
+
+fn Response(Input: bytes, Status: u32, Offset: u32) -> bytes {
+    var Result: bytes = Build.Empty(Input);
+    Result = Build.Appendˉu32(Result, 1113019991u32);
+    Result = Build.Appendˉu32(Result, 1u32);
+    var Total: u32 = 32u32;
+    if Status == 0u32 { Total = 4652u32; }
+    Result = Build.Appendˉu32(Result, Total);
+    Result = Build.Appendˉu32(Result, Status);
+    Result = Build.Appendˉu32(Result, Offset);
+    Result = Build.Appendˉu32(Result, 512u32);
+    Result = Build.Appendˉu32(Result, 4096u32);
+    return Build.Appendˉu32(Result, 12u32);
+}
+
+export fn Nativeˉhostedˉverifierˉplatformˉwindows(Runtime: bytes) -> bytes {
+    let Value: Layout.Nativeˉhostedˉverifierˉlayout =
+        Layout.Nativeˉhostedˉverifierˉplan(Runtime);
+    if !Value.Valid || Value.Target != 1u32 {
+        return Response(Runtime, 1u32, Bytesˉlength(Runtime));
+    }
+    var Result: bytes = Response(Runtime, 0u32, Bytesˉlength(Runtime));
+    Result = Bytesˉconcat(Result, Header(Value));
+    Result = Bytesˉconcat(Result, Imports(Value.Importˉaddress));
+    var Relocation: bytes = Build.Zeros(12u32);
+    Relocation = Build.Patchˉu32(Relocation, 0u32, Value.Textˉaddress);
+    Relocation = Build.Patchˉu32(Relocation, 4u32, 12u32);
+    return Bytesˉconcat(Result, Relocation);
+}

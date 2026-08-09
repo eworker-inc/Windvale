@@ -1,12 +1,12 @@
 {
   "format": "windvale-native-hosted-container-toolset-candidate-1",
   "status": "candidate",
-  "sourceDecision": "0468",
+  "sourceDecision": "0469",
   "qualification": "pending",
   "construction": "stage0-recovery-package-wiring",
   "nativeSourceConstruction": "verified-digest-bound-front-door",
-  "sha256SumsBytes": 6329,
-  "sha256SumsSha256": "b457d99c99f84cf608fe3fd3f1e4177cbbf30b8d4d369eb25b0659ebf6dd2008",
+  "sha256SumsBytes": 6625,
+  "sha256SumsSha256": "c01a37482d5eaaf3cfbcc5d89362ef5698edeb0b8689bf5952e4f9eff787fc59",
   "commands": [
     { "name": "wvhostenumrequest", "sourceProject": "Windvale-Native-Hosted-Enum-Request-Tool.wvproj", "target": "hosted-enum-request-v1" },
     { "name": "wvhostenumservice", "sourceProject": "Windvale-Native-Hosted-Enum-Service-Tool.wvproj", "target": "hosted-enum-service-v1" },
@@ -27,6 +27,7 @@
     { "name": "wvhostsegment", "sourceProject": "Windvale-Native-Hosted-Container-Segmenter-Tool.wvproj", "target": "hosted-container-segmenter-v1" },
     { "name": "wvhostsegmentmanifest", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Manifest-Tool.wvproj", "target": "hosted-container-segment-manifest-v1" },
     { "name": "wvhostpublish", "sourceProject": "Windvale-Native-Hosted-Container-Segment-Set-Admission-Tool.wvproj", "target": "hosted-container-publisher-v1" },
+    { "name": "wvhostverifierbytes", "sourceProject": "Windvale-Native-Hosted-Verifier-Platform-Tool.wvproj", "target": "hosted-verifier-platform-bytes-v1" },
     { "name": "wvhostverifierbundle", "sourceProject": "Windvale-Native-Hosted-Verifier-Service-Bundle-Request-Tool.wvproj", "target": "hosted-verifier-service-bundle-request-v1" },
     { "name": "wvhostverifierrequest", "sourceProject": "Windvale-Native-Hosted-Verifier-Metadata-Request-Tool.wvproj", "target": "hosted-verifier-metadata-request-v1" },
     { "name": "wvhostverifierstartup", "sourceProject": "Windvale-Native-Hosted-Verifier-Startup-Tool.wvproj", "target": "hosted-verifier-startup-v1" }

@@ -1,0 +1,91 @@
+module Linkerˉnativeˉhostedˉverifierˉplatformˉlinux profile portable;
+
+import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
+import Linkerˉnativeˉhostedˉverifierˉlayout as Layout;
+
+fn Programˉheader(
+    Input: bytes,
+    Offset: u32,
+    Type: u32,
+    Flags: u32,
+    Fileˉoffset: u32,
+    Address: u32,
+    Fileˉbytes: u32,
+    Memoryˉbytes: u32,
+    Alignment: u32
+) -> bytes {
+    var Result: bytes = Build.Patchˉu32(Input, Offset, Type);
+    Result = Build.Patchˉu32(Result, Offset + 4u32, Flags);
+    Result = Build.Patchˉu64(Result, Offset + 8u32, Fileˉoffset, 0u32);
+    Result = Build.Patchˉu64(Result, Offset + 16u32, Address, 0u32);
+    Result = Build.Patchˉu64(Result, Offset + 32u32, Fileˉbytes, 0u32);
+    Result = Build.Patchˉu64(Result, Offset + 40u32, Memoryˉbytes, 0u32);
+    return Build.Patchˉu64(Result, Offset + 48u32, Alignment, 0u32);
+}
+
+fn Header(Value: Layout.Nativeˉhostedˉverifierˉlayout) -> bytes {
+    var Result: bytes = Build.Zeros(4096u32);
+    Result = Build.Patchˉu32(Result, 0u32, 1179403647u32);
+    Result = Build.Patchˉu32(Result, 4u32, 65794u32);
+    Result = Build.Patchˉu16(Result, 16u32, 3u32);
+    Result = Build.Patchˉu16(Result, 18u32, 62u32);
+    Result = Build.Patchˉu32(Result, 20u32, 1u32);
+    Result = Build.Patchˉu64(Result, 24u32, Value.Textˉaddress, 0u32);
+    Result = Build.Patchˉu64(Result, 32u32, 64u32, 0u32);
+    Result = Build.Patchˉu16(Result, 52u32, 64u32);
+    Result = Build.Patchˉu16(Result, 54u32, 56u32);
+    Result = Build.Patchˉu16(Result, 56u32, 5u32);
+    Result = Programˉheader(
+        Result, 64u32, 1u32, 4u32, 0u32, 0u32,
+        4096u32, 4096u32, 4096u32
+    );
+    Result = Programˉheader(
+        Result, 120u32, 1u32, 5u32, Value.Textˉfileˉoffset,
+        Value.Textˉaddress, Value.Textˉfileˉbytes,
+        Value.Textˉfileˉbytes, 4096u32
+    );
+    Result = Programˉheader(
+        Result, 176u32, 1u32, 6u32, Value.Runtimeˉfileˉoffset,
+        Value.Runtimeˉaddress, 4096u32,
+        Value.Runtimeˉvirtualˉbytes, 4096u32
+    );
+    Result = Programˉheader(
+        Result, 232u32, 4u32, 4u32, 384u32, 384u32,
+        28u32, 28u32, 4u32
+    );
+    Result = Programˉheader(
+        Result, 288u32, 1685382481u32, 6u32, 0u32, 0u32,
+        0u32, 67108864u32, 16u32
+    );
+    Result = Build.Patchˉu32(Result, 384u32, 9u32);
+    Result = Build.Patchˉu32(Result, 388u32, 4u32);
+    Result = Build.Patchˉu32(Result, 392u32, 1u32);
+    Result = Build.Writeˉascii(Result, 396u32, "Windvale");
+    return Build.Patchˉu32(Result, 408u32, 4u32);
+}
+
+fn Response(Input: bytes, Status: u32, Offset: u32) -> bytes {
+    var Result: bytes = Build.Empty(Input);
+    Result = Build.Appendˉu32(Result, 1112299095u32);
+    Result = Build.Appendˉu32(Result, 1u32);
+    var Total: u32 = 32u32;
+    if Status == 0u32 { Total = 4128u32; }
+    Result = Build.Appendˉu32(Result, Total);
+    Result = Build.Appendˉu32(Result, Status);
+    Result = Build.Appendˉu32(Result, Offset);
+    Result = Build.Appendˉu32(Result, 4096u32);
+    Result = Build.Appendˉu32(Result, 0u32);
+    return Build.Appendˉu32(Result, 0u32);
+}
+
+export fn Nativeˉhostedˉverifierˉplatformˉlinux(Runtime: bytes) -> bytes {
+    let Value: Layout.Nativeˉhostedˉverifierˉlayout =
+        Layout.Nativeˉhostedˉverifierˉplan(Runtime);
+    if !Value.Valid || Value.Target != 2u32 {
+        return Response(Runtime, 1u32, Bytesˉlength(Runtime));
+    }
+    return Bytesˉconcat(
+        Response(Runtime, 0u32, Bytesˉlength(Runtime)),
+        Header(Value)
+    );
+}

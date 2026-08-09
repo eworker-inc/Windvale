@@ -1,0 +1,84 @@
+module Nativeˉhostedˉverifierˉplatformˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉverifierˉplatformˉlinux as Linux;
+import Linkerˉnativeˉhostedˉverifierˉplatformˉwindows as Windows;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostverifierbytes <runtime.wvhr> <regions.wvhb>"
+    );
+    return 64;
+}
+
+fn Responseˉisˉvalid(Response: bytes, Target: u32) -> bool {
+    let Total: u32 = Bytesˉlength(Response);
+    var Magic: u32 = 1112299095u32;
+    var Header: u32 = 4096u32;
+    var Imports: u32 = 0u32;
+    var Relocation: u32 = 0u32;
+    if Target == 1u32 {
+        Magic = 1113019991u32;
+        Header = 512u32;
+        Imports = 4096u32;
+        Relocation = 12u32;
+    }
+    return Total == 32u32 + Header + Imports + Relocation &&
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) == Magic &&
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) == Total &&
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) == 4096u32 &&
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) == Header &&
+        Bytesˉreadˉu32ˉlittle(Response, 24u32) == Imports &&
+        Bytesˉreadˉu32ˉlittle(Response, 28u32) == Relocation;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Runtimeˉpath: text = process.argument(0u32);
+    let Outputˉpath: text = process.argument(1u32);
+    if Pathsˉareˉequal(Runtimeˉpath, Outputˉpath) { return Usage(); }
+    let Runtime: bytes = file.read_bytes(Runtimeˉpath);
+    if Bytesˉlength(Runtime) != 4096u32 { return 2; }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 492u32);
+    var Response: bytes = Linux.Nativeˉhostedˉverifierˉplatformˉlinux(Runtime);
+    if Target == 1u32 {
+        Response = Windows.Nativeˉhostedˉverifierˉplatformˉwindows(Runtime);
+    }
+    if (Target != 1u32 && Target != 2u32) ||
+        !Responseˉisˉvalid(Response, Target) {
+        diagnostic.write_line("verifier platform bytes status=Rejected");
+        return 2;
+    }
+    file.write_bytes(Outputˉpath, Response);
+    console.write_line(
+        Textˉconcat(
+            "verifier platform bytes status=Valid bytes=",
+            U32ˉformat(Bytesˉlength(Response))
+        )
+    );
+    return 0;
+}
