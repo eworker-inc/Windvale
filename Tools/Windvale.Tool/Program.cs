@@ -214,6 +214,7 @@ internal static class Program
         Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
+        Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME => ".exe",
         _ => ".elf",
@@ -438,6 +439,8 @@ internal static class Program
         Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_TARGET_NAME or
         Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
@@ -598,6 +601,7 @@ internal static class Program
                 Consoleˉapplicationˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+                Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Wvoˉstagingˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
                 Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME)
             {
@@ -771,6 +775,11 @@ internal static class Program
                             Bytes),
                     Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
                         Wvoˉstagingˉproducerˉapplicationˉwriter.Writeˉwindows(
+                            Module,
+                            Fragment,
+                            Bytes),
+                    Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME =>
+                        Compilerˉimageˉstagingˉapplicationˉwriter.Writeˉwindows(
                             Module,
                             Fragment,
                             Bytes),
@@ -975,6 +984,11 @@ internal static class Program
                             Module,
                             Fragment,
                             Bytes),
+                    Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_TARGET_NAME =>
+                        Compilerˉimageˉstagingˉapplicationˉwriter.Writeˉlinux(
+                            Module,
+                            Fragment,
+                            Bytes),
                     Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME =>
                         Wvoˉstagingˉpublisherˉapplicationˉwriter.Writeˉlinux(
                             Module,
@@ -1043,6 +1057,7 @@ internal static class Program
                     Consoleˉapplicationˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
+                    Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Wvoˉstagingˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME or
                     Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME) &&
                 OperatingSystem.IsLinux())
@@ -1538,8 +1553,6 @@ internal static class Program
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
             "windows-x64-wvo-publisher-v1|linux-x64-wvo-publisher-v1|" +
-            "windows-x64-wvo-staging-producer-v1|" +
-            "linux-x64-wvo-staging-producer-v1|" +
             "windows-x64-wvo-staging-publisher-v1|" +
             "linux-x64-wvo-staging-publisher-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
@@ -1570,8 +1583,6 @@ internal static class Program
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
             "windows-x64-wvo-publisher-v1|linux-x64-wvo-publisher-v1|" +
-            "windows-x64-wvo-staging-producer-v1|" +
-            "linux-x64-wvo-staging-producer-v1|" +
             "windows-x64-wvo-staging-publisher-v1|" +
             "linux-x64-wvo-staging-publisher-v1> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");

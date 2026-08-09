@@ -1,0 +1,58 @@
+{
+  "format": "windvale-native-segmented-compiler-toolset-candidate-1",
+  "status": "candidate",
+  "provenanceDecision": "0416",
+  "qualification": "pending",
+  "moduleConstruction": "native-qualified-front-door",
+  "applicationConstruction": "stage0-recovery",
+  "artifacts": [
+    {
+      "name": "wvo-staging-producer-wvb",
+      "path": "Wvo-Staging-Producer.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 421544,
+      "sha256": "4d8fcda41a013768a10a2919d06658d9c37fc66d8acbf51bad839c5ef4d13fc6",
+      "sourceProject": "Windvale-Native-X64-Lowering-Staging-Tool.wvproj"
+    },
+    {
+      "name": "windows-x64-wvo-staging-producer",
+      "path": "windows-x64-wvstage.exe",
+      "target": "windows-x64-wvo-staging-producer-v1",
+      "bytes": 6170624,
+      "sha256": "c18253d135f15195cad32ccf6f7243711bfa959a44696b388475165406216adb",
+      "sourceWvb": "Wvo-Staging-Producer.wvb"
+    },
+    {
+      "name": "linux-x64-wvo-staging-producer",
+      "path": "linux-x64-wvstage.elf",
+      "target": "linux-x64-wvo-staging-producer-v1",
+      "bytes": 6172672,
+      "sha256": "e38bc7b4128afc829de112098c5844d3c3fc159d11d09d6e97ef2f79d19845d7",
+      "sourceWvb": "Wvo-Staging-Producer.wvb"
+    },
+    {
+      "name": "compiler-image-staging-wvb",
+      "path": "Compiler-Image-Staging.wvb",
+      "target": "canonical-wvb-1.11",
+      "bytes": 75503,
+      "sha256": "e43e2cc868b5f7ac3ffbee322bef60ce748c736e666889aaeda7c06a90daa5bb",
+      "sourceProject": "Windvale-Compiler-Image-Staging.wvproj"
+    },
+    {
+      "name": "windows-x64-compiler-image-staging",
+      "path": "windows-x64-wvlinkstage.exe",
+      "target": "windows-x64-compiler-image-staging-v1",
+      "bytes": 851968,
+      "sha256": "967827e4592c23f30e2a70b9a60a43837c1dfec6112584596c09d382058e2752",
+      "sourceWvb": "Compiler-Image-Staging.wvb"
+    },
+    {
+      "name": "linux-x64-compiler-image-staging",
+      "path": "linux-x64-wvlinkstage.elf",
+      "target": "linux-x64-compiler-image-staging-v1",
+      "bytes": 851968,
+      "sha256": "02b07d23b763fa4dd2d11bb9c9ca94be32bdbd698b1f9ce7b466af90b768eef8",
+      "sourceWvb": "Compiler-Image-Staging.wvb"
+    }
+  ]
+}

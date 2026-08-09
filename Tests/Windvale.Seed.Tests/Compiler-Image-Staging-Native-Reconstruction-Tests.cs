@@ -12,14 +12,28 @@ internal static partial class Program
     private static void Compilerˉimageˉstagingˉreconstructsˉnativeˉimage()
     {
         var Repository = Findˉrepositoryˉroot();
-        var Producerˉmoduleˉbytes = Compileˉwvbˉtoˉwvoˉstagingˉsuccess();
-        var Producerˉmodule = Moduleˉcodec.Readˉandˉverify(
-            Producerˉmoduleˉbytes);
-        var Producerˉnative = X64ˉnativeˉbackend.Compile(Producerˉmodule);
-        var Producerˉapplication = Buildˉcurrentˉhostˉstagingˉproducer(
-            Producerˉmodule,
-            Producerˉnative.Fragment,
-            Producerˉmoduleˉbytes);
+        var Candidateˉroot = Path.Combine(
+            Repository,
+            "Artifacts",
+            "Native-Segmented-Compiler-Toolset-Candidate");
+        Requireˉstage0ˉrecoveryˉtarget(
+            Path.Combine(Candidateˉroot, "Wvo-Staging-Producer.wvb"),
+            OperatingSystem.IsWindows()
+                ? Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME
+                : Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME);
+        Requireˉstage0ˉrecoveryˉtarget(
+            Path.Combine(Candidateˉroot, "Compiler-Image-Staging.wvb"),
+            OperatingSystem.IsWindows()
+                ? Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME
+                : Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_TARGET_NAME);
+        var Producerˉapplication = Readˉcurrentˉhostˉsegmentedˉcandidate(
+            Repository,
+            "windows-x64-wvstage.exe",
+            "linux-x64-wvstage.elf",
+            Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_APPLICATION_BYTES,
+            Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_APPLICATION_SHA256,
+            Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_APPLICATION_BYTES,
+            Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_APPLICATION_SHA256);
 
         var Directoryˉpath = Path.Combine(
             Path.GetTempPath(),
@@ -52,11 +66,14 @@ internal static partial class Program
             var Expectedˉlink = Linkˉsuccess(
                 [Expectedˉobject.ToArray()],
                 new(0, "Main"));
-            var Stagingˉapplication =
-                Buildˉcurrentˉhostˉcompilerˉimageˉstaging(
-                    Tool,
-                    Stageˉzero.Fragment,
-                    Toolˉbytes);
+            var Stagingˉapplication = Readˉcurrentˉhostˉsegmentedˉcandidate(
+                Repository,
+                "windows-x64-wvlinkstage.exe",
+                "linux-x64-wvlinkstage.elf",
+                Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_APPLICATION_BYTES,
+                Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_APPLICATION_SHA256,
+                Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_APPLICATION_BYTES,
+                Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_APPLICATION_SHA256);
 
             var Objectˉprefix = Path.Combine(Directoryˉpath, "object");
             var Objectˉmanifest = Path.Combine(
@@ -122,52 +139,43 @@ internal static partial class Program
         }
     }
 
-    private static ImmutableArray<byte> Buildˉcurrentˉhostˉstagingˉproducer(
-        Verifiedˉmodule module,
-        Nativeˉfragment fragment,
-        ReadOnlySpan<byte> moduleˉbytes)
+    private static void Requireˉstage0ˉrecoveryˉtarget(
+        string moduleˉpath,
+        string target)
     {
-        if (OperatingSystem.IsWindows())
-        {
-            var Result = Wvoˉstagingˉproducerˉapplicationˉwriter.Writeˉwindows(
-                module,
-                fragment,
-                moduleˉbytes);
-            True(Result.Success, string.Join(" | ", Result.Diagnostics));
-            return Result.Imageˉbytes;
-        }
-
-        var Linux = Wvoˉstagingˉproducerˉapplicationˉwriter.Writeˉlinux(
-            module,
-            fragment,
-            moduleˉbytes);
-        True(Linux.Success, string.Join(" | ", Linux.Diagnostics));
-        return Linux.Imageˉbytes;
+        var Ordinary = Executeˉinspectorˉtool(
+            "aot",
+            moduleˉpath,
+            "--target",
+            target);
+        Equal(64, Ordinary.Exitˉcode);
+        Equal(string.Empty, Ordinary.Standardˉoutput);
+        Contains(
+            Ordinary.Standardˉerror,
+            $"The {target} AOT target is Stage 0 recovery-only;");
     }
 
-    private static ImmutableArray<byte>
-        Buildˉcurrentˉhostˉcompilerˉimageˉstaging(
-            Verifiedˉmodule module,
-            Nativeˉfragment fragment,
-            ReadOnlySpan<byte> moduleˉbytes)
+    private static ImmutableArray<byte> Readˉcurrentˉhostˉsegmentedˉcandidate(
+        string repository,
+        string windowsˉname,
+        string linuxˉname,
+        int windowsˉbytes,
+        string windowsˉsha256,
+        int linuxˉbytes,
+        string linuxˉsha256)
     {
-        if (OperatingSystem.IsWindows())
-        {
-            var Result =
-                Compilerˉimageˉstagingˉapplicationˉwriter.Writeˉwindows(
-                    module,
-                    fragment,
-                    moduleˉbytes);
-            True(Result.Success, string.Join(" | ", Result.Diagnostics));
-            return Result.Imageˉbytes;
-        }
-
-        var Linux = Compilerˉimageˉstagingˉapplicationˉwriter.Writeˉlinux(
-            module,
-            fragment,
-            moduleˉbytes);
-        True(Linux.Success, string.Join(" | ", Linux.Diagnostics));
-        return Linux.Imageˉbytes;
+        var Windows = OperatingSystem.IsWindows();
+        var Pathˉvalue = Path.Combine(
+            repository,
+            "Artifacts",
+            "Native-Segmented-Compiler-Toolset-Candidate",
+            Windows ? windowsˉname : linuxˉname);
+        var Bytes = File.ReadAllBytes(Pathˉvalue).ToImmutableArray();
+        Equal(Windows ? windowsˉbytes : linuxˉbytes, Bytes.Length);
+        Equal(
+            Windows ? windowsˉsha256 : linuxˉsha256,
+            Moduleˉdigest.Calculateˉsha256(Bytes.AsSpan()));
+        return Bytes;
     }
 
     private static uint Readˉstagedˉcount(string manifestˉpath, int offset) =>

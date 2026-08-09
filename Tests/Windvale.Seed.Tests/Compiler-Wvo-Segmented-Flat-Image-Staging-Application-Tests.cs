@@ -136,7 +136,7 @@ internal static partial class Program
             };
             var Expectedˉoutput =
                 "segmented compiler image staging status=Complete " +
-                "image-bytes=21 chunks=4 manifest-bytes=76\n";
+                "image-bytes=21 entry-offset=4 chunks=4 manifest-bytes=76\n";
             var Exitˉcode = OperatingSystem.IsWindows()
                 ? Executeˉwindowsˉapplication(
                     application,

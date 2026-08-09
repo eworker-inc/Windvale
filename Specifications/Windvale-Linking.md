@@ -242,8 +242,8 @@ file output. The existing hosted-container layout additionally carries its
 canonical UTF-8 adapter slot as infrastructure; generated code does not call or
 gain another capability from that slot.
 
-The exact 75,337-byte tool WVB has SHA-256
-`855983284c088cd795c119fe0c392308824066b10a9173dceb7cdc2daa219101`.
+The exact 75,503-byte tool WVB has SHA-256
+`e43e2cc868b5f7ac3ffbee322bef60ce748c736e666889aaeda7c06a90daa5bb`.
 Its canonical repository source closure is
 `Windvale-Compiler-Image-Staging.wvproj`; the ordinary native source front door
 publishes that exact identity byte for byte. The project retains dependencies
@@ -260,15 +260,18 @@ native child loads a managed runtime. The application containers used for this
 evidence remain Stage 0-constructed candidates; native service-bundle and
 PE/ELF construction are separate open boundaries.
 
-The Windows candidate is 849,920 bytes at SHA-256
-`c6315f74f0a674e8d0cbb6e64e80c97d409a500551f51b6ce3d7fa618ca00f6e`;
+The Windows candidate is 851,968 bytes at SHA-256
+`967827e4592c23f30e2a70b9a60a43837c1dfec6112584596c09d382058e2752`;
 the Linux candidate is 851,968 bytes at SHA-256
-`f93db63052605ebb61ce934b351ad45fe7386d134325af8e1a8abb93bc64dd9f`.
+`02b07d23b763fa4dd2d11bb9c9ca94be32bdbd698b1f9ce7b466af90b768eef8`.
 Both containers have independent structural verification. Current-host Windows
 execution stages the complete small fixture without loading a CLR component;
-Linux execution remains a separate qualification item. These candidate
-containers are still constructed by the Stage 0 package writer and therefore
-do not close native host-container reconstruction.
+Linux execution remains a separate qualification item. The completed process
+report includes the exact decimal image size, `Main` entry offset, output chunk
+count, and manifest size so an orchestrator never needs to decode `WVLI`.
+These candidate containers are constructed only through the explicit Stage 0
+recovery command and therefore do not close native host-container
+reconstruction.
 
 ## Deliberate omissions
 

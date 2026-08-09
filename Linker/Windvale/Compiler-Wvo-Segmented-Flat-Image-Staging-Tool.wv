@@ -362,6 +362,8 @@ export fn Main() -> i32 {
     var Report: text =
         "segmented compiler image staging status=Complete image-bytes=";
     Report = Textˉconcat(Report, U32ˉformat(Plan.Imageˉbytes));
+    Report = Textˉconcat(Report, " entry-offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Plan.Entryˉoffset));
     Report = Textˉconcat(Report, " chunks=");
     Report = Textˉconcat(Report, U32ˉformat(Outputˉindex));
     Report = Textˉconcat(Report, " manifest-bytes=");

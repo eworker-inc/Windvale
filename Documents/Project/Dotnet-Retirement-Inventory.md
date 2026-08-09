@@ -101,6 +101,17 @@ service-bundle and host-container construction, a promoted composition
 launcher, durable image publication, canonical map evidence, Linux execution,
 and the grouped gate remain open.
 
+Current L1 update: [Decision 0416](../Decisions/0416-Digest-Bound-Segmented-Compiler-Process-Front-Door.md)
+checks both process families into one six-artifact digest-bound candidate and
+adds paired Windows/Linux launchers for `WVB -> WVOP/chunks` and
+`WVOP/chunks -> WVLI/image chunks`. The managed CLI no longer exposes either
+application constructor through ordinary compile or AOT; exact regeneration
+is recovery-only. The image process now reports its validated decimal `Main`
+entry and chunk count, so orchestration does not decode `WVLI`. Canonical
+4 MiB image rechunking, hosted-package composition, native replacement of the
+two recovery-built host containers, Linux execution, and the grouped gate
+remain open.
+
 [Decision 0355](../Decisions/0355-Windvale-Owned-Native-Utf8-Service-Construction.md)
 removes the normal C# byte-emission algorithm for the shared strict UTF-8
 native service. A focused Windvale core now constructs and patches the exact

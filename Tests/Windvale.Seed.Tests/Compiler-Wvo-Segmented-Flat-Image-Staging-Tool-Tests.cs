@@ -143,7 +143,7 @@ internal static partial class Program
         Equal(21u, Position);
         Equal(
             "segmented compiler image staging status=Complete " +
-            "image-bytes=21 chunks=4 manifest-bytes=76\n",
+            "image-bytes=21 entry-offset=4 chunks=4 manifest-bytes=76\n",
             Output.ToString());
 
         var Native = X64ˉnativeˉbackend.Compile(Tool);

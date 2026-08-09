@@ -43,6 +43,10 @@ internal static class Stage0ˉrecoveryˉaotˉtargets
         Hostedˉenumˉrequestˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉenumˉserviceˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉenumˉserviceˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Wvoˉstagingˉproducerˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Wvoˉstagingˉproducerˉapplicationˉcontract.LINUX_TARGET_NAME or
+        Compilerˉimageˉstagingˉapplicationˉcontract.WINDOWS_TARGET_NAME or
+        Compilerˉimageˉstagingˉapplicationˉcontract.LINUX_TARGET_NAME or
         Hostedˉcontainerˉpublisherˉapplicationˉcontract.WINDOWS_TARGET_NAME or
         Hostedˉcontainerˉpublisherˉapplicationˉcontract.LINUX_TARGET_NAME;
 }
