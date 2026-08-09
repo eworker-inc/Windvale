@@ -1,0 +1,167 @@
+module Linkerˉnativeˉhostedˉverifierˉlayout profile portable;
+
+import Runtimeˉnativeˉhostedˉverifierˉmetadataˉadmission as Admission;
+
+export record Nativeˉhostedˉverifierˉlayout {
+    Valid: bool;
+    Target: u32;
+    Applicationˉbytes: u32;
+    Headerˉbytes: u32;
+    Textˉfileˉoffset: u32;
+    Textˉaddress: u32;
+    Startupˉbytes: u32;
+    Bundleˉoffset: u32;
+    Bundleˉbytes: u32;
+    Textˉfileˉbytes: u32;
+    Dataˉfileˉoffset: u32;
+    Dataˉaddress: u32;
+    Importˉfileˉoffset: u32;
+    Importˉaddress: u32;
+    Runtimeˉfileˉoffset: u32;
+    Runtimeˉaddress: u32;
+    Runtimeˉvirtualˉbytes: u32;
+    Relocationˉfileˉoffset: u32;
+    Relocationˉaddress: u32;
+    Imageˉvirtualˉbytes: u32;
+    Nativeˉimageˉbytes: u32;
+    Nativeˉentry: u32;
+}
+
+fn Align(Value: u32, Alignment: u32) -> u32 {
+    return ((Value + Alignment - 1u32) / Alignment) * Alignment;
+}
+
+fn Invalid() -> Nativeˉhostedˉverifierˉlayout {
+    return Nativeˉhostedˉverifierˉlayout(
+        false,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+export fn Nativeˉhostedˉverifierˉruntimeˉoffset(Index: u32) -> u32 {
+    if Index == 0u32 { return 0u32; }
+    if Index == 1u32 { return 112u32; }
+    if Index == 2u32 { return 73728u32; }
+    if Index == 3u32 { return 2170880u32; }
+    if Index == 4u32 { return 4096u32; }
+    if Index == 5u32 { return 5168u32; }
+    if Index == 6u32 { return 216u32; }
+    if Index == 7u32 { return 264u32; }
+    if Index == 8u32 { return 70704u32; }
+    if Index == 9u32 { return 136388608u32; }
+    if Index == 10u32 { return 137437184u32; }
+    if Index == 11u32 { return 141631488u32; }
+    return 0u32;
+}
+
+fn Runtimeˉvirtualˉbytes(Runtime: bytes, Target: u32) -> u32 {
+    let Recordˉarena: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 556u32);
+    let Textˉarena: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 560u32);
+    if Recordˉarena != 2097152u32 || Textˉarena != 134217728u32 {
+        return 0u32;
+    }
+    var Scratchˉbytes: u32 = 1048577u32;
+    if Target == 1u32 { Scratchˉbytes = 2097154u32; }
+    return Align(141631488u32 + Scratchˉbytes, 4096u32);
+}
+
+export fn Nativeˉhostedˉverifierˉserviceˉaddress(
+    Runtime: bytes,
+    Index: u32
+) -> u32 {
+    if Index >= 6u32 { return 0u32; }
+    return 8192u32 + Bytesˉreadˉu32ˉlittle(
+        Runtime,
+        704u32 + Index * 64u32
+    );
+}
+
+export fn Nativeˉhostedˉverifierˉplan(Runtime: bytes)
+    -> Nativeˉhostedˉverifierˉlayout {
+    if Bytesˉlength(Runtime) != 4096u32 { return Invalid(); }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 492u32);
+    if Target < 1u32 || Target > 2u32 ||
+        !Admission.Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
+            Runtime,
+            480u32,
+            Target
+        ) {
+        return Invalid();
+    }
+    let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 540u32);
+    let Nativeˉimageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 548u32);
+    let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 552u32);
+    let Runtimeˉvirtual: u32 = Runtimeˉvirtualˉbytes(Runtime, Target);
+    if Bundleˉbytes == 0u32 || Nativeˉimageˉbytes == 0u32 ||
+        Runtimeˉvirtual == 0u32 {
+        return Invalid();
+    }
+
+    if Target == 1u32 {
+        let Textˉvirtual: u32 = 4096u32 + Bundleˉbytes;
+        let Textˉfile: u32 = Align(Textˉvirtual, 512u32);
+        let Dataˉfile: u32 = 512u32 + Textˉfile;
+        let Dataˉaddress: u32 = Align(4096u32 + Textˉvirtual, 4096u32);
+        let Runtimeˉaddress: u32 = Dataˉaddress + 4096u32;
+        let Relocationˉfile: u32 = Dataˉfile + 8192u32;
+        let Relocationˉaddress: u32 = Align(
+            Dataˉaddress + 4096u32 + Runtimeˉvirtual,
+            4096u32
+        );
+        return Nativeˉhostedˉverifierˉlayout(
+            true,
+            Target,
+            Relocationˉfile + 512u32,
+            512u32,
+            512u32,
+            4096u32,
+            1275u32,
+            4096u32,
+            Bundleˉbytes,
+            Textˉfile,
+            Dataˉfile,
+            Dataˉaddress,
+            Dataˉfile,
+            Dataˉaddress,
+            Dataˉfile + 4096u32,
+            Runtimeˉaddress,
+            Runtimeˉvirtual,
+            Relocationˉfile,
+            Relocationˉaddress,
+            Align(Relocationˉaddress + 12u32, 4096u32),
+            Nativeˉimageˉbytes,
+            Nativeˉentry
+        );
+    }
+    let Linuxˉtextˉfile: u32 = 4096u32 + Bundleˉbytes;
+    let Linuxˉdataˉaddress: u32 = Align(
+        4096u32 + Linuxˉtextˉfile,
+        4096u32
+    );
+    return Nativeˉhostedˉverifierˉlayout(
+        true,
+        Target,
+        Linuxˉdataˉaddress + 4096u32,
+        4096u32,
+        4096u32,
+        4096u32,
+        668u32,
+        4096u32,
+        Bundleˉbytes,
+        Linuxˉtextˉfile,
+        Linuxˉdataˉaddress,
+        Linuxˉdataˉaddress,
+        0u32,
+        0u32,
+        Linuxˉdataˉaddress,
+        Linuxˉdataˉaddress,
+        Runtimeˉvirtual,
+        0u32,
+        0u32,
+        Linuxˉdataˉaddress + Runtimeˉvirtual,
+        Nativeˉimageˉbytes,
+        Nativeˉentry
+    );
+}

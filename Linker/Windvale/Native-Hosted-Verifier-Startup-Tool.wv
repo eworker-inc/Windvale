@@ -1,0 +1,109 @@
+module Nativeˉhostedˉverifierˉstartupˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉstartupˉinstantiation as Instantiation;
+import Linkerˉnativeˉhostedˉverifierˉstartupˉrequest as Request;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+enum Nativeˉhostedˉverifierˉstartupˉstatus {
+    Valid = 0;
+    Rejected = 1;
+}
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostverifierstartup <runtime.wvhr> <startup.wvo> <response.wvsd>"
+    );
+    return 64;
+}
+
+fn Reject(Phase: text) -> i32 {
+    diagnostic.write_line(
+        Textˉconcat(
+            Textˉconcat(
+                "verifier startup status=",
+                Enumˉname(Nativeˉhostedˉverifierˉstartupˉstatus.Rejected)
+            ),
+            Textˉconcat(" phase=", Phase)
+        )
+    );
+    return 2;
+}
+
+fn Responseˉisˉvalid(
+    Requestˉbytes: u32,
+    Codeˉbytes: u32,
+    Response: bytes
+) -> bool {
+    if Bytesˉlength(Response) != 32u32 + Codeˉbytes { return false; }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1146312279u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 8u32) != Bytesˉlength(Response) ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != Requestˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) != Codeˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Response, 24u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 28u32) != 0u32 {
+        return false;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 3u32 { return Usage(); }
+    let Runtimeˉpath: text = process.argument(0u32);
+    let Objectˉpath: text = process.argument(1u32);
+    let Outputˉpath: text = process.argument(2u32);
+    if Pathsˉareˉequal(Runtimeˉpath, Objectˉpath) ||
+        Pathsˉareˉequal(Runtimeˉpath, Outputˉpath) ||
+        Pathsˉareˉequal(Objectˉpath, Outputˉpath) {
+        return Usage();
+    }
+
+    let Result: Request.Nativeˉhostedˉverifierˉstartupˉrequestˉresult =
+        Request.Nativeˉhostedˉverifierˉstartupˉrequest(
+            file.read_bytes(Runtimeˉpath),
+            file.read_bytes(Objectˉpath)
+        );
+    if !Result.Valid {
+        return Reject(Textˉconcat("request-", U32ˉformat(Result.Failure)));
+    }
+    let Response: bytes =
+        Instantiation.Nativeˉhostedˉstartupˉinstantiate(Result.Value);
+    if !Responseˉisˉvalid(
+        Bytesˉlength(Result.Value),
+        Result.Codeˉbytes,
+        Response
+    ) {
+        return Reject("response");
+    }
+    file.write_bytes(Outputˉpath, Response);
+    console.write_line(
+        Textˉconcat(
+            "verifier startup status=Valid bytes=",
+            U32ˉformat(Bytesˉlength(Response))
+        )
+    );
+    return 0;
+}
