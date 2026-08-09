@@ -1,3 +1,14 @@
+const HELLO_SOURCE = `module Helloˉwindvale profile hosted;
+
+capability console.write_line;
+
+data Greeting: text = "Hello from Windvale";
+
+export fn Main() -> i32 {
+    console.write_line(Greeting);
+    return 0;
+}
+`;
 const EXACT_SOURCE = `module WebAssemblyˉcompilerˉsuccess profile portable;
 
 export fn Main() -> i32 {
@@ -80,10 +91,19 @@ export fn Main() -> i32 {
 
 export const EXAMPLES = Object.freeze([
     Object.freeze({
+        Id: "hello-windvale",
+        Title: "Hello from Windvale",
+        Fileˉname: "Hello-Windvale.wv",
+        Description: "Write one bounded line through an explicitly authorized browser console capability.",
+        Authorizeˉconsoleˉwriteˉline: true,
+        Source: HELLO_SOURCE,
+    }),
+    Object.freeze({
         Id: "windvale-starter",
         Title: "Windvale WebAssembly starter",
         Fileˉname: "WebAssembly-Starter.wv",
         Description: "A small Windvale program compiled to canonical WVB, independently admitted, and run entirely in browser WebAssembly.",
+        Authorizeˉconsoleˉwriteˉline: false,
         Source: EXACT_SOURCE,
     }),
     Object.freeze({
@@ -91,6 +111,7 @@ export const EXAMPLES = Object.freeze([
         Title: "Integer arithmetic",
         Fileˉname: "Arithmetic.wv",
         Description: "Evaluate a portable integer expression and return 42.",
+        Authorizeˉconsoleˉwriteˉline: false,
         Source: ARITHMETIC_SOURCE,
     }),
     Object.freeze({
@@ -98,6 +119,7 @@ export const EXAMPLES = Object.freeze([
         Title: "Functions and loops",
         Fileˉname: "Factorial.wv",
         Description: "Call an internal function, update mutable locals in a loop, and return 720.",
+        Authorizeˉconsoleˉwriteˉline: false,
         Source: FACTORIAL_SOURCE,
     }),
     Object.freeze({
@@ -105,6 +127,7 @@ export const EXAMPLES = Object.freeze([
         Title: "Module data",
         Fileˉname: "Sum-Data.wv",
         Description: "Read immutable module data through indexing and length, sum it through an internal function, and return 29.",
+        Authorizeˉconsoleˉwriteˉline: false,
         Source: SUM_DATA_SOURCE,
     }),
     Object.freeze({
@@ -112,6 +135,7 @@ export const EXAMPLES = Object.freeze([
         Title: "Records and enums",
         Fileˉname: "Records-And-Enums.wv",
         Description: "Construct nominal values, compare an enum member, read a record field, and return 42.",
+        Authorizeˉconsoleˉwriteˉline: false,
         Source: RECORDS_AND_ENUMS_SOURCE,
     }),
 ]);

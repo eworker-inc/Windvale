@@ -16,12 +16,12 @@ One normal run performs this sequence inside a disposable worker:
 4. construct the canonical single-module `WVSS 1` input;
 5. compile source directly in WebAssembly under a 2,000,000-instruction ceiling;
 6. strictly parse the `WVCO 1` compiler result;
-7. treat the returned WVB as untrusted input and resubmit it through `WVXI 1`; and
-8. report status, scalar result, instruction evidence, WVB bytes, and WVB SHA-256.
+7. treat the returned WVB as untrusted input and resubmit it through `WVXI 3` with an explicit console grant; and
+8. report status, bounded standard output, scalar result, instruction evidence, WVB bytes, and WVB SHA-256.
 
-The pinned proof produces 183 WVB bytes with SHA-256 `3d29618283648cb0d23987075912a218ac212d8c8fa31ec00b72f4bf3df795c6`, returns `42`, and requests zero .NET or Blazor assets. The measured direct compiler execution takes about one second on the Windows development host. Larger bundled examples exercise arithmetic, functions, loops, module data, records, and enums. Initial download and WebAssembly compilation vary by browser, network, cache, and CPU; that timing is evidence rather than a portable performance contract.
+The default `Hello-Windvale.wv` proof produces 253 WVB bytes with SHA-256 `0a9230e700a10d14e718340e49562e5b0184a3c3a71b5cd29915126a6b28c28f`, writes `Hello from Windvale` plus LF, returns `0`, and requests zero .NET or Blazor assets. With its visible console grant disabled, the same module returns `WVR3010` before executing a guest instruction. The retained portable proof produces 183 WVB bytes, returns `42`, and exercises the same v3 response boundary without a capability. Initial download and WebAssembly compilation vary by browser, network, cache, and CPU; that timing is evidence rather than a portable performance contract.
 
-The page retains multiple in-memory source tabs, local Monaco syntax support and completions, resizable editor and evidence panes, mobile layout, light/dark themes, and execution/diagnostic/bytecode views. The first browser execution profile remains deliberately narrow: one UTF-8 source module, capability-free compilation, and a scalar `Main` result. Unsupported execution surface fails explicitly.
+The page retains multiple in-memory source tabs, local Monaco syntax support and completions, resizable editor and evidence panes, mobile layout, light/dark themes, and execution/diagnostic/bytecode views. The browser execution profile remains deliberately narrow: one UTF-8 source module, a scalar `Main` result, and at most the explicitly granted bounded `console.write_line` capability. This is ordinary framework code in the page and worker; it requires no Chrome or other browser extension. Unsupported execution surface fails explicitly.
 
 ## Run locally
 
@@ -51,8 +51,9 @@ Deploy `Tools/Windvale.Playground/wwwroot` below the website's `/playground/` pa
 - Source: one canonical `WVSS 1` root, strict UTF-8, at most 64 KiB.
 - Compiler: import-free ABI 4 direct Wasm, 20,000,000 instructions, fixed 2,497-page memory, and a 16 MiB output region.
 - Execution: import-free ABI 3 interpreter Wasm; user-selectable 10,000, 250,000, or 1,000,000 guest instructions; 200,000,000 outer instructions; 64 call frames.
+- Capabilities: optional per-tab `console.write_line` grant; 65,536-byte all-or-nothing standard-output envelope; no other browser authority.
 - Isolation: package loading, compilation, WVB admission, and execution occur in a disposable worker with a five-minute containment timeout.
-- Evidence: pipeline status, scalar result, elapsed time, compiler/execution counters, canonical WVB bytes and digest, and a zero-framework-request assertion.
+- Evidence: pipeline status, bounded standard output, scalar result, elapsed time, compiler/execution counters, canonical WVB bytes and digest, and a zero-framework-request assertion.
 - Editor: repository-built Monaco ESM with Windvale highlighting, completions, source tabs, `Ctrl+Enter` execution, and `Ctrl+M` or `Ctrl+;` insertion of `ˉ`.
 
 ## Artifact production and recovery

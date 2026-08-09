@@ -6,12 +6,14 @@ const MAXIMUM_SOURCE_BYTES = 64 * 1024;
 const COMPILER_INSTRUCTION_BUDGET = 20_000_000;
 const EXECUTION_OUTER_BUDGET = 200_000_000;
 const MAXIMUM_CALL_DEPTH = 64;
+const STANDARD_OUTPUT_LIMIT = 64 * 1024;
 
 export async function Compileˉverifyˉexecute(
     Interpreterˉbytes,
     Compilerˉbytes,
     Sourceˉbytes,
     Executionˉinstructionˉlimit = 1_000_000,
+    Authorizeˉconsoleˉwriteˉline = false,
 ) {
     Requireˉbytes(Interpreterˉbytes, "interpreter");
     Requireˉbytes(Compilerˉbytes, "direct compiler");
@@ -21,6 +23,9 @@ export async function Compileˉverifyˉexecute(
         throw new Error("The Windvale source is outside the 64 KiB browser limit.");
     }
     Requireˉinstructionˉlimit(Executionˉinstructionˉlimit);
+    if (typeof Authorizeˉconsoleˉwriteˉline !== "boolean") {
+        throw new TypeError("The console.write_line authorization must be boolean.");
+    }
     if (!WebAssembly.validate(Interpreterˉbytes)) {
         throw new Error("The browser rejected the packaged Windvale interpreter.");
     }
@@ -77,13 +82,14 @@ export async function Compileˉverifyˉexecute(
     const Executionˉrequest = Buildˉscalarˉrequest(
         Wvb,
         Executionˉinstructionˉlimit,
+        Authorizeˉconsoleˉwriteˉline,
     );
     const Executionˉrun = Runˉrequest(
         Interpreterˉexports,
         Executionˉrequest,
         EXECUTION_OUTER_BUDGET,
     );
-    const Executionˉresponse = Readˉwvxo(Executionˉrun.Output, 1);
+    const Executionˉresponse = Readˉwvxo(Executionˉrun.Output, 3);
     if (Executionˉresponse.Result.byteLength !== 4) {
         throw new Error("The scalar execution response has an invalid result payload.");
     }
@@ -94,6 +100,11 @@ export async function Compileˉverifyˉexecute(
         Compilerˉinstructions: Compilerˉrun.Instructions,
         Executionˉstatus: Executionˉresponse.Status,
         Executionˉresult: Readˉi32(Executionˉresponse.Result, 0),
+        Standardˉoutput: Decodeˉutf8(
+            Executionˉresponse.Standardˉoutput,
+            "standard output",
+        ),
+        Moduleˉprofile: Readˉu8(Wvb, 20) === 2 ? "hosted" : "portable",
         Executionˉguestˉinstructions: Executionˉresponse.Guestˉinstructions,
         Executionˉouterˉinstructions: Executionˉrun.Outerˉinstructions,
     };
@@ -113,15 +124,19 @@ function Buildˉsourceˉset(Source) {
     return Result;
 }
 
-function Buildˉscalarˉrequest(Candidate, Budget) {
-    const Result = new Uint8Array(16 + Candidate.byteLength);
+function Buildˉscalarˉrequest(Candidate, Budget, Authorizeˉconsole) {
+    const Result = new Uint8Array(32 + Candidate.byteLength);
     const View = new DataView(Result.buffer);
     Writeˉu32(View, 0, WVXI_MAGIC);
-    Writeˉu16(View, 4, 1);
+    Writeˉu16(View, 4, 3);
     Writeˉu16(View, 6, 0);
     Writeˉu32(View, 8, Budget);
     Writeˉu32(View, 12, MAXIMUM_CALL_DEPTH);
-    Result.set(Candidate, 16);
+    Writeˉu32(View, 16, Candidate.byteLength);
+    Writeˉu32(View, 20, Authorizeˉconsole ? 1 : 0);
+    Writeˉu32(View, 24, STANDARD_OUTPUT_LIMIT);
+    Writeˉu32(View, 28, 0);
+    Result.set(Candidate, 32);
     return Result;
 }
 
@@ -182,8 +197,8 @@ function Runˉrequest(Exports, Request, Outerˉbudget) {
     if (Outerˉstatus === 0 && Outputˉlength === 0) {
         throw new Error(
             "The compiled module is outside the browser execution profile. " +
-            "Use a capability-free portable module with export fn Main() -> i32; " +
-            "hosted modules and capabilities such as console.write_line are not available.",
+            "Use a portable module or a hosted module declaring only " +
+            "console.write_line, with export fn Main() -> i32.",
         );
     }
     if (Outerˉstatus !== 0 ||
@@ -215,23 +230,47 @@ function Readˉwvxo(Bytes, Expectedˉversion) {
         throw new Error("The interpreter returned an invalid WVXO envelope.");
     }
     let Result;
+    let Standardˉoutput = Bytes.slice(0, 0);
     if (Expectedˉversion === 1) {
         if (Bytes.byteLength !== 20) {
             throw new Error("The interpreter returned an invalid scalar WVXO length.");
         }
         Result = Bytes.slice(16, 20);
-    } else {
+    } else if (Expectedˉversion === 2) {
         const Resultˉlength = Readˉu32(Bytes, 16);
         if (Bytes.byteLength !== 20 + Resultˉlength) {
             throw new Error("The interpreter returned an inconsistent WVXO result length.");
         }
         Result = Bytes.slice(20);
+    } else {
+        if (Bytes.byteLength < 28) {
+            throw new Error("The interpreter returned an invalid browser WVXO length.");
+        }
+        const Standardˉoutputˉlength = Readˉu32(Bytes, 20);
+        const Diagnosticˉoutputˉlength = Readˉu32(Bytes, 24);
+        if (Standardˉoutputˉlength > STANDARD_OUTPUT_LIMIT ||
+            Diagnosticˉoutputˉlength !== 0 ||
+            Bytes.byteLength !== 28 + Standardˉoutputˉlength) {
+            throw new Error("The interpreter returned an inconsistent browser WVXO length.");
+        }
+        Result = Bytes.slice(16, 20);
+        Standardˉoutput = Bytes.slice(28);
     }
     return {
         Status: Readˉu32(Bytes, 8),
         Guestˉinstructions: Readˉu32(Bytes, 12),
         Result,
+        Standardˉoutput,
     };
+}
+
+function Decodeˉutf8(Bytes, Name) {
+    try {
+        return new TextDecoder("utf-8", { fatal: true }).decode(Bytes);
+    }
+    catch {
+        throw new Error(`The interpreter returned invalid UTF-8 ${Name}.`);
+    }
 }
 
 function Readˉwvco(Bytes) {
@@ -329,6 +368,11 @@ function Readˉglobal(Exports, Name) {
 function Readˉu16(Bytes, Offset) {
     return new DataView(Bytes.buffer, Bytes.byteOffset, Bytes.byteLength)
         .getUint16(Offset, true);
+}
+
+function Readˉu8(Bytes, Offset) {
+    return new DataView(Bytes.buffer, Bytes.byteOffset, Bytes.byteLength)
+        .getUint8(Offset);
 }
 
 function Readˉu32(Bytes, Offset) {

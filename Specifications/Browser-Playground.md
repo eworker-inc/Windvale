@@ -23,10 +23,10 @@ bounded Windvale source
     -> import rejection, ABI 4, output-kind 1, fixed-memory checks
     -> direct compilation under the deterministic compiler instruction ceiling
     -> strict WVCO 1 result admission
-    -> returned WVB resubmission through WVXI 1
+    -> returned WVB resubmission through WVXI 3 with explicit grants
     -> SHA-256-verified scalar interpreter Wasm
     -> import rejection, ABI 3, fixed-memory checks
-    -> verified scalar status, result, identities, bytes, and instruction evidence
+    -> verified scalar status, bounded output, result, identities, bytes, and instruction evidence
 
 recovery comparison only
     -> C# Stage 0 compiler, verifier, and reference interpreter
@@ -38,13 +38,15 @@ Compilation failure produces no WVB identity. Execution starts only after the re
 
 ## Accepted module profiles
 
-The browser compiler accepts one canonical `WVSS 1` source-set root. The normal browser execution host admits only the current single-module, capability-free `portable` scalar-execution profile. It does not execute `hosted` or `system` modules and does not fall back to the retained managed host. The recovery engine still implements its earlier portable/bounded-hosted policy and reports `WVPG1003` for a verified system module.
+The browser compiler accepts one canonical `WVSS 1` source-set root. The normal browser execution host admits a single-module `portable` scalar profile and one bounded `hosted` profile declaring exactly `console.write_line`. Both require `Main() -> i32`. It does not execute `system` modules or any other hosted capability set and does not fall back to the retained managed host. The recovery engine still implements its earlier broader bounded-hosted policy and reports `WVPG1003` for a verified system module.
 
 ## Browser capabilities
 
-The normal browser-native profile binds no host capabilities. It supplies no standard-output adapter, arguments, files, network, clocks, randomness, storage, DOM access, native execution, or ambient process state. Capability-bearing execution is outside the current native profile.
+The normal browser-native profile exposes one capability, `console.write_line`, only when the user grants it for the current source tab. A declaration requests authority but does not grant it. The disposable worker encodes the grant in `WVXI 3`; an ungranted hosted module returns `WVR3010` before its first guest instruction. An authorized call appends the argument's strict UTF-8 bytes and one LF to the response's in-memory standard-output channel. The interpreter has no WebAssembly imports and cannot directly call the DOM, browser console, extension APIs, files, or a server.
 
-The retained Stage 0 recovery engine's allowlist remains exact:
+Standard output is limited to 65,536 bytes per run. A write is all-or-nothing; insufficient remaining capacity returns `WVR3013` and does not append a partial line. No arguments, files, network, clocks, randomness, storage, native execution, ambient process state, or diagnostic channel are supplied.
+
+The retained Stage 0 recovery engine's broader allowlist remains exact:
 
 | Capability | Browser mapping |
 | --- | --- |
@@ -82,6 +84,7 @@ The normal browser-native host enforces these ceilings:
 | Host-accepted result-execution budget | 1 to 20,000,000 guest instructions |
 | Returned-WVB outer execution | 200,000,000 instructions |
 | Call depth | 64 frames |
+| Standard output | 65,536 UTF-8 bytes |
 | Worker wall clock | 300,000 milliseconds |
 
 The disposable worker removes package loading and compilation from the browser UI thread and is terminated after success, failure, or timeout. The deterministic compiler and execution instruction ceilings remain the primary work bounds. Five minutes is a containment ceiling, not an interactivity promise.
@@ -91,16 +94,18 @@ The disposable worker removes package loading and compilation from the browser U
 The normal JavaScript host accepts:
 
 - one source string; and
-- one returned-WVB execution budget.
+- one returned-WVB execution budget; and
+- one Boolean `console.write_line` authorization.
 
 It returns immutable evidence containing:
 
 - pipeline status or bounded compiler/runtime failure text;
 - canonical WVB bytes, size, SHA-256 identity, and hexadecimal inspection when compilation succeeds;
 - direct compiler and interpreter execution instruction counters; and
-- verified scalar status and result.
+- verified scalar status and result; and
+- exact bounded standard-output text.
 
-The worker core contains no DOM, file, network capability, or deployment API. The static JavaScript page is the normal UI adapter. The reusable C# engine remains a separate recovery and differential-test boundary.
+The worker core contains no DOM, file, network capability, extension API, or deployment API. The static JavaScript page is the normal UI adapter; no Chrome or other browser extension is required. The reusable C# engine remains a separate recovery and differential-test boundary.
 
 The UI adapter hosts a locally bundled Monaco editor. Its Windvale tokenizer mirrors the implemented lexical categories in `Tools/Editors/Windvale/syntaxes/Windvale.tmLanguage.json`; it is presentation support rather than a source-language contract or compiler front end. Editor text crosses into the disposable worker only when a run is requested. The current native compiler diagnostic envelope does not carry source locations, so the normal page reports its exact bounded text without inventing editor markers.
 
@@ -127,7 +132,7 @@ Compiler, bytecode, and runtime diagnostic codes retain their existing meanings 
 This experiment does not establish:
 
 - complete source-language and hosted-capability breadth in the normal native page;
-- general multi-module, hosted, or system source-to-WVB compilation in the browser;
+- general multi-module, general hosted, or system source-to-WVB compilation in the browser;
 - WebAssembly as an accepted permanent Windvale target;
 - browser UI APIs as portable Windvale UI semantics;
 - native x86-64, PE, ELF, WVO, UEFI, or Windvale OS execution in the browser;
@@ -135,4 +140,4 @@ This experiment does not establish:
 - retirement of the retained Stage 0 recovery implementation; or
 - .NET-free recovery reconstruction of every pinned compiler/interpreter/WebAssembly artifact.
 
-The host contract should be reconsidered when a browser capability is proposed, multi-module source is admitted, native diagnostics gain locations, cross-browser memory or latency evidence requires a smaller compiler profile, the segmented generator gains a non-Stage-0 recovery route, or cross-browser evidence is ready for qualification.
+The host contract should be reconsidered when another browser capability is proposed, output must become resumable rather than response-bounded, multi-module source is admitted, native diagnostics gain locations, cross-browser memory or latency evidence requires a smaller compiler profile, the segmented generator gains a non-Stage-0 recovery route, or cross-browser evidence is ready for qualification.

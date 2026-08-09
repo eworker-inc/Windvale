@@ -13,6 +13,9 @@ const Exampleˉpicker = document.getElementById("example-picker");
 const Exampleˉdescription = document.getElementById("example-description");
 const Runˉbutton = document.getElementById("run-program");
 const Budgetˉpicker = document.getElementById("instruction-budget");
+const Consoleˉauthorization = document.getElementById(
+    "authorize-console-write-line",
+);
 const Resultˉstatus = document.getElementById("result-status");
 const Diagnosticˉcount = document.getElementById("diagnostic-count");
 const Statusˉdiagnostics = document.getElementById("status-diagnostics");
@@ -28,6 +31,7 @@ let Sourceˉtabs = [{
     Fileˉname: EXAMPLES[0].Fileˉname,
     Description: EXAMPLES[0].Description,
     Exampleˉid: EXAMPLES[0].Id,
+    Authorizeˉconsoleˉwriteˉline: EXAMPLES[0].Authorizeˉconsoleˉwriteˉline,
     Source: EXAMPLES[0].Source,
 }];
 let Activeˉsourceˉtabˉid = 1;
@@ -67,6 +71,10 @@ function Bindˉevents() {
             Budgetˉpicker.value = "1000000";
         }
     });
+    Consoleˉauthorization.addEventListener("change", () => {
+        Activeˉsourceˉtab().Authorizeˉconsoleˉwriteˉline =
+            Consoleˉauthorization.checked;
+    });
     document.getElementById("theme-toggle").addEventListener("click", () => Editor.ToggleTheme());
     document.querySelectorAll("[data-result-tab]").forEach(Button =>
         Button.addEventListener("click", () => Selectˉresultˉtab(Button.dataset.resultTab)));
@@ -101,6 +109,7 @@ function Loadˉactiveˉsource() {
     }
     Exampleˉdescription.textContent = Tab.Description;
     Exampleˉpicker.value = Tab.Exampleˉid ?? "";
+    Consoleˉauthorization.checked = Tab.Authorizeˉconsoleˉwriteˉline;
     document.getElementById("source-editor-panel")
         .setAttribute("aria-label", `Source for ${Tab.Fileˉname}`);
 }
@@ -192,6 +201,7 @@ function Addˉsourceˉtab() {
         Fileˉname: `Scratch-${Number}.wv`,
         Description: "An editable single-module source. The browser-native language profile remains experimental while its surface expands.",
         Exampleˉid: null,
+        Authorizeˉconsoleˉwriteˉline: false,
         Source: SCRATCH_SOURCE.replace("module Scratch", `module Scratchˉ${Number}`),
     };
     Sourceˉtabs.push(Tab);
@@ -222,6 +232,7 @@ function Openˉexample(Id) {
         Fileˉname: Example.Fileˉname,
         Description: Example.Description,
         Exampleˉid: Example.Id,
+        Authorizeˉconsoleˉwriteˉline: Example.Authorizeˉconsoleˉwriteˉline,
         Source: Example.Source,
     };
     Sourceˉtabs.push(Tab);
@@ -261,6 +272,7 @@ async function Runˉprogram() {
             Source,
             COMPILER_TIMEOUT_MILLISECONDS,
             Instructionˉbudget,
+            Consoleˉauthorization.checked,
         );
         const Elapsedˉmilliseconds = performance.now() - Started;
         const Frameworkˉrequests = Countˉframeworkˉrequests();
@@ -298,9 +310,17 @@ function Renderˉpipelineˉresult(Result, Instructionˉbudget, Elapsedˉmillisec
     Setˉdiagnosticˉcount(Diagnostic === null ? 0 : 1);
 
     const Resultˉlabel = Result.ExecutionResult === null ? "—" : Result.ExecutionResult.toLocaleString();
+    const Standardˉoutput = typeof Result.StandardOutput === "string"
+        ? Result.StandardOutput
+        : "";
+    const Outputˉseparator = Standardˉoutput.length > 0 &&
+        !Standardˉoutput.endsWith("\n") ? "\n" : "";
+    const Completionˉline = Passed
+        ? `Main returned ${Resultˉlabel}`
+        : "[execution did not complete successfully]";
     Resultˉviews.get("output").innerHTML = `
-        <div class="channel-heading"><span>Program result</span><span>i32</span></div>
-        <pre class="console-output">${Passed ? `Main returned ${Escapeˉhtml(Resultˉlabel)}` : "[execution did not complete successfully]"}</pre>`;
+        <div class="channel-heading"><span>Program output</span><span>bounded UTF-8 + i32</span></div>
+        <pre class="console-output">${Escapeˉhtml(Standardˉoutput + Outputˉseparator + Completionˉline)}</pre>`;
     Renderˉdiagnostics(Diagnostic);
     Resultˉviews.get("bytecode").innerHTML = `
         <div class="channel-heading"><span>Canonical WVB bytes</span><span>${Result.Wvb.byteLength.toLocaleString()} bytes</span></div>
@@ -309,7 +329,11 @@ function Renderˉpipelineˉresult(Result, Instructionˉbudget, Elapsedˉmillisec
         <div class="execution-layout native-execution-layout">
             <dl class="execution-grid">
                 ${Evidenceˉitem("Pipeline", Statusˉlabel)}
-                ${Evidenceˉitem("Module profile", "portable")}
+                ${Evidenceˉitem("Module profile", Result.ModuleProfile ?? "—")}
+                ${Evidenceˉitem(
+                    "console.write_line",
+                    Consoleˉauthorization.checked ? "granted" : "denied",
+                )}
                 ${Evidenceˉitem("Main result", Resultˉlabel)}
                 ${Evidenceˉitem("WVB size", `${Result.Wvb.byteLength.toLocaleString()} bytes`)}
                 ${Evidenceˉitem("Execution budget", Instructionˉbudget.toLocaleString())}
@@ -387,6 +411,7 @@ function Setˉbusy(Busy) {
     Runˉbutton.querySelector("span").textContent = Busy ? "Running…" : "Compile + Run";
     Exampleˉpicker.disabled = Busy;
     Budgetˉpicker.disabled = Busy;
+    Consoleˉauthorization.disabled = Busy;
     Renderˉsourceˉtabs();
 }
 

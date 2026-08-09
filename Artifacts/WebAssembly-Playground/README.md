@@ -24,6 +24,8 @@ node Tools/WebAssembly/Build-Interpreter-Wasm.mjs
 
 Use `--check` for temporary byte-exact reproduction. [Decision 0278](../../Documents/Decisions/0278-Native-WebAssembly-Artifact-Regeneration.md) owns the bounded format-3 compiler-family application and exact output evidence. Stage 0 remains only the explicit recovery route for reconstructing the pinned native compiler packages; it is absent from normal browser artifact production, website build, and deployment.
 
+[Decision 0420](../../Documents/Decisions/0420-Import-Free-Browser-Console-Envelope.md) owns the interpreter's import-free `WVXI 3` grant and bounded-output boundary. It requires no browser extension or .NET runtime.
+
 `Windvale-Compiler-Direct.wasm` is reproduced from the portable compiler WVB by the digest-pinned segmented generator:
 
 ```powershell

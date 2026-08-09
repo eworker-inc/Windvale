@@ -639,7 +639,7 @@ select {
 .capabilities {
     display: grid;
     gap: 7px;
-    margin: 0;
+    margin: 16px 0 0;
     padding: 0;
     border: 0;
 }

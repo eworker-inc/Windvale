@@ -12,7 +12,8 @@ self.onmessage = async Event => {
     try {
         if (!Number.isInteger(Requestˉid) ||
             !(Message.Source instanceof ArrayBuffer) ||
-            !Number.isInteger(Message.ExecutionInstructionLimit)) {
+            !Number.isInteger(Message.ExecutionInstructionLimit) ||
+            typeof Message.AuthorizeConsoleWriteLine !== "boolean") {
             throw new Error("The compiler worker request is invalid.");
         }
         const Package = await (Packageˉpromise ??= Loadˉpackage());
@@ -21,6 +22,7 @@ self.onmessage = async Event => {
             Package.Compiler,
             new Uint8Array(Message.Source),
             Message.ExecutionInstructionLimit,
+            Message.AuthorizeConsoleWriteLine,
         );
         const Wvb = Result.Wvb.slice();
         self.postMessage({
@@ -32,6 +34,8 @@ self.onmessage = async Event => {
             CompilerInstructions: Result.Compilerˉinstructions,
             ExecutionStatus: Result.Executionˉstatus,
             ExecutionResult: Result.Executionˉresult,
+            StandardOutput: Result.Standardˉoutput,
+            ModuleProfile: Result.Moduleˉprofile,
             ExecutionGuestInstructions: Result.Executionˉguestˉinstructions,
             ExecutionOuterInstructions: Result.Executionˉouterˉinstructions,
         }, [Wvb.buffer]);
@@ -48,6 +52,8 @@ self.onmessage = async Event => {
             CompilerInstructions: null,
             ExecutionStatus: null,
             ExecutionResult: null,
+            StandardOutput: null,
+            ModuleProfile: null,
             ExecutionGuestInstructions: null,
             ExecutionOuterInstructions: null,
         });

@@ -4,6 +4,7 @@ export function Compileˉandˉrun(
     Source,
     Timeoutˉmilliseconds = 300_000,
     Executionˉinstructionˉlimit = 1_000_000,
+    Authorizeˉconsoleˉwriteˉline = false,
 ) {
     if (typeof Source !== "string") {
         return Promise.resolve(Failure("The compiler host requires Windvale source text."));
@@ -17,6 +18,11 @@ export function Compileˉandˉrun(
         Executionˉinstructionˉlimit < 1 ||
         Executionˉinstructionˉlimit > 20_000_000) {
         return Promise.resolve(Failure("The execution instruction limit is invalid."));
+    }
+    if (typeof Authorizeˉconsoleˉwriteˉline !== "boolean") {
+        return Promise.resolve(Failure(
+            "The console.write_line authorization must be boolean.",
+        ));
     }
     const Sourceˉbytes = new TextEncoder().encode(Source);
     if (Sourceˉbytes.byteLength === 0 || Sourceˉbytes.byteLength > 64 * 1024) {
@@ -66,6 +72,7 @@ export function Compileˉandˉrun(
             RequestId: Requestˉid,
             Source: Transferˉsource.buffer,
             ExecutionInstructionLimit: Executionˉinstructionˉlimit,
+            AuthorizeConsoleWriteLine: Authorizeˉconsoleˉwriteˉline,
         }, [Transferˉsource.buffer]);
     });
 }
@@ -79,6 +86,8 @@ function Failure(Error) {
         CompilerInstructions: null,
         ExecutionStatus: null,
         ExecutionResult: null,
+        StandardOutput: null,
+        ModuleProfile: null,
         ExecutionGuestInstructions: null,
         ExecutionOuterInstructions: null,
     };

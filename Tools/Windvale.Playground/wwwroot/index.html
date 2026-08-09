@@ -90,10 +90,15 @@
                     <div class="editor-tab-strip" id="source-tabs" role="tablist" aria-label="Open Windvale sources"></div>
                     <div id="source-editor-panel" class="editor-stage" role="tabpanel" aria-label="Windvale source editor">
                         <label class="sr-only" for="fallback-source-editor">Windvale source</label>
-                        <textarea id="fallback-source-editor" class="fallback-editor" spellcheck="false" autocapitalize="off" autocomplete="off">module WebAssemblyˉcompilerˉsuccess profile portable;
+                        <textarea id="fallback-source-editor" class="fallback-editor" spellcheck="false" autocapitalize="off" autocomplete="off">module Helloˉwindvale profile hosted;
+
+capability console.write_line;
+
+data Greeting: text = "Hello from Windvale";
 
 export fn Main() -> i32 {
-    return 42;
+    console.write_line(Greeting);
+    return 0;
 }
 </textarea>
                         <div class="monaco-host" id="monaco-editor"></div>
@@ -111,9 +116,17 @@ export fn Main() -> i32 {
                         <p class="example-description" id="example-description"></p>
                         <div class="native-profile-card">
                             <span>Compiler profile</span>
-                            <strong>portable · scalar result</strong>
-                            <p>Accepts one capability-free portable module with <code>Main() -&gt; i32</code>. Hosted modules and console output are not available yet.</p>
+                            <strong>portable or bounded console · scalar result</strong>
+                            <p>Accepts a portable module, or a hosted module declaring only <code>console.write_line</code>, with <code>Main() -&gt; i32</code>.</p>
                         </div>
+                        <fieldset class="capabilities">
+                            <legend>Capability grants</legend>
+                            <p>Declarations request authority; this control grants it for one disposable worker run.</p>
+                            <label>
+                                <input id="authorize-console-write-line" type="checkbox" checked />
+                                <span><strong>console.write_line</strong><small>Append UTF-8 text to bounded in-memory output only.</small></span>
+                            </label>
+                        </fieldset>
                         <label class="budget-control" for="instruction-budget">
                             <span>Execution budget</span>
                             <select id="instruction-budget">

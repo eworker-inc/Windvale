@@ -60,10 +60,13 @@ await Verifyˉartifact(
     "native WebAssembly compiler",
 );
 
-const Expectedˉinput = Findˉartifact(
-    Packageˉmanifest,
-    "scalar-interpreter-wvb",
-    "interpreter WVB",
+const Expectedˉinput = Packageˉmanifest.interpreterSource;
+Require(
+    Expectedˉinput?.name === "scalar-interpreter-wvb" &&
+        Expectedˉinput.path === "Wvb-Scalar-Interpreter.wvb" &&
+        Number.isInteger(Expectedˉinput.bytes) &&
+        typeof Expectedˉinput.sha256 === "string",
+    "The interpreter WVB inventory entry is missing or invalid.",
 );
 const Expectedˉoutput = Findˉartifact(
     Packageˉmanifest,

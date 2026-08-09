@@ -9,7 +9,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     }
     let Requestˉmajor: u32 = Bytesˉreadˉu16ˉlittle(Request, 4u32);
     if Requestˉmajor < 1u32 { return Invalid; }
-    if Requestˉmajor > 2u32 { return Invalid; }
+    if Requestˉmajor > 3u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Request, 6u32) != 0u32 { return Invalid; }
     let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Request, 8u32);
     let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
@@ -22,6 +22,8 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     var Moduleˉlength: u32 = Requestˉlength - 16u32;
     var Guestˉinputˉoffset: u32 = Requestˉlength;
     var Guestˉinputˉlength: u32 = 0u32;
+    var Capabilityˉgrants: u32 = 0u32;
+    var Standardˉoutputˉlimit: u32 = 0u32;
     if Requestˉmajor == 2u32 {
         if Requestˉlength < 24u32 { return Invalid; }
         Moduleˉoffset = 24u32;
@@ -33,6 +35,19 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
         }
         if Guestˉinputˉlength > 16384u32 { return Invalid; }
         Guestˉinputˉoffset = 24u32 + Moduleˉlength;
+    }
+    if Requestˉmajor == 3u32 {
+        if Requestˉlength < 32u32 { return Invalid; }
+        Moduleˉoffset = 32u32;
+        Moduleˉlength = Bytesˉreadˉu32ˉlittle(Request, 16u32);
+        Capabilityˉgrants = Bytesˉreadˉu32ˉlittle(Request, 20u32);
+        Standardˉoutputˉlimit = Bytesˉreadˉu32ˉlittle(Request, 24u32);
+        if Bytesˉreadˉu32ˉlittle(Request, 28u32) != 0u32 {
+            return Invalid;
+        }
+        if Capabilityˉgrants > 1u32 { return Invalid; }
+        if Standardˉoutputˉlimit > 65536u32 { return Invalid; }
+        if Moduleˉlength != Requestˉlength - 32u32 { return Invalid; }
     }
 
     let Module: bytes = Bytesˉslice(Request, Moduleˉoffset, Moduleˉlength);
@@ -72,11 +87,77 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
         Sectionˉkind = Sectionˉkind + 1u32;
     }
     if Cursor != Moduleˉlength { return Invalid; }
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 20u32)) != 1u32 {
-        return Invalid;
-    }
-    if Bytesˉreadˉu32ˉlittle(Module, Capabilities) != 0u32 {
-        return Invalid;
+    let Moduleˉprofile: u32 = U32ˉfromˉu8(
+        Bytesˉreadˉu8(Module, 20u32)
+    );
+    var Capabilityˉkinds: bytes = Invalid;
+    var Declaredˉcapabilities: u32 = 0u32;
+    let Capabilityˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Module,
+        Capabilities
+    );
+    if Requestˉmajor == 3u32 {
+        if Moduleˉprofile == 1u32 {
+            if Capabilityˉcount != 0u32 { return Invalid; }
+        } else {
+            if Moduleˉprofile != 2u32 { return Invalid; }
+            if Capabilityˉcount != 1u32 { return Invalid; }
+            var Capabilityˉcursor: u32 = Capabilities + 4u32;
+            let Capabilityˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Capabilityˉcursor
+            );
+            Capabilityˉcursor = Capabilityˉcursor + 4u32;
+            var Browserˉconsoleˉcapability: bool =
+                Capabilityˉnameˉlength == 18u32;
+            if Browserˉconsoleˉcapability {
+                if Bytesˉreadˉu32ˉlittle(Module, Capabilityˉcursor)
+                    != 1936617315u32 {
+                    Browserˉconsoleˉcapability = false;
+                }
+                if Bytesˉreadˉu32ˉlittle(Module, Capabilityˉcursor + 4u32)
+                    != 778398831u32 {
+                    Browserˉconsoleˉcapability = false;
+                }
+                if Bytesˉreadˉu32ˉlittle(Module, Capabilityˉcursor + 8u32)
+                    != 1953067639u32 {
+                    Browserˉconsoleˉcapability = false;
+                }
+                if Bytesˉreadˉu32ˉlittle(Module, Capabilityˉcursor + 12u32)
+                    != 1768709989u32 {
+                    Browserˉconsoleˉcapability = false;
+                }
+                if Bytesˉreadˉu16ˉlittle(Module, Capabilityˉcursor + 16u32)
+                    != 25966u32 {
+                    Browserˉconsoleˉcapability = false;
+                }
+            }
+            if Browserˉconsoleˉcapability {
+                Browserˉconsoleˉcapability = true;
+            } else {
+                return Invalid;
+            }
+            Capabilityˉcursor = Capabilityˉcursor
+                + Capabilityˉnameˉlength;
+            if Bytesˉreadˉu32ˉlittle(Module, Capabilityˉcursor) != 1u32 {
+                return Invalid;
+            }
+            Capabilityˉcursor = Capabilityˉcursor + 4u32;
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Capabilityˉcursor))
+                != 3u32 {
+                return Invalid;
+            }
+            Capabilityˉcursor = Capabilityˉcursor + 1u32;
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Capabilityˉcursor))
+                != 0u32 {
+                return Invalid;
+            }
+            Capabilityˉkinds = Bytesˉfromˉu8(1u8);
+            Declaredˉcapabilities = 1u32;
+        }
+    } else {
+        if Moduleˉprofile != 1u32 { return Invalid; }
+        if Capabilityˉcount != 0u32 { return Invalid; }
     }
 
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Types);
@@ -213,6 +294,23 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
         Result,
         Bytesˉfromˉu32ˉlittle(Bytesˉlength(Typeˉoffsets))
     );
+    if Requestˉmajor == 3u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Capabilities));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Capabilityˉgrants));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(Standardˉoutputˉlimit)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(Declaredˉcapabilities)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Capabilityˉkinds))
+        );
+        Result = Bytesˉconcat(Result, Capabilityˉkinds);
+    }
     return Bytesˉconcat(Result, Typeˉoffsets);
 }
 

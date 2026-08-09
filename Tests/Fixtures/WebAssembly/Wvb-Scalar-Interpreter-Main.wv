@@ -49,12 +49,40 @@ export fn Main(Request: bytes) -> bytes {
     let Mainˉindex: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 56u32);
     let Typeˉoffsetsˉlength: u32 = Bytesˉreadˉu32ˉlittle(Preflight, 60u32);
     if Typeˉoffsetsˉlength != Typeˉcount * 4u32 { return Invalid; }
-    if Bytesˉlength(Preflight) != 64u32 + Typeˉoffsetsˉlength {
-        return Invalid;
+    var Capabilities: u32 = 0u32;
+    var Capabilityˉgrants: u32 = 0u32;
+    var Standardˉoutputˉlimit: u32 = 0u32;
+    var Declaredˉcapabilities: u32 = 0u32;
+    var Capabilityˉkinds: bytes = Invalid;
+    var Typeˉoffsetsˉoffset: u32 = 64u32;
+    if Requestˉmajor == 3u32 {
+        if Bytesˉlength(Preflight) < 84u32 { return Invalid; }
+        Capabilities = Bytesˉreadˉu32ˉlittle(Preflight, 64u32);
+        Capabilityˉgrants = Bytesˉreadˉu32ˉlittle(Preflight, 68u32);
+        Standardˉoutputˉlimit = Bytesˉreadˉu32ˉlittle(Preflight, 72u32);
+        Declaredˉcapabilities = Bytesˉreadˉu32ˉlittle(Preflight, 76u32);
+        let Capabilityˉkindsˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Preflight,
+            80u32
+        );
+        Typeˉoffsetsˉoffset = 84u32 + Capabilityˉkindsˉlength;
+        if Bytesˉlength(Preflight)
+            != Typeˉoffsetsˉoffset + Typeˉoffsetsˉlength {
+            return Invalid;
+        }
+        Capabilityˉkinds = Bytesˉslice(
+            Preflight,
+            84u32,
+            Capabilityˉkindsˉlength
+        );
+    } else {
+        if Bytesˉlength(Preflight) != 64u32 + Typeˉoffsetsˉlength {
+            return Invalid;
+        }
     }
     let Typeˉoffsets: bytes = Bytesˉslice(
         Preflight,
-        64u32,
+        Typeˉoffsetsˉoffset,
         Typeˉoffsetsˉlength
     );
 
@@ -65,6 +93,44 @@ export fn Main(Request: bytes) -> bytes {
 
     let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     let Zeroˉcell: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
+    var Standardˉoutput: bytes = Invalid;
+    if Requestˉmajor == 3u32 {
+        if (Capabilityˉgrants & Declaredˉcapabilities)
+            != Declaredˉcapabilities {
+            var Deniedˉresponse: bytes = Bytesˉfromˉu32ˉlittle(
+                1331189335u32
+            );
+            Deniedˉresponse = Bytesˉconcat(
+                Deniedˉresponse,
+                Bytesˉfromˉu16ˉlittle(3u32)
+            );
+            Deniedˉresponse = Bytesˉconcat(
+                Deniedˉresponse,
+                Bytesˉfromˉu16ˉlittle(0u32)
+            );
+            Deniedˉresponse = Bytesˉconcat(
+                Deniedˉresponse,
+                Bytesˉfromˉu32ˉlittle(3010u32)
+            );
+            Deniedˉresponse = Bytesˉconcat(
+                Deniedˉresponse,
+                Zeroˉvalue
+            );
+            Deniedˉresponse = Bytesˉconcat(
+                Deniedˉresponse,
+                Zeroˉvalue
+            );
+            Deniedˉresponse = Bytesˉconcat(
+                Deniedˉresponse,
+                Zeroˉvalue
+            );
+            Deniedˉresponse = Bytesˉconcat(
+                Deniedˉresponse,
+                Zeroˉvalue
+            );
+            return Deniedˉresponse;
+        }
+    }
 
     var Mainˉfound: bool = false;
     var Exportˉindex: u32 = 128u32;
@@ -239,9 +305,12 @@ export fn Main(Request: bytes) -> bytes {
             if Requestˉmajor == 1u32 {
                 if Parameterˉcount != 0u32 { return Invalid; }
                 if Returnˉkind != 1u32 { return Invalid; }
-            } else {
+            } else if Requestˉmajor == 2u32 {
                 if Parameterˉcount != 1u32 { return Invalid; }
                 if Returnˉkind != 6u32 { return Invalid; }
+            } else {
+                if Parameterˉcount != 0u32 { return Invalid; }
+                if Returnˉkind != 1u32 { return Invalid; }
             }
             Mainˉcodeˉoffset = Functionˉcodeˉoffset;
             Mainˉcodeˉlength = Functionˉcodeˉlength;
@@ -277,6 +346,9 @@ export fn Main(Request: bytes) -> bytes {
             if Scanˉopcode == 48u32 { Width = 5u32; Supported = true; }
             if Scanˉopcode == 49u32 { Width = 5u32; Supported = true; }
             if Scanˉopcode == 64u32 { Width = 5u32; Supported = true; }
+            if Scanˉopcode == 65u32 {
+                if Requestˉmajor == 3u32 { Width = 5u32; Supported = true; }
+            }
             if Scanˉopcode == 80u32 { Supported = true; }
             if Scanˉopcode == 81u32 { Supported = true; }
             if Scanˉopcode >= 96u32 {
@@ -634,7 +706,7 @@ export fn Main(Request: bytes) -> bytes {
                     }
                 }
             }
-            if Loadedˉshapeˉkind == 5u32 || Loadedˉshapeˉkind == 6u32 {
+            if Loadedˉshapeˉkind == 3u32 || Loadedˉshapeˉkind == 6u32 {
                 Stackˉproducedˉkind = 1u32;
                 let Loadedˉlength: u32 = Bytesˉreadˉu32ˉlittle(
                     Loadedˉvalue,
@@ -746,7 +818,7 @@ export fn Main(Request: bytes) -> bytes {
                 Localˉshapes,
                 Storedˉshapeˉoffset
             );
-            if Storedˉshapeˉkind == 5u32 || Storedˉshapeˉkind == 6u32 {
+            if Storedˉshapeˉkind == 3u32 || Storedˉshapeˉkind == 6u32 {
                 let Previousˉstoredˉvalue: bytes = Bytesˉslice(
                     Locals,
                     Storedˉlocalˉoffset,
@@ -1912,7 +1984,7 @@ export fn Main(Request: bytes) -> bytes {
                                                         Reclaimedˉfieldˉcursor
                                                             + 4u32;
                                                 }
-                                                if Reclaimedˉfieldˉkind == 5u32
+                                                if Reclaimedˉfieldˉkind == 3u32
                                                     || Reclaimedˉfieldˉkind
                                                         == 6u32 {
                                                     Releasedˉdescriptors =
@@ -2113,13 +2185,13 @@ export fn Main(Request: bytes) -> bytes {
             );
             Stackˉconsumed = 1u32;
             Stackˉproduced = true;
-            if Selectedˉfieldˉkind == 5u32 || Selectedˉfieldˉkind == 6u32 {
+            if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
                 Stackˉproducedˉkind = 1u32;
             }
             if Selectedˉfieldˉkind == 7u32 {
                 Stackˉproducedˉkind = 2u32;
             }
-            if Selectedˉfieldˉkind == 5u32 || Selectedˉfieldˉkind == 6u32 {
+            if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
                 let Fieldˉdescriptorˉlength: u32 = Bytesˉreadˉu32ˉlittle(
                     Fieldˉvalue,
                     4u32
@@ -3062,6 +3134,102 @@ export fn Main(Request: bytes) -> bytes {
             }
         }
 
+        if Payloadˉlength == 65u32 {
+            if Requestˉmajor != 3u32 { return Invalid; }
+            let Capabilityˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Module,
+                Payload + 1u32
+            );
+            if Capabilityˉindex >= Bytesˉlength(Capabilityˉkinds) {
+                return Invalid;
+            }
+            if U32ˉfromˉu8(Bytesˉreadˉu8(
+                Capabilityˉkinds,
+                Capabilityˉindex
+            )) != 1u32 {
+                return Invalid;
+            }
+            if Stackˉdescriptorˉcount == 0u32 { return Invalid; }
+            var Capabilityˉargumentˉisˉdescriptor: bool = false;
+            if Stackˉdescriptorˉcount <= 32u32 {
+                Capabilityˉargumentˉisˉdescriptor =
+                    ((Stackˉdescriptorˉflagsˉlow
+                        >> (Stackˉdescriptorˉcount - 1u32)) & 1u32) != 0u32;
+            } else {
+                Capabilityˉargumentˉisˉdescriptor =
+                    ((Stackˉdescriptorˉflagsˉhigh
+                        >> (Stackˉdescriptorˉcount - 33u32)) & 1u32) != 0u32;
+            }
+            if Capabilityˉargumentˉisˉdescriptor {
+                Capabilityˉargumentˉisˉdescriptor = true;
+            } else {
+                return Invalid;
+            }
+            let Capabilityˉstackˉlength: u32 = Bytesˉlength(Stack);
+            let Capabilityˉargument: bytes = Bytesˉslice(
+                Stack,
+                Capabilityˉstackˉlength - 8u32,
+                8u32
+            );
+            Stack = Bytesˉslice(
+                Stack,
+                0u32,
+                Capabilityˉstackˉlength - 8u32
+            );
+            Stackˉconsumed = 1u32;
+            Releasedˉdescriptors = Bytesˉconcat(
+                Releasedˉdescriptors,
+                Capabilityˉargument
+            );
+            let Capabilityˉtextˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Capabilityˉargument,
+                0u32
+            );
+            let Capabilityˉtextˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+                Capabilityˉargument,
+                4u32
+            );
+            if Capabilityˉtextˉoffset > Bytesˉlength(Heap) {
+                return Invalid;
+            }
+            if Capabilityˉtextˉlength
+                > Bytesˉlength(Heap) - Capabilityˉtextˉoffset {
+                return Invalid;
+            }
+            let Standardˉoutputˉlength: u32 = Bytesˉlength(Standardˉoutput);
+            if Standardˉoutputˉlength > Standardˉoutputˉlimit {
+                return Invalid;
+            }
+            if Capabilityˉtextˉlength >= 4294967295u32 {
+                Sectionˉkind = 3013u32;
+            } else {
+                let Capabilityˉwriteˉlength: u32 = Capabilityˉtextˉlength + 1u32;
+                if Capabilityˉwriteˉlength
+                    > Standardˉoutputˉlimit - Standardˉoutputˉlength {
+                    Sectionˉkind = 3013u32;
+                } else {
+                    Standardˉoutput = Bytesˉconcat(
+                        Standardˉoutput,
+                        Bytesˉslice(
+                            Heap,
+                            Capabilityˉtextˉoffset,
+                            Capabilityˉtextˉlength
+                        )
+                    );
+                    Standardˉoutput = Bytesˉconcat(
+                        Standardˉoutput,
+                        Bytesˉslice(
+                            Bytesˉfromˉu32ˉlittle(10u32),
+                            0u32,
+                            1u32
+                        )
+                    );
+                }
+            }
+            Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+            Mainˉfound = true;
+        }
+
         if Payloadˉlength == 80u32 {
             let Popˉstackˉlength: u32 = Bytesˉlength(Stack);
             if Stackˉdescriptorˉcount == 0u32 { return Invalid; }
@@ -3164,6 +3332,42 @@ export fn Main(Request: bytes) -> bytes {
                     Success,
                     Bytesˉslice(Returnˉresult, 0u32, 4u32)
                 );
+                if Requestˉmajor == 3u32 {
+                    var Browserˉsuccess: bytes = Bytesˉfromˉu32ˉlittle(
+                        1331189335u32
+                    );
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Bytesˉfromˉu16ˉlittle(3u32)
+                    );
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Bytesˉfromˉu16ˉlittle(0u32)
+                    );
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Zeroˉvalue
+                    );
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Bytesˉfromˉu32ˉlittle(Envelope)
+                    );
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Bytesˉslice(Returnˉresult, 0u32, 4u32)
+                    );
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Bytesˉfromˉu32ˉlittle(
+                            Bytesˉlength(Standardˉoutput)
+                        )
+                    );
+                    Browserˉsuccess = Bytesˉconcat(
+                        Browserˉsuccess,
+                        Zeroˉvalue
+                    );
+                    return Bytesˉconcat(Browserˉsuccess, Standardˉoutput);
+                }
                 if Requestˉmajor == 2u32 {
                     return Bytesˉconcat(Success, Stack);
                 }
@@ -3179,7 +3383,7 @@ export fn Main(Request: bytes) -> bytes {
                     Localˉshapes,
                     Returningˉshapeˉoffset + Returningˉlocalˉoffset
                 );
-                if Returningˉlocalˉkind == 5u32
+                if Returningˉlocalˉkind == 3u32
                     || Returningˉlocalˉkind == 6u32 {
                     Releasedˉdescriptors = Bytesˉconcat(
                         Releasedˉdescriptors,
@@ -3539,6 +3743,42 @@ export fn Main(Request: bytes) -> bytes {
         Running = Sectionˉkind == 0u32;
     }
     if Sectionˉkind != 0u32 {
+        if Requestˉmajor == 3u32 {
+            var Browserˉfailure: bytes = Bytesˉfromˉu32ˉlittle(
+                1331189335u32
+            );
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Bytesˉfromˉu16ˉlittle(3u32)
+            );
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Bytesˉfromˉu16ˉlittle(0u32)
+            );
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Bytesˉfromˉu32ˉlittle(Sectionˉkind)
+            );
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Bytesˉfromˉu32ˉlittle(Envelope)
+            );
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Zeroˉvalue
+            );
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Bytesˉfromˉu32ˉlittle(
+                    Bytesˉlength(Standardˉoutput)
+                )
+            );
+            Browserˉfailure = Bytesˉconcat(
+                Browserˉfailure,
+                Zeroˉvalue
+            );
+            return Bytesˉconcat(Browserˉfailure, Standardˉoutput);
+        }
         var Guestˉfailure: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
         Guestˉfailure = Bytesˉconcat(
             Guestˉfailure,
