@@ -9,12 +9,13 @@ bounded decimal loop control, private temporary names, and cleanup. Windvale
 processes continue to own every binary format, source transformation,
 admission decision, digest, segment, and publication transaction.
 
-The ordinary candidate accepts a WVB whose lowered native fragment fits in one
+The ordinary compiler-family candidate accepts a WVB whose lowered native fragment fits in one
 nonempty resource of at most 4 MiB. The explicit image-input mode accepts one
 through eight canonical fragments, with every nonfinal fragment exactly 4 MiB,
-plus a validated decimal entry. Both modes support hosted profiles `1` through
-`7` and construct the established ten-service Windows x64 or Linux x64
-container. `Package-Segmented-Compiler-Wvb` composes native WVB staging, image
+plus a validated decimal entry. Both modes support the seven compiler-family
+hosted profiles `1` through `7`; they do not alias the separately specified
+read-only verifier profiles. Both modes construct the established ten-service
+Windows x64 or Linux x64 container. `Package-Segmented-Compiler-Wvb` composes native WVB staging, image
 linking, canonical transport, and this image-input mode without asking a host
 script to decode a Windvale format.
 
@@ -46,7 +47,7 @@ applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 5,426 | `35a48a3ed0080b5537dd38bdd6ccb3867794ac3a6f3d71c22f4afeaaa59f3e41` |
+| `SHA256SUMS` | 5,426 | `f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front

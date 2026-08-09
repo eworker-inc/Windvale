@@ -1,6 +1,6 @@
 # Decision 0460: Native hosted enum directory for variants
 
-- Status: Implemented current-host candidate; enlarged-verifier image construction and dual-host promotion pending
+- Status: Implemented current-host candidate; read-only verifier container profile and dual-host promotion pending
 - Date: 2026-08-09
 - Advances: [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md), [Decision 0459](0459-Native-Wvb-1-11-Verifier-Admission.md), and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Contract: [native hosted enum processes](../../Specifications/Windvale-Native-Hosted-Enum-Processes.md)
@@ -79,10 +79,26 @@ cross-target Linux construction, and invalid-WVB rejection with input/output
 preservation and no private scratch. This proves candidate-toolset integration
 without promoting it.
 
-The enlarged verifier's exact pre-lowered native chunk set and entry offset are
-not retained in this checkout, so its separate image-mode container construction
-has not run. That construction, independent Linux execution, grouped retirement
-gate, and ordinary-path promotion remain explicit next work.
+The frozen recovery backend exports the enlarged verifier as a 1,183,922-byte
+WVO. The native linker reconstructs a 1,182,876-byte image at entry zero with
+SHA-256
+`247c910a040665100a7b358a51e008f6ae1663574414411acba13a022b8ef399`.
+Supplying that image to the repinned package path proves the former enum
+boundary is closed: the request is valid at 56 bytes and the service is valid
+at 355 bytes, and every later native constructor reaches successful final
+segment-set admission.
+
+That diagnostic must not be promoted. The current package profiles 1 through 7
+are the compiler-family `WVHA`, `WVHB`, `WVHS`, `WVHL`, `WVHP`, `WVHN`, and
+hosted-segmenter contracts. Numeric profile 2 is the build driver, not the
+read-only WVB verifier. Constructing the verifier image under profile 2
+therefore produces a well-formed but semantically wrong build-driver container;
+its differing bytes are useful rejection evidence, not a new golden identity.
+The next slice must introduce or reuse an explicitly named read-only verifier
+container profile, its canonical startup object, and exact metadata admission
+before repeating image-mode construction. Independent Linux execution, the
+grouped retirement gate, and ordinary-path promotion remain explicit later
+work.
 
 No broad Seed, OS, Standard, Qualification, WebAssembly, QEMU, or complete
 retirement gate ran. Those checks remain grouped at the end of the active
