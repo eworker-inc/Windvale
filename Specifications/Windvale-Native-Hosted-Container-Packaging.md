@@ -33,7 +33,7 @@ applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 5,426 | `00863c0f1c4c9b93293d27de08b36ecc6c2a909a455c3aba435bfbc19d103c63` |
+| `SHA256SUMS` | 5,426 | `6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front

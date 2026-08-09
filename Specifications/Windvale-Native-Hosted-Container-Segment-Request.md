@@ -25,7 +25,9 @@ or the exact shorter final segment. The command admits the complete successful
 container plan and its 128-byte layout header. `WVSG` must describe exactly six
 ordered logical regions whose output offsets and lengths match header, startup,
 service bundle, imports, runtime, and relocation fields in that plan. Empty
-target-specific imports or relocation regions retain their ordinals.
+target-specific imports or relocation regions retain their ordinals and use
+the canonical source-manifest anchors: bundle end for empty imports and runtime
+end for empty relocations, rather than the plan's zero absent-section sentinel.
 
 Every declared chunk resource is length-validated before output. The producer
 then emits the exact 32-byte `WVHT` header, exact 128-byte plan header, and only
@@ -53,9 +55,9 @@ The application declares exactly `console.write_line`,
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Container-segment request WVB | 44,019 | `c18f71d2a20612dd10063e88a9ebb34ff1a416da207ad685d49fc0e92ed8e206` |
-| Windows application | 519,168 | `c4690d57b85b951b5af2c7eefdbd81a805114f9a246c02bbf2b593ecec34da18` |
-| Linux application | 520,192 | `4207ba76d4387ec3dce54210a9278e616ddf32ae41f36d3f478f8e134147f82d` |
+| Container-segment request WVB | 44,543 | `09802f31927bc3120476001ff3733c15dcf3072537c109f3b044b170cee8b27f` |
+| Windows application | 523,264 | `f9c2236f747d3737567681dacf5335ea06e412186255c3cd205bc45b7b6f42e6` |
+| Linux application | 524,288 | `f53bdff4f3e00c373a4f82c43266bada4f699d3776a4657e1de4558ea0b5dd2f` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring.

@@ -12,15 +12,15 @@ public static class Hostedˉcontainerˉsegmentˉrequestˉapplicationˉcontract
         "linux-x64-hosted-container-segment-request-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉcontainerˉsegmentˉrequestˉtool";
-    public const int MODULE_BYTES = 44_019;
+    public const int MODULE_BYTES = 44_543;
     public const string MODULE_SHA256 =
-        "c18f71d2a20612dd10063e88a9ebb34ff1a416da207ad685d49fc0e92ed8e206";
-    public const int WINDOWS_APPLICATION_BYTES = 519_168;
+        "09802f31927bc3120476001ff3733c15dcf3072537c109f3b044b170cee8b27f";
+    public const int WINDOWS_APPLICATION_BYTES = 523_264;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "c4690d57b85b951b5af2c7eefdbd81a805114f9a246c02bbf2b593ecec34da18";
-    public const int LINUX_APPLICATION_BYTES = 520_192;
+        "f9c2236f747d3737567681dacf5335ea06e412186255c3cd205bc45b7b6f42e6";
+    public const int LINUX_APPLICATION_BYTES = 524_288;
     public const string LINUX_APPLICATION_SHA256 =
-        "4207ba76d4387ec3dce54210a9278e616ddf32ae41f36d3f478f8e134147f82d";
+        "f53bdff4f3e00c373a4f82c43266bada4f699d3776a4657e1de4558ea0b5dd2f";
 }
 
 public static class Hostedˉcontainerˉsegmentˉrequestˉapplicationˉwriter

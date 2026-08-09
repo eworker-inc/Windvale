@@ -126,6 +126,16 @@ fn Sourcesˉmatchˉplan(
             Expectedˉbytes =
                 Bytesˉreadˉu32ˉlittle(Planˉbytes, 76u32);
         }
+        if Index == 3u32 && Expectedˉbytes == 0u32 {
+            Expectedˉimage =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 48u32) +
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 52u32);
+        }
+        if Index == 5u32 && Expectedˉbytes == 0u32 {
+            Expectedˉimage =
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 64u32) +
+                Bytesˉreadˉu32ˉlittle(Planˉbytes, 68u32);
+        }
         if Bytesˉreadˉu32ˉlittle(Manifest, Record) != Index ||
             Bytesˉreadˉu32ˉlittle(Manifest, Record + 4u32) !=
                 Expectedˉlogical ||

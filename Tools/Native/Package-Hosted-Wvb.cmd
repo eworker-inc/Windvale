@@ -15,7 +15,7 @@ set "Startup=%RepositoryRoot%\Linker\Reference\Consumers\Windows-X64-Hosted-Comp
 set "Input=%~f2"
 set "Output=%~f3"
 
-call :verify_file "%Toolset%\SHA256SUMS" 5426 00863c0f1c4c9b93293d27de08b36ecc6c2a909a455c3aba435bfbc19d103c63 "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 5426 6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"

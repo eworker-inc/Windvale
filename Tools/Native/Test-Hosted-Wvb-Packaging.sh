@@ -84,11 +84,11 @@ status=$?
 [[ $status -ne 0 ]] || fail 'invalid WVB was accepted'
 check_file \
     "$test_directory/Destination.elf" 5426 \
-    00863c0f1c4c9b93293d27de08b36ecc6c2a909a455c3aba435bfbc19d103c63 \
+    6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522 \
     'preserved destination'
 check_file \
     "$test_directory/Invalid.wvb" 5426 \
-    00863c0f1c4c9b93293d27de08b36ecc6c2a909a455c3aba435bfbc19d103c63 \
+    6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522 \
     'preserved input'
 check_no_scratch
 echo 'PASS  hosted packaging rejects invalid WVB and preserves resources'

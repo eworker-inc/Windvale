@@ -126,6 +126,12 @@ internal static partial class Program
             .ToImmutableArray();
         var Relocation = Enumerable.Repeat((byte)0x44, checked((int)Read(76)))
             .ToImmutableArray();
+        var Importˉoffset = Imports.Length == 0
+            ? checked((int)(Read(48) + Read(52)))
+            : checked((int)Read(56));
+        var Relocationˉoffset = Relocation.Length == 0
+            ? checked((int)(Read(64) + Read(68)))
+            : checked((int)Read(72));
         var Expected = Nativeˉhostedˉcontainerˉmaterializationˉsession.Buildˉrequests(
             Plan,
             Header,
@@ -139,9 +145,9 @@ internal static partial class Program
             (0, Header),
             (checked((int)Read(40)), Startup),
             (checked((int)Read(48)), Bundle.Imageˉbytes),
-            (checked((int)Read(56)), Imports),
+            (Importˉoffset, Imports),
             (checked((int)Read(64)), Runtime),
-            (checked((int)Read(72)), Relocation),
+            (Relocationˉoffset, Relocation),
         };
         var Sources = Buildˉimmutableˉsourceˉgeometry(
             Regions,

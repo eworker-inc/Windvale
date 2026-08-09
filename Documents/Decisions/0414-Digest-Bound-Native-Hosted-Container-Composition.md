@@ -31,9 +31,9 @@ nor an identity leaf.
 ## Evidence and consequences
 
 The candidate toolset contains 59 files including its manifest and checksum
-inventory, totaling 14,475,488 bytes. Its `SHA256SUMS` has 57 entries, is 5,426
+inventory, totaling 14,484,204 bytes. Its `SHA256SUMS` has 57 entries, is 5,426
 bytes, has SHA-256
-`00863c0f1c4c9b93293d27de08b36ecc6c2a909a455c3aba435bfbc19d103c63`,
+`6237a4131ab079ed03992e969375d8569f3c546bb415a50c25b19c982f516522`,
 and verifies every listed artifact.
 
 The changed metadata-request WVB reconstructs through the native front door at
@@ -61,8 +61,25 @@ import and relocation regions inherited the plan's zero absent-section offset.
 The candidate now preserves executable mode and anchors each empty region at
 the preceding region's image end. The updated source-set contract passes its
 reviewed focused test 1/1 in 8.241 seconds, and the changed candidate inventory
-passes the Windows packaging smoke 2/2 in 12.3 seconds. A fresh Linux run from
-this exact inventory remains the promotion evidence.
+passes the Windows packaging smoke 2/2 in 12.3 seconds.
+
+Focused run `31286018209` then passed Windows and carried Linux through the
+corrected source set before the segment-request producer rejected that same
+canonical empty-region geometry. An audit of every downstream `WVSG` consumer
+found this as the only remaining stale equality rule. The segment-request
+producer now applies the same empty-region anchors and reconstructs through the
+native front door at 44,543 bytes with SHA-256
+`09802f31927bc3120476001ff3733c15dcf3072537c109f3b044b170cee8b27f`.
+Its reviewed focused test passes 1/1 in 7.650 seconds after a zero-warning
+build, and the updated Windows packaging smoke passes 2/2 in 13.1 seconds.
+
+The remaining chain was also exercised locally through the Windows process
+forms over the preserved Linux-target resources: segment request, segment
+construction, segment manifest, and publication all accept the source set and
+produce the exact 237,568-byte ELF with SHA-256
+`f7b40ac03478d54bdf8fed468fdfbe52a9449159a9fb45c05da6603935e24c67`.
+A fresh genuine Linux run from this exact inventory remains the promotion
+evidence.
 
 This is a candidate rather than an ordinary-path promotion. Linux process
 execution must pass from the same inventory, both launchers need focused
