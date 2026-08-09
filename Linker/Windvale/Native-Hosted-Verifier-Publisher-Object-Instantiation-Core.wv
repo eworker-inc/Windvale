@@ -1,0 +1,329 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiation profile portable;
+
+record Publisherˉobjectˉlayout {
+    Sections: u32;
+    Symbols: u32;
+    Relocations: u32;
+    Sectionˉzeroˉdata: u32;
+    Sectionˉzeroˉbytes: u32;
+    Sectionˉoneˉdata: u32;
+    Sectionˉoneˉbytes: u32;
+    Sectionˉoneˉimage: u32;
+    Symbolˉstart: u32;
+    Relocationˉstart: u32;
+}
+
+record Publisherˉsymbolˉtarget {
+    Valid: bool;
+    Address: u32;
+}
+
+record Publisherˉrelativeˉvalue {
+    Valid: bool;
+    Bits: u32;
+}
+
+record Publisherˉobjectˉresult {
+    Valid: bool;
+    Value: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn I32ˉmagnitude(Value: i32) -> u32 {
+    let Bits: u32 = Bytesˉreadˉu32ˉlittle(Bytesˉfromˉi32ˉlittle(Value), 0u32);
+    if Value >= 0 { return Bits; }
+    return 4294967295u32 - Bits + 1u32;
+}
+
+fn Relativeˉrelocation(Target: u32, Patchˉaddress: u32, Addend: i32) -> Publisherˉrelativeˉvalue {
+    var Negative: bool = Patchˉaddress > Target;
+    var Magnitude: u32 = 0u32;
+    if Negative {
+        Magnitude = Patchˉaddress - Target;
+    } else {
+        Magnitude = Target - Patchˉaddress;
+    }
+    let Addendˉnegative: bool = Addend < 0;
+    let Addendˉmagnitude: u32 = I32ˉmagnitude(Addend);
+    if Negative == Addendˉnegative {
+        var Limit: u32 = 2147483647u32;
+        if Negative { Limit = 2147483648u32; }
+        if Magnitude > Limit || Addendˉmagnitude > Limit - Magnitude {
+            return Publisherˉrelativeˉvalue(false, 0u32);
+        }
+        Magnitude = Magnitude + Addendˉmagnitude;
+    } else if Magnitude < Addendˉmagnitude {
+        Magnitude = Addendˉmagnitude - Magnitude;
+        Negative = Addendˉnegative;
+    } else {
+        Magnitude = Magnitude - Addendˉmagnitude;
+    }
+    if Negative {
+        if Magnitude > 2147483648u32 { return Publisherˉrelativeˉvalue(false, 0u32); }
+        if Magnitude == 0u32 { return Publisherˉrelativeˉvalue(true, 0u32); }
+        return Publisherˉrelativeˉvalue(true, 4294967295u32 - Magnitude + 1u32);
+    }
+    if Magnitude > 2147483647u32 { return Publisherˉrelativeˉvalue(false, 0u32); }
+    return Publisherˉrelativeˉvalue(true, Magnitude);
+}
+
+fn Appendˉzeroes(Output: bytes, Count: u32) -> bytes {
+    var Result: bytes = Output;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Symbolˉresolve(
+    Request: bytes,
+    Object: bytes,
+    Layout: Publisherˉobjectˉlayout,
+    Base: u32,
+    Wanted: u32,
+    Targetˉoffset: u32,
+    Targetˉcount: u32
+) -> Publisherˉsymbolˉtarget {
+    if Wanted >= Layout.Symbols {
+        return Publisherˉsymbolˉtarget(false, 0u32);
+    }
+    var Cursor: u32 = Layout.Symbolˉstart;
+    var Index: u32 = 0u32;
+    var Import: u32 = 0u32;
+    while Index < Layout.Symbols {
+        if Cursor > Layout.Relocationˉstart || 20u32 > Layout.Relocationˉstart - Cursor {
+            return Publisherˉsymbolˉtarget(false, 0u32);
+        }
+        let Binding: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Object, Cursor));
+        let Section: u32 = Bytesˉreadˉu32ˉlittle(Object, Cursor + 4u32);
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Object, Cursor + 8u32);
+        let Nameˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Object, Cursor + 16u32);
+        if Nameˉbytes == 0u32 || Nameˉbytes > Layout.Relocationˉstart - Cursor - 20u32 {
+            return Publisherˉsymbolˉtarget(false, 0u32);
+        }
+        if Index == Wanted {
+            if Binding == 3u32 {
+                if Import >= Targetˉcount {
+                    return Publisherˉsymbolˉtarget(false, 0u32);
+                }
+                let Address: u32 = Bytesˉreadˉu32ˉlittle(
+                    Request, Targetˉoffset + Import * 4u32
+                );
+                return Publisherˉsymbolˉtarget(Address != 0u32, Address);
+            }
+            if Binding < 1u32 || Binding > 2u32 || Section >= Layout.Sections {
+                return Publisherˉsymbolˉtarget(false, 0u32);
+            }
+            var Sectionˉbytes: u32 = Layout.Sectionˉzeroˉbytes;
+            var Sectionˉimage: u32 = 0u32;
+            if Section == 1u32 {
+                Sectionˉbytes = Layout.Sectionˉoneˉbytes;
+                Sectionˉimage = Layout.Sectionˉoneˉimage;
+            }
+            if Offset > Sectionˉbytes {
+                return Publisherˉsymbolˉtarget(false, 0u32);
+            }
+            return Publisherˉsymbolˉtarget(true, Base + Sectionˉimage + Offset);
+        }
+        if Binding == 3u32 { Import = Import + 1u32; }
+        Cursor = Cursor + 20u32 + Nameˉbytes;
+        Index = Index + 1u32;
+    }
+    return Publisherˉsymbolˉtarget(false, 0u32);
+}
+
+fn Instantiate(
+    Request: bytes,
+    Object: bytes,
+    Base: u32,
+    Layout: Publisherˉobjectˉlayout,
+    Targetˉoffset: u32,
+    Targetˉcount: u32
+) -> Publisherˉobjectˉresult {
+    if Bytesˉlength(Object) != Layout.Relocationˉstart + Layout.Relocations * 20u32 ||
+        Bytesˉreadˉu32ˉlittle(Object, 0u32) != 827283031u32 ||
+        Bytesˉreadˉu32ˉlittle(Object, 12u32) != Layout.Sections ||
+        Bytesˉreadˉu32ˉlittle(Object, 16u32) != Layout.Symbols ||
+        Bytesˉreadˉu32ˉlittle(Object, 20u32) != Layout.Relocations {
+        return Publisherˉobjectˉresult(false, Empty(Object));
+    }
+    var Result: bytes = Bytesˉslice(
+        Object, Layout.Sectionˉzeroˉdata, Layout.Sectionˉzeroˉbytes
+    );
+    if Layout.Sections == 2u32 {
+        Result = Appendˉzeroes(Result, Layout.Sectionˉoneˉimage - Bytesˉlength(Result));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉslice(Object, Layout.Sectionˉoneˉdata, Layout.Sectionˉoneˉbytes)
+        );
+    }
+    var Index: u32 = 0u32;
+    while Index < Layout.Relocations {
+        let Record: u32 = Layout.Relocationˉstart + Index * 20u32;
+        let Section: u32 = Bytesˉreadˉu32ˉlittle(Object, Record + 4u32);
+        let Patch: u32 = Bytesˉreadˉu32ˉlittle(Object, Record + 8u32);
+        var Sectionˉimage: u32 = 0u32;
+        var Sectionˉbytes: u32 = Layout.Sectionˉzeroˉbytes;
+        var Sectionˉdata: u32 = Layout.Sectionˉzeroˉdata;
+        if Section == 1u32 {
+            Sectionˉimage = Layout.Sectionˉoneˉimage;
+            Sectionˉbytes = Layout.Sectionˉoneˉbytes;
+            Sectionˉdata = Layout.Sectionˉoneˉdata;
+        }
+        if Bytesˉreadˉu8(Object, Record) != 2u8 || Section >= Layout.Sections ||
+            Sectionˉbytes < 4u32 || Patch > Sectionˉbytes - 4u32 ||
+            Bytesˉreadˉu32ˉlittle(Object, Sectionˉdata + Patch) != 0u32 ||
+            Bytesˉreadˉi32ˉlittle(Object, Record + 16u32) != -4 {
+            return Publisherˉobjectˉresult(false, Empty(Object));
+        }
+        let Target: Publisherˉsymbolˉtarget = Symbolˉresolve(
+            Request,
+            Object,
+            Layout,
+            Base,
+            Bytesˉreadˉu32ˉlittle(Object, Record + 12u32),
+            Targetˉoffset,
+            Targetˉcount
+        );
+        if !Target.Valid { return Publisherˉobjectˉresult(false, Empty(Object)); }
+        let Value: Publisherˉrelativeˉvalue = Relativeˉrelocation(
+            Target.Address, Base + Sectionˉimage + Patch, -4
+        );
+        if !Value.Valid { return Publisherˉobjectˉresult(false, Empty(Object)); }
+        Result = Replaceˉu32(Result, Sectionˉimage + Patch, Value.Bits);
+        Index = Index + 1u32;
+    }
+    return Publisherˉobjectˉresult(true, Result);
+}
+
+fn Header(
+    Input: bytes,
+    Total: u32,
+    Status: u32,
+    Target: u32,
+    Startupˉbytes: u32,
+    Adapterˉbytes: u32,
+    Sha256ˉbytes: u32,
+    Startupˉaddress: u32,
+    Adapterˉaddress: u32,
+    Sha256ˉaddress: u32,
+    Targetˉcount: u32
+) -> bytes {
+    var Result: bytes = Empty(Input);
+    Result = Appendˉu32(Result, 1330206295u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Total);
+    Result = Appendˉu32(Result, Status);
+    Result = Appendˉu32(Result, Bytesˉlength(Input));
+    Result = Appendˉu32(Result, Target);
+    Result = Appendˉu32(Result, 64u32);
+    Result = Appendˉu32(Result, Startupˉbytes);
+    Result = Appendˉu32(Result, 64u32 + Startupˉbytes);
+    Result = Appendˉu32(Result, Adapterˉbytes);
+    Result = Appendˉu32(Result, 64u32 + Startupˉbytes + Adapterˉbytes);
+    Result = Appendˉu32(Result, Sha256ˉbytes);
+    Result = Appendˉu32(Result, Startupˉaddress);
+    Result = Appendˉu32(Result, Adapterˉaddress);
+    Result = Appendˉu32(Result, Sha256ˉaddress);
+    return Appendˉu32(Result, Targetˉcount);
+}
+
+export fn Publisherˉobjectsˉinstantiate(Input: bytes) -> bytes {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < 48u32 || Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1481201239u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Header(Input, 64u32, 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Startupˉaddress: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    let Adapterˉaddress: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Sha256ˉaddress: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Targetˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
+    let Startupˉobjectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    let Adapterˉobjectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
+    let Sha256ˉobjectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
+    var Expectedˉadapterˉaddress: u32 = 243600u32;
+    var Expectedˉsha256ˉaddress: u32 = 248896u32;
+    var Adapterˉsymbols: u32 = 46u32;
+    var Adapterˉrelocations: u32 = 111u32;
+    var Adapterˉtargets: u32 = 43u32;
+    if Target == 2u32 {
+        Expectedˉadapterˉaddress = 142929920u32;
+        Expectedˉsha256ˉaddress = 142933296u32;
+        Adapterˉsymbols = 28u32;
+        Adapterˉrelocations = 49u32;
+        Adapterˉtargets = 26u32;
+    }
+    if (Target != 1u32 && Target != 2u32) || Startupˉaddress != 4096u32 ||
+        Adapterˉaddress != Expectedˉadapterˉaddress ||
+        Sha256ˉaddress != Expectedˉsha256ˉaddress ||
+        Targetˉcount != Adapterˉtargets + 1u32 ||
+        Startupˉobjectˉbytes != (168u32 - (Target - 1u32) * 4u32) ||
+        Adapterˉobjectˉbytes != (9544u32 - (Target - 1u32) * 4037u32) ||
+        Sha256ˉobjectˉbytes != 2176u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 0u32 ||
+        Targetˉcount > (Total - 48u32) / 4u32 {
+        return Header(Input, 64u32, 2u32, Target, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
+    }
+    let Startupˉobjectˉoffset: u32 = 48u32 + Targetˉcount * 4u32;
+    let Adapterˉobjectˉoffset: u32 = Startupˉobjectˉoffset + Startupˉobjectˉbytes;
+    let Sha256ˉobjectˉoffset: u32 = Adapterˉobjectˉoffset + Adapterˉobjectˉbytes;
+    if Sha256ˉobjectˉoffset > Total || Sha256ˉobjectˉbytes != Total - Sha256ˉobjectˉoffset {
+        return Header(Input, 64u32, 3u32, Target, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
+    }
+    let Startup: Publisherˉobjectˉresult = Instantiate(
+        Input, Bytesˉslice(Input, Startupˉobjectˉoffset, Startupˉobjectˉbytes),
+        Startupˉaddress,
+        Publisherˉobjectˉlayout(1u32, 2u32, 1u32, 49u32, 5u32, 0u32, 0u32, 0u32, 54u32, 144u32 + (2u32 - Target) * 4u32),
+        48u32, 1u32
+    );
+    let Adapter: Publisherˉobjectˉresult = Instantiate(
+        Input, Bytesˉslice(Input, Adapterˉobjectˉoffset, Adapterˉobjectˉbytes),
+        Adapterˉaddress,
+        Publisherˉobjectˉlayout(
+            1u32, Adapterˉsymbols, Adapterˉrelocations,
+            49u32, 5286u32 - (Target - 1u32) * 1923u32,
+            0u32, 0u32, 0u32,
+            5335u32 - (Target - 1u32) * 1923u32,
+            7324u32 - (Target - 1u32) * 2797u32
+        ),
+        52u32, Adapterˉtargets
+    );
+    let Sha256: Publisherˉobjectˉresult = Instantiate(
+        Input, Bytesˉslice(Input, Sha256ˉobjectˉoffset, Sha256ˉobjectˉbytes),
+        Sha256ˉaddress,
+        Publisherˉobjectˉlayout(2u32, 7u32, 2u32, 49u32, 1350u32, 1426u32, 333u32, 1352u32, 1759u32, 2136u32),
+        48u32, 0u32
+    );
+    if !Startup.Valid || !Adapter.Valid || !Sha256.Valid {
+        return Header(Input, 64u32, 4u32, Target, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
+    }
+    let Outputˉbytes: u32 = 64u32 + Bytesˉlength(Startup.Value) +
+        Bytesˉlength(Adapter.Value) + Bytesˉlength(Sha256.Value);
+    var Result: bytes = Header(
+        Input, Outputˉbytes, 0u32, Target,
+        Bytesˉlength(Startup.Value), Bytesˉlength(Adapter.Value), Bytesˉlength(Sha256.Value),
+        Startupˉaddress, Adapterˉaddress, Sha256ˉaddress, Targetˉcount
+    );
+    Result = Bytesˉconcat(Result, Startup.Value);
+    Result = Bytesˉconcat(Result, Adapter.Value);
+    return Bytesˉconcat(Result, Sha256.Value);
+}

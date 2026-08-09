@@ -1,7 +1,7 @@
 {
-  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-1",
+  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-2",
   "status": "candidate",
-  "sourceDecision": "0476",
+  "sourceDecision": "0477",
   "provenanceDecision": "0474",
   "qualification": "current-host-focused",
   "construction": "verified-digest-bound-front-door",
@@ -68,6 +68,13 @@
       "bytes": 9390,
       "sha256": "5aa93fda0727d4519c34b7b0c790ecc60da38ce85ea0203bb58a2661854e27e5",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj"
+    },
+    {
+      "name": "publisher-object-instantiation",
+      "path": "Publisher-Object-Instantiation.wvb",
+      "bytes": 16091,
+      "sha256": "dd589e731e2253fc020ca70ea1ba379da287948f90323d8df8447689bc9d6a78",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.wvproj"
     }
   ]
 }

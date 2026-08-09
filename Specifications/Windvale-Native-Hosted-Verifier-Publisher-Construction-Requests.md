@@ -84,7 +84,9 @@ three small downstream records, every numeric placement, all seven output
 digests, all 44/27 ordered target addresses, and malformed identity/structure
 rejection.
 
-The next slice must consume `WVPS`, `WVCR`, `WVPT`, and the Decision 0475
-metadata to instantiate the startup/adapter/SHA objects and then materialize
-the exact Windows PE and Linux ELF. Until that succeeds and is independently
+[Decision 0477](../Documents/Decisions/0477-Native-WVHV-Publisher-Object-Instantiation.md)
+now consumes the admitted object geometry and `WVPT` bindings to instantiate
+the exact startup, adapter, and SHA bytes for both targets. The next slice must
+combine those bytes with `WVCR` and Decision 0475 metadata to materialize the
+exact Windows PE and Linux ELF. Until that succeeds and is independently
 qualified, the frozen C# writer remains Stage 0 recovery/differential evidence.

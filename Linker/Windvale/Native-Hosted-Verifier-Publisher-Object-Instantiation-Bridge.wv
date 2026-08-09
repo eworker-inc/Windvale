@@ -1,0 +1,7 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiationˉbridge profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉobjectˉinstantiation as Instantiation;
+
+export fn Main(Input: bytes) -> bytes {
+    return Instantiation.Publisherˉobjectsˉinstantiate(Input);
+}
