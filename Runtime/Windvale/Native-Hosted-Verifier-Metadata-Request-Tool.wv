@@ -1,0 +1,57 @@
+module Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequestˉtool profile hosted;
+
+import Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequest as Request;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line("verifier metadata request status=Rejected");
+    return 2;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 {
+        diagnostic.write_line(
+            "Usage: wvverifierrequest <evidence.wvve> <request.wvvr>"
+        );
+        return 64;
+    }
+    let Inputˉpath: text = process.argument(0u32);
+    let Outputˉpath: text = process.argument(1u32);
+    if Pathsˉareˉequal(Inputˉpath, Outputˉpath) { return Reject(); }
+
+    let Evidence: bytes = file.read_bytes(Inputˉpath);
+    let Response: bytes =
+        Request.Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Evidence);
+    if Bytesˉlength(Response) != 416u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1146508887u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 16u32) != 352u32 ||
+        Bytesˉreadˉu32ˉlittle(Response, 20u32) != 384u32 {
+        return Reject();
+    }
+    file.write_bytes(Outputˉpath, Bytesˉslice(Response, 32u32, 384u32));
+    console.write_line("verifier metadata request status=Valid bytes=384");
+    return 0;
+}

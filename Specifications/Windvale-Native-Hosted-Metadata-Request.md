@@ -3,7 +3,8 @@
 ## Status and scope
 
 This contract constructs the exact 576-byte `WVHM 1` request consumed by the
-standalone hosted-container metadata constructor. The native command admits one
+standalone hosted-container metadata constructor, or exact 352-byte `WVVE 1`
+verifier evidence consumed by the separate `WVVR` request tool. The native command admits one
 canonical publication plan, reads the immutable service-bundle resources named
 by `WVHS 1`, recomputes all eleven SHA-256 identity leaves inside its own
 process, and writes the request only after the plan, manifest, evidence, and
@@ -47,6 +48,13 @@ The module declares exactly `console.write_line`, `diagnostic.write_line`,
 The bundle file offset is canonical policy and is written as 4,096 rather than
 accepted from this input.
 
+Verifier mode instead accepts exact 32-byte `WVVI 1`: magic `WVVI`, version 1,
+size 32, target 1 or 2, verifier profile 2, native entry, and eight zero reserved
+bytes. Its 96-byte `WVPQ 1` request contains the native fragment followed by
+service IDs 1 through 6. The manifest contains seven exact logical regions.
+After hashing, the process emits `WVVE 1`; the separate verifier request tool
+performs the final pure projection.
+
 ## Plan and evidence binding
 
 The publication input is the exact 144-byte `WVPQ 1` request for ten services.
@@ -77,9 +85,9 @@ bound to the publication plan.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata-request WVB | 63,278 | `55edb3633ee13f4ed7b02781e469c2d0325d8a0a8e274658a3bb06cc580bac04` |
-| Windows metadata-request tool | 1,052,672 | `4d1d5c114f9b022e594dd7d4abef2408143f9de60e4fa4bb00810316b5557366` |
-| Linux metadata-request tool | 1,052,672 | `8a4fb176439e2b71f98c244a98c04deec7985453038f3b2813de6fd6e179d4dd` |
+| Metadata-request WVB | 68,641 | `c90fc5f817454a48c76b476d68fc4460426ba3bce9a787114b693600c4dbe784` |
+| Windows metadata-request tool | 1,100,800 | `cd22508c0f933d60cf1ed1850c2c45002fb0093c02b4a4befe778c5f040e07cf` |
+| Linux metadata-request tool | 1,101,824 | `df370d3434a946784f337a4a7a18eb847a5ec694d7b6fe886c2e89f79b3b301e` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring; no
@@ -87,13 +95,13 @@ C# code selects or calculates product evidence.
 
 ## Source organization and retirement boundary
 
-Manifest admission, SHA-256 compression/streaming, and per-resource region
-state remain focused portable modules. The exact request-format constructor
-currently shares the hosted CLI root because the current native source composer
-rejects that otherwise valid extracted branch at its binding boundary. This is
-a documented bootstrap constraint, not permission to duplicate the algorithm
-or grow numbered source fragments; re-extract it when the native compiler can
-compile the same graph.
+Manifest admission, SHA-256 compression/streaming, per-resource region state,
+and final verifier request construction remain focused portable modules. The
+small verifier evidence projection currently shares the hosted CLI root because
+the current native source composer rejects that otherwise valid extracted
+branch at its binding boundary. This is a documented bootstrap constraint, not
+permission to duplicate the algorithm or grow numbered source fragments;
+re-extract it when the native compiler can compile the same graph.
 
 Immutable bundle resources now flow through a native process into the existing
 native metadata constructor without managed hashing or request projection.

@@ -7,9 +7,10 @@ request into portable Windvale. It binds verifier target and entry, the shared
 six-service native publication plan, and seven nonzero SHA-256 identities into
 the request consumed by the verifier metadata constructor.
 
-This slice does not acquire files or calculate digests. A later native process
-must derive the evidence from immutable verifier and service resources before
-calling this constructor.
+The shared native hosted metadata-request process now acquires immutable
+verifier and service resources, calculates all seven digests, and emits this
+evidence. A small second native tool invokes the constructor and writes the
+successful `WVVR` payload.
 
 ## `WVVE 1` evidence
 
@@ -56,3 +57,10 @@ One focused current-host test executes the interpreter and native backend for
 Windows and Linux, compares each request byte for byte with the frozen C#
 oracle, and covers thirteen malformed evidence cases. C# does not compile the
 production module and remains differential evidence only.
+
+The hosted request wrapper is an exact 17,010-byte native-built WVB with
+SHA-256
+`955907aa104c057d89071ee386d00913c05077bc4463c88a6d14547bd0539fad`.
+It accepts two distinct resource names, reads `WVVE`, requires the exact
+successful `WVVD` response, and writes only the 384-byte request. Retained
+Windows/Linux host containers remain pending.

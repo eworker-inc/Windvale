@@ -167,6 +167,107 @@ fn Metadataˉrequestˉbuild(
     return Request;
 }
 
+fn Verifierˉregionsˉmatchˉplan(
+    Publicationˉrequest: bytes,
+    Layout: bytes,
+    Manifest: bytes,
+    Regionˉbase: u32,
+    Logicalˉbytes: u32
+) -> bool {
+    if Bytesˉlength(Publicationˉrequest) != 96u32 ||
+        Bytesˉlength(Layout) != 104u32 ||
+        Bytesˉreadˉu32ˉlittle(Layout, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Layout, 28u32) != 6u32 ||
+        Regionˉbase < 32u32 ||
+        Regionˉbase + 84u32 != Bytesˉlength(Manifest) {
+        return false;
+    }
+    let Fragmentˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Layout, 20u32);
+    var Expectedˉlogical: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < 7u32 {
+        let Region: u32 = Regionˉbase + Index * 12u32;
+        var Expectedˉbytes: u32 = Fragmentˉbytes;
+        if Index > 0u32 {
+            let Requestˉrecord: u32 = 24u32 + (Index - 1u32) * 12u32;
+            let Placement: u32 = 32u32 + (Index - 1u32) * 12u32;
+            if Bytesˉreadˉu32ˉlittle(Publicationˉrequest, Requestˉrecord) != Index ||
+                Bytesˉreadˉu32ˉlittle(Layout, Placement) != Index {
+                return false;
+            }
+            Expectedˉbytes = Bytesˉreadˉu32ˉlittle(
+                Layout, Placement + 8u32
+            );
+        }
+        if Bytesˉreadˉu32ˉlittle(Manifest, Region) != Index ||
+            Bytesˉreadˉu32ˉlittle(Manifest, Region + 4u32) != Expectedˉlogical ||
+            Bytesˉreadˉu32ˉlittle(Manifest, Region + 8u32) != Expectedˉbytes {
+            return false;
+        }
+        Expectedˉlogical = Expectedˉlogical + Expectedˉbytes;
+        Index = Index + 1u32;
+    }
+    return Expectedˉlogical == Logicalˉbytes;
+}
+
+fn Verifierˉevidenceˉbuild(
+    Inputs: bytes,
+    Publicationˉrequest: bytes,
+    Manifest: bytes,
+    Digests: bytes,
+    Logicalˉbytes: u32,
+    Regionˉbase: u32
+) -> bytes {
+    if Bytesˉlength(Inputs) != 32u32 ||
+        Bytesˉreadˉu32ˉlittle(Inputs, 0u32) != 1230394967u32 ||
+        Bytesˉreadˉu32ˉlittle(Inputs, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Inputs, 8u32) != 32u32 ||
+        Bytesˉreadˉu32ˉlittle(Inputs, 16u32) != 2u32 ||
+        !Metadataˉrequestˉallˉzero(Inputs, 24u32, 8u32) {
+        return Metadataˉrequestˉempty(Inputs);
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Inputs, 12u32);
+    if Target < 1u32 || Target > 2u32 {
+        return Metadataˉrequestˉempty(Inputs);
+    }
+    let Layout = Publication.Nativeˉpublicationˉplan(Publicationˉrequest);
+    if !Verifierˉregionsˉmatchˉplan(
+            Publicationˉrequest,
+            Layout.Value,
+            Manifest,
+            Regionˉbase,
+            Logicalˉbytes
+        ) ||
+        Bytesˉlength(Digests) != 372u32 ||
+        Bytesˉreadˉu32ˉlittle(Digests, 8u32) != 372u32 ||
+        Bytesˉreadˉu32ˉlittle(Digests, 12u32) != Logicalˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Digests, 16u32) != 7u32 ||
+        Bytesˉreadˉu32ˉlittle(Digests, 20u32) != Bytesˉlength(Manifest) {
+        return Metadataˉrequestˉempty(Inputs);
+    }
+
+    var Evidence: bytes = Metadataˉrequestˉempty(Inputs);
+    Evidence = Metadataˉrequestˉappendˉu32(Evidence, 1163286103u32);
+    Evidence = Metadataˉrequestˉappendˉu32(Evidence, 1u32);
+    Evidence = Metadataˉrequestˉappendˉu32(Evidence, 352u32);
+    Evidence = Metadataˉrequestˉappendˉu32(Evidence, Target);
+    Evidence = Metadataˉrequestˉappendˉu32(Evidence, 2u32);
+    Evidence = Metadataˉrequestˉappendˉu32(
+        Evidence, Bytesˉreadˉu32ˉlittle(Inputs, 20u32)
+    );
+    Evidence = Bytesˉconcat(Evidence, Publicationˉrequest);
+    var Index: u32 = 0u32;
+    while Index < 7u32 {
+        Evidence = Bytesˉconcat(
+            Evidence,
+            Bytesˉslice(Digests, 76u32 + Index * 44u32, 32u32)
+        );
+        Index = Index + 1u32;
+    }
+    Evidence = Bytesˉconcat(Evidence, Bytesˉslice(Inputs, 24u32, 8u32));
+    return Evidence;
+}
+
 fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
     let Length: u32 = Bytesˉlength(Left);
     if Length != Bytesˉlength(Right) { return false; }
@@ -288,7 +389,7 @@ export fn Main() -> i32 {
     ) {
         return Reject();
     }
-    let Result: bytes = Metadataˉrequestˉbuild(
+    var Result: bytes = Metadataˉrequestˉbuild(
             Inputs,
             Publicationˉplan,
             Manifest,
@@ -296,10 +397,25 @@ export fn Main() -> i32 {
             Resources.Streamingˉsha256ˉresourceˉlogicalˉbytes(Manifest),
             Resources.Streamingˉsha256ˉresourceˉregionˉbase(Manifest)
         );
-    if Bytesˉlength(Result) != 576u32 {
+    if Bytesˉlength(Inputs) == 32u32 &&
+        Bytesˉreadˉu32ˉlittle(Inputs, 0u32) == 1230394967u32 {
+        Result = Verifierˉevidenceˉbuild(
+            Inputs,
+            Publicationˉplan,
+            Manifest,
+            Digests,
+            Resources.Streamingˉsha256ˉresourceˉlogicalˉbytes(Manifest),
+            Resources.Streamingˉsha256ˉresourceˉregionˉbase(Manifest)
+        );
+    }
+    if Bytesˉlength(Result) != 576u32 && Bytesˉlength(Result) != 352u32 {
         return Reject();
     }
     file.write_bytes(Outputˉpath, Result);
-    console.write_line("hosted metadata request status=Valid bytes=576");
+    if Bytesˉlength(Result) == 352u32 {
+        console.write_line("hosted metadata request status=Valid bytes=352");
+    } else {
+        console.write_line("hosted metadata request status=Valid bytes=576");
+    }
     return 0;
 }
