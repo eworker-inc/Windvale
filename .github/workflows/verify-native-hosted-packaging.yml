@@ -29,8 +29,8 @@ jobs:
         shell: cmd
         run: |
           mkdir "%RUNNER_TEMP%\windvale-current-lowerer"
-          Tools\Native\Build-Wvb.cmd Windvale-Native-X64-Lowering-Tool.wvproj "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.wvb"
-          Tools\Native\Package-Segmented-Compiler-Wvb.cmd 6 "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.wvb" "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.exe"
+          call Tools\Native\Build-Wvb.cmd Windvale-Native-X64-Lowering-Tool.wvproj "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.wvb"
+          call Tools\Native\Package-Segmented-Compiler-Wvb.cmd 6 "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.wvb" "%RUNNER_TEMP%\windvale-current-lowerer\Wvb-To-Wvo.exe"
 
       - name: Export current Windows lowerer candidate
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
