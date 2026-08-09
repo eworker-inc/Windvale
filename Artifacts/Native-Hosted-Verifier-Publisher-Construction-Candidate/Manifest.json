@@ -1,7 +1,7 @@
 {
-  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-4",
+  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-5",
   "status": "candidate",
-  "sourceDecision": "0479",
+  "sourceDecision": "0480",
   "provenanceDecision": "0474",
   "qualification": "current-host-focused",
   "construction": "verified-digest-bound-front-door",
@@ -89,6 +89,13 @@
       "bytes": 13509,
       "sha256": "dfaa0fda9f10843c757ac482ad5988ce79649bf7756a53647bc093b03d0cd089",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj"
+    },
+    {
+      "name": "publisher-windows-materialization",
+      "path": "Publisher-Windows-Materialization.wvb",
+      "bytes": 15431,
+      "sha256": "73786b8bb60f8dc472c8ff111104480e16d1ac46e485125713a3fa4159aee633",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj"
     }
   ]
 }

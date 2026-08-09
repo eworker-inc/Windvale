@@ -1,0 +1,7 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉmaterializationˉbridge profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉwindowsˉmaterialization as Materialization;
+
+export fn Main(Input: bytes) -> bytes {
+    return Materialization.Publisherˉwindowsˉmaterialize(Input);
+}

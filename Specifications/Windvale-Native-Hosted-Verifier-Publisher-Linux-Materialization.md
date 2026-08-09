@@ -51,5 +51,6 @@ This monotonic join avoids repeated replacement of a 250 KiB byte value.
 
 The focused test checks the pinned WVB and base identities, service-free native
 entry, interpreter/native equality, complete final byte equality, final SHA,
-and narrow rejection. Windows PE materialization is the remaining final-writer
-counterpart before pipeline wiring and the broader retirement gates.
+and narrow rejection. [Decision 0480](../Documents/Decisions/0480-Native-WVHV-Publisher-Windows-Materialization.md)
+adds the Windows PE counterpart. Ordinary native pipeline wiring and the
+broader retirement gates remain.

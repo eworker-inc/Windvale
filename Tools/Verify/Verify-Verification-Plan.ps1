@@ -87,6 +87,7 @@ $NativeCases = @(
             'Linker/Windvale/Native-Hosted-Verifier-Publisher-Object-Instantiation-Core.wv',
             'Linker/Windvale/Native-Hosted-Verifier-Publisher-Windows-Imports-Core.wv',
             'Linker/Windvale/Native-Hosted-Verifier-Publisher-Linux-Materialization-Core.wv',
+            'Linker/Windvale/Native-Hosted-Verifier-Publisher-Windows-Materialization-Core.wv',
             'Tools/Windvale.Publish/Native-Hosted-Verifier-Application-Publisher.wv',
             'Tools/Native/Publish-Hosted-Verifier-Application.cmd',
             'Artifacts/Native-Hosted-Verifier-Application-Publisher-Candidate/Manifest.json',
@@ -97,12 +98,14 @@ $NativeCases = @(
             'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.md',
             'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.md',
             'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.md',
+            'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.md',
             'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
             'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Construction-Request.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj',
+            'Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj',
             'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
         )
