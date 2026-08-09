@@ -1,0 +1,9 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉstructureˉbridge profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉstructureˉrequest as Request;
+
+export fn Main(Input: bytes) -> bytes {
+    let Result: Request.Publisherˉstructureˉrequestˉresult =
+        Request.Publisherˉstructureˉrequest(Input);
+    return Result.Value;
+}

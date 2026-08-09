@@ -1,0 +1,48 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉtargetˉrequest profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉtargets as Targets;
+
+export record Publisherˉtargetˉrequestˉresult {
+    Valid: bool;
+    Value: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Publisherˉtargetˉrequest(
+    Structure: bytes
+) -> Publisherˉtargetˉrequestˉresult {
+    if Bytesˉlength(Structure) != 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Structure, 0u32) != 1397773911u32 ||
+        Bytesˉreadˉu32ˉlittle(Structure, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Structure, 8u32) != 128u32 {
+        return Publisherˉtargetˉrequestˉresult(false, Empty(Structure));
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Structure, 12u32);
+    let Count: u32 = Targets.Publisherˉconstructionˉtargetˉcount(Target);
+    if Count == 0u32 {
+        return Publisherˉtargetˉrequestˉresult(false, Empty(Structure));
+    }
+    let Total: u32 = 16u32 + Count * 4u32;
+    var Result: bytes = Empty(Structure);
+    Result = Appendˉu32(Result, 1414551127u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Total);
+    Result = Appendˉu32(Result, Target);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Result = Appendˉu32(
+            Result,
+            Targets.Publisherˉconstructionˉtarget(Target, Index)
+        );
+        Index = Index + 1u32;
+    }
+    if Bytesˉlength(Result) != Total {
+        return Publisherˉtargetˉrequestˉresult(false, Empty(Structure));
+    }
+    return Publisherˉtargetˉrequestˉresult(true, Result);
+}

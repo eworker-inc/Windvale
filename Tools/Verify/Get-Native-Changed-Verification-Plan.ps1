@@ -243,6 +243,10 @@ foreach ($Path in $Paths) {
         'Linker/Windvale/Native-Hosted-Verifier-Application-',
         [StringComparison]::Ordinal)) {
         Add-Suite 'publisher-rejections'
+    } elseif ($Path.StartsWith(
+        'Linker/Windvale/Native-Hosted-Verifier-Publisher-',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'publisher-rejections'
     } elseif ($Path.StartsWith('Linker/Windvale/', [StringComparison]::Ordinal)) {
         Add-Linker-Suites
     } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
@@ -250,6 +254,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tools/Windvale.Publish/', [StringComparison]::Ordinal) -or
         $Path.StartsWith(
             'Artifacts/Native-Hosted-Verifier-Application-',
+            [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Artifacts/Native-Hosted-Verifier-Publisher-',
             [StringComparison]::Ordinal)) {
         Add-Suite 'publisher-rejections'
     } elseif ($Path.StartsWith('Libraries/Database/', [StringComparison]::Ordinal) -or
@@ -267,6 +274,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
         if ($Path.StartsWith(
             'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher',
+            [StringComparison]::Ordinal) -or
+            $Path.StartsWith(
+            'Specifications/Windvale-Native-Hosted-Verifier-Publisher-',
             [StringComparison]::Ordinal)) {
             Add-Suite 'publisher-rejections'
         } elseif ($Path -match 'Assembly|Wva-') {
@@ -288,7 +298,9 @@ foreach ($Path in $Paths) {
         'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
-    )) {
+    ) -or $Path.StartsWith(
+        'Windvale-Native-Hosted-Verifier-Publisher-',
+        [StringComparison]::Ordinal)) {
         Add-Suite 'publisher-rejections'
     } elseif ($Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'seed'

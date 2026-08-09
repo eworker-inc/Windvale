@@ -1,0 +1,90 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉtargets profile portable;
+
+export fn Publisherˉconstructionˉtargetˉcount(Target: u32) -> u32 {
+    if Target == 1u32 { return 44u32; }
+    if Target == 2u32 { return 27u32; }
+    return 0u32;
+}
+
+fn Windowsˉtarget(Index: u32) -> u32 {
+    if Index == 0u32 { return 243851u32; }
+    if Index == 1u32 { return 263216u32; }
+    if Index == 2u32 { return 262144u32; }
+    if Index == 3u32 { return 137695232u32; }
+    if Index == 4u32 { return 258048u32; }
+    if Index == 5u32 { return 141889536u32; }
+    if Index == 6u32 { return 258312u32; }
+    if Index == 7u32 { return 136646656u32; }
+    if Index == 8u32 { return 11193u32; }
+    if Index == 9u32 { return 8192u32; }
+    if Index == 10u32 { return 8981u32; }
+    if Index == 11u32 { return 258264u32; }
+    if Index == 12u32 { return 331776u32; }
+    if Index == 13u32 { return 240928u32; }
+    if Index == 14u32 { return 243328u32; }
+    if Index == 15u32 { return 241296u32; }
+    if Index == 16u32 { return 241216u32; }
+    if Index == 17u32 { return 241200u32; }
+    if Index == 18u32 { return 258160u32; }
+    if Index == 19u32 { return 242528u32; }
+    if Index == 20u32 { return 328752u32; }
+    if Index == 21u32 { return 2428928u32; }
+    if Index == 22u32 { return 254192u32; }
+    if Index == 23u32 { return 254336u32; }
+    if Index == 24u32 { return 254200u32; }
+    if Index == 25u32 { return 254208u32; }
+    if Index == 26u32 { return 254216u32; }
+    if Index == 27u32 { return 254224u32; }
+    if Index == 28u32 { return 254232u32; }
+    if Index == 29u32 { return 254240u32; }
+    if Index == 30u32 { return 254248u32; }
+    if Index == 31u32 { return 254256u32; }
+    if Index == 32u32 { return 254264u32; }
+    if Index == 33u32 { return 254320u32; }
+    if Index == 34u32 { return 254272u32; }
+    if Index == 35u32 { return 254280u32; }
+    if Index == 36u32 { return 254288u32; }
+    if Index == 37u32 { return 254296u32; }
+    if Index == 38u32 { return 254304u32; }
+    if Index == 39u32 { return 250536u32; }
+    if Index == 40u32 { return 250537u32; }
+    if Index == 41u32 { return 250573u32; }
+    if Index == 42u32 { return 248896u32; }
+    return 250186u32;
+}
+
+fn Linuxˉtarget(Index: u32) -> u32 {
+    if Index == 0u32 { return 142929980u32; }
+    if Index == 1u32 { return 250928u32; }
+    if Index == 2u32 { return 249856u32; }
+    if Index == 3u32 { return 137682944u32; }
+    if Index == 4u32 { return 245760u32; }
+    if Index == 5u32 { return 141877248u32; }
+    if Index == 6u32 { return 246024u32; }
+    if Index == 7u32 { return 136634368u32; }
+    if Index == 8u32 { return 11193u32; }
+    if Index == 9u32 { return 8192u32; }
+    if Index == 10u32 { return 8981u32; }
+    if Index == 11u32 { return 245976u32; }
+    if Index == 12u32 { return 319488u32; }
+    if Index == 13u32 { return 240928u32; }
+    if Index == 14u32 { return 243056u32; }
+    if Index == 15u32 { return 241248u32; }
+    if Index == 16u32 { return 241168u32; }
+    if Index == 17u32 { return 241152u32; }
+    if Index == 18u32 { return 245872u32; }
+    if Index == 19u32 { return 242256u32; }
+    if Index == 20u32 { return 316464u32; }
+    if Index == 21u32 { return 2416640u32; }
+    if Index == 22u32 { return 142934936u32; }
+    if Index == 23u32 { return 142934937u32; }
+    if Index == 24u32 { return 142934973u32; }
+    if Index == 25u32 { return 142933296u32; }
+    return 142934586u32;
+}
+
+export fn Publisherˉconstructionˉtarget(Target: u32, Index: u32) -> u32 {
+    if Target == 1u32 && Index < 44u32 { return Windowsˉtarget(Index); }
+    if Target == 2u32 && Index < 27u32 { return Linuxˉtarget(Index); }
+    return 0u32;
+}

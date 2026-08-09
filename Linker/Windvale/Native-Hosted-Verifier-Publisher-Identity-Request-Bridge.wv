@@ -1,0 +1,29 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉidentityˉbridge profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉidentityˉrequest as Request;
+
+fn Resource(Input: bytes, Index: u32) -> bytes {
+    if Bytesˉlength(Input) < 64u32 { return Bytesˉslice(Input, 0u32, 0u32); }
+    let Record: u32 = 16u32 + Index * 8u32;
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, Record);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Record + 4u32);
+    if Offset > Bytesˉlength(Input) || Length > Bytesˉlength(Input) - Offset {
+        return Bytesˉslice(Input, 0u32, 0u32);
+    }
+    return Bytesˉslice(Input, Offset, Length);
+}
+
+export fn Main(Input: bytes) -> bytes {
+    if Bytesˉlength(Input) < 64u32 { return Bytesˉslice(Input, 0u32, 0u32); }
+    let Result: Request.Publisherˉidentityˉrequestˉresult =
+        Request.Publisherˉidentityˉrequest(
+            Bytesˉreadˉu32ˉlittle(Input, 12u32),
+            Resource(Input, 0u32),
+            Resource(Input, 1u32),
+            Resource(Input, 2u32),
+            Resource(Input, 3u32),
+            Resource(Input, 4u32),
+            Resource(Input, 5u32)
+        );
+    return Result.Value;
+}

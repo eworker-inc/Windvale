@@ -1,0 +1,125 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉidentityˉrequest profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha;
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉdigests as Digests;
+
+export record Publisherˉidentityˉrequestˉresult {
+    Valid: bool;
+    Value: bytes;
+    Failureˉinput: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Failure(Input: bytes, Field: u32) -> Publisherˉidentityˉrequestˉresult {
+    return Publisherˉidentityˉrequestˉresult(false, Empty(Input), Field);
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Digest(Input: bytes) -> bytes {
+    var State: Sha.Foundationˉsha256ˉstream =
+        Sha.Foundationˉsha256ˉbegin(Input);
+    State = Sha.Foundationˉsha256ˉupdate(State, Input);
+    return Sha.Foundationˉsha256ˉfinishˉraw(State);
+}
+
+fn Identityˉmatches(
+    Input: bytes,
+    Length: u32,
+    Identity: u32,
+    Target: u32
+) -> bool {
+    if Bytesˉlength(Input) != Length { return false; }
+    let Actual: bytes = Digest(Input);
+    let Expected: bytes = Digests.Publisherˉconstructionˉexpectedˉdigest(
+        Input, Identity, Target
+    );
+    if Bytesˉlength(Actual) != 32u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        if Bytesˉreadˉu8(Actual, Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Appendˉresourceˉrecord(
+    Header: bytes,
+    Offset: u32,
+    Resource: bytes
+) -> bytes {
+    var Result: bytes = Appendˉu32(Header, Offset);
+    return Appendˉu32(Result, Bytesˉlength(Resource));
+}
+
+export fn Publisherˉidentityˉrequest(
+    Target: u32,
+    Module: bytes,
+    Publisherˉobject: bytes,
+    Startupˉobject: bytes,
+    Adapterˉobject: bytes,
+    Sha256ˉobject: bytes,
+    Metadata: bytes
+) -> Publisherˉidentityˉrequestˉresult {
+    if Target != 1u32 && Target != 2u32 { return Failure(Module, 0u32); }
+    var Startupˉbytes: u32 = 168u32;
+    var Adapterˉbytes: u32 = 9544u32;
+    if Target == 2u32 {
+        Startupˉbytes = 164u32;
+        Adapterˉbytes = 5507u32;
+    }
+    if !Identityˉmatches(Module, 29170u32, 1u32, Target) {
+        return Failure(Module, 1u32);
+    }
+    if !Identityˉmatches(Publisherˉobject, 233804u32, 2u32, Target) {
+        return Failure(Module, 2u32);
+    }
+    if !Identityˉmatches(Startupˉobject, Startupˉbytes, 3u32, Target) {
+        return Failure(Module, 3u32);
+    }
+    if !Identityˉmatches(Adapterˉobject, Adapterˉbytes, 4u32, Target) {
+        return Failure(Module, 4u32);
+    }
+    if !Identityˉmatches(Sha256ˉobject, 2176u32, 5u32, Target) {
+        return Failure(Module, 5u32);
+    }
+    if !Identityˉmatches(Metadata, 128u32, 6u32, Target) {
+        return Failure(Module, 6u32);
+    }
+
+    let Total: u32 = 64u32 + 29170u32 + 233804u32 +
+        Startupˉbytes + Adapterˉbytes + 2176u32 + 128u32;
+    var Result: bytes = Empty(Module);
+    Result = Appendˉu32(Result, 1230001751u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Total);
+    Result = Appendˉu32(Result, Target);
+    var Offset: u32 = 64u32;
+    Result = Appendˉresourceˉrecord(Result, Offset, Module);
+    Offset = Offset + Bytesˉlength(Module);
+    Result = Appendˉresourceˉrecord(Result, Offset, Publisherˉobject);
+    Offset = Offset + Bytesˉlength(Publisherˉobject);
+    Result = Appendˉresourceˉrecord(Result, Offset, Startupˉobject);
+    Offset = Offset + Bytesˉlength(Startupˉobject);
+    Result = Appendˉresourceˉrecord(Result, Offset, Adapterˉobject);
+    Offset = Offset + Bytesˉlength(Adapterˉobject);
+    Result = Appendˉresourceˉrecord(Result, Offset, Sha256ˉobject);
+    Offset = Offset + Bytesˉlength(Sha256ˉobject);
+    Result = Appendˉresourceˉrecord(Result, Offset, Metadata);
+    if Bytesˉlength(Result) != 64u32 { return Failure(Module, 7u32); }
+    Result = Bytesˉconcat(Result, Module);
+    Result = Bytesˉconcat(Result, Publisherˉobject);
+    Result = Bytesˉconcat(Result, Startupˉobject);
+    Result = Bytesˉconcat(Result, Adapterˉobject);
+    Result = Bytesˉconcat(Result, Sha256ˉobject);
+    Result = Bytesˉconcat(Result, Metadata);
+    if Bytesˉlength(Result) != Total { return Failure(Module, 8u32); }
+    return Publisherˉidentityˉrequestˉresult(true, Result, Total);
+}

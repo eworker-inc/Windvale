@@ -1,0 +1,82 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉidentityˉrequestˉtool profile hosted;
+
+import Foundationˉdecimalˉparsing as Decimal;
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉidentityˉrequest as Request;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    if Bytesˉlength(Leftˉbytes) != Bytesˉlength(Rightˉbytes) {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Leftˉbytes) {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostverifieridentity <target:1|2> <publisher.wvb> <publisher.wvo> <startup.wvo> <adapter.wvo> <sha256.wvo> <metadata.wvvp> <identity.wvpi>"
+    );
+    return 64;
+}
+
+fn Reject() -> i32 {
+    diagnostic.write_line("publisher identity request status=Rejected");
+    return 2;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 8u32 { return Usage(); }
+    let Outputˉpath: text = process.argument(7u32);
+    var Index: u32 = 1u32;
+    while Index < 7u32 {
+        if Pathsˉareˉequal(process.argument(Index), Outputˉpath) {
+            return Usage();
+        }
+        var Prior: u32 = 1u32;
+        while Prior < Index {
+            if Pathsˉareˉequal(process.argument(Index), process.argument(Prior)) {
+                return Reject();
+            }
+            Prior = Prior + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    let Targetˉtext: bytes = Textˉtoˉutf8(process.argument(0u32));
+    let Target: Decimal.Foundationˉu32ˉparse =
+        Decimal.Foundationˉu32ˉdecimalˉparse(
+            Targetˉtext, 0u32, Bytesˉlength(Targetˉtext)
+        );
+    if !Target.Valid { return Reject(); }
+    let Result: Request.Publisherˉidentityˉrequestˉresult =
+        Request.Publisherˉidentityˉrequest(
+            Target.Value,
+            file.read_bytes(process.argument(1u32)),
+            file.read_bytes(process.argument(2u32)),
+            file.read_bytes(process.argument(3u32)),
+            file.read_bytes(process.argument(4u32)),
+            file.read_bytes(process.argument(5u32)),
+            file.read_bytes(process.argument(6u32))
+        );
+    if !Result.Valid { return Reject(); }
+    file.write_bytes(Outputˉpath, Result.Value);
+    console.write_line(
+        Textˉconcat(
+            "publisher identity request status=Valid bytes=",
+            U32ˉformat(Bytesˉlength(Result.Value))
+        )
+    );
+    return 0;
+}

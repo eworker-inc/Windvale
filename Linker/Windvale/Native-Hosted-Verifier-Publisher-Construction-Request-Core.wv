@@ -1,0 +1,160 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉrequest profile portable;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉdigests as Digests;
+
+export record Publisherˉconstructionˉrequestˉresult {
+    Valid: bool;
+    Value: bytes;
+    Failureˉinput: u32;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Failure(Input: bytes, Field: u32) -> Publisherˉconstructionˉrequestˉresult {
+    return Publisherˉconstructionˉrequestˉresult(
+        false, Empty(Input), Field
+    );
+}
+
+fn Appendˉu32(Output: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Structureˉisˉvalid(Input: bytes) -> bool {
+    if Bytesˉlength(Input) != 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1397773911u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) != 128u32 {
+        return false;
+    }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Target != 1u32 && Target != 2u32 { return false; }
+    var Identityˉbytes: u32 = 275054u32;
+    if Target == 2u32 {
+        Identityˉbytes = 271013u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Input, 16u32) == 29170u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) == 233804u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) == 3001u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) == 789u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 112u32) == Identityˉbytes &&
+        Bytesˉreadˉu32ˉlittle(Input, 116u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 120u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 124u32) == 0u32;
+}
+
+export fn Publisherˉconstructionˉrequest(
+    Structure: bytes
+) -> Publisherˉconstructionˉrequestˉresult {
+    if !Structureˉisˉvalid(Structure) { return Failure(Structure, 0u32); }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Structure, 12u32);
+
+    var Bundleˉbytes: u32 = 235394u32;
+    var Startupˉwvoˉbytes: u32 = 168u32;
+    var Adapterˉwvoˉbytes: u32 = 9544u32;
+    var Adapterˉimageˉbytes: u32 = 5286u32;
+    var Adapterˉsymbols: u32 = 46u32;
+    var Adapterˉrelocations: u32 = 111u32;
+    var Adapterˉfile: u32 = 240016u32;
+    var Adapterˉaddress: u32 = 243600u32;
+    var Sha256ˉfile: u32 = 245312u32;
+    var Sha256ˉaddress: u32 = 248896u32;
+    var Metadataˉfile: u32 = 252896u32;
+    var Metadataˉaddress: u32 = 259552u32;
+    var Outputˉbytes: u32 = 256000u32;
+    var Imageˉend: u32 = 143994880u32;
+    var Importˉpageˉbytes: u32 = 4096u32;
+    var Platformˉimports: u32 = 17u32;
+    var Adapterˉimports: u32 = 43u32;
+    var Targetˉbindings: u32 = 44u32;
+    var Adapterˉexport: u32 = 251u32;
+    var Mutationˉflags: u32 = 63u32;
+    if Target == 2u32 {
+        Bundleˉbytes = 235077u32;
+        Startupˉwvoˉbytes = 164u32;
+        Adapterˉwvoˉbytes = 5507u32;
+        Adapterˉimageˉbytes = 3363u32;
+        Adapterˉsymbols = 28u32;
+        Adapterˉrelocations = 49u32;
+        Adapterˉfile = 249856u32;
+        Adapterˉaddress = 142929920u32;
+        Sha256ˉfile = 253232u32;
+        Sha256ˉaddress = 142933296u32;
+        Metadataˉfile = 247264u32;
+        Metadataˉaddress = 247264u32;
+        Outputˉbytes = 254917u32;
+        Imageˉend = 142934981u32;
+        Importˉpageˉbytes = 0u32;
+        Platformˉimports = 0u32;
+        Adapterˉimports = 26u32;
+        Targetˉbindings = 27u32;
+        Adapterˉexport = 60u32;
+        Mutationˉflags = 207u32;
+    }
+
+    var Result: bytes = Empty(Structure);
+    Result = Appendˉu32(Result, 1380144727u32);
+    Result = Appendˉu32(Result, 1u32);
+    let Total: u32 = 416u32;
+    Result = Appendˉu32(Result, Total);
+    Result = Appendˉu32(Result, Target);
+    Result = Appendˉu32(Result, 6u32);
+    Result = Appendˉu32(Result, Targetˉbindings);
+    Result = Appendˉu32(Result, Mutationˉflags);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 29170u32);
+    Result = Appendˉu32(Result, 233804u32);
+    Result = Appendˉu32(Result, 232448u32);
+    Result = Appendˉu32(Result, 288u32);
+    Result = Appendˉu32(Result, 3001u32);
+    Result = Appendˉu32(Result, 789u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, 27u32);
+    Result = Appendˉu32(Result, 5u32);
+    Result = Appendˉu32(Result, Bundleˉbytes);
+    Result = Appendˉu32(Result, Startupˉwvoˉbytes);
+    Result = Appendˉu32(Result, 5u32);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Appendˉu32(Result, Adapterˉwvoˉbytes);
+    Result = Appendˉu32(Result, Adapterˉimageˉbytes);
+    Result = Appendˉu32(Result, Adapterˉsymbols);
+    Result = Appendˉu32(Result, Adapterˉrelocations);
+    Result = Appendˉu32(Result, 2176u32);
+    Result = Appendˉu32(Result, 1685u32);
+    Result = Appendˉu32(Result, 1350u32);
+    Result = Appendˉu32(Result, 333u32);
+    Result = Appendˉu32(Result, 7u32);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, Adapterˉfile);
+    Result = Appendˉu32(Result, Adapterˉaddress);
+    Result = Appendˉu32(Result, Sha256ˉfile);
+    Result = Appendˉu32(Result, Sha256ˉaddress);
+    Result = Appendˉu32(Result, Metadataˉfile);
+    Result = Appendˉu32(Result, Metadataˉaddress);
+    Result = Appendˉu32(Result, Outputˉbytes);
+    Result = Appendˉu32(Result, Imageˉend);
+    Result = Appendˉu32(Result, Importˉpageˉbytes);
+    Result = Appendˉu32(Result, Platformˉimports);
+    Result = Appendˉu32(Result, Adapterˉimports);
+    Result = Appendˉu32(Result, Adapterˉexport);
+    Result = Appendˉu32(Result, 4096u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 0u32);
+    var Digestˉidentity: u32 = 1u32;
+    while Digestˉidentity < 8u32 {
+        Result = Bytesˉconcat(
+            Result,
+            Digests.Publisherˉconstructionˉexpectedˉdigest(
+                Structure, Digestˉidentity, Target
+            )
+        );
+        Digestˉidentity = Digestˉidentity + 1u32;
+    }
+    if Bytesˉlength(Result) != Total { return Failure(Structure, 7u32); }
+    return Publisherˉconstructionˉrequestˉresult(true, Result, Total);
+}

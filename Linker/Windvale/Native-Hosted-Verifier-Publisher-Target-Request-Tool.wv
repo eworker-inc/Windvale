@@ -1,0 +1,48 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉtargetˉrequestˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉtargetˉrequest as Request;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    if Bytesˉlength(Leftˉbytes) != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Leftˉbytes) {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) != Bytesˉreadˉu8(Rightˉbytes, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Usage() -> i32 {
+    diagnostic.write_line("Usage: wvhostverifiertargets <structure.wvps> <targets.wvpt>");
+    return 64;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Inputˉpath: text = process.argument(0u32);
+    let Outputˉpath: text = process.argument(1u32);
+    if Pathsˉareˉequal(Inputˉpath, Outputˉpath) { return Usage(); }
+    let Result: Request.Publisherˉtargetˉrequestˉresult =
+        Request.Publisherˉtargetˉrequest(file.read_bytes(Inputˉpath));
+    if !Result.Valid {
+        diagnostic.write_line("publisher target request status=Rejected");
+        return 2;
+    }
+    file.write_bytes(Outputˉpath, Result.Value);
+    console.write_line(
+        Textˉconcat(
+            "publisher target request status=Valid bytes=",
+            U32ˉformat(Bytesˉlength(Result.Value))
+        )
+    );
+    return 0;
+}

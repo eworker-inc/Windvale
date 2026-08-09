@@ -1,0 +1,73 @@
+{
+  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0476",
+  "provenanceDecision": "0474",
+  "qualification": "current-host-focused",
+  "construction": "verified-digest-bound-front-door",
+  "artifacts": [
+    {
+      "name": "publisher-native-object",
+      "path": "Publisher.wvo",
+      "bytes": 233804,
+      "sha256": "ef0f5e49a07450e3d957e5576f819201849b705097bfbf75432c76d2c438ec23",
+      "sourceWvb": "../Native-Hosted-Verifier-Application-Publisher-Candidate/Hosted-Verifier-Application-Publisher.wvb"
+    },
+    {
+      "name": "publisher-identity-request",
+      "path": "Publisher-Identity-Request.wvb",
+      "bytes": 39914,
+      "sha256": "de7460b69c969a1b7840fae8db412d180b5baa42b511f56b03e58ab2dafd77e0",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Identity-Request.wvproj"
+    },
+    {
+      "name": "publisher-identity-request-tool",
+      "path": "Publisher-Identity-Request-Tool.wvb",
+      "bytes": 42707,
+      "sha256": "cc72e9164d3ce88e54da9148c02ea352558da79369e85b68765a90fe2f9cdfc9",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Identity-Request-Tool.wvproj"
+    },
+    {
+      "name": "publisher-structure-request",
+      "path": "Publisher-Structure-Request.wvb",
+      "bytes": 18050,
+      "sha256": "d6bcb2717fd7d3f22ab10adca46ab9caccd3e84c25cc7407c875fe094d0ebcd1",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Structure-Request.wvproj"
+    },
+    {
+      "name": "publisher-structure-request-tool",
+      "path": "Publisher-Structure-Request-Tool.wvb",
+      "bytes": 19420,
+      "sha256": "698e95f1489887c4415faa4df1d846c48d797988783ee25961135b5412cbf17f",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Structure-Request-Tool.wvproj"
+    },
+    {
+      "name": "publisher-construction-request",
+      "path": "Publisher-Construction-Request.wvb",
+      "bytes": 14045,
+      "sha256": "d2860a6f2452ccf7ebb6bb4b56b3b100816781c2683098b816b158af72f0467f",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Construction-Request.wvproj"
+    },
+    {
+      "name": "publisher-construction-request-tool",
+      "path": "Publisher-Construction-Request-Tool.wvb",
+      "bytes": 15554,
+      "sha256": "43469dcbfca8796850d47aa570edc56e6376aa35fb5aa003d4900a86275ea0b9",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Construction-Request-Tool.wvproj"
+    },
+    {
+      "name": "publisher-target-request",
+      "path": "Publisher-Target-Request.wvb",
+      "bytes": 7960,
+      "sha256": "c4c7989d8d5983f732a95b9a1b5b1856fd0a4f69708ac2f3a99b38d5b26079b4",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Target-Request.wvproj"
+    },
+    {
+      "name": "publisher-target-request-tool",
+      "path": "Publisher-Target-Request-Tool.wvb",
+      "bytes": 9390,
+      "sha256": "5aa93fda0727d4519c34b7b0c790ecc60da38ce85ea0203bb58a2661854e27e5",
+      "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj"
+    }
+  ]
+}
