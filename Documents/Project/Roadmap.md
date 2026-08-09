@@ -174,6 +174,9 @@ construction, leaving eight frozen producers.
 [Decision 0449](../Decisions/0449-Native-Probe-40-Admission-Bridge-Producer.md)
 consolidates that producer with the WVB admission-bridge recipe, leaving seven
 frozen producers without retaining a second host package.
+[Decision 0450](../Decisions/0450-Native-Probe-40-Native-Bridge-And-Support-Producer.md)
+adds the native bridge/support recipe to the same bounded producer, leaving six
+frozen producers and keeping its source at a reviewable 211 lines.
 Linux execution and the remaining producer transfers stay pending.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.

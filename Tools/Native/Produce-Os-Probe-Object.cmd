@@ -11,6 +11,9 @@ if "%~1"=="exceptions" (
 ) else if "%~1"=="wvb-admission-bridge" (
     set "ExpectedBytes=484"
     set "ExpectedDigest=271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d"
+) else if "%~1"=="native-bridge-and-support" (
+    set "ExpectedBytes=461"
+    set "ExpectedDigest=472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b"
 ) else goto :usage
 
 set "Output=%~f2"
@@ -31,11 +34,11 @@ if not exist "%Producer%" (
     >&2 echo The Windows native OS Probe object producer is missing.
     exit /b 1
 )
-for %%F in ("%Producer%") do if not "%%~zF"=="413696" (
+for %%F in ("%Producer%") do if not "%%~zF"=="434688" (
     >&2 echo The Windows native OS Probe object producer length is invalid.
     exit /b 1
 )
-certutil -hashfile "%Producer%" SHA256 | findstr /i /x /c:"895237d4a651b4fb0a8a458a7bfa55f952c0364304d6e2af3f30fdc945ba5889" >nul
+certutil -hashfile "%Producer%" SHA256 | findstr /i /x /c:"8e4c93a79584873b4cbf3884837f33f94e2909d0a8b99745739fb17dfed283cf" >nul
 if errorlevel 1 (
     >&2 echo The Windows native OS Probe object producer digest is invalid.
     exit /b 1
@@ -54,5 +57,5 @@ if exist "%Output%" del /f /q "%Output%" >nul 2>nul
 exit /b 1
 
 :usage
->&2 echo Usage: Tools\Native\Produce-Os-Probe-Object.cmd ^<exceptions^|wvb-admission-bridge^> ^<output.wvo^>
+>&2 echo Usage: Tools\Native\Produce-Os-Probe-Object.cmd ^<exceptions^|wvb-admission-bridge^|native-bridge-and-support^> ^<output.wvo^>
 exit /b 64

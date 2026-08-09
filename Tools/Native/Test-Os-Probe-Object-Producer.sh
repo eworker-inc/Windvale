@@ -19,6 +19,7 @@ trap cleanup EXIT
 
 exceptions="$temporary_directory/09-exceptions.wvo"
 admission="$temporary_directory/12-wvb-admission-bridge.wvo"
+native_bridge="$temporary_directory/13-native-bridge-and-support.wvo"
 existing="$temporary_directory/Existing.wvo"
 unknown="$temporary_directory/Unknown.wvo"
 invalid="$temporary_directory/Invalid.bin"
@@ -42,6 +43,11 @@ verify_output "$admission" 484 \
     271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d || exit 1
 "$script_directory/Verify-Wvo.sh" "$admission" >/dev/null 2>&1 || exit 1
 
+"$script_directory/Produce-Os-Probe-Object.sh" native-bridge-and-support "$native_bridge" >/dev/null 2>&1 || exit 1
+verify_output "$native_bridge" 461 \
+    472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b || exit 1
+"$script_directory/Verify-Wvo.sh" "$native_bridge" >/dev/null 2>&1 || exit 1
+
 printf '%s\n' preserved > "$existing"
 existing_sha256=$(sha256sum -- "$existing") || exit 1
 existing_sha256=${existing_sha256%% *}
@@ -63,4 +69,4 @@ if [[ $invalid_status -ne 64 || -e $invalid ]]; then
     exit 1
 fi
 
-echo 'Tests: 5, Passed: 5, Failed: 0'
+echo 'Tests: 6, Passed: 6, Failed: 0'

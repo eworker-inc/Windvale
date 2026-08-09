@@ -25,6 +25,7 @@ invalid result, and require the recipe's complete output identity.
 | --- | --- | ---: | --- |
 | `exceptions` | `09-exceptions.wvo` | 483 | `9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c` |
 | `wvb-admission-bridge` | `12-wvb-admission-bridge.wvo` | 484 | `271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d` |
+| `native-bridge-and-support` | `13-native-bridge-and-support.wvo` | 461 | `472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b` |
 
 The exception recipe is defined by the focused
 [x64 exception-object contract](Windvale-X64-Exception-Object-Producer.md).
@@ -34,7 +35,13 @@ The admission bridge contains one 162-byte `.text.admission` section, exports
 `Windvale_kernel_x64_process_enter`, and carries relative-i32 relocations at
 offsets 106, 125, and 148 with addend `-4`.
 
-Both recipes contain only reviewed architecture-specific code bytes and explicit
+The native bridge and support recipe contains a 143-byte `.text.native` section
+and a 23-byte `.text.support` section. It exports
+`Windvale_kernel_x64_native_probe` and `Windvale_kernel_x64_write_byte`, imports
+`Main` and `Windvale_kernel_main`, and carries relative-i32 relocations at
+offsets 106 and 129 with addend `-4`.
+
+All three recipes contain only reviewed architecture-specific code bytes and explicit
 WVO records. Each complete candidate is admitted through the shared portable
 WVO verifier before host publication. A new recipe requires its own exact ABI,
 identity, focused cases, and normal-link evidence; the selector is not an open
@@ -44,11 +51,11 @@ extension or compatibility registry.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `Os-Probe-Object-Producer.wvb` | 38,229 | `41696bba17570dda638abf9c0f58938950d8363b1f5044cb6dcf619b25d54cce` |
-| Windows x64 application | 413,696 | `895237d4a651b4fb0a8a458a7bfa55f952c0364304d6e2af3f30fdc945ba5889` |
-| Linux x64 application | 413,696 | `4c651c82379d3dc7f83781504182f33e3931b1b9e50a2574c23eb08faf3066bf` |
+| `Os-Probe-Object-Producer.wvb` | 40,025 | `889da93916e6387e35d11502c432ee5a661b5eefdc9772a0692235e846bfccfe` |
+| Windows x64 application | 434,688 | `8e4c93a79584873b4cbf3884837f33f94e2909d0a8b99745739fb17dfed283cf` |
+| Linux x64 application | 434,176 | `4ae292f582b309b0ce0fad9ccf90a5f115cf46f5f3ff489f587d313cb97231c5` |
 
-The five-case fixed lane requires both exact outputs plus independent WVO
+The six-case fixed lane requires all three exact outputs plus independent WVO
 admission, existing-destination preservation, unknown-kind rejection, and
 invalid-extension rejection. These fixed native expectations remain executable
 after the managed recovery generators are archived or removed.
