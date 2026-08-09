@@ -633,8 +633,10 @@ their paired applications; the reviewed launcher sequences only native tools,
 uses one private temporary directory, and reproduces the independent hosted
 container byte for byte. Its end-to-end run also corrected a previously hidden
 logical-source versus aligned-image metadata mismatch and added a focused
-alignment-gap test. Linux execution, focused failure preservation, artifact
-promotion, managed-entry-point cutover, and the grouped gate remain.
+alignment-gap test. A paired .NET-free smoke script now also fixes exact output,
+invalid-WVB preservation, and private-cleanup checks; its Windows half passes
+2/2. Linux execution, artifact promotion, managed-entry-point cutover, and the
+grouped gate remain.
 
 Decision 0329 further advances T1 with a separate five-case unsafe-WVB matrix:
 both digest-bound read-only launchers require exact semantic or typed-execution

@@ -1,0 +1,44 @@
+name: Verify native hosted packaging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-hosted-packaging:
+    name: Windows native hosted packaging
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify native hosted packaging
+        shell: cmd
+        run: Tools\Native\Test-Hosted-Wvb-Packaging.cmd
+
+  linux-hosted-packaging:
+    name: Linux native hosted packaging
+    runs-on: ubuntu-latest
+    container:
+      image: debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
+    timeout-minutes: 5
+    steps:
+      - name: Prepare Debian host
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends ca-certificates git
+
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify native hosted packaging
+        shell: bash
+        run: ./Tools/Native/Test-Hosted-Wvb-Packaging.sh

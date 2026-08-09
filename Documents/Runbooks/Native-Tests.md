@@ -413,6 +413,30 @@ No .NET process is required by these commands. The host dependencies are
 `cmd.exe`, `certutil`, `fsutil`, and `tar` on Windows, or Bash, `sha256sum`,
 `base64`, `tar`, `cmp`, `truncate`, and core utilities on Linux.
 
+## Hosted-container composition
+
+After reviewing the launcher, candidate inventory, and the two focused cases,
+run exactly one host-specific command:
+
+```powershell
+Tools\Native\Test-Hosted-Wvb-Packaging.cmd
+```
+
+```sh
+./Tools/Native/Test-Hosted-Wvb-Packaging.sh
+```
+
+The first case must reproduce the pinned orchestration-control application
+byte for byte through the complete native hosted-container path. The second
+must reject a fixed invalid WVB, preserve that input and a pre-existing
+destination exactly, and leave no private package directory. The terminal
+summary is `Tests: 2, Passed: 2, Failed: 0`.
+
+These commands are separate from the fixed retirement-suite coordinator until
+the hosted-container candidate is promoted. Run the Windows and Linux halves
+from the same fetched commit during the final grouped gate; do not run one host
+script repeatedly or use a passing Windows result as Linux execution evidence.
+
 ## Current boundary
 
 The 986-case coordinator is a candidate fixed native gate, not the complete normal

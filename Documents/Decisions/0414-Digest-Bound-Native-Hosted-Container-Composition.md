@@ -49,6 +49,12 @@ exactly equal to the separately constructed candidate. No CLR, hostfxr, or
 hostpolicy process participates in this ordinary launcher. No broad verifier
 ran, in accordance with the grouped end-of-goal verification policy.
 
+The paired focused smoke scripts keep success and rejection evidence outside
+managed test code. The Windows script passes 2/2 in 13.1 seconds: exact package
+equality, then invalid-WVB rejection with input/destination preservation and no
+private scratch. Git Bash accepts both Linux scripts syntactically; this host
+has no Linux execution environment, so genuine ELF evidence remains pending.
+
 This is a candidate rather than an ordinary-path promotion. Linux process
 execution must pass from the same inventory, both launchers need focused
 failure/preservation checks, and the complete containing commit must pass the

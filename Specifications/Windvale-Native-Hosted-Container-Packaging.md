@@ -63,6 +63,21 @@ guarded to that exact private path and runs after success or failure. The final
 publisher preserves an existing destination unless complete segment-set
 admission and the durable platform transaction succeed.
 
+## Focused verification
+
+```text
+Tools\Native\Test-Hosted-Wvb-Packaging.cmd
+./Tools/Native/Test-Hosted-Wvb-Packaging.sh
+```
+
+Each host test packages the pinned orchestration-control WVB and requires exact
+equality with the corresponding independent candidate. It then supplies a
+fixed invalid `.wvb`, requires rejection, and verifies that both the input and
+a pre-existing destination remain byte-identical. The test redirects the
+launcher's temporary root into its own private directory and rejects any
+remaining package scratch. These two cases are the focused composition check;
+they do not replace malformed-format suites or the final qualification gate.
+
 The Windows candidate composes `wvhostcontrol.wvb` into a 236,032-byte PE with
 SHA-256 `eeec7c229b20ac006ed366849c91e2f03e035a9e3ee29da2e9aeb408c76b2709`,
 byte-for-byte equal to the independently constructed candidate. Linux process
