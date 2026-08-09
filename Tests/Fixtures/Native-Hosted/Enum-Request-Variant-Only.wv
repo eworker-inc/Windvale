@@ -1,0 +1,28 @@
+module Nativeˉhostedˉenumˉrequestˉvariantˉonly profile portable;
+
+record Nativeˉhostedˉenumˉpayload {
+    Value: i32;
+}
+
+variant Nativeˉhostedˉenumˉresult {
+    Found(Value: Nativeˉhostedˉenumˉpayload);
+    Missing;
+}
+
+fn Nativeˉhostedˉenumˉvalue() -> Nativeˉhostedˉenumˉresult {
+    return Nativeˉhostedˉenumˉresult.Found(Nativeˉhostedˉenumˉpayload(42));
+}
+
+export fn Main() -> i32 {
+    let Result: Nativeˉhostedˉenumˉresult = Nativeˉhostedˉenumˉvalue();
+    var Value: i32 = 0;
+    match Result {
+        case Nativeˉhostedˉenumˉresult.Found(Payload) {
+            Value = Payload.Value;
+        }
+        case Nativeˉhostedˉenumˉresult.Missing {
+            Value = -1;
+        }
+    }
+    return Value;
+}

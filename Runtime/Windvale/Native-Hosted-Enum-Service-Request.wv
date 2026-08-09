@@ -141,7 +141,7 @@ export fn Nativeˉhostedˉenumˉrequestˉbuild(
     let Section: Nativeˉhostedˉtypesˉsection = Typesˉsection(Input);
     if !Section.Valid { return Invalid(Input); }
     let Nominals: Types.Compilerˉnativeˉx64ˉtypes =
-        Types.Compilerˉnativeˉx64ˉtypesˉread(
+        Types.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
             Input, Section.Offset, Section.Length
         );
     if !Nominals.Valid || Nominals.Count == 0u32 {
@@ -168,8 +168,6 @@ export fn Nativeˉhostedˉenumˉrequestˉbuild(
         }
         Typeˉindex = Typeˉindex + 1u32;
     }
-    if Members == 0u32 { return Invalid(Input); }
-
     let Wvenˉnameˉoffset: u32 =
         24u32 + Nominals.Count * 8u32 + Members * 16u32;
     let Wvenˉbytes: u32 = Wvenˉnameˉoffset + Nameˉbytes;
@@ -205,7 +203,9 @@ export fn Nativeˉhostedˉenumˉrequestˉbuild(
                 Nominals, Typeˉindex
             );
         }
-        Request = Appendˉu32(Request, U32ˉfromˉu8(Kind) - 1u32);
+        var Directoryˉkind: u32 = 0u32;
+        if Kind == 2u8 { Directoryˉkind = 1u32; }
+        Request = Appendˉu32(Request, Directoryˉkind);
         Request = Appendˉu32(Request, Directoryˉitems);
         Typeˉindex = Typeˉindex + 1u32;
     }

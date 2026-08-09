@@ -15,15 +15,17 @@ wvhostenumservice <request.wveq> <service.bin>
 ```
 
 `wvhostenumrequest` is sequenced after the full native WVB verifier. It
-revalidates the WVB 1.11 envelope with seven exact sections and the nominal-
-type section covered by the current native x64 type decoder; it is not a
-replacement for whole-module semantic verification. It supports at most 128
-nominal types (with no more than 64 records or 64 enums) and the current
-single complete `WVEQ 2`
+revalidates the WVB 1.11 envelope with seven exact sections and a hosted-only
+nominal directory reader; it is not a replacement for whole-module semantic
+verification and does not widen the accepted-subset native lowerer. It supports
+at most 128 nominal types, with no more than 64 records, 64 enums, or 64
+variants, and the current single complete `WVEQ 2`
 group whose request and resulting `WVEN 1` each fit one 4 MiB Windvale byte
-value. At least one enum member is required. Records receive zero-member
-directory entries; enum values, strict source names, and lexical ranks are
-copied or derived from the verified module.
+value. Records and variants receive zero-member directory entries; enum values,
+strict source names, and lexical ranks are copied or derived from the verified
+module. A module with no enum members still receives a complete zero-member
+directory so the fixed hosted service layout and every nominal index remain
+stable.
 
 `wvhostenumservice` accepts that bounded `WVEQ 2`, invokes the existing
 Windvale-owned metadata core, independently checks its one-group `WVEC 1` and
@@ -39,14 +41,14 @@ read/write, and process argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Enum-request WVB | 26,167 | `1471775aab260d48db4852cd055f04698b036224f877fcab958f3e1bd9814b83` |
-| Windows enum-request application | 292,352 | `44e11d1105ab685e51ccce2dc6f800b0c2c1d7e897539cd7b65a436d4ff67f21` |
-| Linux enum-request application | 294,912 | `c767e5f0c509e803dbcfe3fc1283f8bcf1208c80a0fee478d5348116f9187040` |
-| Enum-service WVB | 18,976 | `493226f5b61894cb43e3428555e96293310c03571f6cff905eb50fabc7721676` |
-| Enum-service WVO | 168,342 | `0ded580f703ae2d982740fe673d1e04dee581cab8785bb5d0ba8894800cb2963` |
-| Enum-service raw fragment | 167,274 | `cec5c423e32a3c0bc5602551e2b1da2e82929b2edd84b2756c4062bf0f223870` |
-| Windows enum-service application | 185,344 | `61d8b79ea57082c2ea85de5057a66e7c10045c44a9b8997d2ed491f3a1d90a83` |
-| Linux enum-service application | 184,320 | `cd6f3b01df9a57bfe1acf2fa226c58f10c8ba51d2096a75572628cfbea427cf0` |
+| Enum-request WVB | 30,759 | `682c2bf76569ba0ec6c58dfd3ade64d7582a9d22c397c55a22e1785fe8521fb6` |
+| Windows enum-request application | 334,336 | `fd2b4d21aca8aa27ed5cca535a9a2cbbabe57036d4646cf8c91c5b531cc16ef1` |
+| Linux enum-request application | 335,872 | `3b614f15a49b93074d3f2ce54eb193c14f391f3af8ac2f4415dbaf8f6dbca2ba` |
+| Enum-service WVB | 18,883 | `6e44a4c0f4d61ea9aa3d72442baba60080896c0cf7d3536b353fcd61ff48ec07` |
+| Enum-service WVO | 167,750 | `e00168aac4422a6a38d6c7c202d8fc2377b7770c4f3fc144d1ce207271f978bb` |
+| Enum-service raw fragment | 166,682 | `38ea83b0d417bdc57cd0c5b3bd29f8d9cb37a9575767401486fde6da2ded4cea` |
+| Windows enum-service application | 184,832 | `7563f37f3c77473ce52b73506dcb54516107fc964c19860d5dcc75d3bdd52cdf` |
+| Linux enum-service application | 184,320 | `90e99134b750231e011e2c254bac8c12d9d52d8adcbd3a9d5d03d7dc1da26f4b` |
 
 The focused contract uses the native front door as the module producer, the
 digest-bound native WVB-to-WVO candidate as the object producer, and the

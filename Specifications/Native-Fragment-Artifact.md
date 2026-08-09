@@ -113,7 +113,7 @@ Decision 0368 retains these exact `WVNF 1.0` artifacts:
 
 | Consumer | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Segmented enum metadata | 115,167 | `d2f53cd0fdd7812699a06234e19586f18492ffbca68ae0e5f507b09253c5a39b` |
+| Segmented enum metadata | 137,964 | `004db29841eeaf5a448ec67c438a820832ed4af3ede0a8ae1b1d672565ea0999` |
 | Executable-image layout | 61,583 | `9deeb8c4ab8f080cbc187036e0b015932379956930ec9cd1b7f51f7d1daa1f47` |
 | Publication lifetime | 46,125 | `4d87911f2f442e6a2e4dd2364138f35a0037ddc0bff0775a16e37156768777a8` |
 

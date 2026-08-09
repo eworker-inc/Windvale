@@ -233,7 +233,7 @@ fn Requestˉisˉvalid(Input: bytes) -> bool {
     let Groupˉnameˉstart: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
     if Wvenˉtotal < 24u32 || Wvenˉtotal > 33554432u32 ||
         Typeˉcount == 0u32 || Typeˉcount > 1024u32 ||
-        Memberˉcount == 0u32 || Memberˉcount > Typeˉcount * 256u32 ||
+        Memberˉcount > Typeˉcount * 256u32 ||
         Groupˉtypeˉcount == 0u32 || Groupˉtypeˉstart > Typeˉcount ||
         Groupˉtypeˉcount > Typeˉcount - Groupˉtypeˉstart ||
         Groupˉmemberˉcount > Groupˉtypeˉcount * 256u32 ||

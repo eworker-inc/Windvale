@@ -1219,7 +1219,7 @@ $NativeEnumMetadataCoreSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Nat
 dotnet $ToolDll compile $NativeEnumMetadataCoreSource -o $NativeEnumMetadataCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-metadata core.' }
 $NativeEnumMetadataCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataCoreModule).Hash.ToLowerInvariant()
-if ($NativeEnumMetadataCoreHash -ne '9c61f7d436854ace71ab17fcf33da73c40d37d612f68ba08bfa929ab4e710ef1') {
+if ($NativeEnumMetadataCoreHash -ne '8f22e1ba56985fc5a330fcb73cda84456ecc3ef51f9ddffd6bc2edd740f73659') {
     throw "The Windvale native enum-metadata core has an unexpected digest: $NativeEnumMetadataCoreHash"
 }
 $NativeEnumMetadataCoreInspection = (dotnet $ToolDll inspect $NativeEnumMetadataCoreModule) -join "`n"
@@ -1241,7 +1241,7 @@ dotnet $ToolDll `
     -o $NativeEnumMetadataBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-metadata bridge.' }
 $NativeEnumMetadataBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataBridgeModule).Hash.ToLowerInvariant()
-if ($NativeEnumMetadataBridgeHash -ne 'a43a89cedd7fc58740132c2f666ea69866ceff6ebb87d090124207ff3e9154ce') {
+if ($NativeEnumMetadataBridgeHash -ne '052be4402df26ed542107d666ed894cadb04a46ba6b2428bafc9f1879e38a072') {
     throw "The Windvale native enum-metadata bridge has an unexpected digest: $NativeEnumMetadataBridgeHash"
 }
 $NativeEnumMetadataBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataBridgeRetained).Hash.ToLowerInvariant()
@@ -1254,8 +1254,8 @@ if (
 }
 $NativeEnumMetadataArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeEnumMetadataArtifactHash -ne 'd2f53cd0fdd7812699a06234e19586f18492ffbca68ae0e5f507b09253c5a39b' -or
-    (Get-Item -LiteralPath $NativeEnumMetadataArtifactRetained).Length -ne 115167
+    $NativeEnumMetadataArtifactHash -ne '004db29841eeaf5a448ec67c438a820832ed4af3ede0a8ae1b1d672565ea0999' -or
+    (Get-Item -LiteralPath $NativeEnumMetadataArtifactRetained).Length -ne 137964
 ) {
     throw "The retained Windvale native enum-metadata fragment has an unexpected identity: $NativeEnumMetadataArtifactHash"
 }

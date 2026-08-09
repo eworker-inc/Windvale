@@ -11,15 +11,15 @@ public static class Hostedˉenumˉrequestˉapplicationˉcontract
     public const string LINUX_TARGET_NAME =
         "linux-x64-hosted-enum-request-v1";
     public const string MODULE_NAME = "Nativeˉhostedˉenumˉrequestˉtool";
-    public const int MODULE_BYTES = 26_167;
+    public const int MODULE_BYTES = 30_759;
     public const string MODULE_SHA256 =
-        "1471775aab260d48db4852cd055f04698b036224f877fcab958f3e1bd9814b83";
-    public const int WINDOWS_APPLICATION_BYTES = 292_352;
+        "682c2bf76569ba0ec6c58dfd3ade64d7582a9d22c397c55a22e1785fe8521fb6";
+    public const int WINDOWS_APPLICATION_BYTES = 334_336;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "44e11d1105ab685e51ccce2dc6f800b0c2c1d7e897539cd7b65a436d4ff67f21";
-    public const int LINUX_APPLICATION_BYTES = 294_912;
+        "fd2b4d21aca8aa27ed5cca535a9a2cbbabe57036d4646cf8c91c5b531cc16ef1";
+    public const int LINUX_APPLICATION_BYTES = 335_872;
     public const string LINUX_APPLICATION_SHA256 =
-        "c767e5f0c509e803dbcfe3fc1283f8bcf1208c80a0fee478d5348116f9187040";
+        "3b614f15a49b93074d3f2ce54eb193c14f391f3af8ac2f4415dbaf8f6dbca2ba";
 }
 
 public static class Hostedˉenumˉrequestˉapplicationˉwriter

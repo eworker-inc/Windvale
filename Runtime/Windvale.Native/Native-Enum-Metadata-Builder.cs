@@ -22,12 +22,12 @@ internal static class Nativeˉenumˉmetadataˉbuilder
         Loadˉconsumer,
         LazyThreadSafetyMode.ExecutionAndPublication);
 
-    internal const int CONSUMER_CANONICAL_SIZE = 15_385;
+    internal const int CONSUMER_CANONICAL_SIZE = 15_292;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "5292abe7ab6f1bc31a15e49a0e182ded9abe0c0619cd408e44330bcc3e07cca2";
-    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 138_550;
+        "052be4402df26ed542107d666ed894cadb04a46ba6b2428bafc9f1879e38a072";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 137_964;
     internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
-        "f529acc6dbf5e9dca9cb3a1c56d0fb2198104b5da249c7363bbf38cc2b38e806";
+        "004db29841eeaf5a448ec67c438a820832ed4af3ede0a8ae1b1d672565ea0999";
 
     public static ImmutableArray<byte> Build(
         ImmutableArray<Nominalˉtypeˉdeclaration> types)
@@ -60,13 +60,13 @@ internal static class Nativeˉenumˉmetadataˉbuilder
             {
                 Expectedˉmembers = checked(Expectedˉmembers + Enum.Members.Length);
             }
-            else if (Type is not Recordˉtypeˉdeclaration)
+            else if (Type is not Recordˉtypeˉdeclaration and
+                not Variantˉtypeˉdeclaration)
             {
                 throw Invalidˉmetadata();
             }
         }
-        if (Expectedˉmembers == 0 ||
-            metadata.Length is < METADATA_HEADER_BYTES or > Nativeˉcontract.MAXIMUM_ENUM_METADATA_BYTES ||
+        if (metadata.Length is < METADATA_HEADER_BYTES or > Nativeˉcontract.MAXIMUM_ENUM_METADATA_BYTES ||
             BinaryPrimitives.ReadUInt32LittleEndian(metadata) != METADATA_MAGIC ||
             BinaryPrimitives.ReadUInt32LittleEndian(metadata[4..]) != METADATA_VERSION ||
             BinaryPrimitives.ReadUInt32LittleEndian(metadata[8..]) != metadata.Length ||
@@ -200,7 +200,7 @@ internal static class Nativeˉenumˉmetadataˉbuilder
                     checked((uint)Enum.Members.Length),
                     Typeˉnamesˉbytes));
             }
-            else if (Type is Recordˉtypeˉdeclaration)
+            else if (Type is Recordˉtypeˉdeclaration or Variantˉtypeˉdeclaration)
             {
                 Directories.Add(new(0, Start, 0, 0));
             }
@@ -210,12 +210,6 @@ internal static class Nativeˉenumˉmetadataˉbuilder
                     "Native enum metadata contains an unknown nominal type.");
             }
         }
-        if (Members.Count == 0)
-        {
-            throw new InvalidOperationException(
-                "Native enum metadata contains no enum members.");
-        }
-
         var Totalˉbytes = checked(METADATA_HEADER_BYTES +
             types.Length * METADATA_TYPE_BYTES +
             Members.Count * METADATA_MEMBER_BYTES +

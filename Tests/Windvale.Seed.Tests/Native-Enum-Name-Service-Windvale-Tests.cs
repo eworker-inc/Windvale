@@ -13,9 +13,9 @@ internal static partial class Program
     private const int NATIVE_ENUM_NAME_CORE_SIZE = 625;
     private const string NATIVE_ENUM_NAME_CORE_SHA256 =
         "b404104b8e5ca174841b47d02ea45f197599179e0cb23ba778d6a2cdf7846948";
-    private const int NATIVE_ENUM_METADATA_CORE_SIZE = 15_507;
+    private const int NATIVE_ENUM_METADATA_CORE_SIZE = 15_414;
     private const string NATIVE_ENUM_METADATA_CORE_SHA256 =
-        "e1a17bc17e8672bc2a6a7aba129875d6ef02569b77b1285e040da718d6be5501";
+        "8f22e1ba56985fc5a330fcb73cda84456ecc3ef51f9ddffd6bc2edd740f73659";
 
     private static void Windvaleˉnativeˉenumˉnameˉserviceˉruns()
     {

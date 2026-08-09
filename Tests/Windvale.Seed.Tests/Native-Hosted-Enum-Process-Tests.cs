@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Windvale.Bytecode;
+using Windvale.Compiler;
 using Windvale.Compiler.Native;
 using Windvale.Linker;
 using Windvale.ObjectModel;
@@ -53,8 +54,8 @@ internal static partial class Program
                 Serviceˉobjectˉpath);
             Equal(0, Loweredˉservice.Exitˉcode);
             Equal(
-                "native x64 status=Valid abi=22 code-bytes=166864 " +
-                    "object-bytes=168342\n",
+                "native x64 status=Valid abi=22 code-bytes=166272 " +
+                    "object-bytes=167750\n",
                 Loweredˉservice.Output);
             Equal(string.Empty, Loweredˉservice.Error);
             Sequenceˉequal(
@@ -72,9 +73,9 @@ internal static partial class Program
                 Serviceˉobjectˉpath);
             Equal(0, Linkedˉservice.Exitˉcode);
             Contains(Linkedˉservice.Output,
-                "base-address=0 image-bytes=167274");
+                "base-address=0 image-bytes=166682");
             Contains(Linkedˉservice.Output,
-                "image sha256=cec5c423e32a3c0bc5602551e2b1da2e82929b2edd84b2756c4062bf0f223870");
+                "image sha256=38ea83b0d417bdc57cd0c5b3bd29f8d9cb37a9575767401486fde6da2ded4cea");
             Equal(string.Empty, Linkedˉservice.Error);
             Sequenceˉequal(
                 Serviceˉfragment.Code,
@@ -166,6 +167,66 @@ internal static partial class Program
                 $"hosted enum service status=Valid bytes={Expectedˉservice.Length}\n",
                 Loaded));
             Sequenceˉequal(Expectedˉservice, File.ReadAllBytes(Serviceˉpath));
+
+            var Variantˉsourceˉpath = Path.Combine(
+                Repository,
+                "Tests",
+                "Fixtures",
+                "Native-Hosted",
+                "Enum-Request-Variant-Only.wv");
+            var Variantˉcompilation = Seedˉcompiler.Compile(
+                File.ReadAllText(Variantˉsourceˉpath),
+                "Enum-Request-Variant-Only.wv");
+            True(Variantˉcompilation.Success,
+                string.Join(" | ", Variantˉcompilation.Diagnostics));
+            var Variantˉbytes = Variantˉcompilation.Moduleˉbytes;
+            Equal(665, Variantˉbytes.Length);
+            Equal(
+                "789094b2b3cfb2f06c0ad1799e8d12a7d0d6e3b618223158437339baeaf188da",
+                Moduleˉdigest.Calculateˉsha256(Variantˉbytes.AsSpan()));
+            var Variantˉmoduleˉpath = Path.Combine(
+                Directoryˉpath,
+                "Variant-Only.wvb");
+            File.WriteAllBytes(Variantˉmoduleˉpath, Variantˉbytes.AsSpan());
+            var Variantˉmodule = Moduleˉcodec.Readˉandˉverify(
+                Variantˉbytes.AsSpan());
+            Equal(2, Variantˉmodule.Module.Types.Length);
+            var Variantˉrequests = Nativeˉenumˉmetadataˉbuilder.Buildˉrequests(
+                Variantˉmodule.Module.Types);
+            Equal(1, Variantˉrequests.Length);
+            Equal(64, Variantˉrequests[0].Length);
+            Equal(
+                "7af5d827197fd6674bd88655c21dbc98d1886e9c7a30641b8df5460016ef1564",
+                Moduleˉdigest.Calculateˉsha256(Variantˉrequests[0].AsSpan()));
+            var Variantˉservice = X64ˉnativeˉtextˉservices.Build(
+                Nativeˉservice.Enumˉname,
+                Variantˉmodule.Module.Types);
+            Equal(363, Variantˉservice.Length);
+            Equal(
+                "ae4ddb8b9ceb7e1be1fa6212be0f02842bc8641a2b00f765d435362bea8123c2",
+                Moduleˉdigest.Calculateˉsha256(Variantˉservice.AsSpan()));
+            var Variantˉrequestˉpath = Path.Combine(
+                Directoryˉpath,
+                "Variant-Only.wveq");
+            var Variantˉserviceˉpath = Path.Combine(
+                Directoryˉpath,
+                "Variant-Only-Service.bin");
+            Equal(0, Executeˉhostedˉenumˉapplication(
+                Requestˉapplication,
+                [Variantˉmoduleˉpath, Variantˉrequestˉpath],
+                "hosted enum request status=Valid bytes=64\n",
+                Loaded));
+            Sequenceˉequal(
+                Variantˉrequests[0],
+                File.ReadAllBytes(Variantˉrequestˉpath));
+            Equal(0, Executeˉhostedˉenumˉapplication(
+                Serviceˉapplication,
+                [Variantˉrequestˉpath, Variantˉserviceˉpath],
+                "hosted enum service status=Valid bytes=363\n",
+                Loaded));
+            Sequenceˉequal(
+                Variantˉservice,
+                File.ReadAllBytes(Variantˉserviceˉpath));
 
             var Compilerˉmoduleˉpath = Path.Combine(
                 Repository,
