@@ -4214,3 +4214,30 @@ building an artifact. The managed wrapper and complete coordinator were not
 rerun. Linux execution, broader nominal limits and typed opcode transfer,
 Standard, Qualification, promotion, and the grouped end-of-goal gate remain
 deferred.
+
+## Local multi-fragment current-lowerer reconstruction evidence
+
+[Decision 0420](../Decisions/0420-Multi-Fragment-Current-Lowerer-Reconstruction.md)
+corrects the enum-service resource in hosted image mode from fixed `.chunk-7`
+to `fragment count + 6`. The former name was valid for the one-fragment smoke
+but overwrote service 6 in the current lowerer's two-fragment image.
+
+The native source front door produces the exact 399,691-byte, 409-function
+lowerer WVB at SHA-256
+`92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508`.
+Native staging emits 5,790,127 WVO bytes in 53 chunks plus a 660-byte manifest;
+native image linking emits 5,774,315 bytes in 49 semantic chunks at entry zero;
+canonical transport emits 4,194,304- and 1,580,011-byte fragments plus a
+52-byte manifest. Hosted composition then produces the exact independently
+pinned 5,792,768-byte Windows application at SHA-256
+`e096dc7fec20e3318364da1f3b5289f772b53c16cc370f29622dfac35780e2bf`.
+
+That reconstructed native application produces the exact 793-byte
+descriptor-entry WVO at SHA-256
+`9936663f45c194441bfc5e8464286e57f83cd3a18948597a8011af608a4faa51`
+and the exact retained 56,226-byte baseline-JIT bridge WVO at SHA-256
+`bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c`.
+The permanent focused Windows smoke passes 2/2 in 89.7 seconds. No C# compiler
+or runtime implementation changes. Linux script syntax, genuine Linux
+reconstruction/execution, paired promotion, Standard, Qualification, and the
+grouped end gate remain separate.

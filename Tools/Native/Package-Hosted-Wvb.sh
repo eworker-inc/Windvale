@@ -114,7 +114,8 @@ host="$toolset/linux-x64"
     "$service_root/Native-X64-U32-Format-Service.bin" \
     "$service_root/Native-X64-Linux-File-Output-Service.bin" || exit $?
 "$host/wvhostenumrequest.elf" "$input" "$temporary_directory/Enum.wveq" || exit $?
-"$host/wvhostenumservice.elf" "$temporary_directory/Enum.wveq" "$bundle_sources.chunk-7" || exit $?
+enum_source_index=$((fragment_count + 6))
+"$host/wvhostenumservice.elf" "$temporary_directory/Enum.wveq" "$bundle_sources.chunk-$enum_source_index" || exit $?
 "$host/wvhostsourcegeometry.elf" "$bundle_sources" "$fragment_count" "$temporary_directory/Bundle-Sources.wvsg" || exit $?
 "$host/wvhostpublicationrequest.elf" "$temporary_directory/Bundle-Sources.wvsg" "$temporary_directory/Publication.wvpq" || exit $?
 "$host/wvhostcontrol.elf" evidence "$temporary_directory/Bundle-Sources.wvsg" "$temporary_directory/Evidence.wvhs" || exit $?

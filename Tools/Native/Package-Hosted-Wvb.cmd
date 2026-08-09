@@ -101,7 +101,8 @@ if "%ImageMode%"=="1" (
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostenumrequest.exe" "%Input%" "%TemporaryDirectory%\Enum.wveq"
 if errorlevel 1 goto :cleanup
-"%Toolset%\windows-x64\wvhostenumservice.exe" "%TemporaryDirectory%\Enum.wveq" "%BundleSources%.chunk-7"
+set /a EnumSourceIndex=FragmentCount+6
+"%Toolset%\windows-x64\wvhostenumservice.exe" "%TemporaryDirectory%\Enum.wveq" "%BundleSources%.chunk-%EnumSourceIndex%"
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostsourcegeometry.exe" "%BundleSources%" %FragmentCount% "%TemporaryDirectory%\Bundle-Sources.wvsg"
 if errorlevel 1 goto :cleanup

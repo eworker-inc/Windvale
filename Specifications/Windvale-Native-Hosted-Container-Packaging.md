@@ -9,16 +9,24 @@ bounded decimal loop control, private temporary names, and cleanup. Windvale
 processes continue to own every binary format, source transformation,
 admission decision, digest, segment, and publication transaction.
 
-The first candidate accepts a WVB whose lowered native fragment fits in one
-nonempty resource of at most 4 MiB. It supports hosted profiles `1` through `7`
-and constructs the established ten-service Windows x64 or Linux x64 container.
-It is not a general multi-fragment package driver yet.
+The ordinary candidate accepts a WVB whose lowered native fragment fits in one
+nonempty resource of at most 4 MiB. The explicit image-input mode accepts one
+through eight canonical fragments, with every nonfinal fragment exactly 4 MiB,
+plus a validated decimal entry. Both modes support hosted profiles `1` through
+`7` and construct the established ten-service Windows x64 or Linux x64
+container. `Package-Segmented-Compiler-Wvb` composes native WVB staging, image
+linking, canonical transport, and this image-input mode without asking a host
+script to decode a Windvale format.
 
 ## Commands
 
 ```text
 Tools\Native\Package-Hosted-Wvb.cmd <profile> <input.wvb> <output.exe>
 ./Tools/Native/Package-Hosted-Wvb.sh <profile> <input.wvb> <output.elf>
+Tools\Native\Package-Hosted-Wvb.cmd image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry> <output.exe>
+./Tools/Native/Package-Hosted-Wvb.sh image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry> <output.elf>
+Tools\Native\Package-Segmented-Compiler-Wvb.cmd <profile> <input.wvb> <output.exe>
+./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile> <input.wvb> <output.elf>
 ```
 
 The input and output suffixes must match the selected host command. Wrong
@@ -42,8 +50,9 @@ package wiring until this complete toolset is promoted.
 
 ## Ordered path
 
-After the existing native lowerer and linker produce the raw fragment, the
-command executes the fixed-service and enum-service producers, source geometry,
+After the existing native lowerer and linker produce the raw fragment, or after
+image mode accepts its canonical fragment inputs, the command executes the
+fixed-service and enum-service producers, source geometry,
 publication planning, orchestration control, metadata request and construction,
 runtime header, container plan, platform bytes, and startup. It then obtains
 the admitted service-bundle count, constructs every request/response pair,
@@ -51,9 +60,11 @@ builds the final source set, obtains the admitted application-segment count,
 constructs every final request/response pair and manifest, and calls the native
 atomic publisher.
 
-The scripts parse only the fixed decimal `segments=` status lines and the fixed
-native-linker `Main` address line. They do not decode `WVSG`, `WVHS`, `WVPQ`,
-`WVHM`, `WVCD`, `WVSI`, `WVSQ`, `WVHT`, or `WVHU`.
+The enum-service resource index is `fragment count + 6`, immediately after the
+canonical fragments and services 1 through 6. The scripts parse only bounded
+decimal status values, including segment counts and the native-linker `Main`
+address. They do not decode `WVOP`, `WVLI`, `WVSG`, `WVHS`, `WVPQ`, `WVHM`,
+`WVCD`, `WVSI`, `WVSQ`, `WVHT`, or `WVHU`.
 
 ## Private lifecycle and failure behavior
 
@@ -77,6 +88,11 @@ a pre-existing destination remain byte-identical. The test redirects the
 launcher's temporary root into its own private directory and rejects any
 remaining package scratch. These two cases are the focused composition check;
 they do not replace malformed-format suites or the final qualification gate.
+
+`Test-Segmented-Compiler-Packaging` additionally exercises image mode with the
+current two-fragment WVB-to-WVO lowerer. It requires the exact current host
+application identity, the descriptor-returning `Main` differential WVO, and
+byte-for-byte reproduction of the retained baseline-JIT bridge WVO.
 
 The Windows candidate composes `wvhostcontrol.wvb` into a 236,032-byte PE with
 SHA-256 `eeec7c229b20ac006ed366849c91e2f03e035a9e3ee29da2e9aeb408c76b2709`,

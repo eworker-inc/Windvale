@@ -57,13 +57,19 @@ The current candidate identities are:
 | Linux WVB-to-WVO tool | 5,349,376 | `c6ba202ffcb32a261bfd9c997e4bab754ab5a636e2d0b95e5de5f55e598c6358` |
 
 These pinned applications predate Decision 0419. The current Windvale source
-contract additionally admits parameterless `Main() -> bytes`, but promotion
-requires a native application that reconstructs the current 409-function
-399,691-byte lowerer WVB at SHA-256
-`92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508`.
-Until that separate tool promotion completes, descriptor-entry evidence uses
-the current Windvale lowerer under the explicit Stage 0 reference execution
-host; ordinary consumers may use only digest-bound retained WVOs.
+contract additionally admits parameterless `Main() -> bytes`. Decision 0420's
+segmented native construction accepts the current 409-function, 399,691-byte
+lowerer WVB at SHA-256
+`92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508`
+and reproduces the independently pinned 5,792,768-byte Windows application at
+SHA-256
+`e096dc7fec20e3318364da1f3b5289f772b53c16cc370f29622dfac35780e2bf`.
+That native application reproduces both the descriptor-entry and baseline-JIT
+bridge WVOs byte for byte. The paired 5,791,744-byte Linux identity at SHA-256
+`a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e`
+remains an exact expected reconstruction pending genuine Linux execution.
+Ordinary consumers continue to use digest-bound retained WVOs until paired
+promotion replaces the older candidate applications.
 
 `Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 

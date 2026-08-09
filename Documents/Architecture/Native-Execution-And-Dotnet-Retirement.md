@@ -663,6 +663,16 @@ execution, bounded decimal loop control, and private cleanup. The Windows path
 reproduces the independently packaged PE byte for byte. Linux execution,
 failure/preservation evidence, promotion, and grouped qualification remain.
 
+[Decision 0420](../Decisions/0420-Multi-Fragment-Current-Lowerer-Reconstruction.md)
+corrects the image-mode service-resource index exposed by the first real
+two-fragment consumer. Fixed and variable services now share the same
+fragment-relative geometry. The native source, staged-WVO, linked-image,
+canonical-transport, and hosted-container processes reconstruct the current
+409-function lowerer as the exact independently pinned Windows application;
+that native process reproduces the descriptor-entry and baseline-JIT bridge
+WVOs byte for byte. Linux reconstruction, paired promotion, ordinary-launcher
+cutover, and grouped qualification remain.
+
 [Decision 0386](../Decisions/0386-Windvale-Owned-Segmented-Hosted-Container-Materialization.md)
 removes that complete managed array writer. One bounded portable Windvale
 constructor consumes only the source ranges intersecting each canonical

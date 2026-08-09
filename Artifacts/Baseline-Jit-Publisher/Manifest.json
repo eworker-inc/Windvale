@@ -64,7 +64,13 @@
       "bytes": 56226,
       "sha256": "bcc02cdc6134da2388265ad308d3dc739a7e10c1911effa918d5f2577c86ae8c",
       "provenance": "windvale-lowerer-reference-reconstruction",
-      "nativeReconstruction": "pending-current-lowerer-tool-promotion"
+      "nativeReconstruction": {
+        "status": "windows-passed-linux-pending",
+        "lowererToolWvbBytes": 399691,
+        "lowererToolWvbSha256": "92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508",
+        "windowsApplicationBytes": 5792768,
+        "windowsApplicationSha256": "e096dc7fec20e3318364da1f3b5289f772b53c16cc370f29622dfac35780e2bf"
+      }
     }
   ],
   "artifacts": [
