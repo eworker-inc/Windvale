@@ -23,6 +23,8 @@ call :run_case "hello-object" "Examples\Assembler\Hello-Object.wva" "a88f748ba87
 if errorlevel 1 goto :failed
 call :run_case "expanded-x64" "Examples\Assembler\Expanded-X64.wva" "27a324b5c26c1e6a982c6f02b0a157ccfdcbb7500521dd8c95a381aa2ed20646" 238 "678551e9936ca1c901e2dc5ec129d2add73427edb1ea3d086bb4badbf1b6e4ad" "assembly status=valid object-bytes=238 sections=2 symbols=2 relocations=1 offset=740 line=35 column=1"
 if errorlevel 1 goto :failed
+call :run_case "scalar-x64" "Examples\Assembler\Scalar-X64.wva" "e76cb94b82857e097e734f6bdf01b3383487fd8a69f05214d74a1b69e261ae0e" 199 "e1cce07329b6183ebae26ebe252be7d2e754c4aeea08ffe6452c74d60d6ea64a" "assembly status=valid object-bytes=199 sections=1 symbols=1 relocations=0 offset=639 line=29 column=1"
+if errorlevel 1 goto :failed
 call :run_case "typed-scalar-x64" "Examples\Assembler\Typed-Scalar-X64.wva" "a66a36a06ac6375da7ed5287fe6fdae55901f5b8b236c3098723e7a6f856a4ef" 396 "860680074517025c69a2a6edf1dd9ff196475e05f9c50f95b53480c848c650c5" "assembly status=valid object-bytes=396 sections=2 symbols=2 relocations=5 offset=942 line=52 column=1"
 if errorlevel 1 goto :failed
 

@@ -1,0 +1,28 @@
+windvale-assembly 1
+symbol export function Main in .text
+section code .text align 16
+define Main
+add_i32 eax -1
+subtract_i32 r8 16
+and_i32 ecx -2147483648
+or_i32 r10d 2147483647
+xor_i32 r11 -1
+compare_i32 edx 42
+test_i32 r12 -1
+multiply eax ecx
+multiply r8 r15
+rotate_left eax 1
+rotate_right r8d 2
+shift_left rax 3
+shift_right r9d 4
+shift_right_signed r10 63
+load_memory_u32 eax rbx none 1 -4
+load_memory_u32 eax rbx none 1 -2147483648
+load_memory_u32 eax rbx none 1 2147483647
+load_memory_u64 r8 r9 r10 4 16
+load_memory_u64 rax rbx r12 1 0
+store_memory_u32 r12 r13 8 0 r14d
+store_memory_u64 rbp rsi 2 -8 rdx
+return
+end define
+end section

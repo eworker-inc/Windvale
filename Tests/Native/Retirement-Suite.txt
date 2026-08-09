@@ -7,7 +7,7 @@ wvo-differential|Test-Wvo-Differential|256|Tests: 256, Passed: 256, Failed: 0
 wvo-containment|Test-Wvo-Containment|500|Tests: 500, Passed: 500, Failed: 0
 wvo-hostile-size|Test-Wvo-Hostile-Size|4|Tests: 4, Passed: 4, Failed: 0
 assembler-rejections|Test-Assembler-Rejections|11|Tests: 11, Passed: 11, Failed: 0
-assembler-golden|Test-Assembler-Golden|3|Tests: 3, Passed: 3, Failed: 0
+assembler-golden|Test-Assembler-Golden|4|Tests: 4, Passed: 4, Failed: 0
 wva-differential|Test-Wva-Differential|200|Tests: 200, Passed: 200, Failed: 0
 source-containment|Test-Source-Containment|500|Tests: 500, Passed: 500, Failed: 0
 lowerer-rejections|Test-Lowerer-Rejections|2|Tests: 2, Passed: 2, Failed: 0

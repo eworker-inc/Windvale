@@ -4285,6 +4285,29 @@ covering 24 suites and 3,048 fixed cases. The reviewed Windows command
 all 20 cases in 8.9 seconds. The other 23 lanes, managed wrapper, broad local
 verifier, Linux execution, and grouped retirement gate were not run.
 
+## Local fixed native scalar-x64 golden-object evidence
+
+[Decision 0432](../Decisions/0432-Fixed-Native-Scalar-X64-Golden-Object.md)
+promotes the exact managed scalar/SIB raw literal to the 639-byte LF-only
+`Examples/Assembler/Scalar-X64.wva` at SHA-256
+`e76cb94b82857e097e734f6bdf01b3383487fd8a69f05214d74a1b69e261ae0e`.
+A static extraction check proves exact source agreement apart from the
+repository file's terminal LF.
+
+The focused managed assertion passed 1/1 in 479 ms while proving the expected
+instruction bytes, zero relocations, repeated assembly, and linked image. Its
+temporary WVO export was removed, the authoritative `Program.cs` remained
+unchanged, and the generated directory was sent to the Recycle Bin. The exact
+Stage 0 object is 199 bytes at SHA-256
+`e1cce07329b6183ebae26ebe252be7d2e754c4aeea08ffe6452c74d60d6ea64a`.
+
+The reviewed retirement plan remains 2,054 LF-only bytes and now has SHA-256
+`af263e8fe53075a75a21fa76f9277bf50aa8ae18cf628a6df1373f39591ac18b`,
+covering 24 suites and 3,049 fixed cases. The reviewed Windows command
+`Test-Retirement-Suite.cmd --filter assembler-golden` passes its one selected
+suite and all four cases in 2.4 seconds. The other 23 lanes, broad local
+verifier, Linux execution, and grouped retirement gate were not run.
+
 ## Local multi-fragment current-lowerer reconstruction evidence
 
 [Decision 0420](../Decisions/0420-Multi-Fragment-Current-Lowerer-Reconstruction.md)

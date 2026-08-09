@@ -96,6 +96,12 @@ truncation, non-serializable invalid UTF-16, and multi-megabyte value limits kee
 their decoder, recovery-object, or hostile-size owners; dynamic WVA vectors,
 Linux execution, and the grouped gate remain.
 
+[Decision 0432](../Decisions/0432-Fixed-Native-Scalar-X64-Golden-Object.md)
+adds the managed positive scalar/SIB assembler source to the existing golden
+lane. Its exact 199-byte WVO covers immediate ALU, multiply, shifts, rotates,
+and indexed memory, growing the 24-suite plan to 3,049 cases. Generated dynamic
+register vectors, Linux execution, and the grouped gate remain.
+
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 
 ## Sequencing principle

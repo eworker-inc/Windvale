@@ -33,7 +33,7 @@ The exact filter names and case counts are:
 | `wvo-containment` | 500 |
 | `wvo-hostile-size` | 4 |
 | `assembler-rejections` | 11 |
-| `assembler-golden` | 3 |
+| `assembler-golden` | 4 |
 | `wva-differential` | 200 |
 | `source-containment` | 500 |
 | `lowerer-rejections` | 2 |
@@ -50,11 +50,11 @@ The exact filter names and case counts are:
 | `publisher-rejections` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 24 suites and 3,048 cases in manifest order. Its
+Omitting `--filter` selects all 24 suites and 3,049 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 24, Passed: 24, Failed: 0, Cases: 3048
+Suites: 24, Passed: 24, Failed: 0, Cases: 3049
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -156,7 +156,7 @@ Both digest-bound WVB read-only launchers must reject every case with the exact
 phase report and preserve the complete input. The command decodes fixed compact
 fixtures; it does not mutate WVB or start .NET.
 
-The positive assembler-golden lane admits three repository source identities,
+The positive assembler-golden lane admits four repository source identities,
 assembles each twice, requires exact success reports and WVO identities, verifies
 the first object independently, and compares both generated objects byte for
 byte. Run it on Windows with:
@@ -174,8 +174,8 @@ On Linux x64:
 Success is:
 
 ```text
-PASS  suite assembler-golden cases=3
-Suites: 1, Passed: 1, Failed: 0, Cases: 3
+PASS  suite assembler-golden cases=4
+Suites: 1, Passed: 1, Failed: 0, Cases: 4
 ```
 
 The WVO differential lane freezes the Stage 0 acceptance decision for 128
