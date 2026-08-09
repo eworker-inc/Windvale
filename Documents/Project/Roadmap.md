@@ -141,8 +141,8 @@ and promotion remain.
 [Decision 0440](../Decisions/0440-Probe-40-Object-Inventory-Boundary.md)
 exposes fifteen logical components as fourteen ordered WVO containers and
 proves their managed differential link remains byte-identical. The retained
-native linker now reaches the real case but exhausts its narrow v1 runtime while
-constructing the canonical map; improving that one linker is the next transfer.
+native linker now admits the real case but exits through its narrow v1 runtime
+resource mapping before publication; improving that one linker is the next transfer.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

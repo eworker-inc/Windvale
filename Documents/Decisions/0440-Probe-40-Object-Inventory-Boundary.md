@@ -16,9 +16,10 @@ The retained linker source admits up to 64 WVO inputs, but its current Windows
 container accepts only seventeen application arguments. Fifteen WVOs require
 eighteen arguments after base, entry, and output. Reducing the physical input
 count exposes a second measured boundary: the complete Probe 40 link enters
-the native application but exhausts its narrow v1 runtime while constructing
-the 663-line canonical map. It exits through the generic native resource
-mapping before publishing output.
+the native application but exits through its narrow v1 runtime's generic
+resource mapping before publishing output. The available evidence does not yet
+identify whether analysis, image reconstruction, verification, or canonical-map
+construction owns the peak.
 
 ## Decision
 
