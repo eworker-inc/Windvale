@@ -1,0 +1,60 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉapplicationˉadmission profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+
+fn Digest(Input: bytes) -> bytes {
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Input);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Input);
+    return Sha256.Foundationˉsha256ˉfinishˉraw(State);
+}
+
+fn Expectedˉword(Target: u32, Index: u32) -> u32 {
+    if Target == 1u32 {
+        if Index == 0u32 { return 3038794611u32; }
+        if Index == 1u32 { return 2638296063u32; }
+        if Index == 2u32 { return 69556584u32; }
+        if Index == 3u32 { return 628088138u32; }
+        if Index == 4u32 { return 3221419083u32; }
+        if Index == 5u32 { return 1975885780u32; }
+        if Index == 6u32 { return 274825159u32; }
+        return 4127574010u32;
+    }
+    if Index == 0u32 { return 4127608798u32; }
+    if Index == 1u32 { return 1491810264u32; }
+    if Index == 2u32 { return 3023141445u32; }
+    if Index == 3u32 { return 271875189u32; }
+    if Index == 4u32 { return 3287058915u32; }
+    if Index == 5u32 { return 2648121281u32; }
+    if Index == 6u32 { return 3181191855u32; }
+    return 719332331u32;
+}
+
+fn Digestˉmatches(Input: bytes, Target: u32) -> bool {
+    let Actual: bytes = Digest(Input);
+    if Bytesˉlength(Actual) != 32u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        if Bytesˉreadˉu32ˉlittle(Actual, Index * 4u32) !=
+            Expectedˉword(Target, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉverifierˉpublisherˉapplicationˉverification(
+    Input: bytes,
+    Target: u32
+) -> bool {
+    var Expectedˉbytes: u32 = 256000u32;
+    if Target == 2u32 {
+        Expectedˉbytes = 254917u32;
+    }
+    if Target < 1u32 || Target > 2u32 ||
+        Bytesˉlength(Input) != Expectedˉbytes {
+        return false;
+    }
+    return Digestˉmatches(Input, Target);
+}

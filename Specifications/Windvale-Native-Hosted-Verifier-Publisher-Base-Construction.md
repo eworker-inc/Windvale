@@ -51,23 +51,26 @@ require the final exact application identity. They never invoke .NET.
 | --- | ---: | --- |
 | Base-metadata WVB | 70,166 | `6c79bd1b190e7d28190d1481a4ea1c602c227274806a885062af29d06c972630` |
 | Base-runtime WVB | 20,387 | `56d329c2710322b4a3f74565dd5fb862be8ac4c26c7fb76f7c2bfafc66a9f8e2` |
+| Publisher-application admission WVB | 30,325 | `cdcda2e2bcdb7915a769ab9a79f7434e2b26bfbf4e0412a183bd7525769ef954` |
 | Linked publisher fragment | 232,736 | `260e9f4f23c99dab13145ceb98724a4c74157fc579c5685194b7312c1a5cb115` |
 | Windows base | 248,832 | `cf204201e5c26d71e78da1112de2bc724d389a5222cc835d48dbe8cd8bbc5988` |
 | Linux base | 249,856 | `0bdeee07a49f75781767934884cbbc7dd085abff4507e2f78210fa225638539a` |
 | Windows publisher | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
 | Linux publisher | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
 
-Version 7 of the construction candidate contains 20 canonical WVB/WVO
-artifacts and 22 paired host applications. Its 42-entry `SHA256SUMS` is 4,420
+Version 8 of the construction candidate contains 21 canonical WVB/WVO
+artifacts and 22 paired host applications. Its 43-entry `SHA256SUMS` is 4,527
 LF-only bytes with SHA-256
-`430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5`.
+`5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881`.
 
 ## Native owner and remaining gate
 
 The `hosted-verifier-publisher-files` retirement lane owns six fixed cases:
 the complete inventory, exact Windows and Linux construction, malformed base
 record preservation, exact alias preservation, and execution of the constructed
-current-host publisher to install the exact verifier candidate.
+current-host publisher to install the exact verifier candidate. Its inventory
+case also rebuilds the publisher-application admission WVB through the native
+source front door and requires byte equality with the pinned artifact.
 
 The frozen managed file-pipeline test remains recovery/differential evidence.
 Independent Linux execution, grouped qualification, completed-publisher durable

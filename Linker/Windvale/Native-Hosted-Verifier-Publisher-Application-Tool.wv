@@ -1,0 +1,42 @@
+module Linkerˉnativeˉhostedˉverifierˉpublisherˉapplicationˉtool profile hosted;
+
+import Linkerˉnativeˉhostedˉverifierˉpublisherˉapplicationˉadmission as Admission;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Usage() -> i32 {
+    diagnostic.write_line(
+        "Usage: wvhostverifierpublisheradmit <windows|linux> <publisher.exe|publisher.elf>"
+    );
+    return 64;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Usage(); }
+    let Platform: text = process.argument(0u32);
+    var Target: u32 = 0u32;
+    if Platform == "windows" { Target = 1u32; }
+    if Platform == "linux" { Target = 2u32; }
+    if Target == 0u32 { return Usage(); }
+    let Input: bytes = file.read_bytes(process.argument(1u32));
+    if !Admission.Nativeˉhostedˉverifierˉpublisherˉapplicationˉverification(
+        Input,
+        Target
+    ) {
+        diagnostic.write_line(
+            "native hosted verifier publisher application status=Rejected"
+        );
+        return 2;
+    }
+    console.write_line(
+        Textˉconcat(
+            "native hosted verifier publisher application status=Valid bytes=",
+            U32ˉformat(Bytesˉlength(Input))
+        )
+    );
+    return 0;
+}

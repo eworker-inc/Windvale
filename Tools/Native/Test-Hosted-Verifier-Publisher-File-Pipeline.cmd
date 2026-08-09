@@ -22,12 +22,23 @@ set /a Passed=0
 set "Result=1"
 
 set /a Total+=1
-call :check_file "%Construction%\SHA256SUMS" 4420 430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 "construction inventory"
+call :check_file "%Construction%\SHA256SUMS" 4527 5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :check_digest "%Construction%\%%I" %%H "construction artifact"
     if errorlevel 1 goto :failed
 )
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Windvale-Native-Hosted-Verifier-Publisher-Application-Tool.wvproj" ^
+    "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" ^
+    >"%TestDirectory%\Admission-Build.out" 2>"%TestDirectory%\Admission-Build.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Admission-Build.err" "admission source build wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" 30325 cdcda2e2bcdb7915a769ab9a79f7434e2b26bfbf4e0412a183bd7525769ef954 "native-built publisher admission WVB"
+if errorlevel 1 goto :failed
+fc /b "%Construction%\Publisher-Application-Admission-Tool.wvb" "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" >nul
+if errorlevel 1 goto :failed
 call :pass "publisher construction inventory"
 
 set /a Total+=1
@@ -65,9 +76,9 @@ call :check_empty "%TestDirectory%\Reject.out" "metadata rejection wrote standar
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "metadata rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4420 430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 "rejected metadata input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4527 5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 "rejected metadata input"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhv" 4420 430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 "preserved metadata destination"
+call :check_file "%TestDirectory%\Sentinel.wvhv" 4527 5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 "preserved metadata destination"
 if errorlevel 1 goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhr" >nul || goto :failed
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TestDirectory%\Invalid.wvsq" "%TestDirectory%\Sentinel.wvhr" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
@@ -76,7 +87,7 @@ call :check_empty "%TestDirectory%\Reject.out" "runtime rejection wrote standard
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "runtime rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhr" 4420 430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 "preserved runtime destination"
+call :check_file "%TestDirectory%\Sentinel.wvhr" 4527 5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 "preserved runtime destination"
 if errorlevel 1 goto :failed
 call :pass "base tools reject malformed input and preserve destinations"
 
@@ -89,7 +100,7 @@ call :check_empty "%TestDirectory%\Alias.out" "alias rejection wrote standard ou
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Alias.err" "alias rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4420 430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 "preserved alias input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4527 5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 "preserved alias input"
 if errorlevel 1 goto :failed
 call :pass "base tools reject exact path aliases"
 
@@ -156,7 +167,7 @@ exit /b 0
 
 :failed
 set "Result=1"
-for %%F in (Windows.err Linux.err Reject.err Alias.err Execute.err) do if exist "%TestDirectory%\%%F" (
+for %%F in (Admission-Build.err Windows.err Linux.err Reject.err Alias.err Execute.err) do if exist "%TestDirectory%\%%F" (
     for %%S in ("%TestDirectory%\%%F") do if not "%%~zS"=="0" type "%%~fS" >&2
 )
 

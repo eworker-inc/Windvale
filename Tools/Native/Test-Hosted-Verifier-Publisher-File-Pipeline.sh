@@ -85,10 +85,22 @@ fail() {
 }
 
 total=$((total + 1))
-check_file "$construction/SHA256SUMS" 4420 \
-    430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 \
+check_file "$construction/SHA256SUMS" 4527 \
+    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
+"$repository_root/Tools/Native/Build-Wvb.sh" \
+    "$repository_root/Windvale-Native-Hosted-Verifier-Publisher-Application-Tool.wvproj" \
+    "$test_directory/Publisher-Application-Admission-Tool.wvb" \
+    > "$test_directory/Admission-Build.out" \
+    2> "$test_directory/Admission-Build.err" || fail
+check_empty "$test_directory/Admission-Build.err" \
+    'admission source build wrote a diagnostic' || fail
+check_file "$test_directory/Publisher-Application-Admission-Tool.wvb" 30325 \
+    cdcda2e2bcdb7915a769ab9a79f7434e2b26bfbf4e0412a183bd7525769ef954 \
+    'native-built publisher admission WVB' || fail
+cmp --silent "$construction/Publisher-Application-Admission-Tool.wvb" \
+    "$test_directory/Publisher-Application-Admission-Tool.wvb" || fail
 pass 'publisher construction inventory'
 
 total=$((total + 1))
@@ -126,19 +138,19 @@ total=$((total + 1))
 [[ $? -eq 2 ]] || fail
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
-check_file "$test_directory/Invalid.wvsq" 4420 \
-    430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 \
+check_file "$test_directory/Invalid.wvsq" 4527 \
+    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
     'rejected metadata input' || fail
-check_file "$test_directory/Sentinel.wvhv" 4420 \
-    430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 \
+check_file "$test_directory/Sentinel.wvhv" 4527 \
+    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
     "$test_directory/Invalid.wvsq" "$test_directory/Sentinel.wvhr" \
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
-check_file "$test_directory/Sentinel.wvhr" 4420 \
-    430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 \
+check_file "$test_directory/Sentinel.wvhr" 4527 \
+    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -153,8 +165,8 @@ total=$((total + 1))
 [[ $? -eq 64 ]] || fail
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
-check_file "$test_directory/Invalid.wvsq" 4420 \
-    430645441d930284089684ac125bfefc6d57d5cbd3e26612a951964767bcd6d5 \
+check_file "$test_directory/Invalid.wvsq" 4527 \
+    5ff01ed8ef9f4aa2eb9a7b53aca25c0f86984cdc8b932989a375123a02d78881 \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
 
