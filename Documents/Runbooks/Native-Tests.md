@@ -70,6 +70,24 @@ itself changes. The plan identity, child summaries, exit/channel behavior, and
 failure rules are defined by the
 [native retirement test-suite contract](../../Specifications/Windvale-Native-Retirement-Test-Suite.md).
 
+## Changed-file front door
+
+On Windows, the ordinary local entry point is:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
+```
+
+It maps the changed paths to focused suite filters in the manifest's canonical
+order. Planner, inventory, website, and editor changes retain their own focused
+checks. A maintained boundary without native evidence returns a stable named
+gap and invokes neither the managed Seed verifier nor the unfiltered native
+coordinator. Use `-PlanOnly` to inspect the selection without executing it.
+
+The mapping and fail-closed rules are defined by the
+[native changed-file verification contract](../../Specifications/Windvale-Native-Changed-Verification.md).
+Passing this front door is development feedback, not cross-host qualification.
+
 ## Individual candidate commands
 
 On Windows x64:

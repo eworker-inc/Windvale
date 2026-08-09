@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = 'Stop'
 $RetirementInventoryVerifier = Join-Path $PSScriptRoot 'Verify-Dotnet-Retirement-Inventory.ps1'
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
+$NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
 $Cases = @(
     @{ Name = 'documentation'; Paths = @('README.md'); Scope = 'lightweight'; Editor = $false; Areas = @() },
@@ -33,6 +34,106 @@ $Cases = @(
     @{ Name = 'bytecode specification'; Paths = @('Specifications/Seed-Bytecode.md'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'runtime') },
     @{ Name = 'test harness'; Paths = @('Tests/Windvale.Seed.Tests/Program.cs'); Scope = 'qualification'; Editor = $false; Areas = $AllAreas }
 )
+$NativeCases = @(
+    @{
+        Name = 'Windvale compiler'
+        Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv')
+        Suites = @('seed', 'unsafe-wvb', 'source-containment', 'lowerer-rejections', 'console-packager-source-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'managed compiler recovery source'
+        Paths = @('Compiler/Reference/Seed-Compiler.cs')
+        Suites = @()
+        Gaps = @('managed-compiler-recovery-source')
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Windvale assembler'
+        Paths = @('Assembler/Windvale/Wva-Assembler-Core.wv')
+        Suites = @('assembler-rejections', 'assembler-golden', 'wva-differential')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Windvale linker'
+        Paths = @('Linker/Windvale/Wv-Linker-Core.wv')
+        Suites = @('linker-rejections', 'linker-hostile', 'linker-map-limit')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'normal process object'
+        Paths = @('Operating-System/Tools/Process-Object-Tool.wv')
+        Suites = @('os-process-object', 'os-probe')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'exact native suite owner'
+        Paths = @('Tools/Native/Test-Linker-Map-Limit.cmd')
+        Suites = @('linker-map-limit')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'database gap'
+        Paths = @('Libraries/Database/Wvdb-Reader.wv')
+        Suites = @()
+        Gaps = @('database-native-tests')
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'verification planner'
+        Paths = @('Tools/Verify/Get-Native-Changed-Verification-Plan.ps1')
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
+        Name = 'verification planner with ordinary documentation'
+        Paths = @(
+            'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+            'AGENTS.md',
+            'Documents/Decisions/0458-Native-Changed-File-Verification.md'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
+        Name = 'native changed-file specification'
+        Paths = @(
+            'Specifications/README.md',
+            'Specifications/Windvale-Native-Changed-Verification.md'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
+        Name = 'combined deterministic order'
+        Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv', 'Assembler/Windvale/Wva-Assembler-Core.wv')
+        Suites = @('seed', 'unsafe-wvb', 'assembler-rejections', 'assembler-golden', 'wva-differential', 'source-containment', 'lowerer-rejections', 'console-packager-source-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'unmapped gap'
+        Paths = @('Unknown/Boundary.bin')
+        Suites = @()
+        Gaps = @('unmapped:Unknown/Boundary.bin')
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'empty gap'
+        Paths = @()
+        Suites = @()
+        Gaps = @('empty-changed-path-set')
+        VerifyPlan = $false
+    }
+)
 
 & $RetirementInventoryVerifier -Quiet
 
@@ -53,6 +154,26 @@ foreach ($Case in $Cases) {
     }
 }
 
+foreach ($Case in $NativeCases) {
+    $Plan = & $NativePlanner -ChangedPath $Case.Paths -PassThru -Quiet
+    if (
+        !([System.Linq.Enumerable]::SequenceEqual(
+            [string[]]@($Plan.Suites),
+            [string[]]$Case.Suites)) -or
+        !([System.Linq.Enumerable]::SequenceEqual(
+            [string[]]@($Plan.Gaps),
+            [string[]]$Case.Gaps)) -or
+        $Plan.RunPlanVerification -ne $Case.VerifyPlan
+    ) {
+        throw (
+            "Native plan '$($Case.Name)' expected suites=[$($Case.Suites -join ', ')], " +
+            "gaps=[$($Case.Gaps -join ', ')], verify-plan=$($Case.VerifyPlan); found " +
+            "suites=[$($Plan.Suites -join ', ')], gaps=[$($Plan.Gaps -join ', ')], " +
+            "verify-plan=$($Plan.RunPlanVerification)."
+        )
+    }
+}
+
 $EmptyPlan = & $Planner -ChangedPath @() -PassThru -Quiet
 if (
     $EmptyPlan.Scope -ne 'qualification' -or
@@ -64,4 +185,6 @@ if (
     throw 'An empty changed-path plan did not fail closed to qualification, editor verification, and all Seed areas.'
 }
 
-Write-Host "Changed-file verification planning passed ($($Cases.Count + 1) cases)."
+Write-Host (
+    "Changed-file verification planning passed " +
+    "($($Cases.Count + 1) general, $($NativeCases.Count) native cases).")

@@ -5044,3 +5044,17 @@ homepage deployment entry points contain no .NET invocation. The inventory
 format now records and verifies `normal` versus `recovery` mode. No broad or
 behavioral test ran for this documentation/inventory boundary; the focused
 inventory verifier is its complete executable check.
+
+## Local native changed-file verification evidence
+
+[Decision 0458](../Decisions/0458-Native-Changed-File-Verification.md) removes
+the managed Seed call from the recommended local Windows front door. A focused
+planner reads the canonical native retirement-suite order, deduplicates owned
+suite selections, and reports stable gaps for frozen managed source, missing
+database evidence, GitHub qualification, unknown tools/specifications, unknown
+paths, and empty input. It never substitutes the unfiltered coordinator.
+
+`Verify-Verification-Plan.ps1` passes 27 existing general cases and 13 new
+native cases. The actual no-argument `Verify-Changed.ps1` working-tree route
+discovers all 13 task paths, selects plan verification only,
+reports zero gaps, and loads no .NET. No behavior suite or broad gate reran.

@@ -207,6 +207,11 @@ one indirect local call into the managed Seed gate. Nine other direct entries
 are correctly isolated recovery tools. The next slice is a native changed-file
 verification front door, followed by evidence-gap closure and one GitHub
 dual-host cutover rather than a line-for-line managed-test rewrite.
+[Decision 0458](../Decisions/0458-Native-Changed-File-Verification.md) completes
+that local front door on Windows. Qualification-scoped changes now select
+focused native suites in canonical order or stop on stable named gaps; unknown
+paths invoke neither .NET nor the complete native gate. Non-Windows dispatch
+execution, gap closure, WebAssembly reconciliation, and GitHub cutover remain.
 
 The destination is durable; intermediate phases are adaptable. When experiments reveal an impractical contract or a clearly better alternative, update the relevant specification or decision and revise this roadmap rather than preserving accidental early designs.
 

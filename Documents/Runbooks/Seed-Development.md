@@ -7,7 +7,7 @@ This runbook is the practical entry point for building, testing, and exploring t
 - Windows x64 with the inbox command processor, or Linux x64 with Bash and
   `sha256sum`, for the ordinary native project source-to-WVB path
 - .NET SDK 10.0.302 or a compatible later patch in the same feature band for
-  Stage 0 development, verification, execution, packaging, and recovery
+  explicit Stage 0 recovery and managed differential verification
 - PowerShell 7 on Windows, or a POSIX shell on Linux, for repository automation
 - Node.js 24 when running the optional direct-WebAssembly engine verifier
 
@@ -26,13 +26,17 @@ duplicate shared state, or force a split where the code is more coherent togethe
 
 Choose one verification level for a source state. The levels are nested alternatives, not a checklist: a passing broader level subsumes the narrower levels, and a commit or push does not invalidate that result. Rerun only after relevant inputs change. After fixing a failure, rerun the narrowest affected selection and use at most one broader final gate if warranted.
 
-For the normal Windows inner loop, let changed paths select the relevant test areas:
+For the normal Windows inner loop, let changed paths select focused native suites:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
 ```
 
-Use the fast tier directly to select one or more areas and optionally narrow them by displayed test name:
+The planner refuses maintained boundaries whose native evidence has not moved
+yet; it never falls back to the complete native gate or .NET. Use `-PlanOnly` to
+inspect its selected suites and named gaps. When a managed differential is
+explicitly required, use the recovery Fast tier directly and narrow it by area
+and displayed test name:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
@@ -43,11 +47,20 @@ pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 `
   -TimingReportPath artifacts/seed-timing-fast.json
 ```
 
-Available Seed areas are `assembler`, `bytecode`, `compiler`, `database`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. `Verify-Changed.ps1` fails closed to all areas for broad or unrecognized implementation changes.
+Available managed Seed areas are `assembler`, `bytecode`, `compiler`, `database`, `foundation`, `golden`, `linker`, `object-model`, and `runtime`. An unrecognized changed path now produces a named native gap rather than selecting all managed areas.
 
-Fast runs regular tests by default. Tests that execute broad compiler closures, exact-compiler AOT transport, full-stage reproduction, or the golden contract are explicitly extended because a small group dominates suite time. To run one as a focused check, retain the area/filter selection and add `-IncludeExtended`; on Linux set `INCLUDE_EXTENDED=1`. Standard and Qualification always include every extended test.
+The remaining managed verifier is frozen recovery and differential tooling. Its
+Fast tier runs regular tests by default. Tests that execute broad compiler
+closures, exact-compiler AOT transport, full-stage reproduction, or the golden
+contract are explicitly extended because a small group dominates suite time. To
+request one for a focused recovery diagnosis, retain the area/filter selection
+and add `-IncludeExtended`; on Linux set `INCLUDE_EXTENDED=1`. Managed Standard
+and Qualification always include every extended test.
 
-`Development`, `Standard`, and `Qualification` have fixed suites, so omit `-TestArea`, `-TestFilter`, `-FailFast`, and `-IncludeExtended` at those levels. For the broad regular suite without the extended integration contracts, use:
+The managed `Development`, `Standard`, and `Qualification` tiers have fixed
+suites, so omit `-TestArea`, `-TestFilter`, `-FailFast`, and `-IncludeExtended`
+when explicit recovery or final comparison evidence requires one. For example,
+the broad regular managed recovery suite is:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Development
@@ -57,14 +70,16 @@ Choose the gate that protects the changed boundary:
 
 | Change or purpose | Usual gate |
 | --- | --- |
-| One implementation area or focused fix | `Verify-Changed.ps1` or a filtered `Fast` run |
-| Coherent cross-area development batch | `Development` |
-| Complete regular and extended in-process candidate | `Standard` |
-| Release, qualification, or changed portable artifact identity | Cross-host `Qualification` |
+| One implementation area or focused fix | Native `Verify-Changed.ps1` |
+| Coherent cross-area development batch | Native `Verify-Changed.ps1` after the batch settles |
+| Explicit Stage 0 differential diagnosis | Filtered managed `Fast` run |
+| Final retirement candidate | One fetched, settled cross-host retirement/Qualification gate |
 | Compiler inventory or project change | Native `Verify-Bootstrap.cmd` or `.sh` once for the final candidate |
 | OS boot, image, firmware, or kernel-seam change | Focused OS tests and the relevant live boot gate |
 
-The no-argument verifier defaults to `Development`. Request complete Qualification explicitly on Windows:
+The no-argument managed recovery verifier defaults to `Development`. Request its
+complete Qualification tier explicitly on Windows only when the final retirement
+gate or a named diagnosis requires it:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
@@ -76,23 +91,40 @@ On Linux:
 VERIFY_LEVEL=qualification ./Tools/Verify/Verify-Seed.sh
 ```
 
-Linux exposes the same tiers through `VERIFY_LEVEL`, comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, `INCLUDE_EXTENDED`, and `TIMING_REPORT_PATH`; its default is also `development`.
+Linux exposes the same managed recovery tiers through `VERIFY_LEVEL`,
+comma-separated `TEST_AREAS`, `TEST_FILTER`, `FAIL_FAST`, `INCLUDE_EXTENDED`, and
+`TIMING_REPORT_PATH`; its default is also `development`.
 
 ### Standard and Qualification
 
-`Standard` is the complete in-process candidate gate. It runs every regular and extended Seed test, including the golden contract, then runs the bounded Windvale OS in-process suite and writes the conformance report. It stops before the published command-line, process, filesystem, and native-artifact checks.
+Managed `Standard` is the complete in-process recovery/differential candidate
+gate. It runs every regular and extended Seed test, including the golden
+contract, then runs the bounded Windvale OS in-process suite and writes the
+conformance report. It stops before the published command-line, process,
+filesystem, and native-artifact checks.
 
-`Qualification` begins with that same complete in-process suite, then exercises the published CLI as an external tool. It verifies real file publication and preservation behavior, native Windows and Linux application artifacts, assembler/object/linker routes, malformed and rejected inputs, exact artifact identities, and Windvale-written versus Stage 0 agreement.
+Managed `Qualification` begins with that same complete in-process suite, then
+exercises the published CLI as an external tool. Until the final cutover it
+remains comparison evidence for real file publication, native Windows and Linux
+artifacts, assembler/object/linker routes, malformed inputs, exact identities,
+and Windvale-written versus Stage 0 agreement; it is not the normal inner loop.
 
-The recommended candidate workflow is:
+The retirement candidate workflow is:
 
-1. Use `Verify-Changed.ps1`, a focused `Fast` selection, or `Development` while editing.
-2. Run `Standard` once after a coherent higher-risk candidate has settled and before presenting it as complete in-process work.
-3. Commit and push the unchanged candidate.
-4. Let GitHub run the independent Windows and pinned-Debian `Qualification` jobs.
-5. Run a local `Qualification` only when diagnosing that gate, preparing a critical release, or changing a boundary whose external process behavior cannot be established by `Standard`.
+1. Use native `Verify-Changed.ps1` once after each coherent slice settles.
+2. Commit and push that unchanged slice without rerunning a passing check.
+3. Close named native gaps one at a time; use managed Fast only for an explicit
+   differential question.
+4. After all slices settle, fetch and reconcile latest once, then run the complete
+   Windows/Linux retirement and Qualification gate once on the exact candidate.
+5. Use managed Standard or Qualification outside that end gate only to diagnose a
+   failure that focused native evidence cannot explain.
 
-Do not run each tier sequentially against the same source state. A successful `Standard` already subsumes the local Fast and Development suites. A successful single-host `Qualification` is useful diagnostic evidence, but it is not a cross-host qualification claim; that claim requires the paired Windows and Debian results.
+Do not run each tier sequentially against the same source state. A successful
+managed `Standard` already subsumes its Fast and Development suites. A successful
+single-host `Qualification` is useful diagnostic evidence, but it is not a
+cross-host qualification claim; that claim requires the paired Windows and
+Debian results.
 
 Fast and changed-file runs are development feedback, not qualification evidence. GitHub runs the independent dual-host Qualification gate for implementation and specification changes. Do not duplicate that gate locally merely because a commit or push follows. Record which broader checks were not run and why.
 

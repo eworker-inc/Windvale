@@ -12,7 +12,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
-$SeedVerifier = Join-Path $PSScriptRoot 'Verify-Seed.ps1'
+$NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
+$PlanVerifier = Join-Path $PSScriptRoot 'Verify-Verification-Plan.ps1'
 $WebsiteVerifier = Join-Path $PSScriptRoot 'Verify-Website.ps1'
 $EditorVerifier = Join-Path (Split-Path -Parent $PSScriptRoot) 'Editors/Verify-Windvale-Editor.ps1'
 
@@ -52,6 +53,16 @@ if ($Paths.Count -eq 0) {
 }
 
 $Plan = & $Planner -ChangedPath $Paths -PassThru
+$NativePlan = if ($Plan.Scope -eq 'qualification') {
+    & $NativePlanner -ChangedPath $Paths -PassThru
+} else {
+    [pscustomobject]@{
+        Suites = @()
+        Gaps = @()
+        RunPlanVerification = $false
+        ChangedCount = $Paths.Count
+    }
+}
 if ($PlanOnly) {
     return
 }
@@ -73,19 +84,74 @@ if ($Plan.Editor) {
 
 if ($Plan.Scope -eq 'website') {
     & $WebsiteVerifier
-} elseif ($Plan.Areas.Count -ne 0) {
-    Write-Warning 'Changed-file verification is development feedback, not conformance or qualification evidence.'
-    $Arguments = @{
-        Level = 'Fast'
-        TestArea = $Plan.Areas
+} elseif ($Plan.Scope -eq 'qualification') {
+    if ($NativePlan.Gaps.Count -ne 0) {
+        throw (
+            'Changed-file verification has uncovered native evidence gaps: ' +
+            ($NativePlan.Gaps -join ', ') +
+            '. Add or select a native owner; no managed fallback was invoked.'
+        )
     }
-    if (!$NoFailFast) {
-        $Arguments.FailFast = $true
+
+    Write-Warning 'Changed-file verification is native development feedback, not conformance or qualification evidence.'
+    $Failures = [System.Collections.Generic.List[string]]::new()
+    $Timings = [System.Collections.Generic.List[object]]::new()
+    if ($NativePlan.RunPlanVerification) {
+        $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
+        try {
+            & $PlanVerifier
+        } catch {
+            $Failures.Add('verification-plan')
+            if (!$NoFailFast) { throw }
+        } finally {
+            $Stopwatch.Stop()
+            $Timings.Add([pscustomobject]@{
+                name = 'verification-plan'
+                elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
+            })
+        }
     }
+
+    $IsWindowsHost = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
+    $Coordinator = if ($IsWindowsHost) {
+        Join-Path $RepositoryRoot 'Tools/Native/Test-Retirement-Suite.cmd'
+    } else {
+        Join-Path $RepositoryRoot 'Tools/Native/Test-Retirement-Suite.sh'
+    }
+    foreach ($Suite in $NativePlan.Suites) {
+        $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
+        try {
+            & $Coordinator --filter $Suite
+            if ($LASTEXITCODE -ne 0) {
+                throw "Native suite '$Suite' exited $LASTEXITCODE."
+            }
+        } catch {
+            $Failures.Add($Suite)
+            if (!$NoFailFast) { throw }
+        } finally {
+            $Stopwatch.Stop()
+            $Timings.Add([pscustomobject]@{
+                name = $Suite
+                elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
+            })
+        }
+    }
+
     if (![string]::IsNullOrWhiteSpace($TimingReportPath)) {
-        $Arguments.TimingReportPath = $TimingReportPath
+        $TimingParent = Split-Path -Parent $TimingReportPath
+        if (![string]::IsNullOrWhiteSpace($TimingParent) -and
+            !(Test-Path -LiteralPath $TimingParent -PathType Container)) {
+            throw 'The native changed-file timing-report parent does not exist.'
+        }
+        [pscustomobject]@{
+            format = 'windvale-native-changed-verification-timing-1'
+            entries = @($Timings)
+        } | ConvertTo-Json -Depth 4 |
+            Set-Content -LiteralPath $TimingReportPath -Encoding utf8
     }
-    & $SeedVerifier @Arguments
+    if ($Failures.Count -ne 0) {
+        throw "Native changed-file verification failed: $($Failures -join ', ')."
+    }
 } else {
-    Write-Host 'Changed-file verification passed without Seed execution.'
+    Write-Host 'Changed-file verification passed without native suite execution.'
 }
