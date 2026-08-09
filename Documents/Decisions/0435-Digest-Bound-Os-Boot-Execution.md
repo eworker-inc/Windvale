@@ -1,6 +1,6 @@
 # Decision 0435: Digest-bound OS boot execution
 
-- Status: Implemented current-host boundary split; Probe 40 repair and promotion pending
+- Status: Implemented current-host boundary split and normal Probe 40 repair; five-scenario promotion pending
 - Date: 2026-08-09
 - Advances: [Decision 0045](0045-First-Uefi-Application-And-Boot-Probe.md), [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md), and [Decision 0434](0434-Expanded-Native-Wva-Positive-Matrix.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
@@ -37,8 +37,8 @@ need separate retirement rows.
 
 Both changed PowerShell files parse without errors. Static inspection finds no
 `dotnet`, builder-project, or `Windvale.Bootstrap` invocation in the boot
-verifier. The focused recovery command reconstructs the current normal image
-as 683,008 bytes at SHA-256
+verifier. The first focused recovery command reconstructed a 683,008-byte
+normal image at SHA-256
 `6eeb2a73e32b54872687186447662f917e80b973d48f670d1498e76ffd376820`.
 
 One focused normal-scenario boot admitted those exact bytes and reached the
@@ -49,10 +49,21 @@ serial log. This is an exposed current Probe 40 image/runtime blocker, not
 successful O1 promotion evidence. The other four scenarios, broad OS suite,
 Development, Standard, Qualification, and grouped retirement gate were not run.
 
+Focused stage diagnostics located the failure in the init-owned resource-store
+validation. WVB 1.11 had increased the embedded module and complete WVRS image
+by one byte, but the WVA init shim still required the prior 1,195-byte store and
+823-byte data region. The repaired shim now admits the generated 1,196-byte
+store and 824-byte data region. After removing all diagnostic instrumentation,
+the recovery command produced a 683,008-byte image at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+One focused normal boot admitted that exact image and passed the complete Probe
+40 serial contract with QEMU exit `0`. The other four scenarios and every broad
+verifier remain deferred, so this is repair evidence rather than five-scenario
+promotion.
+
 No firmware image, generated cache, or vendor-specific metadata is committed.
 The normal boot process no longer invokes Stage 0, while native image
-construction and the current guest failure remain explicit rather than hidden
-behind a combined command.
+construction and the remaining promotion gate stay explicit.
 
 ## Reconsideration triggers
 

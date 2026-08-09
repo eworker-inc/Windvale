@@ -4462,3 +4462,15 @@ instead of the normal scenario's expected `0`. One diagnostic rerun retained
 the same serial evidence. The other four scenarios and every broad verifier
 remain deferred. This is failure evidence for the current O1 blocker, not a
 qualification or regression fix.
+
+Focused stage diagnostics subsequently proved that arena selection, allocator,
+exceptions, paging, WVB admission, and initial process setup succeeded. The
+init service rejected the generated WVRS image because its WVA shim retained
+the pre-WVB-1.11 1,195-byte store and 823-byte data-region constants after the
+embedded module grew by one byte. The repaired shim admits 1,196 and 824 bytes.
+After all diagnostic instrumentation was removed, recovery reconstruction
+produced a 683,008-byte normal image at SHA-256
+`080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9`.
+One digest-bound normal boot passed the complete Probe 40 serial contract and
+QEMU exited `0`. The other four scenarios and broad verifiers remain deferred;
+this is focused repair evidence, not five-scenario promotion.

@@ -118,7 +118,7 @@ load_memory_u64 r8 rdx none 1 384
 test r8 r8
 branch equal resource_reply_invalid
 load_memory_u32 eax rdx none 1 392
-compare_i32 eax 1195
+compare_i32 eax 1196
 branch not_equal resource_reply_invalid
 load_memory_u32 eax r8 none 1 0
 compare_i32 eax 1397904983
@@ -127,7 +127,7 @@ load_memory_u32 eax r8 none 1 4
 compare_i32 eax 1
 branch not_equal resource_reply_invalid
 load_memory_u32 eax r8 none 1 8
-compare_i32 eax 1195
+compare_i32 eax 1196
 branch not_equal resource_reply_invalid
 load_memory_u32 eax r8 none 1 12
 compare_i32 eax 3
@@ -139,7 +139,7 @@ load_memory_u32 eax r8 none 1 20
 compare_i32 eax 52
 branch not_equal resource_reply_invalid
 load_memory_u32 eax r8 none 1 24
-compare_i32 eax 823
+compare_i32 eax 824
 branch not_equal resource_reply_invalid
 load_memory_u32 eax r8 none 1 28
 test eax eax

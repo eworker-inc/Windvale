@@ -1805,10 +1805,10 @@ internal static class Program
         Equal("4b8126d1baa38054fc70165be3c2f9519e7bea7e1f4d5596bcae36f2567ddf11",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉnativeˉobjectˉbytes.AsSpan()));
         Equal(2_118, First.Initˉserviceˉshimˉobjectˉbytes.Length);
-        Equal("1dd9a6376a10fcd95d157f5feed9eceaf5fc0a8d45911c90fe0786d334dc0cc8",
+        Equal("52098aac184961fda7c3a23c8577851df6c18736555cb169b340d7b0c7249359",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉshimˉobjectˉbytes.AsSpan()));
         Equal(5_159, First.Initˉserviceˉimageˉbytes.Length);
-        Equal("231f8c534d53cbcc8369c0192fc27d260f6753a261092be91145b2f99923ec40",
+        Equal("e9624ebe3b857b77d8b1024a4edfdaf23e040ee61f9dfc484e590ce1e5aa18f0",
             Objectˉdigest.Calculateˉsha256(First.Initˉserviceˉimageˉbytes.AsSpan()));
         Equal(474, First.Directoryˉserviceˉmoduleˉbytes.Length);
         Equal("f7410595f9824e510da9399f52a463013ff41240b67308cdf28b4f5b7484ab2b",
@@ -2090,6 +2090,21 @@ internal static class Program
             "The init resource service shim is not code-only dynamic lookup logic.");
         Equal(0, Countˉsequence(Serviceˉobject.Sections[0].Data, Configurationˉrequest));
         Equal(0, Countˉsequence(Serviceˉobject.Sections[0].Data, Configurationˉreply));
+        var Storeˉlengthˉcomparison = new byte[6];
+        Storeˉlengthˉcomparison[0] = 0x81;
+        Storeˉlengthˉcomparison[1] = 0xF8;
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Storeˉlengthˉcomparison.AsSpan(2), checked((uint)First.Resourceˉstoreˉbytes.Length));
+        var Storeˉdataˉcomparison = new byte[6];
+        Storeˉdataˉcomparison[0] = 0x81;
+        Storeˉdataˉcomparison[1] = 0xF8;
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Storeˉdataˉcomparison.AsSpan(2),
+            BinaryPrimitives.ReadUInt32LittleEndian(First.Resourceˉstoreˉbytes.AsSpan()[24..]));
+        Equal(2, Countˉsequence(
+            Serviceˉobject.Sections[0].Data, Storeˉlengthˉcomparison.ToImmutableArray()));
+        Equal(1, Countˉsequence(
+            Serviceˉobject.Sections[0].Data, Storeˉdataˉcomparison.ToImmutableArray()));
         var Verifiedˉstore = Resourceˉstoreˉverifier.Verify(First.Resourceˉstoreˉbytes.AsSpan());
         Equal(3, Verifiedˉstore.Entries.Length);
         True(Verifiedˉstore.Tryˉlookup("boot:main.configuration", out var Configuration) &&
@@ -3561,19 +3576,19 @@ internal static class Program
         var Serviceˉfaultˉsecond = Kernelˉprocessˉx64.Build(
             Serviceˉfaultˉimage, Kernelˉprocessˉscenario.Serviceˉfault);
         Equal(512_978, First.Objectˉbytes.Length);
-        Equal("aef9b4983cb6305a06f4c7e8d2ddb2025dc591633ed41ee013024b371a935316",
+        Equal("dff07c3f6a52dedf6bcd96181221cba50c831359502ec763ee77f6aaaaafdfaa",
             Objectˉdigest.Calculateˉsha256(First.Objectˉbytes.AsSpan()));
         Equal(46_678, First.Codeˉbytes.Length);
         Equal("05938e22e02abac6d396fa5a64342d94609900a6401b112f18de0fb5421a41b5",
             Objectˉdigest.Calculateˉsha256(First.Codeˉbytes.AsSpan()));
         Equal(513_026, Faultˉfirst.Objectˉbytes.Length);
-        Equal("81dc09b0bd170c4518a2af6a5b7cdede118f849eef945e59dd88c6a4e87ab4e9",
+        Equal("2f4dc7726c66f1542f9f957f837103b36e2e8bb8678cf038f3c7f796842aee57",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Objectˉbytes.AsSpan()));
         Equal(46_758, Faultˉfirst.Codeˉbytes.Length);
         Equal("941da68ab4e166e3f961b88e1755278031c8c60f935d96dbc127b8be10db060c",
             Objectˉdigest.Calculateˉsha256(Faultˉfirst.Codeˉbytes.AsSpan()));
         Equal(499_154, Serviceˉfaultˉfirst.Objectˉbytes.Length);
-        Equal("5db9d0aa9d7ccba02e88e711984c1b2768f2293bcb06532eeb85288d4c97fffe",
+        Equal("ba268b3f7543d14515f854b593d042e9eeafaa0e45be51ec279e8dd80a3e6d24",
             Objectˉdigest.Calculateˉsha256(Serviceˉfaultˉfirst.Objectˉbytes.AsSpan()));
         Equal(33_318, Serviceˉfaultˉfirst.Codeˉbytes.Length);
         Equal("a6e2578f737c49279fd3b9523e00cf0762be6cbba8b91863f568a3b0d9bca747",
@@ -3751,7 +3766,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(683_520, First.Length);
         Equal(
-            "7d1d3bdba4fb6236260ed5d8b7640f0d8b6c4393901a8594775e866db1b57e35",
+            "6dee73d0bb25438e3d30bed3bdec7ccfde925ed320b50d8d1b90a3d26578b13e",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and deliberate user-fault images are identical.");
@@ -3767,7 +3782,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(669_184, First.Length);
         Equal(
-            "099f085e5e0b945c216da24ece7c508d88b86271ec2a9c9b3d4a1faeca6f1928",
+            "8e5de50fb8667ecfacca2c02b1122008d66ba56f77d8c263e5b4a8f410a98b64",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(!First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
             "The normal and contained service-fault images are identical.");
@@ -3784,7 +3799,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(683_008, First.Length);
         Equal(
-            "6eeb2a73e32b54872687186447662f917e80b973d48f670d1498e76ffd376820",
+            "080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         var Verified = Uefiˉapplicationˉverifier.Verify(First.AsSpan());
         True(Verified.Codeˉbytes.Length > 1, "The firmware probe has no executable body.");
@@ -3798,7 +3813,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(683_008, First.Length);
         Equal(
-            "8e591247b61174a3c96737e45ffdc93254445bc9f47a6c31fb497c41bc277b2e",
+            "8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
@@ -3822,7 +3837,7 @@ internal static class Program
         Sequenceˉequal(First, Second);
         Equal(683_008, First.Length);
         Equal(
-            "5b28a824a2fe72aac88794c753ca8afadaa5b461604a91363d92e27776cd666c",
+            "47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b",
             Objectˉdigest.Calculateˉsha256(First.AsSpan()));
         True(
             !First.AsSpan().SequenceEqual(Firmwareˉprobe.Buildˉapplication().AsSpan()),
