@@ -128,6 +128,92 @@ internal static partial class Program
                     Bundleˉpath, Outputˉpath,
                 ]));
                 Sequenceˉequal(Expected, File.ReadAllBytes(Outputˉpath));
+
+                if ((OperatingSystem.IsWindows() &&
+                        Platform == Nativeˉserviceˉplatform.Windows) ||
+                    (OperatingSystem.IsLinux() &&
+                        Platform == Nativeˉserviceˉplatform.Linux))
+                {
+                    var Extension = OperatingSystem.IsWindows() ? ".exe" : ".elf";
+                    var Packagedˉtoolˉpath = Path.Combine(
+                        Repository,
+                        "Artifacts",
+                        "Native-Hosted-Container-Toolset-Candidate",
+                        OperatingSystem.IsWindows() ? "windows-x64" : "linux-x64",
+                        "wvhostverifiercompose" + Extension);
+                    var Directˉoutputˉpath = Prefix + "Direct" + Extension;
+                    var Arguments = new[]
+                    {
+                        Runtimeˉpath,
+                        Platformˉpath,
+                        Startupˉpath,
+                        Bundleˉpath,
+                        Directˉoutputˉpath,
+                    };
+                    if (OperatingSystem.IsWindows())
+                    {
+                        var Loadedˉmodules = new HashSet<string>(
+                            StringComparer.OrdinalIgnoreCase);
+                        Equal(0, Executeˉwindowsˉapplication(
+                            File.ReadAllBytes(Packagedˉtoolˉpath).ToImmutableArray(),
+                            $"verifier container status=Valid bytes={Expected.Length}\n",
+                            Arguments,
+                            timeoutˉmilliseconds: 60_000,
+                            loadedˉmodules: Loadedˉmodules));
+                        Equal(0, Loadedˉmodules.Count(Name =>
+                            Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
+                            Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                            Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+                        Sequenceˉequal(Expected, File.ReadAllBytes(Directˉoutputˉpath));
+                        Loadedˉmodules.Clear();
+                        Equal(0, Executeˉwindowsˉapplication(
+                            File.ReadAllBytes(Directˉoutputˉpath).ToImmutableArray(),
+                            "wvb status=Valid profile=compiler-aligned\n",
+                            [Path.Combine(
+                                Repository,
+                                "Artifacts",
+                                "Native-Front-Door",
+                                "Wvb",
+                                "Compiler-Wvb-Verifier.wvb")],
+                            timeoutˉmilliseconds: 60_000,
+                            loadedˉmodules: Loadedˉmodules));
+                        Equal(0, Loadedˉmodules.Count(Name =>
+                            Name.Contains("clr", StringComparison.OrdinalIgnoreCase) ||
+                            Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                            Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+                    }
+                    else
+                    {
+                        var Loadedˉmappings = new HashSet<string>(StringComparer.Ordinal);
+                        Equal(0, Executeˉlinuxˉapplication(
+                            File.ReadAllBytes(Packagedˉtoolˉpath).ToImmutableArray(),
+                            $"verifier container status=Valid bytes={Expected.Length}\n",
+                            Arguments,
+                            timeoutˉmilliseconds: 60_000,
+                            loadedˉmappings: Loadedˉmappings));
+                        Equal(0, Loadedˉmappings.Count(Name =>
+                            Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||
+                            Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                            Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+                        Sequenceˉequal(Expected, File.ReadAllBytes(Directˉoutputˉpath));
+                        Loadedˉmappings.Clear();
+                        Equal(0, Executeˉlinuxˉapplication(
+                            File.ReadAllBytes(Directˉoutputˉpath).ToImmutableArray(),
+                            "wvb status=Valid profile=compiler-aligned\n",
+                            [Path.Combine(
+                                Repository,
+                                "Artifacts",
+                                "Native-Front-Door",
+                                "Wvb",
+                                "Compiler-Wvb-Verifier.wvb")],
+                            timeoutˉmilliseconds: 60_000,
+                            loadedˉmappings: Loadedˉmappings));
+                        Equal(0, Loadedˉmappings.Count(Name =>
+                            Name.Contains("coreclr", StringComparison.OrdinalIgnoreCase) ||
+                            Name.Contains("hostfxr", StringComparison.OrdinalIgnoreCase) ||
+                            Name.Contains("hostpolicy", StringComparison.OrdinalIgnoreCase)));
+                    }
+                }
                 Paths.AddRange([
                     Runtimeˉpath, Platformˉpath, Startupˉpath,
                     Bundleˉpath, Outputˉpath,
