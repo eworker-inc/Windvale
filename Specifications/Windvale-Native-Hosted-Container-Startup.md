@@ -20,21 +20,21 @@ the existing portable instantiation core.
 wvhoststartup <plan.wvcd> <startup.wvo> <response.wvsd>
 ```
 
-The first input is one successful `WVCD 1` plan: 360 bytes for Windows or 252
+The first input is one successful `WVCD 1` plan: 364 bytes for Windows or 256
 bytes for Linux. The command admits the plan envelope, target, implemented
 profile, startup address, startup byte count, and exact target-table extent.
-Target `1` requires the 4,334-byte Windows startup WVO with 40 symbols, 58
+Target `1` requires the 4,398-byte Windows startup WVO with 40 symbols, 59
 relocations, and SHA-256
-`55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb`.
-Target `2` requires the 2,390-byte Linux startup WVO with 26 symbols, 31
+`dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161`.
+Target `2` requires the 2,454-byte Linux startup WVO with 26 symbols, 32
 relocations, and SHA-256
-`0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff`.
+`1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946`.
 
 The producer constructs the exact 40-byte `WVSI 1` header, appends the plan's
 canonical target table and complete admitted WVO, and calls
 `Linkerˉnativeˉhostedˉstartupˉinstantiation.Nativeˉhostedˉstartupˉinstantiate`.
-It writes only an exact successful `WVSD 1` response: 1,542 bytes for Windows
-or 797 bytes for Linux, including the 32-byte response header and relocated
+It writes only an exact successful `WVSD 1` response: 1,586 bytes for Windows
+or 841 bytes for Linux, including the 32-byte response header and relocated
 startup code.
 
 All three path names must be distinct. An alias is rejected with usage status
@@ -56,9 +56,9 @@ host services shared by the planner, platform-byte producer, and segmenter.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Startup-producer WVB | 42,508 | `ae1401613548724f35f40699249963cf7e0d04cbffbb8b4a0459a7e0d493003e` |
-| Windows startup producer | 373,248 | `d4ba697dc124d79ed25dbb60ba17bdf84cb7a2c6650296901b99b1cb67d02929` |
-| Linux startup producer | 372,736 | `43eb89b3d30cd0760a492ea6431dc736807ef322158beda20501d7f1180adc48` |
+| Startup-producer WVB | 42,508 | `7c68e998940600ecb56534e05635510643ba1fd218bcd3fca9e23300e1380807` |
+| Windows startup producer | 373,248 | `ec1fecf3c05b130554537be6d03a064e75c833ded55677abcbde0c13d0264b3e` |
+| Linux startup producer | 372,736 | `6a58768a3aa137ffd1ba49f318fe0f129a5d7430a5d06d8126af31b4411f5e94` |
 
 The WVB reconstructs through the native Project 1 front door. Focused
 current-host evidence builds the public CLI target, executes a real plan and

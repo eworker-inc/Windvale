@@ -15,7 +15,7 @@ Compilerˉcompileˉsourceˉwvb(Input: bytes)
 
 On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB 1.11 module, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved.
 
-The status contract distinguishes upstream WVIR rejection, declarations, shapes and operations, invalid data, and WVB limits. Its existing module-count and profile statuses remain reserved for stable diagnostic numbering; every currently validated WVSS module count and root profile is accepted.
+The status contract distinguishes upstream WVIR rejection, shapes and operations, invalid data, and WVB limits. The former unsupported-declaration value and the existing module-count and profile values remain reserved for stable diagnostic numbering: upstream WVIR admission now owns declaration-kind rejection, and every currently validated WVSS module count and root profile is accepted.
 
 ## Portable in-memory adapter
 
@@ -149,12 +149,12 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 The current deterministic Stage 0 compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 915,609 bytes, SHA-256 `389024fb26cb9335413fbfbdd739518b53962d7221480b42db7c6c6a9c9a4dd3`.
-- `Source-Wvb-Demo.wvb`: 915,083 bytes, SHA-256 `b910bd18abbca23882cdadbea289b8e1e41dbc2f5871c2f8772c10a170b42c2a`.
-- `Source-Wvb-Tool.wvb`: 913,513 bytes, SHA-256 `abc2ef9839944bddee172cbeb3e11f716d7be9c0d94c1a0d4378341030ee4207`.
-- `Source-Wvb-Memory-Adapter.wvb`: 911,190 bytes, SHA-256 `5113f846684aacfe533660bc7db45badf5422bf720a92c47044f4c3f0e84ebf4`.
+- `Source-Wvb-Core.wvb`: 923,514 bytes, SHA-256 `c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b`.
+- `Source-Wvb-Demo.wvb`: 923,210 bytes, SHA-256 `ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9`.
+- `Source-Wvb-Tool.wvb`: 921,640 bytes, SHA-256 `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
+- `Source-Wvb-Memory-Adapter.wvb`: 919,317 bytes, SHA-256 `86f964aeeca8ebfabf11ddd252c32efe49303135af04e313b3801afe9656df29`.
 
-The memory adapter contains 411 functions, 752,046 aggregate code bytes, 156,313 instructions, at most 1,408 locals and stack depth 34. These are local candidate identities and measurements. Complete Stage 1/Stage 2 bootstrap and dual-host qualification must still be rerun before the candidate becomes a new cross-host bootstrap claim.
+The memory adapter contains 425 functions and retains the admitted maximum of 1,408 locals and stack depth 34. These are local candidate identities and measurements. Complete Stage 1/Stage 2 bootstrap and dual-host qualification must still be rerun before the candidate becomes a new cross-host bootstrap claim.
 
 The static multi-module behavior was first qualified at `cb1db235`, the fused typed-WVIR artifact set at `b1241157310bc597dbdf0d24146f4d81f0128712`, and Decision 0050's bidirectional nominal-index artifact set at `e37204ffcdf17b39a486466cc13f35d8ee00b4b4`. Decision 0055 changes embedded compiler implementation bytes but preserves all five differential fixture outputs byte-identical to Stage 0 and is cross-host qualified at `1a4fca7`.
 

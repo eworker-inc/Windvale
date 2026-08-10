@@ -9,12 +9,12 @@ namespace Windvale.Linker;
 internal static class Nativeˉhostedˉcontainerˉconstructor
 {
     // Transitional managed materializer; native recipe publication owns its removal.
-    internal const int CONSUMER_CANONICAL_SIZE = 33_667;
+    internal const int CONSUMER_CANONICAL_SIZE = 35_557;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "55b89d7b5ca5e6118214bfadf7c8597a959348bf18b230954c623a7549e27509";
-    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 537_190;
+        "d285947f46b0e229891ee20205dd6908a375eea7dc50d460799d8c68e700113a";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 559_209;
     internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
-        "6a9ba7b7bf7cc058f3a3a8bde5e694891dc857ee66521a4c7496aa6bc0fd6634";
+        "981dc6dc9889e2c95477ff473719c74d565de12285db10d4e74e0b9e54a667ba";
 
     private const uint REQUEST_MAGIC = 0x5243_5657;
     private const uint RESPONSE_MAGIC = 0x4443_5657;
@@ -112,7 +112,7 @@ internal static class Nativeˉhostedˉcontainerˉconstructor
             : checked((uint)Linuxˉhostedˉcompilerˉstartup.BYTES);
         var Expectedˉimport = Windows ? 4096u : 0u;
         var Expectedˉrelocation = Windows ? 12u : 0u;
-        var Expectedˉtargetˉbytes = Windows ? 232u : 124u;
+        var Expectedˉtargetˉbytes = Windows ? 236u : 128u;
         var Bundleˉbytes = checked((uint)bundle.Imageˉbytes.Length);
         if (Applicationˉbytes < Bundleˉbytes ||
             Applicationˉbytes > checked(Bundleˉbytes + 16_384u) ||

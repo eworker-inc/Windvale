@@ -29,7 +29,8 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉverifier
             Linuxˉhostedˉcompilerˉapplicationˉcontract.TEXT_ADDRESS + Textˉbytes),
             PAGE_BYTES);
         var Runtimeˉlayout = Hostedˉcompilerˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Linuxˉx64);
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            expectedˉprofile);
         var Expectedˉbytes = checked((int)(Dataˉoffset +
             Linuxˉhostedˉcompilerˉapplicationˉcontract.DATA_FILE_BYTES));
         if (bytes.Length != Expectedˉbytes)
@@ -138,7 +139,8 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉverifier
 
         var Layout = Linuxˉhostedˉcompilerˉapplicationˉcontract.Plan(
             expectedˉbundle,
-            Runtime.Metadata.Nativeˉentryˉoffset);
+            Runtime.Metadata.Nativeˉentryˉoffset,
+            expectedˉprofile);
         return new(
             Layout,
             Runtime.Metadata.Nativeˉentryˉoffset,

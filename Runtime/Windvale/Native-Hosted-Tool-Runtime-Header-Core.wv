@@ -47,13 +47,13 @@ fn Context(Input: bytes) -> bytes {
     var Result: bytes = Empty(Input);
     Result = Appendˉu32(Result, 7u32);
     Result = Appendˉu32(Result, 112u32);
-    Result = Appendˉu64(Result, 755359744u32, 11u32);
+    Result = Appendˉu64(Result, 3870457856u32, 14u32);
     Result = Appendˉu64(Result, 1024u32, 0u32);
     Result = Bytesˉconcat(Result, Zeroes(Input, 16u32));
     Result = Appendˉu32(Result, 2097152u32);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu64(Result, 0u32, 0u32);
-    Result = Appendˉu32(Result, 134217728u32);
+    Result = Appendˉu32(Result, Bytesˉreadˉu32ˉlittle(Input, 104u32));
     Result = Appendˉu32(Result, 0u32);
     return Bytesˉconcat(Result, Zeroes(Input, 48u32));
 }
@@ -86,7 +86,12 @@ fn Scratchˉbytes(Target: u32) -> u32 {
     return 1048577u32;
 }
 
-fn Fileˉinputˉtable(Input: bytes, Target: u32) -> bytes {
+fn Nameˉstrideˉbytes(Profile: u32) -> u32 {
+    if Profile == 2u32 { return 8192u32; }
+    return 1048576u32;
+}
+
+fn Fileˉinputˉtable(Input: bytes, Target: u32, Profile: u32) -> bytes {
     var Result: bytes = Empty(Input);
     Result = Appendˉu32(Result, 1229346391u32);
     Result = Appendˉu32(Result, 1u32);
@@ -96,7 +101,7 @@ fn Fileˉinputˉtable(Input: bytes, Target: u32) -> bytes {
     Result = Appendˉu32(Result, 64u32);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu64(Result, 0u32, 0u32);
-    Result = Appendˉu32(Result, 1048576u32);
+    Result = Appendˉu32(Result, Nameˉstrideˉbytes(Profile));
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu64(Result, 0u32, 0u32);
     Result = Appendˉu32(Result, 4194304u32);
@@ -151,7 +156,7 @@ export fn Nativeˉhostedˉtoolˉruntimeˉheaderˉbuild(Input: bytes) -> bytes {
     var Header: bytes = Context(Input);
     Header = Bytesˉconcat(Header, Serviceˉtable(Input));
     Header = Bytesˉconcat(Header, Outputˉtable(Input, Target));
-    Header = Bytesˉconcat(Header, Fileˉinputˉtable(Input, Target));
+    Header = Bytesˉconcat(Header, Fileˉinputˉtable(Input, Target, Profile));
     Header = Bytesˉconcat(Header, Fileˉoutputˉtable(Input, Target));
     Header = Bytesˉconcat(Header, Bytesˉslice(Input, 24u32, 1024u32));
     Header = Bytesˉconcat(Header, Zeroes(Input, 2592u32));

@@ -72,6 +72,11 @@ fn Profileˉflags(Profile: u32) -> u32 {
     return Profile + 1u32;
 }
 
+fn Textˉarenaˉbytes(Profile: u32) -> u32 {
+    if Profile == 2u32 { return 234881024u32; }
+    return 134217728u32;
+}
+
 fn Capabilityˉservice(Index: u32) -> u32 {
     if Index == 0u32 { return 1u32; }
     if Index == 1u32 { return 6u32; }
@@ -226,9 +231,9 @@ export fn Nativeˉhostedˉtoolˉmetadataˉbuild(Input: bytes) -> bytes {
     Metadata = Appendˉu32(Metadata, Nativeˉbytes);
     Metadata = Appendˉu32(Metadata, Nativeˉentry);
     Metadata = Appendˉu32(Metadata, 2097152u32);
-    Metadata = Appendˉu32(Metadata, 134217728u32);
+    Metadata = Appendˉu32(Metadata, Textˉarenaˉbytes(Profile));
     Metadata = Appendˉu32(Metadata, Profileˉflags(Profile));
-    Metadata = Appendˉu64(Metadata, 755359744u32, 11u32);
+    Metadata = Appendˉu64(Metadata, 3870457856u32, 14u32);
     Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 40u32, 32u32));
     Metadata = Appendˉcapabilities(Input, Metadata);
     Metadata = Appendˉservices(Input, Metadata, Target);

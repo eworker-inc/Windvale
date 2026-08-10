@@ -280,11 +280,22 @@ move r8 rdx
 xor r9 r9
 call Native_main
 
-# Preserve only successful portable process results; map failures to one.
+# Preserve packed native runtime statuses as developer-facing process results.
+# Successful portable results retain the existing zero-through-255 contract.
 move rdx rax
 shift_right rdx 32
 test edx edx
-branch not_equal Failure
+branch equal Native_status_valid
+compare_i32 edx 5
+branch not_equal Native_status_passthrough
+load_address rcx Execution_context
+load_memory_u32 eax rcx none 1 64
+add_i32 eax 64
+jump_label Mapped
+label Native_status_passthrough
+move eax edx
+jump_label Mapped
+label Native_status_valid
 compare_i32 eax 255
 branch below_equal Mapped
 

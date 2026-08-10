@@ -30,7 +30,8 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉverifier
             Windowsˉhostedˉcompilerˉapplicationˉcontract.TEXT_ADDRESS + Textˉvirtual),
             SECTION_ALIGNMENT);
         var Runtimeˉlayout = Hostedˉcompilerˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Windowsˉx64);
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            expectedˉprofile);
         var Dataˉvirtual = checked(
             Windowsˉhostedˉcompilerˉapplicationˉcontract.IMPORT_FILE_BYTES +
             Runtimeˉlayout.Virtualˉbytes);
@@ -189,7 +190,8 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉverifier
 
         var Layout = Windowsˉhostedˉcompilerˉapplicationˉcontract.Plan(
             expectedˉbundle,
-            Runtime.Metadata.Nativeˉentryˉoffset);
+            Runtime.Metadata.Nativeˉentryˉoffset,
+            expectedˉprofile);
         return new(
             Layout,
             Runtime.Metadata.Nativeˉentryˉoffset,

@@ -44,7 +44,8 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉbuilder
     {
         var Layout = Linuxˉhostedˉcompilerˉapplicationˉcontract.Plan(
             bundle,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
         var Runtime = Hostedˉcompilerˉruntimeˉdata.Build(
             Consoleˉapplicationˉtarget.Linuxˉx64,
             capabilities,
@@ -54,7 +55,9 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉbuilder
         var Startup = Linuxˉhostedˉcompilerˉstartup.Buildˉstage0(
             Layout.Textˉaddress,
             Layout.Dataˉaddress,
-            Hostedˉcompilerˉruntimeˉdata.Plan(Consoleˉapplicationˉtarget.Linuxˉx64),
+            Hostedˉcompilerˉruntimeˉdata.Plan(
+                Consoleˉapplicationˉtarget.Linuxˉx64,
+                profile),
             bundle,
             nativeˉentryˉoffset);
         var Result = new byte[Layout.Applicationˉbytes];

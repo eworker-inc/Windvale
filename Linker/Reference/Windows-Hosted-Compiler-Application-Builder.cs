@@ -44,9 +44,11 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉbuilder
     {
         var Layout = Windowsˉhostedˉcompilerˉapplicationˉcontract.Plan(
             bundle,
-            nativeˉentryˉoffset);
+            nativeˉentryˉoffset,
+            profile);
         var Runtimeˉlayout = Hostedˉcompilerˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Windowsˉx64);
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            profile);
         var Runtime = Hostedˉcompilerˉruntimeˉdata.Build(
             Consoleˉapplicationˉtarget.Windowsˉx64,
             capabilities,

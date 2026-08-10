@@ -21,17 +21,6 @@ export enum Compilerˉsourceˉwvbˉstatus {
     Invalidˉdata = 8;
 }
 
-record Compilerˉsourceˉwvbˉdeclarations {
-    Status: Compilerˉsourceˉwvbˉstatus;
-    Capabilities: u32;
-    Data: u32;
-    Records: u32;
-    Enums: u32;
-    Variants: u32;
-    Functions: u32;
-    Exports: u32;
-}
-
 record Compilerˉsourceˉwvbˉtextˉvalue {
     Status: Compilerˉsourceˉwvbˉstatus;
     Value: bytes;
@@ -567,137 +556,6 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
-}
-
-export fn Compilerˉsourceˉwvbˉscanˉdeclarations(
-    Source: bytes,
-    Header: Sourceˉdeclarations.Compilerˉsourceˉheader
-) -> Compilerˉsourceˉwvbˉdeclarations {
-    var Exports: u32 = 0u32;
-    var Capabilities: u32 = 0u32;
-    var Data: u32 = 0u32;
-    var Records: u32 = 0u32;
-    var Enums: u32 = 0u32;
-    var Variants: u32 = 0u32;
-    var Functions: u32 = 0u32;
-    var Cursor: u32 = Header.Nextˉoffset;
-    var Line: u32 = Header.Nextˉline;
-    var Column: u32 = Header.Nextˉcolumn;
-    var Sawˉnonˉimport: bool = false;
-    var Reading: bool = true;
-    while Reading {
-        let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
-            Source, Cursor, Line, Column, Sawˉnonˉimport
-        );
-        if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End {
-            Reading = false;
-        } else {
-            var Supported: bool = Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import;
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Data {
-                Supported = true;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function {
-                Supported = true;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
-                Supported = true;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
-                Supported = true;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
-                Supported = true;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
-                Supported = true;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Constant {
-                Supported = true;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Optionalˉcapability {
-                Supported = true;
-            }
-            if !Supported {
-                return Compilerˉsourceˉwvbˉdeclarations(
-                    Compilerˉsourceˉwvbˉstatus.Unsupportedˉdeclaration,
-                    Capabilities, Data, Records, Enums, Variants, Functions, Exports
-                );
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
-                Capabilities = Capabilities + 1u32;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Data {
-                Data = Data + 1u32;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function {
-                if Declaration.Isˉexported { Exports = Exports + 1u32; }
-                Functions = Functions + 1u32;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
-                Records = Records + 1u32;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
-                Enums = Enums + 1u32;
-            }
-            if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
-                Variants = Variants + 1u32;
-            }
-            if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉclosesˉimports(Declaration) {
-                Sawˉnonˉimport = true;
-            }
-            Cursor = Declaration.Nextˉoffset;
-            Line = Declaration.Nextˉline;
-            Column = Declaration.Nextˉcolumn;
-        }
-    }
-    return Compilerˉsourceˉwvbˉdeclarations(
-        Compilerˉsourceˉwvbˉstatus.Valid,
-        Capabilities, Data,
-        Records,
-        Enums,
-        Variants,
-        Functions,
-        Exports
-    );
-}
-
-export fn Compilerˉsourceˉwvbˉscanˉsourceˉsetˉdeclarations(
-    Input: bytes,
-    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan
-) -> Compilerˉsourceˉwvbˉdeclarations {
-    var Capabilities: u32 = 0u32;
-    var Data: u32 = 0u32;
-    var Records: u32 = 0u32;
-    var Enums: u32 = 0u32;
-    var Variants: u32 = 0u32;
-    var Functions: u32 = 0u32;
-    var Exports: u32 = 0u32;
-    var Module: u32 = 0u32;
-    while Module < Scan.Modules {
-        let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
-            Input, Scan, Module
-        );
-        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
-            View.Source
-        );
-        let Current: Compilerˉsourceˉwvbˉdeclarations =
-            Compilerˉsourceˉwvbˉscanˉdeclarations(View.Source, Header);
-        if Current.Status != Compilerˉsourceˉwvbˉstatus.Valid {
-            return Current;
-        }
-        Capabilities = Capabilities + Current.Capabilities;
-        Data = Data + Current.Data;
-        Records = Records + Current.Records;
-        Enums = Enums + Current.Enums;
-        Variants = Variants + Current.Variants;
-        Functions = Functions + Current.Functions;
-        if Module == 0u32 { Exports = Current.Exports; }
-        Module = Module + 1u32;
-    }
-    return Compilerˉsourceˉwvbˉdeclarations(
-        Compilerˉsourceˉwvbˉstatus.Valid,
-        Capabilities, Data, Records, Enums, Variants, Functions, Exports
-    );
 }
 
 export fn Compilerˉsourceˉwvbˉsymbolˉmodule(
@@ -2937,7 +2795,16 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
 }
 
 export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvbˉsummary {
-    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary = Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Input);
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+            Input, Scan, Symbols
+        );
+    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
     if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
         return Compilerˉsourceˉwvbˉsummaryˉfailure(
             Input,
@@ -2947,54 +2814,16 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
             0u32
         );
     }
-    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
-    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
     let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
-        Sourceˉbindings.Compilerˉsourceˉbindingsˉlocalsˉfromˉsymbols(Input, Scan, Symbols);
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(
+            Symbols, Wirˉcompilation
+        );
     let Root: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
         Input, Scan, 0u32
     );
     let Rootˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader = Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
         Root.Source
     );
-    let Declarations: Compilerˉsourceˉwvbˉdeclarations =
-        Compilerˉsourceˉwvbˉscanˉsourceˉsetˉdeclarations(Input, Scan);
-    if Declarations.Status != Compilerˉsourceˉwvbˉstatus.Valid {
-        return Compilerˉsourceˉwvbˉsummaryˉfailure(
-            Input,
-            Declarations.Status,
-            Wirˉsummary.Status,
-            Declarations.Functions,
-            0u32
-        );
-    }
-    var Declarationˉcountsˉmatch: bool =
-        Declarations.Functions == Symbols.Functions;
-    if Declarations.Capabilities != Symbols.Capabilities {
-        Declarationˉcountsˉmatch = false;
-    }
-    if Declarations.Data != Symbols.Data {
-        Declarationˉcountsˉmatch = false;
-    }
-    if Declarations.Records != Symbols.Records {
-        Declarationˉcountsˉmatch = false;
-    }
-    if Declarations.Enums != Symbols.Enums {
-        Declarationˉcountsˉmatch = false;
-    }
-    if Declarations.Variants != Symbols.Variants {
-        Declarationˉcountsˉmatch = false;
-    }
-    if !Declarationˉcountsˉmatch {
-        return Compilerˉsourceˉwvbˉsummaryˉfailure(
-            Input,
-            Compilerˉsourceˉwvbˉstatus.Unsupportedˉdeclaration,
-            Wirˉsummary.Status,
-            Declarations.Functions,
-            0u32
-        );
-    }
-
     let Orders: Compilerˉsourceˉwvbˉsymbolˉorders =
         Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(Input, Scan, Symbols);
 
@@ -3062,6 +2891,7 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     var Functionˉpayload: bytes = Bytesˉfromˉu32ˉlittle(Symbols.Functions);
     var Codeˉpayload: bytes = Compilerˉsourceˉwvbˉempty(Input);
     var Exportˉentries: bytes = Compilerˉsourceˉwvbˉempty(Input);
+    var Exportˉcount: u32 = 0u32;
     var Codeˉoffset: u32 = 0u32;
     var Functionˉrank: u32 = 0u32;
     var Hasˉcollections: bool = Typeˉencoding.Hasˉcollections;
@@ -3098,18 +2928,17 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
         if Encoded.Hasˉoperators { Hasˉoperators = true; }
         Functionˉpayload = Bytesˉconcat(Functionˉpayload, Encoded.Metadata);
         Codeˉpayload = Bytesˉconcat(Codeˉpayload, Encoded.Code);
-        let Functionˉdeclaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
-            Compilerˉsourceˉwvbˉdeclaration(
-                Functionˉview.Source, Functionˉheader, Symbols, Functionˉentry
-            );
         if Functionˉowner == 0u32 {
-            if Functionˉdeclaration.Isˉexported {
+            if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉlookupˉisˉexported(
+                Symbols.Lookup, Functionˉentry
+            ) {
+                Exportˉcount = Exportˉcount + 1u32;
                 Exportˉentries = Bytesˉconcat(
                     Exportˉentries,
-                    Compilerˉsourceˉwvbˉstring(
-                        Functionˉview.Source,
-                        Functionˉdeclaration.Nameˉoffset,
-                        Functionˉdeclaration.Nameˉlength
+                    Compilerˉsourceˉwvbˉencodedˉstring(
+                        Compilerˉsourceˉwvbˉsymbolˉname(
+                            Input, Scan, Symbols, Functionˉentry
+                        )
                     )
                 );
                 Exportˉentries = Bytesˉconcat(
@@ -3153,7 +2982,7 @@ export fn Compilerˉcompileˉsourceˉwvb(Input: bytes) -> Compilerˉsourceˉwvb�
     );
     Moduleˉpayload = Bytesˉconcat(Moduleˉpayload, Moduleˉmetadata.Payload);
     let Exportˉpayload: bytes = Bytesˉconcat(
-        Bytesˉfromˉu32ˉlittle(Declarations.Exports),
+        Bytesˉfromˉu32ˉlittle(Exportˉcount),
         Exportˉentries
     );
     var Bytecode: bytes = Textˉtoˉutf8("WVB1");

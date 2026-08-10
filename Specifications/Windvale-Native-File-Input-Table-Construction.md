@@ -10,6 +10,11 @@ Windvale owns the immutable table layout. The host retains arena allocation,
 Windows export resolution, native table allocation/copy, post-execution
 snapshot verification, and teardown.
 
+This constructor owns only the generic 1,048,576-byte name-stride instance. It
+rejects the hosted build-driver's 8,192-byte value; that profile constructs and
+admits its embedded table through its separate hosted metadata, runtime-header,
+and container boundary without widening this request or response contract.
+
 All integers are little-endian. Unknown versions, nonzero initial count or
 reserved fields, truncation, trailing bytes, incorrect capacities, and invalid
 platform-function combinations are rejected.
@@ -28,7 +33,7 @@ The request is exactly 136 bytes:
 | 24 | 4 | snapshot capacity | `64` |
 | 28 | 4 | initial snapshot count | Zero |
 | 32 | 8 | name-arena pointer | Opaque nonzero execution-owned target |
-| 40 | 4 | name stride | `1,048,576` |
+| 40 | 4 | name stride | `1,048,576` for this generic constructor; the hosted build-driver runtime owns the separately admitted `8,192` specialization |
 | 44 | 4 | name reserved | Zero |
 | 48 | 8 | data-arena pointer | Opaque nonzero execution-owned target |
 | 56 | 4 | data stride | `4,194,304` |
@@ -90,6 +95,6 @@ The retained bridge WVB is 5,084 bytes with SHA-256
 The normal runtime embeds only its 52,334-byte WVNF 1 artifact with SHA-256
 `378240d8f8770a4707d7f2ae86daae24036fc2eb9fd273d5ab737c9c03e3e70d`.
 
-Any format, capacity, function ordering, platform identity, artifact, or
-bootstrap change requires a new accepted contract version and Windows/Linux
-qualification.
+Any change to this generic constructor's format, exact capacities, function
+ordering, platform identity, artifact, or bootstrap path requires a new
+accepted contract version and Windows/Linux qualification.

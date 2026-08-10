@@ -90,22 +90,24 @@ internal static partial class Program
     private const string SOURCE_SET_SHA256 = "1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb";
     private const string SOURCE_SET_DEMO_SHA256 = "ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742";
     private const string SOURCE_SET_TOOL_SHA256 = "6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f";
-    private const string SOURCE_GRAPH_SHA256 = "7fe9276273e48432f6206bde0d8a533dbc35ddf055b2f68b8a03810f07b4fb14";
-    private const string SOURCE_GRAPH_DEMO_SHA256 = "fc046e27037f0b2f18129b270b21d8d2c5c3c532601c5a4bfdf211881b0c2acb";
-    private const string SOURCE_GRAPH_TOOL_SHA256 = "9d49a4e321429ea203bd9a00ab2f6a9196c844c7cdf77a6b707ad6e0dc48b0fd";
-    private const string SOURCE_SYMBOLS_SHA256 = "9d82d52310cd542a6a2854d10f990080f7a56fd98567ef4ec4042ce6fd6e7a9b";
-    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "43f6aef685cbc265105abf36e7b8cae4de9974824fadfb8e5b83270c96d1ad1e";
-    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "0555ca0b6d86a67cf94e8ee150d0baa92252f6a8ae7a06d7cbf2f7649f1ae43c";
-    private const string SOURCE_BINDINGS_SHA256 = "64b9fb7d92df4b40fc315d1f13f80118856a05ac2fb6b1d27e58dbb2d3bd9999";
-    private const string SOURCE_BINDINGS_DEMO_SHA256 = "f6b9c184bfe8668a5c597dbe76d7709120a541789661df0156ce8f1785272e0a";
-    private const string SOURCE_BINDINGS_TOOL_SHA256 = "7b75e3cd72eb7a2521d3b382effbdf2435879ceca2ed24561683ac63b956dad8";
-    private const string SOURCE_WIR_SHA256 = "3345bdfb062cf467f8b658414a672157b518af8c5a4aa994b0eb0e32e15837a4";
-    private const string SOURCE_WIR_DEMO_SHA256 = "d0b3f7b8fdbf1a7c56ebd8a2f024988933019f6e8b75202d5e97c5a96e567983";
-    private const string SOURCE_WIR_TOOL_SHA256 = "302409f6f1e8c0a1c3061dda2400083e06cf6781a28922f0138a952f2edfb574";
-    private const string SOURCE_WVB_SHA256 = "20ab85982a821dee87c8674c16c520a10646b604a5d3f0e38442589e521bf1c0";
-    private const string SOURCE_WVB_DEMO_SHA256 = "c8f96a8d973c1d03d5bb115612ddc765a2a7e3b617ec61af641f540fb7b2ce04";
-    private const string SOURCE_WVB_TOOL_SHA256 = "fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556";
-    private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "2bf84dc2a8cbb80c52ec7fb6cb2e29eef27def1707f398a276c61063d73df06e";
+    private const string SOURCE_GRAPH_SHA256 = "9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b";
+    private const string SOURCE_GRAPH_DEMO_SHA256 = "a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c";
+    private const string SOURCE_GRAPH_TOOL_SHA256 = "0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10";
+    private const string SOURCE_SYMBOLS_SHA256 = "a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7";
+    private const string SOURCE_SYMBOLS_DEMO_SHA256 = "4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457";
+    private const string SOURCE_SYMBOLS_TOOL_SHA256 = "58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66";
+    private const string SOURCE_BINDINGS_SHA256 = "a772a75fe625f47e165ca190e76d8cd59fa0b591a0270a5817e02e0fac62542c";
+    private const string SOURCE_BINDINGS_DEMO_SHA256 = "563caeb4a76fb34d6c2b2b8340260cc1da518c4cbaad9e5f355201f6bd1fa933";
+    private const string SOURCE_BINDINGS_TOOL_SHA256 = "17e877b3c59d2f9a99d26be4c478f10ce8879e6bce925b65894d158fd4a6e0a9";
+    private const string SOURCE_WIR_SHA256 = "c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb";
+    private const string SOURCE_WIR_DEMO_SHA256 = "7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f";
+    private const string SOURCE_WIR_TOOL_SHA256 = "7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5";
+    private const string SOURCE_WVB_SHA256 = "c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b";
+    private const string SOURCE_WVB_DEMO_SHA256 = "ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9";
+    private const string SOURCE_WVB_TOOL_SHA256 = "18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754";
+    private const string SOURCE_WVB_MEMORY_ADAPTER_SHA256 = "86f964aeeca8ebfabf11ddd252c32efe49303135af04e313b3801afe9656df29";
+    // The native closure below remains the last qualified compiler snapshot.
+    // Decision 0491 deliberately defers its complete reconstruction and repin.
     private const string SOURCE_WVB_TOOL_NATIVE_CODE_SHA256 = "f77097b62e374e77c2c80a86d417a6026af4a40f10ab93d50ef7eda7000c8864";
     private const string SOURCE_WVB_TOOL_NATIVE_WVO_SHA256 = "361ea1b55a8722ae98599f3fede6566dde7bf9c9ad34f7b94effda955fc62f5e";
     private const string SOURCE_WVB_TOOL_NATIVE_LINK_MAP_SHA256 = "2dc7d4ddba8c912cb87640387b9ef6b4613ea9ce67305b154229dc1eb6345e10";
@@ -120,9 +122,9 @@ internal static partial class Program
     private const string COMPILER_WVB_VERIFIER_SHA256 = "70bd61e78c2ddd6052adb15f24a155f006ded903ce7825d8f54adafa252b76f8";
     private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "332488305b0b178dcb713edd81f2df0b8f04455b95e03ee46aa226c69e2ee018";
     private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "e59a0fd2b7c959306b446e8bf387d54118b4719d9099b71f224c1ea4d34802f3";
-    private const string COMPILER_BUILD_DRIVER_SHA256 = "76947c7eeca769cf912c695887b2f1446ee9344790b654acc6832c8ced163b10";
-    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "4c3c79f704b14ad96a7160db4acfdcca5763ae87120fc534ca71801cd69378ec";
-    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "53a46d8f8773c6ebd5061c46ecc62a57c408653f913869bff6981157e2d25f72";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "7c87b171ff61278599bec200090def1ae14ba58567b07d36cfdb3a420a533e4f";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "875e827a512f2387a980d2871115c94ba0a17a0e9dac6b89439140dc9b7f313a";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "d96da77e3dba34598975eb1c721b0195a54f746e1b9a11608bda3e384a96c590";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
@@ -9794,7 +9796,7 @@ internal static partial class Program
                 Case.Bundle.Imageˉbytes.AsSpan());
             Equal(Hostedˉcompilerˉapplicationˉmetadata.SIZE, Case.Metadata.Length);
             Equal(Nativeˉentry, Verified.Nativeˉentryˉoffset);
-            Equal(48_000_000_000UL, Verified.Maximumˉinstructions);
+            Equal(64_000_000_000UL, Verified.Maximumˉinstructions);
             Sequenceˉequal(
                 Compilerˉtool.Module.Capabilities.Select(Capability => (
                     Capability.Name,
@@ -9889,7 +9891,7 @@ internal static partial class Program
             Equal(Case.Outputˉscratchˉoffset, Verified.Layout.Fileˉoutputˉscratchˉoffset);
             Equal(Case.Inputˉscratch, Verified.Layout.Fileˉoutputˉscratchˉbytes);
             Equal(Case.Virtualˉbytes, Verified.Layout.Virtualˉbytes);
-            Equal(48_000_000_000UL, Verified.Metadata.Maximumˉinstructions);
+            Equal(64_000_000_000UL, Verified.Metadata.Maximumˉinstructions);
             foreach (var Offset in new[]
             {
                 Nativeˉexecutionˉcontextˉcontract.INSTRUCTION_BUDGET_OFFSET,
@@ -10820,7 +10822,7 @@ internal static partial class Program
                     "Compiler-Wvb-Verifier-Typed-Directories.wv",
                     COMPILER_WVB_VERIFIER_TYPED_DIRECTORIES_SOURCE),
             ]);
-        Equal(1_101_328, Driverˉbytes.Length);
+        Equal(1_101_068, Driverˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_SHA256,
             Objectˉdigest.Calculateˉsha256(Driverˉbytes));
@@ -10919,7 +10921,7 @@ internal static partial class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(29_138_944, Firstˉwindows.Imageˉbytes.Length);
+        Equal(29_257_728, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -10951,7 +10953,7 @@ internal static partial class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(29_138_944, Firstˉlinux.Imageˉbytes.Length);
+        Equal(29_257_728, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -11417,7 +11419,7 @@ internal static partial class Program
                 .ToImmutableHashSet(StringComparer.Ordinal);
             var Measurement = X64ˉnativeˉexecutor.Measureˉi32(
                 Compilerˉnative.Fragment,
-                maximumˉinstructions: 48_000_000_000,
+                maximumˉinstructions: 64_000_000_000,
                 hostˉservices: new(
                     Compilerˉoutput.Channel,
                     Compilerˉauthorized,
@@ -13951,6 +13953,53 @@ internal static partial class Program
         Equal(
             "source graph status=Valid modules=64 imports=63 reachable=64\n",
             Boundary.Output);
+
+        const string Cycleˉroot = """
+            module Graphˉcycleˉroot profile portable;
+            import Graphˉcycleˉdependency as Dependency;
+            """;
+        const string Cycleˉdependency = """
+            module Graphˉcycleˉdependency profile portable;
+            import Graphˉcycleˉroot as Root;
+            """;
+        var Cycle = Runˉsourceˉsetˉtool(
+            Tool,
+            [new("cycle-root.wv", Cycleˉroot), new("cycle-dependency.wv", Cycleˉdependency)],
+            200_000_000);
+        Equal(1, Cycle.Exitˉcode);
+        Equal(string.Empty, Cycle.Output);
+        Contains(Cycle.Diagnostics, "source graph status=Cycle");
+        Equal(2, Cycle.Readˉcount);
+
+        const string Diamondˉroot = """
+            module Graphˉdiamondˉroot profile portable;
+            import Graphˉdiamondˉleft as Left;
+            import Graphˉdiamondˉright as Right;
+            """;
+        const string Diamondˉleft = """
+            module Graphˉdiamondˉleft profile portable;
+            import Graphˉdiamondˉleaf as Leaf;
+            """;
+        const string Diamondˉright = """
+            module Graphˉdiamondˉright profile portable;
+            import Graphˉdiamondˉleaf as Leaf;
+            """;
+        const string Diamondˉleaf = "module Graphˉdiamondˉleaf profile portable;";
+        var Diamond = Runˉsourceˉsetˉtool(
+            Tool,
+            [
+                new("diamond-root.wv", Diamondˉroot),
+                new("diamond-leaf.wv", Diamondˉleaf),
+                new("diamond-left.wv", Diamondˉleft),
+                new("diamond-right.wv", Diamondˉright),
+            ],
+            240_000_000);
+        Equal(0, Diamond.Exitˉcode);
+        Equal(string.Empty, Diamond.Diagnostics);
+        Equal(4, Diamond.Readˉcount);
+        Equal(
+            "source graph status=Valid modules=4 imports=4 reachable=4\n",
+            Diamond.Output);
     }
 
     private static void Compilerˉsourceˉsymbolsˉrun()
@@ -14133,7 +14182,7 @@ internal static partial class Program
         var Library = Moduleˉcodec.Readˉandˉverify(Libraryˉbytes);
         Equal("Compilerˉsourceˉwir", Library.Module.Name);
         Equal(Moduleˉprofile.Portable, Library.Module.Profile);
-        Equal(72, Library.Module.Exports.Length);
+        Equal(75, Library.Module.Exports.Length);
         foreach (var Typeˉname in new[]
                  {
                      "Compilerˉsourceˉwirˉoperation",
@@ -14182,6 +14231,8 @@ internal static partial class Program
 
     private static void Compilerˉsourceˉwvbˉruns()
     {
+        Compilerˉsourceˉwvbˉexportˉdirectoryˉregression();
+
         var Libraryˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_SOURCE,
             "Source-Wvb-Core.wv",
@@ -14212,24 +14263,24 @@ internal static partial class Program
         var Memoryˉadapterˉbytes = Compileˉwithˉsourceˉwvbˉsuccess(
             SOURCE_WVB_MEMORY_ADAPTER_SOURCE,
             "Source-Wvb-Memory-Adapter.wv");
-        Equal(919_577, Memoryˉadapterˉbytes.Length);
+        Equal(919_317, Memoryˉadapterˉbytes.Length);
         Equal(
             SOURCE_WVB_MEMORY_ADAPTER_SHA256,
             Moduleˉdigest.Calculateˉsha256(Memoryˉadapterˉbytes));
         var Memoryˉadapter = Moduleˉcodec.Readˉandˉverify(Memoryˉadapterˉbytes);
         Equal(Moduleˉprofile.Portable, Memoryˉadapter.Module.Profile);
         Equal(0, Memoryˉadapter.Module.Capabilities.Length);
-        Equal(417, Memoryˉadapter.Functions.Length);
+        Equal(425, Memoryˉadapter.Functions.Length);
         var Memoryˉmain = Memoryˉadapter.Functions.Single(
             Function => Function.Declaration.Name == "Main");
         Equal(1, Memoryˉmain.Declaration.Parameterˉtypes.Length);
         Equal(Valueˉtype.Bytes, Memoryˉmain.Declaration.Parameterˉtypes[0]);
         Equal(Valueˉtype.Bytes, Memoryˉmain.Declaration.Returnˉtype);
         Equal(
-            759_232,
+            758_297,
             Memoryˉadapter.Functions.Sum(Function => Function.Declaration.Codeˉlength));
         Equal(
-            157_844,
+            157_651,
             Memoryˉadapter.Functions.Sum(Function => Function.Instructions.Length));
         Equal(
             1_408,
@@ -14247,7 +14298,7 @@ internal static partial class Program
             });
         var Memoryˉresult = Memoryˉruntime.Runˉmainˉbytes(
             Buildˉsingleˉsourceˉset(SOURCE_WVB_FUNCTION_ONLY_SOURCE));
-        Equal(8_504_719L, Memoryˉresult.Executedˉinstructions);
+        Equal(4_798_569L, Memoryˉresult.Executedˉinstructions);
         Equal(832, Memoryˉresult.Bytes.Length);
         Equal(
             0x4F43_5657u,
@@ -14266,7 +14317,7 @@ internal static partial class Program
             {
                 Maximumˉinstructions = 20_000_000,
             }).Runˉmainˉbytes(ImmutableArray<byte>.Empty);
-        Equal(1_058L, Memoryˉfailure.Executedˉinstructions);
+        Equal(1_381L, Memoryˉfailure.Executedˉinstructions);
         Equal(
             0x4F43_5657u,
             BinaryPrimitives.ReadUInt32LittleEndian(Memoryˉfailure.Bytes.AsSpan(0, 4)));

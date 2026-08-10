@@ -51,7 +51,9 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉcontract
 
     internal static Windowsˉhostedˉcompilerˉapplicationˉlayout Plan(
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
         Validateˉbundle(bundle);
         if (nativeˉentryˉoffset >= bundle.Nativeˉimageˉbytes)
@@ -66,7 +68,8 @@ internal static class Windowsˉhostedˉcompilerˉapplicationˉcontract
         var Dataˉfile = checked((uint)HEADER_BYTES + Textˉfile);
         var Dataˉsection = Alignˉup(checked(TEXT_ADDRESS + Textˉvirtual), 0x1000);
         var Runtime = Hostedˉcompilerˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Windowsˉx64);
+            Consoleˉapplicationˉtarget.Windowsˉx64,
+            profile);
         var Dataˉvirtual = checked(IMPORT_FILE_BYTES + Runtime.Virtualˉbytes);
         var Relocationˉfile = checked(Dataˉfile + DATA_FILE_BYTES);
         var Relocationˉaddress = Alignˉup(checked(Dataˉsection + Dataˉvirtual), 0x1000);

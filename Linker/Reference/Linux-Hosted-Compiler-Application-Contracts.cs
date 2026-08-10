@@ -37,7 +37,9 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉcontract
 
     internal static Linuxˉhostedˉcompilerˉapplicationˉlayout Plan(
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentryˉoffset)
+        uint nativeˉentryˉoffset,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
         Validateˉbundle(bundle);
         if (nativeˉentryˉoffset >= bundle.Nativeˉimageˉbytes)
@@ -50,7 +52,8 @@ internal static class Linuxˉhostedˉcompilerˉapplicationˉcontract
         var Textˉbytes = checked((uint)(BUNDLE_TEXT_OFFSET + bundle.Imageˉbytes.Length));
         var Dataˉoffset = Alignˉup(checked(TEXT_ADDRESS + Textˉbytes), HEADER_BYTES);
         var Runtime = Hostedˉcompilerˉruntimeˉdata.Plan(
-            Consoleˉapplicationˉtarget.Linuxˉx64);
+            Consoleˉapplicationˉtarget.Linuxˉx64,
+            profile);
         return new(
             checked((int)(Dataˉoffset + DATA_FILE_BYTES)),
             HEADER_BYTES,

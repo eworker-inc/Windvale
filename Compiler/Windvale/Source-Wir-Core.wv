@@ -309,6 +309,30 @@ export record Compilerˉsourceˉwirˉsummary {
     Failureˉcolumn: u32;
 }
 
+export record Compilerˉsourceˉwirˉcompilation {
+    Status: Compilerˉsourceˉwirˉstatus;
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus;
+    Modules: u32;
+    Functions: u32;
+    Blocks: u32;
+    Operations: u32;
+    Temporaries: u32;
+    Operands: u32;
+    Directory: bytes;
+    Failureˉmodule: u32;
+    Failureˉrelatedˉmodule: u32;
+    Failureˉfunction: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+    Bindingˉparameters: u32;
+    Bindingˉlocals: u32;
+    Bindingˉreads: u32;
+    Bindingˉassignments: u32;
+    Bindingˉcalls: u32;
+    Bindingˉdirectory: bytes;
+}
+
 export fn Compilerˉsourceˉwirˉempty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -6166,15 +6190,124 @@ export fn Compilerˉsourceˉwirˉsummaryˉsuccess(
     );
 }
 
-export fn Compilerˉvalidateˉsourceˉwir(Input: bytes) -> Compilerˉsourceˉwirˉsummary {
-    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary = Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+fn Compilerˉsourceˉwirˉcompilationˉfromˉsummary(
+    Summary: Compilerˉsourceˉwirˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary
+) -> Compilerˉsourceˉwirˉcompilation {
+    return Compilerˉsourceˉwirˉcompilation(
+        Summary.Status,
+        Summary.Bindingˉstatus,
+        Summary.Modules,
+        Summary.Functions,
+        Summary.Blocks,
+        Summary.Operations,
+        Summary.Temporaries,
+        Summary.Operands,
+        Summary.Directory,
+        Summary.Failureˉmodule,
+        Summary.Failureˉrelatedˉmodule,
+        Summary.Failureˉfunction,
+        Summary.Failureˉoffset,
+        Summary.Failureˉline,
+        Summary.Failureˉcolumn,
+        Bindings.Parameters,
+        Bindings.Locals,
+        Bindings.Reads,
+        Bindings.Assignments,
+        Bindings.Calls,
+        Bindings.Directory
+    );
+}
+
+fn Compilerˉsourceˉwirˉcompilationˉfromˉbindings(
+    Input: bytes,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary
+) -> Compilerˉsourceˉwirˉcompilation {
+    let Summary: Compilerˉsourceˉwirˉsummary =
+        Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Bindings);
+    return Compilerˉsourceˉwirˉcompilationˉfromˉsummary(Summary, Bindings);
+}
+
+fn Compilerˉsourceˉwirˉcompilationˉfromˉbuild(
+    Input: bytes,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉwirˉcompilation {
+    let Summary: Compilerˉsourceˉwirˉsummary =
+        Compilerˉsourceˉwirˉsummaryˉfromˉbuild(Input, Bindings, Build);
+    return Compilerˉsourceˉwirˉcompilationˉfromˉsummary(Summary, Bindings);
+}
+
+fn Compilerˉsourceˉwirˉcompilationˉsuccess(
+    Input: bytes,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Build: Compilerˉsourceˉwirˉbuild,
+    Directory: bytes
+) -> Compilerˉsourceˉwirˉcompilation {
+    let Summary: Compilerˉsourceˉwirˉsummary =
+        Compilerˉsourceˉwirˉsummaryˉsuccess(Input, Bindings, Build, Directory);
+    return Compilerˉsourceˉwirˉcompilationˉfromˉsummary(Summary, Bindings);
+}
+
+export fn Compilerˉsourceˉwirˉcompilationˉsummary(
+    Compilation: Compilerˉsourceˉwirˉcompilation
+) -> Compilerˉsourceˉwirˉsummary {
+    return Compilerˉsourceˉwirˉsummary(
+        Compilation.Status,
+        Compilation.Bindingˉstatus,
+        Compilation.Modules,
+        Compilation.Functions,
+        Compilation.Blocks,
+        Compilation.Operations,
+        Compilation.Temporaries,
+        Compilation.Operands,
+        Compilation.Directory,
+        Compilation.Failureˉmodule,
+        Compilation.Failureˉrelatedˉmodule,
+        Compilation.Failureˉfunction,
+        Compilation.Failureˉoffset,
+        Compilation.Failureˉline,
+        Compilation.Failureˉcolumn
+    );
+}
+
+export fn Compilerˉsourceˉwirˉcompilationˉbindings(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Compilation: Compilerˉsourceˉwirˉcompilation
+) -> Sourceˉbindings.Compilerˉsourceˉbindingˉsummary {
+    return Sourceˉbindings.Compilerˉsourceˉbindingˉsummary(
+        Compilation.Bindingˉstatus,
+        Symbols.Status,
+        Compilation.Modules,
+        Compilation.Functions,
+        Compilation.Bindingˉparameters,
+        Compilation.Bindingˉlocals,
+        Compilation.Bindingˉreads,
+        Compilation.Bindingˉassignments,
+        Compilation.Bindingˉcalls,
+        Compilation.Bindingˉdirectory,
+        Compilation.Failureˉmodule,
+        Compilation.Failureˉrelatedˉmodule,
+        Compilation.Failureˉfunction,
+        Compilation.Failureˉoffset,
+        Compilation.Failureˉline,
+        Compilation.Failureˉcolumn
+    );
+}
+
+export fn Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+) -> Compilerˉsourceˉwirˉcompilation {
     if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
         let Failedˉbindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
             Input, Symbols
         );
-        return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Failedˉbindings);
+        return Compilerˉsourceˉwirˉcompilationˉfromˉbindings(
+            Input, Failedˉbindings
+        );
     }
-    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan = Sourceˉset.Compilerˉscanˉsourceˉset(Input);
     var Build: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉphase(
         Input, Scan, Symbols
     );
@@ -6184,15 +6317,21 @@ export fn Compilerˉvalidateˉsourceˉwir(Input: bytes) -> Compilerˉsourceˉwir
                 Input, Scan, Symbols
             );
         if Localˉbindings.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
-            return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Localˉbindings);
+            return Compilerˉsourceˉwirˉcompilationˉfromˉbindings(
+                Input, Localˉbindings
+            );
         }
         let Completeˉbindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary = Sourceˉbindings.Compilerˉsourceˉbindingsˉfromˉsymbols(
             Input, Scan, Symbols
         );
         if Completeˉbindings.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
-            return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Completeˉbindings);
+            return Compilerˉsourceˉwirˉcompilationˉfromˉbindings(
+                Input, Completeˉbindings
+            );
         }
-        return Compilerˉsourceˉwirˉsummaryˉfromˉbuild(Input, Localˉbindings, Build);
+        return Compilerˉsourceˉwirˉcompilationˉfromˉbuild(
+            Input, Localˉbindings, Build
+        );
     }
     let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
         Sourceˉbindings.Compilerˉsourceˉbindingsˉfinishˉphase(
@@ -6200,7 +6339,7 @@ export fn Compilerˉvalidateˉsourceˉwir(Input: bytes) -> Compilerˉsourceˉwir
             Compilerˉsourceˉwirˉbuildˉbindings(Input, Build)
         );
     if Bindings.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
-        return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Bindings);
+        return Compilerˉsourceˉwirˉcompilationˉfromˉbindings(Input, Bindings);
     }
     if !Compilerˉsourceˉwirˉevidenceˉfits(Build) {
         Build = Compilerˉsourceˉwirˉbuildˉfailure(
@@ -6213,7 +6352,7 @@ export fn Compilerˉvalidateˉsourceˉwir(Input: bytes) -> Compilerˉsourceˉwir
             0u32,
             0u32
         );
-        return Compilerˉsourceˉwirˉsummaryˉfromˉbuild(Input, Bindings, Build);
+        return Compilerˉsourceˉwirˉcompilationˉfromˉbuild(Input, Bindings, Build);
     }
     let Directory: bytes = Compilerˉsourceˉwirˉdirectory(Build);
     if !Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
@@ -6229,9 +6368,34 @@ export fn Compilerˉvalidateˉsourceˉwir(Input: bytes) -> Compilerˉsourceˉwir
             0u32,
             0u32
         );
-        return Compilerˉsourceˉwirˉsummaryˉfromˉbuild(Input, Bindings, Build);
+        return Compilerˉsourceˉwirˉcompilationˉfromˉbuild(Input, Bindings, Build);
     }
-    return Compilerˉsourceˉwirˉsummaryˉsuccess(
+    return Compilerˉsourceˉwirˉcompilationˉsuccess(
         Input, Bindings, Build, Directory
     );
+}
+
+fn Compilerˉvalidateˉsourceˉwirˉwithˉsymbols(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+) -> Compilerˉsourceˉwirˉsummary {
+    let Compilation: Compilerˉsourceˉwirˉcompilation =
+        Compilerˉprepareˉsourceˉwirˉwithˉsymbols(Input, Scan, Symbols);
+    return Compilerˉsourceˉwirˉcompilationˉsummary(Compilation);
+}
+
+export fn Compilerˉvalidateˉsourceˉwir(Input: bytes) -> Compilerˉsourceˉwirˉsummary {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        let Failedˉbindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
+                Input, Symbols
+            );
+        return Compilerˉsourceˉwirˉsummaryˉfromˉbindings(Input, Failedˉbindings);
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    return Compilerˉvalidateˉsourceˉwirˉwithˉsymbols(Input, Scan, Symbols);
 }

@@ -22,12 +22,15 @@ source commit, source tree, target, and qualification provenance. `SHA256SUMS`
 repeats the three artifact identities for external tools.
 
 The seed compiler source is the qualified semantic-freeze tree at commit
-`524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`. The exact Stage 0 recovery state used
-to package the candidate is commit
-`3824f39d0997e3d7ab523f7cc1fe0f4bd8288e35`. The ordinary bootstrap input is the
-explicit thirteen-module inventory in `Windvale-Compiler.wvproj` at that latter
-commit. Its accepted output is exactly 921,900 bytes with SHA-256
-`fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556`.
+`524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`. Commit
+`3824f39d0997e3d7ab523f7cc1fe0f4bd8288e35` remains the exact Stage 0 recovery
+state for the last 921,900-byte convergence candidate. Decision 0491 repins the
+ordinary bootstrap contract to the current explicit inventory in
+`Windvale-Compiler.wvproj`; its accepted output is exactly 921,640 bytes with
+SHA-256
+`18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
+The new candidate's exact checkpoint provenance and paired reconstruction remain
+pending until the current toolset slice is committed and qualified.
 
 The bootstrap artifact root contains both `Native-Compiler-Seed` and the qualified
 `Native-Front-Door` publisher inventory. This permits a released artifact bundle
@@ -84,8 +87,11 @@ verify Stage 2, and require complete Stage 1/Stage 2 byte equality.
 source invocation shared by the seed and convergence routes. They do not discover
 files, parse the project, or weaken the project-manifest identity check.
 
-The Windows candidate completes this chain with identical 921,900-byte outputs
-at SHA-256
-`fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556`.
-The paired Linux coordinator has the same fail-closed contract; its independent
-execution and promotion remain part of the grouped retirement qualification.
+The coordinators are repinned to require identical 921,640-byte outputs at
+SHA-256
+`18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
+That long Stage 1/Stage 2 route was not rerun for Decision 0491 because the
+current candidate toolset must first be reconstructed. Windows and Linux
+execution, exact equality, and promotion therefore remain part of the grouped
+retirement qualification; the earlier 921,900-byte result remains the last
+qualified convergence evidence.

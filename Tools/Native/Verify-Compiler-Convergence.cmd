@@ -36,14 +36,14 @@ call "%RepositoryRoot%\Tools\Native\Compile-Compiler-Source-Set.cmd" ^
     "%Stage1Compiler%" "%SourceRoot%" "%Stage2%"
 if errorlevel 1 goto :cleanup
 
-call :verify_file "%Stage2%" 921900 fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556 "Stage 2 compiler WVB"
+call :verify_file "%Stage2%" 921640 18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754 "Stage 2 compiler WVB"
 if errorlevel 1 goto :cleanup
 "%Verifier%" "%Stage2%" >"%TemporaryDirectory%\Verify.txt"
 if errorlevel 1 goto :cleanup
 fc /b "%Stage1%" "%Stage2%" >nul
 if errorlevel 1 goto :cleanup
 
-echo native compiler convergence status=Complete compiler-bytes=921900 compiler-sha256=fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556
+echo native compiler convergence status=Complete compiler-bytes=921640 compiler-sha256=18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754
 set "Result=0"
 
 :cleanup

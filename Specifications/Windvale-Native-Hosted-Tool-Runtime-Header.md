@@ -32,8 +32,13 @@ The request is exactly 1,048 bytes:
 Metadata admission requires the profile-specific magic, container version and
 flags; ABI 22, execution-context 7 and service-table 5; exact six-capability
 and ten-service directories; 4,096-byte bundle placement; arena and
-48-billion-instruction bounds; target-correct adapters; ordered, contained
-nonempty service leaves; nonzero digests; and a zero reserved tail.
+64-billion-instruction bounds; target-correct adapters; ordered, contained
+nonempty service leaves; nonzero digests; and a zero reserved tail. The
+dynamic text/byte arena is exactly 234,881,024 bytes for profile 2 and
+134,217,728 bytes for every other hosted-tool profile. The runtime constructor
+copies that admitted size into execution-context offset 56. File-input table
+offset 40 is an 8,192-byte name stride for profile 2 and the ordinary
+1,048,576-byte stride for every other profile.
 
 ## Response envelope: `WVHS 1`
 
@@ -84,10 +89,10 @@ The capability-free bridge exposes `Main(bytes) -> bytes`.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata-admission WVB | 10,626 | `bd87ae0427462e77c0a23ead7dd771a36756a05033839eb40d4ddf8b6a7955f3` |
-| Runtime-header core WVB | 18,987 | `76f4958cffadc3a3d56b898755dadf7355a933a0a4a8e12b4fa10fe0ee7ddb84` |
-| Retained bridge WVB | 18,940 | `c09d1949ae9d016b4f7e33121122528d8959e29d058d721dc5f86bda1e25c3f1` |
-| Retained bridge WVNF | 191,208 | `929f0a129b233e466dd0fb11152e80d0a82607d9b83a44b12b1a477834dd2237` |
+| Metadata-admission WVB | 10,779 | `c0c61a601085c9422e5391023e047d7b0b3c88cb49bd52b24ccfd7c3eb7f1e35` |
+| Runtime-header core WVB | 19,330 | `abe7140c46af12c0f99056b8fbaf844f6ab5f51dd9e9f72bc215be86d977585f` |
+| Retained bridge WVB | 19,273 | `d9add4e9608fa1b2b2771de4f29d91793920a8a4d8c6f191ba9a5b1c9bedf3fa` |
+| Retained bridge WVNF | 194,222 | `b726e57277ef81990856159fca428a45c3513ca9218dec5f9fdebc2531637e31` |
 
 The normal managed packaging seam embeds only the digest-bound WVNF. The
 former C# byte writer is retained under an explicit Stage 0 oracle name for

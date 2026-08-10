@@ -13,18 +13,18 @@ internal sealed record Nativeˉhostedˉcontainerˉbytes(
 
 internal static class Nativeˉhostedˉcontainerˉbytesˉconstructor
 {
-    internal const int WINDOWS_CANONICAL_SIZE = 17_409;
+    internal const int WINDOWS_CANONICAL_SIZE = 17_554;
     internal const string WINDOWS_CANONICAL_SHA256 =
-        "a63a185af4b58226f8afd5416b9a7b96f6d25ca8151cfa42f5d9a3cb70daaee8";
-    internal const int WINDOWS_ARTIFACT_SIZE = 183_406;
+        "9186f252e1fe1abde98d774a0d88760707123d5a27ecef48887defc9a017c7fe";
+    internal const int WINDOWS_ARTIFACT_SIZE = 183_502;
     internal const string WINDOWS_ARTIFACT_SHA256 =
-        "7e04baf6105eab333b2898142f7dd2d4f636f445471620ae67cb5125e1cb2d02";
-    internal const int LINUX_CANONICAL_SIZE = 12_086;
+        "01d84e184db9a5970e685255e3f184a59d15a7412b0fc27d6aaba1c69b14dacf";
+    internal const int LINUX_CANONICAL_SIZE = 12_203;
     internal const string LINUX_CANONICAL_SHA256 =
-        "c4cdd9b71c677359de324201206ec215df2c5a92a2622912ba1a425074f29ca2";
-    internal const int LINUX_ARTIFACT_SIZE = 124_463;
+        "54dad025b0f9d49dd0f39f5b12d43a1b0d35daf537712c2e8a2f1e7a75097e72";
+    internal const int LINUX_ARTIFACT_SIZE = 125_151;
     internal const string LINUX_ARTIFACT_SHA256 =
-        "3c8cbb6f1b06794fb25e7fda136cee1081b5bc13f15cf6f09f0b6c01a0d5556a";
+        "1057b804c29b6ca5834d4de447a49b100e50b691d496a00ef9535d4bf06756c7";
 
     private const long MAXIMUM_INSTRUCTIONS = 20_000_000;
     private static readonly Lazy<Nativeˉfragment> WINDOWS = new(

@@ -20,6 +20,8 @@ internal sealed record Hostedˉcompilerˉruntimeˉlayout(
     uint Snapshotˉtableˉbytes,
     uint Recordˉarenaˉoffset,
     uint Textˉarenaˉoffset,
+    uint Textˉarenaˉbytes,
+    uint Nameˉarenaˉstrideˉbytes,
     uint Nameˉarenaˉoffset,
     uint Dataˉarenaˉoffset,
     uint Fileˉinputˉscratchˉoffset,
@@ -43,13 +45,17 @@ internal static class Hostedˉcompilerˉruntimeˉdata
     internal const uint METADATA_OFFSET = 480;
     internal const uint BUNDLE_TEXT_OFFSET = 4096;
     internal const uint MAXIMUM_RUNTIME_DATA_BYTES = 512 * 1024 * 1024;
+    internal const uint BUILD_DRIVER_NAME_ARENA_STRIDE_BYTES = 8 * 1024;
 
     internal static Hostedˉcompilerˉruntimeˉlayout Plan(
-        Consoleˉapplicationˉtarget target)
+        Consoleˉapplicationˉtarget target,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
-        if (!Enum.IsDefined(target))
+        if (!Enum.IsDefined(target) || !Enum.IsDefined(profile))
         {
-            throw new ArgumentOutOfRangeException(nameof(target), target, null);
+            throw new ArgumentOutOfRangeException(
+                !Enum.IsDefined(target) ? nameof(target) : nameof(profile));
         }
 
         var Argumentˉtableˉbytes = checked(
@@ -71,11 +77,17 @@ internal static class Hostedˉcompilerˉruntimeˉdata
             4096);
         var Textˉarenaˉoffset = checked(
             Recordˉarenaˉoffset + Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES);
+        var Textˉarenaˉbytes =
+            Hostedˉcompilerˉapplicationˉmetadata.Textˉarenaˉbytes(profile);
         var Nameˉarenaˉoffset = checked(
-            Textˉarenaˉoffset + Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES);
+            Textˉarenaˉoffset + Textˉarenaˉbytes);
+        var Nameˉarenaˉstrideˉbytes = profile ==
+                Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+            ? BUILD_DRIVER_NAME_ARENA_STRIDE_BYTES
+            : Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES;
         var Nameˉarenaˉbytes = checked(
             Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY *
-            Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES);
+            Nameˉarenaˉstrideˉbytes);
         var Dataˉarenaˉoffset = checked(Nameˉarenaˉoffset + Nameˉarenaˉbytes);
         var Dataˉarenaˉbytes = checked(
             Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY *
@@ -108,6 +120,8 @@ internal static class Hostedˉcompilerˉruntimeˉdata
             Snapshotˉtableˉbytes,
             Recordˉarenaˉoffset,
             Textˉarenaˉoffset,
+            Textˉarenaˉbytes,
+            Nameˉarenaˉstrideˉbytes,
             Nameˉarenaˉoffset,
             Dataˉarenaˉoffset,
             Inputˉscratchˉoffset,
@@ -163,8 +177,8 @@ internal static class Hostedˉcompilerˉruntimeˉdata
         {
             throw Invalid("The hosted compiler runtime header has an invalid size.");
         }
-        var Layout = Plan(expectedˉtarget);
-        Verifyˉcontext(bytes);
+        var Layout = Plan(expectedˉtarget, expectedˉprofile);
+        Verifyˉcontext(bytes, Layout);
         Verifyˉserviceˉtable(bytes);
         Verifyˉoutputˉtable(bytes, expectedˉtarget);
         Verifyˉfileˉinputˉtable(bytes, Layout);
@@ -186,7 +200,9 @@ internal static class Hostedˉcompilerˉruntimeˉdata
         return new(Layout, Metadata);
     }
 
-    private static void Verifyˉcontext(ReadOnlySpan<byte> bytes)
+    private static void Verifyˉcontext(
+        ReadOnlySpan<byte> bytes,
+        Hostedˉcompilerˉruntimeˉlayout layout)
     {
         var Base = checked((int)CONTEXT_OFFSET);
         Require(bytes, Base + Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION_OFFSET,
@@ -209,7 +225,7 @@ internal static class Hostedˉcompilerˉruntimeˉdata
         Requireˉzero(bytes, Base + Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_POINTER_OFFSET,
             sizeof(ulong), "initial text-arena pointer");
         Require(bytes, Base + Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
-            Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES, "text-arena length");
+            layout.Textˉarenaˉbytes, "text-arena length");
         Require(bytes, Base + Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_USED_OFFSET,
             0, "text-arena use");
         Requireˉzero(bytes, Base + Nativeˉexecutionˉcontextˉcontract.SERVICE_FAILURE_DETAIL_OFFSET,
@@ -285,7 +301,7 @@ internal static class Hostedˉcompilerˉruntimeˉdata
         Requireˉu64(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.NAME_ARENA_POINTER_OFFSET,
             0, "initial name-arena pointer");
         Require(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_OFFSET,
-            Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES, "name stride");
+            layout.Nameˉarenaˉstrideˉbytes, "name stride");
         Require(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.NAME_RESERVED_OFFSET,
             0, "name reserved field");
         Requireˉu64(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.DATA_ARENA_POINTER_OFFSET,

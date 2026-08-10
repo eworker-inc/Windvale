@@ -82,7 +82,13 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
     internal const uint CONSOLE_PACKAGER_PROFILE_FLAGS = 6;
     internal const uint WVB_TO_WVO_PROFILE_FLAGS = 7;
     internal const uint HOSTED_CONTAINER_SEGMENTER_PROFILE_FLAGS = 8;
-    internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 48_000_000_000;
+    internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 64_000_000_000;
+    internal const uint BUILD_DRIVER_TEXT_ARENA_BYTES = 224 * 1024 * 1024;
+
+    internal static uint Textˉarenaˉbytes(Hostedˉcompilerˉapplicationˉprofile profile) =>
+        profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+            ? BUILD_DRIVER_TEXT_ARENA_BYTES
+            : Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES;
 
     private static readonly ImmutableArray<Hostedˉcompilerˉcapabilityˉcontract>
         CAPABILITY_CONTRACTS =
@@ -164,7 +170,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         Writeˉu32(Bytes, 68, checked((uint)bundle.Nativeˉimageˉbytes));
         Writeˉu32(Bytes, 72, nativeˉentryˉoffset);
         Writeˉu32(Bytes, 76, Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES);
-        Writeˉu32(Bytes, 80, Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES);
+        Writeˉu32(Bytes, 80, Textˉarenaˉbytes(profile));
         Writeˉu32(Bytes, 84, Profileˉvalue.Flags);
         Writeˉu64(Bytes, 88, COMPILER_MAXIMUM_INSTRUCTIONS);
 
@@ -244,7 +250,7 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
         var Nativeˉentry = Readˉu32(bytes, 72);
         Require(bytes, 76, Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES,
             "record-arena size");
-        Require(bytes, 80, Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES,
+        Require(bytes, 80, Textˉarenaˉbytes(expectedˉprofile),
             "text-arena size");
         Require(bytes, 84, Profileˉvalue.Flags, "profile flags");
         Requireˉu64(bytes, 88, COMPILER_MAXIMUM_INSTRUCTIONS, "instruction budget");

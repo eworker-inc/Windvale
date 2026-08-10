@@ -89,6 +89,13 @@ Tools\Native\Test-Hosted-Wvb-Packaging.cmd
 ./Tools/Native/Test-Hosted-Wvb-Packaging.sh
 ```
 
+Decision 0491 changes the shared hosted startup, file-input leaves, and
+profile-2 layout. The retained candidate toolset and the exact package hashes
+below remain the last paired-host snapshot; the launchers currently fail closed
+on their digest checks until the deliberate candidate-toolset reconstruction
+and repin slice completes. Do not treat the preceding commands as current-source
+qualification evidence during that bounded transition.
+
 Each host test packages the pinned orchestration-control WVB and requires exact
 equality with the corresponding independent candidate, then cross-constructs
 the opposite target and requires exact equality with its candidate. It finally

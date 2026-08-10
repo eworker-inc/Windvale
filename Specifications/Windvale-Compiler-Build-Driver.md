@@ -80,8 +80,29 @@ The fixed 1,024-byte metadata record reuses the qualified compiler-authority cap
 - native ABI `22`, execution-context format `7`, service-table format `5`;
 - six capability records and ten service records;
 - profile flags `3`, meaning compiler plus in-process verifier build driver;
-- instruction budget `48,000,000,000` under the shared Decision 0201 hosted compiler/build-driver ceiling;
+- instruction budget `64,000,000,000` under the successor to Decision 0201's hosted compiler/build-driver ceiling;
+- a 234,881,024-byte dynamic text/byte arena and an 8,192-byte file-input name stride, while the compiler and hosted-tool profiles 3 through 7 retain a 134,217,728-byte arena and 1,048,576-byte name stride;
 - exact native-image and per-service SHA-256 identities.
+
+The larger arena and narrower name slots are profile-local. A hosted process
+argument contains at most 4,096 UTF-8 bytes. The manifest argument must retain
+the seven-byte `.wvproj` suffix after its final `/`, so its retained prefix is
+at most 4,089 bytes; one Project 1 path is at most 4,096 bytes. Their maximum
+8,185-byte concatenation fits the 8,192-byte slot. The retained native
+file-input leaves use `WVFI 1`'s declared name-stride field for both the
+name-length check and slot addressing. The generic host executor and standalone
+file-input-table constructor remain exact at 1,048,576 bytes and do not admit
+this profile-local value.
+
+The name arena begins at 237,051,904, the file-data arena at 237,576,192, and
+file-input scratch at 506,011,648. The narrower slots do not narrow the retained
+scratch capacities: file input and file output each retain 2,097,154 bytes on
+Windows and 1,048,577 bytes on Linux. File-output scratch therefore begins at
+508,112,896 on Windows and 507,064,320 on Linux. The final RW/NX runtime extent
+is 510,214,144 bytes on Windows and 508,116,992 bytes on Linux, both below the
+fixed 512 MiB runtime-data ceiling. That ceiling governs the runtime mapping
+rather than the complete executable image; text and Windows import pages remain
+separate mapped regions.
 
 The PE/ELF constructors and independent parsers take the expected compiler or build-driver profile explicitly. A format-3 compiler container is rejected as format 5 and a format-5 driver is rejected as format 3. Every changed header format, metadata magic, native bundle, digest, extent, reserved byte, truncation, or extension is rejected before execution or package publication.
 
@@ -89,11 +110,11 @@ Because the driver and compiler bind the same ten services and runtime tables, f
 
 ## Canonical identities
 
-The current canonical-source reconstruction candidate is 1,101,328 bytes with SHA-256 `76947c7eeca769cf912c695887b2f1446ee9344790b654acc6832c8ced163b10`. The qualified native front door remains pinned until the candidate passes self-convergence and the exact-commit dual-host gate.
+The current canonical-source reconstruction candidate is 1,101,068 bytes with SHA-256 `7c87b171ff61278599bec200090def1ae14ba58567b07d36cfdb3a420a533e4f`. One current-host Windows package reproduced those exact bytes through the native driver in 57.315 seconds with an empty diagnostic stream. The qualified native front door remains pinned until the exact-commit dual-host gate passes.
 
-The current WVB 1.11 recovery reconstruction for `windows-x64-build-driver-v1` emits a 29,138,944-byte PE32+ application with SHA-256 `4c3c79f704b14ad96a7160db4acfdcca5763ae87120fc534ca71801cd69378ec`.
+The current WVB 1.11 recovery reconstruction for `windows-x64-build-driver-v1` emits a 29,257,728-byte PE32+ application with SHA-256 `875e827a512f2387a980d2871115c94ba0a17a0e9dac6b89439140dc9b7f313a`.
 
-The current WVB 1.11 recovery reconstruction for `linux-x64-build-driver-v1` emits a 29,138,944-byte sectionless static-PIE ELF application with SHA-256 `53a46d8f8773c6ebd5061c46ecc62a57c408653f913869bff6981157e2d25f72`.
+The current WVB 1.11 recovery reconstruction for `linux-x64-build-driver-v1` emits a 29,257,728-byte sectionless static-PIE ELF application with SHA-256 `d96da77e3dba34598975eb1c721b0195a54f746e1b9a11608bda3e384a96c590`.
 
 These are reconstruction candidates produced after the Decision 0220 descriptor-return correction. The digest-bound ordinary native-front-door inventory deliberately retains its previously qualified build-driver applications until this exact descendant passes the Windows/Linux replacement gate; historical qualification identities remain recorded in that inventory and its evidence documents.
 

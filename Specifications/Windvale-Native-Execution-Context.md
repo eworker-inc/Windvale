@@ -196,8 +196,8 @@ File-input-table version 1 is exactly 136 bytes and is never serialized into WVB
 | 16 | 8 | snapshot-table pointer | 64 execution-owned 32-byte records |
 | 24 | 4 | snapshot capacity | `64` |
 | 28 | 4 | snapshot count | Starts at zero; native success advances it after publishing a complete record |
-| 32 | 8 | name-arena pointer | Canonical 64-slot arena |
-| 40 | 4 | name stride | 1 MiB |
+| 32 | 8 | name-arena pointer | Profile-owned 64-slot arena using the declared stride |
+| 40 | 4 | name stride | Declared slot stride: ordinarily 1 MiB; the hosted build-driver profile uses the bounded 8 KiB specialization |
 | 44 | 4 | name reserved | Zero |
 | 48 | 8 | data-arena pointer | Canonical 64-slot arena |
 | 56 | 4 | data stride | 4 MiB |
@@ -207,9 +207,9 @@ File-input-table version 1 is exactly 136 bytes and is never serialized into WVB
 | 76 | 4 | reserved | Zero |
 | 80 | 56 | Windows function pointers | UTF-8 conversion, open, size, read, close, commit, and last-error; all zero on Linux |
 
-Each snapshot record contains name pointer/length/reserved at offsets 0/8/12 and data pointer/length/reserved at 16/24/28. Record `i` must point to canonical name slot `i * 1 MiB` and data slot `i * 4 MiB`. After native return, the owner verifies count, every pointer and bound, zero reserved fields, strict UTF-8 names, and ordinal uniqueness before releasing the execution.
+Each snapshot record contains name pointer/length/reserved at offsets 0/8/12 and data pointer/length/reserved at 16/24/28. Record `i` must point to the name-arena base plus `i * declared name stride` and the data-arena base plus `i * 4 MiB`; its nonempty name must fit the declared stride. After native return, the owner verifies count, every pointer and bound, zero reserved fields, strict UTF-8 names, and ordinal uniqueness before releasing the execution.
 
-The [Windvale file-input-table constructor](Windvale-Native-File-Input-Table-Construction.md) owns the exact immutable initial `WVFI` bytes from already allocated arena targets and resolved opaque functions. The host independently verifies every initial table field before publication and permits only the specified snapshot-count/record mutations during execution, followed by the complete post-execution checks above.
+The generic host executor and [Windvale file-input-table constructor](Windvale-Native-File-Input-Table-Construction.md) own the exact 1 MiB name-stride instance and its immutable initial `WVFI` bytes from already allocated arena targets and resolved opaque functions. The hosted build-driver profile separately constructs and admits its 8 KiB instance through its metadata, runtime-header, and container contracts; no other `WVFI 1` consumer inherits that specialization. The native file-input leaves use the declared field for name-length checks and slot addressing. Each table owner independently verifies every initial field before publication and permits only the specified snapshot-count/record mutations during execution, followed by the complete post-execution checks above.
 
 ## Runtime-private file-output table
 

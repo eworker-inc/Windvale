@@ -997,7 +997,7 @@ dotnet $ToolDll `
     -o $NativeWindowsFileInputCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale Windows file-input core.' }
 $NativeWindowsFileInputCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeWindowsFileInputCoreModule).Hash.ToLowerInvariant()
-if ($NativeWindowsFileInputCoreHash -ne '795e45f1efb6c8a864962fc01a6e8374d758fa4e098eda8900b6639a02b8cf2e') {
+if ($NativeWindowsFileInputCoreHash -ne '6155c4ebb8f4ea76a5d1f22c1bb788aec51e731ceb4a1c5a4ceb7551ba8f409a') {
     throw "The Windvale Windows file-input core has an unexpected digest: $NativeWindowsFileInputCoreHash"
 }
 dotnet $ToolDll `
@@ -1007,7 +1007,7 @@ dotnet $ToolDll `
     -o $NativeLinuxFileInputCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale Linux file-input core.' }
 $NativeLinuxFileInputCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeLinuxFileInputCoreModule).Hash.ToLowerInvariant()
-if ($NativeLinuxFileInputCoreHash -ne '49b7990dd51ae3108f387331d907f4127c18726d95a453a8f768459016ad497e') {
+if ($NativeLinuxFileInputCoreHash -ne '04533e8ecade1f29e0b706c75ec949f5b4c300074cfd65feacb86f5107dcaeba') {
     throw "The Windvale Linux file-input core has an unexpected digest: $NativeLinuxFileInputCoreHash"
 }
 dotnet $ToolDll `
@@ -1019,7 +1019,7 @@ dotnet $ToolDll `
     -o $NativeFileInputBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale file-input bridge.' }
 $NativeFileInputBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileInputBridgeModule).Hash.ToLowerInvariant()
-if ($NativeFileInputBridgeHash -ne '81cb5ed76e0e885055b13ae23bfbca118c99c7ea905d3ae75a5bc87ccb35269b') {
+if ($NativeFileInputBridgeHash -ne '09f73787a909ae35ebc1aefb05bd88e4282ff8db7152d196f83b2798ea7c2234') {
     throw "The Windvale file-input bridge has an unexpected digest: $NativeFileInputBridgeHash"
 }
 $NativeFileInputBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileInputBridgeRetained).Hash.ToLowerInvariant()
@@ -1031,8 +1031,8 @@ if (
     throw 'The retained Windvale file-input bridge does not match its exact source compilation.'
 }
 $NativeFileInputLeaves = @(
-    @($NativeWindowsFileInputLeaf, 1218, '3d2fffc028083cdc4cfd39e553dea603e9a1ae661bb5df3f14ca438c4d3e3cf8'),
-    @($NativeLinuxFileInputLeaf, 996, '55ae4524c463f064aee0964d7f9b64438701fb4375a97c53d11f2f17902c12cb')
+    @($NativeWindowsFileInputLeaf, 1218, '3e2fd284d4991d0f713301514d3fbf6af8ec84af7bd7289698c08a41d434c52d'),
+    @($NativeLinuxFileInputLeaf, 996, 'cbd78340641fa02589d0d96b73d233a67f9404ab76c3df2b1346b2e31ca43701')
 )
 foreach ($NativeFileInputLeaf in $NativeFileInputLeaves) {
     $NativeFileInputLeafHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeFileInputLeaf[0]).Hash.ToLowerInvariant()
@@ -1745,7 +1745,7 @@ $NativeHostedToolRuntimeHeaderArtifactRetained = Join-Path $RepositoryRoot 'Runt
 dotnet $ToolDll compile $NativeHostedToolMetadataAdmissionSource -o $NativeHostedToolMetadataAdmissionModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-tool metadata admission.' }
 $NativeHostedToolMetadataAdmissionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataAdmissionModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataAdmissionHash -ne 'bd87ae0427462e77c0a23ead7dd771a36756a05033839eb40d4ddf8b6a7955f3') {
+if ($NativeHostedToolMetadataAdmissionHash -ne 'c0c61a601085c9422e5391023e047d7b0b3c88cb49bd52b24ccfd7c3eb7f1e35') {
     throw "The hosted-tool metadata admission module has an unexpected digest: $NativeHostedToolMetadataAdmissionHash"
 }
 $NativeHostedToolMetadataConstructionCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv'
@@ -1759,7 +1759,7 @@ dotnet $ToolDll `
     -o $NativeHostedToolMetadataConstructionCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool metadata-construction core.' }
 $NativeHostedToolMetadataConstructionCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionCoreModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataConstructionCoreHash -ne 'e6addd08b83caa9345259b26210bd99f5d8cdfe5b4b302c64a7ecee5930b0c98') {
+if ($NativeHostedToolMetadataConstructionCoreHash -ne 'ebe76d7ccc4b27f7d7135647ef4c4b11ec5d83f281c7c91cc7ca68e389c0c1fa') {
     throw "The hosted-tool metadata-construction core has an unexpected digest: $NativeHostedToolMetadataConstructionCoreHash"
 }
 dotnet $ToolDll `
@@ -1770,7 +1770,7 @@ dotnet $ToolDll `
     -o $NativeHostedToolMetadataConstructionBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool metadata-construction bridge.' }
 $NativeHostedToolMetadataConstructionBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionBridgeModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataConstructionBridgeHash -ne '0b89246f7423f99c01fafdbc6054f7b38cca80c27fee036a272990e4e1a59379') {
+if ($NativeHostedToolMetadataConstructionBridgeHash -ne '4adb36dd4ce821abdd29fe5766a0866847dc9052a0035dfbabd51d6a6b7c19ab') {
     throw "The hosted-tool metadata-construction bridge has an unexpected digest: $NativeHostedToolMetadataConstructionBridgeHash"
 }
 $NativeHostedToolMetadataConstructionBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionBridgeRetained).Hash.ToLowerInvariant()
@@ -1783,8 +1783,8 @@ if (
 }
 $NativeHostedToolMetadataConstructionArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeHostedToolMetadataConstructionArtifactHash -ne 'b077111fd4aa796003f947d4e82facb6754ab83a53951ef8c514025983ca26f4' -or
-    (Get-Item -LiteralPath $NativeHostedToolMetadataConstructionArtifactRetained).Length -ne 212627
+    $NativeHostedToolMetadataConstructionArtifactHash -ne '34f8d5f2f65db0fd736d6bd3557b5b9f3dcb4449366cde10e486ec97e15fbbad' -or
+    (Get-Item -LiteralPath $NativeHostedToolMetadataConstructionArtifactRetained).Length -ne 215031
 ) {
     throw "The retained hosted-tool metadata-construction fragment has an unexpected identity: $NativeHostedToolMetadataConstructionArtifactHash"
 }
@@ -1825,10 +1825,10 @@ if (
     throw "The retained hosted-startup instantiation fragment has an unexpected identity: $NativeHostedStartupInstantiationArtifactHash"
 }
 if (
-    (Get-FileHash -Algorithm SHA256 -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne '55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb' -or
-    (Get-Item -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Length -ne 4334 -or
-    (Get-FileHash -Algorithm SHA256 -LiteralPath $LinuxHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne '0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff' -or
-    (Get-Item -LiteralPath $LinuxHostedCompilerStartupObjectRetained).Length -ne 2390
+    (Get-FileHash -Algorithm SHA256 -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne 'dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161' -or
+    (Get-Item -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Length -ne 4398 -or
+    (Get-FileHash -Algorithm SHA256 -LiteralPath $LinuxHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne '1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946' -or
+    (Get-Item -LiteralPath $LinuxHostedCompilerStartupObjectRetained).Length -ne 2454
 ) {
     throw 'A retained hosted-compiler startup WVO has an unexpected identity.'
 }
@@ -1848,44 +1848,44 @@ $NativeHostedContainerArtifacts = @(
         Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Construction.wvproj'
         Output = $NativeHostedContainerPlanModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvb'
-        ModuleBytes = 33667
-        ModuleHash = '55b89d7b5ca5e6118214bfadf7c8597a959348bf18b230954c623a7549e27509'
+        ModuleBytes = 35557
+        ModuleHash = 'd285947f46b0e229891ee20205dd6908a375eea7dc50d460799d8c68e700113a'
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvnf'
-        FragmentBytes = 537190
-        FragmentHash = '6a9ba7b7bf7cc058f3a3a8bde5e694891dc857ee66521a4c7496aa6bc0fd6634'
+        FragmentBytes = 559209
+        FragmentHash = '981dc6dc9889e2c95477ff473719c74d565de12285db10d4e74e0b9e54a667ba'
     },
     @{
         Name = 'Windows byte constructor'
         Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Windows.wvproj'
         Output = $NativeHostedContainerWindowsModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvb'
-        ModuleBytes = 17409
-        ModuleHash = 'a63a185af4b58226f8afd5416b9a7b96f6d25ca8151cfa42f5d9a3cb70daaee8'
+        ModuleBytes = 17554
+        ModuleHash = '9186f252e1fe1abde98d774a0d88760707123d5a27ecef48887defc9a017c7fe'
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvnf'
-        FragmentBytes = 183406
-        FragmentHash = '7e04baf6105eab333b2898142f7dd2d4f636f445471620ae67cb5125e1cb2d02'
+        FragmentBytes = 183502
+        FragmentHash = '01d84e184db9a5970e685255e3f184a59d15a7412b0fc27d6aaba1c69b14dacf'
     },
     @{
         Name = 'Linux byte constructor'
         Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Linux.wvproj'
         Output = $NativeHostedContainerLinuxModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvb'
-        ModuleBytes = 12086
-        ModuleHash = 'c4cdd9b71c677359de324201206ec215df2c5a92a2622912ba1a425074f29ca2'
+        ModuleBytes = 12203
+        ModuleHash = '54dad025b0f9d49dd0f39f5b12d43a1b0d35daf537712c2e8a2f1e7a75097e72'
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvnf'
-        FragmentBytes = 124463
-        FragmentHash = '3c8cbb6f1b06794fb25e7fda136cee1081b5bc13f15cf6f09f0b6c01a0d5556a'
+        FragmentBytes = 125151
+        FragmentHash = '1057b804c29b6ca5834d4de447a49b100e50b691d496a00ef9535d4bf06756c7'
     },
     @{
         Name = 'segment constructor'
         Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Segmentation.wvproj'
         Output = $NativeHostedContainerSegmentationModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvb'
-        ModuleBytes = 21832
-        ModuleHash = 'af869ba326f99eaa8d1a2c0898c14145a62c4f046da7bbcccf511d7918e79056'
+        ModuleBytes = 22398
+        ModuleHash = '83e6945d99a9a006e64572bf43b6affdf70626f9454145935d52193f8e692369'
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvnf'
-        FragmentBytes = 281719
-        FragmentHash = 'ab96ecad8d37f9383626d24c2e97c7e6615dd3c92c2ed5f9dc816cf77f3dc7d7'
+        FragmentBytes = 285555
+        FragmentHash = '6e4351c1e8cc62b67721d4b61f5374f11fded3cf84b79ce63930c33a10e40d43'
     }
 )
 foreach ($Artifact in $NativeHostedContainerArtifacts) {
@@ -1925,7 +1925,7 @@ dotnet $ToolDll `
     -o $NativeHostedToolRuntimeHeaderCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool runtime-header core.' }
 $NativeHostedToolRuntimeHeaderCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderCoreModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolRuntimeHeaderCoreHash -ne '76f4958cffadc3a3d56b898755dadf7355a933a0a4a8e12b4fa10fe0ee7ddb84') {
+if ($NativeHostedToolRuntimeHeaderCoreHash -ne 'abe7140c46af12c0f99056b8fbaf844f6ab5f51dd9e9f72bc215be86d977585f') {
     throw "The hosted-tool runtime-header core has an unexpected digest: $NativeHostedToolRuntimeHeaderCoreHash"
 }
 dotnet $ToolDll `
@@ -1936,7 +1936,7 @@ dotnet $ToolDll `
     -o $NativeHostedToolRuntimeHeaderBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool runtime-header bridge.' }
 $NativeHostedToolRuntimeHeaderBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderBridgeModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolRuntimeHeaderBridgeHash -ne 'c09d1949ae9d016b4f7e33121122528d8959e29d058d721dc5f86bda1e25c3f1') {
+if ($NativeHostedToolRuntimeHeaderBridgeHash -ne 'd9add4e9608fa1b2b2771de4f29d91793920a8a4d8c6f191ba9a5b1c9bedf3fa') {
     throw "The hosted-tool runtime-header bridge has an unexpected digest: $NativeHostedToolRuntimeHeaderBridgeHash"
 }
 $NativeHostedToolRuntimeHeaderBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderBridgeRetained).Hash.ToLowerInvariant()
@@ -1949,8 +1949,8 @@ if (
 }
 $NativeHostedToolRuntimeHeaderArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeHostedToolRuntimeHeaderArtifactHash -ne '929f0a129b233e466dd0fb11152e80d0a82607d9b83a44b12b1a477834dd2237' -or
-    (Get-Item -LiteralPath $NativeHostedToolRuntimeHeaderArtifactRetained).Length -ne 191208
+    $NativeHostedToolRuntimeHeaderArtifactHash -ne 'b726e57277ef81990856159fca428a45c3513ca9218dec5f9fdebc2531637e31' -or
+    (Get-Item -LiteralPath $NativeHostedToolRuntimeHeaderArtifactRetained).Length -ne 194222
 ) {
     throw "The retained hosted-tool runtime-header fragment has an unexpected identity: $NativeHostedToolRuntimeHeaderArtifactHash"
 }
@@ -2315,7 +2315,7 @@ dotnet $ToolDll `
     -o $SourceGraphModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-graph core.' }
 $SourceGraphHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphModule).Hash.ToLowerInvariant()
-if ($SourceGraphHash -ne '7fe9276273e48432f6206bde0d8a533dbc35ddf055b2f68b8a03810f07b4fb14') {
+if ($SourceGraphHash -ne '9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b') {
     throw "The Windvale source-graph core has an unexpected digest: $SourceGraphHash"
 }
 $SourceGraphInspection = (dotnet $ToolDll inspect $SourceGraphModule) -join "`n"
@@ -2341,7 +2341,7 @@ dotnet $ToolDll `
     -o $SourceGraphDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-graph demo.' }
 $SourceGraphDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphDemoModule).Hash.ToLowerInvariant()
-if ($SourceGraphDemoHash -ne 'fc046e27037f0b2f18129b270b21d8d2c5c3c532601c5a4bfdf211881b0c2acb') {
+if ($SourceGraphDemoHash -ne 'a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c') {
     throw "The source-graph demo has an unexpected digest: $SourceGraphDemoHash"
 }
 $SourceGraphDemoOutput = dotnet $ToolDll `
@@ -2361,7 +2361,7 @@ dotnet $ToolDll `
     -o $SourceGraphToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-graph tool.' }
 $SourceGraphToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphToolModule).Hash.ToLowerInvariant()
-if ($SourceGraphToolHash -ne '9d49a4e321429ea203bd9a00ab2f6a9196c844c7cdf77a6b707ad6e0dc48b0fd') {
+if ($SourceGraphToolHash -ne '0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10') {
     throw "The source-graph tool has an unexpected digest: $SourceGraphToolHash"
 }
 $SourceGraphArguments = @(
@@ -2402,7 +2402,7 @@ dotnet $ToolDll `
     -o $SourceSymbolsModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-symbol core.' }
 $SourceSymbolsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsHash -ne '9d82d52310cd542a6a2854d10f990080f7a56fd98567ef4ec4042ce6fd6e7a9b') {
+if ($SourceSymbolsHash -ne 'a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7') {
     throw "The Windvale source-symbol core has an unexpected digest: $SourceSymbolsHash"
 }
 $SourceSymbolsInspection = (dotnet $ToolDll inspect $SourceSymbolsModule) -join "`n"
@@ -2430,7 +2430,7 @@ dotnet $ToolDll `
     -o $SourceSymbolsDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-symbol demo.' }
 $SourceSymbolsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsDemoModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsDemoHash -ne '43f6aef685cbc265105abf36e7b8cae4de9974824fadfb8e5b83270c96d1ad1e') {
+if ($SourceSymbolsDemoHash -ne '4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457') {
     throw "The source-symbol demo has an unexpected digest: $SourceSymbolsDemoHash"
 }
 $SourceSymbolsDemoOutput = dotnet $ToolDll `
@@ -2451,7 +2451,7 @@ dotnet $ToolDll `
     -o $SourceSymbolsToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-symbol tool.' }
 $SourceSymbolsToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsToolModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsToolHash -ne '0555ca0b6d86a67cf94e8ee150d0baa92252f6a8ae7a06d7cbf2f7649f1ae43c') {
+if ($SourceSymbolsToolHash -ne '58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66') {
     throw "The source-symbol tool has an unexpected digest: $SourceSymbolsToolHash"
 }
 $SourceSymbolsArguments = @(
@@ -2494,7 +2494,7 @@ dotnet $ToolDll `
     -o $SourceBindingsModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-binding core.' }
 $SourceBindingsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsModule).Hash.ToLowerInvariant()
-if ($SourceBindingsHash -ne '64b9fb7d92df4b40fc315d1f13f80118856a05ac2fb6b1d27e58dbb2d3bd9999') {
+if ($SourceBindingsHash -ne 'a772a75fe625f47e165ca190e76d8cd59fa0b591a0270a5817e02e0fac62542c') {
     throw "The Windvale source-binding core has an unexpected digest: $SourceBindingsHash"
 }
 $SourceBindingsInspection = (dotnet $ToolDll inspect $SourceBindingsModule) -join "`n"
@@ -2523,7 +2523,7 @@ dotnet $ToolDll `
     -o $SourceBindingsDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-binding demo.' }
 $SourceBindingsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsDemoModule).Hash.ToLowerInvariant()
-if ($SourceBindingsDemoHash -ne 'f6b9c184bfe8668a5c597dbe76d7709120a541789661df0156ce8f1785272e0a') {
+if ($SourceBindingsDemoHash -ne '563caeb4a76fb34d6c2b2b8340260cc1da518c4cbaad9e5f355201f6bd1fa933') {
     throw "The source-binding demo has an unexpected digest: $SourceBindingsDemoHash"
 }
 $SourceBindingsDemoOutput = dotnet $ToolDll `
@@ -2545,7 +2545,7 @@ dotnet $ToolDll `
     -o $SourceBindingsToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-binding tool.' }
 $SourceBindingsToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBindingsToolModule).Hash.ToLowerInvariant()
-if ($SourceBindingsToolHash -ne '7b75e3cd72eb7a2521d3b382effbdf2435879ceca2ed24561683ac63b956dad8') {
+if ($SourceBindingsToolHash -ne '17e877b3c59d2f9a99d26be4c478f10ce8879e6bce925b65894d158fd4a6e0a9') {
     throw "The source-binding tool has an unexpected digest: $SourceBindingsToolHash"
 }
 $SourceBindingsArguments = @(
@@ -2590,7 +2590,7 @@ dotnet $ToolDll `
     -o $SourceWirModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale typed-WVIR core.' }
 $SourceWirHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirModule).Hash.ToLowerInvariant()
-if ($SourceWirHash -ne '3345bdfb062cf467f8b658414a672157b518af8c5a4aa994b0eb0e32e15837a4') {
+if ($SourceWirHash -ne 'c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb') {
     throw "The Windvale typed-WVIR core has an unexpected digest: $SourceWirHash"
 }
 $SourceWirInspection = (dotnet $ToolDll inspect $SourceWirModule) -join "`n"
@@ -2619,7 +2619,7 @@ dotnet $ToolDll `
     -o $SourceWirDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the typed-WVIR demo.' }
 $SourceWirDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirDemoModule).Hash.ToLowerInvariant()
-if ($SourceWirDemoHash -ne 'd0b3f7b8fdbf1a7c56ebd8a2f024988933019f6e8b75202d5e97c5a96e567983') {
+if ($SourceWirDemoHash -ne '7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f') {
     throw "The typed-WVIR demo has an unexpected digest: $SourceWirDemoHash"
 }
 $SourceWirDemoOutput = dotnet $ToolDll run $SourceWirDemoModule --max-steps 4000000000
@@ -2641,7 +2641,7 @@ dotnet $ToolDll `
     -o $SourceWirToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the typed-WVIR tool.' }
 $SourceWirToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWirToolModule).Hash.ToLowerInvariant()
-if ($SourceWirToolHash -ne '302409f6f1e8c0a1c3061dda2400083e06cf6781a28922f0138a952f2edfb574') {
+if ($SourceWirToolHash -ne '7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5') {
     throw "The typed-WVIR tool has an unexpected digest: $SourceWirToolHash"
 }
 $SourceWirFixtureOutput = dotnet $ToolDll `
@@ -2679,7 +2679,7 @@ $SourceWvbDependencies = @(
 dotnet $ToolDll compile $SourceWvbSource @SourceWvbDependencies -o $SourceWvbModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend core.' }
 $SourceWvbHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbModule).Hash.ToLowerInvariant()
-if ($SourceWvbHash -ne '20ab85982a821dee87c8674c16c520a10646b604a5d3f0e38442589e521bf1c0') {
+if ($SourceWvbHash -ne 'c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b') {
     throw "The Windvale WVB backend core has an unexpected digest: $SourceWvbHash"
 }
 $SourceWvbInspection = (dotnet $ToolDll inspect $SourceWvbModule) -join "`n"
@@ -2697,7 +2697,7 @@ dotnet $ToolDll `
     -o $SourceWvbDemoModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend demo.' }
 $SourceWvbDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbDemoModule).Hash.ToLowerInvariant()
-if ($SourceWvbDemoHash -ne 'c8f96a8d973c1d03d5bb115612ddc765a2a7e3b617ec61af641f540fb7b2ce04') {
+if ($SourceWvbDemoHash -ne 'ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9') {
     throw "The Windvale WVB backend demo has an unexpected digest: $SourceWvbDemoHash"
 }
 $SourceWvbDemoOutput = dotnet $ToolDll run $SourceWvbDemoModule --max-steps 4000000000
@@ -2710,7 +2710,7 @@ dotnet $ToolDll `
     -o $SourceWvbToolModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale WVB backend tool.' }
 $SourceWvbToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceWvbToolModule).Hash.ToLowerInvariant()
-if ($SourceWvbToolHash -ne 'fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556') {
+if ($SourceWvbToolHash -ne '18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754') {
     throw "The Windvale WVB backend tool has an unexpected digest: $SourceWvbToolHash"
 }
 $SourceWvbFixture = Join-Path $RepositoryRoot 'Tests/Fixtures/Source-Wvb/Function-Only.wv'

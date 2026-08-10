@@ -830,7 +830,7 @@ dotnet "$TOOL_DLL" \
     --module "$NATIVE_FILE_INPUT_CODE_SOURCE" \
     -o "$NATIVE_WINDOWS_FILE_INPUT_CORE_MODULE"
 NATIVE_WINDOWS_FILE_INPUT_CORE_HASH=$(sha256sum "$NATIVE_WINDOWS_FILE_INPUT_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_WINDOWS_FILE_INPUT_CORE_HASH" != '795e45f1efb6c8a864962fc01a6e8374d758fa4e098eda8900b6639a02b8cf2e' ]; then
+if [ "$NATIVE_WINDOWS_FILE_INPUT_CORE_HASH" != '6155c4ebb8f4ea76a5d1f22c1bb788aec51e731ceb4a1c5a4ceb7551ba8f409a' ]; then
     echo "The Windvale Windows file-input core has an unexpected digest: $NATIVE_WINDOWS_FILE_INPUT_CORE_HASH" >&2
     exit 1
 fi
@@ -840,7 +840,7 @@ dotnet "$TOOL_DLL" \
     --module "$NATIVE_FILE_INPUT_CODE_SOURCE" \
     -o "$NATIVE_LINUX_FILE_INPUT_CORE_MODULE"
 NATIVE_LINUX_FILE_INPUT_CORE_HASH=$(sha256sum "$NATIVE_LINUX_FILE_INPUT_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_LINUX_FILE_INPUT_CORE_HASH" != '49b7990dd51ae3108f387331d907f4127c18726d95a453a8f768459016ad497e' ]; then
+if [ "$NATIVE_LINUX_FILE_INPUT_CORE_HASH" != '04533e8ecade1f29e0b706c75ec949f5b4c300074cfd65feacb86f5107dcaeba' ]; then
     echo "The Windvale Linux file-input core has an unexpected digest: $NATIVE_LINUX_FILE_INPUT_CORE_HASH" >&2
     exit 1
 fi
@@ -852,14 +852,14 @@ dotnet "$TOOL_DLL" \
     --module "$NATIVE_LINUX_FILE_INPUT_CORE_SOURCE" \
     -o "$NATIVE_FILE_INPUT_BRIDGE_MODULE"
 NATIVE_FILE_INPUT_BRIDGE_HASH=$(sha256sum "$NATIVE_FILE_INPUT_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_FILE_INPUT_BRIDGE_HASH" != '81cb5ed76e0e885055b13ae23bfbca118c99c7ea905d3ae75a5bc87ccb35269b' ]; then
+if [ "$NATIVE_FILE_INPUT_BRIDGE_HASH" != '09f73787a909ae35ebc1aefb05bd88e4282ff8db7152d196f83b2798ea7c2234' ]; then
     echo "The Windvale file-input bridge has an unexpected digest: $NATIVE_FILE_INPUT_BRIDGE_HASH" >&2
     exit 1
 fi
 cmp -s "$NATIVE_FILE_INPUT_BRIDGE_MODULE" "$NATIVE_FILE_INPUT_BRIDGE_RETAINED"
-if [ "$(sha256sum "$NATIVE_WINDOWS_FILE_INPUT_LEAF" | awk '{print $1}')" != '3d2fffc028083cdc4cfd39e553dea603e9a1ae661bb5df3f14ca438c4d3e3cf8' ] ||
+if [ "$(sha256sum "$NATIVE_WINDOWS_FILE_INPUT_LEAF" | awk '{print $1}')" != '3e2fd284d4991d0f713301514d3fbf6af8ec84af7bd7289698c08a41d434c52d' ] ||
     [ "$(wc -c < "$NATIVE_WINDOWS_FILE_INPUT_LEAF")" -ne 1218 ] ||
-    [ "$(sha256sum "$NATIVE_LINUX_FILE_INPUT_LEAF" | awk '{print $1}')" != '55ae4524c463f064aee0964d7f9b64438701fb4375a97c53d11f2f17902c12cb' ] ||
+    [ "$(sha256sum "$NATIVE_LINUX_FILE_INPUT_LEAF" | awk '{print $1}')" != 'cbd78340641fa02589d0d96b73d233a67f9404ab76c3df2b1346b2e31ca43701' ] ||
     [ "$(wc -c < "$NATIVE_LINUX_FILE_INPUT_LEAF")" -ne 996 ]; then
     echo 'A retained Windvale native file-input leaf has an unexpected exact identity.' >&2
     exit 1
@@ -1361,7 +1361,7 @@ NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Wind
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvnf"
 dotnet "$TOOL_DLL" compile "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE" -o "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_MODULE"
 NATIVE_HOSTED_TOOL_METADATA_ADMISSION_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_HASH" != 'bd87ae0427462e77c0a23ead7dd771a36756a05033839eb40d4ddf8b6a7955f3' ]; then
+if [ "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_HASH" != 'c0c61a601085c9422e5391023e047d7b0b3c88cb49bd52b24ccfd7c3eb7f1e35' ]; then
     echo "The hosted-tool metadata admission module has an unexpected digest: $NATIVE_HOSTED_TOOL_METADATA_ADMISSION_HASH" >&2
     exit 1
 fi
@@ -1375,7 +1375,7 @@ dotnet "$TOOL_DLL" \
     --module "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE" \
     -o "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_MODULE"
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_HASH" != 'e6addd08b83caa9345259b26210bd99f5d8cdfe5b4b302c64a7ecee5930b0c98' ]; then
+if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_HASH" != 'ebe76d7ccc4b27f7d7135647ef4c4b11ec5d83f281c7c91cc7ca68e389c0c1fa' ]; then
     echo "The hosted-tool metadata-construction core has an unexpected digest: $NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_HASH" >&2
     exit 1
 fi
@@ -1386,14 +1386,14 @@ dotnet "$TOOL_DLL" \
     --module "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_SOURCE" \
     -o "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE"
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_HASH" != '0b89246f7423f99c01fafdbc6054f7b38cca80c27fee036a272990e4e1a59379' ]; then
+if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_HASH" != '4adb36dd4ce821abdd29fe5766a0866847dc9052a0035dfbabd51d6a6b7c19ab' ]; then
     echo "The hosted-tool metadata-construction bridge has an unexpected digest: $NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_HASH" >&2
     exit 1
 fi
 cmp -s "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE" "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_RETAINED"
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_RETAINED" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_HASH" != 'b077111fd4aa796003f947d4e82facb6754ab83a53951ef8c514025983ca26f4' ] ||
-    [ "$(wc -c < "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_RETAINED")" -ne 212627 ]; then
+if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_HASH" != '34f8d5f2f65db0fd736d6bd3557b5b9f3dcb4449366cde10e486ec97e15fbbad' ] ||
+    [ "$(wc -c < "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_RETAINED")" -ne 215031 ]; then
     echo "The retained hosted-tool metadata-construction fragment has an unexpected identity: $NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_HASH" >&2
     exit 1
 fi
@@ -1422,10 +1422,10 @@ if [ "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH" != 'c26980323050ccf8af
     echo "The retained hosted-startup instantiation fragment has an unexpected identity: $NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH" >&2
     exit 1
 fi
-if [ "$(sha256sum "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED" | awk '{print $1}')" != '55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb' ] ||
-    [ "$(wc -c < "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED")" -ne 4334 ] ||
-    [ "$(sha256sum "$LINUX_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED" | awk '{print $1}')" != '0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff' ] ||
-    [ "$(wc -c < "$LINUX_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED")" -ne 2390 ]; then
+if [ "$(sha256sum "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED" | awk '{print $1}')" != 'dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161' ] ||
+    [ "$(wc -c < "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED")" -ne 4398 ] ||
+    [ "$(sha256sum "$LINUX_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED" | awk '{print $1}')" != '1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946' ] ||
+    [ "$(wc -c < "$LINUX_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED")" -ne 2454 ]; then
     echo 'A retained hosted-compiler startup WVO has an unexpected identity.' >&2
     exit 1
 fi
@@ -1470,40 +1470,40 @@ verify_hosted_container_artifact \
     "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Construction.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_PLAN_MODULE" \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvb" \
-    33667 55b89d7b5ca5e6118214bfadf7c8597a959348bf18b230954c623a7549e27509 \
+    35557 d285947f46b0e229891ee20205dd6908a375eea7dc50d460799d8c68e700113a \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvnf" \
-    537190 6a9ba7b7bf7cc058f3a3a8bde5e694891dc857ee66521a4c7496aa6bc0fd6634
+    559209 981dc6dc9889e2c95477ff473719c74d565de12285db10d4e74e0b9e54a667ba
 verify_hosted_container_artifact \
     'Windows byte constructor' \
     "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Windows.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE" \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvb" \
-    17409 a63a185af4b58226f8afd5416b9a7b96f6d25ca8151cfa42f5d9a3cb70daaee8 \
+    17554 9186f252e1fe1abde98d774a0d88760707123d5a27ecef48887defc9a017c7fe \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvnf" \
-    183406 7e04baf6105eab333b2898142f7dd2d4f636f445471620ae67cb5125e1cb2d02
+    183502 01d84e184db9a5970e685255e3f184a59d15a7412b0fc27d6aaba1c69b14dacf
 verify_hosted_container_artifact \
     'Linux byte constructor' \
     "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Linux.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_LINUX_MODULE" \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvb" \
-    12086 c4cdd9b71c677359de324201206ec215df2c5a92a2622912ba1a425074f29ca2 \
+    12203 54dad025b0f9d49dd0f39f5b12d43a1b0d35daf537712c2e8a2f1e7a75097e72 \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvnf" \
-    124463 3c8cbb6f1b06794fb25e7fda136cee1081b5bc13f15cf6f09f0b6c01a0d5556a
+    125151 1057b804c29b6ca5834d4de447a49b100e50b691d496a00ef9535d4bf06756c7
 verify_hosted_container_artifact \
     'segment constructor' \
     "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Segmentation.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_SEGMENTATION_MODULE" \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvb" \
-    21832 af869ba326f99eaa8d1a2c0898c14145a62c4f046da7bbcccf511d7918e79056 \
+    22398 83e6945d99a9a006e64572bf43b6affdf70626f9454145935d52193f8e692369 \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvnf" \
-    281719 ab96ecad8d37f9383626d24c2e97c7e6615dd3c92c2ed5f9dc816cf77f3dc7d7
+    285555 6e4351c1e8cc62b67721d4b61f5374f11fded3cf84b79ce63930c33a10e40d43
 dotnet "$TOOL_DLL" \
     compile "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_SOURCE" \
     --module "$BYTE_CONSTRUCTION_SOURCE" \
     --module "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE" \
     -o "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_MODULE"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_HASH" != '76f4958cffadc3a3d56b898755dadf7355a933a0a4a8e12b4fa10fe0ee7ddb84' ]; then
+if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_HASH" != 'abe7140c46af12c0f99056b8fbaf844f6ab5f51dd9e9f72bc215be86d977585f' ]; then
     echo "The hosted-tool runtime-header core has an unexpected digest: $NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_HASH" >&2
     exit 1
 fi
@@ -1514,14 +1514,14 @@ dotnet "$TOOL_DLL" \
     --module "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_SOURCE" \
     -o "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_HASH" != 'c09d1949ae9d016b4f7e33121122528d8959e29d058d721dc5f86bda1e25c3f1' ]; then
+if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_HASH" != 'd9add4e9608fa1b2b2771de4f29d91793920a8a4d8c6f191ba9a5b1c9bedf3fa' ]; then
     echo "The hosted-tool runtime-header bridge has an unexpected digest: $NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_HASH" >&2
     exit 1
 fi
 cmp -s "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE" "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_RETAINED"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_RETAINED" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_HASH" != '929f0a129b233e466dd0fb11152e80d0a82607d9b83a44b12b1a477834dd2237' ] ||
-    [ "$(wc -c < "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_RETAINED")" -ne 191208 ]; then
+if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_HASH" != 'b726e57277ef81990856159fca428a45c3513ca9218dec5f9fdebc2531637e31' ] ||
+    [ "$(wc -c < "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_RETAINED")" -ne 194222 ]; then
     echo "The retained hosted-tool runtime-header fragment has an unexpected identity: $NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_HASH" >&2
     exit 1
 fi
@@ -1822,7 +1822,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_GRAPH_MODULE"
 SOURCE_GRAPH_HASH=$(sha256sum "$SOURCE_GRAPH_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_HASH" != '7fe9276273e48432f6206bde0d8a533dbc35ddf055b2f68b8a03810f07b4fb14' ]; then
+if [ "$SOURCE_GRAPH_HASH" != '9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b' ]; then
     echo "The Windvale source-graph core has an unexpected digest: $SOURCE_GRAPH_HASH" >&2
     exit 1
 fi
@@ -1843,7 +1843,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_GRAPH_DEMO_MODULE"
 SOURCE_GRAPH_DEMO_HASH=$(sha256sum "$SOURCE_GRAPH_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_DEMO_HASH" != 'fc046e27037f0b2f18129b270b21d8d2c5c3c532601c5a4bfdf211881b0c2acb' ]; then
+if [ "$SOURCE_GRAPH_DEMO_HASH" != 'a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c' ]; then
     echo "The source-graph demo has an unexpected digest: $SOURCE_GRAPH_DEMO_HASH" >&2
     exit 1
 fi
@@ -1861,7 +1861,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_GRAPH_TOOL_MODULE"
 SOURCE_GRAPH_TOOL_HASH=$(sha256sum "$SOURCE_GRAPH_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_TOOL_HASH" != '9d49a4e321429ea203bd9a00ab2f6a9196c844c7cdf77a6b707ad6e0dc48b0fd' ]; then
+if [ "$SOURCE_GRAPH_TOOL_HASH" != '0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10' ]; then
     echo "The source-graph tool has an unexpected digest: $SOURCE_GRAPH_TOOL_HASH" >&2
     exit 1
 fi
@@ -1895,7 +1895,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SYMBOLS_MODULE"
 SOURCE_SYMBOLS_HASH=$(sha256sum "$SOURCE_SYMBOLS_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_HASH" != '9d82d52310cd542a6a2854d10f990080f7a56fd98567ef4ec4042ce6fd6e7a9b' ]; then
+if [ "$SOURCE_SYMBOLS_HASH" != 'a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7' ]; then
     echo "The Windvale source-symbol core has an unexpected digest: $SOURCE_SYMBOLS_HASH" >&2
     exit 1
 fi
@@ -1918,7 +1918,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SYMBOLS_DEMO_MODULE"
 SOURCE_SYMBOLS_DEMO_HASH=$(sha256sum "$SOURCE_SYMBOLS_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_DEMO_HASH" != '43f6aef685cbc265105abf36e7b8cae4de9974824fadfb8e5b83270c96d1ad1e' ]; then
+if [ "$SOURCE_SYMBOLS_DEMO_HASH" != '4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457' ]; then
     echo "The source-symbol demo has an unexpected digest: $SOURCE_SYMBOLS_DEMO_HASH" >&2
     exit 1
 fi
@@ -1937,7 +1937,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_SYMBOLS_TOOL_MODULE"
 SOURCE_SYMBOLS_TOOL_HASH=$(sha256sum "$SOURCE_SYMBOLS_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_TOOL_HASH" != '0555ca0b6d86a67cf94e8ee150d0baa92252f6a8ae7a06d7cbf2f7649f1ae43c' ]; then
+if [ "$SOURCE_SYMBOLS_TOOL_HASH" != '58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66' ]; then
     echo "The source-symbol tool has an unexpected digest: $SOURCE_SYMBOLS_TOOL_HASH" >&2
     exit 1
 fi
@@ -1973,7 +1973,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BINDINGS_MODULE"
 SOURCE_BINDINGS_HASH=$(sha256sum "$SOURCE_BINDINGS_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_HASH" != '64b9fb7d92df4b40fc315d1f13f80118856a05ac2fb6b1d27e58dbb2d3bd9999' ]; then
+if [ "$SOURCE_BINDINGS_HASH" != 'a772a75fe625f47e165ca190e76d8cd59fa0b591a0270a5817e02e0fac62542c' ]; then
     echo "The Windvale source-binding core has an unexpected digest: $SOURCE_BINDINGS_HASH" >&2
     exit 1
 fi
@@ -1997,7 +1997,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BINDINGS_DEMO_MODULE"
 SOURCE_BINDINGS_DEMO_HASH=$(sha256sum "$SOURCE_BINDINGS_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_DEMO_HASH" != 'f6b9c184bfe8668a5c597dbe76d7709120a541789661df0156ce8f1785272e0a' ]; then
+if [ "$SOURCE_BINDINGS_DEMO_HASH" != '563caeb4a76fb34d6c2b2b8340260cc1da518c4cbaad9e5f355201f6bd1fa933' ]; then
     echo "The source-binding demo has an unexpected digest: $SOURCE_BINDINGS_DEMO_HASH" >&2
     exit 1
 fi
@@ -2017,7 +2017,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_BINDINGS_TOOL_MODULE"
 SOURCE_BINDINGS_TOOL_HASH=$(sha256sum "$SOURCE_BINDINGS_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_TOOL_HASH" != '7b75e3cd72eb7a2521d3b382effbdf2435879ceca2ed24561683ac63b956dad8' ]; then
+if [ "$SOURCE_BINDINGS_TOOL_HASH" != '17e877b3c59d2f9a99d26be4c478f10ce8879e6bce925b65894d158fd4a6e0a9' ]; then
     echo "The source-binding tool has an unexpected digest: $SOURCE_BINDINGS_TOOL_HASH" >&2
     exit 1
 fi
@@ -2055,7 +2055,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WIR_MODULE"
 SOURCE_WIR_HASH=$(sha256sum "$SOURCE_WIR_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_HASH" != '3345bdfb062cf467f8b658414a672157b518af8c5a4aa994b0eb0e32e15837a4' ]; then
+if [ "$SOURCE_WIR_HASH" != 'c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb' ]; then
     echo "The Windvale typed-WVIR core has an unexpected digest: $SOURCE_WIR_HASH" >&2
     exit 1
 fi
@@ -2079,7 +2079,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WIR_DEMO_MODULE"
 SOURCE_WIR_DEMO_HASH=$(sha256sum "$SOURCE_WIR_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_DEMO_HASH" != 'd0b3f7b8fdbf1a7c56ebd8a2f024988933019f6e8b75202d5e97c5a96e567983' ]; then
+if [ "$SOURCE_WIR_DEMO_HASH" != '7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f' ]; then
     echo "The typed-WVIR demo has an unexpected digest: $SOURCE_WIR_DEMO_HASH" >&2
     exit 1
 fi
@@ -2099,7 +2099,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WIR_TOOL_MODULE"
 SOURCE_WIR_TOOL_HASH=$(sha256sum "$SOURCE_WIR_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_TOOL_HASH" != '302409f6f1e8c0a1c3061dda2400083e06cf6781a28922f0138a952f2edfb574' ]; then
+if [ "$SOURCE_WIR_TOOL_HASH" != '7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5' ]; then
     echo "The typed-WVIR tool has an unexpected digest: $SOURCE_WIR_TOOL_HASH" >&2
     exit 1
 fi
@@ -2149,7 +2149,7 @@ dotnet "$TOOL_DLL" \
     --module "$DECIMAL_PARSING_SOURCE" \
     -o "$SOURCE_WVB_MODULE"
 SOURCE_WVB_HASH=$(sha256sum "$SOURCE_WVB_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_HASH" != '20ab85982a821dee87c8674c16c520a10646b604a5d3f0e38442589e521bf1c0' ]; then
+if [ "$SOURCE_WVB_HASH" != 'c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b' ]; then
     echo "The Windvale WVB backend core has an unexpected digest: $SOURCE_WVB_HASH" >&2
     exit 1
 fi
@@ -2159,7 +2159,7 @@ printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉcompileˉsourceˉwvb
 printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (72)' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Demo.wv" "$SOURCE_WVB_DEMO_MODULE"
 SOURCE_WVB_DEMO_HASH=$(sha256sum "$SOURCE_WVB_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_DEMO_HASH" != 'c8f96a8d973c1d03d5bb115612ddc765a2a7e3b617ec61af641f540fb7b2ce04' ]; then
+if [ "$SOURCE_WVB_DEMO_HASH" != 'ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9' ]; then
     echo "The Windvale WVB backend demo has an unexpected digest: $SOURCE_WVB_DEMO_HASH" >&2
     exit 1
 fi
@@ -2167,7 +2167,7 @@ SOURCE_WVB_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_DEMO_MODULE" --max-
 printf '%s\n' "$SOURCE_WVB_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Tool.wv" "$SOURCE_WVB_TOOL_MODULE"
 SOURCE_WVB_TOOL_HASH=$(sha256sum "$SOURCE_WVB_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_TOOL_HASH" != 'fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556' ]; then
+if [ "$SOURCE_WVB_TOOL_HASH" != '18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754' ]; then
     echo "The Windvale WVB backend tool has an unexpected digest: $SOURCE_WVB_TOOL_HASH" >&2
     exit 1
 fi

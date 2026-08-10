@@ -83,11 +83,11 @@ export fn Nativeˉhostedˉcontainerˉplanˉisˉvalid(Plan: bytes) -> bool {
     }
     var Importˉbytes: u32 = 0u32;
     var Relocationˉbytes: u32 = 0u32;
-    var Targetˉbytes: u32 = 124u32;
+    var Targetˉbytes: u32 = 128u32;
     if Target == 1u32 {
         Importˉbytes = 4096u32;
         Relocationˉbytes = 12u32;
-        Targetˉbytes = 232u32;
+        Targetˉbytes = 236u32;
     }
     if Read(Plan, 56u32) != Value.Importˉfileˉoffset ||
         Read(Plan, 60u32) != Importˉbytes ||

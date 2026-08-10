@@ -153,6 +153,31 @@ internal static partial class Program
                 Windowsˉbundle,
                 0,
                 Profile);
+            var Windowsˉlayout = Hostedˉcompilerˉruntimeˉdata.Plan(
+                Consoleˉapplicationˉtarget.Windowsˉx64,
+                Profile);
+            var Expectedˉtextˉarenaˉbytes =
+                Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                    ? Hostedˉcompilerˉapplicationˉmetadata.BUILD_DRIVER_TEXT_ARENA_BYTES
+                    : Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES;
+            Equal(Expectedˉtextˉarenaˉbytes, Windowsˉlayout.Textˉarenaˉbytes);
+            Equal(
+                Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                    ? Hostedˉcompilerˉruntimeˉdata.BUILD_DRIVER_NAME_ARENA_STRIDE_BYTES
+                    : Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES,
+                Windowsˉlayout.Nameˉarenaˉstrideˉbytes);
+            Equal(
+                Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                    ? 510_214_144u
+                    : 476_135_424u,
+                Windowsˉlayout.Virtualˉbytes);
+            if (Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver)
+            {
+                Equal(237_051_904u, Windowsˉlayout.Nameˉarenaˉoffset);
+                Equal(237_576_192u, Windowsˉlayout.Dataˉarenaˉoffset);
+                Equal(506_011_648u, Windowsˉlayout.Fileˉinputˉscratchˉoffset);
+                Equal(508_112_896u, Windowsˉlayout.Fileˉoutputˉscratchˉoffset);
+            }
             var Windowsˉrequest = Nativeˉhostedˉcontainerˉconstructor.Buildˉrequest(
                 Consoleˉapplicationˉtarget.Windowsˉx64,
                 Profile,
@@ -196,6 +221,22 @@ internal static partial class Program
                 Linuxˉbundle,
                 0,
                 Profile);
+            var Linuxˉlayout = Hostedˉcompilerˉruntimeˉdata.Plan(
+                Consoleˉapplicationˉtarget.Linuxˉx64,
+                Profile);
+            Equal(Expectedˉtextˉarenaˉbytes, Linuxˉlayout.Textˉarenaˉbytes);
+            Equal(
+                Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                    ? 508_116_992u
+                    : 474_038_272u,
+                Linuxˉlayout.Virtualˉbytes);
+            if (Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver)
+            {
+                Equal(237_051_904u, Linuxˉlayout.Nameˉarenaˉoffset);
+                Equal(237_576_192u, Linuxˉlayout.Dataˉarenaˉoffset);
+                Equal(506_011_648u, Linuxˉlayout.Fileˉinputˉscratchˉoffset);
+                Equal(507_064_320u, Linuxˉlayout.Fileˉoutputˉscratchˉoffset);
+            }
             var Linuxˉrequest = Nativeˉhostedˉcontainerˉconstructor.Buildˉrequest(
                 Consoleˉapplicationˉtarget.Linuxˉx64,
                 Profile,
@@ -283,6 +324,10 @@ internal static partial class Program
         Expectˉfailure(Replaceˉu32(Request, 28, 1), 4, 12);
         Expectˉfailure(Replaceˉu32(Request, 24, 1), 4, 12);
         Expectˉfailure(Mutateˉbyte(Request, 32 + 480), 5, 32 + 480);
+        Expectˉfailure(Replaceˉu32(Request, 32 + 56, 0), 5, 32 + 56);
+        Expectˉfailure(Replaceˉu32(Request, 32 + 304, 0), 5, 32 + 304);
+        Expectˉfailure(Replaceˉu32(Request, 32 + 336, 0), 5, 32 + 336);
+        Expectˉfailure(Replaceˉu32(Request, 32 + 424, 0), 5, 32 + 424);
 
         void Expectˉrelayˉfailure(ImmutableArray<byte> plan)
         {

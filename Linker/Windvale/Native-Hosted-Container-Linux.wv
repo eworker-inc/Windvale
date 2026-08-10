@@ -12,7 +12,7 @@ fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
 
 fn Validˉplan(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
-    if Total != 252u32 || Read(Input, 0u32) != 1145263703u32 ||
+    if Total != 256u32 || Read(Input, 0u32) != 1145263703u32 ||
         Read(Input, 4u32) != 1u32 || Read(Input, 8u32) != Total ||
         Read(Input, 12u32) != 0u32 || Read(Input, 16u32) != 4128u32 ||
         Read(Input, 20u32) != 2u32 || Read(Input, 24u32) < 1u32 ||
@@ -23,10 +23,11 @@ fn Validˉplan(Input: bytes) -> bool {
     if Bundleˉbytes == 0u32 || Bundleˉbytes > 67108864u32 { return false; }
     let Textˉbytes: u32 = 4096u32 + Bundleˉbytes;
     let Dataˉfile: u32 = Alignˉup(4096u32 + Textˉbytes, 4096u32);
-    let Dataˉvirtual: u32 = 474038272u32;
+    var Dataˉvirtual: u32 = 474038272u32;
+    if Read(Input, 24u32) == 2u32 { Dataˉvirtual = 508116992u32; }
     if Read(Input, 28u32) != Dataˉfile + 4096u32 ||
         Read(Input, 32u32) != 0u32 || Read(Input, 36u32) != 4096u32 ||
-        Read(Input, 40u32) != 4096u32 || Read(Input, 44u32) != 765u32 {
+        Read(Input, 40u32) != 4096u32 || Read(Input, 44u32) != 809u32 {
         return false;
     }
     if Read(Input, 48u32) != 8192u32 || Read(Input, 56u32) != 0u32 ||
@@ -40,7 +41,7 @@ fn Validˉplan(Input: bytes) -> bool {
         return false;
     }
     if Read(Input, 92u32) != Dataˉfile + Dataˉvirtual ||
-        Read(Input, 96u32) != 128u32 || Read(Input, 100u32) != 124u32 ||
+        Read(Input, 96u32) != 128u32 || Read(Input, 100u32) != 128u32 ||
         Read(Input, 104u32) != 0u32 || Read(Input, 108u32) != 0u32 {
         return false;
     }

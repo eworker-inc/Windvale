@@ -124,9 +124,35 @@ internal static partial class Program
                     Inputs,
                     Request.Length,
                     Executed);
+                var Expectedˉtextˉarenaˉbytes =
+                    Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                        ? Hostedˉcompilerˉapplicationˉmetadata.BUILD_DRIVER_TEXT_ARENA_BYTES
+                        : Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES;
+                var Expectedˉnameˉstrideˉbytes =
+                    Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                        ? Hostedˉcompilerˉruntimeˉdata.BUILD_DRIVER_NAME_ARENA_STRIDE_BYTES
+                        : Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES;
                 Sequenceˉequal(
-                    Hostedˉcompilerˉruntimeˉheaderˉstage0ˉoracle.Build(Target, Metadata),
+                    Hostedˉcompilerˉruntimeˉheaderˉstage0ˉoracle.Build(
+                        Target,
+                        Metadata,
+                        Profile),
                     Header);
+                Equal(
+                    Expectedˉtextˉarenaˉbytes,
+                    BinaryPrimitives.ReadUInt32LittleEndian(
+                        Metadata.AsSpan()[80..]));
+                Equal(
+                    Expectedˉtextˉarenaˉbytes,
+                    BinaryPrimitives.ReadUInt32LittleEndian(
+                        Header.AsSpan()[
+                            Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET..]));
+                Equal(
+                    Expectedˉnameˉstrideˉbytes,
+                    BinaryPrimitives.ReadUInt32LittleEndian(
+                        Header.AsSpan()[
+                            checked((int)Hostedˉcompilerˉruntimeˉdata.FILE_INPUT_TABLE_OFFSET +
+                                Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_OFFSET)..]));
                 Sequenceˉequal(
                     Header,
                     Hostedˉcompilerˉruntimeˉdata.Build(

@@ -109,6 +109,13 @@ internal static partial class Program
                     Inputs,
                     Request.Length,
                     Executed);
+                var Expectedˉtextˉarenaˉbytes =
+                    Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                        ? Hostedˉcompilerˉapplicationˉmetadata.BUILD_DRIVER_TEXT_ARENA_BYTES
+                        : Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES;
+                Equal(
+                    Expectedˉtextˉarenaˉbytes,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Metadata.AsSpan()[80..]));
                 Sequenceˉequal(
                     Hostedˉcompilerˉapplicationˉmetadata.Buildˉstage0(
                         Target,

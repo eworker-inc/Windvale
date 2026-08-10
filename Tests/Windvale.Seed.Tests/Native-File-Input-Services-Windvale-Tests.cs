@@ -1,6 +1,7 @@
 using Windvale.Bytecode;
 using Windvale.Compiler;
 using Windvale.Compiler.Native;
+using Windvale.Linker;
 using Windvale.Runtime;
 using Windvale.Runtime.Native;
 
@@ -13,10 +14,10 @@ internal static partial class Program
         "e2bfd4521b8f22529f3747eef196bdf7fa7aa0e97644db23ed45939aa10a1a7a";
     private const int NATIVE_WINDOWS_FILE_INPUT_CORE_SIZE = 32_085;
     private const string NATIVE_WINDOWS_FILE_INPUT_CORE_SHA256 =
-        "795e45f1efb6c8a864962fc01a6e8374d758fa4e098eda8900b6639a02b8cf2e";
+        "6155c4ebb8f4ea76a5d1f22c1bb788aec51e731ceb4a1c5a4ceb7551ba8f409a";
     private const int NATIVE_LINUX_FILE_INPUT_CORE_SIZE = 26_718;
     private const string NATIVE_LINUX_FILE_INPUT_CORE_SHA256 =
-        "49b7990dd51ae3108f387331d907f4127c18726d95a453a8f768459016ad497e";
+        "04533e8ecade1f29e0b706c75ec949f5b4c300074cfd65feacb86f5107dcaeba";
 
     private static void Windvaleˉnativeˉfileˉinputˉservicesˉrun()
     {
@@ -162,6 +163,138 @@ internal static partial class Program
             Sequenceˉequal(
                 Bridgeˉresult.Moduleˉbytes,
                 File.ReadAllBytes(Nativeˉpath));
+        }
+        finally
+        {
+            Directory.Delete(Directoryˉpath, recursive: true);
+        }
+
+        Nativeˉfileˉinputˉservicesˉhonorˉdeclaredˉnameˉstride();
+    }
+
+    private static void Nativeˉfileˉinputˉservicesˉhonorˉdeclaredˉnameˉstride()
+    {
+        // With 64 8192-byte name slots, a stale 1 MiB second-slot offset lands
+        // exactly here in snapshot zero's data and corrupts its retained tail.
+        const int Collisionˉoffset = 512 * 1024;
+        const uint Firstˉtail = 67_305_985u;
+        const string Source = """
+            module Windvaleˉcompilerˉbuildˉdriver profile hosted;
+
+            capability console.write_line;
+            capability diagnostic.write_line;
+            capability file.read_bytes;
+            capability file.write_bytes;
+            capability process.argument;
+            capability process.argument_count;
+
+            enum Snapshotˉstate { Valid = 0; }
+
+            data Empty: bytes = [];
+
+            fn Failure(Code: u32) -> i32 {
+                diagnostic.write_line(
+                    Textˉconcat(Enumˉname(Snapshotˉstate.Valid), U32ˉformat(Code))
+                );
+                return 1;
+            }
+
+            export fn Main() -> i32 {
+                if process.argument_count() != 3u32 { return Failure(1u32); }
+                let First: bytes = file.read_bytes(process.argument(0u32));
+                let Second: bytes = file.read_bytes(process.argument(1u32));
+                if Bytesˉlength(First) != 524292u32 { return Failure(2u32); }
+                if Bytesˉreadˉu32ˉlittle(First, 524288u32) != 67305985u32 {
+                    return Failure(3u32);
+                }
+                if !Textˉutf8ˉisˉvalid(Second) { return Failure(4u32); }
+                file.write_bytes(process.argument(2u32), Empty);
+                console.write_line(
+                    Textˉconcat(
+                        Enumˉname(Snapshotˉstate.Valid),
+                        Textˉconcat(":", U32ˉformat(Bytesˉlength(Second)))
+                    )
+                );
+                return 0;
+            }
+            """;
+
+        var Module = Moduleˉcodec.Readˉandˉverify(Compileˉsuccess(Source));
+        var Fragment = X64ˉnativeˉbackend.Compile(Module).Fragment;
+        Sequenceˉequal(
+            [
+                Nativeˉservice.Consoleˉwriteˉline,
+                Nativeˉservice.Processˉargumentˉcount,
+                Nativeˉservice.Processˉargument,
+                Nativeˉservice.Fileˉreadˉbytes,
+                Nativeˉservice.Textˉutf8ˉisˉvalid,
+                Nativeˉservice.Diagnosticˉwriteˉline,
+                Nativeˉservice.Enumˉname,
+                Nativeˉservice.Textˉconcat,
+                Nativeˉservice.U32ˉformat,
+                Nativeˉservice.Fileˉwriteˉbytes,
+            ],
+            Fragment.Requiredˉservices);
+
+        var Windowsˉbundle = X64ˉnativeˉserviceˉbundle.Build(
+            Fragment,
+            Nativeˉserviceˉplatform.Windows);
+        var Linuxˉbundle = X64ˉnativeˉserviceˉbundle.Build(
+            Fragment,
+            Nativeˉserviceˉplatform.Linux);
+        var Windows = Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉbuildˉdriver(
+            Fragment,
+            Module.Module.Capabilities,
+            Module.Module.Name);
+        var Linux = Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉbuildˉdriver(
+            Fragment,
+            Module.Module.Capabilities,
+            Module.Module.Name);
+        True(Windows.Success, string.Join(" | ", Windows.Diagnostics));
+        True(Linux.Success, string.Join(" | ", Linux.Diagnostics));
+        var Verifiedˉwindows = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
+            Windows.Imageˉbytes.AsSpan(),
+            Windowsˉbundle,
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
+        var Verifiedˉlinux = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
+            Linux.Imageˉbytes.AsSpan(),
+            Linuxˉbundle,
+            Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
+        Equal(8_192u, Verifiedˉwindows.Runtime.Layout.Nameˉarenaˉstrideˉbytes);
+        Equal(8_192u, Verifiedˉlinux.Runtime.Layout.Nameˉarenaˉstrideˉbytes);
+
+        var Directoryˉpath = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-native-file-input-stride-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Directoryˉpath);
+        try
+        {
+            var Firstˉpath = Path.Combine(Directoryˉpath, "first.bin");
+            var Secondˉpath = Path.Combine(Directoryˉpath, "second.bin");
+            var Outputˉpath = Path.Combine(Directoryˉpath, "output.bin");
+            var Firstˉbytes = new byte[Collisionˉoffset + sizeof(uint)];
+            Firstˉbytes[Collisionˉoffset] = 1;
+            Firstˉbytes[Collisionˉoffset + 1] = 2;
+            Firstˉbytes[Collisionˉoffset + 2] = 3;
+            Firstˉbytes[Collisionˉoffset + 3] = 4;
+            Equal(
+                Firstˉtail,
+                System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(
+                    Firstˉbytes.AsSpan(Collisionˉoffset)));
+            File.WriteAllBytes(Firstˉpath, Firstˉbytes);
+            File.WriteAllBytes(Secondˉpath, "second"u8.ToArray());
+
+            var Exitˉcode = OperatingSystem.IsWindows()
+                ? Executeˉwindowsˉapplication(
+                    Windows.Imageˉbytes,
+                    "Valid:6\n",
+                    [Firstˉpath, Secondˉpath, Outputˉpath])
+                : Executeˉlinuxˉapplication(
+                    Linux.Imageˉbytes,
+                    "Valid:6\n",
+                    [Firstˉpath, Secondˉpath, Outputˉpath]);
+            Equal(0, Exitˉcode);
+            Equal(0L, new FileInfo(Outputˉpath).Length);
         }
         finally
         {

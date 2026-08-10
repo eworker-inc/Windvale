@@ -8,12 +8,12 @@ public static class X64ˉnativeˉfileˉinputˉservice
     public const int WINDOWS_CANONICAL_SIZE = 1218;
     public const int LINUX_CANONICAL_SIZE = 996;
     public const string WINDOWS_CANONICAL_SHA256 =
-        "3d2fffc028083cdc4cfd39e553dea603e9a1ae661bb5df3f14ca438c4d3e3cf8";
+        "3e2fd284d4991d0f713301514d3fbf6af8ec84af7bd7289698c08a41d434c52d";
     public const string LINUX_CANONICAL_SHA256 =
-        "55ae4524c463f064aee0964d7f9b64438701fb4375a97c53d11f2f17902c12cb";
+        "cbd78340641fa02589d0d96b73d233a67f9404ab76c3df2b1346b2e31ca43701";
     public const int CONSUMER_CANONICAL_SIZE = 51_341;
     public const string CONSUMER_CANONICAL_SHA256 =
-        "81cb5ed76e0e885055b13ae23bfbca118c99c7ea905d3ae75a5bc87ccb35269b";
+        "09f73787a909ae35ebc1aefb05bd88e4282ff8db7152d196f83b2798ea7c2234";
 
     private static readonly Lazy<ImmutableArray<byte>> WINDOWS = new(
         () => Readˉartifact(

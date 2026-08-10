@@ -50,13 +50,13 @@ fn Reject() -> i32 {
 }
 
 fn Planˉisˉvalid(Plan: bytes, Target: u32) -> bool {
-    var Expectedˉtotal: u32 = 252u32;
-    var Expectedˉstartup: u32 = 765u32;
-    var Expectedˉtargets: u32 = 124u32;
+    var Expectedˉtotal: u32 = 256u32;
+    var Expectedˉstartup: u32 = 809u32;
+    var Expectedˉtargets: u32 = 128u32;
     if Target == 1u32 {
-        Expectedˉtotal = 360u32;
-        Expectedˉstartup = 1510u32;
-        Expectedˉtargets = 232u32;
+        Expectedˉtotal = 364u32;
+        Expectedˉstartup = 1554u32;
+        Expectedˉtargets = 236u32;
     }
     if Target != 1u32 {
         if Target != 2u32 { return false; }
@@ -82,13 +82,13 @@ fn Planˉisˉvalid(Plan: bytes, Target: u32) -> bool {
 }
 
 fn Objectˉisˉexact(Object: bytes, Target: u32) -> bool {
-    var Expectedˉbytes: u32 = 2390u32;
+    var Expectedˉbytes: u32 = 2454u32;
     var Expectedˉdigest: text =
-        "0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff";
+        "1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946";
     if Target == 1u32 {
-        Expectedˉbytes = 4334u32;
+        Expectedˉbytes = 4398u32;
         Expectedˉdigest =
-            "55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb";
+            "dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161";
     }
     if Bytesˉlength(Object) != Expectedˉbytes { return false; }
     return Bytesˉareˉequal(

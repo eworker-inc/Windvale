@@ -42,7 +42,7 @@ addresses.
 
 ## Planner response: `WVCD 1`
 
-The response is a 128-byte header followed by 58 Windows or 31 Linux absolute
+The response is a 128-byte header followed by 59 Windows or 32 Linux absolute
 startup targets in canonical WVO relocation order.
 
 | Offset | Bytes | Field |
@@ -72,7 +72,7 @@ startup targets in canonical WVO relocation order.
 | 88 | 4 | runtime address |
 | 92 | 4 | complete virtual image bytes |
 | 96 | 4 | target-table payload offset, `128` |
-| 100 | 4 | target-table bytes, `232` Windows or `124` Linux |
+| 100 | 4 | target-table bytes, `236` Windows or `128` Linux |
 | 104 | 4 | relocation address, zero on Linux |
 | 108 | 4 | import address, zero on Linux |
 | 112 | 4 | text virtual bytes |
@@ -85,13 +85,13 @@ version, header, metadata, layout, and target-table rejection.
 
 ## Platform byte constructors
 
-The Windows constructor accepts the exact 360-byte successful Windows plan and
+The Windows constructor accepts the exact 364-byte successful Windows plan and
 returns `WVWB 1`: a 32-byte response header followed by the 512-byte PE header,
 4,096-byte import page, and 12-byte relocation block. It owns every PE/COFF,
 optional-header, data-directory, section-header, import descriptor, lookup/IAT,
 name, alignment, stack, and relocation byte.
 
-The Linux constructor accepts the exact 252-byte successful Linux plan and
+The Linux constructor accepts the exact 256-byte successful Linux plan and
 returns `WVLB 1`: a 32-byte response header followed by the exact 4,096-byte ELF
 header page. It owns ELF identification, five program headers, the Windvale
 format note, stack declaration, and all padding.
@@ -108,14 +108,14 @@ Windows/Linux process. It adds no second PE/ELF construction implementation.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Hosted-container planner WVB | 33,667 | `55b89d7b5ca5e6118214bfadf7c8597a959348bf18b230954c623a7549e27509` |
-| Hosted-container planner WVNF | 537,190 | `6a9ba7b7bf7cc058f3a3a8bde5e694891dc857ee66521a4c7496aa6bc0fd6634` |
-| Windows container-byte WVB | 17,409 | `a63a185af4b58226f8afd5416b9a7b96f6d25ca8151cfa42f5d9a3cb70daaee8` |
-| Windows container-byte WVNF | 183,406 | `7e04baf6105eab333b2898142f7dd2d4f636f445471620ae67cb5125e1cb2d02` |
-| Linux container-byte WVB | 12,086 | `c4cdd9b71c677359de324201206ec215df2c5a92a2622912ba1a425074f29ca2` |
-| Linux container-byte WVNF | 124,463 | `3c8cbb6f1b06794fb25e7fda136cee1081b5bc13f15cf6f09f0b6c01a0d5556a` |
-| Hosted-container segmentation WVB | 21,832 | `af869ba326f99eaa8d1a2c0898c14145a62c4f046da7bbcccf511d7918e79056` |
-| Hosted-container segmentation WVNF | 281,719 | `ab96ecad8d37f9383626d24c2e97c7e6615dd3c92c2ed5f9dc816cf77f3dc7d7` |
+| Hosted-container planner WVB | 35,557 | `d285947f46b0e229891ee20205dd6908a375eea7dc50d460799d8c68e700113a` |
+| Hosted-container planner WVNF | 559,209 | `981dc6dc9889e2c95477ff473719c74d565de12285db10d4e74e0b9e54a667ba` |
+| Windows container-byte WVB | 17,554 | `9186f252e1fe1abde98d774a0d88760707123d5a27ecef48887defc9a017c7fe` |
+| Windows container-byte WVNF | 183,502 | `01d84e184db9a5970e685255e3f184a59d15a7412b0fc27d6aaba1c69b14dacf` |
+| Linux container-byte WVB | 12,203 | `54dad025b0f9d49dd0f39f5b12d43a1b0d35daf537712c2e8a2f1e7a75097e72` |
+| Linux container-byte WVNF | 125,151 | `1057b804c29b6ca5834d4de447a49b100e50b691d496a00ef9535d4bf06756c7` |
+| Hosted-container segmentation WVB | 22,398 | `83e6945d99a9a006e64572bf43b6affdf70626f9454145935d52193f8e692369` |
+| Hosted-container segmentation WVNF | 285,555 | `6e4351c1e8cc62b67721d4b61f5374f11fded3cf84b79ce63930c33a10e40d43` |
 
 All four WVB modules reconstruct byte-for-byte through the native project
 front door. Separate fragments are required because the current bootstrap

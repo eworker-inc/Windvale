@@ -180,8 +180,9 @@ fn Emitˉpublish(
     Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
         Next, 139u8, 76u8, 36u8, 48u8
     );
+    // Multiply the snapshot index by the admitted table stride.
     Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉfour(
-        Next, 72u8, 193u8, 225u8, 20u8
+        Next, 15u8, 175u8, 72u8, 40u8
     );
     Next = Serviceˉcode.Nativeˉx64ˉserviceˉemitˉthree(
         Next, 72u8, 1u8, 207u8

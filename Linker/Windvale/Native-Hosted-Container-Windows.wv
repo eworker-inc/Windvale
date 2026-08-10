@@ -12,7 +12,7 @@ fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
 
 fn Validˉplan(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
-    if Total != 360u32 || Read(Input, 0u32) != 1145263703u32 ||
+    if Total != 364u32 || Read(Input, 0u32) != 1145263703u32 ||
         Read(Input, 4u32) != 1u32 || Read(Input, 8u32) != Total ||
         Read(Input, 12u32) != 0u32 || Read(Input, 16u32) != 4128u32 ||
         Read(Input, 20u32) != 1u32 || Read(Input, 24u32) < 1u32 ||
@@ -25,7 +25,10 @@ fn Validˉplan(Input: bytes) -> bool {
     let Textˉfile: u32 = Alignˉup(Textˉvirtual, 512u32);
     let Dataˉfile: u32 = 512u32 + Textˉfile;
     let Dataˉaddress: u32 = Alignˉup(4096u32 + Textˉvirtual, 4096u32);
-    let Dataˉvirtual: u32 = 4096u32 + 476135424u32;
+    var Dataˉvirtual: u32 = 4096u32 + 476135424u32;
+    if Read(Input, 24u32) == 2u32 {
+        Dataˉvirtual = 4096u32 + 510214144u32;
+    }
     let Runtimeˉfile: u32 = Dataˉfile + 4096u32;
     let Runtimeˉaddress: u32 = Dataˉaddress + 4096u32;
     let Relocationˉfile: u32 = Dataˉfile + 8192u32;
@@ -34,7 +37,7 @@ fn Validˉplan(Input: bytes) -> bool {
     );
     if Read(Input, 28u32) != Relocationˉfile + 512u32 ||
         Read(Input, 32u32) != 0u32 || Read(Input, 36u32) != 512u32 ||
-        Read(Input, 40u32) != 512u32 || Read(Input, 44u32) != 1510u32 {
+        Read(Input, 40u32) != 512u32 || Read(Input, 44u32) != 1554u32 {
         return false;
     }
     if Read(Input, 48u32) != 4608u32 || Read(Input, 56u32) != Dataˉfile ||
@@ -48,7 +51,7 @@ fn Validˉplan(Input: bytes) -> bool {
         return false;
     }
     if Read(Input, 92u32) != Alignˉup(Relocationˉaddress + 12u32, 4096u32) ||
-        Read(Input, 96u32) != 128u32 || Read(Input, 100u32) != 232u32 ||
+        Read(Input, 96u32) != 128u32 || Read(Input, 100u32) != 236u32 ||
         Read(Input, 104u32) != Relocationˉaddress ||
         Read(Input, 108u32) != Dataˉaddress {
         return false;

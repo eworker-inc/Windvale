@@ -49,15 +49,15 @@ The current fail-fast ordering is: complete WVSS validation; repeated or missing
 
 ## Bounds and ownership
 
-The graph contains one through 64 modules because WVSS owns that bound. Traversal state is exactly one byte per module and uses `Foundationˉbytesˉrepeat` plus checked single-byte replacement. It contains no native path, timestamp, source text copy, token, declaration object, or host handle.
+The graph contains one through 64 modules because WVSS owns that bound. Traversal state is exactly one byte per module and uses `Foundationˉbytesˉrepeat` plus checked single-byte replacement. After target existence and reachability are admitted, one row-major byte adjacency directory of at most 4,096 bytes owns valid-path incoming-edge queries. It contains no native path, timestamp, source text copy, token, declaration object, or host handle.
 
-Headers and leading import declarations are rescanned from accepted immutable sources. No edge table is retained. The graph phase does not increase the 4 MiB WVSS ceiling or the parser's declaration limits.
+Headers and leading import declarations are scanned once after target existence and reachability are admitted to construct the adjacency directory. They are rescanned only if the preserved cycle-diagnostic walk needs the exact closing edge and source location. The adjacency directory is an internal immutable preparation value, not serialized output. The graph phase does not increase the 4 MiB WVSS ceiling or the parser's declaration limits.
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Graph-Core.wvb`: 276,854 bytes, SHA-256 `7fe9276273e48432f6206bde0d8a533dbc35ddf055b2f68b8a03810f07b4fb14`.
-- `Source-Graph-Demo.wvb`: 282,865 bytes, SHA-256 `fc046e27037f0b2f18129b270b21d8d2c5c3c532601c5a4bfdf211881b0c2acb`.
-- `Source-Graph-Tool.wvb`: 280,052 bytes, SHA-256 `9d49a4e321429ea203bd9a00ab2f6a9196c844c7cdf77a6b707ad6e0dc48b0fd`.
+- `Source-Graph-Core.wvb`: 278,894 bytes, SHA-256 `9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b`.
+- `Source-Graph-Demo.wvb`: 284,848 bytes, SHA-256 `a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c`.
+- `Source-Graph-Tool.wvb`: 282,035 bytes, SHA-256 `0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10`.
 
 These local candidate identities contain the updated frontend while preserving WVSS graph semantics. The current local hosted report is:
 

@@ -42,7 +42,7 @@ services used by the segmenter. The Stage 0 package uses the established
 compiler-authority host envelope; module and target identities keep planner
 semantics separate, and no new hosted metadata profile is introduced.
 
-## Targets and exact identities
+## Targets and last candidate identities
 
 - `windows-x64-hosted-container-planner-v1`, producing `.exe`;
 - `linux-x64-hosted-container-planner-v1`, producing `.elf`.
@@ -53,10 +53,13 @@ semantics separate, and no new hosted metadata profile is introduced.
 | Windows planner | 584,704 | `e401ad5aef792a49be72cf711cfc427a859fe4a534aa780ad47d3b4a2c12a5dc` |
 | Linux planner | 585,728 | `8032370c7391bbc6afa94c1e8804db78f682da4e57144a2907394e202806c0d3` |
 
-The WVB reconstructs through the native Project 1 front door. Focused
-current-host evidence builds the public CLI target, executes a real plan without
-loading .NET, matches the retained fragment byte-for-byte, rejects inconsistent
-metadata while preserving an existing plan, and rejects an input/output alias.
+These identities are the last measured candidate snapshot. Decision 0491 changes
+the embedded layout plus the shared startup/file-input bundle; reconstructing and
+repinning this WVB and both applications is explicitly deferred to the current
+candidate-toolset slice. The preceding focused current-host evidence built the
+public CLI target, executed a real plan without loading .NET, matched the retained
+fragment byte-for-byte, rejected inconsistent metadata while preserving an
+existing plan, and rejected an input/output alias.
 
 ## Retirement boundary
 

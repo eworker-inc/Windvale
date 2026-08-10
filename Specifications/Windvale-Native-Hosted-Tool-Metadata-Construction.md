@@ -78,8 +78,10 @@ The successful payload is the exact `WVH* 1` metadata shape admitted by
 [the hosted-tool runtime-header contract](Windvale-Native-Hosted-Tool-Runtime-Header.md).
 The constructor derives the profile magic, container version, profile flags,
 six canonical capability records, ten canonical service records, target
-adapters, table slots, fixed ABI and arena values, and all reserved zeros. It
+adapters, table slots, fixed ABI and profile-owned arena values, and all reserved zeros. It
 copies only the admitted placement extents and raw digests from the request.
+Profile 2 (the compiler build driver) receives a 234,881,024-byte dynamic
+text/byte arena. Profiles 1 and 3 through 7 retain 134,217,728 bytes.
 
 ## Windvale owner and retained artifact
 
@@ -90,9 +92,9 @@ bundle. The capability-free bridge exposes `Main(bytes) -> bytes`.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata-construction core WVB | 23,877 | `e6addd08b83caa9345259b26210bd99f5d8cdfe5b4b302c64a7ecee5930b0c98` |
-| Retained bridge WVB | 23,778 | `0b89246f7423f99c01fafdbc6054f7b38cca80c27fee036a272990e4e1a59379` |
-| Retained bridge WVNF | 212,627 | `b077111fd4aa796003f947d4e82facb6754ab83a53951ef8c514025983ca26f4` |
+| Metadata-construction core WVB | 24,174 | `ebe76d7ccc4b27f7d7135647ef4c4b11ec5d83f281c7c91cc7ca68e389c0c1fa` |
+| Retained bridge WVB | 24,066 | `4adb36dd4ce821abdd29fe5766a0866847dc9052a0035dfbabd51d6a6b7c19ab` |
+| Retained bridge WVNF | 215,031 | `34f8d5f2f65db0fd736d6bd3557b5b9f3dcb4449366cde10e486ec97e15fbbad` |
 
 The normal managed packaging seam still embeds only the digest-bound WVNF. The
 former C# constructor is retained under the explicit `Buildˉstage0` name for

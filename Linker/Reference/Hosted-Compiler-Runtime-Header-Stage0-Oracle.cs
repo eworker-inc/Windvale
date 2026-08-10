@@ -10,15 +10,17 @@ internal static class Hostedˉcompilerˉruntimeˉheaderˉstage0ˉoracle
 {
     internal static ImmutableArray<byte> Build(
         Consoleˉapplicationˉtarget target,
-        ImmutableArray<byte> metadata)
+        ImmutableArray<byte> metadata,
+        Hostedˉcompilerˉapplicationˉprofile profile =
+            Hostedˉcompilerˉapplicationˉprofile.Compiler)
     {
         if (metadata.IsDefault || metadata.Length != Hostedˉcompilerˉapplicationˉmetadata.SIZE)
         {
             throw new ArgumentException("The Stage 0 hosted runtime metadata is invalid.");
         }
-        var Layout = Hostedˉcompilerˉruntimeˉdata.Plan(target);
+        var Layout = Hostedˉcompilerˉruntimeˉdata.Plan(target, profile);
         var Bytes = new byte[checked((int)Hostedˉcompilerˉruntimeˉdata.HEADER_BYTES)];
-        Writeˉcontext(Bytes);
+        Writeˉcontext(Bytes, Layout);
         Writeˉserviceˉtable(Bytes);
         Writeˉoutputˉtable(Bytes, target);
         Writeˉfileˉinputˉtable(Bytes, Layout);
@@ -27,7 +29,9 @@ internal static class Hostedˉcompilerˉruntimeˉheaderˉstage0ˉoracle
         return Bytes.ToImmutableArray();
     }
 
-    private static void Writeˉcontext(byte[] bytes)
+    private static void Writeˉcontext(
+        byte[] bytes,
+        Hostedˉcompilerˉruntimeˉlayout layout)
     {
         var Base = checked((int)Hostedˉcompilerˉruntimeˉdata.CONTEXT_OFFSET);
         Writeˉu32(bytes, Base + Nativeˉexecutionˉcontextˉcontract.FORMAT_VERSION_OFFSET,
@@ -41,7 +45,7 @@ internal static class Hostedˉcompilerˉruntimeˉheaderˉstage0ˉoracle
         Writeˉu32(bytes, Base + Nativeˉexecutionˉcontextˉcontract.RECORD_ARENA_LENGTH_OFFSET,
             Nativeˉconsoleˉapplicationˉcontract.RECORD_ARENA_BYTES);
         Writeˉu32(bytes, Base + Nativeˉexecutionˉcontextˉcontract.TEXT_ARENA_LENGTH_OFFSET,
-            Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES);
+            layout.Textˉarenaˉbytes);
     }
 
     private static void Writeˉserviceˉtable(byte[] bytes)
@@ -91,7 +95,7 @@ internal static class Hostedˉcompilerˉruntimeˉheaderˉstage0ˉoracle
         Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY_OFFSET,
             Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY);
         Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_OFFSET,
-            Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES);
+            layout.Nameˉarenaˉstrideˉbytes);
         Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.DATA_STRIDE_OFFSET,
             Nativeˉfileˉinputˉtableˉcontract.DATA_STRIDE_BYTES);
         Writeˉu32(bytes, Base + Nativeˉfileˉinputˉtableˉcontract.MAXIMUM_DATA_BYTES_OFFSET,

@@ -19,7 +19,7 @@ ELF construction rules in its hosted shell.
 wvhostbytes <plan.wvcd> <regions.wvhb>
 ```
 
-The input is exactly one successful `WVCD 1` plan: 360 bytes for Windows or 252
+The input is exactly one successful `WVCD 1` plan: 364 bytes for Windows or 256
 bytes for Linux. Target `1` selects
 `Linkerˉnativeˉhostedˉcontainerˉwindows.Main`; target `2` selects
 `Linkerˉnativeˉhostedˉcontainerˉlinux.Main`. Any other target is rejected.
@@ -43,7 +43,7 @@ services as the planner and segmenter. The deletion-bound Stage 0 package writer
 uses the established compiler-authority host envelope; it adds no product
 semantics or new hosted metadata profile.
 
-## Targets and exact identities
+## Targets and last candidate identities
 
 - `windows-x64-hosted-container-platform-bytes-v1`, producing `.exe`;
 - `linux-x64-hosted-container-platform-bytes-v1`, producing `.elf`.
@@ -54,10 +54,13 @@ semantics or new hosted metadata profile.
 | Windows platform-byte producer | 309,760 | `46db452f1356dadb93bf80d4a81a34cf73e02d0f45342309700b5892ea571f7b` |
 | Linux platform-byte producer | 311,296 | `cf09c62056d4960e914504779973a7227bcb2d9879c4328496adb859f83c526d` |
 
-The WVB reconstructs through the native Project 1 front door. Focused
-current-host evidence builds the public CLI target, executes a real plan without
-loading .NET, matches the retained platform fragment byte-for-byte, preserves an
-existing output on rejection, and rejects an input/output alias.
+These identities are the last measured candidate snapshot. Decision 0491 changes
+the profile-2 layout plus the shared startup/file-input bundle; reconstructing and
+repinning this WVB and both applications is explicitly deferred to the current
+candidate-toolset slice. The preceding focused current-host evidence built the
+public CLI target, executed a real plan without loading .NET, matched the retained
+platform fragment byte-for-byte, preserved an existing output on rejection, and
+rejected an input/output alias.
 
 ## Retirement boundary
 

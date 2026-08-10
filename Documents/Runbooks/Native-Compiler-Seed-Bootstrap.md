@@ -40,9 +40,12 @@ evidence, copy those two directories from the promoted seed release into a fresh
 location and pass that copied location rather than the checkout's `Artifacts`
 directory.
 
-The command must report the compiler status line for 419 functions, followed by a
-complete native publication of 921,900 bytes. The output SHA-256 must be
-`fd96bd567d08a18107a9b149560ce9f2e38b49454250e934a4375f465d132556`.
+The repinned candidate command must complete native publication of 921,640 bytes
+with SHA-256
+`18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
+Its exact compiler status summary and downstream native package identities remain
+pending the candidate-toolset reconstruction; do not reuse the preceding
+921,900-byte candidate's 419-function summary as current evidence.
 
 ## Reconstruct the seed through Stage 0
 

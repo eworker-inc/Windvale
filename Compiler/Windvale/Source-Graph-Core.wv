@@ -423,6 +423,74 @@ export fn Compilerˉsourceˉgraphˉhasˉincoming(
     return false;
 }
 
+fn Compilerˉsourceˉgraphˉedges(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan
+) -> bytes {
+    var Edges: bytes = Compilerˉsourceˉgraphˉstate(
+        Scan.Modules * Scan.Modules
+    );
+    var Index: u32 = 0u32;
+    while Index < Scan.Modules {
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Index);
+        let Source: bytes = View.Source;
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Source);
+        var Cursor: u32 = Header.Nextˉoffset;
+        var Line: u32 = Header.Nextˉline;
+        var Column: u32 = Header.Nextˉcolumn;
+        var Reading: bool = true;
+        while Reading {
+            let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+                Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+                    Source, Cursor, Line, Column, false
+                );
+            if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉisˉheaderˉmetadata(
+                Declaration
+            ) {
+                Cursor = Declaration.Nextˉoffset;
+                Line = Declaration.Nextˉline;
+                Column = Declaration.Nextˉcolumn;
+            } else if Declaration.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Import {
+                Reading = false;
+            } else {
+                let Target: Compilerˉsourceˉgraphˉmatch =
+                    Compilerˉsourceˉgraphˉfind(
+                        Input, Scan, Source,
+                        Declaration.Nameˉoffset, Declaration.Nameˉlength
+                    );
+                Edges = Compilerˉsourceˉgraphˉmark(
+                    Edges, Index * Scan.Modules + Target.Index
+                );
+                Cursor = Declaration.Nextˉoffset;
+                Line = Declaration.Nextˉline;
+                Column = Declaration.Nextˉcolumn;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return Edges;
+}
+
+fn Compilerˉsourceˉgraphˉedgesˉhasˉincoming(
+    Edges: bytes,
+    Modules: u32,
+    Removed: bytes,
+    Candidate: u32
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        if Bytesˉreadˉu8(Removed, Index) == 0u8 {
+            if Bytesˉreadˉu8(Edges, Index * Modules + Candidate) != 0u8 {
+                return true;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
 export fn Compilerˉsourceˉgraphˉcycleˉfailure(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -605,7 +673,8 @@ export fn Compilerˉvalidateˉsourceˉgraph(Input: bytes) -> Compilerˉsourceˉg
         Index = Index + 1u32;
     }
 
-    let Imports: u32 = Compilerˉsourceˉgraphˉimportˉcount(Input, Scan);
+    let Imports: u32 = Setˉsummary.Imports;
+    let Edges: bytes = Compilerˉsourceˉgraphˉedges(Input, Scan);
     var Removed: bytes = Compilerˉsourceˉgraphˉstate(Scan.Modules);
     var Removedˉcount: u32 = 0u32;
     while Removedˉcount < Scan.Modules {
@@ -613,7 +682,9 @@ export fn Compilerˉvalidateˉsourceˉgraph(Input: bytes) -> Compilerˉsourceˉg
         var Selected: u32 = Scan.Modules;
         while Candidate < Scan.Modules {
             if Bytesˉreadˉu8(Removed, Candidate) == 0u8 {
-                if !Compilerˉsourceˉgraphˉhasˉincoming(Input, Scan, Removed, Candidate) {
+                if !Compilerˉsourceˉgraphˉedgesˉhasˉincoming(
+                    Edges, Scan.Modules, Removed, Candidate
+                ) {
                     Selected = Candidate;
                     Candidate = Scan.Modules;
                 } else {
