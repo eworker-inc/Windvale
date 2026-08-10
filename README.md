@@ -1,8 +1,8 @@
 # Windvale
 
-![Four-panel Day 9 Windvale comic showing the language compiling its compiler to WebAssembly while C# keeps the recovery kit](Documents/Project/Images/Windvale-Project-History-Day-9.png)
+![Four-panel Day 13 Windvale comic showing its workshop rebuilding the compiler and surrounding tools while a subsidized AI-usage meter reports ten to fifteen dollars per day](Documents/Project/Images/Windvale-Project-Progress-2026-08-10.png)
 
-*Day 9: Windvale compiled its compiler to direct WebAssembly, brought the measured browser playground run down to 2.1 seconds, and let C# retire from the normal browser path while keeping it close for recovery.*
+*Day 13: Windvale's candidate native workshop is reconstructing the compiler and surrounding tools while AI usage currently runs about $10–$15 per day—heavily subsidized for now.*
 
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
