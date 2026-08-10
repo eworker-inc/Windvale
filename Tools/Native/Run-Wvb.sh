@@ -24,4 +24,4 @@ if [[ $input_path != *.wvb ]]; then
     exit 64
 fi
 
-"$artifact_root/linux-x64/wvrun.elf" "$input_path"
+"$artifact_root/linux-x64-wvrun.elf" "$input_path"
