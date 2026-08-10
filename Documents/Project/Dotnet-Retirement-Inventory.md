@@ -284,6 +284,21 @@ direct-entry inventory is unchanged. Independent Linux execution,
 capability-bearing execution, remaining broad-suite transfers, GitHub cutover,
 grouped qualification, and recovery retirement remain open.
 
+Current T2 runtime-table transfer:
+[Decision 0514](../Decisions/0514-Native-Runtime-Table-Build-And-Inspection-Transfer.md)
+extends the paired native front-door helper from 76 to 100 transferred calls
+and from 43 to 59 exact artifacts. It natively builds the output, file-output,
+file-input, service, execution-context, argument, entry, and
+byte-result-admission core/bridge pairs and inspects all eight public bridges.
+The current Windows helper passes in 40.9 seconds, and the eight directly
+affected behavioral owners pass 8/8. This removes sixteen managed builds and
+eight managed inspections from each broad host script, 106 managed invocations
+cumulatively. Retained bridge-WVB and fragment comparisons remain in both broad
+scripts. T2 therefore remains `managed-normal`; the three-normal plus
+nine-recovery direct-entry inventory is unchanged. Independent Linux
+execution, capability-bearing execution, remaining broad-suite transfers,
+GitHub cutover, grouped qualification, and recovery retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by
@@ -1118,9 +1133,9 @@ The next transfer should close a complete row or a clearly bounded part of one r
 
 ## Direct managed entry points
 
-The companion JSON currently records 13 operational files across three lanes:
+The companion JSON currently records 12 operational files across three lanes:
 
-- verification: Seed, WebAssembly, and GitHub qualification;
+- verification: the paired Seed scripts and GitHub qualification;
 - release: the managed independent-qualification workflow that gates publication; and
 - recovery: the explicit Stage 0 compiler, tool, bootstrap, WebAssembly, and OS-image reconstruction scripts.
 

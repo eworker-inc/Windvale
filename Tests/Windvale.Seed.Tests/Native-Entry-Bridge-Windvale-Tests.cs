@@ -185,7 +185,7 @@ internal static partial class Program
             var Nativeˉpath = Path.Combine(Directoryˉpath, "Native-Entry-Bridge.wvb");
             var Nativeˉbuild = Runˉnativeˉfrontˉdoor(
                 Repository,
-                Path.Combine(Repository, "Windvale-Native-Entry-Bridge.wvproj"),
+                Path.Combine(Repository, "Runtime", "Windvale", "Native-Entry-Bridge.wvproj"),
                 Nativeˉpath);
             Equal(0, Nativeˉbuild.Exitˉcode);
             Equal(string.Empty, Nativeˉbuild.Error);

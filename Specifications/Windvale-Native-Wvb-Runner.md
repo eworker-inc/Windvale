@@ -58,14 +58,15 @@ exactly `203` instructions.
 The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid
 option rejection, malformed-module rejection, and input preservation. The
-Windows owner passes 3/3 in 49.8 seconds. The paired 76-case native Seed
-front-door helper builds 43 exact artifacts and passes on Windows in 39.3
+Windows owner passes 3/3 in 49.8 seconds. The paired 100-case native Seed
+front-door helper builds 59 exact artifacts and passes on Windows in 40.9
 seconds. It owns the four Foundation module builds and inspections, all four
 Foundation demo builds, the native-stencil and selected runtime-service builds
 and inspections, the complete output/file-output/file-input generator builds
 and bridge inspections, the fixed-service/enum-metadata/publication/
-service-bundle build and inspection closure, and native execution of the
-Machine Contracts, Byte Ordering, and Decimal Parsing demos. The 4 MiB Byte
+service-bundle build and inspection closure, the complete runtime-table and
+entry-metadata build/inspection closure, and native execution of the Machine
+Contracts, Byte Ordering, and Decimal Parsing demos. The 4 MiB Byte
 Construction demo remains in the managed differential lane because the current
 scalar runner returns bounded failure `3015` before completing it. The Stencil
 demo also remains managed because its explicit 20,000,000-instruction policy

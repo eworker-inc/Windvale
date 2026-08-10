@@ -161,6 +161,22 @@ NATIVE_PUBLICATION_MODULE="$OUTPUT_ROOT/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Publication-Bridge.wvb"
 NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_MODULE="$OUTPUT_ROOT/Native-Service-Bundle-Materialization-Core.wvb"
 NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Service-Bundle-Materialization-Bridge.wvb"
+NATIVE_OUTPUT_TABLE_CORE_MODULE="$OUTPUT_ROOT/Native-Output-Table-Core.wvb"
+NATIVE_OUTPUT_TABLE_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Output-Table-Bridge.wvb"
+NATIVE_FILE_OUTPUT_TABLE_CORE_MODULE="$OUTPUT_ROOT/Native-File-Output-Table-Core.wvb"
+NATIVE_FILE_OUTPUT_TABLE_BRIDGE_MODULE="$OUTPUT_ROOT/Native-File-Output-Table-Bridge.wvb"
+NATIVE_FILE_INPUT_TABLE_CORE_MODULE="$OUTPUT_ROOT/Native-File-Input-Table-Core.wvb"
+NATIVE_FILE_INPUT_TABLE_BRIDGE_MODULE="$OUTPUT_ROOT/Native-File-Input-Table-Bridge.wvb"
+NATIVE_SERVICE_TABLE_CORE_MODULE="$OUTPUT_ROOT/Native-Service-Table-Core.wvb"
+NATIVE_SERVICE_TABLE_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Service-Table-Bridge.wvb"
+NATIVE_EXECUTION_CONTEXT_CORE_MODULE="$OUTPUT_ROOT/Native-Execution-Context-Core.wvb"
+NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Execution-Context-Bridge.wvb"
+NATIVE_ARGUMENT_TABLE_CORE_MODULE="$OUTPUT_ROOT/Native-Argument-Table-Core.wvb"
+NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Argument-Table-Bridge.wvb"
+NATIVE_ENTRY_BRIDGE_CORE_MODULE="$OUTPUT_ROOT/Native-Entry-Bridge-Core.wvb"
+NATIVE_ENTRY_BRIDGE_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Entry-Bridge-Bridge.wvb"
+NATIVE_BYTE_RESULT_ADMISSION_CORE_MODULE="$OUTPUT_ROOT/Native-Byte-Result-Admission-Core.wvb"
+NATIVE_BYTE_RESULT_ADMISSION_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Byte-Result-Admission-Bridge.wvb"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -576,6 +592,134 @@ exact_build \
     'build status=Published verification=compiler-aligned functions=20 code-bytes=14319 module-bytes=17150'
 exact_inspect "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=91 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=16693 bytes=17 count=1'
 
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Output-Table-Core.wvproj" \
+    "$NATIVE_OUTPUT_TABLE_CORE_MODULE" \
+    4710 \
+    ab51993aea2370d84b8fe116634e3da71882756bfa87822f1bce180bb01b04a8 \
+    00001266 \
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=4002 module-bytes=4710'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Output-Table.wvproj" \
+    "$NATIVE_OUTPUT_TABLE_BRIDGE_MODULE" \
+    4714 \
+    b5b20dc0213e55790e4f39e8a512a17e2a0304b0202d488a9342905ee35e80a8 \
+    0000126a \
+    'build status=Published verification=compiler-aligned functions=8 code-bytes=4033 module-bytes=4714'
+exact_inspect "$NATIVE_OUTPUT_TABLE_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=72 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=4685 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-File-Output-Table-Core.wvproj" \
+    "$NATIVE_FILE_OUTPUT_TABLE_CORE_MODULE" \
+    3926 \
+    fb6fd67339561f517967b326cc4299132699dc6f098a38595bbb3aabbf1fbc7f \
+    00000f56 \
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=3293 module-bytes=3926'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-File-Output-Table.wvproj" \
+    "$NATIVE_FILE_OUTPUT_TABLE_BRIDGE_MODULE" \
+    3930 \
+    94cc057b655c58be3ccd2db333cff4e7a755482c52983c4031196ab060a89e06 \
+    00000f5a \
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=3324 module-bytes=3930'
+exact_inspect "$NATIVE_FILE_OUTPUT_TABLE_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=78 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=3901 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-File-Input-Table-Core.wvproj" \
+    "$NATIVE_FILE_INPUT_TABLE_CORE_MODULE" \
+    5078 \
+    0c6b66ae7fcef5a0b73df1d56bbfd0a5376ae2978f6ae762470abcf544b6a438 \
+    000013d6 \
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=4381 module-bytes=5078'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-File-Input-Table.wvproj" \
+    "$NATIVE_FILE_INPUT_TABLE_BRIDGE_MODULE" \
+    5084 \
+    e7d33fc579c0bc2d001a3e7e2ad68e6403091cae6bda270e51578e10f04c4bd9 \
+    000013dc \
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=4412 module-bytes=5084'
+exact_inspect "$NATIVE_FILE_INPUT_TABLE_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=77 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=5055 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Service-Table-Core.wvproj" \
+    "$NATIVE_SERVICE_TABLE_CORE_MODULE" \
+    3065 \
+    ca7388bf816e7d23d5a4cd3cb7cff488ba2cb3d96c0c1a0f511ced54b4296c26 \
+    00000bf9 \
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=2492 module-bytes=3065'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Service-Table.wvproj" \
+    "$NATIVE_SERVICE_TABLE_BRIDGE_MODULE" \
+    3079 \
+    04c87116f12097c6efaeddc471c06ce831f6146c94b4cae0205a635f31bcd50b \
+    00000c07 \
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=2523 module-bytes=3079'
+exact_inspect "$NATIVE_SERVICE_TABLE_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=73 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=3050 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Execution-Context-Core.wvproj" \
+    "$NATIVE_EXECUTION_CONTEXT_CORE_MODULE" \
+    5530 \
+    dda77e9fd637746bf5b1179136deee0bbae2d8d6b57982323b868b98a8daa29b \
+    0000159a \
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=4767 module-bytes=5530'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Execution-Context.wvproj" \
+    "$NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE" \
+    5531 \
+    86b9a139a387eb3c4fb86f43731e442a62af8ce3c7289cf914b31a9256d21a68 \
+    0000159b \
+    'build status=Published verification=compiler-aligned functions=8 code-bytes=4798 module-bytes=5531'
+exact_inspect "$NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=77 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=5502 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Argument-Table-Core.wvproj" \
+    "$NATIVE_ARGUMENT_TABLE_CORE_MODULE" \
+    4362 \
+    08df8569d091fc0c860988dceff1320d7a8e407b54ce571515af601c10120d75 \
+    0000110a \
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=3707 module-bytes=4362'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Argument-Table.wvproj" \
+    "$NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE" \
+    4374 \
+    080be2dea127948697222c23efe4be828410450b602dee5cf2a63abc11627788 \
+    00001116 \
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=3738 module-bytes=4374'
+exact_inspect "$NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=74 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=4345 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Entry-Bridge-Core.wvproj" \
+    "$NATIVE_ENTRY_BRIDGE_CORE_MODULE" \
+    3385 \
+    8eab863c7b214e559c48c822381b822eef22bd852ce16252bb392ebdfbcefdae \
+    00000d39 \
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=2799 module-bytes=3385'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Entry-Bridge.wvproj" \
+    "$NATIVE_ENTRY_BRIDGE_BRIDGE_MODULE" \
+    3401 \
+    d66a34430da6db3271103cfb9c2064a3a5a9de455c564ed87144cf4a0a4994c1 \
+    00000d49 \
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=2830 module-bytes=3401'
+exact_inspect "$NATIVE_ENTRY_BRIDGE_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=72 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=3372 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Byte-Result-Admission-Core.wvproj" \
+    "$NATIVE_BYTE_RESULT_ADMISSION_CORE_MODULE" \
+    7078 \
+    eacc3c6bce78f9b07d11b13a46059e92cf8a34fc1f659b896d444e7e3c937c04 \
+    00001ba6 \
+    'build status=Published verification=compiler-aligned functions=10 code-bytes=6085 module-bytes=7078'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-Byte-Result-Admission.wvproj" \
+    "$NATIVE_BYTE_RESULT_ADMISSION_BRIDGE_MODULE" \
+    7057 \
+    9106356cf441c995b7c8478b3a5a779628328cd82acac87621de9a45bbb2becf \
+    00001b91 \
+    'build status=Published verification=compiler-aligned functions=11 code-bytes=6116 module-bytes=7057'
+exact_inspect "$NATIVE_BYTE_RESULT_ADMISSION_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=82 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=7028 bytes=17 count=1'
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -607,4 +751,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=43 cases=76'
+echo 'native Seed front-door verification status=Complete artifacts=59 cases=100'

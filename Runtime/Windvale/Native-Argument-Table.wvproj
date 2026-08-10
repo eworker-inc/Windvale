@@ -1,0 +1,4 @@
+windvale-project 1
+root "Native-Argument-Table-Bridge.wv"
+source "Native-Argument-Table-Core.wv"
+emit wvb

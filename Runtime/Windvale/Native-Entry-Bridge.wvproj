@@ -1,0 +1,4 @@
+windvale-project 1
+root "Native-Entry-Bridge-Bridge.wv"
+source "Native-Entry-Bridge-Core.wv"
+emit wvb

@@ -157,6 +157,22 @@ $NativePublicationModule = Join-Path $OutputRoot 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $OutputRoot 'Native-Publication-Bridge.wvb'
 $NativeServiceBundleMaterializationCoreModule = Join-Path $OutputRoot 'Native-Service-Bundle-Materialization-Core.wvb'
 $NativeServiceBundleMaterializationBridgeModule = Join-Path $OutputRoot 'Native-Service-Bundle-Materialization-Bridge.wvb'
+$NativeOutputTableCoreModule = Join-Path $OutputRoot 'Native-Output-Table-Core.wvb'
+$NativeOutputTableBridgeModule = Join-Path $OutputRoot 'Native-Output-Table-Bridge.wvb'
+$NativeFileOutputTableCoreModule = Join-Path $OutputRoot 'Native-File-Output-Table-Core.wvb'
+$NativeFileOutputTableBridgeModule = Join-Path $OutputRoot 'Native-File-Output-Table-Bridge.wvb'
+$NativeFileInputTableCoreModule = Join-Path $OutputRoot 'Native-File-Input-Table-Core.wvb'
+$NativeFileInputTableBridgeModule = Join-Path $OutputRoot 'Native-File-Input-Table-Bridge.wvb'
+$NativeServiceTableCoreModule = Join-Path $OutputRoot 'Native-Service-Table-Core.wvb'
+$NativeServiceTableBridgeModule = Join-Path $OutputRoot 'Native-Service-Table-Bridge.wvb'
+$NativeExecutionContextCoreModule = Join-Path $OutputRoot 'Native-Execution-Context-Core.wvb'
+$NativeExecutionContextBridgeModule = Join-Path $OutputRoot 'Native-Execution-Context-Bridge.wvb'
+$NativeArgumentTableCoreModule = Join-Path $OutputRoot 'Native-Argument-Table-Core.wvb'
+$NativeArgumentTableBridgeModule = Join-Path $OutputRoot 'Native-Argument-Table-Bridge.wvb'
+$NativeEntryBridgeCoreModule = Join-Path $OutputRoot 'Native-Entry-Bridge-Core.wvb'
+$NativeEntryBridgeBridgeModule = Join-Path $OutputRoot 'Native-Entry-Bridge-Bridge.wvb'
+$NativeByteResultAdmissionCoreModule = Join-Path $OutputRoot 'Native-Byte-Result-Admission-Core.wvb'
+$NativeByteResultAdmissionBridgeModule = Join-Path $OutputRoot 'Native-Byte-Result-Admission-Bridge.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -514,6 +530,118 @@ Invoke-ExactBuild `
     'build status=Published verification=compiler-aligned functions=20 code-bytes=14319 module-bytes=17150'
 Invoke-ExactInspect $NativeServiceBundleMaterializationBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Output-Table-Core.wvproj') `
+    $NativeOutputTableCoreModule `
+    4710 `
+    'ab51993aea2370d84b8fe116634e3da71882756bfa87822f1bce180bb01b04a8' `
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=4002 module-bytes=4710'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Output-Table.wvproj') `
+    $NativeOutputTableBridgeModule `
+    4714 `
+    'b5b20dc0213e55790e4f39e8a512a17e2a0304b0202d488a9342905ee35e80a8' `
+    'build status=Published verification=compiler-aligned functions=8 code-bytes=4033 module-bytes=4714'
+Invoke-ExactInspect $NativeOutputTableBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-File-Output-Table-Core.wvproj') `
+    $NativeFileOutputTableCoreModule `
+    3926 `
+    'fb6fd67339561f517967b326cc4299132699dc6f098a38595bbb3aabbf1fbc7f' `
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=3293 module-bytes=3926'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-File-Output-Table.wvproj') `
+    $NativeFileOutputTableBridgeModule `
+    3930 `
+    '94cc057b655c58be3ccd2db333cff4e7a755482c52983c4031196ab060a89e06' `
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=3324 module-bytes=3930'
+Invoke-ExactInspect $NativeFileOutputTableBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-File-Input-Table-Core.wvproj') `
+    $NativeFileInputTableCoreModule `
+    5078 `
+    '0c6b66ae7fcef5a0b73df1d56bbfd0a5376ae2978f6ae762470abcf544b6a438' `
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=4381 module-bytes=5078'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-File-Input-Table.wvproj') `
+    $NativeFileInputTableBridgeModule `
+    5084 `
+    'e7d33fc579c0bc2d001a3e7e2ad68e6403091cae6bda270e51578e10f04c4bd9' `
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=4412 module-bytes=5084'
+Invoke-ExactInspect $NativeFileInputTableBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Service-Table-Core.wvproj') `
+    $NativeServiceTableCoreModule `
+    3065 `
+    'ca7388bf816e7d23d5a4cd3cb7cff488ba2cb3d96c0c1a0f511ced54b4296c26' `
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=2492 module-bytes=3065'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Service-Table.wvproj') `
+    $NativeServiceTableBridgeModule `
+    3079 `
+    '04c87116f12097c6efaeddc471c06ce831f6146c94b4cae0205a635f31bcd50b' `
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=2523 module-bytes=3079'
+Invoke-ExactInspect $NativeServiceTableBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Execution-Context-Core.wvproj') `
+    $NativeExecutionContextCoreModule `
+    5530 `
+    'dda77e9fd637746bf5b1179136deee0bbae2d8d6b57982323b868b98a8daa29b' `
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=4767 module-bytes=5530'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Execution-Context.wvproj') `
+    $NativeExecutionContextBridgeModule `
+    5531 `
+    '86b9a139a387eb3c4fb86f43731e442a62af8ce3c7289cf914b31a9256d21a68' `
+    'build status=Published verification=compiler-aligned functions=8 code-bytes=4798 module-bytes=5531'
+Invoke-ExactInspect $NativeExecutionContextBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Argument-Table-Core.wvproj') `
+    $NativeArgumentTableCoreModule `
+    4362 `
+    '08df8569d091fc0c860988dceff1320d7a8e407b54ce571515af601c10120d75' `
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=3707 module-bytes=4362'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Argument-Table.wvproj') `
+    $NativeArgumentTableBridgeModule `
+    4374 `
+    '080be2dea127948697222c23efe4be828410450b602dee5cf2a63abc11627788' `
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=3738 module-bytes=4374'
+Invoke-ExactInspect $NativeArgumentTableBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Entry-Bridge-Core.wvproj') `
+    $NativeEntryBridgeCoreModule `
+    3385 `
+    '8eab863c7b214e559c48c822381b822eef22bd852ce16252bb392ebdfbcefdae' `
+    'build status=Published verification=compiler-aligned functions=6 code-bytes=2799 module-bytes=3385'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Entry-Bridge.wvproj') `
+    $NativeEntryBridgeBridgeModule `
+    3401 `
+    'd66a34430da6db3271103cfb9c2064a3a5a9de455c564ed87144cf4a0a4994c1' `
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=2830 module-bytes=3401'
+Invoke-ExactInspect $NativeEntryBridgeBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Byte-Result-Admission-Core.wvproj') `
+    $NativeByteResultAdmissionCoreModule `
+    7078 `
+    'eacc3c6bce78f9b07d11b13a46059e92cf8a34fc1f659b896d444e7e3c937c04' `
+    'build status=Published verification=compiler-aligned functions=10 code-bytes=6085 module-bytes=7078'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Byte-Result-Admission.wvproj') `
+    $NativeByteResultAdmissionBridgeModule `
+    7057 `
+    '9106356cf441c995b7c8478b3a5a779628328cd82acac87621de9a45bbb2becf' `
+    'build status=Published verification=compiler-aligned functions=11 code-bytes=6116 module-bytes=7057'
+Invoke-ExactInspect $NativeByteResultAdmissionBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -545,4 +673,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=43 cases=76'
+Write-Output 'native Seed front-door verification status=Complete artifacts=59 cases=100'

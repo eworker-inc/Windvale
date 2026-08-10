@@ -514,6 +514,16 @@ Retained bridge-WVB, leaf, and fragment comparisons remain independent;
 capability-bearing execution, the broad harness, Linux evidence, and later
 qualification phases remain open.
 
+Decision 0514 transfers the complete bounded runtime-table construction layer:
+sixteen exact output, file-output, file-input, service, execution-context,
+argument, entry, and byte-result-admission Project 1 builds plus eight native
+bridge inspections. The paired helper now owns 59 artifacts and 100 cases,
+bringing the cumulative removal to 106 managed calls per broad host script.
+All sixteen manifests are component-local and eight obsolete root manifests
+are removed. Retained bridge-WVB and fragment comparisons remain independent;
+capability-bearing execution, the broad harness, Linux evidence, and later
+qualification phases remain open.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

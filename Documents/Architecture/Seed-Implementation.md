@@ -277,6 +277,14 @@ Compiler publication, Foundation byte construction, and Runtime
 materialization. This is build/inspection ownership, not native ownership of
 the capability-bearing execution or broad differential harness.
 
+Decision 0514 extends that ownership rule through the runtime-table and entry
+metadata layer. Sixteen exact Project 1 builds and eight bridge inspections
+leave each broad managed script while retained bridge-WVB and fragment
+comparisons remain. All sixteen manifests live beside their
+`Runtime/Windvale` sources, and the eight obsolete root bridge manifests are
+removed. This is build/inspection ownership, not native ownership of
+capability-bearing execution or the broad differential harness.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

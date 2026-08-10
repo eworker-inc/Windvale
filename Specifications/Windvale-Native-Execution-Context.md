@@ -274,6 +274,13 @@ reproduces all twelve WVBs and inspects eleven public ownership surfaces; the
 broad scripts retain independent comparisons against every embedded bridge,
 fixed leaf, and linked fragment.
 
+[Decision 0514](../Documents/Decisions/0514-Native-Runtime-Table-Build-And-Inspection-Transfer.md)
+adds component-local projects for all eight runtime-table, execution-context,
+argument, entry, and byte-result-admission core/bridge pairs. The paired native
+helper reproduces all sixteen WVBs and inspects the eight public bridges; the
+broad scripts retain independent comparisons against every embedded bridge and
+linked fragment.
+
 Before W^X publication, the runtime requires exact [Decision 0071](../Documents/Decisions/0071-Native-Text-Arena-And-Core-Text-Services.md) identities for the 249-byte concatenation leaf, 225-byte signed formatter, and 191-byte unsigned formatter. [Decision 0072](../Documents/Decisions/0072-Final-Pure-Runtime-Native-Services.md) additionally requires the exact 323-byte enum-name leaf and its independently verified `WVEN` block plus the exact 1,165-byte quote leaf. All preserve `R10`, `R11`, and `R15`. Their service inputs and output-cell addresses remain compiler-generated and independently verified; context state is runtime-owned for the call.
 
 For the bounded single-group normal path, [Decision 0407](../Documents/Decisions/0407-Native-Hosted-Enum-Service-Production.md) replaces managed request projection and final leaf-plus-metadata construction with two exact native hosted processes. Multi-group coordination remains explicit recovery/transition work rather than an implicit fallback.
