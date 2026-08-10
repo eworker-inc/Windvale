@@ -136,13 +136,16 @@ This shortcut applies only when code, tests, contract semantics, serialized byte
 
 ## Direct WebAssembly verification
 
-On Windows, rebuild the Windvale-authored backend, lower thirteen retained fixtures spanning checked arithmetic, bounded straight-line `i32`, metered loops, sequential conditionals, and bounded direct calls through the `.wv` hosted tool, verify exact artifact sizes and hashes, and execute all thirteen modules in Node.js with:
+On Windows, build the retained source/WVB corpus and both exact compiler adapters
+through the native front doors, lower every admitted input through the
+manifest-bound native WebAssembly compiler, verify the exact artifacts, and run
+the strict Node.js engine plus record-arena and compiler probes with:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1
 ```
 
-The verifier requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained arithmetic contracts. For execution ABI 2 it requires exact single-loop success at budget 157, `3011` exhaustion at 156, nonterminating-loop containment at 50, mixed sequential-control success/exhaustion at 184/183 and 331/330 across both conditional routes, two-`if` success/exhaustion at 41/40, shared-budget direct-call success/exhaustion at 66/65, and callee-overflow propagation as `3007/0/14`. Every retained repeat resets exactly. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
+The verifier contains no normal .NET invocation. It requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained arithmetic contracts. For execution ABI 2 it requires exact single-loop success at budget 157, `3011` exhaustion at 156, nonterminating-loop containment at 50, mixed sequential-control success/exhaustion at 184/183 and 331/330 across both conditional routes, two-`if` success/exhaustion at 41/40, shared-budget direct-call success/exhaustion at 66/65, and callee-overflow propagation as `3007/0/14`. Every retained repeat resets exactly. The complete current-Windows route takes roughly 27 minutes. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
 
 ## Native compiler bootstrap verification
 

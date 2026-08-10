@@ -317,6 +317,16 @@ foreach ($Path in $Paths) {
         'Tests/Native/Retirement-Suite.txt'
     )) {
         $RunPlanVerification = $true
+    } elseif ($Path -in @(
+        'Tools/Verify/Verify-WebAssembly.ps1',
+        'Tools/Verify/Verify-WebAssembly-Engine.mjs'
+    ) -or
+        $Path.StartsWith('Tools/WebAssembly/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Windvale.WebAssembly/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Artifacts/WebAssembly-', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Artifacts/webassembly-verification/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tests/Fixtures/WebAssembly/', [StringComparison]::Ordinal)) {
+        Add-Gap 'webassembly-native-verification'
     } elseif ($Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal)) {
         if ([IO.Path]::GetFileName($Path) -in @(
             'Classify-Verification-Changes.ps1',
@@ -345,6 +355,11 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Baseline-Jit-',
         [StringComparison]::Ordinal)) {
         Add-Suite 'baseline-jit'
+    } elseif ($Path.StartsWith(
+        'Compiler/Windvale/WebAssembly-',
+        [StringComparison]::Ordinal)) {
+        Add-Compiler-Suites
+        Add-Gap 'webassembly-native-verification'
     } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Core.wv',
         'Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv',
@@ -745,6 +760,8 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Native-Baseline-Jit-Publication.md'
         )) {
             Add-Suite 'baseline-jit'
+        } elseif ($Path -eq 'Specifications/Windvale-WebAssembly.md') {
+            Add-Gap 'webassembly-native-verification'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Compiler-Reconstruction.md') {
             Add-Suite 'compiler-reconstruction'
         } elseif ($Path -in @(
@@ -832,6 +849,12 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal) -and
         $Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'baseline-jit'
+    } elseif ($Path.StartsWith(
+        'Windvale-WebAssembly',
+        [StringComparison]::Ordinal) -and
+        $Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
+        Add-Suite 'seed'
+        Add-Gap 'webassembly-native-verification'
     } elseif ($Path -in @(
         'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
@@ -889,6 +912,9 @@ foreach ($Path in $Paths) {
         Add-Suite 'seed'
     } elseif ($Path.StartsWith('Examples/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
+        if ($Path.StartsWith('Examples/Compiler/WebAssembly-', [StringComparison]::Ordinal)) {
+            Add-Gap 'webassembly-native-verification'
+        }
     } elseif ($Path.StartsWith('.github/', [StringComparison]::Ordinal)) {
         Add-Gap 'github-native-qualification'
     } elseif ($Path -in @('Directory.Build.props', 'global.json', 'Windvale.slnx')) {

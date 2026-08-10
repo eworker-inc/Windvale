@@ -633,6 +633,36 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'WebAssembly standalone native owner'
+        Paths = @(
+            'Tools/Verify/Verify-WebAssembly.ps1',
+            'Tools/Verify/Verify-WebAssembly-Engine.mjs',
+            'Tools/WebAssembly/Compile-Wvb-To-Wasm.mjs',
+            'Artifacts/WebAssembly-Native-Backend/Manifest.json'
+        )
+        Suites = @()
+        Gaps = @('webassembly-native-verification')
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WebAssembly source and contract owner'
+        Paths = @(
+            'Compiler/Windvale/WebAssembly-Core.wv',
+            'Examples/Compiler/WebAssembly-Tool.wv',
+            'Windvale-WebAssembly.wvproj',
+            'Specifications/Windvale-WebAssembly.md'
+        )
+        Suites = @(
+            'seed',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction'
+        )
+        Gaps = @('webassembly-native-verification')
+        VerifyPlan = $false
+    },
+    @{
         Name = 'database gap'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
         Suites = @()

@@ -89,10 +89,13 @@ await Verifyˉartifact(Compilerˉpath, Compilerˉartifact, "native compiler");
 await Verifyˉartifact(Publisherˉpath, Publisherˉartifact, "native publisher");
 
 const Sourceˉpaths = await Readˉproject(Projectˉpath);
-const Expectedˉcompiler = Findˉartifact(
-    Packageˉmanifest,
-    "portable-source-compiler",
-    "browser compiler",
+const Expectedˉcompiler = Packageˉmanifest.sourceCompiler;
+Require(
+    Expectedˉcompiler?.name === "portable-source-compiler" &&
+        Expectedˉcompiler.path === "Windvale-Compiler-Memory.wvb" &&
+        Number.isInteger(Expectedˉcompiler.bytes) &&
+        typeof Expectedˉcompiler.sha256 === "string",
+    "The browser compiler inventory entry is missing or invalid.",
 );
 const Expectedˉpath = Resolveˉartifact(
     Packageˉroot,

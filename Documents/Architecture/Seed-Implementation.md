@@ -189,6 +189,15 @@ digests; independent Linux reconstruction
 and execution, clean previous-seed renewal, qualification, promotion, and
 recovery release remain open.
 
+Decision 0504 composes the existing native Project 1, compiler-bootstrap,
+portable-compiler, and paired WebAssembly backend boundaries into the complete
+current-Windows generation-and-verification command. One generic launcher
+admits the exact host backend, constructs an import-free module privately, and
+publishes only after validation. The strict Node.js engine, record-arena, and
+compiler probes pass without a normal .NET invocation. Independent Linux
+execution, backend-package reconstruction, cross-browser evidence, grouped
+qualification, promotion, and the final recovery release remain open.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

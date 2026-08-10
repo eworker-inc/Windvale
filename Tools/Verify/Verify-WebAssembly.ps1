@@ -1,16 +1,13 @@
-param(
-    [ValidateSet('Debug', 'Release')]
-    [string]$Configuration = 'Release'
-)
-
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $ArtifactDirectory = Join-Path $RepositoryRoot 'artifacts/webassembly-verification'
-$ToolProject = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/Windvale.Tool.csproj'
-$ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
+$NativeBuild = Join-Path $RepositoryRoot 'Tools/Native/Build-Wvb.cmd'
+$NativeCompilerBootstrap = Join-Path $RepositoryRoot 'Tools/Native/Bootstrap-Compiler.cmd'
+$NativeCompilerMemoryBuild = Join-Path `
+    $RepositoryRoot 'Tools/WebAssembly/Build-Compiler-Wvb.mjs'
+$NativeWebAssemblyCompiler = Join-Path `
+    $RepositoryRoot 'Tools/WebAssembly/Compile-Wvb-To-Wasm.mjs'
 $BackendProject = Join-Path $RepositoryRoot 'Windvale-WebAssembly.wvproj'
-$CompilerProject = Join-Path $RepositoryRoot 'Windvale-Compiler.wvproj'
-$CompilerMemoryProject = Join-Path $RepositoryRoot 'Windvale-Compiler-Memory.wvproj'
 $WvbScalarInterpreterProject = Join-Path $RepositoryRoot 'Windvale-Wvb-Scalar-Interpreter.wvproj'
 $SuccessSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Main.wv'
 $OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Overflow-Main.wv'
@@ -361,173 +358,166 @@ Write-CompilerVerifierPhase `
     'Iˉcontrol' `
     $WvbCompilerControlSecondPhaseText
 
-dotnet build $ToolProject -c $Configuration
-if ($LASTEXITCODE -ne 0) { throw 'The Windvale tool build failed.' }
-
-function Invoke-Windvale([string[]]$ToolArguments) {
-    dotnet $ToolDll @ToolArguments
+function Invoke-NativeWvbBuild(
+    [string]$ProjectPath,
+    [string]$OutputPath
+) {
+    & $NativeBuild $ProjectPath $OutputPath
     if ($LASTEXITCODE -ne 0) {
-        throw "The Windvale tool failed: $($ToolArguments -join ' ')"
+        throw "The native Windvale build failed: $ProjectPath"
     }
 }
 
-Invoke-Windvale @('build', $BackendProject, '-o', $BackendWvb)
-Invoke-Windvale @('compile', $SuccessSource, '-o', $SuccessWvb)
-Invoke-Windvale @('compile', $OverflowSource, '-o', $OverflowWvb)
-Invoke-Windvale @('compile', $StraightSource, '-o', $StraightWvb)
-Invoke-Windvale @('compile', $SubtractOverflowSource, '-o', $SubtractOverflowWvb)
-Invoke-Windvale @('compile', $MultiplyOverflowSource, '-o', $MultiplyOverflowWvb)
-Invoke-Windvale @('compile', $NegateOverflowSource, '-o', $NegateOverflowWvb)
-Invoke-Windvale @('compile', $MeteredLoopSource, '-o', $MeteredLoopWvb)
-Invoke-Windvale @('compile', $NonterminatingLoopSource, '-o', $NonterminatingLoopWvb)
-Invoke-Windvale @('compile', $StructuredControlSource, '-o', $StructuredControlWvb)
-Invoke-Windvale @('compile', $StructuredControlElseSource, '-o', $StructuredControlElseWvb)
-Invoke-Windvale @('compile', $SequentialIfSource, '-o', $SequentialIfWvb)
-Invoke-Windvale @('compile', $BoundedCallsSource, '-o', $BoundedCallsWvb)
-Invoke-Windvale @('compile', $BoundedCallsOverflowSource, '-o', $BoundedCallsOverflowWvb)
-Invoke-Windvale @('compile', $CallsWithControlSource, '-o', $CallsWithControlWvb)
-Invoke-Windvale @('compile', $CallsWithControlElseSource, '-o', $CallsWithControlElseWvb)
-Invoke-Windvale @('compile', $MemoryBytesSource, '-o', $MemoryBytesWvb)
-Invoke-Windvale @('compile', $MemoryTextSource, '-o', $MemoryTextWvb)
-Invoke-Windvale @('compile', $RuntimeValuesSource, '-o', $RuntimeValuesWvb)
-Invoke-Windvale @('compile', $RuntimeConcatSource, '-o', $RuntimeConcatWvb)
-Invoke-Windvale @('compile', $RuntimeU16GuardSource, '-o', $RuntimeU16GuardWvb)
-Invoke-Windvale @('compile', $RuntimeArenaSource, '-o', $RuntimeArenaWvb)
-Invoke-Windvale @('compile', $RuntimeReclaimSource, '-o', $RuntimeReclaimWvb)
-Invoke-Windvale @('compile', $RuntimeU32GuardSource, '-o', $RuntimeU32GuardWvb)
-Invoke-Windvale @('compile', $RuntimeCallsSource, '-o', $RuntimeCallsWvb)
-Invoke-Windvale @('compile', $WvbEnvelopeVerifySource, '-o', $WvbEnvelopeVerifyWvb)
-Invoke-Windvale @('compile', $WvbStructuralVerifySource, '-o', $WvbStructuralVerifyWvb)
-Invoke-Windvale @('compile', $WvbSemanticVerifySource, '-o', $WvbSemanticVerifyWvb)
-Invoke-Windvale @('compile', $WvbSemanticExpandedSource, '-o', $WvbSemanticExpandedWvb)
-Invoke-Windvale @('compile', $WvbExecutableVerifySource, '-o', $WvbExecutableVerifyWvb)
-Invoke-Windvale @('compile', $WvbCompilerSemanticVerifySource, '-o', $WvbCompilerSemanticVerifyWvb)
-Invoke-Windvale @('compile', $WvbCompilerTypedVerifySource, '-o', $WvbCompilerTypedVerifyWvb)
-Invoke-Windvale @('compile', $WvbCompilerTypedSecondVerifySource, '-o', $WvbCompilerTypedSecondVerifyWvb)
-Invoke-Windvale @('compile', $WvbCompilerTypedThirdVerifySource, '-o', $WvbCompilerTypedThirdVerifyWvb)
-Invoke-Windvale @('compile', $WvbCompilerControlVerifySource, '-o', $WvbCompilerControlVerifyWvb)
-Invoke-Windvale @('compile', $WvbCompilerControlSecondVerifySource, '-o', $WvbCompilerControlSecondVerifyWvb)
-Invoke-Windvale @('build', $CompilerProject, '-o', $CompilerWvb)
-Invoke-Windvale @('build', $CompilerMemoryProject, '-o', $CompilerMemoryWvb)
-Invoke-Windvale @('build', $WvbScalarInterpreterProject, '-o', $WvbScalarInterpreterWvb)
-Invoke-Windvale @('compile', $ScalarFunctionOnlySource, '-o', $ScalarFunctionOnlyWvb)
-Invoke-Windvale @('compile', $BytesEntrySource, '-o', $BytesEntryWvb)
-Invoke-Windvale @('compile', $ScalarGuestSource, '-o', $ScalarGuestWvb)
-Invoke-Windvale @('compile', $ScalarI32OverflowSource, '-o', $ScalarI32OverflowWvb)
-Invoke-Windvale @('compile', $ScalarU32OverflowSource, '-o', $ScalarU32OverflowWvb)
-Invoke-Windvale @('compile', $TextBytesGuestSource, '-o', $TextBytesGuestWvb)
-Invoke-Windvale @('compile', $TextBytesUtf8Source, '-o', $TextBytesUtf8Wvb)
-Invoke-Windvale @('compile', $TextBytesInvalidUtf8Source, '-o', $TextBytesInvalidUtf8Wvb)
-Invoke-Windvale @('compile', $TextBytesRangeSource, '-o', $TextBytesRangeWvb)
-Invoke-Windvale @('compile', $TextBytesU16Source, '-o', $TextBytesU16Wvb)
-Invoke-Windvale @('compile', $TextBytesValueSource, '-o', $TextBytesValueWvb)
-Invoke-Windvale @('compile', $TextBytesHeapSource, '-o', $TextBytesHeapWvb)
-Invoke-Windvale @('compile', $FormattingQuoteSource, '-o', $FormattingQuoteWvb)
-Invoke-Windvale @('compile', $Sha256Source, '-o', $Sha256Wvb)
-Invoke-Windvale @('compile', $NominalDefaultsSource, '-o', $NominalDefaultsWvb)
-Invoke-Windvale @('compile', $RecordArenaSource, '-o', $RecordArenaWvb)
-Invoke-Windvale @('compile', $RecordArenaPrecisionSource, '-o', $RecordArenaPrecisionWvb)
-Invoke-Windvale @('compile', $CompilerSuccessSource, '-o', $CompilerSuccessWvb)
-Invoke-Windvale @('compile', $StructuralDataSource, '-o', $StructuralDataWvb)
-Invoke-Windvale @('compile', $StructuralTypesSource, '-o', $StructuralTypesWvb)
-Invoke-Windvale @('compile', $StructuralCapabilitiesSource, '-o', $StructuralCapabilitiesWvb)
+function Invoke-NativeSourceCompile(
+    [string]$SourcePath,
+    [string]$OutputPath
+) {
+    $ProjectName = '.windvale-webassembly-verification-' +
+        "$PID-$([IO.Path]::GetFileName($OutputPath)).wvproj"
+    $ProjectPath = Join-Path $RepositoryRoot $ProjectName
+    $RelativeSource = [IO.Path]::GetRelativePath(
+        $RepositoryRoot,
+        $SourcePath).Replace('\', '/')
+    if ($RelativeSource.StartsWith('../', [StringComparison]::Ordinal) -or
+        [IO.Path]::IsPathRooted($RelativeSource)) {
+        throw "The WebAssembly verification source escapes the repository: $SourcePath"
+    }
+    $ProjectText = "windvale-project 1`nroot `"$RelativeSource`"`nemit wvb`n"
+    [IO.File]::WriteAllText(
+        $ProjectPath,
+        $ProjectText,
+        [Text.UTF8Encoding]::new($false))
+    try {
+        Invoke-NativeWvbBuild $ProjectPath $OutputPath
+    } finally {
+        [IO.File]::Delete($ProjectPath)
+    }
+}
 
-$RunArguments = @(
-    'run', $BackendWvb,
-    '--allow', 'console.write_line',
-    '--allow', 'diagnostic.write_line',
-    '--allow', 'file.read_bytes',
-    '--allow', 'file.write_bytes',
-    '--allow', 'process.argument',
-    '--allow', 'process.argument_count',
-    '--max-steps', '100000000',
-    '--'
-)
-Invoke-Windvale ($RunArguments + @($SuccessWvb, $SuccessWasm))
-Invoke-Windvale ($RunArguments + @($OverflowWvb, $OverflowWasm))
-Invoke-Windvale ($RunArguments + @($StraightWvb, $StraightWasm))
-Invoke-Windvale ($RunArguments + @($SubtractOverflowWvb, $SubtractOverflowWasm))
-Invoke-Windvale ($RunArguments + @($MultiplyOverflowWvb, $MultiplyOverflowWasm))
-Invoke-Windvale ($RunArguments + @($NegateOverflowWvb, $NegateOverflowWasm))
-Invoke-Windvale ($RunArguments + @($MeteredLoopWvb, $MeteredLoopWasm))
-Invoke-Windvale ($RunArguments + @($NonterminatingLoopWvb, $NonterminatingLoopWasm))
-Invoke-Windvale ($RunArguments + @($StructuredControlWvb, $StructuredControlWasm))
-Invoke-Windvale ($RunArguments + @($StructuredControlElseWvb, $StructuredControlElseWasm))
-Invoke-Windvale ($RunArguments + @($SequentialIfWvb, $SequentialIfWasm))
-Invoke-Windvale ($RunArguments + @($BoundedCallsWvb, $BoundedCallsWasm))
-Invoke-Windvale ($RunArguments + @($BoundedCallsOverflowWvb, $BoundedCallsOverflowWasm))
-Invoke-Windvale ($RunArguments + @($CallsWithControlWvb, $CallsWithControlWasm))
-Invoke-Windvale ($RunArguments + @($CallsWithControlElseWvb, $CallsWithControlElseWasm))
-Invoke-Windvale ($RunArguments + @($MemoryBytesWvb, $MemoryBytesWasm))
-Invoke-Windvale ($RunArguments + @($MemoryTextWvb, $MemoryTextWasm))
-Invoke-Windvale ($RunArguments + @($RuntimeValuesWvb, $RuntimeValuesWasm))
-Invoke-Windvale ($RunArguments + @($RuntimeConcatWvb, $RuntimeConcatWasm))
-Invoke-Windvale ($RunArguments + @($RuntimeU16GuardWvb, $RuntimeU16GuardWasm))
-Invoke-Windvale ($RunArguments + @($RuntimeArenaWvb, $RuntimeArenaWasm))
-Invoke-Windvale ($RunArguments + @($RuntimeReclaimWvb, $RuntimeReclaimWasm))
-Invoke-Windvale ($RunArguments + @($RuntimeU32GuardWvb, $RuntimeU32GuardWasm))
-Invoke-Windvale ($RunArguments + @($RuntimeCallsWvb, $RuntimeCallsWasm))
-Invoke-Windvale ($RunArguments + @($WvbEnvelopeVerifyWvb, $WvbEnvelopeVerifyWasm))
-Invoke-Windvale ($RunArguments + @($WvbStructuralVerifyWvb, $WvbStructuralVerifyWasm))
-$SemanticRunArguments = @(
-    'run', $BackendWvb,
-    '--allow', 'console.write_line',
-    '--allow', 'diagnostic.write_line',
-    '--allow', 'file.read_bytes',
-    '--allow', 'file.write_bytes',
-    '--allow', 'process.argument',
-    '--allow', 'process.argument_count',
-    '--max-steps', '150000000',
-    '--'
-)
-Invoke-Windvale ($SemanticRunArguments + @($WvbSemanticVerifyWvb, $WvbSemanticVerifyWasm))
-Invoke-Windvale ($SemanticRunArguments + @($WvbSemanticExpandedWvb, $WvbSemanticExpandedWasm))
-Invoke-Windvale ($SemanticRunArguments + @(
-    $WvbCompilerSemanticVerifyWvb,
-    $WvbCompilerSemanticVerifyWasm))
-$ExecutableSemanticRunArguments = @(
-    'run', $BackendWvb,
-    '--allow', 'console.write_line',
-    '--allow', 'diagnostic.write_line',
-    '--allow', 'file.read_bytes',
-    '--allow', 'file.write_bytes',
-    '--allow', 'process.argument',
-    '--allow', 'process.argument_count',
-    '--max-steps', '275000000',
-    '--'
-)
-$ScalarInterpreterRunArguments = @(
-    'run', $BackendWvb,
-    '--allow', 'console.write_line',
-    '--allow', 'diagnostic.write_line',
-    '--allow', 'file.read_bytes',
-    '--allow', 'file.write_bytes',
-    '--allow', 'process.argument',
-    '--allow', 'process.argument_count',
-    '--max-steps', '500000000',
-    '--'
-)
-Invoke-Windvale ($ExecutableSemanticRunArguments + @(
-    $WvbExecutableVerifyWvb,
-    $WvbExecutableVerifyWasm))
-Invoke-Windvale ($ExecutableSemanticRunArguments + @(
-    $WvbCompilerTypedVerifyWvb,
-    $WvbCompilerTypedVerifyWasm))
-Invoke-Windvale ($ExecutableSemanticRunArguments + @(
-    $WvbCompilerTypedSecondVerifyWvb,
-    $WvbCompilerTypedSecondVerifyWasm))
-Invoke-Windvale ($ExecutableSemanticRunArguments + @(
-    $WvbCompilerTypedThirdVerifyWvb,
-    $WvbCompilerTypedThirdVerifyWasm))
-Invoke-Windvale ($ExecutableSemanticRunArguments + @(
-    $WvbCompilerControlVerifyWvb,
-    $WvbCompilerControlVerifyWasm))
-Invoke-Windvale ($ExecutableSemanticRunArguments + @(
-    $WvbCompilerControlSecondVerifyWvb,
-    $WvbCompilerControlSecondVerifyWasm))
-Invoke-Windvale ($ScalarInterpreterRunArguments + @(
-    $WvbScalarInterpreterWvb,
-    $WvbScalarInterpreterWasm))
+function Invoke-NativeWebAssembly(
+    [string]$InputPath,
+    [string]$OutputPath
+) {
+    node $NativeWebAssemblyCompiler $InputPath $OutputPath
+    if ($LASTEXITCODE -ne 0) {
+        throw "The native WebAssembly compiler failed: $InputPath"
+    }
+}
+
+function Invoke-NativeCompilerBuild([string]$OutputPath) {
+    & $NativeCompilerBootstrap `
+        (Join-Path $RepositoryRoot 'Artifacts') `
+        $RepositoryRoot `
+        $OutputPath
+    if ($LASTEXITCODE -ne 0) {
+        throw 'The native current-compiler bootstrap failed.'
+    }
+}
+
+function Invoke-NativeCompilerMemoryBuild([string]$OutputPath) {
+    node $NativeCompilerMemoryBuild -o $OutputPath
+    if ($LASTEXITCODE -ne 0) {
+        throw 'The native browser-compiler build failed.'
+    }
+}
+
+Invoke-NativeWvbBuild $BackendProject $BackendWvb
+Invoke-NativeSourceCompile $SuccessSource $SuccessWvb
+Invoke-NativeSourceCompile $OverflowSource $OverflowWvb
+Invoke-NativeSourceCompile $StraightSource $StraightWvb
+Invoke-NativeSourceCompile $SubtractOverflowSource $SubtractOverflowWvb
+Invoke-NativeSourceCompile $MultiplyOverflowSource $MultiplyOverflowWvb
+Invoke-NativeSourceCompile $NegateOverflowSource $NegateOverflowWvb
+Invoke-NativeSourceCompile $MeteredLoopSource $MeteredLoopWvb
+Invoke-NativeSourceCompile $NonterminatingLoopSource $NonterminatingLoopWvb
+Invoke-NativeSourceCompile $StructuredControlSource $StructuredControlWvb
+Invoke-NativeSourceCompile $StructuredControlElseSource $StructuredControlElseWvb
+Invoke-NativeSourceCompile $SequentialIfSource $SequentialIfWvb
+Invoke-NativeSourceCompile $BoundedCallsSource $BoundedCallsWvb
+Invoke-NativeSourceCompile $BoundedCallsOverflowSource $BoundedCallsOverflowWvb
+Invoke-NativeSourceCompile $CallsWithControlSource $CallsWithControlWvb
+Invoke-NativeSourceCompile $CallsWithControlElseSource $CallsWithControlElseWvb
+Invoke-NativeSourceCompile $MemoryBytesSource $MemoryBytesWvb
+Invoke-NativeSourceCompile $MemoryTextSource $MemoryTextWvb
+Invoke-NativeSourceCompile $RuntimeValuesSource $RuntimeValuesWvb
+Invoke-NativeSourceCompile $RuntimeConcatSource $RuntimeConcatWvb
+Invoke-NativeSourceCompile $RuntimeU16GuardSource $RuntimeU16GuardWvb
+Invoke-NativeSourceCompile $RuntimeArenaSource $RuntimeArenaWvb
+Invoke-NativeSourceCompile $RuntimeReclaimSource $RuntimeReclaimWvb
+Invoke-NativeSourceCompile $RuntimeU32GuardSource $RuntimeU32GuardWvb
+Invoke-NativeSourceCompile $RuntimeCallsSource $RuntimeCallsWvb
+Invoke-NativeSourceCompile $WvbEnvelopeVerifySource $WvbEnvelopeVerifyWvb
+Invoke-NativeSourceCompile $WvbStructuralVerifySource $WvbStructuralVerifyWvb
+Invoke-NativeSourceCompile $WvbSemanticVerifySource $WvbSemanticVerifyWvb
+Invoke-NativeSourceCompile $WvbSemanticExpandedSource $WvbSemanticExpandedWvb
+Invoke-NativeSourceCompile $WvbExecutableVerifySource $WvbExecutableVerifyWvb
+Invoke-NativeSourceCompile $WvbCompilerSemanticVerifySource $WvbCompilerSemanticVerifyWvb
+Invoke-NativeSourceCompile $WvbCompilerTypedVerifySource $WvbCompilerTypedVerifyWvb
+Invoke-NativeSourceCompile $WvbCompilerTypedSecondVerifySource $WvbCompilerTypedSecondVerifyWvb
+Invoke-NativeSourceCompile $WvbCompilerTypedThirdVerifySource $WvbCompilerTypedThirdVerifyWvb
+Invoke-NativeSourceCompile $WvbCompilerControlVerifySource $WvbCompilerControlVerifyWvb
+Invoke-NativeSourceCompile $WvbCompilerControlSecondVerifySource $WvbCompilerControlSecondVerifyWvb
+Invoke-NativeCompilerBuild $CompilerWvb
+Invoke-NativeCompilerMemoryBuild $CompilerMemoryWvb
+Invoke-NativeWvbBuild $WvbScalarInterpreterProject $WvbScalarInterpreterWvb
+Invoke-NativeSourceCompile $ScalarFunctionOnlySource $ScalarFunctionOnlyWvb
+Invoke-NativeSourceCompile $BytesEntrySource $BytesEntryWvb
+Invoke-NativeSourceCompile $ScalarGuestSource $ScalarGuestWvb
+Invoke-NativeSourceCompile $ScalarI32OverflowSource $ScalarI32OverflowWvb
+Invoke-NativeSourceCompile $ScalarU32OverflowSource $ScalarU32OverflowWvb
+Invoke-NativeSourceCompile $TextBytesGuestSource $TextBytesGuestWvb
+Invoke-NativeSourceCompile $TextBytesUtf8Source $TextBytesUtf8Wvb
+Invoke-NativeSourceCompile $TextBytesInvalidUtf8Source $TextBytesInvalidUtf8Wvb
+Invoke-NativeSourceCompile $TextBytesRangeSource $TextBytesRangeWvb
+Invoke-NativeSourceCompile $TextBytesU16Source $TextBytesU16Wvb
+Invoke-NativeSourceCompile $TextBytesValueSource $TextBytesValueWvb
+Invoke-NativeSourceCompile $TextBytesHeapSource $TextBytesHeapWvb
+Invoke-NativeSourceCompile $FormattingQuoteSource $FormattingQuoteWvb
+Invoke-NativeSourceCompile $Sha256Source $Sha256Wvb
+Invoke-NativeSourceCompile $NominalDefaultsSource $NominalDefaultsWvb
+Invoke-NativeSourceCompile $RecordArenaSource $RecordArenaWvb
+Invoke-NativeSourceCompile $RecordArenaPrecisionSource $RecordArenaPrecisionWvb
+Invoke-NativeSourceCompile $CompilerSuccessSource $CompilerSuccessWvb
+Invoke-NativeSourceCompile $StructuralDataSource $StructuralDataWvb
+Invoke-NativeSourceCompile $StructuralTypesSource $StructuralTypesWvb
+Invoke-NativeSourceCompile $StructuralCapabilitiesSource $StructuralCapabilitiesWvb
+
+Invoke-NativeWebAssembly $SuccessWvb $SuccessWasm
+Invoke-NativeWebAssembly $OverflowWvb $OverflowWasm
+Invoke-NativeWebAssembly $StraightWvb $StraightWasm
+Invoke-NativeWebAssembly $SubtractOverflowWvb $SubtractOverflowWasm
+Invoke-NativeWebAssembly $MultiplyOverflowWvb $MultiplyOverflowWasm
+Invoke-NativeWebAssembly $NegateOverflowWvb $NegateOverflowWasm
+Invoke-NativeWebAssembly $MeteredLoopWvb $MeteredLoopWasm
+Invoke-NativeWebAssembly $NonterminatingLoopWvb $NonterminatingLoopWasm
+Invoke-NativeWebAssembly $StructuredControlWvb $StructuredControlWasm
+Invoke-NativeWebAssembly $StructuredControlElseWvb $StructuredControlElseWasm
+Invoke-NativeWebAssembly $SequentialIfWvb $SequentialIfWasm
+Invoke-NativeWebAssembly $BoundedCallsWvb $BoundedCallsWasm
+Invoke-NativeWebAssembly $BoundedCallsOverflowWvb $BoundedCallsOverflowWasm
+Invoke-NativeWebAssembly $CallsWithControlWvb $CallsWithControlWasm
+Invoke-NativeWebAssembly $CallsWithControlElseWvb $CallsWithControlElseWasm
+Invoke-NativeWebAssembly $MemoryBytesWvb $MemoryBytesWasm
+Invoke-NativeWebAssembly $MemoryTextWvb $MemoryTextWasm
+Invoke-NativeWebAssembly $RuntimeValuesWvb $RuntimeValuesWasm
+Invoke-NativeWebAssembly $RuntimeConcatWvb $RuntimeConcatWasm
+Invoke-NativeWebAssembly $RuntimeU16GuardWvb $RuntimeU16GuardWasm
+Invoke-NativeWebAssembly $RuntimeArenaWvb $RuntimeArenaWasm
+Invoke-NativeWebAssembly $RuntimeReclaimWvb $RuntimeReclaimWasm
+Invoke-NativeWebAssembly $RuntimeU32GuardWvb $RuntimeU32GuardWasm
+Invoke-NativeWebAssembly $RuntimeCallsWvb $RuntimeCallsWasm
+Invoke-NativeWebAssembly $WvbEnvelopeVerifyWvb $WvbEnvelopeVerifyWasm
+Invoke-NativeWebAssembly $WvbStructuralVerifyWvb $WvbStructuralVerifyWasm
+Invoke-NativeWebAssembly $WvbSemanticVerifyWvb $WvbSemanticVerifyWasm
+Invoke-NativeWebAssembly $WvbSemanticExpandedWvb $WvbSemanticExpandedWasm
+Invoke-NativeWebAssembly $WvbCompilerSemanticVerifyWvb $WvbCompilerSemanticVerifyWasm
+Invoke-NativeWebAssembly $WvbExecutableVerifyWvb $WvbExecutableVerifyWasm
+Invoke-NativeWebAssembly $WvbCompilerTypedVerifyWvb $WvbCompilerTypedVerifyWasm
+Invoke-NativeWebAssembly $WvbCompilerTypedSecondVerifyWvb $WvbCompilerTypedSecondVerifyWasm
+Invoke-NativeWebAssembly $WvbCompilerTypedThirdVerifyWvb $WvbCompilerTypedThirdVerifyWasm
+Invoke-NativeWebAssembly $WvbCompilerControlVerifyWvb $WvbCompilerControlVerifyWasm
+Invoke-NativeWebAssembly $WvbCompilerControlSecondVerifyWvb $WvbCompilerControlSecondVerifyWasm
+Invoke-NativeWebAssembly $WvbScalarInterpreterWvb $WvbScalarInterpreterWasm
 
 node $EngineVerifier `
     $SuccessWasm `

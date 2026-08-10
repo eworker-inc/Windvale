@@ -29,6 +29,15 @@ names.
 Unknown input must never select every suite. The complete 3,201-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
 
+The complete WebAssembly generation-and-verification owner remains a distinct
+long-running command rather than a fixed retirement-coordinator suite.
+WebAssembly backend sources, tools, fixtures, project manifests, exact native
+packages, verifier scripts, and their specification therefore select the
+stable `webassembly-native-verification` gap. That gap directs a maintainer to
+run `Verify-WebAssembly.ps1` on Windows and prevents a managed or unfiltered
+fallback. It remains a gap until the same command contract has an independently
+executed Linux owner that the changed-file front door can dispatch.
+
 The `console-verifier-reconstruction` lane owns its exact candidate,
 constructor, test command, project, and Windvale source closure. Its direct
 lowering, linking, assembly, hosted-verifier toolsets, profile-7 sources,

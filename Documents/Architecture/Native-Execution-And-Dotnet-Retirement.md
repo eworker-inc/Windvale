@@ -417,6 +417,17 @@ digests; independent Linux reconstruction and
 execution, clean or previous-seed bootstrap, grouped qualification, atomic
 installation, promotion, and recovery deletion remain.
 
+Decision 0504 removes the standalone WebAssembly verifier's normal managed
+compiler and backend execution. The current Windows route constructs the
+source/WVB corpus and exact compiler adapters through native front doors,
+lowers every admitted input through the manifest-bound paired native backend,
+and runs the strict Node.js engine plus record-arena and compiler probes. The
+complete command passes without loading .NET and leaves only the paired broad
+Seed commands plus GitHub qualification/release as direct normal managed entry
+points. Independent Linux execution, paired changed-file dispatch,
+backend-package reconstruction, cross-browser evidence, grouped qualification,
+promotion, and recovery retirement remain.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

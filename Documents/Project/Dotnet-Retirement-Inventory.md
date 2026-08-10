@@ -35,7 +35,7 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | T2 | Complete Seed, OS, golden, malformed, and differential suites | `managed-normal` | The C# harness owns the broad suite. A digest-bound native retirement coordinator now aggregates 3,201 transferred fixed cases, including twenty fixed unsafe WVB boundaries, four exact positive assembler products, the four WVO export-renamer cases, eleven OS Probe object-producer cases, seven system-kernel target cases, two process-policy source-object cases, two process-object reconstruction cases, the fifteen hosted-verifier publisher construction/admission, durable-promotion, and WVB-publisher cases, three current-compiler reconstruction cases, three segmented compiler toolset reconstruction cases, three WVO inspector reconstruction cases, three standard Wv-Linker reconstruction cases, three console-application-verifier reconstruction and two-snapshot compatibility cases, three console-application-publisher reconstruction and independent-publication cases, six baseline-JIT patch-plan/publication cases, the source-to-AOT chain, 200 hostile linker inputs, 256 hostile PE/ELF candidates, 19 canonical version-1 mutations, 15 valid/mutated hosted format-2 candidates, two segmented maximum-plus-one rejections, two maximum-valid segmented constructions, two exact console-packager source reconstructions, four hostile-size WVO consumer cases, three native-link-to-UEFI cases, four native Probe 40 construction/preservation cases, 256 frozen WVO differential inputs, 200 frozen WVA mutations plus 69 positive register/control/relocation vectors, and the 2,000-case random-containment corpus independently of a live C# oracle; remaining reusable cases must move to versioned fixtures and manifests rather than being ported line for line. |
 | O1 | Windvale OS boot-probe execution | `native-candidate` | `Verify-Os-Boot.ps1` now accepts one caller-supplied EFI application only after exact SHA-256 admission, runs it through the pinned QEMU/firmware boundary, and preserves both the supplied and run-private images without invoking the Stage 0 builder or `dotnet`. The normal, invalid-opcode, and general-protection native Probe 40 images pass their complete digest-bound serial contracts under pinned QEMU; the architecture faults report exact vectors 6 and 13 with error code 0. The two contained process-fault scenarios and promotion remain. |
 | O2 | Windvale OS probe-image construction | `native-candidate` | Portable Windvale owns exact UEFI v3 construction plus independent untrusted-byte verification. A hosted Windvale packager consumes the real digest-bound native linker's exact flat image and reported entry, matches the frozen Stage 0 writer byte for byte, preserves a destination on rejection, and rebuilds through its native Project 1 front door. Its paired 278,528-byte PE/ELF containers now reconstruct without .NET. A manifest-bound normal-scenario seed initially froze eleven Stage 0-produced WVOs from Decision 0444. Decisions 0446 through 0456 now construct all eleven in the ordinary Windvale-native build: the final process object regenerates 463,531 embedded payload bytes from canonical Windvale sources and versioned records while retaining only a 46,678-byte reviewed architecture fixture. Decision 0489 extends the memory-object producer and ordinary builder to the exact invalid-opcode and general-protection variants. The Windows/Linux launchers construct eleven objects through native producers, assemble three top-level objects, link fourteen inputs, and package each of those three exact EFI images without invoking `.NET`; the frozen object inventory is empty. The current-host eleven-case producer, seven-case kernel-target, two-case policy, two-case process-object, and four-case image lanes pass exact construction, admission, malformed-input or overwrite rejection, and existing-output preservation as applicable. Stage 0 remains the explicit regeneration/differential path. Independent Linux execution, a UEFI-specific durable publication transaction, the two contained process-fault scenarios, and final qualification remain required before promotion. |
-| W1 | Complete WebAssembly generation and verification | `native-candidate` | The normal static playground compiles source through direct import-free ABI-4 Windvale compiler Wasm, then verifies and executes the returned WVB through the separate ABI-3 interpreter Wasm. Pinned native routes regenerate both WVB inputs and the interpreter Wasm without .NET; a pinned segmented Wasm generator reproduces the direct compiler artifact during normal maintenance. Reconstructing that generator and the broader differential/qualification gate still retain managed recovery oracles pending grouped promotion. |
+| W1 | Complete WebAssembly generation and verification | `native-candidate` | The normal static playground compiles source through direct import-free ABI-4 Windvale compiler Wasm, then verifies and executes the returned WVB through the separate ABI-3 interpreter Wasm. Decision 0504 makes the complete Windows generation-and-verification command native: it builds the source corpus and compiler WVBs through the native front doors, invokes the digest-bound native WVB-to-Wasm backend through a generic success-only launcher, and runs the strict Node.js engine and probe evidence without loading .NET. That removes `Verify-WebAssembly.ps1` from the direct-managed-entry inventory. Independent Linux execution of the same package and verification contract, reconstruction of the retained segmented generator/backend packages, cross-browser evidence, grouped qualification, and promotion remain. |
 | G1 | Independent dual-host qualification | `managed-normal` | `.github/workflows/verify.yml` installs .NET and runs the managed Seed gate. Native replacement must retain Windows/Linux independence and fail-closed verification. |
 | R1 | Homepage and playground release | `native-candidate` | The homepage workflow publishes the static playground and its digest-pinned native package without installing .NET. Independent release promotion evidence remains before this row is called qualified. |
 | D1 | Local editable browser playground | `native-candidate` | `npm run dev:playground` builds and serves the static Monaco/native-WebAssembly application without starting Blazor or .NET. Cross-host promotion remains. |
@@ -141,6 +141,21 @@ current-host P1/C1 evidence recorded above without changing either standing or
 the machine-readable inventory. Independent Linux execution, grouped
 qualification, clean bootstrap, promotion, and recovery deletion remain.
 
+Current W1/direct-entry update:
+[Decision 0504](../Decisions/0504-Native-WebAssembly-Generation-And-Verification.md)
+replaces every normal managed invocation inside `Verify-WebAssembly.ps1` with
+the native source-to-WVB front doors and a manifest-bound native WVB-to-Wasm
+launcher. The complete current-Windows verifier passes in 1,619.5 seconds; its
+strict engine phase passes in 1,239.5 seconds, followed by the record-arena and
+compiler probes. The command remains the direct standalone owner rather than
+being added to the 3,201-case fixed coordinator because it is a long,
+Windows-only focused gate. Until a paired Linux owner exists, changed-file
+planning reports the explicit `webassembly-native-verification` evidence gap
+instead of invoking a managed or unfiltered fallback. This removes one normal
+direct managed entry point without changing W1's `native-candidate` standing.
+Independent Linux execution, package reconstruction, cross-browser evidence,
+grouped qualification, promotion, and recovery retirement remain.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by
@@ -190,15 +205,17 @@ qualification, and front-door promotion remain open.
 
 [Decision 0457](../Decisions/0457-Normal-Path-Dotnet-Audit.md) confirms that
 ordinary build, inspect, execute, assemble, lower, link, package, publish, Probe,
-website, and deployment routes are already .NET-free. Thirteen files contain
-direct managed invocations: four are normal verification entry points and nine
-are explicit recovery commands. Decision 0458 removes the one indirect normal
+website, and deployment routes are already .NET-free. Twelve files now contain
+direct managed invocations: three are normal broad verification/release entry
+points and nine are explicit recovery commands. Decision 0458 removes the one indirect normal
 call from `Verify-Changed.ps1`: it now selects focused native owners and refuses
 named gaps without invoking .NET. Decision 0459 then closes WVB 1.11 variant
 admission in the Windvale verifier while leaving native variant execution and
-hosted packaging explicit. The remaining retirement work is therefore focused
-verification/runtime gap closure and final GitHub orchestration cutover, not a
-line-for-line rewrite of the managed harness.
+hosted packaging explicit. Decision 0504 then removes the standalone
+WebAssembly verifier from that direct list. The remaining retirement work is
+therefore focused backend/runtime and broad-suite gap closure, paired Linux
+evidence, final GitHub orchestration cutover, and the digest-bound recovery
+archive—not a line-for-line rewrite of the managed harness.
 
 Decisions [0423](../Decisions/0423-Compiler-Scale-Native-Lowerer-Admission.md),
 [0425](../Decisions/0425-Compiler-Scale-Native-Wvo-Resource-Staging.md), and
