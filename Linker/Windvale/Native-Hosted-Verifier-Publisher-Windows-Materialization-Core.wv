@@ -15,6 +15,9 @@ fn Response(Input: bytes, Status: u32) -> bytes {
         if Bytesˉlength(Input) == 686592u32 {
             Applicationˉbytes = 681472u32;
         }
+        if Bytesˉlength(Input) == 1318912u32 {
+            Applicationˉbytes = 1313792u32;
+        }
         Total = 32u32 + Applicationˉbytes;
         Offset = 32u32;
         Target = 1u32;
@@ -29,7 +32,8 @@ fn Response(Input: bytes, Status: u32) -> bytes {
 
 fn Envelopeˉvalid(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
-    if Total != 260608u32 && Total != 686592u32 { return false; }
+    if Total != 260608u32 && Total != 686592u32 &&
+        Total != 1318912u32 { return false; }
     return Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1297569367u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 8u32) == Total &&
@@ -47,6 +51,7 @@ fn Baseˉvalid(Base: bytes, Variant: u32) -> bool {
     var Codeˉextent: u32 = 239490u32;
     var Dataˉfile: u32 = 240128u32;
     var Relocationˉfile: u32 = 248320u32;
+    var Metadataˉdirectory: u32 = 245952u32;
     if Variant == 1u32 {
         Total = 674816u32;
         Codeˉbytes = 665600u32;
@@ -56,8 +61,20 @@ fn Baseˉvalid(Base: bytes, Variant: u32) -> bool {
         Codeˉextent = 665106u32;
         Dataˉfile = 666112u32;
         Relocationˉfile = 674304u32;
+        Metadataˉdirectory = 671936u32;
     }
-    return Variant <= 1u32 && Bytesˉlength(Base) == Total &&
+    if Variant == 2u32 {
+        Total = 1307136u32;
+        Codeˉbytes = 1297920u32;
+        Imageˉend = 145043456u32;
+        Dataˉaddress = 1302528u32;
+        Relocationˉaddress = 145039360u32;
+        Codeˉextent = 1297506u32;
+        Dataˉfile = 1298432u32;
+        Relocationˉfile = 1306624u32;
+        Metadataˉdirectory = 1302720u32;
+    }
+    return Variant <= 2u32 && Bytesˉlength(Base) == Total &&
         Bytesˉreadˉu16ˉlittle(Base, 0u32) == 23117u32 &&
         Bytesˉreadˉu32ˉlittle(Base, 60u32) == 128u32 &&
         Bytesˉreadˉu32ˉlittle(Base, 128u32) == 17744u32 &&
@@ -69,7 +86,7 @@ fn Baseˉvalid(Base: bytes, Variant: u32) -> bool {
         Bytesˉreadˉu32ˉlittle(Base, 208u32) == Imageˉend &&
         Bytesˉreadˉu32ˉlittle(Base, 272u32) == Dataˉaddress &&
         Bytesˉreadˉu32ˉlittle(Base, 304u32) == Relocationˉaddress &&
-        Bytesˉreadˉu32ˉlittle(Base, 360u32) == 245952u32 + Variant * 425984u32 &&
+        Bytesˉreadˉu32ˉlittle(Base, 360u32) == Metadataˉdirectory &&
         Bytesˉreadˉu32ˉlittle(Base, 364u32) == 128u32 &&
         Bytesˉreadˉu32ˉlittle(Base, 400u32) == Codeˉextent &&
         Bytesˉreadˉu32ˉlittle(Base, 408u32) == Codeˉbytes &&
@@ -93,6 +110,19 @@ fn Recordsˉvalid(Construction: bytes, Objects: bytes, Metadata: bytes, Imports:
         Outputˉbytes = 681472u32;
         Importsˉaddress = 679936u32;
     }
+    if Variant == 2u32 {
+        Bundleˉbytes = 1293410u32;
+        Adapterˉfile = 1298032u32;
+        Adapterˉaddress = 1301616u32;
+        Outputˉbytes = 1313792u32;
+        Importsˉaddress = 1310720u32;
+    }
+    var Metadataˉmagic: u32 = 1347835479u32;
+    var Storedˉvariant: u32 = Variant;
+    if Variant == 2u32 {
+        Metadataˉmagic = 1112561239u32;
+        Storedˉvariant = 0u32;
+    }
     return Bytesˉlength(Construction) == 416u32 &&
         Bytesˉreadˉu32ˉlittle(Construction, 0u32) == 1380144727u32 &&
         Bytesˉreadˉu32ˉlittle(Construction, 4u32) == 1u32 &&
@@ -115,11 +145,11 @@ fn Recordsˉvalid(Construction: bytes, Objects: bytes, Metadata: bytes, Imports:
         Bytesˉreadˉu32ˉlittle(Objects, 40u32) == 5355u32 &&
         Bytesˉreadˉu32ˉlittle(Objects, 44u32) == 1685u32 &&
         Bytesˉlength(Metadata) == 128u32 &&
-        Bytesˉreadˉu32ˉlittle(Metadata, 0u32) == 1347835479u32 &&
+        Bytesˉreadˉu32ˉlittle(Metadata, 0u32) == Metadataˉmagic &&
         Bytesˉreadˉu32ˉlittle(Metadata, 4u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Metadata, 8u32) == 128u32 &&
         Bytesˉreadˉu32ˉlittle(Metadata, 12u32) == 1u32 &&
-        Bytesˉreadˉu32ˉlittle(Metadata, 112u32) == Variant &&
+        Bytesˉreadˉu32ˉlittle(Metadata, 112u32) == Storedˉvariant &&
         Bytesˉlength(Imports) == 4128u32 &&
         Bytesˉreadˉu32ˉlittle(Imports, 0u32) == 1296651863u32 &&
         Bytesˉreadˉu32ˉlittle(Imports, 4u32) == 1u32 &&
@@ -149,6 +179,16 @@ fn Header(Base: bytes, Variant: u32) -> bytes {
         Codeˉextent = 672133u32;
         Importsˉfile = 672768u32;
         Relocationˉfile = 680960u32;
+    }
+    if Variant == 2u32 {
+        Codeˉbytes = 1304576u32;
+        Imageˉend = 145051648u32;
+        Importsˉaddress = 1310720u32;
+        Relocationˉaddress = 145047552u32;
+        Importˉdirectory = 1310960u32;
+        Codeˉextent = 1304501u32;
+        Importsˉfile = 1305088u32;
+        Relocationˉfile = 1313280u32;
     }
     Result = Build.Patchˉu8(Result, 154u32, 5u8);
     Result = Build.Patchˉu32(Result, 156u32, Codeˉbytes);
@@ -196,6 +236,14 @@ export fn Publisherˉwindowsˉmaterialize(Input: bytes) -> bytes {
         Tailˉoffset = 670208u32;
         Finalˉtail = 671840u32;
         Outputˉbytes = 681472u32;
+    }
+    if Variant == 2u32 {
+        Bundleˉbytes = 1293410u32;
+        Adapterˉfill = 14u32;
+        Shaˉfill = 75u32;
+        Tailˉoffset = 1302528u32;
+        Finalˉtail = 1304160u32;
+        Outputˉbytes = 1313792u32;
     }
     var Application: bytes = Header(Base, Variant);
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 64u32, 5u32));

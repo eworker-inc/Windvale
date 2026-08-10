@@ -1,12 +1,12 @@
 {
-  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-12",
+  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-13",
   "status": "candidate",
-  "sourceDecision": "0487",
+  "sourceDecision": "0488",
   "provenanceDecision": "0474",
   "qualification": "current-host-focused",
   "construction": "verified-digest-bound-front-door",
-  "sha256SumsBytes": 4812,
-  "sha256SumsSha256": "76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2",
+  "sha256SumsBytes": 4980,
+  "sha256SumsSha256": "f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36",
   "commands": [
     {
       "name": "wvhostverifieridentity",
@@ -64,120 +64,120 @@
     {
       "name": "publisher-identity-request",
       "path": "Publisher-Identity-Request.wvb",
-      "bytes": 46285,
-      "sha256": "c8ec3e6091107d76ae095db6d1e360c6778edc7254df107e7a2e862ca68912c3",
+      "bytes": 51009,
+      "sha256": "39d5709b73c3774be4d52d5b08a122d13bcf33e0e109196664a454201a8f2683",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Identity-Request.wvproj"
     },
     {
       "name": "publisher-identity-request-tool",
       "path": "Publisher-Identity-Request-Tool.wvb",
-      "bytes": 49078,
-      "sha256": "a51c83bff2b365cc856e6b1392eebac0ad5d9924aee261f5ef00c4a89a5974c4",
+      "bytes": 53802,
+      "sha256": "cc11d77b6422c34ddd46218e7121178fc12574258a31b61e83bdb1fb2452186e",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Identity-Request-Tool.wvproj"
     },
     {
       "name": "publisher-structure-request",
       "path": "Publisher-Structure-Request.wvb",
-      "bytes": 22765,
-      "sha256": "1b8e7ed4cf88424c76408e880c2ef3a677349db22a80397604cb08d1908e550d",
+      "bytes": 23908,
+      "sha256": "ae640ceb2dc3dc03336b5ac2a27277559a2039cb2c9232bc1ec86e6adc18e536",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Structure-Request.wvproj"
     },
     {
       "name": "publisher-structure-request-tool",
       "path": "Publisher-Structure-Request-Tool.wvb",
-      "bytes": 24135,
-      "sha256": "922b1e5ccce1e4033a581a46a92e2e2176bf9094cad622fb6733f76b83b20bf7",
+      "bytes": 25278,
+      "sha256": "c293dfb9bd0fcdc092d862ff6c6cbb4119ba7a11271d1c2f7c480ab38cbd3555",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Structure-Request-Tool.wvproj"
     },
     {
       "name": "publisher-construction-request",
       "path": "Publisher-Construction-Request.wvb",
-      "bytes": 19722,
-      "sha256": "a51c7f85311d0ef481d25cd2e1909a590782bd3f6143e919c85ddf5678f0d92d",
+      "bytes": 25131,
+      "sha256": "6dc62ed440cab2c752105853a0e4922e2d89f7a53897216143bdcc4f82c932bb",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Construction-Request.wvproj"
     },
     {
       "name": "publisher-construction-request-tool",
       "path": "Publisher-Construction-Request-Tool.wvb",
-      "bytes": 21231,
-      "sha256": "2d8a279bb69447343e078aa3edede76d847cc33f3c6239fb8d1cbe81eb7b5372",
+      "bytes": 26640,
+      "sha256": "f42b95fd987b48f8deb109b48fee4f0be358e3dc6d6b0de307d563f15741c4f4",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Construction-Request-Tool.wvproj"
     },
     {
       "name": "publisher-target-request",
       "path": "Publisher-Target-Request.wvb",
-      "bytes": 14022,
-      "sha256": "587255641010ba31288bef675f90a5a114de60b1e615f715119d958179576b4c",
+      "bytes": 19924,
+      "sha256": "5f4a80d60044534a6e2008626f405b9be06ae6d8343b78480cac0d298bbd6f0b",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Target-Request.wvproj"
     },
     {
       "name": "publisher-target-request-tool",
       "path": "Publisher-Target-Request-Tool.wvb",
-      "bytes": 15452,
-      "sha256": "1590bf7f6d7753fc11fc38f115ef655af44e8a2f99a29c87f904e5a5e944edf0",
+      "bytes": 21354,
+      "sha256": "78c16ebc5b59b820ff004f5f024268c85ba4103e0f94866da8655eec734ac748",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj"
     },
     {
       "name": "publisher-object-instantiation",
       "path": "Publisher-Object-Instantiation.wvb",
-      "bytes": 16325,
-      "sha256": "d1e39b8779bedc505bd52777448ec390114fe84c5d9a3770ad12d76184bde353",
+      "bytes": 16537,
+      "sha256": "087c552292858232912e15c15df792bc4d385fda7ea0af2a4090018854758897",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.wvproj"
     },
     {
       "name": "publisher-metadata-producer-tool",
       "path": "Publisher-Metadata-Producer-Tool.wvb",
-      "bytes": 60189,
-      "sha256": "cc823f1bbae061030f2d69f7e10c9b64c141a6ba70484d334ed5c8a8b13d7160",
+      "bytes": 69072,
+      "sha256": "222b92872763d005b8b8dbc11819111b1acfe3506bd0c0e6e011ceee14887568",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Metadata-Producer-Tool.wvproj"
     },
     {
       "name": "publisher-object-instantiation-tool",
       "path": "Publisher-Object-Instantiation-Tool.wvb",
-      "bytes": 22101,
-      "sha256": "b9e1460d0817947ed0de05b915de72f8ae3b905c87fb3ae89782a9e1e1ca822d",
+      "bytes": 22313,
+      "sha256": "52b988a10c98c35946db93a0b4f2f9323e29defd7785373b5056286a40819ab9",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation-Tool.wvproj"
     },
     {
       "name": "publisher-windows-imports",
       "path": "Publisher-Windows-Imports.wvb",
-      "bytes": 9550,
-      "sha256": "06e50e7d38dc468e2ca65e662b9e28e8ac21ac89b1edad8b92a13fe1fb8e1f1e",
+      "bytes": 9643,
+      "sha256": "12651ff9d806b39b575fb6f6153c6d8a1d16256506be8d98f3f339ccbcd5fbfe",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.wvproj"
     },
     {
       "name": "publisher-windows-imports-tool",
       "path": "Publisher-Windows-Imports-Tool.wvb",
-      "bytes": 11622,
-      "sha256": "0902d141cd275c8e6a68c0189c71fcebceb8a32c970fcce3120980d0793efe08",
+      "bytes": 12052,
+      "sha256": "474388c62ab8dd60eb1d9393bd4ea58460a163933b2f2bccc3e1845b3cdbd4b6",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports-Tool.wvproj"
     },
     {
       "name": "publisher-linux-materialization",
       "path": "Publisher-Linux-Materialization.wvb",
-      "bytes": 13636,
-      "sha256": "efdd47d9cae3362c2bf2b4bcb5046cf323137bfc3f54e425f99f4f54e87d63ca",
+      "bytes": 14349,
+      "sha256": "432cc05edc7708d96092063c2d256d01dcad19f32f934bdcf7d1515abdeefb59",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj"
     },
     {
       "name": "publisher-linux-materialization-tool",
       "path": "Publisher-Linux-Materialization-Tool.wvb",
-      "bytes": 17400,
-      "sha256": "63de1aa3577f71d2a7c0e40f6f1bbe8296ece9cb637661710b0cad6ad1c4394c",
+      "bytes": 18198,
+      "sha256": "fc8a981fad55ad3576053ab0fe54717d3128410ffe0f86d43585249373d78f34",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization-Tool.wvproj"
     },
     {
       "name": "publisher-windows-materialization",
       "path": "Publisher-Windows-Materialization.wvb",
-      "bytes": 16628,
-      "sha256": "addaa929245787dfd2282671e52382bb069d1735f37fc7f8fc905a492574860c",
+      "bytes": 17799,
+      "sha256": "4042ae5fdac77f9a0fce5a194c620ad0486455457904b30ce59648f5bb90d81b",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj"
     },
     {
       "name": "publisher-windows-materialization-tool",
       "path": "Publisher-Windows-Materialization-Tool.wvb",
-      "bytes": 20590,
-      "sha256": "fef4d35e6938c1465d61fb87b2c738763d965d832c293eb9cec796969935c1a4",
+      "bytes": 21846,
+      "sha256": "c2720d87ce0b16a2e5681c7928ce66e988200f8dc1c5c48318376e03329c4002",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization-Tool.wvproj"
     },
     {
@@ -221,6 +221,20 @@
       "bytes": 660123,
       "sha256": "6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d",
       "sourceWvb": "Publisher-Promoter.wvb"
+    },
+    {
+      "name": "wvb-publisher",
+      "path": "Wvb-Publisher.wvb",
+      "bytes": 159328,
+      "sha256": "5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219",
+      "sourceProject": "Windvale-Wvb-Publisher.wvproj"
+    },
+    {
+      "name": "wvb-publisher-native-object",
+      "path": "Wvb-Publisher.wvo",
+      "bytes": 1292411,
+      "sha256": "90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493",
+      "sourceWvb": "Wvb-Publisher.wvb"
     }
   ],
   "packages": [
@@ -228,88 +242,88 @@
       "name": "windows-x64-wvhostverifieridentity",
       "path": "windows-x64/wvhostverifieridentity.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 728064,
-      "sha256": "653c054c9348f87c07ec89fadc37b3055049e74f376b25ecca210159d8bc202f",
+      "bytes": 759296,
+      "sha256": "3b9de3029d738667c0c723c228f0d8c956a0cf47d6a24bcdd9eac9eedee4323b",
       "sourceArtifact": "Publisher-Identity-Request-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifieridentity",
       "path": "linux-x64/wvhostverifieridentity.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 729088,
-      "sha256": "3d8e2046e9e3c3b186b488714345b9314faf3d9c2a36cd0d1d210745d2440a89",
+      "bytes": 761856,
+      "sha256": "03834b98369bb257f684dc6cc3005adff29f873b080c8f1b5dd0aac049421f6c",
       "sourceArtifact": "Publisher-Identity-Request-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifierstructure",
       "path": "windows-x64/wvhostverifierstructure.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 216576,
-      "sha256": "d138819d2d5c7dcbf9d90d00fd9ac84958f7bd93771c0baa225041d38cc4774a",
+      "bytes": 224256,
+      "sha256": "9105fbad2b2f5884e02eb6180ee3e65c7fa750b5190cc8cb1ffc4355fc9ff8ae",
       "sourceArtifact": "Publisher-Structure-Request-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifierstructure",
       "path": "linux-x64/wvhostverifierstructure.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 217088,
-      "sha256": "78feda5f82aac4d2b24c6fdd06828c998fb7f25c560c424701318111a292ad07",
+      "bytes": 225280,
+      "sha256": "8a75c45dd90ea36ae54e8a1f228045bd78aac5c570e14119fd0a6350fa225d1d",
       "sourceArtifact": "Publisher-Structure-Request-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifierconstructrequest",
       "path": "windows-x64/wvhostverifierconstructrequest.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 183808,
-      "sha256": "9ab82c2dfbc749c75f3bb07b5e5c6a0480c960342c273799a8ce87470bcf7beb",
+      "bytes": 218624,
+      "sha256": "00b0d04126b5ee00e0203e2d3f24e2ee4a959eb60d616df76c935f4e0980d6ed",
       "sourceArtifact": "Publisher-Construction-Request-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifierconstructrequest",
       "path": "linux-x64/wvhostverifierconstructrequest.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 184320,
-      "sha256": "f3fd02691d83e6454f20b0266ef0bc006be6855e0b16576356feee0ec1a92313",
+      "bytes": 217088,
+      "sha256": "33a3013927b62c09b3dfabfa12e0c8a03313883979381b373aee60575ffa9d70",
       "sourceArtifact": "Publisher-Construction-Request-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifiertargets",
       "path": "windows-x64/wvhostverifiertargets.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 128000,
-      "sha256": "b49877e04113ddaac62385d4abe218b224a30c89ef2a2d980b56c4bf0cb83fe6",
+      "bytes": 166912,
+      "sha256": "b54a108759977efb1828613ca2d1579d5c80b5e1017e289918a0ea95e3da1b7e",
       "sourceArtifact": "Publisher-Target-Request-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifiertargets",
       "path": "linux-x64/wvhostverifiertargets.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 126976,
-      "sha256": "9725c6db5042835ab19f32ca7864146cbee4bbfb44bf7c4b1f2c05b5d58a93a3",
+      "bytes": 167936,
+      "sha256": "d6a37b6e12fd03c92219499e259510abac00a1a512f627df6e404c097f56b5bb",
       "sourceArtifact": "Publisher-Target-Request-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifierproducemetadata",
       "path": "windows-x64/wvhostverifierproducemetadata.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 816640,
-      "sha256": "30f2eea461df042edaf59e4c8897d53c1a48dab0b50b945fc4dbb38e66a0f828",
+      "bytes": 873984,
+      "sha256": "79bd9816a9af88ee22bce07374da5fd8ddf63753b145f4e035b656057a1a6553",
       "sourceArtifact": "Publisher-Metadata-Producer-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifierproducemetadata",
       "path": "linux-x64/wvhostverifierproducemetadata.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 819200,
-      "sha256": "57c7ad47982b596271806663a9b7190d975d1474ac9fb00a19702461bb41ba36",
+      "bytes": 876544,
+      "sha256": "8afd64824ddbe282c775d0860609fdefe4c3166f7285578374636a4f1133369b",
       "sourceArtifact": "Publisher-Metadata-Producer-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifierpublishobjects",
       "path": "windows-x64/wvhostverifierpublishobjects.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 258048,
-      "sha256": "7ecb2c238b8d3ef5c3aa80577fc6a154da8b27bf352d9b2d9734efe422314605",
+      "bytes": 259072,
+      "sha256": "70a37fcabe5cf64f4f2177090a138954223255475601c595da02e67ca7dc7dbd",
       "sourceArtifact": "Publisher-Object-Instantiation-Tool.wvb"
     },
     {
@@ -317,55 +331,55 @@
       "path": "linux-x64/wvhostverifierpublishobjects.elf",
       "target": "linux-x64-native-hosted-tool-v1",
       "bytes": 258048,
-      "sha256": "0fb9b5ae68001d97178b0b84537cb31e66aa843dbd77db700c0caad979439085",
+      "sha256": "8726912896d40292d69c49f8043e50a0884fa5068ade7d621320e716f0608e48",
       "sourceArtifact": "Publisher-Object-Instantiation-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifierpublishimports",
       "path": "windows-x64/wvhostverifierpublishimports.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 140800,
-      "sha256": "e7b4013f6031a79d84fbea8074535456d8310acd3d25b419eeeda2fd022d2dc6",
+      "bytes": 143872,
+      "sha256": "ddfc0713f0bde1db5280304276c703b7404fa1e98c1467a463ab2aa1841ffaf8",
       "sourceArtifact": "Publisher-Windows-Imports-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifierpublishimports",
       "path": "linux-x64/wvhostverifierpublishimports.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 139264,
-      "sha256": "5deb1b897922544f0983cbd4dc3445063e1610524be021efc77e63ab14fc1a35",
+      "bytes": 143360,
+      "sha256": "ec7cf4fdb1a5c1ce26d721405c393d255e15d5ad93cb79bd0b4661f774051e5c",
       "sourceArtifact": "Publisher-Windows-Imports-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifierpublishlinux",
       "path": "windows-x64/wvhostverifierpublishlinux.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 201216,
-      "sha256": "0c3f9f52f96ea0a5d673e8ed58a2476fc6dce65b1a7b2607d6dcf4c74fafa21a",
+      "bytes": 202752,
+      "sha256": "971db6b3a33ad8e60e904b0b56e8eadeca45cd1bc21dc720c0b286bb8f67fe60",
       "sourceArtifact": "Publisher-Linux-Materialization-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifierpublishlinux",
       "path": "linux-x64/wvhostverifierpublishlinux.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 200704,
-      "sha256": "c4899c72eea256339a2cd9bdecb370f6f16d0c253528fcd2bfb4f47a4b682f6e",
+      "bytes": 204800,
+      "sha256": "fa1a4d9a96fee35c5cf6f176acbc8257c61000740e7c46570842cefdb1c1803a",
       "sourceArtifact": "Publisher-Linux-Materialization-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifierpublishwindows",
       "path": "windows-x64/wvhostverifierpublishwindows.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 228352,
-      "sha256": "93b874b60f288fd0a2c3ed0a2ed7f1de5f7fb638804bd69806f2d3b4c121b089",
+      "bytes": 236032,
+      "sha256": "c005f42a3aef393c16e961959b655ae043d941e1a8acec239ff475801231f80c",
       "sourceArtifact": "Publisher-Windows-Materialization-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifierpublishwindows",
       "path": "linux-x64/wvhostverifierpublishwindows.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 229376,
-      "sha256": "281cc5e15c5f2dc1837e753e9d6137b58c2e2fe1c44ab75a475b5ac538b0026c",
+      "bytes": 237568,
+      "sha256": "6d8684777ebf806842c2cc0c2bdf93e675db3dc198b738a44853aa678650af41",
       "sourceArtifact": "Publisher-Windows-Materialization-Tool.wvb"
     },
     {

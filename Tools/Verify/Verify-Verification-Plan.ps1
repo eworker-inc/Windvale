@@ -124,7 +124,8 @@ $NativeCases = @(
             'Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj',
             'Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj',
-            'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
+            'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj',
+            'Windvale-Wvb-Publisher.wvproj'
         )
         Suites = @('publisher-rejections', 'hosted-verifier-publisher-files')
         Gaps = @()
@@ -138,6 +139,16 @@ $NativeCases = @(
             'Artifacts/Native-Hosted-Verifier-Publisher-Promoter-Candidate/Manifest.json'
         )
         Suites = @('publisher-rejections', 'hosted-verifier-publisher-files')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WVB publisher construction dispatch'
+        Paths = @(
+            'Tools/Native/Construct-Wvb-Publisher.cmd',
+            'Artifacts/Native-Wvb-Publisher-Candidate/Manifest.json'
+        )
+        Suites = @('hosted-verifier-publisher-files')
         Gaps = @()
         VerifyPlan = $false
     },

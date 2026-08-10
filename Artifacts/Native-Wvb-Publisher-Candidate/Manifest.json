@@ -1,0 +1,28 @@
+{
+  "format": "windvale-native-wvb-publisher-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0488",
+  "provenanceDecision": "0459",
+  "qualification": "current-host-focused",
+  "construction": "windvale-native-role-aware-publisher-overlay",
+  "artifacts": [
+    {
+      "name": "windows-x64-wvb-publisher",
+      "path": "windows-x64-wvpublish.exe",
+      "target": "windows-x64-native-wvb-publisher-v1",
+      "bytes": 1313792,
+      "sha256": "e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1",
+      "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvb",
+      "sourceWvo": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvo"
+    },
+    {
+      "name": "linux-x64-wvb-publisher",
+      "path": "linux-x64-wvpublish.elf",
+      "target": "linux-x64-native-wvb-publisher-v1",
+      "bytes": 1311685,
+      "sha256": "3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72",
+      "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvb",
+      "sourceWvo": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvo"
+    }
+  ]
+}

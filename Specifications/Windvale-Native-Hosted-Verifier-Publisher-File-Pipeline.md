@@ -18,9 +18,9 @@ avoid size; each module has one named contract.
 The new ordinary-file boundaries are:
 
 ```text
-wvhostverifierproducemetadata [variant:0|1] <target:1|2> <module.wvb> <startup.wvo> <metadata.wvvp>
+wvhostverifierproducemetadata [role:0|1|2] <target:1|2> <module.wvb> <startup.wvo> <metadata.wvvp>
 wvhostverifierpublishobjects <request.wvcr> <targets.wvpt> <startup.wvo> <adapter.wvo> <sha256.wvo> <objects.wvio>
-wvhostverifierpublishimports [publisher|promoter] <imports.wvim>
+wvhostverifierpublishimports [publisher|promoter|wvb-publisher] <imports.wvim>
 wvhostverifierpublishlinux <base.elf> <request.wvcr> <objects.wvio> <metadata.wvvp> <application.elf>
 wvhostverifierpublishwindows <base.exe> <request.wvcr> <objects.wvio> <metadata.wvvp> <imports.wvim> <application.exe>
 ```
@@ -54,16 +54,16 @@ All WVBs are built through the digest-bound native source front door.
 
 | Tool WVB | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata producer | 60,189 | `cc823f1bbae061030f2d69f7e10c9b64c141a6ba70484d334ed5c8a8b13d7160` |
-| Object instantiation | 22,101 | `b9e1460d0817947ed0de05b915de72f8ae3b905c87fb3ae89782a9e1e1ca822d` |
-| Windows imports | 11,622 | `0902d141cd275c8e6a68c0189c71fcebceb8a32c970fcce3120980d0793efe08` |
-| Linux materialization | 17,400 | `63de1aa3577f71d2a7c0e40f6f1bbe8296ece9cb637661710b0cad6ad1c4394c` |
-| Windows materialization | 20,590 | `fef4d35e6938c1465d61fb87b2c738763d965d832c293eb9cec796969935c1a4` |
+| Metadata producer | 69,072 | `222b92872763d005b8b8dbc11819111b1acfe3506bd0c0e6e011ceee14887568` |
+| Object instantiation | 22,313 | `52b988a10c98c35946db93a0b4f2f9323e29defd7785373b5056286a40819ab9` |
+| Windows imports | 12,052 | `474388c62ab8dd60eb1d9393bd4ea58460a163933b2f2bccc3e1845b3cdbd4b6` |
+| Linux materialization | 18,198 | `fc8a981fad55ad3576053ab0fe54717d3128410ffe0f86d43585249373d78f34` |
+| Windows materialization | 21,846 | `c2720d87ce0b16a2e5681c7928ce66e988200f8dc1c5c48318376e03329c4002` |
 
 ## Evidence and remaining work
 
-The 12-case native owner builds both publisher and promoter roles for both
-targets, reproduces the exact applications, exercises read-only admission, and
+The 15-case native owner builds publisher, promoter, and WVB-publisher roles
+for both targets, reproduces the exact applications, exercises read-only admission, and
 uses the current-host promoter and publisher as one durable installation chain.
 Corrupt identity, corrupt ordered targets, and output aliasing reject while
 preserving existing destinations. The managed differential test remains

@@ -26,7 +26,8 @@ fn Response(Input: bytes, Status: u32) -> bytes {
 
 fn Envelopeˉvalid(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
-    if Total != 255581u32 && Total != 681565u32 { return false; }
+    if Total != 255581u32 && Total != 681565u32 &&
+        Total != 1312349u32 { return false; }
     return Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1296848471u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 8u32) == Total &&
@@ -41,8 +42,27 @@ fn Inputsˉvalid(
     Objects: bytes,
     Variant: u32
 ) -> bool {
-    return Variant <= 1u32 &&
-        Bytesˉlength(Base) == 249856u32 + Variant * 425984u32 &&
+    var Baseˉbytes: u32 = 249856u32;
+    var Bundleˉbytes: u32 = 235077u32;
+    var Adapterˉfile: u32 = 249856u32;
+    var Adapterˉaddress: u32 = 142929920u32;
+    var Outputˉbytes: u32 = 254917u32;
+    if Variant == 1u32 {
+        Baseˉbytes = 675840u32;
+        Bundleˉbytes = 660693u32;
+        Adapterˉfile = 675840u32;
+        Adapterˉaddress = 143355904u32;
+        Outputˉbytes = 680901u32;
+    }
+    if Variant == 2u32 {
+        Baseˉbytes = 1306624u32;
+        Bundleˉbytes = 1293093u32;
+        Adapterˉfile = 1306624u32;
+        Adapterˉaddress = 143986688u32;
+        Outputˉbytes = 1311685u32;
+    }
+    return Variant <= 2u32 &&
+        Bytesˉlength(Base) == Baseˉbytes &&
         Bytesˉreadˉu32ˉlittle(Base, 0u32) == 1179403647u32 &&
         Bytesˉreadˉu8(Base, 4u32) == 2u8 &&
         Bytesˉreadˉu8(Base, 5u32) == 1u8 &&
@@ -61,10 +81,10 @@ fn Inputsˉvalid(
         Bytesˉreadˉu32ˉlittle(Construction, 4u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Construction, 12u32) == 2u32 &&
         Bytesˉreadˉu32ˉlittle(Construction, 28u32) == Variant &&
-        Bytesˉreadˉu32ˉlittle(Construction, 72u32) == 235077u32 + Variant * 425616u32 &&
-        Bytesˉreadˉu32ˉlittle(Construction, 132u32) == 249856u32 + Variant * 425984u32 &&
-        Bytesˉreadˉu32ˉlittle(Construction, 136u32) == 142929920u32 + Variant * 425984u32 &&
-        Bytesˉreadˉu32ˉlittle(Construction, 156u32) == 254917u32 + Variant * 425984u32 &&
+        Bytesˉreadˉu32ˉlittle(Construction, 72u32) == Bundleˉbytes &&
+        Bytesˉreadˉu32ˉlittle(Construction, 132u32) == Adapterˉfile &&
+        Bytesˉreadˉu32ˉlittle(Construction, 136u32) == Adapterˉaddress &&
+        Bytesˉreadˉu32ˉlittle(Construction, 156u32) == Outputˉbytes &&
         Bytesˉlength(Objects) == 5117u32 &&
         Bytesˉreadˉu32ˉlittle(Objects, 0u32) == 1330206295u32 &&
         Bytesˉreadˉu32ˉlittle(Objects, 4u32) == 1u32 &&
@@ -90,12 +110,18 @@ fn Header(Base: bytes, Variant: u32) -> bytes {
     Result = Build.Replace(Result, 344u32, 56u32, Build.Zeros(56u32));
     Result = Build.Patchˉu32(Result, 344u32, 1u32);
     Result = Build.Patchˉu32(Result, 348u32, 5u32);
-    Result = Build.Patchˉu64(
-        Result, 352u32, 249856u32 + Variant * 425984u32, 0u32
-    );
-    Result = Build.Patchˉu64(
-        Result, 360u32, 142929920u32 + Variant * 425984u32, 0u32
-    );
+    var Adapterˉfile: u32 = 249856u32;
+    var Adapterˉaddress: u32 = 142929920u32;
+    if Variant == 1u32 {
+        Adapterˉfile = 675840u32;
+        Adapterˉaddress = 143355904u32;
+    }
+    if Variant == 2u32 {
+        Adapterˉfile = 1306624u32;
+        Adapterˉaddress = 143986688u32;
+    }
+    Result = Build.Patchˉu64(Result, 352u32, Adapterˉfile, 0u32);
+    Result = Build.Patchˉu64(Result, 360u32, Adapterˉaddress, 0u32);
     Result = Build.Patchˉu64(Result, 376u32, 5061u32, 0u32);
     Result = Build.Patchˉu64(Result, 384u32, 5061u32, 0u32);
     Result = Build.Patchˉu64(Result, 392u32, 4096u32, 0u32);
@@ -111,31 +137,49 @@ export fn Publisherˉlinuxˉmaterialize(Input: bytes) -> bytes {
     let Objects: bytes = Bytesˉslice(Input, 480u32 + Baseˉbytes, 5117u32);
     let Metadata: bytes = Bytesˉslice(Input, 5597u32 + Baseˉbytes, 128u32);
     let Variant: u32 = Bytesˉreadˉu32ˉlittle(Construction, 28u32);
+    var Metadataˉmagic: u32 = 1347835479u32;
+    var Storedˉvariant: u32 = Variant;
+    if Variant == 2u32 {
+        Metadataˉmagic = 1112561239u32;
+        Storedˉvariant = 0u32;
+    }
     if !Inputsˉvalid(Base, Construction, Objects, Variant) ||
         Bytesˉlength(Metadata) != 128u32 ||
-        Bytesˉreadˉu32ˉlittle(Metadata, 0u32) != 1347835479u32 ||
+        Bytesˉreadˉu32ˉlittle(Metadata, 0u32) != Metadataˉmagic ||
         Bytesˉreadˉu32ˉlittle(Metadata, 4u32) != 1u32 ||
         Bytesˉreadˉu32ˉlittle(Metadata, 8u32) != 128u32 ||
         Bytesˉreadˉu32ˉlittle(Metadata, 12u32) != 2u32 ||
-        Bytesˉreadˉu32ˉlittle(Metadata, 112u32) != Variant {
+        Bytesˉreadˉu32ˉlittle(Metadata, 112u32) != Storedˉvariant {
         return Response(Input, 2u32);
+    }
+    var Metadataˉfile: u32 = 247264u32;
+    var Tailˉfile: u32 = 247392u32;
+    var Outputˉbytes: u32 = 254917u32;
+    if Variant == 1u32 {
+        Metadataˉfile = 673248u32;
+        Tailˉfile = 673376u32;
+        Outputˉbytes = 680901u32;
+    }
+    if Variant == 2u32 {
+        Metadataˉfile = 1304032u32;
+        Tailˉfile = 1304160u32;
+        Outputˉbytes = 1311685u32;
     }
     var Application: bytes = Header(Base, Variant);
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 64u32, 5u32));
     Application = Bytesˉconcat(Application, Build.Zeros(4091u32));
     Application = Bytesˉconcat(
         Application,
-        Bytesˉslice(Base, 8192u32, 239072u32 + Variant * 425984u32)
+        Bytesˉslice(Base, 8192u32, Metadataˉfile - 8192u32)
     );
     Application = Bytesˉconcat(Application, Metadata);
     Application = Bytesˉconcat(
         Application,
-        Bytesˉslice(Base, 247392u32 + Variant * 425984u32, 2464u32)
+        Bytesˉslice(Base, Tailˉfile, 2464u32)
     );
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 69u32, 3363u32));
     Application = Bytesˉconcat(Application, Build.Zeros(13u32));
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 3432u32, 1685u32));
-    let Outputˉbytes: u32 = 254917u32 + Variant * 425984u32;
     if Bytesˉlength(Application) != Outputˉbytes {
         return Response(Input, 3u32);
     }

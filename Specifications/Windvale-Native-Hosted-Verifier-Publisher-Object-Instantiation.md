@@ -26,14 +26,15 @@ The little-endian request has a 48-byte header:
 | 32 | startup WVO bytes |
 | 36 | adapter WVO bytes |
 | 40 | SHA WVO bytes, exactly 2,176 |
-| 44 | role: 0 publisher or 1 promoter |
+| 44 | role: 0 publisher, 1 promoter, or 2 WVB publisher |
 
 The header is followed by all `u32` `WVPT` addresses, startup WVO, adapter
 WVO, and SHA WVO. The first address binds startup-run; remaining addresses
 bind adapter imports in WVO symbol order. Windows uses 44 targets and
-role-specific adapter/SHA addresses: 243,600/248,896 for the publisher or
-669,248/674,544 for the promoter. Linux uses 27 targets and
-142,929,920/142,933,296 or 143,355,904/143,359,280. A zero external address
+role-specific adapter/SHA addresses: 243,600/248,896 for the publisher,
+669,248/674,544 for the promoter, or 1,301,616/1,306,912 for the WVB
+publisher. Linux uses 27 targets and 142,929,920/142,933,296,
+143,355,904/143,359,280, or 143,986,688/143,990,064. A zero external address
 rejects.
 
 ## Instantiation rules
@@ -78,6 +79,6 @@ publisher applications, and narrow malformed rejection.
 [Decision 0478](../Documents/Decisions/0478-Native-WVHV-Publisher-Windows-Imports.md)
 constructs the remaining Windows import page. The role-aware file pipeline now
 consumes these bytes with `WVCR`, metadata, and the admitted base application
-to perform exact publisher and promoter PE/ELF mutations. The frozen C# writer
+to perform exact publisher, promoter, and WVB-publisher PE/ELF mutations. The frozen C# writer
 remains Stage 0 recovery/differential evidence until the broader dual-host
 retirement gates are complete.

@@ -57,7 +57,7 @@ export fn Main() -> i32 {
         Startupˉbytes = 164u32;
         Adapterˉbytes = 5507u32;
     }
-    if (Target != 1u32 && Target != 2u32) || Variant > 1u32 ||
+    if (Target != 1u32 && Target != 2u32) || Variant > 2u32 ||
         Bytesˉreadˉu32ˉlittle(Construction, 20u32) != Targetˉcount ||
         Bytesˉreadˉu32ˉlittle(Construction, 76u32) != Startupˉbytes ||
         Bytesˉreadˉu32ˉlittle(Construction, 92u32) != Adapterˉbytes ||

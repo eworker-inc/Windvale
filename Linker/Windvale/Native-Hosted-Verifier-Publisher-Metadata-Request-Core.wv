@@ -45,12 +45,30 @@ fn Digestˉmatches(
     return true;
 }
 
-fn Startupˉimageˉdigest(Input: bytes, Target: u32) -> bytes {
+fn Startupˉimageˉdigest(Input: bytes, Target: u32, Variant: u32) -> bytes {
     var Result: bytes = Empty(Input);
     var Index: u32 = 0u32;
     while Index < 8u32 {
         var Word: u32 = 0u32;
-        if Target == 1u32 {
+        if Variant == 2u32 && Target == 1u32 {
+            if Index == 0u32 { Word = 69008209u32; }
+            else if Index == 1u32 { Word = 2421725397u32; }
+            else if Index == 2u32 { Word = 4181474857u32; }
+            else if Index == 3u32 { Word = 2258053080u32; }
+            else if Index == 4u32 { Word = 3816439214u32; }
+            else if Index == 5u32 { Word = 1765920015u32; }
+            else if Index == 6u32 { Word = 4249841257u32; }
+            else { Word = 4077917040u32; }
+        } else if Variant == 2u32 {
+            if Index == 0u32 { Word = 3429226565u32; }
+            else if Index == 1u32 { Word = 3377513982u32; }
+            else if Index == 2u32 { Word = 1435263034u32; }
+            else if Index == 3u32 { Word = 2278929838u32; }
+            else if Index == 4u32 { Word = 1785774323u32; }
+            else if Index == 5u32 { Word = 2191289243u32; }
+            else if Index == 6u32 { Word = 1273419612u32; }
+            else { Word = 1020119148u32; }
+        } else if Target == 1u32 {
             if Index == 0u32 { Word = 2925244891u32; }
             else if Index == 1u32 { Word = 3665714992u32; }
             else if Index == 2u32 { Word = 1586712129u32; }
@@ -81,16 +99,24 @@ export fn Publisherˉmetadataˉrequestˉforˉvariant(
     Module: bytes,
     Startupˉobject: bytes
 ) -> Publisherˉmetadataˉrequestˉresult {
-    if (Target != 1u32 && Target != 2u32) || Variant > 1u32 {
+    if (Target != 1u32 && Target != 2u32) || Variant > 2u32 {
         return Publisherˉmetadataˉrequestˉresult(false, Empty(Module));
     }
     var Startupˉbytes: u32 = 168u32;
     if Target == 2u32 { Startupˉbytes = 164u32; }
     var Moduleˉbytes: u32 = 29170u32;
     var Mainˉoffset: u32 = 3001u32;
+    var Beginˉoffset: u32 = 789u32;
+    var Applyˉoffset: u32 = 0u32;
     if Variant == 1u32 {
         Moduleˉbytes = 41268u32;
         Mainˉoffset = 1178u32;
+    }
+    if Variant == 2u32 {
+        Moduleˉbytes = 159328u32;
+        Mainˉoffset = 0u32;
+        Beginˉoffset = 5475u32;
+        Applyˉoffset = 4686u32;
     }
     if Bytesˉlength(Module) != Moduleˉbytes ||
         Bytesˉlength(Startupˉobject) != Startupˉbytes {
@@ -113,12 +139,12 @@ export fn Publisherˉmetadataˉrequestˉforˉvariant(
     Result = Appendˉu32(Result, 5u32);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu32(Result, Mainˉoffset);
-    Result = Appendˉu32(Result, 789u32);
-    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, Beginˉoffset);
+    Result = Appendˉu32(Result, Applyˉoffset);
     Result = Appendˉu32(Result, Variant);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu32(Result, 0u32);
-    Result = Bytesˉconcat(Result, Startupˉimageˉdigest(Module, Target));
+    Result = Bytesˉconcat(Result, Startupˉimageˉdigest(Module, Target, Variant));
     Result = Bytesˉconcat(Result, Moduleˉdigest);
     return Publisherˉmetadataˉrequestˉresult(
         Bytesˉlength(Result) == 112u32,

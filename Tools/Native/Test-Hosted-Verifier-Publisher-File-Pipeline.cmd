@@ -11,8 +11,10 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Construction=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Construction-Candidate"
 set "AdmissionCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Admission-Candidate"
 set "PromoterCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Promoter-Candidate"
+set "WvbPublisherCandidate=%RepositoryRoot%\Artifacts\Native-Wvb-Publisher-Candidate"
 set "PublisherTools=%Construction%\windows-x64"
 set "VerifierCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Application-Candidate\windows-x64-wvverify.exe"
+set "PortableWvbCandidate=%RepositoryRoot%\Artifacts\Byte-Construction.wvb"
 set "OriginalTemp=%TEMP%"
 :allocate
 set "TestDirectory=%OriginalTemp%\windvale-publisher-file-test-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -25,7 +27,7 @@ set "Result=1"
 set "Phase=initialization"
 
 set /a Total+=1
-call :check_file "%Construction%\SHA256SUMS" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "construction inventory"
+call :check_file "%Construction%\SHA256SUMS" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :check_digest "%Construction%\%%I" %%H "construction artifact"
@@ -82,6 +84,36 @@ if errorlevel 1 goto :failed
 findstr /b /c:"entry name=Main address=1178" "%TestDirectory%\Promoter-Link.out" >nul
 if errorlevel 1 goto :failed
 call :check_file "%TestDirectory%\Publisher-Promoter.bin" 658339 a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8 "linked publisher promoter fragment"
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Windvale-Wvb-Publisher.wvproj" ^
+    "%TestDirectory%\Wvb-Publisher.wvb" ^
+    >"%TestDirectory%\Wvb-Publisher-Build.out" 2>"%TestDirectory%\Wvb-Publisher-Build.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Wvb-Publisher-Build.err" "WVB publisher source build wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 159328 5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219 "native-built WVB publisher WVB"
+if errorlevel 1 goto :failed
+fc /b "%Construction%\Wvb-Publisher.wvb" "%TestDirectory%\Wvb-Publisher.wvb" >nul
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
+    "%TestDirectory%\Wvb-Publisher.wvb" ^
+    "%TestDirectory%\Wvb-Publisher.wvo" ^
+    >"%TestDirectory%\Wvb-Publisher-Lower.out" 2>"%TestDirectory%\Wvb-Publisher-Lower.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Wvb-Publisher-Lower.err" "WVB publisher native lowering wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 1292411 90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493 "native-lowered WVB publisher WVO"
+if errorlevel 1 goto :failed
+fc /b "%Construction%\Wvb-Publisher.wvo" "%TestDirectory%\Wvb-Publisher.wvo" >nul
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TestDirectory%\Wvb-Publisher.bin" "%TestDirectory%\Wvb-Publisher.wvo" >"%TestDirectory%\Wvb-Publisher-Link.out" 2>"%TestDirectory%\Wvb-Publisher-Link.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Wvb-Publisher-Link.err" "WVB publisher native link wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /b /c:"entry name=Main address=0" "%TestDirectory%\Wvb-Publisher-Link.out" >nul
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wvb-Publisher.bin" 1290749 8426d7a2c22ec6aeec642b55c0144c6f5532929a8c29200fe38298326511b5e5 "linked WVB publisher fragment"
 if errorlevel 1 goto :failed
 call :pass "publisher construction inventory"
 
@@ -140,6 +172,36 @@ if errorlevel 1 goto :failed
 call :check_no_private_scratch
 if errorlevel 1 goto :failed
 call :pass "exact cross-target Linux publisher-promoter construction"
+
+set /a Total+=1
+call "%RepositoryRoot%\Tools\Native\Construct-Wvb-Publisher.cmd" windows "%TestDirectory%\Wvb-Publisher.exe" >"%TestDirectory%\Wvb-Publisher-Windows.out" 2>"%TestDirectory%\Wvb-Publisher-Windows.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Wvb-Publisher-Windows.err" "Windows WVB publisher construction wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /x /c:"WVB publisher construction status=Valid target=windows bytes=1313792" "%TestDirectory%\Wvb-Publisher-Windows.out" >nul
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wvb-Publisher.exe" 1313792 e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1 "Windows WVB publisher"
+if errorlevel 1 goto :failed
+fc /b "%WvbPublisherCandidate%\windows-x64-wvpublish.exe" "%TestDirectory%\Wvb-Publisher.exe" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "exact Windows WVB-publisher construction"
+
+set /a Total+=1
+call "%RepositoryRoot%\Tools\Native\Construct-Wvb-Publisher.cmd" linux "%TestDirectory%\Wvb-Publisher.elf" >"%TestDirectory%\Wvb-Publisher-Linux.out" 2>"%TestDirectory%\Wvb-Publisher-Linux.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Wvb-Publisher-Linux.err" "Linux WVB publisher construction wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /x /c:"WVB publisher construction status=Valid target=linux bytes=1311685" "%TestDirectory%\Wvb-Publisher-Linux.out" >nul
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wvb-Publisher.elf" 1311685 3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72 "Linux WVB publisher"
+if errorlevel 1 goto :failed
+fc /b "%WvbPublisherCandidate%\linux-x64-wvpublish.elf" "%TestDirectory%\Wvb-Publisher.elf" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "exact cross-target Linux WVB-publisher construction"
 
 set /a Total+=1
 call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher-Admitter.cmd" windows "%TestDirectory%\Admitter.exe" >"%TestDirectory%\Admitter-Windows.out" 2>"%TestDirectory%\Admitter-Windows.err"
@@ -231,9 +293,9 @@ call :check_empty "%TestDirectory%\Reject.out" "metadata rejection wrote standar
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "metadata rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "rejected metadata input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "rejected metadata input"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhv" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "preserved metadata destination"
+call :check_file "%TestDirectory%\Sentinel.wvhv" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "preserved metadata destination"
 if errorlevel 1 goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhr" >nul || goto :failed
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TestDirectory%\Invalid.wvsq" "%TestDirectory%\Sentinel.wvhr" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
@@ -242,7 +304,7 @@ call :check_empty "%TestDirectory%\Reject.out" "runtime rejection wrote standard
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "runtime rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhr" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "preserved runtime destination"
+call :check_file "%TestDirectory%\Sentinel.wvhr" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "preserved runtime destination"
 if errorlevel 1 goto :failed
 call :pass "base tools reject malformed input and preserve destinations"
 
@@ -255,7 +317,7 @@ call :check_empty "%TestDirectory%\Alias.out" "alias rejection wrote standard ou
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Alias.err" "alias rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "preserved alias input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "preserved alias input"
 if errorlevel 1 goto :failed
 call :pass "base tools reject exact path aliases"
 
@@ -298,6 +360,22 @@ if errorlevel 1 goto :failed
 call :check_no_private_scratch
 if errorlevel 1 goto :failed
 call :pass "promoted current-host publisher execution"
+
+set /a Total+=1
+set "Phase=current-host WVB publisher execution"
+"%WvbPublisherCandidate%\windows-x64-wvpublish.exe" "%PortableWvbCandidate%" "%TestDirectory%\Published-Portable.wvb" >"%TestDirectory%\Wvb-Publisher-Execute.out" 2>"%TestDirectory%\Wvb-Publisher-Execute.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Wvb-Publisher-Execute.err" "WVB publisher execution wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wvb-Publisher-Execute.out" 117 6e988c238fb917825f93e21b147567e04e256be0ec1e4df9c8dc07e19e4fa32e "WVB publisher completion report"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Published-Portable.wvb" 2001 3be0d06b8f4e7745dd9ffd9f325804d69ce524ac7ff6341b1e7b38037f6dd6f8 "published portable WVB"
+if errorlevel 1 goto :failed
+fc /b "%PortableWvbCandidate%" "%TestDirectory%\Published-Portable.wvb" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "current-host WVB publisher execution"
 set "Result=0"
 goto :cleanup
 
@@ -348,7 +426,7 @@ exit /b 0
 :failed
 set "Result=1"
 >&2 echo FAIL  hosted-verifier publisher files: %Phase%
-for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err) do if exist "%TestDirectory%\%%F" (
+for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
     for %%S in ("%TestDirectory%\%%F") do if not "%%~zS"=="0" type "%%~fS" >&2
 )
 

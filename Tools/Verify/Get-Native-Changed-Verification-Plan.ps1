@@ -141,7 +141,8 @@ function Add-Native-Tool-Suite {
         'Admit-Hosted-Verifier-Publisher',
         'Construct-Hosted-Verifier-Publisher',
         'Construct-Hosted-Verifier-Publisher-Admitter',
-        'Construct-Hosted-Verifier-Publisher-Promoter'
+        'Construct-Hosted-Verifier-Publisher-Promoter',
+        'Construct-Wvb-Publisher'
     )) {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Stem -in @('Package-Hosted-Wvb', 'Test-Hosted-Wvb-Packaging')) {
@@ -300,6 +301,10 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Hosted-Verifier-Publisher-Promoter-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Wvb-Publisher-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path.StartsWith('Tools/Windvale.Publish/', [StringComparison]::Ordinal) -or
         $Path.StartsWith(
             'Artifacts/Native-Hosted-Verifier-Application-Publisher-Candidate/',
@@ -357,7 +362,8 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
-        'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj'
+        'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj',
+        'Windvale-Wvb-Publisher.wvproj'
     )) {
         Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
     } elseif ($Path.StartsWith(

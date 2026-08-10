@@ -26,7 +26,7 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every suite. The complete 3,161-case coordinator
+Unknown input must never select every suite. The complete 3,164-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
 
 ## Dispatch contract

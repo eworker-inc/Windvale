@@ -38,12 +38,16 @@ The paired ordinary host commands are:
 ```text
 Tools\Native\Construct-Hosted-Verifier-Publisher.cmd <windows|linux> <output.exe|output.elf>
 ./Tools/Native/Construct-Hosted-Verifier-Publisher.sh <windows|linux> <output.exe|output.elf>
+Tools\Native\Construct-Wvb-Publisher.cmd <windows|linux> <output.exe|output.elf>
+./Tools/Native/Construct-Wvb-Publisher.sh <windows|linux> <output.exe|output.elf>
 ```
 
 They verify the complete hosted-container and publisher-construction candidate
 inventories, natively lower and link the canonical publisher WVB, require
 `Main` at offset 3,001, construct the target base and publisher records, and
 require the final exact application identity. They never invoke .NET.
+The WVB-publisher wrapper selects role 2 while preserving the original two
+roles and their exact bytes.
 
 ## Exact identities
 
@@ -56,20 +60,27 @@ require the final exact application identity. They never invoke .NET.
 | Publisher-promoter WVB | 41,268 | `30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9` |
 | Publisher-promoter WVO | 660,123 | `6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d` |
 | Linked publisher-promoter fragment | 658,339 | `a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8` |
+| WVB publisher WVB | 159,328 | `5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219` |
+| WVB publisher WVO | 1,292,411 | `90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493` |
+| Linked WVB publisher fragment | 1,290,749 | `8426d7a2c22ec6aeec642b55c0144c6f5532929a8c29200fe38298326511b5e5` |
 | Linked publisher fragment | 232,736 | `260e9f4f23c99dab13145ceb98724a4c74157fc579c5685194b7312c1a5cb115` |
 | Windows base | 248,832 | `cf204201e5c26d71e78da1112de2bc724d389a5222cc835d48dbe8cd8bbc5988` |
 | Linux base | 249,856 | `0bdeee07a49f75781767934884cbbc7dd085abff4507e2f78210fa225638539a` |
 | Windows publisher | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
 | Linux publisher | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
+| Windows WVB-publisher base | 1,307,136 | `146149052209fcb9ef054c80c05dd315e197290f48142c057161b0e9c154e9d6` |
+| Linux WVB-publisher base | 1,306,624 | `c2f710921da8b2f39a8f927b0054a59f00957b9cfc449a687dd600eb9e508427` |
+| Windows WVB publisher | 1,313,792 | `e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1` |
+| Linux WVB publisher | 1,311,685 | `3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72` |
 
-Version 12 of the construction candidate contains 24 canonical WVB/WVO
-artifacts and 22 paired host applications. Its 46-entry `SHA256SUMS` is 4,812
+Version 13 of the construction candidate contains 26 canonical WVB/WVO
+artifacts and 22 paired host applications. Its 48-entry `SHA256SUMS` is 4,980
 LF-only bytes with SHA-256
-`76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2`.
+`f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36`.
 
 ## Native owner and remaining gate
 
-The `hosted-verifier-publisher-files` retirement lane owns twelve fixed cases:
+The `hosted-verifier-publisher-files` retirement lane owns fifteen fixed cases:
 the complete inventory, exact Windows and Linux publisher construction, exact
 Windows and Linux profile-8 admitter construction, a current-host read-only
 admission matrix, malformed base-record preservation, exact alias preservation,
@@ -80,6 +91,9 @@ artifacts. It also rebuilds and lowers the distinct publisher promoter, links
 `Main` at 1,178, requires the exact 658,339-byte fragment, constructs both exact
 promoter applications, installs both publisher subjects through the promoter,
 and runs the installed current-host publisher through one verifier installation.
+It additionally rebuilds and lowers the WVB publisher, constructs both exact
+role-2 applications, and executes the current-host candidate on a canonical
+portable WVB without loading .NET.
 
 The frozen managed file-pipeline test remains recovery/differential evidence.
 Independent Linux execution, grouped qualification, candidate promotion, and

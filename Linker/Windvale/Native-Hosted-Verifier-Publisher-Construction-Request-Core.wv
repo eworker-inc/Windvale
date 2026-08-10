@@ -32,7 +32,7 @@ fn Structureˉisˉvalid(Input: bytes) -> bool {
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     if Target != 1u32 && Target != 2u32 { return false; }
     let Variant: u32 = Bytesˉreadˉu32ˉlittle(Input, 120u32);
-    if Variant > 1u32 { return false; }
+    if Variant > 2u32 { return false; }
     var Identityˉbytes: u32 = 275054u32;
     if Target == 2u32 {
         Identityˉbytes = 271013u32;
@@ -47,11 +47,24 @@ fn Structureˉisˉvalid(Input: bytes) -> bool {
         Identityˉbytes = 713471u32;
         if Target == 2u32 { Identityˉbytes = 709430u32; }
     }
+    if Variant == 2u32 {
+        Moduleˉbytes = 159328u32;
+        Objectˉbytes = 1292411u32;
+        Mainˉoffset = 0u32;
+        Identityˉbytes = 1463819u32;
+        if Target == 2u32 { Identityˉbytes = 1459778u32; }
+    }
+    var Beginˉoffset: u32 = 789u32;
+    var Applyˉoffset: u32 = 0u32;
+    if Variant == 2u32 {
+        Beginˉoffset = 5475u32;
+        Applyˉoffset = 4686u32;
+    }
     return Bytesˉreadˉu32ˉlittle(Input, 16u32) == Moduleˉbytes &&
         Bytesˉreadˉu32ˉlittle(Input, 20u32) == Objectˉbytes &&
         Bytesˉreadˉu32ˉlittle(Input, 36u32) == Mainˉoffset &&
-        Bytesˉreadˉu32ˉlittle(Input, 40u32) == 789u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 44u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) == Beginˉoffset &&
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) == Applyˉoffset &&
         Bytesˉreadˉu32ˉlittle(Input, 112u32) == Identityˉbytes &&
         Bytesˉreadˉu32ˉlittle(Input, 116u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 124u32) == 0u32;
@@ -71,6 +84,8 @@ export fn Publisherˉconstructionˉrequest(
     var Mainˉoffset: u32 = 3001u32;
     var Symbols: u32 = 27u32;
     var Relocations: u32 = 5u32;
+    var Beginˉoffset: u32 = 789u32;
+    var Applyˉoffset: u32 = 0u32;
     if Variant == 1u32 {
         Moduleˉbytes = 41268u32;
         Objectˉbytes = 660123u32;
@@ -79,6 +94,17 @@ export fn Publisherˉconstructionˉrequest(
         Mainˉoffset = 1178u32;
         Symbols = 49u32;
         Relocations = 3u32;
+    }
+    if Variant == 2u32 {
+        Moduleˉbytes = 159328u32;
+        Objectˉbytes = 1292411u32;
+        Codeˉbytes = 1290512u32;
+        Dataˉbytes = 237u32;
+        Mainˉoffset = 0u32;
+        Beginˉoffset = 5475u32;
+        Applyˉoffset = 4686u32;
+        Symbols = 44u32;
+        Relocations = 6u32;
     }
 
     var Bundleˉbytes: u32 = 235394u32;
@@ -112,6 +138,17 @@ export fn Publisherˉconstructionˉrequest(
         Outputˉbytes = 681472u32;
         Imageˉend = 144420864u32;
     }
+    if Variant == 2u32 {
+        Bundleˉbytes = 1293410u32;
+        Adapterˉfile = 1298032u32;
+        Adapterˉaddress = 1301616u32;
+        Sha256ˉfile = 1303328u32;
+        Sha256ˉaddress = 1306912u32;
+        Metadataˉfile = 1310688u32;
+        Metadataˉaddress = 1316320u32;
+        Outputˉbytes = 1313792u32;
+        Imageˉend = 145051648u32;
+    }
     if Target == 2u32 {
         Bundleˉbytes = 235077u32;
         Startupˉwvoˉbytes = 164u32;
@@ -144,6 +181,17 @@ export fn Publisherˉconstructionˉrequest(
             Outputˉbytes = 680901u32;
             Imageˉend = 143360965u32;
         }
+        if Variant == 2u32 {
+            Bundleˉbytes = 1293093u32;
+            Adapterˉfile = 1306624u32;
+            Adapterˉaddress = 143986688u32;
+            Sha256ˉfile = 1310000u32;
+            Sha256ˉaddress = 143990064u32;
+            Metadataˉfile = 1304032u32;
+            Metadataˉaddress = 1304032u32;
+            Outputˉbytes = 1311685u32;
+            Imageˉend = 143991749u32;
+        }
     }
 
     var Result: bytes = Empty(Structure);
@@ -161,8 +209,8 @@ export fn Publisherˉconstructionˉrequest(
     Result = Appendˉu32(Result, Codeˉbytes);
     Result = Appendˉu32(Result, Dataˉbytes);
     Result = Appendˉu32(Result, Mainˉoffset);
-    Result = Appendˉu32(Result, 789u32);
-    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, Beginˉoffset);
+    Result = Appendˉu32(Result, Applyˉoffset);
     Result = Appendˉu32(Result, 2u32);
     Result = Appendˉu32(Result, Symbols);
     Result = Appendˉu32(Result, Relocations);

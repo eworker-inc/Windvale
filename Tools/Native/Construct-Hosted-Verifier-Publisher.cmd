@@ -8,7 +8,7 @@ if "%~3"=="" (
     set "Output=%~f2"
 ) else (
     if not "%~4"=="" goto :usage
-    if /I not "%~1"=="publisher" if /I not "%~1"=="promoter" goto :usage
+    if /I not "%~1"=="publisher" if /I not "%~1"=="promoter" if /I not "%~1"=="wvb-publisher" goto :usage
     set "Role=%~1"
     set "TargetName=%~2"
     set "Output=%~f3"
@@ -49,6 +49,12 @@ if /I "%Role%"=="promoter" (
     set "ApplicationBytes=681472"
     set "ApplicationSha256=9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069"
 )
+if /I "%Role%"=="wvb-publisher" (
+    set "BaseBytes=1307136"
+    set "BaseSha256=146149052209fcb9ef054c80c05dd315e197290f48142c057161b0e9c154e9d6"
+    set "ApplicationBytes=1313792"
+    set "ApplicationSha256=e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1"
+)
 goto :target_ready
 
 :linux
@@ -81,6 +87,12 @@ if /I "%Role%"=="promoter" (
     set "BaseSha256=b2b299aea10987720714779c9f0b6e58bcea567946d82c4f39786915404039a4"
     set "ApplicationBytes=680901"
     set "ApplicationSha256=9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0"
+)
+if /I "%Role%"=="wvb-publisher" (
+    set "BaseBytes=1306624"
+    set "BaseSha256=c2f710921da8b2f39a8f927b0054a59f00957b9cfc449a687dd600eb9e508427"
+    set "ApplicationBytes=1311685"
+    set "ApplicationSha256=3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72"
 )
 
 :target_ready
@@ -115,6 +127,18 @@ if /I "%Role%"=="promoter" (
     set "FragmentBytes=658339"
     set "FragmentSha256=a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8"
 )
+if /I "%Role%"=="wvb-publisher" (
+    set "PublisherWvb=%Construction%\Wvb-Publisher.wvb"
+    set "PublisherObject=%Construction%\Wvb-Publisher.wvo"
+    set "Variant=2"
+    set "PublisherWvbBytes=159328"
+    set "PublisherWvbSha256=5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219"
+    set "PublisherObjectBytes=1292411"
+    set "PublisherObjectSha256=90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493"
+    set "NativeEntry=0"
+    set "FragmentBytes=1290749"
+    set "FragmentSha256=8426d7a2c22ec6aeec642b55c0144c6f5532929a8c29200fe38298326511b5e5"
+)
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "ConsumerRoot=%RepositoryRoot%\Linker\Reference\Consumers"
 
@@ -124,7 +148,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -233,7 +257,7 @@ set "Phase=publisher-imports"
 if "%Variant%"=="0" (
     "%PublisherTools%\wvhostverifierpublishimports.exe" "%TemporaryDirectory%\Imports.wvim" >nul
 ) else (
-    "%PublisherTools%\wvhostverifierpublishimports.exe" promoter "%TemporaryDirectory%\Imports.wvim" >nul
+    "%PublisherTools%\wvhostverifierpublishimports.exe" %Role% "%TemporaryDirectory%\Imports.wvim" >nul
 )
 if errorlevel 1 goto :cleanup
 set "Phase=publisher-windows-materialization"
@@ -250,6 +274,7 @@ call :verify_file "%Output%" %ApplicationBytes% %ApplicationSha256% "published c
 if errorlevel 1 goto :cleanup_output
 if /I "%Role%"=="publisher" echo publisher construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
 if /I "%Role%"=="promoter" echo publisher promoter construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
+if /I "%Role%"=="wvb-publisher" echo WVB publisher construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
 set "Result=0"
 goto :cleanup
 
@@ -287,5 +312,5 @@ if errorlevel 1 (
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Construct-Hosted-Verifier-Publisher.cmd [publisher^|promoter] ^<windows^|linux^> ^<output.exe^|output.elf^>
+>&2 echo Usage: Tools\Native\Construct-Hosted-Verifier-Publisher.cmd [publisher^|promoter^|wvb-publisher] ^<windows^|linux^> ^<output.exe^|output.elf^>
 exit /b 64

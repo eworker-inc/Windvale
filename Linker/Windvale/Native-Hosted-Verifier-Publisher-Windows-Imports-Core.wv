@@ -91,7 +91,8 @@ export fn Publisherˉwindowsˉimports(Input: bytes) -> bytes {
         Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1380537943u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != 16u32 ||
-        (Address != 253952u32 && Address != 679936u32) {
+        (Address != 253952u32 && Address != 679936u32 &&
+            Address != 1310720u32) {
         return Response(Input, 1u32);
     }
     return Bytesˉconcat(Response(Input, 0u32), Imports(Address));

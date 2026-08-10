@@ -2,7 +2,7 @@
 set -uo pipefail
 
 if [[ $# -ne 2 && $# -ne 3 ]]; then
-    echo 'Usage: ./Tools/Native/Construct-Hosted-Verifier-Publisher.sh [publisher|promoter] <windows|linux> <output.exe|output.elf>' >&2
+    echo 'Usage: ./Tools/Native/Construct-Hosted-Verifier-Publisher.sh [publisher|promoter|wvb-publisher] <windows|linux> <output.exe|output.elf>' >&2
     exit 64
 fi
 
@@ -14,8 +14,8 @@ else
     role=$1
     target_name=$2
     output=$3
-    if [[ $role != publisher && $role != promoter ]]; then
-        echo 'Usage: ./Tools/Native/Construct-Hosted-Verifier-Publisher.sh [publisher|promoter] <windows|linux> <output.exe|output.elf>' >&2
+    if [[ $role != publisher && $role != promoter && $role != wvb-publisher ]]; then
+        echo 'Usage: ./Tools/Native/Construct-Hosted-Verifier-Publisher.sh [publisher|promoter|wvb-publisher] <windows|linux> <output.exe|output.elf>' >&2
         exit 64
     fi
 fi
@@ -50,6 +50,12 @@ case "$target_name:$output" in
             application_bytes=681472
             application_sha256=9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069
         fi
+        if [[ $role == wvb-publisher ]]; then
+            base_bytes=1307136
+            base_sha256=146149052209fcb9ef054c80c05dd315e197290f48142c057161b0e9c154e9d6
+            application_bytes=1313792
+            application_sha256=e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1
+        fi
         ;;
     linux:*.elf)
         target=2
@@ -81,9 +87,15 @@ case "$target_name:$output" in
             application_bytes=680901
             application_sha256=9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0
         fi
+        if [[ $role == wvb-publisher ]]; then
+            base_bytes=1306624
+            base_sha256=c2f710921da8b2f39a8f927b0054a59f00957b9cfc449a687dd600eb9e508427
+            application_bytes=1311685
+            application_sha256=3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72
+        fi
         ;;
     *)
-        echo 'Usage: ./Tools/Native/Construct-Hosted-Verifier-Publisher.sh [publisher|promoter] <windows|linux> <output.exe|output.elf>' >&2
+        echo 'Usage: ./Tools/Native/Construct-Hosted-Verifier-Publisher.sh [publisher|promoter|wvb-publisher] <windows|linux> <output.exe|output.elf>' >&2
         exit 64
         ;;
 esac
@@ -120,6 +132,18 @@ if [[ $role == promoter ]]; then
     fragment_bytes=658339
     fragment_sha256=a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8
 fi
+if [[ $role == wvb-publisher ]]; then
+    publisher_wvb="$construction/Wvb-Publisher.wvb"
+    publisher_object="$construction/Wvb-Publisher.wvo"
+    variant=2
+    publisher_wvb_bytes=159328
+    publisher_wvb_sha256=5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219
+    publisher_object_bytes=1292411
+    publisher_object_sha256=90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493
+    native_entry=0
+    fragment_bytes=1290749
+    fragment_sha256=8426d7a2c22ec6aeec642b55c0144c6f5532929a8c29200fe38298326511b5e5
+fi
 service_root="$repository_root/Runtime/Windvale.Native/Consumers"
 consumer_root="$repository_root/Linker/Reference/Consumers"
 
@@ -155,8 +179,8 @@ check_file "$hosted_toolset/SHA256SUMS" 6927 \
     f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 \
     'hosted toolset inventory' || exit $?
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
-check_file "$construction/SHA256SUMS" 4812 \
-    76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 \
+check_file "$construction/SHA256SUMS" 4980 \
+    f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 \
     'publisher construction inventory' || exit $?
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$publisher_wvb" "$publisher_wvb_bytes" "$publisher_wvb_sha256" \
@@ -283,7 +307,7 @@ if [[ $target -eq 1 ]]; then
         "$publisher_tools/wvhostverifierpublishimports.elf" \
             "$temporary_directory/Imports.wvim" >/dev/null || exit $?
     else
-        "$publisher_tools/wvhostverifierpublishimports.elf" promoter \
+        "$publisher_tools/wvhostverifierpublishimports.elf" "$role" \
             "$temporary_directory/Imports.wvim" >/dev/null || exit $?
     fi
     "$publisher_tools/wvhostverifierpublishwindows.elf" \
@@ -306,8 +330,11 @@ check_file "$output" "$application_bytes" "$application_sha256" \
 if [[ $role == publisher ]]; then
     printf 'publisher construction status=Valid target=%s bytes=%s\n' \
         "$target_name" "$application_bytes"
-else
+elif [[ $role == promoter ]]; then
     printf 'publisher promoter construction status=Valid target=%s bytes=%s\n' \
+        "$target_name" "$application_bytes"
+else
+    printf 'WVB publisher construction status=Valid target=%s bytes=%s\n' \
         "$target_name" "$application_bytes"
 fi
 exit 0
