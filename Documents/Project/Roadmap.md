@@ -12,6 +12,13 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0507](../Decisions/0507-Native-Wvb-Runner-Reconstruction.md)
+reconstructs the exact retained-WVB runner WVO and paired profile-5
+applications through native lower/link and WVHV construction. The ordinary
+digest-bound launcher now uses that current candidate, and the focused Windows
+owner passes 3/3. Closing the runner project's source-binding failure and
+executing the same candidate independently on Linux are the next E1 boundaries.
+
 [Decision 0506](../Decisions/0506-Native-Seed-Console-Aot-Qualification-Smoke.md)
 transfers the next coherent boundary in both broad Seed qualification scripts.
 The exact `Sum-Data.wvb` now passes through native lower, WVO admission, flat

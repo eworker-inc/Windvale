@@ -157,21 +157,21 @@ internal static partial class Program
                 Consoleˉapplicationˉtarget.Windowsˉx64,
                 Profile);
             var Expectedˉtextˉarenaˉbytes =
-                Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
-                    ? Hostedˉcompilerˉapplicationˉmetadata.BUILD_DRIVER_TEXT_ARENA_BYTES
+                Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile)
+                    ? Hostedˉcompilerˉapplicationˉmetadata.LARGE_TOOL_TEXT_ARENA_BYTES
                     : Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES;
             Equal(Expectedˉtextˉarenaˉbytes, Windowsˉlayout.Textˉarenaˉbytes);
             Equal(
-                Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
-                    ? Hostedˉcompilerˉruntimeˉdata.BUILD_DRIVER_NAME_ARENA_STRIDE_BYTES
+                Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile)
+                    ? Hostedˉcompilerˉruntimeˉdata.LARGE_TOOL_NAME_ARENA_STRIDE_BYTES
                     : Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES,
                 Windowsˉlayout.Nameˉarenaˉstrideˉbytes);
             Equal(
-                Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile)
                     ? 510_214_144u
                     : 476_135_424u,
                 Windowsˉlayout.Virtualˉbytes);
-            if (Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver)
+            if (Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile))
             {
                 Equal(237_051_904u, Windowsˉlayout.Nameˉarenaˉoffset);
                 Equal(237_576_192u, Windowsˉlayout.Dataˉarenaˉoffset);
@@ -226,11 +226,11 @@ internal static partial class Program
                 Profile);
             Equal(Expectedˉtextˉarenaˉbytes, Linuxˉlayout.Textˉarenaˉbytes);
             Equal(
-                Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
+                Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile)
                     ? 508_116_992u
                     : 474_038_272u,
                 Linuxˉlayout.Virtualˉbytes);
-            if (Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver)
+            if (Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile))
             {
                 Equal(237_051_904u, Linuxˉlayout.Nameˉarenaˉoffset);
                 Equal(237_576_192u, Linuxˉlayout.Dataˉarenaˉoffset);

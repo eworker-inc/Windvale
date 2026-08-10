@@ -142,7 +142,7 @@ fn Emitˉvalueˉcall(
         Output,
         Relativeˉu32(Propagateˉoffset, Bytesˉlength(Output) + 4u32)
     );
-    if Returnsˉdescriptor { return Output; }
+    if Returnsˉdescriptor || Returnˉtype == 0u8 { return Output; }
     return Storeˉeax(Output, Resultˉslot);
 }
 
@@ -172,7 +172,10 @@ export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Returnˉtype) {
         Resultˉindex = State.Nextˉenum;
     }
-    var Resultˉslot: u32 = Valueˉslot(Shape, Returnˉtype, Resultˉindex);
+    var Resultˉslot: u32 = 0u32;
+    if Returnˉtype != 0u8 {
+        Resultˉslot = Valueˉslot(Shape, Returnˉtype, Resultˉindex);
+    }
     if Returnsˉrecord {
         Resultˉslot = Shape.Recordˉbase + State.Nextˉrecord;
     }
@@ -234,6 +237,22 @@ export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
         Nextˉenum = Nextˉenum + 1u32;
     }
     if Returnsˉrecord { Nextˉrecord = Nextˉrecord + 1u32; }
+    if Returnˉtype == 0u8 {
+        return Compilerˉnativeˉx64ˉcallˉstate(
+            Output,
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Depth,
+            Nextˉi32,
+            Nextˉbool,
+            Nextˉtext,
+            Nextˉu8,
+            Nextˉu32,
+            Nextˉbytes,
+            Nextˉenum,
+            Nextˉrecord
+        );
+    }
     return Compilerˉnativeˉx64ˉcallˉstate(
         Output,
         Bytesˉconcat(

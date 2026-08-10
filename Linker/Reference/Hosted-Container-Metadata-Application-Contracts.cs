@@ -12,15 +12,15 @@ public static class Hostedˉcontainerˉmetadataˉapplicationˉcontract
         "linux-x64-hosted-container-metadata-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉcontainerˉmetadataˉtool";
-    public const int MODULE_BYTES = 27_036;
+    public const int MODULE_BYTES = 27_222;
     public const string MODULE_SHA256 =
-        "184cce30bdc7d24a45175ab76dcee535ed9dc9d13dce6f56afe7986553b14aa9";
-    public const int WINDOWS_APPLICATION_BYTES = 255_488;
+        "459e9b820b788adeedcfb1dda9dc92301e60c7add754622c81fb9b24fd8418ab";
+    public const int WINDOWS_APPLICATION_BYTES = 256_512;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "73b0873e9b37543320fcd8fe5639a48e8f1ca3b69acced10975422ddd0042da8";
-    public const int LINUX_APPLICATION_BYTES = 253_952;
+        "c176388e8bd6d5e60f352339d37d71610ebc27e14a6979d106043900dacc61cb";
+    public const int LINUX_APPLICATION_BYTES = 258_048;
     public const string LINUX_APPLICATION_SHA256 =
-        "dea5292090eecb4e0c93b645de186acb8d8ab9bfa4ab87ff8780c633479c17a8";
+        "ffa54f3bbd7596763f944bea47a98b22bf137b755274ddd0540625a6ef8a34d2";
 }
 
 public static class Hostedˉcontainerˉmetadataˉapplicationˉwriter

@@ -12,15 +12,15 @@ public static class Hostedˉcontainerˉruntimeˉapplicationˉcontract
         "linux-x64-hosted-container-runtime-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉcontainerˉruntimeˉtool";
-    public const int MODULE_BYTES = 23_289;
+    public const int MODULE_BYTES = 23_475;
     public const string MODULE_SHA256 =
-        "93d54c99575df902588f3ab59e6e80f6ae767cf3240dbf8ea30e5806d932ffc4";
-    public const int WINDOWS_APPLICATION_BYTES = 247_808;
+        "08533638a689db5b12628ec401c9d4c395507d2dcbda424dc40b36d1c29aa310";
+    public const int WINDOWS_APPLICATION_BYTES = 248_832;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "6489d8672803afc8a5e7121c2d8e720146725a518be15929460738b9069db333";
+        "5e1c241ca5c5e2fce166f2d88899dafbbab88a8dd90bfbb1a1d81863a9a1c286";
     public const int LINUX_APPLICATION_BYTES = 249_856;
     public const string LINUX_APPLICATION_SHA256 =
-        "acc832a003c5862e3a507abdc25265e1a2610a247d06b58fe0f3a7f04b877617";
+        "de729966eca15d95f5ae89b5416c6d3f061635a6634807556ac817b094548604";
 }
 
 public static class Hostedˉcontainerˉruntimeˉapplicationˉwriter

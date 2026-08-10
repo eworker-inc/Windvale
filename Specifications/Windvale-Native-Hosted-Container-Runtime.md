@@ -48,9 +48,9 @@ services used by the other hosted-container transition tools.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Runtime-header producer WVB | 23,289 | `93d54c99575df902588f3ab59e6e80f6ae767cf3240dbf8ea30e5806d932ffc4` |
-| Windows runtime-header producer | 247,808 | `6489d8672803afc8a5e7121c2d8e720146725a518be15929460738b9069db333` |
-| Linux runtime-header producer | 249,856 | `acc832a003c5862e3a507abdc25265e1a2610a247d06b58fe0f3a7f04b877617` |
+| Runtime-header producer WVB | 23,475 | `08533638a689db5b12628ec401c9d4c395507d2dcbda424dc40b36d1c29aa310` |
+| Windows runtime-header producer | 248,832 | `5e1c241ca5c5e2fce166f2d88899dafbbab88a8dd90bfbb1a1d81863a9a1c286` |
+| Linux runtime-header producer | 249,856 | `de729966eca15d95f5ae89b5416c6d3f061635a6634807556ac817b094548604` |
 
 The WVB reconstructs through the native Project 1 front door. Focused
 current-host evidence builds the public CLI target, consumes Windvale-constructed

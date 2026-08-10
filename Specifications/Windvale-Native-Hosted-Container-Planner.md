@@ -49,9 +49,9 @@ semantics separate, and no new hosted metadata profile is introduced.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Planner WVB | 39,162 | `6dc9cbd852698f158cb2b445e2d7c33537b414ef3c1c6198e9bd6366aed42897` |
-| Windows planner | 606,720 | `ef39d922eacd00a3300c2796e1271e1ef1731ec943145f0af6f2ed62c8411ab5` |
-| Linux planner | 606,208 | `7a54190410317628d9b58b5e2c3b91ac4bfd71c6ec192e95409491687a52b79f` |
+| Planner WVB | 39,534 | `e9c6eaa87574e2ee472dcc8c177bfe4d63baf9c34838894096f490bdde465bc0` |
+| Windows planner | 609,280 | `fbbbb70c5fa91b9f41551b25ed991dcc489aa92bf44ab0802a6307313bc8d064` |
+| Linux planner | 610,304 | `edb8f6bf257215309fdad2eee4a18a67e58d2cb8eb9605cbb2067fad3d18ccc9` |
 
 Decision 0492 reconstructs and repins these current candidate identities after
 the Decision 0491 embedded-layout and shared startup/file-input changes. The

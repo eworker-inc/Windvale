@@ -83,11 +83,16 @@ internal static class Hostedˉcompilerˉapplicationˉmetadata
     internal const uint WVB_TO_WVO_PROFILE_FLAGS = 7;
     internal const uint HOSTED_CONTAINER_SEGMENTER_PROFILE_FLAGS = 8;
     internal const ulong COMPILER_MAXIMUM_INSTRUCTIONS = 64_000_000_000;
-    internal const uint BUILD_DRIVER_TEXT_ARENA_BYTES = 224 * 1024 * 1024;
+    internal const uint LARGE_TOOL_TEXT_ARENA_BYTES = 224 * 1024 * 1024;
+
+    internal static bool Usesˉlargeˉruntimeˉgeometry(
+        Hostedˉcompilerˉapplicationˉprofile profile) =>
+        profile is Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver or
+            Hostedˉcompilerˉapplicationˉprofile.Wvbˉtoˉwvo;
 
     internal static uint Textˉarenaˉbytes(Hostedˉcompilerˉapplicationˉprofile profile) =>
-        profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
-            ? BUILD_DRIVER_TEXT_ARENA_BYTES
+        Usesˉlargeˉruntimeˉgeometry(profile)
+            ? LARGE_TOOL_TEXT_ARENA_BYTES
             : Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES;
 
     private static readonly ImmutableArray<Hostedˉcompilerˉcapabilityˉcontract>

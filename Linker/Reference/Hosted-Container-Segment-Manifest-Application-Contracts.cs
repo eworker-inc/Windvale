@@ -12,15 +12,15 @@ public static class Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉcontract
         "linux-x64-hosted-container-segment-manifest-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉcontainerˉsegmentˉmanifestˉtool";
-    public const int MODULE_BYTES = 35_419;
+    public const int MODULE_BYTES = 35_605;
     public const string MODULE_SHA256 =
-        "4553a80bb425c0f79fd20c52ed41745279b5c9313f0bf669d5e749f62d6de33c";
-    public const int WINDOWS_APPLICATION_BYTES = 409_600;
+        "8fd1c3f0537694189928f2e78745179519546e91c3df4325fccc451bfebc3133";
+    public const int WINDOWS_APPLICATION_BYTES = 411_136;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "78d0ef5eb0ba798359d663a4cfcd108677ecb10fb068656c038d8f8096133710";
+        "a63152d9ff108b1e4ccddefbce028a64b43c1b6618efbd288bd07734e39a0ac6";
     public const int LINUX_APPLICATION_BYTES = 409_600;
     public const string LINUX_APPLICATION_SHA256 =
-        "d289d1c649ab58e84f34640eb36f599b60badf2883f8325359ae12be965c6603";
+        "6225cfaab695f281a563b47fe39f1bd2c178c463504951d45c7e7cf73d09c828";
 }
 
 public static class Hostedˉcontainerˉsegmentˉmanifestˉapplicationˉwriter

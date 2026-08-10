@@ -1078,9 +1078,11 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 );
                 Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
             } else {
-                Stackˉrecords = Pushˉscalar(Stackˉrecords);
+                if Callˉreturn != 0u8 {
+                    Stackˉrecords = Pushˉscalar(Stackˉrecords);
+                }
             }
-            Depth = Depth + 1u32;
+            if Callˉreturn != 0u8 { Depth = Depth + 1u32; }
             Handled = true;
         }
 
@@ -1198,7 +1200,11 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         }
 
         if Opcode == 81u8 {
-            if Depth != 1u32 { return Invalid(Input); }
+            if Returnˉtype == 0u8 {
+                if Depth != 0u32 { return Invalid(Input); }
+            } else {
+                if Depth != 1u32 { return Invalid(Input); }
+            }
             if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Returnˉtype) {
                 Usedˉrecord = Bytesˉreadˉu32ˉlittle(Stackˉrecords, 0u32);
                 if Usedˉrecord == 4294967295u32 { return Invalid(Input); }

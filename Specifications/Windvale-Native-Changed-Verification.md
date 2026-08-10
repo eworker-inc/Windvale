@@ -26,7 +26,7 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every suite. The complete 3,201-case coordinator
+Unknown input must never select every suite. The complete 3,204-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
 
 The complete WebAssembly generation-and-verification owner remains a distinct
@@ -43,6 +43,12 @@ constructor, test command, project, and Windvale source closure. Its direct
 lowering, linking, assembly, hosted-verifier toolsets, profile-7 sources,
 inspector startups, and required service leaves also select the lane. Generic
 console changes and unused file-output leaves do not select it merely by name.
+
+The `wvb-runner-reconstruction` lane owns its four-artifact candidate,
+retained-WVB constructor, focused owner, project and runner sources, profile-5
+WVHV closure, inspector startups, lower/link dependencies, launcher, and nine
+service leaves. Source-to-WVB changes do not erase the explicit source-binding
+evidence boundary.
 
 The `console-publisher-reconstruction` lane owns the exact console-application
 publisher candidate, constructor, test command, project, source, and contract.

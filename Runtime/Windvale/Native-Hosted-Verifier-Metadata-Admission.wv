@@ -13,22 +13,31 @@ fn Allˉzero(Input: bytes, Offset: u32, Count: u32) -> bool {
     return true;
 }
 
-fn Serviceˉcapability(Index: u32) -> u32 {
-    if Index == 0u32 { return 1u32; }
-    if Index == 1u32 { return 5u32; }
-    if Index == 2u32 { return 4u32; }
-    if Index == 3u32 { return 3u32; }
-    if Index == 5u32 { return 2u32; }
+fn Serviceˉidentity(Profile: u32, Index: u32) -> u32 {
+    if Profile == 5u32 {
+        if Index == 6u32 { return 8u32; }
+        if Index == 7u32 { return 10u32; }
+        if Index == 8u32 { return 11u32; }
+    }
+    return Index + 1u32;
+}
+
+fn Serviceˉcapability(Identity: u32) -> u32 {
+    if Identity == 1u32 { return 1u32; }
+    if Identity == 2u32 { return 5u32; }
+    if Identity == 3u32 { return 4u32; }
+    if Identity == 4u32 { return 3u32; }
+    if Identity == 6u32 { return 2u32; }
     return 0u32;
 }
 
-fn Serviceˉadapter(Index: u32, Target: u32) -> u32 {
-    if Index == 0u32 { return Target; }
-    if Index == 1u32 || Index == 2u32 { return 3u32; }
-    if Index == 3u32 { return Target + 3u32; }
-    if Index == 4u32 { return 6u32; }
-    if Index == 5u32 { return Target + 6u32; }
-    return Index + 3u32;
+fn Serviceˉadapter(Identity: u32, Target: u32) -> u32 {
+    if Identity == 1u32 { return Target; }
+    if Identity == 2u32 || Identity == 3u32 { return 3u32; }
+    if Identity == 4u32 { return Target + 3u32; }
+    if Identity == 5u32 { return 6u32; }
+    if Identity == 6u32 { return Target + 6u32; }
+    return Identity + 2u32;
 }
 
 fn Capabilitiesˉareˉvalid(Input: bytes, Offset: u32) -> bool {
@@ -59,6 +68,7 @@ fn Servicesˉareˉvalid(
     Target: u32,
     Nativeˉbytes: u32,
     Bundleˉbytes: u32,
+    Profile: u32,
     Serviceˉcount: u32
 ) -> bool {
     var Previousˉend: u32 = Nativeˉbytes;
@@ -67,14 +77,15 @@ fn Servicesˉareˉvalid(
         let Record: u32 = Offset + 208u32 + Index * 64u32;
         let Imageˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Record + 16u32);
         let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, Record + 20u32);
-        let Capability: u32 = Serviceˉcapability(Index);
+        let Identity: u32 = Serviceˉidentity(Profile, Index);
+        let Capability: u32 = Serviceˉcapability(Identity);
         var Flags: u32 = 1u32;
         if Capability == 0u32 { Flags = 2u32; }
-        if Bytesˉreadˉu32ˉlittle(Input, Record) != Index + 1u32 ||
+        if Bytesˉreadˉu32ˉlittle(Input, Record) != Identity ||
             Bytesˉreadˉu32ˉlittle(Input, Record + 4u32) != Capability ||
-            Bytesˉreadˉu32ˉlittle(Input, Record + 8u32) != 8u32 + Index * 8u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Record + 8u32) != Identity * 8u32 ||
             Bytesˉreadˉu32ˉlittle(Input, Record + 12u32) !=
-                Serviceˉadapter(Index, Target) ||
+                Serviceˉadapter(Identity, Target) ||
             Imageˉoffset < Previousˉend || Imageˉoffset >= Bundleˉbytes ||
             Codeˉbytes == 0u32 || Codeˉbytes > Bundleˉbytes - Imageˉoffset ||
             Bytesˉreadˉu32ˉlittle(Input, Record + 24u32) != Flags ||
@@ -96,10 +107,12 @@ export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
 ) -> bool {
     let Total: u32 = Bytesˉlength(Input);
     var Serviceˉcount: u32 = 6u32;
+    if Profile == 5u32 { Serviceˉcount = 9u32; }
     if Profile == 6u32 || Profile == 7u32 { Serviceˉcount = 11u32; }
     if !Rangeˉisˉvalid(Total, Offset, 1024u32) ||
         Target < 1u32 || Target > 2u32 ||
-        (Profile != 2u32 && Profile != 6u32 && Profile != 7u32 &&
+        (Profile != 2u32 && Profile != 5u32 && Profile != 6u32 &&
+            Profile != 7u32 &&
             Profile != 8u32) {
         return false;
     }
@@ -141,6 +154,7 @@ export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
             Target,
             Nativeˉbytes,
             Bundleˉbytes,
+            Profile,
             Serviceˉcount
         ) ||
         !Allˉzero(

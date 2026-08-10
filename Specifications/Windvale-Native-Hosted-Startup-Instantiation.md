@@ -29,7 +29,7 @@ address for every canonical WVO relocation, followed by the complete WVO.
 | 24 | 4 | relocation count | `1` through `256` |
 | 28 | 4 | target count | Equal to relocation count |
 | 32 | 4 | WVO bytes | `1` through `65,536`; consumes the request tail |
-| 36 | 4 | reserved | Zero |
+| 36 | 4 | target policy | `0` requires every target to be nonzero; `1` admits the exact profile-5 optional-service target shape |
 
 Target addresses appear in canonical relocation order. They include targets
 for imports and locally defined symbols. The hosted-container planner defined
@@ -38,6 +38,12 @@ complete target layout. The standalone
 [hosted-container startup producer](Windvale-Native-Hosted-Container-Startup.md)
 now projects that list and the exact retained WVO into this request without a
 managed bridge.
+
+Target policy `1` is bounded to the retained inspector startup shapes: Windows
+uses 50 targets with indices 30 and 32 zero, while Linux uses 29 targets with
+indices 19 and 21 zero. Every other target remains nonzero. This represents
+the two services intentionally omitted by WVB-runner profile 5; all other
+profiles retain policy `0`.
 
 ## Admitted startup-object profile
 
@@ -87,8 +93,8 @@ reproducibility and recovery evidence.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Startup-instantiation WVB | 19,935 | `03b1324c25bfae312705a7de74919299aa417e7a27a5de5d465113f760ae359b` |
-| Startup-instantiation WVNF | 185,819 | `c26980323050ccf8afc47ac1215d3203d4d4aa4b5621dc249529a7405570b6f8` |
+| Startup-instantiation WVB | 21,143 | `933864be78b28394b9fc8e495b5ac872311ebca2a624db6e6731cdb8b399d309` |
+| Startup-instantiation WVNF | 193,891 | `ad1c049bdf77cb410b95cb638aa401874cca1a21b496e36ecab32ceef1539ffd` |
 | Windows hosted startup WVO | 4,398 | `dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161` |
 | Linux hosted startup WVO | 2,454 | `1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946` |
 

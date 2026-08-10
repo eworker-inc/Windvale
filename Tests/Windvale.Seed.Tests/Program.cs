@@ -38,7 +38,7 @@ internal static partial class Program
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "b762f94fe45634910cbc62d6285860b506d0c01df7461da0c14680ebce390517";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "20de442e9a8aa64f957e7d5f353ff62f8e43b2fce74e0aad572a1b8259ad9918";
     private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "0b0720b86dc4885af2074227fe181fe14bbe0f98a988c4a2de0d561a5fcffb5e";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "2d2c5cc91a13603d71bcd72786ae89e3e4afbaf19148fc6170a66df33c33ebef";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "8ce81d1c657f558f66b5b503d0edabad371b1f601297892f0d139e06176bdc27";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -1159,6 +1159,10 @@ internal static partial class Program
         "Windvale.Seed.Tests.WebAssembly-Wvb-Executable-Verify-Phase.wv");
     private static readonly string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Main.wv");
+    private static readonly string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_ENVELOPE_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Envelope.wv");
+    private static readonly string WEBASSEMBLY_WVB_SCALAR_INTERPRETER_FORMATTING_SOURCE = Readˉembeddedˉsource(
+        "Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Formatting.wv");
 
     private static readonly string HELLO_ASSEMBLY_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Hello-Object.wva");
@@ -18763,7 +18767,15 @@ internal static partial class Program
             new(
                 "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
                 WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE),
-            [new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE)]);
+            [
+                new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE),
+                new(
+                    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+                    WEBASSEMBLY_WVB_SCALAR_INTERPRETER_ENVELOPE_SOURCE),
+                new(
+                    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv",
+                    WEBASSEMBLY_WVB_SCALAR_INTERPRETER_FORMATTING_SOURCE),
+            ]);
         Equal(91_731, Scalarˉinterpreterˉwvb.Length);
         Equal(
             WEBASSEMBLY_WVB_SCALAR_INTERPRETER_WVB_SHA256,

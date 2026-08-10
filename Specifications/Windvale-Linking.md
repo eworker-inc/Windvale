@@ -263,9 +263,9 @@ toolset as its seed; it is self-reconstruction evidence rather than a
 non-circular bootstrap or paired-host qualification.
 
 The Windows candidate is 852,480 bytes at SHA-256
-`7f4be5d6b1236b5f5171e52f3861540432c4781140d154e28d52f804aa8cbcde`;
+`f6c9f4ca4bf5983a72888305d42622969aa861d31def21eee980800781e1d3f1`;
 the Linux candidate is 851,968 bytes at SHA-256
-`845402fb71bbf7a76524fd90b771b7c6e2d88b92ff9fe7440efe5839304a6ab3`.
+`bc703c9893107019f19d8e1d1cefd138f7d1b2acfa83d2b70054c8c6063bd2b8`.
 Both containers have independent structural verification. Current-host Windows
 execution stages the complete small fixture without loading a CLR component;
 Linux execution remains a separate qualification item. The completed process
@@ -293,9 +293,9 @@ written last; incomplete output chunks are not completion evidence.
 The exact transport WVB is 23,836 bytes at SHA-256
 `dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d`.
 The Windows application is 269,312 bytes at SHA-256
-`51801aaf70ba265212edd4bcbf6277cc395bb6412a6f38f07954e65a6978f9dc`;
+`1a5e4c7e232f30a1b97c90d7fef2ef03fa98de4a968fac2d07cc497a03248729`;
 the Linux application is 270,336 bytes at SHA-256
-`56c9fd42da56f00f04d4bacf7689bad56693a36b4e9ce7f88dcfcae16db75fe7`.
+`30386b1e571b5b444befbfb7c15ee9ce5cb30e7744cf84ddfee89cbf1e2e8108`.
 Both applications reconstruct through Decision 0496's current-Windows-host
 native cross-target path. The checked-in native processes and digest-bound
 launchers remain the normal candidate front door; Linux execution and
@@ -308,12 +308,12 @@ segmented WVO producer, segmented image linker, canonical image transport, and
 hosted-container toolset. The launcher owns only process orchestration and
 parsing of the transport process's strict decimal completion line.
 
-The segmented producer WVB is exactly 440,427 bytes at SHA-256
-`72652acb0e26367fa3fb56cbc38c76a236152a3991906e7943b822256cb90ba5`.
-Its Windows application is 6,414,336 bytes at SHA-256
-`b1ea826d567f79e10d084e7ad48b2baae892345096abbe714dc7f5e4fd6bafb8`;
-its Linux application is 6,414,336 bytes at SHA-256
-`4a427cd180a9793e33541bf3e2bb929c8d78af40760875cfd1df87c0f4b574fd`.
+The segmented producer WVB is exactly 442,593 bytes at SHA-256
+`7a0463df0f9278174182e799974a3eba8ea3721d7d756c0acd092401f8577f18`.
+Its Windows application is 6,438,912 bytes at SHA-256
+`2e3a1f8057b71c6eafca9c457a2dae5aac099f4b4fdd280fcd534ae1303acb00`;
+its Linux application is 6,438,912 bytes at SHA-256
+`f8fbc55776bc8573bec74b3610cf1d5c918286befcfde17069f1e39194c214d6`.
 Decision 0496 reconstructs this pair and the staging and transport pairs from
 the retained native candidate toolset on Windows. That construction does not
 by itself prove Stage 2, Linux execution, promotion, or a seed-independent

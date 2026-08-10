@@ -14,10 +14,10 @@ internal static partial class Program
 {
     private const int CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_BYTES = 778_240;
     private const string CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_SHA256 =
-        "6231a60404fc49f85695eddcc2e0690e372c64c0cf2d2ca847fd0ffc3f76b028";
+        "578ddd302da5fbd8d8e14c9410787f5aa05378429a1aca738ee2057e2f9ac1a5";
     private const int CURRENT_LINUX_WVB_RUNNER_APPLICATION_BYTES = 778_240;
     private const string CURRENT_LINUX_WVB_RUNNER_APPLICATION_SHA256 =
-        "74180ac7cd80192647f46df166a8ea97af17c9676afbe0b2ecb2c8c824db6944";
+        "16f39270c239609c6f58b086d0648609fad46860ba9bdd198fa7e6668b628047";
 
     private static readonly string FOUNDATION_SHA256_SOURCE =
         Readˉembeddedˉsource("Windvale.Seed.Tests.Foundation-Sha256.wv");
@@ -46,15 +46,25 @@ internal static partial class Program
                 new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE),
                 new("Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
                     WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE),
+                new("Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+                    WEBASSEMBLY_WVB_SCALAR_INTERPRETER_ENVELOPE_SOURCE),
+                new("Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv",
+                    WEBASSEMBLY_WVB_SCALAR_INTERPRETER_FORMATTING_SOURCE),
             ]);
         var Runnerˉmodule = Moduleˉcodec.Readˉandˉverify(Runnerˉbytes);
-        Equal(5, Runnerˉmodule.Module.Functions.Length);
+        Equal(8, Runnerˉmodule.Module.Functions.Length);
 
         var Interpreterˉbytes = Compileˉrunnerˉmodules(
             new(
                 "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
                 WEBASSEMBLY_WVB_SCALAR_INTERPRETER_SOURCE),
-            [new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE)]);
+            [
+                new("Foundation/Sha256.wv", FOUNDATION_SHA256_SOURCE),
+                new("Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+                    WEBASSEMBLY_WVB_SCALAR_INTERPRETER_ENVELOPE_SOURCE),
+                new("Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv",
+                    WEBASSEMBLY_WVB_SCALAR_INTERPRETER_FORMATTING_SOURCE),
+            ]);
         var Interpreterˉmodule = Moduleˉcodec.Readˉandˉverify(Interpreterˉbytes);
         var Heapˉguest = Compileˉsuccess(
             SOURCE_WVB_TEXT_BYTES_INTERPRETER_HEAP_SOURCE);
@@ -71,8 +81,9 @@ internal static partial class Program
             new Referenceˉcapabilityˉhost(new StringWriter()),
             Runtimeˉoptions.Portableˉdefaults with
             {
-                Maximumˉinstructions = 1_000_000,
+                Maximumˉinstructions = 29_535_345,
             }).Runˉmainˉbytes(ImmutableArray.Create(Heapˉrequest));
+        Equal(29_535_345L, Heapˉresult.Executedˉinstructions);
         Equal(20, Heapˉresult.Bytes.Length);
         Equal(
             0x4F58_5657u,
@@ -199,11 +210,15 @@ internal static partial class Program
                 "Build-Wvb",
                 Path.Combine(Repository, "Windvale-Wvb-Runner.wvproj"),
                 Nativeˉrunnerˉpath);
-            Equal(0, Nativeˉbuild.Exitˉcode);
-            Equal(string.Empty, Nativeˉbuild.Error);
-            Sequenceˉequal(
-                File.ReadAllBytes(Pinnedˉwvbˉpath),
-                File.ReadAllBytes(Nativeˉrunnerˉpath));
+            Equal(1, Nativeˉbuild.Exitˉcode);
+            Equal(string.Empty, Nativeˉbuild.Output);
+            Equal(
+                "build status=Compileˉrejected source-status=Sourceˉwir " +
+                "wir-status=Sourceˉbindings function=0 operation=0\n",
+                Nativeˉbuild.Error);
+            False(
+                File.Exists(Nativeˉrunnerˉpath),
+                "The rejected native runner source build published an output.");
 
             var Moduleˉpath = Path.Combine(Directoryˉpath, "Runner.wvb");
             File.WriteAllBytes(Moduleˉpath, Profileˉbytes);

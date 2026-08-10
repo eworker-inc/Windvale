@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHV 1` is the implemented manifest for packaging six fixed Windvale-written read-only binary tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned WVB verifier, the complete structural `wvdump` inspector, the bounded portable-WVB runner, the WVO verifier/inspector, the two-input console-application verifier, and the exact hosted-verifier publisher admitter. All run without loading .NET. The WVB verifier and inspector applications have qualified histories; the runner, WVO, console-verifier, and publisher-admission profiles are implemented candidates pending their focused and grouped dual-host retirement gates. Stage 0 remains an independent recovery oracle until the broader native-retirement gate is qualified.
+`WVHV 1` is the implemented manifest for packaging six fixed Windvale-written read-only binary tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned WVB verifier, the complete structural `wvdump` inspector, the bounded portable-WVB runner, the WVO verifier/inspector, the two-input console-application verifier, and the exact hosted-verifier publisher admitter. All run without loading .NET. The WVB verifier and inspector applications have qualified histories; the runner has current-Windows focused reconstruction and execution evidence; and the WVO, console-verifier, and publisher-admission profiles remain implemented candidates at their documented evidence levels. Grouped dual-host retirement qualification remains pending. Stage 0 remains an independent recovery oracle until the broader native-retirement gate is qualified.
 
 [Decision 0461](../Documents/Decisions/0461-Native-WVHV-Metadata-Ownership.md)
 adds the first native-construction replacement for this family: an exact
@@ -168,7 +168,7 @@ The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `3
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its current corrected-backend candidate is 793,600 bytes with SHA-256 `31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c`.
 
-`windows-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,752 bytes with SHA-256 `91b046015660f5f9e2710ed9cb41d5da9a79a1c87f4cf9ed87790c013a6dcce4`; the current corrected-backend reconstruction is 778,240 bytes with SHA-256 `6231a60404fc49f85695eddcc2e0690e372c64c0cf2d2ca847fd0ffc3f76b028`.
+`windows-x64-wvb-runner-v1` uses metadata profile `5`. The Decision 0507 current native reconstruction candidate is 778,240 bytes with SHA-256 `578ddd302da5fbd8d8e14c9410787f5aa05378429a1aca738ee2057e2f9ac1a5`.
 
 `windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 606,208 bytes with SHA-256 `bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2`.
 
@@ -189,7 +189,7 @@ The current WVB 1.11 reconstruction candidate is 1,224,704 bytes with SHA-256 `e
 
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its current corrected-backend candidate is 794,624 bytes with SHA-256 `cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e`.
 
-`linux-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,240 bytes with SHA-256 `8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294`; the current corrected-backend reconstruction has the same size and SHA-256 `74180ac7cd80192647f46df166a8ea97af17c9676afbe0b2ecb2c8c824db6944`.
+`linux-x64-wvb-runner-v1` uses metadata profile `5`. The Decision 0507 current native cross-target reconstruction candidate is 778,240 bytes with SHA-256 `16f39270c239609c6f58b086d0648609fad46860ba9bdd198fa7e6668b628047`.
 
 `linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 606,208 bytes with SHA-256 `bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1`.
 
@@ -234,7 +234,7 @@ through the native WVB build/lower/link and hosted-container tools.
 
 The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`.
 
-The current native-compiler runner candidate is 90,009 bytes with SHA-256 `3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626`.
+The current retained runner WVB is 90,009 bytes with SHA-256 `3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626`. Its exact current native object is 761,854 bytes with SHA-256 `e92eed5006a7a98609173c0ed73e66a7aec5e152d8556c9174cab928b946a505`; native source-to-WVB reconstruction remains explicitly pending.
 
 The WVO inspector candidate is 61,008 bytes with SHA-256 `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db`.
 
@@ -244,4 +244,4 @@ Qualification shares the existing exact-compiler AOT test so the suite compiles 
 
 ## Retirement boundary
 
-The verifier satisfies one qualified part of the native-retirement inventory: a Windvale-authored semantic verifier runs as a direct Windows or Linux process, and its portable core is shared by the native compiler build driver. The WVB inspector is already qualified; the runner and WVO candidates remove additional ordinary CLI roles once the grouped dual-host and artifact-promotion gates are recorded. The separate [`WVHP 1` console-packager](Windvale-Native-Console-Packager.md) and [`WVHN 1` WVB-to-WVO](Windvale-Native-Wvb-To-Wvo.md) candidates own bounded version-1 recipe materialization and accepted-subset native lowering. Decisions 0497 and 0498 reconstruct their exact current paired applications through retained Windvale-native paths on the current Windows host; Stage 0 remains recovery provenance rather than their only application constructor. Complete native x64 lowering, remaining hosted/tool container construction, the reference recovery compiler, test orchestration, release production, and repository automation still invoke .NET. All remaining [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) conditions remain mandatory before .NET leaves the normal path.
+The verifier satisfies one qualified part of the native-retirement inventory: a Windvale-authored semantic verifier runs as a direct Windows or Linux process, and its portable core is shared by the native compiler build driver. The WVB inspector is already qualified. Decision 0507 gives the runner an exact current-Windows-host retained-WVB-to-WVO-to-paired-application reconstruction and current-host execution owner; source-to-WVB closure, Linux execution, grouped qualification, and promotion remain open. The separate [`WVHP 1` console-packager](Windvale-Native-Console-Packager.md) and [`WVHN 1` WVB-to-WVO](Windvale-Native-Wvb-To-Wvo.md) candidates own bounded version-1 recipe materialization and accepted-subset native lowering. Decisions 0497 and 0498 reconstruct their exact current paired applications through retained Windvale-native paths on the current Windows host; Stage 0 remains recovery provenance rather than their only application constructor. Complete native x64 lowering, remaining hosted/tool container construction, the reference recovery compiler, test orchestration, release production, and repository automation still invoke .NET. All remaining [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md) conditions remain mandatory before .NET leaves the normal path.

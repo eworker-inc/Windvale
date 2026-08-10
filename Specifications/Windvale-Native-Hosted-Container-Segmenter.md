@@ -56,9 +56,9 @@ existing hosted PE/ELF verifiers before publication.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Segmenter WVB | 24,462 | `3dab1cbcd584c1130cb0973012d3507127accb1d949c33136935191010a34046` |
-| Windows application | 316,416 | `a3fa46befcd2214927db34c3d18fba96cb3b7ab7a46e47175f6bff4db2865801` |
-| Linux application | 315,392 | `7477ded87ef6cb524eeed7ac8593282d10eb2537b5db297b87e060e891955735` |
+| Segmenter WVB | 24,648 | `dfd98c3935b402b35414cf6ba548cc0ecde47dadc1c847bb32abddce1cf7cddf` |
+| Windows application | 317,440 | `08daad412e8c3830fd53ddb5fcf83aaf3f657d156375b95e2832db497959ffff` |
+| Linux application | 319,488 | `83ef511305fa384f8a873f8e5f46b111045e49b9683b5768a77cf760d31f016d` |
 
 The focused current-host evidence reconstructs the WVB through the native
 Project 1 front door, constructs both packages, executes one real bounded

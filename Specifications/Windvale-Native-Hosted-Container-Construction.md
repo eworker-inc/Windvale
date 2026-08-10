@@ -108,14 +108,14 @@ Windows/Linux process. It adds no second PE/ELF construction implementation.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Hosted-container planner WVB | 35,557 | `d285947f46b0e229891ee20205dd6908a375eea7dc50d460799d8c68e700113a` |
-| Hosted-container planner WVNF | 559,209 | `981dc6dc9889e2c95477ff473719c74d565de12285db10d4e74e0b9e54a667ba` |
-| Windows container-byte WVB | 17,554 | `9186f252e1fe1abde98d774a0d88760707123d5a27ecef48887defc9a017c7fe` |
-| Windows container-byte WVNF | 183,502 | `01d84e184db9a5970e685255e3f184a59d15a7412b0fc27d6aaba1c69b14dacf` |
-| Linux container-byte WVB | 12,203 | `54dad025b0f9d49dd0f39f5b12d43a1b0d35daf537712c2e8a2f1e7a75097e72` |
-| Linux container-byte WVNF | 125,151 | `1057b804c29b6ca5834d4de447a49b100e50b691d496a00ef9535d4bf06756c7` |
-| Hosted-container segmentation WVB | 22,398 | `83e6945d99a9a006e64572bf43b6affdf70626f9454145935d52193f8e692369` |
-| Hosted-container segmentation WVNF | 285,555 | `6e4351c1e8cc62b67721d4b61f5374f11fded3cf84b79ce63930c33a10e40d43` |
+| Hosted-container planner WVB | 35,929 | `ff1b48cfc05baab5f707dcfce7e73b0714e2379ee594e12f6e9c6ea1589fef7e` |
+| Hosted-container planner WVNF | 561,553 | `f353459548490e28a747c2a9fe37ef047412fca6c55e45da462e0d6d2c2128b3` |
+| Windows container-byte WVB | 17,679 | `a77e4ea3ac2cff35e965ae44cd486f30dd5b0c10aa2cde23c109d0eca37bffcb` |
+| Windows container-byte WVNF | 184,382 | `b02d27b75e9c5fd637fa3ba031d6b03820ae6bce41dbcdaff971a0ee57c1bd22` |
+| Linux container-byte WVB | 12,328 | `dac93155c68ba18f6cbe3af2d301a4c4171b9a9c05841057ea57398536fa8b42` |
+| Linux container-byte WVNF | 126,015 | `4da05782a516e84af8cc0fc2d5c3056dc99ce3fe6c32bc6dbe6e7f9b85314f81` |
+| Hosted-container segmentation WVB | 22,584 | `d6d74f7d27df9f04f02b8eac2e75fde4fc230ba70d198f90b31ad668a06052e6` |
+| Hosted-container segmentation WVNF | 286,727 | `923f7ff4552e0774e613d5805d8fbdbfff9edaa7347108d3d23626b68fe5dee7` |
 
 All four WVB modules reconstruct byte-for-byte through the native project
 front door. Separate fragments are required because the current bootstrap

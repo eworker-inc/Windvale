@@ -12,18 +12,18 @@ internal readonly record struct Nativeˉhostedˉtoolˉruntimeˉheaderˉinputs(
 
 internal static class Nativeˉhostedˉtoolˉruntimeˉheaderˉbuilder
 {
-    internal const int METADATA_ADMISSION_CANONICAL_SIZE = 10_779;
+    internal const int METADATA_ADMISSION_CANONICAL_SIZE = 10_872;
     internal const string METADATA_ADMISSION_CANONICAL_SHA256 =
-        "c0c61a601085c9422e5391023e047d7b0b3c88cb49bd52b24ccfd7c3eb7f1e35";
-    internal const int CORE_CANONICAL_SIZE = 19_330;
+        "d7b0084ed2c69ee03ad65ee4bfffa72550fd8d9ef2889efa0be116350b80b8b5";
+    internal const int CORE_CANONICAL_SIZE = 19_516;
     internal const string CORE_CANONICAL_SHA256 =
-        "abe7140c46af12c0f99056b8fbaf844f6ab5f51dd9e9f72bc215be86d977585f";
-    internal const int CONSUMER_CANONICAL_SIZE = 19_273;
+        "f1c156def9fa6f00bb0401097435bb1d1429d9d4be247b8d11f0de0b5ea51be2";
+    internal const int CONSUMER_CANONICAL_SIZE = 19_459;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "d9add4e9608fa1b2b2771de4f29d91793920a8a4d8c6f191ba9a5b1c9bedf3fa";
-    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 194_222;
+        "3cc8d0850b888911ee3338600bc7699578b163e7400c2b3631ef14649b9a3f18";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 195_394;
     internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
-        "b726e57277ef81990856159fca428a45c3513ca9218dec5f9fdebc2531637e31";
+        "91590986b8c3421ffdca9ecffb8a1798718f868614b77c581c266f4a2061b632";
 
     private const uint REQUEST_MAGIC = 0x5248_5657;
     private const uint RESPONSE_MAGIC = 0x5348_5657;

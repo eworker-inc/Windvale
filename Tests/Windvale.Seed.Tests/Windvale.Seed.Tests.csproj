@@ -1183,6 +1183,12 @@
       Include="../Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
       LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Main.wv" />
     <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Envelope.wv" />
+    <EmbeddedResource
+      Include="../Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv"
+      LogicalName="Windvale.Seed.Tests.WebAssembly-Wvb-Scalar-Interpreter-Formatting.wv" />
+    <EmbeddedResource
       Include="../../Foundation/Sha256.wv"
       LogicalName="Windvale.Seed.Tests.Foundation-Sha256.wv" />
     <EmbeddedResource

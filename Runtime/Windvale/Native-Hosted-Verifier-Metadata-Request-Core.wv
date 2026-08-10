@@ -48,10 +48,20 @@ fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
     return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
 }
 
+fn Serviceˉidentity(Profile: u32, Index: u32) -> u32 {
+    if Profile == 5u32 {
+        if Index == 6u32 { return 8u32; }
+        if Index == 7u32 { return 10u32; }
+        if Index == 8u32 { return 11u32; }
+    }
+    return Index + 1u32;
+}
+
 fn Publicationˉisˉcanonical(
     Input: bytes,
     Planˉbytes: u32,
-    Serviceˉcount: u32
+    Serviceˉcount: u32,
+    Profile: u32
 ) -> bool {
     if Bytesˉreadˉu32ˉlittle(Input, 24u32) != 1364219479u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 28u32) != 1u32 ||
@@ -63,7 +73,8 @@ fn Publicationˉisˉcanonical(
     var Index: u32 = 0u32;
     while Index < Serviceˉcount {
         let Record: u32 = 48u32 + Index * 12u32;
-        if Bytesˉreadˉu32ˉlittle(Input, Record) != Index + 1u32 ||
+        if Bytesˉreadˉu32ˉlittle(Input, Record) !=
+                Serviceˉidentity(Profile, Index) ||
             Bytesˉreadˉu32ˉlittle(Input, Record + 4u32) == 0u32 ||
             Bytesˉreadˉu32ˉlittle(Input, Record + 8u32) != 0u32 {
             return false;
@@ -75,7 +86,7 @@ fn Publicationˉisˉcanonical(
 
 export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> bytes {
     let Total: u32 = Bytesˉlength(Input);
-    if Total != 352u32 && Total != 572u32 {
+    if Total != 352u32 && Total != 484u32 && Total != 572u32 {
         return Failure(Input, 1u32, Total);
     }
     if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1163286103u32 {
@@ -94,6 +105,12 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
     var Serviceˉcount: u32 = 6u32;
     var Evidenceˉbytes: u32 = 352u32;
     var Requestˉbytes: u32 = 384u32;
+    if Profile == 5u32 {
+        Planˉbytes = 132u32;
+        Serviceˉcount = 9u32;
+        Evidenceˉbytes = 484u32;
+        Requestˉbytes = 528u32;
+    }
     if Profile == 6u32 || Profile == 7u32 {
         Planˉbytes = 156u32;
         Serviceˉcount = 11u32;
@@ -101,13 +118,19 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
         Requestˉbytes = 624u32;
     }
     if Target < 1u32 || Target > 2u32 ||
-        (Profile != 2u32 && Profile != 6u32 && Profile != 7u32 &&
+        (Profile != 2u32 && Profile != 5u32 && Profile != 6u32 &&
+            Profile != 7u32 &&
             Profile != 8u32) ||
         Total != Evidenceˉbytes ||
         !Allˉzero(Input, Evidenceˉbytes - 8u32, 8u32) {
         return Failure(Input, 4u32, 12u32);
     }
-    if !Publicationˉisˉcanonical(Input, Planˉbytes, Serviceˉcount) {
+    if !Publicationˉisˉcanonical(
+        Input,
+        Planˉbytes,
+        Serviceˉcount,
+        Profile
+    ) {
         return Failure(Input, 5u32, 24u32);
     }
 

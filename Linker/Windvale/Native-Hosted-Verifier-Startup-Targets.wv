@@ -120,7 +120,10 @@ fn Windowsˉinspectorˉtargets(
     while Service < 11u32 {
         Result = Add(
             Result,
-            Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, Service)
+            Layout.Nativeˉhostedˉverifierˉserviceˉaddressˉforˉidentity(
+                Runtime,
+                Service + 1u32
+            )
         );
         Service = Service + 1u32;
     }
@@ -197,7 +200,10 @@ fn Linuxˉinspectorˉtargets(
     while Service < 11u32 {
         Result = Add(
             Result,
-            Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, Service)
+            Layout.Nativeˉhostedˉverifierˉserviceˉaddressˉforˉidentity(
+                Runtime,
+                Service + 1u32
+            )
         );
         Service = Service + 1u32;
     }
@@ -217,13 +223,13 @@ export fn Nativeˉhostedˉverifierˉstartupˉtargets(
     }
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 564u32);
     if Value.Target == 1u32 {
-        if Profile == 6u32 || Profile == 7u32 {
+        if Profile == 5u32 || Profile == 6u32 || Profile == 7u32 {
             return Windowsˉinspectorˉtargets(Runtime, Value);
         }
         return Windowsˉverifierˉtargets(Runtime, Value);
     }
     if Value.Target == 2u32 {
-        if Profile == 6u32 || Profile == 7u32 {
+        if Profile == 5u32 || Profile == 6u32 || Profile == 7u32 {
             return Linuxˉinspectorˉtargets(Runtime, Value);
         }
         return Linuxˉverifierˉtargets(Runtime, Value);

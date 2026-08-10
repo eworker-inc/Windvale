@@ -1,12 +1,12 @@
 {
-  "format": "windvale-native-hosted-container-toolset-candidate-3",
+  "format": "windvale-native-hosted-container-toolset-candidate-7",
   "status": "candidate",
   "sourceDecision": "0491",
   "qualification": "pending",
   "construction": "stage0-recovery-package-wiring",
   "nativeSourceConstruction": "verified-digest-bound-front-door",
   "sha256SumsBytes": 6927,
-  "sha256SumsSha256": "60f66c785c8dc7352ad394dee5ffd4da4b0f62370c47bdf2978ff0d7a34abd67",
+  "sha256SumsSha256": "430171a9157560acb57e6f84aa772429b436059867892ee2408839057e0eeebc",
   "commands": [
     { "name": "wvhostenumrequest", "sourceProject": "Windvale-Native-Hosted-Enum-Request-Tool.wvproj", "target": "hosted-enum-request-v1" },
     { "name": "wvhostenumservice", "sourceProject": "Windvale-Native-Hosted-Enum-Service-Tool.wvproj", "target": "hosted-enum-service-v1" },

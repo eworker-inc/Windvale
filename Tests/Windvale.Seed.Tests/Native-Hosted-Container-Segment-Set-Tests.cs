@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_CONTAINER_SEGMENT_SET_WVB_BYTES = 31_837;
+    private const int NATIVE_HOSTED_CONTAINER_SEGMENT_SET_WVB_BYTES = 32_023;
     private const string NATIVE_HOSTED_CONTAINER_SEGMENT_SET_WVB_SHA256 =
-        "76af0586a964ec5b29f5f9ef06b67d3d5dcae1423672e03a7bacc4e7b0240747";
+        "4a3b8ebb68b8eb1237da42d699a6b83610f3fd7ffad2402581a7037c8daad99c";
     private const string LINUX_HOSTED_CONTAINER_PUBLISHER_STARTUP_SHA256 =
         "88d45c0936a81d1727a36a6013353e4b01da2ac3c3e121baa7cf21ee17234965";
     private const string WINDOWS_HOSTED_CONTAINER_PUBLISHER_STARTUP_SHA256 =

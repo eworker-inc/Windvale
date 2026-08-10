@@ -10,15 +10,15 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_CONTAINER_SEGMENTER_WVB_BYTES = 24_462;
+    private const int NATIVE_HOSTED_CONTAINER_SEGMENTER_WVB_BYTES = 24_648;
     private const string NATIVE_HOSTED_CONTAINER_SEGMENTER_WVB_SHA256 =
-        "3dab1cbcd584c1130cb0973012d3507127accb1d949c33136935191010a34046";
-    private const int WINDOWS_HOSTED_CONTAINER_SEGMENTER_BYTES = 316_416;
+        "dfd98c3935b402b35414cf6ba548cc0ecde47dadc1c847bb32abddce1cf7cddf";
+    private const int WINDOWS_HOSTED_CONTAINER_SEGMENTER_BYTES = 317_440;
     private const string WINDOWS_HOSTED_CONTAINER_SEGMENTER_SHA256 =
-        "a3fa46befcd2214927db34c3d18fba96cb3b7ab7a46e47175f6bff4db2865801";
-    private const int LINUX_HOSTED_CONTAINER_SEGMENTER_BYTES = 315_392;
+        "08daad412e8c3830fd53ddb5fcf83aaf3f657d156375b95e2832db497959ffff";
+    private const int LINUX_HOSTED_CONTAINER_SEGMENTER_BYTES = 319_488;
     private const string LINUX_HOSTED_CONTAINER_SEGMENTER_SHA256 =
-        "7477ded87ef6cb524eeed7ac8593282d10eb2537b5db297b87e060e891955735";
+        "83ef511305fa384f8a873f8e5f46b111045e49b9683b5768a77cf760d31f016d";
 
     private static void Nativeˉhostedˉcontainerˉsegmenterˉruns()
     {

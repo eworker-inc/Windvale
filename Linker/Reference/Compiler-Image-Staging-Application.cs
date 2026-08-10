@@ -16,10 +16,10 @@ public static class Compilerˉimageˉstagingˉapplicationˉcontract
         "14521acae6052d08add386833a35dd22c36e0dd07a1fad494961ee8064119d1c";
     public const int WINDOWS_APPLICATION_BYTES = 852_480;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "7f4be5d6b1236b5f5171e52f3861540432c4781140d154e28d52f804aa8cbcde";
+        "f6c9f4ca4bf5983a72888305d42622969aa861d31def21eee980800781e1d3f1";
     public const int LINUX_APPLICATION_BYTES = 851_968;
     public const string LINUX_APPLICATION_SHA256 =
-        "845402fb71bbf7a76524fd90b771b7c6e2d88b92ff9fe7440efe5839304a6ab3";
+        "bc703c9893107019f19d8e1d1cefd138f7d1b2acfa83d2b70054c8c6063bd2b8";
 }
 
 public static class Compilerˉimageˉstagingˉapplicationˉwriter

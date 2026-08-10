@@ -14,15 +14,15 @@ internal readonly record struct Nativeˉhostedˉtoolˉmetadataˉinputs(
 
 internal static class Nativeˉhostedˉtoolˉmetadataˉbuilder
 {
-    internal const int CORE_CANONICAL_SIZE = 24_174;
+    internal const int CORE_CANONICAL_SIZE = 24_360;
     internal const string CORE_CANONICAL_SHA256 =
-        "ebe76d7ccc4b27f7d7135647ef4c4b11ec5d83f281c7c91cc7ca68e389c0c1fa";
-    internal const int CONSUMER_CANONICAL_SIZE = 24_066;
+        "5808f778eb21c1214b581f0ce03958a74173a801b886aec7ed32124d7446abcd";
+    internal const int CONSUMER_CANONICAL_SIZE = 24_252;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "4adb36dd4ce821abdd29fe5766a0866847dc9052a0035dfbabd51d6a6b7c19ab";
-    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 215_031;
+        "b5e9397326d3106b22ce735369ef8202ff6bb4c8e14f6069a0c467b4266c8208";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 216_203;
     internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
-        "34f8d5f2f65db0fd736d6bd3557b5b9f3dcb4449366cde10e486ec97e15fbbad";
+        "3bcb475b7be2760ad514d656d6ad5bffaaca7f74dce0439eff1e277ac7b2d5cb";
 
     private const uint REQUEST_MAGIC = 0x4D48_5657;
     private const uint RESPONSE_MAGIC = 0x4448_5657;

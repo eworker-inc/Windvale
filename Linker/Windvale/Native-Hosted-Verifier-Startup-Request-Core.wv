@@ -40,7 +40,7 @@ fn Objectˉisˉexact(Object: bytes, Target: u32, Profile: u32) -> bool {
             "755ffb99cba6a838dd9eec353ce72d4adfb3af130ec4bce5a2278828dd136616"
         );
     }
-    if Profile == 6u32 || Profile == 7u32 {
+    if Profile == 5u32 || Profile == 6u32 || Profile == 7u32 {
         Expectedˉbytes = 2291u32;
         Expectedˉdigest = Textˉtoˉutf8(
             "5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb"
@@ -85,12 +85,14 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
     var Codeˉbytes: u32 = 668u32;
     var Symbols: u32 = 20u32;
     var Relocations: u32 = 24u32;
+    var Targetˉpolicy: u32 = 0u32;
     if Value.Target == 1u32 {
         Codeˉbytes = 1275u32;
         Symbols = 33u32;
         Relocations = 45u32;
     }
-    if Expectedˉprofile == 6u32 || Expectedˉprofile == 7u32 {
+    if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+        Expectedˉprofile == 7u32 {
         Codeˉbytes = 743u32;
         Symbols = 25u32;
         Relocations = 29u32;
@@ -100,6 +102,7 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
             Relocations = 50u32;
         }
     }
+    if Expectedˉprofile == 5u32 { Targetˉpolicy = 1u32; }
     if Bytesˉlength(Targets) != Relocations * 4u32 {
         return Failure(Runtime, 3u32);
     }
@@ -117,7 +120,7 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
     Request = Add(Request, Relocations);
     Request = Add(Request, Relocations);
     Request = Add(Request, Bytesˉlength(Object));
-    Request = Add(Request, 0u32);
+    Request = Add(Request, Targetˉpolicy);
     Request = Bytesˉconcat(Request, Targets);
     Request = Bytesˉconcat(Request, Object);
     return Nativeˉhostedˉverifierˉstartupˉrequestˉresult(

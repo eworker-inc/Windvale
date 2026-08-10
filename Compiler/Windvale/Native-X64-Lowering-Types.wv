@@ -207,6 +207,20 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
     );
 }
 
+export fn Compilerˉnativeˉx64ˉreturnˉshapeˉread(
+    Input: bytes,
+    Cursor: u32,
+    Limit: u32,
+    Types: Compilerˉnativeˉx64ˉtypes
+) -> Compilerˉnativeˉx64ˉshape {
+    if Rangeˉisˉvalid(Limit, Cursor, 1u32) {
+        if Bytesˉreadˉu8(Input, Cursor) == 0u8 {
+            return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, 0u8);
+        }
+    }
+    return Compilerˉnativeˉx64ˉshapeˉread(Input, Cursor, Limit, Types);
+}
+
 fn Skipˉuncheckedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return 0u32; }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);

@@ -55,23 +55,23 @@ call :construct_pair Transport "%TransportWvb%" ^
     "%OutputRoot%\linux-x64-wvimagetransport.elf"
 if errorlevel 1 goto :cleanup
 
-call :verify_file "%WvoStagingWvb%" 440427 72652acb0e26367fa3fb56cbc38c76a236152a3991906e7943b822256cb90ba5 "WVO staging producer WVB"
+call :verify_file "%WvoStagingWvb%" 442593 7a0463df0f9278174182e799974a3eba8ea3721d7d756c0acd092401f8577f18 "WVO staging producer WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 6414336 b1ea826d567f79e10d084e7ad48b2baae892345096abbe714dc7f5e4fd6bafb8 "Windows WVO staging producer"
+call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 6438912 2e3a1f8057b71c6eafca9c457a2dae5aac099f4b4fdd280fcd534ae1303acb00 "Windows WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 6414336 4a427cd180a9793e33541bf3e2bb929c8d78af40760875cfd1df87c0f4b574fd "Linux WVO staging producer"
+call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 6438912 f8fbc55776bc8573bec74b3610cf1d5c918286befcfde17069f1e39194c214d6 "Linux WVO staging producer"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ImageStagingWvb%" 75553 14521acae6052d08add386833a35dd22c36e0dd07a1fad494961ee8064119d1c "compiler-image staging WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvlinkstage.exe" 852480 7f4be5d6b1236b5f5171e52f3861540432c4781140d154e28d52f804aa8cbcde "Windows compiler-image staging application"
+call :verify_file "%OutputRoot%\windows-x64-wvlinkstage.exe" 852480 f6c9f4ca4bf5983a72888305d42622969aa861d31def21eee980800781e1d3f1 "Windows compiler-image staging application"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvlinkstage.elf" 851968 845402fb71bbf7a76524fd90b771b7c6e2d88b92ff9fe7440efe5839304a6ab3 "Linux compiler-image staging application"
+call :verify_file "%OutputRoot%\linux-x64-wvlinkstage.elf" 851968 bc703c9893107019f19d8e1d1cefd138f7d1b2acfa83d2b70054c8c6063bd2b8 "Linux compiler-image staging application"
 if errorlevel 1 goto :cleanup
 call :verify_file "%TransportWvb%" 23836 dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d "compiler-image transport WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvimagetransport.exe" 269312 51801aaf70ba265212edd4bcbf6277cc395bb6412a6f38f07954e65a6978f9dc "Windows compiler-image transport application"
+call :verify_file "%OutputRoot%\windows-x64-wvimagetransport.exe" 269312 1a5e4c7e232f30a1b97c90d7fef2ef03fa98de4a968fac2d07cc497a03248729 "Windows compiler-image transport application"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvimagetransport.elf" 270336 56c9fd42da56f00f04d4bacf7689bad56693a36b4e9ce7f88dcfcae16db75fe7 "Linux compiler-image transport application"
+call :verify_file "%OutputRoot%\linux-x64-wvimagetransport.elf" 270336 30386b1e571b5b444befbfb7c15ee9ce5cb30e7744cf84ddfee89cbf1e2e8108 "Linux compiler-image transport application"
 if errorlevel 1 goto :cleanup
 
 echo native segmented compiler toolset construction status=Complete artifacts=9

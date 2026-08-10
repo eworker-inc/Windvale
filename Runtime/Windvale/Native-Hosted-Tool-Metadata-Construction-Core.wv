@@ -73,7 +73,7 @@ fn Profileˉflags(Profile: u32) -> u32 {
 }
 
 fn Textˉarenaˉbytes(Profile: u32) -> u32 {
-    if Profile == 2u32 { return 234881024u32; }
+    if Profile == 2u32 || Profile == 6u32 { return 234881024u32; }
     return 134217728u32;
 }
 

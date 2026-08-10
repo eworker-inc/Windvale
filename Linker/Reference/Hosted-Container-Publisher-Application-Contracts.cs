@@ -10,15 +10,15 @@ public static class Hostedˉcontainerˉpublisherˉapplicationˉcontract
         "linux-x64-hosted-container-publisher-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉcontainerˉsegmentˉsetˉadmissionˉtool";
-    public const int MODULE_BYTES = 31_837;
+    public const int MODULE_BYTES = 32_023;
     public const string MODULE_SHA256 =
-        "76af0586a964ec5b29f5f9ef06b67d3d5dcae1423672e03a7bacc4e7b0240747";
-    public const int WINDOWS_APPLICATION_BYTES = 384_000;
+        "4a3b8ebb68b8eb1237da42d699a6b83610f3fd7ffad2402581a7037c8daad99c";
+    public const int WINDOWS_APPLICATION_BYTES = 385_024;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "0c53e8b9b74119d4fd8711c974a9f168e74d1e2b49ec3746eff4cdbdecf5b0ae";
+        "da6f614c8e8a839580d3bc7ea7a93863ea5e992b56124ce318c7546853320c65";
     public const int LINUX_APPLICATION_BYTES = 381_885;
     public const string LINUX_APPLICATION_SHA256 =
-        "347a3e5cea46c80618648bd1d0383a0ebb8d1a11819ecfff776005b4e49e3fdb";
+        "89238198cedf88b843ea7f3b2680b716ab554dd2789f135a0c4c6ac7d1950345";
 }
 
 public static class Hostedˉcontainerˉpublisherˉapplicationˉwriter

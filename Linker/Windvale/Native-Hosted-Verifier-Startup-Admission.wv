@@ -215,7 +215,8 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
         Expected =
             "b75a6601cae7bb96d42f85b68a3aedfdb40145af5ddbbf5b548c7f8c898559d9";
     }
-    if Expectedˉprofile == 6u32 || Expectedˉprofile == 7u32 {
+    if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+        Expectedˉprofile == 7u32 {
         Count = 29u32;
         Expected =
             "2c75cbfa34b188d8a5847ac462a00c9e3f799a44fb09b6959bd2b310a289f20f";
@@ -236,19 +237,37 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
     var Index: u32 = 0u32;
     while Index < Count {
         var Patch: u32 = Linuxˉverifierˉpatch(Index);
-        if Expectedˉprofile == 6u32 || Expectedˉprofile == 7u32 {
+        if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+            Expectedˉprofile == 7u32 {
             Patch = Linuxˉinspectorˉpatch(Index);
         }
         if Value.Target == 1u32 {
             Patch = Windowsˉverifierˉpatch(Index);
-            if Expectedˉprofile == 6u32 || Expectedˉprofile == 7u32 {
+            if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
+                Expectedˉprofile == 7u32 {
                 Patch = Windowsˉinspectorˉpatch(Index);
             }
         }
         let Sourceˉend: u32 = Value.Textˉaddress + Patch + 4u32;
         let Target: u32 = Bytesˉreadˉu32ˉlittle(Targetˉbytes, Index * 4u32);
-        if Target < Sourceˉend ||
-            Bytesˉreadˉu32ˉlittle(Startup, Patch) != Target - Sourceˉend {
+        var Absentˉrunnerˉservice: bool = false;
+        if Expectedˉprofile == 5u32 {
+            if Count == 50u32 && (Index == 30u32 || Index == 32u32) {
+                Absentˉrunnerˉservice = true;
+            }
+            if Count == 29u32 && (Index == 19u32 || Index == 21u32) {
+                Absentˉrunnerˉservice = true;
+            }
+        }
+        var Expectedˉbits: u32 = 0u32;
+        if Absentˉrunnerˉservice {
+            if Target != 0u32 { return false; }
+            Expectedˉbits = 4294967295u32 - Sourceˉend + 1u32;
+        } else {
+            if Target < Sourceˉend { return false; }
+            Expectedˉbits = Target - Sourceˉend;
+        }
+        if Bytesˉreadˉu32ˉlittle(Startup, Patch) != Expectedˉbits {
             return false;
         }
         Normalized = Build.Replace(

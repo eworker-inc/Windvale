@@ -125,12 +125,12 @@ internal static partial class Program
                     Request.Length,
                     Executed);
                 var Expectedˉtextˉarenaˉbytes =
-                    Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
-                        ? Hostedˉcompilerˉapplicationˉmetadata.BUILD_DRIVER_TEXT_ARENA_BYTES
+                    Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile)
+                        ? Hostedˉcompilerˉapplicationˉmetadata.LARGE_TOOL_TEXT_ARENA_BYTES
                         : Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES;
                 var Expectedˉnameˉstrideˉbytes =
-                    Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
-                        ? Hostedˉcompilerˉruntimeˉdata.BUILD_DRIVER_NAME_ARENA_STRIDE_BYTES
+                    Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile)
+                        ? Hostedˉcompilerˉruntimeˉdata.LARGE_TOOL_NAME_ARENA_STRIDE_BYTES
                         : Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES;
                 Sequenceˉequal(
                     Hostedˉcompilerˉruntimeˉheaderˉstage0ˉoracle.Build(

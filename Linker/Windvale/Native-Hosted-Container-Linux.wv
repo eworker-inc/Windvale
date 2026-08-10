@@ -24,7 +24,9 @@ fn Validˉplan(Input: bytes) -> bool {
     let Textˉbytes: u32 = 4096u32 + Bundleˉbytes;
     let Dataˉfile: u32 = Alignˉup(4096u32 + Textˉbytes, 4096u32);
     var Dataˉvirtual: u32 = 474038272u32;
-    if Read(Input, 24u32) == 2u32 { Dataˉvirtual = 508116992u32; }
+    if Read(Input, 24u32) == 2u32 || Read(Input, 24u32) == 6u32 {
+        Dataˉvirtual = 508116992u32;
+    }
     if Read(Input, 28u32) != Dataˉfile + 4096u32 ||
         Read(Input, 32u32) != 0u32 || Read(Input, 36u32) != 4096u32 ||
         Read(Input, 40u32) != 4096u32 || Read(Input, 44u32) != 809u32 {

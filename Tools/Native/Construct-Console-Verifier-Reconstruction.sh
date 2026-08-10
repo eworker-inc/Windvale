@@ -40,11 +40,11 @@ verify_file() {
 }
 
 verify_file "$hosted_toolset/SHA256SUMS" \
-    6927 60f66c785c8dc7352ad394dee5ffd4da4b0f62370c47bdf2978ff0d7a34abd67 \
+    6927 430171a9157560acb57e6f84aa772429b436059867892ee2408839057e0eeebc \
     'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" \
-    5064 4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 \
+    5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 \
     'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9437 \

@@ -12,15 +12,15 @@ public static class Hostedˉverifierˉmetadataˉrequestˉapplicationˉcontract
         "linux-x64-hosted-verifier-metadata-request-v1";
     public const string MODULE_NAME =
         "Runtimeˉnativeˉhostedˉverifierˉmetadataˉrequestˉtool";
-    public const int MODULE_BYTES = 18_272;
+    public const int MODULE_BYTES = 18_999;
     public const string MODULE_SHA256 =
-        "5265436ff876131ffd593e607df5e83d30b035bcfe1ea889e939f953a7e2d8f4";
-    public const int WINDOWS_APPLICATION_BYTES = 195_072;
+        "db39724575c5984be646725fad5857f27c2ae116850888b629deb81ef9137d33";
+    public const int WINDOWS_APPLICATION_BYTES = 200_192;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "562f32e9a2d31c6852bbf4e8d8fb7904f966e525025df3106bcb332908ba232e";
-    public const int LINUX_APPLICATION_BYTES = 196_608;
+        "32ae4e859fc373acee698e7295837694a859808868232bf2f6328294a6e90e28";
+    public const int LINUX_APPLICATION_BYTES = 200_704;
     public const string LINUX_APPLICATION_SHA256 =
-        "c9d0f8a655daeb92539eaff6224010b422c8d4b8fb280488ba89fa01af55ac31";
+        "4492bcaa51983185d8e9681bacca1770f9117e5b7c28806aa1eaf629497b09c4";
 }
 
 public static class Hostedˉverifierˉmetadataˉrequestˉapplicationˉwriter

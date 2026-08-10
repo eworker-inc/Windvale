@@ -110,8 +110,8 @@ internal static partial class Program
                     Request.Length,
                     Executed);
                 var Expectedˉtextˉarenaˉbytes =
-                    Profile == Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
-                        ? Hostedˉcompilerˉapplicationˉmetadata.BUILD_DRIVER_TEXT_ARENA_BYTES
+                    Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(Profile)
+                        ? Hostedˉcompilerˉapplicationˉmetadata.LARGE_TOOL_TEXT_ARENA_BYTES
                         : Nativeˉconsoleˉapplicationˉcontract.HOSTED_TEXT_ARENA_BYTES;
                 Equal(
                     Expectedˉtextˉarenaˉbytes,

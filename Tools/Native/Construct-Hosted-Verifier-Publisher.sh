@@ -225,18 +225,18 @@ check_file() {
 }
 
 check_file "$hosted_toolset/SHA256SUMS" 6927 \
-    60f66c785c8dc7352ad394dee5ffd4da4b0f62370c47bdf2978ff0d7a34abd67 \
+    430171a9157560acb57e6f84aa772429b436059867892ee2408839057e0eeebc \
     'hosted toolset inventory' || exit $?
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$construction/SHA256SUMS" 5064 \
-    4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 \
+    12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 \
     'publisher construction inventory' || exit $?
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$publisher_wvb" "$publisher_wvb_bytes" "$publisher_wvb_sha256" \
     'publisher WVB' || exit $?
 if [[ $role == wvo-publisher || $role == console-application-publisher ]]; then
-    check_file "$raw_lowerer" 5971968 \
-        09cb247bb427b3b40305d068ec798b1086c2255c3db823036d47e9f620091dd2 \
+    check_file "$raw_lowerer" 5996544 \
+        55df0cd2a679491bc1a3da50b6bc67b5f512f2a4698721faea6becb556a2a46f \
         'raw native WVB-to-WVO lowerer' || exit $?
 fi
 check_file "$service_root/$console_leaf" "$console_bytes" "$console_sha256" \

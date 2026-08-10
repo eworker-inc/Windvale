@@ -308,12 +308,16 @@ export fn Nativeˉhostedˉstartupˉinstantiate(Input: bytes) -> bytes {
     let Relocationˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
     let Targetˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
     let Objectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    let Targetˉpolicy: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
     if Startupˉaddress != 4096u32 || Codeˉbytes < 4u32 || Codeˉbytes > 4096u32 ||
         Symbolˉcount == 0u32 || Symbolˉcount > 128u32 ||
         Relocationˉcount == 0u32 || Relocationˉcount > 256u32 ||
         Targetˉcount != Relocationˉcount || Objectˉbytes == 0u32 ||
-        Objectˉbytes > 65536u32 || Bytesˉreadˉu32ˉlittle(Input, 36u32) != 0u32 {
+        Objectˉbytes > 65536u32 || Targetˉpolicy > 1u32 {
         return Failure(Input, 4u32, 12u32);
+    }
+    if Targetˉpolicy == 1u32 && Targetˉcount != 50u32 && Targetˉcount != 29u32 {
+        return Failure(Input, 4u32, 28u32);
     }
     if Targetˉcount > (Total - 40u32) / 4u32 {
         return Failure(Input, 1u32, 28u32);
@@ -324,7 +328,19 @@ export fn Nativeˉhostedˉstartupˉinstantiate(Input: bytes) -> bytes {
     }
     var Index: u32 = 0u32;
     while Index < Targetˉcount {
-        if Bytesˉreadˉu32ˉlittle(Input, 40u32 + Index * 4u32) == 0u32 {
+        let Targetˉvalue: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, 40u32 + Index * 4u32);
+        var Absentˉrunnerˉservice: bool = false;
+        if Targetˉpolicy == 1u32 {
+            if Targetˉcount == 50u32 && (Index == 30u32 || Index == 32u32) {
+                Absentˉrunnerˉservice = true;
+            }
+            if Targetˉcount == 29u32 && (Index == 19u32 || Index == 21u32) {
+                Absentˉrunnerˉservice = true;
+            }
+        }
+        if (Absentˉrunnerˉservice && Targetˉvalue != 0u32) ||
+            (!Absentˉrunnerˉservice && Targetˉvalue == 0u32) {
             return Failure(Input, 4u32, 40u32 + Index * 4u32);
         }
         Index = Index + 1u32;

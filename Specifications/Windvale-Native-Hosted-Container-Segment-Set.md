@@ -66,8 +66,8 @@ does not load .NET when packaged as a native application.
 
 ## Exact candidate identity and evidence
 
-The admission WVB is 31,837 bytes at SHA-256
-`76af0586a964ec5b29f5f9ef06b67d3d5dcae1423672e03a7bacc4e7b0240747`.
+The admission WVB is 32,023 bytes at SHA-256
+`4a3b8ebb68b8eb1237da42d699a6b83610f3fd7ffad2402581a7037c8daad99c`.
 It reconstructs byte-for-byte through the native Project 1 front door.
 
 The focused current-host test admits a real hosted-container segment set,
@@ -111,10 +111,10 @@ durable-transaction invocation. The 14-line hosted policy entries select
 ordinals `3,5,7...`, stride two, the 40-byte skip, and the hosted validator.
 Decision 0393 packages the admission root with those shells, the existing
 validator, the shared native publication-state object, and the durable
-transactions. The exact Windows application is 384,000 bytes at SHA-256
-`0c53e8b9b74119d4fd8711c974a9f168e74d1e2b49ec3746eff4cdbdecf5b0ae`;
+transactions. The current Windows application is 385,024 bytes at SHA-256
+`da6f614c8e8a839580d3bc7ea7a93863ea5e992b56124ce318c7546853320c65`;
 the Linux application is 381,885 bytes at SHA-256
-`347a3e5cea46c80618648bd1d0383a0ebb8d1a11819ecfff776005b4e49e3fdb`.
+`89238198cedf88b843ea7f3b2680b716ab554dd2789f135a0c4c6ac7d1950345`.
 Decision 0422 makes the Linux hosted policy select exact mode `0755` while the
 shared staged-WVO policy retains `0600`; the reusable transaction admits only
 those two values and creates the private sibling in its final mode before

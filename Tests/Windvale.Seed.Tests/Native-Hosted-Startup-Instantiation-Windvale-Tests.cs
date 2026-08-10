@@ -187,7 +187,7 @@ internal static partial class Program
         Expectˉfailure(Replaceˉu32(Windowsˉrequest, 16, 0), 4, 12);
         Expectˉfailure(Replaceˉu32(Windowsˉrequest, 20, 0), 4, 12);
         Expectˉfailure(Replaceˉu32(Windowsˉrequest, 28, 0), 4, 12);
-        Expectˉfailure(Replaceˉu32(Windowsˉrequest, 36, 1), 4, 12);
+        Expectˉfailure(Replaceˉu32(Windowsˉrequest, 36, 1), 4, 28);
         Expectˉfailure(Replaceˉu32(Windowsˉrequest, 40, 0), 4, 40);
         Expectˉfailure(Mutateˉbyte(Windowsˉrequest, Objectˉoffset), 5, (uint)Objectˉoffset);
         Expectˉfailure(

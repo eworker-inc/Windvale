@@ -27,7 +27,7 @@ set "Result=1"
 set "Phase=initialization"
 
 set /a Total+=1
-call :check_file "%Construction%\SHA256SUMS" 5064 4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 "construction inventory"
+call :check_file "%Construction%\SHA256SUMS" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :check_digest "%Construction%\%%I" %%H "construction artifact"
@@ -293,9 +293,9 @@ call :check_empty "%TestDirectory%\Reject.out" "metadata rejection wrote standar
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "metadata rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 5064 4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 "rejected metadata input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "rejected metadata input"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhv" 5064 4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 "preserved metadata destination"
+call :check_file "%TestDirectory%\Sentinel.wvhv" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "preserved metadata destination"
 if errorlevel 1 goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhr" >nul || goto :failed
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TestDirectory%\Invalid.wvsq" "%TestDirectory%\Sentinel.wvhr" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
@@ -304,7 +304,7 @@ call :check_empty "%TestDirectory%\Reject.out" "runtime rejection wrote standard
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "runtime rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhr" 5064 4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 "preserved runtime destination"
+call :check_file "%TestDirectory%\Sentinel.wvhr" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "preserved runtime destination"
 if errorlevel 1 goto :failed
 call :pass "base tools reject malformed input and preserve destinations"
 
@@ -317,7 +317,7 @@ call :check_empty "%TestDirectory%\Alias.out" "alias rejection wrote standard ou
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Alias.err" "alias rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 5064 4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 "preserved alias input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "preserved alias input"
 if errorlevel 1 goto :failed
 call :pass "base tools reject exact path aliases"
 

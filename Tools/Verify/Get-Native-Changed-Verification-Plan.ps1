@@ -96,6 +96,7 @@ function Add-Console-Packager-Reconstruction-Suites {
 
 function Add-Hosted-Publisher-Suites {
     Add-Suite @(
+        'wvb-runner-reconstruction',
         'wvo-inspector-reconstruction',
         'wvo-publisher-reconstruction',
         'console-publisher-reconstruction',
@@ -170,6 +171,8 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'wvo-publisher-reconstruction'
         )
+    } elseif ($Stem -eq 'Construct-Wvb-Runner-Reconstruction') {
+        Add-Suite 'wvb-runner-reconstruction'
     } elseif ($Stem -eq 'Construct-Wv-Linker-Reconstruction') {
         Add-Suite 'wv-linker-reconstruction'
     } elseif ($Stem -in @(
@@ -192,13 +195,18 @@ function Add-Native-Tool-Suite {
         Add-Suite 'baseline-jit'
     } elseif ($Stem -match 'Assemble-Wva') {
         Add-Assembler-Suites
-        Add-Suite 'console-verifier-reconstruction'
+        Add-Suite @('wvb-runner-reconstruction', 'console-verifier-reconstruction')
     } elseif ($Stem -match 'Link-Wvo') {
         Add-Linker-Suites
-        Add-Suite @('console-verifier-reconstruction', 'console-publisher-reconstruction')
+        Add-Suite @(
+            'wvb-runner-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction'
+        )
     } elseif ($Stem -eq 'Lower-Wvb-To-Wvo') {
         Add-Suite @(
             'wv-linker-reconstruction',
+            'wvb-runner-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'lowerer-rejections',
@@ -219,7 +227,10 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'console-publisher-reconstruction'
         )
-    } elseif ($Stem -match 'Verify-Wvb|Inspect-Wvb|Run-Wvb') {
+    } elseif ($Stem -eq 'Run-Wvb') {
+        Add-Bytecode-Suites
+        Add-Suite 'wvb-runner-reconstruction'
+    } elseif ($Stem -match 'Verify-Wvb|Inspect-Wvb') {
         Add-Bytecode-Suites
     } elseif ($Stem -match 'Package-Uefi') {
         Add-Suite 'uefi-packager'
@@ -404,6 +415,7 @@ foreach ($Path in $Paths) {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
+            'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -414,6 +426,7 @@ foreach ($Path in $Paths) {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
+            'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -440,6 +453,9 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale.Native/Consumers/Native-X64-Windows-File-Input-Service.bin'
     )) {
         Add-Suite 'console-verifier-reconstruction'
+        if ($Path -notmatch 'Enum-Name|Text-Quote') {
+            Add-Suite 'wvb-runner-reconstruction'
+        }
         if ($Path -in @(
             'Runtime/Windvale.Native/Consumers/Native-X64-Argument-Count-Service.bin',
             'Runtime/Windvale.Native/Consumers/Native-X64-Argument-Service.bin',
@@ -616,6 +632,7 @@ foreach ($Path in $Paths) {
         'Linker/Startup/Linux-X64-Hosted-Inspector.wva'
     )) {
         Add-Suite @(
+            'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction'
         )
@@ -656,11 +673,16 @@ foreach ($Path in $Paths) {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
+            'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Wvb-Runner-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'wvb-runner-reconstruction'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvo-Publisher-Candidate/',
         [StringComparison]::Ordinal)) {
@@ -700,7 +722,11 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Front-Door/',
         [StringComparison]::Ordinal)) {
-        Add-Suite @('console-verifier-reconstruction', 'console-publisher-reconstruction')
+        Add-Suite @(
+            'wvb-runner-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction'
+        )
     } elseif ($Path -in @(
         'Artifacts/Native-Aot-Composition-Probe/Return-42.exe',
         'Artifacts/Native-Aot-Composition-Probe/Return-42.elf'
@@ -723,6 +749,8 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Wvb-Publisher-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite 'hosted-verifier-publisher-files'
+    } elseif ($Path -eq 'Tools/Windvale.Run/Wvb-Runner-Tool.wv') {
+        Add-Suite 'wvb-runner-reconstruction'
     } elseif ($Path -eq
         'Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv') {
         Add-Suite 'console-verifier-reconstruction'
@@ -766,7 +794,7 @@ foreach ($Path in $Paths) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
         if ($Path -eq 'Specifications/Seed-CLI.md') {
-            Add-Suite 'seed'
+            Add-Suite @('seed', 'wvb-runner-reconstruction')
             Add-Gap 'seed-native-front-door'
             Add-Gap 'seed-native-console-aot'
         } elseif ($Path -in @(
@@ -797,6 +825,8 @@ foreach ($Path in $Paths) {
             }
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-To-Wvo.md') {
             Add-Suite 'wvb-to-wvo-reconstruction'
+        } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-Runner.md') {
+            Add-Suite 'wvb-runner-reconstruction'
         } elseif ($Path -in @(
             'Specifications/Windvale-Native-Wv-Linker.md',
             'Specifications/Wv-Linker-Core.md'
@@ -881,6 +911,8 @@ foreach ($Path in $Paths) {
         Add-Suite @('wv-linker-reconstruction', 'console-publisher-reconstruction')
     } elseif ($Path -eq 'Windvale-Wvo-Publisher.wvproj') {
         Add-Suite 'wvo-publisher-reconstruction'
+    } elseif ($Path -eq 'Windvale-Wvb-Runner.wvproj') {
+        Add-Suite 'wvb-runner-reconstruction'
     } elseif ($Path -eq 'Windvale-Wvo-Object.wvproj') {
         Add-Suite 'wvo-inspector-reconstruction'
     } elseif ($Path -eq 'Windvale-Console-Application-Verifier.wvproj') {

@@ -29,6 +29,7 @@ The exact filter names and case counts are:
 | `compiler-reconstruction` | 3 |
 | `segmented-compiler-toolset-reconstruction` | 3 |
 | `wvb-to-wvo-reconstruction` | 3 |
+| `wvb-runner-reconstruction` | 3 |
 | `wv-linker-reconstruction` | 3 |
 | `wvo-inspector-reconstruction` | 3 |
 | `console-verifier-reconstruction` | 3 |
@@ -68,11 +69,11 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 42 suites and 3,201 cases in manifest order. Its
+Omitting `--filter` selects all 43 suites and 3,204 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 42, Passed: 42, Failed: 0, Cases: 3201
+Suites: 43, Passed: 43, Failed: 0, Cases: 3204
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -122,6 +123,21 @@ Tools\Native\Test-Retirement-Suite.cmd --filter wvb-to-wvo-reconstruction
 It verifies the five-file candidate inventory, calls its durable constructor
 once, compares the rebuilt WVB and paired applications byte for byte, and
 requires the current-host rebuilt lowerer to reproduce the fixed Return-42 WVO.
+
+The retained-WVB runner reconstruction owner can be selected directly:
+
+```cmd
+Tools\Native\Test-Retirement-Suite.cmd --filter wvb-runner-reconstruction
+```
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter wvb-runner-reconstruction
+```
+
+Its three cases verify the four-file candidate inventory, reconstruct the exact
+WVO and paired profile-5 applications from the retained WVB, and exercise the
+current-host runner with exact result and rejected-input reports. It does not
+claim source-to-WVB closure or independent Linux execution.
 
 The standard Wv-Linker reconstruction owner can be selected directly:
 
@@ -846,7 +862,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,201-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,204-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

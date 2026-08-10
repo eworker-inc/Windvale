@@ -87,7 +87,7 @@ fn Scratchˉbytes(Target: u32) -> u32 {
 }
 
 fn Nameˉstrideˉbytes(Profile: u32) -> u32 {
-    if Profile == 2u32 { return 8192u32; }
+    if Profile == 2u32 || Profile == 6u32 { return 8192u32; }
     return 1048576u32;
 }
 

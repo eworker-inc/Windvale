@@ -45,7 +45,7 @@ internal static class Hostedˉcompilerˉruntimeˉdata
     internal const uint METADATA_OFFSET = 480;
     internal const uint BUNDLE_TEXT_OFFSET = 4096;
     internal const uint MAXIMUM_RUNTIME_DATA_BYTES = 512 * 1024 * 1024;
-    internal const uint BUILD_DRIVER_NAME_ARENA_STRIDE_BYTES = 8 * 1024;
+    internal const uint LARGE_TOOL_NAME_ARENA_STRIDE_BYTES = 8 * 1024;
 
     internal static Hostedˉcompilerˉruntimeˉlayout Plan(
         Consoleˉapplicationˉtarget target,
@@ -81,9 +81,9 @@ internal static class Hostedˉcompilerˉruntimeˉdata
             Hostedˉcompilerˉapplicationˉmetadata.Textˉarenaˉbytes(profile);
         var Nameˉarenaˉoffset = checked(
             Textˉarenaˉoffset + Textˉarenaˉbytes);
-        var Nameˉarenaˉstrideˉbytes = profile ==
-                Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver
-            ? BUILD_DRIVER_NAME_ARENA_STRIDE_BYTES
+        var Nameˉarenaˉstrideˉbytes =
+            Hostedˉcompilerˉapplicationˉmetadata.Usesˉlargeˉruntimeˉgeometry(profile)
+            ? LARGE_TOOL_NAME_ARENA_STRIDE_BYTES
             : Nativeˉfileˉinputˉtableˉcontract.NAME_STRIDE_BYTES;
         var Nameˉarenaˉbytes = checked(
             Nativeˉfileˉinputˉtableˉcontract.SNAPSHOT_CAPACITY *

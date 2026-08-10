@@ -448,6 +448,13 @@ calls per broad Seed command while leaving the frozen `windvale compile` and
 the broad harness, independent Linux evidence, and later qualification phases
 remain managed or unpromoted.
 
+Decision 0507 closes the paired container-construction seam for the bounded WVB
+runner without rewriting the historical front-door seed. The exact retained
+WVB lowers to a pinned ABI-22 WVO and linked fragment, then profile 5 constructs
+both current applications through the shared WVHV tools. The ordinary launcher
+uses the new candidate. Source-to-WVB bindings, Linux execution, and grouped
+promotion remain open and therefore keep E1 at `native-candidate`.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

@@ -216,6 +216,14 @@ owns this qualification composition without treating the frozen Stage 0
 coverage, broad execution and harness work, and independent Linux evidence
 remain outside this narrow transfer.
 
+Decision 0507 advances the WVB execution product from a historical packaged
+seed to an exact current profile-5 reconstruction. It retains the existing WVB
+as the explicit source boundary, lowers and links it with native tools, and
+constructs both target applications through the shared hosted-verifier path.
+The native Project front door still rejects this project's source bindings, so
+the colocated-project organization direction does not imply source
+reconstruction that has not yet been achieved.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

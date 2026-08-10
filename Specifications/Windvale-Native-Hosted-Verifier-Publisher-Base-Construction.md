@@ -66,12 +66,12 @@ sources.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Base-metadata WVB | 75,501 | `da1e8a543a309c75dac0188fd2f8e40741b37fa0270359a3acf17f1749b14d64` |
-| Base-runtime WVB | 21,807 | `909393ce96e6f64738a52f09bce097c446ec34e90284a9e5ad96acb9ae953803` |
-| Windows base-metadata application | 984,064 | `8617505db3507ca2e50008f48062f647cff23461b0cc6183d71547e86b2e4a0f` |
-| Linux base-metadata application | 983,040 | `cd91a0f0756886dcb2ee9bac2a24776f9853ef7d9e4f5ca488c8539053934d46` |
-| Windows base-runtime application | 231,424 | `d5ffa8b1f8cde0ad3cfd4715650b28eec387f9a2fd673849b39dce08748df2cd` |
-| Linux base-runtime application | 233,472 | `d56a05505544ccbc603dbceb6e0871fa095f41a10b8013d3d859427c7ba27aeb` |
+| Base-metadata WVB | 78,245 | `a96d2bcae53793f95102a45278a229bf4615109e3df670aa44db02d8945e0703` |
+| Base-runtime WVB | 22,465 | `39fc7a256118c41b360a1e0bcf1903798ecc8f1f4155cc787d59e6b92dd5e084` |
+| Windows base-metadata application | 1,003,008 | `b23f04e029730edde01a8c3942d6b8771cfe65a7d8c56f6eac7f29c8371be1df` |
+| Linux base-metadata application | 1,003,520 | `9ade312396293afa20ad5e409e10366c54b9c4616615ccb9cbcf0a4a4432101e` |
+| Windows base-runtime application | 236,032 | `65e94ce354feae8121d8868a27308ba3ae1a993baf3313b8d847d1fb732102e2` |
+| Linux base-runtime application | 237,568 | `db5fc8da164bb72da1c379b582c6bbffa64e8ecd1b6f6f4dd807a7e95f726055` |
 | Publisher-application admission WVB | 30,778 | `b4e0a2ee04de6cfff0efc723c57031bf5cfcd6706e3156525ce2157c5f287d07` |
 | Publisher-application admission WVO | 555,690 | `88cc97665cfd0de14f2c9ac6c80dfd985edc508fccdc3d9b887da740cd034e23` |
 | Publisher-promoter WVB | 41,268 | `c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672` |
@@ -101,7 +101,7 @@ sources.
 Version 17 of the construction candidate contains 27 canonical WVB/WVO
 artifacts and 22 paired host applications. Its 49-entry `SHA256SUMS` is 5,064
 LF-only bytes with SHA-256
-`4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779`.
+`12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5`.
 
 ## Native owner and remaining gate
 

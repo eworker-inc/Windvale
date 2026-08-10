@@ -1665,7 +1665,7 @@ $NativeHostedToolRuntimeHeaderArtifactRetained = Join-Path $RepositoryRoot 'Runt
 dotnet $ToolDll compile $NativeHostedToolMetadataAdmissionSource -o $NativeHostedToolMetadataAdmissionModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-tool metadata admission.' }
 $NativeHostedToolMetadataAdmissionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataAdmissionModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataAdmissionHash -ne 'c0c61a601085c9422e5391023e047d7b0b3c88cb49bd52b24ccfd7c3eb7f1e35') {
+if ($NativeHostedToolMetadataAdmissionHash -ne 'd7b0084ed2c69ee03ad65ee4bfffa72550fd8d9ef2889efa0be116350b80b8b5') {
     throw "The hosted-tool metadata admission module has an unexpected digest: $NativeHostedToolMetadataAdmissionHash"
 }
 $NativeHostedToolMetadataConstructionCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv'
@@ -1679,7 +1679,7 @@ dotnet $ToolDll `
     -o $NativeHostedToolMetadataConstructionCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool metadata-construction core.' }
 $NativeHostedToolMetadataConstructionCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionCoreModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataConstructionCoreHash -ne 'ebe76d7ccc4b27f7d7135647ef4c4b11ec5d83f281c7c91cc7ca68e389c0c1fa') {
+if ($NativeHostedToolMetadataConstructionCoreHash -ne '5808f778eb21c1214b581f0ce03958a74173a801b886aec7ed32124d7446abcd') {
     throw "The hosted-tool metadata-construction core has an unexpected digest: $NativeHostedToolMetadataConstructionCoreHash"
 }
 dotnet $ToolDll `
@@ -1690,7 +1690,7 @@ dotnet $ToolDll `
     -o $NativeHostedToolMetadataConstructionBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool metadata-construction bridge.' }
 $NativeHostedToolMetadataConstructionBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionBridgeModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataConstructionBridgeHash -ne '4adb36dd4ce821abdd29fe5766a0866847dc9052a0035dfbabd51d6a6b7c19ab') {
+if ($NativeHostedToolMetadataConstructionBridgeHash -ne 'b5e9397326d3106b22ce735369ef8202ff6bb4c8e14f6069a0c467b4266c8208') {
     throw "The hosted-tool metadata-construction bridge has an unexpected digest: $NativeHostedToolMetadataConstructionBridgeHash"
 }
 $NativeHostedToolMetadataConstructionBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionBridgeRetained).Hash.ToLowerInvariant()
@@ -1703,8 +1703,8 @@ if (
 }
 $NativeHostedToolMetadataConstructionArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeHostedToolMetadataConstructionArtifactHash -ne '34f8d5f2f65db0fd736d6bd3557b5b9f3dcb4449366cde10e486ec97e15fbbad' -or
-    (Get-Item -LiteralPath $NativeHostedToolMetadataConstructionArtifactRetained).Length -ne 215031
+    $NativeHostedToolMetadataConstructionArtifactHash -ne '3bcb475b7be2760ad514d656d6ad5bffaaca7f74dce0439eff1e277ac7b2d5cb' -or
+    (Get-Item -LiteralPath $NativeHostedToolMetadataConstructionArtifactRetained).Length -ne 216203
 ) {
     throw "The retained hosted-tool metadata-construction fragment has an unexpected identity: $NativeHostedToolMetadataConstructionArtifactHash"
 }
@@ -1728,19 +1728,19 @@ dotnet $ToolDll `
     -o $NativeHostedStartupInstantiationModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-startup instantiation.' }
 $NativeHostedStartupInstantiationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationModule).Hash.ToLowerInvariant()
-if ($NativeHostedStartupInstantiationHash -ne '03b1324c25bfae312705a7de74919299aa417e7a27a5de5d465113f760ae359b') {
+if ($NativeHostedStartupInstantiationHash -ne '933864be78b28394b9fc8e495b5ac872311ebca2a624db6e6731cdb8b399d309') {
     throw "The hosted-startup instantiation module has an unexpected digest: $NativeHostedStartupInstantiationHash"
 }
 if (
     (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationRetained).Hash.ToLowerInvariant() -ne $NativeHostedStartupInstantiationHash -or
-    (Get-Item -LiteralPath $NativeHostedStartupInstantiationRetained).Length -ne 19935
+    (Get-Item -LiteralPath $NativeHostedStartupInstantiationRetained).Length -ne 21143
 ) {
     throw 'The retained hosted-startup instantiation WVB has an unexpected identity.'
 }
 $NativeHostedStartupInstantiationArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeHostedStartupInstantiationArtifactHash -ne 'c26980323050ccf8afc47ac1215d3203d4d4aa4b5621dc249529a7405570b6f8' -or
-    (Get-Item -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Length -ne 185819
+    $NativeHostedStartupInstantiationArtifactHash -ne 'ad1c049bdf77cb410b95cb638aa401874cca1a21b496e36ecab32ceef1539ffd' -or
+    (Get-Item -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Length -ne 193891
 ) {
     throw "The retained hosted-startup instantiation fragment has an unexpected identity: $NativeHostedStartupInstantiationArtifactHash"
 }
@@ -1768,44 +1768,44 @@ $NativeHostedContainerArtifacts = @(
         Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Construction.wvproj'
         Output = $NativeHostedContainerPlanModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvb'
-        ModuleBytes = 35557
-        ModuleHash = 'd285947f46b0e229891ee20205dd6908a375eea7dc50d460799d8c68e700113a'
+        ModuleBytes = 35929
+        ModuleHash = 'ff1b48cfc05baab5f707dcfce7e73b0714e2379ee594e12f6e9c6ea1589fef7e'
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvnf'
-        FragmentBytes = 559209
-        FragmentHash = '981dc6dc9889e2c95477ff473719c74d565de12285db10d4e74e0b9e54a667ba'
+        FragmentBytes = 561553
+        FragmentHash = 'f353459548490e28a747c2a9fe37ef047412fca6c55e45da462e0d6d2c2128b3'
     },
     @{
         Name = 'Windows byte constructor'
         Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Windows.wvproj'
         Output = $NativeHostedContainerWindowsModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvb'
-        ModuleBytes = 17554
-        ModuleHash = '9186f252e1fe1abde98d774a0d88760707123d5a27ecef48887defc9a017c7fe'
+        ModuleBytes = 17679
+        ModuleHash = 'a77e4ea3ac2cff35e965ae44cd486f30dd5b0c10aa2cde23c109d0eca37bffcb'
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvnf'
-        FragmentBytes = 183502
-        FragmentHash = '01d84e184db9a5970e685255e3f184a59d15a7412b0fc27d6aaba1c69b14dacf'
+        FragmentBytes = 184382
+        FragmentHash = 'b02d27b75e9c5fd637fa3ba031d6b03820ae6bce41dbcdaff971a0ee57c1bd22'
     },
     @{
         Name = 'Linux byte constructor'
         Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Linux.wvproj'
         Output = $NativeHostedContainerLinuxModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvb'
-        ModuleBytes = 12203
-        ModuleHash = '54dad025b0f9d49dd0f39f5b12d43a1b0d35daf537712c2e8a2f1e7a75097e72'
+        ModuleBytes = 12328
+        ModuleHash = 'dac93155c68ba18f6cbe3af2d301a4c4171b9a9c05841057ea57398536fa8b42'
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvnf'
-        FragmentBytes = 125151
-        FragmentHash = '1057b804c29b6ca5834d4de447a49b100e50b691d496a00ef9535d4bf06756c7'
+        FragmentBytes = 126015
+        FragmentHash = '4da05782a516e84af8cc0fc2d5c3056dc99ce3fe6c32bc6dbe6e7f9b85314f81'
     },
     @{
         Name = 'segment constructor'
         Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Segmentation.wvproj'
         Output = $NativeHostedContainerSegmentationModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvb'
-        ModuleBytes = 22398
-        ModuleHash = '83e6945d99a9a006e64572bf43b6affdf70626f9454145935d52193f8e692369'
+        ModuleBytes = 22584
+        ModuleHash = 'd6d74f7d27df9f04f02b8eac2e75fde4fc230ba70d198f90b31ad668a06052e6'
         Fragment = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvnf'
-        FragmentBytes = 285555
-        FragmentHash = '6e4351c1e8cc62b67721d4b61f5374f11fded3cf84b79ce63930c33a10e40d43'
+        FragmentBytes = 286727
+        FragmentHash = '923f7ff4552e0774e613d5805d8fbdbfff9edaa7347108d3d23626b68fe5dee7'
     }
 )
 foreach ($Artifact in $NativeHostedContainerArtifacts) {
@@ -1845,7 +1845,7 @@ dotnet $ToolDll `
     -o $NativeHostedToolRuntimeHeaderCoreModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool runtime-header core.' }
 $NativeHostedToolRuntimeHeaderCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderCoreModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolRuntimeHeaderCoreHash -ne 'abe7140c46af12c0f99056b8fbaf844f6ab5f51dd9e9f72bc215be86d977585f') {
+if ($NativeHostedToolRuntimeHeaderCoreHash -ne 'f1c156def9fa6f00bb0401097435bb1d1429d9d4be247b8d11f0de0b5ea51be2') {
     throw "The hosted-tool runtime-header core has an unexpected digest: $NativeHostedToolRuntimeHeaderCoreHash"
 }
 dotnet $ToolDll `
@@ -1856,7 +1856,7 @@ dotnet $ToolDll `
     -o $NativeHostedToolRuntimeHeaderBridgeModule
 if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool runtime-header bridge.' }
 $NativeHostedToolRuntimeHeaderBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderBridgeModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolRuntimeHeaderBridgeHash -ne 'd9add4e9608fa1b2b2771de4f29d91793920a8a4d8c6f191ba9a5b1c9bedf3fa') {
+if ($NativeHostedToolRuntimeHeaderBridgeHash -ne '3cc8d0850b888911ee3338600bc7699578b163e7400c2b3631ef14649b9a3f18') {
     throw "The hosted-tool runtime-header bridge has an unexpected digest: $NativeHostedToolRuntimeHeaderBridgeHash"
 }
 $NativeHostedToolRuntimeHeaderBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderBridgeRetained).Hash.ToLowerInvariant()
@@ -1869,8 +1869,8 @@ if (
 }
 $NativeHostedToolRuntimeHeaderArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeHostedToolRuntimeHeaderArtifactHash -ne 'b726e57277ef81990856159fca428a45c3513ca9218dec5f9fdebc2531637e31' -or
-    (Get-Item -LiteralPath $NativeHostedToolRuntimeHeaderArtifactRetained).Length -ne 194222
+    $NativeHostedToolRuntimeHeaderArtifactHash -ne '91590986b8c3421ffdca9ecffb8a1798718f868614b77c581c266f4a2061b632' -or
+    (Get-Item -LiteralPath $NativeHostedToolRuntimeHeaderArtifactRetained).Length -ne 195394
 ) {
     throw "The retained hosted-tool runtime-header fragment has an unexpected identity: $NativeHostedToolRuntimeHeaderArtifactHash"
 }

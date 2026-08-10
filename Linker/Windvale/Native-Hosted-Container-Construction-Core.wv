@@ -76,7 +76,7 @@ fn Runtimeˉaddress(
 fn Runtimeˉgeometryˉfailure(Runtime: bytes, Target: u32, Profile: u32) -> u32 {
     var Textˉarenaˉbytes: u32 = 134217728u32;
     var Nameˉstrideˉbytes: u32 = 1048576u32;
-    if Profile == 2u32 {
+    if Profile == 2u32 || Profile == 6u32 {
         Textˉarenaˉbytes = 234881024u32;
         Nameˉstrideˉbytes = 8192u32;
     }

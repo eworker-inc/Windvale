@@ -55,7 +55,7 @@ $NativeCases = @(
             'Examples/Seed/Sum-Data.wvproj',
             'Specifications/Seed-CLI.md'
         )
-        Suites = @('seed')
+        Suites = @('seed', 'wvb-runner-reconstruction')
         Gaps = @('seed-native-console-aot', 'seed-native-front-door')
         VerifyPlan = $false
     },
@@ -139,6 +139,7 @@ $NativeCases = @(
             'seed',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
@@ -193,6 +194,7 @@ $NativeCases = @(
         )
         Suites = @(
             'wvb-to-wvo-reconstruction',
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
@@ -247,6 +249,7 @@ $NativeCases = @(
             'compiler-reconstruction',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
@@ -264,6 +267,7 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'wvb-to-wvo-reconstruction',
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
@@ -274,6 +278,20 @@ $NativeCases = @(
             'lowerer-rejections',
             'console-packager-source-reconstruction'
         )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WVB runner reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Wvb-Runner-Reconstruction.cmd',
+            'Tools/Native/Construct-Wvb-Runner-Reconstruction.cmd',
+            'Artifacts/Native-Wvb-Runner-Candidate/Manifest.json',
+            'Windvale-Wvb-Runner.wvproj',
+            'Tools/Windvale.Run/Wvb-Runner-Tool.wv',
+            'Specifications/Windvale-Native-Wvb-Runner.md'
+        )
+        Suites = @('wvb-runner-reconstruction')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -289,6 +307,7 @@ $NativeCases = @(
             'Specifications/Windvale-Native-Wvo-Inspector.md'
         )
         Suites = @(
+            'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction'
         )
@@ -303,6 +322,7 @@ $NativeCases = @(
             'Object-Model/Windvale/Wvo-Object-Core.wv'
         )
         Suites = @(
+            'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -365,6 +385,7 @@ $NativeCases = @(
             'Runtime/Windvale.Native/Consumers/Native-X64-Windows-File-Input-Service.bin'
         )
         Suites = @(
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
@@ -396,6 +417,7 @@ $NativeCases = @(
             'Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate/Manifest.json'
         )
         Suites = @(
+            'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -414,6 +436,7 @@ $NativeCases = @(
         )
         Suites = @(
             'seed',
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -505,6 +528,7 @@ $NativeCases = @(
         Name = 'current lowerer launcher and Wv-Linker consumer'
         Paths = @('Tools/Native/Lower-Wvb-To-Wvo.cmd')
         Suites = @(
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -625,6 +649,7 @@ $NativeCases = @(
             'Windvale-Wvb-Publisher.wvproj'
         )
         Suites = @(
+            'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',

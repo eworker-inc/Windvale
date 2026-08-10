@@ -33,7 +33,7 @@ fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
 
 fn Usage() -> i32 {
     diagnostic.write_line(
-        "Usage: wvhostverifierstartup [publisher-admission|wvo-inspector|console-verifier] <runtime.wvhr> <startup.wvo> <response.wvsd>"
+        "Usage: wvhostverifierstartup [publisher-admission|wvb-runner|wvo-inspector|console-verifier] <runtime.wvhr> <startup.wvo> <response.wvsd>"
     );
     return 64;
 }
@@ -78,6 +78,8 @@ export fn Main() -> i32 {
     if Arguments == 4u32 {
         if Pathsˉareˉequal(process.argument(0u32), "publisher-admission") {
             Expectedˉprofile = 8u32;
+        } else if Pathsˉareˉequal(process.argument(0u32), "wvb-runner") {
+            Expectedˉprofile = 5u32;
         } else if Pathsˉareˉequal(process.argument(0u32), "wvo-inspector") {
             Expectedˉprofile = 6u32;
         } else if Pathsˉareˉequal(process.argument(0u32), "console-verifier") {
