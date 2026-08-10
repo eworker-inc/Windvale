@@ -251,7 +251,7 @@ The current bytecode 1.11 golden modules are:
 - `Compilerˉsourceˉwvbˉdemo`: `ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9`
 - `Compilerˉsourceˉwvbˉtool`: `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`
 - `Wvˉdumpˉcore`: `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`
-- `Wvoˉobjectˉcore`: `b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f`
+- `Wvoˉobjectˉcore`: `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db`
 - `Wvaˉassemblerˉcore`: `1589f2750fa8fcf98ed1058814907f7e03eed0ac368467999118e25fb8195a7f`
 - `Wvˉlinkerˉcore`: `02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874`
 

@@ -1,6 +1,6 @@
 windvale-project 1
 root "Object-Model/Windvale/Wvo-Object-Core.wv"
-source "Object-Model/Windvale/Wvo-Object-Verification.wv"
 source "Foundation/Byte-Ordering.wv"
 source "Foundation/Sha256.wv"
+source "Object-Model/Windvale/Wvo-Object-Verification.wv"
 emit wvb

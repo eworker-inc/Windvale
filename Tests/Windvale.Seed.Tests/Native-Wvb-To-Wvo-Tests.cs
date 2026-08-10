@@ -82,22 +82,22 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Native-Bridge-Adapter.wv");
 
-    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 412_871;
-    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 439_000;
+    private const int WVB_TO_WVO_TOOL_WVB_BYTES = 414_298;
+    private const int WVB_TO_WVO_STAGING_TOOL_WVB_BYTES = 440_427;
     private const string WVB_TO_WVO_STAGING_TOOL_SHA256 =
-        "5b0c18b73921c90ff4b168b49999ac8b39b322964e1204c47d3ff588efba0b07";
+        "72652acb0e26367fa3fb56cbc38c76a236152a3991906e7943b822256cb90ba5";
     private const int WVO_STAGING_MANIFEST_ADAPTER_WVB_BYTES = 7_991;
     private const string WVO_STAGING_MANIFEST_ADAPTER_SHA256 =
         "e7a29d26e78c3cdae93868960d5be537709fc7ed8ef83de1c0bf84ca5e63c3fa";
     private const int WVO_STAGING_NATIVE_BRIDGE_ADAPTER_WVB_BYTES = 8_807;
     private const string WVO_STAGING_NATIVE_BRIDGE_ADAPTER_SHA256 =
         "f4f5e00013d370a431af5b78d36beca37d9fe5504e788204aea6025341607417";
-    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_958_144;
+    private const int WINDOWS_WVB_TO_WVO_APPLICATION_BYTES = 5_972_480;
     private const string WINDOWS_WVB_TO_WVO_APPLICATION_SHA256 =
-        "927cbdf8b89269538ea2af1131276e4edca3e8810c1edaa3c7fd096e3528a267";
-    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_959_680;
+        "be6bfb487f00dcc9f8c785dfe05832263d5899bf2f6fca3f77edf163b51deac7";
+    private const int LINUX_WVB_TO_WVO_APPLICATION_BYTES = 5_971_968;
     private const string LINUX_WVB_TO_WVO_APPLICATION_SHA256 =
-        "21a7c239d5236227da1abe202807170c077dad629e858f46cde4225f8efa2d3b";
+        "09cb247bb427b3b40305d068ec798b1086c2255c3db823036d47e9f620091dd2";
     private const int WVB_TO_WVO_FIXTURE_WVB_BYTES = 174;
     private const string WVB_TO_WVO_FIXTURE_WVB_SHA256 =
         "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31";
@@ -595,7 +595,7 @@ internal static partial class Program
         Assertˉboundedˉfunctionˉbatching(Boundedˉbatchˉadapter);
     }
 
-    private static void Nativeˉu32ˉformatˉloweringˉagrees()
+    private static void Nativeˉintegerˉformatˉloweringˉagrees()
     {
         var Tool = Moduleˉcodec.Readˉandˉverify(
             Compileˉwvbˉtoˉwvoˉtoolˉsuccess());
@@ -1489,6 +1489,9 @@ internal static partial class Program
         var Wvb = Compileˉsuccess(WVB_TO_WVO_TEXT_SERVICES_SOURCE);
         var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
         True(Module.Functions.SelectMany(Function => Function.Instructions)
+            .Any(Instruction => Instruction.Opcode == Opcode.I32ˉformat),
+            "The text-service fixture omitted i32.format.");
+        True(Module.Functions.SelectMany(Function => Function.Instructions)
             .Any(Instruction => Instruction.Opcode == Opcode.U32ˉformat),
             "The text-service fixture omitted u32.format.");
         var Interpreted = new Referenceˉruntime(
@@ -1503,6 +1506,7 @@ internal static partial class Program
                 Nativeˉservice.Textˉutf8ˉisˉvalid,
                 Nativeˉservice.Textˉconcat,
                 Nativeˉservice.Textˉquote,
+                Nativeˉservice.I32ˉformat,
                 Nativeˉservice.U32ˉformat,
             ],
             Native.Fragment.Requiredˉservices);

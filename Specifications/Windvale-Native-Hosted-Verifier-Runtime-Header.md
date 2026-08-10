@@ -2,10 +2,10 @@
 
 ## Status and scope
 
-This contract transfers construction of the compiler-aligned verifier's exact
+This contract transfers construction of the fixed hosted verifier's exact
 4,096-byte initial runtime header into portable Windvale. It reuses the shared
-`WVHR 1` request and `WVHS 1` response envelopes but admits only `WVHV 1`
-profile 2 through the verifier-specific metadata owner. The separate
+`WVHR 1` request and `WVHS 1` response envelopes. It admits `WVHV 1` profiles
+2, 6, and 8 through the verifier-specific metadata owner. The separate
 compiler-family runtime-header constructor continues to interpret `WVHB`
 profiles 1 through 7; equal numeric profile values do not imply equal authority.
 
@@ -23,7 +23,7 @@ The request is exactly 1,048 little-endian bytes:
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `1,048` |
 | 12 | 4 | target | `1` Windows x64 or `2` Linux x64 |
-| 16 | 4 | verifier profile | `2` |
+| 16 | 4 | verifier profile | `2`, `6`, or `8`, matching metadata |
 | 20 | 4 | reserved | Zero |
 | 24 | 1,024 | metadata | Exact admitted `WVHV 1` record for the target |
 
@@ -67,10 +67,12 @@ owns construction. The separate
 owns metadata admission. A small bridge is the root of
 [`Windvale-Native-Hosted-Verifier-Runtime.wvproj`](../Windvale-Native-Hosted-Verifier-Runtime.wvproj).
 
-The native project front door constructs an exact 17,941-byte WVB with SHA-256
+The last accepted profile-2 differential baseline constructed a 17,941-byte
+WVB with SHA-256
 `cf27254409ab5d574f6b6b19feb5958d97c3076a5f3b0806208437cfde04114e`.
-One focused current-host test proves its service-free `Main(bytes) -> bytes`
+One focused current-host test proved its service-free `Main(bytes) -> bytes`
 shape, executes the Windvale interpreter and native backend, and compares both
 Windows and Linux results byte for byte with the frozen C# recovery oracle. Ten
-malformed requests agree across both Windvale execution modes. C# is not used
-to compile the production module and remains differential evidence only.
+malformed requests agreed across both Windvale execution modes. That identity
+is retained profile-2 evidence, not a current profile-6 source pin. C# is not
+used to compile the production module and remains differential evidence only.

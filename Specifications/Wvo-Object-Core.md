@@ -4,7 +4,7 @@
 
 `Object-Model/Windvale/Wvo-Object-Core.wv` owns the Windvale-written WVO 1.0 read-only command and report shell. `Object-Model/Windvale/Wvo-Object-Verification.wv` owns its shared portable reader and complete bounded validator. The shell constructs the canonical representative object for an internal deterministic self-test and emits the same successful verification and inspection reports as the independent C# Stage 0 oracle.
 
-`Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉordering` and `Foundationˉsha256`. The current candidate WVB is 60,974 bytes with SHA-256 `b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f`. It is a source candidate pending the final grouped Windows/Linux retirement gate; this identity is not a cross-host qualification claim.
+`Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉordering` and `Foundationˉsha256`. The current candidate WVB is 61,008 bytes with SHA-256 `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db`. It is a source candidate pending the final grouped Windows/Linux retirement gate; this identity is not a cross-host qualification claim.
 
 This module is an object verifier and inspector, not an assembler, linker, or object-file writer. Moving the source from `Examples/Foundation` into `Object-Model/Windvale` makes its ownership explicit without changing WVO 1.0.
 

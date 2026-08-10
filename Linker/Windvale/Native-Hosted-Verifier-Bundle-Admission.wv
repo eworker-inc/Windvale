@@ -51,15 +51,24 @@ fn Digestˉmatches(
     );
 }
 
-export fn Nativeˉhostedˉverifierˉbundleˉisˉvalid(
+export fn Nativeˉhostedˉverifierˉbundleˉisˉvalidˉforˉprofile(
     Runtime: bytes,
-    Response: bytes
+    Response: bytes,
+    Expectedˉprofile: u32
 ) -> bool {
     if Bytesˉlength(Runtime) != 4096u32 || Bytesˉlength(Response) < 40u32 {
         return false;
     }
+    var Serviceˉcount: u32 = 6u32;
+    if Expectedˉprofile == 6u32 { Serviceˉcount = 11u32; }
+    if (Expectedˉprofile != 2u32 && Expectedˉprofile != 6u32 &&
+            Expectedˉprofile != 8u32) ||
+        Bytesˉreadˉu32ˉlittle(Runtime, 516u32) != Serviceˉcount ||
+        Bytesˉreadˉu32ˉlittle(Runtime, 564u32) != Expectedˉprofile {
+        return false;
+    }
     let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 540u32);
-    if Bundleˉbytes == 0u32 ||
+    if Bundleˉbytes == 0u32 || Bundleˉbytes > Bytesˉlength(Response) - 40u32 ||
         Bytesˉlength(Response) != 40u32 + Bundleˉbytes ||
         Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1230198359u32 ||
         Bytesˉreadˉu32ˉlittle(Response, 4u32) != 2u32 ||
@@ -68,7 +77,7 @@ export fn Nativeˉhostedˉverifierˉbundleˉisˉvalid(
         Bytesˉreadˉu32ˉlittle(Response, 24u32) != Bundleˉbytes ||
         Bytesˉreadˉu32ˉlittle(Response, 28u32) != 0u32 ||
         Bytesˉreadˉu32ˉlittle(Response, 32u32) != Bundleˉbytes ||
-        Bytesˉreadˉu32ˉlittle(Response, 36u32) != 6u32 {
+        Bytesˉreadˉu32ˉlittle(Response, 36u32) != Serviceˉcount {
         return false;
     }
 
@@ -80,7 +89,7 @@ export fn Nativeˉhostedˉverifierˉbundleˉisˉvalid(
 
     var Previousˉend: u32 = Nativeˉbytes;
     var Index: u32 = 0u32;
-    while Index < 6u32 {
+    while Index < Serviceˉcount {
         let Record: u32 = 688u32 + Index * 64u32;
         let Imageˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Runtime, Record + 16u32);
         let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Runtime, Record + 20u32);
@@ -103,4 +112,15 @@ export fn Nativeˉhostedˉverifierˉbundleˉisˉvalid(
         Index = Index + 1u32;
     }
     return Previousˉend == Bundleˉbytes;
+}
+
+export fn Nativeˉhostedˉverifierˉbundleˉisˉvalid(
+    Runtime: bytes,
+    Response: bytes
+) -> bool {
+    return Nativeˉhostedˉverifierˉbundleˉisˉvalidˉforˉprofile(
+        Runtime,
+        Response,
+        2u32
+    );
 }

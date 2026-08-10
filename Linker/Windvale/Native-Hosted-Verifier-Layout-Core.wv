@@ -71,7 +71,15 @@ export fn Nativeˉhostedˉverifierˉserviceˉaddress(
     Runtime: bytes,
     Index: u32
 ) -> u32 {
-    if Index >= 6u32 { return 0u32; }
+    if Bytesˉlength(Runtime) != 4096u32 { return 0u32; }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 516u32);
+    let Profile: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 564u32);
+    if (Profile == 6u32 && Count != 11u32) ||
+        ((Profile == 2u32 || Profile == 8u32) && Count != 6u32) ||
+        (Profile != 2u32 && Profile != 6u32 && Profile != 8u32) ||
+        Index >= Count {
+        return 0u32;
+    }
     return 8192u32 + Bytesˉreadˉu32ˉlittle(
         Runtime,
         704u32 + Index * 64u32
@@ -104,6 +112,8 @@ export fn Nativeˉhostedˉverifierˉplanˉforˉprofile(
     }
 
     if Target == 1u32 {
+        var Startupˉbytes: u32 = 1275u32;
+        if Expectedˉprofile == 6u32 { Startupˉbytes = 1350u32; }
         let Textˉvirtual: u32 = 4096u32 + Bundleˉbytes;
         let Textˉfile: u32 = Align(Textˉvirtual, 512u32);
         let Dataˉfile: u32 = 512u32 + Textˉfile;
@@ -121,7 +131,7 @@ export fn Nativeˉhostedˉverifierˉplanˉforˉprofile(
             512u32,
             512u32,
             4096u32,
-            1275u32,
+            Startupˉbytes,
             4096u32,
             Bundleˉbytes,
             Textˉfile,
@@ -140,6 +150,8 @@ export fn Nativeˉhostedˉverifierˉplanˉforˉprofile(
         );
     }
     let Linuxˉtextˉfile: u32 = 4096u32 + Bundleˉbytes;
+    var Linuxˉstartupˉbytes: u32 = 668u32;
+    if Expectedˉprofile == 6u32 { Linuxˉstartupˉbytes = 743u32; }
     let Linuxˉdataˉaddress: u32 = Align(
         4096u32 + Linuxˉtextˉfile,
         4096u32
@@ -151,7 +163,7 @@ export fn Nativeˉhostedˉverifierˉplanˉforˉprofile(
         4096u32,
         4096u32,
         4096u32,
-        668u32,
+        Linuxˉstartupˉbytes,
         4096u32,
         Bundleˉbytes,
         Linuxˉtextˉfile,

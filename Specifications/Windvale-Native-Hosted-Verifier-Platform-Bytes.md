@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-This contract transfers the platform-owned outer bytes for compiler-verifier
+This contract transfers the platform-owned outer bytes for fixed hosted-verifier
 format 4 into portable Windvale. It consumes the same admitted 4,096-byte
 runtime header as the verifier startup process and emits only the regions that
 are not startup, service-bundle, or runtime payload bytes.
@@ -34,6 +34,7 @@ payload.
 
 ```text
 wvhostverifierbytes <runtime.wvhr> <regions.wvhb>
+wvhostverifierbytes wvo-inspector <runtime.wvhr> <regions.wvhb>
 ```
 
 Success reports `Valid`, writes the exact response, and returns zero. Rejection
@@ -42,9 +43,9 @@ usage, returns 64, and preserves the runtime input.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Tool WVB | 34,376 | `03ad87aa7cef5d440fbd1ac94569aa9f07f979b625f81acbfa5405d9bc8a1fce` |
-| Windows application | 431,104 | `5288573a8eaedb5745f5b0aae733e2ba7dd89253bfb26d01beffe6279d3540c0` |
-| Linux application | 430,080 | `b988c45fd1eada051e93243d506e33e0f15325c03ea83c1b9cdd2e994c322e07` |
+| Tool WVB | 37,233 | `ce83c2af8ed65f97f9912bb9851c479f8736611daab89a61eeb8399db6808bf2` |
+| Windows application | 455,168 | `f13e38175ef91b6283e1289d5bb86a028331f6c147619e84d56aa7473827b69a` |
+| Linux application | 454,656 | `93f4f3101d3f69b5ec9052df7222e735435fd96ac6585eb381971405ae749cfc` |
 
 The native front door builds the WVB and the shared hosted-container packager
 reconstructs both applications. One focused current-host differential test

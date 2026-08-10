@@ -48,16 +48,20 @@ fn Failure(Input: bytes, Status: u32, Failureˉoffset: u32) -> bytes {
     return Responseˉheader(Input, 32u32, Status, Failureˉoffset, 0u32);
 }
 
-fn Publicationˉisˉcanonical(Input: bytes) -> bool {
+fn Publicationˉisˉcanonical(
+    Input: bytes,
+    Planˉbytes: u32,
+    Serviceˉcount: u32
+) -> bool {
     if Bytesˉreadˉu32ˉlittle(Input, 24u32) != 1364219479u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 28u32) != 1u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 32u32) != 96u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 40u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) != Planˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) != Serviceˉcount ||
         Bytesˉreadˉu32ˉlittle(Input, 44u32) != 0u32 {
         return false;
     }
     var Index: u32 = 0u32;
-    while Index < 6u32 {
+    while Index < Serviceˉcount {
         let Record: u32 = 48u32 + Index * 12u32;
         if Bytesˉreadˉu32ˉlittle(Input, Record) != Index + 1u32 ||
             Bytesˉreadˉu32ˉlittle(Input, Record + 4u32) == 0u32 ||
@@ -71,7 +75,9 @@ fn Publicationˉisˉcanonical(Input: bytes) -> bool {
 
 export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> bytes {
     let Total: u32 = Bytesˉlength(Input);
-    if Total != 352u32 { return Failure(Input, 1u32, Total); }
+    if Total != 352u32 && Total != 572u32 {
+        return Failure(Input, 1u32, Total);
+    }
     if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1163286103u32 {
         return Failure(Input, 2u32, 0u32);
     }
@@ -84,21 +90,32 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
     let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    var Planˉbytes: u32 = 96u32;
+    var Serviceˉcount: u32 = 6u32;
+    var Evidenceˉbytes: u32 = 352u32;
+    var Requestˉbytes: u32 = 384u32;
+    if Profile == 6u32 {
+        Planˉbytes = 156u32;
+        Serviceˉcount = 11u32;
+        Evidenceˉbytes = 572u32;
+        Requestˉbytes = 624u32;
+    }
     if Target < 1u32 || Target > 2u32 ||
-        (Profile != 2u32 && Profile != 8u32) ||
-        !Allˉzero(Input, 344u32, 8u32) {
+        (Profile != 2u32 && Profile != 6u32 && Profile != 8u32) ||
+        Total != Evidenceˉbytes ||
+        !Allˉzero(Input, Evidenceˉbytes - 8u32, 8u32) {
         return Failure(Input, 4u32, 12u32);
     }
-    if !Publicationˉisˉcanonical(Input) {
+    if !Publicationˉisˉcanonical(Input, Planˉbytes, Serviceˉcount) {
         return Failure(Input, 5u32, 24u32);
     }
 
     let Plan = Publication.Nativeˉpublicationˉplan(
-        Bytesˉslice(Input, 24u32, 96u32)
+        Bytesˉslice(Input, 24u32, Planˉbytes)
     );
-    if Bytesˉlength(Plan.Value) != 104u32 ||
+    if Bytesˉlength(Plan.Value) != 32u32 + Serviceˉcount * 12u32 ||
         Bytesˉreadˉu32ˉlittle(Plan.Value, 12u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Plan.Value, 28u32) != 6u32 {
+        Bytesˉreadˉu32ˉlittle(Plan.Value, 28u32) != Serviceˉcount {
         return Failure(Input, 5u32, 24u32);
     }
     let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan.Value, 20u32);
@@ -107,9 +124,10 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
         return Failure(Input, 4u32, 20u32);
     }
 
+    let Digestˉstart: u32 = 24u32 + Planˉbytes;
     var Digest: u32 = 0u32;
-    while Digest < 7u32 {
-        let Digestˉoffset: u32 = 120u32 + Digest * 32u32;
+    while Digest < Serviceˉcount + 1u32 {
+        let Digestˉoffset: u32 = Digestˉstart + Digest * 32u32;
         if Allˉzero(Input, Digestˉoffset, 32u32) {
             return Failure(Input, 6u32, Digestˉoffset);
         }
@@ -119,19 +137,22 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
     var Request: bytes = Empty(Input);
     Request = Appendˉu32(Request, 1381389911u32);
     Request = Appendˉu32(Request, 1u32);
-    Request = Appendˉu32(Request, 384u32);
+    Request = Appendˉu32(Request, Requestˉbytes);
     Request = Appendˉu32(Request, Target);
     Request = Appendˉu32(Request, Profile);
     Request = Appendˉu32(Request, 4096u32);
     Request = Appendˉu32(Request, Bundleˉbytes);
     Request = Appendˉu32(Request, Nativeˉbytes);
     Request = Appendˉu32(Request, Nativeˉentry);
-    Request = Appendˉu32(Request, 6u32);
-    Request = Bytesˉconcat(Request, Bytesˉslice(Input, 120u32, 32u32));
+    Request = Appendˉu32(Request, Serviceˉcount);
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉslice(Input, Digestˉstart, 32u32)
+    );
     Request = Bytesˉconcat(Request, Zeroes(Input, 24u32));
 
     var Index: u32 = 0u32;
-    while Index < 6u32 {
+    while Index < Serviceˉcount {
         let Placement: u32 = 32u32 + Index * 12u32;
         Request = Appendˉu32(
             Request,
@@ -143,13 +164,23 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
         );
         Request = Bytesˉconcat(
             Request,
-            Bytesˉslice(Input, 152u32 + Index * 32u32, 32u32)
+            Bytesˉslice(
+                Input,
+                Digestˉstart + 32u32 + Index * 32u32,
+                32u32
+            )
         );
         Request = Bytesˉconcat(Request, Zeroes(Input, 8u32));
         Index = Index + 1u32;
     }
     return Bytesˉconcat(
-        Responseˉheader(Input, 416u32, 0u32, Total, 384u32),
+        Responseˉheader(
+            Input,
+            32u32 + Requestˉbytes,
+            0u32,
+            Total,
+            Requestˉbytes
+        ),
         Request
     );
 }

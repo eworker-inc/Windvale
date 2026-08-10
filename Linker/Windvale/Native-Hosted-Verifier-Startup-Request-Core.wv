@@ -29,7 +29,7 @@ fn Failure(Input: bytes, Code: u32)
     );
 }
 
-fn Objectˉisˉexact(Object: bytes, Target: u32) -> bool {
+fn Objectˉisˉexact(Object: bytes, Target: u32, Profile: u32) -> bool {
     var Expectedˉbytes: u32 = 1925u32;
     var Expectedˉdigest: bytes = Textˉtoˉutf8(
         "08a7afefb69904af8d8c899a86bec76e957dfe255d397dbd9015d9acaa018ae8"
@@ -39,6 +39,18 @@ fn Objectˉisˉexact(Object: bytes, Target: u32) -> bool {
         Expectedˉdigest = Textˉtoˉutf8(
             "755ffb99cba6a838dd9eec353ce72d4adfb3af130ec4bce5a2278828dd136616"
         );
+    }
+    if Profile == 6u32 {
+        Expectedˉbytes = 2291u32;
+        Expectedˉdigest = Textˉtoˉutf8(
+            "5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb"
+        );
+        if Target == 1u32 {
+            Expectedˉbytes = 3927u32;
+            Expectedˉdigest = Textˉtoˉutf8(
+                "1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3"
+            );
+        }
     }
     if Bytesˉlength(Object) != Expectedˉbytes { return false; }
     let Actual: bytes = Sha256.Foundationˉsha256ˉhex(Object);
@@ -65,7 +77,7 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
             Expectedˉprofile
         );
     if !Value.Valid { return Failure(Runtime, 1u32); }
-    if !Objectˉisˉexact(Object, Value.Target) {
+    if !Objectˉisˉexact(Object, Value.Target, Expectedˉprofile) {
         return Failure(Runtime, 2u32);
     }
     let Targets: bytes =
@@ -77,6 +89,16 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
         Codeˉbytes = 1275u32;
         Symbols = 33u32;
         Relocations = 45u32;
+    }
+    if Expectedˉprofile == 6u32 {
+        Codeˉbytes = 743u32;
+        Symbols = 25u32;
+        Relocations = 29u32;
+        if Value.Target == 1u32 {
+            Codeˉbytes = 1350u32;
+            Symbols = 38u32;
+            Relocations = 50u32;
+        }
     }
     if Bytesˉlength(Targets) != Relocations * 4u32 {
         return Failure(Runtime, 3u32);

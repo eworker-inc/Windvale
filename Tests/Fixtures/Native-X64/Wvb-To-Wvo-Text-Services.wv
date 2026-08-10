@@ -9,9 +9,11 @@ export fn Main() -> i32 {
     if !Textˉutf8ˉisˉvalid(Encoded) { return 1; }
     let Roundˉtrip = Textˉfromˉutf8(Encoded);
     let Quoted = Textˉquote(Suffix);
+    let Signed = I32ˉformat(-2147483647 - 1);
     let Formatted = U32ˉformat(4294967295u32);
     if Bytesˉlength(Textˉtoˉutf8(Roundˉtrip)) != 8u32 { return 2; }
     if Bytesˉlength(Textˉtoˉutf8(Quoted)) != 6u32 { return 3; }
-    if Bytesˉlength(Textˉtoˉutf8(Formatted)) != 10u32 { return 4; }
+    if Bytesˉlength(Textˉtoˉutf8(Signed)) != 11u32 { return 4; }
+    if Bytesˉlength(Textˉtoˉutf8(Formatted)) != 10u32 { return 5; }
     return 42;
 }

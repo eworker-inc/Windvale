@@ -50,9 +50,18 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVO inspector WVB | 60,974 | `b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f` |
-| Windows WVO inspector | 606,720 | `2a8f6f8ca8fc6054fff23441f7971c0b90900383d5bed0fecc54f9cac102a300` |
-| Linux WVO inspector | 606,208 | `bdc4817c252ecf2592299a6646161b396bfb251acabc68d3f5d75ff40891541e` |
+| WVO inspector WVB | 61,008 | `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db` |
+| WVO inspector WVO | 591,723 | `f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c` |
+| Linked inspector fragment | 587,529 | `f318ee573b149aac169b67369e90dbacc6451fc129022bfb4e62b2ceff9cfba4` |
+| Windows WVO inspector | 606,208 | `bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2` |
+| Linux WVO inspector | 606,208 | `bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1` |
+
+[Decision 0500](../Documents/Decisions/0500-Native-Wvo-Inspector-Reconstruction.md)
+adds the exact native source-to-WVB-to-WVO-to-paired-application route. Its
+focused current-Windows-host owner passes all three inventory, reconstruction,
+and compatibility/profile-isolation cases in 28.1 seconds. The Linux result is
+cross-target construction evidence; independent Linux execution remains part
+of the grouped gate.
 
 The focused candidate test reconstructs and independently parses both containers, checks exact capabilities and services, exercises the public current-host AOT target, and runs the current-host raw application. It compares complete successful `verify` and `inspect` output with the Stage 0 oracle during candidate qualification, checks malformed and usage outcomes, and inspects loaded modules or mappings for CLR/.NET.
 

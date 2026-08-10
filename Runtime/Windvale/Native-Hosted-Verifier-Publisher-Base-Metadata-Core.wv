@@ -33,17 +33,21 @@ fn Digest(Input: bytes) -> bytes {
     return Sha.Foundationˉsha256ˉfinishˉraw(State);
 }
 
-fn Planˉisˉcanonical(Input: bytes) -> bool {
+fn Planˉisˉcanonical(
+    Input: bytes,
+    Planˉbytes: u32,
+    Serviceˉcount: u32
+) -> bool {
     if Bytesˉreadˉu32ˉlittle(Input, 32u32) != 1364219479u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 36u32) != 1u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 40u32) != 96u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) != Planˉbytes ||
         Bytesˉreadˉu32ˉlittle(Input, 44u32) == 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 48u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 48u32) != Serviceˉcount ||
         Bytesˉreadˉu32ˉlittle(Input, 52u32) != 0u32 {
         return false;
     }
     var Index: u32 = 0u32;
-    while Index < 6u32 {
+    while Index < Serviceˉcount {
         let Record: u32 = 56u32 + Index * 12u32;
         if Bytesˉreadˉu32ˉlittle(Input, Record) != Index + 1u32 ||
             Bytesˉreadˉu32ˉlittle(Input, Record + 4u32) == 0u32 ||
@@ -62,45 +66,59 @@ export fn Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuildˉforˉprofi
     Input: bytes
 ) -> Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉresult {
     let Total: u32 = Bytesˉlength(Input);
+    var Planˉbytes: u32 = 96u32;
+    var Serviceˉcount: u32 = 6u32;
+    var Evidenceˉbytes: u32 = 352u32;
+    var Requestˉbytes: u32 = 384u32;
+    if Profile == 6u32 {
+        Planˉbytes = 156u32;
+        Serviceˉcount = 11u32;
+        Evidenceˉbytes = 572u32;
+        Requestˉbytes = 624u32;
+    }
     if (Target != 1u32 && Target != 2u32) ||
-        (Profile != 2u32 && Profile != 8u32) ||
-        Total < 128u32 || Total > 4194304u32 ||
+        (Profile != 2u32 && Profile != 6u32 && Profile != 8u32) ||
+        Total < 32u32 + Planˉbytes || Total > 4194304u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1364416087u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 4u32) != 2u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total ||
-        Bytesˉreadˉu32ˉlittle(Input, 12u32) != 96u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 12u32) != Planˉbytes ||
         Bytesˉreadˉu32ˉlittle(Input, 16u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 24u32) != Total - 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) !=
+            Total - (32u32 + Planˉbytes) ||
         Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 ||
-        !Planˉisˉcanonical(Input) {
+        !Planˉisˉcanonical(Input, Planˉbytes, Serviceˉcount) {
         return Failure(Input);
     }
 
     let Plan = Publication.Nativeˉpublicationˉplan(
-        Bytesˉslice(Input, 32u32, 96u32)
+        Bytesˉslice(Input, 32u32, Planˉbytes)
     );
-    if Bytesˉlength(Plan.Value) != 104u32 ||
+    if Bytesˉlength(Plan.Value) != 32u32 + Serviceˉcount * 12u32 ||
         Bytesˉreadˉu32ˉlittle(Plan.Value, 12u32) != 0u32 ||
         Bytesˉreadˉu32ˉlittle(Plan.Value, 20u32) !=
             Bytesˉreadˉu32ˉlittle(Input, 44u32) ||
         Bytesˉreadˉu32ˉlittle(Plan.Value, 24u32) !=
             Bytesˉreadˉu32ˉlittle(Input, 20u32) ||
-        Bytesˉreadˉu32ˉlittle(Plan.Value, 28u32) != 6u32 {
+        Bytesˉreadˉu32ˉlittle(Plan.Value, 28u32) != Serviceˉcount {
         return Failure(Input);
     }
 
     var Evidence: bytes = Empty(Input);
     Evidence = Appendˉu32(Evidence, 1163286103u32);
     Evidence = Appendˉu32(Evidence, 1u32);
-    Evidence = Appendˉu32(Evidence, 352u32);
+    Evidence = Appendˉu32(Evidence, Evidenceˉbytes);
     Evidence = Appendˉu32(Evidence, Target);
     Evidence = Appendˉu32(Evidence, Profile);
     Evidence = Appendˉu32(Evidence, Nativeˉentry);
-    Evidence = Bytesˉconcat(Evidence, Bytesˉslice(Input, 32u32, 96u32));
+    Evidence = Bytesˉconcat(
+        Evidence,
+        Bytesˉslice(Input, 32u32, Planˉbytes)
+    );
 
-    var Payloadˉoffset: u32 = 128u32;
+    var Payloadˉoffset: u32 = 32u32 + Planˉbytes;
     var Region: u32 = 0u32;
-    while Region < 7u32 {
+    while Region < Serviceˉcount + 1u32 {
         var Regionˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 44u32);
         if Region > 0u32 {
             Regionˉbytes = Bytesˉreadˉu32ˉlittle(
@@ -121,30 +139,31 @@ export fn Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuildˉforˉprofi
     if Payloadˉoffset != Total { return Failure(Input); }
     Evidence = Appendˉu32(Evidence, 0u32);
     Evidence = Appendˉu32(Evidence, 0u32);
-    if Bytesˉlength(Evidence) != 352u32 { return Failure(Input); }
+    if Bytesˉlength(Evidence) != Evidenceˉbytes { return Failure(Input); }
 
     let Requestˉresponse: bytes =
         Request.Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Evidence);
-    if Bytesˉlength(Requestˉresponse) != 416u32 ||
+    if Bytesˉlength(Requestˉresponse) != 32u32 + Requestˉbytes ||
         Bytesˉreadˉu32ˉlittle(Requestˉresponse, 0u32) != 1146508887u32 ||
         Bytesˉreadˉu32ˉlittle(Requestˉresponse, 4u32) != 1u32 ||
-        Bytesˉreadˉu32ˉlittle(Requestˉresponse, 8u32) != 416u32 ||
+        Bytesˉreadˉu32ˉlittle(Requestˉresponse, 8u32) !=
+            32u32 + Requestˉbytes ||
         Bytesˉreadˉu32ˉlittle(Requestˉresponse, 12u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Requestˉresponse, 16u32) != 352u32 ||
-        Bytesˉreadˉu32ˉlittle(Requestˉresponse, 20u32) != 384u32 {
+        Bytesˉreadˉu32ˉlittle(Requestˉresponse, 16u32) != Evidenceˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Requestˉresponse, 20u32) != Requestˉbytes {
         return Failure(Input);
     }
 
     let Metadataˉresponse: bytes =
         Construction.Nativeˉhostedˉverifierˉmetadataˉbuild(
-            Bytesˉslice(Requestˉresponse, 32u32, 384u32)
+            Bytesˉslice(Requestˉresponse, 32u32, Requestˉbytes)
         );
     if Bytesˉlength(Metadataˉresponse) != 1056u32 ||
         Bytesˉreadˉu32ˉlittle(Metadataˉresponse, 0u32) != 1145591383u32 ||
         Bytesˉreadˉu32ˉlittle(Metadataˉresponse, 4u32) != 1u32 ||
         Bytesˉreadˉu32ˉlittle(Metadataˉresponse, 8u32) != 1056u32 ||
         Bytesˉreadˉu32ˉlittle(Metadataˉresponse, 12u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Metadataˉresponse, 16u32) != 384u32 ||
+        Bytesˉreadˉu32ˉlittle(Metadataˉresponse, 16u32) != Requestˉbytes ||
         Bytesˉreadˉu32ˉlittle(Metadataˉresponse, 20u32) != 1024u32 {
         return Failure(Input);
     }

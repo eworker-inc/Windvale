@@ -34,7 +34,7 @@ fn Digestˉmatches(Input: bytes, Expected: text) -> bool {
     return true;
 }
 
-fn Windowsˉpatch(Index: u32) -> u32 {
+fn Windowsˉverifierˉpatch(Index: u32) -> u32 {
     if Index == 0u32 { return 25u32; }
     if Index == 1u32 { return 32u32; }
     if Index == 2u32 { return 47u32; }
@@ -82,7 +82,60 @@ fn Windowsˉpatch(Index: u32) -> u32 {
     return 1255u32;
 }
 
-fn Linuxˉpatch(Index: u32) -> u32 {
+fn Windowsˉinspectorˉpatch(Index: u32) -> u32 {
+    if Index == 0u32 { return 25u32; }
+    if Index == 1u32 { return 32u32; }
+    if Index == 2u32 { return 47u32; }
+    if Index == 3u32 { return 62u32; }
+    if Index == 4u32 { return 77u32; }
+    if Index == 5u32 { return 92u32; }
+    if Index == 6u32 { return 107u32; }
+    if Index == 7u32 { return 122u32; }
+    if Index == 8u32 { return 129u32; }
+    if Index == 9u32 { return 144u32; }
+    if Index == 10u32 { return 159u32; }
+    if Index == 11u32 { return 174u32; }
+    if Index == 12u32 { return 189u32; }
+    if Index == 13u32 { return 212u32; }
+    if Index == 14u32 { return 235u32; }
+    if Index == 15u32 { return 258u32; }
+    if Index == 16u32 { return 281u32; }
+    if Index == 17u32 { return 304u32; }
+    if Index == 18u32 { return 319u32; }
+    if Index == 19u32 { return 347u32; }
+    if Index == 20u32 { return 364u32; }
+    if Index == 21u32 { return 384u32; }
+    if Index == 22u32 { return 409u32; }
+    if Index == 23u32 { return 432u32; }
+    if Index == 24u32 { return 439u32; }
+    if Index == 25u32 { return 454u32; }
+    if Index == 26u32 { return 469u32; }
+    if Index == 27u32 { return 484u32; }
+    if Index == 28u32 { return 499u32; }
+    if Index == 29u32 { return 514u32; }
+    if Index == 30u32 { return 529u32; }
+    if Index == 31u32 { return 544u32; }
+    if Index == 32u32 { return 559u32; }
+    if Index == 33u32 { return 574u32; }
+    if Index == 34u32 { return 589u32; }
+    if Index == 35u32 { return 604u32; }
+    if Index == 36u32 { return 643u32; }
+    if Index == 37u32 { return 721u32; }
+    if Index == 38u32 { return 728u32; }
+    if Index == 39u32 { return 735u32; }
+    if Index == 40u32 { return 824u32; }
+    if Index == 41u32 { return 913u32; }
+    if Index == 42u32 { return 1032u32; }
+    if Index == 43u32 { return 1061u32; }
+    if Index == 44u32 { return 1075u32; }
+    if Index == 45u32 { return 1121u32; }
+    if Index == 46u32 { return 1189u32; }
+    if Index == 47u32 { return 1205u32; }
+    if Index == 48u32 { return 1272u32; }
+    return 1330u32;
+}
+
+fn Linuxˉverifierˉpatch(Index: u32) -> u32 {
     if Index == 0u32 { return 67u32; }
     if Index == 1u32 { return 74u32; }
     if Index == 2u32 { return 89u32; }
@@ -109,6 +162,38 @@ fn Linuxˉpatch(Index: u32) -> u32 {
     return 622u32;
 }
 
+fn Linuxˉinspectorˉpatch(Index: u32) -> u32 {
+    if Index == 0u32 { return 67u32; }
+    if Index == 1u32 { return 74u32; }
+    if Index == 2u32 { return 89u32; }
+    if Index == 3u32 { return 104u32; }
+    if Index == 4u32 { return 119u32; }
+    if Index == 5u32 { return 134u32; }
+    if Index == 6u32 { return 149u32; }
+    if Index == 7u32 { return 164u32; }
+    if Index == 8u32 { return 171u32; }
+    if Index == 9u32 { return 186u32; }
+    if Index == 10u32 { return 201u32; }
+    if Index == 11u32 { return 216u32; }
+    if Index == 12u32 { return 231u32; }
+    if Index == 13u32 { return 238u32; }
+    if Index == 14u32 { return 253u32; }
+    if Index == 15u32 { return 268u32; }
+    if Index == 16u32 { return 283u32; }
+    if Index == 17u32 { return 298u32; }
+    if Index == 18u32 { return 313u32; }
+    if Index == 19u32 { return 328u32; }
+    if Index == 20u32 { return 343u32; }
+    if Index == 21u32 { return 358u32; }
+    if Index == 22u32 { return 373u32; }
+    if Index == 23u32 { return 388u32; }
+    if Index == 24u32 { return 456u32; }
+    if Index == 25u32 { return 463u32; }
+    if Index == 26u32 { return 567u32; }
+    if Index == 27u32 { return 682u32; }
+    return 697u32;
+}
+
 export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofile(
     Runtime: bytes,
     Startup: bytes,
@@ -130,6 +215,16 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
         Expected =
             "b75a6601cae7bb96d42f85b68a3aedfdb40145af5ddbbf5b548c7f8c898559d9";
     }
+    if Expectedˉprofile == 6u32 {
+        Count = 29u32;
+        Expected =
+            "2c75cbfa34b188d8a5847ac462a00c9e3f799a44fb09b6959bd2b310a289f20f";
+        if Value.Target == 1u32 {
+            Count = 50u32;
+            Expected =
+                "d95553d1ba1f1299a48f42ba75a95068b2137702302ca947ddaa0387c4c7edc8";
+        }
+    }
     let Targetˉbytes: bytes =
         Targets.Nativeˉhostedˉverifierˉstartupˉtargets(Runtime, Value);
     if Bytesˉlength(Targetˉbytes) != Count * 4u32 { return false; }
@@ -140,8 +235,16 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
     );
     var Index: u32 = 0u32;
     while Index < Count {
-        var Patch: u32 = Linuxˉpatch(Index);
-        if Value.Target == 1u32 { Patch = Windowsˉpatch(Index); }
+        var Patch: u32 = Linuxˉverifierˉpatch(Index);
+        if Expectedˉprofile == 6u32 {
+            Patch = Linuxˉinspectorˉpatch(Index);
+        }
+        if Value.Target == 1u32 {
+            Patch = Windowsˉverifierˉpatch(Index);
+            if Expectedˉprofile == 6u32 {
+                Patch = Windowsˉinspectorˉpatch(Index);
+            }
+        }
         let Sourceˉend: u32 = Value.Textˉaddress + Patch + 4u32;
         let Target: u32 = Bytesˉreadˉu32ˉlittle(Targetˉbytes, Index * 4u32);
         if Target < Sourceˉend ||

@@ -27,7 +27,8 @@ fn Serviceˉadapter(Index: u32, Target: u32) -> u32 {
     if Index == 1u32 || Index == 2u32 { return 3u32; }
     if Index == 3u32 { return Target + 3u32; }
     if Index == 4u32 { return 6u32; }
-    return Target + 6u32;
+    if Index == 5u32 { return Target + 6u32; }
+    return Index + 3u32;
 }
 
 fn Capabilitiesˉareˉvalid(Input: bytes, Offset: u32) -> bool {
@@ -57,11 +58,12 @@ fn Servicesˉareˉvalid(
     Offset: u32,
     Target: u32,
     Nativeˉbytes: u32,
-    Bundleˉbytes: u32
+    Bundleˉbytes: u32,
+    Serviceˉcount: u32
 ) -> bool {
     var Previousˉend: u32 = Nativeˉbytes;
     var Index: u32 = 0u32;
-    while Index < 6u32 {
+    while Index < Serviceˉcount {
         let Record: u32 = Offset + 208u32 + Index * 64u32;
         let Imageˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Record + 16u32);
         let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, Record + 20u32);
@@ -93,9 +95,11 @@ export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
     Profile: u32
 ) -> bool {
     let Total: u32 = Bytesˉlength(Input);
+    var Serviceˉcount: u32 = 6u32;
+    if Profile == 6u32 { Serviceˉcount = 11u32; }
     if !Rangeˉisˉvalid(Total, Offset, 1024u32) ||
         Target < 1u32 || Target > 2u32 ||
-        (Profile != 2u32 && Profile != 8u32) {
+        (Profile != 2u32 && Profile != 6u32 && Profile != 8u32) {
         return false;
     }
     if Bytesˉreadˉu32ˉlittle(Input, Offset) != 1447581271u32 ||
@@ -107,7 +111,7 @@ export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
         Bytesˉreadˉu32ˉlittle(Input, Offset + 24u32) != 7u32 ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 28u32) != 5u32 ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 32u32) != 5u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 36u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 36u32) != Serviceˉcount ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 40u32) != 128u32 ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 44u32) != 16u32 ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 48u32) != 208u32 ||
@@ -130,8 +134,19 @@ export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
         Bytesˉreadˉu32ˉlittle(Input, Offset + 92u32) != 3u32 ||
         Allˉzero(Input, Offset + 96u32, 32u32) ||
         !Capabilitiesˉareˉvalid(Input, Offset) ||
-        !Servicesˉareˉvalid(Input, Offset, Target, Nativeˉbytes, Bundleˉbytes) ||
-        !Allˉzero(Input, Offset + 592u32, 432u32) {
+        !Servicesˉareˉvalid(
+            Input,
+            Offset,
+            Target,
+            Nativeˉbytes,
+            Bundleˉbytes,
+            Serviceˉcount
+        ) ||
+        !Allˉzero(
+            Input,
+            Offset + 208u32 + Serviceˉcount * 64u32,
+            1024u32 - (208u32 + Serviceˉcount * 64u32)
+        ) {
         return false;
     }
     return true;

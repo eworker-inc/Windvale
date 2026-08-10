@@ -1070,6 +1070,7 @@ export fn Compilerˉnativeˉx64ˉdescriptorˉoperation(Opcode: u8) -> bool {
     if Numeric >= 11u32 {
         if Numeric <= 15u32 { return true; }
     }
+    if Opcode == 110u8 { return true; }
     if Opcode == 112u8 { return true; }
     if Opcode == 113u8 { return true; }
     if Opcode == 114u8 { return true; }
@@ -1157,6 +1158,7 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 64u8 { return 5u32; }
     if Opcode == 65u8 { return 5u32; }
     if Opcode == 81u8 { return 1u32; }
+    if Opcode == 110u8 { return 1u32; }
     if Opcode == 112u8 { return 1u32; }
     if Opcode == 113u8 { return 1u32; }
     if Opcode == 114u8 { return 1u32; }
@@ -1590,9 +1592,12 @@ fn Compilerˉnativeˉx64ˉanalyzeˉdescriptorˉvalueˉinstruction(
         Bodyˉbytes = Bodyˉbytes +
             Runtimeˉdescriptors.Compilerˉnativeˉx64ˉtextˉconcatˉbytes();
     }
-    if Opcode == 112u8 {
+    if Opcode == 110u8 || Opcode == 112u8 {
         if Depth == 0u32 ||
-            Bytesˉreadˉu8(Stack, Depth - 1u32) != 5u8 {
+            (Opcode == 110u8 &&
+                Bytesˉreadˉu8(Stack, Depth - 1u32) != 1u8) ||
+            (Opcode == 112u8 &&
+                Bytesˉreadˉu8(Stack, Depth - 1u32) != 5u8) {
             return Compilerˉnativeˉx64ˉinvalidˉblockˉvalueˉstate(Input);
         }
         Depth = Depth - 1u32;
@@ -1600,8 +1605,13 @@ fn Compilerˉnativeˉx64ˉanalyzeˉdescriptorˉvalueˉinstruction(
         Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(3u8));
         Depth = Depth + 1u32;
         Textˉvalues = Textˉvalues + 1u32;
-        Bodyˉbytes = Bodyˉbytes +
-            Runtimeˉdescriptors.Compilerˉnativeˉx64ˉu32ˉformatˉbytes();
+        if Opcode == 110u8 {
+            Bodyˉbytes = Bodyˉbytes +
+                Runtimeˉdescriptors.Compilerˉnativeˉx64ˉi32ˉformatˉbytes();
+        } else {
+            Bodyˉbytes = Bodyˉbytes +
+                Runtimeˉdescriptors.Compilerˉnativeˉx64ˉu32ˉformatˉbytes();
+        }
     }
     if Opcode == 115u8 || Opcode == 116u8 {
         if Depth == 0u32 ||
@@ -3199,6 +3209,9 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
     }
     if Opcode == 113u8 {
         return Runtimeˉdescriptors.Compilerˉnativeˉx64ˉtextˉconcatˉbytes();
+    }
+    if Opcode == 110u8 {
+        return Runtimeˉdescriptors.Compilerˉnativeˉx64ˉi32ˉformatˉbytes();
     }
     if Opcode == 112u8 {
         return Runtimeˉdescriptors.Compilerˉnativeˉx64ˉu32ˉformatˉbytes();

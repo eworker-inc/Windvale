@@ -75,7 +75,10 @@ $NativeCases = @(
             'Windvale-Compiler-Image-Canonical-Transport.wvproj',
             'Specifications/Windvale-Native-Hosted-Container-Packaging.md'
         )
-        Suites = @('segmented-compiler-toolset-reconstruction')
+        Suites = @(
+            'segmented-compiler-toolset-reconstruction',
+            'wvo-inspector-reconstruction'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -90,6 +93,7 @@ $NativeCases = @(
             'compiler-reconstruction',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
             'console-packager-container-reconstruction'
         )
@@ -106,6 +110,7 @@ $NativeCases = @(
             'seed',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'source-containment',
@@ -151,6 +156,7 @@ $NativeCases = @(
         )
         Suites = @(
             'wvb-to-wvo-reconstruction',
+            'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction'
         )
         Gaps = @()
@@ -162,11 +168,47 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'wvb-to-wvo-reconstruction',
+            'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WVO inspector reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Wvo-Inspector-Reconstruction.cmd',
+            'Tools/Native/Construct-Wvo-Inspector-Reconstruction.cmd',
+            'Artifacts/Native-Wvo-Object-Candidate/Manifest.json',
+            'Linker/Startup/Windows-X64-Hosted-Inspector.wva',
+            'Linker/Startup/Linux-X64-Hosted-Inspector.wva',
+            'Windvale-Wvo-Object.wvproj',
+            'Specifications/Windvale-Native-Wvo-Inspector.md'
+        )
+        Suites = @('wvo-inspector-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WVO inspector shared profile and object sources'
+        Paths = @(
+            'Runtime/Windvale/Native-Hosted-Verifier-Service-Bundle-Request-Core.wv',
+            'Linker/Windvale/Native-Hosted-Verifier-Startup-Targets.wv',
+            'Object-Model/Windvale/Wvo-Object-Core.wv'
+        )
+        Suites = @(
+            'wvo-inspector-reconstruction',
+            'wvo-publisher-reconstruction',
+            'wvo-read-only',
+            'wvo-differential',
+            'wvo-containment',
+            'wvo-hostile-size',
+            'publisher-rejections',
+            'hosted-verifier-publisher-files'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -335,6 +377,7 @@ $NativeCases = @(
             'Windvale-Wvb-Publisher.wvproj'
         )
         Suites = @(
+            'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
             'publisher-rejections',
             'hosted-verifier-publisher-files'

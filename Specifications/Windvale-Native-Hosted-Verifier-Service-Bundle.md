@@ -2,14 +2,16 @@
 
 ## Status and scope
 
-This contract transfers construction of the compiler verifier's exact
-six-service `WVSQ 2` request into portable Windvale. It accepts one verified
-native fragment and the six already selected platform service leaves, constructs
-and validates their canonical `WVPQ 1` publication request, and supplies one
-bounded request to the shared Windvale service-bundle materializer.
+This contract transfers construction of the fixed hosted-verifier `WVSQ 2`
+requests into portable Windvale. The legacy command accepts one verified native
+fragment and the compiler verifier's six already selected platform service
+leaves. The explicit `wvo-inspector` command accepts the same prefix plus the
+five pure report-service leaves required by profile 6. Each path constructs and
+validates its canonical `WVPQ 1` publication request and supplies one bounded
+request to the shared Windvale service-bundle materializer.
 
-This is a fixed verifier profile, not a general service selector. It does not
-authorize capabilities, choose a target, generate machine code, calculate
+These are two fixed verifier profiles, not a general service selector. The
+contract does not authorize capabilities, choose a target, generate machine code, calculate
 digests, or construct an outer PE/ELF container. Those boundaries precede or
 follow this process explicitly.
 
@@ -25,16 +27,23 @@ Inputs occur in this exact order:
 6. service 5, startup-internal `text.utf8_is_valid`;
 7. service 6, `diagnostic.write_line`.
 
+The explicit `wvo-inspector` form then requires, in order, service 7
+`enum.name`, service 8 `text.concat`, service 9 `text.quote`, service 10
+`i32.format`, and service 11 `u32.format`.
+
 Every input is nonempty. Their resource names are pairwise distinct and the
 output name does not alias an input. Platform-specific leaves are selected and
 verified before invocation; this process preserves their bytes and order.
 
 Windvale constructs the exact 96-byte `WVPQ 1` request with six 12-byte service
-records, then requires the shared publication planner to return a successful
-104-byte layout for the same fragment and service count. The complete image must
+records for the legacy path, or the exact 156-byte request with eleven records
+for `wvo-inspector`. It then requires the shared publication planner to return
+a successful 104-byte or 164-byte layout for the same fragment and service
+count. The complete image must
 fit the canonical 4,194,104-byte service-bundle segment. The emitted `WVSQ 2`
 has segment offset zero, the complete planned image extent, and a payload
-containing the fragment followed by the six raw leaves. Alignment fill remains
+containing the fragment followed by the six or eleven raw leaves. Alignment
+fill remains
 omitted and is reconstructed only by the shared
 [`WVSQ 2` materializer](Windvale-Native-Service-Bundle-Materialization.md).
 
@@ -42,6 +51,7 @@ omitted and is reconstructed only by the shared
 
 ```text
 wvhostverifierbundle <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <request.wvsq>
+wvhostverifierbundle wvo-inspector <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <enum-name> <text-concat> <text-quote> <i32-format> <u32-format> <request.wvsq>
 ```
 
 Success writes one exact request, reports
@@ -58,9 +68,9 @@ The application declares exactly `console.write_line`,
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Request WVB | 13,993 | `b23655332f5525fd411cb3a0a1f815af49f97d743156dfd4d0ae7549fab586f4` |
-| Windows application | 160,256 | `b4902fc6554f6e8bd52c83b870d9cf6b6e179c3207a34037e6f58e44d657d18b` |
-| Linux application | 159,744 | `e8deec17224202394f828db219734fd2e31c266819fc62c616a82bb1db495353` |
+| Request WVB | 21,323 | `bc1afc45e407d08c7a42073224f7d839bae6562d21f7f28ecf82e1980c388e06` |
+| Windows application | 248,832 | `a8edb59d53e78bd48612b78e9919cb9d86e3c1da79749a6a1034f60194e8cd43` |
+| Linux application | 249,856 | `d376a70298419acb9e061df61b1ef80e544f54531f8b1a4948905d52f753fa8c` |
 
 The WVB builds through the native Project 1 front door. Both applications
 reconstruct byte-for-byte through the shared native hosted-container packager;

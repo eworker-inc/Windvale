@@ -62,7 +62,8 @@ fn Serviceˉadapter(Index: u32, Target: u32) -> u32 {
     if Index == 1u32 || Index == 2u32 { return 3u32; }
     if Index == 3u32 { return Target + 3u32; }
     if Index == 4u32 { return 6u32; }
-    return Target + 6u32;
+    if Index == 5u32 { return Target + 6u32; }
+    return Index + 3u32;
 }
 
 fn Appendˉcapabilities(Input: bytes, Metadata: bytes) -> bytes {
@@ -85,10 +86,15 @@ fn Appendˉcapabilities(Input: bytes, Metadata: bytes) -> bytes {
     return Result;
 }
 
-fn Appendˉservices(Input: bytes, Metadata: bytes, Target: u32) -> bytes {
+fn Appendˉservices(
+    Input: bytes,
+    Metadata: bytes,
+    Target: u32,
+    Serviceˉcount: u32
+) -> bytes {
     var Result: bytes = Metadata;
     var Index: u32 = 0u32;
-    while Index < 6u32 {
+    while Index < Serviceˉcount {
         let Requestˉrecord: u32 = 96u32 + Index * 48u32;
         let Capability: u32 = Serviceˉcapability(Index);
         Result = Appendˉu32(Result, Index + 1u32);
@@ -113,7 +119,9 @@ fn Appendˉservices(Input: bytes, Metadata: bytes, Target: u32) -> bytes {
 
 export fn Nativeˉhostedˉverifierˉmetadataˉbuild(Input: bytes) -> bytes {
     let Total: u32 = Bytesˉlength(Input);
-    if Total != 384u32 { return Failure(Input, 1u32, Total); }
+    if Total != 384u32 && Total != 624u32 {
+        return Failure(Input, 1u32, Total);
+    }
     if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1381389911u32 {
         return Failure(Input, 2u32, 0u32);
     }
@@ -130,13 +138,20 @@ export fn Nativeˉhostedˉverifierˉmetadataˉbuild(Input: bytes) -> bytes {
     let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
     let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
     let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    var Requestˉbytes: u32 = 384u32;
+    var Serviceˉcount: u32 = 6u32;
+    if Profile == 6u32 {
+        Requestˉbytes = 624u32;
+        Serviceˉcount = 11u32;
+    }
     if Target < 1u32 || Target > 2u32 ||
-        (Profile != 2u32 && Profile != 8u32) ||
+        (Profile != 2u32 && Profile != 6u32 && Profile != 8u32) ||
+        Total != Requestˉbytes ||
         Bundleˉoffset != 4096u32 ||
         Bundleˉbytes == 0u32 || Bundleˉbytes > 35651584u32 ||
         Nativeˉbytes == 0u32 || Nativeˉbytes > 33554432u32 ||
         Nativeˉbytes > Bundleˉbytes || Nativeˉentry >= Nativeˉbytes ||
-        Bytesˉreadˉu32ˉlittle(Input, 36u32) != 6u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) != Serviceˉcount ||
         Allˉzero(Input, 40u32, 32u32) ||
         !Allˉzero(Input, 72u32, 24u32) {
         return Failure(Input, 4u32, 12u32);
@@ -144,7 +159,7 @@ export fn Nativeˉhostedˉverifierˉmetadataˉbuild(Input: bytes) -> bytes {
 
     var Previousˉend: u32 = Nativeˉbytes;
     var Index: u32 = 0u32;
-    while Index < 6u32 {
+    while Index < Serviceˉcount {
         let Record: u32 = 96u32 + Index * 48u32;
         let Imageˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, Record);
         let Codeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, Record + 4u32);
@@ -168,7 +183,7 @@ export fn Nativeˉhostedˉverifierˉmetadataˉbuild(Input: bytes) -> bytes {
     Metadata = Appendˉu32(Metadata, 7u32);
     Metadata = Appendˉu32(Metadata, 5u32);
     Metadata = Appendˉu32(Metadata, 5u32);
-    Metadata = Appendˉu32(Metadata, 6u32);
+    Metadata = Appendˉu32(Metadata, Serviceˉcount);
     Metadata = Appendˉu32(Metadata, 128u32);
     Metadata = Appendˉu32(Metadata, 16u32);
     Metadata = Appendˉu32(Metadata, 208u32);
@@ -185,8 +200,11 @@ export fn Nativeˉhostedˉverifierˉmetadataˉbuild(Input: bytes) -> bytes {
     Metadata = Appendˉu32(Metadata, 3u32);
     Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 40u32, 32u32));
     Metadata = Appendˉcapabilities(Input, Metadata);
-    Metadata = Appendˉservices(Input, Metadata, Target);
-    Metadata = Bytesˉconcat(Metadata, Zeroes(Input, 432u32));
+    Metadata = Appendˉservices(Input, Metadata, Target, Serviceˉcount);
+    Metadata = Bytesˉconcat(
+        Metadata,
+        Zeroes(Input, 1024u32 - (208u32 + Serviceˉcount * 64u32))
+    );
     if !Admission.Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
         Metadata,
         0u32,

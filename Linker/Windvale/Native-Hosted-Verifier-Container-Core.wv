@@ -79,9 +79,10 @@ export fn Nativeˉhostedˉverifierˉcontainerˉforˉprofile(
     ) {
         return Failure(Runtime, 3u32);
     }
-    if !Bundleˉadmission.Nativeˉhostedˉverifierˉbundleˉisˉvalid(
+    if !Bundleˉadmission.Nativeˉhostedˉverifierˉbundleˉisˉvalidˉforˉprofile(
         Runtime,
-        Bundle
+        Bundle,
+        Expectedˉprofile
     ) {
         return Failure(Runtime, 4u32);
     }

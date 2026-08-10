@@ -246,12 +246,13 @@ fn Objectˉsha256(Input: bytes) -> text {
     return Textˉfromˉutf8(Sha256.Foundationˉsha256ˉhex(Input));
 }
 
-fn Reportˉverifiedˉobject(Input: bytes) -> void {
+fn Reportˉverifiedˉobject(Input: bytes) -> i32 {
     console.write_line("Verified object: X86ˉ64");
     console.write_line(Textˉconcat("SHA-256: ", Objectˉsha256(Input)));
+    return 0;
 }
 
-fn Reportˉobjectˉinspection(Input: bytes) -> void {
+fn Reportˉobjectˉinspection(Input: bytes) -> i32 {
     let Sectionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     let Symbolˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
     let Relocationˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
@@ -319,6 +320,7 @@ fn Reportˉobjectˉinspection(Input: bytes) -> void {
         console.write_line(Relocationˉline);
         Relocationˉindex = Relocationˉindex + 1u32;
     }
+    return 0;
 }
 
 fn Runˉobjectˉcommand() -> i32 {
@@ -343,11 +345,9 @@ fn Runˉobjectˉcommand() -> i32 {
         return 2;
     }
     if Verify {
-        Reportˉverifiedˉobject(Input);
-    } else {
-        Reportˉobjectˉinspection(Input);
+        return Reportˉverifiedˉobject(Input);
     }
-    return 0;
+    return Reportˉobjectˉinspection(Input);
 }
 
 export fn Main() -> i32 {

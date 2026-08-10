@@ -2,19 +2,20 @@
 
 ## Status and scope
 
-This contract transfers pure construction of the exact 384-byte `WVVR 1`
-request into portable Windvale. It binds verifier target and entry, the shared
-six-service native publication plan, and seven nonzero SHA-256 identities into
-the request consumed by the verifier metadata constructor.
+This contract transfers pure construction of the exact profile-2/profile-8
+384-byte and profile-6 624-byte `WVVR 1` requests into portable Windvale. It
+binds verifier target and entry, the matching fixed native publication plan,
+and one nonzero SHA-256 identity for the fragment plus every ordered service
+into the request consumed by the verifier metadata constructor.
 
-The shared native hosted metadata-request process now acquires immutable
-verifier and service resources, calculates all seven digests, and emits this
+The shared native hosted metadata-request process acquires immutable verifier
+and service resources, calculates the seven or twelve digests, and emits this
 evidence. A small second native tool invokes the constructor and writes the
 successful `WVVR` payload.
 
 ## `WVVE 1` evidence
 
-The input is exactly 352 little-endian bytes:
+The profile-2/profile-8 input is exactly 352 little-endian bytes:
 
 | Offset | Bytes | Field | Rule |
 | ---: | ---: | --- | --- |
@@ -22,7 +23,7 @@ The input is exactly 352 little-endian bytes:
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `352` |
 | 12 | 4 | target | `1` Windows x64 or `2` Linux x64 |
-| 16 | 4 | verifier profile | `2` |
+| 16 | 4 | verifier profile | `2` or `8` |
 | 20 | 4 | native entry | Within the native fragment |
 | 24 | 96 | publication request | Exact six-service `WVPQ 1` request |
 | 120 | 32 | native digest | Nonzero SHA-256 |
@@ -34,15 +35,20 @@ service IDs 1 through 6 in order. The shared Windvale publication planner must
 accept it and return six bounded placements. Geometry comes only from that
 planner; the evidence cannot supply offsets or bundle length independently.
 
+Profile 6 uses an exact 572-byte `WVVE 1` record: the same 24-byte prefix, a
+156-byte eleven-service publication request, twelve nonzero 32-byte digests,
+and eight zero reserved bytes. Its fixed service IDs are 1 through 11 in order.
+
 ## `WVVD 1` response
 
 Failure is 32 bytes. Statuses distinguish invalid size, magic, version, fixed
 fields, publication plan, and digest evidence. Failure offset identifies the
 rejected boundary.
 
-Success is 416 bytes: a 32-byte `WVVD 1` header followed by exact 384-byte
-`WVVR 1`. Windvale writes bundle offset 4,096, planner-derived fragment/bundle
-extents and service placements, profile 2, six services, all seven supplied
+Success is 416 bytes for profiles 2 and 8, or 656 bytes for profile 6: a
+32-byte `WVVD 1` header followed by the exact 384-byte or 624-byte `WVVR 1`.
+Windvale writes bundle offset 4,096, planner-derived fragment/bundle extents and
+service placements, the selected profile, six or eleven services, all supplied
 digests, and zero reserved fields.
 
 ## Ownership and evidence
@@ -51,26 +57,28 @@ digests, and zero reserved fields.
 owns validation and construction. A small bridge is the root of
 [`Windvale-Native-Hosted-Verifier-Metadata-Request.wvproj`](../Windvale-Native-Hosted-Verifier-Metadata-Request.wvproj).
 
-The native project front door constructs an exact 15,070-byte WVB with SHA-256
+The last accepted profile-2 differential baseline constructed a 15,070-byte
+WVB with SHA-256
 `fc87cfad498befe8af90fc5201e07c15e13c4a9363b73c344e1f6e49519dd55a`.
-One focused current-host test executes the interpreter and native backend for
-Windows and Linux, compares each request byte for byte with the frozen C#
-oracle, and covers thirteen malformed evidence cases. C# does not compile the
-production module and remains differential evidence only.
+One focused current-host test executed the interpreter and native backend for
+Windows and Linux, compared each request byte for byte with the frozen C#
+oracle, and covered thirteen malformed evidence cases. That identity is
+retained profile-2 evidence, not a current profile-6 source pin. C# does not
+compile the production module and remains differential evidence only.
 
-The hosted request wrapper is an exact 17,319-byte native-built WVB with
+The hosted request wrapper is an exact 18,086-byte native-built WVB with
 SHA-256
-`e7ecb1251664430055fc26bb70371065b72ff988532af8e0897fb2acae406048`.
+`150792a279b3ca080181576b446790b7f4539f07b7c4cfd35017975f3cd1d529`.
 It accepts two distinct resource names, reads `WVVE`, requires the exact
-successful `WVVD` response, and writes only the 384-byte request.
+successful `WVVD` response, and writes only the admitted request payload.
 
 Its recovery-only retained targets are
 `windows-x64-hosted-verifier-metadata-request-v1` and
 `linux-x64-hosted-verifier-metadata-request-v1`. Their exact applications are
-188,928-byte Windows SHA-256
-`4888d4c5252164e4a2637f78dadb5e1228044ac6834525f3cd00fb3a6bbe0b0e`
-and 188,416-byte Linux SHA-256
-`3827deb66f8bb15585e02ba7e2e01a217cc9375eb05ade4c70a91930b0af8803`.
+194,048-byte Windows SHA-256
+`75b6fb59030e1ec7d6b3c336d10aa89badd928d35b669f2fbdf7f33e243da520`
+and 196,608-byte Linux SHA-256
+`4968f2e5d8481b96d701bf6dd350a93097d086191007396ad447b504c37d7109`.
 The C# writer owns only deletion-bound recovery target/identity wiring.
 [Decision 0466](../Documents/Decisions/0466-Native-WVHV-Request-Container-Reconstruction.md)
 adds exact native reconstruction of both products; independent Linux execution

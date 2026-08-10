@@ -9,14 +9,16 @@ the compiler-aligned WVB verifier while `WVHB` profile 2 remains the separate
 compiler build driver.
 
 The portable constructor accepts one exact `WVVR 1` request and returns the
-shared `WVHD 1` metadata-construction response. The current slice owns the
-compiler-aligned verifier's five capabilities and six services. Inspector,
-runner, WVO-inspector, and console-application-verifier service variants remain
-later explicit extensions.
+shared `WVHD 1` metadata-construction response. Profiles 2 and 8 retain the
+compiler-aligned verifier's five capabilities and six services. Profile 6 owns
+the WVO inspector's same five capabilities plus five pure report services.
+Other inspector, runner, and console-application-verifier variants remain
+separate explicit extensions.
 
 ## `WVVR 1` request
 
-The request is exactly 384 bytes, little-endian, and contains no paths or host
+The profile-2/profile-8 request is exactly 384 bytes and the profile-6 request
+is exactly 624 bytes. Both are little-endian and contain no paths or host
 handles.
 
 | Offset | Bytes | Field | Rule |
@@ -25,7 +27,7 @@ handles.
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `384` |
 | 12 | 4 | target | `1` Windows or `2` Linux |
-| 16 | 4 | verifier profile | `2` |
+| 16 | 4 | verifier profile | `2` or `8` |
 | 20 | 4 | bundle offset | `4,096` |
 | 24 | 4 | bundle bytes | `1` through `35,651,584` |
 | 28 | 4 | native image bytes | `1` through `33,554,432`, within the bundle |
@@ -41,6 +43,12 @@ inside the bundle after the native image. The fixed service order is console
 output, argument count, argument lookup, file input, strict UTF-8 validation,
 and diagnostic output.
 
+Profile 6 changes only the fixed shape fields and service suffix: total bytes
+is 624, profile is 6, service count is 11, and offsets 96 through 623 contain
+eleven 48-byte records. Services 7 through 11 are `enum.name`, `text.concat`,
+`text.quote`, `i32.format`, and `u32.format`; they use zero capability identity,
+pure-service flags, and fixed adapters 9 through 13.
+
 ## `WVHD 1` response
 
 Failure is the shared 32-byte `WVHD 1` response. Statuses distinguish size,
@@ -53,11 +61,12 @@ Success is 1,056 bytes: the 32-byte response header followed by exact 1,024-byte
 - magic `WVHV`, metadata version 1, outer container format 4, ABI 22,
   execution-context format 7, and service-table format 5;
 - five canonical read-only capability records;
-- six canonical service records with target-specific adapters and exact input
-  placements/digests;
-- the 2 MiB record arena, 128 MiB hosted text arena, profile 2, and the bounded
-  16,000,000,000-instruction meter;
-- a completely zero reserved tail.
+- six or eleven canonical service records with target-specific adapters and
+  exact input placements/digests;
+- the 2 MiB record arena, 128 MiB hosted text arena, selected profile, and the
+  bounded 16,000,000,000-instruction meter;
+- a completely zero reserved tail: 432 bytes after the six-service records or
+  112 bytes after the eleven-service records.
 
 The constructor invokes the separate portable admission module over its own
 result before returning success. Admission independently checks the header,
@@ -71,14 +80,18 @@ owns construction. [`Native-Hosted-Verifier-Metadata-Admission.wv`](../Runtime/W
 owns admission. The small byte-input bridge is the root of
 [`Windvale-Native-Hosted-Verifier-Metadata.wvproj`](../Windvale-Native-Hosted-Verifier-Metadata.wvproj).
 
-The native project front door constructs an exact 21,566-byte WVB with SHA-256
+The last accepted profile-2 differential baseline constructed a 21,566-byte
+WVB with SHA-256
 `dc7c88f8ec9b6ddd77695b7890eeb6292314fcabd4939239c273908f3afa894b`.
-The focused current-host test obtains that WVB from the native compiler, proves
-its service-free `Main(bytes) -> bytes` shape, executes both the Windvale
-interpreter and native backend, and compares successful Windows and Linux
-metadata byte-for-byte with the frozen C# recovery oracle. It also covers
+The focused current-host test obtained that WVB from the native compiler,
+proved its service-free `Main(bytes) -> bytes` shape, executed both the
+Windvale interpreter and native backend, and compared successful Windows and
+Linux metadata byte-for-byte with the frozen C# recovery oracle. It also covered
 truncation, magic, version, total, target, profile, bundle/native bounds,
 service count, native digest, reserved bytes, and malformed service records.
+That identity is retained profile-2 evidence, not a current profile-6 source
+pin; the WVO-inspector reconstruction owner must measure and pin its current
+complete source and application products before promotion.
 
 The frozen C# source compiler does not compile this new module; new source
 semantics belong to the Windvale compiler under Decision 0213. C# participates

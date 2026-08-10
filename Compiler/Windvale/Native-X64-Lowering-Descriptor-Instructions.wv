@@ -615,6 +615,14 @@ fn Emitˉruntimeˉunary(
     }
     let Target: u32 = Valueˉslot(Shape, Type, Index);
     var Result: bytes = State.Result;
+    if Instruction.Opcode == 110u8 {
+        Result = Runtimeˉdescriptors.Compilerˉnativeˉx64ˉemitˉi32ˉformat(
+            Result,
+            Source,
+            Target,
+            Instruction.Runtimeˉtarget
+        );
+    }
     if Instruction.Opcode == 112u8 {
         Result = Runtimeˉdescriptors.Compilerˉnativeˉx64ˉemitˉu32ˉformat(
             Result,
@@ -792,7 +800,8 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
         Instruction.Opcode == 123u8 {
         return Emitˉbyteˉconstruction(Instruction, Shape, State);
     }
-    if Instruction.Opcode == 112u8 || Instruction.Opcode == 115u8 ||
+    if Instruction.Opcode == 110u8 || Instruction.Opcode == 112u8 ||
+        Instruction.Opcode == 115u8 ||
         Instruction.Opcode == 116u8 ||
         Instruction.Opcode == 117u8 {
         return Emitˉruntimeˉunary(Instruction, Shape, State);

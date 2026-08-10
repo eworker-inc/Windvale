@@ -31,11 +31,15 @@ export fn Main() -> i32 {
     var Base: u32 = 0u32;
     var Profile: u32 = 2u32;
     if Arguments == 5u32 {
-        if !Textˉequals(process.argument(0u32), "publisher-admission") {
-            return 64;
+        if Textˉequals(process.argument(0u32), "publisher-admission") {
+            Profile = 8u32;
+        } else {
+            if !Textˉequals(process.argument(0u32), "wvo-inspector") {
+                return 64;
+            }
+            Profile = 6u32;
         }
         Base = 1u32;
-        Profile = 8u32;
     }
     let Inputˉpath: text = process.argument(Base + 2u32);
     let Outputˉpath: text = process.argument(Base + 3u32);

@@ -31,7 +31,7 @@ promotion, and the grouped retirement gate.
 
 [Decision 0497](../Decisions/0497-Native-Wvb-To-Wvo-Reconstruction.md)
 closes the managed application-writer seam for the exact current accepted-subset
-lowerer candidate. The current Windows native path reconstructs its 412,871-byte
+lowerer candidate. The current Windows native path reconstructs its 414,298-byte
 WVB, both paired target applications, and the unchanged fixed WVB/WVO vector
 through the retained segmented toolset. The route still requires the retained
 seed, independent Linux reconstruction and execution, complete-backend work,

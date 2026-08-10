@@ -120,3 +120,121 @@ export fn Nativeˉhostedˉverifierˉserviceˉbundleˉrequest(
         Total
     );
 }
+
+export fn Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉforˉwvoˉinspector(
+    Fragment: bytes,
+    Console: bytes,
+    Argumentˉcount: bytes,
+    Argument: bytes,
+    Fileˉinput: bytes,
+    Utf8: bytes,
+    Diagnostic: bytes,
+    Enumˉnameˉservice: bytes,
+    Textˉconcatˉservice: bytes,
+    Textˉquoteˉservice: bytes,
+    I32ˉformatˉservice: bytes,
+    U32ˉformatˉservice: bytes
+) -> Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉresult {
+    let Fragmentˉbytes: u32 = Bytesˉlength(Fragment);
+    if Fragmentˉbytes == 0u32 { return Failure(Fragment, 0u32); }
+    if Bytesˉlength(Console) == 0u32 { return Failure(Fragment, 1u32); }
+    if Bytesˉlength(Argumentˉcount) == 0u32 {
+        return Failure(Fragment, 2u32);
+    }
+    if Bytesˉlength(Argument) == 0u32 { return Failure(Fragment, 3u32); }
+    if Bytesˉlength(Fileˉinput) == 0u32 { return Failure(Fragment, 4u32); }
+    if Bytesˉlength(Utf8) == 0u32 { return Failure(Fragment, 5u32); }
+    if Bytesˉlength(Diagnostic) == 0u32 { return Failure(Fragment, 6u32); }
+    if Bytesˉlength(Enumˉnameˉservice) == 0u32 {
+        return Failure(Fragment, 7u32);
+    }
+    if Bytesˉlength(Textˉconcatˉservice) == 0u32 {
+        return Failure(Fragment, 8u32);
+    }
+    if Bytesˉlength(Textˉquoteˉservice) == 0u32 {
+        return Failure(Fragment, 9u32);
+    }
+    if Bytesˉlength(I32ˉformatˉservice) == 0u32 {
+        return Failure(Fragment, 10u32);
+    }
+    if Bytesˉlength(U32ˉformatˉservice) == 0u32 {
+        return Failure(Fragment, 11u32);
+    }
+
+    var Planˉrequest: bytes = Empty(Fragment);
+    Planˉrequest = Appendˉu32(Planˉrequest, 1364219479u32);
+    Planˉrequest = Appendˉu32(Planˉrequest, 1u32);
+    Planˉrequest = Appendˉu32(Planˉrequest, 156u32);
+    Planˉrequest = Appendˉu32(Planˉrequest, Fragmentˉbytes);
+    Planˉrequest = Appendˉu32(Planˉrequest, 11u32);
+    Planˉrequest = Appendˉu32(Planˉrequest, 0u32);
+    Planˉrequest = Appendˉservice(Planˉrequest, 1u32, Console);
+    Planˉrequest = Appendˉservice(Planˉrequest, 2u32, Argumentˉcount);
+    Planˉrequest = Appendˉservice(Planˉrequest, 3u32, Argument);
+    Planˉrequest = Appendˉservice(Planˉrequest, 4u32, Fileˉinput);
+    Planˉrequest = Appendˉservice(Planˉrequest, 5u32, Utf8);
+    Planˉrequest = Appendˉservice(Planˉrequest, 6u32, Diagnostic);
+    Planˉrequest = Appendˉservice(Planˉrequest, 7u32, Enumˉnameˉservice);
+    Planˉrequest = Appendˉservice(Planˉrequest, 8u32, Textˉconcatˉservice);
+    Planˉrequest = Appendˉservice(Planˉrequest, 9u32, Textˉquoteˉservice);
+    Planˉrequest = Appendˉservice(Planˉrequest, 10u32, I32ˉformatˉservice);
+    Planˉrequest = Appendˉservice(Planˉrequest, 11u32, U32ˉformatˉservice);
+    if Bytesˉlength(Planˉrequest) != 156u32 {
+        return Failure(Fragment, 12u32);
+    }
+
+    let Layout = Publication.Nativeˉpublicationˉplan(Planˉrequest);
+    if Bytesˉlength(Layout.Value) != 164u32 ||
+        Bytesˉreadˉu32ˉlittle(Layout.Value, 12u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Layout.Value, 20u32) != Fragmentˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Layout.Value, 28u32) != 11u32 {
+        return Failure(Fragment, 16u32);
+    }
+    let Imageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Layout.Value, 24u32);
+    if Imageˉbytes == 0u32 || Imageˉbytes > SEGMENT_BYTES {
+        return Failure(Fragment, 20u32);
+    }
+
+    let Payloadˉbytes: u32 = Fragmentˉbytes + Bytesˉlength(Console) +
+        Bytesˉlength(Argumentˉcount) + Bytesˉlength(Argument) +
+        Bytesˉlength(Fileˉinput) + Bytesˉlength(Utf8) +
+        Bytesˉlength(Diagnostic) + Bytesˉlength(Enumˉnameˉservice) +
+        Bytesˉlength(Textˉconcatˉservice) +
+        Bytesˉlength(Textˉquoteˉservice) +
+        Bytesˉlength(I32ˉformatˉservice) +
+        Bytesˉlength(U32ˉformatˉservice);
+    let Total: u32 = 32u32 + 156u32 + Payloadˉbytes;
+    if Total > MAXIMUM_BYTES { return Failure(Fragment, 24u32); }
+
+    var Result: bytes = Empty(Fragment);
+    Result = Appendˉu32(Result, 1364416087u32);
+    Result = Appendˉu32(Result, 2u32);
+    Result = Appendˉu32(Result, Total);
+    Result = Appendˉu32(Result, 156u32);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, Imageˉbytes);
+    Result = Appendˉu32(Result, Payloadˉbytes);
+    Result = Appendˉu32(Result, 0u32);
+    Result = Bytesˉconcat(Result, Planˉrequest);
+    Result = Bytesˉconcat(Result, Fragment);
+    Result = Bytesˉconcat(Result, Console);
+    Result = Bytesˉconcat(Result, Argumentˉcount);
+    Result = Bytesˉconcat(Result, Argument);
+    Result = Bytesˉconcat(Result, Fileˉinput);
+    Result = Bytesˉconcat(Result, Utf8);
+    Result = Bytesˉconcat(Result, Diagnostic);
+    Result = Bytesˉconcat(Result, Enumˉnameˉservice);
+    Result = Bytesˉconcat(Result, Textˉconcatˉservice);
+    Result = Bytesˉconcat(Result, Textˉquoteˉservice);
+    Result = Bytesˉconcat(Result, I32ˉformatˉservice);
+    Result = Bytesˉconcat(Result, U32ˉformatˉservice);
+    if Bytesˉlength(Result) != Total {
+        return Failure(Fragment, 28u32);
+    }
+    return Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉresult(
+        true,
+        Result,
+        Planˉrequest,
+        Total
+    );
+}

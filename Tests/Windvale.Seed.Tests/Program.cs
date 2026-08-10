@@ -26,7 +26,7 @@ internal static partial class Program
     private const string FOUNDATION_SHA256 = "c13efd14485afa1bf7fa418b54cea2fdd234fe34fdc824ae52346ce062be7793";
     private const string WVDUMP_CORE_SHA256 = "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
     private const string WVO_SAMPLE_SHA256 = "006fd80183da7fbc71d3c6d63b65e6f3551765508fe9dba6f38ba80e002eb28a";
-    private const string WVO_CORE_SHA256 = "b0d0568cb6861c84ea9cad0b77f9722a9141b30c94952e5662aaa3afc47eae0f";
+    private const string WVO_CORE_SHA256 = "a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db";
     private const string WVA_OBJECT_SHA256 = "992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85";
     private const string WVA_ASSEMBLER_CORE_SHA256 = "a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c";
     private const string WVLINK_CORE_SHA256 = "02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874";
@@ -37,8 +37,8 @@ internal static partial class Program
     private const string NATIVE_X64_LOWERING_DATA_SHA256 = "d641039357bfb6be0c860002a374d70e5266f39861b4c9ea7e4df192dfdf21b3";
     private const string NATIVE_X64_LOWERING_LAYOUT_SHA256 = "b762f94fe45634910cbc62d6285860b506d0c01df7461da0c14680ebce390517";
     private const string NATIVE_X64_LOWERING_OBJECT_SHA256 = "20de442e9a8aa64f957e7d5f353ff62f8e43b2fce74e0aad572a1b8259ad9918";
-    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "0e2b509b54b9320efe7d70080ea74afdce771d01ade33c3d915ae088d9d4b278";
-    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "01781356ae2a6cf10e14d178878102609fcfbe3b9340f71b723ac5caf54451f7";
+    private const string NATIVE_X64_LOWERING_MEMORY_SHA256 = "0b0720b86dc4885af2074227fe181fe14bbe0f98a988c4a2de0d561a5fcffb5e";
+    private const string NATIVE_X64_LOWERING_TOOL_SHA256 = "2d2c5cc91a13603d71bcd72786ae89e3e4afbaf19148fc6170a66df33c33ebef";
     private const string WINDOWS_CONSOLE_SUM_SHA256 = "5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77";
     private const string LINUX_CONSOLE_SUM_SHA256 = "8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4";
     private const string CONSOLE_APPLICATION_PLAN_CORE_SHA256 = "528f4b69e8b697b307e45d1df00f8415f4f773adb5879d7c96cfce04f0bd44b2";
@@ -1403,7 +1403,7 @@ internal static partial class Program
         new("staged compiler WVO snapshots publish atomically without .NET", [TEST_AREA_ASSEMBLER, TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpublisherˉruns),
         new("native staged WVO producer and publisher compose without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpipelineˉruns),
         new("native staged publisher self-lowers and publishes without .NET", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_LINKER, TEST_AREA_RUNTIME], Nativeˉwvoˉstagingˉpublisherˉselfˉlowers, Testˉcost.Extended),
-        new("native u32 formatting lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉformatˉloweringˉagrees),
+        new("native integer formatting lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉintegerˉformatˉloweringˉagrees),
         new("native byte construction lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉbyteˉconstructionˉloweringˉagrees),
         new("native u32 arithmetic lowers through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉarithmeticˉloweringˉagrees),
         new("native u32 bitwise operations lower through both Windvale adapters", [TEST_AREA_COMPILER, TEST_AREA_BYTECODE, TEST_AREA_OBJECT_MODEL, TEST_AREA_RUNTIME], Nativeˉu32ˉbitwiseˉloweringˉagrees),
