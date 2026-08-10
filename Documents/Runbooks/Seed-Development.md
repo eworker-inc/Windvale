@@ -195,7 +195,7 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Run the fixed eight-case native front-door qualification smoke directly with:
+Run the fixed nine-case native front-door qualification smoke directly with:
 
 ```powershell
 $output = New-Item -ItemType Directory -Force artifacts/seed-front-door
@@ -210,8 +210,9 @@ mkdir -p artifacts/seed-front-door
 
 The helper builds four exact WVBs, verifies and inspects the two structural
 fixtures, runs the Sum, Foundation-header, and composed-project modules through
-the current native runner to exact results `29`, `1`, and `42`, and checks
-malformed-project destination preservation. Example and component `.wvproj`
+the current native runner to exact results `29`, `1`, and `42`, requires the
+Sum run to report exactly `203` instructions, and checks malformed-project
+destination preservation. Example and component `.wvproj`
 files normally live beside their owning source, with paths resolved relative to
 the manifest. Root-level manifests remain appropriate for repository-wide
 products such as the complete compiler, but are not the default location for

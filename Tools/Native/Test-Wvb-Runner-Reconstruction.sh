@@ -17,10 +17,10 @@ check_file() {
     printf '%s  %s\n' "$expected_sha" "$path" | sha256sum --check --strict --quiet
 }
 
-if check_file "$candidate/Wvb-Runner.wvb" 90009 3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626 &&
-    check_file "$candidate/Wvb-Runner.wvo" 761854 e92eed5006a7a98609173c0ed73e66a7aec5e152d8556c9174cab928b946a505 &&
-    check_file "$candidate/windows-x64-wvrun.exe" 778240 578ddd302da5fbd8d8e14c9410787f5aa05378429a1aca738ee2057e2f9ac1a5 &&
-    check_file "$candidate/linux-x64-wvrun.elf" 778240 16f39270c239609c6f58b086d0648609fad46860ba9bdd198fa7e6668b628047; then
+if check_file "$candidate/Wvb-Runner.wvb" 121593 5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1 &&
+    check_file "$candidate/Wvb-Runner.wvo" 1078577 118cdd634026d7d616f3b7c7dc951176985e725f5852b4d3b045aab4cf5e5ca5 &&
+    check_file "$candidate/windows-x64-wvrun.exe" 1094656 ab0c2384ecdfd07bc7351562732ae4b1f97e07dcbd2c92e96dc8cb3dee4d3ff7 &&
+    check_file "$candidate/linux-x64-wvrun.elf" 1093632 ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322; then
     echo 'PASS candidate inventory'
     passed=$((passed + 1))
 else
@@ -44,28 +44,34 @@ if [[ $usage_status -eq 64 && ! -s $test_directory/Usage.out ]] &&
     cmp -s "$test_directory/Rebuilt/Wvb-Runner.wvo" "$candidate/Wvb-Runner.wvo" &&
     cmp -s "$test_directory/Rebuilt/windows-x64-wvrun.exe" "$candidate/windows-x64-wvrun.exe" &&
     cmp -s "$test_directory/Rebuilt/linux-x64-wvrun.elf" "$candidate/linux-x64-wvrun.elf"; then
-    echo 'PASS exact retained-WVB paired reconstruction'
+    echo 'PASS exact source-built paired reconstruction'
     passed=$((passed + 1))
 else
-    echo 'FAIL exact retained-WVB paired reconstruction'
+    echo 'FAIL exact source-built paired reconstruction'
     failed=$((failed + 1))
 fi
 
 cp -- "$invalid_fixture" "$test_directory/Invalid.wvb" || exit 1
 "$test_directory/Rebuilt/linux-x64-wvrun.elf" "$fixture" >"$test_directory/Run.out" 2>"$test_directory/Run.err"
 run_status=$?
+"$test_directory/Rebuilt/linux-x64-wvrun.elf" "$fixture" --report-steps >"$test_directory/Report.out" 2>"$test_directory/Report.err"
+report_status=$?
+"$test_directory/Rebuilt/linux-x64-wvrun.elf" "$fixture" --unknown >"$test_directory/Option.out" 2>"$test_directory/Option.err"
+option_status=$?
 "$test_directory/Rebuilt/linux-x64-wvrun.elf" "$test_directory/Invalid.wvb" >"$test_directory/Reject.out" 2>"$test_directory/Reject.err"
 reject_status=$?
-if [[ $run_status -eq 0 && $reject_status -eq 1 ]] &&
+if [[ $run_status -eq 0 && $report_status -eq 0 && $option_status -eq 64 && $reject_status -eq 1 ]] &&
     check_file "$fixture" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 &&
     check_file "$test_directory/Run.out" 11 bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e &&
-    [[ ! -s $test_directory/Run.err && ! -s $test_directory/Reject.out ]] &&
+    check_file "$test_directory/Report.out" 27 16d83153e975eefdac7828db275b4cbd3cdd4a783ed5430c442ed4717936a3e5 &&
+    check_file "$test_directory/Option.err" 43 fd8455c7428eece156befe036c10c6927efee163a7315dad72c730f6e2bcef64 &&
+    [[ ! -s $test_directory/Run.err && ! -s $test_directory/Report.err && ! -s $test_directory/Option.out && ! -s $test_directory/Reject.out ]] &&
     check_file "$test_directory/Reject.err" 53 a2e698719194d86fe8d449d741af6b00bad06930727af6b513d23da909f1d28e &&
     check_file "$test_directory/Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5; then
-    echo 'PASS current-host execution and rejection'
+    echo 'PASS current-host execution reporting and rejection'
     passed=$((passed + 1))
 else
-    echo 'FAIL current-host execution and rejection'
+    echo 'FAIL current-host execution reporting and rejection'
     failed=$((failed + 1))
 fi
 

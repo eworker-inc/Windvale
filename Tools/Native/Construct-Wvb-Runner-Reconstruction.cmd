@@ -19,7 +19,7 @@ if not errorlevel 1 (
     exit /b 64
 )
 
-set "SourceWvb=%RepositoryRoot%\Artifacts\Native-Front-Door\Wvb\Wvb-Runner.wvb"
+set "SourceProject=%RepositoryRoot%\Windvale-Wvb-Runner.wvproj"
 set "HostedToolset=%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Candidate"
 set "Construction=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Construction-Candidate"
 set "HostedTools=%HostedToolset%\windows-x64"
@@ -27,8 +27,6 @@ set "ConstructionTools=%Construction%\windows-x64"
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "StartupRoot=%RepositoryRoot%\Linker\Startup"
 
-call :verify_file "%SourceWvb%" 90009 3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626 "retained WVB-runner module"
-if errorlevel 1 exit /b 1
 call :verify_file "%HostedToolset%\SHA256SUMS" 6927 430171a9157560acb57e6f84aa772429b436059867892ee2408839057e0eeebc "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
@@ -60,21 +58,22 @@ set "LinuxApplication=%OutputRoot%\linux-x64-wvrun.elf"
 set "WindowsStartup=%TemporaryDirectory%\Windows-Startup.wvo"
 set "LinuxStartup=%TemporaryDirectory%\Linux-Startup.wvo"
 
-copy /y "%SourceWvb%" "%Wvb%" >nul || goto :cleanup
-call :verify_file "%Wvb%" 90009 3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626 "WVB-runner module"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%SourceProject%" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
+if errorlevel 1 goto :cleanup
+call :verify_file "%Wvb%" 121593 5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1 "WVB-runner module"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Wvb%" "%Wvo%" >"%TemporaryDirectory%\Lower.out" 2>"%TemporaryDirectory%\Lower.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvo%" 761854 e92eed5006a7a98609173c0ed73e66a7aec5e152d8556c9174cab928b946a505 "WVB-runner WVO"
+call :verify_file "%Wvo%" 1078577 118cdd634026d7d616f3b7c7dc951176985e725f5852b4d3b045aab4cf5e5ca5 "WVB-runner WVO"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Fragment%" "%Wvo%" >"%TemporaryDirectory%\Link.out" 2>"%TemporaryDirectory%\Link.err"
 if errorlevel 1 goto :cleanup
 set "EntryMatch=0"
-for /f "usebackq delims=" %%L in ("%TemporaryDirectory%\Link.out") do if "%%L"=="entry name=Main address=10049" set "EntryMatch=1"
+for /f "usebackq delims=" %%L in ("%TemporaryDirectory%\Link.out") do if "%%L"=="entry name=Main address=14790" set "EntryMatch=1"
 if not "%EntryMatch%"=="1" goto :cleanup
-call :verify_file "%Fragment%" 761278 d602b50d9057f0aad1bb7dca32e624cf78a78244e53ec1a053455caf66a02212 "WVB-runner linked fragment"
+call :verify_file "%Fragment%" 1077675 cb9b08b1d88cc67fa26f210832cbdc542df51d2eb8816ab5ef2a7fc296f426ec "WVB-runner linked fragment"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%StartupRoot%\Windows-X64-Hosted-Inspector.wva" "%WindowsStartup%" >"%TemporaryDirectory%\Windows-Assemble.out" 2>"%TemporaryDirectory%\Windows-Assemble.err"
@@ -88,12 +87,12 @@ if errorlevel 1 goto :cleanup
 
 call :construct_target windows 1 "%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Windows-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Windows-Diagnostic-Output-Service.bin" "%WindowsStartup%" "%WindowsApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 778240 578ddd302da5fbd8d8e14c9410787f5aa05378429a1aca738ee2057e2f9ac1a5 "Windows WVB-runner application"
+call :verify_file "%WindowsApplication%" 1094656 ab0c2384ecdfd07bc7351562732ae4b1f97e07dcbd2c92e96dc8cb3dee4d3ff7 "Windows WVB-runner application"
 if errorlevel 1 goto :cleanup
 
 call :construct_target linux 2 "%ServiceRoot%\Native-X64-Linux-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Linux-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Linux-Diagnostic-Output-Service.bin" "%LinuxStartup%" "%LinuxApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 778240 16f39270c239609c6f58b086d0648609fad46860ba9bdd198fa7e6668b628047 "Linux WVB-runner application"
+call :verify_file "%LinuxApplication%" 1093632 ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322 "Linux WVB-runner application"
 if errorlevel 1 goto :cleanup
 
 echo native WVB runner reconstruction status=Complete artifacts=4
@@ -112,7 +111,7 @@ set "TargetDirectory=%TemporaryDirectory%\%TargetName%"
 mkdir "%TargetDirectory%" || exit /b 1
 "%HostedTools%\wvhostverifierbundle.exe" wvb-runner "%Fragment%" "%ConsoleLeaf%" "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" "%ServiceRoot%\Native-X64-Argument-Service.bin" "%FileInputLeaf%" "%ServiceRoot%\Native-X64-Utf8-Service.bin" "%DiagnosticLeaf%" "%ServiceRoot%\Native-X64-Text-Concat-Service.bin" "%ServiceRoot%\Native-X64-I32-Format-Service.bin" "%ServiceRoot%\Native-X64-U32-Format-Service.bin" "%TargetDirectory%\Bundle.wvsq" >"%TemporaryDirectory%\%TargetName%-Bundle-Request.out" 2>"%TemporaryDirectory%\%TargetName%-Bundle-Request.err"
 if errorlevel 1 exit /b 1
-"%ConstructionTools%\wvhostverifierpublisherbasemetadata.exe" wvb-runner %Target% 10049 "%TargetDirectory%\Bundle.wvsq" "%TargetDirectory%\Metadata.wvhv" >"%TemporaryDirectory%\%TargetName%-Metadata.out" 2>"%TemporaryDirectory%\%TargetName%-Metadata.err"
+"%ConstructionTools%\wvhostverifierpublisherbasemetadata.exe" wvb-runner %Target% 14790 "%TargetDirectory%\Bundle.wvsq" "%TargetDirectory%\Metadata.wvhv" >"%TemporaryDirectory%\%TargetName%-Metadata.out" 2>"%TemporaryDirectory%\%TargetName%-Metadata.err"
 if errorlevel 1 exit /b 1
 "%ConstructionTools%\wvhostverifierpublisherbaseruntime.exe" "%TargetDirectory%\Metadata.wvhv" "%TargetDirectory%\Runtime.wvhr" >"%TemporaryDirectory%\%TargetName%-Runtime.out" 2>"%TemporaryDirectory%\%TargetName%-Runtime.err"
 if errorlevel 1 exit /b 1

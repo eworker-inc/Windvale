@@ -451,9 +451,9 @@ remain managed or unpromoted.
 Decision 0507 closes the paired container-construction seam for the bounded WVB
 runner without rewriting the historical front-door seed. The exact retained
 WVB lowers to a pinned ABI-22 WVO and linked fragment, then profile 5 constructs
-both current applications through the shared WVHV tools. The ordinary launcher
-uses the new candidate. Source-to-WVB bindings, Linux execution, and grouped
-promotion remain open and therefore keep E1 at `native-candidate`.
+both target applications through the shared WVHV tools. Decision 0509 later
+supersedes those active candidate identities with the source-built generation;
+the retained products remain recovery provenance.
 
 Decision 0508 consumes that current runner for three plain-execution checks
 already embedded in both broad Seed commands. The paired native front-door
@@ -462,6 +462,16 @@ project WVBs and proves each input remains unchanged. This replaces three more
 managed calls per host script, fourteen cumulatively with Decisions 0505 and
 0506, while leaving profiling, capability-bearing execution, the broad harness,
 and later qualification phases explicitly managed or unpromoted.
+
+Decision 0509 closes the runner's source boundary by adding its omitted modules
+to the Project 1 manifest in canonical order and building the current WVB
+through the native front door. Exact WVO, fragment, and paired profile-5
+applications now derive from that source-built product. The same runner owns an
+optional exact overall-instruction report, growing the Seed helper to nine cases
+and bringing the cumulative broad-script removal to fifteen managed calls per
+host. Per-function reporting, capability-bearing execution, the broad harness,
+independent Linux evidence, and later qualification phases remain managed or
+unpromoted.
 
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module

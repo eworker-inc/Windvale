@@ -1,43 +1,43 @@
 {
-  "format": "windvale-native-wvb-runner-candidate-1",
+  "format": "windvale-native-wvb-runner-candidate-2",
   "status": "candidate",
   "sourceDecision": "0217",
   "provenanceDecision": "0220",
-  "constructionDecision": "0507",
+  "constructionDecision": "0509",
   "qualification": "current-host-focused",
-  "construction": "windvale-native-profile-5-retained-wvb-reconstruction",
-  "nativeSourceConstruction": "retained-exact-wvb-source-build-pending",
+  "construction": "windvale-native-profile-5-source-reconstruction",
+  "nativeSourceConstruction": "windvale-native-project-1",
   "artifacts": [
     {
       "name": "wvb-runner-wvb",
       "path": "Wvb-Runner.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 90009,
-      "sha256": "3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626",
+      "bytes": 121593,
+      "sha256": "5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1",
       "sourceProject": "Windvale-Wvb-Runner.wvproj"
     },
     {
       "name": "wvb-runner-native-object",
       "path": "Wvb-Runner.wvo",
       "target": "x86-64-wvo-abi-22",
-      "bytes": 761854,
-      "sha256": "e92eed5006a7a98609173c0ed73e66a7aec5e152d8556c9174cab928b946a505",
+      "bytes": 1078577,
+      "sha256": "118cdd634026d7d616f3b7c7dc951176985e725f5852b4d3b045aab4cf5e5ca5",
       "sourceWvb": "Wvb-Runner.wvb"
     },
     {
       "name": "windows-x64-wvb-runner",
       "path": "windows-x64-wvrun.exe",
       "target": "windows-x64-wvb-runner-v1",
-      "bytes": 778240,
-      "sha256": "578ddd302da5fbd8d8e14c9410787f5aa05378429a1aca738ee2057e2f9ac1a5",
+      "bytes": 1094656,
+      "sha256": "ab0c2384ecdfd07bc7351562732ae4b1f97e07dcbd2c92e96dc8cb3dee4d3ff7",
       "sourceWvo": "Wvb-Runner.wvo"
     },
     {
       "name": "linux-x64-wvb-runner",
       "path": "linux-x64-wvrun.elf",
       "target": "linux-x64-wvb-runner-v1",
-      "bytes": 778240,
-      "sha256": "16f39270c239609c6f58b086d0648609fad46860ba9bdd198fa7e6668b628047",
+      "bytes": 1093632,
+      "sha256": "ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322",
       "sourceWvo": "Wvb-Runner.wvo"
     }
   ]

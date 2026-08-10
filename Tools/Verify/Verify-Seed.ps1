@@ -277,7 +277,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=4 cases=8'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=4 cases=9'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -290,15 +290,6 @@ if (
         'native Seed console AOT verification status=Complete artifacts=2 cases=1'
 ) {
     throw 'The native Seed console AOT verification failed.'
-}
-
-$StepReportOutput = dotnet $ToolDll run $SumModule --report-steps
-if (
-    $LASTEXITCODE -ne 0 -or
-    $StepReportOutput -notcontains 'Result: 29' -or
-    ($StepReportOutput -join "`n") -notmatch '(?m)^Instructions: [1-9][0-9]*$'
-) {
-    throw 'The Seed CLI did not report a positive instruction count for Sum-Data.wvb.'
 }
 
 $FunctionStepReportOutput = dotnet $ToolDll run $SumModule --report-function-steps 2>&1

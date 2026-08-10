@@ -12,12 +12,18 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_BYTES = 778_240;
+    private const int CURRENT_WVB_RUNNER_BYTES = 121_593;
+    private const string CURRENT_WVB_RUNNER_SHA256 =
+        "5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1";
+    private const int STAGE0_WVB_RUNNER_BYTES = 126_271;
+    private const string STAGE0_WVB_RUNNER_SHA256 =
+        "00b87804c047b626b00c167bf99ea9834bc77ab8e88e454d39a738b2787e2bcf";
+    private const int CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_BYTES = 1_094_656;
     private const string CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_SHA256 =
-        "578ddd302da5fbd8d8e14c9410787f5aa05378429a1aca738ee2057e2f9ac1a5";
-    private const int CURRENT_LINUX_WVB_RUNNER_APPLICATION_BYTES = 778_240;
+        "ab0c2384ecdfd07bc7351562732ae4b1f97e07dcbd2c92e96dc8cb3dee4d3ff7";
+    private const int CURRENT_LINUX_WVB_RUNNER_APPLICATION_BYTES = 1_093_632;
     private const string CURRENT_LINUX_WVB_RUNNER_APPLICATION_SHA256 =
-        "16f39270c239609c6f58b086d0648609fad46860ba9bdd198fa7e6668b628047";
+        "ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322";
 
     private static readonly string FOUNDATION_SHA256_SOURCE =
         Readˉembeddedˉsource("Windvale.Seed.Tests.Foundation-Sha256.wv");
@@ -52,7 +58,9 @@ internal static partial class Program
                     WEBASSEMBLY_WVB_SCALAR_INTERPRETER_FORMATTING_SOURCE),
             ]);
         var Runnerˉmodule = Moduleˉcodec.Readˉandˉverify(Runnerˉbytes);
-        Equal(8, Runnerˉmodule.Module.Functions.Length);
+        Equal(9, Runnerˉmodule.Module.Functions.Length);
+        Equal(STAGE0_WVB_RUNNER_BYTES, Runnerˉbytes.Length);
+        Equal(STAGE0_WVB_RUNNER_SHA256, Moduleˉdigest.Calculateˉsha256(Runnerˉbytes));
 
         var Interpreterˉbytes = Compileˉrunnerˉmodules(
             new(
@@ -152,8 +160,8 @@ internal static partial class Program
         var Pinnedˉroot = Path.Combine(
             Repository,
             "Artifacts",
-            "Native-Front-Door");
-        var Pinnedˉwvbˉpath = Path.Combine(Pinnedˉroot, "Wvb", "Wvb-Runner.wvb");
+            "Native-Wvb-Runner-Candidate");
+        var Pinnedˉwvbˉpath = Path.Combine(Pinnedˉroot, "Wvb-Runner.wvb");
         var Pinnedˉmodule = Moduleˉcodec.Readˉandˉverify(
             File.ReadAllBytes(Pinnedˉwvbˉpath));
         var Pinnedˉfragment = X64ˉnativeˉbackend.Compile(Pinnedˉmodule).Fragment;
@@ -210,15 +218,18 @@ internal static partial class Program
                 "Build-Wvb",
                 Path.Combine(Repository, "Windvale-Wvb-Runner.wvproj"),
                 Nativeˉrunnerˉpath);
-            Equal(1, Nativeˉbuild.Exitˉcode);
-            Equal(string.Empty, Nativeˉbuild.Output);
+            Equal(0, Nativeˉbuild.Exitˉcode);
             Equal(
-                "build status=Compileˉrejected source-status=Sourceˉwir " +
-                "wir-status=Sourceˉbindings function=0 operation=0\n",
-                Nativeˉbuild.Error);
-            False(
-                File.Exists(Nativeˉrunnerˉpath),
-                "The rejected native runner source build published an output.");
+                "build status=Published verification=compiler-aligned functions=9 " +
+                "code-bytes=117395 module-bytes=121593\n" +
+                "publication status=Complete bytes=0x0001daf9 " +
+                "sha256=5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1\n",
+                Nativeˉbuild.Output);
+            Equal(string.Empty, Nativeˉbuild.Error);
+            var Nativeˉrunnerˉbytes = File.ReadAllBytes(Nativeˉrunnerˉpath);
+            Equal(CURRENT_WVB_RUNNER_BYTES, Nativeˉrunnerˉbytes.Length);
+            Equal(CURRENT_WVB_RUNNER_SHA256, Moduleˉdigest.Calculateˉsha256(Nativeˉrunnerˉbytes));
+            Sequenceˉequal(File.ReadAllBytes(Pinnedˉwvbˉpath), Nativeˉrunnerˉbytes);
 
             var Moduleˉpath = Path.Combine(Directoryˉpath, "Runner.wvb");
             File.WriteAllBytes(Moduleˉpath, Profileˉbytes);

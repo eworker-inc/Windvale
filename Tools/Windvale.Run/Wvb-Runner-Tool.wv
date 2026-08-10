@@ -26,10 +26,38 @@ fn Reportˉfailure(Status: u32, Instructions: u32) -> void {
     diagnostic.write_line(Textˉconcat(Report, U32ˉformat(Instructions)));
 }
 
+fn Isˉreportˉsteps(Input: text) -> bool {
+    let Actual: bytes = Textˉtoˉutf8(Input);
+    let Expected: bytes = Textˉtoˉutf8("--report-steps");
+    let Length: u32 = Bytesˉlength(Actual);
+    if Length != Bytesˉlength(Expected) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Actual, Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
 export fn Main() -> i32 {
-    if process.argument_count() != 1u32 {
-        diagnostic.write_line("Usage: wvrun <module.wvb>");
+    let Arguments: u32 = process.argument_count();
+    if Arguments == 0u32 {
+        diagnostic.write_line("Usage: wvrun <module.wvb> [--report-steps]");
         return 64;
+    }
+    if Arguments > 2u32 {
+        diagnostic.write_line("Usage: wvrun <module.wvb> [--report-steps]");
+        return 64;
+    }
+    var Reportˉsteps: bool = false;
+    if Arguments == 2u32 {
+        if !Isˉreportˉsteps(process.argument(1u32)) {
+            diagnostic.write_line("Usage: wvrun <module.wvb> [--report-steps]");
+            return 64;
+        }
+        Reportˉsteps = true;
     }
 
     let Module: bytes = file.read_bytes(process.argument(0u32));
@@ -64,5 +92,11 @@ export fn Main() -> i32 {
         "Result: ",
         I32ˉformat(Bytesˉreadˉi32ˉlittle(Response, 16u32))
     ));
+    if Reportˉsteps {
+        console.write_line(Textˉconcat(
+            "Instructions: ",
+            U32ˉformat(Instructions)
+        ));
+    }
     return 0;
 }

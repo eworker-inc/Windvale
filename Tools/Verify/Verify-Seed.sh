@@ -269,7 +269,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=4 cases=8' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=4 cases=9' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -280,10 +280,6 @@ if [ "$NATIVE_SEED_CONSOLE_AOT_OUTPUT" != \
     echo 'The native Seed console AOT verification failed.' >&2
     exit 1
 fi
-
-STEP_REPORT_OUTPUT=$(dotnet "$TOOL_DLL" run "$SUM_MODULE" --report-steps)
-printf '%s\n' "$STEP_REPORT_OUTPUT" | grep -F 'Result: 29' >/dev/null
-printf '%s\n' "$STEP_REPORT_OUTPUT" | grep -E '^Instructions: [1-9][0-9]*$' >/dev/null
 
 FUNCTION_STEP_REPORT_OUTPUT=$(dotnet "$TOOL_DLL" run "$SUM_MODULE" --report-function-steps 2>&1)
 printf '%s\n' "$FUNCTION_STEP_REPORT_OUTPUT" | grep -F 'Result: 29' >/dev/null

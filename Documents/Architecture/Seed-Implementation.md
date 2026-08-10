@@ -216,13 +216,12 @@ owns this qualification composition without treating the frozen Stage 0
 coverage, broad execution and harness work, and independent Linux evidence
 remain outside this narrow transfer.
 
-Decision 0507 advances the WVB execution product from a historical packaged
-seed to an exact current profile-5 reconstruction. It retains the existing WVB
-as the explicit source boundary, lowers and links it with native tools, and
-constructs both target applications through the shared hosted-verifier path.
-The native Project front door still rejects this project's source bindings, so
-the colocated-project organization direction does not imply source
-reconstruction that has not yet been achieved.
+Decision 0507 advanced the WVB execution product from a historical packaged
+seed to an exact retained-WVB profile-5 reconstruction. It kept that WVB as the
+explicit source boundary, lowered and linked it with native tools, and
+constructed both target applications through the shared hosted-verifier path.
+Decision 0509 supersedes that active boundary while preserving this evidence as
+recovery provenance.
 
 Decision 0508 then uses that current runner in the paired Seed front-door
 helper for three exact capability-free execution checks. Sum, the Foundation
@@ -230,6 +229,14 @@ header reader, and the composed-project module must return `29`, `1`, and `42`
 and retain their exact bytes. The broad scripts no longer repeat those plain
 runs through Stage 0, while managed reporting, capability authorization, and
 the remaining broad harness stay explicit.
+
+Decision 0509 replaces Decision 0507's retained source boundary with the
+complete Project 1 closure. The native front door now builds the exact current
+runner WVB, and the same construction route pins its WVO, fragment, and paired
+profile-5 applications. The runner's optional overall-instruction report moves
+the Sum fixture's exact count into the nine-case native Seed helper. The frozen
+Stage 0 compiler remains an intentionally divergent recovery/differential
+implementation rather than the current source-product oracle.
 
 ### Reference linker and target adapters
 

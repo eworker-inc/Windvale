@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 1 ]]; then
-    echo 'Usage: ./Tools/Native/Run-Wvb.sh <module.wvb>' >&2
+if [[ $# -lt 1 || $# -gt 2 || ( $# -eq 2 && $2 != --report-steps ) ]]; then
+    echo 'Usage: ./Tools/Native/Run-Wvb.sh <module.wvb> [--report-steps]' >&2
     exit 64
 fi
 
@@ -10,9 +10,9 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Wvb-Runner-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '16f39270c239609c6f58b086d0648609fad46860ba9bdd198fa7e6668b628047' \
+    'ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322' \
     'linux-x64-wvrun.elf' | sha256sum --check --strict --quiet) ||
-    [[ $(wc -c < "$artifact_root/linux-x64-wvrun.elf") -ne 778240 ]]; then
+    [[ $(wc -c < "$artifact_root/linux-x64-wvrun.elf") -ne 1093632 ]]; then
     echo 'The Linux native WVB runner artifact digest is invalid.' >&2
     exit 1
 fi
@@ -24,4 +24,8 @@ if [[ $input_path != *.wvb ]]; then
     exit 64
 fi
 
-"$artifact_root/linux-x64-wvrun.elf" "$input_path"
+if [[ $# -eq 1 ]]; then
+    "$artifact_root/linux-x64-wvrun.elf" "$input_path"
+else
+    "$artifact_root/linux-x64-wvrun.elf" "$input_path" --report-steps
+fi

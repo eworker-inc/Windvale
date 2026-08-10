@@ -45,10 +45,10 @@ inspector startups, and required service leaves also select the lane. Generic
 console changes and unused file-output leaves do not select it merely by name.
 
 The `wvb-runner-reconstruction` lane owns its four-artifact candidate,
-retained-WVB constructor, focused owner, project and runner sources, profile-5
-WVHV closure, inspector startups, lower/link dependencies, launcher, and nine
-service leaves. Source-to-WVB changes do not erase the explicit source-binding
-evidence boundary.
+source-building constructor, focused owner, project and runner sources,
+profile-5 WVHV closure, inspector startups, build/lower/link dependencies,
+launcher, and nine service leaves. Changes to any member of the Project 1
+closure therefore select the exact reconstruction owner.
 
 The `console-publisher-reconstruction` lane owns the exact console-application
 publisher candidate, constructor, test command, project, source, and contract.

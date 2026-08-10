@@ -85,6 +85,29 @@ function Invoke-ExactRun(
     }
 }
 
+function Invoke-ExactInstructionReport(
+    [string]$ModulePath,
+    [int]$ExpectedResult,
+    [int]$ExpectedInstructions,
+    [long]$ExpectedBytes,
+    [string]$ExpectedSha256
+) {
+    $RunOutput = @(& $NativeRun $ModulePath --report-steps 2>&1)
+    if (
+        $LASTEXITCODE -ne 0 -or
+        $RunOutput.Count -ne 2 -or
+        $RunOutput[0].ToString() -ne "Result: $ExpectedResult" -or
+        $RunOutput[1].ToString() -ne "Instructions: $ExpectedInstructions"
+    ) {
+        throw "The native Seed runner instruction report is invalid: $ModulePath"
+    }
+    $Information = Get-Item -LiteralPath $ModulePath
+    $Digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $ModulePath).Hash.ToLowerInvariant()
+    if ($Information.Length -ne $ExpectedBytes -or $Digest -ne $ExpectedSha256) {
+        throw "The native Seed runner modified its reported input module: $ModulePath"
+    }
+}
+
 $SumModule = Join-Path $OutputRoot 'Sum-Data.wvb'
 $HelloModule = Join-Path $OutputRoot 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $OutputRoot 'Read-Wvb-Header.wvb'
@@ -101,6 +124,12 @@ Invoke-ExactInspect $SumModule 'opcode=data\.load\.i32 operand=0'
 Invoke-ExactRun `
     $SumModule `
     29 `
+    494 `
+    '76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df'
+Invoke-ExactInstructionReport `
+    $SumModule `
+    29 `
+    203 `
     494 `
     '76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df'
 
@@ -168,4 +197,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=4 cases=8'
+Write-Output 'native Seed front-door verification status=Complete artifacts=4 cases=9'

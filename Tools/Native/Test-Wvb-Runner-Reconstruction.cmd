@@ -10,13 +10,13 @@ set "InvalidFixture=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Retur
 set "Passed=0"
 set "Failed=0"
 
-call :check_file "%Candidate%\Wvb-Runner.wvb" 90009 3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626
+call :check_file "%Candidate%\Wvb-Runner.wvb" 121593 5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\Wvb-Runner.wvo" 761854 e92eed5006a7a98609173c0ed73e66a7aec5e152d8556c9174cab928b946a505
+call :check_file "%Candidate%\Wvb-Runner.wvo" 1078577 118cdd634026d7d616f3b7c7dc951176985e725f5852b4d3b045aab4cf5e5ca5
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\windows-x64-wvrun.exe" 778240 578ddd302da5fbd8d8e14c9410787f5aa05378429a1aca738ee2057e2f9ac1a5
+call :check_file "%Candidate%\windows-x64-wvrun.exe" 1094656 ab0c2384ecdfd07bc7351562732ae4b1f97e07dcbd2c92e96dc8cb3dee4d3ff7
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\linux-x64-wvrun.elf" 778240 16f39270c239609c6f58b086d0648609fad46860ba9bdd198fa7e6668b628047
+call :check_file "%Candidate%\linux-x64-wvrun.elf" 1093632 ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322
 if errorlevel 1 goto :inventory_failed
 echo PASS candidate inventory
 set /a Passed+=1
@@ -52,11 +52,11 @@ call :check_equal "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Candidate%\w
 if errorlevel 1 goto :reconstruction_failed
 call :check_equal "%TestDirectory%\Rebuilt\linux-x64-wvrun.elf" "%Candidate%\linux-x64-wvrun.elf"
 if errorlevel 1 goto :reconstruction_failed
-echo PASS exact retained-WVB paired reconstruction
+echo PASS exact source-built paired reconstruction
 set /a Passed+=1
 goto :reconstruction_done
 :reconstruction_failed
-echo FAIL exact retained-WVB paired reconstruction
+echo FAIL exact source-built paired reconstruction
 set /a Failed+=1
 :reconstruction_done
 
@@ -67,6 +67,18 @@ if errorlevel 1 goto :runtime_failed
 call :check_file "%TestDirectory%\Run.out" 11 bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e
 if errorlevel 1 goto :runtime_failed
 call :check_file "%TestDirectory%\Run.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+if errorlevel 1 goto :runtime_failed
+"%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Fixture%" --report-steps >"%TestDirectory%\Report.out" 2>"%TestDirectory%\Report.err"
+if errorlevel 1 goto :runtime_failed
+call :check_file "%TestDirectory%\Report.out" 27 16d83153e975eefdac7828db275b4cbd3cdd4a783ed5430c442ed4717936a3e5
+if errorlevel 1 goto :runtime_failed
+call :check_file "%TestDirectory%\Report.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+if errorlevel 1 goto :runtime_failed
+"%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Fixture%" --unknown >"%TestDirectory%\Option.out" 2>"%TestDirectory%\Option.err"
+if not "%ERRORLEVEL%"=="64" goto :runtime_failed
+call :check_file "%TestDirectory%\Option.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+if errorlevel 1 goto :runtime_failed
+call :check_file "%TestDirectory%\Option.err" 43 fd8455c7428eece156befe036c10c6927efee163a7315dad72c730f6e2bcef64
 if errorlevel 1 goto :runtime_failed
 copy /y "%InvalidFixture%" "%TestDirectory%\Invalid.wvb" >nul || goto :runtime_failed
 call :check_file "%TestDirectory%\Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
@@ -79,11 +91,11 @@ call :check_file "%TestDirectory%\Reject.err" 53 a2e698719194d86fe8d449d741af6b0
 if errorlevel 1 goto :runtime_failed
 call :check_file "%TestDirectory%\Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
 if errorlevel 1 goto :runtime_failed
-echo PASS current-host execution and rejection
+echo PASS current-host execution reporting and rejection
 set /a Passed+=1
 goto :runtime_done
 :runtime_failed
-echo FAIL current-host execution and rejection
+echo FAIL current-host execution reporting and rejection
 set /a Failed+=1
 :runtime_done
 

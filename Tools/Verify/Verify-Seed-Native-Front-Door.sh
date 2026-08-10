@@ -84,6 +84,33 @@ exact_run() {
     fi
 }
 
+exact_instruction_report() {
+    MODULE_PATH=$1
+    EXPECTED_RESULT=$2
+    EXPECTED_INSTRUCTIONS=$3
+    EXPECTED_BYTES=$4
+    EXPECTED_SHA256=$5
+    RUN_ERROR=$(mktemp "${TMPDIR:-/tmp}/windvale-seed-report.XXXXXX")
+    if ! RUN_OUTPUT=$("$NATIVE_RUN" "$MODULE_PATH" --report-steps 2>"$RUN_ERROR"); then
+        rm -f -- "$RUN_ERROR"
+        echo "The native Seed runner rejected an instruction report: $MODULE_PATH" >&2
+        exit 1
+    fi
+    EXPECTED_OUTPUT=$(printf 'Result: %s\nInstructions: %s' "$EXPECTED_RESULT" "$EXPECTED_INSTRUCTIONS")
+    if [ -s "$RUN_ERROR" ] || [ "$RUN_OUTPUT" != "$EXPECTED_OUTPUT" ]; then
+        rm -f -- "$RUN_ERROR"
+        echo "The native Seed runner instruction report is invalid: $MODULE_PATH" >&2
+        exit 1
+    fi
+    rm -f -- "$RUN_ERROR"
+    ACTUAL_BYTES=$(wc -c < "$MODULE_PATH" | tr -d ' ')
+    ACTUAL_SHA256=$(sha256sum "$MODULE_PATH" | awk '{print $1}')
+    if [ "$ACTUAL_BYTES" != "$EXPECTED_BYTES" ] || [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+        echo "The native Seed runner modified its reported input module: $MODULE_PATH" >&2
+        exit 1
+    fi
+}
+
 SUM_MODULE="$OUTPUT_ROOT/Sum-Data.wvb"
 HELLO_MODULE="$OUTPUT_ROOT/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$OUTPUT_ROOT/Read-Wvb-Header.wvb"
@@ -101,6 +128,12 @@ exact_inspect "$SUM_MODULE" 'opcode=data.load.i32 operand=0'
 exact_run \
     "$SUM_MODULE" \
     29 \
+    494 \
+    76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df
+exact_instruction_report \
+    "$SUM_MODULE" \
+    29 \
+    203 \
     494 \
     76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df
 
@@ -171,4 +204,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=4 cases=8'
+echo 'native Seed front-door verification status=Complete artifacts=4 cases=9'

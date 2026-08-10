@@ -124,7 +124,7 @@ It verifies the five-file candidate inventory, calls its durable constructor
 once, compares the rebuilt WVB and paired applications byte for byte, and
 requires the current-host rebuilt lowerer to reproduce the fixed Return-42 WVO.
 
-The retained-WVB runner reconstruction owner can be selected directly:
+The source-built runner reconstruction owner can be selected directly:
 
 ```cmd
 Tools\Native\Test-Retirement-Suite.cmd --filter wvb-runner-reconstruction
@@ -134,10 +134,11 @@ Tools\Native\Test-Retirement-Suite.cmd --filter wvb-runner-reconstruction
 ./Tools/Native/Test-Retirement-Suite.sh --filter wvb-runner-reconstruction
 ```
 
-Its three cases verify the four-file candidate inventory, reconstruct the exact
-WVO and paired profile-5 applications from the retained WVB, and exercise the
-current-host runner with exact result and rejected-input reports. It does not
-claim source-to-WVB closure or independent Linux execution.
+Its three cases verify the four-file candidate inventory, rebuild the WVB from
+the complete Project 1 source closure, reconstruct the exact WVO and paired
+profile-5 applications, and exercise the current-host runner with exact result,
+instruction-count, option-rejection, and malformed-input reports. It does not
+claim independent Linux execution or grouped qualification.
 
 The standard Wv-Linker reconstruction owner can be selected directly:
 

@@ -12,6 +12,15 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0509](../Decisions/0509-Native-Wvb-Runner-Source-Reconstruction-And-Step-Reporting.md)
+closes the runner project's omitted-module boundary, reconstructs the exact WVB,
+WVO, fragment, and paired profile-5 applications from current source, and moves
+the Sum fixture's exact `203`-instruction report into the paired native helper.
+The helper now owns nine cases and removes fifteen managed invocations per host
+script cumulatively. Independent Linux execution, capability-bearing execution,
+per-function profiling, the broad harness, and grouped qualification are the
+next E1/T2 boundaries.
+
 [Decision 0508](../Decisions/0508-Native-Seed-Wvb-Execution-Qualification-Smoke.md)
 routes the three representative plain WVB executions in both broad Seed
 scripts through the current native runner. The paired helper now checks eight
@@ -21,11 +30,11 @@ capability-bearing execution, the broad harness, independent Linux execution,
 and later qualification phases remain the next T2 boundaries.
 
 [Decision 0507](../Decisions/0507-Native-Wvb-Runner-Reconstruction.md)
-reconstructs the exact retained-WVB runner WVO and paired profile-5
+records the prior retained-WVB runner WVO and paired profile-5
 applications through native lower/link and WVHV construction. The ordinary
 digest-bound launcher now uses that current candidate, and the focused Windows
-owner passes 3/3. Closing the runner project's source-binding failure and
-executing the same candidate independently on Linux are the next E1 boundaries.
+owner passes 3/3. Decision 0509 supersedes its source boundary with the current
+source-built candidate; independent Linux execution remains open.
 
 [Decision 0506](../Decisions/0506-Native-Seed-Console-Aot-Qualification-Smoke.md)
 transfers the next coherent boundary in both broad Seed qualification scripts.
