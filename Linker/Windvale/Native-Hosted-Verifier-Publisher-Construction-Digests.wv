@@ -297,6 +297,74 @@ fn Wvoˉpublisherˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
     return Expectedˉword(Identity, Target, Index);
 }
 
+fn Consoleˉapplicationˉpublisherˉword(
+    Identity: u32,
+    Target: u32,
+    Index: u32
+) -> u32 {
+    if Identity == 1u32 {
+        if Index == 0u32 { return 3072266984u32; }
+        if Index == 1u32 { return 2613279852u32; }
+        if Index == 2u32 { return 2740165909u32; }
+        if Index == 3u32 { return 2820509122u32; }
+        if Index == 4u32 { return 2521050556u32; }
+        if Index == 5u32 { return 2500092813u32; }
+        if Index == 6u32 { return 1990693574u32; }
+        return 1033000470u32;
+    }
+    if Identity == 2u32 {
+        if Index == 0u32 { return 1954389029u32; }
+        if Index == 1u32 { return 2082552428u32; }
+        if Index == 2u32 { return 4251676722u32; }
+        if Index == 3u32 { return 1760984161u32; }
+        if Index == 4u32 { return 3530229396u32; }
+        if Index == 5u32 { return 3411020005u32; }
+        if Index == 6u32 { return 3275387877u32; }
+        return 1380552243u32;
+    }
+    if Identity == 6u32 && Target == 1u32 {
+        if Index == 0u32 { return 3730782581u32; }
+        if Index == 1u32 { return 2108791262u32; }
+        if Index == 2u32 { return 3221925849u32; }
+        if Index == 3u32 { return 4212360846u32; }
+        if Index == 4u32 { return 1856600660u32; }
+        if Index == 5u32 { return 2691663166u32; }
+        if Index == 6u32 { return 433423432u32; }
+        return 2889942347u32;
+    }
+    if Identity == 6u32 {
+        if Index == 0u32 { return 2804280562u32; }
+        if Index == 1u32 { return 2153906805u32; }
+        if Index == 2u32 { return 3670798352u32; }
+        if Index == 3u32 { return 1334586996u32; }
+        if Index == 4u32 { return 1700377245u32; }
+        if Index == 5u32 { return 719208766u32; }
+        if Index == 6u32 { return 3251173234u32; }
+        return 33430677u32;
+    }
+    if Identity == 7u32 && Target == 1u32 {
+        if Index == 0u32 { return 1088990987u32; }
+        if Index == 1u32 { return 1268745622u32; }
+        if Index == 2u32 { return 3189038216u32; }
+        if Index == 3u32 { return 3318597266u32; }
+        if Index == 4u32 { return 460942643u32; }
+        if Index == 5u32 { return 856316796u32; }
+        if Index == 6u32 { return 1807207469u32; }
+        return 1322401169u32;
+    }
+    if Identity == 7u32 {
+        if Index == 0u32 { return 1703822979u32; }
+        if Index == 1u32 { return 195732929u32; }
+        if Index == 2u32 { return 1475949499u32; }
+        if Index == 3u32 { return 3538245657u32; }
+        if Index == 4u32 { return 2174457329u32; }
+        if Index == 5u32 { return 3419704256u32; }
+        if Index == 6u32 { return 839427174u32; }
+        return 3777636208u32;
+    }
+    return Expectedˉword(Identity, Target, Index);
+}
+
 export fn Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
     Input: bytes,
     Identity: u32,
@@ -304,7 +372,7 @@ export fn Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
     Variant: u32
 ) -> bytes {
     var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    if Variant > 3u32 { return Result; }
+    if Variant > 4u32 { return Result; }
     var Index: u32 = 0u32;
     while Index < 8u32 {
         var Word: u32 = Expectedˉword(Identity, Target, Index);
@@ -322,6 +390,13 @@ export fn Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
             (Identity == 1u32 || Identity == 2u32 ||
                 Identity == 6u32 || Identity == 7u32) {
             Word = Wvoˉpublisherˉword(Identity, Target, Index);
+        }
+        if Variant == 4u32 &&
+            (Identity == 1u32 || Identity == 2u32 ||
+                Identity == 6u32 || Identity == 7u32) {
+            Word = Consoleˉapplicationˉpublisherˉword(
+                Identity, Target, Index
+            );
         }
         Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Word));
         Index = Index + 1u32;

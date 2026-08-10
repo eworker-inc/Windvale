@@ -32,7 +32,7 @@ fn Structureˉisˉvalid(Input: bytes) -> bool {
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     if Target != 1u32 && Target != 2u32 { return false; }
     let Variant: u32 = Bytesˉreadˉu32ˉlittle(Input, 120u32);
-    if Variant > 3u32 { return false; }
+    if Variant > 4u32 { return false; }
     var Identityˉbytes: u32 = 275054u32;
     if Target == 2u32 {
         Identityˉbytes = 271013u32;
@@ -60,6 +60,13 @@ fn Structureˉisˉvalid(Input: bytes) -> bool {
         Mainˉoffset = 0u32;
         Identityˉbytes = 461729u32;
         if Target == 2u32 { Identityˉbytes = 457688u32; }
+    }
+    if Variant == 4u32 {
+        Moduleˉbytes = 115107u32;
+        Objectˉbytes = 1139440u32;
+        Mainˉoffset = 18902u32;
+        Identityˉbytes = 1266627u32;
+        if Target == 2u32 { Identityˉbytes = 1262586u32; }
     }
     var Beginˉoffset: u32 = 789u32;
     var Applyˉoffset: u32 = 0u32;
@@ -124,6 +131,15 @@ export fn Publisherˉconstructionˉrequest(
         Symbols = 39u32;
         Relocations = 3u32;
     }
+    if Variant == 4u32 {
+        Moduleˉbytes = 115107u32;
+        Objectˉbytes = 1139440u32;
+        Codeˉbytes = 1134976u32;
+        Dataˉbytes = 448u32;
+        Mainˉoffset = 18902u32;
+        Symbols = 109u32;
+        Relocations = 15u32;
+    }
 
     var Bundleˉbytes: u32 = 235394u32;
     var Startupˉwvoˉbytes: u32 = 168u32;
@@ -178,6 +194,17 @@ export fn Publisherˉconstructionˉrequest(
         Outputˉbytes = 430080u32;
         Imageˉend = 144166912u32;
     }
+    if Variant == 4u32 {
+        Bundleˉbytes = 1138082u32;
+        Adapterˉfile = 1142704u32;
+        Adapterˉaddress = 1146288u32;
+        Sha256ˉfile = 1148000u32;
+        Sha256ˉaddress = 1151584u32;
+        Metadataˉfile = 1155552u32;
+        Metadataˉaddress = 1160672u32;
+        Outputˉbytes = 1158656u32;
+        Imageˉend = 144896000u32;
+    }
     if Target == 2u32 {
         Bundleˉbytes = 235077u32;
         Startupˉwvoˉbytes = 164u32;
@@ -231,6 +258,17 @@ export fn Publisherˉconstructionˉrequest(
             Metadataˉaddress = 419296u32;
             Outputˉbytes = 426949u32;
             Imageˉend = 143107013u32;
+        }
+        if Variant == 4u32 {
+            Bundleˉbytes = 1137765u32;
+            Adapterˉfile = 1150976u32;
+            Adapterˉaddress = 143831040u32;
+            Sha256ˉfile = 1154352u32;
+            Sha256ˉaddress = 143834416u32;
+            Metadataˉfile = 1148384u32;
+            Metadataˉaddress = 1148384u32;
+            Outputˉbytes = 1156037u32;
+            Imageˉend = 143836101u32;
         }
     }
 

@@ -75,12 +75,13 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(
         Beginˉoffset = 5475u32;
         Applyˉoffset = 4686u32;
     }
+    if Variant == 4u32 { Mainˉoffset = 18902u32; }
     if Bytesˉreadˉu32ˉlittle(Input, 16u32) != 5u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 24u32) != Mainˉoffset ||
         Bytesˉreadˉu32ˉlittle(Input, 28u32) != Beginˉoffset ||
         Bytesˉreadˉu32ˉlittle(Input, 32u32) != Applyˉoffset ||
-        Variant > 3u32 ||
+        Variant > 4u32 ||
         !Allˉzero(Input, 40u32, 8u32) {
         return Failure(Input, 4u32, 16u32);
     }
@@ -99,6 +100,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(
     var Metadataˉmagic: u32 = 1347835479u32;
     if Variant == 2u32 { Metadataˉmagic = 1112561239u32; }
     if Variant == 3u32 { Metadataˉmagic = 1330665047u32; }
+    if Variant == 4u32 { Metadataˉmagic = 1095784023u32; }
     Metadata = Appendˉu32(Metadata, Metadataˉmagic);
     Metadata = Appendˉu32(Metadata, 1u32);
     Metadata = Appendˉu32(Metadata, 128u32);
@@ -108,7 +110,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(
     Metadata = Appendˉu32(Metadata, 4194304u32);
     Metadata = Appendˉu32(Metadata, 1u32);
     Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 48u32, 64u32));
-    if Variant == 2u32 || Variant == 3u32 {
+    if Variant == 2u32 || Variant == 3u32 || Variant == 4u32 {
         Metadata = Appendˉu32(Metadata, 0u32);
         Metadata = Appendˉu32(Metadata, 0u32);
         Metadata = Appendˉu32(Metadata, 0u32);

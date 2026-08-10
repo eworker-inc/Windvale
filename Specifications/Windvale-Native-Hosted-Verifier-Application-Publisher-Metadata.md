@@ -86,9 +86,9 @@ wvhostverifierproducemetadata [role:0|1|2] <target:1|2> <module.wvb> <startup.wv
 ## Ownership and evidence
 
 The focused Windvale source files separate admission, construction, and the
-byte-input bridge. The role-aware metadata-producer WVB is 77,570 bytes with
+byte-input bridge. The role-aware metadata-producer WVB is 85,942 bytes with
 SHA-256
-`04ace838e229ecc3af22a9acd34badeec1718acf9f7efbc49e0f0be251e5209b`.
+`7f9ac017096727387d1265c6408d2acf90a5667ad5050117c226a0f57608e373`.
 
 The focused current-host test remains the recovery owner of service-free
 `Main(bytes) -> bytes`, interpreter/native equality, exact request and metadata

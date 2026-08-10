@@ -34,8 +34,8 @@ The role-2 page SHA-256 is
 `56554387c9db58d57f7f3e95b3a655e5f6f17b581ba7fb4b6d7d31de1696f595`.
 The role-3 page SHA-256 is
 `e062b4c9c03fe908de2a301889e5b1d55772cefd8cc42040745931e455d34248`.
-The constructor WVB is 9,736 bytes with SHA-256
-`06676eb2cfdfb59a4d05ac821f30ba90984b4ed69ce391b617f94758d2e895f8`.
+The constructor WVB is 9,829 bytes with SHA-256
+`c7c700b2411675382a6ded27f15d37348ca5185b07982791ab6d1a758a986b41`.
 
 ## Evidence and remaining work
 

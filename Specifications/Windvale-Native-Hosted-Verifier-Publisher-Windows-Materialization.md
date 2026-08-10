@@ -51,7 +51,7 @@ repeated replacement of the full 256 KiB value.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Base PE | 248,832 | `2afd9d92422b063abd3cd20d8da6056efbbbff9e7ac8baeef9c8b60b391686c5` |
-| Constructor WVB | 18,939 | `062d06db7f3e591740e66f1c2a543b4096baee0f7057fc79d3a8e63a45be66c0` |
+| Constructor WVB | 20,079 | `9a9f55d9d7592a101b8e3255c3f6266ae894a3a569bd244d8b7f50a8a1817c32` |
 | Final PE | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
 | Promoter base PE | 674,816 | `927476ca389c7449fb0c72341f26d68577a6a9e0c0ed02fa45ac8c4af935c77f` |
 | Promoter final PE | 681,472 | `598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23` |

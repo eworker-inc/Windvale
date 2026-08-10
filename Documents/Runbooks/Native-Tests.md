@@ -32,6 +32,7 @@ The exact filter names and case counts are:
 | `wv-linker-reconstruction` | 3 |
 | `wvo-inspector-reconstruction` | 3 |
 | `console-verifier-reconstruction` | 3 |
+| `console-publisher-reconstruction` | 3 |
 | `wvo-publisher-reconstruction` | 2 |
 | `baseline-jit` | 6 |
 | `unsafe-wvb` | 20 |
@@ -67,11 +68,11 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 41 suites and 3,198 cases in manifest order. Its
+Omitting `--filter` selects all 42 suites and 3,201 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 41, Passed: 41, Failed: 0, Cases: 3198
+Suites: 42, Passed: 42, Failed: 0, Cases: 3201
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -173,6 +174,23 @@ constructor once and compare the rebuilt WVB, WVO, and paired applications,
 then exercise the rebuilt current-host verifier over the fixed valid and
 rejected console-container vectors. This focused lane does not claim an
 independent Linux-host execution or the final grouped retirement gate.
+
+The console-application publisher reconstruction owner can be selected directly:
+
+```cmd
+Tools\Native\Test-Retirement-Suite.cmd --filter console-publisher-reconstruction
+```
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter console-publisher-reconstruction
+```
+
+Its three cases verify the exact four-file candidate inventory, rebuild the WVB
+and WVO and construct both target applications, and exercise current-host
+publication success plus rejected-input output preservation. The lane runs its
+durable constructor for each target and retains publisher-family regression in
+the existing focused owner. It does not claim independent Linux-host execution
+or the final grouped retirement gate.
 
 The role-3 WVO publisher reconstruction owner can be selected directly:
 
@@ -828,7 +846,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,198-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,201-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

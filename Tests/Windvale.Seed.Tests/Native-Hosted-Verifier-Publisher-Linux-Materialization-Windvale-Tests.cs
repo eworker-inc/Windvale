@@ -29,9 +29,9 @@ internal static partial class Program
             Equal(0, Build.Exitˉcode);
             Equal(string.Empty, Build.Error);
             var Moduleˉbytes = File.ReadAllBytes(Moduleˉpath);
-            Equal(14_950, Moduleˉbytes.Length);
+            Equal(15_551, Moduleˉbytes.Length);
             Equal(
-                "74cadd840368532e1267454a3ffd551bfe2c0fbc320f472e103afb3cdd0dd639",
+                "0384c8a4e5d8acbed587aa2e31a21832f56a0e71243260d9a213940b589373cd",
                 Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
             var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
             var Native = X64ˉnativeˉbackend.Compile(Module).Fragment;

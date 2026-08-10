@@ -404,6 +404,19 @@ application-writer seam for that candidate on the current Windows host. It does
 not establish independent Linux execution, clean or previous-seed bootstrap,
 grouped qualification, atomic installation, promotion, or recovery deletion.
 
+Decision 0503 applies the same retained native compiler, raw lowerer, standard
+linker, hosted-container, and publisher-construction boundaries to the exact
+console-application publisher. The complete WVO is an admitted oracle before
+linking, and explicit overlay variant 4 binds the target startup, metadata,
+base, objects, Windows imports, and final identity while retaining public
+`WVPA 1` metadata role zero. Neither target publisher participates in its own
+construction. This closes the managed application-writer seam for that exact
+candidate on the current Windows host. The final candidate refresh binds the
+current file-input leaf and replaces only the stale application bytes and
+digests; independent Linux reconstruction and
+execution, clean or previous-seed bootstrap, grouped qualification, atomic
+installation, promotion, and recovery deletion remain.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

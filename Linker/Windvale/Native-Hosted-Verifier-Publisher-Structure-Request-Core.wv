@@ -23,13 +23,13 @@ fn Identityˉvariant(Input: bytes) -> u32 {
         Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1230001751u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != Bytesˉlength(Input) {
-        return 4u32;
+        return 5u32;
     }
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
-    if Target != 1u32 && Target != 2u32 { return 4u32; }
+    if Target != 1u32 && Target != 2u32 { return 5u32; }
     let Moduleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
     let Publisherˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
-    var Variant: u32 = 4u32;
+    var Variant: u32 = 5u32;
     if Moduleˉbytes == 29170u32 && Publisherˉbytes == 233804u32 {
         Variant = 0u32;
     }
@@ -42,7 +42,10 @@ fn Identityˉvariant(Input: bytes) -> u32 {
     if Moduleˉbytes == 41365u32 && Publisherˉbytes == 408284u32 {
         Variant = 3u32;
     }
-    if Variant > 3u32 { return Variant; }
+    if Moduleˉbytes == 115107u32 && Publisherˉbytes == 1139440u32 {
+        Variant = 4u32;
+    }
+    if Variant > 4u32 { return Variant; }
     var Startupˉbytes: u32 = 168u32;
     var Adapterˉbytes: u32 = 9544u32;
     if Target == 2u32 { Startupˉbytes = 164u32; Adapterˉbytes = 5507u32; }
@@ -58,11 +61,11 @@ fn Identityˉvariant(Input: bytes) -> u32 {
         let Record: u32 = 16u32 + Index * 8u32;
         if Bytesˉreadˉu32ˉlittle(Input, Record) != Offset ||
             Bytesˉreadˉu32ˉlittle(Input, Record + 4u32) != Length ||
-            Length > Bytesˉlength(Input) - Offset { return 4u32; }
+            Length > Bytesˉlength(Input) - Offset { return 5u32; }
         Offset = Offset + Length;
         Index = Index + 1u32;
     }
-    if Offset != Bytesˉlength(Input) { return 4u32; }
+    if Offset != Bytesˉlength(Input) { return 5u32; }
     return Variant;
 }
 
@@ -79,7 +82,7 @@ export fn Publisherˉstructureˉrequest(
     Identity: bytes
 ) -> Publisherˉstructureˉrequestˉresult {
     let Variant: u32 = Identityˉvariant(Identity);
-    if Variant > 3u32 { return Failure(Identity, 0u32); }
+    if Variant > 4u32 { return Failure(Identity, 0u32); }
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Identity, 12u32);
     let Module: bytes = Resource(Identity, 0u32);
     let Publisher: bytes = Resource(Identity, 1u32);
@@ -145,6 +148,13 @@ export fn Publisherˉstructureˉrequest(
         Mainˉoffset = 0u32;
         Beginˉoffset = 5475u32;
         Applyˉoffset = 4686u32;
+    }
+    if Variant == 4u32 {
+        Moduleˉbytes = 115107u32;
+        Publisherˉbytes = 1139440u32;
+        Publisherˉsymbols = 109u32;
+        Publisherˉrelocations = 15u32;
+        Mainˉoffset = 18902u32;
     }
     var Result: bytes = Empty(Identity);
     Result = Appendˉu32(Result, 1397773911u32);

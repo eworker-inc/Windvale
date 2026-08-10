@@ -79,7 +79,8 @@ $NativeCases = @(
             'segmented-compiler-toolset-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction'
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -117,6 +118,7 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'source-containment',
@@ -170,6 +172,7 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
         Gaps = @()
@@ -185,7 +188,8 @@ $NativeCases = @(
         )
         Suites = @(
             'wv-linker-reconstruction',
-            'console-verifier-reconstruction'
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -201,6 +205,7 @@ $NativeCases = @(
             'seed',
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit'
@@ -221,6 +226,7 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'console-packager-container-reconstruction',
             'hosted-verifier-publisher-files'
@@ -237,6 +243,7 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'source-containment',
@@ -274,6 +281,7 @@ $NativeCases = @(
         Suites = @(
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'wvo-read-only',
             'wvo-differential',
@@ -314,6 +322,7 @@ $NativeCases = @(
             'seed',
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit',
@@ -335,8 +344,81 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'hosted-verifier-publisher-files'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console publisher reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Console-Application-Publisher-Reconstruction.cmd',
+            'Tools/Native/Construct-Console-Application-Publisher.cmd',
+            'Artifacts/Native-Console-Application-Publisher-Candidate/Manifest.json',
+            'Windvale-Console-Application-Publisher.wvproj',
+            'Tools/Windvale.Publish/Console-Application-Publisher.wv',
+            'Specifications/Windvale-Native-Console-Application-Publisher.md'
+        )
+        Suites = @('console-publisher-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console publisher shared construction closure'
+        Paths = @(
+            'Linker/Windvale/Native-Hosted-Verifier-Publisher-Construction-Request-Core.wv',
+            'Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate/Manifest.json'
+        )
+        Suites = @(
+            'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
+            'wvo-publisher-reconstruction',
+            'hosted-verifier-publisher-files'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console publisher native construction dependencies'
+        Paths = @(
+            'Tools/Native/Build-Wvb.cmd',
+            'Tools/Native/Lower-Wvb-To-Wvo.cmd',
+            'Tools/Native/Link-Wvo.cmd'
+        )
+        Suites = @(
+            'seed',
+            'wv-linker-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
+            'unsafe-wvb',
+            'wvb-containment',
+            'lowerer-rejections',
+            'linker-rejections',
+            'linker-hostile',
+            'linker-map-limit',
+            'wvo-export-renamer',
+            'aot-chain'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console publisher exact package and publication consumers'
+        Paths = @(
+            'Tools/Native/Package-Console.cmd',
+            'Tools/Native/Publish-Console.cmd'
+        )
+        Suites = @(
+            'console-publisher-reconstruction',
+            'console-packager-rejections',
+            'console-container-mutations',
+            'hosted-console-container-mutations',
+            'console-segmented-size',
+            'console-segmented-construction',
+            'console-packager-source-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -361,6 +443,7 @@ $NativeCases = @(
             'Tools/Windvale.Publish/Wvb-Publication-Transaction.wv'
         )
         Suites = @(
+            'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'publisher-rejections',
             'hosted-verifier-publisher-files'
@@ -400,6 +483,7 @@ $NativeCases = @(
         Suites = @(
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'lowerer-rejections',
             'wvo-export-renamer',
             'aot-chain'
@@ -433,6 +517,7 @@ $NativeCases = @(
         Paths = @('Linker/Windvale/Wv-Linker-Core.wv')
         Suites = @(
             'wv-linker-reconstruction',
+            'console-publisher-reconstruction',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit'
@@ -518,6 +603,7 @@ $NativeCases = @(
         Suites = @(
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'publisher-rejections',
             'hosted-verifier-publisher-files'

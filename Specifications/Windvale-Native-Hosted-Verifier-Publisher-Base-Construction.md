@@ -101,7 +101,7 @@ sources.
 Version 17 of the construction candidate contains 27 canonical WVB/WVO
 artifacts and 22 paired host applications. Its 49-entry `SHA256SUMS` is 5,064
 LF-only bytes with SHA-256
-`a63365d681c9540c97c0ef8d51b09a5bf9527a7b98c1a09e9140369ee64302ea`.
+`4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779`.
 
 ## Native owner and remaining gate
 

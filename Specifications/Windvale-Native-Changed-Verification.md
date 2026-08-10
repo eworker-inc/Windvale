@@ -26,7 +26,7 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every suite. The complete 3,198-case coordinator
+Unknown input must never select every suite. The complete 3,201-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
 
 The `console-verifier-reconstruction` lane owns its exact candidate,
@@ -34,6 +34,14 @@ constructor, test command, project, and Windvale source closure. Its direct
 lowering, linking, assembly, hosted-verifier toolsets, profile-7 sources,
 inspector startups, and required service leaves also select the lane. Generic
 console changes and unused file-output leaves do not select it merely by name.
+
+The `console-publisher-reconstruction` lane owns the exact console-application
+publisher candidate, constructor, test command, project, source, and contract.
+Its source closure and direct native build, lowering, linking, profile-2 hosted
+container, publisher-overlay, and publication-object dependencies also select
+the lane. Only `Package-Console` and `Publish-Console` are console consumers of
+this publisher; other tools do not select the lane merely because their names
+contain `Console`.
 
 ## Dispatch contract
 

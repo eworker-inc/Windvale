@@ -100,7 +100,7 @@ fail() {
 
 total=$((total + 1))
 check_file "$construction/SHA256SUMS" 5064 \
-    a63365d681c9540c97c0ef8d51b09a5bf9527a7b98c1a09e9140369ee64302ea \
+    4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
@@ -405,10 +405,10 @@ total=$((total + 1))
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 5064 \
-    a63365d681c9540c97c0ef8d51b09a5bf9527a7b98c1a09e9140369ee64302ea \
+    4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 \
     'rejected metadata input' || fail
 check_file "$test_directory/Sentinel.wvhv" 5064 \
-    a63365d681c9540c97c0ef8d51b09a5bf9527a7b98c1a09e9140369ee64302ea \
+    4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
@@ -416,7 +416,7 @@ cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
 check_file "$test_directory/Sentinel.wvhr" 5064 \
-    a63365d681c9540c97c0ef8d51b09a5bf9527a7b98c1a09e9140369ee64302ea \
+    4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -432,7 +432,7 @@ total=$((total + 1))
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 5064 \
-    a63365d681c9540c97c0ef8d51b09a5bf9527a7b98c1a09e9140369ee64302ea \
+    4c69c2e03e5f9ff5810d3e494167da7b6e8c34c5f630f5af8dbdcebfe0205779 \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
 

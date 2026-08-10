@@ -60,7 +60,7 @@ replacement remains explicitly indeterminate and must not be retried blindly.
 
 ## Container contract
 
-The public Stage 0 construction targets are:
+The public recovery construction targets are:
 
 - `windows-x64-console-application-publisher-v1`, producing `.exe`;
 - `linux-x64-console-application-publisher-v1`, producing `.elf`.
@@ -95,14 +95,27 @@ The historical exported WVA symbol names remain internal construction details.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Publisher WVB | 115,107 | `e8121fb76c7cc39b159d53a3c28d1da8bc2d44968d630495c692a7761656923d` |
-| Windows publisher | 1,158,656 | `e0ba662b480445ec10e03c9046f3fe394cb48e9d68c46fe705c779c09192dc74` |
-| Linux publisher | 1,156,037 | `e58153168780a3a4dc0be6f16eaa71b2040ad4908f1ba6bf24e33a66c29d155b` |
+| Publisher WVO oracle | 1,139,440 | `259c7d746c3a217c32706bfd617cf66894066bd2e50850cbe5733ac3338e4952` |
+| Linked fragment | 1,135,424 | `c6b199644be8ca19cce0110a5090e84c736220a130f9b48a4366caf36254e6e2` |
+| Windows profile base | 1,151,488 | `922c9019308e837f6a3528c3b1edf6cd83b3e432bdb6a140111c958aa6ff5e97` |
+| Linux profile base | 1,150,976 | `a12ab6d136b53c53322d4b7ff612a5f41a2653c30210a4f5dbfb27027bc29f5e` |
+| Windows publisher | 1,158,656 | `0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e` |
+| Linux publisher | 1,156,037 | `83468e65c1a5aa0bbb33f9571958e5d2f1959b81c08bd4cb66a4083270272ae1` |
 
 The WVB rebuilds through the native Project 1 front door after canonicalizing
-its order-independent source inventory. Its complete hosted admission and
-publication closure remains outside the accepted-subset native lowerer and
-fails closed as `Unsupportedˉcode`; native lowering of this publisher is a
-separate remaining backend slice.
+its order-independent source inventory. Decision 0503 lowers that exact WVB
+through the retained raw accepted-subset lowerer and requires the complete WVO
+oracle above. The WVO has 1,134,976 text bytes, 448 read-only-data bytes, 109
+symbols, and 15 relocations. `Main` is symbol 108 at offset 18,902 with 5,436
+bytes; the private apply and begin functions are symbols 14 and 15 at offsets 0
+and 789 with 789 and 389 bytes respectively.
+
+The current Windows native constructor links that admitted object once and
+uses shared publisher-overlay variant 4 to construct both target applications.
+Variant 4 fixes the target-specific startup, metadata, base, object, import,
+and final identities while the embedded public metadata remains `WVPA 1` with
+stored role zero. The route invokes the raw lowerer rather than either target
+publisher, so neither final application publishes or constructs itself.
 
 `Tools/Native/Publish-Console.cmd` and `.sh` verify the current-host publisher
 digest before execution. `Package-Console.cmd` and `.sh` now materialize into a
@@ -131,10 +144,22 @@ scratch. Permanent execution does not consult .NET.
 
 ## Remaining gate
 
-The WVB and paired applications remain Stage 0-constructed recovery artifacts.
-Promotion requires deterministic native reconstruction and direct execution on
-Windows and Linux, the grouped native-retirement gate, and a native replacement
-for this host-container constructor. The retained WVB publisher
-fault/concurrency matrix continues to qualify the shared native transaction;
-this profile adds console-application admission and integration evidence rather
-than duplicating those tests.
+The exact WVB, WVO oracle, linked fragment, profile bases, and paired
+applications now reconstruct on the current Windows host through retained
+Windvale-native compiler, lowerer, linker, hosted-container, and role-aware
+publisher-construction tools. This is same-release cross-target evidence, not a
+clean bootstrap or promotion transaction. Independent Linux reconstruction and
+execution, grouped qualification, ordinary-path promotion, and the final Stage
+0 recovery release remain. The final candidate refresh binds the current
+file-input leaf and replaces its stale application bytes and digests without
+changing the WVB, WVO, fragment, bases, or public `WVPA 1` contract. The retained
+WVB publisher fault/concurrency matrix continues to qualify the shared native
+transaction; this profile adds
+console-application admission and integration evidence rather than duplicating
+those tests.
+
+The focused current-Windows-host owner passes 3/3 in 68.6 seconds, including
+exact reconstruction and independent version-1 publication/rejection
+preservation. The established shared publisher pipeline also passes 15/15 in
+188.7 seconds, preserving exact roles 0 through 3. Linux execution, grouped
+qualification, promotion, clean bootstrap, and recovery deletion remain open.

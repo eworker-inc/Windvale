@@ -10,6 +10,26 @@ fn Allˉzero(Input: bytes, Offset: u32, Count: u32) -> bool {
 }
 
 fn Startupˉdigestˉword(Index: u32, Target: u32, Variant: u32) -> u32 {
+    if Variant == 4u32 && Target == 1u32 {
+        if Index == 0u32 { return 2259744943u32; }
+        if Index == 1u32 { return 498043574u32; }
+        if Index == 2u32 { return 303251925u32; }
+        if Index == 3u32 { return 1038007152u32; }
+        if Index == 4u32 { return 3814723233u32; }
+        if Index == 5u32 { return 2276987604u32; }
+        if Index == 6u32 { return 226358341u32; }
+        return 1010034804u32;
+    }
+    if Variant == 4u32 {
+        if Index == 0u32 { return 3211355519u32; }
+        if Index == 1u32 { return 3676139264u32; }
+        if Index == 2u32 { return 2139486241u32; }
+        if Index == 3u32 { return 1624357721u32; }
+        if Index == 4u32 { return 3607672032u32; }
+        if Index == 5u32 { return 205798076u32; }
+        if Index == 6u32 { return 1445018914u32; }
+        return 519770980u32;
+    }
     if Variant == 3u32 && Target == 1u32 {
         if Index == 0u32 { return 3659669037u32; }
         if Index == 1u32 { return 2518165551u32; }
@@ -71,6 +91,16 @@ fn Startupˉdigestˉword(Index: u32, Target: u32, Variant: u32) -> u32 {
 }
 
 fn Moduleˉdigestˉword(Index: u32, Variant: u32) -> u32 {
+    if Variant == 4u32 {
+        if Index == 0u32 { return 3072266984u32; }
+        if Index == 1u32 { return 2613279852u32; }
+        if Index == 2u32 { return 2740165909u32; }
+        if Index == 3u32 { return 2820509122u32; }
+        if Index == 4u32 { return 2521050556u32; }
+        if Index == 5u32 { return 2500092813u32; }
+        if Index == 6u32 { return 1990693574u32; }
+        return 1033000470u32;
+    }
     if Variant == 3u32 {
         if Index == 0u32 { return 3665923150u32; }
         if Index == 1u32 { return 116127032u32; }
@@ -128,7 +158,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalidˉforˉ
     Variant: u32
 ) -> bool {
     if Target < 1u32 || Target > 2u32 ||
-        Variant > 3u32 ||
+        Variant > 4u32 ||
         Offset > Bytesˉlength(Input) ||
         32u32 > Bytesˉlength(Input) - Offset {
         return false;
@@ -149,7 +179,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalidˉforˉv
     Offset: u32,
     Variant: u32
 ) -> bool {
-    if Variant > 3u32 ||
+    if Variant > 4u32 ||
         Offset > Bytesˉlength(Input) ||
         32u32 > Bytesˉlength(Input) - Offset {
         return false;
@@ -182,7 +212,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalidˉforˉvariant
 ) -> bool {
     if Offset > Bytesˉlength(Input) ||
         128u32 > Bytesˉlength(Input) - Offset ||
-        Target < 1u32 || Target > 2u32 || Variant > 3u32 {
+        Target < 1u32 || Target > 2u32 || Variant > 4u32 {
         return false;
     }
     var Mainˉoffset: u32 = 3001u32;
@@ -199,6 +229,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalidˉforˉvariant
         Beginˉoffset = 5475u32;
         Applyˉoffset = 4686u32;
     }
+    if Variant == 4u32 { Mainˉoffset = 18902u32; }
     var Magic: u32 = 1347835479u32;
     var Storedˉvariant: u32 = Variant;
     if Variant == 2u32 {
@@ -207,6 +238,10 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalidˉforˉvariant
     }
     if Variant == 3u32 {
         Magic = 1330665047u32;
+        Storedˉvariant = 0u32;
+    }
+    if Variant == 4u32 {
+        Magic = 1095784023u32;
         Storedˉvariant = 0u32;
     }
     if Bytesˉreadˉu32ˉlittle(Input, Offset) != Magic ||

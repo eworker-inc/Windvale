@@ -177,6 +177,18 @@ does not participate in constructing itself. The retained same-release tools
 remain bootstrap seeds, so independent Linux execution, clean previous-seed
 renewal, qualification, promotion, and recovery release remain open.
 
+Decision 0503 uses those retained native compiler, raw-lowerer, standard-link,
+hosted-container, and publisher-construction boundaries to reconstruct the
+exact console-application-publisher WVB, WVO oracle, linked fragment, target
+bases, and paired applications on the current Windows host. Explicit overlay
+variant 4 owns the role-specific metadata, structure, target, object, import,
+and materialization evidence without invoking either target publisher. This is
+narrow same-release construction ownership. The final candidate refresh binds
+the current file-input leaf and replaces only stale final application bytes and
+digests; independent Linux reconstruction
+and execution, clean previous-seed renewal, qualification, promotion, and
+recovery release remain open.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

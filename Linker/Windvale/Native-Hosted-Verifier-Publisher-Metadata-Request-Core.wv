@@ -50,7 +50,25 @@ fn Startupˉimageˉdigest(Input: bytes, Target: u32, Variant: u32) -> bytes {
     var Index: u32 = 0u32;
     while Index < 8u32 {
         var Word: u32 = 0u32;
-        if Variant == 3u32 && Target == 1u32 {
+        if Variant == 4u32 && Target == 1u32 {
+            if Index == 0u32 { Word = 2259744943u32; }
+            else if Index == 1u32 { Word = 498043574u32; }
+            else if Index == 2u32 { Word = 303251925u32; }
+            else if Index == 3u32 { Word = 1038007152u32; }
+            else if Index == 4u32 { Word = 3814723233u32; }
+            else if Index == 5u32 { Word = 2276987604u32; }
+            else if Index == 6u32 { Word = 226358341u32; }
+            else { Word = 1010034804u32; }
+        } else if Variant == 4u32 {
+            if Index == 0u32 { Word = 3211355519u32; }
+            else if Index == 1u32 { Word = 3676139264u32; }
+            else if Index == 2u32 { Word = 2139486241u32; }
+            else if Index == 3u32 { Word = 1624357721u32; }
+            else if Index == 4u32 { Word = 3607672032u32; }
+            else if Index == 5u32 { Word = 205798076u32; }
+            else if Index == 6u32 { Word = 1445018914u32; }
+            else { Word = 519770980u32; }
+        } else if Variant == 3u32 && Target == 1u32 {
             if Index == 0u32 { Word = 3659669037u32; }
             else if Index == 1u32 { Word = 2518165551u32; }
             else if Index == 2u32 { Word = 2397325640u32; }
@@ -117,7 +135,7 @@ export fn Publisherˉmetadataˉrequestˉforˉvariant(
     Module: bytes,
     Startupˉobject: bytes
 ) -> Publisherˉmetadataˉrequestˉresult {
-    if (Target != 1u32 && Target != 2u32) || Variant > 3u32 {
+    if (Target != 1u32 && Target != 2u32) || Variant > 4u32 {
         return Publisherˉmetadataˉrequestˉresult(false, Empty(Module));
     }
     var Startupˉbytes: u32 = 168u32;
@@ -141,6 +159,10 @@ export fn Publisherˉmetadataˉrequestˉforˉvariant(
         Mainˉoffset = 0u32;
         Beginˉoffset = 5475u32;
         Applyˉoffset = 4686u32;
+    }
+    if Variant == 4u32 {
+        Moduleˉbytes = 115107u32;
+        Mainˉoffset = 18902u32;
     }
     if Bytesˉlength(Module) != Moduleˉbytes ||
         Bytesˉlength(Startupˉobject) != Startupˉbytes {

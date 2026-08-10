@@ -174,14 +174,15 @@ export fn Publisherˉmoduleˉvariant(Input: bytes) -> u32 {
     if Bytesˉlength(Input) == 41268u32 { return 1u32; }
     if Bytesˉlength(Input) == 159770u32 { return 2u32; }
     if Bytesˉlength(Input) == 41365u32 { return 3u32; }
-    return 4u32;
+    if Bytesˉlength(Input) == 115107u32 { return 4u32; }
+    return 5u32;
 }
 
 export fn Publisherˉmoduleˉisˉvalidˉfor(
     Input: bytes,
     Variant: u32
 ) -> bool {
-    return Variant <= 3u32 && Publisherˉmoduleˉvariant(Input) == Variant;
+    return Variant <= 4u32 && Publisherˉmoduleˉvariant(Input) == Variant;
 }
 
 export fn Publisherˉmoduleˉisˉvalid(Input: bytes) -> bool {
@@ -249,8 +250,24 @@ export fn Publisherˉobjectˉvariant(Input: bytes) -> u32 {
         Applyˉindex = 2u32;
         Applyˉoffset = 4686u32;
         Applyˉname = "$function_0001";
+    } else if Bytesˉlength(Input) == 1139440u32 {
+        Variant = 4u32;
+        Length = 1139440u32;
+        Symbols = 109u32;
+        Relocations = 15u32;
+        Textˉbytes = 1134976u32;
+        Rodataˉbytes = 448u32;
+        Mainˉindex = 108u32;
+        Mainˉoffset = 18902u32;
+        Mainˉbytes = 5436u32;
+        Beginˉindex = 15u32;
+        Beginˉoffset = 789u32;
+        Beginˉbytes = 389u32;
+        Applyˉindex = 14u32;
+        Applyˉoffset = 0u32;
+        Applyˉbytes = 789u32;
     } else if Bytesˉlength(Input) != Length {
-        return 4u32;
+        return 5u32;
     }
     if !Structureˉmatches(Input, 2u32, Symbols, Relocations) ||
         !Sectionˉmatches(
@@ -259,7 +276,7 @@ export fn Publisherˉobjectˉvariant(Input: bytes) -> u32 {
         !Sectionˉmatches(
             Input, 2u32, 1u32, 2u32, 16u32, Rodataˉbytes, ".rodata"
         ) {
-        return 4u32;
+        return 5u32;
     }
     let Symbolˉstart: u32 = Sectionˉrecordsˉend(Input, 2u32);
     if !Symbolˉmatches(
@@ -275,7 +292,7 @@ export fn Publisherˉobjectˉvariant(Input: bytes) -> u32 {
             Input, Symbolˉstart, Symbols, Applyˉindex,
             1u32, 1u32, 0u32, Applyˉoffset, Applyˉbytes, Applyˉname
         ) {
-        return 4u32;
+        return 5u32;
     }
     return Variant;
 }
@@ -284,7 +301,7 @@ export fn Publisherˉobjectˉisˉvalidˉfor(
     Input: bytes,
     Variant: u32
 ) -> bool {
-    if Variant > 3u32 {
+    if Variant > 4u32 {
         return false;
     }
     return Publisherˉobjectˉvariant(Input) == Variant;

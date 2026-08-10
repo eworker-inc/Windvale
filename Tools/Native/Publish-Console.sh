@@ -17,7 +17,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Console-Application-Publisher-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    'e58153168780a3a4dc0be6f16eaa71b2040ad4908f1ba6bf24e33a66c29d155b' \
+    '83468e65c1a5aa0bbb33f9571958e5d2f1959b81c08bd4cb66a4083270272ae1' \
     'linux-x64-wvappublish.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native console-application publisher artifact digest is invalid.' >&2
     exit 1

@@ -54,7 +54,7 @@ This monotonic join avoids repeated replacement of a 250 KiB byte value.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Base ELF | 249,856 | `687338281ca78c9d3a4d08b601c1efbcc198ec3c8fcc96fbf34f5dc349cafae2` |
-| Constructor WVB | 14,950 | `74cadd840368532e1267454a3ffd551bfe2c0fbc320f472e103afb3cdd0dd639` |
+| Constructor WVB | 15,551 | `0384c8a4e5d8acbed587aa2e31a21832f56a0e71243260d9a213940b589373cd` |
 | Final ELF | 254,917 | `babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97` |
 | Promoter base ELF | 675,840 | `768ca223c99e901d17a1c5d86744515e4b571a6feae329fb6fc3cf225215a133` |
 | Promoter final ELF | 680,901 | `422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58` |

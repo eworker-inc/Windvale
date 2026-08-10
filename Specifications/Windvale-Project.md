@@ -67,18 +67,19 @@ Malformed projects and compiler diagnostics exit as compilation failure `1`. Inv
 
 `Tools/Windvale.Project/Project-Manifest-Core.wv` is the portable Windvale-owned parser for the Project 1 text contract. `Windvaleˉprojectˉscanˉmanifest(bytes)` performs the manifest byte bound, strict UTF-8, line-ending, directive, singleton, module-count, and canonical-path checks without file access or ambient host state. Its status values map one-to-one to `WVP1001` through `WVP1007`. A successful scan retains the root and dependency path locations as bounded immutable byte spans; `Windvaleˉprojectˉpathˉat` exposes the root at index zero followed by sources in manifest order and rejects an invalid or inconsistent view without reading outside its inputs.
 
-`Project-Manifest-Tool.wv` is the first hosted shell over that core. It reads exactly one supplied manifest resource and emits a deterministic status/path report. The C# parser remains the reference oracle and the normal `windvale build` implementation; qualified conformance compares successful path values and exact `WVP` line/column failures between the two implementations.
+`Project-Manifest-Tool.wv` is the first hosted shell over that core. It reads exactly one supplied manifest resource and emits a deterministic status/path report. The C# parser remains the reference and recovery oracle; qualified conformance compares successful path values and exact `WVP` line/column failures between the two implementations. The qualified Windvale-native Project 1 build driver owns the normal source-to-WVB route.
 
 The hosted shell is also the first qualified native project consumer. Under ABI 14 it reads a real `.wvproj` through the native file-input table and produces the same output, diagnostics, and exit code under the interpreter, Windows/Linux W^X JIT, and linked WVO/AOT. The native path admits the core's borrowed-byte record fields, `Textˉtoˉutf8`, `Bytesˉfromˉu32ˉlittle`, and bounded `Bytesˉconcat` without adding a capability, service-table slot, execution-context field, or project-format feature. A supplied Stage 0 file reader remains unused during native execution.
 
-This parser and hosted-shell evidence is now consumed by the format-5 Windvale-native build driver. Its project mode retains the parser unchanged, derives bounded source resource names in the hosted adapter, reads every selected source once, invokes the Windvale compiler and shared verifier in memory, and publishes accepted WVB without loading .NET. The Stage 0 `windvale build` command remains the normal and recovery implementation pending dual-host qualification and atomic publication.
+This parser and hosted-shell evidence is now consumed by the format-5 Windvale-native build driver. Its project mode retains the parser unchanged, derives bounded source resource names in the hosted adapter, reads every selected source once, invokes the Windvale compiler and shared verifier in memory, and publishes accepted WVB without loading .NET. The digest-bound native front door is the qualified normal implementation; Stage 0 `windvale build` is retained for recovery and independent differential evidence.
 
 The currently pinned native build driver passes dependency resources to its
 compiler in manifest order and therefore retains a narrower order-sensitivity
 defect. Projects exercised through that exact driver keep dependencies in
 canonical module-name order as a compatibility workaround. This does not change
-Project 1: source directives remain order-independent, Stage 0 remains required
-to accept any valid ordering, and a future qualified native driver should remove
+Project 1: source directives remain order-independent, the retained Stage 0
+recovery implementation continues to accept any valid ordering, and a future
+native driver should remove
 the workaround rather than make ordering part of the manifest contract.
 
 The portable parser deliberately does not resolve a manifest path against a host filesystem. The native driver's hosted adapter defines a narrower cross-host resource-name contract: the manifest name uses `/`, parsed paths append beneath its last separator, and ASCII case aliases are rejected conservatively on both hosts. This keeps separator and identity policy outside the portable parser, but it is not a general host path resolver and does not prove link, mount, short-name, or other provider alias identity. The project form admits at most 63 modules because the retained manifest plus sources must fit the fixed 64-snapshot file-input profile. A future canonical resource-identity provider can remove those conservative restrictions without changing Project 1 text.

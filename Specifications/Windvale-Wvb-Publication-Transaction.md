@@ -95,7 +95,10 @@ the destination is unchanged. Any failure after replacement that lacks confirmed
 directory durability remains indeterminate.
 
 The implemented adapters retain this proof ordering and share the portable state
-machine, verifier, SHA-256, and success transcript. The candidate packages remain
-Stage 0-constructed evidence until the full Decision 0214 fault, concurrency,
-identity, direct no-.NET execution, deterministic package, and cross-host matrix
-passes. Normal-path cutover must not precede that qualification.
+machine, verifier, SHA-256, and success transcript. Current publisher-family
+applications, including the general WVB, WVO, and console-application roles,
+have bounded retained-seed native reconstruction evidence; Stage 0 is no longer
+their only application constructor. That construction evidence does not replace
+the full Decision 0214 fault, concurrency, identity, direct no-.NET execution,
+deterministic package, and cross-host matrix. Normal-path cutover must not
+precede that qualification.

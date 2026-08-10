@@ -15,7 +15,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Publisher=%RepositoryRoot%\Artifacts\Native-Console-Application-Publisher-Candidate\windows-x64-wvappublish.exe"
 
-certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"e0ba662b480445ec10e03c9046f3fe394cb48e9d68c46fe705c779c09192dc74" >nul
+certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e" >nul
 if errorlevel 1 (
     >&2 echo The Windows native console-application publisher artifact digest is invalid.
     exit /b 1
