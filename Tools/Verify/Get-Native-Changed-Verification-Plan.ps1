@@ -121,6 +121,15 @@ function Add-Native-Tool-Suite {
         Add-Suite @('os-kernel-target', 'os-probe')
     } elseif ($Stem -match 'Os-Probe') {
         Add-Suite 'os-probe'
+    } elseif ($Stem -in @(
+        'Bootstrap-Compiler',
+        'Construct-Compiler-Reconstruction',
+        'Stage-Compiler-Wvb',
+        'Link-Staged-Compiler-Wvo',
+        'Transport-Compiler-Image',
+        'Package-Segmented-Compiler-Wvb'
+    )) {
+        Add-Suite 'compiler-reconstruction'
     } elseif ($Stem -match 'Assemble-Wva') {
         Add-Assembler-Suites
     } elseif ($Stem -match 'Link-Wvo') {
@@ -291,6 +300,10 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal)) {
         Add-Suite @('os-probe-object', 'os-probe')
     } elseif ($Path.StartsWith(
+        'Artifacts/Native-Compiler-Reconstruction-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'compiler-reconstruction'
+    } elseif ($Path.StartsWith(
         'Artifacts/Native-Hosted-Container-Toolset-Candidate/',
         [StringComparison]::Ordinal) -or
         $Path.StartsWith(
@@ -334,7 +347,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
-        if ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
+        if ($Path -eq 'Specifications/Windvale-Native-Compiler-Reconstruction.md') {
+            Add-Suite 'compiler-reconstruction'
+        } elseif ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
             Add-Suite 'hosted-verifier-publisher-files'
         } elseif ($Path.StartsWith(
             'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher',

@@ -29,8 +29,9 @@ ordinary bootstrap contract to the current explicit inventory in
 `Windvale-Compiler.wvproj`; its accepted output is exactly 921,640 bytes with
 SHA-256
 `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
-The new candidate's exact checkpoint provenance and paired reconstruction remain
-pending until the current toolset slice is committed and qualified.
+Decision 0494 retains the unqualified current WVB and paired reconstruction in
+`Artifacts/Native-Compiler-Reconstruction-Candidate`; exact checkpoint
+qualification remains pending on both hosts.
 
 The bootstrap artifact root contains both `Native-Compiler-Seed` and the qualified
 `Native-Front-Door` publisher inventory. This permits a released artifact bundle
@@ -90,8 +91,8 @@ files, parse the project, or weaken the project-manifest identity check.
 The coordinators are repinned to require identical 921,640-byte outputs at
 SHA-256
 `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
-That long Stage 1/Stage 2 route was not rerun for Decision 0491 because the
-current candidate toolset must first be reconstructed. Windows and Linux
-execution, exact equality, and promotion therefore remain part of the grouped
-retirement qualification; the earlier 921,900-byte result remains the last
-qualified convergence evidence.
+That long Stage 1/Stage 2 route was not rerun for Decisions 0491 through 0494.
+The current toolset and paired compiler applications are now reconstructed, but
+Windows and Linux execution, exact equality, and promotion remain part of the
+grouped retirement qualification; the earlier 921,900-byte result remains the
+last qualified convergence evidence.

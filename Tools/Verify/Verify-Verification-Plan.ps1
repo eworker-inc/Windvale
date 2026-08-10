@@ -36,6 +36,17 @@ $Cases = @(
 )
 $NativeCases = @(
     @{
+        Name = 'native compiler reconstruction owner'
+        Paths = @(
+            'Tools/Native/Construct-Compiler-Reconstruction.cmd',
+            'Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json',
+            'Specifications/Windvale-Native-Compiler-Reconstruction.md'
+        )
+        Suites = @('compiler-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Windvale compiler'
         Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv')
         Suites = @('seed', 'unsafe-wvb', 'source-containment', 'lowerer-rejections', 'console-packager-source-reconstruction')

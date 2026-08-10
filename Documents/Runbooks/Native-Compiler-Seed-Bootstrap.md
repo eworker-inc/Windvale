@@ -43,10 +43,21 @@ directory.
 The repinned candidate command must complete native publication of 921,640 bytes
 with SHA-256
 `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
-Its exact compiler status summary and downstream native compiler-closure package
-identities remain pending their focused reconstruction and final gate; do not
-reuse the preceding 921,900-byte candidate's 419-function summary as current
-evidence. Decision 0492 separately reconstructs the hosted-container toolset.
+Its exact compiler status summary is
+`source wvb status=Valid functions=427 code-bytes=759920 module-bytes=921640`.
+Decision 0494 reconstructs the downstream paired applications without executing
+them; Decision 0492 owns the hosted-container toolset.
+
+To reconstruct the current unqualified WVB and both target applications into an
+existing directory without changing the qualified seed, use:
+
+```bat
+Tools\Native\Construct-Compiler-Reconstruction.cmd artifacts\Current-Compiler
+```
+
+```sh
+./Tools/Native/Construct-Compiler-Reconstruction.sh artifacts/Current-Compiler
+```
 
 ## Reconstruct the seed through Stage 0
 

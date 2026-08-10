@@ -5124,3 +5124,32 @@ installation, installed-publisher verifier publication, and WVB-publication
 remainder ran; it passed 3/3 in 4.8 seconds. The first twelve checks were not
 restarted. Broad Seed, hosted-container packaging, bootstrap, Linux execution,
 Standard, Qualification, and the grouped retirement gate did not run.
+
+## Local native current-compiler reconstruction evidence
+
+[Decision 0494](../Decisions/0494-Native-Compiler-Reconstruction.md) records a
+distinct unqualified reconstruction inventory for the current compiler. The
+exact canonical WVB is 921,640 bytes at SHA-256
+`18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`;
+its native WVO is 27,657,722 bytes at SHA-256
+`e0a334a805883fe443ed0c7a95b578a076104ea691e29c4e6ed87bf7af63108b`,
+and its linked native image is 27,635,298 bytes at SHA-256
+`80a3ebd54244487bdeafac7b6ebd6c11e1bd839c068405b6507aed83748ff3eb`.
+
+The exact reconstructed Windows application is 27,666,432 bytes at SHA-256
+`c1be8bd7e2c9496fee0cd3e486348804469d72621bcf45e30d8b6e8a1814da9c`.
+The exact reconstructed Linux application is 27,668,480 bytes at SHA-256
+`25905e75e836ad8015a851aa6a52531bf5ab73c9dd97596628c2226740f37a34`.
+An artifact-only managed recovery-oracle measurement completed once in 55.752
+seconds, and a separate accounting-only selection completed once in 12.891
+seconds. The native source/bootstrap, staged lower/link, canonical transport,
+and paired package route then reproduced the retained WVB and both applications
+once without a managed writer. The permanent three-case reconstruction owner
+was reviewed against those exact products but was not rerun, because doing so
+would repeat the same long native construction loop without changing its inputs.
+
+The retirement plan is 2,760 LF-only bytes at SHA-256
+`2f36d7f77d7a95960ce66b318252f57724183e5b561aed8a864715df48a840a6`.
+It records 33 suites and 3,171 fixed cases. Independent Linux reconstruction and
+execution, the current full Stage-2 measurement, broad Seed/OS, Standard,
+Qualification, and the grouped retirement gate did not run.

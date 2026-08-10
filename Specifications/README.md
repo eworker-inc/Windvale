@@ -30,6 +30,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Project manifest](Windvale-Project.md)
 - [Native source-to-WVB front door](Windvale-Native-Source-To-Wvb-Front-Door.md)
 - [Native compiler seed bootstrap](Windvale-Native-Compiler-Seed-Bootstrap.md)
+- [Native current-compiler reconstruction](Windvale-Native-Compiler-Reconstruction.md)
 - [Native WVB-to-WVO application](Windvale-Native-Wvb-To-Wvo.md)
 - [Native WVB-to-WVO rejection tests](Windvale-Native-Wvb-To-Wvo-Rejection-Tests.md)
 - [Native source-to-AOT composition](Windvale-Native-Source-To-Aot-Composition.md)

@@ -11,6 +11,8 @@ if /I not "%~x3"==".wvb" (
 set "ArtifactRoot=%~f1"
 set "SourceRoot=%~f2"
 set "OutputPath=%~f3"
+set "RepositoryRoot=%~dp0..\.."
+for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 if not exist "%ArtifactRoot%\." (
     >&2 echo The native seed artifact root does not exist.
     exit /b 64
