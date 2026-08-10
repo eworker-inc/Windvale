@@ -52,6 +52,15 @@ wrong-digest rejection, and input preservation. Durable one-snapshot promotion,
 independent Linux execution, grouped qualification, and release integration
 remain open under P1.
 
+Decision 0486 begins that durable-promotion boundary without reopening the
+snapshot race: a distinct Windvale promoter imports exact publisher admission
+and the existing atomic publication state machine, then builds and lowers
+through the native front doors to pinned WVB/WVO identities. Its future paired
+applications will reuse the publisher transaction overlay rather than profile 8
+or a host-side copy. Role-aware container construction, current-host durable
+installation, independent Linux execution, grouped qualification, and release
+integration remain open under P1.
+
 [Decision 0457](../Decisions/0457-Normal-Path-Dotnet-Audit.md) confirms that
 ordinary build, inspect, execute, assemble, lower, link, package, publish, Probe,
 website, and deployment routes are already .NET-free. Thirteen files contain

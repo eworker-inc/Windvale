@@ -111,8 +111,8 @@ check_file "$hosted_toolset/SHA256SUMS" 6927 \
     f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 \
     'hosted toolset inventory' || exit $?
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
-check_file "$construction/SHA256SUMS" 4634 \
-    aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 \
+check_file "$construction/SHA256SUMS" 4812 \
+    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
     'publisher construction inventory' || exit $?
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$publisher_wvb" 29170 \

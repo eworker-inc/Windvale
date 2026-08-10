@@ -53,16 +53,19 @@ require the final exact application identity. They never invoke .NET.
 | Base-runtime WVB | 20,850 | `aa354586184de25e0873c65d16fa35819eb9e4c50111b32ba4fd51d69327b806` |
 | Publisher-application admission WVB | 30,778 | `c6ba933fa0ea1068f02235f75ed251655b10b43d64f8984d22b548f01608af0d` |
 | Publisher-application admission WVO | 555,690 | `722d819152d8415487c1cf111474fd11dd0ab89a863e33ab84c865a2e3e13771` |
+| Publisher-promoter WVB | 41,268 | `30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9` |
+| Publisher-promoter WVO | 660,123 | `6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d` |
+| Linked publisher-promoter fragment | 658,339 | `a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8` |
 | Linked publisher fragment | 232,736 | `260e9f4f23c99dab13145ceb98724a4c74157fc579c5685194b7312c1a5cb115` |
 | Windows base | 248,832 | `cf204201e5c26d71e78da1112de2bc724d389a5222cc835d48dbe8cd8bbc5988` |
 | Linux base | 249,856 | `0bdeee07a49f75781767934884cbbc7dd085abff4507e2f78210fa225638539a` |
 | Windows publisher | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
 | Linux publisher | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
 
-Version 10 of the construction candidate contains 22 canonical WVB/WVO
-artifacts and 22 paired host applications. Its 44-entry `SHA256SUMS` is 4,634
+Version 11 of the construction candidate contains 24 canonical WVB/WVO
+artifacts and 22 paired host applications. Its 46-entry `SHA256SUMS` is 4,812
 LF-only bytes with SHA-256
-`aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8`.
+`3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11`.
 
 ## Native owner and remaining gate
 
@@ -73,7 +76,8 @@ admission matrix, malformed base-record preservation, exact alias preservation,
 and execution of the constructed current-host publisher to install the exact
 verifier candidate. Its inventory case also rebuilds and natively lowers the
 publisher-application admission WVB and requires byte equality with both pinned
-artifacts.
+artifacts. It also rebuilds and lowers the distinct publisher promoter, links
+`Main` at 1,178, and requires the exact 658,339-byte fragment.
 
 The frozen managed file-pipeline test remains recovery/differential evidence.
 Independent Linux execution, grouped qualification, completed-publisher durable

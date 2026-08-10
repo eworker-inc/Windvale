@@ -96,8 +96,8 @@ fail() {
 }
 
 total=$((total + 1))
-check_file "$construction/SHA256SUMS" 4634 \
-    aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 \
+check_file "$construction/SHA256SUMS" 4812 \
+    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
@@ -124,6 +124,42 @@ check_file "$test_directory/Publisher-Application-Admission-Tool.wvo" 555690 \
     'native-lowered publisher admission WVO' || fail
 cmp --silent "$construction/Publisher-Application-Admission-Tool.wvo" \
     "$test_directory/Publisher-Application-Admission-Tool.wvo" || fail
+"$repository_root/Tools/Native/Build-Wvb.sh" \
+    "$repository_root/Windvale-Native-Hosted-Verifier-Publisher-Promoter.wvproj" \
+    "$test_directory/Publisher-Promoter.wvb" \
+    > "$test_directory/Promoter-Build.out" \
+    2> "$test_directory/Promoter-Build.err" || fail
+check_empty "$test_directory/Promoter-Build.err" \
+    'promoter source build wrote a diagnostic' || fail
+check_file "$test_directory/Publisher-Promoter.wvb" 41268 \
+    30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9 \
+    'native-built publisher promoter WVB' || fail
+cmp --silent "$construction/Publisher-Promoter.wvb" \
+    "$test_directory/Publisher-Promoter.wvb" || fail
+"$repository_root/Tools/Native/Lower-Wvb-To-Wvo.sh" \
+    "$test_directory/Publisher-Promoter.wvb" \
+    "$test_directory/Publisher-Promoter.wvo" \
+    > "$test_directory/Promoter-Lower.out" \
+    2> "$test_directory/Promoter-Lower.err" || fail
+check_empty "$test_directory/Promoter-Lower.err" \
+    'promoter native lowering wrote a diagnostic' || fail
+check_file "$test_directory/Publisher-Promoter.wvo" 660123 \
+    6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d \
+    'native-lowered publisher promoter WVO' || fail
+cmp --silent "$construction/Publisher-Promoter.wvo" \
+    "$test_directory/Publisher-Promoter.wvo" || fail
+"$repository_root/Tools/Native/Link-Wvo.sh" 0 Main \
+    "$test_directory/Publisher-Promoter.bin" \
+    "$test_directory/Publisher-Promoter.wvo" \
+    > "$test_directory/Promoter-Link.out" \
+    2> "$test_directory/Promoter-Link.err" || fail
+check_empty "$test_directory/Promoter-Link.err" \
+    'promoter native link wrote a diagnostic' || fail
+grep -Fx 'entry name=Main address=1178' \
+    "$test_directory/Promoter-Link.out" >/dev/null || fail
+check_file "$test_directory/Publisher-Promoter.bin" 658339 \
+    a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8 \
+    'linked publisher promoter fragment' || fail
 pass 'publisher construction inventory'
 
 total=$((total + 1))
@@ -260,19 +296,19 @@ total=$((total + 1))
 [[ $? -eq 2 ]] || fail
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
-check_file "$test_directory/Invalid.wvsq" 4634 \
-    aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 \
+check_file "$test_directory/Invalid.wvsq" 4812 \
+    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
     'rejected metadata input' || fail
-check_file "$test_directory/Sentinel.wvhv" 4634 \
-    aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 \
+check_file "$test_directory/Sentinel.wvhv" 4812 \
+    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
     "$test_directory/Invalid.wvsq" "$test_directory/Sentinel.wvhr" \
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
-check_file "$test_directory/Sentinel.wvhr" 4634 \
-    aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 \
+check_file "$test_directory/Sentinel.wvhr" 4812 \
+    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -287,8 +323,8 @@ total=$((total + 1))
 [[ $? -eq 64 ]] || fail
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
-check_file "$test_directory/Invalid.wvsq" 4634 \
-    aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 \
+check_file "$test_directory/Invalid.wvsq" 4812 \
+    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
 
