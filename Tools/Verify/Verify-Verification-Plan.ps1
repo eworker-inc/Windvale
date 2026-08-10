@@ -77,6 +77,7 @@ $NativeCases = @(
         )
         Suites = @(
             'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction'
         )
         Gaps = @()
@@ -93,6 +94,7 @@ $NativeCases = @(
             'compiler-reconstruction',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
             'console-packager-container-reconstruction'
@@ -110,6 +112,7 @@ $NativeCases = @(
             'seed',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
@@ -129,6 +132,7 @@ $NativeCases = @(
         )
         Suites = @(
             'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit'
@@ -139,7 +143,11 @@ $NativeCases = @(
     @{
         Name = 'segmented compiler immutable transport source'
         Paths = @('Foundation/Immutable-Source-Regions.wv')
-        Suites = @('seed', 'segmented-compiler-toolset-reconstruction')
+        Suites = @(
+            'seed',
+            'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -156,8 +164,57 @@ $NativeCases = @(
         )
         Suites = @(
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Wv-Linker reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Wv-Linker-Reconstruction.cmd',
+            'Tools/Native/Construct-Wv-Linker-Reconstruction.cmd',
+            'Artifacts/Native-Wv-Linker-Candidate/Manifest.json',
+            'Windvale-Wv-Linker.wvproj'
+        )
+        Suites = @('wv-linker-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Wv-Linker source and contract'
+        Paths = @(
+            'Linker/Windvale/Wv-Linker-Core.wv',
+            'Foundation/Sha256.wv',
+            'Specifications/Windvale-Native-Wv-Linker.md'
+        )
+        Suites = @(
+            'seed',
+            'wv-linker-reconstruction',
+            'linker-rejections',
+            'linker-hostile',
+            'linker-map-limit'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Wv-Linker segmented and hosted construction dependencies'
+        Paths = @(
+            'Tools/Native/Stage-Compiler-Wvb.cmd',
+            'Artifacts/Native-Hosted-Container-Toolset-Candidate/Manifest.json'
+        )
+        Suites = @(
+            'compiler-reconstruction',
+            'segmented-compiler-toolset-reconstruction',
+            'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
+            'wvo-inspector-reconstruction',
+            'wvo-publisher-reconstruction',
+            'console-packager-container-reconstruction',
+            'hosted-verifier-publisher-files'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -168,6 +225,7 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
@@ -267,9 +325,14 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'current lowerer launcher keeps behavioral owners separate'
+        Name = 'current lowerer launcher and Wv-Linker consumer'
         Paths = @('Tools/Native/Lower-Wvb-To-Wvo.cmd')
-        Suites = @('lowerer-rejections', 'wvo-export-renamer', 'aot-chain')
+        Suites = @(
+            'wv-linker-reconstruction',
+            'lowerer-rejections',
+            'wvo-export-renamer',
+            'aot-chain'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -297,7 +360,12 @@ $NativeCases = @(
     @{
         Name = 'Windvale linker'
         Paths = @('Linker/Windvale/Wv-Linker-Core.wv')
-        Suites = @('linker-rejections', 'linker-hostile', 'linker-map-limit')
+        Suites = @(
+            'wv-linker-reconstruction',
+            'linker-rejections',
+            'linker-hostile',
+            'linker-map-limit'
+        )
         Gaps = @()
         VerifyPlan = $false
     },

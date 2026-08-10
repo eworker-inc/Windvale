@@ -12,10 +12,10 @@ internal static partial class Program
     private const int WV_LINKER_WVB_BYTES = 135_740;
     private const int WINDOWS_WV_LINKER_APPLICATION_BYTES = 1_796_608;
     private const string WINDOWS_WV_LINKER_APPLICATION_SHA256 =
-        "c42b75a033fc79c5a967330e83fc498704840d2cb45723471a8c752dadf0b6e3";
+        "08744f3cacf71280ea757dcdf6509ee3770d5536b08e5b3984a438cb6123fb78";
     private const int LINUX_WV_LINKER_APPLICATION_BYTES = 1_798_144;
     private const string LINUX_WV_LINKER_APPLICATION_SHA256 =
-        "4007b083e7c612e4b7bb9e77d35625fa564c17a077a7183f3f489456468bf4fb";
+        "8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a";
 
     private static void Nativeˉwvˉlinkerˉtargetsˉareˉdiscoverable()
     {

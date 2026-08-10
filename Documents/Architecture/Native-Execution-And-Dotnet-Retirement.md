@@ -386,6 +386,15 @@ retained compiler, lowerer, linker, and hosted-container candidates. Independent
 Linux reconstruction and execution, clean previous-seed renewal, broader P1
 closure, and dual-host promotion remain.
 
+Decision 0501 applies a separate non-self-linking construction route to the
+standard Wv-Linker applications. The raw lowerer fixes one exact WVO oracle,
+while the segmented staging producer, image linker, and canonical transport
+independently derive the fragment directly from the same WVB. Profile-4 hosted
+packaging then constructs both target applications without invoking either
+target standard linker. This removes one managed application-writer seam, not
+the retained same-release seed: independent Linux execution, clean
+previous-seed renewal, qualification, atomic installation, and promotion remain.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

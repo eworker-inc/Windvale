@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 3,350 LF-only bytes with SHA-256
-`7433e5ced051a510f90a52bc3f99caa730665b569281e99feefd5cc8ee4760b2`.
+`Tests/Native/Retirement-Suite.txt` is 3,438 LF-only bytes with SHA-256
+`399f6a044fd4cca1552a79db8c421c5dd92b36f4555a0ce103c5be44133df587`.
 The first line is exactly:
 
 ```text
@@ -44,6 +44,7 @@ file. The current plan is:
 | `compiler-reconstruction` | `Test-Compiler-Reconstruction` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
 | `segmented-compiler-toolset-reconstruction` | `Test-Segmented-Compiler-Toolset-Reconstruction` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
 | `wvb-to-wvo-reconstruction` | `Test-Wvb-To-Wvo-Reconstruction` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
+| `wv-linker-reconstruction` | `Test-Wv-Linker-Reconstruction` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
 | `wvo-inspector-reconstruction` | `Test-Wvo-Inspector-Reconstruction` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
 | `wvo-publisher-reconstruction` | `Test-Wvo-Publisher-Reconstruction` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `baseline-jit` | `Test-Baseline-Jit` | 6 | `Tests: 6, Passed: 6, Failed: 0` |
@@ -80,7 +81,7 @@ file. The current plan is:
 | `os-probe` | `Test-Os-Probe` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 39 suites and 3,192 cases.
+The version-1 plan therefore contains exactly 40 suites and 3,195 cases.
 
 ## Coordinator contract
 
@@ -102,7 +103,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 39, Passed: 39, Failed: 0, Cases: 3192
+Suites: 40, Passed: 40, Failed: 0, Cases: 3195
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

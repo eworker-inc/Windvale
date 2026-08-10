@@ -150,6 +150,7 @@ function Add-Native-Tool-Suite {
             'compiler-reconstruction',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
             'console-packager-container-reconstruction'
@@ -166,6 +167,8 @@ function Add-Native-Tool-Suite {
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction'
         )
+    } elseif ($Stem -eq 'Construct-Wv-Linker-Reconstruction') {
+        Add-Suite 'wv-linker-reconstruction'
     } elseif ($Stem -in @(
         'Construct-Wvo-Inspector-Reconstruction',
         'Test-Wvo-Inspector-Reconstruction'
@@ -184,14 +187,24 @@ function Add-Native-Tool-Suite {
         Add-Assembler-Suites
     } elseif ($Stem -match 'Link-Wvo') {
         Add-Linker-Suites
-    } elseif ($Stem -match 'Lower-Wvb|Rename-Wvo') {
+    } elseif ($Stem -eq 'Lower-Wvb-To-Wvo') {
+        Add-Suite @(
+            'wv-linker-reconstruction',
+            'lowerer-rejections',
+            'wvo-export-renamer',
+            'aot-chain'
+        )
+    } elseif ($Stem -match 'Rename-Wvo') {
         Add-Suite @('lowerer-rejections', 'wvo-export-renamer', 'aot-chain')
     } elseif ($Stem -match 'Verify-Wvo|Inspect-Wvo') {
         Add-Object-Suites
         Add-Suite 'wvo-inspector-reconstruction'
     } elseif ($Stem -match 'Publish-Wvo') {
         Add-Object-Suites
-    } elseif ($Stem -match 'Build-Wvb|Verify-Wvb|Inspect-Wvb|Run-Wvb') {
+    } elseif ($Stem -eq 'Build-Wvb') {
+        Add-Bytecode-Suites
+        Add-Suite 'wv-linker-reconstruction'
+    } elseif ($Stem -match 'Verify-Wvb|Inspect-Wvb|Run-Wvb') {
         Add-Bytecode-Suites
     } elseif ($Stem -match 'Package-Uefi') {
         Add-Suite 'uefi-packager'
@@ -212,6 +225,7 @@ function Add-Native-Tool-Suite {
         }
     } elseif ($Stem -eq 'Package-Hosted-Wvb') {
         Add-Suite @(
+            'wv-linker-reconstruction',
             'console-packager-container-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction',
@@ -337,6 +351,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'segmented-compiler-toolset-reconstruction'
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction'
         )
@@ -344,6 +359,7 @@ foreach ($Path in $Paths) {
         Add-Compiler-Suites
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction'
         )
@@ -390,12 +406,24 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path -in @(
         'Foundation/Byte-Construction.wv',
-        'Foundation/Decimal-Parsing.wv'
+        'Foundation/Byte-Ordering.wv',
+        'Foundation/Decimal-Parsing.wv',
+        'Foundation/Machine-Contracts.wv',
+        'Foundation/Sha256.wv'
     )) {
-        Add-Suite 'seed'
-        Add-Console-Packager-Reconstruction-Suites
+        Add-Suite @('seed', 'wv-linker-reconstruction')
+        if ($Path -in @(
+            'Foundation/Byte-Construction.wv',
+            'Foundation/Decimal-Parsing.wv'
+        )) {
+            Add-Console-Packager-Reconstruction-Suites
+        }
     } elseif ($Path -eq 'Foundation/Immutable-Source-Regions.wv') {
-        Add-Suite @('seed', 'segmented-compiler-toolset-reconstruction')
+        Add-Suite @(
+            'seed',
+            'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction'
+        )
     } elseif ($Path.StartsWith('Foundation/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
     } elseif ($Path -eq 'Object-Model/Windvale/Wvo-Object-Verification.wv') {
@@ -455,8 +483,14 @@ foreach ($Path in $Paths) {
         'Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image.wv',
         'Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Verification.wv'
     )) {
-        Add-Suite 'segmented-compiler-toolset-reconstruction'
+        Add-Suite @(
+            'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction'
+        )
         Add-Linker-Suites
+    } elseif ($Path -eq 'Linker/Windvale/Wv-Linker-Core.wv') {
+        Add-Linker-Suites
+        Add-Suite 'wv-linker-reconstruction'
     } elseif ($Path.StartsWith('Linker/Windvale/', [StringComparison]::Ordinal)) {
         Add-Linker-Suites
     } elseif ($Path -in @(
@@ -481,12 +515,16 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Segmented-Compiler-Toolset-Candidate/',
         [StringComparison]::Ordinal)) {
-        Add-Suite 'segmented-compiler-toolset-reconstruction'
+        Add-Suite @(
+            'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction'
+        )
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvb-To-Wvo-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction'
         )
@@ -509,6 +547,11 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Hosted-Container-Toolset-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Hosted-Publisher-Suites
+        Add-Suite 'wv-linker-reconstruction'
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Wv-Linker-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'wv-linker-reconstruction'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Hosted-Verifier-Publisher-Admission-Candidate/',
         [StringComparison]::Ordinal)) {
@@ -569,7 +612,10 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Linking.md',
             'Specifications/Windvale-Native-Hosted-Container-Packaging.md'
         )) {
-            Add-Suite 'segmented-compiler-toolset-reconstruction'
+            Add-Suite @(
+                'segmented-compiler-toolset-reconstruction',
+                'wv-linker-reconstruction'
+            )
             if ($Path -eq 'Specifications/Windvale-Native-Hosted-Container-Packaging.md') {
                 Add-Suite 'wvo-inspector-reconstruction'
             } else {
@@ -577,6 +623,12 @@ foreach ($Path in $Paths) {
             }
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-To-Wvo.md') {
             Add-Suite 'wvb-to-wvo-reconstruction'
+        } elseif ($Path -in @(
+            'Specifications/Windvale-Native-Wv-Linker.md',
+            'Specifications/Wv-Linker-Core.md'
+        )) {
+            Add-Linker-Suites
+            Add-Suite 'wv-linker-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvo-Publisher.md') {
             Add-Suite 'wvo-publisher-reconstruction'
         } elseif ($Path -in @(
@@ -637,6 +689,8 @@ foreach ($Path in $Paths) {
         'Windvale-Wvb-Publisher.wvproj'
     )) {
         Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
+    } elseif ($Path -eq 'Windvale-Wv-Linker.wvproj') {
+        Add-Suite 'wv-linker-reconstruction'
     } elseif ($Path -eq 'Windvale-Wvo-Publisher.wvproj') {
         Add-Suite 'wvo-publisher-reconstruction'
     } elseif ($Path -eq 'Windvale-Wvo-Object.wvproj') {
@@ -646,10 +700,14 @@ foreach ($Path in $Paths) {
         'Windvale-Compiler-Image-Staging.wvproj',
         'Windvale-Compiler-Image-Canonical-Transport.wvproj'
     )) {
-        Add-Suite 'segmented-compiler-toolset-reconstruction'
+        Add-Suite @(
+            'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction'
+        )
     } elseif ($Path -eq 'Windvale-Native-X64-Lowering-Tool.wvproj') {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'wvo-publisher-reconstruction'
         )

@@ -7,7 +7,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Linker=%RepositoryRoot%\Artifacts\Native-Wv-Linker-Candidate\Wv-Linker.exe"
 
-certutil -hashfile "%Linker%" SHA256 | findstr /I /C:"c42b75a033fc79c5a967330e83fc498704840d2cb45723471a8c752dadf0b6e3" >nul
+certutil -hashfile "%Linker%" SHA256 | findstr /I /C:"08744f3cacf71280ea757dcdf6509ee3770d5536b08e5b3984a438cb6123fb78" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVO linker artifact digest is invalid.
     exit /b 1

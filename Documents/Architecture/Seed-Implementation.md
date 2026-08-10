@@ -162,6 +162,13 @@ Both implementations own the same WVA contract and remain byte-for-byte differen
 - Path-free canonical map construction and hosted publish-after-success composition
 - Portable paired-console layout, sparse exact construction, segmented completed-container verification, and recovered-native evidence
 
+Decision 0501 reconstructs the standard linker's exact WVB, raw-lowerer WVO
+oracle, independently staged and transported fragment, and paired profile-4
+applications on the current Windows host. The distinct segmented image path
+keeps both target standard linkers outside their own construction, while the
+retained same-release compiler, lowerer, staging/link/transport, and hosted
+toolsets remain explicit bootstrap seeds.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

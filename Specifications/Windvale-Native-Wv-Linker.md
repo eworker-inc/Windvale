@@ -10,6 +10,14 @@ The product logic remains in `Linker/Windvale/Wv-Linker-Core.wv`. It owns WVO ad
 
 `Windvale-Wv-Linker.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvˉlinkerˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
 
+Decision 0501 reconstructs the exact candidate without asking either target
+Wv-Linker application to link itself. The retained raw lowerer first produces
+the exact WVO oracle. A distinct segmented staging, image-linking, and canonical
+transport path then derives one raw fragment directly from the WVB, and the
+native hosted-container toolset packages that fragment for both targets under
+profile 4. The route consumes retained same-release native seeds; it is not a
+clean bootstrap or previous-release renewal.
+
 The native writer accepts only that identity and one exported `Main`. Its fragment and application bundle must require these services in this exact order:
 
 1. `console.write_line`;
@@ -36,7 +44,7 @@ The metadata magic is `WVHL`, format version is 1, profile number is 4 in the sh
 
 Both targets reuse the existing compiler-authority process entry, argument capture, bounded file adapters, runtime state, and service leaves. No new platform startup assembly is added by this profile. Assembly remains limited to the unavoidable process/ABI/syscall boundary; all WVO and linking meaning stays in Windvale source.
 
-The Stage 0 `compile` and `aot` commands independently verify the WVB, native fragment, bundle, metadata, runtime data, startup, and complete PE/ELF container before atomic executable publication. The raw application accepts:
+The Stage 0 `compile` and `aot` recovery commands independently verify the WVB, native fragment, bundle, metadata, runtime data, startup, and complete PE/ELF container before atomic executable publication. The Decision 0501 reconstruction instead writes exact products into a separate caller-owned directory; it is construction evidence, not an atomic installer or promotion transaction. The raw application accepts:
 
 ```text
 wvlink-core <base-address> <entry> <output.bin> <input.wvo>...
@@ -51,10 +59,18 @@ The current candidate identities are:
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Linker WVB | 135,740 | `02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874` |
-| Windows linker | 1,796,608 | `c42b75a033fc79c5a967330e83fc498704840d2cb45723471a8c752dadf0b6e3` |
-| Linux linker | 1,798,144 | `4007b083e7c612e4b7bb9e77d35625fa564c17a077a7183f3f489456468bf4fb` |
+| Raw-lowerer WVO oracle | 1,786,271 | `0141219773241e8780e2520f30ab8377914bf89a72f57da091871ac40d68a287` |
+| Canonical linked fragment, `Main` at 884,630 | 1,777,781 | `d30e0c4dce7159bf98c546a0200e8b541797612ab67d6f21e3d8ee876af27480` |
+| Windows linker | 1,796,608 | `08744f3cacf71280ea757dcdf6509ee3770d5536b08e5b3984a438cb6123fb78` |
+| Linux linker | 1,798,144 | `8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a` |
 
-The focused candidate test reconstructs both containers, checks exact capabilities and services, exercises the public AOT target, and runs the current-host raw application. Canonical two-object input must reproduce the complete Stage 0 image and map byte for byte, including signed addend output and all Windvale-computed SHA-256 values. The same raw native application must accept the exact 4 MiB image boundary. Invalid WVO must preserve existing output. Current-host module or mapping inspection must find no CLR/.NET runtime.
+The focused reconstruction owner requires all five identities, reconstructs the
+WVB, WVO oracle, fragment, and paired containers through the route above, and
+runs the reconstructed current-host application on the fixed canonical
+two-object input. That input must reproduce the complete frozen image and map
+byte for byte. The separate linker rejection, hostile-input, map-limit, and
+managed recovery suites retain their existing behavioral and differential
+ownership. Independent Linux execution and grouped qualification remain.
 
 ## Fixed native rejection contract
 
