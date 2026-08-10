@@ -1,0 +1,4 @@
+windvale-project 1
+root "Native-X64-Enum-Name-Service-Bridge.wv"
+source "Native-X64-Enum-Name-Service.wv"
+emit wvb

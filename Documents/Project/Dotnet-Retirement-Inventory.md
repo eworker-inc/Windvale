@@ -269,6 +269,21 @@ unchanged. Independent Linux execution, capability-bearing execution,
 remaining broad-suite transfers, GitHub cutover, grouped qualification, and
 recovery retirement remain open.
 
+Current T2 fixed-service and publication transfer:
+[Decision 0513](../Decisions/0513-Native-Fixed-Service-And-Publication-Build-Inspection-Transfer.md)
+extends the paired native front-door helper from 53 to 76 transferred calls and
+from 31 to 43 exact artifacts. It natively builds and inspects the
+text-concatenation, text-quote, enum-name, enum-metadata, native-publication,
+and service-bundle-materialization source products. The current Windows helper
+passes in 39.3 seconds, and the five directly affected behavioral owners pass
+5/5. This removes twelve managed builds and eleven managed inspections from
+each broad host script, eighty-two managed invocations cumulatively. Retained
+bridge-WVB, leaf, and fragment comparisons remain in both broad scripts. T2
+therefore remains `managed-normal`; the three-normal plus nine-recovery
+direct-entry inventory is unchanged. Independent Linux execution,
+capability-bearing execution, remaining broad-suite transfers, GitHub cutover,
+grouped qualification, and recovery retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

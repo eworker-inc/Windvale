@@ -12,6 +12,16 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0513](../Decisions/0513-Native-Fixed-Service-And-Publication-Build-Inspection-Transfer.md)
+moves twelve fixed-service, enum-metadata, publication, and service-bundle
+builds plus eleven inspections from each broad Seed script into the paired
+native helper. The helper now owns 43 exact artifacts and 76 cases; the
+cumulative normal-path removal is eighty-two managed invocations per host
+script. Ten manifests are component-local, four obsolete root manifests are
+removed, and only the genuine cross-component service-bundle aggregates remain
+at root. Capability-bearing execution, the broad managed harness, independent
+Linux evidence, grouped qualification, and recovery retirement remain open.
+
 [Decision 0512](../Decisions/0512-Native-Io-Service-Build-And-Inspection-Transfer.md)
 moves eleven output/file-output/file-input service builds and three bridge
 inspections from each broad Seed script into the paired native helper. The

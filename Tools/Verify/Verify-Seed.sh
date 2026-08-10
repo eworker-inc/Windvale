@@ -175,17 +175,11 @@ NATIVE_FILE_INPUT_CODE_MODULE="$ARTIFACTS/Native-X64-File-Input-Service-Code.wvb
 NATIVE_WINDOWS_FILE_INPUT_CORE_MODULE="$ARTIFACTS/Native-X64-File-Input-Service-Windows.wvb"
 NATIVE_LINUX_FILE_INPUT_CORE_MODULE="$ARTIFACTS/Native-X64-File-Input-Service-Linux.wvb"
 NATIVE_FILE_INPUT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-File-Input-Services-Bridge.wvb"
-NATIVE_TEXT_CONCAT_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service.wvb"
 NATIVE_TEXT_CONCAT_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Concat-Service-Bridge.wvb"
-NATIVE_TEXT_QUOTE_CORE_MODULE="$ARTIFACTS/Native-X64-Text-Quote-Service.wvb"
 NATIVE_TEXT_QUOTE_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Text-Quote-Service-Bridge.wvb"
-NATIVE_ENUM_NAME_CORE_MODULE="$ARTIFACTS/Native-X64-Enum-Name-Service.wvb"
 NATIVE_ENUM_NAME_BRIDGE_MODULE="$ARTIFACTS/Native-X64-Enum-Name-Service-Bridge.wvb"
-NATIVE_ENUM_METADATA_CORE_MODULE="$ARTIFACTS/Native-Enum-Metadata-Core.wvb"
 NATIVE_ENUM_METADATA_BRIDGE_MODULE="$ARTIFACTS/Native-Enum-Metadata-Bridge.wvb"
-NATIVE_PUBLICATION_MODULE="$ARTIFACTS/Native-Publication-Core.wvb"
 NATIVE_PUBLICATION_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Bridge.wvb"
-NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_MODULE="$ARTIFACTS/Native-Service-Bundle-Materialization-Core.wvb"
 NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE="$ARTIFACTS/Native-Service-Bundle-Materialization-Bridge.wvb"
 NATIVE_OUTPUT_TABLE_CORE_MODULE="$ARTIFACTS/Native-Output-Table-Core.wvb"
 NATIVE_OUTPUT_TABLE_BRIDGE_MODULE="$ARTIFACTS/Native-Output-Table-Bridge.wvb"
@@ -269,7 +263,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=31 cases=53' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=43 cases=76' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -403,7 +397,6 @@ if [ "$(sha256sum "$NATIVE_I32_FORMAT_LEAF_RETAINED" | awk '{print $1}')" != 'c3
     echo 'The retained Windvale native integer-format leaves have unexpected exact identities.' >&2
     exit 1
 fi
-NATIVE_SERVICE_CODE_BUILDER_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Service-Code-Builder.wv"
 NATIVE_OUTPUT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Output-Services-Bridge.wvb"
 NATIVE_WINDOWS_CONSOLE_OUTPUT_LEAF="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Windows-Console-Output-Service.bin"
 NATIVE_WINDOWS_DIAGNOSTIC_OUTPUT_LEAF="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Windows-Diagnostic-Output-Service.bin"
@@ -443,108 +436,24 @@ if [ "$(sha256sum "$NATIVE_WINDOWS_FILE_INPUT_LEAF" | awk '{print $1}')" != '3e2
     echo 'A retained Windvale native file-input leaf has an unexpected exact identity.' >&2
     exit 1
 fi
-NATIVE_TEXT_CONCAT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_TEXT_CONCAT_CORE_SOURCE" \
-    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
-    -o "$NATIVE_TEXT_CONCAT_CORE_MODULE"
-NATIVE_TEXT_CONCAT_CORE_HASH=$(sha256sum "$NATIVE_TEXT_CONCAT_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_TEXT_CONCAT_CORE_HASH" != '6b03161b9b3f112c6641474e321b2764522eb57a949d1b6bfc3d7b73ac91cc73' ]; then
-    echo "The Windvale native text-concatenation service core has an unexpected digest: $NATIVE_TEXT_CONCAT_CORE_HASH" >&2
-    exit 1
-fi
-NATIVE_TEXT_CONCAT_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_CONCAT_CORE_MODULE")
-printf '%s\n' "$NATIVE_TEXT_CONCAT_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_CONCAT_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉtextˉconcatˉserviceˉbuild' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_CONCAT_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_TEXT_CONCAT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv"
 NATIVE_TEXT_CONCAT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service-Bridge.wvb"
 NATIVE_TEXT_CONCAT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service.bin"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_TEXT_CONCAT_BRIDGE_SOURCE" \
-    --module "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" \
-    --module "$NATIVE_TEXT_CONCAT_CORE_SOURCE" \
-    -o "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE"
-NATIVE_TEXT_CONCAT_BRIDGE_HASH=$(sha256sum "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_TEXT_CONCAT_BRIDGE_HASH" != '87bd2e3489d3a5e4b31002858f37a5f2547706fdecc9b5f9292c736c331b9a08' ]; then
-    echo "The Windvale native text-concatenation service bridge has an unexpected digest: $NATIVE_TEXT_CONCAT_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE" "$NATIVE_TEXT_CONCAT_BRIDGE_RETAINED"
 if [ "$(sha256sum "$NATIVE_TEXT_CONCAT_LEAF_RETAINED" | awk '{print $1}')" != '75c5588117e1f5f58a593a23aae6156a3a68a6302df5f50153b977bccbaaa3a0' ] ||
     [ "$(wc -c < "$NATIVE_TEXT_CONCAT_LEAF_RETAINED")" -ne 249 ]; then
     echo 'The retained Windvale native text-concatenation leaf has an unexpected exact identity.' >&2
     exit 1
 fi
-NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_CONCAT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_TEXT_QUOTE_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Quote-Service.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_TEXT_QUOTE_CORE_SOURCE" -o "$NATIVE_TEXT_QUOTE_CORE_MODULE"
-NATIVE_TEXT_QUOTE_CORE_HASH=$(sha256sum "$NATIVE_TEXT_QUOTE_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_TEXT_QUOTE_CORE_HASH" != 'b23c077329de43fcc307f7e7f564aefe318ca1dd7dc6543bfa10160ab724c453' ]; then
-    echo "The Windvale native text-quote service core has an unexpected digest: $NATIVE_TEXT_QUOTE_CORE_HASH" >&2
-    exit 1
-fi
-NATIVE_TEXT_QUOTE_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_QUOTE_CORE_MODULE")
-printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉtextˉquoteˉleaf: bytes length=1165' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉtextˉquoteˉserviceˉbuild' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_QUOTE_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_TEXT_QUOTE_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Quote-Service-Bridge.wv"
 NATIVE_TEXT_QUOTE_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service-Bridge.wvb"
 NATIVE_TEXT_QUOTE_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service.bin"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_TEXT_QUOTE_BRIDGE_SOURCE" \
-    --module "$NATIVE_TEXT_QUOTE_CORE_SOURCE" \
-    -o "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE"
-NATIVE_TEXT_QUOTE_BRIDGE_HASH=$(sha256sum "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_TEXT_QUOTE_BRIDGE_HASH" != '306b76bcf7e6b3252ce0f9509664acc5ee5a2bcc8fa411e8fdcf2c6a1fb4b631' ]; then
-    echo "The Windvale native text-quote service bridge has an unexpected digest: $NATIVE_TEXT_QUOTE_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE" "$NATIVE_TEXT_QUOTE_BRIDGE_RETAINED"
 if [ "$(sha256sum "$NATIVE_TEXT_QUOTE_LEAF_RETAINED" | awk '{print $1}')" != '4f334af9b6349437d36fd703edb6b5882416f033fae47906a40a4bafdc083bb7' ] ||
     [ "$(wc -c < "$NATIVE_TEXT_QUOTE_LEAF_RETAINED")" -ne 1165 ]; then
     echo 'The retained Windvale native text-quote leaf has an unexpected exact identity.' >&2
     exit 1
 fi
-NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_TEXT_QUOTE_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_ENUM_NAME_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Enum-Name-Service.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_ENUM_NAME_CORE_SOURCE" -o "$NATIVE_ENUM_NAME_CORE_MODULE"
-NATIVE_ENUM_NAME_CORE_HASH=$(sha256sum "$NATIVE_ENUM_NAME_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_ENUM_NAME_CORE_HASH" != 'b404104b8e5ca174841b47d02ea45f197599179e0cb23ba778d6a2cdf7846948' ]; then
-    echo "The Windvale native enum-name service core has an unexpected digest: $NATIVE_ENUM_NAME_CORE_HASH" >&2
-    exit 1
-fi
-NATIVE_ENUM_NAME_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ENUM_NAME_CORE_MODULE")
-printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉenumˉnameˉleaf: bytes length=323' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉenumˉnameˉserviceˉbuild' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_NAME_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_ENUM_NAME_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Enum-Name-Service-Bridge.wv"
 NATIVE_ENUM_NAME_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service-Bridge.wvb"
 NATIVE_ENUM_NAME_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service.bin"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_ENUM_NAME_BRIDGE_SOURCE" \
-    --module "$NATIVE_ENUM_NAME_CORE_SOURCE" \
-    -o "$NATIVE_ENUM_NAME_BRIDGE_MODULE"
-NATIVE_ENUM_NAME_BRIDGE_HASH=$(sha256sum "$NATIVE_ENUM_NAME_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_ENUM_NAME_BRIDGE_HASH" != '46d806adcceee597a139976748c2e1d5a25dbf57a3fba61c6836b6cf3ce1f76c' ]; then
-    echo "The Windvale native enum-name service bridge has an unexpected digest: $NATIVE_ENUM_NAME_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_ENUM_NAME_BRIDGE_MODULE" "$NATIVE_ENUM_NAME_BRIDGE_RETAINED"
 NATIVE_ENUM_NAME_LEAF_RETAINED_HASH=$(sha256sum "$NATIVE_ENUM_NAME_LEAF_RETAINED" | awk '{print $1}')
 if [ "$NATIVE_ENUM_NAME_LEAF_RETAINED_HASH" != 'fb05590c5b6e1791380ba288c4112387e791a18722428c90276796bd409d130a' ] ||
@@ -552,75 +461,18 @@ if [ "$NATIVE_ENUM_NAME_LEAF_RETAINED_HASH" != 'fb05590c5b6e1791380ba288c4112387
     echo 'The retained Windvale native enum-name leaf has an unexpected exact identity.' >&2
     exit 1
 fi
-NATIVE_ENUM_NAME_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ENUM_NAME_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_ENUM_NAME_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_NAME_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_NAME_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_ENUM_METADATA_CORE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Enum-Metadata-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_ENUM_METADATA_CORE_SOURCE" -o "$NATIVE_ENUM_METADATA_CORE_MODULE"
-NATIVE_ENUM_METADATA_CORE_HASH=$(sha256sum "$NATIVE_ENUM_METADATA_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_ENUM_METADATA_CORE_HASH" != '9c61f7d436854ace71ab17fcf33da73c40d37d612f68ba08bfa929ab4e710ef1' ]; then
-    echo "The Windvale native enum-metadata core has an unexpected digest: $NATIVE_ENUM_METADATA_CORE_HASH" >&2
-    exit 1
-fi
-NATIVE_ENUM_METADATA_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ENUM_METADATA_CORE_MODULE")
-printf '%s\n' "$NATIVE_ENUM_METADATA_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_METADATA_CORE_INSPECTION" | grep -F 'Nativeˉenumˉmetadataˉbuild' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_METADATA_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_ENUM_METADATA_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Enum-Metadata-Bridge.wv"
 NATIVE_ENUM_METADATA_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvb"
 NATIVE_ENUM_METADATA_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvnf"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_ENUM_METADATA_BRIDGE_SOURCE" \
-    --module "$NATIVE_ENUM_METADATA_CORE_SOURCE" \
-    -o "$NATIVE_ENUM_METADATA_BRIDGE_MODULE"
-NATIVE_ENUM_METADATA_BRIDGE_HASH=$(sha256sum "$NATIVE_ENUM_METADATA_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_ENUM_METADATA_BRIDGE_HASH" != 'a43a89cedd7fc58740132c2f666ea69866ceff6ebb87d090124207ff3e9154ce' ]; then
-    echo "The Windvale native enum-metadata bridge has an unexpected digest: $NATIVE_ENUM_METADATA_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_ENUM_METADATA_BRIDGE_MODULE" "$NATIVE_ENUM_METADATA_BRIDGE_RETAINED"
 NATIVE_ENUM_METADATA_ARTIFACT_HASH=$(sha256sum "$NATIVE_ENUM_METADATA_ARTIFACT_RETAINED" | awk '{print $1}')
-if [ "$NATIVE_ENUM_METADATA_ARTIFACT_HASH" != 'd2f53cd0fdd7812699a06234e19586f18492ffbca68ae0e5f507b09253c5a39b' ] ||
-    [ "$(wc -c < "$NATIVE_ENUM_METADATA_ARTIFACT_RETAINED")" -ne 115167 ]; then
+if [ "$NATIVE_ENUM_METADATA_ARTIFACT_HASH" != '004db29841eeaf5a448ec67c438a820832ed4af3ede0a8ae1b1d672565ea0999' ] ||
+    [ "$(wc -c < "$NATIVE_ENUM_METADATA_ARTIFACT_RETAINED")" -ne 137964 ]; then
     echo "The retained Windvale native enum-metadata fragment has an unexpected identity: $NATIVE_ENUM_METADATA_ARTIFACT_HASH" >&2
     exit 1
 fi
-NATIVE_ENUM_METADATA_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_ENUM_METADATA_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_ENUM_METADATA_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_METADATA_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_ENUM_METADATA_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
-NATIVE_PUBLICATION_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_PUBLICATION_SOURCE" -o "$NATIVE_PUBLICATION_MODULE"
-NATIVE_PUBLICATION_HASH=$(sha256sum "$NATIVE_PUBLICATION_MODULE" | awk '{print $1}')
-if [ "$NATIVE_PUBLICATION_HASH" != '3048902ce708d6e640d484507efc1d567399bcafed6e2c133ca2827aff83189f' ]; then
-    echo "The Windvale native-publication core has an unexpected digest: $NATIVE_PUBLICATION_HASH" >&2
-    exit 1
-fi
-NATIVE_PUBLICATION_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_MODULE")
-printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Nativeˉpublicationˉresult' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Nativeˉpublicationˉstatus' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Nativeˉpublicationˉplan' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_INSPECTION" | grep -F 'Exports (8)' >/dev/null
-
-NATIVE_PUBLICATION_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Bridge.wv"
 NATIVE_PUBLICATION_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvb"
 NATIVE_PUBLICATION_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvnf"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_PUBLICATION_BRIDGE_SOURCE" \
-    --module "$NATIVE_PUBLICATION_SOURCE" \
-    -o "$NATIVE_PUBLICATION_BRIDGE_MODULE"
-NATIVE_PUBLICATION_BRIDGE_HASH=$(sha256sum "$NATIVE_PUBLICATION_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_PUBLICATION_BRIDGE_HASH" != '111608af768b18adb9be8b531214aeb14c472efef482fad507224aaa1b18909c' ]; then
-    echo "The Windvale native-publication bridge has an unexpected digest: $NATIVE_PUBLICATION_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_PUBLICATION_BRIDGE_MODULE" "$NATIVE_PUBLICATION_BRIDGE_RETAINED"
 NATIVE_PUBLICATION_ARTIFACT_HASH=$(sha256sum "$NATIVE_PUBLICATION_ARTIFACT_RETAINED" | awk '{print $1}')
 if [ "$NATIVE_PUBLICATION_ARTIFACT_HASH" != '9deeb8c4ab8f080cbc187036e0b015932379956930ec9cd1b7f51f7d1daa1f47' ] ||
@@ -628,37 +480,9 @@ if [ "$NATIVE_PUBLICATION_ARTIFACT_HASH" != '9deeb8c4ab8f080cbc187036e0b01593237
     echo "The retained Windvale native-publication fragment has an unexpected identity: $NATIVE_PUBLICATION_ARTIFACT_HASH" >&2
     exit 1
 fi
-NATIVE_PUBLICATION_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
-NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Service-Bundle-Materialization-Core.wv"
-NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Service-Bundle-Materialization-Bridge.wv"
 NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Service-Bundle-Materialization-Bridge.wvb"
 NATIVE_SERVICE_BUNDLE_MATERIALIZATION_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Service-Bundle-Materialization-Bridge.wvnf"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_SOURCE" \
-    --module "$NATIVE_PUBLICATION_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    -o "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_MODULE"
-NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_HASH=$(sha256sum "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_HASH" != '97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008' ]; then
-    echo "The Windvale service-bundle materialization core has an unexpected digest: $NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_HASH" >&2
-    exit 1
-fi
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_SOURCE" \
-    --module "$NATIVE_PUBLICATION_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_SOURCE" \
-    -o "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE"
-NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_HASH=$(sha256sum "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_HASH" != '327b753062d46755b934cfe6e6bc16550ec711c8b7d2aff46eac4bf0d8d9d902' ]; then
-    echo "The Windvale service-bundle materialization bridge has an unexpected digest: $NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE" "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_RETAINED"
 NATIVE_SERVICE_BUNDLE_MATERIALIZATION_ARTIFACT_HASH=$(sha256sum "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_ARTIFACT_RETAINED" | awk '{print $1}')
 if [ "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_ARTIFACT_HASH" != 'd0b12e426e891f6ee78209ab817dde7c547c0f68541750d39dd665607434e7a9' ] ||
@@ -666,11 +490,6 @@ if [ "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_ARTIFACT_HASH" != 'd0b12e426e891f6e
     echo "The retained Windvale service-bundle materialization fragment has an unexpected identity: $NATIVE_SERVICE_BUNDLE_MATERIALIZATION_ARTIFACT_HASH" >&2
     exit 1
 fi
-NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
-printf '%s\n' "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 
 NATIVE_OUTPUT_TABLE_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Output-Table-Core.wv"
 NATIVE_OUTPUT_TABLE_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Output-Table-Bridge.wv"

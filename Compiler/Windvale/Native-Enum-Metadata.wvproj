@@ -1,0 +1,4 @@
+windvale-project 1
+root "Native-Enum-Metadata-Bridge.wv"
+source "Native-Enum-Metadata-Core.wv"
+emit wvb

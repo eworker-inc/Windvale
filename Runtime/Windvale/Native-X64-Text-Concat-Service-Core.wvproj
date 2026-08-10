@@ -1,0 +1,4 @@
+windvale-project 1
+root "Native-X64-Text-Concat-Service.wv"
+source "Native-X64-Service-Code-Builder.wv"
+emit wvb

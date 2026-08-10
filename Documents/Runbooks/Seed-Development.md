@@ -195,7 +195,7 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Run the fixed 53-case native front-door qualification smoke directly with:
+Run the fixed 76-case native front-door qualification smoke directly with:
 
 ```powershell
 $output = New-Item -ItemType Directory -Force artifacts/seed-front-door
@@ -208,7 +208,7 @@ mkdir -p artifacts/seed-front-door
 ./Tools/Verify/Verify-Seed-Native-Front-Door.sh artifacts/seed-front-door
 ```
 
-The helper builds 31 exact WVBs. It retains the original Project 1,
+The helper builds 43 exact WVBs. It retains the original Project 1,
 verification, inspection, execution, instruction-count, and malformed-project
 cases; it additionally builds and inspects Machine Contracts, Byte Ordering,
 Decimal Parsing, and Byte Construction, builds all four demos, and executes the
@@ -225,6 +225,12 @@ those aggregates without changing Project 1 or permitting directory escape.
 The helper also builds the eleven output, file-output, and file-input service
 products and natively inspects their three public bridges. Their embedded-WVB
 and exact platform-leaf comparisons remain in the broad scripts.
+
+It additionally builds the text-concatenation, text-quote, enum-name,
+enum-metadata, native-publication, and service-bundle-materialization core and
+bridge pairs, and natively inspects eleven ownership surfaces. Ten of these
+manifests are component-local. The service-bundle core and bridge remain root
+aggregates because they span Compiler, Foundation, and Runtime sources.
 
 Run the exact native capability-free console-AOT qualification composition in
 the same output directory after `Sum-Data.wvb` exists:

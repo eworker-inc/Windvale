@@ -1,0 +1,4 @@
+windvale-project 1
+root "Native-Publication-Bridge.wv"
+source "Native-Publication-Core.wv"
+emit wvb

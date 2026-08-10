@@ -149,6 +149,18 @@ NATIVE_FILE_INPUT_CODE_MODULE="$OUTPUT_ROOT/Native-X64-File-Input-Service-Code.w
 NATIVE_WINDOWS_FILE_INPUT_CORE_MODULE="$OUTPUT_ROOT/Native-X64-File-Input-Service-Windows.wvb"
 NATIVE_LINUX_FILE_INPUT_CORE_MODULE="$OUTPUT_ROOT/Native-X64-File-Input-Service-Linux.wvb"
 NATIVE_FILE_INPUT_BRIDGE_MODULE="$OUTPUT_ROOT/Native-X64-File-Input-Services-Bridge.wvb"
+NATIVE_TEXT_CONCAT_CORE_MODULE="$OUTPUT_ROOT/Native-X64-Text-Concat-Service.wvb"
+NATIVE_TEXT_CONCAT_BRIDGE_MODULE="$OUTPUT_ROOT/Native-X64-Text-Concat-Service-Bridge.wvb"
+NATIVE_TEXT_QUOTE_CORE_MODULE="$OUTPUT_ROOT/Native-X64-Text-Quote-Service.wvb"
+NATIVE_TEXT_QUOTE_BRIDGE_MODULE="$OUTPUT_ROOT/Native-X64-Text-Quote-Service-Bridge.wvb"
+NATIVE_ENUM_NAME_CORE_MODULE="$OUTPUT_ROOT/Native-X64-Enum-Name-Service.wvb"
+NATIVE_ENUM_NAME_BRIDGE_MODULE="$OUTPUT_ROOT/Native-X64-Enum-Name-Service-Bridge.wvb"
+NATIVE_ENUM_METADATA_CORE_MODULE="$OUTPUT_ROOT/Native-Enum-Metadata-Core.wvb"
+NATIVE_ENUM_METADATA_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Enum-Metadata-Bridge.wvb"
+NATIVE_PUBLICATION_MODULE="$OUTPUT_ROOT/Native-Publication-Core.wvb"
+NATIVE_PUBLICATION_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Publication-Bridge.wvb"
+NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_MODULE="$OUTPUT_ROOT/Native-Service-Bundle-Materialization-Core.wvb"
+NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Service-Bundle-Materialization-Bridge.wvb"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -463,6 +475,107 @@ exact_build \
     'build status=Published verification=compiler-aligned functions=35 code-bytes=42279 module-bytes=51341'
 exact_inspect "$NATIVE_FILE_INPUT_BRIDGE_MODULE" 'profile=portable' 'name="Main" parameters=0 result=bytes' 'section name=exports offset=51274 bytes=17 count=1'
 
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service-Core.wvproj" \
+    "$NATIVE_TEXT_CONCAT_CORE_MODULE" \
+    10253 \
+    6b03161b9b3f112c6641474e321b2764522eb57a949d1b6bfc3d7b73ac91cc73 \
+    0000280d \
+    'build status=Published verification=compiler-aligned functions=14 code-bytes=8082 module-bytes=10253'
+exact_inspect "$NATIVE_TEXT_CONCAT_CORE_MODULE" 'profile=portable' 'Native\u02C9x64\u02C9text\u02C9concat\u02C9service\u02C9build' 'section name=exports offset=10149 bytes=54 count=1'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Concat-Service.wvproj" \
+    "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE" \
+    10232 \
+    87bd2e3489d3a5e4b31002858f37a5f2547706fdecc9b5f9292c736c331b9a08 \
+    000027f8 \
+    'build status=Published verification=compiler-aligned functions=15 code-bytes=8098 module-bytes=10232'
+exact_inspect "$NATIVE_TEXT_CONCAT_BRIDGE_MODULE" 'profile=portable' 'name="Main" parameters=0 result=bytes' 'section name=exports offset=10165 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Quote-Service-Core.wvproj" \
+    "$NATIVE_TEXT_QUOTE_CORE_MODULE" \
+    1471 \
+    b23c077329de43fcc307f7e7f564aefe318ca1dd7dc6543bfa10160ab724c453 \
+    000005bf \
+    'build status=Published verification=compiler-aligned functions=1 code-bytes=16 module-bytes=1471'
+exact_inspect "$NATIVE_TEXT_QUOTE_CORE_MODULE" 'profile=portable' 'data index=0 name="Native\u02C9x64\u02C9text\u02C9quote\u02C9leaf" type=bytes bytes=1165' 'Native\u02C9x64\u02C9text\u02C9quote\u02C9service\u02C9build' 'section name=exports offset=1406 bytes=53 count=1'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Text-Quote-Service.wvproj" \
+    "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE" \
+    1435 \
+    306b76bcf7e6b3252ce0f9509664acc5ee5a2bcc8fa411e8fdcf2c6a1fb4b631 \
+    0000059b \
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=32 module-bytes=1435'
+exact_inspect "$NATIVE_TEXT_QUOTE_BRIDGE_MODULE" 'profile=portable' 'name="Main" parameters=0 result=bytes' 'section name=exports offset=1406 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Enum-Name-Service-Core.wvproj" \
+    "$NATIVE_ENUM_NAME_CORE_MODULE" \
+    625 \
+    b404104b8e5ca174841b47d02ea45f197599179e0cb23ba778d6a2cdf7846948 \
+    00000271 \
+    'build status=Published verification=compiler-aligned functions=1 code-bytes=16 module-bytes=625'
+exact_inspect "$NATIVE_ENUM_NAME_CORE_MODULE" 'profile=portable' 'data index=0 name="Native\u02C9x64\u02C9enum\u02C9name\u02C9leaf" type=bytes bytes=323' 'Native\u02C9x64\u02C9enum\u02C9name\u02C9service\u02C9build' 'section name=exports offset=561 bytes=52 count=1'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Enum-Name-Service.wvproj" \
+    "$NATIVE_ENUM_NAME_BRIDGE_MODULE" \
+    592 \
+    46d806adcceee597a139976748c2e1d5a25dbf57a3fba61c6836b6cf3ce1f76c \
+    00000250 \
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=32 module-bytes=592'
+exact_inspect "$NATIVE_ENUM_NAME_BRIDGE_MODULE" 'profile=portable' 'name="Main" parameters=0 result=bytes' 'section name=exports offset=563 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Compiler/Windvale/Native-Enum-Metadata-Core.wvproj" \
+    "$NATIVE_ENUM_METADATA_CORE_MODULE" \
+    15414 \
+    8f22e1ba56985fc5a330fcb73cda84456ecc3ef51f9ddffd6bc2edd740f73659 \
+    00003c36 \
+    'build status=Published verification=compiler-aligned functions=17 code-bytes=13480 module-bytes=15414'
+exact_inspect "$NATIVE_ENUM_METADATA_CORE_MODULE" 'profile=portable' 'Native\u02C9enum\u02C9metadata\u02C9build' 'section name=exports offset=15294 bytes=42 count=1'
+exact_build \
+    "$REPOSITORY_ROOT/Compiler/Windvale/Native-Enum-Metadata.wvproj" \
+    "$NATIVE_ENUM_METADATA_BRIDGE_MODULE" \
+    15292 \
+    052be4402df26ed542107d666ed894cadb04a46ba6b2428bafc9f1879e38a072 \
+    00003bbc \
+    'build status=Published verification=compiler-aligned functions=18 code-bytes=13511 module-bytes=15292'
+exact_inspect "$NATIVE_ENUM_METADATA_BRIDGE_MODULE" 'profile=portable' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=15221 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wvproj" \
+    "$NATIVE_PUBLICATION_MODULE" \
+    7190 \
+    3048902ce708d6e640d484507efc1d567399bcafed6e2c133ca2827aff83189f \
+    00001c16 \
+    'build status=Published verification=compiler-aligned functions=8 code-bytes=5333 module-bytes=7190'
+exact_inspect "$NATIVE_PUBLICATION_MODULE" 'profile=portable' 'Native\u02C9publication\u02C9result' 'Native\u02C9publication\u02C9status' 'Native\u02C9publication\u02C9plan' 'section name=exports offset=6507 bytes=336 count=8'
+exact_build \
+    "$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication.wvproj" \
+    "$NATIVE_PUBLICATION_BRIDGE_MODULE" \
+    6758 \
+    111608af768b18adb9be8b531214aeb14c472efef482fad507224aaa1b18909c \
+    00001a66 \
+    'build status=Published verification=compiler-aligned functions=9 code-bytes=5399 module-bytes=6758'
+exact_inspect "$NATIVE_PUBLICATION_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=71 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=6432 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Native-Service-Bundle-Materialization-Core.wvproj" \
+    "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_MODULE" \
+    17185 \
+    97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008 \
+    00004321 \
+    'build status=Published verification=compiler-aligned functions=19 code-bytes=14253 module-bytes=17185'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Native-Service-Bundle-Materialization.wvproj" \
+    "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE" \
+    17150 \
+    327b753062d46755b934cfe6e6bc16550ec711c8b7d2aff46eac4bf0d8d9d902 \
+    000042fe \
+    'build status=Published verification=compiler-aligned functions=20 code-bytes=14319 module-bytes=17150'
+exact_inspect "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=91 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=16693 bytes=17 count=1'
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -494,4 +607,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=31 cases=53'
+echo 'native Seed front-door verification status=Complete artifacts=43 cases=76'

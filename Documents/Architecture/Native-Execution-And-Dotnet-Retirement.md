@@ -503,6 +503,17 @@ root bridge manifests are removed. Retained bridge-WVB and exact platform-leaf
 comparisons remain independent; capability-bearing execution, the broad
 harness, Linux evidence, and later qualification phases remain open.
 
+Decision 0513 transfers the fixed-service and publication construction
+closure: twelve exact text-concatenation, text-quote, enum-name, enum-metadata,
+native-publication, and service-bundle Project 1 builds plus eleven native
+inspections. The paired helper now owns 43 artifacts and 76 cases, bringing the
+cumulative removal to eighty-two managed calls per broad host script. Ten
+manifests are component-local; the two service-bundle manifests remain root
+aggregates because their closures span Compiler, Foundation, and Runtime.
+Retained bridge-WVB, leaf, and fragment comparisons remain independent;
+capability-bearing execution, the broad harness, Linux evidence, and later
+qualification phases remain open.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

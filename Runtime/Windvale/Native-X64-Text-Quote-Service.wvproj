@@ -1,0 +1,4 @@
+windvale-project 1
+root "Native-X64-Text-Quote-Service-Bridge.wv"
+source "Native-X64-Text-Quote-Service.wv"
+emit wvb

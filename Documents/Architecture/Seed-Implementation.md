@@ -267,6 +267,16 @@ lives beside `Runtime/Windvale` source and the three former repository-root
 bridge manifests are removed. This is build/inspection ownership, not a claim
 that the capability-bearing execution or broad differential harness is native.
 
+Decision 0513 extends the same ownership rule to fixed service leaves, enum
+metadata, native publication planning, and service-bundle materialization.
+Twelve exact Project 1 builds and eleven inspections leave each broad managed
+script while their retained bridge, leaf, and fragment comparisons remain.
+Ten manifests live beside their Runtime or Compiler sources. Only the two
+service-bundle manifests remain at repository root because their closure spans
+Compiler publication, Foundation byte construction, and Runtime
+materialization. This is build/inspection ownership, not native ownership of
+the capability-bearing execution or broad differential harness.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

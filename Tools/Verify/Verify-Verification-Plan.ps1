@@ -70,6 +70,10 @@ $NativeCases = @(
         Paths = @(
             'Compiler/Windvale/Native-Stencil-Core.wv',
             'Compiler/Windvale/Native-Stencil-Bridge.wvproj',
+            'Compiler/Windvale/Native-Enum-Metadata-Core.wvproj',
+            'Compiler/Windvale/Native-Publication-Bridge.wv',
+            'Windvale-Native-Enum-Metadata.wvproj',
+            'Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
             'Examples/Compiler/Native-Stencil-Demo.wv',
             'Native-Stencil-Demo.wvproj'
         )
@@ -95,7 +99,12 @@ $NativeCases = @(
             'Runtime/Windvale/Native-X64-File-Output-Service-Code.wvproj',
             'Runtime/Windvale/Native-X64-File-Output-Services.wvproj',
             'Runtime/Windvale/Native-X64-File-Input-Service-Linux.wv',
-            'Runtime/Windvale/Native-X64-File-Input-Services.wvproj'
+            'Runtime/Windvale/Native-X64-File-Input-Services.wvproj',
+            'Runtime/Windvale/Native-X64-Text-Concat-Service-Core.wvproj',
+            'Runtime/Windvale/Native-X64-Text-Quote-Service-Bridge.wv',
+            'Runtime/Windvale/Native-X64-Enum-Name-Service.wvproj',
+            'Runtime/Windvale/Native-Service-Bundle-Materialization-Core.wv',
+            'Windvale-Native-X64-Text-Concat-Service.wvproj'
         )
         Suites = @('seed', 'unsafe-wvb', 'wvb-containment')
         Gaps = @('seed-native-front-door')

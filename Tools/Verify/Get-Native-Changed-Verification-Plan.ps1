@@ -437,7 +437,18 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-Stencil-Core.wv',
         'Compiler/Windvale/Native-Stencil-Core.wvproj',
         'Compiler/Windvale/Native-Stencil-Bridge.wv',
-        'Compiler/Windvale/Native-Stencil-Bridge.wvproj'
+        'Compiler/Windvale/Native-Stencil-Bridge.wvproj',
+        'Compiler/Windvale/Native-Enum-Metadata-Core.wv',
+        'Compiler/Windvale/Native-Enum-Metadata-Core.wvproj',
+        'Compiler/Windvale/Native-Enum-Metadata-Bridge.wv',
+        'Compiler/Windvale/Native-Enum-Metadata.wvproj',
+        'Compiler/Windvale/Native-Publication-Core.wv',
+        'Compiler/Windvale/Native-Publication-Core.wvproj',
+        'Compiler/Windvale/Native-Publication-Bridge.wv',
+        'Compiler/Windvale/Native-Publication.wvproj',
+        'Windvale-Native-Enum-Metadata.wvproj',
+        'Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
+        'Windvale-Native-Service-Bundle-Materialization.wvproj'
     )) {
         Add-Compiler-Suites
         Add-Gap 'seed-native-front-door'
@@ -477,7 +488,24 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale/Native-X64-File-Input-Service-Linux.wv',
         'Runtime/Windvale/Native-X64-File-Input-Service-Linux.wvproj',
         'Runtime/Windvale/Native-X64-File-Input-Services-Bridge.wv',
-        'Runtime/Windvale/Native-X64-File-Input-Services.wvproj'
+        'Runtime/Windvale/Native-X64-File-Input-Services.wvproj',
+        'Runtime/Windvale/Native-X64-Text-Concat-Service.wv',
+        'Runtime/Windvale/Native-X64-Text-Concat-Service-Core.wvproj',
+        'Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv',
+        'Runtime/Windvale/Native-X64-Text-Concat-Service.wvproj',
+        'Runtime/Windvale/Native-X64-Text-Quote-Service.wv',
+        'Runtime/Windvale/Native-X64-Text-Quote-Service-Core.wvproj',
+        'Runtime/Windvale/Native-X64-Text-Quote-Service-Bridge.wv',
+        'Runtime/Windvale/Native-X64-Text-Quote-Service.wvproj',
+        'Runtime/Windvale/Native-X64-Enum-Name-Service.wv',
+        'Runtime/Windvale/Native-X64-Enum-Name-Service-Core.wvproj',
+        'Runtime/Windvale/Native-X64-Enum-Name-Service-Bridge.wv',
+        'Runtime/Windvale/Native-X64-Enum-Name-Service.wvproj',
+        'Runtime/Windvale/Native-Service-Bundle-Materialization-Core.wv',
+        'Runtime/Windvale/Native-Service-Bundle-Materialization-Bridge.wv',
+        'Windvale-Native-X64-Text-Concat-Service.wvproj',
+        'Windvale-Native-X64-Text-Quote-Service.wvproj',
+        'Windvale-Native-X64-Enum-Name-Service.wvproj'
     )) {
         Add-Bytecode-Suites
         Add-Gap 'seed-native-front-door'

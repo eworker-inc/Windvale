@@ -180,17 +180,11 @@ $NativeFileInputCodeModule = Join-Path $Artifacts 'Native-X64-File-Input-Service
 $NativeWindowsFileInputCoreModule = Join-Path $Artifacts 'Native-X64-File-Input-Service-Windows.wvb'
 $NativeLinuxFileInputCoreModule = Join-Path $Artifacts 'Native-X64-File-Input-Service-Linux.wvb'
 $NativeFileInputBridgeModule = Join-Path $Artifacts 'Native-X64-File-Input-Services-Bridge.wvb'
-$NativeTextConcatCoreModule = Join-Path $Artifacts 'Native-X64-Text-Concat-Service.wvb'
 $NativeTextConcatBridgeModule = Join-Path $Artifacts 'Native-X64-Text-Concat-Service-Bridge.wvb'
-$NativeTextQuoteCoreModule = Join-Path $Artifacts 'Native-X64-Text-Quote-Service.wvb'
 $NativeTextQuoteBridgeModule = Join-Path $Artifacts 'Native-X64-Text-Quote-Service-Bridge.wvb'
-$NativeEnumNameCoreModule = Join-Path $Artifacts 'Native-X64-Enum-Name-Service.wvb'
 $NativeEnumNameBridgeModule = Join-Path $Artifacts 'Native-X64-Enum-Name-Service-Bridge.wvb'
-$NativeEnumMetadataCoreModule = Join-Path $Artifacts 'Native-Enum-Metadata-Core.wvb'
 $NativeEnumMetadataBridgeModule = Join-Path $Artifacts 'Native-Enum-Metadata-Bridge.wvb'
-$NativePublicationModule = Join-Path $Artifacts 'Native-Publication-Core.wvb'
 $NativePublicationBridgeModule = Join-Path $Artifacts 'Native-Publication-Bridge.wvb'
-$NativeServiceBundleMaterializationCoreModule = Join-Path $Artifacts 'Native-Service-Bundle-Materialization-Core.wvb'
 $NativeServiceBundleMaterializationBridgeModule = Join-Path $Artifacts 'Native-Service-Bundle-Materialization-Bridge.wvb'
 $NativeOutputTableCoreModule = Join-Path $Artifacts 'Native-Output-Table-Core.wvb'
 $NativeOutputTableBridgeModule = Join-Path $Artifacts 'Native-Output-Table-Bridge.wvb'
@@ -277,7 +271,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=31 cases=53'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=43 cases=76'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -473,8 +467,6 @@ if ($NativeI32FormatLeafRetainedHash -ne 'c33758106e8d7cd31bbed8ef1e789a8e355c52
     (Get-Item -LiteralPath $NativeU32FormatLeafRetained).Length -ne 191) {
     throw 'The retained Windvale native integer-format leaves have unexpected exact identities.'
 }
-$NativeServiceCodeBuilderSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Service-Code-Builder.wv'
-
 $NativeOutputBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Output-Services-Bridge.wvb'
 $NativeWindowsConsoleOutputLeaf = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Windows-Console-Output-Service.bin'
 $NativeWindowsDiagnosticOutputLeaf = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Windows-Diagnostic-Output-Service.bin'
@@ -548,39 +540,9 @@ foreach ($NativeFileInputLeaf in $NativeFileInputLeaves) {
         throw "The retained Windvale native file-input leaf has an unexpected identity: $($NativeFileInputLeaf[0])"
     }
 }
-$NativeTextConcatCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Concat-Service.wv'
-dotnet $ToolDll `
-    compile $NativeTextConcatCoreSource `
-    --module $NativeServiceCodeBuilderSource `
-    -o $NativeTextConcatCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native text-concatenation service core.' }
-$NativeTextConcatCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextConcatCoreModule).Hash.ToLowerInvariant()
-if ($NativeTextConcatCoreHash -ne '6b03161b9b3f112c6641474e321b2764522eb57a949d1b6bfc3d7b73ac91cc73') {
-    throw "The Windvale native text-concatenation service core has an unexpected digest: $NativeTextConcatCoreHash"
-}
-$NativeTextConcatCoreInspection = (dotnet $ToolDll inspect $NativeTextConcatCoreModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeTextConcatCoreInspection -notmatch 'Profile: portable' -or
-    $NativeTextConcatCoreInspection -notmatch 'Nativeˉx64ˉtextˉconcatˉserviceˉbuild' -or
-    $NativeTextConcatCoreInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native text-concatenation service core inspection is incomplete.'
-}
-
-$NativeTextConcatBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv'
 $NativeTextConcatBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service-Bridge.wvb'
 $NativeTextConcatLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Concat-Service.bin'
-dotnet $ToolDll `
-    compile $NativeTextConcatBridgeSource `
-    --module $NativeServiceCodeBuilderSource `
-    --module $NativeTextConcatCoreSource `
-    -o $NativeTextConcatBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native text-concatenation service bridge.' }
 $NativeTextConcatBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextConcatBridgeModule).Hash.ToLowerInvariant()
-if ($NativeTextConcatBridgeHash -ne '87bd2e3489d3a5e4b31002858f37a5f2547706fdecc9b5f9292c736c331b9a08') {
-    throw "The Windvale native text-concatenation service bridge has an unexpected digest: $NativeTextConcatBridgeHash"
-}
 $NativeTextConcatBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextConcatBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativeTextConcatBridgeRetainedHash -ne $NativeTextConcatBridgeHash -or
@@ -594,46 +556,9 @@ if ($NativeTextConcatLeafRetainedHash -ne '75c5588117e1f5f58a593a23aae6156a3a68a
     (Get-Item -LiteralPath $NativeTextConcatLeafRetained).Length -ne 249) {
     throw 'The retained Windvale native text-concatenation leaf has an unexpected exact identity.'
 }
-$NativeTextConcatBridgeInspection = (dotnet $ToolDll inspect $NativeTextConcatBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeTextConcatBridgeInspection -notmatch 'Profile: portable' -or
-    $NativeTextConcatBridgeInspection -notmatch 'Main\(\) -> bytes' -or
-    $NativeTextConcatBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native text-concatenation service bridge inspection is incomplete.'
-}
-
-$NativeTextQuoteCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Quote-Service.wv'
-dotnet $ToolDll compile $NativeTextQuoteCoreSource -o $NativeTextQuoteCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native text-quote service core.' }
-$NativeTextQuoteCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextQuoteCoreModule).Hash.ToLowerInvariant()
-if ($NativeTextQuoteCoreHash -ne 'b23c077329de43fcc307f7e7f564aefe318ca1dd7dc6543bfa10160ab724c453') {
-    throw "The Windvale native text-quote service core has an unexpected digest: $NativeTextQuoteCoreHash"
-}
-$NativeTextQuoteCoreInspection = (dotnet $ToolDll inspect $NativeTextQuoteCoreModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeTextQuoteCoreInspection -notmatch 'Profile: portable' -or
-    $NativeTextQuoteCoreInspection -notmatch 'Nativeˉx64ˉtextˉquoteˉleaf: bytes length=1165' -or
-    $NativeTextQuoteCoreInspection -notmatch 'Nativeˉx64ˉtextˉquoteˉserviceˉbuild' -or
-    $NativeTextQuoteCoreInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native text-quote service core inspection is incomplete.'
-}
-
-$NativeTextQuoteBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Text-Quote-Service-Bridge.wv'
 $NativeTextQuoteBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service-Bridge.wvb'
 $NativeTextQuoteLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Text-Quote-Service.bin'
-dotnet $ToolDll `
-    compile $NativeTextQuoteBridgeSource `
-    --module $NativeTextQuoteCoreSource `
-    -o $NativeTextQuoteBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native text-quote service bridge.' }
 $NativeTextQuoteBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextQuoteBridgeModule).Hash.ToLowerInvariant()
-if ($NativeTextQuoteBridgeHash -ne '306b76bcf7e6b3252ce0f9509664acc5ee5a2bcc8fa411e8fdcf2c6a1fb4b631') {
-    throw "The Windvale native text-quote service bridge has an unexpected digest: $NativeTextQuoteBridgeHash"
-}
 $NativeTextQuoteBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeTextQuoteBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativeTextQuoteBridgeRetainedHash -ne $NativeTextQuoteBridgeHash -or
@@ -647,46 +572,9 @@ if ($NativeTextQuoteLeafRetainedHash -ne '4f334af9b6349437d36fd703edb6b5882416f0
     (Get-Item -LiteralPath $NativeTextQuoteLeafRetained).Length -ne 1165) {
     throw 'The retained Windvale native text-quote leaf has an unexpected exact identity.'
 }
-$NativeTextQuoteBridgeInspection = (dotnet $ToolDll inspect $NativeTextQuoteBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeTextQuoteBridgeInspection -notmatch 'Profile: portable' -or
-    $NativeTextQuoteBridgeInspection -notmatch 'Main\(\) -> bytes' -or
-    $NativeTextQuoteBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native text-quote service bridge inspection is incomplete.'
-}
-
-$NativeEnumNameCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Enum-Name-Service.wv'
-dotnet $ToolDll compile $NativeEnumNameCoreSource -o $NativeEnumNameCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-name service core.' }
-$NativeEnumNameCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumNameCoreModule).Hash.ToLowerInvariant()
-if ($NativeEnumNameCoreHash -ne 'b404104b8e5ca174841b47d02ea45f197599179e0cb23ba778d6a2cdf7846948') {
-    throw "The Windvale native enum-name service core has an unexpected digest: $NativeEnumNameCoreHash"
-}
-$NativeEnumNameCoreInspection = (dotnet $ToolDll inspect $NativeEnumNameCoreModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeEnumNameCoreInspection -notmatch 'Profile: portable' -or
-    $NativeEnumNameCoreInspection -notmatch 'Nativeˉx64ˉenumˉnameˉleaf: bytes length=323' -or
-    $NativeEnumNameCoreInspection -notmatch 'Nativeˉx64ˉenumˉnameˉserviceˉbuild' -or
-    $NativeEnumNameCoreInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native enum-name service core inspection is incomplete.'
-}
-
-$NativeEnumNameBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Enum-Name-Service-Bridge.wv'
 $NativeEnumNameBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service-Bridge.wvb'
 $NativeEnumNameLeafRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-X64-Enum-Name-Service.bin'
-dotnet $ToolDll `
-    compile $NativeEnumNameBridgeSource `
-    --module $NativeEnumNameCoreSource `
-    -o $NativeEnumNameBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-name service bridge.' }
 $NativeEnumNameBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumNameBridgeModule).Hash.ToLowerInvariant()
-if ($NativeEnumNameBridgeHash -ne '46d806adcceee597a139976748c2e1d5a25dbf57a3fba61c6836b6cf3ce1f76c') {
-    throw "The Windvale native enum-name service bridge has an unexpected digest: $NativeEnumNameBridgeHash"
-}
 $NativeEnumNameBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumNameBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativeEnumNameBridgeRetainedHash -ne $NativeEnumNameBridgeHash -or
@@ -702,45 +590,9 @@ if (
 ) {
     throw 'The retained Windvale native enum-name leaf has an unexpected exact identity.'
 }
-$NativeEnumNameBridgeInspection = (dotnet $ToolDll inspect $NativeEnumNameBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeEnumNameBridgeInspection -notmatch 'Profile: portable' -or
-    $NativeEnumNameBridgeInspection -notmatch 'Main\(\) -> bytes' -or
-    $NativeEnumNameBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native enum-name service bridge inspection is incomplete.'
-}
-
-$NativeEnumMetadataCoreSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Enum-Metadata-Core.wv'
-dotnet $ToolDll compile $NativeEnumMetadataCoreSource -o $NativeEnumMetadataCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-metadata core.' }
-$NativeEnumMetadataCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataCoreModule).Hash.ToLowerInvariant()
-if ($NativeEnumMetadataCoreHash -ne '8f22e1ba56985fc5a330fcb73cda84456ecc3ef51f9ddffd6bc2edd740f73659') {
-    throw "The Windvale native enum-metadata core has an unexpected digest: $NativeEnumMetadataCoreHash"
-}
-$NativeEnumMetadataCoreInspection = (dotnet $ToolDll inspect $NativeEnumMetadataCoreModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeEnumMetadataCoreInspection -notmatch 'Profile: portable' -or
-    $NativeEnumMetadataCoreInspection -notmatch 'Nativeˉenumˉmetadataˉbuild' -or
-    $NativeEnumMetadataCoreInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native enum-metadata core inspection is incomplete.'
-}
-
-$NativeEnumMetadataBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Enum-Metadata-Bridge.wv'
 $NativeEnumMetadataBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvb'
 $NativeEnumMetadataArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Enum-Metadata-Bridge.wvnf'
-dotnet $ToolDll `
-    compile $NativeEnumMetadataBridgeSource `
-    --module $NativeEnumMetadataCoreSource `
-    -o $NativeEnumMetadataBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native enum-metadata bridge.' }
 $NativeEnumMetadataBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataBridgeModule).Hash.ToLowerInvariant()
-if ($NativeEnumMetadataBridgeHash -ne '052be4402df26ed542107d666ed894cadb04a46ba6b2428bafc9f1879e38a072') {
-    throw "The Windvale native enum-metadata bridge has an unexpected digest: $NativeEnumMetadataBridgeHash"
-}
 $NativeEnumMetadataBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeEnumMetadataBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativeEnumMetadataBridgeRetainedHash -ne $NativeEnumMetadataBridgeHash -or
@@ -756,47 +608,9 @@ if (
 ) {
     throw "The retained Windvale native enum-metadata fragment has an unexpected identity: $NativeEnumMetadataArtifactHash"
 }
-$NativeEnumMetadataBridgeInspection = (dotnet $ToolDll inspect $NativeEnumMetadataBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeEnumMetadataBridgeInspection -notmatch 'Profile: portable' -or
-    $NativeEnumMetadataBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
-    $NativeEnumMetadataBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native enum-metadata bridge inspection is incomplete.'
-}
-
-$NativePublicationSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Core.wv'
-dotnet $ToolDll `
-    compile $NativePublicationSource -o $NativePublicationModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-publication core.' }
-$NativePublicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationModule).Hash.ToLowerInvariant()
-if ($NativePublicationHash -ne '3048902ce708d6e640d484507efc1d567399bcafed6e2c133ca2827aff83189f') {
-    throw "The Windvale native-publication core has an unexpected digest: $NativePublicationHash"
-}
-$NativePublicationInspection = (dotnet $ToolDll inspect $NativePublicationModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativePublicationInspection -notmatch 'Profile: portable' -or
-    $NativePublicationInspection -notmatch 'Nativeˉpublicationˉresult' -or
-    $NativePublicationInspection -notmatch 'Nativeˉpublicationˉstatus' -or
-    $NativePublicationInspection -notmatch 'Nativeˉpublicationˉplan' -or
-    $NativePublicationInspection -notmatch 'Exports \(8\)'
-) {
-    throw 'The Windvale native-publication core inspection is incomplete.'
-}
-$NativePublicationBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Bridge.wv'
 $NativePublicationBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvb'
 $NativePublicationArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Bridge.wvnf'
-dotnet $ToolDll `
-    compile $NativePublicationBridgeSource `
-    --module $NativePublicationSource `
-    -o $NativePublicationBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native-publication bridge.' }
 $NativePublicationBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationBridgeModule).Hash.ToLowerInvariant()
-if ($NativePublicationBridgeHash -ne '111608af768b18adb9be8b531214aeb14c472efef482fad507224aaa1b18909c') {
-    throw "The Windvale native-publication bridge has an unexpected digest: $NativePublicationBridgeHash"
-}
 $NativePublicationBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativePublicationBridgeRetainedHash -ne $NativePublicationBridgeHash -or
@@ -812,42 +626,9 @@ if (
 ) {
     throw "The retained Windvale native-publication fragment has an unexpected identity: $NativePublicationArtifactHash"
 }
-$NativePublicationBridgeInspection = (dotnet $ToolDll inspect $NativePublicationBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativePublicationBridgeInspection -notmatch 'Profile: portable' -or
-    $NativePublicationBridgeInspection -notmatch 'Capabilities \(0\)' -or
-    $NativePublicationBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
-    $NativePublicationBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native-publication bridge inspection is incomplete.'
-}
-
-$NativeServiceBundleMaterializationCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Service-Bundle-Materialization-Core.wv'
-$NativeServiceBundleMaterializationBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Service-Bundle-Materialization-Bridge.wv'
 $NativeServiceBundleMaterializationBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Service-Bundle-Materialization-Bridge.wvb'
 $NativeServiceBundleMaterializationArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Service-Bundle-Materialization-Bridge.wvnf'
-dotnet $ToolDll `
-    compile $NativeServiceBundleMaterializationCoreSource `
-    --module $NativePublicationSource `
-    --module $ByteConstructionSource `
-    -o $NativeServiceBundleMaterializationCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale service-bundle materialization core.' }
-$NativeServiceBundleMaterializationCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationCoreModule).Hash.ToLowerInvariant()
-if ($NativeServiceBundleMaterializationCoreHash -ne '97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008') {
-    throw "The Windvale service-bundle materialization core has an unexpected digest: $NativeServiceBundleMaterializationCoreHash"
-}
-dotnet $ToolDll `
-    compile $NativeServiceBundleMaterializationBridgeSource `
-    --module $NativePublicationSource `
-    --module $ByteConstructionSource `
-    --module $NativeServiceBundleMaterializationCoreSource `
-    -o $NativeServiceBundleMaterializationBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale service-bundle materialization bridge.' }
 $NativeServiceBundleMaterializationBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationBridgeModule).Hash.ToLowerInvariant()
-if ($NativeServiceBundleMaterializationBridgeHash -ne '327b753062d46755b934cfe6e6bc16550ec711c8b7d2aff46eac4bf0d8d9d902') {
-    throw "The Windvale service-bundle materialization bridge has an unexpected digest: $NativeServiceBundleMaterializationBridgeHash"
-}
 $NativeServiceBundleMaterializationBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeServiceBundleMaterializationBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativeServiceBundleMaterializationBridgeRetainedHash -ne $NativeServiceBundleMaterializationBridgeHash -or
@@ -863,17 +644,6 @@ if (
 ) {
     throw "The retained Windvale service-bundle materialization fragment has an unexpected identity: $NativeServiceBundleMaterializationArtifactHash"
 }
-$NativeServiceBundleMaterializationBridgeInspection = (dotnet $ToolDll inspect $NativeServiceBundleMaterializationBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeServiceBundleMaterializationBridgeInspection -notmatch 'Profile: portable' -or
-    $NativeServiceBundleMaterializationBridgeInspection -notmatch 'Capabilities \(0\)' -or
-    $NativeServiceBundleMaterializationBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
-    $NativeServiceBundleMaterializationBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale service-bundle materialization bridge inspection is incomplete.'
-}
-
 $NativeOutputTableCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Output-Table-Core.wv'
 $NativeOutputTableBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Output-Table-Bridge.wv'
 $NativeOutputTableBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Output-Table-Bridge.wvb'
