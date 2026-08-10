@@ -51,23 +51,23 @@ fn Startupˉimageˉdigest(Input: bytes, Target: u32, Variant: u32) -> bytes {
     while Index < 8u32 {
         var Word: u32 = 0u32;
         if Variant == 2u32 && Target == 1u32 {
-            if Index == 0u32 { Word = 69008209u32; }
-            else if Index == 1u32 { Word = 2421725397u32; }
-            else if Index == 2u32 { Word = 4181474857u32; }
-            else if Index == 3u32 { Word = 2258053080u32; }
-            else if Index == 4u32 { Word = 3816439214u32; }
-            else if Index == 5u32 { Word = 1765920015u32; }
-            else if Index == 6u32 { Word = 4249841257u32; }
-            else { Word = 4077917040u32; }
+            if Index == 0u32 { Word = 3346130089u32; }
+            else if Index == 1u32 { Word = 3281903756u32; }
+            else if Index == 2u32 { Word = 2738235936u32; }
+            else if Index == 3u32 { Word = 2113698553u32; }
+            else if Index == 4u32 { Word = 3823391619u32; }
+            else if Index == 5u32 { Word = 4273014290u32; }
+            else if Index == 6u32 { Word = 2709535465u32; }
+            else { Word = 589905937u32; }
         } else if Variant == 2u32 {
-            if Index == 0u32 { Word = 3429226565u32; }
-            else if Index == 1u32 { Word = 3377513982u32; }
-            else if Index == 2u32 { Word = 1435263034u32; }
-            else if Index == 3u32 { Word = 2278929838u32; }
-            else if Index == 4u32 { Word = 1785774323u32; }
-            else if Index == 5u32 { Word = 2191289243u32; }
-            else if Index == 6u32 { Word = 1273419612u32; }
-            else { Word = 1020119148u32; }
+            if Index == 0u32 { Word = 2385151233u32; }
+            else if Index == 1u32 { Word = 4186734187u32; }
+            else if Index == 2u32 { Word = 241307273u32; }
+            else if Index == 3u32 { Word = 1361852982u32; }
+            else if Index == 4u32 { Word = 1437019936u32; }
+            else if Index == 5u32 { Word = 2181250393u32; }
+            else if Index == 6u32 { Word = 2840191171u32; }
+            else { Word = 646086525u32; }
         } else if Target == 1u32 {
             if Index == 0u32 { Word = 2925244891u32; }
             else if Index == 1u32 { Word = 3665714992u32; }
@@ -113,7 +113,7 @@ export fn Publisherˉmetadataˉrequestˉforˉvariant(
         Mainˉoffset = 1178u32;
     }
     if Variant == 2u32 {
-        Moduleˉbytes = 159328u32;
+        Moduleˉbytes = 159770u32;
         Mainˉoffset = 0u32;
         Beginˉoffset = 5475u32;
         Applyˉoffset = 4686u32;

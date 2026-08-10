@@ -1,0 +1,146 @@
+module Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories profile portable;
+
+export record Hˉcontrolˉdirectory {
+    Valid: bool;
+    Boundaries: bytes;
+    Branches: bytes;
+}
+
+export fn Hˉlocalˉshapes(
+    Input: bytes,
+    Parameterˉtypes: u32,
+    Parameterˉcount: u32,
+    Localˉtypes: u32,
+    Localˉcount: u32
+) -> bytes {
+    var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Cursor: u32 = Parameterˉtypes;
+    var Index: u32 = 0u32;
+    while Index < Parameterˉcount {
+        let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+        var Nominal: u32 = 0u32;
+        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 {
+            Nominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        }
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉconcat(Bytesˉfromˉu8(Kind), Bytesˉfromˉu32ˉlittle(Nominal))
+        );
+        Cursor = Cursor + 1u32;
+        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 {
+            Cursor = Cursor + 4u32;
+        }
+        Index = Index + 1u32;
+    }
+
+    Cursor = Localˉtypes;
+    Index = 0u32;
+    while Index < Localˉcount {
+        let Localˉkind: u8 = Bytesˉreadˉu8(Input, Cursor);
+        var Localˉnominal: u32 = 0u32;
+        if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 {
+            Localˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        }
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉconcat(
+                Bytesˉfromˉu8(Localˉkind),
+                Bytesˉfromˉu32ˉlittle(Localˉnominal)
+            )
+        );
+        Cursor = Cursor + 1u32;
+        if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 {
+            Cursor = Cursor + 4u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Iˉcontrolˉdirectory(
+    Input: bytes,
+    Functionˉcode: u32,
+    Codeˉlength: u32
+) -> Hˉcontrolˉdirectory {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Boundaries: bytes = Empty;
+    var Branches: bytes = Empty;
+    var Cursor: u32 = 0u32;
+    var Previousˉopcode: u32 = 0u32;
+    while Cursor < Codeˉlength {
+        let Opcode: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Input, Functionˉcode + Cursor)
+        );
+        var Width: u32 = 1u32;
+        if Opcode == 2u32 || Opcode == 8u32 { Width = 2u32; }
+        if Opcode == 1u32 || (Opcode >= 3u32 && Opcode <= 7u32) ||
+            Opcode == 9u32 || Opcode == 10u32 || Opcode == 48u32 ||
+            Opcode == 49u32 || Opcode == 64u32 || Opcode == 65u32 ||
+            Opcode == 104u32 || Opcode == 105u32 {
+            Width = 5u32;
+        }
+        if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||
+            (Opcode >= 151u32 && Opcode <= 153u32) {
+            Width = 9u32;
+        }
+        if Width > Codeˉlength - Cursor {
+            return Hˉcontrolˉdirectory(false, Empty, Empty);
+        }
+
+        var Boundary: u8 = 1u8;
+        if Cursor > 0u32 && (Previousˉopcode == 48u32 ||
+            Previousˉopcode == 49u32 || Previousˉopcode == 81u32) {
+            Boundary = 3u8;
+        }
+        var Chunk: bytes = Bytesˉfromˉu8(Boundary);
+        if Width == 2u32 {
+            Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu8(0u8));
+        }
+        if Width == 5u32 {
+            Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu32ˉlittle(0u32));
+        }
+        if Width == 9u32 {
+            Chunk = Bytesˉconcat(
+                Chunk,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(0u32),
+                    Bytesˉfromˉu32ˉlittle(0u32)
+                )
+            );
+        }
+        Boundaries = Bytesˉconcat(Boundaries, Chunk);
+
+        if Opcode == 48u32 || Opcode == 49u32 {
+            Branches = Bytesˉconcat(
+                Branches,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Cursor),
+                    Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(
+                        Input,
+                        Functionˉcode + Cursor + 1u32
+                    ))
+                )
+            );
+        }
+        Previousˉopcode = Opcode;
+        Cursor = Cursor + Width;
+    }
+    if Cursor != Codeˉlength {
+        return Hˉcontrolˉdirectory(false, Empty, Empty);
+    }
+    if Bytesˉlength(Boundaries) != Codeˉlength {
+        return Hˉcontrolˉdirectory(false, Empty, Empty);
+    }
+    return Hˉcontrolˉdirectory(true, Boundaries, Branches);
+}
+
+export fn Iˉhasˉearlierˉpredecessor(Branches: bytes, Target: u32) -> bool {
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Branches) {
+        let Source: u32 = Bytesˉreadˉu32ˉlittle(Branches, Cursor);
+        let Branchˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Branches, Cursor + 4u32);
+        if Source < Target && Branchˉtarget == Target { return true; }
+        Cursor = Cursor + 8u32;
+    }
+    return false;
+}

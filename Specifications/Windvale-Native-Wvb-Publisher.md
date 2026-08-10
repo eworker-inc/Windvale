@@ -18,9 +18,9 @@ remain before that cutover.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB publisher WVB | 159,328 | `5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219` |
-| Native-lowered WVO | 1,292,411 | `90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493` |
-| Linked fragment | 1,290,749 | `8426d7a2c22ec6aeec642b55c0144c6f5532929a8c29200fe38298326511b5e5` |
+| WVB publisher WVB | 159,770 | `8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96` |
+| Native-lowered WVO | 1,319,377 | `edc49bbae0bfd16a38db4a08d9a6e636edfac35828e1c6b050c45d85d5e1f9e3` |
+| Linked fragment | 1,317,613 | `9003479563a043bb69113be43100289f653f6772356c48a17098c1c6700f5271` |
 
 The WVO has two sections, 44 symbols, six relocations, 1,290,512 code
 bytes, and 237 read-only-data bytes. `Main` is at offset 0. The private
@@ -44,8 +44,8 @@ Tools\Native\Construct-Wvb-Publisher.cmd <windows|linux> <output.exe|output.elf>
 
 | Target | Base bytes / SHA-256 | Final bytes / SHA-256 |
 | --- | --- | --- |
-| Windows x64 | 1,307,136 / `146149052209fcb9ef054c80c05dd315e197290f48142c057161b0e9c154e9d6` | 1,313,792 / `e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1` |
-| Linux x64 | 1,306,624 / `c2f710921da8b2f39a8f927b0054a59f00957b9cfc449a687dd600eb9e508427` | 1,311,685 / `3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72` |
+| Windows x64 | 1,333,760 / `a06095df9ab46b3816c376c2bedc6b07c8e6aff0eaf6c92ff2c2a47d9b210466` | 1,340,928 / `9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7` |
+| Linux x64 | 1,335,296 / `57cac655719571d20922bf6b3db33ec77781201ccd4dbd45fc41e14c651eb6ab` | 1,340,357 / `2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188` |
 
 The paired final applications live in
 `Artifacts/Native-Wvb-Publisher-Candidate`. Their WVB and WVO live in the

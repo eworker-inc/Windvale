@@ -59,7 +59,7 @@ verify_file() {
 
 verify_file "$hosted_toolset/SHA256SUMS" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
-verify_file "$construction/SHA256SUMS" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 'publisher construction inventory' || exit 1
+verify_file "$construction/SHA256SUMS" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a 'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 
 temporary_directory=$(mktemp -d "${TMPDIR:-/tmp}/windvale-hosted-verifier-publisher-admitter.XXXXXXXX") || exit 1

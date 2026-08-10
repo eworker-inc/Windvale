@@ -72,7 +72,12 @@ candidate applications match the independent Stage 0 writer, and the
 current-host candidate durably publishes a canonical portable WVB. The
 retained and candidate publishers still expose the same current
 compiler/build-driver semantic-verifier boundary, so self-convergence and
-front-door promotion remain open rather than being bypassed.
+front-door promotion remain open rather than being bypassed. Decision 0490
+then indexes typed-local and control-flow evidence inside the shared portable
+compiler-WVB verifier, retaining the 16-billion-instruction ceiling while
+admitting the current build driver in 8.4 seconds. The native role-2 pipeline
+reproduces the repinned Windows and Linux WVB publishers byte-for-byte without
+.NET. Dual-host qualification and front-door promotion remain open.
 
 [Decision 0457](../Decisions/0457-Normal-Path-Dotnet-Audit.md) confirms that
 ordinary build, inspect, execute, assemble, lower, link, package, publish, Probe,

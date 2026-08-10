@@ -55,8 +55,8 @@ This monotonic join avoids repeated replacement of a 250 KiB byte value.
 | Constructor WVB | 14,349 | `432cc05edc7708d96092063c2d256d01dcad19f32f934bdcf7d1515abdeefb59` |
 | Final ELF | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
 | Promoter final ELF | 680,901 | `9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0` |
-| WVB-publisher base ELF | 1,306,624 | `c2f710921da8b2f39a8f927b0054a59f00957b9cfc449a687dd600eb9e508427` |
-| WVB-publisher final ELF | 1,311,685 | `3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72` |
+| WVB-publisher base ELF | 1,335,296 | `57cac655719571d20922bf6b3db33ec77781201ccd4dbd45fc41e14c651eb6ab` |
+| WVB-publisher final ELF | 1,340,357 | `2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188` |
 
 The focused test checks the pinned WVB and base identities, service-free native
 entry, interpreter/native equality, complete final byte equality, final SHA,

@@ -51,10 +51,10 @@ case "$target_name:$output" in
             application_sha256=9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069
         fi
         if [[ $role == wvb-publisher ]]; then
-            base_bytes=1307136
-            base_sha256=146149052209fcb9ef054c80c05dd315e197290f48142c057161b0e9c154e9d6
-            application_bytes=1313792
-            application_sha256=e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1
+            base_bytes=1333760
+            base_sha256=a06095df9ab46b3816c376c2bedc6b07c8e6aff0eaf6c92ff2c2a47d9b210466
+            application_bytes=1340928
+            application_sha256=9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7
         fi
         ;;
     linux:*.elf)
@@ -88,10 +88,10 @@ case "$target_name:$output" in
             application_sha256=9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0
         fi
         if [[ $role == wvb-publisher ]]; then
-            base_bytes=1306624
-            base_sha256=c2f710921da8b2f39a8f927b0054a59f00957b9cfc449a687dd600eb9e508427
-            application_bytes=1311685
-            application_sha256=3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72
+            base_bytes=1335296
+            base_sha256=57cac655719571d20922bf6b3db33ec77781201ccd4dbd45fc41e14c651eb6ab
+            application_bytes=1340357
+            application_sha256=2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188
         fi
         ;;
     *)
@@ -136,13 +136,13 @@ if [[ $role == wvb-publisher ]]; then
     publisher_wvb="$construction/Wvb-Publisher.wvb"
     publisher_object="$construction/Wvb-Publisher.wvo"
     variant=2
-    publisher_wvb_bytes=159328
-    publisher_wvb_sha256=5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219
-    publisher_object_bytes=1292411
-    publisher_object_sha256=90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493
+    publisher_wvb_bytes=159770
+    publisher_wvb_sha256=8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96
+    publisher_object_bytes=1319377
+    publisher_object_sha256=edc49bbae0bfd16a38db4a08d9a6e636edfac35828e1c6b050c45d85d5e1f9e3
     native_entry=0
-    fragment_bytes=1290749
-    fragment_sha256=8426d7a2c22ec6aeec642b55c0144c6f5532929a8c29200fe38298326511b5e5
+    fragment_bytes=1317613
+    fragment_sha256=9003479563a043bb69113be43100289f653f6772356c48a17098c1c6700f5271
 fi
 service_root="$repository_root/Runtime/Windvale.Native/Consumers"
 consumer_root="$repository_root/Linker/Reference/Consumers"
@@ -180,7 +180,7 @@ check_file "$hosted_toolset/SHA256SUMS" 6927 \
     'hosted toolset inventory' || exit $?
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$construction/SHA256SUMS" 4980 \
-    f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 \
+    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
     'publisher construction inventory' || exit $?
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$publisher_wvb" "$publisher_wvb_bytes" "$publisher_wvb_sha256" \

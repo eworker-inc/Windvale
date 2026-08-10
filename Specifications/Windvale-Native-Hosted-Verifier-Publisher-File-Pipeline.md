@@ -54,11 +54,11 @@ All WVBs are built through the digest-bound native source front door.
 
 | Tool WVB | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata producer | 69,072 | `222b92872763d005b8b8dbc11819111b1acfe3506bd0c0e6e011ceee14887568` |
-| Object instantiation | 22,313 | `52b988a10c98c35946db93a0b4f2f9323e29defd7785373b5056286a40819ab9` |
-| Windows imports | 12,052 | `474388c62ab8dd60eb1d9393bd4ea58460a163933b2f2bccc3e1845b3cdbd4b6` |
-| Linux materialization | 18,198 | `fc8a981fad55ad3576053ab0fe54717d3128410ffe0f86d43585249373d78f34` |
-| Windows materialization | 21,846 | `c2720d87ce0b16a2e5681c7928ce66e988200f8dc1c5c48318376e03329c4002` |
+| Metadata producer | 69,072 | `d21b5c3733f687d0c3e3531521361a54fb25a3f0cf6b76a010a0bf9ff0603170` |
+| Object instantiation | 22,313 | `8ddd19ebc0586094ce295c53ad694dea02ae6339abe0ba3bc4415299ae3732a2` |
+| Windows imports | 12,052 | `c5bbf97454e12d7844427ce32b435445c3f4db3877c6fca630d97734373c34bd` |
+| Linux materialization | 18,198 | `5b3a1ebae5ace39f495631c9183d197870c2cfa00261fa11dd7d3ead521124bc` |
+| Windows materialization | 21,846 | `077c2fb6e0d553e97f9ef507c3b3165a08112f492898b9fcf5fbbbb893284b5b` |
 
 ## Evidence and remaining work
 

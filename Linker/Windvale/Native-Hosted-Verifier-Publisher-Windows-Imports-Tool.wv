@@ -41,7 +41,7 @@ export fn Main() -> i32 {
         if !Textˉequals(Role, "promoter") &&
             !Textˉequals(Role, "wvb-publisher") { return Usage(); }
         if Textˉequals(Role, "promoter") { Address = 679936u32; }
-        if Textˉequals(Role, "wvb-publisher") { Address = 1310720u32; }
+        if Textˉequals(Role, "wvb-publisher") { Address = 1339392u32; }
         Outputˉindex = 1u32;
     }
     var Request: bytes = Bytesˉfromˉu32ˉlittle(1380537943u32);

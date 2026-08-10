@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVB_PUBLISHER_TOOL_BYTES = 159_328;
+    private const int WVB_PUBLISHER_TOOL_BYTES = 159_770;
     private const string WVB_PUBLISHER_TOOL_SHA256 =
-        "5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219";
+        "8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96";
     private const string LINUX_WVB_PUBLISHER_STARTUP_WVO_SHA256 =
         "eee997412ced0d7edacaf39dae9c4a3c51e859dce4537045f3972be990b115a4";
     private const string LINUX_WVB_PUBLICATION_ADAPTER_WVO_SHA256 =
@@ -78,6 +78,9 @@ internal static partial class Program
                 new Sourceˉmoduleˉinput(
                     "Compiler-Wvb-Verifier-Executable-Core.wv",
                     COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE),
+                new Sourceˉmoduleˉinput(
+                    "Compiler-Wvb-Verifier-Typed-Directories.wv",
+                    COMPILER_WVB_VERIFIER_TYPED_DIRECTORIES_SOURCE),
                 new Sourceˉmoduleˉinput(
                     "Wvb-Publication-Transaction.wv",
                     WVB_PUBLICATION_TRANSACTION_SOURCE),

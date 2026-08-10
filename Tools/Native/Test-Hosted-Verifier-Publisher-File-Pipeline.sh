@@ -100,7 +100,7 @@ fail() {
 
 total=$((total + 1))
 check_file "$construction/SHA256SUMS" 4980 \
-    f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 \
+    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
@@ -170,8 +170,8 @@ check_file "$test_directory/Publisher-Promoter.bin" 658339 \
     2> "$test_directory/Wvb-Publisher-Build.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Build.err" \
     'WVB publisher source build wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvb" 159328 \
-    5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219 \
+check_file "$test_directory/Wvb-Publisher.wvb" 159770 \
+    8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96 \
     'native-built WVB publisher WVB' || fail
 cmp --silent "$construction/Wvb-Publisher.wvb" \
     "$test_directory/Wvb-Publisher.wvb" || fail
@@ -182,8 +182,8 @@ cmp --silent "$construction/Wvb-Publisher.wvb" \
     2> "$test_directory/Wvb-Publisher-Lower.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Lower.err" \
     'WVB publisher native lowering wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvo" 1292411 \
-    90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493 \
+check_file "$test_directory/Wvb-Publisher.wvo" 1319377 \
+    edc49bbae0bfd16a38db4a08d9a6e636edfac35828e1c6b050c45d85d5e1f9e3 \
     'native-lowered WVB publisher WVO' || fail
 cmp --silent "$construction/Wvb-Publisher.wvo" \
     "$test_directory/Wvb-Publisher.wvo" || fail
@@ -195,8 +195,8 @@ check_empty "$test_directory/Wvb-Publisher-Link.err" \
     'WVB publisher native link wrote a diagnostic' || fail
 grep -Fx 'entry name=Main address=0' \
     "$test_directory/Wvb-Publisher-Link.out" >/dev/null || fail
-check_file "$test_directory/Wvb-Publisher.bin" 1290749 \
-    8426d7a2c22ec6aeec642b55c0144c6f5532929a8c29200fe38298326511b5e5 \
+check_file "$test_directory/Wvb-Publisher.bin" 1317613 \
+    9003479563a043bb69113be43100289f653f6772356c48a17098c1c6700f5271 \
     'linked WVB publisher fragment' || fail
 pass 'publisher construction inventory'
 
@@ -269,10 +269,10 @@ total=$((total + 1))
     2> "$test_directory/Wvb-Publisher-Windows.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Windows.err" \
     'Windows WVB publisher construction wrote a diagnostic' || fail
-grep -Fx 'WVB publisher construction status=Valid target=windows bytes=1313792' \
+grep -Fx 'WVB publisher construction status=Valid target=windows bytes=1340928' \
     "$test_directory/Wvb-Publisher-Windows.out" >/dev/null || fail
-check_file "$test_directory/Wvb-Publisher.exe" 1313792 \
-    e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1 \
+check_file "$test_directory/Wvb-Publisher.exe" 1340928 \
+    9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7 \
     'Windows WVB publisher' || fail
 cmp --silent "$wvb_publisher_candidate/windows-x64-wvpublish.exe" \
     "$test_directory/Wvb-Publisher.exe" || fail
@@ -286,10 +286,10 @@ total=$((total + 1))
     2> "$test_directory/Wvb-Publisher-Linux.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Linux.err" \
     'Linux WVB publisher construction wrote a diagnostic' || fail
-grep -Fx 'WVB publisher construction status=Valid target=linux bytes=1311685' \
+grep -Fx 'WVB publisher construction status=Valid target=linux bytes=1340357' \
     "$test_directory/Wvb-Publisher-Linux.out" >/dev/null || fail
-check_file "$test_directory/Wvb-Publisher.elf" 1311685 \
-    3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72 \
+check_file "$test_directory/Wvb-Publisher.elf" 1340357 \
+    2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188 \
     'Linux WVB publisher' || fail
 cmp --silent "$wvb_publisher_candidate/linux-x64-wvpublish.elf" \
     "$test_directory/Wvb-Publisher.elf" || fail
@@ -405,10 +405,10 @@ total=$((total + 1))
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 4980 \
-    f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 \
+    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
     'rejected metadata input' || fail
 check_file "$test_directory/Sentinel.wvhv" 4980 \
-    f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 \
+    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
@@ -416,7 +416,7 @@ cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
 check_file "$test_directory/Sentinel.wvhr" 4980 \
-    f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 \
+    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -432,7 +432,7 @@ total=$((total + 1))
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 4980 \
-    f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 \
+    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
 

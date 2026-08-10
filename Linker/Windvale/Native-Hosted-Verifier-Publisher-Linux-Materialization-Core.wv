@@ -27,7 +27,7 @@ fn Response(Input: bytes, Status: u32) -> bytes {
 fn Envelopeˉvalid(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
     if Total != 255581u32 && Total != 681565u32 &&
-        Total != 1312349u32 { return false; }
+        Total != 1341021u32 { return false; }
     return Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1296848471u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 8u32) == Total &&
@@ -55,11 +55,11 @@ fn Inputsˉvalid(
         Outputˉbytes = 680901u32;
     }
     if Variant == 2u32 {
-        Baseˉbytes = 1306624u32;
-        Bundleˉbytes = 1293093u32;
-        Adapterˉfile = 1306624u32;
-        Adapterˉaddress = 143986688u32;
-        Outputˉbytes = 1311685u32;
+        Baseˉbytes = 1335296u32;
+        Bundleˉbytes = 1319957u32;
+        Adapterˉfile = 1335296u32;
+        Adapterˉaddress = 144015360u32;
+        Outputˉbytes = 1340357u32;
     }
     return Variant <= 2u32 &&
         Bytesˉlength(Base) == Baseˉbytes &&
@@ -117,8 +117,8 @@ fn Header(Base: bytes, Variant: u32) -> bytes {
         Adapterˉaddress = 143355904u32;
     }
     if Variant == 2u32 {
-        Adapterˉfile = 1306624u32;
-        Adapterˉaddress = 143986688u32;
+        Adapterˉfile = 1335296u32;
+        Adapterˉaddress = 144015360u32;
     }
     Result = Build.Patchˉu64(Result, 352u32, Adapterˉfile, 0u32);
     Result = Build.Patchˉu64(Result, 360u32, Adapterˉaddress, 0u32);
@@ -161,9 +161,9 @@ export fn Publisherˉlinuxˉmaterialize(Input: bytes) -> bytes {
         Outputˉbytes = 680901u32;
     }
     if Variant == 2u32 {
-        Metadataˉfile = 1304032u32;
-        Tailˉfile = 1304160u32;
-        Outputˉbytes = 1311685u32;
+        Metadataˉfile = 1332704u32;
+        Tailˉfile = 1332832u32;
+        Outputˉbytes = 1340357u32;
     }
     var Application: bytes = Header(Base, Variant);
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 64u32, 5u32));

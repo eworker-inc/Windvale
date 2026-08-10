@@ -11,13 +11,14 @@ admission of compiler-verifier profile 2 metadata. Runtime, startup, outer
 container construction, and promotion remain pending and do not reuse the
 separate `WVHB` build-driver meaning of numeric profile 2.
 
-These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one monolithic typed walk under a `u64` host meter; the WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
+These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one typed walk under a `u64` host meter. It constructs fixed-width per-function local-shape and control-boundary directories before the typed and reachability checks, avoiding repeated variable-width rescans without changing acceptance. The WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
 
 The canonical source project is [`Windvale-Compiler-Wvb-Verifier.wvproj`](../Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
 
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv` as the hosted adapter;
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv`;
-- `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv`.
+- `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv`;
+- `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv`.
 
 The semantic and executable modules are portable. Their shared `Compilerˉwvbˉverify(bytes) -> u32` entry is also consumed in-process by the [compiler build driver](Windvale-Compiler-Build-Driver.md); the standalone tool owns only arguments, file input, diagnostics, and process result mapping.
 
@@ -150,7 +151,7 @@ The package constructors retain only the zero-relocation templates plus typed pa
 
 `windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the one bounded input snapshot.
 
-The current WVB 1.11 reconstruction candidate is 1,199,104 bytes with SHA-256 `ef0e57d9c1e9d3c4da134611ac0154926c3489b5315bf0bd643fb2f468769460`.
+The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `332488305b0b178dcb713edd81f2df0b8f04455b95e03ee46aa226c69e2ee018`.
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its current corrected-backend candidate is 793,600 bytes with SHA-256 `31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c`.
 
@@ -166,7 +167,7 @@ Its current native candidate is 570,368 bytes with SHA-256
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
 
-The current WVB 1.11 reconstruction candidate is 1,200,128 bytes with SHA-256 `8a3edd4ea8d56746e37dcd49bddfb55adcf0dd8f52967d3d435867b4d7b4f938`.
+The current WVB 1.11 reconstruction candidate is 1,224,704 bytes with SHA-256 `e59a0fd2b7c959306b446e8bf387d54118b4719d9099b71f224c1ea4d34802f3`.
 
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its current corrected-backend candidate is 794,624 bytes with SHA-256 `cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e`.
 
@@ -199,7 +200,7 @@ windvale aot Windvale-Wvo-Object.wvb --target windows-x64-wvo-inspector-v1
 windvale aot Windvale-Wvo-Object.wvb --target linux-x64-wvo-inspector-v1
 ```
 
-The current canonical-source reconstruction candidate is 148,351 bytes with SHA-256 `519c32fda8d95167d54c723a35860eb80663be5f90ff12e4555ffa6031d505e6`. The digest-bound ordinary front door retains its previously qualified artifact until this candidate passes the exact-commit dual-host promotion gate.
+The current canonical-source reconstruction candidate is 148,793 bytes with SHA-256 `70bd61e78c2ddd6052adb15f24a155f006ded903ce7825d8f54adafa252b76f8`. The frozen Stage 0 compiler and qualified native build front door produce byte-identical WVBs. The digest-bound ordinary front door retains its previously qualified artifact until this candidate passes the exact-commit dual-host promotion gate.
 
 The publisher admitter has no Stage 0 CLI target. Its paired candidates are
 constructed by `Construct-Hosted-Verifier-Publisher-Admitter.cmd` and `.sh`

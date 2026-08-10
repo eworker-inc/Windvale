@@ -32,9 +32,9 @@ The header is followed by all `u32` `WVPT` addresses, startup WVO, adapter
 WVO, and SHA WVO. The first address binds startup-run; remaining addresses
 bind adapter imports in WVO symbol order. Windows uses 44 targets and
 role-specific adapter/SHA addresses: 243,600/248,896 for the publisher,
-669,248/674,544 for the promoter, or 1,301,616/1,306,912 for the WVB
+669,248/674,544 for the promoter, or 1,328,480/1,333,776 for the WVB
 publisher. Linux uses 27 targets and 142,929,920/142,933,296,
-143,355,904/143,359,280, or 143,986,688/143,990,064. A zero external address
+143,355,904/143,359,280, or 144,015,360/144,018,736. A zero external address
 rejects.
 
 ## Instantiation rules

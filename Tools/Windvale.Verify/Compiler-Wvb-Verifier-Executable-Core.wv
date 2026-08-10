@@ -1,5 +1,7 @@
 module Windvaleˉcompilerˉwvbˉverifierˉexecutable profile portable;
 
+import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Typedˉdirectories;
+
 record Hˉoperationˉstate {
     Valid: bool;
     Stack: bytes;
@@ -609,6 +611,18 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
         Functionˉcursor = Functionˉcursor + 12u32;
         if Declaredˉmaximum > 4096u32 { return Invalid; }
 
+        let Localˉshapes: bytes = Typedˉdirectories.Hˉlocalˉshapes(
+            Input,
+            Parameterˉtypes,
+            Parameterˉcount,
+            Localˉtypes,
+            Localˉcount
+        );
+        if Bytesˉlength(Localˉshapes) !=
+            (Parameterˉcount + Localˉcount) * 5u32 {
+            return Invalid;
+        }
+
         let Functionˉcode: u32 = Code + Functionˉcodeˉoffset;
         var Cursor: u32 = 0u32;
         var Previousˉopcode: u32 = 0u32;
@@ -670,25 +684,14 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Input,
                     Functionˉcode + Cursor + 1u32
                 );
-                var Wantedˉshape: u32 = Parameterˉtypes;
-                var Wantedˉindex: u32 = Localˉindex;
-                if Localˉindex >= Parameterˉcount {
-                    Wantedˉshape = Localˉtypes;
-                    Wantedˉindex = Localˉindex - Parameterˉcount;
-                }
-                Shapeˉindex = 0u32;
-                while Shapeˉindex < Wantedˉindex {
-                    Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Wantedˉshape));
-                    Wantedˉshape = Wantedˉshape + 1u32;
-                    if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
-                        Wantedˉshape = Wantedˉshape + 4u32;
-                    }
-                    Shapeˉindex = Shapeˉindex + 1u32;
-                }
-                Pushˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Wantedˉshape));
-                if Pushˉkind == 7u32 || Pushˉkind == 8u32 || Pushˉkind == 11u32 {
-                    Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Wantedˉshape + 1u32);
-                }
+                let Wantedˉshape: u32 = Localˉindex * 5u32;
+                Pushˉkind = U32ˉfromˉu8(
+                    Bytesˉreadˉu8(Localˉshapes, Wantedˉshape)
+                );
+                Pushˉnominal = Bytesˉreadˉu32ˉlittle(
+                    Localˉshapes,
+                    Wantedˉshape + 1u32
+                );
                 Hasˉpush = true;
                 Handled = true;
             }
@@ -697,25 +700,14 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Input,
                     Functionˉcode + Cursor + 1u32
                 );
-                var Storedˉshape: u32 = Parameterˉtypes;
-                var Storedˉindex: u32 = Storedˉlocalˉindex;
-                if Storedˉlocalˉindex >= Parameterˉcount {
-                    Storedˉshape = Localˉtypes;
-                    Storedˉindex = Storedˉlocalˉindex - Parameterˉcount;
-                }
-                Shapeˉindex = 0u32;
-                while Shapeˉindex < Storedˉindex {
-                    Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Storedˉshape));
-                    Storedˉshape = Storedˉshape + 1u32;
-                    if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
-                        Storedˉshape = Storedˉshape + 4u32;
-                    }
-                    Shapeˉindex = Shapeˉindex + 1u32;
-                }
-                Firstˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Storedˉshape));
-                if Firstˉkind == 7u32 || Firstˉkind == 8u32 || Firstˉkind == 11u32 {
-                    Firstˉnominal = Bytesˉreadˉu32ˉlittle(Input, Storedˉshape + 1u32);
-                }
+                let Storedˉshape: u32 = Storedˉlocalˉindex * 5u32;
+                Firstˉkind = U32ˉfromˉu8(
+                    Bytesˉreadˉu8(Localˉshapes, Storedˉshape)
+                );
+                Firstˉnominal = Bytesˉreadˉu32ˉlittle(
+                    Localˉshapes,
+                    Storedˉshape + 1u32
+                );
                 Popˉcount = 1u32;
                 Handled = true;
             }
@@ -1148,6 +1140,13 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
 
         let Controlˉfunctionˉcode: u32 = Controlˉcode
             + Controlˉfunctionˉcodeˉoffset;
+        let Controlˉdirectory: Typedˉdirectories.Hˉcontrolˉdirectory =
+            Typedˉdirectories.Iˉcontrolˉdirectory(
+                Input,
+                Controlˉfunctionˉcode,
+                Controlˉfunctionˉcodeˉlength
+            );
+        if !Controlˉdirectory.Valid { return Controlˉinvalid; }
         var Controlˉcursor: u32 = 0u32;
         var Controlˉpreviousˉopcode: u32 = 0u32;
         while Controlˉcursor < Controlˉfunctionˉcodeˉlength {
@@ -1159,71 +1158,12 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                 if Controlˉpreviousˉopcode == 81u32 {
                     Controlˉneedsˉpredecessor = true;
                 }
-                if Controlˉneedsˉpredecessor {
-                    var Controlˉhasˉpredecessor: bool = false;
-                    var Controlˉpredecessorˉscan: u32 = 0u32;
-                    var Controlˉpredecessorˉopcode: u32 = 0u32;
-                    var Controlˉpredecessorˉwidth: u32 = 1u32;
-                    while Controlˉpredecessorˉscan < Controlˉcursor {
-                        Controlˉpredecessorˉopcode = U32ˉfromˉu8(
-                            Bytesˉreadˉu8(
-                                Input,
-                                Controlˉfunctionˉcode
-                                    + Controlˉpredecessorˉscan
-                            )
-                        );
-                        Controlˉpredecessorˉwidth = 1u32;
-                        if Controlˉpredecessorˉopcode == 2u32 { Controlˉpredecessorˉwidth = 2u32; }
-                        if Controlˉpredecessorˉopcode == 8u32 { Controlˉpredecessorˉwidth = 2u32; }
-                        if Controlˉpredecessorˉopcode == 1u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 3u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 4u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 5u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 6u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 7u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 9u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 10u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 48u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 49u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 64u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 65u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 104u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 105u32 { Controlˉpredecessorˉwidth = 5u32; }
-                        if Controlˉpredecessorˉopcode == 106u32 { Controlˉpredecessorˉwidth = 9u32; }
-                        if Controlˉpredecessorˉopcode == 128u32 { Controlˉpredecessorˉwidth = 9u32; }
-                        if Controlˉpredecessorˉopcode == 129u32 { Controlˉpredecessorˉwidth = 9u32; }
-                        if Controlˉpredecessorˉopcode >= 151u32 &&
-                            Controlˉpredecessorˉopcode <= 153u32 {
-                            Controlˉpredecessorˉwidth = 9u32;
-                        }
-                        if Controlˉpredecessorˉopcode == 48u32 {
-                            if Bytesˉreadˉu32ˉlittle(
-                                Input,
-                                Controlˉfunctionˉcode
-                                    + Controlˉpredecessorˉscan
-                                    + 1u32
-                            ) == Controlˉcursor {
-                                Controlˉhasˉpredecessor = true;
-                            }
-                        }
-                        if Controlˉpredecessorˉopcode == 49u32 {
-                            if Bytesˉreadˉu32ˉlittle(
-                                Input,
-                                Controlˉfunctionˉcode
-                                    + Controlˉpredecessorˉscan
-                                    + 1u32
-                            ) == Controlˉcursor {
-                                Controlˉhasˉpredecessor = true;
-                            }
-                        }
-                        Controlˉpredecessorˉscan = Controlˉpredecessorˉscan
-                            + Controlˉpredecessorˉwidth;
-                    }
-                    if Controlˉhasˉpredecessor {
-                        Controlˉhasˉpredecessor = true;
-                    } else {
-                        return Controlˉinvalid;
-                    }
+                if Controlˉneedsˉpredecessor &&
+                    !Typedˉdirectories.Iˉhasˉearlierˉpredecessor(
+                        Controlˉdirectory.Branches,
+                        Controlˉcursor
+                    ) {
+                    return Controlˉinvalid;
                 }
             }
 
@@ -1268,51 +1208,14 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                     Input,
                     Controlˉfunctionˉcode + Controlˉcursor + 1u32
                 );
-                if Controlˉtarget != 0u32 {
-                    var Controlˉtargetˉscan: u32 = 0u32;
-                    var Controlˉtargetˉprevious: u32 = 0u32;
-                    var Controlˉtargetˉwidth: u32 = 1u32;
-                    while Controlˉtargetˉscan < Controlˉtarget {
-                        Controlˉtargetˉprevious = U32ˉfromˉu8(
-                            Bytesˉreadˉu8(
-                                Input,
-                                Controlˉfunctionˉcode + Controlˉtargetˉscan
-                            )
-                        );
-                        Controlˉtargetˉwidth = 1u32;
-                        if Controlˉtargetˉprevious == 2u32 { Controlˉtargetˉwidth = 2u32; }
-                        if Controlˉtargetˉprevious == 8u32 { Controlˉtargetˉwidth = 2u32; }
-                        if Controlˉtargetˉprevious == 1u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 3u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 4u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 5u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 6u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 7u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 9u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 10u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 48u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 49u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 64u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 65u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 104u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 105u32 { Controlˉtargetˉwidth = 5u32; }
-                        if Controlˉtargetˉprevious == 106u32 { Controlˉtargetˉwidth = 9u32; }
-                        if Controlˉtargetˉprevious == 128u32 { Controlˉtargetˉwidth = 9u32; }
-                        if Controlˉtargetˉprevious == 129u32 { Controlˉtargetˉwidth = 9u32; }
-                        if Controlˉtargetˉprevious >= 151u32 &&
-                            Controlˉtargetˉprevious <= 153u32 {
-                            Controlˉtargetˉwidth = 9u32;
-                        }
-                        Controlˉtargetˉscan = Controlˉtargetˉscan
-                            + Controlˉtargetˉwidth;
-                    }
-                    if Controlˉtargetˉprevious != 48u32 {
-                        if Controlˉtargetˉprevious != 49u32 {
-                            if Controlˉtargetˉprevious != 81u32 {
-                                return Controlˉinvalid;
-                            }
-                        }
-                    }
+                if Controlˉtarget >= Controlˉfunctionˉcodeˉlength {
+                    return Controlˉinvalid;
+                }
+                if Controlˉtarget != 0u32 && Bytesˉreadˉu8(
+                    Controlˉdirectory.Boundaries,
+                    Controlˉtarget
+                ) != 3u8 {
+                    return Controlˉinvalid;
                 }
             }
 

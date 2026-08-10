@@ -27,7 +27,7 @@ set "Result=1"
 set "Phase=initialization"
 
 set /a Total+=1
-call :check_file "%Construction%\SHA256SUMS" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "construction inventory"
+call :check_file "%Construction%\SHA256SUMS" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :check_digest "%Construction%\%%I" %%H "construction artifact"
@@ -92,7 +92,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Build.err" "WVB publisher source build wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 159328 5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219 "native-built WVB publisher WVB"
+call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 159770 8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96 "native-built WVB publisher WVB"
 if errorlevel 1 goto :failed
 fc /b "%Construction%\Wvb-Publisher.wvb" "%TestDirectory%\Wvb-Publisher.wvb" >nul
 if errorlevel 1 goto :failed
@@ -103,7 +103,7 @@ call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Lower.err" "WVB publisher native lowering wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 1292411 90b309f903219edb4db02cb3c7a909e173505f4c459376e473bf9f8c1cbd9493 "native-lowered WVB publisher WVO"
+call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 1319377 edc49bbae0bfd16a38db4a08d9a6e636edfac35828e1c6b050c45d85d5e1f9e3 "native-lowered WVB publisher WVO"
 if errorlevel 1 goto :failed
 fc /b "%Construction%\Wvb-Publisher.wvo" "%TestDirectory%\Wvb-Publisher.wvo" >nul
 if errorlevel 1 goto :failed
@@ -113,7 +113,7 @@ call :check_empty "%TestDirectory%\Wvb-Publisher-Link.err" "WVB publisher native
 if errorlevel 1 goto :failed
 findstr /b /c:"entry name=Main address=0" "%TestDirectory%\Wvb-Publisher-Link.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.bin" 1290749 8426d7a2c22ec6aeec642b55c0144c6f5532929a8c29200fe38298326511b5e5 "linked WVB publisher fragment"
+call :check_file "%TestDirectory%\Wvb-Publisher.bin" 1317613 9003479563a043bb69113be43100289f653f6772356c48a17098c1c6700f5271 "linked WVB publisher fragment"
 if errorlevel 1 goto :failed
 call :pass "publisher construction inventory"
 
@@ -178,9 +178,9 @@ call "%RepositoryRoot%\Tools\Native\Construct-Wvb-Publisher.cmd" windows "%TestD
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Windows.err" "Windows WVB publisher construction wrote a diagnostic"
 if errorlevel 1 goto :failed
-findstr /x /c:"WVB publisher construction status=Valid target=windows bytes=1313792" "%TestDirectory%\Wvb-Publisher-Windows.out" >nul
+findstr /x /c:"WVB publisher construction status=Valid target=windows bytes=1340928" "%TestDirectory%\Wvb-Publisher-Windows.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.exe" 1313792 e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1 "Windows WVB publisher"
+call :check_file "%TestDirectory%\Wvb-Publisher.exe" 1340928 9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7 "Windows WVB publisher"
 if errorlevel 1 goto :failed
 fc /b "%WvbPublisherCandidate%\windows-x64-wvpublish.exe" "%TestDirectory%\Wvb-Publisher.exe" >nul
 if errorlevel 1 goto :failed
@@ -193,9 +193,9 @@ call "%RepositoryRoot%\Tools\Native\Construct-Wvb-Publisher.cmd" linux "%TestDir
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Linux.err" "Linux WVB publisher construction wrote a diagnostic"
 if errorlevel 1 goto :failed
-findstr /x /c:"WVB publisher construction status=Valid target=linux bytes=1311685" "%TestDirectory%\Wvb-Publisher-Linux.out" >nul
+findstr /x /c:"WVB publisher construction status=Valid target=linux bytes=1340357" "%TestDirectory%\Wvb-Publisher-Linux.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.elf" 1311685 3bb76b7ab4f5f5a00d9f949e70a65d49aac7b0973856e6a6148f2a9a5ca38c72 "Linux WVB publisher"
+call :check_file "%TestDirectory%\Wvb-Publisher.elf" 1340357 2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188 "Linux WVB publisher"
 if errorlevel 1 goto :failed
 fc /b "%WvbPublisherCandidate%\linux-x64-wvpublish.elf" "%TestDirectory%\Wvb-Publisher.elf" >nul
 if errorlevel 1 goto :failed
@@ -293,9 +293,9 @@ call :check_empty "%TestDirectory%\Reject.out" "metadata rejection wrote standar
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "metadata rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "rejected metadata input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a "rejected metadata input"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhv" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "preserved metadata destination"
+call :check_file "%TestDirectory%\Sentinel.wvhv" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a "preserved metadata destination"
 if errorlevel 1 goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhr" >nul || goto :failed
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TestDirectory%\Invalid.wvsq" "%TestDirectory%\Sentinel.wvhr" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
@@ -304,7 +304,7 @@ call :check_empty "%TestDirectory%\Reject.out" "runtime rejection wrote standard
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "runtime rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhr" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "preserved runtime destination"
+call :check_file "%TestDirectory%\Sentinel.wvhr" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a "preserved runtime destination"
 if errorlevel 1 goto :failed
 call :pass "base tools reject malformed input and preserve destinations"
 
@@ -317,7 +317,7 @@ call :check_empty "%TestDirectory%\Alias.out" "alias rejection wrote standard ou
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Alias.err" "alias rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4980 f04c7378a0612b3274aaf9134eca51063a70df12dbd066cd3288b85bae8def36 "preserved alias input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a "preserved alias input"
 if errorlevel 1 goto :failed
 call :pass "base tools reject exact path aliases"
 

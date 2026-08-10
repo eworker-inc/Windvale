@@ -41,14 +41,14 @@ The exact request identities are:
 | ---: | --- | --- |
 | `0`, publisher | `4533fb4c90bab03d5aeb39f6bd8943424f228fb66846d467d333c182d2a2b8f2` | `a285e192992a5239495fc4046cc59390504ffefbe1ab7b863da2d370e615c500` |
 | `1`, promoter | `144199ee91341765488cf33a50d8e80d036442cc155bba7863f78be6e746f749` | `560569d3d2282e3722d2624196b2bcb16062d65313d9235e3a7fc718c67123e9` |
-| `2`, WVB publisher | `80f7bbfffea3867f9678ebfa1d6ded35746f3e365c45b35b2a1deb5496cb16d1` | `d019558520acb30852f364e7401e47f500cd12c6d1181aa0ced7896a100ff489` |
+| `2`, WVB publisher | `b1b2ec7af1319a329489f9e6c5a13183039243df66e8cc8f8d2f2a548f21c638` | `db7d65bcfb240904377d96578ca56d9981575e66643b0838fae9811f923ac2a9` |
 
 Variant 0 admits the 29,170-byte publisher WVB at SHA-256
 `77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f`.
 Variant 1 admits the 41,268-byte promoter WVB at SHA-256
 `30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9`.
-Variant 2 admits the 159,328-byte WVB publisher at SHA-256
-`5da26ddb18cdb6511cb6c28b9603e79c7d318696a5371ca4410db47be7bcb219`.
+Variant 2 admits the 159,770-byte WVB publisher at SHA-256
+`8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96`.
 All three roles admit the unchanged target startup WVO: Windows 168 bytes at
 `bb136af0382b2f72efc8a07f58fb2368319fce7c119bc7bbfa1b94da6ded9367`
 or Linux 164 bytes at
@@ -86,8 +86,8 @@ wvhostverifierproducemetadata [role:0|1|2] <target:1|2> <module.wvb> <startup.wv
 ## Ownership and evidence
 
 The focused Windvale source files separate admission, construction, and the
-byte-input bridge. The packaged metadata producer is 69,072 bytes with SHA-256
-`222b92872763d005b8b8dbc11819111b1acfe3506bd0c0e6e011ceee14887568`.
+byte-input bridge. The metadata-producer WVB is 69,072 bytes with SHA-256
+`d21b5c3733f687d0c3e3531521361a54fb25a3f0cf6b76a010a0bf9ff0603170`.
 
 The focused current-host test remains the recovery owner of service-free
 `Main(bytes) -> bytes`, interpreter/native equality, exact request and metadata

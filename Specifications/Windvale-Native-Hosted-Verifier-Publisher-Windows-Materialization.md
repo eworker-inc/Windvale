@@ -52,8 +52,8 @@ repeated replacement of the full 256 KiB value.
 | Constructor WVB | 17,799 | `4042ae5fdac77f9a0fce5a194c620ad0486455457904b30ce59648f5bb90d81b` |
 | Final PE | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
 | Promoter final PE | 681,472 | `9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069` |
-| WVB-publisher base PE | 1,307,136 | `146149052209fcb9ef054c80c05dd315e197290f48142c057161b0e9c154e9d6` |
-| WVB-publisher final PE | 1,313,792 | `e95676eabf80e5230d39241a9967b47bf61b4c96bddca0280ff0abb772bae1d1` |
+| WVB-publisher base PE | 1,333,760 | `a06095df9ab46b3816c376c2bedc6b07c8e6aff0eaf6c92ff2c2a47d9b210466` |
+| WVB-publisher final PE | 1,340,928 | `9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7` |
 
 The focused test checks the pinned WVB and base identities, service-free native
 entry, interpreter/native equality, complete final byte equality, final SHA,

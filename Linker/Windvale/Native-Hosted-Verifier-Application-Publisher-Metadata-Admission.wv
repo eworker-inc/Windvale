@@ -11,24 +11,24 @@ fn Allˉzero(Input: bytes, Offset: u32, Count: u32) -> bool {
 
 fn Startupˉdigestˉword(Index: u32, Target: u32, Variant: u32) -> u32 {
     if Variant == 2u32 && Target == 1u32 {
-        if Index == 0u32 { return 69008209u32; }
-        if Index == 1u32 { return 2421725397u32; }
-        if Index == 2u32 { return 4181474857u32; }
-        if Index == 3u32 { return 2258053080u32; }
-        if Index == 4u32 { return 3816439214u32; }
-        if Index == 5u32 { return 1765920015u32; }
-        if Index == 6u32 { return 4249841257u32; }
-        return 4077917040u32;
+        if Index == 0u32 { return 3346130089u32; }
+        if Index == 1u32 { return 3281903756u32; }
+        if Index == 2u32 { return 2738235936u32; }
+        if Index == 3u32 { return 2113698553u32; }
+        if Index == 4u32 { return 3823391619u32; }
+        if Index == 5u32 { return 4273014290u32; }
+        if Index == 6u32 { return 2709535465u32; }
+        return 589905937u32;
     }
     if Variant == 2u32 {
-        if Index == 0u32 { return 3429226565u32; }
-        if Index == 1u32 { return 3377513982u32; }
-        if Index == 2u32 { return 1435263034u32; }
-        if Index == 3u32 { return 2278929838u32; }
-        if Index == 4u32 { return 1785774323u32; }
-        if Index == 5u32 { return 2191289243u32; }
-        if Index == 6u32 { return 1273419612u32; }
-        return 1020119148u32;
+        if Index == 0u32 { return 2385151233u32; }
+        if Index == 1u32 { return 4186734187u32; }
+        if Index == 2u32 { return 241307273u32; }
+        if Index == 3u32 { return 1361852982u32; }
+        if Index == 4u32 { return 1437019936u32; }
+        if Index == 5u32 { return 2181250393u32; }
+        if Index == 6u32 { return 2840191171u32; }
+        return 646086525u32;
     }
     if Target == 1u32 {
         if Index == 0u32 { return 2925244891u32; }
@@ -52,14 +52,14 @@ fn Startupˉdigestˉword(Index: u32, Target: u32, Variant: u32) -> u32 {
 
 fn Moduleˉdigestˉword(Index: u32, Variant: u32) -> u32 {
     if Variant == 2u32 {
-        if Index == 0u32 { return 3681395293u32; }
-        if Index == 1u32 { return 1370934552u32; }
-        if Index == 2u32 { return 2344793628u32; }
-        if Index == 3u32 { return 2632385430u32; }
-        if Index == 4u32 { return 2525376893u32; }
-        if Index == 5u32 { return 2753312677u32; }
-        if Index == 6u32 { return 2075397441u32; }
-        return 431144167u32;
+        if Index == 0u32 { return 2656257922u32; }
+        if Index == 1u32 { return 911493647u32; }
+        if Index == 2u32 { return 3241054387u32; }
+        if Index == 3u32 { return 1815933950u32; }
+        if Index == 4u32 { return 1882309177u32; }
+        if Index == 5u32 { return 1354753853u32; }
+        if Index == 6u32 { return 3596971098u32; }
+        return 2521790058u32;
     }
     if Variant == 1u32 {
         if Index == 0u32 { return 2350836528u32; }

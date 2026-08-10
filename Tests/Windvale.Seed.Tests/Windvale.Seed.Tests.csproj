@@ -1090,6 +1090,9 @@
       Include="../../Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
       LogicalName="Windvale.Seed.Tests.Compiler-Wvb-Verifier-Executable-Core.wv" />
     <EmbeddedResource
+      Include="../../Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+      LogicalName="Windvale.Seed.Tests.Compiler-Wvb-Verifier-Typed-Directories.wv" />
+    <EmbeddedResource
       Include="../../Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv"
       LogicalName="Windvale.Seed.Tests.Compiler-Wvb-Verifier-Tool.wv" />
     <EmbeddedResource

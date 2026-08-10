@@ -27,7 +27,7 @@ release identities. It infers variant 0 (publisher), variant 1 (promoter), or
 variant 2 (WVB publisher) from the exact WVB/WVO identity pair rather than
 accepting a caller-selected variant. The canonical variant-0 totals are
 275,054 Windows bytes and 271,013 Linux bytes; variant 1 totals are 713,471 and
-709,430 bytes; variant 2 totals are 1,463,819 and 1,459,778 bytes. It prevents the
+709,430 bytes; variant 2 totals are 1,491,227 and 1,487,186 bytes. It prevents the
 structure stage from trusting paths, embedded managed resources, or a live C#
 builder.
 
@@ -47,8 +47,8 @@ relocations, 232,448 code bytes, and 288 read-only-data bytes. Startup is five
 instantiated bytes. The promoter WVO is 660,123 bytes with two sections, 49
 symbols, three relocations, 658,160 code bytes, 179 read-only-data bytes, and
 native `Main` at offset 1,178; its transaction offsets remain 789 and 0. The
-WVB-publisher WVO is 1,292,411 bytes with two sections, 44 symbols, six
-relocations, 1,290,512 code bytes, and 237 read-only-data bytes. Its native
+WVB-publisher WVO is 1,319,377 bytes with two sections, 47 symbols, six
+relocations, 1,317,376 code bytes, and 237 read-only-data bytes. Its native
 `Main` is 0, transaction begin is 5,475, and transaction apply is 4,686.
 Windows adapter geometry is 5,286 code bytes, 46 symbols, 111 relocations, 43
 imports, and export offset 251; Linux is 3,363, 28, 49, 26, and 60. The shared
@@ -89,12 +89,12 @@ Role-2 WVB-publisher placements are:
 
 | Field | Windows | Linux |
 | --- | ---: | ---: |
-| Bundle bytes | 1,293,410 | 1,293,093 |
-| Adapter file/address | 1,298,032 / 1,301,616 | 1,306,624 / 143,986,688 |
-| SHA file/address | 1,303,328 / 1,306,912 | 1,310,000 / 143,990,064 |
-| `WVPB` file/address | 1,310,688 / 1,316,320 | 1,304,032 / 1,304,032 |
-| Final bytes | 1,313,792 | 1,311,685 |
-| Image end | 145,051,648 | 143,991,749 |
+| Bundle bytes | 1,320,274 | 1,319,957 |
+| Adapter file/address | 1,324,896 / 1,328,480 | 1,335,296 / 144,015,360 |
+| SHA file/address | 1,330,192 / 1,333,776 | 1,338,672 / 144,018,736 |
+| `WVPB` file/address | 1,337,824 / 1,344,992 | 1,332,704 / 1,332,704 |
+| Final bytes | 1,340,928 | 1,340,357 |
+| Image end | 145,080,320 | 144,020,421 |
 
 Windows mutation flags require startup replacement, metadata, adapter, SHA,
 the 4,096-byte 17-function import page, and shifted data/relocation sections.

@@ -117,12 +117,12 @@ internal static partial class Program
     private const string SOURCE_WVB_TOOL_LINUX_METADATA_SHA256 = "499ae95f433ab3fc925ef66f599d3198b7a60f633e4e88e37f6e7256654283ab";
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "d526b0214aa3c331808b5c4db6afa38da55c105fb20c52a0c65a1dca259c4612";
     private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "b2dc418a95c79802e2804433f77f779f17ca40033840e02e28417430df21178d";
-    private const string COMPILER_WVB_VERIFIER_SHA256 = "519c32fda8d95167d54c723a35860eb80663be5f90ff12e4555ffa6031d505e6";
-    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "ef0e57d9c1e9d3c4da134611ac0154926c3489b5315bf0bd643fb2f468769460";
-    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "8a3edd4ea8d56746e37dcd49bddfb55adcf0dd8f52967d3d435867b4d7b4f938";
-    private const string COMPILER_BUILD_DRIVER_SHA256 = "3829c63064a8c055940a2e4d606f17dfa6f692f6deb049d7a1406003bc86ea50";
-    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "a6e7d312aeb06b5103aafa840556f2166842ec68728d505a7db02f6bf7a9f73a";
-    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "8e4ab2ec3c5f8062f0c7dcccc431543dccd878b88daf9046f83051752fc000e9";
+    private const string COMPILER_WVB_VERIFIER_SHA256 = "70bd61e78c2ddd6052adb15f24a155f006ded903ce7825d8f54adafa252b76f8";
+    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "332488305b0b178dcb713edd81f2df0b8f04455b95e03ee46aa226c69e2ee018";
+    private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "e59a0fd2b7c959306b446e8bf387d54118b4719d9099b71f224c1ea4d34802f3";
+    private const string COMPILER_BUILD_DRIVER_SHA256 = "76947c7eeca769cf912c695887b2f1446ee9344790b654acc6832c8ced163b10";
+    private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "4c3c79f704b14ad96a7160db4acfdcca5763ae87120fc534ca71801cd69378ec";
+    private const string COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256 = "53a46d8f8773c6ebd5061c46ecc62a57c408653f913869bff6981157e2d25f72";
     private const string SOURCE_WVB_DATA_AND_TEXT_SHA256 = "8ff9b57819fae8bd027a8a294f51797160821be57cb3f29c7a97ab9f2685b3cc";
     private const string SOURCE_WVB_HOSTED_CAPABILITIES_SHA256 = "bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f";
     private const string SOURCE_WVB_COMPOSITION_SHA256 = "42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5";
@@ -1195,6 +1195,10 @@ internal static partial class Program
 
     private static readonly string COMPILER_WVB_VERIFIER_EXECUTABLE_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Compiler-Wvb-Verifier-Executable-Core.wv");
+
+    private static readonly string COMPILER_WVB_VERIFIER_TYPED_DIRECTORIES_SOURCE =
+        Readˉembeddedˉsource(
+            "Windvale.Seed.Tests.Compiler-Wvb-Verifier-Typed-Directories.wv");
 
     private static readonly string COMPILER_WVB_VERIFIER_TOOL_SOURCE = Readˉembeddedˉsource(
         "Windvale.Seed.Tests.Compiler-Wvb-Verifier-Tool.wv");
@@ -10379,6 +10383,9 @@ internal static partial class Program
                 new(
                     "Compiler-Wvb-Verifier-Semantic-Core.wv",
                     COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
+                new(
+                    "Compiler-Wvb-Verifier-Typed-Directories.wv",
+                    COMPILER_WVB_VERIFIER_TYPED_DIRECTORIES_SOURCE),
             ]);
         if (!Compilation.Success)
         {
@@ -10388,7 +10395,7 @@ internal static partial class Program
         }
 
         var Verifierˉbytes = Compilation.Moduleˉbytes.ToArray();
-        Equal(148_351, Verifierˉbytes.Length);
+        Equal(148_793, Verifierˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_SHA256,
             Objectˉdigest.Calculateˉsha256(Verifierˉbytes));
@@ -10460,7 +10467,7 @@ internal static partial class Program
             Windowsˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(1_199_104, Firstˉwindows.Imageˉbytes.Length);
+        Equal(1_226_240, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -10481,7 +10488,7 @@ internal static partial class Program
             Linuxˉbundle,
             Nativeˉentry);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(1_200_128, Firstˉlinux.Imageˉbytes.Length);
+        Equal(1_224_704, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));
@@ -10761,11 +10768,16 @@ internal static partial class Program
             Directory.Delete(Directoryˉpath, recursive: true);
         }
 
-        Compilerˉbuildˉdriverˉpackages(compilerˉfragment);
+        Compilerˉbuildˉdriverˉpackages(
+            compilerˉfragment,
+            OperatingSystem.IsWindows()
+                ? Firstˉwindows.Imageˉbytes
+                : Firstˉlinux.Imageˉbytes);
     }
 
     private static void Compilerˉbuildˉdriverˉpackages(
-        Nativeˉfragment compilerˉfragment)
+        Nativeˉfragment compilerˉfragment,
+        ImmutableArray<byte> verifierˉapplication)
     {
         static (int Exitˉcode, string Standardˉoutput, string Standardˉerror) Executeˉtool(
             params string[] arguments)
@@ -10804,11 +10816,49 @@ internal static partial class Program
                 new(
                     "Compiler-Wvb-Verifier-Semantic-Core.wv",
                     COMPILER_WVB_VERIFIER_SEMANTIC_SOURCE),
+                new(
+                    "Compiler-Wvb-Verifier-Typed-Directories.wv",
+                    COMPILER_WVB_VERIFIER_TYPED_DIRECTORIES_SOURCE),
             ]);
-        Equal(1_100_882, Driverˉbytes.Length);
+        Equal(1_101_328, Driverˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_SHA256,
             Objectˉdigest.Calculateˉsha256(Driverˉbytes));
+
+        var Verifierˉdirectory = Path.Combine(
+            Path.GetTempPath(),
+            $"windvale-build-driver-verifier-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Verifierˉdirectory);
+        try
+        {
+            var Driverˉpath = Path.Combine(Verifierˉdirectory, "Compiler-Build-Driver.wvb");
+            File.WriteAllBytes(Driverˉpath, Driverˉbytes);
+            if (OperatingSystem.IsWindows())
+            {
+                Equal(
+                    0,
+                    Executeˉwindowsˉapplication(
+                        verifierˉapplication,
+                        "wvb status=Valid profile=compiler-aligned\n",
+                        [Driverˉpath],
+                        timeoutˉmilliseconds: 600_000));
+            }
+            if (OperatingSystem.IsLinux())
+            {
+                Equal(
+                    0,
+                    Executeˉlinuxˉapplication(
+                        verifierˉapplication,
+                        "wvb status=Valid profile=compiler-aligned\n",
+                        [Driverˉpath],
+                        timeoutˉmilliseconds: 600_000));
+            }
+        }
+        finally
+        {
+            Directory.Delete(Verifierˉdirectory, recursive: true);
+        }
+
         var Driverˉmodule = Moduleˉcodec.Readˉandˉverify(Driverˉbytes);
         Equal("Windvaleˉcompilerˉbuildˉdriver", Driverˉmodule.Module.Name);
         Sequenceˉequal(
@@ -10869,7 +10919,7 @@ internal static partial class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉwindows.Imageˉbytes, Secondˉwindows);
-        Equal(29_112_320, Firstˉwindows.Imageˉbytes.Length);
+        Equal(29_138_944, Firstˉwindows.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉwindows.Imageˉbytes.AsSpan()));
@@ -10901,7 +10951,7 @@ internal static partial class Program
             Nativeˉentry,
             Hostedˉcompilerˉapplicationˉprofile.Buildˉdriver);
         Sequenceˉequal(Firstˉlinux.Imageˉbytes, Secondˉlinux);
-        Equal(29_114_368, Firstˉlinux.Imageˉbytes.Length);
+        Equal(29_138_944, Firstˉlinux.Imageˉbytes.Length);
         Equal(
             COMPILER_BUILD_DRIVER_LINUX_APPLICATION_SHA256,
             Objectˉdigest.Calculateˉsha256(Firstˉlinux.Imageˉbytes.AsSpan()));

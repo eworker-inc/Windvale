@@ -34,7 +34,7 @@ export fn Main() -> i32 {
     let Variant: u32 = Bytesˉreadˉu32ˉlittle(Construction, 28u32);
     var Outputˉbytes: u32 = 254917u32;
     if Variant == 1u32 { Outputˉbytes = 680901u32; }
-    if Variant == 2u32 { Outputˉbytes = 1311685u32; }
+    if Variant == 2u32 { Outputˉbytes = 1340357u32; }
     if Variant > 2u32 {
         diagnostic.write_line("publisher Linux materialization status=Rejected");
         return 2;
