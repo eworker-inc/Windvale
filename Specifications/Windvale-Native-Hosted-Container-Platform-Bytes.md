@@ -50,17 +50,16 @@ semantics or new hosted metadata profile.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Platform-byte WVB | 29,793 | `3cce3e2d548be4f9304a6e6ae62355d42b2879c4fe837283fb8415ea4d715732` |
-| Windows platform-byte producer | 309,760 | `46db452f1356dadb93bf80d4a81a34cf73e02d0f45342309700b5892ea571f7b` |
-| Linux platform-byte producer | 311,296 | `cf09c62056d4960e914504779973a7227bcb2d9879c4328496adb859f83c526d` |
+| Platform-byte WVB | 30,055 | `49d4db5a310ee2bacb0bf8d78d19d040c25ea319291e39dfc98c1ea525449faf` |
+| Windows platform-byte producer | 310,784 | `875f3b2241a2c542c74b102babd1fad0af00c3fea003a6f4b06a6c8e24d8cd6c` |
+| Linux platform-byte producer | 311,296 | `3412d50a5edffa86e84f4dbe4360ff7f9130de96445ff5cee451dcc88ab9bc74` |
 
-These identities are the last measured candidate snapshot. Decision 0491 changes
-the profile-2 layout plus the shared startup/file-input bundle; reconstructing and
-repinning this WVB and both applications is explicitly deferred to the current
-candidate-toolset slice. The preceding focused current-host evidence built the
-public CLI target, executed a real plan without loading .NET, matched the retained
-platform fragment byte-for-byte, preserved an existing output on rejection, and
-rejected an input/output alias.
+Decision 0492 reconstructs and repins these current candidate identities after
+the Decision 0491 profile-2 layout and shared startup/file-input changes. The
+preceding focused current-host evidence built the public CLI target, executed a
+real plan without loading .NET, matched the retained platform fragment
+byte-for-byte, preserved an existing output on rejection, and rejected an
+input/output alias. Independent Linux execution and grouped qualification remain.
 
 ## Retirement boundary
 

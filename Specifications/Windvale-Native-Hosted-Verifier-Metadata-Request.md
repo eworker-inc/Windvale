@@ -58,19 +58,19 @@ Windows and Linux, compares each request byte for byte with the frozen C#
 oracle, and covers thirteen malformed evidence cases. C# does not compile the
 production module and remains differential evidence only.
 
-The hosted request wrapper is an exact 17,204-byte native-built WVB with
+The hosted request wrapper is an exact 17,319-byte native-built WVB with
 SHA-256
-`c5aeb2ff6f50760bd01843d43a307fb23988d9fe6c8865b4c549d21f52486f25`.
+`e7ecb1251664430055fc26bb70371065b72ff988532af8e0897fb2acae406048`.
 It accepts two distinct resource names, reads `WVVE`, requires the exact
 successful `WVVD` response, and writes only the 384-byte request.
 
 Its recovery-only retained targets are
 `windows-x64-hosted-verifier-metadata-request-v1` and
 `linux-x64-hosted-verifier-metadata-request-v1`. Their exact applications are
-187,904-byte Windows SHA-256
-`dc42cd573e26ba8617a7323089f2c140f0488ec0cb3b9a6e4b77d5c4d7fbd4d5`
+188,928-byte Windows SHA-256
+`4888d4c5252164e4a2637f78dadb5e1228044ac6834525f3cd00fb3a6bbe0b0e`
 and 188,416-byte Linux SHA-256
-`cfd0071c3d103ca0feedb33370b81bc3edb0b41e8bb95ee9744d1b53342fb6bd`.
+`3827deb66f8bb15585e02ba7e2e01a217cc9375eb05ade4c70a91930b0af8803`.
 The C# writer owns only deletion-bound recovery target/identity wiring.
 [Decision 0466](../Documents/Decisions/0466-Native-WVHV-Request-Container-Reconstruction.md)
 adds exact native reconstruction of both products; independent Linux execution

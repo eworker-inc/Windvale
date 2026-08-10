@@ -66,8 +66,8 @@ does not load .NET when packaged as a native application.
 
 ## Exact candidate identity and evidence
 
-The admission WVB is 31,271 bytes at SHA-256
-`6ce0c3a4bf48b6d0db4c50574805655777be93f6a10555a4d423947b00bd0018`.
+The admission WVB is 31,837 bytes at SHA-256
+`76af0586a964ec5b29f5f9ef06b67d3d5dcae1423672e03a7bacc4e7b0240747`.
 It reconstructs byte-for-byte through the native Project 1 front door.
 
 The focused current-host test admits a real hosted-container segment set,
@@ -111,14 +111,17 @@ durable-transaction invocation. The 14-line hosted policy entries select
 ordinals `3,5,7...`, stride two, the 40-byte skip, and the hosted validator.
 Decision 0393 packages the admission root with those shells, the existing
 validator, the shared native publication-state object, and the durable
-transactions. The exact Windows application is 379,904 bytes at SHA-256
-`823b9ed3bafdb4a8cb8e5a5a3fe4c9d834f6702771766add5fbf439d8d5d2b37`;
-the Linux application is 377,789 bytes at SHA-256
-`5d8eb97eff9c18e91f1dcb6d2060dd214530474ee046bc2e276e9c603262bd1b`.
+transactions. The exact Windows application is 384,000 bytes at SHA-256
+`0c53e8b9b74119d4fd8711c974a9f168e74d1e2b49ec3746eff4cdbdecf5b0ae`;
+the Linux application is 381,885 bytes at SHA-256
+`347a3e5cea46c80618648bd1d0383a0ebb8d1a11819ecfff776005b4e49e3fdb`.
 Decision 0422 makes the Linux hosted policy select exact mode `0755` while the
 shared staged-WVO policy retains `0600`; the reusable transaction admits only
 those two values and creates the private sibling in its final mode before
-atomic replacement. Native reconstruction of the Stage 0 host-package layout,
-promotion, and grouped qualification remain. GitHub run
+atomic replacement. Decision 0492 repins the current applications after the
+shared startup and file-input changes. Native reconstruction of the Stage 0
+host-package layout, promotion, and grouped qualification remain. Historical
+GitHub run
 [`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
-supplies the paired Windows/Debian execution evidence for this publisher.
+supplies paired Windows/Debian execution evidence for the preceding publisher
+identities; it does not qualify the Decision 0492 applications.

@@ -55,9 +55,9 @@ The application declares exactly `console.write_line`,
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Container-segment request WVB | 44,543 | `09802f31927bc3120476001ff3733c15dcf3072537c109f3b044b170cee8b27f` |
-| Windows application | 523,264 | `f9c2236f747d3737567681dacf5335ea06e412186255c3cd205bc45b7b6f42e6` |
-| Linux application | 524,288 | `f53bdff4f3e00c373a4f82c43266bada4f699d3776a4657e1de4558ea0b5dd2f` |
+| Container-segment request WVB | 45,109 | `ae47ede7efb28af2a17c1c1530035e5fd9b1cc1f4d4ba416801b61d8f3d1da89` |
+| Windows application | 526,848 | `b9477d3fb5206bb5df4a4e8ee4f48b081ef201d667edda99854cb857dd62c2d7` |
+| Linux application | 528,384 | `34026f3f03bbda40ebf5be08f0ca0d2a9e9f1bf13abc29e0db6e81e837884f38` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring.

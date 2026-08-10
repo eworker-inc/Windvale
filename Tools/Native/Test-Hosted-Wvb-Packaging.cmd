@@ -23,7 +23,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Valid.err" "valid packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Valid.exe" 236032 eeec7c229b20ac006ed366849c91e2f03e035a9e3ee29da2e9aeb408c76b2709 "valid package"
+call :check_file "%TestDirectory%\Valid.exe" 236032 d8b10130bc946261526ee0accc9fcbd42dbe2a5d9fd3e4d4f349038550c8c559 "valid package"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Valid.exe" "%Toolset%\windows-x64\wvhostcontrol.exe" >nul
 if errorlevel 1 (
@@ -40,7 +40,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Cross-Target.err" "cross-target packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Cross-Target.elf" 237568 f7b40ac03478d54bdf8fed468fdfbe52a9449159a9fb45c05da6603935e24c67 "cross-target Linux package"
+call :check_file "%TestDirectory%\Cross-Target.elf" 237568 45c8bf1163556c851db8b7fecb2556e899c816d06bd39209d65db942fea3c44a "cross-target Linux package"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Cross-Target.elf" "%Toolset%\linux-x64\wvhostcontrol.elf" >nul
 if errorlevel 1 (
@@ -57,7 +57,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Verifier-Request.err" "verifier request packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Verifier-Request.exe" 187904 dc42cd573e26ba8617a7323089f2c140f0488ec0cb3b9a6e4b77d5c4d7fbd4d5 "verifier request package"
+call :check_file "%TestDirectory%\Verifier-Request.exe" 188928 4888d4c5252164e4a2637f78dadb5e1228044ac6834525f3cd00fb3a6bbe0b0e "verifier request package"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Verifier-Request.exe" "%Toolset%\windows-x64\wvhostverifierrequest.exe" >nul
 if errorlevel 1 (
@@ -74,7 +74,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Verifier-Request-Linux.err" "cross-target verifier request packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Verifier-Request.elf" 188416 cfd0071c3d103ca0feedb33370b81bc3edb0b41e8bb95ee9744d1b53342fb6bd "cross-target verifier request package"
+call :check_file "%TestDirectory%\Verifier-Request.elf" 188416 3827deb66f8bb15585e02ba7e2e01a217cc9375eb05ade4c70a91930b0af8803 "cross-target verifier request package"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Verifier-Request.elf" "%Toolset%\linux-x64\wvhostverifierrequest.elf" >nul
 if errorlevel 1 (
@@ -94,9 +94,9 @@ if not errorlevel 1 (
     >&2 echo FAIL  hosted packaging: invalid WVB was accepted
     goto :failed
 )
-call :check_file "%TestDirectory%\Destination.exe" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 "preserved destination"
+call :check_file "%TestDirectory%\Destination.exe" 6927 bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded "preserved destination"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvb" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 "preserved input"
+call :check_file "%TestDirectory%\Invalid.wvb" 6927 bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded "preserved input"
 if errorlevel 1 goto :failed
 call :check_no_scratch
 if errorlevel 1 goto :failed

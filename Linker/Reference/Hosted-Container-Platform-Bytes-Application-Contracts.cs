@@ -12,15 +12,15 @@ public static class Hostedˉcontainerˉplatformˉbytesˉapplicationˉcontract
         "linux-x64-hosted-container-platform-bytes-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉcontainerˉplatformˉbytesˉtool";
-    public const int MODULE_BYTES = 29_793;
+    public const int MODULE_BYTES = 30_055;
     public const string MODULE_SHA256 =
-        "3cce3e2d548be4f9304a6e6ae62355d42b2879c4fe837283fb8415ea4d715732";
-    public const int WINDOWS_APPLICATION_BYTES = 309_760;
+        "49d4db5a310ee2bacb0bf8d78d19d040c25ea319291e39dfc98c1ea525449faf";
+    public const int WINDOWS_APPLICATION_BYTES = 310_784;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "46db452f1356dadb93bf80d4a81a34cf73e02d0f45342309700b5892ea571f7b";
+        "875f3b2241a2c542c74b102babd1fad0af00c3fea003a6f4b06a6c8e24d8cd6c";
     public const int LINUX_APPLICATION_BYTES = 311_296;
     public const string LINUX_APPLICATION_SHA256 =
-        "cf09c62056d4960e914504779973a7227bcb2d9879c4328496adb859f83c526d";
+        "3412d50a5edffa86e84f4dbe4360ff7f9130de96445ff5cee451dcc88ab9bc74";
 }
 
 public static class Hostedˉcontainerˉplatformˉbytesˉapplicationˉwriter

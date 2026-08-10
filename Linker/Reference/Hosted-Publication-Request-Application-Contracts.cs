@@ -17,10 +17,10 @@ public static class Hostedˉpublicationˉrequestˉapplicationˉcontract
         "7d525451a92d2f0969e5c9006b43f16cd5485fe7791526e4769a920ec01ad430";
     public const int WINDOWS_APPLICATION_BYTES = 240_640;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "6d382e6d3a1442fdbf0cf46ff6cc52aabfd1bd6fed86171775d8acc1fdeef0b1";
+        "18dd309f7df8009de66f7a0a11649561443774b3569e5a1f34da5d736e203759";
     public const int LINUX_APPLICATION_BYTES = 241_664;
     public const string LINUX_APPLICATION_SHA256 =
-        "7a3c97a9e8abc36accc54e94a7abe968486ac679dd5a34b5f18b86a68ab2dd15";
+        "d2e816c7d1cb09856442173d0451bbebbdd6a393047c91f9ceca354ef2e00902";
 }
 
 public static class Hostedˉpublicationˉrequestˉapplicationˉwriter

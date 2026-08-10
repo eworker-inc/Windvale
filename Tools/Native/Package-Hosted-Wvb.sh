@@ -37,14 +37,14 @@ service_root="$repository_root/Runtime/Windvale.Native/Consumers"
 case "$target" in
     linux)
         startup="$repository_root/Linker/Reference/Consumers/Linux-X64-Hosted-Compiler.wvo"
-        startup_bytes=2390
-        startup_sha256=0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff
+        startup_bytes=2454
+        startup_sha256=1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946
         console_service="$service_root/Native-X64-Linux-Console-Output-Service.bin"
         console_service_bytes=213
         console_service_sha256=c5ea073a24c46dd634b1a67a7e7041d476dbce856d058aa8adc2c4e680d3d226
         file_input_service="$service_root/Native-X64-Linux-File-Input-Service.bin"
         file_input_service_bytes=996
-        file_input_service_sha256=55ae4524c463f064aee0964d7f9b64438701fb4375a97c53d11f2f17902c12cb
+        file_input_service_sha256=cbd78340641fa02589d0d96b73d233a67f9404ab76c3df2b1346b2e31ca43701
         diagnostic_service="$service_root/Native-X64-Linux-Diagnostic-Output-Service.bin"
         diagnostic_service_bytes=213
         diagnostic_service_sha256=1c81018143fa9b708373eaceda62722ca40fb1e11b20808f765fe5ece33406fe
@@ -54,14 +54,14 @@ case "$target" in
         ;;
     windows)
         startup="$repository_root/Linker/Reference/Consumers/Windows-X64-Hosted-Compiler.wvo"
-        startup_bytes=4334
-        startup_sha256=55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb
+        startup_bytes=4398
+        startup_sha256=dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161
         console_service="$service_root/Native-X64-Windows-Console-Output-Service.bin"
         console_service_bytes=258
         console_service_sha256=10f3a500aca7f0236cdf9f6c20658591df88bc612e677264cdaa0bcef59a0a48
         file_input_service="$service_root/Native-X64-Windows-File-Input-Service.bin"
         file_input_service_bytes=1218
-        file_input_service_sha256=3d2fffc028083cdc4cfd39e553dea603e9a1ae661bb5df3f14ca438c4d3e3cf8
+        file_input_service_sha256=3e2fd284d4991d0f713301514d3fbf6af8ec84af7bd7289698c08a41d434c52d
         diagnostic_service="$service_root/Native-X64-Windows-Diagnostic-Output-Service.bin"
         diagnostic_service_bytes=258
         diagnostic_service_sha256=1b4068c01b2050c3055c78eb82303c71b8488e8766f7b628fab10ffb23e5ffe2
@@ -96,7 +96,7 @@ verify_file() {
     }
 }
 
-verify_file "$toolset/SHA256SUMS" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 'hosted toolset inventory' || exit 1
+verify_file "$toolset/SHA256SUMS" 6927 bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded 'hosted toolset inventory' || exit 1
 (cd -- "$toolset" && sha256sum --check --strict --quiet SHA256SUMS) || {
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1

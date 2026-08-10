@@ -57,7 +57,7 @@ verify_file() {
     }
 }
 
-verify_file "$hosted_toolset/SHA256SUMS" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 'hosted toolset inventory' || exit 1
+verify_file "$hosted_toolset/SHA256SUMS" 6927 bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded 'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a 'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1

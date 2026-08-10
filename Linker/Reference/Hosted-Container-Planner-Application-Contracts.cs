@@ -11,15 +11,15 @@ public static class Hostedˉcontainerˉplannerˉapplicationˉcontract
     public const string LINUX_TARGET_NAME =
         "linux-x64-hosted-container-planner-v1";
     public const string MODULE_NAME = "Nativeˉhostedˉcontainerˉplannerˉtool";
-    public const int MODULE_BYTES = 37_289;
+    public const int MODULE_BYTES = 39_162;
     public const string MODULE_SHA256 =
-        "81cf3932c5e1d4f711b779c515a718ec1acd32c09ae17031aa63b8a66f5ce788";
-    public const int WINDOWS_APPLICATION_BYTES = 584_704;
+        "6dc9cbd852698f158cb2b445e2d7c33537b414ef3c1c6198e9bd6366aed42897";
+    public const int WINDOWS_APPLICATION_BYTES = 606_720;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "e401ad5aef792a49be72cf711cfc427a859fe4a534aa780ad47d3b4a2c12a5dc";
-    public const int LINUX_APPLICATION_BYTES = 585_728;
+        "ef39d922eacd00a3300c2796e1271e1ef1731ec943145f0af6f2ed62c8411ab5";
+    public const int LINUX_APPLICATION_BYTES = 606_208;
     public const string LINUX_APPLICATION_SHA256 =
-        "8032370c7391bbc6afa94c1e8804db78f682da4e57144a2907394e202806c0d3";
+        "7a54190410317628d9b58b5e2c3b91ac4bfd71c6ec192e95409491687a52b79f";
 }
 
 public static class Hostedˉcontainerˉplannerˉapplicationˉwriter

@@ -45,8 +45,8 @@ file read/write, and process argument/count capabilities.
 | --- | ---: | --- |
 | Orchestration-control WVB | 21,214 | `1d9f86cf636de119bde26a7b5fda5977e032db336d07c3937f0dd42df000e4bf` |
 | Native WVO | 219,635 | `86ba4c10926dd95c4211859edef8604489d164f6b4a0e96e8ff8dafc9841036e` |
-| Windows application | 236,032 | `eeec7c229b20ac006ed366849c91e2f03e035a9e3ee29da2e9aeb408c76b2709` |
-| Linux application | 237,568 | `f7b40ac03478d54bdf8fed468fdfbe52a9449159a9fb45c05da6603935e24c67` |
+| Windows application | 236,032 | `d8b10130bc946261526ee0accc9fcbd42dbe2a5d9fd3e4d4f349038550c8c559` |
+| Linux application | 237,568 | `45c8bf1163556c851db8b7fecb2556e899c816d06bd39209d65db942fea3c44a` |
 
 The native Project 1 front door reproduces the WVB byte for byte, and the
 digest-bound native lowerer reproduces the exact Stage 0 WVO. Package wiring

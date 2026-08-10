@@ -28,6 +28,10 @@ service regions from those payloads and recomputes their SHA-256 values against
 the canonical metadata embedded at runtime offset 480. An envelope-preserving
 payload mutation is therefore rejected before output.
 
+The admitted startup response binds the complete current request size: 4,674
+bytes for Windows and 2,622 bytes for Linux. These totals include the expanded
+startup relocation target table and reject a response from the prior geometry.
+
 Successful output consists of `<chunk-prefix>.chunk-N` plus one `WVSG 1`
 manifest. Chunks remain below the ordinary 4 MiB byte-value ceiling:
 
@@ -61,9 +65,9 @@ argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Source-set WVB | 81,502 | `d8cb87c7c8b1da83572d13ff92c4555c16b19f44c1d649c5b5cb35f9e9fd60ce` |
-| Windows application | 1,280,512 | `a84dbdc7f96eafaab2ed17b076897338cfc86271be4ffddf4bef627d17d12083` |
-| Linux application | 1,282,048 | `872cca3fa39763a58b2183f9cf145d60c666d57fe0c7cd5984070cd55e1b6786` |
+| Source-set WVB | 82,068 | `7f110c0e7fe9a4a50627e9c600f19c61850e12a265cc44c26ad704353f4b2a74` |
+| Windows application | 1,284,096 | `c4626edcc40c2b0c8aff4f4eec8af494034d9bf42fb04959dca393945f7eadfb` |
+| Linux application | 1,286,144 | `a2a4687804e063d6f2d9b9c965b07893f749d34da53f271373bc0b41ae671e63` |
 
 The Stage 0 recovery compiler and native Project 1 front door produce identical
 WVB bytes. Package layout and identity wiring remain deletion-bound Stage 0

@@ -12,15 +12,15 @@ public static class Hostedˉcontainerˉsourceˉsetˉapplicationˉcontract
         "linux-x64-hosted-container-source-set-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉcontainerˉsourceˉsetˉtool";
-    public const int MODULE_BYTES = 81_502;
+    public const int MODULE_BYTES = 82_068;
     public const string MODULE_SHA256 =
-        "d8cb87c7c8b1da83572d13ff92c4555c16b19f44c1d649c5b5cb35f9e9fd60ce";
-    public const int WINDOWS_APPLICATION_BYTES = 1_280_512;
+        "7f110c0e7fe9a4a50627e9c600f19c61850e12a265cc44c26ad704353f4b2a74";
+    public const int WINDOWS_APPLICATION_BYTES = 1_284_096;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "a84dbdc7f96eafaab2ed17b076897338cfc86271be4ffddf4bef627d17d12083";
-    public const int LINUX_APPLICATION_BYTES = 1_282_048;
+        "c4626edcc40c2b0c8aff4f4eec8af494034d9bf42fb04959dca393945f7eadfb";
+    public const int LINUX_APPLICATION_BYTES = 1_286_144;
     public const string LINUX_APPLICATION_SHA256 =
-        "872cca3fa39763a58b2183f9cf145d60c666d57fe0c7cd5984070cd55e1b6786";
+        "a2a4687804e063d6f2d9b9c965b07893f749d34da53f271373bc0b41ae671e63";
 }
 
 public static class Hostedˉcontainerˉsourceˉsetˉapplicationˉwriter

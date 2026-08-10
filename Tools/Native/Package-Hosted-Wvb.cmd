@@ -44,14 +44,14 @@ goto :usage
 if /I not "%~x7"==".exe" if "%ImageMode%"=="1" goto :usage
 if /I not "%~x3"==".exe" if "%ImageMode%"=="0" goto :usage
 set "Startup=%RepositoryRoot%\Linker\Reference\Consumers\Windows-X64-Hosted-Compiler.wvo"
-set "StartupBytes=4334"
-set "StartupSha256=55f4782e976038c2d68bb91aeabb75518103524e9d5caaf1cc9f0662ab5a0feb"
+set "StartupBytes=4398"
+set "StartupSha256=dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161"
 set "ConsoleService=%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin"
 set "ConsoleServiceBytes=258"
 set "ConsoleServiceSha256=10f3a500aca7f0236cdf9f6c20658591df88bc612e677264cdaa0bcef59a0a48"
 set "FileInputService=%ServiceRoot%\Native-X64-Windows-File-Input-Service.bin"
 set "FileInputServiceBytes=1218"
-set "FileInputServiceSha256=3d2fffc028083cdc4cfd39e553dea603e9a1ae661bb5df3f14ca438c4d3e3cf8"
+set "FileInputServiceSha256=3e2fd284d4991d0f713301514d3fbf6af8ec84af7bd7289698c08a41d434c52d"
 set "DiagnosticService=%ServiceRoot%\Native-X64-Windows-Diagnostic-Output-Service.bin"
 set "DiagnosticServiceBytes=258"
 set "DiagnosticServiceSha256=1b4068c01b2050c3055c78eb82303c71b8488e8766f7b628fab10ffb23e5ffe2"
@@ -64,14 +64,14 @@ goto :target_ready
 if /I not "%~x7"==".elf" if "%ImageMode%"=="1" goto :usage
 if /I not "%~x3"==".elf" if "%ImageMode%"=="0" goto :usage
 set "Startup=%RepositoryRoot%\Linker\Reference\Consumers\Linux-X64-Hosted-Compiler.wvo"
-set "StartupBytes=2390"
-set "StartupSha256=0df0525b35bbeb63492929d974326f328c247ce9313111ee6a8c1e321a2c22ff"
+set "StartupBytes=2454"
+set "StartupSha256=1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946"
 set "ConsoleService=%ServiceRoot%\Native-X64-Linux-Console-Output-Service.bin"
 set "ConsoleServiceBytes=213"
 set "ConsoleServiceSha256=c5ea073a24c46dd634b1a67a7e7041d476dbce856d058aa8adc2c4e680d3d226"
 set "FileInputService=%ServiceRoot%\Native-X64-Linux-File-Input-Service.bin"
 set "FileInputServiceBytes=996"
-set "FileInputServiceSha256=55ae4524c463f064aee0964d7f9b64438701fb4375a97c53d11f2f17902c12cb"
+set "FileInputServiceSha256=cbd78340641fa02589d0d96b73d233a67f9404ab76c3df2b1346b2e31ca43701"
 set "DiagnosticService=%ServiceRoot%\Native-X64-Linux-Diagnostic-Output-Service.bin"
 set "DiagnosticServiceBytes=213"
 set "DiagnosticServiceSha256=1c81018143fa9b708373eaceda62722ca40fb1e11b20808f765fe5ece33406fe"
@@ -81,7 +81,7 @@ set "FileOutputServiceSha256=fc688f2a84936dc1082fcb5654667a8a60b0581bff29b1868d4
 
 :target_ready
 
-call :verify_file "%Toolset%\SHA256SUMS" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 6927 bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"

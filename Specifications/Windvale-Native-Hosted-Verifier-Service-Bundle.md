@@ -59,8 +59,8 @@ The application declares exactly `console.write_line`,
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Request WVB | 13,993 | `b23655332f5525fd411cb3a0a1f815af49f97d743156dfd4d0ae7549fab586f4` |
-| Windows application | 160,256 | `cc57bac2881ec4763510310b2b54fd48b23dddef7eb2ef1d6e1ef380955d3d09` |
-| Linux application | 159,744 | `da0a377ebfc821584b239e58cd9891e89a4711554fee8106e690c867627a6288` |
+| Windows application | 160,256 | `b4902fc6554f6e8bd52c83b870d9cf6b6e179c3207a34037e6f58e44d657d18b` |
+| Linux application | 159,744 | `e8deec17224202394f828db219734fd2e31c266819fc62c616a82bb1db495353` |
 
 The WVB builds through the native Project 1 front door. Both applications
 reconstruct byte-for-byte through the shared native hosted-container packager;

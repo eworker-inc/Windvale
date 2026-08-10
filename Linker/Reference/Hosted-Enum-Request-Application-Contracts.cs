@@ -16,10 +16,10 @@ public static class Hostedˉenumˉrequestˉapplicationˉcontract
         "682c2bf76569ba0ec6c58dfd3ade64d7582a9d22c397c55a22e1785fe8521fb6";
     public const int WINDOWS_APPLICATION_BYTES = 334_336;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "fd2b4d21aca8aa27ed5cca535a9a2cbbabe57036d4646cf8c91c5b531cc16ef1";
+        "47394d8982403c3f473e2f62f33790fab9d12e4607f58e2ba603027738410908";
     public const int LINUX_APPLICATION_BYTES = 335_872;
     public const string LINUX_APPLICATION_SHA256 =
-        "3b614f15a49b93074d3f2ce54eb193c14f391f3af8ac2f4415dbaf8f6dbca2ba";
+        "b428ca6305422bcd168029d451840db513543b7a3d578a9f989d8f6f9635fef0";
 }
 
 public static class Hostedˉenumˉrequestˉapplicationˉwriter

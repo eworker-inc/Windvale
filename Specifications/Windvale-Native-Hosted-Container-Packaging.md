@@ -89,12 +89,10 @@ Tools\Native\Test-Hosted-Wvb-Packaging.cmd
 ./Tools/Native/Test-Hosted-Wvb-Packaging.sh
 ```
 
-Decision 0491 changes the shared hosted startup, file-input leaves, and
-profile-2 layout. The retained candidate toolset and the exact package hashes
-below remain the last paired-host snapshot; the launchers currently fail closed
-on their digest checks until the deliberate candidate-toolset reconstruction
-and repin slice completes. Do not treat the preceding commands as current-source
-qualification evidence during that bounded transition.
+Decision 0492 reconstructs the complete Decision 0491 candidate toolset and
+repins both launchers to its 6,927-byte, 72-entry inventory. The focused Windows
+owner below is current-source evidence; independent Linux execution and grouped
+qualification remain pending.
 
 Each host test packages the pinned orchestration-control WVB and requires exact
 equality with the corresponding independent candidate, then cross-constructs
@@ -102,9 +100,10 @@ the opposite target and requires exact equality with its candidate. It finally
 supplies a fixed invalid `.wvb`, requires rejection, and verifies that both the
 input and a pre-existing destination remain byte-identical. The test redirects
 the launcher's temporary root into its own private directory and rejects any
-remaining package scratch. These three cases are the focused composition
-check; they do not replace malformed-format suites or the final qualification
-gate.
+remaining package scratch. The verifier-request WVB is also packaged for both
+targets and compared with the independent candidates. These five cases are the
+focused composition check; they do not replace malformed-format suites or the
+final qualification gate.
 
 On Linux, the shared native durable transaction creates the private hosted
 application sibling with its exact final `0755` mode before writing, flushing,
@@ -118,22 +117,23 @@ application identity, the descriptor-returning `Main` differential WVO, and
 byte-for-byte reproduction of the retained baseline-JIT bridge WVO.
 
 The Windows candidate composes `wvhostcontrol.wvb` into a 236,032-byte PE with
-SHA-256 `eeec7c229b20ac006ed366849c91e2f03e035a9e3ee29da2e9aeb408c76b2709`,
+SHA-256 `d8b10130bc946261526ee0accc9fcbd42dbe2a5d9fd3e4d4f349038550c8c559`,
 byte-for-byte equal to the independently constructed candidate. The Linux
 candidate is a 237,568-byte ELF with SHA-256
-`f7b40ac03478d54bdf8fed468fdfbe52a9449159a9fb45c05da6603935e24c67`.
-Focused GitHub run
+`45c8bf1163556c851db8b7fecb2556e899c816d06bd39209d65db942fea3c44a`.
+Decision 0492's focused Windows run passes all five current cases. Earlier
+GitHub run
 [`31286313268`](https://github.com/eworker-inc/Windvale/actions/runs/31286313268)
-passes both cases on genuine Windows and Debian hosts. Artifact promotion,
-ordinary-path cutover, and the grouped dual-host retirement gate remain
-pending. After Decision 0422 adds the exact atomic Linux executable-mode
-policy, run
+passed the preceding candidate on genuine Windows and Debian hosts. After
+Decision 0422 added the exact atomic Linux executable-mode policy, run
 [`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
-passes both ordinary cases and both current-lowerer segmented cases on genuine
-Windows and Debian hosts.
+passed both ordinary cases and both then-current lowerer segmented cases on
+genuine Windows and Debian hosts. Those runs remain historical evidence and do
+not qualify the Decision 0492 identities. Artifact promotion, ordinary-path
+cutover, and the grouped dual-host retirement gate remain pending.
 
-Decision 0438 adds explicit cross-target selection. The focused Windows command
-passes 3/3 and constructs the established Linux orchestration-control ELF byte
-for byte without .NET. Independent execution of the new cross-target form on
-Linux remains part of the next paired-host evidence rather than being inferred
-from byte equality.
+Decision 0438 adds explicit cross-target selection. Decision 0492's focused
+Windows command passes 5/5 and constructs the current Linux orchestration-control
+and verifier-request ELFs byte for byte without .NET. Independent execution of
+the current cross-target form on Linux remains part of the next paired-host
+evidence rather than being inferred from byte equality.

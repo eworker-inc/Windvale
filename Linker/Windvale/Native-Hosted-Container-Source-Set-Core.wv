@@ -124,8 +124,8 @@ export fn Nativeˉhostedˉcontainerˉstartupˉresponseˉisˉvalid(
     Admitted: Nativeˉhostedˉcontainerˉsourceˉsetˉplan,
     Response: bytes
 ) -> bool {
-    var Requestˉbytes: u32 = 2554u32;
-    if Admitted.Target == 1u32 { Requestˉbytes = 4606u32; }
+    var Requestˉbytes: u32 = 2622u32;
+    if Admitted.Target == 1u32 { Requestˉbytes = 4674u32; }
     if !Admitted.Valid ||
         Bytesˉlength(Response) != 32u32 + Admitted.Startupˉbytes ||
         Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1146312279u32 ||

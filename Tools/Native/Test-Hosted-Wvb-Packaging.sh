@@ -77,7 +77,7 @@ fi
 [[ ! -s $test_directory/Valid.err ]] || fail 'valid packaging wrote a diagnostic'
 check_file \
     "$test_directory/Valid.elf" 237568 \
-    f7b40ac03478d54bdf8fed468fdfbe52a9449159a9fb45c05da6603935e24c67 \
+    45c8bf1163556c851db8b7fecb2556e899c816d06bd39209d65db942fea3c44a \
     'valid package'
 cmp --silent -- "$test_directory/Valid.elf" "$toolset/linux-x64/wvhostcontrol.elf" ||
     fail 'valid package differs from the candidate'
@@ -94,7 +94,7 @@ fi
 [[ ! -s $test_directory/Cross-Target.err ]] || fail 'cross-target packaging wrote a diagnostic'
 check_file \
     "$test_directory/Cross-Target.exe" 236032 \
-    eeec7c229b20ac006ed366849c91e2f03e035a9e3ee29da2e9aeb408c76b2709 \
+    d8b10130bc946261526ee0accc9fcbd42dbe2a5d9fd3e4d4f349038550c8c559 \
     'cross-target Windows package'
 cmp --silent -- "$test_directory/Cross-Target.exe" "$toolset/windows-x64/wvhostcontrol.exe" ||
     fail 'cross-target Windows package differs from the candidate'
@@ -110,7 +110,7 @@ fi
 [[ ! -s $test_directory/Verifier-Request.err ]] || fail 'verifier request packaging wrote a diagnostic'
 check_file \
     "$test_directory/Verifier-Request.elf" 188416 \
-    cfd0071c3d103ca0feedb33370b81bc3edb0b41e8bb95ee9744d1b53342fb6bd \
+    3827deb66f8bb15585e02ba7e2e01a217cc9375eb05ade4c70a91930b0af8803 \
     'verifier request package'
 cmp --silent -- "$test_directory/Verifier-Request.elf" "$toolset/linux-x64/wvhostverifierrequest.elf" ||
     fail 'verifier request package differs from the candidate'
@@ -126,8 +126,8 @@ if ! "$script_directory/Package-Hosted-Wvb.sh" 1 \
 fi
 [[ ! -s $test_directory/Verifier-Request-Windows.err ]] || fail 'cross-target verifier request packaging wrote a diagnostic'
 check_file \
-    "$test_directory/Verifier-Request.exe" 187904 \
-    dc42cd573e26ba8617a7323089f2c140f0488ec0cb3b9a6e4b77d5c4d7fbd4d5 \
+    "$test_directory/Verifier-Request.exe" 188928 \
+    4888d4c5252164e4a2637f78dadb5e1228044ac6834525f3cd00fb3a6bbe0b0e \
     'cross-target verifier request package'
 cmp --silent -- "$test_directory/Verifier-Request.exe" "$toolset/windows-x64/wvhostverifierrequest.exe" ||
     fail 'cross-target verifier request package differs from the candidate'
@@ -143,11 +143,11 @@ status=$?
 [[ $status -ne 0 ]] || fail 'invalid WVB was accepted'
 check_file \
     "$test_directory/Destination.elf" 6927 \
-    f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 \
+    bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded \
     'preserved destination'
 check_file \
     "$test_directory/Invalid.wvb" 6927 \
-    f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 \
+    bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded \
     'preserved input'
 check_no_scratch
 echo 'PASS  hosted packaging rejects invalid WVB and preserves resources'

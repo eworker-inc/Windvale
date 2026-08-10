@@ -49,17 +49,17 @@ semantics separate, and no new hosted metadata profile is introduced.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Planner WVB | 37,289 | `81cf3932c5e1d4f711b779c515a718ec1acd32c09ae17031aa63b8a66f5ce788` |
-| Windows planner | 584,704 | `e401ad5aef792a49be72cf711cfc427a859fe4a534aa780ad47d3b4a2c12a5dc` |
-| Linux planner | 585,728 | `8032370c7391bbc6afa94c1e8804db78f682da4e57144a2907394e202806c0d3` |
+| Planner WVB | 39,162 | `6dc9cbd852698f158cb2b445e2d7c33537b414ef3c1c6198e9bd6366aed42897` |
+| Windows planner | 606,720 | `ef39d922eacd00a3300c2796e1271e1ef1731ec943145f0af6f2ed62c8411ab5` |
+| Linux planner | 606,208 | `7a54190410317628d9b58b5e2c3b91ac4bfd71c6ec192e95409491687a52b79f` |
 
-These identities are the last measured candidate snapshot. Decision 0491 changes
-the embedded layout plus the shared startup/file-input bundle; reconstructing and
-repinning this WVB and both applications is explicitly deferred to the current
-candidate-toolset slice. The preceding focused current-host evidence built the
-public CLI target, executed a real plan without loading .NET, matched the retained
-fragment byte-for-byte, rejected inconsistent metadata while preserving an
-existing plan, and rejected an input/output alias.
+Decision 0492 reconstructs and repins these current candidate identities after
+the Decision 0491 embedded-layout and shared startup/file-input changes. The
+preceding focused current-host evidence built the public CLI target, executed a
+real plan without loading .NET, matched the retained fragment byte-for-byte,
+rejected inconsistent metadata while preserving an existing plan, and rejected
+an input/output alias. Independent Linux execution and grouped qualification
+remain.
 
 ## Retirement boundary
 

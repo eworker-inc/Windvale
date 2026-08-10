@@ -16,10 +16,10 @@ public static class Hostedˉsourceˉgeometryˉapplicationˉcontract
         "22549f1e50084b3cf20113bee6c30c3df9c4f91aad58b0a3ebe247d02a9e4a28";
     public const int WINDOWS_APPLICATION_BYTES = 198_656;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "209d77bd3dc10ccaec33bb0ee5351d0f4a569421ba938a26bbfc8e54d9dea996";
+        "ba87249ae08ab2c4577297accc836f4da0234d0a4bf420bb8529133ca7fe72d9";
     public const int LINUX_APPLICATION_BYTES = 200_704;
     public const string LINUX_APPLICATION_SHA256 =
-        "0457b23abbe871314eba3a91f992b1a479aa6b252f01c82a8be362670dce0f17";
+        "b51744744e022eb0cdddd12009912a6704bf885ac875e531a49d7a912cebc844";
 }
 
 public static class Hostedˉsourceˉgeometryˉapplicationˉwriter

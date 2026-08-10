@@ -48,9 +48,9 @@ output, file read/write, and process argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Segment-manifest WVB | 34,853 | `28299931809e61bb80848e28e0621b670df2d13330f284dc77dac843b0138049` |
-| Windows application | 406,016 | `ff8028aebdaeda1c305225f2d6c3883d22af3ab5bd440e71b50837e4400c334f` |
-| Linux application | 405,504 | `48a60917b0693457441c15c121bf42e489067b8e69356f355dba5ec184ad533e` |
+| Segment-manifest WVB | 35,419 | `4553a80bb425c0f79fd20c52ed41745279b5c9313f0bf669d5e749f62d6de33c` |
+| Windows application | 409,600 | `78d0ef5eb0ba798359d663a4cfcd108677ecb10fb068656c038d8f8096133710` |
+| Linux application | 409,600 | `d289d1c649ab58e84f34640eb36f599b60badf2883f8325359ae12be965c6603` |
 
 The Stage 0 recovery compiler and native Project 1 front door produce identical
 WVB bytes. Package construction remains deletion-bound Stage 0 wiring until

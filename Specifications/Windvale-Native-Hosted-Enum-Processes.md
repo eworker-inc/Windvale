@@ -42,13 +42,13 @@ read/write, and process argument/count capabilities.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Enum-request WVB | 30,759 | `682c2bf76569ba0ec6c58dfd3ade64d7582a9d22c397c55a22e1785fe8521fb6` |
-| Windows enum-request application | 334,336 | `fd2b4d21aca8aa27ed5cca535a9a2cbbabe57036d4646cf8c91c5b531cc16ef1` |
-| Linux enum-request application | 335,872 | `3b614f15a49b93074d3f2ce54eb193c14f391f3af8ac2f4415dbaf8f6dbca2ba` |
+| Windows enum-request application | 334,336 | `47394d8982403c3f473e2f62f33790fab9d12e4607f58e2ba603027738410908` |
+| Linux enum-request application | 335,872 | `b428ca6305422bcd168029d451840db513543b7a3d578a9f989d8f6f9635fef0` |
 | Enum-service WVB | 18,883 | `6e44a4c0f4d61ea9aa3d72442baba60080896c0cf7d3536b353fcd61ff48ec07` |
 | Enum-service WVO | 167,750 | `e00168aac4422a6a38d6c7c202d8fc2377b7770c4f3fc144d1ce207271f978bb` |
 | Enum-service raw fragment | 166,682 | `38ea83b0d417bdc57cd0c5b3bd29f8d9cb37a9575767401486fde6da2ded4cea` |
-| Windows enum-service application | 184,832 | `7563f37f3c77473ce52b73506dcb54516107fc964c19860d5dcc75d3bdd52cdf` |
-| Linux enum-service application | 184,320 | `90e99134b750231e011e2c254bac8c12d9d52d8adcbd3a9d5d03d7dc1da26f4b` |
+| Windows enum-service application | 184,832 | `741af74720dd67f45ad2fad2c2db706c946f80ed57299d4af2864dc5f1aa9107` |
+| Linux enum-service application | 184,320 | `20b949369c323070fd1dd7f2719f4c11f0eb163376cab2bc07f1b92f3eb2834b` |
 
 The focused contract uses the native front door as the module producer, the
 digest-bound native WVB-to-WVO candidate as the object producer, and the

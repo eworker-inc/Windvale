@@ -62,8 +62,8 @@ The application declares exactly `console.write_line`,
 | --- | ---: | --- |
 | Fixed-service acquisition WVB | 7,491 | `048deb0818f11c61c2dd16b6bbcde8f7f58eb351c59149332d12bac6256797c0` |
 | Native WVO | 58,340 | `674b063490c33477655233f508b337b826a448928913185cdb78e2ec1c1b78b1` |
-| Windows application | 75,264 | `7f923dc636da591ac719f07a5f3c4f1f2ce24ae5866ba2176ce8dacf615583b0` |
-| Linux application | 77,824 | `707144072747186ee2fd77e0a27c920a96fac03fe76b1bcaa90b7b4cb1db2dde` |
+| Windows application | 75,264 | `1c1c70348885d68db75fcff43ce500245266806085c3115f64d75de6cf529720` |
+| Linux application | 77,824 | `8a659f15c8d3f11812655a47013133ed6fd66e804c1a304c18efdc174606ea15` |
 
 The native Project 1 front door reproduces the WVB byte for byte, and the
 digest-bound native lowerer reproduces its exact Stage 0 WVO. Package wiring
