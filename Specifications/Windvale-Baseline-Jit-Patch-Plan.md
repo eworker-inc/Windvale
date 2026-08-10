@@ -94,9 +94,10 @@ now invokes this actual producer over canonical WVB inputs, independently
 verifies its returned plans, and publishes the materialized bytes through the
 exact `WVLT 1` write-then-execute lifetime: writable while copying, executable
 only after a successful permission transition, never writable and executable
-at the same time, and torn down on every completion or failure path. Windows
-execution is locally proven; Linux execution and paired-host qualification
-remain.
+at the same time, and torn down on every completion or failure path. Decision
+0424 records paired Windows/Debian execution of the fixed candidate. Later
+current-host retirement-suite runs do not by themselves renew paired-host
+qualification.
 
 ## Verification
 
@@ -106,4 +107,5 @@ The self-test covers deterministic repeated output, `42`, `-1`, WVB truncation,
 altered WVB magic, altered bytecode shape, plan truncation, altered plan magic,
 an invalid patch width, and a nonzero template hole. The paired native host
 launchers then lower, verify, link, package, and execute that test without
-loading .NET.
+loading .NET. `baseline-jit` combines this one construction/admission case with
+the publication contract's five explicit behavioral cases.

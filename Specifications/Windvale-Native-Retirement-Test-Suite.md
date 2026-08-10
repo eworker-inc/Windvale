@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 2,760 LF-only bytes with SHA-256
-`2f36d7f77d7a95960ce66b318252f57724183e5b561aed8a864715df48a840a6`.
+`Tests/Native/Retirement-Suite.txt` is 2,824 LF-only bytes with SHA-256
+`7c110ad196aeb4e783ea02f38e55bbe774c33db4a872f8b047342d40c9b7144a`.
 The first line is exactly:
 
 ```text
@@ -42,6 +42,7 @@ file. The current plan is:
 | --- | --- | ---: | --- |
 | `seed` | `Test-Seed` | 26 | `Tests: 26, Passed: 26, Failed: 0` |
 | `compiler-reconstruction` | `Test-Compiler-Reconstruction` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
+| `baseline-jit` | `Test-Baseline-Jit` | 6 | `Tests: 6, Passed: 6, Failed: 0` |
 | `unsafe-wvb` | `Test-Wvb-Unsafe-Rejections` | 20 | `Tests: 20, Passed: 20, Failed: 0` |
 | `wvb-containment` | `Test-Wvb-Containment` | 1,000 | `Tests: 1000, Passed: 1000, Failed: 0` |
 | `wvo-read-only` | `Test-Wvo-Read-Only-Rejections` | 13 | `Tests: 13, Passed: 13, Failed: 0` |
@@ -74,7 +75,7 @@ file. The current plan is:
 | `os-probe` | `Test-Os-Probe` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 33 suites and 3,171 cases.
+The version-1 plan therefore contains exactly 34 suites and 3,177 cases.
 
 ## Coordinator contract
 
@@ -96,7 +97,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 33, Passed: 33, Failed: 0, Cases: 3171
+Suites: 34, Passed: 34, Failed: 0, Cases: 3177
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

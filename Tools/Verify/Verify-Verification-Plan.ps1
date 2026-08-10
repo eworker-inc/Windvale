@@ -36,6 +36,22 @@ $Cases = @(
 )
 $NativeCases = @(
     @{
+        Name = 'native baseline JIT owner'
+        Paths = @(
+            'Tools/Native/Test-Baseline-Jit-Publisher.cmd',
+            'Compiler/Windvale/Baseline-Jit-Patch-Plan-Core.wv',
+            'Runtime/Windvale/Baseline-Jit-Patch-Plan-Verifier-Core.wv',
+            'Runtime/Native/Windows-X64-Baseline-Jit-Publisher.wva',
+            'Tests/Fixtures/Native-X64/Baseline-Jit-Patch-Plan-Self-Test.wv',
+            'Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj',
+            'Artifacts/Baseline-Jit-Publisher/Manifest.json',
+            'Specifications/Windvale-Native-Baseline-Jit-Publication.md'
+        )
+        Suites = @('baseline-jit')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'native compiler reconstruction owner'
         Paths = @(
             'Tools/Native/Construct-Compiler-Reconstruction.cmd',

@@ -130,6 +130,11 @@ function Add-Native-Tool-Suite {
         'Package-Segmented-Compiler-Wvb'
     )) {
         Add-Suite 'compiler-reconstruction'
+    } elseif ($Stem -in @(
+        'Test-Baseline-Jit-Patch-Plan',
+        'Test-Baseline-Jit-Publisher'
+    )) {
+        Add-Suite 'baseline-jit'
     } elseif ($Stem -match 'Assemble-Wva') {
         Add-Assembler-Suites
     } elseif ($Stem -match 'Link-Wvo') {
@@ -237,6 +242,10 @@ foreach ($Path in $Paths) {
         } else {
             Add-Os-Suite $Path
         }
+    } elseif ($Path.StartsWith(
+        'Compiler/Windvale/Baseline-Jit-',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'baseline-jit'
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
@@ -252,6 +261,19 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-',
         [StringComparison]::Ordinal)) {
         Add-Suite 'hosted-verifier-publisher-files'
+    } elseif ($Path.StartsWith(
+        'Runtime/Windvale/Baseline-Jit-',
+        [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Runtime/Native/Baseline-Jit-',
+            [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Runtime/Native/Windows-X64-Baseline-Jit-',
+            [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Runtime/Native/Linux-X64-Baseline-Jit-',
+            [StringComparison]::Ordinal)) {
+        Add-Suite 'baseline-jit'
     } elseif ($Path.StartsWith('Runtime/Windvale.Bytecode/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Runtime/Windvale.Runtime/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Runtime/Windvale.Native/', [StringComparison]::Ordinal)) {
@@ -296,6 +318,10 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-linker-recovery-source'
     } elseif ($Path.StartsWith(
+        'Artifacts/Baseline-Jit-Publisher/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'baseline-jit'
+    } elseif ($Path.StartsWith(
         'Artifacts/Native-Os-Probe-Memory-Object-Producer-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite @('os-probe-object', 'os-probe')
@@ -337,6 +363,8 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Libraries/Database/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal)) {
         Add-Gap 'database-native-tests'
+    } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Baseline-Jit-Patch-Plan-Self-Test.wv') {
+        Add-Suite 'baseline-jit'
     } elseif ($Path -eq 'Tests/Native/Plan.txt' -or
         $Path.StartsWith('Tests/Native/Malformed-Wvb/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
@@ -347,7 +375,12 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
-        if ($Path -eq 'Specifications/Windvale-Native-Compiler-Reconstruction.md') {
+        if ($Path -in @(
+            'Specifications/Windvale-Baseline-Jit-Patch-Plan.md',
+            'Specifications/Windvale-Native-Baseline-Jit-Publication.md'
+        )) {
+            Add-Suite 'baseline-jit'
+        } elseif ($Path -eq 'Specifications/Windvale-Native-Compiler-Reconstruction.md') {
             Add-Suite 'compiler-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
             Add-Suite 'hosted-verifier-publisher-files'
@@ -378,6 +411,11 @@ foreach ($Path in $Paths) {
         } else {
             Add-Gap "specification:$([IO.Path]::GetFileName($Path))"
         }
+    } elseif ($Path.StartsWith(
+        'Windvale-Native-Baseline-Jit-',
+        [StringComparison]::Ordinal) -and
+        $Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
+        Add-Suite 'baseline-jit'
     } elseif ($Path -in @(
         'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',

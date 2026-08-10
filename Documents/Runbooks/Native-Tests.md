@@ -27,6 +27,7 @@ The exact filter names and case counts are:
 | --- | ---: |
 | `seed` | 26 |
 | `compiler-reconstruction` | 3 |
+| `baseline-jit` | 6 |
 | `unsafe-wvb` | 20 |
 | `wvb-containment` | 1,000 |
 | `wvo-read-only` | 13 |
@@ -59,11 +60,11 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 33 suites and 3,171 cases in manifest order. Its
+Omitting `--filter` selects all 34 suites and 3,177 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 33, Passed: 33, Failed: 0, Cases: 3171
+Suites: 34, Passed: 34, Failed: 0, Cases: 3177
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -71,6 +72,20 @@ for the final grouped retirement candidate unless the coordinator boundary
 itself changes. The plan identity, child summaries, exit/channel behavior, and
 failure rules are defined by the
 [native retirement test-suite contract](../../Specifications/Windvale-Native-Retirement-Test-Suite.md).
+
+The bounded baseline-JIT owner can be selected directly:
+
+```cmd
+Tools\Native\Test-Retirement-Suite.cmd --filter baseline-jit
+```
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter baseline-jit
+```
+
+It runs the aggregate `WVJP 1` producer/verifier self-test and the five named
+`WVLT 1` W^X publication behaviors. A current-host pass is not paired-host
+qualification and does not claim the general JIT/backend is complete.
 
 ## Changed-file front door
 
@@ -693,7 +708,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,171-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,177-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

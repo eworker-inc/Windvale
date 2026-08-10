@@ -5153,3 +5153,26 @@ The retirement plan is 2,760 LF-only bytes at SHA-256
 It records 33 suites and 3,171 fixed cases. Independent Linux reconstruction and
 execution, the current full Stage-2 measurement, broad Seed/OS, Standard,
 Qualification, and the grouped retirement gate did not run.
+
+## Local fixed native baseline-JIT lane evidence
+
+[Decision 0495](../Decisions/0495-Fixed-Native-Baseline-Jit-Lane.md) assigns
+the existing paired patch-plan and W^X publisher checks one direct retirement
+owner. The six fixed cases are one aggregate native `WVJP 1` producer/verifier
+self-test plus the five explicit `WVLT 1` publication behaviors: corrupted
+lifetime rejection, corrupted patch-plan rejection, result `42`, result `-1`,
+and forced seal failure with release.
+
+The current Windows coordinator selected only `baseline-jit` and passed 6/6 in
+eight seconds. Both child launchers reproduced and admitted their exact WVB,
+WVO, link, image, and application identities, executed without loading .NET,
+and ended with their exact terminal summaries. The retirement plan is 2,824
+LF-only bytes at SHA-256
+`7c110ad196aeb4e783ea02f38e55bbe774c33db4a872f8b047342d40c9b7144a`;
+it records 34 suites and 3,177 fixed cases.
+
+This is fixed current-host evidence, not a new paired qualification. The
+Windows final import-patching constructor remains recovery PowerShell, and no
+direct managed inventory entry was removed. Linux execution, compiler
+reconstruction, Stage 2, broad Seed/OS, Standard, Qualification, and the
+unfiltered retirement gate did not run.
