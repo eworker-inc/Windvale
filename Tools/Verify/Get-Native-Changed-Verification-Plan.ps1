@@ -329,6 +329,11 @@ foreach ($Path in $Paths) {
         Add-Gap 'webassembly-native-verification'
     } elseif ($Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal)) {
         if ([IO.Path]::GetFileName($Path) -in @(
+            'Verify-Seed-Native-Console-Aot.ps1',
+            'Verify-Seed-Native-Console-Aot.sh'
+        )) {
+            Add-Gap 'seed-native-console-aot'
+        } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Seed-Native-Front-Door.ps1',
             'Verify-Seed-Native-Front-Door.sh'
         )) {
@@ -760,7 +765,11 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
-        if ($Path -in @(
+        if ($Path -eq 'Specifications/Seed-CLI.md') {
+            Add-Suite 'seed'
+            Add-Gap 'seed-native-front-door'
+            Add-Gap 'seed-native-console-aot'
+        } elseif ($Path -in @(
             'Specifications/Windvale-Baseline-Jit-Patch-Plan.md',
             'Specifications/Windvale-Native-Baseline-Jit-Publication.md'
         )) {
@@ -927,6 +936,12 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'seed'
         Add-Gap 'seed-native-front-door'
+        if ($Path -in @(
+            'Examples/Seed/Sum-Data.wv',
+            'Examples/Seed/Sum-Data.wvproj'
+        )) {
+            Add-Gap 'seed-native-console-aot'
+        }
     } elseif ($Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'seed'
     } elseif ($Path.StartsWith('Examples/', [StringComparison]::Ordinal)) {

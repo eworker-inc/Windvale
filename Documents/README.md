@@ -109,6 +109,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native console-application-publisher reconstruction](Decisions/0503-Native-Console-Application-Publisher-Reconstruction.md) — current-Windows-host native cross-target reconstruction through a raw WVO oracle and role-4 publisher overlay without target self-publication
 - [Native WebAssembly generation and verification](Decisions/0504-Native-WebAssembly-Generation-And-Verification.md) — complete current-Windows source/WVB-to-Wasm generation, strict engine verification, and probes without a normal .NET invocation
 - [Native Seed front-door qualification smoke](Decisions/0505-Native-Seed-Front-Door-Qualification-Smoke.md) — five fixed native build/verify/inspect cases replacing nine managed calls in each broad Seed qualification script
+- [Native Seed console AOT qualification smoke](Decisions/0506-Native-Seed-Console-Aot-Qualification-Smoke.md) — exact native lower/verify/link/package and current-host execution replacing two more managed calls in each broad Seed script
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

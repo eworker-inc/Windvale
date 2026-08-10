@@ -207,6 +207,15 @@ relative to that directory; this is a component-local organization choice, not
 a repository-root project convention. Managed execution, packaging, harness,
 and later qualification phases remain explicit.
 
+Decision 0506 then consumes the exact Sum WVB from that helper through the
+native lowerer, WVO verifier, flat linker, and paired version-1 console
+packager. The complete map and every intermediate identity are fixed; the
+current Windows product executes to result `29`. The paired helper therefore
+owns this qualification composition without treating the frozen Stage 0
+`compile --target` command as the ordinary constructor. General target
+coverage, broad execution and harness work, and independent Linux evidence
+remain outside this narrow transfer.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

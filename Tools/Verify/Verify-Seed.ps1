@@ -26,6 +26,7 @@ $OutputEncoding = $Utf8WithoutBom
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
 $NativeSeedFrontDoor = Join-Path $RepositoryRoot 'Tools/Verify/Verify-Seed-Native-Front-Door.ps1'
+$NativeSeedConsoleAot = Join-Path $RepositoryRoot 'Tools/Verify/Verify-Seed-Native-Console-Aot.ps1'
 $TestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj'
 $OsTestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Os.Tests/Windvale.Os.Tests.csproj'
 $Artifacts = Join-Path $RepositoryRoot 'artifacts'
@@ -146,8 +147,6 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $SumModule = Join-Path $Artifacts 'Sum-Data.wvb'
-$SumWindowsApplication = Join-Path $Artifacts 'Sum-Data-Windows.exe'
-$SumLinuxApplication = Join-Path $Artifacts 'Sum-Data-Linux.elf'
 $HelloModule = Join-Path $Artifacts 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $CompositionModule = Join-Path $Artifacts 'Module-Composition-Demo.wvb'
@@ -283,51 +282,14 @@ if (
     throw 'The native Seed front-door verification failed.'
 }
 
-$WindowsApplicationOutput = dotnet $ToolDll compile `
-    (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') `
-    --target windows-x64-console-v1 `
-    -o $SumWindowsApplication
+$NativeSeedConsoleAotOutput = @(& $NativeSeedConsoleAot -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
-    $WindowsApplicationOutput -notcontains 'Target: windows-x64-console-v1' -or
-    $WindowsApplicationOutput -notcontains 'SHA-256: 5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77'
+    $NativeSeedConsoleAotOutput.Count -ne 1 -or
+    $NativeSeedConsoleAotOutput[0] -ne
+        'native Seed console AOT verification status=Complete artifacts=2 cases=1'
 ) {
-    $WindowsApplicationText = $WindowsApplicationOutput -join ' | '
-    throw "The Seed CLI failed to produce the canonical Windows application (exit $LASTEXITCODE; output: $WindowsApplicationText)."
-}
-$WindowsApplicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SumWindowsApplication).Hash.ToLowerInvariant()
-if (
-    (Get-Item -LiteralPath $SumWindowsApplication).Length -ne 5120 -or
-    $WindowsApplicationHash -ne '5947c00a81f4cf94651d42d619f3173a622448d042f4fa20e3042940d4a56c77'
-) {
-    throw 'The Seed CLI Windows application identity is not canonical.'
-}
-if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
-    [System.Runtime.InteropServices.OSPlatform]::Windows)) {
-    & $SumWindowsApplication
-    if ($LASTEXITCODE -ne 29) {
-        throw "The generated Windows application returned $LASTEXITCODE instead of 29."
-    }
-}
-
-$LinuxApplicationOutput = dotnet $ToolDll compile `
-    (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') `
-    --target linux-x64-console-v1 `
-    -o $SumLinuxApplication
-if (
-    $LASTEXITCODE -ne 0 -or
-    $LinuxApplicationOutput -notcontains 'Target: linux-x64-console-v1' -or
-    $LinuxApplicationOutput -notcontains 'SHA-256: 8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4'
-) {
-    $LinuxApplicationText = $LinuxApplicationOutput -join ' | '
-    throw "The Seed CLI failed to produce the canonical Linux application (exit $LASTEXITCODE; output: $LinuxApplicationText)."
-}
-$LinuxApplicationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SumLinuxApplication).Hash.ToLowerInvariant()
-if (
-    (Get-Item -LiteralPath $SumLinuxApplication).Length -ne 8304 -or
-    $LinuxApplicationHash -ne '8af8b46c290965cfc4475d882ac2d5fbdb0ffe4c493a19883a19c2683a319ec4'
-) {
-    throw 'The Seed CLI Linux application identity is not canonical.'
+    throw 'The native Seed console AOT verification failed.'
 }
 
 $RunOutput = dotnet $ToolDll run $SumModule

@@ -166,8 +166,24 @@ and diagnostics. The current Windows helper passes in 2.8 seconds. T2 remains
 `managed-normal`, and the direct inventory remains twelve files: the broad
 Seed scripts still use .NET for execution, packaging, harness, and many later
 qualification phases, while the GitHub workflow remains managed. Independent
-Linux execution, automatic changed-file ownership, the remaining broad-suite
-transfers, grouped qualification, and recovery retirement remain open.
+Linux execution, the reported changed-file evidence gap, the remaining
+broad-suite transfers, grouped qualification, and recovery retirement remain
+open.
+
+Current T2 console-AOT transfer:
+[Decision 0506](../Decisions/0506-Native-Seed-Console-Aot-Qualification-Smoke.md)
+consumes that helper's exact 494-byte `Sum-Data.wvb`, lowers and independently
+admits its 3,288-byte WVO, requires the complete flat-link map and 3,104-byte
+image, and packages both established version-1 console applications through
+native front doors. The Windows helper passes in 1.1 seconds and executes the
+5,120-byte PE to result `29`. This removes two more managed invocations from
+each host script, eleven cumulatively with Decision 0505, without changing the
+three normal plus nine recovery direct-entry inventory. T2 remains
+`managed-normal` because the broad scripts still use .NET for general
+execution, the harness, and later qualification phases. Independent Linux
+execution, the explicit `seed-native-console-aot` gap, remaining broad-suite
+transfers, GitHub cutover, grouped qualification, and recovery retirement
+remain open.
 
 ## Normal-path audit result
 

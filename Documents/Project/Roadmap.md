@@ -12,6 +12,15 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0506](../Decisions/0506-Native-Seed-Console-Aot-Qualification-Smoke.md)
+transfers the next coherent boundary in both broad Seed qualification scripts.
+The exact `Sum-Data.wvb` now passes through native lower, WVO admission, flat
+linking, paired version-1 packaging, and current-host execution without using
+the managed target compiler. Together with Decision 0505 this removes eleven
+managed invocations per host script. General WVB execution, the managed test
+harness, later qualification phases, independent Linux execution, and the
+GitHub cutover remain the next boundaries.
+
 [Decision 0505](../Decisions/0505-Native-Seed-Front-Door-Qualification-Smoke.md)
 transfers the source/project build, WVB verify/inspect, and malformed-project
 smoke at the start of both broad Seed qualification scripts to paired native

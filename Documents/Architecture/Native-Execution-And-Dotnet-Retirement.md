@@ -438,6 +438,16 @@ and later qualification phases remain. Ordinary component manifests are
 colocated with their source and keep Project 1 paths manifest-relative; no
 root-level manifest layout is imposed.
 
+Decision 0506 continues that transfer across one complete capability-free AOT
+chain. The canonical Sum WVB is lowered once through the accepted native
+backend, admitted as WVO, flat-linked with its exact map, and packaged from the
+same image for Windows and Linux version-1 console targets. The current-host
+product executes to result `29`. This replaces two more managed target-compile
+calls per broad Seed command while leaving the frozen `windvale compile` and
+`aot` target surface in the recovery/differential layer. General execution,
+the broad harness, independent Linux evidence, and later qualification phases
+remain managed or unpromoted.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

@@ -216,6 +216,23 @@ repository-wide products such as the complete compiler, but are not the
 default location for every future project. A later workspace/package design
 may add a higher-level organization contract without changing Project 1.
 
+Run the exact native capability-free console-AOT qualification composition in
+the same output directory after `Sum-Data.wvb` exists:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Seed-Native-Console-Aot.ps1 `
+  -OutputDirectory $output.FullName
+```
+
+```sh
+./Tools/Verify/Verify-Seed-Native-Console-Aot.sh artifacts/seed-front-door
+```
+
+This lowers and verifies the WVO, requires the complete flat-link map, packages
+the exact Windows and Linux version-1 products from one image, and executes the
+current-host product to result `29`. The paired broad Seed scripts invoke it
+immediately after the native front-door helper.
+
 The retained Stage 0 runtime still owns execution:
 
 ```powershell
@@ -228,7 +245,8 @@ Direct single-source compilation remains a Stage 0 development/recovery command:
 dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv -o Artifacts/Sum-Data.wvb
 ```
 
-On Windows, build and run the first narrow import-free native application target with:
+For an independent Stage 0 recovery/differential comparison of the Windows
+version-1 writer, use:
 
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv --target windows-x64-console-v1 -o artifacts/Sum-Data.exe
@@ -236,7 +254,7 @@ dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv --
 $LASTEXITCODE # 29
 ```
 
-On Linux, build and run the matching sectionless static-PIE target with:
+For the corresponding Stage 0 Linux recovery/differential comparison, use:
 
 ```sh
 dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv --target linux-x64-console-v1 -o artifacts/Sum-Data.elf
@@ -244,7 +262,20 @@ dotnet run --project Tools/Windvale.Tool -- compile Examples/Seed/Sum-Data.wv --
 echo $? # 29
 ```
 
-Both version-1 targets accept only capability-free `Main() -> i32` and use the Stage 0 compiler/tool host to construct the container; the generated process does not load .NET. Successful results `0` through `255` are observable unchanged on both hosts, while any other successful `i32` or native failure becomes process result `1`. The CLI stages the complete executable and Linux mode `0755` under a unique sibling name before one atomic replacement, so prepublication failure leaves an existing requested output unchanged. See the [Windows](../../Specifications/Windvale-Windows-Console-Application.md) and [Linux](../../Specifications/Windvale-Linux-Console-Application.md) console application specifications for their fixed ABI-22 context, arenas, verification, and deliberate limits.
+Both version-1 contracts accept only capability-free `Main() -> i32`. The
+ordinary canonical qualification smoke composes the Windvale-native build,
+lower, verify, link, and package front doors; the commands above retain the
+frozen Stage 0 compiler/tool host as an independent writer and recovery oracle.
+The generated process itself does not load .NET. Successful results `0`
+through `255` are observable unchanged on both hosts, while any other
+successful `i32` or native failure becomes process result `1`. Publication
+stages the complete executable and Linux mode `0755` under a unique sibling
+name before one atomic replacement, so prepublication failure leaves an
+existing requested output unchanged. See the
+[Windows](../../Specifications/Windvale-Windows-Console-Application.md) and
+[Linux](../../Specifications/Windvale-Linux-Console-Application.md) console
+application specifications for their fixed ABI-22 context, arenas,
+verification, and deliberate limits.
 
 To build the first standalone hosted console application, use the version-2 target with the existing hosted example:
 

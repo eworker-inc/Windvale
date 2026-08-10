@@ -48,6 +48,18 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Seed native console AOT qualification smoke'
+        Paths = @(
+            'Tools/Verify/Verify-Seed-Native-Console-Aot.ps1',
+            'Tools/Verify/Verify-Seed-Native-Console-Aot.sh',
+            'Examples/Seed/Sum-Data.wvproj',
+            'Specifications/Seed-CLI.md'
+        )
+        Suites = @('seed')
+        Gaps = @('seed-native-console-aot', 'seed-native-front-door')
+        VerifyPlan = $false
+    },
+    @{
         Name = 'native baseline JIT owner'
         Paths = @(
             'Tools/Native/Test-Baseline-Jit-Publisher.cmd',
