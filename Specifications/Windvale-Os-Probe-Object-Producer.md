@@ -18,7 +18,7 @@ Tools/Native/Produce-Os-Probe-Object.sh <kind> <output.wvo>
 The launchers admit the exact host application, require a new `.wvo` destination
 in an existing directory, reject an unknown exact kind, remove a newly created
 invalid result, and require the recipe's complete output identity. The public
-launcher dispatches `memory` and `loader` to separately owned
+launcher dispatches the three `memory*` roles and `loader` to separately owned
 [memory-object](Windvale-Os-Memory-Object-Producer.md) and
 [loader-object](Windvale-Os-Loader-Object-Producer.md) producers; the four
 compact recipes remain in the original focused package.
@@ -32,6 +32,8 @@ compact recipes remain in the original focused package.
 | `native-bridge-and-support` | `13-native-bridge-and-support.wvo` | 461 | `472a0fbe6497525e634a4785e92aa9ee62c3c7d70fff7510e45acbea644eea0b` |
 | `paging` | `10-paging.wvo` | 1,292 | `a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d` |
 | `memory` | `08-memory.wvo` | 1,529 | `2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed` |
+| `memory-invalid-opcode` | `08-memory.wvo` | 1,545 | `09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868` |
+| `memory-general-protection` | `08-memory.wvo` | 1,545 | `23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0` |
 | `loader` | `00-loader.wvo` | 6,336 | `b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804` |
 
 The exception recipe is defined by the focused

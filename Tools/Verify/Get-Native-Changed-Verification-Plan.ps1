@@ -287,6 +287,10 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-linker-recovery-source'
     } elseif ($Path.StartsWith(
+        'Artifacts/Native-Os-Probe-Memory-Object-Producer-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite @('os-probe-object', 'os-probe')
+    } elseif ($Path.StartsWith(
         'Artifacts/Native-Hosted-Container-Toolset-Candidate/',
         [StringComparison]::Ordinal) -or
         $Path.StartsWith(
@@ -344,6 +348,8 @@ foreach ($Path in $Paths) {
                 [StringComparison]::Ordinal)) {
                 Add-Suite 'publisher-rejections'
             }
+        } elseif ($Path -match 'Os-|Kernel|Probe') {
+            Add-Os-Suite $Path
         } elseif ($Path -match 'Assembly|Wva-') {
             Add-Assembler-Suites
         } elseif ($Path -match 'Linking|Linker') {
@@ -354,8 +360,6 @@ foreach ($Path in $Paths) {
             Add-Compiler-Suites
         } elseif ($Path -match 'Bytecode|Runtime|Hosted-Resources') {
             Add-Bytecode-Suites
-        } elseif ($Path -match 'Os-|Kernel|Probe') {
-            Add-Suite 'os-probe'
         } else {
             Add-Gap "specification:$([IO.Path]::GetFileName($Path))"
         }

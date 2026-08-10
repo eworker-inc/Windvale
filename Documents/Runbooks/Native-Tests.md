@@ -51,18 +51,18 @@ The exact filter names and case counts are:
 | `hosted-verifier-publisher-files` | 15 |
 | `uefi-packager` | 3 |
 | `wvo-export-renamer` | 4 |
-| `os-probe-object` | 9 |
+| `os-probe-object` | 11 |
 | `os-kernel-target` | 7 |
 | `os-process-policy` | 2 |
 | `os-process-object` | 2 |
-| `os-probe` | 2 |
+| `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 32 suites and 3,164 cases in manifest order. Its
+Omitting `--filter` selects all 32 suites and 3,168 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 32, Passed: 32, Failed: 0, Cases: 3164
+Suites: 32, Passed: 32, Failed: 0, Cases: 3168
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -528,22 +528,28 @@ script repeatedly or use a passing Windows result as Linux execution evidence.
 
 ## Windvale OS boot execution
 
-The ordinary normal-scenario native build candidate constructs every Probe 40
-object and does not invoke `.NET`:
+The ordinary native build candidate constructs every Probe 40 object for the
+normal, invalid-opcode, and general-protection scenarios and does not invoke
+`.NET`:
 
 ```bat
 Tools\Native\Build-Os-Probe.cmd C:\path\to\BOOTX64.EFI
+Tools\Native\Build-Os-Probe.cmd C:\path\to\INVALID.EFI invalid-opcode
+Tools\Native\Build-Os-Probe.cmd C:\path\to\GENERAL.EFI general-protection
 ```
 
 ```sh
 ./Tools/Native/Build-Os-Probe.sh /path/to/BOOTX64.EFI
+./Tools/Native/Build-Os-Probe.sh /path/to/invalid.efi invalid-opcode
+./Tools/Native/Build-Os-Probe.sh /path/to/general.efi general-protection
 ```
 
 It compiles, lowers, and export-renames the canonical admission source;
 compiles and lowers the canonical native-probe
 source; constructs the focused x64 exception, paging, WVB admission-bridge, and
 native bridge/support objects through one digest-bound Windvale-native producer;
-constructs the normal memory object through a separate focused producer;
+constructs the selected architecture-fault memory object through a separate
+focused producer;
 constructs the normal UEFI loader object from a separately pinned architecture
 fixture and focused producer; compiles the canonical system-kernel source to WVB
 and lowers it through the bounded Windvale-native kernel target; compiles,
@@ -551,8 +557,8 @@ lowers, and export-renames the portable process-policy source through the
 general native tools; rebuilds the process object from its canonical Windvale
 sources, WVA shims, versioned records, and one reviewed architecture fixture;
 assembles three top-level WVA objects natively; links fourteen inputs; and
-packages the exact EFI. Use the focused retirement lane to check construction
-plus existing-output preservation:
+packages the exact EFI. Use the focused retirement lane to check all three exact
+constructions plus existing-output preservation:
 
 ```bat
 Tools\Native\Test-Retirement-Suite.cmd --filter os-probe
@@ -611,6 +617,8 @@ Tools\Native\Produce-Os-Probe-Object.cmd wvb-admission-bridge output.wvo
 Tools\Native\Produce-Os-Probe-Object.cmd native-bridge-and-support output.wvo
 Tools\Native\Produce-Os-Probe-Object.cmd paging output.wvo
 Tools\Native\Produce-Os-Probe-Object.cmd memory output.wvo
+Tools\Native\Produce-Os-Probe-Object.cmd memory-invalid-opcode output.wvo
+Tools\Native\Produce-Os-Probe-Object.cmd memory-general-protection output.wvo
 Tools\Native\Produce-Os-Probe-Object.cmd loader output.wvo
 ```
 
@@ -620,6 +628,8 @@ Tools\Native\Produce-Os-Probe-Object.cmd loader output.wvo
 ./Tools/Native/Produce-Os-Probe-Object.sh native-bridge-and-support output.wvo
 ./Tools/Native/Produce-Os-Probe-Object.sh paging output.wvo
 ./Tools/Native/Produce-Os-Probe-Object.sh memory output.wvo
+./Tools/Native/Produce-Os-Probe-Object.sh memory-invalid-opcode output.wvo
+./Tools/Native/Produce-Os-Probe-Object.sh memory-general-protection output.wvo
 ./Tools/Native/Produce-Os-Probe-Object.sh loader output.wvo
 ```
 
@@ -653,8 +663,9 @@ pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 `
 The verifier copies the admitted image into a unique FAT root, runs the pinned
 QEMU/firmware contract, checks the complete scenario marker, and proves that
 the supplied image, private copy, firmware code, and variable-store template
-did not change. Run only the affected scenario during the inner loop. All five
-scenarios belong to the final OS qualification gate.
+did not change. Run only the affected scenario during the inner loop. User-fault
+and service-fault still need native image construction; all five scenarios
+belong to the final OS qualification gate.
 
 To reconstruct an image through the explicit recovery boundary, use:
 
@@ -681,7 +692,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,164-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,168-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

@@ -201,6 +201,12 @@ WVA shims, and versioned records while retaining one 46,678-byte reviewed
 architecture fixture. The normal Probe 40 object inventory now has eleven
 native producers and zero frozen WVOs. Linux execution, final Decision 0057
 qualification, and the digest-bound recovery release remain.
+[Decision 0489](../Decisions/0489-Native-Probe-40-Architecture-Fault-Scenarios.md)
+then extends the focused memory-object producer and ordinary image builder to
+the exact invalid-opcode and general-protection variants. Both native images
+match the Stage 0 oracle byte for byte and pass their pinned QEMU vector/error
+contracts. Linux execution and the two contained process-fault images remain
+before final qualification.
 [Decision 0457](../Decisions/0457-Normal-Path-Dotnet-Audit.md) completes that
 audit: only four direct normal managed files remain, all in verification, plus
 one indirect local call into the managed Seed gate. Nine other direct entries

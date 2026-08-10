@@ -1,10 +1,35 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 1 || $1 != *.efi ]]; then
-    echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi>' >&2
+if [[ $# -lt 1 || $# -gt 2 || $1 != *.efi ]]; then
+    echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi> [normal|invalid-opcode|general-protection]' >&2
     exit 64
 fi
+scenario=${2:-normal}
+case $scenario in
+    normal)
+        memory_role=memory
+        memory_bytes=1529
+        memory_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
+        efi_digest=080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9
+        ;;
+    invalid-opcode)
+        memory_role=memory-invalid-opcode
+        memory_bytes=1545
+        memory_digest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868
+        efi_digest=8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734
+        ;;
+    general-protection)
+        memory_role=memory-general-protection
+        memory_bytes=1545
+        memory_digest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0
+        efi_digest=47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b
+        ;;
+    *)
+        echo 'Usage: ./Tools/Native/Build-Os-Probe.sh <output.efi> [normal|invalid-opcode|general-protection]' >&2
+        exit 64
+        ;;
+esac
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
@@ -179,7 +204,7 @@ if ! "$script_directory/Assemble-Wva.sh" \
     cat -- "$work/07.log" >&2
     exit 1
 fi
-if ! "$script_directory/Produce-Os-Probe-Object.sh" memory \
+if ! "$script_directory/Produce-Os-Probe-Object.sh" "$memory_role" \
     "$work/08-memory.wvo" >"$work/08.log" 2>&1; then
     cat -- "$work/08.log" >&2
     exit 1
@@ -213,7 +238,7 @@ fi
 if ! printf '%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n' \
     'fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee' "$work/06-memory-object-shims.wvo" \
     'e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344' "$work/07-timer-shims.wvo" \
-    '2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed' "$work/08-memory.wvo" \
+    "$memory_digest" "$work/08-memory.wvo" \
     '9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c' "$work/09-exceptions.wvo" \
     'a6bcad24e4752acc1fbab75d6667e965f2ab4d5613edd2c8e6cda244616fba2d' "$work/10-paging.wvo" \
     '271c378b1f12bb4affa33474d865611cbf14e5b1b8996c703cb3d3cbe22eee7d' "$work/12-wvb-admission-bridge.wvo" \
@@ -221,6 +246,10 @@ if ! printf '%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n%s  %s\n' \
     '845d45d6787ec819ca300ffc81a9ffe3e86c7b3998f3dd2a50a017a353d86193' "$work/11-kernel-shims.wvo" |
     sha256sum --check --strict --quiet; then
     echo 'A native Probe 40 top-level WVA object is invalid.' >&2
+    exit 1
+fi
+if [[ $(wc -c < "$work/08-memory.wvo") -ne $memory_bytes ]]; then
+    echo 'The native Probe 40 memory object has an invalid length.' >&2
     exit 1
 fi
 
@@ -254,7 +283,7 @@ if ! "$script_directory/Package-Uefi.sh" \
 fi
 if [[ $(wc -c < "$work/Probe40.efi") -ne 683008 ]] ||
     ! printf '%s  %s\n' \
-        '080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9' \
+        "$efi_digest" \
         "$work/Probe40.efi" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 EFI candidate is invalid.' >&2
     exit 1
@@ -266,7 +295,7 @@ if ! mv -- "$work/Probe40.efi" "$output"; then
 fi
 printf '%s\n' \
     'windvale-os-probe-native-build 40' \
-    'scenario=normal' \
+    "scenario=$scenario" \
     'efi-bytes=683008' \
-    'efi-sha256=080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9' \
+    "efi-sha256=$efi_digest" \
     "output=$output"

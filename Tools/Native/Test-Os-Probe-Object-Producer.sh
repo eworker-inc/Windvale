@@ -22,6 +22,8 @@ admission="$temporary_directory/12-wvb-admission-bridge.wvo"
 native_bridge="$temporary_directory/13-native-bridge-and-support.wvo"
 paging="$temporary_directory/10-paging.wvo"
 memory="$temporary_directory/08-memory.wvo"
+invalid_opcode_memory="$temporary_directory/08-memory-invalid-opcode.wvo"
+general_protection_memory="$temporary_directory/08-memory-general-protection.wvo"
 loader="$temporary_directory/00-loader.wvo"
 existing="$temporary_directory/Existing.wvo"
 unknown="$temporary_directory/Unknown.wvo"
@@ -61,6 +63,16 @@ verify_output "$memory" 1529 \
     2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed || exit 1
 "$script_directory/Verify-Wvo.sh" "$memory" >/dev/null 2>&1 || exit 1
 
+"$script_directory/Produce-Os-Probe-Object.sh" memory-invalid-opcode "$invalid_opcode_memory" >/dev/null 2>&1 || exit 1
+verify_output "$invalid_opcode_memory" 1545 \
+    09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868 || exit 1
+"$script_directory/Verify-Wvo.sh" "$invalid_opcode_memory" >/dev/null 2>&1 || exit 1
+
+"$script_directory/Produce-Os-Probe-Object.sh" memory-general-protection "$general_protection_memory" >/dev/null 2>&1 || exit 1
+verify_output "$general_protection_memory" 1545 \
+    23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0 || exit 1
+"$script_directory/Verify-Wvo.sh" "$general_protection_memory" >/dev/null 2>&1 || exit 1
+
 "$script_directory/Produce-Os-Probe-Object.sh" loader "$loader" >/dev/null 2>&1 || exit 1
 verify_output "$loader" 6336 \
     b310bc0e9aebc7b14c0892bb3dd4b833d42539c2194427a8f333b511d6af3804 || exit 1
@@ -87,4 +99,4 @@ if [[ $invalid_status -ne 64 || -e $invalid ]]; then
     exit 1
 fi
 
-echo 'Tests: 9, Passed: 9, Failed: 0'
+echo 'Tests: 11, Passed: 11, Failed: 0'

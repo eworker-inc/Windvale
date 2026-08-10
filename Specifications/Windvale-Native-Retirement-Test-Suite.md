@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 2,671 LF-only bytes with SHA-256
-`ac82092f8bd7ecae91a291b1519ddec29d02ed4ba0869b53162cca9e83b85aae`.
+`Tests/Native/Retirement-Suite.txt` is 2,674 LF-only bytes with SHA-256
+`342353a975ad5779d2b5591635a6775fd6566acc8fcb11871f55406022590e54`.
 The first line is exactly:
 
 ```text
@@ -66,14 +66,14 @@ file. The current plan is:
 | `hosted-verifier-publisher-files` | `Test-Hosted-Verifier-Publisher-File-Pipeline` | 15 | `Tests: 15, Passed: 15, Failed: 0` |
 | `uefi-packager` | `Test-Uefi-Packager` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
 | `wvo-export-renamer` | `Test-Wvo-Export-Renamer` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
-| `os-probe-object` | `Test-Os-Probe-Object-Producer` | 9 | `Tests: 9, Passed: 9, Failed: 0` |
+| `os-probe-object` | `Test-Os-Probe-Object-Producer` | 11 | `Tests: 11, Passed: 11, Failed: 0` |
 | `os-kernel-target` | `Test-Os-Kernel-Target` | 7 | `Tests: 7, Passed: 7, Failed: 0` |
 | `os-process-policy` | `Test-Os-Process-Policy-Object` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `os-process-object` | `Test-Os-Process-Object` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
-| `os-probe` | `Test-Os-Probe` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
+| `os-probe` | `Test-Os-Probe` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 32 suites and 3,164 cases.
+The version-1 plan therefore contains exactly 32 suites and 3,168 cases.
 
 ## Coordinator contract
 
@@ -95,7 +95,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 32, Passed: 32, Failed: 0, Cases: 3164
+Suites: 32, Passed: 32, Failed: 0, Cases: 3168
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

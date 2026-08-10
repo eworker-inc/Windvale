@@ -3,81 +3,19 @@ module Probeˉmemoryˉobjectˉproducer profile hosted;
 import Wvoˉobjectˉconstruction as Construction;
 
 capability diagnostic.write_line;
+capability file.read_bytes;
 capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
 data Memoryˉselector: bytes = [109, 101, 109, 111, 114, 121];
-data Memoryˉcode: bytes = [
-    65, 84, 65, 85, 65, 86, 65, 87, 87, 72, 131, 236, 32, 73, 137, 228,
-    73, 137, 205, 77, 133, 237, 15, 132, 11, 3, 0, 0, 72, 184, 87, 86,
-    75, 72, 65, 78, 68, 49, 73, 57, 69, 0, 15, 133, 247, 2, 0, 0,
-    65, 131, 125, 8, 1, 15, 133, 236, 2, 0, 0, 65, 131, 125, 12, 48,
-    15, 133, 225, 2, 0, 0, 73, 131, 125, 16, 0, 15, 132, 214, 2, 0,
-    0, 73, 139, 69, 24, 72, 133, 192, 15, 132, 201, 2, 0, 0, 72, 61,
-    0, 0, 16, 0, 15, 135, 189, 2, 0, 0, 73, 139, 69, 32, 72, 131,
-    248, 40, 15, 130, 175, 2, 0, 0, 72, 61, 0, 1, 0, 0, 15, 135,
-    163, 2, 0, 0, 65, 131, 125, 40, 1, 15, 133, 152, 2, 0, 0, 65,
-    131, 125, 44, 0, 15, 133, 141, 2, 0, 0, 73, 139, 69, 24, 49, 210,
-    73, 247, 117, 32, 72, 133, 210, 15, 133, 122, 2, 0, 0, 72, 133, 192,
-    15, 132, 113, 2, 0, 0, 77, 139, 85, 16, 73, 137, 195, 77, 139, 69,
-    32, 69, 49, 246, 69, 49, 255, 73, 247, 66, 8, 255, 15, 0, 0, 15,
-    133, 82, 2, 0, 0, 73, 247, 66, 16, 255, 15, 0, 0, 15, 133, 68,
-    2, 0, 0, 73, 131, 122, 24, 0, 15, 132, 57, 2, 0, 0, 73, 139,
-    74, 24, 72, 184, 0, 0, 0, 0, 0, 0, 16, 0, 72, 57, 193, 15,
-    135, 34, 2, 0, 0, 72, 255, 201, 72, 193, 225, 12, 73, 3, 74, 8,
-    15, 130, 17, 2, 0, 0, 65, 131, 58, 7, 15, 133, 116, 0, 0, 0,
-    73, 139, 66, 8, 72, 61, 0, 0, 16, 0, 15, 130, 100, 0, 0, 0,
-    73, 129, 122, 24, 157, 0, 0, 0, 15, 130, 86, 0, 0, 0, 72, 5,
-    255, 255, 31, 0, 15, 130, 74, 0, 0, 0, 72, 37, 0, 0, 224, 255,
-    72, 137, 194, 72, 129, 194, 0, 192, 9, 0, 15, 130, 52, 0, 0, 0,
-    72, 57, 202, 15, 135, 43, 0, 0, 0, 72, 185, 0, 48, 246, 255, 0,
-    0, 0, 0, 72, 57, 200, 15, 135, 24, 0, 0, 0, 77, 133, 246, 15,
-    132, 9, 0, 0, 0, 76, 57, 240, 15, 131, 6, 0, 0, 0, 73, 137,
-    198, 77, 137, 215, 77, 1, 194, 73, 255, 203, 15, 133, 39, 255, 255, 255,
-    77, 133, 246, 15, 132, 126, 1, 0, 0, 77, 139, 85, 16, 77, 139, 69,
-    32, 73, 139, 69, 24, 49, 210, 73, 247, 117, 32, 73, 137, 195, 77, 57,
-    250, 15, 132, 49, 0, 0, 0, 73, 139, 66, 8, 73, 141, 142, 0, 208,
-    9, 0, 72, 57, 200, 15, 131, 29, 0, 0, 0, 73, 139, 74, 24, 72,
-    255, 201, 72, 193, 225, 12, 73, 3, 74, 8, 76, 57, 241, 15, 130, 5,
-    0, 0, 0, 233, 47, 1, 0, 0, 77, 1, 194, 73, 255, 203, 15, 133,
-    186, 255, 255, 255, 76, 137, 247, 49, 192, 185, 0, 58, 1, 0, 252, 243,
-    72, 171, 72, 184, 87, 86, 75, 77, 69, 77, 49, 55, 73, 137, 6, 65,
-    199, 70, 8, 17, 0, 0, 0, 65, 199, 70, 12, 64, 0, 0, 0, 77,
-    137, 118, 16, 73, 199, 70, 24, 157, 0, 0, 0, 73, 199, 70, 32, 5,
-    0, 0, 0, 73, 199, 70, 40, 152, 0, 0, 0, 73, 141, 70, 64, 73,
-    137, 70, 48, 73, 199, 70, 56, 0, 0, 0, 0, 65, 199, 134, 160, 11,
-    0, 0, 31, 0, 0, 0, 65, 198, 134, 179, 11, 0, 0, 224, 65, 199,
-    134, 192, 11, 0, 0, 255, 255, 255, 255, 65, 198, 134, 196, 11, 0, 0,
-    255, 73, 139, 85, 0, 72, 137, 80, 0, 73, 139, 85, 8, 72, 137, 80,
-    8, 73, 139, 85, 16, 72, 137, 80, 16, 73, 139, 85, 24, 72, 137, 80,
-    24, 73, 139, 85, 32, 72, 137, 80, 32, 73, 139, 85, 40, 72, 137, 80,
-    40, 76, 137, 241, 186, 1, 0, 0, 0, 232, 0, 0, 0, 0, 72, 133,
-    192, 15, 132, 96, 0, 0, 0, 73, 137, 70, 56, 73, 141, 166, 0, 80,
-    0, 0, 72, 131, 236, 32, 73, 139, 78, 56, 232, 0, 0, 0, 0, 72,
-    133, 192, 15, 133, 46, 0, 0, 0, 76, 137, 241, 232, 0, 0, 0, 0,
-    72, 133, 192, 15, 133, 29, 0, 0, 0, 73, 141, 78, 64, 232, 0, 0,
-    0, 0, 73, 137, 199, 72, 133, 192, 15, 133, 14, 0, 0, 0, 69, 49,
-    255, 233, 6, 0, 0, 0, 65, 191, 1, 0, 0, 0, 76, 137, 228, 76,
-    137, 248, 233, 5, 0, 0, 0, 184, 1, 0, 0, 0, 72, 131, 196, 32,
-    95, 65, 95, 65, 94, 65, 93, 65, 92, 195, 144, 144, 144, 144, 144, 144,
-    87, 72, 133, 201, 15, 132, 243, 0, 0, 0, 72, 184, 87, 86, 75, 77,
-    69, 77, 49, 55, 72, 57, 1, 15, 133, 224, 0, 0, 0, 131, 121, 8,
-    17, 15, 133, 214, 0, 0, 0, 131, 121, 12, 64, 15, 133, 204, 0, 0,
-    0, 72, 57, 73, 16, 15, 133, 194, 0, 0, 0, 72, 129, 121, 24, 157,
-    0, 0, 0, 15, 133, 180, 0, 0, 0, 133, 210, 15, 132, 172, 0, 0,
-    0, 68, 139, 194, 76, 59, 65, 40, 15, 135, 159, 0, 0, 0, 76, 139,
-    73, 32, 77, 137, 202, 76, 3, 81, 40, 73, 129, 250, 157, 0, 0, 0,
-    15, 133, 135, 0, 0, 0, 76, 137, 200, 76, 1, 192, 72, 61, 157, 0,
-    0, 0, 15, 135, 117, 0, 0, 0, 77, 137, 202, 68, 137, 199, 76, 137,
-    208, 72, 193, 232, 3, 76, 141, 153, 160, 11, 0, 0, 73, 1, 195, 68,
-    137, 208, 131, 224, 7, 178, 1, 132, 192, 15, 132, 9, 0, 0, 0, 0,
-    210, 255, 200, 233, 239, 255, 255, 255, 65, 8, 19, 66, 198, 132, 17, 192,
-    11, 0, 0, 255, 73, 255, 194, 65, 255, 200, 15, 133, 190, 255, 255, 255,
-    65, 137, 248, 73, 193, 225, 12, 73, 1, 201, 76, 1, 65, 32, 76, 41,
-    65, 40, 77, 137, 202, 77, 137, 193, 73, 193, 225, 9, 76, 137, 215, 49,
-    192, 76, 137, 201, 252, 243, 72, 171, 76, 137, 208, 95, 195, 49, 192, 95,
-    195
+data Invalidˉopcodeˉselector: bytes = [
+    109, 101, 109, 111, 114, 121, 45, 105, 110, 118, 97, 108, 105, 100, 45,
+    111, 112, 99, 111, 100, 101
+];
+data Generalˉprotectionˉselector: bytes = [
+    109, 101, 109, 111, 114, 121, 45, 103, 101, 110, 101, 114, 97, 108, 45,
+    112, 114, 111, 116, 101, 99, 116, 105, 111, 110
 ];
 
 fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
@@ -93,17 +31,21 @@ fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
     return true;
 }
 
-fn Buildˉmemoryˉobject() -> bytes {
+fn Buildˉmemoryˉobject(
+    Code: bytes,
+    Enterˉbytes: u32,
+    Allocatorˉoffset: u32
+) -> bytes {
     let Section: bytes = Construction.Encodeˉsection(
-        ".text", 1u8, 16u32, Bytesˉlength(Memoryˉcode), Memoryˉcode
+        ".text", 1u8, 16u32, Bytesˉlength(Code), Code
     );
     var Symbols: bytes = Construction.Encodeˉsymbol(
         "Windvale_kernel_allocate_pages",
-        2u8, 1u8, 0u32, 832u32, 257u32
+        2u8, 1u8, 0u32, Allocatorˉoffset, 257u32
     );
     Symbols = Bytesˉconcat(Symbols, Construction.Encodeˉsymbol(
         "Windvale_kernel_memory_enter",
-        2u8, 1u8, 0u32, 0u32, 826u32
+        2u8, 1u8, 0u32, 0u32, Enterˉbytes
     ));
     Symbols = Bytesˉconcat(Symbols, Construction.Encodeˉsymbol(
         "Windvale_kernel_allocate_memory_object",
@@ -138,21 +80,46 @@ fn Buildˉmemoryˉobject() -> bytes {
     );
 }
 
-export fn Main() -> i32 {
-    if process.argument_count() != 2u32 {
-        diagnostic.write_line("Usage: probe-memory-object <memory> <output.wvo>");
-        return 64;
-    }
-    let Selector: bytes = Textˉtoˉutf8(process.argument(0u32));
-    if !Bytesˉequal(Selector, Memoryˉselector) {
-        diagnostic.write_line("probe memory object status=Unsupported");
-        return 64;
-    }
-    let Result: bytes = Buildˉmemoryˉobject();
-    if Bytesˉlength(Result) != 1529u32 {
+fn Publish(
+    Code: bytes,
+    Codeˉbytes: u32,
+    Enterˉbytes: u32,
+    Allocatorˉoffset: u32,
+    Objectˉbytes: u32
+) -> i32 {
+    if Bytesˉlength(Code) != Codeˉbytes {
         diagnostic.write_line("probe memory object status=Rejected");
         return 1;
     }
-    file.write_bytes(process.argument(1u32), Result);
+    let Result: bytes = Buildˉmemoryˉobject(
+        Code, Enterˉbytes, Allocatorˉoffset
+    );
+    if Bytesˉlength(Result) != Objectˉbytes {
+        diagnostic.write_line("probe memory object status=Rejected");
+        return 1;
+    }
+    file.write_bytes(process.argument(2u32), Result);
     return 0;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 3u32 {
+        diagnostic.write_line(
+            "Usage: probe-memory-object <memory|memory-invalid-opcode|memory-general-protection> <code.bin> <output.wvo>"
+        );
+        return 64;
+    }
+    let Selector: bytes = Textˉtoˉutf8(process.argument(0u32));
+    let Code: bytes = file.read_bytes(process.argument(1u32));
+    if Bytesˉequal(Selector, Memoryˉselector) {
+        return Publish(Code, 1089u32, 826u32, 832u32, 1529u32);
+    }
+    if Bytesˉequal(Selector, Invalidˉopcodeˉselector) {
+        return Publish(Code, 1105u32, 834u32, 848u32, 1545u32);
+    }
+    if Bytesˉequal(Selector, Generalˉprotectionˉselector) {
+        return Publish(Code, 1105u32, 844u32, 848u32, 1545u32);
+    }
+    diagnostic.write_line("probe memory object status=Unsupported");
+    return 64;
 }

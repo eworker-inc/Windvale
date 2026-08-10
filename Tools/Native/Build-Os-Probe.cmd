@@ -2,8 +2,29 @@
 setlocal EnableExtensions DisableDelayedExpansion
 
 if "%~1"=="" goto :usage
-if not "%~2"=="" goto :usage
+if not "%~3"=="" goto :usage
 if /I not "%~x1"==".efi" goto :usage
+set "Scenario=%~2"
+if not defined Scenario set "Scenario=normal"
+if /I "%Scenario%"=="normal" (
+    set "Scenario=normal"
+    set "MemoryRole=memory"
+    set "MemoryBytes=1529"
+    set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
+    set "EfiDigest=080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9"
+) else if /I "%Scenario%"=="invalid-opcode" (
+    set "Scenario=invalid-opcode"
+    set "MemoryRole=memory-invalid-opcode"
+    set "MemoryBytes=1545"
+    set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
+    set "EfiDigest=8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734"
+) else if /I "%Scenario%"=="general-protection" (
+    set "Scenario=general-protection"
+    set "MemoryRole=memory-general-protection"
+    set "MemoryBytes=1545"
+    set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
+    set "EfiDigest=47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b"
+) else goto :usage
 
 set "Output=%~f1"
 if exist "%Output%" (
@@ -105,7 +126,7 @@ set "FailureStep=timer-shims"
 cmd /d /c call "%Assembler%" "%RepositoryRoot%\Operating-System\Kernel\X64-Timer-Shims.wva" "%Work%\07-timer-shims.wvo" >"%Work%\07.log" 2>&1
 if errorlevel 1 goto :failure
 set "FailureStep=memory"
-cmd /d /c call "%ObjectProducer%" memory "%Work%\08-memory.wvo" >"%Work%\08.log" 2>&1
+cmd /d /c call "%ObjectProducer%" "%MemoryRole%" "%Work%\08-memory.wvo" >"%Work%\08.log" 2>&1
 if errorlevel 1 goto :failure
 set "FailureStep=exceptions"
 cmd /d /c call "%ObjectProducer%" exceptions "%Work%\09-exceptions.wvo" >"%Work%\09.log" 2>&1
@@ -130,7 +151,7 @@ set "FailureStep=verify-timer-shims"
 call :verify "%Work%\07-timer-shims.wvo" 1202 e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344
 if errorlevel 1 goto :failure
 set "FailureStep=verify-memory"
-call :verify "%Work%\08-memory.wvo" 1529 2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
+call :verify "%Work%\08-memory.wvo" %MemoryBytes% %MemoryDigest%
 if errorlevel 1 goto :failure
 set "FailureStep=verify-exceptions"
 call :verify "%Work%\09-exceptions.wvo" 483 9caeb7ce353bca33e3bbac729ecca0423d59f8ce6b65ccd6b54fa53c381d617c
@@ -171,15 +192,15 @@ if errorlevel 1 goto :failure
 set "FailureStep=package"
 cmd /d /c call "%Packager%" "%Work%\Probe40.bin" 0 "%Work%\Probe40.efi" >"%Work%\Package.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Probe40.efi" 683008 080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9
+call :verify "%Work%\Probe40.efi" 683008 %EfiDigest%
 if errorlevel 1 goto :failure
 
 move /y "%Work%\Probe40.efi" "%Output%" >nul
 if errorlevel 1 goto :failure
 echo windvale-os-probe-native-build 40
-echo scenario=normal
+echo scenario=%Scenario%
 echo efi-bytes=683008
-echo efi-sha256=080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9
+echo efi-sha256=%EfiDigest%
 echo output=%Output%
 if exist "%Work%" rmdir /s /q "%Work%"
 exit /b 0
@@ -227,5 +248,5 @@ if errorlevel 1 (
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Build-Os-Probe.cmd ^<output.efi^>
+>&2 echo Usage: Tools\Native\Build-Os-Probe.cmd ^<output.efi^> [normal^|invalid-opcode^|general-protection]
 exit /b 64

@@ -1,8 +1,8 @@
 {
-  "format": "windvale-native-os-probe-memory-object-producer-candidate-1",
+  "format": "windvale-native-os-probe-memory-object-producer-candidate-2",
   "status": "candidate",
-  "sourceDecision": "0452",
-  "parentCommit": "3431c0193abae0e81621b534d955a2ff2b6594df",
+  "sourceDecision": "0489",
+  "parentCommit": "46615ae10c2f4d23aaa10423af2a22dbc9d4046e",
   "project": "Windvale-Os-Memory-Object-Producer.wvproj",
   "source": "Operating-System/Tools/Memory-Object-Producer.wv",
   "objectConstruction": "Object-Model/Windvale/Wvo-Object-Construction.wv",
@@ -11,29 +11,62 @@
   "outputs": [
     {
       "kind": "memory",
+      "scenario": "normal",
       "name": "08-memory.wvo",
       "bytes": 1529,
       "sha256": "2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
+    },
+    {
+      "kind": "memory",
+      "scenario": "invalid-opcode",
+      "name": "08-memory.wvo",
+      "bytes": 1545,
+      "sha256": "09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
+    },
+    {
+      "kind": "memory",
+      "scenario": "general-protection",
+      "name": "08-memory.wvo",
+      "bytes": 1545,
+      "sha256": "23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
     }
   ],
   "artifacts": [
     {
+      "name": "normal-x64-memory.bin",
+      "target": "x86-64-normal-memory-code",
+      "bytes": 1089,
+      "sha256": "07d2508132456706d8718a0bc9a54cf9b0228afbb61aec8e66ce92d34cf5e803"
+    },
+    {
+      "name": "invalid-opcode-x64-memory.bin",
+      "target": "x86-64-invalid-opcode-memory-code",
+      "bytes": 1105,
+      "sha256": "f350059d181b4a640ab03734807243348bcaca723484b1fe093767e4d042ea18"
+    },
+    {
+      "name": "general-protection-x64-memory.bin",
+      "target": "x86-64-general-protection-memory-code",
+      "bytes": 1105,
+      "sha256": "69f31f4fc8a08bea9202e4accc6101101103ea83ee213f4b4f8f51202655e049"
+    },
+    {
       "name": "Os-Probe-Memory-Object-Producer.wvb",
       "target": "portable-wvb",
-      "bytes": 37769,
-      "sha256": "2ae5f3a2f108b74a86150854c78f7f2dc0335cff2cb1e071be7718fce40e17e7"
+      "bytes": 37517,
+      "sha256": "1971e87f8c9931e914e7f7505d4fef213be5b3e6b1d38b0324ffc030be1b7e60"
     },
     {
       "name": "windows-x64-os-probe-memory-object.exe",
       "target": "windows-x64",
-      "bytes": 399872,
-      "sha256": "79461480b72cc1865278ea6f06170b8f4e9f4e849898d7b3c06aa3d36ff70032"
+      "bytes": 404992,
+      "sha256": "5437c508012d726e8bd6fb79d0942548d615f9ea52348c97b54038ab643d83c4"
     },
     {
       "name": "linux-x64-os-probe-memory-object.elf",
       "target": "linux-x64",
-      "bytes": 401408,
-      "sha256": "02280b115ead806f8b6e2f1dd066d7d06a85ae571d790c66d05daecf2acc6554"
+      "bytes": 405504,
+      "sha256": "1ea358f8cc77b36201b22ff820ef6fd000b4bbd48342dfe6eed994e487a15c7b"
     }
   ]
 }

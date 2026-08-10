@@ -5058,3 +5058,33 @@ paths, and empty input. It never substitutes the unfiltered coordinator.
 native cases. The actual no-argument `Verify-Changed.ps1` working-tree route
 discovers all 13 task paths, selects plan verification only,
 reports zero gaps, and loads no .NET. No behavior suite or broad gate reran.
+
+## Local native Probe 40 architecture-fault evidence
+
+[Decision 0489](../Decisions/0489-Native-Probe-40-Architecture-Fault-Scenarios.md)
+extends the ordinary .NET-free Probe 40 builder from normal to the two
+architecture-fault scenarios. The retained recovery oracle proves that only
+`08-memory.wvo` varies. The native producer reproduces the 1,545-byte
+invalid-opcode object at SHA-256
+`09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868`
+and the 1,545-byte general-protection object at
+`23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0`.
+The normal object remains byte-identical.
+
+The 11-case object-producer owner and four-case integrated image owner pass on
+Windows. All three images remain 683,008 bytes. Invalid-opcode has SHA-256
+`8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734`;
+general-protection has
+`47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b`.
+Pinned QEMU 11.0/Q35/TCG boots both supplied images through their complete
+serial contracts: invalid-opcode reports vector 6/error code 0, and
+general-protection reports vector 13/error code 0; both exit 3 at the expected
+panic boundary.
+
+The retirement plan is 2,674 LF-only bytes at SHA-256
+`342353a975ad5779d2b5591635a6775fd6566acc8fcb11871f55406022590e54`.
+It retains 32 suites and grows to 3,168 fixed cases. Managed execution was used
+only as the explicit differential oracle for object and EFI identities.
+Independent Linux execution, user-fault and service-fault native construction,
+the complete coordinator, broad Seed/OS, Standard, Qualification, and grouped
+promotion did not run.

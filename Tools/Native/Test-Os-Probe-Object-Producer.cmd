@@ -14,6 +14,8 @@ set "Admission=%TemporaryDirectory%\12-wvb-admission-bridge.wvo"
 set "NativeBridge=%TemporaryDirectory%\13-native-bridge-and-support.wvo"
 set "Paging=%TemporaryDirectory%\10-paging.wvo"
 set "Memory=%TemporaryDirectory%\08-memory.wvo"
+set "InvalidOpcodeMemory=%TemporaryDirectory%\08-memory-invalid-opcode.wvo"
+set "GeneralProtectionMemory=%TemporaryDirectory%\08-memory-general-protection.wvo"
 set "Loader=%TemporaryDirectory%\00-loader.wvo"
 set "Existing=%TemporaryDirectory%\Existing.wvo"
 set "Unknown=%TemporaryDirectory%\Unknown.wvo"
@@ -65,6 +67,24 @@ if errorlevel 1 goto :failure
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Memory%" >nul 2>&1
 if errorlevel 1 goto :failure
 
+call "%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd" memory-invalid-opcode "%InvalidOpcodeMemory%" >nul 2>&1
+if errorlevel 1 goto :failure
+if not exist "%InvalidOpcodeMemory%" goto :failure
+for %%F in ("%InvalidOpcodeMemory%") do if not "%%~zF"=="1545" goto :failure
+certutil -hashfile "%InvalidOpcodeMemory%" SHA256 | findstr /i /x /c:"09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868" >nul
+if errorlevel 1 goto :failure
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%InvalidOpcodeMemory%" >nul 2>&1
+if errorlevel 1 goto :failure
+
+call "%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd" memory-general-protection "%GeneralProtectionMemory%" >nul 2>&1
+if errorlevel 1 goto :failure
+if not exist "%GeneralProtectionMemory%" goto :failure
+for %%F in ("%GeneralProtectionMemory%") do if not "%%~zF"=="1545" goto :failure
+certutil -hashfile "%GeneralProtectionMemory%" SHA256 | findstr /i /x /c:"23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0" >nul
+if errorlevel 1 goto :failure
+call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%GeneralProtectionMemory%" >nul 2>&1
+if errorlevel 1 goto :failure
+
 call "%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd" loader "%Loader%" >nul 2>&1
 if errorlevel 1 goto :failure
 if not exist "%Loader%" goto :failure
@@ -90,7 +110,7 @@ call "%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd" exceptions "%In
 if not "%ERRORLEVEL%"=="64" goto :failure
 if exist "%Invalid%" goto :failure
 
-echo Tests: 9, Passed: 9, Failed: 0
+echo Tests: 11, Passed: 11, Failed: 0
 set "Status=0"
 goto :cleanup
 

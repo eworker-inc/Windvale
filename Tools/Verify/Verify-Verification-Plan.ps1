@@ -71,6 +71,17 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'OS Probe memory producer artifacts'
+        Paths = @(
+            'Artifacts/Native-Os-Probe-Memory-Object-Producer-Candidate/Manifest.json',
+            'Artifacts/Native-Os-Probe-Memory-Object-Producer-Candidate/windows-x64-os-probe-memory-object.exe',
+            'Specifications/Windvale-Os-Memory-Object-Producer.md'
+        )
+        Suites = @('os-probe-object', 'os-probe')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'exact native suite owner'
         Paths = @('Tools/Native/Test-Linker-Map-Limit.cmd')
         Suites = @('linker-map-limit')
