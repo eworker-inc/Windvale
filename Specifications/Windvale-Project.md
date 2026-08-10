@@ -35,6 +35,20 @@ Path text is nonempty strict UTF-8 and limited to 4,096 encoded bytes. Version 1
 
 Absolute paths and project-directory escape are rejected. Project paths are host build inputs only. Neither their text nor their resolved native paths enter WVSS, WVB, module identity, canonical ordering, or artifact bytes.
 
+## Repository organization
+
+A `.wvproj` normally lives beside the component source it owns. A root-level
+manifest is reserved for a genuine cross-component aggregate whose contained
+Project 1 paths need the repository common ancestor; it is not the default
+location for every project. Existing root manifests may migrate beside their
+component as those owners are changed and every path consumer is updated.
+
+Project 1 remains a single-artifact input contract, not a workspace. A future
+workspace, package index, or project-reference layer may organize and name
+cross-component aggregates so that fewer manifests need the repository root.
+That layer must preserve Project 1's exact source inventory and must not
+reintroduce `..`, ambient discovery, or directory escape into Project 1 paths.
+
 ## Build command
 
 ```text

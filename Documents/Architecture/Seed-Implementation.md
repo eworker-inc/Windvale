@@ -248,6 +248,17 @@ with the frozen differential runtime until the native value allocator owns that
 shape. This replaces fifteen more managed calls per broad host script without
 pretending the remaining broad harness is native.
 
+Decision 0511 extends the same ownership boundary to the native-stencil,
+UTF-8, integer-format, and shared service-code source products. Eight exact
+Project 1 builds and seven native inspections move out of each broad managed
+script while the retained bridge/leaf comparisons remain independent. The
+single-component manifests live beside `Compiler/Windvale` or
+`Runtime/Windvale`; only the Stencil demo remains a repository-root aggregate
+because it spans `Examples/Compiler` and `Compiler/Windvale`. A later
+workspace/reference layer should remove that placement pressure without
+weakening Project 1 containment. The demo's 20-million-step execution remains
+managed rather than silently widening the fixed runner policy.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

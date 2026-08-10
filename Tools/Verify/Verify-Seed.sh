@@ -269,7 +269,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=12 cases=24' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=20 cases=39' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -364,46 +364,13 @@ printf '%s\n' "$DYNAMIC_ALLOCATOR_OUTPUT" | grep -F 'Result: 0' >/dev/null
 printf '%s\n' "$DYNAMIC_ALLOCATOR_OUTPUT" | grep -F \
     'Dynamic allocator arena-bytes=16777216 header-bytes=16 alignment-bytes=16 allocations=35 reused=12 peak-payload-bytes=6291475 peak-charged-bytes=6291600 peak-blocks=5 maximum-addressed-bytes=8389040 peak-fragmentation-bytes=4194640 maximum-free-spans=3 failed=0 first-failure-payload-bytes=0 first-failure-charged-bytes=0 first-failure-largest-free-span-bytes=0 retained-blocks=0 retained-charged-bytes=0' >/dev/null
 
-NATIVE_STENCIL_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_STENCIL_SOURCE" -o "$NATIVE_STENCIL_MODULE"
-NATIVE_STENCIL_HASH=$(sha256sum "$NATIVE_STENCIL_MODULE" | awk '{print $1}')
-if [ "$NATIVE_STENCIL_HASH" != '6df3c524d0f9bec79cd2516a758985c487cc237c6f94bc5b80e015975d50cca3' ]; then
-    echo "The Windvale native-stencil core has an unexpected digest: $NATIVE_STENCIL_HASH" >&2
-    exit 1
-fi
-NATIVE_STENCIL_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_STENCIL_MODULE")
-printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Nativeˉstencilˉresult' >/dev/null
-printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Nativeˉstencilˉpatchˉkind' >/dev/null
-printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Nativeˉstencilˉprocessˉargumentˉcount' >/dev/null
-printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Nativeˉstencilˉprocessˉargument' >/dev/null
-printf '%s\n' "$NATIVE_STENCIL_INSPECTION" | grep -F 'Exports (20)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Native-Stencil-Demo.wv" \
-    --module "$NATIVE_STENCIL_SOURCE" \
-    -o "$NATIVE_STENCIL_DEMO_MODULE"
-NATIVE_STENCIL_DEMO_HASH=$(sha256sum "$NATIVE_STENCIL_DEMO_MODULE" | awk '{print $1}')
-if [ "$NATIVE_STENCIL_DEMO_HASH" != '6b27fbd10d5f06855354f433ec0b8c9b1af1761ef04458817931e675c26e0da8' ]; then
-    echo "The Windvale native-stencil demo has an unexpected digest: $NATIVE_STENCIL_DEMO_HASH" >&2
-    exit 1
-fi
 NATIVE_STENCIL_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$NATIVE_STENCIL_DEMO_MODULE" --max-steps 20000000)
 printf '%s\n' "$NATIVE_STENCIL_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-NATIVE_STENCIL_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Bridge.wv"
 NATIVE_STENCIL_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Stencil-Bridge.wvb"
 NATIVE_ARGUMENT_COUNT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Argument-Count-Service.bin"
 NATIVE_ARGUMENT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Argument-Service.bin"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_STENCIL_BRIDGE_SOURCE" \
-    --module "$NATIVE_STENCIL_SOURCE" \
-    -o "$NATIVE_STENCIL_BRIDGE_MODULE"
-NATIVE_STENCIL_BRIDGE_HASH=$(sha256sum "$NATIVE_STENCIL_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_STENCIL_BRIDGE_HASH" != '0a4387f12674f08d91682898a27bf84494cbdf886c34542beeb52fd9c4a538da' ]; then
-    echo "The Windvale native-stencil bridge has an unexpected digest: $NATIVE_STENCIL_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_STENCIL_BRIDGE_MODULE" "$NATIVE_STENCIL_BRIDGE_RETAINED"
 NATIVE_ARGUMENT_COUNT_LEAF_HASH=$(sha256sum "$NATIVE_ARGUMENT_COUNT_LEAF_RETAINED" | awk '{print $1}')
 if [ "$NATIVE_ARGUMENT_COUNT_LEAF_HASH" != '2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829' ] ||
@@ -417,72 +384,17 @@ if [ "$NATIVE_ARGUMENT_LEAF_HASH" != '2253e1435f141df5b68f9f7e9e9aa0de448410c42d
     echo "The retained Windvale process-argument leaf has an unexpected identity: $NATIVE_ARGUMENT_LEAF_HASH" >&2
     exit 1
 fi
-NATIVE_STENCIL_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_STENCIL_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_STENCIL_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_UTF8_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Utf8-Service.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_UTF8_CORE_SOURCE" -o "$NATIVE_UTF8_CORE_MODULE"
-NATIVE_UTF8_CORE_HASH=$(sha256sum "$NATIVE_UTF8_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_UTF8_CORE_HASH" != 'adbd4843f3c0aaf003dc6118461278fc903fd2264be6e3b90835af49eb3cb2c7' ]; then
-    echo "The Windvale native UTF-8 service core has an unexpected digest: $NATIVE_UTF8_CORE_HASH" >&2
-    exit 1
-fi
-NATIVE_UTF8_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_UTF8_CORE_MODULE")
-printf '%s\n' "$NATIVE_UTF8_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_UTF8_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉutf8ˉserviceˉbuild' >/dev/null
-printf '%s\n' "$NATIVE_UTF8_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_UTF8_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv"
 NATIVE_UTF8_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service-Bridge.wvb"
 NATIVE_UTF8_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Utf8-Service.bin"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_UTF8_BRIDGE_SOURCE" \
-    --module "$NATIVE_UTF8_CORE_SOURCE" \
-    -o "$NATIVE_UTF8_BRIDGE_MODULE"
-NATIVE_UTF8_BRIDGE_HASH=$(sha256sum "$NATIVE_UTF8_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_UTF8_BRIDGE_HASH" != '4d3c8d50d371147d687163c6d7ab761d32445719789f1f62f1f116f2bf268c4f' ]; then
-    echo "The Windvale native UTF-8 service bridge has an unexpected digest: $NATIVE_UTF8_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_UTF8_BRIDGE_MODULE" "$NATIVE_UTF8_BRIDGE_RETAINED"
 if [ "$(sha256sum "$NATIVE_UTF8_LEAF_RETAINED" | awk '{print $1}')" != '4c3d2e370d62c8d2f54a3c453f39b94cf46ddabd6db3c2f3d6b65f0713b68aaf' ] ||
     [ "$(wc -c < "$NATIVE_UTF8_LEAF_RETAINED")" -ne 800 ]; then
     echo 'The retained Windvale native UTF-8 service leaf has an unexpected exact identity.' >&2
     exit 1
 fi
-NATIVE_UTF8_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_UTF8_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_UTF8_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_INTEGER_FORMAT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Integer-Format-Services.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_INTEGER_FORMAT_CORE_SOURCE" -o "$NATIVE_INTEGER_FORMAT_CORE_MODULE"
-NATIVE_INTEGER_FORMAT_CORE_HASH=$(sha256sum "$NATIVE_INTEGER_FORMAT_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_INTEGER_FORMAT_CORE_HASH" != '6b5b5660392a9f927d046eff41aa3470bdbc616970a0e297c2c467b53d3f1fa2' ]; then
-    echo "The Windvale native integer-format service core has an unexpected digest: $NATIVE_INTEGER_FORMAT_CORE_HASH" >&2
-    exit 1
-fi
-NATIVE_INTEGER_FORMAT_CORE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_INTEGER_FORMAT_CORE_MODULE")
-printf '%s\n' "$NATIVE_INTEGER_FORMAT_CORE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_INTEGER_FORMAT_CORE_INSPECTION" | grep -F 'Nativeˉx64ˉintegerˉformatˉserviceˉbuild' >/dev/null
-printf '%s\n' "$NATIVE_INTEGER_FORMAT_CORE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_INTEGER_FORMAT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Integer-Format-Services-Bridge.wv"
 NATIVE_INTEGER_FORMAT_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-Integer-Format-Services-Bridge.wvb"
 NATIVE_I32_FORMAT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-I32-Format-Service.bin"
 NATIVE_U32_FORMAT_LEAF_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-X64-U32-Format-Service.bin"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_INTEGER_FORMAT_BRIDGE_SOURCE" \
-    --module "$NATIVE_INTEGER_FORMAT_CORE_SOURCE" \
-    -o "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE"
-NATIVE_INTEGER_FORMAT_BRIDGE_HASH=$(sha256sum "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_INTEGER_FORMAT_BRIDGE_HASH" != '851f6d8e01b62106763af518c15dc163a9af9ea30c14cdb01d62adf1538ae7f9' ]; then
-    echo "The Windvale native integer-format service bridge has an unexpected digest: $NATIVE_INTEGER_FORMAT_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE" "$NATIVE_INTEGER_FORMAT_BRIDGE_RETAINED"
 if [ "$(sha256sum "$NATIVE_I32_FORMAT_LEAF_RETAINED" | awk '{print $1}')" != 'c33758106e8d7cd31bbed8ef1e789a8e355c52736c119c75493154a4184fa41e' ] ||
     [ "$(wc -c < "$NATIVE_I32_FORMAT_LEAF_RETAINED")" -ne 225 ] ||
@@ -491,25 +403,7 @@ if [ "$(sha256sum "$NATIVE_I32_FORMAT_LEAF_RETAINED" | awk '{print $1}')" != 'c3
     echo 'The retained Windvale native integer-format leaves have unexpected exact identities.' >&2
     exit 1
 fi
-NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Main() -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_INTEGER_FORMAT_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
 NATIVE_SERVICE_CODE_BUILDER_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Service-Code-Builder.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_SERVICE_CODE_BUILDER_SOURCE" -o "$NATIVE_SERVICE_CODE_BUILDER_MODULE"
-NATIVE_SERVICE_CODE_BUILDER_HASH=$(sha256sum "$NATIVE_SERVICE_CODE_BUILDER_MODULE" | awk '{print $1}')
-if [ "$NATIVE_SERVICE_CODE_BUILDER_HASH" != 'adfb19e5a0668d06d40e0d6cadfadb34a729a0b0d1c12a11d03af722bd53cb06' ]; then
-    echo "The Windvale native service-code builder has an unexpected digest: $NATIVE_SERVICE_CODE_BUILDER_HASH" >&2
-    exit 1
-fi
-NATIVE_SERVICE_CODE_BUILDER_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_SERVICE_CODE_BUILDER_MODULE")
-printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Nativeˉx64ˉserviceˉbuilder' >/dev/null
-printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Nativeˉx64ˉserviceˉfinish' >/dev/null
-printf '%s\n' "$NATIVE_SERVICE_CODE_BUILDER_INSPECTION" | grep -F 'Exports (10)' >/dev/null
-
 NATIVE_WINDOWS_OUTPUT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Output-Service-Windows.wv"
 NATIVE_LINUX_OUTPUT_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Output-Service-Linux.wv"
 NATIVE_OUTPUT_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Output-Services-Bridge.wv"

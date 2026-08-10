@@ -241,6 +241,20 @@ plus nine-recovery direct-entry inventory is unchanged. Independent Linux
 execution, capability-bearing execution, remaining broad-suite transfers,
 GitHub cutover, grouped qualification, and recovery retirement remain open.
 
+Current T2 native service-source transfer:
+[Decision 0511](../Decisions/0511-Native-Service-Source-Build-And-Inspection-Transfer.md)
+extends the paired native front-door helper from 24 to 39 transferred calls
+and from twelve to twenty exact artifacts. It natively builds the
+native-stencil core/demo/bridge, UTF-8 core/bridge, integer-format core/bridge,
+and shared service-code builder, then natively inspects the seven ownership
+surfaces. The current Windows helper passes in 16.1 seconds. This removes eight
+managed compiles and seven managed inspections from each broad host script,
+forty-five managed invocations cumulatively. The 20-million-step Stencil demo
+execution remains managed, so T2 remains `managed-normal`; the three-normal
+plus nine-recovery direct-entry inventory is unchanged. Independent Linux
+execution, capability-bearing execution, remaining broad-suite transfers,
+GitHub cutover, grouped qualification, and recovery retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

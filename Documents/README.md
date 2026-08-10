@@ -114,6 +114,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native Seed WVB execution qualification smoke](Decisions/0508-Native-Seed-Wvb-Execution-Qualification-Smoke.md) — three exact representative WVB executions transferred from each broad Seed script to the current native runner
 - [Native WVB-runner source reconstruction and step reporting](Decisions/0509-Native-Wvb-Runner-Source-Reconstruction-And-Step-Reporting.md) — complete native source-to-WVB reconstruction, exact paired applications, and overall instruction reporting transferred from each broad Seed script
 - [Native Foundation build, inspect, and execution transfer](Decisions/0510-Native-Foundation-Build-Inspect-And-Execution-Transfer.md) — component-local Foundation projects, exact native build/inspection, three supported demo executions, and fifteen more managed calls removed from each broad Seed script
+- [Native service-source build and inspection transfer](Decisions/0511-Native-Service-Source-Build-And-Inspection-Transfer.md) — component-local native-stencil and runtime-service projects, exact native build/inspection, and fifteen more managed calls removed from each broad Seed script
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

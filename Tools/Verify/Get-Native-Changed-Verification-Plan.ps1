@@ -433,10 +433,32 @@ foreach ($Path in $Paths) {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Native-Stencil-Core.wv',
+        'Compiler/Windvale/Native-Stencil-Core.wvproj',
+        'Compiler/Windvale/Native-Stencil-Bridge.wv',
+        'Compiler/Windvale/Native-Stencil-Bridge.wvproj'
+    )) {
+        Add-Compiler-Suites
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-compiler-recovery-source'
+    } elseif ($Path -in @(
+        'Runtime/Windvale/Native-X64-Utf8-Service.wv',
+        'Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv',
+        'Runtime/Windvale/Native-X64-Utf8-Service-Core.wvproj',
+        'Runtime/Windvale/Native-X64-Utf8-Service.wvproj',
+        'Runtime/Windvale/Native-X64-Integer-Format-Services.wv',
+        'Runtime/Windvale/Native-X64-Integer-Format-Services-Bridge.wv',
+        'Runtime/Windvale/Native-X64-Integer-Format-Services-Core.wvproj',
+        'Runtime/Windvale/Native-X64-Integer-Format-Services.wvproj',
+        'Runtime/Windvale/Native-X64-Service-Code-Builder.wv',
+        'Runtime/Windvale/Native-X64-Service-Code-Builder.wvproj'
+    )) {
+        Add-Bytecode-Suites
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path -in @(
         'Runtime/Windvale.Native/Consumers/Native-X64-Argument-Count-Service.bin',
         'Runtime/Windvale.Native/Consumers/Native-X64-Argument-Service.bin',
@@ -985,6 +1007,8 @@ foreach ($Path in $Paths) {
         'Examples/Foundation/Byte-Ordering-Demo.wv',
         'Examples/Foundation/Decimal-Parsing-Demo.wv',
         'Examples/Foundation/Byte-Construction-Demo.wv',
+        'Examples/Compiler/Native-Stencil-Demo.wv',
+        'Native-Stencil-Demo.wvproj',
         'Foundation-Machine-Contracts-Demo.wvproj',
         'Foundation-Byte-Ordering-Demo.wvproj',
         'Foundation-Decimal-Parsing-Demo.wvproj',

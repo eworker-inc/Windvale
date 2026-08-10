@@ -130,6 +130,14 @@ DECIMAL_PARSING_MODULE="$OUTPUT_ROOT/Decimal-Parsing.wvb"
 DECIMAL_PARSING_DEMO_MODULE="$OUTPUT_ROOT/Decimal-Parsing-Demo.wvb"
 BYTE_CONSTRUCTION_MODULE="$OUTPUT_ROOT/Byte-Construction.wvb"
 BYTE_CONSTRUCTION_DEMO_MODULE="$OUTPUT_ROOT/Byte-Construction-Demo.wvb"
+NATIVE_STENCIL_MODULE="$OUTPUT_ROOT/Native-Stencil-Core.wvb"
+NATIVE_STENCIL_DEMO_MODULE="$OUTPUT_ROOT/Native-Stencil-Demo.wvb"
+NATIVE_STENCIL_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Stencil-Bridge.wvb"
+NATIVE_UTF8_CORE_MODULE="$OUTPUT_ROOT/Native-X64-Utf8-Service.wvb"
+NATIVE_UTF8_BRIDGE_MODULE="$OUTPUT_ROOT/Native-X64-Utf8-Service-Bridge.wvb"
+NATIVE_INTEGER_FORMAT_CORE_MODULE="$OUTPUT_ROOT/Native-X64-Integer-Format-Services.wvb"
+NATIVE_INTEGER_FORMAT_BRIDGE_MODULE="$OUTPUT_ROOT/Native-X64-Integer-Format-Services-Bridge.wvb"
+NATIVE_SERVICE_CODE_BUILDER_MODULE="$OUTPUT_ROOT/Native-X64-Service-Code-Builder.wvb"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -283,6 +291,84 @@ exact_build \
     00001399 \
     'build status=Published verification=compiler-aligned functions=3 code-bytes=4194 module-bytes=5017'
 
+exact_build \
+    "$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Core.wvproj" \
+    "$NATIVE_STENCIL_MODULE" \
+    21296 \
+    6df3c524d0f9bec79cd2516a758985c487cc237c6f94bc5b80e015975d50cca3 \
+    00005330 \
+    'build status=Published verification=compiler-aligned functions=20 code-bytes=16427 module-bytes=21296'
+exact_inspect \
+    "$NATIVE_STENCIL_MODULE" \
+    'Native\u02C9stencil\u02C9result' \
+    'Native\u02C9stencil\u02C9patch\u02C9kind' \
+    'Native\u02C9stencil\u02C9process\u02C9argument\u02C9count' \
+    'Native\u02C9stencil\u02C9process\u02C9argument' \
+    'section name=exports offset=19576 bytes=927 count=20'
+exact_build \
+    "$REPOSITORY_ROOT/Native-Stencil-Demo.wvproj" \
+    "$NATIVE_STENCIL_DEMO_MODULE" \
+    25683 \
+    6b27fbd10d5f06855354f433ec0b8c9b1af1761ef04458817931e675c26e0da8 \
+    00006453 \
+    'build status=Published verification=compiler-aligned functions=24 code-bytes=21063 module-bytes=25683'
+exact_build \
+    "$REPOSITORY_ROOT/Compiler/Windvale/Native-Stencil-Bridge.wvproj" \
+    "$NATIVE_STENCIL_BRIDGE_MODULE" \
+    20800 \
+    0a4387f12674f08d91682898a27bf84494cbdf886c34542beeb52fd9c4a538da \
+    00005140 \
+    'build status=Published verification=compiler-aligned functions=21 code-bytes=16833 module-bytes=20800'
+exact_inspect "$NATIVE_STENCIL_BRIDGE_MODULE" 'name="Main" parameters=0 result=bytes' 'section name=exports offset=20065 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Utf8-Service-Core.wvproj" \
+    "$NATIVE_UTF8_CORE_MODULE" \
+    11577 \
+    adbd4843f3c0aaf003dc6118461278fc903fd2264be6e3b90835af49eb3cb2c7 \
+    00002d39 \
+    'build status=Published verification=compiler-aligned functions=18 code-bytes=9098 module-bytes=11577'
+exact_inspect "$NATIVE_UTF8_CORE_MODULE" 'profile=portable' 'Native\u02C9x64\u02C9utf8\u02C9service\u02C9build' 'section name=exports offset=11468 bytes=46 count=1'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Utf8-Service.wvproj" \
+    "$NATIVE_UTF8_BRIDGE_MODULE" \
+    11511 \
+    4d3c8d50d371147d687163c6d7ab761d32445719789f1f62f1f116f2bf268c4f \
+    00002cf7 \
+    'build status=Published verification=compiler-aligned functions=19 code-bytes=9114 module-bytes=11511'
+exact_inspect "$NATIVE_UTF8_BRIDGE_MODULE" 'profile=portable' 'name="Main" parameters=0 result=bytes' 'section name=exports offset=11444 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Integer-Format-Services-Core.wvproj" \
+    "$NATIVE_INTEGER_FORMAT_CORE_MODULE" \
+    11611 \
+    6b5b5660392a9f927d046eff41aa3470bdbc616970a0e297c2c467b53d3f1fa2 \
+    00002d5b \
+    'build status=Published verification=compiler-aligned functions=11 code-bytes=9588 module-bytes=11611'
+exact_inspect "$NATIVE_INTEGER_FORMAT_CORE_MODULE" 'profile=portable' 'Native\u02C9x64\u02C9integer\u02C9format\u02C9service\u02C9build' 'section name=exports offset=11480 bytes=57 count=1'
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Integer-Format-Services.wvproj" \
+    "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE" \
+    11598 \
+    851f6d8e01b62106763af518c15dc163a9af9ea30c14cdb01d62adf1538ae7f9 \
+    00002d4e \
+    'build status=Published verification=compiler-aligned functions=12 code-bytes=9654 module-bytes=11598'
+exact_inspect "$NATIVE_INTEGER_FORMAT_BRIDGE_MODULE" 'profile=portable' 'name="Main" parameters=0 result=bytes' 'section name=exports offset=11531 bytes=17 count=1'
+
+exact_build \
+    "$REPOSITORY_ROOT/Runtime/Windvale/Native-X64-Service-Code-Builder.wvproj" \
+    "$NATIVE_SERVICE_CODE_BUILDER_MODULE" \
+    4135 \
+    adfb19e5a0668d06d40e0d6cadfadb34a729a0b0d1c12a11d03af722bd53cb06 \
+    00001027 \
+    'build status=Published verification=compiler-aligned functions=12 code-bytes=2440 module-bytes=4135'
+exact_inspect \
+    "$NATIVE_SERVICE_CODE_BUILDER_MODULE" \
+    'profile=portable' \
+    'Native\u02C9x64\u02C9service\u02C9builder' \
+    'Native\u02C9x64\u02C9service\u02C9finish' \
+    'section name=exports offset=3663 bytes=401 count=10'
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -314,4 +400,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=12 cases=24'
+echo 'native Seed front-door verification status=Complete artifacts=20 cases=39'

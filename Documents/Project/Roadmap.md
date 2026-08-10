@@ -12,6 +12,16 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0511](../Decisions/0511-Native-Service-Source-Build-And-Inspection-Transfer.md)
+moves eight native-stencil/runtime-service builds and seven inspections from
+each broad Seed script into the paired native helper. The helper now owns twenty
+exact artifacts and 39 cases; the cumulative normal-path removal is forty-five
+managed invocations per host script. Component manifests are colocated by
+default, with one temporary root aggregate for the cross-component Stencil
+demo. Its 20-million-step managed execution, the Byte Construction value and
+profiling boundary, capability-bearing execution, broad harness, independent
+Linux evidence, and grouped qualification are the next T2/E1 boundaries.
+
 [Decision 0510](../Decisions/0510-Native-Foundation-Build-Inspect-And-Execution-Transfer.md)
 moves eight Foundation and demo builds, four inspections, and three supported
 executions from each broad Seed script into the paired native helper. The

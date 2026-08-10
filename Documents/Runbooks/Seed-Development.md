@@ -195,7 +195,7 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Run the fixed 24-call native front-door qualification smoke directly with:
+Run the fixed 39-case native front-door qualification smoke directly with:
 
 ```powershell
 $output = New-Item -ItemType Directory -Force artifacts/seed-front-door
@@ -208,18 +208,19 @@ mkdir -p artifacts/seed-front-door
 ./Tools/Verify/Verify-Seed-Native-Front-Door.sh artifacts/seed-front-door
 ```
 
-The helper builds twelve exact WVBs. It retains the original Project 1,
+The helper builds twenty exact WVBs. It retains the original Project 1,
 verification, inspection, execution, instruction-count, and malformed-project
 cases; it additionally builds and inspects Machine Contracts, Byte Ordering,
 Decimal Parsing, and Byte Construction, builds all four demos, and executes the
-first three demos to exact result `0`. Byte Construction's 4 MiB execution and
-profiling remain in the frozen managed differential lane. Example and component
-`.wvproj` files normally live beside their owning source, with paths resolved
-relative to the manifest. The four Foundation demo projects currently remain
-root-level aggregates because their roots and sources span `Examples/` and
-`Foundation/`; this is a contained Project 1 limitation, not the preferred
-future layout. A later workspace/package design may add a higher-level
-organization contract without changing Project 1.
+first three demos to exact result `0`. It also builds the native-stencil,
+UTF-8, integer-format, and service-code products and natively inspects the
+seven products with public ownership surfaces. Byte Construction's 4 MiB
+execution and profiling and the Stencil demo's 20-million-step execution remain
+in the frozen managed differential lane. Example and component `.wvproj` files
+normally live beside their owning source, with paths resolved relative to the
+manifest. Only genuine cross-component aggregates currently remain at the
+repository common ancestor. A later workspace/package design may organize
+those aggregates without changing Project 1 or permitting directory escape.
 
 Run the exact native capability-free console-AOT qualification composition in
 the same output directory after `Sum-Data.wvb` exists:

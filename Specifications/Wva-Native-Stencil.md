@@ -6,6 +6,15 @@
 
 Neither version defines a general stencil container or complete baseline JIT.
 
+[Decision 0511](../Documents/Decisions/0511-Native-Service-Source-Build-And-Inspection-Transfer.md)
+makes `Compiler/Windvale/Native-Stencil-Core.wvproj` and
+`Compiler/Windvale/Native-Stencil-Bridge.wvproj` the component-local native
+build contracts. The
+demo remains the explicit root aggregate `Native-Stencil-Demo.wvproj` because
+its contained Project 1 inputs span `Examples/Compiler` and
+`Compiler/Windvale`. Native build and inspection reproduce the established
+three WVB identities; the demo's 20-million-step execution remains managed.
+
 ## Purpose
 
 The native-stencil artifacts move construction of existing x86-64 runtime leaves from C# byte literals into WVA source assembled by the Windvale-written assembler. The runtime consumes canonical WVO objects, validates their complete fixed shapes, applies named typed patches, and retains the already-qualified final leaf identities.

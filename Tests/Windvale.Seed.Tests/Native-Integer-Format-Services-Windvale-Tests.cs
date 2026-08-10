@@ -76,7 +76,9 @@ internal static partial class Program
                 Repository,
                 Path.Combine(
                     Repository,
-                    "Windvale-Native-X64-Integer-Format-Services.wvproj"),
+                    "Runtime",
+                    "Windvale",
+                    "Native-X64-Integer-Format-Services.wvproj"),
                 Nativeˉpath);
             Equal(0, Nativeˉbuild.Exitˉcode);
             Equal(string.Empty, Nativeˉbuild.Error);

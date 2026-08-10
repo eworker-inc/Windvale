@@ -37,6 +37,12 @@ The project must use the current Project 1 format and may identify at most 63 so
 modules. The launchers do not discover source files, install packages, infer imports,
 create output directories, package PE/ELF applications, or execute the result.
 
+Place a project manifest beside the component source it owns. Use a repository-root
+manifest only when one artifact genuinely spans components and therefore needs their
+common ancestor under Project 1's contained path rules. Do not use `..` or move every
+manifest to the root for convenience; a future workspace/reference layer will own
+cross-component organization without changing Project 1 containment.
+
 ## Ordinary verification and inspection
 
 On Windows x64:

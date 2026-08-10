@@ -484,6 +484,16 @@ value and profiling path, capability-bearing execution, the broad harness,
 independent Linux evidence, and later qualification phases remain managed or
 unpromoted.
 
+Decision 0511 transfers the next eight exact source builds and seven
+inspections: native stencil, UTF-8, integer formatting, and the shared service
+code builder. The paired helper owns twenty artifacts and 39 cases, bringing
+the cumulative removal to forty-five managed calls per broad host script.
+Component-local project manifests are the repository default; one contained
+root aggregate remains for the cross-component Stencil demo pending a
+workspace/reference contract. Its 20-million-step execution remains managed,
+as do capability-bearing execution, the broad harness, independent Linux
+evidence, and later qualification phases.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

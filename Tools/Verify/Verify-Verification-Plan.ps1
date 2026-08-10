@@ -66,6 +66,36 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Seed native compiler-service source transfer'
+        Paths = @(
+            'Compiler/Windvale/Native-Stencil-Core.wv',
+            'Compiler/Windvale/Native-Stencil-Bridge.wvproj',
+            'Examples/Compiler/Native-Stencil-Demo.wv',
+            'Native-Stencil-Demo.wvproj'
+        )
+        Suites = @(
+            'seed',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction'
+        )
+        Gaps = @('seed-native-front-door')
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Seed native runtime-service source transfer'
+        Paths = @(
+            'Runtime/Windvale/Native-X64-Utf8-Service-Core.wvproj',
+            'Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv',
+            'Runtime/Windvale/Native-X64-Integer-Format-Services.wvproj',
+            'Runtime/Windvale/Native-X64-Service-Code-Builder.wv'
+        )
+        Suites = @('seed', 'unsafe-wvb', 'wvb-containment')
+        Gaps = @('seed-native-front-door')
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Seed native console AOT qualification smoke'
         Paths = @(
             'Tools/Verify/Verify-Seed-Native-Console-Aot.ps1',

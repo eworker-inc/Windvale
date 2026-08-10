@@ -126,6 +126,14 @@ $DecimalParsingModule = Join-Path $OutputRoot 'Decimal-Parsing.wvb'
 $DecimalParsingDemoModule = Join-Path $OutputRoot 'Decimal-Parsing-Demo.wvb'
 $ByteConstructionModule = Join-Path $OutputRoot 'Byte-Construction.wvb'
 $ByteConstructionDemoModule = Join-Path $OutputRoot 'Byte-Construction-Demo.wvb'
+$NativeStencilModule = Join-Path $OutputRoot 'Native-Stencil-Core.wvb'
+$NativeStencilDemoModule = Join-Path $OutputRoot 'Native-Stencil-Demo.wvb'
+$NativeStencilBridgeModule = Join-Path $OutputRoot 'Native-Stencil-Bridge.wvb'
+$NativeUtf8CoreModule = Join-Path $OutputRoot 'Native-X64-Utf8-Service.wvb'
+$NativeUtf8BridgeModule = Join-Path $OutputRoot 'Native-X64-Utf8-Service-Bridge.wvb'
+$NativeIntegerFormatCoreModule = Join-Path $OutputRoot 'Native-X64-Integer-Format-Services.wvb'
+$NativeIntegerFormatBridgeModule = Join-Path $OutputRoot 'Native-X64-Integer-Format-Services-Bridge.wvb'
+$NativeServiceCodeBuilderModule = Join-Path $OutputRoot 'Native-X64-Service-Code-Builder.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -259,6 +267,69 @@ Invoke-ExactBuild `
     'ab594976ced7a84573ade0aa50fb4370d96b8004c8b9a5ec1e888968c7b3bf8f' `
     'build status=Published verification=compiler-aligned functions=3 code-bytes=4194 module-bytes=5017'
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Stencil-Core.wvproj') `
+    $NativeStencilModule `
+    21296 `
+    '6df3c524d0f9bec79cd2516a758985c487cc237c6f94bc5b80e015975d50cca3' `
+    'build status=Published verification=compiler-aligned functions=20 code-bytes=16427 module-bytes=21296'
+Invoke-ExactInspect `
+    $NativeStencilModule `
+    @('Native\\u02C9stencil\\u02C9result', 'Native\\u02C9stencil\\u02C9patch\\u02C9kind', 'Native\\u02C9stencil\\u02C9process\\u02C9argument\\u02C9count', 'Native\\u02C9stencil\\u02C9process\\u02C9argument', 'section name=exports .* count=20')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Native-Stencil-Demo.wvproj') `
+    $NativeStencilDemoModule `
+    25683 `
+    '6b27fbd10d5f06855354f433ec0b8c9b1af1761ef04458817931e675c26e0da8' `
+    'build status=Published verification=compiler-aligned functions=24 code-bytes=21063 module-bytes=25683'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Stencil-Bridge.wvproj') `
+    $NativeStencilBridgeModule `
+    20800 `
+    '0a4387f12674f08d91682898a27bf84494cbdf886c34542beeb52fd9c4a538da' `
+    'build status=Published verification=compiler-aligned functions=21 code-bytes=16833 module-bytes=20800'
+Invoke-ExactInspect $NativeStencilBridgeModule @('name="Main" parameters=0 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Utf8-Service-Core.wvproj') `
+    $NativeUtf8CoreModule `
+    11577 `
+    'adbd4843f3c0aaf003dc6118461278fc903fd2264be6e3b90835af49eb3cb2c7' `
+    'build status=Published verification=compiler-aligned functions=18 code-bytes=9098 module-bytes=11577'
+Invoke-ExactInspect $NativeUtf8CoreModule @('profile=portable', 'Native\\u02C9x64\\u02C9utf8\\u02C9service\\u02C9build', 'section name=exports .* count=1')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Utf8-Service.wvproj') `
+    $NativeUtf8BridgeModule `
+    11511 `
+    '4d3c8d50d371147d687163c6d7ab761d32445719789f1f62f1f116f2bf268c4f' `
+    'build status=Published verification=compiler-aligned functions=19 code-bytes=9114 module-bytes=11511'
+Invoke-ExactInspect $NativeUtf8BridgeModule @('profile=portable', 'name="Main" parameters=0 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Integer-Format-Services-Core.wvproj') `
+    $NativeIntegerFormatCoreModule `
+    11611 `
+    '6b5b5660392a9f927d046eff41aa3470bdbc616970a0e297c2c467b53d3f1fa2' `
+    'build status=Published verification=compiler-aligned functions=11 code-bytes=9588 module-bytes=11611'
+Invoke-ExactInspect $NativeIntegerFormatCoreModule @('profile=portable', 'Native\\u02C9x64\\u02C9integer\\u02C9format\\u02C9service\\u02C9build', 'section name=exports .* count=1')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Integer-Format-Services.wvproj') `
+    $NativeIntegerFormatBridgeModule `
+    11598 `
+    '851f6d8e01b62106763af518c15dc163a9af9ea30c14cdb01d62adf1538ae7f9' `
+    'build status=Published verification=compiler-aligned functions=12 code-bytes=9654 module-bytes=11598'
+Invoke-ExactInspect $NativeIntegerFormatBridgeModule @('profile=portable', 'name="Main" parameters=0 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Service-Code-Builder.wvproj') `
+    $NativeServiceCodeBuilderModule `
+    4135 `
+    'adfb19e5a0668d06d40e0d6cadfadb34a729a0b0d1c12a11d03af722bd53cb06' `
+    'build status=Published verification=compiler-aligned functions=12 code-bytes=2440 module-bytes=4135'
+Invoke-ExactInspect `
+    $NativeServiceCodeBuilderModule `
+    @('profile=portable', 'Native\\u02C9x64\\u02C9service\\u02C9builder', 'Native\\u02C9x64\\u02C9service\\u02C9finish', 'section name=exports .* count=10')
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -290,4 +361,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=12 cases=24'
+Write-Output 'native Seed front-door verification status=Complete artifacts=20 cases=39'
