@@ -274,6 +274,10 @@ export fn Publisherˉobjectsˉinstantiate(Input: bytes) -> bytes {
         Expectedˉadapterˉaddress = 1328480u32;
         Expectedˉsha256ˉaddress = 1333776u32;
     }
+    if Variant == 3u32 {
+        Expectedˉadapterˉaddress = 417792u32;
+        Expectedˉsha256ˉaddress = 423088u32;
+    }
     if Target == 2u32 {
         Expectedˉadapterˉaddress = 142929920u32;
         Expectedˉsha256ˉaddress = 142933296u32;
@@ -288,8 +292,12 @@ export fn Publisherˉobjectsˉinstantiate(Input: bytes) -> bytes {
             Expectedˉadapterˉaddress = 144015360u32;
             Expectedˉsha256ˉaddress = 144018736u32;
         }
+        if Variant == 3u32 {
+            Expectedˉadapterˉaddress = 143101952u32;
+            Expectedˉsha256ˉaddress = 143105328u32;
+        }
     }
-    if (Target != 1u32 && Target != 2u32) || Variant > 2u32 ||
+    if (Target != 1u32 && Target != 2u32) || Variant > 3u32 ||
         Startupˉaddress != 4096u32 ||
         Adapterˉaddress != Expectedˉadapterˉaddress ||
         Sha256ˉaddress != Expectedˉsha256ˉaddress ||

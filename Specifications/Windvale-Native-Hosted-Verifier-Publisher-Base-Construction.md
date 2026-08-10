@@ -76,11 +76,15 @@ roles and their exact bytes.
 | Linux WVB-publisher base | 1,335,296 | `f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090` |
 | Windows WVB publisher | 1,340,928 | `71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3` |
 | Linux WVB publisher | 1,340,357 | `7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c` |
+| Windows WVO-publisher base | 422,912 | `1f9361126c368f133693222cbaa4c21e2d0948e79df7bf945b7b037ac815e884` |
+| Linux WVO-publisher base | 421,888 | `af61a601f4cd8e7fb81704353160a518d2e4f199084fde4b29518d27c89774f7` |
+| Windows WVO publisher | 430,080 | `ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a` |
+| Linux WVO publisher | 426,949 | `4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d` |
 
-Version 15 of the construction candidate contains 26 canonical WVB/WVO
-artifacts and 22 paired host applications. Its 48-entry `SHA256SUMS` is 4,980
+Version 16 of the construction candidate contains 27 canonical WVB/WVO
+artifacts and 22 paired host applications. Its 49-entry `SHA256SUMS` is 5,064
 LF-only bytes with SHA-256
-`4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d`.
+`90538e48d5ad87509f070b4c8cc954d0ae1d4dae3f1b0f0a3c629b58bb0e990c`.
 
 ## Native owner and remaining gate
 
@@ -98,6 +102,11 @@ and runs the installed current-host publisher through one verifier installation.
 It additionally rebuilds and lowers the WVB publisher, constructs both exact
 role-2 applications, and executes the current-host candidate on a canonical
 portable WVB without loading .NET.
+
+The separate `wvo-publisher-reconstruction` lane owns the role-3 candidate
+inventory and exact native WVB plus paired-application reconstruction. It uses
+the raw lowerer directly so the WVO publisher does not participate in
+publishing its own construction object.
 
 The frozen managed file-pipeline test remains recovery/differential evidence.
 Independent Linux execution, grouped qualification, candidate promotion, and

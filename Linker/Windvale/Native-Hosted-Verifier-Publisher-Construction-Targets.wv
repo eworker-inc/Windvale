@@ -1,7 +1,7 @@
 module Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉtargets profile portable;
 
 export fn Publisherˉconstructionˉtargetˉcount(Target: u32, Variant: u32) -> u32 {
-    if Variant > 2u32 { return 0u32; }
+    if Variant > 3u32 { return 0u32; }
     if Target == 1u32 { return 44u32; }
     if Target == 2u32 { return 27u32; }
     return 0u32;
@@ -238,7 +238,90 @@ fn Wvbˉpublisherˉlinuxˉtarget(Index: u32) -> u32 {
     return 144020026u32;
 }
 
+fn Wvoˉpublisherˉwindowsˉtarget(Index: u32) -> u32 {
+    if Index == 0u32 { return 418043u32; }
+    if Index == 1u32 { return 435248u32; }
+    if Index == 2u32 { return 434176u32; }
+    if Index == 3u32 { return 137867264u32; }
+    if Index == 4u32 { return 430080u32; }
+    if Index == 5u32 { return 142061568u32; }
+    if Index == 6u32 { return 430344u32; }
+    if Index == 7u32 { return 136818688u32; }
+    if Index == 8u32 { return 8192u32; }
+    if Index == 9u32 { return 12878u32; }
+    if Index == 10u32 { return 13667u32; }
+    if Index == 11u32 { return 430296u32; }
+    if Index == 12u32 { return 503808u32; }
+    if Index == 13u32 { return 415040u32; }
+    if Index == 14u32 { return 417440u32; }
+    if Index == 15u32 { return 415408u32; }
+    if Index == 16u32 { return 415328u32; }
+    if Index == 17u32 { return 415312u32; }
+    if Index == 18u32 { return 430192u32; }
+    if Index == 19u32 { return 416640u32; }
+    if Index == 20u32 { return 500784u32; }
+    if Index == 21u32 { return 2600960u32; }
+    if Index == 22u32 { return 426224u32; }
+    if Index == 23u32 { return 426368u32; }
+    if Index == 24u32 { return 426232u32; }
+    if Index == 25u32 { return 426240u32; }
+    if Index == 26u32 { return 426248u32; }
+    if Index == 27u32 { return 426256u32; }
+    if Index == 28u32 { return 426264u32; }
+    if Index == 29u32 { return 426272u32; }
+    if Index == 30u32 { return 426280u32; }
+    if Index == 31u32 { return 426288u32; }
+    if Index == 32u32 { return 426296u32; }
+    if Index == 33u32 { return 426352u32; }
+    if Index == 34u32 { return 426304u32; }
+    if Index == 35u32 { return 426312u32; }
+    if Index == 36u32 { return 426320u32; }
+    if Index == 37u32 { return 426328u32; }
+    if Index == 38u32 { return 426336u32; }
+    if Index == 39u32 { return 424728u32; }
+    if Index == 40u32 { return 424729u32; }
+    if Index == 41u32 { return 424765u32; }
+    if Index == 42u32 { return 423088u32; }
+    return 424378u32;
+}
+
+fn Wvoˉpublisherˉlinuxˉtarget(Index: u32) -> u32 {
+    if Index == 0u32 { return 143102012u32; }
+    if Index == 1u32 { return 422960u32; }
+    if Index == 2u32 { return 421888u32; }
+    if Index == 3u32 { return 137854976u32; }
+    if Index == 4u32 { return 417792u32; }
+    if Index == 5u32 { return 142049280u32; }
+    if Index == 6u32 { return 418056u32; }
+    if Index == 7u32 { return 136806400u32; }
+    if Index == 8u32 { return 8192u32; }
+    if Index == 9u32 { return 12878u32; }
+    if Index == 10u32 { return 13667u32; }
+    if Index == 11u32 { return 418008u32; }
+    if Index == 12u32 { return 491520u32; }
+    if Index == 13u32 { return 415040u32; }
+    if Index == 14u32 { return 417168u32; }
+    if Index == 15u32 { return 415360u32; }
+    if Index == 16u32 { return 415280u32; }
+    if Index == 17u32 { return 415264u32; }
+    if Index == 18u32 { return 417904u32; }
+    if Index == 19u32 { return 416368u32; }
+    if Index == 20u32 { return 488496u32; }
+    if Index == 21u32 { return 2588672u32; }
+    if Index == 22u32 { return 143106968u32; }
+    if Index == 23u32 { return 143106969u32; }
+    if Index == 24u32 { return 143107005u32; }
+    if Index == 25u32 { return 143105328u32; }
+    return 143106618u32;
+}
+
 export fn Publisherˉconstructionˉtarget(Target: u32, Variant: u32, Index: u32) -> u32 {
+    if Variant == 3u32 && Target == 1u32 && Index < 44u32 {
+        return Wvoˉpublisherˉwindowsˉtarget(Index);
+    }
+    if Variant == 3u32 && Target == 2u32 && Index < 27u32 {
+        return Wvoˉpublisherˉlinuxˉtarget(Index);
+    }
     if Variant == 2u32 && Target == 1u32 && Index < 44u32 {
         return Wvbˉpublisherˉwindowsˉtarget(Index);
     }

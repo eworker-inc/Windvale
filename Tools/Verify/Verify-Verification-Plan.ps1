@@ -90,6 +90,7 @@ $NativeCases = @(
             'compiler-reconstruction',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wvo-publisher-reconstruction',
             'console-packager-container-reconstruction'
         )
         Gaps = @()
@@ -105,6 +106,7 @@ $NativeCases = @(
             'seed',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
@@ -147,7 +149,10 @@ $NativeCases = @(
             'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv',
             'Specifications/Windvale-Native-Wvb-To-Wvo.md'
         )
-        Suites = @('wvb-to-wvo-reconstruction')
+        Suites = @(
+            'wvb-to-wvo-reconstruction',
+            'wvo-publisher-reconstruction'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -157,10 +162,38 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'wvb-to-wvo-reconstruction',
+            'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WVO publisher reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Wvo-Publisher-Reconstruction.cmd',
+            'Tools/Native/Construct-Wvo-Publisher.cmd',
+            'Artifacts/Native-Wvo-Publisher-Candidate/Manifest.json',
+            'Windvale-Wvo-Publisher.wvproj',
+            'Specifications/Windvale-Native-Wvo-Publisher.md'
+        )
+        Suites = @('wvo-publisher-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WVO publisher shared publication source'
+        Paths = @(
+            'Tools/Windvale.Publish/Wvo-Publisher-Tool.wv',
+            'Tools/Windvale.Publish/Wvb-Publication-Transaction.wv'
+        )
+        Suites = @(
+            'wvo-publisher-reconstruction',
+            'publisher-rejections',
+            'hosted-verifier-publisher-files'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -301,7 +334,11 @@ $NativeCases = @(
             'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj',
             'Windvale-Wvb-Publisher.wvproj'
         )
-        Suites = @('publisher-rejections', 'hosted-verifier-publisher-files')
+        Suites = @(
+            'wvo-publisher-reconstruction',
+            'publisher-rejections',
+            'hosted-verifier-publisher-files'
+        )
         Gaps = @()
         VerifyPlan = $false
     },

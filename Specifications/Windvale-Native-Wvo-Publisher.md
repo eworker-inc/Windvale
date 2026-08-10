@@ -93,8 +93,9 @@ details.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Publisher WVB | 41,365 | `4e8c81da38f5eb06f9334c2d2c5e35120a13e73bac3a9375b5e6a2eff04438c5` |
-| Windows publisher | 430,080 | `035a1baaada6be8d057b782804a8650d978da53dd008337ab00258f2ab597cb7` |
-| Linux publisher | 426,949 | `ac2bb513e2145e9eb911a9be142fc2f1f990a1bab21f278dd841043042b51f7a` |
+| Publisher WVO | 408,284 | `29c1cc269b9387944b4d43fe9215392044996ad47da55be45a1d177f26e5bafb` |
+| Windows publisher | 430,080 | `ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a` |
+| Linux publisher | 426,949 | `4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d` |
 
 `Tools/Native/Publish-Wvo.cmd` and `.sh` verify the current-host publisher
 digest before execution. `Lower-Wvb-To-Wvo.cmd` and `.sh` now lower into a
@@ -113,13 +114,30 @@ The separate [hostile-size contract](Windvale-Native-Wvo-Hostile-Size-Tests.md)
 requires the first file beyond the 4-MiB snapshot limit to fail before the
 transaction while preserving the candidate, destination, and scratch boundary.
 
+## Native reconstruction
+
+[Decision 0499](../Documents/Decisions/0499-Native-Wvo-Publisher-Reconstruction.md)
+extends the existing hosted-verifier publisher-construction pipeline with an
+exact role 3. `Tools/Native/Construct-Wvo-Publisher.cmd` and `.sh` reconstruct
+either target application on the current Windows host through retained native
+compiler, lowerer, linker, hosted-container, and publisher-construction
+toolsets. The route invokes the digest-bound raw lowerer rather than the public
+lower-and-publish wrapper, then requires the resulting 408,284-byte WVO to
+match the exact retained oracle before linking. This keeps the target WVO
+publisher out of its own object-publication path.
+
+The fixed `wvo-publisher-reconstruction` owner passes 2/2 on the current
+Windows host: exact candidate inventory followed by native WVB and paired
+application byte equality. The shared 15-case publisher pipeline also remains
+exact after the role-3 extension.
+
 ## Remaining gate
 
-The WVB and paired applications are Stage 0-constructed because the qualified
-native source builder currently rejects the complete hosted project at
-`Sourceˉbindings`. Promotion requires deterministic reconstruction and direct
-execution on Windows and Linux, the grouped native-retirement gate, and a native
-replacement for this host-container constructor. The retained WVB publisher
-fault/concurrency matrix continues to qualify the shared native transaction;
-this profile adds WVO admission and lowerer integration evidence rather than
-duplicating those tests.
+The current Windows host now reconstructs the exact WVB-to-WVO-to-paired-
+application closure without a managed writer. This is retained-seed cross-target
+construction evidence, not independent Linux execution, clean bootstrap,
+qualification, or promotion. Direct reconstruction and execution on Linux, the
+grouped native-retirement gate, candidate promotion, and final Stage 0 recovery
+release remain. The retained WVB publisher fault/concurrency matrix continues
+to qualify the shared native transaction; this profile adds WVO admission and
+lowerer integration evidence rather than duplicating those tests.

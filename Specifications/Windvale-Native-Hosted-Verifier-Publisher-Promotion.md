@@ -51,7 +51,7 @@ host copy or rename is not conforming.
 
 The native linker places `Main` at address 1,178. The transaction apply/begin
 entry points remain at 0/789. The WVO has 658,160 code bytes, 179 read-only-data
-bytes, 49 symbols, three internal relocations, and no imports. Version 15 of the
+bytes, 49 symbols, three internal relocations, and no imports. Version 16 of the
 publisher-construction candidate pins the WVB and WVO. Its focused inventory
 rebuilds, lowers, links, and compares them without a C# process.
 

@@ -394,6 +394,15 @@ durable replacement and cleanup. The repinned inspector and new publisher remain
 Stage 0-constructed candidates pending Linux execution, native host-container
 construction, and grouped promotion.
 
+Decision 0499 closes that publisher's managed application-writer seam on the
+current Windows host. A distinct role 3 consumes the exact native-built WVB,
+invokes the retained raw lowerer without calling the target publisher, requires
+the complete WVO to match its exact oracle, and reconstructs both target
+applications through the retained hosted-container and publisher-construction
+toolsets. This is cross-target retained-seed evidence only: independent Linux
+reconstruction and execution, clean bootstrap, qualification, promotion, and
+recovery deletion remain.
+
 Decision 0310 extends the fixed native test boundary from WVB-only inputs to one
 canonical accepted WVO plus bad-magic, truncated, and trailing-byte objects. The
 host adapters pin complete input and report identities and invoke only the native

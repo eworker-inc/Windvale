@@ -8,7 +8,7 @@ if "%~3"=="" (
     set "Output=%~f2"
 ) else (
     if not "%~4"=="" goto :usage
-    if /I not "%~1"=="publisher" if /I not "%~1"=="promoter" if /I not "%~1"=="wvb-publisher" goto :usage
+    if /I not "%~1"=="publisher" if /I not "%~1"=="promoter" if /I not "%~1"=="wvb-publisher" if /I not "%~1"=="wvo-publisher" goto :usage
     set "Role=%~1"
     set "TargetName=%~2"
     set "Output=%~f3"
@@ -55,6 +55,12 @@ if /I "%Role%"=="wvb-publisher" (
     set "ApplicationBytes=1340928"
     set "ApplicationSha256=71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3"
 )
+if /I "%Role%"=="wvo-publisher" (
+    set "BaseBytes=422912"
+    set "BaseSha256=1f9361126c368f133693222cbaa4c21e2d0948e79df7bf945b7b037ac815e884"
+    set "ApplicationBytes=430080"
+    set "ApplicationSha256=ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a"
+)
 goto :target_ready
 
 :linux
@@ -93,6 +99,12 @@ if /I "%Role%"=="wvb-publisher" (
     set "BaseSha256=f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090"
     set "ApplicationBytes=1340357"
     set "ApplicationSha256=7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c"
+)
+if /I "%Role%"=="wvo-publisher" (
+    set "BaseBytes=421888"
+    set "BaseSha256=af61a601f4cd8e7fb81704353160a518d2e4f199084fde4b29518d27c89774f7"
+    set "ApplicationBytes=426949"
+    set "ApplicationSha256=4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d"
 )
 
 :target_ready
@@ -139,8 +151,21 @@ if /I "%Role%"=="wvb-publisher" (
     set "FragmentBytes=1317613"
     set "FragmentSha256=9003479563a043bb69113be43100289f653f6772356c48a17098c1c6700f5271"
 )
+if /I "%Role%"=="wvo-publisher" (
+    set "PublisherWvb=%RepositoryRoot%\Artifacts\Native-Wvo-Publisher-Candidate\Wvo-Publisher.wvb"
+    set "PublisherObject=%Construction%\Wvo-Publisher.wvo"
+    set "Variant=3"
+    set "PublisherWvbBytes=41365"
+    set "PublisherWvbSha256=4e8c81da38f5eb06f9334c2d2c5e35120a13e73bac3a9375b5e6a2eff04438c5"
+    set "PublisherObjectBytes=408284"
+    set "PublisherObjectSha256=29c1cc269b9387944b4d43fe9215392044996ad47da55be45a1d177f26e5bafb"
+    set "NativeEntry=0"
+    set "FragmentBytes=406840"
+    set "FragmentSha256=591231b7900aecea5700e139dfd67e36afa3e04a68a87d255aa2be3eb852c828"
+)
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "ConsumerRoot=%RepositoryRoot%\Linker\Reference\Consumers"
+set "RawLowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 
 call :verify_file "%HostedToolset%\SHA256SUMS" 6927 bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded "hosted toolset inventory"
 if errorlevel 1 exit /b 1
@@ -148,7 +173,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 4980 4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 5064 90538e48d5ad87509f070b4c8cc954d0ae1d4dae3f1b0f0a3c629b58bb0e990c "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -156,6 +181,10 @@ for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
 )
 call :verify_file "%PublisherWvb%" %PublisherWvbBytes% %PublisherWvbSha256% "publisher WVB"
 if errorlevel 1 exit /b 1
+if /I "%Role%"=="wvo-publisher" (
+    call :verify_file "%RawLowerer%" 5958144 927cbdf8b89269538ea2af1131276e4edca3e8810c1edaa3c7fd096e3528a267 "raw native WVB-to-WVO lowerer"
+    if errorlevel 1 exit /b 1
+)
 call :verify_file "%ServiceRoot%\%ConsoleLeaf%" %ConsoleBytes% %ConsoleSha256% "console service"
 if errorlevel 1 exit /b 1
 call :verify_file "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" 5 2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829 "argument-count service"
@@ -184,7 +213,11 @@ mkdir "%TemporaryDirectory%" || exit /b 1
 set "Result=1"
 set "Phase=lower"
 
-call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%PublisherWvb%" "%TemporaryDirectory%\Publisher.wvo" >nul
+if /I "%Role%"=="wvo-publisher" (
+    "%RawLowerer%" "%PublisherWvb%" "%TemporaryDirectory%\Publisher.wvo" >nul
+) else (
+    call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%PublisherWvb%" "%TemporaryDirectory%\Publisher.wvo" >nul
+)
 if errorlevel 1 goto :cleanup
 call :verify_file "%TemporaryDirectory%\Publisher.wvo" %PublisherObjectBytes% %PublisherObjectSha256% "lowered publisher object"
 if errorlevel 1 goto :cleanup
@@ -275,6 +308,7 @@ if errorlevel 1 goto :cleanup_output
 if /I "%Role%"=="publisher" echo publisher construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
 if /I "%Role%"=="promoter" echo publisher promoter construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
 if /I "%Role%"=="wvb-publisher" echo WVB publisher construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
+if /I "%Role%"=="wvo-publisher" echo WVO publisher construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
 set "Result=0"
 goto :cleanup
 
@@ -312,5 +346,5 @@ if errorlevel 1 (
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Construct-Hosted-Verifier-Publisher.cmd [publisher^|promoter^|wvb-publisher] ^<windows^|linux^> ^<output.exe^|output.elf^>
+>&2 echo Usage: Tools\Native\Construct-Hosted-Verifier-Publisher.cmd [publisher^|promoter^|wvb-publisher^|wvo-publisher] ^<windows^|linux^> ^<output.exe^|output.elf^>
 exit /b 64

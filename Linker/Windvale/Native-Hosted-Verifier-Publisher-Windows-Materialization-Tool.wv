@@ -36,7 +36,8 @@ export fn Main() -> i32 {
     var Outputˉbytes: u32 = 256000u32;
     if Variant == 1u32 { Outputˉbytes = 681472u32; }
     if Variant == 2u32 { Outputˉbytes = 1340928u32; }
-    if Variant > 2u32 {
+    if Variant == 3u32 { Outputˉbytes = 430080u32; }
+    if Variant > 3u32 {
         diagnostic.write_line("publisher Windows materialization status=Rejected");
         return 2;
     }

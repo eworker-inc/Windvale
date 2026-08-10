@@ -96,10 +96,13 @@ internal static partial class Program
         {
             var Root = Manifest.RootElement;
             Equal(
-                "windvale-native-wvo-publisher-candidate-1",
+                "windvale-native-wvo-publisher-candidate-2",
                 Root.GetProperty("format").GetString());
             Equal("0308", Root.GetProperty("provenanceDecision").GetString());
-            Equal("stage0-recovery", Root.GetProperty("construction").GetString());
+            Equal("0499", Root.GetProperty("constructionDecision").GetString());
+            Equal(
+                "windvale-native-role-aware-publisher-overlay",
+                Root.GetProperty("construction").GetString());
             foreach (var Artifact in Root.GetProperty("artifacts").EnumerateArray())
             {
                 var Relative = Artifact.GetProperty("path").GetString() ??

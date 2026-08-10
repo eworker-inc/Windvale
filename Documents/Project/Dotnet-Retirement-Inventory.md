@@ -61,7 +61,7 @@ promotion, grouped qualification, and non-circular bootstrap evidence remain.
 
 Current T1/T2/P1/C1 update: this paragraph supersedes the older totals and
 console-packager wording in the compact T1 and T2 rows above. The active native
-retirement plan contains 37 focused suites and 3,187 fixed cases.
+retirement plan contains 38 focused suites and 3,189 fixed cases.
 [Decision 0498](../Decisions/0498-Native-Console-Packager-Application-Reconstruction.md)
 preserves the existing two-case WVB/WVO source owner and adds a separate
 four-case owner for the two candidate inventories and both paired application
@@ -72,6 +72,17 @@ reconstruction of accepted tools, but it consumes retained same-release
 candidates. Independent Linux reconstruction and execution, clean
 previous-seed renewal, promotion, grouped qualification, broader P1 coverage,
 and the final recovery archive remain.
+
+Current narrow P1/C1 support update:
+[Decision 0499](../Decisions/0499-Native-Wvo-Publisher-Reconstruction.md)
+reconstructs the exact WVO publisher WVB-to-WVO-to-paired-application closure
+through the retained native raw lowerer, exact WVO oracle, and role-3 publisher
+pipeline on the current Windows host. This removes the managed writer as the
+only constructor for that exact candidate. Its two-case focused retirement
+owner raises the active plan to 38 suites and 3,189 fixed cases without changing
+an inventory standing, direct managed-entry count, or the machine-readable
+inventory. Independent Linux reconstruction and execution, clean bootstrap,
+qualification, promotion, and recovery deletion remain.
 
 ## Normal-path audit result
 

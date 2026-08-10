@@ -233,6 +233,70 @@ fn Wvbˉpublisherˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
     return 207850360u32;
 }
 
+fn Wvoˉpublisherˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
+    if Identity == 1u32 {
+        if Index == 0u32 { return 3665923150u32; }
+        if Index == 1u32 { return 116127032u32; }
+        if Index == 2u32 { return 759968761u32; }
+        if Index == 3u32 { return 305487404u32; }
+        if Index == 4u32 { return 1004999434u32; }
+        if Index == 5u32 { return 1972583084u32; }
+        if Index == 6u32 { return 4020430517u32; }
+        return 3308799216u32;
+    }
+    if Identity == 2u32 {
+        if Index == 0u32 { return 650953001u32; }
+        if Index == 1u32 { return 2491913115u32; }
+        if Index == 2u32 { return 4265823563u32; }
+        if Index == 3u32 { return 540611986u32; }
+        if Index == 4u32 { return 3563755844u32; }
+        if Index == 5u32 { return 3831211389u32; }
+        if Index == 6u32 { return 2132221274u32; }
+        return 4223329574u32;
+    }
+    if Identity == 6u32 && Target == 1u32 {
+        if Index == 0u32 { return 490572298u32; }
+        if Index == 1u32 { return 136705347u32; }
+        if Index == 2u32 { return 164667484u32; }
+        if Index == 3u32 { return 3552567354u32; }
+        if Index == 4u32 { return 861930145u32; }
+        if Index == 5u32 { return 3217459870u32; }
+        if Index == 6u32 { return 1157299734u32; }
+        return 571003313u32;
+    }
+    if Identity == 6u32 {
+        if Index == 0u32 { return 183984234u32; }
+        if Index == 1u32 { return 2970400530u32; }
+        if Index == 2u32 { return 97749422u32; }
+        if Index == 3u32 { return 4202257509u32; }
+        if Index == 4u32 { return 3485986601u32; }
+        if Index == 5u32 { return 38901391u32; }
+        if Index == 6u32 { return 517716346u32; }
+        return 3515024826u32;
+    }
+    if Identity == 7u32 && Target == 1u32 {
+        if Index == 0u32 { return 86658221u32; }
+        if Index == 1u32 { return 3442105105u32; }
+        if Index == 2u32 { return 4123030704u32; }
+        if Index == 3u32 { return 1886678331u32; }
+        if Index == 4u32 { return 4255956168u32; }
+        if Index == 5u32 { return 2204477694u32; }
+        if Index == 6u32 { return 266156804u32; }
+        return 2316833269u32;
+    }
+    if Identity == 7u32 {
+        if Index == 0u32 { return 3554806859u32; }
+        if Index == 1u32 { return 1032741938u32; }
+        if Index == 2u32 { return 1834578645u32; }
+        if Index == 3u32 { return 1208437172u32; }
+        if Index == 4u32 { return 1156473535u32; }
+        if Index == 5u32 { return 223717704u32; }
+        if Index == 6u32 { return 3729965443u32; }
+        return 501610336u32;
+    }
+    return Expectedˉword(Identity, Target, Index);
+}
+
 export fn Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
     Input: bytes,
     Identity: u32,
@@ -240,7 +304,7 @@ export fn Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
     Variant: u32
 ) -> bytes {
     var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    if Variant > 2u32 { return Result; }
+    if Variant > 3u32 { return Result; }
     var Index: u32 = 0u32;
     while Index < 8u32 {
         var Word: u32 = Expectedˉword(Identity, Target, Index);
@@ -253,6 +317,11 @@ export fn Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
             (Identity == 1u32 || Identity == 2u32 ||
                 Identity == 6u32 || Identity == 7u32) {
             Word = Wvbˉpublisherˉword(Identity, Target, Index);
+        }
+        if Variant == 3u32 &&
+            (Identity == 1u32 || Identity == 2u32 ||
+                Identity == 6u32 || Identity == 7u32) {
+            Word = Wvoˉpublisherˉword(Identity, Target, Index);
         }
         Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Word));
         Index = Index + 1u32;

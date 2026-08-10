@@ -26,7 +26,7 @@ fn Textˉequals(Left: text, Right: text) -> bool {
 
 fn Usage() -> i32 {
     diagnostic.write_line(
-        "Usage: wvhostverifierpublishimports [promoter|wvb-publisher] <imports.wvim>"
+        "Usage: wvhostverifierpublishimports [promoter|wvb-publisher|wvo-publisher] <imports.wvim>"
     );
     return 64;
 }
@@ -39,9 +39,11 @@ export fn Main() -> i32 {
     if Count == 2u32 {
         let Role: text = process.argument(0u32);
         if !Textˉequals(Role, "promoter") &&
-            !Textˉequals(Role, "wvb-publisher") { return Usage(); }
+            !Textˉequals(Role, "wvb-publisher") &&
+            !Textˉequals(Role, "wvo-publisher") { return Usage(); }
         if Textˉequals(Role, "promoter") { Address = 679936u32; }
         if Textˉequals(Role, "wvb-publisher") { Address = 1339392u32; }
+        if Textˉequals(Role, "wvo-publisher") { Address = 425984u32; }
         Outputˉindex = 1u32;
     }
     var Request: bytes = Bytesˉfromˉu32ˉlittle(1380537943u32);

@@ -11,7 +11,7 @@ publisher and does not alter the smaller ordinary hosted-verifier profile.
 `WVIR 1` is a 16-byte little-endian request containing magic `WVIR`
 (`0x52495657`), version 1, total bytes 16, and the role-specific import address:
 253,952 for the publisher, 679,936 for the promoter, or 1,310,720 for the WVB
-publisher.
+publisher. The WVO publisher uses address 425,984.
 
 `WVIM 1` begins with a 32-byte little-endian header containing magic `WVIM`
 (`0x4d495657`), version, total bytes, status, consumed input bytes, page offset,
@@ -32,8 +32,10 @@ the relocated promoter page SHA-256 is
 `e1cc3ab2c1f3cc8ed4c83e2cce4ef8dcb9f520af47d75079911799ba8b52ae82`.
 The role-2 page SHA-256 is
 `56554387c9db58d57f7f3e95b3a655e5f6f17b581ba7fb4b6d7d31de1696f595`.
-The constructor WVB is 9,643 bytes with SHA-256
-`12651ff9d806b39b575fb6f6153c6d8a1d16256506be8d98f3f339ccbcd5fbfe`.
+The role-3 page SHA-256 is
+`e062b4c9c03fe908de2a301889e5b1d55772cefd8cc42040745931e455d34248`.
+The constructor WVB is 9,736 bytes with SHA-256
+`06676eb2cfdfb59a4d05ac821f30ba90984b4ed69ce391b617f94758d2e895f8`.
 
 ## Evidence and remaining work
 
@@ -42,4 +44,4 @@ exact equality with the page embedded in the canonical Windows publisher, and
 malformed request rejection. [Decision 0479](../Documents/Decisions/0479-Native-WVHV-Publisher-Linux-Materialization.md)
 performs Linux ELF materialization. The role-aware Windows materializer now
 combines this response, instantiated objects, metadata, and the admitted base
-application for all three roles.
+application for all four roles.

@@ -56,7 +56,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [Fixed native linker map limit](Decisions/0327-Fixed-Native-Linker-Map-Limit.md) — compact generated-fixture evidence for exact `WVL1012` rejection at 16,384 definitions
 - [Fixed native WVB unsafe rejections](Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) — five immutable unsafe instruction-stream cases through both native read-only launchers
-- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 37 native suites and 3,187 transferred cases
+- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 38 native suites and 3,189 transferred cases
 - [Fixed native assembler golden objects](Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md) — three exact positive WVA products with repeated native assembly and independent WVO admission
 - [Fixed native typed WVB rejections](Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md) — six compact single-byte typed/control/nominal mutations through both native readers
 - [Compact native WVB rejection closure](Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md) — four final compact stack, receiver, and nominal-kind mutations plus explicit ownership of excluded cases
@@ -102,6 +102,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native segmented compiler toolset reconstruction](Decisions/0496-Native-Segmented-Compiler-Toolset-Reconstruction.md) — current-Windows-host native cross-target reconstruction of three exact WVBs and six paired applications, with retained-seed circularity explicit
 - [Native WVB-to-WVO reconstruction](Decisions/0497-Native-Wvb-To-Wvo-Reconstruction.md) — current-Windows-host native reconstruction of the exact accepted-subset lowerer WVB, paired applications, and unchanged fixed vector through the retained segmented toolset
 - [Native console-packager application reconstruction](Decisions/0498-Native-Console-Packager-Application-Reconstruction.md) — current-Windows-host native reconstruction of both ordinary and segmented paired application candidates through the retained hosted toolset
+- [Native WVO publisher reconstruction](Decisions/0499-Native-Wvo-Publisher-Reconstruction.md) — current-Windows-host native cross-target reconstruction through an exact WVO oracle and role-3 publisher pipeline without target self-publication
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

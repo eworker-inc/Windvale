@@ -99,8 +99,8 @@ fail() {
 }
 
 total=$((total + 1))
-check_file "$construction/SHA256SUMS" 4980 \
-    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
+check_file "$construction/SHA256SUMS" 5064 \
+    90538e48d5ad87509f070b4c8cc954d0ae1d4dae3f1b0f0a3c629b58bb0e990c \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
@@ -404,19 +404,19 @@ total=$((total + 1))
 [[ $? -eq 2 ]] || fail
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
-check_file "$test_directory/Invalid.wvsq" 4980 \
-    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
+check_file "$test_directory/Invalid.wvsq" 5064 \
+    90538e48d5ad87509f070b4c8cc954d0ae1d4dae3f1b0f0a3c629b58bb0e990c \
     'rejected metadata input' || fail
-check_file "$test_directory/Sentinel.wvhv" 4980 \
-    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
+check_file "$test_directory/Sentinel.wvhv" 5064 \
+    90538e48d5ad87509f070b4c8cc954d0ae1d4dae3f1b0f0a3c629b58bb0e990c \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
     "$test_directory/Invalid.wvsq" "$test_directory/Sentinel.wvhr" \
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
-check_file "$test_directory/Sentinel.wvhr" 4980 \
-    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
+check_file "$test_directory/Sentinel.wvhr" 5064 \
+    90538e48d5ad87509f070b4c8cc954d0ae1d4dae3f1b0f0a3c629b58bb0e990c \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -431,8 +431,8 @@ total=$((total + 1))
 [[ $? -eq 64 ]] || fail
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
-check_file "$test_directory/Invalid.wvsq" 4980 \
-    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
+check_file "$test_directory/Invalid.wvsq" 5064 \
+    90538e48d5ad87509f070b4c8cc954d0ae1d4dae3f1b0f0a3c629b58bb0e990c \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
 

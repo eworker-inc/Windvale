@@ -32,7 +32,7 @@ fn Structureˉisˉvalid(Input: bytes) -> bool {
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     if Target != 1u32 && Target != 2u32 { return false; }
     let Variant: u32 = Bytesˉreadˉu32ˉlittle(Input, 120u32);
-    if Variant > 2u32 { return false; }
+    if Variant > 3u32 { return false; }
     var Identityˉbytes: u32 = 275054u32;
     if Target == 2u32 {
         Identityˉbytes = 271013u32;
@@ -54,9 +54,16 @@ fn Structureˉisˉvalid(Input: bytes) -> bool {
         Identityˉbytes = 1491227u32;
         if Target == 2u32 { Identityˉbytes = 1487186u32; }
     }
+    if Variant == 3u32 {
+        Moduleˉbytes = 41365u32;
+        Objectˉbytes = 408284u32;
+        Mainˉoffset = 0u32;
+        Identityˉbytes = 461729u32;
+        if Target == 2u32 { Identityˉbytes = 457688u32; }
+    }
     var Beginˉoffset: u32 = 789u32;
     var Applyˉoffset: u32 = 0u32;
-    if Variant == 2u32 {
+    if Variant == 2u32 || Variant == 3u32 {
         Beginˉoffset = 5475u32;
         Applyˉoffset = 4686u32;
     }
@@ -106,6 +113,17 @@ export fn Publisherˉconstructionˉrequest(
         Symbols = 47u32;
         Relocations = 6u32;
     }
+    if Variant == 3u32 {
+        Moduleˉbytes = 41365u32;
+        Objectˉbytes = 408284u32;
+        Codeˉbytes = 406752u32;
+        Dataˉbytes = 88u32;
+        Mainˉoffset = 0u32;
+        Beginˉoffset = 5475u32;
+        Applyˉoffset = 4686u32;
+        Symbols = 39u32;
+        Relocations = 3u32;
+    }
 
     var Bundleˉbytes: u32 = 235394u32;
     var Startupˉwvoˉbytes: u32 = 168u32;
@@ -149,6 +167,17 @@ export fn Publisherˉconstructionˉrequest(
         Outputˉbytes = 1340928u32;
         Imageˉend = 145080320u32;
     }
+    if Variant == 3u32 {
+        Bundleˉbytes = 409506u32;
+        Adapterˉfile = 414208u32;
+        Adapterˉaddress = 417792u32;
+        Sha256ˉfile = 419504u32;
+        Sha256ˉaddress = 423088u32;
+        Metadataˉfile = 426976u32;
+        Metadataˉaddress = 431584u32;
+        Outputˉbytes = 430080u32;
+        Imageˉend = 144166912u32;
+    }
     if Target == 2u32 {
         Bundleˉbytes = 235077u32;
         Startupˉwvoˉbytes = 164u32;
@@ -191,6 +220,17 @@ export fn Publisherˉconstructionˉrequest(
             Metadataˉaddress = 1332704u32;
             Outputˉbytes = 1340357u32;
             Imageˉend = 144020421u32;
+        }
+        if Variant == 3u32 {
+            Bundleˉbytes = 409189u32;
+            Adapterˉfile = 421888u32;
+            Adapterˉaddress = 143101952u32;
+            Sha256ˉfile = 425264u32;
+            Sha256ˉaddress = 143105328u32;
+            Metadataˉfile = 419296u32;
+            Metadataˉaddress = 419296u32;
+            Outputˉbytes = 426949u32;
+            Imageˉend = 143107013u32;
         }
     }
 

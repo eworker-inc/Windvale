@@ -27,7 +27,7 @@ fn Response(Input: bytes, Status: u32) -> bytes {
 fn Envelopeˉvalid(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
     if Total != 255581u32 && Total != 681565u32 &&
-        Total != 1341021u32 { return false; }
+        Total != 1341021u32 && Total != 427613u32 { return false; }
     return Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1296848471u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 8u32) == Total &&
@@ -61,7 +61,14 @@ fn Inputsˉvalid(
         Adapterˉaddress = 144015360u32;
         Outputˉbytes = 1340357u32;
     }
-    return Variant <= 2u32 &&
+    if Variant == 3u32 {
+        Baseˉbytes = 421888u32;
+        Bundleˉbytes = 409189u32;
+        Adapterˉfile = 421888u32;
+        Adapterˉaddress = 143101952u32;
+        Outputˉbytes = 426949u32;
+    }
+    return Variant <= 3u32 &&
         Bytesˉlength(Base) == Baseˉbytes &&
         Bytesˉreadˉu32ˉlittle(Base, 0u32) == 1179403647u32 &&
         Bytesˉreadˉu8(Base, 4u32) == 2u8 &&
@@ -120,6 +127,10 @@ fn Header(Base: bytes, Variant: u32) -> bytes {
         Adapterˉfile = 1335296u32;
         Adapterˉaddress = 144015360u32;
     }
+    if Variant == 3u32 {
+        Adapterˉfile = 421888u32;
+        Adapterˉaddress = 143101952u32;
+    }
     Result = Build.Patchˉu64(Result, 352u32, Adapterˉfile, 0u32);
     Result = Build.Patchˉu64(Result, 360u32, Adapterˉaddress, 0u32);
     Result = Build.Patchˉu64(Result, 376u32, 5061u32, 0u32);
@@ -143,6 +154,10 @@ export fn Publisherˉlinuxˉmaterialize(Input: bytes) -> bytes {
         Metadataˉmagic = 1112561239u32;
         Storedˉvariant = 0u32;
     }
+    if Variant == 3u32 {
+        Metadataˉmagic = 1330665047u32;
+        Storedˉvariant = 0u32;
+    }
     if !Inputsˉvalid(Base, Construction, Objects, Variant) ||
         Bytesˉlength(Metadata) != 128u32 ||
         Bytesˉreadˉu32ˉlittle(Metadata, 0u32) != Metadataˉmagic ||
@@ -164,6 +179,11 @@ export fn Publisherˉlinuxˉmaterialize(Input: bytes) -> bytes {
         Metadataˉfile = 1332704u32;
         Tailˉfile = 1332832u32;
         Outputˉbytes = 1340357u32;
+    }
+    if Variant == 3u32 {
+        Metadataˉfile = 419296u32;
+        Tailˉfile = 419424u32;
+        Outputˉbytes = 426949u32;
     }
     var Application: bytes = Header(Base, Variant);
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 64u32, 5u32));

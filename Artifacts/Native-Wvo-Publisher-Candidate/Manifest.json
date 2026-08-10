@@ -1,10 +1,11 @@
 {
-  "format": "windvale-native-wvo-publisher-candidate-1",
+  "format": "windvale-native-wvo-publisher-candidate-2",
   "status": "candidate",
   "sourceDecision": "0214",
   "provenanceDecision": "0308",
+  "constructionDecision": "0499",
   "qualification": "pending",
-  "construction": "stage0-recovery",
+  "construction": "windvale-native-role-aware-publisher-overlay",
   "artifacts": [
     {
       "name": "wvo-publisher-wvb",
@@ -19,7 +20,7 @@
       "path": "windows-x64-wvopublish.exe",
       "target": "windows-x64-wvo-publisher-v1",
       "bytes": 430080,
-      "sha256": "035a1baaada6be8d057b782804a8650d978da53dd008337ab00258f2ab597cb7",
+      "sha256": "ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a",
       "sourceWvb": "Wvo-Publisher.wvb"
     },
     {
@@ -27,7 +28,7 @@
       "path": "linux-x64-wvopublish.elf",
       "target": "linux-x64-wvo-publisher-v1",
       "bytes": 426949,
-      "sha256": "ac2bb513e2145e9eb911a9be142fc2f1f990a1bab21f278dd841043042b51f7a",
+      "sha256": "4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d",
       "sourceWvb": "Wvo-Publisher.wvb"
     }
   ]

@@ -6,8 +6,8 @@ This contract transfers the exact publisher-module identity, native symbol
 discovery, five WVO asset identities, target layout, and ordered relocation
 targets from the frozen C# publisher builder into focused Windvale modules.
 Downstream native stages now consume these records to instantiate the objects
-and materialize publisher, promoter, and general WVB-publisher PE/ELF
-applications.
+and materialize publisher, promoter, general WVB-publisher, and WVO-publisher
+PE/ELF applications.
 
 The boundary is split into four immutable records because combining SHA-256,
 object inspection, layout, and all target bindings exceeds the current
@@ -23,11 +23,12 @@ name, in order, the publisher WVB, its native-lowered WVO, target startup WVO,
 target publication-adapter WVO, shared SHA-256 WVO, and `WVVP` metadata.
 
 The identity producer hashes every complete input and accepts only the pinned
-release identities. It infers variant 0 (publisher), variant 1 (promoter), or
-variant 2 (WVB publisher) from the exact WVB/WVO identity pair rather than
-accepting a caller-selected variant. The canonical variant-0 totals are
-275,054 Windows bytes and 271,013 Linux bytes; variant 1 totals are 713,471 and
-709,430 bytes; variant 2 totals are 1,491,227 and 1,487,186 bytes. It prevents the
+release identities. It infers variant 0 (publisher), variant 1 (promoter),
+variant 2 (WVB publisher), or variant 3 (WVO publisher) from the exact WVB/WVO
+identity pair rather than accepting a caller-selected variant. The canonical
+variant-0 totals are 275,054 Windows bytes and 271,013 Linux bytes; variant 1
+totals are 713,471 and 709,430 bytes; variant 2 totals are 1,491,227 and
+1,487,186 bytes; variant 3 totals are 461,729 and 457,688 bytes. It prevents the
 structure stage from trusting paths, embedded managed resources, or a live C#
 builder.
 
@@ -49,6 +50,9 @@ symbols, three relocations, 658,160 code bytes, 179 read-only-data bytes, and
 native `Main` at offset 1,178; its transaction offsets remain 789 and 0. The
 WVB-publisher WVO is 1,319,377 bytes with two sections, 47 symbols, six
 relocations, 1,317,376 code bytes, and 237 read-only-data bytes. Its native
+`Main` is 0, transaction begin is 5,475, and transaction apply is 4,686.
+The WVO-publisher WVO is 408,284 bytes with two sections, 39 symbols, three
+relocations, 406,752 code bytes, and 88 read-only-data bytes. Its native
 `Main` is 0, transaction begin is 5,475, and transaction apply is 4,686.
 Windows adapter geometry is 5,286 code bytes, 46 symbols, 111 relocations, 43
 imports, and export offset 251; Linux is 3,363, 28, 49, 26, and 60. The shared
@@ -96,6 +100,17 @@ Role-2 WVB-publisher placements are:
 | Final bytes | 1,340,928 | 1,340,357 |
 | Image end | 145,080,320 | 144,020,421 |
 
+Role-3 WVO-publisher placements are:
+
+| Field | Windows | Linux |
+| --- | ---: | ---: |
+| Bundle bytes | 409,506 | 409,189 |
+| Adapter file/address | 414,208 / 417,792 | 421,888 / 143,101,952 |
+| SHA file/address | 419,504 / 423,088 | 425,264 / 143,105,328 |
+| `WVPO` file/address | 426,976 / 431,584 | 419,296 / 419,296 |
+| Final bytes | 430,080 | 426,949 |
+| Image end | 144,166,912 | 143,107,013 |
+
 Windows mutation flags require startup replacement, metadata, adapter, SHA,
 the 4,096-byte 17-function import page, and shifted data/relocation sections.
 Linux flags require startup replacement, metadata, adapter, SHA, a sixth load
@@ -122,8 +137,8 @@ rejection.
 
 The role-aware native file pipeline consumes the admitted geometry and `WVPT`
 bindings, constructs exact startup, adapter, SHA, imports, and metadata, and
-materializes all target applications. Roles 0 and 1 remain byte-identical;
-role 2 produces the exact WVB-publisher identities recorded by the WVB
-publisher contract.
+materializes all target applications. Roles 0 through 2 remain byte-identical;
+role 3 produces the exact WVO-publisher identities recorded by the WVO
+publisher contract while keeping the public `WVPO 1` reserved tail zero.
 Independent Linux execution and the grouped retirement gate remain before the
 frozen C# writer can be removed as recovery/differential evidence.

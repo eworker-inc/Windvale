@@ -65,7 +65,10 @@ fn Moduleˉvariant(Input: bytes, Target: u32) -> u32 {
     if Identityˉmatches(Input, 159770u32, 1u32, Target, 2u32) {
         return 2u32;
     }
-    return 3u32;
+    if Identityˉmatches(Input, 41365u32, 1u32, Target, 3u32) {
+        return 3u32;
+    }
+    return 4u32;
 }
 
 export fn Publisherˉidentityˉvariant(
@@ -92,16 +95,24 @@ export fn Publisherˉidentityˉvariant(
         ) {
         return Variant;
     }
-    return 3u32;
+    if Variant == 3u32 &&
+        Identityˉmatches(
+            Publisherˉobject, 408284u32, 2u32, Target, Variant
+        ) {
+        return Variant;
+    }
+    return 4u32;
 }
 
 fn Resourceˉlength(Variant: u32, Identity: u32, Target: u32) -> u32 {
     if Identity == 1u32 {
+        if Variant == 3u32 { return 41365u32; }
         if Variant == 2u32 { return 159770u32; }
         if Variant == 1u32 { return 41268u32; }
         return 29170u32;
     }
     if Identity == 2u32 {
+        if Variant == 3u32 { return 408284u32; }
         if Variant == 2u32 { return 1319377u32; }
         if Variant == 1u32 { return 660123u32; }
         return 233804u32;
@@ -138,7 +149,7 @@ export fn Publisherˉidentityˉrequest(
 ) -> Publisherˉidentityˉrequestˉresult {
     if Target != 1u32 && Target != 2u32 { return Failure(Module, 0u32); }
     let Variant: u32 = Moduleˉvariant(Module, Target);
-    if Variant > 2u32 { return Failure(Module, 1u32); }
+    if Variant > 3u32 { return Failure(Module, 1u32); }
     let Moduleˉbytes: u32 = Resourceˉlength(Variant, 1u32, Target);
     let Publisherˉbytes: u32 = Resourceˉlength(Variant, 2u32, Target);
     let Startupˉbytes: u32 = Resourceˉlength(Variant, 3u32, Target);
