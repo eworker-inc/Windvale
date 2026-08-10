@@ -23,7 +23,7 @@ The machine-readable [companion inventory](Dotnet-Retirement-Inventory.json) is 
 | B1 | Project source to canonical WVB | `native-qualified` | `Tools/Native/Build-Wvb.cmd` and `.sh` are the ordinary route. The Stage 0 compiler remains `recovery-retained`. |
 | V1 | WVB verification | `native-qualified` | Digest-bound `wvverify` applications protect the ordinary native build route on Windows and Linux. |
 | I1 | WVB inspection | `native-qualified` | Digest-bound `wvdump` applications provide deterministic inspection on both hosts. |
-| E1 | WVB execution | `native-candidate` | Decision 0509 reconstructs the exact profile-5 runner from its complete source closure through WVB, WVO, fragment, and paired applications; the digest-bound launcher owns plain execution and exact overall instruction reporting. Independent Linux execution, capability-bearing execution, per-function profiling, exact-descendant dual-host qualification, and the complete execution surface remain open. |
+| E1 | WVB execution | `native-candidate` | Decision 0509 reconstructs the profile-5 runner from its complete source closure. Decision 0510 aligns its fixed budget with the ordinary 1,000,000-instruction CLI default, reconstructs the resulting exact WVB/WVO/fragment/paired applications, and transfers three more capability-free Foundation executions. Independent Linux execution, capability-bearing execution, the 4 MiB Byte Construction value shape, per-function profiling, exact-descendant dual-host qualification, and the complete execution surface remain open. |
 | T1 | Fixed native portable tests | `native-candidate` | The digest-bound [native retirement suite](../../Specifications/Windvale-Native-Retirement-Test-Suite.md) composes 43 focused Windows/Linux command lanes and 3,204 fixed cases without a normal .NET dependency. Its owned families include Seed behavior, twenty fixed unsafe WVB boundaries, hostile WVB/WVO admission, four exact assembler golden objects, a 269-case WVA differential/positive corpus, assembler/linker/lowerer/publisher rejection and hosted-verifier publisher-construction and read-only admission contracts, the three-case current-compiler reconstruction inventory, the three-case segmented compiler toolset reconstruction inventory, the three-case source-built WVB runner reconstruction and execution inventory, the three-case WVO inspector reconstruction inventory, the three-case standard Wv-Linker reconstruction inventory, the three-case console-application-verifier reconstruction and two-snapshot compatibility inventory, the three-case console-application-publisher reconstruction and independent publication inventory, the six-case baseline-JIT patch-plan and W^X publication contract, the four-case verified WVO export-renaming contract, the eleven-case OS Probe object-producer contract, the seven-case system-kernel target contract, the two-case process-policy source-object contract, the two-case process-object reconstruction contract, WVO differential corpora, source/WVB/WVO containment, version-1 and hosted format-2 PE/ELF containment and valid-shaped mutations, segmented console maximum-plus-one rejections and maximum-valid construction, exact console-packager WVB source reconstruction, hostile-size WVO consumers, native-link-to-UEFI construction/repetition/rejection, the four-case native Probe 40 build lane, and the fixed source-to-AOT chain. Decision 0458 makes the local changed-file front door select only these focused owners and refuse named evidence gaps without a managed or unfiltered fallback. Complete Linux execution of the current plan, remaining gap closure, promotion, and the grouped gate remain. |
 | A1 | WVA assembly | `native-qualified` | Digest-bound `wvasm` applications are promoted for the accepted assembler surface. Probe 40 recovery now uses them for all seven WVA products selected by a scenario: three top-level objects plus the init, directory, boot-resource, and client process-image objects. The complete embedded-source C# path remains frozen recovery/differential evidence, but the normal recovery command no longer executes it. |
 | I2 | WVO verification and inspection | `native-candidate` | One focused Windvale verification module now owns complete WVO admission for both the read-only shell and native publisher. The repinned paired inspector applications, exact candidate manifest, and digest-bound Windows/Linux launchers exist. Decision 0322's fixed matrix requires both launchers to agree on all thirteen stable rejection families without a live managed oracle. Decision 0502 additionally consumes and pins one exact console-verifier WVO oracle during current-host construction; that evidence does not widen WVO inspection coverage or change this standing. Grouped dual-host qualification and promotion to the ordinary path remain. |
@@ -145,8 +145,11 @@ Current E1/C1 support update:
 [Decision 0509](../Decisions/0509-Native-Wvb-Runner-Source-Reconstruction-And-Step-Reporting.md)
 closes the runner's omitted-module boundary and builds the exact 121,593-byte
 WVB from current source before producing its 1,078,577-byte WVO and paired
-profile-5 applications. The normal digest-bound launchers consume that current
-candidate, and its focused Windows owner passes 3/3. The fixed coordinator
+profile-5 applications. [Decision 0510](../Decisions/0510-Native-Foundation-Build-Inspect-And-Execution-Transfer.md)
+aligns the fixed execution budget with the ordinary CLI default and advances
+all four current product digests without changing their sizes. The normal
+digest-bound launchers consume that current candidate, and its focused Windows
+owner passes 3/3. The fixed coordinator
 remains 43 suites and 3,204 cases, and the direct managed-entry inventory is
 unchanged. Independent Linux execution, capability-bearing execution, grouped
 qualification, promotion, and recovery deletion remain.
@@ -221,6 +224,22 @@ cumulatively with Decisions 0505, 0506, and 0508. T2 remains `managed-normal`:
 per-function profiling, capability-bearing execution, the broad harness, and
 later qualification phases still use .NET. The three-normal plus nine-recovery
 direct-entry inventory remains unchanged.
+
+Current T2 Foundation transfer:
+[Decision 0510](../Decisions/0510-Native-Foundation-Build-Inspect-And-Execution-Transfer.md)
+extends the paired native front-door helper from nine to 24 transferred calls
+and from four to twelve exact artifacts. It natively builds four Foundation
+modules and four demos, inspects all four modules, and executes the Machine
+Contracts, Byte Ordering, and Decimal Parsing demos to exact result `0`. The
+current Windows helper passes in 6.3 seconds; the reconstructed runner owner
+passes 3/3 in 49.8 seconds. This removes fifteen additional managed invocations
+from each broad host script, thirty cumulatively. The Byte Construction demo's
+plain execution and dynamic-value reports remain in the managed differential
+lane because the native runner returns bounded failure `3015` for its current
+4 MiB value shape. T2 therefore remains `managed-normal`, and the three-normal
+plus nine-recovery direct-entry inventory is unchanged. Independent Linux
+execution, capability-bearing execution, remaining broad-suite transfers,
+GitHub cutover, grouped qualification, and recovery retirement remain open.
 
 ## Normal-path audit result
 

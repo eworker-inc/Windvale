@@ -41,9 +41,27 @@ $NativeCases = @(
             'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
             'Tools/Verify/Verify-Seed-Native-Front-Door.sh',
             'Examples/Seed/Hello-Windvale.wvproj',
-            'Examples/Foundation/Read-Wvb-Header.wvproj'
+            'Examples/Foundation/Read-Wvb-Header.wvproj',
+            'Foundation/Machine-Contracts.wvproj',
+            'Foundation/Byte-Ordering.wvproj',
+            'Foundation/Decimal-Parsing.wvproj',
+            'Foundation/Byte-Construction.wvproj',
+            'Foundation-Machine-Contracts-Demo.wvproj',
+            'Foundation-Byte-Ordering-Demo.wvproj',
+            'Foundation-Decimal-Parsing-Demo.wvproj',
+            'Foundation-Byte-Construction-Demo.wvproj'
         )
         Suites = @('seed')
+        Gaps = @('seed-native-front-door')
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Seed native Foundation source transfer'
+        Paths = @(
+            'Foundation/Machine-Contracts.wv',
+            'Examples/Foundation/Machine-Contracts-Demo.wv'
+        )
+        Suites = @('seed', 'wv-linker-reconstruction')
         Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
@@ -292,7 +310,7 @@ $NativeCases = @(
             'Specifications/Windvale-Native-Wvb-Runner.md'
         )
         Suites = @('wvb-runner-reconstruction')
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{
@@ -373,7 +391,7 @@ $NativeCases = @(
             'console-packager-source-reconstruction',
             'console-packager-container-reconstruction'
         )
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{

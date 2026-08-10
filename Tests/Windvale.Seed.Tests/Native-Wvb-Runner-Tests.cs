@@ -14,16 +14,16 @@ internal static partial class Program
 {
     private const int CURRENT_WVB_RUNNER_BYTES = 121_593;
     private const string CURRENT_WVB_RUNNER_SHA256 =
-        "5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1";
+        "e58f653445cd717d19c32fe1a0fbc57f03f475187cdec571825b9fd6685b3097";
     private const int STAGE0_WVB_RUNNER_BYTES = 126_271;
     private const string STAGE0_WVB_RUNNER_SHA256 =
-        "00b87804c047b626b00c167bf99ea9834bc77ab8e88e454d39a738b2787e2bcf";
+        "a2644f4bbe6209b033de7b1080113a8fcb4e5da3376d462d7d50c5edeb4a580c";
     private const int CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_BYTES = 1_094_656;
     private const string CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_SHA256 =
-        "ab0c2384ecdfd07bc7351562732ae4b1f97e07dcbd2c92e96dc8cb3dee4d3ff7";
+        "6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc";
     private const int CURRENT_LINUX_WVB_RUNNER_APPLICATION_BYTES = 1_093_632;
     private const string CURRENT_LINUX_WVB_RUNNER_APPLICATION_SHA256 =
-        "ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322";
+        "a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d";
 
     private static readonly string FOUNDATION_SHA256_SOURCE =
         Readˉembeddedˉsource("Windvale.Seed.Tests.Foundation-Sha256.wv");
@@ -223,7 +223,7 @@ internal static partial class Program
                 "build status=Published verification=compiler-aligned functions=9 " +
                 "code-bytes=117395 module-bytes=121593\n" +
                 "publication status=Complete bytes=0x0001daf9 " +
-                "sha256=5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1\n",
+                "sha256=e58f653445cd717d19c32fe1a0fbc57f03f475187cdec571825b9fd6685b3097\n",
                 Nativeˉbuild.Output);
             Equal(string.Empty, Nativeˉbuild.Error);
             var Nativeˉrunnerˉbytes = File.ReadAllBytes(Nativeˉrunnerˉpath);

@@ -277,7 +277,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=4 cases=9'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=12 cases=24'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -370,125 +370,10 @@ if ([Convert]::ToHexString([System.IO.File]::ReadAllBytes($InvalidCompositionMod
 Remove-Item -LiteralPath $InvalidCompositionModule -Force
 
 $MachineContractsSource = Join-Path $RepositoryRoot 'Foundation/Machine-Contracts.wv'
-dotnet $ToolDll `
-    compile $MachineContractsSource -o $MachineContractsModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation machine contracts.' }
-$MachineContractsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $MachineContractsModule).Hash.ToLowerInvariant()
-if ($MachineContractsHash -ne 'f624739461dea01862121daf234b3a838dfcafd73753e3124a038b7efa8b4fa3') {
-    throw "The Foundation machine-contract module has an unexpected digest: $MachineContractsHash"
-}
-$MachineContractsInspection = (dotnet $ToolDll inspect $MachineContractsModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $MachineContractsInspection -notmatch 'Foundationˉalignmentˉisˉvalid' -or
-    $MachineContractsInspection -notmatch 'Foundationˉmachineˉnameˉisˉvalid' -or
-    $MachineContractsInspection -notmatch 'Exports \(2\)'
-) {
-    throw 'The Foundation machine-contract module inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Machine-Contracts-Demo.wv') `
-    --module $MachineContractsSource `
-    -o $MachineContractsDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation machine-contract demo.' }
-$MachineContractsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $MachineContractsDemoModule).Hash.ToLowerInvariant()
-if ($MachineContractsDemoHash -ne '69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3') {
-    throw "The Foundation machine-contract demo has an unexpected digest: $MachineContractsDemoHash"
-}
-$MachineContractsDemoOutput = dotnet $ToolDll run $MachineContractsDemoModule
-if ($LASTEXITCODE -ne 0 -or $MachineContractsDemoOutput -notcontains 'Result: 0') {
-    throw 'The Foundation machine-contract demo did not return Result: 0.'
-}
-
 $ByteOrderingSource = Join-Path $RepositoryRoot 'Foundation/Byte-Ordering.wv'
 $Sha256Source = Join-Path $RepositoryRoot 'Foundation/Sha256.wv'
-dotnet $ToolDll `
-    compile $ByteOrderingSource -o $ByteOrderingModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation byte ordering.' }
-$ByteOrderingHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteOrderingModule).Hash.ToLowerInvariant()
-if ($ByteOrderingHash -ne '27a3c24b5cc358a4f67e2e1959b5e80559918f0176c52e08648e638212e6dece') {
-    throw "The Foundation byte-ordering module has an unexpected digest: $ByteOrderingHash"
-}
-$ByteOrderingInspection = (dotnet $ToolDll inspect $ByteOrderingModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $ByteOrderingInspection -notmatch 'Foundationˉbyteˉspansˉcompare' -or
-    $ByteOrderingInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Foundation byte-ordering module inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Byte-Ordering-Demo.wv') `
-    --module $ByteOrderingSource `
-    -o $ByteOrderingDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation byte-ordering demo.' }
-$ByteOrderingDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteOrderingDemoModule).Hash.ToLowerInvariant()
-if ($ByteOrderingDemoHash -ne 'fbaf423b6e4eac5c18b644dc27f1fa20fca8798519596485cd7497b44979533f') {
-    throw "The Foundation byte-ordering demo has an unexpected digest: $ByteOrderingDemoHash"
-}
-$ByteOrderingDemoOutput = dotnet $ToolDll run $ByteOrderingDemoModule
-if ($LASTEXITCODE -ne 0 -or $ByteOrderingDemoOutput -notcontains 'Result: 0') {
-    throw 'The Foundation byte-ordering demo did not return Result: 0.'
-}
-
 $DecimalParsingSource = Join-Path $RepositoryRoot 'Foundation/Decimal-Parsing.wv'
-dotnet $ToolDll `
-    compile $DecimalParsingSource -o $DecimalParsingModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation decimal parsing.' }
-$DecimalParsingHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $DecimalParsingModule).Hash.ToLowerInvariant()
-if ($DecimalParsingHash -ne 'bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37') {
-    throw "The Foundation decimal-parsing module has an unexpected digest: $DecimalParsingHash"
-}
-$DecimalParsingInspection = (dotnet $ToolDll inspect $DecimalParsingModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $DecimalParsingInspection -notmatch 'Foundationˉu32ˉparse' -or
-    $DecimalParsingInspection -notmatch 'Foundationˉu32ˉdecimalˉparse' -or
-    $DecimalParsingInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Foundation decimal-parsing module inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Decimal-Parsing-Demo.wv') `
-    --module $DecimalParsingSource `
-    -o $DecimalParsingDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation decimal-parsing demo.' }
-$DecimalParsingDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $DecimalParsingDemoModule).Hash.ToLowerInvariant()
-if ($DecimalParsingDemoHash -ne 'd323f8fa9178583990394a37872a8ee522320084ef4741eac26cb0f86c21b453') {
-    throw "The Foundation decimal-parsing demo has an unexpected digest: $DecimalParsingDemoHash"
-}
-$DecimalParsingDemoOutput = dotnet $ToolDll run $DecimalParsingDemoModule
-if ($LASTEXITCODE -ne 0 -or $DecimalParsingDemoOutput -notcontains 'Result: 0') {
-    throw 'The Foundation decimal-parsing demo did not return Result: 0.'
-}
-
 $ByteConstructionSource = Join-Path $RepositoryRoot 'Foundation/Byte-Construction.wv'
-dotnet $ToolDll `
-    compile $ByteConstructionSource -o $ByteConstructionModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Foundation byte construction.' }
-$ByteConstructionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteConstructionModule).Hash.ToLowerInvariant()
-if ($ByteConstructionHash -ne '3be0d06b8f4e7745dd9ffd9f325804d69ce524ac7ff6341b1e7b38037f6dd6f8') {
-    throw "The Foundation byte-construction module has an unexpected digest: $ByteConstructionHash"
-}
-$ByteConstructionInspection = (dotnet $ToolDll inspect $ByteConstructionModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $ByteConstructionInspection -notmatch 'Foundationˉbytesˉresult' -or
-    $ByteConstructionInspection -notmatch 'Foundationˉbytesˉrepeat' -or
-    $ByteConstructionInspection -notmatch 'Foundationˉbytesˉreplace' -or
-    $ByteConstructionInspection -notmatch 'Exports \(2\)'
-) {
-    throw 'The Foundation byte-construction module inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Foundation/Byte-Construction-Demo.wv') `
-    --module $ByteConstructionSource `
-    -o $ByteConstructionDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Foundation byte-construction demo.' }
-$ByteConstructionDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ByteConstructionDemoModule).Hash.ToLowerInvariant()
-if ($ByteConstructionDemoHash -ne 'ab594976ced7a84573ade0aa50fb4370d96b8004c8b9a5ec1e888968c7b3bf8f') {
-    throw "The Foundation byte-construction demo has an unexpected digest: $ByteConstructionDemoHash"
-}
 $ByteConstructionDemoOutput = dotnet $ToolDll run $ByteConstructionDemoModule
 if ($LASTEXITCODE -ne 0 -or $ByteConstructionDemoOutput -notcontains 'Result: 0') {
     throw 'The Foundation byte-construction demo did not return Result: 0.'

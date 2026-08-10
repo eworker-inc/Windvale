@@ -54,12 +54,12 @@ windows_startup="$temporary_directory/Windows-Startup.wvo"
 linux_startup="$temporary_directory/Linux-Startup.wvo"
 
 "$repository_root/Tools/Native/Build-Wvb.sh" "$source_project" "$wvb" >"$temporary_directory/Build.out" 2>"$temporary_directory/Build.err" || exit 1
-check_file "$wvb" 121593 5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1 || exit 1
+check_file "$wvb" 121593 e58f653445cd717d19c32fe1a0fbc57f03f475187cdec571825b9fd6685b3097 || exit 1
 "$repository_root/Tools/Native/Lower-Wvb-To-Wvo.sh" "$wvb" "$wvo" >"$temporary_directory/Lower.out" 2>"$temporary_directory/Lower.err" || exit 1
-check_file "$wvo" 1078577 118cdd634026d7d616f3b7c7dc951176985e725f5852b4d3b045aab4cf5e5ca5 || exit 1
+check_file "$wvo" 1078577 7d0ec719ade7e55d46c5a6dc6f7cb63102db4633172bcab1812e16651002106d || exit 1
 "$repository_root/Tools/Native/Link-Wvo.sh" 0 Main "$fragment" "$wvo" >"$temporary_directory/Link.out" 2>"$temporary_directory/Link.err" || exit 1
 [[ $(grep -Fxc 'entry name=Main address=14790' "$temporary_directory/Link.out") -eq 1 ]] || exit 1
-check_file "$fragment" 1077675 cb9b08b1d88cc67fa26f210832cbdc542df51d2eb8816ab5ef2a7fc296f426ec || exit 1
+check_file "$fragment" 1077675 83dc076c137557495a24e65894c26c7f794e0d67f31dd59a476e1dc7715828d1 || exit 1
 
 "$repository_root/Tools/Native/Assemble-Wva.sh" "$startup_root/Windows-X64-Hosted-Inspector.wva" "$windows_startup" >"$temporary_directory/Windows-Assemble.out" 2>"$temporary_directory/Windows-Assemble.err" || exit 1
 check_file "$windows_startup" 3927 1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3 || exit 1
@@ -97,13 +97,13 @@ construct_target windows 1 \
     "$service_root/Native-X64-Windows-File-Input-Service.bin" \
     "$service_root/Native-X64-Windows-Diagnostic-Output-Service.bin" \
     "$windows_startup" "$windows_application" || exit 1
-check_file "$windows_application" 1094656 ab0c2384ecdfd07bc7351562732ae4b1f97e07dcbd2c92e96dc8cb3dee4d3ff7 || exit 1
+check_file "$windows_application" 1094656 6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc || exit 1
 construct_target linux 2 \
     "$service_root/Native-X64-Linux-Console-Output-Service.bin" \
     "$service_root/Native-X64-Linux-File-Input-Service.bin" \
     "$service_root/Native-X64-Linux-Diagnostic-Output-Service.bin" \
     "$linux_startup" "$linux_application" || exit 1
-check_file "$linux_application" 1093632 ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322 || exit 1
+check_file "$linux_application" 1093632 a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d || exit 1
 chmod +x "$linux_application" || exit 1
 
 echo 'native WVB runner reconstruction status=Complete artifacts=4'

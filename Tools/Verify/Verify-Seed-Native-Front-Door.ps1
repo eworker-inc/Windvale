@@ -56,11 +56,17 @@ function Invoke-ExactVerify([string]$ModulePath) {
 
 function Invoke-ExactInspect(
     [string]$ModulePath,
-    [string]$RequiredPattern
+    [string[]]$RequiredPatterns
 ) {
     $InspectOutput = @(& $NativeInspect $ModulePath 2>&1)
-    if ($LASTEXITCODE -ne 0 -or ($InspectOutput -join "`n") -notmatch $RequiredPattern) {
+    if ($LASTEXITCODE -ne 0) {
         throw "The native Seed inspector omitted required evidence: $ModulePath"
+    }
+    $Inspection = $InspectOutput -join "`n"
+    foreach ($RequiredPattern in $RequiredPatterns) {
+        if ($Inspection -notmatch $RequiredPattern) {
+            throw "The native Seed inspector omitted required evidence: $ModulePath"
+        }
     }
 }
 
@@ -112,6 +118,14 @@ $SumModule = Join-Path $OutputRoot 'Sum-Data.wvb'
 $HelloModule = Join-Path $OutputRoot 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $OutputRoot 'Read-Wvb-Header.wvb'
 $CompositionModule = Join-Path $OutputRoot 'Module-Composition-Demo-Project.wvb'
+$MachineContractsModule = Join-Path $OutputRoot 'Machine-Contracts.wvb'
+$MachineContractsDemoModule = Join-Path $OutputRoot 'Machine-Contracts-Demo.wvb'
+$ByteOrderingModule = Join-Path $OutputRoot 'Byte-Ordering.wvb'
+$ByteOrderingDemoModule = Join-Path $OutputRoot 'Byte-Ordering-Demo.wvb'
+$DecimalParsingModule = Join-Path $OutputRoot 'Decimal-Parsing.wvb'
+$DecimalParsingDemoModule = Join-Path $OutputRoot 'Decimal-Parsing-Demo.wvb'
+$ByteConstructionModule = Join-Path $OutputRoot 'Byte-Construction.wvb'
+$ByteConstructionDemoModule = Join-Path $OutputRoot 'Byte-Construction-Demo.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -166,6 +180,85 @@ Invoke-ExactRun `
     660 `
     '030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607'
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Foundation/Machine-Contracts.wvproj') `
+    $MachineContractsModule `
+    2466 `
+    'f624739461dea01862121daf234b3a838dfcafd73753e3124a038b7efa8b4fa3' `
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=2019 module-bytes=2466'
+Invoke-ExactInspect `
+    $MachineContractsModule `
+    @('Foundation\\u02C9alignment\\u02C9is\\u02C9valid', 'Foundation\\u02C9machine\\u02C9name\\u02C9is\\u02C9valid', 'section name=exports .* count=2')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Foundation-Machine-Contracts-Demo.wvproj') `
+    $MachineContractsDemoModule `
+    3487 `
+    '69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3' `
+    'build status=Published verification=compiler-aligned functions=3 code-bytes=2899 module-bytes=3487'
+Invoke-ExactRun `
+    $MachineContractsDemoModule `
+    0 `
+    3487 `
+    '69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3'
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Foundation/Byte-Ordering.wvproj') `
+    $ByteOrderingModule `
+    990 `
+    '27a3c24b5cc358a4f67e2e1959b5e80559918f0176c52e08648e638212e6dece' `
+    'build status=Published verification=compiler-aligned functions=1 code-bytes=720 module-bytes=990'
+Invoke-ExactInspect `
+    $ByteOrderingModule `
+    @('Foundation\\u02C9byte\\u02C9spans\\u02C9compare', 'section name=exports .* count=1')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Foundation-Byte-Ordering-Demo.wvproj') `
+    $ByteOrderingDemoModule `
+    2422 `
+    'fbaf423b6e4eac5c18b644dc27f1fa20fca8798519596485cd7497b44979533f' `
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=2059 module-bytes=2422'
+Invoke-ExactRun `
+    $ByteOrderingDemoModule `
+    0 `
+    2422 `
+    'fbaf423b6e4eac5c18b644dc27f1fa20fca8798519596485cd7497b44979533f'
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Foundation/Decimal-Parsing.wvproj') `
+    $DecimalParsingModule `
+    1698 `
+    'bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37' `
+    'build status=Published verification=compiler-aligned functions=1 code-bytes=1301 module-bytes=1698'
+Invoke-ExactInspect `
+    $DecimalParsingModule `
+    @('Foundation\\u02C9u32\\u02C9parse', 'Foundation\\u02C9u32\\u02C9decimal\\u02C9parse', 'section name=exports .* count=1')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Foundation-Decimal-Parsing-Demo.wvproj') `
+    $DecimalParsingDemoModule `
+    3742 `
+    'd323f8fa9178583990394a37872a8ee522320084ef4741eac26cb0f86c21b453' `
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=2969 module-bytes=3742'
+Invoke-ExactRun `
+    $DecimalParsingDemoModule `
+    0 `
+    3742 `
+    'd323f8fa9178583990394a37872a8ee522320084ef4741eac26cb0f86c21b453'
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Foundation/Byte-Construction.wvproj') `
+    $ByteConstructionModule `
+    2001 `
+    '3be0d06b8f4e7745dd9ffd9f325804d69ce524ac7ff6341b1e7b38037f6dd6f8' `
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=1503 module-bytes=2001'
+Invoke-ExactInspect `
+    $ByteConstructionModule `
+    @('Foundation\\u02C9bytes\\u02C9result', 'Foundation\\u02C9bytes\\u02C9repeat', 'Foundation\\u02C9bytes\\u02C9replace', 'section name=exports .* count=2')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Foundation-Byte-Construction-Demo.wvproj') `
+    $ByteConstructionDemoModule `
+    5017 `
+    'ab594976ced7a84573ade0aa50fb4370d96b8004c8b9a5ec1e888968c7b3bf8f' `
+    'build status=Published verification=compiler-aligned functions=3 code-bytes=4194 module-bytes=5017'
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -197,4 +290,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=4 cases=9'
+Write-Output 'native Seed front-door verification status=Complete artifacts=12 cases=24'

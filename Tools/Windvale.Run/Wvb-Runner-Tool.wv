@@ -12,7 +12,7 @@ fn Buildˉrequest(Module: bytes) -> bytes {
     var Request: bytes = Bytesˉfromˉu32ˉlittle(1230526039u32);
     Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(1u32));
     Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(0u32));
-    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(4096u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1000000u32));
     Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(8u32));
     return Bytesˉconcat(Request, Module);
 }

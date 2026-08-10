@@ -473,6 +473,17 @@ host. Per-function reporting, capability-bearing execution, the broad harness,
 independent Linux evidence, and later qualification phases remain managed or
 unpromoted.
 
+Decision 0510 aligns the fixed runner request with the ordinary Stage 0
+one-million-instruction default and transfers the next four Foundation
+build/inspect pairs plus three supported demo executions. The paired helper now
+owns twelve exact products and 24 transferred calls, bringing the cumulative
+removal to thirty managed invocations per host script. Component manifests stay
+beside component source; only the four cross-component demos use root aggregate
+manifests pending a workspace/reference design. Byte Construction's 4 MiB
+value and profiling path, capability-bearing execution, the broad harness,
+independent Linux evidence, and later qualification phases remain managed or
+unpromoted.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

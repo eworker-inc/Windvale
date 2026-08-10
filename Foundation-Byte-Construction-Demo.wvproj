@@ -1,0 +1,4 @@
+windvale-project 1
+root "Examples/Foundation/Byte-Construction-Demo.wv"
+source "Foundation/Byte-Construction.wv"
+emit wvb

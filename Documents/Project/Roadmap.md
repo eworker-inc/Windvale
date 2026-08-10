@@ -12,6 +12,17 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0510](../Decisions/0510-Native-Foundation-Build-Inspect-And-Execution-Transfer.md)
+moves eight Foundation and demo builds, four inspections, and three supported
+executions from each broad Seed script into the paired native helper. The
+helper owns twelve exact artifacts and 24 transferred calls; the cumulative
+normal-path removal is thirty managed invocations per host script. Foundation
+component manifests are colocated with their sources, while four temporary
+root aggregates explicitly span `Examples/` and `Foundation/`. The 4 MiB Byte
+Construction execution/profiling shape, capability-bearing execution, broad
+harness, independent Linux evidence, and grouped qualification are the next
+T2/E1 boundaries.
+
 [Decision 0509](../Decisions/0509-Native-Wvb-Runner-Source-Reconstruction-And-Step-Reporting.md)
 closes the runner project's omitted-module boundary, reconstructs the exact WVB,
 WVO, fragment, and paired profile-5 applications from current source, and moves

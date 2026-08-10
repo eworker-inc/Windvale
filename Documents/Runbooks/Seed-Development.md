@@ -195,7 +195,7 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Run the fixed nine-case native front-door qualification smoke directly with:
+Run the fixed 24-call native front-door qualification smoke directly with:
 
 ```powershell
 $output = New-Item -ItemType Directory -Force artifacts/seed-front-door
@@ -208,15 +208,17 @@ mkdir -p artifacts/seed-front-door
 ./Tools/Verify/Verify-Seed-Native-Front-Door.sh artifacts/seed-front-door
 ```
 
-The helper builds four exact WVBs, verifies and inspects the two structural
-fixtures, runs the Sum, Foundation-header, and composed-project modules through
-the current native runner to exact results `29`, `1`, and `42`, requires the
-Sum run to report exactly `203` instructions, and checks malformed-project
-destination preservation. Example and component `.wvproj`
-files normally live beside their owning source, with paths resolved relative to
-the manifest. Root-level manifests remain appropriate for repository-wide
-products such as the complete compiler, but are not the default location for
-every future project. A later workspace/package design may add a higher-level
+The helper builds twelve exact WVBs. It retains the original Project 1,
+verification, inspection, execution, instruction-count, and malformed-project
+cases; it additionally builds and inspects Machine Contracts, Byte Ordering,
+Decimal Parsing, and Byte Construction, builds all four demos, and executes the
+first three demos to exact result `0`. Byte Construction's 4 MiB execution and
+profiling remain in the frozen managed differential lane. Example and component
+`.wvproj` files normally live beside their owning source, with paths resolved
+relative to the manifest. The four Foundation demo projects currently remain
+root-level aggregates because their roots and sources span `Examples/` and
+`Foundation/`; this is a contained Project 1 limitation, not the preferred
+future layout. A later workspace/package design may add a higher-level
 organization contract without changing Project 1.
 
 Run the exact native capability-free console-AOT qualification composition in

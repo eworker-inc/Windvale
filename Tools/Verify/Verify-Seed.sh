@@ -269,7 +269,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=4 cases=9' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=12 cases=24' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -333,102 +333,10 @@ cmp "$COMPOSITION_MODULE" "$PROJECT_COMPOSITION_MODULE"
 rm -f "$INVALID_COMPOSITION_MODULE"
 
 MACHINE_CONTRACTS_SOURCE="$REPOSITORY_ROOT/Foundation/Machine-Contracts.wv"
-dotnet "$TOOL_DLL" \
-    compile "$MACHINE_CONTRACTS_SOURCE" -o "$MACHINE_CONTRACTS_MODULE"
-MACHINE_CONTRACTS_HASH=$(sha256sum "$MACHINE_CONTRACTS_MODULE" | awk '{print $1}')
-if [ "$MACHINE_CONTRACTS_HASH" != 'f624739461dea01862121daf234b3a838dfcafd73753e3124a038b7efa8b4fa3' ]; then
-    echo "The Foundation machine-contract module has an unexpected digest: $MACHINE_CONTRACTS_HASH" >&2
-    exit 1
-fi
-MACHINE_CONTRACTS_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$MACHINE_CONTRACTS_MODULE")
-printf '%s\n' "$MACHINE_CONTRACTS_INSPECTION" | grep -F 'Foundationˉalignmentˉisˉvalid' >/dev/null
-printf '%s\n' "$MACHINE_CONTRACTS_INSPECTION" | grep -F 'Foundationˉmachineˉnameˉisˉvalid' >/dev/null
-printf '%s\n' "$MACHINE_CONTRACTS_INSPECTION" | grep -F 'Exports (2)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Foundation/Machine-Contracts-Demo.wv" \
-    --module "$MACHINE_CONTRACTS_SOURCE" \
-    -o "$MACHINE_CONTRACTS_DEMO_MODULE"
-MACHINE_CONTRACTS_DEMO_HASH=$(sha256sum "$MACHINE_CONTRACTS_DEMO_MODULE" | awk '{print $1}')
-if [ "$MACHINE_CONTRACTS_DEMO_HASH" != '69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3' ]; then
-    echo "The Foundation machine-contract demo has an unexpected digest: $MACHINE_CONTRACTS_DEMO_HASH" >&2
-    exit 1
-fi
-MACHINE_CONTRACTS_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$MACHINE_CONTRACTS_DEMO_MODULE")
-printf '%s\n' "$MACHINE_CONTRACTS_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
 BYTE_ORDERING_SOURCE="$REPOSITORY_ROOT/Foundation/Byte-Ordering.wv"
 SHA256_SOURCE="$REPOSITORY_ROOT/Foundation/Sha256.wv"
-dotnet "$TOOL_DLL" \
-    compile "$BYTE_ORDERING_SOURCE" -o "$BYTE_ORDERING_MODULE"
-BYTE_ORDERING_HASH=$(sha256sum "$BYTE_ORDERING_MODULE" | awk '{print $1}')
-if [ "$BYTE_ORDERING_HASH" != '27a3c24b5cc358a4f67e2e1959b5e80559918f0176c52e08648e638212e6dece' ]; then
-    echo "The Foundation byte-ordering module has an unexpected digest: $BYTE_ORDERING_HASH" >&2
-    exit 1
-fi
-BYTE_ORDERING_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$BYTE_ORDERING_MODULE")
-printf '%s\n' "$BYTE_ORDERING_INSPECTION" | grep -F 'Foundationˉbyteˉspansˉcompare' >/dev/null
-printf '%s\n' "$BYTE_ORDERING_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Foundation/Byte-Ordering-Demo.wv" \
-    --module "$BYTE_ORDERING_SOURCE" \
-    -o "$BYTE_ORDERING_DEMO_MODULE"
-BYTE_ORDERING_DEMO_HASH=$(sha256sum "$BYTE_ORDERING_DEMO_MODULE" | awk '{print $1}')
-if [ "$BYTE_ORDERING_DEMO_HASH" != 'fbaf423b6e4eac5c18b644dc27f1fa20fca8798519596485cd7497b44979533f' ]; then
-    echo "The Foundation byte-ordering demo has an unexpected digest: $BYTE_ORDERING_DEMO_HASH" >&2
-    exit 1
-fi
-BYTE_ORDERING_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$BYTE_ORDERING_DEMO_MODULE")
-printf '%s\n' "$BYTE_ORDERING_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
 DECIMAL_PARSING_SOURCE="$REPOSITORY_ROOT/Foundation/Decimal-Parsing.wv"
-dotnet "$TOOL_DLL" \
-    compile "$DECIMAL_PARSING_SOURCE" -o "$DECIMAL_PARSING_MODULE"
-DECIMAL_PARSING_HASH=$(sha256sum "$DECIMAL_PARSING_MODULE" | awk '{print $1}')
-if [ "$DECIMAL_PARSING_HASH" != 'bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37' ]; then
-    echo "The Foundation decimal-parsing module has an unexpected digest: $DECIMAL_PARSING_HASH" >&2
-    exit 1
-fi
-DECIMAL_PARSING_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$DECIMAL_PARSING_MODULE")
-printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Foundationˉu32ˉparse' >/dev/null
-printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Foundationˉu32ˉdecimalˉparse' >/dev/null
-printf '%s\n' "$DECIMAL_PARSING_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Foundation/Decimal-Parsing-Demo.wv" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$DECIMAL_PARSING_DEMO_MODULE"
-DECIMAL_PARSING_DEMO_HASH=$(sha256sum "$DECIMAL_PARSING_DEMO_MODULE" | awk '{print $1}')
-if [ "$DECIMAL_PARSING_DEMO_HASH" != 'd323f8fa9178583990394a37872a8ee522320084ef4741eac26cb0f86c21b453' ]; then
-    echo "The Foundation decimal-parsing demo has an unexpected digest: $DECIMAL_PARSING_DEMO_HASH" >&2
-    exit 1
-fi
-DECIMAL_PARSING_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$DECIMAL_PARSING_DEMO_MODULE")
-printf '%s\n' "$DECIMAL_PARSING_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
 BYTE_CONSTRUCTION_SOURCE="$REPOSITORY_ROOT/Foundation/Byte-Construction.wv"
-dotnet "$TOOL_DLL" \
-    compile "$BYTE_CONSTRUCTION_SOURCE" -o "$BYTE_CONSTRUCTION_MODULE"
-BYTE_CONSTRUCTION_HASH=$(sha256sum "$BYTE_CONSTRUCTION_MODULE" | awk '{print $1}')
-if [ "$BYTE_CONSTRUCTION_HASH" != '3be0d06b8f4e7745dd9ffd9f325804d69ce524ac7ff6341b1e7b38037f6dd6f8' ]; then
-    echo "The Foundation byte-construction module has an unexpected digest: $BYTE_CONSTRUCTION_HASH" >&2
-    exit 1
-fi
-BYTE_CONSTRUCTION_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$BYTE_CONSTRUCTION_MODULE")
-printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉresult' >/dev/null
-printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉrepeat' >/dev/null
-printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Foundationˉbytesˉreplace' >/dev/null
-printf '%s\n' "$BYTE_CONSTRUCTION_INSPECTION" | grep -F 'Exports (2)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Foundation/Byte-Construction-Demo.wv" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    -o "$BYTE_CONSTRUCTION_DEMO_MODULE"
-BYTE_CONSTRUCTION_DEMO_HASH=$(sha256sum "$BYTE_CONSTRUCTION_DEMO_MODULE" | awk '{print $1}')
-if [ "$BYTE_CONSTRUCTION_DEMO_HASH" != 'ab594976ced7a84573ade0aa50fb4370d96b8004c8b9a5ec1e888968c7b3bf8f' ]; then
-    echo "The Foundation byte-construction demo has an unexpected digest: $BYTE_CONSTRUCTION_DEMO_HASH" >&2
-    exit 1
-fi
 BYTE_CONSTRUCTION_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$BYTE_CONSTRUCTION_DEMO_MODULE")
 printf '%s\n' "$BYTE_CONSTRUCTION_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null

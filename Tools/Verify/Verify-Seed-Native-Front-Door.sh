@@ -52,11 +52,18 @@ exact_verify() {
 }
 
 exact_inspect() {
-    if ! INSPECT_OUTPUT=$("$NATIVE_INSPECT" "$1"); then
-        echo "The native Seed inspector rejected: $1" >&2
+    MODULE_PATH=$1
+    shift
+    if ! INSPECT_OUTPUT=$("$NATIVE_INSPECT" "$MODULE_PATH"); then
+        echo "The native Seed inspector rejected: $MODULE_PATH" >&2
         exit 1
     fi
-    printf '%s\n' "$INSPECT_OUTPUT" | grep -F "$2" >/dev/null
+    for REQUIRED_PATTERN in "$@"; do
+        if ! printf '%s\n' "$INSPECT_OUTPUT" | grep -F "$REQUIRED_PATTERN" >/dev/null; then
+            echo "The native Seed inspector omitted required evidence: $MODULE_PATH" >&2
+            exit 1
+        fi
+    done
 }
 
 exact_run() {
@@ -115,6 +122,14 @@ SUM_MODULE="$OUTPUT_ROOT/Sum-Data.wvb"
 HELLO_MODULE="$OUTPUT_ROOT/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$OUTPUT_ROOT/Read-Wvb-Header.wvb"
 COMPOSITION_MODULE="$OUTPUT_ROOT/Module-Composition-Demo-Project.wvb"
+MACHINE_CONTRACTS_MODULE="$OUTPUT_ROOT/Machine-Contracts.wvb"
+MACHINE_CONTRACTS_DEMO_MODULE="$OUTPUT_ROOT/Machine-Contracts-Demo.wvb"
+BYTE_ORDERING_MODULE="$OUTPUT_ROOT/Byte-Ordering.wvb"
+BYTE_ORDERING_DEMO_MODULE="$OUTPUT_ROOT/Byte-Ordering-Demo.wvb"
+DECIMAL_PARSING_MODULE="$OUTPUT_ROOT/Decimal-Parsing.wvb"
+DECIMAL_PARSING_DEMO_MODULE="$OUTPUT_ROOT/Decimal-Parsing-Demo.wvb"
+BYTE_CONSTRUCTION_MODULE="$OUTPUT_ROOT/Byte-Construction.wvb"
+BYTE_CONSTRUCTION_DEMO_MODULE="$OUTPUT_ROOT/Byte-Construction-Demo.wvb"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -173,6 +188,101 @@ exact_run \
     660 \
     030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607
 
+exact_build \
+    "$REPOSITORY_ROOT/Foundation/Machine-Contracts.wvproj" \
+    "$MACHINE_CONTRACTS_MODULE" \
+    2466 \
+    f624739461dea01862121daf234b3a838dfcafd73753e3124a038b7efa8b4fa3 \
+    000009a2 \
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=2019 module-bytes=2466'
+exact_inspect \
+    "$MACHINE_CONTRACTS_MODULE" \
+    'Foundation\u02C9alignment\u02C9is\u02C9valid' \
+    'Foundation\u02C9machine\u02C9name\u02C9is\u02C9valid' \
+    'section name=exports offset=2364 bytes=90 count=2'
+exact_build \
+    "$REPOSITORY_ROOT/Foundation-Machine-Contracts-Demo.wvproj" \
+    "$MACHINE_CONTRACTS_DEMO_MODULE" \
+    3487 \
+    69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3 \
+    00000d9f \
+    'build status=Published verification=compiler-aligned functions=3 code-bytes=2899 module-bytes=3487'
+exact_run \
+    "$MACHINE_CONTRACTS_DEMO_MODULE" \
+    0 \
+    3487 \
+    69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3
+
+exact_build \
+    "$REPOSITORY_ROOT/Foundation/Byte-Ordering.wvproj" \
+    "$BYTE_ORDERING_MODULE" \
+    990 \
+    27a3c24b5cc358a4f67e2e1959b5e80559918f0176c52e08648e638212e6dece \
+    000003de \
+    'build status=Published verification=compiler-aligned functions=1 code-bytes=720 module-bytes=990'
+exact_inspect \
+    "$BYTE_ORDERING_MODULE" \
+    'Foundation\u02C9byte\u02C9spans\u02C9compare' \
+    'section name=exports offset=933 bytes=45 count=1'
+exact_build \
+    "$REPOSITORY_ROOT/Foundation-Byte-Ordering-Demo.wvproj" \
+    "$BYTE_ORDERING_DEMO_MODULE" \
+    2422 \
+    fbaf423b6e4eac5c18b644dc27f1fa20fca8798519596485cd7497b44979533f \
+    00000976 \
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=2059 module-bytes=2422'
+exact_run \
+    "$BYTE_ORDERING_DEMO_MODULE" \
+    0 \
+    2422 \
+    fbaf423b6e4eac5c18b644dc27f1fa20fca8798519596485cd7497b44979533f
+
+exact_build \
+    "$REPOSITORY_ROOT/Foundation/Decimal-Parsing.wvproj" \
+    "$DECIMAL_PARSING_MODULE" \
+    1698 \
+    bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37 \
+    000006a2 \
+    'build status=Published verification=compiler-aligned functions=1 code-bytes=1301 module-bytes=1698'
+exact_inspect \
+    "$DECIMAL_PARSING_MODULE" \
+    'Foundation\u02C9u32\u02C9parse' \
+    'Foundation\u02C9u32\u02C9decimal\u02C9parse' \
+    'section name=exports offset=1591 bytes=44 count=1'
+exact_build \
+    "$REPOSITORY_ROOT/Foundation-Decimal-Parsing-Demo.wvproj" \
+    "$DECIMAL_PARSING_DEMO_MODULE" \
+    3742 \
+    d323f8fa9178583990394a37872a8ee522320084ef4741eac26cb0f86c21b453 \
+    00000e9e \
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=2969 module-bytes=3742'
+exact_run \
+    "$DECIMAL_PARSING_DEMO_MODULE" \
+    0 \
+    3742 \
+    d323f8fa9178583990394a37872a8ee522320084ef4741eac26cb0f86c21b453
+
+exact_build \
+    "$REPOSITORY_ROOT/Foundation/Byte-Construction.wvproj" \
+    "$BYTE_CONSTRUCTION_MODULE" \
+    2001 \
+    3be0d06b8f4e7745dd9ffd9f325804d69ce524ac7ff6341b1e7b38037f6dd6f8 \
+    000007d1 \
+    'build status=Published verification=compiler-aligned functions=2 code-bytes=1503 module-bytes=2001'
+exact_inspect \
+    "$BYTE_CONSTRUCTION_MODULE" \
+    'Foundation\u02C9bytes\u02C9result' \
+    'Foundation\u02C9bytes\u02C9repeat' \
+    'Foundation\u02C9bytes\u02C9replace' \
+    'section name=exports offset=1862 bytes=73 count=2'
+exact_build \
+    "$REPOSITORY_ROOT/Foundation-Byte-Construction-Demo.wvproj" \
+    "$BYTE_CONSTRUCTION_DEMO_MODULE" \
+    5017 \
+    ab594976ced7a84573ade0aa50fb4370d96b8004c8b9a5ec1e888968c7b3bf8f \
+    00001399 \
+    'build status=Published verification=compiler-aligned functions=3 code-bytes=4194 module-bytes=5017'
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -204,4 +314,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=4 cases=9'
+echo 'native Seed front-door verification status=Complete artifacts=12 cases=24'

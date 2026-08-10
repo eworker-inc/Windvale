@@ -19,11 +19,11 @@ Project 1 semantics.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 121,593 | `5042a57e3281621ee126a64cadef70834800524de60ed0521cedba043bd271f1` |
-| ABI-22 WVO | 1,078,577 | `118cdd634026d7d616f3b7c7dc951176985e725f5852b4d3b045aab4cf5e5ca5` |
-| linked fragment | 1,077,675 | `cb9b08b1d88cc67fa26f210832cbdc542df51d2eb8816ab5ef2a7fc296f426ec` |
-| Windows application | 1,094,656 | `ab0c2384ecdfd07bc7351562732ae4b1f97e07dcbd2c92e96dc8cb3dee4d3ff7` |
-| Linux application | 1,093,632 | `ffc0ad10e0e1dcffc8344bb040885535f5ab67a50cbebb1980c980888c1b5322` |
+| WVB runner | 121,593 | `e58f653445cd717d19c32fe1a0fbc57f03f475187cdec571825b9fd6685b3097` |
+| ABI-22 WVO | 1,078,577 | `7d0ec719ade7e55d46c5a6dc6f7cb63102db4633172bcab1812e16651002106d` |
+| linked fragment | 1,077,675 | `83dc076c137557495a24e65894c26c7f794e0d67f31dd59a476e1dc7715828d1` |
+| Windows application | 1,094,656 | `6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc` |
+| Linux application | 1,093,632 | `a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d` |
 
 The WVO contains 1,077,216 text bytes and 459 read-only-data bytes, with 18
 symbols and 13 relocations. Linking at base zero selects `Main` at address
@@ -49,15 +49,22 @@ native WVB runner reconstruction status=Complete artifacts=4
 
 `Run-Wvb.cmd` and `Run-Wvb.sh` execute the corresponding digest-bound candidate
 with either one module argument or the exact optional `--report-steps` flag.
-Default output remains `Result: <i32>`. Reporting adds one
+The runner supplies the scalar interpreter with a fixed 1,000,000-instruction
+budget, matching the Stage 0 CLI's default execution budget. Default output
+remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
 The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid
 option rejection, malformed-module rejection, and input preservation. The
-Windows owner passes 3/3 in 50.1 seconds. The paired nine-case native Seed
-front-door helper passes on Windows in 3.6 seconds.
+Windows owner passes 3/3 in 49.8 seconds. The paired 24-case native Seed
+front-door helper builds twelve exact artifacts and passes on Windows in 6.3
+seconds. It owns the four Foundation module builds and inspections, all four
+demo builds, and native execution of the Machine Contracts, Byte Ordering, and
+Decimal Parsing demos. The 4 MiB Byte Construction demo remains in the managed
+differential lane because the current scalar runner returns bounded failure
+`3015` before completing it.
 
 ## Evidence boundary
 
@@ -68,7 +75,7 @@ all other relocation targets and all other profiles remain nonzero.
 The feature-frozen Stage 0 compiler remains a recovery and differential owner,
 not the current product oracle. For this source closure it emits a distinct
 126,271-byte WVB with SHA-256
-`00b87804c047b626b00c167bf99ea9834bc77ab8e88e454d39a738b2787e2bcf`,
+`a2644f4bbe6209b033de7b1080113a8fcb4e5da3376d462d7d50c5edeb4a580c`,
 which the current native semantic verifier rejects. The native Project front
 door emits the compiler-aligned product pinned above. That expected divergence
 does not weaken the exact native reconstruction contract.

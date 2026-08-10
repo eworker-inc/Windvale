@@ -238,6 +238,16 @@ the Sum fixture's exact count into the nine-case native Seed helper. The frozen
 Stage 0 compiler remains an intentionally divergent recovery/differential
 implementation rather than the current source-product oracle.
 
+Decision 0510 grows that helper around four real Foundation components. The
+single-component manifests live in `Foundation/`; only the demo aggregates
+remain at the repository common ancestor because Project 1 correctly forbids
+parent-directory escape. Native construction and inspection own all eight
+products, and the one-million-instruction runner executes the three demos
+inside its current value-memory envelope. Byte Construction's 4 MiB demo stays
+with the frozen differential runtime until the native value allocator owns that
+shape. This replaces fifteen more managed calls per broad host script without
+pretending the remaining broad harness is native.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

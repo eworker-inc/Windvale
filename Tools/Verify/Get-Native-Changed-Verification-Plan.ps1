@@ -230,6 +230,7 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -eq 'Run-Wvb') {
         Add-Bytecode-Suites
         Add-Suite 'wvb-runner-reconstruction'
+        Add-Gap 'seed-native-front-door'
     } elseif ($Stem -match 'Verify-Wvb|Inspect-Wvb') {
         Add-Bytecode-Suites
     } elseif ($Stem -match 'Package-Uefi') {
@@ -509,6 +510,14 @@ foreach ($Path in $Paths) {
             Add-Gap 'managed-runtime-recovery-source'
         }
     } elseif ($Path -in @(
+        'Foundation/Byte-Construction.wvproj',
+        'Foundation/Byte-Ordering.wvproj',
+        'Foundation/Decimal-Parsing.wvproj',
+        'Foundation/Machine-Contracts.wvproj'
+    )) {
+        Add-Suite 'seed'
+        Add-Gap 'seed-native-front-door'
+    } elseif ($Path -in @(
         'Foundation/Byte-Construction.wv',
         'Foundation/Byte-Ordering.wv',
         'Foundation/Decimal-Parsing.wv',
@@ -527,6 +536,9 @@ foreach ($Path in $Paths) {
             'Foundation/Decimal-Parsing.wv'
         )) {
             Add-Console-Packager-Reconstruction-Suites
+        }
+        if ($Path -ne 'Foundation/Sha256.wv') {
+            Add-Gap 'seed-native-front-door'
         }
     } elseif ($Path -eq 'Foundation/Immutable-Source-Regions.wv') {
         Add-Suite @(
@@ -683,6 +695,7 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Wvb-Runner-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite 'wvb-runner-reconstruction'
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvo-Publisher-Candidate/',
         [StringComparison]::Ordinal)) {
@@ -751,6 +764,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path -eq 'Tools/Windvale.Run/Wvb-Runner-Tool.wv') {
         Add-Suite 'wvb-runner-reconstruction'
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path -eq
         'Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv') {
         Add-Suite 'console-verifier-reconstruction'
@@ -827,6 +841,7 @@ foreach ($Path in $Paths) {
             Add-Suite 'wvb-to-wvo-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-Runner.md') {
             Add-Suite 'wvb-runner-reconstruction'
+            Add-Gap 'seed-native-front-door'
         } elseif ($Path -in @(
             'Specifications/Windvale-Native-Wv-Linker.md',
             'Specifications/Wv-Linker-Core.md'
@@ -913,6 +928,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'wvo-publisher-reconstruction'
     } elseif ($Path -eq 'Windvale-Wvb-Runner.wvproj') {
         Add-Suite 'wvb-runner-reconstruction'
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path -eq 'Windvale-Wvo-Object.wvproj') {
         Add-Suite 'wvo-inspector-reconstruction'
     } elseif ($Path -eq 'Windvale-Console-Application-Verifier.wvproj') {
@@ -964,7 +980,15 @@ foreach ($Path in $Paths) {
         'Examples/Foundation/Module-Composition-Demo.wv',
         'Examples/Foundation/Module-Composition-Demo.wvproj',
         'Examples/Foundation/Module-Composition-Leaf.wv',
-        'Examples/Foundation/Module-Composition-Middle.wv'
+        'Examples/Foundation/Module-Composition-Middle.wv',
+        'Examples/Foundation/Machine-Contracts-Demo.wv',
+        'Examples/Foundation/Byte-Ordering-Demo.wv',
+        'Examples/Foundation/Decimal-Parsing-Demo.wv',
+        'Examples/Foundation/Byte-Construction-Demo.wv',
+        'Foundation-Machine-Contracts-Demo.wvproj',
+        'Foundation-Byte-Ordering-Demo.wvproj',
+        'Foundation-Decimal-Parsing-Demo.wvproj',
+        'Foundation-Byte-Construction-Demo.wvproj'
     )) {
         Add-Suite 'seed'
         Add-Gap 'seed-native-front-door'
