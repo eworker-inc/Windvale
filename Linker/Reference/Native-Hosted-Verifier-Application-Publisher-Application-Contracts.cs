@@ -15,10 +15,10 @@ public static class Nativeˉhostedˉverifierˉapplicationˉpublisherˉapplicatio
         "77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f";
     public const int WINDOWS_APPLICATION_BYTES = 256_000;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6";
+        "17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96";
     public const int LINUX_APPLICATION_BYTES = 254_917;
     public const string LINUX_APPLICATION_SHA256 =
-        "de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a";
+        "babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97";
 
     internal static readonly Nativeˉpublisherˉapplicationˉcontract CONSTRUCTION = new(
         MODULE_NAME,

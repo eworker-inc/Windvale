@@ -11,23 +11,23 @@ fn Digest(Input: bytes) -> bytes {
 
 fn Expectedˉword(Target: u32, Index: u32) -> u32 {
     if Target == 1u32 {
-        if Index == 0u32 { return 3038794611u32; }
-        if Index == 1u32 { return 2638296063u32; }
-        if Index == 2u32 { return 69556584u32; }
-        if Index == 3u32 { return 628088138u32; }
-        if Index == 4u32 { return 3221419083u32; }
-        if Index == 5u32 { return 1975885780u32; }
-        if Index == 6u32 { return 274825159u32; }
-        return 4127574010u32;
+        if Index == 0u32 { return 1113377559u32; }
+        if Index == 1u32 { return 2252662824u32; }
+        if Index == 2u32 { return 461353363u32; }
+        if Index == 3u32 { return 3495913843u32; }
+        if Index == 4u32 { return 3607363052u32; }
+        if Index == 5u32 { return 2032314797u32; }
+        if Index == 6u32 { return 3186842442u32; }
+        return 2533135477u32;
     }
-    if Index == 0u32 { return 4127608798u32; }
-    if Index == 1u32 { return 1491810264u32; }
-    if Index == 2u32 { return 3023141445u32; }
-    if Index == 3u32 { return 271875189u32; }
-    if Index == 4u32 { return 3287058915u32; }
-    if Index == 5u32 { return 2648121281u32; }
-    if Index == 6u32 { return 3181191855u32; }
-    return 719332331u32;
+    if Index == 0u32 { return 443727546u32; }
+    if Index == 1u32 { return 4163452503u32; }
+    if Index == 2u32 { return 3281371294u32; }
+    if Index == 3u32 { return 8943446u32; }
+    if Index == 4u32 { return 1564934007u32; }
+    if Index == 5u32 { return 103358798u32; }
+    if Index == 6u32 { return 3443681087u32; }
+    return 2535086407u32;
 }
 
 fn Digestˉmatches(Input: bytes, Target: u32) -> bool {

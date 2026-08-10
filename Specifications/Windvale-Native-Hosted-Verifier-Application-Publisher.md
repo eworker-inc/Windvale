@@ -43,15 +43,15 @@ write, exact reread, atomic replacement, directory-durability, and cleanup path.
 | Windows verifier | 1,004,032 | `aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a` |
 | Linux verifier | 1,003,520 | `26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b` |
 | Publisher WVB | 29,170 | `77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f` |
-| Windows publisher | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
-| Linux publisher | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
+| Windows publisher | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
+| Linux publisher | 254,917 | `babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97` |
 
 `Tools/Native/Publish-Hosted-Verifier-Application.cmd` and `.sh` digest-check
-the current-host publisher before execution. Publisher applications are still
-constructed through the frozen Stage 0 C# recovery writer; the Windvale module,
-admission semantics, permanent execution, and transaction are .NET-free. The
-target names are construction-contract identifiers, not ordinary `windvale aot`
-targets.
+the current-host publisher before execution. The exact publisher applications
+are constructed through the digest-bound native hosted-container and
+publisher-overlay tools. The frozen Stage 0 C# writer remains only recovery and
+differential evidence. The target names are construction-contract identifiers,
+not ordinary `windvale aot` targets.
 
 ## Evidence and remaining gate
 
@@ -66,5 +66,5 @@ now owns construction and admission of the exact `WVVP 1` record without
 creating a publisher-WVB digest self-reference.
 
 Independent Linux execution, grouped native retirement qualification, ordinary
-path promotion, release integration, and replacement of the Stage 0 publisher
-container writer remain.
+path promotion, release integration, and final retirement of the retained Stage
+0 recovery writer remain.

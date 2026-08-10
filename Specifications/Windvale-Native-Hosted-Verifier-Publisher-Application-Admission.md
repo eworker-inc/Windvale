@@ -19,8 +19,8 @@ accepts only these exact values:
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `1`, Windows x64 | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
-| `2`, Linux x64 | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
+| `1`, Windows x64 | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
+| `2`, Linux x64 | 254,917 | `babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97` |
 
 Every other target, length, or digest returns false. SHA-256 is computed over
 the complete immutable byte value and compared as eight exact little-endian
@@ -41,11 +41,11 @@ returns zero. Invalid arguments return 64; a wrong target, length, or digest
 reports one rejection diagnostic and returns 2. It never writes a file.
 
 The canonical command WVB is 30,778 bytes with SHA-256
-`c6ba933fa0ea1068f02235f75ed251655b10b43d64f8984d22b548f01608af0d`.
+`b4e0a2ee04de6cfff0efc723c57031bf5cfcd6706e3156525ce2157c5f287d07`.
 It builds through the native Project 1 front door. The accepted native ABI-22
 lowerer produces a 555,690-byte WVO with SHA-256
-`722d819152d8415487c1cf111474fd11dd0ab89a863e33ab84c865a2e3e13771`.
-Both are pinned in version 12 of the publisher-construction candidate.
+`88cc97665cfd0de14f2c9ac6c80dfd985edc508fccdc3d9b887da740cd034e23`.
+Both are pinned in version 15 of the publisher-construction candidate.
 
 ## Hosted profile and applications
 
@@ -61,8 +61,8 @@ The paired applications are:
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Windows x64 | 570,368 | `7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b` |
-| Linux x64 | 569,344 | `9bfe16fa751e21a32847f5534eff7de18ba74cfe5b714c63fb6a6589d30d7cad` |
+| Windows x64 | 570,368 | `4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53` |
+| Linux x64 | 569,344 | `b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a` |
 
 `Construct-Hosted-Verifier-Publisher-Admitter.cmd` and `.sh` reproduce those
 bytes through the native linker and hosted-container tools. The current-host

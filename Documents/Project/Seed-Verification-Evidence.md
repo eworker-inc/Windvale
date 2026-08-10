@@ -5088,3 +5088,39 @@ only as the explicit differential oracle for object and EFI identities.
 Independent Linux execution, user-fault and service-fault native construction,
 the complete coordinator, broad Seed/OS, Standard, Qualification, and grouped
 promotion did not run.
+
+## Local native WVHV publisher-overlay reconstruction evidence
+
+[Decision 0493](../Decisions/0493-Native-WVHV-Publisher-Overlay-Reconstruction.md)
+reconstructs the publisher-overlay family after the shared native file-input
+leaves advanced under Decision 0492. The version-15 construction candidate has
+48 artifacts recorded by a 4,980-byte `SHA256SUMS` at SHA-256
+`4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d`;
+every listed length and digest was checked against the retained file.
+
+The exact Windows/Linux application pairs are 256,000/
+`17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96`
+and 254,917/
+`babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97`
+for the hosted-verifier application publisher; 681,472/
+`598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23`
+and 680,901/
+`422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58`
+for its durable promoter; 1,340,928/
+`71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3`
+and 1,340,357/
+`7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c`
+for the general WVB publisher; and 570,368/
+`4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53`
+and 569,344/
+`b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a`
+for the read-only profile-8 admitter.
+
+The focused Windows publisher-file owner passed its first twelve construction,
+admission, and preservation checks. The next case exposed one stale expected
+success-report digest after the installed publisher identity advanced. After
+reviewing and correcting that test contract, only the affected promoter
+installation, installed-publisher verifier publication, and WVB-publication
+remainder ran; it passed 3/3 in 4.8 seconds. The first twelve checks were not
+restarted. Broad Seed, hosted-container packaging, bootstrap, Linux execution,
+Standard, Qualification, and the grouped retirement gate did not run.

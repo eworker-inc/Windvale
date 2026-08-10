@@ -40,13 +40,13 @@ The exact request identities are:
 | Variant | Windows x64 | Linux x64 |
 | ---: | --- | --- |
 | `0`, publisher | `4533fb4c90bab03d5aeb39f6bd8943424f228fb66846d467d333c182d2a2b8f2` | `a285e192992a5239495fc4046cc59390504ffefbe1ab7b863da2d370e615c500` |
-| `1`, promoter | `144199ee91341765488cf33a50d8e80d036442cc155bba7863f78be6e746f749` | `560569d3d2282e3722d2624196b2bcb16062d65313d9235e3a7fc718c67123e9` |
+| `1`, promoter | `24024ac451abe4d7312a5be05ba5853b5b06568631a6b88f69b39349b1418a8f` | `810b862985bbf75479972062a87603b9b2847bd9fdf4953ae106ab3fabb79950` |
 | `2`, WVB publisher | `b1b2ec7af1319a329489f9e6c5a13183039243df66e8cc8f8d2f2a548f21c638` | `db7d65bcfb240904377d96578ca56d9981575e66643b0838fae9811f923ac2a9` |
 
 Variant 0 admits the 29,170-byte publisher WVB at SHA-256
 `77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f`.
 Variant 1 admits the 41,268-byte promoter WVB at SHA-256
-`30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9`.
+`c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672`.
 Variant 2 admits the 159,770-byte WVB publisher at SHA-256
 `8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96`.
 All three roles admit the unchanged target startup WVO: Windows 168 bytes at
@@ -73,7 +73,7 @@ wrappers for role 0.
 | Variant | Windows x64 | Linux x64 |
 | ---: | --- | --- |
 | `0`, publisher | `40e73f9c4ac9e27c9dea7f9bed8217be125159f89cb2ea314a91bc66da389b74` | `393253dab73387a0c96fd33c278b350fe43e5466a243eabe3f62a6652c946035` |
-| `1`, promoter | `15e65b46463e118c546b847cde4b561d12390f30c772d947ad2a148477b25498` | `2a4b7b8b82dcd792781240499facfaeacb9b994dcbb89710321720fcb060dd22` |
+| `1`, promoter | `dfbc8f1b4767e841417419d77da22bf0e4e78cf0a3258d75959128b95c5684f8` | `e17bfcf08e83d836d3a2b888dbc1cb50569759c53a562729a8b20727b08a560c` |
 | `2`, WVB publisher (`WVPB`) | `a436cb367aeb0b464f548c70cd46cd93f272180fd7cffcabc279439e6c91a79e` | `52ea6856da12caeba02f7db2c7a3a25226d22840190bc65eb0becaeee35e3e87` |
 
 The producer command keeps its four-argument form as role 0 and accepts an
@@ -87,7 +87,7 @@ wvhostverifierproducemetadata [role:0|1|2] <target:1|2> <module.wvb> <startup.wv
 
 The focused Windvale source files separate admission, construction, and the
 byte-input bridge. The metadata-producer WVB is 69,072 bytes with SHA-256
-`d21b5c3733f687d0c3e3531521361a54fb25a3f0cf6b76a010a0bf9ff0603170`.
+`b28497850ba9021394edd31570d8a1868b55c3850e7d4aceb709f7e305005f78`.
 
 The focused current-host test remains the recovery owner of service-free
 `Main(bytes) -> bytes`, interpreter/native equality, exact request and metadata

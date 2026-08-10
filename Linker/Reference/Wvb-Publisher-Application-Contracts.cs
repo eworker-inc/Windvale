@@ -12,10 +12,10 @@ public static class Wvbˉpublisherˉapplicationˉcontract
         "8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96";
     public const int WINDOWS_APPLICATION_BYTES = 1_340_928;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7";
+        "71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3";
     public const int LINUX_APPLICATION_BYTES = 1_340_357;
     public const string LINUX_APPLICATION_SHA256 =
-        "2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188";
+        "7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c";
 }
 
 public static class Wvbˉpublisherˉapplicationˉwriter

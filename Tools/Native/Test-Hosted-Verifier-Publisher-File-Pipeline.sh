@@ -100,7 +100,7 @@ fail() {
 
 total=$((total + 1))
 check_file "$construction/SHA256SUMS" 4980 \
-    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
+    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
@@ -111,7 +111,7 @@ check_file "$construction/SHA256SUMS" 4980 \
 check_empty "$test_directory/Admission-Build.err" \
     'admission source build wrote a diagnostic' || fail
 check_file "$test_directory/Publisher-Application-Admission-Tool.wvb" 30778 \
-    c6ba933fa0ea1068f02235f75ed251655b10b43d64f8984d22b548f01608af0d \
+    b4e0a2ee04de6cfff0efc723c57031bf5cfcd6706e3156525ce2157c5f287d07 \
     'native-built publisher admission WVB' || fail
 cmp --silent "$construction/Publisher-Application-Admission-Tool.wvb" \
     "$test_directory/Publisher-Application-Admission-Tool.wvb" || fail
@@ -123,7 +123,7 @@ cmp --silent "$construction/Publisher-Application-Admission-Tool.wvb" \
 check_empty "$test_directory/Admission-Lower.err" \
     'admission native lowering wrote a diagnostic' || fail
 check_file "$test_directory/Publisher-Application-Admission-Tool.wvo" 555690 \
-    722d819152d8415487c1cf111474fd11dd0ab89a863e33ab84c865a2e3e13771 \
+    88cc97665cfd0de14f2c9ac6c80dfd985edc508fccdc3d9b887da740cd034e23 \
     'native-lowered publisher admission WVO' || fail
 cmp --silent "$construction/Publisher-Application-Admission-Tool.wvo" \
     "$test_directory/Publisher-Application-Admission-Tool.wvo" || fail
@@ -135,7 +135,7 @@ cmp --silent "$construction/Publisher-Application-Admission-Tool.wvo" \
 check_empty "$test_directory/Promoter-Build.err" \
     'promoter source build wrote a diagnostic' || fail
 check_file "$test_directory/Publisher-Promoter.wvb" 41268 \
-    30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9 \
+    c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672 \
     'native-built publisher promoter WVB' || fail
 cmp --silent "$construction/Publisher-Promoter.wvb" \
     "$test_directory/Publisher-Promoter.wvb" || fail
@@ -147,7 +147,7 @@ cmp --silent "$construction/Publisher-Promoter.wvb" \
 check_empty "$test_directory/Promoter-Lower.err" \
     'promoter native lowering wrote a diagnostic' || fail
 check_file "$test_directory/Publisher-Promoter.wvo" 660123 \
-    6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d \
+    ba5d9c5afde115fede472369d24c3d1fe466806de523773d2e445e6a9e004667 \
     'native-lowered publisher promoter WVO' || fail
 cmp --silent "$construction/Publisher-Promoter.wvo" \
     "$test_directory/Publisher-Promoter.wvo" || fail
@@ -161,7 +161,7 @@ check_empty "$test_directory/Promoter-Link.err" \
 grep -Fx 'entry name=Main address=1178' \
     "$test_directory/Promoter-Link.out" >/dev/null || fail
 check_file "$test_directory/Publisher-Promoter.bin" 658339 \
-    a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8 \
+    e06189a37c038a5237787ffd16fb53466df3d10519efd4129b219bd814f4def2 \
     'linked publisher promoter fragment' || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
     "$repository_root/Windvale-Wvb-Publisher.wvproj" \
@@ -208,7 +208,7 @@ check_empty "$test_directory/Windows.err" 'Windows construction wrote a diagnost
 grep -Fx 'publisher construction status=Valid target=windows bytes=256000' \
     "$test_directory/Windows.out" >/dev/null || fail
 check_file "$test_directory/Publisher.exe" 256000 \
-    735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6 \
+    17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96 \
     'Windows publisher' || fail
 check_no_private_scratch || fail
 pass 'exact cross-target Windows publisher construction'
@@ -221,7 +221,7 @@ check_empty "$test_directory/Linux.err" 'Linux construction wrote a diagnostic' 
 grep -Fx 'publisher construction status=Valid target=linux bytes=254917' \
     "$test_directory/Linux.out" >/dev/null || fail
 check_file "$test_directory/Publisher.elf" 254917 \
-    de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a \
+    babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97 \
     'Linux publisher' || fail
 check_no_private_scratch || fail
 pass 'exact Linux publisher construction'
@@ -236,7 +236,7 @@ check_empty "$test_directory/Promoter-Windows.err" \
 grep -Fx 'publisher promoter construction status=Valid target=windows bytes=681472' \
     "$test_directory/Promoter-Windows.out" >/dev/null || fail
 check_file "$test_directory/Promoter.exe" 681472 \
-    9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069 \
+    598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23 \
     'Windows publisher promoter' || fail
 cmp --silent \
     "$promoter_candidate/windows-x64-wvhostverifierpublisherinstall.exe" \
@@ -254,7 +254,7 @@ check_empty "$test_directory/Promoter-Linux.err" \
 grep -Fx 'publisher promoter construction status=Valid target=linux bytes=680901' \
     "$test_directory/Promoter-Linux.out" >/dev/null || fail
 check_file "$test_directory/Promoter.elf" 680901 \
-    9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0 \
+    422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58 \
     'Linux publisher promoter' || fail
 cmp --silent \
     "$promoter_candidate/linux-x64-wvhostverifierpublisherinstall.elf" \
@@ -272,7 +272,7 @@ check_empty "$test_directory/Wvb-Publisher-Windows.err" \
 grep -Fx 'WVB publisher construction status=Valid target=windows bytes=1340928' \
     "$test_directory/Wvb-Publisher-Windows.out" >/dev/null || fail
 check_file "$test_directory/Wvb-Publisher.exe" 1340928 \
-    9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7 \
+    71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3 \
     'Windows WVB publisher' || fail
 cmp --silent "$wvb_publisher_candidate/windows-x64-wvpublish.exe" \
     "$test_directory/Wvb-Publisher.exe" || fail
@@ -289,7 +289,7 @@ check_empty "$test_directory/Wvb-Publisher-Linux.err" \
 grep -Fx 'WVB publisher construction status=Valid target=linux bytes=1340357' \
     "$test_directory/Wvb-Publisher-Linux.out" >/dev/null || fail
 check_file "$test_directory/Wvb-Publisher.elf" 1340357 \
-    2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188 \
+    7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c \
     'Linux WVB publisher' || fail
 cmp --silent "$wvb_publisher_candidate/linux-x64-wvpublish.elf" \
     "$test_directory/Wvb-Publisher.elf" || fail
@@ -306,7 +306,7 @@ check_empty "$test_directory/Admitter-Windows.err" \
 grep -Fx 'publisher admitter construction status=Valid target=windows bytes=570368' \
     "$test_directory/Admitter-Windows.out" >/dev/null || fail
 check_file "$test_directory/Admitter.exe" 570368 \
-    7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b \
+    4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53 \
     'Windows publisher admitter' || fail
 cmp --silent \
     "$admission_candidate/windows-x64-wvhostverifierpublisheradmit.exe" \
@@ -324,7 +324,7 @@ check_empty "$test_directory/Admitter-Linux.err" \
 grep -Fx 'publisher admitter construction status=Valid target=linux bytes=569344' \
     "$test_directory/Admitter-Linux.out" >/dev/null || fail
 check_file "$test_directory/Admitter.elf" 569344 \
-    9bfe16fa751e21a32847f5534eff7de18ba74cfe5b714c63fb6a6589d30d7cad \
+    b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a \
     'Linux publisher admitter' || fail
 cmp --silent \
     "$admission_candidate/linux-x64-wvhostverifierpublisheradmit.elf" \
@@ -387,10 +387,10 @@ check_file "$test_directory/Admit-Usage.err" 103 \
     e8018a9ba1fbf52bb988fb7ad5c57bd4b3b7443af6e187a3d0096ebe5c4b36d0 \
     'invalid-target usage diagnostic' || fail
 check_file "$test_directory/Publisher.exe" 256000 \
-    735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6 \
+    17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96 \
     'preserved Windows publisher subject' || fail
 check_file "$test_directory/Publisher.elf" 254917 \
-    de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a \
+    babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97 \
     'preserved Linux publisher subject' || fail
 check_no_private_scratch || fail
 pass 'current-host publisher admission matrix'
@@ -405,10 +405,10 @@ total=$((total + 1))
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 4980 \
-    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
+    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
     'rejected metadata input' || fail
 check_file "$test_directory/Sentinel.wvhv" 4980 \
-    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
+    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
@@ -416,7 +416,7 @@ cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
 check_file "$test_directory/Sentinel.wvhr" 4980 \
-    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
+    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -432,7 +432,7 @@ total=$((total + 1))
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 4980 \
-    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
+    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
 
@@ -444,10 +444,10 @@ total=$((total + 1))
 check_empty "$test_directory/Install-Publisher-Linux.err" \
     'Linux publisher installation wrote a diagnostic' || fail
 check_file "$test_directory/Install-Publisher-Linux.out" 117 \
-    b136669c594dea0063c960c5c70875fa68086f82032ae3d46f696225715fcff6 \
+    72e2786587919e14f707b437166f86ae18dca24869249c8c541b9836d6ace397 \
     'Linux publisher installation report' || fail
 check_file "$test_directory/Installed-Publisher.elf" 254917 \
-    de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a \
+    babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97 \
     'installed Linux publisher' || fail
 cmp --silent "$test_directory/Publisher.elf" \
     "$test_directory/Installed-Publisher.elf" || fail
@@ -458,10 +458,10 @@ cmp --silent "$test_directory/Publisher.elf" \
 check_empty "$test_directory/Install-Publisher-Windows.err" \
     'Windows publisher installation wrote a diagnostic' || fail
 check_file "$test_directory/Install-Publisher-Windows.out" 117 \
-    6766dce89f5d2aa3086a054b0e556028d5d265208fe3c63834530e48833e8eca \
+    734463bece6f4670d21a7dba7c0a6e865073d36e43990ba3027650263d3e5b8b \
     'Windows publisher installation report' || fail
 check_file "$test_directory/Installed-Publisher.exe" 256000 \
-    735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6 \
+    17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96 \
     'installed Windows publisher' || fail
 cmp --silent "$test_directory/Publisher.exe" \
     "$test_directory/Installed-Publisher.exe" || fail

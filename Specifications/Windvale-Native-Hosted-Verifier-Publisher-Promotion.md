@@ -29,9 +29,9 @@ arguments before admission.
 The complete candidate is read once as a Windvale byte value and admitted by
 `Nativeˉhostedˉverifierˉpublisherˉapplicationˉverification`. That function
 accepts only the 256,000-byte Windows publisher at SHA-256
-`735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6`
+`17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96`
 or the 254,917-byte Linux publisher at SHA-256
-`de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a`.
+`babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97`.
 
 After successful admission, the private
 `Applicationˉpublicationˉpublisherˉbegin/apply` ABI exposes the existing
@@ -45,13 +45,13 @@ host copy or rename is not conforming.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Promoter WVB | 41,268 | `30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9` |
-| Promoter WVO | 660,123 | `6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d` |
-| Linked flat fragment | 658,339 | `a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8` |
+| Promoter WVB | 41,268 | `c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672` |
+| Promoter WVO | 660,123 | `ba5d9c5afde115fede472369d24c3d1fe466806de523773d2e445e6a9e004667` |
+| Linked flat fragment | 658,339 | `e06189a37c038a5237787ffd16fb53466df3d10519efd4129b219bd814f4def2` |
 
 The native linker places `Main` at address 1,178. The transaction apply/begin
 entry points remain at 0/789. The WVO has 658,160 code bytes, 179 read-only-data
-bytes, 49 symbols, three internal relocations, and no imports. Version 12 of the
+bytes, 49 symbols, three internal relocations, and no imports. Version 15 of the
 publisher-construction candidate pins the WVB and WVO. Its focused inventory
 rebuilds, lowers, links, and compares them without a C# process.
 
@@ -60,13 +60,14 @@ rebuilds, lowers, links, and compares them without a C# process.
 The construction records use explicit role 0 for the original publisher and
 role 1 for the promoter. The role is carried in reserved `WVPM`, `WVVP`,
 `WVPS`, and `WVCR` fields. Exact identity admission infers the role from the
-WVB/WVO pair; callers cannot relabel an arbitrary module. Role 0 records and
-completed publisher applications remain byte-identical.
+WVB/WVO pair; callers cannot relabel an arbitrary module. Role 0 retains its
+record geometry and semantics; its candidate identities advance only when a
+shared admitted input advances.
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Windows x64 | 681,472 | `9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069` |
-| Linux x64 | 680,901 | `9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0` |
+| Windows x64 | 681,472 | `598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23` |
+| Linux x64 | 680,901 | `422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58` |
 
 The current-host focused native lane constructs both applications, uses the
 promoter to install both exact publisher subjects, and then uses the installed

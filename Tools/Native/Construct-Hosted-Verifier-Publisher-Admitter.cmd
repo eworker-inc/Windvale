@@ -17,7 +17,7 @@ set "FileInputLeaf=Native-X64-Windows-File-Input-Service.bin"
 set "DiagnosticLeaf=Native-X64-Windows-Diagnostic-Output-Service.bin"
 set "HostedStartup=Windows-X64-Hosted-Verifier.wvo"
 set "ApplicationBytes=570368"
-set "ApplicationSha256=7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b"
+    set "ApplicationSha256=4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53"
 goto :target_ready
 
 :linux
@@ -28,7 +28,7 @@ set "FileInputLeaf=Native-X64-Linux-File-Input-Service.bin"
 set "DiagnosticLeaf=Native-X64-Linux-Diagnostic-Output-Service.bin"
 set "HostedStartup=Linux-X64-Hosted-Verifier.wvo"
 set "ApplicationBytes=569344"
-set "ApplicationSha256=9bfe16fa751e21a32847f5534eff7de18ba74cfe5b714c63fb6a6589d30d7cad"
+    set "ApplicationSha256=b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a"
 
 :target_ready
 if exist "%Output%" (
@@ -49,7 +49,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 4980 4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -67,7 +67,7 @@ call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TemporaryDirectory%\A
 if errorlevel 1 goto :cleanup
 findstr /b /c:"entry name=Main address=0" "%TemporaryDirectory%\Link.txt" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%TemporaryDirectory%\Admission.bin" 554354 356a9bbf2c3ce3d7c959cbf5276a7840bad109e1a563b66bc20b4d5d98ea76fe "publisher-admission fragment"
+call :verify_file "%TemporaryDirectory%\Admission.bin" 554354 1abb04300b4f1e046884efa3d5ddfbb8934c86e34a2a01cb43f30561318652e4 "publisher-admission fragment"
 if errorlevel 1 goto :cleanup
 
 set "Phase=bundle-request"

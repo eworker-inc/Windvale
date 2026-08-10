@@ -17,7 +17,7 @@ case "$target_name:$output" in
         diagnostic_leaf=Native-X64-Windows-Diagnostic-Output-Service.bin
         hosted_startup=Windows-X64-Hosted-Verifier.wvo
         application_bytes=570368
-        application_sha256=7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b
+        application_sha256=4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53
         ;;
     linux:*.elf)
         target=2
@@ -26,7 +26,7 @@ case "$target_name:$output" in
         diagnostic_leaf=Native-X64-Linux-Diagnostic-Output-Service.bin
         hosted_startup=Linux-X64-Hosted-Verifier.wvo
         application_bytes=569344
-        application_sha256=9bfe16fa751e21a32847f5534eff7de18ba74cfe5b714c63fb6a6589d30d7cad
+        application_sha256=b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a
         ;;
     *) usage ;;
 esac
@@ -59,7 +59,7 @@ verify_file() {
 
 verify_file "$hosted_toolset/SHA256SUMS" 6927 bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded 'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
-verify_file "$construction/SHA256SUMS" 4980 217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a 'publisher construction inventory' || exit 1
+verify_file "$construction/SHA256SUMS" 4980 4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d 'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 
 temporary_directory=$(mktemp -d "${TMPDIR:-/tmp}/windvale-hosted-verifier-publisher-admitter.XXXXXXXX") || exit 1
@@ -76,7 +76,7 @@ trap cleanup EXIT
 
 "$repository_root/Tools/Native/Link-Wvo.sh" 0 Main "$temporary_directory/Admission.bin" "$construction/Publisher-Application-Admission-Tool.wvo" > "$temporary_directory/Link.txt" || exit 1
 grep -Fx 'entry name=Main address=0' "$temporary_directory/Link.txt" >/dev/null || exit 1
-verify_file "$temporary_directory/Admission.bin" 554354 356a9bbf2c3ce3d7c959cbf5276a7840bad109e1a563b66bc20b4d5d98ea76fe 'publisher-admission fragment' || exit 1
+verify_file "$temporary_directory/Admission.bin" 554354 1abb04300b4f1e046884efa3d5ddfbb8934c86e34a2a01cb43f30561318652e4 'publisher-admission fragment' || exit 1
 
 phase=bundle-request
 "$hosted_toolset/linux-x64/wvhostverifierbundle.elf" "$temporary_directory/Admission.bin" "$service_root/$console_leaf" "$service_root/Native-X64-Argument-Count-Service.bin" "$service_root/Native-X64-Argument-Service.bin" "$service_root/$file_input_leaf" "$service_root/Native-X64-Utf8-Service.bin" "$service_root/$diagnostic_leaf" "$temporary_directory/Bundle.wvsq" >/dev/null || exit 1

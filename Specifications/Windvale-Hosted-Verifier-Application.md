@@ -161,7 +161,7 @@ The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `3
 
 `windows-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
 Its current native candidate is 570,368 bytes with SHA-256
-`7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b`.
+`4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53`.
 
 ## Linux container
 
@@ -177,7 +177,7 @@ The current WVB 1.11 reconstruction candidate is 1,224,704 bytes with SHA-256 `e
 
 `linux-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
 Its current native candidate is 569,344 bytes with SHA-256
-`9bfe16fa751e21a32847f5534eff7de18ba74cfe5b714c63fb6a6589d30d7cad`.
+`b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a`.
 
 The digest-bound [native read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md) intentionally continues to use the previously qualified verifier and inspector applications until the corrected-backend candidates pass the same exact-commit dual-host gate. Candidate reconstruction does not silently replace a qualified ordinary artifact.
 

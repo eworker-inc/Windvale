@@ -13,7 +13,7 @@ for %%F in ("%Admitter%") do if not "%%~zF"=="570368" (
     >&2 echo The Windows native hosted-verifier publisher admitter byte length is invalid.
     exit /b 1
 )
-certutil -hashfile "%Admitter%" SHA256 | findstr /I /C:"7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b" >nul
+certutil -hashfile "%Admitter%" SHA256 | findstr /I /C:"4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53" >nul
 if errorlevel 1 (
     >&2 echo The Windows native hosted-verifier publisher admitter digest is invalid.
     exit /b 1

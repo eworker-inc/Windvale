@@ -15,7 +15,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Publisher=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Application-Publisher-Candidate\windows-x64-wvhostverifierpublish.exe"
 
-certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6" >nul
+certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96" >nul
 if errorlevel 1 (
     >&2 echo The Windows native hosted-verifier-application publisher artifact digest is invalid.
     exit /b 1

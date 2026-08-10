@@ -55,28 +55,32 @@ roles and their exact bytes.
 | --- | ---: | --- |
 | Base-metadata WVB | 72,025 | `1396b613b18586cb68cdd010adb7864a70ac43d1cadca3f7c474ddd46a207fd2` |
 | Base-runtime WVB | 20,850 | `aa354586184de25e0873c65d16fa35819eb9e4c50111b32ba4fd51d69327b806` |
-| Publisher-application admission WVB | 30,778 | `c6ba933fa0ea1068f02235f75ed251655b10b43d64f8984d22b548f01608af0d` |
-| Publisher-application admission WVO | 555,690 | `722d819152d8415487c1cf111474fd11dd0ab89a863e33ab84c865a2e3e13771` |
-| Publisher-promoter WVB | 41,268 | `30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9` |
-| Publisher-promoter WVO | 660,123 | `6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d` |
-| Linked publisher-promoter fragment | 658,339 | `a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8` |
+| Publisher-application admission WVB | 30,778 | `b4e0a2ee04de6cfff0efc723c57031bf5cfcd6706e3156525ce2157c5f287d07` |
+| Publisher-application admission WVO | 555,690 | `88cc97665cfd0de14f2c9ac6c80dfd985edc508fccdc3d9b887da740cd034e23` |
+| Publisher-promoter WVB | 41,268 | `c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672` |
+| Publisher-promoter WVO | 660,123 | `ba5d9c5afde115fede472369d24c3d1fe466806de523773d2e445e6a9e004667` |
+| Linked publisher-promoter fragment | 658,339 | `e06189a37c038a5237787ffd16fb53466df3d10519efd4129b219bd814f4def2` |
 | WVB publisher WVB | 159,770 | `8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96` |
 | WVB publisher WVO | 1,319,377 | `edc49bbae0bfd16a38db4a08d9a6e636edfac35828e1c6b050c45d85d5e1f9e3` |
 | Linked WVB publisher fragment | 1,317,613 | `9003479563a043bb69113be43100289f653f6772356c48a17098c1c6700f5271` |
 | Linked publisher fragment | 232,736 | `260e9f4f23c99dab13145ceb98724a4c74157fc579c5685194b7312c1a5cb115` |
-| Windows base | 248,832 | `cf204201e5c26d71e78da1112de2bc724d389a5222cc835d48dbe8cd8bbc5988` |
-| Linux base | 249,856 | `0bdeee07a49f75781767934884cbbc7dd085abff4507e2f78210fa225638539a` |
-| Windows publisher | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
-| Linux publisher | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
-| Windows WVB-publisher base | 1,333,760 | `a06095df9ab46b3816c376c2bedc6b07c8e6aff0eaf6c92ff2c2a47d9b210466` |
-| Linux WVB-publisher base | 1,335,296 | `57cac655719571d20922bf6b3db33ec77781201ccd4dbd45fc41e14c651eb6ab` |
-| Windows WVB publisher | 1,340,928 | `9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7` |
-| Linux WVB publisher | 1,340,357 | `2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188` |
+| Windows base | 248,832 | `2afd9d92422b063abd3cd20d8da6056efbbbff9e7ac8baeef9c8b60b391686c5` |
+| Linux base | 249,856 | `687338281ca78c9d3a4d08b601c1efbcc198ec3c8fcc96fbf34f5dc349cafae2` |
+| Windows publisher | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
+| Linux publisher | 254,917 | `babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97` |
+| Windows promoter base | 674,816 | `927476ca389c7449fb0c72341f26d68577a6a9e0c0ed02fa45ac8c4af935c77f` |
+| Linux promoter base | 675,840 | `768ca223c99e901d17a1c5d86744515e4b571a6feae329fb6fc3cf225215a133` |
+| Windows promoter | 681,472 | `598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23` |
+| Linux promoter | 680,901 | `422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58` |
+| Windows WVB-publisher base | 1,333,760 | `8fcdcfc755439ebae5086c72d88113fb52f397ba0687c785af247230a7732fff` |
+| Linux WVB-publisher base | 1,335,296 | `f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090` |
+| Windows WVB publisher | 1,340,928 | `71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3` |
+| Linux WVB publisher | 1,340,357 | `7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c` |
 
-Version 14 of the construction candidate contains 26 canonical WVB/WVO
+Version 15 of the construction candidate contains 26 canonical WVB/WVO
 artifacts and 22 paired host applications. Its 48-entry `SHA256SUMS` is 4,980
 LF-only bytes with SHA-256
-`217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a`.
+`4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d`.
 
 ## Native owner and remaining gate
 

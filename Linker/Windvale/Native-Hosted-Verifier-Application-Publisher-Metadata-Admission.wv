@@ -62,14 +62,14 @@ fn Moduleˉdigestˉword(Index: u32, Variant: u32) -> u32 {
         return 2521790058u32;
     }
     if Variant == 1u32 {
-        if Index == 0u32 { return 2350836528u32; }
-        if Index == 1u32 { return 1712500883u32; }
-        if Index == 2u32 { return 724708185u32; }
-        if Index == 3u32 { return 2991870364u32; }
-        if Index == 4u32 { return 1827308151u32; }
-        if Index == 5u32 { return 1387713148u32; }
-        if Index == 6u32 { return 460853290u32; }
-        return 3384686073u32;
+        if Index == 0u32 { return 2311636928u32; }
+        if Index == 1u32 { return 2072244118u32; }
+        if Index == 2u32 { return 1022141125u32; }
+        if Index == 3u32 { return 317070827u32; }
+        if Index == 4u32 { return 4213551188u32; }
+        if Index == 5u32 { return 1330532566u32; }
+        if Index == 6u32 { return 1438678333u32; }
+        return 1913001156u32;
     }
     if Index == 0u32 { return 1257490039u32; }
     if Index == 1u32 { return 298073986u32; }

@@ -1,10 +1,11 @@
 {
-  "format": "windvale-native-hosted-verifier-application-publisher-candidate-1",
+  "format": "windvale-native-hosted-verifier-application-publisher-candidate-2",
   "status": "candidate",
   "sourceDecision": "0474",
   "provenanceDecision": "0307",
+  "nativeSourceDecision": "0493",
   "qualification": "current-host-focused",
-  "construction": "stage0-recovery",
+  "construction": "windvale-native-role-aware-publisher-overlay",
   "nativeSourceConstruction": "verified-digest-bound-front-door",
   "artifacts": [
     {
@@ -20,7 +21,7 @@
       "path": "windows-x64-wvhostverifierpublish.exe",
       "target": "windows-x64-native-hosted-verifier-application-publisher-v1",
       "bytes": 256000,
-      "sha256": "735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6",
+      "sha256": "17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96",
       "sourceWvb": "Hosted-Verifier-Application-Publisher.wvb"
     },
     {
@@ -28,7 +29,7 @@
       "path": "linux-x64-wvhostverifierpublish.elf",
       "target": "linux-x64-native-hosted-verifier-application-publisher-v1",
       "bytes": 254917,
-      "sha256": "de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a",
+      "sha256": "babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97",
       "sourceWvb": "Hosted-Verifier-Application-Publisher.wvb"
     }
   ]

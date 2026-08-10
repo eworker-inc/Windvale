@@ -41,20 +41,20 @@ case "$target_name:$output" in
         adapter_bytes=9544
         adapter_sha256=ef795dabbced735e0808fca04d0205b87d3735b26dd53ca23ed57a7e74453e93
         base_bytes=248832
-        base_sha256=cf204201e5c26d71e78da1112de2bc724d389a5222cc835d48dbe8cd8bbc5988
+        base_sha256=2afd9d92422b063abd3cd20d8da6056efbbbff9e7ac8baeef9c8b60b391686c5
         application_bytes=256000
-        application_sha256=735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6
+        application_sha256=17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96
         if [[ $role == promoter ]]; then
             base_bytes=674816
-            base_sha256=eede4259e3e9bbf4099f82ff8f26cf6925139801863aeb72d771539b1a3ab9bd
+            base_sha256=927476ca389c7449fb0c72341f26d68577a6a9e0c0ed02fa45ac8c4af935c77f
             application_bytes=681472
-            application_sha256=9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069
+            application_sha256=598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23
         fi
         if [[ $role == wvb-publisher ]]; then
             base_bytes=1333760
-            base_sha256=a06095df9ab46b3816c376c2bedc6b07c8e6aff0eaf6c92ff2c2a47d9b210466
+            base_sha256=8fcdcfc755439ebae5086c72d88113fb52f397ba0687c785af247230a7732fff
             application_bytes=1340928
-            application_sha256=9ee91e3044193e2e90461ecf4e7ddefa4b5583f55b041b31911044c6d65b92c7
+            application_sha256=71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3
         fi
         ;;
     linux:*.elf)
@@ -78,20 +78,20 @@ case "$target_name:$output" in
         adapter_bytes=5507
         adapter_sha256=9272c17b0d7234218a6cd7c31131e9d25e62b6c1ccd976d94975e9b436b2ca5a
         base_bytes=249856
-        base_sha256=0bdeee07a49f75781767934884cbbc7dd085abff4507e2f78210fa225638539a
+        base_sha256=687338281ca78c9d3a4d08b601c1efbcc198ec3c8fcc96fbf34f5dc349cafae2
         application_bytes=254917
-        application_sha256=de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a
+        application_sha256=babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97
         if [[ $role == promoter ]]; then
             base_bytes=675840
-            base_sha256=b2b299aea10987720714779c9f0b6e58bcea567946d82c4f39786915404039a4
+            base_sha256=768ca223c99e901d17a1c5d86744515e4b571a6feae329fb6fc3cf225215a133
             application_bytes=680901
-            application_sha256=9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0
+            application_sha256=422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58
         fi
         if [[ $role == wvb-publisher ]]; then
             base_bytes=1335296
-            base_sha256=57cac655719571d20922bf6b3db33ec77781201ccd4dbd45fc41e14c651eb6ab
+            base_sha256=f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090
             application_bytes=1340357
-            application_sha256=2ade91f624609c93a3b80a0802679bef79832c0a63db7996c889794d365f1188
+            application_sha256=7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c
         fi
         ;;
     *)
@@ -125,12 +125,12 @@ if [[ $role == promoter ]]; then
     publisher_object="$construction/Publisher-Promoter.wvo"
     variant=1
     publisher_wvb_bytes=41268
-    publisher_wvb_sha256=30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9
+    publisher_wvb_sha256=c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672
     publisher_object_bytes=660123
-    publisher_object_sha256=6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d
+    publisher_object_sha256=ba5d9c5afde115fede472369d24c3d1fe466806de523773d2e445e6a9e004667
     native_entry=1178
     fragment_bytes=658339
-    fragment_sha256=a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8
+    fragment_sha256=e06189a37c038a5237787ffd16fb53466df3d10519efd4129b219bd814f4def2
 fi
 if [[ $role == wvb-publisher ]]; then
     publisher_wvb="$construction/Wvb-Publisher.wvb"
@@ -180,7 +180,7 @@ check_file "$hosted_toolset/SHA256SUMS" 6927 \
     'hosted toolset inventory' || exit $?
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$construction/SHA256SUMS" 4980 \
-    217c33c4163719f998a3cfbe6694a5f42d07d78e7c50c31fa0358d95f4bad11a \
+    4989e21858705df8fb1776b36a26350144b6bf02fab5bd8d910e1711f2a7691d \
     'publisher construction inventory' || exit $?
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$publisher_wvb" "$publisher_wvb_bytes" "$publisher_wvb_sha256" \
