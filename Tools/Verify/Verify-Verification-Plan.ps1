@@ -88,7 +88,8 @@ $NativeCases = @(
         )
         Suites = @(
             'compiler-reconstruction',
-            'segmented-compiler-toolset-reconstruction'
+            'segmented-compiler-toolset-reconstruction',
+            'wvb-to-wvo-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -102,6 +103,7 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'segmented-compiler-toolset-reconstruction',
+            'wvb-to-wvo-reconstruction',
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
@@ -130,6 +132,42 @@ $NativeCases = @(
         Name = 'segmented compiler immutable transport source'
         Paths = @('Foundation/Immutable-Source-Regions.wv')
         Suites = @('seed', 'segmented-compiler-toolset-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'WVB-to-WVO reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Wvb-To-Wvo-Reconstruction.cmd',
+            'Tools/Native/Construct-Wvb-To-Wvo-Reconstruction.cmd',
+            'Artifacts/Native-Wvb-To-Wvo-Candidate/Manifest.json',
+            'Windvale-Native-X64-Lowering-Tool.wvproj',
+            'Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj',
+            'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv',
+            'Specifications/Windvale-Native-Wvb-To-Wvo.md'
+        )
+        Suites = @('wvb-to-wvo-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'current WVB-to-WVO source root'
+        Paths = @('Compiler/Windvale/Native-X64-Lowering-Tool.wv')
+        Suites = @(
+            'seed',
+            'wvb-to-wvo-reconstruction',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'current lowerer launcher keeps behavioral owners separate'
+        Paths = @('Tools/Native/Lower-Wvb-To-Wvo.cmd')
+        Suites = @('lowerer-rejections', 'wvo-export-renamer', 'aot-chain')
         Gaps = @()
         VerifyPlan = $false
     },

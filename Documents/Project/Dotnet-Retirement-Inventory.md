@@ -49,6 +49,16 @@ for the accepted subset but no new source semantics, WVO shapes, lowering
 operations, or service serialization. The retained segmented candidate remains
 the seed, and independent Linux reconstruction and execution remain open.
 
+Current N1/C1 update: [Decision 0497](../Decisions/0497-Native-Wvb-To-Wvo-Reconstruction.md)
+supersedes the N1 row's older current-generation and Stage 0-construction
+wording. The current 412,871-byte accepted-subset lowerer WVB and its exact
+5,958,144-byte Windows and 5,959,680-byte Linux applications now reconstruct
+through the retained segmented native toolset on the current Windows host, and
+the unchanged fixed WVB/WVO vector remains exact. This closes only the managed
+application-writer seam for that current candidate. The retained seed,
+independent Linux reconstruction and execution, complete-backend coverage,
+promotion, grouped qualification, and non-circular bootstrap evidence remain.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

@@ -1,34 +1,35 @@
 {
-  "format": "windvale-native-wvb-to-wvo-candidate-1",
+  "format": "windvale-native-wvb-to-wvo-candidate-2",
   "status": "candidate",
   "sourceDecision": "0224",
   "provenanceDecision": "0423",
   "qualification": "pending",
   "toolConstruction": "native-qualified-front-door",
-  "applicationConstruction": "stage0-recovery",
+  "constructionDecision": "0497",
+  "applicationConstruction": "native-segmented-self-reconstruction",
   "artifacts": [
     {
       "name": "wvb-to-wvo-tool-wvb",
       "path": "Wvb-To-Wvo.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 408243,
-      "sha256": "a118468779796449dfadbdaeba202b4460748963573fa74fbd9fda4b1ff2e755",
+      "bytes": 412871,
+      "sha256": "01781356ae2a6cf10e14d178878102609fcfbe3b9340f71b723ac5caf54451f7",
       "sourceProject": "Windvale-Native-X64-Lowering-Tool.wvproj"
     },
     {
       "name": "windows-x64-wvb-to-wvo",
       "path": "Wvb-To-Wvo.exe",
       "target": "windows-x64-wvb-to-wvo-v1",
-      "bytes": 5916160,
-      "sha256": "318a6ef4e633ff1f4b4749254304dd7099684a1d9ed7168b8f7b6a7be2e0adc7",
+      "bytes": 5958144,
+      "sha256": "927cbdf8b89269538ea2af1131276e4edca3e8810c1edaa3c7fd096e3528a267",
       "sourceWvb": "Wvb-To-Wvo.wvb"
     },
     {
       "name": "linux-x64-wvb-to-wvo",
       "path": "Wvb-To-Wvo.elf",
       "target": "linux-x64-wvb-to-wvo-v1",
-      "bytes": 5914624,
-      "sha256": "89c20d975f8c8523ddb783a5b8261b210d9ac620caee8f472cd390f25e1b1f7b",
+      "bytes": 5959680,
+      "sha256": "21a7c239d5236227da1abe202807170c077dad629e858f46cde4225f8efa2d3b",
       "sourceWvb": "Wvb-To-Wvo.wvb"
     },
     {

@@ -12,6 +12,14 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0497](../Decisions/0497-Native-Wvb-To-Wvo-Reconstruction.md)
+closes the managed application-writer seam for the exact current accepted-subset
+lowerer candidate. The current Windows native path reconstructs its 412,871-byte
+WVB, both paired target applications, and the unchanged fixed WVB/WVO vector
+through the retained segmented toolset. The route still requires the retained
+seed, independent Linux reconstruction and execution, complete-backend work,
+promotion, and the grouped retirement gate; it is not clean-bootstrap evidence.
+
 [Decision 0496](../Decisions/0496-Native-Segmented-Compiler-Toolset-Reconstruction.md)
 closes the managed application-writer seam for the three segmented compiler
 process families: the current Windows native path reconstructs their three WVBs

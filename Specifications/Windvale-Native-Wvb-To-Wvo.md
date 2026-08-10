@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHN 1` packages the canonical Windvale-written `Compilerˉnativeˉx64ˉloweringˉtool` as paired Windows x64 and Linux x64 command-line applications. It lowers only the exact metered scalar/control/direct-call and bounded static-data subset defined by the [Windvale-native x86-64 lowering contract](Windvale-Native-X64-Lowering.md). Decision 0304 pins exact candidate artifacts, fixed vectors, and digest-bound launchers; Decision 0308 composes those launchers with native atomic WVO publication. This remains neither the complete native backend nor an ordinary front door until native host-container construction, the grouped Windows/Linux gate, and promotion succeed.
+`WVHN 1` packages the canonical Windvale-written `Compilerˉnativeˉx64ˉloweringˉtool` as paired Windows x64 and Linux x64 command-line applications. It lowers only the exact metered scalar/control/direct-call and bounded static-data subset defined by the [Windvale-native x86-64 lowering contract](Windvale-Native-X64-Lowering.md). Decision 0304 pins exact candidate artifacts, fixed vectors, and digest-bound launchers; Decision 0308 composes those launchers with native atomic WVO publication; and Decision 0497 reconstructs the current WVB and both target applications through the retained segmented native toolset. This remains neither the complete native backend nor an ordinary front door until independent Linux reconstruction and execution, the grouped Windows/Linux gate, and promotion succeed.
 
 The portable core owns WVB admission, control and type verification, ABI-22 selection, branch/call measurement and patching, and canonical WVO 1.0 construction. The application adds no second selector, object writer, or target-specific lowering logic.
 
@@ -44,7 +44,7 @@ The metadata magic is `WVHN`, format version is 1, profile number is 6 in the sh
 - `windows-x64-wvb-to-wvo-v1`, producing `.exe`;
 - `linux-x64-wvb-to-wvo-v1`, producing `.elf` and exact executable mode on Linux.
 
-Both targets reuse the compiler-authority process entry, argument capture, bounded file adapters, runtime state, service leaves, and platform containers. No new WVA or platform assembly is added. Stage 0 independently verifies the WVB, native fragment, bundle, metadata, runtime data, startup, and complete PE/ELF container before atomic candidate publication.
+Both targets reuse the compiler-authority process entry, argument capture, bounded file adapters, runtime state, service leaves, and platform containers. No new WVA or platform assembly is added. The retained segmented native staging, linking, transport, and hosted-packaging path constructs the current paired containers; Stage 0 remains the independent complete-backend, recovery, and differential oracle.
 
 ## Candidate identities and fixed vector
 
@@ -52,27 +52,24 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 408,243 | `a118468779796449dfadbdaeba202b4460748963573fa74fbd9fda4b1ff2e755` |
-| Windows WVB-to-WVO tool | 5,916,160 | `318a6ef4e633ff1f4b4749254304dd7099684a1d9ed7168b8f7b6a7be2e0adc7` |
-| Linux WVB-to-WVO tool | 5,914,624 | `89c20d975f8c8523ddb783a5b8261b210d9ac620caee8f472cd390f25e1b1f7b` |
+| WVB-to-WVO tool WVB | 412,871 | `01781356ae2a6cf10e14d178878102609fcfbe3b9340f71b723ac5caf54451f7` |
+| Windows WVB-to-WVO tool | 5,958,144 | `927cbdf8b89269538ea2af1131276e4edca3e8810c1edaa3c7fd096e3528a267` |
+| Linux WVB-to-WVO tool | 5,959,680 | `21a7c239d5236227da1abe202807170c077dad629e858f46cde4225f8efa2d3b` |
 
 These pinned candidate applications include Decision 0419's parameterless
-`Main() -> bytes` contract and Decision 0423's compiler-scale admission work,
-but their Stage 0-constructed host containers remain unpromoted. Decision 0420's
-segmented native construction accepts the current 409-function, 399,691-byte
-lowerer WVB at SHA-256
-`92655af0632b4dd3525c2b2de98353b095fa1df94b524a94aa47f16014f1e508`
-and reproduces the independently pinned 5,792,768-byte Windows application at
-SHA-256
-`e096dc7fec20e3318364da1f3b5289f772b53c16cc370f29622dfac35780e2bf`.
-That native application reproduces both the descriptor-entry and baseline-JIT
-bridge WVOs byte for byte. The paired 5,791,744-byte Linux identity at SHA-256
-`a9d4ae08d449aa2b1238120efb6bab9720e97f2e2a99354abf15bf086be4cb1e`
-passes genuine Debian reconstruction and execution in GitHub run
-[`31290136463`](https://github.com/eworker-inc/Windvale/actions/runs/31290136463)
-and reproduces the same two retained WVOs.
-Ordinary consumers continue to use digest-bound retained WVOs until paired
-promotion qualifies the current candidate applications.
+`Main() -> bytes` contract and Decision 0423's compiler-scale admission work.
+Decision 0497 uses the current Windows native source front door plus the
+retained segmented staging, linking, transport, and hosted-packaging toolset to
+reconstruct this exact 412,871-byte WVB and both exact target applications in a
+separate output directory. The constructed Windows application then reproduces
+the fixed WVO below. This removes Stage 0 as the only constructor of the current
+candidate generation, but it consumes an already retained native toolset and
+therefore is not a non-circular bootstrap. Decisions 0420 and 0422 preserve
+independent Windows and Debian reconstruction and execution evidence for an
+earlier lowerer generation; the identities above still require independent
+Linux reconstruction and execution before promotion. Ordinary consumers
+continue to use digest-bound retained WVOs until paired promotion qualifies the
+current candidate applications.
 
 `Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 
@@ -95,4 +92,4 @@ Promotion requires one exact source commit to pass on Windows and Linux with:
 - no CLR/.NET module or mapping in the lowerer process; and
 - no regression in WVB 1.11, WVO 1.0, ABI 22, metering, control-flow, or call contracts.
 
-Decision 0225 composes this source candidate with the qualified native source builder and the linker/packager candidates into one exact current-host source-to-executable proof. That proof does not promote this application. Decision 0304 pins both platform applications, a native-produced fixed vector, and digest-bound candidate launchers while retaining Stage 0 host-container construction. Decision 0308 makes those launchers construct privately and publish through the shared portable WVO verifier plus native transaction. Decision 0317 fixes malformed-WVB and valid-but-unsupported-function rejection through the public launcher, with exact diagnostics, output preservation, and isolated-work cleanup. Only an exact descendant that supplies native construction and then passes both hosts moves accepted-subset WVB-to-WVO lowering to the ordinary native launcher. C# remains the complete recovery/differential backend and the normal route for every unsupported module until later Windvale-owned backend slices close those gaps. Decision 0057's complete gate still controls final deletion.
+Decision 0225 composes this source candidate with the qualified native source builder and the linker/packager candidates into one exact current-host source-to-executable proof. That proof does not promote this application. Decision 0304 pins both platform applications, a native-produced fixed vector, and digest-bound candidate launchers. Decision 0308 makes those launchers construct privately and publish through the shared portable WVO verifier plus native transaction. Decision 0317 fixes malformed-WVB and valid-but-unsupported-function rejection through the public launcher, with exact diagnostics, output preservation, and isolated-work cleanup. Decision 0497 closes native construction for this exact current candidate on the current Windows host without qualifying the Linux application, proving a clean bootstrap, or promoting either launcher. Only an exact descendant that passes independent reconstruction and execution on both hosts moves accepted-subset WVB-to-WVO lowering to the ordinary native launcher. C# remains the complete recovery/differential backend and the normal route for every unsupported module until later Windvale-owned backend slices close those gaps. Decision 0057's complete gate still controls final deletion.

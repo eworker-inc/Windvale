@@ -28,6 +28,7 @@ The exact filter names and case counts are:
 | `seed` | 26 |
 | `compiler-reconstruction` | 3 |
 | `segmented-compiler-toolset-reconstruction` | 3 |
+| `wvb-to-wvo-reconstruction` | 3 |
 | `baseline-jit` | 6 |
 | `unsafe-wvb` | 20 |
 | `wvb-containment` | 1,000 |
@@ -61,11 +62,11 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 35 suites and 3,180 cases in manifest order. Its
+Omitting `--filter` selects all 36 suites and 3,183 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 35, Passed: 35, Failed: 0, Cases: 3180
+Suites: 36, Passed: 36, Failed: 0, Cases: 3183
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -101,6 +102,20 @@ Tools\Native\Test-Retirement-Suite.cmd --filter segmented-compiler-toolset-recon
 It calls the durable constructor once, then treats each WVB and its paired exact
 Windows/Linux applications as one case. The three cases cover the WVO staging
 producer, compiler-image staging tool, and canonical image transport tool.
+
+The current WVB-to-WVO reconstruction owner can be selected directly:
+
+```cmd
+Tools\Native\Test-Retirement-Suite.cmd --filter wvb-to-wvo-reconstruction
+```
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter wvb-to-wvo-reconstruction
+```
+
+It verifies the five-file candidate inventory, calls its durable constructor
+once, compares the rebuilt WVB and paired applications byte for byte, and
+requires the current-host rebuilt lowerer to reproduce the fixed Return-42 WVO.
 
 ## Changed-file front door
 
@@ -723,7 +738,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,180-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,183-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

@@ -17,17 +17,20 @@ internal static partial class Program
             Path.Combine(Artifactˉroot, "Manifest.json")));
         var Root = Manifest.RootElement;
         Equal(
-            "windvale-native-wvb-to-wvo-candidate-1",
+            "windvale-native-wvb-to-wvo-candidate-2",
             Root.GetProperty("format").GetString());
         Equal("candidate", Root.GetProperty("status").GetString());
         Equal("0224", Root.GetProperty("sourceDecision").GetString());
-        Equal("0304", Root.GetProperty("provenanceDecision").GetString());
+        Equal("0423", Root.GetProperty("provenanceDecision").GetString());
         Equal("pending", Root.GetProperty("qualification").GetString());
         Equal(
             "native-qualified-front-door",
             Root.GetProperty("toolConstruction").GetString());
         Equal(
-            "stage0-recovery",
+            "0497",
+            Root.GetProperty("constructionDecision").GetString());
+        Equal(
+            "native-segmented-self-reconstruction",
             Root.GetProperty("applicationConstruction").GetString());
         Equal(5, Root.GetProperty("artifacts").GetArrayLength());
         foreach (var Artifact in Root.GetProperty("artifacts").EnumerateArray())

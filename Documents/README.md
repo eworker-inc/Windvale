@@ -56,7 +56,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [Fixed native linker map limit](Decisions/0327-Fixed-Native-Linker-Map-Limit.md) — compact generated-fixture evidence for exact `WVL1012` rejection at 16,384 definitions
 - [Fixed native WVB unsafe rejections](Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) — five immutable unsafe instruction-stream cases through both native read-only launchers
-- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 35 native suites and 3,180 transferred cases
+- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 36 native suites and 3,183 transferred cases
 - [Fixed native assembler golden objects](Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md) — three exact positive WVA products with repeated native assembly and independent WVO admission
 - [Fixed native typed WVB rejections](Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md) — six compact single-byte typed/control/nominal mutations through both native readers
 - [Compact native WVB rejection closure](Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md) — four final compact stack, receiver, and nominal-kind mutations plus explicit ownership of excluded cases
@@ -100,6 +100,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native enum-service fragment reconstruction](Decisions/0408-Native-Enum-Service-Fragment-Reconstruction.md) — focused enum-metadata helpers let the pinned native lowerer and linker reproduce the exact service WVO and raw fragment without .NET
 - [Native hosted segment iteration control](Decisions/0413-Native-Hosted-Segment-Iteration-Control.md) — admitted native count modes keep both bounded loops out of PowerShell/Bash binary parsing
 - [Native segmented compiler toolset reconstruction](Decisions/0496-Native-Segmented-Compiler-Toolset-Reconstruction.md) — current-Windows-host native cross-target reconstruction of three exact WVBs and six paired applications, with retained-seed circularity explicit
+- [Native WVB-to-WVO reconstruction](Decisions/0497-Native-Wvb-To-Wvo-Reconstruction.md) — current-Windows-host native reconstruction of the exact accepted-subset lowerer WVB, paired applications, and unchanged fixed vector through the retained segmented toolset
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

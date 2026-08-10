@@ -503,6 +503,15 @@ execution, extended fault/concurrency evidence, promotion, and grouped dual-
 host qualification remain before this transfer replaces the managed ordinary
 route.
 
+[Decision 0497](../Decisions/0497-Native-Wvb-To-Wvo-Reconstruction.md)
+consumes that retained segmented toolset to rebuild the live accepted-subset
+lowerer WVB, package its exact Windows and Linux applications, and reproduce the
+unchanged fixed WVO through the constructed Windows application. This removes
+the managed application writer as the only constructor of the current lowerer
+candidate without changing lowering semantics or claiming clean bootstrap.
+Independent Linux reconstruction and execution, the complete backend, current
+Stage 2, promotion, and grouped qualification remain outside this boundary.
+
 [Decision 0382](../Decisions/0382-Windvale-Owned-Hosted-Tool-Runtime-Header.md)
 removes C# ownership of the shared initial 4 KiB hosted-tool runtime header.
 Two focused Windvale modules admit the existing fixed `WVH* 1` metadata and

@@ -133,7 +133,8 @@ function Add-Native-Tool-Suite {
     )) {
         Add-Suite @(
             'compiler-reconstruction',
-            'segmented-compiler-toolset-reconstruction'
+            'segmented-compiler-toolset-reconstruction',
+            'wvb-to-wvo-reconstruction'
         )
     } elseif ($Stem -in @(
         'Construct-Segmented-Compiler-Toolset',
@@ -141,6 +142,8 @@ function Add-Native-Tool-Suite {
         'Package-Segmented-Compiler-Wvb'
     )) {
         Add-Suite 'segmented-compiler-toolset-reconstruction'
+    } elseif ($Stem -eq 'Construct-Wvb-To-Wvo-Reconstruction') {
+        Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Stem -in @(
         'Test-Baseline-Jit-Patch-Plan',
         'Test-Baseline-Jit-Publisher'
@@ -288,6 +291,10 @@ foreach ($Path in $Paths) {
     )) {
         Add-Compiler-Suites
         Add-Suite 'segmented-compiler-toolset-reconstruction'
+        Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Tool.wv') {
+        Add-Compiler-Suites
+        Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
@@ -389,6 +396,10 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal)) {
         Add-Suite 'segmented-compiler-toolset-reconstruction'
     } elseif ($Path.StartsWith(
+        'Artifacts/Native-Wvb-To-Wvo-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Path.StartsWith(
         'Artifacts/Native-Hosted-Container-Toolset-Candidate/',
         [StringComparison]::Ordinal) -or
         $Path.StartsWith(
@@ -424,6 +435,8 @@ foreach ($Path in $Paths) {
         Add-Gap 'database-native-tests'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Baseline-Jit-Patch-Plan-Self-Test.wv') {
         Add-Suite 'baseline-jit'
+    } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv') {
+        Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -eq 'Tests/Native/Plan.txt' -or
         $Path.StartsWith('Tests/Native/Malformed-Wvb/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
@@ -449,6 +462,8 @@ foreach ($Path in $Paths) {
             if ($Path -eq 'Specifications/Windvale-Linking.md') {
                 Add-Linker-Suites
             }
+        } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-To-Wvo.md') {
+            Add-Suite 'wvb-to-wvo-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
             Add-Suite 'hosted-verifier-publisher-files'
         } elseif ($Path.StartsWith(
@@ -496,6 +511,11 @@ foreach ($Path in $Paths) {
         'Windvale-Compiler-Image-Canonical-Transport.wvproj'
     )) {
         Add-Suite 'segmented-compiler-toolset-reconstruction'
+    } elseif ($Path -in @(
+        'Windvale-Native-X64-Lowering-Tool.wvproj',
+        'Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj'
+    )) {
+        Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path.StartsWith(
         'Windvale-Native-Hosted-Verifier-Publisher-',
         [StringComparison]::Ordinal)) {

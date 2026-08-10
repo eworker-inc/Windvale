@@ -4,7 +4,7 @@
 
 `Compilerˉnativeˉx64ˉlowering` is the first portable Windvale-written slice of the shared x86-64 backend. It consumes one bounded WVB 1.11 module, independently verifies the metered scalar-control and direct-call subset described below, and emits the canonical WVO 1.0 object used by the existing ABI-22 Stage 0 backend.
 
-This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. The bounded core now has a paired [native WVB-to-WVO application candidate](Windvale-Native-Wvb-To-Wvo.md). C# remains the normal complete WVB-to-native backend outside this subset, the independent fragment and differential oracle, and the candidate constructor until the grouped retirement gate.
+This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. The bounded core now has a paired [native WVB-to-WVO application candidate](Windvale-Native-Wvb-To-Wvo.md). C# remains the normal complete WVB-to-native backend outside this subset and the independent fragment, recovery, and differential oracle. Decision 0497 removes it as the only constructor of the exact current accepted-subset candidate while retaining the grouped retirement gate.
 
 ## Public result
 
@@ -382,6 +382,17 @@ processes on the canonical return-42 fixture without loading .NET. Full compiler
 self-lowering, Linux process composition, ordinary launcher ownership, native
 replacement of both Stage 0 constructors, promotion, and grouped qualification
 remain deferred.
+
+Decision 0497 uses the current Windows native source front door and retained
+segmented staging, linking, transport, and hosted-packaging tools to reconstruct
+the current 412,871-byte accepted-subset lowerer WVB at SHA-256
+`01781356ae2a6cf10e14d178878102609fcfbe3b9340f71b723ac5caf54451f7`,
+then constructs the exact 5,958,144-byte Windows and 5,959,680-byte Linux
+applications. The Windows application reproduces the unchanged 479-byte
+return-42 WVO. This is an exact current-candidate construction result, not a
+semantic expansion, complete-backend transfer, non-circular bootstrap,
+independent Linux reconstruction or execution result, qualification, or
+promotion.
 
 ## Adapters
 
