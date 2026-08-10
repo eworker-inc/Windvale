@@ -123,13 +123,24 @@ function Add-Native-Tool-Suite {
         Add-Suite 'os-probe'
     } elseif ($Stem -in @(
         'Bootstrap-Compiler',
-        'Construct-Compiler-Reconstruction',
-        'Stage-Compiler-Wvb',
-        'Link-Staged-Compiler-Wvo',
-        'Transport-Compiler-Image',
-        'Package-Segmented-Compiler-Wvb'
+        'Construct-Compiler-Reconstruction'
     )) {
         Add-Suite 'compiler-reconstruction'
+    } elseif ($Stem -in @(
+        'Stage-Compiler-Wvb',
+        'Link-Staged-Compiler-Wvo',
+        'Transport-Compiler-Image'
+    )) {
+        Add-Suite @(
+            'compiler-reconstruction',
+            'segmented-compiler-toolset-reconstruction'
+        )
+    } elseif ($Stem -in @(
+        'Construct-Segmented-Compiler-Toolset',
+        'Test-Segmented-Compiler-Packaging',
+        'Package-Segmented-Compiler-Wvb'
+    )) {
+        Add-Suite 'segmented-compiler-toolset-reconstruction'
     } elseif ($Stem -in @(
         'Test-Baseline-Jit-Patch-Plan',
         'Test-Baseline-Jit-Publisher'
@@ -246,6 +257,37 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Baseline-Jit-',
         [StringComparison]::Ordinal)) {
         Add-Suite 'baseline-jit'
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Call-Instructions.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Capabilities.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Data.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Descriptors.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Descriptor-Calls.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Enums.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Layout.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Object.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Publication.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Records.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Record-Allocation.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Record-Instructions.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Record-Local-Liveness.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Runtime-Descriptors.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Static-Data-Instructions.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Types.wv'
+    )) {
+        Add-Compiler-Suites
+        Add-Suite 'segmented-compiler-toolset-reconstruction'
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
@@ -283,6 +325,8 @@ foreach ($Path in $Paths) {
         } else {
             Add-Gap 'managed-runtime-recovery-source'
         }
+    } elseif ($Path -eq 'Foundation/Immutable-Source-Regions.wv') {
+        Add-Suite @('seed', 'segmented-compiler-toolset-reconstruction')
     } elseif ($Path.StartsWith('Foundation/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
     } elseif ($Path.StartsWith('Object-Model/Windvale/', [StringComparison]::Ordinal)) {
@@ -313,6 +357,17 @@ foreach ($Path in $Paths) {
         'Linker/Windvale/Native-Hosted-Verifier-Publisher-',
         [StringComparison]::Ordinal)) {
         Add-Suite 'hosted-verifier-publisher-files'
+    } elseif ($Path -in @(
+        'Linker/Windvale/Compiler-Flat-Image-Staging-Manifest.wv',
+        'Linker/Windvale/Compiler-Flat-Image-Staging-Resources.wv',
+        'Linker/Windvale/Compiler-Image-Canonical-Transport-Tool.wv',
+        'Linker/Windvale/Compiler-Image-Transport-Resources.wv',
+        'Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Staging-Tool.wv',
+        'Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image.wv',
+        'Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Verification.wv'
+    )) {
+        Add-Suite 'segmented-compiler-toolset-reconstruction'
+        Add-Linker-Suites
     } elseif ($Path.StartsWith('Linker/Windvale/', [StringComparison]::Ordinal)) {
         Add-Linker-Suites
     } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
@@ -329,6 +384,10 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Compiler-Reconstruction-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite 'compiler-reconstruction'
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Segmented-Compiler-Toolset-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'segmented-compiler-toolset-reconstruction'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Hosted-Container-Toolset-Candidate/',
         [StringComparison]::Ordinal) -or
@@ -382,6 +441,14 @@ foreach ($Path in $Paths) {
             Add-Suite 'baseline-jit'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Compiler-Reconstruction.md') {
             Add-Suite 'compiler-reconstruction'
+        } elseif ($Path -in @(
+            'Specifications/Windvale-Linking.md',
+            'Specifications/Windvale-Native-Hosted-Container-Packaging.md'
+        )) {
+            Add-Suite 'segmented-compiler-toolset-reconstruction'
+            if ($Path -eq 'Specifications/Windvale-Linking.md') {
+                Add-Linker-Suites
+            }
         } elseif ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
             Add-Suite 'hosted-verifier-publisher-files'
         } elseif ($Path.StartsWith(
@@ -423,6 +490,12 @@ foreach ($Path in $Paths) {
         'Windvale-Wvb-Publisher.wvproj'
     )) {
         Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
+    } elseif ($Path -in @(
+        'Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
+        'Windvale-Compiler-Image-Staging.wvproj',
+        'Windvale-Compiler-Image-Canonical-Transport.wvproj'
+    )) {
+        Add-Suite 'segmented-compiler-toolset-reconstruction'
     } elseif ($Path.StartsWith(
         'Windvale-Native-Hosted-Verifier-Publisher-',
         [StringComparison]::Ordinal)) {

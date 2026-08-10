@@ -493,11 +493,15 @@ These layers deliberately
 do not reuse the pre-opened
 random-access-storage capability, whose contract
 excludes path creation, replacement, and directory publication, and do not
-claim that scratch resources are an atomic destination. Final compiler-image
-link/transport on that exact manifest, native replacement of the Stage 0 package
-constructor, extended fault/concurrency evidence, promotion, and grouped
-dual-host qualification remain before this transfer replaces the managed
-ordinary route.
+claim that scratch resources are an atomic destination. Decision 0496 now
+reconstructs the segmented staging-producer, image-linker, and transport WVBs
+plus all six Windows/Linux applications through the current-Windows-host native
+cross-target path. That closes their managed application-writer seam but
+consumes the retained segmented candidate as its seed. Current full Stage 2,
+non-circular previous-seed renewal, independent Linux reconstruction and
+execution, extended fault/concurrency evidence, promotion, and grouped dual-
+host qualification remain before this transfer replaces the managed ordinary
+route.
 
 [Decision 0382](../Decisions/0382-Windvale-Owned-Hosted-Tool-Runtime-Header.md)
 removes C# ownership of the shared initial 4 KiB hosted-tool runtime header.

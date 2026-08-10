@@ -30,6 +30,8 @@ Tools\Native\Package-Hosted-Wvb.cmd image <profile> <input.wvb> <chunk-prefix> <
 ./Tools/Native/Package-Hosted-Wvb.sh image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry> <output.elf>
 Tools\Native\Package-Segmented-Compiler-Wvb.cmd <profile> <input.wvb> <output.exe>
 ./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile> <input.wvb> <output.elf>
+Tools\Native\Construct-Segmented-Compiler-Toolset.cmd <existing-separate-output-directory>
+./Tools/Native/Construct-Segmented-Compiler-Toolset.sh <existing-separate-output-directory>
 ```
 
 Omitting the optional target preserves the original current-host behavior.
@@ -41,20 +43,30 @@ digest, native child, status-line admission, or publication returns nonzero and
 does not treat a rejected segment request as loop completion.
 
 Before lowering begins, the command verifies the exact `SHA256SUMS` inventory,
-all 57 tool artifacts, nine target-specific fixed service leaves, and the
-target startup WVO. The inventory covers 19 WVBs and their paired Windows/Linux
+all 72 tool artifacts, nine target-specific fixed service leaves, and the
+target startup WVO. The inventory covers 24 WVBs and their paired Windows/Linux
 applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 5,426 | `f674de96634840c42cecd77d3af34de87e2c06458dae3a36577f18da83c5f99d` |
+| `SHA256SUMS` | 6,927 | `bca5cead0b3698f060c4cc5a165eb75dc52aaad5e81202ef95c54f16976d0ded` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front
-door. The 57 tool artifacts themselves retain explicit Stage 0 recovery
+door. The 72 tool artifacts themselves retain explicit Stage 0 recovery
 provenance until this complete toolset is promoted. Their digest-bound native
 processes now construct either target container without calling that recovery
 path.
+
+The separate segmented-toolset constructor builds the staging producer,
+compiler-image staging, and canonical transport WVBs through the native source
+front door, then feeds each WVB through the retained segmented candidate to
+construct its paired Windows and Linux applications. It writes only to an
+existing directory distinct from the checked-in candidate and admits all nine
+outputs against exact size and SHA-256 identities before reporting completion.
+This is current-Windows-host cross-target self-reconstruction: the retained
+candidate remains an input seed, so this command is not a non-circular
+bootstrap or independent Linux-host qualification.
 
 ## Ordered path
 
@@ -94,6 +106,11 @@ repins both launchers to its 6,927-byte, 72-entry inventory. The focused Windows
 owner below is current-source evidence; independent Linux execution and grouped
 qualification remain pending.
 
+Decision 0496 uses that retained toolset to reconstruct the three segmented
+process WVBs and all six target applications. The nine admitted identities are
+construction evidence only; Stage 2, execution of the Linux applications,
+promotion, seed independence, and the grouped dual-host gate remain separate.
+
 Each host test packages the pinned orchestration-control WVB and requires exact
 equality with the corresponding independent candidate, then cross-constructs
 the opposite target and requires exact equality with its candidate. It finally
@@ -111,10 +128,11 @@ rereading, and atomically replacing the destination. Staged WVO publication
 uses the same transaction with `0600`. The launchers do not apply a later
 `chmod`, so successful replacement cannot expose an intermediate wrong mode.
 
-`Test-Segmented-Compiler-Packaging` additionally exercises image mode with the
-current two-fragment WVB-to-WVO lowerer. It requires the exact current host
-application identity, the descriptor-returning `Main` differential WVO, and
-byte-for-byte reproduction of the retained baseline-JIT bridge WVO.
+`Test-Segmented-Compiler-Toolset-Reconstruction` calls the durable segmented
+toolset constructor once and verifies three family cases: each exact WVB plus
+its paired Windows and Linux applications. `Test-Segmented-Compiler-Packaging`
+is a compatibility entry point for that same owner; it no longer couples this
+lane to current-lowerer or baseline-JIT differential evidence.
 
 The Windows candidate composes `wvhostcontrol.wvb` into a 236,032-byte PE with
 SHA-256 `d8b10130bc946261526ee0accc9fcbd42dbe2a5d9fd3e4d4f349038550c8c559`,

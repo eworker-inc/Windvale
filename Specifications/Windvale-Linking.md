@@ -242,8 +242,8 @@ file output. The existing hosted-container layout additionally carries its
 canonical UTF-8 adapter slot as infrastructure; generated code does not call or
 gain another capability from that slot.
 
-The exact 75,503-byte tool WVB has SHA-256
-`e43e2cc868b5f7ac3ffbee322bef60ce748c736e666889aaeda7c06a90daa5bb`.
+The exact 75,553-byte tool WVB has SHA-256
+`14521acae6052d08add386833a35dd22c36e0dd07a1fad494961ee8064119d1c`.
 Its canonical repository source closure is
 `Windvale-Compiler-Image-Staging.wvproj`; the ordinary native source front door
 publishes that exact identity byte for byte. The project retains dependencies
@@ -257,21 +257,22 @@ more than 62 chunks; this staging application consumes those immutable
 snapshots and writes a strict `WVLI`. The joined WVO, flat image, and `Main`
 entry match the independent Stage 0 recovery oracles byte for byte, and neither
 native child loads a managed runtime. The application containers used for this
-evidence remain Stage 0-constructed candidates; native service-bundle and
-PE/ELF construction are separate open boundaries.
+evidence now reconstruct through the current-Windows-host native cross-target
+path recorded by Decision 0496. That path consumes the retained candidate
+toolset as its seed; it is self-reconstruction evidence rather than a
+non-circular bootstrap or paired-host qualification.
 
-The Windows candidate is 851,968 bytes at SHA-256
-`967827e4592c23f30e2a70b9a60a43837c1dfec6112584596c09d382058e2752`;
+The Windows candidate is 852,480 bytes at SHA-256
+`7f4be5d6b1236b5f5171e52f3861540432c4781140d154e28d52f804aa8cbcde`;
 the Linux candidate is 851,968 bytes at SHA-256
-`02b07d23b763fa4dd2d11bb9c9ca94be32bdbd698b1f9ce7b466af90b768eef8`.
+`845402fb71bbf7a76524fd90b771b7c6e2d88b92ff9fe7440efe5839304a6ab3`.
 Both containers have independent structural verification. Current-host Windows
 execution stages the complete small fixture without loading a CLR component;
 Linux execution remains a separate qualification item. The completed process
 report includes the exact decimal image size, `Main` entry offset, output chunk
 count, and manifest size so an orchestrator never needs to decode `WVLI`.
-These candidate containers are constructed only through the explicit Stage 0
-recovery command and therefore do not close native host-container
-reconstruction.
+The former Stage 0 application writer remains recovery and differential
+evidence; it is no longer the only constructor for these exact candidates.
 
 ### Canonical compiler-image transport
 
@@ -292,11 +293,13 @@ written last; incomplete output chunks are not completion evidence.
 The exact transport WVB is 23,836 bytes at SHA-256
 `dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d`.
 The Windows application is 269,312 bytes at SHA-256
-`6c204b9b3ee90a4d73ecdaa1ae0f0c4d5f3056973f3ccd3a8489789c6b46ef6d`;
+`51801aaf70ba265212edd4bcbf6277cc395bb6412a6f38f07954e65a6978f9dc`;
 the Linux application is 270,336 bytes at SHA-256
-`4b7aa91e78880617c3abc8a1cbd59c098cfb274c020d2ecbe7dee214ed9576cd`.
-Both application constructors are Stage 0 recovery-only. The checked-in native
-processes and digest-bound launchers are the normal candidate front door.
+`56c9fd42da56f00f04d4bacf7689bad56693a36b4e9ce7f88dcfcae16db75fe7`.
+Both applications reconstruct through Decision 0496's current-Windows-host
+native cross-target path. The checked-in native processes and digest-bound
+launchers remain the normal candidate front door; Linux execution and
+independent-host reconstruction remain open.
 
 ### Segmented compiler hosted-package composition
 
@@ -304,6 +307,17 @@ processes and digest-bound launchers are the normal candidate front door.
 segmented WVO producer, segmented image linker, canonical image transport, and
 hosted-container toolset. The launcher owns only process orchestration and
 parsing of the transport process's strict decimal completion line.
+
+The segmented producer WVB is exactly 439,000 bytes at SHA-256
+`5b0c18b73921c90ff4b168b49999ac8b39b322964e1204c47d3ff588efba0b07`.
+Its Windows application is 6,400,512 bytes at SHA-256
+`4185b17364b524bb897cf9f8e5917546ad0abb2b15695393879be11c6630a7eb`;
+its Linux application is 6,402,048 bytes at SHA-256
+`cc46996c074a94dfd92a9c42f1403ad377f7dd850c8533387b2857742821f944`.
+Decision 0496 reconstructs this pair and the staging and transport pairs from
+the retained native candidate toolset on Windows. That construction does not
+by itself prove Stage 2, Linux execution, promotion, or a seed-independent
+bootstrap.
 
 The shared `Package-Hosted-Wvb` launcher exposes a separate image-input form:
 `image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry-offset>

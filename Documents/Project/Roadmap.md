@@ -12,6 +12,14 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0496](../Decisions/0496-Native-Segmented-Compiler-Toolset-Reconstruction.md)
+closes the managed application-writer seam for the three segmented compiler
+process families: the current Windows native path reconstructs their three WVBs
+and all six target applications exactly. The path consumes the retained same-
+candidate toolset, so the C1 route still requires a previous qualified seed,
+independent Linux reconstruction and execution, current full Stage 2, paired
+promotion, later-release consumption, and the grouped retirement gate.
+
 [Decision 0310](../Decisions/0310-Fixed-Native-Wvo-Test-Cases.md) advances Phase 10 by moving one accepted WVO and three structural rejection cases into the fixed 26-case .NET-free native plan. Linux execution and the grouped end-of-goal gate still precede promotion.
 
 [Decision 0311](../Decisions/0311-Fixed-Native-Linker-Rejections.md) adds a separate three-case .NET-free linker rejection command, preserving exact diagnostics and an existing output without rebuilding the successful AOT chain. Linux execution and the grouped gate still precede linker promotion.

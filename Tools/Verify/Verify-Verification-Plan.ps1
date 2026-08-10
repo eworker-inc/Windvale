@@ -63,6 +63,77 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'segmented compiler toolset reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Segmented-Compiler-Toolset-Reconstruction.cmd',
+            'Tools/Native/Test-Segmented-Compiler-Packaging.cmd',
+            'Tools/Native/Construct-Segmented-Compiler-Toolset.cmd',
+            'Tools/Native/Package-Segmented-Compiler-Wvb.cmd',
+            'Artifacts/Native-Segmented-Compiler-Toolset-Candidate/Manifest.json',
+            'Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
+            'Windvale-Compiler-Image-Staging.wvproj',
+            'Windvale-Compiler-Image-Canonical-Transport.wvproj',
+            'Specifications/Windvale-Native-Hosted-Container-Packaging.md'
+        )
+        Suites = @('segmented-compiler-toolset-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'shared segmented compiler construction primitives'
+        Paths = @(
+            'Tools/Native/Stage-Compiler-Wvb.cmd',
+            'Tools/Native/Link-Staged-Compiler-Wvo.cmd',
+            'Tools/Native/Transport-Compiler-Image.cmd'
+        )
+        Suites = @(
+            'compiler-reconstruction',
+            'segmented-compiler-toolset-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'segmented compiler source closure'
+        Paths = @(
+            'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv'
+        )
+        Suites = @(
+            'seed',
+            'segmented-compiler-toolset-reconstruction',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'segmented compiler linker closure'
+        Paths = @(
+            'Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image.wv',
+            'Linker/Windvale/Compiler-Image-Transport-Resources.wv',
+            'Specifications/Windvale-Linking.md'
+        )
+        Suites = @(
+            'segmented-compiler-toolset-reconstruction',
+            'linker-rejections',
+            'linker-hostile',
+            'linker-map-limit'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'segmented compiler immutable transport source'
+        Paths = @('Foundation/Immutable-Source-Regions.wv')
+        Suites = @('seed', 'segmented-compiler-toolset-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Windvale compiler'
         Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv')
         Suites = @('seed', 'unsafe-wvb', 'source-containment', 'lowerer-rejections', 'console-packager-source-reconstruction')
