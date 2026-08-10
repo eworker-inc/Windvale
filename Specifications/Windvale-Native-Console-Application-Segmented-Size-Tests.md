@@ -22,16 +22,21 @@ The candidate manifest pins:
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | `Console-Application-Verifier.wvb` | 105,006 | `1dcd5f2aeebd974649e64c90d9f473e1e75f7d13dbcde2814de1dded72cf2c0c` |
-| `windows-x64-wvappverify.exe` | 1,064,448 | `3342db37e009b32f3c41139942f6161130b874f6f49a85c4bc906ada324272dc` |
-| `linux-x64-wvappverify.elf` | 1,064,960 | `cee61bb2bf6d805cbb98766c448d7d0985b95dd0fa55a3cd80b2e3697b369a8d` |
+| `Console-Application-Verifier.wvo` | 1,049,519 | `51292e4d300d4a6bb6ce4879915bba5304de70c9deafdf4eb6ff6a54a6dbf150` |
+| `windows-x64-wvappverify.exe` | 1,063,936 | `05b5f5b3e3999a0ef3537f0908967069a12f17de09753fc90e8a4c7542dc9d3f` |
+| `linux-x64-wvappverify.elf` | 1,064,960 | `c2700e5e68711d7b8e8a8f7e9573d87dfa27c3676a034a314310ef59045e5f1a` |
 
 The WVB rebuilds through the native Project 1 front door after canonicalizing
-its order-independent source inventory. Its complete hosted-admission closure
-still reports `Unsupportedˉcode` through the accepted-subset native lowerer and
-therefore remains a later backend item. The hosted profile has exactly two immutable input snapshots and no file-write
-capability. Existing verifier, inspector, and runner profiles retain one input
-snapshot and their existing layouts. Construction is recorded as
-`stage0-recovery`; normal use of the pinned applications is .NET-free.
+its order-independent source inventory. [Decision 0502](../Documents/Decisions/0502-Native-Console-Application-Verifier-Reconstruction.md)
+records the current-Windows-host native cross-target reconstruction: the
+retained raw lowerer produces the exact WVO oracle, the retained native linker
+produces the 1,045,627-byte fragment with `Main` at offset 19,221, and the
+profile-7 hosted-container path constructs both exact applications. The hosted
+profile has exactly two immutable input snapshots and no file-write capability.
+Existing verifier, inspector, and runner profiles retain one input snapshot and
+their existing layouts. The construction route consumes retained same-release
+seeds and does not claim independent Linux execution, clean bootstrap,
+qualification, promotion, or recovery deletion.
 
 Wrong arity returns `64` with usage on standard error. A rejected application
 returns `1`, writes no standard output, and writes exactly:
@@ -93,5 +98,5 @@ Tests: 2, Passed: 2, Failed: 0
 
 This contract does not qualify Linux execution, validate a maximum-size valid
 PE or ELF, widen the ordinary byte-value limit, transfer large-native segmented
-objects, promote either candidate, replace Stage 0 construction, or complete
-the Decision 0057 retirement gate.
+objects, promote either candidate, prove a clean or previous-seed bootstrap,
+release Stage 0 recovery, or complete the Decision 0057 retirement gate.

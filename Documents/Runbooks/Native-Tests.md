@@ -31,6 +31,7 @@ The exact filter names and case counts are:
 | `wvb-to-wvo-reconstruction` | 3 |
 | `wv-linker-reconstruction` | 3 |
 | `wvo-inspector-reconstruction` | 3 |
+| `console-verifier-reconstruction` | 3 |
 | `wvo-publisher-reconstruction` | 2 |
 | `baseline-jit` | 6 |
 | `unsafe-wvb` | 20 |
@@ -66,11 +67,11 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 40 suites and 3,195 cases in manifest order. Its
+Omitting `--filter` selects all 41 suites and 3,198 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 40, Passed: 40, Failed: 0, Cases: 3195
+Suites: 41, Passed: 41, Failed: 0, Cases: 3198
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -156,6 +157,22 @@ cross-target toolsets, and execute the current-host compatibility and profile
 isolation matrix. This is current-Windows-host evidence; it is not independent
 Linux execution or a clean previous-seed renewal. The accepted focused run
 passes all three cases in 28.1 seconds.
+
+The console-application verifier reconstruction owner can be selected directly:
+
+```cmd
+Tools\Native\Test-Retirement-Suite.cmd --filter console-verifier-reconstruction
+```
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter console-verifier-reconstruction
+```
+
+Its three cases verify the exact candidate inventory, run the durable
+constructor once and compare the rebuilt WVB, WVO, and paired applications,
+then exercise the rebuilt current-host verifier over the fixed valid and
+rejected console-container vectors. This focused lane does not claim an
+independent Linux-host execution or the final grouped retirement gate.
 
 The role-3 WVO publisher reconstruction owner can be selected directly:
 
@@ -811,7 +828,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,195-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,198-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

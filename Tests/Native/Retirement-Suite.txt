@@ -5,6 +5,7 @@ segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Recons
 wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
 wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
 wvo-inspector-reconstruction|Test-Wvo-Inspector-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
+console-verifier-reconstruction|Test-Console-Verifier-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
 wvo-publisher-reconstruction|Test-Wvo-Publisher-Reconstruction|2|Tests: 2, Passed: 2, Failed: 0
 baseline-jit|Test-Baseline-Jit|6|Tests: 6, Passed: 6, Failed: 0
 unsafe-wvb|Test-Wvb-Unsafe-Rejections|20|Tests: 20, Passed: 20, Failed: 0

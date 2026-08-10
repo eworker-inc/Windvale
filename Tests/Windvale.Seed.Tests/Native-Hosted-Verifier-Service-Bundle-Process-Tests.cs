@@ -8,9 +8,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_BUNDLE_REQUEST_BYTES = 21_323;
+    private const int NATIVE_HOSTED_VERIFIER_BUNDLE_REQUEST_BYTES = 22_699;
     private const string NATIVE_HOSTED_VERIFIER_BUNDLE_REQUEST_SHA256 =
-        "bc1afc45e407d08c7a42073224f7d839bae6562d21f7f28ecf82e1980c388e06";
+        "e5499702b0440434aa6776e2664900f9158c226613c716670c66f5de44b32982";
 
     private static void Nativeˉhostedˉverifierˉserviceˉbundleˉprocessˉruns()
     {
@@ -51,6 +51,8 @@ internal static partial class Program
                 "Compiler-Wvb-Verifier.wvb"));
             var Verifier = Moduleˉcodec.Readˉandˉverify(Verifierˉbytes);
             var Verifierˉfragment = X64ˉnativeˉbackend.Compile(Verifier).Fragment;
+            var Consoleˉverifier =
+                Loadˉconsoleˉapplicationˉverifierˉfixture(Repository);
 
             int Run(ImmutableArray<string> arguments)
             {
@@ -143,6 +145,87 @@ internal static partial class Program
                     Paths[4], Paths[5], Paths[6], Paths[0],
                 ]));
                 Sequenceˉequal(Fragment, File.ReadAllBytes(Paths[0]));
+
+                var Consoleˉverifierˉbundle = X64ˉnativeˉserviceˉbundle
+                    .Buildˉhostedˉconsoleˉapplicationˉverifier(
+                        Consoleˉverifier.Fragment,
+                        Platform);
+                Equal(11, Consoleˉverifierˉbundle.Placements.Length);
+                var Consoleˉverifierˉfragment = Consoleˉverifierˉbundle
+                    .Imageˉbytes[..Consoleˉverifierˉbundle.Nativeˉimageˉbytes];
+                var Consoleˉverifierˉserviceˉcode = Consoleˉverifierˉbundle
+                    .Placements.Select(Placement =>
+                        new Nativeˉserviceˉcode(
+                            Placement.Service,
+                            Placement.Adapter,
+                            Consoleˉverifierˉbundle.Imageˉbytes[
+                                Placement.Imageˉoffset..
+                                (Placement.Imageˉoffset + Placement.Codeˉbytes)]))
+                    .ToImmutableArray();
+                var Consoleˉverifierˉservices = Consoleˉverifierˉserviceˉcode
+                    .Select(Service => new Nativeˉpublicationˉservice(
+                        Service.Service,
+                        Service.Code.Length))
+                    .ToImmutableArray();
+                var Consoleˉverifierˉplan = X64ˉnativeˉpublicationˉlayout.Plan(
+                    Consoleˉverifierˉfragment.Length,
+                    Consoleˉverifierˉservices);
+                var Consoleˉverifierˉexpected =
+                    Nativeˉserviceˉbundleˉmaterializationˉsession.Buildˉrequest(
+                        Consoleˉverifierˉfragment,
+                        Consoleˉverifierˉserviceˉcode,
+                        Consoleˉverifierˉplan,
+                        0);
+                var Consoleˉverifierˉprefix = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Console-Verifier-Source-");
+                var Consoleˉverifierˉpaths = Enumerable.Range(0, 12)
+                    .Select(Index => Consoleˉverifierˉprefix + Index)
+                    .ToArray();
+                File.WriteAllBytes(
+                    Consoleˉverifierˉpaths[0],
+                    Consoleˉverifierˉfragment.AsSpan());
+                for (var Index = 0;
+                    Index < Consoleˉverifierˉserviceˉcode.Length;
+                    Index++)
+                {
+                    File.WriteAllBytes(
+                        Consoleˉverifierˉpaths[Index + 1],
+                        Consoleˉverifierˉserviceˉcode[Index].Code.AsSpan());
+                }
+                var Consoleˉverifierˉoutput = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Console-Verifier-Request.wvsq");
+                Equal(0, Run([
+                    "console-verifier",
+                    .. Consoleˉverifierˉpaths,
+                    Consoleˉverifierˉoutput,
+                ]));
+                Sequenceˉequal(
+                    Consoleˉverifierˉexpected,
+                    File.ReadAllBytes(Consoleˉverifierˉoutput));
+
+                var Inspectorˉoutput = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Inspector-Request.wvsq");
+                Equal(0, Run([
+                    "wvo-inspector",
+                    .. Consoleˉverifierˉpaths,
+                    Inspectorˉoutput,
+                ]));
+                Sequenceˉequal(
+                    File.ReadAllBytes(Consoleˉverifierˉoutput),
+                    File.ReadAllBytes(Inspectorˉoutput));
+
+                File.WriteAllBytes(Consoleˉverifierˉoutput, Sentinel);
+                Equal(64, Run([
+                    "console-application-verifier",
+                    .. Consoleˉverifierˉpaths,
+                    Consoleˉverifierˉoutput,
+                ]));
+                Sequenceˉequal(
+                    Sentinel,
+                    File.ReadAllBytes(Consoleˉverifierˉoutput));
             }
         }
         finally

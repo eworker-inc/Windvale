@@ -238,3 +238,33 @@ export fn Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉforˉwvoˉinspecto
         Total
     );
 }
+
+export fn Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉforˉconsoleˉverifier(
+    Fragment: bytes,
+    Console: bytes,
+    Argumentˉcount: bytes,
+    Argument: bytes,
+    Fileˉinput: bytes,
+    Utf8: bytes,
+    Diagnostic: bytes,
+    Enumˉnameˉservice: bytes,
+    Textˉconcatˉservice: bytes,
+    Textˉquoteˉservice: bytes,
+    I32ˉformatˉservice: bytes,
+    U32ˉformatˉservice: bytes
+) -> Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉresult {
+    return Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉforˉwvoˉinspector(
+        Fragment,
+        Console,
+        Argumentˉcount,
+        Argument,
+        Fileˉinput,
+        Utf8,
+        Diagnostic,
+        Enumˉnameˉservice,
+        Textˉconcatˉservice,
+        Textˉquoteˉservice,
+        I32ˉformatˉservice,
+        U32ˉformatˉservice
+    );
+}

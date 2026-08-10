@@ -395,6 +395,15 @@ target standard linker. This removes one managed application-writer seam, not
 the retained same-release seed: independent Linux execution, clean
 previous-seed renewal, qualification, atomic installation, and promotion remain.
 
+Decision 0502 applies the retained native compiler, raw lowerer, standard
+linker, and hosted construction toolsets to the exact two-snapshot
+console-application verifier. Its raw WVO is an exact admitted oracle before
+linking, and profile 7 fixes the eleven-service bundle, two immutable snapshots,
+and target runtime geometry before paired construction. This closes the managed
+application-writer seam for that candidate on the current Windows host. It does
+not establish independent Linux execution, clean or previous-seed bootstrap,
+grouped qualification, atomic installation, promotion, or recovery deletion.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

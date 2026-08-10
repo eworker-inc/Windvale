@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_CONTAINER_BYTES = 69_165;
+    private const int NATIVE_HOSTED_VERIFIER_CONTAINER_BYTES = 87_965;
     private const string NATIVE_HOSTED_VERIFIER_CONTAINER_SHA256 =
-        "908dd3261d4075ee0f34a5976832e81f6bd16e742caf9469b48bcad43c773872";
+        "ef300a56e70c7fbe9b47c623bc0ed408d151e1aee967cba214ef3c8601617b0d";
 
     private static void Nativeˉhostedˉverifierˉcontainerˉprocessˉruns()
     {
@@ -53,6 +53,8 @@ internal static partial class Program
                 Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
                 Symbol.Kind == Nativeˉsymbolˉkind.Function &&
                 Symbol.Name == "Main").Offset;
+            var Consoleˉverifier =
+                Loadˉconsoleˉapplicationˉverifierˉfixture(Repository);
 
             int Run(ImmutableArray<string> arguments)
             {
@@ -128,6 +130,94 @@ internal static partial class Program
                     Bundleˉpath, Outputˉpath,
                 ]));
                 Sequenceˉequal(Expected, File.ReadAllBytes(Outputˉpath));
+
+                var Consoleˉprofile = Hostedˉverifierˉapplicationˉprofile
+                    .Consoleˉapplicationˉverifier;
+                var Consoleˉbundle = X64ˉnativeˉserviceˉbundle
+                    .Buildˉhostedˉconsoleˉapplicationˉverifier(
+                        Consoleˉverifier.Fragment,
+                        Platform);
+                var Consoleˉruntime = Hostedˉverifierˉruntimeˉdata.Build(
+                    Target,
+                    Consoleˉverifier.Module.Module.Capabilities,
+                    Consoleˉbundle,
+                    Consoleˉverifier.Entry,
+                    Consoleˉprofile).ToArray();
+                var Consoleˉruntimeˉlayout = Hostedˉverifierˉruntimeˉdata.Plan(
+                    Target,
+                    Consoleˉprofile);
+                Assertˉconsoleˉverifierˉruntimeˉlayout(
+                    Consoleˉruntimeˉlayout,
+                    Target);
+                var Consoleˉexpected = Platform == Nativeˉserviceˉplatform.Windows
+                    ? Windowsˉhostedˉverifierˉapplicationˉbuilder.Build(
+                        Consoleˉverifier.Module.Module.Capabilities,
+                        Consoleˉbundle,
+                        Consoleˉverifier.Entry,
+                        Consoleˉprofile)
+                    : Linuxˉhostedˉverifierˉapplicationˉbuilder.Build(
+                        Consoleˉverifier.Module.Module.Capabilities,
+                        Consoleˉbundle,
+                        Consoleˉverifier.Entry,
+                        Consoleˉprofile);
+                var Consoleˉplatformˉresponse = Platformˉresponseˉfrom(
+                    Platform,
+                    Consoleˉbundle,
+                    Consoleˉverifier.Entry,
+                    Consoleˉexpected,
+                    Consoleˉprofile);
+                var Consoleˉstartupˉresponse = Startupˉresponseˉfrom(
+                    Platform,
+                    Consoleˉbundle,
+                    Consoleˉverifier.Entry,
+                    Consoleˉexpected,
+                    Consoleˉprofile);
+                var Consoleˉbundleˉresponse = Responseˉwithˉpayload(
+                    1230198359,
+                    2,
+                    [1u, 24u, checked((uint)Consoleˉbundle.Imageˉbytes.Length), 0u,
+                        checked((uint)Consoleˉbundle.Imageˉbytes.Length), 11u],
+                    Consoleˉbundle.Imageˉbytes.AsSpan());
+                var Consoleˉruntimeˉpath = Prefix + "Console-Runtime.wvhr";
+                var Consoleˉplatformˉpath = Prefix + "Console-Platform.wvhb";
+                var Consoleˉstartupˉpath = Prefix + "Console-Startup.wvsd";
+                var Consoleˉbundleˉpath = Prefix + "Console-Bundle.wvsi";
+                var Consoleˉoutputˉpath = Prefix + "Console-Application";
+                File.WriteAllBytes(Consoleˉruntimeˉpath, Consoleˉruntime);
+                File.WriteAllBytes(Consoleˉplatformˉpath, Consoleˉplatformˉresponse);
+                File.WriteAllBytes(Consoleˉstartupˉpath, Consoleˉstartupˉresponse);
+                File.WriteAllBytes(Consoleˉbundleˉpath, Consoleˉbundleˉresponse);
+                Equal(0, Run([
+                    "console-verifier",
+                    Consoleˉruntimeˉpath,
+                    Consoleˉplatformˉpath,
+                    Consoleˉstartupˉpath,
+                    Consoleˉbundleˉpath,
+                    Consoleˉoutputˉpath,
+                ]));
+                Sequenceˉequal(
+                    Consoleˉexpected,
+                    File.ReadAllBytes(Consoleˉoutputˉpath));
+
+                var Changedˉcapacity = Consoleˉruntime.ToArray();
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Changedˉcapacity.AsSpan(288),
+                    1u);
+                var Changedˉcapacityˉpath = Prefix + "Changed-Capacity.wvhr";
+                File.WriteAllBytes(Changedˉcapacityˉpath, Changedˉcapacity);
+                byte[] Capacityˉsentinel = [0x57, 0x56, 0x43, 0x41];
+                File.WriteAllBytes(Consoleˉoutputˉpath, Capacityˉsentinel);
+                Equal(2, Run([
+                    "console-verifier",
+                    Changedˉcapacityˉpath,
+                    Consoleˉplatformˉpath,
+                    Consoleˉstartupˉpath,
+                    Consoleˉbundleˉpath,
+                    Consoleˉoutputˉpath,
+                ]));
+                Sequenceˉequal(
+                    Capacityˉsentinel,
+                    File.ReadAllBytes(Consoleˉoutputˉpath));
 
                 if ((OperatingSystem.IsWindows() &&
                         Platform == Nativeˉserviceˉplatform.Windows) ||
@@ -264,13 +354,16 @@ internal static partial class Program
         Nativeˉserviceˉplatform platform,
         Nativeˉserviceˉbundle bundle,
         uint nativeˉentry,
-        ImmutableArray<byte> application)
+        ImmutableArray<byte> application,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
         if (platform == Nativeˉserviceˉplatform.Windows)
         {
             var Layout = Windowsˉhostedˉverifierˉapplicationˉcontract.Plan(
                 bundle,
-                nativeˉentry);
+                nativeˉentry,
+                profile);
             byte[] Payload = [
                 .. application.AsSpan(0, checked((int)Layout.Headerˉbytes)),
                 .. application.AsSpan(checked((int)Layout.Importˉfileˉoffset), 4096),
@@ -293,10 +386,14 @@ internal static partial class Program
         Nativeˉserviceˉplatform platform,
         Nativeˉserviceˉbundle bundle,
         uint nativeˉentry,
-        ImmutableArray<byte> application)
+        ImmutableArray<byte> application,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
         var Offset = platform == Nativeˉserviceˉplatform.Windows ? 512 : 4096;
-        var Count = platform == Nativeˉserviceˉplatform.Windows ? 1275 : 668;
+        var Count = platform == Nativeˉserviceˉplatform.Windows
+            ? Windowsˉhostedˉverifierˉapplicationˉcontract.Startupˉbytes(profile)
+            : Linuxˉhostedˉverifierˉapplicationˉcontract.Startupˉbytes(profile);
         return Responseˉwithˉpayload(
             1146312279,
             1,

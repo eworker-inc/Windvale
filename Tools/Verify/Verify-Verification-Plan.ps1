@@ -78,7 +78,8 @@ $NativeCases = @(
         Suites = @(
             'segmented-compiler-toolset-reconstruction',
             'wv-linker-reconstruction',
-            'wvo-inspector-reconstruction'
+            'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -96,6 +97,7 @@ $NativeCases = @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
             'wvo-publisher-reconstruction',
             'console-packager-container-reconstruction'
         )
@@ -114,6 +116,7 @@ $NativeCases = @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'source-containment',
@@ -166,6 +169,7 @@ $NativeCases = @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
             'wvo-publisher-reconstruction'
         )
         Gaps = @()
@@ -179,7 +183,10 @@ $NativeCases = @(
             'Artifacts/Native-Wv-Linker-Candidate/Manifest.json',
             'Windvale-Wv-Linker.wvproj'
         )
-        Suites = @('wv-linker-reconstruction')
+        Suites = @(
+            'wv-linker-reconstruction',
+            'console-verifier-reconstruction'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -193,6 +200,7 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'wv-linker-reconstruction',
+            'console-verifier-reconstruction',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit'
@@ -212,6 +220,7 @@ $NativeCases = @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
             'wvo-publisher-reconstruction',
             'console-packager-container-reconstruction',
             'hosted-verifier-publisher-files'
@@ -227,6 +236,7 @@ $NativeCases = @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'source-containment',
@@ -247,7 +257,10 @@ $NativeCases = @(
             'Windvale-Wvo-Object.wvproj',
             'Specifications/Windvale-Native-Wvo-Inspector.md'
         )
-        Suites = @('wvo-inspector-reconstruction')
+        Suites = @(
+            'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -260,12 +273,69 @@ $NativeCases = @(
         )
         Suites = @(
             'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
             'wvo-publisher-reconstruction',
             'wvo-read-only',
             'wvo-differential',
             'wvo-containment',
             'wvo-hostile-size',
             'publisher-rejections',
+            'hosted-verifier-publisher-files'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console verifier reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Console-Verifier-Reconstruction.cmd',
+            'Tools/Native/Construct-Console-Verifier-Reconstruction.cmd',
+            'Artifacts/Native-Console-Application-Verifier-Candidate/Manifest.json',
+            'Windvale-Console-Application-Verifier.wvproj',
+            'Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv',
+            'Specifications/Windvale-Console-Application-Verification.md'
+        )
+        Suites = @('console-verifier-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console verifier source closure'
+        Paths = @(
+            'Foundation/Byte-Construction.wv',
+            'Foundation/Sha256.wv',
+            'Linker/Windvale/Console-Application-Admission-Core.wv',
+            'Linker/Windvale/Console-Application-Construction-Core.wv',
+            'Linker/Windvale/Console-Application-Plan-Core.wv',
+            'Linker/Windvale/Console-Application-Verification-Core.wv',
+            'Linker/Windvale/Hosted-Console-Application-Verification-Common.wv'
+        )
+        Suites = @(
+            'seed',
+            'wv-linker-reconstruction',
+            'console-verifier-reconstruction',
+            'linker-rejections',
+            'linker-hostile',
+            'linker-map-limit',
+            'console-packager-source-reconstruction',
+            'console-packager-container-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console verifier shared hosted toolsets and startup'
+        Paths = @(
+            'Artifacts/Native-Hosted-Container-Toolset-Candidate/Manifest.json',
+            'Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate/Manifest.json',
+            'Linker/Startup/Windows-X64-Hosted-Inspector.wva',
+            'Runtime/Windvale.Native/Consumers/Native-X64-Windows-File-Input-Service.bin'
+        )
+        Suites = @(
+            'wv-linker-reconstruction',
+            'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
+            'wvo-publisher-reconstruction',
             'hosted-verifier-publisher-files'
         )
         Gaps = @()
@@ -329,6 +399,7 @@ $NativeCases = @(
         Paths = @('Tools/Native/Lower-Wvb-To-Wvo.cmd')
         Suites = @(
             'wv-linker-reconstruction',
+            'console-verifier-reconstruction',
             'lowerer-rejections',
             'wvo-export-renamer',
             'aot-chain'
@@ -446,6 +517,7 @@ $NativeCases = @(
         )
         Suites = @(
             'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
             'wvo-publisher-reconstruction',
             'publisher-rejections',
             'hosted-verifier-publisher-files'

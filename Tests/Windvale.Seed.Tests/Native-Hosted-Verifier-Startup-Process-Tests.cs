@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_STARTUP_BYTES = 64_198;
+    private const int NATIVE_HOSTED_VERIFIER_STARTUP_BYTES = 75_731;
     private const string NATIVE_HOSTED_VERIFIER_STARTUP_SHA256 =
-        "36b6b638f14e0ecaff7ad8934ce785e22f9fa3d6c3cd5dcd91cfc98a4fa569d6";
+        "bcc11d87ca487b1901d6f1d9d08529b8e5c0fe5dbe41989b279375dcb35515f7";
 
     private static void Nativeˉhostedˉverifierˉstartupˉprocessˉruns()
     {
@@ -58,6 +58,20 @@ internal static partial class Program
                 Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
                 Symbol.Kind == Nativeˉsymbolˉkind.Function &&
                 Symbol.Name == "Main").Offset;
+            var Consoleˉverifier =
+                Loadˉconsoleˉapplicationˉverifierˉfixture(Repository);
+            var Windowsˉinspectorˉobjectˉpath = Path.Combine(
+                Directoryˉpath,
+                "Windows-X64-Hosted-Inspector.wvo");
+            var Linuxˉinspectorˉobjectˉpath = Path.Combine(
+                Directoryˉpath,
+                "Linux-X64-Hosted-Inspector.wvo");
+            File.WriteAllBytes(
+                Windowsˉinspectorˉobjectˉpath,
+                Assembleˉsuccess(WINDOWS_HOSTED_INSPECTOR_STARTUP_SOURCE));
+            File.WriteAllBytes(
+                Linuxˉinspectorˉobjectˉpath,
+                Assembleˉsuccess(LINUX_HOSTED_INSPECTOR_STARTUP_SOURCE));
 
             int Run(ImmutableArray<string> arguments)
             {
@@ -141,6 +155,104 @@ internal static partial class Program
                     checked((uint)Expected.Length),
                     BinaryPrimitives.ReadUInt32LittleEndian(Response.AsSpan(20)));
                 Sequenceˉequal(Expected, Response.AsSpan(32).ToArray());
+
+                var Consoleˉprofile = Hostedˉverifierˉapplicationˉprofile
+                    .Consoleˉapplicationˉverifier;
+                var Consoleˉbundle = X64ˉnativeˉserviceˉbundle
+                    .Buildˉhostedˉconsoleˉapplicationˉverifier(
+                        Consoleˉverifier.Fragment,
+                        Platform);
+                var Consoleˉruntime = Hostedˉverifierˉruntimeˉdata.Build(
+                    Target,
+                    Consoleˉverifier.Module.Module.Capabilities,
+                    Consoleˉbundle,
+                    Consoleˉverifier.Entry,
+                    Consoleˉprofile);
+                var Consoleˉruntimeˉlayout = Hostedˉverifierˉruntimeˉdata.Plan(
+                    Target,
+                    Consoleˉprofile);
+                Assertˉconsoleˉverifierˉruntimeˉlayout(
+                    Consoleˉruntimeˉlayout,
+                    Target);
+                var Consoleˉapplicationˉlayout = Platform ==
+                    Nativeˉserviceˉplatform.Windows
+                    ? (object)Windowsˉhostedˉverifierˉapplicationˉcontract.Plan(
+                        Consoleˉbundle,
+                        Consoleˉverifier.Entry,
+                        Consoleˉprofile)
+                    : Linuxˉhostedˉverifierˉapplicationˉcontract.Plan(
+                        Consoleˉbundle,
+                        Consoleˉverifier.Entry,
+                        Consoleˉprofile);
+                var Consoleˉexpected = Platform == Nativeˉserviceˉplatform.Windows
+                    ? Windowsˉhostedˉinspectorˉstartup.Build(
+                        ((Windowsˉhostedˉverifierˉapplicationˉlayout)
+                            Consoleˉapplicationˉlayout).Textˉaddress,
+                        ((Windowsˉhostedˉverifierˉapplicationˉlayout)
+                            Consoleˉapplicationˉlayout).Importˉaddress,
+                        ((Windowsˉhostedˉverifierˉapplicationˉlayout)
+                            Consoleˉapplicationˉlayout).Runtimeˉaddress,
+                        Consoleˉruntimeˉlayout,
+                        Consoleˉbundle,
+                        Consoleˉverifier.Entry,
+                        Consoleˉprofile)
+                    : Linuxˉhostedˉinspectorˉstartup.Build(
+                        ((Linuxˉhostedˉverifierˉapplicationˉlayout)
+                            Consoleˉapplicationˉlayout).Textˉaddress,
+                        ((Linuxˉhostedˉverifierˉapplicationˉlayout)
+                            Consoleˉapplicationˉlayout).Dataˉaddress,
+                        Consoleˉruntimeˉlayout,
+                        Consoleˉbundle,
+                        Consoleˉverifier.Entry,
+                        Consoleˉprofile);
+                var Consoleˉruntimeˉpath = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Console-Runtime.wvhr");
+                var Consoleˉresponseˉpath = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Console-Response.wvsd");
+                var Consoleˉobjectˉpath = Platform ==
+                    Nativeˉserviceˉplatform.Windows
+                    ? Windowsˉinspectorˉobjectˉpath
+                    : Linuxˉinspectorˉobjectˉpath;
+                File.WriteAllBytes(Consoleˉruntimeˉpath, Consoleˉruntime.AsSpan());
+                Equal(0, Run([
+                    "console-verifier",
+                    Consoleˉruntimeˉpath,
+                    Consoleˉobjectˉpath,
+                    Consoleˉresponseˉpath,
+                ]));
+                var Consoleˉresponse = File.ReadAllBytes(Consoleˉresponseˉpath);
+                Equal(32 + Consoleˉexpected.Length, Consoleˉresponse.Length);
+                Equal(0u, BinaryPrimitives.ReadUInt32LittleEndian(
+                    Consoleˉresponse.AsSpan(12)));
+                Equal(
+                    checked((uint)Consoleˉexpected.Length),
+                    BinaryPrimitives.ReadUInt32LittleEndian(
+                        Consoleˉresponse.AsSpan(20)));
+                Sequenceˉequal(
+                    Consoleˉexpected,
+                    Consoleˉresponse.AsSpan(32).ToArray());
+
+                var Changedˉcapacity = Consoleˉruntime.ToArray();
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Changedˉcapacity.AsSpan(288),
+                    1u);
+                var Changedˉcapacityˉpath = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Changed-Capacity.wvhr");
+                File.WriteAllBytes(Changedˉcapacityˉpath, Changedˉcapacity);
+                byte[] Capacityˉsentinel = [0x57, 0x56, 0x53, 0x44];
+                File.WriteAllBytes(Consoleˉresponseˉpath, Capacityˉsentinel);
+                Equal(2, Run([
+                    "console-verifier",
+                    Changedˉcapacityˉpath,
+                    Consoleˉobjectˉpath,
+                    Consoleˉresponseˉpath,
+                ]));
+                Sequenceˉequal(
+                    Capacityˉsentinel,
+                    File.ReadAllBytes(Consoleˉresponseˉpath));
             }
 
             var Windowsˉobjectˉpath = Path.Combine(
@@ -184,5 +296,34 @@ internal static partial class Program
         {
             Directory.Delete(Directoryˉpath, recursive: true);
         }
+    }
+
+    private static void Assertˉconsoleˉverifierˉruntimeˉlayout(
+        Hostedˉverifierˉruntimeˉlayout layout,
+        Consoleˉapplicationˉtarget target)
+    {
+        Equal(target, layout.Target);
+        Equal(67u, layout.Maximumˉarguments);
+        Equal(4_096u, layout.Maximumˉargumentˉbytes);
+        Equal(4_096u, layout.Headerˉbytes);
+        Equal(4_096u, layout.Argumentˉtableˉoffset);
+        Equal(1_072u, layout.Argumentˉtableˉbytes);
+        Equal(5_168u, layout.Argumentˉbytesˉoffset);
+        Equal(65_536u, layout.Argumentˉbytes);
+        Equal(70_704u, layout.Snapshotˉtableˉoffset);
+        Equal(64u, layout.Snapshotˉtableˉbytes);
+        Equal(2u, layout.Snapshotˉcapacity);
+        Equal(73_728u, layout.Recordˉarenaˉoffset);
+        Equal(2_170_880u, layout.Textˉarenaˉoffset);
+        Equal(136_388_608u, layout.Nameˉarenaˉoffset);
+        Equal(138_485_760u, layout.Dataˉarenaˉoffset);
+        Equal(146_874_368u, layout.Fileˉinputˉscratchˉoffset);
+        var Windows = target == Consoleˉapplicationˉtarget.Windowsˉx64;
+        Equal(Windows ? 2_097_154u : 1_048_577u,
+            layout.Fileˉinputˉscratchˉbytes);
+        Equal(Windows ? 148_975_616u : 147_927_040u,
+            layout.Fileˉoutputˉscratchˉoffset);
+        Equal(0u, layout.Fileˉoutputˉscratchˉbytes);
+        Equal(Windows ? 148_975_616u : 147_927_040u, layout.Virtualˉbytes);
     }
 }

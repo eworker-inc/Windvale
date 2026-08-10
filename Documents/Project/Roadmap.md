@@ -12,6 +12,15 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0502](../Decisions/0502-Native-Console-Application-Verifier-Reconstruction.md)
+closes the managed application-writer seam for the exact current profile-7
+console-application-verifier candidate. The current Windows native route pins
+the WVB and raw-lowerer WVO oracle, links the admitted object, and constructs
+both two-snapshot applications through the retained hosted-container and
+publisher-construction toolsets. Retained same-release seeds, independent Linux
+reconstruction and execution, clean previous-seed renewal, qualification,
+atomic installation, promotion, and Stage 0 recovery release remain.
+
 [Decision 0501](../Decisions/0501-Native-Wv-Linker-Reconstruction.md)
 closes the managed application-writer seam for the exact current standard
 Wv-Linker candidate. The current Windows native route pins a raw-lowerer WVO

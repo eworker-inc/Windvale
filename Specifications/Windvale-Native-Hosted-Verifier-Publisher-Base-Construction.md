@@ -4,7 +4,7 @@
 
 This contract closes the final managed input in hosted-verifier publisher image
 construction. Two focused hosted Windvale tools derive exact verifier metadata
-and runtime headers from canonical six-service or explicit profile-6
+and runtime headers from canonical six-service or explicit profile-6/profile-7
 eleven-service `WVSQ 2` requests.
 The ordinary construction command then connects those values to the existing
 native bundle, startup, platform, container, publisher-record, object, import,
@@ -20,6 +20,7 @@ still requires a completed-publisher admission and durable replacement boundary.
 ```text
 wvhostverifierpublisherbasemetadata <target:1|2> <native-entry> <request.wvsq> <metadata.wvhv>
 wvhostverifierpublisherbasemetadata wvo-inspector <target:1|2> <native-entry> <request.wvsq> <metadata.wvhv>
+wvhostverifierpublisherbasemetadata console-verifier <target:1|2> <native-entry> <request.wvsq> <metadata.wvhv>
 wvhostverifierpublisherbaseruntime <metadata.wvhv> <runtime.wvhr>
 ```
 
@@ -31,10 +32,11 @@ requires that exact payload length before any fixed read, forms the existing
 1,048-byte runtime request, invokes the shared constructor, and writes only the
 raw 4,096-byte `WVHR` result.
 
-The explicit `wvo-inspector` form requires the 156-byte eleven-service plan,
-hashes the fragment and all eleven ordered leaves, and carries profile 6 through
-the 572-byte evidence and 624-byte request. The legacy form and
-`publisher-admission` selector retain their profile-2/profile-8 bytes.
+The explicit `wvo-inspector` and `console-verifier` forms require the 156-byte
+eleven-service plan, hash the fragment and all eleven ordered leaves, and carry
+profile 6 or profile 7 through the 572-byte evidence and 624-byte request. The
+legacy form and `publisher-admission` selector retain their profile-2/profile-8
+bytes.
 
 Both commands reject an exact path-text input/output alias with status 64.
 Malformed records return 2 without changing an existing destination. Filesystem
@@ -58,14 +60,18 @@ roles and their exact bytes.
 
 ## Exact identities
 
+The base-metadata and base-runtime rows are the retained packaged identities
+from the construction-toolset refresh that consumes the profile-7-capable
+sources.
+
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Base-metadata WVB | 74,614 | `9db2d77674cda3eede9d852cfc8a10ff7d308421ffe5837df8b025d461065259` |
-| Base-runtime WVB | 21,404 | `0be91c987b5a02c26087e77c3ac53a06e413799b6cd7454e4673edc7a19f9346` |
-| Windows base-metadata application | 978,432 | `e99bbe05e9d313f9544c35033aa7b3b1ee80ea064e0042c8b5d18b7761f056f4` |
-| Linux base-metadata application | 978,944 | `0d8670d35f443cbad36892503c5ca8a7c539b0511ca0e310a866c9ebccf2bfd0` |
-| Windows base-runtime application | 229,888 | `a0a9c9bd9afea5815107f844b249946fef1f43c73417a8914d8c03205bbe5beb` |
-| Linux base-runtime application | 229,376 | `5319773660b47e27f825a865b13e45b6b1541063ba9959ca3a012e2c9fba869d` |
+| Base-metadata WVB | 75,501 | `da1e8a543a309c75dac0188fd2f8e40741b37fa0270359a3acf17f1749b14d64` |
+| Base-runtime WVB | 21,807 | `909393ce96e6f64738a52f09bce097c446ec34e90284a9e5ad96acb9ae953803` |
+| Windows base-metadata application | 984,064 | `8617505db3507ca2e50008f48062f647cff23461b0cc6183d71547e86b2e4a0f` |
+| Linux base-metadata application | 983,040 | `cd91a0f0756886dcb2ee9bac2a24776f9853ef7d9e4f5ca488c8539053934d46` |
+| Windows base-runtime application | 231,424 | `d5ffa8b1f8cde0ad3cfd4715650b28eec387f9a2fd673849b39dce08748df2cd` |
+| Linux base-runtime application | 233,472 | `d56a05505544ccbc603dbceb6e0871fa095f41a10b8013d3d859427c7ba27aeb` |
 | Publisher-application admission WVB | 30,778 | `b4e0a2ee04de6cfff0efc723c57031bf5cfcd6706e3156525ce2157c5f287d07` |
 | Publisher-application admission WVO | 555,690 | `88cc97665cfd0de14f2c9ac6c80dfd985edc508fccdc3d9b887da740cd034e23` |
 | Publisher-promoter WVB | 41,268 | `c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672` |
@@ -92,10 +98,10 @@ roles and their exact bytes.
 | Windows WVO publisher | 430,080 | `ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a` |
 | Linux WVO publisher | 426,949 | `4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d` |
 
-Version 16 of the construction candidate contains 27 canonical WVB/WVO
+Version 17 of the construction candidate contains 27 canonical WVB/WVO
 artifacts and 22 paired host applications. Its 49-entry `SHA256SUMS` is 5,064
 LF-only bytes with SHA-256
-`8b752fd2c1b5afed4935453ee4d1f520d8807d439d7ad339f5f71a5ca30c05b1`.
+`a63365d681c9540c97c0ef8d51b09a5bf9527a7b98c1a09e9140369ee64302ea`.
 
 ## Native owner and remaining gate
 

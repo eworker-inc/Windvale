@@ -18,6 +18,18 @@ fn Runtimeˉaddress(
         Layout.Nativeˉhostedˉverifierˉruntimeˉoffset(Index);
 }
 
+fn Runtimeˉaddressˉforˉprofile(
+    Runtime: bytes,
+    Value: Layout.Nativeˉhostedˉverifierˉlayout,
+    Index: u32
+) -> u32 {
+    return Value.Runtimeˉaddress +
+        Layout.Nativeˉhostedˉverifierˉruntimeˉoffsetˉforˉprofile(
+            Index,
+            Bytesˉreadˉu32ˉlittle(Runtime, 564u32)
+        );
+}
+
 fn Windowsˉverifierˉtargets(
     Runtime: bytes,
     Value: Layout.Nativeˉhostedˉverifierˉlayout
@@ -34,8 +46,8 @@ fn Windowsˉverifierˉtargets(
     Result = Add(Result, Runtimeˉaddress(Value, 7u32));
     Result = Add(Result, Runtimeˉaddress(Value, 8u32));
     Result = Add(Result, Runtimeˉaddress(Value, 9u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 11u32));
     Result = Add(Result, Import + 248u32);
     Result = Add(Result, Import + 200u32);
     Result = Add(Result, Import + 216u32);
@@ -58,17 +70,20 @@ fn Windowsˉverifierˉtargets(
     Result = Add(Result, Import + 304u32);
     Result = Add(Result, Runtimeˉaddress(Value, 4u32));
     Result = Add(Result, Runtimeˉaddress(Value, 5u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 11u32));
     Result = Add(Result, Import + 264u32);
     Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 4u32));
     Result = Add(Result, Import + 240u32);
     Result = Add(Result, Runtimeˉaddress(Value, 0u32));
     Result = Add(Result, 8192u32 + Value.Nativeˉentry);
     Result = Add(Result, Import + 240u32);
-    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
     Result = Add(Result, Runtimeˉaddress(Value, 9u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
-    return Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
+    return Add(
+        Result,
+        Runtimeˉaddressˉforˉprofile(Runtime, Value, 11u32)
+    );
 }
 
 fn Windowsˉinspectorˉtargets(
@@ -87,8 +102,8 @@ fn Windowsˉinspectorˉtargets(
     Result = Add(Result, Runtimeˉaddress(Value, 7u32));
     Result = Add(Result, Runtimeˉaddress(Value, 8u32));
     Result = Add(Result, Runtimeˉaddress(Value, 9u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 11u32));
     Result = Add(Result, Import + 248u32);
     Result = Add(Result, Import + 200u32);
     Result = Add(Result, Import + 216u32);
@@ -113,17 +128,20 @@ fn Windowsˉinspectorˉtargets(
     Result = Add(Result, Import + 304u32);
     Result = Add(Result, Runtimeˉaddress(Value, 4u32));
     Result = Add(Result, Runtimeˉaddress(Value, 5u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 11u32));
     Result = Add(Result, Import + 264u32);
     Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 4u32));
     Result = Add(Result, Import + 240u32);
     Result = Add(Result, Runtimeˉaddress(Value, 0u32));
     Result = Add(Result, 8192u32 + Value.Nativeˉentry);
     Result = Add(Result, Import + 240u32);
-    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
     Result = Add(Result, Runtimeˉaddress(Value, 9u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
-    return Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
+    return Add(
+        Result,
+        Runtimeˉaddressˉforˉprofile(Runtime, Value, 11u32)
+    );
 }
 
 fn Linuxˉverifierˉtargets(
@@ -141,8 +159,8 @@ fn Linuxˉverifierˉtargets(
     Result = Add(Result, Runtimeˉaddress(Value, 7u32));
     Result = Add(Result, Runtimeˉaddress(Value, 8u32));
     Result = Add(Result, Runtimeˉaddress(Value, 9u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 11u32));
     Result = Add(Result, Runtimeˉaddress(Value, 1u32));
     Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 0u32));
     Result = Add(Result, Layout.Nativeˉhostedˉverifierˉserviceˉaddress(Runtime, 1u32));
@@ -172,8 +190,8 @@ fn Linuxˉinspectorˉtargets(
     Result = Add(Result, Runtimeˉaddress(Value, 7u32));
     Result = Add(Result, Runtimeˉaddress(Value, 8u32));
     Result = Add(Result, Runtimeˉaddress(Value, 9u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 10u32));
-    Result = Add(Result, Runtimeˉaddress(Value, 11u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
+    Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 11u32));
     Result = Add(Result, Runtimeˉaddress(Value, 1u32));
     var Service: u32 = 0u32;
     while Service < 11u32 {
@@ -199,13 +217,13 @@ export fn Nativeˉhostedˉverifierˉstartupˉtargets(
     }
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 564u32);
     if Value.Target == 1u32 {
-        if Profile == 6u32 {
+        if Profile == 6u32 || Profile == 7u32 {
             return Windowsˉinspectorˉtargets(Runtime, Value);
         }
         return Windowsˉverifierˉtargets(Runtime, Value);
     }
     if Value.Target == 2u32 {
-        if Profile == 6u32 {
+        if Profile == 6u32 || Profile == 7u32 {
             return Linuxˉinspectorˉtargets(Runtime, Value);
         }
         return Linuxˉverifierˉtargets(Runtime, Value);

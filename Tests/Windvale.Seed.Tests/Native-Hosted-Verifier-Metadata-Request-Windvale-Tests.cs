@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_METADATA_REQUEST_BYTES = 15_070;
+    private const int NATIVE_HOSTED_VERIFIER_METADATA_REQUEST_BYTES = 16_138;
     private const string NATIVE_HOSTED_VERIFIER_METADATA_REQUEST_SHA256 =
-        "fc87cfad498befe8af90fc5201e07c15e13c4a9363b73c344e1f6e49519dd55a";
+        "040a30618f3ef760c782fa3cc3014f675f7ac952fd94700e4b894cd6b4145335";
 
     private static void Windvaleˉnativeˉhostedˉverifierˉmetadataˉrequestˉruns()
     {
@@ -71,6 +71,8 @@ internal static partial class Program
             Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
             Symbol.Kind == Nativeˉsymbolˉkind.Function &&
             Symbol.Name == "Main").Offset;
+        var Consoleˉverifier =
+            Loadˉconsoleˉapplicationˉverifierˉfixture(Repository);
 
         ImmutableArray<byte>? Firstˉevidence = null;
         foreach (var Target in Enum.GetValues<Consoleˉapplicationˉtarget>())
@@ -78,28 +80,59 @@ internal static partial class Program
             var Platform = Target == Consoleˉapplicationˉtarget.Windowsˉx64
                 ? Nativeˉserviceˉplatform.Windows
                 : Nativeˉserviceˉplatform.Linux;
-            var Bundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
-                Verifierˉfragment,
-                Platform);
-            var Evidence = Buildˉhostedˉverifierˉrequestˉevidence(
-                Target,
-                Bundle,
-                Nativeˉentry);
-            var Interpreted = Reference.Runˉmainˉbytes(Evidence).Bytes;
-            var Executed = X64ˉnativeˉexecutor.Executeˉbytes(Bridgeˉnative, Evidence);
-            Sequenceˉequal(Interpreted, Executed);
-            Equal(416, Executed.Length);
-            Equal(1146508887u, BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()));
-            Equal(0u, BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[12..]));
-            Equal(352u, BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[16..]));
-            Equal(384u, BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[20..]));
-            Sequenceˉequal(
-                Buildˉhostedˉverifierˉmetadataˉrequest(
+            foreach (var Profile in new[]
+            {
+                Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier,
+                Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier,
+            })
+            {
+                var Extended = Profile ==
+                    Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier;
+                var Fragment = Extended
+                    ? Consoleˉverifier.Fragment
+                    : Verifierˉfragment;
+                var Entry = Extended
+                    ? Consoleˉverifier.Entry
+                    : Nativeˉentry;
+                var Bundle = Extended
+                    ? X64ˉnativeˉserviceˉbundle
+                        .Buildˉhostedˉconsoleˉapplicationˉverifier(
+                            Fragment,
+                            Platform)
+                    : X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
+                        Fragment,
+                        Platform);
+                var Evidence = Buildˉhostedˉverifierˉrequestˉevidence(
                     Target,
                     Bundle,
-                    Nativeˉentry),
-                Executed[32..]);
-            Firstˉevidence ??= Evidence;
+                    Entry,
+                    Profile);
+                var Interpreted = Reference.Runˉmainˉbytes(Evidence).Bytes;
+                var Executed = X64ˉnativeˉexecutor.Executeˉbytes(
+                    Bridgeˉnative,
+                    Evidence);
+                Sequenceˉequal(Interpreted, Executed);
+                Equal(Extended ? 656 : 416, Executed.Length);
+                Equal(1146508887u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()));
+                Equal(0u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[12..]));
+                Equal(Extended ? 572u : 352u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[16..]));
+                Equal(Extended ? 624u : 384u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[20..]));
+                Sequenceˉequal(
+                    Buildˉhostedˉverifierˉmetadataˉrequest(
+                        Target,
+                        Bundle,
+                        Entry,
+                        Profile),
+                    Executed[32..]);
+                if (!Extended)
+                {
+                    Firstˉevidence ??= Evidence;
+                }
+            }
         }
 
         var Valid = Firstˉevidence ?? throw new InvalidOperationException();
@@ -136,9 +169,14 @@ internal static partial class Program
     private static ImmutableArray<byte> Buildˉhostedˉverifierˉrequestˉevidence(
         Consoleˉapplicationˉtarget target,
         Nativeˉserviceˉbundle bundle,
-        uint nativeˉentry)
+        uint nativeˉentry,
+        Hostedˉverifierˉapplicationˉprofile profile)
     {
-        Equal(6, bundle.Placements.Length);
+        var Serviceˉcount = profile ==
+            Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier
+            ? 11
+            : 6;
+        Equal(Serviceˉcount, bundle.Placements.Length);
         var Services = bundle.Placements.Select(Placement =>
             new Nativeˉpublicationˉservice(
                 Placement.Service,
@@ -146,22 +184,26 @@ internal static partial class Program
         var Publicationˉrequest = X64ˉnativeˉpublicationˉlayout.Buildˉrequest(
             bundle.Nativeˉimageˉbytes,
             Services);
-        Equal(96, Publicationˉrequest.Length);
+        var Planˉbytes = 24 + Serviceˉcount * 12;
+        Equal(Planˉbytes, Publicationˉrequest.Length);
 
-        var Bytes = new byte[352];
+        var Evidenceˉbytes = 24 + Planˉbytes + (Serviceˉcount + 1) * 32 + 8;
+        var Bytes = new byte[Evidenceˉbytes];
         BinaryPrimitives.WriteUInt32LittleEndian(Bytes, 1163286103);
         BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(4), 1);
-        BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(8), 352);
+        BinaryPrimitives.WriteUInt32LittleEndian(
+            Bytes.AsSpan(8),
+            checked((uint)Evidenceˉbytes));
         BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(12), (uint)target);
-        BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(16), 2);
+        BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(16), (uint)profile);
         BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(20), nativeˉentry);
         Publicationˉrequest.AsSpan().CopyTo(Bytes.AsSpan(24));
         SHA256.HashData(bundle.Imageˉbytes.AsSpan(0, bundle.Nativeˉimageˉbytes))
-            .CopyTo(Bytes.AsSpan(120, 32));
+            .CopyTo(Bytes.AsSpan(24 + Planˉbytes, 32));
         for (var Index = 0; Index < bundle.Placements.Length; Index++)
         {
             Convert.FromHexString(bundle.Placements[Index].Sha256)
-                .CopyTo(Bytes.AsSpan(152 + Index * 32, 32));
+                .CopyTo(Bytes.AsSpan(24 + Planˉbytes + (Index + 1) * 32, 32));
         }
         return Bytes.ToImmutableArray();
     }

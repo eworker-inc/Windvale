@@ -21,16 +21,16 @@ internal static partial class Program
         {
             var Newˉtools = new (string Name, int Bytes, string Sha256)[]
             {
-                ("Metadata-Producer", 53_009,
-                    "74de7ca9a0c959c782837d6674c30db1dcccb07ed258d50017c968ad38d503bc"),
-                ("Object-Instantiation", 21_724,
-                    "410e4f93c24a2f7cac168298e1e3f2bc3d62f9738c36227b69805ad65591b341"),
-                ("Windows-Imports", 10_464,
-                    "63b87f2618c9fd413238a9a2919bc6cdb1c769e72f4dca2de47c1c7e1c697a29"),
-                ("Linux-Materialization", 16_600,
-                    "84bec5e36d1ae61f05b28c506b8285526022ec05990153bb0079beb61badeacc"),
-                ("Windows-Materialization", 18_658,
-                    "2c9092e5781cadf6a675168415c73ed65303737f6134a5d0bb9a59d874a7cbd2"),
+                ("Metadata-Producer", 77_570,
+                    "04ace838e229ecc3af22a9acd34badeec1718acf9f7efbc49e0f0be251e5209b"),
+                ("Object-Instantiation", 22_525,
+                    "efd0f2ef16793030aa18d5db402bec5ee0e45667a0c102741d5c0beb224f439e"),
+                ("Windows-Imports", 12_392,
+                    "faca11faf0d2675ea95c26f24aea7215a72d9bf2c6a7c6f438662ccbba9534ab"),
+                ("Linux-Materialization", 18_884,
+                    "aa57f0067177930bc3170c60a0aeb4393c5c12a92d84b2d107fc4a8cefebe25b"),
+                ("Windows-Materialization", 23_071,
+                    "f1245e3fb401f2236a78be5ce51c041001945404330acf880e497166a3eb8812"),
             };
             var Toolˉmodules = new Dictionary<string, Verifiedˉmodule>(
                 StringComparer.Ordinal);

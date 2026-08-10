@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_PUBLISHER_METADATA_BYTES = 15_024;
+    private const int NATIVE_HOSTED_VERIFIER_PUBLISHER_METADATA_BYTES = 17_479;
     private const string NATIVE_HOSTED_VERIFIER_PUBLISHER_METADATA_SHA256 =
-        "9c03abc868c2d771710ca7651bb75cef660f1135e964d69e0ba9bb74aeb3169a";
+        "596be1d31c0eb64097880d8137336dd851730f3c9b47e8fbd78acfaaabf61220";
 
     private static void Windvaleˉnativeˉhostedˉverifierˉpublisherˉmetadataˉruns()
     {

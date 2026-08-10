@@ -35,7 +35,7 @@ fn Usage() -> i32 {
         "Usage: wvhostverifierbundle <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <request.wvsq>"
     );
     diagnostic.write_line(
-        "       wvhostverifierbundle wvo-inspector <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <enum-name> <text-concat> <text-quote> <i32-format> <u32-format> <request.wvsq>"
+        "       wvhostverifierbundle <wvo-inspector|console-verifier> <fragment> <console> <argument-count> <argument> <file-input> <utf8> <diagnostic> <enum-name> <text-concat> <text-quote> <i32-format> <u32-format> <request.wvsq>"
     );
     return 64;
 }
@@ -57,7 +57,8 @@ export fn Main() -> i32 {
     var Inputˉcount: u32 = 7u32;
     var Outputˉindex: u32 = 7u32;
     if Arguments == 14u32 {
-        if !Pathsˉareˉequal(process.argument(0u32), "wvo-inspector") {
+        if !Pathsˉareˉequal(process.argument(0u32), "wvo-inspector") &&
+            !Pathsˉareˉequal(process.argument(0u32), "console-verifier") {
             return Usage();
         }
         Base = 1u32;
@@ -84,21 +85,47 @@ export fn Main() -> i32 {
     }
 
     if Arguments == 14u32 {
+        if Pathsˉareˉequal(process.argument(0u32), "console-verifier") {
+            let Consoleˉresult =
+                Request.Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉforˉconsoleˉverifier(
+                    file.read_bytes(process.argument(1u32)),
+                    file.read_bytes(process.argument(2u32)),
+                    file.read_bytes(process.argument(3u32)),
+                    file.read_bytes(process.argument(4u32)),
+                    file.read_bytes(process.argument(5u32)),
+                    file.read_bytes(process.argument(6u32)),
+                    file.read_bytes(process.argument(7u32)),
+                    file.read_bytes(process.argument(8u32)),
+                    file.read_bytes(process.argument(9u32)),
+                    file.read_bytes(process.argument(10u32)),
+                    file.read_bytes(process.argument(11u32)),
+                    file.read_bytes(process.argument(12u32))
+                );
+            if !Consoleˉresult.Valid { return Reject(); }
+            file.write_bytes(Outputˉpath, Consoleˉresult.Value);
+            console.write_line(
+                Textˉconcat(
+                    "verifier service-bundle request status=Valid bytes=",
+                    U32ˉformat(Bytesˉlength(Consoleˉresult.Value))
+                )
+            );
+            return 0;
+        }
         let Inspectorˉresult =
             Request.Nativeˉhostedˉverifierˉserviceˉbundleˉrequestˉforˉwvoˉinspector(
-            file.read_bytes(process.argument(1u32)),
-            file.read_bytes(process.argument(2u32)),
-            file.read_bytes(process.argument(3u32)),
-            file.read_bytes(process.argument(4u32)),
-            file.read_bytes(process.argument(5u32)),
-            file.read_bytes(process.argument(6u32)),
-            file.read_bytes(process.argument(7u32)),
-            file.read_bytes(process.argument(8u32)),
-            file.read_bytes(process.argument(9u32)),
-            file.read_bytes(process.argument(10u32)),
-            file.read_bytes(process.argument(11u32)),
-            file.read_bytes(process.argument(12u32))
-        );
+                file.read_bytes(process.argument(1u32)),
+                file.read_bytes(process.argument(2u32)),
+                file.read_bytes(process.argument(3u32)),
+                file.read_bytes(process.argument(4u32)),
+                file.read_bytes(process.argument(5u32)),
+                file.read_bytes(process.argument(6u32)),
+                file.read_bytes(process.argument(7u32)),
+                file.read_bytes(process.argument(8u32)),
+                file.read_bytes(process.argument(9u32)),
+                file.read_bytes(process.argument(10u32)),
+                file.read_bytes(process.argument(11u32)),
+                file.read_bytes(process.argument(12u32))
+            );
         if !Inspectorˉresult.Valid { return Reject(); }
         file.write_bytes(Outputˉpath, Inspectorˉresult.Value);
         console.write_line(

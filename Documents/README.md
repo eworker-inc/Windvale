@@ -105,6 +105,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native WVO publisher reconstruction](Decisions/0499-Native-Wvo-Publisher-Reconstruction.md) — current-Windows-host native cross-target reconstruction through an exact WVO oracle and role-3 publisher pipeline without target self-publication
 - [Native WVO inspector reconstruction](Decisions/0500-Native-Wvo-Inspector-Reconstruction.md) — current-Windows-host native cross-target reconstruction of the profile-6 WVO inspector through retained compiler and hosted-container toolsets
 - [Native Wv-Linker reconstruction](Decisions/0501-Native-Wv-Linker-Reconstruction.md) — current-Windows-host native cross-target reconstruction through a raw WVO oracle and distinct segmented image path without target self-linking
+- [Native console-application-verifier reconstruction](Decisions/0502-Native-Console-Application-Verifier-Reconstruction.md) — current-Windows-host native cross-target reconstruction of the exact profile-7 two-snapshot verifier through retained compiler and hosted-construction toolsets
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

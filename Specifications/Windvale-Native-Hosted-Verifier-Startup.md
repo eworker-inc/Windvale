@@ -17,9 +17,28 @@ later construction boundaries.
 The runtime input must contain valid `WVHV 1` fixed verifier metadata at
 offset 480 for target 1 (Windows x64) or 2 (Linux x64). The metadata must retain
 container format 4 and ABI 22. Profiles 2 and 8 retain five capabilities and
-six ordered services; profile 6 retains those capabilities and eleven ordered
-services. Every profile retains the canonical 2 MiB record arena and canonical
-128 MiB text arena.
+six ordered services; profiles 6 and 7 retain those capabilities and eleven
+ordered services. Every profile retains the canonical 2 MiB record arena and
+canonical 128 MiB text arena. Profile 7 reserves two immutable input snapshots:
+its snapshot table contains two 32-byte records, its name arena contains two
+1 MiB strides, and its data arena contains two 4 MiB strides. Profiles 2, 6,
+and 8 retain one snapshot and therefore retain their existing addresses and
+emitted bytes.
+
+Profile 7 has this exact runtime geometry, relative to the runtime base:
+
+| Region | Offset or extent |
+| --- | ---: |
+| argument table | 4,096 |
+| argument bytes | 5,168 |
+| two-record snapshot table | 70,704 |
+| record arena | 73,728 |
+| text arena | 2,170,880 |
+| name arena | 136,388,608 |
+| data arena | 138,485,760 |
+| file-input scratch | 146,874,368 |
+| Windows runtime virtual bytes | 148,975,616 |
+| Linux runtime virtual bytes | 147,927,040 |
 
 Windvale derives all runtime table and arena addresses from that admitted
 header. Service addresses are the format-4 bundle base, 8,192, plus each
@@ -33,8 +52,8 @@ The accepted objects are exact native-assembler products:
 | --- | ---: | ---: | ---: | --- |
 | Windows x64 | 3,561 | 33 | 45 | `755ffb99cba6a838dd9eec353ce72d4adfb3af130ec4bce5a2278828dd136616` |
 | Linux x64 | 1,925 | 20 | 24 | `08a7afefb69904af8d8c899a86bec76e957dfe255d397dbd9015d9acaa018ae8` |
-| Windows x64, profile 6 | 3,927 | 38 | 50 | `1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3` |
-| Linux x64, profile 6 | 2,291 | 25 | 29 | `5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb` |
+| Windows x64, profiles 6 and 7 | 3,927 | 38 | 50 | `1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3` |
+| Linux x64, profiles 6 and 7 | 2,291 | 25 | 29 | `5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb` |
 
 The request owner maps each relocation ordinal to one semantic runtime,
 service, native-entry, or Windows import address and supplies the unchanged
@@ -46,11 +65,12 @@ patch machine code itself.
 ```text
 wvhostverifierstartup <runtime.wvhr> <startup.wvo> <response.wvsd>
 wvhostverifierstartup wvo-inspector <runtime.wvhr> <startup.wvo> <response.wvsd>
+wvhostverifierstartup console-verifier <runtime.wvhr> <startup.wvo> <response.wvsd>
 ```
 
 Success writes an exact `WVSD 1` response containing 1,275 Windows or 668 Linux
 startup bytes for profiles 2 and 8, or 1,350 Windows or 743 Linux bytes for
-profile 6, reports `Valid`, and returns zero. Invalid
+profiles 6 and 7, reports `Valid`, and returns zero. Invalid
 runtime, object, or response evidence reports `Rejected` with the failing
 phase, returns 2, and preserves an existing output. Invalid invocation or any
 input/output alias reports usage, returns 64, and preserves every input.
@@ -63,9 +83,9 @@ The application declares exactly `console.write_line`,
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Tool WVB | 73,687 | `1b2a301d5bf5cfef92d734424aa779f1ec15c30cc92fe4321dd436585b833b7f` |
-| Windows application | 881,664 | `0fb95489a08e2350b2b67482e6170947520c98b651b13c84c2a9cfe2361dd3bd` |
-| Linux application | 880,640 | `8d0263b88ff1eb21ed4e9926d7a06581b9ba99e64998d00793b814dd5d0c36f5` |
+| Tool WVB | 75,731 | `bcc11d87ca487b1901d6f1d9d08529b8e5c0fe5dbe41989b279375dcb35515f7` |
+| Windows application | 902,656 | `10d1b09780e860920ebf13f00205682c4ab06b89e8e01fd5b282682d75a6779d` |
+| Linux application | 901,120 | `17579642f3038cee0bca1568ef33cfad7706e33296b7c151455c2111128b517b` |
 
 The WVB builds through the native Project 1 front door. Both applications
 reconstruct through the shared native hosted-container packager. The focused

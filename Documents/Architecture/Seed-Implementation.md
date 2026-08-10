@@ -169,6 +169,14 @@ keeps both target standard linkers outside their own construction, while the
 retained same-release compiler, lowerer, staging/link/transport, and hosted
 toolsets remain explicit bootstrap seeds.
 
+Decision 0502 uses the retained native Project 1 compiler, raw lowerer,
+standard linker, and hosted construction toolsets to reconstruct the exact
+console-application-verifier WVB, WVO oracle, linked fragment, and paired
+profile-7 applications on the current Windows host. The two-snapshot verifier
+does not participate in constructing itself. The retained same-release tools
+remain bootstrap seeds, so independent Linux execution, clean previous-seed
+renewal, qualification, promotion, and recovery release remain open.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

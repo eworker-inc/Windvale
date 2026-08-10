@@ -57,7 +57,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Verifier-Request.err" "verifier request packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Verifier-Request.exe" 194048 75b6fb59030e1ec7d6b3c336d10aa89badd928d35b669f2fbdf7f33e243da520 "verifier request package"
+call :check_file "%TestDirectory%\Verifier-Request.exe" 195072 562f32e9a2d31c6852bbf4e8d8fb7904f966e525025df3106bcb332908ba232e "verifier request package"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Verifier-Request.exe" "%Toolset%\windows-x64\wvhostverifierrequest.exe" >nul
 if errorlevel 1 (
@@ -74,7 +74,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Verifier-Request-Linux.err" "cross-target verifier request packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Verifier-Request.elf" 196608 4968f2e5d8481b96d701bf6dd350a93097d086191007396ad447b504c37d7109 "cross-target verifier request package"
+call :check_file "%TestDirectory%\Verifier-Request.elf" 196608 c9d0f8a655daeb92539eaff6224010b422c8d4b8fb280488ba89fa01af55ac31 "cross-target verifier request package"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Verifier-Request.elf" "%Toolset%\linux-x64\wvhostverifierrequest.elf" >nul
 if errorlevel 1 (
@@ -94,9 +94,9 @@ if not errorlevel 1 (
     >&2 echo FAIL  hosted packaging: invalid WVB was accepted
     goto :failed
 )
-call :check_file "%TestDirectory%\Destination.exe" 6927 e2d6f16ee17e7e3df890583eb0ed796582ef445f74c68db955cd89a7f99e39c4 "preserved destination"
+call :check_file "%TestDirectory%\Destination.exe" 6927 60f66c785c8dc7352ad394dee5ffd4da4b0f62370c47bdf2978ff0d7a34abd67 "preserved destination"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvb" 6927 e2d6f16ee17e7e3df890583eb0ed796582ef445f74c68db955cd89a7f99e39c4 "preserved input"
+call :check_file "%TestDirectory%\Invalid.wvb" 6927 60f66c785c8dc7352ad394dee5ffd4da4b0f62370c47bdf2978ff0d7a34abd67 "preserved input"
 if errorlevel 1 goto :failed
 call :check_no_scratch
 if errorlevel 1 goto :failed

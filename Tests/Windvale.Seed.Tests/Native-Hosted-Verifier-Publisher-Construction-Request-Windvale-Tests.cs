@@ -20,25 +20,25 @@ internal static partial class Program
         Directory.CreateDirectory(Directoryˉpath);
         var Contracts = new (string Name, int Bytes, string Sha256)[]
         {
-            ("Identity-Request", 39_914,
-                "de7460b69c969a1b7840fae8db412d180b5baa42b511f56b03e58ab2dafd77e0"),
-            ("Structure-Request", 18_050,
-                "d6bcb2717fd7d3f22ab10adca46ab9caccd3e84c25cc7407c875fe094d0ebcd1"),
-            ("Construction-Request", 14_045,
-                "d2860a6f2452ccf7ebb6bb4b56b3b100816781c2683098b816b158af72f0467f"),
-            ("Target-Request", 7_960,
-                "c4c7989d8d5983f732a95b9a1b5b1856fd0a4f69708ac2f3a99b38d5b26079b4"),
+            ("Identity-Request", 55_950,
+                "039ce6e5e23f74d1345b9324324b48b32ca78ac9678c656d603558a6f059504c"),
+            ("Structure-Request", 24_735,
+                "43aaf82899d3a3160337d580535c7ee48832dba68025b7cea46681b32ea6388d"),
+            ("Construction-Request", 30_656,
+                "98e54e0ff807baa189bf2e75a1abd9b913c668a49c91a088946e10cf710a842d"),
+            ("Target-Request", 25_826,
+                "15a56d4ba8524c93beccb5e7341fbe486851eba63453ff93ea422d83ea9a415b"),
         };
         var Tools = new (string Name, int Bytes, string Sha256)[]
         {
-            ("Identity-Request", 42_707,
-                "cc72e9164d3ce88e54da9148c02ea352558da79369e85b68765a90fe2f9cdfc9"),
-            ("Structure-Request", 19_420,
-                "698e95f1489887c4415faa4df1d846c48d797988783ee25961135b5412cbf17f"),
-            ("Construction-Request", 15_554,
-                "43469dcbfca8796850d47aa570edc56e6376aa35fb5aa003d4900a86275ea0b9"),
-            ("Target-Request", 9_390,
-                "5aa93fda0727d4519c34b7b0c790ecc60da38ce85ea0203bb58a2661854e27e5"),
+            ("Identity-Request", 58_743,
+                "7f534a4ac03f2c1d902ca9c12f958bfd95a3c06a5b503bbc8eaf6b7d17b4bd7f"),
+            ("Structure-Request", 26_105,
+                "18f990e7bb9cab3653ac280e318d3b1c8b2c77ba1e09b13df3c7b80e46671de3"),
+            ("Construction-Request", 32_165,
+                "da3d3639557c2d986aefe787030717076dccf735229bece01ea9ff44e0dbe685"),
+            ("Target-Request", 27_256,
+                "b6d7c50d70b17bb5cf7a6a8c8cf5542c3c96c8bd2266e3dfc047271f4802a6ec"),
         };
         var Modules = new List<Verifiedˉmodule>();
         var Native = new List<Nativeˉfragment>();

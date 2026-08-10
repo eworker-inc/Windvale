@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.Immutable;
 using Windvale.Bytecode;
 using Windvale.Compiler.Native;
@@ -10,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_PLATFORM_BYTES = 34_376;
+    private const int NATIVE_HOSTED_VERIFIER_PLATFORM_BYTES = 38_484;
     private const string NATIVE_HOSTED_VERIFIER_PLATFORM_SHA256 =
-        "03ad87aa7cef5d440fbd1ac94569aa9f07f979b625f81acbfa5405d9bc8a1fce";
+        "85b9ef76f109aacb1ed88b2724180c501bf87f8de7dd9d8309d0e941a89215b1";
 
     private static void Nativeˉhostedˉverifierˉplatformˉprocessˉruns()
     {
@@ -52,6 +53,8 @@ internal static partial class Program
                 Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
                 Symbol.Kind == Nativeˉsymbolˉkind.Function &&
                 Symbol.Name == "Main").Offset;
+            var Consoleˉverifier =
+                Loadˉconsoleˉapplicationˉverifierˉfixture(Repository);
 
             int Run(ImmutableArray<string> arguments)
             {
@@ -127,6 +130,104 @@ internal static partial class Program
                 Equal(0, Run([Runtimeˉpath, Responseˉpath]));
                 var Response = File.ReadAllBytes(Responseˉpath);
                 Sequenceˉequal(Expected, Response.AsSpan(32).ToArray());
+
+                var Consoleˉprofile = Hostedˉverifierˉapplicationˉprofile
+                    .Consoleˉapplicationˉverifier;
+                var Consoleˉbundle = X64ˉnativeˉserviceˉbundle
+                    .Buildˉhostedˉconsoleˉapplicationˉverifier(
+                        Consoleˉverifier.Fragment,
+                        Platform);
+                var Consoleˉruntime = Hostedˉverifierˉruntimeˉdata.Build(
+                    Target,
+                    Consoleˉverifier.Module.Module.Capabilities,
+                    Consoleˉbundle,
+                    Consoleˉverifier.Entry,
+                    Consoleˉprofile);
+                var Consoleˉruntimeˉlayout = Hostedˉverifierˉruntimeˉdata.Plan(
+                    Target,
+                    Consoleˉprofile);
+                Assertˉconsoleˉverifierˉruntimeˉlayout(
+                    Consoleˉruntimeˉlayout,
+                    Target);
+                var Consoleˉapplication = Platform ==
+                    Nativeˉserviceˉplatform.Windows
+                    ? Windowsˉhostedˉverifierˉapplicationˉbuilder.Build(
+                        Consoleˉverifier.Module.Module.Capabilities,
+                        Consoleˉbundle,
+                        Consoleˉverifier.Entry,
+                        Consoleˉprofile)
+                    : Linuxˉhostedˉverifierˉapplicationˉbuilder.Build(
+                        Consoleˉverifier.Module.Module.Capabilities,
+                        Consoleˉbundle,
+                        Consoleˉverifier.Entry,
+                        Consoleˉprofile);
+                byte[] Consoleˉexpected;
+                if (Platform == Nativeˉserviceˉplatform.Windows)
+                {
+                    var Consoleˉlayout = Windowsˉhostedˉverifierˉapplicationˉcontract
+                        .Plan(
+                            Consoleˉbundle,
+                            Consoleˉverifier.Entry,
+                            Consoleˉprofile);
+                    Equal(1_350, Consoleˉlayout.Startupˉbytes);
+                    Equal(148_975_616u, Consoleˉlayout.Runtimeˉvirtualˉbytes);
+                    Consoleˉexpected = [
+                        .. Consoleˉapplication.AsSpan(0, Consoleˉlayout.Headerˉbytes),
+                        .. Consoleˉapplication.AsSpan(
+                            checked((int)Consoleˉlayout.Importˉfileˉoffset),
+                            checked((int)Windowsˉhostedˉverifierˉapplicationˉcontract
+                                .IMPORT_FILE_BYTES)),
+                        .. Consoleˉapplication.AsSpan(
+                            checked((int)Consoleˉlayout.Relocationˉfileˉoffset),
+                            checked((int)Windowsˉhostedˉverifierˉapplicationˉcontract
+                                .RELOCATION_BYTES)),
+                    ];
+                }
+                else
+                {
+                    var Consoleˉlayout = Linuxˉhostedˉverifierˉapplicationˉcontract
+                        .Plan(
+                            Consoleˉbundle,
+                            Consoleˉverifier.Entry,
+                            Consoleˉprofile);
+                    Equal(743, Consoleˉlayout.Startupˉbytes);
+                    Equal(147_927_040u, Consoleˉlayout.Dataˉvirtualˉbytes);
+                    Consoleˉexpected = Consoleˉapplication.AsSpan(0, 4096).ToArray();
+                }
+                var Consoleˉruntimeˉpath = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Console-Runtime.wvhr");
+                var Consoleˉresponseˉpath = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Console-Platform.wvhb");
+                File.WriteAllBytes(Consoleˉruntimeˉpath, Consoleˉruntime.AsSpan());
+                Equal(0, Run([
+                    "console-verifier",
+                    Consoleˉruntimeˉpath,
+                    Consoleˉresponseˉpath,
+                ]));
+                Sequenceˉequal(
+                    Consoleˉexpected,
+                    File.ReadAllBytes(Consoleˉresponseˉpath).AsSpan(32).ToArray());
+
+                var Changedˉcapacity = Consoleˉruntime.ToArray();
+                BinaryPrimitives.WriteUInt32LittleEndian(
+                    Changedˉcapacity.AsSpan(288),
+                    1u);
+                var Changedˉcapacityˉpath = Path.Combine(
+                    Directoryˉpath,
+                    $"{(uint)Platform}-Changed-Capacity.wvhr");
+                File.WriteAllBytes(Changedˉcapacityˉpath, Changedˉcapacity);
+                byte[] Capacityˉsentinel = [0x57, 0x56, 0x48, 0x42];
+                File.WriteAllBytes(Consoleˉresponseˉpath, Capacityˉsentinel);
+                Equal(2, Run([
+                    "console-verifier",
+                    Changedˉcapacityˉpath,
+                    Consoleˉresponseˉpath,
+                ]));
+                Sequenceˉequal(
+                    Capacityˉsentinel,
+                    File.ReadAllBytes(Consoleˉresponseˉpath));
             }
 
             var Windowsˉruntimeˉpath = Path.Combine(

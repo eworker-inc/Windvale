@@ -28,13 +28,21 @@ placements come from the admitted format-4 layout.
 
 Both responses use the existing version-1 platform-region envelope. Invalid
 runtime metadata or target evidence returns a failure response and no platform
-payload.
+payload. Profile 7 increases only the admitted runtime virtual extent: its
+second name and data strides move the input scratch and image end by exactly
+5 MiB relative to the one-snapshot profiles. Windows therefore moves the
+relocation RVA and image end by 5 MiB, while Linux increases the runtime
+segment memory extent by 5 MiB. Neither target changes its platform-response
+size or application file extent solely because of the second snapshot.
+The exact profile-7 runtime virtual extents are 148,975,616 bytes for Windows
+and 147,927,040 bytes for Linux.
 
 ## Command and identities
 
 ```text
 wvhostverifierbytes <runtime.wvhr> <regions.wvhb>
 wvhostverifierbytes wvo-inspector <runtime.wvhr> <regions.wvhb>
+wvhostverifierbytes console-verifier <runtime.wvhr> <regions.wvhb>
 ```
 
 Success reports `Valid`, writes the exact response, and returns zero. Rejection
@@ -43,9 +51,9 @@ usage, returns 64, and preserves the runtime input.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Tool WVB | 37,233 | `ce83c2af8ed65f97f9912bb9851c479f8736611daab89a61eeb8399db6808bf2` |
-| Windows application | 455,168 | `f13e38175ef91b6283e1289d5bb86a028331f6c147619e84d56aa7473827b69a` |
-| Linux application | 454,656 | `93f4f3101d3f69b5ec9052df7222e735435fd96ac6585eb381971405ae749cfc` |
+| Tool WVB | 38,484 | `85b9ef76f109aacb1ed88b2724180c501bf87f8de7dd9d8309d0e941a89215b1` |
+| Windows application | 465,408 | `4223a30bf7000d55c46aff94ef0352958305680215560cdc86e0243c19363919` |
+| Linux application | 466,944 | `4f77aeefce7b121777aaac1e91a00f79228c91c01ce0c4ba1acaf28dfe2aa7c3` |
 
 The native front door builds the WVB and the shared hosted-container packager
 reconstructs both applications. One focused current-host differential test

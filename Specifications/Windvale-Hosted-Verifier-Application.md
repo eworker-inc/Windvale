@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHV 1` is the implemented manifest for packaging five fixed Windvale-written read-only binary tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned WVB verifier, the complete structural `wvdump` inspector, the bounded portable-WVB runner, the WVO verifier/inspector, and the exact hosted-verifier publisher admitter. All run without loading .NET. The WVB verifier and inspector applications have qualified histories; the runner, WVO, and publisher-admission profiles are implemented candidates pending the grouped dual-host retirement gate. Stage 0 remains an independent recovery oracle until the broader native-retirement gate is qualified.
+`WVHV 1` is the implemented manifest for packaging six fixed Windvale-written read-only binary tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned WVB verifier, the complete structural `wvdump` inspector, the bounded portable-WVB runner, the WVO verifier/inspector, the two-input console-application verifier, and the exact hosted-verifier publisher admitter. All run without loading .NET. The WVB verifier and inspector applications have qualified histories; the runner, WVO, console-verifier, and publisher-admission profiles are implemented candidates pending their focused and grouped dual-host retirement gates. Stage 0 remains an independent recovery oracle until the broader native-retirement gate is qualified.
 
 [Decision 0461](../Documents/Decisions/0461-Native-WVHV-Metadata-Ownership.md)
 adds the first native-construction replacement for this family: an exact
@@ -10,6 +10,13 @@ adds the first native-construction replacement for this family: an exact
 admission of compiler-verifier profile 2 metadata. Runtime, startup, outer
 container construction, and promotion remain pending and do not reuse the
 separate `WVHB` build-driver meaning of numeric profile 2.
+
+[Decision 0502](../Documents/Decisions/0502-Native-Console-Application-Verifier-Reconstruction.md)
+extends that native construction ownership through the exact profile-7
+console-application-verifier WVB, WVO oracle, linked fragment, and paired
+Windows/Linux applications. The route runs on the current Windows host and
+consumes retained same-release native toolsets; independent Linux execution,
+clean bootstrap, qualification, promotion, and recovery release remain.
 
 These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one typed walk under a `u64` host meter. It constructs fixed-width per-function local-shape and control-boundary directories before the typed and reachability checks, avoiding repeated variable-width rescans without changing acceptance. The WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
 
@@ -38,7 +45,7 @@ wvdump <module.wvb>
 
 Success writes the deterministic [`wvdump 1`](Wv-Dump-Report.md) line report and returns `0`. Structural rejection writes one stable diagnostic and returns `2`; invalid invocation returns `64`. Ordinary inspection first runs `wvverify` and invokes `wvdump` only after semantic acceptance.
 
-The WVO profile packages [`Windvale-Wvo-Object.wvproj`](../Windvale-Wvo-Object.wvproj) under the separately specified [native WVO inspector contract](Windvale-Native-Wvo-Inspector.md). It uses the same eleven-service read-only startup as `wvdump`, but profile 6 binds the canonical `Wvoˉobjectˉcore` identity and its `verify`/`inspect` command contract.
+The WVO profile packages [`Windvale-Wvo-Object.wvproj`](../Windvale-Wvo-Object.wvproj) under the separately specified [native WVO inspector contract](Windvale-Native-Wvo-Inspector.md). It uses the same eleven-service read-only startup as `wvdump`, but profile 6 binds the canonical `Wvoˉobjectˉcore` identity and its `verify`/`inspect` command contract. Profile 7 packages [`Windvale-Console-Application-Verifier.wvproj`](../Windvale-Console-Application-Verifier.wvproj) with the same eleven services and reads exactly two immutable application chunks before performing the portable console-application verification plan.
 
 ## Source and authority contract
 
@@ -54,7 +61,10 @@ The verifier fragment requires exactly five corresponding services. Its startup 
 
 The inspector fragment requires the same read-only host services plus the capability-free `text.utf8_is_valid`, `enum.name`, `text.concat`, `text.quote`, `i32.format`, and `u32.format` report services. Its exact eleven-service sequence contains every native service through `u32.format` and excludes `file.write_bytes`. The runner omits the unused enum-name and quoting leaves, retaining exactly nine services. No profile has a file-output table, file-output scratch space, or file-write authority.
 
-Each tool reads at most one candidate snapshot. The candidate remains bounded by the ordinary 4 MiB `bytes` limit. The runtime retains one file-input snapshot slot and no file-output table or output scratch space.
+Each tool except profile 7 reads at most one candidate snapshot. Profile 7
+requires exactly two immutable application-chunk paths and retains two
+snapshot records. Every snapshot remains bounded by the ordinary 4 MiB `bytes`
+limit. No profile has a file-output table or output scratch space.
 
 ## `WVHV 1` metadata
 
@@ -70,7 +80,7 @@ u32   native ABI version = 22
 u32   execution-context version
 u32   service-table version
 u32   capability count = 5
-u32   service count = 6 verifier, 11 WVB/WVO inspector, 9 runner
+u32   service count = 6 compiler verifier, 11 WVB/WVO inspectors or console verifier, 9 runner
 u32   capability offset = 128
 u32   capability record bytes = 16
 u32   service offset = 208
@@ -82,7 +92,7 @@ u32   native-image bytes
 u32   native Main offset
 u32   record-arena bytes
 u32   text-arena bytes
-u32   profile: 2 compiler-WVB verifier, 4 WVB inspector, 5 WVB runner, 6 WVO inspector, 8 publisher admission
+u32   profile: 2 compiler-WVB verifier, 4 WVB inspector, 5 WVB runner, 6 WVO inspector, 7 console verifier, 8 publisher admission
 u64   instruction budget = 16,000,000,000
 bytes native-image SHA-256[32]
 ```
@@ -106,21 +116,24 @@ Profile `5` uses the verifier's first six services and then `text.concat`, `i32.
 
 Profile `6` uses the same exact eleven services as profile `4` and reuses the same inspector startup template. Its distinct profile identity prevents a WVB inspector package from being accepted as the WVO front door or vice versa.
 
+Profile `7` uses profile 6's exact eleven-service sequence and inspector startup
+template. Its distinct metadata identity and two-snapshot runtime capacity bind
+the console-application verifier without granting file-write authority.
+
 Profile `8` uses the verifier's exact five capabilities and six-service bundle.
 It reads one immutable publisher application snapshot, performs exact target,
 length, and SHA-256 admission in Windvale source, and has no file-output table,
-output scratch, or mutation authority. Profile `7` remains assigned to the
-separately owned console-application verifier; the numeric profile `7` used by
-the `WVHG` hosted-container segmenter belongs to another metadata family.
+output scratch, or mutation authority. The numeric profile `7` used by the
+`WVHG` hosted-container segmenter belongs to another metadata family.
 
 ## Runtime and startup
 
 The runtime header retains the ABI-22 execution context, service table, output table, and file-input table. It reserves:
 
 - at most 67 arguments, each at most 4,096 UTF-8 bytes and at most 65,536 aggregate bytes;
-- one 32-byte file snapshot record;
-- one 1 MiB name stride;
-- one 4 MiB data stride;
+- one 32-byte file snapshot record, or two for profile 7;
+- one 1 MiB name stride per snapshot;
+- one 4 MiB data stride per snapshot;
 - the existing fixed record arena and Decision 0201's 128 MiB hosted text arena;
 - one platform path-conversion scratch region;
 - no file-output scratch region.
@@ -149,7 +162,7 @@ The package constructors retain only the zero-relocation templates plus typed pa
 
 ## Windows container
 
-`windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the one bounded input snapshot.
+`windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the bounded input snapshots: one for profiles 2, 6, and 8, and two for profile 7.
 
 The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `332488305b0b178dcb713edd81f2df0b8f04455b95e03ee46aa226c69e2ee018`.
 
@@ -158,6 +171,11 @@ The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `3
 `windows-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,752 bytes with SHA-256 `91b046015660f5f9e2710ed9cb41d5da9a79a1c87f4cf9ed87790c013a6dcce4`; the current corrected-backend reconstruction is 778,240 bytes with SHA-256 `6231a60404fc49f85695eddcc2e0690e372c64c0cf2d2ca847fd0ffc3f76b028`.
 
 `windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 606,208 bytes with SHA-256 `bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2`.
+
+`windows-x64-console-application-verifier-v1` uses metadata profile `7` and
+two immutable input snapshots. Its current native reconstruction candidate is
+1,063,936 bytes with SHA-256
+`05b5f5b3e3999a0ef3537f0908967069a12f17de09753fc90e8a4c7542dc9d3f`.
 
 `windows-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
 Its current native candidate is 570,368 bytes with SHA-256
@@ -174,6 +192,11 @@ The current WVB 1.11 reconstruction candidate is 1,224,704 bytes with SHA-256 `e
 `linux-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,240 bytes with SHA-256 `8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294`; the current corrected-backend reconstruction has the same size and SHA-256 `74180ac7cd80192647f46df166a8ea97af17c9676afbe0b2ecb2c8c824db6944`.
 
 `linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 606,208 bytes with SHA-256 `bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1`.
+
+`linux-x64-console-application-verifier-v1` uses metadata profile `7` and two
+immutable input snapshots. Its current native cross-target reconstruction
+candidate is 1,064,960 bytes with SHA-256
+`c2700e5e68711d7b8e8a8f7e9573d87dfa27c3676a034a314310ef59045e5f1a`.
 
 `linux-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
 Its current native candidate is 569,344 bytes with SHA-256
@@ -198,6 +221,9 @@ windvale aot Windvale-Wvb-Runner.wvb --target linux-x64-wvb-runner-v1
 windvale build Windvale-Wvo-Object.wvproj
 windvale aot Windvale-Wvo-Object.wvb --target windows-x64-wvo-inspector-v1
 windvale aot Windvale-Wvo-Object.wvb --target linux-x64-wvo-inspector-v1
+windvale build Windvale-Console-Application-Verifier.wvproj
+windvale aot Console-Application-Verifier.wvb --target windows-x64-console-application-verifier-v1
+windvale aot Console-Application-Verifier.wvb --target linux-x64-console-application-verifier-v1
 ```
 
 The current canonical-source reconstruction candidate is 148,793 bytes with SHA-256 `70bd61e78c2ddd6052adb15f24a155f006ded903ce7825d8f54adafa252b76f8`. The frozen Stage 0 compiler and qualified native build front door produce byte-identical WVBs. The digest-bound ordinary front door retains its previously qualified artifact until this candidate passes the exact-commit dual-host promotion gate.

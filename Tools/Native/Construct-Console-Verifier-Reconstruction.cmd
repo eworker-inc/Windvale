@@ -8,14 +8,14 @@ if not exist "%~f1\." goto :usage
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "OutputRoot=%~f1"
-set "CandidateRoot=%RepositoryRoot%\Artifacts\Native-Wvo-Object-Candidate"
+set "CandidateRoot=%RepositoryRoot%\Artifacts\Native-Console-Application-Verifier-Candidate"
 if /I "%OutputRoot%"=="%CandidateRoot%" (
-    >&2 echo The WVO inspector reconstruction must use a separate output directory.
+    >&2 echo The console-verifier reconstruction must use a separate output directory.
     exit /b 64
 )
 fsutil reparsepoint query "%OutputRoot%" >nul 2>nul
 if not errorlevel 1 (
-    >&2 echo The WVO inspector reconstruction output directory must not be a reparse point.
+    >&2 echo The console-verifier reconstruction output directory must not be a reparse point.
     exit /b 64
 )
 
@@ -44,34 +44,35 @@ call :verify_file "%StartupRoot%\Linux-X64-Hosted-Inspector.wva" 5214 01603c6b94
 if errorlevel 1 exit /b 1
 
 :allocate
-set "TemporaryDirectory=%TEMP%\windvale-wvo-inspector-reconstruction-%RANDOM%-%RANDOM%-%RANDOM%"
+set "TemporaryDirectory=%TEMP%\windvale-console-verifier-reconstruction-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TemporaryDirectory%" goto :allocate
 mkdir "%TemporaryDirectory%" || exit /b 1
 set "Result=1"
 
-set "Wvb=%OutputRoot%\Wvo-Object.wvb"
-set "Wvo=%OutputRoot%\Wvo-Object.wvo"
-set "WindowsApplication=%OutputRoot%\Wvo-Object.exe"
-set "LinuxApplication=%OutputRoot%\Wvo-Object.elf"
-set "Fragment=%TemporaryDirectory%\Wvo-Object.bin"
+set "Wvb=%OutputRoot%\Console-Application-Verifier.wvb"
+set "Wvo=%OutputRoot%\Console-Application-Verifier.wvo"
+set "Fragment=%TemporaryDirectory%\Console-Application-Verifier.bin"
+set "WindowsApplication=%OutputRoot%\windows-x64-wvappverify.exe"
+set "LinuxApplication=%OutputRoot%\linux-x64-wvappverify.elf"
 set "WindowsStartup=%TemporaryDirectory%\Windows-Startup.wvo"
 set "LinuxStartup=%TemporaryDirectory%\Linux-Startup.wvo"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Wvo-Object.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Console-Application-Verifier.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvb%" 61008 a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db "WVO inspector WVB"
+call :verify_file "%Wvb%" 105006 1dcd5f2aeebd974649e64c90d9f473e1e75f7d13dbcde2814de1dded72cf2c0c "console-verifier WVB"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Wvb%" "%Wvo%" >"%TemporaryDirectory%\Lower.out" 2>"%TemporaryDirectory%\Lower.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvo%" 591723 f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c "WVO inspector native object"
+call :verify_file "%Wvo%" 1049519 51292e4d300d4a6bb6ce4879915bba5304de70c9deafdf4eb6ff6a54a6dbf150 "console-verifier WVO"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Fragment%" "%Wvo%" >"%TemporaryDirectory%\Link.out" 2>"%TemporaryDirectory%\Link.err"
 if errorlevel 1 goto :cleanup
-findstr /b /c:"entry name=Main address=82280" "%TemporaryDirectory%\Link.out" >nul
-if errorlevel 1 goto :cleanup
-call :verify_file "%Fragment%" 587529 f318ee573b149aac169b67369e90dbacc6451fc129022bfb4e62b2ceff9cfba4 "WVO inspector linked fragment"
+set "EntryMatch=0"
+for /f "usebackq delims=" %%L in ("%TemporaryDirectory%\Link.out") do if "%%L"=="entry name=Main address=19221" set "EntryMatch=1"
+if not "%EntryMatch%"=="1" goto :cleanup
+call :verify_file "%Fragment%" 1045627 96fee2a235db667b161db2eff71625dc714f842f82e74dcf22c0aa03b1cdbffa "console-verifier linked fragment"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%StartupRoot%\Windows-X64-Hosted-Inspector.wva" "%WindowsStartup%" >"%TemporaryDirectory%\Windows-Assemble.out" 2>"%TemporaryDirectory%\Windows-Assemble.err"
@@ -85,15 +86,15 @@ if errorlevel 1 goto :cleanup
 
 call :construct_target windows 1 "%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Windows-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Windows-Diagnostic-Output-Service.bin" "%WindowsStartup%" "%WindowsApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 606208 bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2 "Windows WVO inspector application"
+call :verify_file "%WindowsApplication%" 1063936 05b5f5b3e3999a0ef3537f0908967069a12f17de09753fc90e8a4c7542dc9d3f "Windows console-verifier application"
 if errorlevel 1 goto :cleanup
 
 call :construct_target linux 2 "%ServiceRoot%\Native-X64-Linux-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Linux-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Linux-Diagnostic-Output-Service.bin" "%LinuxStartup%" "%LinuxApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 606208 bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1 "Linux WVO inspector application"
+call :verify_file "%LinuxApplication%" 1064960 c2700e5e68711d7b8e8a8f7e9573d87dfa27c3676a034a314310ef59045e5f1a "Linux console-verifier application"
 if errorlevel 1 goto :cleanup
 
-echo native WVO inspector reconstruction status=Complete artifacts=4
+echo native console verifier reconstruction status=Complete artifacts=4
 set "Result=0"
 goto :cleanup
 
@@ -107,19 +108,19 @@ set "Startup=%~6"
 set "Application=%~7"
 set "TargetDirectory=%TemporaryDirectory%\%TargetName%"
 mkdir "%TargetDirectory%" || exit /b 1
-"%HostedTools%\wvhostverifierbundle.exe" wvo-inspector "%Fragment%" "%ConsoleLeaf%" "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" "%ServiceRoot%\Native-X64-Argument-Service.bin" "%FileInputLeaf%" "%ServiceRoot%\Native-X64-Utf8-Service.bin" "%DiagnosticLeaf%" "%ServiceRoot%\Native-X64-Enum-Name-Service.bin" "%ServiceRoot%\Native-X64-Text-Concat-Service.bin" "%ServiceRoot%\Native-X64-Text-Quote-Service.bin" "%ServiceRoot%\Native-X64-I32-Format-Service.bin" "%ServiceRoot%\Native-X64-U32-Format-Service.bin" "%TargetDirectory%\Bundle.wvsq" >"%TemporaryDirectory%\%TargetName%-Bundle-Request.out" 2>"%TemporaryDirectory%\%TargetName%-Bundle-Request.err"
+"%HostedTools%\wvhostverifierbundle.exe" console-verifier "%Fragment%" "%ConsoleLeaf%" "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" "%ServiceRoot%\Native-X64-Argument-Service.bin" "%FileInputLeaf%" "%ServiceRoot%\Native-X64-Utf8-Service.bin" "%DiagnosticLeaf%" "%ServiceRoot%\Native-X64-Enum-Name-Service.bin" "%ServiceRoot%\Native-X64-Text-Concat-Service.bin" "%ServiceRoot%\Native-X64-Text-Quote-Service.bin" "%ServiceRoot%\Native-X64-I32-Format-Service.bin" "%ServiceRoot%\Native-X64-U32-Format-Service.bin" "%TargetDirectory%\Bundle.wvsq" >"%TemporaryDirectory%\%TargetName%-Bundle-Request.out" 2>"%TemporaryDirectory%\%TargetName%-Bundle-Request.err"
 if errorlevel 1 exit /b 1
-"%ConstructionTools%\wvhostverifierpublisherbasemetadata.exe" wvo-inspector %Target% 82280 "%TargetDirectory%\Bundle.wvsq" "%TargetDirectory%\Metadata.wvhv" >"%TemporaryDirectory%\%TargetName%-Metadata.out" 2>"%TemporaryDirectory%\%TargetName%-Metadata.err"
+"%ConstructionTools%\wvhostverifierpublisherbasemetadata.exe" console-verifier %Target% 19221 "%TargetDirectory%\Bundle.wvsq" "%TargetDirectory%\Metadata.wvhv" >"%TemporaryDirectory%\%TargetName%-Metadata.out" 2>"%TemporaryDirectory%\%TargetName%-Metadata.err"
 if errorlevel 1 exit /b 1
 "%ConstructionTools%\wvhostverifierpublisherbaseruntime.exe" "%TargetDirectory%\Metadata.wvhv" "%TargetDirectory%\Runtime.wvhr" >"%TemporaryDirectory%\%TargetName%-Runtime.out" 2>"%TemporaryDirectory%\%TargetName%-Runtime.err"
 if errorlevel 1 exit /b 1
 "%HostedTools%\wvhostbundle.exe" "%TargetDirectory%\Bundle.wvsq" "%TargetDirectory%\Bundle.wvsi" >"%TemporaryDirectory%\%TargetName%-Bundle.out" 2>"%TemporaryDirectory%\%TargetName%-Bundle.err"
 if errorlevel 1 exit /b 1
-"%HostedTools%\wvhostverifierbytes.exe" wvo-inspector "%TargetDirectory%\Runtime.wvhr" "%TargetDirectory%\Platform.wvhb" >"%TemporaryDirectory%\%TargetName%-Platform.out" 2>"%TemporaryDirectory%\%TargetName%-Platform.err"
+"%HostedTools%\wvhostverifierbytes.exe" console-verifier "%TargetDirectory%\Runtime.wvhr" "%TargetDirectory%\Platform.wvhb" >"%TemporaryDirectory%\%TargetName%-Platform.out" 2>"%TemporaryDirectory%\%TargetName%-Platform.err"
 if errorlevel 1 exit /b 1
-"%HostedTools%\wvhostverifierstartup.exe" wvo-inspector "%TargetDirectory%\Runtime.wvhr" "%Startup%" "%TargetDirectory%\Startup.wvsd" >"%TemporaryDirectory%\%TargetName%-Startup.out" 2>"%TemporaryDirectory%\%TargetName%-Startup.err"
+"%HostedTools%\wvhostverifierstartup.exe" console-verifier "%TargetDirectory%\Runtime.wvhr" "%Startup%" "%TargetDirectory%\Startup.wvsd" >"%TemporaryDirectory%\%TargetName%-Startup.out" 2>"%TemporaryDirectory%\%TargetName%-Startup.err"
 if errorlevel 1 exit /b 1
-"%HostedTools%\wvhostverifiercompose.exe" wvo-inspector "%TargetDirectory%\Runtime.wvhr" "%TargetDirectory%\Platform.wvhb" "%TargetDirectory%\Startup.wvsd" "%TargetDirectory%\Bundle.wvsi" "%Application%" >"%TemporaryDirectory%\%TargetName%-Compose.out" 2>"%TemporaryDirectory%\%TargetName%-Compose.err"
+"%HostedTools%\wvhostverifiercompose.exe" console-verifier "%TargetDirectory%\Runtime.wvhr" "%TargetDirectory%\Platform.wvhb" "%TargetDirectory%\Startup.wvsd" "%TargetDirectory%\Bundle.wvsi" "%Application%" >"%TemporaryDirectory%\%TargetName%-Compose.out" 2>"%TemporaryDirectory%\%TargetName%-Compose.err"
 exit /b %ERRORLEVEL%
 
 :verify_file
@@ -144,5 +145,5 @@ if exist "%TemporaryDirectory%\." rmdir /s /q "%TemporaryDirectory%"
 exit /b %Result%
 
 :usage
->&2 echo Usage: Tools\Native\Construct-Wvo-Inspector-Reconstruction.cmd ^<existing-separate-output-directory^>
+>&2 echo Usage: Tools\Native\Construct-Console-Verifier-Reconstruction.cmd ^<existing-separate-output-directory^>
 exit /b 64

@@ -10,9 +10,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_RUNTIME_BYTES = 17_941;
+    private const int NATIVE_HOSTED_VERIFIER_RUNTIME_BYTES = 19_333;
     private const string NATIVE_HOSTED_VERIFIER_RUNTIME_SHA256 =
-        "cf27254409ab5d574f6b6b19feb5958d97c3076a5f3b0806208437cfde04114e";
+        "fbd36782659cedebedfb24525bec1a97afee66d720982ebd11eaeab485419fe7";
 
     private static void Windvaleˉnativeˉhostedˉverifierˉruntimeˉruns()
     {
@@ -70,6 +70,8 @@ internal static partial class Program
             Symbol.Binding == Nativeˉsymbolˉbinding.Export &&
             Symbol.Kind == Nativeˉsymbolˉkind.Function &&
             Symbol.Name == "Main").Offset;
+        var Consoleˉverifier =
+            Loadˉconsoleˉapplicationˉverifierˉfixture(Repository);
 
         ImmutableArray<byte>? Firstˉrequest = null;
         foreach (var Target in Enum.GetValues<Consoleˉapplicationˉtarget>())
@@ -77,41 +79,78 @@ internal static partial class Program
             var Platform = Target == Consoleˉapplicationˉtarget.Windowsˉx64
                 ? Nativeˉserviceˉplatform.Windows
                 : Nativeˉserviceˉplatform.Linux;
-            var Bundle = X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
-                Verifierˉfragment,
-                Platform);
-            var Metadata = Hostedˉverifierˉapplicationˉmetadata.Build(
-                Target,
-                Verifier.Module.Capabilities,
-                Bundle,
-                Hostedˉverifierˉruntimeˉdata.BUNDLE_TEXT_OFFSET,
-                Nativeˉentry,
-                Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier);
-            var Request = Buildˉhostedˉverifierˉruntimeˉrequest(Target, Metadata);
-            var Interpreted = Reference.Runˉmainˉbytes(Request).Bytes;
-            var Executed = X64ˉnativeˉexecutor.Executeˉbytes(Bridgeˉnative, Request);
-            Sequenceˉequal(Interpreted, Executed);
-            Equal(4128, Executed.Length);
-            Equal(1397249623u, BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()));
-            Equal(0u, BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[12..]));
-            Equal(1048u, BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[16..]));
-            Equal(4096u, BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[20..]));
-            var Header = Executed[32..];
-            Sequenceˉequal(
-                Hostedˉverifierˉruntimeˉdata.Build(
+            foreach (var Profile in new[]
+            {
+                Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier,
+                Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier,
+            })
+            {
+                var Extended = Profile ==
+                    Hostedˉverifierˉapplicationˉprofile.Consoleˉapplicationˉverifier;
+                var Applicationˉmodule = Extended
+                    ? Consoleˉverifier.Module
+                    : Verifier;
+                var Fragment = Extended
+                    ? Consoleˉverifier.Fragment
+                    : Verifierˉfragment;
+                var Entry = Extended
+                    ? Consoleˉverifier.Entry
+                    : Nativeˉentry;
+                var Bundle = Extended
+                    ? X64ˉnativeˉserviceˉbundle
+                        .Buildˉhostedˉconsoleˉapplicationˉverifier(
+                            Fragment,
+                            Platform)
+                    : X64ˉnativeˉserviceˉbundle.Buildˉhostedˉverifier(
+                        Fragment,
+                        Platform);
+                var Metadata = Hostedˉverifierˉapplicationˉmetadata.Build(
                     Target,
-                    Verifier.Module.Capabilities,
+                    Applicationˉmodule.Module.Capabilities,
                     Bundle,
-                    Nativeˉentry,
-                    Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier),
-                Header);
-            _ = Hostedˉverifierˉruntimeˉdata.Verify(
-                Header.AsSpan(),
-                Target,
-                Bundle,
-                Bundle.Imageˉbytes.AsSpan(),
-                Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier);
-            Firstˉrequest ??= Request;
+                    Hostedˉverifierˉruntimeˉdata.BUNDLE_TEXT_OFFSET,
+                    Entry,
+                    Profile);
+                var Request = Buildˉhostedˉverifierˉruntimeˉrequest(
+                    Target,
+                    Metadata,
+                    Profile);
+                var Interpreted = Reference.Runˉmainˉbytes(Request).Bytes;
+                var Executed = X64ˉnativeˉexecutor.Executeˉbytes(
+                    Bridgeˉnative,
+                    Request);
+                Sequenceˉequal(Interpreted, Executed);
+                Equal(4128, Executed.Length);
+                Equal(1397249623u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()));
+                Equal(0u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[12..]));
+                Equal(1048u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[16..]));
+                Equal(4096u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Executed.AsSpan()[20..]));
+                var Header = Executed[32..];
+                Equal(Extended ? 2u : 1u,
+                    BinaryPrimitives.ReadUInt32LittleEndian(Header.AsSpan()[288..]));
+                Sequenceˉequal(
+                    Hostedˉverifierˉruntimeˉdata.Build(
+                        Target,
+                        Applicationˉmodule.Module.Capabilities,
+                        Bundle,
+                        Entry,
+                        Profile),
+                    Header);
+                _ = Hostedˉverifierˉruntimeˉdata.Verify(
+                    Header.AsSpan(),
+                    Target,
+                    Bundle,
+                    Bundle.Imageˉbytes.AsSpan(),
+                    Profile);
+                if (!Extended)
+                {
+                    Firstˉrequest ??= Request;
+                }
+            }
         }
 
         var Valid = Firstˉrequest ?? throw new InvalidOperationException();
@@ -144,7 +183,9 @@ internal static partial class Program
 
     private static ImmutableArray<byte> Buildˉhostedˉverifierˉruntimeˉrequest(
         Consoleˉapplicationˉtarget target,
-        ImmutableArray<byte> metadata)
+        ImmutableArray<byte> metadata,
+        Hostedˉverifierˉapplicationˉprofile profile =
+            Hostedˉverifierˉapplicationˉprofile.Compilerˉwvbˉverifier)
     {
         Equal(1024, metadata.Length);
         var Bytes = new byte[1048];
@@ -152,7 +193,7 @@ internal static partial class Program
         BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(4), 1);
         BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(8), 1048);
         BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(12), (uint)target);
-        BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(16), 2);
+        BinaryPrimitives.WriteUInt32LittleEndian(Bytes.AsSpan(16), (uint)profile);
         metadata.AsSpan().CopyTo(Bytes.AsSpan(24));
         return Bytes.ToImmutableArray();
     }

@@ -40,7 +40,7 @@ fn Objectˉisˉexact(Object: bytes, Target: u32, Profile: u32) -> bool {
             "755ffb99cba6a838dd9eec353ce72d4adfb3af130ec4bce5a2278828dd136616"
         );
     }
-    if Profile == 6u32 {
+    if Profile == 6u32 || Profile == 7u32 {
         Expectedˉbytes = 2291u32;
         Expectedˉdigest = Textˉtoˉutf8(
             "5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb"
@@ -90,7 +90,7 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
         Symbols = 33u32;
         Relocations = 45u32;
     }
-    if Expectedˉprofile == 6u32 {
+    if Expectedˉprofile == 6u32 || Expectedˉprofile == 7u32 {
         Codeˉbytes = 743u32;
         Symbols = 25u32;
         Relocations = 29u32;

@@ -1,10 +1,11 @@
 {
-  "format": "windvale-native-console-application-verifier-candidate-1",
+  "format": "windvale-native-console-application-verifier-candidate-2",
   "status": "candidate",
   "sourceDecision": "0341",
   "provenanceDecision": "0307",
-  "qualification": "pending",
-  "construction": "stage0-recovery",
+  "constructionDecision": "0502",
+  "qualification": "current-host-focused",
+  "construction": "windvale-native-profile-7-reconstruction",
   "nativeSourceConstruction": "verified-digest-bound-front-door",
   "nativeSourceDecision": "0344",
   "artifacts": [
@@ -17,20 +18,28 @@
       "sourceProject": "Windvale-Console-Application-Verifier.wvproj"
     },
     {
+      "name": "console-application-verifier-native-object",
+      "path": "Console-Application-Verifier.wvo",
+      "target": "x86-64-wvo-abi-22",
+      "bytes": 1049519,
+      "sha256": "51292e4d300d4a6bb6ce4879915bba5304de70c9deafdf4eb6ff6a54a6dbf150",
+      "sourceWvb": "Console-Application-Verifier.wvb"
+    },
+    {
       "name": "windows-x64-console-application-verifier",
       "path": "windows-x64-wvappverify.exe",
       "target": "windows-x64-console-application-verifier-v1",
-      "bytes": 1064448,
-      "sha256": "3342db37e009b32f3c41139942f6161130b874f6f49a85c4bc906ada324272dc",
-      "sourceWvb": "Console-Application-Verifier.wvb"
+      "bytes": 1063936,
+      "sha256": "05b5f5b3e3999a0ef3537f0908967069a12f17de09753fc90e8a4c7542dc9d3f",
+      "sourceWvo": "Console-Application-Verifier.wvo"
     },
     {
       "name": "linux-x64-console-application-verifier",
       "path": "linux-x64-wvappverify.elf",
       "target": "linux-x64-console-application-verifier-v1",
       "bytes": 1064960,
-      "sha256": "cee61bb2bf6d805cbb98766c448d7d0985b95dd0fa55a3cd80b2e3697b369a8d",
-      "sourceWvb": "Console-Application-Verifier.wvb"
+      "sha256": "c2700e5e68711d7b8e8a8f7e9573d87dfa27c3676a034a314310ef59045e5f1a",
+      "sourceWvo": "Console-Application-Verifier.wvo"
     }
   ]
 }

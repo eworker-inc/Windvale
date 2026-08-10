@@ -94,14 +94,15 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
     var Serviceˉcount: u32 = 6u32;
     var Evidenceˉbytes: u32 = 352u32;
     var Requestˉbytes: u32 = 384u32;
-    if Profile == 6u32 {
+    if Profile == 6u32 || Profile == 7u32 {
         Planˉbytes = 156u32;
         Serviceˉcount = 11u32;
         Evidenceˉbytes = 572u32;
         Requestˉbytes = 624u32;
     }
     if Target < 1u32 || Target > 2u32 ||
-        (Profile != 2u32 && Profile != 6u32 && Profile != 8u32) ||
+        (Profile != 2u32 && Profile != 6u32 && Profile != 7u32 &&
+            Profile != 8u32) ||
         Total != Evidenceˉbytes ||
         !Allˉzero(Input, Evidenceˉbytes - 8u32, 8u32) {
         return Failure(Input, 4u32, 12u32);

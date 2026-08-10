@@ -21,7 +21,7 @@ esac
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Retirement-Suite.txt"
-plan_digest=399f6a044fd4cca1552a79db8c421c5dd92b36f4555a0ce103c5be44133df587
+plan_digest=5487fc45c1ac1f1ab653f4fbdf700c46072cb372663dea68f92d992f1f8e16ff
 
 check_hash() {
     local path=$1
