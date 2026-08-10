@@ -94,9 +94,9 @@ if not errorlevel 1 (
     >&2 echo FAIL  hosted packaging: invalid WVB was accepted
     goto :failed
 )
-call :check_file "%TestDirectory%\Destination.exe" 6927 a7eb43d58a81ee57881f800b2c17b70c2014c26ce4454fa299feb2986348fb58 "preserved destination"
+call :check_file "%TestDirectory%\Destination.exe" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 "preserved destination"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvb" 6927 a7eb43d58a81ee57881f800b2c17b70c2014c26ce4454fa299feb2986348fb58 "preserved input"
+call :check_file "%TestDirectory%\Invalid.wvb" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 "preserved input"
 if errorlevel 1 goto :failed
 call :check_no_scratch
 if errorlevel 1 goto :failed

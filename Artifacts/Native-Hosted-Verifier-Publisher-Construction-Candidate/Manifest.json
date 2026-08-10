@@ -1,12 +1,12 @@
 {
-  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-9",
+  "format": "windvale-native-hosted-verifier-publisher-construction-candidate-10",
   "status": "candidate",
-  "sourceDecision": "0484",
+  "sourceDecision": "0485",
   "provenanceDecision": "0474",
   "qualification": "current-host-focused",
   "construction": "verified-digest-bound-front-door",
   "sha256SumsBytes": 4634,
-  "sha256SumsSha256": "83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273",
+  "sha256SumsSha256": "aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8",
   "commands": [
     {
       "name": "wvhostverifieridentity",
@@ -183,29 +183,29 @@
     {
       "name": "publisher-base-metadata-tool",
       "path": "Publisher-Base-Metadata-Tool.wvb",
-      "bytes": 70166,
-      "sha256": "6c79bd1b190e7d28190d1481a4ea1c602c227274806a885062af29d06c972630",
+      "bytes": 72025,
+      "sha256": "1396b613b18586cb68cdd010adb7864a70ac43d1cadca3f7c474ddd46a207fd2",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj"
     },
     {
       "name": "publisher-base-runtime-tool",
       "path": "Publisher-Base-Runtime-Tool.wvb",
-      "bytes": 20387,
-      "sha256": "56d329c2710322b4a3f74565dd5fb862be8ac4c26c7fb76f7c2bfafc66a9f8e2",
+      "bytes": 20850,
+      "sha256": "aa354586184de25e0873c65d16fa35819eb9e4c50111b32ba4fd51d69327b806",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Base-Runtime-Tool.wvproj"
     },
     {
       "name": "publisher-application-admission-tool",
       "path": "Publisher-Application-Admission-Tool.wvb",
-      "bytes": 30837,
-      "sha256": "f1e7497dc1acba1a08190021d4dac83ec65c3e6b58f80edb3bfcd62eeda55ed3",
+      "bytes": 30778,
+      "sha256": "c6ba933fa0ea1068f02235f75ed251655b10b43d64f8984d22b548f01608af0d",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Application-Tool.wvproj"
     },
     {
       "name": "publisher-application-admission-native-object",
       "path": "Publisher-Application-Admission-Tool.wvo",
-      "bytes": 556273,
-      "sha256": "ac5972e8de83ad962874217ed6e0fba49586096df4c3b69d61abdf7509e2dff5",
+      "bytes": 555690,
+      "sha256": "722d819152d8415487c1cf111474fd11dd0ab89a863e33ab84c865a2e3e13771",
       "sourceWvb": "Publisher-Application-Admission-Tool.wvb"
     }
   ],
@@ -358,32 +358,32 @@
       "name": "windows-x64-wvhostverifierpublisherbasemetadata",
       "path": "windows-x64/wvhostverifierpublisherbasemetadata.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 945664,
-      "sha256": "008d6322d64a299fd7364051ab97bd810f61cbcf75dc1b49b862bd0915e8ee85",
+      "bytes": 960512,
+      "sha256": "d6e02ec9601fd77279f510f2c08fe45dc795eb7ccde491c056ea208ebdd4f388",
       "sourceArtifact": "Publisher-Base-Metadata-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifierpublisherbasemetadata",
       "path": "linux-x64/wvhostverifierpublisherbasemetadata.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 946176,
-      "sha256": "5d09accfbd04fd99a4b23b8f40ec42ac5e3482a873fee06bd796140dd2006e37",
+      "bytes": 962560,
+      "sha256": "ae8bf03197ae63fcc6b0b646c779fe58b2adbe3f8333ab288eed7911858fb423",
       "sourceArtifact": "Publisher-Base-Metadata-Tool.wvb"
     },
     {
       "name": "windows-x64-wvhostverifierpublisherbaseruntime",
       "path": "windows-x64/wvhostverifierpublisherbaseruntime.exe",
       "target": "windows-x64-native-hosted-tool-v1",
-      "bytes": 222208,
-      "sha256": "54a4edd7398ae90299d18d9d025c0ec0df828e89b35845a01b7ea5d37dbef117",
+      "bytes": 225792,
+      "sha256": "5424e425dfe6f63aa8b7e7ea976a0ce1d17ddd0f4c67298a8893f9debe42212b",
       "sourceArtifact": "Publisher-Base-Runtime-Tool.wvb"
     },
     {
       "name": "linux-x64-wvhostverifierpublisherbaseruntime",
       "path": "linux-x64/wvhostverifierpublisherbaseruntime.elf",
       "target": "linux-x64-native-hosted-tool-v1",
-      "bytes": 221184,
-      "sha256": "61d2e1fefd8060ba69d5d9bb9de191809aca02116545d10bec5ca8f9e84022da",
+      "bytes": 225280,
+      "sha256": "fd683d6b8d5ba3c2d1b5787bca76bbb7619217dbd6d23d1c9283e75d1c1ee450",
       "sourceArtifact": "Publisher-Base-Runtime-Tool.wvb"
     }
   ]

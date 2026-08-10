@@ -76,13 +76,13 @@ set "PublisherWvb=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Application-
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "ConsumerRoot=%RepositoryRoot%\Linker\Reference\Consumers"
 
-call :verify_file "%HostedToolset%\SHA256SUMS" 6927 a7eb43d58a81ee57881f800b2c17b70c2014c26ce4454fa299feb2986348fb58 "hosted toolset inventory"
+call :verify_file "%HostedToolset%\SHA256SUMS" 6927 f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 4634 83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 4634 aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"

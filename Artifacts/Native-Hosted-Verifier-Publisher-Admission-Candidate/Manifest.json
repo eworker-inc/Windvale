@@ -1,0 +1,26 @@
+{
+  "format": "windvale-native-hosted-verifier-publisher-admission-candidate-1",
+  "status": "candidate",
+  "sourceDecision": "0485",
+  "provenanceDecision": "0483",
+  "qualification": "current-host-focused",
+  "construction": "windvale-native-profile-8",
+  "artifacts": [
+    {
+      "name": "windows-x64-native-hosted-verifier-publisher-admitter",
+      "path": "windows-x64-wvhostverifierpublisheradmit.exe",
+      "target": "windows-x64-native-hosted-verifier-publisher-admission-v1",
+      "bytes": 570368,
+      "sha256": "7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b",
+      "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Publisher-Application-Admission-Tool.wvb"
+    },
+    {
+      "name": "linux-x64-native-hosted-verifier-publisher-admitter",
+      "path": "linux-x64-wvhostverifierpublisheradmit.elf",
+      "target": "linux-x64-native-hosted-verifier-publisher-admission-v1",
+      "bytes": 569344,
+      "sha256": "9bfe16fa751e21a32847f5534eff7de18ba74cfe5b714c63fb6a6589d30d7cad",
+      "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Publisher-Application-Admission-Tool.wvb"
+    }
+  ]
+}

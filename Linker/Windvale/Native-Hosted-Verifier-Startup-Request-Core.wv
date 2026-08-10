@@ -54,12 +54,16 @@ fn Objectˉisˉexact(Object: bytes, Target: u32) -> bool {
     return true;
 }
 
-export fn Nativeˉhostedˉverifierˉstartupˉrequest(
+export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
     Runtime: bytes,
-    Object: bytes
+    Object: bytes,
+    Expectedˉprofile: u32
 ) -> Nativeˉhostedˉverifierˉstartupˉrequestˉresult {
     let Value: Layout.Nativeˉhostedˉverifierˉlayout =
-        Layout.Nativeˉhostedˉverifierˉplan(Runtime);
+        Layout.Nativeˉhostedˉverifierˉplanˉforˉprofile(
+            Runtime,
+            Expectedˉprofile
+        );
     if !Value.Valid { return Failure(Runtime, 1u32); }
     if !Objectˉisˉexact(Object, Value.Target) {
         return Failure(Runtime, 2u32);
@@ -99,5 +103,16 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequest(
         Request,
         Codeˉbytes,
         0u32
+    );
+}
+
+export fn Nativeˉhostedˉverifierˉstartupˉrequest(
+    Runtime: bytes,
+    Object: bytes
+) -> Nativeˉhostedˉverifierˉstartupˉrequestˉresult {
+    return Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
+        Runtime,
+        Object,
+        2u32
     );
 }

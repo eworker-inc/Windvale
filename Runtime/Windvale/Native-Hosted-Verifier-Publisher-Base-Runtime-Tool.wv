@@ -25,7 +25,7 @@ export fn Main() -> i32 {
     Request = Appendˉu32(Request, 1u32);
     Request = Appendˉu32(Request, 1048u32);
     Request = Appendˉu32(Request, Bytesˉreadˉu32ˉlittle(Metadata, 12u32));
-    Request = Appendˉu32(Request, 2u32);
+    Request = Appendˉu32(Request, Bytesˉreadˉu32ˉlittle(Metadata, 84u32));
     Request = Appendˉu32(Request, 0u32);
     Request = Bytesˉconcat(Request, Metadata);
 

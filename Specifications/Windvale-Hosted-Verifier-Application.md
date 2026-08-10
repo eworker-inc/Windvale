@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHV 1` is the implemented manifest for packaging four fixed Windvale-written read-only binary tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned WVB verifier, the complete structural `wvdump` inspector, the bounded portable-WVB runner, and the WVO verifier/inspector. All run without loading .NET. The WVB verifier and inspector applications have qualified histories; the runner and WVO profiles are implemented candidates pending the grouped dual-host retirement gate. Stage 0 still lowers, packages, and independently verifies the applications until the broader native-retirement gate is qualified.
+`WVHV 1` is the implemented manifest for packaging five fixed Windvale-written read-only binary tools as deterministic Windows and Linux x86-64 applications: the compiler-aligned WVB verifier, the complete structural `wvdump` inspector, the bounded portable-WVB runner, the WVO verifier/inspector, and the exact hosted-verifier publisher admitter. All run without loading .NET. The WVB verifier and inspector applications have qualified histories; the runner, WVO, and publisher-admission profiles are implemented candidates pending the grouped dual-host retirement gate. Stage 0 remains an independent recovery oracle until the broader native-retirement gate is qualified.
 
 [Decision 0461](../Documents/Decisions/0461-Native-WVHV-Metadata-Ownership.md)
 adds the first native-construction replacement for this family: an exact
@@ -81,7 +81,7 @@ u32   native-image bytes
 u32   native Main offset
 u32   record-arena bytes
 u32   text-arena bytes
-u32   profile: 2 compiler-WVB verifier, 4 WVB inspector, 5 WVB runner, 6 WVO inspector
+u32   profile: 2 compiler-WVB verifier, 4 WVB inspector, 5 WVB runner, 6 WVO inspector, 8 publisher admission
 u64   instruction budget = 16,000,000,000
 bytes native-image SHA-256[32]
 ```
@@ -104,6 +104,13 @@ Profile `4` extends that exact sequence with `enum.name`, `text.concat`, `text.q
 Profile `5` uses the verifier's first six services and then `text.concat`, `i32.format`, and `u32.format`. It reuses the inspector startup template; the two service-table slots not present in the runner profile are bound to zero and are unreachable from the independently verified runner fragment.
 
 Profile `6` uses the same exact eleven services as profile `4` and reuses the same inspector startup template. Its distinct profile identity prevents a WVB inspector package from being accepted as the WVO front door or vice versa.
+
+Profile `8` uses the verifier's exact five capabilities and six-service bundle.
+It reads one immutable publisher application snapshot, performs exact target,
+length, and SHA-256 admission in Windvale source, and has no file-output table,
+output scratch, or mutation authority. Profile `7` remains assigned to the
+separately owned console-application verifier; the numeric profile `7` used by
+the `WVHG` hosted-container segmenter belongs to another metadata family.
 
 ## Runtime and startup
 
@@ -151,6 +158,10 @@ The current WVB 1.11 reconstruction candidate is 1,199,104 bytes with SHA-256 `e
 
 `windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 606,720 bytes with SHA-256 `2a8f6f8ca8fc6054fff23441f7971c0b90900383d5bed0fecc54f9cac102a300`.
 
+`windows-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
+Its current native candidate is 570,368 bytes with SHA-256
+`7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b`.
+
 ## Linux container
 
 `linux-x64-verifier-v1` emits a sectionless x86-64 static-PIE ELF with read-only headers, RX text, RW/NX runtime data, a format-4 Windvale note, and a 64 MiB RW/NX GNU stack declaration. It has no interpreter, dynamic table, imports, or loader relocations and uses only checked startup syscalls.
@@ -162,6 +173,10 @@ The current WVB 1.11 reconstruction candidate is 1,200,128 bytes with SHA-256 `8
 `linux-x64-wvb-runner-v1` uses metadata profile `5`. The committed pre-correction candidate remains 778,240 bytes with SHA-256 `8fcfa1fe8dbdb3228c484f284655690d0bf14f4c595eaf820d55cc4ab4f6a294`; the current corrected-backend reconstruction has the same size and SHA-256 `74180ac7cd80192647f46df166a8ea97af17c9676afbe0b2ecb2c8c824db6944`.
 
 `linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 606,208 bytes with SHA-256 `bdc4817c252ecf2592299a6646161b396bfb251acabc68d3f5d75ff40891541e`.
+
+`linux-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
+Its current native candidate is 569,344 bytes with SHA-256
+`9bfe16fa751e21a32847f5534eff7de18ba74cfe5b714c63fb6a6589d30d7cad`.
 
 The digest-bound [native read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md) intentionally continues to use the previously qualified verifier and inspector applications until the corrected-backend candidates pass the same exact-commit dual-host gate. Candidate reconstruction does not silently replace a qualified ordinary artifact.
 
@@ -185,6 +200,10 @@ windvale aot Windvale-Wvo-Object.wvb --target linux-x64-wvo-inspector-v1
 ```
 
 The current canonical-source reconstruction candidate is 148,351 bytes with SHA-256 `519c32fda8d95167d54c723a35860eb80663be5f90ff12e4555ffa6031d505e6`. The digest-bound ordinary front door retains its previously qualified artifact until this candidate passes the exact-commit dual-host promotion gate.
+
+The publisher admitter has no Stage 0 CLI target. Its paired candidates are
+constructed by `Construct-Hosted-Verifier-Publisher-Admitter.cmd` and `.sh`
+through the native WVB build/lower/link and hosted-container tools.
 
 The canonical inspector WVB is 76,527 bytes with SHA-256 `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`.
 

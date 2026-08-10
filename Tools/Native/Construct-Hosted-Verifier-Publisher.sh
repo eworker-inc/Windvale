@@ -108,11 +108,11 @@ check_file() {
 }
 
 check_file "$hosted_toolset/SHA256SUMS" 6927 \
-    a7eb43d58a81ee57881f800b2c17b70c2014c26ce4454fa299feb2986348fb58 \
+    f96d613388cbde3766dfe439cc5066803fcc7709d0fb674a412200d90c305dd3 \
     'hosted toolset inventory' || exit $?
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$construction/SHA256SUMS" 4634 \
-    83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 \
+    aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 \
     'publisher construction inventory' || exit $?
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$publisher_wvb" 29170 \

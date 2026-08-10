@@ -28,7 +28,7 @@ fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
 
 fn Usage() -> i32 {
     diagnostic.write_line(
-        "Usage: wvhostverifierbytes <runtime.wvhr> <regions.wvhb>"
+        "Usage: wvhostverifierbytes [publisher-admission] <runtime.wvhr> <regions.wvhb>"
     );
     return 64;
 }
@@ -57,16 +57,34 @@ fn Responseˉisˉvalid(Response: bytes, Target: u32) -> bool {
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() != 2u32 { return Usage(); }
-    let Runtimeˉpath: text = process.argument(0u32);
-    let Outputˉpath: text = process.argument(1u32);
+    let Arguments: u32 = process.argument_count();
+    if Arguments != 2u32 && Arguments != 3u32 { return Usage(); }
+    var Base: u32 = 0u32;
+    var Expectedˉprofile: u32 = 2u32;
+    if Arguments == 3u32 {
+        if !Pathsˉareˉequal(process.argument(0u32), "publisher-admission") {
+            return Usage();
+        }
+        Base = 1u32;
+        Expectedˉprofile = 8u32;
+    }
+    let Runtimeˉpath: text = process.argument(Base);
+    let Outputˉpath: text = process.argument(Base + 1u32);
     if Pathsˉareˉequal(Runtimeˉpath, Outputˉpath) { return Usage(); }
     let Runtime: bytes = file.read_bytes(Runtimeˉpath);
     if Bytesˉlength(Runtime) != 4096u32 { return 2; }
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 492u32);
-    var Response: bytes = Linux.Nativeˉhostedˉverifierˉplatformˉlinux(Runtime);
+    var Response: bytes =
+        Linux.Nativeˉhostedˉverifierˉplatformˉlinuxˉforˉprofile(
+            Runtime,
+            Expectedˉprofile
+        );
     if Target == 1u32 {
-        Response = Windows.Nativeˉhostedˉverifierˉplatformˉwindows(Runtime);
+        Response =
+            Windows.Nativeˉhostedˉverifierˉplatformˉwindowsˉforˉprofile(
+                Runtime,
+                Expectedˉprofile
+            );
     }
     if (Target != 1u32 && Target != 2u32) ||
         !Responseˉisˉvalid(Response, Target) {

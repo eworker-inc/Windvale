@@ -121,15 +121,17 @@ export fn Nativeˉhostedˉverifierˉruntimeˉheaderˉbuild(Input: bytes) -> byte
     }
 
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
     if Target < 1u32 || Target > 2u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 16u32) != 2u32 ||
+        (Profile != 2u32 && Profile != 8u32) ||
         Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 {
         return Failure(Input, 4u32, 12u32);
     }
-    if !Metadataˉadmission.Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
+    if !Metadataˉadmission.Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
         Input,
         24u32,
-        Target
+        Target,
+        Profile
     ) {
         return Failure(Input, 5u32, 24u32);
     }

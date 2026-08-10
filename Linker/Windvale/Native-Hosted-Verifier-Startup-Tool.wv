@@ -33,7 +33,7 @@ fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
 
 fn Usage() -> i32 {
     diagnostic.write_line(
-        "Usage: wvhostverifierstartup <runtime.wvhr> <startup.wvo> <response.wvsd>"
+        "Usage: wvhostverifierstartup [publisher-admission] <runtime.wvhr> <startup.wvo> <response.wvsd>"
     );
     return 64;
 }
@@ -71,10 +71,20 @@ fn Responseˉisˉvalid(
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() != 3u32 { return Usage(); }
-    let Runtimeˉpath: text = process.argument(0u32);
-    let Objectˉpath: text = process.argument(1u32);
-    let Outputˉpath: text = process.argument(2u32);
+    let Arguments: u32 = process.argument_count();
+    if Arguments != 3u32 && Arguments != 4u32 { return Usage(); }
+    var Base: u32 = 0u32;
+    var Expectedˉprofile: u32 = 2u32;
+    if Arguments == 4u32 {
+        if !Pathsˉareˉequal(process.argument(0u32), "publisher-admission") {
+            return Usage();
+        }
+        Base = 1u32;
+        Expectedˉprofile = 8u32;
+    }
+    let Runtimeˉpath: text = process.argument(Base);
+    let Objectˉpath: text = process.argument(Base + 1u32);
+    let Outputˉpath: text = process.argument(Base + 2u32);
     if Pathsˉareˉequal(Runtimeˉpath, Objectˉpath) ||
         Pathsˉareˉequal(Runtimeˉpath, Outputˉpath) ||
         Pathsˉareˉequal(Objectˉpath, Outputˉpath) {
@@ -82,9 +92,10 @@ export fn Main() -> i32 {
     }
 
     let Result: Request.Nativeˉhostedˉverifierˉstartupˉrequestˉresult =
-        Request.Nativeˉhostedˉverifierˉstartupˉrequest(
+        Request.Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
             file.read_bytes(Runtimeˉpath),
-            file.read_bytes(Objectˉpath)
+            file.read_bytes(Objectˉpath),
+            Expectedˉprofile
         );
     if !Result.Valid {
         return Reject(Textˉconcat("request-", U32ˉformat(Result.Failure)));

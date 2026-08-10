@@ -109,12 +109,16 @@ fn Linuxˉpatch(Index: u32) -> u32 {
     return 622u32;
 }
 
-export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalid(
+export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofile(
     Runtime: bytes,
-    Startup: bytes
+    Startup: bytes,
+    Expectedˉprofile: u32
 ) -> bool {
     let Value: Layout.Nativeˉhostedˉverifierˉlayout =
-        Layout.Nativeˉhostedˉverifierˉplan(Runtime);
+        Layout.Nativeˉhostedˉverifierˉplanˉforˉprofile(
+            Runtime,
+            Expectedˉprofile
+        );
     if !Value.Valid || Bytesˉlength(Startup) != Value.Startupˉbytes {
         return false;
     }
@@ -153,4 +157,15 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalid(
         Index = Index + 1u32;
     }
     return Digestˉmatches(Normalized, Expected);
+}
+
+export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalid(
+    Runtime: bytes,
+    Startup: bytes
+) -> bool {
+    return Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofile(
+        Runtime,
+        Startup,
+        2u32
+    );
 }

@@ -82,9 +82,10 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
         return Failure(Input, 1u32, 8u32);
     }
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
     let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
     if Target < 1u32 || Target > 2u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 16u32) != 2u32 ||
+        (Profile != 2u32 && Profile != 8u32) ||
         !Allˉzero(Input, 344u32, 8u32) {
         return Failure(Input, 4u32, 12u32);
     }
@@ -120,7 +121,7 @@ export fn Nativeˉhostedˉverifierˉmetadataˉrequestˉbuild(Input: bytes) -> by
     Request = Appendˉu32(Request, 1u32);
     Request = Appendˉu32(Request, 384u32);
     Request = Appendˉu32(Request, Target);
-    Request = Appendˉu32(Request, 2u32);
+    Request = Appendˉu32(Request, Profile);
     Request = Appendˉu32(Request, 4096u32);
     Request = Appendˉu32(Request, Bundleˉbytes);
     Request = Appendˉu32(Request, Nativeˉbytes);

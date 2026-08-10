@@ -137,9 +137,15 @@ fn Response(Input: bytes, Status: u32, Offset: u32) -> bytes {
     return Build.Appendˉu32(Result, 12u32);
 }
 
-export fn Nativeˉhostedˉverifierˉplatformˉwindows(Runtime: bytes) -> bytes {
+export fn Nativeˉhostedˉverifierˉplatformˉwindowsˉforˉprofile(
+    Runtime: bytes,
+    Expectedˉprofile: u32
+) -> bytes {
     let Value: Layout.Nativeˉhostedˉverifierˉlayout =
-        Layout.Nativeˉhostedˉverifierˉplan(Runtime);
+        Layout.Nativeˉhostedˉverifierˉplanˉforˉprofile(
+            Runtime,
+            Expectedˉprofile
+        );
     if !Value.Valid || Value.Target != 1u32 {
         return Response(Runtime, 1u32, Bytesˉlength(Runtime));
     }
@@ -150,4 +156,11 @@ export fn Nativeˉhostedˉverifierˉplatformˉwindows(Runtime: bytes) -> bytes {
     Relocation = Build.Patchˉu32(Relocation, 0u32, Value.Textˉaddress);
     Relocation = Build.Patchˉu32(Relocation, 4u32, 12u32);
     return Bytesˉconcat(Result, Relocation);
+}
+
+export fn Nativeˉhostedˉverifierˉplatformˉwindows(Runtime: bytes) -> bytes {
+    return Nativeˉhostedˉverifierˉplatformˉwindowsˉforˉprofile(
+        Runtime,
+        2u32
+    );
 }

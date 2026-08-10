@@ -49,10 +49,7 @@ export fn Main() -> i32 {
         return 2;
     }
     console.write_line(
-        Textˉconcat(
-            "native hosted verifier publisher application status=Valid bytes=",
-            U32ˉformat(Bytesˉlength(Input))
-        )
+        "native hosted verifier publisher application status=Valid"
     );
     return 0;
 }

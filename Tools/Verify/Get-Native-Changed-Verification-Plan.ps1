@@ -135,7 +135,13 @@ function Add-Native-Tool-Suite {
         Add-Suite 'uefi-packager'
     } elseif ($Stem -eq 'Publish-Hosted-Verifier-Application') {
         Add-Suite 'publisher-rejections'
-    } elseif ($Stem -eq 'Construct-Hosted-Verifier-Publisher') {
+    } elseif ($Stem -in @(
+        'Admit-Hosted-Verifier-Publisher',
+        'Construct-Hosted-Verifier-Publisher',
+        'Construct-Hosted-Verifier-Publisher-Admitter'
+    )) {
+        Add-Suite 'hosted-verifier-publisher-files'
+    } elseif ($Stem -in @('Package-Hosted-Wvb', 'Test-Hosted-Wvb-Packaging')) {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Stem -match 'Console|Package-Hosted|Segmented') {
         Add-Suite @(
@@ -222,6 +228,13 @@ foreach ($Path in $Paths) {
         Add-Compiler-Suites
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-compiler-recovery-source'
+    } elseif ($Path -in @(
+        'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv',
+        'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Core.wv',
+        'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Core.wv',
+        'Runtime/Windvale/Native-Hosted-Verifier-Runtime-Header-Core.wv'
+    )) {
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path.StartsWith(
         'Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-',
         [StringComparison]::Ordinal)) {
@@ -245,6 +258,18 @@ foreach ($Path in $Paths) {
         Add-Assembler-Suites
     } elseif ($Path.StartsWith('Assembler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-assembler-recovery-source'
+    } elseif ($Path -in @(
+        'Linker/Windvale/Native-Hosted-Verifier-Container-Core.wv',
+        'Linker/Windvale/Native-Hosted-Verifier-Container-Tool.wv',
+        'Linker/Windvale/Native-Hosted-Verifier-Layout-Core.wv',
+        'Linker/Windvale/Native-Hosted-Verifier-Platform-Linux.wv',
+        'Linker/Windvale/Native-Hosted-Verifier-Platform-Tool.wv',
+        'Linker/Windvale/Native-Hosted-Verifier-Platform-Windows.wv',
+        'Linker/Windvale/Native-Hosted-Verifier-Startup-Admission.wv',
+        'Linker/Windvale/Native-Hosted-Verifier-Startup-Request-Core.wv',
+        'Linker/Windvale/Native-Hosted-Verifier-Startup-Tool.wv'
+    )) {
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path.StartsWith(
         'Linker/Windvale/Native-Hosted-Verifier-Application-',
         [StringComparison]::Ordinal)) {
@@ -257,6 +282,13 @@ foreach ($Path in $Paths) {
         Add-Linker-Suites
     } elseif ($Path.StartsWith('Linker/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-linker-recovery-source'
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Hosted-Container-Toolset-Candidate/',
+        [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Artifacts/Native-Hosted-Verifier-Publisher-Admission-Candidate/',
+            [StringComparison]::Ordinal)) {
+        Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate/',
         [StringComparison]::Ordinal)) {
@@ -286,7 +318,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-test-recovery-source'
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
-        if ($Path.StartsWith(
+        if ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
+            Add-Suite 'hosted-verifier-publisher-files'
+        } elseif ($Path.StartsWith(
             'Specifications/Windvale-Native-Hosted-Verifier-Application-Publisher',
             [StringComparison]::Ordinal) -or
             $Path.StartsWith(

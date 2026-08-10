@@ -49,29 +49,31 @@ require the final exact application identity. They never invoke .NET.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Base-metadata WVB | 70,166 | `6c79bd1b190e7d28190d1481a4ea1c602c227274806a885062af29d06c972630` |
-| Base-runtime WVB | 20,387 | `56d329c2710322b4a3f74565dd5fb862be8ac4c26c7fb76f7c2bfafc66a9f8e2` |
-| Publisher-application admission WVB | 30,837 | `f1e7497dc1acba1a08190021d4dac83ec65c3e6b58f80edb3bfcd62eeda55ed3` |
-| Publisher-application admission WVO | 556,273 | `ac5972e8de83ad962874217ed6e0fba49586096df4c3b69d61abdf7509e2dff5` |
+| Base-metadata WVB | 72,025 | `1396b613b18586cb68cdd010adb7864a70ac43d1cadca3f7c474ddd46a207fd2` |
+| Base-runtime WVB | 20,850 | `aa354586184de25e0873c65d16fa35819eb9e4c50111b32ba4fd51d69327b806` |
+| Publisher-application admission WVB | 30,778 | `c6ba933fa0ea1068f02235f75ed251655b10b43d64f8984d22b548f01608af0d` |
+| Publisher-application admission WVO | 555,690 | `722d819152d8415487c1cf111474fd11dd0ab89a863e33ab84c865a2e3e13771` |
 | Linked publisher fragment | 232,736 | `260e9f4f23c99dab13145ceb98724a4c74157fc579c5685194b7312c1a5cb115` |
 | Windows base | 248,832 | `cf204201e5c26d71e78da1112de2bc724d389a5222cc835d48dbe8cd8bbc5988` |
 | Linux base | 249,856 | `0bdeee07a49f75781767934884cbbc7dd085abff4507e2f78210fa225638539a` |
 | Windows publisher | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
 | Linux publisher | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
 
-Version 9 of the construction candidate contains 22 canonical WVB/WVO
+Version 10 of the construction candidate contains 22 canonical WVB/WVO
 artifacts and 22 paired host applications. Its 44-entry `SHA256SUMS` is 4,634
 LF-only bytes with SHA-256
-`83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273`.
+`aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8`.
 
 ## Native owner and remaining gate
 
-The `hosted-verifier-publisher-files` retirement lane owns six fixed cases:
-the complete inventory, exact Windows and Linux construction, malformed base
-record preservation, exact alias preservation, and execution of the constructed
-current-host publisher to install the exact verifier candidate. Its inventory
-case also rebuilds and natively lowers the publisher-application admission WVB
-and requires byte equality with both pinned artifacts.
+The `hosted-verifier-publisher-files` retirement lane owns nine fixed cases:
+the complete inventory, exact Windows and Linux publisher construction, exact
+Windows and Linux profile-8 admitter construction, a current-host read-only
+admission matrix, malformed base-record preservation, exact alias preservation,
+and execution of the constructed current-host publisher to install the exact
+verifier candidate. Its inventory case also rebuilds and natively lowers the
+publisher-application admission WVB and requires byte equality with both pinned
+artifacts.
 
 The frozen managed file-pipeline test remains recovery/differential evidence.
 Independent Linux execution, grouped qualification, completed-publisher durable

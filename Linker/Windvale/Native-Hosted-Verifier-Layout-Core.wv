@@ -78,15 +78,19 @@ export fn Nativeˉhostedˉverifierˉserviceˉaddress(
     );
 }
 
-export fn Nativeˉhostedˉverifierˉplan(Runtime: bytes)
+export fn Nativeˉhostedˉverifierˉplanˉforˉprofile(
+    Runtime: bytes,
+    Expectedˉprofile: u32
+)
     -> Nativeˉhostedˉverifierˉlayout {
     if Bytesˉlength(Runtime) != 4096u32 { return Invalid(); }
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Runtime, 492u32);
     if Target < 1u32 || Target > 2u32 ||
-        !Admission.Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
+        !Admission.Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
             Runtime,
             480u32,
-            Target
+            Target,
+            Expectedˉprofile
         ) {
         return Invalid();
     }
@@ -164,4 +168,9 @@ export fn Nativeˉhostedˉverifierˉplan(Runtime: bytes)
         Nativeˉimageˉbytes,
         Nativeˉentry
     );
+}
+
+export fn Nativeˉhostedˉverifierˉplan(Runtime: bytes)
+    -> Nativeˉhostedˉverifierˉlayout {
+    return Nativeˉhostedˉverifierˉplanˉforˉprofile(Runtime, 2u32);
 }

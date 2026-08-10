@@ -9,14 +9,40 @@ capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
+fn Textˉequals(Left: text, Right: text) -> bool {
+    let Leftˉbytes: bytes = Textˉtoˉutf8(Left);
+    let Rightˉbytes: bytes = Textˉtoˉutf8(Right);
+    let Length: u32 = Bytesˉlength(Leftˉbytes);
+    if Length != Bytesˉlength(Rightˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Leftˉbytes, Index) !=
+            Bytesˉreadˉu8(Rightˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
 export fn Main() -> i32 {
-    if process.argument_count() != 4u32 { return 64; }
-    let Inputˉpath: text = process.argument(2u32);
-    let Outputˉpath: text = process.argument(3u32);
+    let Arguments: u32 = process.argument_count();
+    if Arguments != 4u32 && Arguments != 5u32 { return 64; }
+    var Base: u32 = 0u32;
+    var Profile: u32 = 2u32;
+    if Arguments == 5u32 {
+        if !Textˉequals(process.argument(0u32), "publisher-admission") {
+            return 64;
+        }
+        Base = 1u32;
+        Profile = 8u32;
+    }
+    let Inputˉpath: text = process.argument(Base + 2u32);
+    let Outputˉpath: text = process.argument(Base + 3u32);
     if Support.Pathsˉareˉequal(Inputˉpath, Outputˉpath) { return 64; }
 
-    let Targetˉtext: bytes = Textˉtoˉutf8(process.argument(0u32));
-    let Entryˉtext: bytes = Textˉtoˉutf8(process.argument(1u32));
+    let Targetˉtext: bytes = Textˉtoˉutf8(process.argument(Base));
+    let Entryˉtext: bytes = Textˉtoˉutf8(process.argument(Base + 1u32));
     let Target: Decimal.Foundationˉu32ˉparse =
         Decimal.Foundationˉu32ˉdecimalˉparse(
             Targetˉtext,
@@ -32,8 +58,9 @@ export fn Main() -> i32 {
     if !Target.Valid || !Entry.Valid { return 2; }
 
     let Result: Metadata.Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉresult =
-        Metadata.Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuild(
+        Metadata.Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuildˉforˉprofile(
             Target.Value,
+            Profile,
             Entry.Value,
             file.read_bytes(Inputˉpath)
         );

@@ -53,14 +53,18 @@ fn Startupˉisˉvalid(Input: bytes, Codeˉbytes: u32) -> bool {
         Bytesˉreadˉu32ˉlittle(Input, 28u32) == 0u32;
 }
 
-export fn Nativeˉhostedˉverifierˉcontainer(
+export fn Nativeˉhostedˉverifierˉcontainerˉforˉprofile(
     Runtime: bytes,
     Platform: bytes,
     Startup: bytes,
-    Bundle: bytes
+    Bundle: bytes,
+    Expectedˉprofile: u32
 ) -> Nativeˉhostedˉverifierˉcontainerˉresult {
     let Value: Layout.Nativeˉhostedˉverifierˉlayout =
-        Layout.Nativeˉhostedˉverifierˉplan(Runtime);
+        Layout.Nativeˉhostedˉverifierˉplanˉforˉprofile(
+            Runtime,
+            Expectedˉprofile
+        );
     if !Value.Valid { return Failure(Runtime, 1u32); }
     if !Platformˉisˉvalid(Platform, Value.Target) {
         return Failure(Runtime, 2u32);
@@ -68,9 +72,10 @@ export fn Nativeˉhostedˉverifierˉcontainer(
     if !Startupˉisˉvalid(Startup, Value.Startupˉbytes) {
         return Failure(Runtime, 3u32);
     }
-    if !Startupˉadmission.Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalid(
+    if !Startupˉadmission.Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofile(
         Runtime,
-        Bytesˉslice(Startup, 32u32, Value.Startupˉbytes)
+        Bytesˉslice(Startup, 32u32, Value.Startupˉbytes),
+        Expectedˉprofile
     ) {
         return Failure(Runtime, 3u32);
     }
@@ -121,4 +126,19 @@ export fn Nativeˉhostedˉverifierˉcontainer(
         Runtime
     );
     return Nativeˉhostedˉverifierˉcontainerˉresult(true, Result, 0u32);
+}
+
+export fn Nativeˉhostedˉverifierˉcontainer(
+    Runtime: bytes,
+    Platform: bytes,
+    Startup: bytes,
+    Bundle: bytes
+) -> Nativeˉhostedˉverifierˉcontainerˉresult {
+    return Nativeˉhostedˉverifierˉcontainerˉforˉprofile(
+        Runtime,
+        Platform,
+        Startup,
+        Bundle,
+        2u32
+    );
 }

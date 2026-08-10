@@ -78,14 +78,27 @@ fn Response(Input: bytes, Status: u32, Offset: u32) -> bytes {
     return Build.Appendˉu32(Result, 0u32);
 }
 
-export fn Nativeˉhostedˉverifierˉplatformˉlinux(Runtime: bytes) -> bytes {
+export fn Nativeˉhostedˉverifierˉplatformˉlinuxˉforˉprofile(
+    Runtime: bytes,
+    Expectedˉprofile: u32
+) -> bytes {
     let Value: Layout.Nativeˉhostedˉverifierˉlayout =
-        Layout.Nativeˉhostedˉverifierˉplan(Runtime);
+        Layout.Nativeˉhostedˉverifierˉplanˉforˉprofile(
+            Runtime,
+            Expectedˉprofile
+        );
     if !Value.Valid || Value.Target != 2u32 {
         return Response(Runtime, 1u32, Bytesˉlength(Runtime));
     }
     return Bytesˉconcat(
         Response(Runtime, 0u32, Bytesˉlength(Runtime)),
         Header(Value)
+    );
+}
+
+export fn Nativeˉhostedˉverifierˉplatformˉlinux(Runtime: bytes) -> bytes {
+    return Nativeˉhostedˉverifierˉplatformˉlinuxˉforˉprofile(
+        Runtime,
+        2u32
     );
 }

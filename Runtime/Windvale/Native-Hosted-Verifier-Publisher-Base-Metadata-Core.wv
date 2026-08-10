@@ -55,13 +55,15 @@ fn Planˉisˉcanonical(Input: bytes) -> bool {
     return true;
 }
 
-export fn Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuild(
+export fn Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuildˉforˉprofile(
     Target: u32,
+    Profile: u32,
     Nativeˉentry: u32,
     Input: bytes
 ) -> Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉresult {
     let Total: u32 = Bytesˉlength(Input);
     if (Target != 1u32 && Target != 2u32) ||
+        (Profile != 2u32 && Profile != 8u32) ||
         Total < 128u32 || Total > 4194304u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1364416087u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 4u32) != 2u32 ||
@@ -92,7 +94,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuild(
     Evidence = Appendˉu32(Evidence, 1u32);
     Evidence = Appendˉu32(Evidence, 352u32);
     Evidence = Appendˉu32(Evidence, Target);
-    Evidence = Appendˉu32(Evidence, 2u32);
+    Evidence = Appendˉu32(Evidence, Profile);
     Evidence = Appendˉu32(Evidence, Nativeˉentry);
     Evidence = Bytesˉconcat(Evidence, Bytesˉslice(Input, 32u32, 96u32));
 
@@ -149,5 +151,18 @@ export fn Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuild(
     return Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉresult(
         true,
         Bytesˉslice(Metadataˉresponse, 32u32, 1024u32)
+    );
+}
+
+export fn Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuild(
+    Target: u32,
+    Nativeˉentry: u32,
+    Input: bytes
+) -> Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉresult {
+    return Nativeˉhostedˉverifierˉpublisherˉbaseˉmetadataˉbuildˉforˉprofile(
+        Target,
+        2u32,
+        Nativeˉentry,
+        Input
     );
 }

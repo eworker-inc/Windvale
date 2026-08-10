@@ -9,6 +9,7 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Construction=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Construction-Candidate"
+set "AdmissionCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Admission-Candidate"
 set "PublisherTools=%Construction%\windows-x64"
 set "VerifierCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Application-Candidate\windows-x64-wvverify.exe"
 set "OriginalTemp=%TEMP%"
@@ -20,9 +21,10 @@ set "TEMP=%TestDirectory%"
 set /a Total=0
 set /a Passed=0
 set "Result=1"
+set "Phase=initialization"
 
 set /a Total+=1
-call :check_file "%Construction%\SHA256SUMS" 4634 83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 "construction inventory"
+call :check_file "%Construction%\SHA256SUMS" 4634 aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :check_digest "%Construction%\%%I" %%H "construction artifact"
@@ -35,7 +37,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Admission-Build.err" "admission source build wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" 30837 f1e7497dc1acba1a08190021d4dac83ec65c3e6b58f80edb3bfcd62eeda55ed3 "native-built publisher admission WVB"
+call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" 30778 c6ba933fa0ea1068f02235f75ed251655b10b43d64f8984d22b548f01608af0d "native-built publisher admission WVB"
 if errorlevel 1 goto :failed
 fc /b "%Construction%\Publisher-Application-Admission-Tool.wvb" "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" >nul
 if errorlevel 1 goto :failed
@@ -46,7 +48,7 @@ call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Admission-Lower.err" "admission native lowering wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvo" 556273 ac5972e8de83ad962874217ed6e0fba49586096df4c3b69d61abdf7509e2dff5 "native-lowered publisher admission WVO"
+call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvo" 555690 722d819152d8415487c1cf111474fd11dd0ab89a863e33ab84c865a2e3e13771 "native-lowered publisher admission WVO"
 if errorlevel 1 goto :failed
 fc /b "%Construction%\Publisher-Application-Admission-Tool.wvo" "%TestDirectory%\Publisher-Application-Admission-Tool.wvo" >nul
 if errorlevel 1 goto :failed
@@ -78,6 +80,87 @@ call :check_no_private_scratch
 if errorlevel 1 goto :failed
 call :pass "exact cross-target Linux publisher construction"
 
+set /a Total+=1
+call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher-Admitter.cmd" windows "%TestDirectory%\Admitter.exe" >"%TestDirectory%\Admitter-Windows.out" 2>"%TestDirectory%\Admitter-Windows.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Admitter-Windows.err" "Windows admitter construction wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /x /c:"publisher admitter construction status=Valid target=windows bytes=570368" "%TestDirectory%\Admitter-Windows.out" >nul
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Admitter.exe" 570368 7f58a5e321d1b4baa16ba673b3e0e1c21c9acd040cba92dae0f180d629c63e6b "Windows publisher admitter"
+if errorlevel 1 goto :failed
+fc /b "%AdmissionCandidate%\windows-x64-wvhostverifierpublisheradmit.exe" "%TestDirectory%\Admitter.exe" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "exact Windows publisher-admitter construction"
+
+set /a Total+=1
+call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher-Admitter.cmd" linux "%TestDirectory%\Admitter.elf" >"%TestDirectory%\Admitter-Linux.out" 2>"%TestDirectory%\Admitter-Linux.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Admitter-Linux.err" "Linux admitter construction wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /x /c:"publisher admitter construction status=Valid target=linux bytes=569344" "%TestDirectory%\Admitter-Linux.out" >nul
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Admitter.elf" 569344 9bfe16fa751e21a32847f5534eff7de18ba74cfe5b714c63fb6a6589d30d7cad "Linux publisher admitter"
+if errorlevel 1 goto :failed
+fc /b "%AdmissionCandidate%\linux-x64-wvhostverifierpublisheradmit.elf" "%TestDirectory%\Admitter.elf" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "exact Linux publisher-admitter construction"
+
+set /a Total+=1
+set "Phase=current-host Windows publisher admission"
+call "%RepositoryRoot%\Tools\Native\Admit-Hosted-Verifier-Publisher.cmd" windows "%TestDirectory%\Publisher.exe" >"%TestDirectory%\Admit-Windows.out" 2>"%TestDirectory%\Admit-Windows.err"
+if errorlevel 1 goto :failed
+set "Phase=current-host Windows publisher admission output"
+call :check_file "%TestDirectory%\Admit-Windows.out" 58 449d559e4d7f203e2f9d99cffb28144c171559c65344b3cd9335c34ee4be9708 "Windows publisher admission output"
+if errorlevel 1 goto :failed
+set "Phase=current-host Windows publisher admission diagnostic"
+call :check_empty "%TestDirectory%\Admit-Windows.err" "Windows publisher admission wrote a diagnostic"
+if errorlevel 1 goto :failed
+set "Phase=current-host Linux publisher admission"
+call "%RepositoryRoot%\Tools\Native\Admit-Hosted-Verifier-Publisher.cmd" linux "%TestDirectory%\Publisher.elf" >"%TestDirectory%\Admit-Linux.out" 2>"%TestDirectory%\Admit-Linux.err"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Admit-Linux.out" 58 449d559e4d7f203e2f9d99cffb28144c171559c65344b3cd9335c34ee4be9708 "Linux publisher admission output"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Admit-Linux.err" "Linux publisher admission wrote a diagnostic"
+if errorlevel 1 goto :failed
+set "Phase=publisher target-swap rejection"
+call "%RepositoryRoot%\Tools\Native\Admit-Hosted-Verifier-Publisher.cmd" linux "%TestDirectory%\Publisher.exe" >"%TestDirectory%\Admit-Swap.out" 2>"%TestDirectory%\Admit-Swap.err"
+if not "%ERRORLEVEL%"=="2" goto :failed
+call :check_file "%TestDirectory%\Admit-Swap.err" 61 ffadaf98e0978439eb19a97ccfe2d4c06f810b8c9926d5193eb4827f3c126b89 "target-swap rejection diagnostic"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Admit-Swap.out" "target-swap rejection wrote standard output"
+if errorlevel 1 goto :failed
+set "Phase=wrong-digest publisher creation"
+fsutil file createnew "%TestDirectory%\Wrong-Digest.exe" 256000 >nul 2>nul
+if errorlevel 1 goto :failed
+set "Phase=wrong-digest publisher rejection"
+call "%RepositoryRoot%\Tools\Native\Admit-Hosted-Verifier-Publisher.cmd" windows "%TestDirectory%\Wrong-Digest.exe" >"%TestDirectory%\Admit-Corrupt.out" 2>"%TestDirectory%\Admit-Corrupt.err"
+if not "%ERRORLEVEL%"=="2" goto :failed
+call :check_empty "%TestDirectory%\Admit-Corrupt.out" "wrong-digest rejection wrote standard output"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Admit-Corrupt.err" 61 ffadaf98e0978439eb19a97ccfe2d4c06f810b8c9926d5193eb4827f3c126b89 "wrong-digest rejection diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Wrong-Digest.exe" 256000 24a046dc04fefdb652e4077b41162490b344a4dd45f918505477f84c592f3070 "preserved wrong-digest publisher"
+if errorlevel 1 goto :failed
+set "Phase=invalid publisher target rejection"
+call "%RepositoryRoot%\Tools\Native\Admit-Hosted-Verifier-Publisher.cmd" other "%TestDirectory%\Publisher.exe" >"%TestDirectory%\Admit-Usage.out" 2>"%TestDirectory%\Admit-Usage.err"
+if not "%ERRORLEVEL%"=="64" goto :failed
+call :check_empty "%TestDirectory%\Admit-Usage.out" "invalid-target usage wrote standard output"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Admit-Usage.err" 103 6c0d4ead9db1e4edfd4f5b85ea1b4f8b2245825c58e2227e286e47faa7857d84 "invalid-target usage diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Publisher.exe" 256000 735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6 "preserved Windows publisher subject"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Publisher.elf" 254917 de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a "preserved Linux publisher subject"
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "current-host publisher admission matrix"
+
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Invalid.wvsq" >nul || goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhv" >nul || goto :failed
 set /a Total+=1
@@ -87,9 +170,9 @@ call :check_empty "%TestDirectory%\Reject.out" "metadata rejection wrote standar
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "metadata rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4634 83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 "rejected metadata input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4634 aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 "rejected metadata input"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhv" 4634 83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 "preserved metadata destination"
+call :check_file "%TestDirectory%\Sentinel.wvhv" 4634 aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 "preserved metadata destination"
 if errorlevel 1 goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhr" >nul || goto :failed
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TestDirectory%\Invalid.wvsq" "%TestDirectory%\Sentinel.wvhr" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
@@ -98,7 +181,7 @@ call :check_empty "%TestDirectory%\Reject.out" "runtime rejection wrote standard
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "runtime rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhr" 4634 83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 "preserved runtime destination"
+call :check_file "%TestDirectory%\Sentinel.wvhr" 4634 aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 "preserved runtime destination"
 if errorlevel 1 goto :failed
 call :pass "base tools reject malformed input and preserve destinations"
 
@@ -111,7 +194,7 @@ call :check_empty "%TestDirectory%\Alias.out" "alias rejection wrote standard ou
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Alias.err" "alias rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4634 83df3a245217c20bd704685e79d296c03bbdd85ee0377cd046a38f995735e273 "preserved alias input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4634 aa8002e8689fa910f316466e908631b62b829fb5bf7dd3ed3675d10106ce21b8 "preserved alias input"
 if errorlevel 1 goto :failed
 call :pass "base tools reject exact path aliases"
 
@@ -178,7 +261,8 @@ exit /b 0
 
 :failed
 set "Result=1"
-for %%F in (Admission-Build.err Admission-Lower.err Windows.err Linux.err Reject.err Alias.err Execute.err) do if exist "%TestDirectory%\%%F" (
+>&2 echo FAIL  hosted-verifier publisher files: %Phase%
+for %%F in (Admission-Build.err Admission-Lower.err Windows.err Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Reject.err Alias.err Execute.err) do if exist "%TestDirectory%\%%F" (
     for %%S in ("%TestDirectory%\%%F") do if not "%%~zS"=="0" type "%%~fS" >&2
 )
 

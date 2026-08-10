@@ -86,14 +86,16 @@ fn Servicesˉareˉvalid(
     return true;
 }
 
-export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
+export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
     Input: bytes,
     Offset: u32,
-    Target: u32
+    Target: u32,
+    Profile: u32
 ) -> bool {
     let Total: u32 = Bytesˉlength(Input);
     if !Rangeˉisˉvalid(Total, Offset, 1024u32) ||
-        Target < 1u32 || Target > 2u32 {
+        Target < 1u32 || Target > 2u32 ||
+        (Profile != 2u32 && Profile != 8u32) {
         return false;
     }
     if Bytesˉreadˉu32ˉlittle(Input, Offset) != 1447581271u32 ||
@@ -123,7 +125,7 @@ export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
         Nativeˉbytes > Bundleˉbytes || Nativeˉentry >= Nativeˉbytes ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 76u32) != 2097152u32 ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 80u32) != 134217728u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 84u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 84u32) != Profile ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 88u32) != 3115098112u32 ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 92u32) != 3u32 ||
         Allˉzero(Input, Offset + 96u32, 32u32) ||
@@ -133,4 +135,17 @@ export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
         return false;
     }
     return true;
+}
+
+export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
+    Input: bytes,
+    Offset: u32,
+    Target: u32
+) -> bool {
+    return Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
+        Input,
+        Offset,
+        Target,
+        2u32
+    );
 }

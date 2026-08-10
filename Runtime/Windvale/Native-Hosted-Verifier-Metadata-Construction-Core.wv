@@ -130,7 +130,8 @@ export fn Nativeˉhostedˉverifierˉmetadataˉbuild(Input: bytes) -> bytes {
     let Bundleˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
     let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
     let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
-    if Target < 1u32 || Target > 2u32 || Profile != 2u32 ||
+    if Target < 1u32 || Target > 2u32 ||
+        (Profile != 2u32 && Profile != 8u32) ||
         Bundleˉoffset != 4096u32 ||
         Bundleˉbytes == 0u32 || Bundleˉbytes > 35651584u32 ||
         Nativeˉbytes == 0u32 || Nativeˉbytes > 33554432u32 ||
@@ -179,17 +180,18 @@ export fn Nativeˉhostedˉverifierˉmetadataˉbuild(Input: bytes) -> bytes {
     Metadata = Appendˉu32(Metadata, Nativeˉentry);
     Metadata = Appendˉu32(Metadata, 2097152u32);
     Metadata = Appendˉu32(Metadata, 134217728u32);
-    Metadata = Appendˉu32(Metadata, 2u32);
+    Metadata = Appendˉu32(Metadata, Profile);
     Metadata = Appendˉu32(Metadata, 3115098112u32);
     Metadata = Appendˉu32(Metadata, 3u32);
     Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 40u32, 32u32));
     Metadata = Appendˉcapabilities(Input, Metadata);
     Metadata = Appendˉservices(Input, Metadata, Target);
     Metadata = Bytesˉconcat(Metadata, Zeroes(Input, 432u32));
-    if !Admission.Nativeˉhostedˉverifierˉmetadataˉisˉvalid(
+    if !Admission.Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
         Metadata,
         0u32,
-        Target
+        Target,
+        Profile
     ) {
         return Failure(Input, 6u32, 12u32);
     }
