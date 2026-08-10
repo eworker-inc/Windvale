@@ -60,12 +60,16 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(
     if Target < 1u32 || Target > 2u32 {
         return Failure(Input, 4u32, 12u32);
     }
+    let Variant: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
+    var Mainˉoffset: u32 = 3001u32;
+    if Variant == 1u32 { Mainˉoffset = 1178u32; }
     if Bytesˉreadˉu32ˉlittle(Input, 16u32) != 5u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 24u32) != 3001u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, 24u32) != Mainˉoffset ||
         Bytesˉreadˉu32ˉlittle(Input, 28u32) != 789u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 32u32) != 0u32 ||
-        !Allˉzero(Input, 36u32, 12u32) {
+        Variant > 1u32 ||
+        !Allˉzero(Input, 40u32, 8u32) {
         return Failure(Input, 4u32, 16u32);
     }
     if !Admission.Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalid(
@@ -73,8 +77,8 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(
     ) {
         return Failure(Input, 4u32, 48u32);
     }
-    if !Admission.Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalid(
-        Input, 80u32
+    if !Admission.Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalidˉforˉvariant(
+        Input, 80u32, Variant
     ) {
         return Failure(Input, 4u32, 80u32);
     }
@@ -91,8 +95,8 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉbuild(
     Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 48u32, 64u32));
     Metadata = Bytesˉconcat(Metadata, Bytesˉslice(Input, 36u32, 12u32));
     Metadata = Appendˉu32(Metadata, 0u32);
-    if !Admission.Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalid(
-        Metadata, 0u32, Target
+    if !Admission.Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalidˉforˉvariant(
+        Metadata, 0u32, Target, Variant
     ) {
         return Failure(Input, 5u32, 12u32);
     }

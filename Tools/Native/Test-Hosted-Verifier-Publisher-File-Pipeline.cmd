@@ -10,6 +10,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Construction=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Construction-Candidate"
 set "AdmissionCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Admission-Candidate"
+set "PromoterCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Promoter-Candidate"
 set "PublisherTools=%Construction%\windows-x64"
 set "VerifierCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Application-Candidate\windows-x64-wvverify.exe"
 set "OriginalTemp=%TEMP%"
@@ -24,7 +25,7 @@ set "Result=1"
 set "Phase=initialization"
 
 set /a Total+=1
-call :check_file "%Construction%\SHA256SUMS" 4812 3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 "construction inventory"
+call :check_file "%Construction%\SHA256SUMS" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :check_digest "%Construction%\%%I" %%H "construction artifact"
@@ -109,6 +110,36 @@ if errorlevel 1 goto :failed
 call :check_no_private_scratch
 if errorlevel 1 goto :failed
 call :pass "exact cross-target Linux publisher construction"
+
+set /a Total+=1
+call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher-Promoter.cmd" windows "%TestDirectory%\Promoter.exe" >"%TestDirectory%\Promoter-Windows.out" 2>"%TestDirectory%\Promoter-Windows.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Promoter-Windows.err" "Windows promoter construction wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /x /c:"publisher promoter construction status=Valid target=windows bytes=681472" "%TestDirectory%\Promoter-Windows.out" >nul
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Promoter.exe" 681472 9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069 "Windows publisher promoter"
+if errorlevel 1 goto :failed
+fc /b "%PromoterCandidate%\windows-x64-wvhostverifierpublisherinstall.exe" "%TestDirectory%\Promoter.exe" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "exact Windows publisher-promoter construction"
+
+set /a Total+=1
+call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher-Promoter.cmd" linux "%TestDirectory%\Promoter.elf" >"%TestDirectory%\Promoter-Linux.out" 2>"%TestDirectory%\Promoter-Linux.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Promoter-Linux.err" "Linux promoter construction wrote a diagnostic"
+if errorlevel 1 goto :failed
+findstr /x /c:"publisher promoter construction status=Valid target=linux bytes=680901" "%TestDirectory%\Promoter-Linux.out" >nul
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Promoter.elf" 680901 9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0 "Linux publisher promoter"
+if errorlevel 1 goto :failed
+fc /b "%PromoterCandidate%\linux-x64-wvhostverifierpublisherinstall.elf" "%TestDirectory%\Promoter.elf" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "exact cross-target Linux publisher-promoter construction"
 
 set /a Total+=1
 call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher-Admitter.cmd" windows "%TestDirectory%\Admitter.exe" >"%TestDirectory%\Admitter-Windows.out" 2>"%TestDirectory%\Admitter-Windows.err"
@@ -200,9 +231,9 @@ call :check_empty "%TestDirectory%\Reject.out" "metadata rejection wrote standar
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "metadata rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4812 3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 "rejected metadata input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "rejected metadata input"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhv" 4812 3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 "preserved metadata destination"
+call :check_file "%TestDirectory%\Sentinel.wvhv" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "preserved metadata destination"
 if errorlevel 1 goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhr" >nul || goto :failed
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TestDirectory%\Invalid.wvsq" "%TestDirectory%\Sentinel.wvhr" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
@@ -211,7 +242,7 @@ call :check_empty "%TestDirectory%\Reject.out" "runtime rejection wrote standard
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "runtime rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhr" 4812 3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 "preserved runtime destination"
+call :check_file "%TestDirectory%\Sentinel.wvhr" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "preserved runtime destination"
 if errorlevel 1 goto :failed
 call :pass "base tools reject malformed input and preserve destinations"
 
@@ -224,14 +255,39 @@ call :check_empty "%TestDirectory%\Alias.out" "alias rejection wrote standard ou
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Alias.err" "alias rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 4812 3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 "preserved alias input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "preserved alias input"
 if errorlevel 1 goto :failed
 call :pass "base tools reject exact path aliases"
 
 set /a Total+=1
+call "%RepositoryRoot%\Tools\Native\Install-Hosted-Verifier-Publisher.cmd" "%TestDirectory%\Publisher.exe" "%TestDirectory%\Installed-Publisher.exe" >"%TestDirectory%\Install-Publisher-Windows.out" 2>"%TestDirectory%\Install-Publisher-Windows.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Install-Publisher-Windows.err" "Windows publisher installation wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Install-Publisher-Windows.out" 117 6766dce89f5d2aa3086a054b0e556028d5d265208fe3c63834530e48833e8eca "Windows publisher installation report"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Installed-Publisher.exe" 256000 735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6 "installed Windows publisher"
+if errorlevel 1 goto :failed
+fc /b "%TestDirectory%\Publisher.exe" "%TestDirectory%\Installed-Publisher.exe" >nul
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Install-Hosted-Verifier-Publisher.cmd" "%TestDirectory%\Publisher.elf" "%TestDirectory%\Installed-Publisher.elf" >"%TestDirectory%\Install-Publisher-Linux.out" 2>"%TestDirectory%\Install-Publisher-Linux.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Install-Publisher-Linux.err" "Linux publisher installation wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Install-Publisher-Linux.out" 117 b136669c594dea0063c960c5c70875fa68086f82032ae3d46f696225715fcff6 "Linux publisher installation report"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Installed-Publisher.elf" 254917 de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a "installed Linux publisher"
+if errorlevel 1 goto :failed
+fc /b "%TestDirectory%\Publisher.elf" "%TestDirectory%\Installed-Publisher.elf" >nul
+if errorlevel 1 goto :failed
+call :check_no_private_scratch
+if errorlevel 1 goto :failed
+call :pass "current-host promoter installs both exact publishers"
+
+set /a Total+=1
 call :check_file "%VerifierCandidate%" 1004032 aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a "Windows verifier candidate"
 if errorlevel 1 goto :failed
-"%TestDirectory%\Publisher.exe" "%VerifierCandidate%" "%TestDirectory%\Installed.exe" >"%TestDirectory%\Execute.out" 2>"%TestDirectory%\Execute.err"
+"%TestDirectory%\Installed-Publisher.exe" "%VerifierCandidate%" "%TestDirectory%\Installed.exe" >"%TestDirectory%\Execute.out" 2>"%TestDirectory%\Execute.err"
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Execute.err" "constructed publisher execution wrote a diagnostic"
 if errorlevel 1 goto :failed
@@ -241,7 +297,7 @@ fc /b "%VerifierCandidate%" "%TestDirectory%\Installed.exe" >nul
 if errorlevel 1 goto :failed
 call :check_no_private_scratch
 if errorlevel 1 goto :failed
-call :pass "constructed current-host publisher execution"
+call :pass "promoted current-host publisher execution"
 set "Result=0"
 goto :cleanup
 
@@ -292,7 +348,7 @@ exit /b 0
 :failed
 set "Result=1"
 >&2 echo FAIL  hosted-verifier publisher files: %Phase%
-for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Windows.err Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Reject.err Alias.err Execute.err) do if exist "%TestDirectory%\%%F" (
+for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err) do if exist "%TestDirectory%\%%F" (
     for %%S in ("%TestDirectory%\%%F") do if not "%%~zS"=="0" type "%%~fS" >&2
 )
 

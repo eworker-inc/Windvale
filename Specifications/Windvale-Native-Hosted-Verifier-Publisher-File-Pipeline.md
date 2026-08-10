@@ -18,9 +18,9 @@ avoid size; each module has one named contract.
 The new ordinary-file boundaries are:
 
 ```text
-wvhostverifierproducemetadata <target:1|2> <publisher.wvb> <startup.wvo> <metadata.wvvp>
+wvhostverifierproducemetadata [variant:0|1] <target:1|2> <module.wvb> <startup.wvo> <metadata.wvvp>
 wvhostverifierpublishobjects <request.wvcr> <targets.wvpt> <startup.wvo> <adapter.wvo> <sha256.wvo> <objects.wvio>
-wvhostverifierpublishimports <imports.wvim>
+wvhostverifierpublishimports [publisher|promoter] <imports.wvim>
 wvhostverifierpublishlinux <base.elf> <request.wvcr> <objects.wvio> <metadata.wvvp> <application.elf>
 wvhostverifierpublishwindows <base.exe> <request.wvcr> <objects.wvio> <metadata.wvvp> <imports.wvim> <application.exe>
 ```
@@ -54,21 +54,23 @@ All WVBs are built through the digest-bound native source front door.
 
 | Tool WVB | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata producer | 53,009 | `74de7ca9a0c959c782837d6674c30db1dcccb07ed258d50017c968ad38d503bc` |
-| Object instantiation | 21,724 | `410e4f93c24a2f7cac168298e1e3f2bc3d62f9738c36227b69805ad65591b341` |
-| Windows imports | 10,464 | `63b87f2618c9fd413238a9a2919bc6cdb1c769e72f4dca2de47c1c7e1c697a29` |
-| Linux materialization | 16,600 | `84bec5e36d1ae61f05b28c506b8285526022ec05990153bb0079beb61badeacc` |
-| Windows materialization | 18,658 | `2c9092e5781cadf6a675168415c73ed65303737f6134a5d0bb9a59d874a7cbd2` |
+| Metadata producer | 60,189 | `cc823f1bbae061030f2d69f7e10c9b64c141a6ba70484d334ed5c8a8b13d7160` |
+| Object instantiation | 22,101 | `b9e1460d0817947ed0de05b915de72f8ae3b905c87fb3ae89782a9e1e1ca822d` |
+| Windows imports | 11,622 | `0902d141cd275c8e6a68c0189c71fcebceb8a32c970fcce3120980d0793efe08` |
+| Linux materialization | 17,400 | `63de1aa3577f71d2a7c0e40f6f1bbe8296ece9cb637661710b0cad6ad1c4394c` |
+| Windows materialization | 20,590 | `fef4d35e6938c1465d61fb87b2c738763d965d832c293eb9cec796969935c1a4` |
 
 ## Evidence and remaining work
 
-The reviewed managed differential test builds all five WVBs, runs the file pipeline
-for both targets, and reproduces the 256,000-byte Windows and 254,917-byte Linux
-publisher applications exactly. Corrupt publisher identity, corrupt ordered
-targets, and output aliasing reject while preserving existing destinations.
+The 12-case native owner builds both publisher and promoter roles for both
+targets, reproduces the exact applications, exercises read-only admission, and
+uses the current-host promoter and publisher as one durable installation chain.
+Corrupt identity, corrupt ordered targets, and output aliasing reject while
+preserving existing destinations. The managed differential test remains
+independent Stage 0 recovery evidence.
 
 The [publisher base-construction contract](Windvale-Native-Hosted-Verifier-Publisher-Base-Construction.md)
 now supplies the former managed input through exact packaged Windvale processes
-and owns the normal candidate lane. This managed test remains only independent
-recovery evidence. Independent Linux execution, completed-publisher durable
-publication, grouped qualification, promotion, and release integration remain.
+and owns the normal candidate lane. The separate digest-bound promoter now owns
+completed-publisher durable publication. Independent Linux execution, grouped
+qualification, promotion, and release integration remain.

@@ -2,15 +2,24 @@
 setlocal EnableExtensions DisableDelayedExpansion
 
 if "%~2"=="" goto :usage
-if not "%~3"=="" goto :usage
-set "TargetName=%~1"
-set "Output=%~f2"
+set "Role=publisher"
+if "%~3"=="" (
+    set "TargetName=%~1"
+    set "Output=%~f2"
+) else (
+    if not "%~4"=="" goto :usage
+    if /I not "%~1"=="publisher" if /I not "%~1"=="promoter" goto :usage
+    set "Role=%~1"
+    set "TargetName=%~2"
+    set "Output=%~f3"
+)
+for %%O in ("%Output%") do set "OutputExtension=%%~xO"
 if /I "%TargetName%"=="windows" goto :windows
 if /I "%TargetName%"=="linux" goto :linux
 goto :usage
 
 :windows
-if /I not "%~x2"==".exe" goto :usage
+if /I not "%OutputExtension%"==".exe" goto :usage
 set "Target=1"
 set "ConsoleLeaf=Native-X64-Windows-Console-Output-Service.bin"
 set "ConsoleBytes=258"
@@ -34,10 +43,16 @@ set "BaseBytes=248832"
 set "BaseSha256=cf204201e5c26d71e78da1112de2bc724d389a5222cc835d48dbe8cd8bbc5988"
 set "ApplicationBytes=256000"
 set "ApplicationSha256=735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6"
+if /I "%Role%"=="promoter" (
+    set "BaseBytes=674816"
+    set "BaseSha256=eede4259e3e9bbf4099f82ff8f26cf6925139801863aeb72d771539b1a3ab9bd"
+    set "ApplicationBytes=681472"
+    set "ApplicationSha256=9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069"
+)
 goto :target_ready
 
 :linux
-if /I not "%~x2"==".elf" goto :usage
+if /I not "%OutputExtension%"==".elf" goto :usage
 set "Target=2"
 set "ConsoleLeaf=Native-X64-Linux-Console-Output-Service.bin"
 set "ConsoleBytes=213"
@@ -61,6 +76,12 @@ set "BaseBytes=249856"
 set "BaseSha256=0bdeee07a49f75781767934884cbbc7dd085abff4507e2f78210fa225638539a"
 set "ApplicationBytes=254917"
 set "ApplicationSha256=de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a"
+if /I "%Role%"=="promoter" (
+    set "BaseBytes=675840"
+    set "BaseSha256=b2b299aea10987720714779c9f0b6e58bcea567946d82c4f39786915404039a4"
+    set "ApplicationBytes=680901"
+    set "ApplicationSha256=9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0"
+)
 
 :target_ready
 if exist "%Output%" (
@@ -73,6 +94,27 @@ set "HostedToolset=%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Ca
 set "Construction=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Publisher-Construction-Candidate"
 set "PublisherTools=%Construction%\windows-x64"
 set "PublisherWvb=%RepositoryRoot%\Artifacts\Native-Hosted-Verifier-Application-Publisher-Candidate\Hosted-Verifier-Application-Publisher.wvb"
+set "PublisherObject=%Construction%\Publisher.wvo"
+set "Variant=0"
+set "PublisherWvbBytes=29170"
+set "PublisherWvbSha256=77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f"
+set "PublisherObjectBytes=233804"
+set "PublisherObjectSha256=ef0f5e49a07450e3d957e5576f819201849b705097bfbf75432c76d2c438ec23"
+set "NativeEntry=3001"
+set "FragmentBytes=232736"
+set "FragmentSha256=260e9f4f23c99dab13145ceb98724a4c74157fc579c5685194b7312c1a5cb115"
+if /I "%Role%"=="promoter" (
+    set "PublisherWvb=%Construction%\Publisher-Promoter.wvb"
+    set "PublisherObject=%Construction%\Publisher-Promoter.wvo"
+    set "Variant=1"
+    set "PublisherWvbBytes=41268"
+    set "PublisherWvbSha256=30eb1e8c93b01266592b322b9c5154b27782ea6c7cd2b6522a10781bf935bec9"
+    set "PublisherObjectBytes=660123"
+    set "PublisherObjectSha256=6f20c95c4c09958dcc09ee35b8f7a3a0330d67f26446206be5bdd85cd8cb042d"
+    set "NativeEntry=1178"
+    set "FragmentBytes=658339"
+    set "FragmentSha256=a7c0ef19de332e00dcae74c9ab8c25b16b1e1ca73169d4485c85575412a28ed8"
+)
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "ConsumerRoot=%RepositoryRoot%\Linker\Reference\Consumers"
 
@@ -82,13 +124,13 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 4812 3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 4812 76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%PublisherWvb%" 29170 77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f "publisher WVB"
+call :verify_file "%PublisherWvb%" %PublisherWvbBytes% %PublisherWvbSha256% "publisher WVB"
 if errorlevel 1 exit /b 1
 call :verify_file "%ServiceRoot%\%ConsoleLeaf%" %ConsoleBytes% %ConsoleSha256% "console service"
 if errorlevel 1 exit /b 1
@@ -120,26 +162,26 @@ set "Phase=lower"
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%PublisherWvb%" "%TemporaryDirectory%\Publisher.wvo" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%TemporaryDirectory%\Publisher.wvo" 233804 ef0f5e49a07450e3d957e5576f819201849b705097bfbf75432c76d2c438ec23 "lowered publisher object"
+call :verify_file "%TemporaryDirectory%\Publisher.wvo" %PublisherObjectBytes% %PublisherObjectSha256% "lowered publisher object"
 if errorlevel 1 goto :cleanup
-fc /b "%TemporaryDirectory%\Publisher.wvo" "%Construction%\Publisher.wvo" >nul
+fc /b "%TemporaryDirectory%\Publisher.wvo" "%PublisherObject%" >nul
 if errorlevel 1 goto :cleanup
 set "Phase=link-command"
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TemporaryDirectory%\Publisher.bin" "%TemporaryDirectory%\Publisher.wvo" >"%TemporaryDirectory%\Link.txt"
 if errorlevel 1 goto :cleanup
 set "Phase=link-entry"
-set "NativeEntry="
-for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Main address=" "%TemporaryDirectory%\Link.txt"') do set "NativeEntry=%%E"
-if not "%NativeEntry%"=="3001" goto :cleanup
+set "ReportedEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Main address=" "%TemporaryDirectory%\Link.txt"') do set "ReportedEntry=%%E"
+if not "%ReportedEntry%"=="%NativeEntry%" goto :cleanup
 set "Phase=link-identity"
-call :verify_file "%TemporaryDirectory%\Publisher.bin" 232736 260e9f4f23c99dab13145ceb98724a4c74157fc579c5685194b7312c1a5cb115 "linked publisher fragment"
+call :verify_file "%TemporaryDirectory%\Publisher.bin" %FragmentBytes% %FragmentSha256% "linked publisher fragment"
 if errorlevel 1 goto :cleanup
 
 set "Phase=base-bundle-request"
 "%HostedToolset%\windows-x64\wvhostverifierbundle.exe" "%TemporaryDirectory%\Publisher.bin" "%ServiceRoot%\%ConsoleLeaf%" "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" "%ServiceRoot%\Native-X64-Argument-Service.bin" "%ServiceRoot%\%FileInputLeaf%" "%ServiceRoot%\Native-X64-Utf8-Service.bin" "%ServiceRoot%\%DiagnosticLeaf%" "%TemporaryDirectory%\Bundle-Request.wvsq" >nul
 if errorlevel 1 goto :cleanup
 set "Phase=base-metadata"
-"%PublisherTools%\wvhostverifierpublisherbasemetadata.exe" %Target% 3001 "%TemporaryDirectory%\Bundle-Request.wvsq" "%TemporaryDirectory%\Metadata.wvhv"
+"%PublisherTools%\wvhostverifierpublisherbasemetadata.exe" %Target% %NativeEntry% "%TemporaryDirectory%\Bundle-Request.wvsq" "%TemporaryDirectory%\Metadata.wvhv"
 if errorlevel 1 goto :cleanup
 set "Phase=base-runtime"
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TemporaryDirectory%\Metadata.wvhv" "%TemporaryDirectory%\Runtime.wvhr"
@@ -160,7 +202,11 @@ call :verify_file "%TemporaryDirectory%\Base.application" %BaseBytes% %BaseSha25
 if errorlevel 1 goto :cleanup
 
 set "Phase=publisher-metadata"
-"%PublisherTools%\wvhostverifierproducemetadata.exe" %Target% "%PublisherWvb%" "%ConsumerRoot%\%PublisherStartup%" "%TemporaryDirectory%\Publisher-Metadata.wvvp" >nul
+if "%Variant%"=="0" (
+    "%PublisherTools%\wvhostverifierproducemetadata.exe" %Target% "%PublisherWvb%" "%ConsumerRoot%\%PublisherStartup%" "%TemporaryDirectory%\Publisher-Metadata.wvvp" >nul
+) else (
+    "%PublisherTools%\wvhostverifierproducemetadata.exe" %Variant% %Target% "%PublisherWvb%" "%ConsumerRoot%\%PublisherStartup%" "%TemporaryDirectory%\Publisher-Metadata.wvvp" >nul
+)
 if errorlevel 1 goto :cleanup
 set "Phase=publisher-identity"
 "%PublisherTools%\wvhostverifieridentity.exe" %Target% "%PublisherWvb%" "%TemporaryDirectory%\Publisher.wvo" "%ConsumerRoot%\%PublisherStartup%" "%ConsumerRoot%\%Adapter%" "%ConsumerRoot%\X64-Wvb-Publication-Sha256.wvo" "%TemporaryDirectory%\Publisher-Metadata.wvvp" "%TemporaryDirectory%\Identity.wvpi" >nul
@@ -184,7 +230,11 @@ goto :materialized
 
 :materialize_windows
 set "Phase=publisher-imports"
-"%PublisherTools%\wvhostverifierpublishimports.exe" "%TemporaryDirectory%\Imports.wvim" >nul
+if "%Variant%"=="0" (
+    "%PublisherTools%\wvhostverifierpublishimports.exe" "%TemporaryDirectory%\Imports.wvim" >nul
+) else (
+    "%PublisherTools%\wvhostverifierpublishimports.exe" promoter "%TemporaryDirectory%\Imports.wvim" >nul
+)
 if errorlevel 1 goto :cleanup
 set "Phase=publisher-windows-materialization"
 "%PublisherTools%\wvhostverifierpublishwindows.exe" "%TemporaryDirectory%\Base.application" "%TemporaryDirectory%\Construction.wvcr" "%TemporaryDirectory%\Objects.wvio" "%TemporaryDirectory%\Publisher-Metadata.wvvp" "%TemporaryDirectory%\Imports.wvim" "%TemporaryDirectory%\Publisher.application" >nul
@@ -198,7 +248,8 @@ copy /b "%TemporaryDirectory%\Publisher.application" "%Output%" >nul
 if errorlevel 1 goto :cleanup_output
 call :verify_file "%Output%" %ApplicationBytes% %ApplicationSha256% "published construction output"
 if errorlevel 1 goto :cleanup_output
-echo publisher construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
+if /I "%Role%"=="publisher" echo publisher construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
+if /I "%Role%"=="promoter" echo publisher promoter construction status=Valid target=%TargetName% bytes=%ApplicationBytes%
 set "Result=0"
 goto :cleanup
 
@@ -236,5 +287,5 @@ if errorlevel 1 (
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Construct-Hosted-Verifier-Publisher.cmd ^<windows^|linux^> ^<output.exe^|output.elf^>
+>&2 echo Usage: Tools\Native\Construct-Hosted-Verifier-Publisher.cmd [publisher^|promoter] ^<windows^|linux^> ^<output.exe^|output.elf^>
 exit /b 64

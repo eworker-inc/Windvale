@@ -111,19 +111,95 @@ fn Expectedˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
     return 719332331u32;
 }
 
+fn Promoterˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
+    if Identity == 1u32 {
+        if Index == 0u32 { return 2350836528u32; }
+        if Index == 1u32 { return 1712500883u32; }
+        if Index == 2u32 { return 724708185u32; }
+        if Index == 3u32 { return 2991870364u32; }
+        if Index == 4u32 { return 1827308151u32; }
+        if Index == 5u32 { return 1387713148u32; }
+        if Index == 6u32 { return 460853290u32; }
+        return 3384686073u32;
+    }
+    if Identity == 2u32 {
+        if Index == 0u32 { return 1556684911u32; }
+        if Index == 1u32 { return 2375354700u32; }
+        if Index == 2u32 { return 904792524u32; }
+        if Index == 3u32 { return 2695100344u32; }
+        if Index == 4u32 { return 4066839859u32; }
+        if Index == 5u32 { return 1797277284u32; }
+        if Index == 6u32 { return 1557708261u32; }
+        return 755289048u32;
+    }
+    if Identity == 6u32 && Target == 1u32 {
+        if Index == 0u32 { return 1180427797u32; }
+        if Index == 1u32 { return 2349940294u32; }
+        if Index == 2u32 { return 2089053012u32; }
+        if Index == 3u32 { return 492194782u32; }
+        if Index == 4u32 { return 806304018u32; }
+        if Index == 5u32 { return 1205433031u32; }
+        if Index == 6u32 { return 2215914157u32; }
+        return 2555687543u32;
+    }
+    if Identity == 6u32 {
+        if Index == 0u32 { return 2340113194u32; }
+        if Index == 1u32 { return 2463620226u32; }
+        if Index == 2u32 { return 1228935800u32; }
+        if Index == 3u32 { return 3942296735u32; }
+        if Index == 4u32 { return 1301912523u32; }
+        if Index == 5u32 { return 278378699u32; }
+        if Index == 6u32 { return 4229961522u32; }
+        return 584933552u32;
+    }
+    if Target == 1u32 {
+        if Index == 0u32 { return 2771694236u32; }
+        if Index == 1u32 { return 469213052u32; }
+        if Index == 2u32 { return 223011950u32; }
+        if Index == 3u32 { return 3860952424u32; }
+        if Index == 4u32 { return 2194636029u32; }
+        if Index == 5u32 { return 2654358392u32; }
+        if Index == 6u32 { return 3988284766u32; }
+        return 1767925312u32;
+    }
+    if Index == 0u32 { return 3802203796u32; }
+    if Index == 1u32 { return 2394164577u32; }
+    if Index == 2u32 { return 302598772u32; }
+    if Index == 3u32 { return 582699691u32; }
+    if Index == 4u32 { return 2456716673u32; }
+    if Index == 5u32 { return 1893245175u32; }
+    if Index == 6u32 { return 269888553u32; }
+    return 4036664157u32;
+}
+
+export fn Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
+    Input: bytes,
+    Identity: u32,
+    Target: u32,
+    Variant: u32
+) -> bytes {
+    var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if Variant > 1u32 { return Result; }
+    var Index: u32 = 0u32;
+    while Index < 8u32 {
+        var Word: u32 = Expectedˉword(Identity, Target, Index);
+        if Variant == 1u32 &&
+            (Identity == 1u32 || Identity == 2u32 ||
+                Identity == 6u32 || Identity == 7u32) {
+            Word = Promoterˉword(Identity, Target, Index);
+        }
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Word));
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
 export fn Publisherˉconstructionˉexpectedˉdigest(
     Input: bytes,
     Identity: u32,
     Target: u32
 ) -> bytes {
-    var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    var Index: u32 = 0u32;
-    while Index < 8u32 {
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉfromˉu32ˉlittle(Expectedˉword(Identity, Target, Index))
-        );
-        Index = Index + 1u32;
-    }
-    return Result;
+    return Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
+        Input, Identity, Target, 0u32
+    );
 }

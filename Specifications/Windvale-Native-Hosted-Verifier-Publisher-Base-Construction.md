@@ -62,14 +62,14 @@ require the final exact application identity. They never invoke .NET.
 | Windows publisher | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
 | Linux publisher | 254,917 | `de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a` |
 
-Version 11 of the construction candidate contains 24 canonical WVB/WVO
+Version 12 of the construction candidate contains 24 canonical WVB/WVO
 artifacts and 22 paired host applications. Its 46-entry `SHA256SUMS` is 4,812
 LF-only bytes with SHA-256
-`3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11`.
+`76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2`.
 
 ## Native owner and remaining gate
 
-The `hosted-verifier-publisher-files` retirement lane owns nine fixed cases:
+The `hosted-verifier-publisher-files` retirement lane owns twelve fixed cases:
 the complete inventory, exact Windows and Linux publisher construction, exact
 Windows and Linux profile-8 admitter construction, a current-host read-only
 admission matrix, malformed base-record preservation, exact alias preservation,
@@ -77,8 +77,10 @@ and execution of the constructed current-host publisher to install the exact
 verifier candidate. Its inventory case also rebuilds and natively lowers the
 publisher-application admission WVB and requires byte equality with both pinned
 artifacts. It also rebuilds and lowers the distinct publisher promoter, links
-`Main` at 1,178, and requires the exact 658,339-byte fragment.
+`Main` at 1,178, requires the exact 658,339-byte fragment, constructs both exact
+promoter applications, installs both publisher subjects through the promoter,
+and runs the installed current-host publisher through one verifier installation.
 
 The frozen managed file-pipeline test remains recovery/differential evidence.
-Independent Linux execution, grouped qualification, completed-publisher durable
-publication, candidate promotion, and release integration remain open.
+Independent Linux execution, grouped qualification, candidate promotion, and
+release integration remain open.

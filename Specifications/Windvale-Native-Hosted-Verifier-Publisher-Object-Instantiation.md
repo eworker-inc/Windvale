@@ -26,13 +26,15 @@ The little-endian request has a 48-byte header:
 | 32 | startup WVO bytes |
 | 36 | adapter WVO bytes |
 | 40 | SHA WVO bytes, exactly 2,176 |
-| 44 | reserved zero |
+| 44 | role: 0 publisher or 1 promoter |
 
 The header is followed by all `u32` `WVPT` addresses, startup WVO, adapter
 WVO, and SHA WVO. The first address binds startup-run; remaining addresses
 bind adapter imports in WVO symbol order. Windows uses 44 targets and
-243,600/248,896 adapter/SHA addresses. Linux uses 27 targets and
-142,929,920/142,933,296 addresses. A zero external address rejects.
+role-specific adapter/SHA addresses: 243,600/248,896 for the publisher or
+669,248/674,544 for the promoter. Linux uses 27 targets and
+142,929,920/142,933,296 or 143,355,904/143,359,280. A zero external address
+rejects.
 
 ## Instantiation rules
 
@@ -74,9 +76,8 @@ interpreter/native equality, exact component equality with both canonical
 publisher applications, and narrow malformed rejection.
 
 [Decision 0478](../Documents/Decisions/0478-Native-WVHV-Publisher-Windows-Imports.md)
-now constructs the remaining publisher-only Windows import page. The next
-slice must consume these bytes with `WVCR`, Decision 0475 metadata, and the
-admitted base application to perform the exact Windows PE and Linux ELF
-mutations. The frozen C# writer remains Stage 0 recovery/differential evidence
-until that materialization and the broader dual-host retirement gates are
-complete.
+constructs the remaining Windows import page. The role-aware file pipeline now
+consumes these bytes with `WVCR`, metadata, and the admitted base application
+to perform exact publisher and promoter PE/ELF mutations. The frozen C# writer
+remains Stage 0 recovery/differential evidence until the broader dual-host
+retirement gates are complete.

@@ -45,7 +45,7 @@ The canonical command WVB is 30,778 bytes with SHA-256
 It builds through the native Project 1 front door. The accepted native ABI-22
 lowerer produces a 555,690-byte WVO with SHA-256
 `722d819152d8415487c1cf111474fd11dd0ab89a863e33ab84c865a2e3e13771`.
-Both are pinned in version 11 of the publisher-construction candidate.
+Both are pinned in version 12 of the publisher-construction candidate.
 
 ## Hosted profile and applications
 
@@ -77,7 +77,7 @@ uses numeric profile `7` only inside its separate `WVHG` metadata family.
 
 Read-only admission also must not be followed by a host-side copy or rename:
 that would admit one snapshot and mutate from another. Decision 0486 adds the
-distinct promoter source plus its native WVB/WVO. Paired promoter applications
-still need a role-aware extension of the publisher-specialized construction
-pipeline. The promoter remains separate from the publisher it installs, and its
-future executable identity remains launcher-pinned.
+distinct promoter source plus its native WVB/WVO. Decision 0487 extends the
+publisher-specialized construction pipeline with an exact promoter role and
+constructs paired promoter applications. The promoter remains separate from the
+publisher it installs, and its executable identity remains launcher-pinned.

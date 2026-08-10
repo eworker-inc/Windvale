@@ -30,7 +30,17 @@ fn Startupˉdigestˉword(Index: u32, Target: u32) -> u32 {
     return 3619038940u32;
 }
 
-fn Moduleˉdigestˉword(Index: u32) -> u32 {
+fn Moduleˉdigestˉword(Index: u32, Variant: u32) -> u32 {
+    if Variant == 1u32 {
+        if Index == 0u32 { return 2350836528u32; }
+        if Index == 1u32 { return 1712500883u32; }
+        if Index == 2u32 { return 724708185u32; }
+        if Index == 3u32 { return 2991870364u32; }
+        if Index == 4u32 { return 1827308151u32; }
+        if Index == 5u32 { return 1387713148u32; }
+        if Index == 6u32 { return 460853290u32; }
+        return 3384686073u32;
+    }
     if Index == 0u32 { return 1257490039u32; }
     if Index == 1u32 { return 298073986u32; }
     if Index == 2u32 { return 1299997813u32; }
@@ -62,21 +72,70 @@ export fn Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalid(
     return true;
 }
 
-export fn Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalid(
+export fn Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalidˉforˉvariant(
     Input: bytes,
-    Offset: u32
+    Offset: u32,
+    Variant: u32
 ) -> bool {
-    if Offset > Bytesˉlength(Input) ||
+    if Variant > 1u32 ||
+        Offset > Bytesˉlength(Input) ||
         32u32 > Bytesˉlength(Input) - Offset {
         return false;
     }
     var Index: u32 = 0u32;
     while Index < 8u32 {
         if Bytesˉreadˉu32ˉlittle(Input, Offset + Index * 4u32) !=
-            Moduleˉdigestˉword(Index) {
+            Moduleˉdigestˉword(Index, Variant) {
             return false;
         }
         Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalid(
+    Input: bytes,
+    Offset: u32
+) -> bool {
+    return Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalidˉforˉvariant(
+        Input, Offset, 0u32
+    );
+}
+
+export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalidˉforˉvariant(
+    Input: bytes,
+    Offset: u32,
+    Target: u32,
+    Variant: u32
+) -> bool {
+    if Offset > Bytesˉlength(Input) ||
+        128u32 > Bytesˉlength(Input) - Offset ||
+        Target < 1u32 || Target > 2u32 || Variant > 1u32 {
+        return false;
+    }
+    var Mainˉoffset: u32 = 3001u32;
+    if Variant == 1u32 { Mainˉoffset = 1178u32; }
+    if Bytesˉreadˉu32ˉlittle(Input, Offset) != 1347835479u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32) != 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32) != Target ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 16u32) != 5u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 20u32) != 5u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 24u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 28u32) != Mainˉoffset ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 32u32) != 789u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 36u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 40u32) != 4194304u32 ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 44u32) != 1u32 ||
+        !Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalid(
+            Input, Offset + 48u32, Target
+        ) ||
+        !Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalidˉforˉvariant(
+            Input, Offset + 80u32, Variant
+        ) ||
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 112u32) != Variant ||
+        !Allˉzero(Input, Offset + 116u32, 12u32) {
+        return false;
     }
     return true;
 }
@@ -86,31 +145,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalid(
     Offset: u32,
     Target: u32
 ) -> bool {
-    if Offset > Bytesˉlength(Input) ||
-        128u32 > Bytesˉlength(Input) - Offset ||
-        Target < 1u32 || Target > 2u32 {
-        return false;
-    }
-    if Bytesˉreadˉu32ˉlittle(Input, Offset) != 1347835479u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) != 1u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32) != 128u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32) != Target ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 16u32) != 5u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 20u32) != 5u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 24u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 28u32) != 3001u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 32u32) != 789u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 36u32) != 0u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 40u32) != 4194304u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, Offset + 44u32) != 1u32 ||
-        !Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalid(
-            Input, Offset + 48u32, Target
-        ) ||
-        !Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalid(
-            Input, Offset + 80u32
-        ) ||
-        !Allˉzero(Input, Offset + 112u32, 16u32) {
-        return false;
-    }
-    return true;
+    return Nativeˉhostedˉverifierˉpublisherˉmetadataˉisˉvalidˉforˉvariant(
+        Input, Offset, Target, 0u32
+    );
 }

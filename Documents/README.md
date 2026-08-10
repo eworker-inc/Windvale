@@ -24,6 +24,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
 - [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
 - [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced direct-entry-point inventory, product-surface ledger, and retained recovery owners
+- [Native publisher promoter applications](Decisions/0487-Native-WVHV-Publisher-Promoter-Applications.md) — separate non-circular durable publisher installation through paired role-aware native applications
 - [Project vision](Project/Project-Vision.md) — purpose, intended stack, success principles, and non-goals
 - [Open questions](Project/Open-Questions.md) — unresolved choices only
 - [Windvale Database proposal](Project/Windvale-Database-Proposal.md) — EWDB-informed engine/application/service split, language-readiness boundaries, performance-transfer rules, and the implemented Stage 1 read-only experiment; no durable format or product direction is accepted
@@ -55,7 +56,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Expanded native linker rejection families](Decisions/0325-Expanded-Native-Linker-Rejection-Families.md) — exact output-preserving evidence for every externally driven `WVL1001` through `WVL1010` family
 - [Fixed native linker map limit](Decisions/0327-Fixed-Native-Linker-Map-Limit.md) — compact generated-fixture evidence for exact `WVL1012` rejection at 16,384 definitions
 - [Fixed native WVB unsafe rejections](Decisions/0329-Fixed-Native-Wvb-Unsafe-Rejections.md) — five immutable unsafe instruction-stream cases through both native read-only launchers
-- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 32 native suites and 3,157 transferred cases
+- [Manifest-driven native retirement test suite](Decisions/0330-Manifest-Driven-Native-Retirement-Test-Suite.md) — one digest-bound direct coordinator, currently covering 32 native suites and 3,161 transferred cases
 - [Fixed native assembler golden objects](Decisions/0429-Fixed-Native-Assembler-Golden-Objects.md) — three exact positive WVA products with repeated native assembly and independent WVO admission
 - [Fixed native typed WVB rejections](Decisions/0430-Fixed-Native-Typed-Wvb-Rejections.md) — six compact single-byte typed/control/nominal mutations through both native readers
 - [Compact native WVB rejection closure](Decisions/0431-Compact-Native-Wvb-Rejection-Closure.md) — four final compact stack, receiver, and nominal-kind mutations plus explicit ownership of excluded cases

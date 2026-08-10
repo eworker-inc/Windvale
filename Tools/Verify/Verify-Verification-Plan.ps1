@@ -131,6 +131,17 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'hosted verifier publisher promoter dispatch'
+        Paths = @(
+            'Tools/Native/Construct-Hosted-Verifier-Publisher-Promoter.cmd',
+            'Tools/Native/Install-Hosted-Verifier-Publisher.cmd',
+            'Artifacts/Native-Hosted-Verifier-Publisher-Promoter-Candidate/Manifest.json'
+        )
+        Suites = @('publisher-rejections', 'hosted-verifier-publisher-files')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'database gap'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
         Suites = @()

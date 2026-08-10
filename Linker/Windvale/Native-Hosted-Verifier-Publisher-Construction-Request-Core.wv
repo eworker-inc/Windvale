@@ -31,18 +31,29 @@ fn Structureˉisˉvalid(Input: bytes) -> bool {
     }
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     if Target != 1u32 && Target != 2u32 { return false; }
+    let Variant: u32 = Bytesˉreadˉu32ˉlittle(Input, 120u32);
+    if Variant > 1u32 { return false; }
     var Identityˉbytes: u32 = 275054u32;
     if Target == 2u32 {
         Identityˉbytes = 271013u32;
     }
-    return Bytesˉreadˉu32ˉlittle(Input, 16u32) == 29170u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 20u32) == 233804u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 36u32) == 3001u32 &&
+    var Moduleˉbytes: u32 = 29170u32;
+    var Objectˉbytes: u32 = 233804u32;
+    var Mainˉoffset: u32 = 3001u32;
+    if Variant == 1u32 {
+        Moduleˉbytes = 41268u32;
+        Objectˉbytes = 660123u32;
+        Mainˉoffset = 1178u32;
+        Identityˉbytes = 713471u32;
+        if Target == 2u32 { Identityˉbytes = 709430u32; }
+    }
+    return Bytesˉreadˉu32ˉlittle(Input, 16u32) == Moduleˉbytes &&
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) == Objectˉbytes &&
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) == Mainˉoffset &&
         Bytesˉreadˉu32ˉlittle(Input, 40u32) == 789u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 44u32) == 0u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 112u32) == Identityˉbytes &&
         Bytesˉreadˉu32ˉlittle(Input, 116u32) == 1u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 120u32) == 0u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 124u32) == 0u32;
 }
 
@@ -51,6 +62,24 @@ export fn Publisherˉconstructionˉrequest(
 ) -> Publisherˉconstructionˉrequestˉresult {
     if !Structureˉisˉvalid(Structure) { return Failure(Structure, 0u32); }
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Structure, 12u32);
+    let Variant: u32 = Bytesˉreadˉu32ˉlittle(Structure, 120u32);
+
+    var Moduleˉbytes: u32 = 29170u32;
+    var Objectˉbytes: u32 = 233804u32;
+    var Codeˉbytes: u32 = 232448u32;
+    var Dataˉbytes: u32 = 288u32;
+    var Mainˉoffset: u32 = 3001u32;
+    var Symbols: u32 = 27u32;
+    var Relocations: u32 = 5u32;
+    if Variant == 1u32 {
+        Moduleˉbytes = 41268u32;
+        Objectˉbytes = 660123u32;
+        Codeˉbytes = 658160u32;
+        Dataˉbytes = 179u32;
+        Mainˉoffset = 1178u32;
+        Symbols = 49u32;
+        Relocations = 3u32;
+    }
 
     var Bundleˉbytes: u32 = 235394u32;
     var Startupˉwvoˉbytes: u32 = 168u32;
@@ -72,6 +101,17 @@ export fn Publisherˉconstructionˉrequest(
     var Targetˉbindings: u32 = 44u32;
     var Adapterˉexport: u32 = 251u32;
     var Mutationˉflags: u32 = 63u32;
+    if Variant == 1u32 {
+        Bundleˉbytes = 661010u32;
+        Adapterˉfile = 665664u32;
+        Adapterˉaddress = 669248u32;
+        Sha256ˉfile = 670960u32;
+        Sha256ˉaddress = 674544u32;
+        Metadataˉfile = 678368u32;
+        Metadataˉaddress = 685536u32;
+        Outputˉbytes = 681472u32;
+        Imageˉend = 144420864u32;
+    }
     if Target == 2u32 {
         Bundleˉbytes = 235077u32;
         Startupˉwvoˉbytes = 164u32;
@@ -93,6 +133,17 @@ export fn Publisherˉconstructionˉrequest(
         Targetˉbindings = 27u32;
         Adapterˉexport = 60u32;
         Mutationˉflags = 207u32;
+        if Variant == 1u32 {
+            Bundleˉbytes = 660693u32;
+            Adapterˉfile = 675840u32;
+            Adapterˉaddress = 143355904u32;
+            Sha256ˉfile = 679216u32;
+            Sha256ˉaddress = 143359280u32;
+            Metadataˉfile = 673248u32;
+            Metadataˉaddress = 673248u32;
+            Outputˉbytes = 680901u32;
+            Imageˉend = 143360965u32;
+        }
     }
 
     var Result: bytes = Empty(Structure);
@@ -104,17 +155,17 @@ export fn Publisherˉconstructionˉrequest(
     Result = Appendˉu32(Result, 6u32);
     Result = Appendˉu32(Result, Targetˉbindings);
     Result = Appendˉu32(Result, Mutationˉflags);
-    Result = Appendˉu32(Result, 0u32);
-    Result = Appendˉu32(Result, 29170u32);
-    Result = Appendˉu32(Result, 233804u32);
-    Result = Appendˉu32(Result, 232448u32);
-    Result = Appendˉu32(Result, 288u32);
-    Result = Appendˉu32(Result, 3001u32);
+    Result = Appendˉu32(Result, Variant);
+    Result = Appendˉu32(Result, Moduleˉbytes);
+    Result = Appendˉu32(Result, Objectˉbytes);
+    Result = Appendˉu32(Result, Codeˉbytes);
+    Result = Appendˉu32(Result, Dataˉbytes);
+    Result = Appendˉu32(Result, Mainˉoffset);
     Result = Appendˉu32(Result, 789u32);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu32(Result, 2u32);
-    Result = Appendˉu32(Result, 27u32);
-    Result = Appendˉu32(Result, 5u32);
+    Result = Appendˉu32(Result, Symbols);
+    Result = Appendˉu32(Result, Relocations);
     Result = Appendˉu32(Result, Bundleˉbytes);
     Result = Appendˉu32(Result, Startupˉwvoˉbytes);
     Result = Appendˉu32(Result, 5u32);
@@ -149,8 +200,8 @@ export fn Publisherˉconstructionˉrequest(
     while Digestˉidentity < 8u32 {
         Result = Bytesˉconcat(
             Result,
-            Digests.Publisherˉconstructionˉexpectedˉdigest(
-                Structure, Digestˉidentity, Target
+            Digests.Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
+                Structure, Digestˉidentity, Target, Variant
             )
         );
         Digestˉidentity = Digestˉidentity + 1u32;

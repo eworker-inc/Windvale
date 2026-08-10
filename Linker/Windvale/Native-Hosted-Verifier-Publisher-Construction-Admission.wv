@@ -49,6 +49,49 @@ fn Sectionˉrecordsˉend(Input: bytes, Sectionˉcount: u32) -> u32 {
     return Cursor;
 }
 
+fn Sectionˉmatches(
+    Input: bytes,
+    Sectionˉcount: u32,
+    Wanted: u32,
+    Kind: u32,
+    Alignment: u32,
+    Dataˉlength: u32,
+    Name: text
+) -> bool {
+    if Wanted >= Sectionˉcount { return false; }
+    var Cursor: u32 = 24u32;
+    var Index: u32 = 0u32;
+    while Index < Sectionˉcount {
+        if Cursor > Bytesˉlength(Input) ||
+            20u32 > Bytesˉlength(Input) - Cursor {
+            return false;
+        }
+        let Currentˉdata: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 12u32);
+        let Nameˉlength: u32 =
+            Bytesˉreadˉu32ˉlittle(Input, Cursor + 16u32);
+        if Nameˉlength > Bytesˉlength(Input) - Cursor - 20u32 ||
+            Currentˉdata >
+                Bytesˉlength(Input) - Cursor - 20u32 - Nameˉlength {
+            return false;
+        }
+        if Index == Wanted {
+            return U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) == Kind &&
+                Bytesˉreadˉu8(Input, Cursor + 1u32) == 0u8 &&
+                Bytesˉreadˉu16ˉlittle(Input, Cursor + 2u32) == 0u32 &&
+                Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32) == Alignment &&
+                Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32) == Dataˉlength &&
+                Currentˉdata == Dataˉlength &&
+                Nameˉmatches(
+                    Input, Cursor + 20u32, Nameˉlength, Name
+                );
+        }
+        Cursor = Cursor + 20u32 + Nameˉlength + Currentˉdata;
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
 fn Symbolˉmatches(
     Input: bytes,
     Symbolˉstart: u32,
@@ -126,28 +169,87 @@ fn Structureˉmatches(
         Cursor + Relocations * 20u32 == Bytesˉlength(Input);
 }
 
+export fn Publisherˉmoduleˉvariant(Input: bytes) -> u32 {
+    if Bytesˉlength(Input) == 29170u32 { return 0u32; }
+    if Bytesˉlength(Input) == 41268u32 { return 1u32; }
+    return 2u32;
+}
+
+export fn Publisherˉmoduleˉisˉvalidˉfor(
+    Input: bytes,
+    Variant: u32
+) -> bool {
+    return Variant <= 1u32 && Publisherˉmoduleˉvariant(Input) == Variant;
+}
+
 export fn Publisherˉmoduleˉisˉvalid(Input: bytes) -> bool {
-    return Bytesˉlength(Input) == 29170u32;
+    return Publisherˉmoduleˉisˉvalidˉfor(Input, 0u32);
+}
+
+export fn Publisherˉobjectˉvariant(Input: bytes) -> u32 {
+    var Variant: u32 = 0u32;
+    var Length: u32 = 233804u32;
+    var Symbols: u32 = 27u32;
+    var Relocations: u32 = 5u32;
+    var Textˉbytes: u32 = 232448u32;
+    var Rodataˉbytes: u32 = 288u32;
+    var Mainˉindex: u32 = 26u32;
+    var Mainˉoffset: u32 = 3001u32;
+    var Beginˉindex: u32 = 5u32;
+    var Applyˉindex: u32 = 4u32;
+    if Bytesˉlength(Input) == 660123u32 {
+        Variant = 1u32;
+        Length = 660123u32;
+        Symbols = 49u32;
+        Relocations = 3u32;
+        Textˉbytes = 658160u32;
+        Rodataˉbytes = 179u32;
+        Mainˉindex = 48u32;
+        Mainˉoffset = 1178u32;
+        Beginˉindex = 3u32;
+        Applyˉindex = 2u32;
+    } else if Bytesˉlength(Input) != Length {
+        return 2u32;
+    }
+    if !Structureˉmatches(Input, 2u32, Symbols, Relocations) ||
+        !Sectionˉmatches(
+            Input, 2u32, 0u32, 1u32, 16u32, Textˉbytes, ".text"
+        ) ||
+        !Sectionˉmatches(
+            Input, 2u32, 1u32, 2u32, 16u32, Rodataˉbytes, ".rodata"
+        ) {
+        return 2u32;
+    }
+    let Symbolˉstart: u32 = Sectionˉrecordsˉend(Input, 2u32);
+    if !Symbolˉmatches(
+            Input, Symbolˉstart, Symbols, Mainˉindex,
+            2u32, 1u32, 0u32, Mainˉoffset, 5280u32, "Main"
+        ) ||
+        !Symbolˉmatches(
+            Input, Symbolˉstart, Symbols, Beginˉindex,
+            1u32, 1u32, 0u32, 789u32, 389u32, "$function_0001"
+        ) ||
+        !Symbolˉmatches(
+            Input, Symbolˉstart, Symbols, Applyˉindex,
+            1u32, 1u32, 0u32, 0u32, 789u32, "$function_0000"
+        ) {
+        return 2u32;
+    }
+    return Variant;
+}
+
+export fn Publisherˉobjectˉisˉvalidˉfor(
+    Input: bytes,
+    Variant: u32
+) -> bool {
+    if Variant > 1u32 {
+        return false;
+    }
+    return Publisherˉobjectˉvariant(Input) == Variant;
 }
 
 export fn Publisherˉobjectˉisˉvalid(Input: bytes) -> bool {
-    if Bytesˉlength(Input) != 233804u32 ||
-        !Structureˉmatches(Input, 2u32, 27u32, 5u32) {
-        return false;
-    }
-    let Symbolˉstart: u32 = Sectionˉrecordsˉend(Input, 2u32);
-    return Symbolˉmatches(
-            Input, Symbolˉstart, 27u32, 26u32,
-            2u32, 1u32, 0u32, 3001u32, 5280u32, "Main"
-        ) &&
-        Symbolˉmatches(
-            Input, Symbolˉstart, 27u32, 5u32,
-            1u32, 1u32, 0u32, 789u32, 389u32, "$function_0001"
-        ) &&
-        Symbolˉmatches(
-            Input, Symbolˉstart, 27u32, 4u32,
-            1u32, 1u32, 0u32, 0u32, 789u32, "$function_0000"
-        );
+    return Publisherˉobjectˉisˉvalidˉfor(Input, 0u32);
 }
 
 export fn Publisherˉstartupˉisˉvalid(Input: bytes, Target: u32) -> bool {

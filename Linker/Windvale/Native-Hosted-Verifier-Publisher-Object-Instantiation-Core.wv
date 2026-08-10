@@ -260,26 +260,35 @@ export fn Publisherˉobjectsˉinstantiate(Input: bytes) -> bytes {
     let Startupˉobjectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
     let Adapterˉobjectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
     let Sha256ˉobjectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
+    let Variant: u32 = Bytesˉreadˉu32ˉlittle(Input, 44u32);
     var Expectedˉadapterˉaddress: u32 = 243600u32;
     var Expectedˉsha256ˉaddress: u32 = 248896u32;
     var Adapterˉsymbols: u32 = 46u32;
     var Adapterˉrelocations: u32 = 111u32;
     var Adapterˉtargets: u32 = 43u32;
+    if Variant == 1u32 {
+        Expectedˉadapterˉaddress = 669248u32;
+        Expectedˉsha256ˉaddress = 674544u32;
+    }
     if Target == 2u32 {
         Expectedˉadapterˉaddress = 142929920u32;
         Expectedˉsha256ˉaddress = 142933296u32;
         Adapterˉsymbols = 28u32;
         Adapterˉrelocations = 49u32;
         Adapterˉtargets = 26u32;
+        if Variant == 1u32 {
+            Expectedˉadapterˉaddress = 143355904u32;
+            Expectedˉsha256ˉaddress = 143359280u32;
+        }
     }
-    if (Target != 1u32 && Target != 2u32) || Startupˉaddress != 4096u32 ||
+    if (Target != 1u32 && Target != 2u32) || Variant > 1u32 ||
+        Startupˉaddress != 4096u32 ||
         Adapterˉaddress != Expectedˉadapterˉaddress ||
         Sha256ˉaddress != Expectedˉsha256ˉaddress ||
         Targetˉcount != Adapterˉtargets + 1u32 ||
         Startupˉobjectˉbytes != (168u32 - (Target - 1u32) * 4u32) ||
         Adapterˉobjectˉbytes != (9544u32 - (Target - 1u32) * 4037u32) ||
         Sha256ˉobjectˉbytes != 2176u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 44u32) != 0u32 ||
         Targetˉcount > (Total - 48u32) / 4u32 {
         return Header(Input, 64u32, 2u32, Target, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
     }

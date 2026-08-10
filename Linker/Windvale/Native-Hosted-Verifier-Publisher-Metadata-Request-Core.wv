@@ -1,6 +1,7 @@
 module Linkerˉnativeˉhostedˉverifierˉpublisherˉmetadataˉrequest profile portable;
 
 import Foundationˉsha256ˉstreaming as Sha;
+import Linkerˉnativeˉhostedˉverifierˉapplicationˉpublisherˉmetadataˉadmission as Admission;
 import Linkerˉnativeˉhostedˉverifierˉpublisherˉconstructionˉdigests as Digests;
 
 export record Publisherˉmetadataˉrequestˉresult {
@@ -74,23 +75,32 @@ fn Startupˉimageˉdigest(Input: bytes, Target: u32) -> bytes {
     return Result;
 }
 
-export fn Publisherˉmetadataˉrequest(
+export fn Publisherˉmetadataˉrequestˉforˉvariant(
     Target: u32,
+    Variant: u32,
     Module: bytes,
     Startupˉobject: bytes
 ) -> Publisherˉmetadataˉrequestˉresult {
-    if Target != 1u32 && Target != 2u32 {
+    if (Target != 1u32 && Target != 2u32) || Variant > 1u32 {
         return Publisherˉmetadataˉrequestˉresult(false, Empty(Module));
     }
     var Startupˉbytes: u32 = 168u32;
     if Target == 2u32 { Startupˉbytes = 164u32; }
-    if Bytesˉlength(Module) != 29170u32 ||
+    var Moduleˉbytes: u32 = 29170u32;
+    var Mainˉoffset: u32 = 3001u32;
+    if Variant == 1u32 {
+        Moduleˉbytes = 41268u32;
+        Mainˉoffset = 1178u32;
+    }
+    if Bytesˉlength(Module) != Moduleˉbytes ||
         Bytesˉlength(Startupˉobject) != Startupˉbytes {
         return Publisherˉmetadataˉrequestˉresult(false, Empty(Module));
     }
     let Moduleˉdigest: bytes = Digest(Module);
     let Startupˉdigest: bytes = Digest(Startupˉobject);
-    if !Digestˉmatches(Moduleˉdigest, 1u32, Target) ||
+    if !Admission.Nativeˉhostedˉverifierˉpublisherˉmoduleˉdigestˉisˉvalidˉforˉvariant(
+            Moduleˉdigest, 0u32, Variant
+        ) ||
         !Digestˉmatches(Startupˉdigest, 3u32, Target) {
         return Publisherˉmetadataˉrequestˉresult(false, Empty(Module));
     }
@@ -102,10 +112,10 @@ export fn Publisherˉmetadataˉrequest(
     Result = Appendˉu32(Result, Target);
     Result = Appendˉu32(Result, 5u32);
     Result = Appendˉu32(Result, 0u32);
-    Result = Appendˉu32(Result, 3001u32);
+    Result = Appendˉu32(Result, Mainˉoffset);
     Result = Appendˉu32(Result, 789u32);
     Result = Appendˉu32(Result, 0u32);
-    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, Variant);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu32(Result, 0u32);
     Result = Bytesˉconcat(Result, Startupˉimageˉdigest(Module, Target));
@@ -113,5 +123,15 @@ export fn Publisherˉmetadataˉrequest(
     return Publisherˉmetadataˉrequestˉresult(
         Bytesˉlength(Result) == 112u32,
         Result
+    );
+}
+
+export fn Publisherˉmetadataˉrequest(
+    Target: u32,
+    Module: bytes,
+    Startupˉobject: bytes
+) -> Publisherˉmetadataˉrequestˉresult {
+    return Publisherˉmetadataˉrequestˉforˉvariant(
+        Target, 0u32, Module, Startupˉobject
     );
 }

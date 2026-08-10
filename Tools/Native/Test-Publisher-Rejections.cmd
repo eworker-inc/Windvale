@@ -31,6 +31,8 @@ call :run_case "console-application" "Publish-Console.cmd" "Candidate.exe" "Dest
 if errorlevel 1 goto :failed
 call :run_case "hosted-verifier-application" "Publish-Hosted-Verifier-Application.cmd" "Candidate.exe" "Destination.exe" "d56759e7c74de5f7c15f2940b87f5d89cd7c5d9dff647854560cdd8cd1749c24"
 if errorlevel 1 goto :failed
+call :run_case "hosted-verifier-publisher" "Install-Hosted-Verifier-Publisher.cmd" "Candidate.exe" "Destination.exe" "22e5d25049052ee2a38f1775cc0c4ba1d5a5bbb95397c0b38a62ed310effe053"
+if errorlevel 1 goto :failed
 call :run_case "wvo" "Publish-Wvo.cmd" "Candidate.wvo" "Destination.wvo" "e7a127a800310d9fbaf8b511b20c7b8184159521dec1be56b641793939a5c69f"
 if errorlevel 1 goto :failed
 
@@ -86,6 +88,11 @@ if errorlevel 1 (
 certutil -hashfile "%Destination%" SHA256 | findstr /I /C:"0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5" >nul
 if errorlevel 1 (
     >&2 echo FAIL  %~1: rejected publication changed the destination
+    exit /b 1
+)
+certutil -hashfile "%Candidate%" SHA256 | findstr /I /C:"0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288" >nul
+if errorlevel 1 (
+    >&2 echo FAIL  %~1: rejected publication changed the candidate
     exit /b 1
 )
 for /f "usebackq delims=" %%S in (`dir /b /a "%TemporaryDirectory%\.wvpublish-*" 2^>nul`) do (

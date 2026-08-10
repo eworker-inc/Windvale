@@ -28,19 +28,35 @@ export fn Main() -> i32 {
     let Objects: bytes = file.read_bytes(process.argument(2u32));
     let Metadata: bytes = file.read_bytes(process.argument(3u32));
     let Imports: bytes = file.read_bytes(process.argument(4u32));
+    if Bytesˉlength(Construction) != 416u32 {
+        diagnostic.write_line("publisher Windows materialization status=Rejected");
+        return 2;
+    }
+    let Variant: u32 = Bytesˉreadˉu32ˉlittle(Construction, 28u32);
+    var Outputˉbytes: u32 = 256000u32;
+    if Variant == 1u32 { Outputˉbytes = 681472u32; }
+    if Variant > 1u32 {
+        diagnostic.write_line("publisher Windows materialization status=Rejected");
+        return 2;
+    }
+    let Constructionˉoffset: u32 = 64u32 + Bytesˉlength(Base);
+    let Objectsˉoffset: u32 = Constructionˉoffset + Bytesˉlength(Construction);
+    let Metadataˉoffset: u32 = Objectsˉoffset + Bytesˉlength(Objects);
+    let Importsˉoffset: u32 = Metadataˉoffset + Bytesˉlength(Metadata);
+    let Total: u32 = Importsˉoffset + Bytesˉlength(Imports);
     var Request: bytes = Bytesˉfromˉu32ˉlittle(1297569367u32);
     Request = Support.Appendˉu32(Request, 1u32);
-    Request = Support.Appendˉu32(Request, 260608u32);
+    Request = Support.Appendˉu32(Request, Total);
     Request = Support.Appendˉu32(Request, 1u32);
     Request = Support.Appendˉu32(Request, 64u32);
     Request = Support.Appendˉu32(Request, Bytesˉlength(Base));
-    Request = Support.Appendˉu32(Request, 248896u32);
+    Request = Support.Appendˉu32(Request, Constructionˉoffset);
     Request = Support.Appendˉu32(Request, Bytesˉlength(Construction));
-    Request = Support.Appendˉu32(Request, 249312u32);
+    Request = Support.Appendˉu32(Request, Objectsˉoffset);
     Request = Support.Appendˉu32(Request, Bytesˉlength(Objects));
-    Request = Support.Appendˉu32(Request, 256352u32);
+    Request = Support.Appendˉu32(Request, Metadataˉoffset);
     Request = Support.Appendˉu32(Request, Bytesˉlength(Metadata));
-    Request = Support.Appendˉu32(Request, 256480u32);
+    Request = Support.Appendˉu32(Request, Importsˉoffset);
     Request = Support.Appendˉu32(Request, Bytesˉlength(Imports));
     Request = Support.Appendˉu32(Request, 0u32);
     Request = Support.Appendˉu32(Request, 0u32);
@@ -50,12 +66,17 @@ export fn Main() -> i32 {
     Request = Bytesˉconcat(Request, Metadata);
     Request = Bytesˉconcat(Request, Imports);
     let Response: bytes = Materialization.Publisherˉwindowsˉmaterialize(Request);
-    if Bytesˉlength(Response) != 256032u32 ||
+    if Bytesˉlength(Response) != 32u32 + Outputˉbytes ||
         Bytesˉreadˉu32ˉlittle(Response, 12u32) != 0u32 {
         diagnostic.write_line("publisher Windows materialization status=Rejected");
         return 2;
     }
-    file.write_bytes(Outputˉpath, Bytesˉslice(Response, 32u32, 256000u32));
-    console.write_line("publisher Windows materialization status=Valid bytes=256000");
+    file.write_bytes(Outputˉpath, Bytesˉslice(Response, 32u32, Outputˉbytes));
+    console.write_line(
+        Textˉconcat(
+            "publisher Windows materialization status=Valid bytes=",
+            U32ˉformat(Outputˉbytes)
+        )
+    );
     return 0;
 }

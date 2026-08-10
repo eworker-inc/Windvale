@@ -114,6 +114,10 @@ run_case() {
         echo "FAIL  $name: rejected publication changed the destination" >&2
         return 1
     fi
+    if ! check_hash "$candidate" "$invalid_digest"; then
+        echo "FAIL  $name: rejected publication changed the candidate" >&2
+        return 1
+    fi
     local scratch=("$temporary_directory"/.wvpublish-*)
     if [[ -e ${scratch[0]} ]]; then
         echo "FAIL  $name: rejected publication left scratch" >&2
@@ -139,6 +143,15 @@ run_case \
     'Candidate.elf' \
     'Destination.elf' \
     'd56759e7c74de5f7c15f2940b87f5d89cd7c5d9dff647854560cdd8cd1749c24' || {
+        echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
+        exit 1
+    }
+run_case \
+    'hosted-verifier-publisher' \
+    'Install-Hosted-Verifier-Publisher.sh' \
+    'Candidate.elf' \
+    'Destination.elf' \
+    '22e5d25049052ee2a38f1775cc0c4ba1d5a5bbb95397c0b38a62ed310effe053' || {
         echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
         exit 1
     }

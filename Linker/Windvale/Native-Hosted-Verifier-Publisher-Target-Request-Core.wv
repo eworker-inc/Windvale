@@ -23,7 +23,10 @@ export fn Publisherˉtargetˉrequest(
         return Publisherˉtargetˉrequestˉresult(false, Empty(Structure));
     }
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Structure, 12u32);
-    let Count: u32 = Targets.Publisherˉconstructionˉtargetˉcount(Target);
+    let Variant: u32 = Bytesˉreadˉu32ˉlittle(Structure, 120u32);
+    let Count: u32 = Targets.Publisherˉconstructionˉtargetˉcount(
+        Target, Variant
+    );
     if Count == 0u32 {
         return Publisherˉtargetˉrequestˉresult(false, Empty(Structure));
     }
@@ -37,7 +40,7 @@ export fn Publisherˉtargetˉrequest(
     while Index < Count {
         Result = Appendˉu32(
             Result,
-            Targets.Publisherˉconstructionˉtarget(Target, Index)
+            Targets.Publisherˉconstructionˉtarget(Target, Variant, Index)
         );
         Index = Index + 1u32;
     }

@@ -10,6 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 construction="$repository_root/Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate"
 admission_candidate="$repository_root/Artifacts/Native-Hosted-Verifier-Publisher-Admission-Candidate"
+promoter_candidate="$repository_root/Artifacts/Native-Hosted-Verifier-Publisher-Promoter-Candidate"
 publisher_tools="$construction/linux-x64"
 verifier_candidate="$repository_root/Artifacts/Native-Hosted-Verifier-Application-Candidate/linux-x64-wvverify.elf"
 original_temporary_root=${TMPDIR:-/tmp}
@@ -97,7 +98,7 @@ fail() {
 
 total=$((total + 1))
 check_file "$construction/SHA256SUMS" 4812 \
-    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
+    76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
@@ -187,6 +188,42 @@ check_file "$test_directory/Publisher.elf" 254917 \
     'Linux publisher' || fail
 check_no_private_scratch || fail
 pass 'exact Linux publisher construction'
+
+total=$((total + 1))
+"$repository_root/Tools/Native/Construct-Hosted-Verifier-Publisher-Promoter.sh" \
+    windows "$test_directory/Promoter.exe" \
+    > "$test_directory/Promoter-Windows.out" \
+    2> "$test_directory/Promoter-Windows.err" || fail
+check_empty "$test_directory/Promoter-Windows.err" \
+    'Windows promoter construction wrote a diagnostic' || fail
+grep -Fx 'publisher promoter construction status=Valid target=windows bytes=681472' \
+    "$test_directory/Promoter-Windows.out" >/dev/null || fail
+check_file "$test_directory/Promoter.exe" 681472 \
+    9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069 \
+    'Windows publisher promoter' || fail
+cmp --silent \
+    "$promoter_candidate/windows-x64-wvhostverifierpublisherinstall.exe" \
+    "$test_directory/Promoter.exe" || fail
+check_no_private_scratch || fail
+pass 'exact cross-target Windows publisher-promoter construction'
+
+total=$((total + 1))
+"$repository_root/Tools/Native/Construct-Hosted-Verifier-Publisher-Promoter.sh" \
+    linux "$test_directory/Promoter.elf" \
+    > "$test_directory/Promoter-Linux.out" \
+    2> "$test_directory/Promoter-Linux.err" || fail
+check_empty "$test_directory/Promoter-Linux.err" \
+    'Linux promoter construction wrote a diagnostic' || fail
+grep -Fx 'publisher promoter construction status=Valid target=linux bytes=680901' \
+    "$test_directory/Promoter-Linux.out" >/dev/null || fail
+check_file "$test_directory/Promoter.elf" 680901 \
+    9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0 \
+    'Linux publisher promoter' || fail
+cmp --silent \
+    "$promoter_candidate/linux-x64-wvhostverifierpublisherinstall.elf" \
+    "$test_directory/Promoter.elf" || fail
+check_no_private_scratch || fail
+pass 'exact Linux publisher-promoter construction'
 
 total=$((total + 1))
 "$repository_root/Tools/Native/Construct-Hosted-Verifier-Publisher-Admitter.sh" \
@@ -297,10 +334,10 @@ total=$((total + 1))
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 4812 \
-    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
+    76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 \
     'rejected metadata input' || fail
 check_file "$test_directory/Sentinel.wvhv" 4812 \
-    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
+    76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
@@ -308,7 +345,7 @@ cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
 check_file "$test_directory/Sentinel.wvhr" 4812 \
-    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
+    76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -324,15 +361,47 @@ total=$((total + 1))
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 4812 \
-    3e8f91bfdb305ef0652036b12a63adf88920483ce5b6e2ca6622c3311fbd0d11 \
+    76c8eebd5d5f426c496beda5f7338ee3dcad4c27edeea9e9d5de49acd236cad2 \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
+
+total=$((total + 1))
+"$repository_root/Tools/Native/Install-Hosted-Verifier-Publisher.sh" \
+    "$test_directory/Publisher.elf" "$test_directory/Installed-Publisher.elf" \
+    > "$test_directory/Install-Publisher-Linux.out" \
+    2> "$test_directory/Install-Publisher-Linux.err" || fail
+check_empty "$test_directory/Install-Publisher-Linux.err" \
+    'Linux publisher installation wrote a diagnostic' || fail
+check_file "$test_directory/Install-Publisher-Linux.out" 117 \
+    b136669c594dea0063c960c5c70875fa68086f82032ae3d46f696225715fcff6 \
+    'Linux publisher installation report' || fail
+check_file "$test_directory/Installed-Publisher.elf" 254917 \
+    de4f06f6d837eb58457a31b4757c3410e389ecc3c11fd79daf229dbdeb23e02a \
+    'installed Linux publisher' || fail
+cmp --silent "$test_directory/Publisher.elf" \
+    "$test_directory/Installed-Publisher.elf" || fail
+"$repository_root/Tools/Native/Install-Hosted-Verifier-Publisher.sh" \
+    "$test_directory/Publisher.exe" "$test_directory/Installed-Publisher.exe" \
+    > "$test_directory/Install-Publisher-Windows.out" \
+    2> "$test_directory/Install-Publisher-Windows.err" || fail
+check_empty "$test_directory/Install-Publisher-Windows.err" \
+    'Windows publisher installation wrote a diagnostic' || fail
+check_file "$test_directory/Install-Publisher-Windows.out" 117 \
+    6766dce89f5d2aa3086a054b0e556028d5d265208fe3c63834530e48833e8eca \
+    'Windows publisher installation report' || fail
+check_file "$test_directory/Installed-Publisher.exe" 256000 \
+    735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6 \
+    'installed Windows publisher' || fail
+cmp --silent "$test_directory/Publisher.exe" \
+    "$test_directory/Installed-Publisher.exe" || fail
+check_no_private_scratch || fail
+pass 'current-host promoter installs both exact publishers'
 
 total=$((total + 1))
 check_file "$verifier_candidate" 1003520 \
     26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b \
     'Linux verifier candidate' || fail
-"$test_directory/Publisher.elf" "$verifier_candidate" \
+"$test_directory/Installed-Publisher.elf" "$verifier_candidate" \
     "$test_directory/Installed.elf" > "$test_directory/Execute.out" \
     2> "$test_directory/Execute.err" || fail
 check_empty "$test_directory/Execute.err" \
@@ -342,6 +411,6 @@ check_file "$test_directory/Installed.elf" 1003520 \
     'installed verifier' || fail
 cmp --silent "$verifier_candidate" "$test_directory/Installed.elf" || fail
 check_no_private_scratch || fail
-pass 'constructed current-host publisher execution'
+pass 'promoted current-host publisher execution'
 
 echo "Tests: $total, Passed: $passed, Failed: 0"

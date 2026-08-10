@@ -72,7 +72,7 @@ fn Response(Input: bytes, Status: u32) -> bytes {
         Total = 4128u32;
         Pageˉoffset = 32u32;
         Pageˉbytes = 4096u32;
-        Address = 253952u32;
+        Address = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     }
     Result = Build.Appendˉu32(Result, Total);
     Result = Build.Appendˉu32(Result, Status);
@@ -83,12 +83,16 @@ fn Response(Input: bytes, Status: u32) -> bytes {
 }
 
 export fn Publisherˉwindowsˉimports(Input: bytes) -> bytes {
+    var Address: u32 = 0u32;
+    if Bytesˉlength(Input) == 16u32 {
+        Address = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    }
     if Bytesˉlength(Input) != 16u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1380537943u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 4u32) != 1u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != 16u32 ||
-        Bytesˉreadˉu32ˉlittle(Input, 12u32) != 253952u32 {
+        (Address != 253952u32 && Address != 679936u32) {
         return Response(Input, 1u32);
     }
-    return Bytesˉconcat(Response(Input, 0u32), Imports(253952u32));
+    return Bytesˉconcat(Response(Input, 0u32), Imports(Address));
 }

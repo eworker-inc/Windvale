@@ -4,18 +4,17 @@
 
 This contract defines the distinct durable promoter that installs one exact
 completed hosted-verifier publisher application. The portable promoter source,
-canonical WVB, accepted native WVO, and linked flat fragment exist. Paired
-Windows/Linux promoter applications and public installation launchers remain
-future work.
+canonical WVB, accepted native WVO, linked flat fragment, paired Windows/Linux
+promoter applications, and digest-bound installation launchers now exist.
 
 The promoter is not the publisher it installs. This separation is required:
 embedding a publisher's own completed digest in that publisher would create a
-self-digest cycle. The promoter's future application identity belongs only in
+self-digest cycle. The promoter's application identity belongs only in
 its external candidate manifest and digest-bound launcher.
 
 ## Portable command
 
-The future executable command is:
+The executable command is:
 
 ```text
 wvhostverifierpublisherinstall <candidate.exe|candidate.elf> <destination.exe|destination.elf>
@@ -52,16 +51,25 @@ host copy or rename is not conforming.
 
 The native linker places `Main` at address 1,178. The transaction apply/begin
 entry points remain at 0/789. The WVO has 658,160 code bytes, 179 read-only-data
-bytes, 49 symbols, three internal relocations, and no imports. Version 11 of the
+bytes, 49 symbols, three internal relocations, and no imports. Version 12 of the
 publisher-construction candidate pins the WVB and WVO. Its focused inventory
 rebuilds, lowers, links, and compares them without a C# process.
 
-## Remaining construction boundary
+## Constructed application identities
 
-The existing publisher container construction records hard-pin the original
-publisher's smaller WVB/WVO geometry, private entry points, placements, and
-completed PE/ELF identities. They must gain an explicit exact promoter role
-while retaining the current publisher bytes unchanged. The promoter then needs
-paired publisher-specialized applications, digest-bound installation launchers,
-successful replacement evidence, corruption and alias preservation, zero
-scratch, and independent Linux execution before durable promotion is complete.
+The construction records use explicit role 0 for the original publisher and
+role 1 for the promoter. The role is carried in reserved `WVPM`, `WVVP`,
+`WVPS`, and `WVCR` fields. Exact identity admission infers the role from the
+WVB/WVO pair; callers cannot relabel an arbitrary module. Role 0 records and
+completed publisher applications remain byte-identical.
+
+| Target | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Windows x64 | 681,472 | `9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069` |
+| Linux x64 | 680,901 | `9406a1e2610db48e744a0912ab4abb2281856e92f7a0d870292c16105d9b9af0` |
+
+The current-host focused native lane constructs both applications, uses the
+promoter to install both exact publisher subjects, and then uses the installed
+current-host publisher to install an exact hosted verifier. The rejection lane
+also proves corrupt-candidate preservation and zero scratch. Independent Linux
+execution, grouped qualification, promotion, and release integration remain.

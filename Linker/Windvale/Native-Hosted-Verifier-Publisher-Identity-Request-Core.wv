@@ -32,14 +32,19 @@ fn Identityˉmatches(
     Input: bytes,
     Length: u32,
     Identity: u32,
-    Target: u32
+    Target: u32,
+    Variant: u32
 ) -> bool {
     if Bytesˉlength(Input) != Length { return false; }
     let Actual: bytes = Digest(Input);
-    let Expected: bytes = Digests.Publisherˉconstructionˉexpectedˉdigest(
-        Input, Identity, Target
-    );
-    if Bytesˉlength(Actual) != 32u32 { return false; }
+    let Expected: bytes =
+        Digests.Publisherˉconstructionˉexpectedˉdigestˉforˉvariant(
+            Input, Identity, Target, Variant
+        );
+    if Bytesˉlength(Actual) != 32u32 ||
+        Bytesˉlength(Expected) != 32u32 {
+        return false;
+    }
     var Index: u32 = 0u32;
     while Index < 32u32 {
         if Bytesˉreadˉu8(Actual, Index) != Bytesˉreadˉu8(Expected, Index) {
@@ -48,6 +53,58 @@ fn Identityˉmatches(
         Index = Index + 1u32;
     }
     return true;
+}
+
+fn Moduleˉvariant(Input: bytes, Target: u32) -> u32 {
+    if Identityˉmatches(Input, 29170u32, 1u32, Target, 0u32) {
+        return 0u32;
+    }
+    if Identityˉmatches(Input, 41268u32, 1u32, Target, 1u32) {
+        return 1u32;
+    }
+    return 2u32;
+}
+
+export fn Publisherˉidentityˉvariant(
+    Module: bytes,
+    Publisherˉobject: bytes,
+    Target: u32
+) -> u32 {
+    let Variant: u32 = Moduleˉvariant(Module, Target);
+    if Variant == 0u32 &&
+        Identityˉmatches(
+            Publisherˉobject, 233804u32, 2u32, Target, Variant
+        ) {
+        return Variant;
+    }
+    if Variant == 1u32 &&
+        Identityˉmatches(
+            Publisherˉobject, 660123u32, 2u32, Target, Variant
+        ) {
+        return Variant;
+    }
+    return 2u32;
+}
+
+fn Resourceˉlength(Variant: u32, Identity: u32, Target: u32) -> u32 {
+    if Identity == 1u32 {
+        if Variant == 1u32 { return 41268u32; }
+        return 29170u32;
+    }
+    if Identity == 2u32 {
+        if Variant == 1u32 { return 660123u32; }
+        return 233804u32;
+    }
+    if Identity == 3u32 {
+        if Target == 2u32 { return 164u32; }
+        return 168u32;
+    }
+    if Identity == 4u32 {
+        if Target == 2u32 { return 5507u32; }
+        return 9544u32;
+    }
+    if Identity == 5u32 { return 2176u32; }
+    return 128u32;
 }
 
 fn Appendˉresourceˉrecord(
@@ -69,32 +126,37 @@ export fn Publisherˉidentityˉrequest(
     Metadata: bytes
 ) -> Publisherˉidentityˉrequestˉresult {
     if Target != 1u32 && Target != 2u32 { return Failure(Module, 0u32); }
-    var Startupˉbytes: u32 = 168u32;
-    var Adapterˉbytes: u32 = 9544u32;
-    if Target == 2u32 {
-        Startupˉbytes = 164u32;
-        Adapterˉbytes = 5507u32;
-    }
-    if !Identityˉmatches(Module, 29170u32, 1u32, Target) {
-        return Failure(Module, 1u32);
-    }
-    if !Identityˉmatches(Publisherˉobject, 233804u32, 2u32, Target) {
+    let Variant: u32 = Moduleˉvariant(Module, Target);
+    if Variant > 1u32 { return Failure(Module, 1u32); }
+    let Moduleˉbytes: u32 = Resourceˉlength(Variant, 1u32, Target);
+    let Publisherˉbytes: u32 = Resourceˉlength(Variant, 2u32, Target);
+    let Startupˉbytes: u32 = Resourceˉlength(Variant, 3u32, Target);
+    let Adapterˉbytes: u32 = Resourceˉlength(Variant, 4u32, Target);
+    if !Identityˉmatches(
+        Publisherˉobject, Publisherˉbytes, 2u32, Target, Variant
+    ) {
         return Failure(Module, 2u32);
     }
-    if !Identityˉmatches(Startupˉobject, Startupˉbytes, 3u32, Target) {
+    if !Identityˉmatches(
+        Startupˉobject, Startupˉbytes, 3u32, Target, Variant
+    ) {
         return Failure(Module, 3u32);
     }
-    if !Identityˉmatches(Adapterˉobject, Adapterˉbytes, 4u32, Target) {
+    if !Identityˉmatches(
+        Adapterˉobject, Adapterˉbytes, 4u32, Target, Variant
+    ) {
         return Failure(Module, 4u32);
     }
-    if !Identityˉmatches(Sha256ˉobject, 2176u32, 5u32, Target) {
+    if !Identityˉmatches(
+        Sha256ˉobject, 2176u32, 5u32, Target, Variant
+    ) {
         return Failure(Module, 5u32);
     }
-    if !Identityˉmatches(Metadata, 128u32, 6u32, Target) {
+    if !Identityˉmatches(Metadata, 128u32, 6u32, Target, Variant) {
         return Failure(Module, 6u32);
     }
 
-    let Total: u32 = 64u32 + 29170u32 + 233804u32 +
+    let Total: u32 = 64u32 + Moduleˉbytes + Publisherˉbytes +
         Startupˉbytes + Adapterˉbytes + 2176u32 + 128u32;
     var Result: bytes = Empty(Module);
     Result = Appendˉu32(Result, 1230001751u32);

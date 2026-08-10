@@ -135,10 +135,13 @@ function Add-Native-Tool-Suite {
         Add-Suite 'uefi-packager'
     } elseif ($Stem -eq 'Publish-Hosted-Verifier-Application') {
         Add-Suite 'publisher-rejections'
+    } elseif ($Stem -eq 'Install-Hosted-Verifier-Publisher') {
+        Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
     } elseif ($Stem -in @(
         'Admit-Hosted-Verifier-Publisher',
         'Construct-Hosted-Verifier-Publisher',
-        'Construct-Hosted-Verifier-Publisher-Admitter'
+        'Construct-Hosted-Verifier-Publisher-Admitter',
+        'Construct-Hosted-Verifier-Publisher-Promoter'
     )) {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Stem -in @('Package-Hosted-Wvb', 'Test-Hosted-Wvb-Packaging')) {
@@ -293,6 +296,10 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite 'hosted-verifier-publisher-files'
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Hosted-Verifier-Publisher-Promoter-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
     } elseif ($Path.StartsWith('Tools/Windvale.Publish/', [StringComparison]::Ordinal) -or
         $Path.StartsWith(
             'Artifacts/Native-Hosted-Verifier-Application-Publisher-Candidate/',

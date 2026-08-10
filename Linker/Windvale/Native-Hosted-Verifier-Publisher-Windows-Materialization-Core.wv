@@ -11,9 +11,12 @@ fn Response(Input: bytes, Status: u32) -> bytes {
     var Applicationˉbytes: u32 = 0u32;
     var Target: u32 = 0u32;
     if Status == 0u32 {
-        Total = 256032u32;
-        Offset = 32u32;
         Applicationˉbytes = 256000u32;
+        if Bytesˉlength(Input) == 686592u32 {
+            Applicationˉbytes = 681472u32;
+        }
+        Total = 32u32 + Applicationˉbytes;
+        Offset = 32u32;
         Target = 1u32;
     }
     Result = Build.Appendˉu32(Result, Total);
@@ -25,58 +28,80 @@ fn Response(Input: bytes, Status: u32) -> bytes {
 }
 
 fn Envelopeˉvalid(Input: bytes) -> bool {
-    return Bytesˉlength(Input) == 260608u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1297569367u32 &&
+    let Total: u32 = Bytesˉlength(Input);
+    if Total != 260608u32 && Total != 686592u32 { return false; }
+    return Bytesˉreadˉu32ˉlittle(Input, 0u32) == 1297569367u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 4u32) == 1u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 8u32) == 260608u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 8u32) == Total &&
         Bytesˉreadˉu32ˉlittle(Input, 12u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Input, 16u32) == 64u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 20u32) == 248832u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 24u32) == 248896u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 28u32) == 416u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 32u32) == 249312u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 36u32) == 7040u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 40u32) == 256352u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 44u32) == 128u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 48u32) == 256480u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 52u32) == 4128u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 56u32) == 0u32 &&
-        Bytesˉreadˉu32ˉlittle(Input, 60u32) == 0u32;
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) == Total - 11776u32;
 }
 
-fn Baseˉvalid(Base: bytes) -> bool {
-    return Bytesˉlength(Base) == 248832u32 &&
+fn Baseˉvalid(Base: bytes, Variant: u32) -> bool {
+    var Total: u32 = 248832u32;
+    var Codeˉbytes: u32 = 239616u32;
+    var Imageˉend: u32 = 143986688u32;
+    var Dataˉaddress: u32 = 245760u32;
+    var Relocationˉaddress: u32 = 143982592u32;
+    var Codeˉextent: u32 = 239490u32;
+    var Dataˉfile: u32 = 240128u32;
+    var Relocationˉfile: u32 = 248320u32;
+    if Variant == 1u32 {
+        Total = 674816u32;
+        Codeˉbytes = 665600u32;
+        Imageˉend = 144412672u32;
+        Dataˉaddress = 671744u32;
+        Relocationˉaddress = 144408576u32;
+        Codeˉextent = 665106u32;
+        Dataˉfile = 666112u32;
+        Relocationˉfile = 674304u32;
+    }
+    return Variant <= 1u32 && Bytesˉlength(Base) == Total &&
         Bytesˉreadˉu16ˉlittle(Base, 0u32) == 23117u32 &&
         Bytesˉreadˉu32ˉlittle(Base, 60u32) == 128u32 &&
         Bytesˉreadˉu32ˉlittle(Base, 128u32) == 17744u32 &&
         Bytesˉreadˉu16ˉlittle(Base, 132u32) == 34404u32 &&
         Bytesˉreadˉu16ˉlittle(Base, 134u32) == 3u32 &&
         Bytesˉreadˉu16ˉlittle(Base, 152u32) == 523u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 156u32) == 239616u32 &&
+        Bytesˉreadˉu32ˉlittle(Base, 156u32) == Codeˉbytes &&
         Bytesˉreadˉu32ˉlittle(Base, 168u32) == 4096u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 208u32) == 143986688u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 272u32) == 245760u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 304u32) == 143982592u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 360u32) == 245952u32 &&
+        Bytesˉreadˉu32ˉlittle(Base, 208u32) == Imageˉend &&
+        Bytesˉreadˉu32ˉlittle(Base, 272u32) == Dataˉaddress &&
+        Bytesˉreadˉu32ˉlittle(Base, 304u32) == Relocationˉaddress &&
+        Bytesˉreadˉu32ˉlittle(Base, 360u32) == 245952u32 + Variant * 425984u32 &&
         Bytesˉreadˉu32ˉlittle(Base, 364u32) == 128u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 400u32) == 239490u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 408u32) == 239616u32 &&
+        Bytesˉreadˉu32ˉlittle(Base, 400u32) == Codeˉextent &&
+        Bytesˉreadˉu32ˉlittle(Base, 408u32) == Codeˉbytes &&
         Bytesˉreadˉu32ˉlittle(Base, 412u32) == 512u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 444u32) == 245760u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 452u32) == 240128u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 484u32) == 143982592u32 &&
-        Bytesˉreadˉu32ˉlittle(Base, 492u32) == 248320u32;
+        Bytesˉreadˉu32ˉlittle(Base, 444u32) == Dataˉaddress &&
+        Bytesˉreadˉu32ˉlittle(Base, 452u32) == Dataˉfile &&
+        Bytesˉreadˉu32ˉlittle(Base, 484u32) == Relocationˉaddress &&
+        Bytesˉreadˉu32ˉlittle(Base, 492u32) == Relocationˉfile;
 }
 
-fn Recordsˉvalid(Construction: bytes, Objects: bytes, Metadata: bytes, Imports: bytes) -> bool {
+fn Recordsˉvalid(Construction: bytes, Objects: bytes, Metadata: bytes, Imports: bytes, Variant: u32) -> bool {
+    var Bundleˉbytes: u32 = 235394u32;
+    var Adapterˉfile: u32 = 240016u32;
+    var Adapterˉaddress: u32 = 243600u32;
+    var Outputˉbytes: u32 = 256000u32;
+    var Importsˉaddress: u32 = 253952u32;
+    if Variant == 1u32 {
+        Bundleˉbytes = 661010u32;
+        Adapterˉfile = 665664u32;
+        Adapterˉaddress = 669248u32;
+        Outputˉbytes = 681472u32;
+        Importsˉaddress = 679936u32;
+    }
     return Bytesˉlength(Construction) == 416u32 &&
         Bytesˉreadˉu32ˉlittle(Construction, 0u32) == 1380144727u32 &&
         Bytesˉreadˉu32ˉlittle(Construction, 4u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Construction, 12u32) == 1u32 &&
-        Bytesˉreadˉu32ˉlittle(Construction, 72u32) == 235394u32 &&
-        Bytesˉreadˉu32ˉlittle(Construction, 132u32) == 240016u32 &&
-        Bytesˉreadˉu32ˉlittle(Construction, 136u32) == 243600u32 &&
-        Bytesˉreadˉu32ˉlittle(Construction, 156u32) == 256000u32 &&
+        Bytesˉreadˉu32ˉlittle(Construction, 28u32) == Variant &&
+        Bytesˉreadˉu32ˉlittle(Construction, 72u32) == Bundleˉbytes &&
+        Bytesˉreadˉu32ˉlittle(Construction, 132u32) == Adapterˉfile &&
+        Bytesˉreadˉu32ˉlittle(Construction, 136u32) == Adapterˉaddress &&
+        Bytesˉreadˉu32ˉlittle(Construction, 156u32) == Outputˉbytes &&
         Bytesˉlength(Objects) == 7040u32 &&
         Bytesˉreadˉu32ˉlittle(Objects, 0u32) == 1330206295u32 &&
         Bytesˉreadˉu32ˉlittle(Objects, 4u32) == 1u32 &&
@@ -94,6 +119,7 @@ fn Recordsˉvalid(Construction: bytes, Objects: bytes, Metadata: bytes, Imports:
         Bytesˉreadˉu32ˉlittle(Metadata, 4u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Metadata, 8u32) == 128u32 &&
         Bytesˉreadˉu32ˉlittle(Metadata, 12u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Metadata, 112u32) == Variant &&
         Bytesˉlength(Imports) == 4128u32 &&
         Bytesˉreadˉu32ˉlittle(Imports, 0u32) == 1296651863u32 &&
         Bytesˉreadˉu32ˉlittle(Imports, 4u32) == 1u32 &&
@@ -101,50 +127,91 @@ fn Recordsˉvalid(Construction: bytes, Objects: bytes, Metadata: bytes, Imports:
         Bytesˉreadˉu32ˉlittle(Imports, 12u32) == 0u32 &&
         Bytesˉreadˉu32ˉlittle(Imports, 20u32) == 32u32 &&
         Bytesˉreadˉu32ˉlittle(Imports, 24u32) == 4096u32 &&
-        Bytesˉreadˉu32ˉlittle(Imports, 28u32) == 253952u32;
+        Bytesˉreadˉu32ˉlittle(Imports, 28u32) == Importsˉaddress;
 }
 
-fn Header(Base: bytes) -> bytes {
+fn Header(Base: bytes, Variant: u32) -> bytes {
     var Result: bytes = Bytesˉslice(Base, 0u32, 512u32);
+    var Codeˉbytes: u32 = 246784u32;
+    var Imageˉend: u32 = 143994880u32;
+    var Importsˉaddress: u32 = 253952u32;
+    var Relocationˉaddress: u32 = 143990784u32;
+    var Importˉdirectory: u32 = 254192u32;
+    var Codeˉextent: u32 = 246485u32;
+    var Importsˉfile: u32 = 247296u32;
+    var Relocationˉfile: u32 = 255488u32;
+    if Variant == 1u32 {
+        Codeˉbytes = 672256u32;
+        Imageˉend = 144420864u32;
+        Importsˉaddress = 679936u32;
+        Relocationˉaddress = 144416768u32;
+        Importˉdirectory = 680176u32;
+        Codeˉextent = 672133u32;
+        Importsˉfile = 672768u32;
+        Relocationˉfile = 680960u32;
+    }
     Result = Build.Patchˉu8(Result, 154u32, 5u8);
-    Result = Build.Patchˉu32(Result, 156u32, 246784u32);
+    Result = Build.Patchˉu32(Result, 156u32, Codeˉbytes);
     Result = Build.Patchˉu32(Result, 168u32, 4096u32);
-    Result = Build.Patchˉu32(Result, 208u32, 143994880u32);
-    Result = Build.Patchˉu32(Result, 272u32, 253952u32);
-    Result = Build.Patchˉu32(Result, 304u32, 143990784u32);
-    Result = Build.Patchˉu32(Result, 360u32, 254192u32);
+    Result = Build.Patchˉu32(Result, 208u32, Imageˉend);
+    Result = Build.Patchˉu32(Result, 272u32, Importsˉaddress);
+    Result = Build.Patchˉu32(Result, 304u32, Relocationˉaddress);
+    Result = Build.Patchˉu32(Result, 360u32, Importˉdirectory);
     Result = Build.Patchˉu32(Result, 364u32, 160u32);
-    Result = Build.Patchˉu32(Result, 400u32, 246485u32);
-    Result = Build.Patchˉu32(Result, 408u32, 246784u32);
-    Result = Build.Patchˉu32(Result, 444u32, 253952u32);
-    Result = Build.Patchˉu32(Result, 452u32, 247296u32);
-    Result = Build.Patchˉu32(Result, 484u32, 143990784u32);
-    return Build.Patchˉu32(Result, 492u32, 255488u32);
+    Result = Build.Patchˉu32(Result, 400u32, Codeˉextent);
+    Result = Build.Patchˉu32(Result, 408u32, Codeˉbytes);
+    Result = Build.Patchˉu32(Result, 444u32, Importsˉaddress);
+    Result = Build.Patchˉu32(Result, 452u32, Importsˉfile);
+    Result = Build.Patchˉu32(Result, 484u32, Relocationˉaddress);
+    return Build.Patchˉu32(Result, 492u32, Relocationˉfile);
 }
 
 export fn Publisherˉwindowsˉmaterialize(Input: bytes) -> bytes {
     if !Envelopeˉvalid(Input) { return Response(Input, 1u32); }
-    let Base: bytes = Bytesˉslice(Input, 64u32, 248832u32);
-    let Construction: bytes = Bytesˉslice(Input, 248896u32, 416u32);
-    let Objects: bytes = Bytesˉslice(Input, 249312u32, 7040u32);
-    let Metadata: bytes = Bytesˉslice(Input, 256352u32, 128u32);
-    let Imports: bytes = Bytesˉslice(Input, 256480u32, 4128u32);
-    if !Baseˉvalid(Base) || !Recordsˉvalid(Construction, Objects, Metadata, Imports) {
+    let Baseˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Constructionˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Objectsˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    let Metadataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
+    let Importsˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 48u32);
+    let Base: bytes = Bytesˉslice(Input, 64u32, Baseˉbytes);
+    let Construction: bytes = Bytesˉslice(Input, Constructionˉoffset, 416u32);
+    let Objects: bytes = Bytesˉslice(Input, Objectsˉoffset, 7040u32);
+    let Metadata: bytes = Bytesˉslice(Input, Metadataˉoffset, 128u32);
+    let Imports: bytes = Bytesˉslice(Input, Importsˉoffset, 4128u32);
+    let Variant: u32 = Bytesˉreadˉu32ˉlittle(Construction, 28u32);
+    if !Baseˉvalid(Base, Variant) ||
+        !Recordsˉvalid(Construction, Objects, Metadata, Imports, Variant) {
         return Response(Input, 2u32);
     }
-    var Application: bytes = Header(Base);
+    var Bundleˉbytes: u32 = 235394u32;
+    var Adapterˉfill: u32 = 14u32;
+    var Shaˉfill: u32 = 299u32;
+    var Tailˉoffset: u32 = 244224u32;
+    var Finalˉtail: u32 = 245856u32;
+    var Outputˉbytes: u32 = 256000u32;
+    if Variant == 1u32 {
+        Bundleˉbytes = 661010u32;
+        Adapterˉfill = 46u32;
+        Shaˉfill = 123u32;
+        Tailˉoffset = 670208u32;
+        Finalˉtail = 671840u32;
+        Outputˉbytes = 681472u32;
+    }
+    var Application: bytes = Header(Base, Variant);
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 64u32, 5u32));
     Application = Bytesˉconcat(Application, Build.Zeros(4091u32));
-    Application = Bytesˉconcat(Application, Bytesˉslice(Base, 4608u32, 235394u32));
-    Application = Bytesˉconcat(Application, Build.Zeros(14u32));
+    Application = Bytesˉconcat(Application, Bytesˉslice(Base, 4608u32, Bundleˉbytes));
+    Application = Bytesˉconcat(Application, Build.Zeros(Adapterˉfill));
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 69u32, 5286u32));
     Application = Bytesˉconcat(Application, Build.Zeros(10u32));
     Application = Bytesˉconcat(Application, Bytesˉslice(Objects, 5355u32, 1685u32));
-    Application = Bytesˉconcat(Application, Build.Zeros(299u32));
+    Application = Bytesˉconcat(Application, Build.Zeros(Shaˉfill));
     Application = Bytesˉconcat(Application, Bytesˉslice(Imports, 32u32, 4096u32));
-    Application = Bytesˉconcat(Application, Bytesˉslice(Base, 244224u32, 1504u32));
+    Application = Bytesˉconcat(Application, Bytesˉslice(Base, Tailˉoffset, 1504u32));
     Application = Bytesˉconcat(Application, Metadata);
-    Application = Bytesˉconcat(Application, Bytesˉslice(Base, 245856u32, 2976u32));
-    if Bytesˉlength(Application) != 256000u32 { return Response(Input, 3u32); }
+    Application = Bytesˉconcat(Application, Bytesˉslice(Base, Finalˉtail, 2976u32));
+    if Bytesˉlength(Application) != Outputˉbytes {
+        return Response(Input, 3u32);
+    }
     return Bytesˉconcat(Response(Input, 0u32), Application);
 }

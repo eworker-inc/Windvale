@@ -27,7 +27,7 @@ fn Pathsˉareˉequal(Left: text, Right: text) -> bool {
 
 fn Usage() -> i32 {
     diagnostic.write_line(
-        "Usage: wvhostverifierproducemetadata <target:1|2> <publisher.wvb> <startup.wvo> <metadata.wvvp>"
+        "Usage: wvhostverifierproducemetadata [variant:0|1] <target:1|2> <publisher.wvb> <startup.wvo> <metadata.wvvp>"
     );
     return 64;
 }
@@ -38,23 +38,39 @@ fn Reject() -> i32 {
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() != 4u32 { return Usage(); }
-    let Outputˉpath: text = process.argument(3u32);
-    if Pathsˉareˉequal(process.argument(1u32), Outputˉpath) ||
-        Pathsˉareˉequal(process.argument(2u32), Outputˉpath) {
+    let Arguments: u32 = process.argument_count();
+    if Arguments != 4u32 && Arguments != 5u32 { return Usage(); }
+    var Base: u32 = 0u32;
+    var Variant: u32 = 0u32;
+    if Arguments == 5u32 {
+        let Variantˉtext: bytes = Textˉtoˉutf8(process.argument(0u32));
+        let Parsedˉvariant: Decimal.Foundationˉu32ˉparse =
+            Decimal.Foundationˉu32ˉdecimalˉparse(
+                Variantˉtext, 0u32, Bytesˉlength(Variantˉtext)
+            );
+        if !Parsedˉvariant.Valid || Parsedˉvariant.Value > 1u32 {
+            return Reject();
+        }
+        Base = 1u32;
+        Variant = Parsedˉvariant.Value;
+    }
+    let Outputˉpath: text = process.argument(Base + 3u32);
+    if Pathsˉareˉequal(process.argument(Base + 1u32), Outputˉpath) ||
+        Pathsˉareˉequal(process.argument(Base + 2u32), Outputˉpath) {
         return Usage();
     }
-    let Targetˉtext: bytes = Textˉtoˉutf8(process.argument(0u32));
+    let Targetˉtext: bytes = Textˉtoˉutf8(process.argument(Base));
     let Target: Decimal.Foundationˉu32ˉparse =
         Decimal.Foundationˉu32ˉdecimalˉparse(
             Targetˉtext, 0u32, Bytesˉlength(Targetˉtext)
         );
     if !Target.Valid { return Reject(); }
     let Requestˉresult: Request.Publisherˉmetadataˉrequestˉresult =
-        Request.Publisherˉmetadataˉrequest(
+        Request.Publisherˉmetadataˉrequestˉforˉvariant(
             Target.Value,
-            file.read_bytes(process.argument(1u32)),
-            file.read_bytes(process.argument(2u32))
+            Variant,
+            file.read_bytes(process.argument(Base + 1u32)),
+            file.read_bytes(process.argument(Base + 2u32))
         );
     if !Requestˉresult.Valid { return Reject(); }
     let Response: bytes =

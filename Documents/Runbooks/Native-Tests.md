@@ -47,8 +47,8 @@ The exact filter names and case counts are:
 | `console-segmented-size` | 2 |
 | `console-segmented-construction` | 2 |
 | `console-packager-source-reconstruction` | 2 |
-| `publisher-rejections` | 3 |
-| `hosted-verifier-publisher-files` | 9 |
+| `publisher-rejections` | 4 |
+| `hosted-verifier-publisher-files` | 12 |
 | `uefi-packager` | 3 |
 | `wvo-export-renamer` | 4 |
 | `os-probe-object` | 9 |
@@ -58,11 +58,11 @@ The exact filter names and case counts are:
 | `os-probe` | 2 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 32 suites and 3,157 cases in manifest order. Its
+Omitting `--filter` selects all 32 suites and 3,161 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 32, Passed: 32, Failed: 0, Cases: 3157
+Suites: 32, Passed: 32, Failed: 0, Cases: 3161
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -406,12 +406,13 @@ Its exact success report is:
 ```text
 PASS  console-application
 PASS  hosted-verifier-application
+PASS  hosted-verifier-publisher
 PASS  wvo
-Tests: 3, Passed: 3, Failed: 0
+Tests: 4, Passed: 4, Failed: 0
 ```
 
-All three cases require exact phase diagnostics, empty standard output, complete
-destination preservation, and zero native publication scratch files.
+All four cases require exact phase diagnostics, empty standard output, complete
+candidate and destination preservation, and zero native publication scratch files.
 
 The focused WVB-to-WVO lowerer command tests malformed admission and one valid
 module outside the accepted native subset without rebuilding the lowerer or
@@ -680,7 +681,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,157-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,161-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

@@ -14,7 +14,8 @@ identity before durable publication.
 (`0x4d575657`), version, total bytes, target 1, five `(offset, length)` pairs,
 and two reserved zeros. Packed resources are the 248,832-byte base PE,
 416-byte `WVCR`, 7,040-byte `WVIO`, 128-byte `WVVP`, and 4,128-byte `WVIM`.
-Total request bytes are 260,608.
+Role 0 uses the 248,832-byte publisher base and totals 260,608 bytes; role 1
+uses the 674,816-byte promoter base and totals 686,592 bytes.
 
 `WVWO 1` has a 32-byte header containing magic `WVWO` (`0x4f575657`),
 version, total, status, consumed input, application offset and bytes, and
@@ -22,6 +23,10 @@ target. Success appends the 256,000-byte PE. Rejection returns only the header
 with status 1, 2, or 3 for envelope, input-contract, or final-size failure.
 
 ## Construction
+
+The concrete ranges below describe role 0. Role 1 applies the same admitted
+join to the larger promoter base, relocated import page, and exact `WVCR`
+placements; the materializer requires matching `WVCR`/`WVVP` roles.
 
 The constructor updates PE entry, image, import, IAT, relocation, and section
 geometry in the 512-byte header. It emits, in order:
@@ -43,10 +48,12 @@ repeated replacement of the full 256 KiB value.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Base PE | 248,832 | `cf204201e5c26d71e78da1112de2bc724d389a5222cc835d48dbe8cd8bbc5988` |
-| Constructor WVB | 15,431 | `73786b8bb60f8dc472c8ff111104480e16d1ac46e485125713a3fa4159aee633` |
+| Constructor WVB | 16,628 | `addaa929245787dfd2282671e52382bb069d1735f37fc7f8fc905a492574860c` |
 | Final PE | 256,000 | `735320b5ff33419d685925044add6f254bf402c0d49fc575c77f6110fac705f6` |
+| Promoter final PE | 681,472 | `9cb234a57c9ff71b6ee44a0d687521e6fd7ccf82784b369e5e65b8ed40666069` |
 
 The focused test checks the pinned WVB and base identities, service-free native
 entry, interpreter/native equality, complete final byte equality, final SHA,
-and narrow rejection. Both target-specific final materializers now exist;
-ordinary native pipeline wiring and broader retirement qualification remain.
+and narrow rejection. Both target-specific materializers now support publisher
+and promoter roles; independent Linux execution and broader retirement
+qualification remain.
