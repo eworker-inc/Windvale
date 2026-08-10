@@ -486,13 +486,22 @@ unpromoted.
 
 Decision 0511 transfers the next eight exact source builds and seven
 inspections: native stencil, UTF-8, integer formatting, and the shared service
-code builder. The paired helper owns twenty artifacts and 39 cases, bringing
-the cumulative removal to forty-five managed calls per broad host script.
+code builder. At that decision the paired helper owned twenty artifacts and 39
+cases, bringing the cumulative removal to forty-five managed calls per broad host script.
 Component-local project manifests are the repository default; one contained
 root aggregate remains for the cross-component Stencil demo pending a
 workspace/reference contract. Its 20-million-step execution remains managed,
 as do capability-bearing execution, the broad harness, independent Linux
 evidence, and later qualification phases.
+
+Decision 0512 transfers the complete native I/O-service generator closure:
+eleven exact output, file-output, and file-input Project 1 builds plus native
+inspection of the three public bridges. The paired helper now owns 31 artifacts
+and 53 cases, bringing the cumulative removal to fifty-nine managed calls per
+broad host script. All touched manifests are component-local and the three old
+root bridge manifests are removed. Retained bridge-WVB and exact platform-leaf
+comparisons remain independent; capability-bearing execution, the broad
+harness, Linux evidence, and later qualification phases remain open.
 
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module

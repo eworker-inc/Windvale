@@ -1,7 +1,0 @@
-windvale-project 1
-root "Runtime/Windvale/Native-X64-File-Input-Services-Bridge.wv"
-source "Runtime/Windvale/Native-X64-File-Input-Service-Code.wv"
-source "Runtime/Windvale/Native-X64-File-Input-Service-Linux.wv"
-source "Runtime/Windvale/Native-X64-File-Input-Service-Windows.wv"
-source "Runtime/Windvale/Native-X64-Service-Code-Builder.wv"
-emit wvb

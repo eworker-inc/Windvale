@@ -257,6 +257,14 @@ paired native front-door helper reproduces and inspects those five WVBs exactly;
 the retained `.bin` leaves remain the runtime inputs and the broad scripts keep
 their independent byte comparisons.
 
+[Decision 0512](../Documents/Decisions/0512-Native-Io-Service-Build-And-Inspection-Transfer.md)
+adds component-local projects for the complete output, file-output, and
+file-input generator closures. The paired native helper reproduces all eleven
+WVBs and inspects the three portable byte-result bridges. The retained bridge
+WVBs and exact Windows/Linux service leaves remain independently compared in
+the broad scripts; this transfer changes neither their executable bytes nor
+the runtime service contract.
+
 Before W^X publication, the runtime requires exact [Decision 0071](../Documents/Decisions/0071-Native-Text-Arena-And-Core-Text-Services.md) identities for the 249-byte concatenation leaf, 225-byte signed formatter, and 191-byte unsigned formatter. [Decision 0072](../Documents/Decisions/0072-Final-Pure-Runtime-Native-Services.md) additionally requires the exact 323-byte enum-name leaf and its independently verified `WVEN` block plus the exact 1,165-byte quote leaf. All preserve `R10`, `R11`, and `R15`. Their service inputs and output-cell addresses remain compiler-generated and independently verified; context state is runtime-owned for the call.
 
 For the bounded single-group normal path, [Decision 0407](../Documents/Decisions/0407-Native-Hosted-Enum-Service-Production.md) replaces managed request projection and final leaf-plus-metadata construction with two exact native hosted processes. Multi-group coordination remains explicit recovery/transition work rather than an implicit fallback.

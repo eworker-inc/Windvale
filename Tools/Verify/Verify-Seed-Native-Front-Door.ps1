@@ -134,6 +134,17 @@ $NativeUtf8BridgeModule = Join-Path $OutputRoot 'Native-X64-Utf8-Service-Bridge.
 $NativeIntegerFormatCoreModule = Join-Path $OutputRoot 'Native-X64-Integer-Format-Services.wvb'
 $NativeIntegerFormatBridgeModule = Join-Path $OutputRoot 'Native-X64-Integer-Format-Services-Bridge.wvb'
 $NativeServiceCodeBuilderModule = Join-Path $OutputRoot 'Native-X64-Service-Code-Builder.wvb'
+$NativeWindowsOutputCoreModule = Join-Path $OutputRoot 'Native-X64-Output-Service-Windows.wvb'
+$NativeLinuxOutputCoreModule = Join-Path $OutputRoot 'Native-X64-Output-Service-Linux.wvb'
+$NativeOutputBridgeModule = Join-Path $OutputRoot 'Native-X64-Output-Services-Bridge.wvb'
+$NativeFileOutputCodeModule = Join-Path $OutputRoot 'Native-X64-File-Output-Service-Code.wvb'
+$NativeWindowsFileOutputCoreModule = Join-Path $OutputRoot 'Native-X64-File-Output-Service-Windows.wvb'
+$NativeLinuxFileOutputCoreModule = Join-Path $OutputRoot 'Native-X64-File-Output-Service-Linux.wvb'
+$NativeFileOutputBridgeModule = Join-Path $OutputRoot 'Native-X64-File-Output-Services-Bridge.wvb'
+$NativeFileInputCodeModule = Join-Path $OutputRoot 'Native-X64-File-Input-Service-Code.wvb'
+$NativeWindowsFileInputCoreModule = Join-Path $OutputRoot 'Native-X64-File-Input-Service-Windows.wvb'
+$NativeLinuxFileInputCoreModule = Join-Path $OutputRoot 'Native-X64-File-Input-Service-Linux.wvb'
+$NativeFileInputBridgeModule = Join-Path $OutputRoot 'Native-X64-File-Input-Services-Bridge.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -330,6 +341,78 @@ Invoke-ExactInspect `
     $NativeServiceCodeBuilderModule `
     @('profile=portable', 'Native\\u02C9x64\\u02C9service\\u02C9builder', 'Native\\u02C9x64\\u02C9service\\u02C9finish', 'section name=exports .* count=10')
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Output-Service-Windows.wvproj') `
+    $NativeWindowsOutputCoreModule `
+    9435 `
+    'a072c3dc92b9675d00ac833860c0c7ef7b44cf98d15a3fead38955921d321983' `
+    'build status=Published verification=compiler-aligned functions=15 code-bytes=7347 module-bytes=9435'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Output-Service-Linux.wvproj') `
+    $NativeLinuxOutputCoreModule `
+    8908 `
+    'd3d8c8b660694af7aed52b3f78a650fc6030bfe4ad6d8adc25396ee64ed608ad' `
+    'build status=Published verification=compiler-aligned functions=14 code-bytes=6941 module-bytes=8908'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-Output-Services.wvproj') `
+    $NativeOutputBridgeModule `
+    14930 `
+    '209b3fad1d03c6f9d08a20e4cfce2511c3af3ed894e1e70e3b32f05ad067ceed' `
+    'build status=Published verification=compiler-aligned functions=18 code-bytes=12050 module-bytes=14930'
+Invoke-ExactInspect $NativeOutputBridgeModule @('profile=portable', 'name="Main" parameters=0 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Output-Service-Code.wvproj') `
+    $NativeFileOutputCodeModule `
+    6576 `
+    '7ed9baf3a21912933045b99cb82d22d73620a318a716931db86670e5ea2212c6' `
+    'build status=Published verification=compiler-aligned functions=18 code-bytes=4463 module-bytes=6576'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Output-Service-Linux.wvproj') `
+    $NativeLinuxFileOutputCoreModule `
+    18658 `
+    '834d0c45b85b26ffd3ee43e49a85c8c4ffa08f36581c02785729b276eeccdb48' `
+    'build status=Published verification=compiler-aligned functions=21 code-bytes=14933 module-bytes=18658'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Output-Service-Windows.wvproj') `
+    $NativeWindowsFileOutputCoreModule `
+    21129 `
+    '9ca03bf6f5b8678389c81e281438160ff4c96c86f11a048aba90238fdc81a45d' `
+    'build status=Published verification=compiler-aligned functions=22 code-bytes=16956 module-bytes=21129'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Output-Services.wvproj') `
+    $NativeFileOutputBridgeModule `
+    33437 `
+    '441db0e0e5a90f98c7e4b12b17086f56487e7d754d7b6378a0eb2972591e64f6' `
+    'build status=Published verification=compiler-aligned functions=26 code-bytes=27468 module-bytes=33437'
+Invoke-ExactInspect $NativeFileOutputBridgeModule @('profile=portable', 'name="Main" parameters=0 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Input-Service-Code.wvproj') `
+    $NativeFileInputCodeModule `
+    7869 `
+    'e2bfd4521b8f22529f3747eef196bdf7fa7aa0e97644db23ed45939aa10a1a7a' `
+    'build status=Published verification=compiler-aligned functions=20 code-bytes=5317 module-bytes=7869'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Input-Service-Linux.wvproj') `
+    $NativeLinuxFileInputCoreModule `
+    26718 `
+    '04533e8ecade1f29e0b706c75ec949f5b4c300074cfd65feacb86f5107dcaeba' `
+    'build status=Published verification=compiler-aligned functions=26 code-bytes=21582 module-bytes=26718'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Input-Service-Windows.wvproj') `
+    $NativeWindowsFileInputCoreModule `
+    32085 `
+    '6155c4ebb8f4ea76a5d1f22c1bb788aec51e731ceb4a1c5a4ceb7551ba8f409a' `
+    'build status=Published verification=compiler-aligned functions=28 code-bytes=25972 module-bytes=32085'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-X64-File-Input-Services.wvproj') `
+    $NativeFileInputBridgeModule `
+    51341 `
+    '09f73787a909ae35ebc1aefb05bd88e4282ff8db7152d196f83b2798ea7c2234' `
+    'build status=Published verification=compiler-aligned functions=35 code-bytes=42279 module-bytes=51341'
+Invoke-ExactInspect $NativeFileInputBridgeModule @('profile=portable', 'name="Main" parameters=0 result=bytes', 'section name=exports .* count=1')
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -361,4 +444,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=20 cases=39'
+Write-Output 'native Seed front-door verification status=Complete artifacts=31 cases=53'

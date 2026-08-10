@@ -12,10 +12,19 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0512](../Decisions/0512-Native-Io-Service-Build-And-Inspection-Transfer.md)
+moves eleven output/file-output/file-input service builds and three bridge
+inspections from each broad Seed script into the paired native helper. The
+helper now owns 31 exact artifacts and 53 cases; the cumulative normal-path
+removal is fifty-nine managed invocations per host script. All eleven touched
+manifests are component-local and three obsolete root bridge manifests are
+removed. Capability-bearing execution, the broad managed harness, independent
+Linux evidence, grouped qualification, and recovery retirement remain open.
+
 [Decision 0511](../Decisions/0511-Native-Service-Source-Build-And-Inspection-Transfer.md)
 moves eight native-stencil/runtime-service builds and seven inspections from
-each broad Seed script into the paired native helper. The helper now owns twenty
-exact artifacts and 39 cases; the cumulative normal-path removal is forty-five
+each broad Seed script into the paired native helper. At that decision the helper
+owned twenty exact artifacts and 39 cases; the cumulative normal-path removal was forty-five
 managed invocations per host script. Component manifests are colocated by
 default, with one temporary root aggregate for the cross-component Stencil
 demo. Its 20-million-step managed execution, the Byte Construction value and

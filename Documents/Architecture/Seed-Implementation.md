@@ -259,6 +259,14 @@ workspace/reference layer should remove that placement pressure without
 weakening Project 1 containment. The demo's 20-million-step execution remains
 managed rather than silently widening the fixed runner policy.
 
+Decision 0512 extends component ownership to the full output, file-output, and
+file-input generator closures. Eleven exact native Project 1 builds and three
+bridge inspections move out of each broad managed script while byte-for-byte
+embedded bridge and platform-leaf comparisons remain. Every touched manifest
+lives beside `Runtime/Windvale` source and the three former repository-root
+bridge manifests are removed. This is build/inspection ownership, not a claim
+that the capability-bearing execution or broad differential harness is native.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

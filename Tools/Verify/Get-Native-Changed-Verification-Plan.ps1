@@ -455,7 +455,29 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale/Native-X64-Integer-Format-Services-Core.wvproj',
         'Runtime/Windvale/Native-X64-Integer-Format-Services.wvproj',
         'Runtime/Windvale/Native-X64-Service-Code-Builder.wv',
-        'Runtime/Windvale/Native-X64-Service-Code-Builder.wvproj'
+        'Runtime/Windvale/Native-X64-Service-Code-Builder.wvproj',
+        'Runtime/Windvale/Native-X64-Output-Service-Windows.wv',
+        'Runtime/Windvale/Native-X64-Output-Service-Windows.wvproj',
+        'Runtime/Windvale/Native-X64-Output-Service-Linux.wv',
+        'Runtime/Windvale/Native-X64-Output-Service-Linux.wvproj',
+        'Runtime/Windvale/Native-X64-Output-Services-Bridge.wv',
+        'Runtime/Windvale/Native-X64-Output-Services.wvproj',
+        'Runtime/Windvale/Native-X64-File-Output-Service-Code.wv',
+        'Runtime/Windvale/Native-X64-File-Output-Service-Code.wvproj',
+        'Runtime/Windvale/Native-X64-File-Output-Service-Windows.wv',
+        'Runtime/Windvale/Native-X64-File-Output-Service-Windows.wvproj',
+        'Runtime/Windvale/Native-X64-File-Output-Service-Linux.wv',
+        'Runtime/Windvale/Native-X64-File-Output-Service-Linux.wvproj',
+        'Runtime/Windvale/Native-X64-File-Output-Services-Bridge.wv',
+        'Runtime/Windvale/Native-X64-File-Output-Services.wvproj',
+        'Runtime/Windvale/Native-X64-File-Input-Service-Code.wv',
+        'Runtime/Windvale/Native-X64-File-Input-Service-Code.wvproj',
+        'Runtime/Windvale/Native-X64-File-Input-Service-Windows.wv',
+        'Runtime/Windvale/Native-X64-File-Input-Service-Windows.wvproj',
+        'Runtime/Windvale/Native-X64-File-Input-Service-Linux.wv',
+        'Runtime/Windvale/Native-X64-File-Input-Service-Linux.wvproj',
+        'Runtime/Windvale/Native-X64-File-Input-Services-Bridge.wv',
+        'Runtime/Windvale/Native-X64-File-Input-Services.wvproj'
     )) {
         Add-Bytecode-Suites
         Add-Gap 'seed-native-front-door'

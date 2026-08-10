@@ -164,7 +164,11 @@ internal static partial class Program
             var Nativeˉpath = Path.Combine(Directoryˉpath, "Output-Services.wvb");
             var Nativeˉbuild = Runˉnativeˉfrontˉdoor(
                 Repository,
-                Path.Combine(Repository, "Windvale-Native-X64-Output-Services.wvproj"),
+                Path.Combine(
+                    Repository,
+                    "Runtime",
+                    "Windvale",
+                    "Native-X64-Output-Services.wvproj"),
                 Nativeˉpath);
             Equal(0, Nativeˉbuild.Exitˉcode);
             Equal(string.Empty, Nativeˉbuild.Error);

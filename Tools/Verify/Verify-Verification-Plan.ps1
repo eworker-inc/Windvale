@@ -89,7 +89,13 @@ $NativeCases = @(
             'Runtime/Windvale/Native-X64-Utf8-Service-Core.wvproj',
             'Runtime/Windvale/Native-X64-Utf8-Service-Bridge.wv',
             'Runtime/Windvale/Native-X64-Integer-Format-Services.wvproj',
-            'Runtime/Windvale/Native-X64-Service-Code-Builder.wv'
+            'Runtime/Windvale/Native-X64-Service-Code-Builder.wv',
+            'Runtime/Windvale/Native-X64-Output-Service-Windows.wvproj',
+            'Runtime/Windvale/Native-X64-Output-Services-Bridge.wv',
+            'Runtime/Windvale/Native-X64-File-Output-Service-Code.wvproj',
+            'Runtime/Windvale/Native-X64-File-Output-Services.wvproj',
+            'Runtime/Windvale/Native-X64-File-Input-Service-Linux.wv',
+            'Runtime/Windvale/Native-X64-File-Input-Services.wvproj'
         )
         Suites = @('seed', 'unsafe-wvb', 'wvb-containment')
         Gaps = @('seed-native-front-door')

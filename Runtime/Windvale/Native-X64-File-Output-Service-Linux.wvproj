@@ -1,0 +1,5 @@
+windvale-project 1
+root "Native-X64-File-Output-Service-Linux.wv"
+source "Native-X64-File-Output-Service-Code.wv"
+source "Native-X64-Service-Code-Builder.wv"
+emit wvb

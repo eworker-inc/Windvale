@@ -1,0 +1,6 @@
+windvale-project 1
+root "Native-X64-Output-Services-Bridge.wv"
+source "Native-X64-Output-Service-Linux.wv"
+source "Native-X64-Output-Service-Windows.wv"
+source "Native-X64-Service-Code-Builder.wv"
+emit wvb
