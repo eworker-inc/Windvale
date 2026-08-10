@@ -25,6 +25,7 @@ $OutputEncoding = $Utf8WithoutBom
 
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
+$NativeSeedFrontDoor = Join-Path $RepositoryRoot 'Tools/Verify/Verify-Seed-Native-Front-Door.ps1'
 $TestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj'
 $OsTestProject = Join-Path $RepositoryRoot 'Tests/Windvale.Os.Tests/Windvale.Os.Tests.csproj'
 $Artifacts = Join-Path $RepositoryRoot 'artifacts'
@@ -152,8 +153,6 @@ $FoundationModule = Join-Path $Artifacts 'Read-Wvb-Header.wvb'
 $CompositionModule = Join-Path $Artifacts 'Module-Composition-Demo.wvb'
 $CompositionReorderedModule = Join-Path $Artifacts 'Module-Composition-Demo-Reordered.wvb'
 $ProjectCompositionModule = Join-Path $Artifacts 'Module-Composition-Demo-Project.wvb'
-$InvalidProjectManifest = Join-Path $Artifacts '__windvale_invalid_project__.wvproj'
-$InvalidProjectModule = Join-Path $Artifacts '__windvale_invalid_project_output__.wvb'
 $InvalidCompositionModule = Join-Path $Artifacts '__windvale_invalid_composition_output__.wvb'
 $MachineContractsModule = Join-Path $Artifacts 'Machine-Contracts.wvb'
 $MachineContractsDemoModule = Join-Path $Artifacts 'Machine-Contracts-Demo.wvb'
@@ -274,8 +273,15 @@ $InvalidWindvaleLinkedImage = Join-Path $Artifacts '__windvale_invalid_wvlink_ou
 $LinkedImage = Join-Path $Artifacts 'Hello-Linked.bin'
 $LinkMap = Join-Path $Artifacts 'Hello-Linked.wvmap'
 $InvalidLinkedImage = Join-Path $Artifacts '__windvale_invalid_link_output__.bin'
-dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') -o $SumModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Sum-Data.wv.' }
+
+$NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
+if (
+    $LASTEXITCODE -ne 0 -or
+    $NativeSeedOutput.Count -ne 1 -or
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=4 cases=5'
+) {
+    throw 'The native Seed front-door verification failed.'
+}
 
 $WindowsApplicationOutput = dotnet $ToolDll compile `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') `
@@ -324,17 +330,6 @@ if (
     throw 'The Seed CLI Linux application identity is not canonical.'
 }
 
-$VerifyOutput = dotnet $ToolDll verify $SumModule
-if ($LASTEXITCODE -ne 0 -or $VerifyOutput -notcontains 'Verified: Sumˉdata') {
-    $VerifyText = $VerifyOutput -join ' | '
-    throw "The Seed CLI failed to verify Sum-Data.wvb (exit $LASTEXITCODE; output: $VerifyText)."
-}
-
-$InspectOutput = dotnet $ToolDll inspect $SumModule
-if ($LASTEXITCODE -ne 0 -or ($InspectOutput -join "`n") -notmatch 'data\.load\.i32') {
-    throw 'The Seed CLI inspector did not expose the expected data instruction.'
-}
-
 $RunOutput = dotnet $ToolDll run $SumModule
 if (
     $LASTEXITCODE -ne 0 -or
@@ -363,9 +358,6 @@ if (
     throw 'The Seed CLI did not report deterministic per-function instruction counts for Sum-Data.wvb.'
 }
 
-dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Seed/Hello-Windvale.wv') -o $HelloModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Hello-Windvale.wv.' }
-
 $UnauthorizedOutput = dotnet $ToolDll run $HelloModule 2>&1
 if ($LASTEXITCODE -ne 3 -or ($UnauthorizedOutput -join "`n") -notmatch 'WVR3010') {
     throw 'The Seed CLI did not refuse an ungranted console capability.'
@@ -374,19 +366,6 @@ if ($LASTEXITCODE -ne 3 -or ($UnauthorizedOutput -join "`n") -notmatch 'WVR3010'
 $HelloOutput = dotnet $ToolDll run $HelloModule --allow console.write_line
 if ($LASTEXITCODE -ne 0 -or $HelloOutput -notcontains 'Hello from Windvale' -or $HelloOutput -notcontains 'Result: 0') {
     throw 'The Seed CLI did not run the authorized Hello-Windvale module correctly.'
-}
-
-dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Foundation/Read-Wvb-Header.wv') -o $FoundationModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Read-Wvb-Header.wv.' }
-
-$FoundationVerifyOutput = dotnet $ToolDll verify $FoundationModule
-if ($LASTEXITCODE -ne 0 -or $FoundationVerifyOutput -notcontains 'Verified: Readˉwvbˉheader') {
-    throw 'The Seed CLI failed to verify Read-Wvb-Header.wvb.'
-}
-
-$FoundationInspectOutput = dotnet $ToolDll inspect $FoundationModule
-if ($LASTEXITCODE -ne 0 -or ($FoundationInspectOutput -join "`n") -notmatch 'bytes\.read_u32_little') {
-    throw 'The Seed CLI inspector did not expose the expected little-endian read instruction.'
 }
 
 $FoundationRunOutput = dotnet $ToolDll run $FoundationModule
@@ -424,14 +403,6 @@ $CompositionReorderedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Compos
 if ($CompositionReorderedHash -ne $CompositionHash) {
     throw 'Reordering explicit source-module inputs changed the composed WVB bytes.'
 }
-$CompositionProject = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Demo.wvproj'
-Push-Location $Artifacts
-try {
-    dotnet $ToolDll build $CompositionProject -o $ProjectCompositionModule
-} finally {
-    Pop-Location
-}
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to build the source-module project.' }
 $ProjectCompositionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $ProjectCompositionModule).Hash.ToLowerInvariant()
 if ($ProjectCompositionHash -ne $CompositionHash) {
     throw "The project build changed the composed WVB digest: $ProjectCompositionHash"
@@ -441,19 +412,6 @@ if (![Linq.Enumerable]::SequenceEqual(
     [IO.File]::ReadAllBytes($ProjectCompositionModule))) {
     throw 'The project and explicit compile commands produced different WVB bytes.'
 }
-[IO.File]::WriteAllText(
-    $InvalidProjectManifest,
-    "windvale-project 1`nroot `"Missing.wv`"`n",
-    [Text.UTF8Encoding]::new($false, $true))
-[IO.File]::WriteAllBytes($InvalidProjectModule, [byte[]](9, 8, 7))
-$InvalidProjectOutput = dotnet $ToolDll build $InvalidProjectManifest -o $InvalidProjectModule 2>&1
-if ($LASTEXITCODE -ne 1 -or ($InvalidProjectOutput -join "`n") -notmatch 'WVP1004') {
-    throw 'The project builder did not reject a missing emit directive deterministically.'
-}
-if ([Convert]::ToHexString([IO.File]::ReadAllBytes($InvalidProjectModule)) -ne '090807') {
-    throw 'A rejected project build modified its existing output module.'
-}
-Remove-Item -LiteralPath $InvalidProjectManifest, $InvalidProjectModule -Force
 if (Test-Path -LiteralPath $InvalidCompositionModule) {
     Remove-Item -LiteralPath $InvalidCompositionModule -Force
 }

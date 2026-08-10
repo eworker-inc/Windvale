@@ -36,6 +36,18 @@ $Cases = @(
 )
 $NativeCases = @(
     @{
+        Name = 'Seed native front-door qualification smoke'
+        Paths = @(
+            'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
+            'Tools/Verify/Verify-Seed-Native-Front-Door.sh',
+            'Examples/Seed/Hello-Windvale.wvproj',
+            'Examples/Foundation/Read-Wvb-Header.wvproj'
+        )
+        Suites = @('seed')
+        Gaps = @('seed-native-front-door')
+        VerifyPlan = $false
+    },
+    @{
         Name = 'native baseline JIT owner'
         Paths = @(
             'Tools/Native/Test-Baseline-Jit-Publisher.cmd',

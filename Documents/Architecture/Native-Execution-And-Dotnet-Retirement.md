@@ -428,6 +428,16 @@ points. Independent Linux execution, paired changed-file dispatch,
 backend-package reconstruction, cross-browser evidence, grouped qualification,
 promotion, and recovery retirement remain.
 
+Decision 0505 then transfers one coherent build/verify/inspect boundary inside
+those broad Seed commands. A paired five-case helper natively constructs four
+exact example/project WVBs, verifies and inspects the two structural fixtures,
+and requires exact malformed-project rejection with destination preservation.
+It removes nine managed invocations from each host script, but does not make
+either script native: managed execution, target packaging, the test harness,
+and later qualification phases remain. Ordinary component manifests are
+colocated with their source and keep Project 1 paths manifest-relative; no
+root-level manifest layout is imposed.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

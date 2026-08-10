@@ -156,6 +156,19 @@ direct managed entry point without changing W1's `native-candidate` standing.
 Independent Linux execution, package reconstruction, cross-browser evidence,
 grouped qualification, promotion, and recovery retirement remain.
 
+Current T2 front-door transfer:
+[Decision 0505](../Decisions/0505-Native-Seed-Front-Door-Qualification-Smoke.md)
+moves four representative Project 1 builds, two WVB verifications, two WVB
+inspections, and one malformed-project preservation check inside each broad
+Seed qualification script to one paired five-case native helper. That removes
+nine managed invocations from each host script while retaining exact products
+and diagnostics. The current Windows helper passes in 2.8 seconds. T2 remains
+`managed-normal`, and the direct inventory remains twelve files: the broad
+Seed scripts still use .NET for execution, packaging, harness, and many later
+qualification phases, while the GitHub workflow remains managed. Independent
+Linux execution, automatic changed-file ownership, the remaining broad-suite
+transfers, grouped qualification, and recovery retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

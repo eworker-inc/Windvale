@@ -329,6 +329,11 @@ foreach ($Path in $Paths) {
         Add-Gap 'webassembly-native-verification'
     } elseif ($Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal)) {
         if ([IO.Path]::GetFileName($Path) -in @(
+            'Verify-Seed-Native-Front-Door.ps1',
+            'Verify-Seed-Native-Front-Door.sh'
+        )) {
+            Add-Gap 'seed-native-front-door'
+        } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Classify-Verification-Changes.ps1',
             'Get-Verification-Plan.ps1',
             'Get-Native-Changed-Verification-Plan.ps1',
@@ -908,6 +913,20 @@ foreach ($Path in $Paths) {
         'Windvale-Native-Hosted-Verifier-Publisher-',
         [StringComparison]::Ordinal)) {
         Add-Hosted-Publisher-Suites
+    } elseif ($Path -in @(
+        'Examples/Seed/Sum-Data.wv',
+        'Examples/Seed/Sum-Data.wvproj',
+        'Examples/Seed/Hello-Windvale.wv',
+        'Examples/Seed/Hello-Windvale.wvproj',
+        'Examples/Foundation/Read-Wvb-Header.wv',
+        'Examples/Foundation/Read-Wvb-Header.wvproj',
+        'Examples/Foundation/Module-Composition-Demo.wv',
+        'Examples/Foundation/Module-Composition-Demo.wvproj',
+        'Examples/Foundation/Module-Composition-Leaf.wv',
+        'Examples/Foundation/Module-Composition-Middle.wv'
+    )) {
+        Add-Suite 'seed'
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'seed'
     } elseif ($Path.StartsWith('Examples/', [StringComparison]::Ordinal)) {

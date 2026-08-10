@@ -12,6 +12,14 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0505](../Decisions/0505-Native-Seed-Front-Door-Qualification-Smoke.md)
+transfers the source/project build, WVB verify/inspect, and malformed-project
+smoke at the start of both broad Seed qualification scripts to paired native
+helpers. The current Windows five-case owner passes and removes nine managed
+invocations from each host script. The scripts remain managed-normal because
+execution, packaging, the test harness, and later qualification phases have
+not moved; Linux execution and the remaining transfers are the next boundary.
+
 [Decision 0504](../Decisions/0504-Native-WebAssembly-Generation-And-Verification.md)
 removes the standalone WebAssembly verifier from the direct managed-entry
 inventory. The complete current-Windows command now builds its source/WVB

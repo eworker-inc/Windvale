@@ -13,6 +13,7 @@ FAIL_FAST=${FAIL_FAST:-0}
 INCLUDE_EXTENDED=${INCLUDE_EXTENDED:-0}
 TIMING_REPORT_PATH=${TIMING_REPORT_PATH:-}
 TOOL_DLL="$REPOSITORY_ROOT/Tools/Windvale.Tool/bin/$CONFIGURATION/net10.0/windvale.dll"
+NATIVE_SEED_FRONT_DOOR="$REPOSITORY_ROOT/Tools/Verify/Verify-Seed-Native-Front-Door.sh"
 TEST_PROJECT="$REPOSITORY_ROOT/Tests/Windvale.Seed.Tests/Windvale.Seed.Tests.csproj"
 OS_TEST_PROJECT="$REPOSITORY_ROOT/Tests/Windvale.Os.Tests/Windvale.Os.Tests.csproj"
 ARTIFACTS="$REPOSITORY_ROOT/artifacts"
@@ -147,8 +148,6 @@ FOUNDATION_MODULE="$ARTIFACTS/Read-Wvb-Header.wvb"
 COMPOSITION_MODULE="$ARTIFACTS/Module-Composition-Demo.wvb"
 COMPOSITION_REORDERED_MODULE="$ARTIFACTS/Module-Composition-Demo-Reordered.wvb"
 PROJECT_COMPOSITION_MODULE="$ARTIFACTS/Module-Composition-Demo-Project.wvb"
-INVALID_PROJECT_MANIFEST="$ARTIFACTS/__windvale_invalid_project__.wvproj"
-INVALID_PROJECT_MODULE="$ARTIFACTS/__windvale_invalid_project_output__.wvb"
 INVALID_COMPOSITION_MODULE="$ARTIFACTS/__windvale_invalid_composition_output__.wvb"
 MACHINE_CONTRACTS_MODULE="$ARTIFACTS/Machine-Contracts.wvb"
 MACHINE_CONTRACTS_DEMO_MODULE="$ARTIFACTS/Machine-Contracts-Demo.wvb"
@@ -269,8 +268,12 @@ INVALID_WINDVALE_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_wvlink_output__.bin
 LINKED_IMAGE="$ARTIFACTS/Hello-Linked.bin"
 LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" -o "$SUM_MODULE"
+
+NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=4 cases=5' ]; then
+    echo 'The native Seed front-door verification failed.' >&2
+    exit 1
+fi
 
 WINDOWS_APPLICATION_OUTPUT=$(dotnet "$TOOL_DLL" \
     compile "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" \
@@ -315,12 +318,6 @@ if [ "$LINUX_APPLICATION_EXIT" != '29' ]; then
     exit 1
 fi
 
-VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$SUM_MODULE")
-printf '%s\n' "$VERIFY_OUTPUT" | grep -F 'Verified: Sumˉdata' >/dev/null
-
-INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$SUM_MODULE")
-printf '%s\n' "$INSPECT_OUTPUT" | grep -F 'data.load.i32' >/dev/null
-
 RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$SUM_MODULE")
 printf '%s\n' "$RUN_OUTPUT" | grep -F 'Result: 29' >/dev/null
 if printf '%s\n' "$RUN_OUTPUT" | grep -E '^Function (instructions|record-fields|dynamic-bytes)=' >/dev/null; then
@@ -337,9 +334,6 @@ printf '%s\n' "$FUNCTION_STEP_REPORT_OUTPUT" | grep -F 'Result: 29' >/dev/null
 printf '%s\n' "$FUNCTION_STEP_REPORT_OUTPUT" | grep -F 'Function instructions=163 index=1 name=Main' >/dev/null
 printf '%s\n' "$FUNCTION_STEP_REPORT_OUTPUT" | grep -F 'Function instructions=40 index=0 name=Add' >/dev/null
 
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Seed/Hello-Windvale.wv" -o "$HELLO_MODULE"
-
 set +e
 UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$HELLO_MODULE" 2>&1)
 UNAUTHORIZED_EXIT=$?
@@ -354,15 +348,6 @@ HELLO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$HELLO_MODULE" --allow console.write_line)
 printf '%s\n' "$HELLO_OUTPUT" | grep -F 'Hello from Windvale' >/dev/null
 printf '%s\n' "$HELLO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Foundation/Read-Wvb-Header.wv" -o "$FOUNDATION_MODULE"
-
-FOUNDATION_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$FOUNDATION_MODULE")
-printf '%s\n' "$FOUNDATION_VERIFY_OUTPUT" | grep -F 'Verified: Readˉwvbˉheader' >/dev/null
-
-FOUNDATION_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$FOUNDATION_MODULE")
-printf '%s\n' "$FOUNDATION_INSPECT_OUTPUT" | grep -F 'bytes.read_u32_little' >/dev/null
 
 FOUNDATION_RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$FOUNDATION_MODULE")
 printf '%s\n' "$FOUNDATION_RUN_OUTPUT" | grep -F 'Result: 1' >/dev/null
@@ -398,29 +383,7 @@ dotnet "$TOOL_DLL" \
     --module "$COMPOSITION_MIDDLE" \
     -o "$COMPOSITION_REORDERED_MODULE"
 cmp "$COMPOSITION_MODULE" "$COMPOSITION_REORDERED_MODULE"
-COMPOSITION_PROJECT="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Demo.wvproj"
-(cd "$ARTIFACTS" && dotnet "$TOOL_DLL" \
-    build "$COMPOSITION_PROJECT" -o "$PROJECT_COMPOSITION_MODULE")
 cmp "$COMPOSITION_MODULE" "$PROJECT_COMPOSITION_MODULE"
-printf '%s\n' \
-    'windvale-project 1' \
-    'root "Missing.wv"' > "$INVALID_PROJECT_MANIFEST"
-printf '\011\010\007' > "$INVALID_PROJECT_MODULE"
-set +e
-INVALID_PROJECT_OUTPUT=$(dotnet "$TOOL_DLL" \
-    build "$INVALID_PROJECT_MANIFEST" -o "$INVALID_PROJECT_MODULE" 2>&1)
-INVALID_PROJECT_EXIT=$?
-set -e
-if [ "$INVALID_PROJECT_EXIT" -ne 1 ]; then
-    echo "Expected invalid project exit 1, found $INVALID_PROJECT_EXIT." >&2
-    exit 1
-fi
-printf '%s\n' "$INVALID_PROJECT_OUTPUT" | grep -F 'WVP1004' >/dev/null
-if [ "$(od -An -tx1 -v "$INVALID_PROJECT_MODULE" | tr -d ' \n')" != '090807' ]; then
-    echo 'A rejected project build modified its existing output module.' >&2
-    exit 1
-fi
-rm -f "$INVALID_PROJECT_MANIFEST" "$INVALID_PROJECT_MODULE"
 rm -f "$INVALID_COMPOSITION_MODULE"
 
 MACHINE_CONTRACTS_SOURCE="$REPOSITORY_ROOT/Foundation/Machine-Contracts.wv"

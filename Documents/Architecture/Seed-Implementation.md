@@ -198,6 +198,15 @@ compiler probes pass without a normal .NET invocation. Independent Linux
 execution, backend-package reconstruction, cross-browser evidence, grouped
 qualification, promotion, and the final recovery release remain open.
 
+Decision 0505 reuses the same qualified Project 1 builder plus native WVB
+verifier and inspector for the first qualification-only manual checks in both
+broad Seed scripts. Four exact WVB products and one malformed-project
+preservation case replace nine managed invocations per host script. The new
+Hello and bytecode-header manifests live beside their source and resolve paths
+relative to that directory; this is a component-local organization choice, not
+a repository-root project convention. Managed execution, packaging, harness,
+and later qualification phases remain explicit.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:
