@@ -455,6 +455,14 @@ both current applications through the shared WVHV tools. The ordinary launcher
 uses the new candidate. Source-to-WVB bindings, Linux execution, and grouped
 promotion remain open and therefore keep E1 at `native-candidate`.
 
+Decision 0508 consumes that current runner for three plain-execution checks
+already embedded in both broad Seed commands. The paired native front-door
+helper now requires exact results from the Sum, Foundation-header, and composed
+project WVBs and proves each input remains unchanged. This replaces three more
+managed calls per host script, fourteen cumulatively with Decisions 0505 and
+0506, while leaving profiling, capability-bearing execution, the broad harness,
+and later qualification phases explicitly managed or unpromoted.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

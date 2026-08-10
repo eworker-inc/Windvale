@@ -174,8 +174,9 @@ Seed qualification script to one paired five-case native helper. That removes
 nine managed invocations from each host script while retaining exact products
 and diagnostics. The current Windows helper passes in 2.8 seconds. T2 remains
 `managed-normal`, and the direct inventory remains twelve files: the broad
-Seed scripts still use .NET for execution, packaging, harness, and many later
-qualification phases, while the GitHub workflow remains managed. Independent
+Seed scripts still use .NET for profiling and capability-bearing execution,
+the harness, and many later qualification phases, while the GitHub workflow
+remains managed. Independent
 Linux execution, the reported changed-file evidence gap, the remaining
 broad-suite transfers, grouped qualification, and recovery retirement remain
 open.
@@ -194,6 +195,20 @@ execution, the harness, and later qualification phases. Independent Linux
 execution, the explicit `seed-native-console-aot` gap, remaining broad-suite
 transfers, GitHub cutover, grouped qualification, and recovery retirement
 remain open.
+
+Current T2 WVB-execution transfer:
+[Decision 0508](../Decisions/0508-Native-Seed-Wvb-Execution-Qualification-Smoke.md)
+extends the paired native front-door helper from five to eight cases and runs
+the exact Sum, Foundation-header, and composed-project WVBs through the current
+Decision 0507 runner. The current Windows helper passes in about four seconds,
+requires exact results `29`, `1`, and `42`, and proves that execution preserves
+all three input modules. This removes three more managed invocations from each
+host script, fourteen cumulatively with Decisions 0505 and 0506, without
+changing the three normal plus nine recovery direct-entry inventory. T2 remains
+`managed-normal` because profiling, capability-bearing execution, the broad
+harness, and later qualification phases still use .NET. Independent Linux
+execution, remaining broad-suite transfers, GitHub cutover, grouped
+qualification, and recovery retirement remain open.
 
 ## Normal-path audit result
 

@@ -12,6 +12,7 @@ OUTPUT_ROOT=$(CDPATH= cd -- "$1" && pwd)
 NATIVE_BUILD="$REPOSITORY_ROOT/Tools/Native/Build-Wvb.sh"
 NATIVE_VERIFY="$REPOSITORY_ROOT/Tools/Native/Verify-Wvb.sh"
 NATIVE_INSPECT="$REPOSITORY_ROOT/Tools/Native/Inspect-Wvb.sh"
+NATIVE_RUN="$REPOSITORY_ROOT/Tools/Native/Run-Wvb.sh"
 
 exact_build() {
     PROJECT_PATH=$1
@@ -58,6 +59,31 @@ exact_inspect() {
     printf '%s\n' "$INSPECT_OUTPUT" | grep -F "$2" >/dev/null
 }
 
+exact_run() {
+    MODULE_PATH=$1
+    EXPECTED_RESULT=$2
+    EXPECTED_BYTES=$3
+    EXPECTED_SHA256=$4
+    RUN_ERROR=$(mktemp "${TMPDIR:-/tmp}/windvale-seed-run.XXXXXX")
+    if ! RUN_OUTPUT=$("$NATIVE_RUN" "$MODULE_PATH" 2>"$RUN_ERROR"); then
+        rm -f -- "$RUN_ERROR"
+        echo "The native Seed runner rejected: $MODULE_PATH" >&2
+        exit 1
+    fi
+    if [ -s "$RUN_ERROR" ] || [ "$RUN_OUTPUT" != "Result: $EXPECTED_RESULT" ]; then
+        rm -f -- "$RUN_ERROR"
+        echo "The native Seed runner report is invalid: $MODULE_PATH" >&2
+        exit 1
+    fi
+    rm -f -- "$RUN_ERROR"
+    ACTUAL_BYTES=$(wc -c < "$MODULE_PATH" | tr -d ' ')
+    ACTUAL_SHA256=$(sha256sum "$MODULE_PATH" | awk '{print $1}')
+    if [ "$ACTUAL_BYTES" != "$EXPECTED_BYTES" ] || [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+        echo "The native Seed runner modified its input module: $MODULE_PATH" >&2
+        exit 1
+    fi
+}
+
 SUM_MODULE="$OUTPUT_ROOT/Sum-Data.wvb"
 HELLO_MODULE="$OUTPUT_ROOT/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$OUTPUT_ROOT/Read-Wvb-Header.wvb"
@@ -72,6 +98,11 @@ exact_build \
     'build status=Published verification=compiler-aligned functions=2 code-bytes=270 module-bytes=494'
 exact_verify "$SUM_MODULE"
 exact_inspect "$SUM_MODULE" 'opcode=data.load.i32 operand=0'
+exact_run \
+    "$SUM_MODULE" \
+    29 \
+    494 \
+    76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Hello-Windvale.wvproj" \
@@ -90,6 +121,11 @@ exact_build \
     'build status=Published verification=compiler-aligned functions=2 code-bytes=1379 module-bytes=1701'
 exact_verify "$FOUNDATION_MODULE"
 exact_inspect "$FOUNDATION_MODULE" 'opcode=bytes.read_u32_little'
+exact_run \
+    "$FOUNDATION_MODULE" \
+    1 \
+    1701 \
+    c13efd14485afa1bf7fa418b54cea2fdd234fe34fdc824ae52346ce062be7793
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Demo.wvproj" \
@@ -98,6 +134,11 @@ exact_build \
     030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607 \
     00000294 \
     'build status=Published verification=compiler-aligned functions=4 code-bytes=280 module-bytes=660'
+exact_run \
+    "$COMPOSITION_MODULE" \
+    42 \
+    660 \
+    030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607
 
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
@@ -130,4 +171,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=4 cases=5'
+echo 'native Seed front-door verification status=Complete artifacts=4 cases=8'

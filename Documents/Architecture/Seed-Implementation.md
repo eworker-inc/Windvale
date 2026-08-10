@@ -224,6 +224,13 @@ The native Project front door still rejects this project's source bindings, so
 the colocated-project organization direction does not imply source
 reconstruction that has not yet been achieved.
 
+Decision 0508 then uses that current runner in the paired Seed front-door
+helper for three exact capability-free execution checks. Sum, the Foundation
+header reader, and the composed-project module must return `29`, `1`, and `42`
+and retain their exact bytes. The broad scripts no longer repeat those plain
+runs through Stage 0, while managed reporting, capability authorization, and
+the remaining broad harness stay explicit.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

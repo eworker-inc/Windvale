@@ -111,6 +111,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Native Seed front-door qualification smoke](Decisions/0505-Native-Seed-Front-Door-Qualification-Smoke.md) — five fixed native build/verify/inspect cases replacing nine managed calls in each broad Seed qualification script
 - [Native Seed console AOT qualification smoke](Decisions/0506-Native-Seed-Console-Aot-Qualification-Smoke.md) — exact native lower/verify/link/package and current-host execution replacing two more managed calls in each broad Seed script
 - [Native WVB-runner reconstruction](Decisions/0507-Native-Wvb-Runner-Reconstruction.md) — retained-WVB native lower/link and exact paired profile-5 construction with current-host execution evidence
+- [Native Seed WVB execution qualification smoke](Decisions/0508-Native-Seed-Wvb-Execution-Qualification-Smoke.md) — three exact representative WVB executions transferred from each broad Seed script to the current native runner
 - [WebAssembly playground exploration](Project/WebAssembly-Playground-Exploration.md) — implemented Stage 0 host plus a Windvale-authored bounded metered-control-flow/direct-call backend, possible permanent browser target, constraints, and remaining decisions
 - [Changelog](../CHANGELOG.md) — release-facing summary of accepted work
 

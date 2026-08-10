@@ -14,6 +14,7 @@ if (!(Test-Path -LiteralPath $OutputRoot -PathType Container)) {
 $NativeBuild = Join-Path $RepositoryRoot 'Tools/Native/Build-Wvb.cmd'
 $NativeVerify = Join-Path $RepositoryRoot 'Tools/Native/Verify-Wvb.cmd'
 $NativeInspect = Join-Path $RepositoryRoot 'Tools/Native/Inspect-Wvb.cmd'
+$NativeRun = Join-Path $RepositoryRoot 'Tools/Native/Run-Wvb.cmd'
 
 function Invoke-ExactBuild(
     [string]$ProjectPath,
@@ -63,6 +64,27 @@ function Invoke-ExactInspect(
     }
 }
 
+function Invoke-ExactRun(
+    [string]$ModulePath,
+    [int]$ExpectedResult,
+    [long]$ExpectedBytes,
+    [string]$ExpectedSha256
+) {
+    $RunOutput = @(& $NativeRun $ModulePath 2>&1)
+    if (
+        $LASTEXITCODE -ne 0 -or
+        $RunOutput.Count -ne 1 -or
+        $RunOutput[0].ToString() -ne "Result: $ExpectedResult"
+    ) {
+        throw "The native Seed runner rejected or misreported: $ModulePath"
+    }
+    $Information = Get-Item -LiteralPath $ModulePath
+    $Digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $ModulePath).Hash.ToLowerInvariant()
+    if ($Information.Length -ne $ExpectedBytes -or $Digest -ne $ExpectedSha256) {
+        throw "The native Seed runner modified its input module: $ModulePath"
+    }
+}
+
 $SumModule = Join-Path $OutputRoot 'Sum-Data.wvb'
 $HelloModule = Join-Path $OutputRoot 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $OutputRoot 'Read-Wvb-Header.wvb'
@@ -76,6 +98,11 @@ Invoke-ExactBuild `
     'build status=Published verification=compiler-aligned functions=2 code-bytes=270 module-bytes=494'
 Invoke-ExactVerify $SumModule
 Invoke-ExactInspect $SumModule 'opcode=data\.load\.i32 operand=0'
+Invoke-ExactRun `
+    $SumModule `
+    29 `
+    494 `
+    '76b4fa3c4c0cc37e6f1350e8191ccd78c6272224f146ef9816b5f987114c15df'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Hello-Windvale.wvproj') `
@@ -92,6 +119,11 @@ Invoke-ExactBuild `
     'build status=Published verification=compiler-aligned functions=2 code-bytes=1379 module-bytes=1701'
 Invoke-ExactVerify $FoundationModule
 Invoke-ExactInspect $FoundationModule 'opcode=bytes\.read_u32_little(?:\r?$|\s)'
+Invoke-ExactRun `
+    $FoundationModule `
+    1 `
+    1701 `
+    'c13efd14485afa1bf7fa418b54cea2fdd234fe34fdc824ae52346ce062be7793'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Demo.wvproj') `
@@ -99,6 +131,11 @@ Invoke-ExactBuild `
     660 `
     '030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607' `
     'build status=Published verification=compiler-aligned functions=4 code-bytes=280 module-bytes=660'
+Invoke-ExactRun `
+    $CompositionModule `
+    42 `
+    660 `
+    '030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607'
 
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
@@ -131,4 +168,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=4 cases=5'
+Write-Output 'native Seed front-door verification status=Complete artifacts=4 cases=8'

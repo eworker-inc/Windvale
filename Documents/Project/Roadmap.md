@@ -12,6 +12,14 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0508](../Decisions/0508-Native-Seed-Wvb-Execution-Qualification-Smoke.md)
+routes the three representative plain WVB executions in both broad Seed
+scripts through the current native runner. The paired helper now checks eight
+cases, including exact results `29`, `1`, and `42` plus input preservation, and
+removes three more managed invocations per host script. Profiling and
+capability-bearing execution, the broad harness, independent Linux execution,
+and later qualification phases remain the next T2 boundaries.
+
 [Decision 0507](../Decisions/0507-Native-Wvb-Runner-Reconstruction.md)
 reconstructs the exact retained-WVB runner WVO and paired profile-5
 applications through native lower/link and WVHV construction. The ordinary
@@ -24,17 +32,18 @@ transfers the next coherent boundary in both broad Seed qualification scripts.
 The exact `Sum-Data.wvb` now passes through native lower, WVO admission, flat
 linking, paired version-1 packaging, and current-host execution without using
 the managed target compiler. Together with Decision 0505 this removes eleven
-managed invocations per host script. General WVB execution, the managed test
-harness, later qualification phases, independent Linux execution, and the
-GitHub cutover remain the next boundaries.
+managed invocations per host script. Profiling and capability-bearing WVB
+execution, the managed test harness, later qualification phases, independent
+Linux execution, and the GitHub cutover remain the next boundaries.
 
 [Decision 0505](../Decisions/0505-Native-Seed-Front-Door-Qualification-Smoke.md)
 transfers the source/project build, WVB verify/inspect, and malformed-project
 smoke at the start of both broad Seed qualification scripts to paired native
 helpers. The current Windows five-case owner passes and removes nine managed
 invocations from each host script. The scripts remain managed-normal because
-execution, packaging, the test harness, and later qualification phases have
-not moved; Linux execution and the remaining transfers are the next boundary.
+profiling and capability-bearing execution, the test harness, and later
+qualification phases have not moved; Linux execution and the remaining
+transfers are the next boundary.
 
 [Decision 0504](../Decisions/0504-Native-WebAssembly-Generation-And-Verification.md)
 removes the standalone WebAssembly verifier from the direct managed-entry

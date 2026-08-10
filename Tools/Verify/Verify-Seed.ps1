@@ -277,7 +277,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=4 cases=5'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=4 cases=8'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -290,15 +290,6 @@ if (
         'native Seed console AOT verification status=Complete artifacts=2 cases=1'
 ) {
     throw 'The native Seed console AOT verification failed.'
-}
-
-$RunOutput = dotnet $ToolDll run $SumModule
-if (
-    $LASTEXITCODE -ne 0 -or
-    $RunOutput -notcontains 'Result: 29' -or
-    ($RunOutput -join "`n") -match '(?m)^Function (instructions|record-fields|dynamic-bytes)='
-) {
-    throw 'The Seed CLI did not produce Result: 29 for Sum-Data.wvb.'
 }
 
 $StepReportOutput = dotnet $ToolDll run $SumModule --report-steps
@@ -330,11 +321,6 @@ if ($LASTEXITCODE -ne 0 -or $HelloOutput -notcontains 'Hello from Windvale' -or 
     throw 'The Seed CLI did not run the authorized Hello-Windvale module correctly.'
 }
 
-$FoundationRunOutput = dotnet $ToolDll run $FoundationModule
-if ($LASTEXITCODE -ne 0 -or $FoundationRunOutput -notcontains 'Result: 1') {
-    throw 'The Seed CLI did not produce Result: 1 for Read-Wvb-Header.wvb.'
-}
-
 $CompositionRoot = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Demo.wv'
 $CompositionMiddle = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Middle.wv'
 $CompositionLeaf = Join-Path $RepositoryRoot 'Examples/Foundation/Module-Composition-Leaf.wv'
@@ -344,10 +330,6 @@ if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-modu
 $CompositionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $CompositionModule).Hash.ToLowerInvariant()
 if ($CompositionHash -ne '030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bdafe9f9a5d24607') {
     throw "The composed source module has an unexpected digest: $CompositionHash"
-}
-$CompositionRunOutput = dotnet $ToolDll run $CompositionModule
-if ($LASTEXITCODE -ne 0 -or $CompositionRunOutput -notcontains 'Result: 42') {
-    throw 'The composed source module did not return Result: 42.'
 }
 $RecordFieldReportOutput = dotnet $ToolDll run $CompositionModule --report-function-record-fields 2>&1
 if (

@@ -269,7 +269,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=4 cases=5' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=4 cases=8' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -278,13 +278,6 @@ NATIVE_SEED_CONSOLE_AOT_OUTPUT=$("$NATIVE_SEED_CONSOLE_AOT" "$ARTIFACTS")
 if [ "$NATIVE_SEED_CONSOLE_AOT_OUTPUT" != \
     'native Seed console AOT verification status=Complete artifacts=2 cases=1' ]; then
     echo 'The native Seed console AOT verification failed.' >&2
-    exit 1
-fi
-
-RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$SUM_MODULE")
-printf '%s\n' "$RUN_OUTPUT" | grep -F 'Result: 29' >/dev/null
-if printf '%s\n' "$RUN_OUTPUT" | grep -E '^Function (instructions|record-fields|dynamic-bytes)=' >/dev/null; then
-    echo 'The default run unexpectedly reported per-function profiling data.' >&2
     exit 1
 fi
 
@@ -312,9 +305,6 @@ HELLO_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$HELLO_OUTPUT" | grep -F 'Hello from Windvale' >/dev/null
 printf '%s\n' "$HELLO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-FOUNDATION_RUN_OUTPUT=$(dotnet "$TOOL_DLL" run "$FOUNDATION_MODULE")
-printf '%s\n' "$FOUNDATION_RUN_OUTPUT" | grep -F 'Result: 1' >/dev/null
-
 COMPOSITION_ROOT="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Demo.wv"
 COMPOSITION_MIDDLE="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Middle.wv"
 COMPOSITION_LEAF="$REPOSITORY_ROOT/Examples/Foundation/Module-Composition-Leaf.wv"
@@ -328,9 +318,6 @@ if [ "$COMPOSITION_HASH" != '030ce3f627e7bdeb8ff8a3432f01e94920c93551fd58d982bda
     echo "The composed source module has an unexpected digest: $COMPOSITION_HASH" >&2
     exit 1
 fi
-COMPOSITION_RUN_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$COMPOSITION_MODULE")
-printf '%s\n' "$COMPOSITION_RUN_OUTPUT" | grep -F 'Result: 42' >/dev/null
 RECORD_FIELD_REPORT_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$COMPOSITION_MODULE" --report-function-record-fields 2>&1)
 printf '%s\n' "$RECORD_FIELD_REPORT_OUTPUT" | grep -F 'Result: 42' >/dev/null
