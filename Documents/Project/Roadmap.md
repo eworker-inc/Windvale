@@ -12,6 +12,15 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0498](../Decisions/0498-Native-Console-Packager-Application-Reconstruction.md)
+closes the managed application-writer seam for the exact current ordinary and
+segmented console-packager candidates. The current Windows native route builds
+and lowers each project once, links each object once, and constructs both target
+applications through profile 5 of the retained hosted-container toolset without
+using either target packager. The C1/P1 route still requires the retained seed,
+independent Linux reconstruction and execution, broader packaging closure,
+promotion, and the grouped retirement gate.
+
 [Decision 0497](../Decisions/0497-Native-Wvb-To-Wvo-Reconstruction.md)
 closes the managed application-writer seam for the exact current accepted-subset
 lowerer candidate. The current Windows native path reconstructs its 412,871-byte

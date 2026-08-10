@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts, and Decision 0307 composes their digest-bound launchers with the native atomic console-application publisher. Decision 0343 makes the WVB natively reconstructible, and Decision 0344 extends that exact source check through native WVO lowering. This is not yet an ordinary front door: Stage 0 remains the host-container construction and recovery target until native PE/ELF construction, the grouped Windows/Linux gate, and artifact promotion succeed.
+`WVHP 1` packages the canonical Windvale-written `Consoleˉapplicationˉpackager` as paired Windows x64 and Linux x64 command-line applications. Decision 0303 pins exact candidate artifacts, and Decision 0307 composes their digest-bound launchers with the native atomic console-application publisher. Decision 0343 makes the WVB natively reconstructible, Decision 0344 extends that exact source check through native WVO lowering, and Decision 0498 reconstructs the current paired applications through the retained native hosted-container toolset. This is not yet an ordinary front door: independent Linux reconstruction and execution, the grouped Windows/Linux gate, and artifact promotion remain.
 
 The application composes the existing [console-application plan](Windvale-Console-Application-Plan.md), [construction](Windvale-Console-Application-Construction.md), and [verification](Windvale-Console-Application-Verification.md) contracts. It adds no second PE or ELF layout implementation.
 
@@ -53,7 +53,7 @@ The metadata magic is `WVHP`, format version is 1, profile number is 5 in the sh
 - `windows-x64-console-packager-v1`, producing `.exe`;
 - `linux-x64-console-packager-v1`, producing `.elf` and exact executable mode on Linux.
 
-Both targets reuse the compiler-authority process entry, argument capture, bounded file adapters, runtime state, service leaves, and platform containers. No new WVA or platform assembly is added. The Stage 0 `compile` and `aot` commands independently verify the WVB, native fragment, service bundle, metadata, runtime data, startup, and complete PE/ELF container before atomic candidate publication.
+Both targets reuse the compiler-authority process entry, argument capture, bounded file adapters, runtime state, service leaves, and platform containers. No new WVA or platform assembly is added. The native source builder, accepted-subset lowerer, flat linker, and hosted-container toolset construct the current paired applications. Stage 0 remains the independent complete-backend, recovery, and differential oracle.
 
 ## Candidate identities and evidence
 
@@ -62,8 +62,8 @@ The current candidate identities are:
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Console packager WVB | 60,797 | `f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c` |
-| Windows console packager | 708,608 | `c14ee974fa74227a49b407c9517cdce1fc7608a1486a8b5e2cf2fcb996ab55a5` |
-| Linux console packager | 708,608 | `e251b2edae1e1a500522ecb0b31c1b7a40a36086fd36959198e3a49cb04d8dad` |
+| Windows console packager | 708,608 | `ea8e666806618cd9c230bdc88882e9b30a98182f8486456a46c75b746a0cdab9` |
+| Linux console packager | 708,608 | `d399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af` |
 
 `Tools/Native/Test-Console-Packager-Source-Reconstruction.cmd` and `.sh`
 build the ordinary and segmented projects through the digest-bound native
@@ -77,8 +77,14 @@ and a 789,653-byte WVO at SHA-256
 `4cd97c60169649c466dcf185491eac326bbb7676fb97d95c840c199defb8bbda`.
 Both builds include compiler-aligned WVB verification and native atomic
 publication; both lowerings include WVO verification and native atomic
-publication. This proves source-to-WVO reconstruction, not construction of the
-checked-in PE/ELF tool containers.
+publication. Decision 0498 continues from each exact WVO through the native
+flat linker, then packages the resulting one-fragment image for both targets
+through profile 5 of the retained hosted-container toolset. This current-
+Windows-host path reconstructs the two exact applications above and the paired
+segmented-packager applications without invoking either target packager or a
+managed application writer. It consumes retained native compiler, lowerer,
+linker, and hosted-container candidates, so it is not a clean or non-circular
+bootstrap claim.
 
 The focused test reconstructs both containers, checks exact capabilities and services, exercises the public current-host AOT target, and runs the current-host raw application. One six-byte return-42 image must package deterministically into both target formats. The independent platform verifiers recover the exact image and zero entry, the current-host result returns 42, malformed target or entry input preserves an existing output, and process inspection finds no CLR/.NET runtime.
 
@@ -125,4 +131,4 @@ Promotion requires one exact source commit to pass on Windows and Linux with:
 - no CLR/.NET module or mapping in the packager process; and
 - no regression in version-1 PE/ELF, native ABI, capability, construction, or verification contracts.
 
-Decision 0303 pins both platform applications and explicitly records Stage 0 construction. Decision 0307 adds native safe publication to their digest-bound launchers, and Decision 0343 closes exact WVB source reconstruction. Only an exact descendant that supplies native host-container construction and passes both hosts moves ordinary version-1 materialization to the native packager. Stage 0 remains a named recovery/differential path until Decision 0057's complete archive gate permits deletion.
+Decision 0303 pins both platform applications and records their original Stage 0 construction. Decision 0307 adds native safe publication to their digest-bound launchers, and Decisions 0343 and 0344 close exact WVB and WVO reconstruction. Decision 0498 removes the managed application writer as the only constructor of the exact current paired packager applications on the current Windows host. Only an exact descendant that independently reconstructs and executes on both hosts, passes the grouped gate, and is promoted moves ordinary version-1 materialization to the native packager. Stage 0 remains a named recovery/differential path until Decision 0057's complete archive gate permits deletion.

@@ -1,9 +1,11 @@
 {
-  "format": "windvale-native-console-segmented-packager-candidate-1",
+  "format": "windvale-native-console-segmented-packager-candidate-2",
   "status": "candidate",
   "sourceDecision": "0342",
+  "provenanceDecision": "0342",
   "qualification": "pending",
-  "construction": "stage0-recovery",
+  "constructionDecision": "0498",
+  "construction": "native-cross-target-hosted-toolset",
   "nativeSourceConstruction": "verified-digest-bound-front-door",
   "nativeSourceDecision": "0344",
   "artifacts": [
@@ -20,7 +22,7 @@
       "path": "Console-Segmented-Packager.exe",
       "target": "windows-x64-console-segmented-packager-v1",
       "bytes": 805376,
-      "sha256": "e932fc5ed2bdc5252e9fa4de95c0dc02bba1e351e31bc86dd4956e372cf706d0",
+      "sha256": "a6a6fd40a6becf0f65bbf995006e8e5410832da6f5ebc906f216f9e435032ef0",
       "sourceWvb": "Console-Segmented-Packager.wvb"
     },
     {
@@ -28,7 +30,7 @@
       "path": "Console-Segmented-Packager.elf",
       "target": "linux-x64-console-segmented-packager-v1",
       "bytes": 806912,
-      "sha256": "395ec1da4512a67b513179cad7068ee76e6598088214ca2ada56afd623eb410f",
+      "sha256": "8916fb509f81e29dabca7ed0202c0ad250f129e78b70b701630dbfcd55a1d30d",
       "sourceWvb": "Console-Segmented-Packager.wvb"
     }
   ]

@@ -15,7 +15,7 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Packager=%RepositoryRoot%\Artifacts\Native-Console-Packager-Candidate\Console-Packager.exe"
 set "PublisherLauncher=%RepositoryRoot%\Tools\Native\Publish-Console.cmd"
 
-certutil -hashfile "%Packager%" SHA256 | findstr /I /C:"c14ee974fa74227a49b407c9517cdce1fc7608a1486a8b5e2cf2fcb996ab55a5" >nul
+certutil -hashfile "%Packager%" SHA256 | findstr /I /C:"ea8e666806618cd9c230bdc88882e9b30a98182f8486456a46c75b746a0cdab9" >nul
 if errorlevel 1 (
     >&2 echo The Windows native console packager artifact digest is invalid.
     exit /b 1

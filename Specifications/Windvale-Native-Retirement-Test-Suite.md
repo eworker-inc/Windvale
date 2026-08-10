@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 3,036 LF-only bytes with SHA-256
-`76c628246093479e50410971d8ab45169ee17d5f2c1552ad1826cba2ece9af1a`.
+`Tests/Native/Retirement-Suite.txt` is 3,158 LF-only bytes with SHA-256
+`0161a932d64d70d7c2073d25b76db3f6add6a64323cbdd7cac8ce0da20ac6150`.
 The first line is exactly:
 
 ```text
@@ -66,6 +66,7 @@ file. The current plan is:
 | `console-segmented-size` | `Test-Console-Application-Segmented-Size-Boundaries` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `console-segmented-construction` | `Test-Console-Application-Segmented-Construction` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `console-packager-source-reconstruction` | `Test-Console-Packager-Source-Reconstruction` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
+| `console-packager-container-reconstruction` | `Test-Console-Packager-Container-Reconstruction` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `publisher-rejections` | `Test-Publisher-Rejections` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `hosted-verifier-publisher-files` | `Test-Hosted-Verifier-Publisher-File-Pipeline` | 15 | `Tests: 15, Passed: 15, Failed: 0` |
 | `uefi-packager` | `Test-Uefi-Packager` | 3 | `Tests: 3, Passed: 3, Failed: 0` |
@@ -77,7 +78,7 @@ file. The current plan is:
 | `os-probe` | `Test-Os-Probe` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
 
-The version-1 plan therefore contains exactly 36 suites and 3,183 cases.
+The version-1 plan therefore contains exactly 37 suites and 3,187 cases.
 
 ## Coordinator contract
 
@@ -99,7 +100,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 36, Passed: 36, Failed: 0, Cases: 3183
+Suites: 37, Passed: 37, Failed: 0, Cases: 3187
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

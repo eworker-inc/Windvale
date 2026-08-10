@@ -1,10 +1,11 @@
 {
-  "format": "windvale-native-console-packager-candidate-1",
+  "format": "windvale-native-console-packager-candidate-2",
   "status": "candidate",
   "sourceDecision": "0223",
   "provenanceDecision": "0303",
   "qualification": "pending",
-  "construction": "stage0-recovery",
+  "constructionDecision": "0498",
+  "construction": "native-cross-target-hosted-toolset",
   "nativeSourceConstruction": "verified-digest-bound-front-door",
   "nativeSourceDecision": "0344",
   "artifacts": [
@@ -21,7 +22,7 @@
       "path": "Console-Packager.exe",
       "target": "windows-x64-console-packager-v1",
       "bytes": 708608,
-      "sha256": "c14ee974fa74227a49b407c9517cdce1fc7608a1486a8b5e2cf2fcb996ab55a5",
+      "sha256": "ea8e666806618cd9c230bdc88882e9b30a98182f8486456a46c75b746a0cdab9",
       "sourceWvb": "Console-Packager.wvb"
     },
     {
@@ -29,7 +30,7 @@
       "path": "Console-Packager.elf",
       "target": "linux-x64-console-packager-v1",
       "bytes": 708608,
-      "sha256": "e251b2edae1e1a500522ecb0b31c1b7a40a36086fd36959198e3a49cb04d8dad",
+      "sha256": "d399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af",
       "sourceWvb": "Console-Packager.wvb"
     }
   ]

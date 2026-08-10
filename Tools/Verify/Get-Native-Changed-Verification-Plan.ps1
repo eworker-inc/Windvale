@@ -87,6 +87,13 @@ function Add-Linker-Suites {
     Add-Suite @('linker-rejections', 'linker-hostile', 'linker-map-limit')
 }
 
+function Add-Console-Packager-Reconstruction-Suites {
+    Add-Suite @(
+        'console-packager-source-reconstruction',
+        'console-packager-container-reconstruction'
+    )
+}
+
 function Add-Os-Suite {
     param([Parameter(Mandatory)][string]$Path)
     if ($Path -match 'Process-Foundation|Process-Policy') {
@@ -134,7 +141,8 @@ function Add-Native-Tool-Suite {
         Add-Suite @(
             'compiler-reconstruction',
             'segmented-compiler-toolset-reconstruction',
-            'wvb-to-wvo-reconstruction'
+            'wvb-to-wvo-reconstruction',
+            'console-packager-container-reconstruction'
         )
     } elseif ($Stem -in @(
         'Construct-Segmented-Compiler-Toolset',
@@ -144,6 +152,8 @@ function Add-Native-Tool-Suite {
         Add-Suite 'segmented-compiler-toolset-reconstruction'
     } elseif ($Stem -eq 'Construct-Wvb-To-Wvo-Reconstruction') {
         Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Stem -eq 'Construct-Console-Packager-Reconstruction') {
+        Add-Suite 'console-packager-container-reconstruction'
     } elseif ($Stem -in @(
         'Test-Baseline-Jit-Patch-Plan',
         'Test-Baseline-Jit-Publisher'
@@ -173,7 +183,12 @@ function Add-Native-Tool-Suite {
         'Construct-Wvb-Publisher'
     )) {
         Add-Suite 'hosted-verifier-publisher-files'
-    } elseif ($Stem -in @('Package-Hosted-Wvb', 'Test-Hosted-Wvb-Packaging')) {
+    } elseif ($Stem -eq 'Package-Hosted-Wvb') {
+        Add-Suite @(
+            'console-packager-container-reconstruction',
+            'hosted-verifier-publisher-files'
+        )
+    } elseif ($Stem -eq 'Test-Hosted-Wvb-Packaging') {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Stem -match 'Console|Package-Hosted|Segmented') {
         Add-Suite @(
@@ -332,6 +347,12 @@ foreach ($Path in $Paths) {
         } else {
             Add-Gap 'managed-runtime-recovery-source'
         }
+    } elseif ($Path -in @(
+        'Foundation/Byte-Construction.wv',
+        'Foundation/Decimal-Parsing.wv'
+    )) {
+        Add-Suite 'seed'
+        Add-Console-Packager-Reconstruction-Suites
     } elseif ($Path -eq 'Foundation/Immutable-Source-Regions.wv') {
         Add-Suite @('seed', 'segmented-compiler-toolset-reconstruction')
     } elseif ($Path.StartsWith('Foundation/', [StringComparison]::Ordinal)) {
@@ -344,6 +365,18 @@ foreach ($Path in $Paths) {
         Add-Assembler-Suites
     } elseif ($Path.StartsWith('Assembler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-assembler-recovery-source'
+    } elseif ($Path -in @(
+        'Linker/Windvale/Console-Application-Construction-Core.wv',
+        'Linker/Windvale/Console-Application-Packager.wv',
+        'Linker/Windvale/Console-Application-Plan-Core.wv',
+        'Linker/Windvale/Console-Application-Segmented-Construction.wv',
+        'Linker/Windvale/Console-Application-Segmented-Packager.wv',
+        'Linker/Windvale/Console-Application-Segmented-Recipe.wv',
+        'Linker/Windvale/Console-Application-Staging-Manifest.wv',
+        'Linker/Windvale/Console-Application-Verification-Core.wv'
+    )) {
+        Add-Linker-Suites
+        Add-Console-Packager-Reconstruction-Suites
     } elseif ($Path -in @(
         'Linker/Windvale/Native-Hosted-Verifier-Container-Core.wv',
         'Linker/Windvale/Native-Hosted-Verifier-Container-Tool.wv',
@@ -399,6 +432,13 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Wvb-To-Wvo-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Console-Packager-Candidate/',
+        [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Artifacts/Native-Console-Segmented-Packager-Candidate/',
+            [StringComparison]::Ordinal)) {
+        Add-Suite 'console-packager-container-reconstruction'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Hosted-Container-Toolset-Candidate/',
         [StringComparison]::Ordinal) -or
@@ -464,6 +504,8 @@ foreach ($Path in $Paths) {
             }
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-To-Wvo.md') {
             Add-Suite 'wvb-to-wvo-reconstruction'
+        } elseif ($Path -eq 'Specifications/Windvale-Native-Console-Packager.md') {
+            Add-Console-Packager-Reconstruction-Suites
         } elseif ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
             Add-Suite 'hosted-verifier-publisher-files'
         } elseif ($Path.StartsWith(
@@ -516,6 +558,11 @@ foreach ($Path in $Paths) {
         'Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj'
     )) {
         Add-Suite 'wvb-to-wvo-reconstruction'
+    } elseif ($Path -in @(
+        'Windvale-Console-Application-Packager.wvproj',
+        'Windvale-Console-Application-Segmented-Packager.wvproj'
+    )) {
+        Add-Console-Packager-Reconstruction-Suites
     } elseif ($Path.StartsWith(
         'Windvale-Native-Hosted-Verifier-Publisher-',
         [StringComparison]::Ordinal)) {

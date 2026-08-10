@@ -25,6 +25,7 @@ hosted-console-container-mutations|Test-Hosted-Console-Container-Mutations|15|Te
 console-segmented-size|Test-Console-Application-Segmented-Size-Boundaries|2|Tests: 2, Passed: 2, Failed: 0
 console-segmented-construction|Test-Console-Application-Segmented-Construction|2|Tests: 2, Passed: 2, Failed: 0
 console-packager-source-reconstruction|Test-Console-Packager-Source-Reconstruction|2|Tests: 2, Passed: 2, Failed: 0
+console-packager-container-reconstruction|Test-Console-Packager-Container-Reconstruction|4|Tests: 4, Passed: 4, Failed: 0
 publisher-rejections|Test-Publisher-Rejections|4|Tests: 4, Passed: 4, Failed: 0
 hosted-verifier-publisher-files|Test-Hosted-Verifier-Publisher-File-Pipeline|15|Tests: 15, Passed: 15, Failed: 0
 uefi-packager|Test-Uefi-Packager|3|Tests: 3, Passed: 3, Failed: 0

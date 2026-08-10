@@ -17,7 +17,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Console-Segmented-Packager-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '395ec1da4512a67b513179cad7068ee76e6598088214ca2ada56afd623eb410f' \
+    '8916fb509f81e29dabca7ed0202c0ad250f129e78b70b701630dbfcd55a1d30d' \
     'Console-Segmented-Packager.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native segmented console-packager artifact digest is invalid.' >&2
     exit 1

@@ -14,7 +14,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Packager=%RepositoryRoot%\Artifacts\Native-Console-Segmented-Packager-Candidate\Console-Segmented-Packager.exe"
 
-certutil -hashfile "%Packager%" SHA256 | findstr /I /C:"e932fc5ed2bdc5252e9fa4de95c0dc02bba1e351e31bc86dd4956e372cf706d0" >nul
+certutil -hashfile "%Packager%" SHA256 | findstr /I /C:"a6a6fd40a6becf0f65bbf995006e8e5410832da6f5ebc906f216f9e435032ef0" >nul
 if errorlevel 1 (
     >&2 echo The Windows native segmented console-packager artifact digest is invalid.
     exit /b 1

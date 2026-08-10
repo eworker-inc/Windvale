@@ -89,7 +89,8 @@ $NativeCases = @(
         Suites = @(
             'compiler-reconstruction',
             'segmented-compiler-toolset-reconstruction',
-            'wvb-to-wvo-reconstruction'
+            'wvb-to-wvo-reconstruction',
+            'console-packager-container-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -160,6 +161,32 @@ $NativeCases = @(
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console packager container reconstruction owner'
+        Paths = @(
+            'Tools/Native/Test-Console-Packager-Container-Reconstruction.cmd',
+            'Tools/Native/Construct-Console-Packager-Reconstruction.cmd',
+            'Artifacts/Native-Console-Packager-Candidate/Manifest.json',
+            'Artifacts/Native-Console-Segmented-Packager-Candidate/Manifest.json'
+        )
+        Suites = @('console-packager-container-reconstruction')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'console packager reconstruction projects and contract'
+        Paths = @(
+            'Windvale-Console-Application-Packager.wvproj',
+            'Windvale-Console-Application-Segmented-Packager.wvproj',
+            'Specifications/Windvale-Native-Console-Packager.md'
+        )
+        Suites = @(
+            'console-packager-source-reconstruction',
+            'console-packager-container-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false

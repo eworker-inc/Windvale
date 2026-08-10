@@ -51,6 +51,7 @@ The exact filter names and case counts are:
 | `console-segmented-size` | 2 |
 | `console-segmented-construction` | 2 |
 | `console-packager-source-reconstruction` | 2 |
+| `console-packager-container-reconstruction` | 4 |
 | `publisher-rejections` | 4 |
 | `hosted-verifier-publisher-files` | 15 |
 | `uefi-packager` | 3 |
@@ -62,11 +63,11 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 36 suites and 3,183 cases in manifest order. Its
+Omitting `--filter` selects all 37 suites and 3,187 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 36, Passed: 36, Failed: 0, Cases: 3183
+Suites: 37, Passed: 37, Failed: 0, Cases: 3187
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -116,6 +117,23 @@ Tools\Native\Test-Retirement-Suite.cmd --filter wvb-to-wvo-reconstruction
 It verifies the five-file candidate inventory, calls its durable constructor
 once, compares the rebuilt WVB and paired applications byte for byte, and
 requires the current-host rebuilt lowerer to reproduce the fixed Return-42 WVO.
+
+The ordinary and segmented console-packager container candidates have one
+separate focused reconstruction owner:
+
+```cmd
+Tools\Native\Test-Retirement-Suite.cmd --filter console-packager-container-reconstruction
+```
+
+```sh
+./Tools/Native/Test-Retirement-Suite.sh --filter console-packager-container-reconstruction
+```
+
+It checks each three-file candidate inventory, rejects a missing constructor
+destination, calls the durable constructor exactly once, requires its exact
+channels, and compares both rebuilt WVB-and-paired-application families byte
+for byte. The four cases keep source-to-WVO reconstruction in the separate
+`console-packager-source-reconstruction` lane.
 
 ## Changed-file front door
 
@@ -738,7 +756,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,183-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,187-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

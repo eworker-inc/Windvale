@@ -378,8 +378,13 @@ generic rejection came from noncanonical dependency inventory order passed
 through the pinned driver's retained order-sensitive path. Canonicalizing both
 manifests makes the native Project 1 front door reproduce the exact ordinary and
 segmented WVBs through compiler-aligned verification and atomic publication.
-Their PE/ELF host containers remain Stage 0-constructed pending a later native
-container-construction and dual-host promotion slice.
+Decision 0344 continues both closures through exact native WVO lowering.
+Decision 0498 links each WVO once and reconstructs its exact Windows and Linux
+profile-5 applications through the retained native hosted-container toolset.
+Neither target packager constructs itself or its sibling, but the path consumes
+retained compiler, lowerer, linker, and hosted-container candidates. Independent
+Linux reconstruction and execution, clean previous-seed renewal, broader P1
+closure, and dual-host promotion remain.
 
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module

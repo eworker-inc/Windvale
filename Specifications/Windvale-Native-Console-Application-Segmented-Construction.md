@@ -8,10 +8,11 @@ keeps the ordinary 4 MiB byte-value limit: the completed application never
 exists as one Windvale value. The tool instead emits one exact 4 MiB first
 chunk, one bounded second chunk, and a fixed staging manifest written last.
 
-The current applications are Stage 0-constructed candidates. Normal candidate
-execution does not load .NET, and the project now reconstructs its exact WVB
-through the digest-bound native front door. Native host-container reconstruction,
-Linux execution, promotion, and grouped qualification remain.
+The current applications reconstruct through the retained native hosted-
+container toolset on the current Windows host. Normal candidate execution does
+not load .NET, and the project reconstructs its exact WVB and WVO through the
+digest-bound native front doors. Independent Linux reconstruction and
+execution, promotion, and grouped qualification remain.
 
 ## Portable construction
 
@@ -48,13 +49,16 @@ The exact candidate manifest pins:
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | `Console-Segmented-Packager.wvb` | 70,033 | `c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e` |
-| `Console-Segmented-Packager.exe` | 805,376 | `e932fc5ed2bdc5252e9fa4de95c0dc02bba1e351e31bc86dd4956e372cf706d0` |
-| `Console-Segmented-Packager.elf` | 806,912 | `395ec1da4512a67b513179cad7068ee76e6598088214ca2ada56afd623eb410f` |
+| `Console-Segmented-Packager.exe` | 805,376 | `a6a6fd40a6becf0f65bbf995006e8e5410832da6f5ebc906f216f9e435032ef0` |
+| `Console-Segmented-Packager.elf` | 806,912 | `8916fb509f81e29dabca7ed0202c0ad250f129e78b70b701630dbfcd55a1d30d` |
 
-Host-container construction remains recorded as `stage0-recovery`. Decision
-0343 corrects the project inventory order and reconstructs the exact WVB through
-the native front door; the PE/ELF tool containers remain recovery-built
-candidates rather than complete native-front-door products.
+Decision 0343 corrects the project inventory order and reconstructs the exact
+WVB through the native front door; Decision 0344 continues through exact WVO
+lowering. Decision 0498 links that WVO once and uses profile 5 of the retained
+hosted-container toolset to reconstruct both exact target applications without
+invoking this segmented packager or a managed application writer. This is a
+current-Windows-host cross-target construction result that consumes retained
+native candidates, not a clean bootstrap or Linux execution result.
 
 ## `WVCS 1.0` staging manifest
 
@@ -108,6 +112,6 @@ Tests: 2, Passed: 2, Failed: 0
 ## Boundary
 
 This contract does not publish the chunks atomically to a public application
-path, reconstruct the packager's PE/ELF host containers natively, qualify Linux
-execution, promote either candidate, transfer large-native WVO construction, or
-complete the Decision 0057 retirement gate.
+path, independently reconstruct or execute the packager on Linux, promote
+either candidate, transfer large-native WVO construction, prove a clean
+bootstrap, or complete the Decision 0057 retirement gate.
