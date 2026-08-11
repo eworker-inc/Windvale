@@ -53,6 +53,14 @@ The current candidate identities are:
 | Windows assembler | 2,895,360 | `e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4` |
 | Linux assembler | 2,895,872 | `ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0` |
 
+These are immutable qualified front-door identities, not expected output from
+every later Stage 0 backend revision. Decision 0520 keeps them under the
+manifest, launcher, and front-door owner while current recovery-writer tests
+prove repeatability, independent application verification, CLI equality,
+accepted/rejected execution, and absence of CLR loading. The same digest-bound
+applications now construct the canonical WVO inspection fixture for both broad
+Seed scripts.
+
 The focused candidate test reconstructs both containers, checks the exact authority and service bundle, exercises the public AOT target, and runs the current-host raw application. Canonical input must produce the independently verified 218-byte WVO with SHA-256 `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`; malformed input must leave output absent. Current-host module or mapping inspection must find no CLR/.NET runtime.
 
 Decision 0321 adds a separate fixed rejection-family command over the ordinary

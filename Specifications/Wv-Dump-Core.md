@@ -71,6 +71,13 @@ transfers product identity only. Capability refusal, self-test, hosted valid and
 malformed input, interpreter/JIT/AOT agreement, and Stage 0 oracle behavior
 remain separately owned until their native execution lanes are cut over.
 
+Decision 0520 transfers three ordinary executions to the pinned host
+application: the no-argument self-test, complete canonical Sum report, and exact
+bad-magic report for `Sum-Data.wv`. Each input digest is rechecked after the
+process. Reference-runtime capability refusal plus empty and missing resource
+failures remain managed because their `WVR3010`, `WVR3021`, and `WVR3022`
+contracts are not equivalent to the current native host-boundary exits.
+
 ## Qualification fixtures
 
 The no-argument self-test covers a valid minimal metadata-free WVB 1.11 module plus short header, bad magic, bad version, bad section count, wrong kind, nonzero flags, hostile `0xFFFFFFFF` length, truncation, and trailing bytes. The conformance suite additionally passes malformed payload counts and an unknown opcode through the hosted shell and requires a diagnostic result rather than a runtime escape.

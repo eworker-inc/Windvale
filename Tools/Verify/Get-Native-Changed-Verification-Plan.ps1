@@ -753,6 +753,9 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Assembler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-assembler-recovery-source'
+    } elseif ($Path -eq 'Examples/Assembler/Hello-Object.wva') {
+        Add-Assembler-Suites
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path -in @(
         'Linker/Windvale/Console-Application-Admission-Core.wv',
         'Linker/Windvale/Console-Application-Verification-Core.wv',

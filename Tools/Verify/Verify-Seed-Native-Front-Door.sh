@@ -14,6 +14,10 @@ NATIVE_SOURCE_COMPILER_BUILD="$REPOSITORY_ROOT/Tools/Native/Build-Source-Compile
 NATIVE_VERIFY="$REPOSITORY_ROOT/Tools/Native/Verify-Wvb.sh"
 NATIVE_INSPECT="$REPOSITORY_ROOT/Tools/Native/Inspect-Wvb.sh"
 NATIVE_RUN="$REPOSITORY_ROOT/Tools/Native/Run-Wvb.sh"
+NATIVE_ASSEMBLER="$REPOSITORY_ROOT/Tools/Native/Assemble-Wva.sh"
+NATIVE_WVO_VERIFY="$REPOSITORY_ROOT/Tools/Native/Verify-Wvo.sh"
+NATIVE_WVO_INSPECT="$REPOSITORY_ROOT/Tools/Native/Inspect-Wvo.sh"
+NATIVE_WVDUMP_APPLICATION="$REPOSITORY_ROOT/Artifacts/Native-Front-Door/linux-x64/wvdump.elf"
 
 exact_build() {
     PROJECT_PATH=$1
@@ -165,6 +169,122 @@ exact_instruction_report() {
     fi
 }
 
+exact_wvdump_execution() {
+    SUM_PATH=$1
+    INVALID_PATH=$2
+    APPLICATION_BYTES=$(wc -c < "$NATIVE_WVDUMP_APPLICATION" | tr -d ' ')
+    APPLICATION_SHA256=$(sha256sum "$NATIVE_WVDUMP_APPLICATION" | awk '{print $1}')
+    if [ "$APPLICATION_BYTES" != 794624 ] || \
+        [ "$APPLICATION_SHA256" != 'd3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627' ]; then
+        echo 'The Linux native WvDump application identity is invalid.' >&2
+        exit 1
+    fi
+    ERROR_FILE=$(mktemp "${TMPDIR:-/tmp}/windvale-seed-wvdump.XXXXXX")
+    if ! SELF_OUTPUT=$("$NATIVE_WVDUMP_APPLICATION" 2>"$ERROR_FILE"); then
+        rm -f -- "$ERROR_FILE"
+        echo 'The digest-bound native WvDump self-test failed.' >&2
+        exit 1
+    fi
+    if [ -n "$SELF_OUTPUT" ] || [ -s "$ERROR_FILE" ]; then
+        rm -f -- "$ERROR_FILE"
+        echo 'The digest-bound native WvDump self-test emitted unexpected output.' >&2
+        exit 1
+    fi
+
+    SUM_SHA256=$(sha256sum "$SUM_PATH" | awk '{print $1}')
+    if ! REPORT_OUTPUT=$("$NATIVE_WVDUMP_APPLICATION" "$SUM_PATH" 2>"$ERROR_FILE"); then
+        rm -f -- "$ERROR_FILE"
+        echo 'The digest-bound native WvDump rejected the canonical module.' >&2
+        exit 1
+    fi
+    if [ -s "$ERROR_FILE" ]; then
+        rm -f -- "$ERROR_FILE"
+        echo 'The digest-bound native WvDump emitted an unexpected diagnostic.' >&2
+        exit 1
+    fi
+    for REQUIRED_LINE in \
+        'wvdump 1' \
+        'module version=1.11 profile=portable name="Sum\u02C9data"' \
+        'data index=0 name="Values" type=i32_array elements=4' \
+        'instruction function=1 offset=141 opcode=call operand=0' \
+        'export index=0 name="Main" kind=function target=1'; do
+        if ! printf '%s\n' "$REPORT_OUTPUT" | grep -F -x "$REQUIRED_LINE" >/dev/null; then
+            rm -f -- "$ERROR_FILE"
+            echo 'The digest-bound native WvDump report omitted required evidence.' >&2
+            exit 1
+        fi
+    done
+    if [ "$(sha256sum "$SUM_PATH" | awk '{print $1}')" != "$SUM_SHA256" ]; then
+        rm -f -- "$ERROR_FILE"
+        echo 'The digest-bound native WvDump modified the canonical module.' >&2
+        exit 1
+    fi
+
+    INVALID_SHA256=$(sha256sum "$INVALID_PATH" | awk '{print $1}')
+    set +e
+    INVALID_OUTPUT=$("$NATIVE_WVDUMP_APPLICATION" "$INVALID_PATH" 2>&1)
+    INVALID_EXIT=$?
+    set -e
+    rm -f -- "$ERROR_FILE"
+    if [ "$INVALID_EXIT" -ne 2 ] || [ "$INVALID_OUTPUT" != 'Badˉmagic sections=0 offset=0' ] || \
+        [ "$(sha256sum "$INVALID_PATH" | awk '{print $1}')" != "$INVALID_SHA256" ]; then
+        echo 'The digest-bound native WvDump invalid-file contract failed.' >&2
+        exit 1
+    fi
+}
+
+exact_wvo_read_only_execution() {
+    OBJECT_PATH=$1
+    ASSEMBLY_SOURCE="$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva"
+    if ! ASSEMBLY_OUTPUT=$("$NATIVE_ASSEMBLER" "$ASSEMBLY_SOURCE" "$OBJECT_PATH"); then
+        echo 'The digest-bound native WVA assembler did not construct the WVO read-only fixture.' >&2
+        exit 1
+    fi
+    EXPECTED_ASSEMBLY_OUTPUT=$(printf '%s\n%s' \
+        'wvasm 1' \
+        'assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1')
+    OBJECT_BYTES=$(wc -c < "$OBJECT_PATH" | tr -d ' ')
+    OBJECT_SHA256=$(sha256sum "$OBJECT_PATH" | awk '{print $1}')
+    if [ "$ASSEMBLY_OUTPUT" != "$EXPECTED_ASSEMBLY_OUTPUT" ] || \
+        [ "$OBJECT_BYTES" != 218 ] || \
+        [ "$OBJECT_SHA256" != '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85' ]; then
+        echo 'The native WVO read-only fixture has an unexpected report or identity.' >&2
+        exit 1
+    fi
+
+    if ! VERIFY_OUTPUT=$("$NATIVE_WVO_VERIFY" "$OBJECT_PATH"); then
+        echo 'The digest-bound native WVO verifier rejected the canonical fixture.' >&2
+        exit 1
+    fi
+    EXPECTED_VERIFY_OUTPUT=$(printf '%s\n%s' \
+        'Verified object: X86ˉ64' \
+        "SHA-256: $OBJECT_SHA256")
+    if [ "$VERIFY_OUTPUT" != "$EXPECTED_VERIFY_OUTPUT" ]; then
+        echo 'The digest-bound native WVO verifier report is invalid.' >&2
+        exit 1
+    fi
+
+    if ! INSPECT_OUTPUT=$("$NATIVE_WVO_INSPECT" "$OBJECT_PATH"); then
+        echo 'The digest-bound native WVO inspector rejected the canonical fixture.' >&2
+        exit 1
+    fi
+    for REQUIRED_LINE in \
+        'Windvale object 1.0' \
+        'Architecture: X86ˉ64' \
+        'Sections (2)' \
+        '  [2] Console_write binding=Import kind=Function section=undefined offset=0 size=0' \
+        '  [0] kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4'; do
+        if ! printf '%s\n' "$INSPECT_OUTPUT" | grep -F -x "$REQUIRED_LINE" >/dev/null; then
+            echo 'The digest-bound native WVO inspection omitted required evidence.' >&2
+            exit 1
+        fi
+    done
+    if [ "$(sha256sum "$OBJECT_PATH" | awk '{print $1}')" != "$OBJECT_SHA256" ]; then
+        echo 'The digest-bound native WVO inspector modified its input.' >&2
+        exit 1
+    fi
+}
+
 SUM_MODULE="$OUTPUT_ROOT/Sum-Data.wvb"
 HELLO_MODULE="$OUTPUT_ROOT/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$OUTPUT_ROOT/Read-Wvb-Header.wvb"
@@ -266,6 +386,7 @@ WVDUMP_CORE_MODULE="$OUTPUT_ROOT/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$OUTPUT_ROOT/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$OUTPUT_ROOT/Wva-Assembler-Core.wvb"
 WVLINK_CORE_MODULE="$OUTPUT_ROOT/Wv-Linker-Core.wvb"
+WVO_SAMPLE="$OUTPUT_ROOT/Sample.wvo"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -1147,6 +1268,11 @@ exact_build \
 exact_verify "$WVLINK_CORE_MODULE"
 exact_inspect "$WVLINK_CORE_MODULE" 'profile=hosted' 'section name=capabilities offset=50 bytes=172 count=6' 'section name=exports offset=133297 bytes=17 count=1' 'section name=types offset=133322 bytes=2418 count=20' 'Inspect\u02C9object' 'Find\u02C9section' 'Find\u02C9symbol' 'Find\u02C9relocation' 'Validate\u02C9export\u02C9uniqueness' 'Validate\u02C9imports' 'Measure\u02C9layout' 'Validate\u02C9definitions' 'Build\u02C9unrelocated\u02C9image' 'Apply\u02C9relocations' 'Verifier\u02C9place\u02C9section' 'Verifier\u02C9find\u02C9export' 'Verifier\u02C9apply\u02C9relocations\u02C9reverse' 'Accept\u02C9reconstructed\u02C9image' 'Accepted\u02C9object\u02C9view' 'Definition\u02C9map\u02C9minimum\u02C9exceeds\u02C9limit' 'Build\u02C9canonical\u02C9map' '__WvM4F0' '__WvM2F0' '__WvM3F0' '__WvM1F0' '__WvM1F1' 'name="__WvM5F0" parameters=1 result=bytes locals=903' 'opcode=bytes.read_i32_little' 'file.read_bytes' 'file.write_bytes'
 
+exact_wvdump_execution \
+    "$SUM_MODULE" \
+    "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv"
+exact_wvo_read_only_execution "$WVO_SAMPLE"
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -1178,4 +1304,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=101 cases=168'
+echo 'native Seed front-door verification status=Complete artifacts=102 cases=174'

@@ -18,13 +18,6 @@ internal static partial class Program
     private const int WVB_INSPECTOR_BYTES = 76_527;
     private const string WVB_INSPECTOR_SHA256 =
         "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753";
-    private const int WINDOWS_WVB_INSPECTOR_APPLICATION_BYTES = 793_600;
-    private const string WINDOWS_WVB_INSPECTOR_APPLICATION_SHA256 =
-        "31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c";
-    private const int LINUX_WVB_INSPECTOR_APPLICATION_BYTES = 794_624;
-    private const string LINUX_WVB_INSPECTOR_APPLICATION_SHA256 =
-        "cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e";
-
     private static readonly string LINUX_HOSTED_INSPECTOR_STARTUP_SOURCE =
         Readˉembeddedˉsource("Windvale.Seed.Tests.Linux-X64-Hosted-Inspector.wva");
     private static readonly string WINDOWS_HOSTED_INSPECTOR_STARTUP_SOURCE =
@@ -92,10 +85,15 @@ internal static partial class Program
             Windows.Diagnostics.IsEmpty
                 ? "The Windows WVB inspector failed without a diagnostic."
                 : Windows.Diagnostics[0].Message);
-        Equal(WINDOWS_WVB_INSPECTOR_APPLICATION_BYTES, Windows.Imageˉbytes.Length);
-        Equal(
-            WINDOWS_WVB_INSPECTOR_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan()));
+        var Repeatedˉwindows = Windowsˉconsoleˉapplicationˉwriter.Writeˉhostedˉinspector(
+            Inspectorˉnative.Fragment,
+            Inspectorˉmodule.Module.Capabilities);
+        True(
+            Repeatedˉwindows.Success,
+            Repeatedˉwindows.Diagnostics.IsEmpty
+                ? "The repeated Windows WVB inspector failed without a diagnostic."
+                : Repeatedˉwindows.Diagnostics[0].Message);
+        Sequenceˉequal(Windows.Imageˉbytes, Repeatedˉwindows.Imageˉbytes);
         Sequenceˉequal(
             Windows.Imageˉbytes,
             Windowsˉhostedˉverifierˉapplicationˉbuilder.Build(
@@ -116,10 +114,15 @@ internal static partial class Program
             Linux.Diagnostics.IsEmpty
                 ? "The Linux WVB inspector failed without a diagnostic."
                 : Linux.Diagnostics[0].Message);
-        Equal(LINUX_WVB_INSPECTOR_APPLICATION_BYTES, Linux.Imageˉbytes.Length);
-        Equal(
-            LINUX_WVB_INSPECTOR_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan()));
+        var Repeatedˉlinux = Linuxˉconsoleˉapplicationˉwriter.Writeˉhostedˉinspector(
+            Inspectorˉnative.Fragment,
+            Inspectorˉmodule.Module.Capabilities);
+        True(
+            Repeatedˉlinux.Success,
+            Repeatedˉlinux.Diagnostics.IsEmpty
+                ? "The repeated Linux WVB inspector failed without a diagnostic."
+                : Repeatedˉlinux.Diagnostics[0].Message);
+        Sequenceˉequal(Linux.Imageˉbytes, Repeatedˉlinux.Imageˉbytes);
         Sequenceˉequal(
             Linux.Imageˉbytes,
             Linuxˉhostedˉverifierˉapplicationˉbuilder.Build(

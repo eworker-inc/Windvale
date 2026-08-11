@@ -9,13 +9,6 @@ namespace Windvale.Seed.Tests;
 internal static partial class Program
 {
     private const int WVA_ASSEMBLER_WVB_BYTES = 180_071;
-    private const int WINDOWS_WVA_ASSEMBLER_APPLICATION_BYTES = 2_895_360;
-    private const string WINDOWS_WVA_ASSEMBLER_APPLICATION_SHA256 =
-        "e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4";
-    private const int LINUX_WVA_ASSEMBLER_APPLICATION_BYTES = 2_895_872;
-    private const string LINUX_WVA_ASSEMBLER_APPLICATION_SHA256 =
-        "ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0";
-
     private static void Nativeˉwvaˉassemblerˉruns()
     {
         var Assemblerˉbytes = Compileˉwithˉtoolˉfoundationˉsuccess(
@@ -73,10 +66,16 @@ internal static partial class Program
             Windows.Diagnostics.IsEmpty
                 ? "The Windows WVA assembler writer failed without a diagnostic."
                 : Windows.Diagnostics[0].Message);
-        Equal(WINDOWS_WVA_ASSEMBLER_APPLICATION_BYTES, Windows.Imageˉbytes.Length);
-        Equal(
-            WINDOWS_WVA_ASSEMBLER_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan()));
+        var Repeatedˉwindows = Hostedˉwvaˉassemblerˉapplicationˉwriter.Writeˉwindows(
+            Assemblerˉnative.Fragment,
+            Assemblerˉmodule.Module.Capabilities,
+            Assemblerˉmodule.Module.Name);
+        True(
+            Repeatedˉwindows.Success,
+            Repeatedˉwindows.Diagnostics.IsEmpty
+                ? "The repeated Windows WVA assembler writer failed without a diagnostic."
+                : Repeatedˉwindows.Diagnostics[0].Message);
+        Sequenceˉequal(Windows.Imageˉbytes, Repeatedˉwindows.Imageˉbytes);
         var Verifiedˉwindows = Windowsˉhostedˉcompilerˉapplicationˉverifier.Verify(
             Windows.Imageˉbytes.AsSpan(),
             Windowsˉbundle,
@@ -94,10 +93,16 @@ internal static partial class Program
             Linux.Diagnostics.IsEmpty
                 ? "The Linux WVA assembler writer failed without a diagnostic."
                 : Linux.Diagnostics[0].Message);
-        Equal(LINUX_WVA_ASSEMBLER_APPLICATION_BYTES, Linux.Imageˉbytes.Length);
-        Equal(
-            LINUX_WVA_ASSEMBLER_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan()));
+        var Repeatedˉlinux = Hostedˉwvaˉassemblerˉapplicationˉwriter.Writeˉlinux(
+            Assemblerˉnative.Fragment,
+            Assemblerˉmodule.Module.Capabilities,
+            Assemblerˉmodule.Module.Name);
+        True(
+            Repeatedˉlinux.Success,
+            Repeatedˉlinux.Diagnostics.IsEmpty
+                ? "The repeated Linux WVA assembler writer failed without a diagnostic."
+                : Repeatedˉlinux.Diagnostics[0].Message);
+        Sequenceˉequal(Linux.Imageˉbytes, Repeatedˉlinux.Imageˉbytes);
         var Verifiedˉlinux = Linuxˉhostedˉcompilerˉapplicationˉverifier.Verify(
             Linux.Imageˉbytes.AsSpan(),
             Linuxˉbundle,

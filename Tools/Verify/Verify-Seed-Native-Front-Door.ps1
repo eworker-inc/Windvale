@@ -16,6 +16,10 @@ $NativeSourceCompilerBuild = Join-Path $RepositoryRoot 'Tools/Native/Build-Sourc
 $NativeVerify = Join-Path $RepositoryRoot 'Tools/Native/Verify-Wvb.cmd'
 $NativeInspect = Join-Path $RepositoryRoot 'Tools/Native/Inspect-Wvb.cmd'
 $NativeRun = Join-Path $RepositoryRoot 'Tools/Native/Run-Wvb.cmd'
+$NativeAssembler = Join-Path $RepositoryRoot 'Tools/Native/Assemble-Wva.cmd'
+$NativeWvoVerify = Join-Path $RepositoryRoot 'Tools/Native/Verify-Wvo.cmd'
+$NativeWvoInspect = Join-Path $RepositoryRoot 'Tools/Native/Inspect-Wvo.cmd'
+$NativeWvDumpApplication = Join-Path $RepositoryRoot 'Artifacts/Native-Front-Door/windows-x64/wvdump.exe'
 
 function Invoke-ExactBuild(
     [string]$ProjectPath,
@@ -148,6 +152,112 @@ function Invoke-ExactInstructionReport(
     }
 }
 
+function Invoke-ExactWvDumpExecution(
+    [string]$SumPath,
+    [string]$InvalidPath
+) {
+    $ApplicationInformation = Get-Item -LiteralPath $NativeWvDumpApplication
+    $ApplicationDigest = (
+        Get-FileHash -Algorithm SHA256 -LiteralPath $NativeWvDumpApplication
+    ).Hash.ToLowerInvariant()
+    if (
+        $ApplicationInformation.Length -ne 795136 -or
+        $ApplicationDigest -ne '61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381'
+    ) {
+        throw 'The Windows native WvDump application identity is invalid.'
+    }
+    $SelfTestOutput = @(& $NativeWvDumpApplication 2>&1)
+    if ($LASTEXITCODE -ne 0 -or $SelfTestOutput.Count -ne 0) {
+        throw 'The digest-bound native WvDump self-test failed.'
+    }
+
+    $SumDigest = (Get-FileHash -Algorithm SHA256 -LiteralPath $SumPath).Hash
+    $ReportOutput = @(& $NativeWvDumpApplication $SumPath 2>&1)
+    $ReportExit = $LASTEXITCODE
+    $Report = $ReportOutput -join "`n"
+    foreach ($Pattern in @(
+        '(?m)^wvdump 1$',
+        'module version=1\.11 profile=portable name="Sum\\u02C9data"',
+        'data index=0 name="Values" type=i32_array elements=4',
+        'instruction function=1 offset=141 opcode=call operand=0',
+        'export index=0 name="Main" kind=function target=1'
+    )) {
+        if ($Report -notmatch $Pattern) {
+            throw 'The digest-bound native WvDump report omitted required evidence.'
+        }
+    }
+    if (
+        $ReportExit -ne 0 -or
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $SumPath).Hash -ne $SumDigest
+    ) {
+        throw 'The digest-bound native WvDump rejected or modified the canonical module.'
+    }
+
+    $InvalidDigest = (Get-FileHash -Algorithm SHA256 -LiteralPath $InvalidPath).Hash
+    $InvalidOutput = @(& $NativeWvDumpApplication $InvalidPath 2>&1)
+    $InvalidExit = $LASTEXITCODE
+    if (
+        $InvalidExit -ne 2 -or
+        $InvalidOutput.Count -ne 1 -or
+        $InvalidOutput[0].ToString() -ne 'Badˉmagic sections=0 offset=0' -or
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $InvalidPath).Hash -ne $InvalidDigest
+    ) {
+        throw 'The digest-bound native WvDump invalid-file contract failed.'
+    }
+}
+
+function Invoke-ExactWvoReadOnlyExecution([string]$ObjectPath) {
+    $AssemblySource = Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva'
+    $AssemblyOutput = @(& $NativeAssembler $AssemblySource $ObjectPath 2>&1)
+    if (
+        $LASTEXITCODE -ne 0 -or
+        $AssemblyOutput.Count -ne 2 -or
+        $AssemblyOutput[0].ToString() -ne 'wvasm 1' -or
+        $AssemblyOutput[1].ToString() -ne 'assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1'
+    ) {
+        throw 'The digest-bound native WVA assembler did not construct the WVO read-only fixture.'
+    }
+    $ObjectInformation = Get-Item -LiteralPath $ObjectPath
+    $ObjectDigest = (Get-FileHash -Algorithm SHA256 -LiteralPath $ObjectPath).Hash.ToLowerInvariant()
+    if (
+        $ObjectInformation.Length -ne 218 -or
+        $ObjectDigest -ne '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85'
+    ) {
+        throw 'The native WVO read-only fixture has an unexpected identity.'
+    }
+
+    $VerifyOutput = @(& $NativeWvoVerify $ObjectPath 2>&1)
+    if (
+        $LASTEXITCODE -ne 0 -or
+        $VerifyOutput.Count -ne 2 -or
+        $VerifyOutput[0].ToString() -ne 'Verified object: X86ˉ64' -or
+        $VerifyOutput[1].ToString() -ne "SHA-256: $ObjectDigest"
+    ) {
+        throw 'The digest-bound native WVO verifier report is invalid.'
+    }
+
+    $InspectOutput = @(& $NativeWvoInspect $ObjectPath 2>&1)
+    $InspectExit = $LASTEXITCODE
+    $Inspection = $InspectOutput -join "`n"
+    foreach ($Pattern in @(
+        '(?m)^Windvale object 1\.0$',
+        '(?m)^Architecture: X86ˉ64$',
+        'Sections \(2\)',
+        'Console_write binding=Import',
+        'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4'
+    )) {
+        if ($Inspection -notmatch $Pattern) {
+            throw 'The digest-bound native WVO inspection omitted required evidence.'
+        }
+    }
+    if (
+        $InspectExit -ne 0 -or
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $ObjectPath).Hash.ToLowerInvariant() -ne $ObjectDigest
+    ) {
+        throw 'The digest-bound native WVO inspector rejected or modified its input.'
+    }
+}
+
 $SumModule = Join-Path $OutputRoot 'Sum-Data.wvb'
 $HelloModule = Join-Path $OutputRoot 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $OutputRoot 'Read-Wvb-Header.wvb'
@@ -249,6 +359,7 @@ $WvDumpCoreModule = Join-Path $OutputRoot 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $OutputRoot 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $OutputRoot 'Wva-Assembler-Core.wvb'
 $WvLinkerCoreModule = Join-Path $OutputRoot 'Wv-Linker-Core.wvb'
+$WvoSample = Join-Path $OutputRoot 'Sample.wvo'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -1014,6 +1125,11 @@ Invoke-ExactBuild `
 Invoke-ExactVerify $WvLinkerCoreModule
 Invoke-ExactInspect $WvLinkerCoreModule @('profile=hosted', 'section name=capabilities offset=50 bytes=172 count=6', 'section name=exports offset=133297 bytes=17 count=1', 'section name=types offset=133322 bytes=2418 count=20', 'Inspect\\u02C9object', 'Find\\u02C9section', 'Find\\u02C9symbol', 'Find\\u02C9relocation', 'Validate\\u02C9export\\u02C9uniqueness', 'Validate\\u02C9imports', 'Measure\\u02C9layout', 'Validate\\u02C9definitions', 'Build\\u02C9unrelocated\\u02C9image', 'Apply\\u02C9relocations', 'Verifier\\u02C9place\\u02C9section', 'Verifier\\u02C9find\\u02C9export', 'Verifier\\u02C9apply\\u02C9relocations\\u02C9reverse', 'Accept\\u02C9reconstructed\\u02C9image', 'Accepted\\u02C9object\\u02C9view', 'Definition\\u02C9map\\u02C9minimum\\u02C9exceeds\\u02C9limit', 'Build\\u02C9canonical\\u02C9map', '__WvM4F0', '__WvM2F0', '__WvM3F0', '__WvM1F0', '__WvM1F1', 'name="__WvM5F0" parameters=1 result=bytes locals=903', 'opcode=bytes\.read_i32_little', 'file\.read_bytes', 'file\.write_bytes')
 
+Invoke-ExactWvDumpExecution `
+    $SumModule `
+    (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv')
+Invoke-ExactWvoReadOnlyExecution $WvoSample
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -1045,4 +1161,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=101 cases=168'
+Write-Output 'native Seed front-door verification status=Complete artifacts=102 cases=174'

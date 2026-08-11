@@ -6,6 +6,13 @@ The shared hosted-verifier container packages the canonical Windvale-written `Wv
 
 The product logic is split across two cohesive object-model modules. `Wvo-Object-Verification.wv` owns complete portable WVO admission and malformed-input status; `Wvo-Object-Core.wv` owns deterministic verification and inspection reports, SHA-256 identity, the hosted shell, and self-test. The native WVO publisher reuses the first module. The package adds no second object parser or platform-specific WVO logic.
 
+Decision 0520 makes the digest-bound applications own successful verification
+and inspection of the canonical native-assembled WVO in both broad Seed
+scripts. The current candidate's no-argument native self-test returns 1 and its
+empty/missing resource exits do not yet match the reference-runtime reports, so
+those calls remain explicit qualification gaps rather than being counted as
+transferred.
+
 ## Construction contract
 
 `Windvale-Wvo-Object.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvoˉobjectˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.

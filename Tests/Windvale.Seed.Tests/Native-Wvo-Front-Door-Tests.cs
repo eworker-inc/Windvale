@@ -6,6 +6,11 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
+    private const string WINDOWS_WVO_INSPECTOR_APPLICATION_SHA256 =
+        "bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2";
+    private const string LINUX_WVO_INSPECTOR_APPLICATION_SHA256 =
+        "bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1";
+
     private static void Nativeˉwvoˉfrontˉdoorˉruns()
     {
         var Repository = Findˉrepositoryˉroot();

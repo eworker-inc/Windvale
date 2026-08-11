@@ -29,6 +29,13 @@ Rejection returns `1` and writes the stable failed phase to standard error.
 
 The report is checked against fixed contract text and artifact hashes. The normal result does not depend on running the C# inspector or comparing against a live .NET oracle. The frozen Stage 0 path remains useful for explicitly named differential and recovery tests.
 
+Decision 0520 makes the pinned host WvDump application own its no-argument
+self-test, canonical Sum report, and deterministic bad-magic report inside both
+broad Seed scripts. The helper checks the application identity before direct
+execution and rechecks both input digests afterward. Reference-runtime
+capability refusal and missing/empty-resource diagnostics remain separate
+managed contracts.
+
 ## Pinned inventory
 
 `Artifacts/Native-Front-Door/Manifest.json` and `SHA256SUMS` bind twelve artifacts: the existing build driver and publisher WVB/applications plus these six read-only-tool artifacts:
@@ -47,5 +54,12 @@ The verifier artifacts retain their previously qualified identities. The inspect
 ## Recovery boundary
 
 Stage 0 currently remains responsible for reconstructing the packages, independently parsing their containers, and running repository qualification. After this front door qualifies, ordinary documentation and developer use select the native commands; `dotnet ... verify` and `dotnet ... inspect` remain only in an explicit recovery/differential lane.
+
+Current Stage 0 application-writer tests do not duplicate the pinned application
+digests above. They reconstruct each host application twice, require byte
+equality, independently verify its profile and bundle, compare it with current
+CLI AOT output, execute accepted and rejected current-host inputs, and prove no
+CLR module or mapping was loaded. Pinned product identity and current recovery
+writer determinism are intentionally distinct evidence.
 
 This slice does not retire .NET from native lowering, package construction, general execution, test orchestration, assembly, linking, release production, or final recovery. Those are separate inventory items under [Decision 0057](../Documents/Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md).

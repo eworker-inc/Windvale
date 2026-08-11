@@ -585,6 +585,21 @@ the managed lane. The retained current WVO and WVA host-container writers have
 drifted from the pinned candidates, so repinning requires reconciliation and
 independent dual-host evidence. T2 remains `managed-normal`.
 
+Decision 0520 advances the first supported binary-tool execution subset. The
+paired helper now verifies the pinned WvDump application before its no-argument
+self-test, canonical Sum report, and deterministic invalid-file report; invokes
+the qualified native WVA assembler to produce the exact 218-byte WVO fixture;
+and executes digest-bound WVO verification and inspection while proving input
+preservation. These six cases grow the helper to 102 artifacts and 174 cases and
+bring cumulative broad-host removal to 180 managed calls. Historical product
+digests remain under manifest/reconstruction/launcher ownership. Current Stage
+0 writer tests instead require repeated byte equality, independent application
+verification, current CLI equality, accepted/rejected native execution, and no
+CLR loading. This preserves recovery evidence without forcing an evolving
+backend to reproduce an older qualified container. Native capability refusal,
+missing/empty-resource behavior, the pinned WVO self-test, Stage 0 object-report
+oracles, and the WVA/linker behavior block keep T2 `managed-normal`.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

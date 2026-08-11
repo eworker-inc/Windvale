@@ -251,7 +251,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=101 cases=168' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=102 cases=174' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -1063,43 +1063,6 @@ if [ "$WVDUMP_UNAUTHORIZED_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVDUMP_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-WVDUMP_CORE_RUN_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVDUMP_CORE_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 10000000)
-printf '%s\n' "$WVDUMP_CORE_RUN_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
-WVDUMP_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVDUMP_CORE_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 10000000 \
-    -- "$SUM_MODULE")
-printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'wvdump 1' >/dev/null
-printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'module version=1.11 profile=portable name="Sum\u02C9data"' >/dev/null
-printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'data index=0 name="Values" type=i32_array elements=4' >/dev/null
-printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'instruction function=1 offset=141 opcode=call operand=0' >/dev/null
-printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'export index=0 name="Main" kind=function target=1' >/dev/null
-printf '%s\n' "$WVDUMP_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
-WVDUMP_INVALID_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVDUMP_CORE_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" 2>&1)
-printf '%s\n' "$WVDUMP_INVALID_OUTPUT" | grep -F 'Badˉmagic sections=0 offset=0' >/dev/null
-printf '%s\n' "$WVDUMP_INVALID_OUTPUT" | grep -F 'Result: 2' >/dev/null
-
 MISSING_HOSTED_FILE="$ARTIFACTS/__windvale_missing_hosted_resource__.wvb"
 if [ -e "$MISSING_HOSTED_FILE" ]; then
     echo "The missing-file verifier path unexpectedly exists: $MISSING_HOSTED_FILE" >&2
@@ -1159,42 +1122,11 @@ WVO_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
     --max-steps 10000000)
 printf '%s\n' "$WVO_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-WVO_SAMPLE_OUTPUT=$(dotnet "$TOOL_DLL" \
-    assemble "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" \
-    -o "$WVO_SAMPLE")
-printf '%s\n' "$WVO_SAMPLE_OUTPUT" | grep -F "Assembled: $WVO_SAMPLE" >/dev/null
-
 WVO_HASH=$(sha256sum "$WVO_SAMPLE" | awk '{print $1}')
 if [ "$WVO_HASH" != '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85' ]; then
     echo "The WVO inspector input has unexpected bytes: $WVO_HASH" >&2
     exit 1
 fi
-
-WVO_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVO_CORE_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 10000000 \
-    -- verify "$WVO_SAMPLE")
-printf '%s\n' "$WVO_HOSTED_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
-printf '%s\n' "$WVO_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
-WVO_HOSTED_INSPECTION=$(dotnet "$TOOL_DLL" \
-    run "$WVO_CORE_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 10000000 \
-    -- inspect "$WVO_SAMPLE")
-printf '%s\n' "$WVO_HOSTED_INSPECTION" | grep -F 'Sections (2)' >/dev/null
-printf '%s\n' "$WVO_HOSTED_INSPECTION" | grep -F 'Console_write binding=Import' >/dev/null
-printf '%s\n' "$WVO_HOSTED_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' >/dev/null
-printf '%s\n' "$WVO_HOSTED_INSPECTION" | grep -F 'Result: 0' >/dev/null
 
 WVO_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" object-verify "$WVO_SAMPLE")
 printf '%s\n' "$WVO_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null

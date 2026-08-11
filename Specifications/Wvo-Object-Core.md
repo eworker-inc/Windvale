@@ -14,6 +14,15 @@ list omitted `Wvo-Object-Verification.wv` and was no longer a current-product
 contract. Hosted verification/inspection behavior, malformed inputs, and WVO
 sample construction remain separate execution evidence.
 
+Decision 0520 transfers successful hosted verification and inspection of the
+canonical 218-byte assembler object to the digest-bound native applications.
+The paired helper invokes the qualified native WVA assembler, requires object
+SHA-256 `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`,
+checks the exact native reports, and proves the object unchanged. The pinned
+application's no-argument self-test currently returns 1, and native empty or
+missing resource failures do not yet reproduce the reference-runtime reports;
+those calls and the independent Stage 0 object-report oracles remain explicit.
+
 This module is an object verifier and inspector, not an assembler, linker, or object-file writer. Moving the source from `Examples/Foundation` into `Object-Model/Windvale` makes its ownership explicit without changing WVO 1.0.
 
 ## Pure boundaries

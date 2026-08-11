@@ -259,7 +259,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=101 cases=168'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=102 cases=174'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -1438,33 +1438,6 @@ if ($LASTEXITCODE -ne 3 -or ($WvDumpUnauthorizedOutput -join "`n") -notmatch 'WV
     throw 'The Seed CLI did not refuse ungranted WvDump hosted capabilities.'
 }
 
-$WvDumpCoreRunOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities
-if ($LASTEXITCODE -ne 0 -or $WvDumpCoreRunOutput -notcontains 'Result: 0') {
-    throw 'The Seed CLI did not produce Result: 0 for Wv-Dump-Core.wvb.'
-}
-
-$WvDumpHostedOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities -- $SumModule
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvDumpHostedOutput -notcontains 'wvdump 1' -or
-    $WvDumpHostedOutput -notcontains 'module version=1.11 profile=portable name="Sum\u02C9data"' -or
-    $WvDumpHostedOutput -notcontains 'data index=0 name="Values" type=i32_array elements=4' -or
-    $WvDumpHostedOutput -notcontains 'instruction function=1 offset=141 opcode=call operand=0' -or
-    $WvDumpHostedOutput -notcontains 'export index=0 name="Main" kind=function target=1' -or
-    $WvDumpHostedOutput -notcontains 'Result: 0'
-) {
-    throw 'The Windvale-written WvDump core did not produce the expected real-module report.'
-}
-
-$WvDumpInvalidOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
-if (
-    $LASTEXITCODE -ne 0 -or
-    ($WvDumpInvalidOutput -join "`n") -notmatch 'Badˉmagic sections=0 offset=0' -or
-    $WvDumpInvalidOutput -notcontains 'Result: 2'
-) {
-    throw 'The Windvale-written WvDump core did not route an invalid-file diagnostic separately.'
-}
-
 $MissingHostedFile = Join-Path $Artifacts '__windvale_missing_hosted_resource__.wvb'
 if (Test-Path -LiteralPath $MissingHostedFile) {
     throw "The missing-file verifier path unexpectedly exists: $MissingHostedFile"
@@ -1498,36 +1471,9 @@ if ($LASTEXITCODE -ne 0 -or $WvoSelfTestOutput -notcontains 'Result: 0') {
     throw 'The Windvale object core self-test did not return Result: 0.'
 }
 
-$WvoSampleOutput = dotnet $ToolDll assemble `
-    (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') `
-    -o $WvoSample
-if ($LASTEXITCODE -ne 0 -or $WvoSampleOutput -notcontains "Assembled: $WvoSample") {
-    throw 'The Stage 0 assembler did not create the WVO inspector input.'
-}
-
 $WvoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WvoSample).Hash.ToLowerInvariant()
 if ($WvoHash -ne '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85') {
     throw "The WVO inspector input has unexpected bytes: $WvoHash"
-}
-
-$WvoHostedOutput = dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- verify $WvoSample
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvoHostedOutput -notcontains 'Verified object: X86ˉ64' -or
-    $WvoHostedOutput -notcontains 'Result: 0'
-) {
-    throw 'The Windvale object core did not verify the expected object.'
-}
-
-$WvoHostedInspection = (dotnet $ToolDll run $WvoCoreModule @WvoCapabilities -- inspect $WvoSample) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvoHostedInspection -notmatch 'Sections \(2\)' -or
-    $WvoHostedInspection -notmatch 'Console_write binding=Import' -or
-    $WvoHostedInspection -notmatch 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' -or
-    $WvoHostedInspection -notmatch 'Result: 0'
-) {
-    throw 'The Windvale object core did not inspect the expected records.'
 }
 
 $WvoVerifyOutput = dotnet $ToolDll object-verify $WvoSample

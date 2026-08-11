@@ -392,6 +392,27 @@ writer reconciliation, independent Linux execution, remaining broad-suite
 transfers, GitHub cutover, grouped qualification, promotion, and recovery
 retirement remain open.
 
+Current T2 WvDump and WVO read-only execution transfer:
+[Decision 0520](../Decisions/0520-Native-Wvdump-And-Wvo-Read-Only-Execution-Transfer.md)
+extends the paired helper from 168 to 174 cases and from 101 to 102 exact
+artifacts. It verifies the pinned host WvDump identity and owns its no-argument
+self-test, canonical Sum report, and invalid-file report; invokes the qualified
+native WVA assembler to construct the exact 218-byte WVO fixture; and runs its
+digest-bound native verification and inspection while proving input
+preservation. One uninterrupted current-Windows helper run passes in 1,197.8
+seconds. This removes six managed calls from each broad host script, 180
+cumulatively. Historical WvDump, WVO, and WVA application identities remain
+under their manifests, reconstruction owners, and digest-bound launchers.
+Current Stage 0 writer tests now own deterministic repeated reconstruction,
+independent application verification, current CLI equality, accepted/rejected
+native execution, and absence of CLR loading rather than duplicating historical
+digests. Capability refusal, missing and empty resource failures, the pinned WVO
+no-argument self-test, Stage 0 object-report oracles, and all WVA/linker behavior
+remain managed. T2 therefore remains `managed-normal`; the three-normal plus
+nine-recovery direct-entry inventory is unchanged. Independent Linux execution,
+remaining broad-suite transfers, GitHub cutover, grouped qualification,
+promotion, and recovery retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

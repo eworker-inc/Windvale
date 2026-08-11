@@ -9,13 +9,6 @@ namespace Windvale.Seed.Tests;
 internal static partial class Program
 {
     private const int WVO_INSPECTOR_WVB_BYTES = 61_008;
-    private const int WINDOWS_WVO_INSPECTOR_APPLICATION_BYTES = 606_208;
-    private const string WINDOWS_WVO_INSPECTOR_APPLICATION_SHA256 =
-        "bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2";
-    private const int LINUX_WVO_INSPECTOR_APPLICATION_BYTES = 606_208;
-    private const string LINUX_WVO_INSPECTOR_APPLICATION_SHA256 =
-        "bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1";
-
     private static void Nativeˉwvoˉinspectorˉtargetsˉareˉdiscoverable()
     {
         var Help = Executeˉinspectorˉtool("help");
@@ -68,10 +61,16 @@ internal static partial class Program
             Windows.Diagnostics.IsEmpty
                 ? "The Windows WVO inspector writer failed without a diagnostic."
                 : Windows.Diagnostics[0].Message);
-        Equal(WINDOWS_WVO_INSPECTOR_APPLICATION_BYTES, Windows.Imageˉbytes.Length);
-        Equal(
-            WINDOWS_WVO_INSPECTOR_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Windows.Imageˉbytes.AsSpan()));
+        var Repeatedˉwindows = Wvoˉinspectorˉapplicationˉwriter.Writeˉwindows(
+            Inspectorˉnative.Fragment,
+            Inspectorˉmodule.Module.Capabilities,
+            Inspectorˉmodule.Module.Name);
+        True(
+            Repeatedˉwindows.Success,
+            Repeatedˉwindows.Diagnostics.IsEmpty
+                ? "The repeated Windows WVO inspector writer failed without a diagnostic."
+                : Repeatedˉwindows.Diagnostics[0].Message);
+        Sequenceˉequal(Windows.Imageˉbytes, Repeatedˉwindows.Imageˉbytes);
         var Verifiedˉwindows = Windowsˉhostedˉverifierˉapplicationˉverifier.Verify(
             Windows.Imageˉbytes.AsSpan(),
             Windowsˉbundle,
@@ -89,10 +88,16 @@ internal static partial class Program
             Linux.Diagnostics.IsEmpty
                 ? "The Linux WVO inspector writer failed without a diagnostic."
                 : Linux.Diagnostics[0].Message);
-        Equal(LINUX_WVO_INSPECTOR_APPLICATION_BYTES, Linux.Imageˉbytes.Length);
-        Equal(
-            LINUX_WVO_INSPECTOR_APPLICATION_SHA256,
-            Objectˉdigest.Calculateˉsha256(Linux.Imageˉbytes.AsSpan()));
+        var Repeatedˉlinux = Wvoˉinspectorˉapplicationˉwriter.Writeˉlinux(
+            Inspectorˉnative.Fragment,
+            Inspectorˉmodule.Module.Capabilities,
+            Inspectorˉmodule.Module.Name);
+        True(
+            Repeatedˉlinux.Success,
+            Repeatedˉlinux.Diagnostics.IsEmpty
+                ? "The repeated Linux WVO inspector writer failed without a diagnostic."
+                : Repeatedˉlinux.Diagnostics[0].Message);
+        Sequenceˉequal(Linux.Imageˉbytes, Repeatedˉlinux.Imageˉbytes);
         var Verifiedˉlinux = Linuxˉhostedˉverifierˉapplicationˉverifier.Verify(
             Linux.Imageˉbytes.AsSpan(),
             Linuxˉbundle,

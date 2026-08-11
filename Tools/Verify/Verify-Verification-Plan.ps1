@@ -726,7 +726,8 @@ $NativeCases = @(
         Name = 'Windvale assembler'
         Paths = @(
             'Assembler/Windvale/Wva-Assembler-Core.wv',
-            'Windvale-Wva-Assembler.wvproj'
+            'Windvale-Wva-Assembler.wvproj',
+            'Examples/Assembler/Hello-Object.wva'
         )
         Suites = @('assembler-rejections', 'assembler-golden', 'wva-differential')
         Gaps = @('seed-native-front-door')
