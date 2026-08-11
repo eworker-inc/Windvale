@@ -9,7 +9,6 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Candidate=%RepositoryRoot%\Artifacts\Native-Console-Application-Verifier-Candidate"
-set "Fixture=%RepositoryRoot%\Artifacts\Native-Aot-Composition-Probe\Return-42.exe"
 set /a Tests=0
 set /a Passed=0
 
@@ -42,6 +41,16 @@ set "UsageErr="
 set "UsageExpected="
 set "EmptySnapshot=%TestDirectory%\Empty.bin"
 type nul >"%EmptySnapshot%"
+set "Probe=%TestDirectory%\Aot-Probe"
+mkdir "%Probe%" || goto :failed
+call "%RepositoryRoot%\Tools\Native\Construct-Aot-Composition-Probe.cmd" "%Probe%" ^
+    >"%TestDirectory%\Probe.out" 2>"%TestDirectory%\Probe.err"
+if errorlevel 1 goto :failed
+>"%TestDirectory%\Probe.expected" echo native AOT composition probe status=Complete artifacts=6
+fc /b "%TestDirectory%\Probe.out" "%TestDirectory%\Probe.expected" >nul
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Probe.err") do if not "%%~zF"=="0" goto :failed
+set "Fixture=%Probe%\Return-42.exe"
 
 call "%RepositoryRoot%\Tools\Native\Construct-Console-Verifier-Reconstruction.cmd" "%TestDirectory%" >"%TestDirectory%\Construct.out" 2>"%TestDirectory%\Construct.err"
 if errorlevel 1 goto :failed

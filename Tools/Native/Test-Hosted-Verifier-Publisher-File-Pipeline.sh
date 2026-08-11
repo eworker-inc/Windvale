@@ -14,7 +14,6 @@ promoter_candidate="$repository_root/Artifacts/Native-Hosted-Verifier-Publisher-
 wvb_publisher_candidate="$repository_root/Artifacts/Native-Wvb-Publisher-Candidate"
 publisher_tools="$construction/linux-x64"
 verifier_candidate="$repository_root/Artifacts/Native-Hosted-Verifier-Application-Candidate/linux-x64-wvverify.elf"
-portable_wvb_candidate="$repository_root/Artifacts/Byte-Construction.wvb"
 original_temporary_root=${TMPDIR:-/tmp}
 test_directory=$(mktemp -d \
     "$original_temporary_root/windvale-publisher-file-test.XXXXXXXX") || exit 1
@@ -100,7 +99,7 @@ fail() {
 
 total=$((total + 1))
 check_file "$construction/SHA256SUMS" 5064 \
-    ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb \
+    38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d \
     'construction inventory' || fail
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || fail
 "$repository_root/Tools/Native/Build-Wvb.sh" \
@@ -405,10 +404,10 @@ total=$((total + 1))
 check_empty "$test_directory/Reject.out" 'metadata rejection wrote standard output' || fail
 check_empty "$test_directory/Reject.err" 'metadata rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 5064 \
-    ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb \
+    38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d \
     'rejected metadata input' || fail
 check_file "$test_directory/Sentinel.wvhv" 5064 \
-    ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb \
+    38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d \
     'preserved metadata destination' || fail
 cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
 "$publisher_tools/wvhostverifierpublisherbaseruntime.elf" \
@@ -416,7 +415,7 @@ cp -- "$construction/SHA256SUMS" "$test_directory/Sentinel.wvhr" || fail
     > "$test_directory/Reject.out" 2> "$test_directory/Reject.err"
 [[ $? -eq 2 ]] || fail
 check_file "$test_directory/Sentinel.wvhr" 5064 \
-    ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb \
+    38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d \
     'preserved runtime destination' || fail
 pass 'base tools reject malformed input and preserve destinations'
 
@@ -432,11 +431,12 @@ total=$((total + 1))
 check_empty "$test_directory/Alias.out" 'alias rejection wrote standard output' || fail
 check_empty "$test_directory/Alias.err" 'alias rejection wrote a diagnostic' || fail
 check_file "$test_directory/Invalid.wvsq" 5064 \
-    ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb \
+    38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d \
     'preserved alias input' || fail
 pass 'base tools reject exact path aliases'
 
 total=$((total + 1))
+phase='Linux publisher installation'
 "$repository_root/Tools/Native/Install-Hosted-Verifier-Publisher.sh" \
     "$test_directory/Publisher.elf" "$test_directory/Installed-Publisher.elf" \
     > "$test_directory/Install-Publisher-Linux.out" \
@@ -444,7 +444,7 @@ total=$((total + 1))
 check_empty "$test_directory/Install-Publisher-Linux.err" \
     'Linux publisher installation wrote a diagnostic' || fail
 check_file "$test_directory/Install-Publisher-Linux.out" 117 \
-    72e2786587919e14f707b437166f86ae18dca24869249c8c541b9836d6ace397 \
+    3aef3f511812af7ab26f11000c1e1e279ffe9a164ac9a526341b419179e8bd84 \
     'Linux publisher installation report' || fail
 check_file "$test_directory/Installed-Publisher.elf" 254965 \
     510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac \
@@ -486,6 +486,17 @@ pass 'promoted current-host publisher execution'
 
 total=$((total + 1))
 phase='current-host WVB publisher execution'
+portable_wvb_candidate="$test_directory/Byte-Construction.wvb"
+"$repository_root/Tools/Native/Build-Wvb.sh" \
+    "$repository_root/Foundation/Byte-Construction.wvproj" \
+    "$portable_wvb_candidate" \
+    > "$test_directory/Byte-Construction-Build.out" \
+    2> "$test_directory/Byte-Construction-Build.err" || fail
+check_empty "$test_directory/Byte-Construction-Build.err" \
+    'native Byte Construction build wrote a diagnostic' || fail
+check_file "$portable_wvb_candidate" 2001 \
+    3be0d06b8f4e7745dd9ffd9f325804d69ce524ac7ff6341b1e7b38037f6dd6f8 \
+    'native-built portable WVB' || fail
 "$wvb_publisher_candidate/linux-x64-wvpublish.elf" \
     "$portable_wvb_candidate" "$test_directory/Published-Portable.wvb" \
     > "$test_directory/Wvb-Publisher-Execute.out" \

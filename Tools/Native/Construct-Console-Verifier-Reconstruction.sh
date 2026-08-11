@@ -44,7 +44,7 @@ verify_file "$hosted_toolset/SHA256SUMS" \
     'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" \
-    5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb \
+    5064 38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d \
     'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9437 \
@@ -170,6 +170,7 @@ construct_target linux 2 \
 verify_file "$linux_application" \
     1064960 c2700e5e68711d7b8e8a8f7e9573d87dfa27c3676a034a314310ef59045e5f1a \
     'Linux console-verifier application' || exit 1
+chmod +x "$linux_application" || exit 1
 [[ -x $linux_application ]] || {
     echo 'The Linux console-verifier application is not executable.' >&2
     exit 1

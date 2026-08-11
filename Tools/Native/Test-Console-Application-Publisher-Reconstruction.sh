@@ -9,7 +9,6 @@ fi
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 candidate="$repository_root/Artifacts/Native-Console-Application-Publisher-Candidate"
-aot_probe="$repository_root/Artifacts/Native-Aot-Composition-Probe"
 raw_lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 tests=0
 passed=0
@@ -130,9 +129,19 @@ check_equal "$test_directory/Console-Application-Publisher.elf" \
     "$candidate/linux-x64-wvappublish.elf" || fail
 pass 'exact native WVB, WVO, and paired publisher reconstruction'
 
-check_file "$aot_probe/Return-42.elf" 8304 \
+probe="$test_directory/Aot-Probe"
+mkdir -- "$probe" || fail
+"$script_directory/Construct-Aot-Composition-Probe.sh" "$probe" \
+    >"$test_directory/Probe.out" 2>"$test_directory/Probe.err" || fail
+printf '%s\n' 'native AOT composition probe status=Complete artifacts=6' \
+    >"$test_directory/Probe.expected" || fail
+check_equal "$test_directory/Probe.out" "$test_directory/Probe.expected" || fail
+[[ ! -s $test_directory/Probe.err ]] || fail
+fixture="$probe/Return-42.elf"
+
+check_file "$fixture" 8304 \
     fe525b84b9bf902677a5c7beb36872dfd72e7d6d0f12bfb5c95d491c4e1cd3f7 || fail
-cp -- "$aot_probe/Return-42.elf" \
+cp -- "$fixture" \
     "$test_directory/Subject.elf" || fail
 cp -- "$candidate/Console-Application-Publisher.wvb" \
     "$test_directory/Destination.elf" || fail
@@ -163,7 +172,7 @@ check_equal "$test_directory/Reject.err" "$test_directory/Reject.expected" || fa
 check_equal "$test_directory/Invalid.elf" \
     "$candidate/Console-Application-Publisher.wvb" || fail
 check_equal "$test_directory/Destination.elf" \
-    "$aot_probe/Return-42.elf" || fail
+    "$fixture" || fail
 [[ -z $(find "$test_directory" -maxdepth 1 -name '.wvpublish-*' -print -quit) ]] || fail
 pass 'current-host independent version-1 publication and rejected-input preservation'
 

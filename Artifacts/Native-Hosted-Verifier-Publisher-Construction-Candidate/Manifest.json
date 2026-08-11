@@ -8,7 +8,7 @@
   "qualification": "pending",
   "construction": "verified-digest-bound-front-door",
   "sha256SumsBytes": 5064,
-  "sha256SumsSha256": "ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb",
+  "sha256SumsSha256": "38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d",
   "commands": [
     {
       "name": "wvhostverifieridentity",
@@ -95,14 +95,14 @@
       "name": "publisher-construction-request",
       "path": "Publisher-Construction-Request.wvb",
       "bytes": 36046,
-      "sha256": "3dbed45aeb650591698b525e9db6d64046f5daa5c861d6e14114e89327a5de45",
+      "sha256": "feac4723e8f777c7a280053d83782558aad0995d77367dafebfc2ef42e4887bb",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Construction-Request.wvproj"
     },
     {
       "name": "publisher-construction-request-tool",
       "path": "Publisher-Construction-Request-Tool.wvb",
       "bytes": 37555,
-      "sha256": "1769e3bf77af756dc48fa7c4ff1ec4988fbccd2a97d463d7505d619b51524452",
+      "sha256": "5d75e18ed4436e8bcb490ec19ded320aa9f6cf06a68521ec0e16fe9b064eaab2",
       "sourceProject": "Windvale-Native-Hosted-Verifier-Publisher-Construction-Request-Tool.wvproj"
     },
     {
@@ -284,7 +284,7 @@
       "path": "windows-x64/wvhostverifierconstructrequest.exe",
       "target": "windows-x64-native-hosted-tool-v1",
       "bytes": 289280,
-      "sha256": "14d153bdcf38eaf299b5da3b55b5f7115cca4dde6b56f9b89a60d575275b3903",
+      "sha256": "a3ddc158450e494680a3f7f2b4cff373d3ed1af07934a6b5e24308b49a39e41e",
       "sourceArtifact": "Publisher-Construction-Request-Tool.wvb"
     },
     {
@@ -292,7 +292,7 @@
       "path": "linux-x64/wvhostverifierconstructrequest.elf",
       "target": "linux-x64-native-hosted-tool-v1",
       "bytes": 290816,
-      "sha256": "b35f6415d099cd0dfb84f0a538cd63f345c4a90c4ac22dd857aac49149e77ac9",
+      "sha256": "4695ff974690ce6166d5c6c4964c910ef85eb09c3ff39a65f8e3ac73e85c1fd3",
       "sourceArtifact": "Publisher-Construction-Request-Tool.wvb"
     },
     {

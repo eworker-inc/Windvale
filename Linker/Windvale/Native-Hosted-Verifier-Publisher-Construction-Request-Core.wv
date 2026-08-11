@@ -52,21 +52,21 @@ fn Structureˉisˉvalid(Input: bytes) -> bool {
         Objectˉbytes = 1319377u32;
         Mainˉoffset = 0u32;
         Identityˉbytes = 1491227u32;
-        if Target == 2u32 { Identityˉbytes = 1487314u32; }
+        if Target == 2u32 { Identityˉbytes = 1487238u32; }
     }
     if Variant == 3u32 {
         Moduleˉbytes = 41365u32;
         Objectˉbytes = 408284u32;
         Mainˉoffset = 0u32;
         Identityˉbytes = 461729u32;
-        if Target == 2u32 { Identityˉbytes = 457816u32; }
+        if Target == 2u32 { Identityˉbytes = 457740u32; }
     }
     if Variant == 4u32 {
         Moduleˉbytes = 115107u32;
         Objectˉbytes = 1139440u32;
         Mainˉoffset = 18902u32;
         Identityˉbytes = 1266627u32;
-        if Target == 2u32 { Identityˉbytes = 1262714u32; }
+        if Target == 2u32 { Identityˉbytes = 1262638u32; }
     }
     var Beginˉoffset: u32 = 789u32;
     var Applyˉoffset: u32 = 0u32;

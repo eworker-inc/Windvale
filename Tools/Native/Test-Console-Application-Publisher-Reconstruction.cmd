@@ -9,7 +9,6 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Candidate=%RepositoryRoot%\Artifacts\Native-Console-Application-Publisher-Candidate"
-set "AotProbe=%RepositoryRoot%\Artifacts\Native-Aot-Composition-Probe"
 set "RawLowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 set /a Tests=0
 set /a Passed=0
@@ -87,9 +86,21 @@ call :check_equal "%TestDirectory%\Console-Application-Publisher.elf" "%Candidat
 if errorlevel 1 goto :failed
 call :pass "exact native WVB, WVO, and paired publisher reconstruction"
 
-call :check_file "%AotProbe%\Return-42.exe" 2560 8f2c3389dafa40c0231a0f5aeead3db5570697d54874f324a81f84a2d5b16eb6
+set "Probe=%TestDirectory%\Aot-Probe"
+mkdir "%Probe%" || goto :failed
+call "%RepositoryRoot%\Tools\Native\Construct-Aot-Composition-Probe.cmd" "%Probe%" ^
+    >"%TestDirectory%\Probe.out" 2>"%TestDirectory%\Probe.err"
 if errorlevel 1 goto :failed
-copy /b "%AotProbe%\Return-42.exe" "%TestDirectory%\Subject.exe" >nul
+>"%TestDirectory%\Probe.expected" echo native AOT composition probe status=Complete artifacts=6
+call :check_equal "%TestDirectory%\Probe.out" "%TestDirectory%\Probe.expected"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Probe.err"
+if errorlevel 1 goto :failed
+set "Fixture=%Probe%\Return-42.exe"
+
+call :check_file "%Fixture%" 2560 8f2c3389dafa40c0231a0f5aeead3db5570697d54874f324a81f84a2d5b16eb6
+if errorlevel 1 goto :failed
+copy /b "%Fixture%" "%TestDirectory%\Subject.exe" >nul
 if errorlevel 1 goto :failed
 copy /b "%Candidate%\Console-Application-Publisher.wvb" "%TestDirectory%\Destination.exe" >nul
 if errorlevel 1 goto :failed
@@ -116,7 +127,7 @@ call :check_file "%TestDirectory%\Reject.err" 54 39db034713225109f62c272db447d75
 if errorlevel 1 goto :failed
 call :check_equal "%TestDirectory%\Invalid.exe" "%Candidate%\Console-Application-Publisher.wvb"
 if errorlevel 1 goto :failed
-call :check_equal "%TestDirectory%\Destination.exe" "%AotProbe%\Return-42.exe"
+call :check_equal "%TestDirectory%\Destination.exe" "%Fixture%"
 if errorlevel 1 goto :failed
 for /f "usebackq delims=" %%S in (`dir /b /a "%TestDirectory%\.wvpublish-*" 2^>nul`) do goto :failed
 call :pass "current-host independent version-1 publication and rejected-input preservation"

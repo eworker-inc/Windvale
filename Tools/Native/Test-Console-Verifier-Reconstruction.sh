@@ -9,7 +9,6 @@ fi
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 candidate="$repository_root/Artifacts/Native-Console-Application-Verifier-Candidate"
-fixture="$repository_root/Artifacts/Native-Aot-Composition-Probe/Return-42.elf"
 tests=0
 passed=0
 
@@ -76,6 +75,15 @@ printf '%s\n' 'Usage: ./Tools/Native/Construct-Console-Verifier-Reconstruction.s
 check_equal "$test_directory/Usage.err" "$test_directory/Usage.expected" || fail
 empty_snapshot="$test_directory/Empty.bin"
 : > "$empty_snapshot" || fail
+probe="$test_directory/Aot-Probe"
+mkdir -- "$probe" || fail
+"$script_directory/Construct-Aot-Composition-Probe.sh" "$probe" \
+    >"$test_directory/Probe.out" 2>"$test_directory/Probe.err" || fail
+printf '%s\n' 'native AOT composition probe status=Complete artifacts=6' \
+    >"$test_directory/Probe.expected" || fail
+check_equal "$test_directory/Probe.out" "$test_directory/Probe.expected" || fail
+[[ ! -s $test_directory/Probe.err ]] || fail
+fixture="$probe/Return-42.elf"
 
 "$script_directory/Construct-Console-Verifier-Reconstruction.sh" "$test_directory" \
     >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" || fail
