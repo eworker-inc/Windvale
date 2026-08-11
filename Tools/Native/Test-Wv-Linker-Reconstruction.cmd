@@ -9,7 +9,6 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Candidate=%RepositoryRoot%\Artifacts\Native-Wv-Linker-Candidate"
-set "FixtureRoot=%RepositoryRoot%\Artifacts\Native-Linker-Candidate"
 set /a Tests=0
 set /a Passed=0
 
@@ -52,8 +51,22 @@ call :check_equal "%TestDirectory%\Wv-Linker.elf" "%Candidate%\Wv-Linker.elf"
 if errorlevel 1 goto :failed
 call :pass "exact independent paired reconstruction"
 
-set "Main=%FixtureRoot%\Main.wvo"
-set "Provider=%FixtureRoot%\Provider.wvo"
+set "Main=%TestDirectory%\Main.wvo"
+set "Provider=%TestDirectory%\Provider.wvo"
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Examples\Assembler\Hello-Object.wva" "%Main%" ^
+    >"%TestDirectory%\Main-Assemble.out" 2>"%TestDirectory%\Main-Assemble.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Main-Assemble.err") do if not "%%~zF"=="0" goto :failed
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Examples\Linker\Console-Provider.wva" "%Provider%" ^
+    >"%TestDirectory%\Provider-Assemble.out" 2>"%TestDirectory%\Provider-Assemble.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Provider-Assemble.err") do if not "%%~zF"=="0" goto :failed
+call :check_file "%Main%" 218 992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85
+if errorlevel 1 goto :failed
+call :check_file "%Provider%" 91 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab
+if errorlevel 1 goto :failed
 set "Application=%TestDirectory%\Wv-Linker.exe"
 set "Image=%TestDirectory%\Application.bin"
 set "Map=%TestDirectory%\Application.wvmap"

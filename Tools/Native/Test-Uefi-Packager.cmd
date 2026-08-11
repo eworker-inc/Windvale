@@ -8,22 +8,35 @@ if not "%~1"=="" (
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
-set "LinkerArtifacts=%RepositoryRoot%\Artifacts\Native-Linker-Candidate"
 set "PackagerArtifacts=%RepositoryRoot%\Artifacts\Native-Uefi-Packager-Candidate"
-call :check_file "%LinkerArtifacts%\Main.wvo" 218 992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85 "main WVO"
-if errorlevel 1 exit /b 1
-call :check_file "%LinkerArtifacts%\Provider.wvo" 91 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab "provider WVO"
-if errorlevel 1 exit /b 1
 
 :allocate
 set "TestDirectory=%TEMP%\windvale-native-uefi-packager-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TestDirectory%" goto :allocate
 mkdir "%TestDirectory%" || exit /b 1
 set "Result=1"
+set "Main=%TestDirectory%\Main.wvo"
+set "Provider=%TestDirectory%\Provider.wvo"
+
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Examples\Assembler\Hello-Object.wva" "%Main%" ^
+    >"%TestDirectory%\Main-Assemble.out" 2>"%TestDirectory%\Main-Assemble.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Main-Assemble.err" "main WVO assembly wrote a diagnostic"
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+    "%RepositoryRoot%\Examples\Linker\Console-Provider.wva" "%Provider%" ^
+    >"%TestDirectory%\Provider-Assemble.out" 2>"%TestDirectory%\Provider-Assemble.err"
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Provider-Assemble.err" "provider WVO assembly wrote a diagnostic"
+if errorlevel 1 goto :failed
+call :check_file "%Main%" 218 992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85 "main WVO"
+if errorlevel 1 goto :failed
+call :check_file "%Provider%" 91 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab "provider WVO"
+if errorlevel 1 goto :failed
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main ^
-    "%TestDirectory%\Native.bin" "%LinkerArtifacts%\Main.wvo" ^
-    "%LinkerArtifacts%\Provider.wvo" ^
+    "%TestDirectory%\Native.bin" "%Main%" "%Provider%" ^
     >"%TestDirectory%\Link.out" 2>"%TestDirectory%\Link.err"
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Link.err" "native linking wrote a diagnostic"
@@ -123,7 +136,7 @@ call :cleanup_files
 exit /b 1
 
 :cleanup_files
-for %%F in (Native.bin Link.out Link.err Application.efi Package.out Package.err Application-Again.efi Repeat.out Repeat.err Rejected.efi Invalid.out Invalid.err) do (
+for %%F in (Main.wvo Main-Assemble.out Main-Assemble.err Provider.wvo Provider-Assemble.out Provider-Assemble.err Native.bin Link.out Link.err Application.efi Package.out Package.err Application-Again.efi Repeat.out Repeat.err Rejected.efi Invalid.out Invalid.err) do (
     if exist "%TestDirectory%\%%F" del /f /q "%TestDirectory%\%%F" >nul 2>nul
 )
 rmdir "%TestDirectory%" >nul 2>nul

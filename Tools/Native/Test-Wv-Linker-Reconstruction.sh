@@ -9,7 +9,6 @@ fi
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 candidate="$repository_root/Artifacts/Native-Wv-Linker-Candidate"
-fixture_root="$repository_root/Artifacts/Native-Linker-Candidate"
 tests=0
 passed=0
 
@@ -86,8 +85,20 @@ check_equal "$test_directory/Wv-Linker.exe" "$candidate/Wv-Linker.exe" || fail
 check_equal "$test_directory/Wv-Linker.elf" "$candidate/Wv-Linker.elf" || fail
 pass 'exact independent paired reconstruction'
 
-main="$fixture_root/Main.wvo"
-provider="$fixture_root/Provider.wvo"
+main="$test_directory/Main.wvo"
+provider="$test_directory/Provider.wvo"
+"$script_directory/Assemble-Wva.sh" \
+    "$repository_root/Examples/Assembler/Hello-Object.wva" "$main" \
+    >"$test_directory/Main-Assemble.out" 2>"$test_directory/Main-Assemble.err" || fail
+[[ ! -s $test_directory/Main-Assemble.err ]] || fail
+"$script_directory/Assemble-Wva.sh" \
+    "$repository_root/Examples/Linker/Console-Provider.wva" "$provider" \
+    >"$test_directory/Provider-Assemble.out" 2>"$test_directory/Provider-Assemble.err" || fail
+[[ ! -s $test_directory/Provider-Assemble.err ]] || fail
+check_file "$main" 218 \
+    992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85 || fail
+check_file "$provider" 91 \
+    486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab || fail
 application="$test_directory/Wv-Linker.elf"
 image="$test_directory/Application.bin"
 map="$test_directory/Application.wvmap"

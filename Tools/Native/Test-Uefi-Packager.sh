@@ -8,7 +8,6 @@ fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
-linker_artifacts="$repository_root/Artifacts/Native-Linker-Candidate"
 packager_artifacts="$repository_root/Artifacts/Native-Uefi-Packager-Candidate"
 temporary_root=${TMPDIR:-/tmp}
 test_directory=$(mktemp -d "$temporary_root/windvale-native-uefi-packager.XXXXXXXX") || exit 1
@@ -42,13 +41,25 @@ check_file() {
     [[ $actual_sha256 == "$expected_sha256" ]] || fail "$label digest differs"
 }
 
-check_file "$linker_artifacts/Main.wvo" 218 \
+main="$test_directory/Main.wvo"
+provider="$test_directory/Provider.wvo"
+"$script_directory/Assemble-Wva.sh" \
+    "$repository_root/Examples/Assembler/Hello-Object.wva" "$main" \
+    >"$test_directory/Main-Assemble.out" 2>"$test_directory/Main-Assemble.err" ||
+    fail 'main WVO assembly failed'
+[[ ! -s $test_directory/Main-Assemble.err ]] || fail 'main WVO assembly wrote a diagnostic'
+"$script_directory/Assemble-Wva.sh" \
+    "$repository_root/Examples/Linker/Console-Provider.wva" "$provider" \
+    >"$test_directory/Provider-Assemble.out" 2>"$test_directory/Provider-Assemble.err" ||
+    fail 'provider WVO assembly failed'
+[[ ! -s $test_directory/Provider-Assemble.err ]] || fail 'provider WVO assembly wrote a diagnostic'
+check_file "$main" 218 \
     992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85 'main WVO'
-check_file "$linker_artifacts/Provider.wvo" 91 \
+check_file "$provider" 91 \
     486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab 'provider WVO'
 
 "$script_directory/Link-Wvo.sh" 0 Main "$test_directory/Native.bin" \
-    "$linker_artifacts/Main.wvo" "$linker_artifacts/Provider.wvo" \
+    "$main" "$provider" \
     >"$test_directory/Link.out" 2>"$test_directory/Link.err" || fail 'native linking failed'
 [[ ! -s $test_directory/Link.err ]] || fail 'native linking wrote a diagnostic'
 grep -Fx 'entry name=Main address=0' "$test_directory/Link.out" >/dev/null ||
