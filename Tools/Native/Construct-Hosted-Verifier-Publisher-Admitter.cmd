@@ -17,7 +17,7 @@ set "FileInputLeaf=Native-X64-Windows-File-Input-Service.bin"
 set "DiagnosticLeaf=Native-X64-Windows-Diagnostic-Output-Service.bin"
 set "HostedStartup=Windows-X64-Hosted-Verifier.wvo"
 set "ApplicationBytes=570368"
-    set "ApplicationSha256=72d1164fe2f47e1bec00437bf63b317d39f1ed011cea7cf01a1343ce01547765"
+    set "ApplicationSha256=1407ed428387986e170b4d8394e9a0a6295408ef668d5d6e16d719102428dd4f"
 goto :target_ready
 
 :linux
@@ -28,7 +28,7 @@ set "FileInputLeaf=Native-X64-Linux-File-Input-Service.bin"
 set "DiagnosticLeaf=Native-X64-Linux-Diagnostic-Output-Service.bin"
 set "HostedStartup=Linux-X64-Hosted-Verifier.wvo"
 set "ApplicationBytes=569344"
-    set "ApplicationSha256=18777615d60e1279cb855b05ba03933bb65c9a622036dad2e954e3df683216e2"
+    set "ApplicationSha256=27fff54e139228586a6948aa234de60e5d4f5439e6b0616a55c057d4ad8661c2"
 
 :target_ready
 if exist "%Output%" (
@@ -43,13 +43,13 @@ set "Tools=%Construction%\windows-x64"
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "ConsumerRoot=%RepositoryRoot%\Linker\Reference\Consumers"
 
-call :verify_file "%HostedToolset%\SHA256SUMS" 6927 430171a9157560acb57e6f84aa772429b436059867892ee2408839057e0eeebc "hosted toolset inventory"
+call :verify_file "%HostedToolset%\SHA256SUMS" 6927 dc1899b252a8ad0f75eeee33cdec82d9cbbba40c7ba8115bb55aaad0b9dd00c8 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 5064 38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 5064 161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -67,7 +67,7 @@ call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TemporaryDirectory%\A
 if errorlevel 1 goto :cleanup
 findstr /b /c:"entry name=Main address=0" "%TemporaryDirectory%\Link.txt" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%TemporaryDirectory%\Admission.bin" 554354 0b34e2ac21a21ea7c726c7e75aa3479505023966713c30fd4502d12af9e0eba5 "publisher-admission fragment"
+call :verify_file "%TemporaryDirectory%\Admission.bin" 554354 7a91f2db5e4c42b88f696cd4ef7cc31eb668f88b811c856ef09c5819911fa453 "publisher-admission fragment"
 if errorlevel 1 goto :cleanup
 
 set "Phase=bundle-request"

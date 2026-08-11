@@ -21,7 +21,7 @@ internal static partial class Program
         var Contracts = new (string Name, int Bytes, string Sha256)[]
         {
             ("Identity-Request", 60_891,
-                "7a54fd5af2bb4694e35a411401fabc49448230f102d6a4bfd73c824625301c96"),
+                "4b9bdacacaead0b56f0fe5b624294b1375fdfa02ad59356b425906d5277adacc"),
             ("Structure-Request", 25_561,
                 "63496d90faac3ab91bc3f592c46c196d298cd5c6df836a0ee57f7a1feaa5fc02"),
             ("Construction-Request", 36_046,
@@ -32,7 +32,7 @@ internal static partial class Program
         var Tools = new (string Name, int Bytes, string Sha256)[]
         {
             ("Identity-Request", 63_684,
-                "acd451459776c593a49bffeda37f3e4fcfd82d2db978fe76d7838fbfe83c9d5b"),
+                "542ff016774e1dfe8b999f2a5b838aaa45946a44182a9e1f16e0174ffb12cb83"),
             ("Structure-Request", 26_931,
                 "9c59a9494554d54992ad5749e2a6b16ab431d39064e5955c658bb57a7180366f"),
             ("Construction-Request", 37_555,

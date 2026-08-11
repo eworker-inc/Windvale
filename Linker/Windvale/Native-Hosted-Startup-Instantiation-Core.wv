@@ -316,7 +316,7 @@ export fn Nativeˉhostedˉstartupˉinstantiate(Input: bytes) -> bytes {
         Objectˉbytes > 65536u32 || Targetˉpolicy > 1u32 {
         return Failure(Input, 4u32, 12u32);
     }
-    if Targetˉpolicy == 1u32 && Targetˉcount != 50u32 && Targetˉcount != 29u32 {
+    if Targetˉpolicy == 1u32 && Targetˉcount != 51u32 && Targetˉcount != 29u32 {
         return Failure(Input, 4u32, 28u32);
     }
     if Targetˉcount > (Total - 40u32) / 4u32 {
@@ -332,7 +332,7 @@ export fn Nativeˉhostedˉstartupˉinstantiate(Input: bytes) -> bytes {
             Bytesˉreadˉu32ˉlittle(Input, 40u32 + Index * 4u32);
         var Absentˉrunnerˉservice: bool = false;
         if Targetˉpolicy == 1u32 {
-            if Targetˉcount == 50u32 && (Index == 30u32 || Index == 32u32) {
+            if Targetˉcount == 51u32 && (Index == 30u32 || Index == 32u32) {
                 Absentˉrunnerˉservice = true;
             }
             if Targetˉcount == 29u32 && (Index == 19u32 || Index == 21u32) {

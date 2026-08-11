@@ -14,7 +14,13 @@ if errorlevel 1 (
 )
 
 "%Linker%" %*
-exit /b %ERRORLEVEL%
+set "LinkerExit=%ERRORLEVEL%"
+
+rem The hosted-compiler shell exposes WVR3025 as 64 + service detail 9.
+rem Wv-Linker's public immutable-snapshot boundary normalizes that failure to
+rem one before its Windvale Main can run; 73 is not a linker process result.
+if "%LinkerExit%"=="73" set "LinkerExit=1"
+exit /b %LinkerExit%
 
 :usage
 >&2 echo Usage: Tools\Native\Link-Wvo.cmd ^<base-address^> ^<entry^> ^<output.bin^> ^<input.wvo^>...

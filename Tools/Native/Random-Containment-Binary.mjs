@@ -13,13 +13,13 @@ export async function Testˉwvb(Repositoryˉroot, Cases) {
     const Artifact = Hostˉartifact({
         win32: [
             "Artifacts/Native-Front-Door/windows-x64/wvverify.exe",
-            1_007_104,
-            "f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0",
+            1_004_032,
+            "5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7",
         ],
         linux: [
             "Artifacts/Native-Front-Door/linux-x64/wvverify.elf",
-            1_007_616,
-            "dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a",
+            1_003_520,
+            "824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982",
         ],
     });
     const Verifier = await Verifyˉartifact(
@@ -49,7 +49,7 @@ export async function Testˉwvo(Repositoryˉroot, Cases) {
         win32: [
             "Artifacts/Native-Wvo-Object-Candidate/Wvo-Object.exe",
             606_720,
-            "a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366",
+            "8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1",
         ],
         linux: [
             "Artifacts/Native-Wvo-Object-Candidate/Wvo-Object.elf",

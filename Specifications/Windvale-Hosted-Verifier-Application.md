@@ -150,36 +150,36 @@ The inspector uses separate least-authority startup sources because its five add
 
 Their assembled WVO identities are respectively:
 
-- Windows: `755ffb99cba6a838dd9eec353ce72d4adfb3af130ec4bce5a2278828dd136616`;
+- Windows: `4d97a1f30d9c871f2a72911cea2644b32d3ea29a2dbbc76105ec4ab1d001b95f`;
 - Linux: `08a7afefb69904af8d8c899a86bec76e957dfe255d397dbd9015d9acaa018ae8`.
 
 The inspector WVO identities are:
 
-- Windows: `1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3`;
+- Windows: `95ff213a8e59f28d148eb8223a100a5b24dcbc3eb1b444264783a860f159fe49`;
 - Linux: `5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb`.
 
 The package constructors retain only the zero-relocation templates plus typed patch plans. Tests reassemble the WVA sources, resolve local and imported symbols independently, and require byte equality with each packaged startup.
 
 ## Windows container
 
-`windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports eleven functions from `KERNEL32.dll` and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the bounded input snapshots: one for profiles 2, 6, and 8, and two for profile 7.
+`windows-x64-verifier-v1` emits a PE32+ console application with RX `.text`, RW/NX `.data`, and read-only discardable `.reloc` sections. The startup imports twelve functions from `KERNEL32.dll`, including `ExitProcess`, and `CommandLineToArgvW` from `SHELL32.dll`. It imports no CLR or C runtime and exposes no file-output service. `CreateFileW` is used by the trusted startup with read-only access for the bounded input snapshots: one for profiles 2, 6, and 8, and two for profile 7.
 
 The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `332488305b0b178dcb713edd81f2df0b8f04455b95e03ee46aa226c69e2ee018`.
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its current corrected-backend candidate is 793,600 bytes with SHA-256 `31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c`.
 
-`windows-x64-wvb-runner-v1` uses metadata profile `5`. The Decision 0510 current source reconstruction candidate is 1,094,656 bytes with SHA-256 `6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc`.
+`windows-x64-wvb-runner-v1` uses metadata profile `5`. The current source reconstruction candidate is 1,094,656 bytes with SHA-256 `28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c`.
 
-`windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current enum-complete source candidate is 606,720 bytes with SHA-256 `a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366`.
+`windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current enum-complete source candidate is 606,720 bytes with SHA-256 `8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1`.
 
 `windows-x64-console-application-verifier-v1` uses metadata profile `7` and
 two immutable input snapshots. Its current native reconstruction candidate is
 1,063,936 bytes with SHA-256
-`05b5f5b3e3999a0ef3537f0908967069a12f17de09753fc90e8a4c7542dc9d3f`.
+`a82027ab78ee5f4d7d9f34180392ee8b8364ea78616c11aeac1e684250fc3679`.
 
 `windows-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
 Its current native candidate is 570,368 bytes with SHA-256
-`72d1164fe2f47e1bec00437bf63b317d39f1ed011cea7cf01a1343ce01547765`.
+`1407ed428387986e170b4d8394e9a0a6295408ef668d5d6e16d719102428dd4f`.
 
 ## Linux container
 
@@ -200,7 +200,7 @@ candidate is 1,064,960 bytes with SHA-256
 
 `linux-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
 Its current native candidate is 569,344 bytes with SHA-256
-`18777615d60e1279cb855b05ba03933bb65c9a622036dad2e954e3df683216e2`.
+`27fff54e139228586a6948aa234de60e5d4f5439e6b0616a55c057d4ad8661c2`.
 
 The digest-bound [native read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md) intentionally continues to use the previously qualified verifier and inspector applications until the corrected-backend candidates pass the same exact-commit dual-host gate. Candidate reconstruction does not silently replace a qualified ordinary artifact.
 

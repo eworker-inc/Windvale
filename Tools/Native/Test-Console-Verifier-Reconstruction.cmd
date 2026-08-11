@@ -16,7 +16,7 @@ call :check_file "%Candidate%\Console-Application-Verifier.wvb" 105006 1dcd5f2ae
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Console-Application-Verifier.wvo" 1049519 51292e4d300d4a6bb6ce4879915bba5304de70c9deafdf4eb6ff6a54a6dbf150
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\windows-x64-wvappverify.exe" 1063936 05b5f5b3e3999a0ef3537f0908967069a12f17de09753fc90e8a4c7542dc9d3f
+call :check_file "%Candidate%\windows-x64-wvappverify.exe" 1063936 a82027ab78ee5f4d7d9f34180392ee8b8364ea78616c11aeac1e684250fc3679
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\linux-x64-wvappverify.elf" 1064960 c2700e5e68711d7b8e8a8f7e9573d87dfa27c3676a034a314310ef59045e5f1a
 if errorlevel 1 goto :failed
@@ -82,7 +82,7 @@ if not "%ERRORLEVEL%"=="1" goto :failed
 for %%F in ("%TestDirectory%\Rejection.out") do if not "%%~zF"=="0" goto :failed
 call :check_file "%TestDirectory%\Rejection.err" 76 8a02b32387b434d07a3223b98bf966fd80571e5ca296d8c1100d01e9c3338105
 if errorlevel 1 goto :failed
-call :check_file "%Application%" 1063936 05b5f5b3e3999a0ef3537f0908967069a12f17de09753fc90e8a4c7542dc9d3f
+call :check_file "%Application%" 1063936 a82027ab78ee5f4d7d9f34180392ee8b8364ea78616c11aeac1e684250fc3679
 if errorlevel 1 goto :failed
 call :check_file "%Fixture%" 2560 8f2c3389dafa40c0231a0f5aeead3db5570697d54874f324a81f84a2d5b16eb6
 if errorlevel 1 goto :failed

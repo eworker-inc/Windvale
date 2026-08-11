@@ -19,7 +19,7 @@ check_file() {
 
 if check_file "$candidate/Wvb-Runner.wvb" 121593 e58f653445cd717d19c32fe1a0fbc57f03f475187cdec571825b9fd6685b3097 &&
     check_file "$candidate/Wvb-Runner.wvo" 1078577 7d0ec719ade7e55d46c5a6dc6f7cb63102db4633172bcab1812e16651002106d &&
-    check_file "$candidate/windows-x64-wvrun.exe" 1094656 6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc &&
+    check_file "$candidate/windows-x64-wvrun.exe" 1094656 28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c &&
     check_file "$candidate/linux-x64-wvrun.elf" 1093632 a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d; then
     echo 'PASS candidate inventory'
     passed=$((passed + 1))

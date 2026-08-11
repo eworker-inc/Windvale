@@ -54,7 +54,7 @@ All WVBs are built through the digest-bound native source front door.
 
 | Tool WVB | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata producer | 85,942 | `37dee9b2f5248e76ca13369b0eb75a6b8d3dddb55ab8658f1376556dd1ff42d2` |
+| Metadata producer | 85,942 | `205403fd2f5ac1ebeda048804ac02fc67e7d83c6152f8daabe403ac7c79149dd` |
 | Object instantiation | 22,737 | `b24b43bc55926cf21562acb0c2067fb1b0a95a225b22865abf0743c7820ca7da` |
 | Windows imports | 12,764 | `c71ccad47766356e9da53e8615aabbb404c64e9ebd6c9cd80ad4e302d1609052` |
 | Linux materialization | 19,570 | `8b8be18c03cbf55a56928efb4867accafdb754b66be5b403704acd3d8974809a` |

@@ -13,7 +13,7 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Verifier=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvverify.exe"
 set "Inspector=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvdump.exe"
 
-certutil -hashfile "%Verifier%" SHA256 | findstr /I /C:"f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0" >nul
+certutil -hashfile "%Verifier%" SHA256 | findstr /I /C:"5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVB verifier artifact digest is invalid.
     exit /b 1

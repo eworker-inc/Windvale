@@ -22,7 +22,7 @@ Project 1 semantics.
 | WVB runner | 121,593 | `e58f653445cd717d19c32fe1a0fbc57f03f475187cdec571825b9fd6685b3097` |
 | ABI-22 WVO | 1,078,577 | `7d0ec719ade7e55d46c5a6dc6f7cb63102db4633172bcab1812e16651002106d` |
 | linked fragment | 1,077,675 | `83dc076c137557495a24e65894c26c7f794e0d67f31dd59a476e1dc7715828d1` |
-| Windows application | 1,094,656 | `6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc` |
+| Windows application | 1,094,656 | `28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c` |
 | Linux application | 1,093,632 | `a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d` |
 
 The WVO contains 1,077,216 text bytes and 459 read-only-data bytes, with 18

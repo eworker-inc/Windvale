@@ -29,9 +29,9 @@ arguments before admission.
 The complete candidate is read once as a Windvale byte value and admitted by
 `Nativeˉhostedˉverifierˉpublisherˉapplicationˉverification`. That function
 accepts only the 256,000-byte Windows publisher at SHA-256
-`17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96`
+`2b165f5029798a4d5467412b65cba0ddffb05dfc449144fd80161d6117784e12`
 or the 254,965-byte Linux publisher at SHA-256
-`510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac`.
+`8c9a1dbbb177041c61e4606696ce9ddf9225a98407a7d3af0a4338069a15979e`.
 
 After successful admission, the private
 `Applicationˉpublicationˉpublisherˉbegin/apply` ABI exposes the existing
@@ -45,9 +45,9 @@ host copy or rename is not conforming.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Promoter WVB | 41,268 | `086bd4d93d93d51b0f9140a0adf9f54a7f205dc902d9cb5d732dc7a887e10edc` |
-| Promoter WVO | 660,123 | `ee5274c86d680640d3ab75754faf63585a639a44fc9626ea5b9f9bcce9779e8e` |
-| Linked flat fragment | 658,339 | `d50dc45866818c36a0332af71e914dc9a05052d97f43c0f60add4a75101bbec6` |
+| Promoter WVB | 41,268 | `7ea1cda2842c4258f654ee17deb441c1b06a3fcedfc29f7382e9259b2f3800fe` |
+| Promoter WVO | 660,123 | `9ee875a6668b1661087dc6a59384c2427e6ef6febb5c83a4ed936e56cd13b44f` |
+| Linked flat fragment | 658,339 | `843094cf8ba3de92697568abab6788a276f0ea7bd193e65abfb5c7b56918fb43` |
 
 The native linker places `Main` at address 1,178. The transaction apply/begin
 entry points remain at 0/789. The WVO has 658,160 code bytes, 179 read-only-data
@@ -66,8 +66,8 @@ shared admitted input advances.
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Windows x64 | 681,472 | `86c72f5485bd6eeba1bdb65841102d7f388a8714b8e07ca3d519250de2886d8b` |
-| Linux x64 | 680,949 | `700f3df624611abad03cbd70811bad2ab015136ecdacc6dff9cdd97f5fc81395` |
+| Windows x64 | 681,472 | `5690fb32c7fec85551e0c5cd58e4f56589a5ad4c09108b5dde86fa9fc7b3fb92` |
+| Linux x64 | 680,949 | `3cd1c82807495e34445345b5e61b8c5911434c84d2a6f49a11b21fd2521423f5` |
 
 The current-host focused native lane constructs both applications, uses the
 promoter to install both exact publisher subjects, and then uses the installed

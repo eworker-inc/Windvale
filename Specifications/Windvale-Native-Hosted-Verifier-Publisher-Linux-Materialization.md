@@ -53,11 +53,11 @@ This monotonic join avoids repeated replacement of a 250 KiB byte value.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Base ELF | 249,856 | `687338281ca78c9d3a4d08b601c1efbcc198ec3c8fcc96fbf34f5dc349cafae2` |
+| Base ELF | 249,856 | `577bda8af2b1d8fca6f37e894c6b7f920e547f3e2b0bd1a28d2af518743a6629` |
 | Constructor WVB | 15,551 | `9f0d6a1537717771c05dfb8c21633f6ec7a2019c0a428dcf8402d59cf1c2e8df` |
-| Final ELF | 254,965 | `510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac` |
-| Promoter base ELF | 675,840 | `18fbe415177f5f96644ecca8bf5e38aa6c42e62108e9b4df794752dd5820ddc5` |
-| Promoter final ELF | 680,949 | `700f3df624611abad03cbd70811bad2ab015136ecdacc6dff9cdd97f5fc81395` |
+| Final ELF | 254,965 | `8c9a1dbbb177041c61e4606696ce9ddf9225a98407a7d3af0a4338069a15979e` |
+| Promoter base ELF | 675,840 | `848ee9ed30ffc5094f77b4f79b72e3b4a426b4f9e0fc8e26631ed6619596f782` |
+| Promoter final ELF | 680,949 | `3cd1c82807495e34445345b5e61b8c5911434c84d2a6f49a11b21fd2521423f5` |
 | WVB-publisher base ELF | 1,335,296 | `f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090` |
 | WVB-publisher final ELF | 1,340,405 | `7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095` |
 | WVO-publisher base ELF | 421,888 | `af61a601f4cd8e7fb81704353160a518d2e4f199084fde4b29518d27c89774f7` |

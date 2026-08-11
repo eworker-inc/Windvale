@@ -30,11 +30,11 @@ check_file() {
     printf '%s  %s\n' "$expected_sha" "$path" | sha256sum --check --strict --quiet
 }
 
-check_file "$hosted_toolset/SHA256SUMS" 6927 430171a9157560acb57e6f84aa772429b436059867892ee2408839057e0eeebc || exit 1
+check_file "$hosted_toolset/SHA256SUMS" 6927 dc1899b252a8ad0f75eeee33cdec82d9cbbba40c7ba8115bb55aaad0b9dd00c8 || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
-check_file "$construction/SHA256SUMS" 5064 38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d || exit 1
+check_file "$construction/SHA256SUMS" 5064 161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
-check_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9437 f706848709e9c217f31dce6733b8aa3e94518b6f371cbd5ccc8af63603edb495 || exit 1
+check_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9617 865c29d2f83740e70be173f6116b29b0fa9eb4836f52e96200eb508f6fdbb789 || exit 1
 check_file "$startup_root/Linux-X64-Hosted-Inspector.wva" 5214 01603c6b945b4e03ebef1d3d5bf691a5e05bf2e2630d6466e1db1028b8c9c005 || exit 1
 
 temporary_directory=$(mktemp -d "${TMPDIR:-/tmp}/windvale-wvb-runner-reconstruction.XXXXXX") || exit 1
@@ -62,7 +62,7 @@ check_file "$wvo" 1078577 7d0ec719ade7e55d46c5a6dc6f7cb63102db4633172bcab1812e16
 check_file "$fragment" 1077675 83dc076c137557495a24e65894c26c7f794e0d67f31dd59a476e1dc7715828d1 || exit 1
 
 "$repository_root/Tools/Native/Assemble-Wva.sh" "$startup_root/Windows-X64-Hosted-Inspector.wva" "$windows_startup" >"$temporary_directory/Windows-Assemble.out" 2>"$temporary_directory/Windows-Assemble.err" || exit 1
-check_file "$windows_startup" 3927 1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3 || exit 1
+check_file "$windows_startup" 4017 95ff213a8e59f28d148eb8223a100a5b24dcbc3eb1b444264783a860f159fe49 || exit 1
 "$repository_root/Tools/Native/Assemble-Wva.sh" "$startup_root/Linux-X64-Hosted-Inspector.wva" "$linux_startup" >"$temporary_directory/Linux-Assemble.out" 2>"$temporary_directory/Linux-Assemble.err" || exit 1
 check_file "$linux_startup" 2291 5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb || exit 1
 
@@ -97,7 +97,7 @@ construct_target windows 1 \
     "$service_root/Native-X64-Windows-File-Input-Service.bin" \
     "$service_root/Native-X64-Windows-Diagnostic-Output-Service.bin" \
     "$windows_startup" "$windows_application" || exit 1
-check_file "$windows_application" 1094656 6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc || exit 1
+check_file "$windows_application" 1094656 28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c || exit 1
 construct_target linux 2 \
     "$service_root/Native-X64-Linux-Console-Output-Service.bin" \
     "$service_root/Native-X64-Linux-File-Input-Service.bin" \

@@ -17,7 +17,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Hosted-Verifier-Publisher-Promoter-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '700f3df624611abad03cbd70811bad2ab015136ecdacc6dff9cdd97f5fc81395' \
+    '3cd1c82807495e34445345b5e61b8c5911434c84d2a6f49a11b21fd2521423f5' \
     'linux-x64-wvhostverifierpublisherinstall.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native hosted-verifier publisher promoter artifact digest is invalid.' >&2
     exit 1

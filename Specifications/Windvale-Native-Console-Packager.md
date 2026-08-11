@@ -70,11 +70,11 @@ build the ordinary and segmented projects through the digest-bound native
 Project 1 front door, then lower each reconstructed WVB through the pinned
 native WVB-to-WVO application. The ordinary reconstruction produces the WVB
 identity above and a 692,425-byte WVO at SHA-256
-`fd9e289cdae2bfc7956384cd76c022c873fc4c8f39bda4824eb8b82240265695`.
+`2a73e1a03d71cbec54de085cce2901580310105a1cb01e78563242242893186e`.
 The segmented sibling produces a 70,033-byte WVB at SHA-256
 `c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e`
 and a 789,653-byte WVO at SHA-256
-`4cd97c60169649c466dcf185491eac326bbb7676fb97d95c840c199defb8bbda`.
+`cd0d79b92ee1b80242732f4d7419a08e71c5c5e132e462c5ae4b39953c56ede9`.
 Both builds include compiler-aligned WVB verification and native atomic
 publication; both lowerings include WVO verification and native atomic
 publication. Decision 0498 continues from each exact WVO through the native

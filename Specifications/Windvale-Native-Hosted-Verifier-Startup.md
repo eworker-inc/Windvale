@@ -50,9 +50,9 @@ The accepted objects are exact native-assembler products:
 
 | Target | WVO bytes | Symbols | Relocations | SHA-256 |
 | --- | ---: | ---: | ---: | --- |
-| Windows x64 | 3,561 | 33 | 45 | `755ffb99cba6a838dd9eec353ce72d4adfb3af130ec4bce5a2278828dd136616` |
+| Windows x64 | 3,651 | 34 | 46 | `4d97a1f30d9c871f2a72911cea2644b32d3ea29a2dbbc76105ec4ab1d001b95f` |
 | Linux x64 | 1,925 | 20 | 24 | `08a7afefb69904af8d8c899a86bec76e957dfe255d397dbd9015d9acaa018ae8` |
-| Windows x64, profiles 6 and 7 | 3,927 | 38 | 50 | `1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3` |
+| Windows x64, profiles 6 and 7 | 4,017 | 39 | 51 | `95ff213a8e59f28d148eb8223a100a5b24dcbc3eb1b444264783a860f159fe49` |
 | Linux x64, profiles 6 and 7 | 2,291 | 25 | 29 | `5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb` |
 
 The request owner maps each relocation ordinal to one semantic runtime,
@@ -68,8 +68,8 @@ wvhostverifierstartup wvo-inspector <runtime.wvhr> <startup.wvo> <response.wvsd>
 wvhostverifierstartup console-verifier <runtime.wvhr> <startup.wvo> <response.wvsd>
 ```
 
-Success writes an exact `WVSD 1` response containing 1,275 Windows or 668 Linux
-startup bytes for profiles 2 and 8, or 1,350 Windows or 743 Linux bytes for
+Success writes an exact `WVSD 1` response containing 1,301 Windows or 668 Linux
+startup bytes for profiles 2 and 8, or 1,376 Windows or 743 Linux bytes for
 profiles 6 and 7, reports `Valid`, and returns zero. Invalid
 runtime, object, or response evidence reports `Rejected` with the failing
 phase, returns 2, and preserves an existing output. Invalid invocation or any
@@ -83,9 +83,9 @@ The application declares exactly `console.write_line`,
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Tool WVB | 79,053 | `5f185fdcbc778ad33f19a499d0aa0241e5e6ef1568cf0a4879e2f9562afeeeee` |
-| Windows application | 925,184 | `0b860b4b7c52526523cac040b47a5349c4ea18d95a955a6c1924e21feb0fab35` |
-| Linux application | 925,696 | `99ea61f5d1e222ba55b0463865cc3a2765a03f2f9fcdd71e51de97e3142cbe78` |
+| Tool WVB | 79,215 | `532402c09f9cbba05431445bfeaa0ab63e3064fb05a77cce6274017bfb7c386c` |
+| Windows application | 926,720 | `1091e934e480d090255504270f54ba583944b6544f24b12e0300cd0b6f055225` |
+| Linux application | 925,696 | `01a271916c517d733673f5ad11e1453e001d6bdef7010257daa468d933471743` |
 
 The WVB builds through the native Project 1 front door. Both applications
 reconstruct through the shared native hosted-container packager. The focused

@@ -122,23 +122,23 @@ fn Moduleˉdigestˉword(Index: u32, Variant: u32) -> u32 {
         return 2521790058u32;
     }
     if Variant == 1u32 {
-        if Index == 0u32 { return 3654576904u32; }
-        if Index == 1u32 { return 466981693u32; }
-        if Index == 2u32 { return 2688585999u32; }
-        if Index == 3u32 { return 1257634221u32; }
-        if Index == 4u32 { return 3378323583u32; }
-        if Index == 5u32 { return 1573640450u32; }
-        if Index == 6u32 { return 2831625587u32; }
-        return 3691962759u32;
+        if Index == 0u32 { return 2731385214u32; }
+        if Index == 1u32 { return 1480731780u32; }
+        if Index == 2u32 { return 401495286u32; }
+        if Index == 3u32 { return 3242308830u32; }
+        if Index == 4u32 { return 3460262576u32; }
+        if Index == 5u32 { return 1939849951u32; }
+        if Index == 6u32 { return 2602953090u32; }
+        return 4261427247u32;
     }
-    if Index == 0u32 { return 1257490039u32; }
-    if Index == 1u32 { return 298073986u32; }
-    if Index == 2u32 { return 1299997813u32; }
-    if Index == 3u32 { return 1342719756u32; }
-    if Index == 4u32 { return 2092546170u32; }
-    if Index == 5u32 { return 3374716795u32; }
-    if Index == 6u32 { return 2525960323u32; }
-    return 2672874799u32;
+    if Index == 0u32 { return 4040674174u32; }
+    if Index == 1u32 { return 2094865329u32; }
+    if Index == 2u32 { return 2270669792u32; }
+    if Index == 3u32 { return 2547429735u32; }
+    if Index == 4u32 { return 1046812348u32; }
+    if Index == 5u32 { return 2239922511u32; }
+    if Index == 6u32 { return 3101166222u32; }
+    return 2667251928u32;
 }
 
 export fn Nativeˉhostedˉverifierˉpublisherˉstartupˉdigestˉisˉvalid(

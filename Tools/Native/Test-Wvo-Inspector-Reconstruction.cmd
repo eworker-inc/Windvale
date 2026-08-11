@@ -11,7 +11,7 @@ call :check_file "%Candidate%\Wvo-Object.wvb" 61008 a630d49f0549c865644d8052fbff
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Wvo-Object.wvo" 591723 f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvo-Object.exe" 606720 a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366
+call :check_file "%Candidate%\Wvo-Object.exe" 606720 8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Wvo-Object.elf" 606208 f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1
 if errorlevel 1 goto :failed

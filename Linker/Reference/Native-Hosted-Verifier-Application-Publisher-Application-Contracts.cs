@@ -12,13 +12,13 @@ public static class Nativeˉhostedˉverifierˉapplicationˉpublisherˉapplicatio
         "Windvaleˉnativeˉhostedˉverifierˉapplicationˉpublisherˉtool";
     public const int MODULE_BYTES = 29_170;
     public const string MODULE_SHA256 =
-        "77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f";
+        "7ecbd7f0b11bdd7ce0ab578767b1d697bc16653e4f8182858e0ad8b8d808fb9e";
     public const int WINDOWS_APPLICATION_BYTES = 256_000;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96";
+        "2b165f5029798a4d5467412b65cba0ddffb05dfc449144fd80161d6117784e12";
     public const int LINUX_APPLICATION_BYTES = 254_965;
     public const string LINUX_APPLICATION_SHA256 =
-        "510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac";
+        "8c9a1dbbb177041c61e4606696ce9ddf9225a98407a7d3af0a4338069a15979e";
 
     internal static readonly Nativeˉpublisherˉapplicationˉcontract CONSTRUCTION = new(
         MODULE_NAME,

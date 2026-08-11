@@ -76,10 +76,11 @@ fn Windowsˉverifierˉpatch(Index: u32) -> u32 {
     if Index == 38u32 { return 986u32; }
     if Index == 39u32 { return 1000u32; }
     if Index == 40u32 { return 1046u32; }
-    if Index == 41u32 { return 1114u32; }
-    if Index == 42u32 { return 1130u32; }
-    if Index == 43u32 { return 1197u32; }
-    return 1255u32;
+    if Index == 41u32 { return 1096u32; }
+    if Index == 42u32 { return 1140u32; }
+    if Index == 43u32 { return 1156u32; }
+    if Index == 44u32 { return 1223u32; }
+    return 1281u32;
 }
 
 fn Windowsˉinspectorˉpatch(Index: u32) -> u32 {
@@ -129,10 +130,11 @@ fn Windowsˉinspectorˉpatch(Index: u32) -> u32 {
     if Index == 43u32 { return 1061u32; }
     if Index == 44u32 { return 1075u32; }
     if Index == 45u32 { return 1121u32; }
-    if Index == 46u32 { return 1189u32; }
-    if Index == 47u32 { return 1205u32; }
-    if Index == 48u32 { return 1272u32; }
-    return 1330u32;
+    if Index == 46u32 { return 1171u32; }
+    if Index == 47u32 { return 1215u32; }
+    if Index == 48u32 { return 1231u32; }
+    if Index == 49u32 { return 1298u32; }
+    return 1356u32;
 }
 
 fn Linuxˉverifierˉpatch(Index: u32) -> u32 {
@@ -211,9 +213,9 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
     var Expected: text =
         "1d1379ec117e347283cbc4c9bc1750a246a9d6e43d09ef9217f9353670e9e2b5";
     if Value.Target == 1u32 {
-        Count = 45u32;
+        Count = 46u32;
         Expected =
-            "b75a6601cae7bb96d42f85b68a3aedfdb40145af5ddbbf5b548c7f8c898559d9";
+            "83ae0bf695dec2396d311deaa484de5530aa1b35f7a3f77922a1ca800fb614a7";
     }
     if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
         Expectedˉprofile == 7u32 {
@@ -221,9 +223,9 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
         Expected =
             "2c75cbfa34b188d8a5847ac462a00c9e3f799a44fb09b6959bd2b310a289f20f";
         if Value.Target == 1u32 {
-            Count = 50u32;
+            Count = 51u32;
             Expected =
-                "d95553d1ba1f1299a48f42ba75a95068b2137702302ca947ddaa0387c4c7edc8";
+                "7f9e9f9f7423a69b203309770115e1d62e124ef883c7306eb34e50e5dd4c239e";
         }
     }
     let Targetˉbytes: bytes =
@@ -252,7 +254,7 @@ export fn Nativeˉhostedˉverifierˉstartupˉrelocationsˉareˉvalidˉforˉprofi
         let Target: u32 = Bytesˉreadˉu32ˉlittle(Targetˉbytes, Index * 4u32);
         var Absentˉrunnerˉservice: bool = false;
         if Expectedˉprofile == 5u32 {
-            if Count == 50u32 && (Index == 30u32 || Index == 32u32) {
+            if Count == 51u32 && (Index == 30u32 || Index == 32u32) {
                 Absentˉrunnerˉservice = true;
             }
             if Count == 29u32 && (Index == 19u32 || Index == 21u32) {

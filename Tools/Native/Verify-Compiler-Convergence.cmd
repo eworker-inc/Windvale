@@ -12,7 +12,7 @@ if not exist "%SourceRoot%\." goto :usage
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Verifier=%ArtifactRoot%\Native-Front-Door\windows-x64\wvverify.exe"
-call :verify_file "%Verifier%" 1007104 f15422397ad890909f481f131f945e25651c858695ba5ce58b2a7305b34647f0 "Windows native WVB verifier"
+call :verify_file "%Verifier%" 1004032 5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7 "Windows native WVB verifier"
 if errorlevel 1 exit /b 1
 
 :allocate

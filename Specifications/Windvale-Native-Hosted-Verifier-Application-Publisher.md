@@ -39,12 +39,12 @@ write, exact reread, atomic replacement, directory-durability, and cleanup path.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Admission WVB | 18,091 | `382f0e23711400d94a843324a34b43347a782a893b1f13d4f417ee20554fad17` |
-| Windows verifier | 1,004,032 | `aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a` |
-| Linux verifier | 1,003,520 | `26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b` |
-| Publisher WVB | 29,170 | `77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f` |
-| Windows publisher | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
-| Linux publisher | 254,965 | `510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac` |
+| Admission WVB | 18,091 | `ffba52552f843a50efe00443492aa38116dd10d70149bb23025b8d488f43421e` |
+| Windows verifier | 1,004,032 | `5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7` |
+| Linux verifier | 1,003,520 | `824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982` |
+| Publisher WVB | 29,170 | `7ecbd7f0b11bdd7ce0ab578767b1d697bc16653e4f8182858e0ad8b8d808fb9e` |
+| Windows publisher | 256,000 | `2b165f5029798a4d5467412b65cba0ddffb05dfc449144fd80161d6117784e12` |
+| Linux publisher | 254,965 | `8c9a1dbbb177041c61e4606696ce9ddf9225a98407a7d3af0a4338069a15979e` |
 
 `Tools/Native/Publish-Hosted-Verifier-Application.cmd` and `.sh` digest-check
 the current-host publisher before execution. The exact publisher applications

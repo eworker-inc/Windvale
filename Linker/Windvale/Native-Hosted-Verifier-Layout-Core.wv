@@ -153,10 +153,10 @@ export fn Nativeˉhostedˉverifierˉplanˉforˉprofile(
     }
 
     if Target == 1u32 {
-        var Startupˉbytes: u32 = 1275u32;
+        var Startupˉbytes: u32 = 1301u32;
         if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
             Expectedˉprofile == 7u32 {
-            Startupˉbytes = 1350u32;
+            Startupˉbytes = 1376u32;
         }
         let Textˉvirtual: u32 = 4096u32 + Bundleˉbytes;
         let Textˉfile: u32 = Align(Textˉvirtual, 512u32);

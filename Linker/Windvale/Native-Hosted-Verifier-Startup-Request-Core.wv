@@ -35,9 +35,9 @@ fn Objectˉisˉexact(Object: bytes, Target: u32, Profile: u32) -> bool {
         "08a7afefb69904af8d8c899a86bec76e957dfe255d397dbd9015d9acaa018ae8"
     );
     if Target == 1u32 {
-        Expectedˉbytes = 3561u32;
+        Expectedˉbytes = 3651u32;
         Expectedˉdigest = Textˉtoˉutf8(
-            "755ffb99cba6a838dd9eec353ce72d4adfb3af130ec4bce5a2278828dd136616"
+            "4d97a1f30d9c871f2a72911cea2644b32d3ea29a2dbbc76105ec4ab1d001b95f"
         );
     }
     if Profile == 5u32 || Profile == 6u32 || Profile == 7u32 {
@@ -46,9 +46,9 @@ fn Objectˉisˉexact(Object: bytes, Target: u32, Profile: u32) -> bool {
             "5d316c109b5c8964c019c44f96f42370408820c7db1ec278268cef541ba17ebb"
         );
         if Target == 1u32 {
-            Expectedˉbytes = 3927u32;
+            Expectedˉbytes = 4017u32;
             Expectedˉdigest = Textˉtoˉutf8(
-                "1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3"
+                "95ff213a8e59f28d148eb8223a100a5b24dcbc3eb1b444264783a860f159fe49"
             );
         }
     }
@@ -87,9 +87,9 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
     var Relocations: u32 = 24u32;
     var Targetˉpolicy: u32 = 0u32;
     if Value.Target == 1u32 {
-        Codeˉbytes = 1275u32;
-        Symbols = 33u32;
-        Relocations = 45u32;
+        Codeˉbytes = 1301u32;
+        Symbols = 34u32;
+        Relocations = 46u32;
     }
     if Expectedˉprofile == 5u32 || Expectedˉprofile == 6u32 ||
         Expectedˉprofile == 7u32 {
@@ -97,9 +97,9 @@ export fn Nativeˉhostedˉverifierˉstartupˉrequestˉforˉprofile(
         Symbols = 25u32;
         Relocations = 29u32;
         if Value.Target == 1u32 {
-            Codeˉbytes = 1350u32;
-            Symbols = 38u32;
-            Relocations = 50u32;
+            Codeˉbytes = 1376u32;
+            Symbols = 39u32;
+            Relocations = 51u32;
         }
     }
     if Expectedˉprofile == 5u32 { Targetˉpolicy = 1u32; }

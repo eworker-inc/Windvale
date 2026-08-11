@@ -5176,3 +5176,37 @@ Windows final import-patching constructor remains recovery PowerShell, and no
 direct managed inventory entry was removed. Linux execution, compiler
 reconstruction, Stage 2, broad Seed/OS, Standard, Qualification, and the
 unfiltered retirement gate did not run.
+
+## Complete local Windows native-retirement qualification evidence
+
+[Decision 0524](../Decisions/0524-Windows-Native-Retirement-Exit-Closure.md)
+closes the hosted-verifier and inspector process-result boundary on Windows.
+Both x64 startups now call `KERNEL32.dll!ExitProcess` with the Windvale `Main`
+result and the required 40-byte call frame. The native platform, reference
+mirrors, exact startup objects, candidates, publishers, reconstruction
+contracts, and pinned manifests advance together. The linker launchers also
+normalize only the hosted shell's exact immutable-input result 73 to the public
+linker rejection result one.
+
+The complete local Windows native-retirement coordinator passes all 43 suites
+and all 3,204 cases in 1,754.6 seconds. Focused affected evidence includes
+15/15 publisher-pipeline cases, 3/3 console publisher reconstructions, 2/2 WVO
+publisher reconstructions, 2/2 source and 4/4 container console-packager cases,
+and 500/500 random WVO containment cases. Three consecutive focused random
+source-containment runs pass 1,500/1,500; the final complete coordinator passes
+its own 500/500 source selection.
+
+All ten changed JSON manifests parse. Both generated SHA-256 inventories match
+every listed retained artifact, and `git diff --check` passes. The final
+publisher applications are Windows/Linux 256,000 bytes /
+`2b165f5029798a4d5467412b65cba0ddffb05dfc449144fd80161d6117784e12`
+and 254,965 bytes /
+`8c9a1dbbb177041c61e4606696ce9ddf9225a98407a7d3af0a4338069a15979e`.
+The construction inventory is 5,064 bytes at SHA-256
+`161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a`.
+
+This qualifies the complete current Windows retirement plan. The private Linux
+QA endpoint did not accept the configured SSH connection during this run, so
+independent Linux execution, paired report comparison, promotion, the explicit
+Stage 0 recovery archive, and the final normal-path audit remain pending. No
+private QA configuration is retained in the repository.

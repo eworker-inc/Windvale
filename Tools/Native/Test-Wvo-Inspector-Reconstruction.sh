@@ -38,7 +38,7 @@ check_file "$candidate/Wvo-Object.wvb" 61008 \
 check_file "$candidate/Wvo-Object.wvo" 591723 \
     f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c || fail
 check_file "$candidate/Wvo-Object.exe" 606720 \
-    a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366 || fail
+    8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1 || fail
 check_file "$candidate/Wvo-Object.elf" 606208 \
     f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1 || fail
 [[ -x $candidate/Wvo-Object.elf ]] || fail

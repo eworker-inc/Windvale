@@ -17,3 +17,12 @@ if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
 fi
 
 "$artifact_root/Wv-Linker.elf" "$@"
+linker_status=$?
+
+# The hosted-compiler shell exposes WVR3025 as 64 + service detail 9.
+# Wv-Linker's public immutable-snapshot boundary normalizes that failure to
+# one before its Windvale Main can run; 73 is not a linker process result.
+if ((linker_status == 73)); then
+    exit 1
+fi
+exit "$linker_status"

@@ -31,6 +31,7 @@ symbol import data Text_arena
 symbol import data Windows_close_handle_iat
 symbol import data Windows_command_line_to_argv_iat
 symbol import data Windows_create_file_iat
+symbol import data Windows_exit_process_iat
 symbol import data Windows_get_command_line_iat
 symbol import data Windows_get_file_size_iat
 symbol import data Windows_get_last_error_iat
@@ -284,7 +285,12 @@ pop rdi
 pop rsi
 pop rbp
 pop rbx
-return
+    move ecx eax
+    subtract_i32 rsp 40
+    load_address rax Windows_exit_process_iat
+load_memory_u64 rax rax none 1 0
+call_register rax
+trap
 end define
 
 # The PE loader has already mapped the fixed RW/NX name and data arenas. The

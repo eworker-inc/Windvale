@@ -40,15 +40,15 @@ verify_file() {
 }
 
 verify_file "$hosted_toolset/SHA256SUMS" 6927 \
-    430171a9157560acb57e6f84aa772429b436059867892ee2408839057e0eeebc \
+    dc1899b252a8ad0f75eeee33cdec82d9cbbba40c7ba8115bb55aaad0b9dd00c8 \
     'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" 5064 \
-    38a978f3b3db4d2bbed569fb75f19c6ac7de4b5a4446eaa70aba81279a81456d \
+    161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a \
     'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
-verify_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9437 \
-    f706848709e9c217f31dce6733b8aa3e94518b6f371cbd5ccc8af63603edb495 \
+verify_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9617 \
+    865c29d2f83740e70be173f6116b29b0fa9eb4836f52e96200eb508f6fdbb789 \
     'Windows inspector startup source' || exit 1
 verify_file "$startup_root/Linux-X64-Hosted-Inspector.wva" 5214 \
     01603c6b945b4e03ebef1d3d5bf691a5e05bf2e2630d6466e1db1028b8c9c005 \
@@ -114,8 +114,8 @@ verify_file "$fragment" 587529 \
 "$script_directory/Assemble-Wva.sh" \
     "$startup_root/Windows-X64-Hosted-Inspector.wva" "$windows_startup" \
     >"$temporary_directory/Windows-Assemble.out" 2>"$temporary_directory/Windows-Assemble.err" || exit $?
-verify_file "$windows_startup" 3927 \
-    1bb785d5a06c40b91e45ebdc26b33ae33cb8ee7b244daffaa30ee59b9509edf3 \
+verify_file "$windows_startup" 4017 \
+    95ff213a8e59f28d148eb8223a100a5b24dcbc3eb1b444264783a860f159fe49 \
     'Windows inspector startup WVO' || exit 1
 "$script_directory/Assemble-Wva.sh" \
     "$startup_root/Linux-X64-Hosted-Inspector.wva" "$linux_startup" \
@@ -176,7 +176,7 @@ construct_target windows 1 \
     "$service_root/Native-X64-Windows-Diagnostic-Output-Service.bin" \
     "$windows_startup" "$windows_application" || exit 1
 verify_file "$windows_application" 606720 \
-    a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366 \
+    8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1 \
     'Windows WVO inspector application' || exit 1
 
 construct_target linux 2 \

@@ -51,9 +51,9 @@ usage, returns 64, and preserves the runtime input.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Tool WVB | 40,063 | `b9900f7f3e49f7b99e135a77c3eec09cd3ef8d07a52633e9a70fca578925bb8e` |
-| Windows application | 476,672 | `d2df4da421389d77d34e6a0eea981c7ec7f045a201e4ac567dc4be2a357337a5` |
-| Linux application | 475,136 | `eac8d2def78033ccc84b87ebacbdc5b82b159031f6a308df8e4e9b37036919f0` |
+| Tool WVB | 40,197 | `6b3dc11da9a864917304bf740c5edcad3ed87ec08dc5a837e60fc752b212a0ee` |
+| Windows application | 477,696 | `5a0c759c44f2a4d7103c82e636feb635a2876c7207ac3dcd88d8d72159d5fc2f` |
+| Linux application | 479,232 | `3f0a5fbd17caf75c01e3ff188b88327cceb6d85f6fd886aff188d6d2dc056f63` |
 
 The native front door builds the WVB and the shared hosted-container packager
 reconstructs both applications. One focused current-host differential test

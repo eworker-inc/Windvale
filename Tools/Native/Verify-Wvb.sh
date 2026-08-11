@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Front-Door"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    'dd98cd8f42ee8237b030d96dd1305e23843f92ae7dfd92469a67579e2cbe718a' \
+    '824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982' \
     'linux-x64/wvverify.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native WVB verifier artifact digest is invalid.' >&2
     exit 1

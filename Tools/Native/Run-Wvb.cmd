@@ -17,7 +17,7 @@ for %%F in ("%Runner%") do if not "%%~zF"=="1094656" (
     >&2 echo The Windows native WVB runner artifact size is invalid.
     exit /b 1
 )
-certutil -hashfile "%Runner%" SHA256 | findstr /I /C:"6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc" >nul
+certutil -hashfile "%Runner%" SHA256 | findstr /I /C:"28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVB runner artifact digest is invalid.
     exit /b 1

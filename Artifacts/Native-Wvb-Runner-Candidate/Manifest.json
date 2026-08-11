@@ -29,7 +29,7 @@
       "path": "windows-x64-wvrun.exe",
       "target": "windows-x64-wvb-runner-v1",
       "bytes": 1094656,
-      "sha256": "6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc",
+      "sha256": "28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c",
       "sourceWvo": "Wvb-Runner.wvo"
     },
     {

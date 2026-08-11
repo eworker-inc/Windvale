@@ -14,13 +14,13 @@ public static class Hostedˉcontainerˉstartupˉapplicationˉcontract
         "Nativeˉhostedˉcontainerˉstartupˉtool";
     public const int MODULE_BYTES = 43_716;
     public const string MODULE_SHA256 =
-        "537afc1c6dba50b882f6b35cada70e9be4afccea5c1ef3eff1c82f925a010fd4";
+        "4f8a731164676b0e4ac399f633073bd9798a867e738db3acf48173474611a915";
     public const int WINDOWS_APPLICATION_BYTES = 381_440;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "23105912a93f627a95e7c1fc3db79aa57c324f2e90a29d1ea90dfc3eb4083ec2";
+        "b7c3c04a482548092bb797eeed8d58b2b7cb68694e7aa101663a6a769e030c2e";
     public const int LINUX_APPLICATION_BYTES = 380_928;
     public const string LINUX_APPLICATION_SHA256 =
-        "a9d44a7b613cdc76d07d79d4e8fe84e3373bbcde0960187b8c3da932043e01eb";
+        "a46ebb92d18e19fd011dcd3905829b566633f7f60a2cf7b0c1ec8cd2a5a66024";
 }
 
 public static class Hostedˉcontainerˉstartupˉapplicationˉwriter

@@ -51,9 +51,9 @@ usage, returns 64, and preserves the input.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Tool WVB | 91,072 | `679e7c0238b5e71a29dee2e52880e3390d68d33c29d7e9b631e8d90119894854` |
-| Windows application | 1,359,872 | `c30ae33769bb7e4f7b901bd7294e2e0eefdd5c20bd2510d05e54d3f5dfa64374` |
-| Linux application | 1,359,872 | `3cfcc9220c4e5b71bbe48613e33cddd8a7bbb06ab8719291bcfdecab5a10bb99` |
+| Tool WVB | 91,386 | `a9a208994f3ff91051c61f308d3aa65a0e58cfab93c58be7401c87740fb48546` |
+| Windows application | 1,362,432 | `4accc071b8d566ca2ccbbfa4852b12cb2092c28a13ec89195f8ef7d2a6caa151` |
+| Linux application | 1,363,968 | `0e710d3d816cdc8df32c782fc1015ecd31e3c13cc9af563d4867ad0198085cb1` |
 
 One focused current-host test compares both completed verifier applications
 byte for byte with the frozen Stage 0 application contracts. On the current

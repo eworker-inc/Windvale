@@ -22,7 +22,7 @@ internal static partial class Program
             var Newˉtools = new (string Name, int Bytes, string Sha256)[]
             {
                 ("Metadata-Producer", 85_942,
-                    "37dee9b2f5248e76ca13369b0eb75a6b8d3dddb55ab8658f1376556dd1ff42d2"),
+                    "205403fd2f5ac1ebeda048804ac02fc67e7d83c6152f8daabe403ac7c79149dd"),
                 ("Object-Instantiation", 22_737,
                     "b24b43bc55926cf21562acb0c2067fb1b0a95a225b22865abf0743c7820ca7da"),
                 ("Windows-Imports", 12_764,

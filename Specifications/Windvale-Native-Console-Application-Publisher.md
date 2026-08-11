@@ -97,7 +97,7 @@ The historical exported WVA symbol names remain internal construction details.
 | Publisher WVB | 115,107 | `e8121fb76c7cc39b159d53a3c28d1da8bc2d44968d630495c692a7761656923d` |
 | Publisher WVO oracle | 1,139,440 | `259c7d746c3a217c32706bfd617cf66894066bd2e50850cbe5733ac3338e4952` |
 | Linked fragment | 1,135,424 | `c6b199644be8ca19cce0110a5090e84c736220a130f9b48a4366caf36254e6e2` |
-| Windows profile base | 1,151,488 | `922c9019308e837f6a3528c3b1edf6cd83b3e432bdb6a140111c958aa6ff5e97` |
+| Windows profile base | 1,151,488 | `23bf32201666f99af52015d9b3c10ab27d48f088cb766c8701f3f1973b7ab69b` |
 | Linux profile base | 1,150,976 | `a12ab6d136b53c53322d4b7ff612a5f41a2653c30210a4f5dbfb27027bc29f5e` |
 | Windows publisher | 1,158,656 | `0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e` |
 | Linux publisher | 1,156,085 | `e9b8771978c9fb06c3a8ecc55c7b9a3ba1acd24faa541dc669920c10ed792925` |

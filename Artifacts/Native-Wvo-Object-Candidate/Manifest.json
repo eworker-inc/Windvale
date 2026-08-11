@@ -28,7 +28,7 @@
       "path": "Wvo-Object.exe",
       "target": "windows-x64-wvo-inspector-v1",
       "bytes": 606720,
-      "sha256": "a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366",
+      "sha256": "8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1",
       "sourceWvo": "Wvo-Object.wvo"
     },
     {

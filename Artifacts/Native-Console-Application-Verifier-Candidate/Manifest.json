@@ -30,7 +30,7 @@
       "path": "windows-x64-wvappverify.exe",
       "target": "windows-x64-console-application-verifier-v1",
       "bytes": 1063936,
-      "sha256": "05b5f5b3e3999a0ef3537f0908967069a12f17de09753fc90e8a4c7542dc9d3f",
+      "sha256": "a82027ab78ee5f4d7d9f34180392ee8b8364ea78616c11aeac1e684250fc3679",
       "sourceWvo": "Console-Application-Verifier.wvo"
     },
     {

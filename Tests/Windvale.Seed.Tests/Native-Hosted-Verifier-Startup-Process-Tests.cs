@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_STARTUP_BYTES = 79_053;
+    private const int NATIVE_HOSTED_VERIFIER_STARTUP_BYTES = 79_215;
     private const string NATIVE_HOSTED_VERIFIER_STARTUP_SHA256 =
-        "5f185fdcbc778ad33f19a499d0aa0241e5e6ef1568cf0a4879e2f9562afeeeee";
+        "532402c09f9cbba05431445bfeaa0ab63e3064fb05a77cce6274017bfb7c386c";
 
     private static void Nativeˉhostedˉverifierˉstartupˉprocessˉruns()
     {

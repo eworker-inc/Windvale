@@ -53,10 +53,8 @@ export async function Forˉeachˉbounded(Items, Parallelism, Action) {
 
 export function Runˉprocess(Fileˉpath, Arguments) {
     if (process.platform === "win32") {
-        // Sustained asynchronous Windows launches can occasionally surface a
-        // zero status through libuv even when the child emitted its rejection
-        // report. The synchronous API preserves the native exit contract and
-        // keeps the same per-channel output bound.
+        // Keep each Windows status and bounded output pair in one synchronous
+        // collection while the explicit native ExitProcess contract is stressed.
         const Result = spawnSync(Fileˉpath, Arguments, {
             stdio: ["ignore", "pipe", "pipe"],
             windowsHide: true,

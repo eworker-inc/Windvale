@@ -21,11 +21,11 @@ export fn Nativeˉhostedˉverifierˉapplicationˉverification(
 ) -> bool {
     var Expectedˉbytes: u32 = 1004032u32;
     var Expectedˉsha256: text =
-        "aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a";
+        "5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7";
     if Target == 2u32 {
         Expectedˉbytes = 1003520u32;
         Expectedˉsha256 =
-            "26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b";
+            "824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982";
     }
     if Target < 1u32 || Target > 2u32 ||
         Bytesˉlength(Input) != Expectedˉbytes {

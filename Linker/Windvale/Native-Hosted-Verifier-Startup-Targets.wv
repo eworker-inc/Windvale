@@ -53,7 +53,7 @@ fn Windowsˉverifierˉtargets(
     Result = Add(Result, Import + 216u32);
     Result = Add(Result, Import + 256u32);
     Result = Add(Result, Import + 192u32);
-    Result = Add(Result, Value.Textˉaddress + 1085u32);
+    Result = Add(Result, Value.Textˉaddress + 1111u32);
     Result = Add(Result, Import + 224u32);
     Result = Add(Result, Import + 232u32);
     Result = Add(Result, Runtimeˉaddress(Value, 6u32));
@@ -77,6 +77,7 @@ fn Windowsˉverifierˉtargets(
     Result = Add(Result, Runtimeˉaddress(Value, 0u32));
     Result = Add(Result, 8192u32 + Value.Nativeˉentry);
     Result = Add(Result, Import + 240u32);
+    Result = Add(Result, Import + 280u32);
     Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
     Result = Add(Result, Runtimeˉaddress(Value, 9u32));
     Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
@@ -109,7 +110,7 @@ fn Windowsˉinspectorˉtargets(
     Result = Add(Result, Import + 216u32);
     Result = Add(Result, Import + 256u32);
     Result = Add(Result, Import + 192u32);
-    Result = Add(Result, Value.Textˉaddress + 1160u32);
+    Result = Add(Result, Value.Textˉaddress + 1186u32);
     Result = Add(Result, Import + 224u32);
     Result = Add(Result, Import + 232u32);
     Result = Add(Result, Runtimeˉaddress(Value, 6u32));
@@ -138,6 +139,7 @@ fn Windowsˉinspectorˉtargets(
     Result = Add(Result, Runtimeˉaddress(Value, 0u32));
     Result = Add(Result, 8192u32 + Value.Nativeˉentry);
     Result = Add(Result, Import + 240u32);
+    Result = Add(Result, Import + 280u32);
     Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));
     Result = Add(Result, Runtimeˉaddress(Value, 9u32));
     Result = Add(Result, Runtimeˉaddressˉforˉprofile(Runtime, Value, 10u32));

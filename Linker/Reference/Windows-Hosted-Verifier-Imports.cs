@@ -19,6 +19,7 @@ internal static class Windowsˉhostedˉverifierˉimports
 
     internal const int CLOSE_HANDLE_IAT_OFFSET = KERNEL_IAT_OFFSET + 0;
     internal const int CREATE_FILE_IAT_OFFSET = KERNEL_IAT_OFFSET + 8;
+    internal const int EXIT_PROCESS_IAT_OFFSET = KERNEL_IAT_OFFSET + 88;
     internal const int GET_COMMAND_LINE_IAT_OFFSET = KERNEL_IAT_OFFSET + 16;
     internal const int GET_FILE_SIZE_IAT_OFFSET = KERNEL_IAT_OFFSET + 24;
     internal const int GET_LAST_ERROR_IAT_OFFSET = KERNEL_IAT_OFFSET + 32;
@@ -43,6 +44,7 @@ internal static class Windowsˉhostedˉverifierˉimports
         new("ReadFile", 468),
         new("WideCharToMultiByte", 480),
         new("WriteFile", 502),
+        new("ExitProcess", 562),
     ];
     private static readonly Importˉname SHELL_IMPORT =
         new("CommandLineToArgvW", 514);

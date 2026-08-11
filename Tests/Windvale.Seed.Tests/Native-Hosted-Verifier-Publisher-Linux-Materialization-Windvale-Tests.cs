@@ -64,7 +64,7 @@ internal static partial class Program
                 Publisher.Module.Capabilities, Bundle, Nativeˉentry).ToArray();
             Equal(249_856, Base.Length);
             Equal(
-                "687338281ca78c9d3a4d08b601c1efbcc198ec3c8fcc96fbf34f5dc349cafae2",
+                "577bda8af2b1d8fca6f37e894c6b7f920e547f3e2b0bd1a28d2af518743a6629",
                 Convert.ToHexString(SHA256.HashData(Base)).ToLowerInvariant());
 
             var Expected = File.ReadAllBytes(Path.Combine(
@@ -85,7 +85,7 @@ internal static partial class Program
             Equal(0u, Readˉpublisherˉrequestˉu32(Executed, 12));
             Sequenceˉequal(Expected, Executed.AsSpan()[32..].ToArray());
             Equal(
-                "510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac",
+                "8c9a1dbbb177041c61e4606696ce9ddf9225a98407a7d3af0a4338069a15979e",
                 Convert.ToHexString(SHA256.HashData(Executed.AsSpan()[32..])).ToLowerInvariant());
 
             Expectˉlinuxˉpublisherˉmaterializationˉfailure(

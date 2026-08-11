@@ -217,7 +217,7 @@ function Invoke-ExactWvoReadOnlyExecution([string]$ObjectPath) {
     ).Hash.ToLowerInvariant()
     if (
         $ApplicationInformation.Length -ne 606720 -or
-        $ApplicationDigest -ne 'a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366'
+        $ApplicationDigest -ne '8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1'
     ) {
         throw 'The Windows native WVO inspector application identity is invalid.'
     }

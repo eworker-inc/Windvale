@@ -60,7 +60,7 @@ The current candidate identities are:
 | WVO inspector WVB | 61,008 | `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db` |
 | WVO inspector WVO | 591,723 | `f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c` |
 | Linked inspector fragment | 587,529 | `f318ee573b149aac169b67369e90dbacc6451fc129022bfb4e62b2ceff9cfba4` |
-| Windows WVO inspector | 606,720 | `a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366` |
+| Windows WVO inspector | 606,720 | `8c6f30b0b55898776d8dc394ea763313527650a361ceb6f478ffad48979084f1` |
 | Linux WVO inspector | 606,208 | `f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1` |
 
 [Decision 0500](../Documents/Decisions/0500-Native-Wvo-Inspector-Reconstruction.md)

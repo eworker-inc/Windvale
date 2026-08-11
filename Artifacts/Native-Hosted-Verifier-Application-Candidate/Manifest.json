@@ -11,7 +11,7 @@
       "path": "windows-x64-wvverify.exe",
       "target": "windows-x64-compiler-verifier-v4",
       "bytes": 1004032,
-      "sha256": "aea110110300870cd4f8e3dfcae98de24d90678dd33bfc8584351f58028ff34a",
+      "sha256": "5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7",
       "sourceWvb": "../Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb"
     },
     {
@@ -19,7 +19,7 @@
       "path": "linux-x64-wvverify.elf",
       "target": "linux-x64-compiler-verifier-v4",
       "bytes": 1003520,
-      "sha256": "26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b",
+      "sha256": "824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982",
       "sourceWvb": "../Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb"
     }
   ]

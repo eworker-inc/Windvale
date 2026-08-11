@@ -115,6 +115,7 @@ fn Imports(Address: u32) -> bytes {
         Result, Address, 9u32, 480u32, "WideCharToMultiByte"
     );
     Result = Importˉentry(Result, Address, 10u32, 502u32, "WriteFile");
+    Result = Importˉentry(Result, Address, 11u32, 562u32, "ExitProcess");
     let Shellˉname: u32 = Address + 514u32;
     Result = Build.Patchˉu64(Result, 176u32, Shellˉname, 0u32);
     Result = Build.Patchˉu64(Result, 304u32, Shellˉname, 0u32);

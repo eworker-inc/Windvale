@@ -12,7 +12,7 @@
       "path": "windows-x64-wvhostverifierpublisherinstall.exe",
       "target": "windows-x64-native-hosted-verifier-publisher-promoter-v1",
       "bytes": 681472,
-      "sha256": "86c72f5485bd6eeba1bdb65841102d7f388a8714b8e07ca3d519250de2886d8b",
+      "sha256": "5690fb32c7fec85551e0c5cd58e4f56589a5ad4c09108b5dde86fa9fc7b3fb92",
       "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Publisher-Promoter.wvb",
       "sourceWvo": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Publisher-Promoter.wvo"
     },
@@ -21,7 +21,7 @@
       "path": "linux-x64-wvhostverifierpublisherinstall.elf",
       "target": "linux-x64-native-hosted-verifier-publisher-promoter-v1",
       "bytes": 680949,
-      "sha256": "700f3df624611abad03cbd70811bad2ab015136ecdacc6dff9cdd97f5fc81395",
+      "sha256": "3cd1c82807495e34445345b5e61b8c5911434c84d2a6f49a11b21fd2521423f5",
       "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Publisher-Promoter.wvb",
       "sourceWvo": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Publisher-Promoter.wvo"
     }

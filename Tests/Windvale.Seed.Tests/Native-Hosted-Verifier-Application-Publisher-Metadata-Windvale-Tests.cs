@@ -13,7 +13,7 @@ internal static partial class Program
 {
     private const int NATIVE_HOSTED_VERIFIER_PUBLISHER_METADATA_BYTES = 19_850;
     private const string NATIVE_HOSTED_VERIFIER_PUBLISHER_METADATA_SHA256 =
-        "ce63600b7aa9e233d8ee97904cbe353aa9cc1e57fdefc0d9b8cf9e12f3c7385a";
+        "d1baeb7d9a2cac4d892505450fd268c2a6ad8e28ca5122d0daca571edbb3acc2";
 
     private static void Windvaleˉnativeˉhostedˉverifierˉpublisherˉmetadataˉruns()
     {

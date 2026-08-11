@@ -12,7 +12,7 @@ internal static partial class Program
 {
     private const int NATIVE_HOSTED_VERIFIER_APPLICATION_ADMISSION_BYTES = 18_091;
     private const string NATIVE_HOSTED_VERIFIER_APPLICATION_ADMISSION_SHA256 =
-        "382f0e23711400d94a843324a34b43347a782a893b1f13d4f417ee20554fad17";
+        "ffba52552f843a50efe00443492aa38116dd10d70149bb23025b8d488f43421e";
 
     private static void Nativeˉhostedˉverifierˉapplicationˉpublisherˉruns()
     {

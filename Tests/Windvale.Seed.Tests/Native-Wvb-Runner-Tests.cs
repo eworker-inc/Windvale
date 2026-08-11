@@ -20,7 +20,7 @@ internal static partial class Program
         "a2644f4bbe6209b033de7b1080113a8fcb4e5da3376d462d7d50c5edeb4a580c";
     private const int CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_BYTES = 1_094_656;
     private const string CURRENT_WINDOWS_WVB_RUNNER_APPLICATION_SHA256 =
-        "6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc";
+        "28158b3fcd050b38d1054d2aa44da15e6e481a20f6918fab85279ba3c10ca05c";
     private const int CURRENT_LINUX_WVB_RUNNER_APPLICATION_BYTES = 1_093_632;
     private const string CURRENT_LINUX_WVB_RUNNER_APPLICATION_SHA256 =
         "a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d";

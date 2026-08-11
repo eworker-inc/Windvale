@@ -80,7 +80,11 @@ export async function Testˉsource(Repositoryˉroot, Temporaryˉdirectory, Cases
             Assembler.Fileˉpath,
             [Case.Inputˉpath, Destination],
         );
-        Require(Result.Code === 2, `${Case.Name}: native assembler exit differs.`);
+        Require(
+            Result.Code === 2,
+            `${Case.Name}: native assembler exit ${Result.Code} differs; ` +
+                `diagnostic=${JSON.stringify(Result.Error.toString("utf8"))}.`,
+        );
         Require(Result.Output.byteLength === 0, `${Case.Name}: native assembler wrote output.`);
         const Diagnostic = Oneˉline(Result.Error, `${Case.Name} assembler diagnostic`);
         Require(
