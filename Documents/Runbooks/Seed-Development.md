@@ -195,7 +195,7 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Run the fixed 121-case native front-door qualification smoke directly with:
+Run the fixed 132-case native front-door qualification smoke directly with:
 
 ```powershell
 $output = New-Item -ItemType Directory -Force artifacts/seed-front-door
@@ -208,7 +208,7 @@ mkdir -p artifacts/seed-front-door
 ./Tools/Verify/Verify-Seed-Native-Front-Door.sh artifacts/seed-front-door
 ```
 
-The helper builds 71 exact WVBs. It retains the original Project 1,
+The helper builds 79 exact WVBs. It retains the original Project 1,
 verification, inspection, execution, instruction-count, and malformed-project
 cases; it additionally builds and inspects Machine Contracts, Byte Ordering,
 Decimal Parsing, and Byte Construction, builds all four demos, and executes the
@@ -246,6 +246,15 @@ fragment comparisons. Projects stay component-local only when their entire
 closure has one owner; cross-component Foundation/Runtime/Linker aggregates
 remain at repository root.
 
+The helper finally builds the source-lexer core/demo,
+declaration-parser core/demo/tool, and body-parser core/demo/tool and natively
+inspects the three core type/export surfaces. These manifests remain root
+aggregates because their complete closures span Compiler or Examples plus
+Foundation. The broad scripts still run the three demos and five
+capability-bearing tools through Stage 0; the current native runner does not
+complete the demos, and the tools require explicit console, diagnostic, file,
+and process capabilities.
+
 Run the exact native capability-free console-AOT qualification composition in
 the same output directory after `Sum-Data.wvb` exists:
 
@@ -263,7 +272,8 @@ the exact Windows and Linux version-1 products from one image, and executes the
 current-host product to result `29`. The paired broad Seed scripts invoke it
 immediately after the native front-door helper.
 
-The retained Stage 0 runtime still owns execution:
+The retained Stage 0 runtime still owns the remaining general and parser
+execution lane:
 
 ```powershell
 dotnet run --project Tools/Windvale.Tool -- run Artifacts/Sum-Data.wvb

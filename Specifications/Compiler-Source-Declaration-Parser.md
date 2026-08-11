@@ -74,13 +74,13 @@ Input collections cannot exceed the lexer token ceiling. A constant initializer 
 The current candidate hosted tool parses the real lexer as:
 
 ```text
-source declarations status=Valid imports=1 capabilities=0 data=0 records=2 enums=3 functions=17 tokens=6175 offset=51134
+source declarations status=Valid imports=1 capabilities=0 data=0 records=3 enums=3 functions=19 tokens=6881 offset=56312
 ```
 
 It parses its own declaration source as:
 
 ```text
-source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=32 tokens=15098 offset=112327
+source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums=4 functions=32 tokens=15142 offset=112567
 ```
 
 ## Current candidate artifacts
@@ -88,6 +88,14 @@ source declarations status=Valid imports=1 capabilities=0 data=0 records=4 enums
 - `Source-Declaration-Parser.wvb`: 151,197 bytes, SHA-256 `8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb`.
 - `Source-Declaration-Parser-Demo.wvb`: 154,365 bytes, SHA-256 `9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf`, result `0` under 20,000,000 instructions.
 - `Source-Declaration-Parser-Tool.wvb`: 151,731 bytes, SHA-256 `ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0`.
+
+Decision 0516 makes the native Project 1 front door the ordinary constructor
+for all three WVBs and binds the core's exact portable type/export surface
+through native inspection. The demo and capability-bearing hosted-tool runs
+remain in the managed differential lane because the scalar native runner does
+not complete the demo and does not bind the tool's console, diagnostic, file,
+and process capabilities. This is local Windows transfer evidence, not a new
+cross-host qualification claim.
 
 The real lexer completes under 30,000,000 instructions. The larger self-declaration pass completes under 45,000,000. These are local deterministic constant-declaration candidates, not a successor cross-host qualification claim, and do not change assembler or linker ceilings.
 

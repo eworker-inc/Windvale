@@ -24,6 +24,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Progress](Project/Progress.md) — authoritative current-state snapshot, immediate measured transfer, and working paths
 - [Roadmap](Project/Roadmap.md) — forward phase gates, detailed sequence, and next deliverables
 - [.NET retirement inventory](Project/Dotnet-Retirement-Inventory.md) — enforced direct-entry-point inventory, product-surface ledger, and retained recovery owners
+- [Native source-parser build and inspection transfer](Decisions/0516-Native-Source-Parser-Build-And-Inspection-Transfer.md) — current Windows ownership of eight lexer/declaration/body-parser builds and three inspections, with parser execution and cross-host qualification still explicit gaps
 - [Native publisher promoter applications](Decisions/0487-Native-WVHV-Publisher-Promoter-Applications.md) — separate non-circular durable publisher installation through paired role-aware native applications
 - [Project vision](Project/Project-Vision.md) — purpose, intended stack, success principles, and non-goals
 - [Open questions](Project/Open-Questions.md) — unresolved choices only

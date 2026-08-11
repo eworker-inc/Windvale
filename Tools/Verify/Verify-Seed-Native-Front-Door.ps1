@@ -185,6 +185,14 @@ $NativeHostedToolRuntimeHeaderCoreModule = Join-Path $OutputRoot 'Native-Hosted-
 $NativeHostedToolRuntimeHeaderBridgeModule = Join-Path $OutputRoot 'Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
 $NativePublicationLifetimeCoreModule = Join-Path $OutputRoot 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $OutputRoot 'Native-Publication-Lifetime-Bridge.wvb'
+$SourceLexerModule = Join-Path $OutputRoot 'Source-Lexer-Core.wvb'
+$SourceLexerDemoModule = Join-Path $OutputRoot 'Source-Lexer-Demo.wvb'
+$SourceDeclarationParserModule = Join-Path $OutputRoot 'Source-Declaration-Parser.wvb'
+$SourceDeclarationParserDemoModule = Join-Path $OutputRoot 'Source-Declaration-Parser-Demo.wvb'
+$SourceDeclarationParserToolModule = Join-Path $OutputRoot 'Source-Declaration-Parser-Tool.wvb'
+$SourceBodyParserModule = Join-Path $OutputRoot 'Source-Body-Parser.wvb'
+$SourceBodyParserDemoModule = Join-Path $OutputRoot 'Source-Body-Parser-Demo.wvb'
+$SourceBodyParserToolModule = Join-Path $OutputRoot 'Source-Body-Parser-Tool.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -740,6 +748,60 @@ Invoke-ExactBuild `
     'build status=Published verification=compiler-aligned functions=8 code-bytes=3424 module-bytes=4442'
 Invoke-ExactInspect $NativePublicationLifetimeBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Lexer-Core.wvproj') `
+    $SourceLexerModule `
+    49470 `
+    '411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08efb89da6b3e' `
+    'build status=Published verification=compiler-aligned functions=20 code-bytes=40152 module-bytes=49470'
+Invoke-ExactInspect $SourceLexerModule @('profile=portable', 'section name=exports offset=46433 bytes=715 count=17', 'section name=types offset=47156 bytes=2314 count=7', 'Compiler\\u02C9source\\u02C9token', 'Compiler\\u02C9token\\u02C9kind', 'Compiler\\u02C9lex\\u02C9source\\u02C9bounded')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Lexer-Demo.wvproj') `
+    $SourceLexerDemoModule `
+    56674 `
+    'f83ff53dd2ffa1808bbf5c9ca2056f8dbb386308d52142f720ddf26420a6c2db' `
+    'build status=Published verification=compiler-aligned functions=21 code-bytes=46427 module-bytes=56674'
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Declaration-Parser.wvproj') `
+    $SourceDeclarationParserModule `
+    151197 `
+    '8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb' `
+    'build status=Published verification=compiler-aligned functions=52 code-bytes=120804 module-bytes=151197'
+Invoke-ExactInspect $SourceDeclarationParserModule @('profile=portable', 'section name=exports offset=145507 bytes=1417 count=32', 'section name=types offset=146932 bytes=4265 count=15', 'Compiler\\u02C9source\\u02C9declaration', 'Compiler\\u02C9source\\u02C9module\\u02C9summary', 'Compiler\\u02C9parse\\u02C9next\\u02C9declaration\\u02C9validated')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Declaration-Parser-Demo.wvproj') `
+    $SourceDeclarationParserDemoModule `
+    154365 `
+    '9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf' `
+    'build status=Published verification=compiler-aligned functions=53 code-bytes=124556 module-bytes=154365'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Declaration-Parser-Tool.wvproj') `
+    $SourceDeclarationParserToolModule `
+    151731 `
+    'ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0' `
+    'build status=Published verification=compiler-aligned functions=55 code-bytes=122750 module-bytes=151731'
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Body-Parser.wvproj') `
+    $SourceBodyParserModule `
+    248663 `
+    '68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589' `
+    'build status=Published verification=compiler-aligned functions=100 code-bytes=197096 module-bytes=248663'
+Invoke-ExactInspect $SourceBodyParserModule @('profile=portable', 'section name=exports offset=239096 bytes=2112 count=47', 'section name=types offset=241216 bytes=7447 count=25', 'Compiler\\u02C9source\\u02C9expression', 'Compiler\\u02C9source\\u02C9statement', 'Compiler\\u02C9parse\\u02C9expression\\u02C9validated', 'Compiler\\u02C9parse\\u02C9source\\u02C9bodies')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Body-Parser-Demo.wvproj') `
+    $SourceBodyParserDemoModule `
+    254805 `
+    '2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f' `
+    'build status=Published verification=compiler-aligned functions=101 code-bytes=204515 module-bytes=254805'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Body-Parser-Tool.wvproj') `
+    $SourceBodyParserToolModule `
+    247844 `
+    '0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f' `
+    'build status=Published verification=compiler-aligned functions=103 code-bytes=198924 module-bytes=247844'
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -771,4 +833,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=71 cases=121'
+Write-Output 'native Seed front-door verification status=Complete artifacts=79 cases=132'

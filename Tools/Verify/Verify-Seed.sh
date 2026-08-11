@@ -251,7 +251,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=71 cases=121' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=79 cases=132' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -657,77 +657,14 @@ if [ "$NATIVE_PUBLICATION_LIFETIME_ARTIFACT_HASH" != '4d87911f2f442e6a2e4dd23641
     exit 1
 fi
 SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Lexer-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_LEXER_MODULE"
-SOURCE_LEXER_HASH=$(sha256sum "$SOURCE_LEXER_MODULE" | awk '{print $1}')
-if [ "$SOURCE_LEXER_HASH" != '411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08efb89da6b3e' ]; then
-    echo "The Windvale source lexer has an unexpected digest: $SOURCE_LEXER_HASH" >&2
-    exit 1
-fi
-SOURCE_LEXER_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_LEXER_MODULE")
-printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Nominal types (7)' >/dev/null
-printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉsourceˉtoken' >/dev/null
-printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉtokenˉkind' >/dev/null
-printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Compilerˉlexˉsourceˉbounded' >/dev/null
-printf '%s\n' "$SOURCE_LEXER_INSPECTION" | grep -F 'Exports (17)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Lexer-Demo.wv" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_LEXER_DEMO_MODULE"
-SOURCE_LEXER_DEMO_HASH=$(sha256sum "$SOURCE_LEXER_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_LEXER_DEMO_HASH" != 'f83ff53dd2ffa1808bbf5c9ca2056f8dbb386308d52142f720ddf26420a6c2db' ]; then
-    echo "The Windvale source-lexer demo has an unexpected digest: $SOURCE_LEXER_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_LEXER_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_LEXER_DEMO_MODULE" --max-steps 10000000)
 printf '%s\n' "$SOURCE_LEXER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_DECLARATION_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Declaration-Parser.wv"
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_DECLARATION_PARSER_MODULE"
-SOURCE_DECLARATION_PARSER_HASH=$(sha256sum "$SOURCE_DECLARATION_PARSER_MODULE" | awk '{print $1}')
-if [ "$SOURCE_DECLARATION_PARSER_HASH" != '8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb' ]; then
-    echo "The Windvale declaration parser has an unexpected digest: $SOURCE_DECLARATION_PARSER_HASH" >&2
-    exit 1
-fi
-SOURCE_DECLARATION_PARSER_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_DECLARATION_PARSER_MODULE")
-printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Nominal types (15)' >/dev/null
-printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉdeclaration' >/dev/null
-printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉmoduleˉsummary' >/dev/null
-printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉnextˉdeclarationˉvalidated' >/dev/null
-printf '%s\n' "$SOURCE_DECLARATION_PARSER_INSPECTION" | grep -F 'Exports (32)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Declaration-Parser-Demo.wv" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_DECLARATION_PARSER_DEMO_MODULE"
-SOURCE_DECLARATION_PARSER_DEMO_HASH=$(sha256sum "$SOURCE_DECLARATION_PARSER_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_DECLARATION_PARSER_DEMO_HASH" != '9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf' ]; then
-    echo "The declaration-parser demo has an unexpected digest: $SOURCE_DECLARATION_PARSER_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_DECLARATION_PARSER_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_DECLARATION_PARSER_DEMO_MODULE" --max-steps 20000000)
 printf '%s\n' "$SOURCE_DECLARATION_PARSER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Declaration-Parser-Tool.wv" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_DECLARATION_PARSER_TOOL_MODULE"
-SOURCE_DECLARATION_PARSER_TOOL_HASH=$(sha256sum "$SOURCE_DECLARATION_PARSER_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_DECLARATION_PARSER_TOOL_HASH" != 'ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0' ]; then
-    echo "The declaration-parser tool has an unexpected digest: $SOURCE_DECLARATION_PARSER_TOOL_HASH" >&2
-    exit 1
-fi
 SOURCE_LEXER_DECLARATION_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_DECLARATION_PARSER_TOOL_MODULE" \
     --allow console.write_line \
@@ -752,51 +689,9 @@ printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'source declara
 printf '%s\n' "$SOURCE_PARSER_SELF_DECLARATION_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_BODY_PARSER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Body-Parser.wv"
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_BODY_PARSER_MODULE"
-SOURCE_BODY_PARSER_HASH=$(sha256sum "$SOURCE_BODY_PARSER_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BODY_PARSER_HASH" != '68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589' ]; then
-    echo "The Windvale body parser has an unexpected digest: $SOURCE_BODY_PARSER_HASH" >&2
-    exit 1
-fi
-SOURCE_BODY_PARSER_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_BODY_PARSER_MODULE")
-printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Nominal types (25)' >/dev/null
-printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉexpression' >/dev/null
-printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉsourceˉstatement' >/dev/null
-printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉexpressionˉvalidated' >/dev/null
-printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Compilerˉparseˉsourceˉbodies' >/dev/null
-printf '%s\n' "$SOURCE_BODY_PARSER_INSPECTION" | grep -F 'Exports (47)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Body-Parser-Demo.wv" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_BODY_PARSER_DEMO_MODULE"
-SOURCE_BODY_PARSER_DEMO_HASH=$(sha256sum "$SOURCE_BODY_PARSER_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BODY_PARSER_DEMO_HASH" != '2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f' ]; then
-    echo "The body-parser demo has an unexpected digest: $SOURCE_BODY_PARSER_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_BODY_PARSER_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BODY_PARSER_DEMO_MODULE" --max-steps 30000000)
 printf '%s\n' "$SOURCE_BODY_PARSER_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Body-Parser-Tool.wv" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_BODY_PARSER_TOOL_MODULE"
-SOURCE_BODY_PARSER_TOOL_HASH=$(sha256sum "$SOURCE_BODY_PARSER_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BODY_PARSER_TOOL_HASH" != '0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f' ]; then
-    echo "The body-parser tool has an unexpected digest: $SOURCE_BODY_PARSER_TOOL_HASH" >&2
-    exit 1
-fi
 SOURCE_LEXER_BODY_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BODY_PARSER_TOOL_MODULE" \
     --allow console.write_line \

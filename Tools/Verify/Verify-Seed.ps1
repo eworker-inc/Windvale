@@ -259,7 +259,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=71 cases=121'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=79 cases=132'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -925,36 +925,6 @@ if (
     throw "The retained Windvale native publication-lifetime fragment has an unexpected identity: $NativePublicationLifetimeArtifactHash"
 }
 $SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Lexer-Core.wv'
-dotnet $ToolDll `
-    compile $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceLexerModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source lexer.' }
-$SourceLexerHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceLexerModule).Hash.ToLowerInvariant()
-if ($SourceLexerHash -ne '411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08efb89da6b3e') {
-    throw "The Windvale source lexer has an unexpected digest: $SourceLexerHash"
-}
-$SourceLexerInspection = (dotnet $ToolDll inspect $SourceLexerModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $SourceLexerInspection -notmatch 'Nominal types \(7\)' -or
-    $SourceLexerInspection -notmatch 'Compilerˉsourceˉtoken' -or
-    $SourceLexerInspection -notmatch 'Compilerˉtokenˉkind' -or
-    $SourceLexerInspection -notmatch 'Compilerˉlexˉsourceˉbounded' -or
-    $SourceLexerInspection -notmatch 'Exports \(17\)'
-) {
-    throw 'The Windvale source-lexer inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Lexer-Demo.wv') `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceLexerDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-lexer demo.' }
-$SourceLexerDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceLexerDemoModule).Hash.ToLowerInvariant()
-if ($SourceLexerDemoHash -ne 'f83ff53dd2ffa1808bbf5c9ca2056f8dbb386308d52142f720ddf26420a6c2db') {
-    throw "The Windvale source-lexer demo has an unexpected digest: $SourceLexerDemoHash"
-}
 $SourceLexerDemoOutput = dotnet $ToolDll `
     run $SourceLexerDemoModule --max-steps 10000000
 if ($LASTEXITCODE -ne 0 -or $SourceLexerDemoOutput -notcontains 'Result: 0') {
@@ -962,53 +932,10 @@ if ($LASTEXITCODE -ne 0 -or $SourceLexerDemoOutput -notcontains 'Result: 0') {
 }
 
 $SourceDeclarationParserSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Declaration-Parser.wv'
-dotnet $ToolDll `
-    compile $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceDeclarationParserModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale declaration parser.' }
-$SourceDeclarationParserHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceDeclarationParserModule).Hash.ToLowerInvariant()
-if ($SourceDeclarationParserHash -ne '8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb') {
-    throw "The Windvale declaration parser has an unexpected digest: $SourceDeclarationParserHash"
-}
-$SourceDeclarationParserInspection = (dotnet $ToolDll inspect $SourceDeclarationParserModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $SourceDeclarationParserInspection -notmatch 'Nominal types \(15\)' -or
-    $SourceDeclarationParserInspection -notmatch 'Compilerˉsourceˉdeclaration' -or
-    $SourceDeclarationParserInspection -notmatch 'Compilerˉsourceˉmoduleˉsummary' -or
-    $SourceDeclarationParserInspection -notmatch 'Compilerˉparseˉnextˉdeclarationˉvalidated' -or
-    $SourceDeclarationParserInspection -notmatch 'Exports \(32\)'
-) {
-    throw 'The Windvale declaration-parser inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Declaration-Parser-Demo.wv') `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceDeclarationParserDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the declaration-parser demo.' }
-$SourceDeclarationParserDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceDeclarationParserDemoModule).Hash.ToLowerInvariant()
-if ($SourceDeclarationParserDemoHash -ne '9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf') {
-    throw "The declaration-parser demo has an unexpected digest: $SourceDeclarationParserDemoHash"
-}
 $SourceDeclarationParserDemoOutput = dotnet $ToolDll `
     run $SourceDeclarationParserDemoModule --max-steps 20000000
 if ($LASTEXITCODE -ne 0 -or $SourceDeclarationParserDemoOutput -notcontains 'Result: 0') {
     throw 'The declaration-parser demo did not return Result: 0.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Declaration-Parser-Tool.wv') `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceDeclarationParserToolModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the declaration-parser tool.' }
-$SourceDeclarationParserToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceDeclarationParserToolModule).Hash.ToLowerInvariant()
-if ($SourceDeclarationParserToolHash -ne 'ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0') {
-    throw "The declaration-parser tool has an unexpected digest: $SourceDeclarationParserToolHash"
 }
 $SourceDeclarationParserArguments = @(
     'run', $SourceDeclarationParserToolModule,
@@ -1038,57 +965,10 @@ if (
 }
 
 $SourceBodyParserSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Body-Parser.wv'
-dotnet $ToolDll `
-    compile $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceBodyParserModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale body parser.' }
-$SourceBodyParserHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBodyParserModule).Hash.ToLowerInvariant()
-if ($SourceBodyParserHash -ne '68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589') {
-    throw "The Windvale body parser has an unexpected digest: $SourceBodyParserHash"
-}
-$SourceBodyParserInspection = (dotnet $ToolDll inspect $SourceBodyParserModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $SourceBodyParserInspection -notmatch 'Nominal types \(25\)' -or
-    $SourceBodyParserInspection -notmatch 'Compilerˉsourceˉexpression' -or
-    $SourceBodyParserInspection -notmatch 'Compilerˉsourceˉstatement' -or
-    $SourceBodyParserInspection -notmatch 'Compilerˉparseˉexpressionˉvalidated' -or
-    $SourceBodyParserInspection -notmatch 'Compilerˉparseˉsourceˉbodies' -or
-    $SourceBodyParserInspection -notmatch 'Exports \(47\)'
-) {
-    throw 'The Windvale body-parser inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Body-Parser-Demo.wv') `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceBodyParserDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the body-parser demo.' }
-$SourceBodyParserDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBodyParserDemoModule).Hash.ToLowerInvariant()
-if ($SourceBodyParserDemoHash -ne '2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f') {
-    throw "The body-parser demo has an unexpected digest: $SourceBodyParserDemoHash"
-}
 $SourceBodyParserDemoOutput = dotnet $ToolDll `
     run $SourceBodyParserDemoModule --max-steps 30000000
 if ($LASTEXITCODE -ne 0 -or $SourceBodyParserDemoOutput -notcontains 'Result: 0') {
     throw 'The body-parser demo did not return Result: 0.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Body-Parser-Tool.wv') `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceBodyParserToolModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the body-parser tool.' }
-$SourceBodyParserToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceBodyParserToolModule).Hash.ToLowerInvariant()
-if ($SourceBodyParserToolHash -ne '0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f') {
-    throw "The body-parser tool has an unexpected digest: $SourceBodyParserToolHash"
 }
 $SourceBodyParserArguments = @(
     'run', $SourceBodyParserToolModule,

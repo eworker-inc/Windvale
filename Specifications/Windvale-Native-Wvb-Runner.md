@@ -58,21 +58,31 @@ exactly `203` instructions.
 The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid
 option rejection, malformed-module rejection, and input preservation. The
-Windows owner passes 3/3 in 49.8 seconds. The paired 121-case native Seed
-front-door helper builds 71 exact artifacts and passes on Windows in 79.1
+Windows owner passes 3/3 in 49.8 seconds. The paired 132-case native Seed
+front-door helper builds 79 exact artifacts and passes on Windows in 264.4
 seconds. It owns the four Foundation module builds and inspections, all four
 Foundation demo builds, the native-stencil and selected runtime-service builds
 and inspections, the complete output/file-output/file-input generator builds
 and bridge inspections, the fixed-service/enum-metadata/publication/
 service-bundle build and inspection closure, the complete runtime-table and
 entry-metadata build/inspection closure, hosted metadata/startup/container/
-runtime-header construction, publication-lifetime construction, and native
-execution of the Machine Contracts, Byte Ordering, and Decimal Parsing demos.
+runtime-header construction, publication-lifetime construction, source-lexer/
+declaration-parser/body-parser core/demo/tool construction and core inspection,
+and native execution of the Machine Contracts, Byte Ordering, and Decimal
+Parsing demos.
 The 4 MiB Byte
 Construction demo remains in the managed differential lane because the current
 scalar runner returns bounded failure `3015` before completing it. The Stencil
 demo also remains managed because its explicit 20,000,000-instruction policy
 exceeds the runner's fixed ordinary budget.
+
+The three source-parser demos remain in the managed differential lane. Direct
+native probes do not produce the required result: declaration and body stop at
+runtime code `3004`, and the lexer exits without `Result: 0`. The declaration
+and body hosted tools also require console, diagnostic, file, and process
+capabilities that this scalar profile does not bind. Decision 0516 therefore
+transfers their construction and inspection without changing this runner's
+execution contract.
 
 ## Evidence boundary
 

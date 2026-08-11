@@ -68,6 +68,22 @@ $NativeCases = @(
     @{
         Name = 'Seed native compiler-service source transfer'
         Paths = @(
+            'Compiler/Windvale/Source-Lexer-Core.wv',
+            'Compiler/Windvale/Source-Declaration-Parser.wv',
+            'Compiler/Windvale/Source-Body-Parser.wv',
+            'Examples/Compiler/Source-Lexer-Demo.wv',
+            'Examples/Compiler/Source-Declaration-Parser-Demo.wv',
+            'Examples/Compiler/Source-Declaration-Parser-Tool.wv',
+            'Examples/Compiler/Source-Body-Parser-Demo.wv',
+            'Examples/Compiler/Source-Body-Parser-Tool.wv',
+            'Windvale-Source-Lexer-Core.wvproj',
+            'Windvale-Source-Lexer-Demo.wvproj',
+            'Windvale-Source-Declaration-Parser.wvproj',
+            'Windvale-Source-Declaration-Parser-Demo.wvproj',
+            'Windvale-Source-Declaration-Parser-Tool.wvproj',
+            'Windvale-Source-Body-Parser.wvproj',
+            'Windvale-Source-Body-Parser-Demo.wvproj',
+            'Windvale-Source-Body-Parser-Tool.wvproj',
             'Compiler/Windvale/Native-Stencil-Core.wv',
             'Compiler/Windvale/Native-Stencil-Bridge.wvproj',
             'Compiler/Windvale/Native-Enum-Metadata-Core.wvproj',

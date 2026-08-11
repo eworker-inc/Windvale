@@ -534,6 +534,17 @@ construction does not collapse those independent artifact checks. Manifests
 are component-local only when their complete closure has one owner, while
 cross-component aggregates remain at repository root.
 
+Decision 0516 transfers the source lexer, declaration parser, and body parser
+construction boundary without conflating it with runtime support. Eight exact
+Project 1 core/demo/tool builds and three native core inspections grow the
+paired helper to 79 artifacts and 132 cases and bring the cumulative broad-host
+removal to 138 managed calls. All eight manifests are honest repository-root
+aggregates because their closures span Compiler or Examples plus Foundation.
+The three demo runs and five capability-bearing tool runs remain in the managed
+differential lane: the current native runner does not complete those demos, and
+the hosted tools require console, diagnostic, file, and process capabilities.
+Construction ownership therefore advances while T2 remains `managed-normal`.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

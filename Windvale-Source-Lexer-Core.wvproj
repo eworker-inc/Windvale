@@ -1,0 +1,4 @@
+windvale-project 1
+root "Compiler/Windvale/Source-Lexer-Core.wv"
+source "Foundation/Decimal-Parsing.wv"
+emit wvb

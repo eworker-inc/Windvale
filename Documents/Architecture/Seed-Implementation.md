@@ -294,6 +294,16 @@ and linked-fragment comparisons. Single-component manifests are local to their
 Runtime, Linker, or Compiler owner, but projects spanning Foundation, Runtime,
 and Linker remain explicit repository-root aggregates.
 
+Decision 0516 transfers the first three Windvale-written source-compiler
+phases. The paired helper now builds the lexer core/demo, declaration-parser
+core/demo/tool, and body-parser core/demo/tool and inspects the three core
+type/export surfaces. Their cross-component Project 1 manifests remain root
+aggregates because Project containment must not permit an Examples or Compiler
+manifest to escape upward to Foundation. The broad managed scripts retain only
+the three demo runs and five capability-bearing hosted-tool runs from this
+block. The current native runner's inability to complete those demos is an
+explicit execution gap, not a reason to keep ordinary construction managed.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

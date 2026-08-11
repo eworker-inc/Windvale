@@ -315,6 +315,22 @@ plus nine-recovery direct-entry inventory is unchanged. Independent Linux
 execution, capability-bearing execution, remaining broad-suite transfers,
 GitHub cutover, grouped qualification, and recovery retirement remain open.
 
+Current T2 source-parser construction transfer:
+[Decision 0516](../Decisions/0516-Native-Source-Parser-Build-And-Inspection-Transfer.md)
+extends the paired native front-door helper from 121 to 132 transferred calls
+and from 71 to 79 exact artifacts. It natively builds the source-lexer core and
+demo, declaration-parser core/demo/tool, and body-parser core/demo/tool, then
+inspects the three core type/export surfaces. The complete current-Windows
+helper passes in 264.4 seconds, and the focused regular/extended compiler
+selection passes 7/7. This removes eight managed builds and three managed
+inspections from each broad host script, 138 managed invocations cumulatively.
+The three demo runs and five capability-bearing tool runs remain managed because
+the native runner does not yet complete those behaviors. T2 therefore remains
+`managed-normal`; the three-normal plus nine-recovery direct-entry inventory is
+unchanged. Independent Linux execution, native parser execution, remaining
+broad-suite transfers, GitHub cutover, grouped qualification, and recovery
+retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

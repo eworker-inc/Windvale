@@ -189,6 +189,14 @@ NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_MODULE="$OUTPUT_ROOT/Native-Hosted-Tool-R
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Hosted-Tool-Runtime-Header-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_CORE_MODULE="$OUTPUT_ROOT/Native-Publication-Lifetime-Core.wvb"
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE="$OUTPUT_ROOT/Native-Publication-Lifetime-Bridge.wvb"
+SOURCE_LEXER_MODULE="$OUTPUT_ROOT/Source-Lexer-Core.wvb"
+SOURCE_LEXER_DEMO_MODULE="$OUTPUT_ROOT/Source-Lexer-Demo.wvb"
+SOURCE_DECLARATION_PARSER_MODULE="$OUTPUT_ROOT/Source-Declaration-Parser.wvb"
+SOURCE_DECLARATION_PARSER_DEMO_MODULE="$OUTPUT_ROOT/Source-Declaration-Parser-Demo.wvb"
+SOURCE_DECLARATION_PARSER_TOOL_MODULE="$OUTPUT_ROOT/Source-Declaration-Parser-Tool.wvb"
+SOURCE_BODY_PARSER_MODULE="$OUTPUT_ROOT/Source-Body-Parser.wvb"
+SOURCE_BODY_PARSER_DEMO_MODULE="$OUTPUT_ROOT/Source-Body-Parser-Demo.wvb"
+SOURCE_BODY_PARSER_TOOL_MODULE="$OUTPUT_ROOT/Source-Body-Parser-Tool.wvb"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -830,6 +838,68 @@ exact_build \
     'build status=Published verification=compiler-aligned functions=8 code-bytes=3424 module-bytes=4442'
 exact_inspect "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=81 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=4207 bytes=17 count=1'
 
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Lexer-Core.wvproj" \
+    "$SOURCE_LEXER_MODULE" \
+    49470 \
+    411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08efb89da6b3e \
+    0000c13e \
+    'build status=Published verification=compiler-aligned functions=20 code-bytes=40152 module-bytes=49470'
+exact_inspect "$SOURCE_LEXER_MODULE" 'profile=portable' 'section name=exports offset=46433 bytes=715 count=17' 'section name=types offset=47156 bytes=2314 count=7' 'Compiler\u02C9source\u02C9token' 'Compiler\u02C9token\u02C9kind' 'Compiler\u02C9lex\u02C9source\u02C9bounded'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Lexer-Demo.wvproj" \
+    "$SOURCE_LEXER_DEMO_MODULE" \
+    56674 \
+    f83ff53dd2ffa1808bbf5c9ca2056f8dbb386308d52142f720ddf26420a6c2db \
+    0000dd62 \
+    'build status=Published verification=compiler-aligned functions=21 code-bytes=46427 module-bytes=56674'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Declaration-Parser.wvproj" \
+    "$SOURCE_DECLARATION_PARSER_MODULE" \
+    151197 \
+    8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb \
+    00024e9d \
+    'build status=Published verification=compiler-aligned functions=52 code-bytes=120804 module-bytes=151197'
+exact_inspect "$SOURCE_DECLARATION_PARSER_MODULE" 'profile=portable' 'section name=exports offset=145507 bytes=1417 count=32' 'section name=types offset=146932 bytes=4265 count=15' 'Compiler\u02C9source\u02C9declaration' 'Compiler\u02C9source\u02C9module\u02C9summary' 'Compiler\u02C9parse\u02C9next\u02C9declaration\u02C9validated'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Declaration-Parser-Demo.wvproj" \
+    "$SOURCE_DECLARATION_PARSER_DEMO_MODULE" \
+    154365 \
+    9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf \
+    00025afd \
+    'build status=Published verification=compiler-aligned functions=53 code-bytes=124556 module-bytes=154365'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Declaration-Parser-Tool.wvproj" \
+    "$SOURCE_DECLARATION_PARSER_TOOL_MODULE" \
+    151731 \
+    ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0 \
+    000250b3 \
+    'build status=Published verification=compiler-aligned functions=55 code-bytes=122750 module-bytes=151731'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Body-Parser.wvproj" \
+    "$SOURCE_BODY_PARSER_MODULE" \
+    248663 \
+    68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589 \
+    0003cb57 \
+    'build status=Published verification=compiler-aligned functions=100 code-bytes=197096 module-bytes=248663'
+exact_inspect "$SOURCE_BODY_PARSER_MODULE" 'profile=portable' 'section name=exports offset=239096 bytes=2112 count=47' 'section name=types offset=241216 bytes=7447 count=25' 'Compiler\u02C9source\u02C9expression' 'Compiler\u02C9source\u02C9statement' 'Compiler\u02C9parse\u02C9expression\u02C9validated' 'Compiler\u02C9parse\u02C9source\u02C9bodies'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Body-Parser-Demo.wvproj" \
+    "$SOURCE_BODY_PARSER_DEMO_MODULE" \
+    254805 \
+    2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f \
+    0003e355 \
+    'build status=Published verification=compiler-aligned functions=101 code-bytes=204515 module-bytes=254805'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Body-Parser-Tool.wvproj" \
+    "$SOURCE_BODY_PARSER_TOOL_MODULE" \
+    247844 \
+    0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f \
+    0003c824 \
+    'build status=Published verification=compiler-aligned functions=103 code-bytes=198924 module-bytes=247844'
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -861,4 +931,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=71 cases=121'
+echo 'native Seed front-door verification status=Complete artifacts=79 cases=132'

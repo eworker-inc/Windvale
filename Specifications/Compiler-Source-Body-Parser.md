@@ -81,14 +81,22 @@ The first failure is deterministic and includes lexical status, expected/found t
 - `Source-Body-Parser-Demo.wvb`: 254,805 bytes, SHA-256 `2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f`, result `0` under 30,000,000 instructions.
 - `Source-Body-Parser-Tool.wvb`: 247,844 bytes, SHA-256 `0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f`.
 
+Decision 0516 makes the native Project 1 front door the ordinary constructor
+for all three WVBs and binds the core's exact portable type/export surface
+through native inspection. The demo and capability-bearing hosted-tool runs
+remain in the managed differential lane because the scalar native runner stops
+the demo at runtime code `3004` and does not bind the tool's console,
+diagnostic, file, and process capabilities. This is local Windows transfer
+evidence, not a new cross-host qualification claim.
+
 These are the current local deterministic identities after initializer inference, named-record parsing, recursive `else if`, loop-control statements, short-circuit operators, and compound assignment. Cross-host qualification remains required before they replace the retained qualified baseline claim.
 
 The real-source reports are:
 
 ```text
-source bodies status=Valid functions=17 top-level=118 statements=686 expression-nodes=1916 statement-depth=17 expression-depth=5 offset=51135
-source bodies status=Valid functions=32 top-level=363 statements=917 expression-nodes=3593 statement-depth=12 expression-depth=5 offset=112328
-source bodies status=Valid functions=47 top-level=338 statements=811 expression-nodes=3576 statement-depth=7 expression-depth=3 offset=109506
+source bodies status=Valid functions=19 top-level=131 statements=749 expression-nodes=2153 statement-depth=17 expression-depth=5 offset=56313
+source bodies status=Valid functions=32 top-level=365 statements=921 expression-nodes=3601 statement-depth=12 expression-depth=5 offset=112568
+source bodies status=Valid functions=48 top-level=339 statements=812 expression-nodes=3607 statement-depth=7 expression-depth=3 offset=110706
 ```
 
 These correspond to the lexer, declaration parser, and body parser. Their ceilings remain respectively 100,000,000, 160,000,000, and 160,000,000 instructions. The body parser was originally cross-host qualified at `ddfa9e3`; Decision 0042's artifact identity was requalified byte for byte with the role-based compiler layout at `4fdc6bf`. Decision 0055's reuse and containment implementation is cross-host qualified at `1a4fca7`.
