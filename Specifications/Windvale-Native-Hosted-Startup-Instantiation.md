@@ -104,3 +104,8 @@ The standalone hosted-container startup producer now owns exact WVO identity,
 request projection, native invocation, and response admission. The retained
 managed relay remains deletion-bound until the complete process pipeline is
 composed and promoted.
+
+[Decision 0515](../Documents/Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
+moves exact startup-instantiation Project 1 construction and public-surface
+inspection into the paired native helper. The broad scripts still compare the
+native-built WVB with the retained WVB, WVNF, and both target WVO identities.

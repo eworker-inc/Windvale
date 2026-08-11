@@ -211,7 +211,9 @@ internal static partial class Program
                 Repository,
                 Path.Combine(
                     Repository,
-                    "Windvale-Native-Hosted-Startup-Instantiation.wvproj"),
+                    "Linker",
+                    "Windvale",
+                    "Native-Hosted-Startup-Instantiation.wvproj"),
                 Nativeˉpath);
             Equal(0, Nativeˉbuild.Exitˉcode);
             Equal(string.Empty, Nativeˉbuild.Error);

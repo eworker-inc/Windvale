@@ -189,17 +189,13 @@ NATIVE_EXECUTION_CONTEXT_BRIDGE_MODULE="$ARTIFACTS/Native-Execution-Context-Brid
 NATIVE_ARGUMENT_TABLE_BRIDGE_MODULE="$ARTIFACTS/Native-Argument-Table-Bridge.wvb"
 NATIVE_ENTRY_BRIDGE_BRIDGE_MODULE="$ARTIFACTS/Native-Entry-Bridge-Bridge.wvb"
 NATIVE_BYTE_RESULT_ADMISSION_BRIDGE_MODULE="$ARTIFACTS/Native-Byte-Result-Admission-Bridge.wvb"
-NATIVE_HOSTED_TOOL_METADATA_ADMISSION_MODULE="$ARTIFACTS/Native-Hosted-Tool-Metadata-Admission.wvb"
-NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Metadata-Construction-Core.wvb"
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Metadata-Construction-Bridge.wvb"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE="$ARTIFACTS/Native-Hosted-Startup-Instantiation.wvb"
 NATIVE_HOSTED_CONTAINER_PLAN_MODULE="$ARTIFACTS/Native-Hosted-Container-Construction.wvb"
 NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE="$ARTIFACTS/Native-Hosted-Container-Windows.wvb"
 NATIVE_HOSTED_CONTAINER_LINUX_MODULE="$ARTIFACTS/Native-Hosted-Container-Linux.wvb"
 NATIVE_HOSTED_CONTAINER_SEGMENTATION_MODULE="$ARTIFACTS/Native-Hosted-Container-Segmentation.wvb"
-NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Runtime-Header-Core.wvb"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE="$ARTIFACTS/Native-Hosted-Tool-Runtime-Header-Bridge.wvb"
-NATIVE_PUBLICATION_LIFETIME_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Core.wvb"
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE="$ARTIFACTS/Native-Publication-Lifetime-Bridge.wvb"
 SOURCE_LEXER_MODULE="$ARTIFACTS/Source-Lexer-Core.wvb"
 SOURCE_LEXER_DEMO_MODULE="$ARTIFACTS/Source-Lexer-Demo.wvb"
@@ -255,7 +251,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=59 cases=100' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=71 cases=121' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -563,42 +559,10 @@ if [ "$NATIVE_BYTE_RESULT_ADMISSION_ARTIFACT_HASH" != '35c29fa9bbc41a00e8797f781
     exit 1
 fi
 
-NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv"
-NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Core.wv"
-NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Bridge.wv"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvb"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvnf"
-dotnet "$TOOL_DLL" compile "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE" -o "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_MODULE"
-NATIVE_HOSTED_TOOL_METADATA_ADMISSION_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_HASH" != 'd7b0084ed2c69ee03ad65ee4bfffa72550fd8d9ef2889efa0be116350b80b8b5' ]; then
-    echo "The hosted-tool metadata admission module has an unexpected digest: $NATIVE_HOSTED_TOOL_METADATA_ADMISSION_HASH" >&2
-    exit 1
-fi
-NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv"
-NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_SOURCE="$REPOSITORY_ROOT/Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Bridge.wv"
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Metadata-Construction-Bridge.wvb"
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Metadata-Construction-Bridge.wvnf"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE" \
-    -o "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_MODULE"
-NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_HASH" != '5808f778eb21c1214b581f0ce03958a74173a801b886aec7ed32124d7446abcd' ]; then
-    echo "The hosted-tool metadata-construction core has an unexpected digest: $NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_HASH" >&2
-    exit 1
-fi
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE" \
-    --module "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_CORE_SOURCE" \
-    -o "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE"
-NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_HASH" != 'b5e9397326d3106b22ce735369ef8202ff6bb4c8e14f6069a0c467b4266c8208' ]; then
-    echo "The hosted-tool metadata-construction bridge has an unexpected digest: $NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE" "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_RETAINED"
 NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_RETAINED" | awk '{print $1}')
 if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_HASH" != '3bcb475b7be2760ad514d656d6ad5bffaaca7f74dce0439eff1e277ac7b2d5cb' ] ||
@@ -606,24 +570,10 @@ if [ "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_HASH" != '3bcb475b7be27
     echo "The retained hosted-tool metadata-construction fragment has an unexpected identity: $NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_ARTIFACT_HASH" >&2
     exit 1
 fi
-NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_TOOL_METADATA_CONSTRUCTION_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-NATIVE_HOSTED_STARTUP_INSTANTIATION_PROJECT="$REPOSITORY_ROOT/Windvale-Native-Hosted-Startup-Instantiation.wvproj"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_RETAINED="$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvb"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvnf"
 WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED="$REPOSITORY_ROOT/Linker/Reference/Consumers/Windows-X64-Hosted-Compiler.wvo"
 LINUX_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED="$REPOSITORY_ROOT/Linker/Reference/Consumers/Linux-X64-Hosted-Compiler.wvo"
-dotnet "$TOOL_DLL" \
-    build "$NATIVE_HOSTED_STARTUP_INSTANTIATION_PROJECT" \
-    -o "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE"
-NATIVE_HOSTED_STARTUP_INSTANTIATION_HASH=$(sha256sum "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_STARTUP_INSTANTIATION_HASH" != '933864be78b28394b9fc8e495b5ac872311ebca2a624db6e6731cdb8b399d309' ]; then
-    echo "The hosted-startup instantiation module has an unexpected digest: $NATIVE_HOSTED_STARTUP_INSTANTIATION_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE" "$NATIVE_HOSTED_STARTUP_INSTANTIATION_RETAINED"
 NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH=$(sha256sum "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_RETAINED" | awk '{print $1}')
 if [ "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH" != 'ad1c049bdf77cb410b95cb638aa401874cca1a21b496e36ecab32ceef1539ffd' ] ||
@@ -638,22 +588,15 @@ if [ "$(sha256sum "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED" | awk '{pri
     echo 'A retained hosted-compiler startup WVO has an unexpected identity.' >&2
     exit 1
 fi
-NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE")
-printf '%s\n' "$NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_STARTUP_INSTANTIATION_INSPECTION" | grep -F 'Exports (1)' >/dev/null
 verify_hosted_container_artifact() {
     name="$1"
-    project="$2"
-    output="$3"
-    retained="$4"
-    module_bytes="$5"
-    module_hash="$6"
-    fragment="$7"
-    fragment_bytes="$8"
-    fragment_hash="$9"
-    dotnet "$TOOL_DLL" build "$project" -o "$output"
+    output="$2"
+    retained="$3"
+    module_bytes="$4"
+    module_hash="$5"
+    fragment="$6"
+    fragment_bytes="$7"
+    fragment_hash="$8"
     actual_module_hash=$(sha256sum "$output" | awk '{print $1}')
     if [ "$actual_module_hash" != "$module_hash" ] ||
         [ "$(wc -c < "$output")" -ne "$module_bytes" ] ||
@@ -668,15 +611,9 @@ verify_hosted_container_artifact() {
         echo "The hosted-container $name WVNF has an unexpected identity: $actual_fragment_hash" >&2
         exit 1
     fi
-    inspection=$(dotnet "$TOOL_DLL" inspect "$output")
-    printf '%s\n' "$inspection" | grep -F 'Profile: portable' >/dev/null
-    printf '%s\n' "$inspection" | grep -F 'Capabilities (0)' >/dev/null
-    printf '%s\n' "$inspection" | grep -F 'Main(bytes) -> bytes' >/dev/null
-    printf '%s\n' "$inspection" | grep -F 'Exports (1)' >/dev/null
 }
 verify_hosted_container_artifact \
     'planner' \
-    "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Construction.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_PLAN_MODULE" \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvb" \
     35929 ff1b48cfc05baab5f707dcfce7e73b0714e2379ee594e12f6e9c6ea1589fef7e \
@@ -684,7 +621,6 @@ verify_hosted_container_artifact \
     561553 f353459548490e28a747c2a9fe37ef047412fca6c55e45da462e0d6d2c2128b3
 verify_hosted_container_artifact \
     'Windows byte constructor' \
-    "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Windows.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE" \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvb" \
     17679 a77e4ea3ac2cff35e965ae44cd486f30dd5b0c10aa2cde23c109d0eca37bffcb \
@@ -692,7 +628,6 @@ verify_hosted_container_artifact \
     184382 b02d27b75e9c5fd637fa3ba031d6b03820ae6bce41dbcdaff971a0ee57c1bd22
 verify_hosted_container_artifact \
     'Linux byte constructor' \
-    "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Linux.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_LINUX_MODULE" \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvb" \
     12328 dac93155c68ba18f6cbe3af2d301a4c4171b9a9c05841057ea57398536fa8b42 \
@@ -700,33 +635,11 @@ verify_hosted_container_artifact \
     126015 4da05782a516e84af8cc0fc2d5c3056dc99ce3fe6c32bc6dbe6e7f9b85314f81
 verify_hosted_container_artifact \
     'segment constructor' \
-    "$REPOSITORY_ROOT/Windvale-Native-Hosted-Container-Segmentation.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_SEGMENTATION_MODULE" \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvb" \
     22584 d6d74f7d27df9f04f02b8eac2e75fde4fc230ba70d198f90b31ad668a06052e6 \
     "$REPOSITORY_ROOT/Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvnf" \
     286727 923f7ff4552e0774e613d5805d8fbdbfff9edaa7347108d3d23626b68fe5dee7
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE" \
-    -o "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_MODULE"
-NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_HASH" != 'f1c156def9fa6f00bb0401097435bb1d1429d9d4be247b8d11f0de0b5ea51be2' ]; then
-    echo "The hosted-tool runtime-header core has an unexpected digest: $NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_HASH" >&2
-    exit 1
-fi
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$NATIVE_HOSTED_TOOL_METADATA_ADMISSION_SOURCE" \
-    --module "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_CORE_SOURCE" \
-    -o "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE"
-NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_HASH" != '3cc8d0850b888911ee3338600bc7699578b163e7400c2b3631ef14649b9a3f18' ]; then
-    echo "The hosted-tool runtime-header bridge has an unexpected digest: $NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE" "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_RETAINED"
 NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_HASH=$(sha256sum "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_RETAINED" | awk '{print $1}')
 if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_HASH" != '91590986b8c3421ffdca9ecffb8a1798718f868614b77c581c266f4a2061b632' ] ||
@@ -734,39 +647,8 @@ if [ "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_HASH" != '91590986b8c3421ffdca
     echo "The retained hosted-tool runtime-header fragment has an unexpected identity: $NATIVE_HOSTED_TOOL_RUNTIME_HEADER_ARTIFACT_HASH" >&2
     exit 1
 fi
-NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_HOSTED_TOOL_RUNTIME_HEADER_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
-NATIVE_PUBLICATION_LIFETIME_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_PUBLICATION_LIFETIME_SOURCE" -o "$NATIVE_PUBLICATION_LIFETIME_MODULE"
-NATIVE_PUBLICATION_LIFETIME_HASH=$(sha256sum "$NATIVE_PUBLICATION_LIFETIME_MODULE" | awk '{print $1}')
-if [ "$NATIVE_PUBLICATION_LIFETIME_HASH" != 'a9e540c5c9ddaaeb4f45ab08a902a0a9019ce8155d544e319485c023b7d485d3' ]; then
-    echo "The Windvale native publication-lifetime core has an unexpected digest: $NATIVE_PUBLICATION_LIFETIME_HASH" >&2
-    exit 1
-fi
-NATIVE_PUBLICATION_LIFETIME_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_LIFETIME_MODULE")
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Nativeˉpublicationˉlifetimeˉresult' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Nativeˉpublicationˉlifetimeˉstatus' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Nativeˉpublicationˉlifetimeˉplan' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_INSPECTION" | grep -F 'Exports (7)' >/dev/null
-
-NATIVE_PUBLICATION_LIFETIME_BRIDGE_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv"
 NATIVE_PUBLICATION_LIFETIME_BRIDGE_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvb"
 NATIVE_PUBLICATION_LIFETIME_ARTIFACT_RETAINED="$REPOSITORY_ROOT/Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvnf"
-dotnet "$TOOL_DLL" \
-    compile "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_SOURCE" \
-    --module "$NATIVE_PUBLICATION_LIFETIME_SOURCE" \
-    -o "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE"
-NATIVE_PUBLICATION_LIFETIME_BRIDGE_HASH=$(sha256sum "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE" | awk '{print $1}')
-if [ "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_HASH" != 'f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554' ]; then
-    echo "The Windvale native publication-lifetime bridge has an unexpected digest: $NATIVE_PUBLICATION_LIFETIME_BRIDGE_HASH" >&2
-    exit 1
-fi
 cmp -s "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE" "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_RETAINED"
 NATIVE_PUBLICATION_LIFETIME_ARTIFACT_HASH=$(sha256sum "$NATIVE_PUBLICATION_LIFETIME_ARTIFACT_RETAINED" | awk '{print $1}')
 if [ "$NATIVE_PUBLICATION_LIFETIME_ARTIFACT_HASH" != '4d87911f2f442e6a2e4dd2364138f35a0037ddc0bff0775a16e37156768777a8' ] ||
@@ -774,12 +656,6 @@ if [ "$NATIVE_PUBLICATION_LIFETIME_ARTIFACT_HASH" != '4d87911f2f442e6a2e4dd23641
     echo "The retained Windvale native publication-lifetime fragment has an unexpected identity: $NATIVE_PUBLICATION_LIFETIME_ARTIFACT_HASH" >&2
     exit 1
 fi
-NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE")
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Profile: portable' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Capabilities (0)' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Main(bytes) -> bytes' >/dev/null
-printf '%s\n' "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_INSPECTION" | grep -F 'Exports (1)' >/dev/null
-
 SOURCE_LEXER_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Lexer-Core.wv"
 dotnet "$TOOL_DLL" \
     compile "$SOURCE_LEXER_SOURCE" \

@@ -195,7 +195,7 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Run the fixed 100-case native front-door qualification smoke directly with:
+Run the fixed 121-case native front-door qualification smoke directly with:
 
 ```powershell
 $output = New-Item -ItemType Directory -Force artifacts/seed-front-door
@@ -208,7 +208,7 @@ mkdir -p artifacts/seed-front-door
 ./Tools/Verify/Verify-Seed-Native-Front-Door.sh artifacts/seed-front-door
 ```
 
-The helper builds 59 exact WVBs. It retains the original Project 1,
+The helper builds 71 exact WVBs. It retains the original Project 1,
 verification, inspection, execution, instruction-count, and malformed-project
 cases; it additionally builds and inspects Machine Contracts, Byte Ordering,
 Decimal Parsing, and Byte Construction, builds all four demos, and executes the
@@ -237,6 +237,14 @@ execution-context, argument, entry, and byte-result-admission core/bridge
 pairs, and natively inspects all eight public bridges. All sixteen manifests
 are component-local. Their retained bridge-WVB and exact fragment comparisons
 remain in the broad scripts.
+
+The helper then builds hosted-tool metadata admission/construction, startup
+instantiation, all four hosted-container products, runtime-header construction,
+and publication lifetime, and natively inspects nine public or core surfaces.
+The broad scripts retain exact bridge-WVB, hosted-startup WVO, and linked
+fragment comparisons. Projects stay component-local only when their entire
+closure has one owner; cross-component Foundation/Runtime/Linker aggregates
+remain at repository root.
 
 Run the exact native capability-free console-AOT qualification composition in
 the same output directory after `Sum-Data.wvb` exists:

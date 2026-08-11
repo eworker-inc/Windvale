@@ -299,6 +299,22 @@ nine-recovery direct-entry inventory is unchanged. Independent Linux
 execution, capability-bearing execution, remaining broad-suite transfers,
 GitHub cutover, grouped qualification, and recovery retirement remain open.
 
+Current T2 hosted-construction transfer:
+[Decision 0515](../Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
+extends the paired native front-door helper from 100 to 121 transferred calls
+and from 59 to 71 exact artifacts. It natively builds hosted-tool metadata
+admission/construction, startup instantiation, all four hosted-container
+products, runtime-header construction, and publication-lifetime core/bridge,
+then inspects nine public or core surfaces. The current Windows helper passes
+in 79.1 seconds; the five hosted-tool behavioral owners pass 5/5 and the
+publication-lifetime owner passes 1/1. This removes twelve managed builds and
+nine managed inspections from each broad host script, 127 managed invocations
+cumulatively. Retained WVB, startup-WVO, and linked-fragment comparisons remain
+in both broad scripts. T2 therefore remains `managed-normal`; the three-normal
+plus nine-recovery direct-entry inventory is unchanged. Independent Linux
+execution, capability-bearing execution, remaining broad-suite transfers,
+GitHub cutover, grouped qualification, and recovery retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

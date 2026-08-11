@@ -446,6 +446,10 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-Publication-Core.wvproj',
         'Compiler/Windvale/Native-Publication-Bridge.wv',
         'Compiler/Windvale/Native-Publication.wvproj',
+        'Compiler/Windvale/Native-Publication-Lifetime-Core.wv',
+        'Compiler/Windvale/Native-Publication-Lifetime-Core.wvproj',
+        'Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv',
+        'Compiler/Windvale/Native-Publication-Lifetime.wvproj',
         'Windvale-Native-Enum-Metadata.wvproj',
         'Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
         'Windvale-Native-Service-Bundle-Materialization.wvproj'
@@ -535,6 +539,16 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale/Native-Byte-Result-Admission-Core.wvproj',
         'Runtime/Windvale/Native-Byte-Result-Admission-Bridge.wv',
         'Runtime/Windvale/Native-Byte-Result-Admission.wvproj',
+        'Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv',
+        'Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wvproj',
+        'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv',
+        'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Bridge.wv',
+        'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Core.wv',
+        'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Bridge.wv',
+        'Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj',
+        'Windvale-Native-Hosted-Tool-Metadata.wvproj',
+        'Windvale-Native-Hosted-Tool-Runtime-Header-Core.wvproj',
+        'Windvale-Native-Hosted-Tool-Runtime-Header.wvproj',
         'Windvale-Native-X64-Text-Concat-Service.wvproj',
         'Windvale-Native-X64-Text-Quote-Service.wvproj',
         'Windvale-Native-X64-Enum-Name-Service.wvproj',
@@ -749,6 +763,25 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Linker/Windvale/Wv-Linker-Core.wv') {
         Add-Linker-Suites
         Add-Suite @('wv-linker-reconstruction', 'console-publisher-reconstruction')
+    } elseif ($Path -in @(
+        'Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv',
+        'Linker/Windvale/Native-Hosted-Startup-Instantiation-Bridge.wv',
+        'Linker/Windvale/Native-Hosted-Startup-Instantiation.wvproj',
+        'Linker/Windvale/Native-Hosted-Container-Construction-Core.wv',
+        'Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv',
+        'Linker/Windvale/Native-Hosted-Container-Layout.wv',
+        'Linker/Windvale/Native-Hosted-Container-Windows.wv',
+        'Linker/Windvale/Native-Hosted-Container-Linux.wv',
+        'Linker/Windvale/Native-Hosted-Container-Segmentation-Core.wv',
+        'Linker/Windvale/Native-Hosted-Container-Segmentation.wv',
+        'Windvale-Native-Hosted-Startup-Instantiation.wvproj',
+        'Windvale-Native-Hosted-Container-Construction.wvproj',
+        'Windvale-Native-Hosted-Container-Windows.wvproj',
+        'Windvale-Native-Hosted-Container-Linux.wvproj',
+        'Windvale-Native-Hosted-Container-Segmentation.wvproj'
+    )) {
+        Add-Linker-Suites
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path.StartsWith('Linker/Windvale/', [StringComparison]::Ordinal)) {
         Add-Linker-Suites
     } elseif ($Path -in @(

@@ -285,6 +285,15 @@ comparisons remain. All sixteen manifests live beside their
 removed. This is build/inspection ownership, not native ownership of
 capability-bearing execution or the broad differential harness.
 
+Decision 0515 transfers the next contiguous construction block: hosted-tool
+metadata admission/construction, startup instantiation, four hosted-container
+products, runtime-header construction, and publication lifetime. The paired
+native helper owns twelve additional builds and nine inspections; the broad
+managed scripts consume those exact outputs only for retained WVB, startup-WVO,
+and linked-fragment comparisons. Single-component manifests are local to their
+Runtime, Linker, or Compiler owner, but projects spanning Foundation, Runtime,
+and Linker remain explicit repository-root aggregates.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

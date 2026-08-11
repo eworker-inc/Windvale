@@ -524,6 +524,16 @@ are removed. Retained bridge-WVB and fragment comparisons remain independent;
 capability-bearing execution, the broad harness, Linux evidence, and later
 qualification phases remain open.
 
+Decision 0515 extends paired native construction through hosted-tool metadata,
+startup instantiation, the four outer-container products, runtime-header
+construction, and publication lifetime. Twelve exact Project 1 builds and nine
+native inspections grow the helper to 71 artifacts and 121 cases, bringing the
+cumulative removal to 127 managed calls per broad host script. The broad route
+still compares retained WVBs, both startup WVOs, and linked fragments; native
+construction does not collapse those independent artifact checks. Manifests
+are component-local only when their complete closure has one owner, while
+cross-component aggregates remain at repository root.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

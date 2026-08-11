@@ -72,6 +72,8 @@ $NativeCases = @(
             'Compiler/Windvale/Native-Stencil-Bridge.wvproj',
             'Compiler/Windvale/Native-Enum-Metadata-Core.wvproj',
             'Compiler/Windvale/Native-Publication-Bridge.wv',
+            'Compiler/Windvale/Native-Publication-Lifetime-Core.wvproj',
+            'Compiler/Windvale/Native-Publication-Lifetime.wvproj',
             'Windvale-Native-Enum-Metadata.wvproj',
             'Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
             'Examples/Compiler/Native-Stencil-Demo.wv',
@@ -107,10 +109,30 @@ $NativeCases = @(
             'Runtime/Windvale/Native-Output-Table-Core.wvproj',
             'Runtime/Windvale/Native-Execution-Context-Bridge.wv',
             'Runtime/Windvale/Native-Byte-Result-Admission.wvproj',
+            'Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wvproj',
+            'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Bridge.wv',
+            'Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj',
+            'Windvale-Native-Hosted-Tool-Runtime-Header.wvproj',
             'Windvale-Native-X64-Text-Concat-Service.wvproj',
             'Windvale-Native-Output-Table.wvproj'
         )
         Suites = @('seed', 'unsafe-wvb', 'wvb-containment')
+        Gaps = @('seed-native-front-door')
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Seed native hosted construction source transfer'
+        Paths = @(
+            'Linker/Windvale/Native-Hosted-Startup-Instantiation.wvproj',
+            'Linker/Windvale/Native-Hosted-Container-Construction-Core.wv',
+            'Linker/Windvale/Native-Hosted-Container-Segmentation.wv',
+            'Windvale-Native-Hosted-Startup-Instantiation.wvproj',
+            'Windvale-Native-Hosted-Container-Construction.wvproj',
+            'Windvale-Native-Hosted-Container-Windows.wvproj',
+            'Windvale-Native-Hosted-Container-Linux.wvproj',
+            'Windvale-Native-Hosted-Container-Segmentation.wvproj'
+        )
+        Suites = @('linker-rejections', 'linker-hostile', 'linker-map-limit')
         Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },

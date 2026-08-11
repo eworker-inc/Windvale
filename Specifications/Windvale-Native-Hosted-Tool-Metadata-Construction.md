@@ -107,3 +107,9 @@ now combines the publication plan with actual immutable chunk bytes, recomputes
 all eleven manifest-bound SHA-256 leaves, and constructs the exact `WVHM`
 request without managed projection. The Stage 0 oracle leaves the product tree
 only after the final recovery archive.
+
+[Decision 0515](../Documents/Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
+makes the paired native Project 1 helper the ordinary build and inspection
+owner for metadata admission plus the construction core/bridge. The broad
+scripts retain exact bridge-WVB and WVNF comparisons; this transfer does not
+remove the independent Stage 0 behavioral oracle or recovery archive.

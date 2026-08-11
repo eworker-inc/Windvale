@@ -97,3 +97,9 @@ The retained bridge is digest-checked, verified, lowered, and run as a service-f
 Windows `VirtualAlloc`/`VirtualProtect`/`FlushInstructionCache`/`VirtualFree` and Linux `mmap`/`mprotect`/`munmap` remain narrow authority adapters inside that owner. Windvale chooses permitted lifecycle actions; it does not receive raw pointers or call a general FFI. Context, service-table, arena, result-cell, and hosted-resource lifetimes remain separate Stage 0 owners.
 
 Any change to an envelope, limit, state, action, transition, status, or failure offset requires a new accepted contract version, regenerated retained WVB identity, hostile-input coverage, and exact Windows/Debian qualification.
+
+[Decision 0515](../Documents/Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
+makes the paired native Project 1 helper the ordinary build and inspection
+owner for the publication-lifetime core and bridge. The broad scripts retain
+their exact retained-bridge WVB and WVNF comparisons, while capability-bearing
+publication and the Stage 0 behavioral oracle remain separate boundaries.

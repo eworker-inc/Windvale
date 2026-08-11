@@ -101,3 +101,9 @@ is removed from the product tree after the final recovery archive. The
 standalone runtime-header producer now owns the process boundary. The retained
 managed bridge remains only until complete pipeline promotion and recovery
 archiving.
+
+[Decision 0515](../Documents/Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
+makes the paired native Project 1 helper the ordinary build and inspection
+owner for the metadata-admission dependency and runtime-header core/bridge.
+The broad scripts continue to compare the native-built bridge with the retained
+WVB and exact WVNF.

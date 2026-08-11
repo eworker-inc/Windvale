@@ -173,6 +173,18 @@ $NativeEntryBridgeCoreModule = Join-Path $OutputRoot 'Native-Entry-Bridge-Core.w
 $NativeEntryBridgeBridgeModule = Join-Path $OutputRoot 'Native-Entry-Bridge-Bridge.wvb'
 $NativeByteResultAdmissionCoreModule = Join-Path $OutputRoot 'Native-Byte-Result-Admission-Core.wvb'
 $NativeByteResultAdmissionBridgeModule = Join-Path $OutputRoot 'Native-Byte-Result-Admission-Bridge.wvb'
+$NativeHostedToolMetadataAdmissionModule = Join-Path $OutputRoot 'Native-Hosted-Tool-Metadata-Admission.wvb'
+$NativeHostedToolMetadataConstructionCoreModule = Join-Path $OutputRoot 'Native-Hosted-Tool-Metadata-Construction-Core.wvb'
+$NativeHostedToolMetadataConstructionBridgeModule = Join-Path $OutputRoot 'Native-Hosted-Tool-Metadata-Construction-Bridge.wvb'
+$NativeHostedStartupInstantiationModule = Join-Path $OutputRoot 'Native-Hosted-Startup-Instantiation.wvb'
+$NativeHostedContainerPlanModule = Join-Path $OutputRoot 'Native-Hosted-Container-Construction.wvb'
+$NativeHostedContainerWindowsModule = Join-Path $OutputRoot 'Native-Hosted-Container-Windows.wvb'
+$NativeHostedContainerLinuxModule = Join-Path $OutputRoot 'Native-Hosted-Container-Linux.wvb'
+$NativeHostedContainerSegmentationModule = Join-Path $OutputRoot 'Native-Hosted-Container-Segmentation.wvb'
+$NativeHostedToolRuntimeHeaderCoreModule = Join-Path $OutputRoot 'Native-Hosted-Tool-Runtime-Header-Core.wvb'
+$NativeHostedToolRuntimeHeaderBridgeModule = Join-Path $OutputRoot 'Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
+$NativePublicationLifetimeCoreModule = Join-Path $OutputRoot 'Native-Publication-Lifetime-Core.wvb'
+$NativePublicationLifetimeBridgeModule = Join-Path $OutputRoot 'Native-Publication-Lifetime-Bridge.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -642,6 +654,92 @@ Invoke-ExactBuild `
     'build status=Published verification=compiler-aligned functions=11 code-bytes=6116 module-bytes=7057'
 Invoke-ExactInspect $NativeByteResultAdmissionBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wvproj') `
+    $NativeHostedToolMetadataAdmissionModule `
+    10872 `
+    'd7b0084ed2c69ee03ad65ee4bfffa72550fd8d9ef2889efa0be116350b80b8b5' `
+    'build status=Published verification=compiler-aligned functions=13 code-bytes=9503 module-bytes=10872'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj') `
+    $NativeHostedToolMetadataConstructionCoreModule `
+    24360 `
+    '5808f778eb21c1214b581f0ce03958a74173a801b886aec7ed32124d7446abcd' `
+    'build status=Published verification=compiler-aligned functions=35 code-bytes=21363 module-bytes=24360'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Tool-Metadata.wvproj') `
+    $NativeHostedToolMetadataConstructionBridgeModule `
+    24252 `
+    'b5e9397326d3106b22ce735369ef8202ff6bb4c8e14f6069a0c467b4266c8208' `
+    'build status=Published verification=compiler-aligned functions=36 code-bytes=21394 module-bytes=24252'
+Invoke-ExactInspect $NativeHostedToolMetadataConstructionBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Linker/Windvale/Native-Hosted-Startup-Instantiation.wvproj') `
+    $NativeHostedStartupInstantiationModule `
+    21143 `
+    '933864be78b28394b9fc8e495b5ac872311ebca2a624db6e6731cdb8b399d309' `
+    'build status=Published verification=compiler-aligned functions=15 code-bytes=18808 module-bytes=21143'
+Invoke-ExactInspect $NativeHostedStartupInstantiationModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Construction.wvproj') `
+    $NativeHostedContainerPlanModule `
+    35929 `
+    'ff1b48cfc05baab5f707dcfce7e73b0714e2379ee594e12f6e9c6ea1589fef7e' `
+    'build status=Published verification=compiler-aligned functions=41 code-bytes=31210 module-bytes=35929'
+Invoke-ExactInspect $NativeHostedContainerPlanModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Windows.wvproj') `
+    $NativeHostedContainerWindowsModule `
+    17679 `
+    'a77e4ea3ac2cff35e965ae44cd486f30dd5b0c10aa2cde23c109d0eca37bffcb' `
+    'build status=Published verification=compiler-aligned functions=22 code-bytes=15041 module-bytes=17679'
+Invoke-ExactInspect $NativeHostedContainerWindowsModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Linux.wvproj') `
+    $NativeHostedContainerLinuxModule `
+    12328 `
+    'dac93155c68ba18f6cbe3af2d301a4c4171b9a9c05841057ea57398536fa8b42' `
+    'build status=Published verification=compiler-aligned functions=19 code-bytes=10674 module-bytes=12328'
+Invoke-ExactInspect $NativeHostedContainerLinuxModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Segmentation.wvproj') `
+    $NativeHostedContainerSegmentationModule `
+    22584 `
+    'd6d74f7d27df9f04f02b8eac2e75fde4fc230ba70d198f90b31ad668a06052e6' `
+    'build status=Published verification=compiler-aligned functions=28 code-bytes=19181 module-bytes=22584'
+Invoke-ExactInspect $NativeHostedContainerSegmentationModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Tool-Runtime-Header-Core.wvproj') `
+    $NativeHostedToolRuntimeHeaderCoreModule `
+    19516 `
+    'f1c156def9fa6f00bb0401097435bb1d1429d9d4be247b8d11f0de0b5ea51be2' `
+    'build status=Published verification=compiler-aligned functions=29 code-bytes=17050 module-bytes=19516'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Tool-Runtime-Header.wvproj') `
+    $NativeHostedToolRuntimeHeaderBridgeModule `
+    19459 `
+    '3cc8d0850b888911ee3338600bc7699578b163e7400c2b3631ef14649b9a3f18' `
+    'build status=Published verification=compiler-aligned functions=30 code-bytes=17081 module-bytes=19459'
+Invoke-ExactInspect $NativeHostedToolRuntimeHeaderBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wvproj') `
+    $NativePublicationLifetimeCoreModule `
+    4955 `
+    'a9e540c5c9ddaaeb4f45ab08a902a0a9019ce8155d544e319485c023b7d485d3' `
+    'build status=Published verification=compiler-aligned functions=7 code-bytes=3358 module-bytes=4955'
+Invoke-ExactInspect $NativePublicationLifetimeCoreModule @('profile=portable', 'Native\\u02C9publication\\u02C9lifetime\\u02C9result', 'Native\\u02C9publication\\u02C9lifetime\\u02C9status', 'Native\\u02C9publication\\u02C9lifetime\\u02C9plan', 'section name=exports .* count=7')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime.wvproj') `
+    $NativePublicationLifetimeBridgeModule `
+    4442 `
+    'f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554' `
+    'build status=Published verification=compiler-aligned functions=8 code-bytes=3424 module-bytes=4442'
+Invoke-ExactInspect $NativePublicationLifetimeBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -673,4 +771,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=59 cases=100'
+Write-Output 'native Seed front-door verification status=Complete artifacts=71 cases=121'

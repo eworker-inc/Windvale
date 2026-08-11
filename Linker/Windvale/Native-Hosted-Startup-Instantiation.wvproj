@@ -1,0 +1,4 @@
+windvale-project 1
+root "Native-Hosted-Startup-Instantiation-Bridge.wv"
+source "Native-Hosted-Startup-Instantiation-Core.wv"
+emit wvb

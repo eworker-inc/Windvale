@@ -189,3 +189,9 @@ still need native ownership. The C# segment-set
 fixture/harness is temporary transition evidence rather than product logic.
 Linux-host execution and grouped dual-host qualification remain deferred to the
 final retirement gate.
+
+[Decision 0515](../Documents/Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
+moves exact Project 1 construction and native inspection of the planner,
+Windows constructor, Linux constructor, and segment constructor out of each
+broad managed script. Their cross-component manifests remain repository-root
+aggregates, and the broad scripts retain exact WVB and WVNF comparisons.

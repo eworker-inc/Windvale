@@ -194,17 +194,13 @@ $NativeExecutionContextBridgeModule = Join-Path $Artifacts 'Native-Execution-Con
 $NativeArgumentTableBridgeModule = Join-Path $Artifacts 'Native-Argument-Table-Bridge.wvb'
 $NativeEntryBridgeBridgeModule = Join-Path $Artifacts 'Native-Entry-Bridge-Bridge.wvb'
 $NativeByteResultAdmissionBridgeModule = Join-Path $Artifacts 'Native-Byte-Result-Admission-Bridge.wvb'
-$NativeHostedToolMetadataAdmissionModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Admission.wvb'
-$NativeHostedToolMetadataConstructionCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Construction-Core.wvb'
 $NativeHostedToolMetadataConstructionBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Metadata-Construction-Bridge.wvb'
 $NativeHostedStartupInstantiationModule = Join-Path $Artifacts 'Native-Hosted-Startup-Instantiation.wvb'
 $NativeHostedContainerPlanModule = Join-Path $Artifacts 'Native-Hosted-Container-Construction.wvb'
 $NativeHostedContainerWindowsModule = Join-Path $Artifacts 'Native-Hosted-Container-Windows.wvb'
 $NativeHostedContainerLinuxModule = Join-Path $Artifacts 'Native-Hosted-Container-Linux.wvb'
 $NativeHostedContainerSegmentationModule = Join-Path $Artifacts 'Native-Hosted-Container-Segmentation.wvb'
-$NativeHostedToolRuntimeHeaderCoreModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Core.wvb'
 $NativeHostedToolRuntimeHeaderBridgeModule = Join-Path $Artifacts 'Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
-$NativePublicationLifetimeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Core.wvb'
 $NativePublicationLifetimeBridgeModule = Join-Path $Artifacts 'Native-Publication-Lifetime-Bridge.wvb'
 $SourceLexerModule = Join-Path $Artifacts 'Source-Lexer-Core.wvb'
 $SourceLexerDemoModule = Join-Path $Artifacts 'Source-Lexer-Demo.wvb'
@@ -263,7 +259,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=59 cases=100'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=71 cases=121'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -788,42 +784,11 @@ if (
     throw "The retained Windvale native byte-result admission fragment has an unexpected identity: $NativeByteResultAdmissionArtifactHash"
 }
 
-$NativeHostedToolMetadataAdmissionSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv'
-$NativeHostedToolRuntimeHeaderCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Core.wv'
-$NativeHostedToolRuntimeHeaderBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Bridge.wv'
 $NativeHostedToolRuntimeHeaderBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvb'
 $NativeHostedToolRuntimeHeaderArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Runtime-Header-Bridge.wvnf'
-dotnet $ToolDll compile $NativeHostedToolMetadataAdmissionSource -o $NativeHostedToolMetadataAdmissionModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-tool metadata admission.' }
-$NativeHostedToolMetadataAdmissionHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataAdmissionModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataAdmissionHash -ne 'd7b0084ed2c69ee03ad65ee4bfffa72550fd8d9ef2889efa0be116350b80b8b5') {
-    throw "The hosted-tool metadata admission module has an unexpected digest: $NativeHostedToolMetadataAdmissionHash"
-}
-$NativeHostedToolMetadataConstructionCoreSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv'
-$NativeHostedToolMetadataConstructionBridgeSource = Join-Path $RepositoryRoot 'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Bridge.wv'
 $NativeHostedToolMetadataConstructionBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Metadata-Construction-Bridge.wvb'
 $NativeHostedToolMetadataConstructionArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Hosted-Tool-Metadata-Construction-Bridge.wvnf'
-dotnet $ToolDll `
-    compile $NativeHostedToolMetadataConstructionCoreSource `
-    --module $ByteConstructionSource `
-    --module $NativeHostedToolMetadataAdmissionSource `
-    -o $NativeHostedToolMetadataConstructionCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool metadata-construction core.' }
-$NativeHostedToolMetadataConstructionCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionCoreModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataConstructionCoreHash -ne '5808f778eb21c1214b581f0ce03958a74173a801b886aec7ed32124d7446abcd') {
-    throw "The hosted-tool metadata-construction core has an unexpected digest: $NativeHostedToolMetadataConstructionCoreHash"
-}
-dotnet $ToolDll `
-    compile $NativeHostedToolMetadataConstructionBridgeSource `
-    --module $ByteConstructionSource `
-    --module $NativeHostedToolMetadataAdmissionSource `
-    --module $NativeHostedToolMetadataConstructionCoreSource `
-    -o $NativeHostedToolMetadataConstructionBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool metadata-construction bridge.' }
 $NativeHostedToolMetadataConstructionBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionBridgeModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolMetadataConstructionBridgeHash -ne 'b5e9397326d3106b22ce735369ef8202ff6bb4c8e14f6069a0c467b4266c8208') {
-    throw "The hosted-tool metadata-construction bridge has an unexpected digest: $NativeHostedToolMetadataConstructionBridgeHash"
-}
 $NativeHostedToolMetadataConstructionBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolMetadataConstructionBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativeHostedToolMetadataConstructionBridgeRetainedHash -ne $NativeHostedToolMetadataConstructionBridgeHash -or
@@ -839,29 +804,11 @@ if (
 ) {
     throw "The retained hosted-tool metadata-construction fragment has an unexpected identity: $NativeHostedToolMetadataConstructionArtifactHash"
 }
-$NativeHostedToolMetadataConstructionBridgeInspection = (dotnet $ToolDll inspect $NativeHostedToolMetadataConstructionBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Profile: portable' -or
-    $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Capabilities \(0\)' -or
-    $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
-    $NativeHostedToolMetadataConstructionBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale hosted-tool metadata-construction bridge inspection is incomplete.'
-}
-$NativeHostedStartupInstantiationProject = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Startup-Instantiation.wvproj'
 $NativeHostedStartupInstantiationRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvb'
 $NativeHostedStartupInstantiationArtifactRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Startup-Instantiation.wvnf'
 $WindowsHostedCompilerStartupObjectRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Windows-X64-Hosted-Compiler.wvo'
 $LinuxHostedCompilerStartupObjectRetained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Linux-X64-Hosted-Compiler.wvo'
-dotnet $ToolDll `
-    build $NativeHostedStartupInstantiationProject `
-    -o $NativeHostedStartupInstantiationModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile hosted-startup instantiation.' }
 $NativeHostedStartupInstantiationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationModule).Hash.ToLowerInvariant()
-if ($NativeHostedStartupInstantiationHash -ne '933864be78b28394b9fc8e495b5ac872311ebca2a624db6e6731cdb8b399d309') {
-    throw "The hosted-startup instantiation module has an unexpected digest: $NativeHostedStartupInstantiationHash"
-}
 if (
     (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationRetained).Hash.ToLowerInvariant() -ne $NativeHostedStartupInstantiationHash -or
     (Get-Item -LiteralPath $NativeHostedStartupInstantiationRetained).Length -ne 21143
@@ -883,20 +830,9 @@ if (
 ) {
     throw 'A retained hosted-compiler startup WVO has an unexpected identity.'
 }
-$NativeHostedStartupInstantiationInspection = (dotnet $ToolDll inspect $NativeHostedStartupInstantiationModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeHostedStartupInstantiationInspection -notmatch 'Profile: portable' -or
-    $NativeHostedStartupInstantiationInspection -notmatch 'Capabilities \(0\)' -or
-    $NativeHostedStartupInstantiationInspection -notmatch 'Main\(bytes\) -> bytes' -or
-    $NativeHostedStartupInstantiationInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale hosted-startup instantiation inspection is incomplete.'
-}
 $NativeHostedContainerArtifacts = @(
     @{
         Name = 'planner'
-        Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Construction.wvproj'
         Output = $NativeHostedContainerPlanModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Construction.wvb'
         ModuleBytes = 35929
@@ -907,7 +843,6 @@ $NativeHostedContainerArtifacts = @(
     },
     @{
         Name = 'Windows byte constructor'
-        Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Windows.wvproj'
         Output = $NativeHostedContainerWindowsModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Windows.wvb'
         ModuleBytes = 17679
@@ -918,7 +853,6 @@ $NativeHostedContainerArtifacts = @(
     },
     @{
         Name = 'Linux byte constructor'
-        Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Linux.wvproj'
         Output = $NativeHostedContainerLinuxModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Linux.wvb'
         ModuleBytes = 12328
@@ -929,7 +863,6 @@ $NativeHostedContainerArtifacts = @(
     },
     @{
         Name = 'segment constructor'
-        Project = Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Segmentation.wvproj'
         Output = $NativeHostedContainerSegmentationModule
         Retained = Join-Path $RepositoryRoot 'Linker/Reference/Consumers/Native-Hosted-Container-Segmentation.wvb'
         ModuleBytes = 22584
@@ -940,8 +873,6 @@ $NativeHostedContainerArtifacts = @(
     }
 )
 foreach ($Artifact in $NativeHostedContainerArtifacts) {
-    dotnet $ToolDll build $Artifact.Project -o $Artifact.Output
-    if ($LASTEXITCODE -ne 0) { throw "The Seed CLI failed to build the hosted-container $($Artifact.Name)." }
     $ModuleHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Artifact.Output).Hash.ToLowerInvariant()
     if (
         $ModuleHash -ne $Artifact.ModuleHash -or
@@ -958,38 +889,8 @@ foreach ($Artifact in $NativeHostedContainerArtifacts) {
     ) {
         throw "The hosted-container $($Artifact.Name) WVNF has an unexpected identity: $FragmentHash"
     }
-    $Inspection = (dotnet $ToolDll inspect $Artifact.Output) -join "`n"
-    if (
-        $LASTEXITCODE -ne 0 -or
-        $Inspection -notmatch 'Profile: portable' -or
-        $Inspection -notmatch 'Capabilities \(0\)' -or
-        $Inspection -notmatch 'Main\(bytes\) -> bytes' -or
-        $Inspection -notmatch 'Exports \(1\)'
-    ) {
-        throw "The hosted-container $($Artifact.Name) inspection is incomplete."
-    }
 }
-dotnet $ToolDll `
-    compile $NativeHostedToolRuntimeHeaderCoreSource `
-    --module $ByteConstructionSource `
-    --module $NativeHostedToolMetadataAdmissionSource `
-    -o $NativeHostedToolRuntimeHeaderCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool runtime-header core.' }
-$NativeHostedToolRuntimeHeaderCoreHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderCoreModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolRuntimeHeaderCoreHash -ne 'f1c156def9fa6f00bb0401097435bb1d1429d9d4be247b8d11f0de0b5ea51be2') {
-    throw "The hosted-tool runtime-header core has an unexpected digest: $NativeHostedToolRuntimeHeaderCoreHash"
-}
-dotnet $ToolDll `
-    compile $NativeHostedToolRuntimeHeaderBridgeSource `
-    --module $ByteConstructionSource `
-    --module $NativeHostedToolMetadataAdmissionSource `
-    --module $NativeHostedToolRuntimeHeaderCoreSource `
-    -o $NativeHostedToolRuntimeHeaderBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the hosted-tool runtime-header bridge.' }
 $NativeHostedToolRuntimeHeaderBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderBridgeModule).Hash.ToLowerInvariant()
-if ($NativeHostedToolRuntimeHeaderBridgeHash -ne '3cc8d0850b888911ee3338600bc7699578b163e7400c2b3631ef14649b9a3f18') {
-    throw "The hosted-tool runtime-header bridge has an unexpected digest: $NativeHostedToolRuntimeHeaderBridgeHash"
-}
 $NativeHostedToolRuntimeHeaderBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedToolRuntimeHeaderBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativeHostedToolRuntimeHeaderBridgeRetainedHash -ne $NativeHostedToolRuntimeHeaderBridgeHash -or
@@ -1005,48 +906,9 @@ if (
 ) {
     throw "The retained hosted-tool runtime-header fragment has an unexpected identity: $NativeHostedToolRuntimeHeaderArtifactHash"
 }
-$NativeHostedToolRuntimeHeaderBridgeInspection = (dotnet $ToolDll inspect $NativeHostedToolRuntimeHeaderBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativeHostedToolRuntimeHeaderBridgeInspection -notmatch 'Profile: portable' -or
-    $NativeHostedToolRuntimeHeaderBridgeInspection -notmatch 'Capabilities \(0\)' -or
-    $NativeHostedToolRuntimeHeaderBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
-    $NativeHostedToolRuntimeHeaderBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale hosted-tool runtime-header bridge inspection is incomplete.'
-}
-
-$NativePublicationLifetimeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Core.wv'
-dotnet $ToolDll `
-    compile $NativePublicationLifetimeSource -o $NativePublicationLifetimeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native publication-lifetime core.' }
-$NativePublicationLifetimeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeModule).Hash.ToLowerInvariant()
-if ($NativePublicationLifetimeHash -ne 'a9e540c5c9ddaaeb4f45ab08a902a0a9019ce8155d544e319485c023b7d485d3') {
-    throw "The Windvale native publication-lifetime core has an unexpected digest: $NativePublicationLifetimeHash"
-}
-$NativePublicationLifetimeInspection = (dotnet $ToolDll inspect $NativePublicationLifetimeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativePublicationLifetimeInspection -notmatch 'Profile: portable' -or
-    $NativePublicationLifetimeInspection -notmatch 'Nativeˉpublicationˉlifetimeˉresult' -or
-    $NativePublicationLifetimeInspection -notmatch 'Nativeˉpublicationˉlifetimeˉstatus' -or
-    $NativePublicationLifetimeInspection -notmatch 'Nativeˉpublicationˉlifetimeˉplan' -or
-    $NativePublicationLifetimeInspection -notmatch 'Exports \(7\)'
-) {
-    throw 'The Windvale native publication-lifetime core inspection is incomplete.'
-}
-$NativePublicationLifetimeBridgeSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv'
 $NativePublicationLifetimeBridgeRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvb'
 $NativePublicationLifetimeArtifactRetained = Join-Path $RepositoryRoot 'Runtime/Windvale.Native/Consumers/Native-Publication-Lifetime-Bridge.wvnf'
-dotnet $ToolDll `
-    compile $NativePublicationLifetimeBridgeSource `
-    --module $NativePublicationLifetimeSource `
-    -o $NativePublicationLifetimeBridgeModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale native publication-lifetime bridge.' }
 $NativePublicationLifetimeBridgeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeBridgeModule).Hash.ToLowerInvariant()
-if ($NativePublicationLifetimeBridgeHash -ne 'f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554') {
-    throw "The Windvale native publication-lifetime bridge has an unexpected digest: $NativePublicationLifetimeBridgeHash"
-}
 $NativePublicationLifetimeBridgeRetainedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativePublicationLifetimeBridgeRetained).Hash.ToLowerInvariant()
 if (
     $NativePublicationLifetimeBridgeRetainedHash -ne $NativePublicationLifetimeBridgeHash -or
@@ -1062,17 +924,6 @@ if (
 ) {
     throw "The retained Windvale native publication-lifetime fragment has an unexpected identity: $NativePublicationLifetimeArtifactHash"
 }
-$NativePublicationLifetimeBridgeInspection = (dotnet $ToolDll inspect $NativePublicationLifetimeBridgeModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $NativePublicationLifetimeBridgeInspection -notmatch 'Profile: portable' -or
-    $NativePublicationLifetimeBridgeInspection -notmatch 'Capabilities \(0\)' -or
-    $NativePublicationLifetimeBridgeInspection -notmatch 'Main\(bytes\) -> bytes' -or
-    $NativePublicationLifetimeBridgeInspection -notmatch 'Exports \(1\)'
-) {
-    throw 'The Windvale native publication-lifetime bridge inspection is incomplete.'
-}
-
 $SourceLexerSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Lexer-Core.wv'
 dotnet $ToolDll `
     compile $SourceLexerSource `
