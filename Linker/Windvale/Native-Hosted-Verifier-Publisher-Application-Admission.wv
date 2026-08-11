@@ -20,14 +20,14 @@ fn Expectedˉword(Target: u32, Index: u32) -> u32 {
         if Index == 6u32 { return 3186842442u32; }
         return 2533135477u32;
     }
-    if Index == 0u32 { return 443727546u32; }
-    if Index == 1u32 { return 4163452503u32; }
-    if Index == 2u32 { return 3281371294u32; }
-    if Index == 3u32 { return 8943446u32; }
-    if Index == 4u32 { return 1564934007u32; }
-    if Index == 5u32 { return 103358798u32; }
-    if Index == 6u32 { return 3443681087u32; }
-    return 2535086407u32;
+    if Index == 0u32 { return 3848015697u32; }
+    if Index == 1u32 { return 3935610066u32; }
+    if Index == 2u32 { return 2061241039u32; }
+    if Index == 3u32 { return 3162584417u32; }
+    if Index == 4u32 { return 2915332387u32; }
+    if Index == 5u32 { return 1603821327u32; }
+    if Index == 6u32 { return 3984659280u32; }
+    return 2888786881u32;
 }
 
 fn Digestˉmatches(Input: bytes, Target: u32) -> bool {
@@ -50,7 +50,7 @@ export fn Nativeˉhostedˉverifierˉpublisherˉapplicationˉverification(
 ) -> bool {
     var Expectedˉbytes: u32 = 256000u32;
     if Target == 2u32 {
-        Expectedˉbytes = 254917u32;
+        Expectedˉbytes = 254965u32;
     }
     if Target < 1u32 || Target > 2u32 ||
         Bytesˉlength(Input) != Expectedˉbytes {

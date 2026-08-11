@@ -27,7 +27,7 @@ set "Result=1"
 set "Phase=initialization"
 
 set /a Total+=1
-call :check_file "%Construction%\SHA256SUMS" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "construction inventory"
+call :check_file "%Construction%\SHA256SUMS" 5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb "construction inventory"
 if errorlevel 1 goto :failed
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :check_digest "%Construction%\%%I" %%H "construction artifact"
@@ -40,7 +40,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Admission-Build.err" "admission source build wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" 30778 b4e0a2ee04de6cfff0efc723c57031bf5cfcd6706e3156525ce2157c5f287d07 "native-built publisher admission WVB"
+call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" 30778 d43013f4a3b70f90ae83e5cd1b643421b2bf5ec4b4dbdec1cb844849d09024db "native-built publisher admission WVB"
 if errorlevel 1 goto :failed
 fc /b "%Construction%\Publisher-Application-Admission-Tool.wvb" "%TestDirectory%\Publisher-Application-Admission-Tool.wvb" >nul
 if errorlevel 1 goto :failed
@@ -51,7 +51,7 @@ call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Admission-Lower.err" "admission native lowering wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvo" 555690 88cc97665cfd0de14f2c9ac6c80dfd985edc508fccdc3d9b887da740cd034e23 "native-lowered publisher admission WVO"
+call :check_file "%TestDirectory%\Publisher-Application-Admission-Tool.wvo" 555690 e348c41dcd96dbacedcc1820d42013e3c19795d89f7183ac7bc64311612dd927 "native-lowered publisher admission WVO"
 if errorlevel 1 goto :failed
 fc /b "%Construction%\Publisher-Application-Admission-Tool.wvo" "%TestDirectory%\Publisher-Application-Admission-Tool.wvo" >nul
 if errorlevel 1 goto :failed
@@ -62,7 +62,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Promoter-Build.err" "promoter source build wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher-Promoter.wvb" 41268 c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672 "native-built publisher promoter WVB"
+call :check_file "%TestDirectory%\Publisher-Promoter.wvb" 41268 086bd4d93d93d51b0f9140a0adf9f54a7f205dc902d9cb5d732dc7a887e10edc "native-built publisher promoter WVB"
 if errorlevel 1 goto :failed
 fc /b "%Construction%\Publisher-Promoter.wvb" "%TestDirectory%\Publisher-Promoter.wvb" >nul
 if errorlevel 1 goto :failed
@@ -73,7 +73,7 @@ call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Promoter-Lower.err" "promoter native lowering wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher-Promoter.wvo" 660123 ba5d9c5afde115fede472369d24c3d1fe466806de523773d2e445e6a9e004667 "native-lowered publisher promoter WVO"
+call :check_file "%TestDirectory%\Publisher-Promoter.wvo" 660123 ee5274c86d680640d3ab75754faf63585a639a44fc9626ea5b9f9bcce9779e8e "native-lowered publisher promoter WVO"
 if errorlevel 1 goto :failed
 fc /b "%Construction%\Publisher-Promoter.wvo" "%TestDirectory%\Publisher-Promoter.wvo" >nul
 if errorlevel 1 goto :failed
@@ -83,7 +83,7 @@ call :check_empty "%TestDirectory%\Promoter-Link.err" "promoter native link wrot
 if errorlevel 1 goto :failed
 findstr /b /c:"entry name=Main address=1178" "%TestDirectory%\Promoter-Link.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher-Promoter.bin" 658339 e06189a37c038a5237787ffd16fb53466df3d10519efd4129b219bd814f4def2 "linked publisher promoter fragment"
+call :check_file "%TestDirectory%\Publisher-Promoter.bin" 658339 d50dc45866818c36a0332af71e914dc9a05052d97f43c0f60add4a75101bbec6 "linked publisher promoter fragment"
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Windvale-Wvb-Publisher.wvproj" ^
@@ -135,9 +135,9 @@ call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher.cmd" lin
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Linux.err" "Linux construction wrote a diagnostic"
 if errorlevel 1 goto :failed
-findstr /x /c:"publisher construction status=Valid target=linux bytes=254917" "%TestDirectory%\Linux.out" >nul
+findstr /x /c:"publisher construction status=Valid target=linux bytes=254965" "%TestDirectory%\Linux.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher.elf" 254917 babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97 "Linux publisher"
+call :check_file "%TestDirectory%\Publisher.elf" 254965 510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac "Linux publisher"
 if errorlevel 1 goto :failed
 call :check_no_private_scratch
 if errorlevel 1 goto :failed
@@ -150,7 +150,7 @@ call :check_empty "%TestDirectory%\Promoter-Windows.err" "Windows promoter const
 if errorlevel 1 goto :failed
 findstr /x /c:"publisher promoter construction status=Valid target=windows bytes=681472" "%TestDirectory%\Promoter-Windows.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Promoter.exe" 681472 598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23 "Windows publisher promoter"
+call :check_file "%TestDirectory%\Promoter.exe" 681472 86c72f5485bd6eeba1bdb65841102d7f388a8714b8e07ca3d519250de2886d8b "Windows publisher promoter"
 if errorlevel 1 goto :failed
 fc /b "%PromoterCandidate%\windows-x64-wvhostverifierpublisherinstall.exe" "%TestDirectory%\Promoter.exe" >nul
 if errorlevel 1 goto :failed
@@ -163,9 +163,9 @@ call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher-Promoter
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Promoter-Linux.err" "Linux promoter construction wrote a diagnostic"
 if errorlevel 1 goto :failed
-findstr /x /c:"publisher promoter construction status=Valid target=linux bytes=680901" "%TestDirectory%\Promoter-Linux.out" >nul
+findstr /x /c:"publisher promoter construction status=Valid target=linux bytes=680949" "%TestDirectory%\Promoter-Linux.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Promoter.elf" 680901 422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58 "Linux publisher promoter"
+call :check_file "%TestDirectory%\Promoter.elf" 680949 700f3df624611abad03cbd70811bad2ab015136ecdacc6dff9cdd97f5fc81395 "Linux publisher promoter"
 if errorlevel 1 goto :failed
 fc /b "%PromoterCandidate%\linux-x64-wvhostverifierpublisherinstall.elf" "%TestDirectory%\Promoter.elf" >nul
 if errorlevel 1 goto :failed
@@ -193,9 +193,9 @@ call "%RepositoryRoot%\Tools\Native\Construct-Wvb-Publisher.cmd" linux "%TestDir
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Linux.err" "Linux WVB publisher construction wrote a diagnostic"
 if errorlevel 1 goto :failed
-findstr /x /c:"WVB publisher construction status=Valid target=linux bytes=1340357" "%TestDirectory%\Wvb-Publisher-Linux.out" >nul
+findstr /x /c:"WVB publisher construction status=Valid target=linux bytes=1340405" "%TestDirectory%\Wvb-Publisher-Linux.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.elf" 1340357 7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c "Linux WVB publisher"
+call :check_file "%TestDirectory%\Wvb-Publisher.elf" 1340405 7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095 "Linux WVB publisher"
 if errorlevel 1 goto :failed
 fc /b "%WvbPublisherCandidate%\linux-x64-wvpublish.elf" "%TestDirectory%\Wvb-Publisher.elf" >nul
 if errorlevel 1 goto :failed
@@ -210,7 +210,7 @@ call :check_empty "%TestDirectory%\Admitter-Windows.err" "Windows admitter const
 if errorlevel 1 goto :failed
 findstr /x /c:"publisher admitter construction status=Valid target=windows bytes=570368" "%TestDirectory%\Admitter-Windows.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Admitter.exe" 570368 4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53 "Windows publisher admitter"
+call :check_file "%TestDirectory%\Admitter.exe" 570368 72d1164fe2f47e1bec00437bf63b317d39f1ed011cea7cf01a1343ce01547765 "Windows publisher admitter"
 if errorlevel 1 goto :failed
 fc /b "%AdmissionCandidate%\windows-x64-wvhostverifierpublisheradmit.exe" "%TestDirectory%\Admitter.exe" >nul
 if errorlevel 1 goto :failed
@@ -225,7 +225,7 @@ call :check_empty "%TestDirectory%\Admitter-Linux.err" "Linux admitter construct
 if errorlevel 1 goto :failed
 findstr /x /c:"publisher admitter construction status=Valid target=linux bytes=569344" "%TestDirectory%\Admitter-Linux.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Admitter.elf" 569344 b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a "Linux publisher admitter"
+call :check_file "%TestDirectory%\Admitter.elf" 569344 18777615d60e1279cb855b05ba03933bb65c9a622036dad2e954e3df683216e2 "Linux publisher admitter"
 if errorlevel 1 goto :failed
 fc /b "%AdmissionCandidate%\linux-x64-wvhostverifierpublisheradmit.elf" "%TestDirectory%\Admitter.elf" >nul
 if errorlevel 1 goto :failed
@@ -278,7 +278,7 @@ call :check_file "%TestDirectory%\Admit-Usage.err" 103 6c0d4ead9db1e4edfd4f5b85e
 if errorlevel 1 goto :failed
 call :check_file "%TestDirectory%\Publisher.exe" 256000 17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96 "preserved Windows publisher subject"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Publisher.elf" 254917 babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97 "preserved Linux publisher subject"
+call :check_file "%TestDirectory%\Publisher.elf" 254965 510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac "preserved Linux publisher subject"
 if errorlevel 1 goto :failed
 call :check_no_private_scratch
 if errorlevel 1 goto :failed
@@ -293,9 +293,9 @@ call :check_empty "%TestDirectory%\Reject.out" "metadata rejection wrote standar
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "metadata rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "rejected metadata input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb "rejected metadata input"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhv" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "preserved metadata destination"
+call :check_file "%TestDirectory%\Sentinel.wvhv" 5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb "preserved metadata destination"
 if errorlevel 1 goto :failed
 copy /y "%Construction%\SHA256SUMS" "%TestDirectory%\Sentinel.wvhr" >nul || goto :failed
 "%PublisherTools%\wvhostverifierpublisherbaseruntime.exe" "%TestDirectory%\Invalid.wvsq" "%TestDirectory%\Sentinel.wvhr" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
@@ -304,7 +304,7 @@ call :check_empty "%TestDirectory%\Reject.out" "runtime rejection wrote standard
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Reject.err" "runtime rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Sentinel.wvhr" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "preserved runtime destination"
+call :check_file "%TestDirectory%\Sentinel.wvhr" 5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb "preserved runtime destination"
 if errorlevel 1 goto :failed
 call :pass "base tools reject malformed input and preserve destinations"
 
@@ -317,7 +317,7 @@ call :check_empty "%TestDirectory%\Alias.out" "alias rejection wrote standard ou
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Alias.err" "alias rejection wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvsq" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "preserved alias input"
+call :check_file "%TestDirectory%\Invalid.wvsq" 5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb "preserved alias input"
 if errorlevel 1 goto :failed
 call :pass "base tools reject exact path aliases"
 
@@ -338,7 +338,7 @@ call :check_empty "%TestDirectory%\Install-Publisher-Linux.err" "Linux publisher
 if errorlevel 1 goto :failed
 call :check_file "%TestDirectory%\Install-Publisher-Linux.out" 117 72e2786587919e14f707b437166f86ae18dca24869249c8c541b9836d6ace397 "Linux publisher installation report"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Installed-Publisher.elf" 254917 babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97 "installed Linux publisher"
+call :check_file "%TestDirectory%\Installed-Publisher.elf" 254965 510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac "installed Linux publisher"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Publisher.elf" "%TestDirectory%\Installed-Publisher.elf" >nul
 if errorlevel 1 goto :failed

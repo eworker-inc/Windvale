@@ -50,8 +50,8 @@ check_file "$candidate/Console-Application-Publisher.wvo" 1139440 \
     259c7d746c3a217c32706bfd617cf66894066bd2e50850cbe5733ac3338e4952 || fail
 check_file "$candidate/windows-x64-wvappublish.exe" 1158656 \
     0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e || fail
-check_file "$candidate/linux-x64-wvappublish.elf" 1156037 \
-    83468e65c1a5aa0bbb33f9571958e5d2f1959b81c08bd4cb66a4083270272ae1 || fail
+check_file "$candidate/linux-x64-wvappublish.elf" 1156085 \
+    e9b8771978c9fb06c3a8ecc55c7b9a3ba1acd24faa541dc669920c10ed792925 || fail
 pass 'candidate inventory'
 
 temporary_root=${TMPDIR:-/tmp}
@@ -120,7 +120,7 @@ check_equal "$test_directory/Windows.out" "$test_directory/Windows.expected" || 
     "$test_directory/Console-Application-Publisher.elf" \
     >"$test_directory/Linux.out" 2>"$test_directory/Linux.err" || fail
 printf '%s\n' \
-    'console-application publisher construction status=Valid target=linux bytes=1156037' \
+    'console-application publisher construction status=Valid target=linux bytes=1156085' \
     >"$test_directory/Linux.expected" || fail
 check_equal "$test_directory/Linux.out" "$test_directory/Linux.expected" || fail
 [[ ! -s $test_directory/Linux.err ]] || fail

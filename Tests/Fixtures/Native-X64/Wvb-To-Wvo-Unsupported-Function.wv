@@ -1,0 +1,5 @@
+module Nativeˉunsupportedˉfunction profile portable;
+
+export fn Main(Input: i32) -> i32 {
+    return Input;
+}

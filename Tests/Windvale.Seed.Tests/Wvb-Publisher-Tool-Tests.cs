@@ -17,7 +17,7 @@ internal static partial class Program
     private const string LINUX_WVB_PUBLISHER_STARTUP_WVO_SHA256 =
         "eee997412ced0d7edacaf39dae9c4a3c51e859dce4537045f3972be990b115a4";
     private const string LINUX_WVB_PUBLICATION_ADAPTER_WVO_SHA256 =
-        "9272c17b0d7234218a6cd7c31131e9d25e62b6c1ccd976d94975e9b436b2ca5a";
+        "1a97195d846626276f38dbb44be68a696dd057f701918f66eb46f6e9d7b5999e";
     private const string WINDOWS_WVB_PUBLISHER_STARTUP_WVO_SHA256 =
         "bb136af0382b2f72efc8a07f58fb2368319fce7c119bc7bbfa1b94da6ded9367";
     private const string WINDOWS_WVB_PUBLICATION_ADAPTER_WVO_SHA256 =
@@ -284,7 +284,7 @@ internal static partial class Program
         Equal(
             LINUX_WVB_PUBLISHER_STARTUP_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Linuxˉstartupˉwvo.AsSpan()));
-        Equal(5_507, Linuxˉadapterˉwvo.Length);
+        Equal(5_559, Linuxˉadapterˉwvo.Length);
         Equal(
             LINUX_WVB_PUBLICATION_ADAPTER_WVO_SHA256,
             Objectˉdigest.Calculateˉsha256(Linuxˉadapterˉwvo.AsSpan()));

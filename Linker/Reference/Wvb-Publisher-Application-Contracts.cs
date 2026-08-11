@@ -13,9 +13,9 @@ public static class Wvbˉpublisherˉapplicationˉcontract
     public const int WINDOWS_APPLICATION_BYTES = 1_340_928;
     public const string WINDOWS_APPLICATION_SHA256 =
         "71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3";
-    public const int LINUX_APPLICATION_BYTES = 1_340_357;
+    public const int LINUX_APPLICATION_BYTES = 1_340_405;
     public const string LINUX_APPLICATION_SHA256 =
-        "7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c";
+        "7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095";
 }
 
 public static class Wvbˉpublisherˉapplicationˉwriter

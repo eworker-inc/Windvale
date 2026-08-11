@@ -8,10 +8,10 @@ The product logic is split across two cohesive object-model modules. `Wvo-Object
 
 Decision 0520 makes the digest-bound applications own successful verification
 and inspection of the canonical native-assembled WVO in both broad Seed
-scripts. The current candidate's no-argument native self-test returns 1 and its
-empty/missing resource exits do not yet match the reference-runtime reports, so
-those calls remain explicit qualification gaps rather than being counted as
-transferred.
+scripts. Decision 0522 repairs their incomplete enum-service bundle, refreshes
+the candidate identities, and transfers no-argument self-test. Empty and
+missing resource exits still do not match the typed reference-runtime reports,
+so those calls remain explicit qualification gaps.
 
 ## Construction contract
 
@@ -60,15 +60,20 @@ The current candidate identities are:
 | WVO inspector WVB | 61,008 | `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db` |
 | WVO inspector WVO | 591,723 | `f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c` |
 | Linked inspector fragment | 587,529 | `f318ee573b149aac169b67369e90dbacc6451fc129022bfb4e62b2ceff9cfba4` |
-| Windows WVO inspector | 606,208 | `bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2` |
-| Linux WVO inspector | 606,208 | `bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1` |
+| Windows WVO inspector | 606,720 | `a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366` |
+| Linux WVO inspector | 606,208 | `f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1` |
 
 [Decision 0500](../Documents/Decisions/0500-Native-Wvo-Inspector-Reconstruction.md)
 adds the exact native source-to-WVB-to-WVO-to-paired-application route. Its
 focused current-Windows-host owner passes all three inventory, reconstruction,
 and compatibility/profile-isolation cases in 28.1 seconds. The Linux result is
 cross-target construction evidence; independent Linux execution remains part
-of the grouped gate.
+of the grouped gate. Decision 0522 advances that historical candidate to the
+enum-complete candidate-3 identity. Native `wvhostenumrequest` produces a
+945-byte request, `wvhostenumservice` produces the complete 1,244-byte
+leaf-plus-metadata service, and both target reconstructions equal the current
+Stage 0 writer byte for byte. Focused reconstruction and no-argument execution
+pass independently on Windows and Linux.
 
 The focused candidate test reconstructs and independently parses both containers, checks exact capabilities and services, exercises the public current-host AOT target, and runs the current-host raw application. It compares complete successful `verify` and `inspect` output with the Stage 0 oracle during candidate qualification, checks malformed and usage outcomes, and inspects loaded modules or mappings for CLR/.NET.
 

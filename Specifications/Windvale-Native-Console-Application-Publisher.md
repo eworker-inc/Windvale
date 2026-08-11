@@ -100,7 +100,7 @@ The historical exported WVA symbol names remain internal construction details.
 | Windows profile base | 1,151,488 | `922c9019308e837f6a3528c3b1edf6cd83b3e432bdb6a140111c958aa6ff5e97` |
 | Linux profile base | 1,150,976 | `a12ab6d136b53c53322d4b7ff612a5f41a2653c30210a4f5dbfb27027bc29f5e` |
 | Windows publisher | 1,158,656 | `0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e` |
-| Linux publisher | 1,156,037 | `83468e65c1a5aa0bbb33f9571958e5d2f1959b81c08bd4cb66a4083270272ae1` |
+| Linux publisher | 1,156,085 | `e9b8771978c9fb06c3a8ecc55c7b9a3ba1acd24faa541dc669920c10ed792925` |
 
 The WVB rebuilds through the native Project 1 front door after canonicalizing
 its order-independent source inventory. Decision 0503 lowers that exact WVB

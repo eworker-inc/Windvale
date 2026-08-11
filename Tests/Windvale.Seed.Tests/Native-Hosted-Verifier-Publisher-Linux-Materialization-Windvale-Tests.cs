@@ -31,7 +31,7 @@ internal static partial class Program
             var Moduleˉbytes = File.ReadAllBytes(Moduleˉpath);
             Equal(15_551, Moduleˉbytes.Length);
             Equal(
-                "0384c8a4e5d8acbed587aa2e31a21832f56a0e71243260d9a213940b589373cd",
+                "9f0d6a1537717771c05dfb8c21633f6ec7a2019c0a428dcf8402d59cf1c2e8df",
                 Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
             var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
             var Native = X64ˉnativeˉbackend.Compile(Module).Fragment;
@@ -80,12 +80,12 @@ internal static partial class Program
             var Executed = X64ˉnativeˉexecutor.Executeˉbytes(
                 Native, Request, maximumˉinstructions: 20_000_000);
             Sequenceˉequal(Reference.Runˉmainˉbytes(Request).Bytes, Executed);
-            Equal(254_949, Executed.Length);
+            Equal(254_997, Executed.Length);
             Equal(0x4f4c_5657u, Readˉpublisherˉrequestˉu32(Executed, 0));
             Equal(0u, Readˉpublisherˉrequestˉu32(Executed, 12));
             Sequenceˉequal(Expected, Executed.AsSpan()[32..].ToArray());
             Equal(
-                "babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97",
+                "510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac",
                 Convert.ToHexString(SHA256.HashData(Executed.AsSpan()[32..])).ToLowerInvariant());
 
             Expectˉlinuxˉpublisherˉmaterializationˉfailure(
@@ -95,7 +95,7 @@ internal static partial class Program
             Expectˉlinuxˉpublisherˉmaterializationˉfailure(
                 Native, Reference, Replaceˉpublisherˉu32(Request, 250_348, 1u), 2u);
             Expectˉlinuxˉpublisherˉmaterializationˉfailure(
-                Native, Reference, Replaceˉpublisherˉu32(Request, 255_465, 1u), 2u);
+                Native, Reference, Replaceˉpublisherˉu32(Request, 255_517, 1u), 2u);
         }
         finally
         {
@@ -113,26 +113,26 @@ internal static partial class Program
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(72), 235_077u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(132), 249_856u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(136), 142_929_920u);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(156), 254_917u);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(156), 254_965u);
         return Result;
     }
 
     private static byte[] Buildˉlinuxˉpublisherˉobjectsˉrecord(byte[] application)
     {
-        var Result = new byte[5_117];
+        var Result = new byte[5_169];
         BinaryPrimitives.WriteUInt32LittleEndian(Result, 0x4f49_5657u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(4), 1u);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(8), 5_117u);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(8), 5_169u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(20), 2u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(24), 64u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(28), 5u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(32), 69u);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(36), 3_363u);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(40), 3_432u);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(36), 3_415u);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(40), 3_484u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(44), 1_685u);
         application.AsSpan(4_096, 5).CopyTo(Result.AsSpan(64));
-        application.AsSpan(249_856, 3_363).CopyTo(Result.AsSpan(69));
-        application.AsSpan(253_232, 1_685).CopyTo(Result.AsSpan(3_432));
+        application.AsSpan(249_856, 3_415).CopyTo(Result.AsSpan(69));
+        application.AsSpan(253_280, 1_685).CopyTo(Result.AsSpan(3_484));
         return Result;
     }
 
@@ -142,12 +142,12 @@ internal static partial class Program
         byte[] objects,
         byte[] metadata)
     {
-        var Result = new byte[255_581];
+        var Result = new byte[255_633];
         BinaryPrimitives.WriteUInt32LittleEndian(Result, 0x4d4c_5657u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(4), 1u);
-        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(8), 255_581u);
+        BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(8), 255_633u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(12), 2u);
-        var Values = new[] { 64u, 249_856u, 249_920u, 416u, 250_336u, 5_117u, 255_453u, 128u };
+        var Values = new[] { 64u, 249_856u, 249_920u, 416u, 250_336u, 5_169u, 255_505u, 128u };
         for (var Index = 0; Index < Values.Length; Index++)
         {
             BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(16 + Index * 4), Values[Index]);
@@ -155,7 +155,7 @@ internal static partial class Program
         baseˉapplication.CopyTo(Result.AsSpan(64));
         construction.CopyTo(Result.AsSpan(249_920));
         objects.CopyTo(Result.AsSpan(250_336));
-        metadata.CopyTo(Result.AsSpan(255_453));
+        metadata.CopyTo(Result.AsSpan(255_505));
         return Result.ToImmutableArray();
     }
 

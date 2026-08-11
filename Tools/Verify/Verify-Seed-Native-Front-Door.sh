@@ -17,6 +17,7 @@ NATIVE_RUN="$REPOSITORY_ROOT/Tools/Native/Run-Wvb.sh"
 NATIVE_ASSEMBLER="$REPOSITORY_ROOT/Tools/Native/Assemble-Wva.sh"
 NATIVE_WVO_VERIFY="$REPOSITORY_ROOT/Tools/Native/Verify-Wvo.sh"
 NATIVE_WVO_INSPECT="$REPOSITORY_ROOT/Tools/Native/Inspect-Wvo.sh"
+NATIVE_WVO_APPLICATION="$REPOSITORY_ROOT/Artifacts/Native-Wvo-Object-Candidate/Wvo-Object.elf"
 NATIVE_WVDUMP_APPLICATION="$REPOSITORY_ROOT/Artifacts/Native-Front-Door/linux-x64/wvdump.elf"
 NATIVE_WVA_APPLICATION="$REPOSITORY_ROOT/Artifacts/Native-Front-Door/linux-x64/wvasm.elf"
 NATIVE_LINKER="$REPOSITORY_ROOT/Tools/Native/Link-Wvo.sh"
@@ -238,6 +239,22 @@ exact_wvdump_execution() {
 
 exact_wvo_read_only_execution() {
     OBJECT_PATH=$1
+    APPLICATION_BYTES=$(wc -c < "$NATIVE_WVO_APPLICATION" | tr -d ' ')
+    APPLICATION_SHA256=$(sha256sum "$NATIVE_WVO_APPLICATION" | awk '{print $1}')
+    if [ "$APPLICATION_BYTES" != 606208 ] || \
+        [ "$APPLICATION_SHA256" != 'f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1' ]; then
+        echo 'The Linux native WVO inspector application identity is invalid.' >&2
+        exit 1
+    fi
+    if ! SELF_TEST_OUTPUT=$("$NATIVE_WVO_APPLICATION"); then
+        echo 'The digest-bound native WVO inspector self-test failed.' >&2
+        exit 1
+    fi
+    if [ -n "$SELF_TEST_OUTPUT" ]; then
+        echo 'The digest-bound native WVO inspector self-test emitted unexpected output.' >&2
+        exit 1
+    fi
+
     ASSEMBLY_SOURCE="$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva"
     if ! ASSEMBLY_OUTPUT=$("$NATIVE_ASSEMBLER" "$ASSEMBLY_SOURCE" "$OBJECT_PATH"); then
         echo 'The digest-bound native WVA assembler did not construct the WVO read-only fixture.' >&2
@@ -1492,4 +1509,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=105 cases=184'
+echo 'native Seed front-door verification status=Complete artifacts=105 cases=185'

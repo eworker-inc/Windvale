@@ -31,14 +31,14 @@ fn Startupˉdigestˉword(Index: u32, Target: u32, Variant: u32) -> u32 {
         return 519770980u32;
     }
     if Variant == 3u32 && Target == 1u32 {
-        if Index == 0u32 { return 3659669037u32; }
-        if Index == 1u32 { return 2518165551u32; }
-        if Index == 2u32 { return 2397325640u32; }
-        if Index == 3u32 { return 3834877255u32; }
-        if Index == 4u32 { return 8965882u32; }
-        if Index == 5u32 { return 2282519885u32; }
-        if Index == 6u32 { return 171578610u32; }
-        return 222938223u32;
+        if Index == 0u32 { return 4293010631u32; }
+        if Index == 1u32 { return 3620289198u32; }
+        if Index == 2u32 { return 360485465u32; }
+        if Index == 3u32 { return 2531147558u32; }
+        if Index == 4u32 { return 1873302768u32; }
+        if Index == 5u32 { return 1355050762u32; }
+        if Index == 6u32 { return 2970522518u32; }
+        return 3208098414u32;
     }
     if Variant == 3u32 {
         if Index == 0u32 { return 897654718u32; }
@@ -122,14 +122,14 @@ fn Moduleˉdigestˉword(Index: u32, Variant: u32) -> u32 {
         return 2521790058u32;
     }
     if Variant == 1u32 {
-        if Index == 0u32 { return 2311636928u32; }
-        if Index == 1u32 { return 2072244118u32; }
-        if Index == 2u32 { return 1022141125u32; }
-        if Index == 3u32 { return 317070827u32; }
-        if Index == 4u32 { return 4213551188u32; }
-        if Index == 5u32 { return 1330532566u32; }
-        if Index == 6u32 { return 1438678333u32; }
-        return 1913001156u32;
+        if Index == 0u32 { return 3654576904u32; }
+        if Index == 1u32 { return 466981693u32; }
+        if Index == 2u32 { return 2688585999u32; }
+        if Index == 3u32 { return 1257634221u32; }
+        if Index == 4u32 { return 3378323583u32; }
+        if Index == 5u32 { return 1573640450u32; }
+        if Index == 6u32 { return 2831625587u32; }
+        return 3691962759u32;
     }
     if Index == 0u32 { return 1257490039u32; }
     if Index == 1u32 { return 298073986u32; }

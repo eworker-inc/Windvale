@@ -57,7 +57,7 @@ existing hosted PE/ELF verifiers before publication.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Segmenter WVB | 24,648 | `dfd98c3935b402b35414cf6ba548cc0ecde47dadc1c847bb32abddce1cf7cddf` |
-| Windows application | 317,440 | `08daad412e8c3830fd53ddb5fcf83aaf3f657d156375b95e2832db497959ffff` |
+| Windows application | 317,440 | `c3026f45af4e070732deef4c0ae0b1a260f2b3535085ea3031eeacee4e1ce79a` |
 | Linux application | 319,488 | `83ef511305fa384f8a873f8e5f46b111045e49b9683b5768a77cf760d31f016d` |
 
 The focused current-host evidence reconstructs the WVB through the native

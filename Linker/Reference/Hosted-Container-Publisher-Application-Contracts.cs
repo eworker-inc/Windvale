@@ -18,7 +18,7 @@ public static class Hostedˉcontainerˉpublisherˉapplicationˉcontract
         "da6f614c8e8a839580d3bc7ea7a93863ea5e992b56124ce318c7546853320c65";
     public const int LINUX_APPLICATION_BYTES = 381_885;
     public const string LINUX_APPLICATION_SHA256 =
-        "89238198cedf88b843ea7f3b2680b716ab554dd2789f135a0c4c6ac7d1950345";
+        "cc1649f45f96df16925afc2f44772f2c32ce243f40c7efbe8c07cde246aa02a2";
 }
 
 public static class Hostedˉcontainerˉpublisherˉapplicationˉwriter

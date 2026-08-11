@@ -20,7 +20,7 @@ call :check_file "%Candidate%\Console-Application-Publisher.wvo" 1139440 259c7d7
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\windows-x64-wvappublish.exe" 1158656 0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\linux-x64-wvappublish.elf" 1156037 83468e65c1a5aa0bbb33f9571958e5d2f1959b81c08bd4cb66a4083270272ae1
+call :check_file "%Candidate%\linux-x64-wvappublish.elf" 1156085 e9b8771978c9fb06c3a8ecc55c7b9a3ba1acd24faa541dc669920c10ed792925
 if errorlevel 1 goto :failed
 call :pass "candidate inventory"
 
@@ -76,7 +76,7 @@ call "%RepositoryRoot%\Tools\Native\Construct-Console-Application-Publisher.cmd"
     linux "%TestDirectory%\Console-Application-Publisher.elf" ^
     >"%TestDirectory%\Linux.out" 2>"%TestDirectory%\Linux.err"
 if errorlevel 1 goto :failed
->"%TestDirectory%\Linux.expected" echo console-application publisher construction status=Valid target=linux bytes=1156037
+>"%TestDirectory%\Linux.expected" echo console-application publisher construction status=Valid target=linux bytes=1156085
 call :check_equal "%TestDirectory%\Linux.out" "%TestDirectory%\Linux.expected"
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Linux.err"

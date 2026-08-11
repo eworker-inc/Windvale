@@ -170,7 +170,7 @@ The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `3
 
 `windows-x64-wvb-runner-v1` uses metadata profile `5`. The Decision 0510 current source reconstruction candidate is 1,094,656 bytes with SHA-256 `6af8988f18c69a6757daeef8376c22ecbae406c31652813607fe2c3a6aa43ffc`.
 
-`windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 606,208 bytes with SHA-256 `bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2`.
+`windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current enum-complete source candidate is 606,720 bytes with SHA-256 `a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366`.
 
 `windows-x64-console-application-verifier-v1` uses metadata profile `7` and
 two immutable input snapshots. Its current native reconstruction candidate is
@@ -179,7 +179,7 @@ two immutable input snapshots. Its current native reconstruction candidate is
 
 `windows-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
 Its current native candidate is 570,368 bytes with SHA-256
-`4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53`.
+`72d1164fe2f47e1bec00437bf63b317d39f1ed011cea7cf01a1343ce01547765`.
 
 ## Linux container
 
@@ -191,7 +191,7 @@ The current WVB 1.11 reconstruction candidate is 1,224,704 bytes with SHA-256 `e
 
 `linux-x64-wvb-runner-v1` uses metadata profile `5`. The Decision 0510 current source reconstruction candidate is 1,093,632 bytes with SHA-256 `a674b455aecaec48889318fd190a2123bc8bc784b1ee9b9eaa76b491ebebcb2d`.
 
-`linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current source candidate is 606,208 bytes with SHA-256 `bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1`.
+`linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current enum-complete source candidate is 606,208 bytes with SHA-256 `f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1`.
 
 `linux-x64-console-application-verifier-v1` uses metadata profile `7` and two
 immutable input snapshots. Its current native cross-target reconstruction
@@ -200,7 +200,7 @@ candidate is 1,064,960 bytes with SHA-256
 
 `linux-x64-native-hosted-verifier-publisher-admission-v1` uses profile `8`.
 Its current native candidate is 569,344 bytes with SHA-256
-`b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a`.
+`18777615d60e1279cb855b05ba03933bb65c9a622036dad2e954e3df683216e2`.
 
 The digest-bound [native read-only front door](Windvale-Native-Wvb-Read-Only-Front-Door.md) intentionally continues to use the previously qualified verifier and inspector applications until the corrected-backend candidates pass the same exact-commit dual-host gate. Candidate reconstruction does not silently replace a qualified ordinary artifact.
 

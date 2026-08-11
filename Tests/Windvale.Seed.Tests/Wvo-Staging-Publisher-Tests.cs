@@ -9,15 +9,15 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 433_523;
+    private const int WVO_STAGING_PUBLISHER_TOOL_BYTES = 451_676;
     private const string WVO_STAGING_PUBLISHER_TOOL_SHA256 =
-        "221b20ab5db8785ec495d2151088c532f53fc8c9c66fbb021156f05b62e32ca3";
+        "50f0284d00081583eedebd6fcc23e5b9fd887c3916caa2f061b94713c10fd071";
     private const string LINUX_WVO_STAGING_PUBLISHER_WVO_SHA256 =
         "8cb479d958881b8fa74b67dc3de6bc5b669adfd38d699735a2ab62aee610ccba";
     private const string LINUX_WVO_STAGING_ADAPTER_WVO_SHA256 =
         "c4f51956b86d477a93232091da491b0c8a4a117150125dbf24e817234d0a1da1";
     private const string LINUX_IMMUTABLE_SNAPSHOT_SHELL_WVO_SHA256 =
-        "939c7dc5bf6a0ddf94bc4f406f40b0733f15f21d323b7eae5cd8e58103004481";
+        "595398fc2fd80e4b29bc88e9de13731374c6783a6dc2ac0f86eecf7734eb41fc";
     private const string LINUX_HOSTED_CONTAINER_ADAPTER_WVO_SHA256 =
         "7cdbf94f43d53252db293fda79c69773c5d40b03a1acbd120256614487583929";
     private const string LINUX_DURABLE_MULTI_CHUNK_WVO_SHA256 =

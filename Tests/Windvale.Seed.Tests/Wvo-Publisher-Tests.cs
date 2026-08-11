@@ -147,6 +147,7 @@ internal static partial class Program
                         Windowsˉresult.Imageˉbytes,
                         Report,
                         [Candidateˉpath, Destinationˉpath],
+                        timeoutˉmilliseconds: 60_000,
                         loadedˉmodules: Loadedˉmodules));
                 Equal(
                     0,
@@ -164,6 +165,7 @@ internal static partial class Program
                         Linuxˉresult.Imageˉbytes,
                         Report,
                         [Candidateˉpath, Destinationˉpath],
+                        timeoutˉmilliseconds: 60_000,
                         loadedˉmappings: Loadedˉmappings));
                 Equal(
                     0,
@@ -187,6 +189,7 @@ internal static partial class Program
                         Windowsˉresult.Imageˉbytes,
                         string.Empty,
                         [Candidateˉpath, Destinationˉpath],
+                        timeoutˉmilliseconds: 60_000,
                         expectedˉerror: "publication status=Rejected phase=wvo\n"));
             }
             else
@@ -197,6 +200,7 @@ internal static partial class Program
                         Linuxˉresult.Imageˉbytes,
                         string.Empty,
                         [Candidateˉpath, Destinationˉpath],
+                        timeoutˉmilliseconds: 60_000,
                         expectedˉerror: "publication status=Rejected phase=wvo\n"));
             }
             Sequenceˉequal(Preserved, File.ReadAllBytes(Destinationˉpath));

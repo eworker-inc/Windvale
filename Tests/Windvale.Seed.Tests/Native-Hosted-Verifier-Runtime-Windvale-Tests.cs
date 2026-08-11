@@ -10,9 +10,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_RUNTIME_BYTES = 19_333;
+    private const int NATIVE_HOSTED_VERIFIER_RUNTIME_BYTES = 19_991;
     private const string NATIVE_HOSTED_VERIFIER_RUNTIME_SHA256 =
-        "fbd36782659cedebedfb24525bec1a97afee66d720982ebd11eaeab485419fe7";
+        "49888fba2892450728eaa72442711b9ee7072e66f08622d8ef0d8c1041a5f3ec";
 
     private static void Windvaleˉnativeˉhostedˉverifierˉruntimeˉruns()
     {

@@ -22,12 +22,12 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Content-Native-Adapter.wv");
 
-    private const int WVO_STAGING_CONTENT_ADAPTER_WVB_BYTES = 403_243;
+    private const int WVO_STAGING_CONTENT_ADAPTER_WVB_BYTES = 450_115;
     private const string WVO_STAGING_CONTENT_ADAPTER_SHA256 =
-        "2fb1ad5fc4e9561faf20ecd2390e9069e635909a1aeb4cea1ffcac13004a1634";
-    private const int WVO_STAGING_CONTENT_NATIVE_ADAPTER_WVB_BYTES = 404_838;
+        "15c4299d72f845a44b91f8d829be10413c7be2df365603b132db31f66963c86f";
+    private const int WVO_STAGING_CONTENT_NATIVE_ADAPTER_WVB_BYTES = 451_710;
     private const string WVO_STAGING_CONTENT_NATIVE_ADAPTER_SHA256 =
-        "491e504bd2c15889d6cedd282f5cc637e7011099cb6a761d815aefdb0f61eceb";
+        "a9b42315cd0c2cef71914568a3c77a7467011b6e25f1d42c3ddaa73ec53fc620";
 
     private static void Nativeˉwvoˉstagingˉcontentˉisˉverified()
     {

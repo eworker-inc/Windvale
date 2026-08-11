@@ -20,15 +20,15 @@
       "path": "windows-x64-wvopublish.exe",
       "target": "windows-x64-wvo-publisher-v1",
       "bytes": 430080,
-      "sha256": "ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a",
+      "sha256": "76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910",
       "sourceWvb": "Wvo-Publisher.wvb"
     },
     {
       "name": "linux-x64-wvo-publisher",
       "path": "linux-x64-wvopublish.elf",
       "target": "linux-x64-wvo-publisher-v1",
-      "bytes": 426949,
-      "sha256": "4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d",
+      "bytes": 426997,
+      "sha256": "2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2",
       "sourceWvb": "Wvo-Publisher.wvb"
     }
   ]

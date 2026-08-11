@@ -617,6 +617,30 @@ Capability refusal, typed missing-output-parent failures, the stale WVO
 candidate/resource boundary, and later Stage 0 recovery comparisons keep T2
 `managed-normal`.
 
+Decision 0522 repairs the adjacent WVO product boundary. Profile-6
+reconstruction now derives the selected module's admitted enum metadata through
+the retained native enum-request and enum-service processes, appends it to the
+fixed `Enumˉname` leaf, and applies Linux executable mode after container
+composition. The unchanged WVB/WVO/fragment therefore produces candidate-3
+applications that match current recovery-writer bytes and pass self-test on
+both hosts. The paired helper grows to 185 cases and cumulative broad-script
+removal reaches 193 managed calls. Authorization and resource-error behavior
+remain reference-runtime-owned until a versioned native hosted-service failure
+contract exists, so T2 remains `managed-normal`.
+
+Decision 0523 closes three publisher-chain correctness gaps exposed by the
+current large products. Staged-content admission now compares one manifest code
+chunk across consecutive bounded publication values without constructing the
+whole WVO. The Linux durable publication adapter keeps WVB/WVO data at `0600`
+but selects `0755` for an admitted ELF snapshot, and the immutable-snapshot
+startup keeps saved policy outside both complete `stat` buffers. Construction
+candidate 20 coherently repins the affected requests, paired construction
+tools, admission applications, promoter, and generic publisher family. Focused
+evidence plus the complete 224-test Standard Seed and 39-test OS suites pass on
+Windows and Linux with equal normalized contracts. Grouped Qualification,
+promotion, remaining capability-bearing execution, and final recovery release
+remain open, so T2 remains `managed-normal`.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

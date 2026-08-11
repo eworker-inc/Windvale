@@ -72,11 +72,11 @@ sources.
 | Linux base-metadata application | 1,003,520 | `9ade312396293afa20ad5e409e10366c54b9c4616615ccb9cbcf0a4a4432101e` |
 | Windows base-runtime application | 236,032 | `65e94ce354feae8121d8868a27308ba3ae1a993baf3313b8d847d1fb732102e2` |
 | Linux base-runtime application | 237,568 | `db5fc8da164bb72da1c379b582c6bbffa64e8ecd1b6f6f4dd807a7e95f726055` |
-| Publisher-application admission WVB | 30,778 | `b4e0a2ee04de6cfff0efc723c57031bf5cfcd6706e3156525ce2157c5f287d07` |
-| Publisher-application admission WVO | 555,690 | `88cc97665cfd0de14f2c9ac6c80dfd985edc508fccdc3d9b887da740cd034e23` |
-| Publisher-promoter WVB | 41,268 | `c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672` |
-| Publisher-promoter WVO | 660,123 | `ba5d9c5afde115fede472369d24c3d1fe466806de523773d2e445e6a9e004667` |
-| Linked publisher-promoter fragment | 658,339 | `e06189a37c038a5237787ffd16fb53466df3d10519efd4129b219bd814f4def2` |
+| Publisher-application admission WVB | 30,778 | `d43013f4a3b70f90ae83e5cd1b643421b2bf5ec4b4dbdec1cb844849d09024db` |
+| Publisher-application admission WVO | 555,690 | `e348c41dcd96dbacedcc1820d42013e3c19795d89f7183ac7bc64311612dd927` |
+| Publisher-promoter WVB | 41,268 | `086bd4d93d93d51b0f9140a0adf9f54a7f205dc902d9cb5d732dc7a887e10edc` |
+| Publisher-promoter WVO | 660,123 | `ee5274c86d680640d3ab75754faf63585a639a44fc9626ea5b9f9bcce9779e8e` |
+| Linked publisher-promoter fragment | 658,339 | `d50dc45866818c36a0332af71e914dc9a05052d97f43c0f60add4a75101bbec6` |
 | WVB publisher WVB | 159,770 | `8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96` |
 | WVB publisher WVO | 1,319,377 | `edc49bbae0bfd16a38db4a08d9a6e636edfac35828e1c6b050c45d85d5e1f9e3` |
 | Linked WVB publisher fragment | 1,317,613 | `9003479563a043bb69113be43100289f653f6772356c48a17098c1c6700f5271` |
@@ -84,24 +84,24 @@ sources.
 | Windows base | 248,832 | `2afd9d92422b063abd3cd20d8da6056efbbbff9e7ac8baeef9c8b60b391686c5` |
 | Linux base | 249,856 | `687338281ca78c9d3a4d08b601c1efbcc198ec3c8fcc96fbf34f5dc349cafae2` |
 | Windows publisher | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
-| Linux publisher | 254,917 | `babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97` |
-| Windows promoter base | 674,816 | `927476ca389c7449fb0c72341f26d68577a6a9e0c0ed02fa45ac8c4af935c77f` |
-| Linux promoter base | 675,840 | `768ca223c99e901d17a1c5d86744515e4b571a6feae329fb6fc3cf225215a133` |
-| Windows promoter | 681,472 | `598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23` |
-| Linux promoter | 680,901 | `422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58` |
+| Linux publisher | 254,965 | `510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac` |
+| Windows promoter base | 674,816 | `17f4939071697344c5252478198713dab08ebc9c8fe476687fd758bad59f4d4e` |
+| Linux promoter base | 675,840 | `18fbe415177f5f96644ecca8bf5e38aa6c42e62108e9b4df794752dd5820ddc5` |
+| Windows promoter | 681,472 | `86c72f5485bd6eeba1bdb65841102d7f388a8714b8e07ca3d519250de2886d8b` |
+| Linux promoter | 680,949 | `700f3df624611abad03cbd70811bad2ab015136ecdacc6dff9cdd97f5fc81395` |
 | Windows WVB-publisher base | 1,333,760 | `8fcdcfc755439ebae5086c72d88113fb52f397ba0687c785af247230a7732fff` |
 | Linux WVB-publisher base | 1,335,296 | `f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090` |
 | Windows WVB publisher | 1,340,928 | `71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3` |
-| Linux WVB publisher | 1,340,357 | `7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c` |
+| Linux WVB publisher | 1,340,405 | `7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095` |
 | Windows WVO-publisher base | 422,912 | `1f9361126c368f133693222cbaa4c21e2d0948e79df7bf945b7b037ac815e884` |
 | Linux WVO-publisher base | 421,888 | `af61a601f4cd8e7fb81704353160a518d2e4f199084fde4b29518d27c89774f7` |
-| Windows WVO publisher | 430,080 | `ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a` |
-| Linux WVO publisher | 426,949 | `4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d` |
+| Windows WVO publisher | 430,080 | `76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910` |
+| Linux WVO publisher | 426,997 | `2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2` |
 
-Version 17 of the construction candidate contains 27 canonical WVB/WVO
+Version 20 of the construction candidate contains 27 canonical WVB/WVO
 artifacts and 22 paired host applications. Its 49-entry `SHA256SUMS` is 5,064
 LF-only bytes with SHA-256
-`12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5`.
+`ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb`.
 
 ## Native owner and remaining gate
 

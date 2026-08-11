@@ -79,16 +79,11 @@ decode_fixture \
     "$invalid" \
     '20618498d9df059d52fc0d660bf52f32df291c88b94d4b5ded224078f936108e' \
     'bad-magic input' || exit $?
-cp -- "$repository_root/Artifacts/Decimal-Parsing.wvb" "$unsupported" || {
-    echo 'The native lowerer unsupported-function fixture could not be copied.' >&2
-    exit 1
-}
-if ! check_hash \
+decode_fixture \
+    "$repository_root/Tests/Native/Wvb-To-Wvo-Rejections/Unsupported-Function.wvb.b64" \
     "$unsupported" \
-    'bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37'; then
-    echo 'The native lowerer unsupported-function fixture identity differs.' >&2
-    exit 1
-fi
+    '605a2528ebad0fc418e9cb1ab8738c6e3a9b2e58cb9e0897cb0bc93fececaf91' \
+    'unsupported-function input' || exit $?
 decode_fixture \
     "$repository_root/Tests/Native/Wvo/Return-42.wvo.b64" \
     "$sentinel" \

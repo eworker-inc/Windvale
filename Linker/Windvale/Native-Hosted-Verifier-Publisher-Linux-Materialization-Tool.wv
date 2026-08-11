@@ -32,11 +32,11 @@ export fn Main() -> i32 {
         return 2;
     }
     let Variant: u32 = Bytesˉreadˉu32ˉlittle(Construction, 28u32);
-    var Outputˉbytes: u32 = 254917u32;
-    if Variant == 1u32 { Outputˉbytes = 680901u32; }
-    if Variant == 2u32 { Outputˉbytes = 1340357u32; }
-    if Variant == 3u32 { Outputˉbytes = 426949u32; }
-    if Variant == 4u32 { Outputˉbytes = 1156037u32; }
+    var Outputˉbytes: u32 = 254965u32;
+    if Variant == 1u32 { Outputˉbytes = 680949u32; }
+    if Variant == 2u32 { Outputˉbytes = 1340405u32; }
+    if Variant == 3u32 { Outputˉbytes = 426997u32; }
+    if Variant == 4u32 { Outputˉbytes = 1156085u32; }
     if Variant > 4u32 {
         diagnostic.write_line("publisher Linux materialization status=Rejected");
         return 2;

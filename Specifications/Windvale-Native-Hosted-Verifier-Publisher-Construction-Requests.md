@@ -75,7 +75,7 @@ Key target placements are:
 | Adapter file/address | 240,016 / 243,600 | 249,856 / 142,929,920 |
 | SHA file/address | 245,312 / 248,896 | 253,232 / 142,933,296 |
 | `WVVP` file/address | 252,896 / 259,552 | 247,264 / 247,264 |
-| Final bytes | 256,000 | 254,917 |
+| Final bytes | 256,000 | 254,965 |
 | Image end | 143,994,880 | 142,934,981 |
 
 Role-1 promoter placements are:
@@ -86,7 +86,7 @@ Role-1 promoter placements are:
 | Adapter file/address | 665,664 / 669,248 | 675,840 / 143,355,904 |
 | SHA file/address | 670,960 / 674,544 | 679,216 / 143,359,280 |
 | `WVVP` file/address | 678,368 / 685,536 | 673,248 / 673,248 |
-| Final bytes | 681,472 | 680,901 |
+| Final bytes | 681,472 | 680,949 |
 | Image end | 144,420,864 | 143,360,965 |
 
 Role-2 WVB-publisher placements are:
@@ -97,7 +97,7 @@ Role-2 WVB-publisher placements are:
 | Adapter file/address | 1,324,896 / 1,328,480 | 1,335,296 / 144,015,360 |
 | SHA file/address | 1,330,192 / 1,333,776 | 1,338,672 / 144,018,736 |
 | `WVPB` file/address | 1,337,824 / 1,344,992 | 1,332,704 / 1,332,704 |
-| Final bytes | 1,340,928 | 1,340,357 |
+| Final bytes | 1,340,928 | 1,340,405 |
 | Image end | 145,080,320 | 144,020,421 |
 
 Role-3 WVO-publisher placements are:
@@ -108,7 +108,7 @@ Role-3 WVO-publisher placements are:
 | Adapter file/address | 414,208 / 417,792 | 421,888 / 143,101,952 |
 | SHA file/address | 419,504 / 423,088 | 425,264 / 143,105,328 |
 | `WVPO` file/address | 426,976 / 431,584 | 419,296 / 419,296 |
-| Final bytes | 430,080 | 426,949 |
+| Final bytes | 430,080 | 426,997 |
 | Image end | 144,166,912 | 143,107,013 |
 
 Windows mutation flags require startup replacement, metadata, adapter, SHA,

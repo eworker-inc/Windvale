@@ -69,12 +69,13 @@ sentinel="$temporary_directory/Sentinel.bin"
 run_output="$temporary_directory/Run.out"
 run_error="$temporary_directory/Run.err"
 decode_error="$temporary_directory/Decode.err"
+invalid_digest=0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288
 sentinel_digest=0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
 
 decode_fixture \
     "$repository_root/Tests/Native/Wvo/Bad-Magic.wvo.b64" \
     "$invalid" \
-    '0369f8b34765adb08799e6b852e9d1e249c40d1049976b01ff59355dd111f288' \
+    "$invalid_digest" \
     'invalid candidate' || exit $?
 decode_fixture \
     "$repository_root/Tests/Native/Wvo/Return-42.wvo.b64" \

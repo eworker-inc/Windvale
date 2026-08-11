@@ -37,10 +37,10 @@ check_file "$candidate/Wvo-Object.wvb" 61008 \
     a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db || fail
 check_file "$candidate/Wvo-Object.wvo" 591723 \
     f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c || fail
-check_file "$candidate/Wvo-Object.exe" 606208 \
-    bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2 || fail
+check_file "$candidate/Wvo-Object.exe" 606720 \
+    a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366 || fail
 check_file "$candidate/Wvo-Object.elf" 606208 \
-    bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1 || fail
+    f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1 || fail
 [[ -x $candidate/Wvo-Object.elf ]] || fail
 pass 'candidate inventory'
 
@@ -76,6 +76,11 @@ check_equal "$test_directory/Wvo-Object.wvo" "$candidate/Wvo-Object.wvo" || fail
 check_equal "$test_directory/Wvo-Object.exe" "$candidate/Wvo-Object.exe" || fail
 check_equal "$test_directory/Wvo-Object.elf" "$candidate/Wvo-Object.elf" || fail
 pass 'exact paired reconstruction'
+
+"$candidate/Wvo-Object.elf" \
+    >"$test_directory/Self-Test.out" 2>"$test_directory/Self-Test.err" || fail
+[[ ! -s $test_directory/Self-Test.out ]] || fail
+[[ ! -s $test_directory/Self-Test.err ]] || fail
 
 "$candidate/Wvo-Object.elf" verify "$candidate/Wvo-Object.wvo" \
     >"$test_directory/Verify.out" 2>"$test_directory/Verify.err" || fail

@@ -79,7 +79,7 @@ internal static class Immutableˉsnapshotˉpublisherˉapplicationˉbuilder
         (LINUX_HOSTED_ADAPTER_RESOURCE, 300,
             "7cdbf94f43d53252db293fda79c69773c5d40b03a1acbd120256614487583929"),
         (LINUX_SHELL_RESOURCE, 3_503,
-            "939c7dc5bf6a0ddf94bc4f406f40b0733f15f21d323b7eae5cd8e58103004481"),
+            "595398fc2fd80e4b29bc88e9de13731374c6783a6dc2ac0f86eecf7734eb41fc"),
         (LINUX_TRANSACTION_RESOURCE, 2_468,
             "01eb64695ef008da75b282079fde1cb93766bdc37a518695b2377eecee7b3f85"),
         (WINDOWS_STARTUP_RESOURCE, 184,

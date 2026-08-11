@@ -28,8 +28,8 @@
       "name": "linux-x64-hosted-verifier-application-publisher",
       "path": "linux-x64-wvhostverifierpublish.elf",
       "target": "linux-x64-native-hosted-verifier-application-publisher-v1",
-      "bytes": 254917,
-      "sha256": "babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97",
+      "bytes": 254965,
+      "sha256": "510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac",
       "sourceWvb": "Hosted-Verifier-Application-Publisher.wvb"
     }
   ]

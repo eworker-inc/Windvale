@@ -20,8 +20,8 @@
       "name": "linux-x64-wvb-publisher",
       "path": "linux-x64-wvpublish.elf",
       "target": "linux-x64-native-wvb-publisher-v1",
-      "bytes": 1340357,
-      "sha256": "7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c",
+      "bytes": 1340405,
+      "sha256": "7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095",
       "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvb",
       "sourceWvo": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Wvb-Publisher.wvo"
     }

@@ -259,7 +259,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
             Current.Nextˉfunction,
             Current.Position
         );
-    let Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+    var Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
         Nextˉnonempty(Input, Plan, Regions, Cursor);
     if Step.Status !=
         Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid {
@@ -278,24 +278,69 @@ export fn Compilerˉnativeˉx64ˉstagingˉcontentˉnext(
         Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 4u32);
     let Length: u32 =
         Bytesˉreadˉu32ˉlittle(Stagingˉmanifest, Entry + 8u32);
-    if Step.Position != Position || Bytesˉlength(Step.Value) != Length {
+    let Chunkˉlengthˉvalid: bool = Bytesˉlength(Chunk) == Length;
+    var Matches: bool = true;
+    var Compared: u32 = 0u32;
+    var Grouping: bool = true;
+    while Grouping {
+        let Stepˉbytes: u32 = Bytesˉlength(Step.Value);
+        if Compared > Length {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Manifestˉentry
+            );
+        }
+        if Step.Position != Position + Compared ||
+            Stepˉbytes == 0u32 ||
+            Stepˉbytes > Length - Compared {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Manifestˉentry
+            );
+        }
+        if Chunkˉlengthˉvalid {
+            var Offset: u32 = 0u32;
+            while Offset < Stepˉbytes {
+                if Bytesˉreadˉu8(Chunk, Compared + Offset) !=
+                    Bytesˉreadˉu8(Step.Value, Offset) {
+                    Matches = false;
+                }
+                Offset = Offset + 1u32;
+            }
+        }
+        Compared = Compared + Stepˉbytes;
+        if Step.Kind ==
+                Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code &&
+            Compared < Length {
+            let Nextˉcursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor =
+                Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+                    Step.Nextˉvalid,
+                    Step.Nextˉkind,
+                    Step.Nextˉfunction,
+                    Step.Nextˉposition
+                );
+            let Nextˉstep: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+                Nextˉnonempty(Input, Plan, Regions, Nextˉcursor);
+            if Nextˉstep.Status !=
+                    Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid ||
+                Nextˉstep.Kind !=
+                    Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code {
+                return Invalid(
+                    Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Manifestˉentry
+                );
+            }
+            Step = Nextˉstep;
+        } else {
+            Grouping = false;
+        }
+    }
+    if Compared != Length {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Manifestˉentry
         );
     }
-    if Bytesˉlength(Chunk) != Length {
+    if !Chunkˉlengthˉvalid {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉcontentˉstatus.Chunkˉlength
         );
-    }
-    var Matches: bool = true;
-    var Offset: u32 = 0u32;
-    while Offset < Length {
-        if Bytesˉreadˉu8(Chunk, Offset) !=
-            Bytesˉreadˉu8(Step.Value, Offset) {
-            Matches = false;
-        }
-        Offset = Offset + 1u32;
     }
     if !Matches {
         return Invalid(

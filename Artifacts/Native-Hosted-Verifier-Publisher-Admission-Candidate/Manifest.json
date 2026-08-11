@@ -12,7 +12,7 @@
       "path": "windows-x64-wvhostverifierpublisheradmit.exe",
       "target": "windows-x64-native-hosted-verifier-publisher-admission-v1",
       "bytes": 570368,
-      "sha256": "4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53",
+      "sha256": "72d1164fe2f47e1bec00437bf63b317d39f1ed011cea7cf01a1343ce01547765",
       "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Publisher-Application-Admission-Tool.wvb"
     },
     {
@@ -20,7 +20,7 @@
       "path": "linux-x64-wvhostverifierpublisheradmit.elf",
       "target": "linux-x64-native-hosted-verifier-publisher-admission-v1",
       "bytes": 569344,
-      "sha256": "b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a",
+      "sha256": "18777615d60e1279cb855b05ba03933bb65c9a622036dad2e954e3df683216e2",
       "sourceWvb": "../Native-Hosted-Verifier-Publisher-Construction-Candidate/Publisher-Application-Admission-Tool.wvb"
     }
   ]

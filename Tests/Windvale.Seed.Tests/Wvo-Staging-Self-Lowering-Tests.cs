@@ -7,9 +7,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int STAGING_PUBLISHER_WVO_BYTES = 6_355_569;
+    private const int STAGING_PUBLISHER_WVO_BYTES = 6_620_295;
     private const string STAGING_PUBLISHER_WVO_SHA256 =
-        "727e7da06f11340dcee4552f119de3422dee17968c49438906242bbf1166e7e5";
+        "c45ac01ed0dca7431e4d0c89aa46e7998ef3665a2a5fcdc77144cdd4739f5129";
 
     private static void Nativeˉwvoˉstagingˉpublisherˉselfˉlowers()
     {

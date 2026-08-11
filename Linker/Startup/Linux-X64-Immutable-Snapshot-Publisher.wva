@@ -40,6 +40,8 @@ move rbx r10
 move ebp r11d
 # Preserve the kernel argc/argv stack, allocate the established bounded runtime
 # stack, and reserve its final 16 KiB for paths, identities, and transaction cells.
+# Policy cells begin after both 144-byte Linux stat records so an existing
+# destination cannot overwrite the selected snapshot sequence or final mode.
 xor edi edi
 move_u32 esi 67108864
 move_u32 edx 3
@@ -54,11 +56,11 @@ branch above_equal Failure
 move rsp rax
 add_i32 rsp 67108864
 subtract_i32 rsp 16384
-store_memory_u64 rsp none 1 12672 rbx
-store_memory_u32 rsp none 1 12680 r13d
-store_memory_u32 rsp none 1 12684 r14d
-store_memory_u32 rsp none 1 12688 r15d
-store_memory_u32 rsp none 1 12692 ebp
+store_memory_u64 rsp none 1 12736 rbx
+store_memory_u32 rsp none 1 12744 r13d
+store_memory_u32 rsp none 1 12748 r14d
+store_memory_u32 rsp none 1 12752 r15d
+store_memory_u32 rsp none 1 12756 ebp
 
 # Bind the fixed execution regions and the eight services used by admission.
 load_address r15 Execution_context
@@ -181,7 +183,7 @@ test eax eax
 branch not_equal Native_exit
 
 move_u32 edi 2
-load_memory_u64 rax rsp none 1 12672
+load_memory_u64 rax rsp none 1 12736
 call_register rax
 test eax eax
 branch equal Failure
@@ -449,11 +451,11 @@ label Resources_verified
 move rdi r13
 move rsi rsp
 add_i32 rsi 8224
-load_memory_u32 edx rsp none 1 12680
+load_memory_u32 edx rsp none 1 12744
 load_memory_u32 ecx rsp none 1 12720
-load_memory_u32 r8d rsp none 1 12684
-load_memory_u32 r9d rsp none 1 12688
-load_memory_u32 r10d rsp none 1 12692
+load_memory_u32 r8d rsp none 1 12748
+load_memory_u32 r9d rsp none 1 12752
+load_memory_u32 r10d rsp none 1 12756
 call Linux_durable_multi_chunk_publication_run
 move ebx eax
 move rdi r13

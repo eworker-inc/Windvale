@@ -94,8 +94,8 @@ details.
 | --- | ---: | --- |
 | Publisher WVB | 41,365 | `4e8c81da38f5eb06f9334c2d2c5e35120a13e73bac3a9375b5e6a2eff04438c5` |
 | Publisher WVO | 408,284 | `29c1cc269b9387944b4d43fe9215392044996ad47da55be45a1d177f26e5bafb` |
-| Windows publisher | 430,080 | `ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a` |
-| Linux publisher | 426,949 | `4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d` |
+| Windows publisher | 430,080 | `76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910` |
+| Linux publisher | 426,997 | `2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2` |
 
 `Tools/Native/Publish-Wvo.cmd` and `.sh` verify the current-host publisher
 digest before execution. `Lower-Wvb-To-Wvo.cmd` and `.sh` now lower into a

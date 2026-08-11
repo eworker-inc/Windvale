@@ -44,7 +44,7 @@ write, exact reread, atomic replacement, directory-durability, and cleanup path.
 | Linux verifier | 1,003,520 | `26a35ed3f0221968cee45b7cf5dc3fdad4b1e60c754b95928bd74559da65ec0b` |
 | Publisher WVB | 29,170 | `77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f` |
 | Windows publisher | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
-| Linux publisher | 254,917 | `babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97` |
+| Linux publisher | 254,965 | `510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac` |
 
 `Tools/Native/Publish-Hosted-Verifier-Application.cmd` and `.sh` digest-check
 the current-host publisher before execution. The exact publisher applications

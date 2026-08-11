@@ -69,14 +69,14 @@ fn Startupˉimageˉdigest(Input: bytes, Target: u32, Variant: u32) -> bytes {
             else if Index == 6u32 { Word = 1445018914u32; }
             else { Word = 519770980u32; }
         } else if Variant == 3u32 && Target == 1u32 {
-            if Index == 0u32 { Word = 3659669037u32; }
-            else if Index == 1u32 { Word = 2518165551u32; }
-            else if Index == 2u32 { Word = 2397325640u32; }
-            else if Index == 3u32 { Word = 3834877255u32; }
-            else if Index == 4u32 { Word = 8965882u32; }
-            else if Index == 5u32 { Word = 2282519885u32; }
-            else if Index == 6u32 { Word = 171578610u32; }
-            else { Word = 222938223u32; }
+            if Index == 0u32 { Word = 4293010631u32; }
+            else if Index == 1u32 { Word = 3620289198u32; }
+            else if Index == 2u32 { Word = 360485465u32; }
+            else if Index == 3u32 { Word = 2531147558u32; }
+            else if Index == 4u32 { Word = 1873302768u32; }
+            else if Index == 5u32 { Word = 1355050762u32; }
+            else if Index == 6u32 { Word = 2970522518u32; }
+            else { Word = 3208098414u32; }
         } else if Variant == 3u32 {
             if Index == 0u32 { Word = 897654718u32; }
             else if Index == 1u32 { Word = 1292077660u32; }

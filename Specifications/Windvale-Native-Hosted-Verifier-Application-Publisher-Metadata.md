@@ -46,7 +46,7 @@ The exact request identities are:
 Variant 0 admits the 29,170-byte publisher WVB at SHA-256
 `77c6f34a823fc41175647c4d0c4708507ab8b97c7b1726c983188f962fd5509f`.
 Variant 1 admits the 41,268-byte promoter WVB at SHA-256
-`c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672`.
+`086bd4d93d93d51b0f9140a0adf9f54a7f205dc902d9cb5d732dc7a887e10edc`.
 Variant 2 admits the 159,770-byte WVB publisher at SHA-256
 `8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96`.
 All three roles admit the unchanged target startup WVO: Windows 168 bytes at
@@ -88,7 +88,7 @@ wvhostverifierproducemetadata [role:0|1|2] <target:1|2> <module.wvb> <startup.wv
 The focused Windvale source files separate admission, construction, and the
 byte-input bridge. The role-aware metadata-producer WVB is 85,942 bytes with
 SHA-256
-`7f9ac017096727387d1265c6408d2acf90a5667ad5050117c226a0f57608e373`.
+`37dee9b2f5248e76ca13369b0eb75a6b8d3dddb55ab8658f1376556dd1ff42d2`.
 
 The focused current-host test remains the recovery owner of service-free
 `Main(bytes) -> bytes`, interpreter/native equality, exact request and metadata

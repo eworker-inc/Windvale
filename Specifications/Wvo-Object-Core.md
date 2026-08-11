@@ -79,3 +79,11 @@ The module declares exactly `console.write_line`, `diagnostic.write_line`, `file
 ## Ownership boundary
 
 The assembler owns WVA parsing and WVO production. The linker owns symbol resolution, layout, relocation, image construction, and maps. These object modules own only WVO validation and human-readable inspection. The paired read-only package and promotion gate are specified by [Windvale native WVO inspector](Windvale-Native-Wvo-Inspector.md); atomic whole-object replacement is separately specified by the [native WVO publisher](Windvale-Native-Wvo-Publisher.md).
+
+Decision 0522 makes the paired digest-bound applications own the no-argument
+self-test on Windows and Linux. Reconstruction derives the module-specific
+enum metadata through the native hosted-enum processes and packages the
+complete leaf-plus-metadata service, so deterministic construction, formatting,
+quoting, and enum-name checks execute without Stage 0. Capability refusal and
+invalid or missing hosted resources remain adapter-boundary contracts rather
+than WVO-core semantics.

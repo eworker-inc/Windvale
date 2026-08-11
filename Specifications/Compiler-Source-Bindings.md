@@ -133,7 +133,7 @@ The focused demo covers valid parameters/locals/data/calls; ordinary and compoun
 The current local hosted closure report is:
 
 ```text
-source bindings status=Valid modules=9 functions=261 parameters=1154 locals=1584 reads=13346 assignments=1098 calls=2314 directory-bytes=101120
+source bindings status=Valid modules=9 functions=263 parameters=1160 locals=1597 reads=13401 assignments=1108 calls=2326 directory-bytes=101820
 ```
 
 The pre-preparation implementation was qualified at `9185b28`, the prepared-symbol/local-only baseline at `bf77f70`, and Decision 0041's fused consumer at `b124115`. Decision 0050's bidirectional nominal map and length-filtered equality paths are qualified at `e37204f`. Decision 0055's artifacts consume validated lexer cursors and the bounded nominal range and are cross-host qualified at `1a4fca7`. Decision 0058 uses the reverse equality helper on exact-name paths without changing WVLB format or binding semantics and is cross-host qualified at `5c16547`.

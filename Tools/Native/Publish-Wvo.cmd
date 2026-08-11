@@ -11,7 +11,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Publisher=%RepositoryRoot%\Artifacts\Native-Wvo-Publisher-Candidate\windows-x64-wvopublish.exe"
 
-certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a" >nul
+certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVO publisher artifact digest is invalid.
     exit /b 1

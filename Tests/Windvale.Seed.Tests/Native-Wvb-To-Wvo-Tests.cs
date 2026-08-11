@@ -1217,16 +1217,16 @@ internal static partial class Program
     {
         var Template = Moduleˉcodec.Read(Compileˉsuccess(WVB_TO_WVO_RETURN_42_SOURCE));
         var Code = ImmutableArray.CreateBuilder<byte>();
-        for (uint Local = 1; Local <= 1_024; Local++)
+        for (uint Local = 1; Local <= 1_023; Local++)
         {
             Code.AddRange(U32ˉinstruction(Opcode.Localˉload, Local - 1));
             Code.AddRange(U32ˉinstruction(Opcode.Localˉstore, Local));
         }
-        Code.AddRange(U32ˉinstruction(Opcode.Localˉload, 1_024));
+        Code.AddRange(U32ˉinstruction(Opcode.Localˉload, 1_023));
         Code.Add((byte)Opcode.Return);
         var Localˉtypes = Enumerable.Repeat<Valueˉshape>(
             Valueˉtype.I32,
-            1_025).ToImmutableArray();
+            1_024).ToImmutableArray();
         var Function = Template.Functions.Single() with
         {
             Localˉtypes = Localˉtypes,
@@ -1240,9 +1240,9 @@ internal static partial class Program
             Code = Code.ToImmutable(),
         });
         var Module = Moduleˉcodec.Readˉandˉverify(Wvb);
-        Equal(1_025, Module.Functions[0].Declaration.Allˉlocalˉtypes.Length);
-        Equal(10_246, Module.Functions[0].Declaration.Codeˉlength);
-        Equal(2_050, Module.Functions[0].Instructions.Length);
+        Equal(1_024, Module.Functions[0].Declaration.Allˉlocalˉtypes.Length);
+        Equal(10_236, Module.Functions[0].Declaration.Codeˉlength);
+        Equal(2_048, Module.Functions[0].Instructions.Length);
 
         var Native = X64ˉnativeˉbackend.Compile(Module);
         _ = Nativeˉfragmentˉverifier.Verify(Native.Fragment);

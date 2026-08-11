@@ -32,7 +32,7 @@ internal static partial class Program
             var Moduleˉbytes = File.ReadAllBytes(Moduleˉpath);
             Equal(16_961, Moduleˉbytes.Length);
             Equal(
-                "5ec1b08d55b3c0d8717243335d668f39c5f47bebbdb4ba58dbe4976933646e5a",
+                "7da724a1cef230fbc815e38edf46fc8f4d9b53a257276cc04ea8858d3902b874",
                 Moduleˉdigest.Calculateˉsha256(Moduleˉbytes));
             var Module = Moduleˉcodec.Readˉandˉverify(Moduleˉbytes);
             var Native = X64ˉnativeˉbackend.Compile(Module).Fragment;
@@ -56,7 +56,7 @@ internal static partial class Program
                 var Executed = X64ˉnativeˉexecutor.Executeˉbytes(
                     Native, Request, maximumˉinstructions: 10_000_000);
                 Sequenceˉequal(Reference.Runˉmainˉbytes(Request).Bytes, Executed);
-                Equal(Windows ? 7_040 : 5_117, Executed.Length);
+                Equal(Windows ? 7_040 : 5_169, Executed.Length);
                 Equal(0x4f49_5657u, Readˉpublisherˉrequestˉu32(Executed, 0));
                 Equal(1u, Readˉpublisherˉrequestˉu32(Executed, 4));
                 Equal((uint)Executed.Length, Readˉpublisherˉrequestˉu32(Executed, 8));
@@ -64,7 +64,7 @@ internal static partial class Program
                 Equal((uint)Request.Length, Readˉpublisherˉrequestˉu32(Executed, 16));
                 Equal((uint)Target, Readˉpublisherˉrequestˉu32(Executed, 20));
                 Equal(5u, Readˉpublisherˉrequestˉu32(Executed, 28));
-                Equal(Windows ? 5_286u : 3_363u,
+                Equal(Windows ? 5_286u : 3_415u,
                     Readˉpublisherˉrequestˉu32(Executed, 36));
                 Equal(1_685u, Readˉpublisherˉrequestˉu32(Executed, 44));
 
@@ -76,15 +76,20 @@ internal static partial class Program
                         ? "windows-x64-wvhostverifierpublish.exe"
                         : "linux-x64-wvhostverifierpublish.elf"));
                 var Startup = Executed.AsSpan(64, 5);
-                var Adapter = Executed.AsSpan(69, Windows ? 5_286 : 3_363);
-                var Sha256 = Executed.AsSpan(Windows ? 5_355 : 3_432, 1_685);
+                var Adapter = Executed.AsSpan(69, Windows ? 5_286 : 3_415);
+                var Sha256 = Executed.AsSpan(Windows ? 5_355 : 3_484, 1_685);
+                Equal(
+                    Windows
+                        ? "3f3f7c4230724bf6e2692f232ed3a904705174ed7ba1174012dc1d1ebfa1be93"
+                        : "b9540cacf3005d402f438805ab66822c725977d3dc27f66cf1916631f1ba9245",
+                    Convert.ToHexString(SHA256.HashData(Adapter)).ToLowerInvariant());
                 Sequenceˉequal(
                     Application.AsSpan(Windows ? 512 : 4_096, 5).ToArray(), Startup.ToArray());
                 Sequenceˉequal(
                     Application.AsSpan(Windows ? 240_016 : 249_856, Adapter.Length).ToArray(),
                     Adapter.ToArray());
                 Sequenceˉequal(
-                    Application.AsSpan(Windows ? 245_312 : 253_232, 1_685).ToArray(),
+                    Application.AsSpan(Windows ? 245_312 : 253_280, 1_685).ToArray(),
                     Sha256.ToArray());
                 Equal(
                     Windows
@@ -94,7 +99,7 @@ internal static partial class Program
                 Equal(
                     Windows
                         ? "3f3f7c4230724bf6e2692f232ed3a904705174ed7ba1174012dc1d1ebfa1be93"
-                        : "7cbae400e311d763170a77685e959caa630a590b8f2e8964e78dea53ea6d152c",
+                        : "b9540cacf3005d402f438805ab66822c725977d3dc27f66cf1916631f1ba9245",
                     Convert.ToHexString(SHA256.HashData(Adapter)).ToLowerInvariant());
                 Equal(
                     "513d73834e2c6358adad022a31a386be59391874e73e4ad5bf74c70ec0b170ce",
@@ -102,7 +107,7 @@ internal static partial class Program
                 Equal(
                     Windows
                         ? "41591b9e04457c46aa449fb1a2ab8415a29e9146bdb775f46dcf6f9c38a94a16"
-                        : "c19e7f510d8a05554a94e55e53edc32118f2fc6bcd38e6ef42fb96727feb225a",
+                        : "dbe367f7cb9dc4beb39ea14ed3d0fa0f1b470cf2b0f4360d3947ba4ec3f4d0f6",
                     Convert.ToHexString(SHA256.HashData(Executed.AsSpan()[64..])).ToLowerInvariant());
             }
 
@@ -148,7 +153,7 @@ internal static partial class Program
         BinaryPrimitives.WriteUInt32LittleEndian(
             Result.AsSpan(20), Windows ? 243_600u : 142_929_920u);
         BinaryPrimitives.WriteUInt32LittleEndian(
-            Result.AsSpan(24), Windows ? 248_896u : 142_933_296u);
+            Result.AsSpan(24), Windows ? 248_896u : 142_933_344u);
         BinaryPrimitives.WriteUInt32LittleEndian(Result.AsSpan(28), (uint)Targets.Length);
         for (var Index = 0; Index < Objects.Length; Index++)
         {

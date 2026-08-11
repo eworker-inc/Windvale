@@ -487,7 +487,20 @@ move rdi r13
 move rsi rsp
 add_i32 rsi 12336
 move_u32 edx 655554
+# Preserve data-only WVB/WVO publication as 0600. A canonical ELF snapshot is
+# an executable application and receives final 0755 metadata on the exclusively
+# created sibling before the same atomic rename. Recompute after each collision
+# because R10 is a syscall argument register.
 move_u32 r10d 384
+load_memory_u32 eax rsp none 1 12728
+compare_i32 eax 4
+branch below Publication_mode_ready
+load_memory_u64 rax rsp none 1 12720
+load_memory_u32 eax rax none 1 0
+compare_i32 eax 1179403647
+branch not_equal Publication_mode_ready
+move_u32 r10d 493
+label Publication_mode_ready
 move_u32 eax 257
 syscall
 compare_i32 rax -17

@@ -348,12 +348,12 @@ export fn Publisherˉadapterˉisˉvalid(Input: bytes, Target: u32) -> bool {
     var Beginˉindex: u32 = 12u32;
     var Applyˉindex: u32 = 11u32;
     if Target == 2u32 {
-        Length = 5507u32;
+        Length = 5559u32;
         Symbols = 28u32;
         Relocations = 49u32;
         Exportˉindex = 1u32;
         Exportˉoffset = 60u32;
-        Exportˉsize = 3303u32;
+        Exportˉsize = 3355u32;
         Exportˉname = "Linux_wvb_publisher_run";
         Mainˉindex = 9u32;
         Beginˉindex = 11u32;

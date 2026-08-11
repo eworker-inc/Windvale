@@ -19,6 +19,7 @@ $NativeRun = Join-Path $RepositoryRoot 'Tools/Native/Run-Wvb.cmd'
 $NativeAssembler = Join-Path $RepositoryRoot 'Tools/Native/Assemble-Wva.cmd'
 $NativeWvoVerify = Join-Path $RepositoryRoot 'Tools/Native/Verify-Wvo.cmd'
 $NativeWvoInspect = Join-Path $RepositoryRoot 'Tools/Native/Inspect-Wvo.cmd'
+$NativeWvoApplication = Join-Path $RepositoryRoot 'Artifacts/Native-Wvo-Object-Candidate/Wvo-Object.exe'
 $NativeWvDumpApplication = Join-Path $RepositoryRoot 'Artifacts/Native-Front-Door/windows-x64/wvdump.exe'
 $NativeWvaApplication = Join-Path $RepositoryRoot 'Artifacts/Native-Front-Door/windows-x64/wvasm.exe'
 $NativeLinker = Join-Path $RepositoryRoot 'Tools/Native/Link-Wvo.cmd'
@@ -210,6 +211,21 @@ function Invoke-ExactWvDumpExecution(
 }
 
 function Invoke-ExactWvoReadOnlyExecution([string]$ObjectPath) {
+    $ApplicationInformation = Get-Item -LiteralPath $NativeWvoApplication
+    $ApplicationDigest = (
+        Get-FileHash -Algorithm SHA256 -LiteralPath $NativeWvoApplication
+    ).Hash.ToLowerInvariant()
+    if (
+        $ApplicationInformation.Length -ne 606720 -or
+        $ApplicationDigest -ne 'a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366'
+    ) {
+        throw 'The Windows native WVO inspector application identity is invalid.'
+    }
+    $SelfTest = @(& $NativeWvoApplication 2>&1)
+    if ($LASTEXITCODE -ne 0 -or $SelfTest.Count -ne 0) {
+        throw 'The digest-bound native WVO inspector self-test failed.'
+    }
+
     $AssemblySource = Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva'
     $AssemblyOutput = @(& $NativeAssembler $AssemblySource $ObjectPath 2>&1)
     if (
@@ -1358,4 +1374,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=105 cases=184'
+Write-Output 'native Seed front-door verification status=Complete artifacts=105 cases=185'

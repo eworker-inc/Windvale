@@ -48,13 +48,13 @@ export async function Testˉwvo(Repositoryˉroot, Cases) {
     const Artifact = Hostˉartifact({
         win32: [
             "Artifacts/Native-Wvo-Object-Candidate/Wvo-Object.exe",
-            606_208,
-            "bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2",
+            606_720,
+            "a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366",
         ],
         linux: [
             "Artifacts/Native-Wvo-Object-Candidate/Wvo-Object.elf",
             606_208,
-            "bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1",
+            "f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1",
         ],
     });
     const Verifier = await Verifyˉartifact(

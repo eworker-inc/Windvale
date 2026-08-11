@@ -40,9 +40,9 @@ fail() {
 check_file "$candidate/Wvo-Publisher.wvb" 41365 \
     4e8c81da38f5eb06f9334c2d2c5e35120a13e73bac3a9375b5e6a2eff04438c5 || fail
 check_file "$candidate/windows-x64-wvopublish.exe" 430080 \
-    ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a || fail
-check_file "$candidate/linux-x64-wvopublish.elf" 426949 \
-    4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d || fail
+    76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910 || fail
+check_file "$candidate/linux-x64-wvopublish.elf" 426997 \
+    2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2 || fail
 pass 'candidate inventory'
 
 if "$script_directory/Construct-Wvo-Publisher.sh" >/dev/null 2>&1; then
@@ -90,7 +90,7 @@ check_equal "$test_directory/Windows.out" "$test_directory/Windows.expected" || 
 "$script_directory/Construct-Wvo-Publisher.sh" linux \
     "$test_directory/Wvo-Publisher.elf" \
     >"$test_directory/Linux.out" 2>"$test_directory/Linux.err" || fail
-printf '%s\n' 'WVO publisher construction status=Valid target=linux bytes=426949' \
+printf '%s\n' 'WVO publisher construction status=Valid target=linux bytes=426997' \
     >"$test_directory/Linux.expected" || fail
 check_equal "$test_directory/Linux.out" "$test_directory/Linux.expected" || fail
 [[ ! -s $test_directory/Linux.err ]] || fail

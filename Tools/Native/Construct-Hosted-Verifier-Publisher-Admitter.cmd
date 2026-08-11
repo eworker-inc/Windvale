@@ -17,7 +17,7 @@ set "FileInputLeaf=Native-X64-Windows-File-Input-Service.bin"
 set "DiagnosticLeaf=Native-X64-Windows-Diagnostic-Output-Service.bin"
 set "HostedStartup=Windows-X64-Hosted-Verifier.wvo"
 set "ApplicationBytes=570368"
-    set "ApplicationSha256=4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53"
+    set "ApplicationSha256=72d1164fe2f47e1bec00437bf63b317d39f1ed011cea7cf01a1343ce01547765"
 goto :target_ready
 
 :linux
@@ -28,7 +28,7 @@ set "FileInputLeaf=Native-X64-Linux-File-Input-Service.bin"
 set "DiagnosticLeaf=Native-X64-Linux-Diagnostic-Output-Service.bin"
 set "HostedStartup=Linux-X64-Hosted-Verifier.wvo"
 set "ApplicationBytes=569344"
-    set "ApplicationSha256=b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a"
+    set "ApplicationSha256=18777615d60e1279cb855b05ba03933bb65c9a622036dad2e954e3df683216e2"
 
 :target_ready
 if exist "%Output%" (
@@ -49,7 +49,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -67,7 +67,7 @@ call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TemporaryDirectory%\A
 if errorlevel 1 goto :cleanup
 findstr /b /c:"entry name=Main address=0" "%TemporaryDirectory%\Link.txt" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%TemporaryDirectory%\Admission.bin" 554354 1abb04300b4f1e046884efa3d5ddfbb8934c86e34a2a01cb43f30561318652e4 "publisher-admission fragment"
+call :verify_file "%TemporaryDirectory%\Admission.bin" 554354 0b34e2ac21a21ea7c726c7e75aa3479505023966713c30fd4502d12af9e0eba5 "publisher-admission fragment"
 if errorlevel 1 goto :cleanup
 
 set "Phase=bundle-request"
@@ -125,7 +125,9 @@ exit /b %ERRORLEVEL%
 :verify_digest
 certutil -hashfile "%~1" SHA256 | findstr /i /c:"%~2" >nul
 if errorlevel 1 (
-    >&2 echo The %~3 digest is invalid: %~1
+    set "ActualSha256="
+    for /f "skip=1 tokens=*" %%H in ('certutil -hashfile "%~1" SHA256') do if not defined ActualSha256 set "ActualSha256=%%H"
+    >&2 call echo The %~3 digest is invalid: %~1 expected=%~2 actual=%%ActualSha256%%
     exit /b 1
 )
 exit /b 0

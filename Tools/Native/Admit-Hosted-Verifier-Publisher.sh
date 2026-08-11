@@ -13,7 +13,7 @@ admitter="$artifact_root/linux-x64-wvhostverifierpublisheradmit.elf"
 
 if [[ ! -f "$admitter" || $(wc -c < "$admitter") -ne 569344 ]] ||
     ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-        'b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a' \
+        '18777615d60e1279cb855b05ba03933bb65c9a622036dad2e954e3df683216e2' \
         'linux-x64-wvhostverifierpublisheradmit.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native hosted-verifier publisher admitter identity is invalid.' >&2
     exit 1

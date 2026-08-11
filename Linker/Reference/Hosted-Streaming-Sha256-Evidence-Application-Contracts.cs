@@ -17,10 +17,10 @@ public static class Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉcontract
         "95a112cc469c7667e8158cd57770a806501ede1bdea9a82a797b770b9e59dea4";
     public const int WINDOWS_APPLICATION_BYTES = 914_432;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "16719d10c539c8950b620c7eee73e23d82a915b5e395977da9eabdf88e18e9a9";
+        "a08bc80a7785682b179ab93fed4a770315a9dd3286511e1d1efde04a8f0492dd";
     public const int LINUX_APPLICATION_BYTES = 913_408;
     public const string LINUX_APPLICATION_SHA256 =
-        "e0383452a56712748a17ffbe1f780817c338bf1900d3ef914706604ce592b6ea";
+        "48ed1d906eff7574413760fc35e87b2c8b440f227b964649333503a73803d268";
 }
 
 public static class Hostedˉstreamingˉsha256ˉevidenceˉapplicationˉwriter

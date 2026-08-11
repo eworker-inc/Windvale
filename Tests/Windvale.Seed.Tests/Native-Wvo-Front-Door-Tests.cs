@@ -7,9 +7,9 @@ namespace Windvale.Seed.Tests;
 internal static partial class Program
 {
     private const string WINDOWS_WVO_INSPECTOR_APPLICATION_SHA256 =
-        "bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2";
+        "a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366";
     private const string LINUX_WVO_INSPECTOR_APPLICATION_SHA256 =
-        "bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1";
+        "f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1";
 
     private static void Nativeˉwvoˉfrontˉdoorˉruns()
     {
@@ -21,14 +21,14 @@ internal static partial class Program
         using var Manifest = JsonDocument.Parse(File.ReadAllBytes(
             Path.Combine(Artifactˉroot, "Manifest.json")));
         var Root = Manifest.RootElement;
-        Equal("windvale-native-wvo-object-candidate-2", Root.GetProperty("format").GetString());
+        Equal("windvale-native-wvo-object-candidate-3", Root.GetProperty("format").GetString());
         Equal("candidate", Root.GetProperty("status").GetString());
         Equal("0222", Root.GetProperty("sourceDecision").GetString());
         Equal("0308", Root.GetProperty("provenanceDecision").GetString());
-        Equal("0500", Root.GetProperty("constructionDecision").GetString());
+        Equal("0522", Root.GetProperty("constructionDecision").GetString());
         Equal("pending", Root.GetProperty("qualification").GetString());
         Equal(
-            "windvale-native-profile-6-reconstruction",
+            "windvale-native-profile-6-enum-complete-reconstruction",
             Root.GetProperty("construction").GetString());
         Equal(4, Root.GetProperty("artifacts").GetArrayLength());
         foreach (var Artifact in Root.GetProperty("artifacts").EnumerateArray())

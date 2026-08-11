@@ -15,10 +15,10 @@ internal static partial class Program
         "dfd98c3935b402b35414cf6ba548cc0ecde47dadc1c847bb32abddce1cf7cddf";
     private const int WINDOWS_HOSTED_CONTAINER_SEGMENTER_BYTES = 317_440;
     private const string WINDOWS_HOSTED_CONTAINER_SEGMENTER_SHA256 =
-        "08daad412e8c3830fd53ddb5fcf83aaf3f657d156375b95e2832db497959ffff";
+        "c3026f45af4e070732deef4c0ae0b1a260f2b3535085ea3031eeacee4e1ce79a";
     private const int LINUX_HOSTED_CONTAINER_SEGMENTER_BYTES = 319_488;
     private const string LINUX_HOSTED_CONTAINER_SEGMENTER_SHA256 =
-        "83ef511305fa384f8a873f8e5f46b111045e49b9683b5768a77cf760d31f016d";
+        "8e688dd7182d380f078a8d6b7c6393f33170214b3537504e9561220d296a5a63";
 
     private static void Nativeˉhostedˉcontainerˉsegmenterˉruns()
     {

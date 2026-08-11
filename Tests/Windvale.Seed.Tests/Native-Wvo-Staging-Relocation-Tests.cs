@@ -23,12 +23,12 @@ internal static partial class Program
         Readˉembeddedˉsource(
             "Windvale.Seed.Tests.Wvo-Staging-Relocations-Native-Adapter.wv");
 
-    private const int WVO_STAGING_RELOCATIONS_ADAPTER_WVB_BYTES = 41_953;
+    private const int WVO_STAGING_RELOCATIONS_ADAPTER_WVB_BYTES = 42_003;
     private const string WVO_STAGING_RELOCATIONS_ADAPTER_SHA256 =
-        "9e0dfc3db2e8c03f903e7a40e13bbb3c1b56a9f938420e5e5535c80c1f4c5d2a";
-    private const int WVO_STAGING_RELOCATIONS_NATIVE_ADAPTER_WVB_BYTES = 40_660;
+        "82d5764228bbf62161911378904fa94a6eeecb7c0cfedf5bb464227b6ab16780";
+    private const int WVO_STAGING_RELOCATIONS_NATIVE_ADAPTER_WVB_BYTES = 40_710;
     private const string WVO_STAGING_RELOCATIONS_NATIVE_ADAPTER_SHA256 =
-        "b254d54d29f162fb0a3232c052bbe985885d2e9b94bf7d732002c6adac1e7d30";
+        "04e94b7626d76248338928ca06da6ff8cbd001f1830b2ba29b3f4c46c8a1fbdc";
 
     private static void Nativeˉwvoˉstagingˉrelocationsˉareˉverified()
     {

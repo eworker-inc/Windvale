@@ -21,24 +21,24 @@ internal static partial class Program
         var Contracts = new (string Name, int Bytes, string Sha256)[]
         {
             ("Identity-Request", 60_891,
-                "db3a75a34fd96a1a72f85790868faf19e7fa4d7710cb2122a409215548a99e87"),
+                "7a54fd5af2bb4694e35a411401fabc49448230f102d6a4bfd73c824625301c96"),
             ("Structure-Request", 25_561,
-                "c111f8227401abcebecd601a7283338e1ebe18934e920d9d19a11e4871e1c5d5"),
+                "63496d90faac3ab91bc3f592c46c196d298cd5c6df836a0ee57f7a1feaa5fc02"),
             ("Construction-Request", 36_046,
-                "ebe61935ae2d27a48b08cc4779dd6373869df1bee10d02ee256993b452cbef55"),
+                "3dbed45aeb650591698b525e9db6d64046f5daa5c861d6e14114e89327a5de45"),
             ("Target-Request", 31_730,
-                "092db601b9d52703ed00c6169f30928184abe0af8649e4b66c70938a59c66fd4"),
+                "d8f0ab1a3f865cb307a71732ed9d88fa83b5f1d020d028d62419fc6c36c9e347"),
         };
         var Tools = new (string Name, int Bytes, string Sha256)[]
         {
             ("Identity-Request", 63_684,
-                "c8f56149ab7cf4526abb65bb86637520c67eb45ed8ef8372071390ec87595b03"),
+                "acd451459776c593a49bffeda37f3e4fcfd82d2db978fe76d7838fbfe83c9d5b"),
             ("Structure-Request", 26_931,
-                "144f0707794ffead7d8723ab5f0c310641468ee362e688952bc5f66dcfb1b435"),
+                "9c59a9494554d54992ad5749e2a6b16ab431d39064e5955c658bb57a7180366f"),
             ("Construction-Request", 37_555,
-                "ad009ab17096f85c00bc597b9766aa5a4b31d026a2b82db4f286bc04ea82564e"),
+                "1769e3bf77af756dc48fa7c4ff1ec4988fbccd2a97d463d7505d619b51524452"),
             ("Target-Request", 33_160,
-                "9668230e76ccf6df1deae6d020fa3aa390915f5ba17b198dbd4984bebad09e9a"),
+                "767f20717146df1aea8fc42225d6c15a9d372cdd0a221cba6c9dd989fd07b3e6"),
         };
         var Modules = new List<Verifiedˉmodule>();
         var Native = new List<Nativeˉfragment>();
@@ -111,8 +111,8 @@ internal static partial class Program
                 var Identity = Buildˉpublisherˉidentityˉinput(
                     Repository, Target);
                 var Admitted = Run(0, Identity);
+                Equal(Windows ? 275_054 : 271_065, Admitted.Length);
                 Sequenceˉequal(Identity, Admitted);
-                Equal(Windows ? 275_054 : 271_013, Admitted.Length);
 
                 var Structure = Run(1, Admitted);
                 Equal(128, Structure.Length);
@@ -140,7 +140,7 @@ internal static partial class Program
                     Readˉpublisherˉrequestˉu32(Construction, 132));
                 Equal(Windows ? 243_600u : 142_929_920u,
                     Readˉpublisherˉrequestˉu32(Construction, 136));
-                Equal(Windows ? 256_000u : 254_917u,
+                Equal(Windows ? 256_000u : 254_965u,
                     Readˉpublisherˉrequestˉu32(Construction, 156));
                 var Resources = Publisherˉidentityˉresources(Identity);
                 var Application = File.ReadAllBytes(Path.Combine(
@@ -298,6 +298,6 @@ internal static partial class Program
         142929980, 250928, 249856, 137682944, 245760, 141877248, 246024,
         136634368, 11193, 8192, 8981, 245976, 319488, 240928, 243056,
         241248, 241168, 241152, 245872, 242256, 316464, 2416640,
-        142934936, 142934937, 142934973, 142933296, 142934586,
+        142934984, 142934985, 142935021, 142933344, 142934634,
     ];
 }

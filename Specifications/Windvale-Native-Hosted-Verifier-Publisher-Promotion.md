@@ -30,8 +30,8 @@ The complete candidate is read once as a Windvale byte value and admitted by
 `Nativeˉhostedˉverifierˉpublisherˉapplicationˉverification`. That function
 accepts only the 256,000-byte Windows publisher at SHA-256
 `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96`
-or the 254,917-byte Linux publisher at SHA-256
-`babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97`.
+or the 254,965-byte Linux publisher at SHA-256
+`510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac`.
 
 After successful admission, the private
 `Applicationˉpublicationˉpublisherˉbegin/apply` ABI exposes the existing
@@ -45,9 +45,9 @@ host copy or rename is not conforming.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Promoter WVB | 41,268 | `c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672` |
-| Promoter WVO | 660,123 | `ba5d9c5afde115fede472369d24c3d1fe466806de523773d2e445e6a9e004667` |
-| Linked flat fragment | 658,339 | `e06189a37c038a5237787ffd16fb53466df3d10519efd4129b219bd814f4def2` |
+| Promoter WVB | 41,268 | `086bd4d93d93d51b0f9140a0adf9f54a7f205dc902d9cb5d732dc7a887e10edc` |
+| Promoter WVO | 660,123 | `ee5274c86d680640d3ab75754faf63585a639a44fc9626ea5b9f9bcce9779e8e` |
+| Linked flat fragment | 658,339 | `d50dc45866818c36a0332af71e914dc9a05052d97f43c0f60add4a75101bbec6` |
 
 The native linker places `Main` at address 1,178. The transaction apply/begin
 entry points remain at 0/789. The WVO has 658,160 code bytes, 179 read-only-data
@@ -66,8 +66,8 @@ shared admitted input advances.
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Windows x64 | 681,472 | `598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23` |
-| Linux x64 | 680,901 | `422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58` |
+| Windows x64 | 681,472 | `86c72f5485bd6eeba1bdb65841102d7f388a8714b8e07ca3d519250de2886d8b` |
+| Linux x64 | 680,949 | `700f3df624611abad03cbd70811bad2ab015136ecdacc6dff9cdd97f5fc81395` |
 
 The current-host focused native lane constructs both applications, uses the
 promoter to install both exact publisher subjects, and then uses the installed

@@ -429,6 +429,37 @@ inventory is unchanged. Grouped repository Qualification, GitHub's
 pinned-Debian result, promotion, clean/previous-seed renewal, and recovery
 retirement remain open.
 
+Current T2 WVO reconstruction and self-test transfer:
+[Decision 0522](../Decisions/0522-Enum-Complete-Native-Wvo-Inspector-Reconstruction.md)
+replaces the incomplete fixed-leaf profile-6 bundle with the exact 945-byte
+enum request and 1,244-byte module-specific enum service. Candidate-3 retains
+the WVB, WVO, and linked fragment identities while refreshing the Windows
+application to 606,720 bytes and the Linux application to 606,208 bytes; both
+match the current Stage 0 writer and pass no-argument self-test. The focused
+reconstruction owner and complete helper pass independently on Windows and
+Linux. The helper now owns 105 artifacts and 185 cases, removes one more
+managed call per broad script, and brings cumulative removal to 193. WVO
+capability refusal, invalid-name and missing-resource reports, Stage 0 object
+oracles, grouped Qualification, promotion, and recovery retirement remain.
+T2 and the twelve-file direct-entry inventory are unchanged.
+
+Current native publisher-chain closure:
+[Decision 0523](../Decisions/0523-Grouped-Staging-And-Linux-Publisher-Closure.md)
+admits one staged manifest code chunk across consecutive bounded publication
+values, publishes admitted Linux ELF applications as `0755` while retaining
+`0600` for WVB/WVO data, and moves immutable-snapshot policy outside both Linux
+`stat` buffers. Construction candidate 20 repins the complete affected request,
+tool, admission, promoter, and generic publisher closure. Focused Windows and
+independent Linux execution cover the exact file pipeline, object
+instantiation, AOT chain, immutable segment sets, publisher rejection and
+preservation, digest-bound launchers, WVO read-only rejection, and WVO
+inspector reconstruction. Both hosts also pass all 224 Standard Seed tests and
+all 39 OS tests, and their normalized conformance contracts match. This repairs
+candidate correctness; it removes no additional managed broad-script call. T2,
+grouped Qualification, promotion,
+clean or previous-seed renewal, capability-bearing execution transfer, and the
+final recovery/archive release remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

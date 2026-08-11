@@ -16,9 +16,9 @@ public static class Consoleˉapplicationˉpublisherˉapplicationˉcontract
     public const int WINDOWS_APPLICATION_BYTES = 1_158_656;
     public const string WINDOWS_APPLICATION_SHA256 =
         "0bafe84096859f4b88dc14be92c6cdc5336d791b7c5b0a332dccb76b913dd24e";
-    public const int LINUX_APPLICATION_BYTES = 1_156_037;
+    public const int LINUX_APPLICATION_BYTES = 1_156_085;
     public const string LINUX_APPLICATION_SHA256 =
-        "83468e65c1a5aa0bbb33f9571958e5d2f1959b81c08bd4cb66a4083270272ae1";
+        "e9b8771978c9fb06c3a8ecc55c7b9a3ba1acd24faa541dc669920c10ed792925";
 
     internal static readonly Nativeˉpublisherˉapplicationˉcontract CONSTRUCTION = new(
         MODULE_NAME,

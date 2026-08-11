@@ -16,12 +16,14 @@ inputs:
 | Role | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Malformed WVB, decoded `Bad-Magic.wvb.b64` | 174 | `20618498d9df059d52fc0d660bf52f32df291c88b94d4b5ded224078f936108e` |
-| Valid unsupported WVB, `Decimal-Parsing.wvb` | 1,698 | `bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37` |
+| Valid unsupported WVB, decoded `Unsupported-Function.wvb.b64` | 183 | `605a2528ebad0fc418e9cb1ab8738c6e3a9b2e58cb9e0897cb0bc93fececaf91` |
 | Destination sentinel, decoded `Return-42.wvo.b64` | 479 | `0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5` |
 
-The malformed fixture fails WVB 1.11 admission. The decimal-parsing fixture is
-a valid module whose function shape is outside the lowerer's current accepted
-subset. It is not recompiled during the test.
+The malformed fixture fails WVB 1.11 admission. The unsupported-function
+fixture is the exact compiled form of
+`Tests/Fixtures/Native-X64/Wvb-To-Wvo-Unsupported-Function.wv`; it is a valid
+portable module whose exported `Main(i32) -> i32` shape is outside the
+lowerer's accepted entry subset. It is not recompiled during the test.
 
 ## Rejection contract
 

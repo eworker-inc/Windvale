@@ -51,14 +51,14 @@ repeated replacement of the full 256 KiB value.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Base PE | 248,832 | `2afd9d92422b063abd3cd20d8da6056efbbbff9e7ac8baeef9c8b60b391686c5` |
-| Constructor WVB | 20,079 | `9a9f55d9d7592a101b8e3255c3f6266ae894a3a569bd244d8b7f50a8a1817c32` |
+| Constructor WVB | 20,079 | `44d07d46a0280e6a7591179abd062649144d3b2dfbf487b55f7353df5bdb8640` |
 | Final PE | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
-| Promoter base PE | 674,816 | `927476ca389c7449fb0c72341f26d68577a6a9e0c0ed02fa45ac8c4af935c77f` |
-| Promoter final PE | 681,472 | `598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23` |
+| Promoter base PE | 674,816 | `17f4939071697344c5252478198713dab08ebc9c8fe476687fd758bad59f4d4e` |
+| Promoter final PE | 681,472 | `86c72f5485bd6eeba1bdb65841102d7f388a8714b8e07ca3d519250de2886d8b` |
 | WVB-publisher base PE | 1,333,760 | `8fcdcfc755439ebae5086c72d88113fb52f397ba0687c785af247230a7732fff` |
 | WVB-publisher final PE | 1,340,928 | `71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3` |
 | WVO-publisher base PE | 422,912 | `1f9361126c368f133693222cbaa4c21e2d0948e79df7bf945b7b037ac815e884` |
-| WVO-publisher final PE | 430,080 | `ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a` |
+| WVO-publisher final PE | 430,080 | `76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910` |
 
 The focused test checks the pinned WVB and base identities, service-free native
 entry, interpreter/native equality, complete final byte equality, final SHA,

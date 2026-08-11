@@ -12,15 +12,15 @@ public static class Hostedˉcontainerˉstartupˉapplicationˉcontract
         "linux-x64-hosted-container-startup-v1";
     public const string MODULE_NAME =
         "Nativeˉhostedˉcontainerˉstartupˉtool";
-    public const int MODULE_BYTES = 42_508;
+    public const int MODULE_BYTES = 43_716;
     public const string MODULE_SHA256 =
-        "7c68e998940600ecb56534e05635510643ba1fd218bcd3fca9e23300e1380807";
-    public const int WINDOWS_APPLICATION_BYTES = 373_248;
+        "537afc1c6dba50b882f6b35cada70e9be4afccea5c1ef3eff1c82f925a010fd4";
+    public const int WINDOWS_APPLICATION_BYTES = 381_440;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "ec1fecf3c05b130554537be6d03a064e75c833ded55677abcbde0c13d0264b3e";
-    public const int LINUX_APPLICATION_BYTES = 372_736;
+        "23105912a93f627a95e7c1fc3db79aa57c324f2e90a29d1ea90dfc3eb4083ec2";
+    public const int LINUX_APPLICATION_BYTES = 380_928;
     public const string LINUX_APPLICATION_SHA256 =
-        "6a58768a3aa137ffd1ba49f318fe0f129a5d7430a5d06d8126af31b4411f5e94";
+        "a9d44a7b613cdc76d07d79d4e8fe84e3373bbcde0960187b8c3da932043e01eb";
 }
 
 public static class Hostedˉcontainerˉstartupˉapplicationˉwriter

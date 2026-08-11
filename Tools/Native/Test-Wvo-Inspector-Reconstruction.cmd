@@ -11,9 +11,9 @@ call :check_file "%Candidate%\Wvo-Object.wvb" 61008 a630d49f0549c865644d8052fbff
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Wvo-Object.wvo" 591723 f45b14c33a7615209a2a16f6caf0bee041bdb5e2f46fd868792222e774fdb30c
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvo-Object.exe" 606208 bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2
+call :check_file "%Candidate%\Wvo-Object.exe" 606720 a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvo-Object.elf" 606208 bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1
+call :check_file "%Candidate%\Wvo-Object.elf" 606208 f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1
 if errorlevel 1 goto :failed
 call :pass "candidate inventory"
 
@@ -40,6 +40,11 @@ if errorlevel 1 goto :failed
 call :check_equal "%TestDirectory%\Wvo-Object.elf" "%Candidate%\Wvo-Object.elf"
 if errorlevel 1 goto :failed
 call :pass "exact paired reconstruction"
+
+"%Candidate%\Wvo-Object.exe" >"%TestDirectory%\Self-Test.out" 2>"%TestDirectory%\Self-Test.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Self-Test.out") do if not "%%~zF"=="0" goto :failed
+for %%F in ("%TestDirectory%\Self-Test.err") do if not "%%~zF"=="0" goto :failed
 
 "%Candidate%\Wvo-Object.exe" verify "%Candidate%\Wvo-Object.wvo" >"%TestDirectory%\Verify.out" 2>"%TestDirectory%\Verify.err"
 if errorlevel 1 goto :failed

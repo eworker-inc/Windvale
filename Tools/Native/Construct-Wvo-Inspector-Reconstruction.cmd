@@ -32,7 +32,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -54,12 +54,23 @@ set "Wvo=%OutputRoot%\Wvo-Object.wvo"
 set "WindowsApplication=%OutputRoot%\Wvo-Object.exe"
 set "LinuxApplication=%OutputRoot%\Wvo-Object.elf"
 set "Fragment=%TemporaryDirectory%\Wvo-Object.bin"
+set "EnumRequest=%TemporaryDirectory%\Wvo-Object.wveq"
+set "EnumService=%TemporaryDirectory%\Enum-Service.bin"
 set "WindowsStartup=%TemporaryDirectory%\Windows-Startup.wvo"
 set "LinuxStartup=%TemporaryDirectory%\Linux-Startup.wvo"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Wvo-Object.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
 if errorlevel 1 goto :cleanup
 call :verify_file "%Wvb%" 61008 a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db "WVO inspector WVB"
+if errorlevel 1 goto :cleanup
+
+"%HostedTools%\wvhostenumrequest.exe" "%Wvb%" "%EnumRequest%" >"%TemporaryDirectory%\Enum-Request.out" 2>"%TemporaryDirectory%\Enum-Request.err"
+if errorlevel 1 goto :cleanup
+call :verify_file "%EnumRequest%" 945 7129a003ae3d0e795f5aea61e4e8d8f25ba4fb93180f2538bea9f04a3c0bdab6 "WVO inspector enum request"
+if errorlevel 1 goto :cleanup
+"%HostedTools%\wvhostenumservice.exe" "%EnumRequest%" "%EnumService%" >"%TemporaryDirectory%\Enum-Service.out" 2>"%TemporaryDirectory%\Enum-Service.err"
+if errorlevel 1 goto :cleanup
+call :verify_file "%EnumService%" 1244 577ffaee02e64b0956f73d5ca44d65afa262cf476ae5eee86a899ffc575788d1 "WVO inspector enum service"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Wvb%" "%Wvo%" >"%TemporaryDirectory%\Lower.out" 2>"%TemporaryDirectory%\Lower.err"
@@ -85,12 +96,12 @@ if errorlevel 1 goto :cleanup
 
 call :construct_target windows 1 "%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Windows-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Windows-Diagnostic-Output-Service.bin" "%WindowsStartup%" "%WindowsApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 606208 bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2 "Windows WVO inspector application"
+call :verify_file "%WindowsApplication%" 606720 a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366 "Windows WVO inspector application"
 if errorlevel 1 goto :cleanup
 
 call :construct_target linux 2 "%ServiceRoot%\Native-X64-Linux-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Linux-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Linux-Diagnostic-Output-Service.bin" "%LinuxStartup%" "%LinuxApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 606208 bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1 "Linux WVO inspector application"
+call :verify_file "%LinuxApplication%" 606208 f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1 "Linux WVO inspector application"
 if errorlevel 1 goto :cleanup
 
 echo native WVO inspector reconstruction status=Complete artifacts=4
@@ -107,7 +118,7 @@ set "Startup=%~6"
 set "Application=%~7"
 set "TargetDirectory=%TemporaryDirectory%\%TargetName%"
 mkdir "%TargetDirectory%" || exit /b 1
-"%HostedTools%\wvhostverifierbundle.exe" wvo-inspector "%Fragment%" "%ConsoleLeaf%" "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" "%ServiceRoot%\Native-X64-Argument-Service.bin" "%FileInputLeaf%" "%ServiceRoot%\Native-X64-Utf8-Service.bin" "%DiagnosticLeaf%" "%ServiceRoot%\Native-X64-Enum-Name-Service.bin" "%ServiceRoot%\Native-X64-Text-Concat-Service.bin" "%ServiceRoot%\Native-X64-Text-Quote-Service.bin" "%ServiceRoot%\Native-X64-I32-Format-Service.bin" "%ServiceRoot%\Native-X64-U32-Format-Service.bin" "%TargetDirectory%\Bundle.wvsq" >"%TemporaryDirectory%\%TargetName%-Bundle-Request.out" 2>"%TemporaryDirectory%\%TargetName%-Bundle-Request.err"
+"%HostedTools%\wvhostverifierbundle.exe" wvo-inspector "%Fragment%" "%ConsoleLeaf%" "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" "%ServiceRoot%\Native-X64-Argument-Service.bin" "%FileInputLeaf%" "%ServiceRoot%\Native-X64-Utf8-Service.bin" "%DiagnosticLeaf%" "%EnumService%" "%ServiceRoot%\Native-X64-Text-Concat-Service.bin" "%ServiceRoot%\Native-X64-Text-Quote-Service.bin" "%ServiceRoot%\Native-X64-I32-Format-Service.bin" "%ServiceRoot%\Native-X64-U32-Format-Service.bin" "%TargetDirectory%\Bundle.wvsq" >"%TemporaryDirectory%\%TargetName%-Bundle-Request.out" 2>"%TemporaryDirectory%\%TargetName%-Bundle-Request.err"
 if errorlevel 1 exit /b 1
 "%ConstructionTools%\wvhostverifierpublisherbasemetadata.exe" wvo-inspector %Target% 82280 "%TargetDirectory%\Bundle.wvsq" "%TargetDirectory%\Metadata.wvhv" >"%TemporaryDirectory%\%TargetName%-Metadata.out" 2>"%TemporaryDirectory%\%TargetName%-Metadata.err"
 if errorlevel 1 exit /b 1

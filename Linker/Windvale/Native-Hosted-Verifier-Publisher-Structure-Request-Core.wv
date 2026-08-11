@@ -48,7 +48,7 @@ fn Identityˉvariant(Input: bytes) -> u32 {
     if Variant > 4u32 { return Variant; }
     var Startupˉbytes: u32 = 168u32;
     var Adapterˉbytes: u32 = 9544u32;
-    if Target == 2u32 { Startupˉbytes = 164u32; Adapterˉbytes = 5507u32; }
+    if Target == 2u32 { Startupˉbytes = 164u32; Adapterˉbytes = 5559u32; }
     var Offset: u32 = 64u32;
     var Index: u32 = 0u32;
     while Index < 6u32 {
@@ -110,8 +110,8 @@ export fn Publisherˉstructureˉrequest(
     var Adapterˉexport: u32 = 251u32;
     if Target == 2u32 {
         Startupˉwvo = 164u32;
-        Adapterˉwvo = 5507u32;
-        Adapterˉimage = 3363u32;
+        Adapterˉwvo = 5559u32;
+        Adapterˉimage = 3415u32;
         Adapterˉsymbols = 28u32;
         Adapterˉrelocations = 49u32;
         Adapterˉimports = 26u32;

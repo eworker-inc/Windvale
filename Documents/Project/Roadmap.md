@@ -12,17 +12,18 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
-[Decision 0521](../Decisions/0521-Native-Wva-And-Linker-Execution-Transfer.md)
-moves twelve native-equivalent WVA/linker invocations from each broad Seed
-script into the paired helper. The helper now owns 105 exact artifacts and 184
-cases; cumulative normal-path removal is 192 managed invocations per host
-script. One uninterrupted Windows run and one independent Linux 6.1 x86-64 run
-pass the identical tracked state and produce byte-identical canonical/provider
-WVOs, image, and map. Capability refusal, missing-output-parent adapter
-failures, the stale WVO candidate/resource boundary, grouped repository
-Qualification, promotion, and recovery retirement remain open. Repairing and
-qualifying the WVO native reconstruction plus transferring the remaining
-capability-bearing broad-script executions form the next large block.
+[Decision 0523](../Decisions/0523-Grouped-Staging-And-Linux-Publisher-Closure.md)
+closes grouped code-chunk admission, Linux executable publication, and
+existing-destination policy preservation in the native publisher chain.
+Construction candidate 20 coherently repins the affected paired tools,
+admission, promoter, and generic publisher family. Focused evidence plus all
+224 Standard Seed and 39 OS tests pass on Windows and Linux with equal
+normalized conformance contracts. Decision 0522's 105-artifact/185-case
+helper and 193 cumulative managed-call removals remain unchanged. Grouped
+repository Qualification, promotion, capability-bearing execution transfer,
+and recovery retirement remain open. Specifying a versioned native
+hosted-service failure boundary and transferring those remaining executions
+form the next block.
 
 [Decision 0516](../Decisions/0516-Native-Source-Parser-Build-And-Inspection-Transfer.md)
 moves eight lexer, declaration-parser, and body-parser core/demo/tool builds plus
@@ -39,6 +40,11 @@ pinned product identity from current recovery-writer reconstruction evidence.
 Decision 0521 transfers the native-equivalent WVA/linker self-test, semantic,
 publication, rejection, and preservation block with independent dual-host
 helper execution.
+Decision 0522 repairs WVO inspector enum-service reconstruction, refreshes the
+paired candidate identity, and transfers its no-argument self-test.
+Decision 0523 repairs grouped staged-content comparison plus Linux mode and
+existing-destination publication policy, then repins the complete affected
+publisher construction closure.
 
 [Decision 0515](../Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
 moves twelve hosted-tool metadata, startup, hosted-container, runtime-header,

@@ -12,10 +12,10 @@ public static class Wvoˉpublisherˉapplicationˉcontract
         "4e8c81da38f5eb06f9334c2d2c5e35120a13e73bac3a9375b5e6a2eff04438c5";
     public const int WINDOWS_APPLICATION_BYTES = 430_080;
     public const string WINDOWS_APPLICATION_SHA256 =
-        "ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a";
-    public const int LINUX_APPLICATION_BYTES = 426_949;
+        "76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910";
+    public const int LINUX_APPLICATION_BYTES = 426_997;
     public const string LINUX_APPLICATION_SHA256 =
-        "4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d";
+        "2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2";
 
     internal static readonly Nativeˉpublisherˉapplicationˉcontract CONSTRUCTION = new(
         MODULE_NAME,

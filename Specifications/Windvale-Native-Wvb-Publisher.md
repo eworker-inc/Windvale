@@ -45,7 +45,7 @@ Tools\Native\Construct-Wvb-Publisher.cmd <windows|linux> <output.exe|output.elf>
 | Target | Base bytes / SHA-256 | Final bytes / SHA-256 |
 | --- | --- | --- |
 | Windows x64 | 1,333,760 / `8fcdcfc755439ebae5086c72d88113fb52f397ba0687c785af247230a7732fff` | 1,340,928 / `71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3` |
-| Linux x64 | 1,335,296 / `f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090` | 1,340,357 / `7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c` |
+| Linux x64 | 1,335,296 / `f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090` | 1,340,405 / `7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095` |
 
 The paired final applications live in
 `Artifacts/Native-Wvb-Publisher-Candidate`. Their WVB and WVO live in the

@@ -28,16 +28,8 @@ set /a Passed=0
 
 call :decode_fixture "Tests\Native\Malformed-Wvb\Bad-Magic.wvb.b64" "%Invalid%" "20618498d9df059d52fc0d660bf52f32df291c88b94d4b5ded224078f936108e" "bad-magic input"
 if errorlevel 1 goto :failed
-copy /y "%RepositoryRoot%\Artifacts\Decimal-Parsing.wvb" "%Unsupported%" >nul
-if errorlevel 1 (
-    >&2 echo The native lowerer unsupported-function fixture could not be copied.
-    goto :failed
-)
-certutil -hashfile "%Unsupported%" SHA256 | findstr /I /C:"bb120d1098855b8b4adced6bcd1b1ab695f115e76bebdacb19a2b07b798cad37" >nul
-if errorlevel 1 (
-    >&2 echo The native lowerer unsupported-function fixture identity differs.
-    goto :failed
-)
+call :decode_fixture "Tests\Native\Wvb-To-Wvo-Rejections\Unsupported-Function.wvb.b64" "%Unsupported%" "605a2528ebad0fc418e9cb1ab8738c6e3a9b2e58cb9e0897cb0bc93fececaf91" "unsupported-function input"
+if errorlevel 1 goto :failed
 call :decode_fixture "Tests\Native\Wvo\Return-42.wvo.b64" "%Sentinel%" "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5" "destination sentinel"
 if errorlevel 1 goto :failed
 

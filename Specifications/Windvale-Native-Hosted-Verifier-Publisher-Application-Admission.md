@@ -20,7 +20,7 @@ accepts only these exact values:
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
 | `1`, Windows x64 | 256,000 | `17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96` |
-| `2`, Linux x64 | 254,917 | `babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97` |
+| `2`, Linux x64 | 254,965 | `510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac` |
 
 Every other target, length, or digest returns false. SHA-256 is computed over
 the complete immutable byte value and compared as eight exact little-endian
@@ -41,10 +41,10 @@ returns zero. Invalid arguments return 64; a wrong target, length, or digest
 reports one rejection diagnostic and returns 2. It never writes a file.
 
 The canonical command WVB is 30,778 bytes with SHA-256
-`b4e0a2ee04de6cfff0efc723c57031bf5cfcd6706e3156525ce2157c5f287d07`.
+`d43013f4a3b70f90ae83e5cd1b643421b2bf5ec4b4dbdec1cb844849d09024db`.
 It builds through the native Project 1 front door. The accepted native ABI-22
 lowerer produces a 555,690-byte WVO with SHA-256
-`88cc97665cfd0de14f2c9ac6c80dfd985edc508fccdc3d9b887da740cd034e23`.
+`e348c41dcd96dbacedcc1820d42013e3c19795d89f7183ac7bc64311612dd927`.
 Both are pinned in version 15 of the publisher-construction candidate.
 
 ## Hosted profile and applications
@@ -61,8 +61,8 @@ The paired applications are:
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Windows x64 | 570,368 | `4742ee299759728be1b72fed3d3b42620c21b10f77aed12cf150c1549b177b53` |
-| Linux x64 | 569,344 | `b03788fad58ce071788b2f30945ed1dc0992559bb04b6cad04e719ff1114dc0a` |
+| Windows x64 | 570,368 | `72d1164fe2f47e1bec00437bf63b317d39f1ed011cea7cf01a1343ce01547765` |
+| Linux x64 | 569,344 | `18777615d60e1279cb855b05ba03933bb65c9a622036dad2e954e3df683216e2` |
 
 `Construct-Hosted-Verifier-Publisher-Admitter.cmd` and `.sh` reproduce those
 bytes through the native linker and hosted-container tools. The current-host

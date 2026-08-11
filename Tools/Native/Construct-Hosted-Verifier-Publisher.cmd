@@ -45,9 +45,9 @@ set "ApplicationBytes=256000"
     set "ApplicationSha256=17cb5c4228e8448693b17f1b73695fd0ecfd03d7ada922794a5bf3bd7594fc96"
 if /I "%Role%"=="promoter" (
     set "BaseBytes=674816"
-    set "BaseSha256=927476ca389c7449fb0c72341f26d68577a6a9e0c0ed02fa45ac8c4af935c77f"
+    set "BaseSha256=17f4939071697344c5252478198713dab08ebc9c8fe476687fd758bad59f4d4e"
     set "ApplicationBytes=681472"
-    set "ApplicationSha256=598bd2de8247abd19d931efa1edcc8323adef7f56da51da1d41256933667eb23"
+    set "ApplicationSha256=86c72f5485bd6eeba1bdb65841102d7f388a8714b8e07ca3d519250de2886d8b"
 )
 if /I "%Role%"=="wvb-publisher" (
     set "BaseBytes=1333760"
@@ -59,7 +59,7 @@ if /I "%Role%"=="wvo-publisher" (
     set "BaseBytes=422912"
     set "BaseSha256=1f9361126c368f133693222cbaa4c21e2d0948e79df7bf945b7b037ac815e884"
     set "ApplicationBytes=430080"
-    set "ApplicationSha256=ad4c2a05115b2acdb074c0f53b6d7470c8bcacfdfea86583043bdd0ff511188a"
+    set "ApplicationSha256=76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910"
 )
 if /I "%Role%"=="console-application-publisher" (
     set "BaseBytes=1151488"
@@ -88,35 +88,35 @@ set "PublisherStartup=Linux-X64-Wvb-Publisher.wvo"
 set "PublisherStartupBytes=164"
 set "PublisherStartupSha256=eee997412ced0d7edacaf39dae9c4a3c51e859dce4537045f3972be990b115a4"
 set "Adapter=Linux-X64-Wvb-Publication-Adapter.wvo"
-set "AdapterBytes=5507"
-set "AdapterSha256=9272c17b0d7234218a6cd7c31131e9d25e62b6c1ccd976d94975e9b436b2ca5a"
+set "AdapterBytes=5559"
+set "AdapterSha256=1a97195d846626276f38dbb44be68a696dd057f701918f66eb46f6e9d7b5999e"
 set "BaseBytes=249856"
     set "BaseSha256=687338281ca78c9d3a4d08b601c1efbcc198ec3c8fcc96fbf34f5dc349cafae2"
-set "ApplicationBytes=254917"
-    set "ApplicationSha256=babe721a573e29f89ec095c35677880077ff465d4e2129063f6742cd47591a97"
+set "ApplicationBytes=254965"
+    set "ApplicationSha256=510f5ce5d2a494eacf0adc7a613581bc2371c4ad0f5f985f501381edc1632fac"
 if /I "%Role%"=="promoter" (
     set "BaseBytes=675840"
-    set "BaseSha256=768ca223c99e901d17a1c5d86744515e4b571a6feae329fb6fc3cf225215a133"
-    set "ApplicationBytes=680901"
-    set "ApplicationSha256=422332fb4f2824ae558bf93adadb6470597399d07810f5428f71aa4d971a4f58"
+    set "BaseSha256=18fbe415177f5f96644ecca8bf5e38aa6c42e62108e9b4df794752dd5820ddc5"
+    set "ApplicationBytes=680949"
+    set "ApplicationSha256=700f3df624611abad03cbd70811bad2ab015136ecdacc6dff9cdd97f5fc81395"
 )
 if /I "%Role%"=="wvb-publisher" (
     set "BaseBytes=1335296"
     set "BaseSha256=f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090"
-    set "ApplicationBytes=1340357"
-    set "ApplicationSha256=7f2dbfaecf2734c5afdbd6e2e54263a5a74038b8a498eeb1e155ee71788b630c"
+    set "ApplicationBytes=1340405"
+    set "ApplicationSha256=7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095"
 )
 if /I "%Role%"=="wvo-publisher" (
     set "BaseBytes=421888"
     set "BaseSha256=af61a601f4cd8e7fb81704353160a518d2e4f199084fde4b29518d27c89774f7"
-    set "ApplicationBytes=426949"
-    set "ApplicationSha256=4b0ce2d332648e3dd572596db4490748bf62ee4448a9550d83c152de60f7e51d"
+    set "ApplicationBytes=426997"
+    set "ApplicationSha256=2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2"
 )
 if /I "%Role%"=="console-application-publisher" (
     set "BaseBytes=1150976"
     set "BaseSha256=a12ab6d136b53c53322d4b7ff612a5f41a2653c30210a4f5dbfb27027bc29f5e"
-    set "ApplicationBytes=1156037"
-    set "ApplicationSha256=83468e65c1a5aa0bbb33f9571958e5d2f1959b81c08bd4cb66a4083270272ae1"
+    set "ApplicationBytes=1156085"
+    set "ApplicationSha256=e9b8771978c9fb06c3a8ecc55c7b9a3ba1acd24faa541dc669920c10ed792925"
 )
 
 :target_ready
@@ -144,12 +144,12 @@ if /I "%Role%"=="promoter" (
     set "PublisherObject=%Construction%\Publisher-Promoter.wvo"
     set "Variant=1"
     set "PublisherWvbBytes=41268"
-    set "PublisherWvbSha256=c0c7c88996ef837bc5a2ec3ceb1de61254b025fbd6504e4f3d7dc055c4140672"
+    set "PublisherWvbSha256=086bd4d93d93d51b0f9140a0adf9f54a7f205dc902d9cb5d732dc7a887e10edc"
     set "PublisherObjectBytes=660123"
-    set "PublisherObjectSha256=ba5d9c5afde115fede472369d24c3d1fe466806de523773d2e445e6a9e004667"
+    set "PublisherObjectSha256=ee5274c86d680640d3ab75754faf63585a639a44fc9626ea5b9f9bcce9779e8e"
     set "NativeEntry=1178"
     set "FragmentBytes=658339"
-    set "FragmentSha256=e06189a37c038a5237787ffd16fb53466df3d10519efd4129b219bd814f4def2"
+    set "FragmentSha256=d50dc45866818c36a0332af71e914dc9a05052d97f43c0f60add4a75101bbec6"
 )
 if /I "%Role%"=="wvb-publisher" (
     set "PublisherWvb=%Construction%\Wvb-Publisher.wvb"
@@ -197,7 +197,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 5064 12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 5064 ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -371,7 +371,9 @@ if not exist "%~1" (
 )
 certutil -hashfile "%~1" SHA256 | findstr /i /c:"%~2" >nul
 if errorlevel 1 (
-    >&2 echo The %~3 digest is invalid: %~1
+    set "ActualSha256="
+    for /f "skip=1 tokens=*" %%H in ('certutil -hashfile "%~1" SHA256') do if not defined ActualSha256 set "ActualSha256=%%H"
+    >&2 call echo The %~3 digest is invalid: %~1 expected=%~2 actual=%%ActualSha256%%
     exit /b 1
 )
 exit /b 0

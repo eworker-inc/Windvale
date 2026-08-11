@@ -148,8 +148,8 @@ fn Recordsˉvalid(Construction: bytes, Objects: bytes, Metadata: bytes, Imports:
     }
     if Variant == 3u32 {
         Bundleˉbytes = 409506u32;
-        Adapterˉfile = 414208u32;
-        Adapterˉaddress = 417792u32;
+        Adapterˉfile = 414128u32;
+        Adapterˉaddress = 417712u32;
         Outputˉbytes = 430080u32;
         Importsˉaddress = 425984u32;
     }
@@ -247,7 +247,7 @@ fn Header(Base: bytes, Variant: u32) -> bytes {
         Importsˉaddress = 425984u32;
         Relocationˉaddress = 144162816u32;
         Importˉdirectory = 426224u32;
-        Codeˉextent = 420677u32;
+        Codeˉextent = 420597u32;
         Importsˉfile = 421376u32;
         Relocationˉfile = 429568u32;
     }
@@ -318,8 +318,8 @@ export fn Publisherˉwindowsˉmaterialize(Input: bytes) -> bytes {
     }
     if Variant == 3u32 {
         Bundleˉbytes = 409506u32;
-        Adapterˉfill = 94u32;
-        Shaˉfill = 187u32;
+        Adapterˉfill = 14u32;
+        Shaˉfill = 267u32;
         Tailˉoffset = 418304u32;
         Finalˉtail = 419936u32;
         Outputˉbytes = 430080u32;

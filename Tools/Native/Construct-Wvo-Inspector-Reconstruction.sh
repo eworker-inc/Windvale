@@ -44,7 +44,7 @@ verify_file "$hosted_toolset/SHA256SUMS" 6927 \
     'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" 5064 \
-    12b7cafbfeafcf1fc667e074ea0670f353bc883131d8a2f180008019f07d03d5 \
+    ac41be9f59a7db47f721e0c0485cfe7e10cfc888e902f67e91a3c1c6330b68eb \
     'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9437 \
@@ -74,6 +74,8 @@ wvo="$output_root/Wvo-Object.wvo"
 windows_application="$output_root/Wvo-Object.exe"
 linux_application="$output_root/Wvo-Object.elf"
 fragment="$temporary_directory/Wvo-Object.bin"
+enum_request="$temporary_directory/Wvo-Object.wveq"
+enum_service="$temporary_directory/Enum-Service.bin"
 windows_startup="$temporary_directory/Windows-Startup.wvo"
 linux_startup="$temporary_directory/Linux-Startup.wvo"
 
@@ -82,6 +84,19 @@ linux_startup="$temporary_directory/Linux-Startup.wvo"
 verify_file "$wvb" 61008 \
     a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db \
     'WVO inspector WVB' || exit 1
+
+"$hosted_tools/wvhostenumrequest.elf" "$wvb" "$enum_request" \
+    >"$temporary_directory/Enum-Request.out" \
+    2>"$temporary_directory/Enum-Request.err" || exit $?
+verify_file "$enum_request" 945 \
+    7129a003ae3d0e795f5aea61e4e8d8f25ba4fb93180f2538bea9f04a3c0bdab6 \
+    'WVO inspector enum request' || exit 1
+"$hosted_tools/wvhostenumservice.elf" "$enum_request" "$enum_service" \
+    >"$temporary_directory/Enum-Service.out" \
+    2>"$temporary_directory/Enum-Service.err" || exit $?
+verify_file "$enum_service" 1244 \
+    577ffaee02e64b0956f73d5ca44d65afa262cf476ae5eee86a899ffc575788d1 \
+    'WVO inspector enum service' || exit 1
 
 "$script_directory/Lower-Wvb-To-Wvo.sh" "$wvb" "$wvo" \
     >"$temporary_directory/Lower.out" 2>"$temporary_directory/Lower.err" || exit $?
@@ -120,7 +135,7 @@ construct_target() {
         "$file_input_leaf" \
         "$service_root/Native-X64-Utf8-Service.bin" \
         "$diagnostic_leaf" \
-        "$service_root/Native-X64-Enum-Name-Service.bin" \
+        "$enum_service" \
         "$service_root/Native-X64-Text-Concat-Service.bin" \
         "$service_root/Native-X64-Text-Quote-Service.bin" \
         "$service_root/Native-X64-I32-Format-Service.bin" \
@@ -160,8 +175,8 @@ construct_target windows 1 \
     "$service_root/Native-X64-Windows-File-Input-Service.bin" \
     "$service_root/Native-X64-Windows-Diagnostic-Output-Service.bin" \
     "$windows_startup" "$windows_application" || exit 1
-verify_file "$windows_application" 606208 \
-    bb39e58d51e7b6c3eab2690995ee52fc958557ab03cfcbcb9b5ef0f3070157d2 \
+verify_file "$windows_application" 606720 \
+    a534b1c7a5ff9112c221a9576141842c4bb50c28b1d43d0ab02a8679bba6f366 \
     'Windows WVO inspector application' || exit 1
 
 construct_target linux 2 \
@@ -169,8 +184,9 @@ construct_target linux 2 \
     "$service_root/Native-X64-Linux-File-Input-Service.bin" \
     "$service_root/Native-X64-Linux-Diagnostic-Output-Service.bin" \
     "$linux_startup" "$linux_application" || exit 1
+chmod +x "$linux_application" || exit 1
 verify_file "$linux_application" 606208 \
-    bf94145cee63a4d7014bd7a31a40832017f025b7d8086a4ae3875385ba8345c1 \
+    f94d2e16da76c949e15978bd879bff38205685be08d7afa1670f48d3f6592ea1 \
     'Linux WVO inspector application' || exit 1
 [[ -x $linux_application ]] || {
     echo 'The Linux WVO inspector application is not executable.' >&2

@@ -1583,6 +1583,8 @@ internal static class Program
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
             "windows-x64-wvo-publisher-v1|linux-x64-wvo-publisher-v1|" +
+            "windows-x64-wvo-staging-producer-v1|" +
+            "linux-x64-wvo-staging-producer-v1|" +
             "windows-x64-wvo-staging-publisher-v1|" +
             "linux-x64-wvo-staging-publisher-v1>] [-o <artifact>]");
         output.WriteLine("  windvale build <project.wvproj> [-o <module.wvb>]");
@@ -1613,6 +1615,8 @@ internal static class Program
             "windows-x64-console-application-publisher-v1|" +
             "linux-x64-console-application-publisher-v1|" +
             "windows-x64-wvo-publisher-v1|linux-x64-wvo-publisher-v1|" +
+            "windows-x64-wvo-staging-producer-v1|" +
+            "linux-x64-wvo-staging-producer-v1|" +
             "windows-x64-wvo-staging-publisher-v1|" +
             "linux-x64-wvo-staging-publisher-v1> [-o <artifact>]");
         output.WriteLine("  windvale assemble <source.wva> [-o <object.wvo>]");
