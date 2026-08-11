@@ -559,6 +559,20 @@ runs remain in the managed differential lane because native demo probes stop
 with code `3004` and the scalar profile does not bind their hosted capabilities.
 Construction ownership therefore advances while T2 remains `managed-normal`.
 
+Decision 0518 completes ordinary construction and core inspection of the next
+three source-compiler phases. Nine exact source-bindings, typed-WVIR, and
+source-WVB core/demo/tool builds plus three native core inspections grow the
+paired helper to 97 artifacts and 156 cases and bring the cumulative broad-host
+removal to 162 managed calls. The generic Project front door reproduces the
+bindings and WVIR families. A bounded compiler-seed launcher reproduces the WVB
+family through an exact private candidate and qualified publisher because the
+pinned generic native build-driver artifact cannot compile that current closure.
+This is an explicit removable bootstrap seam, not a parallel source or Project
+contract. The three demos, bindings/WVIR hosted tools, and complete WVB fixture,
+differential, and Stage 0 oracle sequence remain in the managed lane. Native
+demo code `3004`, missing hosted profiles, and the absent independent native
+oracle keep T2 `managed-normal`.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

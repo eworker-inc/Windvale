@@ -58,8 +58,8 @@ exactly `203` instructions.
 The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid
 option rejection, malformed-module rejection, and input preservation. The
-Windows owner passes 3/3 in 49.8 seconds. The paired 144-case native Seed
-front-door helper builds 88 exact artifacts and passes on Windows in 580.1
+Windows owner passes 3/3 in 49.8 seconds. The paired 156-case native Seed
+front-door helper builds 97 exact artifacts and passes on Windows in 903.3
 seconds. It owns the four Foundation module builds and inspections, all four
 Foundation demo builds, the native-stencil and selected runtime-service builds
 and inspections, the complete output/file-output/file-input generator builds
@@ -69,7 +69,8 @@ entry-metadata build/inspection closure, hosted metadata/startup/container/
 runtime-header construction, publication-lifetime construction, source-lexer/
 declaration-parser/body-parser core/demo/tool construction and core inspection,
 source-set/source-graph/source-symbol core/demo/tool construction and core
-inspection,
+inspection, source-bindings/typed-WVIR/source-WVB core/demo/tool construction
+and core inspection,
 and native execution of the Machine Contracts, Byte Ordering, and Decimal
 Parsing demos.
 The 4 MiB Byte
@@ -93,6 +94,15 @@ hosted tools require console, diagnostic, file, and process capabilities that
 this scalar profile does not bind. Decision 0517 therefore transfers the nine
 builds and three core inspections without changing this runner's execution
 contract.
+
+The final three source-compiler demos also remain in the managed differential
+lane. Direct native probes stop with runtime code `3004`: source bindings after
+791 instructions, typed WVIR after 767, and source WVB after 770. The bindings
+and WVIR tools require console, diagnostic, file, and process capabilities that
+this scalar profile does not bind. The WVB tool additionally owns the retained
+fixture/differential/oracle sequence. Decision 0518 therefore transfers these
+nine builds and three core inspections without changing the runner or oracle
+contracts.
 
 ## Evidence boundary
 

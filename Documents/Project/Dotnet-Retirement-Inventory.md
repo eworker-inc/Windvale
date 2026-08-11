@@ -350,6 +350,25 @@ nine-recovery direct-entry inventory is unchanged. Independent Linux execution,
 native semantic execution, remaining broad-suite transfers, GitHub cutover,
 grouped qualification, and recovery retirement remain open.
 
+Current T2 final source-compiler phase construction transfer:
+[Decision 0518](../Decisions/0518-Native-Source-Bindings-Wvir-And-Wvb-Build-Inspection-Transfer.md)
+extends the paired native front-door helper from 144 to 156 transferred calls
+and from 88 to 97 exact artifacts. It natively builds the source-bindings,
+typed-WVIR, and source-WVB core/demo/tool products, then inspects the three core
+type/export surfaces. The complete current-Windows helper passes in 903.3
+seconds. The focused bindings owner passes in 6.291 test seconds, the extended
+typed-WVIR owner in 10.069 seconds, and the extended WVB-backend owner in 32.144
+seconds. This removes nine managed builds and three managed inspections from
+each broad host script, 162 managed invocations cumulatively. Six products use
+the generic Project front door; the WVB products use a bounded seed-backed
+launcher because the pinned generic driver cannot compile that current closure.
+The three demo runs, two capability-bearing phase tools, and complete WVB
+fixture/differential/oracle sequence remain managed. T2 therefore remains
+`managed-normal`; the three-normal plus nine-recovery direct-entry inventory is
+unchanged. Independent Linux execution, native semantic/tool execution,
+remaining broad-suite transfers, GitHub cutover, grouped qualification, and
+recovery retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

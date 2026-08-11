@@ -147,12 +147,21 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 `Tests/Fixtures/Source-Wvb/Wide-Scalars.wv` covers checked `i64`/`u64` constants, arithmetic, comparisons, bitwise operations, formatting, and exact little-endian `u64` byte construction and reading. Both backends produce the exact 2,750-byte WVB module with SHA-256 `b898bc07461f7d93b2c8bd5806e06fa5c98cdaa5c11a7f4ce1fef89b77a7bf69`; it executes with result `64`.
 
-The current deterministic Stage 0 compiler artifacts are:
+The current deterministic compiler artifacts are:
 
 - `Source-Wvb-Core.wvb`: 923,514 bytes, SHA-256 `c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b`.
 - `Source-Wvb-Demo.wvb`: 923,210 bytes, SHA-256 `ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9`.
 - `Source-Wvb-Tool.wvb`: 921,640 bytes, SHA-256 `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
 - `Source-Wvb-Memory-Adapter.wvb`: 919,317 bytes, SHA-256 `86f964aeeca8ebfabf11ddd252c32efe49303135af04e313b3801afe9656df29`.
+
+Decision 0518 moves ordinary construction of the core, demo, and tool products
+to the bounded native compiler-seed launcher and moves exact core inspection to
+the paired native front-door helper. The generic native Project driver cannot
+yet compile this current closure; that implementation limitation does not
+change Project 1 or source-WVB semantics. The managed demo and complete hosted
+fixture/differential/oracle sequence remain behavior evidence because the
+scalar native runner stops the demo with code `3004` and no independent native
+oracle yet replaces Stage 0 for that lane.
 
 The memory adapter contains 425 functions and retains the admitted maximum of 1,408 locals and stack depth 34. These are local candidate identities and measurements. Complete Stage 1/Stage 2 bootstrap and dual-host qualification must still be rerun before the candidate becomes a new cross-host bootstrap claim.
 

@@ -122,6 +122,12 @@ The real nine-module compiler closure must complete below the fixed 4,000,000,00
 
 These are local deterministic WVLB 1.1 candidate identities; they do not claim cross-host requalification.
 
+Decision 0518 moves ordinary construction of all three products to the generic
+native Project front door and moves exact core inspection to the paired native
+front-door helper. The managed demo and hosted-tool executions remain retained
+behavior evidence because the scalar native runner stops the demo with code
+`3004` and does not bind the tool's hosted capabilities.
+
 The focused demo covers valid parameters/locals/data/calls; ordinary and compound mutable assignment plus immutable rejection; loop-control and short-circuit expression traversal; nested scope and initializer visibility; duplicate locals; primitive, visible, unknown, and inaccessible local types; unknown and inaccessible names/calls; undeclared capabilities; arity; upstream symbol failures; and corrupted header, range, entry, and trailing-data evidence.
 
 The current local hosted closure report is:

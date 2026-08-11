@@ -143,6 +143,10 @@ function Add-Native-Tool-Suite {
         'Construct-Compiler-Reconstruction'
     )) {
         Add-Suite 'compiler-reconstruction'
+    } elseif ($Stem -eq 'Build-Source-Compiler-Product') {
+        Add-Compiler-Suites
+        Add-Suite 'compiler-reconstruction'
+        Add-Gap 'seed-native-front-door'
     } elseif ($Stem -in @(
         'Stage-Compiler-Wvb',
         'Link-Staged-Compiler-Wvo',
@@ -440,6 +444,10 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Source-Set-Core.wv',
         'Compiler/Windvale/Source-Graph-Core.wv',
         'Compiler/Windvale/Source-Symbols-Core.wv',
+        'Compiler/Windvale/Source-Bindings-Core.wv',
+        'Compiler/Windvale/Source-Wir-Core.wv',
+        'Compiler/Windvale/Source-Wvb-Core.wv',
+        'Compiler/Windvale/Source-Wvb-Temporary-Slots.wv',
         'Examples/Compiler/Source-Lexer-Demo.wv',
         'Examples/Compiler/Source-Declaration-Parser-Demo.wv',
         'Examples/Compiler/Source-Declaration-Parser-Tool.wv',
@@ -451,6 +459,12 @@ foreach ($Path in $Paths) {
         'Examples/Compiler/Source-Graph-Tool.wv',
         'Examples/Compiler/Source-Symbols-Demo.wv',
         'Examples/Compiler/Source-Symbols-Tool.wv',
+        'Examples/Compiler/Source-Bindings-Demo.wv',
+        'Examples/Compiler/Source-Bindings-Tool.wv',
+        'Examples/Compiler/Source-Wir-Demo.wv',
+        'Examples/Compiler/Source-Wir-Tool.wv',
+        'Examples/Compiler/Source-Wvb-Demo.wv',
+        'Examples/Compiler/Source-Wvb-Tool.wv',
         'Windvale-Source-Lexer-Core.wvproj',
         'Windvale-Source-Lexer-Demo.wvproj',
         'Windvale-Source-Declaration-Parser.wvproj',
@@ -468,6 +482,15 @@ foreach ($Path in $Paths) {
         'Windvale-Source-Symbols-Core.wvproj',
         'Windvale-Source-Symbols-Demo.wvproj',
         'Windvale-Source-Symbols-Tool.wvproj',
+        'Windvale-Source-Bindings-Core.wvproj',
+        'Windvale-Source-Bindings-Demo.wvproj',
+        'Windvale-Source-Bindings-Tool.wvproj',
+        'Windvale-Source-Wir-Core.wvproj',
+        'Windvale-Source-Wir-Demo.wvproj',
+        'Windvale-Source-Wir-Tool.wvproj',
+        'Windvale-Source-Wvb-Core.wvproj',
+        'Windvale-Source-Wvb-Demo.wvproj',
+        'Windvale-Compiler.wvproj',
         'Compiler/Windvale/Native-Stencil-Core.wv',
         'Compiler/Windvale/Native-Stencil-Core.wvproj',
         'Compiler/Windvale/Native-Stencil-Bridge.wv',

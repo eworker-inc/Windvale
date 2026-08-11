@@ -195,7 +195,7 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Run the fixed 144-case native front-door qualification smoke directly with:
+Run the fixed 156-case native front-door qualification smoke directly with:
 
 ```powershell
 $output = New-Item -ItemType Directory -Force artifacts/seed-front-door
@@ -208,7 +208,7 @@ mkdir -p artifacts/seed-front-door
 ./Tools/Verify/Verify-Seed-Native-Front-Door.sh artifacts/seed-front-door
 ```
 
-The helper builds 88 exact WVBs. It retains the original Project 1,
+The helper builds 97 exact WVBs. It retains the original Project 1,
 verification, inspection, execution, instruction-count, and malformed-project
 cases; it additionally builds and inspects Machine Contracts, Byte Ordering,
 Decimal Parsing, and Byte Construction, builds all four demos, and executes the
@@ -265,6 +265,26 @@ Project 1 ordering requirement. The broad scripts still run the three demos and
 three capability-bearing tools through Stage 0. Native demo probes stop with
 runtime code `3004`, and the scalar profile does not bind the tools' console,
 diagnostic, file, and process capabilities.
+
+It then builds the source-bindings, typed-WVIR, and source-WVB core/demo/tool
+products and natively inspects the three core type/export surfaces. The generic
+native Project front door owns the bindings and WVIR families. Use the bounded
+source-compiler-product launcher for the WVB family while the pinned generic
+driver cannot compile the current closure:
+
+```bat
+Tools\Native\Build-Source-Compiler-Product.cmd tool Artifacts\Source-Wvb-Tool.wvb
+```
+
+```sh
+./Tools/Native/Build-Source-Compiler-Product.sh tool Artifacts/Source-Wvb-Tool.wvb
+```
+
+The launcher accepts `core`, `demo`, or `tool`, binds the exact selected
+manifest and source inventory, compiles privately through the native compiler
+seed, and publishes through the qualified native publisher. The broad scripts
+retain the three demo runs, bindings/WVIR hosted tools, and complete source-WVB
+fixture/differential/oracle sequence.
 
 Run the exact native capability-free console-AOT qualification composition in
 the same output directory after `Sum-Data.wvb` exists:

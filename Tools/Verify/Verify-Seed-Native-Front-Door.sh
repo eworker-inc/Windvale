@@ -10,6 +10,7 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPOSITORY_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 OUTPUT_ROOT=$(CDPATH= cd -- "$1" && pwd)
 NATIVE_BUILD="$REPOSITORY_ROOT/Tools/Native/Build-Wvb.sh"
+NATIVE_SOURCE_COMPILER_BUILD="$REPOSITORY_ROOT/Tools/Native/Build-Source-Compiler-Product.sh"
 NATIVE_VERIFY="$REPOSITORY_ROOT/Tools/Native/Verify-Wvb.sh"
 NATIVE_INSPECT="$REPOSITORY_ROOT/Tools/Native/Inspect-Wvb.sh"
 NATIVE_RUN="$REPOSITORY_ROOT/Tools/Native/Run-Wvb.sh"
@@ -36,6 +37,32 @@ exact_build() {
     ACTUAL_SHA256=$(sha256sum "$OUTPUT_PATH" | awk '{print $1}')
     if [ "$ACTUAL_BYTES" != "$EXPECTED_BYTES" ] || [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
         echo "The native Seed project build produced an unexpected module: $OUTPUT_PATH" >&2
+        exit 1
+    fi
+}
+
+exact_source_compiler_build() {
+    PRODUCT=$1
+    OUTPUT_PATH=$2
+    EXPECTED_BYTES=$3
+    EXPECTED_SHA256=$4
+    EXPECTED_HEX_BYTES=$5
+    EXPECTED_COMPILER_REPORT=$6
+    if ! BUILD_OUTPUT=$("$NATIVE_SOURCE_COMPILER_BUILD" "$PRODUCT" "$OUTPUT_PATH"); then
+        echo "The native source compiler product build failed: $PRODUCT" >&2
+        exit 1
+    fi
+    EXPECTED_OUTPUT=$(printf '%s\n%s' \
+        "$EXPECTED_COMPILER_REPORT" \
+        "publication status=Complete bytes=0x$EXPECTED_HEX_BYTES sha256=$EXPECTED_SHA256")
+    if [ "$BUILD_OUTPUT" != "$EXPECTED_OUTPUT" ]; then
+        echo "The native source compiler product report is invalid: $PRODUCT" >&2
+        exit 1
+    fi
+    ACTUAL_BYTES=$(wc -c < "$OUTPUT_PATH" | tr -d ' ')
+    ACTUAL_SHA256=$(sha256sum "$OUTPUT_PATH" | awk '{print $1}')
+    if [ "$ACTUAL_BYTES" != "$EXPECTED_BYTES" ] || [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+        echo "The native source compiler product is unexpected: $OUTPUT_PATH" >&2
         exit 1
     fi
 }
@@ -206,6 +233,15 @@ SOURCE_GRAPH_TOOL_MODULE="$OUTPUT_ROOT/Source-Graph-Tool.wvb"
 SOURCE_SYMBOLS_MODULE="$OUTPUT_ROOT/Source-Symbols-Core.wvb"
 SOURCE_SYMBOLS_DEMO_MODULE="$OUTPUT_ROOT/Source-Symbols-Demo.wvb"
 SOURCE_SYMBOLS_TOOL_MODULE="$OUTPUT_ROOT/Source-Symbols-Tool.wvb"
+SOURCE_BINDINGS_MODULE="$OUTPUT_ROOT/Source-Bindings-Core.wvb"
+SOURCE_BINDINGS_DEMO_MODULE="$OUTPUT_ROOT/Source-Bindings-Demo.wvb"
+SOURCE_BINDINGS_TOOL_MODULE="$OUTPUT_ROOT/Source-Bindings-Tool.wvb"
+SOURCE_WIR_MODULE="$OUTPUT_ROOT/Source-Wir-Core.wvb"
+SOURCE_WIR_DEMO_MODULE="$OUTPUT_ROOT/Source-Wir-Demo.wvb"
+SOURCE_WIR_TOOL_MODULE="$OUTPUT_ROOT/Source-Wir-Tool.wvb"
+SOURCE_WVB_MODULE="$OUTPUT_ROOT/Source-Wvb-Core.wvb"
+SOURCE_WVB_DEMO_MODULE="$OUTPUT_ROOT/Source-Wvb-Demo.wvb"
+SOURCE_WVB_TOOL_MODULE="$OUTPUT_ROOT/Source-Wvb-Tool.wvb"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -978,6 +1014,75 @@ exact_build \
     0006b06a \
     'build status=Published verification=compiler-aligned functions=209 code-bytes=355987 module-bytes=438378'
 
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Bindings-Core.wvproj" \
+    "$SOURCE_BINDINGS_MODULE" \
+    542309 \
+    a772a75fe625f47e165ca190e76d8cd59fa0b591a0270a5817e02e0fac62542c \
+    00084665 \
+    'build status=Published verification=compiler-aligned functions=263 code-bytes=437438 module-bytes=542309'
+exact_inspect "$SOURCE_BINDINGS_MODULE" 'profile=portable' 'section name=exports offset=526082 bytes=2996 count=59' 'section name=types offset=529086 bytes=13223 count=55' 'Compiler\u02C9source\u02C9binding\u02C9status' 'Compiler\u02C9source\u02C9binding\u02C9summary' 'Compiler\u02C9source\u02C9bindings\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9bindings'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Bindings-Demo.wvproj" \
+    "$SOURCE_BINDINGS_DEMO_MODULE" \
+    548036 \
+    563caeb4a76fb34d6c2b2b8340260cc1da518c4cbaad9e5f355201f6bd1fa933 \
+    00085cc4 \
+    'build status=Published verification=compiler-aligned functions=271 code-bytes=443818 module-bytes=548036'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Bindings-Tool.wvproj" \
+    "$SOURCE_BINDINGS_TOOL_MODULE" \
+    542334 \
+    17e877b3c59d2f9a99d26be4c478f10ce8879e6bce925b65894d158fd4a6e0a9 \
+    0008467e \
+    'build status=Published verification=compiler-aligned functions=268 code-bytes=441068 module-bytes=542334'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Wir-Core.wvproj" \
+    "$SOURCE_WIR_MODULE" \
+    817391 \
+    c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb \
+    000c78ef \
+    'build status=Published verification=compiler-aligned functions=346 code-bytes=665606 module-bytes=817391'
+exact_inspect "$SOURCE_WIR_MODULE" 'profile=portable' 'section name=exports offset=794006 bytes=3755 count=75' 'section name=types offset=797769 bytes=19622 count=66' 'Compiler\u02C9source\u02C9wir\u02C9operation' 'Compiler\u02C9source\u02C9wir\u02C9summary' 'Compiler\u02C9source\u02C9wir\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9wir'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Wir-Demo.wvproj" \
+    "$SOURCE_WIR_DEMO_MODULE" \
+    822254 \
+    7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f \
+    000c8bee \
+    'build status=Published verification=compiler-aligned functions=352 code-bytes=672121 module-bytes=822254'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Wir-Tool.wvproj" \
+    "$SOURCE_WIR_TOOL_MODULE" \
+    815722 \
+    7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5 \
+    000c726a \
+    'build status=Published verification=compiler-aligned functions=351 code-bytes=669118 module-bytes=815722'
+
+exact_source_compiler_build \
+    core \
+    "$SOURCE_WVB_MODULE" \
+    923514 \
+    c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b \
+    000e177a \
+    'source wvb status=Valid functions=422 code-bytes=757261 module-bytes=923514'
+exact_inspect "$SOURCE_WVB_MODULE" 'profile=portable' 'section name=exports offset=898984 bytes=3322 count=70' 'section name=types offset=902314 bytes=21200 count=82' 'Compiler\u02C9source\u02C9wvb\u02C9summary' 'Compiler\u02C9compile\u02C9source\u02C9wvb'
+exact_source_compiler_build \
+    demo \
+    "$SOURCE_WVB_DEMO_MODULE" \
+    923210 \
+    ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9 \
+    000e164a \
+    'source wvb status=Valid functions=426 code-bytes=760228 module-bytes=923210'
+exact_source_compiler_build \
+    tool \
+    "$SOURCE_WVB_TOOL_MODULE" \
+    921640 \
+    18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754 \
+    000e1028 \
+    'source wvb status=Valid functions=427 code-bytes=759920 module-bytes=921640'
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -1009,4 +1114,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=88 cases=144'
+echo 'native Seed front-door verification status=Complete artifacts=97 cases=156'

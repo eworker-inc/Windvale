@@ -316,6 +316,20 @@ from this block. Runtime code `3004` for the demos and the absent hosted
 capability profile remain explicit execution gaps, not reasons to keep ordinary
 construction managed.
 
+Decision 0518 transfers the final three source-compiler construction phases in
+that sequence. The paired helper now builds the source-bindings, typed-WVIR, and
+source-WVB core/demo/tool products and inspects the three core type/export
+surfaces. The generic native Project front door owns the bindings and WVIR
+families. A bounded seed-backed launcher owns the WVB family because the pinned
+generic build-driver artifact cannot compile that current closure even though
+the admitted native compiler seed reproduces it exactly. The launcher binds the
+selected aggregate and complete source inventory, compiles privately, and uses
+the qualified publisher for replacement. It is a removable bootstrap seam, not
+a second Project contract. The broad managed scripts retain the three demo
+runs, bindings/WVIR hosted-tool behaviors, and complete WVB fixture,
+differential, and oracle lane. Runtime code `3004`, absent hosted profiles, and
+the missing independent native differential oracle remain explicit gaps.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

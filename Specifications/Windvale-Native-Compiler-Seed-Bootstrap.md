@@ -60,6 +60,31 @@ existing destination. The launchers remove their private candidate on success or
 failure. They do not parse project syntax, discover sources, infer imports, lower
 native applications, or install host dependencies.
 
+## Bounded source-WVB product launchers
+
+`Tools/Native/Build-Source-Compiler-Product.cmd` and `.sh` expose the admitted
+compiler seed for the current source-WVB `core`, `demo`, and `tool` products.
+This bounded route exists because the pinned generic native Project build-driver
+artifact does not compile the current WVB core/tool closure, while the compiler
+seed application directly reproduces all three exact products. It is a removable
+normal-construction seam, not a replacement Project format or a new compiler.
+
+Each launcher admits the seed and publisher inventory, requires the exact
+selected repository-root manifest identity, passes the fixed source inventory
+for that product, writes a process-private candidate, and delegates final
+verification and atomic replacement to the qualified publisher. The tool variant
+reuses `Windvale-Compiler.wvproj`; core and demo use their focused aggregates.
+Invalid product, arity, or output-suffix usage returns 64. Any admission,
+compilation, or publication failure preserves an existing destination.
+
+The Windows launcher pins the exact selected compiler, publisher, compiler-WVB,
+and manifest files. The Linux launcher verifies the complete seed and
+front-door `SHA256SUMS` inventories before selecting the current-host
+applications. Independent Linux execution and grouped qualification remain
+required before this current product transfer is a cross-host claim. A rebuilt,
+qualified generic Project driver that compiles this closure should replace the
+bounded launchers.
+
 ## Recovery and promotion
 
 `Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1` and its Bash peer reconstruct the

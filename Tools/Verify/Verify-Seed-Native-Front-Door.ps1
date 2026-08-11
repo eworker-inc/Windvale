@@ -12,6 +12,7 @@ if (!(Test-Path -LiteralPath $OutputRoot -PathType Container)) {
 }
 
 $NativeBuild = Join-Path $RepositoryRoot 'Tools/Native/Build-Wvb.cmd'
+$NativeSourceCompilerBuild = Join-Path $RepositoryRoot 'Tools/Native/Build-Source-Compiler-Product.cmd'
 $NativeVerify = Join-Path $RepositoryRoot 'Tools/Native/Verify-Wvb.cmd'
 $NativeInspect = Join-Path $RepositoryRoot 'Tools/Native/Inspect-Wvb.cmd'
 $NativeRun = Join-Path $RepositoryRoot 'Tools/Native/Run-Wvb.cmd'
@@ -40,6 +41,33 @@ function Invoke-ExactBuild(
     $Digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $OutputPath).Hash.ToLowerInvariant()
     if ($Information.Length -ne $ExpectedBytes -or $Digest -ne $ExpectedSha256) {
         throw "The native Seed project build produced an unexpected module: $OutputPath"
+    }
+}
+
+function Invoke-ExactSourceCompilerBuild(
+    [string]$Product,
+    [string]$OutputPath,
+    [long]$ExpectedBytes,
+    [string]$ExpectedSha256,
+    [string]$ExpectedCompilerReport
+) {
+    $BuildOutput = @(& $NativeSourceCompilerBuild $Product $OutputPath 2>&1)
+    $BuildExit = $LASTEXITCODE
+    $ExpectedPublicationReport =
+        "publication status=Complete bytes=0x$($ExpectedBytes.ToString('x8')) sha256=$ExpectedSha256"
+    if (
+        $BuildExit -ne 0 -or
+        $BuildOutput.Count -ne 2 -or
+        $BuildOutput[0] -ne $ExpectedCompilerReport -or
+        $BuildOutput[1] -ne $ExpectedPublicationReport
+    ) {
+        throw "The native source compiler $Product product did not reproduce its exact report."
+    }
+
+    $Information = Get-Item -LiteralPath $OutputPath
+    $Digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $OutputPath).Hash.ToLowerInvariant()
+    if ($Information.Length -ne $ExpectedBytes -or $Digest -ne $ExpectedSha256) {
+        throw "The native source compiler $Product product has an unexpected identity."
     }
 }
 
@@ -202,6 +230,15 @@ $SourceGraphToolModule = Join-Path $OutputRoot 'Source-Graph-Tool.wvb'
 $SourceSymbolsModule = Join-Path $OutputRoot 'Source-Symbols-Core.wvb'
 $SourceSymbolsDemoModule = Join-Path $OutputRoot 'Source-Symbols-Demo.wvb'
 $SourceSymbolsToolModule = Join-Path $OutputRoot 'Source-Symbols-Tool.wvb'
+$SourceBindingsModule = Join-Path $OutputRoot 'Source-Bindings-Core.wvb'
+$SourceBindingsDemoModule = Join-Path $OutputRoot 'Source-Bindings-Demo.wvb'
+$SourceBindingsToolModule = Join-Path $OutputRoot 'Source-Bindings-Tool.wvb'
+$SourceWirModule = Join-Path $OutputRoot 'Source-Wir-Core.wvb'
+$SourceWirDemoModule = Join-Path $OutputRoot 'Source-Wir-Demo.wvb'
+$SourceWirToolModule = Join-Path $OutputRoot 'Source-Wir-Tool.wvb'
+$SourceWvbModule = Join-Path $OutputRoot 'Source-Wvb-Core.wvb'
+$SourceWvbDemoModule = Join-Path $OutputRoot 'Source-Wvb-Demo.wvb'
+$SourceWvbToolModule = Join-Path $OutputRoot 'Source-Wvb-Tool.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -871,6 +908,66 @@ Invoke-ExactBuild `
     '58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66' `
     'build status=Published verification=compiler-aligned functions=209 code-bytes=355987 module-bytes=438378'
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Bindings-Core.wvproj') `
+    $SourceBindingsModule `
+    542309 `
+    'a772a75fe625f47e165ca190e76d8cd59fa0b591a0270a5817e02e0fac62542c' `
+    'build status=Published verification=compiler-aligned functions=263 code-bytes=437438 module-bytes=542309'
+Invoke-ExactInspect $SourceBindingsModule @('profile=portable', 'section name=exports offset=526082 bytes=2996 count=59', 'section name=types offset=529086 bytes=13223 count=55', 'Compiler\\u02C9source\\u02C9binding\\u02C9status', 'Compiler\\u02C9source\\u02C9binding\\u02C9summary', 'Compiler\\u02C9source\\u02C9bindings\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9bindings')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Bindings-Demo.wvproj') `
+    $SourceBindingsDemoModule `
+    548036 `
+    '563caeb4a76fb34d6c2b2b8340260cc1da518c4cbaad9e5f355201f6bd1fa933' `
+    'build status=Published verification=compiler-aligned functions=271 code-bytes=443818 module-bytes=548036'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Bindings-Tool.wvproj') `
+    $SourceBindingsToolModule `
+    542334 `
+    '17e877b3c59d2f9a99d26be4c478f10ce8879e6bce925b65894d158fd4a6e0a9' `
+    'build status=Published verification=compiler-aligned functions=268 code-bytes=441068 module-bytes=542334'
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Wir-Core.wvproj') `
+    $SourceWirModule `
+    817391 `
+    'c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb' `
+    'build status=Published verification=compiler-aligned functions=346 code-bytes=665606 module-bytes=817391'
+Invoke-ExactInspect $SourceWirModule @('profile=portable', 'section name=exports offset=794006 bytes=3755 count=75', 'section name=types offset=797769 bytes=19622 count=66', 'Compiler\\u02C9source\\u02C9wir\\u02C9operation', 'Compiler\\u02C9source\\u02C9wir\\u02C9summary', 'Compiler\\u02C9source\\u02C9wir\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9wir')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Wir-Demo.wvproj') `
+    $SourceWirDemoModule `
+    822254 `
+    '7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f' `
+    'build status=Published verification=compiler-aligned functions=352 code-bytes=672121 module-bytes=822254'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Wir-Tool.wvproj') `
+    $SourceWirToolModule `
+    815722 `
+    '7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5' `
+    'build status=Published verification=compiler-aligned functions=351 code-bytes=669118 module-bytes=815722'
+
+Invoke-ExactSourceCompilerBuild `
+    'core' `
+    $SourceWvbModule `
+    923514 `
+    'c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b' `
+    'source wvb status=Valid functions=422 code-bytes=757261 module-bytes=923514'
+Invoke-ExactInspect $SourceWvbModule @('profile=portable', 'section name=exports offset=898984 bytes=3322 count=70', 'section name=types offset=902314 bytes=21200 count=82', 'Compiler\\u02C9source\\u02C9wvb\\u02C9summary', 'Compiler\\u02C9compile\\u02C9source\\u02C9wvb')
+Invoke-ExactSourceCompilerBuild `
+    'demo' `
+    $SourceWvbDemoModule `
+    923210 `
+    'ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9' `
+    'source wvb status=Valid functions=426 code-bytes=760228 module-bytes=923210'
+Invoke-ExactSourceCompilerBuild `
+    'tool' `
+    $SourceWvbToolModule `
+    921640 `
+    '18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754' `
+    'source wvb status=Valid functions=427 code-bytes=759920 module-bytes=921640'
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -902,4 +999,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=88 cases=144'
+Write-Output 'native Seed front-door verification status=Complete artifacts=97 cases=156'

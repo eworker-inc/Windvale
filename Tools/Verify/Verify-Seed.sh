@@ -251,7 +251,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=88 cases=144' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=97 cases=156' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -792,66 +792,9 @@ printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'source symbols status=Val
 printf '%s\n' "$SOURCE_SYMBOLS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_BINDINGS_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Bindings-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_BINDINGS_SOURCE" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_BINDINGS_MODULE"
-SOURCE_BINDINGS_HASH=$(sha256sum "$SOURCE_BINDINGS_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_HASH" != 'a772a75fe625f47e165ca190e76d8cd59fa0b591a0270a5817e02e0fac62542c' ]; then
-    echo "The Windvale source-binding core has an unexpected digest: $SOURCE_BINDINGS_HASH" >&2
-    exit 1
-fi
-SOURCE_BINDINGS_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_BINDINGS_MODULE")
-printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Nominal types (55)' >/dev/null
-printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Compilerˉsourceˉbindingˉstatus' >/dev/null
-printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Compilerˉsourceˉbindingˉsummary' >/dev/null
-printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid' >/dev/null
-printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉbindings' >/dev/null
-printf '%s\n' "$SOURCE_BINDINGS_INSPECTION" | grep -F 'Exports (59)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Bindings-Demo.wv" \
-    --module "$SOURCE_BINDINGS_SOURCE" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_BINDINGS_DEMO_MODULE"
-SOURCE_BINDINGS_DEMO_HASH=$(sha256sum "$SOURCE_BINDINGS_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_DEMO_HASH" != '563caeb4a76fb34d6c2b2b8340260cc1da518c4cbaad9e5f355201f6bd1fa933' ]; then
-    echo "The source-binding demo has an unexpected digest: $SOURCE_BINDINGS_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_BINDINGS_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BINDINGS_DEMO_MODULE" --max-steps 2000000000)
 printf '%s\n' "$SOURCE_BINDINGS_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Bindings-Tool.wv" \
-    --module "$SOURCE_BINDINGS_SOURCE" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_BINDINGS_TOOL_MODULE"
-SOURCE_BINDINGS_TOOL_HASH=$(sha256sum "$SOURCE_BINDINGS_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_BINDINGS_TOOL_HASH" != '17e877b3c59d2f9a99d26be4c478f10ce8879e6bce925b65894d158fd4a6e0a9' ]; then
-    echo "The source-binding tool has an unexpected digest: $SOURCE_BINDINGS_TOOL_HASH" >&2
-    exit 1
-fi
 SOURCE_BINDINGS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_BINDINGS_TOOL_MODULE" \
     --allow console.write_line \
@@ -872,68 +815,8 @@ SOURCE_BINDINGS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'source bindings status=Valid modules=9 functions=261 parameters=1154 locals=1584 reads=13354 assignments=1098 calls=2317 directory-bytes=101120' >/dev/null
 printf '%s\n' "$SOURCE_BINDINGS_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_WIR_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Wir-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_WIR_SOURCE" \
-    --module "$SOURCE_BINDINGS_SOURCE" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_WIR_MODULE"
-SOURCE_WIR_HASH=$(sha256sum "$SOURCE_WIR_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_HASH" != 'c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb' ]; then
-    echo "The Windvale typed-WVIR core has an unexpected digest: $SOURCE_WIR_HASH" >&2
-    exit 1
-fi
-SOURCE_WIR_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_WIR_MODULE")
-printf '%s\n' "$SOURCE_WIR_INSPECTION" | grep -F 'Compilerˉsourceˉwirˉoperation' >/dev/null
-printf '%s\n' "$SOURCE_WIR_INSPECTION" | grep -F 'Compilerˉsourceˉwirˉsummary' >/dev/null
-printf '%s\n' "$SOURCE_WIR_INSPECTION" | grep -F 'Compilerˉsourceˉwirˉdirectoryˉisˉvalid' >/dev/null
-printf '%s\n' "$SOURCE_WIR_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉwir' >/dev/null
-printf '%s\n' "$SOURCE_WIR_INSPECTION" | grep -F 'Exports (72)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Wir-Demo.wv" \
-    --module "$SOURCE_WIR_SOURCE" \
-    --module "$SOURCE_BINDINGS_SOURCE" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_WIR_DEMO_MODULE"
-SOURCE_WIR_DEMO_HASH=$(sha256sum "$SOURCE_WIR_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_DEMO_HASH" != '7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f' ]; then
-    echo "The typed-WVIR demo has an unexpected digest: $SOURCE_WIR_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_WIR_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WIR_DEMO_MODULE" --max-steps 4000000000)
 printf '%s\n' "$SOURCE_WIR_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Wir-Tool.wv" \
-    --module "$SOURCE_WIR_SOURCE" \
-    --module "$SOURCE_BINDINGS_SOURCE" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_WIR_TOOL_MODULE"
-SOURCE_WIR_TOOL_HASH=$(sha256sum "$SOURCE_WIR_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WIR_TOOL_HASH" != '7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5' ]; then
-    echo "The typed-WVIR tool has an unexpected digest: $SOURCE_WIR_TOOL_HASH" >&2
-    exit 1
-fi
 SOURCE_WIR_FIXTURE_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_WIR_TOOL_MODULE" \
     --allow console.write_line \
@@ -946,62 +829,8 @@ SOURCE_WIR_FIXTURE_OUTPUT=$(dotnet "$TOOL_DLL" \
 printf '%s\n' "$SOURCE_WIR_FIXTURE_OUTPUT" | grep -F 'source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporaries=36 operands=29 directory-bytes=3200' >/dev/null
 printf '%s\n' "$SOURCE_WIR_FIXTURE_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
-SOURCE_WVB_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Wvb-Core.wv"
-SOURCE_WVB_TEMPORARY_SLOTS_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv"
-compile_source_wvb() {
-    dotnet "$TOOL_DLL" \
-        compile "$1" \
-        --module "$SOURCE_WVB_SOURCE" \
-        --module "$SOURCE_WVB_TEMPORARY_SLOTS_SOURCE" \
-        --module "$SOURCE_WIR_SOURCE" \
-        --module "$SOURCE_BINDINGS_SOURCE" \
-        --module "$SOURCE_SYMBOLS_SOURCE" \
-        --module "$SOURCE_GRAPH_SOURCE" \
-        --module "$SOURCE_SET_SOURCE" \
-        --module "$SOURCE_BODY_PARSER_SOURCE" \
-        --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-        --module "$SOURCE_LEXER_SOURCE" \
-        --module "$BYTE_CONSTRUCTION_SOURCE" \
-        --module "$DECIMAL_PARSING_SOURCE" \
-        -o "$2"
-}
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_WVB_SOURCE" \
-    --module "$SOURCE_WVB_TEMPORARY_SLOTS_SOURCE" \
-    --module "$SOURCE_WIR_SOURCE" \
-    --module "$SOURCE_BINDINGS_SOURCE" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_WVB_MODULE"
-SOURCE_WVB_HASH=$(sha256sum "$SOURCE_WVB_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_HASH" != 'c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b' ]; then
-    echo "The Windvale WVB backend core has an unexpected digest: $SOURCE_WVB_HASH" >&2
-    exit 1
-fi
-SOURCE_WVB_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_WVB_MODULE")
-printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉsourceˉwvbˉsummary' >/dev/null
-printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Compilerˉcompileˉsourceˉwvb' >/dev/null
-printf '%s\n' "$SOURCE_WVB_INSPECTION" | grep -F 'Exports (72)' >/dev/null
-compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Demo.wv" "$SOURCE_WVB_DEMO_MODULE"
-SOURCE_WVB_DEMO_HASH=$(sha256sum "$SOURCE_WVB_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_DEMO_HASH" != 'ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9' ]; then
-    echo "The Windvale WVB backend demo has an unexpected digest: $SOURCE_WVB_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_WVB_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" run "$SOURCE_WVB_DEMO_MODULE" --max-steps 4000000000)
 printf '%s\n' "$SOURCE_WVB_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-compile_source_wvb "$REPOSITORY_ROOT/Examples/Compiler/Source-Wvb-Tool.wv" "$SOURCE_WVB_TOOL_MODULE"
-SOURCE_WVB_TOOL_HASH=$(sha256sum "$SOURCE_WVB_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_WVB_TOOL_HASH" != '18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754' ]; then
-    echo "The Windvale WVB backend tool has an unexpected digest: $SOURCE_WVB_TOOL_HASH" >&2
-    exit 1
-fi
 SOURCE_WVB_FIXTURE="$REPOSITORY_ROOT/Tests/Fixtures/Source-Wvb/Function-Only.wv"
 rm -f -- "$SOURCE_WVB_FIXTURE_MODULE" "$SOURCE_WVB_FIXTURE_ORACLE"
 SOURCE_WVB_FIXTURE_OUTPUT=$(dotnet "$TOOL_DLL" \
