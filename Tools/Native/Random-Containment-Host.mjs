@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
     access,
     readFile,
@@ -52,6 +52,33 @@ export async function Forˉeachˉbounded(Items, Parallelism, Action) {
 }
 
 export function Runˉprocess(Fileˉpath, Arguments) {
+    if (process.platform === "win32") {
+        // Sustained asynchronous Windows launches can occasionally surface a
+        // zero status through libuv even when the child emitted its rejection
+        // report. The synchronous API preserves the native exit contract and
+        // keeps the same per-channel output bound.
+        const Result = spawnSync(Fileˉpath, Arguments, {
+            stdio: ["ignore", "pipe", "pipe"],
+            windowsHide: true,
+            maxBuffer: 65_536,
+        });
+        if (Result.error?.code === "ENOBUFS") {
+            throw new Error("A native containment command exceeded its output bound.");
+        }
+        if (Result.error !== undefined) {
+            throw Result.error;
+        }
+        if (Result.signal !== null) {
+            throw new Error(
+                `A native containment command ended through signal ${Result.signal}.`,
+            );
+        }
+        return {
+            Code: Result.status,
+            Output: Result.stdout,
+            Error: Result.stderr,
+        };
+    }
     return new Promise((Resolve, Reject) => {
         const Child = spawn(Fileˉpath, Arguments, {
             stdio: ["ignore", "pipe", "pipe"],

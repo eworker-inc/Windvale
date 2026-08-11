@@ -52,5 +52,10 @@ try {
             ),
         "Refusing to remove an unexpected containment directory.",
     );
-    await rm(Temporaryˉdirectory, { recursive: true, force: true });
+    await rm(Temporaryˉdirectory, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 100,
+    });
 }
