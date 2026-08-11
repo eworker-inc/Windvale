@@ -106,6 +106,12 @@ and the 555,690-byte WVO at
 The retained C# writer may reproduce these bytes for recovery evidence, but it
 does not regain ownership of ordinary publication or installation.
 
+The refreshed Linux hosted-verifier application publisher, publisher
+admitter, publisher promoter, and WVB publisher are tracked with executable
+mode. Their normal launchers must therefore work from a clean Git checkout;
+local archive or overlay preparation is not permitted to supply missing
+product permissions implicitly.
+
 ## Evidence
 
 - The focused hosted-verifier publisher file pipeline passes 7/7 on Windows
@@ -119,6 +125,9 @@ does not regain ownership of ordinary publication or installation.
 - Linux publication writes WVB and WVO data with mode `0600` and writes the
   exact admitted ELF application with mode `0755`; existing-destination
   publication preserves the selected immutable snapshot and final mode.
+- A clean-checkout focused Linux rejection run directly launches the four
+  pinned publisher roles and preserves both invalid candidates and existing
+  destinations without relying on overlay-restored executable bits.
 - The full paired native helper already passes 105 artifacts and 185 cases on
   both hosts after Decision 0522. Repository Standard and GitHub grouped
   Qualification are separate gates and are not implied by those focused runs.
