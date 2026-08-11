@@ -1269,7 +1269,7 @@ MISSING_WINDVALE_LINK_OUTPUT="$MISSING_WINDVALE_LINK_PARENT/Hello.bin"
 set +e
 MISSING_WINDVALE_LINK_PARENT_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$WVLINK_CORE_MODULE" \
-    --allow console.write \
+    --allow console.write_line \
     --allow diagnostic.write_line \
     --allow file.read_bytes \
     --allow file.write_bytes \
@@ -1283,7 +1283,11 @@ if [ "$MISSING_WINDVALE_LINK_PARENT_EXIT" -ne 3 ]; then
     echo "Expected missing Windvale link parent exit 3, found $MISSING_WINDVALE_LINK_PARENT_EXIT." >&2
     exit 1
 fi
-printf '%s\n' "$MISSING_WINDVALE_LINK_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null
+if ! printf '%s\n' "$MISSING_WINDVALE_LINK_PARENT_OUTPUT" | grep -F 'WVR3022' >/dev/null; then
+    echo 'The Windvale linker did not report a missing output parent deterministically.' >&2
+    printf '%s\n' "$MISSING_WINDVALE_LINK_PARENT_OUTPUT" >&2
+    exit 1
+fi
 if [ -e "$MISSING_WINDVALE_LINK_OUTPUT" ]; then
     echo 'The failed Windvale linker write left a partial image.' >&2
     exit 1

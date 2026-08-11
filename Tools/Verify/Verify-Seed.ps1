@@ -1514,7 +1514,7 @@ if ($LASTEXITCODE -ne 3 -or ($WvaAssemblerUnauthorizedOutput -join "`n") -notmat
 }
 
 $WvLinkerCapabilities = @(
-    '--allow', 'console.write',
+    '--allow', 'console.write_line',
     '--allow', 'diagnostic.write_line',
     '--allow', 'file.read_bytes',
     '--allow', 'file.write_bytes',
@@ -1596,8 +1596,9 @@ if (Test-Path -LiteralPath $MissingWindvaleLinkParent) {
 }
 $MissingWindvaleLinkOutput = Join-Path $MissingWindvaleLinkParent 'Hello.bin'
 $MissingWindvaleLinkParentOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $MissingWindvaleLinkOutput $WindvaleAssemblyObject $LinkProviderObject 2>&1
-if ($LASTEXITCODE -ne 3 -or ($MissingWindvaleLinkParentOutput -join "`n") -notmatch 'WVR3022') {
-    throw 'The Windvale linker did not report a missing output parent deterministically.'
+$MissingWindvaleLinkParentText = $MissingWindvaleLinkParentOutput -join "`n"
+if ($LASTEXITCODE -ne 3 -or $MissingWindvaleLinkParentText -notmatch 'WVR3022') {
+    throw "The Windvale linker did not report a missing output parent deterministically. Output: $MissingWindvaleLinkParentText"
 }
 if (Test-Path -LiteralPath $MissingWindvaleLinkOutput) {
     throw 'The failed Windvale linker write left a partial image.'
