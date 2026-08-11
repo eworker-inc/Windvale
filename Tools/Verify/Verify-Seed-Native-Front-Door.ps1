@@ -193,6 +193,15 @@ $SourceDeclarationParserToolModule = Join-Path $OutputRoot 'Source-Declaration-P
 $SourceBodyParserModule = Join-Path $OutputRoot 'Source-Body-Parser.wvb'
 $SourceBodyParserDemoModule = Join-Path $OutputRoot 'Source-Body-Parser-Demo.wvb'
 $SourceBodyParserToolModule = Join-Path $OutputRoot 'Source-Body-Parser-Tool.wvb'
+$SourceSetModule = Join-Path $OutputRoot 'Source-Set-Core.wvb'
+$SourceSetDemoModule = Join-Path $OutputRoot 'Source-Set-Demo.wvb'
+$SourceSetToolModule = Join-Path $OutputRoot 'Source-Set-Tool.wvb'
+$SourceGraphModule = Join-Path $OutputRoot 'Source-Graph-Core.wvb'
+$SourceGraphDemoModule = Join-Path $OutputRoot 'Source-Graph-Demo.wvb'
+$SourceGraphToolModule = Join-Path $OutputRoot 'Source-Graph-Tool.wvb'
+$SourceSymbolsModule = Join-Path $OutputRoot 'Source-Symbols-Core.wvb'
+$SourceSymbolsDemoModule = Join-Path $OutputRoot 'Source-Symbols-Demo.wvb'
+$SourceSymbolsToolModule = Join-Path $OutputRoot 'Source-Symbols-Tool.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -802,6 +811,66 @@ Invoke-ExactBuild `
     '0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f' `
     'build status=Published verification=compiler-aligned functions=103 code-bytes=198924 module-bytes=247844'
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Set-Core.wvproj') `
+    $SourceSetModule `
+    257873 `
+    '1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb' `
+    'build status=Published verification=compiler-aligned functions=110 code-bytes=206538 module-bytes=257873'
+Invoke-ExactInspect $SourceSetModule @('profile=portable', 'section name=exports offset=249270 bytes=430 count=10', 'section name=types offset=249708 bytes=8165 count=29', 'Compiler\\u02C9source\\u02C9set\\u02C9scan', 'Compiler\\u02C9source\\u02C9set\\u02C9summary', 'Compiler\\u02C9scan\\u02C9source\\u02C9set', 'Compiler\\u02C9validate\\u02C9source\\u02C9set')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Set-Demo.wvproj') `
+    $SourceSetDemoModule `
+    267203 `
+    'ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742' `
+    'build status=Published verification=compiler-aligned functions=116 code-bytes=214034 module-bytes=267203'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Set-Tool.wvproj') `
+    $SourceSetToolModule `
+    261726 `
+    '6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f' `
+    'build status=Published verification=compiler-aligned functions=115 code-bytes=209802 module-bytes=261726'
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Graph-Core.wvproj') `
+    $SourceGraphModule `
+    278894 `
+    '9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b' `
+    'build status=Published verification=compiler-aligned functions=126 code-bytes=223460 module-bytes=278894'
+Invoke-ExactInspect $SourceGraphModule @('profile=portable', 'section name=exports offset=269556 bytes=549 count=12', 'section name=types offset=270113 bytes=8781 count=34', 'Compiler\\u02C9source\\u02C9graph\\u02C9status', 'Compiler\\u02C9source\\u02C9graph\\u02C9summary', 'Compiler\\u02C9validate\\u02C9source\\u02C9graph')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Graph-Demo.wvproj') `
+    $SourceGraphDemoModule `
+    284848 `
+    'a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c' `
+    'build status=Published verification=compiler-aligned functions=131 code-bytes=228355 module-bytes=284848'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Graph-Tool.wvproj') `
+    $SourceGraphToolModule `
+    282035 `
+    '0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10' `
+    'build status=Published verification=compiler-aligned functions=131 code-bytes=226370 module-bytes=282035'
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Symbols-Core.wvproj') `
+    $SourceSymbolsModule `
+    439545 `
+    'a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7' `
+    'build status=Published verification=compiler-aligned functions=204 code-bytes=351993 module-bytes=439545'
+Invoke-ExactInspect $SourceSymbolsModule @('profile=portable', 'section name=exports offset=424691 bytes=3608 count=66', 'section name=types offset=428307 bytes=11238 count=45', 'Compiler\\u02C9source\\u02C9symbol\\u02C9status', 'Compiler\\u02C9source\\u02C9symbol\\u02C9summary', 'Compiler\\u02C9source\\u02C9symbols\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9symbols')
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Symbols-Demo.wvproj') `
+    $SourceSymbolsDemoModule `
+    450431 `
+    '4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457' `
+    'build status=Published verification=compiler-aligned functions=213 code-bytes=362117 module-bytes=450431'
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Source-Symbols-Tool.wvproj') `
+    $SourceSymbolsToolModule `
+    438378 `
+    '58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66' `
+    'build status=Published verification=compiler-aligned functions=209 code-bytes=355987 module-bytes=438378'
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -833,4 +902,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=79 cases=132'
+Write-Output 'native Seed front-door verification status=Complete artifacts=88 cases=144'

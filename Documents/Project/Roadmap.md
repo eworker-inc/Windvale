@@ -12,16 +12,26 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
+[Decision 0517](../Decisions/0517-Native-Source-Semantic-Build-And-Inspection-Transfer.md)
+moves nine source-set, source-graph, and source-symbol core/demo/tool builds plus
+three core inspections from each broad Seed script into the paired native
+helper. The helper now owns 88 exact artifacts and 144 cases; the cumulative
+normal-path removal is 150 managed invocations per host script. The three demo
+runs and three capability-bearing tool runs remain managed because the current
+native runner stops the demos with code `3004` and does not bind the tools'
+hosted capabilities. Source bindings, typed WVIR, and the WVB backend are the
+next contiguous construction block; parser/semantic execution, the native
+Project driver's order-sensitivity defect, the broad managed harness,
+independent Linux evidence, grouped qualification, and recovery retirement
+remain open.
+
 [Decision 0516](../Decisions/0516-Native-Source-Parser-Build-And-Inspection-Transfer.md)
 moves eight lexer, declaration-parser, and body-parser core/demo/tool builds plus
 three core inspections from each broad Seed script into the paired native
-helper. The helper now owns 79 exact artifacts and 132 cases; the cumulative
-normal-path removal is 138 managed invocations per host script. The three demo
-runs and five capability-bearing tool runs remain managed because the current
-native runner does not complete them. Source-set, module-graph, and symbol
-construction are the next contiguous build/inspection block; parser execution,
-the broad managed harness, independent Linux evidence, grouped qualification,
-and recovery retirement remain open.
+helper. The helper owns 79 exact artifacts and 132 cases at that boundary; the
+cumulative normal-path removal is 138 managed invocations per host script.
+Decision 0517 continues from this boundary into the source-set, graph, and
+symbol construction phases while preserving execution as a separate gap.
 
 [Decision 0515](../Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
 moves twelve hosted-tool metadata, startup, hosted-container, runtime-header,

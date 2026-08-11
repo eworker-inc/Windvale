@@ -195,7 +195,7 @@ Or on Linux:
 ./Tools/Native/Inspect-Wvb.sh Artifacts/Sum-Data.wvb
 ```
 
-Run the fixed 132-case native front-door qualification smoke directly with:
+Run the fixed 144-case native front-door qualification smoke directly with:
 
 ```powershell
 $output = New-Item -ItemType Directory -Force artifacts/seed-front-door
@@ -208,7 +208,7 @@ mkdir -p artifacts/seed-front-door
 ./Tools/Verify/Verify-Seed-Native-Front-Door.sh artifacts/seed-front-door
 ```
 
-The helper builds 79 exact WVBs. It retains the original Project 1,
+The helper builds 88 exact WVBs. It retains the original Project 1,
 verification, inspection, execution, instruction-count, and malformed-project
 cases; it additionally builds and inspects Machine Contracts, Byte Ordering,
 Decimal Parsing, and Byte Construction, builds all four demos, and executes the
@@ -246,7 +246,7 @@ fragment comparisons. Projects stay component-local only when their entire
 closure has one owner; cross-component Foundation/Runtime/Linker aggregates
 remain at repository root.
 
-The helper finally builds the source-lexer core/demo,
+The helper then builds the source-lexer core/demo,
 declaration-parser core/demo/tool, and body-parser core/demo/tool and natively
 inspects the three core type/export surfaces. These manifests remain root
 aggregates because their complete closures span Compiler or Examples plus
@@ -254,6 +254,17 @@ Foundation. The broad scripts still run the three demos and five
 capability-bearing tools through Stage 0; the current native runner does not
 complete the demos, and the tools require explicit console, diagnostic, file,
 and process capabilities.
+
+The helper finally builds the source-set, source-graph, and source-symbol
+core/demo/tool products and natively inspects the three core type/export
+surfaces. These nine manifests are also root aggregates because their complete
+closures span Compiler or Examples plus Foundation. Keep their dependencies in
+canonical module-name order while the pinned native Project driver's documented
+order-sensitivity defect remains; this is a compatibility workaround, not a
+Project 1 ordering requirement. The broad scripts still run the three demos and
+three capability-bearing tools through Stage 0. Native demo probes stop with
+runtime code `3004`, and the scalar profile does not bind the tools' console,
+diagnostic, file, and process capabilities.
 
 Run the exact native capability-free console-AOT qualification composition in
 the same output directory after `Sum-Data.wvb` exists:

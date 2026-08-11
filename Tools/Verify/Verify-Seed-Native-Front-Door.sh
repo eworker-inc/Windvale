@@ -197,6 +197,15 @@ SOURCE_DECLARATION_PARSER_TOOL_MODULE="$OUTPUT_ROOT/Source-Declaration-Parser-To
 SOURCE_BODY_PARSER_MODULE="$OUTPUT_ROOT/Source-Body-Parser.wvb"
 SOURCE_BODY_PARSER_DEMO_MODULE="$OUTPUT_ROOT/Source-Body-Parser-Demo.wvb"
 SOURCE_BODY_PARSER_TOOL_MODULE="$OUTPUT_ROOT/Source-Body-Parser-Tool.wvb"
+SOURCE_SET_MODULE="$OUTPUT_ROOT/Source-Set-Core.wvb"
+SOURCE_SET_DEMO_MODULE="$OUTPUT_ROOT/Source-Set-Demo.wvb"
+SOURCE_SET_TOOL_MODULE="$OUTPUT_ROOT/Source-Set-Tool.wvb"
+SOURCE_GRAPH_MODULE="$OUTPUT_ROOT/Source-Graph-Core.wvb"
+SOURCE_GRAPH_DEMO_MODULE="$OUTPUT_ROOT/Source-Graph-Demo.wvb"
+SOURCE_GRAPH_TOOL_MODULE="$OUTPUT_ROOT/Source-Graph-Tool.wvb"
+SOURCE_SYMBOLS_MODULE="$OUTPUT_ROOT/Source-Symbols-Core.wvb"
+SOURCE_SYMBOLS_DEMO_MODULE="$OUTPUT_ROOT/Source-Symbols-Demo.wvb"
+SOURCE_SYMBOLS_TOOL_MODULE="$OUTPUT_ROOT/Source-Symbols-Tool.wvb"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -900,6 +909,75 @@ exact_build \
     0003c824 \
     'build status=Published verification=compiler-aligned functions=103 code-bytes=198924 module-bytes=247844'
 
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Set-Core.wvproj" \
+    "$SOURCE_SET_MODULE" \
+    257873 \
+    1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb \
+    0003ef51 \
+    'build status=Published verification=compiler-aligned functions=110 code-bytes=206538 module-bytes=257873'
+exact_inspect "$SOURCE_SET_MODULE" 'profile=portable' 'section name=exports offset=249270 bytes=430 count=10' 'section name=types offset=249708 bytes=8165 count=29' 'Compiler\u02C9source\u02C9set\u02C9scan' 'Compiler\u02C9source\u02C9set\u02C9summary' 'Compiler\u02C9scan\u02C9source\u02C9set' 'Compiler\u02C9validate\u02C9source\u02C9set'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Set-Demo.wvproj" \
+    "$SOURCE_SET_DEMO_MODULE" \
+    267203 \
+    ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742 \
+    000413c3 \
+    'build status=Published verification=compiler-aligned functions=116 code-bytes=214034 module-bytes=267203'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Set-Tool.wvproj" \
+    "$SOURCE_SET_TOOL_MODULE" \
+    261726 \
+    6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f \
+    0003fe5e \
+    'build status=Published verification=compiler-aligned functions=115 code-bytes=209802 module-bytes=261726'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Graph-Core.wvproj" \
+    "$SOURCE_GRAPH_MODULE" \
+    278894 \
+    9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b \
+    0004416e \
+    'build status=Published verification=compiler-aligned functions=126 code-bytes=223460 module-bytes=278894'
+exact_inspect "$SOURCE_GRAPH_MODULE" 'profile=portable' 'section name=exports offset=269556 bytes=549 count=12' 'section name=types offset=270113 bytes=8781 count=34' 'Compiler\u02C9source\u02C9graph\u02C9status' 'Compiler\u02C9source\u02C9graph\u02C9summary' 'Compiler\u02C9validate\u02C9source\u02C9graph'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Graph-Demo.wvproj" \
+    "$SOURCE_GRAPH_DEMO_MODULE" \
+    284848 \
+    a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c \
+    000458b0 \
+    'build status=Published verification=compiler-aligned functions=131 code-bytes=228355 module-bytes=284848'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Graph-Tool.wvproj" \
+    "$SOURCE_GRAPH_TOOL_MODULE" \
+    282035 \
+    0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10 \
+    00044db3 \
+    'build status=Published verification=compiler-aligned functions=131 code-bytes=226370 module-bytes=282035'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Symbols-Core.wvproj" \
+    "$SOURCE_SYMBOLS_MODULE" \
+    439545 \
+    a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7 \
+    0006b4f9 \
+    'build status=Published verification=compiler-aligned functions=204 code-bytes=351993 module-bytes=439545'
+exact_inspect "$SOURCE_SYMBOLS_MODULE" 'profile=portable' 'section name=exports offset=424691 bytes=3608 count=66' 'section name=types offset=428307 bytes=11238 count=45' 'Compiler\u02C9source\u02C9symbol\u02C9status' 'Compiler\u02C9source\u02C9symbol\u02C9summary' 'Compiler\u02C9source\u02C9symbols\u02C9directory\u02C9is\u02C9valid' 'Compiler\u02C9validate\u02C9source\u02C9symbols'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Symbols-Demo.wvproj" \
+    "$SOURCE_SYMBOLS_DEMO_MODULE" \
+    450431 \
+    4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457 \
+    0006df7f \
+    'build status=Published verification=compiler-aligned functions=213 code-bytes=362117 module-bytes=450431'
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Source-Symbols-Tool.wvproj" \
+    "$SOURCE_SYMBOLS_TOOL_MODULE" \
+    438378 \
+    58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66 \
+    0006b06a \
+    'build status=Published verification=compiler-aligned functions=209 code-bytes=355987 module-bytes=438378'
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -931,4 +1009,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=79 cases=132'
+echo 'native Seed front-door verification status=Complete artifacts=88 cases=144'

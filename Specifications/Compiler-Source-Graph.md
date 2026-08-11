@@ -61,6 +61,11 @@ Headers and leading import declarations are scanned once after target existence 
 
 These local candidate identities contain the updated frontend while preserving WVSS graph semantics. The current local hosted report is:
 
+Decision 0517 reproduces all three identities through the current-Windows
+native Project front door and natively inspects the core portable type/export
+surface. Independent Linux execution and native demo/tool execution remain
+pending.
+
 ```text
 source graph status=Valid modules=7 imports=10 reachable=7
 ```

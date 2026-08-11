@@ -259,7 +259,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=79 cases=132'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=88 cases=144'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -1007,60 +1007,10 @@ if (
 }
 
 $SourceSetSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Set-Core.wv'
-dotnet $ToolDll `
-    compile $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceSetModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-set core.' }
-$SourceSetHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSetModule).Hash.ToLowerInvariant()
-if ($SourceSetHash -ne '1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb') {
-    throw "The Windvale source-set core has an unexpected digest: $SourceSetHash"
-}
-$SourceSetInspection = (dotnet $ToolDll inspect $SourceSetModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $SourceSetInspection -notmatch 'Nominal types \(29\)' -or
-    $SourceSetInspection -notmatch 'Compilerˉsourceˉsetˉscan' -or
-    $SourceSetInspection -notmatch 'Compilerˉsourceˉsetˉsummary' -or
-    $SourceSetInspection -notmatch 'Compilerˉscanˉsourceˉset' -or
-    $SourceSetInspection -notmatch 'Compilerˉvalidateˉsourceˉset' -or
-    $SourceSetInspection -notmatch 'Exports \(10\)'
-) {
-    throw 'The Windvale source-set inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Set-Demo.wv') `
-    --module $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceSetDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-set demo.' }
-$SourceSetDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSetDemoModule).Hash.ToLowerInvariant()
-if ($SourceSetDemoHash -ne 'ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742') {
-    throw "The source-set demo has an unexpected digest: $SourceSetDemoHash"
-}
 $SourceSetDemoOutput = dotnet $ToolDll `
     run $SourceSetDemoModule --max-steps 200000000
 if ($LASTEXITCODE -ne 0 -or $SourceSetDemoOutput -notcontains 'Result: 0') {
     throw 'The source-set demo did not return Result: 0.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Set-Tool.wv') `
-    --module $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $DecimalParsingSource `
-    -o $SourceSetToolModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-set tool.' }
-$SourceSetToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSetToolModule).Hash.ToLowerInvariant()
-if ($SourceSetToolHash -ne '6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f') {
-    throw "The source-set tool has an unexpected digest: $SourceSetToolHash"
 }
 $SourceSetArguments = @(
     'run', $SourceSetToolModule,
@@ -1086,65 +1036,10 @@ if (
 }
 
 $SourceGraphSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Graph-Core.wv'
-dotnet $ToolDll `
-    compile $SourceGraphSource `
-    --module $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $ByteConstructionSource `
-    --module $DecimalParsingSource `
-    -o $SourceGraphModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-graph core.' }
-$SourceGraphHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphModule).Hash.ToLowerInvariant()
-if ($SourceGraphHash -ne '9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b') {
-    throw "The Windvale source-graph core has an unexpected digest: $SourceGraphHash"
-}
-$SourceGraphInspection = (dotnet $ToolDll inspect $SourceGraphModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $SourceGraphInspection -notmatch 'Nominal types \(34\)' -or
-    $SourceGraphInspection -notmatch 'Compilerˉsourceˉgraphˉstatus' -or
-    $SourceGraphInspection -notmatch 'Compilerˉsourceˉgraphˉsummary' -or
-    $SourceGraphInspection -notmatch 'Compilerˉvalidateˉsourceˉgraph' -or
-    $SourceGraphInspection -notmatch 'Exports \(12\)'
-) {
-    throw 'The Windvale source-graph inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Graph-Demo.wv') `
-    --module $SourceGraphSource `
-    --module $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $ByteConstructionSource `
-    --module $DecimalParsingSource `
-    -o $SourceGraphDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-graph demo.' }
-$SourceGraphDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphDemoModule).Hash.ToLowerInvariant()
-if ($SourceGraphDemoHash -ne 'a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c') {
-    throw "The source-graph demo has an unexpected digest: $SourceGraphDemoHash"
-}
 $SourceGraphDemoOutput = dotnet $ToolDll `
     run $SourceGraphDemoModule --max-steps 300000000
 if ($LASTEXITCODE -ne 0 -or $SourceGraphDemoOutput -notcontains 'Result: 0') {
     throw 'The source-graph demo did not return Result: 0.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Graph-Tool.wv') `
-    --module $SourceGraphSource `
-    --module $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $ByteConstructionSource `
-    --module $DecimalParsingSource `
-    -o $SourceGraphToolModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-graph tool.' }
-$SourceGraphToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceGraphToolModule).Hash.ToLowerInvariant()
-if ($SourceGraphToolHash -ne '0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10') {
-    throw "The source-graph tool has an unexpected digest: $SourceGraphToolHash"
 }
 $SourceGraphArguments = @(
     'run', $SourceGraphToolModule,
@@ -1172,69 +1067,10 @@ if (
 }
 
 $SourceSymbolsSource = Join-Path $RepositoryRoot 'Compiler/Windvale/Source-Symbols-Core.wv'
-dotnet $ToolDll `
-    compile $SourceSymbolsSource `
-    --module $SourceGraphSource `
-    --module $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $ByteConstructionSource `
-    --module $DecimalParsingSource `
-    -o $SourceSymbolsModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale source-symbol core.' }
-$SourceSymbolsHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsHash -ne 'a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7') {
-    throw "The Windvale source-symbol core has an unexpected digest: $SourceSymbolsHash"
-}
-$SourceSymbolsInspection = (dotnet $ToolDll inspect $SourceSymbolsModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $SourceSymbolsInspection -notmatch 'Nominal types \(45\)' -or
-    $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolˉstatus' -or
-    $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolˉsummary' -or
-    $SourceSymbolsInspection -notmatch 'Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid' -or
-    $SourceSymbolsInspection -notmatch 'Compilerˉvalidateˉsourceˉsymbols' -or
-    $SourceSymbolsInspection -notmatch 'Exports \(66\)'
-) {
-    throw 'The Windvale source-symbol inspection is incomplete.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Symbols-Demo.wv') `
-    --module $SourceSymbolsSource `
-    --module $SourceGraphSource `
-    --module $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $ByteConstructionSource `
-    --module $DecimalParsingSource `
-    -o $SourceSymbolsDemoModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-symbol demo.' }
-$SourceSymbolsDemoHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsDemoModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsDemoHash -ne '4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457') {
-    throw "The source-symbol demo has an unexpected digest: $SourceSymbolsDemoHash"
-}
 $SourceSymbolsDemoOutput = dotnet $ToolDll `
     run $SourceSymbolsDemoModule --max-steps 1500000000
 if ($LASTEXITCODE -ne 0 -or $SourceSymbolsDemoOutput -notcontains 'Result: 0') {
     throw 'The source-symbol demo did not return Result: 0.'
-}
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Examples/Compiler/Source-Symbols-Tool.wv') `
-    --module $SourceSymbolsSource `
-    --module $SourceGraphSource `
-    --module $SourceSetSource `
-    --module $SourceBodyParserSource `
-    --module $SourceDeclarationParserSource `
-    --module $SourceLexerSource `
-    --module $ByteConstructionSource `
-    --module $DecimalParsingSource `
-    -o $SourceSymbolsToolModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the source-symbol tool.' }
-$SourceSymbolsToolHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $SourceSymbolsToolModule).Hash.ToLowerInvariant()
-if ($SourceSymbolsToolHash -ne '58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66') {
-    throw "The source-symbol tool has an unexpected digest: $SourceSymbolsToolHash"
 }
 $SourceSymbolsArguments = @(
     'run', $SourceSymbolsToolModule,

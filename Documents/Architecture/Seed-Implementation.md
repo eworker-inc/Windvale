@@ -304,6 +304,18 @@ the three demo runs and five capability-bearing hosted-tool runs from this
 block. The current native runner's inability to complete those demos is an
 explicit execution gap, not a reason to keep ordinary construction managed.
 
+Decision 0517 transfers the next three Windvale-written semantic phases. The
+paired helper now builds the source-set, source-graph, and source-symbol
+core/demo/tool products and inspects the three core type/export surfaces. Their
+cross-component Project 1 manifests remain root aggregates for the same
+containment reason and temporarily list dependencies in canonical module-name
+order to accommodate the pinned native driver's documented order-sensitivity
+defect. That workaround does not change Project 1. The broad managed scripts
+retain only the three demo runs and three capability-bearing hosted-tool runs
+from this block. Runtime code `3004` for the demos and the absent hosted
+capability profile remain explicit execution gaps, not reasons to keep ordinary
+construction managed.
+
 ### Reference linker and target adapters
 
 `Linker/Reference/` owns the independent C# Stage 0 and recovery implementation:

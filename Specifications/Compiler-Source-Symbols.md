@@ -129,6 +129,11 @@ Failure evidence names the current module, a related prior/target module when ap
 - `Source-Symbols-Demo.wvb`: 450,431 bytes, SHA-256 `4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457`.
 - `Source-Symbols-Tool.wvb`: 438,378 bytes, SHA-256 `58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66`.
 
+Decision 0517 reproduces all three identities through the current-Windows
+native Project front door and natively inspects the core portable type/export
+surface. Independent Linux execution and native demo/tool execution remain
+pending.
+
 The candidate demo additionally exercises valid constants, enum and earlier-constant references, Boolean short-circuiting over invalid or would-overflow skipped operands, invalid names/types/initializers, exact type mismatch, forward reference, checked overflow, and imported-module rejection. The hosted tool retains namespace/signature reporting; constants contribute WVSD entries but deliberately do not change the existing public aggregate `Data` count. The current local whole-compiler closure report is:
 
 ```text

@@ -331,6 +331,25 @@ unchanged. Independent Linux execution, native parser execution, remaining
 broad-suite transfers, GitHub cutover, grouped qualification, and recovery
 retirement remain open.
 
+Current T2 source-semantic construction transfer:
+[Decision 0517](../Decisions/0517-Native-Source-Semantic-Build-And-Inspection-Transfer.md)
+extends the paired native front-door helper from 132 to 144 transferred calls
+and from 79 to 88 exact artifacts. It natively builds the source-set,
+source-graph, and source-symbol core/demo/tool products, then inspects the three
+core type/export surfaces. The complete current-Windows helper passes in 580.1
+seconds, and the three focused regular/extended compiler owners pass 3/3 in
+28.950 test seconds. This removes nine managed builds and three managed
+inspections from each broad host script, 150 managed invocations cumulatively.
+The nine repository-root aggregates use canonical module-name dependency order
+as a compatibility workaround for the pinned native Project driver's documented
+order-sensitivity defect; Project 1 remains order-independent. The three demo
+runs and three capability-bearing tool runs remain managed because the native
+runner stops the demos with code `3004` and does not bind those hosted
+capabilities. T2 therefore remains `managed-normal`; the three-normal plus
+nine-recovery direct-entry inventory is unchanged. Independent Linux execution,
+native semantic execution, remaining broad-suite transfers, GitHub cutover,
+grouped qualification, and recovery retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

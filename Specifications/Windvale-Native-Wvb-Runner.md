@@ -58,8 +58,8 @@ exactly `203` instructions.
 The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid
 option rejection, malformed-module rejection, and input preservation. The
-Windows owner passes 3/3 in 49.8 seconds. The paired 132-case native Seed
-front-door helper builds 79 exact artifacts and passes on Windows in 264.4
+Windows owner passes 3/3 in 49.8 seconds. The paired 144-case native Seed
+front-door helper builds 88 exact artifacts and passes on Windows in 580.1
 seconds. It owns the four Foundation module builds and inspections, all four
 Foundation demo builds, the native-stencil and selected runtime-service builds
 and inspections, the complete output/file-output/file-input generator builds
@@ -68,6 +68,8 @@ service-bundle build and inspection closure, the complete runtime-table and
 entry-metadata build/inspection closure, hosted metadata/startup/container/
 runtime-header construction, publication-lifetime construction, source-lexer/
 declaration-parser/body-parser core/demo/tool construction and core inspection,
+source-set/source-graph/source-symbol core/demo/tool construction and core
+inspection,
 and native execution of the Machine Contracts, Byte Ordering, and Decimal
 Parsing demos.
 The 4 MiB Byte
@@ -83,6 +85,14 @@ and body hosted tools also require console, diagnostic, file, and process
 capabilities that this scalar profile does not bind. Decision 0516 therefore
 transfers their construction and inspection without changing this runner's
 execution contract.
+
+The three source-semantic demos also remain in the managed differential lane.
+Direct native probes stop with runtime code `3004`: source set after 13,098
+instructions, source graph after 1,511, and source symbols after 1,430. Their
+hosted tools require console, diagnostic, file, and process capabilities that
+this scalar profile does not bind. Decision 0517 therefore transfers the nine
+builds and three core inspections without changing this runner's execution
+contract.
 
 ## Evidence boundary
 

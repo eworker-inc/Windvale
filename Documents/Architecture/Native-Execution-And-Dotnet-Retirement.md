@@ -545,6 +545,20 @@ differential lane: the current native runner does not complete those demos, and
 the hosted tools require console, diagnostic, file, and process capabilities.
 Construction ownership therefore advances while T2 remains `managed-normal`.
 
+Decision 0517 transfers the next semantic construction boundary without
+conflating it with runtime support. Nine exact Project 1 source-set,
+source-graph, and source-symbol core/demo/tool builds plus three native core
+inspections grow the paired helper to 88 artifacts and 144 cases and bring the
+cumulative broad-host removal to 150 managed calls. All nine manifests are
+honest repository-root aggregates because their closures span Compiler or
+Examples plus Foundation. They use canonical module-name dependency order only
+as the documented compatibility workaround for the pinned native Project
+driver's narrower order-sensitivity defect; Project 1 remains normatively
+order-independent. The three demo runs and three capability-bearing hosted-tool
+runs remain in the managed differential lane because native demo probes stop
+with code `3004` and the scalar profile does not bind their hosted capabilities.
+Construction ownership therefore advances while T2 remains `managed-normal`.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

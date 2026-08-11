@@ -62,6 +62,11 @@ The hosted source-set tool accepts explicit root/dependency resource names, cons
 
 These local candidate identities include the new lexical, declaration, and body-expression surface and require cross-host requalification. The current local hosted report is:
 
+Decision 0517 reproduces all three identities through the current-Windows
+native Project front door and natively inspects the core portable type/export
+surface. Independent Linux execution and native demo/tool execution remain
+pending.
+
 ```text
 source set status=Valid modules=5 source-bytes=297051 imports=6 records=18 enums=11 functions=110
 ```

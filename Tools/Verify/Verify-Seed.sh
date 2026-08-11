@@ -251,7 +251,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=79 cases=132' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=88 cases=144' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -727,54 +727,9 @@ printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'source bodies status=Valid f
 printf '%s\n' "$SOURCE_BODY_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_SET_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Set-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_SET_MODULE"
-SOURCE_SET_HASH=$(sha256sum "$SOURCE_SET_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SET_HASH" != '1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb' ]; then
-    echo "The Windvale source-set core has an unexpected digest: $SOURCE_SET_HASH" >&2
-    exit 1
-fi
-SOURCE_SET_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_SET_MODULE")
-printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Nominal types (29)' >/dev/null
-printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉsourceˉsetˉscan' >/dev/null
-printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉsourceˉsetˉsummary' >/dev/null
-printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉscanˉsourceˉset' >/dev/null
-printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉset' >/dev/null
-printf '%s\n' "$SOURCE_SET_INSPECTION" | grep -F 'Exports (10)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Set-Demo.wv" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_SET_DEMO_MODULE"
-SOURCE_SET_DEMO_HASH=$(sha256sum "$SOURCE_SET_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SET_DEMO_HASH" != 'ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742' ]; then
-    echo "The source-set demo has an unexpected digest: $SOURCE_SET_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_SET_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_SET_DEMO_MODULE" --max-steps 200000000)
 printf '%s\n' "$SOURCE_SET_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Set-Tool.wv" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_SET_TOOL_MODULE"
-SOURCE_SET_TOOL_HASH=$(sha256sum "$SOURCE_SET_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SET_TOOL_HASH" != '6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f' ]; then
-    echo "The source-set tool has an unexpected digest: $SOURCE_SET_TOOL_HASH" >&2
-    exit 1
-fi
 SOURCE_SET_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_SET_TOOL_MODULE" \
     --allow console.write_line \
@@ -792,59 +747,9 @@ printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'source set status=Valid modul
 printf '%s\n' "$SOURCE_SET_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_GRAPH_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Graph-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_GRAPH_MODULE"
-SOURCE_GRAPH_HASH=$(sha256sum "$SOURCE_GRAPH_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_HASH" != '9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b' ]; then
-    echo "The Windvale source-graph core has an unexpected digest: $SOURCE_GRAPH_HASH" >&2
-    exit 1
-fi
-SOURCE_GRAPH_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_GRAPH_MODULE")
-printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Nominal types (34)' >/dev/null
-printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉsourceˉgraphˉstatus' >/dev/null
-printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉsourceˉgraphˉsummary' >/dev/null
-printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉgraph' >/dev/null
-printf '%s\n' "$SOURCE_GRAPH_INSPECTION" | grep -F 'Exports (12)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Graph-Demo.wv" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_GRAPH_DEMO_MODULE"
-SOURCE_GRAPH_DEMO_HASH=$(sha256sum "$SOURCE_GRAPH_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_DEMO_HASH" != 'a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c' ]; then
-    echo "The source-graph demo has an unexpected digest: $SOURCE_GRAPH_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_GRAPH_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_GRAPH_DEMO_MODULE" --max-steps 300000000)
 printf '%s\n' "$SOURCE_GRAPH_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Graph-Tool.wv" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_GRAPH_TOOL_MODULE"
-SOURCE_GRAPH_TOOL_HASH=$(sha256sum "$SOURCE_GRAPH_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_GRAPH_TOOL_HASH" != '0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10' ]; then
-    echo "The source-graph tool has an unexpected digest: $SOURCE_GRAPH_TOOL_HASH" >&2
-    exit 1
-fi
 SOURCE_GRAPH_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_GRAPH_TOOL_MODULE" \
     --allow console.write_line \
@@ -864,63 +769,9 @@ printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'source graph status=Valid m
 printf '%s\n' "$SOURCE_GRAPH_SELF_OUTPUT" | grep -F 'Result: 0' >/dev/null
 
 SOURCE_SYMBOLS_SOURCE="$REPOSITORY_ROOT/Compiler/Windvale/Source-Symbols-Core.wv"
-dotnet "$TOOL_DLL" \
-    compile "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_SYMBOLS_MODULE"
-SOURCE_SYMBOLS_HASH=$(sha256sum "$SOURCE_SYMBOLS_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_HASH" != 'a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7' ]; then
-    echo "The Windvale source-symbol core has an unexpected digest: $SOURCE_SYMBOLS_HASH" >&2
-    exit 1
-fi
-SOURCE_SYMBOLS_INSPECTION=$(dotnet "$TOOL_DLL" inspect "$SOURCE_SYMBOLS_MODULE")
-printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Nominal types (45)' >/dev/null
-printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolˉstatus' >/dev/null
-printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolˉsummary' >/dev/null
-printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid' >/dev/null
-printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Compilerˉvalidateˉsourceˉsymbols' >/dev/null
-printf '%s\n' "$SOURCE_SYMBOLS_INSPECTION" | grep -F 'Exports (66)' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Symbols-Demo.wv" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_SYMBOLS_DEMO_MODULE"
-SOURCE_SYMBOLS_DEMO_HASH=$(sha256sum "$SOURCE_SYMBOLS_DEMO_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_DEMO_HASH" != '4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457' ]; then
-    echo "The source-symbol demo has an unexpected digest: $SOURCE_SYMBOLS_DEMO_HASH" >&2
-    exit 1
-fi
 SOURCE_SYMBOLS_DEMO_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_SYMBOLS_DEMO_MODULE" --max-steps 1500000000)
 printf '%s\n' "$SOURCE_SYMBOLS_DEMO_OUTPUT" | grep -F 'Result: 0' >/dev/null
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Compiler/Source-Symbols-Tool.wv" \
-    --module "$SOURCE_SYMBOLS_SOURCE" \
-    --module "$SOURCE_GRAPH_SOURCE" \
-    --module "$SOURCE_SET_SOURCE" \
-    --module "$SOURCE_BODY_PARSER_SOURCE" \
-    --module "$SOURCE_DECLARATION_PARSER_SOURCE" \
-    --module "$SOURCE_LEXER_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    -o "$SOURCE_SYMBOLS_TOOL_MODULE"
-SOURCE_SYMBOLS_TOOL_HASH=$(sha256sum "$SOURCE_SYMBOLS_TOOL_MODULE" | awk '{print $1}')
-if [ "$SOURCE_SYMBOLS_TOOL_HASH" != '58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66' ]; then
-    echo "The source-symbol tool has an unexpected digest: $SOURCE_SYMBOLS_TOOL_HASH" >&2
-    exit 1
-fi
 SOURCE_SYMBOLS_SELF_OUTPUT=$(dotnet "$TOOL_DLL" \
     run "$SOURCE_SYMBOLS_TOOL_MODULE" \
     --allow console.write_line \
