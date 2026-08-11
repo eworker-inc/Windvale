@@ -741,12 +741,16 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Object-Model/Windvale/Wvo-Object-Core.wv') {
         Add-Object-Suites
         Add-Suite 'wvo-inspector-reconstruction'
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path.StartsWith('Object-Model/Windvale/', [StringComparison]::Ordinal)) {
         Add-Object-Suites
     } elseif ($Path.StartsWith('Object-Model/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-object-recovery-source'
     } elseif ($Path.StartsWith('Assembler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Assembler-Suites
+        if ($Path -eq 'Assembler/Windvale/Wva-Assembler-Core.wv') {
+            Add-Gap 'seed-native-front-door'
+        }
     } elseif ($Path.StartsWith('Assembler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-assembler-recovery-source'
     } elseif ($Path -in @(
@@ -820,6 +824,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Linker/Windvale/Wv-Linker-Core.wv') {
         Add-Linker-Suites
         Add-Suite @('wv-linker-reconstruction', 'console-publisher-reconstruction')
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path -in @(
         'Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv',
         'Linker/Windvale/Native-Hosted-Startup-Instantiation-Bridge.wv',
@@ -1126,6 +1131,10 @@ foreach ($Path in $Paths) {
         Add-Hosted-Publisher-Suites
     } elseif ($Path -eq 'Windvale-Wv-Linker.wvproj') {
         Add-Suite @('wv-linker-reconstruction', 'console-publisher-reconstruction')
+        Add-Gap 'seed-native-front-door'
+    } elseif ($Path -eq 'Windvale-Wva-Assembler.wvproj') {
+        Add-Assembler-Suites
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path -eq 'Windvale-Wvo-Publisher.wvproj') {
         Add-Suite 'wvo-publisher-reconstruction'
     } elseif ($Path -eq 'Windvale-Wvb-Runner.wvproj') {
@@ -1133,6 +1142,7 @@ foreach ($Path in $Paths) {
         Add-Gap 'seed-native-front-door'
     } elseif ($Path -eq 'Windvale-Wvo-Object.wvproj') {
         Add-Suite 'wvo-inspector-reconstruction'
+        Add-Gap 'seed-native-front-door'
     } elseif ($Path -eq 'Windvale-Console-Application-Verifier.wvproj') {
         Add-Suite 'console-verifier-reconstruction'
     } elseif ($Path -eq 'Windvale-Console-Application-Publisher.wvproj') {
@@ -1187,6 +1197,8 @@ foreach ($Path in $Paths) {
         'Examples/Foundation/Byte-Ordering-Demo.wv',
         'Examples/Foundation/Decimal-Parsing-Demo.wv',
         'Examples/Foundation/Byte-Construction-Demo.wv',
+        'Examples/Foundation/Wv-Dump-Core.wv',
+        'Windvale-Wvb-Inspector.wvproj',
         'Examples/Compiler/Native-Stencil-Demo.wv',
         'Native-Stencil-Demo.wvproj',
         'Foundation-Machine-Contracts-Demo.wvproj',

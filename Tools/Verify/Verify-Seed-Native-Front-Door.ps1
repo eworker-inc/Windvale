@@ -84,7 +84,8 @@ function Invoke-ExactVerify([string]$ModulePath) {
 
 function Invoke-ExactInspect(
     [string]$ModulePath,
-    [string[]]$RequiredPatterns
+    [string[]]$RequiredPatterns,
+    [string[]]$ForbiddenPatterns = @()
 ) {
     $InspectOutput = @(& $NativeInspect $ModulePath 2>&1)
     if ($LASTEXITCODE -ne 0) {
@@ -94,6 +95,11 @@ function Invoke-ExactInspect(
     foreach ($RequiredPattern in $RequiredPatterns) {
         if ($Inspection -notmatch $RequiredPattern) {
             throw "The native Seed inspector omitted required evidence: $ModulePath"
+        }
+    }
+    foreach ($ForbiddenPattern in $ForbiddenPatterns) {
+        if ($Inspection -match $ForbiddenPattern) {
+            throw "The native Seed inspector exposed forbidden evidence: $ModulePath"
         }
     }
 }
@@ -239,6 +245,10 @@ $SourceWirToolModule = Join-Path $OutputRoot 'Source-Wir-Tool.wvb'
 $SourceWvbModule = Join-Path $OutputRoot 'Source-Wvb-Core.wvb'
 $SourceWvbDemoModule = Join-Path $OutputRoot 'Source-Wvb-Demo.wvb'
 $SourceWvbToolModule = Join-Path $OutputRoot 'Source-Wvb-Tool.wvb'
+$WvDumpCoreModule = Join-Path $OutputRoot 'Wv-Dump-Core.wvb'
+$WvoCoreModule = Join-Path $OutputRoot 'Wvo-Object-Core.wvb'
+$WvaAssemblerModule = Join-Path $OutputRoot 'Wva-Assembler-Core.wvb'
+$WvLinkerCoreModule = Join-Path $OutputRoot 'Wv-Linker-Core.wvb'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -968,6 +978,42 @@ Invoke-ExactSourceCompilerBuild `
     '18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754' `
     'source wvb status=Valid functions=427 code-bytes=759920 module-bytes=921640'
 
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Wvb-Inspector.wvproj') `
+    $WvDumpCoreModule `
+    76527 `
+    '293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753' `
+    'build status=Published verification=compiler-aligned functions=39 code-bytes=59277 module-bytes=76527'
+Invoke-ExactVerify $WvDumpCoreModule
+Invoke-ExactInspect $WvDumpCoreModule @('profile=hosted', 'section name=capabilities offset=48 bytes=145 count=5', 'section name=exports offset=75635 bytes=17 count=1', 'section name=types offset=75660 bytes=867 count=5', 'Inspect\\u02C9wvb\\u02C9envelope', 'opcode=record\.create', 'opcode=record\.field', 'opcode=enum\.name', 'opcode=u32\.format', 'opcode=text\.concat', 'opcode=bytes\.read_i32_little', 'opcode=text\.utf8_is_valid', 'opcode=text\.from_utf8', 'opcode=text\.quote', 'opcode=u32\.from_u8')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Wvo-Object.wvproj') `
+    $WvoCoreModule `
+    61008 `
+    'a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db' `
+    'build status=Published verification=compiler-aligned functions=42 code-bytes=51298 module-bytes=61008'
+Invoke-ExactVerify $WvoCoreModule
+Invoke-ExactInspect $WvoCoreModule @('profile=hosted', 'section name=capabilities offset=51 bytes=145 count=5', 'section name=exports offset=59468 bytes=17 count=1', 'section name=types offset=59493 bytes=1515 count=13', 'opcode=bytes\.concat', 'opcode=bytes\.from_u16_little', 'opcode=bytes\.from_i32_little', 'opcode=text\.to_utf8', '__WvM1F0', 'file\.read_bytes', 'Object\\u02C9sha256', 'name="__WvM2F0" parameters=1 result=bytes') @('file\.write_bytes')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Wva-Assembler.wvproj') `
+    $WvaAssemblerModule `
+    180071 `
+    'a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c' `
+    'build status=Published verification=compiler-aligned functions=101 code-bytes=145748 module-bytes=180071'
+Invoke-ExactVerify $WvaAssemblerModule
+Invoke-ExactInspect $WvaAssemblerModule @('profile=hosted', 'section name=capabilities offset=54 bytes=172 count=6', 'section name=exports offset=177876 bytes=17 count=1', 'section name=types offset=177901 bytes=2170 count=19', 'Scan\\u02C9wva', 'Inspect\\u02C9wva\\u02C9semantics', 'Encode\\u02C9wva', 'Encode\\u02C9sections', 'Encode\\u02C9symbols', 'Encode\\u02C9relocations', '__WvM4F1', '__WvM2F0', '__WvM3F0', '__WvM1F0', 'opcode=bytes\.concat', 'opcode=bytes\.from_u32_little', 'file\.read_bytes', 'file\.write_bytes')
+
+Invoke-ExactBuild `
+    (Join-Path $RepositoryRoot 'Windvale-Wv-Linker.wvproj') `
+    $WvLinkerCoreModule `
+    135740 `
+    '02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874' `
+    'build status=Published verification=compiler-aligned functions=96 code-bytes=112099 module-bytes=135740'
+Invoke-ExactVerify $WvLinkerCoreModule
+Invoke-ExactInspect $WvLinkerCoreModule @('profile=hosted', 'section name=capabilities offset=50 bytes=172 count=6', 'section name=exports offset=133297 bytes=17 count=1', 'section name=types offset=133322 bytes=2418 count=20', 'Inspect\\u02C9object', 'Find\\u02C9section', 'Find\\u02C9symbol', 'Find\\u02C9relocation', 'Validate\\u02C9export\\u02C9uniqueness', 'Validate\\u02C9imports', 'Measure\\u02C9layout', 'Validate\\u02C9definitions', 'Build\\u02C9unrelocated\\u02C9image', 'Apply\\u02C9relocations', 'Verifier\\u02C9place\\u02C9section', 'Verifier\\u02C9find\\u02C9export', 'Verifier\\u02C9apply\\u02C9relocations\\u02C9reverse', 'Accept\\u02C9reconstructed\\u02C9image', 'Accepted\\u02C9object\\u02C9view', 'Definition\\u02C9map\\u02C9minimum\\u02C9exceeds\\u02C9limit', 'Build\\u02C9canonical\\u02C9map', '__WvM4F0', '__WvM2F0', '__WvM3F0', '__WvM1F0', '__WvM1F1', 'name="__WvM5F0" parameters=1 result=bytes locals=903', 'opcode=bytes\.read_i32_little', 'file\.read_bytes', 'file\.write_bytes')
+
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
     $TemporaryRoot `
@@ -999,4 +1045,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=97 cases=156'
+Write-Output 'native Seed front-door verification status=Complete artifacts=101 cases=168'

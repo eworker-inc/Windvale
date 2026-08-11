@@ -259,7 +259,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=97 cases=156'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=101 cases=168'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -1424,34 +1424,6 @@ if (
     throw 'The Windvale WVB backend did not reject noncanonical dependency order without output.'
 }
 
-dotnet $ToolDll compile (Join-Path $RepositoryRoot 'Examples/Foundation/Wv-Dump-Core.wv') -o $WvDumpCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wv-Dump-Core.wv.' }
-
-$WvDumpCoreVerifyOutput = dotnet $ToolDll verify $WvDumpCoreModule
-if ($LASTEXITCODE -ne 0 -or $WvDumpCoreVerifyOutput -notcontains 'Verified: Wvˉdumpˉcore') {
-    throw 'The Seed CLI failed to verify Wv-Dump-Core.wvb.'
-}
-
-$WvDumpCoreInspectOutput = dotnet $ToolDll inspect $WvDumpCoreModule
-$WvDumpCoreInspection = $WvDumpCoreInspectOutput -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvDumpCoreInspectOutput -notcontains 'Nominal types (5)' -or
-    $WvDumpCoreInspection -notmatch 'Inspectˉwvbˉenvelope' -or
-    $WvDumpCoreInspection -notmatch 'record\.create' -or
-    $WvDumpCoreInspection -notmatch 'record\.field' -or
-    $WvDumpCoreInspection -notmatch 'enum\.name' -or
-    $WvDumpCoreInspection -notmatch 'u32\.format' -or
-    $WvDumpCoreInspection -notmatch 'text\.concat' -or
-    $WvDumpCoreInspection -notmatch 'bytes\.read_i32_little' -or
-    $WvDumpCoreInspection -notmatch 'text\.utf8_is_valid' -or
-    $WvDumpCoreInspection -notmatch 'text\.from_utf8' -or
-    $WvDumpCoreInspection -notmatch 'text\.quote' -or
-    $WvDumpCoreInspection -notmatch 'u32\.from_u8'
-) {
-    throw 'The Seed CLI inspector did not expose the structured Windvale section walker.'
-}
-
 $WvDumpCapabilities = @(
     '--allow', 'console.write_line',
     '--allow', 'diagnostic.write_line',
@@ -1505,34 +1477,6 @@ if ($LASTEXITCODE -ne 3 -or ($WvDumpMissingOutput -join "`n") -notmatch 'WVR3022
 $WvDumpInvalidNameOutput = dotnet $ToolDll run $WvDumpCoreModule @WvDumpCapabilities -- '' 2>&1
 if ($LASTEXITCODE -ne 3 -or ($WvDumpInvalidNameOutput -join "`n") -notmatch 'WVR3021') {
     throw 'The hosted file adapter did not reject an empty resource name deterministically.'
-}
-
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Object-Model/Windvale/Wvo-Object-Core.wv') `
-    --module $ByteOrderingSource `
-    --module $Sha256Source `
-    -o $WvoCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wvo-Object-Core.wv.' }
-
-$WvoCoreVerifyOutput = dotnet $ToolDll verify $WvoCoreModule
-if ($LASTEXITCODE -ne 0 -or $WvoCoreVerifyOutput -notcontains 'Verified: Wvoˉobjectˉcore') {
-    throw 'The Seed CLI failed to verify Wvo-Object-Core.wvb.'
-}
-
-$WvoCoreInspection = (dotnet $ToolDll inspect $WvoCoreModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvoCoreInspection -notmatch 'bytes\.concat' -or
-    $WvoCoreInspection -notmatch 'bytes\.from_u16_little' -or
-    $WvoCoreInspection -notmatch 'bytes\.from_i32_little' -or
-    $WvoCoreInspection -notmatch 'text\.to_utf8' -or
-    $WvoCoreInspection -notmatch '__WvM1F0' -or
-    $WvoCoreInspection -notmatch 'file\.read_bytes' -or
-    $WvoCoreInspection -notmatch 'Objectˉsha256' -or
-    $WvoCoreInspection -notmatch '__WvM2F0\(bytes\) -> bytes' -or
-    $WvoCoreInspection -match 'file\.write_bytes'
-) {
-    throw 'The Seed CLI inspector did not expose the read-only Windvale object operations.'
 }
 
 $WvoCapabilities = @(
@@ -1615,41 +1559,6 @@ if ($LASTEXITCODE -ne 3 -or ($WvoMissingInputOutput -join "`n") -notmatch 'WVR30
     throw 'The hosted file reader did not report a missing WVO input deterministically.'
 }
 
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Assembler/Windvale/Wva-Assembler-Core.wv') `
-    --module $MachineContractsSource `
-    --module $ByteOrderingSource `
-    --module $DecimalParsingSource `
-    --module $ByteConstructionSource `
-    -o $WvaAssemblerModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile Wva-Assembler-Core.wv.' }
-
-$WvaAssemblerVerifyOutput = dotnet $ToolDll verify $WvaAssemblerModule
-if ($LASTEXITCODE -ne 0 -or $WvaAssemblerVerifyOutput -notcontains 'Verified: Wvaˉassemblerˉcore') {
-    throw 'The bytecode verifier rejected the Windvale WVA assembler.'
-}
-
-$WvaAssemblerInspection = (dotnet $ToolDll inspect $WvaAssemblerModule) -join "`n"
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvaAssemblerInspection -notmatch 'Scanˉwva' -or
-    $WvaAssemblerInspection -notmatch 'Inspectˉwvaˉsemantics' -or
-    $WvaAssemblerInspection -notmatch 'Encodeˉwva' -or
-    $WvaAssemblerInspection -notmatch 'Encodeˉsections' -or
-    $WvaAssemblerInspection -notmatch 'Encodeˉsymbols' -or
-    $WvaAssemblerInspection -notmatch 'Encodeˉrelocations' -or
-    $WvaAssemblerInspection -notmatch '__WvM4F1' -or
-    $WvaAssemblerInspection -notmatch '__WvM2F0' -or
-    $WvaAssemblerInspection -notmatch '__WvM3F0' -or
-    $WvaAssemblerInspection -notmatch '__WvM1F0' -or
-    $WvaAssemblerInspection -notmatch 'bytes\.concat' -or
-    $WvaAssemblerInspection -notmatch 'bytes\.from_u32_little' -or
-    $WvaAssemblerInspection -notmatch 'file\.read_bytes' -or
-    $WvaAssemblerInspection -notmatch 'file\.write_bytes'
-) {
-    throw 'The Seed CLI inspector did not expose the Windvale WVA assembler operations.'
-}
-
 $WvaAssemblerCapabilities = @(
     '--allow', 'console.write_line',
     '--allow', 'diagnostic.write_line',
@@ -1668,53 +1577,6 @@ if ($LASTEXITCODE -ne 3 -or ($WvaAssemblerUnauthorizedOutput -join "`n") -notmat
 $WvaAssemblerSelfTestOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities
 if ($LASTEXITCODE -ne 0 -or $WvaAssemblerSelfTestOutput -notcontains 'Result: 0') {
     throw 'The Windvale WVA assembler self-test did not return Result: 0.'
-}
-
-dotnet $ToolDll `
-    compile (Join-Path $RepositoryRoot 'Linker/Windvale/Wv-Linker-Core.wv') `
-    --module $MachineContractsSource `
-    --module $ByteOrderingSource `
-    --module $DecimalParsingSource `
-    --module $ByteConstructionSource `
-    -o $WvLinkerCoreModule
-if ($LASTEXITCODE -ne 0) { throw 'The Seed CLI failed to compile the Windvale linker core.' }
-
-$WvLinkerVerifyOutput = dotnet $ToolDll verify $WvLinkerCoreModule
-if ($LASTEXITCODE -ne 0 -or $WvLinkerVerifyOutput -notcontains 'Verified: Wvˉlinkerˉcore') {
-    throw 'The bytecode verifier rejected the Windvale linker core.'
-}
-
-$WvLinkerInspectOutput = dotnet $ToolDll inspect $WvLinkerCoreModule
-$WvLinkerInspection = $WvLinkerInspectOutput -join "`n"
-if (
-    $WvLinkerInspection -notmatch 'Inspectˉobject' -or
-    $WvLinkerInspection -notmatch 'Findˉsection' -or
-    $WvLinkerInspection -notmatch 'Findˉsymbol' -or
-    $WvLinkerInspection -notmatch 'Findˉrelocation' -or
-    $WvLinkerInspection -notmatch 'Validateˉexportˉuniqueness' -or
-    $WvLinkerInspection -notmatch 'Validateˉimports' -or
-    $WvLinkerInspection -notmatch 'Measureˉlayout' -or
-    $WvLinkerInspection -notmatch 'Validateˉdefinitions' -or
-    $WvLinkerInspection -notmatch 'Buildˉunrelocatedˉimage' -or
-    $WvLinkerInspection -notmatch 'Applyˉrelocations' -or
-    $WvLinkerInspection -notmatch 'Verifierˉplaceˉsection' -or
-    $WvLinkerInspection -notmatch 'Verifierˉfindˉexport' -or
-    $WvLinkerInspection -notmatch 'Verifierˉapplyˉrelocationsˉreverse' -or
-    $WvLinkerInspection -notmatch 'Acceptˉreconstructedˉimage' -or
-    $WvLinkerInspection -notmatch 'Acceptedˉobjectˉview' -or
-    $WvLinkerInspection -notmatch 'Definitionˉmapˉminimumˉexceedsˉlimit' -or
-    $WvLinkerInspection -notmatch 'Buildˉcanonicalˉmap' -or
-    $WvLinkerInspection -notmatch '__WvM4F0' -or
-    $WvLinkerInspection -notmatch '__WvM2F0' -or
-    $WvLinkerInspection -notmatch '__WvM3F0' -or
-    $WvLinkerInspection -notmatch '__WvM1F0' -or
-    $WvLinkerInspection -notmatch '__WvM1F1' -or
-    $WvLinkerInspection -notmatch 'bytes\.read_i32_little' -or
-    $WvLinkerInspection -notmatch 'bytes\.sha256_hex' -or
-    $WvLinkerInspection -notmatch 'file\.read_bytes' -or
-    $WvLinkerInspection -notmatch 'file\.write_bytes'
-) {
-    throw 'The Seed CLI inspector did not expose the Windvale linker scanner operations.'
 }
 
 $WvLinkerCapabilities = @(

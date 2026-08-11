@@ -369,6 +369,29 @@ unchanged. Independent Linux execution, native semantic/tool execution,
 remaining broad-suite transfers, GitHub cutover, grouped qualification, and
 recovery retirement remain open.
 
+Current T2 canonical binary-tool construction transfer:
+[Decision 0519](../Decisions/0519-Native-Binary-Tool-Build-Verification-And-Inspection-Transfer.md)
+extends the paired native front-door helper from 156 to 168 transferred calls
+and from 97 to 101 exact artifacts. It natively builds, independently verifies,
+and deterministically inspects WvDump, the WVO object core, the WVA assembler,
+and the Wv linker from their authoritative Project 1 manifests. The current
+Windows evidence covers the unchanged 156-case prefix and the corrected focused
+twelve-case tail without claiming one uninterrupted passing invocation.
+Focused WvDump interpreter/JIT/AOT agreement, digest-bound WVO read-only
+reports, eleven WVA rejection families, and digest-bound linker output all pass.
+This removes four managed builds, four managed verifications, and four managed
+inspections from each broad host script, 174 managed invocations cumulatively.
+Capability-bearing execution, malformed-input and output-preservation behavior,
+artifact publication, and Stage 0 differential/oracle comparisons remain
+managed. The retained current WVO application writer now emits 606,720 bytes
+against the pinned 606,208-byte candidate, and the retained WVA application
+writer no longer reproduces its pinned Windows digest. Neither candidate is
+repinned from one-host evidence. T2 therefore remains `managed-normal`; the
+three-normal plus nine-recovery direct-entry inventory is unchanged. Current-
+writer reconciliation, independent Linux execution, remaining broad-suite
+transfers, GitHub cutover, grouped qualification, promotion, and recovery
+retirement remain open.
+
 ## Normal-path audit result
 
 Decision 0485 closes the read-only publisher-admitter packaging item left by

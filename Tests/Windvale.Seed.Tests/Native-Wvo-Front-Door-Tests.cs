@@ -16,13 +16,16 @@ internal static partial class Program
         using var Manifest = JsonDocument.Parse(File.ReadAllBytes(
             Path.Combine(Artifactˉroot, "Manifest.json")));
         var Root = Manifest.RootElement;
-        Equal("windvale-native-wvo-object-candidate-1", Root.GetProperty("format").GetString());
+        Equal("windvale-native-wvo-object-candidate-2", Root.GetProperty("format").GetString());
         Equal("candidate", Root.GetProperty("status").GetString());
         Equal("0222", Root.GetProperty("sourceDecision").GetString());
         Equal("0308", Root.GetProperty("provenanceDecision").GetString());
+        Equal("0500", Root.GetProperty("constructionDecision").GetString());
         Equal("pending", Root.GetProperty("qualification").GetString());
-        Equal("stage0-recovery", Root.GetProperty("construction").GetString());
-        Equal(3, Root.GetProperty("artifacts").GetArrayLength());
+        Equal(
+            "windvale-native-profile-6-reconstruction",
+            Root.GetProperty("construction").GetString());
+        Equal(4, Root.GetProperty("artifacts").GetArrayLength());
         foreach (var Artifact in Root.GetProperty("artifacts").EnumerateArray())
         {
             var Relative = Artifact.GetProperty("path").GetString() ??

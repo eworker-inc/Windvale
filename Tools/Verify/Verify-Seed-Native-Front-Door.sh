@@ -93,6 +93,26 @@ exact_inspect() {
     done
 }
 
+exact_inspect_without() {
+    MODULE_PATH=$1
+    FORBIDDEN_PATTERN=$2
+    shift 2
+    if ! INSPECT_OUTPUT=$("$NATIVE_INSPECT" "$MODULE_PATH"); then
+        echo "The native Seed inspector rejected: $MODULE_PATH" >&2
+        exit 1
+    fi
+    for REQUIRED_PATTERN in "$@"; do
+        if ! printf '%s\n' "$INSPECT_OUTPUT" | grep -F "$REQUIRED_PATTERN" >/dev/null; then
+            echo "The native Seed inspector omitted required evidence: $MODULE_PATH" >&2
+            exit 1
+        fi
+    done
+    if printf '%s\n' "$INSPECT_OUTPUT" | grep -F "$FORBIDDEN_PATTERN" >/dev/null; then
+        echo "The native Seed inspector exposed forbidden evidence: $MODULE_PATH" >&2
+        exit 1
+    fi
+}
+
 exact_run() {
     MODULE_PATH=$1
     EXPECTED_RESULT=$2
@@ -242,6 +262,10 @@ SOURCE_WIR_TOOL_MODULE="$OUTPUT_ROOT/Source-Wir-Tool.wvb"
 SOURCE_WVB_MODULE="$OUTPUT_ROOT/Source-Wvb-Core.wvb"
 SOURCE_WVB_DEMO_MODULE="$OUTPUT_ROOT/Source-Wvb-Demo.wvb"
 SOURCE_WVB_TOOL_MODULE="$OUTPUT_ROOT/Source-Wvb-Tool.wvb"
+WVDUMP_CORE_MODULE="$OUTPUT_ROOT/Wv-Dump-Core.wvb"
+WVO_CORE_MODULE="$OUTPUT_ROOT/Wvo-Object-Core.wvb"
+WVA_ASSEMBLER_MODULE="$OUTPUT_ROOT/Wva-Assembler-Core.wvb"
+WVLINK_CORE_MODULE="$OUTPUT_ROOT/Wv-Linker-Core.wvb"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -1083,6 +1107,46 @@ exact_source_compiler_build \
     000e1028 \
     'source wvb status=Valid functions=427 code-bytes=759920 module-bytes=921640'
 
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Wvb-Inspector.wvproj" \
+    "$WVDUMP_CORE_MODULE" \
+    76527 \
+    293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753 \
+    00012aef \
+    'build status=Published verification=compiler-aligned functions=39 code-bytes=59277 module-bytes=76527'
+exact_verify "$WVDUMP_CORE_MODULE"
+exact_inspect "$WVDUMP_CORE_MODULE" 'profile=hosted' 'section name=capabilities offset=48 bytes=145 count=5' 'section name=exports offset=75635 bytes=17 count=1' 'section name=types offset=75660 bytes=867 count=5' 'Inspect\u02C9wvb\u02C9envelope' 'opcode=record.create' 'opcode=record.field' 'opcode=enum.name' 'opcode=u32.format' 'opcode=text.concat' 'opcode=bytes.read_i32_little' 'opcode=text.utf8_is_valid' 'opcode=text.from_utf8' 'opcode=text.quote' 'opcode=u32.from_u8'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Wvo-Object.wvproj" \
+    "$WVO_CORE_MODULE" \
+    61008 \
+    a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db \
+    0000ee50 \
+    'build status=Published verification=compiler-aligned functions=42 code-bytes=51298 module-bytes=61008'
+exact_verify "$WVO_CORE_MODULE"
+exact_inspect_without "$WVO_CORE_MODULE" 'file.write_bytes' 'profile=hosted' 'section name=capabilities offset=51 bytes=145 count=5' 'section name=exports offset=59468 bytes=17 count=1' 'section name=types offset=59493 bytes=1515 count=13' 'opcode=bytes.concat' 'opcode=bytes.from_u16_little' 'opcode=bytes.from_i32_little' 'opcode=text.to_utf8' '__WvM1F0' 'file.read_bytes' 'Object\u02C9sha256' 'name="__WvM2F0" parameters=1 result=bytes'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Wva-Assembler.wvproj" \
+    "$WVA_ASSEMBLER_MODULE" \
+    180071 \
+    a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c \
+    0002bf67 \
+    'build status=Published verification=compiler-aligned functions=101 code-bytes=145748 module-bytes=180071'
+exact_verify "$WVA_ASSEMBLER_MODULE"
+exact_inspect "$WVA_ASSEMBLER_MODULE" 'profile=hosted' 'section name=capabilities offset=54 bytes=172 count=6' 'section name=exports offset=177876 bytes=17 count=1' 'section name=types offset=177901 bytes=2170 count=19' 'Scan\u02C9wva' 'Inspect\u02C9wva\u02C9semantics' 'Encode\u02C9wva' 'Encode\u02C9sections' 'Encode\u02C9symbols' 'Encode\u02C9relocations' '__WvM4F1' '__WvM2F0' '__WvM3F0' '__WvM1F0' 'opcode=bytes.concat' 'opcode=bytes.from_u32_little' 'file.read_bytes' 'file.write_bytes'
+
+exact_build \
+    "$REPOSITORY_ROOT/Windvale-Wv-Linker.wvproj" \
+    "$WVLINK_CORE_MODULE" \
+    135740 \
+    02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874 \
+    0002123c \
+    'build status=Published verification=compiler-aligned functions=96 code-bytes=112099 module-bytes=135740'
+exact_verify "$WVLINK_CORE_MODULE"
+exact_inspect "$WVLINK_CORE_MODULE" 'profile=hosted' 'section name=capabilities offset=50 bytes=172 count=6' 'section name=exports offset=133297 bytes=17 count=1' 'section name=types offset=133322 bytes=2418 count=20' 'Inspect\u02C9object' 'Find\u02C9section' 'Find\u02C9symbol' 'Find\u02C9relocation' 'Validate\u02C9export\u02C9uniqueness' 'Validate\u02C9imports' 'Measure\u02C9layout' 'Validate\u02C9definitions' 'Build\u02C9unrelocated\u02C9image' 'Apply\u02C9relocations' 'Verifier\u02C9place\u02C9section' 'Verifier\u02C9find\u02C9export' 'Verifier\u02C9apply\u02C9relocations\u02C9reverse' 'Accept\u02C9reconstructed\u02C9image' 'Accepted\u02C9object\u02C9view' 'Definition\u02C9map\u02C9minimum\u02C9exceeds\u02C9limit' 'Build\u02C9canonical\u02C9map' '__WvM4F0' '__WvM2F0' '__WvM3F0' '__WvM1F0' '__WvM1F1' 'name="__WvM5F0" parameters=1 result=bytes locals=903' 'opcode=bytes.read_i32_little' 'file.read_bytes' 'file.write_bytes'
+
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
     case "$TEMPORARY_DIRECTORY" in
@@ -1114,4 +1178,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=97 cases=156'
+echo 'native Seed front-door verification status=Complete artifacts=101 cases=168'

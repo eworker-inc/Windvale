@@ -573,6 +573,18 @@ differential, and Stage 0 oracle sequence remain in the managed lane. Native
 demo code `3004`, missing hosted profiles, and the absent independent native
 oracle keep T2 `managed-normal`.
 
+Decision 0519 transfers the next complete product-identity boundary. WvDump,
+the WVO object core, the WVA assembler, and the Wv linker now build through
+their authoritative Project 1 manifests, pass independent native verification,
+and expose their exact profile, capability, export, type, and ownership surfaces
+through native inspection. These twelve cases grow the paired helper to 101
+artifacts and 168 cases and bring the cumulative broad-host removal to 174
+managed calls. Capability-bearing executions, malformed-input and preservation
+contracts, produced-object/image evidence, and Stage 0 differentials remain in
+the managed lane. The retained current WVO and WVA host-container writers have
+drifted from the pinned candidates, so repinning requires reconciliation and
+independent dual-host evidence. T2 remains `managed-normal`.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

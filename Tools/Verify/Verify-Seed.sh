@@ -251,7 +251,7 @@ LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=97 cases=156' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=101 cases=168' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -1053,26 +1053,6 @@ if [ "$ACTUAL_EXISTING_COMPOSITION" != "$EXPECTED_EXISTING_COMPOSITION" ]; then
 fi
 rm -f "$INVALID_COMPOSITION_MODULE"
 
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Examples/Foundation/Wv-Dump-Core.wv" -o "$WVDUMP_CORE_MODULE"
-
-WVDUMP_CORE_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVDUMP_CORE_MODULE")
-printf '%s\n' "$WVDUMP_CORE_VERIFY_OUTPUT" | grep -F 'Verified: Wvˉdumpˉcore' >/dev/null
-
-WVDUMP_CORE_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$WVDUMP_CORE_MODULE")
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'Inspectˉwvbˉenvelope' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'Nominal types (5)' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'record.create' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'record.field' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'enum.name' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'u32.format' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'text.concat' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'bytes.read_i32_little' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'text.utf8_is_valid' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'text.from_utf8' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'text.quote' >/dev/null
-printf '%s\n' "$WVDUMP_CORE_INSPECT_OUTPUT" | grep -F 'u32.from_u8' >/dev/null
-
 set +e
 WVDUMP_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVDUMP_CORE_MODULE" 2>&1)
 WVDUMP_UNAUTHORIZED_EXIT=$?
@@ -1158,29 +1138,6 @@ if [ "$WVDUMP_INVALID_NAME_EXIT" -ne 3 ]; then
     exit 1
 fi
 printf '%s\n' "$WVDUMP_INVALID_NAME_OUTPUT" | grep -F 'WVR3021' >/dev/null
-
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Object-Model/Windvale/Wvo-Object-Core.wv" \
-    --module "$BYTE_ORDERING_SOURCE" \
-    --module "$SHA256_SOURCE" \
-    -o "$WVO_CORE_MODULE"
-
-WVO_CORE_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVO_CORE_MODULE")
-printf '%s\n' "$WVO_CORE_VERIFY_OUTPUT" | grep -F 'Verified: Wvoˉobjectˉcore' >/dev/null
-
-WVO_CORE_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$WVO_CORE_MODULE")
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.concat' >/dev/null
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.from_u16_little' >/dev/null
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'bytes.from_i32_little' >/dev/null
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'text.to_utf8' >/dev/null
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F '__WvM1F0' >/dev/null
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'Objectˉsha256' >/dev/null
-printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F '__WvM2F0(bytes) -> bytes' >/dev/null
-if printf '%s\n' "$WVO_CORE_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null; then
-    echo 'The read-only Windvale object core unexpectedly retained file-write authority.' >&2
-    exit 1
-fi
 
 set +e
 WVO_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVO_CORE_MODULE" 2>&1)
@@ -1288,33 +1245,6 @@ if [ "$WVO_MISSING_INPUT_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVO_MISSING_INPUT_OUTPUT" | grep -F 'WVR3022' >/dev/null
 
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Assembler/Windvale/Wva-Assembler-Core.wv" \
-    --module "$MACHINE_CONTRACTS_SOURCE" \
-    --module "$BYTE_ORDERING_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    -o "$WVA_ASSEMBLER_MODULE"
-
-WVA_ASSEMBLER_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVA_ASSEMBLER_MODULE")
-printf '%s\n' "$WVA_ASSEMBLER_VERIFY_OUTPUT" | grep -F 'Verified: Wvaˉassemblerˉcore' >/dev/null
-
-WVA_ASSEMBLER_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$WVA_ASSEMBLER_MODULE")
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Scanˉwva' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Inspectˉwvaˉsemantics' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉwva' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉsections' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉsymbols' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'Encodeˉrelocations' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F '__WvM4F1' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F '__WvM2F0' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F '__WvM3F0' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F '__WvM1F0' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'bytes.concat' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'bytes.from_u32_little' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
-
 set +e
 WVA_ASSEMBLER_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVA_ASSEMBLER_MODULE" 2>&1)
 WVA_ASSEMBLER_UNAUTHORIZED_EXIT=$?
@@ -1335,45 +1265,6 @@ WVA_ASSEMBLER_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
     --allow process.argument_count \
     --max-steps 10000000)
 printf '%s\n' "$WVA_ASSEMBLER_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
-dotnet "$TOOL_DLL" \
-    compile "$REPOSITORY_ROOT/Linker/Windvale/Wv-Linker-Core.wv" \
-    --module "$MACHINE_CONTRACTS_SOURCE" \
-    --module "$BYTE_ORDERING_SOURCE" \
-    --module "$DECIMAL_PARSING_SOURCE" \
-    --module "$BYTE_CONSTRUCTION_SOURCE" \
-    -o "$WVLINK_CORE_MODULE"
-
-WVLINK_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" verify "$WVLINK_CORE_MODULE")
-printf '%s\n' "$WVLINK_VERIFY_OUTPUT" | grep -F 'Verified: Wvˉlinkerˉcore' >/dev/null
-
-WVLINK_INSPECT_OUTPUT=$(dotnet "$TOOL_DLL" inspect "$WVLINK_CORE_MODULE")
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Inspectˉobject' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Findˉsection' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Findˉsymbol' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Findˉrelocation' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉexportˉuniqueness' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉimports' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Measureˉlayout' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Validateˉdefinitions' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Buildˉunrelocatedˉimage' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Applyˉrelocations' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Verifierˉplaceˉsection' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Verifierˉfindˉexport' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Verifierˉapplyˉrelocationsˉreverse' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Acceptˉreconstructedˉimage' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Acceptedˉobjectˉview' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Definitionˉmapˉminimumˉexceedsˉlimit' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'Buildˉcanonicalˉmap' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F '__WvM4F0' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F '__WvM2F0' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F '__WvM3F0' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F '__WvM1F0' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F '__WvM1F1' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.read_i32_little' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'bytes.sha256_hex' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.read_bytes' >/dev/null
-printf '%s\n' "$WVLINK_INSPECT_OUTPUT" | grep -F 'file.write_bytes' >/dev/null
 
 set +e
 WVLINK_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVLINK_CORE_MODULE" 2>&1)

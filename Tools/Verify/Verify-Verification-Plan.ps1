@@ -376,7 +376,7 @@ $NativeCases = @(
             'console-verifier-reconstruction',
             'console-publisher-reconstruction'
         )
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{
@@ -395,7 +395,7 @@ $NativeCases = @(
             'linker-hostile',
             'linker-map-limit'
         )
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{
@@ -470,7 +470,7 @@ $NativeCases = @(
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction'
         )
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{
@@ -493,7 +493,7 @@ $NativeCases = @(
             'publisher-rejections',
             'hosted-verifier-publisher-files'
         )
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{
@@ -713,10 +713,23 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'WvDump native front-door construction owner'
+        Paths = @(
+            'Examples/Foundation/Wv-Dump-Core.wv',
+            'Windvale-Wvb-Inspector.wvproj'
+        )
+        Suites = @('seed')
+        Gaps = @('seed-native-front-door')
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Windvale assembler'
-        Paths = @('Assembler/Windvale/Wva-Assembler-Core.wv')
+        Paths = @(
+            'Assembler/Windvale/Wva-Assembler-Core.wv',
+            'Windvale-Wva-Assembler.wvproj'
+        )
         Suites = @('assembler-rejections', 'assembler-golden', 'wva-differential')
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{
@@ -729,7 +742,7 @@ $NativeCases = @(
             'linker-hostile',
             'linker-map-limit'
         )
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{
@@ -909,7 +922,7 @@ $NativeCases = @(
         Name = 'combined deterministic order'
         Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv', 'Assembler/Windvale/Wva-Assembler-Core.wv')
         Suites = @('seed', 'unsafe-wvb', 'assembler-rejections', 'assembler-golden', 'wva-differential', 'source-containment', 'lowerer-rejections', 'console-packager-source-reconstruction')
-        Gaps = @()
+        Gaps = @('seed-native-front-door')
         VerifyPlan = $false
     },
     @{

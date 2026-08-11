@@ -6,6 +6,14 @@
 
 `Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉordering` and `Foundationˉsha256`. The current candidate WVB is 61,008 bytes with SHA-256 `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db`. It is a source candidate pending the final grouped Windows/Linux retirement gate; this identity is not a cross-host qualification claim.
 
+Decision 0519 makes that manifest the normal broad-script build contract and
+requires independent native verification plus exact inspection of its
+42-function, 51,298-code-byte product. Inspection binds the five read-only
+capabilities and rejects `file.write_bytes`. The old duplicated managed source
+list omitted `Wvo-Object-Verification.wv` and was no longer a current-product
+contract. Hosted verification/inspection behavior, malformed inputs, and WVO
+sample construction remain separate execution evidence.
+
 This module is an object verifier and inspector, not an assembler, linker, or object-file writer. Moving the source from `Examples/Foundation` into `Object-Model/Windvale` makes its ownership explicit without changing WVO 1.0.
 
 ## Pure boundaries
