@@ -115,7 +115,7 @@ elif [[ $? -ne 1 ]]; then
 fi
 [[ ! -s $test_directory/Rejection.out ]] || fail
 check_file "$test_directory/Rejection.err" \
-    76 78ca7089fbe5e559ef1820d84e4b7cbc08462a294a03f89f93f4f9ae984055c0 || fail
+    76 fa0ab0ac412348d0f8de2f025d6102fa60bbe655ec932d6de58db3edd5e143cc || fail
 check_file "$application" \
     1064960 c2700e5e68711d7b8e8a8f7e9573d87dfa27c3676a034a314310ef59045e5f1a || fail
 check_file "$fixture" 8304 \
