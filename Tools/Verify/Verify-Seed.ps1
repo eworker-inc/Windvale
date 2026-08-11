@@ -245,12 +245,10 @@ $WvaAssemblerModule = Join-Path $Artifacts 'Wva-Assembler-Core.wvb'
 $WvLinkerCoreModule = Join-Path $Artifacts 'Wv-Linker-Core.wvb'
 $WvoSample = Join-Path $Artifacts 'Sample.wvo'
 $AssemblyObject = Join-Path $Artifacts 'Hello-Object.wvo'
-$WindvaleAssemblyObject = Join-Path $Artifacts 'Hello-Object-Windvale.wvo'
-$InvalidWindvaleAssemblyObject = Join-Path $Artifacts '__windvale_invalid_assembly_output__.wvo'
+$WindvaleAssemblyObject = $WvoSample
 $LinkProviderObject = Join-Path $Artifacts 'Console-Provider.wvo'
 $WindvaleLinkedImage = Join-Path $Artifacts 'Hello-Linked-Windvale.bin'
 $WindvaleLinkMap = Join-Path $Artifacts 'Hello-Linked-Windvale.wvmap'
-$InvalidWindvaleLinkedImage = Join-Path $Artifacts '__windvale_invalid_wvlink_output__.bin'
 $LinkedImage = Join-Path $Artifacts 'Hello-Linked.bin'
 $LinkMap = Join-Path $Artifacts 'Hello-Linked.wvmap'
 $InvalidLinkedImage = Join-Path $Artifacts '__windvale_invalid_link_output__.bin'
@@ -259,7 +257,7 @@ $NativeSeedOutput = @(& $NativeSeedFrontDoor -OutputDirectory $Artifacts)
 if (
     $LASTEXITCODE -ne 0 -or
     $NativeSeedOutput.Count -ne 1 -or
-    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=102 cases=174'
+    $NativeSeedOutput[0] -ne 'native Seed front-door verification status=Complete artifacts=105 cases=184'
 ) {
     throw 'The native Seed front-door verification failed.'
 }
@@ -1520,11 +1518,6 @@ if ($LASTEXITCODE -ne 3 -or ($WvaAssemblerUnauthorizedOutput -join "`n") -notmat
     throw 'The Seed CLI did not refuse ungranted WVA assembler capabilities.'
 }
 
-$WvaAssemblerSelfTestOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities
-if ($LASTEXITCODE -ne 0 -or $WvaAssemblerSelfTestOutput -notcontains 'Result: 0') {
-    throw 'The Windvale WVA assembler self-test did not return Result: 0.'
-}
-
 $WvLinkerCapabilities = @(
     '--allow', 'console.write',
     '--allow', 'diagnostic.write_line',
@@ -1539,45 +1532,9 @@ if ($LASTEXITCODE -ne 3 -or ($WvLinkerUnauthorizedOutput -join "`n") -notmatch '
     throw 'The Seed CLI did not refuse ungranted Windvale linker capabilities.'
 }
 
-$WvLinkerSelfTestOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities
-if ($LASTEXITCODE -ne 0 -or $WvLinkerSelfTestOutput -notcontains 'Result: 0') {
-    throw 'The Windvale linker scanner self-test did not return Result: 0.'
-}
-
-$WvaAssemblerHostedOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Assembler/Hello-Object.wva') $WindvaleAssemblyObject
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvaAssemblerHostedOutput -notcontains 'wvasm 1' -or
-    $WvaAssemblerHostedOutput -notcontains 'assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1' -or
-    $WvaAssemblerHostedOutput -notcontains 'Result: 0'
-) {
-    throw 'The Windvale WVA assembler did not encode the canonical assembly source.'
-}
 $WindvaleAssemblyHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleAssemblyObject).Hash.ToLowerInvariant()
 if ($WindvaleAssemblyHash -ne '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85') {
     throw "The Windvale WVA assembler wrote unexpected bytes: $WindvaleAssemblyHash"
-}
-$WindvaleAssemblyVerifyOutput = dotnet $ToolDll object-verify $WindvaleAssemblyObject
-if ($LASTEXITCODE -ne 0 -or $WindvaleAssemblyVerifyOutput -notcontains 'Verified object: X86ˉ64') {
-    throw 'The independent object verifier rejected the Windvale-written assembler output.'
-}
-
-$WvLinkerHostedOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- $WindvaleAssemblyObject
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvLinkerHostedOutput -notcontains 'object status=Valid sections=2 symbols=3 relocations=2 offset=218' -or
-    $WvLinkerHostedOutput -notcontains 'Result: 0'
-) {
-    throw 'The Windvale linker scanner did not accept the canonical assembler object.'
-}
-
-$WvLinkerInvalidOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') 2>&1
-if (
-    $LASTEXITCODE -ne 0 -or
-    ($WvLinkerInvalidOutput -join "`n") -notmatch 'object status=Badˉmagic' -or
-    $WvLinkerInvalidOutput -notcontains 'Result: 2'
-) {
-    throw 'The Windvale linker scanner did not reject a non-WVO input deterministically.'
 }
 $MissingAssemblerParent = Join-Path $Artifacts '__windvale_missing_assembler_parent__'
 if (Test-Path -LiteralPath $MissingAssemblerParent) {
@@ -1592,28 +1549,6 @@ if (Test-Path -LiteralPath $MissingAssemblerOutput) {
     throw 'The failed Windvale assembler host write left a partial output object.'
 }
 
-if (Test-Path -LiteralPath $InvalidWindvaleAssemblyObject) {
-    throw "The invalid Windvale assembly output unexpectedly exists: $InvalidWindvaleAssemblyObject"
-}
-$WvaSemanticInvalidOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') $InvalidWindvaleAssemblyObject 2>&1
-if (
-    $LASTEXITCODE -ne 0 -or
-    ($WvaSemanticInvalidOutput -join "`n") -notmatch 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' -or
-    $WvaSemanticInvalidOutput -notcontains 'Result: 2'
-) {
-    throw 'The Windvale WVA assembler did not reject non-WVA source deterministically.'
-}
-if (Test-Path -LiteralPath $InvalidWindvaleAssemblyObject) {
-    throw 'Rejected Windvale assembly created a partial output object.'
-}
-$WvaSemanticExistingOutput = dotnet $ToolDll run $WvaAssemblerModule @WvaAssemblerCapabilities -- (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') $WindvaleAssemblyObject 2>&1
-if (
-    $LASTEXITCODE -ne 0 -or
-    ($WvaSemanticExistingOutput -join "`n") -notmatch 'assembly status=WVA1001' -or
-    $WvaSemanticExistingOutput -notcontains 'Result: 2'
-) {
-    throw 'The Windvale WVA assembler did not reject invalid input targeting an existing output.'
-}
 $PreservedWindvaleAssemblyHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleAssemblyObject).Hash.ToLowerInvariant()
 if ($PreservedWindvaleAssemblyHash -ne $WindvaleAssemblyHash) {
     throw 'Rejected Windvale assembly modified an existing output object.'
@@ -1647,64 +1582,13 @@ if (
     throw 'The object inspector did not expose the expected WVA sections and relocations.'
 }
 
-$ProviderAssemblyOutput = dotnet $ToolDll assemble (Join-Path $RepositoryRoot 'Examples/Linker/Console-Provider.wva') -o $LinkProviderObject
-if (
-    $LASTEXITCODE -ne 0 -or
-    $ProviderAssemblyOutput -notcontains 'SHA-256: 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab'
-) {
-    throw 'The Stage 0 assembler did not produce the canonical linker provider object.'
-}
-
-$WvLinkerMapOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleLinkedImage $WindvaleAssemblyObject $LinkProviderObject
-if (
-    $LASTEXITCODE -ne 0 -or
-    $WvLinkerMapOutput -notcontains 'windvale-link-map 1' -or
-    $WvLinkerMapOutput -notcontains 'target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24' -or
-    $WvLinkerMapOutput -notcontains 'entry name=Main address=1048576' -or
-    $WvLinkerMapOutput -notcontains 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' -or
-    $WvLinkerMapOutput -notcontains 'import index=0 input=0 source-index=2 kind=function name=Console_write provider-input=1 provider-source-index=0 address=1048592' -or
-    $WvLinkerMapOutput -notcontains 'relocation index=0 input=0 source-index=0 kind=relative-i32 patch-offset=6 patch-address=1048582 target=Console_write target-input=1 target-source-index=0 target-address=1048592 addend=-4 value=6' -or
-    $WvLinkerMapOutput -notcontains 'relocation index=1 input=0 source-index=1 kind=absolute-u32 patch-offset=20 patch-address=1048596 target=Main target-input=0 target-source-index=1 target-address=1048576 addend=0 value=1048576' -or
-    $WvLinkerMapOutput -notcontains 'Result: 0' -or
-    ($WvLinkerMapOutput -join "`n") -match [regex]::Escape($RepositoryRoot)
-) {
-    throw 'The Windvale linker did not produce the canonical path-free map.'
-}
 $WindvaleLinkHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleLinkedImage).Hash.ToLowerInvariant()
 if ($WindvaleLinkHash -ne '0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a') {
     throw "The Windvale linker wrote unexpected image bytes: $WindvaleLinkHash"
 }
-[System.IO.File]::WriteAllText(
-    $WindvaleLinkMap,
-    ((($WvLinkerMapOutput | Where-Object { $_ -ne 'Result: 0' }) -join "`n") + "`n"),
-    [System.Text.UTF8Encoding]::new($false))
 $WindvaleLinkMapHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleLinkMap).Hash.ToLowerInvariant()
 if ($WindvaleLinkMapHash -ne '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4') {
     throw "The Windvale linker wrote an unexpected canonical map: $WindvaleLinkMapHash"
-}
-
-if (Test-Path -LiteralPath $InvalidWindvaleLinkedImage) {
-    throw "The invalid Windvale link output unexpectedly exists: $InvalidWindvaleLinkedImage"
-}
-$WvLinkerUndefinedOutput = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $InvalidWindvaleLinkedImage $WindvaleAssemblyObject 2>&1
-if (
-    $LASTEXITCODE -ne 0 -or
-    ($WvLinkerUndefinedOutput -join "`n") -notmatch 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' -or
-    $WvLinkerUndefinedOutput -notcontains 'Result: 2'
-) {
-    throw 'The Windvale linker did not reject an undefined import deterministically.'
-}
-if (Test-Path -LiteralPath $InvalidWindvaleLinkedImage) {
-    throw 'A rejected Windvale link created a partial image.'
-}
-
-$WvLinkerExistingFailure = dotnet $ToolDll run $WvLinkerCoreModule @WvLinkerCapabilities -- 1048576 Main $WindvaleLinkedImage $WindvaleAssemblyObject 2>&1
-if (
-    $LASTEXITCODE -ne 0 -or
-    ($WvLinkerExistingFailure -join "`n") -notmatch 'link status=WVL1005' -or
-    $WvLinkerExistingFailure -notcontains 'Result: 2'
-) {
-    throw 'The Windvale linker did not reject an invalid link targeting an existing image.'
 }
 $PreservedWindvaleLinkHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $WindvaleLinkedImage).Hash.ToLowerInvariant()
 if ($PreservedWindvaleLinkHash -ne $WindvaleLinkHash) {

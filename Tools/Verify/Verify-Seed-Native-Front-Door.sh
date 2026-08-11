@@ -18,6 +18,9 @@ NATIVE_ASSEMBLER="$REPOSITORY_ROOT/Tools/Native/Assemble-Wva.sh"
 NATIVE_WVO_VERIFY="$REPOSITORY_ROOT/Tools/Native/Verify-Wvo.sh"
 NATIVE_WVO_INSPECT="$REPOSITORY_ROOT/Tools/Native/Inspect-Wvo.sh"
 NATIVE_WVDUMP_APPLICATION="$REPOSITORY_ROOT/Artifacts/Native-Front-Door/linux-x64/wvdump.elf"
+NATIVE_WVA_APPLICATION="$REPOSITORY_ROOT/Artifacts/Native-Front-Door/linux-x64/wvasm.elf"
+NATIVE_LINKER="$REPOSITORY_ROOT/Tools/Native/Link-Wvo.sh"
+NATIVE_LINKER_APPLICATION="$REPOSITORY_ROOT/Artifacts/Native-Wv-Linker-Candidate/Wv-Linker.elf"
 
 exact_build() {
     PROJECT_PATH=$1
@@ -285,6 +288,178 @@ exact_wvo_read_only_execution() {
     fi
 }
 
+exact_wva_and_linker_execution() {
+    OBJECT_PATH=$1
+    INVALID_SOURCE_PATH=$2
+    PROVIDER_OBJECT_PATH=$3
+    LINKED_IMAGE_PATH=$4
+    LINK_MAP_PATH=$5
+    INVALID_ASSEMBLY_PATH=$6
+    INVALID_LINK_PATH=$7
+
+    ASSEMBLER_BYTES=$(wc -c < "$NATIVE_WVA_APPLICATION" | tr -d ' ')
+    ASSEMBLER_SHA256=$(sha256sum "$NATIVE_WVA_APPLICATION" | awk '{print $1}')
+    if [ "$ASSEMBLER_BYTES" != 2895872 ] || \
+        [ "$ASSEMBLER_SHA256" != 'ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0' ]; then
+        echo 'The Linux native WVA assembler application identity is invalid.' >&2
+        exit 1
+    fi
+    if ! ASSEMBLER_SELF_OUTPUT=$("$NATIVE_WVA_APPLICATION"); then
+        echo 'The digest-bound native WVA assembler self-test failed.' >&2
+        exit 1
+    fi
+    if [ -n "$ASSEMBLER_SELF_OUTPUT" ]; then
+        echo 'The digest-bound native WVA assembler self-test emitted unexpected output.' >&2
+        exit 1
+    fi
+
+    LINKER_BYTES=$(wc -c < "$NATIVE_LINKER_APPLICATION" | tr -d ' ')
+    LINKER_SHA256=$(sha256sum "$NATIVE_LINKER_APPLICATION" | awk '{print $1}')
+    if [ "$LINKER_BYTES" != 1798144 ] || \
+        [ "$LINKER_SHA256" != '8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a' ]; then
+        echo 'The Linux native WVO linker application identity is invalid.' >&2
+        exit 1
+    fi
+    if ! LINKER_SELF_OUTPUT=$("$NATIVE_LINKER_APPLICATION"); then
+        echo 'The digest-bound native WVO linker self-test failed.' >&2
+        exit 1
+    fi
+    if [ -n "$LINKER_SELF_OUTPUT" ]; then
+        echo 'The digest-bound native WVO linker self-test emitted unexpected output.' >&2
+        exit 1
+    fi
+
+    OBJECT_SHA256=$(sha256sum "$OBJECT_PATH" | awk '{print $1}')
+    if ! SCANNER_OUTPUT=$("$NATIVE_LINKER_APPLICATION" "$OBJECT_PATH"); then
+        echo 'The digest-bound native WVO linker scanner rejected the canonical object.' >&2
+        exit 1
+    fi
+    if [ "$SCANNER_OUTPUT" != 'object status=Valid sections=2 symbols=3 relocations=2 offset=218' ] || \
+        [ "$(sha256sum "$OBJECT_PATH" | awk '{print $1}')" != "$OBJECT_SHA256" ]; then
+        echo 'The digest-bound native WVO linker scanner report or preservation contract failed.' >&2
+        exit 1
+    fi
+    INVALID_SOURCE_SHA256=$(sha256sum "$INVALID_SOURCE_PATH" | awk '{print $1}')
+    set +e
+    INVALID_SCANNER_OUTPUT=$("$NATIVE_LINKER_APPLICATION" "$INVALID_SOURCE_PATH" 2>&1)
+    INVALID_SCANNER_EXIT=$?
+    set -e
+    if [ "$INVALID_SCANNER_EXIT" -ne 2 ] || \
+        [ "$INVALID_SCANNER_OUTPUT" != 'object status=Badˉmagic sections=0 symbols=0 relocations=0 offset=0' ] || \
+        [ "$(sha256sum "$INVALID_SOURCE_PATH" | awk '{print $1}')" != "$INVALID_SOURCE_SHA256" ]; then
+        echo 'The digest-bound native WVO linker scanner invalid-file contract failed.' >&2
+        exit 1
+    fi
+
+    if [ -e "$INVALID_ASSEMBLY_PATH" ]; then
+        echo "The invalid native assembly output unexpectedly exists: $INVALID_ASSEMBLY_PATH" >&2
+        exit 1
+    fi
+    set +e
+    INVALID_ASSEMBLY_OUTPUT=$("$NATIVE_WVA_APPLICATION" \
+        "$INVALID_SOURCE_PATH" "$INVALID_ASSEMBLY_PATH" 2>&1)
+    INVALID_ASSEMBLY_EXIT=$?
+    set -e
+    if [ "$INVALID_ASSEMBLY_EXIT" -ne 2 ] || \
+        [ "$INVALID_ASSEMBLY_OUTPUT" != 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' ] || \
+        [ -e "$INVALID_ASSEMBLY_PATH" ]; then
+        echo 'The digest-bound native WVA assembler created output for rejected source.' >&2
+        exit 1
+    fi
+    set +e
+    EXISTING_ASSEMBLY_OUTPUT=$("$NATIVE_WVA_APPLICATION" \
+        "$INVALID_SOURCE_PATH" "$OBJECT_PATH" 2>&1)
+    EXISTING_ASSEMBLY_EXIT=$?
+    set -e
+    if [ "$EXISTING_ASSEMBLY_EXIT" -ne 2 ] || \
+        [ "$EXISTING_ASSEMBLY_OUTPUT" != 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' ] || \
+        [ "$(sha256sum "$OBJECT_PATH" | awk '{print $1}')" != "$OBJECT_SHA256" ]; then
+        echo 'Rejected native assembly modified the canonical object.' >&2
+        exit 1
+    fi
+
+    PROVIDER_SOURCE="$REPOSITORY_ROOT/Examples/Linker/Console-Provider.wva"
+    if ! PROVIDER_OUTPUT=$("$NATIVE_ASSEMBLER" "$PROVIDER_SOURCE" "$PROVIDER_OBJECT_PATH"); then
+        echo 'The digest-bound native WVA assembler did not construct the linker provider.' >&2
+        exit 1
+    fi
+    EXPECTED_PROVIDER_OUTPUT=$(printf '%s\n%s' \
+        'wvasm 1' \
+        'assembly status=valid object-bytes=91 sections=1 symbols=1 relocations=0 offset=163 line=10 column=1')
+    PROVIDER_BYTES=$(wc -c < "$PROVIDER_OBJECT_PATH" | tr -d ' ')
+    PROVIDER_SHA256=$(sha256sum "$PROVIDER_OBJECT_PATH" | awk '{print $1}')
+    if [ "$PROVIDER_OUTPUT" != "$EXPECTED_PROVIDER_OUTPUT" ] || \
+        [ "$PROVIDER_BYTES" != 91 ] || \
+        [ "$PROVIDER_SHA256" != '486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab' ]; then
+        echo 'The native linker provider has an unexpected report or identity.' >&2
+        exit 1
+    fi
+
+    if ! LINK_OUTPUT=$("$NATIVE_LINKER" 1048576 Main "$LINKED_IMAGE_PATH" \
+        "$OBJECT_PATH" "$PROVIDER_OBJECT_PATH"); then
+        echo 'The digest-bound native WVO linker rejected the canonical link.' >&2
+        exit 1
+    fi
+    for REQUIRED_LINE in \
+        'windvale-link-map 1' \
+        'target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24' \
+        'entry name=Main address=1048576' \
+        'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' \
+        'import index=0 input=0 source-index=2 kind=function name=Console_write provider-input=1 provider-source-index=0 address=1048592' \
+        'relocation index=1 input=0 source-index=1 kind=absolute-u32 patch-offset=20 patch-address=1048596 target=Main target-input=0 target-source-index=1 target-address=1048576 addend=0 value=1048576'; do
+        if ! printf '%s\n' "$LINK_OUTPUT" | grep -F -x "$REQUIRED_LINE" >/dev/null; then
+            echo 'The digest-bound native WVO linker map omitted required evidence.' >&2
+            exit 1
+        fi
+    done
+    if printf '%s\n' "$LINK_OUTPUT" | grep -F "$REPOSITORY_ROOT" >/dev/null; then
+        echo 'The digest-bound native WVO linker map exposed a repository path.' >&2
+        exit 1
+    fi
+    LINKED_BYTES=$(wc -c < "$LINKED_IMAGE_PATH" | tr -d ' ')
+    LINKED_SHA256=$(sha256sum "$LINKED_IMAGE_PATH" | awk '{print $1}')
+    if [ "$LINKED_BYTES" != 24 ] || \
+        [ "$LINKED_SHA256" != '0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' ]; then
+        echo 'The digest-bound native WVO linker wrote unexpected image bytes.' >&2
+        exit 1
+    fi
+    printf '%s\n' "$LINK_OUTPUT" >"$LINK_MAP_PATH"
+    LINK_MAP_BYTES=$(wc -c < "$LINK_MAP_PATH" | tr -d ' ')
+    LINK_MAP_SHA256=$(sha256sum "$LINK_MAP_PATH" | awk '{print $1}')
+    if [ "$LINK_MAP_BYTES" != 1721 ] || \
+        [ "$LINK_MAP_SHA256" != '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4' ]; then
+        echo 'The digest-bound native WVO linker wrote an unexpected canonical map.' >&2
+        exit 1
+    fi
+
+    if [ -e "$INVALID_LINK_PATH" ]; then
+        echo "The invalid native link output unexpectedly exists: $INVALID_LINK_PATH" >&2
+        exit 1
+    fi
+    set +e
+    UNDEFINED_OUTPUT=$("$NATIVE_LINKER" 1048576 Main "$INVALID_LINK_PATH" \
+        "$OBJECT_PATH" 2>&1)
+    UNDEFINED_EXIT=$?
+    set -e
+    if [ "$UNDEFINED_EXIT" -ne 2 ] || \
+        [ "$UNDEFINED_OUTPUT" != 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' ] || \
+        [ -e "$INVALID_LINK_PATH" ]; then
+        echo 'The digest-bound native WVO linker created output for an undefined import.' >&2
+        exit 1
+    fi
+    set +e
+    EXISTING_LINK_OUTPUT=$("$NATIVE_LINKER" 1048576 Main "$LINKED_IMAGE_PATH" \
+        "$OBJECT_PATH" 2>&1)
+    EXISTING_LINK_EXIT=$?
+    set -e
+    if [ "$EXISTING_LINK_EXIT" -ne 2 ] || \
+        [ "$EXISTING_LINK_OUTPUT" != 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' ] || \
+        [ "$(sha256sum "$LINKED_IMAGE_PATH" | awk '{print $1}')" != "$LINKED_SHA256" ]; then
+        echo 'A rejected native WVO link modified the existing image.' >&2
+        exit 1
+    fi
+}
+
 SUM_MODULE="$OUTPUT_ROOT/Sum-Data.wvb"
 HELLO_MODULE="$OUTPUT_ROOT/Hello-Windvale.wvb"
 FOUNDATION_MODULE="$OUTPUT_ROOT/Read-Wvb-Header.wvb"
@@ -387,6 +562,11 @@ WVO_CORE_MODULE="$OUTPUT_ROOT/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$OUTPUT_ROOT/Wva-Assembler-Core.wvb"
 WVLINK_CORE_MODULE="$OUTPUT_ROOT/Wv-Linker-Core.wvb"
 WVO_SAMPLE="$OUTPUT_ROOT/Sample.wvo"
+LINK_PROVIDER_OBJECT="$OUTPUT_ROOT/Console-Provider.wvo"
+WINDVALE_LINKED_IMAGE="$OUTPUT_ROOT/Hello-Linked-Windvale.bin"
+WINDVALE_LINK_MAP="$OUTPUT_ROOT/Hello-Linked-Windvale.wvmap"
+INVALID_WINDVALE_ASSEMBLY_OBJECT="$OUTPUT_ROOT/__windvale_invalid_assembly_output__.wvo"
+INVALID_WINDVALE_LINKED_IMAGE="$OUTPUT_ROOT/__windvale_invalid_wvlink_output__.bin"
 
 exact_build \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wvproj" \
@@ -1272,6 +1452,14 @@ exact_wvdump_execution \
     "$SUM_MODULE" \
     "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv"
 exact_wvo_read_only_execution "$WVO_SAMPLE"
+exact_wva_and_linker_execution \
+    "$WVO_SAMPLE" \
+    "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" \
+    "$LINK_PROVIDER_OBJECT" \
+    "$WINDVALE_LINKED_IMAGE" \
+    "$WINDVALE_LINK_MAP" \
+    "$INVALID_WINDVALE_ASSEMBLY_OBJECT" \
+    "$INVALID_WINDVALE_LINKED_IMAGE"
 
 TEMPORARY_DIRECTORY=$(mktemp -d "${TMPDIR:-/tmp}/windvale-seed-front-door.XXXXXX")
 cleanup() {
@@ -1304,4 +1492,4 @@ if [ "$INVALID_EXIT" -ne 1 ] || \
     exit 1
 fi
 
-echo 'native Seed front-door verification status=Complete artifacts=102 cases=174'
+echo 'native Seed front-door verification status=Complete artifacts=105 cases=184'

@@ -12,18 +12,17 @@ The destination is stable, but the route is not frozen. An intermediate design m
 
 This roadmap owns the forward phase gates, sequencing, and next deliverables. It may state whether a gate is open or complete, but it is not the project's activity diary; the [Progress dashboard](Progress.md) owns the current implementation snapshot and immediate measured transfer. Update this roadmap when evidence changes the route, gate, or intended order.
 
-[Decision 0520](../Decisions/0520-Native-Wvdump-And-Wvo-Read-Only-Execution-Transfer.md)
-moves six supported WvDump/WVO executions from each broad Seed script into the
-paired native helper. The helper now owns 102 exact artifacts and 174 cases; the
-cumulative normal-path removal is 180 managed invocations per host script. One
-uninterrupted current-Windows helper run passes all cases. Pinned product
-identities and evolving Stage 0 recovery-writer determinism now have distinct
-test owners, resolving the reported WVO/WVA drift without a repin. Repair the
-pinned WVO no-argument self-test and specify native missing/empty-resource
-failures before transferring those calls. WVA/linker self-test, publication,
-rejection, preservation, and differential behavior form the next large block.
-The broad managed harness, independent Linux evidence, grouped qualification,
-promotion, and recovery retirement remain open.
+[Decision 0521](../Decisions/0521-Native-Wva-And-Linker-Execution-Transfer.md)
+moves twelve native-equivalent WVA/linker invocations from each broad Seed
+script into the paired helper. The helper now owns 105 exact artifacts and 184
+cases; cumulative normal-path removal is 192 managed invocations per host
+script. One uninterrupted Windows run and one independent Linux 6.1 x86-64 run
+pass the identical tracked state and produce byte-identical canonical/provider
+WVOs, image, and map. Capability refusal, missing-output-parent adapter
+failures, the stale WVO candidate/resource boundary, grouped repository
+Qualification, promotion, and recovery retirement remain open. Repairing and
+qualifying the WVO native reconstruction plus transferring the remaining
+capability-bearing broad-script executions form the next large block.
 
 [Decision 0516](../Decisions/0516-Native-Source-Parser-Build-And-Inspection-Transfer.md)
 moves eight lexer, declaration-parser, and body-parser core/demo/tool builds plus
@@ -37,6 +36,9 @@ Decision 0519 then transfers the four canonical binary-tool products through
 construction, verification, and inspection while keeping execution separate.
 Decision 0520 transfers the supported WvDump/WVO execution subset and separates
 pinned product identity from current recovery-writer reconstruction evidence.
+Decision 0521 transfers the native-equivalent WVA/linker self-test, semantic,
+publication, rejection, and preservation block with independent dual-host
+helper execution.
 
 [Decision 0515](../Decisions/0515-Native-Hosted-Construction-Build-And-Inspection-Transfer.md)
 moves twelve hosted-tool metadata, startup, hosted-container, runtime-header,

@@ -122,3 +122,13 @@ The current strict UTF-8 intrinsic returns validity rather than the first malfor
 The conformance suite compares complete Windvale-written output with Stage 0 for the canonical object, the complete original statement set, all register spellings, representative low/extended REX/ModRM combinations, every condition code, forward and backward local fixups, stack/indirect control, RIP-relative symbols, every immediate ALU/test and rotate/shift family, signed multiply, no-index and indexed SIB addressing, all four scales, fixed displacement boundaries, and the REX.X distinction between no index and `r12`. It also compares malformed immediate, count, width, base, index, scale, displacement, target-kind, label, and section-context rejection. Every output passes the independently owned WVO verifier. Rejected diagnostic fixtures and mutations must invoke the writer zero times; native verifier paths additionally require no output file.
 
 The module consumes the shared Foundation contracts for alignment, machine names, ordinal byte-span comparison, bounded unsigned decimal accumulation, and repeated immutable byte construction. It still owns WVA token spans, signed numbers, width rules, exact diagnostics, scanner, semantics, object measurement, and encoding; further extraction requires another demonstrated consumer rather than a broad split by file size. The separately owned linker consumes completed WVO bytes and owns multi-object resolution, layout, relocation application, map evidence, and final images rather than extending this assembler.
+
+Decision 0521 transfers the native-equivalent execution block to the paired
+digest-bound applications. On both Windows and Linux, the native front-door
+owner now runs the no-argument self-test, constructs and independently verifies
+the canonical 218-byte WVO, rejects invalid semantics without creating a new
+destination or changing an existing one, and constructs the exact 91-byte
+provider WVO consumed by the linker case. The broad Seed scripts retain hosted
+capability refusal, missing-output-parent adapter failure, and live Stage 0
+differential/oracle behavior because those are not native-equivalent execution
+claims.

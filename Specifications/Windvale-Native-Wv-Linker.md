@@ -181,3 +181,13 @@ Promotion to the ordinary linker front door requires one exact source commit to 
 - no regression in WVO, Windvale Linking 1, native ABI, capability, or hosted-service contracts.
 
 Decision 0302 already pins both platform applications behind digest-bound native launchers. Only an exact descendant containing those launchers, Decision 0325's expanded rejection matrix, and Decision 0327's map-limit boundary that passes both hosts moves ordinary linking to them. `windvale link` then remains the explicit Stage 0 recovery/differential command until Decision 0057's complete archive gate permits deletion.
+
+Decision 0521 supplies independent Windows/Linux execution evidence for the
+native-equivalent linker block through those digest-bound applications. Both
+hosts pass the no-argument self-test with no output, accept the canonical WVO,
+reject a non-WVO scanner input, consume the exact provider WVO, and publish the
+identical 24-byte image plus 1,721-byte path-free canonical map. Undefined
+imports return 2 without creating a new destination and preserve an existing
+destination byte for byte. Hosted capability denial, missing-output-parent
+resource failure, and live Stage 0 differential/oracle behavior remain outside
+this transferred block.

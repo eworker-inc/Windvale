@@ -58,9 +58,10 @@ exactly `203` instructions.
 The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid
 option rejection, malformed-module rejection, and input preservation. The
-Windows owner passes 3/3 in 49.8 seconds. The paired 174-case native Seed
-front-door helper builds 102 exact artifacts and passes one uninterrupted
-current-Windows run in 1,197.8 seconds. The helper owns the four Foundation
+Windows owner passes 3/3 in 49.8 seconds. The paired 184-case native Seed
+front-door helper builds 105 exact artifacts and passes one uninterrupted
+Windows run in 984.1 seconds plus one independent Linux 6.1 x86-64 run in
+845.9 seconds over the identical tracked state. The helper owns the four Foundation
 module builds and inspections, all four
 Foundation demo builds, the native-stencil and selected runtime-service builds
 and inspections, the complete output/file-output/file-input generator builds
@@ -76,6 +77,9 @@ WvDump/WVO-object/WVA-assembler/Wv-linker construction, independent
 verification, and inspection,
 WvDump self-test/valid/invalid execution, native construction of the canonical
 WVO fixture, and its digest-bound verification and inspection,
+WVA/linker self-test, scanner, semantic rejection and preservation, provider
+construction, canonical image/map publication, and undefined-import
+preservation,
 and native execution of the Machine Contracts, Byte Ordering, and Decimal
 Parsing demos.
 The 4 MiB Byte

@@ -406,12 +406,28 @@ under their manifests, reconstruction owners, and digest-bound launchers.
 Current Stage 0 writer tests now own deterministic repeated reconstruction,
 independent application verification, current CLI equality, accepted/rejected
 native execution, and absence of CLR loading rather than duplicating historical
-digests. Capability refusal, missing and empty resource failures, the pinned WVO
-no-argument self-test, Stage 0 object-report oracles, and all WVA/linker behavior
-remain managed. T2 therefore remains `managed-normal`; the three-normal plus
-nine-recovery direct-entry inventory is unchanged. Independent Linux execution,
-remaining broad-suite transfers, GitHub cutover, grouped qualification,
-promotion, and recovery retirement remain open.
+digests. At that boundary capability refusal, missing and empty resource
+failures, the pinned WVO no-argument self-test, Stage 0 object-report oracles,
+and all WVA/linker behavior remained managed.
+
+Current T2 WVA/linker execution transfer:
+[Decision 0521](../Decisions/0521-Native-Wva-And-Linker-Execution-Transfer.md)
+extends the paired helper from 174 to 184 cases and from 102 to 105 exact
+artifacts. It verifies the platform-specific pinned assembler/linker identities;
+owns both self-tests, scanner acceptance/rejection, WVA semantic rejection and
+preservation, provider construction, canonical link publication, and
+undefined-import preservation; and publishes the provider WVO, 24-byte image,
+and 1,721-byte map for the retained Stage 0 differential lane. One uninterrupted
+Windows run passes in 984.1 seconds and one independent Linux 6.1 x86-64 run
+passes the identical tracked state in 845.9 seconds. Both hosts produce the same
+four shared output identities. This removes twelve managed calls from each broad
+host script, 192 cumulatively. Capability refusal, missing-output-parent adapter
+failures, the WvDump/WVO resource-error boundary, the stale pinned WVO self-test,
+and later Stage 0 differential/oracle behavior remain managed. T2 therefore
+remains `managed-normal`; the three-normal plus nine-recovery direct-entry
+inventory is unchanged. Grouped repository Qualification, GitHub's
+pinned-Debian result, promotion, clean/previous-seed renewal, and recovery
+retirement remain open.
 
 ## Normal-path audit result
 

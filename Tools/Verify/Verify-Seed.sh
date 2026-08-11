@@ -240,18 +240,16 @@ WVA_ASSEMBLER_MODULE="$ARTIFACTS/Wva-Assembler-Core.wvb"
 WVLINK_CORE_MODULE="$ARTIFACTS/Wv-Linker-Core.wvb"
 WVO_SAMPLE="$ARTIFACTS/Sample.wvo"
 ASSEMBLY_OBJECT="$ARTIFACTS/Hello-Object.wvo"
-WINDVALE_ASSEMBLY_OBJECT="$ARTIFACTS/Hello-Object-Windvale.wvo"
-INVALID_WINDVALE_ASSEMBLY_OBJECT="$ARTIFACTS/__windvale_invalid_assembly_output__.wvo"
+WINDVALE_ASSEMBLY_OBJECT="$WVO_SAMPLE"
 LINK_PROVIDER_OBJECT="$ARTIFACTS/Console-Provider.wvo"
 WINDVALE_LINKED_IMAGE="$ARTIFACTS/Hello-Linked-Windvale.bin"
 WINDVALE_LINK_MAP="$ARTIFACTS/Hello-Linked-Windvale.wvmap"
-INVALID_WINDVALE_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_wvlink_output__.bin"
 LINKED_IMAGE="$ARTIFACTS/Hello-Linked.bin"
 LINK_MAP="$ARTIFACTS/Hello-Linked.wvmap"
 INVALID_LINKED_IMAGE="$ARTIFACTS/__windvale_invalid_link_output__.bin"
 
 NATIVE_SEED_OUTPUT=$("$NATIVE_SEED_FRONT_DOOR" "$ARTIFACTS")
-if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=102 cases=174' ]; then
+if [ "$NATIVE_SEED_OUTPUT" != 'native Seed front-door verification status=Complete artifacts=105 cases=184' ]; then
     echo 'The native Seed front-door verification failed.' >&2
     exit 1
 fi
@@ -1187,17 +1185,6 @@ if [ "$WVA_ASSEMBLER_UNAUTHORIZED_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVA_ASSEMBLER_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-WVA_ASSEMBLER_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVA_ASSEMBLER_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 10000000)
-printf '%s\n' "$WVA_ASSEMBLER_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
 set +e
 WVLINK_UNAUTHORIZED_OUTPUT=$(dotnet "$TOOL_DLL" run "$WVLINK_CORE_MODULE" 2>&1)
 WVLINK_UNAUTHORIZED_EXIT=$?
@@ -1208,65 +1195,11 @@ if [ "$WVLINK_UNAUTHORIZED_EXIT" -ne 3 ]; then
 fi
 printf '%s\n' "$WVLINK_UNAUTHORIZED_OUTPUT" | grep -F 'WVR3010' >/dev/null
 
-WVLINK_SELF_TEST_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVLINK_CORE_MODULE" \
-    --allow console.write \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 20000000)
-printf '%s\n' "$WVLINK_SELF_TEST_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
-WVA_ASSEMBLER_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVA_ASSEMBLER_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 10000000 \
-    -- "$REPOSITORY_ROOT/Examples/Assembler/Hello-Object.wva" "$WINDVALE_ASSEMBLY_OBJECT")
-printf '%s\n' "$WVA_ASSEMBLER_HOSTED_OUTPUT" | grep -F 'wvasm 1' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_HOSTED_OUTPUT" | grep -F 'assembly status=valid object-bytes=218 sections=2 symbols=3 relocations=2 offset=403 line=22 column=1' >/dev/null
-printf '%s\n' "$WVA_ASSEMBLER_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
 WINDVALE_ASSEMBLY_HASH=$(sha256sum "$WINDVALE_ASSEMBLY_OBJECT" | awk '{print $1}')
 if [ "$WINDVALE_ASSEMBLY_HASH" != '992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85' ]; then
     echo "The Windvale WVA assembler wrote unexpected bytes: $WINDVALE_ASSEMBLY_HASH" >&2
     exit 1
 fi
-WINDVALE_ASSEMBLY_VERIFY_OUTPUT=$(dotnet "$TOOL_DLL" object-verify "$WINDVALE_ASSEMBLY_OBJECT")
-printf '%s\n' "$WINDVALE_ASSEMBLY_VERIFY_OUTPUT" | grep -F 'Verified object: X86ˉ64' >/dev/null
-
-WVLINK_HOSTED_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVLINK_CORE_MODULE" \
-    --allow console.write \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 20000000 \
-    -- "$WINDVALE_ASSEMBLY_OBJECT")
-printf '%s\n' "$WVLINK_HOSTED_OUTPUT" | grep -F 'object status=Valid sections=2 symbols=3 relocations=2 offset=218' >/dev/null
-printf '%s\n' "$WVLINK_HOSTED_OUTPUT" | grep -F 'Result: 0' >/dev/null
-
-WVLINK_INVALID_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVLINK_CORE_MODULE" \
-    --allow console.write \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 20000000 \
-    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" 2>&1)
-printf '%s\n' "$WVLINK_INVALID_OUTPUT" | grep -F 'object status=Badˉmagic' >/dev/null
-printf '%s\n' "$WVLINK_INVALID_OUTPUT" | grep -F 'Result: 2' >/dev/null
-
 MISSING_ASSEMBLER_PARENT="$ARTIFACTS/__windvale_missing_assembler_parent__"
 if [ -e "$MISSING_ASSEMBLER_PARENT" ]; then
     echo "The missing assembler parent unexpectedly exists: $MISSING_ASSEMBLER_PARENT" >&2
@@ -1296,39 +1229,6 @@ if [ -e "$MISSING_ASSEMBLER_OUTPUT" ]; then
     exit 1
 fi
 
-if [ -e "$INVALID_WINDVALE_ASSEMBLY_OBJECT" ]; then
-    echo "The invalid Windvale assembly output unexpectedly exists: $INVALID_WINDVALE_ASSEMBLY_OBJECT" >&2
-    exit 1
-fi
-WVA_SEMANTIC_INVALID_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVA_ASSEMBLER_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 10000000 \
-    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" "$INVALID_WINDVALE_ASSEMBLY_OBJECT" 2>&1)
-printf '%s\n' "$WVA_SEMANTIC_INVALID_OUTPUT" | grep -F 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' >/dev/null
-printf '%s\n' "$WVA_SEMANTIC_INVALID_OUTPUT" | grep -F 'Result: 2' >/dev/null
-if [ -e "$INVALID_WINDVALE_ASSEMBLY_OBJECT" ]; then
-    echo 'Rejected Windvale assembly created a partial output object.' >&2
-    exit 1
-fi
-
-WVA_SEMANTIC_EXISTING_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVA_ASSEMBLER_MODULE" \
-    --allow console.write_line \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 10000000 \
-    -- "$REPOSITORY_ROOT/Examples/Seed/Sum-Data.wv" "$WINDVALE_ASSEMBLY_OBJECT" 2>&1)
-printf '%s\n' "$WVA_SEMANTIC_EXISTING_OUTPUT" | grep -F 'assembly status=WVA1001' >/dev/null
-printf '%s\n' "$WVA_SEMANTIC_EXISTING_OUTPUT" | grep -F 'Result: 2' >/dev/null
 PRESERVED_WINDVALE_ASSEMBLY_HASH=$(sha256sum "$WINDVALE_ASSEMBLY_OBJECT" | awk '{print $1}')
 if [ "$PRESERVED_WINDVALE_ASSEMBLY_HASH" != "$WINDVALE_ASSEMBLY_HASH" ]; then
     echo 'Rejected Windvale assembly modified an existing output object.' >&2
@@ -1353,77 +1253,17 @@ printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F '.text kind=Code align=16 memory=
 printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F 'kind=Relativeˉi32 section=0 offset=6 symbol=2 addend=-4' >/dev/null
 printf '%s\n' "$ASSEMBLY_INSPECTION" | grep -F 'kind=Absoluteˉu32 section=1 offset=3 symbol=1 addend=0' >/dev/null
 
-PROVIDER_ASSEMBLY_OUTPUT=$(dotnet "$TOOL_DLL" \
-    assemble "$REPOSITORY_ROOT/Examples/Linker/Console-Provider.wva" -o "$LINK_PROVIDER_OBJECT")
-printf '%s\n' "$PROVIDER_ASSEMBLY_OUTPUT" | grep -F 'SHA-256: 486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab' >/dev/null
-
-WVLINK_MAP_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVLINK_CORE_MODULE" \
-    --allow console.write \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 20000000 \
-    -- 1048576 Main "$WINDVALE_LINKED_IMAGE" "$WINDVALE_ASSEMBLY_OBJECT" "$LINK_PROVIDER_OBJECT")
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'windvale-link-map 1' >/dev/null
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24' >/dev/null
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'entry name=Main address=1048576' >/dev/null
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' >/dev/null
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'import index=0 input=0 source-index=2 kind=function name=Console_write provider-input=1 provider-source-index=0 address=1048592' >/dev/null
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'relocation index=0 input=0 source-index=0 kind=relative-i32 patch-offset=6 patch-address=1048582 target=Console_write target-input=1 target-source-index=0 target-address=1048592 addend=-4 value=6' >/dev/null
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -Fx 'relocation index=1 input=0 source-index=1 kind=absolute-u32 patch-offset=20 patch-address=1048596 target=Main target-input=0 target-source-index=1 target-address=1048576 addend=0 value=1048576' >/dev/null
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -F 'Result: 0' >/dev/null
-if printf '%s\n' "$WVLINK_MAP_OUTPUT" | grep -F "$REPOSITORY_ROOT" >/dev/null; then
-    echo 'The Windvale canonical link map exposed a repository path.' >&2
-    exit 1
-fi
 WINDVALE_LINK_HASH=$(sha256sum "$WINDVALE_LINKED_IMAGE" | awk '{print $1}')
 if [ "$WINDVALE_LINK_HASH" != '0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a' ]; then
     echo "The Windvale linker wrote unexpected image bytes: $WINDVALE_LINK_HASH" >&2
     exit 1
 fi
-printf '%s\n' "$WVLINK_MAP_OUTPUT" | sed '/^Result: 0$/d' > "$WINDVALE_LINK_MAP"
 WINDVALE_LINK_MAP_HASH=$(sha256sum "$WINDVALE_LINK_MAP" | awk '{print $1}')
 if [ "$WINDVALE_LINK_MAP_HASH" != '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4' ]; then
     echo "The Windvale linker wrote an unexpected canonical map: $WINDVALE_LINK_MAP_HASH" >&2
     exit 1
 fi
 
-if [ -e "$INVALID_WINDVALE_LINKED_IMAGE" ]; then
-    echo "The invalid Windvale link output unexpectedly exists: $INVALID_WINDVALE_LINKED_IMAGE" >&2
-    exit 1
-fi
-WVLINK_UNDEFINED_OUTPUT=$(dotnet "$TOOL_DLL" \
-    run "$WVLINK_CORE_MODULE" \
-    --allow console.write \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 20000000 \
-    -- 1048576 Main "$INVALID_WINDVALE_LINKED_IMAGE" "$WINDVALE_ASSEMBLY_OBJECT" 2>&1)
-printf '%s\n' "$WVLINK_UNDEFINED_OUTPUT" | grep -F 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' >/dev/null
-printf '%s\n' "$WVLINK_UNDEFINED_OUTPUT" | grep -F 'Result: 2' >/dev/null
-if [ -e "$INVALID_WINDVALE_LINKED_IMAGE" ]; then
-    echo 'A rejected Windvale link created a partial image.' >&2
-    exit 1
-fi
-
-WVLINK_EXISTING_FAILURE=$(dotnet "$TOOL_DLL" \
-    run "$WVLINK_CORE_MODULE" \
-    --allow console.write \
-    --allow diagnostic.write_line \
-    --allow file.read_bytes \
-    --allow file.write_bytes \
-    --allow process.argument \
-    --allow process.argument_count \
-    --max-steps 20000000 \
-    -- 1048576 Main "$WINDVALE_LINKED_IMAGE" "$WINDVALE_ASSEMBLY_OBJECT" 2>&1)
-printf '%s\n' "$WVLINK_EXISTING_FAILURE" | grep -F 'link status=WVL1005' >/dev/null
-printf '%s\n' "$WVLINK_EXISTING_FAILURE" | grep -F 'Result: 2' >/dev/null
 PRESERVED_WINDVALE_LINK_HASH=$(sha256sum "$WINDVALE_LINKED_IMAGE" | awk '{print $1}')
 if [ "$PRESERVED_WINDVALE_LINK_HASH" != "$WINDVALE_LINK_HASH" ]; then
     echo 'A rejected Windvale link modified an existing image.' >&2

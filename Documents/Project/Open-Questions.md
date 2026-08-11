@@ -131,6 +131,10 @@ The [WebAssembly playground exploration](WebAssembly-Playground-Exploration.md) 
 - Which measured application first needs monotonic time, civil time, secure entropy, deterministic test entropy, name resolution, connection, or listening capabilities?
 - After the x86-64 shared backend and initial OS process, scheduler, memory-object, and isolated-driver paths stabilize, which hardware and product value should trigger an ARM64 proposal?
 
+## Repository organization
+
+- Low priority: after .NET-retirement ownership stabilizes, which root-level `.wvproj` files genuinely span components under Project 1 containment, and which should move beside their owning component? Inventory every path, routing, reconstruction, and documentation reference and define one compatibility-free migration before moving manifests; do not churn the root set piecemeal.
+
 ## First decision sequence
 
 Decisions 0058 through qualified 0103, 0105, 0108, 0109, 0111, 0112, 0133, and 0150 establish reproducible bytecode compiler convergence, the bounded shared native path through frame-owned direct records and generation-owned dynamic values, all current service leaves and calls through 64 parameters, typed block-scoped physical storage under the 2,048-cell bound, bounded exact-compiler publication and complete native reproduction, live Windvale-produced service leaves, Windvale-owned executable-image layout and lifetime, WVA-owned Q35 poweroff, normalized trap entries, the first kernel-owned W^X root, fixed in-guest WVB admission, protected processes, the first init/resource service, a user-space Windvale bytecode interpreter, section-derived validation, typed WVB/execution-budget publication, automatic terminal cleanup, generation-safe reclaim/reuse, and two exact compiler-produced WVB programs across hosts and Windvale OS. Decisions 0104 through 0177 also retain a separate WebAssembly interoperability track with a capability-free in-memory compiler contract and the exact 1,511/1,512 compiler execution boundary. The recommended next implementation decisions remain:

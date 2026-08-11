@@ -600,6 +600,23 @@ backend to reproduce an older qualified container. Native capability refusal,
 missing/empty-resource behavior, the pinned WVO self-test, Stage 0 object-report
 oracles, and the WVA/linker behavior block keep T2 `managed-normal`.
 
+Decision 0521 transfers the native-equivalent WVA/linker behavior block. The
+paired helper verifies the pinned per-host assembler and linker identities,
+runs both self-tests, owns valid/invalid object scanning, requires WVA semantic
+rejection to preserve absent and existing destinations, constructs the exact
+provider WVO, publishes the canonical image and path-free map, and requires
+undefined-import rejection to preserve absent and existing images. The broad
+scripts consume the helper-owned 218-byte object, 91-byte provider, 24-byte
+image, and 1,721-byte map before the retained Stage 0 differential lane.
+Twelve additional managed calls per host disappear, bringing the cumulative
+removal to 192; the helper owns 105 artifacts and 184 cases. One uninterrupted
+Windows run and one independent Linux 6.1 x86-64 run pass the identical tracked
+state and produce identical shared bytes. This is independent dual-host helper
+execution, not the grouped repository Qualification or promotion gate.
+Capability refusal, typed missing-output-parent failures, the stale WVO
+candidate/resource boundary, and later Stage 0 recovery comparisons keep T2
+`managed-normal`.
+
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module
 shared by the read-only inspector and a new five-service publisher. The lowerer

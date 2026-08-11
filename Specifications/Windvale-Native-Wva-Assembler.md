@@ -61,6 +61,15 @@ accepted/rejected execution, and absence of CLR loading. The same digest-bound
 applications now construct the canonical WVO inspection fixture for both broad
 Seed scripts.
 
+Decision 0521 executes those exact applications as the owner of the
+native-equivalent WVA behavior block on independent Windows and Linux hosts.
+Both hosts pass no-argument self-test with no output, produce the identical
+218-byte canonical WVO, reject invalid semantics with exit code 2, preserve an
+existing destination byte for byte, and produce the identical 91-byte provider
+WVO used by the native linker case. Capability denial and missing-output-parent
+resource failures remain at the hosted-adapter boundary, while live Stage 0
+comparisons remain explicitly differential and recovery evidence.
+
 The focused candidate test reconstructs both containers, checks the exact authority and service bundle, exercises the public AOT target, and runs the current-host raw application. Canonical input must produce the independently verified 218-byte WVO with SHA-256 `992c298a4f9b68dec27b7203a2770f2a37ef2016ea45e88d33ee21994060fe85`; malformed input must leave output absent. Current-host module or mapping inspection must find no CLR/.NET runtime.
 
 Decision 0321 adds a separate fixed rejection-family command over the ordinary

@@ -83,3 +83,13 @@ Both the Windows and Debian verifiers must also compile and inspect the module t
 The qualified suite additionally compares canonical and reversed input order, aligned and unaligned bases, all section representations, aggregate overflow, malformed objects, duplicate exports, missing imports, kind mismatch, missing entry, invalid requests, layout overflow, exact image and map bytes, snapshot read counts, and publish-after-success behavior with the Stage 0 oracle. The current-host native AOT contract exercises the accepted 4 MiB code-plus-BSS maximum, complete byte comparison, map construction, and one hosted write without using the slower Stage 0 interpreter as a performance oracle. Four valid objects containing the aggregate maximum 16,384 short-name definitions prove `WVL1012` with no writer under the existing explicit reference-runtime ceiling.
 
 The Windows and Debian verifiers compare real Windvale/Stage 0 image and map files byte for byte, prove rejected links preserve an existing image, and check a missing output parent. The exact `40ac57d` archive passed both complete verifiers and its normalized reports agree, completing roadmap gate 6G and Phase 6. Exact archives at `d46af86`, `4fdea22`, `6d2a351`, and `26e2fd1` then qualified the machine-contract, ordinal-byte-span, bounded-decimal, and immutable-byte-construction Foundation extractions: both hosts produced the same composed linker WVB at each gate while preserving every link output, ceiling, and failure contract.
+
+Decision 0521 transfers the native-equivalent execution block to the paired
+digest-bound applications. On both Windows and Linux, the native front-door
+owner now runs the no-argument self-test, accepts the canonical WVO, rejects a
+non-WVO scanner input, publishes the exact 24-byte image and 1,721-byte
+path-free canonical map, and proves undefined-import rejection leaves a new
+destination absent and an existing destination unchanged. The broad Seed
+scripts retain hosted capability refusal, missing-output-parent adapter
+failure, and live Stage 0 differential/oracle behavior because those are not
+native-equivalent execution claims.

@@ -20,6 +20,9 @@ $NativeAssembler = Join-Path $RepositoryRoot 'Tools/Native/Assemble-Wva.cmd'
 $NativeWvoVerify = Join-Path $RepositoryRoot 'Tools/Native/Verify-Wvo.cmd'
 $NativeWvoInspect = Join-Path $RepositoryRoot 'Tools/Native/Inspect-Wvo.cmd'
 $NativeWvDumpApplication = Join-Path $RepositoryRoot 'Artifacts/Native-Front-Door/windows-x64/wvdump.exe'
+$NativeWvaApplication = Join-Path $RepositoryRoot 'Artifacts/Native-Front-Door/windows-x64/wvasm.exe'
+$NativeLinker = Join-Path $RepositoryRoot 'Tools/Native/Link-Wvo.cmd'
+$NativeLinkerApplication = Join-Path $RepositoryRoot 'Artifacts/Native-Wv-Linker-Candidate/Wv-Linker.exe'
 
 function Invoke-ExactBuild(
     [string]$ProjectPath,
@@ -258,6 +261,187 @@ function Invoke-ExactWvoReadOnlyExecution([string]$ObjectPath) {
     }
 }
 
+function Invoke-ExactWvaAndLinkerExecution(
+    [string]$ObjectPath,
+    [string]$InvalidSourcePath,
+    [string]$ProviderObjectPath,
+    [string]$LinkedImagePath,
+    [string]$LinkMapPath,
+    [string]$InvalidAssemblyPath,
+    [string]$InvalidLinkPath
+) {
+    $AssemblerInformation = Get-Item -LiteralPath $NativeWvaApplication
+    $AssemblerDigest = (
+        Get-FileHash -Algorithm SHA256 -LiteralPath $NativeWvaApplication
+    ).Hash.ToLowerInvariant()
+    if (
+        $AssemblerInformation.Length -ne 2895360 -or
+        $AssemblerDigest -ne 'e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4'
+    ) {
+        throw 'The Windows native WVA assembler application identity is invalid.'
+    }
+    $AssemblerSelfTest = @(& $NativeWvaApplication 2>&1)
+    if ($LASTEXITCODE -ne 0 -or $AssemblerSelfTest.Count -ne 0) {
+        throw 'The digest-bound native WVA assembler self-test failed.'
+    }
+
+    $LinkerInformation = Get-Item -LiteralPath $NativeLinkerApplication
+    $LinkerDigest = (
+        Get-FileHash -Algorithm SHA256 -LiteralPath $NativeLinkerApplication
+    ).Hash.ToLowerInvariant()
+    if (
+        $LinkerInformation.Length -ne 1796608 -or
+        $LinkerDigest -ne '08744f3cacf71280ea757dcdf6509ee3770d5536b08e5b3984a438cb6123fb78'
+    ) {
+        throw 'The Windows native WVO linker application identity is invalid.'
+    }
+    $LinkerSelfTest = @(& $NativeLinkerApplication 2>&1)
+    if ($LASTEXITCODE -ne 0 -or $LinkerSelfTest.Count -ne 0) {
+        throw 'The digest-bound native WVO linker self-test failed.'
+    }
+
+    $ObjectDigest = (Get-FileHash -Algorithm SHA256 -LiteralPath $ObjectPath).Hash.ToLowerInvariant()
+    $ScannerOutput = @(& $NativeLinkerApplication $ObjectPath 2>&1)
+    if (
+        $LASTEXITCODE -ne 0 -or
+        $ScannerOutput.Count -ne 1 -or
+        $ScannerOutput[0].ToString() -ne 'object status=Valid sections=2 symbols=3 relocations=2 offset=218' -or
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $ObjectPath).Hash.ToLowerInvariant() -ne $ObjectDigest
+    ) {
+        throw 'The digest-bound native WVO linker scanner rejected or modified the canonical object.'
+    }
+    $InvalidSourceDigest = (
+        Get-FileHash -Algorithm SHA256 -LiteralPath $InvalidSourcePath
+    ).Hash.ToLowerInvariant()
+    $InvalidScannerOutput = @(& $NativeLinkerApplication $InvalidSourcePath 2>&1)
+    if (
+        $LASTEXITCODE -ne 2 -or
+        $InvalidScannerOutput.Count -ne 1 -or
+        $InvalidScannerOutput[0].ToString() -ne 'object status=Badˉmagic sections=0 symbols=0 relocations=0 offset=0' -or
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $InvalidSourcePath).Hash.ToLowerInvariant() -ne $InvalidSourceDigest
+    ) {
+        throw 'The digest-bound native WVO linker scanner invalid-file contract failed.'
+    }
+
+    if (Test-Path -LiteralPath $InvalidAssemblyPath) {
+        throw "The invalid native assembly output unexpectedly exists: $InvalidAssemblyPath"
+    }
+    $InvalidAssemblyOutput = @(
+        & $NativeWvaApplication $InvalidSourcePath $InvalidAssemblyPath 2>&1
+    )
+    if (
+        $LASTEXITCODE -ne 2 -or
+        $InvalidAssemblyOutput.Count -ne 1 -or
+        $InvalidAssemblyOutput[0].ToString() -ne 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' -or
+        (Test-Path -LiteralPath $InvalidAssemblyPath)
+    ) {
+        throw 'The digest-bound native WVA assembler created output for rejected source.'
+    }
+    $ExistingAssemblyOutput = @(
+        & $NativeWvaApplication $InvalidSourcePath $ObjectPath 2>&1
+    )
+    if (
+        $LASTEXITCODE -ne 2 -or
+        $ExistingAssemblyOutput.Count -ne 1 -or
+        $ExistingAssemblyOutput[0].ToString() -ne 'assembly status=WVA1001 object-bytes=0 sections=0 symbols=0 relocations=0 offset=0 line=1 column=1' -or
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $ObjectPath).Hash.ToLowerInvariant() -ne $ObjectDigest
+    ) {
+        throw 'Rejected native assembly modified the canonical object.'
+    }
+
+    $ProviderSource = Join-Path $RepositoryRoot 'Examples/Linker/Console-Provider.wva'
+    $ProviderOutput = @(& $NativeAssembler $ProviderSource $ProviderObjectPath 2>&1)
+    if (
+        $LASTEXITCODE -ne 0 -or
+        $ProviderOutput.Count -ne 2 -or
+        $ProviderOutput[0].ToString() -ne 'wvasm 1' -or
+        $ProviderOutput[1].ToString() -ne 'assembly status=valid object-bytes=91 sections=1 symbols=1 relocations=0 offset=163 line=10 column=1'
+    ) {
+        throw 'The digest-bound native WVA assembler did not construct the linker provider.'
+    }
+    $ProviderInformation = Get-Item -LiteralPath $ProviderObjectPath
+    $ProviderDigest = (
+        Get-FileHash -Algorithm SHA256 -LiteralPath $ProviderObjectPath
+    ).Hash.ToLowerInvariant()
+    if (
+        $ProviderInformation.Length -ne 91 -or
+        $ProviderDigest -ne '486134e34bb32abadd233d1c3303acd9c313aa69d3874cafdce0fcb61b6e72ab'
+    ) {
+        throw 'The native linker provider has an unexpected identity.'
+    }
+
+    $LinkOutput = @(
+        & $NativeLinker 1048576 Main $LinkedImagePath $ObjectPath $ProviderObjectPath 2>&1
+    )
+    $LinkExit = $LASTEXITCODE
+    $LinkReport = $LinkOutput -join "`n"
+    foreach ($Pattern in @(
+        '(?m)^windvale-link-map 1$',
+        '(?m)^target name=flat-x86-64-v1 architecture=x86-64 base-address=1048576 image-bytes=24$',
+        '(?m)^entry name=Main address=1048576$',
+        '(?m)^image sha256=0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a$',
+        '(?m)^import index=0 input=0 source-index=2 kind=function name=Console_write provider-input=1 provider-source-index=0 address=1048592$',
+        '(?m)^relocation index=1 input=0 source-index=1 kind=absolute-u32 patch-offset=20 patch-address=1048596 target=Main target-input=0 target-source-index=1 target-address=1048576 addend=0 value=1048576$'
+    )) {
+        if ($LinkReport -notmatch $Pattern) {
+            throw 'The digest-bound native WVO linker map omitted required evidence.'
+        }
+    }
+    if ($LinkExit -ne 0 -or $LinkReport -match [regex]::Escape($RepositoryRoot)) {
+        throw 'The digest-bound native WVO linker did not produce a path-free canonical map.'
+    }
+    $LinkedInformation = Get-Item -LiteralPath $LinkedImagePath
+    $LinkedDigest = (
+        Get-FileHash -Algorithm SHA256 -LiteralPath $LinkedImagePath
+    ).Hash.ToLowerInvariant()
+    if (
+        $LinkedInformation.Length -ne 24 -or
+        $LinkedDigest -ne '0e02d447ec379e8bc8be373694d6ca14fdde0125550cbd34ee05b3ecc63ffe9a'
+    ) {
+        throw 'The digest-bound native WVO linker wrote unexpected image bytes.'
+    }
+    [IO.File]::WriteAllText(
+        $LinkMapPath,
+        "$LinkReport`n",
+        [Text.UTF8Encoding]::new($false))
+    $LinkMapInformation = Get-Item -LiteralPath $LinkMapPath
+    $LinkMapDigest = (
+        Get-FileHash -Algorithm SHA256 -LiteralPath $LinkMapPath
+    ).Hash.ToLowerInvariant()
+    if (
+        $LinkMapInformation.Length -ne 1721 -or
+        $LinkMapDigest -ne '31bc6a8e90d5f3049ae3e2eb0735a901923186d6a03ed40f22762b557b2ba5f4'
+    ) {
+        throw 'The digest-bound native WVO linker wrote an unexpected canonical map.'
+    }
+
+    if (Test-Path -LiteralPath $InvalidLinkPath) {
+        throw "The invalid native link output unexpectedly exists: $InvalidLinkPath"
+    }
+    $UndefinedOutput = @(
+        & $NativeLinker 1048576 Main $InvalidLinkPath $ObjectPath 2>&1
+    )
+    if (
+        $LASTEXITCODE -ne 2 -or
+        $UndefinedOutput.Count -ne 1 -or
+        $UndefinedOutput[0].ToString() -ne 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' -or
+        (Test-Path -LiteralPath $InvalidLinkPath)
+    ) {
+        throw 'The digest-bound native WVO linker created output for an undefined import.'
+    }
+    $ExistingLinkOutput = @(
+        & $NativeLinker 1048576 Main $LinkedImagePath $ObjectPath 2>&1
+    )
+    if (
+        $LASTEXITCODE -ne 2 -or
+        $ExistingLinkOutput.Count -ne 1 -or
+        $ExistingLinkOutput[0].ToString() -ne 'link status=WVL1005 inputs=1 sections=2 symbols=3 relocations=2 image-bytes=0 entry-address=0 input=0' -or
+        (Get-FileHash -Algorithm SHA256 -LiteralPath $LinkedImagePath).Hash.ToLowerInvariant() -ne $LinkedDigest
+    ) {
+        throw 'A rejected native WVO link modified the existing image.'
+    }
+}
+
 $SumModule = Join-Path $OutputRoot 'Sum-Data.wvb'
 $HelloModule = Join-Path $OutputRoot 'Hello-Windvale.wvb'
 $FoundationModule = Join-Path $OutputRoot 'Read-Wvb-Header.wvb'
@@ -360,6 +544,11 @@ $WvoCoreModule = Join-Path $OutputRoot 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $OutputRoot 'Wva-Assembler-Core.wvb'
 $WvLinkerCoreModule = Join-Path $OutputRoot 'Wv-Linker-Core.wvb'
 $WvoSample = Join-Path $OutputRoot 'Sample.wvo'
+$LinkProviderObject = Join-Path $OutputRoot 'Console-Provider.wvo'
+$WindvaleLinkedImage = Join-Path $OutputRoot 'Hello-Linked-Windvale.bin'
+$WindvaleLinkMap = Join-Path $OutputRoot 'Hello-Linked-Windvale.wvmap'
+$InvalidWindvaleAssemblyObject = Join-Path $OutputRoot '__windvale_invalid_assembly_output__.wvo'
+$InvalidWindvaleLinkedImage = Join-Path $OutputRoot '__windvale_invalid_wvlink_output__.bin'
 
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wvproj') `
@@ -1129,6 +1318,14 @@ Invoke-ExactWvDumpExecution `
     $SumModule `
     (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv')
 Invoke-ExactWvoReadOnlyExecution $WvoSample
+Invoke-ExactWvaAndLinkerExecution `
+    $WvoSample `
+    (Join-Path $RepositoryRoot 'Examples/Seed/Sum-Data.wv') `
+    $LinkProviderObject `
+    $WindvaleLinkedImage `
+    $WindvaleLinkMap `
+    $InvalidWindvaleAssemblyObject `
+    $InvalidWindvaleLinkedImage
 
 $TemporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $TemporaryDirectory = Join-Path `
@@ -1161,4 +1358,4 @@ try {
 }
 
 $global:LASTEXITCODE = 0
-Write-Output 'native Seed front-door verification status=Complete artifacts=102 cases=174'
+Write-Output 'native Seed front-door verification status=Complete artifacts=105 cases=184'
