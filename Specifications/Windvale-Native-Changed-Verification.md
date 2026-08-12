@@ -54,6 +54,14 @@ front doors for the current host, and never substitutes a managed or unfiltered
 fallback. No `webassembly-native-verification` gap remains in the native
 planner.
 
+The main GitHub workflow and its focused static verifier select one explicit
+`RunGitHubQualificationVerification` owner. That owner requires the exact six
+native qualification jobs, their pinned host/action dependencies, their native
+commands, and the fail-closed required-gate join. It also runs the direct
+managed-entry audit, which must report zero normal entries. Workflow changes no
+longer report `github-native-qualification` or fall back to a broad local gate;
+the committed workflow's independent jobs provide execution evidence.
+
 The `console-verifier-reconstruction` lane owns its exact candidate,
 constructor, test command, project, and Windvale source closure. Its direct
 lowering, linking, assembly, hosted-verifier toolsets, profile-7 sources,
@@ -82,11 +90,12 @@ whitespace, editor, and website behavior. For qualification-scoped changes it:
 1. computes the native plan before mutation or test execution;
 2. refuses any nonempty gap set without invoking .NET;
 3. runs the planner/inventory verifier when selected;
-4. invokes each selected suite through `Test-Retirement-Suite.cmd --filter` on
+4. runs the focused GitHub workflow verifier when selected;
+5. invokes each selected suite through `Test-Retirement-Suite.cmd --filter` on
    Windows or the paired `.sh` coordinator on non-Windows hosts;
-5. invokes the distinct long-running WebAssembly verifier once when selected;
-6. stops at the first failure unless `-NoFailFast` is explicit; and
-7. optionally writes `windvale-native-changed-verification-timing-1` JSON.
+6. invokes the distinct long-running WebAssembly verifier once when selected;
+7. stops at the first failure unless `-NoFailFast` is explicit; and
+8. optionally writes `windvale-native-changed-verification-timing-1` JSON.
 
 The command is development feedback. Passing it is not Standard, Qualification,
 cross-host, or complete-retirement evidence. A pre-existing output owned by a

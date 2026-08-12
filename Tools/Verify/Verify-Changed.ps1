@@ -15,6 +15,7 @@ $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $PlanVerifier = Join-Path $PSScriptRoot 'Verify-Verification-Plan.ps1'
 $WebAssemblyVerifier = Join-Path $PSScriptRoot 'Verify-WebAssembly.ps1'
+$GitHubQualificationVerifier = Join-Path $PSScriptRoot 'Verify-GitHub-Native-Qualification.ps1'
 $WebsiteVerifier = Join-Path $PSScriptRoot 'Verify-Website.ps1'
 $EditorVerifier = Join-Path (Split-Path -Parent $PSScriptRoot) 'Editors/Verify-Windvale-Editor.ps1'
 
@@ -62,6 +63,7 @@ $NativePlan = if ($Plan.Scope -eq 'qualification') {
         Gaps = @()
         RunPlanVerification = $false
         RunWebAssemblyVerification = $false
+        RunGitHubQualificationVerification = $false
         ChangedCount = $Paths.Count
     }
 }
@@ -109,6 +111,22 @@ if ($Plan.Scope -eq 'website') {
             $Stopwatch.Stop()
             $Timings.Add([pscustomobject]@{
                 name = 'verification-plan'
+                elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
+            })
+        }
+    }
+
+    if ($NativePlan.RunGitHubQualificationVerification) {
+        $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
+        try {
+            & $GitHubQualificationVerifier
+        } catch {
+            $Failures.Add('github-qualification')
+            if (!$NoFailFast) { throw }
+        } finally {
+            $Stopwatch.Stop()
+            $Timings.Add([pscustomobject]@{
+                name = 'github-qualification'
                 elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
             })
         }

@@ -104,10 +104,11 @@ conformance report. It stops before the published command-line, process,
 filesystem, and native-artifact checks.
 
 Managed `Qualification` begins with that same complete in-process suite, then
-exercises the published CLI as an external tool. Until the final cutover it
-remains comparison evidence for real file publication, native Windows and Linux
-artifacts, assembler/object/linker routes, malformed inputs, exact identities,
-and Windvale-written versus Stage 0 agreement; it is not the normal inner loop.
+exercises the published CLI as an external tool. After the native GitHub
+cutover it remains recovery/comparison evidence for real file publication,
+native Windows and Linux artifacts, assembler/object/linker routes, malformed
+inputs, exact identities, and Windvale-written versus Stage 0 agreement; it is
+not a normal acceptance path.
 
 The retirement candidate workflow is:
 
@@ -127,6 +128,12 @@ cross-host qualification claim; that claim requires the paired Windows and
 Debian results.
 
 Fast and changed-file runs are development feedback, not qualification evidence. GitHub runs the independent dual-host Qualification gate for implementation and specification changes. Do not duplicate that gate locally merely because a commit or push follows. Record which broader checks were not run and why.
+
+The native GitHub Qualification gate runs six independent jobs in parallel:
+the complete fixed retirement suite, the complete WebAssembly owner, and native
+compiler self-convergence on Windows and Linux. The required `Verification
+gate` joins those results. Treat one workflow run as the broad gate; diagnose or
+rerun only its failed owner rather than manually repeating passing siblings.
 
 ### Qualification follow-ups
 

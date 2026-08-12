@@ -935,6 +935,22 @@ $NativeCases = @(
         VerifyWebAssembly = $true
     },
     @{
+        Name = 'GitHub native qualification workflow owner'
+        Paths = @('.github/workflows/verify.yml')
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $false
+        VerifyGitHub = $true
+    },
+    @{
+        Name = 'GitHub native qualification verifier owner'
+        Paths = @('Tools/Verify/Verify-GitHub-Native-Qualification.ps1')
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+        VerifyGitHub = $true
+    },
+    @{
         Name = 'database gap'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
         Suites = @()
@@ -1028,6 +1044,11 @@ foreach ($Case in $NativeCases) {
     } else {
         $false
     }
+    $ExpectedGitHubVerification = if ($Case.ContainsKey('VerifyGitHub')) {
+        $Case.VerifyGitHub
+    } else {
+        $false
+    }
     if (
         !([System.Linq.Enumerable]::SequenceEqual(
             [string[]]@($Plan.Suites),
@@ -1036,15 +1057,18 @@ foreach ($Case in $NativeCases) {
             [string[]]@($Plan.Gaps),
             [string[]]$Case.Gaps)) -or
         $Plan.RunPlanVerification -ne $Case.VerifyPlan -or
-        $Plan.RunWebAssemblyVerification -ne $ExpectedWebAssemblyVerification
+        $Plan.RunWebAssemblyVerification -ne $ExpectedWebAssemblyVerification -or
+        $Plan.RunGitHubQualificationVerification -ne $ExpectedGitHubVerification
     ) {
         throw (
             "Native plan '$($Case.Name)' expected suites=[$($Case.Suites -join ', ')], " +
             "gaps=[$($Case.Gaps -join ', ')], verify-plan=$($Case.VerifyPlan), " +
-            "verify-webassembly=$ExpectedWebAssemblyVerification; found " +
+            "verify-webassembly=$ExpectedWebAssemblyVerification, " +
+            "verify-github=$ExpectedGitHubVerification; found " +
             "suites=[$($Plan.Suites -join ', ')], gaps=[$($Plan.Gaps -join ', ')], " +
             "verify-plan=$($Plan.RunPlanVerification), " +
-            "verify-webassembly=$($Plan.RunWebAssemblyVerification)."
+            "verify-webassembly=$($Plan.RunWebAssemblyVerification), " +
+            "verify-github=$($Plan.RunGitHubQualificationVerification)."
         )
     }
 }

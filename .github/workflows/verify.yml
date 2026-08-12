@@ -14,10 +14,6 @@ concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  DOTNET_NOLOGO: "1"
-
 jobs:
   classify-changes:
     name: Classify verification scope
@@ -136,12 +132,12 @@ jobs:
         shell: pwsh
         run: pwsh -NoProfile -File Tools/Verify/Verify-Website.ps1
 
-  windows-verifier:
-    name: Windows verifier
+  windows-native-suite:
+    name: Windows native retirement suite
     needs: classify-changes
     if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -149,36 +145,43 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Install pinned .NET SDK
-        if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          global-json-file: global.json
+          node-version: 24
 
       - name: Verify Windvale editor support
         if: ${{ needs.classify-changes.outputs.editor == 'true' }}
         shell: pwsh
         run: pwsh -NoProfile -File Tools/Editors/Verify-Windvale-Editor.ps1
 
-      - name: Run Windows verification
-        if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
+      - name: Verify changed-file whitespace
         shell: pwsh
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Seed.ps1 -Level Qualification
+        env:
+          BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
+          HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+        run: |
+          git diff --check $env:BASE_SHA $env:HEAD_SHA --
+          if ($LASTEXITCODE -ne 0) { throw 'Changed-file whitespace verification failed.' }
 
-  linux-verifier:
-    name: Linux verifier
+      - name: Run complete native retirement suite
+        shell: cmd
+        run: Tools\Native\Test-Retirement-Suite.cmd
+
+  linux-native-suite:
+    name: Linux native retirement suite
     needs: classify-changes
     if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
     runs-on: ubuntu-latest
     container:
       image: debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
-    timeout-minutes: 60
+    timeout-minutes: 75
     steps:
       - name: Prepare Debian host
         shell: bash
         run: |
           apt-get update
-          apt-get install --yes --no-install-recommends ca-certificates curl git gzip libicu72 tar
+          apt-get install --yes --no-install-recommends ca-certificates curl git gzip libicu72 tar xz-utils
 
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -186,18 +189,100 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Install pinned .NET SDK
-        if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          global-json-file: global.json
+          node-version: 24
 
-      - name: Run Linux verification
-        if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
+      - name: Run complete native retirement suite
         shell: bash
-        env:
-          VERIFY_LEVEL: qualification
-        run: ./Tools/Verify/Verify-Seed.sh
+        run: ./Tools/Native/Test-Retirement-Suite.sh
+
+  windows-webassembly:
+    name: Windows native WebAssembly
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Run native WebAssembly verification
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1
+
+  linux-webassembly:
+    name: Linux native WebAssembly
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pinned Node.js runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Run native WebAssembly verification
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1
+
+  windows-bootstrap:
+    name: Windows native bootstrap
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify native compiler convergence
+        shell: cmd
+        run: Tools\Verify\Verify-Bootstrap.cmd
+
+  linux-bootstrap:
+    name: Linux native bootstrap
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.scope == 'qualification' }}
+    runs-on: ubuntu-latest
+    container:
+      image: debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
+    timeout-minutes: 45
+    steps:
+      - name: Prepare Debian host
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends ca-certificates git gzip libicu72 tar
+
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify native compiler convergence
+        shell: bash
+        run: ./Tools/Verify/Verify-Bootstrap.sh
 
   verification-gate:
     name: Verification gate
@@ -205,8 +290,12 @@ jobs:
       - classify-changes
       - lightweight-verifier
       - website-verifier
-      - windows-verifier
-      - linux-verifier
+      - windows-native-suite
+      - linux-native-suite
+      - windows-webassembly
+      - linux-webassembly
+      - windows-bootstrap
+      - linux-bootstrap
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -218,28 +307,44 @@ jobs:
           CLASSIFY_RESULT: ${{ needs.classify-changes.result }}
           LIGHTWEIGHT_RESULT: ${{ needs.lightweight-verifier.result }}
           WEBSITE_RESULT: ${{ needs.website-verifier.result }}
-          WINDOWS_RESULT: ${{ needs.windows-verifier.result }}
-          LINUX_RESULT: ${{ needs.linux-verifier.result }}
+          WINDOWS_NATIVE_RESULT: ${{ needs.windows-native-suite.result }}
+          LINUX_NATIVE_RESULT: ${{ needs.linux-native-suite.result }}
+          WINDOWS_WEBASSEMBLY_RESULT: ${{ needs.windows-webassembly.result }}
+          LINUX_WEBASSEMBLY_RESULT: ${{ needs.linux-webassembly.result }}
+          WINDOWS_BOOTSTRAP_RESULT: ${{ needs.windows-bootstrap.result }}
+          LINUX_BOOTSTRAP_RESULT: ${{ needs.linux-bootstrap.result }}
         run: |
           test "$CLASSIFY_RESULT" = success
           case "$SCOPE" in
             lightweight)
               test "$LIGHTWEIGHT_RESULT" = success
               test "$WEBSITE_RESULT" = skipped
-              test "$WINDOWS_RESULT" = skipped
-              test "$LINUX_RESULT" = skipped
+              test "$WINDOWS_NATIVE_RESULT" = skipped
+              test "$LINUX_NATIVE_RESULT" = skipped
+              test "$WINDOWS_WEBASSEMBLY_RESULT" = skipped
+              test "$LINUX_WEBASSEMBLY_RESULT" = skipped
+              test "$WINDOWS_BOOTSTRAP_RESULT" = skipped
+              test "$LINUX_BOOTSTRAP_RESULT" = skipped
               ;;
             website)
               test "$LIGHTWEIGHT_RESULT" = skipped
               test "$WEBSITE_RESULT" = success
-              test "$WINDOWS_RESULT" = skipped
-              test "$LINUX_RESULT" = skipped
+              test "$WINDOWS_NATIVE_RESULT" = skipped
+              test "$LINUX_NATIVE_RESULT" = skipped
+              test "$WINDOWS_WEBASSEMBLY_RESULT" = skipped
+              test "$LINUX_WEBASSEMBLY_RESULT" = skipped
+              test "$WINDOWS_BOOTSTRAP_RESULT" = skipped
+              test "$LINUX_BOOTSTRAP_RESULT" = skipped
               ;;
             qualification)
               test "$LIGHTWEIGHT_RESULT" = skipped
               test "$WEBSITE_RESULT" = skipped
-              test "$WINDOWS_RESULT" = success
-              test "$LINUX_RESULT" = success
+              test "$WINDOWS_NATIVE_RESULT" = success
+              test "$LINUX_NATIVE_RESULT" = success
+              test "$WINDOWS_WEBASSEMBLY_RESULT" = success
+              test "$LINUX_WEBASSEMBLY_RESULT" = success
+              test "$WINDOWS_BOOTSTRAP_RESULT" = success
+              test "$LINUX_BOOTSTRAP_RESULT" = success
               ;;
             *)
               echo "Unsupported verification scope: $SCOPE" >&2

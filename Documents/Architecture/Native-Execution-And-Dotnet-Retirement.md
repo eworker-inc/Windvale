@@ -418,15 +418,14 @@ execution, clean or previous-seed bootstrap, grouped qualification, atomic
 installation, promotion, and recovery deletion remain.
 
 Decision 0504 removes the standalone WebAssembly verifier's normal managed
-compiler and backend execution. The current Windows route constructs the
+compiler and backend execution. The paired Windows/Linux route constructs the
 source/WVB corpus and exact compiler adapters through native front doors,
 lowers every admitted input through the manifest-bound paired native backend,
 and runs the strict Node.js engine plus record-arena and compiler probes. The
-complete command passes without loading .NET and leaves only the paired broad
-Seed commands plus GitHub qualification/release as direct normal managed entry
-points. Independent Linux execution, paired changed-file dispatch,
-backend-package reconstruction, cross-browser evidence, grouped qualification,
-promotion, and recovery retirement remain.
+complete command passes on both hosts without loading .NET, and changed-file
+verification dispatches it once after cheaper fixed owners. Backend-package
+reconstruction, cross-browser evidence, grouped qualification, promotion, and
+recovery retirement remain.
 
 Decision 0505 then transfers one coherent build/verify/inspect boundary inside
 those broad Seed commands. A paired five-case helper natively constructs four
@@ -640,6 +639,16 @@ evidence plus the complete 224-test Standard Seed and 39-test OS suites pass on
 Windows and Linux with equal normalized contracts. Grouped Qualification,
 promotion, remaining capability-bearing execution, and final recovery release
 remain open, so T2 remains `managed-normal`.
+
+Decision 0525 supersedes that normal-path standing without erasing the retained
+comparison evidence. It composes the complete fixed retirement suite, the
+distinct WebAssembly owner, and native compiler self-convergence into one
+six-job GitHub matrix. Windows and Linux instances of each profile run
+concurrently, while the required gate fails closed unless every selected job
+succeeds. The candidate workflow contains no .NET setup or invocation; the
+broad managed Seed scripts become explicit recovery/differential commands. T2
+and G1 move to `native-candidate`; the first independent matrix and final Stage
+0 recovery archive remain before promotion and complete retirement.
 
 Decision 0308 closes the current accepted-subset lowerer's whole-object
 publication half. Complete WVO admission moves into one focused portable module

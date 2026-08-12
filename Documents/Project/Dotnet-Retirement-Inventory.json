@@ -1,16 +1,7 @@
 {
   "format": "windvale-dotnet-retirement-inventory-1",
-  "updated": "2026-08-10",
+  "updated": "2026-08-12",
   "directManagedEntrypoints": [
-    {
-      "path": ".github/workflows/verify.yml",
-      "mode": "normal",
-      "lanes": [
-        "verification",
-        "release"
-      ],
-      "owner": "dual-host qualification and homepage release"
-    },
     {
       "path": "Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1",
       "mode": "recovery",
@@ -85,19 +76,19 @@
     },
     {
       "path": "Tools/Verify/Verify-Seed.ps1",
-      "mode": "normal",
+      "mode": "recovery",
       "lanes": [
-        "verification"
+        "recovery"
       ],
-      "owner": "Windows Seed qualification"
+      "owner": "Windows managed Seed qualification recovery and differential evidence"
     },
     {
       "path": "Tools/Verify/Verify-Seed.sh",
-      "mode": "normal",
+      "mode": "recovery",
       "lanes": [
-        "verification"
+        "recovery"
       ],
-      "owner": "Linux Seed qualification"
+      "owner": "Linux managed Seed qualification recovery and differential evidence"
     }
   ]
 }

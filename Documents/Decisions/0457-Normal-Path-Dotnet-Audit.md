@@ -1,6 +1,6 @@
 # Decision 0457: Normal-path .NET audit
 
-- Status: Implemented audit; verification cutover pending
+- Status: Implemented audit; native cutover candidate recorded by Decision 0525
 - Date: 2026-08-09
 - Advances: [Decision 0456](0456-Native-Probe-40-Process-Object.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)

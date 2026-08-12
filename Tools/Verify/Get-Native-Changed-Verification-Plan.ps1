@@ -16,6 +16,7 @@ $Gaps = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $RunPlanVerification = $false
 $RunWebAssemblyVerification = $false
+$RunGitHubQualificationVerification = $false
 
 $SuiteEntries = @(
     Get-Content -LiteralPath $SuitePlanPath |
@@ -58,6 +59,10 @@ function Add-Gap {
 
 function Add-WebAssemblyVerification {
     $script:RunWebAssemblyVerification = $true
+}
+
+function Add-GitHubQualificationVerification {
+    $script:RunGitHubQualificationVerification = $true
 }
 
 function Add-Compiler-Suites {
@@ -350,6 +355,11 @@ foreach ($Path in $Paths) {
         Add-WebAssemblyVerification
     } elseif ($Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal)) {
         if ([IO.Path]::GetFileName($Path) -in @(
+            'Verify-GitHub-Native-Qualification.ps1'
+        )) {
+            Add-GitHubQualificationVerification
+            $RunPlanVerification = $true
+        } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Seed-Native-Console-Aot.ps1',
             'Verify-Seed-Native-Console-Aot.sh'
         )) {
@@ -1230,7 +1240,7 @@ foreach ($Path in $Paths) {
             Add-WebAssemblyVerification
         }
     } elseif ($Path.StartsWith('.github/', [StringComparison]::Ordinal)) {
-        Add-Gap 'github-native-qualification'
+        Add-GitHubQualificationVerification
     } elseif ($Path -in @('Directory.Build.props', 'global.json', 'Windvale.slnx')) {
         Add-Gap 'managed-build-closure'
     } else {
@@ -1245,6 +1255,7 @@ if (!$Quiet) {
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
     Write-Host "Plan verification: $($RunPlanVerification.ToString().ToLowerInvariant())"
     Write-Host "WebAssembly verification: $($RunWebAssemblyVerification.ToString().ToLowerInvariant())"
+    Write-Host "GitHub qualification verification: $($RunGitHubQualificationVerification.ToString().ToLowerInvariant())"
 }
 if ($PassThru) {
     [pscustomobject]@{
@@ -1252,6 +1263,7 @@ if ($PassThru) {
         Gaps = $OrderedGaps
         RunPlanVerification = $RunPlanVerification
         RunWebAssemblyVerification = $RunWebAssemblyVerification
+        RunGitHubQualificationVerification = $RunGitHubQualificationVerification
         ChangedCount = $Paths.Count
     }
 }
