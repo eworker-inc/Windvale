@@ -1,8 +1,8 @@
 # Windvale
 
-![Four-panel Day 15 Windvale comic showing Windvale taking the native trail while C# keeps the archived maps safe at the Stage 0 recovery cabin](Documents/Project/Images/Windvale-Project-Progress-2026-08-12.png)
+![Illustrated Windvale journey from the C# bootstrap through the Windvale language and tools to a self-hosting compiler](Documents/Project/Images/Windvale-Project-History-Day-15.png)
 
-*Day 15: All eight .NET-retirement conditions are qualified. Windvale's normal Windows and Linux paths are native, while C# remains preserved as the Stage 0 recovery oracle.*
+*Day 15: AI systems under human direction grew Windvale from a C# bootstrap into a qualified native, self-hosting stack. The normal Windows and Linux paths no longer require .NET, while C# remains preserved as the Stage 0 recovery oracle.*
 
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
