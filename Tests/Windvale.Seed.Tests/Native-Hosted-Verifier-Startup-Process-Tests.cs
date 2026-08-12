@@ -11,9 +11,9 @@ namespace Windvale.Seed.Tests;
 
 internal static partial class Program
 {
-    private const int NATIVE_HOSTED_VERIFIER_STARTUP_BYTES = 79_215;
+    private const int NATIVE_HOSTED_VERIFIER_STARTUP_BYTES = 79_401;
     private const string NATIVE_HOSTED_VERIFIER_STARTUP_SHA256 =
-        "532402c09f9cbba05431445bfeaa0ab63e3064fb05a77cce6274017bfb7c386c";
+        "d669c6d74703980785f2d070d39ef2f5b537710d4ed74b174b7f0ffa41416341";
 
     private static void Nativeˉhostedˉverifierˉstartupˉprocessˉruns()
     {
@@ -40,6 +40,48 @@ internal static partial class Program
                 Moduleˉdigest.Calculateˉsha256(Toolˉbytes));
             var Tool = Moduleˉcodec.Readˉandˉverify(Toolˉbytes);
             var Nativeˉtool = X64ˉnativeˉbackend.Compile(Tool).Fragment;
+            var Windowsˉapplication =
+                Hostedˉcontainerˉtoolˉapplicationˉbuilder.Writeˉwindows(
+                    Nativeˉtool,
+                    Tool.Module.Capabilities,
+                    Tool.Module.Name,
+                    "Nativeˉhostedˉverifierˉstartupˉtool",
+                    Hostedˉcompilerˉapplicationˉprofile.Compiler,
+                    "hosted-verifier startup tool",
+                    "WVW3033");
+            var Linuxˉapplication =
+                Hostedˉcontainerˉtoolˉapplicationˉbuilder.Writeˉlinux(
+                    Nativeˉtool,
+                    Tool.Module.Capabilities,
+                    Tool.Module.Name,
+                    "Nativeˉhostedˉverifierˉstartupˉtool",
+                    Hostedˉcompilerˉapplicationˉprofile.Compiler,
+                    "hosted-verifier startup tool",
+                    "WVL3033");
+            True(Windowsˉapplication.Success,
+                string.Join(" | ", Windowsˉapplication.Diagnostics));
+            True(Linuxˉapplication.Success,
+                string.Join(" | ", Linuxˉapplication.Diagnostics));
+            var Candidateˉroot = Path.Combine(
+                Repository,
+                "Artifacts",
+                "Native-Hosted-Container-Toolset-Candidate");
+            Sequenceˉequal(
+                Toolˉbytes,
+                File.ReadAllBytes(Path.Combine(
+                    Candidateˉroot, "Wvb", "wvhostverifierstartup.wvb")));
+            Sequenceˉequal(
+                Windowsˉapplication.Imageˉbytes,
+                File.ReadAllBytes(Path.Combine(
+                    Candidateˉroot,
+                    "windows-x64",
+                    "wvhostverifierstartup.exe")));
+            Sequenceˉequal(
+                Linuxˉapplication.Imageˉbytes,
+                File.ReadAllBytes(Path.Combine(
+                    Candidateˉroot,
+                    "linux-x64",
+                    "wvhostverifierstartup.elf")));
             Equal(
                 new Nativeˉentryˉshape(
                     Nativeˉentryˉinputˉkind.None,

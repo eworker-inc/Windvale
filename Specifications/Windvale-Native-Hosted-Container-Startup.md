@@ -56,9 +56,9 @@ host services shared by the planner, platform-byte producer, and segmenter.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Startup-producer WVB | 43,716 | `4f8a731164676b0e4ac399f633073bd9798a867e738db3acf48173474611a915` |
-| Windows startup producer | 381,440 | `b7c3c04a482548092bb797eeed8d58b2b7cb68694e7aa101663a6a769e030c2e` |
-| Linux startup producer | 380,928 | `a46ebb92d18e19fd011dcd3905829b566633f7f60a2cf7b0c1ec8cd2a5a66024` |
+| Startup-producer WVB | 43,902 | `f01ea2c4f851350ac70faf0be690d9695acb946fd9138b4f9577c57ea12b8598` |
+| Windows startup producer | 382,464 | `ebc3acd6cbfae0b473d74f18eb32a3dd873891400e557ef882312fa01dd13103` |
+| Linux startup producer | 385,024 | `3d0c204fa8c8fc2b48ade1e1f4126d687707d061d7b06a5601629df57539c0d2` |
 
 The WVB reconstructs through the native Project 1 front door. Focused
 current-host evidence builds the public CLI target, executes a real plan and

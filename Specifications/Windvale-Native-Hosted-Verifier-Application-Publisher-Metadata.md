@@ -39,7 +39,7 @@ The exact request identities are:
 
 | Variant | Windows x64 | Linux x64 |
 | ---: | --- | --- |
-| `0`, publisher | `4533fb4c90bab03d5aeb39f6bd8943424f228fb66846d467d333c182d2a2b8f2` | `a285e192992a5239495fc4046cc59390504ffefbe1ab7b863da2d370e615c500` |
+| `0`, publisher | `9b09ace8c8c254954bb444406e425f86089baf54c5222d2ea3861d10eb36aed7` | `bf74294a1ff52aa439d150d64727c579619434dda315d444ed551ff8604bf359` |
 | `1`, promoter | `24024ac451abe4d7312a5be05ba5853b5b06568631a6b88f69b39349b1418a8f` | `810b862985bbf75479972062a87603b9b2847bd9fdf4953ae106ab3fabb79950` |
 | `2`, WVB publisher | `b1b2ec7af1319a329489f9e6c5a13183039243df66e8cc8f8d2f2a548f21c638` | `db7d65bcfb240904377d96578ca56d9981575e66643b0838fae9811f923ac2a9` |
 
@@ -72,7 +72,7 @@ wrappers for role 0.
 
 | Variant | Windows x64 | Linux x64 |
 | ---: | --- | --- |
-| `0`, publisher | `40e73f9c4ac9e27c9dea7f9bed8217be125159f89cb2ea314a91bc66da389b74` | `393253dab73387a0c96fd33c278b350fe43e5466a243eabe3f62a6652c946035` |
+| `0`, publisher | `2279fdd70884ec803c93bd10094331bc600882b51bfb32fc4811472c68a37171` | `28ae3c7bbe0fb996dd23fd0d8e0127e39080b15a113d305614799774086352b0` |
 | `1`, promoter | `dfbc8f1b4767e841417419d77da22bf0e4e78cf0a3258d75959128b95c5684f8` | `e17bfcf08e83d836d3a2b888dbc1cb50569759c53a562729a8b20727b08a560c` |
 | `2`, WVB publisher (`WVPB`) | `a436cb367aeb0b464f548c70cd46cd93f272180fd7cffcabc279439e6c91a79e` | `52ea6856da12caeba02f7db2c7a3a25226d22840190bc65eb0becaeee35e3e87` |
 
@@ -88,7 +88,7 @@ wvhostverifierproducemetadata [role:0|1|2] <target:1|2> <module.wvb> <startup.wv
 The focused Windvale source files separate admission, construction, and the
 byte-input bridge. The role-aware metadata-producer WVB is 85,942 bytes with
 SHA-256
-`205403fd2f5ac1ebeda048804ac02fc67e7d83c6152f8daabe403ac7c79149dd`.
+`c6871c0b2fd45d8c4e3f18879c253a0ef46aaba2c72f50cfcb52674d8a3b535c`.
 
 The focused current-host test remains the recovery owner of service-free
 `Main(bytes) -> bytes`, interpreter/native equality, exact request and metadata

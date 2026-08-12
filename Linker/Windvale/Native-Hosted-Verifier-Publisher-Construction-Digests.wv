@@ -92,23 +92,23 @@ fn Expectedˉword(Identity: u32, Target: u32, Index: u32) -> u32 {
         return 2958189320u32;
     }
     if Identity == 7u32 && Target == 1u32 {
-        if Index == 0u32 { return 1113377559u32; }
-        if Index == 1u32 { return 2252662824u32; }
-        if Index == 2u32 { return 461353363u32; }
-        if Index == 3u32 { return 3495913843u32; }
-        if Index == 4u32 { return 3607363052u32; }
-        if Index == 5u32 { return 2032314797u32; }
-        if Index == 6u32 { return 3186842442u32; }
-        return 2533135477u32;
+        if Index == 0u32 { return 1348408875u32; }
+        if Index == 1u32 { return 1300920617u32; }
+        if Index == 2u32 { return 725706580u32; }
+        if Index == 3u32 { return 3718302565u32; }
+        if Index == 4u32 { return 4233998591u32; }
+        if Index == 5u32 { return 4249129284u32; }
+        if Index == 6u32 { return 1629296256u32; }
+        return 307132439u32;
     }
-    if Index == 0u32 { return 3848015697u32; }
-    if Index == 1u32 { return 3935610066u32; }
-    if Index == 2u32 { return 2061241039u32; }
-    if Index == 3u32 { return 3162584417u32; }
-    if Index == 4u32 { return 2915332387u32; }
-    if Index == 5u32 { return 1603821327u32; }
-    if Index == 6u32 { return 3984659280u32; }
-    return 2888786881u32;
+    if Index == 0u32 { return 3139279500u32; }
+    if Index == 1u32 { return 470054833u32; }
+    if Index == 2u32 { return 1717625953u32; }
+    if Index == 3u32 { return 3751661206u32; }
+    if Index == 4u32 { return 2225677714u32; }
+    if Index == 5u32 { return 2949883655u32; }
+    if Index == 6u32 { return 104350474u32; }
+    return 2660701594u32;
 }
 
 fn Promoterˉword(Identity: u32, Target: u32, Index: u32) -> u32 {

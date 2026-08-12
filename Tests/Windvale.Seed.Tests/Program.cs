@@ -118,7 +118,7 @@ internal static partial class Program
     private const string SOURCE_WVB_TOOL_LINUX_RUNTIME_HEADER_SHA256 = "6c76e45248a39bf76b82313d9b71a20de7fee53e99e40780a8059003979624b5";
     private const string SOURCE_WVB_TOOL_LINUX_APPLICATION_SHA256 = "25905e75e836ad8015a851aa6a52531bf5ab73c9dd97596628c2226740f37a34";
     private const string COMPILER_WVB_VERIFIER_SHA256 = "70bd61e78c2ddd6052adb15f24a155f006ded903ce7825d8f54adafa252b76f8";
-    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "1eb56e1330b099458a3f0286db300355d8d96c5ca67bd2d30a431dc61c0c4238";
+    private const string COMPILER_WVB_VERIFIER_WINDOWS_APPLICATION_SHA256 = "3cccc8821a356862aaf43ae65a85878e10269f85cb86bff1af489214848a8140";
     private const string COMPILER_WVB_VERIFIER_LINUX_APPLICATION_SHA256 = "9a4ade51d111e23af5c84d2fb16a660c89959357b4fff4661bb97a29f2ae4565";
     private const string COMPILER_BUILD_DRIVER_SHA256 = "7c87b171ff61278599bec200090def1ae14ba58567b07d36cfdb3a420a533e4f";
     private const string COMPILER_BUILD_DRIVER_WINDOWS_APPLICATION_SHA256 = "875e827a512f2387a980d2871115c94ba0a17a0e9dac6b89439140dc9b7f313a";
@@ -10579,6 +10579,9 @@ internal static partial class Program
         Windowsˉtargets.Add("Windows_create_file_iat", checked(
             Verifiedˉwindows.Layout.Importˉaddress +
             Windowsˉhostedˉverifierˉimports.CREATE_FILE_IAT_OFFSET));
+        Windowsˉtargets.Add("Windows_exit_process_iat", checked(
+            Verifiedˉwindows.Layout.Importˉaddress +
+            Windowsˉhostedˉverifierˉimports.EXIT_PROCESS_IAT_OFFSET));
         Windowsˉtargets.Add("Windows_get_command_line_iat", checked(
             Verifiedˉwindows.Layout.Importˉaddress +
             Windowsˉhostedˉverifierˉimports.GET_COMMAND_LINE_IAT_OFFSET));

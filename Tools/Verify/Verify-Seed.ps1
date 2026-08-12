@@ -809,14 +809,14 @@ $LinuxHostedCompilerStartupObjectRetained = Join-Path $RepositoryRoot 'Linker/Re
 $NativeHostedStartupInstantiationHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationModule).Hash.ToLowerInvariant()
 if (
     (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationRetained).Hash.ToLowerInvariant() -ne $NativeHostedStartupInstantiationHash -or
-    (Get-Item -LiteralPath $NativeHostedStartupInstantiationRetained).Length -ne 21143
+    (Get-Item -LiteralPath $NativeHostedStartupInstantiationRetained).Length -ne 21329
 ) {
     throw 'The retained hosted-startup instantiation WVB has an unexpected identity.'
 }
 $NativeHostedStartupInstantiationArtifactHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Hash.ToLowerInvariant()
 if (
-    $NativeHostedStartupInstantiationArtifactHash -ne 'ad1c049bdf77cb410b95cb638aa401874cca1a21b496e36ecab32ceef1539ffd' -or
-    (Get-Item -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Length -ne 193891
+    $NativeHostedStartupInstantiationArtifactHash -ne 'cb63e425cc53425890853d4edc58d34176f88c1c6b30d60375e8339a260feef7' -or
+    (Get-Item -LiteralPath $NativeHostedStartupInstantiationArtifactRetained).Length -ne 195063
 ) {
     throw "The retained hosted-startup instantiation fragment has an unexpected identity: $NativeHostedStartupInstantiationArtifactHash"
 }

@@ -93,8 +93,8 @@ reproducibility and recovery evidence.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Startup-instantiation WVB | 21,143 | `933864be78b28394b9fc8e495b5ac872311ebca2a624db6e6731cdb8b399d309` |
-| Startup-instantiation WVNF | 193,891 | `ad1c049bdf77cb410b95cb638aa401874cca1a21b496e36ecab32ceef1539ffd` |
+| Startup-instantiation WVB | 21,329 | `8fb31dbbbb70f094da1e5104d9edd49dd9690bc386541e1d19a75a0fd03ae445` |
+| Startup-instantiation WVNF | 195,063 | `cb63e425cc53425890853d4edc58d34176f88c1c6b30d60375e8339a260feef7` |
 | Windows hosted startup WVO | 4,398 | `dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161` |
 | Linux hosted startup WVO | 2,454 | `1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946` |
 

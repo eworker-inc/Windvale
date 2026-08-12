@@ -21,22 +21,22 @@ internal static partial class Program
         var Contracts = new (string Name, int Bytes, string Sha256)[]
         {
             ("Identity-Request", 60_891,
-                "4b9bdacacaead0b56f0fe5b624294b1375fdfa02ad59356b425906d5277adacc"),
+                "1b7c6a296ed06cd7e37d2f3a02075ff5bda3a569d9c4717199a9e237b24b249d"),
             ("Structure-Request", 25_561,
                 "63496d90faac3ab91bc3f592c46c196d298cd5c6df836a0ee57f7a1feaa5fc02"),
             ("Construction-Request", 36_046,
-                "3dbed45aeb650591698b525e9db6d64046f5daa5c861d6e14114e89327a5de45"),
+                "4a492804f2e4d313175ecdd919a6aea4ae2ad85881016e0f2cfd7db3cf0bd4d7"),
             ("Target-Request", 31_730,
                 "d8f0ab1a3f865cb307a71732ed9d88fa83b5f1d020d028d62419fc6c36c9e347"),
         };
         var Tools = new (string Name, int Bytes, string Sha256)[]
         {
             ("Identity-Request", 63_684,
-                "542ff016774e1dfe8b999f2a5b838aaa45946a44182a9e1f16e0174ffb12cb83"),
+                "f6542076159e49cc49696dd51871da4fed0547a7061cbee6eec9010c836e591b"),
             ("Structure-Request", 26_931,
                 "9c59a9494554d54992ad5749e2a6b16ab431d39064e5955c658bb57a7180366f"),
             ("Construction-Request", 37_555,
-                "1769e3bf77af756dc48fa7c4ff1ec4988fbccd2a97d463d7505d619b51524452"),
+                "c103931f2fb47e78e54382502cc6422335e0328d7d95031857a4843c9582958c"),
             ("Target-Request", 33_160,
                 "767f20717146df1aea8fc42225d6c15a9d372cdd0a221cba6c9dd989fd07b3e6"),
         };

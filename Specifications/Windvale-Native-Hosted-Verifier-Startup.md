@@ -83,9 +83,9 @@ The application declares exactly `console.write_line`,
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Tool WVB | 79,215 | `532402c09f9cbba05431445bfeaa0ab63e3064fb05a77cce6274017bfb7c386c` |
-| Windows application | 926,720 | `1091e934e480d090255504270f54ba583944b6544f24b12e0300cd0b6f055225` |
-| Linux application | 925,696 | `01a271916c517d733673f5ad11e1453e001d6bdef7010257daa468d933471743` |
+| Tool WVB | 79,401 | `d669c6d74703980785f2d070d39ef2f5b537710d4ed74b174b7f0ffa41416341` |
+| Windows application | 927,744 | `c3c8e8691c76cacb13c14397d43b519da7a3c54e83a34a48963de6895fb235d4` |
+| Linux application | 929,792 | `5c2b948cf46550188c6bf2329f1bd8fd3ceea7ef156fcc188695e2aa93d07b68` |
 
 The WVB builds through the native Project 1 front door. Both applications
 reconstruct through the shared native hosted-container packager. The focused

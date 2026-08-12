@@ -16,12 +16,12 @@ internal readonly record struct Nativeˉhostedˉstartupˉinputs(
 internal static class Nativeˉhostedˉstartupˉinstantiator
 {
     // Transitional managed transport; native outer-container orchestration owns its removal.
-    internal const int CONSUMER_CANONICAL_SIZE = 21_143;
+    internal const int CONSUMER_CANONICAL_SIZE = 21_329;
     internal const string CONSUMER_CANONICAL_SHA256 =
-        "933864be78b28394b9fc8e495b5ac872311ebca2a624db6e6731cdb8b399d309";
-    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 193_891;
+        "8fb31dbbbb70f094da1e5104d9edd49dd9690bc386541e1d19a75a0fd03ae445";
+    internal const int CONSUMER_ARTIFACT_CANONICAL_SIZE = 195_063;
     internal const string CONSUMER_ARTIFACT_CANONICAL_SHA256 =
-        "ad1c049bdf77cb410b95cb638aa401874cca1a21b496e36ecab32ceef1539ffd";
+        "cb63e425cc53425890853d4edc58d34176f88c1c6b30d60375e8339a260feef7";
 
     private const uint REQUEST_MAGIC = 0x4953_5657;
     private const uint RESPONSE_MAGIC = 0x4453_5657;

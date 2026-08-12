@@ -53,7 +53,7 @@ define a general modulo-result translation or change Windvale linker results.
 All candidates embedding the affected Windows startup or shared hosted tooling
 are regenerated, and every dependent exact size and digest is refreshed. The
 hosted-container toolset inventory is 6,927 bytes at SHA-256
-`dc1899b252a8ad0f75eeee33cdec82d9cbbba40c7ba8115bb55aaad0b9dd00c8`.
+`d2cd2c34bb8eaa09d50389685393dc893afa0ef31cd44835d2e5e619a2da7f6f`.
 The publisher-construction inventory is 5,064 bytes at SHA-256
 `161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a`.
 

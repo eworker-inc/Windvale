@@ -22,7 +22,7 @@ internal static partial class Program
             var Newˉtools = new (string Name, int Bytes, string Sha256)[]
             {
                 ("Metadata-Producer", 85_942,
-                    "205403fd2f5ac1ebeda048804ac02fc67e7d83c6152f8daabe403ac7c79149dd"),
+                    "c6871c0b2fd45d8c4e3f18879c253a0ef46aaba2c72f50cfcb52674d8a3b535c"),
                 ("Object-Instantiation", 22_737,
                     "b24b43bc55926cf21562acb0c2067fb1b0a95a225b22865abf0743c7820ca7da"),
                 ("Windows-Imports", 12_764,
@@ -160,8 +160,8 @@ internal static partial class Program
                     Metadataˉpath));
                 Equal(
                     Windows
-                        ? "40e73f9c4ac9e27c9dea7f9bed8217be125159f89cb2ea314a91bc66da389b74"
-                        : "393253dab73387a0c96fd33c278b350fe43e5466a243eabe3f62a6652c946035",
+                        ? "2279fdd70884ec803c93bd10094331bc600882b51bfb32fc4811472c68a37171"
+                        : "28ae3c7bbe0fb996dd23fd0d8e0127e39080b15a113d305614799774086352b0",
                     Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Metadataˉpath)))
                         .ToLowerInvariant());
                 Equal(0, Run(

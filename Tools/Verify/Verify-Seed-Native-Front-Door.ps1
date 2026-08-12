@@ -1057,9 +1057,9 @@ Invoke-ExactInspect $NativeHostedToolMetadataConstructionBridgeModule @('profile
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Linker/Windvale/Native-Hosted-Startup-Instantiation.wvproj') `
     $NativeHostedStartupInstantiationModule `
-    21143 `
-    '933864be78b28394b9fc8e495b5ac872311ebca2a624db6e6731cdb8b399d309' `
-    'build status=Published verification=compiler-aligned functions=15 code-bytes=18808 module-bytes=21143'
+    21329 `
+    '8fb31dbbbb70f094da1e5104d9edd49dd9690bc386541e1d19a75a0fd03ae445' `
+    'build status=Published verification=compiler-aligned functions=15 code-bytes=18994 module-bytes=21329'
 Invoke-ExactInspect $NativeHostedStartupInstantiationModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 
 Invoke-ExactBuild `

@@ -76,15 +76,15 @@ internal static partial class Program
             Equal(1347835479u, BinaryPrimitives.ReadUInt32LittleEndian(Metadata));
             Equal(
                 Windows
-                    ? "40e73f9c4ac9e27c9dea7f9bed8217be125159f89cb2ea314a91bc66da389b74"
-                    : "393253dab73387a0c96fd33c278b350fe43e5466a243eabe3f62a6652c946035",
+                    ? "2279fdd70884ec803c93bd10094331bc600882b51bfb32fc4811472c68a37171"
+                    : "28ae3c7bbe0fb996dd23fd0d8e0127e39080b15a113d305614799774086352b0",
                 Objectˉdigest.Calculateˉsha256(Metadata));
 
             var Request = Buildˉpublisherˉmetadataˉrequest(Metadata);
             Equal(
                 Windows
-                    ? "4533fb4c90bab03d5aeb39f6bd8943424f228fb66846d467d333c182d2a2b8f2"
-                    : "a285e192992a5239495fc4046cc59390504ffefbe1ab7b863da2d370e615c500",
+                    ? "9b09ace8c8c254954bb444406e425f86089baf54c5222d2ea3861d10eb36aed7"
+                    : "bf74294a1ff52aa439d150d64727c579619434dda315d444ed551ff8604bf359",
                 Objectˉdigest.Calculateˉsha256(Request.AsSpan()));
             var Interpreted = Reference.Runˉmainˉbytes(Request).Bytes;
             var Executed = X64ˉnativeˉexecutor.Executeˉbytes(Native, Request);
