@@ -1,8 +1,8 @@
 # Windvale
 
-![Four-panel Day 13 Windvale comic showing its workshop rebuilding the compiler and surrounding tools while a subsidized AI-usage meter reports ten to fifteen dollars per day](Documents/Project/Images/Windvale-Project-Progress-2026-08-10.png)
+![Four-panel Day 15 Windvale comic showing Windvale taking the native trail while C# keeps the archived maps safe at the Stage 0 recovery cabin](Documents/Project/Images/Windvale-Project-Progress-2026-08-12.png)
 
-*Day 13: Windvale's candidate native workshop is reconstructing the compiler and surrounding tools while AI usage currently runs about $10–$15 per day—heavily subsidized for now.*
+*Day 15: All eight .NET-retirement conditions are qualified. Windvale's normal Windows and Linux paths are native, while C# remains preserved as the Stage 0 recovery oracle.*
 
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
