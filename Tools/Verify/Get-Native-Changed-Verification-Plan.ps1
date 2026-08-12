@@ -348,7 +348,7 @@ foreach ($Path in $Paths) {
             'Verify-Seed-Native-Console-Aot.ps1',
             'Verify-Seed-Native-Console-Aot.sh'
         )) {
-            Add-Gap 'seed-native-console-aot'
+            Add-Suite 'seed-native-console-aot'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Seed-Native-Front-Door.ps1',
             'Verify-Seed-Native-Front-Door.sh'
@@ -1020,7 +1020,7 @@ foreach ($Path in $Paths) {
         if ($Path -eq 'Specifications/Seed-CLI.md') {
             Add-Suite @('seed', 'wvb-runner-reconstruction')
             Add-Suite 'seed-native-front-door'
-            Add-Gap 'seed-native-console-aot'
+            Add-Suite 'seed-native-console-aot'
         } elseif ($Path -in @(
             'Specifications/Windvale-Baseline-Jit-Patch-Plan.md',
             'Specifications/Windvale-Native-Baseline-Jit-Publication.md'
@@ -1215,7 +1215,7 @@ foreach ($Path in $Paths) {
             'Examples/Seed/Sum-Data.wv',
             'Examples/Seed/Sum-Data.wvproj'
         )) {
-            Add-Gap 'seed-native-console-aot'
+            Add-Suite 'seed-native-console-aot'
         }
     } elseif ($Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'seed'

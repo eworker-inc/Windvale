@@ -27,6 +27,7 @@ The exact filter names and case counts are:
 | --- | ---: |
 | `seed` | 26 |
 | `seed-native-front-door` | 1 |
+| `seed-native-console-aot` | 1 |
 | `compiler-reconstruction` | 3 |
 | `segmented-compiler-toolset-reconstruction` | 3 |
 | `wvb-to-wvo-reconstruction` | 3 |
@@ -70,11 +71,11 @@ The exact filter names and case counts are:
 | `os-probe` | 4 |
 | `aot-chain` | 1 |
 
-Omitting `--filter` selects all 44 suites and 3,205 cases in manifest order. Its
+Omitting `--filter` selects all 45 suites and 3,206 cases in manifest order. Its
 terminal success line is:
 
 ```text
-Suites: 44, Passed: 44, Failed: 0, Cases: 3205
+Suites: 45, Passed: 45, Failed: 0, Cases: 3206
 ```
 
 Do not use the unfiltered command as another inner-loop level. It is reserved
@@ -864,7 +865,7 @@ UEFI packaging are retained only as recovery/differential implementations.
 
 ## Current boundary
 
-The 3,205-case coordinator is a candidate fixed native gate, not the complete normal
+The 3,206-case coordinator is a candidate fixed native gate, not the complete normal
 repository verifier. It covers the transferred result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, and AOT-chain contracts. It does not replace the remaining

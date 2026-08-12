@@ -1,6 +1,6 @@
 # Decision 0506: Native Seed console AOT qualification smoke
 
-- Status: Current-Windows focused evidence complete; independent Linux and broad qualification integration pending
+- Status: Paired-host focused owner complete; broad native qualification cutover pending
 - Date: 2026-08-10
 - Scope: canonical capability-free WVB-to-WVO lowering, WVO verification, flat linking, paired version-1 console packaging, and current-host execution inside the broad Seed qualification commands
 - Extends: Decisions 0119, 0122, 0213, 0305, 0457, 0458, and 0505
@@ -58,11 +58,12 @@ The current Windows helper passed its exact chain in 1.1 seconds. It reproduced
 both established application identities and the generated Windows application
 returned `29` without loading .NET.
 
-The Linux helper is structurally paired but was not executed because a Bash
-host is unavailable in this environment. Changed-file planning reports the
-explicit `seed-native-console-aot` gap. The broad Qualification command was not
-rerun because its remaining managed execution, harness, and later phases are
-outside this transferred boundary.
+The paired focused owner now constructs the exact input WVB through the native
+Project 1 front door and invokes the host-specific helper in one private
+directory. Windows and Debian execute the same lower, admit, link, paired
+package, identity, mode, and current-host result contract. The fixed coordinator
+owns this as `seed-native-console-aot`; all three changed-file mappings formerly
+reporting that evidence gap now select the focused lane.
 
 ## Consequences
 
@@ -70,11 +71,11 @@ outside this transferred boundary.
   native front doors.
 - T2 remains `managed-normal`; both broad Seed scripts and the GitHub workflow
   remain in the direct managed-entry inventory.
-- The direct file count and the 42-suite/3,201-case fixed retirement plan do
-  not change.
-- Independent Linux execution, general native WVB execution, the remaining
-  broad Seed transfers, GitHub orchestration cutover, grouped qualification,
-  promotion, and recovery retirement remain open.
+- The direct managed-entry file count does not change. The fixed retirement
+  plan advances to 45 suites and 3,206 cases.
+- General native WVB execution, the remaining broad Seed transfers, GitHub
+  orchestration cutover, grouped qualification, promotion, and recovery
+  retirement remain open.
 
 ## Reconsider when
 

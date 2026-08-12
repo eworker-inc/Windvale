@@ -236,8 +236,23 @@ $NativeCases = @(
             'Examples/Seed/Sum-Data.wvproj',
             'Specifications/Seed-CLI.md'
         )
-        Suites = @('seed', 'seed-native-front-door', 'wvb-runner-reconstruction')
-        Gaps = @('seed-native-console-aot')
+        Suites = @(
+            'seed',
+            'seed-native-front-door',
+            'seed-native-console-aot',
+            'wvb-runner-reconstruction'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Seed native console AOT audit owner'
+        Paths = @(
+            'Tools/Verify/Verify-Seed-Native-Console-Aot.ps1',
+            'Tools/Verify/Verify-Seed-Native-Console-Aot.sh'
+        )
+        Suites = @('seed-native-console-aot')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
