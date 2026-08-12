@@ -149,6 +149,6 @@ $InventoryEntries = @($Inventory.directManagedEntrypoints)
 Assert-Workflow (
     @($InventoryEntries | Where-Object { $_.mode -eq 'normal' }).Count -eq 0
 ) 'The retirement inventory still contains a normal managed entry point.'
-Assert-Workflow ($InventoryEntries.Count -eq 11) `
-    "The retirement inventory contains $($InventoryEntries.Count) entries instead of eleven recovery owners."
+Assert-Workflow ($InventoryEntries.Count -eq 9) `
+    "The retirement inventory contains $($InventoryEntries.Count) entries instead of nine recovery owners."
 Write-Host 'GitHub native qualification workflow verification passed (6 native jobs; 0 normal managed entry points).'

@@ -2,6 +2,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+$RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $RetirementInventoryVerifier = Join-Path $PSScriptRoot 'Verify-Dotnet-Retirement-Inventory.ps1'
 $Stage0RecoveryArchiveVerifier = Join-Path $PSScriptRoot 'Verify-Stage0-Recovery-Archive.ps1'
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
@@ -1033,6 +1034,26 @@ $NativeCases = @(
 
 & $RetirementInventoryVerifier -Quiet
 & $Stage0RecoveryArchiveVerifier
+
+$RetirementSuitePlan = Join-Path $RepositoryRoot 'Tests/Native/Retirement-Suite.txt'
+foreach ($Line in Get-Content -LiteralPath $RetirementSuitePlan | Select-Object -Skip 1) {
+    $Fields = $Line -split '\|', 4
+    if ($Fields.Count -ne 4) {
+        throw "Malformed native retirement-suite entry: $Line"
+    }
+    $WindowsOwner = "Tools/Native/$($Fields[1]).cmd"
+    $LinuxOwner = "Tools/Native/$($Fields[1]).sh"
+    foreach ($Owner in @($WindowsOwner, $LinuxOwner)) {
+        if (!(Test-Path -LiteralPath (Join-Path $RepositoryRoot $Owner) -PathType Leaf)) {
+            throw "The native retirement suite is missing owner '$Owner'."
+        }
+    }
+    $LinuxIndex = @(git -C $RepositoryRoot ls-files -s -- $LinuxOwner)
+    if ($LASTEXITCODE -ne 0 -or $LinuxIndex.Count -ne 1 -or
+        $LinuxIndex[0] -notmatch '^100755 ') {
+        throw "Linux retirement-suite owner '$LinuxOwner' is not executable in Git."
+    }
+}
 
 foreach ($Case in $Cases) {
     $Plan = & $Planner -ChangedPath $Case.Paths -PassThru -Quiet

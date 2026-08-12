@@ -111,8 +111,8 @@ foreach ($RequiredText in @(
         'checkout --quiet --detach',
         'Verify-Managed-Bootstrap',
         'Rebuild-Native-Compiler-Seed',
-        'Rebuild-Native-Front-Door',
-        'Verify-Bootstrap'
+        'Artifacts/Native-Front-Door',
+        'Verify-Compiler-Convergence'
     )) {
     if (!$Verifier.Contains($RequiredText)) {
         throw "The Stage 0 recovery verifier is missing '$RequiredText'."

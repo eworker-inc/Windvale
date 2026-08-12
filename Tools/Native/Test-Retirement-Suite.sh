@@ -37,6 +37,14 @@ if ! check_hash "$plan" "$plan_digest"; then
     exit 1
 fi
 
+while IFS='|' read -r name command cases expected_summary; do
+    owner="$repository_root/Tools/Native/$command.sh"
+    if [[ ! -x $owner ]]; then
+        echo "Native retirement suite owner is missing or not executable: $owner" >&2
+        exit 1
+    fi
+done < <(tail -n +2 -- "$plan")
+
 temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-native-retirement-suite.XXXXXXXX") || exit 1
 suite_output="$temporary_directory/Suite.out"

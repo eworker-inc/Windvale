@@ -96,25 +96,17 @@ entry point:
 dotnet run --project Tools/Windvale.Tool -- build project.wvproj -o output.wvb
 ```
 
-To reconstruct all fifteen pinned WVB and native application artifacts into a separate
-directory on Windows:
+The final Stage 0 archive reconstructs the feature-freeze native compiler seed,
+admits the digest-bound native front door carried by the archived commit, and
+uses that recovered seed chain to prove current native compiler convergence on
+Windows and Linux. Follow
+`Documents/Runbooks/Stage0-Recovery-Archive.md` for construction and verification.
 
-```powershell
-pwsh -NoProfile -File Tools/Recovery/Rebuild-Native-Front-Door.ps1 <output-directory>
-```
-
-Or on Linux:
-
-```sh
-./Tools/Recovery/Rebuild-Native-Front-Door.sh <output-directory>
-```
-
-Reconstruction requires the pinned .NET SDK. It builds the retained Stage 0 CLI,
-reconstructs the established native tools, uses the rebuilt native build driver for
-the runner WVB, and reconstructs all five canonical WVB modules and all ten native
-applications. It then requires every length and SHA-256 identity to match the
-committed inventory. The recovery scripts refuse to target the canonical distribution
-directory.
+The feature-frozen C# compiler is not a valid direct builder for current
+front-door source after post-freeze language growth. The former paired rebuild
+commands are therefore removed from the active recovery surface and retained in
+Git history only as provenance. New source semantics remain solely in
+`Compiler/Windvale`.
 
 ## Verification boundary
 

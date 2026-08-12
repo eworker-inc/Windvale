@@ -48,9 +48,11 @@ workflow invokes them.
 
 ## Evidence boundary
 
-Before publication, the direct-entry audit reports eleven direct managed entry
-points: zero normal and eleven recovery. It independently discovers the same
-set, and the workflow contains no `setup-dotnet`, `dotnet`, or `DOTNET_` entry.
+Before publication, the direct-entry audit reported eleven direct managed entry
+points: zero normal and eleven recovery. The final Stage 0 archive work later
+removed the paired obsolete front-door rebuilders, leaving zero normal and nine
+recovery entries. The audit independently discovers the current set, and the
+workflow contains no `setup-dotnet`, `dotnet`, or `DOTNET_` entry.
 Planner and inventory verification, workflow structure checks, changed-file
 whitespace verification, and documentation review are the proportional local
 checks for this orchestration-only change.

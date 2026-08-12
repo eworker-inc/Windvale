@@ -524,8 +524,11 @@ indirect normal call from `Verify-Changed.ps1`; Decision 0504 removes the
 standalone WebAssembly verifier from the direct list. [Decision
 0525](../Decisions/0525-Native-Dual-Host-Qualification-Cutover.md) then removes
 .NET from the normal GitHub matrix and reclassifies the paired broad Seed
-scripts as recovery/differential commands. The candidate inventory now contains
-eleven direct managed entry points, all recovery and none normal. Its first
+scripts as recovery/differential commands. The final archive work then removes
+the obsolete paired Stage 0 front-door rebuilders: the feature-frozen compiler
+cannot and must not reproduce post-freeze source semantics. The candidate
+inventory now contains nine direct managed entry points, all recovery and none
+normal. Its first
 independent six-job native matrix and the final digest-bound recovery archive
 remain before complete retirement is declared; a line-for-line rewrite of the
 managed harness is not required.

@@ -80,21 +80,18 @@ paths inside portable Windvale semantics.
 
 ## Recovery reconstruction
 
-The checked-in native binaries are the normal dependency. Their construction is
-kept in the explicit recovery lane:
+The checked-in, digest-bound native front door is part of the documented native
+seed inventory. The final Stage 0 archive reconstructs the older native compiler
+seed from the feature-freeze source, admits the archived front-door artifacts,
+and passes both to the native compiler-convergence owner. That chain must compile
+the current source graph and produce byte-identical Stage 1 and Stage 2 WVBs on
+Windows and Linux.
 
-```powershell
-pwsh -NoProfile -File Tools/Recovery/Rebuild-Native-Front-Door.ps1 <output-directory>
-```
-
-```sh
-./Tools/Recovery/Rebuild-Native-Front-Door.sh <output-directory>
-```
-
-Those scripts build the Stage 0 CLI, compile all four source projects represented
-in the shared inventory, invoke all eight named AOT targets, and require exact
-agreement with the committed inventory. Recovery always writes a separate directory
-and cannot silently refresh the canonical distribution.
+The feature-frozen C# compiler does not directly reconstruct the current front
+door. Post-freeze source semantics belong only to `Compiler/Windvale`; requiring
+Stage 0 to accept them would violate the freeze and create a second forward
+compiler. The removed direct front-door rebuild commands remain available in Git
+history as provenance for their pre-freeze artifact generation.
 
 ## Required evidence
 

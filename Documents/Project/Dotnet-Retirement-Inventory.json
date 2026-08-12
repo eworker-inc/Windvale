@@ -19,22 +19,6 @@
       "owner": "Linux Stage 0 native compiler seed reconstruction"
     },
     {
-      "path": "Tools/Recovery/Rebuild-Native-Front-Door.ps1",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Windows Stage 0 native-front-door reconstruction"
-    },
-    {
-      "path": "Tools/Recovery/Rebuild-Native-Front-Door.sh",
-      "mode": "recovery",
-      "lanes": [
-        "recovery"
-      ],
-      "owner": "Linux Stage 0 native-front-door reconstruction"
-    },
-    {
       "path": "Tools/Recovery/Rebuild-WebAssembly-Native-Compiler.ps1",
       "mode": "recovery",
       "lanes": [

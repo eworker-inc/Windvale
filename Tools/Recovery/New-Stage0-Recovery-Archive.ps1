@@ -175,9 +175,9 @@ Write-LfText (Join-Path $Destination $ArtifactInventoryName) $ArtifactInventory
 
 $RecoveryInventory = Get-Content -LiteralPath $RecoveryInventoryPath -Raw | ConvertFrom-Json
 $RecoveryEntries = @($RecoveryInventory.directManagedEntrypoints)
-if ($RecoveryEntries.Count -ne 11 -or
+if ($RecoveryEntries.Count -ne 9 -or
     @($RecoveryEntries | Where-Object { $_.mode -ne 'recovery' }).Count -ne 0) {
-    throw 'The final recovery archive requires exactly eleven recovery-only managed entry points.'
+    throw 'The final recovery archive requires exactly nine recovery-only managed entry points.'
 }
 Copy-LfText $RecoveryInventoryPath (Join-Path $Destination $RecoveryInventoryName)
 Copy-LfText $DependencyPath (Join-Path $Destination $DependencyName)

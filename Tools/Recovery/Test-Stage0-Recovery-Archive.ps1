@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory)]
     [string]$ReleaseDirectory,
-    [switch]$RunRecovery
+    [switch]$RunRecovery,
+    [switch]$RunManagedConvergence
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,6 +14,10 @@ $TemporaryPrefix = $TemporaryBase.TrimEnd([IO.Path]::DirectorySeparatorChar) +
     [IO.Path]::DirectorySeparatorChar
 $TemporaryRoot = Join-Path $TemporaryBase (
     'windvale-stage0-recovery-verification-' + [guid]::NewGuid().ToString('N'))
+
+if ($RunManagedConvergence -and !$RunRecovery) {
+    throw '-RunManagedConvergence requires -RunRecovery.'
+}
 
 function Invoke-Checked {
     param([scriptblock]$Command, [string]$Failure)
@@ -115,8 +120,8 @@ if ([string]$Manifest.releaseId -notmatch '^windvale-stage0-recovery-[0-9a-f]{12
 if ($ManifestFiles[0].Name -cne "$($Manifest.releaseId)-manifest.json") {
     throw 'The recovery release manifest filename differs from its release identifier.'
 }
-if ([int]$Manifest.recoveryEntryCount -ne 11) {
-    throw 'The recovery release must retain exactly eleven managed recovery entry points.'
+if ([int]$Manifest.recoveryEntryCount -ne 9) {
+    throw 'The recovery release must retain exactly nine managed recovery entry points.'
 }
 
 $ManifestAssets = @($Manifest.assets)
@@ -303,27 +308,28 @@ try {
         if ($IsWindows) {
             $ManagedBootstrap = Join-Path $Checkout 'Tools/Recovery/Verify-Managed-Bootstrap.ps1'
             $SeedRebuilder = Join-Path $Checkout 'Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1'
-            $FrontDoorRebuilder = Join-Path $Checkout 'Tools/Recovery/Rebuild-Native-Front-Door.ps1'
-            $NativeBootstrap = Join-Path $Checkout 'Tools/Verify/Verify-Bootstrap.cmd'
+            $NativeConvergence = Join-Path $Checkout 'Tools/Native/Verify-Compiler-Convergence.cmd'
         } elseif ($IsLinux) {
             $ManagedBootstrap = Join-Path $Checkout 'Tools/Recovery/Verify-Managed-Bootstrap.sh'
             $SeedRebuilder = Join-Path $Checkout 'Tools/Recovery/Rebuild-Native-Compiler-Seed.sh'
-            $FrontDoorRebuilder = Join-Path $Checkout 'Tools/Recovery/Rebuild-Native-Front-Door.sh'
-            $NativeBootstrap = Join-Path $Checkout 'Tools/Verify/Verify-Bootstrap.sh'
+            $NativeConvergence = Join-Path $Checkout 'Tools/Native/Verify-Compiler-Convergence.sh'
         } else {
             throw 'Complete recovery verification supports only Windows and Linux.'
         }
 
         Push-Location $Checkout
         try {
-            Invoke-Checked { & $ManagedBootstrap } `
-                'Managed Stage 1/Stage 2 recovery convergence failed.' | Out-Null
+            if ($RunManagedConvergence) {
+                Invoke-Checked { & $ManagedBootstrap } `
+                    'Optional managed Stage 1/Stage 2 convergence failed.' | Out-Null
+            }
             Invoke-Checked { & $SeedRebuilder (Join-Path $TemporaryRoot 'Native-Compiler-Seed') } `
                 'Native compiler seed recovery failed.' | Out-Null
-            Invoke-Checked { & $FrontDoorRebuilder (Join-Path $TemporaryRoot 'Native-Front-Door') } `
-                'Native front-door recovery failed.' | Out-Null
-            Invoke-Checked { & $NativeBootstrap } `
-                'The recovered source could not hand off to native compiler convergence.' | Out-Null
+            Copy-Item -LiteralPath (Join-Path $Checkout 'Artifacts/Native-Front-Door') `
+                -Destination (Join-Path $TemporaryRoot 'Native-Front-Door') `
+                -Recurse
+            Invoke-Checked { & $NativeConvergence $TemporaryRoot $Checkout } `
+                'The reconstructed native tools could not prove compiler convergence.' | Out-Null
         } finally {
             Pop-Location
         }
@@ -339,10 +345,10 @@ try {
     Write-Output "recovery-entries=$($RecoveryEntries.Count)"
     Write-Output "host-profile=$HostProfile"
     if ($RunRecovery) {
-        Write-Output 'managed-bootstrap=passed'
+        Write-Output "managed-convergence-executed=$($RunManagedConvergence.IsPresent.ToString().ToLowerInvariant())"
         Write-Output 'native-seed-reconstruction=passed'
-        Write-Output 'native-front-door-reconstruction=passed'
-        Write-Output 'native-bootstrap-handoff=passed'
+        Write-Output 'archived-native-front-door-admission=passed'
+        Write-Output 'reconstructed-native-convergence=passed'
     }
     Write-Output "recovery-executed=$($RunRecovery.IsPresent.ToString().ToLowerInvariant())"
 } finally {

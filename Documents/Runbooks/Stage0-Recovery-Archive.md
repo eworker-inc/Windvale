@@ -81,17 +81,42 @@ On Linux x64, use the same PowerShell command when PowerShell 7 is available.
 The verifier selects the paired `.ps1` or `.sh` recovery owners for the current
 host. It creates a separate checkout from the release bundle and then:
 
-1. proves frozen managed Stage 1/Stage 2 compiler convergence;
-2. reconstructs the exact paired native compiler seed from the historical
+1. reconstructs the exact paired native compiler seed from the historical
    source commits contained in the bundle;
-3. reconstructs the exact current native source-build, publisher, verifier,
-   inspector, and runner front door; and
-4. runs native compiler self-convergence through `Verify-Bootstrap.cmd` or
-   `.sh` without using the recovered managed tool as the normal verifier.
+2. admits the digest-bound native front-door seed artifacts carried by the
+   archived commit; and
+3. passes the reconstructed compiler seed and archived native front door to the
+   paired native compiler-convergence owner, which builds the current compiler
+   graph and produces byte-identical Stage 1 and Stage 2 compilers without using
+   the recovered managed tool as the verifier or execution path.
+
+The current front door is intentionally not reconstructed directly by Stage 0.
+Decision 0213 freezes the C# source compiler at the WVB 1.11 semantic baseline,
+while later language semantics belong only to `Compiler/Windvale`. Requiring the
+frozen compiler to reproduce current source would undo that boundary. The
+archive instead reconstructs the older native compiler seed from Stage 0 and
+then proves that this independently recovered seed reaches the current native
+fixed point through the committed, digest-bound bootstrap chain.
 
 All reconstruction occurs below a verifier-owned temporary directory and is
 removed after success or failure. The release directory and bundle are
 read-only inputs.
+
+The older managed Stage 0 → Stage 1 → Stage 2 convergence proof is already
+qualified for the frozen semantic baseline and is not repeated by the final
+release gate. It remains available as an explicit, substantially slower
+independent diagnostic when that evidence is specifically needed:
+
+```powershell
+pwsh -NoProfile -File Tools/Recovery/Test-Stage0-Recovery-Archive.ps1 `
+  -ReleaseDirectory C:\Recovery\Windvale-Stage0 `
+  -RunRecovery `
+  -RunManagedConvergence
+```
+
+This optional switch adds the managed comparison before the same reconstructed
+native handoff; it does not strengthen the normal `.NET`-free qualification
+matrix and is not required for archive publication.
 
 ## Qualification evidence and publication
 

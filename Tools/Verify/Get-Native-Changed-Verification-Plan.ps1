@@ -345,6 +345,8 @@ foreach ($Path in $Paths) {
     )) {
         $RunPlanVerification = $true
     } elseif ($Path -in @(
+        'Tools/Recovery/Rebuild-Native-Front-Door.ps1',
+        'Tools/Recovery/Rebuild-Native-Front-Door.sh',
         'Tools/Recovery/New-Stage0-Recovery-Archive.ps1',
         'Tools/Recovery/Test-Stage0-Recovery-Archive.ps1'
     )) {

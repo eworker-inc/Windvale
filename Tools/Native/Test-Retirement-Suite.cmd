@@ -19,6 +19,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
+for /f "usebackq skip=1 tokens=1,2 delims=|" %%N in ("%Plan%") do (
+    if not exist "%RepositoryRoot%\Tools\Native\%%O.cmd" (
+        >&2 echo Native retirement suite owner is missing: %RepositoryRoot%\Tools\Native\%%O.cmd
+        exit /b 1
+    )
+)
+
 :allocate
 set "TemporaryDirectory=%TEMP%\windvale-native-retirement-suite-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TemporaryDirectory%" goto :allocate
