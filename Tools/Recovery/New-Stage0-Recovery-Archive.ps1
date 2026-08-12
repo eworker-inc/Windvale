@@ -28,7 +28,9 @@ function Invoke-Checked {
 
 function Write-LfText {
     param([string]$Path, [string[]]$Line)
-    [IO.File]::WriteAllText($Path, (($Line -join "`n") + "`n"), $Utf8)
+    $Content = ($Line -join "`n").
+        Replace("`r`n", "`n").Replace("`r", "`n").TrimEnd("`n")
+    [IO.File]::WriteAllText($Path, ($Content + "`n"), $Utf8)
 }
 
 function Copy-LfText {
