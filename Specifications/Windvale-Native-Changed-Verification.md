@@ -26,8 +26,15 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every suite. The complete 3,204-case coordinator
+Unknown input must never select every suite. The complete 3,205-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
+
+The `seed-native-front-door` lane owns the exact native Project 1 build,
+publication, verification, inspection, execution, assembly, object, and linker
+report audit formerly reachable only after a broad managed gate. Every path
+previously classified with the `seed-native-front-door` evidence gap now selects
+this focused native lane, including changes to the paired host audit scripts.
+No `seed-native-front-door` gap remains in the native planner.
 
 The complete WebAssembly generation-and-verification owner remains a distinct
 long-running command rather than a fixed retirement-coordinator suite.

@@ -146,7 +146,7 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -eq 'Build-Source-Compiler-Product') {
         Add-Compiler-Suites
         Add-Suite 'compiler-reconstruction'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Stem -in @(
         'Stage-Compiler-Wvb',
         'Link-Staged-Compiler-Wvo',
@@ -234,7 +234,7 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -eq 'Run-Wvb') {
         Add-Bytecode-Suites
         Add-Suite 'wvb-runner-reconstruction'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Stem -match 'Verify-Wvb|Inspect-Wvb') {
         Add-Bytecode-Suites
     } elseif ($Stem -match 'Package-Uefi') {
@@ -353,7 +353,7 @@ foreach ($Path in $Paths) {
             'Verify-Seed-Native-Front-Door.ps1',
             'Verify-Seed-Native-Front-Door.sh'
         )) {
-            Add-Gap 'seed-native-front-door'
+            Add-Suite 'seed-native-front-door'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Classify-Verification-Changes.ps1',
             'Get-Verification-Plan.ps1',
@@ -512,7 +512,7 @@ foreach ($Path in $Paths) {
         'Windvale-Native-Service-Bundle-Materialization.wvproj'
     )) {
         Add-Compiler-Suites
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
@@ -619,7 +619,7 @@ foreach ($Path in $Paths) {
         'Windvale-Native-Byte-Result-Admission.wvproj'
     )) {
         Add-Bytecode-Suites
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -in @(
         'Runtime/Windvale.Native/Consumers/Native-X64-Argument-Count-Service.bin',
         'Runtime/Windvale.Native/Consumers/Native-X64-Argument-Service.bin',
@@ -699,7 +699,7 @@ foreach ($Path in $Paths) {
         'Foundation/Machine-Contracts.wvproj'
     )) {
         Add-Suite 'seed'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -in @(
         'Foundation/Byte-Construction.wv',
         'Foundation/Byte-Ordering.wv',
@@ -721,7 +721,7 @@ foreach ($Path in $Paths) {
             Add-Console-Packager-Reconstruction-Suites
         }
         if ($Path -ne 'Foundation/Sha256.wv') {
-            Add-Gap 'seed-native-front-door'
+            Add-Suite 'seed-native-front-door'
         }
     } elseif ($Path -eq 'Foundation/Immutable-Source-Regions.wv') {
         Add-Suite @(
@@ -741,7 +741,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Object-Model/Windvale/Wvo-Object-Core.wv') {
         Add-Object-Suites
         Add-Suite 'wvo-inspector-reconstruction'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path.StartsWith('Object-Model/Windvale/', [StringComparison]::Ordinal)) {
         Add-Object-Suites
     } elseif ($Path.StartsWith('Object-Model/', [StringComparison]::Ordinal)) {
@@ -749,13 +749,13 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Assembler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Assembler-Suites
         if ($Path -eq 'Assembler/Windvale/Wva-Assembler-Core.wv') {
-            Add-Gap 'seed-native-front-door'
+            Add-Suite 'seed-native-front-door'
         }
     } elseif ($Path.StartsWith('Assembler/', [StringComparison]::Ordinal)) {
         Add-Gap 'managed-assembler-recovery-source'
     } elseif ($Path -eq 'Examples/Assembler/Hello-Object.wva') {
         Add-Assembler-Suites
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -in @(
         'Linker/Windvale/Console-Application-Admission-Core.wv',
         'Linker/Windvale/Console-Application-Verification-Core.wv',
@@ -827,7 +827,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Linker/Windvale/Wv-Linker-Core.wv') {
         Add-Linker-Suites
         Add-Suite @('wv-linker-reconstruction', 'console-publisher-reconstruction')
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -in @(
         'Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv',
         'Linker/Windvale/Native-Hosted-Startup-Instantiation-Bridge.wv',
@@ -846,7 +846,7 @@ foreach ($Path in $Paths) {
         'Windvale-Native-Hosted-Container-Segmentation.wvproj'
     )) {
         Add-Linker-Suites
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path.StartsWith('Linker/Windvale/', [StringComparison]::Ordinal)) {
         Add-Linker-Suites
     } elseif ($Path -in @(
@@ -905,7 +905,7 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Wvb-Runner-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite 'wvb-runner-reconstruction'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvo-Publisher-Candidate/',
         [StringComparison]::Ordinal)) {
@@ -974,7 +974,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path -eq 'Tools/Windvale.Run/Wvb-Runner-Tool.wv') {
         Add-Suite 'wvb-runner-reconstruction'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -eq
         'Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv') {
         Add-Suite 'console-verifier-reconstruction'
@@ -1019,7 +1019,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
         if ($Path -eq 'Specifications/Seed-CLI.md') {
             Add-Suite @('seed', 'wvb-runner-reconstruction')
-            Add-Gap 'seed-native-front-door'
+            Add-Suite 'seed-native-front-door'
             Add-Gap 'seed-native-console-aot'
         } elseif ($Path -in @(
             'Specifications/Windvale-Baseline-Jit-Patch-Plan.md',
@@ -1051,7 +1051,7 @@ foreach ($Path in $Paths) {
             Add-Suite 'wvb-to-wvo-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-Runner.md') {
             Add-Suite 'wvb-runner-reconstruction'
-            Add-Gap 'seed-native-front-door'
+            Add-Suite 'seed-native-front-door'
         } elseif ($Path -in @(
             'Specifications/Windvale-Native-Wv-Linker.md',
             'Specifications/Wv-Linker-Core.md'
@@ -1134,18 +1134,18 @@ foreach ($Path in $Paths) {
         Add-Hosted-Publisher-Suites
     } elseif ($Path -eq 'Windvale-Wv-Linker.wvproj') {
         Add-Suite @('wv-linker-reconstruction', 'console-publisher-reconstruction')
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -eq 'Windvale-Wva-Assembler.wvproj') {
         Add-Assembler-Suites
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -eq 'Windvale-Wvo-Publisher.wvproj') {
         Add-Suite 'wvo-publisher-reconstruction'
     } elseif ($Path -eq 'Windvale-Wvb-Runner.wvproj') {
         Add-Suite 'wvb-runner-reconstruction'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -eq 'Windvale-Wvo-Object.wvproj') {
         Add-Suite 'wvo-inspector-reconstruction'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
     } elseif ($Path -eq 'Windvale-Console-Application-Verifier.wvproj') {
         Add-Suite 'console-verifier-reconstruction'
     } elseif ($Path -eq 'Windvale-Console-Application-Publisher.wvproj') {
@@ -1210,7 +1210,7 @@ foreach ($Path in $Paths) {
         'Foundation-Byte-Construction-Demo.wvproj'
     )) {
         Add-Suite 'seed'
-        Add-Gap 'seed-native-front-door'
+        Add-Suite 'seed-native-front-door'
         if ($Path -in @(
             'Examples/Seed/Sum-Data.wv',
             'Examples/Seed/Sum-Data.wvproj'

@@ -1,5 +1,6 @@
 windvale-native-retirement-suite 1
 seed|Test-Seed|26|Tests: 26, Passed: 26, Failed: 0
+seed-native-front-door|Test-Seed-Native-Front-Door|1|Tests: 1, Passed: 1, Failed: 0
 compiler-reconstruction|Test-Compiler-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
 segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0
 wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|3|Tests: 3, Passed: 3, Failed: 0

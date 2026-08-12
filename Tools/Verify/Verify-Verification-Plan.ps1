@@ -51,8 +51,18 @@ $NativeCases = @(
             'Foundation-Decimal-Parsing-Demo.wvproj',
             'Foundation-Byte-Construction-Demo.wvproj'
         )
-        Suites = @('seed')
-        Gaps = @('seed-native-front-door')
+        Suites = @('seed', 'seed-native-front-door')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Seed native front-door audit owner'
+        Paths = @(
+            'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
+            'Tools/Verify/Verify-Seed-Native-Front-Door.sh'
+        )
+        Suites = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -61,8 +71,8 @@ $NativeCases = @(
             'Foundation/Machine-Contracts.wv',
             'Examples/Foundation/Machine-Contracts-Demo.wv'
         )
-        Suites = @('seed', 'wv-linker-reconstruction')
-        Gaps = @('seed-native-front-door')
+        Suites = @('seed', 'seed-native-front-door', 'wv-linker-reconstruction')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -134,12 +144,13 @@ $NativeCases = @(
         )
         Suites = @(
             'seed',
+            'seed-native-front-door',
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
         )
-        Gaps = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -150,13 +161,14 @@ $NativeCases = @(
         )
         Suites = @(
             'seed',
+            'seed-native-front-door',
             'compiler-reconstruction',
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
         )
-        Gaps = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -186,8 +198,13 @@ $NativeCases = @(
             'Windvale-Native-X64-Text-Concat-Service.wvproj',
             'Windvale-Native-Output-Table.wvproj'
         )
-        Suites = @('seed', 'unsafe-wvb', 'wvb-containment')
-        Gaps = @('seed-native-front-door')
+        Suites = @(
+            'seed',
+            'seed-native-front-door',
+            'unsafe-wvb',
+            'wvb-containment'
+        )
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -202,8 +219,13 @@ $NativeCases = @(
             'Windvale-Native-Hosted-Container-Linux.wvproj',
             'Windvale-Native-Hosted-Container-Segmentation.wvproj'
         )
-        Suites = @('linker-rejections', 'linker-hostile', 'linker-map-limit')
-        Gaps = @('seed-native-front-door')
+        Suites = @(
+            'seed-native-front-door',
+            'linker-rejections',
+            'linker-hostile',
+            'linker-map-limit'
+        )
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -214,8 +236,8 @@ $NativeCases = @(
             'Examples/Seed/Sum-Data.wvproj',
             'Specifications/Seed-CLI.md'
         )
-        Suites = @('seed', 'wvb-runner-reconstruction')
-        Gaps = @('seed-native-console-aot', 'seed-native-front-door')
+        Suites = @('seed', 'seed-native-front-door', 'wvb-runner-reconstruction')
+        Gaps = @('seed-native-console-aot')
         VerifyPlan = $false
     },
     @{
@@ -372,11 +394,12 @@ $NativeCases = @(
             'Windvale-Wv-Linker.wvproj'
         )
         Suites = @(
+            'seed-native-front-door',
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction'
         )
-        Gaps = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -388,6 +411,7 @@ $NativeCases = @(
         )
         Suites = @(
             'seed',
+            'seed-native-front-door',
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -395,7 +419,7 @@ $NativeCases = @(
             'linker-hostile',
             'linker-map-limit'
         )
-        Gaps = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -450,8 +474,8 @@ $NativeCases = @(
             'Tools/Windvale.Run/Wvb-Runner-Tool.wv',
             'Specifications/Windvale-Native-Wvb-Runner.md'
         )
-        Suites = @('wvb-runner-reconstruction')
-        Gaps = @('seed-native-front-door')
+        Suites = @('seed-native-front-door', 'wvb-runner-reconstruction')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -466,11 +490,12 @@ $NativeCases = @(
             'Specifications/Windvale-Native-Wvo-Inspector.md'
         )
         Suites = @(
+            'seed-native-front-door',
             'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction'
         )
-        Gaps = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -481,6 +506,7 @@ $NativeCases = @(
             'Object-Model/Windvale/Wvo-Object-Core.wv'
         )
         Suites = @(
+            'seed-native-front-door',
             'wvb-runner-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
@@ -493,7 +519,7 @@ $NativeCases = @(
             'publisher-rejections',
             'hosted-verifier-publisher-files'
         )
-        Gaps = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -523,6 +549,7 @@ $NativeCases = @(
         )
         Suites = @(
             'seed',
+            'seed-native-front-door',
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
@@ -532,7 +559,7 @@ $NativeCases = @(
             'console-packager-source-reconstruction',
             'console-packager-container-reconstruction'
         )
-        Gaps = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -718,8 +745,8 @@ $NativeCases = @(
             'Examples/Foundation/Wv-Dump-Core.wv',
             'Windvale-Wvb-Inspector.wvproj'
         )
-        Suites = @('seed')
-        Gaps = @('seed-native-front-door')
+        Suites = @('seed', 'seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -729,21 +756,27 @@ $NativeCases = @(
             'Windvale-Wva-Assembler.wvproj',
             'Examples/Assembler/Hello-Object.wva'
         )
-        Suites = @('assembler-rejections', 'assembler-golden', 'wva-differential')
-        Gaps = @('seed-native-front-door')
+        Suites = @(
+            'seed-native-front-door',
+            'assembler-rejections',
+            'assembler-golden',
+            'wva-differential'
+        )
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
         Name = 'Windvale linker'
         Paths = @('Linker/Windvale/Wv-Linker-Core.wv')
         Suites = @(
+            'seed-native-front-door',
             'wv-linker-reconstruction',
             'console-publisher-reconstruction',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit'
         )
-        Gaps = @('seed-native-front-door')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{
@@ -922,8 +955,18 @@ $NativeCases = @(
     @{
         Name = 'combined deterministic order'
         Paths = @('Compiler/Windvale/Source-Wvb-Compiler.wv', 'Assembler/Windvale/Wva-Assembler-Core.wv')
-        Suites = @('seed', 'unsafe-wvb', 'assembler-rejections', 'assembler-golden', 'wva-differential', 'source-containment', 'lowerer-rejections', 'console-packager-source-reconstruction')
-        Gaps = @('seed-native-front-door')
+        Suites = @(
+            'seed',
+            'seed-native-front-door',
+            'unsafe-wvb',
+            'assembler-rejections',
+            'assembler-golden',
+            'wva-differential',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction'
+        )
+        Gaps = @()
         VerifyPlan = $false
     },
     @{

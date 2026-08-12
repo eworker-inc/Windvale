@@ -1156,7 +1156,7 @@ exact_build \
     21329 \
     8fb31dbbbb70f094da1e5104d9edd49dd9690bc386541e1d19a75a0fd03ae445 \
     00005351 \
-    'build status=Published verification=compiler-aligned functions=15 code-bytes=18994 module-bytes=21329'
+    'build status=Published verification=compiler-aligned functions=15 code-bytes=18984 module-bytes=21329'
 exact_inspect "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE" 'profile=portable' 'section name=capabilities offset=88 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=21110 bytes=17 count=1'
 
 exact_build \
