@@ -219,6 +219,7 @@ internal static partial class Program
                 application,
                 expectedˉoutput,
                 [input, output],
+                timeoutˉmilliseconds: 30_000,
                 loadedˉmodules: loaded,
                 expectedˉerror: expectedˉerror)
             : Executeˉlinuxˉapplication(
