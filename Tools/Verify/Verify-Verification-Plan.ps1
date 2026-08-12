@@ -911,8 +911,9 @@ $NativeCases = @(
             'Artifacts/WebAssembly-Native-Backend/Manifest.json'
         )
         Suites = @()
-        Gaps = @('webassembly-native-verification')
+        Gaps = @()
         VerifyPlan = $false
+        VerifyWebAssembly = $true
     },
     @{
         Name = 'WebAssembly source and contract owner'
@@ -929,8 +930,9 @@ $NativeCases = @(
             'lowerer-rejections',
             'console-packager-source-reconstruction'
         )
-        Gaps = @('webassembly-native-verification')
+        Gaps = @()
         VerifyPlan = $false
+        VerifyWebAssembly = $true
     },
     @{
         Name = 'database gap'
@@ -1021,6 +1023,11 @@ foreach ($Case in $Cases) {
 
 foreach ($Case in $NativeCases) {
     $Plan = & $NativePlanner -ChangedPath $Case.Paths -PassThru -Quiet
+    $ExpectedWebAssemblyVerification = if ($Case.ContainsKey('VerifyWebAssembly')) {
+        $Case.VerifyWebAssembly
+    } else {
+        $false
+    }
     if (
         !([System.Linq.Enumerable]::SequenceEqual(
             [string[]]@($Plan.Suites),
@@ -1028,13 +1035,16 @@ foreach ($Case in $NativeCases) {
         !([System.Linq.Enumerable]::SequenceEqual(
             [string[]]@($Plan.Gaps),
             [string[]]$Case.Gaps)) -or
-        $Plan.RunPlanVerification -ne $Case.VerifyPlan
+        $Plan.RunPlanVerification -ne $Case.VerifyPlan -or
+        $Plan.RunWebAssemblyVerification -ne $ExpectedWebAssemblyVerification
     ) {
         throw (
             "Native plan '$($Case.Name)' expected suites=[$($Case.Suites -join ', ')], " +
-            "gaps=[$($Case.Gaps -join ', ')], verify-plan=$($Case.VerifyPlan); found " +
+            "gaps=[$($Case.Gaps -join ', ')], verify-plan=$($Case.VerifyPlan), " +
+            "verify-webassembly=$ExpectedWebAssemblyVerification; found " +
             "suites=[$($Plan.Suites -join ', ')], gaps=[$($Plan.Gaps -join ', ')], " +
-            "verify-plan=$($Plan.RunPlanVerification)."
+            "verify-plan=$($Plan.RunPlanVerification), " +
+            "verify-webassembly=$($Plan.RunWebAssemblyVerification)."
         )
     }
 }

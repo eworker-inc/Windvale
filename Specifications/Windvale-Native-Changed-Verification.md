@@ -46,11 +46,13 @@ select this lane; no gap with that name remains in the native planner.
 The complete WebAssembly generation-and-verification owner remains a distinct
 long-running command rather than a fixed retirement-coordinator suite.
 WebAssembly backend sources, tools, fixtures, project manifests, exact native
-packages, verifier scripts, and their specification therefore select the
-stable `webassembly-native-verification` gap. That gap directs a maintainer to
-run `Verify-WebAssembly.ps1` on Windows and prevents a managed or unfiltered
-fallback. It remains a gap until the same command contract has an independently
-executed Linux owner that the changed-file front door can dispatch.
+packages, verifier scripts, and their specification select one explicit
+`RunWebAssemblyVerification` owner. The changed-file front door dispatches
+`Verify-WebAssembly.ps1` once after any selected fixed suites pass. The command
+selects the paired native `.cmd` or `.sh` source-build and compiler-bootstrap
+front doors for the current host, and never substitutes a managed or unfiltered
+fallback. No `webassembly-native-verification` gap remains in the native
+planner.
 
 The `console-verifier-reconstruction` lane owns its exact candidate,
 constructor, test command, project, and Windvale source closure. Its direct
@@ -82,8 +84,9 @@ whitespace, editor, and website behavior. For qualification-scoped changes it:
 3. runs the planner/inventory verifier when selected;
 4. invokes each selected suite through `Test-Retirement-Suite.cmd --filter` on
    Windows or the paired `.sh` coordinator on non-Windows hosts;
-5. stops at the first failure unless `-NoFailFast` is explicit; and
-6. optionally writes `windvale-native-changed-verification-timing-1` JSON.
+5. invokes the distinct long-running WebAssembly verifier once when selected;
+6. stops at the first failure unless `-NoFailFast` is explicit; and
+7. optionally writes `windvale-native-changed-verification-timing-1` JSON.
 
 The command is development feedback. Passing it is not Standard, Qualification,
 cross-host, or complete-retirement evidence. A pre-existing output owned by a

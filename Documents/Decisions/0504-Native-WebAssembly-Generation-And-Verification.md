@@ -1,6 +1,6 @@
 # Decision 0504: Native WebAssembly generation and verification
 
-- Status: Current-Windows focused evidence complete; independent Linux and grouped qualification pending
+- Status: Paired Windows/Linux focused evidence complete; grouped qualification pending
 - Date: 2026-08-10
 - Scope: normal WebAssembly source/WVB construction, WVB-to-Wasm generation, and strict engine verification without .NET
 - Extends: Decisions 0202, 0277, 0278, 0312, 0333, 0457, and 0458
@@ -66,13 +66,26 @@ The new launcher also passed a bounded success/rejection check: valid input
 produced an import-free module, an unsupported WVB was rejected, the existing
 destination was preserved, and no private scratch remained.
 
-This is current-Windows evidence. The manifest binds a Linux x64 compiler, but
-the complete Linux generation/engine command has not run in this slice.
-`Verify-WebAssembly.ps1` therefore leaves the W1 product standing at
-`native-candidate` and is not inserted into the fixed cross-platform retirement
-coordinator. WebAssembly-owned changes select the explicit
-`webassembly-native-verification` evidence gap until a paired automatic owner
-exists; they never fall back to a managed verifier.
+The complete command also passed on an independent Linux host in 1,371.8
+seconds with empty stderr. Its final compiler probe returned the exact 183-byte
+payload at SHA-256
+`3d29618283648cb0d23987075912a218ac212d8c8fa31ec00b72f4bf3df795c6`.
+The verifier selects the paired native `.cmd` or `.sh` source-build and
+compiler-bootstrap front doors for the current host; no private host
+configuration is part of the repository evidence.
+
+The automatic Windows changed-file route then passed this exact implementation
+state in 1,353.0 seconds. Its plan contained nine changed paths, no fixed suites,
+no evidence gaps, planner verification, and exactly one WebAssembly owner.
+
+`Verify-WebAssembly.ps1` remains outside the fixed cross-platform retirement
+coordinator because it is a distinct long-running owner. WebAssembly-owned
+changes now select one explicit `RunWebAssemblyVerification` plan property, and
+`Verify-Changed.ps1` dispatches the command once after any cheaper fixed suites
+pass. The five former `webassembly-native-verification` mappings are closed and
+never fall back to a managed or unfiltered verifier. W1 remains
+`native-candidate` until grouped qualification and its other documented
+promotion conditions complete.
 
 The verifier currently creates a cleanup-contained, temporary root-level
 `.wvproj` only for generated one-root fixtures because the native builder's
@@ -87,11 +100,10 @@ not prescribe that project files belong at repository root.
   inventory. The inventory becomes twelve files: three normal broad
   verification/release entry points and nine recovery commands.
 - The managed WebAssembly backend and source compiler are no longer part of the
-  normal Windows WebAssembly gate.
+  normal Windows or Linux WebAssembly gate.
 - The Stage 0 backend/compiler reconstruction scripts remain explicit recovery
   owners and keep their managed provenance.
-- Independent Linux execution, paired automatic changed-file ownership,
-  segmented backend-package reconstruction, cross-browser evidence, grouped
+- Segmented backend-package reconstruction, cross-browser evidence, grouped
   qualification, promotion, and final recovery retirement remain open.
 
 ## Reconsider when

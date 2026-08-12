@@ -1,8 +1,10 @@
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $ArtifactDirectory = Join-Path $RepositoryRoot 'artifacts/webassembly-verification'
-$NativeBuild = Join-Path $RepositoryRoot 'Tools/Native/Build-Wvb.cmd'
-$NativeCompilerBootstrap = Join-Path $RepositoryRoot 'Tools/Native/Bootstrap-Compiler.cmd'
+$NativeScriptSuffix = if ($IsWindows) { '.cmd' } else { '.sh' }
+$NativeBuild = Join-Path $RepositoryRoot "Tools/Native/Build-Wvb$NativeScriptSuffix"
+$NativeCompilerBootstrap = Join-Path `
+    $RepositoryRoot "Tools/Native/Bootstrap-Compiler$NativeScriptSuffix"
 $NativeCompilerMemoryBuild = Join-Path `
     $RepositoryRoot 'Tools/WebAssembly/Build-Compiler-Wvb.mjs'
 $NativeWebAssemblyCompiler = Join-Path `

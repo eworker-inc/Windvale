@@ -14,6 +14,7 @@ $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $PlanVerifier = Join-Path $PSScriptRoot 'Verify-Verification-Plan.ps1'
+$WebAssemblyVerifier = Join-Path $PSScriptRoot 'Verify-WebAssembly.ps1'
 $WebsiteVerifier = Join-Path $PSScriptRoot 'Verify-Website.ps1'
 $EditorVerifier = Join-Path (Split-Path -Parent $PSScriptRoot) 'Editors/Verify-Windvale-Editor.ps1'
 
@@ -60,6 +61,7 @@ $NativePlan = if ($Plan.Scope -eq 'qualification') {
         Suites = @()
         Gaps = @()
         RunPlanVerification = $false
+        RunWebAssemblyVerification = $false
         ChangedCount = $Paths.Count
     }
 }
@@ -132,6 +134,22 @@ if ($Plan.Scope -eq 'website') {
             $Stopwatch.Stop()
             $Timings.Add([pscustomobject]@{
                 name = $Suite
+                elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
+            })
+        }
+    }
+
+    if ($NativePlan.RunWebAssemblyVerification) {
+        $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
+        try {
+            & $WebAssemblyVerifier
+        } catch {
+            $Failures.Add('webassembly')
+            if (!$NoFailFast) { throw }
+        } finally {
+            $Stopwatch.Stop()
+            $Timings.Add([pscustomobject]@{
+                name = 'webassembly'
                 elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
             })
         }

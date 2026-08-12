@@ -136,7 +136,7 @@ This shortcut applies only when code, tests, contract semantics, serialized byte
 
 ## Direct WebAssembly verification
 
-On Windows, build the retained source/WVB corpus and both exact compiler adapters
+On Windows or Linux, build the retained source/WVB corpus and both exact compiler adapters
 through the native front doors, lower every admitted input through the
 manifest-bound native WebAssembly compiler, verify the exact artifacts, and run
 the strict Node.js engine plus record-arena and compiler probes with:
@@ -145,7 +145,22 @@ the strict Node.js engine plus record-arena and compiler probes with:
 pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1
 ```
 
-The verifier contains no normal .NET invocation. It requires execution ABI 1 to reset its exported evidence, return status `0` or `3007`, and publish the same result and attempted-instruction count as the retained arithmetic contracts. For execution ABI 2 it requires exact single-loop success at budget 157, `3011` exhaustion at 156, nonterminating-loop containment at 50, mixed sequential-control success/exhaustion at 184/183 and 331/330 across both conditional routes, two-`if` success/exhaustion at 41/40, shared-budget direct-call success/exhaustion at 66/65, and callee-overflow propagation as `3007/0/14`. Every retained repeat resets exactly. The complete current-Windows route takes roughly 27 minutes. A successful local run is engine evidence, not Windows/Linux cross-host qualification or browser-worker evidence.
+The verifier contains no normal .NET invocation and selects the paired native
+host scripts. It requires execution ABI 1 to reset its exported evidence,
+return status `0` or `3007`, and publish the same result and attempted-instruction
+count as the retained arithmetic contracts. For execution ABI 2 it requires
+exact single-loop success at budget 157, `3011` exhaustion at 156,
+nonterminating-loop containment at 50, mixed sequential-control
+success/exhaustion at 184/183 and 331/330 across both conditional routes,
+two-`if` success/exhaustion at 41/40, shared-budget direct-call
+success/exhaustion at 66/65, and callee-overflow propagation as `3007/0/14`.
+Every retained repeat resets exactly. Measured complete routes take roughly
+23–27 minutes across the current Windows and independent Linux hosts.
+`Verify-Changed.ps1` dispatches this owner once for
+WebAssembly-owned changes, after any cheaper fixed suites pass. A successful
+local run is engine evidence; paired independent host reports remain necessary
+for Windows/Linux qualification, and neither local report is browser-worker
+evidence.
 
 ## Native compiler bootstrap verification
 

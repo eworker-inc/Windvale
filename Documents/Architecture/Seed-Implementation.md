@@ -191,12 +191,14 @@ recovery release remain open.
 
 Decision 0504 composes the existing native Project 1, compiler-bootstrap,
 portable-compiler, and paired WebAssembly backend boundaries into the complete
-current-Windows generation-and-verification command. One generic launcher
+paired Windows/Linux generation-and-verification command. One generic launcher
 admits the exact host backend, constructs an import-free module privately, and
 publishes only after validation. The strict Node.js engine, record-arena, and
-compiler probes pass without a normal .NET invocation. Independent Linux
-execution, backend-package reconstruction, cross-browser evidence, grouped
-qualification, promotion, and the final recovery release remain open.
+compiler probes pass on both hosts without a normal .NET invocation. The
+changed-file front door dispatches that distinct long-running owner once after
+any cheaper fixed suites. Backend-package reconstruction, cross-browser
+evidence, grouped qualification, promotion, and the final recovery release
+remain open.
 
 Decision 0505 reuses the same qualified Project 1 builder plus native WVB
 verifier and inspector for the first qualification-only manual checks in both

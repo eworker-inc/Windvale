@@ -15,6 +15,7 @@ $SelectedSuites = [System.Collections.Generic.HashSet[string]]::new(
 $Gaps = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $RunPlanVerification = $false
+$RunWebAssemblyVerification = $false
 
 $SuiteEntries = @(
     Get-Content -LiteralPath $SuitePlanPath |
@@ -53,6 +54,10 @@ function Add-Suite {
 function Add-Gap {
     param([Parameter(Mandatory)][string]$Name)
     $null = $Gaps.Add($Name)
+}
+
+function Add-WebAssemblyVerification {
+    $script:RunWebAssemblyVerification = $true
 }
 
 function Add-Compiler-Suites {
@@ -342,7 +347,7 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Artifacts/WebAssembly-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Artifacts/webassembly-verification/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/WebAssembly/', [StringComparison]::Ordinal)) {
-        Add-Gap 'webassembly-native-verification'
+        Add-WebAssemblyVerification
     } elseif ($Path.StartsWith('Tools/Verify/', [StringComparison]::Ordinal)) {
         if ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Seed-Native-Console-Aot.ps1',
@@ -385,7 +390,7 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/WebAssembly-',
         [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
-        Add-Gap 'webassembly-native-verification'
+        Add-WebAssemblyVerification
     } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Core.wv',
         'Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv',
@@ -1027,7 +1032,7 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'baseline-jit'
         } elseif ($Path -eq 'Specifications/Windvale-WebAssembly.md') {
-            Add-Gap 'webassembly-native-verification'
+            Add-WebAssemblyVerification
         } elseif ($Path -eq 'Specifications/Windvale-Native-Compiler-Reconstruction.md') {
             Add-Suite 'compiler-reconstruction'
         } elseif ($Path -in @(
@@ -1123,7 +1128,7 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal) -and
         $Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'seed'
-        Add-Gap 'webassembly-native-verification'
+        Add-WebAssemblyVerification
     } elseif ($Path -in @(
         'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
         'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
@@ -1222,7 +1227,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Examples/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
         if ($Path.StartsWith('Examples/Compiler/WebAssembly-', [StringComparison]::Ordinal)) {
-            Add-Gap 'webassembly-native-verification'
+            Add-WebAssemblyVerification
         }
     } elseif ($Path.StartsWith('.github/', [StringComparison]::Ordinal)) {
         Add-Gap 'github-native-qualification'
@@ -1239,12 +1244,14 @@ if (!$Quiet) {
     Write-Host "Native suites: [$($OrderedSuites -join ', ')]"
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
     Write-Host "Plan verification: $($RunPlanVerification.ToString().ToLowerInvariant())"
+    Write-Host "WebAssembly verification: $($RunWebAssemblyVerification.ToString().ToLowerInvariant())"
 }
 if ($PassThru) {
     [pscustomobject]@{
         Suites = $OrderedSuites
         Gaps = $OrderedGaps
         RunPlanVerification = $RunPlanVerification
+        RunWebAssemblyVerification = $RunWebAssemblyVerification
         ChangedCount = $Paths.Count
     }
 }
