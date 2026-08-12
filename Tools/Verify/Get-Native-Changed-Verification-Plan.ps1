@@ -337,10 +337,16 @@ foreach ($Path in $Paths) {
         continue
     } elseif ($Path -in @(
         'Documents/Project/Dotnet-Retirement-Inventory.json',
+        'Documents/Project/Stage0-Recovery-Dependencies.json',
         'Specifications/README.md',
         'Specifications/Windvale-Native-Changed-Verification.md',
         'Specifications/Windvale-Native-Retirement-Test-Suite.md',
         'Tests/Native/Retirement-Suite.txt'
+    )) {
+        $RunPlanVerification = $true
+    } elseif ($Path -in @(
+        'Tools/Recovery/New-Stage0-Recovery-Archive.ps1',
+        'Tools/Recovery/Test-Stage0-Recovery-Archive.ps1'
     )) {
         $RunPlanVerification = $true
     } elseif ($Path -in @(
@@ -376,6 +382,7 @@ foreach ($Path in $Paths) {
             'Verify-Changed.ps1',
             'Verify-Change-Classification.ps1',
             'Verify-Dotnet-Retirement-Inventory.ps1',
+            'Verify-Stage0-Recovery-Archive.ps1',
             'Verify-Verification-Plan.ps1'
         )) {
             $RunPlanVerification = $true

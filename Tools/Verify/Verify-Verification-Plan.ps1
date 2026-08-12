@@ -3,6 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $RetirementInventoryVerifier = Join-Path $PSScriptRoot 'Verify-Dotnet-Retirement-Inventory.ps1'
+$Stage0RecoveryArchiveVerifier = Join-Path $PSScriptRoot 'Verify-Stage0-Recovery-Archive.ps1'
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $AllAreas = @('assembler', 'bytecode', 'compiler', 'database', 'foundation', 'golden', 'linker', 'object-model', 'runtime')
@@ -965,6 +966,18 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
+        Name = 'Stage 0 recovery archive owner'
+        Paths = @(
+            'Documents/Project/Stage0-Recovery-Dependencies.json',
+            'Tools/Recovery/New-Stage0-Recovery-Archive.ps1',
+            'Tools/Recovery/Test-Stage0-Recovery-Archive.ps1',
+            'Tools/Verify/Verify-Stage0-Recovery-Archive.ps1'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
         Name = 'verification planner with ordinary documentation'
         Paths = @(
             'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
@@ -1019,6 +1032,7 @@ $NativeCases = @(
 )
 
 & $RetirementInventoryVerifier -Quiet
+& $Stage0RecoveryArchiveVerifier
 
 foreach ($Case in $Cases) {
     $Plan = & $Planner -ChangedPath $Case.Paths -PassThru -Quiet

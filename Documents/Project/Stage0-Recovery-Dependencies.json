@@ -1,0 +1,73 @@
+{
+  "format": "windvale-stage0-recovery-dependencies-1",
+  "hostProfiles": [
+    "windows-x64",
+    "linux-x64"
+  ],
+  "required": [
+    {
+      "name": ".NET SDK",
+      "version": "10.0.302",
+      "role": "Stage 0 compiler, reference runtime, object, linker, packager, and recovery oracle",
+      "license": "MIT with bundled third-party notices",
+      "source": "global.json"
+    },
+    {
+      "name": "Git",
+      "version": "2.x with bundle and archive support",
+      "role": "source-bundle verification, separate-checkout recovery, and historical reconstruction inputs",
+      "license": "GPL-2.0-only",
+      "source": "host toolchain"
+    },
+    {
+      "name": "PowerShell",
+      "version": "7.x",
+      "role": "Windows recovery orchestration and cross-platform archive verification",
+      "license": "MIT",
+      "source": "host toolchain"
+    },
+    {
+      "name": "POSIX shell and core utilities",
+      "version": "Debian 12 compatible",
+      "role": "Linux recovery orchestration, SHA-256 verification, comparison, and temporary-file lifecycle",
+      "license": "distribution package notices",
+      "source": "host operating system"
+    }
+  ],
+  "optional": [
+    {
+      "name": "Node.js",
+      "version": "24.x",
+      "role": "complete WebAssembly engine verification; not required for compiler-seed recovery",
+      "license": "MIT with bundled third-party notices",
+      "source": "normal verification host"
+    },
+    {
+      "name": "QEMU and pinned firmware",
+      "version": "repository runbook pins",
+      "role": "live Windvale OS boot evidence; not required for compiler-seed recovery",
+      "license": "upstream and distribution notices",
+      "source": "OS boot runbook"
+    }
+  ],
+  "managedPackages": [
+    {
+      "name": "Microsoft.AspNetCore.Components.WebAssembly",
+      "version": "10.0.10",
+      "role": "retained playground recovery UI only",
+      "license": "MIT"
+    },
+    {
+      "name": "Microsoft.AspNetCore.Components.WebAssembly.DevServer",
+      "version": "10.0.10",
+      "role": "retained playground recovery development host only",
+      "license": "MIT"
+    }
+  ],
+  "coreRecoveryExternalPackages": [],
+  "notes": [
+    "The core Stage 0 compiler and tool projects use no external NuGet PackageReference.",
+    "The archive contains source and repository-owned seed artifacts, not local SDK installations or package caches.",
+    "Exact third-party notices remain the responsibility of each acquired external toolchain distribution."
+  ]
+}
