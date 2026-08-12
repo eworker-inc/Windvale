@@ -1,7 +1,7 @@
 # Decision 0057: Windvale-native execution and .NET retirement
 
 - Date: 2026-07-31
-- Status: Accepted direction; condition 1 has qualified evidence, Decisions 0059 through 0382 partially advance conditions 2 through 8, and the complete retirement gate remains open
+- Status: Qualified and implemented for the accepted repository subset by Decision 0526; .NET is retired from normal workflows and retained only as frozen Stage 0 recovery evidence
 - Refines: [Decision 0002](0002-Windvale-Seed-Bootstrap.md)'s long-term bootstrap and recovery role
 
 ## Context
@@ -43,7 +43,9 @@ Portable WVB and native execution solve different problems. WVB remains the veri
 
 This gate retires a dependency; it does not erase bootstrap history or claim that every optional optimizer is complete.
 
-Decision 0058 qualifies condition 1 on Windows and Debian with an exact committed 12-module inventory, byte-identical Stage 1 and Stage 2 compilers, and a clean recovery procedure. Later decisions through Decision 0382 add substantial native execution, compiler packaging, verifier, build-driver, runtime, backend, and hosted-runtime-header evidence without completing conditions 2 through 8. [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md) records their current partial status, freezes forward C# source-language growth at the next qualified WVB 1.11 baseline, and sequences the native front-door cutover; it does not retire .NET.
+Decision 0058 qualifies condition 1 on Windows and Debian with an exact committed 12-module inventory, byte-identical Stage 1 and Stage 2 compilers, and a clean recovery procedure. Later decisions through Decision 0525 add and compose the native execution, compiler packaging, verifier, build-driver, runtime, backend, hosted-container, WebAssembly, OS-image, and recovery owners. [Decision 0213](0213-Stage0-Semantic-Freeze-And-Native-Front-Door.md) freezes forward C# source-language growth at WVB 1.11 and establishes the native front-door cutover.
+
+[Decision 0526](0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) closes all eight conditions at exact commit `e5a1a7473c57935c5dfcf09b78b18c3c099e70ef`. The paired Windows/Linux native matrix passes, the direct-entry audit reports zero normal and nine recovery-only managed entry points, and the immutable final Stage 0 release reconstructs the same selected bundle on both hosts. Candidate work beyond the accepted repository subset remains forward language, runtime, package, browser, or OS breadth rather than a normal .NET dependency.
 
 ## Consequences
 

@@ -1,6 +1,6 @@
 # Decision 0457: Normal-path .NET audit
 
-- Status: Implemented audit; native cutover candidate recorded by Decision 0525
+- Status: Implemented audit; native cutover qualified by Decision 0526
 - Date: 2026-08-09
 - Advances: [Decision 0456](0456-Native-Probe-40-Process-Object.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Inventory: [.NET retirement inventory](../Project/Dotnet-Retirement-Inventory.md)
@@ -59,6 +59,12 @@ The remaining normal dependency is verification orchestration:
 
 This is the shortcut: the remaining work is a bounded evidence and orchestration
 cutover, not a second implementation of every managed test.
+
+Decision 0526 completes that shortcut. The current independently verified audit
+contains zero normal and nine recovery-only direct managed entry points;
+`Verify-Changed.ps1`, the main GitHub workflow, and WebAssembly verification now
+dispatch only native normal owners. The table above is the historical cutover
+set discovered by this decision rather than the current standing.
 
 ## Evidence and consequences
 

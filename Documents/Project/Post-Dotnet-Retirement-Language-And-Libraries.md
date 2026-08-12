@@ -1,24 +1,25 @@
 # Post-.NET-retirement language and library stage
 
-> Status: Proposed product direction. This document does not add source syntax,
-> WVB behavior, packages, capability interfaces, or a new numbered roadmap phase.
-> A focused decision and measured consumer evidence remain required before any
-> individual contract is accepted or implemented.
+> Status: Active next-stage product proposal after Decision 0526's completed
+> .NET retirement. This document does not itself add source syntax, WVB behavior,
+> packages, capability interfaces, or a new numbered roadmap phase. A focused
+> decision and measured consumer evidence remain required before any individual
+> contract is accepted or implemented.
 
 ## Purpose
 
-Completing the [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
-retirement gate makes Windvale's native toolchain the normal Windows and Linux
-development path. It does not by itself make the language convenient for a useful
-application ecosystem. The immediate product opportunity is to use that stable
+The [Decision 0057](../Decisions/0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
+gate is complete under [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md),
+so Windvale's native toolchain is the normal Windows and Linux development path.
+That result does not by itself make the language convenient for a useful
+application ecosystem. The immediate product opportunity is to use the stable
 path to prove a small, coherent set of application and library contracts.
 
-Package, library, and application preparation may proceed during retirement when a
-direct consumer exists and the work does not widen the frozen C# compiler. The
-post-retirement product claim and proposed Windvale 0.1 qualification still wait
-for the complete Decision 0057 gate. The next numbered roadmap phase remains the
-boot and minimal-kernel work. This proposal is a parallel product lane, not a
-replacement for that work: its output is a useful cross-host
+Package, library, and application work may now proceed through the qualified
+native path when a direct consumer exists; it must not widen the frozen C#
+compiler. The next numbered roadmap phase remains the boot and minimal-kernel
+work. This proposal is a parallel product lane, not a replacement for that work:
+its output is a useful cross-host
 application/library/package path, while Phase 11 continues to establish Windvale OS
 mechanisms.
 

@@ -1,6 +1,6 @@
 # Decision 0525: Native dual-host qualification cutover
 
-- Status: Implemented candidate; first independent native matrix pending
+- Status: Qualified and implemented by Decision 0526
 - Date: 2026-08-12
 - Advances: Decisions 0057, 0457, 0458, 0504, and 0524
 - Scope: normal GitHub qualification orchestration on Windows and Linux
@@ -57,10 +57,11 @@ Planner and inventory verification, workflow structure checks, changed-file
 whitespace verification, and documentation review are the proportional local
 checks for this orchestration-only change.
 
-The first GitHub run from the exact committed workflow is the independent
-Windows/Linux qualification evidence. Until all six jobs and the required gate
-pass, this decision remains a candidate and does not promote T1, T2, G1, or the
-complete retirement gate.
+The exact Decision 0526 release commit passed all six jobs and the required gate
+in [GitHub run 31608597009](https://github.com/eworker-inc/Windvale/actions/runs/31608597009).
+Both 45-suite coordinators passed 3,206 cases, both WebAssembly owners passed,
+and both native compiler-convergence owners passed. T1, T2, G1, and the accepted
+retirement subset are therefore promoted by Decision 0526.
 
 ## Consequences
 

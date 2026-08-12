@@ -1,7 +1,7 @@
 # Decision 0178: Project stewardship, archives, and recovery
 
 - Date: 2026-08-03
-- Status: Accepted project policy; operational enablement and final retirement archive pending
+- Status: Implemented; the final retirement archive is published and independently retained under Decision 0526
 - Refines: [Decision 0032](0032-Public-Contribution-And-Governance-Foundation.md) and [Decision 0057](0057-Windvale-Native-Execution-And-Dotnet-Retirement.md)
 - Retains: E-Worker Inc stewardship, the public GitHub repository, and C#/.NET as recoverable Stage 0 rather than a permanent product dependency
 
@@ -67,7 +67,7 @@ GitHub remains an operational concentration risk, but the independently held E-W
 
 Stage 0 recovery work becomes incremental and reviewable. The final native-retirement gate still requires one complete clean reconstruction, but most inputs will already have been exercised rather than assembled for the first time at retirement.
 
-No GitHub role is granted, Discussion category enabled, release created, archive signed, or .NET dependency retired by this decision.
+This decision did not itself grant a GitHub role or enable a Discussion category. [Decision 0526](0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md) later published the digest-bound final recovery release, verified its exact selected bundle on Windows and Linux, retained the independent E-Worker copy, and retired .NET from the normal accepted workflow.
 
 ## Reconsider when
 
