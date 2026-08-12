@@ -50,20 +50,25 @@ build_case() {
     fi
 }
 
-build_case normal "$normal" +    080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9 || exit 1
+build_case normal "$normal" \
+    080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9 || exit 1
 
-"$script_directory/Build-Os-Probe.sh" "$normal" normal +    >"$temporary_directory/Repeat.out" 2>"$temporary_directory/Repeat.err"
+"$script_directory/Build-Os-Probe.sh" "$normal" normal \
+    >"$temporary_directory/Repeat.out" 2>"$temporary_directory/Repeat.err"
 repeat_status=$?
 if [[ $repeat_status -ne 1 ]] ||
     ! grep -Fxq 'The native Probe 40 output already exists.' "$temporary_directory/Repeat.err" ||
-    ! verify_output "$normal" +        080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9 ||
+    ! verify_output "$normal" \
+        080b4d669e9a11fdc802bf7197ae5a044978b6ba39741b2b1c832296987f74d9 ||
     find "$temporary_directory" -maxdepth 1 -name '.windvale-os-probe-native.*' -print -quit |
         grep -q .; then
     cat -- "$temporary_directory/Repeat.out" "$temporary_directory/Repeat.err" >&2
     exit 1
 fi
 
-build_case invalid-opcode "$invalid_opcode" +    8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734 || exit 1
-build_case general-protection "$general_protection" +    47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b || exit 1
+build_case invalid-opcode "$invalid_opcode" \
+    8af8a705da7a63e895e39a94a1ff60dae52bfa1ad0b9c0984adeafe538bae734 || exit 1
+build_case general-protection "$general_protection" \
+    47f5ae37b48edb0212c6d439237e43ee2ca8064061786010f9644acf70f7ad4b || exit 1
 
 echo 'Tests: 4, Passed: 4, Failed: 0'

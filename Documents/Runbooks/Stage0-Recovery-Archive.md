@@ -49,9 +49,14 @@ The command creates:
 The command refuses a dirty source tree, an existing nonempty destination, an
 unverifiable bundle, or an inventory inconsistency. Run it twice into separate
 directories, once from a clean Windows checkout and once from a clean Linux
-checkout, for final qualification. The two base asset sets must agree in every
-byte, because the manifest derives its timestamp from the archived commit rather
-than the wall clock.
+checkout, for final qualification. The generated metadata, source inventory,
+artifact inventory, dependency inventory, license inventory, and runbook must
+agree byte for byte. Git may choose a different valid pack representation when
+the hosts use different Git versions, so bundle-byte equality and the derived
+`SHA256SUMS` identity are not cross-version requirements. Both bundles must
+instead verify the same exact commit, tree, complete source inventory, and
+artifact identities. Select one generated release set for publication and run
+the complete recovery check against that exact set on both hosts.
 
 ## Verify structure only
 
