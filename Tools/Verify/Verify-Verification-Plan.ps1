@@ -1055,6 +1055,17 @@ foreach ($Line in Get-Content -LiteralPath $RetirementSuitePlan | Select-Object 
     }
 }
 
+$LinuxArtifactIndex = @(git -C $RepositoryRoot ls-files -s -- 'Artifacts/**/*.elf')
+if ($LASTEXITCODE -ne 0 -or $LinuxArtifactIndex.Count -eq 0) {
+    throw 'The tracked Linux ELF artifact inventory could not be read.'
+}
+foreach ($Entry in $LinuxArtifactIndex) {
+    if ($Entry -notmatch '^100755 .+\t(.+\.elf)$') {
+        $Artifact = if ($Entry -match '\t(.+)$') { $Matches[1] } else { $Entry }
+        throw "Linux ELF artifact '$Artifact' is not executable in Git."
+    }
+}
+
 foreach ($Case in $Cases) {
     $Plan = & $Planner -ChangedPath $Case.Paths -PassThru -Quiet
     if (
