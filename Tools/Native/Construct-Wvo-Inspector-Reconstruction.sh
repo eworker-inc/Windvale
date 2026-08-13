@@ -40,7 +40,7 @@ verify_file() {
 }
 
 verify_file "$hosted_toolset/SHA256SUMS" 6927 \
-    d2cd2c34bb8eaa09d50389685393dc893afa0ef31cd44835d2e5e619a2da7f6f \
+    3051a9c328c04a53dd0f0a54a8f83c7d1f12c3947df3bd19d7ad066ac3f09954 \
     'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" 5064 \

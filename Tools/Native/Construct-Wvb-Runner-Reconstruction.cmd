@@ -27,7 +27,7 @@ set "ConstructionTools=%Construction%\windows-x64"
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "StartupRoot=%RepositoryRoot%\Linker\Startup"
 
-call :verify_file "%HostedToolset%\SHA256SUMS" 6927 d2cd2c34bb8eaa09d50389685393dc893afa0ef31cd44835d2e5e619a2da7f6f "hosted toolset inventory"
+call :verify_file "%HostedToolset%\SHA256SUMS" 6927 3051a9c328c04a53dd0f0a54a8f83c7d1f12c3947df3bd19d7ad066ac3f09954 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
