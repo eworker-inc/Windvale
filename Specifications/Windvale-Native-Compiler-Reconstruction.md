@@ -12,13 +12,13 @@ set, or replace the retained Stage 0 recovery archive.
 
 `Projects/Examples/Windvale-Compiler.wvproj` is 649 LF-only bytes at SHA-256
 `a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05`.
-The native seed bootstrap compiles that exact inventory to a 927,274-byte WVB at
+The native seed bootstrap compiles that exact inventory to a 929,711-byte WVB at
 SHA-256
-`d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`.
-Its 427 functions contain 764,800 WVB code bytes.
+`79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91`.
+Its 428 functions contain 766,777 WVB code bytes.
 
-The current native backend produces 27,744,550 linked image bytes at SHA-256
-`b1787162c3f265eaac2584e7dbf121fa01009ef18d7c092e5c495f1ac8aee5ec`.
+The current native backend produces 27,872,534 linked image bytes at SHA-256
+`f84c08841f13233797df0db5eb5db3211664e5d2b2bafb35b81f903211dc5953`.
 The retained independent recovery oracle remains evidence for the previous
 recovery checkpoint; this current native-only refresh does not claim a new
 managed differential measurement.
@@ -29,9 +29,9 @@ The retained candidate artifacts are:
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Canonical WVB 1.11 | 927,274 | `d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae` |
-| Windows x64 format 3 | 27,776,000 | `0975f6181c78cd4b0007883d4b4ee9275b7cbb46bf904ce0cc79730d32308f7e` |
-| Linux x64 format 3 | 27,774,976 | `93651adc36557aaa895627e8d8aa022b8765fc4f6cfaafbb5dc7c0a263287f67` |
+| Canonical WVB 1.11 | 929,711 | `79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91` |
+| Windows x64 format 3 | 27,904,000 | `e24feb288cef6284ed0444e73e9317eb7e98df7eeb9be551ac9b13f6f896c455` |
+| Linux x64 format 3 | 27,906,048 | `e3d99aefb66b70d468d8e563db9786030a92baeb6c193bb2dcde5ea3b4d446b2` |
 
 `Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json` binds those
 three files. This inventory is intentionally distinct from
@@ -47,7 +47,7 @@ directory. They:
    project inventory;
 2. require the canonical current WVB identity;
 3. stage the large WVO through the admitted segmented native lowerer;
-4. link and transport one canonical 27,744,550-byte image;
+4. link and transport one canonical 27,872,534-byte image;
 5. require entry offset 43,146 and exactly seven transported chunks;
 6. package the same WVB and image for both permanent hosts through the current
    hosted-container toolset; and

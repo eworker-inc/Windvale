@@ -57,6 +57,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Checked random-access database page reads](Windvale-Database-Storage-Page.md)
 - [Durable dual-superblock record and recovery selection](Windvale-Database-Durable-Superblock.md)
 - [Durable pages, compact commit record, and publication planner](Windvale-Database-Durable-Commit.md)
+- [Storage publication execution and reopen/tail-repair planning](Windvale-Database-Storage-Recovery.md)
 
 ## Assembly, objects, and linking
 

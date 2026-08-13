@@ -74,7 +74,7 @@ Parameters and local variables may have `i32`, `i64`, `u8`, `u32`, `u64`, `bool`
 - Names within each declaration category are unique.
 - Function and data names occupy separate namespaces. Constants share the value namespace with data and cannot reuse an earlier data or constant name.
 - Record names define a nominal type, a preferred named-literal target, and the retained positional constructor. A function cannot use the same name as a record construction target, and records or functions cannot take a reserved intrinsic call name.
-- A record contains 1 through 64 uniquely named fields in declaration order. Seed record fields may be primitive values or enums; nested record fields are deferred.
+- A record contains 1 through 64 uniquely named fields in declaration order. Seed record fields may be primitive values, enums, or other immutable record identities; record containment must be acyclic.
 - An enum contains 1 through 256 uniquely named members with unique explicit `i32` values. Seed source currently accepts nonnegative values; bytecode preserves signed `i32` values for forward evolution.
 - A variant contains 1 through 256 unique cases. A case has no payload or exactly one uniquely named non-`void`, non-builder, non-collection, non-variant payload.
 - A constant name uses `ALL_CAPS_WITH_UNDERSCORES`, has one explicit admitted scalar or enum type, and has no mutable storage or address identity.

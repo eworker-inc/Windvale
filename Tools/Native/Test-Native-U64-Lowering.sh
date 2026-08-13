@@ -65,25 +65,25 @@ page_fixture="$repository_root/Tests/Fixtures/Database/Native-Hosted-Snapshot-Pa
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-U64.wvproj" \
     "$target_wvb" >/dev/null || exit $?
-verify_file "$target_wvb" 1024 \
-    ced899022e388413714456621f029974fa6e4db5361ff6348b6f127f97316bf5 \
+verify_file "$target_wvb" 1493 \
+    f1179c830314160635728125d1bfe826c18edc4be1a0b5284b002f3b8a93d66f \
     'u64 WVB' || exit $?
 
 "$lowerer" "$target_wvb" "$target_wvo" >/dev/null || exit $?
 "$script_directory/Verify-Wvo.sh" "$target_wvo" >/dev/null || exit $?
-verify_file "$target_wvo" 8032 \
-    0807b47f84505a256cdb1a542df2ccab1bce87b07424cdeaeae895e2b86d2459 \
+verify_file "$target_wvo" 12032 \
+    08e2fe2f0813237b4b75938a411cd1e1ea20af9e3373b6ae0ebe71842b559fdd \
     'u64 WVO' || exit $?
 
 "$script_directory/Link-Wvo.sh" 0 Main "$image" "$target_wvo" >/dev/null || exit $?
-verify_file "$image" 7848 \
-    114143636e072c92a20673ca23176fc4584d2ae84b5f46258bb816a98e49e77e \
+verify_file "$image" 11848 \
+    8deabde0d548d857dad200289516594ed12b4521c62751dbe94de0749d38467b \
     'u64 flat image' || exit $?
 
 "$script_directory/Package-Console.sh" linux-x64-console-v1 \
     "$image" 0 "$linux_application" >/dev/null || exit $?
-verify_file "$linux_application" 12400 \
-    573171b3564ec1fa201470f5d0dcbdf19ff10856fee8bf6374e32bada24a8453 \
+verify_file "$linux_application" 16496 \
+    b373bc39174005770df74af46bb6ff30af5829a6a93b37ec192799c6c74f9992 \
     'u64 Linux application' || exit $?
 "$linux_application" >/dev/null
 application_result=$?
@@ -94,8 +94,8 @@ fi
 
 "$script_directory/Package-Console.sh" windows-x64-console-v1 \
     "$image" 0 "$windows_application" >/dev/null || exit $?
-verify_file "$windows_application" 9728 \
-    184ed47cc4c77bb86925c62920a6d4e884a46dee4d62e8b079cda0bd3b01c799 \
+verify_file "$windows_application" 13824 \
+    517fc7203d194a047aa6fa482e2983e55d481ba4a2f0d7fc271c2455d0342235 \
     'u64 Windows application' || exit $?
 
 "$script_directory/Build-Wvb.sh" \

@@ -89,7 +89,7 @@ if [[ $result -ne 0 ]]; then
     exit "$result"
 fi
 
-verify_file "$candidate" 927274 \
-    d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae \
+verify_file "$candidate" 929711 \
+    79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 \
     'bootstrapped compiler WVB' || exit 1
 "$publisher" "$candidate" "$output_path"

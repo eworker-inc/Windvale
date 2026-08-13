@@ -1,0 +1,566 @@
+module Databaseˉsuperblockˉselfˉtest profile hosted;
+
+import Foundationˉbyteˉconstruction as Construction;
+import Foundationˉsha256ˉstreaming as Sha256;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+capability process.argument;
+capability process.argument_count;
+
+data BASE_CHECKSUM: bytes = [
+    211, 221, 204, 111, 1, 244, 160, 11,
+    173, 199, 31, 11, 55, 255, 17, 70,
+    48, 128, 209, 245, 143, 7, 250, 150,
+    22, 46, 97, 150, 48, 232, 100, 116,
+];
+
+data OLDER_CHECKSUM: bytes = [
+    221, 162, 90, 108, 138, 133, 231, 125,
+    255, 255, 176, 241, 115, 217, 57, 159,
+    219, 47, 254, 60, 214, 178, 119, 121,
+    1, 22, 219, 80, 149, 24, 131, 216,
+];
+
+data NEWER_CHECKSUM: bytes = [
+    6, 77, 26, 56, 251, 23, 70, 204,
+    27, 197, 14, 126, 126, 231, 62, 88,
+    202, 38, 178, 118, 202, 193, 106, 67,
+    48, 164, 103, 84, 74, 161, 31, 202,
+];
+
+data SAME_GENERATION_CHECKSUM: bytes = [
+    173, 164, 156, 222, 36, 162, 146, 69,
+    130, 12, 82, 121, 96, 95, 251, 149,
+    161, 174, 63, 16, 124, 147, 32, 2,
+    62, 33, 182, 3, 181, 181, 116, 152,
+];
+
+data OTHER_DATABASE_CHECKSUM: bytes = [
+    111, 156, 127, 157, 126, 103, 25, 141,
+    164, 197, 33, 253, 41, 105, 241, 150,
+    252, 137, 0, 206, 30, 175, 27, 202,
+    235, 143, 110, 202, 235, 114, 193, 50,
+];
+
+data BEYOND_STORAGE_CHECKSUM: bytes = [
+    192, 192, 121, 121, 198, 139, 126, 174,
+    118, 75, 5, 163, 81, 138, 94, 36,
+    230, 89, 218, 90, 24, 14, 104, 135,
+    5, 111, 92, 63, 18, 36, 124, 43,
+];
+
+data RESERVED_ZEROES: bytes = [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
+fn Databaseˉsuperblockˉvalue(
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Generation: u64,
+    Committedˉsequence: u64,
+    Rootˉpage: u64,
+    Commitˉlogˉhead: u64,
+    Earliestˉretainedˉsequence: u64,
+    Pageˉcount: u64,
+    Committedˉlength: u64,
+    Pageˉsize: u32,
+    Rootˉdepth: u32
+) -> Superblock.Databaseˉsuperblock {
+    return Superblock.Databaseˉsuperblock(
+        Databaseˉidentityˉhigh,
+        Databaseˉidentityˉlow,
+        Generation,
+        Committedˉsequence,
+        Rootˉpage,
+        Commitˉlogˉhead,
+        Earliestˉretainedˉsequence,
+        Pageˉcount,
+        Committedˉlength,
+        Pageˉsize,
+        Rootˉdepth
+    );
+}
+
+fn Databaseˉsuperblockˉcommitted(
+    Databaseˉidentityˉhigh: u64,
+    Generation: u64,
+    Committedˉsequence: u64,
+    Pageˉcount: u64,
+    Committedˉlength: u64
+) -> Superblock.Databaseˉsuperblock {
+    return Databaseˉsuperblockˉvalue(
+        Databaseˉidentityˉhigh,
+        2u64,
+        Generation,
+        Committedˉsequence,
+        2u64,
+        4u64,
+        1u64,
+        Pageˉcount,
+        Committedˉlength,
+        4096u32,
+        2u32
+    );
+}
+
+fn Databaseˉsuperblockˉfixture(
+    Value: Superblock.Databaseˉsuperblock,
+    Checksum: bytes
+) -> bytes {
+    var Body: bytes = Bytesˉfromˉu32ˉlittle(1396987479u32);
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(1u32));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(256u32));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(0u32));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Databaseˉidentityˉhigh));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Databaseˉidentityˉlow));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Generation));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Committedˉsequence));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Rootˉpage));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Commitˉlogˉhead));
+    Body = Bytesˉconcat(
+        Body,
+        Bytesˉfromˉu64ˉlittle(Value.Earliestˉretainedˉsequence)
+    );
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Pageˉcount));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Committedˉlength));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(Value.Pageˉsize));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(Value.Rootˉdepth));
+    Body = Bytesˉconcat(Body, RESERVED_ZEROES);
+    return Bytesˉconcat(Body, Checksum);
+}
+
+fn Databaseˉsuperblockˉbase() -> bytes {
+    return Databaseˉsuperblockˉfixture(
+        Databaseˉsuperblockˉcommitted(1u64, 7u64, 3u64, 5u64, 20992u64),
+        BASE_CHECKSUM
+    );
+}
+
+fn Databaseˉsuperblockˉreplace(
+    Input: bytes,
+    Offset: u32,
+    Removedˉlength: u32,
+    Replacement: bytes
+) -> bytes {
+    let Result: Construction.Foundationˉbytesˉresult =
+        Construction.Foundationˉbytesˉreplace(
+            Input,
+            Offset,
+            Removedˉlength,
+            Replacement
+        );
+    if !Result.Valid { return Bytesˉslice(Input, 0u32, 0u32); }
+    return Result.Value;
+}
+
+fn Databaseˉsuperblockˉrechecksum(Input: bytes) -> bytes {
+    let Body: bytes = Bytesˉslice(Input, 0u32, 224u32);
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Body);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Body);
+    return Bytesˉconcat(
+        Body,
+        Sha256.Foundationˉsha256ˉfinishˉraw(State)
+    );
+}
+
+fn Databaseˉsuperblockˉencodeˉfails(
+    Value: Superblock.Databaseˉsuperblock,
+    Expected: Superblock.Databaseˉsuperblockˉerror
+) -> bool {
+    let Result: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉencode(Value);
+    return Result.Error == Expected && Bytesˉlength(Result.Bytes) == 0u32;
+}
+
+fn Databaseˉsuperblockˉdecodeˉfails(
+    Input: bytes,
+    Expected: Superblock.Databaseˉsuperblockˉerror
+) -> bool {
+    let Result: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉdecode(Input);
+    return Result.Error == Expected;
+}
+
+fn Databaseˉsuperblockˉbytesˉareˉequal(
+    First: bytes,
+    Second: bytes
+) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Basic() -> i32 {
+    let Baseˉvalue: Superblock.Databaseˉsuperblock =
+        Databaseˉsuperblockˉcommitted(1u64, 7u64, 3u64, 5u64, 20992u64);
+    let Encoded: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉencode(Baseˉvalue);
+    if Encoded.Error != Superblock.Databaseˉsuperblockˉerror.Valid ||
+        Bytesˉlength(Encoded.Bytes) != 256u32 {
+        return 1;
+    }
+    if Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 0u32) != 1396987479u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 8u32) != 256u32 ||
+        !Databaseˉsuperblockˉbytesˉareˉequal(
+            Bytesˉslice(Encoded.Bytes, 224u32, 32u32),
+            BASE_CHECKSUM
+        ) {
+        return 2;
+    }
+    let Decoded: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉdecode(Encoded.Bytes);
+    if Decoded.Error != Superblock.Databaseˉsuperblockˉerror.Valid ||
+        Decoded.Databaseˉidentityˉhigh != 1u64 ||
+        Decoded.Databaseˉidentityˉlow != 2u64 ||
+        Decoded.Generation != 7u64 ||
+        Decoded.Committedˉsequence != 3u64 ||
+        Decoded.Rootˉpage != 2u64 ||
+        Decoded.Commitˉlogˉhead != 4u64 ||
+        Decoded.Earliestˉretainedˉsequence != 1u64 ||
+        Decoded.Pageˉcount != 5u64 ||
+        Decoded.Committedˉlength != 20992u64 ||
+        Decoded.Pageˉsize != 4096u32 ||
+        Decoded.Rootˉdepth != 2u32 {
+        return 3;
+    }
+    return 42;
+}
+
+fn Header() -> i32 {
+    let Base: bytes = Databaseˉsuperblockˉbase();
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Bytesˉslice(Base, 0u32, 255u32),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉlength
+    ) { return 1; }
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Databaseˉsuperblockˉreplace(
+            Base, 0u32, 4u32, Bytesˉfromˉu32ˉlittle(0u32)
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉmagic
+    ) { return 2; }
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Databaseˉsuperblockˉreplace(
+            Base, 4u32, 4u32, Bytesˉfromˉu32ˉlittle(2u32)
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Unsupportedˉversion
+    ) { return 3; }
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Databaseˉsuperblockˉreplace(
+            Base, 8u32, 4u32, Bytesˉfromˉu32ˉlittle(255u32)
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉdeclaredˉsize
+    ) { return 4; }
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Databaseˉsuperblockˉreplace(
+            Base, 12u32, 4u32, Bytesˉfromˉu32ˉlittle(1u32)
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Unsupportedˉflags
+    ) { return 5; }
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Databaseˉsuperblockˉreplace(
+            Base, 96u32, 1u32, Bytesˉfromˉu8(1u8)
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉreserved
+    ) { return 6; }
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Databaseˉsuperblockˉreplace(
+            Base, 255u32, 1u32, Bytesˉfromˉu8(0u8)
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉchecksum
+    ) { return 7; }
+    return 42;
+}
+
+fn Root() -> i32 {
+    let Forged: bytes = Databaseˉsuperblockˉrechecksum(
+        Databaseˉsuperblockˉreplace(
+            Databaseˉsuperblockˉbase(),
+            48u32,
+            8u32,
+            Bytesˉfromˉu64ˉlittle(5u64)
+        )
+    );
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Forged,
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉrootˉpage
+    ) { return 1; }
+    return 42;
+}
+
+fn Length() -> i32 {
+    let Forged: bytes = Databaseˉsuperblockˉrechecksum(
+        Databaseˉsuperblockˉreplace(
+            Databaseˉsuperblockˉbase(),
+            80u32,
+            8u32,
+            Bytesˉfromˉu64ˉlittle(20993u64)
+        )
+    );
+    if !Databaseˉsuperblockˉdecodeˉfails(
+        Forged,
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉcommittedˉlength
+    ) { return 1; }
+    return 42;
+}
+
+fn Semantic() -> i32 {
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            0u64, 0u64, 1u64, 0u64, 0u64,
+            18446744073709551615u64, 0u64, 1u64, 4608u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉdatabaseˉidentity
+    ) { return 1; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 0u64, 0u64, 0u64,
+            18446744073709551615u64, 0u64, 1u64, 4608u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉgeneration
+    ) { return 2; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 0u64, 0u64,
+            18446744073709551615u64, 0u64, 1u64, 4608u64, 1024u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉpageˉsize
+    ) { return 3; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 0u64, 0u64,
+            18446744073709551615u64, 0u64, 0u64, 512u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉpageˉcount
+    ) { return 4; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 0u64, 1u64,
+            18446744073709551615u64, 0u64, 1u64, 4608u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉrootˉpage
+    ) { return 5; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 0u64, 0u64,
+            18446744073709551615u64, 0u64, 1u64, 4608u64, 4096u32, 129u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉrootˉdepth
+    ) { return 6; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 0u64, 0u64,
+            0u64, 0u64, 1u64, 4608u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉcommitˉlog
+    ) { return 7; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 1u64, 0u64,
+            18446744073709551615u64, 1u64, 1u64, 4608u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉcommitˉlog
+    ) { return 8; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 1u64, 0u64,
+            0u64, 0u64, 1u64, 4608u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉretainedˉsequence
+    ) { return 9; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 1u64, 0u64,
+            0u64, 2u64, 1u64, 4608u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉretainedˉsequence
+    ) { return 10; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 1u64, 0u64,
+            0u64, 1u64, 4503599627370496u64, 512u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Arithmeticˉoverflow
+    ) { return 11; }
+    if !Databaseˉsuperblockˉencodeˉfails(
+        Databaseˉsuperblockˉvalue(
+            1u64, 2u64, 1u64, 1u64, 0u64,
+            0u64, 1u64, 1u64, 4609u64, 4096u32, 1u32
+        ),
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉcommittedˉlength
+    ) { return 12; }
+    return 42;
+}
+
+fn Single() -> i32 {
+    let Base: bytes = Databaseˉsuperblockˉbase();
+    let Invalid: bytes = Bytesˉslice(Base, 0u32, 255u32);
+    var Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(Base, Invalid, 20992u64);
+    if Selection.Status != Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Selection.Slot != Superblock.Databaseˉsuperblockˉslot.First {
+        return 1;
+    }
+    Selection = Superblock.Databaseˉsuperblockˉselect(Invalid, Base, 20992u64);
+    if Selection.Status != Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid ||
+        Selection.Slot != Superblock.Databaseˉsuperblockˉslot.Second {
+        return 2;
+    }
+    return 42;
+}
+
+fn Older() -> i32 {
+    let Olderˉblock: bytes = Databaseˉsuperblockˉfixture(
+        Databaseˉsuperblockˉcommitted(1u64, 6u64, 2u64, 5u64, 20992u64),
+        OLDER_CHECKSUM
+    );
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Olderˉblock,
+            Databaseˉsuperblockˉbase(),
+            20992u64
+        );
+    if Selection.Slot != Superblock.Databaseˉsuperblockˉslot.Second ||
+        Selection.Generation != 7u64 {
+        return 1;
+    }
+    return 42;
+}
+
+fn Newer() -> i32 {
+    let Newerˉblock: bytes = Databaseˉsuperblockˉfixture(
+        Databaseˉsuperblockˉcommitted(1u64, 8u64, 4u64, 5u64, 20992u64),
+        NEWER_CHECKSUM
+    );
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Newerˉblock,
+            Databaseˉsuperblockˉbase(),
+            20992u64
+        );
+    if Selection.Slot != Superblock.Databaseˉsuperblockˉslot.First ||
+        Selection.Generation != 8u64 {
+        return 1;
+    }
+    return 42;
+}
+
+fn Identical() -> i32 {
+    let Base: bytes = Databaseˉsuperblockˉbase();
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(Base, Base, 25000u64);
+    if Selection.Slot != Superblock.Databaseˉsuperblockˉslot.First ||
+        Selection.Tailˉbytes != 4008u64 {
+        return 1;
+    }
+    return 42;
+}
+
+fn Generation() -> i32 {
+    let Same: bytes = Databaseˉsuperblockˉfixture(
+        Databaseˉsuperblockˉcommitted(1u64, 7u64, 4u64, 5u64, 20992u64),
+        SAME_GENERATION_CHECKSUM
+    );
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Databaseˉsuperblockˉbase(),
+            Same,
+            20992u64
+        );
+    if Selection.Status !=
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Conflictingˉgeneration {
+        return 1;
+    }
+    return 42;
+}
+
+fn Database() -> i32 {
+    let Other: bytes = Databaseˉsuperblockˉfixture(
+        Databaseˉsuperblockˉcommitted(3u64, 8u64, 4u64, 5u64, 20992u64),
+        OTHER_DATABASE_CHECKSUM
+    );
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Databaseˉsuperblockˉbase(),
+            Other,
+            20992u64
+        );
+    if Selection.Status !=
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Conflictingˉdatabase {
+        return 1;
+    }
+    return 42;
+}
+
+fn Recovery() -> i32 {
+    let Base: bytes = Databaseˉsuperblockˉbase();
+    let Invalid: bytes = Bytesˉslice(Base, 0u32, 255u32);
+    var Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(Invalid, Invalid, 20992u64);
+    if Selection.Status !=
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Noˉvalidˉsuperblock {
+        return 1;
+    }
+    Selection = Superblock.Databaseˉsuperblockˉselect(Base, Base, 20991u64);
+    if Selection.Status !=
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Noˉvalidˉsuperblock ||
+        Selection.Firstˉerror != Superblock.Databaseˉsuperblockˉerror.Outsideˉstorage ||
+        Selection.Secondˉerror != Superblock.Databaseˉsuperblockˉerror.Outsideˉstorage {
+        return 2;
+    }
+    return 42;
+}
+
+fn Outside() -> i32 {
+    let Beyond: bytes = Databaseˉsuperblockˉfixture(
+        Databaseˉsuperblockˉcommitted(1u64, 8u64, 4u64, 6u64, 25088u64),
+        BEYOND_STORAGE_CHECKSUM
+    );
+    let Selection: Superblock.Databaseˉsuperblockˉselection =
+        Superblock.Databaseˉsuperblockˉselect(
+            Databaseˉsuperblockˉbase(),
+            Beyond,
+            20992u64
+        );
+    if Selection.Slot != Superblock.Databaseˉsuperblockˉslot.First ||
+        Selection.Secondˉerror != Superblock.Databaseˉsuperblockˉerror.Outsideˉstorage {
+        return 1;
+    }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 { return 64; }
+    let Caseˉbytes: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Caseˉbytes) != 1u32 { return 64; }
+    let Case: u8 = Bytesˉreadˉu8(Caseˉbytes, 0u32);
+    if Case == 65u8 { return Basic(); }
+    if Case == 66u8 { return Header(); }
+    if Case == 67u8 { return Root(); }
+    if Case == 68u8 { return Length(); }
+    if Case == 69u8 { return Semantic(); }
+    if Case == 70u8 { return Single(); }
+    if Case == 71u8 { return Older(); }
+    if Case == 72u8 { return Newer(); }
+    if Case == 73u8 { return Identical(); }
+    if Case == 74u8 { return Generation(); }
+    if Case == 75u8 { return Database(); }
+    if Case == 76u8 { return Recovery(); }
+    if Case == 77u8 { return Outside(); }
+    return 64;
+}

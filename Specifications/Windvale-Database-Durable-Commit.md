@@ -155,9 +155,12 @@ Every planned action consumes one closed observation and exact progress:
 It is never permission to retry an uncertain mutation. Invalid progress,
 partial flushes, or attempts to advance a terminal state fail closed.
 
-The planner does not truncate an aborted or uncertain tail. Recovery can
-identify it from selected committed length, but a future writer must define
-its reopen, truncation, writer-fence, and fault-injection policy.
+The publication planner does not truncate an aborted or uncertain tail. The
+connected [storage recovery contract](Windvale-Database-Storage-Recovery.md)
+consumes a fresh dual-superblock selection, resizes only its reported
+unpublished tail, and flushes content-and-length before another publication
+may begin. An indeterminate resize or flush requires another reopen and is
+never retried in place.
 
 ## Limits and exclusions
 

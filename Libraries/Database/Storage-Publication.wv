@@ -1,0 +1,566 @@
+module Windvaleˉdatabaseˉstorageˉpublication profile portable;
+
+import Windvaleˉdatabaseˉcommitˉpublication as Publication;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+const DATABASE_STORAGE_MAX_TRANSFER: u32 = 65536u32;
+const DATABASE_STORAGE_SUPERBLOCK_BYTES: u32 = 256u32;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉstorageˉpublicationˉstatus {
+    Active = 0;
+    Committed = 1;
+    Aborted = 2;
+    Recover = 3;
+    Invalid = 4;
+}
+
+export enum Databaseˉstorageˉpublicationˉerror {
+    None = 0;
+    Invalidˉpublication = 1;
+    Invalidˉgeneration = 2;
+    Invalidˉstorageˉlength = 3;
+    Unpublishedˉtail = 4;
+    Invalidˉpageˉbytes = 5;
+    Invalidˉsuperblockˉbytes = 6;
+    Invalidˉstate = 7;
+    Invalidˉobservation = 8;
+    Changedˉstorage = 9;
+    Providerˉrejected = 10;
+    Staleˉgeneration = 11;
+    Indeterminate = 12;
+}
+
+export enum Databaseˉstorageˉproviderˉerror {
+    None = 0;
+    Permissionˉdenied = 1;
+    Unavailable = 2;
+    Revoked = 3;
+    Stale = 4;
+    Peerˉexited = 5;
+    Outsideˉstorage = 6;
+    Unsupported = 7;
+    Invalidˉrequest = 8;
+    Invalidˉresponse = 9;
+}
+
+export enum Databaseˉstorageˉobservationˉkind {
+    Completed = 0;
+    Rejected = 1;
+    Partial = 2;
+    Indeterminate = 3;
+    Stale = 4;
+    Invalid = 5;
+}
+
+export enum Databaseˉstorageˉactionˉkind {
+    None = 0;
+    Write = 1;
+    Flush = 2;
+    Resize = 3;
+}
+
+export enum Databaseˉstorageˉflushˉscope {
+    None = 0;
+    Content = 1;
+    Contentˉandˉlength = 2;
+}
+
+export record Databaseˉstorageˉobservation {
+    Kind: Databaseˉstorageˉobservationˉkind;
+    Providerˉerror: Databaseˉstorageˉproviderˉerror;
+    Generation: u64;
+    Storageˉlength: u64;
+    Position: u64;
+    Progress: u32;
+}
+
+export record Databaseˉstorageˉaction {
+    Kind: Databaseˉstorageˉactionˉkind;
+    Generation: u64;
+    Position: u64;
+    Length: u32;
+    Flushˉscope: Databaseˉstorageˉflushˉscope;
+    Value: bytes;
+}
+
+export record Databaseˉstorageˉpublication {
+    Status: Databaseˉstorageˉpublicationˉstatus;
+    Error: Databaseˉstorageˉpublicationˉerror;
+    Providerˉerror: Databaseˉstorageˉproviderˉerror;
+    Publication: Publication.Databaseˉcommitˉpublication;
+    Storageˉgeneration: u64;
+    Storageˉlength: u64;
+    Pageˉcursor: u32;
+    Pages: bytes;
+    Superblock: bytes;
+}
+
+fn Databaseˉstorageˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉstorageˉfailure(
+    Error: Databaseˉstorageˉpublicationˉerror
+) -> Databaseˉstorageˉpublication {
+    let Invalidˉpublication: Publication.Databaseˉcommitˉpublication =
+        Publication.Databaseˉcommitˉpublication(
+            Publication.Databaseˉcommitˉpublicationˉerror.Invalidˉstate,
+            Publication.Databaseˉcommitˉpublicationˉstage.Invalid,
+            Superblock.Databaseˉsuperblockˉslot.None,
+            0u64,
+            0u64,
+            Publication.Databaseˉcommitˉpublicationˉflushˉscope.None,
+            0u64,
+            0u64,
+            0u64,
+            0u64,
+            0u64,
+            0u64
+        );
+    return Databaseˉstorageˉpublication(
+        Databaseˉstorageˉpublicationˉstatus.Invalid,
+        Error,
+        Databaseˉstorageˉproviderˉerror.None,
+        Invalidˉpublication,
+        0u64,
+        0u64,
+        0u32,
+        Databaseˉstorageˉempty(),
+        Databaseˉstorageˉempty()
+    );
+}
+
+fn Databaseˉstorageˉstate(
+    Status: Databaseˉstorageˉpublicationˉstatus,
+    Error: Databaseˉstorageˉpublicationˉerror,
+    Providerˉerror: Databaseˉstorageˉproviderˉerror,
+    Publicationˉstate: Publication.Databaseˉcommitˉpublication,
+    Source: Databaseˉstorageˉpublication,
+    Storageˉlength: u64,
+    Pageˉcursor: u32
+) -> Databaseˉstorageˉpublication {
+    return Databaseˉstorageˉpublication(
+        Status,
+        Error,
+        Providerˉerror,
+        Publicationˉstate,
+        Source.Storageˉgeneration,
+        Storageˉlength,
+        Pageˉcursor,
+        Source.Pages,
+        Source.Superblock
+    );
+}
+
+fn Databaseˉstorageˉterminal(
+    State: Databaseˉstorageˉpublication,
+    Status: Databaseˉstorageˉpublicationˉstatus,
+    Error: Databaseˉstorageˉpublicationˉerror,
+    Providerˉerror: Databaseˉstorageˉproviderˉerror,
+    Storageˉlength: u64
+) -> Databaseˉstorageˉpublication {
+    var Observation: Publication.Databaseˉcommitˉpublicationˉobservation =
+        Publication.Databaseˉcommitˉpublicationˉobservation.Indeterminate;
+    var Progress: u64 = 0u64;
+    if Status == Databaseˉstorageˉpublicationˉstatus.Committed {
+        Observation =
+            Publication.Databaseˉcommitˉpublicationˉobservation.Completed;
+        if State.Publication.Stage ==
+                Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages ||
+            State.Publication.Stage ==
+                Publication.Databaseˉcommitˉpublicationˉstage.Writeˉsuperblock {
+            Progress = State.Publication.Length;
+        }
+    } else if Status == Databaseˉstorageˉpublicationˉstatus.Aborted {
+        Observation =
+            Publication.Databaseˉcommitˉpublicationˉobservation.Rejected;
+    }
+    let Terminalˉpublication: Publication.Databaseˉcommitˉpublication =
+        Publication.Databaseˉcommitˉpublicationˉadvance(
+            State.Publication,
+            Observation,
+            Progress
+        );
+    return Databaseˉstorageˉstate(
+        Status,
+        Error,
+        Providerˉerror,
+        Terminalˉpublication,
+        State,
+        Storageˉlength,
+        State.Pageˉcursor
+    );
+}
+
+export fn Databaseˉstorageˉpublicationˉbegin(
+    Publicationˉstate: Publication.Databaseˉcommitˉpublication,
+    Storageˉgeneration: u64,
+    Selectedˉtailˉbytes: u64,
+    Observedˉstorageˉlength: u64,
+    Pages: bytes,
+    Superblockˉbytes: bytes
+) -> Databaseˉstorageˉpublication {
+    if Publicationˉstate.Error !=
+            Publication.Databaseˉcommitˉpublicationˉerror.Valid ||
+        Publicationˉstate.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Invalidˉpublication
+        );
+    }
+    if Storageˉgeneration == 0u64 {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Invalidˉgeneration
+        );
+    }
+    if Selectedˉtailˉbytes != 0u64 {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Unpublishedˉtail
+        );
+    }
+    if Publicationˉstate.Currentˉlength >
+        U64_MAXIMUM - Selectedˉtailˉbytes {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Invalidˉstorageˉlength
+        );
+    }
+    if Observedˉstorageˉlength !=
+        Publicationˉstate.Currentˉlength + Selectedˉtailˉbytes {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Invalidˉstorageˉlength
+        );
+    }
+    let Pageˉbytes: u32 = Bytesˉlength(Pages);
+    if Pageˉbytes == 0u32 ||
+        U64ˉfromˉu32(Pageˉbytes) != Publicationˉstate.Length {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Invalidˉpageˉbytes
+        );
+    }
+    if Bytesˉlength(Superblockˉbytes) !=
+        DATABASE_STORAGE_SUPERBLOCK_BYTES {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Invalidˉsuperblockˉbytes
+        );
+    }
+    return Databaseˉstorageˉpublication(
+        Databaseˉstorageˉpublicationˉstatus.Active,
+        Databaseˉstorageˉpublicationˉerror.None,
+        Databaseˉstorageˉproviderˉerror.None,
+        Publicationˉstate,
+        Storageˉgeneration,
+        Observedˉstorageˉlength,
+        0u32,
+        Pages,
+        Superblockˉbytes
+    );
+}
+
+fn Databaseˉstorageˉactionˉempty() -> Databaseˉstorageˉaction {
+    return Databaseˉstorageˉaction(
+        Databaseˉstorageˉactionˉkind.None,
+        0u64,
+        0u64,
+        0u32,
+        Databaseˉstorageˉflushˉscope.None,
+        Databaseˉstorageˉempty()
+    );
+}
+
+export fn Databaseˉstorageˉpublicationˉaction(
+    State: Databaseˉstorageˉpublication
+) -> Databaseˉstorageˉaction {
+    if State.Status != Databaseˉstorageˉpublicationˉstatus.Active ||
+        State.Error != Databaseˉstorageˉpublicationˉerror.None {
+        return Databaseˉstorageˉactionˉempty();
+    }
+    if State.Publication.Stage ==
+        Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages {
+        let Total: u32 = Bytesˉlength(State.Pages);
+        if State.Pageˉcursor >= Total { return Databaseˉstorageˉactionˉempty(); }
+        let Remaining: u32 = Total - State.Pageˉcursor;
+        var Length: u32 = Remaining;
+        if Length > DATABASE_STORAGE_MAX_TRANSFER {
+            Length = DATABASE_STORAGE_MAX_TRANSFER;
+        }
+        return Databaseˉstorageˉaction(
+            Databaseˉstorageˉactionˉkind.Write,
+            State.Storageˉgeneration,
+            State.Publication.Position + U64ˉfromˉu32(State.Pageˉcursor),
+            Length,
+            Databaseˉstorageˉflushˉscope.None,
+            Bytesˉslice(State.Pages, State.Pageˉcursor, Length)
+        );
+    }
+    if State.Publication.Stage ==
+        Publication.Databaseˉcommitˉpublicationˉstage.Flushˉpages {
+        return Databaseˉstorageˉaction(
+            Databaseˉstorageˉactionˉkind.Flush,
+            State.Storageˉgeneration,
+            0u64,
+            0u32,
+            Databaseˉstorageˉflushˉscope.Contentˉandˉlength,
+            Databaseˉstorageˉempty()
+        );
+    }
+    if State.Publication.Stage ==
+        Publication.Databaseˉcommitˉpublicationˉstage.Writeˉsuperblock {
+        return Databaseˉstorageˉaction(
+            Databaseˉstorageˉactionˉkind.Write,
+            State.Storageˉgeneration,
+            State.Publication.Position,
+            DATABASE_STORAGE_SUPERBLOCK_BYTES,
+            Databaseˉstorageˉflushˉscope.None,
+            State.Superblock
+        );
+    }
+    if State.Publication.Stage ==
+        Publication.Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock {
+        return Databaseˉstorageˉaction(
+            Databaseˉstorageˉactionˉkind.Flush,
+            State.Storageˉgeneration,
+            0u64,
+            0u32,
+            Databaseˉstorageˉflushˉscope.Content,
+            Databaseˉstorageˉempty()
+        );
+    }
+    return Databaseˉstorageˉactionˉempty();
+}
+
+fn Databaseˉstorageˉmaximum(First: u64, Second: u64) -> u64 {
+    if First >= Second { return First; }
+    return Second;
+}
+
+fn Databaseˉstorageˉinvalidˉobservation(
+    State: Databaseˉstorageˉpublication
+) -> Databaseˉstorageˉpublication {
+    return Databaseˉstorageˉterminal(
+        State,
+        Databaseˉstorageˉpublicationˉstatus.Recover,
+        Databaseˉstorageˉpublicationˉerror.Invalidˉobservation,
+        Databaseˉstorageˉproviderˉerror.Invalidˉresponse,
+        State.Storageˉlength
+    );
+}
+
+export fn Databaseˉstorageˉpublicationˉaccept(
+    State: Databaseˉstorageˉpublication,
+    Observation: Databaseˉstorageˉobservation
+) -> Databaseˉstorageˉpublication {
+    if State.Status != Databaseˉstorageˉpublicationˉstatus.Active ||
+        State.Error != Databaseˉstorageˉpublicationˉerror.None {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Invalidˉstate
+        );
+    }
+    let Action: Databaseˉstorageˉaction =
+        Databaseˉstorageˉpublicationˉaction(State);
+    if Action.Kind == Databaseˉstorageˉactionˉkind.None {
+        return Databaseˉstorageˉfailure(
+            Databaseˉstorageˉpublicationˉerror.Invalidˉstate
+        );
+    }
+    if Observation.Position != Action.Position {
+        return Databaseˉstorageˉinvalidˉobservation(State);
+    }
+    if Observation.Kind == Databaseˉstorageˉobservationˉkind.Stale {
+        if Observation.Providerˉerror !=
+                Databaseˉstorageˉproviderˉerror.Stale ||
+            Observation.Generation == 0u64 ||
+            Observation.Generation == State.Storageˉgeneration ||
+            Observation.Storageˉlength != 0u64 ||
+            Observation.Progress != 0u32 {
+            return Databaseˉstorageˉinvalidˉobservation(State);
+        }
+        return Databaseˉstorageˉterminal(
+            State,
+            Databaseˉstorageˉpublicationˉstatus.Recover,
+            Databaseˉstorageˉpublicationˉerror.Staleˉgeneration,
+            Observation.Providerˉerror,
+            State.Storageˉlength
+        );
+    }
+    if Observation.Kind == Databaseˉstorageˉobservationˉkind.Invalid {
+        if Observation.Providerˉerror !=
+                Databaseˉstorageˉproviderˉerror.Invalidˉresponse ||
+            Observation.Storageˉlength != 0u64 ||
+            Observation.Progress != 0u32 {
+            return Databaseˉstorageˉinvalidˉobservation(State);
+        }
+        return Databaseˉstorageˉinvalidˉobservation(State);
+    }
+    if Observation.Generation != State.Storageˉgeneration {
+        return Databaseˉstorageˉinvalidˉobservation(State);
+    }
+    if Observation.Kind == Databaseˉstorageˉobservationˉkind.Rejected {
+        if Observation.Providerˉerror ==
+                Databaseˉstorageˉproviderˉerror.None ||
+            Observation.Providerˉerror ==
+                Databaseˉstorageˉproviderˉerror.Stale ||
+            Observation.Providerˉerror ==
+                Databaseˉstorageˉproviderˉerror.Invalidˉresponse ||
+            Observation.Storageˉlength != 0u64 ||
+            Observation.Progress != 0u32 {
+            return Databaseˉstorageˉinvalidˉobservation(State);
+        }
+        var Rejectedˉstatus: Databaseˉstorageˉpublicationˉstatus =
+            Databaseˉstorageˉpublicationˉstatus.Aborted;
+        if State.Publication.Stage ==
+            Publication.Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock {
+            Rejectedˉstatus = Databaseˉstorageˉpublicationˉstatus.Recover;
+        }
+        return Databaseˉstorageˉterminal(
+            State,
+            Rejectedˉstatus,
+            Databaseˉstorageˉpublicationˉerror.Providerˉrejected,
+            Observation.Providerˉerror,
+            State.Storageˉlength
+        );
+    }
+    if Observation.Providerˉerror !=
+        Databaseˉstorageˉproviderˉerror.None {
+        return Databaseˉstorageˉinvalidˉobservation(State);
+    }
+    if Observation.Kind ==
+        Databaseˉstorageˉobservationˉkind.Indeterminate {
+        if Observation.Storageˉlength != 0u64 ||
+            Observation.Progress != 0u32 {
+            return Databaseˉstorageˉinvalidˉobservation(State);
+        }
+        return Databaseˉstorageˉterminal(
+            State,
+            Databaseˉstorageˉpublicationˉstatus.Recover,
+            Databaseˉstorageˉpublicationˉerror.Indeterminate,
+            Databaseˉstorageˉproviderˉerror.None,
+            State.Storageˉlength
+        );
+    }
+    if Observation.Kind == Databaseˉstorageˉobservationˉkind.Partial {
+        if Action.Kind != Databaseˉstorageˉactionˉkind.Write ||
+            Observation.Progress == 0u32 ||
+            Observation.Progress >= Action.Length {
+            return Databaseˉstorageˉinvalidˉobservation(State);
+        }
+        let Partialˉend: u64 = Action.Position +
+            U64ˉfromˉu32(Observation.Progress);
+        let Partialˉexpectedˉlength: u64 = Databaseˉstorageˉmaximum(
+            State.Storageˉlength,
+            Partialˉend
+        );
+        if Observation.Storageˉlength != Partialˉexpectedˉlength {
+            return Databaseˉstorageˉterminal(
+                State,
+                Databaseˉstorageˉpublicationˉstatus.Recover,
+                Databaseˉstorageˉpublicationˉerror.Changedˉstorage,
+                Databaseˉstorageˉproviderˉerror.None,
+                State.Storageˉlength
+            );
+        }
+        return Databaseˉstorageˉterminal(
+            State,
+            Databaseˉstorageˉpublicationˉstatus.Recover,
+            Databaseˉstorageˉpublicationˉerror.Indeterminate,
+            Databaseˉstorageˉproviderˉerror.None,
+            Partialˉexpectedˉlength
+        );
+    }
+    if Observation.Kind != Databaseˉstorageˉobservationˉkind.Completed {
+        return Databaseˉstorageˉinvalidˉobservation(State);
+    }
+    if Action.Kind == Databaseˉstorageˉactionˉkind.Write {
+        if Observation.Progress != Action.Length {
+            return Databaseˉstorageˉinvalidˉobservation(State);
+        }
+        let Completedˉend: u64 =
+            Action.Position + U64ˉfromˉu32(Action.Length);
+        let Completedˉexpectedˉlength: u64 = Databaseˉstorageˉmaximum(
+            State.Storageˉlength,
+            Completedˉend
+        );
+        if Observation.Storageˉlength != Completedˉexpectedˉlength {
+            return Databaseˉstorageˉterminal(
+                State,
+                Databaseˉstorageˉpublicationˉstatus.Recover,
+                Databaseˉstorageˉpublicationˉerror.Changedˉstorage,
+                Databaseˉstorageˉproviderˉerror.None,
+                State.Storageˉlength
+            );
+        }
+        if State.Publication.Stage ==
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages {
+            let Nextˉcursor: u32 = State.Pageˉcursor + Action.Length;
+            if Nextˉcursor < Bytesˉlength(State.Pages) {
+                return Databaseˉstorageˉstate(
+                    Databaseˉstorageˉpublicationˉstatus.Active,
+                    Databaseˉstorageˉpublicationˉerror.None,
+                    Databaseˉstorageˉproviderˉerror.None,
+                    State.Publication,
+                    State,
+                    Completedˉexpectedˉlength,
+                    Nextˉcursor
+                );
+            }
+            return Databaseˉstorageˉstate(
+                Databaseˉstorageˉpublicationˉstatus.Active,
+                Databaseˉstorageˉpublicationˉerror.None,
+                Databaseˉstorageˉproviderˉerror.None,
+                Publication.Databaseˉcommitˉpublicationˉadvance(
+                    State.Publication,
+                    Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+                    State.Publication.Length
+                ),
+                State,
+                Completedˉexpectedˉlength,
+                Nextˉcursor
+            );
+        }
+        return Databaseˉstorageˉstate(
+            Databaseˉstorageˉpublicationˉstatus.Active,
+            Databaseˉstorageˉpublicationˉerror.None,
+            Databaseˉstorageˉproviderˉerror.None,
+            Publication.Databaseˉcommitˉpublicationˉadvance(
+                State.Publication,
+                Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+                State.Publication.Length
+            ),
+            State,
+            Completedˉexpectedˉlength,
+            State.Pageˉcursor
+        );
+    }
+    if Observation.Progress != 0u32 ||
+        Observation.Storageˉlength != State.Storageˉlength {
+        return Databaseˉstorageˉinvalidˉobservation(State);
+    }
+    if State.Publication.Stage ==
+        Publication.Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock {
+        return Databaseˉstorageˉterminal(
+            State,
+            Databaseˉstorageˉpublicationˉstatus.Committed,
+            Databaseˉstorageˉpublicationˉerror.None,
+            Databaseˉstorageˉproviderˉerror.None,
+            State.Storageˉlength
+        );
+    }
+    if State.Publication.Stage ==
+        Publication.Databaseˉcommitˉpublicationˉstage.Flushˉpages {
+        return Databaseˉstorageˉstate(
+            Databaseˉstorageˉpublicationˉstatus.Active,
+            Databaseˉstorageˉpublicationˉerror.None,
+            Databaseˉstorageˉproviderˉerror.None,
+            Publication.Databaseˉcommitˉpublicationˉadvance(
+                State.Publication,
+                Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+                0u64
+            ),
+            State,
+            State.Storageˉlength,
+            State.Pageˉcursor
+        );
+    }
+    return Databaseˉstorageˉinvalidˉobservation(State);
+}

@@ -1899,6 +1899,82 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
     );
 }
 
+fn Compilerˉsourceˉwirˉcompileˉrecordˉpath(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
+    Base: Compilerˉsourceˉwirˉvalue,
+    Cursor: u32,
+    Line: u32,
+    Column: u32
+) -> Compilerˉsourceˉwirˉvalue {
+    var Result: Compilerˉsourceˉwirˉvalue = Base;
+    var Pathˉcursor: u32 = Cursor;
+    var Pathˉline: u32 = Line;
+    var Pathˉcolumn: u32 = Column;
+    let Pathˉend: u32 = Expression.Valueˉoffset + Expression.Valueˉlength;
+    while Pathˉcursor < Pathˉend {
+        let Dot: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Pathˉcursor, Pathˉline, Pathˉcolumn
+            );
+        let Member: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Dot.Nextˉoffset, Dot.Nextˉline, Dot.Nextˉcolumn
+            );
+        if Result.Shape < 65536u32 || Result.Shape >= 131072u32 {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Result),
+                Compilerˉsourceˉwirˉstatus.Invalidˉfieldˉtarget,
+                Result.Currentˉmodule,
+                Member.Offset,
+                Member.Line,
+                Member.Column
+            );
+        }
+        let Pathˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+            Compilerˉsourceˉwirˉnominalˉbyˉshape(
+                Input, Scan, Symbols, Result.Shape
+            );
+        let Pathˉfield: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉnominalˉmember(
+                Input,
+                Scan,
+                Symbols,
+                Pathˉnominal,
+                Source,
+                Member.Offset,
+                Member.Length
+            );
+        if !Pathˉfield.Found {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Result),
+                Compilerˉsourceˉwirˉstatus.Unknownˉfield,
+                Pathˉnominal.Module,
+                Member.Offset,
+                Member.Line,
+                Member.Column
+            );
+        }
+        Result = Compilerˉsourceˉwirˉemit(
+            Compilerˉsourceˉwirˉvalueˉbuild(Result),
+            Compilerˉsourceˉwirˉoperation.Recordˉfield,
+            Pathˉfield.Shape,
+            Compilerˉsourceˉwirˉoneˉoperand(Result.Temporary),
+            Result.Shape - 65536u32,
+            Pathˉfield.Index,
+            Expression.Offset,
+            Expression.Length
+        );
+        Pathˉcursor = Member.Nextˉoffset;
+        Pathˉline = Member.Nextˉline;
+        Pathˉcolumn = Member.Nextˉcolumn;
+    }
+    return Result;
+}
+
 export fn Compilerˉsourceˉwirˉcompileˉfield(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -1923,32 +1999,38 @@ export fn Compilerˉsourceˉwirˉcompileˉfield(
         Expression.Firstˉoffset, Expression.Firstˉlength, Expression.Offset
     );
     if Local.Found {
-        if Local.Shape < 65536u32 {
+        if Local.Shape < 65536u32 || Local.Shape >= 131072u32 {
             return Compilerˉsourceˉwirˉfailureˉvalue(
-                Build, Compilerˉsourceˉwirˉstatus.Invalidˉfieldˉtarget,
+                Build,
+                Compilerˉsourceˉwirˉstatus.Invalidˉfieldˉtarget,
                 Build.Currentˉmodule,
-                Expression.Firstˉoffset, Firstˉposition.Line, Firstˉposition.Column
+                Expression.Firstˉoffset,
+                Firstˉposition.Line,
+                Firstˉposition.Column
             );
         }
-        if Local.Shape >= 131072u32 {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Build, Compilerˉsourceˉwirˉstatus.Invalidˉfieldˉtarget,
-                Build.Currentˉmodule,
-                Expression.Firstˉoffset, Firstˉposition.Line, Firstˉposition.Column
+        let Recordˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+            Compilerˉsourceˉwirˉnominalˉbyˉshape(
+                Input, Scan, Symbols, Local.Shape
             );
-        }
-        let Recordˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉwirˉnominalˉbyˉshape(
-            Input, Scan, Symbols, Local.Shape
-        );
-        let Field: Compilerˉsourceˉwirˉmember = Compilerˉsourceˉwirˉnominalˉmember(
-            Input, Scan, Symbols, Recordˉnominal,
-            Source, Expression.Secondˉoffset, Expression.Secondˉlength
-        );
+        let Field: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉnominalˉmember(
+                Input,
+                Scan,
+                Symbols,
+                Recordˉnominal,
+                Source,
+                Expression.Secondˉoffset,
+                Expression.Secondˉlength
+            );
         if !Field.Found {
             return Compilerˉsourceˉwirˉfailureˉvalue(
-                Build, Compilerˉsourceˉwirˉstatus.Unknownˉfield,
+                Build,
+                Compilerˉsourceˉwirˉstatus.Unknownˉfield,
                 Recordˉnominal.Module,
-                Expression.Secondˉoffset, Position.Line, Position.Column
+                Expression.Secondˉoffset,
+                Position.Line,
+                Position.Column
             );
         }
         let Target: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
@@ -1956,15 +2038,34 @@ export fn Compilerˉsourceˉwirˉcompileˉfield(
             Compilerˉsourceˉwirˉempty(Source), Local.Slot, 0u32,
             Expression.Firstˉoffset, Expression.Firstˉlength
         );
-        return Compilerˉsourceˉwirˉemit(
-            Compilerˉsourceˉwirˉvalueˉbuild(Target),
-            Compilerˉsourceˉwirˉoperation.Recordˉfield,
-            Field.Shape,
-            Compilerˉsourceˉwirˉoneˉoperand(Target.Temporary),
-            Local.Shape - 65536u32,
-            Field.Index,
-            Expression.Offset,
-            Expression.Length
+        let Firstˉfield: Compilerˉsourceˉwirˉvalue =
+            Compilerˉsourceˉwirˉemit(
+                Compilerˉsourceˉwirˉvalueˉbuild(Target),
+                Compilerˉsourceˉwirˉoperation.Recordˉfield,
+                Field.Shape,
+                Compilerˉsourceˉwirˉoneˉoperand(Target.Temporary),
+                Local.Shape - 65536u32,
+                Field.Index,
+                Expression.Offset,
+                Expression.Length
+            );
+        let Secondˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source,
+                Expression.Secondˉoffset,
+                Position.Line,
+                Position.Column
+            );
+        return Compilerˉsourceˉwirˉcompileˉrecordˉpath(
+            Input,
+            Scan,
+            Symbols,
+            Source,
+            Expression,
+            Firstˉfield,
+            Secondˉtoken.Nextˉoffset,
+            Secondˉtoken.Nextˉline,
+            Secondˉtoken.Nextˉcolumn
         );
     }
     let Qualifiedˉconstant: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch =

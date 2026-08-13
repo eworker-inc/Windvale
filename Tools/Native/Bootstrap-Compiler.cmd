@@ -47,7 +47,7 @@ call "%RepositoryRoot%\Tools\Native\Compile-Compiler-Source-Set.cmd" ^
 set "Result=%ERRORLEVEL%"
 if not "%Result%"=="0" goto :cleanup
 
-call :verify_file "%Candidate%" 927274 d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae "bootstrapped compiler WVB"
+call :verify_file "%Candidate%" 929711 79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 "bootstrapped compiler WVB"
 if errorlevel 1 (
     set "Result=1"
     goto :cleanup

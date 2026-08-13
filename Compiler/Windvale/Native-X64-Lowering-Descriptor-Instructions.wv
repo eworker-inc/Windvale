@@ -842,6 +842,11 @@ fn Emitˉbyteˉconstruction(
             Bytesˉconcatenation.Compilerˉnativeˉx64ˉemitˉbytesˉfromˉu16ˉlittle(
                 Result, Source, Target, Instruction.Runtimeˉtarget
             );
+    } else if Instruction.Opcode == 190u8 {
+        Result =
+            Bytesˉconcatenation.Compilerˉnativeˉx64ˉemitˉbytesˉfromˉu64ˉlittle(
+                Result, Source, Target, Instruction.Runtimeˉtarget
+            );
     } else {
         Result =
             Bytesˉconcatenation.Compilerˉnativeˉx64ˉemitˉbytesˉfromˉ32ˉlittle(
@@ -978,7 +983,8 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
     }
     if Instruction.Opcode == 120u8 || Instruction.Opcode == 121u8 ||
         Instruction.Opcode == 122u8 ||
-        Instruction.Opcode == 123u8 {
+        Instruction.Opcode == 123u8 ||
+        Instruction.Opcode == 190u8 {
         return Emitˉbyteˉconstruction(Instruction, Shape, State);
     }
     if Instruction.Opcode == 110u8 || Instruction.Opcode == 112u8 ||

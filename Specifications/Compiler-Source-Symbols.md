@@ -81,7 +81,7 @@ Capabilities must belong to the implemented catalog. A portable-profile module m
 
 Records and enums are nonempty. Field names are unique within a record. Enum member names and explicit values are each unique within an enum. Parameter names are unique within a function. These rules apply after complete syntax validation, so the symbol phase operates only on qualified declaration and body spans.
 
-A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives or enums; a named record field returns `Invalidˉfieldˉtype`. Function parameters and results may use visible record or enum types.
+A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Function parameters and results may use visible record or enum types. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
 
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 
@@ -125,9 +125,9 @@ Failure evidence names the current module, a related prior/target module when ap
 
 ## Candidate artifacts and retained qualified evidence
 
-- `Source-Symbols-Core.wvb`: 442,346 bytes, SHA-256 `1541761fa2de9d74a993fa66e8213c7b81ee07d9c7a293efe6c4af96b7d81bc7`.
-- `Source-Symbols-Demo.wvb`: 453,232 bytes, SHA-256 `9dd24f3afd8864c444e23ea2228d5ea60fabca459b1cc47a537e0c77ea284da2`.
-- `Source-Symbols-Tool.wvb`: 441,179 bytes, SHA-256 `b93cfd428589b94ed5b4579b087d942c34a6ddd738e7a0e3a24ff57becb62f46`.
+- `Source-Symbols-Core.wvb`: 442,471 bytes, SHA-256 `29cdfca436073bf628fa92a10f70915f14bdbcddffb659b25dec793722790e2b`.
+- `Source-Symbols-Demo.wvb`: 453,357 bytes, SHA-256 `b4aed72b84f8c23f3f391b663d1c87a27912bfff355e3f1def848f057b5e8e65`.
+- `Source-Symbols-Tool.wvb`: 441,304 bytes, SHA-256 `01b96a2a6f2d6f1d0210e57020b928f4dad5b3ac1407fd0e0a04b875048f87e7`.
 
 Decision 0517 reproduces all three identities through the current-Windows
 native Project front door and natively inspects the core portable type/export

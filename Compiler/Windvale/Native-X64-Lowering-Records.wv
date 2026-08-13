@@ -84,8 +84,51 @@ fn Typeˉtag(Result: bytes, Typeˉindex: u32) -> bytes {
     return Appendˉu32(Output, Typeˉindex);
 }
 
-export fn Compilerˉnativeˉx64ˉrecordˉcreateˉbytes(Fields: u32) -> u32 {
-    return 32u32 + Fields * 32u32;
+fn Addˉraxˉoffset(Result: bytes, Offset: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 5u8);
+    return Appendˉu32(Output, Offset);
+}
+
+fn Padˉto(Result: bytes, Length: u32) -> bytes {
+    var Output: bytes = Result;
+    while Bytesˉlength(Output) < Length {
+        Output = Appendˉbyte(Output, 144u8);
+    }
+    return Output;
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉcreateˉbytes(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> u32 {
+    let Fields: u32 = Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+        Types,
+        Typeˉindex
+    );
+    var Result: u32 = 32u32;
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        let Type: u8 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+            Input,
+            Types,
+            Typeˉindex,
+            Field
+        );
+        if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+            Result = Result + 8u32 + 30u32 *
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+                    Input,
+                    Types,
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
+                );
+        } else {
+            Result = Result + 32u32;
+        }
+        Field = Field + 1u32;
+    }
+    return Result;
 }
 
 export fn Compilerˉnativeˉx64ˉrecordˉcopyˉbytes(Fields: u32) -> u32 {
@@ -254,6 +297,8 @@ export fn Compilerˉnativeˉx64ˉemitˉrecordˉreturn(
 
 export fn Compilerˉnativeˉx64ˉemitˉrecordˉcreate(
     Result: bytes,
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Typeˉindex: u32,
     Fieldˉslots: bytes,
     Targetˉslot: u32,
@@ -267,10 +312,41 @@ export fn Compilerˉnativeˉx64ˉemitˉrecordˉcreate(
             Fieldˉslots,
             Field * 4u32
         );
-        Output = Loadˉrax(Output, Source);
-        Output = Storeˉrax(Output, Backingˉcell + Field);
-        Output = Loadˉraxˉfield(Output, Source);
-        Output = Storeˉraxˉfield(Output, Backingˉcell + Field);
+        let Type: u8 = Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+            Input,
+            Types,
+            Typeˉindex,
+            Field
+        );
+        if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+            Output = Loadˉrdx(Output, Source);
+            let Childˉwidth: u32 =
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+                    Input,
+                    Types,
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
+                );
+            let Childˉbacking: u32 = Backingˉcell +
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉbackingˉoffset(
+                    Input,
+                    Types,
+                    Typeˉindex,
+                    Field
+                );
+            var Childˉfield: u32 = 0u32;
+            while Childˉfield < Childˉwidth {
+                Output = Loadˉrecordˉfield(Output, Childˉfield, false);
+                Output = Storeˉrax(Output, Childˉbacking + Childˉfield);
+                Output = Loadˉrecordˉfield(Output, Childˉfield, true);
+                Output = Storeˉraxˉfield(Output, Childˉbacking + Childˉfield);
+                Childˉfield = Childˉfield + 1u32;
+            }
+        } else {
+            Output = Loadˉrax(Output, Source);
+            Output = Storeˉrax(Output, Backingˉcell + Field);
+            Output = Loadˉraxˉfield(Output, Source);
+            Output = Storeˉraxˉfield(Output, Backingˉcell + Field);
+        }
         Field = Field + 1u32;
     }
     Output = Frameˉaddress(Output, Backingˉcell, 0u32);
@@ -312,4 +388,20 @@ export fn Compilerˉnativeˉx64ˉemitˉrecordˉfield(
     Output = Storeˉrax(Output, Targetˉslot);
     Output = Loadˉrecordˉfield(Output, Field, true);
     return Storeˉraxˉfield(Output, Targetˉslot);
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉrecordˉfieldˉview(
+    Result: bytes,
+    Typeˉindex: u32,
+    Backingˉoffset: u32,
+    Sourceˉhandle: u32,
+    Targetˉslot: u32
+) -> bytes {
+    let Start: u32 = Bytesˉlength(Result);
+    var Output: bytes = Typeˉtag(Result, Typeˉindex);
+    Output = Loadˉrax(Output, Sourceˉhandle);
+    Output = Addˉraxˉoffset(Output, Backingˉoffset * 16u32);
+    Output = Storeˉrax(Output, Targetˉslot);
+    // The common instruction-limit step contributes the remaining ten bytes.
+    return Padˉto(Output, Start + 44u32);
 }

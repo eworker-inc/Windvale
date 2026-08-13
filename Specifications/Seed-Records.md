@@ -23,7 +23,7 @@ fn Readˉleft(Value: Pair) -> i32 {
 
 - A record name introduces a nominal value type and a positional constructor.
 - Constructor arguments follow declared field order and require exact types.
-- A field is read by name from a local or parameter.
+- A field path is read left to right by name from a local or parameter.
 - Records may be function parameters, function results, and locals.
 - Record values and their fields are immutable. A mutable `var` may receive a replacement record value, but fields cannot be assigned.
 - Record equality, methods, optional fields, default arguments, generics, and destructuring are not part of Seed.
@@ -33,15 +33,23 @@ fn Readˉleft(Value: Pair) -> i32 {
 - A module may declare at most 1,024 nominal record and enum types in total.
 - A record contains 1 through 64 fields.
 - Field names are unique within the record.
-- A field may be `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, or a nominal Seed enum.
-- Nested record fields are deferred. This keeps default construction, runtime representation, verification, and lifetime behavior bounded while the bootstrap has no general memory model.
+- A field may use an admitted primitive, a nominal Seed enum, or an immutable
+  record identity.
+- Record containment must be acyclic. A backend may impose a smaller explicit
+  flattened-width bound; the native x64 subset admits at most 64 backing cells
+  for one recursively flattened record value.
 
 ## Runtime and bytecode
 
 The compiler assigns record type indices in ordinal record-name order. Bytecode carries nominal record shapes in function signatures and locals, declares field schemas in the Types section, constructs values with `record.create`, and reads fields with `record.field`.
 
-The verifier checks record indices, constructor arity and operand types, field indices, and nominal identity before execution. The reference runtime stores a record as its type index plus an immutable field array. No instruction exposes or mutates that array.
+The verifier checks record indices, constructor arity and operand types, field
+indices, nominal identity, and bounded acyclic containment before execution.
+The reference runtime stores a record as its type index plus immutable field
+values. No instruction exposes or mutates that storage.
 
 ## Deliberate next steps
 
-Small nominal enums and bounded formatting are now qualified companion contracts. Nested aggregates or a broader allocation model should be introduced only when a concrete compiler, runtime, assembler, or Foundation data structure requires them.
+Small nominal enums, bounded formatting, and nested immutable record values are
+now companion contracts. Mutable aggregates, collections, optional fields,
+destructuring, and a broader allocation model remain separate future work.

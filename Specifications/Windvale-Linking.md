@@ -308,12 +308,12 @@ segmented WVO producer, segmented image linker, canonical image transport, and
 hosted-container toolset. The launcher owns only process orchestration and
 parsing of the transport process's strict decimal completion line.
 
-The segmented producer WVB is exactly 462,099 bytes at SHA-256
-`15d4b8f5739d93ff1aaf4a051397d7e9b4bcb1f9415bbc2d38e5c2f0963c7ce0`.
-Its Windows application is 6,649,344 bytes at SHA-256
-`75c385e8ca0d6719a1d61a92fa083d789fb633c1c759235f23af545db2e1bfc2`;
-its Linux application is 6,647,808 bytes at SHA-256
-`c3924d60eb1f61d98df8ef9b911996ad6dd237941670baf3c6e415f02857906c`.
+The segmented producer WVB is exactly 472,421 bytes at SHA-256
+`dbb5a5f9f5bf8a9ae221c5c61a2aa3c4b72c44682cf38a99948e0ec89bd9d6fc`.
+Its Windows application is 6,804,480 bytes at SHA-256
+`59ba8a96e75f2a3c257e3dada30c687d10ee7ecda4fd32ca0be35236ec2aa112`;
+its Linux application is 6,803,456 bytes at SHA-256
+`9d2ad636d88d2f89618e3017fed34be580b80fb43d54ded42cfe8fca42221c39`.
 Decision 0496 reconstructs this pair and the staging and transport pairs from
 the retained native candidate toolset on Windows. That construction does not
 by itself prove Stage 2, Linux execution, promotion, or a seed-independent

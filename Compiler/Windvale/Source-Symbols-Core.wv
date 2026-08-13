@@ -1551,7 +1551,8 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
         );
     }
     if Forˉfield {
-        if Match.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
+        if Match.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record &&
+            Match.Kind != Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
             return Compilerˉsourceˉsymbolsˉtypeˉfailure(
                 Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype,
                 Kind,

@@ -1,0 +1,3 @@
+windvale-project 2
+root "Tests/Fixtures/Native-X64/Nested-Record-Fields.wv"
+emit wvb

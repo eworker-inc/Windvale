@@ -81,6 +81,8 @@ fn Emitˉcreate(
     return Compilerˉnativeˉx64ˉrecordˉstate(
         Records.Compilerˉnativeˉx64ˉemitˉrecordˉcreate(
             State.Result,
+            Instruction.Input,
+            Types,
             Typeˉindex,
             Bytesˉslice(State.Stackˉslots, Depth * 4u32, Fields * 4u32),
             Target,
@@ -143,7 +145,12 @@ fn Emitˉfield(
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) {
         Index = State.Nextˉenum;
     }
-    let Target: u32 = Valueˉslot(Shape, Type, Index);
+    var Target: u32 = 0u32;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+        Target = Shape.Recordˉbase + State.Nextˉrecord;
+    } else {
+        Target = Valueˉslot(Shape, Type, Index);
+    }
     var Nextˉi32: u32 = State.Nextˉi32;
     var Nextˉbool: u32 = State.Nextˉbool;
     var Nextˉtext: u32 = State.Nextˉtext;
@@ -161,14 +168,33 @@ fn Emitˉfield(
         Nextˉenum = Nextˉenum + 1u32;
     }
     let Depth: u32 = State.Stackˉdepth - 1u32;
-    return Compilerˉnativeˉx64ˉrecordˉstate(
-        Records.Compilerˉnativeˉx64ˉemitˉrecordˉfield(
-            State.Result,
+    var Result: bytes = State.Result;
+    var Nextˉrecord: u32 = State.Nextˉrecord;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+        Result = Records.Compilerˉnativeˉx64ˉemitˉrecordˉfieldˉview(
+            Result,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type),
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉbackingˉoffset(
+                Instruction.Input,
+                Types,
+                Typeˉindex,
+                Field
+            ),
+            Source,
+            Target
+        );
+        Nextˉrecord = Nextˉrecord + 1u32;
+    } else {
+        Result = Records.Compilerˉnativeˉx64ˉemitˉrecordˉfield(
+            Result,
             Typeˉindex,
             Field,
             Source,
             Target
-        ),
+        );
+    }
+    return Compilerˉnativeˉx64ˉrecordˉstate(
+        Result,
         Bytesˉconcat(
             Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
             Bytesˉfromˉu8(Type)
@@ -185,7 +211,7 @@ fn Emitˉfield(
         Nextˉu32,
         Nextˉbytes,
         Nextˉenum,
-        State.Nextˉrecord
+        Nextˉrecord
     );
 }
 
@@ -213,7 +239,8 @@ fn Emitˉload(
         Records.Compilerˉnativeˉx64ˉemitˉrecordˉcopy(
             State.Result,
             Typeˉindex,
-            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+                Instruction.Input,
                 Types,
                 Typeˉindex
             ),
@@ -262,7 +289,8 @@ fn Emitˉstore(
         Records.Compilerˉnativeˉx64ˉemitˉrecordˉcopy(
             State.Result,
             Typeˉindex,
-            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+                Instruction.Input,
                 Types,
                 Typeˉindex
             ),

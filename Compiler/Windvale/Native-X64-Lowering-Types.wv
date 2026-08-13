@@ -6,6 +6,7 @@ export record Compilerˉnativeˉx64ˉtypes {
     Kinds: bytes;
     Itemˉoffsets: bytes;
     Itemˉcounts: bytes;
+    Recordˉwidths: bytes;
 }
 
 export record Compilerˉnativeˉx64ˉshape {
@@ -23,6 +24,7 @@ fn Invalid(Input: bytes) -> Compilerˉnativeˉx64ˉtypes {
     return Compilerˉnativeˉx64ˉtypes(
         false,
         0u32,
+        Emptyˉbytes,
         Emptyˉbytes,
         Emptyˉbytes,
         Emptyˉbytes
@@ -372,7 +374,8 @@ fn Compilerˉnativeˉx64ˉtypesˉreadˉmode(
         Count,
         Kinds,
         Itemˉoffsets,
-        Itemˉcounts
+        Itemˉcounts,
+        Empty(Input)
     );
 
     Index = 0u32;
@@ -402,9 +405,6 @@ fn Compilerˉnativeˉx64ˉtypesˉreadˉmode(
                             Types
                         );
                     if !Shape.Valid { return Invalid(Input); }
-                    if Compilerˉnativeˉx64ˉtypeˉisˉrecord(Shape.Type) {
-                        return Invalid(Input);
-                    }
                     Cursor = Shape.Next;
                 }
             } else if Scanˉkind == 2u8 {
@@ -429,7 +429,35 @@ fn Compilerˉnativeˉx64ˉtypesˉreadˉmode(
         }
         Index = Index + 1u32;
     }
-    return Types;
+    var Recordˉwidths: bytes = Empty(Input);
+    Index = 0u32;
+    while Index < Count {
+        if Compilerˉnativeˉx64ˉtypeˉkind(Types, Index) == 1u8 {
+            let Width: u32 =
+                Compilerˉnativeˉx64ˉrecordˉwidth(Input, Types, Index);
+            if Width == 0u32 {
+                return Invalid(Input);
+            }
+            Recordˉwidths = Bytesˉconcat(
+                Recordˉwidths,
+                Bytesˉfromˉu32ˉlittle(Width)
+            );
+        } else {
+            Recordˉwidths = Bytesˉconcat(
+                Recordˉwidths,
+                Bytesˉfromˉu32ˉlittle(0u32)
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉtypes(
+        Types.Valid,
+        Types.Count,
+        Types.Kinds,
+        Types.Itemˉoffsets,
+        Types.Itemˉcounts,
+        Recordˉwidths
+    );
 }
 
 export fn Compilerˉnativeˉx64ˉtypesˉread(
@@ -505,11 +533,112 @@ export fn Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
     return 0u8;
 }
 
-export fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(
+fn Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Rootˉtype: u32,
+    Depth: u32
+) -> u32 {
+    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 || Depth >= 64u32 {
+        return 0u32;
+    }
+    if Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 1u8 {
+        return 0u32;
+    }
+    if Depth > 0u32 && Typeˉindex == Rootˉtype { return 0u32; }
+    let Fields: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+        Types,
+        Typeˉindex
+    );
+    var Width: u32 = Fields;
+    var Field: u32 = 0u32;
+    while Field < Fields {
+        let Fieldˉtype: u8 = Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+            Input,
+            Types,
+            Typeˉindex,
+            Field
+        );
+        if Compilerˉnativeˉx64ˉtypeˉisˉrecord(Fieldˉtype) {
+            let Childˉwidth: u32 = Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
+                Input,
+                Types,
+                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Fieldˉtype),
+                Rootˉtype,
+                Depth + 1u32
+            );
+            if Childˉwidth == 0u32 || Width > 64u32 - Childˉwidth {
+                return 0u32;
+            }
+            Width = Width + Childˉwidth;
+        }
+        Field = Field + 1u32;
+    }
+    return Width;
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉwidth(
     Input: bytes,
     Types: Compilerˉnativeˉx64ˉtypes,
     Typeˉindex: u32
+) -> u32 {
+    if Bytesˉlength(Types.Recordˉwidths) == Types.Count * 4u32 {
+        return Bytesˉreadˉu32ˉlittle(
+            Types.Recordˉwidths,
+            Typeˉindex * 4u32
+        );
+    }
+    return Compilerˉnativeˉx64ˉrecordˉwidthˉfrom(
+        Input,
+        Types,
+        Typeˉindex,
+        Typeˉindex,
+        0u32
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉfieldˉbackingˉoffset(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Fieldˉindex: u32
+) -> u32 {
+    let Fields: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+        Types,
+        Typeˉindex
+    );
+    if Fieldˉindex >= Fields { return 0u32; }
+    var Offset: u32 = Fields;
+    var Field: u32 = 0u32;
+    while Field < Fieldˉindex {
+        let Fieldˉtype: u8 = Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+            Input,
+            Types,
+            Typeˉindex,
+            Field
+        );
+        if Compilerˉnativeˉx64ˉtypeˉisˉrecord(Fieldˉtype) {
+            Offset = Offset + Compilerˉnativeˉx64ˉrecordˉwidth(
+                Input,
+                Types,
+                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Fieldˉtype)
+            );
+        }
+        Field = Field + 1u32;
+    }
+    return Offset;
+}
+
+fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptorsˉfrom(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Depth: u32
 ) -> bool {
+    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 || Depth >= 64u32 {
+        return false;
+    }
     let Fields: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉcount(
         Types,
         Typeˉindex
@@ -523,9 +652,30 @@ export fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(
             Field
         );
         if Type == 3u8 || Type == 6u8 { return true; }
+        if Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+            if Compilerˉnativeˉx64ˉrecordˉhasˉdescriptorsˉfrom(
+                Input,
+                Types,
+                Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type),
+                Depth + 1u32
+            ) { return true; }
+        }
         Field = Field + 1u32;
     }
     return false;
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉhasˉdescriptors(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> bool {
+    return Compilerˉnativeˉx64ˉrecordˉhasˉdescriptorsˉfrom(
+        Input,
+        Types,
+        Typeˉindex,
+        0u32
+    );
 }
 
 export fn Compilerˉnativeˉx64ˉanalyzeˉscalarˉarithmetic(

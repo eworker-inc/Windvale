@@ -448,6 +448,10 @@ foreach ($Path in $Paths) {
             $Path.Contains('Commit-Publication', [StringComparison]::Ordinal)) {
             Add-Suite 'database-durable-commit'
         }
+        if ($Path.Contains('Storage-Publication', [StringComparison]::Ordinal) -or
+            $Path.Contains('Storage-Recovery', [StringComparison]::Ordinal)) {
+            Add-Suite 'database-storage'
+        }
     } elseif ($Path -eq 'Specifications/Windvale-Native-Random-Containment-Tests.md') {
         Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
     } elseif ($Path.StartsWith('Applications/Database/', [StringComparison]::Ordinal) -or
@@ -467,10 +471,14 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Tests/Fixtures/Database/Database-Storage-Page-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Superblock-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Database-Durable-Commit-', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tests/Fixtures/Database/Database-Storage-Publication-', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tests/Fixtures/Database/Database-Storage-Recovery-', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Database/Native-Hosted-Snapshot-Page', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Tests/Windvale-Native-Test-Database-Storage-Page', [StringComparison]::Ordinal) -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Durable-Superblock.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Native-Hosted-Snapshot-Page.wvproj' -or
         $Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal) -or
         $Path -in @(
@@ -489,6 +497,10 @@ foreach ($Path in $Paths) {
             $Path.Contains('Durable-Commit', [StringComparison]::Ordinal) -or
             $Path.Contains('Commit-Publication', [StringComparison]::Ordinal)) {
             Add-Suite 'database-durable-commit'
+        }
+        if ($Path.Contains('Storage-Publication', [StringComparison]::Ordinal) -or
+            $Path.Contains('Storage-Recovery', [StringComparison]::Ordinal)) {
+            Add-Suite 'database-storage'
         }
         if ($Path -in @(
             'Libraries/Database/Wvdb-Reader.wv',
@@ -547,6 +559,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'native-u64-lowering'
         Add-Suite 'database-superblock'
         Add-Suite 'database-durable-commit'
+        Add-Suite 'database-storage'
         Add-Suite 'segmented-compiler-toolset-reconstruction'
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
@@ -644,6 +657,12 @@ foreach ($Path in $Paths) {
     )) {
         Add-Compiler-Suites
         Add-Suite 'seed-native-front-door'
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Symbols-Core.wv',
+            'Compiler/Windvale/Source-Wir-Core.wv'
+        )) {
+            Add-Suite 'database-storage'
+        }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites
     } elseif ($Path.StartsWith('Compiler/', [StringComparison]::Ordinal)) {
@@ -1153,6 +1172,8 @@ foreach ($Path in $Paths) {
         Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-U64.wv') {
         Add-Suite 'native-u64-lowering'
+    } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Nested-Record-Fields.wv') {
+        Add-Suite 'database-storage'
     } elseif ($Path -eq 'Tests/Native/Plan.txt' -or
         $Path.StartsWith('Tests/Native/Malformed-Wvb/', [StringComparison]::Ordinal)) {
         Add-Suite 'seed'
@@ -1264,7 +1285,15 @@ foreach ($Path in $Paths) {
             Add-Suite 'publisher-rejections'
         } elseif ($Path -eq 'Specifications/Windvale-Native-X64-Lowering.md') {
             Add-Compiler-Suites
-            Add-Suite @('native-u64-lowering', 'wvb-to-wvo-reconstruction')
+            Add-Suite @('native-u64-lowering', 'database-storage', 'wvb-to-wvo-reconstruction')
+        } elseif ($Path -in @(
+            'Specifications/Seed-Language.md',
+            'Specifications/Seed-Records.md',
+            'Specifications/Compiler-Source-Symbols.md',
+            'Specifications/Compiler-Source-Wir.md'
+        )) {
+            Add-Compiler-Suites
+            Add-Suite 'database-storage'
         } elseif ($Path -eq 'Specifications/Windvale-Uefi-Application.md') {
             Add-Suite 'uefi-packager'
         } elseif ($Path -eq 'Specifications/Wv-Dump-Core.md') {
@@ -1380,6 +1409,12 @@ foreach ($Path in $Paths) {
         Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-U64.wvproj') {
         Add-Suite 'native-u64-lowering'
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj'
+    )) {
+        Add-Suite 'database-storage'
     } elseif ($Path -in @(
         'Projects/Linker/Windvale-Console-Application-Packager.wvproj',
         'Projects/Linker/Windvale-Console-Application-Segmented-Packager.wvproj'

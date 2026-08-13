@@ -188,21 +188,24 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Numeric >= 173u32 {
         if Numeric <= 178u32 { return 1u32; }
     }
-    if Opcode == 189u8 || Opcode == 191u8 { return 1u32; }
+    if Opcode == 189u8 || Opcode == 190u8 || Opcode == 191u8 { return 1u32; }
     return 0u32;
 }
 
 fn Recordˉwidth(
+    Input: bytes,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Type: u8
 ) -> u32 {
-    return Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+    return Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+        Input,
         Types,
         Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
     );
 }
 
 fn Rememberˉrecordˉtype(
+    Input: bytes,
     Recordˉtypes: bytes,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Identifier: u32,
@@ -212,7 +215,8 @@ fn Rememberˉrecordˉtype(
         return Bytesˉconcat(Recordˉtypes, Bytesˉfromˉu8(Type));
     }
     let Existing: u8 = Bytesˉreadˉu8(Recordˉtypes, Identifier);
-    if Recordˉwidth(Types, Type) > Recordˉwidth(Types, Existing) {
+    if Recordˉwidth(Input, Types, Type) >
+        Recordˉwidth(Input, Types, Existing) {
         return Setˉbyte(Recordˉtypes, Identifier, Type);
     }
     return Recordˉtypes;
@@ -841,6 +845,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Recordˉvalues = Blockˉrecordˉvalues;
                 }
                 Recordˉtypes = Rememberˉrecordˉtype(
+                    Input,
                     Recordˉtypes,
                     Types,
                     Resultˉrecord,
@@ -928,6 +933,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Numericˉopcode >= 109u32 && Numericˉopcode <= 112u32 ||
             Numericˉopcode >= 115u32 && Numericˉopcode <= 118u32 ||
             Numericˉopcode >= 120u32 && Numericˉopcode <= 124u32 ||
+            Opcode == 190u8 ||
             Opcode == 191u8 {
             if Depth == 0u32 { return Invalid(Input); }
             Depth = Depth - 1u32;
@@ -982,10 +988,30 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             }
             var Field: u32 = 0u32;
             while Field < Fields {
-                if Bytesˉreadˉu32ˉlittle(
+                let Fieldˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
                     Stackˉrecords,
                     (Depth - Fields + Field) * 4u32
-                ) != 4294967295u32 { return Invalid(Input); }
+                );
+                let Fieldˉtype: u8 =
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+                        Input,
+                        Types,
+                        Typeˉindex,
+                        Field
+                    );
+                if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+                    Fieldˉtype
+                ) {
+                    if Fieldˉrecord == 4294967295u32 {
+                        return Invalid(Input);
+                    }
+                    Usedˉrecords = Bytesˉconcat(
+                        Usedˉrecords,
+                        Bytesˉfromˉu32ˉlittle(Fieldˉrecord)
+                    );
+                } else if Fieldˉrecord != 4294967295u32 {
+                    return Invalid(Input);
+                }
                 Field = Field + 1u32;
             }
             Depth = Depth - Fields;
@@ -1000,6 +1026,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Typeˉindex
             );
             Recordˉtypes = Rememberˉrecordˉtype(
+                Input,
                 Recordˉtypes,
                 Types,
                 Resultˉrecord,
@@ -1021,9 +1048,56 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Usedˉrecords,
                 Bytesˉfromˉu32ˉlittle(Usedˉrecord)
             );
+            let Sourceˉtype: u8 = Bytesˉreadˉu8(
+                Recordˉtypes,
+                Usedˉrecord
+            );
+            let Sourceˉtypeˉindex: u32 =
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+                    Sourceˉtype
+                );
+            let Fieldˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Codeˉoffset + Cursor + 1u32
+            );
+            if Fieldˉindex >=
+                Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+                    Types,
+                    Sourceˉtypeˉindex
+                ) { return Invalid(Input); }
+            let Selectedˉfieldˉtype: u8 =
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
+                    Input,
+                    Types,
+                    Sourceˉtypeˉindex,
+                    Fieldˉindex
+                );
             Depth = Depth - 1u32;
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
-            Stackˉrecords = Pushˉscalar(Stackˉrecords);
+            if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(
+                Selectedˉfieldˉtype
+            ) {
+                if Blockˉrecordˉvalues >= 256u32 { return Invalid(Input); }
+                Resultˉrecord = Scratchˉvalues;
+                Scratchˉvalues = Scratchˉvalues + 1u32;
+                Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;
+                if Blockˉrecordˉvalues > Recordˉvalues {
+                    Recordˉvalues = Blockˉrecordˉvalues;
+                }
+                Recordˉtypes = Rememberˉrecordˉtype(
+                    Input,
+                    Recordˉtypes,
+                    Types,
+                    Resultˉrecord,
+                    Selectedˉfieldˉtype
+                );
+                Stackˉrecords = Pushˉrecord(
+                    Stackˉrecords,
+                    Resultˉrecord
+                );
+            } else {
+                Stackˉrecords = Pushˉscalar(Stackˉrecords);
+            }
             Depth = Depth + 1u32;
             Handled = true;
         }
@@ -1080,6 +1154,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                     Recordˉvalues = Blockˉrecordˉvalues;
                 }
                 Recordˉtypes = Rememberˉrecordˉtype(
+                    Input,
                     Recordˉtypes,
                     Types,
                     Resultˉrecord,

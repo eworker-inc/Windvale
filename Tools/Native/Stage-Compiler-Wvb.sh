@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Segmented-Compiler-Toolset-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    'c3924d60eb1f61d98df8ef9b911996ad6dd237941670baf3c6e415f02857906c' \
+    '9d2ad636d88d2f89618e3017fed34be580b80fb43d54ded42cfe8fca42221c39' \
     'linux-x64-wvstage.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux segmented WVO producer artifact digest is invalid.' >&2
     exit 1

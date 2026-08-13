@@ -228,10 +228,12 @@ export fn Compilerˉnativeˉx64ˉbuildˉrecordˉinterference(
 }
 
 fn Recordˉwidth(
+    Input: bytes,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Type: u8
 ) -> u32 {
-    return Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+    return Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+        Input,
         Types,
         Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Type)
     );
@@ -252,7 +254,7 @@ fn Allocateˉoffsets(
         while Identifier < Count {
             if Bytesˉreadˉu8(Present, Identifier) == 1u8 {
                 let Type: u8 = Bytesˉreadˉu8(Typeˉbyˉidentifier, Identifier);
-                if Recordˉwidth(Types, Type) == Width {
+                if Recordˉwidth(Input, Types, Type) == Width {
                     var Candidate: u32 = 0u32;
                     var Searching: bool = true;
                     while Searching {
@@ -272,6 +274,7 @@ fn Allocateˉoffsets(
                                     Other
                                 ) {
                                     let Otherˉwidth: u32 = Recordˉwidth(
+                                        Input,
                                         Types,
                                         Bytesˉreadˉu8(Typeˉbyˉidentifier, Other)
                                     );
@@ -300,6 +303,7 @@ fn Allocateˉoffsets(
 }
 
 fn Requiredˉfields(
+    Input: bytes,
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Present: bytes,
     Typeˉbyˉidentifier: bytes,
@@ -314,6 +318,7 @@ fn Requiredˉfields(
                 Offsets,
                 Identifier * 4u32
             ) + Recordˉwidth(
+                Input,
                 Types,
                 Bytesˉreadˉu8(Typeˉbyˉidentifier, Identifier)
             );
@@ -343,6 +348,7 @@ export fn Compilerˉnativeˉx64ˉallocateˉrecordˉoffsets(
     return Compilerˉnativeˉx64ˉrecordˉallocation(
         Offsets,
         Requiredˉfields(
+            Input,
             Types,
             Present,
             Typeˉbyˉidentifier,

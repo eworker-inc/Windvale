@@ -11,24 +11,24 @@
       "name": "wvo-staging-producer-wvb",
       "path": "Wvo-Staging-Producer.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 462099,
-      "sha256": "15d4b8f5739d93ff1aaf4a051397d7e9b4bcb1f9415bbc2d38e5c2f0963c7ce0",
+      "bytes": 472421,
+      "sha256": "dbb5a5f9f5bf8a9ae221c5c61a2aa3c4b72c44682cf38a99948e0ec89bd9d6fc",
       "sourceProject": "Windvale-Native-X64-Lowering-Staging-Tool.wvproj"
     },
     {
       "name": "windows-x64-wvo-staging-producer",
       "path": "windows-x64-wvstage.exe",
       "target": "windows-x64-wvo-staging-producer-v1",
-      "bytes": 6649344,
-      "sha256": "75c385e8ca0d6719a1d61a92fa083d789fb633c1c759235f23af545db2e1bfc2",
+      "bytes": 6804480,
+      "sha256": "59ba8a96e75f2a3c257e3dada30c687d10ee7ecda4fd32ca0be35236ec2aa112",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {
       "name": "linux-x64-wvo-staging-producer",
       "path": "linux-x64-wvstage.elf",
       "target": "linux-x64-wvo-staging-producer-v1",
-      "bytes": 6647808,
-      "sha256": "c3924d60eb1f61d98df8ef9b911996ad6dd237941670baf3c6e415f02857906c",
+      "bytes": 6803456,
+      "sha256": "9d2ad636d88d2f89618e3017fed34be580b80fb43d54ded42cfe8fca42221c39",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {

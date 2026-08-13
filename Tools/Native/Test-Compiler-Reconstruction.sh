@@ -33,12 +33,12 @@ fail() {
     exit 1
 }
 
-verify_file "$candidate/Wvb/Windvale-Compiler.wvb" 927274 \
-    d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae || fail
-verify_file "$candidate/windows-x64/wvcompiler.exe" 27776000 \
-    0975f6181c78cd4b0007883d4b4ee9275b7cbb46bf904ce0cc79730d32308f7e || fail
-verify_file "$candidate/linux-x64/wvcompiler.elf" 27774976 \
-    93651adc36557aaa895627e8d8aa022b8765fc4f6cfaafbb5dc7c0a263287f67 || fail
+verify_file "$candidate/Wvb/Windvale-Compiler.wvb" 929711 \
+    79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 || fail
+verify_file "$candidate/windows-x64/wvcompiler.exe" 27904000 \
+    e24feb288cef6284ed0444e73e9317eb7e98df7eeb9be551ac9b13f6f896c455 || fail
+verify_file "$candidate/linux-x64/wvcompiler.elf" 27906048 \
+    e3d99aefb66b70d468d8e563db9786030a92baeb6c193bb2dcde5ea3b4d446b2 || fail
 pass 'candidate inventory'
 
 if "$script_directory/Construct-Compiler-Reconstruction.sh" >/dev/null 2>&1; then
@@ -65,15 +65,15 @@ trap cleanup EXIT
 
 "$script_directory/Construct-Compiler-Reconstruction.sh" "$test_directory" \
     >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" || fail
-grep -Fx 'native compiler reconstruction status=Complete compiler-bytes=927274 native-bytes=27744550 entry-offset=43146 chunks=7' \
+grep -Fx 'native compiler reconstruction status=Complete compiler-bytes=929711 native-bytes=27872534 entry-offset=43146 chunks=7' \
     "$test_directory/Construct.out" >/dev/null || fail
 [[ ! -s $test_directory/Construct.err ]] || fail
-verify_file "$test_directory/Wvb/Windvale-Compiler.wvb" 927274 \
-    d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae || fail
-verify_file "$test_directory/windows-x64/wvcompiler.exe" 27776000 \
-    0975f6181c78cd4b0007883d4b4ee9275b7cbb46bf904ce0cc79730d32308f7e || fail
-verify_file "$test_directory/linux-x64/wvcompiler.elf" 27774976 \
-    93651adc36557aaa895627e8d8aa022b8765fc4f6cfaafbb5dc7c0a263287f67 || fail
+verify_file "$test_directory/Wvb/Windvale-Compiler.wvb" 929711 \
+    79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91 || fail
+verify_file "$test_directory/windows-x64/wvcompiler.exe" 27904000 \
+    e24feb288cef6284ed0444e73e9317eb7e98df7eeb9be551ac9b13f6f896c455 || fail
+verify_file "$test_directory/linux-x64/wvcompiler.elf" 27906048 \
+    e3d99aefb66b70d468d8e563db9786030a92baeb6c193bb2dcde5ea3b4d446b2 || fail
 pass 'native paired reconstruction'
 
 echo "Tests: $tests, Passed: $passed, Failed: 0"

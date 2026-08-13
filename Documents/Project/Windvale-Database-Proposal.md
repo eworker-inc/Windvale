@@ -185,7 +185,8 @@ storage resource. A recoverable database writer is not ready.
 | General page and row collections | Not ready | Deterministic maps/page tables, nested or variable-size aggregates, exact allocation charging, and consuming database publication remain unimplemented. |
 | Durable superblock and recovery selection | Implemented candidate | [`WVDS 1`](../../Specifications/Windvale-Database-Durable-Superblock.md) defines two checksummed 256-byte slots, checked committed length, generation selection, conflict rejection, and unpublished-tail reporting. It is the publication target and performs no I/O. |
 | Durable page, compact log, and publication ordering | Implemented candidate | [`WVPG 1` and `WVCR 1`](../../Specifications/Windvale-Database-Durable-Commit.md) validate exact immutable pages and commit linkage; the pure planner enforces append, content-and-length flush, inactive-slot write, and content flush while mapping partial or indeterminate mutations to recovery. |
-| Capability-bearing mutation and crash recovery | Not ready | The random-access/flush contract and executable publication plan now exist, but the writer fence, I/O executor, crash injection, reopen/truncation policy, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
+| Portable storage publication and reopen policy | Implemented candidate | The [storage recovery contract](../../Specifications/Windvale-Database-Storage-Recovery.md) maps publication to bounded 64 KiB actions and maps fresh superblock evidence plus an unpublished tail to exact resize and content-and-length flush actions. Uncertain mutations require reopen and are never silently replayed. |
+| Capability-bearing mutation and crash recovery | Not ready | The random-access/flush contract and portable publication/reopen planners now exist, but the native ABI 22 provider, writer fence, I/O executor, crash injection, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Not ready | Structured tasks, channels, cancellation, synchronization, and cross-task ownership remain future contracts. |
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
 | Windvale OS database service | Not ready | Persistent storage, general launch/supervision, resource domains, service bindings, and filesystem providers remain future work. |
@@ -483,10 +484,11 @@ This proposal does not:
 
 ## Recommended next decision
 
-Decisions 0534 and 0535 now supply the dual superblock, immutable page
-envelope, compact commit record, and portable publication oracle. The next
-database decision should bind that oracle to one pre-opened
-`storage.random_access_v1` object, add a writer fence plus reopen/truncation
-policy, and inject failure at every write and flush boundary. Recovery must
-prove page-before-superblock ordering with real provider observations before
-any transaction queue, network listener, or SQL execution path is added.
+Decisions 0534 through 0536 now supply the dual superblock, immutable page
+envelope, compact commit record, portable publication actions, and exact
+reopen/tail-repair policy. The next database decision should add a native ABI
+and provider for one pre-opened `storage.random_access_v1` object, establish a
+writer fence, and inject process or power failure at every write, resize, and
+flush boundary. Recovery must prove page-before-superblock ordering and exact
+tail repair with real provider observations before any transaction queue,
+network listener, or SQL execution path is added.

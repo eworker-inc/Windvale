@@ -1,0 +1,6 @@
+windvale-project 2
+root "Libraries/Database/Durable-Superblock.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Sha256-Compression.wv"
+source "Foundation/Sha256-Streaming.wv"
+emit wvb

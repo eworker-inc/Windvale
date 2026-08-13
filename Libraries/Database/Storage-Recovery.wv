@@ -1,0 +1,254 @@
+module Windvaleˉdatabaseˉstorageˉrecovery profile portable;
+
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Storage;
+
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉstorageˉrecoveryˉstage {
+    Invalid = 0;
+    Resizeˉtail = 1;
+    Flushˉtail = 2;
+    Ready = 3;
+    Reopen = 4;
+    Stopped = 5;
+}
+
+export enum Databaseˉstorageˉrecoveryˉerror {
+    None = 0;
+    Invalidˉselection = 1;
+    Invalidˉgeneration = 2;
+    Invalidˉstorageˉlength = 3;
+    Invalidˉstate = 4;
+    Invalidˉobservation = 5;
+    Changedˉstorage = 6;
+    Providerˉrejected = 7;
+    Staleˉgeneration = 8;
+    Indeterminate = 9;
+}
+
+export record Databaseˉstorageˉrecovery {
+    Stage: Databaseˉstorageˉrecoveryˉstage;
+    Error: Databaseˉstorageˉrecoveryˉerror;
+    Providerˉerror: Storage.Databaseˉstorageˉproviderˉerror;
+    Selection: Superblock.Databaseˉsuperblockˉselection;
+    Storageˉgeneration: u64;
+    Storageˉlength: u64;
+}
+
+fn Databaseˉstorageˉrecoveryˉstate(
+    Source: Databaseˉstorageˉrecovery,
+    Stage: Databaseˉstorageˉrecoveryˉstage,
+    Error: Databaseˉstorageˉrecoveryˉerror,
+    Providerˉerror: Storage.Databaseˉstorageˉproviderˉerror,
+    Storageˉlength: u64
+) -> Databaseˉstorageˉrecovery {
+    return Databaseˉstorageˉrecovery(
+        Stage,
+        Error,
+        Providerˉerror,
+        Source.Selection,
+        Source.Storageˉgeneration,
+        Storageˉlength
+    );
+}
+
+export fn Databaseˉstorageˉrecoveryˉbegin(
+    Selection: Superblock.Databaseˉsuperblockˉselection,
+    Storageˉgeneration: u64,
+    Observedˉstorageˉlength: u64
+) -> Databaseˉstorageˉrecovery {
+    var Stage: Databaseˉstorageˉrecoveryˉstage =
+        Databaseˉstorageˉrecoveryˉstage.Resizeˉtail;
+    var Error: Databaseˉstorageˉrecoveryˉerror =
+        Databaseˉstorageˉrecoveryˉerror.None;
+    if Selection.Status !=
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid {
+        Stage = Databaseˉstorageˉrecoveryˉstage.Invalid;
+        Error = Databaseˉstorageˉrecoveryˉerror.Invalidˉselection;
+    } else if Storageˉgeneration == 0u64 {
+        Stage = Databaseˉstorageˉrecoveryˉstage.Invalid;
+        Error = Databaseˉstorageˉrecoveryˉerror.Invalidˉgeneration;
+    } else if Selection.Committedˉlength >
+            U64_MAXIMUM - Selection.Tailˉbytes ||
+        Observedˉstorageˉlength !=
+            Selection.Committedˉlength + Selection.Tailˉbytes {
+        Stage = Databaseˉstorageˉrecoveryˉstage.Invalid;
+        Error = Databaseˉstorageˉrecoveryˉerror.Invalidˉstorageˉlength;
+    } else if Selection.Tailˉbytes == 0u64 {
+        Stage = Databaseˉstorageˉrecoveryˉstage.Ready;
+    }
+    return Databaseˉstorageˉrecovery(
+        Stage,
+        Error,
+        Storage.Databaseˉstorageˉproviderˉerror.None,
+        Selection,
+        Storageˉgeneration,
+        Observedˉstorageˉlength
+    );
+}
+
+fn Databaseˉstorageˉrecoveryˉemptyˉaction()
+    -> Storage.Databaseˉstorageˉaction {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Storage.Databaseˉstorageˉaction(
+        Storage.Databaseˉstorageˉactionˉkind.None,
+        0u64,
+        0u64,
+        0u32,
+        Storage.Databaseˉstorageˉflushˉscope.None,
+        Bytesˉslice(Unit, 0u32, 0u32)
+    );
+}
+
+export fn Databaseˉstorageˉrecoveryˉaction(
+    State: Databaseˉstorageˉrecovery
+) -> Storage.Databaseˉstorageˉaction {
+    let Emptyˉaction: Storage.Databaseˉstorageˉaction =
+        Databaseˉstorageˉrecoveryˉemptyˉaction();
+    let Empty: bytes = Emptyˉaction.Value;
+    if State.Error != Databaseˉstorageˉrecoveryˉerror.None {
+        return Databaseˉstorageˉrecoveryˉemptyˉaction();
+    }
+    if State.Stage == Databaseˉstorageˉrecoveryˉstage.Resizeˉtail {
+        return Storage.Databaseˉstorageˉaction(
+            Storage.Databaseˉstorageˉactionˉkind.Resize,
+            State.Storageˉgeneration,
+            State.Selection.Committedˉlength,
+            0u32,
+            Storage.Databaseˉstorageˉflushˉscope.None,
+            Empty
+        );
+    }
+    if State.Stage == Databaseˉstorageˉrecoveryˉstage.Flushˉtail {
+        return Storage.Databaseˉstorageˉaction(
+            Storage.Databaseˉstorageˉactionˉkind.Flush,
+            State.Storageˉgeneration,
+            0u64,
+            0u32,
+            Storage.Databaseˉstorageˉflushˉscope.Contentˉandˉlength,
+            Empty
+        );
+    }
+    return Databaseˉstorageˉrecoveryˉemptyˉaction();
+}
+
+fn Databaseˉstorageˉrecoveryˉinvalidˉobservation(
+    State: Databaseˉstorageˉrecovery
+) -> Databaseˉstorageˉrecovery {
+    return Databaseˉstorageˉrecoveryˉstate(
+        State,
+        Databaseˉstorageˉrecoveryˉstage.Reopen,
+        Databaseˉstorageˉrecoveryˉerror.Invalidˉobservation,
+        Storage.Databaseˉstorageˉproviderˉerror.Invalidˉresponse,
+        State.Storageˉlength
+    );
+}
+
+export fn Databaseˉstorageˉrecoveryˉaccept(
+    State: Databaseˉstorageˉrecovery,
+    Observation: Storage.Databaseˉstorageˉobservation
+) -> Databaseˉstorageˉrecovery {
+    if State.Error != Databaseˉstorageˉrecoveryˉerror.None ||
+        State.Stage != Databaseˉstorageˉrecoveryˉstage.Resizeˉtail &&
+        State.Stage != Databaseˉstorageˉrecoveryˉstage.Flushˉtail {
+        return Databaseˉstorageˉrecoveryˉstate(
+            State,
+            Databaseˉstorageˉrecoveryˉstage.Invalid,
+            Databaseˉstorageˉrecoveryˉerror.Invalidˉstate,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            State.Storageˉlength
+        );
+    }
+    let Action: Storage.Databaseˉstorageˉaction =
+        Databaseˉstorageˉrecoveryˉaction(State);
+    if Observation.Position != Action.Position {
+        return Databaseˉstorageˉrecoveryˉinvalidˉobservation(State);
+    }
+    if Observation.Kind == Storage.Databaseˉstorageˉobservationˉkind.Stale {
+        if Observation.Providerˉerror !=
+                Storage.Databaseˉstorageˉproviderˉerror.Stale ||
+            Observation.Generation == 0u64 ||
+            Observation.Generation == State.Storageˉgeneration ||
+            Observation.Storageˉlength != 0u64 ||
+            Observation.Progress != 0u32 {
+            return Databaseˉstorageˉrecoveryˉinvalidˉobservation(State);
+        }
+        return Databaseˉstorageˉrecoveryˉstate(
+            State,
+            Databaseˉstorageˉrecoveryˉstage.Reopen,
+            Databaseˉstorageˉrecoveryˉerror.Staleˉgeneration,
+            Observation.Providerˉerror,
+            State.Storageˉlength
+        );
+    }
+    if Observation.Generation != State.Storageˉgeneration {
+        return Databaseˉstorageˉrecoveryˉinvalidˉobservation(State);
+    }
+    if Observation.Kind == Storage.Databaseˉstorageˉobservationˉkind.Rejected {
+        if Observation.Providerˉerror ==
+                Storage.Databaseˉstorageˉproviderˉerror.None ||
+            Observation.Providerˉerror ==
+                Storage.Databaseˉstorageˉproviderˉerror.Stale ||
+            Observation.Providerˉerror ==
+                Storage.Databaseˉstorageˉproviderˉerror.Invalidˉresponse ||
+            Observation.Storageˉlength != 0u64 ||
+            Observation.Progress != 0u32 {
+            return Databaseˉstorageˉrecoveryˉinvalidˉobservation(State);
+        }
+        return Databaseˉstorageˉrecoveryˉstate(
+            State,
+            Databaseˉstorageˉrecoveryˉstage.Stopped,
+            Databaseˉstorageˉrecoveryˉerror.Providerˉrejected,
+            Observation.Providerˉerror,
+            State.Storageˉlength
+        );
+    }
+    if Observation.Providerˉerror !=
+        Storage.Databaseˉstorageˉproviderˉerror.None {
+        return Databaseˉstorageˉrecoveryˉinvalidˉobservation(State);
+    }
+    if Observation.Kind ==
+        Storage.Databaseˉstorageˉobservationˉkind.Indeterminate {
+        if Observation.Storageˉlength != 0u64 ||
+            Observation.Progress != 0u32 {
+            return Databaseˉstorageˉrecoveryˉinvalidˉobservation(State);
+        }
+        return Databaseˉstorageˉrecoveryˉstate(
+            State,
+            Databaseˉstorageˉrecoveryˉstage.Reopen,
+            Databaseˉstorageˉrecoveryˉerror.Indeterminate,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            State.Storageˉlength
+        );
+    }
+    if Observation.Kind != Storage.Databaseˉstorageˉobservationˉkind.Completed ||
+        Observation.Progress != 0u32 {
+        return Databaseˉstorageˉrecoveryˉinvalidˉobservation(State);
+    }
+    if Observation.Storageˉlength != State.Selection.Committedˉlength {
+        return Databaseˉstorageˉrecoveryˉstate(
+            State,
+            Databaseˉstorageˉrecoveryˉstage.Reopen,
+            Databaseˉstorageˉrecoveryˉerror.Changedˉstorage,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            State.Storageˉlength
+        );
+    }
+    if State.Stage == Databaseˉstorageˉrecoveryˉstage.Resizeˉtail {
+        return Databaseˉstorageˉrecoveryˉstate(
+            State,
+            Databaseˉstorageˉrecoveryˉstage.Flushˉtail,
+            Databaseˉstorageˉrecoveryˉerror.None,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            Observation.Storageˉlength
+        );
+    }
+    return Databaseˉstorageˉrecoveryˉstate(
+        State,
+        Databaseˉstorageˉrecoveryˉstage.Ready,
+        Databaseˉstorageˉrecoveryˉerror.None,
+        Storage.Databaseˉstorageˉproviderˉerror.None,
+        Observation.Storageˉlength
+    );
+}

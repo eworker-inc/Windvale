@@ -521,7 +521,7 @@ Invoke-NativeWebAssembly $WvbCompilerControlVerifyWvb $WvbCompilerControlVerifyW
 Invoke-NativeWebAssembly $WvbCompilerControlSecondVerifyWvb $WvbCompilerControlSecondVerifyWasm
 Invoke-NativeWebAssembly $WvbScalarInterpreterWvb $WvbScalarInterpreterWasm
 
-node $EngineVerifier `
+node --no-liftoff $EngineVerifier `
     $SuccessWasm `
     $OverflowWasm `
     $StraightWasm `

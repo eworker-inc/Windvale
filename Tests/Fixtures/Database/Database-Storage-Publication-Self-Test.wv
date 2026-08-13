@@ -1,0 +1,226 @@
+module Databaseˉstorageˉpublicationˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉcommitˉpublication as Publication;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Storage;
+
+fn Testˉbytes(Length: u32) -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(90u8);
+    if Length == 0u32 { return Bytesˉslice(Unit, 0u32, 0u32); }
+    var Result: bytes = Unit;
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        var Addition: bytes = Result;
+        if Bytesˉlength(Addition) > Remaining {
+            Addition = Bytesˉslice(Addition, 0u32, Remaining);
+        }
+        Result = Bytesˉconcat(Result, Addition);
+    }
+    return Result;
+}
+
+fn Testˉpublication(Pages: bytes)
+    -> Publication.Databaseˉcommitˉpublication {
+    let Appended: u64 = U64ˉfromˉu32(Bytesˉlength(Pages));
+    return Publication.Databaseˉcommitˉpublication(
+        Publication.Databaseˉcommitˉpublicationˉerror.Valid,
+        Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages,
+        Superblock.Databaseˉsuperblockˉslot.Second,
+        512u64,
+        Appended,
+        Publication.Databaseˉcommitˉpublicationˉflushˉscope.None,
+        3u64,
+        7u64,
+        512u64,
+        4u64,
+        8u64,
+        512u64 + Appended
+    );
+}
+
+fn Testˉbegin(Pages: bytes) -> Storage.Databaseˉstorageˉpublication {
+    return Storage.Databaseˉstorageˉpublicationˉbegin(
+        Testˉpublication(Pages),
+        11u64,
+        0u64,
+        512u64,
+        Pages,
+        Testˉbytes(256u32)
+    );
+}
+
+fn Completed(
+    Generation: u64,
+    Length: u64,
+    Position: u64,
+    Progress: u32
+) -> Storage.Databaseˉstorageˉobservation {
+    return Storage.Databaseˉstorageˉobservation(
+        Storage.Databaseˉstorageˉobservationˉkind.Completed,
+        Storage.Databaseˉstorageˉproviderˉerror.None,
+        Generation,
+        Length,
+        Position,
+        Progress
+    );
+}
+
+fn Publicationˉhappy() -> i32 {
+    let Pages: bytes = Testˉbytes(65537u32);
+    var State: Storage.Databaseˉstorageˉpublication = Testˉbegin(Pages);
+    if State.Status != Storage.Databaseˉstorageˉpublicationˉstatus.Active ||
+        State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages ||
+        State.Publication.Targetˉgeneration != 4u64 {
+        return 1;
+    }
+    var Action: Storage.Databaseˉstorageˉaction =
+        Storage.Databaseˉstorageˉpublicationˉaction(State);
+    if Action.Kind != Storage.Databaseˉstorageˉactionˉkind.Write ||
+        Action.Position != 512u64 || Action.Length != 65536u32 ||
+        Bytesˉlength(Action.Value) != 65536u32 {
+        return 2;
+    }
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(11u64, 66048u64, 512u64, 65536u32)
+    );
+    Action = Storage.Databaseˉstorageˉpublicationˉaction(State);
+    if State.Pageˉcursor != 65536u32 ||
+        State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages ||
+        Action.Position != 66048u64 || Action.Length != 1u32 {
+        return 3;
+    }
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(11u64, 66049u64, 66048u64, 1u32)
+    );
+    Action = Storage.Databaseˉstorageˉpublicationˉaction(State);
+    if State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Flushˉpages ||
+        Action.Kind != Storage.Databaseˉstorageˉactionˉkind.Flush ||
+        Action.Flushˉscope !=
+            Storage.Databaseˉstorageˉflushˉscope.Contentˉandˉlength {
+        return 4;
+    }
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(11u64, 66049u64, 0u64, 0u32)
+    );
+    Action = Storage.Databaseˉstorageˉpublicationˉaction(State);
+    if State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉsuperblock ||
+        Action.Kind != Storage.Databaseˉstorageˉactionˉkind.Write ||
+        Action.Position != 256u64 || Action.Length != 256u32 {
+        return 5;
+    }
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(11u64, 66049u64, 256u64, 256u32)
+    );
+    Action = Storage.Databaseˉstorageˉpublicationˉaction(State);
+    if State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock ||
+        Action.Flushˉscope != Storage.Databaseˉstorageˉflushˉscope.Content {
+        return 6;
+    }
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(11u64, 66049u64, 0u64, 0u32)
+    );
+    if State.Status != Storage.Databaseˉstorageˉpublicationˉstatus.Committed ||
+        State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Committed ||
+        State.Publication.Targetˉsequence != 8u64 {
+        return 7;
+    }
+    return 0;
+}
+
+fn Publicationˉfaults() -> i32 {
+    let Pages: bytes = Testˉbytes(32u32);
+    var State: Storage.Databaseˉstorageˉpublication = Testˉbegin(Pages);
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Storage.Databaseˉstorageˉobservation(
+            Storage.Databaseˉstorageˉobservationˉkind.Rejected,
+            Storage.Databaseˉstorageˉproviderˉerror.Permissionˉdenied,
+            11u64,
+            0u64,
+            512u64,
+            0u32
+        )
+    );
+    if State.Status != Storage.Databaseˉstorageˉpublicationˉstatus.Aborted ||
+        State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Aborted {
+        return 10;
+    }
+    State = Testˉbegin(Pages);
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Storage.Databaseˉstorageˉobservation(
+            Storage.Databaseˉstorageˉobservationˉkind.Partial,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            11u64,
+            522u64,
+            512u64,
+            10u32
+        )
+    );
+    if State.Status != Storage.Databaseˉstorageˉpublicationˉstatus.Recover ||
+        State.Error != Storage.Databaseˉstorageˉpublicationˉerror.Indeterminate ||
+        State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Recover {
+        return 11;
+    }
+    State = Testˉbegin(Pages);
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Storage.Databaseˉstorageˉobservation(
+            Storage.Databaseˉstorageˉobservationˉkind.Stale,
+            Storage.Databaseˉstorageˉproviderˉerror.Stale,
+            12u64,
+            0u64,
+            512u64,
+            0u32
+        )
+    );
+    if State.Error !=
+            Storage.Databaseˉstorageˉpublicationˉerror.Staleˉgeneration ||
+        State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Recover {
+        return 12;
+    }
+    State = Testˉbegin(Pages);
+    State = Storage.Databaseˉstorageˉpublicationˉaccept(
+        State,
+        Completed(11u64, 543u64, 512u64, 32u32)
+    );
+    if State.Error != Storage.Databaseˉstorageˉpublicationˉerror.Changedˉstorage ||
+        State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Recover {
+        return 13;
+    }
+    State = Storage.Databaseˉstorageˉpublicationˉbegin(
+        Testˉpublication(Pages),
+        11u64,
+        1u64,
+        513u64,
+        Pages,
+        Testˉbytes(256u32)
+    );
+    if State.Error != Storage.Databaseˉstorageˉpublicationˉerror.Unpublishedˉtail ||
+        State.Publication.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Invalid {
+        return 14;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Happy: i32 = Publicationˉhappy();
+    if Happy != 0 { return Happy; }
+    return Publicationˉfaults();
+}

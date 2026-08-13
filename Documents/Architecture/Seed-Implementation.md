@@ -408,18 +408,18 @@ The current bytecode 1.11 golden modules are:
 - `Compilerˉsourceˉgraph`: `f29b234fc07bc4b1e0b01587b28cd6aa422dd61a68fa310b032b3fc3be5c8a68`
 - `Compilerˉsourceˉgraphˉdemo`: `5e8c4add278609866b952bd0a18dcb7e0e9b05ac04e7e7a5a6fec1e5655ad468`
 - `Compilerˉsourceˉgraphˉtool`: `1e0494b7e49f0d14a0508367dcb68d054b69faf501b3ef60ca6f14d48998f7f4`
-- `Compilerˉsourceˉsymbols`: `1541761fa2de9d74a993fa66e8213c7b81ee07d9c7a293efe6c4af96b7d81bc7`
-- `Compilerˉsourceˉsymbolsˉdemo`: `9dd24f3afd8864c444e23ea2228d5ea60fabca459b1cc47a537e0c77ea284da2`
-- `Compilerˉsourceˉsymbolsˉtool`: `b93cfd428589b94ed5b4579b087d942c34a6ddd738e7a0e3a24ff57becb62f46`
-- `Compilerˉsourceˉbindings`: `08783918419590b27de26a59356935339ba54699fbca0f9957059d6c2aba1aae`
-- `Compilerˉsourceˉbindingsˉdemo`: `b77949a3777f9cf8f7a43d071d2416524869e56e770c0e36c17f75298a7d4a10`
-- `Compilerˉsourceˉbindingsˉtool`: `7903b481865b68fe9be9b8587f41c89688d8da8ac3f558dfdccf956caa44ba55`
-- `Compilerˉsourceˉwir`: `efcdce0043ec7709105c2b4df59171401f886d8233f85c9ec394f649d03dab82`
-- `Compilerˉsourceˉwirˉdemo`: `8d5ed5bc9a79f5f152403198156a439fcb355be560c1c974b0c7c479df343ef4`
-- `Compilerˉsourceˉwirˉtool`: `bf2deea160d48b72bbb80f0ad2bb1e547e7e111506502724708db208bc8e8406`
-- `Compilerˉsourceˉwvb`: `c1734f76c06bc0deeb284144e6d8bd51b8be05c2f797055ce8ef7b54113be9c0`
-- `Compilerˉsourceˉwvbˉdemo`: `a9f07a6338baaab2519c1ce501221786aac444eaa7a827a168362feb681b8fe7`
-- `Compilerˉsourceˉwvbˉtool`: `d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`
+- `Compilerˉsourceˉsymbols`: `29cdfca436073bf628fa92a10f70915f14bdbcddffb659b25dec793722790e2b`
+- `Compilerˉsourceˉsymbolsˉdemo`: `b4aed72b84f8c23f3f391b663d1c87a27912bfff355e3f1def848f057b5e8e65`
+- `Compilerˉsourceˉsymbolsˉtool`: `01b96a2a6f2d6f1d0210e57020b928f4dad5b3ac1407fd0e0a04b875048f87e7`
+- `Compilerˉsourceˉbindings`: `cb150812dd5838ae427687f19eefcc77d07e01eaea5821f1b20a92b03c3b0dbc`
+- `Compilerˉsourceˉbindingsˉdemo`: `527e5588728764ec58580a969fef7a888473ac034074378f1de94014e8c27c59`
+- `Compilerˉsourceˉbindingsˉtool`: `d6371a386ea64f9836a5b1382142508a69e609c8315f620aef8f44d991b9890f`
+- `Compilerˉsourceˉwir`: `7a727928b77b3c8a969b410f7c6e5664915765f5a6f515d037e672ab391cfbd3`
+- `Compilerˉsourceˉwirˉdemo`: `106a75c39b994c46165813686fed21ac9ec65c10a1abaa353aec2acb4a4a6aaf`
+- `Compilerˉsourceˉwirˉtool`: `279f6b8a3dc68884e3700cd6b2995ec44ca0d910b2eadd6aff1d34eea3a1ab1d`
+- `Compilerˉsourceˉwvb`: `fcea785e80089643a7d807557e5e145f46d33411abfec98f9f570f246e693a87`
+- `Compilerˉsourceˉwvbˉdemo`: `432e485b25bee1e4372e4253a87152a4fc2e9846cd40f09952398d525ec2f501`
+- `Compilerˉsourceˉwvbˉtool`: `79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91`
 - `Wvˉdumpˉcore`: `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`
 - `Wvoˉobjectˉcore`: `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db`
 - `Wvaˉassemblerˉcore`: `1589f2750fa8fcf98ed1058814907f7e03eed0ac368467999118e25fb8195a7f`
@@ -447,6 +447,6 @@ Changes to those hashes require a reviewed bytecode/compiler-contract change rat
 
 ## Deliberate Seed limits
 
-The core Seed language/runtime contract does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, nested records, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, runtime module linkage, package discovery, or a general host executable-container writer. Later repository layers provide a bounded shared native backend, narrow capability-free Windows and Linux console containers, and an experimental OS probe, but those do not silently broaden Seed semantics. The qualified Windvale and Stage 0 linkers remain deliberately limited to verified WVO inputs and one raw flat-memory-image target; UEFI, Windows, and Linux packaging are separate target adapters. Decision 0302 supplies a digest-bound native flat-linker candidate, but the Stage 0 command remains the ordinary recovery route until grouped Windows/Linux qualification promotes the exact candidate commit.
+The core Seed language/runtime contract does not include optimization, a general heap contract, garbage collection, mutable arrays or record fields, cyclic record containment, flags enums, general text builders, floating point, catchable exceptions, threads, async work, raw pointers, foreign calls, file enumeration or mutation beyond bounded whole-file replacement, runtime module linkage, package discovery, or a general host executable-container writer. Later repository layers provide a bounded shared native backend, narrow capability-free Windows and Linux console containers, and an experimental OS probe, but those do not silently broaden Seed semantics. The qualified Windvale and Stage 0 linkers remain deliberately limited to verified WVO inputs and one raw flat-memory-image target; UEFI, Windows, and Linux packaging are separate target adapters. Decision 0302 supplies a digest-bound native flat-linker candidate, but the Stage 0 command remains the ordinary recovery route until grouped Windows/Linux qualification promotes the exact candidate commit.
 
 These are scope boundaries, not assertions that the current language model is final.

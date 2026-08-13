@@ -1,0 +1,30 @@
+module Nativeˉnestedˉrecordˉfields profile portable;
+
+record Nativeˉnestedˉcommit {
+    Generation: u64;
+    Sequence: u64;
+}
+
+record Nativeˉnestedˉstate {
+    Status: u32;
+    Commit: Nativeˉnestedˉcommit;
+}
+
+fn Nativeˉnestedˉstateˉmake(
+    Generation: u64,
+    Sequence: u64
+) -> Nativeˉnestedˉstate {
+    let Commit: Nativeˉnestedˉcommit =
+        Nativeˉnestedˉcommit(Generation, Sequence);
+    return Nativeˉnestedˉstate(1u32, Commit);
+}
+
+export fn Main() -> i32 {
+    let State: Nativeˉnestedˉstate =
+        Nativeˉnestedˉstateˉmake(41u64, 1u64);
+    if State.Status == 1u32 &&
+        State.Commit.Generation + State.Commit.Sequence == 42u64 {
+        return 0;
+    }
+    return 1;
+}

@@ -86,6 +86,11 @@ A constant read resolves its WVSD 1.1 entry, reevaluates the validated root decl
 
 A named record literal resolves one accessible record, lowers each field expression left to right in source order, rejects unknown, duplicate, missing, or mismatched fields, and places the resulting temporary IDs into declaration-order operands before emitting the existing `Recordˉcreate = 17` operation. No new WVIR operation or WVB opcode is introduced. Recursive `else if` lowers through the existing conditional blocks and terminators.
 
+A dotted local record path emits one `Recordˉfield = 18` operation per segment
+in source order. Each intermediate result must retain an exact record nominal
+shape; a scalar or enum before the final segment is an invalid field target.
+Unknown members are diagnosed against the owning intermediate nominal type.
+
 `&&` and `||` lower the left operand, branch to either a short-result block or a right-operand block, and join those Boolean values with `Boolˉphi`. The right expression therefore has no operation or runtime behavior on the skipped path. The operation records the short and right predecessor identities so independent validation does not infer phi ownership from layout alone.
 
 `break` closes the current block with a jump to the nearest enclosing loop's after-block. `continue` closes it with a jump to that loop's condition block. Nested loops replace those targets while their bodies are lowered. Compound assignment emits exactly one local load, lowers the right operand, applies the corresponding checked `i32` or `u32` arithmetic operation, and emits one store; an immutable, missing, mismatched, or unsupported target is rejected before publication.
@@ -100,9 +105,9 @@ source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporarie
 
 Current deterministic candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 821,168 bytes, SHA-256 `efcdce0043ec7709105c2b4df59171401f886d8233f85c9ec394f649d03dab82`.
-- `Source-Wir-Demo.wvb`: 826,031 bytes, SHA-256 `8d5ed5bc9a79f5f152403198156a439fcb355be560c1c974b0c7c479df343ef4`.
-- `Source-Wir-Tool.wvb`: 819,499 bytes, SHA-256 `bf2deea160d48b72bbb80f0ad2bb1e547e7e111506502724708db208bc8e8406`.
+- `Source-Wir-Core.wvb`: 823,640 bytes, SHA-256 `7a727928b77b3c8a969b410f7c6e5664915765f5a6f515d037e672ab391cfbd3`.
+- `Source-Wir-Demo.wvb`: 828,468 bytes, SHA-256 `106a75c39b994c46165813686fed21ac9ec65c10a1abaa353aec2acb4a4a6aaf`.
+- `Source-Wir-Tool.wvb`: 821,936 bytes, SHA-256 `279f6b8a3dc68884e3700cd6b2995ec44ca0d910b2eadd6aff1d34eea3a1ab1d`.
 
 These local identities include inferred-local verification, storage-free typed-constant lowering, named-record remapping, recursive `else if`, loop-control targets, compound assignment, and structurally verified short-circuit Boolean phi nodes; they require cross-host requalification before a new qualification claim.
 

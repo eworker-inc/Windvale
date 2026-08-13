@@ -1,0 +1,231 @@
+module Databaseˉstorageˉrecoveryˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+import Windvaleˉdatabaseˉstorageˉpublication as Storage;
+import Windvaleˉdatabaseˉstorageˉrecovery as Recovery;
+
+fn Selection(
+    Status: Superblock.Databaseˉsuperblockˉselectionˉstatus,
+    Tail: u64
+) -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Status,
+        Superblock.Databaseˉsuperblockˉslot.First,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉchecksum,
+        Tail,
+        10u64,
+        20u64,
+        7u64,
+        9u64,
+        0u64,
+        18446744073709551615u64,
+        1u64,
+        0u64,
+        512u64,
+        4096u32,
+        0u32
+    );
+}
+
+fn Observation(
+    Kind: Storage.Databaseˉstorageˉobservationˉkind,
+    Providerˉerror: Storage.Databaseˉstorageˉproviderˉerror,
+    Generation: u64,
+    Storageˉlength: u64,
+    Position: u64,
+    Progress: u32
+) -> Storage.Databaseˉstorageˉobservation {
+    return Storage.Databaseˉstorageˉobservation(
+        Kind,
+        Providerˉerror,
+        Generation,
+        Storageˉlength,
+        Position,
+        Progress
+    );
+}
+
+fn Recoveryˉhappy() -> i32 {
+    var State: Recovery.Databaseˉstorageˉrecovery =
+        Recovery.Databaseˉstorageˉrecoveryˉbegin(
+            Selection(
+                Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+                4096u64
+            ),
+            11u64,
+            4608u64
+        );
+    var Action: Storage.Databaseˉstorageˉaction =
+        Recovery.Databaseˉstorageˉrecoveryˉaction(State);
+    if State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Resizeˉtail ||
+        State.Selection.Generation != 7u64 ||
+        Action.Kind != Storage.Databaseˉstorageˉactionˉkind.Resize ||
+        Action.Generation != 11u64 || Action.Position != 512u64 {
+        return 1;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+        State,
+        Observation(
+            Storage.Databaseˉstorageˉobservationˉkind.Completed,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            11u64,
+            512u64,
+            512u64,
+            0u32
+        )
+    );
+    Action = Recovery.Databaseˉstorageˉrecoveryˉaction(State);
+    if State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Flushˉtail ||
+        State.Storageˉlength != 512u64 ||
+        Action.Kind != Storage.Databaseˉstorageˉactionˉkind.Flush ||
+        Action.Flushˉscope !=
+            Storage.Databaseˉstorageˉflushˉscope.Contentˉandˉlength {
+        return 2;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+        State,
+        Observation(
+            Storage.Databaseˉstorageˉobservationˉkind.Completed,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            11u64,
+            512u64,
+            0u64,
+            0u32
+        )
+    );
+    Action = Recovery.Databaseˉstorageˉrecoveryˉaction(State);
+    if State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Ready ||
+        State.Error != Recovery.Databaseˉstorageˉrecoveryˉerror.None ||
+        Action.Kind != Storage.Databaseˉstorageˉactionˉkind.None {
+        return 3;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉbegin(
+        Selection(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            0u64
+        ),
+        11u64,
+        512u64
+    );
+    if State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Ready {
+        return 4;
+    }
+    return 0;
+}
+
+fn Recoveryˉfaults() -> i32 {
+    let Tailˉselection: Superblock.Databaseˉsuperblockˉselection = Selection(
+        Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+        64u64
+    );
+    var State: Recovery.Databaseˉstorageˉrecovery =
+        Recovery.Databaseˉstorageˉrecoveryˉbegin(
+            Tailˉselection,
+            11u64,
+            576u64
+        );
+    State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+        State,
+        Observation(
+            Storage.Databaseˉstorageˉobservationˉkind.Indeterminate,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            11u64,
+            0u64,
+            512u64,
+            0u32
+        )
+    );
+    if State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Reopen ||
+        State.Error != Recovery.Databaseˉstorageˉrecoveryˉerror.Indeterminate {
+        return 10;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉbegin(
+        Tailˉselection,
+        11u64,
+        576u64
+    );
+    State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+        State,
+        Observation(
+            Storage.Databaseˉstorageˉobservationˉkind.Stale,
+            Storage.Databaseˉstorageˉproviderˉerror.Stale,
+            12u64,
+            0u64,
+            512u64,
+            0u32
+        )
+    );
+    if State.Error != Recovery.Databaseˉstorageˉrecoveryˉerror.Staleˉgeneration ||
+        State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Reopen {
+        return 11;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉbegin(
+        Tailˉselection,
+        11u64,
+        576u64
+    );
+    State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+        State,
+        Observation(
+            Storage.Databaseˉstorageˉobservationˉkind.Rejected,
+            Storage.Databaseˉstorageˉproviderˉerror.Permissionˉdenied,
+            11u64,
+            0u64,
+            512u64,
+            0u32
+        )
+    );
+    if State.Error != Recovery.Databaseˉstorageˉrecoveryˉerror.Providerˉrejected ||
+        State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Stopped {
+        return 12;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉbegin(
+        Tailˉselection,
+        11u64,
+        576u64
+    );
+    State = Recovery.Databaseˉstorageˉrecoveryˉaccept(
+        State,
+        Observation(
+            Storage.Databaseˉstorageˉobservationˉkind.Completed,
+            Storage.Databaseˉstorageˉproviderˉerror.None,
+            11u64,
+            513u64,
+            512u64,
+            0u32
+        )
+    );
+    if State.Error != Recovery.Databaseˉstorageˉrecoveryˉerror.Changedˉstorage ||
+        State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Reopen {
+        return 13;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉbegin(
+        Selection(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Noˉvalidˉsuperblock,
+            0u64
+        ),
+        11u64,
+        512u64
+    );
+    if State.Error != Recovery.Databaseˉstorageˉrecoveryˉerror.Invalidˉselection ||
+        State.Stage != Recovery.Databaseˉstorageˉrecoveryˉstage.Invalid {
+        return 14;
+    }
+    State = Recovery.Databaseˉstorageˉrecoveryˉbegin(
+        Tailˉselection,
+        11u64,
+        575u64
+    );
+    if State.Error !=
+            Recovery.Databaseˉstorageˉrecoveryˉerror.Invalidˉstorageˉlength {
+        return 15;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Happy: i32 = Recoveryˉhappy();
+    if Happy != 0 { return Happy; }
+    return Recoveryˉfaults();
+}

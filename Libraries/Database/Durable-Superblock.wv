@@ -1,0 +1,544 @@
+module Windvaleˉdatabaseˉdurableˉsuperblock profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+
+const SUPERBLOCK_MAGIC: u32 = 1396987479u32;
+const SUPERBLOCK_VERSION: u32 = 1u32;
+const SUPERBLOCK_BYTES: u32 = 256u32;
+const SUPERBLOCK_BODY_BYTES: u32 = 224u32;
+const SUPERBLOCK_REGION_BYTES: u64 = 512u64;
+const SUPERBLOCK_RESERVED_OFFSET: u32 = 96u32;
+const SUPERBLOCK_CHECKSUM_OFFSET: u32 = 224u32;
+const SUPERBLOCK_CHECKSUM_BYTES: u32 = 32u32;
+const SUPERBLOCK_NO_PAGE: u64 = 18446744073709551615u64;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉsuperblockˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉdeclaredˉsize = 4;
+    Unsupportedˉflags = 5;
+    Invalidˉreserved = 6;
+    Invalidˉchecksum = 7;
+    Invalidˉdatabaseˉidentity = 8;
+    Invalidˉgeneration = 9;
+    Invalidˉpageˉsize = 10;
+    Invalidˉpageˉcount = 11;
+    Invalidˉrootˉpage = 12;
+    Invalidˉrootˉdepth = 13;
+    Invalidˉcommitˉlog = 14;
+    Invalidˉretainedˉsequence = 15;
+    Arithmeticˉoverflow = 16;
+    Invalidˉcommittedˉlength = 17;
+    Outsideˉstorage = 18;
+}
+
+export record Databaseˉsuperblock {
+    Databaseˉidentityˉhigh: u64;
+    Databaseˉidentityˉlow: u64;
+    Generation: u64;
+    Committedˉsequence: u64;
+    Rootˉpage: u64;
+    Commitˉlogˉhead: u64;
+    Earliestˉretainedˉsequence: u64;
+    Pageˉcount: u64;
+    Committedˉlength: u64;
+    Pageˉsize: u32;
+    Rootˉdepth: u32;
+}
+
+record Databaseˉsuperblockˉlength {
+    Error: Databaseˉsuperblockˉerror;
+    Length: u64;
+}
+
+export record Databaseˉsuperblockˉresult {
+    Error: Databaseˉsuperblockˉerror;
+    Databaseˉidentityˉhigh: u64;
+    Databaseˉidentityˉlow: u64;
+    Generation: u64;
+    Committedˉsequence: u64;
+    Rootˉpage: u64;
+    Commitˉlogˉhead: u64;
+    Earliestˉretainedˉsequence: u64;
+    Pageˉcount: u64;
+    Committedˉlength: u64;
+    Pageˉsize: u32;
+    Rootˉdepth: u32;
+    Bytes: bytes;
+}
+
+export enum Databaseˉsuperblockˉselectionˉstatus {
+    Valid = 0;
+    Noˉvalidˉsuperblock = 1;
+    Conflictingˉdatabase = 2;
+    Conflictingˉgeneration = 3;
+}
+
+export enum Databaseˉsuperblockˉslot {
+    None = 0;
+    First = 1;
+    Second = 2;
+}
+
+export record Databaseˉsuperblockˉselection {
+    Status: Databaseˉsuperblockˉselectionˉstatus;
+    Slot: Databaseˉsuperblockˉslot;
+    Firstˉerror: Databaseˉsuperblockˉerror;
+    Secondˉerror: Databaseˉsuperblockˉerror;
+    Tailˉbytes: u64;
+    Databaseˉidentityˉhigh: u64;
+    Databaseˉidentityˉlow: u64;
+    Generation: u64;
+    Committedˉsequence: u64;
+    Rootˉpage: u64;
+    Commitˉlogˉhead: u64;
+    Earliestˉretainedˉsequence: u64;
+    Pageˉcount: u64;
+    Committedˉlength: u64;
+    Pageˉsize: u32;
+    Rootˉdepth: u32;
+}
+
+fn Databaseˉsuperblockˉemptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉsuperblockˉempty() -> Databaseˉsuperblock {
+    return Databaseˉsuperblock(
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        SUPERBLOCK_NO_PAGE,
+        0u64,
+        0u64,
+        0u64,
+        0u32,
+        0u32
+    );
+}
+
+fn Databaseˉsuperblockˉfailure(
+    Error: Databaseˉsuperblockˉerror
+) -> Databaseˉsuperblockˉresult {
+    return Databaseˉsuperblockˉresult(
+        Error,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        SUPERBLOCK_NO_PAGE,
+        0u64,
+        0u64,
+        0u64,
+        0u32,
+        0u32,
+        Databaseˉsuperblockˉemptyˉbytes()
+    );
+}
+
+fn Databaseˉsuperblockˉpageˉsizeˉisˉvalid(Pageˉsize: u32) -> bool {
+    return Pageˉsize == 4096u32 ||
+        Pageˉsize == 8192u32 ||
+        Pageˉsize == 16384u32 ||
+        Pageˉsize == 32768u32 ||
+        Pageˉsize == 65536u32;
+}
+
+fn Databaseˉsuperblockˉexpectedˉlength(
+    Pageˉsize: u32,
+    Pageˉcount: u64
+) -> Databaseˉsuperblockˉlength {
+    let Pageˉbytes: u64 = U64ˉfromˉu32(Pageˉsize);
+    if Pageˉcount > (U64_MAXIMUM - SUPERBLOCK_REGION_BYTES) / Pageˉbytes {
+        return Databaseˉsuperblockˉlength(
+            Databaseˉsuperblockˉerror.Arithmeticˉoverflow,
+            0u64
+        );
+    }
+    return Databaseˉsuperblockˉlength(
+        Databaseˉsuperblockˉerror.Valid,
+        SUPERBLOCK_REGION_BYTES + Pageˉcount * Pageˉbytes
+    );
+}
+
+fn Databaseˉsuperblockˉvalidate(
+    Value: Databaseˉsuperblock
+) -> Databaseˉsuperblockˉerror {
+    if Value.Databaseˉidentityˉhigh == 0u64 &&
+        Value.Databaseˉidentityˉlow == 0u64 {
+        return Databaseˉsuperblockˉerror.Invalidˉdatabaseˉidentity;
+    }
+    if Value.Generation == 0u64 {
+        return Databaseˉsuperblockˉerror.Invalidˉgeneration;
+    }
+    if !Databaseˉsuperblockˉpageˉsizeˉisˉvalid(Value.Pageˉsize) {
+        return Databaseˉsuperblockˉerror.Invalidˉpageˉsize;
+    }
+    if Value.Pageˉcount == 0u64 {
+        return Databaseˉsuperblockˉerror.Invalidˉpageˉcount;
+    }
+    if Value.Rootˉpage >= Value.Pageˉcount {
+        return Databaseˉsuperblockˉerror.Invalidˉrootˉpage;
+    }
+    if Value.Rootˉdepth == 0u32 || Value.Rootˉdepth > 128u32 {
+        return Databaseˉsuperblockˉerror.Invalidˉrootˉdepth;
+    }
+    if Value.Committedˉsequence == 0u64 {
+        if Value.Commitˉlogˉhead != SUPERBLOCK_NO_PAGE {
+            return Databaseˉsuperblockˉerror.Invalidˉcommitˉlog;
+        }
+        if Value.Earliestˉretainedˉsequence != 0u64 {
+            return Databaseˉsuperblockˉerror.Invalidˉretainedˉsequence;
+        }
+    } else {
+        if Value.Commitˉlogˉhead == SUPERBLOCK_NO_PAGE ||
+            Value.Commitˉlogˉhead >= Value.Pageˉcount {
+            return Databaseˉsuperblockˉerror.Invalidˉcommitˉlog;
+        }
+        if Value.Earliestˉretainedˉsequence == 0u64 ||
+            Value.Earliestˉretainedˉsequence > Value.Committedˉsequence {
+            return Databaseˉsuperblockˉerror.Invalidˉretainedˉsequence;
+        }
+    }
+
+    let Length: Databaseˉsuperblockˉlength =
+        Databaseˉsuperblockˉexpectedˉlength(
+            Value.Pageˉsize,
+            Value.Pageˉcount
+        );
+    if Length.Error != Databaseˉsuperblockˉerror.Valid {
+        return Length.Error;
+    }
+    if Length.Length != Value.Committedˉlength {
+        return Databaseˉsuperblockˉerror.Invalidˉcommittedˉlength;
+    }
+    return Databaseˉsuperblockˉerror.Valid;
+}
+
+fn Databaseˉsuperblockˉdigest(Value: bytes) -> bytes {
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Value);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Value);
+    return Sha256.Foundationˉsha256ˉfinishˉraw(State);
+}
+
+fn Databaseˉsuperblockˉbytesˉareˉequal(
+    First: bytes,
+    Second: bytes
+) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Databaseˉsuperblockˉencode(
+    Value: Databaseˉsuperblock
+) -> Databaseˉsuperblockˉresult {
+    let Error: Databaseˉsuperblockˉerror =
+        Databaseˉsuperblockˉvalidate(Value);
+    if Error != Databaseˉsuperblockˉerror.Valid {
+        return Databaseˉsuperblockˉfailure(Error);
+    }
+
+    var Body: bytes = Bytesˉfromˉu32ˉlittle(SUPERBLOCK_MAGIC);
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(SUPERBLOCK_VERSION));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(SUPERBLOCK_BYTES));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(0u32));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Databaseˉidentityˉhigh));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Databaseˉidentityˉlow));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Generation));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Committedˉsequence));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Rootˉpage));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Commitˉlogˉhead));
+    Body = Bytesˉconcat(
+        Body,
+        Bytesˉfromˉu64ˉlittle(Value.Earliestˉretainedˉsequence)
+    );
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Pageˉcount));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(Value.Committedˉlength));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(Value.Pageˉsize));
+    Body = Bytesˉconcat(Body, Bytesˉfromˉu32ˉlittle(Value.Rootˉdepth));
+    var Reservedˉindex: u32 = SUPERBLOCK_RESERVED_OFFSET;
+    while Reservedˉindex < SUPERBLOCK_BODY_BYTES {
+        Body = Bytesˉconcat(Body, Bytesˉfromˉu64ˉlittle(0u64));
+        Reservedˉindex = Reservedˉindex + 8u32;
+    }
+    let Digest: bytes = Databaseˉsuperblockˉdigest(Body);
+    if Bytesˉlength(Body) != SUPERBLOCK_BODY_BYTES ||
+        Bytesˉlength(Digest) != SUPERBLOCK_CHECKSUM_BYTES {
+        return Databaseˉsuperblockˉfailure(
+            Databaseˉsuperblockˉerror.Invalidˉchecksum
+        );
+    }
+    return Databaseˉsuperblockˉresult(
+        Databaseˉsuperblockˉerror.Valid,
+        Value.Databaseˉidentityˉhigh,
+        Value.Databaseˉidentityˉlow,
+        Value.Generation,
+        Value.Committedˉsequence,
+        Value.Rootˉpage,
+        Value.Commitˉlogˉhead,
+        Value.Earliestˉretainedˉsequence,
+        Value.Pageˉcount,
+        Value.Committedˉlength,
+        Value.Pageˉsize,
+        Value.Rootˉdepth,
+        Bytesˉconcat(Body, Digest)
+    );
+}
+
+export fn Databaseˉsuperblockˉdecode(
+    Input: bytes
+) -> Databaseˉsuperblockˉresult {
+    if Bytesˉlength(Input) != SUPERBLOCK_BYTES {
+        return Databaseˉsuperblockˉfailure(
+            Databaseˉsuperblockˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != SUPERBLOCK_MAGIC {
+        return Databaseˉsuperblockˉfailure(
+            Databaseˉsuperblockˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != SUPERBLOCK_VERSION {
+        return Databaseˉsuperblockˉfailure(
+            Databaseˉsuperblockˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != SUPERBLOCK_BYTES {
+        return Databaseˉsuperblockˉfailure(
+            Databaseˉsuperblockˉerror.Invalidˉdeclaredˉsize
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉsuperblockˉfailure(
+            Databaseˉsuperblockˉerror.Unsupportedˉflags
+        );
+    }
+    var Reservedˉindex: u32 = SUPERBLOCK_RESERVED_OFFSET;
+    while Reservedˉindex < SUPERBLOCK_CHECKSUM_OFFSET {
+        if Bytesˉreadˉu8(Input, Reservedˉindex) != 0u8 {
+            return Databaseˉsuperblockˉfailure(
+                Databaseˉsuperblockˉerror.Invalidˉreserved
+            );
+        }
+        Reservedˉindex = Reservedˉindex + 1u32;
+    }
+
+    let Body: bytes = Bytesˉslice(Input, 0u32, SUPERBLOCK_BODY_BYTES);
+    let Storedˉchecksum: bytes = Bytesˉslice(
+        Input,
+        SUPERBLOCK_CHECKSUM_OFFSET,
+        SUPERBLOCK_CHECKSUM_BYTES
+    );
+    if !Databaseˉsuperblockˉbytesˉareˉequal(
+        Storedˉchecksum,
+        Databaseˉsuperblockˉdigest(Body)
+    ) {
+        return Databaseˉsuperblockˉfailure(
+            Databaseˉsuperblockˉerror.Invalidˉchecksum
+        );
+    }
+
+    let Value: Databaseˉsuperblock = Databaseˉsuperblock(
+        Bytesˉreadˉu64ˉlittle(Input, 16u32),
+        Bytesˉreadˉu64ˉlittle(Input, 24u32),
+        Bytesˉreadˉu64ˉlittle(Input, 32u32),
+        Bytesˉreadˉu64ˉlittle(Input, 40u32),
+        Bytesˉreadˉu64ˉlittle(Input, 48u32),
+        Bytesˉreadˉu64ˉlittle(Input, 56u32),
+        Bytesˉreadˉu64ˉlittle(Input, 64u32),
+        Bytesˉreadˉu64ˉlittle(Input, 72u32),
+        Bytesˉreadˉu64ˉlittle(Input, 80u32),
+        Bytesˉreadˉu32ˉlittle(Input, 88u32),
+        Bytesˉreadˉu32ˉlittle(Input, 92u32)
+    );
+    let Error: Databaseˉsuperblockˉerror =
+        Databaseˉsuperblockˉvalidate(Value);
+    if Error != Databaseˉsuperblockˉerror.Valid {
+        return Databaseˉsuperblockˉfailure(Error);
+    }
+    return Databaseˉsuperblockˉresult(
+        Databaseˉsuperblockˉerror.Valid,
+        Value.Databaseˉidentityˉhigh,
+        Value.Databaseˉidentityˉlow,
+        Value.Generation,
+        Value.Committedˉsequence,
+        Value.Rootˉpage,
+        Value.Commitˉlogˉhead,
+        Value.Earliestˉretainedˉsequence,
+        Value.Pageˉcount,
+        Value.Committedˉlength,
+        Value.Pageˉsize,
+        Value.Rootˉdepth,
+        Input
+    );
+}
+
+fn Databaseˉsuperblockˉwithinˉstorage(
+    Result: Databaseˉsuperblockˉresult,
+    Storageˉlength: u64
+) -> Databaseˉsuperblockˉresult {
+    if Result.Error != Databaseˉsuperblockˉerror.Valid {
+        return Result;
+    }
+    if Result.Committedˉlength > Storageˉlength {
+        return Databaseˉsuperblockˉfailure(
+            Databaseˉsuperblockˉerror.Outsideˉstorage
+        );
+    }
+    return Result;
+}
+
+fn Databaseˉsuperblockˉselectionˉfailure(
+    Status: Databaseˉsuperblockˉselectionˉstatus,
+    Firstˉerror: Databaseˉsuperblockˉerror,
+    Secondˉerror: Databaseˉsuperblockˉerror
+) -> Databaseˉsuperblockˉselection {
+    return Databaseˉsuperblockˉselection(
+        Status,
+        Databaseˉsuperblockˉslot.None,
+        Firstˉerror,
+        Secondˉerror,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        SUPERBLOCK_NO_PAGE,
+        0u64,
+        0u64,
+        0u64,
+        0u32,
+        0u32
+    );
+}
+
+fn Databaseˉsuperblockˉselectionˉvalid(
+    Slot: Databaseˉsuperblockˉslot,
+    Firstˉerror: Databaseˉsuperblockˉerror,
+    Secondˉerror: Databaseˉsuperblockˉerror,
+    Storageˉlength: u64,
+    Value: Databaseˉsuperblockˉresult
+) -> Databaseˉsuperblockˉselection {
+    return Databaseˉsuperblockˉselection(
+        Databaseˉsuperblockˉselectionˉstatus.Valid,
+        Slot,
+        Firstˉerror,
+        Secondˉerror,
+        Storageˉlength - Value.Committedˉlength,
+        Value.Databaseˉidentityˉhigh,
+        Value.Databaseˉidentityˉlow,
+        Value.Generation,
+        Value.Committedˉsequence,
+        Value.Rootˉpage,
+        Value.Commitˉlogˉhead,
+        Value.Earliestˉretainedˉsequence,
+        Value.Pageˉcount,
+        Value.Committedˉlength,
+        Value.Pageˉsize,
+        Value.Rootˉdepth
+    );
+}
+
+export fn Databaseˉsuperblockˉselect(
+    Firstˉbytes: bytes,
+    Secondˉbytes: bytes,
+    Storageˉlength: u64
+) -> Databaseˉsuperblockˉselection {
+    let First: Databaseˉsuperblockˉresult =
+        Databaseˉsuperblockˉwithinˉstorage(
+            Databaseˉsuperblockˉdecode(Firstˉbytes),
+            Storageˉlength
+        );
+    let Second: Databaseˉsuperblockˉresult =
+        Databaseˉsuperblockˉwithinˉstorage(
+            Databaseˉsuperblockˉdecode(Secondˉbytes),
+            Storageˉlength
+        );
+    let Firstˉvalid: bool = First.Error == Databaseˉsuperblockˉerror.Valid;
+    let Secondˉvalid: bool = Second.Error == Databaseˉsuperblockˉerror.Valid;
+    if !Firstˉvalid && !Secondˉvalid {
+        return Databaseˉsuperblockˉselectionˉfailure(
+            Databaseˉsuperblockˉselectionˉstatus.Noˉvalidˉsuperblock,
+            First.Error,
+            Second.Error
+        );
+    }
+    if Firstˉvalid && !Secondˉvalid {
+        return Databaseˉsuperblockˉselectionˉvalid(
+            Databaseˉsuperblockˉslot.First,
+            First.Error,
+            Second.Error,
+            Storageˉlength,
+            First
+        );
+    }
+    if !Firstˉvalid && Secondˉvalid {
+        return Databaseˉsuperblockˉselectionˉvalid(
+            Databaseˉsuperblockˉslot.Second,
+            First.Error,
+            Second.Error,
+            Storageˉlength,
+            Second
+        );
+    }
+    if First.Databaseˉidentityˉhigh != Second.Databaseˉidentityˉhigh ||
+        First.Databaseˉidentityˉlow != Second.Databaseˉidentityˉlow {
+        return Databaseˉsuperblockˉselectionˉfailure(
+            Databaseˉsuperblockˉselectionˉstatus.Conflictingˉdatabase,
+            First.Error,
+            Second.Error
+        );
+    }
+    if First.Generation == Second.Generation {
+        if !Databaseˉsuperblockˉbytesˉareˉequal(
+            First.Bytes,
+            Second.Bytes
+        ) {
+            return Databaseˉsuperblockˉselectionˉfailure(
+                Databaseˉsuperblockˉselectionˉstatus.Conflictingˉgeneration,
+                First.Error,
+                Second.Error
+            );
+        }
+        return Databaseˉsuperblockˉselectionˉvalid(
+            Databaseˉsuperblockˉslot.First,
+            First.Error,
+            Second.Error,
+            Storageˉlength,
+            First
+        );
+    }
+    if First.Generation > Second.Generation {
+        return Databaseˉsuperblockˉselectionˉvalid(
+            Databaseˉsuperblockˉslot.First,
+            First.Error,
+            Second.Error,
+            Storageˉlength,
+            First
+        );
+    }
+    return Databaseˉsuperblockˉselectionˉvalid(
+        Databaseˉsuperblockˉslot.Second,
+        First.Error,
+        Second.Error,
+        Storageˉlength,
+        Second
+    );
+}

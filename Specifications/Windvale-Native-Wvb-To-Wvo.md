@@ -52,9 +52,9 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 435,970 | `5f6240f7202a56269661ca3281578340695404de5718fee88e47e1f5bb864ff5` |
-| Windows WVB-to-WVO tool | 6,206,976 | `0d58124ba389f93f352cf32f0eedc35773b2235ac0af8f5fee886a17001a9080` |
-| Linux WVB-to-WVO tool | 6,205,440 | `8debddbbeefc325ba15aae700c77921bb077460067222b9100618d1ec6bec76f` |
+| WVB-to-WVO tool WVB | 446,292 | `cd7f69d18d8a2bb34bb7e1db9577fcda6702c507af3cc77e34ed549c4cfb3a44` |
+| Windows WVB-to-WVO tool | 6,357,504 | `783d4b49a9ad0df0113a7ffe199ccb4dff208ef6a8edac716ef7a508fcf668ab` |
+| Linux WVB-to-WVO tool | 6,356,992 | `9c6bf30c8b344c6f2d195d059cc4fc69f36db15b25285121e028978dafc9f18b` |
 
 These pinned candidate applications include Decision 0419's parameterless
 `Main() -> bytes` contract and Decision 0423's compiler-scale admission work.

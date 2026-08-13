@@ -161,9 +161,9 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 The current deterministic compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 929,148 bytes, SHA-256 `c1734f76c06bc0deeb284144e6d8bd51b8be05c2f797055ce8ef7b54113be9c0`.
-- `Source-Wvb-Demo.wvb`: 928,844 bytes, SHA-256 `a9f07a6338baaab2519c1ce501221786aac444eaa7a827a168362feb681b8fe7`.
-- `Source-Wvb-Tool.wvb`: 927,274 bytes, SHA-256 `d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`.
+- `Source-Wvb-Core.wvb`: 931,585 bytes, SHA-256 `fcea785e80089643a7d807557e5e145f46d33411abfec98f9f570f246e693a87`.
+- `Source-Wvb-Demo.wvb`: 931,281 bytes, SHA-256 `432e485b25bee1e4372e4253a87152a4fc2e9846cd40f09952398d525ec2f501`.
+- `Source-Wvb-Tool.wvb`: 929,711 bytes, SHA-256 `79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91`.
 - `Source-Wvb-Memory-Adapter.wvb`: 924,951 bytes, SHA-256 `8c5f97a83d7dde34d42f411260986915679e47dcac89a486e0a3a8d94cb523a5`.
 
 Decision 0518 moved ordinary construction of the core, demo, and tool products to

@@ -150,7 +150,8 @@ $NativeCases = @(
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
-            'console-packager-source-reconstruction'
+            'console-packager-source-reconstruction',
+            'database-storage'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -380,7 +381,8 @@ $NativeCases = @(
             'console-packager-source-reconstruction',
             'native-u64-lowering',
             'database-superblock',
-            'database-durable-commit'
+            'database-durable-commit',
+            'database-storage'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1020,6 +1022,59 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj'
         )
         Suites = @('database-durable-commit', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'database storage publication and recovery owner'
+        Paths = @(
+            'Libraries/Database/Storage-Publication.wv',
+            'Libraries/Database/Storage-Recovery.wv',
+            'Tests/Fixtures/Database/Database-Storage-Publication-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Storage-Recovery-Self-Test.wv'
+        )
+        Suites = @('database-storage', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'database storage project owner'
+        Paths = @(
+            'Projects/Libraries/Windvale-Library-Database-Storage-Publication.wvproj',
+            'Projects/Libraries/Windvale-Library-Database-Storage-Recovery.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj'
+        )
+        Suites = @('database-storage', 'workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'nested record database owner'
+        Paths = @(
+            'Tests/Fixtures/Native-X64/Nested-Record-Fields.wv',
+            'Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'nested record language contract owner'
+        Paths = @(
+            'Specifications/Seed-Language.md',
+            'Specifications/Seed-Records.md',
+            'Specifications/Compiler-Source-Symbols.md',
+            'Specifications/Compiler-Source-Wir.md'
+        )
+        Suites = @(
+            'seed',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction',
+            'database-storage'
+        )
         Gaps = @()
         VerifyPlan = $false
     },

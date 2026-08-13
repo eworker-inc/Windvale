@@ -27,9 +27,10 @@ The seed compiler source is the qualified semantic-freeze tree at commit
 state for the last 921,900-byte convergence candidate. Decision 0491 repins the
 ordinary bootstrap contract to the current explicit inventory in
 `Projects/Examples/Windvale-Compiler.wvproj`. Decision 0529's native-only
-capability-composition refresh now produces exactly 927,274 bytes with
+capability-composition refresh, extended by Decision 0536's nested-record source
+support, now produces exactly 929,711 bytes with
 SHA-256
-`d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`.
+`79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91`.
 Decision 0494 retains the unqualified current WVB and paired reconstruction in
 `Artifacts/Native-Compiler-Reconstruction-Candidate`; exact checkpoint
 qualification remains pending on both hosts.
@@ -114,9 +115,9 @@ verify Stage 2, and require complete Stage 1/Stage 2 byte equality.
 source invocation shared by the seed and convergence routes. They do not discover
 files, parse the project, or weaken the project-manifest identity check.
 
-The coordinators are repinned to require identical 927,274-byte outputs at
+The coordinators are repinned to require identical 929,711-byte outputs at
 SHA-256
-`d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`.
+`79150787761c7d5e6013ddcb136e518d1388811c99551de443adb6f7a3a23d91`.
 That long Stage 1/Stage 2 route was not rerun for Decisions 0491 through 0494.
 The current toolset and paired compiler applications are now reconstructed, but
 Windows and Linux execution, exact equality, and promotion remain part of the
