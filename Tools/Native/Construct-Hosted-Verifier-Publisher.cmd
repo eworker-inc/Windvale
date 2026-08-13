@@ -206,11 +206,11 @@ for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
 call :verify_file "%PublisherWvb%" %PublisherWvbBytes% %PublisherWvbSha256% "publisher WVB"
 if errorlevel 1 exit /b 1
 if /I "%Role%"=="wvo-publisher" (
-    call :verify_file "%RawLowerer%" 5997056 4c2bf61306b81851424dbc02e7eb345ac34bcc9ffacd7727e8378c7b9e5dae07 "raw native WVB-to-WVO lowerer"
+    call :verify_file "%RawLowerer%" 6206976 0d58124ba389f93f352cf32f0eedc35773b2235ac0af8f5fee886a17001a9080 "raw native WVB-to-WVO lowerer"
     if errorlevel 1 exit /b 1
 )
 if /I "%Role%"=="console-application-publisher" (
-    call :verify_file "%RawLowerer%" 5997056 4c2bf61306b81851424dbc02e7eb345ac34bcc9ffacd7727e8378c7b9e5dae07 "raw native WVB-to-WVO lowerer"
+    call :verify_file "%RawLowerer%" 6206976 0d58124ba389f93f352cf32f0eedc35773b2235ac0af8f5fee886a17001a9080 "raw native WVB-to-WVO lowerer"
     if errorlevel 1 exit /b 1
 )
 call :verify_file "%ServiceRoot%\%ConsoleLeaf%" %ConsoleBytes% %ConsoleSha256% "console service"

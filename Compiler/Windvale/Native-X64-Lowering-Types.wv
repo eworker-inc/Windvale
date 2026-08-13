@@ -179,7 +179,7 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
     if U32ˉfromˉu8(Kind) >= 1u32 {
-        if U32ˉfromˉu8(Kind) <= 6u32 {
+        if U32ˉfromˉu8(Kind) <= 10u32 && Kind != 7u8 && Kind != 8u8 {
             return Compilerˉnativeˉx64ˉshape(true, Cursor + 1u32, Kind);
         }
     }
@@ -225,7 +225,9 @@ fn Skipˉuncheckedˉshape(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return 0u32; }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
     if U32ˉfromˉu8(Kind) >= 1u32 {
-        if U32ˉfromˉu8(Kind) <= 6u32 { return Cursor + 1u32; }
+        if U32ˉfromˉu8(Kind) <= 10u32 && Kind != 7u8 && Kind != 8u8 {
+            return Cursor + 1u32;
+        }
     }
     if Kind != 7u8 {
         if Kind != 8u8 { return 0u32; }
@@ -544,6 +546,11 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉscalarˉarithmetic(
         Emittedˉbytes = 32u32;
     }
     if Numeric >= 20u32 { Type = 5u8; }
+    if Numeric >= 134u32 && Numeric <= 136u32 {
+        Type = 10u8;
+        Emittedˉbytes = 43u32;
+        if Opcode == 136u8 { Emittedˉbytes = 46u32; }
+    }
     if Opcode == 22u8 { Emittedˉbytes = 41u32; }
     if Numeric >= 173u32 { Emittedˉbytes = 33u32; }
     if Opcode == 176u8 {

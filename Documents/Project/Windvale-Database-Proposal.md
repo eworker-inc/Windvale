@@ -1,7 +1,7 @@
 # Windvale Database proposal
 
 - Date: 2026-08-04
-- Status: Proposal for review; the Stage 1 reader, hosted snapshot consumer, checked storage geometry, and first pre-opened mutable storage-resource contract are implemented candidates, but no durable database format, writer, recovery protocol, service contract, or product name is accepted by this document
+- Status: Active implementation proposal; the bounded reader, hosted page seams, checked storage geometry, mutable storage-resource contract, `WVDS 1` superblock, `WVPG 1` page envelope, `WVCR 1` commit record, and portable publication planner are implemented candidates, but no tree-node format, capability-bearing writer, transaction engine, server contract, SQL grammar, or product name is accepted by this document
 - Working name: Windvale Database
 - Informed by: EWDB source, performance evidence, and operational experience
 - Builds from: [bounded owned values](../Decisions/0137-Bounded-Owned-Values-Before-Dynamic-Collections.md), [conditional 64-bit scalars](../Decisions/0138-Conditional-Wvb-1-7-64-Bit-Scalars.md), [language and capability direction](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md), [payload variants and recoverable results](../Decisions/0199-Nominal-Payload-Variants-And-Recoverable-Results.md), [bounded sequences and builders](../Decisions/0200-Bounded-Sequences-Affine-Builders-And-For.md), and the [language-design guide](../Architecture/Language-Design.md)
@@ -9,8 +9,11 @@
 ## Purpose
 
 This document explores adding a database to Windvale without claiming that the
-current language, runtime, native backend, libraries, or operating system can
-already support a durable database server. It identifies what should be learned
+current language, runtime, libraries, or operating system can already support a
+complete durable database server. The native backend now executes the durable
+superblock, physical-page, compact-log, and publication-planning core, but the
+capability-bearing writer and service boundaries remain absent.
+This proposal identifies what should be learned
 from EWDB, where a Windvale database would belong, which prerequisites are
 missing, and the smallest useful implementation sequence.
 
@@ -155,7 +158,7 @@ The first engine slice should exclude:
 - product-specific backup placement and operations;
 - graph declarations and traversal until the ordered-index core exists;
 - compatibility with obsolete development formats;
-- general SQL parsing or PostgreSQL wire compatibility; and
+- an unbounded SQL surface or PostgreSQL wire compatibility in the storage-kernel slice; and
 - a second implementation of behavior still owned only by the qualified EWDB
   runtime.
 
@@ -173,14 +176,16 @@ storage resource. A recoverable database writer is not ready.
 | Candidate work | Current readiness | Boundary |
 | --- | --- | --- |
 | Database architecture and format proposal | Ready | Documentation makes no execution claim. |
-| Checksums, endian codecs, key comparison, and page validation | Ready in bounded slices | Current scalars and immutable `bytes` can express the algorithms; canonical WVB 1.11 includes exact little-endian `u64` field codecs in the Stage 0 and Windvale-written compiler/reference-runtime path. |
+| Checksums, endian codecs, key comparison, and page validation | Ready in bounded slices | Current scalars and immutable `bytes` express the algorithms; canonical WVB 1.11 and native x64 now execute exact little-endian `u64` reads and writes. |
 | One read-only B+tree lookup over a small in-memory fixture | Implemented experiment | [`WVDB 1`](../../Specifications/Windvale-Database-Reader.md) validates at most 64 256-byte pages and returns a typed exact `u32` to `i32` result. It is not an accepted durable format. |
 | Rights-limited hosted snapshot lookup | Implemented candidate | [`Readˉonlyˉwvdb`](../../Libraries/Platform/Database/Read-Only-Wvdb.wv) composes the immutable directory provider and portable reader, assembles at most six chunks, and distinguishes provider failures from invalid database bytes. Independent Linux qualification remains pending. |
 | Checked page identity and byte-range arithmetic | Implemented candidate | [`Windvaleˉdatabaseˉstorageˉgeometry`](../../Specifications/Database-Storage-Geometry.md) computes zero-based `u64` page ranges, widens `u32` page size explicitly, and returns typed invalid-size, overflow, or outside-storage outcomes without I/O authority. |
 | Pre-opened mutable storage object | Implemented candidate | [`storage.random_access_v1`](../../Specifications/Random-Access-Storage-Capability.md) binds one object with `u64` generation/positions/length, exact 64 KiB reads, positioned writes, resize, typed mutation completion, and two flush classes. The reference launcher has one shared Windows/Linux file adapter; independent Linux and crash-recovery qualification remain pending. |
 | Bounded sequences and builders | Ready for narrow algorithms | WVB 1.11 implements bounded immutable sequences, affine builders, and deterministic `for`; nested collections, general maps, and database page ownership remain unavailable. |
 | General page and row collections | Not ready | Deterministic maps/page tables, nested or variable-size aggregates, exact allocation charging, and consuming database publication remain unimplemented. |
-| Durable page-file mutation and WAL recovery | Not ready | The first random-access and flush contract now exists, but internal commit publication, mutation identities, recovery, crash injection, WAL policy, and accepted page/superblock bytes remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
+| Durable superblock and recovery selection | Implemented candidate | [`WVDS 1`](../../Specifications/Windvale-Database-Durable-Superblock.md) defines two checksummed 256-byte slots, checked committed length, generation selection, conflict rejection, and unpublished-tail reporting. It is the publication target and performs no I/O. |
+| Durable page, compact log, and publication ordering | Implemented candidate | [`WVPG 1` and `WVCR 1`](../../Specifications/Windvale-Database-Durable-Commit.md) validate exact immutable pages and commit linkage; the pure planner enforces append, content-and-length flush, inactive-slot write, and content flush while mapping partial or indeterminate mutations to recovery. |
+| Capability-bearing mutation and crash recovery | Not ready | The random-access/flush contract and executable publication plan now exist, but the writer fence, I/O executor, crash injection, reopen/truncation policy, tree-node payloads, and reclamation remain unimplemented. Native path replacement and directory durability remain separate future interfaces. |
 | Concurrent readers, one hosted writer, and group commit | Not ready | Structured tasks, channels, cancellation, synchronization, and cross-task ownership remain future contracts. |
 | High-performance native database process | Not ready | General Windvale-owned native lowering, 64-bit backend coverage, memory management, optimization, and host services remain incomplete. |
 | Windvale OS database service | Not ready | Persistent storage, general launch/supervision, resource domains, service bindings, and filesystem providers remain future work. |
@@ -233,9 +238,12 @@ configured growth ceiling. Reusing a physical page requires an explicit
 generation/fencing rule; an equal numeric offset alone cannot prove that a
 cached or logged reference is current.
 
-This direction does not assign a durable magic or format version yet. Page
-layout, checksums, commit publication, WAL recovery, and malformed-input rules
-must be selected together before a persistent format is accepted.
+Decision 0534 assigns `WVDS 1` only to the dual-superblock record and its
+recovery selector. Decision 0535 separately assigns `WVPG 1` to the physical
+page envelope and `WVCR 1` to the compact commit record. None silently
+versions root, branch, leaf, row, index, transaction, or whole-database
+compatibility. Those formats still require their own validation, recovery,
+migration, and malformed-input rules.
 
 ## Required enabling contracts
 
@@ -371,6 +379,13 @@ Build a single-process, single-writer ordered key/value kernel with:
 - deterministic compaction or obsolete-page reclamation; and
 - fault injection before and after every durable transition.
 
+The first two Stage 3 sub-slices are implemented. `WVDS 1` supplies dual
+checksummed root records and deterministic recovery selection. `WVPG 1`,
+`WVCR 1`, and the pure publication planner add immutable page/log bytes and an
+executable durable-before-publish state sequence. They do not yet consume the
+storage capability, inject crashes, truncate an unpublished tail, encode tree
+nodes, or execute a transaction.
+
 This milestone needs no general query language, network protocol, or graph
 layer.
 
@@ -395,6 +410,9 @@ After the kernel is stable:
 
 - define a versioned typed client/service protocol independent from host wire
   encoding;
+- add a bounded SQL parser, binder, planner, and diagnostic surface for people;
+  SQL translates into the same typed query/transaction model and is not the
+  engine's internal API or service wire contract;
 - package a Windows/Linux hosted server application;
 - add inspection, backup, restore, repair, and qualification tools; and
 - bind the same engine and semantic capabilities into a supervised Windvale OS
@@ -431,11 +449,12 @@ measured against EWDB and relevant external comparators.
 This proposal does not:
 
 - accept the working product name or a repository layout;
-- select an on-disk format, query language, isolation level, or wire protocol;
+- select a complete on-disk format, SQL grammar, isolation level, or wire protocol;
 - promise EWDB data, API, query, or operational compatibility;
 - retire EWDB or move an existing authority;
 - claim PostgreSQL parity;
-- add SQL, replication, clustering, failover, or distributed consensus;
+- claim general SQL or PostgreSQL compatibility, replication, clustering,
+  failover, or distributed consensus;
 - make .NET, C, POSIX, Windows, or Linux behavior the database definition; or
 - authorize dead `.wv` source that cannot compile, verify, and execute in a
   bounded milestone.
@@ -455,6 +474,8 @@ This proposal does not:
   default?
 - Which transaction isolation and single-writer guarantees are required by the
   first real consumer?
+- Which bounded SQL subset best serves administrators and interactive users
+  without becoming the typed client protocol?
 - Which first benchmark workload and storage profile justify an initial numeric
   performance budget?
 - Which implemented slice is useful enough to package before network service
@@ -462,10 +483,10 @@ This proposal does not:
 
 ## Recommended next decision
 
-Decision 0212 now provides the smallest pre-opened hosted storage resource
-without changing the experimental database bytes. The next database decision
-should compose it with checked geometry and page validation for one exact
-`u64` page read, then specify a two-superblock internal commit/recovery protocol
-and crash-injection oracle before any general writer is added. That work should
-select new durable bytes from recovery requirements rather than silently
-promoting the 256-byte experimental page format.
+Decisions 0534 and 0535 now supply the dual superblock, immutable page
+envelope, compact commit record, and portable publication oracle. The next
+database decision should bind that oracle to one pre-opened
+`storage.random_access_v1` object, add a writer fence plus reopen/truncation
+policy, and inject failure at every write and flush boundary. Recovery must
+prove page-before-superblock ordering with real provider observations before
+any transaction queue, network listener, or SQL execution path is added.

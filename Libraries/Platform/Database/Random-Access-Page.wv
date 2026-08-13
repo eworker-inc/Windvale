@@ -1,0 +1,210 @@
+module Randomˉaccessˉdatabaseˉpage profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+import Windvaleˉdatabaseˉstorageˉpage as Page;
+
+capability storage.random_access_v1;
+
+export enum Databaseˉpageˉreadˉstatus {
+    Valid = 0;
+    Pageˉfailure = 1;
+    Storageˉfailure = 2;
+}
+
+export enum Databaseˉpageˉstorageˉerror {
+    None = 0;
+    Permissionˉdenied = 1;
+    Unavailable = 2;
+    Revoked = 3;
+    Stale = 4;
+    Peerˉexited = 5;
+    Outsideˉstorage = 6;
+    Unsupported = 7;
+    Invalidˉrequest = 8;
+    Invalidˉresponse = 9;
+}
+
+export enum Databaseˉpageˉerror {
+    None = 0;
+    Invalidˉpageˉsize = 1;
+    Transferˉlimit = 2;
+    Arithmeticˉoverflow = 3;
+    Outsideˉstorage = 4;
+    Staleˉgeneration = 5;
+    Changedˉstorage = 6;
+    Invalidˉposition = 7;
+    Invalidˉlength = 8;
+}
+
+export record Databaseˉpageˉreadˉresult {
+    Status: Databaseˉpageˉreadˉstatus;
+    Pageˉerror: Databaseˉpageˉerror;
+    Storageˉerror: Databaseˉpageˉstorageˉerror;
+    Generation: u64;
+    Storageˉlength: u64;
+    Pageˉidentifier: u64;
+    Offset: u64;
+    Endˉexclusive: u64;
+    Value: bytes;
+}
+
+fn Databaseˉpageˉerrorˉfromˉcore(
+    Error: Page.Databaseˉstorageˉpageˉerror
+) -> Databaseˉpageˉerror {
+    if Error == Page.Databaseˉstorageˉpageˉerror.Invalidˉpageˉsize {
+        return Databaseˉpageˉerror.Invalidˉpageˉsize;
+    }
+    if Error == Page.Databaseˉstorageˉpageˉerror.Transferˉlimit {
+        return Databaseˉpageˉerror.Transferˉlimit;
+    }
+    if Error == Page.Databaseˉstorageˉpageˉerror.Arithmeticˉoverflow {
+        return Databaseˉpageˉerror.Arithmeticˉoverflow;
+    }
+    if Error == Page.Databaseˉstorageˉpageˉerror.Outsideˉstorage {
+        return Databaseˉpageˉerror.Outsideˉstorage;
+    }
+    if Error == Page.Databaseˉstorageˉpageˉerror.Staleˉgeneration {
+        return Databaseˉpageˉerror.Staleˉgeneration;
+    }
+    if Error == Page.Databaseˉstorageˉpageˉerror.Changedˉstorage {
+        return Databaseˉpageˉerror.Changedˉstorage;
+    }
+    if Error == Page.Databaseˉstorageˉpageˉerror.Invalidˉposition {
+        return Databaseˉpageˉerror.Invalidˉposition;
+    }
+    if Error == Page.Databaseˉstorageˉpageˉerror.Invalidˉlength {
+        return Databaseˉpageˉerror.Invalidˉlength;
+    }
+    return Databaseˉpageˉerror.None;
+}
+
+fn Databaseˉpageˉstorageˉerrorˉfromˉstatus(
+    Status: Storage.Storageˉstatus
+) -> Databaseˉpageˉstorageˉerror {
+    if Status == Storage.Storageˉstatus.Permissionˉdenied {
+        return Databaseˉpageˉstorageˉerror.Permissionˉdenied;
+    }
+    if Status == Storage.Storageˉstatus.Unavailable {
+        return Databaseˉpageˉstorageˉerror.Unavailable;
+    }
+    if Status == Storage.Storageˉstatus.Revoked {
+        return Databaseˉpageˉstorageˉerror.Revoked;
+    }
+    if Status == Storage.Storageˉstatus.Stale {
+        return Databaseˉpageˉstorageˉerror.Stale;
+    }
+    if Status == Storage.Storageˉstatus.Peerˉexited {
+        return Databaseˉpageˉstorageˉerror.Peerˉexited;
+    }
+    if Status == Storage.Storageˉstatus.Outsideˉstorage {
+        return Databaseˉpageˉstorageˉerror.Outsideˉstorage;
+    }
+    if Status == Storage.Storageˉstatus.Unsupported {
+        return Databaseˉpageˉstorageˉerror.Unsupported;
+    }
+    if Status == Storage.Storageˉstatus.Invalidˉrequest {
+        return Databaseˉpageˉstorageˉerror.Invalidˉrequest;
+    }
+    return Databaseˉpageˉstorageˉerror.Invalidˉresponse;
+}
+
+fn Databaseˉpageˉstorageˉfailure(
+    Status: Storage.Storageˉstatus,
+    Pageˉidentifier: u64
+) -> Databaseˉpageˉreadˉresult {
+    return Databaseˉpageˉreadˉresult(
+        Databaseˉpageˉreadˉstatus.Storageˉfailure,
+        Databaseˉpageˉerror.None,
+        Databaseˉpageˉstorageˉerrorˉfromˉstatus(Status),
+        0u64,
+        0u64,
+        Pageˉidentifier,
+        0u64,
+        0u64,
+        Textˉtoˉutf8("")
+    );
+}
+
+fn Databaseˉpageˉfailure(
+    Plan: Page.Databaseˉstorageˉpageˉplan
+) -> Databaseˉpageˉreadˉresult {
+    return Databaseˉpageˉreadˉresult(
+        Databaseˉpageˉreadˉstatus.Pageˉfailure,
+        Databaseˉpageˉerrorˉfromˉcore(Plan.Error),
+        Databaseˉpageˉstorageˉerror.None,
+        Plan.Generation,
+        Plan.Storageˉlength,
+        Plan.Pageˉidentifier,
+        Plan.Offset,
+        Plan.Endˉexclusive,
+        Textˉtoˉutf8("")
+    );
+}
+
+export fn Databaseˉstorageˉreadˉpage(
+    Headerˉsize: u64,
+    Pageˉsize: u32,
+    Pageˉidentifier: u64
+) -> Databaseˉpageˉreadˉresult {
+    let Description: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Description.Status != Storage.Storageˉstatus.Valid {
+        return Databaseˉpageˉstorageˉfailure(
+            Description.Status,
+            Pageˉidentifier
+        );
+    }
+
+    let Plan: Page.Databaseˉstorageˉpageˉplan =
+        Page.Databaseˉstorageˉpageˉprepare(
+            Headerˉsize,
+            Pageˉsize,
+            Pageˉidentifier,
+            Description.Generation,
+            Description.Storageˉlength
+        );
+    if Plan.Error != Page.Databaseˉstorageˉpageˉerror.Valid {
+        return Databaseˉpageˉfailure(Plan);
+    }
+
+    let Read: Storage.Storageˉresult = Storage.Storageˉreadˉat(
+        Plan.Generation,
+        Plan.Offset,
+        Plan.Length
+    );
+    if Read.Status != Storage.Storageˉstatus.Valid {
+        return Databaseˉpageˉstorageˉfailure(Read.Status, Pageˉidentifier);
+    }
+
+    let Accepted: Page.Databaseˉstorageˉpage =
+        Page.Databaseˉstorageˉpageˉaccept(
+            Plan,
+            Read.Generation,
+            Read.Storageˉlength,
+            Read.Position,
+            Read.Value
+        );
+    if Accepted.Error != Page.Databaseˉstorageˉpageˉerror.Valid {
+        return Databaseˉpageˉreadˉresult(
+            Databaseˉpageˉreadˉstatus.Pageˉfailure,
+            Databaseˉpageˉerrorˉfromˉcore(Accepted.Error),
+            Databaseˉpageˉstorageˉerror.None,
+            Accepted.Generation,
+            Accepted.Storageˉlength,
+            Accepted.Pageˉidentifier,
+            Accepted.Offset,
+            Accepted.Endˉexclusive,
+            Textˉtoˉutf8("")
+        );
+    }
+    return Databaseˉpageˉreadˉresult(
+        Databaseˉpageˉreadˉstatus.Valid,
+        Databaseˉpageˉerror.None,
+        Databaseˉpageˉstorageˉerror.None,
+        Accepted.Generation,
+        Accepted.Storageˉlength,
+        Accepted.Pageˉidentifier,
+        Accepted.Offset,
+        Accepted.Endˉexclusive,
+        Accepted.Value
+    );
+}

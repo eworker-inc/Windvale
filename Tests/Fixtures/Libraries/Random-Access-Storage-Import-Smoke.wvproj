@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Libraries/Random-Access-Storage-Import-Smoke.wv"
+source "Libraries/Platform/Storage/Random-Access-Storage.wv"
+emit wvb

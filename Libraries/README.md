@@ -17,8 +17,8 @@ WVB linking remain later contracts.
 ## Layers
 
 - `Foundation/` contains deterministic capability-free algorithms and values. `Foundation/Resources/Resource-Store.wv` owns portable `WVRS 1` validation and lookup.
-- `Database/` contains reusable capability-free database algorithms. `Storage-Geometry.wv` owns checked zero-based `u64` page-range arithmetic, while `Wvdb-Reader.wv` remains the bounded experimental snapshot reader.
-- `Platform/` contains application-facing adapters over semantic capabilities. `Platform/Resources/Hosted-Resource-Store.wv` obtains store bytes through the bounded `file.read_bytes` bootstrap leaf and delegates format policy to Foundation. `Platform/Filesystem/Read-Only-Directory.wv` owns a typed 3 KiB read-at API over one pre-bound immutable directory instance. `Platform/Storage/Random-Access-Storage.wv` owns the typed mutable `u64` storage-resource boundary. `Platform/Database/Read-Only-Wvdb.wv` composes the immutable directory provider with the portable experimental WVDB reader while keeping storage and database failures distinct and owning the complete public failure vocabulary exposed by its facade.
+- `Database/` contains reusable capability-free database algorithms. `Storage-Geometry.wv` owns checked zero-based `u64` page-range arithmetic, `Storage-Page.wv` owns immutable read plans and exact response admission, `Durable-Superblock.wv` owns `WVDS 1` encoding and dual-slot recovery selection, `Durable-Page.wv` owns `WVPG 1` physical pages, `Durable-Commit-Record.wv` owns `WVCR 1` commit linkage, `Commit-Publication.wv` owns the durable-before-publish state machine, and `Wvdb-Reader.wv` remains the bounded experimental snapshot reader.
+- `Platform/` contains application-facing adapters over semantic capabilities. `Platform/Resources/Hosted-Resource-Store.wv` obtains store bytes through the bounded `file.read_bytes` bootstrap leaf and delegates format policy to Foundation. `Platform/Filesystem/Read-Only-Directory.wv` owns a typed 3 KiB read-at API over one pre-bound immutable directory instance. `Platform/Storage/Random-Access-Storage.wv` owns the typed mutable `u64` storage-resource boundary. `Platform/Database/Random-Access-Page.wv` composes that boundary with the portable page core while preserving distinct page and provider failures. `Platform/Database/Native-Hosted-Snapshot-Page.wv` is the narrow native transition provider: it obtains one bounded immutable host snapshot through `file.read_bytes`, then admits one checked page through the same portable core. `Platform/Database/Read-Only-Wvdb.wv` composes the immutable directory provider with the portable experimental WVDB reader while keeping storage and database failures distinct and owning the complete public failure vocabulary exposed by its facade.
 - `Protocol/` is reserved until a reusable bounded provider/service wire contract moves here from a concrete implementation.
 - `System/` is reserved until a reusable privileged kernel, driver, or machine API has an implemented owner and contract.
 
@@ -33,16 +33,24 @@ native build inputs for the current reusable modules:
 | --- | --- | --- |
 | `Windvale-Library-Resource-Store` | `Resourceˉstore` | portable / none |
 | `Windvale-Library-Database-Storage-Geometry` | `Windvaleˉdatabaseˉstorageˉgeometry` | portable / none |
+| `Windvale-Library-Database-Storage-Page` | `Windvaleˉdatabaseˉstorageˉpage` | portable / none |
+| `Windvale-Library-Database-Durable-Superblock` | `Windvaleˉdatabaseˉdurableˉsuperblock` | portable / none |
+| `Windvale-Library-Database-Durable-Page` | `Windvaleˉdatabaseˉdurableˉpage` | portable / none |
+| `Windvale-Library-Database-Durable-Commit-Record` | `Windvaleˉdatabaseˉdurableˉcommitˉrecord` | portable / none |
+| `Windvale-Library-Database-Commit-Publication` | `Windvaleˉdatabaseˉcommitˉpublication` | portable / none |
 | `Windvale-Library-Wvdb-Reader` | `Windvaleˉdatabaseˉreader` | portable / none |
 | `Windvale-Library-Hosted-Resource-Store` | `Hostedˉresourceˉstore` | hosted / `file.read_bytes` |
 | `Windvale-Library-Read-Only-Directory` | `Readˉonlyˉdirectory` | hosted / `filesystem.directory_read_v1` |
 | `Windvale-Library-Random-Access-Storage` | `Randomˉaccessˉstorage` | hosted / `storage.random_access_v1` |
+| `Windvale-Library-Random-Access-Database-Page` | `Randomˉaccessˉdatabaseˉpage` | hosted / `storage.random_access_v1` |
+| `Windvale-Library-Native-Hosted-Snapshot-Page` | `Nativeˉhostedˉsnapshotˉpage` | hosted / `file.read_bytes` |
 | `Windvale-Library-Read-Only-Wvdb` | `Readˉonlyˉwvdb` | hosted / `filesystem.directory_read_v1` |
 
-`Tools/Native/Test-Libraries` builds all seven projects, builds one positive
-capability-bearing importer and two database conformance applications, and rejects
-missing root approval and incompatible profile imports. Its completion contract is
-12 cases. The suite uses only the native Project 2 build and publication path.
+`Tools/Native/Test-Libraries` builds all fourteen reusable projects, three
+positive capability-bearing importers, and seven database conformance
+applications, then rejects missing root approval and incompatible profile
+imports. Its completion contract is 26 cases. The suite uses only the native
+Project 2 build and publication path.
 
 ## Module names and local namespaces
 
@@ -105,7 +113,24 @@ Package resources, immutable `WVRS 1` images, mutable application storage, and n
 
 The hosted `Readˉonlyˉwvdb` adapter remains a bounded consumer of the immutable
 directory contract. Its 16,416-byte ceiling comes from the experimental reader.
-The new mutable storage capability is deliberately format-neutral; the next
-WVDB adapter must compose it with checked page geometry and validation.
-Internal commit publication, recovery, mutation identities, page ownership,
-transactions, and concurrency remain database-layer work.
+The mutable storage capability remains format-neutral. The checked
+[`Databaseˉstorageˉpage`](../Specifications/Windvale-Database-Storage-Page.md)
+core and hosted `Randomˉaccessˉdatabaseˉpage` facade now compose it into one
+exact page read while preserving generation, stable length, and typed failure
+invariants. Native x64 now lowers the required checked `u64` subset. The
+transition `Nativeˉhostedˉsnapshotˉpage` provider executes the same core over
+the existing bounded Windows/Linux native file-input leaves, with the resource
+name supplied by the host-tool argument binding. It is an immutable snapshot
+bridge, not the eventual pre-opened `storage.random_access_v1` native service.
+Page-format validation, a widened native service table, internal commit
+publication, recovery, mutation identities, page ownership, transactions, and
+concurrency remain database-layer work.
+
+The portable [`Databaseˉsuperblock`](../Specifications/Windvale-Database-Durable-Superblock.md)
+contract now fixes the first two-slot durable publication target and recovery
+selector. The connected [durable commit contract](../Specifications/Windvale-Database-Durable-Commit.md)
+adds `WVPG 1` page bytes, `WVCR 1` commit linkage, and the exact append/flush/
+inactive-slot/flush planner. These portable modules have no I/O authority and
+do not claim a capability-bearing writer. The focused `database-superblock`
+and `database-durable-commit` owners execute 13 and 12 bounded cases and pin
+deterministic WVB, WVO, linked-image, and Windows/Linux hosted artifacts.

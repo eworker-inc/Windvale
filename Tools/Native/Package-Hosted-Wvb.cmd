@@ -35,6 +35,7 @@ if not defined Target set "Target=windows"
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Toolset=%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Candidate"
+set "EnumRequestCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Enum-Request-Candidate"
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 if /I "%Target%"=="windows" goto :windows_target
 if /I "%Target%"=="linux" goto :linux_target
@@ -87,6 +88,12 @@ for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
+call :verify_file "%EnumRequestCandidate%\Wvb\wvhostenumrequest.wvb" 31791 a4ecd63b37f004310e458d41361a694dbaac47ffb056b949f5f1352f7d6ff64c "hosted enum-request WVB"
+if errorlevel 1 exit /b 1
+call :verify_file "%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" 343040 da15dcbab81b206a8bc47b23188b5c4e19da6219523483df8754f3dfe7340cde "hosted enum-request Windows application"
+if errorlevel 1 exit /b 1
+call :verify_file "%EnumRequestCandidate%\linux-x64\wvhostenumrequest.elf" 344064 f11fa229adfd1ac4c0ca97c77e376ef426d0f59ed5c66958c36c27fad0337cfd "hosted enum-request Linux application"
+if errorlevel 1 exit /b 1
 call :verify_file "%ConsoleService%" %ConsoleServiceBytes% %ConsoleServiceSha256% "console service"
 if errorlevel 1 exit /b 1
 call :verify_file "%ServiceRoot%\Native-X64-Argument-Count-Service.bin" 5 2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829 "argument-count service"
@@ -143,7 +150,7 @@ if "%ImageMode%"=="1" (
     "%ServiceRoot%\Native-X64-U32-Format-Service.bin" ^
     "%FileOutputService%"
 if errorlevel 1 goto :cleanup
-"%Toolset%\windows-x64\wvhostenumrequest.exe" "%Input%" "%TemporaryDirectory%\Enum.wveq"
+"%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" "%Input%" "%TemporaryDirectory%\Enum.wveq"
 if errorlevel 1 goto :cleanup
 set /a EnumSourceIndex=FragmentCount+6
 "%Toolset%\windows-x64\wvhostenumservice.exe" "%TemporaryDirectory%\Enum.wveq" "%BundleSources%.chunk-%EnumSourceIndex%"

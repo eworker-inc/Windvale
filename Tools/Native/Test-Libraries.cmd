@@ -18,10 +18,17 @@ set "Result=1"
 for %%P in (
     Windvale-Library-Resource-Store
     Windvale-Library-Database-Storage-Geometry
+    Windvale-Library-Database-Storage-Page
+    Windvale-Library-Database-Durable-Superblock
+    Windvale-Library-Database-Durable-Page
+    Windvale-Library-Database-Durable-Commit-Record
+    Windvale-Library-Database-Commit-Publication
     Windvale-Library-Wvdb-Reader
     Windvale-Library-Hosted-Resource-Store
     Windvale-Library-Read-Only-Directory
     Windvale-Library-Random-Access-Storage
+    Windvale-Library-Random-Access-Database-Page
+    Windvale-Library-Native-Hosted-Snapshot-Page
     Windvale-Library-Read-Only-Wvdb
 ) do (
     call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
@@ -35,8 +42,23 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%TemporaryDirectory%\Directory-Import-Smoke.wvb" >nul
 if errorlevel 1 goto :cleanup
 
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Tests\Fixtures\Libraries\Random-Access-Page-Import-Smoke.wvproj" ^
+    "%TemporaryDirectory%\Random-Access-Page-Import-Smoke.wvb" >nul
+if errorlevel 1 goto :cleanup
+
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Tests\Fixtures\Libraries\Random-Access-Storage-Import-Smoke.wvproj" ^
+    "%TemporaryDirectory%\Random-Access-Storage-Import-Smoke.wvb" >nul
+if errorlevel 1 goto :cleanup
+
 for %%T in (
     Windvale-Native-Test-Database-Geometry
+    Windvale-Native-Test-Database-Storage-Page
+    Windvale-Native-Test-Database-Storage-Page-Accept
+    Windvale-Native-Test-Database-Durable-Superblock
+    Windvale-Native-Test-Database-Durable-Commit
+    Windvale-Native-Test-Native-Hosted-Snapshot-Page
     Windvale-Native-Test-Database-Reader
 ) do (
     call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
@@ -56,7 +78,7 @@ for %%N in (
     if exist "%TemporaryDirectory%\%%N.wvb" goto :cleanup
 )
 
-echo native libraries status=Passed projects=8 conformance-builds=2 negative=2 cases=12
+echo native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26
 set "Result=0"
 
 :cleanup

@@ -1,0 +1,46 @@
+module Nativeˉhostedˉsnapshotˉpage profile hosted;
+
+import Windvaleˉdatabaseˉstorageˉpage as Page;
+
+capability file.read_bytes;
+
+const SNAPSHOT_GENERATION: u64 = 1u64;
+
+export fn Nativeˉhostedˉsnapshotˉreadˉpage(
+    Resource: text,
+    Headerˉsize: u32,
+    Pageˉsize: u32,
+    Pageˉidentifier: u32
+) -> Page.Databaseˉstorageˉpage {
+    let Snapshot: bytes = file.read_bytes(Resource);
+    let Storageˉlength: u64 = U64ˉfromˉu32(Bytesˉlength(Snapshot));
+    let Plan: Page.Databaseˉstorageˉpageˉplan =
+        Page.Databaseˉstorageˉpageˉprepare(
+            U64ˉfromˉu32(Headerˉsize),
+            Pageˉsize,
+            U64ˉfromˉu32(Pageˉidentifier),
+            SNAPSHOT_GENERATION,
+            Storageˉlength
+        );
+    if Plan.Error != Page.Databaseˉstorageˉpageˉerror.Valid {
+        return Page.Databaseˉstorageˉpageˉaccept(
+            Plan,
+            SNAPSHOT_GENERATION,
+            Storageˉlength,
+            Plan.Offset,
+            Textˉtoˉutf8("")
+        );
+    }
+
+    // A valid plan fits inside the bounded native file snapshot, so these
+    // narrow operations cannot overflow even though source arithmetic traps.
+    let Offset: u32 = Headerˉsize + Pageˉidentifier * Pageˉsize;
+    let Value: bytes = Bytesˉslice(Snapshot, Offset, Pageˉsize);
+    return Page.Databaseˉstorageˉpageˉaccept(
+        Plan,
+        SNAPSHOT_GENERATION,
+        Storageˉlength,
+        Plan.Offset,
+        Value
+    );
+}

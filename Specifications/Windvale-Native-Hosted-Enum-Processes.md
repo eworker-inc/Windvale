@@ -14,7 +14,10 @@ wvhostenumrequest <module.wvb> <request.wveq>
 wvhostenumservice <request.wveq> <service.bin>
 ```
 
-`wvhostenumrequest` is sequenced after the full native WVB verifier. It
+`wvhostenumrequest` is sequenced after the full native WVB verifier. Its current
+digest-bound candidate uses the native x64 type reader that admits `u64` record
+fields; those fields still receive zero-member directory entries and do not
+change serialized enum metadata. It
 revalidates the WVB 1.11 envelope with seven exact sections and a hosted-only
 nominal directory reader; it is not a replacement for whole-module semantic
 verification and does not widen the accepted-subset native lowerer. It supports
@@ -41,9 +44,9 @@ read/write, and process argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Enum-request WVB | 30,759 | `682c2bf76569ba0ec6c58dfd3ade64d7582a9d22c397c55a22e1785fe8521fb6` |
-| Windows enum-request application | 334,336 | `383b1c07ba74b74f245158e493985a95d99bee84f5f2cf6b51688bfa6f315682` |
-| Linux enum-request application | 335,872 | `b428ca6305422bcd168029d451840db513543b7a3d578a9f989d8f6f9635fef0` |
+| Enum-request WVB | 31,791 | `a4ecd63b37f004310e458d41361a694dbaac47ffb056b949f5f1352f7d6ff64c` |
+| Windows enum-request application | 343,040 | `da15dcbab81b206a8bc47b23188b5c4e19da6219523483df8754f3dfe7340cde` |
+| Linux enum-request application | 344,064 | `f11fa229adfd1ac4c0ca97c77e376ef426d0f59ed5c66958c36c27fad0337cfd` |
 | Enum-service WVB | 18,883 | `6e44a4c0f4d61ea9aa3d72442baba60080896c0cf7d3536b353fcd61ff48ec07` |
 | Enum-service WVO | 167,750 | `e00168aac4422a6a38d6c7c202d8fc2377b7770c4f3fc144d1ce207271f978bb` |
 | Enum-service raw fragment | 166,682 | `38ea83b0d417bdc57cd0c5b3bd29f8d9cb37a9575767401486fde6da2ded4cea` |
@@ -53,6 +56,7 @@ read/write, and process argument/count capabilities.
 The focused contract uses the native front door as the module producer, the
 digest-bound native WVB-to-WVO candidate as the object producer, and the
 digest-bound native linker at base zero as the raw-fragment producer. Each
-result must agree byte for byte with the frozen C# differential oracle. Package
-wiring remains deletion-bound Stage 0 evidence until ordered native
-orchestration and the final retirement gate qualify.
+result is exact and digest-bound. `Package-Hosted-Wvb` consumes the separate
+three-artifact enum-request candidate while retaining the remaining hosted
+container toolset inventory unchanged. Independent Linux execution and the
+grouped qualification gate remain pending.

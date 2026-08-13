@@ -1,0 +1,185 @@
+module Windvaleˉdatabaseˉstorageˉpage profile portable;
+
+const MAXIMUM_PAGE_TRANSFER: u32 = 65536u32;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉstorageˉpageˉerror {
+    Valid = 0;
+    Invalidˉpageˉsize = 1;
+    Transferˉlimit = 2;
+    Arithmeticˉoverflow = 3;
+    Outsideˉstorage = 4;
+    Staleˉgeneration = 5;
+    Changedˉstorage = 6;
+    Invalidˉposition = 7;
+    Invalidˉlength = 8;
+}
+
+export record Databaseˉstorageˉpageˉplan {
+    Error: Databaseˉstorageˉpageˉerror;
+    Generation: u64;
+    Storageˉlength: u64;
+    Pageˉidentifier: u64;
+    Offset: u64;
+    Length: u32;
+    Endˉexclusive: u64;
+}
+
+export record Databaseˉstorageˉpage {
+    Error: Databaseˉstorageˉpageˉerror;
+    Generation: u64;
+    Storageˉlength: u64;
+    Pageˉidentifier: u64;
+    Offset: u64;
+    Endˉexclusive: u64;
+    Value: bytes;
+}
+
+fn Databaseˉstorageˉpageˉplanˉfailure(
+    Error: Databaseˉstorageˉpageˉerror,
+    Generation: u64,
+    Storageˉlength: u64,
+    Pageˉidentifier: u64,
+    Pageˉsize: u32
+) -> Databaseˉstorageˉpageˉplan {
+    return Databaseˉstorageˉpageˉplan(
+        Error,
+        Generation,
+        Storageˉlength,
+        Pageˉidentifier,
+        0u64,
+        Pageˉsize,
+        0u64
+    );
+}
+
+export fn Databaseˉstorageˉpageˉprepare(
+    Headerˉsize: u64,
+    Pageˉsize: u32,
+    Pageˉidentifier: u64,
+    Generation: u64,
+    Storageˉlength: u64
+) -> Databaseˉstorageˉpageˉplan {
+    if Pageˉsize == 0u32 {
+        return Databaseˉstorageˉpageˉplanˉfailure(
+            Databaseˉstorageˉpageˉerror.Invalidˉpageˉsize,
+            Generation,
+            Storageˉlength,
+            Pageˉidentifier,
+            Pageˉsize
+        );
+    }
+    if Pageˉsize > MAXIMUM_PAGE_TRANSFER {
+        return Databaseˉstorageˉpageˉplanˉfailure(
+            Databaseˉstorageˉpageˉerror.Transferˉlimit,
+            Generation,
+            Storageˉlength,
+            Pageˉidentifier,
+            Pageˉsize
+        );
+    }
+
+    let Pageˉlength: u64 = U64ˉfromˉu32(Pageˉsize);
+    if Headerˉsize > U64_MAXIMUM - Pageˉlength {
+        return Databaseˉstorageˉpageˉplanˉfailure(
+            Databaseˉstorageˉpageˉerror.Arithmeticˉoverflow,
+            Generation,
+            Storageˉlength,
+            Pageˉidentifier,
+            Pageˉsize
+        );
+    }
+    let Maximumˉpageˉidentifier: u64 = (
+        U64_MAXIMUM - Headerˉsize - Pageˉlength
+    ) / Pageˉlength;
+    if Pageˉidentifier > Maximumˉpageˉidentifier {
+        return Databaseˉstorageˉpageˉplanˉfailure(
+            Databaseˉstorageˉpageˉerror.Arithmeticˉoverflow,
+            Generation,
+            Storageˉlength,
+            Pageˉidentifier,
+            Pageˉsize
+        );
+    }
+
+    let Offset: u64 = Headerˉsize + Pageˉidentifier * Pageˉlength;
+    let Endˉexclusive: u64 = Offset + Pageˉlength;
+    if Endˉexclusive > Storageˉlength {
+        return Databaseˉstorageˉpageˉplanˉfailure(
+            Databaseˉstorageˉpageˉerror.Outsideˉstorage,
+            Generation,
+            Storageˉlength,
+            Pageˉidentifier,
+            Pageˉsize
+        );
+    }
+    return Databaseˉstorageˉpageˉplan(
+        Databaseˉstorageˉpageˉerror.Valid,
+        Generation,
+        Storageˉlength,
+        Pageˉidentifier,
+        Offset,
+        Pageˉsize,
+        Endˉexclusive
+    );
+}
+
+fn Databaseˉstorageˉpageˉfailure(
+    Plan: Databaseˉstorageˉpageˉplan,
+    Error: Databaseˉstorageˉpageˉerror
+) -> Databaseˉstorageˉpage {
+    return Databaseˉstorageˉpage(
+        Error,
+        Plan.Generation,
+        Plan.Storageˉlength,
+        Plan.Pageˉidentifier,
+        Plan.Offset,
+        Plan.Endˉexclusive,
+        Textˉtoˉutf8("")
+    );
+}
+
+export fn Databaseˉstorageˉpageˉaccept(
+    Plan: Databaseˉstorageˉpageˉplan,
+    Generation: u64,
+    Storageˉlength: u64,
+    Position: u64,
+    Value: bytes
+) -> Databaseˉstorageˉpage {
+    if Plan.Error != Databaseˉstorageˉpageˉerror.Valid {
+        return Databaseˉstorageˉpageˉfailure(Plan, Plan.Error);
+    }
+    if Generation != Plan.Generation {
+        return Databaseˉstorageˉpageˉfailure(
+            Plan,
+            Databaseˉstorageˉpageˉerror.Staleˉgeneration
+        );
+    }
+    if Storageˉlength != Plan.Storageˉlength {
+        return Databaseˉstorageˉpageˉfailure(
+            Plan,
+            Databaseˉstorageˉpageˉerror.Changedˉstorage
+        );
+    }
+    if Position != Plan.Offset {
+        return Databaseˉstorageˉpageˉfailure(
+            Plan,
+            Databaseˉstorageˉpageˉerror.Invalidˉposition
+        );
+    }
+    if Bytesˉlength(Value) != Plan.Length {
+        return Databaseˉstorageˉpageˉfailure(
+            Plan,
+            Databaseˉstorageˉpageˉerror.Invalidˉlength
+        );
+    }
+    return Databaseˉstorageˉpage(
+        Databaseˉstorageˉpageˉerror.Valid,
+        Generation,
+        Storageˉlength,
+        Plan.Pageˉidentifier,
+        Position,
+        Plan.Endˉexclusive,
+        Value
+    );
+}

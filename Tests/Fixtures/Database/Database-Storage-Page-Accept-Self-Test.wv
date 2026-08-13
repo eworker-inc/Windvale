@@ -1,0 +1,92 @@
+module Databaseˉstorageˉpageˉacceptˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉstorageˉpage as Page;
+
+data PAGE_VALUE: bytes = [10, 20, 30, 40];
+
+fn Databaseˉpageˉacceptˉwith(
+    Generation: u64,
+    Storageˉlength: u64,
+    Position: u64,
+    Value: bytes,
+    Expected: Page.Databaseˉstorageˉpageˉerror
+) -> bool {
+    let Plan: Page.Databaseˉstorageˉpageˉplan =
+        Page.Databaseˉstorageˉpageˉprepare(
+            32u64,
+            4u32,
+            2u64,
+            7u64,
+            44u64
+        );
+    let Result: Page.Databaseˉstorageˉpage =
+        Page.Databaseˉstorageˉpageˉaccept(
+            Plan,
+            Generation,
+            Storageˉlength,
+            Position,
+            Value
+        );
+    return Result.Error == Expected;
+}
+
+fn Databaseˉpageˉacceptˉisˉvalid() -> bool {
+    let Plan: Page.Databaseˉstorageˉpageˉplan =
+        Page.Databaseˉstorageˉpageˉprepare(
+            32u64,
+            4u32,
+            2u64,
+            7u64,
+            44u64
+        );
+    let Result: Page.Databaseˉstorageˉpage =
+        Page.Databaseˉstorageˉpageˉaccept(
+            Plan,
+            7u64,
+            44u64,
+            40u64,
+            PAGE_VALUE
+        );
+    return Result.Error == Page.Databaseˉstorageˉpageˉerror.Valid &&
+        Result.Generation == 7u64 &&
+        Result.Storageˉlength == 44u64 &&
+        Result.Pageˉidentifier == 2u64 &&
+        Result.Offset == 40u64 &&
+        Result.Endˉexclusive == 44u64 &&
+        Bytesˉlength(Result.Value) == 4u32 &&
+        Bytesˉreadˉu8(Result.Value, 0u32) == 10u8 &&
+        Bytesˉreadˉu8(Result.Value, 3u32) == 40u8;
+}
+
+export fn Main() -> i32 {
+    if !Databaseˉpageˉacceptˉisˉvalid() { return 1; }
+    if !Databaseˉpageˉacceptˉwith(
+        8u64,
+        44u64,
+        40u64,
+        PAGE_VALUE,
+        Page.Databaseˉstorageˉpageˉerror.Staleˉgeneration
+    ) { return 2; }
+    if !Databaseˉpageˉacceptˉwith(
+        7u64,
+        45u64,
+        40u64,
+        PAGE_VALUE,
+        Page.Databaseˉstorageˉpageˉerror.Changedˉstorage
+    ) { return 3; }
+    if !Databaseˉpageˉacceptˉwith(
+        7u64,
+        44u64,
+        39u64,
+        PAGE_VALUE,
+        Page.Databaseˉstorageˉpageˉerror.Invalidˉposition
+    ) { return 4; }
+    if !Databaseˉpageˉacceptˉwith(
+        7u64,
+        44u64,
+        40u64,
+        Bytesˉslice(PAGE_VALUE, 0u32, 3u32),
+        Page.Databaseˉstorageˉpageˉerror.Invalidˉlength
+    ) { return 5; }
+    return 42;
+}

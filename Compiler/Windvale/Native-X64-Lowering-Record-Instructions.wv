@@ -138,7 +138,7 @@ fn Emitˉfield(
     if Type == 2u8 { Index = State.Nextˉbool; }
     if Type == 3u8 { Index = State.Nextˉtext; }
     if Type == 4u8 { Index = State.Nextˉu8; }
-    if Type == 5u8 { Index = State.Nextˉu32; }
+    if Type == 5u8 || Type == 10u8 { Index = State.Nextˉu32; }
     if Type == 6u8 { Index = State.Nextˉbytes; }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) {
         Index = State.Nextˉenum;
@@ -155,7 +155,7 @@ fn Emitˉfield(
     if Type == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
     if Type == 3u8 { Nextˉtext = Nextˉtext + 1u32; }
     if Type == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
-    if Type == 5u8 { Nextˉu32 = Nextˉu32 + 1u32; }
+    if Type == 5u8 || Type == 10u8 { Nextˉu32 = Nextˉu32 + 1u32; }
     if Type == 6u8 { Nextˉbytes = Nextˉbytes + 1u32; }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Type) {
         Nextˉenum = Nextˉenum + 1u32;

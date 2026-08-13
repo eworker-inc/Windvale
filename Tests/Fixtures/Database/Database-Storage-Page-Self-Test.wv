@@ -1,0 +1,72 @@
+module Databaseˉstorageˉpageˉselfˉtest profile portable;
+
+import Windvaleˉdatabaseˉstorageˉpage as Page;
+
+fn Databaseˉpageˉplanˉisˉvalid() -> bool {
+    let Result: Page.Databaseˉstorageˉpageˉplan =
+        Page.Databaseˉstorageˉpageˉprepare(
+            32u64,
+            4u32,
+            2u64,
+            7u64,
+            44u64
+        );
+    return Result.Error == Page.Databaseˉstorageˉpageˉerror.Valid &&
+        Result.Generation == 7u64 &&
+        Result.Storageˉlength == 44u64 &&
+        Result.Pageˉidentifier == 2u64 &&
+        Result.Offset == 40u64 &&
+        Result.Length == 4u32 &&
+        Result.Endˉexclusive == 44u64;
+}
+
+fn Databaseˉpageˉplanˉfails(
+    Headerˉsize: u64,
+    Pageˉsize: u32,
+    Pageˉidentifier: u64,
+    Storageˉlength: u64,
+    Expected: Page.Databaseˉstorageˉpageˉerror
+) -> bool {
+    let Result: Page.Databaseˉstorageˉpageˉplan =
+        Page.Databaseˉstorageˉpageˉprepare(
+            Headerˉsize,
+            Pageˉsize,
+            Pageˉidentifier,
+            7u64,
+            Storageˉlength
+        );
+    return Result.Error == Expected;
+}
+
+export fn Main() -> i32 {
+    if !Databaseˉpageˉplanˉisˉvalid() { return 1; }
+    if !Databaseˉpageˉplanˉfails(
+        0u64,
+        0u32,
+        0u64,
+        0u64,
+        Page.Databaseˉstorageˉpageˉerror.Invalidˉpageˉsize
+    ) { return 2; }
+    if !Databaseˉpageˉplanˉfails(
+        0u64,
+        65537u32,
+        0u64,
+        65537u64,
+        Page.Databaseˉstorageˉpageˉerror.Transferˉlimit
+    ) { return 3; }
+    if !Databaseˉpageˉplanˉfails(
+        18446744073709551615u64,
+        1u32,
+        0u64,
+        18446744073709551615u64,
+        Page.Databaseˉstorageˉpageˉerror.Arithmeticˉoverflow
+    ) { return 4; }
+    if !Databaseˉpageˉplanˉfails(
+        32u64,
+        4u32,
+        2u64,
+        43u64,
+        Page.Databaseˉstorageˉpageˉerror.Outsideˉstorage
+    ) { return 5; }
+    return 42;
+}

@@ -55,6 +55,14 @@ fn Storeˉeax(Result: bytes, Slot: u32) -> bytes {
     return Appendˉu32(Output, Slot * 16u32);
 }
 
+fn Storeˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
 fn Valueˉslot(
     Shape: Compilerˉnativeˉx64ˉcallˉlayout,
     Type: u8,
@@ -143,6 +151,7 @@ fn Emitˉvalueˉcall(
         Relativeˉu32(Propagateˉoffset, Bytesˉlength(Output) + 4u32)
     );
     if Returnsˉdescriptor || Returnˉtype == 0u8 { return Output; }
+    if Returnˉtype == 10u8 { return Storeˉrax(Output, Resultˉslot); }
     return Storeˉeax(Output, Resultˉslot);
 }
 
@@ -167,7 +176,9 @@ export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
     if Returnˉtype == 2u8 { Resultˉindex = State.Nextˉbool; }
     if Returnˉtype == 3u8 { Resultˉindex = State.Nextˉtext; }
     if Returnˉtype == 4u8 { Resultˉindex = State.Nextˉu8; }
-    if Returnˉtype == 5u8 { Resultˉindex = State.Nextˉu32; }
+    if Returnˉtype == 5u8 || Returnˉtype == 10u8 {
+        Resultˉindex = State.Nextˉu32;
+    }
     if Returnˉtype == 6u8 { Resultˉindex = State.Nextˉbytes; }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Returnˉtype) {
         Resultˉindex = State.Nextˉenum;
@@ -231,7 +242,9 @@ export fn Compilerˉnativeˉx64ˉemitˉcallˉinstruction(
     if Returnˉtype == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
     if Returnˉtype == 3u8 { Nextˉtext = Nextˉtext + 1u32; }
     if Returnˉtype == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
-    if Returnˉtype == 5u8 { Nextˉu32 = Nextˉu32 + 1u32; }
+    if Returnˉtype == 5u8 || Returnˉtype == 10u8 {
+        Nextˉu32 = Nextˉu32 + 1u32;
+    }
     if Returnˉtype == 6u8 { Nextˉbytes = Nextˉbytes + 1u32; }
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Returnˉtype) {
         Nextˉenum = Nextˉenum + 1u32;

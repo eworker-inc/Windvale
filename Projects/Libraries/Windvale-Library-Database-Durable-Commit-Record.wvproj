@@ -1,0 +1,6 @@
+windvale-project 2
+root "Libraries/Database/Durable-Commit-Record.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Sha256-Compression.wv"
+source "Foundation/Sha256-Streaming.wv"
+emit wvb

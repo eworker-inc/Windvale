@@ -130,6 +130,7 @@ export fn Compilerˉnativeˉx64ˉdescriptorˉsliceˉbytes() -> u32 {
 
 export fn Compilerˉnativeˉx64ˉdescriptorˉreadˉbytes(Kind: u8) -> u32 {
     if Kind == 13u8 || Kind == 14u8 { return 71u32; }
+    if Kind == 189u8 { return 72u32; }
     return 70u32;
 }
 
@@ -213,6 +214,7 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉread(
     var Width: u8 = 4u8;
     if Kind == 13u8 { Width = 1u8; }
     if Kind == 14u8 { Width = 2u8; }
+    if Kind == 189u8 { Width = 8u8; }
     var Output: bytes = Loadˉeax(Result, Offset);
     Output = Loadˉecxˉfield(Output, Source, 8u32);
     Output = Appendˉbyte(Output, 57u8);
@@ -238,10 +240,15 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉread(
             Output = Appendˉbyte(Output, 15u8);
             Output = Appendˉbyte(Output, 183u8);
             Output = Appendˉbyte(Output, 2u8);
+        } else if Kind == 189u8 {
+            Output = Appendˉbyte(Output, 72u8);
+            Output = Appendˉbyte(Output, 139u8);
+            Output = Appendˉbyte(Output, 2u8);
         } else {
             Output = Appendˉbyte(Output, 139u8);
             Output = Appendˉbyte(Output, 2u8);
         }
     }
+    if Kind == 189u8 { return Storeˉrax(Output, Target); }
     return Storeˉeax(Output, Target);
 }

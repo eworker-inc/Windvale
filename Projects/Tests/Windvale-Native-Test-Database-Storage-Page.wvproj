@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Storage-Page-Self-Test.wv"
+source "Libraries/Database/Storage-Page.wv"
+emit wvb

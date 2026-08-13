@@ -54,6 +54,9 @@ These documents define the current implemented or accepted contracts. Dated rati
 ## Database experiment
 
 - [Experimental Windvale Database reader and hosted snapshot adapter](Windvale-Database-Reader.md)
+- [Checked random-access database page reads](Windvale-Database-Storage-Page.md)
+- [Durable dual-superblock record and recovery selection](Windvale-Database-Durable-Superblock.md)
+- [Durable pages, compact commit record, and publication planner](Windvale-Database-Durable-Commit.md)
 
 ## Assembly, objects, and linking
 

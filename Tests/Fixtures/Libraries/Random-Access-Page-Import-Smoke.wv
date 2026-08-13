@@ -1,0 +1,13 @@
+module Randomˉaccessˉpageˉimportˉsmoke profile hosted;
+
+import Randomˉaccessˉdatabaseˉpage as Database;
+
+capability storage.random_access_v1;
+
+export fn Main() -> i32 {
+    let Result: Database.Databaseˉpageˉreadˉresult =
+        Database.Databaseˉstorageˉreadˉpage(16u64, 4096u32, 0u64);
+    if Result.Status == Database.Databaseˉpageˉreadˉstatus.Valid { return 42; }
+    if Result.Status == Database.Databaseˉpageˉreadˉstatus.Pageˉfailure { return 1; }
+    return 2;
+}

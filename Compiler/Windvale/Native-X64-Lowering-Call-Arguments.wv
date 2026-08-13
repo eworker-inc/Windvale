@@ -15,6 +15,10 @@ fn Typeˉisˉdescriptor(Type: u8) -> bool {
     return Type == 6u8;
 }
 
+fn Typeˉisˉwideˉscalar(Type: u8) -> bool {
+    return Type == 10u8;
+}
+
 fn Emitˉframeˉadjustment(
     Result: bytes,
     Subtract: bool,
@@ -39,13 +43,13 @@ fn Loadˉregisterˉargument(
     var Output: bytes = Result;
     let Isˉrecord: bool =
         Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type);
-    if Isˉrecord || Typeˉisˉdescriptor(Type) {
+    if Isˉrecord || Typeˉisˉdescriptor(Type) || Typeˉisˉwideˉscalar(Type) {
         if Argument < 2u32 {
             Output = Appendˉbyte(Output, 76u8);
         } else {
             Output = Appendˉbyte(Output, 72u8);
         }
-        if Isˉrecord {
+        if Isˉrecord || Typeˉisˉwideˉscalar(Type) {
             Output = Appendˉbyte(Output, 139u8);
         } else {
             Output = Appendˉbyte(Output, 141u8);
@@ -73,7 +77,7 @@ fn Copyˉstackˉargument(
     let Sourceˉoffset: u32 = Slot * 16u32 + Stackˉbytes;
     var Output: bytes = Result;
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
-        Typeˉisˉdescriptor(Type) {
+        Typeˉisˉdescriptor(Type) || Typeˉisˉwideˉscalar(Type) {
         Output = Appendˉbyte(Output, 72u8);
     }
     Output = Appendˉbyte(Output, 139u8);
@@ -81,7 +85,7 @@ fn Copyˉstackˉargument(
     Output = Appendˉbyte(Output, 36u8);
     Output = Appendˉu32(Output, Sourceˉoffset);
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
-        Typeˉisˉdescriptor(Type) {
+        Typeˉisˉdescriptor(Type) || Typeˉisˉwideˉscalar(Type) {
         Output = Appendˉbyte(Output, 72u8);
     }
     Output = Appendˉbyte(Output, 137u8);
@@ -123,7 +127,8 @@ fn Storeˉregisterˉparameter(
     Type: u8
 ) -> bytes {
     var Output: bytes = Result;
-    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
+        Typeˉisˉwideˉscalar(Type) {
         if Parameter < 2u32 {
             Output = Appendˉbyte(Output, 76u8);
         } else {
@@ -182,7 +187,7 @@ fn Copyˉstackˉparameter(
         (Parameter - 4u32) * 16u32;
     var Output: bytes = Result;
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
-        Typeˉisˉdescriptor(Type) {
+        Typeˉisˉdescriptor(Type) || Typeˉisˉwideˉscalar(Type) {
         Output = Appendˉbyte(Output, 72u8);
     }
     Output = Appendˉbyte(Output, 139u8);
@@ -190,7 +195,7 @@ fn Copyˉstackˉparameter(
     Output = Appendˉbyte(Output, 36u8);
     Output = Appendˉu32(Output, Incomingˉoffset);
     if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
-        Typeˉisˉdescriptor(Type) {
+        Typeˉisˉdescriptor(Type) || Typeˉisˉwideˉscalar(Type) {
         Output = Storeˉrax(Output, Parameter);
     } else {
         Output = Appendˉbyte(Output, 137u8);
@@ -233,6 +238,7 @@ export fn Compilerˉnativeˉx64ˉcallˉargumentˉbytes(
         let Type: u8 = Bytesˉreadˉu8(Parameterˉtypes, Parameter);
         if Parameter < Compilerˉnativeˉx64ˉcallˉregisterˉparameterˉlimit() {
             if Parameter < 2u32 || Typeˉisˉdescriptor(Type) ||
+                Typeˉisˉwideˉscalar(Type) ||
                 Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
                 Result = Result + 8u32;
             } else {
@@ -242,7 +248,8 @@ export fn Compilerˉnativeˉx64ˉcallˉargumentˉbytes(
             if Typeˉisˉdescriptor(Type) {
                 Result = Result + 32u32;
             } else {
-                if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+                if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
+                    Typeˉisˉwideˉscalar(Type) {
                     Result = Result + 16u32;
                 } else {
                     Result = Result + 14u32;
@@ -268,7 +275,7 @@ export fn Compilerˉnativeˉx64ˉcallˉparameterˉbytes(
             if Typeˉisˉdescriptor(Type) {
                 Result = Result + 23u32;
             } else {
-                if Parameter < 2u32 ||
+                if Parameter < 2u32 || Typeˉisˉwideˉscalar(Type) ||
                     Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
                     Result = Result + 8u32;
                 } else {
@@ -279,7 +286,8 @@ export fn Compilerˉnativeˉx64ˉcallˉparameterˉbytes(
             if Typeˉisˉdescriptor(Type) {
                 Result = Result + 32u32;
             } else {
-                if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) {
+                if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Type) ||
+                    Typeˉisˉwideˉscalar(Type) {
                     Result = Result + 16u32;
                 } else {
                     Result = Result + 14u32;

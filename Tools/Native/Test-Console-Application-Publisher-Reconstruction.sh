@@ -94,8 +94,8 @@ check_equal "$test_directory/Build.out" "$test_directory/Build.expected" || fail
 check_equal "$test_directory/Console-Application-Publisher.wvb" \
     "$candidate/Console-Application-Publisher.wvb" || fail
 
-check_file "$raw_lowerer" 5996544 \
-    55df0cd2a679491bc1a3da50b6bc67b5f512f2a4698721faea6becb556a2a46f || fail
+check_file "$raw_lowerer" 6205440 \
+    8debddbbeefc325ba15aae700c77921bb077460067222b9100618d1ec6bec76f || fail
 "$raw_lowerer" "$test_directory/Console-Application-Publisher.wvb" \
     "$test_directory/Console-Application-Publisher.wvo" \
     >"$test_directory/Lower.out" 2>"$test_directory/Lower.err" || fail

@@ -377,7 +377,10 @@ $NativeCases = @(
             'unsafe-wvb',
             'source-containment',
             'lowerer-rejections',
-            'console-packager-source-reconstruction'
+            'console-packager-source-reconstruction',
+            'native-u64-lowering',
+            'database-superblock',
+            'database-durable-commit'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -988,6 +991,35 @@ $NativeCases = @(
         Name = 'database library owner'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
         Suites = @('libraries', 'packages')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'durable database superblock owner'
+        Paths = @('Libraries/Database/Durable-Superblock.wv')
+        Suites = @('database-superblock', 'database-durable-commit', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'durable database commit owner'
+        Paths = @(
+            'Libraries/Database/Durable-Page.wv',
+            'Libraries/Database/Durable-Commit-Record.wv',
+            'Libraries/Database/Commit-Publication.wv',
+            'Tests/Fixtures/Database/Database-Durable-Commit-Self-Test.wv'
+        )
+        Suites = @('database-durable-commit', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'durable database commit project owner'
+        Paths = @(
+            'Projects/Libraries/Windvale-Library-Database-Durable-Page.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj'
+        )
+        Suites = @('database-durable-commit', 'workspace-project2', 'libraries')
         Gaps = @()
         VerifyPlan = $false
     },

@@ -1,0 +1,390 @@
+module Windvaleˉdatabaseˉdurableˉpage profile portable;
+
+import Foundationˉsha256ˉstreaming as Sha256;
+
+const DATABASE_PAGE_MAGIC: u32 = 1196447319u32;
+const DATABASE_PAGE_VERSION: u32 = 1u32;
+const DATABASE_PAGE_HEADER_BYTES: u32 = 128u32;
+const DATABASE_PAGE_HEADER_BODY_BYTES: u32 = 96u32;
+const DATABASE_PAGE_CHECKSUM_BYTES: u32 = 32u32;
+const DATABASE_PAGE_NO_PAGE: u64 = 18446744073709551615u64;
+
+export enum Databaseˉdurableˉpageˉkind {
+    Root = 1;
+    Branch = 2;
+    Leaf = 3;
+    Commitˉlog = 4;
+}
+
+export enum Databaseˉdurableˉpageˉerror {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheaderˉsize = 4;
+    Unsupportedˉflags = 5;
+    Invalidˉpageˉsize = 6;
+    Invalidˉkind = 7;
+    Invalidˉpageˉidentifier = 8;
+    Invalidˉgeneration = 9;
+    Invalidˉsequence = 10;
+    Invalidˉpreviousˉpage = 11;
+    Invalidˉpayloadˉlength = 12;
+    Invalidˉitemˉcount = 13;
+    Invalidˉheaderˉchecksum = 14;
+    Invalidˉpayloadˉchecksum = 15;
+    Invalidˉpadding = 16;
+}
+
+export record Databaseˉdurableˉpage {
+    Kind: Databaseˉdurableˉpageˉkind;
+    Pageˉsize: u32;
+    Pageˉidentifier: u64;
+    Generation: u64;
+    Commitˉsequence: u64;
+    Previousˉpage: u64;
+    Itemˉcount: u32;
+    Payload: bytes;
+}
+
+export record Databaseˉdurableˉpageˉresult {
+    Error: Databaseˉdurableˉpageˉerror;
+    Kind: Databaseˉdurableˉpageˉkind;
+    Pageˉsize: u32;
+    Pageˉidentifier: u64;
+    Generation: u64;
+    Commitˉsequence: u64;
+    Previousˉpage: u64;
+    Itemˉcount: u32;
+    Payload: bytes;
+    Bytes: bytes;
+}
+
+fn Databaseˉdurableˉpageˉempty() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Databaseˉdurableˉpageˉzeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Databaseˉdurableˉpageˉempty(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Databaseˉdurableˉpageˉdigest(Value: bytes) -> bytes {
+    var State: Sha256.Foundationˉsha256ˉstream =
+        Sha256.Foundationˉsha256ˉbegin(Value);
+    State = Sha256.Foundationˉsha256ˉupdate(State, Value);
+    return Sha256.Foundationˉsha256ˉfinishˉraw(State);
+}
+
+fn Databaseˉdurableˉpageˉbytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Databaseˉdurableˉpageˉsizeˉisˉvalid(Pageˉsize: u32) -> bool {
+    return Pageˉsize == 4096u32 ||
+        Pageˉsize == 8192u32 ||
+        Pageˉsize == 16384u32 ||
+        Pageˉsize == 32768u32 ||
+        Pageˉsize == 65536u32;
+}
+
+fn Databaseˉdurableˉpageˉkindˉfromˉu32(
+    Value: u32
+) -> Databaseˉdurableˉpageˉkind {
+    if Value == 1u32 { return Databaseˉdurableˉpageˉkind.Root; }
+    if Value == 2u32 { return Databaseˉdurableˉpageˉkind.Branch; }
+    if Value == 3u32 { return Databaseˉdurableˉpageˉkind.Leaf; }
+    return Databaseˉdurableˉpageˉkind.Commitˉlog;
+}
+
+fn Databaseˉdurableˉpageˉkindˉtoˉu32(
+    Value: Databaseˉdurableˉpageˉkind
+) -> u32 {
+    if Value == Databaseˉdurableˉpageˉkind.Root { return 1u32; }
+    if Value == Databaseˉdurableˉpageˉkind.Branch { return 2u32; }
+    if Value == Databaseˉdurableˉpageˉkind.Leaf { return 3u32; }
+    return 4u32;
+}
+
+fn Databaseˉdurableˉpageˉfailure(
+    Error: Databaseˉdurableˉpageˉerror
+) -> Databaseˉdurableˉpageˉresult {
+    return Databaseˉdurableˉpageˉresult(
+        Error,
+        Databaseˉdurableˉpageˉkind.Root,
+        0u32,
+        0u64,
+        0u64,
+        0u64,
+        DATABASE_PAGE_NO_PAGE,
+        0u32,
+        Databaseˉdurableˉpageˉempty(),
+        Databaseˉdurableˉpageˉempty()
+    );
+}
+
+fn Databaseˉdurableˉpageˉvalidate(
+    Value: Databaseˉdurableˉpage
+) -> Databaseˉdurableˉpageˉerror {
+    if !Databaseˉdurableˉpageˉsizeˉisˉvalid(Value.Pageˉsize) {
+        return Databaseˉdurableˉpageˉerror.Invalidˉpageˉsize;
+    }
+    if Value.Pageˉidentifier == DATABASE_PAGE_NO_PAGE {
+        return Databaseˉdurableˉpageˉerror.Invalidˉpageˉidentifier;
+    }
+    if Value.Generation == 0u64 {
+        return Databaseˉdurableˉpageˉerror.Invalidˉgeneration;
+    }
+    if Value.Commitˉsequence == 0u64 {
+        if Value.Generation != 1u64 || Value.Pageˉidentifier != 0u64 ||
+            Value.Kind != Databaseˉdurableˉpageˉkind.Root {
+            return Databaseˉdurableˉpageˉerror.Invalidˉsequence;
+        }
+        if Value.Previousˉpage != DATABASE_PAGE_NO_PAGE {
+            return Databaseˉdurableˉpageˉerror.Invalidˉpreviousˉpage;
+        }
+    }
+    if Value.Previousˉpage != DATABASE_PAGE_NO_PAGE &&
+        Value.Previousˉpage >= Value.Pageˉidentifier {
+        return Databaseˉdurableˉpageˉerror.Invalidˉpreviousˉpage;
+    }
+    let Payloadˉlength: u32 = Bytesˉlength(Value.Payload);
+    if Payloadˉlength > Value.Pageˉsize - DATABASE_PAGE_HEADER_BYTES {
+        return Databaseˉdurableˉpageˉerror.Invalidˉpayloadˉlength;
+    }
+    if Payloadˉlength == 0u32 {
+        if Value.Itemˉcount != 0u32 {
+            return Databaseˉdurableˉpageˉerror.Invalidˉitemˉcount;
+        }
+    } else if Value.Itemˉcount == 0u32 {
+        return Databaseˉdurableˉpageˉerror.Invalidˉitemˉcount;
+    }
+    if Value.Kind == Databaseˉdurableˉpageˉkind.Commitˉlog {
+        if Payloadˉlength != 256u32 {
+            return Databaseˉdurableˉpageˉerror.Invalidˉpayloadˉlength;
+        }
+        if Value.Itemˉcount != 1u32 {
+            return Databaseˉdurableˉpageˉerror.Invalidˉitemˉcount;
+        }
+    }
+    return Databaseˉdurableˉpageˉerror.Valid;
+}
+
+export fn Databaseˉdurableˉpageˉencode(
+    Value: Databaseˉdurableˉpage
+) -> Databaseˉdurableˉpageˉresult {
+    let Error: Databaseˉdurableˉpageˉerror =
+        Databaseˉdurableˉpageˉvalidate(Value);
+    if Error != Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉdurableˉpageˉfailure(Error);
+    }
+    let Payloadˉchecksum: bytes = Databaseˉdurableˉpageˉdigest(Value.Payload);
+    var Headerˉbody: bytes = Bytesˉfromˉu32ˉlittle(DATABASE_PAGE_MAGIC);
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu32ˉlittle(DATABASE_PAGE_VERSION)
+    );
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu32ˉlittle(DATABASE_PAGE_HEADER_BYTES)
+    );
+    Headerˉbody = Bytesˉconcat(Headerˉbody, Bytesˉfromˉu32ˉlittle(0u32));
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu32ˉlittle(Value.Pageˉsize)
+    );
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu32ˉlittle(
+            Databaseˉdurableˉpageˉkindˉtoˉu32(Value.Kind)
+        )
+    );
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu64ˉlittle(Value.Pageˉidentifier)
+    );
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu64ˉlittle(Value.Generation)
+    );
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu64ˉlittle(Value.Commitˉsequence)
+    );
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu64ˉlittle(Value.Previousˉpage)
+    );
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Value.Payload))
+    );
+    Headerˉbody = Bytesˉconcat(
+        Headerˉbody,
+        Bytesˉfromˉu32ˉlittle(Value.Itemˉcount)
+    );
+    Headerˉbody = Bytesˉconcat(Headerˉbody, Payloadˉchecksum);
+    if Bytesˉlength(Headerˉbody) != DATABASE_PAGE_HEADER_BODY_BYTES {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉheaderˉchecksum
+        );
+    }
+    let Header: bytes = Bytesˉconcat(
+        Headerˉbody,
+        Databaseˉdurableˉpageˉdigest(Headerˉbody)
+    );
+    let Paddingˉlength: u32 = Value.Pageˉsize -
+        DATABASE_PAGE_HEADER_BYTES - Bytesˉlength(Value.Payload);
+    let Pageˉbytes: bytes = Bytesˉconcat(
+        Bytesˉconcat(Header, Value.Payload),
+        Databaseˉdurableˉpageˉzeroes(Paddingˉlength)
+    );
+    return Databaseˉdurableˉpageˉresult(
+        Databaseˉdurableˉpageˉerror.Valid,
+        Value.Kind,
+        Value.Pageˉsize,
+        Value.Pageˉidentifier,
+        Value.Generation,
+        Value.Commitˉsequence,
+        Value.Previousˉpage,
+        Value.Itemˉcount,
+        Value.Payload,
+        Pageˉbytes
+    );
+}
+
+export fn Databaseˉdurableˉpageˉdecode(
+    Input: bytes
+) -> Databaseˉdurableˉpageˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if !Databaseˉdurableˉpageˉsizeˉisˉvalid(Total) {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉlength
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != DATABASE_PAGE_MAGIC {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉmagic
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 4u32) != DATABASE_PAGE_VERSION {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Unsupportedˉversion
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != DATABASE_PAGE_HEADER_BYTES {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉheaderˉsize
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 0u32 {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Unsupportedˉflags
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) != Total {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉpageˉsize
+        );
+    }
+    let Rawˉkind: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    if Rawˉkind < 1u32 || Rawˉkind > 4u32 {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉkind
+        );
+    }
+    let Headerˉbody: bytes = Bytesˉslice(
+        Input,
+        0u32,
+        DATABASE_PAGE_HEADER_BODY_BYTES
+    );
+    if !Databaseˉdurableˉpageˉbytesˉequal(
+        Bytesˉslice(
+            Input,
+            DATABASE_PAGE_HEADER_BODY_BYTES,
+            DATABASE_PAGE_CHECKSUM_BYTES
+        ),
+        Databaseˉdurableˉpageˉdigest(Headerˉbody)
+    ) {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉheaderˉchecksum
+        );
+    }
+    let Payloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 56u32);
+    if Payloadˉlength > Total - DATABASE_PAGE_HEADER_BYTES {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉpayloadˉlength
+        );
+    }
+    let Payload: bytes = Bytesˉslice(
+        Input,
+        DATABASE_PAGE_HEADER_BYTES,
+        Payloadˉlength
+    );
+    if !Databaseˉdurableˉpageˉbytesˉequal(
+        Bytesˉslice(Input, 64u32, DATABASE_PAGE_CHECKSUM_BYTES),
+        Databaseˉdurableˉpageˉdigest(Payload)
+    ) {
+        return Databaseˉdurableˉpageˉfailure(
+            Databaseˉdurableˉpageˉerror.Invalidˉpayloadˉchecksum
+        );
+    }
+    var Paddingˉindex: u32 = DATABASE_PAGE_HEADER_BYTES + Payloadˉlength;
+    while Paddingˉindex < Total {
+        if Bytesˉreadˉu8(Input, Paddingˉindex) != 0u8 {
+            return Databaseˉdurableˉpageˉfailure(
+                Databaseˉdurableˉpageˉerror.Invalidˉpadding
+            );
+        }
+        Paddingˉindex = Paddingˉindex + 1u32;
+    }
+    let Value: Databaseˉdurableˉpage = Databaseˉdurableˉpage(
+        Databaseˉdurableˉpageˉkindˉfromˉu32(Rawˉkind),
+        Total,
+        Bytesˉreadˉu64ˉlittle(Input, 24u32),
+        Bytesˉreadˉu64ˉlittle(Input, 32u32),
+        Bytesˉreadˉu64ˉlittle(Input, 40u32),
+        Bytesˉreadˉu64ˉlittle(Input, 48u32),
+        Bytesˉreadˉu32ˉlittle(Input, 60u32),
+        Payload
+    );
+    let Error: Databaseˉdurableˉpageˉerror =
+        Databaseˉdurableˉpageˉvalidate(Value);
+    if Error != Databaseˉdurableˉpageˉerror.Valid {
+        return Databaseˉdurableˉpageˉfailure(Error);
+    }
+    return Databaseˉdurableˉpageˉresult(
+        Databaseˉdurableˉpageˉerror.Valid,
+        Value.Kind,
+        Value.Pageˉsize,
+        Value.Pageˉidentifier,
+        Value.Generation,
+        Value.Commitˉsequence,
+        Value.Previousˉpage,
+        Value.Itemˉcount,
+        Value.Payload,
+        Input
+    );
+}

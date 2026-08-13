@@ -1,0 +1,1010 @@
+module Databaseˉdurableˉcommitˉselfˉtest profile hosted;
+
+import Windvaleˉdatabaseˉcommitˉpublication as Publication;
+import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+capability process.argument;
+capability process.argument_count;
+
+const NO_PAGE: u64 = 18446744073709551615u64;
+
+data PAGE_PAYLOAD: bytes = [1, 2, 3, 4];
+
+fn Emptyˉbytes() -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Unit, 0u32, 0u32);
+}
+
+fn Zeroes(Length: u32) -> bytes {
+    if Length == 0u32 { return Emptyˉbytes(); }
+    var Result: bytes = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Result) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Result);
+        if Bytesˉlength(Result) <= Remaining {
+            Result = Bytesˉconcat(Result, Result);
+        } else {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Result, 0u32, Remaining)
+            );
+        }
+    }
+    return Result;
+}
+
+fn Replace(
+    Input: bytes,
+    Offset: u32,
+    Length: u32,
+    Replacement: bytes
+) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Replacement
+        ),
+        Bytesˉslice(
+            Input,
+            Offset + Length,
+            Bytesˉlength(Input) - Offset - Length
+        )
+    );
+}
+
+fn Corrupt(Input: bytes, Offset: u32) -> bytes {
+    let Current: u8 = Bytesˉreadˉu8(Input, Offset);
+    if Current == 0u8 {
+        return Replace(Input, Offset, 1u32, Bytesˉfromˉu8(1u8));
+    }
+    return Replace(Input, Offset, 1u32, Bytesˉfromˉu8(0u8));
+}
+
+fn Pageˉvalue(
+    Kind: Page.Databaseˉdurableˉpageˉkind,
+    Pageˉsize: u32,
+    Pageˉidentifier: u64,
+    Generation: u64,
+    Sequence: u64,
+    Previousˉpage: u64,
+    Itemˉcount: u32,
+    Payload: bytes
+) -> Page.Databaseˉdurableˉpage {
+    return Page.Databaseˉdurableˉpage(
+        Kind,
+        Pageˉsize,
+        Pageˉidentifier,
+        Generation,
+        Sequence,
+        Previousˉpage,
+        Itemˉcount,
+        Payload
+    );
+}
+
+fn Pageˉbase() -> bytes {
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Leaf,
+            4096u32,
+            7u64,
+            2u64,
+            3u64,
+            4u64,
+            1u32,
+            PAGE_PAYLOAD
+        )
+    );
+    return Result.Bytes;
+}
+
+fn Pageˉdecodeˉfails(
+    Input: bytes,
+    Error: Page.Databaseˉdurableˉpageˉerror
+) -> bool {
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Input);
+    return Result.Error == Error;
+}
+
+fn Pageˉencodeˉfails(
+    Value: Page.Databaseˉdurableˉpage,
+    Error: Page.Databaseˉdurableˉpageˉerror
+) -> bool {
+    let Result: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(Value);
+    return Result.Error == Error;
+}
+
+fn Pageˉbasic() -> i32 {
+    let Encoded: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉencode(
+            Pageˉvalue(
+                Page.Databaseˉdurableˉpageˉkind.Leaf,
+                4096u32,
+                7u64,
+                2u64,
+                3u64,
+                4u64,
+                1u32,
+                PAGE_PAYLOAD
+            )
+        );
+    if Encoded.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Bytesˉlength(Encoded.Bytes) != 4096u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 0u32) != 1196447319u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 8u32) != 128u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 20u32) != 3u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 56u32) != 4u32 {
+        return 1;
+    }
+    let Decoded: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉdecode(Encoded.Bytes);
+    if Decoded.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Decoded.Kind != Page.Databaseˉdurableˉpageˉkind.Leaf ||
+        Decoded.Pageˉsize != 4096u32 ||
+        Decoded.Pageˉidentifier != 7u64 ||
+        Decoded.Generation != 2u64 ||
+        Decoded.Commitˉsequence != 3u64 ||
+        Decoded.Previousˉpage != 4u64 ||
+        Decoded.Itemˉcount != 1u32 ||
+        Bytesˉlength(Decoded.Payload) != 4u32 ||
+        Bytesˉreadˉu8(Decoded.Payload, 3u32) != 4u8 {
+        return 2;
+    }
+    return 42;
+}
+
+fn Pageˉheader() -> i32 {
+    let Base: bytes = Pageˉbase();
+    if !Pageˉdecodeˉfails(
+        Bytesˉslice(Base, 0u32, 4095u32),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉlength
+    ) { return 1; }
+    if !Pageˉdecodeˉfails(
+        Replace(Base, 0u32, 4u32, Bytesˉfromˉu32ˉlittle(0u32)),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉmagic
+    ) { return 2; }
+    if !Pageˉdecodeˉfails(
+        Replace(Base, 4u32, 4u32, Bytesˉfromˉu32ˉlittle(2u32)),
+        Page.Databaseˉdurableˉpageˉerror.Unsupportedˉversion
+    ) { return 3; }
+    if !Pageˉdecodeˉfails(
+        Replace(Base, 8u32, 4u32, Bytesˉfromˉu32ˉlittle(127u32)),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉheaderˉsize
+    ) { return 4; }
+    if !Pageˉdecodeˉfails(
+        Replace(Base, 12u32, 4u32, Bytesˉfromˉu32ˉlittle(1u32)),
+        Page.Databaseˉdurableˉpageˉerror.Unsupportedˉflags
+    ) { return 5; }
+    if !Pageˉdecodeˉfails(
+        Replace(Base, 16u32, 4u32, Bytesˉfromˉu32ˉlittle(8192u32)),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉpageˉsize
+    ) { return 6; }
+    if !Pageˉdecodeˉfails(
+        Replace(Base, 20u32, 4u32, Bytesˉfromˉu32ˉlittle(5u32)),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉkind
+    ) { return 7; }
+    return 42;
+}
+
+fn Pageˉheaderˉchecksum() -> i32 {
+    if !Pageˉdecodeˉfails(
+        Corrupt(Pageˉbase(), 127u32),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉheaderˉchecksum
+    ) { return 1; }
+    return 42;
+}
+
+fn Pageˉpayloadˉchecksum() -> i32 {
+    if !Pageˉdecodeˉfails(
+        Replace(Pageˉbase(), 128u32, 1u32, Bytesˉfromˉu8(9u8)),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉpayloadˉchecksum
+    ) { return 1; }
+    return 42;
+}
+
+fn Pageˉpadding() -> i32 {
+    if !Pageˉdecodeˉfails(
+        Replace(Pageˉbase(), 132u32, 1u32, Bytesˉfromˉu8(1u8)),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉpadding
+    ) { return 1; }
+    return 42;
+}
+
+fn Pageˉsemantic() -> i32 {
+    if !Pageˉencodeˉfails(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Root,
+            1024u32, 0u64, 1u64, 0u64, NO_PAGE, 0u32, Emptyˉbytes()
+        ),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉpageˉsize
+    ) { return 1; }
+    if !Pageˉencodeˉfails(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Root,
+            4096u32, NO_PAGE, 1u64, 0u64, NO_PAGE, 0u32, Emptyˉbytes()
+        ),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉpageˉidentifier
+    ) { return 2; }
+    if !Pageˉencodeˉfails(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Root,
+            4096u32, 0u64, 0u64, 0u64, NO_PAGE, 0u32, Emptyˉbytes()
+        ),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉgeneration
+    ) { return 3; }
+    if !Pageˉencodeˉfails(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Leaf,
+            4096u32, 0u64, 1u64, 0u64, NO_PAGE, 0u32, Emptyˉbytes()
+        ),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉsequence
+    ) { return 4; }
+    if !Pageˉencodeˉfails(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Leaf,
+            4096u32, 7u64, 2u64, 3u64, 7u64, 1u32, PAGE_PAYLOAD
+        ),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉpreviousˉpage
+    ) { return 5; }
+    if !Pageˉencodeˉfails(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Leaf,
+            4096u32, 7u64, 2u64, 3u64, 4u64, 1u32, Zeroes(3969u32)
+        ),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉpayloadˉlength
+    ) { return 6; }
+    if !Pageˉencodeˉfails(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Leaf,
+            4096u32, 7u64, 2u64, 3u64, 4u64, 0u32, PAGE_PAYLOAD
+        ),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉitemˉcount
+    ) { return 7; }
+    if !Pageˉencodeˉfails(
+        Pageˉvalue(
+            Page.Databaseˉdurableˉpageˉkind.Commitˉlog,
+            4096u32, 7u64, 2u64, 3u64, 4u64, 1u32, PAGE_PAYLOAD
+        ),
+        Page.Databaseˉdurableˉpageˉerror.Invalidˉpayloadˉlength
+    ) { return 8; }
+    return 42;
+}
+
+fn Commitˉvalue(
+    Databaseˉidentityˉhigh: u64,
+    Databaseˉidentityˉlow: u64,
+    Generation: u64,
+    Sequence: u64,
+    Previousˉgeneration: u64,
+    Previousˉsequence: u64,
+    Rootˉpage: u64,
+    Previousˉlogˉpage: u64,
+    Logˉpage: u64,
+    Firstˉallocatedˉpage: u64,
+    Allocatedˉpageˉcount: u64,
+    Pageˉcount: u64,
+    Committedˉlength: u64,
+    Pageˉsize: u32,
+    Rootˉdepth: u32
+) -> Commit.Databaseˉcommitˉrecord {
+    return Commit.Databaseˉcommitˉrecord(
+        Databaseˉidentityˉhigh,
+        Databaseˉidentityˉlow,
+        Generation,
+        Sequence,
+        Previousˉgeneration,
+        Previousˉsequence,
+        Rootˉpage,
+        Previousˉlogˉpage,
+        Logˉpage,
+        Firstˉallocatedˉpage,
+        Allocatedˉpageˉcount,
+        Pageˉcount,
+        Committedˉlength,
+        Pageˉsize,
+        Rootˉdepth
+    );
+}
+
+fn Commitˉbaseˉvalue() -> Commit.Databaseˉcommitˉrecord {
+    return Commitˉvalue(
+        1u64,
+        2u64,
+        2u64,
+        3u64,
+        1u64,
+        0u64,
+        1u64,
+        NO_PAGE,
+        2u64,
+        1u64,
+        2u64,
+        3u64,
+        12800u64,
+        4096u32,
+        1u32
+    );
+}
+
+fn Commitˉbase() -> bytes {
+    let Result: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉencode(Commitˉbaseˉvalue());
+    return Result.Bytes;
+}
+
+fn Commitˉdecodeˉfails(
+    Input: bytes,
+    Error: Commit.Databaseˉcommitˉrecordˉerror
+) -> bool {
+    let Result: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉdecode(Input);
+    return Result.Error == Error;
+}
+
+fn Commitˉencodeˉfails(
+    Value: Commit.Databaseˉcommitˉrecord,
+    Error: Commit.Databaseˉcommitˉrecordˉerror
+) -> bool {
+    let Result: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉencode(Value);
+    return Result.Error == Error;
+}
+
+fn Commitˉbasic() -> i32 {
+    let Encoded: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉencode(Commitˉbaseˉvalue());
+    if Encoded.Error != Commit.Databaseˉcommitˉrecordˉerror.Valid ||
+        Bytesˉlength(Encoded.Bytes) != 256u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 0u32) != 1380144727u32 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Bytes, 8u32) != 256u32 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 80u32) != 2u64 ||
+        Bytesˉreadˉu64ˉlittle(Encoded.Bytes, 96u32) != 2u64 {
+        return 1;
+    }
+    let Decoded: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉdecode(Encoded.Bytes);
+    if Decoded.Error != Commit.Databaseˉcommitˉrecordˉerror.Valid ||
+        Decoded.Databaseˉidentityˉhigh != 1u64 ||
+        Decoded.Databaseˉidentityˉlow != 2u64 ||
+        Decoded.Generation != 2u64 ||
+        Decoded.Committedˉsequence != 3u64 ||
+        Decoded.Previousˉgeneration != 1u64 ||
+        Decoded.Previousˉsequence != 0u64 ||
+        Decoded.Rootˉpage != 1u64 ||
+        Decoded.Previousˉlogˉpage != NO_PAGE ||
+        Decoded.Logˉpage != 2u64 ||
+        Decoded.Firstˉallocatedˉpage != 1u64 ||
+        Decoded.Allocatedˉpageˉcount != 2u64 ||
+        Decoded.Pageˉcount != 3u64 ||
+        Decoded.Committedˉlength != 12800u64 ||
+        Decoded.Pageˉsize != 4096u32 ||
+        Decoded.Rootˉdepth != 1u32 {
+        return 2;
+    }
+    return 42;
+}
+
+fn Commitˉheader() -> i32 {
+    let Base: bytes = Commitˉbase();
+    if !Commitˉdecodeˉfails(
+        Bytesˉslice(Base, 0u32, 255u32),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉlength
+    ) { return 1; }
+    if !Commitˉdecodeˉfails(
+        Replace(Base, 0u32, 4u32, Bytesˉfromˉu32ˉlittle(0u32)),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉmagic
+    ) { return 2; }
+    if !Commitˉdecodeˉfails(
+        Replace(Base, 4u32, 4u32, Bytesˉfromˉu32ˉlittle(2u32)),
+        Commit.Databaseˉcommitˉrecordˉerror.Unsupportedˉversion
+    ) { return 3; }
+    if !Commitˉdecodeˉfails(
+        Replace(Base, 8u32, 4u32, Bytesˉfromˉu32ˉlittle(255u32)),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉdeclaredˉsize
+    ) { return 4; }
+    if !Commitˉdecodeˉfails(
+        Replace(Base, 12u32, 4u32, Bytesˉfromˉu32ˉlittle(1u32)),
+        Commit.Databaseˉcommitˉrecordˉerror.Unsupportedˉflags
+    ) { return 5; }
+    if !Commitˉdecodeˉfails(
+        Replace(Base, 128u32, 1u32, Bytesˉfromˉu8(1u8)),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉreserved
+    ) { return 6; }
+    if !Commitˉdecodeˉfails(
+        Corrupt(Base, 224u32),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉchecksum
+    ) { return 7; }
+    return 42;
+}
+
+fn Commitˉsemantic() -> i32 {
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            0u64, 0u64, 2u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            2u64, 1u64, 2u64, 3u64, 12800u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉdatabaseˉidentity
+    ) { return 1; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 3u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            2u64, 1u64, 2u64, 3u64, 12800u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉgeneration
+    ) { return 2; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 3u64, 1u64, 0u64,
+            2u64, 1u64, 2u64, 3u64, 12800u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉsequence
+    ) { return 3; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 1u64, 0u64,
+            2u64, 1u64, 2u64, 3u64, 12800u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉpreviousˉlog
+    ) { return 4; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            2u64, 1u64, 2u64, 3u64, 12800u64, 1024u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉpageˉsize
+    ) { return 5; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            2u64, 1u64, 1u64, 2u64, 8704u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉallocation
+    ) { return 6; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            2u64, 1u64, 2u64, 4u64, 16896u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉpageˉcount
+    ) { return 7; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 0u64, NO_PAGE,
+            2u64, 1u64, 2u64, 3u64, 12800u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉrootˉpage
+    ) { return 8; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            1u64, 1u64, 2u64, 3u64, 12800u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉlogˉpage
+    ) { return 9; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            2u64, 1u64, 2u64, 3u64, 12800u64, 4096u32, 129u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉrootˉdepth
+    ) { return 10; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            2u64, 1u64, 2u64, 3u64, 12801u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Invalidˉcommittedˉlength
+    ) { return 11; }
+    if !Commitˉencodeˉfails(
+        Commitˉvalue(
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64,
+            18446744073709551614u64, NO_PAGE, 18446744073709551614u64,
+            18446744073709551614u64, 2u64, 0u64, 0u64, 4096u32, 1u32
+        ),
+        Commit.Databaseˉcommitˉrecordˉerror.Arithmeticˉoverflow
+    ) { return 12; }
+    return 42;
+}
+
+fn Publicationˉcurrent(
+    Status: Superblock.Databaseˉsuperblockˉselectionˉstatus,
+    Slot: Superblock.Databaseˉsuperblockˉslot,
+    Identityˉhigh: u64
+) -> Superblock.Databaseˉsuperblockˉselection {
+    return Superblock.Databaseˉsuperblockˉselection(
+        Status,
+        Slot,
+        Superblock.Databaseˉsuperblockˉerror.Valid,
+        Superblock.Databaseˉsuperblockˉerror.Invalidˉlength,
+        0u64,
+        Identityˉhigh,
+        2u64,
+        1u64,
+        0u64,
+        0u64,
+        NO_PAGE,
+        0u64,
+        1u64,
+        4608u64,
+        4096u32,
+        1u32
+    );
+}
+
+fn Publicationˉtarget(
+    Error: Superblock.Databaseˉsuperblockˉerror,
+    Identityˉhigh: u64,
+    Generation: u64,
+    Sequence: u64,
+    Rootˉpage: u64,
+    Pageˉsize: u32
+) -> Superblock.Databaseˉsuperblockˉresult {
+    return Superblock.Databaseˉsuperblockˉresult(
+        Error,
+        Identityˉhigh,
+        2u64,
+        Generation,
+        Sequence,
+        Rootˉpage,
+        2u64,
+        1u64,
+        3u64,
+        12800u64,
+        Pageˉsize,
+        1u32,
+        Emptyˉbytes()
+    );
+}
+
+fn Publicationˉrecord(
+    Error: Commit.Databaseˉcommitˉrecordˉerror,
+    Identityˉhigh: u64,
+    Previousˉgeneration: u64,
+    Previousˉsequence: u64,
+    Rootˉpage: u64
+) -> Commit.Databaseˉcommitˉrecordˉresult {
+    return Commit.Databaseˉcommitˉrecordˉresult(
+        Error,
+        Identityˉhigh,
+        2u64,
+        2u64,
+        3u64,
+        Previousˉgeneration,
+        Previousˉsequence,
+        Rootˉpage,
+        NO_PAGE,
+        2u64,
+        1u64,
+        2u64,
+        3u64,
+        12800u64,
+        4096u32,
+        1u32,
+        Zeroes(256u32)
+    );
+}
+
+fn Publicationˉlogˉpage(
+    Record: Commit.Databaseˉcommitˉrecordˉresult
+) -> Page.Databaseˉdurableˉpageˉresult {
+    return Page.Databaseˉdurableˉpageˉresult(
+        Page.Databaseˉdurableˉpageˉerror.Valid,
+        Page.Databaseˉdurableˉpageˉkind.Commitˉlog,
+        Record.Pageˉsize,
+        Record.Logˉpage,
+        Record.Generation,
+        Record.Committedˉsequence,
+        Record.Previousˉlogˉpage,
+        1u32,
+        Record.Bytes,
+        Emptyˉbytes()
+    );
+}
+
+fn Publicationˉattempt(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Target: Superblock.Databaseˉsuperblockˉresult,
+    Record: Commit.Databaseˉcommitˉrecordˉresult
+) -> Publication.Databaseˉcommitˉpublication {
+    return Publication.Databaseˉcommitˉpublicationˉbegin(
+        Current,
+        Target,
+        Record,
+        Publicationˉlogˉpage(Record)
+    );
+}
+
+fn Publicationˉbegin(
+    Slot: Superblock.Databaseˉsuperblockˉslot
+) -> Publication.Databaseˉcommitˉpublication {
+    return Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Slot,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            1u64,
+            2u64,
+            3u64,
+            1u64,
+            4096u32
+        ),
+        Publicationˉrecord(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64,
+            1u64,
+            0u64,
+            1u64
+        )
+    );
+}
+
+fn Publicationˉhappy() -> i32 {
+    var State: Publication.Databaseˉcommitˉpublication =
+        Publicationˉbegin(Superblock.Databaseˉsuperblockˉslot.First);
+    if State.Error != Publication.Databaseˉcommitˉpublicationˉerror.Valid ||
+        State.Stage != Publication.Databaseˉcommitˉpublicationˉstage.Writeˉpages ||
+        State.Targetˉslot != Superblock.Databaseˉsuperblockˉslot.Second ||
+        State.Position != 4608u64 ||
+        State.Length != 8192u64 ||
+        State.Currentˉgeneration != 1u64 ||
+        State.Targetˉgeneration != 2u64 ||
+        State.Targetˉsequence != 3u64 ||
+        State.Targetˉlength != 12800u64 {
+        return 1;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        State,
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        8192u64
+    );
+    if State.Stage != Publication.Databaseˉcommitˉpublicationˉstage.Flushˉpages ||
+        State.Flushˉscope !=
+            Publication.Databaseˉcommitˉpublicationˉflushˉscope.Contentˉandˉlength {
+        return 2;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        State,
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        0u64
+    );
+    if State.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Writeˉsuperblock ||
+        State.Position != 256u64 || State.Length != 256u64 {
+        return 3;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        State,
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        256u64
+    );
+    if State.Stage !=
+            Publication.Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock ||
+        State.Flushˉscope !=
+            Publication.Databaseˉcommitˉpublicationˉflushˉscope.Content {
+        return 4;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        State,
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        0u64
+    );
+    if State.Stage != Publication.Databaseˉcommitˉpublicationˉstage.Committed {
+        return 5;
+    }
+    let Other: Publication.Databaseˉcommitˉpublication =
+        Publicationˉbegin(Superblock.Databaseˉsuperblockˉslot.Second);
+    if Other.Targetˉslot != Superblock.Databaseˉsuperblockˉslot.First {
+        return 6;
+    }
+    return 42;
+}
+
+fn Publicationˉmismatch() -> i32 {
+    var State: Publication.Databaseˉcommitˉpublication =
+        Publicationˉattempt(
+            Publicationˉcurrent(
+                Superblock.Databaseˉsuperblockˉselectionˉstatus.Noˉvalidˉsuperblock,
+                Superblock.Databaseˉsuperblockˉslot.None,
+                1u64
+            ),
+            Publicationˉtarget(
+                Superblock.Databaseˉsuperblockˉerror.Valid,
+                1u64, 2u64, 3u64, 1u64, 4096u32
+            ),
+            Publicationˉrecord(
+                Commit.Databaseˉcommitˉrecordˉerror.Valid,
+                1u64, 1u64, 0u64, 1u64
+            )
+        );
+    if State.Error != Publication.Databaseˉcommitˉpublicationˉerror.Invalidˉcurrent {
+        return 1;
+    }
+    State = Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Invalidˉchecksum,
+            1u64, 2u64, 3u64, 1u64, 4096u32
+        ),
+        Publicationˉrecord(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64, 1u64, 0u64, 1u64
+        )
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Invalidˉtargetˉsuperblock {
+        return 2;
+    }
+    State = Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            3u64, 2u64, 3u64, 1u64, 4096u32
+        ),
+        Publicationˉrecord(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64, 1u64, 0u64, 1u64
+        )
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Conflictingˉdatabase {
+        return 3;
+    }
+    State = Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            1u64, 3u64, 3u64, 1u64, 4096u32
+        ),
+        Publicationˉrecord(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64, 1u64, 0u64, 1u64
+        )
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Conflictingˉgeneration {
+        return 4;
+    }
+    State = Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            1u64, 2u64, 4u64, 1u64, 4096u32
+        ),
+        Publicationˉrecord(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64, 1u64, 0u64, 1u64
+        )
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Conflictingˉsequence {
+        return 5;
+    }
+    State = Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            1u64, 2u64, 3u64, 1u64, 8192u32
+        ),
+        Publicationˉrecord(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64, 1u64, 0u64, 1u64
+        )
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Conflictingˉstorage {
+        return 6;
+    }
+    State = Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            1u64, 2u64, 3u64, 0u64, 4096u32
+        ),
+        Publicationˉrecord(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64, 1u64, 0u64, 1u64
+        )
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Conflictingˉpages {
+        return 7;
+    }
+    let Validˉrecord: Commit.Databaseˉcommitˉrecordˉresult =
+        Publicationˉrecord(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64, 1u64, 0u64, 1u64
+        );
+    let Badˉlog: Page.Databaseˉdurableˉpageˉresult =
+        Page.Databaseˉdurableˉpageˉresult(
+            Page.Databaseˉdurableˉpageˉerror.Valid,
+            Page.Databaseˉdurableˉpageˉkind.Commitˉlog,
+            4096u32, 3u64, 2u64, 3u64, NO_PAGE, 1u32,
+            Validˉrecord.Bytes, Emptyˉbytes()
+        );
+    State = Publication.Databaseˉcommitˉpublicationˉbegin(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            1u64, 2u64, 3u64, 1u64, 4096u32
+        ),
+        Validˉrecord,
+        Badˉlog
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Invalidˉlogˉpage {
+        return 8;
+    }
+    let Badˉretention: Superblock.Databaseˉsuperblockˉresult =
+        Superblock.Databaseˉsuperblockˉresult(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            1u64, 2u64, 2u64, 3u64, 1u64, 2u64, 2u64,
+            3u64, 12800u64, 4096u32, 1u32, Emptyˉbytes()
+        );
+    State = Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Badˉretention,
+        Validˉrecord
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Conflictingˉretention {
+        return 9;
+    }
+    let Overflowˉrecord: Commit.Databaseˉcommitˉrecordˉresult =
+        Commit.Databaseˉcommitˉrecordˉresult(
+            Commit.Databaseˉcommitˉrecordˉerror.Valid,
+            1u64, 2u64, 2u64, 3u64, 1u64, 0u64, 1u64, NO_PAGE,
+            2u64, 18446744073709551614u64, 2u64, 0u64,
+            12800u64, 4096u32, 1u32, Zeroes(256u32)
+        );
+    State = Publicationˉattempt(
+        Publicationˉcurrent(
+            Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid,
+            Superblock.Databaseˉsuperblockˉslot.First,
+            1u64
+        ),
+        Publicationˉtarget(
+            Superblock.Databaseˉsuperblockˉerror.Valid,
+            1u64, 2u64, 3u64, 1u64, 4096u32
+        ),
+        Overflowˉrecord
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Arithmeticˉoverflow {
+        return 10;
+    }
+    return 42;
+}
+
+fn Publicationˉoutcomes() -> i32 {
+    var State: Publication.Databaseˉcommitˉpublication =
+        Publication.Databaseˉcommitˉpublicationˉadvance(
+            Publicationˉbegin(Superblock.Databaseˉsuperblockˉslot.First),
+            Publication.Databaseˉcommitˉpublicationˉobservation.Rejected,
+            0u64
+        );
+    if State.Stage != Publication.Databaseˉcommitˉpublicationˉstage.Aborted {
+        return 1;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        Publicationˉbegin(Superblock.Databaseˉsuperblockˉslot.First),
+        Publication.Databaseˉcommitˉpublicationˉobservation.Partial,
+        1u64
+    );
+    if State.Stage != Publication.Databaseˉcommitˉpublicationˉstage.Recover {
+        return 2;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        Publicationˉbegin(Superblock.Databaseˉsuperblockˉslot.First),
+        Publication.Databaseˉcommitˉpublicationˉobservation.Indeterminate,
+        0u64
+    );
+    if State.Stage != Publication.Databaseˉcommitˉpublicationˉstage.Recover {
+        return 3;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        Publicationˉbegin(Superblock.Databaseˉsuperblockˉslot.First),
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        1u64
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Invalidˉobservation {
+        return 4;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        Publicationˉbegin(Superblock.Databaseˉsuperblockˉslot.First),
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        8192u64
+    );
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        State,
+        Publication.Databaseˉcommitˉpublicationˉobservation.Partial,
+        1u64
+    );
+    if State.Error !=
+        Publication.Databaseˉcommitˉpublicationˉerror.Invalidˉobservation {
+        return 5;
+    }
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        Publicationˉbegin(Superblock.Databaseˉsuperblockˉslot.First),
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        8192u64
+    );
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        State,
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        0u64
+    );
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        State,
+        Publication.Databaseˉcommitˉpublicationˉobservation.Completed,
+        256u64
+    );
+    State = Publication.Databaseˉcommitˉpublicationˉadvance(
+        State,
+        Publication.Databaseˉcommitˉpublicationˉobservation.Rejected,
+        0u64
+    );
+    if State.Stage != Publication.Databaseˉcommitˉpublicationˉstage.Recover {
+        return 6;
+    }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 { return 64; }
+    let Caseˉbytes: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Caseˉbytes) != 1u32 { return 64; }
+    let Case: u8 = Bytesˉreadˉu8(Caseˉbytes, 0u32);
+    if Case == 65u8 { return Pageˉbasic(); }
+    if Case == 66u8 { return Pageˉheader(); }
+    if Case == 67u8 { return Pageˉheaderˉchecksum(); }
+    if Case == 68u8 { return Pageˉpayloadˉchecksum(); }
+    if Case == 69u8 { return Pageˉpadding(); }
+    if Case == 70u8 { return Pageˉsemantic(); }
+    if Case == 71u8 { return Commitˉbasic(); }
+    if Case == 72u8 { return Commitˉheader(); }
+    if Case == 73u8 { return Commitˉsemantic(); }
+    if Case == 74u8 { return Publicationˉhappy(); }
+    if Case == 75u8 { return Publicationˉmismatch(); }
+    if Case == 76u8 { return Publicationˉoutcomes(); }
+    return 64;
+}

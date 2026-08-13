@@ -19,8 +19,8 @@ suite boundary specifically requires it.
 
 ## Plan identity and grammar
 
-`Tests/Native/Retirement-Suite.txt` is 4,246 LF-only bytes with SHA-256
-`cd4cc535d9f324ed5fe4c4a3b15dc06462759aa12409c3f5156a22ea15a90b05`.
+`Tests/Native/Retirement-Suite.txt` is 4,682 LF-only bytes with SHA-256
+`aed9ffaffeb8ec45d7afdd63c9fa0c18da6350e204daa9ad1fc2f5f52e82f291`.
 The first line is exactly:
 
 ```text
@@ -85,11 +85,14 @@ file. The current plan is:
 | `os-process-object` | `Test-Os-Process-Object` | 2 | `Tests: 2, Passed: 2, Failed: 0` |
 | `os-probe` | `Test-Os-Probe` | 4 | `Tests: 4, Passed: 4, Failed: 0` |
 | `aot-chain` | `Test-Aot-Chain` | 1 | `native aot chain status=Passed result=42` |
+| `native-u64-lowering` | `Test-Native-U64-Lowering` | 1 | `native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified` |
+| `database-superblock` | `Test-Database-Superblock` | 13 | `native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified` |
+| `database-durable-commit` | `Test-Database-Durable-Commit` | 12 | `native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified` |
 | `workspace-project2` | `Test-Workspace-Project2` | 8 | `native workspace/project test status=Complete cases=8` |
-| `libraries` | `Test-Libraries` | 12 | `native libraries status=Passed projects=8 conformance-builds=2 negative=2 cases=12` |
+| `libraries` | `Test-Libraries` | 26 | `native libraries status=Passed projects=17 conformance-builds=7 negative=2 cases=26` |
 | `packages` | `Test-Wvdb-Query-Package` | 8 | `native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8` |
 
-The version-1 plan therefore contains exactly 48 suites and 3,234 cases.
+The version-1 plan therefore contains exactly 51 suites and 3,274 cases.
 
 ## Coordinator contract
 
@@ -111,7 +114,7 @@ files remain private to one newly allocated directory and are removed on exit.
 A complete success ends with:
 
 ```text
-Suites: 48, Passed: 48, Failed: 0, Cases: 3234
+Suites: 51, Passed: 51, Failed: 0, Cases: 3274
 ```
 
 For example, the `unsafe-wvb` filter succeeds with:

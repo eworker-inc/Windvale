@@ -1,0 +1,4 @@
+windvale-project 2
+root "Libraries/Platform/Database/Native-Hosted-Snapshot-Page.wv"
+source "Libraries/Database/Storage-Page.wv"
+emit wvb

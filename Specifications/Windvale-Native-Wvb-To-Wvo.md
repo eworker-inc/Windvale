@@ -52,15 +52,15 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 416,464 | `8ce81d1c657f558f66b5b503d0edabad371b1f601297892f0d139e06176bdc27` |
-| Windows WVB-to-WVO tool | 5,997,056 | `4c2bf61306b81851424dbc02e7eb345ac34bcc9ffacd7727e8378c7b9e5dae07` |
-| Linux WVB-to-WVO tool | 5,996,544 | `55df0cd2a679491bc1a3da50b6bc67b5f512f2a4698721faea6becb556a2a46f` |
+| WVB-to-WVO tool WVB | 435,970 | `5f6240f7202a56269661ca3281578340695404de5718fee88e47e1f5bb864ff5` |
+| Windows WVB-to-WVO tool | 6,206,976 | `0d58124ba389f93f352cf32f0eedc35773b2235ac0af8f5fee886a17001a9080` |
+| Linux WVB-to-WVO tool | 6,205,440 | `8debddbbeefc325ba15aae700c77921bb077460067222b9100618d1ec6bec76f` |
 
 These pinned candidate applications include Decision 0419's parameterless
 `Main() -> bytes` contract and Decision 0423's compiler-scale admission work.
 Decision 0497 uses the current Windows native source front door plus the
 retained segmented staging, linking, transport, and hosted-packaging toolset to
-reconstruct this exact 414,298-byte WVB and both exact target applications in a
+reconstruct this exact 435,970-byte WVB and both exact target applications in a
 separate output directory. The constructed Windows application then reproduces
 the fixed WVO below. This removes Stage 0 as the only constructor of the current
 candidate generation, but it consumes an already retained native toolset and

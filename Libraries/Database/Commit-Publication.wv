@@ -1,0 +1,376 @@
+module Windvaleˉdatabaseˉcommitˉpublication profile portable;
+
+import Windvaleˉdatabaseˉdurableˉcommitˉrecord as Commit;
+import Windvaleˉdatabaseˉdurableˉpage as Page;
+import Windvaleˉdatabaseˉdurableˉsuperblock as Superblock;
+
+const DATABASE_PUBLICATION_SUPERBLOCK_BYTES: u64 = 256u64;
+const DATABASE_PUBLICATION_SECOND_SLOT_OFFSET: u64 = 256u64;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export enum Databaseˉcommitˉpublicationˉerror {
+    Valid = 0;
+    Invalidˉcurrent = 1;
+    Invalidˉtargetˉsuperblock = 2;
+    Invalidˉcommitˉrecord = 3;
+    Invalidˉlogˉpage = 4;
+    Conflictingˉdatabase = 5;
+    Conflictingˉgeneration = 6;
+    Conflictingˉsequence = 7;
+    Conflictingˉretention = 8;
+    Conflictingˉstorage = 9;
+    Conflictingˉpages = 10;
+    Invalidˉslot = 11;
+    Invalidˉstate = 12;
+    Invalidˉobservation = 13;
+    Arithmeticˉoverflow = 14;
+}
+
+export enum Databaseˉcommitˉpublicationˉstage {
+    Invalid = 0;
+    Writeˉpages = 1;
+    Flushˉpages = 2;
+    Writeˉsuperblock = 3;
+    Flushˉsuperblock = 4;
+    Committed = 5;
+    Aborted = 6;
+    Recover = 7;
+}
+
+export enum Databaseˉcommitˉpublicationˉobservation {
+    Completed = 0;
+    Rejected = 1;
+    Partial = 2;
+    Indeterminate = 3;
+}
+
+export enum Databaseˉcommitˉpublicationˉflushˉscope {
+    None = 0;
+    Content = 1;
+    Contentˉandˉlength = 2;
+}
+
+export record Databaseˉcommitˉpublication {
+    Error: Databaseˉcommitˉpublicationˉerror;
+    Stage: Databaseˉcommitˉpublicationˉstage;
+    Targetˉslot: Superblock.Databaseˉsuperblockˉslot;
+    Position: u64;
+    Length: u64;
+    Flushˉscope: Databaseˉcommitˉpublicationˉflushˉscope;
+    Currentˉgeneration: u64;
+    Currentˉsequence: u64;
+    Currentˉlength: u64;
+    Targetˉgeneration: u64;
+    Targetˉsequence: u64;
+    Targetˉlength: u64;
+}
+
+fn Databaseˉpublicationˉfailure(
+    Error: Databaseˉcommitˉpublicationˉerror
+) -> Databaseˉcommitˉpublication {
+    return Databaseˉcommitˉpublication(
+        Error,
+        Databaseˉcommitˉpublicationˉstage.Invalid,
+        Superblock.Databaseˉsuperblockˉslot.None,
+        0u64,
+        0u64,
+        Databaseˉcommitˉpublicationˉflushˉscope.None,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64,
+        0u64
+    );
+}
+
+fn Databaseˉpublicationˉnext(
+    State: Databaseˉcommitˉpublication,
+    Stage: Databaseˉcommitˉpublicationˉstage,
+    Position: u64,
+    Length: u64,
+    Flushˉscope: Databaseˉcommitˉpublicationˉflushˉscope
+) -> Databaseˉcommitˉpublication {
+    return Databaseˉcommitˉpublication(
+        Databaseˉcommitˉpublicationˉerror.Valid,
+        Stage,
+        State.Targetˉslot,
+        Position,
+        Length,
+        Flushˉscope,
+        State.Currentˉgeneration,
+        State.Currentˉsequence,
+        State.Currentˉlength,
+        State.Targetˉgeneration,
+        State.Targetˉsequence,
+        State.Targetˉlength
+    );
+}
+
+fn Databaseˉpublicationˉtargetˉslot(
+    Current: Superblock.Databaseˉsuperblockˉslot
+) -> Superblock.Databaseˉsuperblockˉslot {
+    if Current == Superblock.Databaseˉsuperblockˉslot.First {
+        return Superblock.Databaseˉsuperblockˉslot.Second;
+    }
+    return Superblock.Databaseˉsuperblockˉslot.First;
+}
+
+fn Databaseˉpublicationˉslotˉoffset(
+    Slot: Superblock.Databaseˉsuperblockˉslot
+) -> u64 {
+    if Slot == Superblock.Databaseˉsuperblockˉslot.Second {
+        return DATABASE_PUBLICATION_SECOND_SLOT_OFFSET;
+    }
+    return 0u64;
+}
+
+fn Databaseˉpublicationˉbytesˉequal(First: bytes, Second: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(First);
+    if Length != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Databaseˉcommitˉpublicationˉbegin(
+    Current: Superblock.Databaseˉsuperblockˉselection,
+    Target: Superblock.Databaseˉsuperblockˉresult,
+    Record: Commit.Databaseˉcommitˉrecordˉresult,
+    Logˉpage: Page.Databaseˉdurableˉpageˉresult
+) -> Databaseˉcommitˉpublication {
+    if Current.Status != Superblock.Databaseˉsuperblockˉselectionˉstatus.Valid {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Invalidˉcurrent
+        );
+    }
+    if Current.Slot != Superblock.Databaseˉsuperblockˉslot.First &&
+        Current.Slot != Superblock.Databaseˉsuperblockˉslot.Second {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Invalidˉslot
+        );
+    }
+    if Target.Error != Superblock.Databaseˉsuperblockˉerror.Valid {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Invalidˉtargetˉsuperblock
+        );
+    }
+    if Record.Error != Commit.Databaseˉcommitˉrecordˉerror.Valid {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Invalidˉcommitˉrecord
+        );
+    }
+    if Logˉpage.Error != Page.Databaseˉdurableˉpageˉerror.Valid ||
+        Logˉpage.Kind != Page.Databaseˉdurableˉpageˉkind.Commitˉlog ||
+        Logˉpage.Pageˉsize != Record.Pageˉsize ||
+        Logˉpage.Pageˉidentifier != Record.Logˉpage ||
+        Logˉpage.Generation != Record.Generation ||
+        Logˉpage.Commitˉsequence != Record.Committedˉsequence ||
+        Logˉpage.Previousˉpage != Record.Previousˉlogˉpage ||
+        Logˉpage.Itemˉcount != 1u32 ||
+        !Databaseˉpublicationˉbytesˉequal(Logˉpage.Payload, Record.Bytes) {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Invalidˉlogˉpage
+        );
+    }
+    if Current.Databaseˉidentityˉhigh != Target.Databaseˉidentityˉhigh ||
+        Current.Databaseˉidentityˉlow != Target.Databaseˉidentityˉlow ||
+        Current.Databaseˉidentityˉhigh != Record.Databaseˉidentityˉhigh ||
+        Current.Databaseˉidentityˉlow != Record.Databaseˉidentityˉlow {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Conflictingˉdatabase
+        );
+    }
+    if Current.Generation != Record.Previousˉgeneration ||
+        Target.Generation != Record.Generation {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Conflictingˉgeneration
+        );
+    }
+    if Current.Committedˉsequence != Record.Previousˉsequence ||
+        Target.Committedˉsequence != Record.Committedˉsequence {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Conflictingˉsequence
+        );
+    }
+    if Current.Committedˉsequence == 0u64 {
+        if Target.Earliestˉretainedˉsequence != 1u64 {
+            return Databaseˉpublicationˉfailure(
+                Databaseˉcommitˉpublicationˉerror.Conflictingˉretention
+            );
+        }
+    } else if Target.Earliestˉretainedˉsequence !=
+        Current.Earliestˉretainedˉsequence {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Conflictingˉretention
+        );
+    }
+    let Pageˉbytes: u64 = U64ˉfromˉu32(Record.Pageˉsize);
+    if Record.Firstˉallocatedˉpage > (U64_MAXIMUM - 512u64) / Pageˉbytes {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Arithmeticˉoverflow
+        );
+    }
+    if Current.Committedˉlength != 512u64 +
+            Record.Firstˉallocatedˉpage * Pageˉbytes ||
+        Target.Committedˉlength != Record.Committedˉlength ||
+        Current.Pageˉsize != Target.Pageˉsize ||
+        Current.Pageˉsize != Record.Pageˉsize {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Conflictingˉstorage
+        );
+    }
+    if Current.Pageˉcount != Record.Firstˉallocatedˉpage ||
+        Current.Commitˉlogˉhead != Record.Previousˉlogˉpage ||
+        Target.Rootˉpage != Record.Rootˉpage ||
+        Target.Commitˉlogˉhead != Record.Logˉpage ||
+        Target.Pageˉcount != Record.Pageˉcount ||
+        Target.Rootˉdepth != Record.Rootˉdepth {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Conflictingˉpages
+        );
+    }
+    if Record.Allocatedˉpageˉcount > U64_MAXIMUM / Pageˉbytes {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Arithmeticˉoverflow
+        );
+    }
+    let Appendedˉbytes: u64 = Record.Allocatedˉpageˉcount * Pageˉbytes;
+    if Current.Committedˉlength > U64_MAXIMUM - Appendedˉbytes ||
+        Current.Committedˉlength + Appendedˉbytes != Target.Committedˉlength {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Conflictingˉstorage
+        );
+    }
+    return Databaseˉcommitˉpublication(
+        Databaseˉcommitˉpublicationˉerror.Valid,
+        Databaseˉcommitˉpublicationˉstage.Writeˉpages,
+        Databaseˉpublicationˉtargetˉslot(Current.Slot),
+        Current.Committedˉlength,
+        Appendedˉbytes,
+        Databaseˉcommitˉpublicationˉflushˉscope.None,
+        Current.Generation,
+        Current.Committedˉsequence,
+        Current.Committedˉlength,
+        Target.Generation,
+        Target.Committedˉsequence,
+        Target.Committedˉlength
+    );
+}
+
+export fn Databaseˉcommitˉpublicationˉadvance(
+    State: Databaseˉcommitˉpublication,
+    Observation: Databaseˉcommitˉpublicationˉobservation,
+    Progress: u64
+) -> Databaseˉcommitˉpublication {
+    if State.Error != Databaseˉcommitˉpublicationˉerror.Valid ||
+        State.Stage == Databaseˉcommitˉpublicationˉstage.Invalid ||
+        State.Stage == Databaseˉcommitˉpublicationˉstage.Committed ||
+        State.Stage == Databaseˉcommitˉpublicationˉstage.Aborted ||
+        State.Stage == Databaseˉcommitˉpublicationˉstage.Recover {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Invalidˉstate
+        );
+    }
+    let Isˉwrite: bool =
+        State.Stage == Databaseˉcommitˉpublicationˉstage.Writeˉpages ||
+        State.Stage == Databaseˉcommitˉpublicationˉstage.Writeˉsuperblock;
+    if Observation == Databaseˉcommitˉpublicationˉobservation.Rejected {
+        if Progress != 0u64 {
+            return Databaseˉpublicationˉfailure(
+                Databaseˉcommitˉpublicationˉerror.Invalidˉobservation
+            );
+        }
+        var Rejectedˉstage: Databaseˉcommitˉpublicationˉstage =
+            Databaseˉcommitˉpublicationˉstage.Aborted;
+        if State.Stage ==
+            Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock {
+            Rejectedˉstage = Databaseˉcommitˉpublicationˉstage.Recover;
+        }
+        return Databaseˉpublicationˉnext(
+            State,
+            Rejectedˉstage,
+            0u64,
+            0u64,
+            Databaseˉcommitˉpublicationˉflushˉscope.None
+        );
+    }
+    if Observation == Databaseˉcommitˉpublicationˉobservation.Indeterminate {
+        if Progress != 0u64 {
+            return Databaseˉpublicationˉfailure(
+                Databaseˉcommitˉpublicationˉerror.Invalidˉobservation
+            );
+        }
+        return Databaseˉpublicationˉnext(
+            State,
+            Databaseˉcommitˉpublicationˉstage.Recover,
+            0u64,
+            0u64,
+            Databaseˉcommitˉpublicationˉflushˉscope.None
+        );
+    }
+    if Observation == Databaseˉcommitˉpublicationˉobservation.Partial {
+        if !Isˉwrite || Progress == 0u64 || Progress >= State.Length {
+            return Databaseˉpublicationˉfailure(
+                Databaseˉcommitˉpublicationˉerror.Invalidˉobservation
+            );
+        }
+        return Databaseˉpublicationˉnext(
+            State,
+            Databaseˉcommitˉpublicationˉstage.Recover,
+            0u64,
+            0u64,
+            Databaseˉcommitˉpublicationˉflushˉscope.None
+        );
+    }
+    if Isˉwrite {
+        if Progress != State.Length {
+            return Databaseˉpublicationˉfailure(
+                Databaseˉcommitˉpublicationˉerror.Invalidˉobservation
+            );
+        }
+    } else if Progress != 0u64 {
+        return Databaseˉpublicationˉfailure(
+            Databaseˉcommitˉpublicationˉerror.Invalidˉobservation
+        );
+    }
+    if State.Stage == Databaseˉcommitˉpublicationˉstage.Writeˉpages {
+        return Databaseˉpublicationˉnext(
+            State,
+            Databaseˉcommitˉpublicationˉstage.Flushˉpages,
+            0u64,
+            0u64,
+            Databaseˉcommitˉpublicationˉflushˉscope.Contentˉandˉlength
+        );
+    }
+    if State.Stage == Databaseˉcommitˉpublicationˉstage.Flushˉpages {
+        return Databaseˉpublicationˉnext(
+            State,
+            Databaseˉcommitˉpublicationˉstage.Writeˉsuperblock,
+            Databaseˉpublicationˉslotˉoffset(State.Targetˉslot),
+            DATABASE_PUBLICATION_SUPERBLOCK_BYTES,
+            Databaseˉcommitˉpublicationˉflushˉscope.None
+        );
+    }
+    if State.Stage == Databaseˉcommitˉpublicationˉstage.Writeˉsuperblock {
+        return Databaseˉpublicationˉnext(
+            State,
+            Databaseˉcommitˉpublicationˉstage.Flushˉsuperblock,
+            0u64,
+            0u64,
+            Databaseˉcommitˉpublicationˉflushˉscope.Content
+        );
+    }
+    return Databaseˉpublicationˉnext(
+        State,
+        Databaseˉcommitˉpublicationˉstage.Committed,
+        0u64,
+        0u64,
+        Databaseˉcommitˉpublicationˉflushˉscope.None
+    );
+}

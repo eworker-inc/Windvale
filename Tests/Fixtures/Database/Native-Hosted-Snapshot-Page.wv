@@ -1,0 +1,27 @@
+module Nativeˉhostedˉsnapshotˉpageˉtest profile hosted;
+
+import Nativeˉhostedˉsnapshotˉpage as Snapshot;
+import Windvaleˉdatabaseˉstorageˉpage as Page;
+
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 { return 1; }
+    let Result: Page.Databaseˉstorageˉpage =
+        Snapshot.Nativeˉhostedˉsnapshotˉreadˉpage(
+            process.argument(0u32),
+            0u32,
+            8u32,
+            1u32
+        );
+    if Result.Error != Page.Databaseˉstorageˉpageˉerror.Valid { return 2; }
+    if Result.Generation != 1u64 { return 3; }
+    if Result.Storageˉlength != 17u64 { return 4; }
+    if Result.Pageˉidentifier != 1u64 { return 5; }
+    if Result.Offset != 8u64 || Result.Endˉexclusive != 16u64 { return 6; }
+    if Bytesˉlength(Result.Value) != 8u32 { return 7; }
+    if Bytesˉreadˉu8(Result.Value, 0u32) != 42u8 { return 8; }
+    return 42;
+}

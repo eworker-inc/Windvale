@@ -177,13 +177,18 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 104u8 { return 5u32; }
     if Opcode == 105u8 { return 5u32; }
     if Opcode == 106u8 { return 9u32; }
+    if Opcode == 129u8 { return 9u32; }
     if Numeric >= 107u32 {
         if Numeric <= 124u32 { return 1u32; }
     }
-    if Opcode == 161u8 || Opcode == 162u8 { return 1u32; }
+    if Numeric >= 134u32 && Numeric <= 136u32 { return 1u32; }
+    if Numeric >= 143u32 && Numeric <= 148u32 { return 1u32; }
+    if Opcode == 161u8 || Opcode == 162u8 ||
+        Opcode == 165u8 || Opcode == 166u8 { return 1u32; }
     if Numeric >= 173u32 {
         if Numeric <= 178u32 { return 1u32; }
     }
+    if Opcode == 189u8 || Opcode == 191u8 { return 1u32; }
     return 0u32;
 }
 
@@ -814,7 +819,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
 
         if Opcode == 1u8 || Opcode == 2u8 || Opcode == 3u8 ||
             Opcode == 6u8 || Opcode == 8u8 || Opcode == 9u8 ||
-            Opcode == 10u8 || Opcode == 106u8 {
+            Opcode == 10u8 || Opcode == 106u8 || Opcode == 129u8 {
             Stackˉrecords = Pushˉscalar(Stackˉrecords);
             Depth = Depth + 1u32;
             Handled = true;
@@ -922,7 +927,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Opcode == 40u8 ||
             Numericˉopcode >= 109u32 && Numericˉopcode <= 112u32 ||
             Numericˉopcode >= 115u32 && Numericˉopcode <= 118u32 ||
-            Numericˉopcode >= 120u32 && Numericˉopcode <= 124u32 {
+            Numericˉopcode >= 120u32 && Numericˉopcode <= 124u32 ||
+            Opcode == 191u8 {
             if Depth == 0u32 { return Invalid(Input); }
             Depth = Depth - 1u32;
             Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
@@ -946,7 +952,10 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Numericˉopcode >= 96u32 && Numericˉopcode <= 103u32 ||
             Opcode == 107u8 || Opcode == 108u8 || Opcode == 113u8 ||
             Opcode == 114u8 || Opcode == 119u8 ||
+            Numericˉopcode >= 134u32 && Numericˉopcode <= 136u32 ||
+            Numericˉopcode >= 143u32 && Numericˉopcode <= 148u32 ||
             Opcode == 161u8 || Opcode == 162u8 ||
+            Opcode == 165u8 || Opcode == 166u8 || Opcode == 189u8 ||
             Numericˉopcode >= 173u32 && Numericˉopcode <= 175u32 ||
             Opcode == 177u8 || Opcode == 178u8 {
             if Depth < 2u32 { return Invalid(Input); }

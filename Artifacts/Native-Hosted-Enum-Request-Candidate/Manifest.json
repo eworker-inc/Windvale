@@ -1,0 +1,25 @@
+{
+  "format": "windvale-native-hosted-enum-request-candidate-1",
+  "status": "candidate",
+  "qualification": "pending",
+  "construction": "native-project-front-door-and-hosted-package",
+  "sourceProject": "Projects/Runtime/Windvale-Native-Hosted-Enum-Request-Tool.wvproj",
+  "admission": "WVB 1.11 nominal metadata including u64 record fields",
+  "artifacts": [
+    {
+      "path": "Wvb/wvhostenumrequest.wvb",
+      "bytes": 31791,
+      "sha256": "a4ecd63b37f004310e458d41361a694dbaac47ffb056b949f5f1352f7d6ff64c"
+    },
+    {
+      "path": "windows-x64/wvhostenumrequest.exe",
+      "bytes": 343040,
+      "sha256": "da15dcbab81b206a8bc47b23188b5c4e19da6219523483df8754f3dfe7340cde"
+    },
+    {
+      "path": "linux-x64/wvhostenumrequest.elf",
+      "bytes": 344064,
+      "sha256": "f11fa229adfd1ac4c0ca97c77e376ef426d0f59ed5c66958c36c27fad0337cfd"
+    }
+  ]
+}

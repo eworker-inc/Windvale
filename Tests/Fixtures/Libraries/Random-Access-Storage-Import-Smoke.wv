@@ -1,0 +1,11 @@
+module Randomˉaccessˉstorageˉimportˉsmoke profile hosted;
+
+import Randomˉaccessˉstorage as Storage;
+
+capability storage.random_access_v1;
+
+export fn Main() -> i32 {
+    let Result: Storage.Storageˉresult = Storage.Storageˉdescribe();
+    if Result.Status == Storage.Storageˉstatus.Valid { return 42; }
+    return 1;
+}
