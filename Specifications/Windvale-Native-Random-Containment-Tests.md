@@ -81,15 +81,11 @@ combined per-channel bound.
 
 Windows and Linux use the same asynchronous bounded child-process collection.
 Completion is observed only after the child has exited and both output channels
-have closed. Linux reports the child status directly. On Windows, the inbox command
-processor invokes the native child, snapshots its exact `ERRORLEVEL`, emits one
-private status marker, and exits successfully; the shared collector removes that
-marker and returns the inner status with the child's bounded standard output and
-diagnostic bytes. This avoids an intermittent Node/libuv status-zero observation
-for the custom PE while retaining four-worker concurrency. The adapter does not
-retry, reinterpret, or excuse an unexpected status. Windows verifier and inspector
-applications continue to own explicit `ExitProcess` termination; loader
-fall-through does not participate in the exit contract.
+have closed, and the reported child status is asserted directly. Windows verifier
+and inspector applications own explicit `ExitProcess` termination; loader
+fall-through does not participate in the exit contract. The verifier artifact
+identity is therefore part of this containment boundary, including its
+verifier-specific startup rather than a generic hosted-compiler startup.
 
 All 1,000 WVB values must return the native verifier's rejection exit, write no
 standard output, emit one structured `wvb status=Invalid phase=...` diagnostic,

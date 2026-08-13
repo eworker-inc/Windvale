@@ -1,7 +1,7 @@
 # Decision 0532: Windows containment ERRORLEVEL observation
 
 - Date: 2026-08-13
-- Status: Implemented candidate
+- Status: Superseded by [Decision 0533](0533-Restore-Verifier-Specific-Front-Door-Startup.md)
 - Supersedes: [Decision 0531](0531-Restore-Bounded-Asynchronous-Windows-Containment-Collection.md)
 - Contract: [Native random containment tests](../../Specifications/Windvale-Native-Random-Containment-Tests.md)
 
@@ -13,11 +13,11 @@ diagnostic. Synchronous Node.js collection failed on fixed inputs `Wvb-0917` and
 `Wvb-0880`. Restoring asynchronous collection then failed immediately on
 `Wvb-0000`. Linux qualification and local Windows execution remained correct.
 
-The changing input ordinal, correct diagnostic, and failure under both Node child
-APIs isolate the issue to direct Node/libuv observation of this custom PE's process
-status on the hosted Windows runner. The native verifier's exact exit assertion
-must remain; treating a diagnostic as a substitute would weaken the product CLI
-contract.
+At the time, the changing input ordinal, correct diagnostic, and failure under both
+Node child APIs appeared to isolate the issue to direct Node/libuv observation of
+this custom PE's process status on the hosted Windows runner. The native verifier's
+exact exit assertion remained mandatory; treating a diagnostic as a substitute
+would have weakened the product CLI contract.
 
 ## Decision
 
@@ -52,9 +52,11 @@ or modify the verifier application.
 
 ## Evidence boundary
 
-All three focused Windows containment owners must pass locally. A new GitHub run
-must pass Windows retirement and the aggregate Verification gate before the issue is
-closed; the three preceding failed runs remain useful negative evidence.
+GitHub Verify run `31672940187` also failed through this adapter on fixed case
+`Wvb-0002`: the command processor observed the same status zero after the verifier
+printed its correct rejection. That result disproved the process-observation
+hypothesis and isolated the defect to the product artifact. Decision 0533 removes
+the adapter and restores the verifier-specific startup artifact.
 
 ## Reconsideration triggers
 

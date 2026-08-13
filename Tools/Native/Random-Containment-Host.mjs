@@ -6,14 +6,7 @@ import {
 } from "node:fs/promises";
 import { constants as Fsˉconstants } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { Decodeˉutf8, Sha256 } from "./Random-Containment-Corpus.mjs";
-
-const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
-const Windowsˉcollector = path.join(
-    Scriptˉdirectory,
-    "Collect-Windows-Containment-Process.cmd",
-);
 
 export function Hostˉartifact(Artifacts) {
     return Artifacts[process.platform];
@@ -59,35 +52,13 @@ export async function Forˉeachˉbounded(Items, Parallelism, Action) {
 }
 
 export function Runˉprocess(Fileˉpath, Arguments) {
-    const Collectˉwindowsˉstatus = process.platform === "win32";
-    if (Collectˉwindowsˉstatus) {
-        Require(
-            Arguments.length >= 1 && Arguments.length <= 2,
-            "The Windows containment collector supports one or two child arguments.",
-        );
-    }
-    const Program = Collectˉwindowsˉstatus ? Windowsˉcollector : Fileˉpath;
-    const Processˉarguments = Collectˉwindowsˉstatus
-        ? []
-        : Arguments;
-    const Environment = Collectˉwindowsˉstatus
-        ? {
-            ...process.env,
-            WINDVALE_CONTAINMENT_CHILD: Fileˉpath,
-            WINDVALE_CONTAINMENT_ARGUMENT_COUNT: Arguments.length.toString(),
-            WINDVALE_CONTAINMENT_ARGUMENT_0: Arguments[0],
-            WINDVALE_CONTAINMENT_ARGUMENT_1: Arguments[1] ?? "",
-        }
-        : process.env;
     return new Promise((Resolve, Reject) => {
-        const Child = spawn(Program, Processˉarguments, {
+        const Child = spawn(Fileˉpath, Arguments, {
             stdio: ["ignore", "pipe", "pipe"],
             windowsHide: true,
-            env: Environment,
-            shell: Collectˉwindowsˉstatus,
         });
         const Output = [];
-        const Diagnostic = [];
+        const Error = [];
         let Outputˉbytes = 0;
         let Errorˉbytes = 0;
         let Exceeded = false;
@@ -107,7 +78,7 @@ export function Runˉprocess(Fileˉpath, Arguments) {
                 Child.kill();
                 return;
             }
-            Diagnostic.push(Chunk);
+            Error.push(Chunk);
         });
         Child.on("error", Reject);
         Child.on("close", (Code, Signal) => {
@@ -119,40 +90,7 @@ export function Runˉprocess(Fileˉpath, Arguments) {
                 Reject(new Error(`A native containment command ended through signal ${Signal}.`));
                 return;
             }
-            const Outputˉbytes = Buffer.concat(Output);
-            if (Collectˉwindowsˉstatus) {
-                if (Code !== 0) {
-                    Reject(new Error(
-                        `The Windows containment collector exited ${Code}; ` +
-                            `diagnostic=${JSON.stringify(Buffer.concat(Diagnostic).toString("utf8"))}.`,
-                    ));
-                    return;
-                }
-                const Marker = Buffer.from("windvale-child-exit=", "ascii");
-                const Markerˉoffset = Outputˉbytes.lastIndexOf(Marker);
-                if (Markerˉoffset < 0) {
-                    Reject(new Error("The Windows containment collector omitted its status."));
-                    return;
-                }
-                const Statusˉtext = Outputˉbytes.subarray(Markerˉoffset).toString("ascii");
-                const Statusˉmatch = /^windvale-child-exit=([0-9]+)\r\n$/u.exec(Statusˉtext);
-                if (Statusˉmatch === null) {
-                    Reject(new Error("The Windows containment collector status is malformed."));
-                    return;
-                }
-                const Status = Number(Statusˉmatch[1]);
-                if (!Number.isSafeInteger(Status) || Status > 4_294_967_295) {
-                    Reject(new Error("The Windows containment collector status is out of range."));
-                    return;
-                }
-                Resolve({
-                    Code: Status,
-                    Output: Outputˉbytes.subarray(0, Markerˉoffset),
-                    Error: Buffer.concat(Diagnostic),
-                });
-                return;
-            }
-            Resolve({ Code, Output: Outputˉbytes, Error: Buffer.concat(Diagnostic) });
+            Resolve({ Code, Output: Buffer.concat(Output), Error: Buffer.concat(Error) });
         });
     });
 }

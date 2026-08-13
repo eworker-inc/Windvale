@@ -31,8 +31,8 @@ verify_file() {
     }
 }
 
-verify_file "$verifier" 1257472 \
-    fe84ab498fde5112e62398982bc76e3334e4bdec9e2502b87a2e4bb191fbdab3 \
+verify_file "$verifier" 1003520 \
+    824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982 \
     'Linux native WVB verifier' || exit 1
 
 temporary_root=${TMPDIR:-/tmp}
