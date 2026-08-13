@@ -44,7 +44,7 @@ verify_file "$hosted_toolset/SHA256SUMS" 6927 \
     'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" 5064 \
-    161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a \
+    d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc \
     'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9617 \
@@ -79,7 +79,7 @@ enum_service="$temporary_directory/Enum-Service.bin"
 windows_startup="$temporary_directory/Windows-Startup.wvo"
 linux_startup="$temporary_directory/Linux-Startup.wvo"
 
-"$script_directory/Build-Wvb.sh" "$repository_root/Windvale-Wvo-Object.wvproj" "$wvb" \
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Object-Model/Windvale-Wvo-Object.wvproj" "$wvb" \
     >"$temporary_directory/Build.out" 2>"$temporary_directory/Build.err" || exit $?
 verify_file "$wvb" 61008 \
     a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db \

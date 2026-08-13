@@ -53,11 +53,11 @@ segmented_windows="$segmented_output/Console-Segmented-Packager.exe"
 segmented_linux="$segmented_output/Console-Segmented-Packager.elf"
 
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Console-Application-Packager.wvproj" \
+    "$repository_root/Projects/Linker/Windvale-Console-Application-Packager.wvproj" \
     "$ordinary_wvb" \
     >"$temporary_directory/Build-Ordinary.txt" 2>"$temporary_directory/Build-Ordinary.err" || exit $?
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Console-Application-Segmented-Packager.wvproj" \
+    "$repository_root/Projects/Linker/Windvale-Console-Application-Segmented-Packager.wvproj" \
     "$segmented_wvb" \
     >"$temporary_directory/Build-Segmented.txt" 2>"$temporary_directory/Build-Segmented.err" || exit $?
 

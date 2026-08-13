@@ -1,0 +1,7 @@
+module Capabilityˉbearingˉsupport profile hosted;
+
+capability filesystem.directory_read_v1;
+
+export fn Capabilityˉbearingˉsupportˉaccepts(Name: text) -> bool {
+    return true;
+}

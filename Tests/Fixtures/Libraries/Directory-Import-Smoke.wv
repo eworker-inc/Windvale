@@ -1,0 +1,10 @@
+module Directoryˉimportˉsmoke profile hosted;
+
+import Readˉonlyˉdirectory as Directory;
+
+capability filesystem.directory_read_v1;
+
+export fn Main() -> i32 {
+    if Directory.Directoryˉreadˉnameˉisˉvalid("value.wvdb") { return 42; }
+    return 1;
+}

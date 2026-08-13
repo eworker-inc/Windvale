@@ -1,7 +1,0 @@
-windvale-project 1
-root "Tools/Windvale.Publish/Native-Hosted-Verifier-Application-Publisher.wv"
-source "Foundation/Sha256.wv"
-source "Linker/Windvale/Native-Hosted-Verifier-Application-Admission.wv"
-source "Tools/Windvale.Publish/Wvb-Publication-Native-Bridge.wv"
-source "Tools/Windvale.Publish/Wvb-Publication-Transaction.wv"
-emit wvb

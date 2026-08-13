@@ -1,0 +1,8 @@
+windvale-project 2
+root "Linker/Windvale/Console-Application-Packager.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Linker/Windvale/Console-Application-Construction-Core.wv"
+source "Linker/Windvale/Console-Application-Plan-Core.wv"
+source "Linker/Windvale/Console-Application-Verification-Core.wv"
+emit wvb

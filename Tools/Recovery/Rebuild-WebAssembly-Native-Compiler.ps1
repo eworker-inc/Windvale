@@ -27,7 +27,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $Tool = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/bin/Release/net10.0/windvale.exe'
 $CompilerWvb = Join-Path $Destination 'Wvb/Source-Compiler.wvb'
 
-& $Tool build (Join-Path $RepositoryRoot 'Windvale-Compiler.wvproj') `
+& $Tool build (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Compiler.wvproj') `
     -o $CompilerWvb
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $Tool aot $CompilerWvb `

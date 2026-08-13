@@ -1,3 +1,3 @@
-windvale-project 1
-root "Native-Entry-Bridge-Core.wv"
+windvale-project 2
+root "Runtime/Windvale/Native-Entry-Bridge-Core.wv"
 emit wvb

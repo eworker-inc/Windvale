@@ -37,7 +37,7 @@ verify_identity() {
 }
 
 if ! "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Os-Process-Policy.wvproj" \
+    "$repository_root/Projects/Operating-System/Windvale-Os-Process-Policy.wvproj" \
     "$work/Process-Policy.wvb" >"$work/Build.log" 2>&1; then
     cat -- "$work/Build.log" >&2
     exit 1

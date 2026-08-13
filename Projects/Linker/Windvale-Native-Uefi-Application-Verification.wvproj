@@ -1,0 +1,4 @@
+windvale-project 2
+root "Linker/Windvale/Uefi-Application-Verification-Bridge.wv"
+source "Linker/Windvale/Uefi-Application-Verification-Core.wv"
+emit wvb

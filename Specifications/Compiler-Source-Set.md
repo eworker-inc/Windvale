@@ -56,9 +56,9 @@ The hosted source-set tool accepts explicit root/dependency resource names, cons
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Set-Core.wvb`: 257,873 bytes, SHA-256 `1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb`.
-- `Source-Set-Demo.wvb`: 267,203 bytes, SHA-256 `ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742`.
-- `Source-Set-Tool.wvb`: 261,726 bytes, SHA-256 `6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f`.
+- `Source-Set-Core.wvb`: 257,061 bytes, SHA-256 `2daf59f6863a39c662e282cfc272a0203cff9fc0440e033774b40c8b44354d35`.
+- `Source-Set-Demo.wvb`: 266,391 bytes, SHA-256 `de6e86890e54a47a2dba9a821c4cb279c8c02468cbd78c8f57df95c6e399f50e`.
+- `Source-Set-Tool.wvb`: 260,914 bytes, SHA-256 `132e2a7817c704afa4d6ef9f9a33e21ddbd704cc0bd6139e205a0a3048c65fa1`.
 
 These local candidate identities include the new lexical, declaration, and body-expression surface and require cross-host requalification. The current local hosted report is:
 

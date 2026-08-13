@@ -83,11 +83,11 @@ verify_file() {
     [[ $actual_sha256 == "$expected_sha256" ]]
 }
 
-verify_file "$wvb" 921640 \
-    18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754 || exit 1
-verify_file "$windows" 27666432 \
-    c1be8bd7e2c9496fee0cd3e486348804469d72621bcf45e30d8b6e8a1814da9c || exit 1
-verify_file "$linux" 27668480 \
-    25905e75e836ad8015a851aa6a52531bf5ab73c9dd97596628c2226740f37a34 || exit 1
+verify_file "$wvb" 927274 \
+    d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae || exit 1
+verify_file "$windows" 27776000 \
+    11c01839d63a13570e02873f760614eef42089a29a282083f5def3e968038d78 || exit 1
+verify_file "$linux" 27774976 \
+    93651adc36557aaa895627e8d8aa022b8765fc4f6cfaafbb5dc7c0a263287f67 || exit 1
 
-echo 'native compiler reconstruction status=Complete compiler-bytes=921640 native-bytes=27635298 entry-offset=43146 chunks=7'
+echo 'native compiler reconstruction status=Complete compiler-bytes=927274 native-bytes=27744550 entry-offset=43146 chunks=7'

@@ -8,7 +8,7 @@ The portable core owns WVB admission, control and type verification, ABI-22 sele
 
 ## Construction contract
 
-`Windvale-Native-X64-Lowering-Tool.wvproj` is the exact source-to-WVB project. Its root is `Compiler/Windvale/Native-X64-Lowering-Tool.wv`, its canonical module identity is `Compilerˉnativeˉx64ˉloweringˉtool`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
+`Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj` is the exact source-to-WVB project. Its root is `Compiler/Windvale/Native-X64-Lowering-Tool.wv`, its canonical module identity is `Compilerˉnativeˉx64ˉloweringˉtool`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
 
 The native writer accepts only that identity and entry. Its fragment requires these services in this exact order:
 
@@ -71,7 +71,7 @@ Linux reconstruction and execution before promotion. Ordinary consumers
 continue to use digest-bound retained WVOs until paired promotion qualifies the
 current candidate applications.
 
-`Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
+`Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` produces the fixed accepted-subset input:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |

@@ -1,0 +1,7 @@
+module Capabilityˉprofileˉrejection profile portable;
+
+import Capabilityˉbearingˉsupport as Support;
+
+export fn Main() -> i32 {
+    return 42;
+}

@@ -27,7 +27,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $Tool = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/bin/Release/net10.0/windvale.exe'
 $CompilerWvb = Join-Path $Destination 'Wvb/WebAssembly-Compiler.wvb'
 
-& $Tool build (Join-Path $RepositoryRoot 'Windvale-WebAssembly-Artifact-Tool.wvproj') `
+& $Tool build (Join-Path $RepositoryRoot 'Projects/Tools/Windvale-WebAssembly-Artifact-Tool.wvproj') `
     -o $CompilerWvb
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & $Tool aot $CompilerWvb `

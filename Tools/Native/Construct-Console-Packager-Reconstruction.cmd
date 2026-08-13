@@ -46,11 +46,11 @@ set "SegmentedWindows=%SegmentedOutput%\Console-Segmented-Packager.exe"
 set "SegmentedLinux=%SegmentedOutput%\Console-Segmented-Packager.elf"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Console-Application-Packager.wvproj" ^
+    "%RepositoryRoot%\Projects/Linker/Windvale-Console-Application-Packager.wvproj" ^
     "%OrdinaryWvb%" >"%TemporaryDirectory%\Build-Ordinary.txt" 2>"%TemporaryDirectory%\Build-Ordinary.err"
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Console-Application-Segmented-Packager.wvproj" ^
+    "%RepositoryRoot%\Projects/Linker/Windvale-Console-Application-Segmented-Packager.wvproj" ^
     "%SegmentedWvb%" >"%TemporaryDirectory%\Build-Segmented.txt" 2>"%TemporaryDirectory%\Build-Segmented.err"
 if errorlevel 1 goto :cleanup
 

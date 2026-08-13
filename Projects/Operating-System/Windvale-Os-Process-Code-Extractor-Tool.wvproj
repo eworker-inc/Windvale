@@ -1,0 +1,5 @@
+windvale-project 2
+root "Operating-System/Tools/Process-Code-Extractor-Tool.wv"
+source "Foundation/Byte-Ordering.wv"
+source "Object-Model/Windvale/Wvo-Object-Verification.wv"
+emit wvb

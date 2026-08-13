@@ -38,11 +38,11 @@ set "CanonicalPrefix=%TemporaryDirectory%\Canonical"
 set "CanonicalManifest=%TemporaryDirectory%\Canonical.wvli"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Native-X64-Lowering-Tool.wvproj" ^
+    "%RepositoryRoot%\Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" ^
     "%LowererWvb%" >"%TemporaryDirectory%\Build-Lowerer.txt" 2>"%TemporaryDirectory%\Build-Lowerer.err"
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" ^
+    "%RepositoryRoot%\Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" ^
     "%ReturnWvb%" >"%TemporaryDirectory%\Build-Return-42.txt" 2>"%TemporaryDirectory%\Build-Return-42.err"
 if errorlevel 1 goto :cleanup
 

@@ -14,6 +14,8 @@ export enum Compilerˉsourceˉgraphˉstatus {
     Unreachable = 5;
     Invalidˉalias = 6;
     Duplicateˉalias = 7;
+    Dependencyˉprofile = 8;
+    Missingˉcapabilityˉapproval = 9;
 }
 
 export record Compilerˉsourceˉgraphˉmatch {
@@ -301,6 +303,104 @@ export fn Compilerˉsourceˉgraphˉexpand(
                             Declaration.Nameˉoffset,
                             Position.Line,
                             Position.Column
+                        );
+                    }
+                    let Targetˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Target.Index);
+                    let Targetˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader =
+                        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Targetˉview.Source);
+                    var Profilesˉcompatible: bool = false;
+                    if Header.Profile == Sourceˉdeclarations.Compilerˉsourceˉprofile.System {
+                        Profilesˉcompatible = true;
+                    }
+                    if Header.Profile == Sourceˉdeclarations.Compilerˉsourceˉprofile.Hosted {
+                        Profilesˉcompatible =
+                            Targetˉheader.Profile != Sourceˉdeclarations.Compilerˉsourceˉprofile.System;
+                    }
+                    if Header.Profile == Sourceˉdeclarations.Compilerˉsourceˉprofile.Portable {
+                        Profilesˉcompatible =
+                            Targetˉheader.Profile == Sourceˉdeclarations.Compilerˉsourceˉprofile.Portable;
+                    }
+                    if !Profilesˉcompatible {
+                        return Compilerˉsourceˉgraphˉwalkˉfailure(
+                            Compilerˉsourceˉgraphˉstatus.Dependencyˉprofile,
+                            Nextˉstate, Nextˉreachable, Index, Target.Index,
+                            Declaration.Nameˉoffset, Position.Line, Position.Column
+                        );
+                    }
+                    var Capabilitiesˉapproved: bool = true;
+                    var Targetˉcursor: u32 = Targetˉheader.Nextˉoffset;
+                    var Targetˉline: u32 = Targetˉheader.Nextˉline;
+                    var Targetˉcolumn: u32 = Targetˉheader.Nextˉcolumn;
+                    var Targetˉsawˉnonˉimport: bool = false;
+                    var Readingˉtarget: bool = true;
+                    while Readingˉtarget {
+                        let Targetˉdeclaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+                            Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+                                Targetˉview.Source, Targetˉcursor, Targetˉline,
+                                Targetˉcolumn, Targetˉsawˉnonˉimport
+                            );
+                        if Targetˉdeclaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End {
+                            Readingˉtarget = false;
+                        } else {
+                            if Targetˉdeclaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
+                                var Declared: bool = false;
+                                var Ownerˉcursor: u32 = Header.Nextˉoffset;
+                                var Ownerˉline: u32 = Header.Nextˉline;
+                                var Ownerˉcolumn: u32 = Header.Nextˉcolumn;
+                                var Ownerˉsawˉnonˉimport: bool = false;
+                                var Readingˉowner: bool = true;
+                                while Readingˉowner {
+                                    let Ownerˉdeclaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+                                        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+                                            Source, Ownerˉcursor, Ownerˉline,
+                                            Ownerˉcolumn, Ownerˉsawˉnonˉimport
+                                        );
+                                    if Ownerˉdeclaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End {
+                                        Readingˉowner = false;
+                                    } else {
+                                        if Ownerˉdeclaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
+                                            if Ownerˉdeclaration.Nameˉlength == Targetˉdeclaration.Nameˉlength {
+                                                if Sourceˉset.Compilerˉsourceˉspansˉequal(
+                                                    Source, Ownerˉdeclaration.Nameˉoffset, Ownerˉdeclaration.Nameˉlength,
+                                                    Targetˉview.Source, Targetˉdeclaration.Nameˉoffset,
+                                                    Targetˉdeclaration.Nameˉlength
+                                                ) {
+                                                    Declared = true;
+                                                    Readingˉowner = false;
+                                                }
+                                            }
+                                        }
+                                        if Readingˉowner {
+                                            if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉclosesˉimports(Ownerˉdeclaration) {
+                                                Ownerˉsawˉnonˉimport = true;
+                                            }
+                                            Ownerˉcursor = Ownerˉdeclaration.Nextˉoffset;
+                                            Ownerˉline = Ownerˉdeclaration.Nextˉline;
+                                            Ownerˉcolumn = Ownerˉdeclaration.Nextˉcolumn;
+                                        }
+                                    }
+                                }
+                                if !Declared {
+                                    Capabilitiesˉapproved = false;
+                                    Readingˉtarget = false;
+                                }
+                            }
+                            if Readingˉtarget {
+                                if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉclosesˉimports(Targetˉdeclaration) {
+                                    Targetˉsawˉnonˉimport = true;
+                                }
+                                Targetˉcursor = Targetˉdeclaration.Nextˉoffset;
+                                Targetˉline = Targetˉdeclaration.Nextˉline;
+                                Targetˉcolumn = Targetˉdeclaration.Nextˉcolumn;
+                            }
+                        }
+                    }
+                    if !Capabilitiesˉapproved {
+                        return Compilerˉsourceˉgraphˉwalkˉfailure(
+                            Compilerˉsourceˉgraphˉstatus.Missingˉcapabilityˉapproval,
+                            Nextˉstate, Nextˉreachable, Index, Target.Index,
+                            Declaration.Nameˉoffset, Position.Line, Position.Column
                         );
                     }
                     if Bytesˉreadˉu8(Nextˉstate, Target.Index) == 0u8 {

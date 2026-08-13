@@ -1,5 +1,0 @@
-windvale-project 1
-root "Runtime/Windvale/Native-Hosted-Publication-Request-Tool.wv"
-source "Compiler/Windvale/Native-Publication-Core.wv"
-source "Foundation/Immutable-Source-Regions.wv"
-emit wvb

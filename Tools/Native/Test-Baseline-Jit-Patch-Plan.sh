@@ -51,7 +51,7 @@ map="$temporary_directory/Baseline-Jit-Patch-Plan.wvmap"
 application_error="$temporary_directory/Application.err"
 
 "$repository_root/Tools/Native/Build-Wvb.sh" \
-    "$repository_root/Windvale-Native-Baseline-Jit-Patch-Plan-Self-Test.wvproj" \
+    "$repository_root/Projects/Tests/Windvale-Native-Baseline-Jit-Patch-Plan-Self-Test.wvproj" \
     "$wvb" >/dev/null || exit $?
 check_hash "$wvb" \
     '2934df86db71047bfd325d50fd9549362bc60953e6924d6242b56eb79be658ea' \

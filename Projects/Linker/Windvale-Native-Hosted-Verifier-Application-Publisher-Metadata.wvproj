@@ -1,0 +1,5 @@
+windvale-project 2
+root "Linker/Windvale/Native-Hosted-Verifier-Application-Publisher-Metadata-Construction-Bridge.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Application-Publisher-Metadata-Admission.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Application-Publisher-Metadata-Construction-Core.wv"
+emit wvb

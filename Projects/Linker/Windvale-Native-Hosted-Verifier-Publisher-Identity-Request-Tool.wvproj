@@ -1,0 +1,9 @@
+windvale-project 2
+root "Linker/Windvale/Native-Hosted-Verifier-Publisher-Identity-Request-Tool.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Foundation/Sha256-Compression.wv"
+source "Foundation/Sha256-Streaming.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Publisher-Construction-Digests.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Publisher-Identity-Request-Core.wv"
+emit wvb

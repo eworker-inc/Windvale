@@ -15,7 +15,7 @@ if [[ $output_root == "$candidate_root" ]]; then
     exit 64
 fi
 
-source_project="$repository_root/Windvale-Wvb-Runner.wvproj"
+source_project="$repository_root/Projects/Tools/Windvale-Wvb-Runner.wvproj"
 hosted_toolset="$repository_root/Artifacts/Native-Hosted-Container-Toolset-Candidate"
 construction="$repository_root/Artifacts/Native-Hosted-Verifier-Publisher-Construction-Candidate"
 hosted_tools="$hosted_toolset/linux-x64"
@@ -32,7 +32,7 @@ check_file() {
 
 check_file "$hosted_toolset/SHA256SUMS" 6927 d2cd2c34bb8eaa09d50389685393dc893afa0ef31cd44835d2e5e619a2da7f6f || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
-check_file "$construction/SHA256SUMS" 5064 161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a || exit 1
+check_file "$construction/SHA256SUMS" 5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 check_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9617 865c29d2f83740e70be173f6116b29b0fa9eb4836f52e96200eb508f6fdbb789 || exit 1
 check_file "$startup_root/Linux-X64-Hosted-Inspector.wva" 5214 01603c6b945b4e03ebef1d3d5bf691a5e05bf2e2630d6466e1db1028b8c9c005 || exit 1

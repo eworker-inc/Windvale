@@ -32,7 +32,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 5064 161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -59,7 +59,7 @@ set "EnumService=%TemporaryDirectory%\Enum-Service.bin"
 set "WindowsStartup=%TemporaryDirectory%\Windows-Startup.wvo"
 set "LinuxStartup=%TemporaryDirectory%\Linux-Startup.wvo"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Wvo-Object.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Object-Model/Windvale-Wvo-Object.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
 if errorlevel 1 goto :cleanup
 call :verify_file "%Wvb%" 61008 a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db "WVO inspector WVB"
 if errorlevel 1 goto :cleanup

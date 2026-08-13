@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Libraries/Directory-Import-Smoke.wv"
+source "Libraries/Platform/Filesystem/Read-Only-Directory.wv"
+emit wvb

@@ -16,26 +16,26 @@ set "Compiler=%SeedRoot%\windows-x64\wvcompiler.exe"
 set "Publisher=%FrontDoorRoot%\windows-x64\wvpublish.exe"
 set "Output=%~f2"
 if /I "%Product%"=="core" (
-    set "Project=%RepositoryRoot%\Windvale-Source-Wvb-Core.wvproj"
+    set "Project=%RepositoryRoot%\Projects/Compiler/Windvale-Source-Wvb-Core.wvproj"
     set "ProjectBytes=603"
-    set "ProjectSha256=989dd0e30bd24a2e11714598405f01a87200ac53d0896c3db1fa5d89cf11faab"
+    set "ProjectSha256=62349b49ad2608a212e364f8e319f0f376bbc0c8457bcbef2f20a55bfdd0c8c7"
 )
 if /I "%Product%"=="demo" (
-    set "Project=%RepositoryRoot%\Windvale-Source-Wvb-Demo.wvproj"
+    set "Project=%RepositoryRoot%\Projects/Examples/Windvale-Source-Wvb-Demo.wvproj"
     set "ProjectBytes=649"
-    set "ProjectSha256=fcb003a7f7b8b6e7107a282034e6853f0969c7c55de948a90b6ad4114dd704d7"
+    set "ProjectSha256=7e595320777792b842d230b0033baab519f9d277719f0efdfb24edb3e55fb697"
 )
 if /I "%Product%"=="tool" (
-    set "Project=%RepositoryRoot%\Windvale-Compiler.wvproj"
+    set "Project=%RepositoryRoot%\Projects/Examples/Windvale-Compiler.wvproj"
     set "ProjectBytes=649"
-    set "ProjectSha256=e097e9d007909a3cf17476ccfce41ace5fa89c566386d15ae24c7d91d9f91e7b"
+    set "ProjectSha256=a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05"
 )
 
 call :verify_file "%CompilerWvb%" 914746 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 "native compiler seed WVB"
 if errorlevel 1 exit /b 1
 call :verify_file "%Compiler%" 27467776 344940f66b26b516b8b4e10a712a6b2c01cbff95aa7ff18aac0789ba9197f970 "Windows native compiler seed"
 if errorlevel 1 exit /b 1
-call :verify_file "%Publisher%" 1121792 f2502ecf9143cfa1343c5f5cb1de066bdf1f82f0e4782afae178f11c41afd735 "Windows native publisher"
+call :verify_file "%Publisher%" 1371136 b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421 "Windows native publisher"
 if errorlevel 1 exit /b 1
 call :verify_file "%Project%" %ProjectBytes% %ProjectSha256% "source compiler product manifest"
 if errorlevel 1 exit /b 1

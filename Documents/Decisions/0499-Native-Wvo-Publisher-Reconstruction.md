@@ -25,7 +25,7 @@ platform construction, and final materializers.
 
 Windvale adopts one bounded reconstruction route for the exact WVO publisher:
 
-1. consume the WVB produced from `Windvale-Wvo-Publisher.wvproj` through the
+1. consume the WVB produced from `Projects/Tools/Windvale-Wvo-Publisher.wvproj` through the
    native project front door;
 2. invoke the retained raw accepted-subset lowerer directly, avoiding the
    composite lower-and-publish wrapper;

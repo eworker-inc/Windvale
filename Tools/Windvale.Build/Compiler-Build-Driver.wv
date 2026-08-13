@@ -12,18 +12,6 @@ capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
-record Compilerˉbuildˉdriverˉprojectˉprefix {
-    Valid: bool;
-    Value: bytes;
-}
-
-record Compilerˉbuildˉdriverˉprojectˉpaths {
-    Valid: bool;
-    Outputˉisˉinput: bool;
-    Failureˉline: u32;
-    Failureˉcolumn: u32;
-}
-
 fn Compilerˉbuildˉdriverˉempty() -> bytes {
     return Textˉtoˉutf8("");
 }
@@ -97,25 +85,26 @@ fn Compilerˉbuildˉdriverˉhasˉsuffix(Value: bytes, Suffix: text) -> bool {
     );
 }
 
-fn Compilerˉbuildˉdriverˉderiveˉprojectˉprefix(
-    Manifestˉname: bytes
-) -> Compilerˉbuildˉdriverˉprojectˉprefix {
-    let Length: u32 = Bytesˉlength(Manifestˉname);
+fn Compilerˉbuildˉdriverˉresourceˉnameˉisˉvalid(Resourceˉname: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Resourceˉname);
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Resourceˉname, Index) == 92u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉbuildˉdriverˉderiveˉresourceˉprefix(Resourceˉname: bytes) -> bytes {
+    let Length: u32 = Bytesˉlength(Resourceˉname);
     var Prefixˉbytes: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index < Length {
-        let Character: u8 = Bytesˉreadˉu8(Manifestˉname, Index);
-        if Character == 92u8 {
-            return Compilerˉbuildˉdriverˉprojectˉprefix(
-                false, Compilerˉbuildˉdriverˉempty()
-            );
-        }
+        let Character: u8 = Bytesˉreadˉu8(Resourceˉname, Index);
         if Character == 47u8 { Prefixˉbytes = Index + 1u32; }
         Index = Index + 1u32;
     }
-    return Compilerˉbuildˉdriverˉprojectˉprefix(
-        true, Bytesˉslice(Manifestˉname, 0u32, Prefixˉbytes)
-    );
+    return Bytesˉslice(Resourceˉname, 0u32, Prefixˉbytes);
 }
 
 fn Compilerˉbuildˉdriverˉprojectˉresource(
@@ -131,9 +120,9 @@ fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
     Prefix: bytes,
     Manifestˉname: bytes,
     Outputˉname: bytes
-) -> Compilerˉbuildˉdriverˉprojectˉpaths {
+) -> bytes {
     if Compilerˉbuildˉdriverˉresourceˉequals(Manifestˉname, Outputˉname) {
-        return Compilerˉbuildˉdriverˉprojectˉpaths(false, true, 0u32, 0u32);
+        return Bytesˉfromˉu32ˉlittle(1u32);
     }
     var Index: u32 = 0u32;
     while Index < Scan.Modules {
@@ -141,15 +130,13 @@ fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
             Manifest, Scan, Index
         );
         if !Path.Found {
-            return Compilerˉbuildˉdriverˉprojectˉpaths(
-                false, false, Path.Line, Path.Column
-            );
+            var Missing: bytes = Bytesˉfromˉu32ˉlittle(2u32);
+            Missing = Bytesˉconcat(Missing, Bytesˉfromˉu32ˉlittle(Path.Line));
+            return Bytesˉconcat(Missing, Bytesˉfromˉu32ˉlittle(Path.Column));
         }
         let Resource: bytes = Compilerˉbuildˉdriverˉprojectˉresource(Prefix, Path);
         if Compilerˉbuildˉdriverˉresourceˉequals(Resource, Outputˉname) {
-            return Compilerˉbuildˉdriverˉprojectˉpaths(
-                false, true, Path.Line, Path.Column
-            );
+            return Bytesˉfromˉu32ˉlittle(1u32);
         }
         var Previousˉindex: u32 = 0u32;
         while Previousˉindex < Index {
@@ -162,15 +149,19 @@ fn Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
             if Compilerˉbuildˉdriverˉresourceˉequals(
                 Resource, Previousˉresource
             ) {
-                return Compilerˉbuildˉdriverˉprojectˉpaths(
-                    false, false, Path.Line, Path.Column
+                var Duplicate: bytes = Bytesˉfromˉu32ˉlittle(2u32);
+                Duplicate = Bytesˉconcat(
+                    Duplicate, Bytesˉfromˉu32ˉlittle(Path.Line)
+                );
+                return Bytesˉconcat(
+                    Duplicate, Bytesˉfromˉu32ˉlittle(Path.Column)
                 );
             }
             Previousˉindex = Previousˉindex + 1u32;
         }
         Index = Index + 1u32;
     }
-    return Compilerˉbuildˉdriverˉprojectˉpaths(true, false, 0u32, 0u32);
+    return Bytesˉfromˉu32ˉlittle(0u32);
 }
 
 fn Compilerˉbuildˉdriverˉprojectˉinput(
@@ -274,22 +265,40 @@ fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
     return 0;
 }
 
-fn Compilerˉbuildˉdriverˉisˉprojectˉmode(Value: text) -> bool {
+fn Compilerˉbuildˉdriverˉargumentˉequals(Value: text, Expected: text) -> bool {
     let Bytes: bytes = Textˉtoˉutf8(Value);
     return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
-        Bytes, 0u32, Bytesˉlength(Bytes), "--project"
+        Bytes, 0u32, Bytesˉlength(Bytes), Expected
     );
 }
 
 fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
-    if Arguments != 3u32 {
-        diagnostic.write_line("Usage: wvbuild --project <project.wvproj> <output.wvb>");
+    if Arguments != 5u32 {
+        diagnostic.write_line(
+            "Usage: wvbuild --workspace <workspace.wvws> --project <project.wvproj> <output.wvb>"
+        );
         return 64;
     }
-    let Manifestˉpath: text = process.argument(1u32);
-    let Outputˉpath: text = process.argument(2u32);
+    if !Compilerˉbuildˉdriverˉargumentˉequals(
+        process.argument(2u32), "--project"
+    ) {
+        diagnostic.write_line(
+            "Usage: wvbuild --workspace <workspace.wvws> --project <project.wvproj> <output.wvb>"
+        );
+        return 64;
+    }
+    let Workspaceˉpath: text = process.argument(1u32);
+    let Manifestˉpath: text = process.argument(3u32);
+    let Outputˉpath: text = process.argument(4u32);
+    let Workspaceˉname: bytes = Textˉtoˉutf8(Workspaceˉpath);
     let Manifestˉname: bytes = Textˉtoˉutf8(Manifestˉpath);
     let Outputˉname: bytes = Textˉtoˉutf8(Outputˉpath);
+    if !Compilerˉbuildˉdriverˉhasˉsuffix(Workspaceˉname, ".wvws") {
+        diagnostic.write_line(
+            "build status=Invalidˉinvocation reason=workspace-extension"
+        );
+        return 64;
+    }
     if !Compilerˉbuildˉdriverˉhasˉsuffix(Manifestˉname, ".wvproj") {
         diagnostic.write_line(
             "build status=Invalidˉinvocation reason=project-extension"
@@ -302,13 +311,64 @@ fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
         );
         return 64;
     }
-    let Prefix: Compilerˉbuildˉdriverˉprojectˉprefix =
-        Compilerˉbuildˉdriverˉderiveˉprojectˉprefix(Manifestˉname);
-    if !Prefix.Valid {
+    if Compilerˉbuildˉdriverˉresourceˉequals(Workspaceˉname, Outputˉname) {
         diagnostic.write_line(
-            "build status=Invalidˉinvocation reason=project-resource-name"
+            "build status=Invalidˉinvocation reason=output-is-input"
         );
         return 64;
+    }
+    if !Compilerˉbuildˉdriverˉresourceˉnameˉisˉvalid(Workspaceˉname) {
+        diagnostic.write_line(
+            "build status=Invalidˉinvocation reason=workspace-resource-name"
+        );
+        return 64;
+    }
+    let Prefix: bytes = Compilerˉbuildˉdriverˉderiveˉresourceˉprefix(
+        Workspaceˉname
+    );
+    let Prefixˉlength: u32 = Bytesˉlength(Prefix);
+    var Manifestˉinsideˉworkspace: bool =
+        Bytesˉlength(Manifestˉname) > Prefixˉlength;
+    if Manifestˉinsideˉworkspace {
+        Manifestˉinsideˉworkspace = Compilerˉbuildˉdriverˉresourceˉequals(
+            Bytesˉslice(Manifestˉname, 0u32, Prefixˉlength), Prefix
+        );
+    }
+    if !Manifestˉinsideˉworkspace {
+        diagnostic.write_line(
+            "build status=Workspaceˉrejected code=WVW1003 line=1 column=1"
+        );
+        return 1;
+    }
+
+    let Workspaceˉmanifest: bytes = file.read_bytes(Workspaceˉpath);
+    let Workspaceˉlength: u32 = Bytesˉlength(Workspaceˉmanifest);
+    var Workspaceˉheaderˉvalid: bool = Workspaceˉlength >= 20u32;
+    if Workspaceˉheaderˉvalid {
+        Workspaceˉheaderˉvalid = Project.Windvaleˉprojectˉspanˉequalsˉtext(
+            Workspaceˉmanifest, 0u32, 20u32, "windvale-workspace 1"
+        );
+    }
+    if !Workspaceˉheaderˉvalid {
+        diagnostic.write_line(
+            "build status=Workspaceˉrejected code=WVW1001 line=1 column=1"
+        );
+        return 1;
+    }
+    var Workspaceˉtextˉvalid: bool = Workspaceˉlength == 20u32;
+    if Workspaceˉlength == 21u32 {
+        Workspaceˉtextˉvalid = Bytesˉreadˉu8(Workspaceˉmanifest, 20u32) == 10u8;
+    }
+    if Workspaceˉlength == 22u32 {
+        Workspaceˉtextˉvalid =
+            Bytesˉreadˉu8(Workspaceˉmanifest, 20u32) == 13u8 &&
+            Bytesˉreadˉu8(Workspaceˉmanifest, 21u32) == 10u8;
+    }
+    if !Workspaceˉtextˉvalid {
+        diagnostic.write_line(
+            "build status=Workspaceˉrejected code=WVW1002 line=1 column=21"
+        );
+        return 1;
     }
 
     let Manifest: bytes = file.read_bytes(Manifestˉpath);
@@ -330,12 +390,17 @@ fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
         return 1;
     }
 
-    let Paths: Compilerˉbuildˉdriverˉprojectˉpaths =
+    let Paths: bytes =
         Compilerˉbuildˉdriverˉcheckˉprojectˉpaths(
-            Manifest, Scan, Prefix.Value, Manifestˉname, Outputˉname
+            Manifest,
+            Scan,
+            Prefix,
+            Manifestˉname,
+            Outputˉname
         );
-    if !Paths.Valid {
-        if Paths.Outputˉisˉinput {
+    let Pathsˉstatus: u32 = Bytesˉreadˉu32ˉlittle(Paths, 0u32);
+    if Pathsˉstatus != 0u32 {
+        if Pathsˉstatus == 1u32 {
             diagnostic.write_line(
                 "build status=Invalidˉinvocation reason=output-is-input"
             );
@@ -343,14 +408,14 @@ fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
         }
         diagnostic.write_line(Compilerˉbuildˉdriverˉprojectˉfailure(
             Project.Windvaleˉprojectˉstatus.Duplicateˉpath,
-            Paths.Failureˉline,
-            Paths.Failureˉcolumn
+            Bytesˉreadˉu32ˉlittle(Paths, 4u32),
+            Bytesˉreadˉu32ˉlittle(Paths, 8u32)
         ));
         return 1;
     }
 
     return Compilerˉbuildˉdriverˉpublish(
-        Compilerˉbuildˉdriverˉprojectˉinput(Manifest, Scan, Prefix.Value),
+        Compilerˉbuildˉdriverˉprojectˉinput(Manifest, Scan, Prefix),
         Outputˉpath
     );
 }
@@ -388,7 +453,9 @@ fn Compilerˉbuildˉdriverˉrunˉexplicit(Arguments: u32) -> i32 {
 export fn Main() -> i32 {
     let Arguments: u32 = process.argument_count();
     if Arguments > 0u32 {
-        if Compilerˉbuildˉdriverˉisˉprojectˉmode(process.argument(0u32)) {
+        if Compilerˉbuildˉdriverˉargumentˉequals(
+            process.argument(0u32), "--workspace"
+        ) {
             return Compilerˉbuildˉdriverˉrunˉproject(Arguments);
         }
     }

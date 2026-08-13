@@ -2,14 +2,15 @@
 
 ## Status
 
-This tree owns reusable Windvale APIs and implementations. [Decision 0140](../Documents/Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) defines the durable platform/capability direction; [Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) implements the first bounded capability-bearing static-library slice; [Decision 0153](../Documents/Decisions/0153-First-Versioned-Read-Only-Directory-Capability.md) implements the first rights-limited read-only directory operation; [Decision 0210](../Documents/Decisions/0210-First-Hosted-Wvdb-Snapshot-Consumer.md) composes that operation with the experimental portable database reader; [Decision 0211](../Documents/Decisions/0211-U64-Database-Storage-Geometry.md) adds format-neutral checked `u64` page geometry; and [Decision 0212](../Documents/Decisions/0212-First-Preopened-Random-Access-Storage.md) adds the first pre-opened mutable `u64` storage resource.
+This tree owns reusable Windvale APIs and implementations. [Decision 0140](../Documents/Decisions/0140-Per-Module-Platform-Scope-And-Filesystem-Capabilities.md) defines the durable platform/capability direction; [Decision 0145](../Documents/Decisions/0145-First-Capability-Bearing-Static-Library.md) implements the first bounded capability-bearing static-library slice; [Decision 0153](../Documents/Decisions/0153-First-Versioned-Read-Only-Directory-Capability.md) implements the first rights-limited read-only directory operation; [Decision 0210](../Documents/Decisions/0210-First-Hosted-Wvdb-Snapshot-Consumer.md) composes that operation with the experimental portable database reader; [Decision 0211](../Documents/Decisions/0211-U64-Database-Storage-Geometry.md) adds format-neutral checked `u64` page geometry; [Decision 0212](../Documents/Decisions/0212-First-Preopened-Random-Access-Storage.md) adds the first pre-opened mutable `u64` storage resource; and [Decision 0529](../Documents/Decisions/0529-Native-Capability-Bearing-Library-Composition.md) makes these capability-bearing compositions native-owned build inputs.
 
 The current compiler still uses `portable`, `hosted`, and `system` as a coarse compatibility and authority boundary. Independent platform scope, optional capabilities, typed capability values, provider binding metadata, and runtime module linking are not implemented.
 
-The proposed [post-.NET-retirement language and library stage](../Documents/Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
-recommends the next product-facing use of these layers: one package-backed
-application, one portable library, and one rights-limited platform library. It does
-not add a global namespace, package resolver, or any new library contract yet.
+The [post-retirement language and library stage](../Documents/Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
+now has a native foundation: Project 2 manifests build each current library,
+capability-bearing dependencies compose under an explicit root approval rule, and
+the changed-file planner has a focused native library owner. Package resolution,
+binary library distribution, and runtime WVB linking remain later contracts.
 
 ## Layers
 
@@ -20,6 +21,26 @@ not add a global namespace, package resolver, or any new library contract yet.
 - `System/` is reserved until a reusable privileged kernel, driver, or machine API has an implemented owner and contract.
 
 Do not add empty scaffolding for a planned layer. Add a directory only with its first owned implementation and specification.
+
+## Current build inventory
+
+The checked-in Project 2 manifests under `Projects/Libraries/` are the canonical
+native build inputs for the current reusable modules:
+
+| Project | Root module | Profile / direct capability |
+| --- | --- | --- |
+| `Windvale-Library-Resource-Store` | `Resourceˉstore` | portable / none |
+| `Windvale-Library-Database-Storage-Geometry` | `Windvaleˉdatabaseˉstorageˉgeometry` | portable / none |
+| `Windvale-Library-Wvdb-Reader` | `Windvaleˉdatabaseˉreader` | portable / none |
+| `Windvale-Library-Hosted-Resource-Store` | `Hostedˉresourceˉstore` | hosted / `file.read_bytes` |
+| `Windvale-Library-Read-Only-Directory` | `Readˉonlyˉdirectory` | hosted / `filesystem.directory_read_v1` |
+| `Windvale-Library-Random-Access-Storage` | `Randomˉaccessˉstorage` | hosted / `storage.random_access_v1` |
+| `Windvale-Library-Read-Only-Wvdb` | `Readˉonlyˉwvdb` | hosted / `filesystem.directory_read_v1` |
+
+`Tools/Native/Test-Libraries` builds all seven projects, builds one positive
+capability-bearing importer and two database conformance applications, and rejects
+missing root approval and incompatible profile imports. Its completion contract is
+12 cases. The suite uses only the native Project 2 build and publication path.
 
 ## Module names and local namespaces
 

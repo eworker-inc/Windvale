@@ -1,6 +1,0 @@
-windvale-project 1
-root "Runtime/Windvale/Native-Hosted-Orchestration-Control-Tool.wv"
-source "Foundation/Decimal-Parsing.wv"
-source "Foundation/Immutable-Source-Regions.wv"
-source "Runtime/Windvale/Native-Hosted-Orchestration-Control-Core.wv"
-emit wvb

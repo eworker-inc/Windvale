@@ -22,6 +22,16 @@ if [[ $project_path != *.wvproj ]]; then
     exit 64
 fi
 
+workspace_path="$repository_root/Windvale.wvws"
+if [[ ! -f $workspace_path ]]; then
+    echo 'The native workspace marker is missing.' >&2
+    exit 1
+fi
+if [[ -L $repository_root ]] || [[ -n $(find "$repository_root" -type l -print -quit) ]]; then
+    echo 'The native workspace must not contain symbolic links.' >&2
+    exit 1
+fi
+
 if [[ $# -eq 2 ]]; then
     output_input=$2
     output_directory=$(CDPATH= cd -- "$(dirname -- "$output_input")" && pwd -P) || exit 1
@@ -50,7 +60,8 @@ cleanup() {
 trap cleanup EXIT
 
 candidate_path="$temporary_directory/Candidate.wvb"
-"$artifact_root/linux-x64/wvbuild.elf" --project "$project_path" "$candidate_path"
+"$artifact_root/linux-x64/wvbuild.elf" \
+    --workspace "$workspace_path" --project "$project_path" "$candidate_path"
 result=$?
 if [[ $result -eq 0 ]]; then
     "$artifact_root/linux-x64/wvpublish.elf" "$candidate_path" "$output_path"

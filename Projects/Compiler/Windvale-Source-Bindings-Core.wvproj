@@ -1,0 +1,11 @@
+windvale-project 2
+root "Compiler/Windvale/Source-Bindings-Core.wv"
+source "Compiler/Windvale/Source-Body-Parser.wv"
+source "Compiler/Windvale/Source-Declaration-Parser.wv"
+source "Compiler/Windvale/Source-Graph-Core.wv"
+source "Compiler/Windvale/Source-Lexer-Core.wv"
+source "Compiler/Windvale/Source-Set-Core.wv"
+source "Compiler/Windvale/Source-Symbols-Core.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Decimal-Parsing.wv"
+emit wvb

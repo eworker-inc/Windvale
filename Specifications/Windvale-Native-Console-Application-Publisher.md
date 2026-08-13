@@ -18,7 +18,7 @@ alias rejection, atomic replacement, directory durability, and scratch cleanup.
 
 ## Windvale module and command
 
-`Windvale-Console-Application-Publisher.wvproj` builds the hosted module
+`Projects/Tools/Windvale-Console-Application-Publisher.wvproj` builds the hosted module
 `Windvaleˉconsoleˉapplicationˉpublisherˉtool`. It exports only `Main() -> i32`
 and declares these exact capabilities:
 

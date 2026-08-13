@@ -16,7 +16,7 @@ and two reserved zeros. Packed resources are the 248,832-byte base PE,
 416-byte `WVCR`, 7,040-byte `WVIO`, 128-byte `WVVP`, and 4,128-byte `WVIM`.
 Role 0 uses the 248,832-byte publisher base and totals 260,608 bytes; role 1
 uses the 674,816-byte promoter base and totals 686,592 bytes; role 2 uses the
-1,333,760-byte WVB-publisher base and totals 1,345,536 bytes; role 3 uses the
+1,363,968-byte WVB-publisher base and totals 1,375,744 bytes; role 3 uses the
 422,912-byte WVO-publisher base and totals 434,688 bytes.
 
 `WVWO 1` has a 32-byte header containing magic `WVWO` (`0x4f575657`),
@@ -55,8 +55,8 @@ repeated replacement of the full 256 KiB value.
 | Final PE | 256,000 | `2b165f5029798a4d5467412b65cba0ddffb05dfc449144fd80161d6117784e12` |
 | Promoter base PE | 674,816 | `818b1dcb4ad7145f2beee18c5e9afbb2e5aeab3bb56df905a5f07ae8eb3082ec` |
 | Promoter final PE | 681,472 | `5690fb32c7fec85551e0c5cd58e4f56589a5ad4c09108b5dde86fa9fc7b3fb92` |
-| WVB-publisher base PE | 1,333,760 | `0e1434cb9f369bdd2507db5c6c86f0166b428d31ca3c00852f0e4d159a3ee79e` |
-| WVB-publisher final PE | 1,340,928 | `71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3` |
+| WVB-publisher base PE | 1,363,968 | `243b763d8b49b34108585c56f46c90190eac085a80c59873c8a2cb3e88d16102` |
+| WVB-publisher final PE | 1,371,136 | `b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421` |
 | WVO-publisher base PE | 422,912 | `22534a8a0ae42e977cd79daa3ff8b6fde5ef39d719edda07726410f95df6683d` |
 | WVO-publisher final PE | 430,080 | `76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910` |
 

@@ -18,7 +18,7 @@ The existing source-visible `file.write_bytes` service is durable but non-atomic
 
 Move the compiler-aligned verifier algorithm behind one portable `Compilerˉwvbˉverify(bytes) -> u32` entry and retain the standalone verifier as a thin hosted adapter.
 
-Implement `Windvale-Compiler-Build-Driver.wvproj`. Its hosted root constructs the bounded source set from explicit arguments, rejects exact input/output resource-name equality, invokes the Windvale compiler in memory, invokes the shared verifier over the resulting bytes, and calls `file.write_bytes` exactly once only after acceptance.
+Implement `Projects/Tools/Windvale-Compiler-Build-Driver.wvproj`. Its hosted root constructs the bounded source set from explicit arguments, rejects exact input/output resource-name equality, invokes the Windvale compiler in memory, invokes the shared verifier over the resulting bytes, and calls `file.write_bytes` exactly once only after acceptance.
 
 Package the driver through public `windows-x64-build-driver-v1` and `linux-x64-build-driver-v1` targets. Give the profile distinct `WVHB 1` magic, outer container format 5, and profile flags 3. Reuse the existing compiler-authority runtime, exact ten-service bundle, and canonical WVA startups because the authority and platform calls are identical. Require the canonical driver WVB module name before format-5 packaging and make the independent parsers take the expected profile explicitly.
 

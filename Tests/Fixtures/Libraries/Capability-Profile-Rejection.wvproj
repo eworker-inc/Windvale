@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Libraries/Capability-Profile-Rejection.wv"
+source "Tests/Fixtures/Libraries/Capability-Bearing-Support.wv"
+emit wvb

@@ -1,4 +1,4 @@
-windvale-project 1
-root "Native-Publication-Bridge.wv"
-source "Native-Publication-Core.wv"
+windvale-project 2
+root "Compiler/Windvale/Native-Publication-Bridge.wv"
+source "Compiler/Windvale/Native-Publication-Core.wv"
 emit wvb

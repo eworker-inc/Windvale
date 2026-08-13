@@ -26,7 +26,7 @@ if errorlevel 1 exit /b 1
 set "Status=1"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Os-Process-Policy.wvproj" ^
+    "%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Process-Policy.wvproj" ^
     "%Work%\Process-Policy.wvb" >"%Work%\Build.log" 2>&1
 if errorlevel 1 goto :failure
 call :verify "%Work%\Process-Policy.wvb" 18764 c46c6b3780cad8d292607ed687a7e511e2e3c47fbc6fc21526ecc0ffeb937895

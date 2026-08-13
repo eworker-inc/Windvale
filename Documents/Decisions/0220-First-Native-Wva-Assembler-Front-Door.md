@@ -17,7 +17,7 @@ During native execution, a canonical assembler fixture exposed a general descrip
 
 ### Make the assembler an explicit Windvale project
 
-Add `Windvale-Wva-Assembler.wvproj` with `Assembler/Windvale/Wva-Assembler-Core.wv` as root and the four exact Foundation dependencies used by the implementation. Add the nominal zero enum member required by native lowering without changing the existing serialized values of the accepted token kinds.
+Add `Projects/Assembler/Windvale-Wva-Assembler.wvproj` with `Assembler/Windvale/Wva-Assembler-Core.wv` as root and the four exact Foundation dependencies used by the implementation. Add the nominal zero enum member required by native lowering without changing the existing serialized values of the accepted token kinds.
 
 ### Correct descriptor-return ownership once
 

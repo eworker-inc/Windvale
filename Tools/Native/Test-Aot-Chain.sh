@@ -51,7 +51,7 @@ map="$temporary_directory/Return-42.wvmap"
 application_error="$temporary_directory/Application.err"
 
 "$repository_root/Tools/Native/Build-Wvb.sh" \
-    "$repository_root/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" \
     "$wvb" >/dev/null || exit $?
 check_hash "$wvb" \
     '7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31' \

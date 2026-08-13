@@ -2,7 +2,10 @@
 
 ## Status and scope
 
-`WVHB 1` is the implemented manifest for the first Windvale-native source-to-verified-WVB build driver. The same canonical Windvale application packages as deterministic Windows and Linux x86-64 processes and runs without loading .NET. It is cross-host qualified at exact commit `524e84afb6e5bab6bbd95ebc0b9eeaf886af834b` in GitHub [Verify run 30964566192](https://github.com/eworker-inc/Windvale/actions/runs/30964566192). The pinned packages are now consumed by the candidate ordinary [native source-to-WVB front door](Windvale-Native-Source-To-Wvb-Front-Door.md); Stage 0 remains the explicit construction, independent-verification, and recovery route.
+`WVHB 1` is the implemented manifest for the Windvale-native
+source-to-verified-WVB build driver. The same canonical Windvale application
+packages as deterministic Windows and Linux x86-64 processes. The pinned packages
+are consumed by the ordinary [native source-to-WVB front door](Windvale-Native-Source-To-Wvb-Front-Door.md).
 
 The driver is intentionally narrow. Its explicit-source form accepts one root source, zero or more dependencies, and one output path:
 
@@ -10,23 +13,44 @@ The driver is intentionally narrow. Its explicit-source form accepts one root so
 wvbuild <root.wv> [dependency.wv ...] <output.wvb>
 ```
 
-Its project form consumes the existing Windvale Project 1 parser and requires an explicit output:
+Its normal project form consumes an explicitly supplied Workspace 1 and Project 2
+pair and requires an explicit output:
 
 ```text
-wvbuild --project <project.wvproj> <output.wvb>
+wvbuild --workspace <workspace.wvws> --project <project.wvproj> <output.wvb>
 ```
 
-The explicit form supports at most 64 source modules. The project form supports at most 63 modules because its manifest occupies one of the fixed profile's 64 retained file snapshots. Both forms read each source resource exactly once, construct `WVSS 1` in memory, invoke the Windvale compiler, invoke the portable compiler-aligned WVB verifier over the candidate bytes, and perform exactly one `file.write_bytes` only after verifier acceptance. Success reports the published function/code/module sizes and returns `0`; invocation failure returns `64`; project, compilation, or verifier rejection reports a stable diagnostic and returns `1`.
+The explicit form supports at most 64 source modules. The current project-driver
+profile supports at most 63 modules. Both forms read each source resource exactly
+once, construct `WVSS 1` in memory, invoke the Windvale compiler, invoke the
+portable compiler-aligned WVB verifier over the candidate bytes, and perform exactly
+one `file.write_bytes` only after verifier acceptance. Success reports the published
+function/code/module sizes and returns `0`; invocation failure returns `64`;
+workspace, project, compilation, or verifier rejection reports a stable diagnostic
+and returns `1`.
 
-The canonical project is [`Windvale-Compiler-Build-Driver.wvproj`](../Windvale-Compiler-Build-Driver.wvproj). It composes the compiler sources from [`Windvale-Compiler.wvproj`](../Windvale-Compiler.wvproj), the portable Project 1 parser, the portable verifier core, and `Tools/Windvale.Build/Compiler-Build-Driver.wv` as its only hosted adapter.
+The canonical project is [`Projects/Tools/Windvale-Compiler-Build-Driver.wvproj`](../Projects/Tools/Windvale-Compiler-Build-Driver.wvproj). It composes the compiler sources, the portable Project 2 parser, the portable verifier core, and `Tools/Windvale.Build/Compiler-Build-Driver.wv` as its only hosted adapter.
 
 ## Project resource boundary
 
-Project mode reads the manifest once, validates it through `Windvaleˉprojectˉscanˉmanifest`, and obtains the root followed by the manifest's source entries through `Windvaleˉprojectˉpathˉat`. Source `import` declarations remain the semantic dependency graph; the driver neither discovers files nor guesses dependency order.
+Project mode reads the workspace marker and manifest once, validates the manifest
+through `Windvaleˉprojectˉscanˉmanifest`, and obtains the root followed by the
+manifest's source entries through `Windvaleˉprojectˉpathˉat`. Source `import`
+declarations remain the semantic dependency graph; the driver neither discovers
+files nor guesses dependency order.
 
-The hosted adapter derives each source resource name by retaining the manifest resource-name prefix through its final `/` and appending the Project 1 canonical relative path. The manifest argument therefore uses `/` as the profile's resource separator on both hosts; `\` is rejected instead of being given platform-dependent meaning. This is resource-name derivation inside the hosted adapter, not native path interpretation in the portable parser.
+The hosted adapter derives each source resource name from the directory containing
+the explicit workspace marker and appends the Project 2 canonical
+workspace-relative path. Manifest location has no source-resolution semantics.
+Resource names use `/` at this boundary on both hosts; `\` is rejected instead of
+being given platform-dependent meaning.
 
-Before any source read, the driver rejects a resource name equal to an earlier source or the output. Comparison folds ASCII `A` through `Z`, making the accepted project subset conservative on case-sensitive Linux providers while preventing the ordinary Windows case alias. The adapter cannot resolve links, mount aliases, short names, or other provider identities; those remain excluded until a canonical resource-identity capability exists. `.wvproj` and `.wvb` suffixes are exact and mandatory in project mode.
+Before any source read, the driver rejects a resource name equal to an earlier
+source or the output. Comparison folds ASCII `A` through `Z`, making the accepted
+project subset conservative on case-sensitive Linux providers while preventing the
+ordinary Windows case alias. Repository wrappers reject reparse/link-bearing
+workspaces until a canonical resource-identity capability exists. `.wvws`, `.wvproj`,
+and `.wvb` suffixes are exact and mandatory in project mode.
 
 Project failures use the existing `WVP1001` through `WVP1007` identities with one-based line and column evidence. The native 63-module bound reports `WVP1005`; conservative duplicate rejection reports `WVP1007` before source access. Malformed projects and compilation failures leave an existing output unchanged.
 
@@ -85,10 +109,9 @@ The fixed 1,024-byte metadata record reuses the qualified compiler-authority cap
 - exact native-image and per-service SHA-256 identities.
 
 The larger arena and narrower name slots are profile-local. A hosted process
-argument contains at most 4,096 UTF-8 bytes. The manifest argument must retain
-the seven-byte `.wvproj` suffix after its final `/`, so its retained prefix is
-at most 4,089 bytes; one Project 1 path is at most 4,096 bytes. Their maximum
-8,185-byte concatenation fits the 8,192-byte slot. The retained native
+argument contains at most 4,096 UTF-8 bytes. The workspace resource prefix and one
+Project 2 path are each bounded so their maximum concatenation fits the 8,192-byte
+slot. The retained native
 file-input leaves use `WVFI 1`'s declared name-stride field for both the
 name-length check and slot addressing. The generic host executor and standalone
 file-input-table constructor remain exact at 1,048,576 bytes and do not admit
@@ -118,16 +141,22 @@ The current WVB 1.11 recovery reconstruction for `linux-x64-build-driver-v1` emi
 
 These are reconstruction candidates produced after the Decision 0220 descriptor-return correction. The digest-bound ordinary native-front-door inventory deliberately retains its previously qualified build-driver applications until this exact descendant passes the Windows/Linux replacement gate; historical qualification identities remain recorded in that inventory and its evidence documents.
 
-The Stage 0 construction route is:
+The retained recovery construction route is recorded separately. The normal source
+construction route is:
 
 ```text
-windvale build Windvale-Compiler-Build-Driver.wvproj
-windvale aot Windvale-Compiler-Build-Driver.wvb --target windows-x64-build-driver-v1
-windvale aot Windvale-Compiler-Build-Driver.wvb --target linux-x64-build-driver-v1
+Tools/Native/Build-Wvb Projects/Tools/Windvale-Compiler-Build-Driver.wvproj <output.wvb>
 ```
 
-The existing exact-compiler AOT test constructs this project once, verifies deterministic paired packages, drives malformed outer inputs through both independent parsers, exercises the public current-host AOT route, and runs the native driver in both explicit and project modes. Project evidence parses a real manifest, resolves a three-module composition beneath the manifest resource prefix, compares exact output bytes with the reference compiler, rejects malformed and conservatively duplicate manifests without changing an existing output, and inspects current-host modules or mappings for .NET. No new top-level compiler construction is added.
+`Test-Workspace-Project2` executes the native driver over the checked-in workspace,
+publishes and runs a valid module, and owns seven malformed or containment
+rejections. `Test-Libraries` exercises Project 2 over reusable portable and hosted
+library compositions. Both tests leave failed outputs unpublished.
 
 ## Retirement boundary
 
-This milestone removes .NET from another useful execution path: a previously packaged Windvale-native driver can parse a bounded `.wvproj`, read its explicit source set, compile it, and verifier-admit canonical WVB on Windows or Linux. The ordinary launcher composes that driver with the exact native publisher, so the useful source-to-atomically-published-WVB path also avoids .NET. It does not discover files, consume packages or project references, native-lower WVB, package applications as PE/ELF, run tests, assemble, link, inspect, or execute output. The complete shared x64 lowering and remaining tool surfaces are not yet Windvale-owned. Stage 0 still reconstructs and independently checks the distributed driver and remains the recovery oracle. Decision 0057's complete dual-host native-retirement gate remains mandatory.
+The ordinary launcher composes the packaged Windvale-native driver with the exact
+native publisher. It does not discover files, consume packages or project
+references, native-lower WVB, package applications as PE/ELF, run tests, assemble,
+link, inspect, or execute output. Those are separate native contracts. The retained
+recovery archive does not participate in ordinary builds or focused verification.

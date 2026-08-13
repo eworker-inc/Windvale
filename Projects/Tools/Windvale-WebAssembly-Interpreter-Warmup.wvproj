@@ -1,0 +1,3 @@
+windvale-project 2
+root "Tools/WebAssembly/Interpreter-Warmup.wv"
+emit wvb

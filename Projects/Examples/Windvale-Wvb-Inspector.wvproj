@@ -1,0 +1,3 @@
+windvale-project 2
+root "Examples/Foundation/Wv-Dump-Core.wv"
+emit wvb

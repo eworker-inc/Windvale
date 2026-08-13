@@ -25,15 +25,15 @@ if not exist "%SourceRoot%\." (
 set "CompilerWvb=%ArtifactRoot%\Native-Compiler-Seed\Wvb\Windvale-Compiler.wvb"
 set "Compiler=%ArtifactRoot%\Native-Compiler-Seed\windows-x64\wvcompiler.exe"
 set "Publisher=%ArtifactRoot%\Native-Front-Door\windows-x64\wvpublish.exe"
-set "Project=%SourceRoot%\Windvale-Compiler.wvproj"
+set "Project=%SourceRoot%\Projects/Examples/Windvale-Compiler.wvproj"
 
 call :verify_file "%CompilerWvb%" 914746 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 "native compiler seed WVB"
 if errorlevel 1 exit /b 1
 call :verify_file "%Compiler%" 27467776 344940f66b26b516b8b4e10a712a6b2c01cbff95aa7ff18aac0789ba9197f970 "Windows native compiler seed"
 if errorlevel 1 exit /b 1
-call :verify_file "%Publisher%" 1121792 f2502ecf9143cfa1343c5f5cb1de066bdf1f82f0e4782afae178f11c41afd735 "Windows native publisher"
+call :verify_file "%Publisher%" 1371136 b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421 "Windows native publisher"
 if errorlevel 1 exit /b 1
-call :verify_file "%Project%" 649 e097e9d007909a3cf17476ccfce41ace5fa89c566386d15ae24c7d91d9f91e7b "compiler project manifest"
+call :verify_file "%Project%" 649 a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05 "compiler project manifest"
 if errorlevel 1 exit /b 1
 
 :allocate
@@ -47,7 +47,7 @@ call "%RepositoryRoot%\Tools\Native\Compile-Compiler-Source-Set.cmd" ^
 set "Result=%ERRORLEVEL%"
 if not "%Result%"=="0" goto :cleanup
 
-call :verify_file "%Candidate%" 921640 18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754 "bootstrapped compiler WVB"
+call :verify_file "%Candidate%" 927274 d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae "bootstrapped compiler WVB"
 if errorlevel 1 (
     set "Result=1"
     goto :cleanup

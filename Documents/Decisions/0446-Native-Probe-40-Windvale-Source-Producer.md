@@ -19,7 +19,7 @@ seed and would miss the simplest source-owned producer cutover.
 
 ## Decision
 
-- Add `Windvale-Os-Native-Wvb-Probe.wvproj` as the exact one-source Project 1
+- Add `Projects/Operating-System/Windvale-Os-Native-Wvb-Probe.wvproj` as the exact one-source Project 1
   contract for `Operating-System/Kernel/Native-Wvb-Probe.wv`.
 - In the ordinary Windows and Linux Probe 40 build, compile that project with
   the digest-bound native build driver and lower its verified WVB with the

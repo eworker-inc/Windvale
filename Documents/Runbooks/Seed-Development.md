@@ -417,7 +417,7 @@ dotnet run --project Tools/Windvale.Tool -- build `
 dotnet run --project Tools/Windvale.Tool -- run artifacts/Module-Composition-Demo.wvb
 ```
 
-The manifest identifies one root and the explicit source files available to its imports. [`Windvale-Compiler.wvproj`](../../Windvale-Compiler.wvproj) is the complete compiler consumer used by bootstrap verification.
+The manifest identifies one root and the explicit source files available to its imports. [`Projects/Examples/Windvale-Compiler.wvproj`](../../Projects/Examples/Windvale-Compiler.wvproj) is the complete compiler consumer used by bootstrap verification.
 
 ## Assemble and link
 

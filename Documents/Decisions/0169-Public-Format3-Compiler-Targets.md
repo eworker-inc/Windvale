@@ -26,7 +26,7 @@ The focused Release exact-compiler case passes with a zero-warning build. The pu
 
 The shared atomic-publication case already injects a prepublication failure, proves an existing destination remains byte-identical, proves no sibling remains, then proves complete replacement; on Linux it also verifies exact executable mode. The format-3 CLI routes reach that same code path after their independent verifier succeeds.
 
-The clean project-manifest recovery route is also executed locally against `Windvale-Compiler.wvproj`: `build` emits the canonical 599,868-byte WVB once, then paired `aot` commands consume that exact verified module and reproduce the 17,157,120-byte PE and 17,158,144-byte ELF at their pinned SHA-256 values. Target extension selection is shared between default naming and final validation and covered for all seven source targets, closing an initial split in which Windows format 3 defaulted to `.exe` but the later validator treated it as `.elf`.
+The clean project-manifest recovery route is also executed locally against `Projects/Examples/Windvale-Compiler.wvproj`: `build` emits the canonical 599,868-byte WVB once, then paired `aot` commands consume that exact verified module and reproduce the 17,157,120-byte PE and 17,158,144-byte ELF at their pinned SHA-256 values. Target extension selection is shared between default naming and final validation and covered for all seven source targets, closing an initial split in which Windows format 3 defaulted to `.exe` but the later validator treated it as `.elf`.
 
 ## Cross-host qualification
 

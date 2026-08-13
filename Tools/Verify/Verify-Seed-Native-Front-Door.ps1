@@ -629,7 +629,7 @@ Invoke-ExactInspect `
     $MachineContractsModule `
     @('Foundation\\u02C9alignment\\u02C9is\\u02C9valid', 'Foundation\\u02C9machine\\u02C9name\\u02C9is\\u02C9valid', 'section name=exports .* count=2')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Foundation-Machine-Contracts-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Foundation-Machine-Contracts-Demo.wvproj') `
     $MachineContractsDemoModule `
     3487 `
     '69106233197b3dbc33f23184eaa443505e8595aa056e9e2e10659a33eeefeea3' `
@@ -650,7 +650,7 @@ Invoke-ExactInspect `
     $ByteOrderingModule `
     @('Foundation\\u02C9byte\\u02C9spans\\u02C9compare', 'section name=exports .* count=1')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Foundation-Byte-Ordering-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Foundation-Byte-Ordering-Demo.wvproj') `
     $ByteOrderingDemoModule `
     2422 `
     'fbaf423b6e4eac5c18b644dc27f1fa20fca8798519596485cd7497b44979533f' `
@@ -671,7 +671,7 @@ Invoke-ExactInspect `
     $DecimalParsingModule `
     @('Foundation\\u02C9u32\\u02C9parse', 'Foundation\\u02C9u32\\u02C9decimal\\u02C9parse', 'section name=exports .* count=1')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Foundation-Decimal-Parsing-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Foundation-Decimal-Parsing-Demo.wvproj') `
     $DecimalParsingDemoModule `
     3742 `
     'd323f8fa9178583990394a37872a8ee522320084ef4741eac26cb0f86c21b453' `
@@ -692,7 +692,7 @@ Invoke-ExactInspect `
     $ByteConstructionModule `
     @('Foundation\\u02C9bytes\\u02C9result', 'Foundation\\u02C9bytes\\u02C9repeat', 'Foundation\\u02C9bytes\\u02C9replace', 'section name=exports .* count=2')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Foundation-Byte-Construction-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Foundation-Byte-Construction-Demo.wvproj') `
     $ByteConstructionDemoModule `
     5017 `
     'ab594976ced7a84573ade0aa50fb4370d96b8004c8b9a5ec1e888968c7b3bf8f' `
@@ -708,7 +708,7 @@ Invoke-ExactInspect `
     $NativeStencilModule `
     @('Native\\u02C9stencil\\u02C9result', 'Native\\u02C9stencil\\u02C9patch\\u02C9kind', 'Native\\u02C9stencil\\u02C9process\\u02C9argument\\u02C9count', 'Native\\u02C9stencil\\u02C9process\\u02C9argument', 'section name=exports .* count=20')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Native-Stencil-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Native-Stencil-Demo.wvproj') `
     $NativeStencilDemoModule `
     25683 `
     '6b27fbd10d5f06855354f433ec0b8c9b1af1761ef04458817931e675c26e0da8' `
@@ -909,13 +909,13 @@ Invoke-ExactBuild `
 Invoke-ExactInspect $NativePublicationBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Service-Bundle-Materialization-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization-Core.wvproj') `
     $NativeServiceBundleMaterializationCoreModule `
     17185 `
     '97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008' `
     'build status=Published verification=compiler-aligned functions=19 code-bytes=14253 module-bytes=17185'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Service-Bundle-Materialization.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization.wvproj') `
     $NativeServiceBundleMaterializationBridgeModule `
     17150 `
     '327b753062d46755b934cfe6e6bc16550ec711c8b7d2aff46eac4bf0d8d9d902' `
@@ -1041,13 +1041,13 @@ Invoke-ExactBuild `
     'd7b0084ed2c69ee03ad65ee4bfffa72550fd8d9ef2889efa0be116350b80b8b5' `
     'build status=Published verification=compiler-aligned functions=13 code-bytes=9503 module-bytes=10872'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj') `
     $NativeHostedToolMetadataConstructionCoreModule `
     24360 `
     '5808f778eb21c1214b581f0ce03958a74173a801b886aec7ed32124d7446abcd' `
     'build status=Published verification=compiler-aligned functions=35 code-bytes=21363 module-bytes=24360'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Tool-Metadata.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata.wvproj') `
     $NativeHostedToolMetadataConstructionBridgeModule `
     24252 `
     'b5e9397326d3106b22ce735369ef8202ff6bb4c8e14f6069a0c467b4266c8208' `
@@ -1063,28 +1063,28 @@ Invoke-ExactBuild `
 Invoke-ExactInspect $NativeHostedStartupInstantiationModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Construction.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Native-Hosted-Container-Construction.wvproj') `
     $NativeHostedContainerPlanModule `
     35929 `
     'ff1b48cfc05baab5f707dcfce7e73b0714e2379ee594e12f6e9c6ea1589fef7e' `
     'build status=Published verification=compiler-aligned functions=41 code-bytes=31210 module-bytes=35929'
 Invoke-ExactInspect $NativeHostedContainerPlanModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Windows.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Native-Hosted-Container-Windows.wvproj') `
     $NativeHostedContainerWindowsModule `
     17679 `
     'a77e4ea3ac2cff35e965ae44cd486f30dd5b0c10aa2cde23c109d0eca37bffcb' `
     'build status=Published verification=compiler-aligned functions=22 code-bytes=15041 module-bytes=17679'
 Invoke-ExactInspect $NativeHostedContainerWindowsModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Linux.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Native-Hosted-Container-Linux.wvproj') `
     $NativeHostedContainerLinuxModule `
     12328 `
     'dac93155c68ba18f6cbe3af2d301a4c4171b9a9c05841057ea57398536fa8b42' `
     'build status=Published verification=compiler-aligned functions=19 code-bytes=10674 module-bytes=12328'
 Invoke-ExactInspect $NativeHostedContainerLinuxModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Container-Segmentation.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Native-Hosted-Container-Segmentation.wvproj') `
     $NativeHostedContainerSegmentationModule `
     22584 `
     'd6d74f7d27df9f04f02b8eac2e75fde4fc230ba70d198f90b31ad668a06052e6' `
@@ -1092,13 +1092,13 @@ Invoke-ExactBuild `
 Invoke-ExactInspect $NativeHostedContainerSegmentationModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Tool-Runtime-Header-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Runtime/Windvale-Native-Hosted-Tool-Runtime-Header-Core.wvproj') `
     $NativeHostedToolRuntimeHeaderCoreModule `
     19516 `
     'f1c156def9fa6f00bb0401097435bb1d1429d9d4be247b8d11f0de0b5ea51be2' `
     'build status=Published verification=compiler-aligned functions=29 code-bytes=17050 module-bytes=19516'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Native-Hosted-Tool-Runtime-Header.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Runtime/Windvale-Native-Hosted-Tool-Runtime-Header.wvproj') `
     $NativeHostedToolRuntimeHeaderBridgeModule `
     19459 `
     '3cc8d0850b888911ee3338600bc7699578b163e7400c2b3631ef14649b9a3f18' `
@@ -1121,181 +1121,181 @@ Invoke-ExactBuild `
 Invoke-ExactInspect $NativePublicationLifetimeBridgeModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Lexer-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Source-Lexer-Core.wvproj') `
     $SourceLexerModule `
     49470 `
     '411c7d9679fc53a600c15d2d132b4ac62aa410e45a67f63f76e08efb89da6b3e' `
     'build status=Published verification=compiler-aligned functions=20 code-bytes=40152 module-bytes=49470'
 Invoke-ExactInspect $SourceLexerModule @('profile=portable', 'section name=exports offset=46433 bytes=715 count=17', 'section name=types offset=47156 bytes=2314 count=7', 'Compiler\\u02C9source\\u02C9token', 'Compiler\\u02C9token\\u02C9kind', 'Compiler\\u02C9lex\\u02C9source\\u02C9bounded')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Lexer-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Lexer-Demo.wvproj') `
     $SourceLexerDemoModule `
     56674 `
     'f83ff53dd2ffa1808bbf5c9ca2056f8dbb386308d52142f720ddf26420a6c2db' `
     'build status=Published verification=compiler-aligned functions=21 code-bytes=46427 module-bytes=56674'
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Declaration-Parser.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Source-Declaration-Parser.wvproj') `
     $SourceDeclarationParserModule `
     151197 `
     '8a0bafe3b0faebfd20e882be59a37af659158fb674cf58aba5adf2284050c6eb' `
     'build status=Published verification=compiler-aligned functions=52 code-bytes=120804 module-bytes=151197'
 Invoke-ExactInspect $SourceDeclarationParserModule @('profile=portable', 'section name=exports offset=145507 bytes=1417 count=32', 'section name=types offset=146932 bytes=4265 count=15', 'Compiler\\u02C9source\\u02C9declaration', 'Compiler\\u02C9source\\u02C9module\\u02C9summary', 'Compiler\\u02C9parse\\u02C9next\\u02C9declaration\\u02C9validated')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Declaration-Parser-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Declaration-Parser-Demo.wvproj') `
     $SourceDeclarationParserDemoModule `
     154365 `
     '9e7ff36a3aa8b0a1cf5b4698ef6ab14f8be40f59fd4dffc4ab327813028e8fbf' `
     'build status=Published verification=compiler-aligned functions=53 code-bytes=124556 module-bytes=154365'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Declaration-Parser-Tool.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Declaration-Parser-Tool.wvproj') `
     $SourceDeclarationParserToolModule `
     151731 `
     'ad07772ae002683c58899e09e4a323b594ca4957b9f526fca5dc6f4340fd85f0' `
     'build status=Published verification=compiler-aligned functions=55 code-bytes=122750 module-bytes=151731'
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Body-Parser.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Source-Body-Parser.wvproj') `
     $SourceBodyParserModule `
     248663 `
     '68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589' `
     'build status=Published verification=compiler-aligned functions=100 code-bytes=197096 module-bytes=248663'
 Invoke-ExactInspect $SourceBodyParserModule @('profile=portable', 'section name=exports offset=239096 bytes=2112 count=47', 'section name=types offset=241216 bytes=7447 count=25', 'Compiler\\u02C9source\\u02C9expression', 'Compiler\\u02C9source\\u02C9statement', 'Compiler\\u02C9parse\\u02C9expression\\u02C9validated', 'Compiler\\u02C9parse\\u02C9source\\u02C9bodies')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Body-Parser-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Body-Parser-Demo.wvproj') `
     $SourceBodyParserDemoModule `
     254805 `
     '2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f' `
     'build status=Published verification=compiler-aligned functions=101 code-bytes=204515 module-bytes=254805'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Body-Parser-Tool.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Body-Parser-Tool.wvproj') `
     $SourceBodyParserToolModule `
     247844 `
     '0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f' `
     'build status=Published verification=compiler-aligned functions=103 code-bytes=198924 module-bytes=247844'
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Set-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Source-Set-Core.wvproj') `
     $SourceSetModule `
-    257873 `
-    '1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb' `
-    'build status=Published verification=compiler-aligned functions=110 code-bytes=206538 module-bytes=257873'
-Invoke-ExactInspect $SourceSetModule @('profile=portable', 'section name=exports offset=249270 bytes=430 count=10', 'section name=types offset=249708 bytes=8165 count=29', 'Compiler\\u02C9source\\u02C9set\\u02C9scan', 'Compiler\\u02C9source\\u02C9set\\u02C9summary', 'Compiler\\u02C9scan\\u02C9source\\u02C9set', 'Compiler\\u02C9validate\\u02C9source\\u02C9set')
+    257061 `
+    '2daf59f6863a39c662e282cfc272a0203cff9fc0440e033774b40c8b44354d35' `
+    'build status=Published verification=compiler-aligned functions=110 code-bytes=205855 module-bytes=257061'
+Invoke-ExactInspect $SourceSetModule @('profile=portable', 'section name=exports offset=248458 bytes=430 count=10', 'section name=types offset=248896 bytes=8165 count=29', 'Compiler\\u02C9source\\u02C9set\\u02C9scan', 'Compiler\\u02C9source\\u02C9set\\u02C9summary', 'Compiler\\u02C9scan\\u02C9source\\u02C9set', 'Compiler\\u02C9validate\\u02C9source\\u02C9set')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Set-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Set-Demo.wvproj') `
     $SourceSetDemoModule `
-    267203 `
-    'ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742' `
-    'build status=Published verification=compiler-aligned functions=116 code-bytes=214034 module-bytes=267203'
+    266391 `
+    'de6e86890e54a47a2dba9a821c4cb279c8c02468cbd78c8f57df95c6e399f50e' `
+    'build status=Published verification=compiler-aligned functions=116 code-bytes=213351 module-bytes=266391'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Set-Tool.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Set-Tool.wvproj') `
     $SourceSetToolModule `
-    261726 `
-    '6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f' `
-    'build status=Published verification=compiler-aligned functions=115 code-bytes=209802 module-bytes=261726'
+    260914 `
+    '132e2a7817c704afa4d6ef9f9a33e21ddbd704cc0bd6139e205a0a3048c65fa1' `
+    'build status=Published verification=compiler-aligned functions=115 code-bytes=209119 module-bytes=260914'
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Graph-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Source-Graph-Core.wvproj') `
     $SourceGraphModule `
-    278894 `
-    '9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b' `
-    'build status=Published verification=compiler-aligned functions=126 code-bytes=223460 module-bytes=278894'
-Invoke-ExactInspect $SourceGraphModule @('profile=portable', 'section name=exports offset=269556 bytes=549 count=12', 'section name=types offset=270113 bytes=8781 count=34', 'Compiler\\u02C9source\\u02C9graph\\u02C9status', 'Compiler\\u02C9source\\u02C9graph\\u02C9summary', 'Compiler\\u02C9validate\\u02C9source\\u02C9graph')
+    281381 `
+    'f29b234fc07bc4b1e0b01587b28cd6aa422dd61a68fa310b032b3fc3be5c8a68' `
+    'build status=Published verification=compiler-aligned functions=126 code-bytes=225553 module-bytes=281381'
+Invoke-ExactInspect $SourceGraphModule @('profile=portable', 'section name=exports offset=271979 bytes=549 count=12', 'section name=types offset=272536 bytes=8845 count=34', 'Compiler\\u02C9source\\u02C9graph\\u02C9status', 'Compiler\\u02C9source\\u02C9graph\\u02C9summary', 'Compiler\\u02C9validate\\u02C9source\\u02C9graph')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Graph-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Graph-Demo.wvproj') `
     $SourceGraphDemoModule `
-    284848 `
-    'a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c' `
-    'build status=Published verification=compiler-aligned functions=131 code-bytes=228355 module-bytes=284848'
+    287335 `
+    '5e8c4add278609866b952bd0a18dcb7e0e9b05ac04e7e7a5a6fec1e5655ad468' `
+    'build status=Published verification=compiler-aligned functions=131 code-bytes=230448 module-bytes=287335'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Graph-Tool.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Graph-Tool.wvproj') `
     $SourceGraphToolModule `
-    282035 `
-    '0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10' `
-    'build status=Published verification=compiler-aligned functions=131 code-bytes=226370 module-bytes=282035'
+    284522 `
+    '1e0494b7e49f0d14a0508367dcb68d054b69faf501b3ef60ca6f14d48998f7f4' `
+    'build status=Published verification=compiler-aligned functions=131 code-bytes=228463 module-bytes=284522'
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Symbols-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Source-Symbols-Core.wvproj') `
     $SourceSymbolsModule `
-    439545 `
-    'a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7' `
-    'build status=Published verification=compiler-aligned functions=204 code-bytes=351993 module-bytes=439545'
-Invoke-ExactInspect $SourceSymbolsModule @('profile=portable', 'section name=exports offset=424691 bytes=3608 count=66', 'section name=types offset=428307 bytes=11238 count=45', 'Compiler\\u02C9source\\u02C9symbol\\u02C9status', 'Compiler\\u02C9source\\u02C9symbol\\u02C9summary', 'Compiler\\u02C9source\\u02C9symbols\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9symbols')
+    442346 `
+    '1541761fa2de9d74a993fa66e8213c7b81ee07d9c7a293efe6c4af96b7d81bc7' `
+    'build status=Published verification=compiler-aligned functions=204 code-bytes=354292 module-bytes=442346'
+Invoke-ExactInspect $SourceSymbolsModule @('profile=portable', 'section name=exports offset=427428 bytes=3608 count=66', 'section name=types offset=431044 bytes=11302 count=45', 'Compiler\\u02C9source\\u02C9symbol\\u02C9status', 'Compiler\\u02C9source\\u02C9symbol\\u02C9summary', 'Compiler\\u02C9source\\u02C9symbols\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9symbols')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Symbols-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Symbols-Demo.wvproj') `
     $SourceSymbolsDemoModule `
-    450431 `
-    '4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457' `
-    'build status=Published verification=compiler-aligned functions=213 code-bytes=362117 module-bytes=450431'
+    453232 `
+    '9dd24f3afd8864c444e23ea2228d5ea60fabca459b1cc47a537e0c77ea284da2' `
+    'build status=Published verification=compiler-aligned functions=213 code-bytes=364416 module-bytes=453232'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Symbols-Tool.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Symbols-Tool.wvproj') `
     $SourceSymbolsToolModule `
-    438378 `
-    '58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66' `
-    'build status=Published verification=compiler-aligned functions=209 code-bytes=355987 module-bytes=438378'
+    441179 `
+    'b93cfd428589b94ed5b4579b087d942c34a6ddd738e7a0e3a24ff57becb62f46' `
+    'build status=Published verification=compiler-aligned functions=209 code-bytes=358286 module-bytes=441179'
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Bindings-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Source-Bindings-Core.wvproj') `
     $SourceBindingsModule `
-    542309 `
-    'a772a75fe625f47e165ca190e76d8cd59fa0b591a0270a5817e02e0fac62542c' `
-    'build status=Published verification=compiler-aligned functions=263 code-bytes=437438 module-bytes=542309'
-Invoke-ExactInspect $SourceBindingsModule @('profile=portable', 'section name=exports offset=526082 bytes=2996 count=59', 'section name=types offset=529086 bytes=13223 count=55', 'Compiler\\u02C9source\\u02C9binding\\u02C9status', 'Compiler\\u02C9source\\u02C9binding\\u02C9summary', 'Compiler\\u02C9source\\u02C9bindings\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9bindings')
+    545334 `
+    '08783918419590b27de26a59356935339ba54699fbca0f9957059d6c2aba1aae' `
+    'build status=Published verification=compiler-aligned functions=263 code-bytes=439949 module-bytes=545334'
+Invoke-ExactInspect $SourceBindingsModule @('profile=portable', 'section name=exports offset=529043 bytes=2996 count=59', 'section name=types offset=532047 bytes=13287 count=55', 'Compiler\\u02C9source\\u02C9binding\\u02C9status', 'Compiler\\u02C9source\\u02C9binding\\u02C9summary', 'Compiler\\u02C9source\\u02C9bindings\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9bindings')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Bindings-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Bindings-Demo.wvproj') `
     $SourceBindingsDemoModule `
-    548036 `
-    '563caeb4a76fb34d6c2b2b8340260cc1da518c4cbaad9e5f355201f6bd1fa933' `
-    'build status=Published verification=compiler-aligned functions=271 code-bytes=443818 module-bytes=548036'
+    551061 `
+    'b77949a3777f9cf8f7a43d071d2416524869e56e770c0e36c17f75298a7d4a10' `
+    'build status=Published verification=compiler-aligned functions=271 code-bytes=446329 module-bytes=551061'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Bindings-Tool.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Bindings-Tool.wvproj') `
     $SourceBindingsToolModule `
-    542334 `
-    '17e877b3c59d2f9a99d26be4c478f10ce8879e6bce925b65894d158fd4a6e0a9' `
-    'build status=Published verification=compiler-aligned functions=268 code-bytes=441068 module-bytes=542334'
+    545359 `
+    '7903b481865b68fe9be9b8587f41c89688d8da8ac3f558dfdccf956caa44ba55' `
+    'build status=Published verification=compiler-aligned functions=268 code-bytes=443579 module-bytes=545359'
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Wir-Core.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Source-Wir-Core.wvproj') `
     $SourceWirModule `
-    817391 `
-    'c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb' `
-    'build status=Published verification=compiler-aligned functions=346 code-bytes=665606 module-bytes=817391'
-Invoke-ExactInspect $SourceWirModule @('profile=portable', 'section name=exports offset=794006 bytes=3755 count=75', 'section name=types offset=797769 bytes=19622 count=66', 'Compiler\\u02C9source\\u02C9wir\\u02C9operation', 'Compiler\\u02C9source\\u02C9wir\\u02C9summary', 'Compiler\\u02C9source\\u02C9wir\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9wir')
+    821168 `
+    'efcdce0043ec7709105c2b4df59171401f886d8233f85c9ec394f649d03dab82' `
+    'build status=Published verification=compiler-aligned functions=346 code-bytes=668829 module-bytes=821168'
+Invoke-ExactInspect $SourceWirModule @('profile=portable', 'section name=exports offset=797719 bytes=3755 count=75', 'section name=types offset=801482 bytes=19686 count=66', 'Compiler\\u02C9source\\u02C9wir\\u02C9operation', 'Compiler\\u02C9source\\u02C9wir\\u02C9summary', 'Compiler\\u02C9source\\u02C9wir\\u02C9directory\\u02C9is\\u02C9valid', 'Compiler\\u02C9validate\\u02C9source\\u02C9wir')
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Wir-Demo.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Wir-Demo.wvproj') `
     $SourceWirDemoModule `
-    822254 `
-    '7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f' `
-    'build status=Published verification=compiler-aligned functions=352 code-bytes=672121 module-bytes=822254'
+    826031 `
+    '8d5ed5bc9a79f5f152403198156a439fcb355be560c1c974b0c7c479df343ef4' `
+    'build status=Published verification=compiler-aligned functions=352 code-bytes=675344 module-bytes=826031'
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Source-Wir-Tool.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Source-Wir-Tool.wvproj') `
     $SourceWirToolModule `
-    815722 `
-    '7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5' `
-    'build status=Published verification=compiler-aligned functions=351 code-bytes=669118 module-bytes=815722'
+    819499 `
+    'bf2deea160d48b72bbb80f0ad2bb1e547e7e111506502724708db208bc8e8406' `
+    'build status=Published verification=compiler-aligned functions=351 code-bytes=672341 module-bytes=819499'
 
 Invoke-ExactSourceCompilerBuild `
     'core' `
     $SourceWvbModule `
-    923514 `
-    'c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b' `
-    'source wvb status=Valid functions=422 code-bytes=757261 module-bytes=923514'
-Invoke-ExactInspect $SourceWvbModule @('profile=portable', 'section name=exports offset=898984 bytes=3322 count=70', 'section name=types offset=902314 bytes=21200 count=82', 'Compiler\\u02C9source\\u02C9wvb\\u02C9summary', 'Compiler\\u02C9compile\\u02C9source\\u02C9wvb')
+    929148 `
+    'c1734f76c06bc0deeb284144e6d8bd51b8be05c2f797055ce8ef7b54113be9c0' `
+    'source wvb status=Valid functions=422 code-bytes=762141 module-bytes=929148'
+Invoke-ExactInspect $SourceWvbModule @('profile=portable', 'section name=exports offset=904554 bytes=3322 count=70', 'section name=types offset=907884 bytes=21264 count=82', 'Compiler\\u02C9source\\u02C9wvb\\u02C9summary', 'Compiler\\u02C9compile\\u02C9source\\u02C9wvb')
 Invoke-ExactSourceCompilerBuild `
     'demo' `
     $SourceWvbDemoModule `
-    923210 `
-    'ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9' `
-    'source wvb status=Valid functions=426 code-bytes=760228 module-bytes=923210'
+    928844 `
+    'a9f07a6338baaab2519c1ce501221786aac444eaa7a827a168362feb681b8fe7' `
+    'source wvb status=Valid functions=426 code-bytes=765108 module-bytes=928844'
 Invoke-ExactSourceCompilerBuild `
     'tool' `
     $SourceWvbToolModule `
-    921640 `
-    '18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754' `
-    'source wvb status=Valid functions=427 code-bytes=759920 module-bytes=921640'
+    927274 `
+    'd3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae' `
+    'source wvb status=Valid functions=427 code-bytes=764800 module-bytes=927274'
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Wvb-Inspector.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Wvb-Inspector.wvproj') `
     $WvDumpCoreModule `
     76527 `
     '293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753' `
@@ -1304,7 +1304,7 @@ Invoke-ExactVerify $WvDumpCoreModule
 Invoke-ExactInspect $WvDumpCoreModule @('profile=hosted', 'section name=capabilities offset=48 bytes=145 count=5', 'section name=exports offset=75635 bytes=17 count=1', 'section name=types offset=75660 bytes=867 count=5', 'Inspect\\u02C9wvb\\u02C9envelope', 'opcode=record\.create', 'opcode=record\.field', 'opcode=enum\.name', 'opcode=u32\.format', 'opcode=text\.concat', 'opcode=bytes\.read_i32_little', 'opcode=text\.utf8_is_valid', 'opcode=text\.from_utf8', 'opcode=text\.quote', 'opcode=u32\.from_u8')
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Wvo-Object.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Object-Model/Windvale-Wvo-Object.wvproj') `
     $WvoCoreModule `
     61008 `
     'a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db' `
@@ -1313,7 +1313,7 @@ Invoke-ExactVerify $WvoCoreModule
 Invoke-ExactInspect $WvoCoreModule @('profile=hosted', 'section name=capabilities offset=51 bytes=145 count=5', 'section name=exports offset=59468 bytes=17 count=1', 'section name=types offset=59493 bytes=1515 count=13', 'opcode=bytes\.concat', 'opcode=bytes\.from_u16_little', 'opcode=bytes\.from_i32_little', 'opcode=text\.to_utf8', '__WvM1F0', 'file\.read_bytes', 'Object\\u02C9sha256', 'name="__WvM2F0" parameters=1 result=bytes') @('file\.write_bytes')
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Wva-Assembler.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Assembler/Windvale-Wva-Assembler.wvproj') `
     $WvaAssemblerModule `
     180071 `
     'a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c' `
@@ -1322,7 +1322,7 @@ Invoke-ExactVerify $WvaAssemblerModule
 Invoke-ExactInspect $WvaAssemblerModule @('profile=hosted', 'section name=capabilities offset=54 bytes=172 count=6', 'section name=exports offset=177876 bytes=17 count=1', 'section name=types offset=177901 bytes=2170 count=19', 'Scan\\u02C9wva', 'Inspect\\u02C9wva\\u02C9semantics', 'Encode\\u02C9wva', 'Encode\\u02C9sections', 'Encode\\u02C9symbols', 'Encode\\u02C9relocations', '__WvM4F1', '__WvM2F0', '__WvM3F0', '__WvM1F0', 'opcode=bytes\.concat', 'opcode=bytes\.from_u32_little', 'file\.read_bytes', 'file\.write_bytes')
 
 Invoke-ExactBuild `
-    (Join-Path $RepositoryRoot 'Windvale-Wv-Linker.wvproj') `
+    (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Wv-Linker.wvproj') `
     $WvLinkerCoreModule `
     135740 `
     '02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874' `
@@ -1349,18 +1349,14 @@ $TemporaryDirectory = Join-Path `
     "windvale-seed-front-door-$PID-$([guid]::NewGuid().ToString('N'))"
 New-Item -ItemType Directory -Path $TemporaryDirectory | Out-Null
 try {
-    $InvalidProject = Join-Path $TemporaryDirectory 'Invalid.wvproj'
+    $LegacyProject = Join-Path $RepositoryRoot 'Tests/Fixtures/Project/Legacy-Project1.wvproj'
     $ExistingOutput = Join-Path $TemporaryDirectory 'Existing.wvb'
-    [IO.File]::WriteAllText(
-        $InvalidProject,
-        "windvale-project 1`nroot `"Missing.wv`"`n",
-        [Text.UTF8Encoding]::new($false))
     [IO.File]::WriteAllBytes($ExistingOutput, [byte[]](9, 8, 7))
-    $InvalidOutput = @(& $NativeBuild $InvalidProject $ExistingOutput 2>&1)
+    $InvalidOutput = @(& $NativeBuild $LegacyProject $ExistingOutput 2>&1)
     if (
         $LASTEXITCODE -ne 1 -or
         $InvalidOutput.Count -ne 1 -or
-        $InvalidOutput[0].ToString() -ne 'build status=Projectˉrejected code=WVP1004 line=3 column=1' -or
+        $InvalidOutput[0].ToString() -ne 'build status=Projectˉrejected code=WVP1001 line=1 column=1' -or
         [Convert]::ToHexString([IO.File]::ReadAllBytes($ExistingOutput)) -ne '090807'
     ) {
         throw 'The native Seed project rejection or output preservation contract failed.'

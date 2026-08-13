@@ -16,7 +16,7 @@ The existing hosted WVB inspector package already supplies the exact read-only c
 
 ### Move object semantics to their owning architecture area
 
-Move the source to `Object-Model/Windvale/Wvo-Object-Core.wv` and add `Windvale-Wvo-Object.wvproj` with its exact byte-ordering and SHA-256 dependencies. Keep canonical sample construction only as an internal self-test. Remove the file-writing shell and its capability; the ordinary commands read, verify, and report an existing WVO.
+Move the source to `Object-Model/Windvale/Wvo-Object-Core.wv` and add `Projects/Object-Model/Windvale-Wvo-Object.wvproj` with its exact byte-ordering and SHA-256 dependencies. Keep canonical sample construction only as an internal self-test. Remove the file-writing shell and its capability; the ordinary commands read, verify, and report an existing WVO.
 
 Close the remaining verifier parity gaps for duplicate section/symbol names and complete inspection views. Successful `verify` and `inspect` output matches the independent C# Stage 0 commands byte for byte after platform newline normalization. Invalid input returns a deterministic structural status without partially reporting an object.
 

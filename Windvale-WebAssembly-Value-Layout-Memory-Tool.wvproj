@@ -1,6 +1,0 @@
-windvale-project 1
-root "Tools/Windvale.WebAssembly/Value-Layout-Memory-Tool.wv"
-source "Compiler/Windvale/WebAssembly-Function-Directory.wv"
-source "Compiler/Windvale/WebAssembly-Binary-Encoding.wv"
-source "Compiler/Windvale/WebAssembly-Value-Layout.wv"
-emit wvb

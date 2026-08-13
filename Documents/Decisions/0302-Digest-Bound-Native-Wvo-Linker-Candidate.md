@@ -21,7 +21,7 @@ promotion for later gates.
 
 ## Decision
 
-- Rebuild `Windvale-Wv-Linker.wvproj` through the qualified native source
+- Rebuild `Projects/Linker/Windvale-Wv-Linker.wvproj` through the qualified native source
   front door into a clean candidate directory. Construct its exact Windows and
   Linux hosted applications once through the retained Stage 0 package writer.
 - Add a manifest that pins the WVB, PE, and ELF size, digest, target, source,

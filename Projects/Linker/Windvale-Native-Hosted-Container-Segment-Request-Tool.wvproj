@@ -1,0 +1,9 @@
+windvale-project 2
+root "Linker/Windvale/Native-Hosted-Container-Segment-Request-Tool.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Foundation/Immutable-Source-Regions.wv"
+source "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Container-Layout.wv"
+source "Linker/Windvale/Native-Hosted-Container-Segmentation-Core.wv"
+emit wvb

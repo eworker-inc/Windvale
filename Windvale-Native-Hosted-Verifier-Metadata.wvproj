@@ -1,6 +1,0 @@
-windvale-project 1
-root "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Bridge.wv"
-source "Foundation/Byte-Construction.wv"
-source "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv"
-source "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Core.wv"
-emit wvb

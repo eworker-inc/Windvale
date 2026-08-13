@@ -43,11 +43,11 @@ canonical_prefix="$temporary_directory/Canonical"
 canonical_manifest="$temporary_directory/Canonical.wvli"
 
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Native-X64-Lowering-Tool.wvproj" \
+    "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
     "$lowerer_wvb" \
     >"$temporary_directory/Build-Lowerer.txt" 2>"$temporary_directory/Build-Lowerer.err" || exit $?
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" \
     "$return_wvb" \
     >"$temporary_directory/Build-Return-42.txt" 2>"$temporary_directory/Build-Return-42.err" || exit $?
 

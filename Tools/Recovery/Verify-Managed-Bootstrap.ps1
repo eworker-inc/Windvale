@@ -11,7 +11,7 @@ $RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $ToolProject = Join-Path $RepositoryRoot 'Tools/Windvale.Tool/Windvale.Tool.csproj'
 $ToolDll = Join-Path $RepositoryRoot "Tools/Windvale.Tool/bin/$Configuration/net10.0/windvale.dll"
 $Artifacts = Join-Path $RepositoryRoot 'artifacts'
-$ProjectManifest = Join-Path $RepositoryRoot 'Windvale-Compiler.wvproj'
+$ProjectManifest = Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Compiler.wvproj'
 $RootSource = Join-Path $RepositoryRoot 'Examples/Compiler/Source-Wvb-Tool.wv'
 $Dependencies = @(
     'Compiler/Windvale/Source-Bindings-Core.wv',

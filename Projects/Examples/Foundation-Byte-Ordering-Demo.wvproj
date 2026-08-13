@@ -1,0 +1,4 @@
+windvale-project 2
+root "Examples/Foundation/Byte-Ordering-Demo.wv"
+source "Foundation/Byte-Ordering.wv"
+emit wvb

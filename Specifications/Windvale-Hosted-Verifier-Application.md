@@ -20,7 +20,7 @@ clean bootstrap, qualification, promotion, and recovery release remain.
 
 These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. The native application retains one typed walk under a `u64` host meter. It constructs fixed-width per-function local-shape and control-boundary directories before the typed and reachability checks, avoiding repeated variable-width rescans without changing acceptance. The WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
 
-The canonical source project is [`Windvale-Compiler-Wvb-Verifier.wvproj`](../Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
+The canonical source project is [`Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj`](../Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
 
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv` as the hosted adapter;
 - `Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv`;
@@ -37,7 +37,7 @@ wvverify <module.wvb>
 
 Success writes `wvb status=Valid profile=compiler-aligned` plus LF to standard output and returns `0`. Rejection writes one stable phase line to standard error and returns `1`. Invalid invocation writes the usage line to standard error and returns `64`.
 
-The canonical WVB inspector project is [`Windvale-Wvb-Inspector.wvproj`](../Windvale-Wvb-Inspector.wvproj), which reuses the checked-in Windvale source `Examples/Foundation/Wv-Dump-Core.wv` without a second implementation. Its invocation is:
+The canonical WVB inspector project is [`Projects/Examples/Windvale-Wvb-Inspector.wvproj`](../Projects/Examples/Windvale-Wvb-Inspector.wvproj), which reuses the checked-in Windvale source `Examples/Foundation/Wv-Dump-Core.wv` without a second implementation. Its invocation is:
 
 ```text
 wvdump <module.wvb>
@@ -45,7 +45,7 @@ wvdump <module.wvb>
 
 Success writes the deterministic [`wvdump 1`](Wv-Dump-Report.md) line report and returns `0`. Structural rejection writes one stable diagnostic and returns `2`; invalid invocation returns `64`. Ordinary inspection first runs `wvverify` and invokes `wvdump` only after semantic acceptance.
 
-The WVO profile packages [`Windvale-Wvo-Object.wvproj`](../Windvale-Wvo-Object.wvproj) under the separately specified [native WVO inspector contract](Windvale-Native-Wvo-Inspector.md). It uses the same eleven-service read-only startup as `wvdump`, but profile 6 binds the canonical `Wvoˉobjectˉcore` identity and its `verify`/`inspect` command contract. Profile 7 packages [`Windvale-Console-Application-Verifier.wvproj`](../Windvale-Console-Application-Verifier.wvproj) with the same eleven services and reads exactly two immutable application chunks before performing the portable console-application verification plan.
+The WVO profile packages [`Projects/Object-Model/Windvale-Wvo-Object.wvproj`](../Projects/Object-Model/Windvale-Wvo-Object.wvproj) under the separately specified [native WVO inspector contract](Windvale-Native-Wvo-Inspector.md). It uses the same eleven-service read-only startup as `wvdump`, but profile 6 binds the canonical `Wvoˉobjectˉcore` identity and its `verify`/`inspect` command contract. Profile 7 packages [`Projects/Tools/Windvale-Console-Application-Verifier.wvproj`](../Projects/Tools/Windvale-Console-Application-Verifier.wvproj) with the same eleven services and reads exactly two immutable application chunks before performing the portable console-application verification plan.
 
 ## Source and authority contract
 
@@ -209,19 +209,19 @@ The digest-bound [native read-only front door](Windvale-Native-Wvb-Read-Only-Fro
 The Stage 0 routes are:
 
 ```text
-windvale build Windvale-Compiler-Wvb-Verifier.wvproj
+windvale build Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj
 windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target windows-x64-verifier-v1
 windvale aot Windvale-Compiler-Wvb-Verifier.wvb --target linux-x64-verifier-v1
-windvale build Windvale-Wvb-Inspector.wvproj
+windvale build Projects/Examples/Windvale-Wvb-Inspector.wvproj
 windvale aot Windvale-Wvb-Inspector.wvb --target windows-x64-wvb-inspector-v1
 windvale aot Windvale-Wvb-Inspector.wvb --target linux-x64-wvb-inspector-v1
-windvale build Windvale-Wvb-Runner.wvproj
+windvale build Projects/Tools/Windvale-Wvb-Runner.wvproj
 windvale aot Windvale-Wvb-Runner.wvb --target windows-x64-wvb-runner-v1
 windvale aot Windvale-Wvb-Runner.wvb --target linux-x64-wvb-runner-v1
-windvale build Windvale-Wvo-Object.wvproj
+windvale build Projects/Object-Model/Windvale-Wvo-Object.wvproj
 windvale aot Windvale-Wvo-Object.wvb --target windows-x64-wvo-inspector-v1
 windvale aot Windvale-Wvo-Object.wvb --target linux-x64-wvo-inspector-v1
-windvale build Windvale-Console-Application-Verifier.wvproj
+windvale build Projects/Tools/Windvale-Console-Application-Verifier.wvproj
 windvale aot Console-Application-Verifier.wvb --target windows-x64-console-application-verifier-v1
 windvale aot Console-Application-Verifier.wvb --target linux-x64-console-application-verifier-v1
 ```

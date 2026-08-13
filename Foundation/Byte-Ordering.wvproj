@@ -1,3 +1,3 @@
-windvale-project 1
-root "Byte-Ordering.wv"
+windvale-project 2
+root "Foundation/Byte-Ordering.wv"
 emit wvb

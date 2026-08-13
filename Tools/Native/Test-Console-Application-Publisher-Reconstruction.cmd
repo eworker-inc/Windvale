@@ -37,7 +37,7 @@ fc /b "%TestDirectory%\Usage.err" "%TestDirectory%\Usage.expected" >nul
 if errorlevel 1 goto :failed
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Console-Application-Publisher.wvproj" ^
+    "%RepositoryRoot%\Projects/Tools/Windvale-Console-Application-Publisher.wvproj" ^
     "%TestDirectory%\Console-Application-Publisher.wvb" ^
     >"%TestDirectory%\Build.out" 2>"%TestDirectory%\Build.err"
 if errorlevel 1 goto :failed

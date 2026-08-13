@@ -1,0 +1,4 @@
+windvale-project 2
+root "Examples/Foundation/Machine-Contracts-Demo.wv"
+source "Foundation/Machine-Contracts.wv"
+emit wvb

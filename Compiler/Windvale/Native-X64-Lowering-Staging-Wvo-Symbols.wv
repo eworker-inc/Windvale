@@ -188,7 +188,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
         Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
             Stagingˉmanifest
         );
-    if Envelopeˉsummary.Symbols > 576u32 {
+    if Envelopeˉsummary.Symbols > 768u32 {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
         );

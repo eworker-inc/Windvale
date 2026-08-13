@@ -1,0 +1,5 @@
+windvale-project 2
+root "Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Core.wv"
+source "Foundation/Byte-Construction.wv"
+source "Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv"
+emit wvb

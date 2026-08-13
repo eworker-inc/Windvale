@@ -59,7 +59,7 @@ $WindowsApplication = Join-Path $TemporaryRoot 'Baseline-Jit-Publisher.exe'
 try {
     Invoke-Checked {
         & (Join-Path $RepositoryRoot 'Tools\Native\Build-Wvb.cmd') `
-            (Join-Path $RepositoryRoot 'Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj') `
+            (Join-Path $RepositoryRoot 'Projects/Compiler/Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj') `
             $BridgeWvb
     } 'Windvale producer-bridge build'
     Assert-File $BridgeWvb 4574 '2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9' 'producer-bridge WVB'

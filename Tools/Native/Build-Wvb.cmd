@@ -14,12 +14,12 @@ set "ArtifactRoot=%RepositoryRoot%\Artifacts\Native-Front-Door"
 set "BuildDriver=%ArtifactRoot%\windows-x64\wvbuild.exe"
 set "Publisher=%ArtifactRoot%\windows-x64\wvpublish.exe"
 
-certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"ee338c635aa817a26081c4327da4b36b78557f10518268162b8039d1f82316f4" >nul
+certutil -hashfile "%BuildDriver%" SHA256 | findstr /I /C:"65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec" >nul
 if errorlevel 1 (
     >&2 echo The Windows native build-driver artifact digest is invalid.
     exit /b 1
 )
-certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"f2502ecf9143cfa1343c5f5cb1de066bdf1f82f0e4782afae178f11c41afd735" >nul
+certutil -hashfile "%Publisher%" SHA256 | findstr /I /C:"b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421" >nul
 if errorlevel 1 (
     >&2 echo The Windows native publisher artifact digest is invalid.
     exit /b 1
@@ -27,6 +27,21 @@ if errorlevel 1 (
 
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
+set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
+if not exist "%WorkspacePath%" (
+    >&2 echo The native workspace marker is missing.
+    exit /b 1
+)
+fsutil reparsepoint query "%RepositoryRoot%" >nul 2>nul
+if not errorlevel 1 (
+    >&2 echo The native workspace root must not be a reparse point.
+    exit /b 1
+)
+for /f "delims=" %%L in ('dir /a:l /s /b "%RepositoryRoot%" 2^>nul') do (
+    >&2 echo The native workspace must not contain a reparse point: %%L
+    exit /b 1
+)
+set "WorkspaceResource=%WorkspacePath:\=/%"
 if "%~2"=="" (
     set "OutputPath=%~dpn1.wvb"
 ) else (
@@ -44,12 +59,13 @@ mkdir "%TemporaryDirectory%" || exit /b 1
 set "CandidatePath=%TemporaryDirectory%\Candidate.wvb"
 set "CandidateResource=%CandidatePath:\=/%"
 
-"%BuildDriver%" --project "%ProjectResource%" "%CandidateResource%"
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%CandidateResource%"
 set "Result=%ERRORLEVEL%"
-if "%Result%"=="0" (
-    "%Publisher%" "%CandidatePath%" "%OutputPath%"
-    set "Result=%ERRORLEVEL%"
-)
+if not "%Result%"=="0" goto :cleanup
+"%Publisher%" "%CandidatePath%" "%OutputPath%"
+set "Result=%ERRORLEVEL%"
+
+:cleanup
 if exist "%CandidatePath%" del /f /q "%CandidatePath%" >nul 2>nul
 rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b %Result%

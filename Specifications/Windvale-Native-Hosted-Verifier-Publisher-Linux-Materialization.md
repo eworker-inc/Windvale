@@ -16,7 +16,7 @@ and four reserved zeros. Packed resources are the 249,856-byte base ELF,
 416-byte `WVCR`, 5,117-byte `WVIO`, and 128-byte `WVVP`. Role 0 uses the
 249,856-byte publisher base and totals 255,581 bytes; role 1 uses the
 675,840-byte promoter base and totals 681,565 bytes; role 2 uses the
-1,335,296-byte WVB-publisher base and totals 1,341,021 bytes; role 3 uses the
+1,363,968-byte WVB-publisher base and totals 1,369,693 bytes; role 3 uses the
 421,888-byte WVO-publisher base and totals 427,613 bytes.
 
 `WVLO 1` has a 32-byte header containing magic `WVLO` (`0x4f4c5657`),
@@ -58,8 +58,8 @@ This monotonic join avoids repeated replacement of a 250 KiB byte value.
 | Final ELF | 254,965 | `8c9a1dbbb177041c61e4606696ce9ddf9225a98407a7d3af0a4338069a15979e` |
 | Promoter base ELF | 675,840 | `848ee9ed30ffc5094f77b4f79b72e3b4a426b4f9e0fc8e26631ed6619596f782` |
 | Promoter final ELF | 680,949 | `3cd1c82807495e34445345b5e61b8c5911434c84d2a6f49a11b21fd2521423f5` |
-| WVB-publisher base ELF | 1,335,296 | `f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090` |
-| WVB-publisher final ELF | 1,340,405 | `7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095` |
+| WVB-publisher base ELF | 1,363,968 | `2fc0332887c96ad0fa34d1987091d60ddbbe61f019739d41734cd491b8ca4b64` |
+| WVB-publisher final ELF | 1,369,077 | `b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af` |
 | WVO-publisher base ELF | 421,888 | `af61a601f4cd8e7fb81704353160a518d2e4f199084fde4b29518d27c89774f7` |
 | WVO-publisher final ELF | 426,997 | `2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2` |
 

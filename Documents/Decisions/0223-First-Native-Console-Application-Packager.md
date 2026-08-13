@@ -16,7 +16,7 @@ The existing hosted-compiler startup already provides the bounded arguments, inp
 
 ### Compose construction, materialization, and verification in Windvale
 
-Add `Windvale-Console-Application-Packager.wvproj`. Its hosted root parses an exact target and decimal entry offset, reads one raw native image, constructs the existing 32-byte `WVCQ 1` request, invokes the existing portable sparse constructor, validates every recipe field and segment, and materializes canonical zero gaps plus literal and native spans into one completed application value.
+Add `Projects/Linker/Windvale-Console-Application-Packager.wvproj`. Its hosted root parses an exact target and decimal entry offset, reads one raw native image, constructs the existing 32-byte `WVCQ 1` request, invokes the existing portable sparse constructor, validates every recipe field and segment, and materializes canonical zero gaps plus literal and native spans into one completed application value.
 
 Before its single output call, the application runs the existing portable console-application verifier and requires exact target, native-image bytes, and entry-offset recovery. Invalid target, malformed entry, invalid recipe, oversized complete application, verification disagreement, or runtime failure produces no application write. This source adds no PE/ELF layout constants outside the existing construction and verification modules.
 

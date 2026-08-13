@@ -73,7 +73,7 @@ if [[ $(wc -c < "$work/00-loader.wvo") -ne 6336 ]] ||
 fi
 
 if ! "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Os-Kernel-Markers.wvproj" \
+    "$repository_root/Projects/Operating-System/Windvale-Os-Kernel-Markers.wvproj" \
     "$work/01-kernel.wvb" >"$work/01-build.log" 2>&1; then
     cat -- "$work/01-build.log" >&2
     exit 1
@@ -100,7 +100,7 @@ if [[ $(wc -c < "$work/01-kernel.wvo") -ne 12134 ]] ||
 fi
 
 if ! "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Os-Wvb-Admission.wvproj" \
+    "$repository_root/Projects/Operating-System/Windvale-Os-Wvb-Admission.wvproj" \
     "$work/02-wvb-admission.wvb" >"$work/02-build.log" 2>&1; then
     cat -- "$work/02-build.log" >&2
     exit 1
@@ -140,7 +140,7 @@ if [[ $(wc -c < "$work/02-wvb-admission-native.wvo") -ne 20337 ]] ||
 fi
 
 if ! "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Os-Native-Wvb-Probe.wvproj" \
+    "$repository_root/Projects/Operating-System/Windvale-Os-Native-Wvb-Probe.wvproj" \
     "$work/03-native-wvb-probe.wvb" >"$work/03-build.log" 2>&1; then
     cat -- "$work/03-build.log" >&2
     exit 1

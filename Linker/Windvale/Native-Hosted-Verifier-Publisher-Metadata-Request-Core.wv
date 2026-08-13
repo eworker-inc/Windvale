@@ -149,7 +149,7 @@ export fn Publisherˉmetadataˉrequestˉforˉvariant(
         Mainˉoffset = 1178u32;
     }
     if Variant == 2u32 {
-        Moduleˉbytes = 159770u32;
+        Moduleˉbytes = 163300u32;
         Mainˉoffset = 0u32;
         Beginˉoffset = 5475u32;
         Applyˉoffset = 4686u32;

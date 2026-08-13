@@ -31,7 +31,7 @@ $Cases = @(
     @{ Name = 'database specification'; Paths = @('Specifications/Windvale-Database-Reader.md'); Scope = 'qualification'; Editor = $false; Areas = @('database') },
     @{ Name = 'Seed example'; Paths = @('Examples/Seed/Sum-Data.wv'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler', 'runtime') },
     @{ Name = 'project tool'; Paths = @('Tools/Windvale.Project/Project-Parser.cs'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },
-    @{ Name = 'project manifest'; Paths = @('Windvale-Compiler.wvproj'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },
+    @{ Name = 'project manifest'; Paths = @('Projects/Examples/Windvale-Compiler.wvproj'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'project specification'; Paths = @('Specifications/Windvale-Project.md'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'compiler') },
     @{ Name = 'bytecode specification'; Paths = @('Specifications/Seed-Bytecode.md'); Scope = 'qualification'; Editor = $false; Areas = @('bytecode', 'runtime') },
     @{ Name = 'test harness'; Paths = @('Tests/Windvale.Seed.Tests/Program.cs'); Scope = 'qualification'; Editor = $false; Areas = $AllAreas }
@@ -48,10 +48,10 @@ $NativeCases = @(
             'Foundation/Byte-Ordering.wvproj',
             'Foundation/Decimal-Parsing.wvproj',
             'Foundation/Byte-Construction.wvproj',
-            'Foundation-Machine-Contracts-Demo.wvproj',
-            'Foundation-Byte-Ordering-Demo.wvproj',
-            'Foundation-Decimal-Parsing-Demo.wvproj',
-            'Foundation-Byte-Construction-Demo.wvproj'
+            'Projects/Examples/Foundation-Machine-Contracts-Demo.wvproj',
+            'Projects/Examples/Foundation-Byte-Ordering-Demo.wvproj',
+            'Projects/Examples/Foundation-Decimal-Parsing-Demo.wvproj',
+            'Projects/Examples/Foundation-Byte-Construction-Demo.wvproj'
         )
         Suites = @('seed', 'seed-native-front-door')
         Gaps = @()
@@ -107,32 +107,32 @@ $NativeCases = @(
             'Examples/Compiler/Source-Wir-Tool.wv',
             'Examples/Compiler/Source-Wvb-Demo.wv',
             'Examples/Compiler/Source-Wvb-Tool.wv',
-            'Windvale-Source-Lexer-Core.wvproj',
-            'Windvale-Source-Lexer-Demo.wvproj',
-            'Windvale-Source-Declaration-Parser.wvproj',
-            'Windvale-Source-Declaration-Parser-Demo.wvproj',
-            'Windvale-Source-Declaration-Parser-Tool.wvproj',
-            'Windvale-Source-Body-Parser.wvproj',
-            'Windvale-Source-Body-Parser-Demo.wvproj',
-            'Windvale-Source-Body-Parser-Tool.wvproj',
-            'Windvale-Source-Set-Core.wvproj',
-            'Windvale-Source-Set-Demo.wvproj',
-            'Windvale-Source-Set-Tool.wvproj',
-            'Windvale-Source-Graph-Core.wvproj',
-            'Windvale-Source-Graph-Demo.wvproj',
-            'Windvale-Source-Graph-Tool.wvproj',
-            'Windvale-Source-Symbols-Core.wvproj',
-            'Windvale-Source-Symbols-Demo.wvproj',
-            'Windvale-Source-Symbols-Tool.wvproj',
-            'Windvale-Source-Bindings-Core.wvproj',
-            'Windvale-Source-Bindings-Demo.wvproj',
-            'Windvale-Source-Bindings-Tool.wvproj',
-            'Windvale-Source-Wir-Core.wvproj',
-            'Windvale-Source-Wir-Demo.wvproj',
-            'Windvale-Source-Wir-Tool.wvproj',
-            'Windvale-Source-Wvb-Core.wvproj',
-            'Windvale-Source-Wvb-Demo.wvproj',
-            'Windvale-Compiler.wvproj',
+            'Projects/Compiler/Windvale-Source-Lexer-Core.wvproj',
+            'Projects/Examples/Windvale-Source-Lexer-Demo.wvproj',
+            'Projects/Compiler/Windvale-Source-Declaration-Parser.wvproj',
+            'Projects/Examples/Windvale-Source-Declaration-Parser-Demo.wvproj',
+            'Projects/Examples/Windvale-Source-Declaration-Parser-Tool.wvproj',
+            'Projects/Compiler/Windvale-Source-Body-Parser.wvproj',
+            'Projects/Examples/Windvale-Source-Body-Parser-Demo.wvproj',
+            'Projects/Examples/Windvale-Source-Body-Parser-Tool.wvproj',
+            'Projects/Compiler/Windvale-Source-Set-Core.wvproj',
+            'Projects/Examples/Windvale-Source-Set-Demo.wvproj',
+            'Projects/Examples/Windvale-Source-Set-Tool.wvproj',
+            'Projects/Compiler/Windvale-Source-Graph-Core.wvproj',
+            'Projects/Examples/Windvale-Source-Graph-Demo.wvproj',
+            'Projects/Examples/Windvale-Source-Graph-Tool.wvproj',
+            'Projects/Compiler/Windvale-Source-Symbols-Core.wvproj',
+            'Projects/Examples/Windvale-Source-Symbols-Demo.wvproj',
+            'Projects/Examples/Windvale-Source-Symbols-Tool.wvproj',
+            'Projects/Compiler/Windvale-Source-Bindings-Core.wvproj',
+            'Projects/Examples/Windvale-Source-Bindings-Demo.wvproj',
+            'Projects/Examples/Windvale-Source-Bindings-Tool.wvproj',
+            'Projects/Compiler/Windvale-Source-Wir-Core.wvproj',
+            'Projects/Examples/Windvale-Source-Wir-Demo.wvproj',
+            'Projects/Examples/Windvale-Source-Wir-Tool.wvproj',
+            'Projects/Compiler/Windvale-Source-Wvb-Core.wvproj',
+            'Projects/Examples/Windvale-Source-Wvb-Demo.wvproj',
+            'Projects/Examples/Windvale-Compiler.wvproj',
             'Compiler/Windvale/Native-Stencil-Core.wv',
             'Compiler/Windvale/Native-Stencil-Bridge.wvproj',
             'Compiler/Windvale/Native-Enum-Metadata-Core.wvproj',
@@ -140,9 +140,9 @@ $NativeCases = @(
             'Compiler/Windvale/Native-Publication-Lifetime-Core.wvproj',
             'Compiler/Windvale/Native-Publication-Lifetime.wvproj',
             'Windvale-Native-Enum-Metadata.wvproj',
-            'Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
+            'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
             'Examples/Compiler/Native-Stencil-Demo.wv',
-            'Native-Stencil-Demo.wvproj'
+            'Projects/Examples/Native-Stencil-Demo.wvproj'
         )
         Suites = @(
             'seed',
@@ -195,8 +195,8 @@ $NativeCases = @(
             'Runtime/Windvale/Native-Byte-Result-Admission.wvproj',
             'Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wvproj',
             'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Bridge.wv',
-            'Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj',
-            'Windvale-Native-Hosted-Tool-Runtime-Header.wvproj',
+            'Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj',
+            'Projects/Runtime/Windvale-Native-Hosted-Tool-Runtime-Header.wvproj',
             'Windvale-Native-X64-Text-Concat-Service.wvproj',
             'Windvale-Native-Output-Table.wvproj'
         )
@@ -216,10 +216,10 @@ $NativeCases = @(
             'Linker/Windvale/Native-Hosted-Container-Construction-Core.wv',
             'Linker/Windvale/Native-Hosted-Container-Segmentation.wv',
             'Windvale-Native-Hosted-Startup-Instantiation.wvproj',
-            'Windvale-Native-Hosted-Container-Construction.wvproj',
-            'Windvale-Native-Hosted-Container-Windows.wvproj',
-            'Windvale-Native-Hosted-Container-Linux.wvproj',
-            'Windvale-Native-Hosted-Container-Segmentation.wvproj'
+            'Projects/Linker/Windvale-Native-Hosted-Container-Construction.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Container-Windows.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Container-Linux.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Container-Segmentation.wvproj'
         )
         Suites = @(
             'seed-native-front-door',
@@ -265,11 +265,26 @@ $NativeCases = @(
             'Runtime/Windvale/Baseline-Jit-Patch-Plan-Verifier-Core.wv',
             'Runtime/Native/Windows-X64-Baseline-Jit-Publisher.wva',
             'Tests/Fixtures/Native-X64/Baseline-Jit-Patch-Plan-Self-Test.wv',
-            'Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj',
+            'Projects/Compiler/Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj',
             'Artifacts/Baseline-Jit-Publisher/Manifest.json',
             'Specifications/Windvale-Native-Baseline-Jit-Publication.md'
         )
         Suites = @('baseline-jit')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'native random binary containment and WVB front-door specification owners'
+        Paths = @(
+            'Tools/Native/Random-Containment-Binary.mjs',
+            'Specifications/Windvale-Native-Wvb-Read-Only-Front-Door.md'
+        )
+        Suites = @(
+            'seed',
+            'unsafe-wvb',
+            'wvb-containment',
+            'wvo-containment'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -292,9 +307,9 @@ $NativeCases = @(
             'Tools/Native/Construct-Segmented-Compiler-Toolset.cmd',
             'Tools/Native/Package-Segmented-Compiler-Wvb.cmd',
             'Artifacts/Native-Segmented-Compiler-Toolset-Candidate/Manifest.json',
-            'Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
-            'Windvale-Compiler-Image-Staging.wvproj',
-            'Windvale-Compiler-Image-Canonical-Transport.wvproj',
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
+            'Projects/Linker/Windvale-Compiler-Image-Staging.wvproj',
+            'Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj',
             'Specifications/Windvale-Native-Hosted-Container-Packaging.md'
         )
         Suites = @(
@@ -385,8 +400,8 @@ $NativeCases = @(
             'Tools/Native/Test-Wvb-To-Wvo-Reconstruction.cmd',
             'Tools/Native/Construct-Wvb-To-Wvo-Reconstruction.cmd',
             'Artifacts/Native-Wvb-To-Wvo-Candidate/Manifest.json',
-            'Windvale-Native-X64-Lowering-Tool.wvproj',
-            'Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj',
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj',
             'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv',
             'Specifications/Windvale-Native-Wvb-To-Wvo.md'
         )
@@ -408,7 +423,7 @@ $NativeCases = @(
             'Tools/Native/Test-Wv-Linker-Reconstruction.cmd',
             'Tools/Native/Construct-Wv-Linker-Reconstruction.cmd',
             'Artifacts/Native-Wv-Linker-Candidate/Manifest.json',
-            'Windvale-Wv-Linker.wvproj'
+            'Projects/Linker/Windvale-Wv-Linker.wvproj'
         )
         Suites = @(
             'seed-native-front-door',
@@ -487,7 +502,7 @@ $NativeCases = @(
             'Tools/Native/Test-Wvb-Runner-Reconstruction.cmd',
             'Tools/Native/Construct-Wvb-Runner-Reconstruction.cmd',
             'Artifacts/Native-Wvb-Runner-Candidate/Manifest.json',
-            'Windvale-Wvb-Runner.wvproj',
+            'Projects/Tools/Windvale-Wvb-Runner.wvproj',
             'Tools/Windvale.Run/Wvb-Runner-Tool.wv',
             'Specifications/Windvale-Native-Wvb-Runner.md'
         )
@@ -503,7 +518,7 @@ $NativeCases = @(
             'Artifacts/Native-Wvo-Object-Candidate/Manifest.json',
             'Linker/Startup/Windows-X64-Hosted-Inspector.wva',
             'Linker/Startup/Linux-X64-Hosted-Inspector.wva',
-            'Windvale-Wvo-Object.wvproj',
+            'Projects/Object-Model/Windvale-Wvo-Object.wvproj',
             'Specifications/Windvale-Native-Wvo-Inspector.md'
         )
         Suites = @(
@@ -545,7 +560,7 @@ $NativeCases = @(
             'Tools/Native/Test-Console-Verifier-Reconstruction.cmd',
             'Tools/Native/Construct-Console-Verifier-Reconstruction.cmd',
             'Artifacts/Native-Console-Application-Verifier-Candidate/Manifest.json',
-            'Windvale-Console-Application-Verifier.wvproj',
+            'Projects/Tools/Windvale-Console-Application-Verifier.wvproj',
             'Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv',
             'Specifications/Windvale-Console-Application-Verification.md'
         )
@@ -605,7 +620,7 @@ $NativeCases = @(
             'Tools/Native/Test-Console-Application-Publisher-Reconstruction.cmd',
             'Tools/Native/Construct-Console-Application-Publisher.cmd',
             'Artifacts/Native-Console-Application-Publisher-Candidate/Manifest.json',
-            'Windvale-Console-Application-Publisher.wvproj',
+            'Projects/Tools/Windvale-Console-Application-Publisher.wvproj',
             'Tools/Windvale.Publish/Console-Application-Publisher.wv',
             'Specifications/Windvale-Native-Console-Application-Publisher.md'
         )
@@ -679,7 +694,7 @@ $NativeCases = @(
             'Tools/Native/Test-Wvo-Publisher-Reconstruction.cmd',
             'Tools/Native/Construct-Wvo-Publisher.cmd',
             'Artifacts/Native-Wvo-Publisher-Candidate/Manifest.json',
-            'Windvale-Wvo-Publisher.wvproj',
+            'Projects/Tools/Windvale-Wvo-Publisher.wvproj',
             'Specifications/Windvale-Native-Wvo-Publisher.md'
         )
         Suites = @('wvo-publisher-reconstruction')
@@ -716,8 +731,8 @@ $NativeCases = @(
     @{
         Name = 'console packager reconstruction projects and contract'
         Paths = @(
-            'Windvale-Console-Application-Packager.wvproj',
-            'Windvale-Console-Application-Segmented-Packager.wvproj',
+            'Projects/Linker/Windvale-Console-Application-Packager.wvproj',
+            'Projects/Linker/Windvale-Console-Application-Segmented-Packager.wvproj',
             'Specifications/Windvale-Native-Console-Packager.md'
         )
         Suites = @(
@@ -760,7 +775,7 @@ $NativeCases = @(
         Name = 'WvDump native front-door construction owner'
         Paths = @(
             'Examples/Foundation/Wv-Dump-Core.wv',
-            'Windvale-Wvb-Inspector.wvproj'
+            'Projects/Examples/Windvale-Wvb-Inspector.wvproj'
         )
         Suites = @('seed', 'seed-native-front-door')
         Gaps = @()
@@ -770,7 +785,7 @@ $NativeCases = @(
         Name = 'Windvale assembler'
         Paths = @(
             'Assembler/Windvale/Wva-Assembler-Core.wv',
-            'Windvale-Wva-Assembler.wvproj',
+            'Projects/Assembler/Windvale-Wva-Assembler.wvproj',
             'Examples/Assembler/Hello-Object.wva'
         )
         Suites = @(
@@ -857,19 +872,19 @@ $NativeCases = @(
             'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.md',
             'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.md',
             'Specifications/Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.md',
-            'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
-            'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Construction-Request.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Application-Tool.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Promoter.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj',
-            'Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj',
-            'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj',
-            'Windvale-Wvb-Publisher.wvproj'
+            'Projects/Tools/Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Construction-Request.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Application-Tool.wvproj',
+            'Projects/Tools/Windvale-Native-Hosted-Verifier-Publisher-Promoter.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj',
+            'Projects/Runtime/Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj',
+            'Projects/Linker/Windvale-Native-Hosted-Verifier-Application-Tool.wvproj',
+            'Projects/Tools/Windvale-Wvb-Publisher.wvproj'
         )
         Suites = @(
             'wvb-runner-reconstruction',
@@ -909,6 +924,7 @@ $NativeCases = @(
         Paths = @(
             'Tools/Verify/Verify-WebAssembly.ps1',
             'Tools/Verify/Verify-WebAssembly-Engine.mjs',
+            'Tools/WebAssembly/Build-Compiler-Wvb.mjs',
             'Tools/WebAssembly/Compile-Wvb-To-Wasm.mjs',
             'Artifacts/WebAssembly-Native-Backend/Manifest.json'
         )
@@ -922,7 +938,7 @@ $NativeCases = @(
         Paths = @(
             'Compiler/Windvale/WebAssembly-Core.wv',
             'Examples/Compiler/WebAssembly-Tool.wv',
-            'Windvale-WebAssembly.wvproj',
+            'Projects/Examples/Windvale-WebAssembly.wvproj',
             'Specifications/Windvale-WebAssembly.md'
         )
         Suites = @(
@@ -953,10 +969,28 @@ $NativeCases = @(
         VerifyGitHub = $true
     },
     @{
-        Name = 'database gap'
+        Name = 'database library owner'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
-        Suites = @()
-        Gaps = @('database-native-tests')
+        Suites = @('libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'library project owner'
+        Paths = @('Projects/Libraries/Windvale-Database-Reader.wvproj')
+        Suites = @('workspace-project2', 'libraries')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'workspace Project 2 owner'
+        Paths = @(
+            'Windvale.wvws',
+            'Specifications/Windvale-Project.md',
+            'Tests/Fixtures/Project/Workspace-Project2-Build.wvproj'
+        )
+        Suites = @('workspace-project2')
+        Gaps = @()
         VerifyPlan = $false
     },
     @{

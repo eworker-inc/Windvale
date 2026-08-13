@@ -50,7 +50,7 @@ verify_file() {
 compiler_wvb="$artifact_root/Native-Compiler-Seed/Wvb/Windvale-Compiler.wvb"
 compiler="$artifact_root/Native-Compiler-Seed/linux-x64/wvcompiler.elf"
 publisher="$artifact_root/Native-Front-Door/linux-x64/wvpublish.elf"
-project="$source_root/Windvale-Compiler.wvproj"
+project="$source_root/Projects/Examples/Windvale-Compiler.wvproj"
 
 verify_file "$compiler_wvb" 914746 \
     48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 \
@@ -58,11 +58,11 @@ verify_file "$compiler_wvb" 914746 \
 verify_file "$compiler" 27467776 \
     2f745e2c4dddb7333926783796f06b6f02ef356742fb5873a2efffdca16c696a \
     'Linux native compiler seed' || exit 1
-verify_file "$publisher" 1119173 \
-    71dccc29333b05cff71e4b36e5e41617e0df4f8d747747479e8a27f4a90ed3b0 \
+verify_file "$publisher" 1369077 \
+    b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af \
     'Linux native publisher' || exit 1
 verify_file "$project" 649 \
-    e097e9d007909a3cf17476ccfce41ace5fa89c566386d15ae24c7d91d9f91e7b \
+    a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05 \
     'compiler project manifest' || exit 1
 
 temporary_root=${TMPDIR:-/tmp}
@@ -89,7 +89,7 @@ if [[ $result -ne 0 ]]; then
     exit "$result"
 fi
 
-verify_file "$candidate" 921640 \
-    18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754 \
+verify_file "$candidate" 927274 \
+    d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae \
     'bootstrapped compiler WVB' || exit 1
 "$publisher" "$candidate" "$output_path"

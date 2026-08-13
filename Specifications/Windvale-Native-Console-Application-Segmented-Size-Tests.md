@@ -12,7 +12,7 @@ command does not load .NET or invoke a live managed oracle.
 
 ## Verifier application
 
-`Windvale-Console-Application-Verifier.wvproj` builds module
+`Projects/Tools/Windvale-Console-Application-Verifier.wvproj` builds module
 `Windvaleˉconsoleˉapplicationˉverifierˉtool`. `Main` requires exactly two paths,
 reads both inputs once through `file.read_bytes`, and passes them to the shared
 portable console-application admission function.

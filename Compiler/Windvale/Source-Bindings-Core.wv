@@ -999,8 +999,14 @@ export fn Compilerˉsourceˉbindingsˉcapabilityˉarity(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "file.write_bytes") {
         return 2u32;
     }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "filesystem.directory_read_v1") {
+        return 3u32;
+    }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "process.argument_count") {
         return 0u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "storage.random_access_v1") {
+        return 5u32;
     }
     return 1u32;
 }

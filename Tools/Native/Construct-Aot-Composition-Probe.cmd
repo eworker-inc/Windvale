@@ -16,7 +16,7 @@ set "WindowsApplication=%OutputRoot%\Return-42.exe"
 set "LinuxApplication=%OutputRoot%\Return-42.elf"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" "%Wvb%" ^
+    "%RepositoryRoot%\Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" "%Wvb%" ^
     >"%OutputRoot%\Build.out" 2>"%OutputRoot%\Build.err"
 if errorlevel 1 exit /b 1
 call :check_empty "%OutputRoot%\Build.err"

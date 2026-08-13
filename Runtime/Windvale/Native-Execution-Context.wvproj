@@ -1,4 +1,4 @@
-windvale-project 1
-root "Native-Execution-Context-Bridge.wv"
-source "Native-Execution-Context-Core.wv"
+windvale-project 2
+root "Runtime/Windvale/Native-Execution-Context-Bridge.wv"
+source "Runtime/Windvale/Native-Execution-Context-Core.wv"
 emit wvb

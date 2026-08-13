@@ -1,5 +1,0 @@
-windvale-project 1
-root "Runtime/Windvale/Native-Hosted-Source-Geometry-Tool.wv"
-source "Foundation/Decimal-Parsing.wv"
-source "Foundation/Immutable-Source-Regions.wv"
-emit wvb

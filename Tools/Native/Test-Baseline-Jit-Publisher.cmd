@@ -24,7 +24,7 @@ set "UnpatchedApplication=%TemporaryDirectory%\Baseline-Jit-Publisher-Unpatched.
 set "ApplicationError=%TemporaryDirectory%\Application.err"
 set "Application=%RepositoryRoot%\Artifacts\Baseline-Jit-Publisher\windows-x64\Baseline-Jit-Publisher.exe"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj" "%BridgeWvb%" >nul
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Compiler/Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj" "%BridgeWvb%" >nul
 if errorlevel 1 goto :failed
 call :verify_hash "%BridgeWvb%" 2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9 "producer-bridge WVB"
 if errorlevel 1 goto :failed

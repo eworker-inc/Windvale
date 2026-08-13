@@ -9,8 +9,8 @@ $NativeCompilerMemoryBuild = Join-Path `
     $RepositoryRoot 'Tools/WebAssembly/Build-Compiler-Wvb.mjs'
 $NativeWebAssemblyCompiler = Join-Path `
     $RepositoryRoot 'Tools/WebAssembly/Compile-Wvb-To-Wasm.mjs'
-$BackendProject = Join-Path $RepositoryRoot 'Windvale-WebAssembly.wvproj'
-$WvbScalarInterpreterProject = Join-Path $RepositoryRoot 'Windvale-Wvb-Scalar-Interpreter.wvproj'
+$BackendProject = Join-Path $RepositoryRoot 'Projects/Examples/Windvale-WebAssembly.wvproj'
+$WvbScalarInterpreterProject = Join-Path $RepositoryRoot 'Projects/Tests/Windvale-Wvb-Scalar-Interpreter.wvproj'
 $SuccessSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Main.wv'
 $OverflowSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Checked-Add-Overflow-Main.wv'
 $StraightSource = Join-Path $RepositoryRoot 'Tests/Fixtures/WebAssembly/Straight-I32-Main.wv'
@@ -384,7 +384,7 @@ function Invoke-NativeSourceCompile(
         [IO.Path]::IsPathRooted($RelativeSource)) {
         throw "The WebAssembly verification source escapes the repository: $SourcePath"
     }
-    $ProjectText = "windvale-project 1`nroot `"$RelativeSource`"`nemit wvb`n"
+    $ProjectText = "windvale-project 2`nroot `"$RelativeSource`"`nemit wvb`n"
     [IO.File]::WriteAllText(
         $ProjectPath,
         $ProjectText,

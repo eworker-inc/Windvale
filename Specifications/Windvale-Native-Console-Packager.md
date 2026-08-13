@@ -8,7 +8,7 @@ The application composes the existing [console-application plan](Windvale-Consol
 
 ## Construction contract
 
-`Windvale-Console-Application-Packager.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Consoleˉapplicationˉpackager`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
+`Projects/Linker/Windvale-Console-Application-Packager.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Consoleˉapplicationˉpackager`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
 
 The native writer accepts only that identity and one exported `Main`. Its fragment requires these services in this exact order:
 

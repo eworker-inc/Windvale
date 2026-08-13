@@ -144,13 +144,13 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                 while Innerˉindex < Length {
                     Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
                     if Raw < 1u32 { return Invalid; }
-                    if Raw > 6u32 { return Invalid; }
+                    if Raw > 10u32 { return Invalid; }
                     Payloadˉcursor = Payloadˉcursor + 1u32;
                     Innerˉindex = Innerˉindex + 1u32;
                 }
                 if Payloadˉcursor >= Payloadˉend { return Invalid; }
                 Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
-                if Raw > 6u32 { return Invalid; }
+                if Raw > 10u32 { return Invalid; }
                 Payloadˉcursor = Payloadˉcursor + 1u32;
                 Index = Index + 1u32;
             }
@@ -620,6 +620,27 @@ export fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
             if Bytesˉreadˉu16ˉlittle(Input, Name + 20u32) != 29806u32 { Matches = false; }
             if Matches { Catalog = 5u32; }
         }
+        if Nameˉlength == 24u32 {
+            Matches = true;
+            if Bytesˉreadˉu32ˉlittle(Input, Name) != 1919906931u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 4u32) != 778397537u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 8u32) != 1684955506u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 12u32) != 1633643887u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 16u32) != 1936024419u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 20u32) != 829841267u32 { Matches = false; }
+            if Matches { Catalog = 7u32; }
+        }
+        if Nameˉlength == 28u32 {
+            Matches = true;
+            if Bytesˉreadˉu32ˉlittle(Input, Name) != 1701603686u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 4u32) != 1953724787u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 8u32) != 1680764261u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 12u32) != 1667592809u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 16u32) != 2037542772u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 20u32) != 1634038367u32 { Matches = false; }
+            if Bytesˉreadˉu32ˉlittle(Input, Name + 24u32) != 829841252u32 { Matches = false; }
+            if Matches { Catalog = 6u32; }
+        }
         if Catalog == 0u32 { return Invalid; }
 
         Cursor = End;
@@ -649,6 +670,22 @@ export fn Cˉmoduleˉandˉcapabilities(Input: bytes) -> bytes {
         if Catalog == 5u32 {
             if Parameterˉcount != 0u32 { return Invalid; }
             if Bytesˉreadˉu8(Input, Cursor) != 5u8 { return Invalid; }
+        }
+        if Catalog == 6u32 {
+            if Parameterˉcount != 3u32 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor) != 3u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) != 5u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 2u32) != 5u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 3u32) != 6u8 { return Invalid; }
+        }
+        if Catalog == 7u32 {
+            if Parameterˉcount != 5u32 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor) != 5u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 1u32) != 10u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 2u32) != 10u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 3u32) != 5u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 4u32) != 6u8 { return Invalid; }
+            if Bytesˉreadˉu8(Input, Cursor + 5u32) != 6u8 { return Invalid; }
         }
         Cursor = Cursor + Parameterˉcount + 1u32;
         Previousˉname = Name;

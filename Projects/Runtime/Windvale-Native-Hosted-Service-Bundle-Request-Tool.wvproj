@@ -1,0 +1,6 @@
+windvale-project 2
+root "Runtime/Windvale/Native-Hosted-Service-Bundle-Request-Tool.wv"
+source "Compiler/Windvale/Native-Publication-Core.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Foundation/Immutable-Source-Regions.wv"
+emit wvb

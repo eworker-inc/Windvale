@@ -15,7 +15,7 @@ Decision 0229 moves five malformed WVB envelope cases into the .NET-free test pl
 
 Supersede the unqualified `WVNT 3` plan with fixed `WVNT 4` without changing the six-field schema or adding another launcher branch. Nine checked-in base64 fixtures decode to exact WVB values, and the existing `verify-failure` expectation requires the pinned qualified native verifier's exact phase, process result, standard output, and standard error.
 
-The first eight nominal/control corruptions derive from the exact 1,782-byte native build of `Windvale-Native-Test-Nominal-Types.wvproj`, SHA-256 `b1c3543f8064732a0039d071f4e3a7da2bb901f8cfb890fb1de42193a228ff4b`. The capability corruption derives from the exact 850-byte native Project 1 build of `Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv`, SHA-256 `bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f`.
+The first eight nominal/control corruptions derive from the exact 1,782-byte native build of `Projects/Tests/Windvale-Native-Test-Nominal-Types.wvproj`, SHA-256 `b1c3543f8064732a0039d071f4e3a7da2bb901f8cfb890fb1de42193a228ff4b`. The capability corruption derives from the exact 850-byte native Project 1 build of `Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv`, SHA-256 `bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f`.
 
 The zero-based decoded offsets and replacements mirror the already-reviewed managed conformance cases:
 

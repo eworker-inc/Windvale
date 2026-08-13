@@ -1,0 +1,9 @@
+windvale-project 2
+root "Runtime/Windvale/Native-Hosted-Tool-Metadata-Request-Tool.wv"
+source "Compiler/Windvale/Native-Publication-Core.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Sha256-Compression.wv"
+source "Foundation/Sha256-Streaming.wv"
+source "Runtime/Windvale/Streaming-Sha256-Evidence-Core.wv"
+source "Runtime/Windvale/Streaming-Sha256-Resource-Evidence.wv"
+emit wvb

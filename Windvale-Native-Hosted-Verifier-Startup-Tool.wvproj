@@ -1,9 +1,0 @@
-windvale-project 1
-root "Linker/Windvale/Native-Hosted-Verifier-Startup-Tool.wv"
-source "Foundation/Sha256.wv"
-source "Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv"
-source "Linker/Windvale/Native-Hosted-Verifier-Layout-Core.wv"
-source "Linker/Windvale/Native-Hosted-Verifier-Startup-Request-Core.wv"
-source "Linker/Windvale/Native-Hosted-Verifier-Startup-Targets.wv"
-source "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv"
-emit wvb

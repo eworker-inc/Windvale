@@ -18,9 +18,9 @@ avoid size; each module has one named contract.
 The new ordinary-file boundaries are:
 
 ```text
-wvhostverifierproducemetadata [role:0|1|2] <target:1|2> <module.wvb> <startup.wvo> <metadata.wvvp>
+wvhostverifierproducemetadata [role:0|1|2|3|4] <target:1|2> <module.wvb> <startup.wvo> <metadata>
 wvhostverifierpublishobjects <request.wvcr> <targets.wvpt> <startup.wvo> <adapter.wvo> <sha256.wvo> <objects.wvio>
-wvhostverifierpublishimports [publisher|promoter|wvb-publisher] <imports.wvim>
+wvhostverifierpublishimports [publisher|promoter|wvb-publisher|wvo-publisher|console-application-publisher] <imports.wvim>
 wvhostverifierpublishlinux <base.elf> <request.wvcr> <objects.wvio> <metadata.wvvp> <application.elf>
 wvhostverifierpublishwindows <base.exe> <request.wvcr> <objects.wvio> <metadata.wvvp> <imports.wvim> <application.exe>
 ```
@@ -66,11 +66,11 @@ The 15-case native owner builds publisher, promoter, and WVB-publisher roles
 for both targets, reproduces the exact applications, exercises read-only admission, and
 uses the current-host promoter and publisher as one durable installation chain.
 Corrupt identity, corrupt ordered targets, and output aliasing reject while
-preserving existing destinations. The managed differential test remains
-independent Stage 0 recovery evidence.
+preserving existing destinations. Historical differential evidence remains in the
+immutable recovery release and is not invoked by this native owner.
 
 The [publisher base-construction contract](Windvale-Native-Hosted-Verifier-Publisher-Base-Construction.md)
-now supplies the former managed input through exact packaged Windvale processes
+now supplies the former external input through exact packaged Windvale processes
 and owns the normal candidate lane. The separate digest-bound promoter now owns
 completed-publisher durable publication. Independent Linux execution, grouped
 qualification, promotion, and release integration remain.

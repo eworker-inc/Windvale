@@ -53,28 +53,28 @@ run_logged() {
     fi
 }
 
-run_logged Build-Init.log "$script_directory/Build-Wvb.sh" "$repository_root/Windvale-Os-Init-Resource-Service.wvproj" "$work/Init.wvb"
+run_logged Build-Init.log "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Init-Resource-Service.wvproj" "$work/Init.wvb"
 verify_identity "$work/Init.wvb" 526 7cefa7dcf82ed05d6b6e133aa79b7da90372e2d8f8f993abe7449513398ede83 || exit 1
 run_logged Lower-Init.log "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Init.wvb" "$work/Init-Main.wvo"
 verify_identity "$work/Init-Main.wvo" 3424 1a1a8599e7e9f92ebdb9c8e8c2df202311de3ffe3a549f3f339efdce4ef47456 || exit 1
 run_logged Rename-Init.log "$script_directory/Rename-Wvo-Export.sh" "$work/Init-Main.wvo" Main Windvale_init_resource_service_main "$work/Init.wvo"
 verify_identity "$work/Init.wvo" 3455 4b8126d1baa38054fc70165be3c2f9519e7bea7e1f4d5596bcae36f2567ddf11 || exit 1
 
-run_logged Build-Directory.log "$script_directory/Build-Wvb.sh" "$repository_root/Windvale-Os-Directory-Process-Service.wvproj" "$work/Directory.wvb"
+run_logged Build-Directory.log "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Directory-Process-Service.wvproj" "$work/Directory.wvb"
 verify_identity "$work/Directory.wvb" 474 f7410595f9824e510da9399f52a463013ff41240b67308cdf28b4f5b7484ab2b || exit 1
 run_logged Lower-Directory.log "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Directory.wvb" "$work/Directory-Main.wvo"
 verify_identity "$work/Directory-Main.wvo" 2768 f80f17b1ae73885eb8fa7b81d319a089ea680994439d4d7debad58ad952e179e || exit 1
 run_logged Rename-Directory.log "$script_directory/Rename-Wvo-Export.sh" "$work/Directory-Main.wvo" Main Windvale_directory_process_service_main "$work/Directory.wvo"
 verify_identity "$work/Directory.wvo" 2803 04339b8fd627c6b765a16903ad339408c86eaa9877bdc52357cbafa33e98679a || exit 1
 
-run_logged Build-Interpreter.log "$script_directory/Build-Wvb.sh" "$repository_root/Windvale-Os-Bytecode-Interpreter.wvproj" "$work/Interpreter.wvb"
+run_logged Build-Interpreter.log "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Bytecode-Interpreter.wvproj" "$work/Interpreter.wvb"
 verify_identity "$work/Interpreter.wvb" 56307 e2024702919e9acd37c119a7afb9991a73904d97ef3bdb1defe8c5ea13e91a3d || exit 1
 run_logged Lower-Interpreter.log "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Interpreter.wvb" "$work/Interpreter-Main.wvo"
 verify_identity "$work/Interpreter-Main.wvo" 448737 dca63103e751f74e528514b25cb8650a7361e94172381a93dbfc8d5014844d78 || exit 1
 run_logged Rename-Interpreter.log "$script_directory/Rename-Wvo-Export.sh" "$work/Interpreter-Main.wvo" Main Windvale_user_bytecode_interpreter_main "$work/Interpreter.wvo"
 verify_identity "$work/Interpreter.wvo" 448772 7fb4a3d3a4aca6f44f6ab8bed3a2891147e319f275c6c2af3eab42e8c5763c4d || exit 1
 
-run_logged Build-Program.log "$script_directory/Build-Wvb.sh" "$repository_root/Windvale-Native-Test-Function-Only.wvproj" "$work/Program.wvb"
+run_logged Build-Program.log "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tests/Windvale-Native-Test-Function-Only.wvproj" "$work/Program.wvb"
 verify_identity "$work/Program.wvb" 816 28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936 || exit 1
 
 run_logged Assemble-Init.log "$script_directory/Assemble-Wva.sh" "$repository_root/Operating-System/Kernel/Init-Resource-Service-Shim.wva" "$work/Init-Shim.wvo"

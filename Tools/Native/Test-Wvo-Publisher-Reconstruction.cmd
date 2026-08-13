@@ -24,7 +24,7 @@ if exist "%TestDirectory%" goto :allocate
 mkdir "%TestDirectory%" || goto :failed
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Wvo-Publisher.wvproj" "%TestDirectory%\Wvo-Publisher.wvb" ^
+    "%RepositoryRoot%\Projects/Tools/Windvale-Wvo-Publisher.wvproj" "%TestDirectory%\Wvo-Publisher.wvb" ^
     >"%TestDirectory%\Build.out" 2>"%TestDirectory%\Build.err"
 if errorlevel 1 goto :failed
 call :check_file "%TestDirectory%\Build.out" 219 da952e943f937655a80d4847bbab9aaa701a31d8809d6c810ff6bde02590a396

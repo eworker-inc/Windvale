@@ -82,7 +82,7 @@ printf '%s\n' \
 check_equal "$test_directory/Usage.err" "$test_directory/Usage.expected" || fail
 
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Console-Application-Publisher.wvproj" \
+    "$repository_root/Projects/Tools/Windvale-Console-Application-Publisher.wvproj" \
     "$test_directory/Console-Application-Publisher.wvb" \
     >"$test_directory/Build.out" 2>"$test_directory/Build.err" || fail
 printf '%s\n' \

@@ -5,7 +5,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Plan.txt"
 
-certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"6ad262319aad1b9df3c9e211fd1e01ed509d8e00beff0de8004642e2928457de" >nul
+certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"c3e2aff879fb74c093ecbb2afa78229fd04c7e93c592aaa43d69786cbe8968a3" >nul
 if errorlevel 1 (
     >&2 echo The native test plan artifact digest is invalid.
     exit /b 1

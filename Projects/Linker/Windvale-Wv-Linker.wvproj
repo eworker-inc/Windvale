@@ -1,0 +1,8 @@
+windvale-project 2
+root "Linker/Windvale/Wv-Linker-Core.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Byte-Ordering.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Foundation/Machine-Contracts.wv"
+source "Foundation/Sha256.wv"
+emit wvb

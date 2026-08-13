@@ -60,7 +60,7 @@ canonical_prefix="$temporary_directory/Canonical"
 canonical_manifest="$temporary_directory/Canonical.wvli"
 
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Wv-Linker.wvproj" "$wvb" \
+    "$repository_root/Projects/Linker/Windvale-Wv-Linker.wvproj" "$wvb" \
     >"$temporary_directory/Build.out" 2>"$temporary_directory/Build.err" || exit $?
 verify_file "$wvb" 135740 \
     02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874 \

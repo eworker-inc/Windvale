@@ -19,7 +19,7 @@ set "MalformedOutput=%TemporaryDirectory%\Malformed.wvo"
 set "Target=%RepositoryRoot%\Artifacts\Native-Os-Kernel-Target-Candidate\windows-x64-os-kernel-target.exe"
 set "Status=1"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Os-Kernel-Markers.wvproj" "%Module%" >nul 2>&1
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Kernel-Markers.wvproj" "%Module%" >nul 2>&1
 if errorlevel 1 goto :failure
 call :verify "%Module%" 1484 7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c
 if errorlevel 1 goto :failure

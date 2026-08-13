@@ -1,8 +1,0 @@
-windvale-project 1
-root "Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Native-Adapter.wv"
-source "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
-source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv"
-source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv"
-source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations-Native-Bridge.wv"
-source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv"
-emit wvb

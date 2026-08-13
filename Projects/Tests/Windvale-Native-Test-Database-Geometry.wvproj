@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Storage-Geometry-Self-Test.wv"
+source "Libraries/Database/Storage-Geometry.wv"
+emit wvb

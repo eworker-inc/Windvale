@@ -1,5 +1,0 @@
-windvale-project 1
-root "Runtime/Windvale/Native-Hosted-Enum-Request-Tool.wv"
-source "Compiler/Windvale/Native-X64-Lowering-Types.wv"
-source "Runtime/Windvale/Native-Hosted-Enum-Service-Request.wv"
-emit wvb

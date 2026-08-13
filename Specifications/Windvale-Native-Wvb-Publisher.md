@@ -18,11 +18,11 @@ remain before that cutover.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB publisher WVB | 159,770 | `8247539e0f4a5436b3902ec1fef33c6c39c231703de7bf505a6c65d66a764f96` |
-| Native-lowered WVO | 1,319,377 | `edc49bbae0bfd16a38db4a08d9a6e636edfac35828e1c6b050c45d85d5e1f9e3` |
-| Linked fragment | 1,317,613 | `9003479563a043bb69113be43100289f653f6772356c48a17098c1c6700f5271` |
+| WVB publisher WVB | 163,300 | `9ebfe92eef070dfdcf18c4d176b5f32f64ad3f80751340b8a59ab2f1d567ec2a` |
+| Native-lowered WVO | 1,349,361 | `43a594776b4e280575ac14e2866b4708961dd1290d643b41779a4933a8ba5991` |
+| Linked fragment | 1,347,597 | `3d419d28b606408e7b2430cceacf4c0b7b109bcd511df4e98ca0d41b871f1c2d` |
 
-The WVO has two sections, 44 symbols, six relocations, 1,290,512 code
+The WVO has two sections, 47 symbols, six relocations, 1,347,360 code
 bytes, and 237 read-only-data bytes. `Main` is at offset 0. The private
 transaction-begin bridge is `$function_0002` at offset 5,475 with 389 bytes;
 the transaction-apply bridge is `$function_0001` at offset 4,686 with 789
@@ -44,8 +44,8 @@ Tools\Native\Construct-Wvb-Publisher.cmd <windows|linux> <output.exe|output.elf>
 
 | Target | Base bytes / SHA-256 | Final bytes / SHA-256 |
 | --- | --- | --- |
-| Windows x64 | 1,333,760 / `0e1434cb9f369bdd2507db5c6c86f0166b428d31ca3c00852f0e4d159a3ee79e` | 1,340,928 / `71794a6a254ccfd652ffe3bad556c32f86e2d9210a5a3099bad576f97476a8f3` |
-| Linux x64 | 1,335,296 / `f53a4c8c5d292e999735cf5fd337b7c6997c0a8e6d2ba316ec94cd6b0838b090` | 1,340,405 / `7024fc5f96181f819e01bc41bc5c34d9eaed4301ea459c0c2bc43b7f52b21095` |
+| Windows x64 | 1,363,968 / `243b763d8b49b34108585c56f46c90190eac085a80c59873c8a2cb3e88d16102` | 1,371,136 / `b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421` |
+| Linux x64 | 1,363,968 / `2fc0332887c96ad0fa34d1987091d60ddbbe61f019739d41734cd491b8ca4b64` | 1,369,077 / `b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af` |
 
 The paired final applications live in
 `Artifacts/Native-Wvb-Publisher-Candidate`. Their WVB and WVO live in the
@@ -56,9 +56,9 @@ one inventory and one process toolset.
 
 The focused native owner rebuilds and lowers the WVB publisher, requires exact
 WVB/WVO/fragment equality, reconstructs both applications, and executes the
-current-host candidate on a canonical portable WVB. The focused managed test
-remains independent Stage 0 differential evidence and matches both application
-identities.
+current-host candidate on a canonical portable WVB. The immutable recovery release
+retains historical differential evidence; it is not part of the normal publisher
+build or focused verification path.
 
 The current compiler and compiler-build-driver WVB candidates still encounter
 the same semantic-verifier rejection through both the retained front door and

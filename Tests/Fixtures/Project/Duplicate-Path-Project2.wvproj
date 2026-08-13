@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Project/Workspace-Project2-Self-Test.wv"
+source "tests/fixtures/project/workspace-project2-self-test.wv"
+emit wvb

@@ -1,0 +1,7 @@
+windvale-project 2
+root "Tools/Windvale.WebAssembly/Compiler-Directory-Tool.wv"
+source "Compiler/Windvale/WebAssembly-Function-Directory.wv"
+source "Compiler/Windvale/WebAssembly-Type-Directory.wv"
+source "Compiler/Windvale/WebAssembly-Typed-Calls.wv"
+source "Compiler/Windvale/WebAssembly-Executable-Graph.wv"
+emit wvb

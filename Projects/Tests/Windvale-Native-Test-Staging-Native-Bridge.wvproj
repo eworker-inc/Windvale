@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Native-X64/Wvo-Staging-Native-Bridge-Adapter.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Staging-Native-Bridge.wv"
+emit wvb

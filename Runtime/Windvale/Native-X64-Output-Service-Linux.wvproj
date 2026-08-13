@@ -1,4 +1,4 @@
-windvale-project 1
-root "Native-X64-Output-Service-Linux.wv"
-source "Native-X64-Service-Code-Builder.wv"
+windvale-project 2
+root "Runtime/Windvale/Native-X64-Output-Service-Linux.wv"
+source "Runtime/Windvale/Native-X64-Service-Code-Builder.wv"
 emit wvb

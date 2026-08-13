@@ -1,0 +1,3 @@
+windvale-project 2
+root "Libraries/Platform/Storage/Random-Access-Storage.wv"
+emit wvb

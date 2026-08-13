@@ -31,7 +31,7 @@ chunk becomes publishable.
 
 ## Hosted staging tool
 
-`Windvale-Console-Application-Segmented-Packager.wvproj` builds module
+`Projects/Linker/Windvale-Console-Application-Segmented-Packager.wvproj` builds module
 `Consoleˉapplicationˉsegmentedˉpackager`. Its command is:
 
 ```text

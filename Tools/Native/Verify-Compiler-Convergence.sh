@@ -31,8 +31,8 @@ verify_file() {
     }
 }
 
-verify_file "$verifier" 1003520 \
-    824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982 \
+verify_file "$verifier" 1257472 \
+    fe84ab498fde5112e62398982bc76e3334e4bdec9e2502b87a2e4bb191fbdab3 \
     'Linux native WVB verifier' || exit 1
 
 temporary_root=${TMPDIR:-/tmp}
@@ -62,10 +62,10 @@ trap cleanup EXIT
 "$repository_root/Tools/Native/Compile-Compiler-Source-Set.sh" \
     "$stage1_compiler" "$source_root" "$stage2" || exit $?
 
-verify_file "$stage2" 921640 \
-    18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754 \
+verify_file "$stage2" 927274 \
+    d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae \
     'Stage 2 compiler WVB' || exit 1
 "$verifier" "$stage2" >"$temporary_directory/Verify.txt" || exit $?
 cmp --silent -- "$stage1" "$stage2" || exit 1
 
-echo 'native compiler convergence status=Complete compiler-bytes=921640 compiler-sha256=18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754'
+echo 'native compiler convergence status=Complete compiler-bytes=927274 compiler-sha256=d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae'

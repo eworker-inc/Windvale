@@ -6,6 +6,8 @@
   "publisherQualification": "https://github.com/eworker-inc/Windvale/actions/runs/30971408639",
   "runnerCommit": "36c4baff385f782700c3df8de1d7dec8db6e2e0b",
   "runnerQualification": "pending",
+  "buildDriverProjectFormat": "workspace-1-project-2",
+  "buildDriverQualification": "current-host-focused",
   "assemblerCommit": "3aa5ba27f0ae4f96bc80d8bd521363015e884ab3",
   "assemblerQualification": "https://github.com/eworker-inc/Windvale/actions/runs/31004212797",
   "artifacts": [
@@ -13,25 +15,25 @@
       "name": "compiler-build-driver-wvb",
       "path": "Wvb/Compiler-Build-Driver.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 1078247,
-      "sha256": "c609e6a4ed90da3e8e3a52cfe6266da7501ebb3142df4d1746bfcd9457051b00",
-      "sourceProject": "Windvale-Compiler-Build-Driver.wvproj"
+      "bytes": 1114527,
+      "sha256": "1b3f08cca3f104b034032db9eb46642f4f569a2f72e288b67fcbea31c94c8b40",
+      "sourceProject": "Projects/Tools/Windvale-Compiler-Build-Driver.wvproj"
     },
     {
       "name": "wvb-publisher-wvb",
       "path": "Wvb/Wvb-Publisher.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 136698,
-      "sha256": "d8fcbebe7915542b0206900bcce5459957cee768470bf64a2999e6ee688af05d",
-      "sourceProject": "Windvale-Wvb-Publisher.wvproj"
+      "bytes": 163300,
+      "sha256": "9ebfe92eef070dfdcf18c4d176b5f32f64ad3f80751340b8a59ab2f1d567ec2a",
+      "sourceProject": "Projects/Tools/Windvale-Wvb-Publisher.wvproj"
     },
     {
       "name": "compiler-wvb-verifier-wvb",
       "path": "Wvb/Compiler-Wvb-Verifier.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 125721,
-      "sha256": "259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f",
-      "sourceProject": "Windvale-Compiler-Wvb-Verifier.wvproj"
+      "bytes": 152323,
+      "sha256": "06d4010279dce74dba258a5f2533f4a961a767d56f62709f2c13f87d4fdff64f",
+      "sourceProject": "Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj"
     },
     {
       "name": "wvb-inspector-wvb",
@@ -39,7 +41,7 @@
       "target": "canonical-wvb-1.11",
       "bytes": 76527,
       "sha256": "293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753",
-      "sourceProject": "Windvale-Wvb-Inspector.wvproj"
+      "sourceProject": "Projects/Examples/Windvale-Wvb-Inspector.wvproj"
     },
     {
       "name": "wvb-runner-wvb",
@@ -47,7 +49,7 @@
       "target": "canonical-wvb-1.11",
       "bytes": 90009,
       "sha256": "3b881147e5e6c8298cf249e6e02c9f18ed4a677d49ef0a307427465795a1c626",
-      "sourceProject": "Windvale-Wvb-Runner.wvproj"
+      "sourceProject": "Projects/Tools/Windvale-Wvb-Runner.wvproj"
     },
     {
       "name": "wva-assembler-wvb",
@@ -55,30 +57,30 @@
       "target": "canonical-wvb-1.11",
       "bytes": 180071,
       "sha256": "a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c",
-      "sourceProject": "Windvale-Wva-Assembler.wvproj"
+      "sourceProject": "Projects/Assembler/Windvale-Wva-Assembler.wvproj"
     },
     {
       "name": "windows-x64-build-driver",
       "path": "windows-x64/wvbuild.exe",
       "target": "windows-x64-build-driver-v1",
-      "bytes": 28920320,
-      "sha256": "ee338c635aa817a26081c4327da4b36b78557f10518268162b8039d1f82316f4",
+      "bytes": 29429248,
+      "sha256": "65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec",
       "sourceWvb": "Wvb/Compiler-Build-Driver.wvb"
     },
     {
       "name": "windows-x64-wvb-publisher",
       "path": "windows-x64/wvpublish.exe",
       "target": "windows-x64-wvb-publisher-v1",
-      "bytes": 1121792,
-      "sha256": "f2502ecf9143cfa1343c5f5cb1de066bdf1f82f0e4782afae178f11c41afd735",
+      "bytes": 1371136,
+      "sha256": "b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421",
       "sourceWvb": "Wvb/Wvb-Publisher.wvb"
     },
     {
       "name": "windows-x64-wvb-verifier",
       "path": "windows-x64/wvverify.exe",
       "target": "windows-x64-verifier-v1",
-      "bytes": 1004032,
-      "sha256": "5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7",
+      "bytes": 1257472,
+      "sha256": "2b870ae276ee8c53e7b6f7277a19067ddb9466e5ac7e0b640745a5d40810efd1",
       "sourceWvb": "Wvb/Compiler-Wvb-Verifier.wvb"
     },
     {
@@ -109,24 +111,24 @@
       "name": "linux-x64-build-driver",
       "path": "linux-x64/wvbuild.elf",
       "target": "linux-x64-build-driver-v1",
-      "bytes": 28921856,
-      "sha256": "7a4451e10fbc0eaa92c08f9752112f3933b7d6d519c6e3dc08f78517d7ac6e52",
+      "bytes": 29429760,
+      "sha256": "d228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969",
       "sourceWvb": "Wvb/Compiler-Build-Driver.wvb"
     },
     {
       "name": "linux-x64-wvb-publisher",
       "path": "linux-x64/wvpublish.elf",
       "target": "linux-x64-wvb-publisher-v1",
-      "bytes": 1119173,
-      "sha256": "71dccc29333b05cff71e4b36e5e41617e0df4f8d747747479e8a27f4a90ed3b0",
+      "bytes": 1369077,
+      "sha256": "b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af",
       "sourceWvb": "Wvb/Wvb-Publisher.wvb"
     },
     {
       "name": "linux-x64-wvb-verifier",
       "path": "linux-x64/wvverify.elf",
       "target": "linux-x64-verifier-v1",
-      "bytes": 1003520,
-      "sha256": "824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982",
+      "bytes": 1257472,
+      "sha256": "fe84ab498fde5112e62398982bc76e3334e4bdec9e2502b87a2e4bb191fbdab3",
       "sourceWvb": "Wvb/Compiler-Wvb-Verifier.wvb"
     },
     {

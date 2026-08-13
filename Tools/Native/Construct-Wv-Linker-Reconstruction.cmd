@@ -38,7 +38,7 @@ set "CanonicalPrefix=%TemporaryDirectory%\Canonical"
 set "CanonicalManifest=%TemporaryDirectory%\Canonical.wvli"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Wv-Linker.wvproj" "%Wvb%" ^
+    "%RepositoryRoot%\Projects/Linker/Windvale-Wv-Linker.wvproj" "%Wvb%" ^
     >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
 if errorlevel 1 goto :cleanup
 call :verify_file "%Wvb%" 135740 02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874 "Wv-Linker WVB"

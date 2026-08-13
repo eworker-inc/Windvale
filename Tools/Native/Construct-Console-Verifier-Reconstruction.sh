@@ -44,7 +44,7 @@ verify_file "$hosted_toolset/SHA256SUMS" \
     'hosted toolset inventory' || exit 1
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$construction/SHA256SUMS" \
-    5064 161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a \
+    5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc \
     'publisher construction inventory' || exit 1
 (cd -- "$construction" && sha256sum --check --strict --quiet SHA256SUMS) || exit 1
 verify_file "$startup_root/Windows-X64-Hosted-Inspector.wva" 9617 \
@@ -77,7 +77,7 @@ linux_application="$output_root/linux-x64-wvappverify.elf"
 windows_startup="$temporary_directory/Windows-Startup.wvo"
 linux_startup="$temporary_directory/Linux-Startup.wvo"
 
-"$script_directory/Build-Wvb.sh" "$repository_root/Windvale-Console-Application-Verifier.wvproj" "$wvb" \
+"$script_directory/Build-Wvb.sh" "$repository_root/Projects/Tools/Windvale-Console-Application-Verifier.wvproj" "$wvb" \
     >"$temporary_directory/Build.out" 2>"$temporary_directory/Build.err" || exit $?
 verify_file "$wvb" 105006 \
     1dcd5f2aeebd974649e64c90d9f473e1e75f7d13dbcde2814de1dded72cf2c0c \

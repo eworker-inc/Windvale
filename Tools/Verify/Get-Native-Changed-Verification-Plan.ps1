@@ -245,6 +245,8 @@ function Add-Native-Tool-Suite {
         Add-Bytecode-Suites
         Add-Suite 'wvb-runner-reconstruction'
         Add-Suite 'seed-native-front-door'
+    } elseif ($Stem -eq 'Random-Containment-Binary') {
+        Add-Suite @('wvb-containment', 'wvo-containment')
     } elseif ($Stem -match 'Verify-Wvb|Inspect-Wvb') {
         Add-Bytecode-Suites
     } elseif ($Stem -match 'Package-Uefi') {
@@ -351,6 +353,24 @@ foreach ($Path in $Paths) {
         'Tools/Recovery/Test-Stage0-Recovery-Archive.ps1'
     )) {
         $RunPlanVerification = $true
+    } elseif ($Path -eq 'Tools/Recovery/Rebuild-Baseline-Jit-Publisher.ps1') {
+        Add-Suite 'baseline-jit'
+    } elseif ($Path -in @(
+        'Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1',
+        'Tools/Recovery/Rebuild-Native-Compiler-Seed.sh'
+    )) {
+        Add-Compiler-Suites
+        Add-Suite 'compiler-reconstruction'
+    } elseif ($Path -in @(
+        'Tools/Recovery/Rebuild-WebAssembly-Native-Backend.ps1',
+        'Tools/Recovery/Rebuild-WebAssembly-Native-Compiler.ps1'
+    )) {
+        Add-WebAssemblyVerification
+    } elseif ($Path -in @(
+        'Tools/Recovery/Verify-Managed-Bootstrap.ps1',
+        'Tools/Recovery/Verify-Managed-Bootstrap.sh'
+    )) {
+        $RunPlanVerification = $true
     } elseif ($Path -in @(
         'Tools/Verify/Verify-WebAssembly.ps1',
         'Tools/Verify/Verify-WebAssembly-Engine.mjs'
@@ -393,6 +413,28 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path.StartsWith('Tools/Native/', [StringComparison]::Ordinal)) {
         Add-Native-Tool-Suite $Path
+    } elseif ($Path.StartsWith('Tools/Windvale.Project/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Windvale.Build/', [StringComparison]::Ordinal)) {
+        Add-Suite 'workspace-project2'
+        Add-Compiler-Suites
+    } elseif ($Path -eq
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv') {
+        Add-Bytecode-Suites
+        Add-Suite 'libraries'
+    } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
+        Add-Suite @('workspace-project2', 'libraries')
+    } elseif ($Path -eq 'Windvale.wvws' -or
+        $Path -eq 'Specifications/Windvale-Project.md' -or
+        $Path.StartsWith('Tests/Fixtures/Project/', [StringComparison]::Ordinal)) {
+        Add-Suite 'workspace-project2'
+    } elseif ($Path.StartsWith('Libraries/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tests/Fixtures/Libraries/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Specifications/Read-Only-Directory-Capability.md',
+            'Specifications/Random-Access-Storage-Capability.md'
+        )) {
+        Add-Suite 'libraries'
     } elseif ($Path.StartsWith('Operating-System/', [StringComparison]::Ordinal) -or
         $Path -match '^Windvale-Os-.+\.wvproj$') {
         if ($Path.EndsWith('.cs', [StringComparison]::OrdinalIgnoreCase) -or
@@ -489,32 +531,32 @@ foreach ($Path in $Paths) {
         'Examples/Compiler/Source-Wir-Tool.wv',
         'Examples/Compiler/Source-Wvb-Demo.wv',
         'Examples/Compiler/Source-Wvb-Tool.wv',
-        'Windvale-Source-Lexer-Core.wvproj',
-        'Windvale-Source-Lexer-Demo.wvproj',
-        'Windvale-Source-Declaration-Parser.wvproj',
-        'Windvale-Source-Declaration-Parser-Demo.wvproj',
-        'Windvale-Source-Declaration-Parser-Tool.wvproj',
-        'Windvale-Source-Body-Parser.wvproj',
-        'Windvale-Source-Body-Parser-Demo.wvproj',
-        'Windvale-Source-Body-Parser-Tool.wvproj',
-        'Windvale-Source-Set-Core.wvproj',
-        'Windvale-Source-Set-Demo.wvproj',
-        'Windvale-Source-Set-Tool.wvproj',
-        'Windvale-Source-Graph-Core.wvproj',
-        'Windvale-Source-Graph-Demo.wvproj',
-        'Windvale-Source-Graph-Tool.wvproj',
-        'Windvale-Source-Symbols-Core.wvproj',
-        'Windvale-Source-Symbols-Demo.wvproj',
-        'Windvale-Source-Symbols-Tool.wvproj',
-        'Windvale-Source-Bindings-Core.wvproj',
-        'Windvale-Source-Bindings-Demo.wvproj',
-        'Windvale-Source-Bindings-Tool.wvproj',
-        'Windvale-Source-Wir-Core.wvproj',
-        'Windvale-Source-Wir-Demo.wvproj',
-        'Windvale-Source-Wir-Tool.wvproj',
-        'Windvale-Source-Wvb-Core.wvproj',
-        'Windvale-Source-Wvb-Demo.wvproj',
-        'Windvale-Compiler.wvproj',
+        'Projects/Compiler/Windvale-Source-Lexer-Core.wvproj',
+        'Projects/Examples/Windvale-Source-Lexer-Demo.wvproj',
+        'Projects/Compiler/Windvale-Source-Declaration-Parser.wvproj',
+        'Projects/Examples/Windvale-Source-Declaration-Parser-Demo.wvproj',
+        'Projects/Examples/Windvale-Source-Declaration-Parser-Tool.wvproj',
+        'Projects/Compiler/Windvale-Source-Body-Parser.wvproj',
+        'Projects/Examples/Windvale-Source-Body-Parser-Demo.wvproj',
+        'Projects/Examples/Windvale-Source-Body-Parser-Tool.wvproj',
+        'Projects/Compiler/Windvale-Source-Set-Core.wvproj',
+        'Projects/Examples/Windvale-Source-Set-Demo.wvproj',
+        'Projects/Examples/Windvale-Source-Set-Tool.wvproj',
+        'Projects/Compiler/Windvale-Source-Graph-Core.wvproj',
+        'Projects/Examples/Windvale-Source-Graph-Demo.wvproj',
+        'Projects/Examples/Windvale-Source-Graph-Tool.wvproj',
+        'Projects/Compiler/Windvale-Source-Symbols-Core.wvproj',
+        'Projects/Examples/Windvale-Source-Symbols-Demo.wvproj',
+        'Projects/Examples/Windvale-Source-Symbols-Tool.wvproj',
+        'Projects/Compiler/Windvale-Source-Bindings-Core.wvproj',
+        'Projects/Examples/Windvale-Source-Bindings-Demo.wvproj',
+        'Projects/Examples/Windvale-Source-Bindings-Tool.wvproj',
+        'Projects/Compiler/Windvale-Source-Wir-Core.wvproj',
+        'Projects/Examples/Windvale-Source-Wir-Demo.wvproj',
+        'Projects/Examples/Windvale-Source-Wir-Tool.wvproj',
+        'Projects/Compiler/Windvale-Source-Wvb-Core.wvproj',
+        'Projects/Examples/Windvale-Source-Wvb-Demo.wvproj',
+        'Projects/Examples/Windvale-Compiler.wvproj',
         'Compiler/Windvale/Native-Stencil-Core.wv',
         'Compiler/Windvale/Native-Stencil-Core.wvproj',
         'Compiler/Windvale/Native-Stencil-Bridge.wv',
@@ -532,8 +574,8 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv',
         'Compiler/Windvale/Native-Publication-Lifetime.wvproj',
         'Windvale-Native-Enum-Metadata.wvproj',
-        'Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
-        'Windvale-Native-Service-Bundle-Materialization.wvproj'
+        'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization-Core.wvproj',
+        'Projects/Runtime/Windvale-Native-Service-Bundle-Materialization.wvproj'
     )) {
         Add-Compiler-Suites
         Add-Suite 'seed-native-front-door'
@@ -626,10 +668,10 @@ foreach ($Path in $Paths) {
         'Runtime/Windvale/Native-Hosted-Tool-Metadata-Construction-Bridge.wv',
         'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Core.wv',
         'Runtime/Windvale/Native-Hosted-Tool-Runtime-Header-Bridge.wv',
-        'Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj',
-        'Windvale-Native-Hosted-Tool-Metadata.wvproj',
-        'Windvale-Native-Hosted-Tool-Runtime-Header-Core.wvproj',
-        'Windvale-Native-Hosted-Tool-Runtime-Header.wvproj',
+        'Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata-Construction-Core.wvproj',
+        'Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata.wvproj',
+        'Projects/Runtime/Windvale-Native-Hosted-Tool-Runtime-Header-Core.wvproj',
+        'Projects/Runtime/Windvale-Native-Hosted-Tool-Runtime-Header.wvproj',
         'Windvale-Native-X64-Text-Concat-Service.wvproj',
         'Windvale-Native-X64-Text-Quote-Service.wvproj',
         'Windvale-Native-X64-Enum-Name-Service.wvproj',
@@ -864,10 +906,10 @@ foreach ($Path in $Paths) {
         'Linker/Windvale/Native-Hosted-Container-Segmentation-Core.wv',
         'Linker/Windvale/Native-Hosted-Container-Segmentation.wv',
         'Windvale-Native-Hosted-Startup-Instantiation.wvproj',
-        'Windvale-Native-Hosted-Container-Construction.wvproj',
-        'Windvale-Native-Hosted-Container-Windows.wvproj',
-        'Windvale-Native-Hosted-Container-Linux.wvproj',
-        'Windvale-Native-Hosted-Container-Segmentation.wvproj'
+        'Projects/Linker/Windvale-Native-Hosted-Container-Construction.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Container-Windows.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Container-Linux.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Container-Segmentation.wvproj'
     )) {
         Add-Linker-Suites
         Add-Suite 'seed-native-front-door'
@@ -1024,9 +1066,6 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Artifacts/Native-Hosted-Verifier-Publisher-',
             [StringComparison]::Ordinal)) {
         Add-Suite 'publisher-rejections'
-    } elseif ($Path.StartsWith('Libraries/Database/', [StringComparison]::Ordinal) -or
-        $Path.StartsWith('Specifications/Windvale-Database', [StringComparison]::Ordinal)) {
-        Add-Gap 'database-native-tests'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Baseline-Jit-Patch-Plan-Self-Test.wv') {
         Add-Suite 'baseline-jit'
     } elseif ($Path -eq 'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv') {
@@ -1050,6 +1089,9 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Native-Baseline-Jit-Publication.md'
         )) {
             Add-Suite 'baseline-jit'
+        } elseif ($Path -eq
+            'Specifications/Windvale-Native-Wvb-Read-Only-Front-Door.md') {
+            Add-Bytecode-Suites
         } elseif ($Path -eq 'Specifications/Windvale-WebAssembly.md') {
             Add-WebAssemblyVerification
         } elseif ($Path -eq 'Specifications/Windvale-Native-Compiler-Reconstruction.md') {
@@ -1105,6 +1147,25 @@ foreach ($Path in $Paths) {
             Add-Suite 'console-verifier-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Console-Packager.md') {
             Add-Console-Packager-Reconstruction-Suites
+        } elseif ($Path -in @(
+            'Specifications/Windvale-Native-Console-Application-Segmented-Construction.md',
+            'Specifications/Windvale-Native-Console-Application-Segmented-Size-Tests.md',
+            'Specifications/Windvale-Native-Hosted-Container-Segmenter.md'
+        )) {
+            Add-Console-Packager-Reconstruction-Suites
+        } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-Publisher.md') {
+            Add-Hosted-Publisher-Suites
+            Add-Suite 'publisher-rejections'
+        } elseif ($Path -eq 'Specifications/Windvale-Native-X64-Lowering.md') {
+            Add-Compiler-Suites
+            Add-Suite 'wvb-to-wvo-reconstruction'
+        } elseif ($Path -eq 'Specifications/Windvale-Uefi-Application.md') {
+            Add-Suite 'uefi-packager'
+        } elseif ($Path -eq 'Specifications/Wv-Dump-Core.md') {
+            Add-Object-Suites
+            Add-Suite 'wvo-inspector-reconstruction'
+        } elseif ($Path -eq 'Specifications/Windvale-Native-Test-Plan.md') {
+            $RunPlanVerification = $true
         } elseif ($Path -eq 'Specifications/Windvale-Console-Application-Verification.md') {
             Add-Suite 'console-verifier-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {
@@ -1137,9 +1198,12 @@ foreach ($Path in $Paths) {
         } else {
             Add-Gap "specification:$([IO.Path]::GetFileName($Path))"
         }
-    } elseif ($Path.StartsWith(
+    } elseif (($Path.StartsWith(
         'Windvale-Native-Baseline-Jit-',
-        [StringComparison]::Ordinal) -and
+        [StringComparison]::Ordinal) -or
+        $Path.StartsWith(
+            'Projects/Compiler/Windvale-Native-Baseline-Jit-',
+            [StringComparison]::Ordinal)) -and
         $Path.EndsWith('.wvproj', [StringComparison]::OrdinalIgnoreCase)) {
         Add-Suite 'baseline-jit'
     } elseif ($Path.StartsWith(
@@ -1149,47 +1213,55 @@ foreach ($Path in $Paths) {
         Add-Suite 'seed'
         Add-WebAssemblyVerification
     } elseif ($Path -in @(
-        'Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
-        'Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
-        'Windvale-Native-Hosted-Verifier-Application-Tool.wvproj',
-        'Windvale-Wvb-Publisher.wvproj'
+        'Projects/Tools/Windvale-Native-Hosted-Verifier-Application-Publisher.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Application-Publisher-Metadata.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Application-Tool.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Construction-Request.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Application-Tool.wvproj',
+        'Projects/Tools/Windvale-Native-Hosted-Verifier-Publisher-Promoter.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Object-Instantiation.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Windows-Imports.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Linux-Materialization.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Windows-Materialization.wvproj',
+        'Projects/Linker/Windvale-Native-Hosted-Verifier-Publisher-Target-Request-Tool.wvproj',
+        'Projects/Tools/Windvale-Wvb-Publisher.wvproj'
     )) {
         Add-Suite @('publisher-rejections', 'hosted-verifier-publisher-files')
         Add-Hosted-Publisher-Suites
-    } elseif ($Path -eq 'Windvale-Wv-Linker.wvproj') {
+    } elseif ($Path -eq 'Projects/Linker/Windvale-Wv-Linker.wvproj') {
         Add-Suite @('wv-linker-reconstruction', 'console-publisher-reconstruction')
         Add-Suite 'seed-native-front-door'
-    } elseif ($Path -eq 'Windvale-Wva-Assembler.wvproj') {
+    } elseif ($Path -eq 'Projects/Assembler/Windvale-Wva-Assembler.wvproj') {
         Add-Assembler-Suites
         Add-Suite 'seed-native-front-door'
-    } elseif ($Path -eq 'Windvale-Wvo-Publisher.wvproj') {
+    } elseif ($Path -eq 'Projects/Tools/Windvale-Wvo-Publisher.wvproj') {
         Add-Suite 'wvo-publisher-reconstruction'
-    } elseif ($Path -eq 'Windvale-Wvb-Runner.wvproj') {
+    } elseif ($Path -eq 'Projects/Tools/Windvale-Wvb-Runner.wvproj') {
         Add-Suite 'wvb-runner-reconstruction'
         Add-Suite 'seed-native-front-door'
-    } elseif ($Path -eq 'Windvale-Wvo-Object.wvproj') {
+    } elseif ($Path -eq 'Projects/Object-Model/Windvale-Wvo-Object.wvproj') {
         Add-Suite 'wvo-inspector-reconstruction'
         Add-Suite 'seed-native-front-door'
-    } elseif ($Path -eq 'Windvale-Console-Application-Verifier.wvproj') {
+    } elseif ($Path -eq 'Projects/Tools/Windvale-Console-Application-Verifier.wvproj') {
         Add-Suite 'console-verifier-reconstruction'
-    } elseif ($Path -eq 'Windvale-Console-Application-Publisher.wvproj') {
+    } elseif ($Path -eq 'Projects/Tools/Windvale-Console-Application-Publisher.wvproj') {
         Add-Suite 'console-publisher-reconstruction'
     } elseif ($Path -in @(
-        'Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj',
-        'Windvale-Native-Hosted-Verifier-Publisher-Base-Runtime-Tool.wvproj'
+        'Projects/Runtime/Windvale-Native-Hosted-Verifier-Publisher-Base-Metadata-Tool.wvproj',
+        'Projects/Runtime/Windvale-Native-Hosted-Verifier-Publisher-Base-Runtime-Tool.wvproj'
     )) {
         Add-Hosted-Publisher-Suites
         Add-Suite 'console-verifier-reconstruction'
     } elseif ($Path -in @(
-        'Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
-        'Windvale-Compiler-Image-Staging.wvproj',
-        'Windvale-Compiler-Image-Canonical-Transport.wvproj'
+        'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
+        'Projects/Linker/Windvale-Compiler-Image-Staging.wvproj',
+        'Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj'
     )) {
         Add-Suite @(
             'segmented-compiler-toolset-reconstruction',
             'wv-linker-reconstruction'
         )
-    } elseif ($Path -eq 'Windvale-Native-X64-Lowering-Tool.wvproj') {
+    } elseif ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj') {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
@@ -1198,11 +1270,11 @@ foreach ($Path in $Paths) {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
-    } elseif ($Path -eq 'Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj') {
+    } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj') {
         Add-Suite 'wvb-to-wvo-reconstruction'
     } elseif ($Path -in @(
-        'Windvale-Console-Application-Packager.wvproj',
-        'Windvale-Console-Application-Segmented-Packager.wvproj'
+        'Projects/Linker/Windvale-Console-Application-Packager.wvproj',
+        'Projects/Linker/Windvale-Console-Application-Segmented-Packager.wvproj'
     )) {
         Add-Console-Packager-Reconstruction-Suites
     } elseif ($Path.StartsWith(
@@ -1225,13 +1297,13 @@ foreach ($Path in $Paths) {
         'Examples/Foundation/Decimal-Parsing-Demo.wv',
         'Examples/Foundation/Byte-Construction-Demo.wv',
         'Examples/Foundation/Wv-Dump-Core.wv',
-        'Windvale-Wvb-Inspector.wvproj',
+        'Projects/Examples/Windvale-Wvb-Inspector.wvproj',
         'Examples/Compiler/Native-Stencil-Demo.wv',
-        'Native-Stencil-Demo.wvproj',
-        'Foundation-Machine-Contracts-Demo.wvproj',
-        'Foundation-Byte-Ordering-Demo.wvproj',
-        'Foundation-Decimal-Parsing-Demo.wvproj',
-        'Foundation-Byte-Construction-Demo.wvproj'
+        'Projects/Examples/Native-Stencil-Demo.wvproj',
+        'Projects/Examples/Foundation-Machine-Contracts-Demo.wvproj',
+        'Projects/Examples/Foundation-Byte-Ordering-Demo.wvproj',
+        'Projects/Examples/Foundation-Decimal-Parsing-Demo.wvproj',
+        'Projects/Examples/Foundation-Byte-Construction-Demo.wvproj'
     )) {
         Add-Suite 'seed'
         Add-Suite 'seed-native-front-door'

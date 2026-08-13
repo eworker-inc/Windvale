@@ -67,7 +67,7 @@ cleanup() {
 trap cleanup EXIT
 
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Wvo-Publisher.wvproj" \
+    "$repository_root/Projects/Tools/Windvale-Wvo-Publisher.wvproj" \
     "$test_directory/Wvo-Publisher.wvb" \
     >"$test_directory/Build.out" 2>"$test_directory/Build.err" || fail
 printf '%s\n' \

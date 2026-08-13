@@ -20,7 +20,7 @@ This is a metering/composition boundary, not evidence that any semantic check ma
 - Expand only candidate capacity: at most 4,096 functions, 4 MiB aggregate code, 400,000 decoded instructions, 4,096 operand cells, and the existing WVB-format parameter/local/type bounds.
 - Split verification into three import-free execution-ABI-3 artifacts: canonical metadata/references, typed execution, and control/reachability. The host supplies the identical candidate bytes to fresh fixed-memory instances and admits the candidate only when all three return the exact one-byte success value.
 - Keep independent instruction meters for the three phases. Normalize exported Wasm `i32` instruction globals to unsigned values in the JavaScript verifier so exact counts above `2^31 - 1` are preserved.
-- Reconstruct the exact compiler WVB from `Windvale-Compiler.wvproj` in the repository gate and require its existing 599,868-byte identity before running the bundle.
+- Reconstruct the exact compiler WVB from `Projects/Examples/Windvale-Compiler.wvproj` in the repository gate and require its existing 599,868-byte identity before running the bundle.
 
 ## Consequences
 

@@ -1,5 +1,0 @@
-windvale-project 1
-root "Tests/Fixtures/Native-X64/Baseline-Jit-Patch-Plan-Self-Test.wv"
-source "Compiler/Windvale/Baseline-Jit-Patch-Plan-Core.wv"
-source "Runtime/Windvale/Baseline-Jit-Patch-Plan-Verifier-Core.wv"
-emit wvb

@@ -17,7 +17,7 @@ scratch cleanup.
 
 ## Windvale module and command
 
-`Windvale-Wvo-Publisher.wvproj` builds the hosted module
+`Projects/Tools/Windvale-Wvo-Publisher.wvproj` builds the hosted module
 `Windvaleˉwvoˉpublisherˉtool`. It exports only `Main() -> i32` and declares
 these exact capabilities:
 

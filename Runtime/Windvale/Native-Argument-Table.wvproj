@@ -1,4 +1,4 @@
-windvale-project 1
-root "Native-Argument-Table-Bridge.wv"
-source "Native-Argument-Table-Core.wv"
+windvale-project 2
+root "Runtime/Windvale/Native-Argument-Table-Bridge.wv"
+source "Runtime/Windvale/Native-Argument-Table-Core.wv"
 emit wvb

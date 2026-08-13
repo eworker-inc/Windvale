@@ -10,18 +10,18 @@ set, or replace the retained Stage 0 recovery archive.
 
 ## Exact candidate
 
-`Windvale-Compiler.wvproj` is 649 LF-only bytes at SHA-256
-`e097e9d007909a3cf17476ccfce41ace5fa89c566386d15ae24c7d91d9f91e7b`.
-The native seed bootstrap compiles that exact inventory to a 921,640-byte WVB at
+`Projects/Examples/Windvale-Compiler.wvproj` is 649 LF-only bytes at SHA-256
+`a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05`.
+The native seed bootstrap compiles that exact inventory to a 927,274-byte WVB at
 SHA-256
-`18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
-Its 427 functions contain 759,920 WVB code bytes.
+`d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`.
+Its 427 functions contain 764,800 WVB code bytes.
 
-The current native backend produces 27,635,298 linked image bytes at SHA-256
-`80a3ebd54244487bdeafac7b6ebd6c11e1bd839c068405b6507aed83748ff3eb`.
-The independent recovery oracle encodes the same closure as a 27,657,722-byte
-WVO at SHA-256
-`e0a334a805883fe443ed0c7a95b578a076104ea691e29c4e6ed87bf7af63108b`.
+The current native backend produces 27,744,550 linked image bytes at SHA-256
+`b1787162c3f265eaac2584e7dbf121fa01009ef18d7c092e5c495f1ac8aee5ec`.
+The retained independent recovery oracle remains evidence for the previous
+recovery checkpoint; this current native-only refresh does not claim a new
+managed differential measurement.
 The segmented native path transports the image as seven canonical chunks and
 binds `Main` at entry offset 43,146.
 
@@ -29,9 +29,9 @@ The retained candidate artifacts are:
 
 | Target | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Canonical WVB 1.11 | 921,640 | `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754` |
-| Windows x64 format 3 | 27,666,432 | `c1be8bd7e2c9496fee0cd3e486348804469d72621bcf45e30d8b6e8a1814da9c` |
-| Linux x64 format 3 | 27,668,480 | `25905e75e836ad8015a851aa6a52531bf5ab73c9dd97596628c2226740f37a34` |
+| Canonical WVB 1.11 | 927,274 | `d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae` |
+| Windows x64 format 3 | 27,776,000 | `11c01839d63a13570e02873f760614eef42089a29a282083f5def3e968038d78` |
+| Linux x64 format 3 | 27,774,976 | `93651adc36557aaa895627e8d8aa022b8765fc4f6cfaafbb5dc7c0a263287f67` |
 
 `Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json` binds those
 three files. This inventory is intentionally distinct from
@@ -47,7 +47,7 @@ directory. They:
    project inventory;
 2. require the canonical current WVB identity;
 3. stage the large WVO through the admitted segmented native lowerer;
-4. link and transport one canonical 27,635,298-byte image;
+4. link and transport one canonical 27,744,550-byte image;
 5. require entry offset 43,146 and exactly seven transported chunks;
 6. package the same WVB and image for both permanent hosts through the current
    hosted-container toolset; and
@@ -68,7 +68,7 @@ reserved for the final grouped qualification under the compiler-seed bootstrap
 contract.
 
 Decision 0494 measured the managed recovery oracle once without either Stage-2
-execution, then reproduced the same WVB and both application identities through
-the Windows native path. Independent Linux reconstruction/execution, the full
-current Stage-2 arena measurement, dual-host qualification, promotion, and the
-final recovery release remain open.
+execution. The current candidate is now reproduced through the Windows native
+path without refreshing that managed oracle. Independent Linux reconstruction
+and execution, the full current Stage-2 arena measurement, dual-host
+qualification, promotion, and the final recovery release remain open.

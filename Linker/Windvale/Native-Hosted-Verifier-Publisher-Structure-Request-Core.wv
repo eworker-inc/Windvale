@@ -36,7 +36,7 @@ fn Identityˉvariant(Input: bytes) -> u32 {
     if Moduleˉbytes == 41268u32 && Publisherˉbytes == 660123u32 {
         Variant = 1u32;
     }
-    if Moduleˉbytes == 159770u32 && Publisherˉbytes == 1319377u32 {
+    if Moduleˉbytes == 163300u32 && Publisherˉbytes == 1349361u32 {
         Variant = 2u32;
     }
     if Moduleˉbytes == 41365u32 && Publisherˉbytes == 408284u32 {
@@ -132,8 +132,8 @@ export fn Publisherˉstructureˉrequest(
         Mainˉoffset = 1178u32;
     }
     if Variant == 2u32 {
-        Moduleˉbytes = 159770u32;
-        Publisherˉbytes = 1319377u32;
+        Moduleˉbytes = 163300u32;
+        Publisherˉbytes = 1349361u32;
         Publisherˉsymbols = 47u32;
         Publisherˉrelocations = 6u32;
         Mainˉoffset = 0u32;

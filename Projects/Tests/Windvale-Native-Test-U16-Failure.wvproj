@@ -1,0 +1,3 @@
+windvale-project 2
+root "Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-U16-Failure.wv"
+emit wvb

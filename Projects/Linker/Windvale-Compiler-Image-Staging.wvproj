@@ -1,0 +1,11 @@
+windvale-project 2
+root "Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Staging-Tool.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv"
+source "Linker/Windvale/Compiler-Flat-Image-Staging-Manifest.wv"
+source "Linker/Windvale/Compiler-Flat-Image-Staging-Resources.wv"
+source "Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image.wv"
+source "Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Verification.wv"
+emit wvb

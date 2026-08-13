@@ -1,3 +1,3 @@
-windvale-project 1
-root "Byte-Construction.wv"
+windvale-project 2
+root "Foundation/Byte-Construction.wv"
 emit wvb

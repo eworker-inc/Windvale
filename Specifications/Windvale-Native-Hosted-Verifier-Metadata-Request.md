@@ -59,7 +59,7 @@ digests, and zero reserved fields.
 
 [`Native-Hosted-Verifier-Metadata-Request-Core.wv`](../Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Core.wv)
 owns validation and construction. A small bridge is the root of
-[`Windvale-Native-Hosted-Verifier-Metadata-Request.wvproj`](../Windvale-Native-Hosted-Verifier-Metadata-Request.wvproj).
+[`Projects/Runtime/Windvale-Native-Hosted-Verifier-Metadata-Request.wvproj`](../Projects/Runtime/Windvale-Native-Hosted-Verifier-Metadata-Request.wvproj).
 
 The current profile-7-capable source constructs a 16,138-byte WVB with SHA-256
 `040a30618f3ef760c782fa3cc3014f675f7ac952fd94700e4b894cd6b4145335`.

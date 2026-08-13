@@ -1,0 +1,5 @@
+windvale-project 2
+root "Libraries/Platform/Database/Read-Only-Wvdb.wv"
+source "Libraries/Platform/Filesystem/Read-Only-Directory.wv"
+source "Libraries/Database/Wvdb-Reader.wv"
+emit wvb

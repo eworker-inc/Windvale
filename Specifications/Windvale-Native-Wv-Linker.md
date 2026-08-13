@@ -8,7 +8,7 @@ The product logic remains in `Linker/Windvale/Wv-Linker-Core.wv`. It owns WVO ad
 
 ## Construction contract
 
-`Windvale-Wv-Linker.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvˉlinkerˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
+`Projects/Linker/Windvale-Wv-Linker.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvˉlinkerˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
 
 Decision 0501 reconstructs the exact candidate without asking either target
 Wv-Linker application to link itself. The retained raw lowerer first produces

@@ -55,9 +55,9 @@ Headers and leading import declarations are scanned once after target existence 
 
 ## Current deterministic artifacts and retained evidence
 
-- `Source-Graph-Core.wvb`: 278,894 bytes, SHA-256 `9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b`.
-- `Source-Graph-Demo.wvb`: 284,848 bytes, SHA-256 `a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c`.
-- `Source-Graph-Tool.wvb`: 282,035 bytes, SHA-256 `0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10`.
+- `Source-Graph-Core.wvb`: 281,381 bytes, SHA-256 `f29b234fc07bc4b1e0b01587b28cd6aa422dd61a68fa310b032b3fc3be5c8a68`.
+- `Source-Graph-Demo.wvb`: 287,335 bytes, SHA-256 `5e8c4add278609866b952bd0a18dcb7e0e9b05ac04e7e7a5a6fec1e5655ad468`.
+- `Source-Graph-Tool.wvb`: 284,522 bytes, SHA-256 `1e0494b7e49f0d14a0508367dcb68d054b69faf501b3ef60ca6f14d48998f7f4`.
 
 These local candidate identities contain the updated frontend while preserving WVSS graph semantics. The current local hosted report is:
 

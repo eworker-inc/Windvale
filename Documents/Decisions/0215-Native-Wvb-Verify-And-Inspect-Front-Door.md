@@ -37,7 +37,7 @@ Use separate Windows and Linux WVA startup modules only for the unavoidable pre-
 
 ### Keep one inspector implementation
 
-`Windvale-Wvb-Inspector.wvproj` points to the existing `Examples/Foundation/Wv-Dump-Core.wv`. Do not create a parallel tool source merely to make the package look separate. The current file is large; a later source-only refactor may split envelope/payload scanning, instruction decoding, and report composition by ownership if it preserves the exact WVB/report contract. File size is a maintainability signal, not a hard limit, and numbered part files are not an acceptable substitute for real ownership boundaries.
+`Projects/Examples/Windvale-Wvb-Inspector.wvproj` points to the existing `Examples/Foundation/Wv-Dump-Core.wv`. Do not create a parallel tool source merely to make the package look separate. The current file is large; a later source-only refactor may split envelope/payload scanning, instruction decoding, and report composition by ownership if it preserves the exact WVB/report contract. File size is a maintainability signal, not a hard limit, and numbered part files are not an acceptable substitute for real ownership boundaries.
 
 ### Use stable native oracles
 

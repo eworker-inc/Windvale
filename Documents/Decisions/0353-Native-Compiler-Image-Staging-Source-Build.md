@@ -22,7 +22,7 @@ until the build driver derives it itself.
 
 ## Decision
 
-- Add `Windvale-Compiler-Image-Staging.wvproj` as the complete source closure
+- Add `Projects/Linker/Windvale-Compiler-Image-Staging.wvproj` as the complete source closure
   for the hosted staging root, segmented linker, independent verifier, strict
   `WVOP` and `WVLI` contracts, and staging resource policy.
 - Keep every non-root source in canonical ordinal module-name order. Do not

@@ -14,7 +14,7 @@ Project 1 declares dependency directives order-independent. Reordering the expli
 
 ## Decision
 
-List the two dependency sources in canonical module-name order in `Windvale-Wvb-Scalar-Interpreter.wvproj`. Keep root identity, imports, source bytes, compiler semantics, WVB format, and WebAssembly profile unchanged.
+List the two dependency sources in canonical module-name order in `Projects/Tests/Windvale-Wvb-Scalar-Interpreter.wvproj`. Keep root identity, imports, source bytes, compiler semantics, WVB format, and WebAssembly profile unchanged.
 
 Use the pinned native front door as the preferred production measurement for this interpreter WVB. Retain Stage 0 output as independent recovery and differential evidence. Do not claim that the later WVB-to-Wasm lowering or website publication path is .NET-free until a native packaged backend owns those steps.
 

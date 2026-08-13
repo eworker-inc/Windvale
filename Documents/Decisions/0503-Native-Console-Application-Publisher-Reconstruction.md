@@ -24,7 +24,7 @@ publisher to publish or construct itself.
 Windvale adopts one bounded reconstruction route for the exact
 console-application-publisher candidate:
 
-1. build `Windvale-Console-Application-Publisher.wvproj` through the retained
+1. build `Projects/Tools/Windvale-Console-Application-Publisher.wvproj` through the retained
    native Project 1 front door and require the complete WVB identity;
 2. invoke the retained raw accepted-subset lowerer and require the complete WVO
    oracle identity;

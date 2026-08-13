@@ -9,7 +9,7 @@ The recovery dependency closure is deliberately small:
 - One exact Git commit and its complete tree.
 - The .NET SDK selected by `global.json`; the currently qualified version is `10.0.302`.
 - The `Tools/Windvale.Tool` project-reference closure. That closure has no external `PackageReference`; the optional browser playground packages are not dependencies of the compiler tool.
-- The canonical twelve-source inventory in `Windvale-Compiler.wvproj`.
+- The canonical twelve-source inventory in `Projects/Examples/Windvale-Compiler.wvproj`.
 
 Record the output of `git rev-parse HEAD`, `git rev-parse HEAD^{tree}`, `dotnet --version`, and the final artifact hashes with every retained recovery copy.
 
@@ -42,7 +42,7 @@ Then build the Stage 0 tool once and use the canonical project manifest for ever
 dotnet build Tools/Windvale.Tool/Windvale.Tool.csproj --configuration Release --nologo
 New-Item -ItemType Directory -Force artifacts/Exact-Compiler-Recovery | Out-Null
 $Tool = 'Tools/Windvale.Tool/bin/Release/net10.0/windvale.dll'
-dotnet $Tool build Windvale-Compiler.wvproj `
+dotnet $Tool build Projects/Examples/Windvale-Compiler.wvproj `
   -o artifacts/Exact-Compiler-Recovery/Windvale-Compiler.wvb
 dotnet $Tool aot artifacts/Exact-Compiler-Recovery/Windvale-Compiler.wvb `
   --target windows-x64-console-v3 `
@@ -56,7 +56,7 @@ dotnet $Tool aot artifacts/Exact-Compiler-Recovery/Windvale-Compiler.wvb `
 dotnet build Tools/Windvale.Tool/Windvale.Tool.csproj --configuration Release --nologo
 mkdir -p artifacts/Exact-Compiler-Recovery
 tool=Tools/Windvale.Tool/bin/Release/net10.0/windvale.dll
-dotnet "$tool" build Windvale-Compiler.wvproj \
+dotnet "$tool" build Projects/Examples/Windvale-Compiler.wvproj \
   -o artifacts/Exact-Compiler-Recovery/Windvale-Compiler.wvb
 dotnet "$tool" aot artifacts/Exact-Compiler-Recovery/Windvale-Compiler.wvb \
   --target windows-x64-console-v3 \

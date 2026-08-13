@@ -2,9 +2,9 @@
 
 ## Status and scope
 
-This contract transfers the exact publisher-module identity, native symbol
-discovery, five WVO asset identities, target layout, and ordered relocation
-targets from the frozen C# publisher builder into focused Windvale modules.
+This contract owns the exact publisher-module identity, native symbol discovery,
+five WVO asset identities, target layout, and ordered relocation targets in focused
+Windvale modules.
 Downstream native stages now consume these records to instantiate the objects
 and materialize publisher, promoter, general WVB-publisher, and WVO-publisher
 PE/ELF applications.
@@ -27,10 +27,9 @@ release identities. It infers variant 0 (publisher), variant 1 (promoter),
 variant 2 (WVB publisher), or variant 3 (WVO publisher) from the exact WVB/WVO
 identity pair rather than accepting a caller-selected variant. The canonical
 variant-0 totals are 275,054 Windows bytes and 271,013 Linux bytes; variant 1
-totals are 713,471 and 709,430 bytes; variant 2 totals are 1,491,227 and
-1,487,186 bytes; variant 3 totals are 461,729 and 457,688 bytes. It prevents the
-structure stage from trusting paths, embedded managed resources, or a live C#
-builder.
+totals are 713,471 and 709,430 bytes; variant 2 totals are 1,524,741 and
+1,520,752 bytes; variant 3 totals are 461,729 and 457,688 bytes. It prevents the
+structure stage from trusting paths, embedded resources, or an external builder.
 
 ## `WVPS 1`: admitted structure
 
@@ -48,8 +47,8 @@ relocations, 232,448 code bytes, and 288 read-only-data bytes. Startup is five
 instantiated bytes. The promoter WVO is 660,123 bytes with two sections, 49
 symbols, three relocations, 658,160 code bytes, 179 read-only-data bytes, and
 native `Main` at offset 1,178; its transaction offsets remain 789 and 0. The
-WVB-publisher WVO is 1,319,377 bytes with two sections, 47 symbols, six
-relocations, 1,317,376 code bytes, and 237 read-only-data bytes. Its native
+WVB-publisher WVO is 1,349,361 bytes with two sections, 47 symbols, six
+relocations, 1,347,360 code bytes, and 237 read-only-data bytes. Its native
 `Main` is 0, transaction begin is 5,475, and transaction apply is 4,686.
 The WVO-publisher WVO is 408,284 bytes with two sections, 39 symbols, three
 relocations, 406,752 code bytes, and 88 read-only-data bytes. Its native
@@ -93,12 +92,12 @@ Role-2 WVB-publisher placements are:
 
 | Field | Windows | Linux |
 | --- | ---: | ---: |
-| Bundle bytes | 1,320,274 | 1,319,957 |
-| Adapter file/address | 1,324,896 / 1,328,480 | 1,335,296 / 144,015,360 |
-| SHA file/address | 1,330,192 / 1,333,776 | 1,338,672 / 144,018,736 |
-| `WVPB` file/address | 1,337,824 / 1,344,992 | 1,332,704 / 1,332,704 |
-| Final bytes | 1,340,928 | 1,340,405 |
-| Image end | 145,080,320 | 144,020,421 |
+| Bundle bytes | 1,350,258 | 1,349,941 |
+| Adapter file/address | 1,355,104 / 1,358,688 | 1,363,968 / 144,044,032 |
+| SHA file/address | 1,360,400 / 1,363,984 | 1,367,392 / 144,047,456 |
+| `WVPB` file/address | 1,368,032 / 1,375,200 | 1,361,376 / 1,361,376 |
+| Final bytes | 1,371,136 | 1,369,077 |
+| Image end | 145,108,992 | 144,049,141 |
 
 Role-3 WVO-publisher placements are:
 
@@ -137,8 +136,7 @@ rejection.
 
 The role-aware native file pipeline consumes the admitted geometry and `WVPT`
 bindings, constructs exact startup, adapter, SHA, imports, and metadata, and
-materializes all target applications. Roles 0 through 2 remain byte-identical;
-role 3 produces the exact WVO-publisher identities recorded by the WVO
-publisher contract while keeping the public `WVPO 1` reserved tail zero.
-Independent Linux execution and the grouped retirement gate remain before the
-frozen C# writer can be removed as recovery/differential evidence.
+materializes all target applications. Roles 0, 1, 3, and 4 retain their pinned
+identities; role 2 carries the current compiler and capability-catalog closure and
+keeps the public `WVPB 1` reserved tail zero. Independent Linux execution and the
+grouped retirement gate remain before the retained recovery writer can be removed.

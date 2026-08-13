@@ -49,9 +49,9 @@ set "ObjectProducer=%RepositoryRoot%\Tools\Native\Produce-Os-Probe-Object.cmd"
 set "KernelLowerer=%RepositoryRoot%\Tools\Native\Lower-Os-Kernel-Wvb.cmd"
 set "PolicyProducer=%RepositoryRoot%\Tools\Native\Build-Os-Process-Policy-Object.cmd"
 set "ProcessProducer=%RepositoryRoot%\Tools\Native\Build-Os-Process-Object.cmd"
-set "AdmissionProject=%RepositoryRoot%\Windvale-Os-Wvb-Admission.wvproj"
-set "KernelProject=%RepositoryRoot%\Windvale-Os-Kernel-Markers.wvproj"
-set "NativeProbeProject=%RepositoryRoot%\Windvale-Os-Native-Wvb-Probe.wvproj"
+set "AdmissionProject=%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Wvb-Admission.wvproj"
+set "KernelProject=%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Kernel-Markers.wvproj"
+set "NativeProbeProject=%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Native-Wvb-Probe.wvproj"
 
 set "Work=%OutputDirectory%.windvale-os-probe-native-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" (

@@ -91,11 +91,16 @@ console.write_line(text) -> void
 diagnostic.write_line(text) -> void
 file.read_bytes(text) -> bytes
 file.write_bytes(text, bytes) -> void
+filesystem.directory_read_v1(text, u32, u32) -> bytes
 process.argument(u32) -> text
 process.argument_count() -> u32
+storage.random_access_v1(u32, u64, u64, u32, bytes) -> bytes
 ```
 
-Their authorization, bounds, output, and host-error semantics are defined by [Hosted-Resources.md](Hosted-Resources.md).
+The process, file-byte, console, and diagnostic leaves are defined by
+[Hosted-Resources.md](Hosted-Resources.md). The two rights-limited application
+interfaces are defined by [Read-Only-Directory-Capability.md](Read-Only-Directory-Capability.md)
+and [Random-Access-Storage-Capability.md](Random-Access-Storage-Capability.md).
 
 ## Statements
 

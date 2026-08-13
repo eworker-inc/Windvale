@@ -1,4 +1,0 @@
-windvale-project 1
-root "Examples/Foundation/Decimal-Parsing-Demo.wv"
-source "Foundation/Decimal-Parsing.wv"
-emit wvb

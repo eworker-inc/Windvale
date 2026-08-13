@@ -1,6 +1,0 @@
-windvale-project 1
-root "Tests/Fixtures/Database/Wvdb-Reader-Self-Test.wv"
-source "Foundation/Byte-Construction.wv"
-source "Libraries/Database/Wvdb-Reader.wv"
-source "Tests/Fixtures/Database/Wvdb-Test-Fixtures.wv"
-emit wvb

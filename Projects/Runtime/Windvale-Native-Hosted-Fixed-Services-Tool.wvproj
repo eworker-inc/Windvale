@@ -1,0 +1,3 @@
+windvale-project 2
+root "Runtime/Windvale/Native-Hosted-Fixed-Services-Tool.wv"
+emit wvb

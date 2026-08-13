@@ -28,19 +28,19 @@ output_directory=$(CDPATH= cd -- "$(dirname -- "$2")" && pwd -P) || exit 64
 output="$output_directory/$(basename -- "$2")"
 case "$product" in
     core)
-        project="$repository_root/Windvale-Source-Wvb-Core.wvproj"
+        project="$repository_root/Projects/Compiler/Windvale-Source-Wvb-Core.wvproj"
         project_bytes=603
-        project_sha256=989dd0e30bd24a2e11714598405f01a87200ac53d0896c3db1fa5d89cf11faab
+        project_sha256=62349b49ad2608a212e364f8e319f0f376bbc0c8457bcbef2f20a55bfdd0c8c7
         ;;
     demo)
-        project="$repository_root/Windvale-Source-Wvb-Demo.wvproj"
+        project="$repository_root/Projects/Examples/Windvale-Source-Wvb-Demo.wvproj"
         project_bytes=649
-        project_sha256=fcb003a7f7b8b6e7107a282034e6853f0969c7c55de948a90b6ad4114dd704d7
+        project_sha256=7e595320777792b842d230b0033baab519f9d277719f0efdfb24edb3e55fb697
         ;;
     tool)
-        project="$repository_root/Windvale-Compiler.wvproj"
+        project="$repository_root/Projects/Examples/Windvale-Compiler.wvproj"
         project_bytes=649
-        project_sha256=e097e9d007909a3cf17476ccfce41ace5fa89c566386d15ae24c7d91d9f91e7b
+        project_sha256=a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05
         ;;
 esac
 actual_project_bytes=$(wc -c < "$project") || exit 1

@@ -1,5 +1,5 @@
-windvale-project 1
-root "Native-X64-Text-Concat-Service-Bridge.wv"
-source "Native-X64-Service-Code-Builder.wv"
-source "Native-X64-Text-Concat-Service.wv"
+windvale-project 2
+root "Runtime/Windvale/Native-X64-Text-Concat-Service-Bridge.wv"
+source "Runtime/Windvale/Native-X64-Service-Code-Builder.wv"
+source "Runtime/Windvale/Native-X64-Text-Concat-Service.wv"
 emit wvb

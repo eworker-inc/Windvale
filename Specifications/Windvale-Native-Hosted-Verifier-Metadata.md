@@ -78,7 +78,7 @@ and reserved bytes.
 [`Native-Hosted-Verifier-Metadata-Construction-Core.wv`](../Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Core.wv)
 owns construction. [`Native-Hosted-Verifier-Metadata-Admission.wv`](../Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv)
 owns admission. The small byte-input bridge is the root of
-[`Windvale-Native-Hosted-Verifier-Metadata.wvproj`](../Windvale-Native-Hosted-Verifier-Metadata.wvproj).
+[`Projects/Runtime/Windvale-Native-Hosted-Verifier-Metadata.wvproj`](../Projects/Runtime/Windvale-Native-Hosted-Verifier-Metadata.wvproj).
 
 The current profile-7-capable source constructs a 23,446-byte WVB with SHA-256
 `4041ba7b2188127f3a0bb7f20673376812b8d52e207cb237349fb0cdd63d7470`.

@@ -48,7 +48,7 @@ rejected-input preservation.
 
 ## Evidence boundary
 
-The native Project front door still rejects `Windvale-Wvb-Runner.wvproj` at
+The native Project front door still rejects `Projects/Tools/Windvale-Wvb-Runner.wvproj` at
 source bindings. This decision therefore begins at the retained exact WVB and
 does not claim source-to-WVB reconstruction. The Linux executable is a verified
 cross-target product but has not been executed independently on Linux.

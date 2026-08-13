@@ -33,7 +33,7 @@ windows_application="$output_root/Return-42.exe"
 linux_application="$output_root/Return-42.elf"
 
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" "$wvb" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" "$wvb" \
     >"$output_root/Build.out" 2>"$output_root/Build.err" || exit $?
 [[ ! -s $output_root/Build.err ]] || exit 1
 check_file "$wvb" \

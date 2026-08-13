@@ -1,0 +1,5 @@
+windvale-project 2
+root "Linker/Windvale/Native-Hosted-Verifier-Publisher-Structure-Request-Bridge.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Publisher-Construction-Admission.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Publisher-Structure-Request-Core.wv"
+emit wvb

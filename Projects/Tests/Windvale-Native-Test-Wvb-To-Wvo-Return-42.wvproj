@@ -1,0 +1,3 @@
+windvale-project 2
+root "Tests/Fixtures/Native-X64/Wvb-To-Wvo-Return-42.wv"
+emit wvb

@@ -100,9 +100,9 @@ source wir status=Valid modules=1 functions=8 blocks=11 operations=44 temporarie
 
 Current deterministic candidate artifacts are:
 
-- `Source-Wir-Core.wvb`: 817,391 bytes, SHA-256 `c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb`.
-- `Source-Wir-Demo.wvb`: 822,254 bytes, SHA-256 `7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f`.
-- `Source-Wir-Tool.wvb`: 815,722 bytes, SHA-256 `7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5`.
+- `Source-Wir-Core.wvb`: 821,168 bytes, SHA-256 `efcdce0043ec7709105c2b4df59171401f886d8233f85c9ec394f649d03dab82`.
+- `Source-Wir-Demo.wvb`: 826,031 bytes, SHA-256 `8d5ed5bc9a79f5f152403198156a439fcb355be560c1c974b0c7c479df343ef4`.
+- `Source-Wir-Tool.wvb`: 819,499 bytes, SHA-256 `bf2deea160d48b72bbb80f0ad2bb1e547e7e111506502724708db208bc8e8406`.
 
 These local identities include inferred-local verification, storage-free typed-constant lowering, named-record remapping, recursive `else if`, loop-control targets, compound assignment, and structurally verified short-circuit Boolean phi nodes; they require cross-host requalification before a new qualification claim.
 

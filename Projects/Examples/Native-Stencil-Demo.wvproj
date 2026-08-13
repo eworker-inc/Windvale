@@ -1,0 +1,4 @@
+windvale-project 2
+root "Examples/Compiler/Native-Stencil-Demo.wv"
+source "Compiler/Windvale/Native-Stencil-Core.wv"
+emit wvb

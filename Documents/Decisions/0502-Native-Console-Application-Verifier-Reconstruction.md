@@ -26,7 +26,7 @@ process.
 Windvale adopts one bounded reconstruction route for the exact
 console-application-verifier candidate:
 
-1. build `Windvale-Console-Application-Verifier.wvproj` through the retained
+1. build `Projects/Tools/Windvale-Console-Application-Verifier.wvproj` through the retained
    native Project 1 front door and require the complete WVB identity;
 2. lower that exact WVB through the retained raw accepted-subset lowerer and
    require the complete WVO oracle identity;

@@ -83,7 +83,14 @@ repeat:
 
 Entries are strictly sorted by ordinal capability name and cannot be duplicated. Portable modules require zero capabilities.
 
-The current canonical hosted signatures are defined by [Hosted-Resources.md](Hosted-Resources.md). Extending the recognized catalog does not change this encoding or the WVB version when all signatures use existing value types.
+The canonical catalog contains the seven process, file-byte, console, and
+diagnostic signatures defined by [Hosted-Resources.md](Hosted-Resources.md), plus
+`filesystem.directory_read_v1(text, u32, u32) -> bytes` and
+`storage.random_access_v1(u32, u64, u64, u32, bytes) -> bytes`. Their semantic
+contracts are defined by [Read-Only-Directory-Capability.md](Read-Only-Directory-Capability.md)
+and [Random-Access-Storage-Capability.md](Random-Access-Storage-Capability.md).
+Extending the recognized catalog does not change this encoding or the WVB version
+when every signature uses existing value types.
 
 ## Data section
 

@@ -26,7 +26,7 @@ text or exit status.
 
 Windvale adopts one bounded reconstruction route for the exact WVO inspector:
 
-1. build `Windvale-Wvo-Object.wvproj` once through the retained native project
+1. build `Projects/Object-Model/Windvale-Wvo-Object.wvproj` once through the retained native project
    front door and require its complete WVB identity;
 2. invoke the retained raw accepted-subset lowerer once and require the complete
    WVO identity before linking;

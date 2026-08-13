@@ -1,0 +1,3 @@
+windvale-project 2
+root "Tests/Fixtures/Source-Wvb/Text-Bytes-Interpreter-Range-Failure.wv"
+emit wvb

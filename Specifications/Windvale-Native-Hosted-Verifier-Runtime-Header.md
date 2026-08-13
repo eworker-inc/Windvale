@@ -80,7 +80,7 @@ relocation targets.
 owns construction. The separate
 [`Native-Hosted-Verifier-Metadata-Admission.wv`](../Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv)
 owns metadata admission. A small bridge is the root of
-[`Windvale-Native-Hosted-Verifier-Runtime.wvproj`](../Windvale-Native-Hosted-Verifier-Runtime.wvproj).
+[`Projects/Runtime/Windvale-Native-Hosted-Verifier-Runtime.wvproj`](../Projects/Runtime/Windvale-Native-Hosted-Verifier-Runtime.wvproj).
 
 The current profile-7-capable source constructs a 19,333-byte WVB with SHA-256
 `fbd36782659cedebedfb24525bec1a97afee66d720982ebd11eaeab485419fe7`.

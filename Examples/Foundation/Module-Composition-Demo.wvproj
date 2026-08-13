@@ -1,5 +1,5 @@
-windvale-project 1
-root "Module-Composition-Demo.wv"
-source "Module-Composition-Leaf.wv"
-source "Module-Composition-Middle.wv"
+windvale-project 2
+root "Examples/Foundation/Module-Composition-Demo.wv"
+source "Examples/Foundation/Module-Composition-Leaf.wv"
+source "Examples/Foundation/Module-Composition-Middle.wv"
 emit wvb

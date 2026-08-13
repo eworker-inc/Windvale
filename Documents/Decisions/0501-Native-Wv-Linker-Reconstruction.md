@@ -24,7 +24,7 @@ lowerer can separately produce one complete WVO oracle for the same exact WVB.
 Windvale adopts one bounded reconstruction route for the exact standard
 Wv-Linker candidate:
 
-1. build `Windvale-Wv-Linker.wvproj` once through the retained native project
+1. build `Projects/Linker/Windvale-Wv-Linker.wvproj` once through the retained native project
    front door and require the complete WVB identity;
 2. invoke the retained raw accepted-subset lowerer once and require the
    complete WVO oracle identity;

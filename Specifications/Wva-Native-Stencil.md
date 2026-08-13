@@ -10,7 +10,7 @@ Neither version defines a general stencil container or complete baseline JIT.
 makes `Compiler/Windvale/Native-Stencil-Core.wvproj` and
 `Compiler/Windvale/Native-Stencil-Bridge.wvproj` the component-local native
 build contracts. The
-demo remains the explicit root aggregate `Native-Stencil-Demo.wvproj` because
+demo remains the explicit root aggregate `Projects/Examples/Native-Stencil-Demo.wvproj` because
 its contained Project 1 inputs span `Examples/Compiler` and
 `Compiler/Windvale`. Native build and inspection reproduce the established
 three WVB identities; the demo's 20-million-step execution remains managed.

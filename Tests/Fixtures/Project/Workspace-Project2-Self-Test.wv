@@ -1,0 +1,32 @@
+module Workspaceˉproject2ˉselfˉtest profile portable;
+
+import Windvaleˉproject as Project;
+
+fn Projectˉstatus(
+    Input: text,
+    Expected: Project.Windvaleˉprojectˉstatus
+) -> bool {
+    let Scan: Project.Windvaleˉprojectˉscan =
+        Project.Windvaleˉprojectˉscanˉmanifest(Textˉtoˉutf8(Input));
+    return Scan.Status == Expected;
+}
+
+export fn Main() -> i32 {
+    if !Projectˉstatus(
+        "windvale-project 2\nroot \"Compiler/Main.wv\"\nemit wvb\n",
+        Project.Windvaleˉprojectˉstatus.Valid
+    ) { return 1; }
+    if !Projectˉstatus(
+        "windvale-project 1\nroot \"Compiler/Main.wv\"\nemit wvb\n",
+        Project.Windvaleˉprojectˉstatus.Invalidˉheader
+    ) { return 2; }
+    if !Projectˉstatus(
+        "windvale-project 2\nroot \"../Compiler/Main.wv\"\nemit wvb\n",
+        Project.Windvaleˉprojectˉstatus.Invalidˉpath
+    ) { return 3; }
+    if !Projectˉstatus(
+        "windvale-project 2\nroot \"/Compiler/Main.wv\"\nemit wvb\n",
+        Project.Windvaleˉprojectˉstatus.Invalidˉpath
+    ) { return 4; }
+    return 42;
+}

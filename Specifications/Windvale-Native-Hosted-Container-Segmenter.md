@@ -9,7 +9,7 @@ that dispatches and concatenates segments.
 
 The canonical source module is
 `Nativeˉhostedˉcontainerˉsegmenterˉtool`, built by
-`Windvale-Native-Hosted-Container-Segmenter-Tool.wvproj`. Shared construction
+`Projects/Linker/Windvale-Native-Hosted-Container-Segmenter-Tool.wvproj`. Shared construction
 logic is owned by the focused
 `Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore` module. The retained
 service-free fragment wrapper and this hosted command each expose exactly one

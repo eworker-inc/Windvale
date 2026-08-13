@@ -21,16 +21,6 @@ record Windvaleˉprojectˉline {
     Failureˉcolumn: u32;
 }
 
-record Windvaleˉprojectˉpathˉscan {
-    Status: Windvaleˉprojectˉstatus;
-    Offset: u32;
-    Length: u32;
-    Line: u32;
-    Column: u32;
-    Failureˉoffset: u32;
-    Failureˉcolumn: u32;
-}
-
 export record Windvaleˉprojectˉscan {
     Status: Windvaleˉprojectˉstatus;
     Modules: u32;
@@ -292,14 +282,72 @@ export fn Windvaleˉprojectˉasciiˉalphanumeric(Value: u8) -> bool {
     return false;
 }
 
+fn Windvaleˉprojectˉstatusˉvalue(Status: Windvaleˉprojectˉstatus) -> u32 {
+    if Status == Windvaleˉprojectˉstatus.Invalidˉheader { return 1001u32; }
+    if Status == Windvaleˉprojectˉstatus.Invalidˉtext { return 1002u32; }
+    if Status == Windvaleˉprojectˉstatus.Malformedˉdirective { return 1003u32; }
+    if Status == Windvaleˉprojectˉstatus.Invalidˉsingleton { return 1004u32; }
+    if Status == Windvaleˉprojectˉstatus.Sourceˉlimit { return 1005u32; }
+    if Status == Windvaleˉprojectˉstatus.Invalidˉpath { return 1006u32; }
+    if Status == Windvaleˉprojectˉstatus.Duplicateˉpath { return 1007u32; }
+    return 0u32;
+}
+
+fn Windvaleˉprojectˉstatusˉfromˉvalue(Value: u32) -> Windvaleˉprojectˉstatus {
+    if Value == 1001u32 { return Windvaleˉprojectˉstatus.Invalidˉheader; }
+    if Value == 1002u32 { return Windvaleˉprojectˉstatus.Invalidˉtext; }
+    if Value == 1003u32 { return Windvaleˉprojectˉstatus.Malformedˉdirective; }
+    if Value == 1004u32 { return Windvaleˉprojectˉstatus.Invalidˉsingleton; }
+    if Value == 1005u32 { return Windvaleˉprojectˉstatus.Sourceˉlimit; }
+    if Value == 1006u32 { return Windvaleˉprojectˉstatus.Invalidˉpath; }
+    if Value == 1007u32 { return Windvaleˉprojectˉstatus.Duplicateˉpath; }
+    return Windvaleˉprojectˉstatus.Valid;
+}
+
 export fn Windvaleˉprojectˉpathˉfailure(
     Status: Windvaleˉprojectˉstatus,
     Line: u32,
     Offset: u32,
     Column: u32
-) -> Windvaleˉprojectˉpathˉscan {
-    return Windvaleˉprojectˉpathˉscan(
-        Status, 0u32, 0u32, Line, 0u32, Offset, Column
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(
+        Windvaleˉprojectˉstatusˉvalue(Status)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Line));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Column));
+}
+
+fn Windvaleˉprojectˉpathˉscanˉvalue(
+    Status: Windvaleˉprojectˉstatus,
+    Offset: u32,
+    Length: u32,
+    Line: u32,
+    Column: u32,
+    Failureˉoffset: u32,
+    Failureˉcolumn: u32
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(
+        Windvaleˉprojectˉstatusˉvalue(Status)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Offset));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Length));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Line));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Column));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Failureˉoffset));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Failureˉcolumn));
+}
+
+fn Windvaleˉprojectˉpathˉscanˉfield(Value: bytes, Field: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Value, Field * 4u32);
+}
+
+fn Windvaleˉprojectˉpathˉscanˉstatus(Value: bytes) -> Windvaleˉprojectˉstatus {
+    return Windvaleˉprojectˉstatusˉfromˉvalue(
+        Windvaleˉprojectˉpathˉscanˉfield(Value, 0u32)
     );
 }
 
@@ -308,7 +356,7 @@ export fn Windvaleˉprojectˉreadˉpath(
     Lineˉvalue: Windvaleˉprojectˉline,
     Line: u32,
     Prefix: text
-) -> Windvaleˉprojectˉpathˉscan {
+) -> bytes {
     let Prefixˉlength: u32 = Bytesˉlength(Textˉtoˉutf8(Prefix));
     if Lineˉvalue.Length <= Prefixˉlength {
         return Windvaleˉprojectˉpathˉfailure(
@@ -445,7 +493,7 @@ export fn Windvaleˉprojectˉreadˉpath(
         Cursor = Cursor + 1u32;
     }
 
-    return Windvaleˉprojectˉpathˉscan(
+    return Windvaleˉprojectˉpathˉscanˉvalue(
         Windvaleˉprojectˉstatus.Valid,
         Valueˉoffset,
         Valueˉlength,
@@ -460,12 +508,24 @@ export fn Windvaleˉprojectˉreadˉpath(
 
 export fn Windvaleˉprojectˉappendˉsource(
     Directory: bytes,
-    Path: Windvaleˉprojectˉpathˉscan
+    Path: bytes
 ) -> bytes {
-    var Result: bytes = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Path.Offset));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Path.Length));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Path.Line));
-    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Path.Column));
+    var Result: bytes = Bytesˉconcat(
+        Directory,
+        Bytesˉfromˉu32ˉlittle(Windvaleˉprojectˉpathˉscanˉfield(Path, 1u32))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Windvaleˉprojectˉpathˉscanˉfield(Path, 2u32))
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Windvaleˉprojectˉpathˉscanˉfield(Path, 3u32))
+    );
+    return Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Windvaleˉprojectˉpathˉscanˉfield(Path, 4u32))
+    );
 }
 
 export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉscan {
@@ -491,7 +551,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
         );
     }
     if !Windvaleˉprojectˉspanˉequalsˉtext(
-        Input, Header.Offset, Header.Length, "windvale-project 1"
+        Input, Header.Offset, Header.Length, "windvale-project 2"
     ) {
         return Windvaleˉprojectˉfailure(
             Windvaleˉprojectˉstatus.Invalidˉheader, Header.Offset, 1u32, 1u32
@@ -536,22 +596,24 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                         1u32
                     );
                 }
-                let Rootˉpath: Windvaleˉprojectˉpathˉscan = Windvaleˉprojectˉreadˉpath(
+                let Rootˉpath: bytes = Windvaleˉprojectˉreadˉpath(
                     Input, Line, Lineˉnumber, "root \""
                 );
-                if Rootˉpath.Status != Windvaleˉprojectˉstatus.Valid {
+                let Rootˉstatus: Windvaleˉprojectˉstatus =
+                    Windvaleˉprojectˉpathˉscanˉstatus(Rootˉpath);
+                if Rootˉstatus != Windvaleˉprojectˉstatus.Valid {
                     return Windvaleˉprojectˉfailure(
-                        Rootˉpath.Status,
-                        Rootˉpath.Failureˉoffset,
+                        Rootˉstatus,
+                        Windvaleˉprojectˉpathˉscanˉfield(Rootˉpath, 5u32),
                         Lineˉnumber,
-                        Rootˉpath.Failureˉcolumn
+                        Windvaleˉprojectˉpathˉscanˉfield(Rootˉpath, 6u32)
                     );
                 }
                 Hasˉroot = true;
-                Rootˉoffset = Rootˉpath.Offset;
-                Rootˉlength = Rootˉpath.Length;
-                Rootˉline = Rootˉpath.Line;
-                Rootˉcolumn = Rootˉpath.Column;
+                Rootˉoffset = Windvaleˉprojectˉpathˉscanˉfield(Rootˉpath, 1u32);
+                Rootˉlength = Windvaleˉprojectˉpathˉscanˉfield(Rootˉpath, 2u32);
+                Rootˉline = Windvaleˉprojectˉpathˉscanˉfield(Rootˉpath, 3u32);
+                Rootˉcolumn = Windvaleˉprojectˉpathˉscanˉfield(Rootˉpath, 4u32);
             } else {
                 if Windvaleˉprojectˉspanˉstartsˉwithˉtext(
                     Input, Line.Offset, Line.Length, "source \""
@@ -564,15 +626,17 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                             1u32
                         );
                     }
-                    let Sourceˉpath: Windvaleˉprojectˉpathˉscan = Windvaleˉprojectˉreadˉpath(
+                    let Sourceˉpath: bytes = Windvaleˉprojectˉreadˉpath(
                         Input, Line, Lineˉnumber, "source \""
                     );
-                    if Sourceˉpath.Status != Windvaleˉprojectˉstatus.Valid {
+                    let Sourceˉstatus: Windvaleˉprojectˉstatus =
+                        Windvaleˉprojectˉpathˉscanˉstatus(Sourceˉpath);
+                    if Sourceˉstatus != Windvaleˉprojectˉstatus.Valid {
                         return Windvaleˉprojectˉfailure(
-                            Sourceˉpath.Status,
-                            Sourceˉpath.Failureˉoffset,
+                            Sourceˉstatus,
+                            Windvaleˉprojectˉpathˉscanˉfield(Sourceˉpath, 5u32),
                             Lineˉnumber,
-                            Sourceˉpath.Failureˉcolumn
+                            Windvaleˉprojectˉpathˉscanˉfield(Sourceˉpath, 6u32)
                         );
                     }
                     Sourceˉdirectory = Windvaleˉprojectˉappendˉsource(Sourceˉdirectory, Sourceˉpath);

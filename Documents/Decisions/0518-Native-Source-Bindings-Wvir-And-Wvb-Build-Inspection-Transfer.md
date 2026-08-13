@@ -32,7 +32,7 @@ inspection can transfer without claiming those separate behavior boundaries.
 ## Decision
 
 Add eight explicit repository-root Project 1 aggregates, reuse the existing
-`Windvale-Compiler.wvproj` aggregate for the WVB tool, and make the paired
+`Projects/Examples/Windvale-Compiler.wvproj` aggregate for the WVB tool, and make the paired
 `Verify-Seed-Native-Front-Door` helpers the normal builder for these products:
 
 | Product | Functions | Code bytes | Module bytes | SHA-256 |

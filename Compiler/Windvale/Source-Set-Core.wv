@@ -399,35 +399,6 @@ export fn Compilerˉvalidateˉsourceˉset(Input: bytes) -> Compilerˉsourceˉset
             }
         }
 
-        if Index > 0u32 {
-            if Header.Profile != Sourceˉdeclarations.Compilerˉsourceˉprofile.Portable {
-                return Compilerˉsourceˉsetˉsummaryˉfailure(
-                    Compilerˉsourceˉsetˉstatus.Dependencyˉprofile,
-                    Scan.Modules,
-                    Scan.Sourceˉbytes,
-                    Index,
-                    Header.Nameˉoffset,
-                    Nameˉposition.Line,
-                    Nameˉposition.Column,
-                    Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
-                    Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
-                );
-            }
-            if Parsed.Capabilities != 0u32 {
-                return Compilerˉsourceˉsetˉsummaryˉfailure(
-                    Compilerˉsourceˉsetˉstatus.Dependencyˉshape,
-                    Scan.Modules,
-                    Scan.Sourceˉbytes,
-                    Index,
-                    Header.Nameˉoffset,
-                    Nameˉposition.Line,
-                    Nameˉposition.Column,
-                    Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
-                    Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid
-                );
-            }
-        }
-
         Imports = Imports + Parsed.Imports;
         Records = Records + Parsed.Records;
         Enums = Enums + Parsed.Enums;

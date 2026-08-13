@@ -32,7 +32,7 @@ for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%Construction%\SHA256SUMS" 5064 161787321f0741cc5007bd263afb23f11a7c697a557c70e8c1c09e04877c071a "publisher construction inventory"
+call :verify_file "%Construction%\SHA256SUMS" 5064 d9a41516b7d5f768afe377fd957e897bcb1cd3552fdf4c9510af3fc6969a7edc "publisher construction inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Construction%\SHA256SUMS") do (
     call :verify_digest "%Construction%\%%I" %%H "publisher construction artifact"
@@ -57,7 +57,7 @@ set "LinuxApplication=%OutputRoot%\linux-x64-wvappverify.elf"
 set "WindowsStartup=%TemporaryDirectory%\Windows-Startup.wvo"
 set "LinuxStartup=%TemporaryDirectory%\Linux-Startup.wvo"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Console-Application-Verifier.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Tools/Windvale-Console-Application-Verifier.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
 if errorlevel 1 goto :cleanup
 call :verify_file "%Wvb%" 105006 1dcd5f2aeebd974649e64c90d9f473e1e75f7d13dbcde2814de1dded72cf2c0c "console-verifier WVB"
 if errorlevel 1 goto :cleanup

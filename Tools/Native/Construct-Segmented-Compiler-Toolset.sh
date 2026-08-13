@@ -35,15 +35,15 @@ image_staging_wvb="$output_root/Compiler-Image-Staging.wvb"
 transport_wvb="$output_root/Compiler-Image-Canonical-Transport.wvb"
 
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Native-X64-Lowering-Staging-Tool.wvproj" \
+    "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj" \
     "$wvo_staging_wvb" \
     >"$temporary_directory/Build-Wvo-Staging.txt" 2>"$temporary_directory/Build-Wvo-Staging.err" || exit $?
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Compiler-Image-Staging.wvproj" \
+    "$repository_root/Projects/Linker/Windvale-Compiler-Image-Staging.wvproj" \
     "$image_staging_wvb" \
     >"$temporary_directory/Build-Image-Staging.txt" 2>"$temporary_directory/Build-Image-Staging.err" || exit $?
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Compiler-Image-Canonical-Transport.wvproj" \
+    "$repository_root/Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj" \
     "$transport_wvb" \
     >"$temporary_directory/Build-Transport.txt" 2>"$temporary_directory/Build-Transport.err" || exit $?
 
@@ -137,13 +137,13 @@ verify_file "$output_root/linux-x64-wvstage.elf" 6438912 \
     f8fbc55776bc8573bec74b3610cf1d5c918286befcfde17069f1e39194c214d6 \
     'Linux WVO staging producer' || exit 1
 verify_file "$image_staging_wvb" 75553 \
-    14521acae6052d08add386833a35dd22c36e0dd07a1fad494961ee8064119d1c \
+    67a7b2142f5a95b5ce2e49b9c329ad7908d37418bc6cfd2b2b773c6b97b06265 \
     'compiler-image staging WVB' || exit 1
 verify_file "$output_root/windows-x64-wvlinkstage.exe" 852480 \
-    f6c9f4ca4bf5983a72888305d42622969aa861d31def21eee980800781e1d3f1 \
+    cd1c0621181ed9a6444d07c1a83429f39a7fa9debd46df4cfe6d65afc512eb7b \
     'Windows compiler-image staging application' || exit 1
 verify_file "$output_root/linux-x64-wvlinkstage.elf" 851968 \
-    bc703c9893107019f19d8e1d1cefd138f7d1b2acfa83d2b70054c8c6063bd2b8 \
+    baa183ff2318ace7e29d9aed39b1261d7887403674e52466efeb5fa12d88c8b8 \
     'Linux compiler-image staging application' || exit 1
 verify_file "$transport_wvb" 23836 \
     dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d \

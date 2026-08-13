@@ -1,0 +1,6 @@
+windvale-project 2
+root "Linker/Windvale/Uefi-Application-Construction-Bridge.wv"
+source "Foundation/Byte-Construction.wv"
+source "Linker/Windvale/Uefi-Application-Construction-Core.wv"
+source "Linker/Windvale/Uefi-Application-Verification-Core.wv"
+emit wvb

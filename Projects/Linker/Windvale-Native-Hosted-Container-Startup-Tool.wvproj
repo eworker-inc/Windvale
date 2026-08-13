@@ -1,0 +1,5 @@
+windvale-project 2
+root "Linker/Windvale/Native-Hosted-Container-Startup-Tool.wv"
+source "Foundation/Sha256.wv"
+source "Linker/Windvale/Native-Hosted-Startup-Instantiation-Core.wv"
+emit wvb

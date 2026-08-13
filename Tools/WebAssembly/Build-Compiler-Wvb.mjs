@@ -23,8 +23,9 @@ const Packageˉroot = path.join(
 );
 const Projectˉpath = path.join(
     Repositoryˉroot,
-    "Windvale-Compiler-Memory.wvproj",
+    "Projects/Compiler/Windvale-Compiler-Memory.wvproj",
 );
+const Workspaceˉpath = path.join(Repositoryˉroot, "Windvale.wvws");
 const Defaultˉoutput = path.join(
     Packageˉroot,
     "Windvale-Compiler-Memory.wvb",
@@ -88,7 +89,8 @@ const Publisherˉpath = Resolveˉartifact(
 await Verifyˉartifact(Compilerˉpath, Compilerˉartifact, "native compiler");
 await Verifyˉartifact(Publisherˉpath, Publisherˉartifact, "native publisher");
 
-const Sourceˉpaths = await Readˉproject(Projectˉpath);
+const Workspaceˉroot = await Readˉworkspace(Workspaceˉpath);
+const Sourceˉpaths = await Readˉproject(Projectˉpath, Workspaceˉroot);
 const Expectedˉcompiler = Packageˉmanifest.sourceCompiler;
 Require(
     Expectedˉcompiler?.name === "portable-source-compiler" &&
@@ -230,27 +232,66 @@ async function Verifyˉartifact(Fileˉpath, Artifact, Boundary) {
     Require(Digest === Artifact.sha256, `The ${Boundary} SHA-256 is invalid.`);
 }
 
-async function Readˉproject(Fileˉpath) {
-    const Text = (await readFile(Fileˉpath, "utf8")).replace(/^\uFEFF/, "");
-    const Lines = Text.split(/\r?\n/u).map(Line => Line.trim()).filter(Boolean);
-    Require(Lines.shift() === "windvale-project 1", "The compiler project header is invalid.");
-    const Rootˉmatch = /^root "([^"\r\n]+)"$/u.exec(Lines.shift() ?? "");
-    Require(Rootˉmatch !== null, "The compiler project root is invalid.");
-    Require(Lines.pop() === "emit wvb", "The compiler project emission is invalid.");
+async function Readˉworkspace(Fileˉpath) {
+    const Bytes = await readFile(Fileˉpath);
+    const Text = new TextDecoder("utf-8", { fatal: true }).decode(Bytes);
+    Require(
+        Text === "windvale-workspace 1" ||
+            Text === "windvale-workspace 1\n" ||
+            Text === "windvale-workspace 1\r\n",
+        "The compiler workspace is invalid.",
+    );
+    return path.dirname(Fileˉpath);
+}
+
+async function Readˉproject(Fileˉpath, Workspaceˉroot) {
+    const Bytes = await readFile(Fileˉpath);
+    Require(Bytes.byteLength <= 65_536, "The compiler project exceeds the byte limit.");
+    const Text = new TextDecoder("utf-8", { fatal: true }).decode(Bytes);
+    Require(!Text.startsWith("\uFEFF"), "The compiler project contains a byte-order mark.");
+    const Lines = Text.split(/\r?\n/u);
+    if (Lines.at(-1) === "") {
+        Lines.pop();
+    }
+    Require(
+        Lines.shift() === "windvale-project 2",
+        "The compiler project header is invalid.",
+    );
+    Require(Lines.length !== 0 && Lines.every(Line => Line.length !== 0),
+        "The compiler project contains an empty line.");
+    let Root = null;
+    let Emitsˉwvb = false;
     const Sources = [];
     for (const Line of Lines) {
-        const Match = /^source "([^"\r\n]+)"$/u.exec(Line);
-        Require(Match !== null, `The compiler project line is invalid: ${Line}`);
-        Sources.push(Match[1]);
+        const Rootˉmatch = /^root "([^"\r\n]+)"$/u.exec(Line);
+        const Sourceˉmatch = /^source "([^"\r\n]+)"$/u.exec(Line);
+        if (Rootˉmatch !== null) {
+            Require(Root === null, "The compiler project repeats its root.");
+            Root = Rootˉmatch[1];
+        } else if (Sourceˉmatch !== null) {
+            Sources.push(Sourceˉmatch[1]);
+        } else if (Line === "emit wvb") {
+            Require(!Emitsˉwvb, "The compiler project repeats its emission.");
+            Emitsˉwvb = true;
+        } else {
+            throw new Error(`The compiler project line is invalid: ${Line}`);
+        }
     }
-    Require(Sources.length < 64, "The compiler project exceeds the native source limit.");
-    const Projectˉdirectory = path.dirname(Fileˉpath);
-    const Resolved = [Rootˉmatch[1], ...Sources].map(Relativeˉpath => {
-        Require(!path.isAbsolute(Relativeˉpath), "The compiler project source must be relative.");
-        const Sourceˉpath = path.resolve(Projectˉdirectory, Relativeˉpath);
+    Require(Root !== null, "The compiler project root is missing.");
+    Require(Emitsˉwvb, "The compiler project emission is missing.");
+    Require(Sources.length <= 63, "The compiler project exceeds the native source limit.");
+    const Resolved = [Root, ...Sources].map(Relativeˉpath => {
+        const Segments = Relativeˉpath.split("/");
         Require(
-            Sourceˉpath.startsWith(`${Repositoryˉroot}${path.sep}`),
-            "The compiler project source escapes the repository.",
+            Relativeˉpath.length <= 4_096 && Relativeˉpath.endsWith(".wv") &&
+                Segments.every(Segment =>
+                    /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/u.test(Segment)),
+            "The compiler project source path is invalid.",
+        );
+        const Sourceˉpath = path.resolve(Workspaceˉroot, ...Segments);
+        Require(
+            Sourceˉpath.startsWith(`${path.resolve(Workspaceˉroot)}${path.sep}`),
+            "The compiler project source escapes the workspace.",
         );
         return Sourceˉpath;
     });

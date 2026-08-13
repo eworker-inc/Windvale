@@ -1,0 +1,4 @@
+windvale-project 2
+root "Libraries/Platform/Resources/Hosted-Resource-Store.wv"
+source "Libraries/Foundation/Resources/Resource-Store.wv"
+emit wvb

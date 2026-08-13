@@ -1,3 +1,3 @@
-windvale-project 1
-root "Native-Publication-Lifetime-Core.wv"
+windvale-project 2
+root "Compiler/Windvale/Native-Publication-Lifetime-Core.wv"
 emit wvb

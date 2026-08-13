@@ -101,7 +101,7 @@ qualification.
 
 ## Verification
 
-`Windvale-Native-Baseline-Jit-Patch-Plan-Self-Test.wvproj` builds the producer,
+`Projects/Tests/Windvale-Native-Baseline-Jit-Patch-Plan-Self-Test.wvproj` builds the producer,
 verifier, and capability-free self-test through the native source front door.
 The self-test covers deterministic repeated output, `42`, `-1`, WVB truncation,
 altered WVB magic, altered bytecode shape, plan truncation, altered plan magic,

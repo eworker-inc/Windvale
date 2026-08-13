@@ -24,7 +24,7 @@ directory and are removed on success or failure.
 
 The builder performs these exact steps:
 
-1. Build `Windvale-Os-Process-Policy.wvproj`, whose sole root is
+1. Build `Projects/Operating-System/Windvale-Os-Process-Policy.wvproj`, whose sole root is
    `Operating-System/Kernel/Process-Foundation.wv`.
 2. Require the 18,764-byte WVB identity
    `c46c6b3780cad8d292607ed687a7e511e2e3c47fbc6fc21526ecc0ffeb937895`.

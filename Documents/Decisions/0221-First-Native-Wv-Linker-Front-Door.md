@@ -16,7 +16,7 @@ The linker initially used the semantic SHA-256 opcode and exact `console.write`.
 
 ### Compose one exact Windvale linker project
 
-Add `Windvale-Wv-Linker.wvproj` with the linker core as root and its exact machine-contract, byte-ordering, decimal-parsing, byte-construction, and SHA-256 dependencies. Use the Windvale Foundation SHA implementation for input and image identities. Preserve the complete canonical map bytes; use `console.write_line` by removing the map's already-final LF before the call.
+Add `Projects/Linker/Windvale-Wv-Linker.wvproj` with the linker core as root and its exact machine-contract, byte-ordering, decimal-parsing, byte-construction, and SHA-256 dependencies. Use the Windvale Foundation SHA implementation for input and image identities. Preserve the complete canonical map bytes; use `console.write_line` by removing the map's already-final LF before the call.
 
 Format raw two's-complement map values through a small Windvale helper over `U32ˉformat`. Cover zero, signed maximum, signed minimum, and minus one in the embedded self-test. Do not add `I32ˉformat`, another startup template, or linker semantics in assembly.
 

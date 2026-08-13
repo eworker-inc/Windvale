@@ -44,9 +44,9 @@ managed contracts.
 | --- | ---: | --- |
 | `Wvb/Compiler-Wvb-Verifier.wvb` | 125,721 | `259db7fc70679153982ca70843cf002e87b786d04ebeb0eafb628207f44c723f` |
 | `Wvb/Wvb-Inspector.wvb` | 76,527 | `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753` |
-| `windows-x64/wvverify.exe` | 1,004,032 | `5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7` |
+| `windows-x64/wvverify.exe` | 1,257,472 | `2b870ae276ee8c53e7b6f7277a19067ddb9466e5ac7e0b640745a5d40810efd1` |
 | `windows-x64/wvdump.exe` | 795,136 | `61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381` |
-| `linux-x64/wvverify.elf` | 1,003,520 | `824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982` |
+| `linux-x64/wvverify.elf` | 1,257,472 | `fe84ab498fde5112e62398982bc76e3334e4bdec9e2502b87a2e4bb191fbdab3` |
 | `linux-x64/wvdump.elf` | 794,624 | `d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627` |
 
 The verifier artifacts retain their previously qualified identities. The inspector WVB reuses the existing complete Windvale `Wv-Dump-Core.wv` implementation rather than introducing a second parser or report generator.

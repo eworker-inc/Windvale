@@ -1,4 +1,4 @@
-windvale-project 1
-root "Native-Stencil-Bridge.wv"
-source "Native-Stencil-Core.wv"
+windvale-project 2
+root "Compiler/Windvale/Native-Stencil-Bridge.wv"
+source "Compiler/Windvale/Native-Stencil-Core.wv"
 emit wvb

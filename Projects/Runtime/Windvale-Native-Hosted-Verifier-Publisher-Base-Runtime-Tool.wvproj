@@ -1,0 +1,7 @@
+windvale-project 2
+root "Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-Runtime-Tool.wv"
+source "Foundation/Byte-Construction.wv"
+source "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv"
+source "Runtime/Windvale/Native-Hosted-Verifier-Publisher-Base-File-Tool-Support.wv"
+source "Runtime/Windvale/Native-Hosted-Verifier-Runtime-Header-Core.wv"
+emit wvb

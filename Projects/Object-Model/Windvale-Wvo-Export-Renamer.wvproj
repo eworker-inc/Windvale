@@ -1,0 +1,6 @@
+windvale-project 2
+root "Object-Model/Windvale/Wvo-Export-Renamer.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Byte-Ordering.wv"
+source "Object-Model/Windvale/Wvo-Object-Verification.wv"
+emit wvb

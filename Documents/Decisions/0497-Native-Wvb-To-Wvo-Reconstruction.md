@@ -26,7 +26,7 @@ retained native seed is a clean bootstrap.
 Windvale adopts a five-artifact reconstruction contract for the current
 accepted-subset lowerer:
 
-1. build `Windvale-Native-X64-Lowering-Tool.wvproj` and the fixed return-42
+1. build `Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj` and the fixed return-42
    project through the native source front door;
 2. use the retained segmented native staging, image-linking, transport, and
    hosted-packaging applications to construct the lowerer image and both target

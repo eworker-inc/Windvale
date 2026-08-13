@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Segmented-Compiler-Toolset-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    'bc703c9893107019f19d8e1d1cefd138f7d1b2acfa83d2b70054c8c6063bd2b8' \
+    'baa183ff2318ace7e29d9aed39b1261d7887403674e52466efeb5fa12d88c8b8' \
     'linux-x64-wvlinkstage.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux segmented compiler-image linker artifact digest is invalid.' >&2
     exit 1

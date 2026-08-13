@@ -1,4 +1,0 @@
-windvale-project 1
-root "Tools/Windvale.WebAssembly/WebAssembly-Artifact-Tool.wv"
-source "Compiler/Windvale/WebAssembly-Core.wv"
-emit wvb

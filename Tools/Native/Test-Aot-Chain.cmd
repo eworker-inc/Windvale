@@ -19,7 +19,7 @@ set "Image=%TemporaryDirectory%\Return-42.bin"
 set "Application=%TemporaryDirectory%\Return-42.exe"
 set "Map=%TemporaryDirectory%\Return-42.wvmap"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" "%Wvb%" >nul
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" "%Wvb%" >nul
 if errorlevel 1 goto :failed
 certutil -hashfile "%Wvb%" SHA256 | findstr /I /C:"7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31" >nul
 if errorlevel 1 (

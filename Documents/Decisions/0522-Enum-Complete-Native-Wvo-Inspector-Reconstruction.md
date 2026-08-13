@@ -30,7 +30,7 @@ The newer WVB-runner reconstruction already owns that post-construction step.
 
 ### Compose the complete enum service
 
-After building and verifying `Windvale-Wvo-Object.wvproj`, both reconstruction
+After building and verifying `Projects/Object-Model/Windvale-Wvo-Object.wvproj`, both reconstruction
 scripts invoke the retained native hosted-enum processes:
 
 1. `wvhostenumrequest` derives the exact single-group request from the verified

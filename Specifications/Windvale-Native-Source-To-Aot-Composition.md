@@ -21,7 +21,7 @@ Every arrow is a process or file boundary already owned by its linked contract. 
 
 ## Fixed fixture and products
 
-`Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` selects one portable `Main() -> i32` fixture. Its current deterministic products are:
+`Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj` selects one portable `Main() -> i32` fixture. Its current deterministic products are:
 
 | Product | Bytes | SHA-256 |
 | --- | ---: | --- |

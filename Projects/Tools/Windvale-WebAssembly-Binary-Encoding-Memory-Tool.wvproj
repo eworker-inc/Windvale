@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tools/Windvale.WebAssembly/Binary-Encoding-Memory-Tool.wv"
+source "Compiler/Windvale/WebAssembly-Binary-Encoding.wv"
+emit wvb

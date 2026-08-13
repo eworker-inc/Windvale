@@ -62,7 +62,7 @@ The Windvale decoder validates:
 
 This decoder is deliberately a structural inspector, not an alternate semantic verifier. The mandatory compiler-aligned verifier owns canonical declaration ordering, identifier grammar, recognized capability signatures, nominal-reference identity, stack typing, branch boundaries, reachable control flow, exact maximum-stack calculation, and all instruction reference checks. Its native application is the ordinary gate; the C# implementation remains the frozen Stage 0 recovery and differential oracle while retirement is in progress.
 
-Decision 0519 makes `Windvale-Wvb-Inspector.wvproj` the normal broad-script
+Decision 0519 makes `Projects/Examples/Windvale-Wvb-Inspector.wvproj` the normal broad-script
 construction contract. The exact 39-function, 59,277-code-byte product is
 76,527 bytes with SHA-256
 `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`;

@@ -37,7 +37,7 @@ verify_identity() {
 }
 
 "$script_directory/Build-Wvb.sh" \
-    "$repository_root/Windvale-Os-Kernel-Markers.wvproj" "$module" \
+    "$repository_root/Projects/Operating-System/Windvale-Os-Kernel-Markers.wvproj" "$module" \
     >/dev/null 2>&1 || exit 1
 verify_identity "$module" 1484 \
     7a0ef0dedba2a72177239c54fd670be82968e7c5156855bf36be7412da6d656c || exit 1

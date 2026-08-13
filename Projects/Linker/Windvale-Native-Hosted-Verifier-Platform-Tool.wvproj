@@ -1,0 +1,9 @@
+windvale-project 2
+root "Linker/Windvale/Native-Hosted-Verifier-Platform-Tool.wv"
+source "Foundation/Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Layout-Core.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Platform-Linux.wv"
+source "Linker/Windvale/Native-Hosted-Verifier-Platform-Windows.wv"
+source "Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv"
+emit wvb

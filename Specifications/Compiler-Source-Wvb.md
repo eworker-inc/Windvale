@@ -25,7 +25,7 @@ The status contract distinguishes upstream WVIR rejection, shapes and operations
 Main(Input: bytes) -> bytes
 ```
 
-`Input` is one complete canonical WVSS 1 value. The adapter passes it unchanged to `Compilerˉcompileˉsourceˉwvb`; it does not resolve paths, enumerate files, read process arguments, write output, or print diagnostics. `Windvale-Compiler-Memory.wvproj` builds the adapter with the same compiler-core source inventory as the hosted tool.
+`Input` is one complete canonical WVSS 1 value. The adapter passes it unchanged to `Compilerˉcompileˉsourceˉwvb`; it does not resolve paths, enumerate files, read process arguments, write output, or print diagnostics. `Projects/Compiler/Windvale-Compiler-Memory.wvproj` builds the adapter with the same compiler-core source inventory as the hosted tool.
 
 The returned `WVCO 1` value has this exact little-endian layout:
 
@@ -87,7 +87,15 @@ Named-record syntax has disappeared by this boundary: typed WVIR has already eva
 
 ## Capability translation
 
-The validated root profile maps directly to the existing WVB profile byte. Root capability declarations are emitted by ordinal name, independently of source declaration order. Dependencies cannot declare capabilities in the qualified Windvale-written backend. Parameter/result tags for its qualified seven-entry baseline come from the fixed internal catalog and therefore reproduce Stage 0's canonical Capabilities section exactly. The later Stage 0 static-composition candidate admits capability-bearing dependencies and Decision 0153's eighth catalog entry; the Windvale-written compiler has not yet adopted those candidate extensions.
+The validated root profile maps directly to the existing WVB profile byte. A
+dependency may declare capabilities when its profile is compatible with its
+importer. The root must explicitly redeclare every capability required by its
+complete dependency closure; compilation does not treat a library requirement as
+authority. The root declarations alone form the emitted capability table, sorted by
+ordinal name independently of source declaration order. Dependency capability calls
+are rebound to those root-owned indices by canonical capability name. Parameter and
+result tags come from the fixed nine-entry Seed catalog, including
+`filesystem.directory_read_v1` and `storage.random_access_v1`.
 
 WVIR operation `63` carries a validated WVSD capability directory entry. The backend ranks that entry among capability declarations by ordinal name and emits WVB `call.capability` with the resulting index. No capability is inferred, removed, or authorized by compilation; host support and runtime authorization remain separate required boundaries.
 
@@ -141,7 +149,11 @@ A separate control-flow oracle compiles nested `&&`/`||` precedence, a skipped o
 
 `Tests/Fixtures/Source-Wvb/Nominal-Types.wv` deliberately interleaves records, enums, data, and unsorted functions. It covers inferred record, enum, and text locals; named literals; canonical record/enum grouping and ordering; every primitive record field plus enum fields; nominal parameters/results/locals/temporaries; multiline trailing commas; and all six nominal WVIR operations. Both backends produce the exact 1,782-byte WVB module with SHA-256 `b1c3543f8064732a0039d071f4e3a7da2bb901f8cfb890fb1de42193a228ff4b`; it executes with result `11`.
 
-`Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv` deliberately declares all seven catalog capabilities out of order. Its seven functions cover every capability call, parameter shape, and result shape. Both backends produce the exact 850-byte hosted WVB module with SHA-256 `bad95ed62ed8406c169ddadaa8da8576825d9213af2faa74b945db44afdfd41f`; the authorized no-argument path executes with result `0` and performs no file read or write.
+`Tests/Fixtures/Source-Wvb/Hosted-Capabilities.wv` deliberately declares the
+baseline hosted catalog out of order. The library suite separately covers the two
+rights-limited application capability signatures and capability calls imported from
+a dependency. Successful compilation canonicalizes both cases without invoking an
+I/O operation.
 
 The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical flattening across a root and two transitive dependencies. Dependency-owned functions, records, enums, a variant, and text literals combine with root static data and a synthetic-name collision. Only `Main` remains exported. Both backends produce the exact 1,388-byte WVB module with SHA-256 `42d134ee0674dcc2cfa97d018ea03b27f014b2f916d8273ba02a0aee868e0fd5`; it executes with result `42`. Reversed dependency order is rejected before output publication.
 
@@ -149,19 +161,17 @@ The three `Tests/Fixtures/Source-Wvb/Composition-*.wv` sources cover canonical f
 
 The current deterministic compiler artifacts are:
 
-- `Source-Wvb-Core.wvb`: 923,514 bytes, SHA-256 `c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b`.
-- `Source-Wvb-Demo.wvb`: 923,210 bytes, SHA-256 `ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9`.
-- `Source-Wvb-Tool.wvb`: 921,640 bytes, SHA-256 `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
-- `Source-Wvb-Memory-Adapter.wvb`: 919,317 bytes, SHA-256 `86f964aeeca8ebfabf11ddd252c32efe49303135af04e313b3801afe9656df29`.
+- `Source-Wvb-Core.wvb`: 929,148 bytes, SHA-256 `c1734f76c06bc0deeb284144e6d8bd51b8be05c2f797055ce8ef7b54113be9c0`.
+- `Source-Wvb-Demo.wvb`: 928,844 bytes, SHA-256 `a9f07a6338baaab2519c1ce501221786aac444eaa7a827a168362feb681b8fe7`.
+- `Source-Wvb-Tool.wvb`: 927,274 bytes, SHA-256 `d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`.
+- `Source-Wvb-Memory-Adapter.wvb`: 924,951 bytes, SHA-256 `8c5f97a83d7dde34d42f411260986915679e47dcac89a486e0a3a8d94cb523a5`.
 
-Decision 0518 moves ordinary construction of the core, demo, and tool products
-to the bounded native compiler-seed launcher and moves exact core inspection to
-the paired native front-door helper. The generic native Project driver cannot
-yet compile this current closure; that implementation limitation does not
-change Project 1 or source-WVB semantics. The managed demo and complete hosted
-fixture/differential/oracle sequence remain behavior evidence because the
-scalar native runner stops the demo with code `3004` and no independent native
-oracle yet replaces Stage 0 for that lane.
+Decision 0518 moved ordinary construction of the core, demo, and tool products to
+the bounded native compiler-seed launcher. Decision 0528 now routes repository
+project builds through explicit Workspace 1 and Project 2 inputs, and Decision 0529
+adds native capability-bearing library composition evidence. Historical
+differential results remain evidence, but the normal build and focused verification
+path for this boundary is native-owned.
 
 The memory adapter contains 425 functions and retains the admitted maximum of 1,408 locals and stack depth 34. These are local candidate identities and measurements. Complete Stage 1/Stage 2 bootstrap and dual-host qualification must still be rerun before the candidate becomes a new cross-host bootstrap claim.
 
@@ -173,4 +183,7 @@ For Decision 0058, Stage 0 compiled the then-canonical 12-module source inventor
 
 Exact bytecode compiler self-reproduction is cross-host qualified under Decision 0058. The 4 MiB WVSS envelope is sufficient for the real compiler closure, while parity with Stage 0's larger input limit remains a separate future contract decision.
 
-The C# Stage 0 compiler remains the independent recovery/reference implementation, and the C# runtime remains the host for this bytecode proof. Native compiler execution, native code, object emission, executable containers, and OS-specific lowering are not part of this contract.
+The retained recovery archive remains historical independent evidence. Ordinary
+compiler execution, Project 2 construction, WVB verification, and publication use
+the native front door. Native object emission, executable containers, and
+OS-specific lowering remain separate contracts.

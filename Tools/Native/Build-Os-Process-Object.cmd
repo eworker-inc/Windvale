@@ -40,7 +40,7 @@ if errorlevel 1 exit /b 1
 set "Status=1"
 
 set "FailureStep=build-init"
-call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Os-Init-Resource-Service.wvproj" "%Work%\Init.wvb" >"%Work%\Build-Init.log" 2>&1
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Init-Resource-Service.wvproj" "%Work%\Init.wvb" >"%Work%\Build-Init.log" 2>&1
 if errorlevel 1 goto :failure
 call :verify "%Work%\Init.wvb" 526 7cefa7dcf82ed05d6b6e133aa79b7da90372e2d8f8f993abe7449513398ede83
 if errorlevel 1 goto :failure
@@ -56,7 +56,7 @@ call :verify "%Work%\Init.wvo" 3455 4b8126d1baa38054fc70165be3c2f9519e7bea7e1f4d
 if errorlevel 1 goto :failure
 
 set "FailureStep=build-directory"
-call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Os-Directory-Process-Service.wvproj" "%Work%\Directory.wvb" >"%Work%\Build-Directory.log" 2>&1
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Directory-Process-Service.wvproj" "%Work%\Directory.wvb" >"%Work%\Build-Directory.log" 2>&1
 if errorlevel 1 goto :failure
 call :verify "%Work%\Directory.wvb" 474 f7410595f9824e510da9399f52a463013ff41240b67308cdf28b4f5b7484ab2b
 if errorlevel 1 goto :failure
@@ -72,7 +72,7 @@ call :verify "%Work%\Directory.wvo" 2803 04339b8fd627c6b765a16903ad339408c86eaa9
 if errorlevel 1 goto :failure
 
 set "FailureStep=build-interpreter"
-call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Os-Bytecode-Interpreter.wvproj" "%Work%\Interpreter.wvb" >"%Work%\Build-Interpreter.log" 2>&1
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Operating-System/Windvale-Os-Bytecode-Interpreter.wvproj" "%Work%\Interpreter.wvb" >"%Work%\Build-Interpreter.log" 2>&1
 if errorlevel 1 goto :failure
 call :verify "%Work%\Interpreter.wvb" 56307 e2024702919e9acd37c119a7afb9991a73904d97ef3bdb1defe8c5ea13e91a3d
 if errorlevel 1 goto :failure
@@ -88,7 +88,7 @@ call :verify "%Work%\Interpreter.wvo" 448772 7fb4a3d3a4aca6f44f6ab8bed3a2891147e
 if errorlevel 1 goto :failure
 
 set "FailureStep=build-program"
-call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Native-Test-Function-Only.wvproj" "%Work%\Program.wvb" >"%Work%\Build-Program.log" 2>&1
+call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Tests/Windvale-Native-Test-Function-Only.wvproj" "%Work%\Program.wvb" >"%Work%\Build-Program.log" 2>&1
 if errorlevel 1 goto :failure
 call :verify "%Work%\Program.wvb" 816 28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936
 if errorlevel 1 goto :failure

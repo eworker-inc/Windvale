@@ -21,6 +21,7 @@ SHA256SUMS text eol=lf
 *.html text eol=lf
 *.css text eol=lf
 *.wvproj text eol=lf
+*.wvws text eol=lf
 *.ps1 text eol=lf
 *.cmd text eol=crlf
 *.sh text eol=lf

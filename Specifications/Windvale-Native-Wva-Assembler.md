@@ -8,7 +8,7 @@ The product logic remains in `Assembler/Windvale/Wva-Assembler-Core.wv`. It owns
 
 ## Construction contract
 
-`Windvale-Wva-Assembler.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvaˉassemblerˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
+`Projects/Assembler/Windvale-Wva-Assembler.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvaˉassemblerˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
 
 The native writer accepts only that identity and one exported `Main`. Its fragment must require these services in this exact order:
 

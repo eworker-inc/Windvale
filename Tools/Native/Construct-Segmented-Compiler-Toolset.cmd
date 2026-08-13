@@ -30,15 +30,15 @@ set "ImageStagingWvb=%OutputRoot%\Compiler-Image-Staging.wvb"
 set "TransportWvb=%OutputRoot%\Compiler-Image-Canonical-Transport.wvb"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Native-X64-Lowering-Staging-Tool.wvproj" ^
+    "%RepositoryRoot%\Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj" ^
     "%WvoStagingWvb%" >"%TemporaryDirectory%\Build-Wvo-Staging.txt" 2>"%TemporaryDirectory%\Build-Wvo-Staging.err"
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Compiler-Image-Staging.wvproj" ^
+    "%RepositoryRoot%\Projects/Linker/Windvale-Compiler-Image-Staging.wvproj" ^
     "%ImageStagingWvb%" >"%TemporaryDirectory%\Build-Image-Staging.txt" 2>"%TemporaryDirectory%\Build-Image-Staging.err"
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Windvale-Compiler-Image-Canonical-Transport.wvproj" ^
+    "%RepositoryRoot%\Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj" ^
     "%TransportWvb%" >"%TemporaryDirectory%\Build-Transport.txt" 2>"%TemporaryDirectory%\Build-Transport.err"
 if errorlevel 1 goto :cleanup
 
@@ -61,11 +61,11 @@ call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 6438912 2e3a1f8057b71c6
 if errorlevel 1 goto :cleanup
 call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 6438912 f8fbc55776bc8573bec74b3610cf1d5c918286befcfde17069f1e39194c214d6 "Linux WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%ImageStagingWvb%" 75553 14521acae6052d08add386833a35dd22c36e0dd07a1fad494961ee8064119d1c "compiler-image staging WVB"
+call :verify_file "%ImageStagingWvb%" 75553 67a7b2142f5a95b5ce2e49b9c329ad7908d37418bc6cfd2b2b773c6b97b06265 "compiler-image staging WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvlinkstage.exe" 852480 f6c9f4ca4bf5983a72888305d42622969aa861d31def21eee980800781e1d3f1 "Windows compiler-image staging application"
+call :verify_file "%OutputRoot%\windows-x64-wvlinkstage.exe" 852480 cd1c0621181ed9a6444d07c1a83429f39a7fa9debd46df4cfe6d65afc512eb7b "Windows compiler-image staging application"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvlinkstage.elf" 851968 bc703c9893107019f19d8e1d1cefd138f7d1b2acfa83d2b70054c8c6063bd2b8 "Linux compiler-image staging application"
+call :verify_file "%OutputRoot%\linux-x64-wvlinkstage.elf" 851968 baa183ff2318ace7e29d9aed39b1261d7887403674e52466efeb5fa12d88c8b8 "Linux compiler-image staging application"
 if errorlevel 1 goto :cleanup
 call :verify_file "%TransportWvb%" 23836 dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d "compiler-image transport WVB"
 if errorlevel 1 goto :cleanup

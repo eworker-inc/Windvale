@@ -49,7 +49,7 @@ try {
     $SeedArchive = Join-Path $TemporaryDirectory 'Seed-Source.tar'
     Invoke-Checked {
         git -C $RepositoryRoot archive --format=tar --output=$SeedArchive $SemanticFreezeCommit -- `
-            Windvale-Compiler.wvproj `
+            Projects/Examples/Windvale-Compiler.wvproj `
             Examples/Compiler/Source-Wvb-Tool.wv `
             Compiler/Windvale `
             Foundation/Byte-Construction.wv `
@@ -69,7 +69,7 @@ try {
     $Wvb = Join-Path $Destination 'Wvb/Windvale-Compiler.wvb'
     Push-Location $SeedSource
     try {
-        Invoke-Checked { dotnet $Tool build Windvale-Compiler.wvproj -o $Wvb } `
+        Invoke-Checked { dotnet $Tool build Projects/Examples/Windvale-Compiler.wvproj -o $Wvb } `
             'The semantic-freeze compiler WVB could not be reconstructed.'
     }
     finally { Pop-Location }

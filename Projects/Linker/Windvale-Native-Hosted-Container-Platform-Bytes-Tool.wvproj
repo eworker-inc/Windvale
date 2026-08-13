@@ -1,0 +1,7 @@
+windvale-project 2
+root "Linker/Windvale/Native-Hosted-Container-Platform-Bytes-Tool.wv"
+source "Foundation/Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv"
+source "Linker/Windvale/Native-Hosted-Container-Linux.wv"
+source "Linker/Windvale/Native-Hosted-Container-Windows.wv"
+emit wvb

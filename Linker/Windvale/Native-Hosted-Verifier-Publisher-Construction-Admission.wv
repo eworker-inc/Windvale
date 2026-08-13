@@ -172,7 +172,7 @@ fn Structureˉmatches(
 export fn Publisherˉmoduleˉvariant(Input: bytes) -> u32 {
     if Bytesˉlength(Input) == 29170u32 { return 0u32; }
     if Bytesˉlength(Input) == 41268u32 { return 1u32; }
-    if Bytesˉlength(Input) == 159770u32 { return 2u32; }
+    if Bytesˉlength(Input) == 163300u32 { return 2u32; }
     if Bytesˉlength(Input) == 41365u32 { return 3u32; }
     if Bytesˉlength(Input) == 115107u32 { return 4u32; }
     return 5u32;
@@ -218,12 +218,12 @@ export fn Publisherˉobjectˉvariant(Input: bytes) -> u32 {
         Mainˉoffset = 1178u32;
         Beginˉindex = 3u32;
         Applyˉindex = 2u32;
-    } else if Bytesˉlength(Input) == 1319377u32 {
+    } else if Bytesˉlength(Input) == 1349361u32 {
         Variant = 2u32;
-        Length = 1319377u32;
+        Length = 1349361u32;
         Symbols = 47u32;
         Relocations = 6u32;
-        Textˉbytes = 1317376u32;
+        Textˉbytes = 1347360u32;
         Rodataˉbytes = 237u32;
         Mainˉindex = 46u32;
         Mainˉoffset = 0u32;

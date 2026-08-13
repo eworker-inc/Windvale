@@ -56,7 +56,7 @@ application_error="$temporary_directory/Application.err"
 published_application="$repository_root/Artifacts/Baseline-Jit-Publisher/linux-x64/Baseline-Jit-Publisher.elf"
 
 "$repository_root/Tools/Native/Build-Wvb.sh" \
-    "$repository_root/Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj" \
+    "$repository_root/Projects/Compiler/Windvale-Native-Baseline-Jit-Patch-Plan-Bridge.wvproj" \
     "$bridge_wvb" >/dev/null || exit $?
 check_hash "$bridge_wvb" \
     '2dc536e9d3511d4fde3191e1084d9634543154a525623fd3c7c669f9d3bf20d9' \

@@ -1,5 +1,0 @@
-windvale-project 1
-root "Runtime/Windvale/Native-Hosted-Verifier-Service-Bundle-Request-Tool.wv"
-source "Compiler/Windvale/Native-Publication-Core.wv"
-source "Runtime/Windvale/Native-Hosted-Verifier-Service-Bundle-Request-Core.wv"
-emit wvb

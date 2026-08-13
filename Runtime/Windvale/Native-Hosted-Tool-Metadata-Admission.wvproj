@@ -1,3 +1,3 @@
-windvale-project 1
-root "Native-Hosted-Tool-Metadata-Admission.wv"
+windvale-project 2
+root "Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv"
 emit wvb

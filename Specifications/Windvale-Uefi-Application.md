@@ -76,12 +76,12 @@ The verifier bridge uses the analogous `WVUV 1` response and appends recovered
 code only on success. These bridge envelopes are native-tool interfaces, not a
 new UEFI application-format version.
 
-`Windvale-Native-Uefi-Application-Construction.wvproj` and
-`Windvale-Native-Uefi-Application-Verification.wvproj` are the canonical
+`Projects/Linker/Windvale-Native-Uefi-Application-Construction.wvproj` and
+`Projects/Linker/Windvale-Native-Uefi-Application-Verification.wvproj` are the canonical
 portable Project 1 front doors. `Uefi-Application-Packager.wv` instead exposes
 the hosted command
 `wvuefi <native-image.bin> <entry-offset> <output.efi>` and directly invokes the
-typed construction core. Its `Windvale-Uefi-Application-Packager.wvproj` front
+typed construction core. Its `Projects/Linker/Windvale-Uefi-Application-Packager.wvproj` front
 door uses only explicit argument, diagnostic, console, file-read, and
 file-write capabilities. It writes no destination unless construction and
 independent verification succeed. The exact WVB and paired profile-5 PE/ELF

@@ -4,7 +4,7 @@
 
 `Wvaˉassemblerˉcore` is the first complete Windvale-written implementation of WVA 1. It consumes immutable source bytes, applies the accepted source and line limits, validates the complete initial grammar and semantic model, derives section and definition ranges, encodes x86-64 instruction/data bytes, constructs canonical WVO 1.0 records, and returns one immutable object value. Portable scanning, validation, measurement, and encoding do not use host text parsing or file APIs; the hosted shell supplies explicit input/output resources only at the boundary.
 
-The implementation source is owned by `Assembler/Windvale/Wva-Assembler-Core.wv`, and `Windvale-Wva-Assembler.wvproj` is its explicit source-to-WVB construction contract. The independent C# Stage 0 oracle and recovery implementation is owned by `Assembler/Reference/`; canonical WVA input examples remain under `Examples/Assembler/`. The paired native application contract is specified separately in [Windvale native WVA assembler](Windvale-Native-Wva-Assembler.md).
+The implementation source is owned by `Assembler/Windvale/Wva-Assembler-Core.wv`, and `Projects/Assembler/Windvale-Wva-Assembler.wvproj` is its explicit source-to-WVB construction contract. The independent C# Stage 0 oracle and recovery implementation is owned by `Assembler/Reference/`; canonical WVA input examples remain under `Examples/Assembler/`. The paired native application contract is specified separately in [Windvale native WVA assembler](Windvale-Native-Wva-Assembler.md).
 
 Decision 0519 makes this Project 1 manifest the normal broad-script
 construction contract and requires independent native verification plus exact

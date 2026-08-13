@@ -15,7 +15,7 @@ so those calls remain explicit qualification gaps.
 
 ## Construction contract
 
-`Windvale-Wvo-Object.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvoˉobjectˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
+`Projects/Object-Model/Windvale-Wvo-Object.wvproj` is the exact source-to-WVB project. Its canonical module identity is `Wvoˉobjectˉcore`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
 
 The native writer accepts only that identity and one exported `Main`. Its fragment and application bundle require these services in this exact order:
 

@@ -122,7 +122,7 @@ leave the normal path.
 - Size, alignment, range, canonical-order, symbol-reference, relocation-placeholder, and overlap verification
 - Object inspection and SHA-256 identity
 
-`Object-Model/Windvale/Wvo-Object-Verification.wv` owns the corresponding Windvale-written bounded reader and verifier. The smaller `Wvo-Object-Core.wv` owns only its self-test, hosted command shell, SHA-256 identity, and complete read-only report path. `Windvale-Wvo-Object.wvproj` composes those focused modules with byte ordering and SHA-256, while paired profile-6 Windows/Linux candidates reuse the existing eleven-service read-only inspector package without adding platform assembly or file-write authority. Decision 0308 also composes the portable verification module with the existing native publication transaction, so accepted-subset lowering now publishes a private whole-object candidate atomically without a second parser or managed wrapper.
+`Object-Model/Windvale/Wvo-Object-Verification.wv` owns the corresponding Windvale-written bounded reader and verifier. The smaller `Wvo-Object-Core.wv` owns only its self-test, hosted command shell, SHA-256 identity, and complete read-only report path. `Projects/Object-Model/Windvale-Wvo-Object.wvproj` composes those focused modules with byte ordering and SHA-256, while paired profile-6 Windows/Linux candidates reuse the existing eleven-service read-only inspector package without adding platform assembly or file-write authority. Decision 0308 also composes the portable verification module with the existing native publication transaction, so accepted-subset lowering now publishes a private whole-object candidate atomically without a second parser or managed wrapper.
 
 The C# object verifier returns a `Verifiedˉobject`; both Stage 0 CLI object commands decode and verify before reporting. During native-candidate qualification this project remains the independent recovery/differential oracle. Decision 0301 now supplies digest-bound native WVO verification and inspection launchers, but they remain candidate entry points until the grouped Windows/Linux gate promotes their exact containing commit. After promotion they become the ordinary path while C# remains explicitly named recovery evidence until the complete retirement gate passes.
 
@@ -402,24 +402,24 @@ The current bytecode 1.11 golden modules are:
 - `Compilerˉsourceˉbodyˉparser`: `68a340644274f220224a0c2c08058c78c82bcb0d3edff71402cfce5071121589`
 - `Compilerˉsourceˉbodyˉparserˉdemo`: `2a4e44f3c652e9c91ed2dd5c6b3eb1f30f580d937953dd99b26b0eba535a738f`
 - `Compilerˉsourceˉbodyˉparserˉtool`: `0a69617d83408b8cf0c99b0efa0e83b24357f36f1de72729c5c513736607ec4f`
-- `Compilerˉsourceˉset`: `1121320e20d83f685c559ea2d0cff8b8e57583d047a3c6aaf9f5c1fdc9423acb`
-- `Compilerˉsourceˉsetˉdemo`: `ac7fb0e04cf042ab9f9f3bfc8f344f0fdbcdc4198189b65f152eaead84b07742`
-- `Compilerˉsourceˉsetˉtool`: `6e8b8c8aaa6fe2c5735719a9b317e8897cf70f87828ea1be5d26d670bc2ed30f`
-- `Compilerˉsourceˉgraph`: `9c1ae01b93b9a598fd6b726071dad9a8b4c6fe47d9c8e2d060eff9451724c85b`
-- `Compilerˉsourceˉgraphˉdemo`: `a762e564411e9fe72b906c3c37521c9047bb40b1267d2fb46223f382f1c7966c`
-- `Compilerˉsourceˉgraphˉtool`: `0a23a10c6abb9eb82229300ab92324f3298fcbf26d3be0948dbc984274a9ac10`
-- `Compilerˉsourceˉsymbols`: `a7df71802871d48561c8045d7e997266365d74f7e5158d531164ae636d57a5e7`
-- `Compilerˉsourceˉsymbolsˉdemo`: `4cf84322af1cd514bc7ac9ac5e752ef689bb1729e83ea9021b9660c823243457`
-- `Compilerˉsourceˉsymbolsˉtool`: `58732a7cb3352f1f61ba4cecb65ae0280aecc975ca06eca359a2881e14477a66`
-- `Compilerˉsourceˉbindings`: `a772a75fe625f47e165ca190e76d8cd59fa0b591a0270a5817e02e0fac62542c`
-- `Compilerˉsourceˉbindingsˉdemo`: `563caeb4a76fb34d6c2b2b8340260cc1da518c4cbaad9e5f355201f6bd1fa933`
-- `Compilerˉsourceˉbindingsˉtool`: `17e877b3c59d2f9a99d26be4c478f10ce8879e6bce925b65894d158fd4a6e0a9`
-- `Compilerˉsourceˉwir`: `c4c3bd9164ccdf75acd1140e74c256295bb1f8ea8bdbf69cdcd3225ceea70fbb`
-- `Compilerˉsourceˉwirˉdemo`: `7f533fcb38a9311ba4d390b814ea3741ab25d5db9ac2167bd9f4f6b58bddc02f`
-- `Compilerˉsourceˉwirˉtool`: `7fbfc8f57620dd81a5d2024310a21a8ce32d56cc986d94b39ca03428c1404db5`
-- `Compilerˉsourceˉwvb`: `c4602b6c026a65e0b9de11c025768b7f652ee73640b6f5ff1806d40ee5d0071b`
-- `Compilerˉsourceˉwvbˉdemo`: `ef5a7cad94cce135dd937756980f9268fa2964f49dbb4fccca95ba4d09713fc9`
-- `Compilerˉsourceˉwvbˉtool`: `18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`
+- `Compilerˉsourceˉset`: `2daf59f6863a39c662e282cfc272a0203cff9fc0440e033774b40c8b44354d35`
+- `Compilerˉsourceˉsetˉdemo`: `de6e86890e54a47a2dba9a821c4cb279c8c02468cbd78c8f57df95c6e399f50e`
+- `Compilerˉsourceˉsetˉtool`: `132e2a7817c704afa4d6ef9f9a33e21ddbd704cc0bd6139e205a0a3048c65fa1`
+- `Compilerˉsourceˉgraph`: `f29b234fc07bc4b1e0b01587b28cd6aa422dd61a68fa310b032b3fc3be5c8a68`
+- `Compilerˉsourceˉgraphˉdemo`: `5e8c4add278609866b952bd0a18dcb7e0e9b05ac04e7e7a5a6fec1e5655ad468`
+- `Compilerˉsourceˉgraphˉtool`: `1e0494b7e49f0d14a0508367dcb68d054b69faf501b3ef60ca6f14d48998f7f4`
+- `Compilerˉsourceˉsymbols`: `1541761fa2de9d74a993fa66e8213c7b81ee07d9c7a293efe6c4af96b7d81bc7`
+- `Compilerˉsourceˉsymbolsˉdemo`: `9dd24f3afd8864c444e23ea2228d5ea60fabca459b1cc47a537e0c77ea284da2`
+- `Compilerˉsourceˉsymbolsˉtool`: `b93cfd428589b94ed5b4579b087d942c34a6ddd738e7a0e3a24ff57becb62f46`
+- `Compilerˉsourceˉbindings`: `08783918419590b27de26a59356935339ba54699fbca0f9957059d6c2aba1aae`
+- `Compilerˉsourceˉbindingsˉdemo`: `b77949a3777f9cf8f7a43d071d2416524869e56e770c0e36c17f75298a7d4a10`
+- `Compilerˉsourceˉbindingsˉtool`: `7903b481865b68fe9be9b8587f41c89688d8da8ac3f558dfdccf956caa44ba55`
+- `Compilerˉsourceˉwir`: `efcdce0043ec7709105c2b4df59171401f886d8233f85c9ec394f649d03dab82`
+- `Compilerˉsourceˉwirˉdemo`: `8d5ed5bc9a79f5f152403198156a439fcb355be560c1c974b0c7c479df343ef4`
+- `Compilerˉsourceˉwirˉtool`: `bf2deea160d48b72bbb80f0ad2bb1e547e7e111506502724708db208bc8e8406`
+- `Compilerˉsourceˉwvb`: `c1734f76c06bc0deeb284144e6d8bd51b8be05c2f797055ce8ef7b54113be9c0`
+- `Compilerˉsourceˉwvbˉdemo`: `a9f07a6338baaab2519c1ce501221786aac444eaa7a827a168362feb681b8fe7`
+- `Compilerˉsourceˉwvbˉtool`: `d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`
 - `Wvˉdumpˉcore`: `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753`
 - `Wvoˉobjectˉcore`: `a630d49f0549c865644d8052fbff7e8bf2b6a6dcd013e1187d4356d49cd188db`
 - `Wvaˉassemblerˉcore`: `1589f2750fa8fcf98ed1058814907f7e03eed0ac368467999118e25fb8195a7f`

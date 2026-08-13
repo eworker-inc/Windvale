@@ -40,7 +40,7 @@ mkdir -- "$reconstructor" "$seed_source"
 git -C "$repository_root" archive --format=tar "$reconstruction_commit" |
     tar -xf - -C "$reconstructor"
 git -C "$repository_root" archive --format=tar "$semantic_freeze_commit" -- \
-    Windvale-Compiler.wvproj \
+    Projects/Examples/Windvale-Compiler.wvproj \
     Examples/Compiler/Source-Wvb-Tool.wv \
     Compiler/Windvale \
     Foundation/Byte-Construction.wv \
@@ -53,7 +53,7 @@ git -C "$repository_root" archive --format=tar "$semantic_freeze_commit" -- \
 tool="$reconstructor/Tools/Windvale.Tool/bin/Release/net10.0/windvale.dll"
 wvb="$destination/Wvb/Windvale-Compiler.wvb"
 (cd -- "$seed_source" &&
-    dotnet "$tool" build Windvale-Compiler.wvproj -o "$wvb")
+    dotnet "$tool" build Projects/Examples/Windvale-Compiler.wvproj -o "$wvb")
 dotnet "$tool" aot "$wvb" --target windows-x64-console-v3 \
     -o "$destination/windows-x64/wvcompiler.exe"
 dotnet "$tool" aot "$wvb" --target linux-x64-console-v3 \

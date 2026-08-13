@@ -40,11 +40,11 @@ evidence, copy those two directories from the promoted seed release into a fresh
 location and pass that copied location rather than the checkout's `Artifacts`
 directory.
 
-The repinned candidate command must complete native publication of 921,640 bytes
+The repinned candidate command must complete native publication of 927,274 bytes
 with SHA-256
-`18a657f8d4192f01a5822274a7348c02fc30b9bb3a4a9283e4ba302590c3f754`.
+`d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae`.
 Its exact compiler status summary is
-`source wvb status=Valid functions=427 code-bytes=759920 module-bytes=921640`.
+`source wvb status=Valid functions=427 code-bytes=764800 module-bytes=927274`.
 Decision 0494 reconstructs the downstream paired applications without executing
 them; Decision 0492 owns the hosted-container toolset.
 

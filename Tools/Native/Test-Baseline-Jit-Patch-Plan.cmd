@@ -20,7 +20,7 @@ set "Application=%TemporaryDirectory%\Baseline-Jit-Patch-Plan.exe"
 set "Map=%TemporaryDirectory%\Baseline-Jit-Patch-Plan.wvmap"
 set "ApplicationError=%TemporaryDirectory%\Application.err"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Windvale-Native-Baseline-Jit-Patch-Plan-Self-Test.wvproj" "%Wvb%" >nul
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Tests/Windvale-Native-Baseline-Jit-Patch-Plan-Self-Test.wvproj" "%Wvb%" >nul
 if errorlevel 1 goto :failed
 call :verify_hash "%Wvb%" 2934df86db71047bfd325d50fd9549362bc60953e6924d6242b56eb79be658ea "WVB"
 if errorlevel 1 goto :failed
