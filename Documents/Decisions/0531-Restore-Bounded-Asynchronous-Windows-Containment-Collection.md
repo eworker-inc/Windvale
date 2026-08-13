@@ -1,7 +1,7 @@
 # Decision 0531: Restore bounded asynchronous Windows containment collection
 
 - Date: 2026-08-13
-- Status: Implemented candidate
+- Status: Superseded by [Decision 0532](0532-Windows-Containment-Errorlevel-Observation.md)
 - Repairs: [Decision 0524](0524-Windows-Native-Retirement-Exit-Closure.md)
 - Contract: [Native random containment tests](../../Specifications/Windvale-Native-Random-Containment-Tests.md)
 
@@ -51,6 +51,12 @@ module had explicit planner ownership.
 The focused Windows source, WVB, and WVO owners must pass from the corrected source
 state. GitHub must then provide a new independent dual-host qualification result;
 local success alone does not close the reported issue.
+
+GitHub run 31671393519 then failed on the first WVB input with the same diagnostic
+and false status-zero observation. Asynchronous collection restored concurrency but
+did not make Node/libuv a reliable direct observer for this custom Windows PE. The
+common asynchronous structure is retained, while Decision 0532 replaces only the
+inner Windows status observation.
 
 ## Reconsideration triggers
 

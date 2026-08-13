@@ -252,6 +252,7 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -in @(
         'Random-Containment-Corpus',
         'Random-Containment-Host',
+        'Collect-Windows-Containment-Process',
         'Test-Random-Containment'
     )) {
         Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')

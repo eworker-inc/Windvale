@@ -293,6 +293,7 @@ $NativeCases = @(
         Paths = @(
             'Tools/Native/Random-Containment-Host.mjs',
             'Tools/Native/Random-Containment-Corpus.mjs',
+            'Tools/Native/Collect-Windows-Containment-Process.cmd',
             'Tools/Native/Test-Random-Containment.mjs',
             'Specifications/Windvale-Native-Random-Containment-Tests.md'
         )
