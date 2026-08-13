@@ -40,6 +40,13 @@ This is the application-side complement of the proposed
 it is not a claim that a public registry, dynamic runtime linker, desktop, network
 stack, or Windvale OS distribution is ready.
 
+The first implementation slice is now selected under [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md).
+WVDB Query builds deterministically from Package 1 and Lock 1, composes the portable
+decimal and database code with the hosted read-only directory facade, and exposes
+its exact capability closure for inspection. The package build and inspection path
+is implemented on both native hosts. Native directory-provider binding, execution,
+and denial evidence remain open, so the complete outcome above is not yet claimed.
+
 ## Keep the library model simple
 
 Windvale should not copy the .NET global namespace model. A source module is an
@@ -239,10 +246,9 @@ real workload, rather than a language-feature wish list, decides whether typed
 capability references, result propagation, or bounded keyed collections are the
 next implementation slice.
 
-The existing `Readˉonlyˉwvdb` snapshot path is the leading review candidate because
-it already composes a bounded portable reader, a rights-limited directory adapter,
-typed provider and database failures, and explicit transitive capability approval.
-It is not yet the selected product application: it still needs a standalone useful
-entry point, the named .NET-free execution path, Linux evidence, and package
-contracts. Selecting it must not promote the experimental `WVDB 1` bytes into a
-durable database format.
+The existing `Readˉonlyˉwvdb` snapshot path is now the selected first application
+composition. It has a standalone entry point, canonical Package 1 / Lock 1 input,
+and paired native build and inspection owners. It still needs native
+directory-provider binding, cross-host execution, and capability-denial evidence.
+Selection does not promote the experimental `WVDB 1` bytes into a durable database
+format.

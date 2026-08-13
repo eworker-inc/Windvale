@@ -1,0 +1,21 @@
+windvale-package 1
+name windvale.wvdb-query
+version 0.1.0
+license LicenseRef-Windvale-Community-Source-1.0
+root application
+target hosted-wvb-v1
+project Projects/Applications/Windvale-Wvdb-Query.wvproj
+part application hosted Applications/Database/Wvdb-Query.wv
+part decimal-parsing portable Foundation/Decimal-Parsing.wv
+part read-only-directory hosted Libraries/Platform/Filesystem/Read-Only-Directory.wv
+part read-only-wvdb hosted Libraries/Platform/Database/Read-Only-Wvdb.wv
+part wvdb-reader portable Libraries/Database/Wvdb-Reader.wv
+dependency application decimal-parsing
+dependency application read-only-wvdb
+dependency read-only-wvdb read-only-directory
+dependency read-only-wvdb wvdb-reader
+capability console.write_line
+capability diagnostic.write_line
+capability filesystem.directory_read_v1
+capability process.argument
+capability process.argument_count

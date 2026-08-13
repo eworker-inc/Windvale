@@ -46,3 +46,4 @@ os-probe|Test-Os-Probe|4|Tests: 4, Passed: 4, Failed: 0
 aot-chain|Test-Aot-Chain|1|native aot chain status=Passed result=42
 workspace-project2|Test-Workspace-Project2|8|native workspace/project test status=Complete cases=8
 libraries|Test-Libraries|12|native libraries status=Passed projects=8 conformance-builds=2 negative=2 cases=12
+packages|Test-Wvdb-Query-Package|8|native package status=Passed builds=2 inspection=1 negative=3 preservation=1 cases=8

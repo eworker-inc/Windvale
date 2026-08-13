@@ -1,0 +1,7 @@
+windvale-project 2
+root "Applications/Database/Wvdb-Query.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Libraries/Platform/Filesystem/Read-Only-Directory.wv"
+source "Libraries/Platform/Database/Read-Only-Wvdb.wv"
+source "Libraries/Database/Wvdb-Reader.wv"
+emit wvb

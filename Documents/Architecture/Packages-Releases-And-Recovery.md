@@ -2,7 +2,7 @@
 
 ## Status
 
-Recommended future architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted product direction in [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) and [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md). Project 1 is implemented as a deterministic build-input manifest; no package bundle, dependency lockfile, installed-package store, signed release envelope, updater, or Windvale OS A/B installation contract is implemented.
+Recommended architecture under proposed [Decision 0198](../Decisions/0198-Next-Integrated-Architecture-Defaults.md). It details the accepted product direction in [Decision 0178](../Decisions/0178-Project-Stewardship-Archives-And-Recovery.md) and [Decision 0183](../Decisions/0183-Product-Packaging-Trust-And-Evolution.md). [Decision 0530](../Decisions/0530-First-Locked-Source-Package-And-Wvdb-Application.md) implements one exact Package 1 / Lock 1 local-source baseline around Project 2. No general resolver, package bundle, content-addressed store, installed generation, signed release envelope, updater, or Windvale OS A/B installation contract is implemented.
 
 ## Recommendation
 
@@ -111,8 +111,8 @@ Windvale OS, a public package registry, automatic network updates, WebAssembly p
 
 ## Implementation sequence
 
-1. Extend Project 1 only when a real build input requires it; do not turn it into a package file incrementally.
-2. Specify a canonical package manifest and lockfile around one existing multi-module application and reusable library.
+1. Keep Workspace 1 and Project 2 limited to deterministic source-build input; do not turn either into a package format.
+2. Generalize the implemented Package 1 / Lock 1 pilot only when a second real package requires resolution beyond its exact local-source graph.
 3. Add an independently verified content-addressed local store and deterministic package bundle.
 4. Bind selected package parts and approved capabilities into the clean-spawn launch plan.
 5. Produce an unsigned local package flow on Windows and Linux, then add signed release envelopes and offline verification.
@@ -122,4 +122,4 @@ Windvale OS, a public package registry, automatic network updates, WebAssembly p
 
 ## Deliberately open details
 
-The architecture does not yet freeze file extensions, binary encodings, canonical serialization, version syntax, resolver algorithm, signature suite, threshold policy, content-store location, garbage-collection limits, release cadence, or update transport. It fixes immutable content identity, separate manifests/locks/bundles/releases, per-part metadata, offline operation, non-authorizing signatures, generation-based activation, recoverable updates, and the recommended 0.1 product boundary.
+Package 1 and Lock 1 freeze `.wvpack` and `.wvlock`, canonical text records, and the exact `local-source-1` pilot. The broader architecture does not yet freeze a general resolver algorithm, package-bundle binary encoding, signature suite, threshold policy, content-store location, garbage-collection limits, release cadence, or update transport. It fixes immutable content identity, separate manifests/locks/bundles/releases, per-part metadata, offline operation, non-authorizing signatures, generation-based activation, recoverable updates, and the recommended 0.1 product boundary.

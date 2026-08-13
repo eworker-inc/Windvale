@@ -1,0 +1,65 @@
+module Wvdbˉquery profile hosted;
+
+import Foundationˉdecimalˉparsing as Decimal;
+import Readˉonlyˉwvdb as Snapshot;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability filesystem.directory_read_v1;
+capability process.argument;
+capability process.argument_count;
+
+fn Wvdbˉqueryˉusage() -> i32 {
+    diagnostic.write_line("Usage: wvdb-query <name.wvdb> <u32-key>");
+    return 64;
+}
+
+fn Wvdbˉqueryˉkeyˉreport(Prefix: text, Key: u32) -> text {
+    return Textˉconcat(Prefix, U32ˉformat(Key));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 2u32 { return Wvdbˉqueryˉusage(); }
+
+    let Name: text = process.argument(0u32);
+    let Keyˉtext: bytes = Textˉtoˉutf8(process.argument(1u32));
+    let Parsed: Decimal.Foundationˉu32ˉparse = Decimal.Foundationˉu32ˉdecimalˉparse(
+        Keyˉtext,
+        0u32,
+        Bytesˉlength(Keyˉtext)
+    );
+    if !Parsed.Valid { return Wvdbˉqueryˉusage(); }
+
+    let Lookup: Snapshot.Wvdbˉsnapshotˉlookupˉresult = Snapshot.Wvdbˉsnapshotˉlookup(
+        Name,
+        Parsed.Value
+    );
+    match Lookup {
+        case Snapshot.Wvdbˉsnapshotˉlookupˉresult.Found(Value) {
+            var Foundˉreport: text = Wvdbˉqueryˉkeyˉreport("found key=", Parsed.Value);
+            Foundˉreport = Textˉconcat(Foundˉreport, " value=");
+            console.write_line(Textˉconcat(Foundˉreport, I32ˉformat(Value)));
+            return 0;
+        }
+        case Snapshot.Wvdbˉsnapshotˉlookupˉresult.Missing {
+            console.write_line(Wvdbˉqueryˉkeyˉreport("missing key=", Parsed.Value));
+            return 2;
+        }
+        case Snapshot.Wvdbˉsnapshotˉlookupˉresult.Storageˉfailure(Failure) {
+            var Storageˉreport: text = "storage-failure status=";
+            Storageˉreport = Textˉconcat(Storageˉreport, Enumˉname(Failure.Status));
+            Storageˉreport = Textˉconcat(Storageˉreport, " requested-offset=");
+            Storageˉreport = Textˉconcat(Storageˉreport, U32ˉformat(Failure.Requestedˉoffset));
+            Storageˉreport = Textˉconcat(Storageˉreport, " file-length=");
+            diagnostic.write_line(Textˉconcat(Storageˉreport, U32ˉformat(Failure.Fileˉlength)));
+            return 3;
+        }
+        case Snapshot.Wvdbˉsnapshotˉlookupˉresult.Databaseˉfailure(Failure) {
+            var Databaseˉreport: text = "database-failure status=";
+            Databaseˉreport = Textˉconcat(Databaseˉreport, Enumˉname(Failure.Status));
+            Databaseˉreport = Textˉconcat(Databaseˉreport, " offset=");
+            diagnostic.write_line(Textˉconcat(Databaseˉreport, U32ˉformat(Failure.Offset)));
+            return 4;
+        }
+    }
+}

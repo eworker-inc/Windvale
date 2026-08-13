@@ -26,8 +26,16 @@ GitHub qualification, unknown verification tools, unknown native tools,
 unmapped specifications, and empty input likewise fail closed with explicit gap
 names.
 
-Unknown input must never select every suite. The complete 3,206-case coordinator
+Unknown input must never select every suite. The complete 3,234-case coordinator
 is reserved for the final grouped gate, not used as changed-file fallback.
+
+The `workspace-project2` lane owns Workspace 1 and Project 2 parsing, workspace
+containment, deterministic source ordering, and native publication. The `libraries`
+lane owns the seven reusable library projects plus capability-bearing composition
+and database conformance consumers. The `packages` lane owns the WVDB Query
+application, its exact Package 1 / Lock 1 metadata, Project 2 input, locked library
+parts, native package front doors, deterministic output identity, capability
+inspection, negative admission, and failed-output preservation.
 
 The `seed-native-front-door` lane owns the exact native Project 1 build,
 publication, verification, inspection, execution, assembly, object, and linker

@@ -9,14 +9,16 @@ The current compiler still uses `portable`, `hosted`, and `system` as a coarse c
 The [post-retirement language and library stage](../Documents/Project/Post-Dotnet-Retirement-Language-And-Libraries.md)
 now has a native foundation: Project 2 manifests build each current library,
 capability-bearing dependencies compose under an explicit root approval rule, and
-the changed-file planner has a focused native library owner. Package resolution,
-binary library distribution, and runtime WVB linking remain later contracts.
+the changed-file planner has a focused native library owner. The first exact
+`local-source-1` package now composes the WVDB Query application from checked-in
+source parts. General package resolution, binary library distribution, and runtime
+WVB linking remain later contracts.
 
 ## Layers
 
 - `Foundation/` contains deterministic capability-free algorithms and values. `Foundation/Resources/Resource-Store.wv` owns portable `WVRS 1` validation and lookup.
 - `Database/` contains reusable capability-free database algorithms. `Storage-Geometry.wv` owns checked zero-based `u64` page-range arithmetic, while `Wvdb-Reader.wv` remains the bounded experimental snapshot reader.
-- `Platform/` contains application-facing adapters over semantic capabilities. `Platform/Resources/Hosted-Resource-Store.wv` obtains store bytes through the bounded `file.read_bytes` bootstrap leaf and delegates format policy to Foundation. `Platform/Filesystem/Read-Only-Directory.wv` owns a typed 3 KiB read-at API over one pre-bound immutable directory instance. `Platform/Storage/Random-Access-Storage.wv` owns the typed mutable `u64` storage-resource boundary. `Platform/Database/Read-Only-Wvdb.wv` composes the immutable directory provider with the portable experimental WVDB reader while keeping storage and database failures distinct.
+- `Platform/` contains application-facing adapters over semantic capabilities. `Platform/Resources/Hosted-Resource-Store.wv` obtains store bytes through the bounded `file.read_bytes` bootstrap leaf and delegates format policy to Foundation. `Platform/Filesystem/Read-Only-Directory.wv` owns a typed 3 KiB read-at API over one pre-bound immutable directory instance. `Platform/Storage/Random-Access-Storage.wv` owns the typed mutable `u64` storage-resource boundary. `Platform/Database/Read-Only-Wvdb.wv` composes the immutable directory provider with the portable experimental WVDB reader while keeping storage and database failures distinct and owning the complete public failure vocabulary exposed by its facade.
 - `Protocol/` is reserved until a reusable bounded provider/service wire contract moves here from a concrete implementation.
 - `System/` is reserved until a reusable privileged kernel, driver, or machine API has an implemented owner and contract.
 
@@ -62,11 +64,13 @@ let Result: Storage.Storageˉresult = Storage.Storageˉreadˉat(
 This keeps call sites concise while the compiler enforces module ownership and
 qualified access. Folder names are not silently converted into source names,
 and moving a source file does not by itself redefine its module identity.
-Future package-part metadata will add globally unique dependency identities;
-it should not require every source reference to repeat a `.NET`-style global
-namespace. Module names still use Windvale source naming, import aliases define
-the local vocabulary, and capability/package/ABI identities retain their
-separately specified ASCII-safe forms.
+Package 1 now gives the selected distribution a globally unique package identity
+and exact part graph, but source imports still name explicit modules internalized by
+Project 2. A future general package resolver must map those imports unambiguously;
+it should not require every source reference to repeat a broad global namespace.
+Module names still use Windvale source naming, import aliases define the local
+vocabulary, and capability/package/ABI identities retain their separately
+specified ASCII-safe forms.
 
 The post-retirement proposal retains this rule: prefer a focused facade only when
 it owns a small coherent family of operations. Do not turn `Platform/Filesystem`

@@ -241,6 +241,8 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'console-publisher-reconstruction'
         )
+    } elseif ($Stem -eq 'Build-Wvdb-Query-Package') {
+        Add-Suite 'packages'
     } elseif ($Stem -eq 'Run-Wvb') {
         Add-Bytecode-Suites
         Add-Suite 'wvb-runner-reconstruction'
@@ -423,6 +425,14 @@ foreach ($Path in $Paths) {
         Add-Suite 'libraries'
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
         Add-Suite @('workspace-project2', 'libraries')
+    } elseif ($Path.StartsWith('Applications/Database/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal) -or
+        $Path -eq 'Specifications/Windvale-Package.md') {
+        Add-Suite 'packages'
+        if ($Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal)) {
+            Add-Suite 'workspace-project2'
+        }
     } elseif ($Path -eq 'Windvale.wvws' -or
         $Path -eq 'Specifications/Windvale-Project.md' -or
         $Path.StartsWith('Tests/Fixtures/Project/', [StringComparison]::Ordinal)) {
@@ -435,6 +445,13 @@ foreach ($Path in $Paths) {
             'Specifications/Random-Access-Storage-Capability.md'
         )) {
         Add-Suite 'libraries'
+        if ($Path -in @(
+            'Libraries/Database/Wvdb-Reader.wv',
+            'Libraries/Platform/Filesystem/Read-Only-Directory.wv',
+            'Libraries/Platform/Database/Read-Only-Wvdb.wv'
+        )) {
+            Add-Suite 'packages'
+        }
     } elseif ($Path.StartsWith('Operating-System/', [StringComparison]::Ordinal) -or
         $Path -match '^Windvale-Os-.+\.wvproj$') {
         if ($Path.EndsWith('.cs', [StringComparison]::OrdinalIgnoreCase) -or
@@ -788,6 +805,9 @@ foreach ($Path in $Paths) {
         }
         if ($Path -ne 'Foundation/Sha256.wv') {
             Add-Suite 'seed-native-front-door'
+        }
+        if ($Path -eq 'Foundation/Decimal-Parsing.wv') {
+            Add-Suite 'packages'
         }
     } elseif ($Path -eq 'Foundation/Immutable-Source-Regions.wv') {
         Add-Suite @(

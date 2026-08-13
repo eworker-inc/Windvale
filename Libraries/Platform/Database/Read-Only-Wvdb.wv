@@ -29,11 +29,90 @@ export record Wvdbˉsnapshotˉstorageˉfailure {
     Fileˉlength: u32;
 }
 
+export enum Wvdbˉsnapshotˉdatabaseˉstatus {
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉpageˉmagic = 5;
+    Unsupportedˉpageˉversion = 6;
+    Invalidˉpageˉidentity = 7;
+    Invalidˉpageˉkind = 8;
+    Invalidˉpageˉcount = 9;
+    Invalidˉpageˉreserved = 10;
+    Invalidˉpageˉchecksum = 11;
+    Invalidˉpageˉorder = 12;
+    Invalidˉchild = 13;
+    Invalidˉpageˉpadding = 14;
+    Invalidˉcycle = 15;
+    Invalidˉdepth = 16;
+}
+
+export record Wvdbˉsnapshotˉdatabaseˉfailure {
+    Status: Wvdbˉsnapshotˉdatabaseˉstatus;
+    Offset: u32;
+}
+
 export variant Wvdbˉsnapshotˉlookupˉresult {
     Found(Value: i32);
     Missing;
     Storageˉfailure(Value: Wvdbˉsnapshotˉstorageˉfailure);
-    Databaseˉfailure(Value: Database.Wvdbˉfailure);
+    Databaseˉfailure(Value: Wvdbˉsnapshotˉdatabaseˉfailure);
+}
+
+fn Wvdbˉsnapshotˉdatabaseˉstatus(
+    Error: Database.Wvdbˉerror
+) -> Wvdbˉsnapshotˉdatabaseˉstatus {
+    match Error {
+        case Database.Wvdbˉerror.Invalidˉsize {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉsize;
+        }
+        case Database.Wvdbˉerror.Invalidˉmagic {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉmagic;
+        }
+        case Database.Wvdbˉerror.Unsupportedˉversion {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Unsupportedˉversion;
+        }
+        case Database.Wvdbˉerror.Invalidˉheader {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉheader;
+        }
+        case Database.Wvdbˉerror.Invalidˉpageˉmagic {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉpageˉmagic;
+        }
+        case Database.Wvdbˉerror.Unsupportedˉpageˉversion {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Unsupportedˉpageˉversion;
+        }
+        case Database.Wvdbˉerror.Invalidˉpageˉidentity {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉpageˉidentity;
+        }
+        case Database.Wvdbˉerror.Invalidˉpageˉkind {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉpageˉkind;
+        }
+        case Database.Wvdbˉerror.Invalidˉpageˉcount {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉpageˉcount;
+        }
+        case Database.Wvdbˉerror.Invalidˉpageˉreserved {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉpageˉreserved;
+        }
+        case Database.Wvdbˉerror.Invalidˉpageˉchecksum {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉpageˉchecksum;
+        }
+        case Database.Wvdbˉerror.Invalidˉpageˉorder {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉpageˉorder;
+        }
+        case Database.Wvdbˉerror.Invalidˉchild {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉchild;
+        }
+        case Database.Wvdbˉerror.Invalidˉpageˉpadding {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉpageˉpadding;
+        }
+        case Database.Wvdbˉerror.Invalidˉcycle {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉcycle;
+        }
+        case Database.Wvdbˉerror.Invalidˉdepth {
+            return Wvdbˉsnapshotˉdatabaseˉstatus.Invalidˉdepth;
+        }
+    }
 }
 
 fn Wvdbˉsnapshotˉstorageˉstatus(
@@ -167,7 +246,12 @@ export fn Wvdbˉsnapshotˉlookup(
             return Wvdbˉsnapshotˉlookupˉresult.Missing();
         }
         case Database.Wvdbˉlookupˉresult.Failure(Failure) {
-            return Wvdbˉsnapshotˉlookupˉresult.Databaseˉfailure(Failure);
+            return Wvdbˉsnapshotˉlookupˉresult.Databaseˉfailure(
+                Wvdbˉsnapshotˉdatabaseˉfailure(
+                    Wvdbˉsnapshotˉdatabaseˉstatus(Failure.Error),
+                    Failure.Offset
+                )
+            );
         }
     }
 }

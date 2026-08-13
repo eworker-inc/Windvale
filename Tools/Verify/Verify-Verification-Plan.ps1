@@ -971,7 +971,19 @@ $NativeCases = @(
     @{
         Name = 'database library owner'
         Paths = @('Libraries/Database/Wvdb-Reader.wv')
-        Suites = @('libraries')
+        Suites = @('libraries', 'packages')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'package application owner'
+        Paths = @(
+            'Applications/Database/Wvdb-Query.wv',
+            'Distribution/Applications/Wvdb-Query/Windvale-Wvdb-Query.wvlock',
+            'Projects/Applications/Windvale-Wvdb-Query.wvproj',
+            'Specifications/Windvale-Package.md'
+        )
+        Suites = @('workspace-project2', 'packages')
         Gaps = @()
         VerifyPlan = $false
     },

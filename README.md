@@ -136,6 +136,10 @@ export fn Main() -> i32 {
 - `Linker/` — symbol resolution, layout, relocation, and image production
 - `Runtime/` — bytecode loading, verification, execution, and host adaptation
 - `Foundation/` — reusable Windvale APIs and implementations needed by current tools
+- `Libraries/` — reusable portable, hosted, protocol, and system-facing Windvale APIs
+- `Applications/` — useful deployable Windvale entry points
+- `Projects/` — cross-component Workspace 1 / Project 2 build inputs
+- `Distribution/` — checked-in package manifests, locks, and future release metadata
 - `Operating-System/` — boot, kernel, processes, services, and platform work
 - `Tools/` — CLI, editors, website support, inspection, and verification tools
 - `Tests/` — conformance, integration, malformed-input, and reproducibility coverage
