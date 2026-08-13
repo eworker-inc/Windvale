@@ -61,7 +61,7 @@ The current candidate identities are:
 | Linker WVB | 135,740 | `02f727a8ce2d6826c8414cada0933c7d5a54893ea061621d08147984c3d6f874` |
 | Raw-lowerer WVO oracle | 1,786,271 | `0141219773241e8780e2520f30ab8377914bf89a72f57da091871ac40d68a287` |
 | Canonical linked fragment, `Main` at 884,630 | 1,777,781 | `d30e0c4dce7159bf98c546a0200e8b541797612ab67d6f21e3d8ee876af27480` |
-| Windows linker | 1,796,608 | `08744f3cacf71280ea757dcdf6509ee3770d5536b08e5b3984a438cb6123fb78` |
+| Windows linker | 1,796,608 | `f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0` |
 | Linux linker | 1,798,144 | `8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a` |
 
 The focused reconstruction owner requires all five identities, reconstructs the

@@ -79,7 +79,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 4 ^
     "%Wvb%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% "%WindowsApplication%" windows ^
     >"%TemporaryDirectory%\Windows.out" 2>"%TemporaryDirectory%\Windows.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 1796608 08744f3cacf71280ea757dcdf6509ee3770d5536b08e5b3984a438cb6123fb78 "Windows Wv-Linker application"
+call :verify_file "%WindowsApplication%" 1796608 f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0 "Windows Wv-Linker application"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 4 ^

@@ -10,7 +10,7 @@ set /a Passed=0
 
 call :check_file "%OrdinaryCandidate%\Console-Packager.wvb" 60797 f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c
 if errorlevel 1 goto :failed
-call :check_file "%OrdinaryCandidate%\Console-Packager.exe" 708608 ea8e666806618cd9c230bdc88882e9b30a98182f8486456a46c75b746a0cdab9
+call :check_file "%OrdinaryCandidate%\Console-Packager.exe" 708608 0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2
 if errorlevel 1 goto :failed
 call :check_file "%OrdinaryCandidate%\Console-Packager.elf" 708608 d399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af
 if errorlevel 1 goto :failed
@@ -18,7 +18,7 @@ call :pass "ordinary candidate inventory"
 
 call :check_file "%SegmentedCandidate%\Console-Segmented-Packager.wvb" 70033 c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e
 if errorlevel 1 goto :failed
-call :check_file "%SegmentedCandidate%\Console-Segmented-Packager.exe" 805376 a6a6fd40a6becf0f65bbf995006e8e5410832da6f5ebc906f216f9e435032ef0
+call :check_file "%SegmentedCandidate%\Console-Segmented-Packager.exe" 805376 954c4b2aaba56149c21e16e19ca6f16434069513e1d1b3034423dab457635412
 if errorlevel 1 goto :failed
 call :check_file "%SegmentedCandidate%\Console-Segmented-Packager.elf" 806912 8916fb509f81e29dabca7ed0202c0ad250f129e78b70b701630dbfcd55a1d30d
 if errorlevel 1 goto :failed

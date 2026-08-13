@@ -53,7 +53,7 @@ The current candidate identities are:
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | WVB-to-WVO tool WVB | 416,464 | `8ce81d1c657f558f66b5b503d0edabad371b1f601297892f0d139e06176bdc27` |
-| Windows WVB-to-WVO tool | 5,997,056 | `884bc29e8ae1ddc5e892f01729d1eab7443cc32d92cbdc37a1587b642c1cdc14` |
+| Windows WVB-to-WVO tool | 5,997,056 | `4c2bf61306b81851424dbc02e7eb345ac34bcc9ffacd7727e8378c7b9e5dae07` |
 | Linux WVB-to-WVO tool | 5,996,544 | `55df0cd2a679491bc1a3da50b6bc67b5f512f2a4698721faea6becb556a2a46f` |
 
 These pinned candidate applications include Decision 0419's parameterless

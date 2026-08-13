@@ -22,7 +22,7 @@
       "path": "Console-Packager.exe",
       "target": "windows-x64-console-packager-v1",
       "bytes": 708608,
-      "sha256": "ea8e666806618cd9c230bdc88882e9b30a98182f8486456a46c75b746a0cdab9",
+      "sha256": "0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2",
       "sourceWvb": "Console-Packager.wvb"
     },
     {

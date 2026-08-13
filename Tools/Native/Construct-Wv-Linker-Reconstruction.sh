@@ -98,7 +98,7 @@ verify_file "$fragment" 1777781 \
     "$wvb" "$canonical_prefix" "$fragment_count" "$native_entry" "$windows_application" windows \
     >"$temporary_directory/Windows.out" 2>"$temporary_directory/Windows.err" || exit $?
 verify_file "$windows_application" 1796608 \
-    08744f3cacf71280ea757dcdf6509ee3770d5536b08e5b3984a438cb6123fb78 \
+    f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0 \
     'Windows Wv-Linker application' || exit 1
 
 "$script_directory/Package-Hosted-Wvb.sh" image 4 \

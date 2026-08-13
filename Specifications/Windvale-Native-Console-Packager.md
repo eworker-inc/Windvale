@@ -62,7 +62,7 @@ The current candidate identities are:
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Console packager WVB | 60,797 | `f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c` |
-| Windows console packager | 708,608 | `ea8e666806618cd9c230bdc88882e9b30a98182f8486456a46c75b746a0cdab9` |
+| Windows console packager | 708,608 | `0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2` |
 | Linux console packager | 708,608 | `d399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af` |
 
 `Tools/Native/Test-Console-Packager-Source-Reconstruction.cmd` and `.sh`

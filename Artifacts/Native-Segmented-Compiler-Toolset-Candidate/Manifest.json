@@ -20,7 +20,7 @@
       "path": "windows-x64-wvstage.exe",
       "target": "windows-x64-wvo-staging-producer-v1",
       "bytes": 6438912,
-      "sha256": "2e3a1f8057b71c6eafca9c457a2dae5aac099f4b4fdd280fcd534ae1303acb00",
+      "sha256": "84ebfa2fc3a6c0137bafbafe1f8bb78c60101479a0d3016cf7e5e49cc72c37ec",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {
@@ -44,7 +44,7 @@
       "path": "windows-x64-wvlinkstage.exe",
       "target": "windows-x64-compiler-image-staging-v1",
       "bytes": 852480,
-      "sha256": "cd1c0621181ed9a6444d07c1a83429f39a7fa9debd46df4cfe6d65afc512eb7b",
+      "sha256": "32fc318be24b6dcd7f67720098242872c3b2d2b960b7c75e7418a89f92b7bf43",
       "sourceWvb": "Compiler-Image-Staging.wvb"
     },
     {
@@ -68,7 +68,7 @@
       "path": "windows-x64-wvimagetransport.exe",
       "target": "windows-x64-compiler-image-transport-v1",
       "bytes": 269312,
-      "sha256": "1a5e4c7e232f30a1b97c90d7fef2ef03fa98de4a968fac2d07cc497a03248729",
+      "sha256": "3d1479e286f3486c9ae4cc48a542fb7654cc8bca52ec240f8f3ee030e7c79d92",
       "sourceWvb": "Compiler-Image-Canonical-Transport.wvb"
     },
     {

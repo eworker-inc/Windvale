@@ -263,7 +263,7 @@ toolset as its seed; it is self-reconstruction evidence rather than a
 non-circular bootstrap or paired-host qualification.
 
 The Windows candidate is 852,480 bytes at SHA-256
-`cd1c0621181ed9a6444d07c1a83429f39a7fa9debd46df4cfe6d65afc512eb7b`;
+`32fc318be24b6dcd7f67720098242872c3b2d2b960b7c75e7418a89f92b7bf43`;
 the Linux candidate is 851,968 bytes at SHA-256
 `baa183ff2318ace7e29d9aed39b1261d7887403674e52466efeb5fa12d88c8b8`.
 Both containers have independent structural verification. Current-host Windows
@@ -293,7 +293,7 @@ written last; incomplete output chunks are not completion evidence.
 The exact transport WVB is 23,836 bytes at SHA-256
 `dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d`.
 The Windows application is 269,312 bytes at SHA-256
-`1a5e4c7e232f30a1b97c90d7fef2ef03fa98de4a968fac2d07cc497a03248729`;
+`3d1479e286f3486c9ae4cc48a542fb7654cc8bca52ec240f8f3ee030e7c79d92`;
 the Linux application is 270,336 bytes at SHA-256
 `30386b1e571b5b444befbfb7c15ee9ce5cb30e7744cf84ddfee89cbf1e2e8108`.
 Both applications reconstruct through Decision 0496's current-Windows-host
@@ -311,7 +311,7 @@ parsing of the transport process's strict decimal completion line.
 The segmented producer WVB is exactly 442,593 bytes at SHA-256
 `7a0463df0f9278174182e799974a3eba8ea3721d7d756c0acd092401f8577f18`.
 Its Windows application is 6,438,912 bytes at SHA-256
-`2e3a1f8057b71c6eafca9c457a2dae5aac099f4b4fdd280fcd534ae1303acb00`;
+`84ebfa2fc3a6c0137bafbafe1f8bb78c60101479a0d3016cf7e5e49cc72c37ec`;
 its Linux application is 6,438,912 bytes at SHA-256
 `f8fbc55776bc8573bec74b3610cf1d5c918286befcfde17069f1e39194c214d6`.
 Decision 0496 reconstructs this pair and the staging and transport pairs from

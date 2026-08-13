@@ -22,7 +22,7 @@
       "path": "Console-Segmented-Packager.exe",
       "target": "windows-x64-console-segmented-packager-v1",
       "bytes": 805376,
-      "sha256": "a6a6fd40a6becf0f65bbf995006e8e5410832da6f5ebc906f216f9e435032ef0",
+      "sha256": "954c4b2aaba56149c21e16e19ca6f16434069513e1d1b3034423dab457635412",
       "sourceWvb": "Console-Segmented-Packager.wvb"
     },
     {

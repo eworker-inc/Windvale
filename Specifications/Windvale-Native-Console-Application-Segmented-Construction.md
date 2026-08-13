@@ -49,7 +49,7 @@ The exact candidate manifest pins:
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | `Console-Segmented-Packager.wvb` | 70,033 | `c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e` |
-| `Console-Segmented-Packager.exe` | 805,376 | `a6a6fd40a6becf0f65bbf995006e8e5410832da6f5ebc906f216f9e435032ef0` |
+| `Console-Segmented-Packager.exe` | 805,376 | `954c4b2aaba56149c21e16e19ca6f16434069513e1d1b3034423dab457635412` |
 | `Console-Segmented-Packager.elf` | 806,912 | `8916fb509f81e29dabca7ed0202c0ad250f129e78b70b701630dbfcd55a1d30d` |
 
 Decision 0343 corrects the project inventory order and reconstructs the exact

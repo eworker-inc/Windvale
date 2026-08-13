@@ -138,7 +138,7 @@ verify_file "$ordinary_wvb" 60797 \
     f4c75495321736bbce22582213133e7cc09157a8439dc198d9848ec95683e89c \
     'ordinary console-packager WVB' || exit 1
 verify_file "$ordinary_windows" 708608 \
-    ea8e666806618cd9c230bdc88882e9b30a98182f8486456a46c75b746a0cdab9 \
+    0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2 \
     'Windows ordinary console-packager application' || exit 1
 verify_file "$ordinary_linux" 708608 \
     d399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af \
@@ -147,7 +147,7 @@ verify_file "$segmented_wvb" 70033 \
     c4941f396f76467cb6455472f7f4711c21a6f65c12c09a9b5f4135987628f20e \
     'segmented console-packager WVB' || exit 1
 verify_file "$segmented_windows" 805376 \
-    a6a6fd40a6becf0f65bbf995006e8e5410832da6f5ebc906f216f9e435032ef0 \
+    954c4b2aaba56149c21e16e19ca6f16434069513e1d1b3034423dab457635412 \
     'Windows segmented console-packager application' || exit 1
 verify_file "$segmented_linux" 806912 \
     8916fb509f81e29dabca7ed0202c0ad250f129e78b70b701630dbfcd55a1d30d \

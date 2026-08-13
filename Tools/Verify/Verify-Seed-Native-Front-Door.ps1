@@ -307,7 +307,7 @@ function Invoke-ExactWvaAndLinkerExecution(
     ).Hash.ToLowerInvariant()
     if (
         $LinkerInformation.Length -ne 1796608 -or
-        $LinkerDigest -ne '08744f3cacf71280ea757dcdf6509ee3770d5536b08e5b3984a438cb6123fb78'
+        $LinkerDigest -ne 'f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0'
     ) {
         throw 'The Windows native WVO linker application identity is invalid.'
     }

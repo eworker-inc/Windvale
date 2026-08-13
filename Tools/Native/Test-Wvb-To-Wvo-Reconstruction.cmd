@@ -9,7 +9,7 @@ set /a Passed=0
 
 call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 416464 8ce81d1c657f558f66b5b503d0edabad371b1f601297892f0d139e06176bdc27
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.exe" 5997056 884bc29e8ae1ddc5e892f01729d1eab7443cc32d92cbdc37a1587b642c1cdc14
+call :check_file "%Candidate%\Wvb-To-Wvo.exe" 5997056 4c2bf61306b81851424dbc02e7eb345ac34bcc9ffacd7727e8378c7b9e5dae07
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Wvb-To-Wvo.elf" 5996544 55df0cd2a679491bc1a3da50b6bc67b5f512f2a4698721faea6becb556a2a46f
 if errorlevel 1 goto :failed

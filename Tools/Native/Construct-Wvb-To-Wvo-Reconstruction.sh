@@ -114,7 +114,7 @@ verify_file "$lowerer_wvb" 416464 \
     8ce81d1c657f558f66b5b503d0edabad371b1f601297892f0d139e06176bdc27 \
     'WVB-to-WVO tool WVB' || exit 1
 verify_file "$windows_application" 5997056 \
-    884bc29e8ae1ddc5e892f01729d1eab7443cc32d92cbdc37a1587b642c1cdc14 \
+    4c2bf61306b81851424dbc02e7eb345ac34bcc9ffacd7727e8378c7b9e5dae07 \
     'Windows WVB-to-WVO application' || exit 1
 verify_file "$linux_application" 5996544 \
     55df0cd2a679491bc1a3da50b6bc67b5f512f2a4698721faea6becb556a2a46f \
