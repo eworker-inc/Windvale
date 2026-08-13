@@ -101,7 +101,7 @@ export fn Nativeˉhostedˉcontainerˉplan(
     var Startupˉbytes: u32 = 809u32;
     if Target == 1u32 {
         Headerˉbytes = 512u32;
-        Startupˉbytes = 1554u32;
+        Startupˉbytes = 1580u32;
     }
     let Textˉvirtual: u32 = 4096u32 + Bundleˉbytes;
     var Textˉfile: u32 = Textˉvirtual;

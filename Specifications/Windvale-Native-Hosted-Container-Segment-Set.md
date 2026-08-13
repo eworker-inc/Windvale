@@ -112,7 +112,7 @@ ordinals `3,5,7...`, stride two, the 40-byte skip, and the hosted validator.
 Decision 0393 packages the admission root with those shells, the existing
 validator, the shared native publication-state object, and the durable
 transactions. The current Windows application is 385,024 bytes at SHA-256
-`da6f614c8e8a839580d3bc7ea7a93863ea5e992b56124ce318c7546853320c65`;
+`a6a44132c924a2fb1fb8bca597f7c059949f7095a96b45281770c3a59004b4e4`;
 the Linux application is 381,885 bytes at SHA-256
 `89238198cedf88b843ea7f3b2680b716ab554dd2789f135a0c4c6ac7d1950345`.
 Decision 0422 makes the Linux hosted policy select exact mode `0755` while the

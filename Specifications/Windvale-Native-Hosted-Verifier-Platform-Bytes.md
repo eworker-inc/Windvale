@@ -52,7 +52,7 @@ usage, returns 64, and preserves the runtime input.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Tool WVB | 40,197 | `6b3dc11da9a864917304bf740c5edcad3ed87ec08dc5a837e60fc752b212a0ee` |
-| Windows application | 477,696 | `5a0c759c44f2a4d7103c82e636feb635a2876c7207ac3dcd88d8d72159d5fc2f` |
+| Windows application | 477,696 | `8c95b12ebe1ee0ccc94d2222f7b24f86409e5d6ef6f86d8bc48400afafd0ab05` |
 | Linux application | 479,232 | `3f0a5fbd17caf75c01e3ff188b88327cceb6d85f6fd886aff188d6d2dc056f63` |
 
 The native front door builds the WVB and the shared hosted-container packager

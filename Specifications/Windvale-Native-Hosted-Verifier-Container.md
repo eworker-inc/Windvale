@@ -52,7 +52,7 @@ usage, returns 64, and preserves the input.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Tool WVB | 91,386 | `a9a208994f3ff91051c61f308d3aa65a0e58cfab93c58be7401c87740fb48546` |
-| Windows application | 1,362,432 | `4accc071b8d566ca2ccbbfa4852b12cb2092c28a13ec89195f8ef7d2a6caa151` |
+| Windows application | 1,362,432 | `988981a47d02fd7aa5b8dd27e1e4da42a16403e9d876b567c8633986a7902c65` |
 | Linux application | 1,363,968 | `0e710d3d816cdc8df32c782fc1015ecd31e3c13cc9af563d4867ad0198085cb1` |
 
 One focused current-host test compares both completed verifier applications

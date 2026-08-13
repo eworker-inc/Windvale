@@ -44,8 +44,8 @@ goto :usage
 if /I not "%~x7"==".exe" if "%ImageMode%"=="1" goto :usage
 if /I not "%~x3"==".exe" if "%ImageMode%"=="0" goto :usage
 set "Startup=%RepositoryRoot%\Linker\Reference\Consumers\Windows-X64-Hosted-Compiler.wvo"
-set "StartupBytes=4398"
-set "StartupSha256=dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161"
+set "StartupBytes=4488"
+set "StartupSha256=6e97c4e610919291423764332eee926223ea556ea4631347c7f88f2aa1f154d5"
 set "ConsoleService=%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin"
 set "ConsoleServiceBytes=258"
 set "ConsoleServiceSha256=10f3a500aca7f0236cdf9f6c20658591df88bc612e677264cdaa0bcef59a0a48"
@@ -81,7 +81,7 @@ set "FileOutputServiceSha256=fc688f2a84936dc1082fcb5654667a8a60b0581bff29b1868d4
 
 :target_ready
 
-call :verify_file "%Toolset%\SHA256SUMS" 6927 d2cd2c34bb8eaa09d50389685393dc893afa0ef31cd44835d2e5e619a2da7f6f "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 6927 3051a9c328c04a53dd0f0a54a8f83c7d1f12c3947df3bd19d7ad066ac3f09954 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"

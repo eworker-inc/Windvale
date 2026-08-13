@@ -20,12 +20,12 @@ the existing portable instantiation core.
 wvhoststartup <plan.wvcd> <startup.wvo> <response.wvsd>
 ```
 
-The first input is one successful `WVCD 1` plan: 364 bytes for Windows or 256
+The first input is one successful `WVCD 1` plan: 368 bytes for Windows or 256
 bytes for Linux. The command admits the plan envelope, target, implemented
 profile, startup address, startup byte count, and exact target-table extent.
-Target `1` requires the 4,398-byte Windows startup WVO with 40 symbols, 59
+Target `1` requires the 4,488-byte Windows startup WVO with 41 symbols, 60
 relocations, and SHA-256
-`dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161`.
+`6e97c4e610919291423764332eee926223ea556ea4631347c7f88f2aa1f154d5`.
 Target `2` requires the 2,454-byte Linux startup WVO with 26 symbols, 32
 relocations, and SHA-256
 `1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946`.
@@ -33,7 +33,7 @@ relocations, and SHA-256
 The producer constructs the exact 40-byte `WVSI 1` header, appends the plan's
 canonical target table and complete admitted WVO, and calls
 `Linkerˉnativeˉhostedˉstartupˉinstantiation.Nativeˉhostedˉstartupˉinstantiate`.
-It writes only an exact successful `WVSD 1` response: 1,586 bytes for Windows
+It writes only an exact successful `WVSD 1` response: 1,612 bytes for Windows
 or 841 bytes for Linux, including the 32-byte response header and relocated
 startup code.
 
@@ -57,7 +57,7 @@ host services shared by the planner, platform-byte producer, and segmenter.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Startup-producer WVB | 43,902 | `f01ea2c4f851350ac70faf0be690d9695acb946fd9138b4f9577c57ea12b8598` |
-| Windows startup producer | 382,464 | `ebc3acd6cbfae0b473d74f18eb32a3dd873891400e557ef882312fa01dd13103` |
+| Windows startup producer | 382,464 | `d814a6f5d1a4e3babec713afeb32f765e5a8b1b7c5be493ea8f39603a142e87c` |
 | Linux startup producer | 385,024 | `3d0c204fa8c8fc2b48ade1e1f4126d687707d061d7b06a5601629df57539c0d2` |
 
 The WVB reconstructs through the native Project 1 front door. Focused

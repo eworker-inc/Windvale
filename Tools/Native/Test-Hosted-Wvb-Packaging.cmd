@@ -23,7 +23,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Valid.err" "valid packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Valid.exe" 236032 d8b10130bc946261526ee0accc9fcbd42dbe2a5d9fd3e4d4f349038550c8c559 "valid package"
+call :check_file "%TestDirectory%\Valid.exe" 236032 2483ec3c219f63cf6d16e114fcc8d7ef563296b5b7dea4d9b370c914d8b94362 "valid package"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Valid.exe" "%Toolset%\windows-x64\wvhostcontrol.exe" >nul
 if errorlevel 1 (
@@ -57,7 +57,7 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Verifier-Request.err" "verifier request packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Verifier-Request.exe" 200192 32ae4e859fc373acee698e7295837694a859808868232bf2f6328294a6e90e28 "verifier request package"
+call :check_file "%TestDirectory%\Verifier-Request.exe" 200192 8ee1bc4362193059e8536048bd5886e4d5bf5d5f78bbdfd6f4c9cdb8686804c7 "verifier request package"
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Verifier-Request.exe" "%Toolset%\windows-x64\wvhostverifierrequest.exe" >nul
 if errorlevel 1 (
@@ -94,9 +94,9 @@ if not errorlevel 1 (
     >&2 echo FAIL  hosted packaging: invalid WVB was accepted
     goto :failed
 )
-call :check_file "%TestDirectory%\Destination.exe" 6927 d2cd2c34bb8eaa09d50389685393dc893afa0ef31cd44835d2e5e619a2da7f6f "preserved destination"
+call :check_file "%TestDirectory%\Destination.exe" 6927 3051a9c328c04a53dd0f0a54a8f83c7d1f12c3947df3bd19d7ad066ac3f09954 "preserved destination"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvb" 6927 d2cd2c34bb8eaa09d50389685393dc893afa0ef31cd44835d2e5e619a2da7f6f "preserved input"
+call :check_file "%TestDirectory%\Invalid.wvb" 6927 3051a9c328c04a53dd0f0a54a8f83c7d1f12c3947df3bd19d7ad066ac3f09954 "preserved input"
 if errorlevel 1 goto :failed
 call :check_no_scratch
 if errorlevel 1 goto :failed

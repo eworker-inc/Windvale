@@ -10,7 +10,7 @@ relocation; it does not contain a second copy of the startup instructions.
 
 This version accepts one x86-64 `.text` section, at most 4,096 code bytes, 128
 symbols, 256 relocations, and 65,536 object bytes. The current objects are the
-Windows 1,554-byte startup with 40 symbols and 59 relocations and the Linux
+Windows 1,580-byte startup with 41 symbols and 60 relocations and the Linux
 809-byte startup with 26 symbols and 32 relocations.
 
 ## Request envelope: `WVSI 1`
@@ -95,7 +95,7 @@ reproducibility and recovery evidence.
 | --- | ---: | --- |
 | Startup-instantiation WVB | 21,329 | `8fb31dbbbb70f094da1e5104d9edd49dd9690bc386541e1d19a75a0fd03ae445` |
 | Startup-instantiation WVNF | 195,063 | `cb63e425cc53425890853d4edc58d34176f88c1c6b30d60375e8339a260feef7` |
-| Windows hosted startup WVO | 4,398 | `dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161` |
+| Windows hosted startup WVO | 4,488 | `6e97c4e610919291423764332eee926223ea556ea4631347c7f88f2aa1f154d5` |
 | Linux hosted startup WVO | 2,454 | `1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946` |
 
 The former C# template patchers remain under `Buildˉstage0` only for

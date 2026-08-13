@@ -821,8 +821,8 @@ if (
     throw "The retained hosted-startup instantiation fragment has an unexpected identity: $NativeHostedStartupInstantiationArtifactHash"
 }
 if (
-    (Get-FileHash -Algorithm SHA256 -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne 'dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161' -or
-    (Get-Item -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Length -ne 4398 -or
+    (Get-FileHash -Algorithm SHA256 -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne '6e97c4e610919291423764332eee926223ea556ea4631347c7f88f2aa1f154d5' -or
+    (Get-Item -LiteralPath $WindowsHostedCompilerStartupObjectRetained).Length -ne 4488 -or
     (Get-FileHash -Algorithm SHA256 -LiteralPath $LinuxHostedCompilerStartupObjectRetained).Hash.ToLowerInvariant() -ne '1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946' -or
     (Get-Item -LiteralPath $LinuxHostedCompilerStartupObjectRetained).Length -ne 2454
 ) {

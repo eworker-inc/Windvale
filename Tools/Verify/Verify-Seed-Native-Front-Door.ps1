@@ -292,7 +292,7 @@ function Invoke-ExactWvaAndLinkerExecution(
     ).Hash.ToLowerInvariant()
     if (
         $AssemblerInformation.Length -ne 2895360 -or
-        $AssemblerDigest -ne 'e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4'
+        $AssemblerDigest -ne '40a35687fb052dcd4f6d3a767436f4024d91bd5f03890b30fa4f0300184a35ed'
     ) {
         throw 'The Windows native WVA assembler application identity is invalid.'
     }
@@ -1065,16 +1065,16 @@ Invoke-ExactInspect $NativeHostedStartupInstantiationModule @('profile=portable'
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Native-Hosted-Container-Construction.wvproj') `
     $NativeHostedContainerPlanModule `
-    35929 `
-    'ff1b48cfc05baab5f707dcfce7e73b0714e2379ee594e12f6e9c6ea1589fef7e' `
-    'build status=Published verification=compiler-aligned functions=41 code-bytes=31210 module-bytes=35929'
+    36010 `
+    'e7c92413c31571e8af3dd4ed93664faee5e08716c6241d320b1377c681a254cf' `
+    'build status=Published verification=compiler-aligned functions=41 code-bytes=31286 module-bytes=36010'
 Invoke-ExactInspect $NativeHostedContainerPlanModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Native-Hosted-Container-Windows.wvproj') `
     $NativeHostedContainerWindowsModule `
-    17679 `
-    'a77e4ea3ac2cff35e965ae44cd486f30dd5b0c10aa2cde23c109d0eca37bffcb' `
-    'build status=Published verification=compiler-aligned functions=22 code-bytes=15041 module-bytes=17679'
+    17813 `
+    'f7a8d3e69b347a3deddf81b5eea09ef929c9798081a6743e7d9aa94262db6de0' `
+    'build status=Published verification=compiler-aligned functions=22 code-bytes=15136 module-bytes=17813'
 Invoke-ExactInspect $NativeHostedContainerWindowsModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Native-Hosted-Container-Linux.wvproj') `
@@ -1087,7 +1087,7 @@ Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Projects/Linker/Windvale-Native-Hosted-Container-Segmentation.wvproj') `
     $NativeHostedContainerSegmentationModule `
     22584 `
-    'd6d74f7d27df9f04f02b8eac2e75fde4fc230ba70d198f90b31ad668a06052e6' `
+    '488e6d26e4d4ff459ea602fa5cd13b6270486332a4eab64796a29391271c2604' `
     'build status=Published verification=compiler-aligned functions=28 code-bytes=19181 module-bytes=22584'
 Invoke-ExactInspect $NativeHostedContainerSegmentationModule @('profile=portable', 'section name=capabilities .* count=0', 'name="Main" parameters=1 result=bytes', 'section name=exports .* count=1')
 

@@ -50,8 +50,8 @@ The current candidate identities are:
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Assembler WVB | 180,071 | `a50e261fb690b1b2836b7b05da2d94ec7f023ef531ddd2432fc6a9001ae7049c` |
-| Windows assembler | 2,895,360 | `e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4` |
-| Linux assembler | 2,895,872 | `ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0` |
+| Windows assembler | 2,895,360 | `40a35687fb052dcd4f6d3a767436f4024d91bd5f03890b30fa4f0300184a35ed` |
+| Linux assembler | 2,895,872 | `36796a26917e699030e2987c01b74799bcdc339af578f76e02f9a1f47ca10b8c` |
 
 These are immutable qualified front-door identities, not expected output from
 every later Stage 0 backend revision. Decision 0520 keeps them under the

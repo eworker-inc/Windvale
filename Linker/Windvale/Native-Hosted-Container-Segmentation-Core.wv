@@ -87,7 +87,7 @@ export fn Nativeˉhostedˉcontainerˉplanˉisˉvalid(Plan: bytes) -> bool {
     if Target == 1u32 {
         Importˉbytes = 4096u32;
         Relocationˉbytes = 12u32;
-        Targetˉbytes = 236u32;
+        Targetˉbytes = 240u32;
     }
     if Read(Plan, 56u32) != Value.Importˉfileˉoffset ||
         Read(Plan, 60u32) != Importˉbytes ||

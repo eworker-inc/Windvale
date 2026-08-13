@@ -49,7 +49,7 @@ services used by the other hosted-container transition tools.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Runtime-header producer WVB | 23,475 | `08533638a689db5b12628ec401c9d4c395507d2dcbda424dc40b36d1c29aa310` |
-| Windows runtime-header producer | 248,832 | `5e1c241ca5c5e2fce166f2d88899dafbbab88a8dd90bfbb1a1d81863a9a1c286` |
+| Windows runtime-header producer | 248,832 | `06d035dcd79b2c94fcc4f2ac005db99d1f1df9e4f2386241c84d94534e2a5677` |
 | Linux runtime-header producer | 249,856 | `de729966eca15d95f5ae89b5416c6d3f061635a6634807556ac817b094548604` |
 
 The WVB reconstructs through the native Project 1 front door. Focused

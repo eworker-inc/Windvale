@@ -29,7 +29,7 @@ file read/write, and process argument/count.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Source-geometry WVB | 17,802 | `22549f1e50084b3cf20113bee6c30c3df9c4f91aad58b0a3ebe247d02a9e4a28` |
-| Windows application | 198,656 | `ba87249ae08ab2c4577297accc836f4da0234d0a4bf420bb8529133ca7fe72d9` |
+| Windows application | 198,656 | `43c0b237f5ae4ab1ee2572de205edbf2a22d5f1c28b6cf16960bf2849a56ad9a` |
 | Linux application | 200,704 | `b51744744e022eb0cdddd12009912a6704bf885ac875e531a49d7a912cebc844` |
 
 The focused current-host contract verifies exact geometry, public CLI routing,

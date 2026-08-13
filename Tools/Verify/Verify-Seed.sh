@@ -579,8 +579,8 @@ if [ "$NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH" != 'cb63e425cc53425890
     echo "The retained hosted-startup instantiation fragment has an unexpected identity: $NATIVE_HOSTED_STARTUP_INSTANTIATION_ARTIFACT_HASH" >&2
     exit 1
 fi
-if [ "$(sha256sum "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED" | awk '{print $1}')" != 'dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161' ] ||
-    [ "$(wc -c < "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED")" -ne 4398 ] ||
+if [ "$(sha256sum "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED" | awk '{print $1}')" != '6e97c4e610919291423764332eee926223ea556ea4631347c7f88f2aa1f154d5' ] ||
+    [ "$(wc -c < "$WINDOWS_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED")" -ne 4488 ] ||
     [ "$(sha256sum "$LINUX_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED" | awk '{print $1}')" != '1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946' ] ||
     [ "$(wc -c < "$LINUX_HOSTED_COMPILER_STARTUP_OBJECT_RETAINED")" -ne 2454 ]; then
     echo 'A retained hosted-compiler startup WVO has an unexpected identity.' >&2

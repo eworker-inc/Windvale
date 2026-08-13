@@ -54,9 +54,9 @@ fn Planˉisˉvalid(Plan: bytes, Target: u32) -> bool {
     var Expectedˉstartup: u32 = 809u32;
     var Expectedˉtargets: u32 = 128u32;
     if Target == 1u32 {
-        Expectedˉtotal = 364u32;
-        Expectedˉstartup = 1554u32;
-        Expectedˉtargets = 236u32;
+        Expectedˉtotal = 368u32;
+        Expectedˉstartup = 1580u32;
+        Expectedˉtargets = 240u32;
     }
     if Target != 1u32 {
         if Target != 2u32 { return false; }
@@ -86,9 +86,9 @@ fn Objectˉisˉexact(Object: bytes, Target: u32) -> bool {
     var Expectedˉdigest: text =
         "1b8c08308d3f7320b741ae86022400ced6748352314b7f27954ec1c5a7345946";
     if Target == 1u32 {
-        Expectedˉbytes = 4398u32;
+        Expectedˉbytes = 4488u32;
         Expectedˉdigest =
-            "dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161";
+            "6e97c4e610919291423764332eee926223ea556ea4631347c7f88f2aa1f154d5";
     }
     if Bytesˉlength(Object) != Expectedˉbytes { return false; }
     return Bytesˉareˉequal(
@@ -101,7 +101,7 @@ fn Buildˉrequest(Plan: bytes, Object: bytes, Target: u32) -> bytes {
     let Targetˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Plan, 100u32);
     let Targetˉcount: u32 = Targetˉbytes / 4u32;
     var Symbolˉcount: u32 = 26u32;
-    if Target == 1u32 { Symbolˉcount = 40u32; }
+    if Target == 1u32 { Symbolˉcount = 41u32; }
     var Request: bytes = Bytesˉslice(Plan, 0u32, 0u32);
     Request = Appendˉu32(Request, 1230198359u32);
     Request = Appendˉu32(Request, 1u32);

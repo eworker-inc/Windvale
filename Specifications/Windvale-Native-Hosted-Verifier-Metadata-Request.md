@@ -81,7 +81,7 @@ Its recovery-only retained targets are
 `windows-x64-hosted-verifier-metadata-request-v1` and
 `linux-x64-hosted-verifier-metadata-request-v1`. Their exact applications are
 200,192-byte Windows SHA-256
-`32ae4e859fc373acee698e7295837694a859808868232bf2f6328294a6e90e28`
+`8ee1bc4362193059e8536048bd5886e4d5bf5d5f78bbdfd6f4c9cdb8686804c7`
 and 200,704-byte Linux SHA-256
 `4492bcaa51983185d8e9681bacca1770f9117e5b7c28806aa1eaf629497b09c4`.
 The C# writer owns only deletion-bound recovery target/identity wiring.

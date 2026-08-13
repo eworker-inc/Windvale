@@ -72,7 +72,7 @@ startup targets in canonical WVO relocation order.
 | 88 | 4 | runtime address |
 | 92 | 4 | complete virtual image bytes |
 | 96 | 4 | target-table payload offset, `128` |
-| 100 | 4 | target-table bytes, `236` Windows or `128` Linux |
+| 100 | 4 | target-table bytes, `240` Windows or `128` Linux |
 | 104 | 4 | relocation address, zero on Linux |
 | 108 | 4 | import address, zero on Linux |
 | 112 | 4 | text virtual bytes |
@@ -85,7 +85,7 @@ version, header, metadata, layout, and target-table rejection.
 
 ## Platform byte constructors
 
-The Windows constructor accepts the exact 364-byte successful Windows plan and
+The Windows constructor accepts the exact 368-byte successful Windows plan and
 returns `WVWB 1`: a 32-byte response header followed by the 512-byte PE header,
 4,096-byte import page, and 12-byte relocation block. It owns every PE/COFF,
 optional-header, data-directory, section-header, import descriptor, lookup/IAT,

@@ -54,8 +54,8 @@ case "$target" in
         ;;
     windows)
         startup="$repository_root/Linker/Reference/Consumers/Windows-X64-Hosted-Compiler.wvo"
-        startup_bytes=4398
-        startup_sha256=dbf9314d43b47ffc5d3cdeef3c439456b295ac5c3a1cda0b1faaff6227910161
+        startup_bytes=4488
+        startup_sha256=6e97c4e610919291423764332eee926223ea556ea4631347c7f88f2aa1f154d5
         console_service="$service_root/Native-X64-Windows-Console-Output-Service.bin"
         console_service_bytes=258
         console_service_sha256=10f3a500aca7f0236cdf9f6c20658591df88bc612e677264cdaa0bcef59a0a48
@@ -96,7 +96,7 @@ verify_file() {
     }
 }
 
-verify_file "$toolset/SHA256SUMS" 6927 d2cd2c34bb8eaa09d50389685393dc893afa0ef31cd44835d2e5e619a2da7f6f 'hosted toolset inventory' || exit 1
+verify_file "$toolset/SHA256SUMS" 6927 3051a9c328c04a53dd0f0a54a8f83c7d1f12c3947df3bd19d7ad066ac3f09954 'hosted toolset inventory' || exit 1
 (cd -- "$toolset" && sha256sum --check --strict --quiet SHA256SUMS) || {
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1

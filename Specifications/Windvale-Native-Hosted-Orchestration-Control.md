@@ -45,7 +45,7 @@ file read/write, and process argument/count capabilities.
 | --- | ---: | --- |
 | Orchestration-control WVB | 21,214 | `1d9f86cf636de119bde26a7b5fda5977e032db336d07c3937f0dd42df000e4bf` |
 | Native WVO | 219,635 | `86ba4c10926dd95c4211859edef8604489d164f6b4a0e96e8ff8dafc9841036e` |
-| Windows application | 236,032 | `d8b10130bc946261526ee0accc9fcbd42dbe2a5d9fd3e4d4f349038550c8c559` |
+| Windows application | 236,032 | `2483ec3c219f63cf6d16e114fcc8d7ef563296b5b7dea4d9b370c914d8b94362` |
 | Linux application | 237,568 | `45c8bf1163556c851db8b7fecb2556e899c816d06bd39209d65db942fea3c44a` |
 
 The native Project 1 front door reproduces the WVB byte for byte, and the

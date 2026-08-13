@@ -28,7 +28,7 @@ service regions from those payloads and recomputes their SHA-256 values against
 the canonical metadata embedded at runtime offset 480. An envelope-preserving
 payload mutation is therefore rejected before output.
 
-The admitted startup response binds the complete current request size: 4,674
+The admitted startup response binds the complete current request size: 4,768
 bytes for Windows and 2,622 bytes for Linux. These totals include the expanded
 startup relocation target table and reject a response from the prior geometry.
 
@@ -66,7 +66,7 @@ argument/count capabilities.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Source-set WVB | 82,254 | `9b5a64fee4d986f0ec0c490f34bb524f2052b1fe3d028d5b6ae2f7ec12552d97` |
-| Windows application | 1,285,632 | `7aa0cd770aa480f6dc21cf0480fed1b586e13b0b31e95d49972a1becc062373f` |
+| Windows application | 1,285,632 | `48bddea0a7e51621d53c2c17b37d45bda346564e0e7bebb43a940361084fb693` |
 | Linux application | 1,286,144 | `57f44f2f53f3805de0e0f4ee358ea23a3f88e7b3594b49fe10a003b95cd46e02` |
 
 The Stage 0 recovery compiler and native Project 1 front door produce identical

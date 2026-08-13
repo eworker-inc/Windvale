@@ -12,7 +12,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Assembler=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvasm.exe"
 
-certutil -hashfile "%Assembler%" SHA256 | findstr /I /C:"e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4" >nul
+certutil -hashfile "%Assembler%" SHA256 | findstr /I /C:"40a35687fb052dcd4f6d3a767436f4024d91bd5f03890b30fa4f0300184a35ed" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVA assembler artifact digest is invalid.
     exit /b 1

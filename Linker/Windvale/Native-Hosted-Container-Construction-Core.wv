@@ -126,7 +126,7 @@ fn Windowsˉtargets(
     Result = Add(Result, Import + 224u32);
     Result = Add(Result, Import + 264u32);
     Result = Add(Result, Import + 192u32);
-    Result = Add(Result, Value.Textˉaddress + 1364u32);
+    Result = Add(Result, Value.Textˉaddress + 1390u32);
     Result = Add(Result, Import + 232u32);
     Result = Add(Result, Runtimeˉaddress(Value, 8u32));
     Result = Add(Result, Runtimeˉaddress(Value, 13u32));
@@ -163,6 +163,7 @@ fn Windowsˉtargets(
     Result = Add(Result, 8192u32 + Value.Nativeˉentry);
     Result = Add(Result, Runtimeˉaddress(Value, 0u32));
     Result = Add(Result, Import + 248u32);
+    Result = Add(Result, Import + 288u32);
     Result = Add(Result, Runtimeˉaddress(Value, 11u32));
     Result = Add(Result, Runtimeˉaddress(Value, 10u32));
     Result = Add(Result, Runtimeˉaddress(Value, 11u32));
@@ -263,7 +264,7 @@ fn Nativeˉhostedˉcontainerˉconstruct(Input: bytes) -> bytes {
     if !Value.Valid { return Failure(Input, 6u32, 32u32 + 480u32); }
     let Targets: bytes = Targetˉbytes(Input, Value, Metadata);
     var Expectedˉtargetˉbytes: u32 = 128u32;
-    if Target == 1u32 { Expectedˉtargetˉbytes = 236u32; }
+    if Target == 1u32 { Expectedˉtargetˉbytes = 240u32; }
     if Bytesˉlength(Targets) != Expectedˉtargetˉbytes {
         return Failure(Input, 7u32, 32u32 + 480u32);
     }

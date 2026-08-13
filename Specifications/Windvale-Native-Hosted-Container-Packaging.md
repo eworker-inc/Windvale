@@ -135,7 +135,7 @@ is a compatibility entry point for that same owner; it no longer couples this
 lane to current-lowerer or baseline-JIT differential evidence.
 
 The Windows candidate composes `wvhostcontrol.wvb` into a 236,032-byte PE with
-SHA-256 `d8b10130bc946261526ee0accc9fcbd42dbe2a5d9fd3e4d4f349038550c8c559`,
+SHA-256 `2483ec3c219f63cf6d16e114fcc8d7ef563296b5b7dea4d9b370c914d8b94362`,
 byte-for-byte equal to the independently constructed candidate. The Linux
 candidate is a 237,568-byte ELF with SHA-256
 `45c8bf1163556c851db8b7fecb2556e899c816d06bd39209d65db942fea3c44a`.

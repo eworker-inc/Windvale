@@ -19,7 +19,7 @@ ELF construction rules in its hosted shell.
 wvhostbytes <plan.wvcd> <regions.wvhb>
 ```
 
-The input is exactly one successful `WVCD 1` plan: 364 bytes for Windows or 256
+The input is exactly one successful `WVCD 1` plan: 368 bytes for Windows or 256
 bytes for Linux. Target `1` selects
 `Linkerˉnativeˉhostedˉcontainerˉwindows.Main`; target `2` selects
 `Linkerˉnativeˉhostedˉcontainerˉlinux.Main`. Any other target is rejected.
@@ -51,7 +51,7 @@ semantics or new hosted metadata profile.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Platform-byte WVB | 30,305 | `8038e0762f06d821600eddf9963f5178e9d48bc63f455a2b519c31650623dc3e` |
-| Windows platform-byte producer | 312,320 | `8fb80312395b9db8fb9a83ba6bb62530fb63e59d351efb168e81412c9960b6d7` |
+| Windows platform-byte producer | 313,856 | `55cac8f961666c0f3bdeb53664e31d15559f58fb238110878a04696e6494e3a2` |
 | Linux platform-byte producer | 311,296 | `e4664a0975f5117fe772a610f7bd02b3e8951d9db24bb67c0436792a21dd339f` |
 
 Decision 0492 reconstructs and repins these current candidate identities after

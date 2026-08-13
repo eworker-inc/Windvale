@@ -50,7 +50,7 @@ semantics separate, and no new hosted metadata profile is introduced.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Planner WVB | 39,534 | `e9c6eaa87574e2ee472dcc8c177bfe4d63baf9c34838894096f490bdde465bc0` |
-| Windows planner | 609,280 | `fbbbb70c5fa91b9f41551b25ed991dcc489aa92bf44ab0802a6307313bc8d064` |
+| Windows planner | 610,304 | `e7039e5b9397cd33e5a18e9151fe458aaa2cb7a7d92b288f98a93f7a0b0ccfcf` |
 | Linux planner | 610,304 | `edb8f6bf257215309fdad2eee4a18a67e58d2cb8eb9605cbb2067fad3d18ccc9` |
 
 Decision 0492 reconstructs and repins these current candidate identities after

@@ -12,7 +12,7 @@ fn Alignˉup(Value: u32, Alignment: u32) -> u32 {
 
 fn Validˉplan(Input: bytes) -> bool {
     let Total: u32 = Bytesˉlength(Input);
-    if Total != 364u32 || Read(Input, 0u32) != 1145263703u32 ||
+    if Total != 368u32 || Read(Input, 0u32) != 1145263703u32 ||
         Read(Input, 4u32) != 1u32 || Read(Input, 8u32) != Total ||
         Read(Input, 12u32) != 0u32 || Read(Input, 16u32) != 4128u32 ||
         Read(Input, 20u32) != 1u32 || Read(Input, 24u32) < 1u32 ||
@@ -37,7 +37,7 @@ fn Validˉplan(Input: bytes) -> bool {
     );
     if Read(Input, 28u32) != Relocationˉfile + 512u32 ||
         Read(Input, 32u32) != 0u32 || Read(Input, 36u32) != 512u32 ||
-        Read(Input, 40u32) != 512u32 || Read(Input, 44u32) != 1554u32 {
+        Read(Input, 40u32) != 512u32 || Read(Input, 44u32) != 1580u32 {
         return false;
     }
     if Read(Input, 48u32) != 4608u32 || Read(Input, 56u32) != Dataˉfile ||
@@ -51,7 +51,7 @@ fn Validˉplan(Input: bytes) -> bool {
         return false;
     }
     if Read(Input, 92u32) != Alignˉup(Relocationˉaddress + 12u32, 4096u32) ||
-        Read(Input, 96u32) != 128u32 || Read(Input, 100u32) != 236u32 ||
+        Read(Input, 96u32) != 128u32 || Read(Input, 100u32) != 240u32 ||
         Read(Input, 104u32) != Relocationˉaddress ||
         Read(Input, 108u32) != Dataˉaddress {
         return false;
@@ -185,6 +185,7 @@ fn Imports(Plan: bytes) -> bytes {
     Result = Importˉentry(Result, Address, 9u32, 468u32, "ReadFile");
     Result = Importˉentry(Result, Address, 10u32, 480u32, "WideCharToMultiByte");
     Result = Importˉentry(Result, Address, 11u32, 502u32, "WriteFile");
+    Result = Importˉentry(Result, Address, 12u32, 562u32, "ExitProcess");
     let Shellˉname: u32 = Address + 514u32;
     Result = Build.Patchˉu64(Result, 176u32, Shellˉname, 0u32);
     Result = Build.Patchˉu64(Result, 304u32, Shellˉname, 0u32);

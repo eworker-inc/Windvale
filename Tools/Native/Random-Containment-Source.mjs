@@ -46,12 +46,12 @@ export async function Testˉsource(Repositoryˉroot, Temporaryˉdirectory, Cases
         win32: [
             "Artifacts/Native-Front-Door/windows-x64/wvasm.exe",
             2_895_360,
-            "e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4",
+            "40a35687fb052dcd4f6d3a767436f4024d91bd5f03890b30fa4f0300184a35ed",
         ],
         linux: [
             "Artifacts/Native-Front-Door/linux-x64/wvasm.elf",
             2_895_872,
-            "ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0",
+            "36796a26917e699030e2987c01b74799bcdc339af578f76e02f9a1f47ca10b8c",
         ],
     });
     const Assembler = await Verifyˉartifact(

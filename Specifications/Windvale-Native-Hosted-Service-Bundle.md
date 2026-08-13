@@ -46,7 +46,7 @@ services shared by the hosted-container transition tools.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Service-bundle producer WVB | 20,144 | `2284d3896b013bd81ad75ff9de658a07fa4ae0f7ad6d7522e4cdf2abf36917ec` |
-| Windows service-bundle producer | 220,672 | `f585015f927d1d06de964994324f0b5dad7b32f3b3a72b306a1f55fe67268e05` |
+| Windows service-bundle producer | 220,672 | `7ff03fd63dd1dfc2159fc41f3e94913f8d86867b7d9a46530e9a11ed4da9c959` |
 | Linux service-bundle producer | 221,184 | `1b6f9ec568056c0f7ded939f64f0635e74970252f61b30415c5141227b52b0a8` |
 
 The WVB reconstructs through the native Project 1 front door. Focused

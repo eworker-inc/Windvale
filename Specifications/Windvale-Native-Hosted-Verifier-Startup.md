@@ -84,7 +84,7 @@ The application declares exactly `console.write_line`,
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Tool WVB | 79,401 | `d669c6d74703980785f2d070d39ef2f5b537710d4ed74b174b7f0ffa41416341` |
-| Windows application | 927,744 | `c3c8e8691c76cacb13c14397d43b519da7a3c54e83a34a48963de6895fb235d4` |
+| Windows application | 927,744 | `65cdf5585a1e81a02b77de0902b59e97f6ed54752d4e836855b309ad3baa45aa` |
 | Linux application | 929,792 | `5c2b948cf46550188c6bf2329f1bd8fd3ceea7ef156fcc188695e2aa93d07b68` |
 
 The WVB builds through the native Project 1 front door. Both applications

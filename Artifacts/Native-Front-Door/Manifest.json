@@ -79,8 +79,8 @@
       "name": "windows-x64-wvb-verifier",
       "path": "windows-x64/wvverify.exe",
       "target": "windows-x64-verifier-v1",
-      "bytes": 1004032,
-      "sha256": "5f0a83681f54c7e047d6b68c86f71767d6c3584330bef1e68108f9b3465167a7",
+      "bytes": 1255936,
+      "sha256": "a1dc701cc8d5ace0a680a15e19435c48b3bccde3cf6197bfdd07ee04a4bf9871",
       "sourceWvb": "Wvb/Compiler-Wvb-Verifier.wvb"
     },
     {
@@ -104,7 +104,7 @@
       "path": "windows-x64/wvasm.exe",
       "target": "windows-x64-wva-assembler-v1",
       "bytes": 2895360,
-      "sha256": "e03a1f22317fef36213d14a0a669b262f81143a54cbe334da075901987268ed4",
+      "sha256": "40a35687fb052dcd4f6d3a767436f4024d91bd5f03890b30fa4f0300184a35ed",
       "sourceWvb": "Wvb/Wva-Assembler.wvb"
     },
     {
@@ -127,8 +127,8 @@
       "name": "linux-x64-wvb-verifier",
       "path": "linux-x64/wvverify.elf",
       "target": "linux-x64-verifier-v1",
-      "bytes": 1003520,
-      "sha256": "824e90ae07e82af3d6d0b4cf23bc4d3327fc3367684215171247fa71ab274982",
+      "bytes": 1257472,
+      "sha256": "cb77e47f1d69530a16c661deecd91640764a13994d75c4994780e488e938b1f4",
       "sourceWvb": "Wvb/Compiler-Wvb-Verifier.wvb"
     },
     {
@@ -152,7 +152,7 @@
       "path": "linux-x64/wvasm.elf",
       "target": "linux-x64-wva-assembler-v1",
       "bytes": 2895872,
-      "sha256": "ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0",
+      "sha256": "36796a26917e699030e2987c01b74799bcdc339af578f76e02f9a1f47ca10b8c",
       "sourceWvb": "Wvb/Wva-Assembler.wvb"
     }
   ]

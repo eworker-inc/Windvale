@@ -49,7 +49,7 @@ output, file read/write, and process argument/count capabilities.
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Segment-manifest WVB | 35,605 | `8fd1c3f0537694189928f2e78745179519546e91c3df4325fccc451bfebc3133` |
-| Windows application | 411,136 | `a63152d9ff108b1e4ccddefbce028a64b43c1b6618efbd288bd07734e39a0ac6` |
+| Windows application | 411,136 | `7c73bff9d488809dff69f02bc25d635cd764c15092acd73bb04defcc590be24b` |
 | Linux application | 409,600 | `6225cfaab695f281a563b47fe39f1bd2c178c463504951d45c7e7cf73d09c828` |
 
 The Stage 0 recovery compiler and native Project 1 front door produce identical

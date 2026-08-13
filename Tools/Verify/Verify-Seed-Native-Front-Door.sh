@@ -317,7 +317,7 @@ exact_wva_and_linker_execution() {
     ASSEMBLER_BYTES=$(wc -c < "$NATIVE_WVA_APPLICATION" | tr -d ' ')
     ASSEMBLER_SHA256=$(sha256sum "$NATIVE_WVA_APPLICATION" | awk '{print $1}')
     if [ "$ASSEMBLER_BYTES" != 2895872 ] || \
-        [ "$ASSEMBLER_SHA256" != 'ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0' ]; then
+        [ "$ASSEMBLER_SHA256" != '36796a26917e699030e2987c01b74799bcdc339af578f76e02f9a1f47ca10b8c' ]; then
         echo 'The Linux native WVA assembler application identity is invalid.' >&2
         exit 1
     fi
@@ -1162,19 +1162,19 @@ exact_inspect "$NATIVE_HOSTED_STARTUP_INSTANTIATION_MODULE" 'profile=portable' '
 exact_build \
     "$REPOSITORY_ROOT/Projects/Linker/Windvale-Native-Hosted-Container-Construction.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_PLAN_MODULE" \
-    35929 \
-    ff1b48cfc05baab5f707dcfce7e73b0714e2379ee594e12f6e9c6ea1589fef7e \
-    00008c59 \
-    'build status=Published verification=compiler-aligned functions=41 code-bytes=31210 module-bytes=35929'
-exact_inspect "$NATIVE_HOSTED_CONTAINER_PLAN_MODULE" 'profile=portable' 'section name=capabilities offset=81 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=35311 bytes=17 count=1'
+    36010 \
+    e7c92413c31571e8af3dd4ed93664faee5e08716c6241d320b1377c681a254cf \
+    00008caa \
+    'build status=Published verification=compiler-aligned functions=41 code-bytes=31286 module-bytes=36010'
+exact_inspect "$NATIVE_HOSTED_CONTAINER_PLAN_MODULE" 'profile=portable' 'section name=capabilities offset=81 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=35392 bytes=17 count=1'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Linker/Windvale-Native-Hosted-Container-Windows.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE" \
-    17679 \
-    a77e4ea3ac2cff35e965ae44cd486f30dd5b0c10aa2cde23c109d0eca37bffcb \
-    0000450f \
-    'build status=Published verification=compiler-aligned functions=22 code-bytes=15041 module-bytes=17679'
-exact_inspect "$NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE" 'profile=portable' 'section name=capabilities offset=76 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=17613 bytes=17 count=1'
+    17813 \
+    f7a8d3e69b347a3deddf81b5eea09ef929c9798081a6743e7d9aa94262db6de0 \
+    00004595 \
+    'build status=Published verification=compiler-aligned functions=22 code-bytes=15136 module-bytes=17813'
+exact_inspect "$NATIVE_HOSTED_CONTAINER_WINDOWS_MODULE" 'profile=portable' 'section name=capabilities offset=76 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=17747 bytes=17 count=1'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Linker/Windvale-Native-Hosted-Container-Linux.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_LINUX_MODULE" \
@@ -1187,7 +1187,7 @@ exact_build \
     "$REPOSITORY_ROOT/Projects/Linker/Windvale-Native-Hosted-Container-Segmentation.wvproj" \
     "$NATIVE_HOSTED_CONTAINER_SEGMENTATION_MODULE" \
     22584 \
-    d6d74f7d27df9f04f02b8eac2e75fde4fc230ba70d198f90b31ad668a06052e6 \
+    488e6d26e4d4ff459ea602fa5cd13b6270486332a4eab64796a29391271c2604 \
     00005838 \
     'build status=Published verification=compiler-aligned functions=28 code-bytes=19181 module-bytes=22584'
 exact_inspect "$NATIVE_HOSTED_CONTAINER_SEGMENTATION_MODULE" 'profile=portable' 'section name=capabilities offset=81 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=21891 bytes=17 count=1'

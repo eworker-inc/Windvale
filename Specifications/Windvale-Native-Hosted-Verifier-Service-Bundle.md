@@ -71,7 +71,7 @@ The application declares exactly `console.write_line`,
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | Request WVB | 29,170 | `aef88f86d77179a05cc3da8555acfa9e2f3af42d96a6080305ab67eb994aa424` |
-| Windows application | 342,016 | `3cce8fef47288218cacdedbb2d06ce4362f2fde6c4a88a849eafdda4a2f1850a` |
+| Windows application | 342,016 | `25b887bb0c90e0021d304a19df416cea8a48c38b66a06fcc204cb08bdfb6ad7a` |
 | Linux application | 344,064 | `9efd837fc5d33c713edf6c487cf49af35e49f690311433b37b05304abdaad7f7` |
 
 These rows are the retained packaged products from the hosted-toolset refresh

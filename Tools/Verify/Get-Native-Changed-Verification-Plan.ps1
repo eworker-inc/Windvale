@@ -252,6 +252,7 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -in @(
         'Random-Containment-Corpus',
         'Random-Containment-Host',
+        'Random-Containment-Source',
         'Test-Random-Containment'
     )) {
         Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
@@ -405,6 +406,11 @@ foreach ($Path in $Paths) {
             'Verify-Seed-Native-Front-Door.sh'
         )) {
             Add-Suite 'seed-native-front-door'
+        } elseif ([IO.Path]::GetFileName($Path) -in @(
+            'Verify-Seed.ps1',
+            'Verify-Seed.sh'
+        )) {
+            Add-Suite @('seed', 'seed-native-front-door')
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Classify-Verification-Changes.ps1',
             'Get-Verification-Plan.ps1',
@@ -944,6 +950,14 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Linker/Windvale/', [StringComparison]::Ordinal)) {
         Add-Linker-Suites
     } elseif ($Path -in @(
+        'Linker/Startup/Windows-X64-Hosted-Compiler.wva',
+        'Linker/Reference/Consumers/Windows-X64-Hosted-Compiler.wvo'
+    )) {
+        Add-Assembler-Suites
+        Add-Linker-Suites
+        Add-Hosted-Publisher-Suites
+        Add-Suite 'seed-native-front-door'
+    } elseif ($Path -in @(
         'Linker/Startup/Windows-X64-Hosted-Inspector.wva',
         'Linker/Startup/Linux-X64-Hosted-Inspector.wva'
     )) {
@@ -1173,6 +1187,29 @@ foreach ($Path in $Paths) {
         )) {
             Add-Hosted-Publisher-Suites
             Add-Suite 'console-verifier-reconstruction'
+        } elseif ($Path -in @(
+            'Specifications/Windvale-Native-Hosted-Container-Construction.md',
+            'Specifications/Windvale-Native-Hosted-Container-Metadata.md',
+            'Specifications/Windvale-Native-Hosted-Container-Planner.md',
+            'Specifications/Windvale-Native-Hosted-Container-Platform-Bytes.md',
+            'Specifications/Windvale-Native-Hosted-Container-Segment-Manifest.md',
+            'Specifications/Windvale-Native-Hosted-Container-Segment-Request.md',
+            'Specifications/Windvale-Native-Hosted-Container-Segment-Set.md',
+            'Specifications/Windvale-Native-Hosted-Container-Startup.md',
+            'Specifications/Windvale-Native-Hosted-Enum-Processes.md',
+            'Specifications/Windvale-Native-Hosted-Fixed-Services.md',
+            'Specifications/Windvale-Native-Hosted-Orchestration-Control.md',
+            'Specifications/Windvale-Native-Hosted-Publication-Request.md',
+            'Specifications/Windvale-Native-Hosted-Service-Bundle-Request.md',
+            'Specifications/Windvale-Native-Hosted-Service-Bundle.md',
+            'Specifications/Windvale-Native-Hosted-Startup-Instantiation.md'
+        )) {
+            Add-Hosted-Publisher-Suites
+            Add-Suite @(
+                'wv-linker-reconstruction',
+                'console-packager-container-reconstruction',
+                'seed-native-front-door'
+            )
         } elseif ($Path -eq 'Specifications/Windvale-Native-Console-Packager.md') {
             Add-Console-Packager-Reconstruction-Suites
         } elseif ($Path -in @(

@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Front-Door"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    'ebe18959f2a057db5181f4e2bbf7979fac9359d50542581b63da6dc48c4163a0' \
+    '36796a26917e699030e2987c01b74799bcdc339af578f76e02f9a1f47ca10b8c' \
     'linux-x64/wvasm.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native WVA assembler artifact digest is invalid.' >&2
     exit 1
