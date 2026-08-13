@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import {
     access,
     readFile,
@@ -52,31 +52,6 @@ export async function Forˉeachˉbounded(Items, Parallelism, Action) {
 }
 
 export function Runˉprocess(Fileˉpath, Arguments) {
-    if (process.platform === "win32") {
-        // Keep each Windows status and bounded output pair in one synchronous
-        // collection while the explicit native ExitProcess contract is stressed.
-        const Result = spawnSync(Fileˉpath, Arguments, {
-            stdio: ["ignore", "pipe", "pipe"],
-            windowsHide: true,
-            maxBuffer: 65_536,
-        });
-        if (Result.error?.code === "ENOBUFS") {
-            throw new Error("A native containment command exceeded its output bound.");
-        }
-        if (Result.error !== undefined) {
-            throw Result.error;
-        }
-        if (Result.signal !== null) {
-            throw new Error(
-                `A native containment command ended through signal ${Result.signal}.`,
-            );
-        }
-        return {
-            Code: Result.status,
-            Output: Result.stdout,
-            Error: Result.stderr,
-        };
-    }
     return new Promise((Resolve, Reject) => {
         const Child = spawn(Fileˉpath, Arguments, {
             stdio: ["ignore", "pipe", "pipe"],

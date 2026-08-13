@@ -249,6 +249,12 @@ function Add-Native-Tool-Suite {
         Add-Suite 'seed-native-front-door'
     } elseif ($Stem -eq 'Random-Containment-Binary') {
         Add-Suite @('wvb-containment', 'wvo-containment')
+    } elseif ($Stem -in @(
+        'Random-Containment-Corpus',
+        'Random-Containment-Host',
+        'Test-Random-Containment'
+    )) {
+        Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
     } elseif ($Stem -match 'Verify-Wvb|Inspect-Wvb') {
         Add-Bytecode-Suites
     } elseif ($Stem -match 'Package-Uefi') {
@@ -425,6 +431,8 @@ foreach ($Path in $Paths) {
         Add-Suite 'libraries'
     } elseif ($Path.StartsWith('Projects/Libraries/', [StringComparison]::Ordinal)) {
         Add-Suite @('workspace-project2', 'libraries')
+    } elseif ($Path -eq 'Specifications/Windvale-Native-Random-Containment-Tests.md') {
+        Add-Suite @('wvb-containment', 'wvo-containment', 'source-containment')
     } elseif ($Path.StartsWith('Applications/Database/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Distribution/Applications/Wvdb-Query/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Projects/Applications/', [StringComparison]::Ordinal) -or

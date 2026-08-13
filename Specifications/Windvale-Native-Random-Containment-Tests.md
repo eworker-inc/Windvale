@@ -79,6 +79,13 @@ SHA-256, and Linux executable mode before any case. At most four independent
 native processes run at once inside one lane. Each process has a 65,536-byte
 combined per-channel bound.
 
+Windows and Linux use the same asynchronous child-process collector. Completion
+is observed only after the child has exited and both output channels have closed;
+the collector then reports the native status, bounded standard output, and bounded
+diagnostic bytes as one result. Windows verifier and inspector applications own
+explicit `ExitProcess` termination, so no synchronous host workaround or loader
+fall-through participates in the exit contract.
+
 All 1,000 WVB values must return the native verifier's rejection exit, write no
 standard output, emit one structured `wvb status=Invalid phase=...` diagnostic,
 and preserve the input. All 500 WVO values must return the native object

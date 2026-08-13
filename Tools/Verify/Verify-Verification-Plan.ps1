@@ -289,6 +289,22 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'native shared random containment host owner'
+        Paths = @(
+            'Tools/Native/Random-Containment-Host.mjs',
+            'Tools/Native/Random-Containment-Corpus.mjs',
+            'Tools/Native/Test-Random-Containment.mjs',
+            'Specifications/Windvale-Native-Random-Containment-Tests.md'
+        )
+        Suites = @(
+            'wvb-containment',
+            'wvo-containment',
+            'source-containment'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'native compiler reconstruction owner'
         Paths = @(
             'Tools/Native/Construct-Compiler-Reconstruction.cmd',
