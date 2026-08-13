@@ -219,6 +219,75 @@ Exact commit `a898fe8` completes concurrent Qualification in 484.1 seconds on Wi
 
 Decision 0089 follows the same throughput rule with one focused wide-call case. Exact integrated commit `860c69c` completes concurrent Qualification in 501.3 seconds on Windows and 517.2 seconds on Debian, with suite times of 243.529 and 257.101 seconds. The wide-call case takes 38 and 39 milliseconds while the golden closure takes 180.409 and 191.031 seconds. Both hosts pass zero-warning builds, all 67 Seed tests, all 21 OS tests, and the complete CLI/reproduction gate; normalized contracts and all 69 portable artifacts match. All three exact probe-21 QEMU scenarios and GitHub's Windows/Linux gate pass. ABI 16 therefore removes 103 real compiler signature blockers without moving the edit-time loop or milestone bottleneck materially.
 
+## Native changed-verification measurements and next optimizations
+
+The 2026-08-13 Windows x64 nested-record and database-storage batch selected 28
+native owners plus WebAssembly. The first complete changed-file pass took
+3,188.5 seconds (53 minutes 8.5 seconds). All 28 native owners passed; the
+WebAssembly owner stopped at stale exact compiler identities and instruction
+budgets after the compiler changed. The largest native costs were:
+
+| Owner | Elapsed |
+| --- | ---: |
+| Native Seed front door | 715.4 seconds |
+| Native database storage | 562.3 seconds |
+| Compiler reconstruction | 467.4 seconds |
+| Hosted verifier publisher | 171.6 seconds |
+| Segmented compiler-toolset reconstruction | 164.2 seconds |
+
+This is qualification and reconstruction time, not ordinary compilation time.
+The new nested-record fixture compiled in 0.067 to 0.071 seconds. Its native
+lowering took 0.047 to 0.110 seconds. The database publication and recovery
+fixtures each compiled and lowered in approximately 2.9 to 3.3 seconds.
+
+The WebAssembly owner originally ran the multi-billion-instruction compiler
+verifier through Node's default WebAssembly tier and remained incomplete at the
+local 1,204-second command ceiling. Running that same verifier with
+`--no-liftoff`, which selects Node's optimizing tier and is also used by the
+existing final compiler probe, did not remove or weaken any module, digest,
+budget, output, or failure check. The final complete focused owner passed in
+604.713 seconds (10 minutes 4.7 seconds). The retained compiler's six direct
+verifier phases completed in 186.3 seconds under that tier; the portable
+compiler's six phases completed in 178.5 seconds.
+
+A failed broad run does not require every passing owner to run again. Passing
+evidence may be reused while none of that owner's implementation, inputs,
+tools, or expected contracts changed. Rerun the narrowest affected owner. A
+monolithic owner such as the current WebAssembly script must still restart from
+its beginning after an internal failure, although direct probes may diagnose a
+late failure against already-built immutable artifacts.
+
+The next throughput work should preserve that evidence boundary while reducing
+repeated work:
+
+1. Add a content-addressed local artifact cache for reconstructed compilers,
+   lowerers, verifiers, WVBs, WVOs, and WebAssembly modules. Every cache key
+   must include all input digests, the producing tool identity, target/profile,
+   and relevant options; every hit must revalidate the recorded output digest.
+2. Write an immutable checkpoint manifest after each verification phase. A
+   resumed owner may skip a phase only when its complete key and output digests
+   match. A clean exact-commit qualification mode remains available and must
+   ignore or independently audit local cache state.
+3. Separate artifact construction from artifact execution in the WebAssembly
+   owner. This lets a changed engine expectation rerun engine and probe stages
+   without regenerating dozens of unchanged WVB and Wasm products.
+4. Schedule independent native owners concurrently with explicit CPU and
+   memory bounds, isolated temporary/output directories, deterministic log
+   collation, and a retained sequential oracle for equivalence checks.
+5. Keep distinct fast and full lanes. The local lane runs affected semantic and
+   ownership checks. The full dual-host lane retains exact reconstruction,
+   hostile-input, deterministic-byte, and portable-runtime evidence for the
+   final pushed commit.
+6. Add compiler incrementality separately: cache parsed modules, symbols, WIR,
+   and unchanged native objects by complete dependency digest. Verification
+   orchestration and compiler incrementality solve different bottlenecks and
+   should be measured independently.
+
+Working targets, to be accepted only after equivalent-evidence measurements on
+Windows and Linux, are a one-to-two-minute repeat WebAssembly owner when its
+artifacts are unchanged and a 15-to-25-minute local broad gate for a batch of
+this size. These are planning targets, not current performance claims.
+
 ## Evidence rules
 
 - Timing values are diagnostic host evidence, not portable semantics, and never enter the conformance contract.
