@@ -86,7 +86,7 @@ verify_file() {
 verify_file "$wvb" 927274 \
     d3dbadd987f10a98ebd90d1357973dca055094e2dbd3cc3e0e90afb3c3c17fae || exit 1
 verify_file "$windows" 27776000 \
-    11c01839d63a13570e02873f760614eef42089a29a282083f5def3e968038d78 || exit 1
+    0975f6181c78cd4b0007883d4b4ee9275b7cbb46bf904ce0cc79730d32308f7e || exit 1
 verify_file "$linux" 27774976 \
     93651adc36557aaa895627e8d8aa022b8765fc4f6cfaafbb5dc7c0a263287f67 || exit 1
 

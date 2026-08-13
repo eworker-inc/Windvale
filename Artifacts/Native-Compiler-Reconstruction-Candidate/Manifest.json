@@ -27,7 +27,7 @@
       "path": "windows-x64/wvcompiler.exe",
       "target": "windows-x64-console-v3",
       "bytes": 27776000,
-      "sha256": "11c01839d63a13570e02873f760614eef42089a29a282083f5def3e968038d78",
+      "sha256": "0975f6181c78cd4b0007883d4b4ee9275b7cbb46bf904ce0cc79730d32308f7e",
       "sourceWvb": "Wvb/Windvale-Compiler.wvb"
     },
     {
