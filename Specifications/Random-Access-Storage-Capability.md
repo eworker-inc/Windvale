@@ -95,6 +95,14 @@ one nonblocking exclusive `flock`, which remains advisory against
 non-cooperating native programs. The fixed name is test-shell policy, not a
 source path API or the eventual configurable database-server launcher.
 
+The focused owner has two evidence boundaries. Its no-argument form is the
+clean nine-case owner and ignores local caches. `--development` is an explicit
+non-qualification lane that uses the target-scoped [native tool
+checkpoint](Windvale-Native-Tool-Checkpoint.md), assembles and verifies both
+platform leaves, and executes the Windows create, tail-repair, and stable-reopen
+lifecycle. `--prepare-development-tools` prepares or validates that checkpoint
+without running the database case.
+
 ## Mutation outcomes
 
 Mutation results use one of four completion values:

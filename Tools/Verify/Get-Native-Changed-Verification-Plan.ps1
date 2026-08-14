@@ -1334,6 +1334,8 @@ foreach ($Path in $Paths) {
             Add-Suite 'wvo-inspector-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Test-Plan.md') {
             $RunPlanVerification = $true
+        } elseif ($Path -eq 'Specifications/Windvale-Native-Tool-Checkpoint.md') {
+            Add-Suite 'database-storage'
         } elseif ($Path -eq 'Specifications/Windvale-Console-Application-Verification.md') {
             Add-Suite 'console-verifier-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Hosted-Verifier-Application.md') {

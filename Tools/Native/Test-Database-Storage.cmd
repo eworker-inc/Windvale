@@ -1,10 +1,18 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
-if not "%~1"=="" (
-    >&2 echo Usage: Tools\Native\Test-Database-Storage.cmd
-    exit /b 64
+set "Development=0"
+set "PrepareOnly=0"
+if "%~1"=="" goto :arguments_ready
+if not "%~2"=="" goto :usage
+if /I "%~1"=="--development" set "Development=1"
+if /I "%~1"=="--prepare-development-tools" (
+    set "Development=1"
+    set "PrepareOnly=1"
 )
+if "%Development%"=="0" goto :usage
+
+:arguments_ready
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -22,21 +30,46 @@ set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%WorkspacePath:\=/%"
 set "Result=1"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
-    "%BuildDriverWvb%" >nul
-if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
-    2 "%BuildDriverWvb%" "%BuildDriver%" >nul
-if errorlevel 1 goto :cleanup
+if "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+        "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
+        "%BuildDriverWvb%" >nul
+    if errorlevel 1 goto :cleanup
+    call :prepare_cached_build_driver "%BuildDriverWvb%"
+    if errorlevel 1 goto :cleanup
+    set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
+    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 6499840 a8041f1053fa04598a762998d7820ffc0b704b92494d3ae87ebb8d95ac94450e
+    if errorlevel 1 goto :cleanup
+) else (
+    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+        "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
+        "%BuildDriverWvb%" >nul
+    if errorlevel 1 goto :cleanup
+    call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
+        2 "%BuildDriverWvb%" "%BuildDriver%" >nul
+    if errorlevel 1 goto :cleanup
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj" ^
-    "%LowererWvb%" >nul
-if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
-    6 "%LowererWvb%" "%Lowerer%" >nul
-if errorlevel 1 goto :cleanup
+    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+        "%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj" ^
+        "%LowererWvb%" >nul
+    if errorlevel 1 goto :cleanup
+    call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
+        6 "%LowererWvb%" "%Lowerer%" >nul
+    if errorlevel 1 goto :cleanup
+)
+
+if "%PrepareOnly%"=="1" (
+    set "Result=0"
+    goto :cleanup
+)
+
+if "%Development%"=="1" (
+    call :verify_host_storage ^
+        "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
+    if errorlevel 1 goto :cleanup
+    set "Result=0"
+    goto :cleanup
+)
 
 call :verify_target Nested ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Nested-Record-Fields.wvproj"
@@ -70,6 +103,14 @@ for %%R in ("%TemporaryDirectory%") do set "ResolvedTemporaryDirectory=%%~fR"
 echo(%ResolvedTemporaryDirectory%| findstr /b /i /c:"%TEMP%\windvale-database-storage-" >nul || exit /b 1
 if exist "%ResolvedTemporaryDirectory%\." rmdir /s /q "%ResolvedTemporaryDirectory%"
 if not "%Result%"=="0" exit /b %Result%
+if "%PrepareOnly%"=="1" (
+    echo native database storage development tools status=Passed checkpoint=%ToolCheckpoint%
+    exit /b 0
+)
+if "%Development%"=="1" (
+    echo native database storage development status=Passed cases=1 local-results=0 tools=%ToolCheckpoint%
+    exit /b 0
+)
 echo native database storage status=Passed cases=9 local-results=0 cross-host-images=Verified
 exit /b 0
 
@@ -101,17 +142,21 @@ set "InitialFile=%RunDirectory%\Windvale-Database-Storage.initial"
 
 "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
 if errorlevel 1 exit /b 1
-"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-if errorlevel 1 exit /b 1
-fc /b "%FirstWvb%" "%SecondWvb%" >nul
-if errorlevel 1 exit /b 1
+if not "%Development%"=="1" (
+    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvb%" "%SecondWvb%" >nul
+    if errorlevel 1 exit /b 1
+)
 
 "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
 if errorlevel 1 exit /b 1
-"%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
-if errorlevel 1 exit /b 1
-fc /b "%FirstWvo%" "%SecondWvo%" >nul
-if errorlevel 1 exit /b 1
+if not "%Development%"=="1" (
+    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%FirstWvo%" "%SecondWvo%" >nul
+    if errorlevel 1 exit /b 1
+)
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%FirstWvo%" >nul
 if errorlevel 1 exit /b 1
 
@@ -119,12 +164,14 @@ call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
     "%RepositoryRoot%\Runtime\Native\X64-Random-Access-Storage-Host.wva" ^
     "%CommonFirst%" >nul
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
-    "%RepositoryRoot%\Runtime\Native\X64-Random-Access-Storage-Host.wva" ^
-    "%CommonSecond%" >nul
-if errorlevel 1 exit /b 1
-fc /b "%CommonFirst%" "%CommonSecond%" >nul
-if errorlevel 1 exit /b 1
+if not "%Development%"=="1" (
+    call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
+        "%RepositoryRoot%\Runtime\Native\X64-Random-Access-Storage-Host.wva" ^
+        "%CommonSecond%" >nul
+    if errorlevel 1 exit /b 1
+    fc /b "%CommonFirst%" "%CommonSecond%" >nul
+    if errorlevel 1 exit /b 1
+)
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%CommonFirst%" >nul
 if errorlevel 1 exit /b 1
 
@@ -195,6 +242,11 @@ if not "%ApplicationResult%"=="0" (
 fc /b "%InitialFile%" "%StorageFile%" >nul
 if errorlevel 1 exit /b 1
 
+if "%Development%"=="1" (
+    endlocal
+    exit /b 0
+)
+
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
     Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
     "%CommonFirst%" "%LinuxPlatform%" >"%LinuxMap%"
@@ -211,6 +263,139 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
 if errorlevel 1 exit /b 1
 endlocal
 exit /b 0
+
+:verify_file
+if not exist "%~1" exit /b 1
+for %%F in ("%~1") do if not "%%~zF"=="%~2" exit /b 1
+certutil -hashfile "%~1" SHA256 | findstr /I /C:"%~3" >nul
+exit /b %ERRORLEVEL%
+
+:prepare_cached_build_driver
+setlocal EnableExtensions DisableDelayedExpansion
+set "CheckpointInput=%~f1"
+call :get_sha256 "%CheckpointInput%" CheckpointInputSha256
+if errorlevel 1 exit /b 1
+call :get_sha256 "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" CheckpointPackageSha256
+if errorlevel 1 exit /b 1
+call :get_sha256 "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" CheckpointStageSha256
+if errorlevel 1 exit /b 1
+call :get_sha256 "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" CheckpointLinkSha256
+if errorlevel 1 exit /b 1
+call :get_sha256 "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" CheckpointTransportSha256
+if errorlevel 1 exit /b 1
+call :get_sha256 "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" CheckpointHostedSha256
+if errorlevel 1 exit /b 1
+call :get_sha256 "%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Candidate\SHA256SUMS" CheckpointInventorySha256
+if errorlevel 1 exit /b 1
+set "CheckpointMaterial=build-driver-v1-windows-profile-2-%CheckpointInputSha256%-%CheckpointPackageSha256%-%CheckpointStageSha256%-%CheckpointLinkSha256%-%CheckpointTransportSha256%-%CheckpointHostedSha256%-%CheckpointInventorySha256%"
+set "CheckpointKeyMaterial=%TemporaryDirectory%\Checkpoint-Key.txt"
+>"%CheckpointKeyMaterial%" echo %CheckpointMaterial%
+call :get_sha256 "%CheckpointKeyMaterial%" CheckpointKey
+if errorlevel 1 exit /b 1
+
+if defined WINDVALE_NATIVE_CACHE_ROOT (
+    set "CheckpointRoot=%WINDVALE_NATIVE_CACHE_ROOT%"
+) else (
+    if not defined LOCALAPPDATA exit /b 1
+    set "CheckpointRoot=%LOCALAPPDATA%\Windvale\Native-Tool-Cache"
+)
+if not exist "%CheckpointRoot%\." mkdir "%CheckpointRoot%" || exit /b 1
+fsutil reparsepoint query "%CheckpointRoot%" >nul 2>nul
+if not errorlevel 1 exit /b 1
+set "CheckpointFamily=%CheckpointRoot%\build-driver-v1\windows-profile-2"
+if not exist "%CheckpointFamily%\." mkdir "%CheckpointFamily%" || exit /b 1
+fsutil reparsepoint query "%CheckpointFamily%" >nul 2>nul
+if not errorlevel 1 exit /b 1
+set "CheckpointDirectory=%CheckpointFamily%\%CheckpointKey%"
+set "CheckpointManifest=%CheckpointDirectory%\Checkpoint.txt"
+set "CheckpointApplication=%CheckpointDirectory%\Build-Driver.exe"
+set "CheckpointWasCreated=0"
+
+if exist "%CheckpointDirectory%\." (
+    fsutil reparsepoint query "%CheckpointDirectory%" >nul 2>nul
+    if not errorlevel 1 exit /b 1
+    goto :validate_checkpoint
+)
+
+set "CheckpointTemporary=%CheckpointFamily%\.new-%CheckpointKey%-%RANDOM%-%RANDOM%"
+if exist "%CheckpointTemporary%\." exit /b 1
+mkdir "%CheckpointTemporary%" || exit /b 1
+set "CheckpointCandidate=%CheckpointTemporary%\Build-Driver.exe"
+call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
+    2 "%CheckpointInput%" "%CheckpointCandidate%" >nul
+if errorlevel 1 (
+    if exist "%CheckpointCandidate%" del /f /q "%CheckpointCandidate%" >nul 2>nul
+    rmdir "%CheckpointTemporary%" >nul 2>nul
+    exit /b 1
+)
+call :get_sha256 "%CheckpointCandidate%" CheckpointOutputSha256
+if errorlevel 1 exit /b 1
+for %%F in ("%CheckpointCandidate%") do set "CheckpointOutputBytes=%%~zF"
+if %CheckpointOutputBytes% LEQ 0 exit /b 1
+if %CheckpointOutputBytes% GTR 67108864 exit /b 1
+>"%CheckpointTemporary%\Checkpoint.txt" echo windvale-native-tool-checkpoint 1
+>>"%CheckpointTemporary%\Checkpoint.txt" echo key %CheckpointKey%
+>>"%CheckpointTemporary%\Checkpoint.txt" echo input-sha256 %CheckpointInputSha256%
+>>"%CheckpointTemporary%\Checkpoint.txt" echo output-bytes %CheckpointOutputBytes%
+>>"%CheckpointTemporary%\Checkpoint.txt" echo output-sha256 %CheckpointOutputSha256%
+move "%CheckpointTemporary%" "%CheckpointDirectory%" >nul
+if errorlevel 1 exit /b 1
+set "CheckpointWasCreated=1"
+
+:validate_checkpoint
+if not exist "%CheckpointManifest%" exit /b 1
+if not exist "%CheckpointApplication%" exit /b 1
+fsutil reparsepoint query "%CheckpointManifest%" >nul 2>nul
+if not errorlevel 1 exit /b 1
+fsutil reparsepoint query "%CheckpointApplication%" >nul 2>nul
+if not errorlevel 1 exit /b 1
+for %%F in ("%CheckpointManifest%") do if %%~zF GTR 512 exit /b 1
+for %%F in ("%CheckpointApplication%") do set "CheckpointActualBytes=%%~zF"
+if %CheckpointActualBytes% LEQ 0 exit /b 1
+if %CheckpointActualBytes% GTR 67108864 exit /b 1
+call :get_sha256 "%CheckpointApplication%" CheckpointActualSha256
+if errorlevel 1 exit /b 1
+set "CheckpointExpected=%TemporaryDirectory%\Checkpoint-Expected.txt"
+>"%CheckpointExpected%" echo windvale-native-tool-checkpoint 1
+>>"%CheckpointExpected%" echo key %CheckpointKey%
+>>"%CheckpointExpected%" echo input-sha256 %CheckpointInputSha256%
+>>"%CheckpointExpected%" echo output-bytes %CheckpointActualBytes%
+>>"%CheckpointExpected%" echo output-sha256 %CheckpointActualSha256%
+fc /b "%CheckpointExpected%" "%CheckpointManifest%" >nul || exit /b 1
+set "BuildDriver=%CheckpointApplication%"
+if "%CheckpointWasCreated%"=="1" (
+    set "ToolCheckpoint=Created"
+) else (
+    set "ToolCheckpoint=Hit"
+)
+if not defined ToolCheckpoint set "ToolCheckpoint=Hit"
+
+:prepare_cache_ok
+set "PreparedBuildDriver=%BuildDriver%"
+set "PreparedToolCheckpoint=%ToolCheckpoint%"
+endlocal & set "BuildDriver=%PreparedBuildDriver%" & set "ToolCheckpoint=%PreparedToolCheckpoint%"
+exit /b 0
+
+:get_sha256
+setlocal EnableExtensions DisableDelayedExpansion
+set "LocalDigest="
+for /f "skip=1 tokens=* delims=" %%H in ('certutil -hashfile "%~1" SHA256') do if not defined LocalDigest set "LocalDigest=%%H"
+set "LocalDigest=%LocalDigest: =%"
+set "LocalDigest=%LocalDigest:A=a%"
+set "LocalDigest=%LocalDigest:B=b%"
+set "LocalDigest=%LocalDigest:C=c%"
+set "LocalDigest=%LocalDigest:D=d%"
+set "LocalDigest=%LocalDigest:E=e%"
+set "LocalDigest=%LocalDigest:F=f%"
+echo(%LocalDigest%| findstr /r /i /x "[0-9a-f][0-9a-f]*" >nul || exit /b 1
+if "%LocalDigest:~63,1%"=="" exit /b 1
+if not "%LocalDigest:~64,1%"=="" exit /b 1
+endlocal & set "%~2=%LocalDigest%"
+exit /b 0
+
+:usage
+>&2 echo Usage: Tools\Native\Test-Database-Storage.cmd [--development^|--prepare-development-tools]
+exit /b 64
 
 :verify_storage_lowering
 setlocal EnableExtensions DisableDelayedExpansion

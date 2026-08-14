@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 0 ]]; then
-    echo 'Usage: ./Tools/Native/Test-Database-Storage.sh' >&2
+development=0
+prepare_only=0
+if [[ $# -eq 1 && $1 == --development ]]; then
+    development=1
+elif [[ $# -eq 1 && $1 == --prepare-development-tools ]]; then
+    development=1
+    prepare_only=1
+elif [[ $# -ne 0 ]]; then
+    echo 'Usage: ./Tools/Native/Test-Database-Storage.sh [--development|--prepare-development-tools]' >&2
     exit 64
 fi
 
@@ -29,17 +36,129 @@ lowerer_wvb="$temporary_directory/Lowerer.wvb"
 lowerer="$temporary_directory/Lowerer.elf"
 workspace_path="$repository_root/Windvale.wvws"
 
-"$script_directory/Build-Wvb.sh" \
-    "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
-    "$build_driver_wvb" >/dev/null || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" \
-    2 "$build_driver_wvb" "$build_driver" >/dev/null || exit $?
+verify_file() {
+    local path=$1 expected_size=$2 expected_digest=$3
+    [[ -f $path && $(wc -c < "$path") -eq $expected_size ]] || return 1
+    local directory
+    directory=$(CDPATH= cd -- "$(dirname -- "$path")" && pwd -P) || return 1
+    (cd -- "$directory" && printf '%s  %s\n' \
+        "$expected_digest" "$(basename -- "$path")" | sha256sum --check --strict --quiet)
+}
 
-"$script_directory/Build-Wvb.sh" \
-    "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
-    "$lowerer_wvb" >/dev/null || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" \
-    6 "$lowerer_wvb" "$lowerer" >/dev/null || exit $?
+sha256_file() {
+    sha256sum -- "$1" | awk '{ print $1 }'
+}
+
+accept_build_driver_checkpoint() {
+    local directory=$1 expected_key=$2 expected_input=$3
+    local manifest="$directory/Checkpoint.txt"
+    local application="$directory/Build-Driver.elf"
+    [[ -f $manifest && -f $application && ! -L $directory &&
+        ! -L $manifest && ! -L $application ]] || return 1
+    [[ $(wc -c < "$manifest") -le 512 ]] || return 1
+    local actual_bytes actual_sha256 expected_manifest
+    actual_bytes=$(wc -c < "$application") || return 1
+    [[ $actual_bytes -gt 0 && $actual_bytes -le 67108864 ]] || return 1
+    actual_sha256=$(sha256_file "$application") || return 1
+    expected_manifest="$temporary_directory/Checkpoint-Expected.txt"
+    printf '%s\n' \
+        'windvale-native-tool-checkpoint 1' \
+        "key $expected_key" \
+        "input-sha256 $expected_input" \
+        "output-bytes $actual_bytes" \
+        "output-sha256 $actual_sha256" \
+        > "$expected_manifest" || return 1
+    cmp --silent -- "$expected_manifest" "$manifest" || return 1
+    build_driver=$application
+}
+
+prepare_cached_build_driver() {
+    local input=$1
+    local input_sha256 package_sha256 stage_sha256 link_sha256 transport_sha256
+    local hosted_sha256 inventory_sha256 material key
+    input_sha256=$(sha256_file "$input") || return 1
+    package_sha256=$(sha256_file "$script_directory/Package-Segmented-Compiler-Wvb.sh") || return 1
+    stage_sha256=$(sha256_file "$script_directory/Stage-Compiler-Wvb.sh") || return 1
+    link_sha256=$(sha256_file "$script_directory/Link-Staged-Compiler-Wvo.sh") || return 1
+    transport_sha256=$(sha256_file "$script_directory/Transport-Compiler-Image.sh") || return 1
+    hosted_sha256=$(sha256_file "$script_directory/Package-Hosted-Wvb.sh") || return 1
+    inventory_sha256=$(sha256_file \
+        "$repository_root/Artifacts/Native-Hosted-Container-Toolset-Candidate/SHA256SUMS") || return 1
+    material="build-driver-v1-linux-profile-2-$input_sha256-$package_sha256-$stage_sha256-$link_sha256-$transport_sha256-$hosted_sha256-$inventory_sha256"
+    key=$(printf '%s\n' "$material" | sha256sum | awk '{ print $1 }') || return 1
+
+    local cache_root_input
+    if [[ -n ${WINDVALE_NATIVE_CACHE_ROOT:-} ]]; then
+        cache_root_input=$WINDVALE_NATIVE_CACHE_ROOT
+    else
+        cache_root_input="${XDG_CACHE_HOME:-$HOME/.cache}/windvale/native-tool-cache"
+    fi
+    [[ ! -L $cache_root_input ]] || return 1
+    mkdir -p -- "$cache_root_input" || return 1
+    local cache_root
+    cache_root=$(CDPATH= cd -- "$cache_root_input" && pwd -P) || return 1
+    [[ -z $(find "$cache_root" -type l -print -quit) ]] || return 1
+    local family="$cache_root/build-driver-v1/linux-profile-2"
+    mkdir -p -- "$family" || return 1
+    [[ ! -L $family ]] || return 1
+    local directory="$family/$key"
+    if [[ -e $directory ]]; then
+        accept_build_driver_checkpoint "$directory" "$key" "$input_sha256" || return 1
+        tool_checkpoint=Hit
+        return 0
+    fi
+
+    local temporary
+    temporary=$(mktemp -d "$family/.new-$key.XXXXXXXX") || return 1
+    local candidate="$temporary/Build-Driver.elf"
+    if ! "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
+        2 "$input" "$candidate" >/dev/null; then
+        rm -f -- "$candidate"
+        rmdir -- "$temporary"
+        return 1
+    fi
+    local output_sha256 output_bytes
+    output_sha256=$(sha256_file "$candidate") || return 1
+    output_bytes=$(wc -c < "$candidate") || return 1
+    [[ $output_bytes -gt 0 && $output_bytes -le 67108864 ]] || return 1
+    printf '%s\n' \
+        'windvale-native-tool-checkpoint 1' \
+        "key $key" \
+        "input-sha256 $input_sha256" \
+        "output-bytes $output_bytes" \
+        "output-sha256 $output_sha256" \
+        > "$temporary/Checkpoint.txt" || return 1
+    mv -- "$temporary" "$directory" || return 1
+    accept_build_driver_checkpoint "$directory" "$key" "$input_sha256" || return 1
+    tool_checkpoint=Created
+}
+
+if ((development == 1)); then
+    "$script_directory/Build-Wvb.sh" \
+        "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
+        "$build_driver_wvb" >/dev/null || exit $?
+    prepare_cached_build_driver "$build_driver_wvb" || exit $?
+    lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
+    verify_file "$lowerer" 6500352 \
+        de7bdb40637208ee05a7987aba0ea88366638e132fb3f7ba5d9730befde316b5 || exit $?
+else
+    "$script_directory/Build-Wvb.sh" \
+        "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
+        "$build_driver_wvb" >/dev/null || exit $?
+    "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
+        2 "$build_driver_wvb" "$build_driver" >/dev/null || exit $?
+
+    "$script_directory/Build-Wvb.sh" \
+        "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
+        "$lowerer_wvb" >/dev/null || exit $?
+    "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
+        6 "$lowerer_wvb" "$lowerer" >/dev/null || exit $?
+fi
+
+if ((prepare_only == 1)); then
+    echo "native database storage development tools status=Passed checkpoint=$tool_checkpoint"
+    exit 0
+fi
 
 verify_target() {
     local label=$1 project_path=$2
@@ -54,12 +173,16 @@ verify_target() {
     local windows_application="$temporary_directory/$label.exe"
 
     "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-    cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+    if ((development == 0)); then
+        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
+        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
+    fi
 
     "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-    "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-    cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    if ((development == 0)); then
+        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
+        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+    fi
     "$script_directory/Verify-Wvo.sh" "$first_wvo" >/dev/null || return $?
 
     "$script_directory/Link-Wvo.sh" 0 Main "$image" "$first_wvo" >"$map" || return $?
@@ -181,10 +304,12 @@ verify_host_storage() {
     "$script_directory/Assemble-Wva.sh" \
         "$repository_root/Runtime/Native/X64-Random-Access-Storage-Host.wva" \
         "$common_first" >/dev/null || return $?
-    "$script_directory/Assemble-Wva.sh" \
-        "$repository_root/Runtime/Native/X64-Random-Access-Storage-Host.wva" \
-        "$common_second" >/dev/null || return $?
-    cmp --silent -- "$common_first" "$common_second" || return 1
+    if ((development == 0)); then
+        "$script_directory/Assemble-Wva.sh" \
+            "$repository_root/Runtime/Native/X64-Random-Access-Storage-Host.wva" \
+            "$common_second" >/dev/null || return $?
+        cmp --silent -- "$common_first" "$common_second" || return 1
+    fi
     "$script_directory/Verify-Wvo.sh" "$common_first" >/dev/null || return $?
 
     "$script_directory/Assemble-Wva.sh" \
@@ -240,6 +365,10 @@ verify_host_storage() {
     fi
     cmp --silent -- "$initial_file" "$storage_file" || return 1
 
+    if ((development == 1)); then
+        return 0
+    fi
+
     "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
         "$windows_image" "$first_wvo" "$common_first" "$windows_platform" \
         >"$windows_map" || return $?
@@ -256,21 +385,27 @@ verify_host_storage() {
         "$windows_application" windows >/dev/null || return $?
 }
 
-verify_target Nested \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
-verify_target Publication \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj" || exit $?
-verify_target Recovery \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
-verify_target ProviderTable \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
-verify_target ProviderCall \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj" || exit $?
-verify_target Context9 \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
-verify_storage_lowering \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
+if ((development == 0)); then
+    verify_target Nested \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
+    verify_target Publication \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj" || exit $?
+    verify_target Recovery \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
+    verify_target ProviderTable \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
+    verify_target ProviderCall \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj" || exit $?
+    verify_target Context9 \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
+    verify_storage_lowering \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
+fi
 verify_host_storage \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
 
+if ((development == 1)); then
+    echo "native database storage development status=Passed cases=1 local-results=0 tools=$tool_checkpoint"
+    exit 0
+fi
 echo 'native database storage status=Passed cases=9 local-results=0 cross-host-images=Verified'

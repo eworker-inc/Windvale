@@ -1055,6 +1055,13 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'native tool checkpoint owner'
+        Paths = @('Specifications/Windvale-Native-Tool-Checkpoint.md')
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'nested record database owner'
         Paths = @(
             'Tests/Fixtures/Native-X64/Nested-Record-Fields.wv',

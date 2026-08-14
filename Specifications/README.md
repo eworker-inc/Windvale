@@ -148,6 +148,7 @@ These documents define the current implemented or accepted contracts. Dated rati
 - [Windvale OS process-policy object build](Windvale-Os-Process-Policy-Object.md)
 - [Windvale OS process-object build](Windvale-Os-Process-Object.md)
 - [Native changed-file verification](Windvale-Native-Changed-Verification.md)
+- [Native local verification tool checkpoint](Windvale-Native-Tool-Checkpoint.md)
 
 ## Boot and operating system
 

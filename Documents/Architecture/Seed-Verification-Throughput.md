@@ -248,6 +248,15 @@ in reconstruction and paired hosted packaging rather than database semantics,
 which makes this owner a concrete first consumer of the cache and checkpoint
 work below.
 
+Decision 0546 implements that first consumer without weakening the clean
+owner. The target-scoped checkpoint keys the current build-driver WVB and its
+native packaging inputs, revalidates the exact manifest, output size, and
+SHA-256 on every hit, and remains outside qualification evidence. On the same
+Windows host, a warm composed durability lifecycle passed in 100.179 seconds,
+approximately 6.6 times faster than the clean 658.777-second nine-case owner.
+The no-argument owner still reconstructs both compiler tools, checks duplicate
+outputs, and constructs both target applications.
+
 The WebAssembly owner originally ran the multi-billion-instruction compiler
 verifier through Node's default WebAssembly tier and remained incomplete at the
 local 1,204-second command ceiling. Running that same verifier with

@@ -321,6 +321,12 @@ execution. The ordinary hosted packager still lacks exact WVB-to-provider
 admission and configurable binding, so this remains a focused shell rather than
 a product launcher.
 
+[Decision 0546](../Decisions/0546-First-Native-Verification-Tool-Checkpoint.md)
+adds a non-qualification cached development lane for that composed lifecycle.
+It reduced the measured Windows feedback loop from 658.777 seconds for the
+clean nine-case owner to 100.179 seconds while keeping clean reconstruction and
+cross-target construction as the final owner boundary.
+
 The first database can avoid requiring cross-platform atomic file replacement
 by publishing commits inside one storage object: write new pages, flush their
 content, write one checksummed alternate superblock/root record, then flush
