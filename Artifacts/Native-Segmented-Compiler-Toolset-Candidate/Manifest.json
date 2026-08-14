@@ -4,31 +4,31 @@
   "provenanceDecision": "0423",
   "qualification": "pending",
   "moduleConstruction": "native-qualified-front-door",
-  "constructionDecision": "0496",
+  "constructionDecision": "0542",
   "applicationConstruction": "native-segmented-self-reconstruction",
   "artifacts": [
     {
       "name": "wvo-staging-producer-wvb",
       "path": "Wvo-Staging-Producer.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 472421,
-      "sha256": "dbb5a5f9f5bf8a9ae221c5c61a2aa3c4b72c44682cf38a99948e0ec89bd9d6fc",
+      "bytes": 482611,
+      "sha256": "4a79ffad86630a7bf1efed7f3c4c28f7d7586c0432bdb0c34a14c428d57a8ade",
       "sourceProject": "Windvale-Native-X64-Lowering-Staging-Tool.wvproj"
     },
     {
       "name": "windows-x64-wvo-staging-producer",
       "path": "windows-x64-wvstage.exe",
       "target": "windows-x64-wvo-staging-producer-v1",
-      "bytes": 6804480,
-      "sha256": "59ba8a96e75f2a3c257e3dada30c687d10ee7ecda4fd32ca0be35236ec2aa112",
+      "bytes": 6934528,
+      "sha256": "50ea8ba23182802f577b1adf3865950558c626865b45e212792fda44b358f0da",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {
       "name": "linux-x64-wvo-staging-producer",
       "path": "linux-x64-wvstage.elf",
       "target": "linux-x64-wvo-staging-producer-v1",
-      "bytes": 6803456,
-      "sha256": "9d2ad636d88d2f89618e3017fed34be580b80fb43d54ded42cfe8fca42221c39",
+      "bytes": 6934528,
+      "sha256": "e147ec43acbaec07c88b7c549df1fc1cf4ca7d5fdc06a48865b31ec95110d92a",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {
